@@ -30,6 +30,8 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Objects;
 import java.util.Set;
+import java.util.WeakHashMap;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
@@ -65,6 +67,19 @@ public class MinimalSleepSetReduction<L, S, R> implements INwaOutgoingLetterAndT
 
 	private final R mInitial;
 
+	// Memory footprint optimization: Unify different but equal sleep sets (see #getSleepSet below).
+	// ---------------------------------------------------------------------------------------------
+	// This is useful because the number of states of the reduced automaton often far exceeds the number of different
+	// sleep sets. Hence, without this optimization, we create millions of sleep sets when only a few thousand of them
+	// are different from each other. Unification thus allows for significant memory savings.
+	//
+	// At the same time, we do not expect this unification to be particularly expensive in runtime, since
+	// (1) it only requires a newly created set to be compared to (hopefully few) other sets with the same hash code,
+	// (2) such comparisons likely take place anyway at other points in the code (e.g. to unify sleep set states), and
+	// (3) the unification also may speed up future comparisons, because in most cases sleep sets are either already
+	// reference-equal, or they have different hash codes (which is used in ImmutableSet::equals).
+	private final WeakHashMap<ImmutableSet<L>, ImmutableSet<L>> mSleepSetUnifier = new WeakHashMap<>();
+
 	/**
 	 * Create a new reduction automaton.
 	 *
@@ -91,7 +106,7 @@ public class MinimalSleepSetReduction<L, S, R> implements INwaOutgoingLetterAndT
 		final var initial =
 				DataStructureUtils.getOnly(operand.getInitialStates(), "There must only be one initial state");
 		if (initial.isPresent()) {
-			mInitial = mStateFactory.createSleepSetState(initial.get(), ImmutableSet.empty());
+			mInitial = mStateFactory.createSleepSetState(initial.get(), getSleepSet(ImmutableSet.empty()));
 		} else {
 			mInitial = null;
 		}
@@ -163,13 +178,17 @@ public class MinimalSleepSetReduction<L, S, R> implements INwaOutgoingLetterAndT
 
 		// TODO factor out sleep set successor computation
 		final ImmutableSet<L> succSleepSet =
-				ImmutableSet.of((Set<L>) Set.of(Stream.concat(currentSleepSet.stream(), explored)
+				getSleepSet(ImmutableSet.of((Set<L>) Set.of(Stream.concat(currentSleepSet.stream(), explored)
 						.filter(l -> mIndependence.isIndependent(currentState, letter, l) == Dependence.INDEPENDENT)
-						.toArray()));
+						.toArray())));
 
 		final R succSleepSetState =
 				mStateFactory.createSleepSetState(currentTransitionOpt.get().getSucc(), succSleepSet);
 		return Set.of(new OutgoingInternalTransition<>(letter, succSleepSetState));
+	}
+
+	private ImmutableSet<L> getSleepSet(final ImmutableSet<L> set) {
+		return mSleepSetUnifier.computeIfAbsent(set, Function.identity());
 	}
 
 	@Override
