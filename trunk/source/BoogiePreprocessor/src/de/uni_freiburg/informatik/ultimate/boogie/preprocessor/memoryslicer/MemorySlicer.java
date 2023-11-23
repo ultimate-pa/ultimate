@@ -189,7 +189,7 @@ public class MemorySlicer implements IUnmanagedObserver {
 			for (final String caller : aa.getReverseCallgraph().getImage(proc)) {
 				if (!caller.equals(proc)) {
 					boolean someChange = false;
-					for (final Integer modifiedSlice : procedureToDirectlyModifiedMemorySlices.getImage(proc)) {
+					for (final Integer modifiedSlice : procedureToModifiedMemorySlices.getImage(proc)) {
 						someChange |= procedureToModifiedMemorySlices.addPair(caller, modifiedSlice);
 					}
 					if (someChange) {
