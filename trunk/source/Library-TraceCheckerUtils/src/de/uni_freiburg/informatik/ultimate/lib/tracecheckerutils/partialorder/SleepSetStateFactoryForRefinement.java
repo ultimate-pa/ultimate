@@ -107,7 +107,7 @@ public class SleepSetStateFactoryForRefinement<L> implements ISleepSetStateFacto
 		mKnownStates.clear();
 	}
 
-	private static <L> IPredicate createFreshCopy(final IPredicate original, final ImmutableSet<L> sleepset) {
+	private static <L> SleepPredicate<L> createFreshCopy(final IPredicate original, final ImmutableSet<L> sleepset) {
 		if (!(original instanceof IMLPredicate)) {
 			throw new IllegalArgumentException("Unexpected type of predicate: " + original.getClass());
 		}
