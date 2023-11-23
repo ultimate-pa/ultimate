@@ -81,7 +81,7 @@ public abstract class Petri2FiniteAutomatonAbstractionProvider<L extends IIcfgTr
 	 * Determines if the locations belonging to the given marking are all hopeless. In this case, the state
 	 * corresponding to this marking can be omitted from the program automaton.
 	 */
-	protected boolean areAllLocationsHopeless(final Map<IcfgLocation, Boolean> hopelessCache,
+	protected static boolean areAllLocationsHopeless(final Map<IcfgLocation, Boolean> hopelessCache,
 			final Set<? extends IcfgLocation> errorLocs, final Marking<IPredicate> marking) {
 		for (final IPredicate place : marking) {
 			if (place instanceof ISLPredicate) {
