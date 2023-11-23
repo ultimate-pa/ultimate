@@ -27,11 +27,8 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder;
 
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -52,6 +49,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.BetterLockstepOrder.RoundRobinComparator;
+import de.uni_freiburg.informatik.ultimate.util.HashUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.UnifyHash;
 
 /**
  * A DFS order that aims to place context switches between threads whenever (and only when) a loop head is reached.
@@ -110,7 +109,7 @@ public class LoopLockstepOrder<L extends IIcfgTransition<?>> implements IDfsOrde
 		private final String mMaxThread;
 		private final Set<? extends IcfgLocation> mLoopHeads;
 
-		private final Map<PredicateWithLastThread, PredicateWithLastThread> mKnownStates = new HashMap<>();
+		private final UnifyHash<PredicateWithLastThread> mStateUnifier = new UnifyHash<>();
 
 		private WrapperAutomaton(final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> automaton,
 				final String maxThread, final Set<? extends IcfgLocation> loopHeads) {
@@ -211,9 +210,19 @@ public class LoopLockstepOrder<L extends IIcfgTransition<?>> implements IDfsOrde
 			throw new UnsupportedOperationException();
 		}
 
-		private IPredicate getOrCreateState(final IPredicate underlying, final String lastThread) {
-			final var newState = new PredicateWithLastThread((IMLPredicate) underlying, lastThread);
-			return mKnownStates.computeIfAbsent(newState, Function.identity());
+		private IPredicate getOrCreateState(final IPredicate state, final String lastThread) {
+			final var mlState = (IMLPredicate) state;
+			final int hash = PredicateWithLastThread.hashCode(mlState, lastThread);
+
+			for (final var candidate : mStateUnifier.iterateHashCode(hash)) {
+				if (candidate.valueEquals(mlState, lastThread)) {
+					return candidate;
+				}
+			}
+
+			final var newState = new PredicateWithLastThread(mlState, lastThread);
+			mStateUnifier.put(hash, newState);
+			return newState;
 		}
 	}
 
@@ -229,6 +238,27 @@ public class LoopLockstepOrder<L extends IIcfgTransition<?>> implements IDfsOrde
 		@Override
 		public String toString() {
 			return "PredicateWithLastThread [last=" + mAnnotation + ", underlying=" + mUnderlying + "]";
+		}
+
+		@Override
+		public int hashCode() {
+			// reproducible hash code
+			return hashCode(mUnderlying, mAnnotation);
+		}
+
+		private static int hashCode(final IMLPredicate underlying, final String lastThread) {
+			final int prime = 83;
+			return HashUtils.hashJenkins(prime, underlying, lastThread);
+		}
+
+		@Override
+		public boolean equals(final Object obj) {
+			// reference equality, as WrapperAutomaton unifies instances of this class
+			return this == obj;
+		}
+
+		private boolean valueEquals(final IMLPredicate underlying, final String lastThread) {
+			return mUnderlying.equals(underlying) && mAnnotation.equals(lastThread);
 		}
 	}
 }

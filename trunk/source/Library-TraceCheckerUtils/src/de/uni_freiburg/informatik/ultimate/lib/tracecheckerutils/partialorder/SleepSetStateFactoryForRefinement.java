@@ -26,17 +26,16 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ISleepSetStateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.AnnotatedMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.UnifyHash;
 
 /**
  * An implementation of an {@link ISleepSetStateFactory} for {@link IPredicate} states. Currently only works with
@@ -48,11 +47,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
  *            The type of letters in the sleep set
  */
 public class SleepSetStateFactoryForRefinement<L> implements ISleepSetStateFactory<L, IPredicate, IPredicate> {
-
 	private final IPredicate mEmptyStack;
+	private final UnifyHash<SleepPredicate<L>> mUnifier = new UnifyHash<>();
 
-	// Can we get rid of this entirely? [Requires reference equality to be replaced with #equals() everywhere.]
-	private final Map<SleepPredicate<L>, SleepPredicate<L>> mKnownStates = new HashMap<>();
 
 	/**
 	 * Creates a new instance from a predicate factory.
@@ -71,8 +68,17 @@ public class SleepSetStateFactoryForRefinement<L> implements ISleepSetStateFacto
 
 	@Override
 	public IPredicate createSleepSetState(final IPredicate state, final ImmutableSet<L> sleepset) {
-		final var newState = createFreshCopy(state, sleepset);
-		return mKnownStates.computeIfAbsent(newState, Function.identity());
+		final var mlState = (IMLPredicate) state;
+		final int hash = SleepPredicate.hashCode(mlState, sleepset);
+		for (final var candidate : mUnifier.iterateHashCode(hash)) {
+			if (candidate.valueEquals(mlState, sleepset)) {
+				return candidate;
+			}
+		}
+
+		final var newState = new SleepPredicate<>(mlState, sleepset);
+		mUnifier.put(hash, newState);
+		return newState;
 	}
 
 	/**
@@ -103,15 +109,8 @@ public class SleepSetStateFactoryForRefinement<L> implements ISleepSetStateFacto
 		return ((SleepPredicate<L>) sleepState).getSleepSet();
 	}
 
+	@Deprecated
 	public void reset() {
-		mKnownStates.clear();
-	}
-
-	private static <L> SleepPredicate<L> createFreshCopy(final IPredicate original, final ImmutableSet<L> sleepset) {
-		if (!(original instanceof IMLPredicate)) {
-			throw new IllegalArgumentException("Unexpected type of predicate: " + original.getClass());
-		}
-		return new SleepPredicate<>((IMLPredicate) original, sleepset);
 	}
 
 	/**
@@ -142,5 +141,25 @@ public class SleepSetStateFactoryForRefinement<L> implements ISleepSetStateFacto
 			return "SleepPredicate [underlying: " + mUnderlying + ", sleep set: " + mAnnotation + "]";
 		}
 
+		@Override
+		public int hashCode() {
+			// reproducible hash code
+			return hashCode(mUnderlying, mAnnotation);
+		}
+
+		private static int hashCode(final IMLPredicate underlying, final ImmutableSet<?> sleepSet) {
+			final int prime = 79;
+			return HashUtils.hashJenkins(prime, underlying, sleepSet);
+		}
+
+		@Override
+		public boolean equals(final Object obj) {
+			// reference equality, as instances are unified by the factory
+			return this == obj;
+		}
+
+		private boolean valueEquals(final IMLPredicate underlying, final ImmutableSet<L> sleepSet) {
+			return mUnderlying.equals(underlying) && mAnnotation.equals(sleepSet);
+		}
 	}
 }

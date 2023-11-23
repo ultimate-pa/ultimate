@@ -30,8 +30,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Objects;
 import java.util.Set;
-import java.util.WeakHashMap;
-import java.util.function.Function;
 import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
@@ -45,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.II
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.UnifyHash;
 
 /**
  * Implementation of the Sleep Set Reduction with new states. The reduction automaton partially unfolds and unrolls the
@@ -78,7 +77,8 @@ public class MinimalSleepSetReduction<L, S, R> implements INwaOutgoingLetterAndT
 	// (2) such comparisons likely take place anyway at other points in the code (e.g. to unify sleep set states), and
 	// (3) the unification also may speed up future comparisons, because in most cases sleep sets are either already
 	// reference-equal, or they have different hash codes (which is used in ImmutableSet::equals).
-	private final WeakHashMap<ImmutableSet<L>, ImmutableSet<L>> mSleepSetUnifier = new WeakHashMap<>();
+	//
+	private final UnifyHash<ImmutableSet<L>> mSleepSetUnifier = new UnifyHash<>();
 
 	/**
 	 * Create a new reduction automaton.
@@ -188,7 +188,14 @@ public class MinimalSleepSetReduction<L, S, R> implements INwaOutgoingLetterAndT
 	}
 
 	private ImmutableSet<L> getSleepSet(final ImmutableSet<L> set) {
-		return mSleepSetUnifier.computeIfAbsent(set, Function.identity());
+		final int hash = set.hashCode();
+		for (final var candidate : mSleepSetUnifier.iterateHashCode(hash)) {
+			if (candidate.equals(set)) {
+				return candidate;
+			}
+		}
+		mSleepSetUnifier.put(hash, set);
+		return set;
 	}
 
 	@Override
