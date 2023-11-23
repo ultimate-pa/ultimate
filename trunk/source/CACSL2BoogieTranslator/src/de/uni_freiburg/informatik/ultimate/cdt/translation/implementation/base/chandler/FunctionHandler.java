@@ -113,14 +113,17 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultTransformer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValueFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.SkipResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO.AUXVAR;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
@@ -700,8 +703,25 @@ public class FunctionHandler {
 				in = mExprResultTransformer.performImplicitConversion(in, expectedParamType, loc);
 			}
 
-			translatedParams.add(in.getLrValue().getValue());
 			functionCallExpressionResultBuilder.addAllExceptLrValue(in);
+			final LRValue lrValue = in.getLrValue();
+			if (in.getOverapprs().isEmpty()) {
+				translatedParams.add(lrValue.getValue());
+			} else {
+				// If one of the arguments is overapproximated, assign the value to an aux-var and overapproximate this
+				// assignment
+				// TODO: Avoid passing the overapproximation to the function call itself.
+				final AuxVarInfo auxVar =
+						mAuxVarInfoBuilder.constructAuxVarInfo(loc, lrValue.getCType(), AUXVAR.NONDET);
+				functionCallExpressionResultBuilder.addAuxVar(auxVar).addDeclaration(auxVar.getVarDec());
+				final Statement assign =
+						StatementFactory.constructSingleAssignmentStatement(loc, auxVar.getLhs(), lrValue.getValue());
+				for (final Overapprox oa : in.getOverapprs()) {
+					oa.annotate(assign);
+				}
+				functionCallExpressionResultBuilder.addStatement(assign);
+				translatedParams.add(auxVar.getExp());
+			}
 		}
 		if (calleeProcCType != null && calleeProcCType.getVarArgsUsage() == VarArgsUsage.USED) {
 			// If the varargs are used, we create a pointer for all the varargs and pass them to the function.
