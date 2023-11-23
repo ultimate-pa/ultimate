@@ -219,7 +219,7 @@ public abstract class ProductNwa<LETTER, STATE> implements INwaOutgoingLetterAnd
 					letter)) {
 				final STATE fstSucc = fstTrans.getSucc();
 				final STATE sndSucc = sndTrans.getSucc();
-				if (mAssumeInSndNonFinalIsTrap && !mSndOperand.isFinal(sndSucc)) {
+				if (isTrapInSnd(sndSucc)) {
 					continue;
 				}
 				final STATE resSucc = getOrConstructState(fstSucc, sndSucc);
@@ -254,7 +254,7 @@ public abstract class ProductNwa<LETTER, STATE> implements INwaOutgoingLetterAnd
 			for (final OutgoingCallTransition<LETTER, STATE> sndTrans : mSndOperand.callSuccessors(snd, letter)) {
 				final STATE fstSucc = fstTrans.getSucc();
 				final STATE sndSucc = sndTrans.getSucc();
-				if (mAssumeInSndNonFinalIsTrap && !mSndOperand.isFinal(sndSucc)) {
+				if (isTrapInSnd(sndSucc)) {
 					continue;
 				}
 				final STATE resSucc = getOrConstructState(fstSucc, sndSucc);
@@ -287,7 +287,7 @@ public abstract class ProductNwa<LETTER, STATE> implements INwaOutgoingLetterAnd
 					sndHier, letter)) {
 				final STATE fstSucc = fstTrans.getSucc();
 				final STATE sndSucc = sndTrans.getSucc();
-				if (mAssumeInSndNonFinalIsTrap && !mSndOperand.isFinal(sndSucc)) {
+				if (isTrapInSnd(sndSucc)) {
 					continue;
 				}
 				final STATE resSucc = getOrConstructState(fstSucc, sndSucc);
@@ -318,6 +318,10 @@ public abstract class ProductNwa<LETTER, STATE> implements INwaOutgoingLetterAnd
 	@Override
 	public String sizeInformation() {
 		return "currently " + size() + " states, but on-demand construction may add more states";
+	}
+
+	protected boolean isTrapInSnd(final STATE state) {
+		return mAssumeInSndNonFinalIsTrap && mSndOperand.isFinal(state);
 	}
 
 	/**
