@@ -123,7 +123,7 @@ public class AliasAnalysis {
 		for (final Declaration d : unit.getDeclarations()) {
 			if (d instanceof Procedure) {
 				final Procedure p = (Procedure) d;
-				if (p.getBody() != null) {
+				if (p.getBody() != null && !MemorySlicer.isUltimateMemoryReadWriteProcedureWithImplementation(p)) {
 					mCurrentProcedure = p;
 					processBody(ma, p.getBody());
 				}
@@ -526,6 +526,16 @@ public class AliasAnalysis {
 			assert st.getLhs().length == 1;
 			final PointerBase returnedIndex = extractPointerBaseFromVariableLhs(mAsfac, st.getLhs()[0]);
 			ma.reportEquivalence(mAsfac, destIndex, returnedIndex);
+		} else if (st.getMethodName().equals(MemorySliceUtils.ULTIMATE_C_REALLOC)) {
+			assert st.getArguments().length == 2;
+			final PointerBase index = extractPointerBaseFromPointer(mAsfac, st.getArguments()[0]);
+			mAccessAddresses.add(index);
+			assert st.getLhs().length == 1;
+			final PointerBase returnedIndex = extractPointerBaseFromVariableLhs(mAsfac, st.getLhs()[0]);
+			mAccessAddresses.add(returnedIndex);
+			mWriteAddresses.add(returnedIndex);
+			mProcedureToWritePointers.addPair(mCurrentProcedure.getIdentifier(), returnedIndex);
+			ma.reportEquivalence(mAsfac, index, returnedIndex);
 		} else if (st.getMethodName().equals(MemorySliceUtils.ULTIMATE_DEALLOC)) {
 			// do nothing
 		} else if (mProcedureToImplementation.containsKey(st.getMethodName())) {

@@ -87,6 +87,7 @@ public class MemorySliceUtils {
 	public static final String ULTIMATE_C_MEMMOVE = "#Ultimate.C_memmove";
 	public static final String ULTIMATE_C_MEMSET = "#Ultimate.C_memset";
 	public static final String ULTIMATE_C_STRCPY = "#Ultimate.C_strcpy";
+	public static final String ULTIMATE_C_REALLOC = "#Ultimate.C_realloc";
 
 	private MemorySliceUtils() {
 		// do not instantiate

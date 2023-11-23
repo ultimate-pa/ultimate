@@ -276,10 +276,10 @@ public class MemorySlicer implements IUnmanagedObserver {
 		return false;
 	}
 
-	private static boolean isUltimateMemoryReadWriteProcedureWithImplementation(final Procedure proc) {
+	public static boolean isUltimateMemoryReadWriteProcedureWithImplementation(final Procedure proc) {
 		final List<String> ultimateMemoryModifyingProcedures = toList(MemorySliceUtils.ULTIMATE_C_MEMSET,
 				MemorySliceUtils.ULTIMATE_C_MEMCPY, MemorySliceUtils.ULTIMATE_C_MEMMOVE,
-				MemorySliceUtils.ULTIMATE_C_STRCPY);
+				MemorySliceUtils.ULTIMATE_C_STRCPY, MemorySliceUtils.ULTIMATE_C_REALLOC);
 		for (final String ummp : ultimateMemoryModifyingProcedures) {
 			if (proc.getIdentifier().startsWith(ummp)) {
 				return true;
