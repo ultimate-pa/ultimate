@@ -110,6 +110,14 @@ public class AliasAnalysis {
 		return mAccessAddresses;
 	}
 
+	public HashRelation<String, String> getReverseCallgraph() {
+		return mReverseCallgraph;
+	}
+
+	public HashRelation<String, PointerBase> getProcedureToWritePointers() {
+		return mProcedureToWritePointers;
+	}
+
 	public MayAlias aliasAnalysis(final Unit unit) {
 		final MayAlias ma = new MayAlias();
 		for (final Declaration d : unit.getDeclarations()) {

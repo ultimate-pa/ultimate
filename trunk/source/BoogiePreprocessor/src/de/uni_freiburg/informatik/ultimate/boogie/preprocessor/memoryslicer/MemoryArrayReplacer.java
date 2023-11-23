@@ -30,6 +30,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieTransformer;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
@@ -41,11 +42,13 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ModifiesSpecification;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  *
@@ -56,24 +59,28 @@ public class MemoryArrayReplacer extends BoogieTransformer {
 
 	private final AddressStoreFactory mAsFac;
 	private final UnionFind<AddressStore> mUf;
-	private final Map<AddressStore, Integer> mRepToNewHeapArray;
+	private final Map<AddressStore, Integer> mRepToMemorySlice;
 	private final int[] mSliceAccessCounter;
 	private int mAccessCounter;
 	private final int[] mSliceInitializationCounter;
 	private int mInitializationCounter;
 	private final int[] mSliceWriteCounter;
 	private int mWriteCounter;
+	private final HashRelation<String, Integer> mProcedureToModifiedMemorySlices;
+	private String mCurrentProcedure;
 
 	public MemoryArrayReplacer(final AddressStoreFactory asfac, final MayAlias ma,
-			final Map<AddressStore, Integer> repToArray) {
+			final Map<AddressStore, Integer> repToArray,
+			final HashRelation<String, Integer> procedureToModifiedMemorySlices) {
 		mAsFac = asfac;
 		mUf = ma.getAddressStores();
-		mRepToNewHeapArray = repToArray;
-		mSliceAccessCounter = new int[mRepToNewHeapArray.size()];
+		mRepToMemorySlice = repToArray;
+		mProcedureToModifiedMemorySlices = procedureToModifiedMemorySlices;
+		mSliceAccessCounter = new int[mRepToMemorySlice.size()];
 		mAccessCounter = 0;
-		mSliceInitializationCounter = new int[mRepToNewHeapArray.size()];
+		mSliceInitializationCounter = new int[mRepToMemorySlice.size()];
 		mInitializationCounter = 0;
-		mSliceWriteCounter = new int[mRepToNewHeapArray.size()];
+		mSliceWriteCounter = new int[mRepToMemorySlice.size()];
 		mWriteCounter = 0;
 	}
 
@@ -93,6 +100,9 @@ public class MemoryArrayReplacer extends BoogieTransformer {
 
 	@Override
 	protected Declaration processDeclaration(final Declaration decl) {
+		if (decl instanceof Procedure) {
+			mCurrentProcedure = ((Procedure) decl).getIdentifier();
+		}
 		return super.processDeclaration(decl);
 	}
 
@@ -100,7 +110,8 @@ public class MemoryArrayReplacer extends BoogieTransformer {
 	protected Specification processSpecification(final Specification spec) {
 		if (spec instanceof ModifiesSpecification) {
 			final ModifiesSpecification ms = (ModifiesSpecification) spec;
-			return MemorySlicer.reviseModifiesSpec(mRepToNewHeapArray.values(), ms, MemorySliceUtils.MEMORY_POINTER,
+			final Set<Integer> modifiedSlices = mProcedureToModifiedMemorySlices.getImage(mCurrentProcedure);
+			return MemorySlicer.reviseModifiesSpec(modifiedSlices, ms, MemorySliceUtils.MEMORY_POINTER,
 					MemorySliceUtils.MEMORY_INT, MemorySliceUtils.MEMORY_REAL);
 		} else {
 			return super.processSpecification(spec);
@@ -316,7 +327,7 @@ public class MemoryArrayReplacer extends BoogieTransformer {
 		final PointerBase pointerBase = AliasAnalysis.extractPointerBaseFromBase(mAsFac, pointerBaseExpr);
 		final AddressStore rep = mUf.find(pointerBase);
 		Objects.requireNonNull(rep);
-		final Integer number = mRepToNewHeapArray.get(rep);
+		final Integer number = mRepToMemorySlice.get(rep);
 		Objects.requireNonNull(number);
 		return number;
 	}
@@ -325,7 +336,7 @@ public class MemoryArrayReplacer extends BoogieTransformer {
 		final PointerBase pointerBase = AliasAnalysis.extractPointerBaseFromPointer(mAsFac, pointerBaseExpr);
 		final AddressStore rep = mUf.find(pointerBase);
 		Objects.requireNonNull(rep);
-		final Integer number = mRepToNewHeapArray.get(rep);
+		final Integer number = mRepToMemorySlice.get(rep);
 		Objects.requireNonNull(number);
 		return number;
 	}

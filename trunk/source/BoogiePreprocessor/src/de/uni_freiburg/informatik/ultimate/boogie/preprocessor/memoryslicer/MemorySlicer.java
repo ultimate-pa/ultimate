@@ -32,6 +32,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -55,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  *
@@ -115,44 +117,30 @@ public class MemorySlicer implements IUnmanagedObserver {
 			throws AssertionError {
 		final AliasAnalysis aa = new AliasAnalysis(mAsfac, map);
 		final MayAlias ma = aa.aliasAnalysis(unit);
-		final Map<AddressStore, Integer> repToArray = new HashMap<>();
-		{
-			final UnionFind<AddressStore> uf = ma.getAddressStores();
-			for (final AddressStore elem : uf.getAllElements()) {
-				if (elem instanceof PointerBase) {
-					if (AliasAnalysis.isNullPointer((PointerBase) elem)) {
-						assert uf.find(elem) == elem && uf.getEquivalenceClassMembers(elem).size() == 1;
-					}
-				}
-			}
-			int ctr = 0;
-			final Set<AddressStore> representativesOfAccesses = new HashSet<>();
-			for (final PointerBase tmp : aa.getAccessAddresses()) {
-				final AddressStore rep = uf.find(tmp);
-				Objects.requireNonNull(rep, "Cannot find pointer: " + tmp);
-				representativesOfAccesses.add(rep);
-			}
-			for (final AddressStore rep : representativesOfAccesses) {
-				repToArray.put(rep, ctr);
-				ctr++;
-			}
-		}
-		final Collection<Integer> newHeapSliceIds = repToArray.values();
+		final Map<AddressStore, Integer> repToArray = constructMemorySliceMapping(aa, ma);
+
 		final Collection<String> memorySliceSuffixes = new ArrayList<>();
 		for (final Integer memorySliceId : repToArray.values()) {
 			final String memorySliceSuffix = MemorySliceUtils.constructMemorySliceSuffix(memorySliceId);
 			memorySliceSuffixes.add(memorySliceSuffix);
 		}
 
+		final HashRelation<String, Integer> procedureToDirectlyModifiedMemorySlices = computeProcedureToDirectlyModifiedSlices(
+				aa, ma, repToArray);
+
+		final HashRelation<String, Integer> procedureToModifiedMemorySlices = computeProcedureToModifiedSlices(aa,
+				procedureToDirectlyModifiedMemorySlices);
+
 		final ArrayDeque<Declaration> newDecls = new ArrayDeque<>();
-		final MemoryArrayReplacer har = new MemoryArrayReplacer(mAsfac, ma, repToArray);
+		final MemoryArrayReplacer har = new MemoryArrayReplacer(mAsfac, ma, repToArray,
+				procedureToModifiedMemorySlices);
 		for (final Declaration d : unit.getDeclarations()) {
 			final List<String> memoryArrays = Arrays.asList(new String[] { MemorySliceUtils.MEMORY_POINTER,
 					MemorySliceUtils.MEMORY_INT, MemorySliceUtils.MEMORY_REAL });
-			final List<VariableDeclaration> newHeapVarDecls = duplicateMemoryArrayVarDecl(memoryArrays,
+			final List<VariableDeclaration> newMemoryVarDecls = duplicateMemoryArrayVarDecl(memoryArrays,
 					memorySliceSuffixes, d);
-			if (newHeapVarDecls != null) {
-				newDecls.addAll(newHeapVarDecls);
+			if (newMemoryVarDecls != null) {
+				newDecls.addAll(newMemoryVarDecls);
 			} else if (d instanceof Procedure) {
 				final Procedure proc = (Procedure) d;
 				if (isUltimateBasicMemoryReadWriteProcedure(proc)
@@ -186,6 +174,76 @@ public class MemorySlicer implements IUnmanagedObserver {
 		}
 		mLogger.info(har.generateLogMessage());
 		return newDecls;
+	}
+
+	public HashRelation<String, Integer> computeProcedureToModifiedSlices(final AliasAnalysis aa,
+			final HashRelation<String, Integer> procedureToDirectlyModifiedMemorySlices) {
+		final HashRelation<String, Integer> procedureToModifiedMemorySlices = new HashRelation<>(
+				procedureToDirectlyModifiedMemorySlices);
+		final LinkedHashSet<String> worklist = new LinkedHashSet<>();
+		worklist.addAll(procedureToDirectlyModifiedMemorySlices.getDomain());
+		while (!worklist.isEmpty()) {
+			final String proc = worklist.iterator().next();
+			worklist.remove(proc);
+
+			for (final String caller : aa.getReverseCallgraph().getImage(proc)) {
+				if (!caller.equals(proc)) {
+					boolean someChange = false;
+					for (final Integer modifiedSlice : procedureToDirectlyModifiedMemorySlices.getImage(proc)) {
+						someChange |= procedureToModifiedMemorySlices.addPair(caller, modifiedSlice);
+					}
+					if (someChange) {
+						worklist.add(caller);
+					}
+				}
+			}
+		}
+		return procedureToModifiedMemorySlices;
+	}
+
+	public HashRelation<String, Integer> computeProcedureToDirectlyModifiedSlices(final AliasAnalysis aa,
+			final MayAlias ma, final Map<AddressStore, Integer> repToArray) {
+		final HashRelation<String, Integer> procedureToDirectlyModifiedMemorySlices = new HashRelation<>();
+		{
+			final HashRelation<String, PointerBase> procedureToWritePointers = aa.getProcedureToWritePointers();
+			for (final String proc : procedureToWritePointers.getDomain()) {
+				for (final PointerBase pb : procedureToWritePointers.getImage(proc)) {
+					final AddressStore rep = ma.getAddressStores().find(pb);
+					final Integer sliceNumber = repToArray.get(rep);
+					if (sliceNumber == null) {
+						throw new MemorySliceException("Unknown PointerBase " + pb);
+					}
+					procedureToDirectlyModifiedMemorySlices.addPair(proc, sliceNumber);
+				}
+			}
+		}
+		return procedureToDirectlyModifiedMemorySlices;
+	}
+
+	public Map<AddressStore, Integer> constructMemorySliceMapping(final AliasAnalysis aa, final MayAlias ma) {
+		final Map<AddressStore, Integer> repToArray = new HashMap<>();
+		{
+			final UnionFind<AddressStore> uf = ma.getAddressStores();
+			for (final AddressStore elem : uf.getAllElements()) {
+				if (elem instanceof PointerBase) {
+					if (AliasAnalysis.isNullPointer((PointerBase) elem)) {
+						assert uf.find(elem) == elem && uf.getEquivalenceClassMembers(elem).size() == 1;
+					}
+				}
+			}
+			int ctr = 0;
+			final Set<AddressStore> representativesOfAccesses = new HashSet<>();
+			for (final PointerBase tmp : aa.getAccessAddresses()) {
+				final AddressStore rep = uf.find(tmp);
+				Objects.requireNonNull(rep, "Cannot find pointer: " + tmp);
+				representativesOfAccesses.add(rep);
+			}
+			for (final AddressStore rep : representativesOfAccesses) {
+				repToArray.put(rep, ctr);
+				ctr++;
+			}
+		}
+		return repToArray;
 	}
 
 	private Map<String, Procedure> constructIdToImplementation(final Declaration[] declarations) {
@@ -255,16 +313,16 @@ public class MemorySlicer implements IUnmanagedObserver {
 		return false;
 	}
 
-	public static ModifiesSpecification reviseModifiesSpec(final Collection<Integer> heapSliceIds,
+	public static ModifiesSpecification reviseModifiesSpec(final Collection<Integer> memorySliceIds,
 			final ModifiesSpecification oldMs, final String... memoryInt) {
 		final VariableLHS[] oldIds = oldMs.getIdentifiers();
 		final List<VariableLHS> newIds = new ArrayList<>();
 		for (final VariableLHS oldId : oldIds) {
 			if (Arrays.asList(memoryInt).contains(oldId.getIdentifier())) {
-				for (final Integer heapSliceId : heapSliceIds) {
-					final String heapSliceSuffix = MemorySliceUtils.constructMemorySliceSuffix(heapSliceId);
+				for (final Integer memorySliceId : memorySliceIds) {
+					final String memorySliceSuffix = MemorySliceUtils.constructMemorySliceSuffix(memorySliceId);
 					final VariableLHS vlhs = new VariableLHS(oldId.getLoc(), oldId.getType(),
-							oldId.getIdentifier() + heapSliceSuffix, oldId.getDeclarationInformation());
+							oldId.getIdentifier() + memorySliceSuffix, oldId.getDeclarationInformation());
 					ModelUtils.copyAnnotations(oldId, vlhs);
 					newIds.add(vlhs);
 				}
@@ -348,11 +406,11 @@ public class MemorySlicer implements IUnmanagedObserver {
 
 	private static List<VariableDeclaration> duplicateMemoryArrayVarDecl(final VariableDeclaration varDecl,
 			final String[] memoryArrayIds, final Collection<String> memorySliceSuffixes) {
-		final List<VariableDeclaration> newHeapVarDecls = new ArrayList<>();
+		final List<VariableDeclaration> newMemoryVarDecls = new ArrayList<>();
 		for (final String memorySliceSuffix : memorySliceSuffixes) {
-			newHeapVarDecls.add(renameMemoryArray(varDecl, memoryArrayIds, memorySliceSuffix));
+			newMemoryVarDecls.add(renameMemoryArray(varDecl, memoryArrayIds, memorySliceSuffix));
 		}
-		return newHeapVarDecls;
+		return newMemoryVarDecls;
 	}
 
 	private static VariableDeclaration renameMemoryArray(final VariableDeclaration oldVarDecl,
