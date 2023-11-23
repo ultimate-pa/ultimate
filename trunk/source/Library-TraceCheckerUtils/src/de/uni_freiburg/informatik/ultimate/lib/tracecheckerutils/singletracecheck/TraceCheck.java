@@ -64,6 +64,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.TraceCheckerUtils;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheck.FeasibilityCheckResult;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheck.TraceCheckLock;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
@@ -520,7 +522,7 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 				}
 			}
 		}
-		final boolean vaReuse = true;
+		final boolean vaReuse = false;
 		if (vaReuse) {
 
 			// TODO Add empty annotation to unreachable test goals? to prevent a reuse Not sure if needed

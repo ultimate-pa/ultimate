@@ -497,7 +497,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 
 	// Test Generation
 	// ========================================================================
-	private static final TestGenerationMode DEF_TEST_GEN_MODE = TestGenerationMode.None;
+	private static final TestGenerationMode DEF_TEST_GEN_MODE = TestGenerationMode.Standard;
 	public static final String LABEL_TEST_GEN_MODE = "Test Generation Mode";
 	private static final String DESC_TEST_GEN_MODE =
 			"None deactivates Test Generation, Standart standart Test Generation for Model Checkers, Search-MultiGoal uses the A* to find Multi Goal test cases and ignores ifeasible traces during the search, Naive-MultiGoal starts the CEGAR with the last added Test Goal and adds a new Test Goal every iteration";
