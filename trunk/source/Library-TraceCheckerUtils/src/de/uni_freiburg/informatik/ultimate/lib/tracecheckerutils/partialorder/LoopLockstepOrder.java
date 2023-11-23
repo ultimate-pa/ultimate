@@ -31,6 +31,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -51,7 +52,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.BetterLockstepOrder.RoundRobinComparator;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * A DFS order that aims to place context switches between threads whenever (and only when) a loop head is reached.
@@ -110,7 +110,7 @@ public class LoopLockstepOrder<L extends IIcfgTransition<?>> implements IDfsOrde
 		private final String mMaxThread;
 		private final Set<? extends IcfgLocation> mLoopHeads;
 
-		private final Map<Pair<IPredicate, String>, IPredicate> mKnownStates = new HashMap<>();
+		private final Map<PredicateWithLastThread, PredicateWithLastThread> mKnownStates = new HashMap<>();
 
 		private WrapperAutomaton(final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> automaton,
 				final String maxThread, final Set<? extends IcfgLocation> loopHeads) {
@@ -212,13 +212,13 @@ public class LoopLockstepOrder<L extends IIcfgTransition<?>> implements IDfsOrde
 		}
 
 		private IPredicate getOrCreateState(final IPredicate underlying, final String lastThread) {
-			return mKnownStates.computeIfAbsent(new Pair<>(underlying, lastThread),
-					p -> new PredicateWithLastThread((IMLPredicate) p.getFirst(), p.getSecond()));
+			final var newState = new PredicateWithLastThread((IMLPredicate) underlying, lastThread);
+			return mKnownStates.computeIfAbsent(newState, Function.identity());
 		}
 	}
 
 	public static final class PredicateWithLastThread extends AnnotatedMLPredicate<String> {
-		public PredicateWithLastThread(final IMLPredicate underlying, final String lastThread) {
+		private PredicateWithLastThread(final IMLPredicate underlying, final String lastThread) {
 			super(underlying, lastThread);
 		}
 

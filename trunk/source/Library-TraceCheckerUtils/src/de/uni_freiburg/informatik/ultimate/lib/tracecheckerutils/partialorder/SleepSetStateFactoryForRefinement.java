@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ISleepSetStateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.AnnotatedMLPredicate;
@@ -36,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * An implementation of an {@link ISleepSetStateFactory} for {@link IPredicate} states. Currently only works with
@@ -52,7 +52,7 @@ public class SleepSetStateFactoryForRefinement<L> implements ISleepSetStateFacto
 	private final IPredicate mEmptyStack;
 
 	// Can we get rid of this entirely? [Requires reference equality to be replaced with #equals() everywhere.]
-	private final Map<Pair<IPredicate, ImmutableSet<L>>, IPredicate> mKnownStates = new HashMap<>();
+	private final Map<SleepPredicate<L>, SleepPredicate<L>> mKnownStates = new HashMap<>();
 
 	/**
 	 * Creates a new instance from a predicate factory.
@@ -71,8 +71,8 @@ public class SleepSetStateFactoryForRefinement<L> implements ISleepSetStateFacto
 
 	@Override
 	public IPredicate createSleepSetState(final IPredicate state, final ImmutableSet<L> sleepset) {
-		return mKnownStates.computeIfAbsent(new Pair<>(state, sleepset),
-				p -> createFreshCopy(p.getFirst(), p.getSecond()));
+		final var newState = createFreshCopy(state, sleepset);
+		return mKnownStates.computeIfAbsent(newState, Function.identity());
 	}
 
 	/**
@@ -142,16 +142,5 @@ public class SleepSetStateFactoryForRefinement<L> implements ISleepSetStateFacto
 			return "SleepPredicate [underlying: " + mUnderlying + ", sleep set: " + mAnnotation + "]";
 		}
 
-		@Override
-		public int hashCode() {
-			// reproducible hash code provided by super class AnnotatedMLPredicate
-			return super.hashCode();
-		}
-
-		@Override
-		public boolean equals(final Object obj) {
-			// reference equality, as instances are unified by the factory
-			return this == obj;
-		}
 	}
 }
