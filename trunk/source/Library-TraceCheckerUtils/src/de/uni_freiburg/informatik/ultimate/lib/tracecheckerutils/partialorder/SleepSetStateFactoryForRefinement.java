@@ -141,5 +141,17 @@ public class SleepSetStateFactoryForRefinement<L> implements ISleepSetStateFacto
 		public String toString() {
 			return "SleepPredicate [underlying: " + mUnderlying + ", sleep set: " + mAnnotation + "]";
 		}
+
+		@Override
+		public int hashCode() {
+			// reproducible hash code provided by super class AnnotatedMLPredicate
+			return super.hashCode();
+		}
+
+		@Override
+		public boolean equals(final Object obj) {
+			// reference equality, as instances are unified by the factory
+			return this == obj;
+		}
 	}
 }
