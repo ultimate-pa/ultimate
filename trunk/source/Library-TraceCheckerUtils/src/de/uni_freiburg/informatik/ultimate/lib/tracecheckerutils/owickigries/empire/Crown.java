@@ -25,10 +25,17 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire;
 
+import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * @author Miriam Lagunes (miriam.lagunes@students.uni-freiburg.de)
@@ -48,6 +55,85 @@ public final class Crown<PLACE, LETTER> {
 	public Crown(final BranchingProcess<LETTER, PLACE> bp) {
 		mBp = bp;
 		mCrown = new HashSet<>();
+	}
+
+	private Set<Set<Condition<LETTER, PLACE>>> getAllCrownCuts() {
+		final var crownCuts = new HashSet<Set<Condition<LETTER, PLACE>>>();
+		for (final Rook<PLACE, LETTER> rook : mCrown) {
+			final var rookCensus = rook.getCensus();
+			crownCuts.addAll(rookCensus);
+		}
+		return crownCuts;
+	}
+
+	private List<ImmutableList<Condition<LETTER, PLACE>>> computeCuts() {
+		final var corelation = mBp.getCoRelation();
+
+		final Condition<LETTER, PLACE>[] conditions = mBp.getConditions().toArray(Condition[]::new);
+		final var cosets = new ArrayList<ImmutableList<Condition<LETTER, PLACE>>>();
+
+		// worklist entries have the form Pair<ImmutableList<Condition>, int>(coset, minIndex)
+		// Each pair in the worklist consists of a co-set (as list) and an index which identifies a suffix of the
+		// conditions array. The suffix describes all conditions which may yet be added to the co-set.
+		final var worklist = new ArrayDeque<Pair<ImmutableList<Condition<LETTER, PLACE>>, Integer>>();
+		worklist.add(new Pair<>(ImmutableList.empty(), 0));
+
+		while (!worklist.isEmpty()) {
+			final var pair = worklist.pop();
+			final var coset = pair.getFirst();
+			final int minIndex = pair.getSecond();
+			boolean isMaximal = true;
+
+			ImmutableList<Condition<LETTER, PLACE>> extendedCoset = null;
+
+			// See if any of the remaining candidates in conditions[minIndex..] can be added to the co-set.
+			// If so, add them and push the result on the worklist.
+			for (int i = minIndex; i < conditions.length; ++i) {
+				final Condition<LETTER, PLACE> candidate = conditions[i];
+				final boolean acceptCandidate = corelation.isCoset(coset, candidate);
+				if (acceptCandidate) {
+					// As an optimization, we do not push the extended co-set onto the worklist immediately.
+					// By postponing, we avoid re-checking the co-relation wrt the next few conditions which
+					// can already not be added to coset, let alone extendedCoset.
+					if (extendedCoset != null) {
+						worklist.push(new Pair<>(extendedCoset, i));
+					}
+
+					isMaximal = false;
+					extendedCoset = new ImmutableList<>(candidate, coset);
+				}
+			}
+			if (extendedCoset != null) {
+				worklist.push(new Pair<>(extendedCoset, conditions.length));
+			}
+
+			// See if any condition in conditions[0..minIndex-1] can be added to the coset.
+			// If so, the current co-set is not maximal.
+			// We do not add the extended co-set to the worklist in this case; the algorithm should have done so before.
+			for (int i = 0; isMaximal && i < minIndex; ++i) {
+				isMaximal &= coset.contains(conditions[i]) || !corelation.isCoset(coset, conditions[i]);
+			}
+
+			// If the current coset is maximal, add its marking to the results.
+			if (isMaximal) {
+				cosets.add(coset);
+			}
+		}
+
+		return cosets;
+	}
+
+	private boolean crownContainsAllCuts() {
+		final var crownMarkings = getAllCrownCuts();
+		final var branchingProcessCuts = computeCuts();
+		for (final ImmutableList<Condition<LETTER, PLACE>> branchingProcessCoset : branchingProcessCuts) {
+			final Set<Condition<LETTER, PLACE>> coset =
+					branchingProcessCoset.stream().map(condition -> condition).collect(Collectors.toSet());
+			if (!crownMarkings.contains(coset)) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	public Set<Rook<PLACE, LETTER>> getRooks() {
@@ -76,6 +162,22 @@ public final class Crown<PLACE, LETTER> {
 			return true;
 		}
 		return false;
+	}
+
+	/**
+	 * Assert validity for the law and Kingdom
+	 *
+	 * @param placesCoRelation
+	 *            Contains the information about the corelation of the Places.
+	 * @param assertConds
+	 *            Assertion Conditions of the refined Petri Net
+	 */
+	public void validityAssertion(final PlacesCoRelation<PLACE, LETTER> placesCoRelation,
+			final Set<Condition<LETTER, PLACE>> assertConds) {
+		for (final Rook<PLACE, LETTER> rook : mCrown) {
+			rook.validityAssertion(mBp, placesCoRelation, assertConds);
+		}
+		assert crownContainsAllCuts() : "Crown does not contain all cosets of the refined Petri nets branching process";
 	}
 
 }

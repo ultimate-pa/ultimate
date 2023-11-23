@@ -66,11 +66,11 @@ public final class CrownConstruction<PLACE, LETTER> {
 		mPreCrown = new Crown<>(mBp);
 		mOrigConds = origConds;
 		mAssertConds = assertConds;
-		mPlacesCoRelation = new PlacesCoRelation<>(bp, net);
+		mPlacesCoRelation = new PlacesCoRelation<>(bp);
 		settlements();
 		mCrown.addRook(crownComputation());
 		crownRefurbishment();
-		mCrown.toString();
+		mCrown.validityAssertion(mPlacesCoRelation, assertConds);
 	}
 
 	private void settlements() {

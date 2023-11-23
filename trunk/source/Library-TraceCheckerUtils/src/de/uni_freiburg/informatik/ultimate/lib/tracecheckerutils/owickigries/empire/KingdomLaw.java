@@ -25,9 +25,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.ICoRelation;
 
 public final class KingdomLaw<PLACE, LETTER> {
 
@@ -53,6 +57,23 @@ public final class KingdomLaw<PLACE, LETTER> {
 
 	public Set<Condition<LETTER, PLACE>> getConditions() {
 		return mLaw;
+	}
+
+	/**
+	 * Assert that all assertion conditions in the Law are co-related.
+	 *
+	 * @param bp
+	 *            Branching Process of the refined Petri net
+	 */
+	public void validityAssertion(final BranchingProcess<LETTER, PLACE> bp) {
+		final ICoRelation<LETTER, PLACE> coRelation = bp.getCoRelation();
+		final List<Condition<LETTER, PLACE>> lawConditions = new ArrayList<>(mLaw);
+		for (int i = 0; i < lawConditions.size(); i++) {
+			for (int j = i + 1; j < lawConditions.size(); j++) {
+				assert coRelation.isInCoRelation(lawConditions.get(i),
+						lawConditions.get(j)) : "Conditions in Law are not co-related";
+			}
+		}
 	}
 
 	@SuppressWarnings("unchecked")

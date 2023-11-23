@@ -25,10 +25,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire;
 
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
@@ -131,12 +131,11 @@ public final class Rook<PLACE, LETTER> {
 		mLaw.addCondition(condition);
 	}
 
-	public Set<Collection<Condition<LETTER, PLACE>>> census() {
-		final Set<Collection<Condition<LETTER, PLACE>>> coSets = new HashSet<>();
-		for (final Realm<PLACE, LETTER> realm : mKingdom.getRealms()) {
-			coSets.add(DataStructureUtils.union(realm.getConditions(), mLaw.getConditions()));
-		}
-		return coSets;
+	public Set<Set<Condition<LETTER, PLACE>>> getCensus() {
+		final Set<Set<Condition<LETTER, PLACE>>> treaty = mKingdom.getTreaty();
+		final Set<Set<Condition<LETTER, PLACE>>> census = treaty.stream()
+				.map(coset -> DataStructureUtils.union(coset, mLaw.getConditions())).collect(Collectors.toSet());
+		return census;
 	}
 
 	public Kingdom<PLACE, LETTER> getKingdom() {
@@ -190,6 +189,30 @@ public final class Rook<PLACE, LETTER> {
 			}
 		}
 		return placesToConditions;
+	}
+
+	/**
+	 * Asserts that the Kingdom and Law of the Rook are valid. Further asserts that all conditions in the Law are
+	 * positive co-related to the Kingdom. The function also asserts that all co-sets in census of the Rook are Cuts.
+	 *
+	 * @param bp
+	 *            Branching of the refined Petri net.
+	 * @param placesCoRelation
+	 *            Contains the information about the corelation of the Places.
+	 * @param assertConds
+	 *            Assertion conditions of the refined Petri net.
+	 */
+	public void validityAssertion(final BranchingProcess<LETTER, PLACE> bp,
+			final PlacesCoRelation<PLACE, LETTER> placesCoRelation, final Set<Condition<LETTER, PLACE>> assertConds) {
+		mKingdom.validityAssertion(placesCoRelation);
+		mLaw.validityAssertion(bp);
+		for (final Condition<LETTER, PLACE> assertionCondition : mLaw.getConditions()) {
+			final CoKingdom<PLACE, LETTER> coKingdom =
+					new CoKingdom<>(mKingdom, assertionCondition, bp, placesCoRelation);
+			assert coKingdom.getCoRelation() == CoRelationType.POSITIVE : "Not all assertion Conditions are "
+					+ "positive co-related to the Kingdom";
+		}
+		assert !containsNonCut(bp) : "Not all co-sets in census of the Rook are Cuts";
 	}
 
 	@SuppressWarnings("unchecked")

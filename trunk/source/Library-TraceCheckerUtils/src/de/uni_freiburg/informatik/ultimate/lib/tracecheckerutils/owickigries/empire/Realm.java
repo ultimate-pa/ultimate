@@ -25,6 +25,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
@@ -40,6 +42,19 @@ public final class Realm<PLACE, LETTER> {
 
 	public Realm(final Set<Condition<LETTER, PLACE>> realm) {
 		mRealm = realm;
+	}
+
+	private boolean placesNotCorelated(final PlacesCoRelation<PLACE, LETTER> placesCoRelation) {
+		final List<Condition<LETTER, PLACE>> realmConditions = new ArrayList<>(mRealm);
+		for (int i = 0; i < realmConditions.size(); i++) {
+			for (int j = i + 1; j < realmConditions.size(); j++) {
+				if (placesCoRelation.getPlacesCorelation(realmConditions.get(i).getPlace(),
+						realmConditions.get(j).getPlace())) {
+					return false;
+				}
+			}
+		}
+		return true;
 	}
 
 	/**
@@ -139,6 +154,16 @@ public final class Realm<PLACE, LETTER> {
 	 */
 	public boolean contains(final Condition<LETTER, PLACE> condition) {
 		return mRealm.contains(condition);
+	}
+
+	/**
+	 * Assert that there are no two conditions whose corresponding places are corelated
+	 *
+	 * @param placesCoRelation
+	 *            Contains the information about the corelation of the Places.
+	 */
+	public void validityAssertion(final PlacesCoRelation<PLACE, LETTER> placesCoRelation) {
+		assert placesNotCorelated(placesCoRelation) : "There are Conditions with co-related Places in the Realm";
 	}
 
 	@SuppressWarnings("unchecked")

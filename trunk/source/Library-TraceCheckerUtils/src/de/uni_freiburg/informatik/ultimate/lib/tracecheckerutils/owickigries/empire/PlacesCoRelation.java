@@ -27,8 +27,8 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire;
 
 import java.util.Set;
+import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.ICoRelation;
@@ -46,17 +46,17 @@ public final class PlacesCoRelation<PLACE, LETTER> {
 	 * @param net
 	 *            Original Petri net.
 	 */
-	public PlacesCoRelation(final BranchingProcess<LETTER, PLACE> bp, final IPetriNet<LETTER, PLACE> net) {
+	public PlacesCoRelation(final BranchingProcess<LETTER, PLACE> bp) {
 		mCoRelation = bp.getCoRelation();
-		mCoRelatedPlaces = getAllCorelatedPlaces(net, bp);
+		mCoRelatedPlaces = getAllCorelatedPlaces(bp);
 	}
 
-	private final HashRelation<PLACE, PLACE> getAllCorelatedPlaces(final IPetriNet<LETTER, PLACE> net,
-			final BranchingProcess<LETTER, PLACE> bp) {
-		final Set<PLACE> originalPlaces = net.getPlaces();
+	private final HashRelation<PLACE, PLACE> getAllCorelatedPlaces(final BranchingProcess<LETTER, PLACE> bp) {
+		final Set<PLACE> places =
+				bp.getConditions().stream().map(condition -> condition.getPlace()).collect(Collectors.toSet());
 		final HashRelation<PLACE, PLACE> coPlacesHashtable = new HashRelation<>();
-		for (final PLACE place : originalPlaces) {
-			for (final PLACE place2 : originalPlaces) {
+		for (final PLACE place : places) {
+			for (final PLACE place2 : places) {
 				if (!place.equals(place2) && placesCoRelation(place, place2, bp)) {
 					coPlacesHashtable.addPair(place, place2);
 					coPlacesHashtable.addPair(place2, place);

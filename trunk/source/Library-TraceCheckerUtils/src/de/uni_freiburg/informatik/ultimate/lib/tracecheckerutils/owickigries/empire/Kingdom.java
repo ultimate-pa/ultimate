@@ -30,6 +30,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 public final class Kingdom<PLACE, LETTER> {
 	/**
@@ -126,6 +127,31 @@ public final class Kingdom<PLACE, LETTER> {
 		final Set<Realm<PLACE, LETTER>> kingdomRealms = new HashSet<>(getRealms());
 		getAllCosets(kingdomRealms, new HashSet<>(), treatySet);
 		return treatySet;
+	}
+
+	/**
+	 * Assert that all realms in the Kingdom are valid, that the kingdom is not empty and that the realms in the kingdom
+	 * are disjoint.
+	 *
+	 * @param placesCoRelation
+	 *            Contains the information about the corelation of the Places.
+	 */
+	public void validityAssertion(final PlacesCoRelation<PLACE, LETTER> placesCoRelation) {
+		for (final Realm<PLACE, LETTER> realm : mKingdom) {
+			realm.validityAssertion(placesCoRelation);
+		}
+		assert !mKingdom.isEmpty() : "There is an empty Kingdom";
+		boolean foundAny = false;
+		Set<Condition<LETTER, PLACE>> intersectionConditions = null;
+		for (final Realm<PLACE, LETTER> realm : mKingdom) {
+			if (!foundAny) {
+				foundAny = true;
+				intersectionConditions = realm.getConditions();
+				continue;
+			}
+			intersectionConditions = DataStructureUtils.intersection(intersectionConditions, realm.getConditions());
+			assert intersectionConditions.isEmpty() : "Kingdoms Realms are not disjoint";
+		}
 	}
 
 	@SuppressWarnings("unchecked")
