@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.boogie.preprocessor.memoryslicer;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -78,6 +77,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieConstructedType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieStructType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  *
@@ -87,10 +87,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 public class AliasAnalysis {
 
 	private final AddressStoreFactory mAsfac;
-//	private final MayAlias mMa = new MayAlias();
 	private final Set<PointerBase> mWriteAddresses;
 	private final Set<PointerBase> mAccessAddresses;
 	private final Map<String, Procedure> mProcedureToImplementation;
+	private Procedure mCurrentProcedure;
+	private final HashRelation<String, String> mReverseCallgraph = new HashRelation<>();
+	private final HashRelation<String, PointerBase> mProcedureToWritePointers = new HashRelation<>();
 
 	public AliasAnalysis(final AddressStoreFactory asfac, final Map<String, Procedure> map) {
 		super();
@@ -114,6 +116,7 @@ public class AliasAnalysis {
 			if (d instanceof Procedure) {
 				final Procedure p = (Procedure) d;
 				if (p.getBody() != null) {
+					mCurrentProcedure = p;
 					processBody(ma, p.getBody());
 				}
 			} else if (d instanceof Axiom) {
@@ -175,8 +178,6 @@ public class AliasAnalysis {
 			if (isPointerType(st.getLhs()[0].getType())) {
 				final PointerBase returnOfJoin = extractPointerBaseFromVariableLhs(mAsfac, st.getLhs()[0]);
 				ma.addPointerBase(mAsfac, returnOfJoin);
-				mAccessAddresses.add(returnOfJoin);
-				mWriteAddresses.add(returnOfJoin);
 				// return value of join could potentially alias with the return values of all
 				// procedures that have matching out params (one outParam which is a pointer)
 				for (final Entry<String, Procedure> entry : mProcedureToImplementation.entrySet()) {
@@ -227,20 +228,13 @@ public class AliasAnalysis {
 					|| fa.getIdentifier().equals(MemorySliceUtils.INIT_TO_ZERO_AT_POINTER_BASE_ADDRESS_POINTER)) {
 				final PointerBase p = extractPointerBaseFromBase(mAsfac, fa.getArguments()[1]);
 				ma.addPointerBase(mAsfac, p);
-				mWriteAddresses.add(p);
 				mAccessAddresses.add(p);
+				mWriteAddresses.add(p);
+				mProcedureToWritePointers.addPair(mCurrentProcedure.getIdentifier(), p);
 				return;
 			}
 		}
-//		if (isIntArray(st.getLhs())) {
-//			final ArrayStoreExpression aae = (ArrayStoreExpression) st.getRhs()[0];
-//			final Expression expr = aae.getIndices()[0];
-//			final PointerBase index = extractPointerBaseFromPointer(mAsfac, expr);
-//			mWriteAddresses.add(index);
-//			mAccessAddresses.add(index);
-//		}
-		final Map<PointerBase, PointerBase> variableUpdate = new HashMap<>();
-		final Map<PointerBase, PointerBase> pointerArrayUpdate = new HashMap<>();
+
 		final LeftHandSide[] lhs = st.getLhs();
 		for (int i = 0; i < lhs.length; i++) {
 			if (lhs[i] instanceof VariableLHS) {
@@ -249,7 +243,7 @@ public class AliasAnalysis {
 					final PointerBase pbLhs = extractPointerBaseFromVariableLhs(mAsfac, vlhs);
 					final List<PointerBase> pbRhss = extractPointerBasesFromPointer(mAsfac, st.getRhs()[i]);
 					for (final PointerBase pbRhs : pbRhss) {
-						variableUpdate.put(pbLhs, pbRhs);
+						ma.reportEquivalence(mAsfac, pbLhs, pbRhs);
 					}
 				} else if (MemorySliceUtils.containsMemoryArrays(vlhs)) {
 					throw new MemorySliceException("Unsupported: Memory array in LHS");
@@ -262,9 +256,7 @@ public class AliasAnalysis {
 					if (isPointerType(slhs.getType())) {
 						final List<PointerBase> values = extractPointerBasesFromPointer(mAsfac, st.getRhs()[i]);
 						for (final PointerBase value : values) {
-							if (!isNullPointer(value)) {
-								ma.reportEquivalence(mAsfac, mAsfac.getStruct(), value);
-							}
+							ma.reportEquivalence(mAsfac, mAsfac.getStruct(), value);
 						}
 					}
 				}
@@ -275,15 +267,27 @@ public class AliasAnalysis {
 				final LeftHandSide array = alhs.getArray();
 				if (MemorySliceUtils.isPointerArray(array)) {
 					assert alhs.getIndices().length == 1;
-					final PointerBase index = extractPointerBaseFromPointer(mAsfac, alhs.getIndices()[0]);
-					final PointerBase value = extractPointerBaseFromPointer(mAsfac, st.getRhs()[i]);
-					pointerArrayUpdate.put(index, value);
+					final List<PointerBase> indices = extractPointerBasesFromPointer(mAsfac, alhs.getIndices()[0]);
+					final List<PointerBase> values = extractPointerBasesFromPointer(mAsfac, st.getRhs()[i]);
+					for (final PointerBase index : indices) {
+						ma.addPointerBase(mAsfac, index);
+						mAccessAddresses.add(index);
+						mWriteAddresses.add(index);
+						mProcedureToWritePointers.addPair(mCurrentProcedure.getIdentifier(), index);
+						final MemorySegment ms = mAsfac.getMemorySegment(index);
+						for (final PointerBase value : values) {
+							ma.reportEquivalence(mAsfac, ms, value);
+						}
+					}
 				} else if (MemorySliceUtils.isIntArray(array) || MemorySliceUtils.isRealArray(array)) {
 					assert alhs.getIndices().length == 1;
-					final PointerBase index = extractPointerBaseFromPointer(mAsfac, alhs.getIndices()[0]);
-					ma.addPointerBase(mAsfac, index);
-					mWriteAddresses.add(index);
-					mAccessAddresses.add(index);
+					final List<PointerBase> indices = extractPointerBasesFromPointer(mAsfac, alhs.getIndices()[0]);
+					for (final PointerBase index : indices) {
+						ma.addPointerBase(mAsfac, index);
+						mAccessAddresses.add(index);
+						mWriteAddresses.add(index);
+						mProcedureToWritePointers.addPair(mCurrentProcedure.getIdentifier(), index);
+					}
 				} else {
 					// probably a local array, we don't have to deal with that
 					if (MemorySliceUtils.containsMemoryArrays(array)) {
@@ -292,9 +296,7 @@ public class AliasAnalysis {
 						if (isPointerType(alhs.getType())) {
 							final List<PointerBase> values = extractPointerBasesFromPointer(mAsfac, st.getRhs()[i]);
 							for (final PointerBase value : values) {
-								if (!isNullPointer(value)) {
-									ma.reportEquivalence(mAsfac, mAsfac.getArray(), value);
-								}
+								ma.reportEquivalence(mAsfac, mAsfac.getArray(), value);
 							}
 						}
 					}
@@ -305,26 +307,6 @@ public class AliasAnalysis {
 
 			} else {
 				throw new MemorySliceException("LHS is " + lhs[i].getClass());
-			}
-		}
-		if (variableUpdate.isEmpty() && pointerArrayUpdate.isEmpty()) {
-			// nothing to do
-		} else {
-			for (final Entry<PointerBase, PointerBase> entry : variableUpdate.entrySet()) {
-				if (isNullPointer(entry.getValue())) {
-					ma.addPointerBase(mAsfac, entry.getKey());
-				} else {
-					ma.reportEquivalence(mAsfac, entry.getKey(), entry.getValue());
-				}
-			}
-			for (final Entry<PointerBase, PointerBase> entry : pointerArrayUpdate.entrySet()) {
-				ma.addPointerBase(mAsfac, entry.getKey());
-				if (!isNullPointer(entry.getValue())) {
-					final MemorySegment ms = mAsfac.getMemorySegment(entry.getKey());
-					ma.reportEquivalence(mAsfac, ms, entry.getValue());
-					mWriteAddresses.add(entry.getKey());
-					mAccessAddresses.add(entry.getKey());
-				}
 			}
 		}
 
@@ -444,6 +426,7 @@ public class AliasAnalysis {
 	}
 
 	private void processCallStatement(final MayAlias ma, final CallStatement st) {
+		mReverseCallgraph.addPair(st.getMethodName(), mCurrentProcedure.getIdentifier());
 		if (st.getMethodName().equals(MemorySliceUtils.ALLOC_INIT)) {
 			assert st.getArguments().length == 2;
 			final Expression tmp = st.getArguments()[1];
@@ -461,14 +444,14 @@ public class AliasAnalysis {
 			final Expression baseOfValueExpr = st.getArguments()[0];
 			final Expression baseOfIndexExpr = st.getArguments()[1];
 			final List<PointerBase> basesOfValue = extractPointerBasesFromPointer(mAsfac, baseOfValueExpr);
-			final PointerBase baseOfIndex = extractPointerBaseFromPointer(mAsfac, baseOfIndexExpr);
-			ma.addPointerBase(mAsfac, baseOfIndex);
-			mWriteAddresses.add(baseOfIndex);
-			mAccessAddresses.add(baseOfIndex);
-			for (final PointerBase baseOfValue : basesOfValue) {
-				if (!isNullPointer(baseOfValue)) {
-					ma.addPointerBase(mAsfac, baseOfIndex);
-					final MemorySegment ms = mAsfac.getMemorySegment(baseOfIndex);
+			final List<PointerBase> basesOfIndex = extractPointerBasesFromPointer(mAsfac, baseOfIndexExpr);
+			for (final PointerBase baseOfIndex : basesOfIndex) {
+				mAccessAddresses.add(baseOfIndex);
+				mWriteAddresses.add(baseOfIndex);
+				mProcedureToWritePointers.addPair(mCurrentProcedure.getIdentifier(), baseOfIndex);
+				ma.addPointerBase(mAsfac, baseOfIndex);
+				final MemorySegment ms = mAsfac.getMemorySegment(baseOfIndex);
+				for (final PointerBase baseOfValue : basesOfValue) {
 					ma.reportEquivalence(mAsfac, ms, baseOfValue);
 				}
 			}
@@ -477,12 +460,14 @@ public class AliasAnalysis {
 			assert st.getArguments().length == 2;
 			assert st.getLhs().length == 1;
 			final Expression baseOfIndexExpr = st.getArguments()[0];
-			final PointerBase baseOfIndex = extractPointerBaseFromPointer(mAsfac, baseOfIndexExpr);
+			final List<PointerBase> basesOfIndex = extractPointerBasesFromPointer(mAsfac, baseOfIndexExpr);
 			final PointerBase baseOfLhs = extractPointerBaseFromVariableLhs(mAsfac, st.getLhs()[0]);
-			ma.addPointerBase(mAsfac, baseOfIndex);
-			final MemorySegment ms = mAsfac.getMemorySegment(baseOfIndex);
-			ma.reportEquivalence(mAsfac, baseOfLhs, ms);
-			mAccessAddresses.add(baseOfIndex);
+			for (final PointerBase baseOfIndex : basesOfIndex) {
+				ma.addPointerBase(mAsfac, baseOfIndex);
+				final MemorySegment ms = mAsfac.getMemorySegment(baseOfIndex);
+				ma.reportEquivalence(mAsfac, baseOfLhs, ms);
+				mAccessAddresses.add(baseOfIndex);
+			}
 
 		} else if (st.getMethodName().startsWith(MemorySliceUtils.WRITE_INIT_INT)
 				|| st.getMethodName().startsWith(MemorySliceUtils.WRITE_INT)
@@ -491,24 +476,30 @@ public class AliasAnalysis {
 				|| st.getMethodName().startsWith(MemorySliceUtils.WRITE_REAL)
 				|| st.getMethodName().startsWith(MemorySliceUtils.WRITE_UNCHECKED_REAL)) {
 			final Expression pointerBaseExpr = st.getArguments()[1];
-			final PointerBase baseOfIndex = extractPointerBaseFromPointer(mAsfac, pointerBaseExpr);
-			ma.addPointerBase(mAsfac, baseOfIndex);
-			mWriteAddresses.add(baseOfIndex);
-			mAccessAddresses.add(baseOfIndex);
+			final List<PointerBase> basesOfIndex = extractPointerBasesFromPointer(mAsfac, pointerBaseExpr);
+			for (final PointerBase baseOfIndex : basesOfIndex) {
+				ma.addPointerBase(mAsfac, baseOfIndex);
+				mAccessAddresses.add(baseOfIndex);
+				mWriteAddresses.add(baseOfIndex);
+				mProcedureToWritePointers.addPair(mCurrentProcedure.getIdentifier(), baseOfIndex);
+			}
 		} else if (st.getMethodName().startsWith(MemorySliceUtils.READ_INT)
 				|| st.getMethodName().startsWith(MemorySliceUtils.READ_UNCHECKED_INT)
 				|| st.getMethodName().startsWith(MemorySliceUtils.READ_REAL)
 				|| st.getMethodName().startsWith(MemorySliceUtils.READ_UNCHECKED_REAL)) {
 			final Expression pointerBaseExpr = st.getArguments()[0];
-			final PointerBase baseOfIndex = extractPointerBaseFromPointer(mAsfac, pointerBaseExpr);
-			ma.addPointerBase(mAsfac, baseOfIndex);
-			mAccessAddresses.add(baseOfIndex);
+			final List<PointerBase> basesOfIndex = extractPointerBasesFromPointer(mAsfac, pointerBaseExpr);
+			for (final PointerBase baseOfIndex : basesOfIndex) {
+				ma.addPointerBase(mAsfac, baseOfIndex);
+				mAccessAddresses.add(baseOfIndex);
+			}
 		} else if (st.getMethodName().equals(MemorySliceUtils.ULTIMATE_C_MEMSET)) {
 			assert st.getArguments().length == 3;
 			final Expression pointerBaseExpr = st.getArguments()[0];
 			final PointerBase baseOfIndex = extractPointerBaseFromPointer(mAsfac, pointerBaseExpr);
-			mWriteAddresses.add(baseOfIndex);
 			mAccessAddresses.add(baseOfIndex);
+			mWriteAddresses.add(baseOfIndex);
+			mProcedureToWritePointers.addPair(mCurrentProcedure.getIdentifier(), baseOfIndex);
 			assert st.getLhs().length == 1;
 			final PointerBase returnedIndex = extractPointerBaseFromVariableLhs(mAsfac, st.getLhs()[0]);
 			ma.reportEquivalence(mAsfac, baseOfIndex, returnedIndex);
@@ -519,9 +510,10 @@ public class AliasAnalysis {
 			assert st.getArguments().length == 3 || st.getArguments().length == 2;
 			final PointerBase destIndex = extractPointerBaseFromPointer(mAsfac, st.getArguments()[0]);
 			final PointerBase srcIndex = extractPointerBaseFromPointer(mAsfac, st.getArguments()[1]);
-			mWriteAddresses.add(destIndex);
 			mAccessAddresses.add(destIndex);
 			mAccessAddresses.add(srcIndex);
+			mWriteAddresses.add(destIndex);
+			mProcedureToWritePointers.addPair(mCurrentProcedure.getIdentifier(), destIndex);
 			ma.reportEquivalence(mAsfac, destIndex, srcIndex);
 			assert st.getLhs().length == 1;
 			final PointerBase returnedIndex = extractPointerBaseFromVariableLhs(mAsfac, st.getLhs()[0]);
@@ -545,9 +537,7 @@ public class AliasAnalysis {
 							new DeclarationInformation(sc, p.getIdentifier()));
 					final List<PointerBase> argPointers = extractPointerBasesFromPointer(mAsfac, arg);
 					for (final PointerBase argPointer : argPointers) {
-						if (!isNullPointer(argPointer)) {
-							ma.reportEquivalence(mAsfac, argPointer, inParamPointer);
-						}
+						ma.reportEquivalence(mAsfac, argPointer, inParamPointer);
 					}
 				}
 			}
@@ -564,6 +554,9 @@ public class AliasAnalysis {
 							new DeclarationInformation(sc, p.getIdentifier()));
 					final PointerBase lhsPointer = extractPointerBaseFromVariableLhs(mAsfac, vlhs);
 					ma.reportEquivalence(mAsfac, lhsPointer, outParamPointer);
+					mAccessAddresses.add(lhsPointer);
+					mWriteAddresses.add(lhsPointer);
+					mProcedureToWritePointers.addPair(mCurrentProcedure.getIdentifier(), lhsPointer);
 				}
 			}
 		} else {
@@ -608,12 +601,8 @@ public class AliasAnalysis {
 					final List<PointerBase> left = extractPointerBasesFromPointer(mAsfac, expr.getLeft());
 					final List<PointerBase> right = extractPointerBasesFromPointer(mAsfac, expr.getRight());
 					for (final PointerBase l : left) {
-						if (!isNullPointer(l)) {
-							for (final PointerBase r : right) {
-								if (!isNullPointer(r)) {
-									mMa.reportEquivalence(mAsfac, l, r);
-								}
-							}
+						for (final PointerBase r : right) {
+							mMa.reportEquivalence(mAsfac, l, r);
 						}
 					}
 				}

@@ -120,10 +120,9 @@ public class MemorySlicer implements IUnmanagedObserver {
 			final UnionFind<AddressStore> uf = ma.getAddressStores();
 			for (final AddressStore elem : uf.getAllElements()) {
 				if (elem instanceof PointerBase) {
-					assert !AliasAnalysis.isNullPointer((PointerBase) elem);
-				} else if (elem instanceof MemorySegment) {
-					final MemorySegment ms = (MemorySegment) elem;
-					assert !AliasAnalysis.isNullPointer(ms.getPointerBase());
+					if (AliasAnalysis.isNullPointer((PointerBase) elem)) {
+						assert uf.find(elem) == elem && uf.getEquivalenceClassMembers(elem).size() == 1;
+					}
 				}
 			}
 			int ctr = 0;
