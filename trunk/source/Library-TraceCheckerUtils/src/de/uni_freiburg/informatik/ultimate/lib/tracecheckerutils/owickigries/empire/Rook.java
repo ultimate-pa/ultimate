@@ -38,6 +38,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
+ * Class represents Rooks which are Kingdom and Law pairs. Rooks are immutable.
+ *
  * @author Miriam Lagunes (miriam.lagunes@students.uni-freiburg.de)
  *
  * @param <PLACE>
@@ -58,13 +60,12 @@ public final class Rook<PLACE, LETTER> {
 	private final KingdomLaw<PLACE, LETTER> mLaw;
 
 	public Rook(final Kingdom<PLACE, LETTER> kingdom, final KingdomLaw<PLACE, LETTER> law) {
-		mKingdom = kingdom;
-		mLaw = law;
+		mKingdom = new Kingdom<>(kingdom.getRealms());
+		mLaw = new KingdomLaw<>(law.getConditions());
 	}
 
-	private boolean isCut(final Set<Condition<LETTER, PLACE>> coSet, final BranchingProcess<LETTER, PLACE> bp) {
+	private boolean isCut(final Set<Condition<LETTER, PLACE>> possibleCut, final BranchingProcess<LETTER, PLACE> bp) {
 		final Set<Condition<LETTER, PLACE>> allConditions = new HashSet<>(bp.getConditions());
-		final Set<Condition<LETTER, PLACE>> possibleCut = DataStructureUtils.union(coSet, mLaw.getConditions());
 		final Set<Condition<LETTER, PLACE>> missingConditions =
 				DataStructureUtils.difference(allConditions, possibleCut);
 		final ICoRelation<LETTER, PLACE> coRelation = bp.getCoRelation();
@@ -87,8 +88,8 @@ public final class Rook<PLACE, LETTER> {
 	 * @return True if the Rook contains a non cut.
 	 */
 	public boolean containsNonCut(final BranchingProcess<LETTER, PLACE> bp) {
-		final Set<Set<Condition<LETTER, PLACE>>> treaty = mKingdom.getTreaty();
-		for (final Set<Condition<LETTER, PLACE>> coSet : treaty) {
+		final Set<Set<Condition<LETTER, PLACE>>> census = getCensus();
+		for (final Set<Condition<LETTER, PLACE>> coSet : census) {
 			if (!isCut(coSet, bp)) {
 				return true;
 			}
@@ -97,29 +98,31 @@ public final class Rook<PLACE, LETTER> {
 	}
 
 	/**
-	 * Add a new town realm (only with specified condition) to Kingdom.
+	 * Add a new town realm (only with specified condition) to Kingdom. And return a new Rook containing the kingdom.
 	 *
-	 * @param cond
+	 * @param condition
+	 *            Condition to create new realm with.
+	 * @return Rook with modified Kingdom and the instances law.
 	 */
-	public void expansion(final Condition<LETTER, PLACE> condition) {
+	public Rook<PLACE, LETTER> expansion(final Condition<LETTER, PLACE> condition) {
 		final Realm<PLACE, LETTER> realm = new Realm<>(DataStructureUtils.toSet(condition));
-		mKingdom.addRealm(realm);
+		final Kingdom<PLACE, LETTER> newKingdom = mKingdom.addRealm(realm);
+		return new Rook<>(newKingdom, getLaw());
 	}
 
 	/**
-	 * Adds the condition to the specified existing realm of the rook's Kingdom.
+	 * Adds the condition to the specified existing realm of the rook's Kingdom and returns new Rook containing the
+	 * changes in kingdom.
 	 *
 	 * @param condition
 	 * @param realm
-	 * @return true if condition is added, false if realm is not found in Kingdom. TODO: Kindred cases...
+	 * @return New Rook with condition added to specified realm. TODO: Kindred cases...
 	 */
-	public boolean immigration(final Condition<LETTER, PLACE> condition, final Realm<PLACE, LETTER> realm) {
-		if (mKingdom.removeRealm(realm)) {
-			realm.addCondition(condition);
-			mKingdom.addRealm(realm);
-			return true;
-		}
-		return false;
+	public Rook<PLACE, LETTER> immigration(final Condition<LETTER, PLACE> condition, Realm<PLACE, LETTER> realm) {
+		Kingdom<PLACE, LETTER> kingdom = mKingdom.removeRealm(realm);
+		realm = realm.addCondition(condition);
+		kingdom = kingdom.addRealm(realm);
+		return new Rook<>(kingdom, getLaw());
 	}
 
 	/**
@@ -127,8 +130,9 @@ public final class Rook<PLACE, LETTER> {
 	 *
 	 * @param condition
 	 */
-	public void approval(final Condition<LETTER, PLACE> condition) {
-		mLaw.addCondition(condition);
+	public Rook<PLACE, LETTER> approval(final Condition<LETTER, PLACE> condition) {
+		final KingdomLaw<PLACE, LETTER> newLaw = mLaw.addCondition(condition);
+		return new Rook<>(getKingdom(), newLaw);
 	}
 
 	public Set<Set<Condition<LETTER, PLACE>>> getCensus() {
@@ -139,11 +143,11 @@ public final class Rook<PLACE, LETTER> {
 	}
 
 	public Kingdom<PLACE, LETTER> getKingdom() {
-		return mKingdom;
+		return new Kingdom<>(mKingdom.getRealms());
 	}
 
 	public KingdomLaw<PLACE, LETTER> getLaw() {
-		return mLaw;
+		return new KingdomLaw<>(mLaw.getConditions());
 	}
 
 	public Set<SubterrElement<LETTER, PLACE>> getSubterritory() {

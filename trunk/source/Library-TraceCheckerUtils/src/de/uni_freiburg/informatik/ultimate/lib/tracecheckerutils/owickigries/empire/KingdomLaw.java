@@ -26,6 +26,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -33,30 +34,68 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Branching
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.ICoRelation;
 
+/**
+ * Class Law implements a set of corelated assertion Conditions. Law is immutable.
+ *
+ * @author Matthias Zumkeller (zumkellm@informatik.uni-freiburg.de)
+ *
+ * @param <PLACE>
+ *            The type of places in the Petri program
+ * @param <LETTER>
+ *            The type of statements in the Petri program
+ */
 public final class KingdomLaw<PLACE, LETTER> {
 
 	private final Set<Condition<LETTER, PLACE>> mLaw;
 
 	public KingdomLaw(final Set<Condition<LETTER, PLACE>> conditions) {
-		mLaw = conditions;
+		mLaw = new HashSet<>(conditions);
 	}
 
-	public void addCondition(final Condition<LETTER, PLACE> condition) {
-		mLaw.add(condition);
+	/**
+	 * Add Condition to law and return new Law containing it.
+	 *
+	 * @param condition
+	 *            Condition to be added
+	 * @return New Law with added condition.
+	 */
+	public KingdomLaw<PLACE, LETTER> addCondition(final Condition<LETTER, PLACE> condition) {
+		final Set<Condition<LETTER, PLACE>> lawConditions = getConditions();
+		lawConditions.add(condition);
+		return new KingdomLaw<>(lawConditions);
 	}
 
-	public void addCondition(final Set<Condition<LETTER, PLACE>> conditions) {
-		mLaw.addAll(conditions);
+	/**
+	 * Add Conditions to law and return new Law containing it.
+	 *
+	 * @param conditions
+	 *            Conditions to be added
+	 * @return New Law with added conditions.
+	 */
+	public KingdomLaw<PLACE, LETTER> addCondition(final Set<Condition<LETTER, PLACE>> conditions) {
+		final Set<Condition<LETTER, PLACE>> lawConditions = getConditions();
+		lawConditions.addAll(conditions);
+		return new KingdomLaw<>(lawConditions);
 	}
 
-	public void removeCondition(final Condition<LETTER, PLACE> condition) {
+	/**
+	 * Remove condition and return new Law without it.
+	 *
+	 * @param condition
+	 *            Condition to be removed
+	 * @return New Law without condition.
+	 */
+	public KingdomLaw<PLACE, LETTER> removeCondition(final Condition<LETTER, PLACE> condition) {
 		if (mLaw.contains(condition)) {
-			mLaw.remove(condition);
+			final Set<Condition<LETTER, PLACE>> lawConditions = getConditions();
+			lawConditions.remove(condition);
+			return new KingdomLaw<>(lawConditions);
 		}
+		return new KingdomLaw<>(mLaw);
 	}
 
 	public Set<Condition<LETTER, PLACE>> getConditions() {
-		return mLaw;
+		return new HashSet<>(mLaw);
 	}
 
 	/**

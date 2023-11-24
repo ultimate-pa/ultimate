@@ -32,6 +32,15 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Branching
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
+/**
+ * Class Kingdom represents sets of Realms. To be a valid Kingdom, it is non-empty, all Realms have to be disjoint and
+ * further all subsets in its treaty are co-sets. Kingdoms are immutable.
+ *
+ * @author Matthias Zumkeller (zumkellm@informatik.uni-freiburg.de)
+ *
+ * @param <PLACE>
+ * @param <LETTER>
+ */
 public final class Kingdom<PLACE, LETTER> {
 	/**
 	 * The set of realms in Kingdom.
@@ -39,7 +48,7 @@ public final class Kingdom<PLACE, LETTER> {
 	private final Set<Realm<PLACE, LETTER>> mKingdom;
 
 	public Kingdom(final Set<Realm<PLACE, LETTER>> kingdom) {
-		mKingdom = kingdom;
+		mKingdom = new HashSet<>(kingdom);
 	}
 
 	private void getAllCosets(final Set<Realm<PLACE, LETTER>> remainingKingdom,
@@ -62,48 +71,62 @@ public final class Kingdom<PLACE, LETTER> {
 	 * @return Set of realms in Kingdom.
 	 */
 	public Set<Realm<PLACE, LETTER>> getRealms() {
-		return mKingdom;
+		return new HashSet<>(mKingdom);
 	}
 
 	/**
-	 * Adds the specified realm into the set of realms in the kingdom.
+	 * Returns new kingdom with the realm added to it.
 	 *
 	 * @param realm
+	 *            Realm to be added into the kingdom
+	 * @return New kingdom with realm added into it.
 	 */
-	public void addRealm(final Realm<PLACE, LETTER> realm) {
-		mKingdom.add(realm);
+	public Kingdom<PLACE, LETTER> addRealm(final Realm<PLACE, LETTER> realm) {
+		final Set<Realm<PLACE, LETTER>> realms = getRealms();
+		realms.add(realm);
+		return new Kingdom<>(realms);
 	}
 
 	/**
-	 * Add the specified set of realms into the Kingdom.
+	 * Returns new kingdom with the realms added to it.
 	 *
 	 * @param realms
+	 *            Realms to be added into the kingdom
+	 * @return New kingdom with realms added into it.
 	 */
-	public void addRealm(final Set<Realm<PLACE, LETTER>> realms) {
-		mKingdom.addAll(realms);
+	public Kingdom<PLACE, LETTER> addRealm(final Set<Realm<PLACE, LETTER>> realms) {
+		final Set<Realm<PLACE, LETTER>> kingdomRealms = getRealms();
+		kingdomRealms.addAll(realms);
+		return new Kingdom<>(kingdomRealms);
 	}
 
 	/**
-	 * Remove the specified realm from Kingdom.
+	 * Return new kingdom without the specific realm.
 	 *
 	 * @param realm
+	 *            Realm to be removed
+	 * @return New kingdom without realm
 	 */
-	public boolean removeRealm(final Realm<PLACE, LETTER> realm) {
+	public Kingdom<PLACE, LETTER> removeRealm(final Realm<PLACE, LETTER> realm) {
 		if (mKingdom.contains(realm)) {
-			mKingdom.remove(realm);
-			return true;
+			final Set<Realm<PLACE, LETTER>> kingdomRealms = getRealms();
+			kingdomRealms.remove(realm);
+			return new Kingdom<>(kingdomRealms);
 		}
-		return false;
+		return new Kingdom<>(mKingdom);
 	}
 
-	public boolean removeRealm(final Set<Realm<PLACE, LETTER>> realms) {
-		boolean removalSuccess = true;
-		for (final Realm<PLACE, LETTER> realm : realms) {
-			if (!removeRealm(realm)) {
-				removalSuccess = false;
-			}
-		}
-		return removalSuccess;
+	/**
+	 * Return new kingdom without the specific realms.
+	 *
+	 * @param realms
+	 *            Realms to be removed
+	 * @return New kingdom without realms
+	 */
+	public Kingdom<PLACE, LETTER> removeRealm(final Set<Realm<PLACE, LETTER>> realms) {
+		final Set<Realm<PLACE, LETTER>> kingdomRealms = getRealms();
+		kingdomRealms.removeAll(realms);
+		return new Kingdom<>(kingdomRealms);
 	}
 
 	/**
@@ -124,7 +147,7 @@ public final class Kingdom<PLACE, LETTER> {
 	 */
 	public Set<Set<Condition<LETTER, PLACE>>> getTreaty() {
 		final Set<Set<Condition<LETTER, PLACE>>> treatySet = new HashSet<>();
-		final Set<Realm<PLACE, LETTER>> kingdomRealms = new HashSet<>(getRealms());
+		final Set<Realm<PLACE, LETTER>> kingdomRealms = getRealms();
 		getAllCosets(kingdomRealms, new HashSet<>(), treatySet);
 		return treatySet;
 	}

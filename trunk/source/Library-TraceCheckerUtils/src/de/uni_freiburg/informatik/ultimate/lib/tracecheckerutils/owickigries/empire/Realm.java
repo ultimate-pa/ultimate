@@ -26,6 +26,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -34,6 +35,16 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.ICoRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
+/**
+ * Class representing Realms which are sets of Conditions whose places are pairwise not corelated. Realms are immutable.
+ *
+ * @author Matthias Zumkeller (zumkellm@informatik.uni-freiburg.de)
+ *
+ * @param <PLACE>
+ *            The type of places
+ * @param <LETTER>
+ *            The type of statements
+ */
 public final class Realm<PLACE, LETTER> {
 	/**
 	 * The set of conditions in realm.
@@ -41,7 +52,7 @@ public final class Realm<PLACE, LETTER> {
 	private final Set<Condition<LETTER, PLACE>> mRealm;
 
 	public Realm(final Set<Condition<LETTER, PLACE>> realm) {
-		mRealm = realm;
+		mRealm = new HashSet<>(realm);
 	}
 
 	private boolean placesNotCorelated(final PlacesCoRelation<PLACE, LETTER> placesCoRelation) {
@@ -58,42 +69,54 @@ public final class Realm<PLACE, LETTER> {
 	}
 
 	/**
-	 * @return set of all conditions in region.
+	 * @return copy of set of all conditions in region.
 	 */
 	public Set<Condition<LETTER, PLACE>> getConditions() {
-		return mRealm;
+		return new HashSet<>(mRealm);
 	}
 
 	/**
-	 * * Adds the specified condition into the set of conditions in the realm.
+	 * Creates new Realm containing the new condition and the conditions of the Realm instance the method was applied
+	 * on.
 	 *
 	 * @param condition
 	 *            Condition to be added.
+	 * @return Realm containing the old conditions and the new one.
 	 */
-	public void addCondition(final Condition<LETTER, PLACE> condition) {
-		mRealm.add(condition);
+	public Realm<PLACE, LETTER> addCondition(final Condition<LETTER, PLACE> condition) {
+		final var newConditions = getConditions();
+		newConditions.add(condition);
+		return new Realm<>(newConditions);
 	}
 
 	/**
-	 * Add the specified set of conditions to the realm.
+	 * Creates new Realm containing the new conditions and the conditions of the Realm instance the method was applied
+	 * on.
 	 *
 	 * @param conditions
 	 *            Set of conditions to be added.
+	 * @return Realm containing the old conditions and the new ones.
 	 */
-	public void addCondition(final Set<Condition<LETTER, PLACE>> conditions) {
-		mRealm.addAll(conditions);
+	public Realm<PLACE, LETTER> addCondition(final Set<Condition<LETTER, PLACE>> conditions) {
+		final var newConditions = getConditions();
+		newConditions.addAll(conditions);
+		return new Realm<>(newConditions);
 	}
 
 	/**
-	 * Removes the specified condition from the realm.
+	 * Returns new Realm without the specific condition.
 	 *
 	 * @param condition
 	 *            Condition to be removed.
+	 * @return Realm without condition.
 	 */
-	public void removeCondition(final Condition<PLACE, LETTER> condition) {
+	public Realm<PLACE, LETTER> removeCondition(final Condition<PLACE, LETTER> condition) {
 		if (mRealm.contains(condition)) {
-			mRealm.remove(condition);
+			final var newConditions = getConditions();
+			newConditions.remove(condition);
+			return new Realm<>(newConditions);
 		}
+		return new Realm<>(mRealm);
 	}
 
 	/**

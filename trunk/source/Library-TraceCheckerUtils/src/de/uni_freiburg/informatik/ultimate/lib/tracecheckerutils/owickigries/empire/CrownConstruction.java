@@ -96,13 +96,15 @@ public final class CrownConstruction<PLACE, LETTER> {
 
 	private Set<Rook<PLACE, LETTER>> crownComputation() {
 		Set<Rook<PLACE, LETTER>> colonizedRooks = mPreCrown.getRooks();
-		for (final Rook<PLACE, LETTER> rook : mPreCrown.getRooks()) {
+		for (final Rook<PLACE, LETTER> rook : new HashSet<>(colonizedRooks)) {
 			colonizedRooks = crownExpansion(rook, new ArrayList<>(mOrigConds), colonizedRooks, true);
 		}
-		for (final Rook<PLACE, LETTER> rook : colonizedRooks) {
+		Set<Rook<PLACE, LETTER>> colonizedpreRooks = computePreRooks(colonizedRooks);
+		colonizedRooks = DataStructureUtils.difference(colonizedRooks, colonizedpreRooks);
+		for (final Rook<PLACE, LETTER> rook : new HashSet<>(colonizedRooks)) {
 			colonizedRooks = crownExpansion(rook, new ArrayList<>(mAssertConds), colonizedRooks, false);
 		}
-		final Set<Rook<PLACE, LETTER>> colonizedpreRooks = computePreRooks(colonizedRooks);
+		colonizedpreRooks = computePreRooks(colonizedRooks);
 		colonizedRooks = DataStructureUtils.difference(colonizedRooks, colonizedpreRooks);
 		return colonizedRooks;
 	}
@@ -163,6 +165,7 @@ public final class CrownConstruction<PLACE, LETTER> {
 				final List<Condition<LETTER, PLACE>> ntroops =
 						conditions.stream().filter(cond -> !cond.equals(condition)).collect(Collectors.toList());
 				Set<Rook<PLACE, LETTER>> expandedRooks = crownExpansion(colonyRook, ntroops, crownRooks, colonizer);
+				expandedRooks.add(colonyRook);
 				final Set<Rook<PLACE, LETTER>> preRooks = computePreRooks(expandedRooks);
 				expandedRooks = DataStructureUtils.difference(expandedRooks, preRooks);
 				crownRooks = DataStructureUtils.union(crownRooks, expandedRooks);
@@ -216,14 +219,14 @@ public final class CrownConstruction<PLACE, LETTER> {
 	}
 
 	private Rook<PLACE, LETTER> expand(final CoRook<PLACE, LETTER> coRook) {
-		final Rook<PLACE, LETTER> rook = coRook.getRook();
-		rook.expansion(coRook.getCondition());
+		Rook<PLACE, LETTER> rook = coRook.getRook();
+		rook = rook.expansion(coRook.getCondition());
 		return rook;
 	}
 
 	private Rook<PLACE, LETTER> immigrate(final CoRook<PLACE, LETTER> coRook) {
-		final Rook<PLACE, LETTER> rook = coRook.getRook();
-		rook.immigration(coRook.getCondition(), getNegKingdom(coRook));
+		Rook<PLACE, LETTER> rook = coRook.getRook();
+		rook = rook.immigration(coRook.getCondition(), getNegKingdom(coRook));
 		return rook;
 	}
 
@@ -240,21 +243,21 @@ public final class CrownConstruction<PLACE, LETTER> {
 	}
 
 	private Rook<PLACE, LETTER> approve(final CoRook<PLACE, LETTER> coRook) {
-		final Rook<PLACE, LETTER> rook = coRook.getRook();
-		rook.approval(coRook.getCondition());
+		Rook<PLACE, LETTER> rook = coRook.getRook();
+		rook = rook.approval(coRook.getCondition());
 		return rook;
 	}
 
 	private Rook<PLACE, LETTER> ratify(final CoRook<PLACE, LETTER> coRook) {
 		final Kingdom<PLACE, LETTER> kingdom = new Kingdom<>(coRook.getCoKingdom().getPosKingdom());
-		final KingdomLaw<PLACE, LETTER> law = new KingdomLaw<>(new HashSet<Condition<LETTER, PLACE>>());
-		law.addCondition(coRook.getCondition());
+		final KingdomLaw<PLACE, LETTER> law =
+				new KingdomLaw<>(new HashSet<Condition<LETTER, PLACE>>(Set.of(coRook.getCondition())));
 		return new Rook<>(kingdom, law);
 	}
 
 	private Rook<PLACE, LETTER> enactment(final CoRook<PLACE, LETTER> coRook) {
-		final KingdomLaw<PLACE, LETTER> law = new KingdomLaw<>(new HashSet<Condition<LETTER, PLACE>>());
-		law.addCondition(coRook.getCondition());
+		final KingdomLaw<PLACE, LETTER> law =
+				new KingdomLaw<>(new HashSet<Condition<LETTER, PLACE>>(Set.of(coRook.getCondition())));
 		return new Rook<>(coRook.getRook().getKingdom(), law);
 	}
 
