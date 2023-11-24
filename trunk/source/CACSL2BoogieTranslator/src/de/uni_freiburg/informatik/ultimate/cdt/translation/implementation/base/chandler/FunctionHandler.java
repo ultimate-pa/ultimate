@@ -703,14 +703,13 @@ public class FunctionHandler {
 				in = mExprResultTransformer.performImplicitConversion(in, expectedParamType, loc);
 			}
 
-			functionCallExpressionResultBuilder.addAllExceptLrValue(in);
+			functionCallExpressionResultBuilder.addAllExceptLrValueAndOverapproximation(in);
 			final LRValue lrValue = in.getLrValue();
 			if (in.getOverapprs().isEmpty()) {
 				translatedParams.add(lrValue.getValue());
 			} else {
 				// If one of the arguments is overapproximated, assign the value to an aux-var and overapproximate this
 				// assignment
-				// TODO: Avoid passing the overapproximation to the function call itself.
 				final AuxVarInfo auxVar =
 						mAuxVarInfoBuilder.constructAuxVarInfo(loc, lrValue.getCType(), AUXVAR.NONDET);
 				functionCallExpressionResultBuilder.addAuxVar(auxVar).addDeclaration(auxVar.getVarDec());
