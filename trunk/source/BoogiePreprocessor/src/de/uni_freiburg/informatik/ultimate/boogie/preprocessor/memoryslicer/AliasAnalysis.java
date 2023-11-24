@@ -214,6 +214,25 @@ public class AliasAnalysis {
 		for (final Expression arg : st.getArguments()) {
 			analyzeExpression(ma, arg);
 		}
+		final Procedure p = mProcedureToImplementation.get(st.getProcedureName());
+		assert st.getArguments().length == p.getInParams().length;
+		for (int i = 0; i < st.getArguments().length; i++) {
+			final Expression arg = st.getArguments()[i];
+			if (isPointerType(arg.getType())) {
+				final StorageClass sc;
+				if (p.getSpecification() == null) {
+					sc = StorageClass.IMPLEMENTATION_INPARAM;
+				} else {
+					sc = StorageClass.PROC_FUNC_INPARAM;
+				}
+				final PointerBase inParamPointer = extractPointerBaseFromVarlist(mAsfac, p.getInParams()[i],
+						new DeclarationInformation(sc, p.getIdentifier()));
+				final List<PointerBase> argPointers = extractPointerBasesFromPointer(mAsfac, arg);
+				for (final PointerBase argPointer : argPointers) {
+					ma.reportEquivalence(mAsfac, argPointer, inParamPointer);
+				}
+			}
+		}
 	}
 
 	private void processAssertStatement(final MayAlias ma, final AssertStatement st) {
