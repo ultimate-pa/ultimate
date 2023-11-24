@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>de.uni_freiburg.informatik.ultimate</groupId>
 	<artifactId>mavenparent</artifactId>
-	<version>0.2.3</version>
+	<version>0.2.4</version>
 	<packaging>pom</packaging>
 
 	<name>Ultimate</name>
@@ -16,7 +16,7 @@
 	</scm>
 
 	<properties>
-		<ultimate-version>0.2.3</ultimate-version>
+		<ultimate-version>0.2.4</ultimate-version>
 
 		<!-- maven plugin versions -->
 		<!-- https://mvnrepository.com/artifact/org.eclipse.tycho/tycho-core -->

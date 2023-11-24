@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: WebBackend
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.web.backend;singleton:=true
-Bundle-Version: 0.2.3
+Bundle-Version: 0.2.4
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.web.backend.Activator
 Bundle-RequiredExecutionEnvironment: JavaSE-11
 Bundle-ActivationPolicy: lazy
