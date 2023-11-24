@@ -206,6 +206,9 @@ public class FloatSupportInUltimate {
 			"fmal",
 			"scalbl",
 			"signgam;",
+			"modf",
+			"modff",
+			"modfl",
 
 			// from fenv.h
 			"feclearexcept",
@@ -286,11 +289,6 @@ public class FloatSupportInUltimate {
 		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("nearbyint", CPrimitives.DOUBLE);
 		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("nearbyintf", CPrimitives.FLOAT);
 		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("nearbyintl", CPrimitives.LONGDOUBLE);
-
-		// https://en.cppreference.com/w/c/numeric/math/modf
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("modf", CPrimitives.DOUBLE);
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("modff", CPrimitives.FLOAT);
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("modfl", CPrimitives.LONGDOUBLE);
 
 		// http://en.cppreference.com/w/c/numeric/math/signbit
 		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("signbit", CPrimitives.INT);
