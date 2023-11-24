@@ -941,6 +941,8 @@ public class FunctionHandler {
 				// The main function can only take arguments of type int and char** or char*[]
 				// Since we do not support command line arguments, we just do not add the as a parameter
 				// Therefore we crash, if they are actually used (the variable is not declared in that case).
+				// TODO: With an improved overapproximation detection, we should rather overapproximate the assignment
+				// to this variable, instead of crashing.
 				if ("main".equals(mProcedureManager.getCurrentProcedureInfo().getProcedureName())
 						&& (cvar instanceof CPointer || cvar instanceof CArray)) {
 					mSymboltable.removeCSymbol(paramDec, inparamCId);
