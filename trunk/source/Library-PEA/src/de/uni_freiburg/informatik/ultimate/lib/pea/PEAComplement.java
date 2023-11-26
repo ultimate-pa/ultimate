@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.pea;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -27,8 +28,18 @@ public class PEAComplement {
 	final PhaseEventAutomata<CDD> mTotalisedPEA;
 	final PhaseEventAutomata<CDD> mComplementPEA;
 
+	private static Set<String> mConstVars;
+
 	public PEAComplement(PhaseEventAutomata<CDD> PEAtoComplement) {
 		mPEAtoComplement = PEAtoComplement;
+		mConstVars = Collections.emptySet();
+		mTotalisedPEA = this.totalise(mPEAtoComplement);
+		mComplementPEA = this.complement(mTotalisedPEA);
+	}
+
+	public PEAComplement(PhaseEventAutomata<CDD> PEAtoComplement, Set<String> constVars) {
+		mPEAtoComplement = PEAtoComplement;
+		mConstVars = constVars;
 		mTotalisedPEA = this.totalise(mPEAtoComplement);
 		mComplementPEA = this.complement(mTotalisedPEA);
 	}
@@ -109,7 +120,9 @@ public class PEAComplement {
 						.or(guardUnprimed.and(successorStateInv).and(RangeDecision.strict(successorClockInv)));
 			}
 		}
-		CDD guardToSinkPrimed = guardToSink.prime(clockVarSet);
+		Set<String> unprimedVars = clockVarSet;
+		unprimedVars.addAll(mConstVars);
+		CDD guardToSinkPrimed = guardToSink.prime(unprimedVars);
 		CDD guardToSinkWithClockSuffix = addClockSuffixCDD(guardToSinkPrimed, TOTAL_POSTFIX);
 		// make transition to sink
 		totalisedPhase.addTransition(sinkPhase, guardToSinkWithClockSuffix.negate(), new String[] {});

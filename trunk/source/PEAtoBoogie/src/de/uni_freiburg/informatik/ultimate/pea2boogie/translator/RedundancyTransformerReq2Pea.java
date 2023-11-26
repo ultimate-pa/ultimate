@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.pea2boogie.translator;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -44,6 +45,7 @@ public class RedundancyTransformerReq2Pea implements IReq2Pea {
 		final ReqSymboltableBuilder builder = new ReqSymboltableBuilder(mLogger);
 		final IReqSymbolTable symbolTable = req2pea.getSymboltable();
 		mSymbolTable = symbolTable;
+		Set<String> constVars = mSymbolTable.getConstVars();
 
 		for (final DeclarationPattern p : mInitPattern) {
 			builder.addInitPattern(p);
@@ -60,7 +62,7 @@ public class RedundancyTransformerReq2Pea implements IReq2Pea {
 
 			for (Entry<CounterTrace, PhaseEventAutomata<CDD>> pea : ct2pea) {
 				PhaseEventAutomata peaToComplement = pea.getValue();
-				PEAComplement complementPea = new PEAComplement(peaToComplement);
+				PEAComplement complementPea = new PEAComplement(peaToComplement, constVars);
 				PhaseEventAutomata totalisedPea = complementPea.getTotalisedPEA();
 				PhaseEventAutomata complementedPEA = complementPea.getComplementPEA();
 				totalCt2pea.add(new Pair<>(pea.getKey(), totalisedPea));
