@@ -23,8 +23,8 @@
  * licensors of the ULTIMATE TraceCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire;
+package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown;
 
-public enum CoRelationType {
-	POSITIVE, NEGATIVE, PARTIAL, DIVERGENT, CONTAINS
+public enum ColonizationType {
+	EXPANSION, IMMIGRATION, FOUNDATION, DEFEAT, NULL
 }

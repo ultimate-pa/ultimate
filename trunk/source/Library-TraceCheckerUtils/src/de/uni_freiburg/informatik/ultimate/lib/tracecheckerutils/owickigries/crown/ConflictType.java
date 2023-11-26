@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2020 University of Freiburg
+ * Copyright (C) 2023 Matthias Zumkeller
+ * Copyright (C) 2023 University of Freiburg
  *
  * This file is part of the ULTIMATE TraceCheckerUtils Library.
  *
@@ -23,8 +24,8 @@
  * licensors of the ULTIMATE TraceCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire;
+package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown;
 
-public enum ColonizationType {
-	EXPANSION, IMMIGRATION, FOUNDATION, DEFEAT, NULL
+public enum ConflictType {
+	CONFLICT_FREE, CONFLICTING
 }

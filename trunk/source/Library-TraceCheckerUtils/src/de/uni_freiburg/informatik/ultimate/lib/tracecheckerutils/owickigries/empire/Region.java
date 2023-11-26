@@ -30,6 +30,7 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown.Realm;
 
 public class Region<PLACE, LETTER> {
 
