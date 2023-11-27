@@ -790,7 +790,7 @@ public class FlowSensitiveFaultLocalizer<L extends IIcfgTransition<?>> {
 			final CfgSmtToolkit csToolkit, final IIcfg<IcfgLocation> IIcfg) {
 		mLogger.info("Starting flow-sensitive error relevancy analysis");
 
-		// get information from CFG but instead of fromulas, put edges
+		// get information from CFG but instead of formulas, put edges
 		final Map<Integer, Map<Integer, Set<IcfgEdge>>> informationFromCfg2 =
 				computeInformationFromCFG(counterexample, cfg, csToolkit.getManagedScript());
 
