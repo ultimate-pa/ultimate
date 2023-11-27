@@ -321,7 +321,7 @@ public abstract class ProductNwa<LETTER, STATE> implements INwaOutgoingLetterAnd
 	}
 
 	protected boolean isTrapInSnd(final STATE state) {
-		return mAssumeInSndNonFinalIsTrap && mSndOperand.isFinal(state);
+		return mAssumeInSndNonFinalIsTrap && !mSndOperand.isFinal(state);
 	}
 
 	/**
