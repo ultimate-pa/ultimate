@@ -50,7 +50,6 @@ public class SleepSetStateFactoryForRefinement<L> implements ISleepSetStateFacto
 	private final IPredicate mEmptyStack;
 	private final UnifyHash<SleepPredicate<L>> mUnifier = new UnifyHash<>();
 
-
 	/**
 	 * Creates a new instance from a predicate factory.
 	 *
@@ -107,10 +106,6 @@ public class SleepSetStateFactoryForRefinement<L> implements ISleepSetStateFacto
 	@Override
 	public ImmutableSet<L> getSleepSet(final IPredicate sleepState) {
 		return ((SleepPredicate<L>) sleepState).getSleepSet();
-	}
-
-	@Deprecated
-	public void reset() {
 	}
 
 	/**
