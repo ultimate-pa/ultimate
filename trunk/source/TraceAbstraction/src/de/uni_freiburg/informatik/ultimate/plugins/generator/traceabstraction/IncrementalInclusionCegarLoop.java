@@ -92,6 +92,8 @@ public class IncrementalInclusionCegarLoop<L extends IIcfgTransition<?>> extends
 		super(name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation,
 				computeHoareAnnotation, hoareAnnotationLocs, services, transitionClazz, stateFactoryForRefinement);
 		mLanguageOperation = languageOperation;
+
+		// TODO #proofRefactor
 		if (mComputeHoareAnnotation) {
 			throw new UnsupportedOperationException(
 					"while using this CEGAR loop computation of Hoare annotation is unsupported ");

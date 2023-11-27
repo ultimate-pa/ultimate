@@ -104,6 +104,7 @@ public class CegarLoopConcurrentAutomata<L extends IIcfgTransition<?>> extends N
 		final Function<IMLPredicate, Set<IcfgLocation>> lcsProvider = x -> asHashSet(x.getProgramPoints());
 		AutomataMinimization<Set<IcfgLocation>, IMLPredicate, L> am;
 		try {
+			// TODO #proofRefactor
 			am = new AutomataMinimization<>(getServices(), mAbstraction, minimization, mComputeHoareAnnotation,
 					mIteration, predicateFactoryRefinement, MINIMIZE_EVERY_KTH_ITERATION, mStoredRawInterpolantAutomata,
 					mInterpolAutomaton, MINIMIZATION_TIMEOUT, resultCheckPredFac, lcsProvider, false);
@@ -120,6 +121,7 @@ public class CegarLoopConcurrentAutomata<L extends IIcfgTransition<?>> extends N
 			final IDoubleDeckerAutomaton<L, IPredicate> newAbstraction = am.getMinimizedAutomaton();
 
 			// extract Hoare annotation
+			// TODO #proofRefactor
 			if (mComputeHoareAnnotation) {
 				final Map<IPredicate, IPredicate> oldState2newState = am.getOldState2newStateMapping();
 				if (oldState2newState == null) {
@@ -145,6 +147,7 @@ public class CegarLoopConcurrentAutomata<L extends IIcfgTransition<?>> extends N
 		// howDifferentAreInterpolants(mInterpolAutomaton.getStates());
 
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
+		// TODO #proofRefactor
 		final boolean explointSigmaStarConcatOfIA = !mComputeHoareAnnotation;
 
 		final INestedWordAutomaton<L, IPredicate> oldAbstraction = mAbstraction;

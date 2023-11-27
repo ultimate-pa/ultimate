@@ -188,11 +188,15 @@ public class LazyReuseCegarLoop<L extends IIcfgTransition<?>> extends ReuseCegar
 			dumpOrAppendAutomatonForReuseIfEnabled(reuseAut, reuseAutPair.getSecond());
 
 			if (REMOVE_DEAD_ENDS) {
+				// TODO #proofRefactor
 				if (mComputeHoareAnnotation) {
 					final Difference<L, IPredicate> difference = (Difference<L, IPredicate>) diff;
 					mHaf.updateOnIntersection(difference.getFst2snd2res(), difference.getResult());
 				}
+
 				diff.removeDeadEnds();
+
+				// TODO #proofRefactor
 				if (mComputeHoareAnnotation) {
 					mHaf.addDeadEndDoubleDeckers(diff);
 				}

@@ -524,6 +524,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 			throw new UnsupportedOperationException();
 		}
 
+		// TODO #proofRefactor
 		if (mComputeHoareAnnotation) {
 			assert new InductivityCheck<>(getServices(), dia, false, true,
 					new IncrementalHoareTripleChecker(super.mCsToolkit, false)).getResult() : "Not inductive";

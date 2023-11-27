@@ -496,6 +496,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 			mLogger.info("%s automaton has %s", automatonType, mInterpolAutomaton.sizeInformation());
 		}
 
+		// TODO #proofRefactor
 		if (mComputeHoareAnnotation && mPref.getHoareAnnotationPositions() == HoareAnnotationPositions.All) {
 			assert new InductivityCheck<>(getServices(), (INestedWordAutomaton<L, IPredicate>) mAbstraction, false,
 					true, new IncrementalHoareTripleChecker(mCsToolkit, false)).getResult() : "Not inductive";
@@ -869,6 +870,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 				floydHoareAutomata = null;
 			}
 
+			// TODO #proofRefactor
 			if (mComputeHoareAnnotation && mResults.values().stream().anyMatch(a -> a.getResult() == Result.SAFE)) {
 				computeIcfgHoareAnnotation();
 				writeHoareAnnotationToLogger();
@@ -882,6 +884,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 			return mErrorLocs.size() - mResults.size();
 		}
 
+		// TODO #proofRefactor
 		@SuppressWarnings("unchecked")
 		private void writeHoareAnnotationToLogger() {
 			final IIcfg<IcfgLocation> root = (IIcfg<IcfgLocation>) mIcfg;

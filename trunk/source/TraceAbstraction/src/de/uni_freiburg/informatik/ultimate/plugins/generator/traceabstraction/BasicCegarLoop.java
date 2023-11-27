@@ -202,6 +202,7 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 		mHaf = new HoareAnnotationFragments<>(mLogger, hoareAnnotationLocs, mPref.getHoareAnnotationPositions());
 		mStateFactoryForRefinement = stateFactoryForRefinement;
 
+		// TODO #proofRefactor
 		mPredicateFactoryInterpolantAutomata = new PredicateFactoryForInterpolantAutomata(
 				super.mCsToolkit.getManagedScript(), mPredicateFactory, computeHoareAnnotation);
 

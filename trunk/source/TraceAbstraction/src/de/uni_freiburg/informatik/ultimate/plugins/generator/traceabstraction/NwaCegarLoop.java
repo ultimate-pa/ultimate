@@ -57,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpt
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmptyHeuristic.AStarHeuristic;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmptyHeuristic.IHeuristic;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.ProductNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IOpWithDelayedDeadEndRemoval;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.senwa.DifferenceSenwa;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
@@ -131,6 +132,9 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 	private final ScoringMethod mScoringMethod;
 	private final AStarHeuristic mAStarHeuristic;
 	private final Integer mAStarRandomHeuristicSeed;
+
+	// TODO #proofRefactor
+	private final IProofUpdater<L> mProofUpdater = null;
 
 	public NwaCegarLoop(final DebugIdentifier name, final INestedWordAutomaton<L, IPredicate> initialAbstraction,
 			final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
@@ -314,7 +318,9 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 		} else {
 			automatonType = AutomatonType.FLOYD_HOARE;
 			useErrorAutomaton = false;
-			exploitSigmaStarConcatOfIa = !mComputeHoareAnnotation;
+			// TODO #proofRefactor
+			exploitSigmaStarConcatOfIa =
+					!mComputeHoareAnnotation && (mProofUpdater == null || mProofUpdater.exploitSigmaStarConcatOfIa());
 			subtrahendBeforeEnhancement = mInterpolAutomaton;
 			enhanceMode = mPref.interpolantAutomatonEnhancement();
 			subtrahend = enhanceInterpolantAutomaton(enhanceMode, predicateUnifier, htc, subtrahendBeforeEnhancement);
@@ -392,13 +398,24 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 			}
 
 			if (REMOVE_DEAD_ENDS) {
+				// TODO #proofRefactor
 				if (mComputeHoareAnnotation) {
 					final Difference<L, IPredicate> difference = (Difference<L, IPredicate>) diff;
 					mHaf.updateOnIntersection(difference.getFst2snd2res(), difference.getResult());
 				}
+				if (mProofUpdater != null) {
+					final Difference<L, IPredicate> difference = (Difference<L, IPredicate>) diff;
+					mProofUpdater.updateOnIntersection(difference.getFst2snd2res(), difference.getResult());
+				}
+
 				diff.removeDeadEnds();
+
+				// TODO #proofRefactor
 				if (mComputeHoareAnnotation) {
 					mHaf.addDeadEndDoubleDeckers(diff);
+				}
+				if (mProofUpdater != null) {
+					mProofUpdater.addDeadEndDoubleDeckers(diff);
 				}
 			}
 			mAbstraction = diff.getResult();
@@ -488,8 +505,10 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 						: new HashSet<>(Arrays.asList(((IMLPredicate) x).getProgramPoints())));
 		AutomataMinimization<Set<IcfgLocation>, IPredicate, L> am;
 		try {
-			am = new AutomataMinimization<>(getServices(), mAbstraction, minimization, mComputeHoareAnnotation,
-					mIteration, predicateFactoryRefinement, MINIMIZE_EVERY_KTH_ITERATION, mStoredRawInterpolantAutomata,
+			// TODO #proofRefactor
+			final boolean computeOld2New = mComputeHoareAnnotation || mProofUpdater != null;
+			am = new AutomataMinimization<>(getServices(), mAbstraction, minimization, computeOld2New, mIteration,
+					predicateFactoryRefinement, MINIMIZE_EVERY_KTH_ITERATION, mStoredRawInterpolantAutomata,
 					mInterpolAutomaton, MINIMIZATION_TIMEOUT, resultCheckPredFac, lcsProvider, true);
 		} catch (final AutomataMinimizationTimeout e) {
 			mCegarLoopBenchmark.addAutomataMinimizationData(e.getStatistics());
@@ -503,12 +522,20 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 			final IDoubleDeckerAutomaton<L, IPredicate> newAbstraction = am.getMinimizedAutomaton();
 
 			// extract Hoare annotation
+			// TODO #proofRefactor
 			if (mComputeHoareAnnotation) {
 				final Map<IPredicate, IPredicate> oldState2newState = am.getOldState2newStateMapping();
 				if (oldState2newState == null) {
 					throw new AssertionError("Hoare annotation and " + minimization + " incompatible");
 				}
 				mHaf.updateOnMinimization(oldState2newState, newAbstraction);
+			}
+			if (mProofUpdater != null) {
+				final Map<IPredicate, IPredicate> oldState2newState = am.getOldState2newStateMapping();
+				if (oldState2newState == null) {
+					throw new AssertionError("Proof production and " + minimization + " incompatible");
+				}
+				mProofUpdater.updateOnMinimization(oldState2newState, newAbstraction);
 			}
 
 			// statistics
@@ -561,5 +588,17 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 		default:
 			throw new IllegalArgumentException();
 		}
+	}
+
+	public interface IProofUpdater<L> {
+		boolean exploitSigmaStarConcatOfIa();
+
+		void updateOnIntersection(Map<IPredicate, Map<IPredicate, ProductNwa<L, IPredicate>.ProductState>> fst2snd2res,
+				IDoubleDeckerAutomaton<L, IPredicate> result);
+
+		void updateOnMinimization(final Map<IPredicate, IPredicate> old2New,
+				final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction);
+
+		void addDeadEndDoubleDeckers(IOpWithDelayedDeadEndRemoval<L, IPredicate> diff);
 	}
 }
