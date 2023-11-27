@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.proofs.IProofProducer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
@@ -72,6 +73,28 @@ public interface IInitialAbstractionProvider<L extends IIcfgTransition<?>, A ext
 	 */
 	A getInitialAbstraction(IIcfg<? extends IcfgLocation> icfg, Set<? extends IcfgLocation> errorLocs)
 			throws AutomataLibraryException;
+
+	/**
+	 * After an initial abstraction has been computed, attempts to create a proof producer for the abstraction.
+	 *
+	 * @param <PROOF>
+	 *            The type of proofs that shall be produced
+	 * @param proofType
+	 *            The type of proofs that shall be produced
+	 * @param proofUpdates
+	 *            If this is non-null, the returned producer must implement this interface. If no such producer can be
+	 *            found, fail instead.
+	 * @return A proof producer satisfying the above constraints.
+	 * @throws UnsupportedOperationException
+	 *             if no proof producer satisfying the constraints is known
+	 */
+	// TODO #proofRefactor
+	default <PROOF> IProofProducer<A, PROOF> getProofProducer(final Class<PROOF> proofType,
+			final Class<?> proofUpdates) {
+		final String suffix = proofUpdates == null ? "" : (" while implementing " + proofUpdates.getSimpleName());
+		throw new UnsupportedOperationException(getClass().getSimpleName()
+				+ " does not support producing proofs of type " + proofType.getSimpleName() + suffix);
+	}
 
 	// TODO Add statistics support
 }
