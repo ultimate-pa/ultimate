@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.proofs;
 
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
+
 /**
  * A specialization of {@link IProofPostProcessor} for post-processings that implement only a proof format conversion,
  * but do not reflect a program transformation.
@@ -41,8 +43,56 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.proofs;
  */
 public interface IProofConverter<PROGRAM, INPROOF, OUTPROOF>
 		extends IProofPostProcessor<PROGRAM, INPROOF, PROGRAM, OUTPROOF> {
+	PROGRAM getProgram();
+
+	@Override
+	default PROGRAM getOriginalProgram() {
+		return getProgram();
+	}
+
 	@Override
 	default PROGRAM getTransformedProgram() {
-		return getOriginalProgram();
+		return getProgram();
+	}
+
+	static <PROGRAM, PROOF> IProofConverter<PROGRAM, PROOF, PROOF> identity(final PROGRAM program) {
+		return new IProofConverter<>() {
+			@Override
+			public PROGRAM getProgram() {
+				return program;
+			}
+
+			@Override
+			public PROOF processProof(final PROOF proof) {
+				return proof;
+			}
+
+			@Override
+			public IStatisticsDataProvider getStatistics() {
+				throw new UnsupportedOperationException();
+			}
+		};
+	}
+
+	static <PROGRAM, INPROOF, MIDPROOF, OUTPROOF> IProofConverter<PROGRAM, INPROOF, OUTPROOF> compose(
+			final IProofConverter<PROGRAM, INPROOF, MIDPROOF> left,
+			final IProofConverter<PROGRAM, MIDPROOF, OUTPROOF> right) {
+		assert right.getProgram() == left.getProgram();
+		return new IProofConverter<>() {
+			@Override
+			public PROGRAM getProgram() {
+				return right.getProgram();
+			}
+
+			@Override
+			public OUTPROOF processProof(final INPROOF proof) {
+				return right.processProof(left.processProof(proof));
+			}
+
+			@Override
+			public IStatisticsDataProvider getStatistics() {
+				throw new UnsupportedOperationException();
+			}
+		};
 	}
 }

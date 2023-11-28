@@ -64,4 +64,56 @@ public interface IProofPostProcessor<INPROGRAM, INPROOF, OUTPROGRAM, OUTPROOF> {
 	OUTPROOF processProof(INPROOF proof);
 
 	IStatisticsDataProvider getStatistics();
+
+	static <PROGRAM, PROOF> IProofPostProcessor<PROGRAM, PROOF, PROGRAM, PROOF> identity(final PROGRAM program) {
+		return new IProofPostProcessor<>() {
+			@Override
+			public PROGRAM getOriginalProgram() {
+				return program;
+			}
+
+			@Override
+			public PROGRAM getTransformedProgram() {
+				return program;
+			}
+
+			@Override
+			public PROOF processProof(final PROOF proof) {
+				return proof;
+			}
+
+			@Override
+			public IStatisticsDataProvider getStatistics() {
+				throw new UnsupportedOperationException();
+			}
+		};
+	}
+
+	static <INPROGRAM, INPROOF, MIDPROGRAM, MIDPROOF, OUTPROGRAM, OUTPROOF>
+			IProofPostProcessor<INPROGRAM, INPROOF, OUTPROGRAM, OUTPROOF>
+			compose(final IProofPostProcessor<INPROGRAM, INPROOF, MIDPROGRAM, MIDPROOF> left,
+					final IProofPostProcessor<MIDPROGRAM, MIDPROOF, OUTPROGRAM, OUTPROOF> right) {
+		assert right.getTransformedProgram() == left.getOriginalProgram();
+		return new IProofPostProcessor<>() {
+			@Override
+			public OUTPROGRAM getOriginalProgram() {
+				return right.getOriginalProgram();
+			}
+
+			@Override
+			public INPROGRAM getTransformedProgram() {
+				return left.getTransformedProgram();
+			}
+
+			@Override
+			public OUTPROOF processProof(final INPROOF proof) {
+				return right.processProof(left.processProof(proof));
+			}
+
+			@Override
+			public IStatisticsDataProvider getStatistics() {
+				throw new UnsupportedOperationException();
+			}
+		};
+	}
 }
