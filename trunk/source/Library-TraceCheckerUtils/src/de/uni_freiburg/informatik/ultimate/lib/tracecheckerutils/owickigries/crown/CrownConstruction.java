@@ -97,15 +97,14 @@ public final class CrownConstruction<PLACE, LETTER> {
 
 	private Set<Rook<PLACE, LETTER>> crownComputation() {
 		Set<Rook<PLACE, LETTER>> colonizedRooks = mPreCrown.getRooks();
-		for (final Rook<PLACE, LETTER> rook : new HashSet<>(colonizedRooks)) {
-			colonizedRooks = crownExpansion(rook, new ArrayList<>(mOrigConds), colonizedRooks, true);
+		final Set<Rook<PLACE, LETTER>> reSet = new HashSet<>();
+		for (final Rook<PLACE, LETTER> rook : colonizedRooks) {
+			reSet.addAll(crownExpansion(rook, new ArrayList<>(mOrigConds), new HashSet<>(), true));
 		}
-		Set<Rook<PLACE, LETTER>> colonizedpreRooks = computePreRooks(colonizedRooks);
-		colonizedRooks = DataStructureUtils.difference(colonizedRooks, colonizedpreRooks);
-		for (final Rook<PLACE, LETTER> rook : new HashSet<>(colonizedRooks)) {
-			colonizedRooks = crownExpansion(rook, new ArrayList<>(mAssertConds), colonizedRooks, false);
+		for (final Rook<PLACE, LETTER> rook : reSet) {
+			colonizedRooks.addAll(crownExpansion(rook, new ArrayList<>(mAssertConds), new HashSet<>(), false));
 		}
-		colonizedpreRooks = computePreRooks(colonizedRooks);
+		final Set<Rook<PLACE, LETTER>> colonizedpreRooks = computePreRooks(colonizedRooks);
 		colonizedRooks = DataStructureUtils.difference(colonizedRooks, colonizedpreRooks);
 		return colonizedRooks;
 	}
