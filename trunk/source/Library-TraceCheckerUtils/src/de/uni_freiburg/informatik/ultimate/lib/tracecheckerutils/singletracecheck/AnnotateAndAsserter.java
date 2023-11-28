@@ -114,7 +114,7 @@ public class AnnotateAndAsserter<L extends IAction> {
 		// number that the pending context. The first pending context has
 		// number -1, the second -2, ...
 		int pendingContextCode = -1 - mSSA.getTrace().getPendingReturns().size();
-		final boolean reuseVarAssignmentsOfReachableErrorLocatiosn = false;
+		final boolean reuseVarAssignmentsOfReachableErrorLocatiosn = true;
 		ArrayList<Pair<Term, Term>> varAssignmentPair = new ArrayList<Pair<Term, Term>>();
 
 		for (final Integer positionOfPendingReturn : mSSA.getTrace().getPendingReturns().keySet()) {
