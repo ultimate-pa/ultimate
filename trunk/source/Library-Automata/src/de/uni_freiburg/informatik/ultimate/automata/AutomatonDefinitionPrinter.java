@@ -57,9 +57,8 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.BranchingProcessWriterToString;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.NetWriterToString;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.NetWriterToStringWithUniqueNumber;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.NetWriterUniqueId;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.IPetriAtsFormatter;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.NetWriter;
 import de.uni_freiburg.informatik.ultimate.automata.tree.IRankedLetter;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.visualization.TreeAutomatonWriter;
@@ -469,13 +468,13 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 
 		switch (format) {
 		case ATS:
-			new NetWriterToString<>(printWriter, name, castNet);
+			new NetWriter<>(printWriter, name, castNet, new IPetriAtsFormatter.ToString<>());
 			break;
 		case ATS_QUOTED:
-			new NetWriterToStringWithUniqueNumber<>(printWriter, name, castNet);
+			new NetWriter<>(printWriter, name, castNet, new IPetriAtsFormatter.ToStringWithUniqueNumber<>());
 			break;
 		case ATS_NUMERATE:
-			new NetWriterUniqueId<>(printWriter, name, castNet);
+			new NetWriter<>(printWriter, name, castNet, new IPetriAtsFormatter.UniqueId<>());
 			break;
 		case BA:
 		case GFF:
