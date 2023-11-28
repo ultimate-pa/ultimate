@@ -228,8 +228,8 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 			// the CFG does not have error location and no automaton is dumped.
 			mLogger.info("Dumping reuse automata for " + mTaskIdentifier.toString());
 			final String filename = mTaskIdentifier + "-reuse";
-			final String fullPath =
-					mPref.dumpPath() + File.separator + filename + "." + mPrintAutomataLabeling.getFileEnding();
+			final String fullPath = mPref.dumpPath() + File.separator + filename + "."
+					+ mPrintAutomataLabeling.getFormat().getFileEnding();
 			final File file = new File(fullPath);
 			try {
 				final FileWriter fw = new FileWriter(file, false);
