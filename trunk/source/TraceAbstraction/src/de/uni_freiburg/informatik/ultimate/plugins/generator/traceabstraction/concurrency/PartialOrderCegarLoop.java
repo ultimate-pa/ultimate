@@ -48,20 +48,20 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Inform
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.TotalizeNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.UnionNwa;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetCoveringRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.CoinFlipBudget;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.OptimisticBudget;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.SleepMapReduction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.SleepMapReduction.IBudgetFunction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.AcceptingRunSearchVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.CoveringOptimizationVisitor;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.CoveringOptimizationVisitor.CoveringMode;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.DeadEndOptimizingSearchVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.IDeadEndStore;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.IDfsVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.SleepSetVisitorSearch;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.WrapperVisitor;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.CoveringOptimizationVisitor.CoveringMode;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IUnionStateFactory;
@@ -227,8 +227,8 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		} else {
 			mItpAutomata = new UnionNwa<>(mItpAutomata, determinized, mFactory, false);
 		}
-		mAbstraction =
-				new InformationStorage<>(mProgram == null ? mAbstraction : mProgram, mItpAutomata, mFactory, false);
+		mAbstraction = new InformationStorage<>(mProgram == null ? mAbstraction : mProgram, mItpAutomata, mFactory,
+				PartialOrderCegarLoop::isFalseLiteral);
 
 		// augment refinement result with Hoare triple checker to allow re-use by independence providers
 		final var resultWithHtc = addHoareTripleChecker(mRefinementResult, htc);
@@ -324,7 +324,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 			// TODO once this is done, we can also give a more precise return type and avoid casts in getCounterexample
 			visitor = new SleepSetVisitorSearch<>(this::isGoalState, this::isProvenState);
 		} else {
-			visitor = new AcceptingRunSearchVisitor<>(this::isGoalState, this::isProvenState);
+			visitor = new AcceptingRunSearchVisitor<>(this::isGoalState);
 		}
 		if (mPOR.getDfsOrder() instanceof BetterLockstepOrder<?, ?>) {
 			visitor = ((BetterLockstepOrder<L, IPredicate>) mPOR.getDfsOrder()).wrapVisitor(visitor);

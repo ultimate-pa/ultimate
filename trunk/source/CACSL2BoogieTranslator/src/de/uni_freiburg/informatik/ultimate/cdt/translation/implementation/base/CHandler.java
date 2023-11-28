@@ -371,6 +371,9 @@ public class CHandler {
 
 	private final boolean mIsInLibraryMode;
 
+	private boolean mIsConcurrent;
+	private boolean mHasThreadLocalVars;
+
 	/**
 	 * Constructor for CHandler in pre-run mode.
 	 *
@@ -1468,14 +1471,23 @@ public class CHandler {
 
 	public Result visit(final IDispatcher main, final IASTFunctionCallExpression node) {
 		final IASTExpression functionName = node.getFunctionNameExpression();
+		final ILocation loc = mLocationFactory.createCLocation(node);
 		if (functionName instanceof IASTIdExpression) {
+			// TODO: This is just a workaround for now to crash when thread local variables are used in a concurrent
+			// program
+			if ("pthread_create".equals(((IASTIdExpression) functionName).getName().toString())) {
+				mIsConcurrent = true;
+				// Only crash for thread local variable in concurrent programs
+				if (mHasThreadLocalVars) {
+					throw new UnsupportedSyntaxException(loc, "Thread local variables are not supported yet.");
+				}
+			}
 			final Result standardFunction =
 					mStandardFunctionHandler.translateStandardFunction(main, node, (IASTIdExpression) functionName);
 			if (standardFunction != null) {
 				return standardFunction;
 			}
 		}
-		final ILocation loc = mLocationFactory.createCLocation(node);
 		return mFunctionHandler.handleFunctionCallExpression(main, loc, functionName, node.getArguments(),
 				mMemoryHandler);
 	}
@@ -2049,16 +2061,17 @@ public class CHandler {
 	}
 
 	public Result visit(final IDispatcher main, final IASTProblemDeclaration node) {
-		if (node.getRawSignature().equals("_Noreturn") || node.getRawSignature().equals("noreturn")) {
+		final String signature = node.getRawSignature();
+		if (signature.equals("_Noreturn") || signature.equals("noreturn")) {
 			// Matthias 20230309: It seems like the parser does not support die _Noreturn
 			// function specifier. It considers this as a IASTProblemDeclaration that is a
 			// direct child of the translation unit. As a workaround, we skip this node.
 			return new SkipResult();
-		} else {
-			final ILocation loc = mLocationFactory.createCLocation(node);
-			final String msg = "Syntax error (declaration problem) in C program: " + node.getProblem().getMessage();
-			throw new IncorrectSyntaxException(loc, msg);
+
 		}
+		final ILocation loc = mLocationFactory.createCLocation(node);
+		throw new IncorrectSyntaxException(loc, String.format(
+				"Syntax error (declaration problem) in C program: %s (%s)", node.getProblem().getMessage(), signature));
 	}
 
 	public Result visit(final IDispatcher main, final IASTProblemExpression node) {
@@ -2113,6 +2126,15 @@ public class CHandler {
 			final String msg = "This statement can be removed!";
 			mReporter.warn(loc, msg);
 			return new SkipResult();
+		}
+		// TODO: This is just a workaround for now to crash when thread local variables are used in a concurrent program
+		if (Arrays.stream(node.getDeclSpecifier().getAttributes()).map(x -> String.valueOf(x.getName()))
+				.anyMatch("thread"::equals)) {
+			mHasThreadLocalVars = true;
+			// Only crash for thread local variable in concurrent programs
+			if (mIsConcurrent) {
+				throw new UnsupportedSyntaxException(loc, "Thread local variables are not supported yet.");
+			}
 		}
 
 		// we have an enum declaration
@@ -2321,25 +2343,13 @@ public class CHandler {
 					resultBuilder.addDeclarations(res.getDeclarations());
 					resultBuilder.addAuxVars(res.getAuxVars());
 					resultBuilder.addOverapprox(res.getOverapprs());
-					for (final Statement s : res.getStatements()) {
-						if (s instanceof BreakStatement) {
-							ifBlock.add(new GotoStatement(locC, new String[] { breakLabelName }));
-						} else {
-							ifBlock.add(s);
-						}
-					}
+					ifBlock.addAll(replaceBreaksWithGotos(locC, res.getStatements(), breakLabelName));
 				}
 				if (r.getNode() != null && r.getNode() instanceof Body) {
 					// we already have a unique naming for variables! -> unfold
 					final Body b = (Body) r.getNode();
 					resultBuilder.addDeclarations(Arrays.asList(b.getLocalVars()));
-					for (final Statement s : b.getBlock()) {
-						if (s instanceof BreakStatement) {
-							ifBlock.add(new GotoStatement(locC, new String[] { breakLabelName }));
-						} else {
-							ifBlock.add(s);
-						}
-					}
+					ifBlock.addAll(replaceBreaksWithGotos(locC, Arrays.asList(b.getBlock()), breakLabelName));
 				}
 			}
 		}
@@ -2377,6 +2387,27 @@ public class CHandler {
 
 		assert resultBuilder.getLrValue() == null;
 		return resultBuilder.build();
+	}
+
+	private static List<Statement> replaceBreaksWithGotos(final ILocation loc, final Collection<Statement> statements,
+			final String label) {
+		final List<Statement> result = new ArrayList<>(statements.size());
+		for (final Statement st : statements) {
+			if (st instanceof BreakStatement) {
+				result.add(new GotoStatement(loc, new String[] { label }));
+			} else if (st instanceof IfStatement) {
+				final IfStatement ifSt = (IfStatement) st;
+				final Statement[] newThen =
+						replaceBreaksWithGotos(loc, Arrays.asList(ifSt.getThenPart()), label).toArray(Statement[]::new);
+				final Statement[] newElse =
+						replaceBreaksWithGotos(loc, Arrays.asList(ifSt.getElsePart()), label).toArray(Statement[]::new);
+				result.add(new IfStatement(loc, ifSt.getCondition(), newThen, newElse));
+			} else {
+				// TODO: Are there any other statements, where breaks should be replaced?
+				result.add(st);
+			}
+		}
+		return result;
 	}
 
 	public Result visit(final IDispatcher main, final IASTTranslationUnit node) {
@@ -2912,15 +2943,16 @@ public class CHandler {
 
 			mTypeHandler.addDefinedType(bId, new TypesResult(new NamedType(loc, boogieType, cDec.getName(), null),
 					false, false, cDec.getType()));
-			if (cDec.getType().getUnderlyingType().isIncomplete() && !cDec.getType().getUnderlyingType().isVoidType()) {
+			final CType cType = cDec.getType();
+			if (cType.isIncomplete() && !cType.isVoidType()) {
+				final CType underlying = cType.getUnderlyingType();
 				final String identifier;
-				if (cDec.getType().getUnderlyingType() instanceof CStructOrUnion) {
-					identifier = ((CStructOrUnion) cDec.getType().getUnderlyingType()).getName();
-				} else if (cDec.getType().getUnderlyingType() instanceof CEnum) {
-					identifier = ((CEnum) cDec.getType().getUnderlyingType()).getName();
+				if (underlying instanceof CStructOrUnion) {
+					identifier = ((CStructOrUnion) underlying).getName();
+				} else if (underlying instanceof CEnum) {
+					identifier = ((CEnum) underlying).getName();
 				} else {
-					throw new AssertionError(
-							"missing support for global incomplete " + cDec.getType().getUnderlyingType());
+					throw new AssertionError("missing support for global incomplete " + cType);
 				}
 				mTypeHandler.registerNamedIncompleteType(identifier, cDec.getName());
 			}
@@ -3675,5 +3707,4 @@ public class CHandler {
 		}
 		return main.transformWithWitness(node, result);
 	}
-
 }

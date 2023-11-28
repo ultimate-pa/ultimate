@@ -68,11 +68,11 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.WitnessEntry;
 public class YamlWitnessParser {
 	// Maximal size for witnesses to be parsed
 	// The default is just 3MB, but this is not sufficient for us.
-	private static final int MAXIMAL_SIZE = 30 * 1024 * 1024;
+	private static final int MAXIMAL_SIZE = 50 * 1024 * 1024;
 
 	// TODO: Make this a map instead with functions as values (i.e. what to do with this versions)
 	private static final List<FormatVersion> SUPPORTED_VERSIONS =
-			List.of(new FormatVersion(0, 1), new FormatVersion(0, 2));
+			List.of(new FormatVersion(0, 1), new FormatVersion(0, 2), new FormatVersion(2, 0));
 
 	public static Witness parseWitness(final File yamlInput) throws IOException {
 		final LoaderOptions loaderOptions = new LoaderOptions();

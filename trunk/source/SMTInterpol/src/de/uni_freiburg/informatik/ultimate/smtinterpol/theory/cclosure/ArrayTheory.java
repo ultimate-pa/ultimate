@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.model.ArraySortInterpretation;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.model.Model;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.option.SMTInterpolConstants;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.SourceAnnotation;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCAnnotation.RuleKind;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.ScopedArrayList;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.ScopedLinkedHashSet;
@@ -625,6 +626,17 @@ public class ArrayTheory implements ITheory {
 
 	private final LogProxy mLogger;
 
+	/**
+	 * The push/pop level, i.e., the number of push minus the number of pop
+	 * operations.
+	 */
+	private int mPushPopLevel = 0;
+	/**
+	 * The first push/pop level which contains an select or store with a quantified
+	 * variable as index. This is -1 if there is no such quantifer.
+	 */
+	private int mNeedDiffIndexLevel = -1;
+
 	/// Cache for the congruence roots;
 	Map<CCTerm, ArrayNode> mCongRoots = null;
 	/**
@@ -804,7 +816,7 @@ public class ArrayTheory implements ITheory {
 		for (final Entry<ArrayNode, Map<CCTerm, Object>> entry : mArrayModels.entrySet()) {
 			final StringBuilder sb = new StringBuilder();
 			sb.append(entry.getKey().mTerm).append(" = store[");
-			sb.append(((ArrayNode) entry.getValue().get(null)).mTerm);
+			sb.append(entry.getKey().getWeakRepresentative().mTerm);
 			for (final Entry<CCTerm, Object> storeEntry : entry.getValue().entrySet()) {
 				if (storeEntry.getKey() == null) {
 					continue;
@@ -857,10 +869,16 @@ public class ArrayTheory implements ITheory {
 		mStores.beginScope();
 		mConsts.beginScope();
 		mDiffs.beginScope();
+		mPushPopLevel++;
 	}
 
 	@Override
 	public void pop() {
+		if (mNeedDiffIndexLevel == mPushPopLevel) {
+			// no longer need diff for quantified arrays
+			mNeedDiffIndexLevel = -1;
+		}
+		mPushPopLevel--;
 		mArrays.endScope();
 		mStores.endScope();
 		mConsts.endScope();
@@ -957,10 +975,24 @@ public class ArrayTheory implements ITheory {
 					todoQueue.addFirst(parent);
 					continue;
 				}
+				final Term secondParentTerm;
+				if (node.mSecondaryEdge != null) {
+					secondParentTerm = builder.getModelValue(node.mSecondaryEdge.mTerm);
+					if (secondParentTerm == null) {
+						// secondary parent wasn't visited yet; it must be visited first
+						// enqueue the node again and its parent.
+						todoQueue.addFirst(node);
+						todoQueue.addFirst(node.mSecondaryEdge);
+						continue;
+					}
+				} else {
+					secondParentTerm = null;
+				}
 				final CCTerm ccIndex = getIndexFromStore(node.mPrimaryStore).getRepresentative();
 				final CCTerm ccValue = node.mSelects.get(ccIndex);
 				final Term index = builder.getModelValue(ccIndex);
-				final Term value = ccValue == null ? model.extendFresh(valueSort) : builder.getModelValue(ccValue);
+				final Term value = secondParentTerm != null ? arraySortInterpretation.getSelect(secondParentTerm, index)
+						: ccValue == null ? model.extendFresh(valueSort) : builder.getModelValue(ccValue);
 				Term nodeValue = t.term("store", parentTerm, index, value);
 				nodeValue = arraySortInterpretation.normalizeStoreTerm(nodeValue);
 				builder.setModelValue(node.mTerm, nodeValue);
@@ -1441,7 +1473,14 @@ public class ArrayTheory implements ITheory {
 				constRep = getValueFromConst(weakRep.mConstTerm).getRepresentative();
 			}
 			if (node == weakRep) {
-				nodeMapping.put(null, node);
+				if (mNeedDiffIndexLevel >= 0) {
+					// If we have quantified array indices, we need to handle extensionality for
+					// arrays that are not weakly equivalent. Unless the arrays have different
+					// sorts.
+					nodeMapping.put(null, node.mTerm.getFlatTerm().getSort());
+				} else {
+					nodeMapping.put(null, node);
+				}
 				for (final Entry<CCTerm, CCAppTerm> e : node.mSelects.entrySet()) {
 					final CCTerm value = e.getValue().getRepresentative();
 					assert constRep == null || value == constRep;
@@ -1470,14 +1509,25 @@ public class ArrayTheory implements ITheory {
 			}
 		}
 		for (final SymmetricPair<ArrayNode> equalities : propEqualities) {
-			mNumInstsEq++;
-			final WeakCongruencePath path = new WeakCongruencePath(this);
-			final Clause lemma = path.computeWeakeqExt(equalities.getFirst().mTerm, equalities.getSecond().mTerm,
-					mCClosure.isProofGenerationEnabled());
-			if (mLogger.isDebugEnabled()) {
-				mLogger.debug("AL sw: " + lemma);
+			if (equalities.getFirst().getWeakRepresentative() == equalities.getSecond().getWeakRepresentative()) {
+				mNumInstsEq++;
+				final WeakCongruencePath path = new WeakCongruencePath(this);
+				final Clause lemma = path.computeWeakeqExt(equalities.getFirst().mTerm, equalities.getSecond().mTerm,
+						mCClosure.isProofGenerationEnabled());
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug("AL sw: " + lemma);
+				}
+				mCClosure.getEngine().learnClause(lemma);
 			}
-			mCClosure.getEngine().learnClause(lemma);
+		}
+		for (final SymmetricPair<ArrayNode> equalities : propEqualities) {
+			if (equalities.getFirst().getWeakRepresentative() != equalities.getSecond().getWeakRepresentative()) {
+				assert mNeedDiffIndexLevel >= 0;
+				// just create a diff term and let the solver do the rest.
+				final Term diffTerm = mClausifier.getTheory().term(SMTInterpolConstants.DIFF,
+						equalities.getFirst().mTerm.getFlatTerm(), equalities.getSecond().mTerm.getFlatTerm());
+				mClausifier.addTermAxioms(diffTerm, new SourceAnnotation("", null));
+			}
 		}
 		mTimeBuildWeakEqi += (System.nanoTime() - startTime);
 		return !propEqualities.isEmpty();
@@ -1504,5 +1554,16 @@ public class ArrayTheory implements ITheory {
 		final ArrayNode weakRep = mCongRoots.get(array.getRepresentative()).getWeakRepresentative();
 		assert weakRep != null;
 		return weakRep.mTerm;
+	}
+
+	/**
+	 * This is called by the quantifier theory to indicate that there is a
+	 * quantified variable as a select index or store index. If this is the case, we
+	 * need to create diff terms to ensure extensionality is handled correctly.
+	 */
+	public void setNeedDiffIndices() {
+		if (mNeedDiffIndexLevel < 0) {
+			mNeedDiffIndexLevel = mPushPopLevel;
+		}
 	}
 }

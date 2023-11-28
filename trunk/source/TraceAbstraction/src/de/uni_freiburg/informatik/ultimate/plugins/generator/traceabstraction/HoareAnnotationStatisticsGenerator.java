@@ -33,11 +33,11 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
 
 public class HoareAnnotationStatisticsGenerator implements IStatisticsDataProvider {
 	
-	private int mFomulaSimplifications;
+	private int mFormulaSimplifications;
 	private long mFormulaSimplificationTreeSizeReduction;
 	private long mHoareSimplificationTime;
 	
-	private int mFomulaSimplificationsInter;
+	private int mFormulaSimplificationsInter;
 	private long mFormulaSimplificationTreeSizeReductionInter;
 	private long mHoareSimplificationTimeInter;
 	
@@ -56,14 +56,14 @@ public class HoareAnnotationStatisticsGenerator implements IStatisticsDataProvid
 	public Object getValue(final String key) {
 		final HoareAnnotationStatisticsDefinitions keyEnum = Enum.valueOf(HoareAnnotationStatisticsDefinitions.class, key);
 		switch (keyEnum) {
-		case FomulaSimplifications:
-			return mFomulaSimplifications;
+		case FormulaSimplifications:
+			return mFormulaSimplifications;
 		case FormulaSimplificationTreeSizeReduction:
 			return mFormulaSimplificationTreeSizeReduction;
 		case HoareSimplificationTime:
 			return mHoareSimplificationTime;
-		case FomulaSimplificationsInter:
-			return mFomulaSimplificationsInter;
+		case FormulaSimplificationsInter:
+			return mFormulaSimplificationsInter;
 		case FormulaSimplificationTreeSizeReductionInter:
 			return mFormulaSimplificationTreeSizeReductionInter;
 		case HoareSimplificationTimeInter:
@@ -94,7 +94,7 @@ public class HoareAnnotationStatisticsGenerator implements IStatisticsDataProvid
 	}
 
 	public void reportSimplification() {
-		mFomulaSimplifications++;
+		mFormulaSimplifications++;
 	}
 
 	public void reportReduction(final long reductionOfTreeSize) {
@@ -106,7 +106,7 @@ public class HoareAnnotationStatisticsGenerator implements IStatisticsDataProvid
 	}
 	
 	public void reportSimplificationInter() {
-		mFomulaSimplificationsInter++;
+		mFormulaSimplificationsInter++;
 	}
 
 	public void reportReductionInter(final long reductionOfTreeSize) {

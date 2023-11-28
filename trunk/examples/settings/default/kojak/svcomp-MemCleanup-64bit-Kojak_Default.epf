@@ -63,6 +63,7 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Interpolating\ solver=SMTINTERPOL
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck=
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Timeout\ in\ seconds=1000000
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Theory\ for\ external\ solver=ALL
 @de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck=0.0.1
 
 

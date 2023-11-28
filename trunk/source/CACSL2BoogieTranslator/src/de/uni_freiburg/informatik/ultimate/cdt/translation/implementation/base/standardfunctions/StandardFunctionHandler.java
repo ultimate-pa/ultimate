@@ -260,6 +260,10 @@ public class StandardFunctionHandler {
 		for (final String unsupportedFloatFunction : FloatSupportInUltimate.getUnsupportedFloatOperations()) {
 			fill(map, unsupportedFloatFunction, dieFloat);
 		}
+		for (final var overapprox : FloatSupportInUltimate.getOverapproximatedUnaryFunctions().entrySet()) {
+			fill(map, overapprox.getKey(), (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name,
+					1, new CPrimitive(overapprox.getValue())));
+		}
 
 		/** functions of pthread library **/
 		fill(map, "pthread_create", this::handlePthread_create);
@@ -288,6 +292,17 @@ public class StandardFunctionHandler {
 		fill(map, "pthread_setspecific", die);
 		// further unsupported pthread functions
 		fill(map, "pthread_rwlock_init", die);
+
+		/** Semaphores https://pubs.opengroup.org/onlinepubs/7908799/xsh/semaphore.h.html **/
+		fill(map, "sem_close", die);
+		fill(map, "sem_destroy", die);
+		fill(map, "sem_getvalue", die);
+		fill(map, "sem_init", die);
+		fill(map, "sem_open", die);
+		fill(map, "sem_post", die);
+		fill(map, "sem_trywait", die);
+		fill(map, "sem_unlink", die);
+		fill(map, "sem_wait", die);
 
 		fill(map, "printf", (main, node, loc, name) -> handlePrintF(main, node, loc));
 
@@ -328,9 +343,9 @@ public class StandardFunctionHandler {
 		/*
 		 * See https://gcc.gnu.org/onlinedocs/gcc/Other-Builtins.html
 		 */
-		fill(map, "__builtin_popcount", this::handlePopcount);
-		fill(map, "__builtin_popcountl", this::handlePopcount);
-		fill(map, "__builtin_popcountll", this::handlePopcount);
+		fill(map, "__builtin_popcount", die);
+		fill(map, "__builtin_popcountl", die);
+		fill(map, "__builtin_popcountll", die);
 
 		/*
 		 * The GNU C online documentation at https://gcc.gnu.org/onlinedocs/gcc/Return-Address.html on 09 Nov 2016 says:
@@ -355,6 +370,8 @@ public class StandardFunctionHandler {
 		fill(map, "__builtin_return_address", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
 				name, 1, new CPointer(new CPrimitive(CPrimitives.VOID))));
 
+		fill(map, "__builtin_bswap16", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
+				new CPrimitive(CPrimitives.USHORT)));
 		fill(map, "__builtin_bswap32", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
 				new CPrimitive(CPrimitives.UINT)));
 		fill(map, "__builtin_bswap64", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
@@ -431,6 +448,11 @@ public class StandardFunctionHandler {
 				loc, name, IASTBinaryExpression.op_lessEqual));
 		fill(map, "__builtin_isunordered", this::handleFloatBuiltinIsUnordered);
 		fill(map, "__builtin_islessgreater", this::handleFloatBuiltinIsLessGreater);
+		fill(map, "__builtin_constant_p", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
+				new CPrimitive(CPrimitives.BOOL)));
+		fill(map, "__builtin_isinf_sign", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
+				new CPrimitive(CPrimitives.INT)));
+		fill(map, "__builtin_isnan", (main, node, loc, name) -> handleUnaryFloatFunction(main, node, loc, "isnan"));
 
 		/** math.h float functions **/
 		// see 7.12.3.1 or http://en.cppreference.com/w/c/numeric/math/fpclassify
@@ -471,12 +493,6 @@ public class StandardFunctionHandler {
 		// see 7.12.3.5 or http://en.cppreference.com/w/c/numeric/math/isnormal
 		fill(map, "isnormal", this::handleUnaryFloatFunction);
 
-		// see 7.12.3.6 or http://en.cppreference.com/w/c/numeric/math/signbit
-		fill(map, "signbit", this::handleUnaryFloatFunction);
-		fill(map, "__signbit", this::handleUnaryFloatFunction); // ??
-		fill(map, "__signbitl", this::handleUnaryFloatFunction); // ??
-		fill(map, "__signbitf", this::handleUnaryFloatFunction); // ??
-
 		// see 7.12.7.5 or http://en.cppreference.com/w/c/numeric/math/sqrt
 		fill(map, "sqrt", this::handleUnaryFloatFunction);
 		fill(map, "sqrtf", this::handleUnaryFloatFunction);
@@ -514,11 +530,6 @@ public class StandardFunctionHandler {
 		fill(map, "ceilf", this::handleUnaryFloatFunction);
 		fill(map, "ceill", this::handleUnaryFloatFunction);
 
-		// see 7.12.4.6 or http://en.cppreference.com/w/c/numeric/math/sin
-		fill(map, "sin", this::handleUnaryFloatFunction);
-		fill(map, "sinf", this::handleUnaryFloatFunction);
-		fill(map, "sinl", this::handleUnaryFloatFunction);
-
 		// see 7.12.12.2 or http://en.cppreference.com/w/c/numeric/math/fmax
 		// NaN arguments are treated as missing data: if one argument is a NaN and the
 		// other numeric, then the
@@ -533,9 +544,12 @@ public class StandardFunctionHandler {
 		fill(map, "fminl", this::handleBinaryFloatFunction);
 
 		// see 7.12.10.2 or http://en.cppreference.com/w/c/numeric/math/remainder
-		fill(map, "remainder", this::handleBinaryFloatFunction);
-		fill(map, "remainderf", this::handleBinaryFloatFunction);
-		fill(map, "remainderl", this::handleBinaryFloatFunction);
+		fill(map, "remainder", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 2,
+				new CPrimitive(CPrimitives.DOUBLE)));
+		fill(map, "remainderf", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 2,
+				new CPrimitive(CPrimitives.FLOAT)));
+		fill(map, "remainderl", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 2,
+				new CPrimitive(CPrimitives.LONGDOUBLE)));
 
 		// see 7.12.10.1 or http://en.cppreference.com/w/c/numeric/math/fmod
 		fill(map, "fmod", this::handleBinaryFloatFunction);
@@ -543,9 +557,12 @@ public class StandardFunctionHandler {
 		fill(map, "fmodl", this::handleBinaryFloatFunction);
 
 		// see 7.12.11.1 or http://en.cppreference.com/w/c/numeric/math/copysign
-		fill(map, "copysign", this::handleBinaryFloatFunction);
-		fill(map, "copysignf", this::handleBinaryFloatFunction);
-		fill(map, "copysignl", this::handleBinaryFloatFunction);
+		fill(map, "copysign", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 2,
+				new CPrimitive(CPrimitives.DOUBLE)));
+		fill(map, "copysignf", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 2,
+				new CPrimitive(CPrimitives.FLOAT)));
+		fill(map, "copysignl", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 2,
+				new CPrimitive(CPrimitives.LONGDOUBLE)));
 
 		// see 7.12.12.1 or https://en.cppreference.com/w/c/numeric/math/fdim
 		fill(map, "fdim", this::handleBinaryFloatFunction);
@@ -1012,33 +1029,6 @@ public class StandardFunctionHandler {
 				mExpressionTranslation.constructUnaryExpression(loc, IASTUnaryExpression.op_minus, expr, resultType);
 		final Expression iteExpression = ExpressionFactory.constructIfThenElseExpression(loc, positive, expr, negated);
 		return builder.setLrValue(new RValue(iteExpression, resultType)).build();
-	}
-
-	/**
-	 * Count the number of ones in the argument. __builtin_popcountl(x) is currently just overapproximated with some
-	 * result, where result >= 0 and result <= x
-	 */
-	private Result handlePopcount(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
-			final String name) {
-		final IASTInitializerClause[] arguments = node.getArguments();
-		checkArguments(loc, 1, name, arguments);
-		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
-		final ExpressionResult argResult =
-				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
-		builder.addAllExceptLrValue(argResult);
-		final CPrimitive retType = new CPrimitive(CPrimitives.INT);
-		final AuxVarInfo auxVar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, retType, AUXVAR.NONDET);
-		builder.addAuxVar(auxVar).addDeclaration(auxVar.getVarDec());
-		// TODO: Consider argResult for a better overapproximation
-		final Expression nonNegative = mExpressionTranslation.constructBinaryComparisonExpression(loc,
-				IASTBinaryExpression.op_greaterEqual, auxVar.getExp(), retType,
-				mExpressionTranslation.constructLiteralForIntegerType(loc, retType, BigInteger.ZERO), retType);
-		final Expression smallerTypeSize =
-				mExpressionTranslation.constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_lessEqual,
-						auxVar.getExp(), retType, argResult.getLrValue().getValue(), retType);
-		final Expression assumption = ExpressionFactory.and(loc, List.of(nonNegative, smallerTypeSize));
-		builder.addStatement(new AssumeStatement(loc, assumption)).addOverapprox(new Overapprox(name, loc));
-		return builder.setLrValue(new RValue(auxVar.getExp(), retType)).build();
 	}
 
 	// For now we do not handle setjmp properly. We crash on longjmp, so it is sufficient to always return 0 for setjmp.
@@ -1688,11 +1678,18 @@ public class StandardFunctionHandler {
 	 */
 	private Result handlePthread_mutex_lock(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
+		return handleLockCall(main, node, loc, name, mMemoryHandler::constructPthreadMutexLockCall);
+	}
 
-		final IASTInitializerClause[] arguments = node.getArguments();
-		checkArguments(loc, 1, name, arguments);
-
-		return createPthread_mutex_lock(main, loc, arguments[0]);
+	/**
+	 * We assume that the mutex type is PTHREAD_MUTEX_NORMAL which means that if we unlock a mutex that has never been
+	 * locked, the behavior is undefined. We use a semantics where unlocking a non-locked mutex is a no-op. For the
+	 * return value we follow what GCC did in my experiments. It produced code that returned 0 even if we unlocked a
+	 * non-locked mutex.
+	 */
+	private Result handlePthread_mutex_unlock(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+		return handleLockCall(main, node, loc, name, mMemoryHandler::constructPthreadMutexUnlockCall);
 	}
 
 	private Result handlePthread_mutex_trylock(final IDispatcher main, final IASTFunctionCallExpression node,
@@ -1717,44 +1714,31 @@ public class StandardFunctionHandler {
 
 	private ExpressionResult createPthread_mutex_lock(final IDispatcher main, final ILocation loc,
 			final IASTInitializerClause mutex) {
-		final ExpressionResult arg = mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, mutex);
-
-		// final CPrimitive returnType = new CPrimitive(CPrimitives.INT);
-		// // we assume that function is always successful and returns 0
-		// final BigInteger value = BigInteger.ZERO;
-		// final Expression mutexArray = mMemoryHandler.constructMutexArrayIdentifierExpression(loc);
-		// final Expression mutexArrayAtIndex = ExpressionFactory.constructNestedArrayAccessExpression(loc, mutexArray,
-		// new Expression[] { arg.getLrValue().getValue() });
-		// final Expression mutexIsUnlocked = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ,
-		// mutexArrayAtIndex, mMemoryHandler.getBooleanArrayHelper().constructValue(false));
-		// final AssumeStatement assumeMutexUnlocked = new AssumeStatement(loc, mutexIsUnlocked);
-		final Expression index = arg.getLrValue().getValue();
-		// final AssignmentStatement lockMutex = mMemoryHandler.constructMutexArrayAssignment(loc, index, true);
-		final ExpressionResultBuilder erb = new ExpressionResultBuilder();
-		// auxvar for joined procedure's return value
-		final CType cType = new CPrimitive(CPrimitives.INT);
-		final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, cType, SFO.AUXVAR.NONDET);
-		erb.addDeclaration(auxvarinfo.getVarDec());
-		erb.addAuxVar(auxvarinfo);
-		erb.addStatement(mMemoryHandler.constructPthreadMutexLockCall(loc, index, auxvarinfo.getLhs()));
-		erb.setLrValue(new RValue(auxvarinfo.getExp(), new CPrimitive(CPrimitives.INT)));
-		// erb.addAllExceptLrValue(arg);
-		// erb.addStatement(assumeMutexUnlocked);
-		// erb.addStatement(lockMutex);
-		// erb.setLrValue(new RValue(mTypeSizes.constructLiteralForIntegerType(loc, returnType, value),
-		// new CPrimitive(CPrimitives.INT)));
-		return erb.build();
+		return handleLockCall(main, loc, "pthread_mutex_lock", mutex, mMemoryHandler::constructPthreadMutexLockCall);
 	}
 
-	private Result handleLockCall(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
-			final String name, final ILockCallFactory callFactory) {
+	private ExpressionResult createPthread_mutex_unlock(final IDispatcher main, final ILocation loc,
+			final IASTInitializerClause mutex) {
+		return handleLockCall(main, loc, "pthread_mutex_unlock", mutex,
+				mMemoryHandler::constructPthreadMutexUnlockCall);
+	}
+
+	private ExpressionResult handleLockCall(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name, final ILockCallFactory callFactory) {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 1, name, arguments);
 		final IASTInitializerClause lock = arguments[0];
 
+		return handleLockCall(main, loc, name, lock, callFactory);
+	}
+
+	private ExpressionResult handleLockCall(final IDispatcher main, final ILocation loc, final String name,
+			final IASTInitializerClause lock, final ILockCallFactory callFactory) {
+		final ExpressionResultBuilder erb = new ExpressionResultBuilder();
+
 		final ExpressionResult arg = mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, lock);
 		final Expression index = arg.getLrValue().getValue();
-		final ExpressionResultBuilder erb = new ExpressionResultBuilder();
+		erb.addAllExceptLrValue(arg);
 
 		// auxvar for procedure's return value
 		final CType cType = new CPrimitive(CPrimitives.INT);
@@ -1765,44 +1749,10 @@ public class StandardFunctionHandler {
 		erb.addStatement(callFactory.apply(loc, index, auxvarinfo.getLhs()));
 		erb.setLrValue(new RValue(auxvarinfo.getExp(), new CPrimitive(CPrimitives.INT)));
 		return erb.build();
-
 	}
 
 	private interface ILockCallFactory {
-		CallStatement apply(ILocation loc, Expression index, VariableLHS lhs);
-	}
-
-	/**
-	 * We assume that the mutex type is PTHREAD_MUTEX_NORMAL which means that if we unlock a mutex that has never been
-	 * locked, the behavior is undefined. We use a semantics where unlocking a non-locked mutex is a no-op. For the
-	 * return value we follow what GCC did in my experiments. It produced code that returned 0 even if we unlocked a
-	 * non-locked mutex.
-	 */
-	private Result handlePthread_mutex_unlock(final IDispatcher main, final IASTFunctionCallExpression node,
-			final ILocation loc, final String name) {
-		final IASTInitializerClause[] arguments = node.getArguments();
-		checkArguments(loc, 1, name, arguments);
-
-		return createPthread_mutex_unlock(main, loc, arguments[0]);
-	}
-
-	private ExpressionResult createPthread_mutex_unlock(final IDispatcher main, final ILocation loc,
-			final IASTInitializerClause mutex) {
-		mMemoryHandler.requireMemoryModelFeature(MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX);
-
-		final ExpressionResult arg = mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, mutex);
-
-		final CPrimitive returnType = new CPrimitive(CPrimitives.INT);
-		// we assume that function is always successful and returns 0
-		final BigInteger value = BigInteger.ZERO;
-		final Expression index = arg.getLrValue().getValue();
-		final AssignmentStatement unlockMutex = mMemoryHandler.constructMutexArrayAssignment(loc, index, false);
-		final ExpressionResultBuilder erb = new ExpressionResultBuilder();
-		erb.addAllExceptLrValue(arg);
-		erb.addStatement(unlockMutex);
-		erb.setLrValue(new RValue(mTypeSizes.constructLiteralForIntegerType(loc, returnType, value),
-				new CPrimitive(CPrimitives.INT)));
-		return erb.build();
+		Statement apply(ILocation loc, Expression index, VariableLHS lhs);
 	}
 
 	private Result handlePthread_mutex_init(final IDispatcher main, final IASTFunctionCallExpression node,

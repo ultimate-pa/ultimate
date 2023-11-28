@@ -32,7 +32,7 @@ import de.uni_freiburg.informatik.ultimate.witnessprinter.preferences.Preference
 
 public class YamlCorrectnessWitnessGenerator {
 	private static final String[] ACSL_SUBSTRING = new String[] { "\\old", "\\result", "exists", "forall" };
-	private static final FormatVersion FORMAT_VERSION = new FormatVersion(0, 2);
+	private static final FormatVersion FORMAT_VERSION = new FormatVersion(2, 0);
 
 	private final ILogger mLogger;
 	private final IBacktranslatedCFG<?, ?> mTranslatedCFG;
@@ -104,7 +104,7 @@ public class YamlCorrectnessWitnessGenerator {
 		switch (FORMAT_VERSION.toString()) {
 		case "0.1":
 			return witness;
-		case "0.2":
+		case "2.0":
 			return new Witness(List.of(witness.toInvariantSet(metadataSupplier)));
 		default:
 			throw new UnsupportedOperationException("Unknown format version " + FORMAT_VERSION);
@@ -122,7 +122,7 @@ public class YamlCorrectnessWitnessGenerator {
 		switch (FORMAT_VERSION.toString()) {
 		case "0.1":
 			return "C";
-		case "0.2":
+		case "2.0":
 			return "c_expression";
 		default:
 			throw new UnsupportedOperationException("Unknown format version " + FORMAT_VERSION);

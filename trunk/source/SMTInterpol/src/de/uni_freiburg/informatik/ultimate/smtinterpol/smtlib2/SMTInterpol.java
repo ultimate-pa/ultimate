@@ -71,6 +71,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.PropProofChecker;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.SourceAnnotation;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.UnsatCoreCollector;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.ErrorCallback.ErrorReason;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.ResourceLimit;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.ScopedArrayList;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.TimeoutHandler;
 
@@ -95,21 +96,21 @@ public class SMTInterpol extends NoopScript {
 		FULL {
 			@Override
 			boolean check(final DPLLEngine engine) {
-				engine.provideCompleteness(DPLLEngine.COMPLETE);
+				engine.setCompleteness(DPLLEngine.COMPLETE);
 				return engine.solve();
 			}
 		},
 		PROPAGATION {
 			@Override
 			boolean check(final DPLLEngine engine) {
-				engine.provideCompleteness(DPLLEngine.INCOMPLETE_CHECK);
+				engine.setCompleteness(DPLLEngine.INCOMPLETE_CHECK);
 				return engine.propagate();
 			}
 		},
 		QUICK {
 			@Override
 			boolean check(final DPLLEngine engine) {
-				engine.provideCompleteness(DPLLEngine.INCOMPLETE_CHECK);
+				engine.setCompleteness(DPLLEngine.INCOMPLETE_CHECK);
 				return engine.quickCheck();
 			}
 		};
@@ -166,7 +167,9 @@ public class SMTInterpol extends NoopScript {
 	private DPLLEngine mEngine;
 	private Clausifier mClausifier;
 	private ScopedArrayList<Term> mAssertions;
-	private TimeoutHandler mCancel;
+	private TerminationRequest mCancel;
+	private TimeoutHandler mTimeout;
+	private ResourceLimit mResourceLimit;
 
 	private final LogProxy mLogger;
 
@@ -282,7 +285,9 @@ public class SMTInterpol extends NoopScript {
 		mLogger = options.getLogProxy();
 		mOptions = options;
 		mSolverOptions = options.getSolverOptions();
-		mCancel = new TimeoutHandler(cancel);
+		mCancel = cancel;
+		mTimeout = new TimeoutHandler(mCancel);
+		mResourceLimit = new ResourceLimit(mTimeout);
 		reset();
 	}
 
@@ -331,6 +336,8 @@ public class SMTInterpol extends NoopScript {
 			}
 		}
 		mCancel = other.mCancel;
+		mTimeout = other.mTimeout;
+		mResourceLimit = other.mResourceLimit;
 		setupClausifier(getTheory().getLogic());
 	}
 
@@ -449,7 +456,11 @@ public class SMTInterpol extends NoopScript {
 		}
 		final long timeout = mSolverOptions.getTimeout();
 		if (timeout > 0) {
-			mCancel.setTimeout(timeout);
+			mTimeout.setTimeout(timeout);
+		}
+		final long resouceLimit = mSolverOptions.getReproducibleResourceLimit();
+		if (resouceLimit > 0) {
+			mResourceLimit.setResourceLimit(resouceLimit);
 		}
 
 		LBool result = LBool.UNKNOWN;
@@ -542,7 +553,8 @@ public class SMTInterpol extends NoopScript {
 			}
 		}
 		mStatusInfo = LBool.UNKNOWN;
-		mCancel.clearTimeout();
+		mTimeout.clearTimeout();
+		mResourceLimit.clearResourceLimit();
 		return result;
 	}
 
@@ -579,7 +591,7 @@ public class SMTInterpol extends NoopScript {
 	private void setupClausifier(final Logics logic) {
 		try {
 			final ProofMode proofMode = getProofMode();
-			mEngine = new DPLLEngine(mLogger, mCancel);
+			mEngine = new DPLLEngine(mLogger, mResourceLimit);
 			mClausifier = new Clausifier(getTheory(), mEngine, proofMode);
 			// This has to be before set-logic since we need to capture
 			// initialization of CClosure.
@@ -618,7 +630,11 @@ public class SMTInterpol extends NoopScript {
 		}
 		final long timeout = mSolverOptions.getTimeout();
 		if (timeout > 0) {
-			mCancel.setTimeout(timeout);
+			mTimeout.setTimeout(timeout);
+		}
+		final long resouceLimit = mSolverOptions.getReproducibleResourceLimit();
+		if (resouceLimit > 0) {
+			mResourceLimit.setResourceLimit(resouceLimit);
 		}
 		super.assertTerm(term);
 		if (!term.getSort().equals(getTheory().getBooleanSort())) {
@@ -663,7 +679,8 @@ public class SMTInterpol extends NoopScript {
 			}
 			throw exc;
 		}
-		mCancel.clearTimeout();
+		mTimeout.clearTimeout();
+		mResourceLimit.clearResourceLimit();
 		return LBool.UNKNOWN;
 	}
 
@@ -781,7 +798,11 @@ public class SMTInterpol extends NoopScript {
 	public Term[] getInterpolants(final Term[] partition, final int[] startOfSubtree, final Term proofTree) {
 		final long timeout = mSolverOptions.getTimeout();
 		if (timeout > 0) {
-			mCancel.setTimeout(timeout);
+			mTimeout.setTimeout(timeout);
+		}
+		final long resouceLimit = mSolverOptions.getReproducibleResourceLimit();
+		if (resouceLimit > 0) {
+			mResourceLimit.setResourceLimit(resouceLimit);
 		}
 		try {
 			if (partition.length != startOfSubtree.length) {
@@ -844,7 +865,7 @@ public class SMTInterpol extends NoopScript {
 			final Term[] ipls;
 			try {
 				final Interpolator interpolator = new Interpolator(mLogger, checkingSolver, mAssertions, getTheory(),
-						parts, startOfSubtree, mCancel);
+						parts, startOfSubtree, mResourceLimit);
 				ipls = interpolator.getInterpolants(proofTree);
 				if (checkingSolver != null) {
 					mLogger.info("FOUND VALID INTERPOLANT");
@@ -873,7 +894,8 @@ public class SMTInterpol extends NoopScript {
 			}
 			throw ex;
 		} finally {
-			mCancel.clearTimeout();
+			mTimeout.clearTimeout();
+			mResourceLimit.clearResourceLimit();
 		}
 	}
 
@@ -1072,10 +1094,6 @@ public class SMTInterpol extends NoopScript {
 	 */
 	public LogProxy getLogger() {
 		return mLogger;
-	}
-
-	public TerminationRequest getTimeoutHandler() {
-		return mCancel;
 	}
 
 	protected void setEngine(final DPLLEngine engine) {
@@ -1331,20 +1349,22 @@ public class SMTInterpol extends NoopScript {
 	}
 
 	public boolean isTerminationRequested() {
-		return mCancel.isTerminationRequested();
+		return mResourceLimit.isTerminationRequested();
 	}
 
 	/**
 	 * Use with caution.
 	 */
 	public void setTerminationRequest(final TerminationRequest request) {
-		mCancel = new TimeoutHandler(request);
+		mCancel = request;
+		mTimeout = new TimeoutHandler(request);
+		mResourceLimit = new ResourceLimit(mTimeout);
 	}
 
 	/**
 	 * Use with caution.
 	 */
 	public TerminationRequest getTerminationRequest() {
-		return mCancel.getTerminationRequest();
+		return mCancel;
 	}
 }

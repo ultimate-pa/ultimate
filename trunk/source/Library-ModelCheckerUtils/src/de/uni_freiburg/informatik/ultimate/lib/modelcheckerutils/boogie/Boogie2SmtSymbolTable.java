@@ -325,7 +325,11 @@ public class Boogie2SmtSymbolTable
 	}
 
 	public Map<String, Expression[]> getAttributes(final String boogieFunctionId) {
-		return Collections.unmodifiableMap(mBoogieFunction2Attributes.get(boogieFunctionId));
+		final Map<String, Expression[]> attributes = mBoogieFunction2Attributes.get(boogieFunctionId);
+		if (attributes == null) {
+			throw new AssertionError("Undeclared function: " + boogieFunctionId);
+		}
+		return Collections.unmodifiableMap(attributes);
 	}
 
 	private void declareFunction(final FunctionDeclaration funcdecl) {

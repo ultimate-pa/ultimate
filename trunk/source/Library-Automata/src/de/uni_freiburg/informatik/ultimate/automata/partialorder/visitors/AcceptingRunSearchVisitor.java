@@ -48,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 public class AcceptingRunSearchVisitor<L, S> implements IDfsVisitor<L, S> {
 
 	private final Predicate<S> mIsGoalState;
-	private final Predicate<S> mIsHopelessState;
 
 	// The current stack, as n+1 states and n letters
 	private final Deque<S> mStateStack = new ArrayDeque<>();
@@ -66,14 +65,9 @@ public class AcceptingRunSearchVisitor<L, S> implements IDfsVisitor<L, S> {
 	 *
 	 * @param isGoalState
 	 *            A predicate identifying a goal state. We consider a run accepting if it reaches such a state.
-	 * @param isHopelessState
-	 *            A predicate identifying hopeless states, i.e., states from which no goal state can be reached. The
-	 *            visitor prunes such states from the traversal. It is sound for this predicate to always return
-	 *            <code>false</code>, e.g. if there is no meaningful and cheap test to identify hopeless states.
 	 */
-	public AcceptingRunSearchVisitor(final Predicate<S> isGoalState, final Predicate<S> isHopelessState) {
+	public AcceptingRunSearchVisitor(final Predicate<S> isGoalState) {
 		mIsGoalState = isGoalState;
-		mIsHopelessState = isHopelessState;
 	}
 
 	@Override
@@ -81,7 +75,7 @@ public class AcceptingRunSearchVisitor<L, S> implements IDfsVisitor<L, S> {
 		assert mStateStack.isEmpty() : "start state must be first";
 		mStateStack.addLast(state);
 		mFound = mIsGoalState.test(state);
-		return isHopelessState(state);
+		return false;
 	}
 
 	@Override
@@ -90,13 +84,12 @@ public class AcceptingRunSearchVisitor<L, S> implements IDfsVisitor<L, S> {
 		assert mStateStack.getLast() == source : "Unexpected transition from state " + source;
 		mPendingLetter = letter;
 		mPendingState = target;
-		return isHopelessState(target);
+		return false;
 	}
 
 	@Override
 	public boolean discoverState(final S state) {
 		assert !mFound : "Unexpected state discovery after abort";
-		assert !isHopelessState(state) : "Should not be able to reach hopeless state";
 
 		if (mPendingLetter == null) {
 			// Must be initial state
@@ -129,13 +122,6 @@ public class AcceptingRunSearchVisitor<L, S> implements IDfsVisitor<L, S> {
 	@Override
 	public boolean isFinished() {
 		return mFound;
-	}
-
-	private boolean isHopelessState(final S state) {
-		if (mIsHopelessState == null) {
-			return false;
-		}
-		return mIsHopelessState.test(state);
 	}
 
 	/**

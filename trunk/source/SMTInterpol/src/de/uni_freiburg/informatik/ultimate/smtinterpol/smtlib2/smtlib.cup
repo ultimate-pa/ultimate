@@ -366,6 +366,15 @@ action code {:
 		return null;
 	}
 
+	public DataType createDatatype(Symbol sym, String name, int numSortParams) {
+		try {
+			return parser.env.getScript().datatype(name, numSortParams);
+		} catch (SMTLIBException se) {
+			parser.report_error(se.getMessage(), sym);
+			return null;
+		}
+	}
+
 	public Term createTerm(Symbol fsym, String name, String[] indices, Sort resultSort, Term[] param) {
 		// check if there was an error when creating the child term.
 		for (Term p : param) {
@@ -439,7 +448,7 @@ terminal String /* attribute */
          CDIAGNOSTICOUTPUTCHANNEL, CREGULAROUTPUTCHANNEL,
          CEXPANDDEFINITIONS, CINTERACTIVEMODE, CPRINTSUCCESS, CVERBOSITY,
          CPRODUCEASSIGNMENTS, CPRODUCEMODELS, CPRODUCEPROOFS, CPRODUCEUNSATCORES,
-         CRANDOMSEED, CINTERPOLANTCHECKMODE, CSTRONGSIMPLIFIER,
+         CRANDOMSEED, CREPRODUCIBLERESOURCELIMIT, CINTERPOLANTCHECKMODE, CSTRONGSIMPLIFIER,
          CTIMEOUT, CPRODUCEUNSATASSUMPTIONS;
 terminal String SYMBOL, KEYWORD;
 terminal BigInteger NUMERAL;
@@ -691,7 +700,7 @@ booleanOption ::= CPRINTSUCCESS | CEXPANDDEFINITIONS | CINTERACTIVEMODE
                 | CPRODUCEASSIGNMENTS | CINTERPOLANTCHECKMODE
                 | CSTRONGSIMPLIFIER | CPRODUCEUNSATASSUMPTIONS;
 stringOption ::= CREGULAROUTPUTCHANNEL | CDIAGNOSTICOUTPUTCHANNEL;
-numeralOption ::= CRANDOMSEED | CVERBOSITY | CTIMEOUT;
+numeralOption ::= CRANDOMSEED | CREPRODUCIBLERESOURCELIMIT | CVERBOSITY | CTIMEOUT;
 option ::= booleanOption:o bValue:b {: RESULT = new Object[] { o, b }; :}
          | stringOption:o STRING:s {: RESULT = new Object[] { o, s }; :}
          | numeralOption:o NUMERAL:n {: RESULT = new Object[] { o, n }; :}
@@ -721,12 +730,12 @@ interpolantpartition
            ;
 
 sortDec ::= LPAR symbol:type NUMERAL:numParams RPAR
-            {: RESULT = parser.env.getScript().datatype(type, numParams.intValue()); :}
+            {: RESULT = createDatatype(type$, type, numParams.intValue()); :}
             ;
 
 /* sort declaration in declare-datatype is always of arity 0 */
 sortDec0 ::= symbol:type
-            {: RESULT = parser.env.getScript().datatype(type, 0); :}
+            {: RESULT = createDatatype(type$, type, 0); :}
             ;
 
 selectorDec ::= LPAR symbol:selector sort:argumentSort RPAR
@@ -851,28 +860,36 @@ command ::= SETLOGIC symbol:logic
             :}
           | DECLAREDATATYPE sortDec0:datatype datatypeDec:dataDec
             {:
-              try {
-                  parser.env.getScript().declareDatatype(datatype, dataDec.getConstructors());
-                  parser.env.printSuccess();
-              } catch (SMTLIBException se) {
-                  parser.report_error(se.getMessage(), datatype$);
+              if (hasError()) {
                   parser.env.printError(getError());
+              } else {
+	              try {
+	                  parser.env.getScript().declareDatatype(datatype, dataDec.getConstructors());
+	                  parser.env.printSuccess();
+	              } catch (SMTLIBException se) {
+	                  parser.report_error(se.getMessage(), datatype$);
+	                  parser.env.printError(getError());
+	              }
               }
             :}
           | DECLAREDATATYPES LPAR sortDec+:datatypes RPAR LPAR datatypeDec+:dataDecs RPAR
             {:
-              DataType.Constructor[][] constructors = new DataType.Constructor[dataDecs.length][];
-              Sort[][] sortParams = new Sort[dataDecs.length][];
-              for (int i = 0; i < dataDecs.length; i++) {
-                  constructors[i] = dataDecs[i].getConstructors();
-                  sortParams[i] = dataDecs[i].getSortParams();
-              }
-              try {
-                  parser.env.getScript().declareDatatypes(datatypes, constructors, sortParams);
-                  parser.env.printSuccess();
-              } catch (SMTLIBException se) {
-                  parser.report_error(se.getMessage(), datatypes$);
+              if (hasError()) {
                   parser.env.printError(getError());
+              } else {
+	              DataType.Constructor[][] constructors = new DataType.Constructor[dataDecs.length][];
+	              Sort[][] sortParams = new Sort[dataDecs.length][];
+	              for (int i = 0; i < dataDecs.length; i++) {
+	                  constructors[i] = dataDecs[i].getConstructors();
+	                  sortParams[i] = dataDecs[i].getSortParams();
+	              }
+	              try {
+	                  parser.env.getScript().declareDatatypes(datatypes, constructors, sortParams);
+	                  parser.env.printSuccess();
+	              } catch (SMTLIBException se) {
+	                  parser.report_error(se.getMessage(), datatypes$);
+	                  parser.env.printError(getError());
+	              }
               }
             :}
           | DEFINEFUN {: localVars.beginScope(); :} symbol:fun
@@ -1161,7 +1178,7 @@ keywordTheoryLogic ::= keywordTheory | keywordLogic | CNOTES | CVALUES;
 keywordOption ::= CDIAGNOSTICOUTPUTCHANNEL | CREGULAROUTPUTCHANNEL |
          CEXPANDDEFINITIONS | CINTERACTIVEMODE | CPRINTSUCCESS | CVERBOSITY |
          CPRODUCEASSIGNMENTS | CPRODUCEMODELS | CPRODUCEPROOFS | CPRODUCEUNSATCORES |
-         CRANDOMSEED | CTIMEOUT | CINTERPOLANTCHECKMODE | CSTRONGSIMPLIFIER;
+         CRANDOMSEED | CREPRODUCIBLERESOURCELIMIT | CTIMEOUT | CINTERPOLANTCHECKMODE | CSTRONGSIMPLIFIER;
 
 keywordNoAttr ::= KEYWORD | keywordTheoryLogic | keywordOption;
 keywordNoTheory ::= KEYWORD | keywordAttr | keywordLogic | keywordOption;

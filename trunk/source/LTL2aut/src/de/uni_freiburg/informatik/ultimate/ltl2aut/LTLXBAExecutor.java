@@ -87,7 +87,7 @@ public class LTLXBAExecutor {
 	/**
 	 * Returns a Büchi automaton for the ltl formula as a promela never claim.
 	 *
-	 * @param ltlFomula
+	 * @param ltlFormula
 	 *            ltl formula in the form accepted by the called tool
 	 * @throws IOException
 	 * @throws InterruptedException

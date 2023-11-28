@@ -404,6 +404,7 @@ def run_ultimate(ultimate_call, prop, verbose=False):
             if line.find(termination_path_end) != -1:
                 reading_error_path = False
         elif prop.is_data_race():
+            result_msg = "DATA-RACE"
             if line.find(data_race_found_string) != -1:
                 result = "FALSE"
             if line.find(all_spec_string) != -1:

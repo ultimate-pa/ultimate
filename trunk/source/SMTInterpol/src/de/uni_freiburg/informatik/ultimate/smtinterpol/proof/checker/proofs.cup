@@ -22,7 +22,7 @@ package de.uni_freiburg.informatik.ultimate.smtinterpol.proof.checker;
 import de.uni_freiburg.informatik.ultimate.logic.*;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofLiteral;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofRules;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.ScopedLinkedHashMap;
 import java.math.BigInteger;
 import java.math.BigDecimal;
 import java.util.Arrays;
@@ -82,8 +82,8 @@ parser code {:
 :}
 
 action code {:
-	ScopedHashMap<String,Term> localVars =
-		new ScopedHashMap<String, Term>(false);
+	ScopedLinkedHashMap<String,Term> localVars =
+		new ScopedLinkedHashMap<String, Term>(false);
 	Sort[] mSortParams = null;
 	static Sort[] emptySortArray = new Sort[0];
 	Sort mMatchSort = null;
@@ -479,7 +479,7 @@ terminal String UNDERSCORE, BANG,
          FALSEE, TRUEI, NOTI, NOTE, ORI, ORE, ANDI, ANDE, IMPI, IMPE,
          IFFI1, IFFI2, IFFE1, IFFE2, XORI, XORE, FORALLI, FORALLE, EXISTSI, EXISTSE,
          EQI, EQE, DISTINCTI, DISTINCTE, ITE1, ITE2, REFL, SYMM, TRANS, CONG, EXPAND, DELANNOT,
-         DIVISIBLEDEF, GTDEF, GEQDEF, TRICHOTOMY, TOTAL, TOTALINT, FARKAS, TOINTHIGH, TOINTLOW,
+         DIVISIBLEDEF, GTDEF, GEQDEF, TRICHOTOMY, TOTAL, TOTALINT, FARKAS, MULPOS, TOINTHIGH, TOINTLOW,
          MINUSDEF, DIVIDEDEF, POLYADD, POLYMUL, TOREALDEF, DIVLOW, DIVHIGH, MODDEF,
          SELECTSTORE1, SELECTSTORE2, EXTDIFF, CONST,
          DT_PROJECT, DT_CONS, DT_TESTI, DT_TESTE, DT_EXHAUST, DT_ACYCLIC, DT_MATCH;
@@ -775,6 +775,8 @@ axiom ::= FALSEE {: RESULT = parser.getProofRules().falseElim(); :}
                  terms[i] = coeffTerms[i].getTerm();
              }
              RESULT = parser.getProofRules().farkas(terms, coeffs); :}
+        | LPAR MULPOS term*:ineqs RPAR
+          {: RESULT = parser.getProofRules().mulPos(ineqs); :}
         | LPAR POLYADD term:plusTerm term:result RPAR
           {: RESULT = parser.getProofRules().polyAdd(plusTerm, result); :}
         | LPAR POLYMUL term:mulTerm term:result RPAR

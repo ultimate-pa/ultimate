@@ -113,14 +113,17 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultTransformer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValueFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.SkipResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO.AUXVAR;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
@@ -700,8 +703,24 @@ public class FunctionHandler {
 				in = mExprResultTransformer.performImplicitConversion(in, expectedParamType, loc);
 			}
 
-			translatedParams.add(in.getLrValue().getValue());
-			functionCallExpressionResultBuilder.addAllExceptLrValue(in);
+			functionCallExpressionResultBuilder.addAllExceptLrValueAndOverapproximation(in);
+			final LRValue lrValue = in.getLrValue();
+			if (in.getOverapprs().isEmpty()) {
+				translatedParams.add(lrValue.getValue());
+			} else {
+				// If one of the arguments is overapproximated, assign the value to an aux-var and overapproximate this
+				// assignment
+				final AuxVarInfo auxVar =
+						mAuxVarInfoBuilder.constructAuxVarInfo(loc, lrValue.getCType(), AUXVAR.NONDET);
+				functionCallExpressionResultBuilder.addAuxVar(auxVar).addDeclaration(auxVar.getVarDec());
+				final Statement assign =
+						StatementFactory.constructSingleAssignmentStatement(loc, auxVar.getLhs(), lrValue.getValue());
+				for (final Overapprox oa : in.getOverapprs()) {
+					oa.annotate(assign);
+				}
+				functionCallExpressionResultBuilder.addStatement(assign);
+				translatedParams.add(auxVar.getExp());
+			}
 		}
 		if (calleeProcCType != null && calleeProcCType.getVarArgsUsage() == VarArgsUsage.USED) {
 			// If the varargs are used, we create a pointer for all the varargs and pass them to the function.
@@ -916,6 +935,18 @@ public class FunctionHandler {
 
 				ASTType type = inparamVarList.getType();
 				final CType cvar = mSymboltable.findCSymbol(paramDec, inparamCId).getCType();
+
+				// TODO: This is a workaround for the command line arguments of the main function
+				// The main function can only take arguments of type int and char** or char*[]
+				// Since we do not support command line arguments, we just do not add the as a parameter
+				// Therefore we crash, if they are actually used (the variable is not declared in that case).
+				// TODO: With an improved overapproximation detection, we should rather overapproximate the assignment
+				// to this variable, instead of crashing.
+				if ("main".equals(mProcedureManager.getCurrentProcedureInfo().getProcedureName())
+						&& (cvar instanceof CPointer || cvar instanceof CArray)) {
+					mSymboltable.removeCSymbol(paramDec, inparamCId);
+					continue;
+				}
 
 				// onHeap case for a function parameter means the parameter is
 				// addressoffed in the function body

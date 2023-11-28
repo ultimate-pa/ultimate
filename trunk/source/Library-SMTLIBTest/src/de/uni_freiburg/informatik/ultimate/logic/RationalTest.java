@@ -63,6 +63,26 @@ public final class RationalTest {
 	}
 
 	@Test
+	public void testGCDRational() {
+		Assert.assertEquals(Rational.ZERO, Rational.ZERO.gcd(Rational.ZERO));
+		for (int i = 0; i < RATIONALS.length; i++) {
+			if (RATIONALS[i].isRational()) {
+				Assert.assertEquals(RATIONALS[i].abs(), Rational.ZERO.gcd(RATIONALS[i]));
+				Assert.assertEquals(RATIONALS[i].abs(), RATIONALS[i].gcd(Rational.ZERO));
+				Assert.assertEquals(RATIONALS[i].abs(), RATIONALS[i].gcd(RATIONALS[i]));
+				Assert.assertEquals(RATIONALS[i].abs(), RATIONALS[i].negate().gcd(RATIONALS[i]));
+				Assert.assertEquals(RATIONALS[i].abs(), RATIONALS[i].gcd(RATIONALS[i].negate()));
+				if (RATIONALS[i].isIntegral()) {
+					Assert.assertEquals(Rational.ONE, Rational.ONE.gcd(RATIONALS[i]));
+					Assert.assertEquals(Rational.ONE, RATIONALS[i].gcd(Rational.ONE));
+					Assert.assertEquals(Rational.ONE, Rational.MONE.gcd(RATIONALS[i]));
+					Assert.assertEquals(Rational.ONE, RATIONALS[i].gcd(Rational.MONE));
+				}
+			}
+		}
+	}
+
+	@Test
 	public void testGCDlong() {
 		Assert.assertEquals(0, Rational.gcd(0L, 0L));
 		Assert.assertEquals(5, Rational.gcd(5L, 0L));// NOCHECKSTYLE

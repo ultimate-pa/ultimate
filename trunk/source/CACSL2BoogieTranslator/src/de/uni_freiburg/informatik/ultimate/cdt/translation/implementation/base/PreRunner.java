@@ -162,7 +162,12 @@ public class PreRunner extends ASTVisitor {
 		if (declaration.getDeclarator() instanceof IASTFunctionDeclarator) {
 			mIsMMRequired = true;
 		}
-		final String name = declaration.getDeclarator().getName().toString();
+
+		String name = declaration.getDeclarator().getName().toString();
+		if (name.isEmpty() && declaration.getDeclarator() instanceof IASTFunctionDeclarator) {
+			name = declaration.getDeclarator().getNestedDeclarator().getName().toString();
+		}
+
 		mTemporarySymbolTable.put(name, declaration);
 		return super.visit(declaration);
 	}

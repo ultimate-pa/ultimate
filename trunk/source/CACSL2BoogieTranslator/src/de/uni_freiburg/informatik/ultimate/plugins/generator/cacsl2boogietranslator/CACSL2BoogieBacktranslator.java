@@ -1184,9 +1184,13 @@ public class CACSL2BoogieBacktranslator
 			// TODO: This might be problematic for signed types!
 			return translatedArguments[0];
 		case "fp":
-			// this function is used to construct floating points
-			return createFakeFloat((BitvecLiteral) fun.getArguments()[0], (BitvecLiteral) fun.getArguments()[1],
-					(BitvecLiteral) fun.getArguments()[2]);
+			if (Arrays.stream(fun.getArguments()).allMatch(BitvecLiteral.class::isInstance)) {
+				// this function is used to construct floating points
+				return createFakeFloat((BitvecLiteral) fun.getArguments()[0], (BitvecLiteral) fun.getArguments()[1],
+						(BitvecLiteral) fun.getArguments()[2]);
+			}
+			reportUnfinishedBacktranslation("fp can only be backtranslated, if the arguments are literals: " + fun);
+			return null;
 		case "NaN":
 			return new FakeExpression(String.valueOf(Float.NaN));
 		case "bvadd":

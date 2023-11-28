@@ -74,3 +74,10 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding/Maximize\ final\ states=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding/Use\ SBE=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding/Minimize\ states\ even\ if\ more\ edges\ are\ added\ than\ removed.=false
+
+
+#Mon Nov 20 16:53:41 CET 2023
+\!/instance/de.uni_freiburg.informatik.ultimate.boogie.preprocessor=
+/instance/de.uni_freiburg.informatik.ultimate.boogie.preprocessor/Use\ memory\ slicer=true
+@de.uni_freiburg.informatik.ultimate.boogie.preprocessor=0.2.3
+file_export_version=3.0

@@ -83,10 +83,10 @@ public class TranslationManager {
 	 * variables used to overapproximate bit-wise function in constraint mode NONE, third is a flag that is true if
 	 * constraint mode is NONE
 	 */
-	public Triple<Term, Set<TermVariable>, Boolean> translateBvtoInt(final Term bitvecFromula) {
+	public Triple<Term, Set<TermVariable>, Boolean> translateBvtoInt(final Term bitvecFormula) {
 		final BvToIntTranslation bvToInt =
-				new BvToIntTranslation(mMgdScript, mVariableMap, mTc, bitvecFromula.getFreeVars(), mNutzTransformation);
-		final Term integerFormulaNoConstraint = bvToInt.transform(bitvecFromula);
+				new BvToIntTranslation(mMgdScript, mVariableMap, mTc, bitvecFormula.getFreeVars(), mNutzTransformation);
+		final Term integerFormulaNoConstraint = bvToInt.transform(bitvecFormula);
 		mVariableMap = bvToInt.getVarMap();
 		mReversedVarMap = bvToInt.getReversedVarMap();
 		final Set<TermVariable> overapproxVariables = bvToInt.getOverapproxVariables();
@@ -102,14 +102,14 @@ public class TranslationManager {
 
 	}
 
-	public Triple<Term, Set<Term>, Boolean> translateBvtoIntTransferrer(final Term bitvecFromula, final Script scriptBV, final Script scriptINT) {
+	public Triple<Term, Set<Term>, Boolean> translateBvtoIntTransferrer(final Term bitvecFormula, final Script scriptBV, final Script scriptINT) {
 		mConstraintSet = new HashSet<>();
 		final TranslationConstrainer tc = new TranslationConstrainer(mMgdScript, mCfo);
 		final BvToIntTransferrer bvToInt =
-				new BvToIntTransferrer(scriptBV, scriptINT, mMgdScript, mVariableMap, tc, bitvecFromula.getFreeVars(), mNutzTransformation);
+				new BvToIntTransferrer(scriptBV, scriptINT, mMgdScript, mVariableMap, tc, bitvecFormula.getFreeVars(), mNutzTransformation);
 		final Term integerFormulaNoConstraint;
 		try {
-			integerFormulaNoConstraint = bvToInt.transform(bitvecFromula);
+			integerFormulaNoConstraint = bvToInt.transform(bitvecFormula);
 		} catch (final SMTLIBException e) {
 			throw new AssertionError("Translation error " + e);
 		}

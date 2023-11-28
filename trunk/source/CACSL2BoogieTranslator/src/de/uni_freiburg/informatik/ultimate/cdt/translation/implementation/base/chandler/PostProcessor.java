@@ -780,22 +780,23 @@ public class PostProcessor {
 							DeclarationInformation.DECLARATIONINFO_GLOBAL);
 
 					if (mCHandler.isHeapVar(id)) {
-						final CallStatement ultimateAllocCall;
 						if (MemoryHandler.FIXED_ADDRESSES_FOR_INITIALIZATION) {
 							final Pair<RValue, CallStatement> pair = mMemoryHandler
 									.getUltimateMemAllocInitCall(currentDeclsLoc, en.getValue().getType());
 							final RValue addressRValue = pair.getFirst();
-							ultimateAllocCall = pair.getSecond();
+							final CallStatement ultimateAllocCall = pair.getSecond();
+							staticObjectInitStatements.add(ultimateAllocCall);
 							final AssignmentStatement pointerAssignment = new AssignmentStatement(currentDeclsLoc,
 									new LeftHandSide[] { lhs }, new Expression[] { addressRValue.getValue() });
 							staticObjectInitStatements.add(pointerAssignment);
 						} else {
 							final LocalLValue llVal = new LocalLValue(lhs, en.getValue().getType(), null);
-							ultimateAllocCall =
+							final CallStatement ultimateAllocCall =
 									mMemoryHandler.getUltimateMemAllocCall(llVal, currentDeclsLoc, MemoryArea.STACK);
 							proceduresCalledByUltimateInit.add(MemoryModelDeclarations.ULTIMATE_ALLOC_STACK.name());
+							staticObjectInitStatements.add(ultimateAllocCall);
 						}
-						staticObjectInitStatements.add(ultimateAllocCall);
+
 					}
 
 					final ExpressionResult initRex =

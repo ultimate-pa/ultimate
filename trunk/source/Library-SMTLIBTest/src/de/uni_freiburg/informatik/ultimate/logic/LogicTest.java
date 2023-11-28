@@ -18,6 +18,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.logic;
 
+import static org.junit.Assert.assertTrue;
+
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -31,14 +33,14 @@ public class LogicTest {
 		final Theory theory = new Theory(Logics.AUFLIRA);
 		final Sort sortInt = theory.getSort("Int");
 		final Sort sortReal = theory.getSort("Real");
-		Assert.assertNull(theory.getFunction("-"));
+		assertThrowsSMTLIBException(() -> theory.getFunction("-"));
 		final FunctionSymbol minusInt1 = theory.getFunction("-", sortInt);
 		final FunctionSymbol minusInt2 = theory.getFunction("-", sortInt, sortInt);
 		Assert.assertNotNull(minusInt1);
 		Assert.assertNotNull(minusInt2);
 		Assert.assertSame(minusInt2, theory.getFunction("-", sortInt, sortInt, sortInt));
-		Assert.assertNull(theory.getFunction("+"));
-		Assert.assertNull(theory.getFunction("+", sortInt));
+		assertThrowsSMTLIBException(() -> theory.getFunction("+"));
+		assertThrowsSMTLIBException(() -> theory.getFunction("+", sortInt));
 		final FunctionSymbol plusInt2 = theory.getFunction("+", sortInt, sortInt);
 		Assert.assertNotNull(plusInt2);
 		Assert.assertSame(plusInt2, theory.getFunction("+", sortInt, sortInt, sortInt));
@@ -49,7 +51,7 @@ public class LogicTest {
 		Assert.assertNotNull(minusReal2);
 		Assert.assertSame(minusReal2, theory.getFunction("-", sortReal, sortReal, sortReal));
 
-		Assert.assertNull(theory.getFunction("+", sortReal));
+		assertThrowsSMTLIBException(() -> theory.getFunction("+", sortReal));
 		final FunctionSymbol plusReal2 = theory.getFunction("+", sortReal, sortReal);
 		Assert.assertNotNull(plusReal2);
 		Assert.assertSame(plusReal2, theory.getFunction("+", sortReal, sortReal, sortReal));
@@ -96,5 +98,14 @@ public class LogicTest {
 		Assert.assertEquals(bitvec(theory, 3), bv5.getSort());// NOCHECKSTYLE
 		Assert.assertEquals(bitvec(theory, 5), bv3.getSort());// NOCHECKSTYLE
 		Assert.assertEquals(bitvec(theory, 8), theory.term("concat", bv3, bv5).getSort());// NOCHECKSTYLE
+	}
+
+	private void assertThrowsSMTLIBException(Runnable code) {
+		try {
+			code.run();
+			assertTrue(false);
+		} catch (final SMTLIBException ex) {
+			return;
+		}
 	}
 }

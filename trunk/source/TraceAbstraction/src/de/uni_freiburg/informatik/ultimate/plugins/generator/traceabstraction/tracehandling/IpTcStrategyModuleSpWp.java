@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckSpWp;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
@@ -55,14 +56,16 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracechec
  */
 public abstract class IpTcStrategyModuleSpWp<LETTER extends IIcfgTransition<?>>
 		extends IpTcStrategyModuleTraceCheck<TraceCheckSpWp<LETTER>, LETTER> {
+	private final InterpolationTechnique mInterpolationTechnique;
 
 	public IpTcStrategyModuleSpWp(final TaskIdentifier taskIdentifier, final IUltimateServiceProvider services,
 			final TaCheckAndRefinementPreferences<LETTER> prefs, final IRun<LETTER, ?> counterExample,
 			final IPredicate precondition, final IPredicate postcondition,
 			final AssertionOrderModulation<LETTER> assertionOrderModulation, final IPredicateUnifier predicateUnifier,
-			final PredicateFactory predicateFactory) {
+			final PredicateFactory predicateFactory, final InterpolationTechnique interpolationTechnique) {
 		super(taskIdentifier, services, prefs, counterExample, precondition, postcondition, assertionOrderModulation,
 				predicateUnifier, predicateFactory);
+		mInterpolationTechnique = interpolationTechnique;
 	}
 
 	@Override
@@ -93,29 +96,25 @@ public abstract class IpTcStrategyModuleSpWp<LETTER extends IIcfgTransition<?>>
 
 	@Override
 	protected TraceCheckSpWp<LETTER> construct() {
-		final InterpolationTechnique interpolationTechnique = getInterpolationTechnique();
-		assert interpolationTechnique == InterpolationTechnique.ForwardPredicates
-				|| interpolationTechnique == InterpolationTechnique.BackwardPredicates
-				|| interpolationTechnique == InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect
-				|| interpolationTechnique == InterpolationTechnique.FPandBP;
+		assert mInterpolationTechnique == InterpolationTechnique.ForwardPredicates
+				|| mInterpolationTechnique == InterpolationTechnique.BackwardPredicates
+				|| mInterpolationTechnique == InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect
+				|| mInterpolationTechnique == InterpolationTechnique.FPandBP;
 
 		final AssertCodeBlockOrder assertionOrder =
-				mAssertionOrderModulation.get(mCounterexample, interpolationTechnique);
+				mAssertionOrderModulation.get(mCounterexample, mInterpolationTechnique);
 		final XnfConversionTechnique xnfConversionTechnique = mPrefs.getXnfConversionTechnique();
 		final SimplificationTechnique simplificationTechnique = mPrefs.getSimplificationTechnique();
-		final ManagedScript managedScript = constructManagedScript();
+		final ManagedScript managedScript = createExternalManagedScript(getSolverSettings());
 
 		return new TraceCheckSpWp<>(mPrecondition, mPostcondition, new TreeMap<Integer, IPredicate>(),
 				NestedWord.nestedWord(mCounterexample.getWord()), mPrefs.getCfgSmtToolkit(), assertionOrder,
 				mPrefs.getUnsatCores(), mPrefs.getUseLiveVariables(), mServices, mPrefs.computeCounterexample(),
-				mPredicateFactory, mPredicateUnifier, interpolationTechnique, managedScript, xnfConversionTechnique,
+				mPredicateFactory, mPredicateUnifier, mInterpolationTechnique, managedScript, xnfConversionTechnique,
 				simplificationTechnique,
 				TraceCheckUtils.getSequenceOfProgramPoints(NestedWord.nestedWord(mCounterexample.getWord())),
 				mPrefs.collectInterpolantStatistics());
 	}
 
-	protected abstract ManagedScript constructManagedScript();
-
-	protected abstract InterpolationTechnique getInterpolationTechnique();
-
+	protected abstract SolverSettings getSolverSettings();
 }

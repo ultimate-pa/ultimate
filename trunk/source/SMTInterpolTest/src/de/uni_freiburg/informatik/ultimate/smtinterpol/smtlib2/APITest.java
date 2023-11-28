@@ -93,12 +93,10 @@ public class APITest {
 		Assert.assertSame(LBool.UNKNOWN, isSat);
 		ReasonUnknown ru = (ReasonUnknown) solver.getInfo(":reason-unknown");
 		Assert.assertSame(ReasonUnknown.CANCELLED, ru);
-		// Check monotonicity of checker
+		// Calling sat retry with a new resource limit
 		tc.setStop(false);
 		isSat = solver.checkSat();
-		Assert.assertSame(LBool.UNKNOWN, isSat);
-		ru = (ReasonUnknown) solver.getInfo(":reason-unknown");
-		Assert.assertSame(ReasonUnknown.CANCELLED, ru);
+		Assert.assertSame(LBool.SAT, isSat);
 		solver.pop(1);
 		isSat = solver.checkSat();
 		Assert.assertSame(LBool.SAT, isSat);
@@ -347,5 +345,52 @@ public class APITest {
 		} catch (final SMTLIBException expected) {
 			System.err.println(expected.getMessage());
 		}
+	}
+
+	public static void randomWalk(SMTInterpol solver, int n) {
+		final Sort intsort = solver.sort("Int");
+		final Term[] is = new Term[n];
+		final Term[] xs = new Term[n];
+		for (int j = 0; j < n; j++) {
+			solver.declareFun("i"+j, Script.EMPTY_SORT_ARRAY, intsort);
+			solver.declareFun("x"+j, Script.EMPTY_SORT_ARRAY, intsort);
+			is[j] = solver.term("i"+j);
+			xs[j] = solver.term("x"+j);
+		}
+		solver.assertTerm(solver.term("=", solver.term("x0"), solver.numeral(BigInteger.ZERO)));
+		solver.assertTerm(solver.term("=", solver.term("i0"), solver.numeral(BigInteger.ZERO)));
+		for (int j = 1; j < n; j++) {
+			solver.assertTerm(solver.term("=", is[j], solver.term("+", is[j-1], solver.numeral(BigInteger.ONE))));
+			Term xp1 = solver.term("=", xs[j], solver.term("+", xs[j-1], solver.numeral(BigInteger.ONE)));
+			Term xm1 = solver.term("=", xs[j], solver.term("-", xs[j-1], solver.numeral(BigInteger.ONE)));
+			solver.assertTerm(solver.term("or", xp1, xm1));
+		}
+		solver.assertTerm(solver.term(">", xs[n-1], is[n-1]));
+	}
+
+	@Test
+	public void testReproducibleResourceLimit() {
+		long[] limits = {100, 10000, 0};
+		LBool[] expected = {LBool.UNKNOWN, LBool.UNSAT, LBool.UNSAT};
+		for (int i = 0; i < limits.length; i++) {
+			final SMTInterpol solver = new SMTInterpol(new DefaultLogger());
+			solver.setLogic(Logics.QF_LIA);
+			solver.setOption(":reproducible-resource-limit", limits[i]);
+			randomWalk(solver, 10);
+			LBool isSat = solver.checkSat();
+			Assert.assertSame("check-sat with limit " + limits[i], expected[i], isSat);
+			Assert.assertEquals("resource limit is " + limits[i], BigInteger.valueOf(limits[i]), solver.getOption(":reproducible-resource-limit"));
+		}
+	}
+
+	@Test
+	public void testReproducibleResourceLimitChange() {
+		final SMTInterpol solver = new SMTInterpol(new DefaultLogger());
+		solver.setLogic(Logics.QF_LIA);
+		randomWalk(solver, 5);
+		solver.setOption(":reproducible-resource-limit", 10);
+		Assert.assertSame("check-sat with limit 10", LBool.UNKNOWN, solver.checkSat());
+		solver.setOption(":reproducible-resource-limit", 0);
+		Assert.assertSame("check-sat with limit 0", LBool.UNSAT, solver.checkSat());
 	}
 }

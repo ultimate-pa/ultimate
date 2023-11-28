@@ -91,6 +91,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.Boogie2S
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieDeclarations;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.Statements2TransFormula.TranslationResult;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ConcurrencyInformation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ThreadInstance;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgElement;
@@ -129,6 +130,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.prefere
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer.CodeBlockSize;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.TransFormulaAdder;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.HashDeque;
 
 /**
  * This class generates a recursive control flow graph (in the style of POPL'10 - Heizmann, Hoenicke, Podelski - Nested
@@ -167,6 +169,7 @@ public class CfgBuilder {
 	private final RCFGBacktranslator mRcfgBacktranslator;
 
 	private final CodeBlockSize mCodeBlockSize;
+	private final boolean mCtxSwitchOnlyAtAtomicBoundaries;
 
 	private final IUltimateServiceProvider mServices;
 
@@ -213,6 +216,8 @@ public class CfgBuilder {
 		} else {
 			mCodeBlockSize = userDefineCodeBlockSize;
 		}
+		mCtxSwitchOnlyAtAtomicBoundaries =
+				prefs.getBoolean(RcfgPreferenceInitializer.LABEL_CONTEXT_SWITCH_ONLY_AT_ATOMIC_BOUNDARIES);
 
 		mBoogie2Smt = new Boogie2SMT(mgdScript, mBoogieDeclarations, mServices, simplePartialSkolemization);
 		final RCFGBacktranslator backtranslator = new RCFGBacktranslator(mLogger);
@@ -282,11 +287,13 @@ public class CfgBuilder {
 		case SequenceOfStatements: // handled in ProcedureCfgBuilder
 		case OneNontrivialStatement:
 		case SingleStatement:
-			new LargeBlockEncoding(InternalLbeMode.ONLY_ATOMIC_BLOCK);
+			new LargeBlockEncoding(mCtxSwitchOnlyAtAtomicBoundaries ? InternalLbeMode.ALL_EXCEPT_ATOMIC_BOUNDARIES
+					: InternalLbeMode.ONLY_ATOMIC_BLOCK);
 			break;
 		default:
 			throw new AssertionError("unknown value: " + mCodeBlockSize);
 		}
+		ensureAtomicCompositionComplete();
 
 		final Set<BoogieIcfgLocation> initialNodes = icfg.getProcedureEntryNodes().entrySet().stream()
 				.filter(a -> a.getKey().equals(ULTIMATE_START)).map(Entry::getValue).collect(Collectors.toSet());
@@ -300,8 +307,6 @@ public class CfgBuilder {
 		}
 		ModelUtils.copyAnnotations(unit, icfg);
 		mLogger.info("Removed " + mRemovedAssumeTrueStatements + " assume(true) statements.");
-
-		ensureAtomicCompositionComplete();
 
 		return icfg;
 	}
@@ -329,8 +334,11 @@ public class CfgBuilder {
 					+ edge + "). Is there illegal control flow (e.g. loops) within an atomic block?");
 		}
 
+		// If the edge is neither the start nor the end of an atomic block, everything is fine.
 		if (!AtomicBlockInfo.isStartOfAtomicBlock(edge)) {
-			// If the edge is neither the start nor the end of an atomic block, everything is fine.
+			// Edge may be marked as complete atomic block.
+			// If so, remove the annotation as it is only for internal use.
+			AtomicBlockInfo.removeAnnotation(edge);
 			return;
 		}
 
@@ -1565,6 +1573,7 @@ public class CfgBuilder {
 			if (AtomicBlockInfo.isStartOfAtomicBlock(mCurrent)) {
 				// if current edge is both start and end of an atomic block, it is already atomic -- nothing else to do
 				AtomicBlockInfo.removeAnnotation(mCurrent);
+				AtomicBlockInfo.addCompleteAnnotation(mCurrent);
 			} else {
 				// mark current edge as end of atomic block
 				AtomicBlockInfo.addEndAnnotation(mCurrent);
@@ -1650,24 +1659,24 @@ public class CfgBuilder {
 	 * Defines which statements will be composed.
 	 */
 	private enum InternalLbeMode {
-		ONLY_ATOMIC_BLOCK, ATOMIC_BLOCK_AND_INBETWEEN_SEQUENCE_POINTS, ALL
+		ONLY_ATOMIC_BLOCK, ATOMIC_BLOCK_AND_INBETWEEN_SEQUENCE_POINTS, ALL_EXCEPT_ATOMIC_BOUNDARIES, ALL
 	}
 
 	private enum SequentialCompositionType {
-		NONE, STRAIGHTLINE, Y2V
+		NONE, STRAIGHTLINE, COMPLEX
 	}
 
 	private class LargeBlockEncoding {
 		private final InternalLbeMode mInternalLbeMode;
 		final boolean mSimplifyCodeBlocks;
-		private final Set<BoogieIcfgLocation> mAtomicPoints = new HashSet<>();
+		private final Set<BoogieIcfgLocation> mAtomicPoints;
 		private final Set<BoogieIcfgLocation> mEntryNodes;
 
 		// straight-line sequential composition points
-		private final Set<BoogieIcfgLocation> mSequentialQueue = new HashSet<>();
+		private final HashDeque<BoogieIcfgLocation> mSequentialQueue = new HashDeque<>();
 
 		// Y-to-V and upside-down Y-to-V composition points
-		private final Set<BoogieIcfgLocation> mComplexSequentialQueue = new HashSet<>();
+		private final HashDeque<BoogieIcfgLocation> mComplexSequentialQueue = new HashDeque<>();
 
 		private final Map<BoogieIcfgLocation, List<CodeBlock>> mParallelQueue = new HashMap<>();
 
@@ -1677,22 +1686,26 @@ public class CfgBuilder {
 					.getBoolean(RcfgPreferenceInitializer.LABEL_SIMPLIFY);
 			mEntryNodes = new HashSet<>(mIcfg.getProcedureEntryNodes().values());
 
-			if (mInternalLbeMode == InternalLbeMode.ATOMIC_BLOCK_AND_INBETWEEN_SEQUENCE_POINTS
-					|| mInternalLbeMode == InternalLbeMode.ONLY_ATOMIC_BLOCK) {
-				collectAtomicPoints();
-			}
+			// collect locations inside atomic blocks
+			mAtomicPoints = collectAtomicPoints();
+			assert getAllLocations().allMatch(pp -> !mAtomicPoints.contains(pp)
+					|| allPredecessorsAtomic(pp)) : "Atomic point with unexpected non-atomic predecessor!";
+			assert getAllLocations().allMatch(pp -> !mAtomicPoints.contains(pp)
+					|| allSuccessorsAtomic(pp)) : "Atomic point with unexpected non-atomic successor!";
+
+			// initialize queues of locations that are candidates for different kind of compositions
 			getAllLocations().forEach(pp -> considerCompositionCandidate(pp, true));
 
 			// We distinguish 3 types of compositions: straight-line sequential compositions, parallel compositions, and
-			// Y-to-V sequential compositions. We employ Y-to-V compositions extremely sparingly, as they can lead to
-			// the creation of an exponential number of edges for complex branching code. Often, all these edges are
-			// later reduced through parallel composition to very few edges (but a timeout occurs before this happens).
+			// complex sequential compositions.
+			// We employ complex compositions extremely sparingly, as they can lead to the creation of an exponential
+			// number of edges for code with a lot of branching. Often, all these edges are later reduced through
+			// parallel composition to very few edges (but a timeout occurs before this happens).
 			while (!mSequentialQueue.isEmpty() || !mParallelQueue.isEmpty() || !mComplexSequentialQueue.isEmpty()) {
 				while (mSequentialQueue.isEmpty() && mParallelQueue.isEmpty() && !mComplexSequentialQueue.isEmpty()) {
-					final BoogieIcfgLocation superfluousPP = mComplexSequentialQueue.iterator().next();
-					mComplexSequentialQueue.remove(superfluousPP);
+					final BoogieIcfgLocation superfluousPP = mComplexSequentialQueue.pollFirst();
 					composeSequential(superfluousPP);
-					mLogger.debug("Y2V composition at %s", superfluousPP);
+					mLogger.debug("Complex sequential composition at %s", superfluousPP);
 				}
 
 				while (mSequentialQueue.isEmpty() && !mParallelQueue.isEmpty()) {
@@ -1706,8 +1719,7 @@ public class CfgBuilder {
 				}
 
 				while (!mSequentialQueue.isEmpty()) {
-					final BoogieIcfgLocation superfluousPP = mSequentialQueue.iterator().next();
-					mSequentialQueue.remove(superfluousPP);
+					final BoogieIcfgLocation superfluousPP = mSequentialQueue.pollFirst();
 					composeSequential(superfluousPP);
 					mLogger.debug("sequential composition at %s", superfluousPP);
 				}
@@ -1723,7 +1735,8 @@ public class CfgBuilder {
 		/**
 		 * Identifies all nodes that are inside an atomic block.
 		 */
-		private void collectAtomicPoints() {
+		private Set<BoogieIcfgLocation> collectAtomicPoints() {
+			final var atomicPoints = new HashSet<BoogieIcfgLocation>();
 			final ArrayDeque<IcfgEdge> worklist = new ArrayDeque<>();
 
 			// Begin at start edges of atomic blocks
@@ -1736,7 +1749,7 @@ public class CfgBuilder {
 					continue;
 				}
 
-				final boolean unvisited = mAtomicPoints.add(pp);
+				final boolean unvisited = atomicPoints.add(pp);
 				if (unvisited) {
 					for (final IcfgEdge next : pp.getOutgoingEdges()) {
 						worklist.add(next);
@@ -1744,10 +1757,7 @@ public class CfgBuilder {
 				}
 			}
 
-			assert getAllLocations().allMatch(pp -> !mAtomicPoints.contains(pp)
-					|| allPredecessorsAtomic(pp)) : "Atomic point with unexpected non-atomic predecessor!";
-			assert getAllLocations().allMatch(pp -> !mAtomicPoints.contains(pp)
-					|| allSuccessorsAtomic(pp)) : "Atomic point with unexpected non-atomic successor!";
+			return atomicPoints;
 		}
 
 		private boolean allPredecessorsAtomic(final BoogieIcfgLocation pp) {
@@ -1764,10 +1774,10 @@ public class CfgBuilder {
 		 * Determines if the given node is a composition candidate. If so, it is placed in the appropriate queue,
 		 * depending on what kind of composition is to be performed.
 		 */
-		private void considerCompositionCandidate(final BoogieIcfgLocation pp, final boolean allowY2V) {
+		private void considerCompositionCandidate(final BoogieIcfgLocation pp, final boolean allowComplex) {
 			final SequentialCompositionType seq = classifySequentialCompositionNode(pp);
 			if (seq == SequentialCompositionType.STRAIGHTLINE) {
-				mSequentialQueue.add(pp);
+				mSequentialQueue.offerLast(pp);
 				return;
 			}
 
@@ -1775,8 +1785,23 @@ public class CfgBuilder {
 			final List<CodeBlock> list = computeOutgoingCandidatesForParallelComposition(pp);
 			if (list != null) {
 				mParallelQueue.put(pp, list);
-			} else if (seq == SequentialCompositionType.Y2V && allowY2V) {
-				mComplexSequentialQueue.add(pp);
+			} else if (seq == SequentialCompositionType.COMPLEX && allowComplex) {
+				// An upside-down Y-to-V composition is called "unavoidable" if it has multiple distinct successor
+				// nodes, and at least one of them is terminal.
+				// The primary case where this happens are assert statements, as the error location is terminal.
+				// In such cases, other compositions cannot avoid the need for a complex sequential composition
+				// (e.g. parallel composition of the outgoing edges is impossible).
+				final boolean isUnavoidable = pp.getIncomingEdges().size() == 1
+						&& pp.getOutgoingNodes().stream().anyMatch(s -> s.getOutgoingEdges().isEmpty())
+						&& pp.getOutgoingNodes().stream().distinct().count() > 1;
+
+				// We prioritize unavoidable upside-down Y-to-V compositions since they must occur at some point anyway,
+				// and they might in turn enable other, more preferable compositions.
+				if (isUnavoidable) {
+					mComplexSequentialQueue.offerFirst(pp);
+				} else {
+					mComplexSequentialQueue.offerLast(pp);
+				}
 			}
 		}
 
@@ -1792,6 +1817,12 @@ public class CfgBuilder {
 			final List<IcfgEdge> outgoingEdges = new ArrayList<>(pp.getOutgoingEdges());
 			final List<IcfgEdge> newEdges = new ArrayList<>();
 
+			if (incomingEdges.size() > 1 && outgoingEdges.size() > 1) {
+				mLogger.warn("Complex %d:%d sequential composition. "
+						+ "Such compositions can cause exponential blowup and should not occur in structured programs.",
+						incomingEdges.size(), outgoingEdges.size());
+			}
+
 			for (final IcfgEdge incoming : incomingEdges) {
 				for (final IcfgEdge outgoing : outgoingEdges) {
 					final BoogieIcfgLocation predecessor = (BoogieIcfgLocation) incoming.getSource();
@@ -1806,6 +1837,7 @@ public class CfgBuilder {
 						// When completing an edge from beginning to end of an atomic block, remove the annotations
 						ModelUtils.copyAnnotationsFiltered(incoming, comp, ann -> !(ann instanceof AtomicBlockInfo));
 						ModelUtils.copyAnnotationsFiltered(outgoing, comp, ann -> !(ann instanceof AtomicBlockInfo));
+						AtomicBlockInfo.addCompleteAnnotation(comp);
 					} else {
 						ModelUtils.copyAnnotations(incoming, comp);
 						ModelUtils.copyAnnotations(outgoing, comp);
@@ -1859,6 +1891,7 @@ public class CfgBuilder {
 			if (pp.getIncomingEdges().isEmpty() || pp.getOutgoingEdges().isEmpty() || mEntryNodes.contains(pp)) {
 				return SequentialCompositionType.NONE;
 			}
+
 			if (DataStructureUtils.haveNonEmptyIntersection(new HashSet<>(pp.getIncomingEdges()),
 					new HashSet<>(pp.getOutgoingEdges()))) {
 				// do not allow loops
@@ -1868,6 +1901,10 @@ public class CfgBuilder {
 			final boolean edgesComposable = pp.getIncomingEdges().stream().allMatch(this::isComposableEdge)
 					&& pp.getOutgoingEdges().stream().allMatch(this::isComposableEdge);
 			if (!edgesComposable) {
+				return SequentialCompositionType.NONE;
+			}
+
+			if (mInternalLbeMode == InternalLbeMode.ALL_EXCEPT_ATOMIC_BOUNDARIES && isAtomicBoundary(pp)) {
 				return SequentialCompositionType.NONE;
 			}
 
@@ -1881,6 +1918,8 @@ public class CfgBuilder {
 			}
 
 			switch (mInternalLbeMode) {
+			case ALL_EXCEPT_ATOMIC_BOUNDARIES:
+				// atomic boundaries already handled above, so fall-through to the case for ALL
 			case ALL:
 				if (isStraightline) {
 					return SequentialCompositionType.STRAIGHTLINE;
@@ -1889,7 +1928,7 @@ public class CfgBuilder {
 					// Y-V currently unsupported outside atomic blocks (implementation cannot handle loops properly)
 					// TODO (Dominik 2020-09-16) Check if above comment still holds after Y-to-V fix, may work now (as
 					// loop entry is reverse Y-to-V).
-					return SequentialCompositionType.Y2V;
+					return SequentialCompositionType.COMPLEX;
 				}
 				return SequentialCompositionType.NONE;
 			case ATOMIC_BLOCK_AND_INBETWEEN_SEQUENCE_POINTS:
@@ -1899,14 +1938,38 @@ public class CfgBuilder {
 			case ONLY_ATOMIC_BLOCK:
 				if (!isInAtomicBlock) {
 					return SequentialCompositionType.NONE;
-				} else if (isStraightline) {
-					return SequentialCompositionType.STRAIGHTLINE;
-				} else {
-					return SequentialCompositionType.Y2V;
 				}
+				if (isStraightline) {
+					return SequentialCompositionType.STRAIGHTLINE;
+				}
+				return SequentialCompositionType.COMPLEX;
 			default:
 				throw new AssertionError("unknown value " + mInternalLbeMode);
 			}
+		}
+
+		private boolean isAtomicBoundary(final BoogieIcfgLocation loc) {
+			return isAtomicBegin(loc) || isAtomicEnd(loc);
+		}
+
+		private boolean isAtomicBegin(final BoogieIcfgLocation loc) {
+			// points inside atomic blocks cannot be on the boundary
+			if (mAtomicPoints.contains(loc)) {
+				return false;
+			}
+
+			return loc.getOutgoingEdges().stream()
+					.anyMatch(e -> AtomicBlockInfo.isStartOfAtomicBlock(e) || AtomicBlockInfo.isCompleteAtomicBlock(e));
+		}
+
+		private boolean isAtomicEnd(final BoogieIcfgLocation loc) {
+			// points inside atomic blocks cannot be on the boundary
+			if (mAtomicPoints.contains(loc)) {
+				return false;
+			}
+
+			return loc.getIncomingEdges().stream()
+					.anyMatch(e -> AtomicBlockInfo.isEndOfAtomicBlock(e) || AtomicBlockInfo.isCompleteAtomicBlock(e));
 		}
 
 		private boolean isComposableEdge(final IcfgEdge edge) {
@@ -1942,11 +2005,7 @@ public class CfgBuilder {
 					final CodeBlock cb = (CodeBlock) edge;
 					final BoogieIcfgLocation succ = (BoogieIcfgLocation) cb.getTarget();
 					if (canBeSuccessorOfParallelComposition(succ)) {
-						List<CodeBlock> edges = succ2edge.get(succ);
-						if (edges == null) {
-							edges = new ArrayList<>();
-							succ2edge.put(succ, edges);
-						}
+						final List<CodeBlock> edges = succ2edge.computeIfAbsent(succ, x -> new ArrayList<>());
 						edges.add(cb);
 						if (result == null && edges.size() > 1) {
 							result = edges;
@@ -1961,6 +2020,8 @@ public class CfgBuilder {
 			switch (mInternalLbeMode) {
 			case ALL:
 				return true;
+			case ALL_EXCEPT_ATOMIC_BOUNDARIES:
+				return (IcfgUtils.isConcurrent(mIcfg) && !isAtomicBegin(pp)) || mAtomicPoints.contains(pp);
 			case ATOMIC_BLOCK_AND_INBETWEEN_SEQUENCE_POINTS:
 				// TODO #FaultLocalization
 				throw new UnsupportedOperationException();
@@ -1977,6 +2038,8 @@ public class CfgBuilder {
 			switch (mInternalLbeMode) {
 			case ALL:
 				return true;
+			case ALL_EXCEPT_ATOMIC_BOUNDARIES:
+				return (IcfgUtils.isConcurrent(mIcfg) && !isAtomicEnd(pp)) || mAtomicPoints.contains(pp);
 			case ATOMIC_BLOCK_AND_INBETWEEN_SEQUENCE_POINTS:
 				// TODO #FaultLocalization
 				throw new UnsupportedOperationException();

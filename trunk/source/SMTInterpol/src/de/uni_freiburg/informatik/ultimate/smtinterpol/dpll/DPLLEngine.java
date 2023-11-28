@@ -21,6 +21,7 @@ package de.uni_freiburg.informatik.ultimate.smtinterpol.dpll;
 import java.io.PrintWriter;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -1490,10 +1491,11 @@ public class DPLLEngine {
 			int stacklvl = c.mStacklevel;
 			final Literal[] lits = c.mLiterals;
 			Clause res;
-			final Antecedent[] ants = isProofGenerationEnabled() ? new Antecedent[c.getSize() - 1] : null;
+			Antecedent[] ants = isProofGenerationEnabled() ? new Antecedent[c.getSize() - 1] : null;
 			int i = 0;
 			for (final Literal l : lits) {
-				if (mAssumptionLiterals.contains(l.negate())) {
+				if (l.getAtom().mExplanation == null) {
+					assert mAssumptionLiterals.contains(l.negate());
 					clauseLits.add(l);
 				} else if (l != lit) {
 					final Clause lc = getLevel0(l.negate());
@@ -1513,7 +1515,14 @@ public class DPLLEngine {
 			clauseLits.add(lit);
 			final Literal[] arrayLits = clauseLits.toArray(new Literal[clauseLits.size()]);
 			if (isProofGenerationEnabled()) {
-				res = new Clause(arrayLits, new ResolutionNode(c, ants), stacklvl);
+				if (i == 0) {
+					res = c;
+				} else {
+					if (i < ants.length) {
+						ants = Arrays.copyOf(ants, i);
+					}
+					res = new Clause(arrayLits, new ResolutionNode(c, ants), stacklvl);
+				}
 			} else {
 				res = new Clause(arrayLits, stacklvl);
 			}

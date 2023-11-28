@@ -36,9 +36,10 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.cdt.core.dom.ast.IASTCompositeTypeSpecifier;
@@ -128,7 +129,7 @@ public class TypeHandler implements ITypeHandler {
 	 */
 	private final LinkedHashSet<String> mIncompleteType;
 
-	private final HashRelation<String, CStructOrUnion> mIncompleteCStructOrUnionObjects = new HashRelation<>();
+	private final Map<String, CStructOrUnion> mIncompleteCStructOrUnionObjects = new HashMap<>();
 	private final HashRelation<String, CEnum> mIncompleteCEnumObjects = new HashRelation<>();
 
 	/**
@@ -156,8 +157,8 @@ public class TypeHandler implements ITypeHandler {
 	private final StaticObjectsHandler mStaticObjectsHandler;
 
 	/**
-	 * If there is an incomplete type X that has not yet been completed and occurs in a statement of the form typedef X
-	 * Y, then the pair (X,Y) is in this relation.
+	 * If there is an incomplete type X that has not yet been completed and occurs in a statement of the form
+	 * <code>typedef X Y</code>, then the pair (X,Y) is in this relation.
 	 */
 	private final HashRelation<String, String> mNamedIncompleteTypes = new HashRelation<>();
 
@@ -235,7 +236,8 @@ public class TypeHandler implements ITypeHandler {
 		case IASTSimpleDeclSpecifier.t_unspecified:
 		case IASTSimpleDeclSpecifier.t_bool:
 		case IASTSimpleDeclSpecifier.t_char:
-		case IASTSimpleDeclSpecifier.t_int: {
+		case IASTSimpleDeclSpecifier.t_int:
+		case IASTSimpleDeclSpecifier.t_int128: {
 			// so int is also a primitive type
 			// NOTE: in a extended implementation we should
 			// handle here different types of int (short, long,...)
@@ -281,7 +283,7 @@ public class TypeHandler implements ITypeHandler {
 						cvar));
 			}
 			// if we do not find a type we cancel with Exception
-			final String msg = "TypeHandler: We do not support this type!" + node.getType();
+			final String msg = "TypeHandler: We do not support this type: " + node.getType() + "!";
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
 	}
@@ -425,10 +427,10 @@ public class TypeHandler implements ITypeHandler {
 			CType ctype;
 			if (node.getKind() == IASTElaboratedTypeSpecifier.k_struct) {
 				ctype = new CStructOrUnion(StructOrUnion.STRUCT, type);
-				mIncompleteCStructOrUnionObjects.addPair(rslvName, (CStructOrUnion) ctype);
+				addIncompleteStructOrUnion(rslvName, (CStructOrUnion) ctype);
 			} else if (node.getKind() == IASTElaboratedTypeSpecifier.k_union) {
 				ctype = new CStructOrUnion(StructOrUnion.UNION, type);
-				mIncompleteCStructOrUnionObjects.addPair(rslvName, (CStructOrUnion) ctype);
+				addIncompleteStructOrUnion(rslvName, (CStructOrUnion) ctype);
 			} else {
 				ctype = new CEnum(type);
 				mIncompleteCEnumObjects.addPair(rslvName, (CEnum) ctype);
@@ -442,6 +444,14 @@ public class TypeHandler implements ITypeHandler {
 		}
 		final String msg = "Not yet implemented: Spec [" + node.getKind() + "] of " + node.getClass();
 		throw new UnsupportedSyntaxException(loc, msg);
+	}
+
+	private void addIncompleteStructOrUnion(final String name, final CStructOrUnion structOrUnion) {
+		final var existing = mIncompleteCStructOrUnionObjects.get(name);
+		if (existing != null && !existing.equals(structOrUnion)) {
+			throw new AssertionError("too many types");
+		}
+		mIncompleteCStructOrUnionObjects.put(name, structOrUnion);
 	}
 
 	@Override
@@ -480,25 +490,21 @@ public class TypeHandler implements ITypeHandler {
 
 		final String identifier = CStructOrUnion.getPrefix(isStructOrUnion) + rslvName;
 
-		if (mIncompleteCStructOrUnionObjects.getDomain().contains(rslvName)) {
-			final Set<CStructOrUnion> objects = mIncompleteCStructOrUnionObjects.getImage(rslvName);
-			assert objects.size() == 1 : "too many types";
-			for (final CStructOrUnion structOrUnion : objects) {
-				structOrUnion.complete(fNames.toArray(new String[fNames.size()]),
-						fTypes.toArray(new CType[fTypes.size()]), bitFieldWidths);
-				mStaticObjectsHandler.completeTypeDeclaration(structOrUnion.getName(), structOrUnion, this);
-				final TypesResult typeResult = mDefinedTypes.get(rslvName);
-				mDefinedTypes.put(rslvName, TypesResult.create(typeResult, structOrUnion));
-				if (mNamedIncompleteTypes.getDomain().contains(structOrUnion.getName())) {
-					redirectNamedType(mNamedIncompleteTypes.getImage(structOrUnion.getName()), structOrUnion,
-							node.getParent());
-				}
+		if (mIncompleteCStructOrUnionObjects.containsKey(rslvName)) {
+			final CStructOrUnion structOrUnion = mIncompleteCStructOrUnionObjects.get(rslvName);
+			structOrUnion.complete(fNames, fTypes, bitFieldWidths);
+			mStaticObjectsHandler.completeTypeDeclaration(structOrUnion.getName(), structOrUnion, this);
+			final TypesResult typeResult = mDefinedTypes.get(rslvName);
+			mDefinedTypes.put(rslvName, TypesResult.create(typeResult, structOrUnion));
+			if (mNamedIncompleteTypes.getDomain().contains(structOrUnion.getName())) {
+				redirectNamedType(mNamedIncompleteTypes.getImage(structOrUnion.getName()), structOrUnion,
+						node.getParent());
 			}
-			mIncompleteCStructOrUnionObjects.removeDomainElement(rslvName);
+
+			mIncompleteCStructOrUnionObjects.remove(rslvName);
 		}
 
-		final CStructOrUnion cvar = new CStructOrUnion(isStructOrUnion, rslvName,
-				fNames.toArray(new String[fNames.size()]), fTypes.toArray(new CType[fTypes.size()]), bitFieldWidths);
+		final CStructOrUnion cvar = new CStructOrUnion(isStructOrUnion, rslvName, fNames, fTypes, bitFieldWidths);
 
 		// TODO : boogie type
 		final NamedType namedType = new NamedType(loc, BoogieType.TYPE_ERROR, identifier, new ASTType[0]);
@@ -526,24 +532,30 @@ public class TypeHandler implements ITypeHandler {
 	}
 
 	private void redirectNamedType(final Set<String> names, final CStructOrUnion completeStruct, final IASTNode hook) {
-		final Set<String> alreadyRedirected = new HashSet<>();
+		final Map<String, CType> alreadyRedirected = new HashMap<>();
 		for (final String name : names) {
 			constructUpdatedCNamedAndAddToSymbolTable(name, completeStruct, alreadyRedirected, hook);
 		}
 	}
 
 	private CType constructUpdatedCNamedAndAddToSymbolTable(final String name, final CStructOrUnion completeStruct,
-			final Set<String> alreadyRedirected, final IASTNode hook) {
-		if (alreadyRedirected.contains(name)) {
-			return null;
+			final Map<String, CType> alreadyRedirected, final IASTNode hook) {
+		if (alreadyRedirected.containsKey(name)) {
+			return alreadyRedirected.get(name);
 		}
 		final SymbolTableValue oldStv = mSymboltable.findCSymbol(hook, name);
+		if (oldStv == null) {
+			throw new AssertionError("Unable to locate " + name + " in the symbol table");
+		}
 
 		CType newDefiningType;
 		if ((oldStv.getCType() instanceof CNamed)) {
 			// end of chain not yet reached
-			final CType definingTypeOfDefiningType = constructUpdatedCNamedAndAddToSymbolTable(
-					((CNamed) oldStv.getCType()).getName(), completeStruct, alreadyRedirected, hook);
+			final var boogieId = ((CNamed) oldStv.getCType()).getName();
+			final var cId = mSymboltable.getCIdForBoogieId(boogieId);
+
+			final CType definingTypeOfDefiningType =
+					constructUpdatedCNamedAndAddToSymbolTable(cId, completeStruct, alreadyRedirected, hook);
 			newDefiningType = new CNamed(name, definingTypeOfDefiningType);
 		} else {
 			newDefiningType = completeStruct;
@@ -553,11 +565,11 @@ public class TypeHandler implements ITypeHandler {
 		final CDeclaration newCDecl = new CDeclaration(newDefiningType, oldCDecl.getName(),
 				oldCDecl.getIASTInitializer(), oldCDecl.getInitializer(), oldCDecl.isOnHeap(),
 				oldCDecl.getStorageClass(), oldCDecl.getBitfieldSize());
-		final SymbolTableValue val = new SymbolTableValue(oldStv.getBoogieName(), oldStv.getBoogieDecl(),
-				oldStv.getAstType(), newCDecl, oldStv.getDeclarationInformation(), oldStv.getDeclarationNode(),
-				oldStv.isIntFromPointer());
+		final SymbolTableValue val =
+				new SymbolTableValue(oldStv.getBoogieName(), oldStv.getBoogieDecl(), oldStv.getAstType(), newCDecl,
+						oldStv.getDeclarationInformation(), oldStv.getDeclarationNode(), oldStv.isIntFromPointer());
 		mSymboltable.storeCSymbol(hook, name, val);
-		alreadyRedirected.add(name);
+		alreadyRedirected.put(name, newDefiningType);
 		return newDefiningType;
 	}
 
@@ -788,8 +800,8 @@ public class TypeHandler implements ITypeHandler {
 		} else if (cType instanceof CEnum) {
 			return getBoogieTypeForCType(new CPrimitive(CPrimitives.INT));
 		} else if (cType instanceof CArray) {
-			final BoogieType[] indexTypes = new BoogieType[] {
-					getBoogieTypeForCType(mTranslationSettings.getCTypeOfPointerComponents()) };
+			final BoogieType[] indexTypes =
+					new BoogieType[] { getBoogieTypeForCType(mTranslationSettings.getCTypeOfPointerComponents()) };
 			final BoogieType valueType = getBoogieTypeForCType(((CArray) cType).getValueType());
 			return BoogieType.createArrayType(0, indexTypes, valueType);
 		} else if (cType instanceof CFunction) {
