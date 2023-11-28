@@ -74,7 +74,7 @@ public abstract class CommonExternalFormatWriter<LETTER, STATE> extends GeneralA
 
 		final ArrayList<LETTER> alphabetList = new ArrayList<>(alphabet);
 
-		Collections.sort(alphabetList, new sortLetter<LETTER>());
+		Collections.sort(alphabetList, Comparator.comparing(LETTER::toString));
 		for (final LETTER letter : alphabetList) {
 			alphabetMapping.put(letter, Integer.toString(counter));
 			counter++;
@@ -92,13 +92,12 @@ public abstract class CommonExternalFormatWriter<LETTER, STATE> extends GeneralA
 		return stateMapping;
 	}
 
-
 	public static <LETTER> Map<LETTER, String> constructAlphabetMapping(final Collection<LETTER> alphabet,
 			final char symbol) {
 		int counter = 0;
 		final Map<LETTER, String> alphabetMapping = new LinkedHashMap<>();
-		final ArrayList<LETTER> alphabetList = new ArrayList<LETTER>(alphabet);
-		Collections.sort(alphabetList, new sortLetter<LETTER>());
+		final ArrayList<LETTER> alphabetList = new ArrayList<>(alphabet);
+		Collections.sort(alphabetList, Comparator.comparing(LETTER::toString));
 		for (final LETTER letter : alphabetList) {
 			alphabetMapping.put(letter, symbol + Integer.toString(counter));
 			counter++;
@@ -158,12 +157,5 @@ public abstract class CommonExternalFormatWriter<LETTER, STATE> extends GeneralA
 			}
 			return String.valueOf(value);
 		}
-	}
-}
-
-class sortLetter<LETTER> implements Comparator<LETTER> {
-	@Override
-	public int compare(final LETTER a, final LETTER b) {
-		return a.toString().compareTo(b.toString());
 	}
 }
