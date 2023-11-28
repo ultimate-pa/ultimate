@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries;
 
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -50,8 +49,8 @@ public class NaiveOwickiGriesTestSuite extends OwickiGriesTestSuite {
 			final BoundedPetriNet<SimpleAction, IPredicate> refinedPetriNet,
 			final BranchingProcess<SimpleAction, IPredicate> unfolding) throws AutomataLibraryException {
 		// construct Owicki-Gries annotation
-		final var floydHoare = new PetriFloydHoare<>(mServices, mMgdScript, mSymbolTable, unfolding, program,
-				List.of(mUnifier), true, true);
+		final var floydHoare =
+				new PetriFloydHoare<>(mServices, mMgdScript, mSymbolTable, unfolding, program, mUnifiers, true, true);
 		final Map<Marking<IPredicate>, IPredicate> petriFloydHoare = floydHoare.getResult();
 		final var construction = new OwickiGriesConstruction<>(mServices, mMgdScript, mSymbolTable,
 				Set.of(SimpleAction.PROCEDURE), program, petriFloydHoare, true);

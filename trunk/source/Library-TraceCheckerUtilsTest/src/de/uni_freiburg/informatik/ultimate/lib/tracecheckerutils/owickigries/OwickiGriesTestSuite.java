@@ -54,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsDeterministic;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsTotal;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.TotalizeNwa;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.DifferencePairwiseOnDemand;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.DifferencePetriNet;
@@ -79,6 +79,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.Mon
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtParserUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
@@ -102,6 +103,7 @@ import de.uni_freiburg.informatik.ultimate.test.junitextension.testfactory.Facto
 import de.uni_freiburg.informatik.ultimate.test.junitextension.testfactory.TestFactory;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
@@ -123,8 +125,8 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 
 	protected IIcfgSymbolTable mSymbolTable;
 	protected BasicPredicateFactory mPredicateFactory;
-	protected PredicateUnifier mUnifier;
 	protected IHoareTripleChecker mHtc;
+	protected final List<IPredicateUnifier> mUnifiers = new ArrayList<>();
 
 	@TestFactory
 	public Iterable<OwickiGriesTestCase> createTests() throws IOException {
@@ -155,8 +157,6 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 		mSymbolTable = setupSymbolTable(path);
 		final var id2Action = parseActions(path);
 		mPredicateFactory = new BasicPredicateFactory(mServices, mMgdScript, mSymbolTable);
-		mUnifier = new PredicateUnifier(mLogger, mServices, mMgdScript, mPredicateFactory, mSymbolTable,
-				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 
 		final var modifiesRelation = new HashRelation<String, IProgramNonOldVar>();
 		for (final var pv : mSymbolTable.getGlobals()) {
@@ -208,7 +208,9 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 		for (final var proof : proofs) {
 			final var loopers = DifferencePairwiseOnDemand.determineUniversalLoopers(proof);
 			final var oldNet = difference == null ? program : difference;
-			difference = new DifferencePetriNet<>(mAutomataServices, oldNet, proof, loopers);
+			final var initialTrueState = DataStructureUtils.getOneAndOnly(proof.getInitialStates(), "initial state");
+			difference = new DifferencePetriNet<>(mAutomataServices, oldNet,
+					new TotalizeNwa<>(proof, initialTrueState, false), loopers);
 		}
 		assert difference != null : "Difference can only be null if there no proofs, this is checked above";
 
@@ -229,7 +231,6 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 			throws AutomataLibraryException {
 		assert NestedWordAutomataUtils.isFiniteAutomaton(proof) : "Proof must not have call or return transitions";
 		assert new IsDeterministic<>(mAutomataServices, proof).getResult() : "Proof must be deterministic";
-		assert new IsTotal<>(mAutomataServices, proof).getResult() : "Proof must be total";
 
 		for (final var initial : proof.getInitialStates()) {
 			assert "true".equals(
@@ -371,10 +372,15 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 		final var parsedAut =
 				new NestedWordAutomaton<SimpleAction, IPredicate>(mAutomataServices, parsedAlphabet, () -> null);
 
+		// create predicate unifier for this iteration
+		final var unifier = new PredicateUnifier(mLogger, mServices, mMgdScript, mPredicateFactory, mSymbolTable,
+				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		mUnifiers.add(unifier);
+
 		// parse states
 		final var stateMap = new HashMap<String, IPredicate>();
 		for (final var state : aut.getStates()) {
-			final var parsedState = parsePredicate(state);
+			final var parsedState = parsePredicate(state, unifier);
 			stateMap.put(state, parsedState);
 			parsedAut.addState(aut.isInitial(state), aut.isFinal(state), parsedState);
 		}
@@ -390,9 +396,9 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 		return parsedAut;
 	}
 
-	private IPredicate parsePredicate(final String state) {
+	private IPredicate parsePredicate(final String state, final IPredicateUnifier unifier) {
 		final Term term = SmtParserUtils.parseWithVariables(state, mServices, mMgdScript, mSymbolTable);
-		return mUnifier.getOrConstructPredicate(term);
+		return unifier.getOrConstructPredicate(term);
 	}
 
 	private static SimpleAction parseAction(final Map<Integer, SimpleAction> id2Action, final String label) {
