@@ -62,7 +62,9 @@ public class AtsFormat implements IFormat {
 
 	@Override
 	public void printHeader(final PrintWriter pw, final String header) {
-		pw.println(AutomatonDefinitionPrinter.generateDefaultAtsHeader(header));
+		pw.println("// Testfile dumped by Ultimate at " + getDateTimeNice());
+		pw.println("//");
+		pw.println("// " + header);
 	}
 
 	@Override
@@ -113,6 +115,15 @@ public class AtsFormat implements IFormat {
 	public <L, S> void printBranchingProcess(final PrintWriter printWriter, final String name,
 			final BranchingProcess<L, S> branchingProcess) {
 		new BranchingProcessWriterToString<>(printWriter, name, branchingProcess);
+	}
+
+	/**
+	 * Date/time string used inside files.
+	 *
+	 * @return date/time string
+	 */
+	private static String getDateTimeNice() {
+		return AutomatonDefinitionPrinter.getDateTimeFromFormat("yyyy/MM/dd HH:mm:ss");
 	}
 
 	static class AtsNumerateFormat extends AtsFormat {

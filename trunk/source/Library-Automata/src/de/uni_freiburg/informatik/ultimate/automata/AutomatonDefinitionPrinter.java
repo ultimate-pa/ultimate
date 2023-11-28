@@ -208,10 +208,10 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 		}
 		final PrintWriter printWriter = new PrintWriter(fileWriter);
 		try {
-			printWriter.append(generateDefaultAtsHeader(atsHeaderMessage));
-			printWriter.append(System.lineSeparator());
-			printWriter.append(atsCommands);
-			printWriter.append(System.lineSeparator());
+			format.printHeader(printWriter, atsHeaderMessage);
+			printWriter.println();
+			printWriter.println(atsCommands);
+			printWriter.println();
 			for (final NamedAutomaton<?, ?> na : nas) {
 				printAutomaton(services, na, format, printWriter);
 			}
@@ -270,15 +270,6 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 	}
 
 	/**
-	 * Date/time string used inside files.
-	 *
-	 * @return date/time string
-	 */
-	private static String getDateTimeNice() {
-		return getDateTimeFromFormat("yyyy/MM/dd HH:mm:ss");
-	}
-
-	/**
 	 * Date/time string used for file names (no special characters).
 	 *
 	 * @return date/time string
@@ -287,7 +278,7 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 		return getDateTimeFromFormat("yyyyMMddHHmmss");
 	}
 
-	private static String getDateTimeFromFormat(final String format) {
+	static String getDateTimeFromFormat(final String format) {
 		final DateFormat dateFormat = new SimpleDateFormat(format, Locale.ENGLISH);
 		final Date date = new Date();
 		return dateFormat.format(date);
@@ -305,11 +296,6 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 			}
 		}
 		printWriter.close();
-	}
-
-	static String generateDefaultAtsHeader(final String atsHeaderMessage) {
-		return "// Testfile dumped by Ultimate at " + getDateTimeNice() + System.lineSeparator() + "//"
-				+ System.lineSeparator() + "// " + atsHeaderMessage + System.lineSeparator();
 	}
 
 	/**
