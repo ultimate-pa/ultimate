@@ -206,8 +206,8 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 		} catch (final IOException e) {
 			throw new AssertionError("Unable to create file writer for " + fileName);
 		}
-		final PrintWriter printWriter = new PrintWriter(fileWriter);
-		try {
+
+		try (final PrintWriter printWriter = new PrintWriter(fileWriter)) {
 			format.printHeader(printWriter, atsHeaderMessage);
 			printWriter.println();
 			printWriter.println(atsCommands);
@@ -216,7 +216,6 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 				printAutomaton(services, na, format, printWriter);
 			}
 		} finally {
-			printWriter.close();
 			try {
 				fileWriter.close();
 			} catch (final IOException e) {
