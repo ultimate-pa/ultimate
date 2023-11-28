@@ -31,6 +31,7 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -157,5 +158,12 @@ public abstract class CommonExternalFormatWriter<LETTER, STATE> extends GeneralA
 			}
 			return String.valueOf(value);
 		}
+	}
+}
+
+class sortLetter<LETTER> implements Comparator<LETTER> {
+	@Override
+	public int compare(final LETTER a, final LETTER b) {
+		return a.toString().compareTo(b.toString());
 	}
 }

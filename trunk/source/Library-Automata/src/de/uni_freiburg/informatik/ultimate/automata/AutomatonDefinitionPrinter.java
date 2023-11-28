@@ -51,9 +51,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.N
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.visualization.BaFormatWriter;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.visualization.GoalFormatWriter;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.visualization.HanoiFormatWriter;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.visualization.NwaWriterToString;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.visualization.NwaWriterToStringWithHash;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.visualization.NwaWriterUniqueId;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.visualization.INwaAtsFormatter;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.visualization.NwaWriter;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
@@ -392,13 +391,13 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 		}
 		switch (format) {
 		case ATS:
-			new NwaWriterToString<>(printWriter, name, nwa);
+			new NwaWriter<>(printWriter, name, nwa, new INwaAtsFormatter.ToString<>());
 			break;
 		case ATS_QUOTED:
-			new NwaWriterToStringWithHash<>(printWriter, name, nwa);
+			new NwaWriter<>(printWriter, name, nwa, new INwaAtsFormatter.ToStringWithHash<>());
 			break;
 		case ATS_NUMERATE:
-			new NwaWriterUniqueId<>(printWriter, name, nwa);
+			new NwaWriter<>(printWriter, name, nwa, new INwaAtsFormatter.UniqueId<>());
 			break;
 		case BA:
 			if (!NestedWordAutomataUtils.isFiniteAutomaton(nwa)) {
