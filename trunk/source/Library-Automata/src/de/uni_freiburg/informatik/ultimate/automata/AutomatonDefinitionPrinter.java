@@ -37,12 +37,10 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.function.Supplier;
 
 import de.uni_freiburg.informatik.ultimate.automata.alternating.AlternatingAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.alternating.visualization.AlternatingAutomatonWriter;
-import de.uni_freiburg.informatik.ultimate.automata.counting.CaWriter;
 import de.uni_freiburg.informatik.ultimate.automata.counting.CountingAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.counting.datastructures.CaDatastructureWriter;
 import de.uni_freiburg.informatik.ultimate.automata.counting.datastructures.CountingAutomatonDataStructure;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
@@ -51,18 +49,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.N
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.visualization.BaFormatWriter;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.visualization.GoalFormatWriter;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.visualization.HanoiFormatWriter;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.visualization.INwaAtsFormatter;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.visualization.NwaWriter;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.BranchingProcessWriterToString;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.IPetriAtsFormatter;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.NetWriter;
 import de.uni_freiburg.informatik.ultimate.automata.tree.IRankedLetter;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
-import de.uni_freiburg.informatik.ultimate.automata.tree.visualization.TreeAutomatonWriter;
-import de.uni_freiburg.informatik.ultimate.automata.tree.visualization.TreeAutomatonWriterUniqueId;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
@@ -80,7 +71,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 public class AutomatonDefinitionPrinter<LETTER, STATE> {
 	private static final String UNSUPPORTED_LABELING = "Unsupported labeling.";
 	private static final int ONE = 1;
-	private static final String ATS_EXTENSION = "ats";
 
 	// enable writing automata, e.g., when an error occurs
 	private static final boolean DUMP_AUTOMATON = false;
@@ -93,39 +83,39 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 		 * Automata script.<br>
 		 * The {@link #toString()} representation of {@link LETTER} and {@link STATE} is used.
 		 */
-		ATS(ATS_EXTENSION),
+		ATS(AtsFormat::new),
 		/**
 		 * Automata script.<br>
 		 * The {@link #toString()} representations of {@link LETTER} and {@link STATE} are ignored. The
 		 * {@link TestFileWriter} introduces new names, e.g. the letters of the alphabet are <tt>a0, ..., an</tt>.
 		 */
-		ATS_NUMERATE(ATS_EXTENSION),
+		ATS_NUMERATE(AtsFormat.AtsNumerateFormat::new),
 		/**
 		 * Automata script.<br>
 		 * The {@link #toString()} representation of {@link LETTER} and {@link STATE} plus a number is used.
 		 */
-		ATS_QUOTED(ATS_EXTENSION),
+		ATS_QUOTED(AtsFormat.AtsQuotedFormat::new),
 		/**
 		 * The <tt>BA</tt> format which is also used by some tools of Yu-Fang Chen.
 		 */
-		BA("ba"),
+		BA(BaFormat::new),
 		/**
 		 * (GOAL File Format) - The XML file format used by <tt>GOAL</tt>.
 		 */
-		GFF("gff"),
+		GFF(GffFormat::new),
 		/**
 		 * The <tt>Hanoi Omega Automaton</tt> format.
 		 */
-		HOA("hoa");
+		HOA(HoaFormat::new);
 
-		private final String mFileEnding;
+		private final Supplier<IFormat> mFormatSupplier;
 
-		Format(final String fileEnding) {
-			mFileEnding = fileEnding;
+		Format(final Supplier<IFormat> formatSupplier) {
+			mFormatSupplier = formatSupplier;
 		}
 
-		public String getFileEnding() {
-			return mFileEnding;
+		public IFormat getFormat() {
+			return mFormatSupplier.get();
 		}
 	}
 
@@ -163,7 +153,7 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 	 *            (false)
 	 */
 	public AutomatonDefinitionPrinter(final AutomataLibraryServices services, final String automatonName,
-			final String fileName, final Format format, final String message, final boolean append,
+			final String fileName, final IFormat format, final String message, final boolean append,
 			final IAutomaton<?, ?>... automata) {
 		this(services);
 		final FileWriter fileWriter = getFileWriterWithOptionalAppend(fileName, format, append);
@@ -177,20 +167,37 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 	}
 
 	public AutomatonDefinitionPrinter(final AutomataLibraryServices services, final String automatonName,
-			final String fileName, final Format format, final String message, final IAutomaton<?, ?>... automata) {
+			final String fileName, final Format format, final String message, final boolean append,
+			final IAutomaton<?, ?>... automata) {
+		this(services, automatonName, fileName, format.getFormat(), message, append, automata);
+	}
+
+	public AutomatonDefinitionPrinter(final AutomataLibraryServices services, final String automatonName,
+			final String fileName, final IFormat format, final String message, final IAutomaton<?, ?>... automata) {
 		this(services, automatonName, fileName, format, message, false, automata);
+	}
+
+	public AutomatonDefinitionPrinter(final AutomataLibraryServices services, final String automatonName,
+			final String fileName, final Format format, final String message, final IAutomaton<?, ?>... automata) {
+		this(services, automatonName, fileName, format.getFormat(), message, automata);
 	}
 
 	public static String toString(final AutomataLibraryServices services, final String automatonName,
 			final IAutomaton<?, ?> automaton) {
 		final StringWriter stringWriter = new StringWriter();
 		final PrintWriter printWriter = new PrintWriter(stringWriter);
-		printAutomaton(services, new NamedAutomaton<>(automatonName, automaton), Format.ATS, printWriter);
+		printAutomaton(services, new NamedAutomaton<>(automatonName, automaton), Format.ATS.getFormat(), printWriter);
 		return stringWriter.toString();
 	}
 
 	public static void writeAutomatonToFile(final AutomataLibraryServices services, final String fileName,
 			final Format format, final String atsHeaderMessage, final String atsCommands,
+			final NamedAutomaton<?, ?>... nas) {
+		writeAutomatonToFile(services, fileName, format.getFormat(), atsHeaderMessage, atsCommands, nas);
+	}
+
+	public static void writeAutomatonToFile(final AutomataLibraryServices services, final String fileName,
+			final IFormat format, final String atsHeaderMessage, final String atsCommands,
 			final NamedAutomaton<?, ?>... nas) {
 		final File file = new File(fileName + '.' + format.getFileEnding());
 		final FileWriter fileWriter;
@@ -249,7 +256,7 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 	 * @param append
 	 *
 	 */
-	private FileWriter getFileWriterWithOptionalAppend(final String fileName, final Format format,
+	private FileWriter getFileWriterWithOptionalAppend(final String fileName, final IFormat format,
 			final boolean append) {
 		final File testfile = new File(fileName + '.' + format.getFileEnding());
 		try {
@@ -287,22 +294,9 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 	}
 
 	private static void printAutomataToFileWriter(final AutomataLibraryServices services, final PrintWriter printWriter,
-			final String automatonName, final Format format, final String atsHeaderMessage,
+			final String automatonName, final IFormat format, final String atsHeaderMessage,
 			final IAutomaton<?, ?>... automata) {
-		switch (format) {
-		case ATS:
-		case ATS_NUMERATE:
-		case ATS_QUOTED:
-			printWriter.println(generateDefaultAtsHeader(atsHeaderMessage));
-			break;
-		case BA:
-		case HOA:
-		case GFF:
-			// add nothing
-			break;
-		default:
-			throw new IllegalArgumentException(UNSUPPORTED_LABELING);
-		}
+		format.printHeader(printWriter, atsHeaderMessage);
 		if (automata.length == ONE) {
 			printAutomaton(services, new NamedAutomaton<>(automatonName, automata[0]), format, printWriter);
 		} else {
@@ -313,7 +307,7 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 		printWriter.close();
 	}
 
-	private static String generateDefaultAtsHeader(final String atsHeaderMessage) {
+	static String generateDefaultAtsHeader(final String atsHeaderMessage) {
 		return "// Testfile dumped by Ultimate at " + getDateTimeNice() + System.lineSeparator() + "//"
 				+ System.lineSeparator() + "// " + atsHeaderMessage + System.lineSeparator();
 	}
@@ -332,52 +326,34 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 	 * @param printWriter
 	 */
 	private static <LETTER, STATE> void printAutomaton(final AutomataLibraryServices services,
-			final NamedAutomaton<LETTER, STATE> na, final Format format, final PrintWriter printWriter) {
+			final NamedAutomaton<LETTER, STATE> na, final IFormat format, final PrintWriter printWriter) {
 		if (na.getAutomaton() instanceof INwaOutgoingLetterAndTransitionProvider) {
 			printNestedWordAutomaton(services, na.getName(),
 					(INwaOutgoingLetterAndTransitionProvider<LETTER, STATE>) na.getAutomaton(), format, printWriter);
 		} else if (na.getAutomaton() instanceof IPetriNet) {
 			printPetriNet(na.getName(), (IPetriNet<LETTER, STATE>) na.getAutomaton(), format, printWriter);
 		} else if (na.getAutomaton() instanceof AlternatingAutomaton) {
-			printAlternatingAutomaton(na.getName(), (AlternatingAutomaton<LETTER, STATE>) na.getAutomaton(), format,
-					printWriter);
+			format.printAlternatingAutomaton(printWriter, na.getName(),
+					(AlternatingAutomaton<LETTER, STATE>) na.getAutomaton());
 		} else if (na.getAutomaton() instanceof TreeAutomatonBU<?, ?>) {
-			printTreeAutomaton(na.getName(), (TreeAutomatonBU<?, STATE>) na.getAutomaton(), format, printWriter);
+			format.printTreeAutomaton(printWriter, na.getName(), (TreeAutomatonBU<?, STATE>) na.getAutomaton());
 		} else if (na.getAutomaton() instanceof BranchingProcess<?, ?>) {
-			printBranchingProcess(na.getName(), (BranchingProcess<LETTER, STATE>) na.getAutomaton(), format,
-					printWriter);
+			format.printBranchingProcess(printWriter, na.getName(),
+					(BranchingProcess<LETTER, STATE>) na.getAutomaton());
 		} else if (na.getAutomaton() instanceof CountingAutomaton) {
-			printCountingAutomaton(na.getName(), (CountingAutomaton<LETTER, STATE>) na.getAutomaton(), format, printWriter);
+			format.printCountingAutomaton(printWriter, na.getName(),
+					(CountingAutomaton<LETTER, STATE>) na.getAutomaton());
 		} else if (na.getAutomaton() instanceof CountingAutomatonDataStructure) {
-			printCountingAutomatonDataStructure(na.getName(),
-					(CountingAutomatonDataStructure<LETTER, STATE>) na.getAutomaton(), format, printWriter);
+			format.printCountingAutomatonDataStructure(printWriter, na.getName(),
+					(CountingAutomatonDataStructure<LETTER, STATE>) na.getAutomaton());
 		} else {
 			throw new AssertionError("unknown kind of automaton");
 		}
 	}
 
-	private static <LETTER, STATE> void printTreeAutomaton(final String name,
-			final TreeAutomatonBU<? extends IRankedLetter, STATE> automaton, final Format format,
-			final PrintWriter printWriter) {
-		switch (format) {
-		case ATS:
-			new TreeAutomatonWriter<>(printWriter, name, automaton);
-			break;
-		case ATS_NUMERATE:
-			new TreeAutomatonWriterUniqueId<>(printWriter, name, automaton);
-			break;
-		case ATS_QUOTED:
-		case BA:
-		case GFF:
-		case HOA:
-		default:
-			throw new AssertionError(UNSUPPORTED_LABELING);
-		}
-	}
-
 	private static <LETTER, STATE> void printNestedWordAutomaton(final AutomataLibraryServices services,
 			final String name, final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> automaton,
-			final Format format, final PrintWriter printWriter) throws AssertionError {
+			final IFormat format, final PrintWriter printWriter) throws AssertionError {
 		INestedWordAutomaton<LETTER, STATE> nwa;
 		if (automaton instanceof INestedWordAutomaton) {
 			nwa = (INestedWordAutomaton<LETTER, STATE>) automaton;
@@ -388,76 +364,11 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 				throw new AssertionError("Timeout while preparing automaton for printing.");
 			}
 		}
-		switch (format) {
-		case ATS:
-			new NwaWriter<>(printWriter, name, nwa, new INwaAtsFormatter.ToString<>());
-			break;
-		case ATS_QUOTED:
-			new NwaWriter<>(printWriter, name, nwa, new INwaAtsFormatter.ToStringWithHash<>());
-			break;
-		case ATS_NUMERATE:
-			new NwaWriter<>(printWriter, name, nwa, new INwaAtsFormatter.UniqueId<>());
-			break;
-		case BA:
-			if (!NestedWordAutomataUtils.isFiniteAutomaton(nwa)) {
-				throw new UnsupportedOperationException(
-						format + " format does not support call transitions or return transitions");
-			}
-			new BaFormatWriter<>(printWriter, nwa);
-			break;
-		case HOA:
-			if (!NestedWordAutomataUtils.isFiniteAutomaton(nwa)) {
-				throw new UnsupportedOperationException(
-						format + " format does not support call transitions or return transitions");
-			}
-			new HanoiFormatWriter<>(printWriter, nwa);
-			break;
-		case GFF:
-			if (!NestedWordAutomataUtils.isFiniteAutomaton(nwa)) {
-				throw new UnsupportedOperationException(
-						format + " format does not support call transitions or return transitions");
-			}
-			new GoalFormatWriter<>(printWriter, nwa);
-			break;
-		default:
-			throw new AssertionError(UNSUPPORTED_LABELING);
-		}
-	}
-
-	private static <LETTER, STATE> void printCountingAutomaton(final String name,
-			final CountingAutomaton<LETTER, STATE> automaton, final Format format, final PrintWriter printWriter) {
-		switch (format) {
-		case ATS:
-			new CaWriter<>(printWriter, name, automaton);
-			break;
-		case ATS_QUOTED:
-		case ATS_NUMERATE:
-		case BA:
-		case HOA:
-		case GFF:
-		default:
-			throw new AssertionError(UNSUPPORTED_LABELING);
-		}
-	}
-
-	private static <LETTER, STATE> void printCountingAutomatonDataStructure(final String name,
-			final CountingAutomatonDataStructure<LETTER, STATE> automaton, final Format format, final PrintWriter printWriter) {
-		switch (format) {
-		case ATS:
-			new CaDatastructureWriter<>(printWriter, name, automaton);
-			break;
-		case ATS_QUOTED:
-		case ATS_NUMERATE:
-		case BA:
-		case HOA:
-		case GFF:
-		default:
-			throw new AssertionError(UNSUPPORTED_LABELING);
-		}
+		format.printNestedWordAutomaton(printWriter, name, nwa);
 	}
 
 	private static <LETTER, STATE> void printPetriNet(final String name, final IPetriNet<LETTER, STATE> net,
-			final Format format, final PrintWriter printWriter) throws AssertionError {
+			final IFormat format, final PrintWriter printWriter) throws AssertionError {
 		if (!(net instanceof BoundedPetriNet)) {
 			final String msg =
 					"Unknown Petri net type. Only supported type is " + BoundedPetriNet.class.getSimpleName();
@@ -465,56 +376,18 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 		}
 
 		final BoundedPetriNet<LETTER, STATE> castNet = (BoundedPetriNet<LETTER, STATE>) net;
+		format.printPetriNet(printWriter, name, castNet);
+	}
 
-		switch (format) {
-		case ATS:
-			new NetWriter<>(printWriter, name, castNet, new IPetriAtsFormatter.ToString<>());
-			break;
-		case ATS_QUOTED:
-			new NetWriter<>(printWriter, name, castNet, new IPetriAtsFormatter.ToStringWithUniqueNumber<>());
-			break;
-		case ATS_NUMERATE:
-			new NetWriter<>(printWriter, name, castNet, new IPetriAtsFormatter.UniqueId<>());
-			break;
-		case BA:
-		case GFF:
-		case HOA:
-		default:
-			throw new AssertionError(UNSUPPORTED_LABELING);
+	private static void ensureNoCallReturn(final IFormat format, final INestedWordAutomaton<?, ?> nwa) {
+		if (!NestedWordAutomataUtils.isFiniteAutomaton(nwa)) {
+			throw new UnsupportedOperationException(
+					format.getClass().getSimpleName() + " does not support call transitions or return transitions");
 		}
 	}
 
-	private static <LETTER, STATE> void printAlternatingAutomaton(final String name,
-			final AlternatingAutomaton<LETTER, STATE> alternating, final Format format, final PrintWriter printWriter) {
-		switch (format) {
-		case ATS:
-			new AlternatingAutomatonWriter<>(printWriter, name, alternating);
-			break;
-		case ATS_QUOTED:
-		case ATS_NUMERATE:
-		case BA:
-		case GFF:
-		case HOA:
-		default:
-			throw new AssertionError(UNSUPPORTED_LABELING);
-		}
-	}
-
-	private static <LETTER, STATE> void printBranchingProcess(final String name,
-			final BranchingProcess<LETTER, STATE> branchingProcess, final Format format, final PrintWriter printWriter)
-			throws AssertionError {
-		switch (format) {
-		case ATS:
-			new BranchingProcessWriterToString<>(printWriter, name, branchingProcess);
-			break;
-		case ATS_QUOTED:
-		case ATS_NUMERATE:
-		case BA:
-		case GFF:
-		case HOA:
-		default:
-			throw new AssertionError(UNSUPPORTED_LABELING);
-		}
+	static void failUnsupported() {
+		throw new AssertionError(UNSUPPORTED_LABELING);
 	}
 
 	public static class NamedAutomaton<LETTER, STATE> {
@@ -536,6 +409,94 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 		public IAutomaton<LETTER, STATE> getAutomaton() {
 			return mAutomaton;
 		}
+	}
 
+	/**
+	 * Defines how various kinds of automata are printed as strings.
+	 *
+	 * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+	 *
+	 */
+	public interface IFormat {
+		String getFileEnding();
+
+		default void printHeader(final PrintWriter pw, final String header) {
+			// do nothing
+		}
+
+		<L, S> void printNestedWordAutomaton(final PrintWriter printWriter, final String name,
+				INestedWordAutomaton<L, S> nwa);
+
+		default <L, S> void printCountingAutomaton(final PrintWriter printWriter, final String name,
+				final CountingAutomaton<L, S> automaton) {
+			failUnsupported();
+		}
+
+		default <L, S> void printTreeAutomaton(final PrintWriter printWriter, final String name,
+				final TreeAutomatonBU<? extends IRankedLetter, S> automaton) {
+			failUnsupported();
+		}
+
+		default <L, S> void printCountingAutomatonDataStructure(final PrintWriter printWriter, final String name,
+				final CountingAutomatonDataStructure<L, S> automaton) {
+			failUnsupported();
+		}
+
+		default <L, S> void printPetriNet(final PrintWriter printWriter, final String name,
+				final BoundedPetriNet<L, S> net) {
+			failUnsupported();
+		}
+
+		default <L, S> void printAlternatingAutomaton(final PrintWriter printWriter, final String name,
+				final AlternatingAutomaton<L, S> alternating) {
+			failUnsupported();
+		}
+
+		default <L, S> void printBranchingProcess(final PrintWriter printWriter, final String name,
+				final BranchingProcess<L, S> branchingProcess) {
+			failUnsupported();
+		}
+	}
+
+	private static class BaFormat implements IFormat {
+		@Override
+		public String getFileEnding() {
+			return "ba";
+		}
+
+		@Override
+		public <L, S> void printNestedWordAutomaton(final PrintWriter printWriter, final String name,
+				final INestedWordAutomaton<L, S> nwa) {
+			ensureNoCallReturn(this, nwa);
+			new BaFormatWriter<>(printWriter, nwa);
+		}
+	}
+
+	private static class GffFormat implements IFormat {
+		@Override
+		public String getFileEnding() {
+			return "gff";
+		}
+
+		@Override
+		public <L, S> void printNestedWordAutomaton(final PrintWriter printWriter, final String name,
+				final INestedWordAutomaton<L, S> nwa) {
+			ensureNoCallReturn(this, nwa);
+			new GoalFormatWriter<>(printWriter, nwa);
+		}
+	}
+
+	private static class HoaFormat implements IFormat {
+		@Override
+		public String getFileEnding() {
+			return "hoa";
+		}
+
+		@Override
+		public <L, S> void printNestedWordAutomaton(final PrintWriter printWriter, final String name,
+				final INestedWordAutomaton<L, S> nwa) {
+			ensureNoCallReturn(this, nwa);
+			new HanoiFormatWriter<>(printWriter, nwa);
+		}
 	}
 }
