@@ -35,7 +35,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -210,24 +209,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 		}
 		if (mCounterexample == null) {
 			if (DUMP_OWICKI_GRIES_TEST) {
-				final var symbolTable = mIcfg.getCfgSmtToolkit().getSymbolTable();
-				final String variablesComment = "//@ variables " + Stream
-						.concat(mIcfg.getCfgSmtToolkit().getProcedures().stream()
-								.flatMap(p -> symbolTable.getLocals(p).stream()), symbolTable.getGlobals().stream())
-						.map(pv -> "(" + pv.getTermVariable().getName() + " " + pv.getTermVariable().getSort() + ")")
-						.collect(Collectors.joining(" "));
-
-				final var automata = new ArrayList<NamedAutomaton<L, IPredicate>>();
-				automata.add(new NamedAutomaton<>("program", mInitialNet));
-
-				int i = 1;
-				for (final var proofAut : mProofAutomata) {
-					automata.add(new NamedAutomaton<>("proof" + i, proofAut));
-					i++;
-				}
-
-				writeAutomataToFile("owicki-gries-test.ats", "", variablesComment,
-						automata.toArray(NamedAutomaton[]::new));
+				new OwickiGriesTestDumper<>(mServices, mTaskIdentifier, mIcfg, mInitialNet, mProofAutomata);
 			}
 
 			return true;
