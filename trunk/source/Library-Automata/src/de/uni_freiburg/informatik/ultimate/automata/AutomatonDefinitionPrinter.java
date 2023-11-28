@@ -503,12 +503,6 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 	private static <LETTER, STATE> void printBranchingProcess(final String name,
 			final BranchingProcess<LETTER, STATE> branchingProcess, final Format format, final PrintWriter printWriter)
 			throws AssertionError {
-		if (!(branchingProcess instanceof BranchingProcess)) {
-			final String msg =
-					"Unknown Petri branching process. Only supported type is " + BranchingProcess.class.getSimpleName();
-			throw new IllegalArgumentException(msg);
-		}
-
 		switch (format) {
 		case ATS:
 			new BranchingProcessWriterToString<>(printWriter, name, branchingProcess);
