@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction;
 
+import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
@@ -34,9 +35,13 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.proofs.IProofConverter;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.proofs.IProofPostProcessor;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.proofs.IProofProducer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.cfg2automaton.Cfg2Automaton;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
 /**
  * Provides an initial abstraction in the form of a nested word automaton. This is only applicable to sequential
@@ -55,6 +60,8 @@ public class NwaInitialAbstractionProvider<L extends IIcfgTransition<?>>
 	private final boolean mInterprocedural;
 	private final PredicateFactory mPredicateFactory;
 
+	private INestedWordAutomaton<L, IPredicate> mAbstraction;
+
 	/**
 	 * Create a new instance. For documentation of the parameters, see the corresponding parameters in
 	 * {@link CFG2NestedWordAutomaton#constructAutomatonWithSPredicates(IUltimateServiceProvider, IIcfg, IEmptyStackStateFactory, java.util.Collection, boolean, PredicateFactory)}.
@@ -71,7 +78,80 @@ public class NwaInitialAbstractionProvider<L extends IIcfgTransition<?>>
 	@Override
 	public INestedWordAutomaton<L, IPredicate> getInitialAbstraction(final IIcfg<? extends IcfgLocation> icfg,
 			final Set<? extends IcfgLocation> errorLocs) {
-		return Cfg2Automaton.constructAutomatonWithSPredicates(mServices, icfg, mStateFactory, errorLocs,
-				mInterprocedural, mPredicateFactory);
+		if (mAbstraction == null) {
+			mAbstraction = Cfg2Automaton.constructAutomatonWithSPredicates(mServices, icfg, mStateFactory, errorLocs,
+					mInterprocedural, mPredicateFactory);
+		}
+		return mAbstraction;
+	}
+
+	@Override
+	public <PROOF> IProofProducer<INestedWordAutomaton<L, IPredicate>, PROOF>
+			getProofProducer(final Class<PROOF> proofType, final Class<?> proofUpdates) {
+		// TODO replace Map<S,IPredicate> by new class/interface (I)FloydHoareAnnotation<S>
+		if (proofUpdates == null || proofUpdates.isAssignableFrom(NwaHoareProofProducer.class)) {
+			// TODO implement retrieval of suitable proof converter, if one exists
+			final IProofConverter<INestedWordAutomaton<L, IPredicate>, Map<IPredicate, IPredicate>, PROOF> converter =
+					null;
+
+			if (converter != null) {
+				return NwaHoareProofProducer.create(mAbstraction).withPostProcessor(converter);
+			}
+		}
+
+		return IInitialAbstractionProvider.super.getProofProducer(proofType, proofUpdates);
+	}
+
+	// TODO can't implement INwaCegarLoop.ProofProducer because in wrong project
+	private static final class NwaHoareProofProducer<L, S, PROGRAM, PROOF>
+			implements IProofProducer<PROGRAM, PROOF> /* , INwaCegarLoop.ProofProducer */ {
+
+		private final INestedWordAutomaton<L, S> mProgram;
+
+		// TODO replace Map<S,IPredicate> by new class/interface (I)FloydHoareAnnotation<S>
+		private final IProofPostProcessor<INestedWordAutomaton<L, S>, Map<S, IPredicate>, PROGRAM, PROOF> mPost;
+
+		private NwaHoareProofProducer(final INestedWordAutomaton<L, S> program,
+				final IProofPostProcessor<INestedWordAutomaton<L, S>, Map<S, IPredicate>, PROGRAM, PROOF> postProcessor) {
+			mProgram = program;
+			mPost = postProcessor;
+
+			assert postProcessor.getOriginalProgram() == mProgram;
+		}
+
+		public static <L, S> NwaHoareProofProducer<L, S, INestedWordAutomaton<L, S>, Map<S, IPredicate>>
+				create(final INestedWordAutomaton<L, S> program) {
+			return new NwaHoareProofProducer<>(program, IProofPostProcessor.identity(program));
+		}
+
+		@Override
+		public PROGRAM getProgram() {
+			return mPost.getOriginalProgram();
+		}
+
+		@Override
+		public boolean hasProof() {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
+		@Override
+		public PROOF getOrComputeProof() {
+			// TODO
+			final Map<S, IPredicate> floydHoare = null;
+			return mPost.processProof(floydHoare);
+		}
+
+		@Override
+		public <OUTPROGRAM, OUTPROOF> IProofProducer<OUTPROGRAM, OUTPROOF>
+				withPostProcessor(final IProofPostProcessor<PROGRAM, PROOF, OUTPROGRAM, OUTPROOF> postProcessor) {
+			return new NwaHoareProofProducer<>(mProgram, IProofPostProcessor.compose(mPost, postProcessor));
+		}
+
+		@Override
+		public IStatisticsDataProvider getStatistics() {
+			// TODO Auto-generated method stub
+			throw new UnsupportedOperationException();
+		}
 	}
 }
