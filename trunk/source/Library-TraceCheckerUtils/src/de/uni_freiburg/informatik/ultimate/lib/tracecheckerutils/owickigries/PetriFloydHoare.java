@@ -67,7 +67,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @param <L>
  *            The type of statements in the Petri program
  */
-public class PetriFloydHoare<P extends IPredicate, L> {
+public class PetriFloydHoare<P, L> {
 	private final IUltimateServiceProvider mServices;
 	private final ManagedScript mManagedScript;
 	private final BasicPredicateFactory mFactory;
@@ -80,20 +80,23 @@ public class PetriFloydHoare<P extends IPredicate, L> {
 	private final Set<P> mOriginalPlaces;
 
 	private final BranchingProcess<L, P> mRefinedUnfolding;
+	private final Function<P, IPredicate> mAssertionPlaceAnnotation;
 	private final Collection<Marking<P>> mRefinedReach;
 	private final Set<P> mAssertionPlaces;
 
 	private final Map<Marking<P>, IPredicate> mFloydHoareAnnotation;
 
 	public PetriFloydHoare(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
-			final BranchingProcess<L, P> bp, final IPetriNet<L, P> net, final List<IPredicateUnifier> predicateUnifiers,
-			final boolean iterativeCosets, final boolean coveringSimplification) {
-		this(services, csToolkit.getManagedScript(), csToolkit.getSymbolTable(), bp, net, predicateUnifiers,
-				iterativeCosets, coveringSimplification);
+			final BranchingProcess<L, P> bp, final Function<P, IPredicate> assertionPlaceAnnotation,
+			final IPetriNet<L, P> net, final List<IPredicateUnifier> predicateUnifiers, final boolean iterativeCosets,
+			final boolean coveringSimplification) {
+		this(services, csToolkit.getManagedScript(), csToolkit.getSymbolTable(), bp, assertionPlaceAnnotation, net,
+				predicateUnifiers, iterativeCosets, coveringSimplification);
 	}
 
 	public PetriFloydHoare(final IUltimateServiceProvider services, final ManagedScript mgdScript,
-			final IIcfgSymbolTable symbolTable, final BranchingProcess<L, P> bp, final IPetriNet<L, P> net,
+			final IIcfgSymbolTable symbolTable, final BranchingProcess<L, P> bp,
+			final Function<P, IPredicate> assertionPlaceAnnotation, final IPetriNet<L, P> net,
 			final List<IPredicateUnifier> predicateUnifiers, final boolean iterativeCosets,
 			final boolean coveringSimplification) {
 		mServices = services;
@@ -103,6 +106,7 @@ public class PetriFloydHoare<P extends IPredicate, L> {
 
 		mOriginalProgram = net;
 		mRefinedUnfolding = bp;
+		mAssertionPlaceAnnotation = assertionPlaceAnnotation;
 
 		final var refinedReachablePlaces =
 				mRefinedUnfolding.getConditions().stream().map(Condition::getPlace).collect(Collectors.toSet());
@@ -240,7 +244,7 @@ public class PetriFloydHoare<P extends IPredicate, L> {
 	private IPredicate getMarkingAssertion(final Marking<P> originalMarking) {
 		final Set<IPredicate> disjuncts = new HashSet<>();
 		for (final Marking<P> refinedMarking : getRefinedMarkingsForOriginal(originalMarking)) {
-			disjuncts.add(mFactory.and(getAssertPlaces(refinedMarking)));
+			disjuncts.add(mFactory.and(getAssertions(refinedMarking)));
 		}
 		return mFactory.or(disjuncts);
 	}
@@ -255,12 +259,13 @@ public class PetriFloydHoare<P extends IPredicate, L> {
 				.collect(Collectors.toSet());
 	}
 
-	private Set<? extends IPredicate> getAssertPlaces(final Marking<P> refinedMarking) {
+	private Set<IPredicate> getAssertions(final Marking<P> refinedMarking) {
 		final var assertPlaces = DataStructureUtils.intersection(refinedMarking.getPlaces(), mAssertionPlaces);
+		final var assertions = assertPlaces.stream().map(mAssertionPlaceAnnotation).collect(Collectors.toSet());
 		if (mCoveringSimplification) {
-			return simplifyAssertions((Set) assertPlaces);
+			return simplifyAssertions(assertions);
 		}
-		return assertPlaces;
+		return assertions;
 	}
 
 	// ---------------------------
@@ -301,7 +306,7 @@ public class PetriFloydHoare<P extends IPredicate, L> {
 	}
 
 	private Set<IPredicate> getCosetPredicates(final Set<Condition<L, P>> coset) {
-		return coset.stream().map(Condition::getPlace).collect(Collectors.toSet());
+		return coset.stream().map(Condition::getPlace).map(mAssertionPlaceAnnotation).collect(Collectors.toSet());
 	}
 
 	private Set<Set<Condition<L, P>>> collectCoSets(final Set<Condition<L, P>> compCoset,

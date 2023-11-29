@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
@@ -628,9 +629,9 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 		final var predicateUnifiers = mRefinementEngines.stream().map(IRefinementEngineResult::getPredicateUnifier)
 				.collect(Collectors.toList());
 
-		final var floydHoare =
-				new PetriFloydHoare<>(getServices(), mCsToolkit, mFinPrefix, mInitialNet, predicateUnifiers,
-						mPref.owickiGriesIterativeCosets(), mPref.owickiGriesCoveringSimplification()).getResult();
+		final var floydHoare = new PetriFloydHoare<>(getServices(), mCsToolkit, mFinPrefix, Function.identity(),
+				mInitialNet, predicateUnifiers, mPref.owickiGriesIterativeCosets(),
+				mPref.owickiGriesCoveringSimplification()).getResult();
 
 		try {
 			mLogger.warn("Checking inductivity of Floyd-Hoare annotation for initial Petri net");
