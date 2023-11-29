@@ -1870,17 +1870,15 @@ public class StandardFunctionHandler {
 						.addAllExceptLrValue(result).addStatement(createAnnotatedAssertOrAssume(loc, name,
 								mSettings.checkAssertions(), Spec.ASSERT, result.getLrValue().getValue(), errorMsg))
 						.build();
-			} else {
-				/* WARNING: this case should be never reached since the msg should be always a string literal */
-				throw new IncorrectSyntaxException(loc, "Message parameter of static assert is not a string literal");
 			}
-		} else {
-			/* static C11 or C23 assertion with one argument (expr) */
-			checkArguments(loc, 1, name, arguments);
-
-			/* handle as regular assertion */
-			return handleAssert(main, node, loc, name);
+			/* WARNING: this case should be never reached since the msg should be always a string literal */
+			throw new IncorrectSyntaxException(loc, "Message parameter of static assert is not a string literal");
 		}
+		/* static C11 or C23 assertion with one argument (expr) */
+		checkArguments(loc, 1, name, arguments);
+
+		/* handle as regular assertion */
+		return handleAssert(main, node, loc, name);
 	}
 
 	private Result handleBuiltinFegetround(final IDispatcher main, final IASTFunctionCallExpression node,
