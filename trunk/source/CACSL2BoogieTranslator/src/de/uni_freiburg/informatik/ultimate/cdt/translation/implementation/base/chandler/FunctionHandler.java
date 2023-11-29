@@ -629,20 +629,10 @@ public class FunctionHandler {
 	private Result handleFunctionCallGivenNameAndArguments(final IDispatcher main, final ILocation loc,
 			final String calleeName, final IASTInitializerClause[] arguments, final MemoryHandler memoryHandler) {
 
-		final BoogieProcedureInfo calleeProcInfo;
 		if (!mProcedureManager.hasProcedure(calleeName)) {
-			/*
-			 * "implicit function declaration", assume it was declared as int foo(); (thus the signature can be
-			 * completed by the first call, which we are dispatching here)
-			 */
-			mLogger.warn("implicit declaration of function " + calleeName);
-			mProcedureManager.registerProcedure(calleeName);
-			calleeProcInfo = mProcedureManager.getProcedureInfo(calleeName);
-			calleeProcInfo.setDefaultDeclarationAndCType(loc,
-					mTypeHandler.cType2AstType(loc, new CPrimitive(CPrimitives.INT)));
-		} else {
-			calleeProcInfo = mProcedureManager.getProcedureInfo(calleeName);
+			throw new UnsupportedSyntaxException(loc, "Unsupported function: " + calleeName);
 		}
+		final BoogieProcedureInfo calleeProcInfo = mProcedureManager.getProcedureInfo(calleeName);
 
 		final Procedure calleeProcDecl = calleeProcInfo.getDeclaration();
 		final CFunction calleeProcCType = calleeProcInfo.getCType();
