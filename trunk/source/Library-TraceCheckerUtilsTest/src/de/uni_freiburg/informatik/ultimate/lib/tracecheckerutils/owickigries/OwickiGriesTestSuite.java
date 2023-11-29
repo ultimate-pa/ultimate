@@ -434,7 +434,7 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 
 		@Override
 		public String toString() {
-			return mPath.getFileName().toString();
+			return mPath.getFileName().toString().replace(".", "_");
 		}
 
 		@Override
