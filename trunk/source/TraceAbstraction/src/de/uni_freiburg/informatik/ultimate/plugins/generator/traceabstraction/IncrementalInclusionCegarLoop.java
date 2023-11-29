@@ -66,6 +66,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.Inc
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.proofs.IUpdateOnDifference;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.proofs.IUpdateOnMinimization;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
@@ -82,15 +84,17 @@ public class IncrementalInclusionCegarLoop<L extends IIcfgTransition<?>> extends
 	protected final List<AbstractInterpolantAutomaton<L>> mInterpolantAutomata = new ArrayList<>();
 	protected final List<IHoareTripleChecker> mHoareTripleChecker = new ArrayList<>();
 
-	public IncrementalInclusionCegarLoop(final DebugIdentifier name,
-			final INestedWordAutomaton<L, IPredicate> initialAbstraction, final IIcfg<?> rootNode,
-			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final TAPreferences taPrefs,
-			final Set<? extends IcfgLocation> errorLocs, final InterpolationTechnique interpolation,
-			final boolean computeHoareAnnotation, final Set<IPredicate> hoareAnnotationStates,
-			final IUltimateServiceProvider services, final LanguageOperation languageOperation,
-			final Class<L> transitionClazz, final PredicateFactoryRefinement stateFactoryForRefinement) {
+	public <T extends IUpdateOnDifference<L> & IUpdateOnMinimization<L>> IncrementalInclusionCegarLoop(
+			final DebugIdentifier name, final INestedWordAutomaton<L, IPredicate> initialAbstraction,
+			final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
+			final TAPreferences taPrefs, final Set<? extends IcfgLocation> errorLocs,
+			final InterpolationTechnique interpolation, final T proofUpdater, final boolean computeHoareAnnotation,
+			final Set<IPredicate> hoareAnnotationStates, final IUltimateServiceProvider services,
+			final LanguageOperation languageOperation, final Class<L> transitionClazz,
+			final PredicateFactoryRefinement stateFactoryForRefinement) {
 		super(name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation,
-				computeHoareAnnotation, hoareAnnotationStates, services, transitionClazz, stateFactoryForRefinement);
+				proofUpdater, computeHoareAnnotation, hoareAnnotationStates, services, transitionClazz,
+				stateFactoryForRefinement);
 		mLanguageOperation = languageOperation;
 
 		// TODO #proofRefactor

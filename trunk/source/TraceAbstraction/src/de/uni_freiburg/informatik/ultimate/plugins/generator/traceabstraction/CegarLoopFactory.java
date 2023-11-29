@@ -149,8 +149,9 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 		if (languageOperation != LanguageOperation.DIFFERENCE) {
 			final var abstraction = createAutomataAbstraction(services, root, errorLocs, predicateFactory,
 					stateFactoryForRefinement, witnessAutomaton);
+			// TODO extract proof producer from IInitialAbstractionProvider and pass to CEGAR loop
 			return new IncrementalInclusionCegarLoop<>(name, abstraction, root, csToolkit, predicateFactory, mPrefs,
-					errorLocs, mPrefs.interpolation(), mComputeHoareAnnotation,
+					errorLocs, mPrefs.interpolation(), null, mComputeHoareAnnotation,
 					hoareAnnotationStates(hoareAnnotationLocs, abstraction), services, languageOperation,
 					mTransitionClazz, stateFactoryForRefinement);
 		}
@@ -158,8 +159,9 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 		if (mPrefs.interpolantAutomaton() == InterpolantAutomaton.TOTALINTERPOLATION) {
 			final var abstraction = createAutomataAbstraction(services, root, errorLocs, predicateFactory,
 					stateFactoryForRefinement, witnessAutomaton);
+			// TODO extract proof producer from IInitialAbstractionProvider and pass to CEGAR loop
 			return new CegarLoopSWBnonRecursive<>(name, abstraction, root, csToolkit, predicateFactory, mPrefs,
-					errorLocs, mPrefs.interpolation(), mComputeHoareAnnotation,
+					errorLocs, mPrefs.interpolation(), null, mComputeHoareAnnotation,
 					hoareAnnotationStates(hoareAnnotationLocs, abstraction), services, mTransitionClazz,
 					stateFactoryForRefinement);
 		}
@@ -220,6 +222,7 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 			final Set<IcfgLocation> hoareAnnotationLocs, final PredicateFactoryRefinement stateFactoryForRefinement,
 			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton) {
 
+		// TODO extract proof producer from IInitialAbstractionProvider and pass to CEGAR loops
 		final INestedWordAutomaton<L, IPredicate> initialAbstraction = createAutomataAbstraction(services, root,
 				errorLocs, predicateFactory, stateFactoryForRefinement, witnessAutomaton);
 		final CfgSmtToolkit csToolkit = root.getCfgSmtToolkit();
@@ -227,17 +230,17 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 		switch (mPrefs.getFloydHoareAutomataReuse()) {
 		case EAGER:
 			return new EagerReuseCegarLoop<>(name, initialAbstraction, root, csToolkit, predicateFactory, mPrefs,
-					errorLocs, mPrefs.interpolation(), mComputeHoareAnnotation,
+					errorLocs, mPrefs.interpolation(), null, mComputeHoareAnnotation,
 					hoareAnnotationStates(hoareAnnotationLocs, initialAbstraction), services, Collections.emptyList(),
 					rawFloydHoareAutomataFromFile, mTransitionClazz, stateFactoryForRefinement);
 		case LAZY_IN_ORDER:
 			return new LazyReuseCegarLoop<>(name, initialAbstraction, root, csToolkit, predicateFactory, mPrefs,
-					errorLocs, mPrefs.interpolation(), mComputeHoareAnnotation,
+					errorLocs, mPrefs.interpolation(), null, mComputeHoareAnnotation,
 					hoareAnnotationStates(hoareAnnotationLocs, initialAbstraction), services, Collections.emptyList(),
 					rawFloydHoareAutomataFromFile, mTransitionClazz, stateFactoryForRefinement);
 		case NONE:
 			return new NwaCegarLoop<>(name, initialAbstraction, root, csToolkit, predicateFactory, mPrefs, errorLocs,
-					mPrefs.interpolation(), mComputeHoareAnnotation,
+					mPrefs.interpolation(), null, mComputeHoareAnnotation,
 					hoareAnnotationStates(hoareAnnotationLocs, initialAbstraction), services, mTransitionClazz,
 					stateFactoryForRefinement);
 		default:

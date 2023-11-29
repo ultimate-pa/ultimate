@@ -87,6 +87,8 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.Simplificati
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SMTFeatureExtractionTermClassifier.ScoringMethod;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.cfg2automaton.Cfg2Automaton;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.proofs.IUpdateOnDifference;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.proofs.IUpdateOnMinimization;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram;
@@ -134,17 +136,19 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 	private final Integer mAStarRandomHeuristicSeed;
 
 	// TODO #proofRefactor
-	private final IProofUpdater<L> mProofUpdater = null;
+	private final ProofUpdater<L, ?> mProofUpdater;
 	protected HoareAnnotationFragments<L> mHaf;
 
-	public NwaCegarLoop(final DebugIdentifier name, final INestedWordAutomaton<L, IPredicate> initialAbstraction,
-			final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
-			final TAPreferences taPrefs, final Set<? extends IcfgLocation> errorLocs,
-			final InterpolationTechnique interpolation, final boolean computeHoareAnnotation,
-			final Set<IPredicate> hoareAnnotationStates, final IUltimateServiceProvider services,
-			final Class<L> transitionClazz, final PredicateFactoryRefinement stateFactoryForRefinement) {
+	public <T extends IUpdateOnDifference<L> & IUpdateOnMinimization<L>> NwaCegarLoop(final DebugIdentifier name,
+			final INestedWordAutomaton<L, IPredicate> initialAbstraction, final IIcfg<?> rootNode,
+			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final TAPreferences taPrefs,
+			final Set<? extends IcfgLocation> errorLocs, final InterpolationTechnique interpolation,
+			final T proofUpdater, final boolean computeHoareAnnotation, final Set<IPredicate> hoareAnnotationStates,
+			final IUltimateServiceProvider services, final Class<L> transitionClazz,
+			final PredicateFactoryRefinement stateFactoryForRefinement) {
 		super(name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation,
 				computeHoareAnnotation, services, transitionClazz, stateFactoryForRefinement);
+		mProofUpdater = proofUpdater == null ? null : new ProofUpdater<>(proofUpdater);
 		mHaf = new HoareAnnotationFragments<>(mLogger, hoareAnnotationStates);
 
 		mErrorGeneralizationEngine = new ErrorGeneralizationEngine<>(services);
@@ -598,15 +602,37 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 		}
 	}
 
-	public interface IProofUpdater<L> {
-		boolean exploitSigmaStarConcatOfIa();
+	// Annoyingly, this wrapper seems currently necessary due to Java's limited support for intersection types.
+	// The alternative is including a type parameter as below in the NwaCegarLoop itself.
+	private static final class ProofUpdater<L, T extends IUpdateOnMinimization<L> & IUpdateOnDifference<L>>
+			implements IUpdateOnMinimization<L>, IUpdateOnDifference<L> {
+		private final T mUpdater;
 
-		void updateOnIntersection(Map<IPredicate, Map<IPredicate, ProductNwa<L, IPredicate>.ProductState>> fst2snd2res,
-				IDoubleDeckerAutomaton<L, IPredicate> result);
+		public ProofUpdater(final T updater) {
+			mUpdater = updater;
+		}
 
-		void updateOnMinimization(final Map<IPredicate, IPredicate> old2New,
-				final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction);
+		@Override
+		public boolean exploitSigmaStarConcatOfIa() {
+			return mUpdater.exploitSigmaStarConcatOfIa();
+		}
 
-		void addDeadEndDoubleDeckers(IOpWithDelayedDeadEndRemoval<L, IPredicate> diff);
+		@Override
+		public void updateOnIntersection(
+				final Map<IPredicate, Map<IPredicate, ProductNwa<L, IPredicate>.ProductState>> fst2snd2res,
+				final IDoubleDeckerAutomaton<L, IPredicate> result) {
+			mUpdater.updateOnIntersection(fst2snd2res, result);
+		}
+
+		@Override
+		public void addDeadEndDoubleDeckers(final IOpWithDelayedDeadEndRemoval<L, IPredicate> diff) {
+			mUpdater.addDeadEndDoubleDeckers(diff);
+		}
+
+		@Override
+		public void updateOnMinimization(final Map<IPredicate, IPredicate> old2New,
+				final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction) {
+			mUpdater.updateOnMinimization(old2New, abstraction);
+		}
 	}
 }
