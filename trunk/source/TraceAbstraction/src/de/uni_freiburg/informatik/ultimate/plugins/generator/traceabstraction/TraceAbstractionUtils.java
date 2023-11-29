@@ -32,7 +32,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -45,14 +44,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.ICallAction;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IReturnAction;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
@@ -69,7 +64,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.Simplificati
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareAnnotationPositions;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
@@ -154,30 +148,6 @@ public final class TraceAbstractionUtils {
 		}
 		final Term result = Substitution.apply(mgdScript, substitutionMapping, ps.getFormula());
 		return result;
-	}
-
-	public static <LOC extends IcfgLocation> Set<LOC> getLocationsForWhichHoareAnnotationIsComputed(
-			final IIcfg<LOC> root, final HoareAnnotationPositions hoareAnnotationPositions) {
-		final Set<LOC> hoareAnnotationLocs = new HashSet<>();
-		switch (hoareAnnotationPositions) {
-		case All:
-			for (final Entry<String, Map<DebugIdentifier, LOC>> entry : root.getProgramPoints().entrySet()) {
-				hoareAnnotationLocs.addAll(entry.getValue().values());
-			}
-			break;
-		case LoopsAndPotentialCycles:
-			hoareAnnotationLocs.addAll(root.getLoopLocations());
-			hoareAnnotationLocs.addAll(IcfgUtils.getCallerAndCalleePoints(root));
-			hoareAnnotationLocs.addAll(IcfgUtils.getPotentialCycleProgramPoints(root));
-			break;
-		case LoopHeads:
-			hoareAnnotationLocs.addAll(root.getLoopLocations());
-			hoareAnnotationLocs.addAll(IcfgUtils.getCallerAndCalleePoints(root));
-			break;
-		default:
-			throw new AssertionError("unknown value " + hoareAnnotationPositions);
-		}
-		return hoareAnnotationLocs;
 	}
 
 	/**
