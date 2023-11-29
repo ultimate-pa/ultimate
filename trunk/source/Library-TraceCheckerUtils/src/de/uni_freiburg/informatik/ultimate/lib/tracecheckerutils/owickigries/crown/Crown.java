@@ -177,7 +177,7 @@ public final class Crown<PLACE, LETTER> {
 		for (final Rook<PLACE, LETTER> rook : mCrown) {
 			rook.validityAssertion(mBp, placesCoRelation, assertConds);
 		}
-		assert crownContainsAllCuts() : "Crown does not contain all cosets of the refined Petri nets branching process";
+		assert crownContainsAllCuts() : "Crown does not contain all cuts of the refined Petri nets branching process";
 	}
 
 }

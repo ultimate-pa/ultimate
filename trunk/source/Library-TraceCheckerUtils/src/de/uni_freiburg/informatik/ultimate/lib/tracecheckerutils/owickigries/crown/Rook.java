@@ -60,8 +60,8 @@ public final class Rook<PLACE, LETTER> {
 	private final KingdomLaw<PLACE, LETTER> mLaw;
 
 	public Rook(final Kingdom<PLACE, LETTER> kingdom, final KingdomLaw<PLACE, LETTER> law) {
-		mKingdom = new Kingdom<>(kingdom.getRealms());
-		mLaw = new KingdomLaw<>(law.getConditions());
+		mKingdom = kingdom;
+		mLaw = law;
 	}
 
 	private boolean isCut(final Set<Condition<LETTER, PLACE>> possibleCut, final BranchingProcess<LETTER, PLACE> bp) {
@@ -105,7 +105,7 @@ public final class Rook<PLACE, LETTER> {
 	 * @return Rook with modified Kingdom and the instances law.
 	 */
 	public Rook<PLACE, LETTER> expansion(final Condition<LETTER, PLACE> condition) {
-		final Realm<PLACE, LETTER> realm = new Realm<>(DataStructureUtils.toSet(condition));
+		final Realm<PLACE, LETTER> realm = new Realm<>(Set.of(condition));
 		final Kingdom<PLACE, LETTER> newKingdom = mKingdom.addRealm(realm);
 		return new Rook<>(newKingdom, getLaw());
 	}
@@ -143,11 +143,11 @@ public final class Rook<PLACE, LETTER> {
 	}
 
 	public Kingdom<PLACE, LETTER> getKingdom() {
-		return new Kingdom<>(mKingdom.getRealms());
+		return mKingdom;
 	}
 
 	public KingdomLaw<PLACE, LETTER> getLaw() {
-		return new KingdomLaw<>(mLaw.getConditions());
+		return mLaw;
 	}
 
 	public Set<SubterrElement<LETTER, PLACE>> getSubterritory() {

@@ -26,6 +26,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -59,6 +60,9 @@ public final class CrownConstruction<PLACE, LETTER> {
 	private final Set<Condition<LETTER, PLACE>> mAssertConds;
 
 	private final PlacesCoRelation<PLACE, LETTER> mPlacesCoRelation;
+
+	// Store already determined information about a rook containing non cuts to save runtime
+	private final HashMap<Rook<PLACE, LETTER>, Boolean> mContainsNonCut = new HashMap<>();
 
 	public CrownConstruction(final BranchingProcess<LETTER, PLACE> bp, final Set<Condition<LETTER, PLACE>> origConds,
 			final Set<Condition<LETTER, PLACE>> assertConds, final IPetriNet<LETTER, PLACE> net) {
@@ -96,16 +100,16 @@ public final class CrownConstruction<PLACE, LETTER> {
 	}
 
 	private Set<Rook<PLACE, LETTER>> crownComputation() {
-		Set<Rook<PLACE, LETTER>> colonizedRooks = mPreCrown.getRooks();
+		final Set<Rook<PLACE, LETTER>> colonizedRooks = mPreCrown.getRooks();
 		final Set<Rook<PLACE, LETTER>> reSet = new HashSet<>();
 		for (final Rook<PLACE, LETTER> rook : colonizedRooks) {
-			reSet.addAll(crownExpansion(rook, new ArrayList<>(mOrigConds), new HashSet<>(), true));
-		}
-		for (final Rook<PLACE, LETTER> rook : reSet) {
-			colonizedRooks.addAll(crownExpansion(rook, new ArrayList<>(mAssertConds), new HashSet<>(), false));
+			reSet.addAll(crownExpansion(rook, new ArrayList<>(mOrigConds), true));
 		}
 		final Set<Rook<PLACE, LETTER>> colonizedpreRooks = computePreRooks(colonizedRooks);
-		colonizedRooks = DataStructureUtils.difference(colonizedRooks, colonizedpreRooks);
+		colonizedRooks.removeAll(colonizedpreRooks);
+		for (final Rook<PLACE, LETTER> rook : reSet) {
+			colonizedRooks.addAll(crownExpansion(rook, new ArrayList<>(mAssertConds), false));
+		}
 		return colonizedRooks;
 	}
 
@@ -127,21 +131,21 @@ public final class CrownConstruction<PLACE, LETTER> {
 			final Set<Condition<LETTER, PLACE>> allKindredConditions =
 					kindred.getKindredConditions(splitMarkings, rook);
 			final Set<Realm<PLACE, LETTER>> kindredRealms = kindred.getKindredRealms(allKindredConditions, rook);
-			final Kingdom<PLACE, LETTER> firstKingdom =
+			Kingdom<PLACE, LETTER> firstKingdom =
 					new Kingdom<>(DataStructureUtils.difference(rook.getKingdom().getRealms(), kindredRealms));
 			for (final Realm<PLACE, LETTER> realm : kindredRealms) {
 				final Set<Condition<LETTER, PLACE>> newRealmConditions =
 						DataStructureUtils.difference(realm.getConditions(), allKindredConditions);
-				firstKingdom.addRealm(new Realm<>(newRealmConditions));
+				firstKingdom = firstKingdom.addRealm(new Realm<>(newRealmConditions));
 			}
 			mCrown.removeRook(rook);
 			mCrown.addRook(new Rook<>(firstKingdom, rook.getLaw()));
 			for (final Marking<PLACE> marking : splitMarkings) {
 				final Set<Condition<LETTER, PLACE>> markingKindredConds = kindred.getKindredConditions(marking, rook);
-				final Kingdom<PLACE, LETTER> secondKingdom =
+				Kingdom<PLACE, LETTER> secondKingdom =
 						new Kingdom<>(DataStructureUtils.difference(rook.getKingdom().getRealms(), kindredRealms));
 				for (final Condition<LETTER, PLACE> condition : markingKindredConds) {
-					secondKingdom.addRealm(new Realm<>(new HashSet<>(Set.of(condition))));
+					secondKingdom = secondKingdom.addRealm(new Realm<>(new HashSet<>(Set.of(condition))));
 				}
 				mCrown.addRook(new Rook<>(secondKingdom, rook.getLaw()));
 			}
@@ -149,9 +153,10 @@ public final class CrownConstruction<PLACE, LETTER> {
 	}
 
 	private Set<Rook<PLACE, LETTER>> crownExpansion(final Rook<PLACE, LETTER> rook,
-			final List<Condition<LETTER, PLACE>> troopConditions, Set<Rook<PLACE, LETTER>> crownRooks,
-			final boolean colonizer) {
-		for (final Condition<LETTER, PLACE> condition : troopConditions) {
+			final List<Condition<LETTER, PLACE>> troopConditions, final boolean colonizer) {
+		final Set<Rook<PLACE, LETTER>> crownRooks = new HashSet<>();
+		for (int i = 0; i < troopConditions.size(); i++) {
+			final Condition<LETTER, PLACE> condition = troopConditions.get(i);
 			final List<Condition<LETTER, PLACE>> conditions = new ArrayList<>(troopConditions);
 			Rook<PLACE, LETTER> colonyRook;
 			if (colonizer) {
@@ -164,11 +169,11 @@ public final class CrownConstruction<PLACE, LETTER> {
 			} else {
 				final List<Condition<LETTER, PLACE>> ntroops =
 						conditions.stream().filter(cond -> !cond.equals(condition)).collect(Collectors.toList());
-				Set<Rook<PLACE, LETTER>> expandedRooks = crownExpansion(colonyRook, ntroops, crownRooks, colonizer);
-				expandedRooks.add(colonyRook);
-				final Set<Rook<PLACE, LETTER>> preRooks = computePreRooks(expandedRooks);
-				expandedRooks = DataStructureUtils.difference(expandedRooks, preRooks);
-				crownRooks = DataStructureUtils.union(crownRooks, expandedRooks);
+				final Set<Rook<PLACE, LETTER>> expandedRooks = crownExpansion(colonyRook, ntroops, colonizer);
+				if (colonizer || !containsNonCut(colonyRook)) {
+					expandedRooks.add(colonyRook);
+				}
+				crownRooks.addAll(expandedRooks);
 			}
 		}
 		return crownRooks;
@@ -250,14 +255,12 @@ public final class CrownConstruction<PLACE, LETTER> {
 
 	private Rook<PLACE, LETTER> ratify(final CoRook<PLACE, LETTER> coRook) {
 		final Kingdom<PLACE, LETTER> kingdom = new Kingdom<>(coRook.getCoKingdom().getPosKingdom());
-		final KingdomLaw<PLACE, LETTER> law =
-				new KingdomLaw<>(new HashSet<Condition<LETTER, PLACE>>(Set.of(coRook.getCondition())));
+		final KingdomLaw<PLACE, LETTER> law = new KingdomLaw<>(Set.of(coRook.getCondition()));
 		return new Rook<>(kingdom, law);
 	}
 
 	private Rook<PLACE, LETTER> enactment(final CoRook<PLACE, LETTER> coRook) {
-		final KingdomLaw<PLACE, LETTER> law =
-				new KingdomLaw<>(new HashSet<Condition<LETTER, PLACE>>(Set.of(coRook.getCondition())));
+		final KingdomLaw<PLACE, LETTER> law = new KingdomLaw<>(Set.of(coRook.getCondition()));
 		return new Rook<>(coRook.getRook().getKingdom(), law);
 	}
 
@@ -267,8 +270,13 @@ public final class CrownConstruction<PLACE, LETTER> {
 
 	private Set<Rook<PLACE, LETTER>> computePreRooks(final Set<Rook<PLACE, LETTER>> rooks) {
 		final Set<Rook<PLACE, LETTER>> preRooks =
-				rooks.stream().filter(rook -> rook.containsNonCut(mBp)).collect(Collectors.toSet());
+				rooks.stream().filter(rook -> containsNonCut(rook)).collect(Collectors.toSet());
 		return preRooks;
+	}
+
+	private boolean containsNonCut(final Rook<PLACE, LETTER> rook) {
+		final Boolean noCut = mContainsNonCut.computeIfAbsent(rook, r -> r.containsNonCut(mBp));
+		return noCut;
 	}
 
 	private boolean getRooksTerritoryEquality(final Set<Rook<PLACE, LETTER>> rooks) {

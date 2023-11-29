@@ -52,7 +52,7 @@ public final class Realm<PLACE, LETTER> {
 	private final Set<Condition<LETTER, PLACE>> mRealm;
 
 	public Realm(final Set<Condition<LETTER, PLACE>> realm) {
-		mRealm = new HashSet<>(realm);
+		mRealm = realm;
 	}
 
 	private boolean placesNotCorelated(final PlacesCoRelation<PLACE, LETTER> placesCoRelation) {
