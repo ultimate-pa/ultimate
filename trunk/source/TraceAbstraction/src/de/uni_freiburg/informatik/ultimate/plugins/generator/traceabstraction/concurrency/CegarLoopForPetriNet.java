@@ -116,6 +116,8 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 	}
 
 	private static final boolean DUMP_OWICKI_GRIES_TEST = true;
+	private static final boolean GENERATE_OWICKI_GRIES_PROOF = false;
+
 	private final List<INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> mProofAutomata = new ArrayList<>();
 
 	private static final boolean USE_ON_DEMAND_RESULT = true;
@@ -617,6 +619,9 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 		if (mPref.applyOneShotLbe()) {
 			// TODO this should be moved somewhere else, it's not the responsibility of this CEGAR loop
 			throw new AssertionError("Owicki-Gries does currently not support Petri net LBE.");
+		}
+		if (!GENERATE_OWICKI_GRIES_PROOF) {
+			return;
 		}
 
 		final long startTime = System.nanoTime();
