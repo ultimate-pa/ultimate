@@ -31,18 +31,15 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.proofs.IProofConverter;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.proofs.IProofPostProcessor;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.proofs.IProofProducer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.cfg2automaton.Cfg2Automaton;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.floydhoare.IFloydHoareAnnotation;
-import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
 /**
  * Provides an initial abstraction in the form of a nested word automaton. This is only applicable to sequential
@@ -69,7 +66,10 @@ public class NwaInitialAbstractionProvider<L extends IIcfgTransition<?>>
 	 */
 	public NwaInitialAbstractionProvider(final IUltimateServiceProvider services,
 			final IEmptyStackStateFactory<IPredicate> stateFactory, final boolean interprocedural,
-			final PredicateFactory predicateFactory) {
+			final PredicateFactory predicateFactory // ,
+	// TODO: Add HoareAnnotationPositions.NONE in place of this boolean
+	// final boolean computeHoareAnnotation, final HoareAnnotationPositions hoarePositions
+	) {
 		mServices = services;
 		mStateFactory = stateFactory;
 		mInterprocedural = interprocedural;
@@ -100,58 +100,5 @@ public class NwaInitialAbstractionProvider<L extends IIcfgTransition<?>>
 		}
 
 		return IInitialAbstractionProvider.super.getProofProducer(proofType, proofUpdates);
-	}
-
-	// TODO can't implement INwaCegarLoop.ProofProducer because in wrong project
-	private static final class NwaHoareProofProducer<L extends IAction, S, PROGRAM, PROOF>
-			implements IProofProducer<PROGRAM, PROOF> /* , INwaCegarLoop.ProofProducer */ {
-
-		private final INestedWordAutomaton<L, S> mProgram;
-
-		private final IProofPostProcessor<INestedWordAutomaton<L, S>, IFloydHoareAnnotation<L, IPredicate>, PROGRAM, PROOF> mPost;
-
-		private NwaHoareProofProducer(final INestedWordAutomaton<L, S> program,
-				final IProofPostProcessor<INestedWordAutomaton<L, S>, IFloydHoareAnnotation<L, IPredicate>, PROGRAM, PROOF> postProcessor) {
-			mProgram = program;
-			mPost = postProcessor;
-
-			assert postProcessor.getOriginalProgram() == mProgram;
-		}
-
-		public static <L extends IAction, S>
-				NwaHoareProofProducer<L, S, INestedWordAutomaton<L, S>, IFloydHoareAnnotation<L, IPredicate>>
-				create(final INestedWordAutomaton<L, S> program) {
-			return new NwaHoareProofProducer<>(program, IProofPostProcessor.identity(program));
-		}
-
-		@Override
-		public PROGRAM getProgram() {
-			return mPost.getOriginalProgram();
-		}
-
-		@Override
-		public boolean hasProof() {
-			// TODO Auto-generated method stub
-			return false;
-		}
-
-		@Override
-		public PROOF getOrComputeProof() {
-			// TODO
-			final IFloydHoareAnnotation<L, IPredicate> floydHoare = null;
-			return mPost.processProof(floydHoare);
-		}
-
-		@Override
-		public <OUTPROGRAM, OUTPROOF> IProofProducer<OUTPROGRAM, OUTPROOF>
-				withPostProcessor(final IProofPostProcessor<PROGRAM, PROOF, OUTPROGRAM, OUTPROOF> postProcessor) {
-			return new NwaHoareProofProducer<>(mProgram, IProofPostProcessor.compose(mPost, postProcessor));
-		}
-
-		@Override
-		public IStatisticsDataProvider getStatistics() {
-			// TODO Auto-generated method stub
-			throw new UnsupportedOperationException();
-		}
 	}
 }
