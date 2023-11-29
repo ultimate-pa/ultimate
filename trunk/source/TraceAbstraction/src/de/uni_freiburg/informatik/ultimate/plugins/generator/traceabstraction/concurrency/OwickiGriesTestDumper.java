@@ -51,19 +51,19 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.TaskIdentifier;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 public final class OwickiGriesTestDumper<L extends IAction> {
 	private final Map<L, String> mAlphabetNames = new HashMap<>();
-	private final Script mScript;
+	private final ManagedScript mMgdScript;
 
 	public OwickiGriesTestDumper(final IUltimateServiceProvider services, final TaskIdentifier ident,
 			final IIcfg<?> icfg, final IPetriNet<L, IPredicate> initialNet,
 			final List<INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> proofAutomata) {
-		mScript = icfg.getCfgSmtToolkit().getManagedScript().getScript();
+		mMgdScript = icfg.getCfgSmtToolkit().getManagedScript();
 
 		final String variablesComment = getVariablesComment(icfg);
 		final String alphabetComments = getAlphabetDefinition(initialNet, proofAutomata);
@@ -125,12 +125,15 @@ public final class OwickiGriesTestDumper<L extends IAction> {
 			TermVariable subst;
 			if (!transformula.getAssignedVars().contains(entry.getKey())) {
 				subst = entry.getKey().getTermVariable();
-			} else {
+			} else if (entry.getKey() instanceof IProgramNonOldVar) {
 				subst = ((IProgramNonOldVar) entry.getKey()).getOldVar().getTermVariable();
+			} else {
+				final String name = "old(" + entry.getKey().getTermVariable().getName() + ")";
+				subst = mMgdScript.variable(name, entry.getKey().getSort());
 			}
 			substitution.put(entry.getValue(), subst);
 		}
-		final Term newFormula = PureSubstitution.apply(mScript, substitution, transformula.getFormula());
+		final Term newFormula = PureSubstitution.apply(mMgdScript, substitution, transformula.getFormula());
 		return assignedVars + " " + newFormula.toString();
 	}
 
