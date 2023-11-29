@@ -556,22 +556,28 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 
 	@Override
 	protected void computeIcfgHoareAnnotation() {
-		if (mCsToolkit.getManagedScript().isLocked()) {
-			throw new AssertionError("SMTManager must not be locked at the beginning of Hoare annotation computation");
-		}
-		final INestedWordAutomaton<L, IPredicate> abstraction = mAbstraction;
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.HoareAnnotationTime.toString());
 		try {
-			new HoareAnnotationExtractor<>(getServices(), abstraction, mHaf);
-			final HoareAnnotationComposer clha = new HoareAnnotationComposer(mCsToolkit, mPredicateFactory, mHaf,
-					getServices(), mSimplificationTechnique, mXnfConversionTechnique);
+			final HoareAnnotationComposer clha = computeHoareAnnotationComposer();
 			final HoareAnnotationWriter writer = new HoareAnnotationWriter(mIcfg, mCsToolkit, mPredicateFactory, clha,
-					getServices(), mSimplificationTechnique, mXnfConversionTechnique);
-			writer.addHoareAnnotationToCFG();
+					mServices, mSimplificationTechnique, mXnfConversionTechnique);
+			// writer.addHoareAnnotationToCFG();
+			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.HoareAnnotationTime.toString());
 			mCegarLoopBenchmark.addHoareAnnotationData(clha.getHoareAnnotationStatisticsGenerator());
 		} finally {
 			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.HoareAnnotationTime.toString());
 		}
+	}
+
+	protected HoareAnnotationComposer computeHoareAnnotationComposer() {
+		if (mCsToolkit.getManagedScript().isLocked()) {
+			throw new AssertionError("SMTManager must not be locked at the beginning of Hoare annotation computation");
+		}
+		final INestedWordAutomaton<L, IPredicate> abstraction = mAbstraction;
+		new HoareAnnotationExtractor<>(mServices, abstraction, mHaf);
+		final HoareAnnotationComposer clha = new HoareAnnotationComposer(mCsToolkit, mPredicateFactory, mHaf, mServices,
+				mSimplificationTechnique, mXnfConversionTechnique);
+		return clha;
 	}
 
 	private static final boolean checkStoreCounterExamples(final TAPreferences pref) {

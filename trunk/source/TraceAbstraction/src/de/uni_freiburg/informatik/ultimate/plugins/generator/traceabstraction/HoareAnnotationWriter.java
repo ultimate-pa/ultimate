@@ -36,6 +36,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.HoareAnnotation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.SPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.UnknownState;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 
@@ -66,17 +68,30 @@ public class HoareAnnotationWriter {
 	}
 
 	public void addHoareAnnotationToCFG() {
-		for (final Entry<IcfgLocation, IPredicate> entry : mCegarLoopHoareAnnotation.getLoc2hoare().entrySet()) {
-			final HoareAnnotation taAnnot = HoareAnnotation.getAnnotation(entry.getKey());
+		for (final Entry<IPredicate, IPredicate> entry : mCegarLoopHoareAnnotation.getLoc2hoare().entrySet()) {
+			final IcfgLocation loc = getProgramPoint(entry.getKey());
+			final HoareAnnotation taAnnot = HoareAnnotation.getAnnotation(loc);
 			final HoareAnnotation hoareAnnot;
 			if (taAnnot == null) {
 				hoareAnnot =
-						mPredicateFactory.getNewHoareAnnotation(entry.getKey(), mCsToolkit.getModifiableGlobalsTable());
-				hoareAnnot.annotate(entry.getKey());
+						mPredicateFactory.getNewHoareAnnotation(loc, mCsToolkit.getModifiableGlobalsTable());
+				hoareAnnot.annotate(loc);
 			} else {
 				hoareAnnot = taAnnot;
 			}
 			hoareAnnot.addInvariant(entry.getValue());
 		}
+	}
+
+	private IcfgLocation getProgramPoint(final IPredicate pred) {
+		final IcfgLocation pp;
+		if (pred instanceof SPredicate) {
+			pp = ((SPredicate) pred).getProgramPoint();
+		} else if (pred instanceof UnknownState) {
+			pp = ((UnknownState) pred).getProgramPoint();
+		} else {
+			throw new AssertionError("predicate does not offer program point");
+		}
+		return pp;
 	}
 }

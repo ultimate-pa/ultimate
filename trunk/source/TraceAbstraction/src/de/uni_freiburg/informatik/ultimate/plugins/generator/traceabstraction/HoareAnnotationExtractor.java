@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.MLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.SPredicate;
 
 /**
@@ -86,10 +87,10 @@ public class HoareAnnotationExtractor<LETTER extends IIcfgTransition<?>>
 	protected Collection<IPredicate> getInitialStates() {
 		final Collection<IPredicate> result = mTraversedNwa.getInitialStates();
 		if (result.size() == 1) {
-			// case where automaton is emtpy minimized and contains only one
+			// case where automaton is empty minimized and contains only one
 			// dummy state.
 			final IPredicate p = result.iterator().next();
-			if (!(p instanceof SPredicate)) {
+			if (!(p instanceof SPredicate) && !(p instanceof MLPredicate)) {
 				throw new AssertionError("No State Automaton would be ok");
 				// result = new ArrayList<Predicate>(0);
 			}

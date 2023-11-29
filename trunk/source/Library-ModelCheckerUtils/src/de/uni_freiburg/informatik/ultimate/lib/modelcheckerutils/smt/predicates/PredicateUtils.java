@@ -35,8 +35,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramOldVar;
@@ -395,5 +397,15 @@ public class PredicateUtils {
 		final Term result = (PureSubstitution.apply(script, substitutionMapping, postcond.getFormula()));
 		assert result.getFreeVars().length == 0 : "there are free vars";
 		return result;
+	}
+
+	public static Stream<IcfgLocation> getLocations(final IPredicate pred) {
+		if (pred instanceof ISLPredicate) {
+			return Stream.of(((ISLPredicate) pred).getProgramPoint());
+		}
+		if (pred instanceof IMLPredicate) {
+			return Arrays.stream(((IMLPredicate) pred).getProgramPoints());
+		}
+		return Stream.of();
 	}
 }

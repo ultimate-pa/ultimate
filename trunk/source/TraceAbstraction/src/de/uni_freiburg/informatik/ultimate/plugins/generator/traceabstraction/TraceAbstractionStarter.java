@@ -141,12 +141,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		mResultReporter = new CegarLoopResultReporter<>(mServices, mLogger, Activator.PLUGIN_ID, Activator.PLUGIN_NAME,
 				this::recordLocationResult);
 
-		if (mPrefs.computeHoareAnnotation() && mIsConcurrent) {
-			mLogger.warn("Switching off computation of Hoare annotation because input is a concurrent program");
-			mComputeHoareAnnotation = false;
-		} else {
-			mComputeHoareAnnotation = mPrefs.computeHoareAnnotation();
-		}
+		mComputeHoareAnnotation = mPrefs.computeHoareAnnotation();
 
 		mCegarFactory = new CegarLoopFactory<>(transitionClazz, mPrefs, createCompositionFactory, copyFactory,
 				mComputeHoareAnnotation);

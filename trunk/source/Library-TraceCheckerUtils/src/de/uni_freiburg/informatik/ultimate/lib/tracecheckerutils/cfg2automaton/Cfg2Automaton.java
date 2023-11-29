@@ -269,15 +269,19 @@ public class Cfg2Automaton<LETTER extends IIcfgTransition<?>> {
 		{
 			for (final Entry<IIcfgForkTransitionThreadCurrent<IcfgLocation>, List<ThreadInstance>> entry : icfg
 					.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().entrySet()) {
+
+				final ManagedScript mgdScript = icfg.getCfgSmtToolkit().getManagedScript();
+				final Term trueTerm = mgdScript.getScript().term("true");
+
 				final List<ThreadInstance> threadInstances = entry.getValue();
 				final List<IPredicate> notinUseStates = new ArrayList<>();
 				final List<IPredicate> inUseStates = new ArrayList<>();
 				for (final ThreadInstance ti : threadInstances) {
 					final String threadInstanceId = ti.getThreadInstanceName();
 					final IPredicate threadNotInUsePredicate = threadInstance2notinUseState.computeIfAbsent(
-							threadInstanceId, x -> createThreadNotInUsePredicate(x, net, predicateFactory));
+							threadInstanceId, x -> createThreadNotInUsePredicate(x, net, predicateFactory, trueTerm));
 					final IPredicate threadInUsePredicate = threadInstance2inUseState.computeIfAbsent(threadInstanceId,
-							x -> createThreadInUsePredicate(x, net, predicateFactory));
+							x -> createThreadInUsePredicate(x, net, predicateFactory, trueTerm));
 
 					notinUseStates.add(threadNotInUsePredicate);
 					inUseStates.add(threadInUsePredicate);
@@ -387,17 +391,21 @@ public class Cfg2Automaton<LETTER extends IIcfgTransition<?>> {
 	}
 
 	private static <LETTER> IPredicate createThreadNotInUsePredicate(final String threadInstanceId,
-			final BoundedPetriNet<LETTER, IPredicate> net, final PredicateFactory predicateFactory) {
+			final BoundedPetriNet<LETTER, IPredicate> net, final PredicateFactory predicateFactory,
+			final Term predicateTerm) {
+		// TODO (2020-09-03 Dominik) Label predicate with the string below; but use trueTerm (not dontCare).
 		final String threadNotInUseString = threadInstanceId + "NotInUse";
-		final IPredicate threadNotInUsePredicate = predicateFactory.newDebugPredicate(threadNotInUseString);
+		final IPredicate threadNotInUsePredicate = predicateFactory.newPredicate(predicateTerm);
 		net.addPlace(threadNotInUsePredicate, true, false);
 		return threadNotInUsePredicate;
 	}
 
 	private static <LETTER> IPredicate createThreadInUsePredicate(final String threadInstanceId,
-			final BoundedPetriNet<LETTER, IPredicate> net, final PredicateFactory predicateFactory) {
+			final BoundedPetriNet<LETTER, IPredicate> net, final PredicateFactory predicateFactory,
+			final Term predicateTerm) {
+		// TODO (2020-09-03 Dominik) Label predicate with the string below; but use trueTerm (not dontCare).
 		final String threadInUseString = threadInstanceId + "InUse";
-		final IPredicate threadInUsePredicate = predicateFactory.newDebugPredicate(threadInUseString);
+		final IPredicate threadInUsePredicate = predicateFactory.newPredicate(predicateTerm);
 		net.addPlace(threadInUsePredicate, false, false);
 		return threadInUsePredicate;
 	}
