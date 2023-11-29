@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency;
 
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -135,6 +136,8 @@ public final class OwickiGriesTestDumper<L extends IAction> {
 
 	private void writeAutomataToFile(final IUltimateServiceProvider services, final String filename,
 			final String atsCommands, final NamedAutomaton<L, IPredicate>... automata) {
+		services.getLoggingService().getLogger(getClass())
+				.info("Dumping Owicki-Gries test to " + Paths.get(filename).toAbsolutePath().toString());
 		AutomatonDefinitionPrinter.writeAutomatonToFile(new AutomataLibraryServices(services), filename,
 				new CustomFormat(), "", atsCommands, automata);
 	}
