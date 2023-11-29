@@ -46,7 +46,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareAnnotationPositions;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
@@ -77,8 +76,6 @@ public class HoareAnnotationFragments<LETTER extends IAction> {
 
 	private final Set<IPredicate> mHoareAnnotationPositions;
 
-	private final HoareAnnotationPositions mHoareAnnotationPos;
-
 	Map<IPredicate, HashRelation<IPredicate, IPredicate>> getDeadContexts2ProgPoint2Preds() {
 		return mDeadContexts2ProgPoint2Preds;
 	}
@@ -95,11 +92,9 @@ public class HoareAnnotationFragments<LETTER extends IAction> {
 		return mContext2Entry;
 	}
 
-	public HoareAnnotationFragments(final ILogger logger, final Set<IPredicate> hoareAnnotationLocations,
-			final HoareAnnotationPositions hoareAnnotationPos) {
+	public HoareAnnotationFragments(final ILogger logger, final Set<IPredicate> hoareAnnotationStates) {
 		mLogger = logger;
-		mHoareAnnotationPositions = hoareAnnotationLocations;
-		mHoareAnnotationPos = hoareAnnotationPos;
+		mHoareAnnotationPositions = hoareAnnotationStates;
 	}
 
 	/**
@@ -268,12 +263,11 @@ public class HoareAnnotationFragments<LETTER extends IAction> {
 
 	void addDoubleDecker(final IPredicate down, final IPredicate up, final IPredicate empty) {
 		final IPredicate pp = getProgramPoint(up);
-		if ((mHoareAnnotationPos == HoareAnnotationPositions.LoopsAndPotentialCycles
-				|| mHoareAnnotationPos == HoareAnnotationPositions.LoopHeads)
-				&& !mHoareAnnotationPositions.contains(pp)) {
+		if (!mHoareAnnotationPositions.contains(pp)) {
 			// do not compute Hoare annotation for this program point
 			return;
 		}
+
 		if (down == empty) {
 			mProgPoint2StatesWithEmptyContext.addPair(pp, up);
 		} else {

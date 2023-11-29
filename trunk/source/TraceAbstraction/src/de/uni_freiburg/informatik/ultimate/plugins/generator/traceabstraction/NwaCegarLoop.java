@@ -145,8 +145,8 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 			final Class<L> transitionClazz, final PredicateFactoryRefinement stateFactoryForRefinement) {
 		super(name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation,
 				computeHoareAnnotation, services, transitionClazz, stateFactoryForRefinement);
+		mHaf = new HoareAnnotationFragments<>(mLogger, hoareAnnotationStates);
 
-		mHaf = new HoareAnnotationFragments<>(mLogger, hoareAnnotationStates, mPref.getHoareAnnotationPositions());
 		mErrorGeneralizationEngine = new ErrorGeneralizationEngine<>(services);
 
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
