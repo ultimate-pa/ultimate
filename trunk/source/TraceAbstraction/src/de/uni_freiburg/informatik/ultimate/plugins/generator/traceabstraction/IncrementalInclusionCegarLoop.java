@@ -86,11 +86,11 @@ public class IncrementalInclusionCegarLoop<L extends IIcfgTransition<?>> extends
 			final INestedWordAutomaton<L, IPredicate> initialAbstraction, final IIcfg<?> rootNode,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final TAPreferences taPrefs,
 			final Set<? extends IcfgLocation> errorLocs, final InterpolationTechnique interpolation,
-			final boolean computeHoareAnnotation, final Set<IcfgLocation> hoareAnnotationLocs,
+			final boolean computeHoareAnnotation, final Set<IPredicate> hoareAnnotationStates,
 			final IUltimateServiceProvider services, final LanguageOperation languageOperation,
 			final Class<L> transitionClazz, final PredicateFactoryRefinement stateFactoryForRefinement) {
 		super(name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation,
-				computeHoareAnnotation, hoareAnnotationLocs, services, transitionClazz, stateFactoryForRefinement);
+				computeHoareAnnotation, hoareAnnotationStates, services, transitionClazz, stateFactoryForRefinement);
 		mLanguageOperation = languageOperation;
 
 		// TODO #proofRefactor

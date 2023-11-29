@@ -174,11 +174,11 @@ public class CegarLoopSWBnonRecursive<L extends IIcfgTransition<?>> extends NwaC
 			final INestedWordAutomaton<L, IPredicate> initialAbstraction, final IIcfg<?> icfg,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final TAPreferences taPrefs,
 			final Set<IcfgLocation> errorLocs, final InterpolationTechnique interpolation,
-			final boolean computeHoareAnnotation, final Set<IcfgLocation> hoareAnnotationLocs,
+			final boolean computeHoareAnnotation, final Set<IPredicate> hoareAnnotationStates,
 			final IUltimateServiceProvider services, final Class<L> transitionClazz,
 			final PredicateFactoryRefinement stateFactoryForRefinement) {
 		super(name, initialAbstraction, icfg, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation,
-				computeHoareAnnotation, hoareAnnotationLocs, services, transitionClazz, stateFactoryForRefinement);
+				computeHoareAnnotation, hoareAnnotationStates, services, transitionClazz, stateFactoryForRefinement);
 		mErrorPathHistory = new ArrayList<>();
 		mnofStates = new ArrayList<>();
 	}

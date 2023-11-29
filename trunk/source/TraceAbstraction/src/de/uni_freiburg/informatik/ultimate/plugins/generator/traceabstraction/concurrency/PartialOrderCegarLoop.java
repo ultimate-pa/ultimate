@@ -28,7 +28,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
@@ -136,7 +135,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 			final List<IRefinableIndependenceProvider<L>> independenceProviders, final Class<L> transitionClazz,
 			final PredicateFactoryRefinement stateFactoryForRefinement) {
 		super(name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation, false,
-				Collections.emptySet(), services, transitionClazz, stateFactoryForRefinement);
+				services, transitionClazz, stateFactoryForRefinement);
 
 		assert !mPref.applyOneShotPOR() : "Turn off one-shot partial order reduction when using this CEGAR loop.";
 

@@ -27,7 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -155,8 +154,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 			final TAPreferences taPrefs, final Set<IcfgLocation> errorLocs, final IUltimateServiceProvider services,
 			final Class<L> transitionClazz, final PredicateFactoryRefinement stateFactoryForRefinement) {
 		super(name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs,
-				taPrefs.interpolation(), false, Collections.emptySet(), services, transitionClazz,
-				stateFactoryForRefinement);
+				taPrefs.interpolation(), false, services, transitionClazz, stateFactoryForRefinement);
 		mPetriClStatisticsGenerator = new PetriCegarLoopStatisticsGenerator(mCegarLoopBenchmark);
 		mCounterexampleCache = new CounterexampleCache<>();
 

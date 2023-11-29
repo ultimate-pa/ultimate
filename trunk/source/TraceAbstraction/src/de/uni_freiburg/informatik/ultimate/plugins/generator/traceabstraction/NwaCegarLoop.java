@@ -135,16 +135,18 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 
 	// TODO #proofRefactor
 	private final IProofUpdater<L> mProofUpdater = null;
+	protected HoareAnnotationFragments<L> mHaf;
 
 	public NwaCegarLoop(final DebugIdentifier name, final INestedWordAutomaton<L, IPredicate> initialAbstraction,
 			final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final TAPreferences taPrefs, final Set<? extends IcfgLocation> errorLocs,
 			final InterpolationTechnique interpolation, final boolean computeHoareAnnotation,
-			final Set<IcfgLocation> hoareAnnotationLocs, final IUltimateServiceProvider services,
+			final Set<IPredicate> hoareAnnotationStates, final IUltimateServiceProvider services,
 			final Class<L> transitionClazz, final PredicateFactoryRefinement stateFactoryForRefinement) {
 		super(name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation,
-				computeHoareAnnotation, hoareAnnotationLocs, services, transitionClazz, stateFactoryForRefinement);
+				computeHoareAnnotation, services, transitionClazz, stateFactoryForRefinement);
 
+		mHaf = new HoareAnnotationFragments<>(mLogger, hoareAnnotationStates, mPref.getHoareAnnotationPositions());
 		mErrorGeneralizationEngine = new ErrorGeneralizationEngine<>(services);
 
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);

@@ -109,12 +109,12 @@ public class ReuseCegarLoop<L extends IIcfgTransition<?>> extends NwaCegarLoop<L
 			final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final TAPreferences taPrefs, final Set<? extends IcfgLocation> errorLocs,
 			final InterpolationTechnique interpolation, final boolean computeHoareAnnotation,
-			final Set<IcfgLocation> hoareAnnotationLocs, final IUltimateServiceProvider services,
+			final Set<IPredicate> hoareAnnotationStates, final IUltimateServiceProvider services,
 			final List<Pair<AbstractInterpolantAutomaton<L>, IPredicateUnifier>> floydHoareAutomataFromOtherLocations,
 			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile,
 			final Class<L> transitionClazz, final PredicateFactoryRefinement stateFactoryForRefinement) {
 		super(name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation,
-				computeHoareAnnotation, hoareAnnotationLocs, services, transitionClazz, stateFactoryForRefinement);
+				computeHoareAnnotation, hoareAnnotationStates, services, transitionClazz, stateFactoryForRefinement);
 		mFloydHoareAutomataFromOtherErrorLocations = floydHoareAutomataFromOtherLocations;
 		mRawFloydHoareAutomataFromFile = rawFloydHoareAutomataFromFile;
 		mFloydHoareAutomataFromFile = new ArrayList<>();

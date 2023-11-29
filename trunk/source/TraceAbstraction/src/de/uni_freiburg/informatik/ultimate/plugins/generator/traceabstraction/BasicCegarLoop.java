@@ -43,7 +43,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -92,7 +91,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskIterationIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult.BasicRefinementEngineResult;
@@ -180,7 +178,6 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 			new LinkedHashSet<>();
 
 	protected boolean mFallbackToFpIfInterprocedural = false;
-	protected HoareAnnotationFragments<L> mHaf;
 	protected IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> mRefinementResult;
 
 	private boolean mFirstReuseDump = true;
@@ -188,9 +185,8 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 	public BasicCegarLoop(final DebugIdentifier name, final A initialAbstraction, final IIcfg<?> rootNode,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final TAPreferences taPrefs,
 			final Set<? extends IcfgLocation> errorLocs, InterpolationTechnique interpolation,
-			final boolean computeHoareAnnotation, final Set<IcfgLocation> hoareAnnotationLocs,
-			final IUltimateServiceProvider services, final Class<L> transitionClazz,
-			final PredicateFactoryRefinement stateFactoryForRefinement) {
+			final boolean computeHoareAnnotation, final IUltimateServiceProvider services,
+			final Class<L> transitionClazz, final PredicateFactoryRefinement stateFactoryForRefinement) {
 		super(services, name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs,
 				services.getLoggingService().getLogger(Activator.PLUGIN_ID), transitionClazz, computeHoareAnnotation);
 		mPathProgramDumpController = new PathProgramDumpController<>(getServices(), mPref, mIcfg);
@@ -201,17 +197,6 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 		}
 
 		mStoreFloydHoareAutomata = taPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.NONE;
-
-		final Set<IPredicate> hoareAnnotationStates;
-		if (initialAbstraction instanceof INestedWordAutomaton<?, ?>) {
-			final var nwa = (INestedWordAutomaton<?, IPredicate>) initialAbstraction;
-			hoareAnnotationStates = nwa.getStates().stream()
-					.filter(p -> PredicateUtils.getLocations(p).anyMatch(hoareAnnotationLocs::contains))
-					.collect(Collectors.toSet());
-		} else {
-			hoareAnnotationStates = Set.of();
-		}
-		mHaf = new HoareAnnotationFragments<>(mLogger, hoareAnnotationStates, mPref.getHoareAnnotationPositions());
 		mStateFactoryForRefinement = stateFactoryForRefinement;
 
 		// TODO #proofRefactor
