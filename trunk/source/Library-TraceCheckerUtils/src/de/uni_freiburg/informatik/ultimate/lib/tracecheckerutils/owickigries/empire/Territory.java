@@ -79,26 +79,6 @@ public final class Territory<PLACE, LETTER> {
 		return mTerritory;
 	}
 
-	/**
-	 * Adds the specified set of regions into the territory.
-	 *
-	 * @param regions
-	 *            Set of regions to be added.
-	 */
-	public void addRegion(final Set<Region<PLACE, LETTER>> regions) {
-		mTerritory.addAll(regions);
-	}
-
-	/**
-	 * Adds the specified region of places into territory.
-	 *
-	 * @param region
-	 *            Single region to be added.
-	 */
-	public void addRegion(final Region<PLACE, LETTER> region) {
-		mTerritory.add(region);
-	}
-
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean equals(final Object obj) {

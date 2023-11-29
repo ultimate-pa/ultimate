@@ -28,11 +28,14 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.em
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown.Crown;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown.CrownConstruction;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
@@ -46,6 +49,7 @@ public class PetriOwickiGries<LETTER, PLACE> {
 	private final Set<PLACE> mOriginalPlaces;
 	private final IPetriNet<LETTER, PLACE> mNet;
 	private final Crown<PLACE, LETTER> mCrown;
+	private final EmpireAnnotation<PLACE, LETTER> mEmpireAnnotation;
 
 	/**
 	 *
@@ -54,7 +58,8 @@ public class PetriOwickiGries<LETTER, PLACE> {
 	 * @param net
 	 *            the original Petri program
 	 */
-	public PetriOwickiGries(final BranchingProcess<LETTER, PLACE> bp, final IPetriNet<LETTER, PLACE> net) {
+	public PetriOwickiGries(final BranchingProcess<LETTER, PLACE> bp, final IPetriNet<LETTER, PLACE> net,
+			final BasicPredicateFactory factory, final Function<PLACE, IPredicate> placeToAssertion) {
 		mBp = bp;
 		mNet = net;
 		mOriginalPlaces = mNet.getPlaces();
@@ -62,12 +67,19 @@ public class PetriOwickiGries<LETTER, PLACE> {
 		mOriginalConditions = getOrigConditions();
 		mAssertionConditions = DataStructureUtils.difference(mConditions, mOriginalConditions);
 		mCrown = getCrown();
+		mEmpireAnnotation = getEmpireAnnotation(factory, placeToAssertion);
 	}
 
 	private Crown<PLACE, LETTER> getCrown() {
 		final CrownConstruction<PLACE, LETTER> crownConstruction =
 				new CrownConstruction<>(mBp, mOriginalConditions, mAssertionConditions, mNet);
 		return crownConstruction.getCrown();
+	}
+
+	private EmpireAnnotation<PLACE, LETTER> getEmpireAnnotation(final BasicPredicateFactory factory,
+			final Function<PLACE, IPredicate> placeToAssertion) {
+		final CrownsEmpire<PLACE, LETTER> crownsEmpire = new CrownsEmpire<>(mCrown, factory, placeToAssertion);
+		return crownsEmpire.getEmpireAnnotation();
 	}
 
 	private Set<Condition<LETTER, PLACE>> getOrigConditions() {

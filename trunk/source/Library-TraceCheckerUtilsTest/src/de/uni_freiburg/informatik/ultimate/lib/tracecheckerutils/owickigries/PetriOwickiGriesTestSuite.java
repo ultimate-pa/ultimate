@@ -45,6 +45,6 @@ public class PetriOwickiGriesTestSuite extends OwickiGriesTestSuite {
 			final BoundedPetriNet<SimpleAction, IPredicate> program,
 			final BoundedPetriNet<SimpleAction, IPredicate> refinedPetriNet,
 			final BranchingProcess<SimpleAction, IPredicate> unfolding) throws AutomataLibraryException {
-		new PetriOwickiGries<>(unfolding, program);
+		new PetriOwickiGries<>(unfolding, program, mPredicateFactory, p -> p);
 	}
 }
