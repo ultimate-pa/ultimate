@@ -22,5 +22,10 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.util,
  de.uni_freiburg.informatik.ultimate.smtinterpol,
  de.uni_freiburg.informatik.ultimate.smtsolver.external,
- de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder
+ de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
+ org.junit,
+ junit-jupiter-api
 Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.lib.tracecheckerutils
+Import-Package: de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction,
+ de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences,
+ de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling
