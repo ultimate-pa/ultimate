@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<benchmark tool="shell" memlimit="5GB" timelimit="20" hardtimelimit="22">
+  <resultfiles></resultfiles>
+
+  <option name="success">1 tests successful</option>
+  <option name="failure">1 tests failed</option>
+
+  <rundefinition name="PetriOwickiGriesTestSuite">
+    <option name="command">${benchmark_path}/../run-test.sh Library-TraceCheckerUtilsTest de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.PetriOwickiGriesTestSuite ${inputfile_name}</option>
+  </rundefinition>
+
+  <tasks name="regression">
+    <include>../../../trunk/examples/concurrent/OwickiGries/PetriPrograms/*.ats</include>
+  </tasks>
+
+</benchmark>
