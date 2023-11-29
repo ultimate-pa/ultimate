@@ -26,12 +26,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction;
 
-import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.proofs.IProofPr
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.cfg2automaton.Cfg2Automaton;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.floydhoare.IFloydHoareAnnotation;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
 /**
@@ -88,10 +89,9 @@ public class NwaInitialAbstractionProvider<L extends IIcfgTransition<?>>
 	@Override
 	public <PROOF> IProofProducer<INestedWordAutomaton<L, IPredicate>, PROOF>
 			getProofProducer(final Class<PROOF> proofType, final Class<?> proofUpdates) {
-		// TODO replace Map<S,IPredicate> by new class/interface (I)FloydHoareAnnotation<S>
 		if (proofUpdates == null || proofUpdates.isAssignableFrom(NwaHoareProofProducer.class)) {
 			// TODO implement retrieval of suitable proof converter, if one exists
-			final IProofConverter<INestedWordAutomaton<L, IPredicate>, Map<IPredicate, IPredicate>, PROOF> converter =
+			final IProofConverter<INestedWordAutomaton<L, IPredicate>, IFloydHoareAnnotation<L, IPredicate>, PROOF> converter =
 					null;
 
 			if (converter != null) {
@@ -103,23 +103,23 @@ public class NwaInitialAbstractionProvider<L extends IIcfgTransition<?>>
 	}
 
 	// TODO can't implement INwaCegarLoop.ProofProducer because in wrong project
-	private static final class NwaHoareProofProducer<L, S, PROGRAM, PROOF>
+	private static final class NwaHoareProofProducer<L extends IAction, S, PROGRAM, PROOF>
 			implements IProofProducer<PROGRAM, PROOF> /* , INwaCegarLoop.ProofProducer */ {
 
 		private final INestedWordAutomaton<L, S> mProgram;
 
-		// TODO replace Map<S,IPredicate> by new class/interface (I)FloydHoareAnnotation<S>
-		private final IProofPostProcessor<INestedWordAutomaton<L, S>, Map<S, IPredicate>, PROGRAM, PROOF> mPost;
+		private final IProofPostProcessor<INestedWordAutomaton<L, S>, IFloydHoareAnnotation<L, IPredicate>, PROGRAM, PROOF> mPost;
 
 		private NwaHoareProofProducer(final INestedWordAutomaton<L, S> program,
-				final IProofPostProcessor<INestedWordAutomaton<L, S>, Map<S, IPredicate>, PROGRAM, PROOF> postProcessor) {
+				final IProofPostProcessor<INestedWordAutomaton<L, S>, IFloydHoareAnnotation<L, IPredicate>, PROGRAM, PROOF> postProcessor) {
 			mProgram = program;
 			mPost = postProcessor;
 
 			assert postProcessor.getOriginalProgram() == mProgram;
 		}
 
-		public static <L, S> NwaHoareProofProducer<L, S, INestedWordAutomaton<L, S>, Map<S, IPredicate>>
+		public static <L extends IAction, S>
+				NwaHoareProofProducer<L, S, INestedWordAutomaton<L, S>, IFloydHoareAnnotation<L, IPredicate>>
 				create(final INestedWordAutomaton<L, S> program) {
 			return new NwaHoareProofProducer<>(program, IProofPostProcessor.identity(program));
 		}
@@ -138,7 +138,7 @@ public class NwaInitialAbstractionProvider<L extends IIcfgTransition<?>>
 		@Override
 		public PROOF getOrComputeProof() {
 			// TODO
-			final Map<S, IPredicate> floydHoare = null;
+			final IFloydHoareAnnotation<L, IPredicate> floydHoare = null;
 			return mPost.processProof(floydHoare);
 		}
 

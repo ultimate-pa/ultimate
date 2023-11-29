@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationC
  * @param assertInductivity
  *            if true, assert statements require inductivity (resp. anti-inductivity)
  */
+// TODO #proofRefactor : Make full-blown validity checker for IFloydHoareAnnotation
 public class InductivityCheck<LETTER extends IAction> {
 
 	private final IUltimateServiceProvider mServices;
