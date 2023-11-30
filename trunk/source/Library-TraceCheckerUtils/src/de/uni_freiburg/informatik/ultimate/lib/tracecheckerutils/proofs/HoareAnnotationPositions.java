@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.d
 public enum HoareAnnotationPositions {
 	All, LoopHeads, LoopsAndPotentialCycles, None;
 
-	public <LOC extends IcfgLocation> Set<LOC> getLocationsForWhichHoareAnnotationIsComputed(final IIcfg<LOC> root) {
+	public <LOC extends IcfgLocation> Set<LOC> getLocations(final IIcfg<LOC> root) {
 		final Set<LOC> hoareAnnotationLocs = new HashSet<>();
 		switch (this) {
 		case All:

@@ -139,7 +139,7 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 		final Set<IcfgLocation> hoareAnnotationLocs;
 		if (mComputeHoareAnnotation) {
 			hoareAnnotationLocs =
-					mPrefs.getHoareAnnotationPositions().getLocationsForWhichHoareAnnotationIsComputed(root);
+					mPrefs.getHoareAnnotationPositions().getLocations(root);
 		} else {
 			hoareAnnotationLocs = Collections.emptySet();
 		}
