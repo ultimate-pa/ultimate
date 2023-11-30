@@ -68,9 +68,8 @@ public final class CoRook<PLACE, LETTER> {
 					&& mCoLaw.getCoRelation() == CoRelationType.POSITIVE) {
 				if (mCoKingdom.getConflictFree()) {
 					return ColonizationType.IMMIGRATION;
-				} else {
-					return ColonizationType.FOUNDATION;
 				}
+				return ColonizationType.FOUNDATION;
 			} else {
 				return ColonizationType.DEFEAT;
 			}
