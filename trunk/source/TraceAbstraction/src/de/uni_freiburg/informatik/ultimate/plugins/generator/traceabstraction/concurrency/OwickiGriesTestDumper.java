@@ -49,10 +49,12 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.TaskIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
+import de.uni_freiburg.informatik.ultimate.logic.PrintTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
@@ -81,12 +83,17 @@ public final class OwickiGriesTestDumper<L extends IAction> {
 				automata.toArray(NamedAutomaton[]::new));
 	}
 
-	private static String getVariablesComment(final IIcfg<?> icfg) {
+	private String getVariablesComment(final IIcfg<?> icfg) {
 		final var symbolTable = icfg.getCfgSmtToolkit().getSymbolTable();
-		return "//@ variables " + Stream
-				.concat(icfg.getCfgSmtToolkit().getProcedures().stream()
-						.flatMap(p -> symbolTable.getLocals(p).stream()), symbolTable.getGlobals().stream())
-				.map(pv -> "(" + pv.getTermVariable().getName() + " " + pv.getTermVariable().getSort() + ")")
+
+		final var actualVars = Stream.concat(symbolTable.getGlobals().stream(),
+				icfg.getCfgSmtToolkit().getProcedures().stream().flatMap(p -> symbolTable.getLocals(p).stream()))
+				.map(IProgramVar::getTermVariable);
+		final var constVars = symbolTable.getConstants().stream()
+				.map(c -> mMgdScript.variable(c.getDefaultConstant().getFunction().getName(), c.getSort()));
+
+		return "//@ variables " + Stream.concat(actualVars, constVars)
+				.map(tv -> "(" + PrintTerm.quoteIdentifier(tv.getName()) + " " + tv.getSort() + ")")
 				.collect(Collectors.joining(" "));
 	}
 
