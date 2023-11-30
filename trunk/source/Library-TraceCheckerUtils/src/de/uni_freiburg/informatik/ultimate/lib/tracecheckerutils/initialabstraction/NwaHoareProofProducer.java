@@ -88,7 +88,7 @@ final class NwaHoareProofProducer<L extends IAction, S, PROGRAM, PROOF>
 	}
 
 	@Override
-	public <OUTPROGRAM, OUTPROOF> IProofProducer<OUTPROGRAM, OUTPROOF>
+	public <OUTPROGRAM, OUTPROOF> NwaHoareProofProducer<L, S, OUTPROGRAM, OUTPROOF>
 			withPostProcessor(final IProofPostProcessor<PROGRAM, PROOF, OUTPROGRAM, OUTPROOF> postProcessor) {
 		return new NwaHoareProofProducer<>(mProgram, // mHoareAnnotationStates,
 				IProofPostProcessor.compose(mPost, postProcessor));
