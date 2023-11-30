@@ -1088,13 +1088,8 @@ public class CHandler {
 			final Result r = main.dispatch(child);
 			if (r instanceof ExpressionResult) {
 				final ExpressionResult res = (ExpressionResult) r;
-				resultBuilder.addDeclarations(res.getDeclarations());
-				resultBuilder.addStatements(res.getStatements());
+				resultBuilder.addAllExceptLrValue(res);
 				expr = res.getLrValue();
-				// if (!((ExpressionResult) r).getOverapprs().isEmpty()) {
-				// throw new AssertionError("Forgot to pass overapproximation flags to statements: " +
-				// ((ExpressionResult) r).getOverapprs());
-				// }
 			} else if (r.getNode() != null && r.getNode() instanceof Body) {
 				assert false : "should not happen, as CompoundStatement now yields an "
 						+ "ExpressionResult or a CompoundStatementExpressionResult";
@@ -1425,35 +1420,11 @@ public class CHandler {
 	public Result visit(final IDispatcher main, final IASTExpressionStatement node) {
 
 		final Result r = main.dispatch(node.getExpression());
-		if (r instanceof ExpressionResult) {
-			final ExpressionResult rExp = (ExpressionResult) r;
-
-			final ArrayList<Statement> stmt = new ArrayList<>(rExp.getStatements());
-			final ArrayList<Declaration> decl = new ArrayList<>(rExp.getDeclarations());
-			final List<Overapprox> overappr = new ArrayList<>();
-			stmt.addAll(CTranslationUtil.createHavocsForAuxVars(rExp.getAuxVars()));
-			overappr.addAll(rExp.getOverapprs());
-			return new ExpressionResult(stmt, rExp.getLrValue(), decl, Collections.emptySet(), overappr);
+		if (r instanceof ExpressionResult || r instanceof SkipResult) {
+			return r;
 		}
 		if (r instanceof ExpressionListResult) {
-			final ArrayList<Statement> stmt = new ArrayList<>();
-			final ArrayList<Declaration> decl = new ArrayList<>();
-			final List<Overapprox> overappr = new ArrayList<>();
-			// final Map<VariableDeclaration, ILocation> emptyAuxVars = new
-			// LinkedHashMap<>(0);
-			for (final ExpressionResult res : ((ExpressionListResult) r).getList()) {
-				if (!res.getStatements().isEmpty()) {
-					stmt.addAll(res.getStatements());
-					decl.addAll(res.getDeclarations());
-					stmt.addAll(CTranslationUtil.createHavocsForAuxVars(res.getAuxVars()));
-					overappr.addAll(res.getOverapprs());
-				}
-			}
-
-			return new ExpressionResult(stmt, null, decl, Collections.emptySet(), overappr);
-		}
-		if (r instanceof SkipResult) {
-			return r;
+			return new ExpressionResultBuilder().addAllExceptLrValue(((ExpressionListResult) r).getList()).build();
 		}
 		final String msg = "We always convert to AssignmentStatement, other options raise this error!";
 		final ILocation loc = mLocationFactory.createCLocation(node);
