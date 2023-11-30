@@ -89,6 +89,8 @@ public class NwaInitialAbstractionProvider<L extends IIcfgTransition<?>>
 	@Override
 	public <PROOF> IProofProducer<INestedWordAutomaton<L, IPredicate>, PROOF>
 			getProofProducer(final Class<PROOF> proofType, final Class<?> proofUpdates) {
+		// TODO if hoareAnnotationStates.isEmpty() return null
+
 		if (proofUpdates == null || proofUpdates.isAssignableFrom(NwaHoareProofProducer.class)) {
 			// TODO implement retrieval of suitable proof converter, if one exists
 			final IProofConverter<INestedWordAutomaton<L, IPredicate>, IFloydHoareAnnotation<L, IPredicate>, PROOF> converter =

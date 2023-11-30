@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.d
  * Hoare annotation position.
  */
 public enum HoareAnnotationPositions {
-	All, LoopHeads, LoopsAndPotentialCycles;
+	All, LoopHeads, LoopsAndPotentialCycles, None;
 
 	public <LOC extends IcfgLocation> Set<LOC> getLocationsForWhichHoareAnnotationIsComputed(final IIcfg<LOC> root) {
 		final Set<LOC> hoareAnnotationLocs = new HashSet<>();
@@ -58,6 +58,8 @@ public enum HoareAnnotationPositions {
 			hoareAnnotationLocs.addAll(root.getLoopLocations());
 			hoareAnnotationLocs.addAll(IcfgUtils.getCallerAndCalleePoints(root));
 			break;
+		case None:
+			return Set.of();
 		default:
 			throw new AssertionError("unknown value " + this);
 		}

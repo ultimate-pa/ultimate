@@ -126,8 +126,8 @@ public final class TAPreferences {
 
 		mHoare = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_HOARE);
 
-		mHoareAnnotationPositions = mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_HOARE_POSITIONS,
-				HoareAnnotationPositions.class);
+		mHoareAnnotationPositions = mHoare ? mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_HOARE_POSITIONS,
+				HoareAnnotationPositions.class) : HoareAnnotationPositions.None;
 
 		mInterpolation = mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_INTERPOLATED_LOCS,
 				InterpolationTechnique.class);
@@ -346,6 +346,8 @@ public final class TAPreferences {
 		return mAutomataTypeConcurrency;
 	}
 
+	// TODO #proofRefactor
+	@Deprecated
 	public boolean computeHoareAnnotation() {
 		return mHoare;
 	}
