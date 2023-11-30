@@ -34,7 +34,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 
 public class FloydHoareMapping<L extends IAction, S> implements IFloydHoareAnnotation<L, S> {
-	private final INwaOutgoingTransitionProvider<L, S> mAutomaton;
 	private final IPredicate mPrecondition;
 	private final IPredicate mPostcondition;
 	private final Map<S, IPredicate> mAnnotation;
@@ -58,16 +57,10 @@ public class FloydHoareMapping<L extends IAction, S> implements IFloydHoareAnnot
 
 	public FloydHoareMapping(final INwaOutgoingTransitionProvider<L, S> automaton, final IPredicate precondition,
 			final IPredicate postcondition, final Map<S, IPredicate> annotation, final IPredicate defaultPredicate) {
-		mAutomaton = automaton;
 		mPrecondition = precondition;
 		mPostcondition = postcondition;
 		mAnnotation = annotation;
 		mDefaultPredicate = defaultPredicate;
-	}
-
-	@Override
-	public INwaOutgoingTransitionProvider<L, S> getAnnotatedAutomaton() {
-		return mAutomaton;
 	}
 
 	@Override

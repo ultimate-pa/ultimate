@@ -26,13 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.floydhoare;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 
 public interface IFloydHoareAnnotation<L extends IAction, S> {
-	INwaOutgoingTransitionProvider<L, S> getAnnotatedAutomaton();
-
 	IPredicate getPrecondition();
 
 	IPredicate getPostcondition();

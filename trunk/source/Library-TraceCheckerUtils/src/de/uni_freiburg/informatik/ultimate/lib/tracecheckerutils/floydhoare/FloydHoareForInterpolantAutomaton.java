@@ -26,31 +26,21 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.floydhoare;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 
 public class FloydHoareForInterpolantAutomaton<L extends IAction> implements IFloydHoareAnnotation<L, IPredicate> {
-	private final INwaOutgoingTransitionProvider<L, IPredicate> mInterpolantAutomaton;
 	private final IPredicate mPrecondition;
 	private final IPredicate mPostcondition;
 
-	public FloydHoareForInterpolantAutomaton(final INwaOutgoingTransitionProvider<L, IPredicate> interpolantAutomaton,
-			final IPredicateUnifier unifier) {
-		this(interpolantAutomaton, unifier.getTruePredicate(), unifier.getFalsePredicate());
+	public FloydHoareForInterpolantAutomaton(final IPredicateUnifier unifier) {
+		this(unifier.getTruePredicate(), unifier.getFalsePredicate());
 	}
 
-	public FloydHoareForInterpolantAutomaton(final INwaOutgoingTransitionProvider<L, IPredicate> interpolantAutomaton,
-			final IPredicate precondition, final IPredicate postcondition) {
-		mInterpolantAutomaton = interpolantAutomaton;
+	public FloydHoareForInterpolantAutomaton(final IPredicate precondition, final IPredicate postcondition) {
 		mPrecondition = precondition;
 		mPostcondition = postcondition;
-	}
-
-	@Override
-	public INwaOutgoingTransitionProvider<L, IPredicate> getAnnotatedAutomaton() {
-		return mInterpolantAutomaton;
 	}
 
 	@Override
