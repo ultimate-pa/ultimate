@@ -43,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
@@ -53,14 +52,11 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerCache;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
@@ -105,55 +101,8 @@ public final class TraceAbstractionUtils {
 	}
 
 	/**
-	 * Construct Predicate which represents the same Predicate as ps, but where all globalVars are renamed to
-	 * oldGlobalVars.
-	 *
-	 * @param services
-	 * @param mgdScript
-	 * @param predicateFactory
-	 * @param simplificationTechnique
-	 */
-	public static IPredicate renameGlobalsToOldGlobals(final IPredicate ps, final IUltimateServiceProvider services,
-			final ManagedScript mgdScript, final BasicPredicateFactory predicateFactory,
-			final SimplificationTechnique simplificationTechnique) {
-		if (predicateFactory.isDontCare(ps)) {
-			throw new UnsupportedOperationException("don't cat not expected");
-		}
-		final Map<Term, Term> substitutionMapping = new HashMap<>();
-		for (final IProgramVar pv : ps.getVars()) {
-			if (pv instanceof IProgramNonOldVar) {
-				final IProgramVar oldVar = ((IProgramNonOldVar) pv).getOldVar();
-				substitutionMapping.put(pv.getTermVariable(), oldVar.getTermVariable());
-			}
-		}
-		Term renamedFormula = Substitution.apply(mgdScript, substitutionMapping, ps.getFormula());
-		renamedFormula = SmtUtils.simplify(mgdScript, renamedFormula, services, simplificationTechnique);
-		final IPredicate result = predicateFactory.newPredicate(renamedFormula);
-		return result;
-	}
-
-	/**
-	 * Construct Term which represents the same set of states as ps, but where all globalVars are renamed to
-	 * oldGlobalVars.
-	 *
-	 */
-	public static Term renameGlobalsToOldGlobals(final IPredicate ps, final IUltimateServiceProvider services,
-			final ManagedScript mgdScript) {
-		final Map<Term, Term> substitutionMapping = new HashMap<>();
-		for (final IProgramVar pv : ps.getVars()) {
-			if (pv instanceof IProgramNonOldVar) {
-				final IProgramVar oldVar = ((IProgramNonOldVar) pv).getOldVar();
-				substitutionMapping.put(pv.getTermVariable(), oldVar.getTermVariable());
-			}
-		}
-		final Term result = Substitution.apply(mgdScript, substitutionMapping, ps.getFormula());
-		return result;
-	}
-
-	/**
-	 * For each oldVar in vars that is not modifiable by procedure proc: substitute
-	 * the oldVar by the corresponding globalVar in term and remove the oldvar from
-	 * vars.
+	 * For each oldVar in vars that is not modifiable by procedure proc: substitute the oldVar by the corresponding
+	 * globalVar in term and remove the oldvar from vars.
 	 */
 	public static Term substituteOldVarsOfNonModifiableGlobals(final String proc, final Set<IProgramVar> vars,
 			final Term term, final ModifiableGlobalsTable modifiableGlobals, final ManagedScript mgdScript) {

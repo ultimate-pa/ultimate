@@ -3,29 +3,29 @@
  * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
  *
- * This file is part of the ULTIMATE TraceAbstraction plug-in.
+ * This file is part of the ULTIMATE TraceCheckerUtils Library.
  *
- * The ULTIMATE TraceAbstraction plug-in is free software: you can redistribute it and/or modify
+ * The ULTIMATE TraceCheckerUtils Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * The ULTIMATE TraceAbstraction plug-in is distributed in the hope that it will be useful,
+ * The ULTIMATE TraceCheckerUtils Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with the ULTIMATE TraceAbstraction plug-in. If not, see <http://www.gnu.org/licenses/>.
+ * along with the ULTIMATE TraceCheckerUtils Library. If not, see <http://www.gnu.org/licenses/>.
  *
  * Additional permission under GNU GPL version 3 section 7:
- * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
+ * If you modify the ULTIMATE TraceCheckerUtils Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
  * containing parts covered by the terms of the Eclipse Public License, the
- * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
+ * licensors of the ULTIMATE TraceCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
+package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.floydhoare;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -37,15 +37,19 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermVarsProc;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.ExtendedSimplificationResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -88,7 +92,7 @@ public class HoareAnnotationComposer {
 			final HoareAnnotationFragments<?> hoareAnnotationFragments, final IUltimateServiceProvider services,
 			final SimplificationTechnique simplicationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
-		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mLogger = services.getLoggingService().getLogger(getClass());
 		mCsToolkit = csToolkit;
 		mPredicateFactory = predicateFactory;
 		mHoareAnnotationFragments = hoareAnnotationFragments;
@@ -124,8 +128,8 @@ public class HoareAnnotationComposer {
 					postForCallpred = mHoareAnnotationFragments.getCallpred2Entry().get(entry.getKey());
 				}
 				assert postForCallpred != null : "no post for callpred";
-				final Term precond = TraceAbstractionUtils.renameGlobalsToOldGlobals(postForCallpred, mServices,
-						mCsToolkit.getManagedScript());
+				final Term precond =
+						renameGlobalsToOldGlobals(postForCallpred, mServices, mCsToolkit.getManagedScript());
 
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug("In " + loc + " holds " + entry.getValue() + " for precond " + precond);
@@ -236,8 +240,8 @@ public class HoareAnnotationComposer {
 				throw new AssertionError("not implemented");
 			}
 			precondForContext = mHoareAnnotationFragments.getCallpred2Entry().get(context);
-			precondForContext = TraceAbstractionUtils.renameGlobalsToOldGlobals(precondForContext, mServices,
-					mCsToolkit.getManagedScript(), mPredicateFactory, SimplificationTechnique.SIMPLIFY_DDA);
+			precondForContext = renameGlobalsToOldGlobals(precondForContext, mServices, mCsToolkit.getManagedScript(),
+					mPredicateFactory, SimplificationTechnique.SIMPLIFY_DDA);
 			final HashRelation<IPredicate, IPredicate> pp2preds =
 					mHoareAnnotationFragments.getDeadContexts2ProgPoint2Preds().get(context);
 			addHoareAnnotationForCallPred(loc2callpred2invariant, precondForContext, pp2preds);
@@ -250,8 +254,8 @@ public class HoareAnnotationComposer {
 				throw new AssertionError("not implemented");
 			}
 			precondForContext = mHoareAnnotationFragments.getCallpred2Entry().get(context);
-			precondForContext = TraceAbstractionUtils.renameGlobalsToOldGlobals(precondForContext, mServices,
-					mCsToolkit.getManagedScript(), mPredicateFactory, SimplificationTechnique.SIMPLIFY_DDA);
+			precondForContext = renameGlobalsToOldGlobals(precondForContext, mServices, mCsToolkit.getManagedScript(),
+					mPredicateFactory, SimplificationTechnique.SIMPLIFY_DDA);
 			final HashRelation<IPredicate, IPredicate> pp2preds =
 					mHoareAnnotationFragments.getLiveContexts2ProgPoint2Preds().get(context);
 			addHoareAnnotationForCallPred(loc2callpred2invariant, precondForContext, pp2preds);
@@ -287,4 +291,49 @@ public class HoareAnnotationComposer {
 		return mLoc2hoare;
 	}
 
+	/**
+	 * Construct Predicate which represents the same Predicate as ps, but where all globalVars are renamed to
+	 * oldGlobalVars.
+	 *
+	 * @param services
+	 * @param mgdScript
+	 * @param predicateFactory
+	 * @param simplificationTechnique
+	 */
+	private static IPredicate renameGlobalsToOldGlobals(final IPredicate ps, final IUltimateServiceProvider services,
+			final ManagedScript mgdScript, final BasicPredicateFactory predicateFactory,
+			final SimplificationTechnique simplificationTechnique) {
+		if (predicateFactory.isDontCare(ps)) {
+			throw new UnsupportedOperationException("don't cat not expected");
+		}
+		final Map<Term, Term> substitutionMapping = new HashMap<>();
+		for (final IProgramVar pv : ps.getVars()) {
+			if (pv instanceof IProgramNonOldVar) {
+				final IProgramVar oldVar = ((IProgramNonOldVar) pv).getOldVar();
+				substitutionMapping.put(pv.getTermVariable(), oldVar.getTermVariable());
+			}
+		}
+		Term renamedFormula = Substitution.apply(mgdScript, substitutionMapping, ps.getFormula());
+		renamedFormula = SmtUtils.simplify(mgdScript, renamedFormula, services, simplificationTechnique);
+		final IPredicate result = predicateFactory.newPredicate(renamedFormula);
+		return result;
+	}
+
+	/**
+	 * Construct Term which represents the same set of states as ps, but where all globalVars are renamed to
+	 * oldGlobalVars.
+	 *
+	 */
+	private static Term renameGlobalsToOldGlobals(final IPredicate ps, final IUltimateServiceProvider services,
+			final ManagedScript mgdScript) {
+		final Map<Term, Term> substitutionMapping = new HashMap<>();
+		for (final IProgramVar pv : ps.getVars()) {
+			if (pv instanceof IProgramNonOldVar) {
+				final IProgramVar oldVar = ((IProgramNonOldVar) pv).getOldVar();
+				substitutionMapping.put(pv.getTermVariable(), oldVar.getTermVariable());
+			}
+		}
+		final Term result = Substitution.apply(mgdScript, substitutionMapping, ps.getFormula());
+		return result;
+	}
 }

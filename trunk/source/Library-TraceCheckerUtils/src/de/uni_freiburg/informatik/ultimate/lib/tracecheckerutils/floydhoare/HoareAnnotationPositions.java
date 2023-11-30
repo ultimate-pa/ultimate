@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE TraceCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.proofs;
+package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.floydhoare;
 
 import java.util.HashSet;
 import java.util.Map;

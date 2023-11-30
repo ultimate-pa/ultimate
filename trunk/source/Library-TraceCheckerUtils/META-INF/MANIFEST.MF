@@ -7,6 +7,7 @@ Bundle-RequiredExecutionEnvironment: JavaSE-11
 Export-Package: 
  de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils,
  de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.cfg2automaton,
+ de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.floydhoare,
  de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction,
  de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder,
  de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence,
