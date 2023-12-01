@@ -1083,12 +1083,17 @@ public class CHandler {
 			beginScope();
 		}
 
+		Set<AuxVarInfo> auxVars = Set.of();
 		for (final IASTNode child : node.getChildren()) {
 			checkForACSL(main, resultBuilder, child, null, true);
+			resultBuilder.addStatements(CTranslationUtil.createHavocsForAuxVars(auxVars));
 			final Result r = main.dispatch(child);
 			if (r instanceof ExpressionResult) {
 				final ExpressionResult res = (ExpressionResult) r;
-				resultBuilder.addAllExceptLrValue(res);
+				resultBuilder.addDeclarations(res.getDeclarations());
+				resultBuilder.addOverapprox(res.getOverapprs());
+				resultBuilder.addStatements(res.getStatements());
+				auxVars = res.getAuxVars();
 				expr = res.getLrValue();
 			} else if (r.getNode() != null && r.getNode() instanceof Body) {
 				assert false : "should not happen, as CompoundStatement now yields an "
@@ -1097,6 +1102,7 @@ public class CHandler {
 				final Body b = (Body) r.getNode();
 				resultBuilder.addDeclarations(Arrays.asList(b.getLocalVars()));
 				resultBuilder.addStatements(Arrays.asList(b.getBlock()));
+				auxVars = Set.of();
 			} else if (r instanceof SkipResult) {
 				// skip
 			} else {
@@ -1125,6 +1131,7 @@ public class CHandler {
 			addHavocsAtScopeEnd(mLocationFactory.createCLocation(node), node, resultBuilder);
 			endScope();
 		}
+		resultBuilder.addStatements(CTranslationUtil.createHavocsForAuxVars(auxVars));
 		return resultBuilder.build();
 	}
 
