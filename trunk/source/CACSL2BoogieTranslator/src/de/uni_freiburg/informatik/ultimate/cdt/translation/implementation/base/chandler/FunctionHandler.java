@@ -629,10 +629,20 @@ public class FunctionHandler {
 	private Result handleFunctionCallGivenNameAndArguments(final IDispatcher main, final ILocation loc,
 			final String calleeName, final IASTInitializerClause[] arguments, final MemoryHandler memoryHandler) {
 
+		final BoogieProcedureInfo calleeProcInfo;
 		if (!mProcedureManager.hasProcedure(calleeName)) {
-			throw new UnsupportedSyntaxException(loc, "Unsupported function: " + calleeName);
+			if (!"__VERIFIER_atomic_begin".equals(calleeName) && !"__VERIFIER_atomic_end".equals(calleeName)) {
+				throw new UnsupportedSyntaxException(loc, "Unsupported function: " + calleeName);
+			}
+			// TODO: For now accept the implicit declaration for __VERIFIER_atomic functions
+			mLogger.warn("implicit declaration of function " + calleeName);
+			mProcedureManager.registerProcedure(calleeName);
+			calleeProcInfo = mProcedureManager.getProcedureInfo(calleeName);
+			calleeProcInfo.setDefaultDeclarationAndCType(loc,
+					mTypeHandler.cType2AstType(loc, new CPrimitive(CPrimitives.INT)));
+		} else {
+			calleeProcInfo = mProcedureManager.getProcedureInfo(calleeName);
 		}
-		final BoogieProcedureInfo calleeProcInfo = mProcedureManager.getProcedureInfo(calleeName);
 
 		final Procedure calleeProcDecl = calleeProcInfo.getDeclaration();
 		final CFunction calleeProcCType = calleeProcInfo.getCType();
