@@ -132,7 +132,8 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 	public Iterable<OwickiGriesTestCase> createTests() throws IOException {
 		final Path dir = Path.of(TestUtil.getPathFromTrunk("examples/concurrent/OwickiGries/PetriPrograms"));
 		try (final var files = Files.list(dir)) {
-			return files.map(OwickiGriesTestCase::new).sorted().collect(Collectors.toList());
+			return files.filter(file -> file.toString().endsWith(".ats")).map(OwickiGriesTestCase::new).sorted()
+					.collect(Collectors.toList());
 		}
 	}
 
