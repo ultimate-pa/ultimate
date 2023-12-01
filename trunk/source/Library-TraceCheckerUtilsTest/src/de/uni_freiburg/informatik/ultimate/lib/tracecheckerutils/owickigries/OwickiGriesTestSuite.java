@@ -44,6 +44,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.junit.Before;
 
@@ -261,16 +262,19 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 		}
 
 		final String varDescr = varLine.get().substring(prefix.length());
-		final var syntax = "(forall (" + varDescr + ") true)";
-		final var formula = (QuantifiedFormula) TermParseUtils.parseTerm(mMgdScript.getScript(), syntax);
-
-		for (final var quantVar : formula.getVariables()) {
+		for (final var quantVar : parseVarDef(varDescr)) {
 			final var pv = ProgramVarUtils.constructGlobalProgramVarPair(quantVar.getName(), quantVar.getSort(),
 					mMgdScript, null);
 			symbolTable.add(pv);
 		}
 
 		return symbolTable;
+	}
+
+	private TermVariable[] parseVarDef(final String varDef) {
+		final var syntax = "(forall (" + varDef + ") true)";
+		final var formula = (QuantifiedFormula) TermParseUtils.parseTerm(mMgdScript.getScript(), syntax);
+		return formula.getVariables();
 	}
 
 	private Map<Integer, SimpleAction> parseActions(final Path path) throws IOException {
@@ -287,7 +291,8 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 		}
 
 		final var result = new HashMap<Integer, SimpleAction>();
-		final Pattern actionPattern = Pattern.compile("\\s*\\[(\\d+)\\]\\s+\\{([^\\}]*)\\}\\s+([^\\s].*)$");
+		final Pattern actionPattern =
+				Pattern.compile("\\s*\\[(\\d+)\\]\\s+\\{([^\\}]*)\\}(\\s+\\[[^\\]]*\\]|)\\s+([^\\s].*)$");
 		for (final var actionLine : actionLines) {
 			final String actionDescr = actionLine.substring(prefix.length());
 			final var matcher = actionPattern.matcher(actionDescr);
@@ -298,27 +303,45 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 					.filter(s -> !s.isEmpty()).collect(Collectors.toSet());
 			final var assignedVars = mSymbolTable.getGlobals().stream()
 					.filter(pv -> assignedVarNames.contains(pv.getIdentifier())).collect(Collectors.toSet());
-			final String transformulaString = matcher.group(3);
+
+			final var auxVarString = matcher.group(3).trim();
+			Set<TermVariable> auxVars;
+			if (auxVarString.isEmpty()) {
+				auxVars = Set.of();
+			} else {
+				auxVars = Set.of(parseVarDef(auxVarString.substring(0, auxVarString.length() - 1).substring(1)));
+			}
+
+			final String transformulaString = matcher.group(4);
 
 			if (result.containsKey(id)) {
 				throw new IllegalArgumentException("duplicate definition for action [" + id + "]");
 			}
 
-			final var action = new SimpleAction(id, parseTransformula(transformulaString, assignedVars));
+			final var action = new SimpleAction(id, parseTransformula(transformulaString, assignedVars, auxVars));
 			result.put(id, action);
 		}
 
 		return result;
 	}
 
-	private UnmodifiableTransFormula parseTransformula(final String syntax, final Set<IProgramNonOldVar> assignedVars) {
-		final var term = SmtParserUtils.parseWithVariables(syntax, mServices, mMgdScript, mSymbolTable);
+	private UnmodifiableTransFormula parseTransformula(final String syntax, final Set<IProgramNonOldVar> assignedVars,
+			final Set<TermVariable> auxVars) {
+		final var termVars = Stream.concat(auxVars.stream(),
+				Stream.concat(mSymbolTable.getGlobals().stream(),
+						mSymbolTable.getGlobals().stream().map(IProgramNonOldVar::getOldVar))
+						.map(IProgramVar::getTermVariable))
+				.collect(Collectors.toSet());
+		final var term = SmtParserUtils.parseWithVariables(syntax, mServices, mMgdScript, termVars);
 
 		final var inVars = mSymbolTable.getGlobals().stream()
 				.collect(Collectors.toMap(IProgramVar.class::cast, pv -> getOldTermVariable(pv, assignedVars)));
 		final var outVars = mSymbolTable.getGlobals().stream()
 				.collect(Collectors.toMap(IProgramVar.class::cast, IProgramVar::getTermVariable));
-		final var builder = new TransFormulaBuilder(inVars, outVars, true, null, true, null, true);
+		final var builder = new TransFormulaBuilder(inVars, outVars, true, null, true, null, auxVars.isEmpty());
+		for (final var av : auxVars) {
+			builder.addAuxVar(av);
+		}
 		builder.setFormula(term);
 		builder.setInfeasibility(Infeasibility.NOT_DETERMINED);
 

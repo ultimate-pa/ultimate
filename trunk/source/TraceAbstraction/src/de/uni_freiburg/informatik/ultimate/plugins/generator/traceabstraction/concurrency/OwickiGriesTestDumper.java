@@ -92,8 +92,7 @@ public final class OwickiGriesTestDumper<L extends IAction> {
 		final var constVars = symbolTable.getConstants().stream()
 				.map(c -> mMgdScript.variable(c.getDefaultConstant().getFunction().getName(), c.getSort()));
 
-		return "//@ variables " + Stream.concat(actualVars, constVars)
-				.map(tv -> "(" + PrintTerm.quoteIdentifier(tv.getName()) + " " + tv.getSort() + ")")
+		return "//@ variables " + Stream.concat(actualVars, constVars).map(OwickiGriesTestDumper::printVarWithSort)
 				.collect(Collectors.joining(" "));
 	}
 
@@ -124,6 +123,14 @@ public final class OwickiGriesTestDumper<L extends IAction> {
 		final var assignedVars = transformula.getAssignedVars().stream().map(pv -> pv.getTermVariable().getName())
 				.collect(Collectors.joining(",", "{", "}"));
 
+		final String auxVars;
+		if (transformula.getAuxVars().isEmpty()) {
+			auxVars = "";
+		} else {
+			auxVars = transformula.getAuxVars().stream().map(OwickiGriesTestDumper::printVarWithSort)
+					.collect(Collectors.joining(" ", " [", "]"));
+		}
+
 		final Map<TermVariable, Term> substitution = new HashMap<>();
 		for (final var entry : transformula.getOutVars().entrySet()) {
 			substitution.put(entry.getValue(), entry.getKey().getTermVariable());
@@ -141,7 +148,11 @@ public final class OwickiGriesTestDumper<L extends IAction> {
 			substitution.put(entry.getValue(), subst);
 		}
 		final Term newFormula = PureSubstitution.apply(mMgdScript, substitution, transformula.getFormula());
-		return assignedVars + " " + newFormula.toString();
+		return assignedVars + auxVars + " " + newFormula.toString();
+	}
+
+	private static String printVarWithSort(final TermVariable tv) {
+		return "(" + PrintTerm.quoteIdentifier(tv.getName()) + " " + tv.getSort() + ")";
 	}
 
 	private void writeAutomataToFile(final IUltimateServiceProvider services, final String filename,
