@@ -105,14 +105,12 @@ public final class CrownConstruction<PLACE, LETTER> {
 		for (final Rook<PLACE, LETTER> rook : colonizedRooks) {
 			reSet.addAll(crownExpansion(rook, new ArrayList<>(mOrigConds), true));
 		}
-		if (reSet.isEmpty()) {
-			reSet.addAll(colonizedRooks);
-		}
+		colonizedRooks.clear();
 		for (final Rook<PLACE, LETTER> rook : reSet) {
 			colonizedRooks.addAll(crownExpansion(rook, new ArrayList<>(mAssertConds), false));
 		}
-		final Set<Rook<PLACE, LETTER>> colonizedpreRooks = computePreRooks(colonizedRooks);
-		colonizedRooks.removeAll(colonizedpreRooks);
+		// final Set<Rook<PLACE, LETTER>> colonizedpreRooks = computePreRooks(colonizedRooks);
+		// colonizedRooks.removeAll(colonizedpreRooks);
 		return colonizedRooks;
 	}
 
@@ -158,6 +156,7 @@ public final class CrownConstruction<PLACE, LETTER> {
 	private Set<Rook<PLACE, LETTER>> crownExpansion(final Rook<PLACE, LETTER> rook,
 			final List<Condition<LETTER, PLACE>> troopConditions, final boolean colonizer) {
 		final Set<Rook<PLACE, LETTER>> crownRooks = new HashSet<>();
+		boolean isComplete = true;
 		for (int i = 0; i < troopConditions.size(); i++) {
 			final Condition<LETTER, PLACE> condition = troopConditions.get(i);
 			final List<Condition<LETTER, PLACE>> conditions = new ArrayList<>(troopConditions);
@@ -170,14 +169,15 @@ public final class CrownConstruction<PLACE, LETTER> {
 			if (colonyRook == null) {
 				conditions.remove(condition);
 			} else {
+				isComplete = false;
 				final List<Condition<LETTER, PLACE>> ntroops =
 						conditions.stream().filter(cond -> !cond.equals(condition)).collect(Collectors.toList());
 				final Set<Rook<PLACE, LETTER>> expandedRooks = crownExpansion(colonyRook, ntroops, colonizer);
-				if (colonizer || !containsNonCut(colonyRook)) {
-					expandedRooks.add(colonyRook);
-				}
 				crownRooks.addAll(expandedRooks);
 			}
+		}
+		if (isComplete) {
+			crownRooks.add(rook);
 		}
 		return crownRooks;
 	}

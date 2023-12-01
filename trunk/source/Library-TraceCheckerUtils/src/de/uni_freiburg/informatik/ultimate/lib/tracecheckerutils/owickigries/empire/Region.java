@@ -62,35 +62,6 @@ public class Region<PLACE, LETTER> {
 	}
 
 	/**
-	 * * Adds the specified place in to the set of places in the region.
-	 *
-	 * @param place
-	 */
-	public void addPlace(final PLACE place) {
-		mRegion.add(place);
-	}
-
-	/**
-	 * Add the specified set of places to the region.
-	 *
-	 * @param places
-	 */
-	public void addPlace(final Set<PLACE> places) {
-		mRegion.addAll(places);
-	}
-
-	/**
-	 * Removes the specified place from the region.
-	 *
-	 * @param place
-	 */
-	public void removePlace(final PLACE place) {
-		if (mRegion.contains(place)) {
-			mRegion.remove(place);
-		}
-	}
-
-	/**
 	 * @param petriNet
 	 *            over which place corelation is checked.
 	 * @return true if place is NOT corelated to all places in the region. TODO: place corelation!!!!
