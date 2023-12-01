@@ -28,34 +28,32 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.floydhoare;
 
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 
-public class FloydHoareMapping<L, S> implements IFloydHoareAnnotation<S> {
+public class FloydHoareMapping<S> implements IFloydHoareAnnotation<S> {
 	private final IPredicate mPrecondition;
 	private final IPredicate mPostcondition;
 	private final Map<S, IPredicate> mAnnotation;
 
 	private final IPredicate mDefaultPredicate;
 
-	public FloydHoareMapping(final INwaOutgoingTransitionProvider<L, S> automaton, final IPredicateUnifier unifier,
+	public FloydHoareMapping(final IPredicateUnifier unifier, final Map<S, IPredicate> annotation) {
+		this(unifier, annotation, null);
+	}
+
+	public FloydHoareMapping(final IPredicateUnifier unifier, final Map<S, IPredicate> annotation,
+			final IPredicate defaultPredicate) {
+		this(unifier.getTruePredicate(), unifier.getFalsePredicate(), annotation, defaultPredicate);
+	}
+
+	public FloydHoareMapping(final IPredicate precondition, final IPredicate postcondition,
 			final Map<S, IPredicate> annotation) {
-		this(automaton, unifier, annotation, null);
+		this(precondition, postcondition, annotation, null);
 	}
 
-	public FloydHoareMapping(final INwaOutgoingTransitionProvider<L, S> automaton, final IPredicateUnifier unifier,
+	public FloydHoareMapping(final IPredicate precondition, final IPredicate postcondition,
 			final Map<S, IPredicate> annotation, final IPredicate defaultPredicate) {
-		this(automaton, unifier.getTruePredicate(), unifier.getFalsePredicate(), annotation, defaultPredicate);
-	}
-
-	public FloydHoareMapping(final INwaOutgoingTransitionProvider<L, S> automaton, final IPredicate precondition,
-			final IPredicate postcondition, final Map<S, IPredicate> annotation) {
-		this(automaton, precondition, postcondition, annotation, null);
-	}
-
-	public FloydHoareMapping(final INwaOutgoingTransitionProvider<L, S> automaton, final IPredicate precondition,
-			final IPredicate postcondition, final Map<S, IPredicate> annotation, final IPredicate defaultPredicate) {
 		mPrecondition = precondition;
 		mPostcondition = postcondition;
 		mAnnotation = annotation;
