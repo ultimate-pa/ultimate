@@ -17,7 +17,7 @@ public class RandomCriterion<L extends IIcfgTransition<?>> implements ICondition
 	@Override
 	public Boolean decide(IPredicate state, L a, L b) {
 
-		return (mRandomGenerator.nextInt(100)/100) < mProbability;
+		return (mRandomGenerator.nextInt(100) < (100*mProbability));
 	}
 	
 	@Override
