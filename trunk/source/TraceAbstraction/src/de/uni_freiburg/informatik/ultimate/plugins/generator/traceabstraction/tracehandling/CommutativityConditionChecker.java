@@ -40,10 +40,10 @@ public class CommutativityConditionChecker<L extends IIcfgTransition<?>> impleme
 	}
 
 	@Override
-	public Boolean checkConditionalCommutativity(IRun<L, IPredicate> run, IPredicate state, L a, L b) {
+	public boolean checkConditionalCommutativity(IRun<L, IPredicate> run, IPredicate state, L a, L b) {
 
 		IPredicate condition = mCriterionChecker.getCondition(run, state, a, b);
-		if (condition != null && Boolean.TRUE.equals(mCriterionChecker.checkCondition())) {
+		if (condition != null && mCriterionChecker.checkCondition()) {
 			ITARefinementStrategy<L> strategy = mStrategyFactory.constructStrategy(mServices, run, mAbstraction, mTaskIdentifier, mEmptyStackFactory,
 					IPreconditionProvider.constructDefaultPreconditionProvider(), new CommutativityConditionProvider(condition));
 			if(strategy.nextFeasibilityCheck().isCorrect().equals(LBool.UNSAT)) {

@@ -6,5 +6,5 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 
 public interface IConditionalCommutativityChecker<L extends IIcfgTransition<?>> {
 
-	Boolean checkConditionalCommutativity(IRun<L, IPredicate> run, IPredicate state, L a, L b);
+	boolean checkConditionalCommutativity(IRun<L, IPredicate> run, IPredicate state, L a, L b);
 }

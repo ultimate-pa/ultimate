@@ -7,7 +7,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 public interface IConditionalCommutativityCriterion<L extends IIcfgTransition<?>> {
 
 	
-	Boolean decide(IPredicate state, L a, L b);
+	boolean decide(IPredicate state, L a, L b);
 	
-	Boolean decide(IPredicate condition);
+	boolean decide(IPredicate condition);
 }
