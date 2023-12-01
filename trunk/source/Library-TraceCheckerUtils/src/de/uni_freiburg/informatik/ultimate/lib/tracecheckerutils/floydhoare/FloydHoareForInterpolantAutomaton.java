@@ -26,11 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.floydhoare;
 
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 
-public class FloydHoareForInterpolantAutomaton<L extends IAction> implements IFloydHoareAnnotation<L, IPredicate> {
+public class FloydHoareForInterpolantAutomaton implements IFloydHoareAnnotation<IPredicate> {
 	private final IPredicate mPrecondition;
 	private final IPredicate mPostcondition;
 

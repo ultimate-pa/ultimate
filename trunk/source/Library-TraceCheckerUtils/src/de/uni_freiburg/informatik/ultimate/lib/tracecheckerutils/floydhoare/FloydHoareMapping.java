@@ -29,11 +29,10 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.floydhoare;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 
-public class FloydHoareMapping<L extends IAction, S> implements IFloydHoareAnnotation<L, S> {
+public class FloydHoareMapping<L, S> implements IFloydHoareAnnotation<S> {
 	private final IPredicate mPrecondition;
 	private final IPredicate mPostcondition;
 	private final Map<S, IPredicate> mAnnotation;

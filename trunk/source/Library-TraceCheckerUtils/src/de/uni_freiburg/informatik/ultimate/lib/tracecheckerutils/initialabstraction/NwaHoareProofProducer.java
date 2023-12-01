@@ -47,10 +47,10 @@ final class NwaHoareProofProducer<L extends IAction, S, PROGRAM, PROOF>
 
 	private final INestedWordAutomaton<L, S> mProgram;
 	// private final Set<S> mHoareAnnotationStates;
-	private final IProofPostProcessor<INestedWordAutomaton<L, S>, IFloydHoareAnnotation<L, IPredicate>, PROGRAM, PROOF> mPost;
+	private final IProofPostProcessor<INestedWordAutomaton<L, S>, IFloydHoareAnnotation<IPredicate>, PROGRAM, PROOF> mPost;
 
 	private NwaHoareProofProducer(final INestedWordAutomaton<L, S> program, // final Set<S> hoareAnnotationStates,
-			final IProofPostProcessor<INestedWordAutomaton<L, S>, IFloydHoareAnnotation<L, IPredicate>, PROGRAM, PROOF> postProcessor) {
+			final IProofPostProcessor<INestedWordAutomaton<L, S>, IFloydHoareAnnotation<IPredicate>, PROGRAM, PROOF> postProcessor) {
 		mProgram = program;
 		// mHoareAnnotationStates = hoareAnnotationStates;
 		// mHaf = new HoareAnnotationFragments<>(mLogger, hoareAnnotationStates);
@@ -60,7 +60,7 @@ final class NwaHoareProofProducer<L extends IAction, S, PROGRAM, PROOF>
 	}
 
 	public static <L extends IAction, S>
-			NwaHoareProofProducer<L, S, INestedWordAutomaton<L, S>, IFloydHoareAnnotation<L, IPredicate>>
+			NwaHoareProofProducer<L, S, INestedWordAutomaton<L, S>, IFloydHoareAnnotation<IPredicate>>
 			create(final INestedWordAutomaton<L, S> program
 	// , final Set<S> hoareAnnotationStates
 	) {
@@ -83,7 +83,7 @@ final class NwaHoareProofProducer<L extends IAction, S, PROGRAM, PROOF>
 	@Override
 	public PROOF getOrComputeProof() {
 		// TODO
-		final IFloydHoareAnnotation<L, IPredicate> floydHoare = null;
+		final IFloydHoareAnnotation<IPredicate> floydHoare = null;
 		return mPost.processProof(floydHoare);
 	}
 
