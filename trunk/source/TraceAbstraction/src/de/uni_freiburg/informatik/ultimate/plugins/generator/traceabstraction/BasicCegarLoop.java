@@ -95,6 +95,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult.BasicRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.cfg2automaton.Cfg2Automaton;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.floydhoare.NwaFloydHoareValidityCheck;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -106,7 +107,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.er
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.NondeterministicInterpolantAutomaton;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
@@ -403,9 +403,7 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 
 		assert isInterpolantAutomatonOfSingleStateType(mInterpolAutomaton);
 		if (NON_EA_INDUCTIVITY_CHECK) {
-			final boolean inductive = new InductivityCheck<>(getServices(), mInterpolAutomaton, false, true,
-					new IncrementalHoareTripleChecker(super.mCsToolkit, false)).getResult();
-
+			final boolean inductive = checkInterpolantAutomatonInductivity(mInterpolAutomaton);
 			if (!inductive) {
 				throw new AssertionError("not inductive");
 			}
@@ -415,12 +413,11 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 				false) : "Interpolant automaton broken!: " + mCounterexample.getWord() + " not accepted";
 
 		// FIXME (Dominik 2020-12-19): The assertion below is problematic, because it has side-effects!
-		// In particular, InductivityCheck calls IncrementalHoareTripleChecker, which in the method unAssertCodeBlock
-		// unlocks a ManagedScript. If assertions are disabled, this remains locked. This leads to exceptions if other
-		// callers try to lock it. With assertions enabled, the line below causes the ManagedScript to be unlocked and
-		// no exceptions occur.
-		assert new InductivityCheck<>(getServices(), mInterpolAutomaton, false, true,
-				new IncrementalHoareTripleChecker(super.mCsToolkit, false)).getResult();
+		// In particular, NwaFloydHoareValidityCheck calls IncrementalHoareTripleChecker, which in the method
+		// unAssertCodeBlock unlocks a ManagedScript. If assertions are disabled, this remains locked. This leads to
+		// exceptions if other callers try to lock it. With assertions enabled, the line below causes the ManagedScript
+		// to be unlocked and no exceptions occur.
+		assert checkInterpolantAutomatonInductivity(mInterpolAutomaton);
 	}
 
 	protected static boolean
@@ -574,9 +571,8 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 		}
 		assert isInterpolantAutomatonOfSingleStateType(
 				new RemoveUnreachable<>(new AutomataLibraryServices(getServices()), interpolantAutomaton).getResult());
-		assert new InductivityCheck<>(getServices(),
-				new RemoveUnreachable<>(new AutomataLibraryServices(getServices()), interpolantAutomaton).getResult(),
-				false, true, new IncrementalHoareTripleChecker(super.mCsToolkit, false)).getResult();
+		assert checkInterpolantAutomatonInductivity(
+				new RemoveUnreachable<>(new AutomataLibraryServices(getServices()), interpolantAutomaton).getResult());
 	}
 
 	private void debugLogBrokenInterpolantAutomaton(
@@ -685,6 +681,12 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 			return mFloydHoareAutomata;
 		}
 		throw new IllegalStateException("Floyd-Hoare automata have not been stored");
+	}
+
+	protected boolean checkInterpolantAutomatonInductivity(final INestedWordAutomaton<L, IPredicate> automaton) {
+		return NwaFloydHoareValidityCheck.forInterpolantAutomaton(mServices, mCsToolkit.getManagedScript(),
+				new IncrementalHoareTripleChecker(mCsToolkit, false), mRefinementResult.getPredicateUnifier(),
+				automaton, true).getResult();
 	}
 
 	public IPreconditionProvider getPreconditionProvider() {
