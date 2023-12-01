@@ -22,24 +22,35 @@ public class CommutativityConditionChecker<L extends IIcfgTransition<?>> impleme
 	
 	
 	ConditionalCommutativityCriterionChecker<L> mCriterionChecker;
-	public CommutativityConditionChecker(IRun<L, IPredicate> run, IPredicate state, L a, L b, IConditionalCommutativityCriterion<L> criterion,
-			IIndependenceRelation<IPredicate, L> independenceRelation, SemanticIndependenceConditionGenerator generator, final IUltimateServiceProvider services,
-			final IAutomaton<L, IPredicate> abstraction, final TaskIdentifier taskIdentifier, final IEmptyStackStateFactory<IPredicate> emptyStackFactory, final StrategyFactory<L> strategyFactory){
+	private IUltimateServiceProvider mServices;
+	private IAutomaton<L, IPredicate> mAbstraction;
+	private TaskIdentifier mTaskIdentifier;
+	private IEmptyStackStateFactory<IPredicate> mEmptyStackFactory;
+	private StrategyFactory<L> mStrategyFactory;
+	public CommutativityConditionChecker(IConditionalCommutativityCriterion<L> criterion, IIndependenceRelation<IPredicate, L> independenceRelation,
+			SemanticIndependenceConditionGenerator generator, final IUltimateServiceProvider services, final IAutomaton<L, IPredicate> abstraction, 
+			final TaskIdentifier taskIdentifier, final IEmptyStackStateFactory<IPredicate> emptyStackFactory, final StrategyFactory<L> strategyFactory){
 		
 		mCriterionChecker = new ConditionalCommutativityCriterionChecker<L>(criterion, independenceRelation, generator);
-		IPredicate condition = mCriterionChecker.getCondition(run, state, a, b);
-		if (Boolean.TRUE.equals(mCriterionChecker.checkCondition())) {
-			ITARefinementStrategy<L> strategy = strategyFactory.constructStrategy(services, run, abstraction, taskIdentifier, emptyStackFactory,
-					IPreconditionProvider.constructDefaultPreconditionProvider(), new CommutativityConditionProvider(condition));
-			if(strategy.nextFeasibilityCheck().isCorrect().equals(LBool.SAT)) {
-				//condition holds after run
-			}
-		}
+		mServices = services;
+		mAbstraction = abstraction;
+		mTaskIdentifier = taskIdentifier;
+		mEmptyStackFactory = emptyStackFactory;
+		mStrategyFactory = strategyFactory;
 	}
 
 	@Override
-	public Boolean checkConditionalCommutativity() {
-		return null;
+	public Boolean checkConditionalCommutativity(IRun<L, IPredicate> run, IPredicate state, L a, L b) {
+
+		IPredicate condition = mCriterionChecker.getCondition(run, state, a, b);
+		if (condition != null && Boolean.TRUE.equals(mCriterionChecker.checkCondition())) {
+			ITARefinementStrategy<L> strategy = mStrategyFactory.constructStrategy(mServices, run, mAbstraction, mTaskIdentifier, mEmptyStackFactory,
+					IPreconditionProvider.constructDefaultPreconditionProvider(), new CommutativityConditionProvider(condition));
+			if(strategy.nextFeasibilityCheck().isCorrect().equals(LBool.UNSAT)) {
+				return true;
+			}
+		}		
+		return false;
 	}
 	
 	private class CommutativityConditionProvider implements IPostconditionProvider{
@@ -51,8 +62,7 @@ public class CommutativityConditionChecker<L extends IIcfgTransition<?>> impleme
 
 		@Override
 		public IPredicate constructPostcondition(IPredicateUnifier predicateUnifier) {
-			predicateUnifier.getOrConstructPredicate(mCondition);
-			return null;
+			return predicateUnifier.getOrConstructPredicate(mCondition);
 		}
 	}
 }

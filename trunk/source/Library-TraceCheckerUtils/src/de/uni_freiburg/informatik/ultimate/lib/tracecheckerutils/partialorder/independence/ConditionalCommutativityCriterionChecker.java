@@ -33,11 +33,10 @@ public class ConditionalCommutativityCriterionChecker<L extends IIcfgTransition<
 	}
 	
 	public IPredicate getCondition(IRun<L, IPredicate> run, IPredicate state, L a, L b) {
-		IPredicate condition = null;
 		if (Boolean.TRUE.equals(mCriterion.decide(state, a, b))) {
-			condition = mGenerator.generateCondition(state, a.getTransformula(), b.getTransformula());
+			return mGenerator.generateCondition(state, a.getTransformula(), b.getTransformula());
 		}
-		return condition;
+		return null;
 	}
 	
 	public Boolean checkCondition() {
