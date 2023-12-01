@@ -61,7 +61,7 @@ public class TerritoryLaw<PLACE, LETTER> {
 	 * @param placeToAssertion
 	 *            Function which resolves an assertion PLACE to IPredicate.
 	 * @param factory
-	 *            Factory for Predicate operations
+	 *            Factory for IPredicate operations
 	 */
 	public TerritoryLaw(final Territory<PLACE, LETTER> territory, final KingdomLaw<PLACE, LETTER> rookLaw,
 			final Function<PLACE, IPredicate> placeToAssertion, final BasicPredicateFactory factory) {

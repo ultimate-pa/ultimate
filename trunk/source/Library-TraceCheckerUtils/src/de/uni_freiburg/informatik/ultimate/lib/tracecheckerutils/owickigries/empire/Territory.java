@@ -25,10 +25,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire;
 
+import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown.Kingdom;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
  * @author Miriam Lagunes (miriam.lagunes@students.uni-freiburg.de)
@@ -72,11 +75,39 @@ public final class Territory<PLACE, LETTER> {
 		return kingdomRegions;
 	}
 
+	private void getAllMarkings(final Set<Region<PLACE, LETTER>> remainingTerritory, final Set<PLACE> currentMarking,
+			final Set<Marking<PLACE>> treaty) {
+		if (remainingTerritory.isEmpty()) {
+			treaty.add(new Marking<>(ImmutableSet.of(currentMarking)));
+			return;
+		}
+		final Region<PLACE, LETTER> currentRegion = remainingTerritory.iterator().next();
+		remainingTerritory.remove(currentRegion);
+
+		for (final PLACE place : currentRegion.getPlaces()) {
+			currentMarking.add(place);
+			getAllMarkings(new HashSet<>(remainingTerritory), new HashSet<>(currentMarking), treaty);
+			currentMarking.remove(place);
+		}
+	}
+
 	/**
 	 * @return Set of regions in Territory.
 	 */
 	public Set<Region<PLACE, LETTER>> getRegions() {
 		return mTerritory;
+	}
+
+	/**
+	 * Calculate the treaty by creating a set of markings picking one place per region.
+	 *
+	 * @return Treaty of the Territory.
+	 */
+	public Set<Marking<PLACE>> getTreaty() {
+		final Set<Marking<PLACE>> treatySet = new HashSet<>();
+		final Set<Region<PLACE, LETTER>> territoryRegions = new HashSet<>(mTerritory);
+		getAllMarkings(territoryRegions, new HashSet<>(), treatySet);
+		return treatySet;
 	}
 
 	@SuppressWarnings("unchecked")
