@@ -146,7 +146,7 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 		mInterpreter = new AutomataDefinitionInterpreter(this, mLogger, mServices);
 
 		final var script = new HistoryRecordingScript(UltimateMocks.createSolver(SOLVER_COMMAND, LOG_LEVEL));
-		script.setLogic(Logics.ALIA);
+		script.setLogic(Logics.ALL);
 		mMgdScript = new ManagedScript(mServices, script);
 	}
 
