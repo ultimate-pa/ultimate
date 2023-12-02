@@ -1130,6 +1130,11 @@ public class CfgBuilder {
 			final LoopEntryAnnotation lea = LoopEntryAnnotation.getAnnotation(st);
 			BoogieIcfgLocation locNode = mLabel2LocNodes.get(labelId);
 			if (locNode != null) {
+				// The locNode to which labelId points may have been replaced
+				// by another locNode. Lets follow this map transitively.
+				while (locNode != mLabel2LocNodes.get(locNode.getDebugIdentifier())) {
+					locNode = mLabel2LocNodes.get(locNode.getDebugIdentifier());
+				}
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug("LocNode for " + labelId + " already" + " constructed, namely: " + locNode);
 				}
