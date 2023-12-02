@@ -632,7 +632,8 @@ public class FunctionHandler {
 		final BoogieProcedureInfo calleeProcInfo;
 		if (!mProcedureManager.hasProcedure(calleeName)) {
 			if (!"__VERIFIER_atomic_begin".equals(calleeName) && !"__VERIFIER_atomic_end".equals(calleeName)) {
-				throw new UnsupportedSyntaxException(loc, "Unsupported function: " + calleeName);
+				throw new UnsupportedSyntaxException(loc,
+						"The function " + calleeName + " is not declared (might be an unsupported builtin function");
 			}
 			// TODO: For now accept the implicit declaration for __VERIFIER_atomic functions
 			mLogger.warn("implicit declaration of function " + calleeName);
