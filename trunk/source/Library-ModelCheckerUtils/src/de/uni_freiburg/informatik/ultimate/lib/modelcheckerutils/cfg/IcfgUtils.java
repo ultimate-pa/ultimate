@@ -188,16 +188,31 @@ public class IcfgUtils {
 		return result;
 	}
 
-	public static <LOC extends IcfgLocation> boolean hasUnreachableProgramPoints(final IIcfg<LOC> icfg) {
-		for (final Entry<String, Map<DebugIdentifier, LOC>> entry : icfg.getProgramPoints().entrySet()) {
-			for (final Entry<DebugIdentifier, LOC> innerEntry : entry.getValue().entrySet()) {
-				final LOC loc = innerEntry.getValue();
-				if (loc.getIncomingEdges().isEmpty() && !isEntry(loc, icfg) && !isExit(loc, icfg)) {
-					return true;
-				}
+	public static <LOC extends IcfgLocation> boolean areProgramPointsStoredConsistently(final IIcfg<LOC> icfg) {
+		final Set<IcfgLocation> reachableProgramPoints = new IcfgEdgeIterator(icfg).asStream().map(x -> x.getTarget())
+				.collect(Collectors.toSet());
+		reachableProgramPoints.addAll(icfg.getInitialNodes());
+		final Set<LOC> registeredProgramPoints = icfg.getProgramPoints().entrySet().stream()
+				.flatMap(x -> x.getValue().entrySet().stream()).map(Entry::getValue).collect(Collectors.toSet());
+		if (!reachableProgramPoints.equals(registeredProgramPoints)) {
+			final Set<IcfgLocation> diff1 = new HashSet<>(reachableProgramPoints);
+			diff1.removeAll(registeredProgramPoints);
+			if (!diff1.isEmpty()) {
+				throw new AssertionError("Program points reachable but not registered: " + diff1);
+			}
+			final Set<IcfgLocation> diff2 = new HashSet<>(registeredProgramPoints);
+			diff2.removeAll(reachableProgramPoints);
+			// ExitNodes are registered even if they are not reachable (the optimization
+			// where we omit ExitNodes would require many case distinctions and would only
+			// save a few nodes).
+			final Set<LOC> exitProgramPoints = icfg.getProcedureExitNodes().entrySet().stream().map(Entry::getValue)
+					.collect(Collectors.toSet());
+			diff2.removeAll(exitProgramPoints);
+			if (!diff2.isEmpty()) {
+				throw new AssertionError("Program points registered but not reachable: " + diff2);
 			}
 		}
-		return false;
+		return true;
 	}
 
 	/**
