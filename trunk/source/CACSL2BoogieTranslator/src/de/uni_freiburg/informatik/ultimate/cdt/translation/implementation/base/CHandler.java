@@ -1091,7 +1091,7 @@ public class CHandler {
 			if (r instanceof ExpressionResult) {
 				final ExpressionResult res = (ExpressionResult) r;
 				resultBuilder.addDeclarations(res.getDeclarations());
-				resultBuilder.addOverapprox(res.getOverapprs());
+				// TODO Frank: We somehow should not copy the overapproximations here
 				resultBuilder.addStatements(res.getStatements());
 				auxVars = res.getAuxVars();
 				expr = res.getLrValue();
