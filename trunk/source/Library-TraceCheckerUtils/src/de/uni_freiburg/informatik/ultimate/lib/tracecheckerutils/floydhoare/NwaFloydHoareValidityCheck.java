@@ -34,7 +34,8 @@ public class NwaFloydHoareValidityCheck<L extends IAction, S> extends FloydHoare
 			final IHoareTripleChecker hoareTripleChecker, final IPredicateUnifier unifier,
 			final INestedWordAutomaton<L, IPredicate> automaton, final boolean assertValidity) {
 		return new NwaFloydHoareValidityCheck<>(services, mgdScript, hoareTripleChecker, automaton,
-				new FloydHoareForInterpolantAutomaton(unifier), assertValidity, MissingAnnotationBehaviour.THROW, true);
+				new FloydHoareForInterpolantAutomaton(unifier), assertValidity, MissingAnnotationBehaviour.THROW,
+				false);
 	}
 
 	@Override

@@ -80,6 +80,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskFileIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.TaskIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -498,8 +499,10 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 
 		// TODO #proofRefactor
 		if (mComputeHoareAnnotation && mPref.getHoareAnnotationPositions() == HoareAnnotationPositions.All) {
+			final var unifier = new PredicateUnifier(mLogger, mServices, mCsToolkit.getManagedScript(),
+					mPredicateFactory, mCsToolkit.getSymbolTable(), mSimplificationTechnique, mXnfConversionTechnique);
 			assert NwaFloydHoareValidityCheck.forInterpolantAutomaton(mServices, mCsToolkit.getManagedScript(),
-					new IncrementalHoareTripleChecker(mCsToolkit, false), null,
+					new IncrementalHoareTripleChecker(mCsToolkit, false), unifier,
 					(INestedWordAutomaton<L, IPredicate>) mAbstraction, true).getResult() : "Not inductive";
 		}
 
