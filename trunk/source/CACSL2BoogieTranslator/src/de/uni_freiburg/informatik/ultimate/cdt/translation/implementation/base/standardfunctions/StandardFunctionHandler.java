@@ -1058,10 +1058,11 @@ public class StandardFunctionHandler {
 			final var allOnes = mExpressionTranslation.constructUnaryExpression(loc, IASTUnaryExpression.op_tilde,
 					argZero, argType);
 
-			// 0 != arg & (~0 << (result-1))
+			// 0 != arg & (1 << (result-1))
 			// This means that at index "result", the argument has a 1.
 			final var lShiftRes = mExpressionTranslation.handleBitshiftExpression(loc,
-					IASTBinaryExpression.op_shiftLeft, allOnes, argType,
+					IASTBinaryExpression.op_shiftLeft,
+					mExpressionTranslation.constructLiteralForIntegerType(loc, argType, BigInteger.ONE), argType,
 					mExpressionTranslation.constructArithmeticIntegerExpression(loc, IASTBinaryExpression.op_minus,
 							resultInfo.getExp(), resultType, resultOne, resultType),
 					resultType, mAuxVarInfoBuilder);
