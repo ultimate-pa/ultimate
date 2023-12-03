@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown.Kingdom;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown.Rook;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
@@ -108,6 +109,12 @@ public final class Territory<PLACE, LETTER> {
 		final Set<Region<PLACE, LETTER>> territoryRegions = new HashSet<>(mTerritory);
 		getAllMarkings(territoryRegions, new HashSet<>(), treatySet);
 		return treatySet;
+	}
+
+	public static <P, L> boolean getRooksTerritoryEquality(final Set<Rook<P, L>> rooks) {
+		final Set<Territory<P, L>> rookTerritories =
+				rooks.stream().map(rook -> new Territory<>(rook.getKingdom())).collect(Collectors.toSet());
+		return (rookTerritories.size() == 1);
 	}
 
 	@SuppressWarnings("unchecked")

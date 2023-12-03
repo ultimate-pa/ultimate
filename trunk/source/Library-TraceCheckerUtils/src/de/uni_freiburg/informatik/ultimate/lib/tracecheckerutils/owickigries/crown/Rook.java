@@ -80,6 +80,10 @@ public final class Rook<PLACE, LETTER> {
 		return true;
 	}
 
+	private Realm<PLACE, LETTER> getNegKingdom(final CoRook<PLACE, LETTER> coRook) {
+		return coRook.getCoKingdom().getNegKingdom().iterator().next();
+	}
+
 	/**
 	 * Check if treaty(Rook) contains any non-maximal coset
 	 *
@@ -118,7 +122,9 @@ public final class Rook<PLACE, LETTER> {
 	 * @param realm
 	 * @return New Rook with condition added to specified realm. TODO: Kindred cases...
 	 */
-	public Rook<PLACE, LETTER> immigration(final Condition<LETTER, PLACE> condition, Realm<PLACE, LETTER> realm) {
+	public Rook<PLACE, LETTER> immigration(final CoRook<PLACE, LETTER> coRook) {
+		final Condition<LETTER, PLACE> condition = coRook.getCondition();
+		Realm<PLACE, LETTER> realm = getNegKingdom(coRook);
 		Kingdom<PLACE, LETTER> kingdom = mKingdom.removeRealm(realm);
 		realm = realm.addCondition(condition);
 		kingdom = kingdom.addRealm(realm);
@@ -126,13 +132,61 @@ public final class Rook<PLACE, LETTER> {
 	}
 
 	/**
-	 * Add new assertion condition into the Rook's law set
+	 * Adds new Realm containing condition and the conflict free conditions to Kingdom and removes the negative Kingdom
+	 * from the set of Realms in Rook.
+	 *
+	 * @param coRook
+	 *            coRook corresponding to Rook
+	 * @return New Rook
+	 */
+	public Rook<PLACE, LETTER> foundation(final CoRook<PLACE, LETTER> coRook) {
+		final Set<Realm<PLACE, LETTER>> newRealms = getKingdom().getRealms();
+		newRealms.remove(getNegKingdom(coRook));
+		final Set<Condition<LETTER, PLACE>> conflictFreeConditions = coRook.getCoKingdom().getConflictFreeConditions();
+		conflictFreeConditions.add(coRook.getCondition());
+		final Realm<PLACE, LETTER> newRealm = new Realm<>(conflictFreeConditions);
+		newRealms.add(newRealm);
+		final Kingdom<PLACE, LETTER> kingdom = new Kingdom<>(newRealms);
+		return new Rook<>(kingdom, getLaw());
+	}
+
+	/**
+	 * Add condition to Rook's Law
 	 *
 	 * @param condition
+	 *            Corresponding condition
+	 * @return New Rook containing condition in its Law
 	 */
 	public Rook<PLACE, LETTER> approval(final Condition<LETTER, PLACE> condition) {
 		final KingdomLaw<PLACE, LETTER> newLaw = mLaw.addCondition(condition);
 		return new Rook<>(getKingdom(), newLaw);
+	}
+
+	/**
+	 * Change Law of Rook to the Law only containing condition.
+	 *
+	 * @param coRook
+	 *            CoRook corresponding to Rook
+	 * @return New Rook with Law containing solely condition.
+	 */
+	public Rook<PLACE, LETTER> enactment(final CoRook<PLACE, LETTER> coRook) {
+		final KingdomLaw<PLACE, LETTER> law = new KingdomLaw<>(Set.of(coRook.getCondition()));
+		return new Rook<>(coRook.getRook().getKingdom(), law);
+	}
+
+	/**
+	 * Create new Rook containing only the positive kingdom wrt. to coRook's condition.
+	 *
+	 * @param coRook
+	 *            CoRook corresponding to Rook
+	 * @return New Rook containing only the positive kingdom wrt. to coRook's condition
+	 */
+	public Rook<PLACE, LETTER> ratification(final CoRook<PLACE, LETTER> coRook) {
+		final Kingdom<PLACE, LETTER> kingdom = new Kingdom<>(coRook.getCoKingdom().getPosKingdom());
+		final KingdomLaw<PLACE, LETTER> law = new KingdomLaw<>(Set.of(coRook.getCondition()));
+		// final KingdomLaw<PLACE, LETTER> law = new KingdomLaw<>(
+		// DataStructureUtils.union(coRook.getRook().getLaw().getConditions(), Set.of(coRook.getCondition())));
+		return new Rook<>(kingdom, law);
 	}
 
 	public Set<Set<Condition<LETTER, PLACE>>> getCensus() {

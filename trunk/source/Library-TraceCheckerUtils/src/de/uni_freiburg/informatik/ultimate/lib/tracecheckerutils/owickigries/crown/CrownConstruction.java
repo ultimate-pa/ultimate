@@ -26,8 +26,10 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown;
 
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -103,11 +105,11 @@ public final class CrownConstruction<PLACE, LETTER> {
 		final Set<Rook<PLACE, LETTER>> colonizedRooks = mPreCrown.getRooks();
 		final Set<Rook<PLACE, LETTER>> reSet = new HashSet<>();
 		for (final Rook<PLACE, LETTER> rook : colonizedRooks) {
-			reSet.addAll(crownExpansion(rook, new ArrayList<>(mOrigConds), true));
+			reSet.addAll(crownExpansionRecursive(rook, new ArrayList<>(mOrigConds), true));
 		}
 		colonizedRooks.clear();
 		for (final Rook<PLACE, LETTER> rook : reSet) {
-			colonizedRooks.addAll(crownExpansion(rook, new ArrayList<>(mAssertConds), false));
+			colonizedRooks.addAll(crownExpansionRecursive(rook, new ArrayList<>(mAssertConds), false));
 		}
 		// final Set<Rook<PLACE, LETTER>> colonizedpreRooks = computePreRooks(colonizedRooks);
 		// colonizedRooks.removeAll(colonizedpreRooks);
@@ -125,7 +127,7 @@ public final class CrownConstruction<PLACE, LETTER> {
 			final Set<Marking<PLACE>> splitMarkings = new HashSet<>();
 			for (final Marking<PLACE> marking : kindredMarkings) {
 				final Set<Rook<PLACE, LETTER>> kindredRooks = kindred.getKindredRooks(marking);
-				if (!getRooksTerritoryEquality(kindredRooks)) {
+				if (!Territory.getRooksTerritoryEquality(kindredRooks)) {
 					splitMarkings.add(marking);
 				}
 			}
@@ -153,13 +155,14 @@ public final class CrownConstruction<PLACE, LETTER> {
 		}
 	}
 
-	private Set<Rook<PLACE, LETTER>> crownExpansion(final Rook<PLACE, LETTER> rook,
+	// Recursive expansion
+	private Set<Rook<PLACE, LETTER>> crownExpansionRecursive(final Rook<PLACE, LETTER> rook,
 			final List<Condition<LETTER, PLACE>> troopConditions, final boolean colonizer) {
 		final Set<Rook<PLACE, LETTER>> crownRooks = new HashSet<>();
-		boolean isComplete = true;
+		boolean isMaximal = true;
+		final List<Condition<LETTER, PLACE>> conditions = new ArrayList<>(troopConditions);
 		for (int i = 0; i < troopConditions.size(); i++) {
 			final Condition<LETTER, PLACE> condition = troopConditions.get(i);
-			final List<Condition<LETTER, PLACE>> conditions = new ArrayList<>(troopConditions);
 			Rook<PLACE, LETTER> colonyRook;
 			if (colonizer) {
 				colonyRook = colonize(condition, rook);
@@ -169,16 +172,56 @@ public final class CrownConstruction<PLACE, LETTER> {
 			if (colonyRook == null) {
 				conditions.remove(condition);
 			} else {
-				isComplete = false;
+				isMaximal = false;
 				final List<Condition<LETTER, PLACE>> ntroops =
 						conditions.stream().filter(cond -> !cond.equals(condition)).collect(Collectors.toList());
-				final Set<Rook<PLACE, LETTER>> expandedRooks = crownExpansion(colonyRook, ntroops, colonizer);
+				final Set<Rook<PLACE, LETTER>> expandedRooks = crownExpansionRecursive(colonyRook, ntroops, colonizer);
 				crownRooks.addAll(expandedRooks);
 			}
 		}
-		if (isComplete) {
+		if (isMaximal) {
 			crownRooks.add(rook);
 		}
+		return crownRooks;
+	}
+
+	// Iterative expansion using two stacks
+	private Set<Rook<PLACE, LETTER>> crownExpansionIterative(final Rook<PLACE, LETTER> rook,
+			final List<Condition<LETTER, PLACE>> troopConditions, final boolean colonizer) {
+		final Set<Rook<PLACE, LETTER>> crownRooks = new HashSet<>();
+		final Deque<Rook<PLACE, LETTER>> rookStack = new LinkedList<>();
+		final Deque<List<Condition<LETTER, PLACE>>> conditionStack = new LinkedList<>();
+		rookStack.push(rook);
+		conditionStack.push(troopConditions);
+		boolean isMaximal = true;
+		while (!(rookStack.isEmpty() || conditionStack.isEmpty())) {
+			final Rook<PLACE, LETTER> currentRook = rookStack.pop();
+			final List<Condition<LETTER, PLACE>> currentConditions = conditionStack.pop();
+			isMaximal = true;
+			final List<Condition<LETTER, PLACE>> conditions = new ArrayList<>(currentConditions);
+			for (int i = 0; i < currentConditions.size(); i++) {
+				final Condition<LETTER, PLACE> condition = currentConditions.get(i);
+				Rook<PLACE, LETTER> colonyRook;
+				if (colonizer) {
+					colonyRook = colonize(condition, currentRook);
+				} else {
+					colonyRook = legislate(condition, currentRook);
+				}
+				if (colonyRook == null) {
+					conditions.remove(condition);
+				} else {
+					isMaximal = false;
+					final List<Condition<LETTER, PLACE>> ntroops =
+							conditions.stream().filter(cond -> !cond.equals(condition)).collect(Collectors.toList());
+					rookStack.push(colonyRook);
+					conditionStack.push(ntroops);
+				}
+			}
+			if (isMaximal) {
+				crownRooks.add(currentRook);
+			}
+		}
+
 		return crownRooks;
 	}
 
@@ -188,13 +231,13 @@ public final class CrownConstruction<PLACE, LETTER> {
 		Rook<PLACE, LETTER> colonyRook;
 		switch (coRook.getColonization()) {
 		case EXPANSION:
-			colonyRook = expand(coRook);
+			colonyRook = rook.expansion(condition);
 			break;
 		case IMMIGRATION:
-			colonyRook = immigrate(coRook);
+			colonyRook = rook.immigration(coRook);
 			break;
 		case FOUNDATION:
-			colonyRook = founding(coRook);
+			colonyRook = rook.foundation(coRook);
 			break;
 		default:
 			colonyRook = null;
@@ -208,13 +251,13 @@ public final class CrownConstruction<PLACE, LETTER> {
 		Rook<PLACE, LETTER> colonyRook;
 		switch (coRook.getLegislation()) {
 		case APPROVAL:
-			colonyRook = approve(coRook);
+			colonyRook = rook.approval(condition);
 			break;
 		case ENACTMENT:
-			colonyRook = enactment(coRook);
+			colonyRook = rook.enactment(coRook);
 			break;
 		case RATIFICATION:
-			colonyRook = ratify(coRook);
+			colonyRook = rook.ratification(coRook);
 			break;
 		default:
 			colonyRook = null;
@@ -226,51 +269,6 @@ public final class CrownConstruction<PLACE, LETTER> {
 		return mOrigConds.contains(condition);
 	}
 
-	private Rook<PLACE, LETTER> expand(final CoRook<PLACE, LETTER> coRook) {
-		Rook<PLACE, LETTER> rook = coRook.getRook();
-		rook = rook.expansion(coRook.getCondition());
-		return rook;
-	}
-
-	private Rook<PLACE, LETTER> immigrate(final CoRook<PLACE, LETTER> coRook) {
-		Rook<PLACE, LETTER> rook = coRook.getRook();
-		rook = rook.immigration(coRook.getCondition(), getNegKingdom(coRook));
-		return rook;
-	}
-
-	private Rook<PLACE, LETTER> founding(final CoRook<PLACE, LETTER> coRook) {
-		final Rook<PLACE, LETTER> rook = coRook.getRook();
-		final Set<Realm<PLACE, LETTER>> newRealms = rook.getKingdom().getRealms();
-		newRealms.remove(getNegKingdom(coRook));
-		final Set<Condition<LETTER, PLACE>> conflictFreeConditions = coRook.getCoKingdom().getConflictFreeConditions();
-		conflictFreeConditions.add(coRook.getCondition());
-		final Realm<PLACE, LETTER> newRealm = new Realm<>(conflictFreeConditions);
-		newRealms.add(newRealm);
-		final Kingdom<PLACE, LETTER> kingdom = new Kingdom<>(newRealms);
-		return new Rook<>(kingdom, rook.getLaw());
-	}
-
-	private Rook<PLACE, LETTER> approve(final CoRook<PLACE, LETTER> coRook) {
-		Rook<PLACE, LETTER> rook = coRook.getRook();
-		rook = rook.approval(coRook.getCondition());
-		return rook;
-	}
-
-	private Rook<PLACE, LETTER> ratify(final CoRook<PLACE, LETTER> coRook) {
-		final Kingdom<PLACE, LETTER> kingdom = new Kingdom<>(coRook.getCoKingdom().getPosKingdom());
-		final KingdomLaw<PLACE, LETTER> law = new KingdomLaw<>(Set.of(coRook.getCondition()));
-		return new Rook<>(kingdom, law);
-	}
-
-	private Rook<PLACE, LETTER> enactment(final CoRook<PLACE, LETTER> coRook) {
-		final KingdomLaw<PLACE, LETTER> law = new KingdomLaw<>(Set.of(coRook.getCondition()));
-		return new Rook<>(coRook.getRook().getKingdom(), law);
-	}
-
-	private Realm<PLACE, LETTER> getNegKingdom(final CoRook<PLACE, LETTER> coRook) {
-		return coRook.getCoKingdom().getNegKingdom().iterator().next();
-	}
-
 	private Set<Rook<PLACE, LETTER>> computePreRooks(final Set<Rook<PLACE, LETTER>> rooks) {
 		final Set<Rook<PLACE, LETTER>> preRooks =
 				rooks.stream().filter(rook -> containsNonCut(rook)).collect(Collectors.toSet());
@@ -280,12 +278,6 @@ public final class CrownConstruction<PLACE, LETTER> {
 	private boolean containsNonCut(final Rook<PLACE, LETTER> rook) {
 		final Boolean noCut = mContainsNonCut.computeIfAbsent(rook, r -> r.containsNonCut(mBp));
 		return noCut;
-	}
-
-	private boolean getRooksTerritoryEquality(final Set<Rook<PLACE, LETTER>> rooks) {
-		final Set<Territory<PLACE, LETTER>> rookTerritories =
-				rooks.stream().map(rook -> new Territory<PLACE, LETTER>(rook.getKingdom())).collect(Collectors.toSet());
-		return (rookTerritories.size() == 1);
 	}
 
 	public Crown<PLACE, LETTER> getCrown() {
