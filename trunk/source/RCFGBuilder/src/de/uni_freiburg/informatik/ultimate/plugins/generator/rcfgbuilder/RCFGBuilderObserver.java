@@ -86,7 +86,7 @@ public class RCFGBuilderObserver implements IUnmanagedObserver {
 		final CfgBuilder recCFGBuilder = new CfgBuilder(unit, mServices);
 		try {
 			mGraphroot = recCFGBuilder.createIcfg(unit);
-			assert IcfgUtils.areProgramPointsStoredConsistently(mGraphroot);
+			assert IcfgUtils.areReachableProgramPointsRegistered(mGraphroot);
 			mServices.getBacktranslationService().addTranslator(recCFGBuilder.getBacktranslator());
 		} catch (final SMTLIBException e) {
 			final String message = e.getMessage();

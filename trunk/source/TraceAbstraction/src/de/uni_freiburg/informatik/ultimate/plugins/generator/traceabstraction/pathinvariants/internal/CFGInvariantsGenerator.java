@@ -166,7 +166,7 @@ public final class CFGInvariantsGenerator {
 		mPredicateUnifier = predicateUnifier;
 		mPredicateOfInitialLocations = predicateOfInitialLocations;
 		mPredicateOfErrorLocations = predicateofErrorLocations;
-		if (!IcfgUtils.areProgramPointsStoredConsistently(icfg)) {
+		if (!IcfgUtils.areReachableProgramPointsRegistered(icfg)) {
 			throw new IllegalArgumentException("ICFGs that have unreachable program points are not supported");
 		}
 		mIcfg = icfg;
