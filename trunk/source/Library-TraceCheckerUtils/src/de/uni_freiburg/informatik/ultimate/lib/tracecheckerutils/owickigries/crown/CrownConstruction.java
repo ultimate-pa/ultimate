@@ -85,15 +85,15 @@ public final class CrownConstruction<PLACE, LETTER> {
 		// Create a new rook for each original condition.
 		// Add a to crown a new rook with "capital" and one corelated assertion condition
 		for (final Condition<LETTER, PLACE> originalCondition : mOrigConds) {
-			final Set<Condition<LETTER, PLACE>> originalConditionSet = new HashSet<>(Set.of(originalCondition));
+			final Set<Condition<LETTER, PLACE>> originalConditionSet = Set.of(originalCondition);
 			final Realm<PLACE, LETTER> realm = new Realm<>(ImmutableSet.of(originalConditionSet));
-			final Set<Realm<PLACE, LETTER>> realmSet = new HashSet<>(Set.of(realm));
+			final Set<Realm<PLACE, LETTER>> realmSet = Set.of(realm);
 			final Kingdom<PLACE, LETTER> kingdom = new Kingdom<>(ImmutableSet.of(realmSet));
 			for (final Condition<LETTER, PLACE> assertionCondition : mAssertConds) {
 				final CoKingdom<PLACE, LETTER> coKingdom =
 						new CoKingdom<>(kingdom, assertionCondition, mBp, mPlacesCoRelation);
 				if (coKingdom.getCoRelation() == CoRelationType.POSITIVE) {
-					final Set<Condition<LETTER, PLACE>> lawConditions = new HashSet<>(Set.of(assertionCondition));
+					final Set<Condition<LETTER, PLACE>> lawConditions = Set.of(assertionCondition);
 					final KingdomLaw<PLACE, LETTER> kingdomLaw = new KingdomLaw<>(ImmutableSet.of(lawConditions));
 					final Rook<PLACE, LETTER> rook = new Rook<>(kingdom, kingdomLaw);
 					mPreCrown.addRook(rook);
@@ -149,8 +149,7 @@ public final class CrownConstruction<PLACE, LETTER> {
 				Kingdom<PLACE, LETTER> secondKingdom = new Kingdom<>(
 						ImmutableSet.of(DataStructureUtils.difference(rook.getKingdom().getRealms(), kindredRealms)));
 				for (final Condition<LETTER, PLACE> condition : markingKindredConds) {
-					secondKingdom =
-							secondKingdom.addRealm(new Realm<>(ImmutableSet.of(new HashSet<>(Set.of(condition)))));
+					secondKingdom = secondKingdom.addRealm(new Realm<>(ImmutableSet.of(Set.of(condition))));
 				}
 				mCrown.addRook(new Rook<>(secondKingdom, rook.getLaw()));
 			}

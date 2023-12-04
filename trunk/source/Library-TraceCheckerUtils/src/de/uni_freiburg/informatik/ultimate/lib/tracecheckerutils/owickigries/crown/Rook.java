@@ -110,7 +110,7 @@ public final class Rook<PLACE, LETTER> {
 	 * @return Rook with modified Kingdom and the instances law.
 	 */
 	public Rook<PLACE, LETTER> expansion(final Condition<LETTER, PLACE> condition) {
-		final Realm<PLACE, LETTER> realm = new Realm<>(ImmutableSet.of(new HashSet<>(Set.of(condition))));
+		final Realm<PLACE, LETTER> realm = new Realm<>(ImmutableSet.of(Set.of(condition)));
 		final Kingdom<PLACE, LETTER> newKingdom = mKingdom.addRealm(realm);
 		return new Rook<>(newKingdom, getLaw());
 	}
@@ -119,8 +119,8 @@ public final class Rook<PLACE, LETTER> {
 	 * Adds the condition to the specified existing realm of the rook's Kingdom and returns new Rook containing the
 	 * changes in kingdom.
 	 *
-	 * @param condition
-	 * @param realm
+	 * @param coRook
+	 *            coRook corresponding to Rook
 	 * @return New Rook with condition added to specified realm. TODO: Kindred cases...
 	 */
 	public Rook<PLACE, LETTER> immigration(final CoRook<PLACE, LETTER> coRook) {
