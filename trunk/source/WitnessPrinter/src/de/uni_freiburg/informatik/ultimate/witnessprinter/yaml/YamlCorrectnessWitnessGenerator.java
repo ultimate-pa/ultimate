@@ -90,7 +90,6 @@ public class YamlCorrectnessWitnessGenerator {
 			final int column = Math.max(loc.getStartColumn(), 0);
 			final String function = loc.getFunction();
 			if (function == null) {
-				// TODO: Is this possible, maybe for global invariants? What is the expected behavior?
 				continue;
 			}
 			final Location witnessLocation =
@@ -115,12 +114,10 @@ public class YamlCorrectnessWitnessGenerator {
 			if (ensures == null) {
 				continue;
 			}
-			// TODO: Make sure that this is actually the definition or declaration of the contract
 			// If the column is unknown (-1), use the first position of the line
 			final int column = Math.max(loc.getStartColumn(), 0);
 			final String function = loc.getFunction();
 			if (function == null) {
-				// TODO: Is this possible, maybe for global invariants? What is the expected behavior?
 				continue;
 			}
 			final Location witnessLocation =
