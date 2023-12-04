@@ -32,7 +32,7 @@ import de.uni_freiburg.informatik.ultimate.witnessprinter.preferences.Preference
 
 public class YamlCorrectnessWitnessGenerator {
 	private static final String[] ACSL_SUBSTRING = new String[] { "\\old", "\\result", "exists", "forall" };
-	private static final FormatVersion FORMAT_VERSION = new FormatVersion(2, 0);
+	private static final FormatVersion FORMAT_VERSION = new FormatVersion(3, 0);
 
 	private final ILogger mLogger;
 	private final boolean mIsACSLForbidden;
@@ -66,16 +66,14 @@ public class YamlCorrectnessWitnessGenerator {
 		// e.g. by line number and/or entry type?
 		final List<WitnessEntry> entries = new ArrayList<>();
 		entries.addAll(extractLoopInvariants(allProgramPoints, metadataSupplier, hash, format));
-		entries.addAll(extractFunctionContracts(allProgramPoints, metadataSupplier, hash, format));
-		final Witness witness = new Witness(entries);
-		switch (FORMAT_VERSION.toString()) {
-		case "0.1":
-			return witness;
-		case "2.0":
-			return new Witness(List.of(witness.toInvariantSet(metadataSupplier)));
-		default:
-			throw new UnsupportedOperationException("Unknown format version " + FORMAT_VERSION);
+		if (FORMAT_VERSION.getMajor() >= 3) {
+			entries.addAll(extractFunctionContracts(allProgramPoints, metadataSupplier, hash, format));
 		}
+		final Witness witness = new Witness(entries);
+		if (FORMAT_VERSION.getMajor() < 2) {
+			return witness;
+		}
+		return new Witness(List.of(witness.toInvariantSet(metadataSupplier)));
 	}
 
 	private List<WitnessEntry> extractLoopInvariants(final List<IcfgLocation> programPoints,
@@ -140,14 +138,20 @@ public class YamlCorrectnessWitnessGenerator {
 	}
 
 	private String getExpressionFormat() {
-		if (!mIsACSLForbidden) {
-			throw new UnsupportedOperationException("ACSL is not supported in witnesses yet");
-		}
 		switch (FORMAT_VERSION.toString()) {
 		case "0.1":
+			if (!mIsACSLForbidden) {
+				throw new UnsupportedOperationException("ACSL is not supported in witnesses yet");
+			}
 			return "C";
 		case "2.0":
+			if (!mIsACSLForbidden) {
+				throw new UnsupportedOperationException("ACSL is not supported in witnesses yet");
+			}
 			return "c_expression";
+		case "3.0":
+			// TODO: Should we always use ACSL here or dependent on the actual invariant/contract?
+			return "acsl";
 		default:
 			throw new UnsupportedOperationException("Unknown format version " + FORMAT_VERSION);
 		}

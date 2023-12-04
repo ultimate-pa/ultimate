@@ -5,12 +5,12 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Witness.IMapSerializable;
 
-public class InvariantSetEntry implements IMapSerializable {
+public class WitnessSetEntry implements IMapSerializable {
 	private final String mType;
 	private final Location mLocation;
 	private final Map<String, Object> mOtherValues;
 
-	public InvariantSetEntry(final String type, final Location location, final Map<String, Object> otherValues) {
+	public WitnessSetEntry(final String type, final Location location, final Map<String, Object> otherValues) {
 		mType = type;
 		mLocation = location;
 		mOtherValues = otherValues;

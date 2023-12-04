@@ -63,8 +63,8 @@ public class FunctionContract extends WitnessEntry {
 	}
 
 	@Override
-	public InvariantSetEntry toInvariantSetEntry() {
-		return new InvariantSetEntry(NAME, mLocation, Map.of("ensures", mEnsures, "format", mFormat));
+	public WitnessSetEntry toSetEntry() {
+		return new WitnessSetEntry(NAME, mLocation, Map.of("ensures", mEnsures, "format", mFormat));
 	}
 
 	@Override

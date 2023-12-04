@@ -47,7 +47,6 @@ import org.yaml.snakeyaml.constructor.SafeConstructor;
 
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.FormatVersion;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Invariant;
-import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.InvariantSet;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Location;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LocationInvariant;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LoopInvariant;
@@ -95,7 +94,8 @@ public class YamlWitnessParser {
 			final Invariant loopInvariant = parseInvariant((Map<String, String>) entry.get(LoopInvariant.NAME));
 			return Stream.of(new LoopInvariant(metadata, location, loopInvariant));
 		}
-		case InvariantSet.NAME:
+		case "invariant_set":
+		case "entry_set":
 			// TODO: This just transforms the "new" format to the "old" format, maybe change this in the future
 			final List<Map<String, Map<String, Object>>> content =
 					(List<Map<String, Map<String, Object>>>) entry.get("content");
