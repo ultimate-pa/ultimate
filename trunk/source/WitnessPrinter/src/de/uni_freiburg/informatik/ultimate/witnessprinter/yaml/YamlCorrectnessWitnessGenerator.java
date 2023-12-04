@@ -34,7 +34,6 @@ public class YamlCorrectnessWitnessGenerator {
 	private static final String[] ACSL_SUBSTRING = new String[] { "\\old", "\\result", "exists", "forall" };
 
 	private final ILogger mLogger;
-	private final boolean mIsACSLForbidden;
 	private final IPreferenceProvider mPreferences;
 	private final IIcfg<? extends IcfgLocation> mIcfg;
 
@@ -43,7 +42,6 @@ public class YamlCorrectnessWitnessGenerator {
 		mLogger = logger;
 		mIcfg = icfg;
 		mPreferences = PreferenceInitializer.getPreferences(services);
-		mIsACSLForbidden = mPreferences.getBoolean(PreferenceInitializer.LABEL_DO_NOT_USE_ACSL);
 	}
 
 	private Witness getWitness() {
@@ -53,7 +51,6 @@ public class YamlCorrectnessWitnessGenerator {
 		final String arch = mPreferences.getString(PreferenceInitializer.LABEL_GRAPH_DATA_ARCHITECTURE);
 		final FormatVersion formatVersion =
 				FormatVersion.fromString(mPreferences.getString(PreferenceInitializer.LABEL_YAML_FORMAT_VERSION));
-		final String format = getExpressionFormat(formatVersion);
 		final String version = new UltimateCore().getUltimateVersionString();
 		final String filename = ILocation.getAnnotation(mIcfg).getFileName();
 		final Supplier<Metadata> metadataSupplier = () -> new Metadata(formatVersion, UUID.randomUUID(),
@@ -66,9 +63,9 @@ public class YamlCorrectnessWitnessGenerator {
 		// TODO: Should we sort these entries somehow (for consistent result in validation and to improve readability)
 		// e.g. by line number and/or entry type?
 		final List<WitnessEntry> entries = new ArrayList<>();
-		entries.addAll(extractLoopInvariants(allProgramPoints, metadataSupplier, hash, format));
+		entries.addAll(extractLoopInvariants(allProgramPoints, metadataSupplier, hash, formatVersion));
 		if (formatVersion.getMajor() >= 3) {
-			entries.addAll(extractFunctionContracts(allProgramPoints, metadataSupplier, hash, format));
+			entries.addAll(extractFunctionContracts(allProgramPoints, metadataSupplier, hash, formatVersion));
 		}
 		final Witness witness = new Witness(entries);
 		if (formatVersion.getMajor() < 2) {
@@ -78,14 +75,14 @@ public class YamlCorrectnessWitnessGenerator {
 	}
 
 	private List<WitnessEntry> extractLoopInvariants(final List<IcfgLocation> programPoints,
-			final Supplier<Metadata> metadataSupplier, final String hash, final String format) {
+			final Supplier<Metadata> metadataSupplier, final String hash, final FormatVersion formatVersion) {
 		final List<WitnessEntry> result = new ArrayList<>();
 		for (final IcfgLocation pp : programPoints) {
 			final ILocation loc = ILocation.getAnnotation(pp);
 			if (loc == null) {
 				continue;
 			}
-			final String invariant = filterInvariant(WitnessInvariant.getAnnotation(pp));
+			final String invariant = filterInvariant(WitnessInvariant.getAnnotation(pp), formatVersion);
 			if (invariant == null) {
 				continue;
 			}
@@ -101,13 +98,13 @@ public class YamlCorrectnessWitnessGenerator {
 			// TODO: How could we figure out, if it is a LocationInvariant or LoopInvariant?
 			// For now we only produce loop invariants anyways
 			result.add(new LoopInvariant(metadataSupplier.get(), witnessLocation,
-					new Invariant(invariant, "assertion", format)));
+					new Invariant(invariant, "assertion", getExpressionFormat(invariant, formatVersion))));
 		}
 		return result;
 	}
 
 	private static List<WitnessEntry> extractFunctionContracts(final List<IcfgLocation> programPoints,
-			final Supplier<Metadata> metadataSupplier, final String hash, final String format) {
+			final Supplier<Metadata> metadataSupplier, final String hash, final FormatVersion formatVersion) {
 		final List<WitnessEntry> result = new ArrayList<>();
 		for (final IcfgLocation pp : programPoints) {
 			final ILocation loc = ILocation.getAnnotation(pp);
@@ -129,7 +126,7 @@ public class YamlCorrectnessWitnessGenerator {
 			final Location witnessLocation =
 					new Location(loc.getFileName(), hash, loc.getStartLine(), column, function);
 			result.add(new FunctionContract(metadataSupplier.get(), witnessLocation, List.of(ensures.getExpression()),
-					format));
+					getExpressionFormat(ensures.getExpression(), formatVersion)));
 		}
 		return result;
 	}
@@ -138,32 +135,26 @@ public class YamlCorrectnessWitnessGenerator {
 		return getWitness().toYamlString();
 	}
 
-	private String getExpressionFormat(final FormatVersion formatVersion) {
-		switch (formatVersion.toString()) {
-		case "0.1":
-			if (!mIsACSLForbidden) {
-				throw new UnsupportedOperationException("ACSL is not supported in witnesses yet");
-			}
+	private static String getExpressionFormat(final String expression, final FormatVersion formatVersion) {
+		if (formatVersion.getMajor() == 0) {
 			return "C";
-		case "2.0":
-			if (!mIsACSLForbidden) {
-				throw new UnsupportedOperationException("ACSL is not supported in witnesses yet");
-			}
-			return "c_expression";
-		case "3.0":
-			// TODO: Should we always use ACSL here or dependent on the actual invariant/contract?
-			return "acsl";
-		default:
-			throw new UnsupportedOperationException("Unknown format version " + formatVersion);
 		}
+		if (formatVersion.getMajor() < 3 || !containsACSL(expression)) {
+			return "c_expression";
+		}
+		return "acsl";
 	}
 
-	private String filterInvariant(final WitnessInvariant invariant) {
+	private static boolean containsACSL(final String expression) {
+		return Arrays.stream(ACSL_SUBSTRING).anyMatch(expression::contains);
+	}
+
+	private String filterInvariant(final WitnessInvariant invariant, final FormatVersion formatVersion) {
 		if (invariant == null) {
 			return null;
 		}
 		final String label = invariant.getInvariant();
-		if (mIsACSLForbidden && label != null && Arrays.stream(ACSL_SUBSTRING).anyMatch(label::contains)) {
+		if (formatVersion.getMajor() < 3 && containsACSL(label)) {
 			mLogger.warn("Not writing invariant because ACSL is forbidden: " + label);
 			return null;
 		}
