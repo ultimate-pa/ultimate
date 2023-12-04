@@ -444,6 +444,21 @@ public class StandardFunctionHandler {
 		fill(map, "__atomic_test_and_set", this::handleAtomicTestAndSet);
 		fill(map, "__atomic_clear", this::handleAtomicClear);
 
+		fill(map, "__atomic_compare_exchange",
+				(main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
+						new CPrimitive(CPrimitives.BOOL)));
+		fill(map, "__atomic_compare_exchange_n",
+				(main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
+						new CPrimitive(CPrimitives.BOOL)));
+		fill(map, "__atomic_thread_fence", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main,
+				loc, name, new CPrimitive(CPrimitives.VOID)));
+		fill(map, "__atomic_signal_fence", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main,
+				loc, name, new CPrimitive(CPrimitives.VOID)));
+		fill(map, "__atomic_always_lock_free", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
+				name, 2, new CPrimitive(CPrimitives.BOOL)));
+		fill(map, "__atomic_is_lock_free", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name,
+				2, new CPrimitive(CPrimitives.BOOL)));
+
 		/*
 		 * builtin_prefetch according to https://gcc.gnu.org/onlinedocs/gcc-3.4.5/gcc/Other-Builtins.html (state:
 		 * 5.6.2015) triggers the processor to load something into cache, does nothing else is void thus has no return
