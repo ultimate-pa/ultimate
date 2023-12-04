@@ -27,10 +27,12 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.cr
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
  * Class Kingdom represents sets of Realms. To be a valid Kingdom, it is non-empty, all Realms have to be disjoint and
@@ -45,10 +47,10 @@ public final class Kingdom<PLACE, LETTER> {
 	/**
 	 * The set of realms in Kingdom.
 	 */
-	private final Set<Realm<PLACE, LETTER>> mKingdom;
+	private final ImmutableSet<Realm<PLACE, LETTER>> mKingdom;
 
-	public Kingdom(final Set<Realm<PLACE, LETTER>> kingdom) {
-		mKingdom = new HashSet<>(kingdom);
+	public Kingdom(final ImmutableSet<Realm<PLACE, LETTER>> kingdom) {
+		mKingdom = kingdom;
 	}
 
 	private void getAllCosets(final Set<Realm<PLACE, LETTER>> remainingKingdom,
@@ -70,8 +72,8 @@ public final class Kingdom<PLACE, LETTER> {
 	/**
 	 * @return Set of realms in Kingdom.
 	 */
-	public Set<Realm<PLACE, LETTER>> getRealms() {
-		return new HashSet<>(mKingdom);
+	public ImmutableSet<Realm<PLACE, LETTER>> getRealms() {
+		return mKingdom;
 	}
 
 	/**
@@ -82,9 +84,8 @@ public final class Kingdom<PLACE, LETTER> {
 	 * @return New kingdom with realm added into it.
 	 */
 	public Kingdom<PLACE, LETTER> addRealm(final Realm<PLACE, LETTER> realm) {
-		final Set<Realm<PLACE, LETTER>> realms = getRealms();
-		realms.add(realm);
-		return new Kingdom<>(realms);
+		final var realms = DataStructureUtils.union(mKingdom, Set.of(realm));
+		return new Kingdom<>(ImmutableSet.of(realms));
 	}
 
 	/**
@@ -95,9 +96,8 @@ public final class Kingdom<PLACE, LETTER> {
 	 * @return New kingdom with realms added into it.
 	 */
 	public Kingdom<PLACE, LETTER> addRealm(final Set<Realm<PLACE, LETTER>> realms) {
-		final Set<Realm<PLACE, LETTER>> kingdomRealms = getRealms();
-		kingdomRealms.addAll(realms);
-		return new Kingdom<>(kingdomRealms);
+		final var kingdomRealms = DataStructureUtils.union(mKingdom, realms);
+		return new Kingdom<>(ImmutableSet.of(kingdomRealms));
 	}
 
 	/**
@@ -108,12 +108,8 @@ public final class Kingdom<PLACE, LETTER> {
 	 * @return New kingdom without realm
 	 */
 	public Kingdom<PLACE, LETTER> removeRealm(final Realm<PLACE, LETTER> realm) {
-		if (mKingdom.contains(realm)) {
-			final Set<Realm<PLACE, LETTER>> kingdomRealms = getRealms();
-			kingdomRealms.remove(realm);
-			return new Kingdom<>(kingdomRealms);
-		}
-		return new Kingdom<>(mKingdom);
+		final var kingdomRealms = mKingdom.stream().filter(r -> !r.equals(realm)).collect(ImmutableSet.collector());
+		return new Kingdom<>(kingdomRealms);
 	}
 
 	/**
@@ -124,8 +120,7 @@ public final class Kingdom<PLACE, LETTER> {
 	 * @return New kingdom without realms
 	 */
 	public Kingdom<PLACE, LETTER> removeRealm(final Set<Realm<PLACE, LETTER>> realms) {
-		final Set<Realm<PLACE, LETTER>> kingdomRealms = getRealms();
-		kingdomRealms.removeAll(realms);
+		final var kingdomRealms = mKingdom.stream().filter(r -> !realms.contains(r)).collect(ImmutableSet.collector());
 		return new Kingdom<>(kingdomRealms);
 	}
 
@@ -147,7 +142,7 @@ public final class Kingdom<PLACE, LETTER> {
 	 */
 	public Set<Set<Condition<LETTER, PLACE>>> getTreaty() {
 		final Set<Set<Condition<LETTER, PLACE>>> treatySet = new HashSet<>();
-		final Set<Realm<PLACE, LETTER>> kingdomRealms = getRealms();
+		final Set<Realm<PLACE, LETTER>> kingdomRealms = getRealms().stream().collect(Collectors.toSet());
 		getAllCosets(kingdomRealms, new HashSet<>(), treatySet);
 		return treatySet;
 	}

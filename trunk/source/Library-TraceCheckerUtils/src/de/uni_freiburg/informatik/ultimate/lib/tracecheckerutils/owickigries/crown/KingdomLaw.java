@@ -26,13 +26,14 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.ICoRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
  * Class Law implements a set of corelated assertion Conditions. Law is immutable.
@@ -46,10 +47,10 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.ICoRelati
  */
 public final class KingdomLaw<PLACE, LETTER> {
 
-	private final Set<Condition<LETTER, PLACE>> mLaw;
+	private final ImmutableSet<Condition<LETTER, PLACE>> mLaw;
 
-	public KingdomLaw(final Set<Condition<LETTER, PLACE>> conditions) {
-		mLaw = new HashSet<>(conditions);
+	public KingdomLaw(final ImmutableSet<Condition<LETTER, PLACE>> conditions) {
+		mLaw = conditions;
 	}
 
 	/**
@@ -60,9 +61,8 @@ public final class KingdomLaw<PLACE, LETTER> {
 	 * @return New Law with added condition.
 	 */
 	public KingdomLaw<PLACE, LETTER> addCondition(final Condition<LETTER, PLACE> condition) {
-		final Set<Condition<LETTER, PLACE>> lawConditions = getConditions();
-		lawConditions.add(condition);
-		return new KingdomLaw<>(lawConditions);
+		final var lawConditions = DataStructureUtils.union(mLaw, Set.of(condition));
+		return new KingdomLaw<>(ImmutableSet.of(lawConditions));
 	}
 
 	/**
@@ -73,9 +73,8 @@ public final class KingdomLaw<PLACE, LETTER> {
 	 * @return New Law with added conditions.
 	 */
 	public KingdomLaw<PLACE, LETTER> addCondition(final Set<Condition<LETTER, PLACE>> conditions) {
-		final Set<Condition<LETTER, PLACE>> lawConditions = getConditions();
-		lawConditions.addAll(conditions);
-		return new KingdomLaw<>(lawConditions);
+		final var lawConditions = DataStructureUtils.union(mLaw, conditions);
+		return new KingdomLaw<>(ImmutableSet.of(lawConditions));
 	}
 
 	/**
@@ -86,16 +85,13 @@ public final class KingdomLaw<PLACE, LETTER> {
 	 * @return New Law without condition.
 	 */
 	public KingdomLaw<PLACE, LETTER> removeCondition(final Condition<LETTER, PLACE> condition) {
-		if (mLaw.contains(condition)) {
-			final Set<Condition<LETTER, PLACE>> lawConditions = getConditions();
-			lawConditions.remove(condition);
-			return new KingdomLaw<>(lawConditions);
-		}
-		return new KingdomLaw<>(mLaw);
+		final var lawConditions =
+				mLaw.stream().filter(cond -> !cond.equals(condition)).collect(ImmutableSet.collector());
+		return new KingdomLaw<>(lawConditions);
 	}
 
-	public Set<Condition<LETTER, PLACE>> getConditions() {
-		return new HashSet<>(mLaw);
+	public ImmutableSet<Condition<LETTER, PLACE>> getConditions() {
+		return mLaw;
 	}
 
 	/**

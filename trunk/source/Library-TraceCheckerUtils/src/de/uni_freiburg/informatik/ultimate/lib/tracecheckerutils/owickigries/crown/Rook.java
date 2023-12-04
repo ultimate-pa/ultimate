@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Branching
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.ICoRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
@@ -109,7 +110,7 @@ public final class Rook<PLACE, LETTER> {
 	 * @return Rook with modified Kingdom and the instances law.
 	 */
 	public Rook<PLACE, LETTER> expansion(final Condition<LETTER, PLACE> condition) {
-		final Realm<PLACE, LETTER> realm = new Realm<>(Set.of(condition));
+		final Realm<PLACE, LETTER> realm = new Realm<>(ImmutableSet.of(new HashSet<>(Set.of(condition))));
 		final Kingdom<PLACE, LETTER> newKingdom = mKingdom.addRealm(realm);
 		return new Rook<>(newKingdom, getLaw());
 	}
@@ -144,9 +145,9 @@ public final class Rook<PLACE, LETTER> {
 		newRealms.remove(getNegKingdom(coRook));
 		final Set<Condition<LETTER, PLACE>> conflictFreeConditions = coRook.getCoKingdom().getConflictFreeConditions();
 		conflictFreeConditions.add(coRook.getCondition());
-		final Realm<PLACE, LETTER> newRealm = new Realm<>(conflictFreeConditions);
+		final Realm<PLACE, LETTER> newRealm = new Realm<>(ImmutableSet.of(conflictFreeConditions));
 		newRealms.add(newRealm);
-		final Kingdom<PLACE, LETTER> kingdom = new Kingdom<>(newRealms);
+		final Kingdom<PLACE, LETTER> kingdom = new Kingdom<>(ImmutableSet.of(newRealms));
 		return new Rook<>(kingdom, getLaw());
 	}
 
@@ -170,7 +171,7 @@ public final class Rook<PLACE, LETTER> {
 	 * @return New Rook with Law containing solely condition.
 	 */
 	public Rook<PLACE, LETTER> enactment(final CoRook<PLACE, LETTER> coRook) {
-		final KingdomLaw<PLACE, LETTER> law = new KingdomLaw<>(Set.of(coRook.getCondition()));
+		final KingdomLaw<PLACE, LETTER> law = new KingdomLaw<>(ImmutableSet.of(Set.of(coRook.getCondition())));
 		return new Rook<>(coRook.getRook().getKingdom(), law);
 	}
 
@@ -182,8 +183,8 @@ public final class Rook<PLACE, LETTER> {
 	 * @return New Rook containing only the positive kingdom wrt. to coRook's condition
 	 */
 	public Rook<PLACE, LETTER> ratification(final CoRook<PLACE, LETTER> coRook) {
-		final Kingdom<PLACE, LETTER> kingdom = new Kingdom<>(coRook.getCoKingdom().getPosKingdom());
-		final KingdomLaw<PLACE, LETTER> law = new KingdomLaw<>(Set.of(coRook.getCondition()));
+		final Kingdom<PLACE, LETTER> kingdom = new Kingdom<>(ImmutableSet.of(coRook.getCoKingdom().getPosKingdom()));
+		final KingdomLaw<PLACE, LETTER> law = new KingdomLaw<>(ImmutableSet.of(Set.of(coRook.getCondition())));
 		// final KingdomLaw<PLACE, LETTER> law = new KingdomLaw<>(
 		// DataStructureUtils.union(coRook.getRook().getLaw().getConditions(), Set.of(coRook.getCondition())));
 		return new Rook<>(kingdom, law);

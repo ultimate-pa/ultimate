@@ -26,7 +26,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -34,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Branching
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.ICoRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
  * Class representing Realms which are sets of Conditions whose places are pairwise not corelated. Realms are immutable.
@@ -49,9 +49,9 @@ public final class Realm<PLACE, LETTER> {
 	/**
 	 * The set of conditions in realm.
 	 */
-	private final Set<Condition<LETTER, PLACE>> mRealm;
+	private final ImmutableSet<Condition<LETTER, PLACE>> mRealm;
 
-	public Realm(final Set<Condition<LETTER, PLACE>> realm) {
+	public Realm(final ImmutableSet<Condition<LETTER, PLACE>> realm) {
 		mRealm = realm;
 	}
 
@@ -71,8 +71,8 @@ public final class Realm<PLACE, LETTER> {
 	/**
 	 * @return copy of set of all conditions in region.
 	 */
-	public Set<Condition<LETTER, PLACE>> getConditions() {
-		return new HashSet<>(mRealm);
+	public ImmutableSet<Condition<LETTER, PLACE>> getConditions() {
+		return mRealm;
 	}
 
 	/**
@@ -84,9 +84,8 @@ public final class Realm<PLACE, LETTER> {
 	 * @return Realm containing the old conditions and the new one.
 	 */
 	public Realm<PLACE, LETTER> addCondition(final Condition<LETTER, PLACE> condition) {
-		final var newConditions = getConditions();
-		newConditions.add(condition);
-		return new Realm<>(newConditions);
+		final var newConditions = DataStructureUtils.union(mRealm, Set.of(condition));
+		return new Realm<>(ImmutableSet.of(newConditions));
 	}
 
 	/**
@@ -98,9 +97,8 @@ public final class Realm<PLACE, LETTER> {
 	 * @return Realm containing the old conditions and the new ones.
 	 */
 	public Realm<PLACE, LETTER> addCondition(final Set<Condition<LETTER, PLACE>> conditions) {
-		final var newConditions = getConditions();
-		newConditions.addAll(conditions);
-		return new Realm<>(newConditions);
+		final var newConditions = DataStructureUtils.union(mRealm, conditions);
+		return new Realm<>(ImmutableSet.of(newConditions));
 	}
 
 	/**
@@ -111,12 +109,9 @@ public final class Realm<PLACE, LETTER> {
 	 * @return Realm without condition.
 	 */
 	public Realm<PLACE, LETTER> removeCondition(final Condition<PLACE, LETTER> condition) {
-		if (mRealm.contains(condition)) {
-			final var newConditions = getConditions();
-			newConditions.remove(condition);
-			return new Realm<>(newConditions);
-		}
-		return new Realm<>(mRealm);
+		final var newConditions =
+				mRealm.stream().filter(cond -> !cond.equals(condition)).collect(ImmutableSet.collector());
+		return new Realm<>(newConditions);
 	}
 
 	/**

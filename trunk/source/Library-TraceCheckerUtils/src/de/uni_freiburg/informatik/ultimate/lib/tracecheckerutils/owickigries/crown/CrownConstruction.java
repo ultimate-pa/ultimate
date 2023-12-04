@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Branching
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire.Territory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
  * @author Miriam Lagunes (miriam.lagunes@students.uni-freiburg.de)
@@ -85,15 +86,15 @@ public final class CrownConstruction<PLACE, LETTER> {
 		// Add a to crown a new rook with "capital" and one corelated assertion condition
 		for (final Condition<LETTER, PLACE> originalCondition : mOrigConds) {
 			final Set<Condition<LETTER, PLACE>> originalConditionSet = new HashSet<>(Set.of(originalCondition));
-			final Realm<PLACE, LETTER> realm = new Realm<>(originalConditionSet);
+			final Realm<PLACE, LETTER> realm = new Realm<>(ImmutableSet.of(originalConditionSet));
 			final Set<Realm<PLACE, LETTER>> realmSet = new HashSet<>(Set.of(realm));
-			final Kingdom<PLACE, LETTER> kingdom = new Kingdom<>(realmSet);
+			final Kingdom<PLACE, LETTER> kingdom = new Kingdom<>(ImmutableSet.of(realmSet));
 			for (final Condition<LETTER, PLACE> assertionCondition : mAssertConds) {
 				final CoKingdom<PLACE, LETTER> coKingdom =
 						new CoKingdom<>(kingdom, assertionCondition, mBp, mPlacesCoRelation);
 				if (coKingdom.getCoRelation() == CoRelationType.POSITIVE) {
 					final Set<Condition<LETTER, PLACE>> lawConditions = new HashSet<>(Set.of(assertionCondition));
-					final KingdomLaw<PLACE, LETTER> kingdomLaw = new KingdomLaw<>(lawConditions);
+					final KingdomLaw<PLACE, LETTER> kingdomLaw = new KingdomLaw<>(ImmutableSet.of(lawConditions));
 					final Rook<PLACE, LETTER> rook = new Rook<>(kingdom, kingdomLaw);
 					mPreCrown.addRook(rook);
 				}
@@ -134,21 +135,22 @@ public final class CrownConstruction<PLACE, LETTER> {
 			final Set<Condition<LETTER, PLACE>> allKindredConditions =
 					kindred.getKindredConditions(splitMarkings, rook);
 			final Set<Realm<PLACE, LETTER>> kindredRealms = kindred.getKindredRealms(allKindredConditions, rook);
-			Kingdom<PLACE, LETTER> firstKingdom =
-					new Kingdom<>(DataStructureUtils.difference(rook.getKingdom().getRealms(), kindredRealms));
+			Kingdom<PLACE, LETTER> firstKingdom = new Kingdom<>(
+					ImmutableSet.of(DataStructureUtils.difference(rook.getKingdom().getRealms(), kindredRealms)));
 			for (final Realm<PLACE, LETTER> realm : kindredRealms) {
-				final Set<Condition<LETTER, PLACE>> newRealmConditions =
-						DataStructureUtils.difference(realm.getConditions(), allKindredConditions);
+				final ImmutableSet<Condition<LETTER, PLACE>> newRealmConditions =
+						ImmutableSet.of(DataStructureUtils.difference(realm.getConditions(), allKindredConditions));
 				firstKingdom = firstKingdom.addRealm(new Realm<>(newRealmConditions));
 			}
 			mCrown.removeRook(rook);
 			mCrown.addRook(new Rook<>(firstKingdom, rook.getLaw()));
 			for (final Marking<PLACE> marking : splitMarkings) {
 				final Set<Condition<LETTER, PLACE>> markingKindredConds = kindred.getKindredConditions(marking, rook);
-				Kingdom<PLACE, LETTER> secondKingdom =
-						new Kingdom<>(DataStructureUtils.difference(rook.getKingdom().getRealms(), kindredRealms));
+				Kingdom<PLACE, LETTER> secondKingdom = new Kingdom<>(
+						ImmutableSet.of(DataStructureUtils.difference(rook.getKingdom().getRealms(), kindredRealms)));
 				for (final Condition<LETTER, PLACE> condition : markingKindredConds) {
-					secondKingdom = secondKingdom.addRealm(new Realm<>(new HashSet<>(Set.of(condition))));
+					secondKingdom =
+							secondKingdom.addRealm(new Realm<>(ImmutableSet.of(new HashSet<>(Set.of(condition)))));
 				}
 				mCrown.addRook(new Rook<>(secondKingdom, rook.getLaw()));
 			}
