@@ -1155,41 +1155,45 @@ public class StandardFunctionHandler {
 	private Result handleAtomicFetchAdd(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
 		return handleAtomicFetchOp(main, node, loc, name,
-				(x, y) -> new ExpressionResult(new RValue(mExpressionTranslation.constructArithmeticExpression(loc,
-						IASTBinaryExpression.op_plus, x.getLrValue().getValue(), (CPrimitive) x.getCType(),
-						y.getLrValue().getValue(), (CPrimitive) y.getCType()), x.getCType())));
+				(x, y) -> new ExpressionResult(new RValue(
+						mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_plus,
+								x.getLrValue().getValue(), (CPrimitive) x.getCType().getUnderlyingType(),
+								y.getLrValue().getValue(), (CPrimitive) y.getCType().getUnderlyingType()),
+						x.getCType())));
 	}
 
 	private Result handleAtomicFetchSub(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
 		return handleAtomicFetchOp(main, node, loc, name,
-				(x, y) -> new ExpressionResult(new RValue(mExpressionTranslation.constructArithmeticExpression(loc,
-						IASTBinaryExpression.op_minus, x.getLrValue().getValue(), (CPrimitive) x.getCType(),
-						y.getLrValue().getValue(), (CPrimitive) y.getCType()), x.getCType())));
+				(x, y) -> new ExpressionResult(new RValue(
+						mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_minus,
+								x.getLrValue().getValue(), (CPrimitive) x.getCType().getUnderlyingType(),
+								y.getLrValue().getValue(), (CPrimitive) y.getCType().getUnderlyingType()),
+						x.getCType())));
 	}
 
 	private Result handleAtomicFetchAnd(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
 		return handleAtomicFetchOp(main, node, loc, name,
 				(x, y) -> mExpressionTranslation.handleBinaryBitwiseExpression(loc, IASTBinaryExpression.op_binaryAnd,
-						x.getLrValue().getValue(), (CPrimitive) x.getCType(), y.getLrValue().getValue(),
-						(CPrimitive) y.getCType(), mAuxVarInfoBuilder));
+						x.getLrValue().getValue(), (CPrimitive) x.getCType().getUnderlyingType(),
+						y.getLrValue().getValue(), (CPrimitive) y.getCType().getUnderlyingType(), mAuxVarInfoBuilder));
 	}
 
 	private Result handleAtomicFetchOr(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
 		return handleAtomicFetchOp(main, node, loc, name,
 				(x, y) -> mExpressionTranslation.handleBinaryBitwiseExpression(loc, IASTBinaryExpression.op_binaryOr,
-						x.getLrValue().getValue(), (CPrimitive) x.getCType(), y.getLrValue().getValue(),
-						(CPrimitive) y.getCType(), mAuxVarInfoBuilder));
+						x.getLrValue().getValue(), (CPrimitive) x.getCType().getUnderlyingType(),
+						y.getLrValue().getValue(), (CPrimitive) y.getCType().getUnderlyingType(), mAuxVarInfoBuilder));
 	}
 
 	private Result handleAtomicFetchXor(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
 		return handleAtomicFetchOp(main, node, loc, name,
 				(x, y) -> mExpressionTranslation.handleBinaryBitwiseExpression(loc, IASTBinaryExpression.op_binaryXor,
-						x.getLrValue().getValue(), (CPrimitive) x.getCType(), y.getLrValue().getValue(),
-						(CPrimitive) y.getCType(), mAuxVarInfoBuilder));
+						x.getLrValue().getValue(), (CPrimitive) x.getCType().getUnderlyingType(),
+						y.getLrValue().getValue(), (CPrimitive) y.getCType().getUnderlyingType(), mAuxVarInfoBuilder));
 	}
 
 	private Result handleAtomicFetchOp(final IDispatcher main, final IASTFunctionCallExpression node,
