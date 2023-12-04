@@ -826,7 +826,7 @@ public class StandardFunctionHandler {
 		// We cannot handle restoring the environment, so we just check if the function is reachable and create an
 		// overraproximation for that case
 		fill(map, "longjmp", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
-				new CPrimitive(CPrimitives.INT)));
+				new CPrimitive(CPrimitives.VOID)));
 
 		// setjmp https://en.cppreference.com/w/c/program/setjmp
 		fill(map, "_setjmp", this::handleSetjmp);
@@ -2739,9 +2739,11 @@ public class StandardFunctionHandler {
 		new Check(Spec.UNKNOWN).annotate(unreach);
 		builder.addStatement(new WhileStatement(loc, ExpressionFactory.createBooleanLiteral(loc, true),
 				new LoopInvariantSpecification[0], new Statement[] { unreach }));
-		final AuxVarInfo auxVar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, returnType, AUXVAR.NONDET);
-		builder.addAuxVar(auxVar).addDeclaration(auxVar.getVarDec());
-		builder.setLrValue(new RValue(auxVar.getExp(), returnType));
+		if (!returnType.isVoidType()) {
+			final AuxVarInfo auxVar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, returnType, AUXVAR.NONDET);
+			builder.addAuxVar(auxVar).addDeclaration(auxVar.getVarDec());
+			builder.setLrValue(new RValue(auxVar.getExp(), returnType));
+		}
 		return builder.build();
 	}
 
