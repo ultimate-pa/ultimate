@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Manuel Bentele (bentele@informatik.uni-freiburg.de)
+ * Copyright (C) 2023 Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  * Copyright (C) 2023 University of Freiburg
  *
  * This file is part of the ULTIMATE WitnessParser plug-in.
@@ -28,44 +28,48 @@
 package de.uni_freiburg.informatik.ultimate.witnessparser.yaml;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
- * @author Manuel Bentele (bentele@informatik.uni-freiburg.de)
+ * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  */
-public class LocationInvariant extends WitnessEntry {
+public class FunctionContract extends WitnessEntry {
 
 	/**
 	 * Witness entry name of the YAML witness format.
 	 */
-	public static final String NAME = "location_invariant";
+	public static final String NAME = "function_contract";
 
 	private final Location mLocation;
-	private final Invariant mInvariant;
+	private final String mFormat;
+	// TODO: Add support for other elements of the contracts
+	private final List<String> mEnsures;
 
-	public LocationInvariant(final Metadata metadata, final Location location, final Invariant invariant) {
+	public FunctionContract(final Metadata metadata, final Location location, final List<String> ensures,
+			final String format) {
 		super(NAME, metadata);
 		mLocation = location;
-		mInvariant = invariant;
+		mFormat = format;
+		mEnsures = ensures;
 	}
 
 	public Location getLocation() {
 		return mLocation;
 	}
 
-	public Invariant getInvariant() {
-		return mInvariant;
+	public List<String> getEnsures() {
+		return mEnsures;
 	}
 
 	@Override
 	public InvariantSetEntry toInvariantSetEntry() {
-		return new InvariantSetEntry(NAME, mLocation,
-				Map.of("value", mInvariant.getExpression(), "format", mInvariant.getFormat()));
+		return new InvariantSetEntry(NAME, mLocation, Map.of("ensures", mEnsures, "format", mFormat));
 	}
 
 	@Override
 	public String toString() {
-		return getClass().getSimpleName() + " " + mLocation + ": " + mInvariant;
+		return getClass().getSimpleName() + " " + mLocation + ": " + mEnsures;
 	}
 
 	@Override
@@ -74,7 +78,8 @@ public class LocationInvariant extends WitnessEntry {
 		result.put("entry_type", NAME);
 		result.put("metadata", mMetadata.toMap());
 		result.put("location", mLocation.toMap());
-		result.put(NAME, mInvariant.toMap());
+		result.put("ensures", mEnsures);
+		result.put("format", mFormat);
 		return result;
 	}
 }

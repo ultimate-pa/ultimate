@@ -59,7 +59,8 @@ public class LoopInvariant extends WitnessEntry {
 
 	@Override
 	public InvariantSetEntry toInvariantSetEntry() {
-		return new InvariantSetEntry(NAME, mLocation, mInvariant.getExpression(), mInvariant.getFormat());
+		return new InvariantSetEntry(NAME, mLocation,
+				Map.of("value", mInvariant.getExpression(), "format", mInvariant.getFormat()));
 	}
 
 	@Override

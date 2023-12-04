@@ -10,6 +10,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.UltimateCore;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessEnsuresClause;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
@@ -18,6 +19,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.FormatVersion;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.FunctionContract;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Invariant;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Location;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LoopInvariant;
@@ -62,7 +64,9 @@ public class YamlCorrectnessWitnessGenerator {
 
 		// TODO: Should we sort these entries somehow (for consistent result in validation and to improve readability)
 		// e.g. by line number and/or entry type?
-		final List<WitnessEntry> entries = extractLoopInvariants(allProgramPoints, metadataSupplier, hash, format);
+		final List<WitnessEntry> entries = new ArrayList<>();
+		entries.addAll(extractLoopInvariants(allProgramPoints, metadataSupplier, hash, format));
+		entries.addAll(extractFunctionContracts(allProgramPoints, metadataSupplier, hash, format));
 		final Witness witness = new Witness(entries);
 		switch (FORMAT_VERSION.toString()) {
 		case "0.1":
@@ -99,6 +103,34 @@ public class YamlCorrectnessWitnessGenerator {
 			// For now we only produce loop invariants anyways
 			result.add(new LoopInvariant(metadataSupplier.get(), witnessLocation,
 					new Invariant(invariant, "assertion", format)));
+		}
+		return result;
+	}
+
+	private static List<WitnessEntry> extractFunctionContracts(final List<IcfgLocation> programPoints,
+			final Supplier<Metadata> metadataSupplier, final String hash, final String format) {
+		final List<WitnessEntry> result = new ArrayList<>();
+		for (final IcfgLocation pp : programPoints) {
+			final ILocation loc = ILocation.getAnnotation(pp);
+			if (loc == null) {
+				continue;
+			}
+			final WitnessEnsuresClause ensures = WitnessEnsuresClause.getAnnotation(pp);
+			if (ensures == null) {
+				continue;
+			}
+			// TODO: Make sure that this is actually the definition or declaration of the contract
+			// If the column is unknown (-1), use the first position of the line
+			final int column = Math.max(loc.getStartColumn(), 0);
+			final String function = loc.getFunction();
+			if (function == null) {
+				// TODO: Is this possible, maybe for global invariants? What is the expected behavior?
+				continue;
+			}
+			final Location witnessLocation =
+					new Location(loc.getFileName(), hash, loc.getStartLine(), column, function);
+			result.add(new FunctionContract(metadataSupplier.get(), witnessLocation, List.of(ensures.getExpression()),
+					format));
 		}
 		return result;
 	}

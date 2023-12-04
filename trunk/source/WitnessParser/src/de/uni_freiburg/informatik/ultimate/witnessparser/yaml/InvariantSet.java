@@ -23,5 +23,4 @@ public class InvariantSet extends WitnessEntry {
 		result.put("content", mContent.stream().map(x -> Map.of("invariant", x.toMap())).collect(Collectors.toList()));
 		return result;
 	}
-
 }
