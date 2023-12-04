@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessEnsuresClause;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.InvariantResult;
@@ -477,7 +478,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 						Activator.PLUGIN_NAME, finalNode, backTranslatorService, procName, formula);
 
 				mResultReporter.reportResult(result);
-				// TODO: Add setting that controls the generation of those witness invariants
+				new WitnessEnsuresClause(result.getContract()).annotate(finalNode);
 			}
 		}
 	}
