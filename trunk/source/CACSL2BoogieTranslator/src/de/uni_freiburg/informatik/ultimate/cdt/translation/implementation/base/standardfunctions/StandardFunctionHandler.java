@@ -426,11 +426,14 @@ public class StandardFunctionHandler {
 
 		// Atomic operations https://en.cppreference.com/w/c/atomic
 		// Preprocessing leads to: https://gcc.gnu.org/onlinedocs/gcc/_005f_005fatomic-Builtins.html
-		// TODO: What about the *_n operations? Do we also need them?
 
 		fill(map, "__atomic_load", this::handleAtomicLoad);
 		fill(map, "__atomic_exchange", this::handleAtomicExchange);
 		fill(map, "__atomic_store", this::handleAtomicStore);
+
+		fill(map, "__atomic_load_n", this::handleAtomicLoadN);
+		fill(map, "__atomic_store_n", this::handleAtomicStoreN);
+		fill(map, "__atomic_exchange_n", this::handleAtomicExchangeN);
 
 		fill(map, "__atomic_fetch_add", this::handleAtomicFetchAdd);
 		fill(map, "__atomic_fetch_sub", this::handleAtomicFetchSub);
@@ -1059,6 +1062,66 @@ public class StandardFunctionHandler {
 		checkArguments(loc, 4, name, arguments);
 		return handleAtomicWrite(main, loc,
 				List.of(new Pair<>(arguments[0], arguments[2]), new Pair<>(arguments[1], arguments[0])), arguments[3]);
+	}
+
+	private Result handleAtomicLoadN(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+			final String name) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 2, name, arguments);
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		final ExpressionResult ptr = (ExpressionResult) main.dispatch(arguments[0]);
+		builder.addAllExceptLrValue(ptr);
+		final ExpressionResult read =
+				mMemoryHandler.getReadCall(ptr.getLrValue().getValue(), ((CPointer) ptr.getCType()).getPointsToType());
+		builder.addAllIncludingLrValue(read);
+		if (mDataRaceChecker != null) {
+			mDataRaceChecker.checkOnRead(builder, loc,
+					new HeapLValue(ptr.getLrValue().getValue(), ptr.getLrValue().getUnderlyingType(), null));
+		}
+		return buildWrtMemoryOrder(loc, builder, (ExpressionResult) main.dispatch(arguments[1]));
+	}
+
+	private Result handleAtomicStoreN(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 3, name, arguments);
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		final ExpressionResult target = (ExpressionResult) main.dispatch(arguments[0]);
+		final ExpressionResult value = (ExpressionResult) main.dispatch(arguments[1]);
+		builder.addAllExceptLrValue(target).addAllExceptLrValue(value);
+		final var heapValue = LRValueFactory.constructHeapLValue(mTypeHandler, target.getLrValue().getValue(),
+				target.getCType(), null);
+		builder.addStatements(mMemoryHandler.getWriteCall(loc, heapValue, value.getLrValue().getValue(),
+				((CPointer) target.getCType()).getPointsToType(), false));
+		if (mDataRaceChecker != null) {
+			mDataRaceChecker.checkOnWrite(builder, loc, heapValue);
+		}
+		return buildWrtMemoryOrder(loc, builder, (ExpressionResult) main.dispatch(arguments[2]));
+	}
+
+	private Result handleAtomicExchangeN(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 3, name, arguments);
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		final ExpressionResult target = (ExpressionResult) main.dispatch(arguments[0]);
+		final ExpressionResult value = (ExpressionResult) main.dispatch(arguments[1]);
+		builder.addAllExceptLrValue(target).addAllExceptLrValue(value);
+		final ExpressionResult read = mMemoryHandler.getReadCall(target.getLrValue().getValue(),
+				((CPointer) target.getCType()).getPointsToType());
+		builder.addAllIncludingLrValue(read);
+		if (mDataRaceChecker != null) {
+			mDataRaceChecker.checkOnRead(builder, loc,
+					new HeapLValue(target.getLrValue().getValue(), target.getLrValue().getUnderlyingType(), null));
+		}
+		final var heapValue = LRValueFactory.constructHeapLValue(mTypeHandler, target.getLrValue().getValue(),
+				target.getCType(), null);
+		builder.addStatements(mMemoryHandler.getWriteCall(loc, heapValue, value.getLrValue().getValue(),
+				((CPointer) target.getCType()).getPointsToType(), false));
+		if (mDataRaceChecker != null) {
+			mDataRaceChecker.checkOnWrite(builder, loc, heapValue);
+		}
+		return buildWrtMemoryOrder(loc, builder, (ExpressionResult) main.dispatch(arguments[2]));
 	}
 
 	private Result handleAtomicWrite(final IDispatcher main, final ILocation loc,
