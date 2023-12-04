@@ -50,12 +50,12 @@ public class FormatVersion implements Comparable<FormatVersion> {
 	public static FormatVersion fromString(final String string) {
 		final String[] split = string.split("\\.");
 		if (split.length != 2) {
-			return null;
+			throw new IllegalArgumentException("Invalid format version " + string);
 		}
 		try {
 			return new FormatVersion(Integer.parseInt(split[0]), Integer.parseInt(split[1]));
 		} catch (final NumberFormatException e) {
-			return null;
+			throw new IllegalArgumentException("Invalid format version " + string);
 		}
 	}
 
