@@ -32,7 +32,6 @@ import de.uni_freiburg.informatik.ultimate.witnessprinter.preferences.Preference
 
 public class YamlCorrectnessWitnessGenerator {
 	private static final String[] ACSL_SUBSTRING = new String[] { "\\old", "\\result", "exists", "forall" };
-	private static final FormatVersion FORMAT_VERSION = new FormatVersion(3, 0);
 
 	private final ILogger mLogger;
 	private final boolean mIsACSLForbidden;
@@ -52,10 +51,12 @@ public class YamlCorrectnessWitnessGenerator {
 		final String hash = mPreferences.getString(PreferenceInitializer.LABEL_GRAPH_DATA_PROGRAMHASH);
 		final String spec = mPreferences.getString(PreferenceInitializer.LABEL_GRAPH_DATA_SPECIFICATION);
 		final String arch = mPreferences.getString(PreferenceInitializer.LABEL_GRAPH_DATA_ARCHITECTURE);
+		final FormatVersion formatVersion =
+				FormatVersion.fromString(mPreferences.getString(PreferenceInitializer.LABEL_YAML_FORMAT_VERSION));
+		final String format = getExpressionFormat(formatVersion);
 		final String version = new UltimateCore().getUltimateVersionString();
-		final String format = getExpressionFormat();
 		final String filename = ILocation.getAnnotation(mIcfg).getFileName();
-		final Supplier<Metadata> metadataSupplier = () -> new Metadata(FORMAT_VERSION, UUID.randomUUID(),
+		final Supplier<Metadata> metadataSupplier = () -> new Metadata(formatVersion, UUID.randomUUID(),
 				OffsetDateTime.now(), new Producer(producer, version),
 				new Task(List.of(filename), Map.of(filename, hash), spec, arch, "C"));
 
@@ -66,11 +67,11 @@ public class YamlCorrectnessWitnessGenerator {
 		// e.g. by line number and/or entry type?
 		final List<WitnessEntry> entries = new ArrayList<>();
 		entries.addAll(extractLoopInvariants(allProgramPoints, metadataSupplier, hash, format));
-		if (FORMAT_VERSION.getMajor() >= 3) {
+		if (formatVersion.getMajor() >= 3) {
 			entries.addAll(extractFunctionContracts(allProgramPoints, metadataSupplier, hash, format));
 		}
 		final Witness witness = new Witness(entries);
-		if (FORMAT_VERSION.getMajor() < 2) {
+		if (formatVersion.getMajor() < 2) {
 			return witness;
 		}
 		return new Witness(List.of(witness.toInvariantSet(metadataSupplier)));
@@ -137,8 +138,8 @@ public class YamlCorrectnessWitnessGenerator {
 		return getWitness().toYamlString();
 	}
 
-	private String getExpressionFormat() {
-		switch (FORMAT_VERSION.toString()) {
+	private String getExpressionFormat(final FormatVersion formatVersion) {
+		switch (formatVersion.toString()) {
 		case "0.1":
 			if (!mIsACSLForbidden) {
 				throw new UnsupportedOperationException("ACSL is not supported in witnesses yet");
@@ -153,7 +154,7 @@ public class YamlCorrectnessWitnessGenerator {
 			// TODO: Should we always use ACSL here or dependent on the actual invariant/contract?
 			return "acsl";
 		default:
-			throw new UnsupportedOperationException("Unknown format version " + FORMAT_VERSION);
+			throw new UnsupportedOperationException("Unknown format version " + formatVersion);
 		}
 	}
 
