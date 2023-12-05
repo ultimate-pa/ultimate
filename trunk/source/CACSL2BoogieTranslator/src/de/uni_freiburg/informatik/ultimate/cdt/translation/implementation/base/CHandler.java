@@ -671,9 +671,15 @@ public class CHandler {
 		if (!mIsPrerun) {
 			// handle proc. declaration & resolve their transitive modified globals
 			mDeclarations.addAll(mProcedureManager.computeFinalProcedureDeclarations(mMemoryHandler));
-			for (final String functionName : mFunctionHandler.getCalledFunctionsWithoutDefinition()) {
+			final Set<String> calledFunctionsWithoutDefinition = mFunctionHandler.getCalledFunctionsWithoutDefinition();
+			for (final String functionName : calledFunctionsWithoutDefinition) {
 				mLogger.warn("The function " + functionName
 						+ " is called, but not defined or handled by StandardFunctionHandler.");
+			}
+			if (!calledFunctionsWithoutDefinition.isEmpty()) {
+				throw new UnsupportedSyntaxException(loc,
+						"The following functions are not defined or handled internally: "
+								+ calledFunctionsWithoutDefinition);
 			}
 		}
 
