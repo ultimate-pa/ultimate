@@ -107,7 +107,13 @@ public abstract class AbstractStatisticsDataProvider implements IStatisticsDataP
 		if (getter == null) {
 			throw new IllegalArgumentException("Unknown key '" + key + "'");
 		}
-		return getter.get();
+		final var rawValue = getter.get();
+
+		final var converter = mConverters.get(key);
+		if (converter == null) {
+			return rawValue;
+		}
+		return converter.apply(rawValue);
 	}
 
 	@Override
@@ -143,10 +149,8 @@ public abstract class AbstractStatisticsDataProvider implements IStatisticsDataP
 			for (final String key : getKeys()) {
 				sb.append(delimiter);
 				final Object value = benchmarkData.getValue(key);
-				final var converter = mConverters.get(key);
-				final var converted = converter.apply(value);
 				final BiFunction<String, Object, String> printer = mPrinters.get(key);
-				sb.append(printer.apply(key, converted));
+				sb.append(printer.apply(key, value));
 				delimiter = ", ";
 			}
 			return sb.toString();
