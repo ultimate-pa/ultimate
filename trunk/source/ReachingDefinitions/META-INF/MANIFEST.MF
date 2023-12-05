@@ -12,7 +12,7 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.smtlib,
  de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2
 Bundle-ActivationPolicy: lazy
-Bundle-RequiredExecutionEnvironment: JavaSE-11
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Export-Package: de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions,
  de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations,
  de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.boogie,

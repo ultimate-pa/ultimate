@@ -17,5 +17,5 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
 Export-Package: de.uni_freiburg.informatik.ultimate.plugins.blockencoding, 
  de.uni_freiburg.informatik.ultimate.plugins.blockencoding.preferences
 Bundle-ActivationPolicy: lazy
-Bundle-RequiredExecutionEnvironment: JavaSE-11
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.plugins.blockencoding

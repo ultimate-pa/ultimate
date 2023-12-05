@@ -4,7 +4,7 @@ Bundle-Name: Library-ApacheCommonsLang
 Bundle-SymbolicName: org.apache.commons.lang
 Bundle-Version: 3.12.0
 Bundle-Vendor: https://commons.apache.org/proper/commons-lang
-Bundle-RequiredExecutionEnvironment: JavaSE-11
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Export-Package: org.apache.commons.lang3,
  org.apache.commons.lang3.arch,
  org.apache.commons.lang3.builder,
