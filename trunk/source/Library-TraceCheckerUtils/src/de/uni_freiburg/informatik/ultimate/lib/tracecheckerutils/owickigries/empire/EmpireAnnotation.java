@@ -64,6 +64,7 @@ public class EmpireAnnotation<PLACE, LETTER> {
 		mStatistics.measureAnnotationSize(getAnnotationSize());
 		mStatistics.measureEmpireSize(getEmpireSize());
 		mStatistics.measureLawSize(getLawSize());
+		mStatistics.reportRegionCount(getRegionCount());
 	}
 
 	public Set<Region<PLACE, LETTER>> getColony() {
@@ -106,6 +107,10 @@ public class EmpireAnnotation<PLACE, LETTER> {
 		return size;
 	}
 
+	public int getRegionCount() {
+		return getColony().size();
+	}
+
 	/**
 	 * Get the size of the Law i.e. sum of all formulae.
 	 *
@@ -135,15 +140,22 @@ public class EmpireAnnotation<PLACE, LETTER> {
 		public static final String EMPIRE_SIZE = "empire size";
 		public static final String LAW_SIZE = "empire law size";
 		public static final String ANNOTATION_SIZE = "empire annotation size";
+		public static final String REGION_COUNT = "number of regions";
 
 		private long mEmpireSize;
 		private long mLawSize;
 		private long mAnnotationSize;
+		private long mRegionCount;
 
 		public Statistics() {
 			declare(EMPIRE_SIZE, () -> mEmpireSize, KeyType.COUNTER);
 			declare(LAW_SIZE, () -> mLawSize, KeyType.COUNTER);
 			declare(ANNOTATION_SIZE, () -> mAnnotationSize, KeyType.COUNTER);
+			declare(REGION_COUNT, () -> mRegionCount, KeyType.COUNTER);
+		}
+
+		private void reportRegionCount(final int count) {
+			mRegionCount = count;
 		}
 
 		private void measureEmpireSize(final long empireSize) {
