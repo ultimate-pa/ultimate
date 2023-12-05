@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.operations;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -30,6 +31,8 @@ public class RabinDeterministicDifference<LETTER, PLACE>
 	private final IRabinPetriNet<LETTER, PLACE> mPetriNet;
 	private final INestedWordAutomaton<LETTER, PLACE> mBuchiAutomaton;
 	private final BoundedRabinPetriNet<LETTER, PLACE> mDifferenceNet;
+	// Looper optimization removes check for deterministic and complete automata on some edges
+	private final boolean mLooperOptimizationEnabled = false;
 
 	/**
 	 * eagerly builds a Rabin-Petri-Net that accepts L = @param{petriNet} - @param{buchiAutomaton}
@@ -53,7 +56,6 @@ public class RabinDeterministicDifference<LETTER, PLACE>
 			throw new IllegalArgumentException("Buchi with multiple initial states not supported.");
 		}
 		mDifferenceNet = new BoundedRabinPetriNet<>(services, petriNet.getAlphabet(), false);
-
 		constructIntersectionNet();
 	}
 
@@ -64,7 +66,11 @@ public class RabinDeterministicDifference<LETTER, PLACE>
 
 	private final void constructIntersectionNet() throws AutomataLibraryException {
 		addPlacesToIntersectionNet();
-		addTransitionsToIntersectionNet();
+		if (mLooperOptimizationEnabled) {
+			addTransitionsAndLoopersToIntersectionNet();
+		} else {
+			addTransitionsToIntersectionNet();
+		}
 	}
 
 	private final void addPlacesToIntersectionNet() {
@@ -94,32 +100,71 @@ public class RabinDeterministicDifference<LETTER, PLACE>
 		}
 	}
 
+	private final void produceProductTransitions(final Transition<LETTER, PLACE> petriTransition)
+			throws AutomataLibraryException {
+		for (final PLACE buchiPlace : mBuchiAutomaton.getStates()) {
+
+			final Iterable<OutgoingInternalTransition<LETTER, PLACE>> successorCandidate =
+					mBuchiAutomaton.internalSuccessors(buchiPlace, petriTransition.getSymbol());
+
+			final Iterator<OutgoingInternalTransition<LETTER, PLACE>> successorCandidateIterator =
+					successorCandidate.iterator();
+			OutgoingInternalTransition<LETTER, PLACE> buchiTransition;
+			if (successorCandidateIterator.hasNext()) {
+				buchiTransition = successorCandidateIterator.next();
+				if (successorCandidateIterator.hasNext()) {
+					throw new AutomataLibraryException(getClass(),
+							"Nondeterministic buchi automaton can not be used in deterministic difference.\n"
+									+ "There are multiple transitions for one state-letter pair.");
+				}
+			} else {
+				throw new AutomataLibraryException(getClass(),
+						"Incomplete buchi automaton can not be used in deterministic difference.\n"
+								+ "There is no transition for one state-letter pair.");
+			}
+			addNewTransition(petriTransition, buchiTransition, buchiPlace);
+		}
+	}
+
 	private final void addTransitionsToIntersectionNet() throws AutomataLibraryException {
 		for (final Transition<LETTER, PLACE> petriTransition : mPetriNet.getTransitions()) {
-			for (final PLACE buchiPlace : mBuchiAutomaton.getStates()) {
+			produceProductTransitions(petriTransition);
+		}
+	}
 
-				final Iterable<OutgoingInternalTransition<LETTER, PLACE>> successorCandidate =
-						mBuchiAutomaton.internalSuccessors(buchiPlace, petriTransition.getSymbol());
+	private final void addTransitionsAndLoopersToIntersectionNet() throws AutomataLibraryException {
+		// Generates a List of Letters that are used in Transitions in the Petri-Net with Map references, so that the
+		// difference can be built letterwise
+		final HashMap<LETTER, Set<Transition<LETTER, PLACE>>> transitionMap = new HashMap<>();
+		for (final Transition<LETTER, PLACE> trans : mPetriNet.getTransitions()) {
 
-				final Iterator<OutgoingInternalTransition<LETTER, PLACE>> successorCandidateIterator =
-						successorCandidate.iterator();
-				OutgoingInternalTransition<LETTER, PLACE> buchiTransition;
-				if (successorCandidateIterator.hasNext()) {
-					buchiTransition = successorCandidateIterator.next();
-					if (successorCandidateIterator.hasNext()) {
-						throw new AutomataLibraryException(getClass(),
-								"Nondeterministic buchi automaton can not be used in deterministic difference.\n"
-										+ "There are multiple transitions for one state-letter pair.");
+			transitionMap.putIfAbsent(trans.getSymbol(), new HashSet<Transition<LETTER, PLACE>>());
+
+			transitionMap.get(trans.getSymbol()).add(trans);
+		}
+		for (final LETTER l : transitionMap.keySet()) {
+			// the if-clause requires all states to have self-loops
+			if (mBuchiAutomaton.getStates().stream()
+					.allMatch(x -> mBuchiAutomaton.internalSuccessors(x, l).iterator().next().getSucc().equals(x))) {
+
+				for (final Transition<LETTER, PLACE> t : transitionMap.get(l)) {
+					// if there is firing into a finite place the behaviour of the automaton can be ignored for this
+					// transition (full looper-optimization)
+					if (t.getSuccessors().stream().anyMatch(z -> mPetriNet.isFinite(z))) {
+						mLogger.error("Used Looper Optimization for RPN.");
+						mDifferenceNet.addTransition(l, t.getPredecessors(), t.getSuccessors());
+					} else {
+						// maybe there is a looper optimization for arbitrary transitions but it would probably need
+						// additional places and transitions to check if the automaton is in an accepting state
+						produceProductTransitions(t);
 					}
-				} else {
-					throw new AutomataLibraryException(getClass(),
-							"Incomplete buchi automaton can not be used in deterministic difference.\n"
-									+ "There is no transition for one state-letter pair.");
 				}
-
-				addNewTransition(petriTransition, buchiTransition, buchiPlace);
-
+			} else {
+				for (final Transition<LETTER, PLACE> t : transitionMap.get(l)) {
+					produceProductTransitions(t);
+				}
 			}
+
 		}
 	}
 
@@ -151,8 +196,7 @@ public class RabinDeterministicDifference<LETTER, PLACE>
 	@Override
 	public boolean checkResult(final IPetriNet2FiniteAutomatonStateFactory<PLACE> stateFactory)
 			throws AutomataLibraryException {
-		return mBuchiAutomaton.getStates().size() * mPetriNet.getTransitions().size() == mDifferenceNet.getTransitions()
-				.size() && mBuchiAutomaton.getStates().stream().noneMatch(x -> mPetriNet.getPlaces().contains(x));
+		return mBuchiAutomaton.getStates().stream().noneMatch(x -> mPetriNet.getPlaces().contains(x));
 		// TODO: implement a stricter check
 	}
 }

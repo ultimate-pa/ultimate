@@ -1,0 +1,34 @@
+// Date:  05-12-2023
+// Author: pm251@venus.uni-freiburg.de
+
+
+
+RabinPetriNet testNet = (
+	alphabet = {a b c d},
+	places = {p1 p2 p3},
+	transitions = { ({p1} a {p2 p3}) ({p2} b {p2}) ({p3} c {p3}) ({p1} d {p1})},
+	initialMarking = {p1},
+	acceptingPlaces = {p2 p3},
+	finitePlaces = {p1}
+);
+
+NestedWordAutomaton testAutomata = (
+	callAlphabet = {a b c d},
+	internalAlphabet = {a b c d},
+	returnAlphabet = {a b c d},
+	states = {q1 q2 q3 F},
+	initialStates = {q1},
+	finalStates = {q2},
+	callTransitions = {},
+	internalTransitions = { (q1 a q2) (q2 c q2) (q2 b q3) (q3 b q3)	(q3 c q2)
+	(q1 b F) (q1 c F) (q2 a F) (q3 a F) (F a F) (F b F) (F c F) (q1 d q1) (q2 d q2) (q3 d q3) (F d F)},
+	returnTransitions = {}
+);
+
+assert(rabinAccepts(rabinDeterministicDifference(testNet, testAutomata), [a , b]));
+assert(rabinAccepts(rabinDeterministicDifference(testNet, testAutomata), [a , b b]));
+
+assert(!rabinAccepts(rabinDeterministicDifference(testNet, testAutomata), [a , c]));
+assert(!rabinAccepts(rabinDeterministicDifference(testNet, testAutomata), [a , c c]));
+assert(!rabinAccepts(rabinDeterministicDifference(testNet, testAutomata), [a , b c b]));
+assert(!rabinAccepts(rabinDeterministicDifference(testNet, testAutomata), [a , c c b]));
