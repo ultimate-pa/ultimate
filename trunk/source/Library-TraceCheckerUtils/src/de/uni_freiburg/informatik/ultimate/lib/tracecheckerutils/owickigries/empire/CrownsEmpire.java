@@ -66,7 +66,7 @@ public class CrownsEmpire<PLACE, LETTER> {
 
 	private EmpireAnnotation<PLACE, LETTER> constructEmpireAnnotation(final BasicPredicateFactory factory,
 			final Function<PLACE, IPredicate> placeToAssertion) {
-		final HashMap<Territory<PLACE, LETTER>, TerritoryLaw<PLACE, LETTER>> crownsTerritories = new HashMap();
+		final HashMap<Territory<PLACE, LETTER>, TerritoryLaw<PLACE, LETTER>> crownsTerritories = new HashMap<>();
 		for (final Rook<PLACE, LETTER> rook : mCrown.getRooks()) {
 			final Territory<PLACE, LETTER> rookTerritory = new Territory<>(rook.getKingdom());
 			if (!crownsTerritories.containsKey(rookTerritory)) {
