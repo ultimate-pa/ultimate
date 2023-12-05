@@ -32,6 +32,10 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
+import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
 
 /**
  * An Empire annotation. Can serve as proof of the program's correctness.
@@ -46,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 public class EmpireAnnotation<PLACE, LETTER> {
 	Set<Territory<PLACE, LETTER>> mEmpire;
 	HashMap<Territory<PLACE, LETTER>, TerritoryLaw<PLACE, LETTER>> mLaw;
+	private final Statistics mStatistics = new Statistics();
 
 	/**
 	 * Construct the Empire Annotation with given Territories and Law
@@ -56,6 +61,9 @@ public class EmpireAnnotation<PLACE, LETTER> {
 	public EmpireAnnotation(final HashMap<Territory<PLACE, LETTER>, TerritoryLaw<PLACE, LETTER>> territoryLawMap) {
 		mEmpire = territoryLawMap.keySet();
 		mLaw = territoryLawMap;
+		mStatistics.measureAnnotationSize(getAnnotationSize());
+		mStatistics.measureEmpireSize(getEmpireSize());
+		mStatistics.measureLawSize(getLawSize());
 	}
 
 	public Set<Region<PLACE, LETTER>> getColony() {
@@ -86,5 +94,68 @@ public class EmpireAnnotation<PLACE, LETTER> {
 	 */
 	public Map<Territory<PLACE, LETTER>, TerritoryLaw<PLACE, LETTER>> getLaw() {
 		return mLaw;
+	}
+
+	/**
+	 * Get the size of the Empire i.e. number of Territories in the Empire.
+	 *
+	 * @return Number of Territories
+	 */
+	public long getEmpireSize() {
+		final long size = mEmpire.size();
+		return size;
+	}
+
+	/**
+	 * Get the size of the Law i.e. sum of all formulae.
+	 *
+	 * @return Size of the law as long.
+	 */
+	public long getLawSize() {
+		final DAGSize sizeComputation = new DAGSize();
+		final long size = mLaw.entrySet().stream()
+				.collect(Collectors.summingLong(x -> sizeComputation.size(x.getValue().getLaw().getFormula())));
+		return size;
+	}
+
+	/**
+	 * Get the sum of Law size and Empire size
+	 *
+	 * @return Empire annotation size as long
+	 */
+	public long getAnnotationSize() {
+		return getEmpireSize() + getLawSize();
+	}
+
+	public IStatisticsDataProvider getStatistics() {
+		return mStatistics;
+	}
+
+	private static final class Statistics extends AbstractStatisticsDataProvider {
+		public static final String EMPIRE_SIZE = "empire size";
+		public static final String LAW_SIZE = "empire law size";
+		public static final String ANNOTATION_SIZE = "empire annotation size";
+
+		private long mEmpireSize;
+		private long mLawSize;
+		private long mAnnotationSize;
+
+		public Statistics() {
+			declare(EMPIRE_SIZE, () -> mEmpireSize, KeyType.COUNTER);
+			declare(LAW_SIZE, () -> mLawSize, KeyType.COUNTER);
+			declare(ANNOTATION_SIZE, () -> mAnnotationSize, KeyType.COUNTER);
+		}
+
+		private void measureEmpireSize(final long empireSize) {
+			mEmpireSize = empireSize;
+		}
+
+		private void measureLawSize(final long lawSize) {
+			mLawSize = lawSize;
+		}
+
+		private void measureAnnotationSize(final long annotationSize) {
+			mAnnotationSize = annotationSize;
+		}
 	}
 }

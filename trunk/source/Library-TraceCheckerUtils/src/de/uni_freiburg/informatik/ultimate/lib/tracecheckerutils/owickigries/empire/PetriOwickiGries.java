@@ -85,6 +85,10 @@ public class PetriOwickiGries<LETTER, PLACE> {
 		mAssertionConditions = DataStructureUtils.difference(mConditions, mOriginalConditions);
 		mCrown = getCrown();
 		mEmpireAnnotation = getEmpireAnnotation(factory, placeToAssertion);
+		mStatistics.addEmpireStatistics(mEmpireAnnotation);
+		mLogger.info("Constructed Empire Annotation with Empire size %s, Law size %s and Annotation size %s",
+				mEmpireAnnotation.getEmpireSize(), mEmpireAnnotation.getLawSize(),
+				mEmpireAnnotation.getAnnotationSize());
 	}
 
 	private Crown<PLACE, LETTER> getCrown() {
@@ -119,17 +123,24 @@ public class PetriOwickiGries<LETTER, PLACE> {
 	private static final class Statistics extends AbstractStatisticsDataProvider {
 		public static final String CROWN_STATISTICS = "Crown construction";
 		public static final String EMPIRE_TIME = "Crown empire time";
+		public static final String EMPIRE_STATISTICS = "Empire statistics";
 
 		private IStatisticsDataProvider mCrownStatistics;
 		private final TimeTracker mEmpireTime = new TimeTracker();
+		private IStatisticsDataProvider mEmpireStatistics;
 
 		public Statistics() {
 			declare(EMPIRE_TIME, () -> mEmpireTime, KeyType.TT_TIMER);
 			forward(CROWN_STATISTICS, () -> mCrownStatistics);
+			forward(EMPIRE_STATISTICS, () -> mEmpireStatistics);
 		}
 
 		private void addCrownStatistics(final CrownConstruction<?, ?> crownConstruction) {
 			mCrownStatistics = crownConstruction.getStatistics();
+		}
+
+		private void addEmpireStatistics(final EmpireAnnotation<?, ?> empireAnnotation) {
+			mEmpireStatistics = empireAnnotation.getStatistics();
 		}
 
 		private <T> T measureEmpire(final Supplier<T> runner) {

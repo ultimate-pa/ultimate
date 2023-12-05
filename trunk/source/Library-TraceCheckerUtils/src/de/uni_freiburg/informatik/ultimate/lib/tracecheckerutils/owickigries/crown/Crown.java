@@ -103,6 +103,20 @@ public final class Crown<PLACE, LETTER> {
 		return false;
 	}
 
+	public long getNumKingdoms() {
+		return mCrown.size();
+	}
+
+	public long getAssertionSize() {
+		final long assertionSize =
+				mCrown.stream().collect(Collectors.summingLong(x -> x.getLaw().getConditions().size()));
+		return assertionSize;
+	}
+
+	public long getCrownSize() {
+		return getNumKingdoms() + getAssertionSize();
+	}
+
 	/**
 	 * Assert validity for the law and Kingdom
 	 *
@@ -125,5 +139,4 @@ public final class Crown<PLACE, LETTER> {
 		}
 		return true;
 	}
-
 }

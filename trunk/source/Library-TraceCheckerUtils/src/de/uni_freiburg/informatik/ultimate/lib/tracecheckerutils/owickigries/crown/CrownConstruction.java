@@ -89,6 +89,9 @@ public final class CrownConstruction<PLACE, LETTER> {
 		mCrown.addRook(rooks);
 
 		mStatistics.measureRefurbishment(() -> crownRefurbishment());
+		mStatistics.measureCrownSize(mCrown.getCrownSize());
+		mStatistics.measureAssertionSize(mCrown.getAssertionSize());
+		mStatistics.measureNumKingdoms(mCrown.getNumKingdoms());
 		assert mCrown.validityAssertion(mPlacesCoRelation, assertConds);
 	}
 
@@ -304,15 +307,24 @@ public final class CrownConstruction<PLACE, LETTER> {
 		public static final String SETTLEMENT_TIME = "settlement time";
 		public static final String CROWN_COMPUTATION_TIME = "crown computation time";
 		public static final String CROWN_REFURBISHMENT_TIME = "crown refurbishment time";
+		public static final String NUM_KINGDOMS = "number of kingdoms in crown";
+		public static final String ASSERTION_SIZE = "crown assertion size";
+		public static final String CROWN_SIZE = "crown size";
 
 		private final TimeTracker mSettlementTimer = new TimeTracker();
 		private final TimeTracker mCrownTimer = new TimeTracker();
 		private final TimeTracker mRefurbishmentTimer = new TimeTracker();
+		private long mNumKingdoms;
+		private long mAssertionSize;
+		private long mCrownSize;
 
 		public Statistics() {
 			declare(SETTLEMENT_TIME, () -> mSettlementTimer, KeyType.TT_TIMER);
 			declare(CROWN_COMPUTATION_TIME, () -> mCrownTimer, KeyType.TT_TIMER);
 			declare(CROWN_REFURBISHMENT_TIME, () -> mRefurbishmentTimer, KeyType.TT_TIMER);
+			declare(NUM_KINGDOMS, () -> mNumKingdoms, KeyType.COUNTER);
+			declare(ASSERTION_SIZE, () -> mAssertionSize, KeyType.COUNTER);
+			declare(CROWN_SIZE, () -> mCrownSize, KeyType.COUNTER);
 		}
 
 		private void measureSettlement(final Runnable runner) {
@@ -325,6 +337,18 @@ public final class CrownConstruction<PLACE, LETTER> {
 
 		private void measureRefurbishment(final Runnable runner) {
 			mRefurbishmentTimer.measure(runner);
+		}
+
+		private void measureNumKingdoms(final long numKingdoms) {
+			mNumKingdoms = numKingdoms;
+		}
+
+		private void measureAssertionSize(final long assertionSize) {
+			mAssertionSize = assertionSize;
+		}
+
+		private void measureCrownSize(final long crownSize) {
+			mCrownSize = crownSize;
 		}
 	}
 }
