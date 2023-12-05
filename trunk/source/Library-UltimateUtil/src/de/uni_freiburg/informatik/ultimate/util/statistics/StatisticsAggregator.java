@@ -47,7 +47,9 @@ public final class StatisticsAggregator extends AbstractStatisticsDataProvider {
 					throw new UnsupportedOperationException("Conflicting keytypes");
 				}
 				if (old == null) {
-					declare(entry.getKey(), () -> mValues.get(entry.getKey()), entry.getValue());
+					final var type = entry.getValue();
+					declare(entry.getKey(), () -> mValues.get(entry.getKey()), type::aggregate, null,
+							type::prettyPrint);
 				}
 			}
 
