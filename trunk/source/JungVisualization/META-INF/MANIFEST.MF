@@ -10,7 +10,7 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  org.apache.batik.anim,
  org.apache.batik.svggen,
  org.apache.batik.ext.awt
-Bundle-RequiredExecutionEnvironment: JavaSE-11
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Bundle-ActivationPolicy: lazy
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.Activator
 Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.plugins.output.jungvisualization

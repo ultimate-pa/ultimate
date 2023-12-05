@@ -6,4 +6,4 @@ Bundle-Version: 0.0.1
 Export-Package: de.uni_freiburg.informatik.ultimate.constraintparser
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core
 Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.constraintparser
-Bundle-RequiredExecutionEnvironment: JavaSE-11
+Bundle-RequiredExecutionEnvironment: JavaSE-21
