@@ -47,6 +47,7 @@ import java.util.stream.StreamSupport;
 public abstract class AbstractStatisticsDataProvider implements IStatisticsDataProvider {
 	private final Map<String, Supplier<Object>> mSuppliers = new LinkedHashMap<>();
 	private final Map<String, BinaryOperator<Object>> mAggregators = new HashMap<>();
+	private final Map<String, Function<Object, Object>> mConverters = new HashMap<>();
 	private final Map<String, BiFunction<String, Object, String>> mPrinters = new HashMap<>();
 	private final BenchmarkType mBenchmarkType = new BenchmarkType();
 
@@ -61,17 +62,24 @@ public abstract class AbstractStatisticsDataProvider implements IStatisticsDataP
 	 *            The type of data (including aggregation and printing)
 	 */
 	protected final void declare(final String key, final Supplier<Object> getter, final KeyType type) {
-		declare(key, getter, type::aggregate, type::prettyPrint);
+		declare(key, getter, type::aggregate, type::convert, type::prettyPrint);
 	}
 
 	protected final void declare(final String key, final Supplier<Object> getter,
 			final BinaryOperator<Object> aggregator, final BiFunction<String, Object, String> printer) {
+		declare(key, getter, aggregator, Function.identity(), printer);
+	}
+
+	protected final void declare(final String key, final Supplier<Object> getter,
+			final BinaryOperator<Object> aggregator, final Function<Object, Object> converter,
+			final BiFunction<String, Object, String> printer) {
 		assert !mSuppliers.containsKey(key);
 		assert getter != null;
 		assert aggregator != null;
 		assert printer != null;
 		mSuppliers.put(key, getter);
 		mAggregators.put(key, aggregator);
+		mConverters.put(key, converter);
 		mPrinters.put(key, printer);
 	}
 
@@ -135,8 +143,10 @@ public abstract class AbstractStatisticsDataProvider implements IStatisticsDataP
 			for (final String key : getKeys()) {
 				sb.append(delimiter);
 				final Object value = benchmarkData.getValue(key);
+				final var converter = mConverters.get(key);
+				final var converted = converter.apply(value);
 				final BiFunction<String, Object, String> printer = mPrinters.get(key);
-				sb.append(printer.apply(key, value));
+				sb.append(printer.apply(key, converted));
 				delimiter = ", ";
 			}
 			return sb.toString();
