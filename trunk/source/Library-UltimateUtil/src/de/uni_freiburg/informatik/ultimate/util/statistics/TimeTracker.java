@@ -48,9 +48,18 @@ public final class TimeTracker {
 
 	public <T> T measure(final Supplier<T> fun) {
 		start();
-		final T rtr = fun.get();
-		stop();
-		return rtr;
+		try {
+			return fun.get();
+		} finally {
+			stop();
+		}
+	}
+
+	public void measure(final Runnable fun) {
+		measure(() -> {
+			fun.run();
+			return null;
+		});
 	}
 
 	public void start() {
