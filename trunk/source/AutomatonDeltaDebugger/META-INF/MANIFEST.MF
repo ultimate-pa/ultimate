@@ -10,6 +10,6 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.util,
  de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser,
  de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter
-Bundle-RequiredExecutionEnvironment: JavaSE-11
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Bundle-ActivationPolicy: lazy
 Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger

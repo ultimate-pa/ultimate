@@ -10,7 +10,7 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.util,
  com.github.jhoenicke.javacup,
  de.uni_freiburg.informatik.ultimate.lib.automata
 Bundle-ActivationPolicy: lazy
-Bundle-RequiredExecutionEnvironment: JavaSE-11
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Export-Package: de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser,
  de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST
 Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.plugins.source.automatascriptparser

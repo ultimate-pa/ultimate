@@ -17,7 +17,7 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.boogieast,
  de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer
 Bundle-ActivationPolicy: lazy
-Bundle-RequiredExecutionEnvironment: JavaSE-11
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Export-Package: de.uni_freiburg.informatik.ultimate.source.smtparser,
  de.uni_freiburg.informatik.ultimate.source.smtparser.chc
 Import-Package: de.uni_freiburg.informatik.ultimate.source.smtparser

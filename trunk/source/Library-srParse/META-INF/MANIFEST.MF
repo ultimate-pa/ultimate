@@ -13,7 +13,7 @@ Require-Bundle: com.github.jhoenicke.javacup,
  de.uni_freiburg.informatik.ultimate.astbuilder,
  de.uni_freiburg.informatik.ultimate.lib.smtlib,
  de.uni_freiburg.informatik.ultimate.lib.smtlibutils
-Bundle-RequiredExecutionEnvironment: JavaSE-11
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Import-Package: de.uni_freiburg.informatik.ultimate.core.util,
  de.uni_freiburg.informatik.ultimate.util,
  de.uni_freiburg.informatik.ultimate.util.datastructures.relation
