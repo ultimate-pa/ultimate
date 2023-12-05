@@ -100,15 +100,20 @@ public final class KingdomLaw<PLACE, LETTER> {
 	 * @param bp
 	 *            Branching Process of the refined Petri net
 	 */
-	public void validityAssertion(final BranchingProcess<LETTER, PLACE> bp) {
+	public boolean validityAssertion(final BranchingProcess<LETTER, PLACE> bp) {
 		final ICoRelation<LETTER, PLACE> coRelation = bp.getCoRelation();
 		final List<Condition<LETTER, PLACE>> lawConditions = new ArrayList<>(mLaw);
 		for (int i = 0; i < lawConditions.size(); i++) {
+			final var cond1 = lawConditions.get(i);
 			for (int j = i + 1; j < lawConditions.size(); j++) {
-				assert coRelation.isInCoRelation(lawConditions.get(i),
-						lawConditions.get(j)) : "Conditions in Law are not co-related";
+				final var cond2 = lawConditions.get(j);
+				if (!coRelation.isInCoRelation(cond1, cond2)) {
+					assert false : "Conditions " + cond1 + " and " + cond2 + " in Law are not co-related";
+					return false;
+				}
 			}
 		}
+		return true;
 	}
 
 	@SuppressWarnings("unchecked")

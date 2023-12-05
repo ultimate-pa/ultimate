@@ -58,9 +58,11 @@ public final class Realm<PLACE, LETTER> {
 	private boolean placesNotCorelated(final PlacesCoRelation<PLACE, LETTER> placesCoRelation) {
 		final List<Condition<LETTER, PLACE>> realmConditions = new ArrayList<>(mRealm);
 		for (int i = 0; i < realmConditions.size(); i++) {
+			final var place1 = realmConditions.get(i).getPlace();
 			for (int j = i + 1; j < realmConditions.size(); j++) {
-				if (placesCoRelation.getPlacesCorelation(realmConditions.get(i).getPlace(),
-						realmConditions.get(j).getPlace())) {
+				final var place2 = realmConditions.get(j).getPlace();
+				if (placesCoRelation.getPlacesCorelation(place1, place2)) {
+					assert false : "Places " + place1 + " and " + place2 + " are corelated";
 					return false;
 				}
 			}
@@ -180,8 +182,10 @@ public final class Realm<PLACE, LETTER> {
 	 * @param placesCoRelation
 	 *            Contains the information about the corelation of the Places.
 	 */
-	public void validityAssertion(final PlacesCoRelation<PLACE, LETTER> placesCoRelation) {
-		assert placesNotCorelated(placesCoRelation) : "There are Conditions with co-related Places in the Realm";
+	public boolean validityAssertion(final PlacesCoRelation<PLACE, LETTER> placesCoRelation) {
+		final boolean valid = placesNotCorelated(placesCoRelation);
+		assert valid : "There are Conditions with co-related Places in the Realm";
+		return valid;
 	}
 
 	@SuppressWarnings("unchecked")

@@ -154,11 +154,19 @@ public final class Kingdom<PLACE, LETTER> {
 	 * @param placesCoRelation
 	 *            Contains the information about the corelation of the Places.
 	 */
-	public void validityAssertion(final PlacesCoRelation<PLACE, LETTER> placesCoRelation) {
+	public boolean validityAssertion(final PlacesCoRelation<PLACE, LETTER> placesCoRelation) {
 		for (final Realm<PLACE, LETTER> realm : mKingdom) {
-			realm.validityAssertion(placesCoRelation);
+			if (!realm.validityAssertion(placesCoRelation)) {
+				assert false : "invalid realm: " + realm;
+				return false;
+			}
 		}
-		assert !mKingdom.isEmpty() : "There is an empty Kingdom";
+
+		if (mKingdom.isEmpty()) {
+			assert false : "There is an empty Kingdom";
+			return false;
+		}
+
 		boolean foundAny = false;
 		Set<Condition<LETTER, PLACE>> intersectionConditions = null;
 		for (final Realm<PLACE, LETTER> realm : mKingdom) {
@@ -167,9 +175,16 @@ public final class Kingdom<PLACE, LETTER> {
 				intersectionConditions = realm.getConditions();
 				continue;
 			}
+
+			// TODO Dominik 2023-12-05: This loop seems suspicious: Whether the assertion fails or not may depend on the
+			// iteration order of the set mKingdom, which is not guaranteed. What are you trying to check here?
 			intersectionConditions = DataStructureUtils.intersection(intersectionConditions, realm.getConditions());
-			assert intersectionConditions.isEmpty() : "Kingdoms Realms are not disjoint";
+			if (!intersectionConditions.isEmpty()) {
+				assert false : "Kingdoms Realms are not disjoint";
+				return false;
+			}
 		}
+		return true;
 	}
 
 	@SuppressWarnings("unchecked")

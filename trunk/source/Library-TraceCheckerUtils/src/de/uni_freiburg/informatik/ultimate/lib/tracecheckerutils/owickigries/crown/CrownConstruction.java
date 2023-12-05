@@ -89,7 +89,7 @@ public final class CrownConstruction<PLACE, LETTER> {
 		mCrown.addRook(rooks);
 
 		mStatistics.measureRefurbishment(() -> crownRefurbishment());
-		mCrown.validityAssertion(mPlacesCoRelation, assertConds);
+		assert mCrown.validityAssertion(mPlacesCoRelation, assertConds);
 	}
 
 	private void settlements() {

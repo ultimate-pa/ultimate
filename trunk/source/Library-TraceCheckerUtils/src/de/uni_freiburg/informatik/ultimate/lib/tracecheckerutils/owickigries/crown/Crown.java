@@ -111,12 +111,19 @@ public final class Crown<PLACE, LETTER> {
 	 * @param assertConds
 	 *            Assertion Conditions of the refined Petri Net
 	 */
-	public void validityAssertion(final PlacesCoRelation<PLACE, LETTER> placesCoRelation,
+	public boolean validityAssertion(final PlacesCoRelation<PLACE, LETTER> placesCoRelation,
 			final Set<Condition<LETTER, PLACE>> assertConds) {
 		for (final Rook<PLACE, LETTER> rook : mCrown) {
-			rook.validityAssertion(mBp, placesCoRelation, assertConds);
+			if (!rook.validityAssertion(mBp, placesCoRelation, assertConds)) {
+				assert false;
+				return false;
+			}
 		}
-		assert crownContainsAllCuts() : "Crown does not contain all cuts of the refined Petri nets branching process";
+		if (!crownContainsAllCuts()) {
+			assert false : "Crown does not contain all cuts of the refined Petri nets branching process";
+			return false;
+		}
+		return true;
 	}
 
 }

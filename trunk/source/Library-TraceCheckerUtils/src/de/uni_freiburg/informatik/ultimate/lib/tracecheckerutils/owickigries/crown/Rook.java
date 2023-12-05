@@ -261,17 +261,36 @@ public final class Rook<PLACE, LETTER> {
 	 * @param assertConds
 	 *            Assertion conditions of the refined Petri net.
 	 */
-	public void validityAssertion(final BranchingProcess<LETTER, PLACE> bp,
+	public boolean validityAssertion(final BranchingProcess<LETTER, PLACE> bp,
 			final PlacesCoRelation<PLACE, LETTER> placesCoRelation, final Set<Condition<LETTER, PLACE>> assertConds) {
-		mKingdom.validityAssertion(placesCoRelation);
-		mLaw.validityAssertion(bp);
+		// TODO Dominik 2023-12-05: Why is the parameter assertConds there but not used?
+
+		if (!mKingdom.validityAssertion(placesCoRelation)) {
+			assert false : "invalid kingdom";
+			return false;
+		}
+
+		if (!mLaw.validityAssertion(bp)) {
+			assert false : "invalid law";
+			return false;
+		}
+
 		for (final Condition<LETTER, PLACE> assertionCondition : mLaw.getConditions()) {
 			final CoKingdom<PLACE, LETTER> coKingdom =
 					new CoKingdom<>(mKingdom, assertionCondition, bp, placesCoRelation);
-			assert coKingdom.getCoRelation() == CoRelationType.POSITIVE : "Not all assertion Conditions are "
-					+ "positive co-related to the Kingdom";
+
+			if (coKingdom.getCoRelation() != CoRelationType.POSITIVE) {
+				assert false : "Not all assertion Conditions are positive co-related to the Kingdom";
+				return false;
+			}
 		}
-		assert !containsNonCut(bp) : "Not all co-sets in census of the Rook are Cuts";
+
+		if (containsNonCut(bp)) {
+			assert false : "Not all co-sets in census of the Rook are Cuts";
+			return false;
+		}
+
+		return true;
 	}
 
 	@SuppressWarnings("unchecked")
