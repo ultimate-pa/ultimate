@@ -10,7 +10,7 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.core,
  de.uni_freiburg.informatik.ultimate.lib.ultimatemodel,
  org.yaml.snakeyaml
 Bundle-ActivationPolicy: lazy
-Bundle-RequiredExecutionEnvironment: JavaSE-11
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Export-Package: de.uni_freiburg.informatik.ultimate.witnessparser.graph,
  de.uni_freiburg.informatik.ultimate.witnessparser.preferences,
  de.uni_freiburg.informatik.ultimate.witnessparser.yaml

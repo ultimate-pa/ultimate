@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: de.uni_freiburg.informatik.ultimate.lib.test
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.test
 Bundle-Version: 0.2.4
-Bundle-RequiredExecutionEnvironment: JavaSE-11
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Export-Package: de.uni_freiburg.informatik.ultimate.test,
  de.uni_freiburg.informatik.ultimate.test.benchexec,
  de.uni_freiburg.informatik.ultimate.test.decider,

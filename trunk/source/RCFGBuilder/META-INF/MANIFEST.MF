@@ -14,7 +14,7 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.boogie.printer,
  de.uni_freiburg.informatik.ultimate.lib.smtlibutils
 Bundle-ActivationPolicy: lazy
-Bundle-RequiredExecutionEnvironment: JavaSE-11
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Import-Package: de.uni_freiburg.informatik.ultimate.boogie.type
 Export-Package: de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg,

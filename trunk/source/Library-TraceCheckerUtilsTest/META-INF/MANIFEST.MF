@@ -4,7 +4,7 @@ Bundle-Name: Library-TraceCheckerUtilsTest
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.test
 Bundle-Version: 0.2.4
 Fragment-Host: de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils
-Bundle-RequiredExecutionEnvironment: JavaSE-11
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.test,
  org.junit,

@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: Library-SmtLibUtils
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.smtlibutils
 Bundle-Version: 0.2.4
-Bundle-RequiredExecutionEnvironment: JavaSE-11
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Export-Package: de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer,
  de.uni_freiburg.informatik.ultimate.lib.smtlibutils,
  de.uni_freiburg.informatik.ultimate.lib.smtlibutils.abduction,

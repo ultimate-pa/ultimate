@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: IRSDependencies
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies;singleton:=true
 Bundle-Version: 0.2.4
-Bundle-RequiredExecutionEnvironment: JavaSE-11
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Bundle-ActivationPolicy: lazy
 Export-Package: de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.loopdetector,
  de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.visitors,

@@ -5,7 +5,7 @@ Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.reqtotestpowerset;singl
 Bundle-Version: 0.1.24
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.reqtotestpowerset.Activator
 Bundle-ActivationPolicy: lazy
-Bundle-RequiredExecutionEnvironment: JavaSE-11
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Require-Bundle: com.github.jhoenicke.javacup,
  de.uni_freiburg.informatik.ultimate.lib.util,
  de.uni_freiburg.informatik.ultimate.lib.pea,

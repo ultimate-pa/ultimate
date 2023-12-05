@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: de.uni_freiburg.informatik.ultimate.lib.util
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.util
 Bundle-Version: 0.2.4
-Bundle-RequiredExecutionEnvironment: JavaSE-11
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.ultimatemodel
 Export-Package: de.uni_freiburg.informatik.ultimate.util,
  de.uni_freiburg.informatik.ultimate.util.csv,

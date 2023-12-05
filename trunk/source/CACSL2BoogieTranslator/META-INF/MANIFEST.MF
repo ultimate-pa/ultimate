@@ -14,7 +14,7 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.witnessprinter,
  de.uni_freiburg.informatik.ultimate.cdt.parser
 Bundle-ActivationPolicy: lazy
-Bundle-RequiredExecutionEnvironment: JavaSE-11
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Export-Package: de.uni_freiburg.informatik.ultimate.cdt.translation.implementation,
  de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util,
  de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator

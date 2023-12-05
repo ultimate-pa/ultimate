@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: GUILoggingWindow
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.gui.logging;singleton:=true
 Bundle-Version: 0.2.4
-Bundle-RequiredExecutionEnvironment: JavaSE-11
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.core,
  org.eclipse.ui.workbench,

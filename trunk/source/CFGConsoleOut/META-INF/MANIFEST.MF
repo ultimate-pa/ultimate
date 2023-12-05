@@ -11,7 +11,7 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils,
  de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils,
  de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction
-Bundle-RequiredExecutionEnvironment: JavaSE-11
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Bundle-ActivationPolicy: lazy
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.output.cfgconsoleout.Activator
 Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.output.cfgconsoleout

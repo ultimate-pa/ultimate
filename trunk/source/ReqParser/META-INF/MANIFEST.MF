@@ -5,7 +5,7 @@ Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.reqparser;singleton:=tr
 Bundle-Version: 0.2.4
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.reqparser.Activator
 Bundle-ActivationPolicy: lazy
-Bundle-RequiredExecutionEnvironment: JavaSE-11
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Require-Bundle: com.github.jhoenicke.javacup,
  de.uni_freiburg.informatik.ultimate.lib.smtlib,
  de.uni_freiburg.informatik.ultimate.lib.srparse,

@@ -17,7 +17,7 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer,
  de.uni_freiburg.informatik.ultimate.acsl.parser
 Bundle-ActivationPolicy: lazy
-Bundle-RequiredExecutionEnvironment: JavaSE-11
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Export-Package: de.uni_freiburg.informatik.ultimate.ltl2aut.ast,
  de.uni_freiburg.informatik.ultimate.ltl2aut.never2nwa
 Import-Package: org.apache.commons.io

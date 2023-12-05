@@ -4,7 +4,7 @@ Bundle-Name: de.uni_freiburg.informatik.ultimate.output.peaexamplegenerator
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.output.peaexamplegenerator;singleton:=true
 Bundle-Version: 0.2.4
 Bundle-ActivationPolicy: lazy
-Bundle-RequiredExecutionEnvironment: JavaSE-11
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.ultimatemodel,
  de.uni_freiburg.informatik.ultimate.lib.util,
  de.uni_freiburg.informatik.ultimate.lib.core,

@@ -4,7 +4,7 @@ Bundle-Name: de.uni_freiburg.informatik.ultimate.lib.util.test
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.util.test
 Bundle-Version: 0.2.4
 Fragment-Host: de.uni_freiburg.informatik.ultimate.lib.util
-Bundle-RequiredExecutionEnvironment: JavaSE-11
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Require-Bundle: org.junit,
  de.uni_freiburg.informatik.ultimate.lib.test,
  de.uni_freiburg.informatik.ultimate.core

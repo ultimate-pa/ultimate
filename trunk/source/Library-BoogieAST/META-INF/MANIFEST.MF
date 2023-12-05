@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: Library-BoogieAST
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.boogieast
 Bundle-Version: 0.2.4
-Bundle-RequiredExecutionEnvironment: JavaSE-11
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Export-Package: de.uni_freiburg.informatik.ultimate.boogie,
  de.uni_freiburg.informatik.ultimate.boogie.annotation,
  de.uni_freiburg.informatik.ultimate.boogie.ast,

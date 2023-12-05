@@ -26,6 +26,6 @@ Export-Package: de.uni_freiburg.informatik.ultimate.core.coreplugin,
  de.uni_freiburg.informatik.ultimate.core.preferences,
  de.uni_freiburg.informatik.ultimate.core.util,
  de.uni_freiburg.informatik.ultimate.ep
-Bundle-RequiredExecutionEnvironment: JavaSE-11
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Import-Package: de.uni_freiburg.informatik.ultimate.astbuilder
 Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.core

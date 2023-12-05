@@ -303,7 +303,7 @@ Export-Package: de.uni_freiburg.informatik.ultimate.automata;
  de.uni_freiburg.informatik.ultimate.automata.tree.operations.minimization.performance;uses:="de.uni_freiburg.informatik.ultimate.automata.statefactory,de.uni_freiburg.informatik.ultimate.automata.tree,de.uni_freiburg.informatik.ultimate.automata",
  de.uni_freiburg.informatik.ultimate.automata.tree.visualization;uses:="de.uni_freiburg.informatik.ultimate.automata.tree,de.uni_freiburg.informatik.ultimate.core.model.models,de.uni_freiburg.informatik.ultimate.automata",
  de.uni_freiburg.informatik.ultimate.automata.util;uses:="de.uni_freiburg.informatik.ultimate.util.datastructures.relation,de.uni_freiburg.informatik.ultimate.util.datastructures"
-Bundle-RequiredExecutionEnvironment: JavaSE-11
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Bundle-ClassPath: src/de/uni_freiburg/informatik/ultimate/automata/petrinet/petruchio/petruchio.jar,
                   src/de/uni_freiburg/informatik/ultimate/automata/nestedword/operations/optncsb/trove-3.0.3.jar,
  .
