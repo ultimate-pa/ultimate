@@ -29,18 +29,27 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.em
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown.Crown;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown.CrownConstruction;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
+import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
+import de.uni_freiburg.informatik.ultimate.util.statistics.TimeTracker;
 
 public class PetriOwickiGries<LETTER, PLACE> {
+
+	private final ILogger mLogger;
 
 	private final BranchingProcess<LETTER, PLACE> mBp;
 	private final Set<Condition<LETTER, PLACE>> mConditions;
@@ -51,6 +60,8 @@ public class PetriOwickiGries<LETTER, PLACE> {
 	private final Crown<PLACE, LETTER> mCrown;
 	private final EmpireAnnotation<PLACE, LETTER> mEmpireAnnotation;
 
+	private final Statistics mStatistics = new Statistics();
+
 	/**
 	 *
 	 * @param bp
@@ -58,10 +69,16 @@ public class PetriOwickiGries<LETTER, PLACE> {
 	 * @param net
 	 *            the original Petri program
 	 */
-	public PetriOwickiGries(final BranchingProcess<LETTER, PLACE> bp, final IPetriNet<LETTER, PLACE> net,
-			final BasicPredicateFactory factory, final Function<PLACE, IPredicate> placeToAssertion) {
+	public PetriOwickiGries(final IUltimateServiceProvider services, final BranchingProcess<LETTER, PLACE> bp,
+			final IPetriNet<LETTER, PLACE> net, final BasicPredicateFactory factory,
+			final Function<PLACE, IPredicate> placeToAssertion) {
+		mLogger = services.getLoggingService().getLogger(PetriOwickiGries.class);
+
 		mBp = bp;
 		mNet = net;
+		mLogger.info("Constructing Owicki-Gries proof for Petri program that %s and unfolding that %s",
+				net.sizeInformation(), bp.sizeInformation());
+
 		mOriginalPlaces = mNet.getPlaces();
 		mConditions = mBp.getConditions().stream().collect(Collectors.toSet());
 		mOriginalConditions = getOrigConditions();
@@ -73,13 +90,16 @@ public class PetriOwickiGries<LETTER, PLACE> {
 	private Crown<PLACE, LETTER> getCrown() {
 		final CrownConstruction<PLACE, LETTER> crownConstruction =
 				new CrownConstruction<>(mBp, mOriginalConditions, mAssertionConditions, mNet);
+		mStatistics.addCrownStatistics(crownConstruction);
 		return crownConstruction.getCrown();
 	}
 
 	private EmpireAnnotation<PLACE, LETTER> getEmpireAnnotation(final BasicPredicateFactory factory,
 			final Function<PLACE, IPredicate> placeToAssertion) {
-		final CrownsEmpire<PLACE, LETTER> crownsEmpire = new CrownsEmpire<>(mCrown, factory, placeToAssertion);
-		return crownsEmpire.getEmpireAnnotation();
+		return mStatistics.measureEmpire(() -> {
+			final CrownsEmpire<PLACE, LETTER> crownsEmpire = new CrownsEmpire<>(mCrown, factory, placeToAssertion);
+			return crownsEmpire.getEmpireAnnotation();
+		});
 	}
 
 	private Set<Condition<LETTER, PLACE>> getOrigConditions() {
@@ -90,5 +110,30 @@ public class PetriOwickiGries<LETTER, PLACE> {
 			}
 		}
 		return conditions;
+	}
+
+	public IStatisticsDataProvider getStatistics() {
+		return mStatistics;
+	}
+
+	private static final class Statistics extends AbstractStatisticsDataProvider {
+		public static final String CROWN_STATISTICS = "Crown construction";
+		public static final String EMPIRE_TIME = "Crown empire time";
+
+		private IStatisticsDataProvider mCrownStatistics;
+		private final TimeTracker mEmpireTime = new TimeTracker();
+
+		public Statistics() {
+			declare(EMPIRE_TIME, () -> mEmpireTime, KeyType.TT_TIMER);
+			forward(CROWN_STATISTICS, () -> mCrownStatistics);
+		}
+
+		private void addCrownStatistics(final CrownConstruction<?, ?> crownConstruction) {
+			mCrownStatistics = crownConstruction.getStatistics();
+		}
+
+		private <T> T measureEmpire(final Supplier<T> runner) {
+			return mEmpireTime.measure(runner);
+		}
 	}
 }

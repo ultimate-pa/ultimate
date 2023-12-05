@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries;
 
 import java.nio.file.Path;
+import java.util.function.Function;
 
 import org.junit.runner.RunWith;
 
@@ -37,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire.PetriOwickiGries;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataTestFileAST;
 import de.uni_freiburg.informatik.ultimate.test.junitextension.testfactory.FactoryTestRunner;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
 @RunWith(FactoryTestRunner.class)
 public class PetriOwickiGriesTestSuite extends OwickiGriesTestSuite {
@@ -45,6 +47,10 @@ public class PetriOwickiGriesTestSuite extends OwickiGriesTestSuite {
 			final BoundedPetriNet<SimpleAction, IPredicate> program,
 			final BoundedPetriNet<SimpleAction, IPredicate> refinedPetriNet,
 			final BranchingProcess<SimpleAction, IPredicate> unfolding) throws AutomataLibraryException {
-		new PetriOwickiGries<>(unfolding, program, mPredicateFactory, p -> p);
+		final var pog = new PetriOwickiGries<>(mServices, unfolding, program, mPredicateFactory, Function.identity());
+
+		final StatisticsData data = new StatisticsData();
+		data.aggregateBenchmarkData(pog.getStatistics());
+		mLogger.info("PetriOwickiGries Statistics: %s", data);
 	}
 }

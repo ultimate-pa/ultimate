@@ -32,6 +32,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
@@ -41,6 +42,10 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire.Territory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
+import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
+import de.uni_freiburg.informatik.ultimate.util.statistics.TimeTracker;
 
 /**
  * @author Miriam Lagunes (miriam.lagunes@students.uni-freiburg.de)
@@ -67,6 +72,8 @@ public final class CrownConstruction<PLACE, LETTER> {
 	// Store already determined information about a rook containing non cuts to save runtime
 	private final HashMap<Rook<PLACE, LETTER>, Boolean> mContainsNonCut = new HashMap<>();
 
+	private final Statistics mStatistics = new Statistics();
+
 	public CrownConstruction(final BranchingProcess<LETTER, PLACE> bp, final Set<Condition<LETTER, PLACE>> origConds,
 			final Set<Condition<LETTER, PLACE>> assertConds, final IPetriNet<LETTER, PLACE> net) {
 		mBp = bp;
@@ -75,9 +82,13 @@ public final class CrownConstruction<PLACE, LETTER> {
 		mOrigConds = origConds;
 		mAssertConds = assertConds;
 		mPlacesCoRelation = new PlacesCoRelation<>(bp);
-		settlements();
-		mCrown.addRook(crownComputation());
-		crownRefurbishment();
+
+		mStatistics.measureSettlement(() -> settlements());
+
+		final var rooks = mStatistics.measureCrownComputation(() -> crownComputation());
+		mCrown.addRook(rooks);
+
+		mStatistics.measureRefurbishment(() -> crownRefurbishment());
 		mCrown.validityAssertion(mPlacesCoRelation, assertConds);
 	}
 
@@ -285,4 +296,35 @@ public final class CrownConstruction<PLACE, LETTER> {
 		return mCrown;
 	}
 
+	public IStatisticsDataProvider getStatistics() {
+		return mStatistics;
+	}
+
+	private static final class Statistics extends AbstractStatisticsDataProvider {
+		public static final String SETTLEMENT_TIME = "settlement time";
+		public static final String CROWN_COMPUTATION_TIME = "crown computation time";
+		public static final String CROWN_REFURBISHMENT_TIME = "crown refurbishment time";
+
+		private final TimeTracker mSettlementTimer = new TimeTracker();
+		private final TimeTracker mCrownTimer = new TimeTracker();
+		private final TimeTracker mRefurbishmentTimer = new TimeTracker();
+
+		public Statistics() {
+			declare(SETTLEMENT_TIME, () -> mSettlementTimer, KeyType.TT_TIMER);
+			declare(CROWN_COMPUTATION_TIME, () -> mCrownTimer, KeyType.TT_TIMER);
+			declare(CROWN_REFURBISHMENT_TIME, () -> mRefurbishmentTimer, KeyType.TT_TIMER);
+		}
+
+		private void measureSettlement(final Runnable runner) {
+			mSettlementTimer.measure(runner);
+		}
+
+		private <T> T measureCrownComputation(final Supplier<T> runner) {
+			return mCrownTimer.measure(runner);
+		}
+
+		private void measureRefurbishment(final Runnable runner) {
+			mRefurbishmentTimer.measure(runner);
+		}
+	}
 }
