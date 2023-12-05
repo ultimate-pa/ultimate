@@ -987,12 +987,10 @@ public class CACSL2BoogieBacktranslator
 						"Expression " + BoogiePrettyPrinter.print(expression) + " has no C AST node");
 				return null;
 			}
-
-			// TODO: This seems problematic, because we mainly use the backtranslated expression to be printed.
-			// if (cnode instanceof IASTExpression) {
-			// return (IASTExpression) cnode;
-			// } else
-			if (cnode instanceof CASTTranslationUnit) {
+			if (cnode instanceof IASTExpression) {
+				// TODO: Should we backtranslate expressions like x++, f(x),...?
+				return null;
+			} else if (cnode instanceof CASTTranslationUnit) {
 				// expressions that map to CASTTranslationUnit dont need to
 				// be backtranslated
 				return null;
@@ -1607,7 +1605,6 @@ public class CACSL2BoogieBacktranslator
 			// TODO: Do not backtranslate offsets, might lead to wrong invariants
 			return null;
 		}
-		reportUnfinishedBacktranslation("unknown boogie variable " + boogieId);
 		return null;
 	}
 
