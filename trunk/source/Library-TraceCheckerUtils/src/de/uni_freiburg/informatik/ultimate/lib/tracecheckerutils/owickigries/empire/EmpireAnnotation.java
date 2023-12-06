@@ -102,12 +102,12 @@ public class EmpireAnnotation<PLACE, LETTER> {
 	 *
 	 * @return Number of Territories
 	 */
-	public long getEmpireSize() {
+	public final long getEmpireSize() {
 		final long size = mEmpire.size();
 		return size;
 	}
 
-	public int getRegionCount() {
+	public final int getRegionCount() {
 		return getColony().size();
 	}
 
@@ -116,7 +116,7 @@ public class EmpireAnnotation<PLACE, LETTER> {
 	 *
 	 * @return Size of the law as long.
 	 */
-	public long getLawSize() {
+	public final long getLawSize() {
 		final DAGSize sizeComputation = new DAGSize();
 		final long size = mLaw.entrySet().stream()
 				.collect(Collectors.summingLong(x -> sizeComputation.size(x.getValue().getLaw().getFormula())));
@@ -128,7 +128,7 @@ public class EmpireAnnotation<PLACE, LETTER> {
 	 *
 	 * @return Empire annotation size as long
 	 */
-	public long getAnnotationSize() {
+	public final long getAnnotationSize() {
 		return getEmpireSize() + getLawSize();
 	}
 
