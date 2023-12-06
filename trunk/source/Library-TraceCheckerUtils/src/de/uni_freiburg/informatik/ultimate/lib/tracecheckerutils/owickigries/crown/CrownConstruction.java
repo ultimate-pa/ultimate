@@ -84,9 +84,11 @@ public final class CrownConstruction<PLACE, LETTER> {
 		final var refurbishedRooks = mStatistics.measureRefurbishment(() -> crownRefurbishment(crownRooks));
 		mCrown = new Crown<>(bp, refurbishedRooks);
 
-		mStatistics.measureCrownSize(mCrown.getCrownSize());
-		mStatistics.measureAssertionSize(mCrown.getAssertionSize());
-		mStatistics.measureNumKingdoms(mCrown.getNumKingdoms());
+		for (final Rook<PLACE, LETTER> rook : refurbishedRooks) {
+			rook.getKingdom().getRealms().stream().collect(Collectors.toSet()).removeAll(rook.getKingdom().getRealms());
+		}
+
+		mStatistics.reportCrown(mCrown);
 		assert mCrown.validityAssertion(mPlacesCoRelation, assertConds);
 	}
 
@@ -336,16 +338,10 @@ public final class CrownConstruction<PLACE, LETTER> {
 			return mRefurbishmentTimer.measure(runner);
 		}
 
-		private void measureNumKingdoms(final long numKingdoms) {
-			mNumKingdoms = numKingdoms;
-		}
-
-		private void measureAssertionSize(final long assertionSize) {
-			mAssertionSize = assertionSize;
-		}
-
-		private void measureCrownSize(final long crownSize) {
-			mCrownSize = crownSize;
+		private void reportCrown(final Crown<?, ?> crown) {
+			mNumKingdoms = crown.getNumKingdoms();
+			mAssertionSize = crown.getAssertionSize();
+			mCrownSize = crown.getCrownSize();
 		}
 	}
 }

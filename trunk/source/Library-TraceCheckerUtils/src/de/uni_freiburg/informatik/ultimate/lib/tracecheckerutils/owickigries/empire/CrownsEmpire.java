@@ -33,6 +33,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown.Crown;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown.Rook;
+import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
 
 /**
  * Construct an Empire annotation from a Crown.
@@ -45,8 +48,10 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.cro
  *            The type of statements in the Petri program
  */
 public class CrownsEmpire<PLACE, LETTER> {
-	Crown<PLACE, LETTER> mCrown;
-	EmpireAnnotation<PLACE, LETTER> mEmpireAnnotation;
+	private final Crown<PLACE, LETTER> mCrown;
+	private final EmpireAnnotation<PLACE, LETTER> mEmpireAnnotation;
+
+	private final Statistics mStatistics = new Statistics();
 
 	/**
 	 * Takes a crown and constructs an empire from it.
@@ -62,6 +67,7 @@ public class CrownsEmpire<PLACE, LETTER> {
 			final Function<PLACE, IPredicate> placeToAssertion) {
 		mCrown = crown;
 		mEmpireAnnotation = constructEmpireAnnotation(factory, placeToAssertion);
+		mStatistics.reportEmpire(mEmpireAnnotation);
 	}
 
 	private EmpireAnnotation<PLACE, LETTER> constructEmpireAnnotation(final BasicPredicateFactory factory,
@@ -89,5 +95,35 @@ public class CrownsEmpire<PLACE, LETTER> {
 
 	public Crown<PLACE, LETTER> getCrown() {
 		return mCrown;
+	}
+
+	public IStatisticsDataProvider getStatistics() {
+		return mStatistics;
+	}
+
+	private static final class Statistics extends AbstractStatisticsDataProvider {
+		public static final String EMPIRE_SIZE = "empire size";
+		public static final String LAW_SIZE = "empire law size";
+		public static final String ANNOTATION_SIZE = "empire annotation size";
+		public static final String REGION_COUNT = "number of regions";
+
+		private long mEmpireSize;
+		private long mLawSize;
+		private long mAnnotationSize;
+		private long mRegionCount;
+
+		public Statistics() {
+			declare(EMPIRE_SIZE, () -> mEmpireSize, KeyType.COUNTER);
+			declare(LAW_SIZE, () -> mLawSize, KeyType.COUNTER);
+			declare(ANNOTATION_SIZE, () -> mAnnotationSize, KeyType.COUNTER);
+			declare(REGION_COUNT, () -> mRegionCount, KeyType.COUNTER);
+		}
+
+		private void reportEmpire(final EmpireAnnotation<?, ?> empireAnnotation) {
+			mRegionCount = empireAnnotation.getRegionCount();
+			mEmpireSize = empireAnnotation.getEmpireSize();
+			mLawSize = empireAnnotation.getLawSize();
+			mAnnotationSize = empireAnnotation.getAnnotationSize();
+		}
 	}
 }

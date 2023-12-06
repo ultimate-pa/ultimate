@@ -33,9 +33,6 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
-import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
-import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
-import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
 
 /**
  * An Empire annotation. Can serve as proof of the program's correctness.
@@ -50,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
 public class EmpireAnnotation<PLACE, LETTER> {
 	Set<Territory<PLACE, LETTER>> mEmpire;
 	HashMap<Territory<PLACE, LETTER>, TerritoryLaw<PLACE, LETTER>> mLaw;
-	private final Statistics mStatistics = new Statistics();
 
 	/**
 	 * Construct the Empire Annotation with given Territories and Law
@@ -61,10 +57,6 @@ public class EmpireAnnotation<PLACE, LETTER> {
 	public EmpireAnnotation(final HashMap<Territory<PLACE, LETTER>, TerritoryLaw<PLACE, LETTER>> territoryLawMap) {
 		mEmpire = territoryLawMap.keySet();
 		mLaw = territoryLawMap;
-		mStatistics.measureAnnotationSize(getAnnotationSize());
-		mStatistics.measureEmpireSize(getEmpireSize());
-		mStatistics.measureLawSize(getLawSize());
-		mStatistics.reportRegionCount(getRegionCount());
 	}
 
 	public Set<Region<PLACE, LETTER>> getColony() {
@@ -130,44 +122,5 @@ public class EmpireAnnotation<PLACE, LETTER> {
 	 */
 	public final long getAnnotationSize() {
 		return getEmpireSize() + getLawSize();
-	}
-
-	public IStatisticsDataProvider getStatistics() {
-		return mStatistics;
-	}
-
-	private static final class Statistics extends AbstractStatisticsDataProvider {
-		public static final String EMPIRE_SIZE = "empire size";
-		public static final String LAW_SIZE = "empire law size";
-		public static final String ANNOTATION_SIZE = "empire annotation size";
-		public static final String REGION_COUNT = "number of regions";
-
-		private long mEmpireSize;
-		private long mLawSize;
-		private long mAnnotationSize;
-		private long mRegionCount;
-
-		public Statistics() {
-			declare(EMPIRE_SIZE, () -> mEmpireSize, KeyType.COUNTER);
-			declare(LAW_SIZE, () -> mLawSize, KeyType.COUNTER);
-			declare(ANNOTATION_SIZE, () -> mAnnotationSize, KeyType.COUNTER);
-			declare(REGION_COUNT, () -> mRegionCount, KeyType.COUNTER);
-		}
-
-		private void reportRegionCount(final int count) {
-			mRegionCount = count;
-		}
-
-		private void measureEmpireSize(final long empireSize) {
-			mEmpireSize = empireSize;
-		}
-
-		private void measureLawSize(final long lawSize) {
-			mLawSize = lawSize;
-		}
-
-		private void measureAnnotationSize(final long annotationSize) {
-			mAnnotationSize = annotationSize;
-		}
 	}
 }

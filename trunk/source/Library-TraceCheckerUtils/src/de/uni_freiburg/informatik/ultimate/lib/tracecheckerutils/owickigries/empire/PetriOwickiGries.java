@@ -85,7 +85,6 @@ public class PetriOwickiGries<LETTER, PLACE> {
 		mAssertionConditions = DataStructureUtils.difference(mConditions, mOriginalConditions);
 		mCrown = getCrown();
 		mEmpireAnnotation = getEmpireAnnotation(factory, placeToAssertion);
-		mStatistics.addEmpireStatistics(mEmpireAnnotation);
 		mLogger.info("Constructed Empire Annotation with Empire size %s, Law size %s and Annotation size %s",
 				mEmpireAnnotation.getEmpireSize(), mEmpireAnnotation.getLawSize(),
 				mEmpireAnnotation.getAnnotationSize());
@@ -94,16 +93,19 @@ public class PetriOwickiGries<LETTER, PLACE> {
 	private Crown<PLACE, LETTER> getCrown() {
 		final CrownConstruction<PLACE, LETTER> crownConstruction =
 				new CrownConstruction<>(mBp, mOriginalConditions, mAssertionConditions, mNet);
-		mStatistics.addCrownStatistics(crownConstruction);
+		mStatistics.reportCrownStatistics(crownConstruction);
 		return crownConstruction.getCrown();
 	}
 
 	private EmpireAnnotation<PLACE, LETTER> getEmpireAnnotation(final BasicPredicateFactory factory,
 			final Function<PLACE, IPredicate> placeToAssertion) {
-		return mStatistics.measureEmpire(() -> {
-			final CrownsEmpire<PLACE, LETTER> crownsEmpire = new CrownsEmpire<>(mCrown, factory, placeToAssertion);
-			return crownsEmpire.getEmpireAnnotation();
+		final CrownsEmpire<PLACE, LETTER> crownsEmpire = mStatistics.measureEmpire(() -> {
+			final CrownsEmpire<PLACE, LETTER> empireConstruction =
+					new CrownsEmpire<>(mCrown, factory, placeToAssertion);
+			return empireConstruction;
 		});
+		mStatistics.reportEmpireStatistics(crownsEmpire);
+		return crownsEmpire.getEmpireAnnotation();
 	}
 
 	private Set<Condition<LETTER, PLACE>> getOrigConditions() {
@@ -135,12 +137,12 @@ public class PetriOwickiGries<LETTER, PLACE> {
 			forward(EMPIRE_STATISTICS, () -> mEmpireStatistics);
 		}
 
-		private void addCrownStatistics(final CrownConstruction<?, ?> crownConstruction) {
+		private void reportCrownStatistics(final CrownConstruction<?, ?> crownConstruction) {
 			mCrownStatistics = crownConstruction.getStatistics();
 		}
 
-		private void addEmpireStatistics(final EmpireAnnotation<?, ?> empireAnnotation) {
-			mEmpireStatistics = empireAnnotation.getStatistics();
+		private void reportEmpireStatistics(final CrownsEmpire<?, ?> crownsEmpire) {
+			mEmpireStatistics = crownsEmpire.getStatistics();
 		}
 
 		private <T> T measureEmpire(final Supplier<T> runner) {
