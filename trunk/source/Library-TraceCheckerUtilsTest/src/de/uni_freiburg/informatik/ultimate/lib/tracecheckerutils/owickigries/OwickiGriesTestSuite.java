@@ -42,6 +42,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -104,6 +105,7 @@ import de.uni_freiburg.informatik.ultimate.test.junitextension.testfactory.Facto
 import de.uni_freiburg.informatik.ultimate.test.junitextension.testfactory.TestFactory;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -129,6 +131,8 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 	protected IHoareTripleChecker mHtc;
 	protected final List<IPredicateUnifier> mUnifiers = new ArrayList<>();
 
+	private long mStartTime = -1L;
+
 	@TestFactory
 	public Iterable<OwickiGriesTestCase> createTests() throws IOException {
 		final Path dir = Path.of(TestUtil.getPathFromTrunk("examples/concurrent/OwickiGries/PetriPrograms"));
@@ -140,6 +144,8 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 
 	@Before
 	public void setUp() {
+		mStartTime = System.nanoTime();
+
 		mServices = UltimateMocks.createUltimateServiceProviderMock();
 		mAutomataServices = new AutomataLibraryServices(mServices);
 		mLogger = mServices.getLoggingService().getLogger(getClass());
@@ -225,6 +231,10 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 
 		final var bp = finPrefix.getResult();
 		final var constructedDifference = difference.getYetConstructedPetriNet();
+
+		final long setupTime = System.nanoTime() - mStartTime;
+		mLogger.info("OwickiGriesTestSuite setup time: %s",
+				CoreUtil.toTimeString(setupTime, TimeUnit.NANOSECONDS, TimeUnit.MILLISECONDS, 0));
 
 		runTest(path, parsed, program, constructedDifference, bp);
 	}

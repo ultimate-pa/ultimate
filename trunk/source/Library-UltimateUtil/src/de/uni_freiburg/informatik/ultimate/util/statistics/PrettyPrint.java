@@ -69,6 +69,12 @@ public final class PrettyPrint {
 				CoreUtil.toTimeString((long) data, TimeUnit.NANOSECONDS, TimeUnit.SECONDS, 1));
 	}
 
+	public static BiFunction<String, Object, String>
+			dataAsTimeMilli(final BiFunction<String, Object, String> pprinter) {
+		return (key, data) -> pprinter.apply(key,
+				CoreUtil.toTimeString((long) data, TimeUnit.NANOSECONDS, TimeUnit.MILLISECONDS, 1));
+	}
+
 	public static BiFunction<String, Object, String> list(final BiFunction<String, Object, String> pprinter,
 			final Function<Object, String> elemPrinter) {
 		return (key, data) -> pprinter.apply(key,
