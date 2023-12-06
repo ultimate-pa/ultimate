@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Branching
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.MonolithicImplicationChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown.Crown;
@@ -71,7 +72,7 @@ public class PetriOwickiGries<LETTER, PLACE> {
 	 */
 	public PetriOwickiGries(final IUltimateServiceProvider services, final BranchingProcess<LETTER, PLACE> bp,
 			final IPetriNet<LETTER, PLACE> net, final BasicPredicateFactory factory,
-			final Function<PLACE, IPredicate> placeToAssertion) {
+			final Function<PLACE, IPredicate> placeToAssertion, final MonolithicImplicationChecker implicationChecker) {
 		mLogger = services.getLoggingService().getLogger(PetriOwickiGries.class);
 
 		mBp = bp;

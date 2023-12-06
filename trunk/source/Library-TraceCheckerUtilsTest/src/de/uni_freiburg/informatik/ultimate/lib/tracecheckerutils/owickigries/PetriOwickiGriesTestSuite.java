@@ -34,6 +34,7 @@ import org.junit.runner.RunWith;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.MonolithicImplicationChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire.PetriOwickiGries;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataTestFileAST;
@@ -47,7 +48,8 @@ public class PetriOwickiGriesTestSuite extends OwickiGriesTestSuite {
 			final BoundedPetriNet<SimpleAction, IPredicate> program,
 			final BoundedPetriNet<SimpleAction, IPredicate> refinedPetriNet,
 			final BranchingProcess<SimpleAction, IPredicate> unfolding) throws AutomataLibraryException {
-		final var pog = new PetriOwickiGries<>(mServices, unfolding, program, mPredicateFactory, Function.identity());
+		final var pog = new PetriOwickiGries<>(mServices, unfolding, program, mPredicateFactory, Function.identity(),
+				new MonolithicImplicationChecker(mServices, mMgdScript));
 
 		final StatisticsData data = new StatisticsData();
 		data.aggregateBenchmarkData(pog.getStatistics());

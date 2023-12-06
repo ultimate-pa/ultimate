@@ -56,4 +56,8 @@ public class MarkingLaw<PLACE, LETTER> {
 	public IPredicate getMarkingLaw(final Marking<PLACE> marking) {
 		return mMarkingLawMap.get(marking);
 	}
+
+	public Set<Marking<PLACE>> getMarkings() {
+		return mMarkingLawMap.keySet();
+	}
 }
