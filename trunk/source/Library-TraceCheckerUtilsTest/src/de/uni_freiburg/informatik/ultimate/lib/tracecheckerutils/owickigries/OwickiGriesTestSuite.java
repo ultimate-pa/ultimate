@@ -296,7 +296,9 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 		for (final var actionLine : actionLines) {
 			final String actionDescr = actionLine.substring(prefix.length());
 			final var matcher = actionPattern.matcher(actionDescr);
-			assert matcher.find();
+
+			final boolean found = matcher.find();
+			assert found : "failed to parse action semantics: " + actionLine;
 
 			final int id = Integer.parseUnsignedInt(matcher.group(1));
 			final var assignedVarNames = Arrays.stream(matcher.group(2).split(",")).map(String::trim)
@@ -428,7 +430,9 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 	private static SimpleAction parseAction(final Map<Integer, SimpleAction> id2Action, final String label) {
 		final var pattern = Pattern.compile("^\\[(\\d+)\\]$");
 		final var matcher = pattern.matcher(label);
-		assert matcher.find();
+
+		final boolean found = matcher.find();
+		assert found : "Failed to parse action: " + label;
 
 		final int id = Integer.parseUnsignedInt(matcher.group(1));
 		if (!id2Action.containsKey(id)) {
