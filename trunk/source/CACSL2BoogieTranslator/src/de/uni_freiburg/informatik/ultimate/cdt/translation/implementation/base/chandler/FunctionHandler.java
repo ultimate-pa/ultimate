@@ -523,7 +523,6 @@ public class FunctionHandler {
 		}
 
 		final String rawName = ((IASTIdExpression) functionName).getName().toString();
-		mCalledFunctions.add(rawName);
 		// Resolve the function name (might be prefixed by multiparse)
 		final String methodName = mSymboltable.applyMultiparseRenaming(functionName.getContainingFilename(), rawName);
 
@@ -532,7 +531,7 @@ public class FunctionHandler {
 			// A 'real' function in the symbol table has a IASTFunctionDefinition as the parent of the declarator.
 			return handleFunctionPointerCall(loc, main, functionName, arguments, memoryHandler);
 		}
-
+		mCalledFunctions.add(rawName);
 		return handleFunctionCallGivenNameAndArguments(main, loc, methodName, arguments, memoryHandler);
 	}
 
