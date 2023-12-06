@@ -841,6 +841,14 @@ public class StandardFunctionHandler {
 		// https://en.cppreference.com/w/c/chrono/time
 		fill(map, "time", this::handleTime);
 
+		// https://en.cppreference.com/w/c/string/wide/iswxdigit
+		fill(map, "iswxdigit", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
+				new CPrimitive(CPrimitives.INT)));
+
+		// https://refspecs.linuxbase.org/LSB_5.0.0/LSB-Core-generic/LSB-Core-generic/baselib---ctype-b-loc.html
+		fill(map, " __ctype_b_loc", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
+				new CPointer(new CPointer(new CPrimitive(CPrimitives.SHORT)))));
+
 		/** End <stdlib.h> functions according to 7.22 General utilities <stdlib.h> **/
 
 		checkFloatSupport(map, dieFloat);
