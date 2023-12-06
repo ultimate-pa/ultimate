@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<benchmark tool="ultimateautomizer" memlimit="8GB" timelimit="300" hardtimelimit="320" cpuCores="2">
+  <resultfiles>/storage/repos/ultimate/releaseScripts/default/UAutomizer-linux/*.ats</resultfiles>
+
+  <option name="--force-no-wrapper" />
+  <option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
+
+  <rundefinition name="AutomizerPN">
+    <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-NoLbe.epf</option>
+    <option name="--traceabstraction.compute.hoare.annotation.of.negated.interpolant.automaton,.abstraction.and.cfg">true</option>
+  </rundefinition>
+
+  <!-- TASKS -->
+
+  <tasks name="ConcurrencySafety-Main">
+    <includesfile>../../../trunk/examples/svcomp/ConcurrencySafety-Main.set</includesfile>
+    <propertyfile expectedverdict="true">../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
+  </tasks>
+
+  <tasks name="NoDataRace-Main">
+    <option name="&#45;-cacsl2boogietranslator.check.absence.of.data.races.in.concurrent.programs">true</option>
+    <option name="&#45;-cacsl2boogietranslator.check.unreachability.of.reach_error.function">false</option>
+
+    <includesfile>../../../trunk/examples/svcomp/NoDataRace-Main.set</includesfile>
+    <propertyfile expectedverdict="true">../../../trunk/examples/svcomp/properties/no-data-race.prp</propertyfile>
+  </tasks>
+
+  <tasks name="ConcurrencySafety-MemSafety">
+    <option name="--cacsl2boogietranslator.check.unreachability.of.reach_error.function">false</option>
+    <option name="--cacsl2boogietranslator.pointer.base.address.is.valid.at.dereference">ASSERTandASSUME</option>
+    <option name="--cacsl2boogietranslator.pointer.to.allocated.memory.at.dereference">ASSERTandASSUME</option>
+    <option name="--cacsl2boogietranslator.check.array.bounds.for.arrays.that.are.off.heap">ASSERTandASSUME</option>
+    <option name="--cacsl2boogietranslator.check.if.freed.pointer.was.valid">true</option>
+    <option name="--cacsl2boogietranslator.adapt.memory.model.on.pointer.casts.if.necessary">true</option>
+
+    <includesfile>../../../trunk/examples/svcomp/ConcurrencySafety-MemSafety.set</includesfile>
+    <propertyfile expectedverdict="true">../../../trunk/examples/svcomp/properties/valid-memsafety.prp</propertyfile>
+  </tasks>
+
+  <tasks name="ConcurrencySafety-NoOverflow">
+    <option name="--cacsl2boogietranslator.check.unreachability.of.reach_error.function">false</option>
+    <option name="--cacsl2boogietranslator.check.absence.of.signed.integer.overflows">true</option>
+
+    <includesfile>../../../trunk/examples/svcomp/ConcurrencySafety-NoOverflows.set</includesfile>
+    <propertyfile expectedverdict="true">../../../trunk/examples/svcomp/properties/no-overflow.prp</propertyfile>
+  </tasks>
+
+</benchmark>

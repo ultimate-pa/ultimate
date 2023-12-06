@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<benchmark tool="shell" memlimit="5GB" timelimit="20" hardtimelimit="22">
+<benchmark tool="shell" memlimit="8GB" timelimit="300" hardtimelimit="320">
   <resultfiles></resultfiles>
 
   <option name="success">1 tests successful</option>
