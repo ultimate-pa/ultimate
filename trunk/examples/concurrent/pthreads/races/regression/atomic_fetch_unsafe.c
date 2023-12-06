@@ -7,7 +7,7 @@
 
 typedef unsigned long pthread_t;
 
-int x, y;
+int x;
 
 void* thread1() {
   int local = __atomic_fetch_add(&x, 1, 5);

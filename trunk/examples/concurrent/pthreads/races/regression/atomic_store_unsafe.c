@@ -7,7 +7,7 @@
 
 typedef unsigned long pthread_t;
 
-int x, y;
+int x;
 
 void* thread1() {
   int local = 1;

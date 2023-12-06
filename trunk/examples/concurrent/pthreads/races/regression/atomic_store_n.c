@@ -7,7 +7,7 @@
 
 typedef unsigned long pthread_t;
 
-int x, y;
+int x;
 
 void* thread1() {
   __atomic_store_n(&x, 1, 5);
