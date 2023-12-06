@@ -141,7 +141,8 @@ public final class Rook<PLACE, LETTER> {
 	 * @return New Rook
 	 */
 	public Rook<PLACE, LETTER> foundation(final CoRook<PLACE, LETTER> coRook) {
-		final Set<Realm<PLACE, LETTER>> newRealms = getKingdom().getRealms().stream().collect(Collectors.toSet());
+		final Set<Realm<PLACE, LETTER>> newRealms =
+				getKingdom().getRealms().stream().collect(Collectors.toCollection(HashSet::new));
 		newRealms.remove(getNegKingdom(coRook));
 		final Set<Condition<LETTER, PLACE>> conflictFreeConditions = coRook.getCoKingdom().getConflictFreeConditions();
 		conflictFreeConditions.add(coRook.getCondition());
