@@ -84,10 +84,6 @@ public final class CrownConstruction<PLACE, LETTER> {
 		final var refurbishedRooks = mStatistics.measureRefurbishment(() -> crownRefurbishment(crownRooks));
 		mCrown = new Crown<>(bp, refurbishedRooks);
 
-		for (final Rook<PLACE, LETTER> rook : refurbishedRooks) {
-			rook.getKingdom().getRealms().stream().collect(Collectors.toSet()).removeAll(rook.getKingdom().getRealms());
-		}
-
 		mStatistics.reportCrown(mCrown);
 		assert mCrown.validityAssertion(mPlacesCoRelation, assertConds);
 	}
