@@ -8,6 +8,6 @@
 			<accessrule kind="accessible" pattern="org/eclipse/cdt/internal/core/**"/>
 		</accessrules>
 	</classpathentry>
-	<classpathentry excluding="**/.svn/*" kind="src" path="src"/>
+	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
