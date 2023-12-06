@@ -85,15 +85,13 @@ public class PetriOwickiGries<LETTER, PLACE> {
 		mAssertionConditions = DataStructureUtils.difference(mConditions, mOriginalConditions);
 		mCrown = getCrown();
 		mEmpireAnnotation = getEmpireAnnotation(factory, placeToAssertion);
-		mLogger.info("Constructed Empire Annotation with Empire size %s, Law size %s and Annotation size %s",
-				mEmpireAnnotation.getEmpireSize(), mEmpireAnnotation.getLawSize(),
-				mEmpireAnnotation.getAnnotationSize());
 	}
 
 	private Crown<PLACE, LETTER> getCrown() {
 		final CrownConstruction<PLACE, LETTER> crownConstruction =
 				new CrownConstruction<>(mBp, mOriginalConditions, mAssertionConditions, mNet);
 		mStatistics.reportCrownStatistics(crownConstruction);
+		mLogger.info("PetriOwickiGries Crown Statistics: %s", crownConstruction.getStatistics());
 		return crownConstruction.getCrown();
 	}
 
@@ -105,6 +103,7 @@ public class PetriOwickiGries<LETTER, PLACE> {
 			return empireConstruction;
 		});
 		mStatistics.reportEmpireStatistics(crownsEmpire);
+		mLogger.info("PetriOwickiGries Empire Statistics: %s", crownsEmpire.getStatistics());
 		return crownsEmpire.getEmpireAnnotation();
 	}
 
@@ -132,7 +131,7 @@ public class PetriOwickiGries<LETTER, PLACE> {
 		private IStatisticsDataProvider mEmpireStatistics;
 
 		public Statistics() {
-			declare(EMPIRE_TIME, () -> mEmpireTime, KeyType.TT_TIMER);
+			declare(EMPIRE_TIME, () -> mEmpireTime, KeyType.TT_TIMER_MS);
 			forward(CROWN_STATISTICS, () -> mCrownStatistics);
 			forward(EMPIRE_STATISTICS, () -> mEmpireStatistics);
 		}

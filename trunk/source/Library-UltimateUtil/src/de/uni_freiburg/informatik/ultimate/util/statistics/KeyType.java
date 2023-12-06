@@ -63,6 +63,7 @@ public enum KeyType {
 	TIMER(() -> 0L, Aggregate::longAdd, PrettyPrint.dataAsTime(PrettyPrint::keyColonData), Converter::identity),
 	MAX_TIMER(() -> 0L, Aggregate::longMax, PrettyPrint.dataAsTime(PrettyPrint::keyColonData), Converter::identity),
 	TT_TIMER(() -> 0L, Aggregate::longAdd, PrettyPrint.dataAsTime(PrettyPrint::dataSpaceKey), Converter::nanos),
+	TT_TIMER_MS(() -> 0L, Aggregate::longAdd, PrettyPrint.dataAsTimeMilli(PrettyPrint::dataSpaceKey), Converter::nanos),
 	TT_MAX_TIMER(() -> 0L, Aggregate::longMax, PrettyPrint.dataAsTime(PrettyPrint::dataSpaceKey), Converter::nanos),
 	IN_CA_RE_COUNTER(InCaReCounter::new, Aggregate::inCaReAdd, PrettyPrint::dataSpaceKey, Converter::identity);
 
