@@ -305,10 +305,18 @@ public class StandardFunctionHandler {
 
 		fill(map, "printf", (main, node, loc, name) -> handlePrintF(main, node, loc));
 
+		// https://en.cppreference.com/w/c/io/fgets
+		fill(map, "fgets", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 2,
+				new CPointer(new CPrimitive(CPrimitives.CHAR))));
+
+		// https://en.cppreference.com/w/c/io/fgetc
+		fill(map, "fgetc", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
+				new CPrimitive(CPrimitives.INT)));
+
 		// TODO 20211105 Matthias: Unsound because our implementation of printf is
 		// unsound and because we consider wchars as chars.
 		fill(map, "wprintf", (main, node, loc, name) -> handlePrintF(main, node, loc));
-
+		fill(map, "fprintf", (main, node, loc, name) -> handlePrintFunction(main, node, loc));
 		fill(map, "snprintf", (main, node, loc, name) -> handleSnPrintF(main, node, loc));
 
 		// https://en.cppreference.com/w/c/io/fscanf
@@ -337,6 +345,8 @@ public class StandardFunctionHandler {
 		fill(map, "__builtin_memmove", this::handleMemmove);
 		fill(map, "__memmove", this::handleMemmove);
 		fill(map, "memmove", this::handleMemmove);
+
+		fill(map, "memcmp", this::handleMemCmp);
 
 		fill(map, "alloca", this::handleAlloc);
 		fill(map, "__builtin_alloca", this::handleAlloc);
@@ -428,7 +438,10 @@ public class StandardFunctionHandler {
 		fill(map, "strlen", this::handleStrLen);
 		fill(map, "__builtin_strcmp", this::handleStrCmp);
 		fill(map, "strcmp", this::handleStrCmp);
+		fill(map, "strncmp", this::handleStrnCmp);
 		fill(map, "strcpy", this::handleStrCpy);
+		fill(map, "strncpy", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 3,
+				new CPointer(new CPrimitive(CPrimitives.CHAR))));
 
 		/** various float builtins **/
 		fill(map, "nan", (main, node, loc, name) -> handleNaNOrInfinity(loc, name));
@@ -846,8 +859,28 @@ public class StandardFunctionHandler {
 				new CPrimitive(CPrimitives.INT)));
 
 		// https://refspecs.linuxbase.org/LSB_5.0.0/LSB-Core-generic/LSB-Core-generic/baselib---ctype-b-loc.html
-		fill(map, " __ctype_b_loc", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
+		fill(map, "__ctype_b_loc", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
 				new CPointer(new CPointer(new CPrimitive(CPrimitives.SHORT)))));
+
+		// TODO: These functions occur in SV-COMP, are they builtins?
+		fill(map, "__bad_size_call_parameter",
+				(main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
+						new CPrimitive(CPrimitives.VOID)));
+		fill(map, "__bad_percpu_size", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main,
+				loc, name, new CPrimitive(CPrimitives.VOID)));
+		fill(map, "__bad_unaligned_access_size",
+				(main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
+						new CPrimitive(CPrimitives.VOID)));
+		fill(map, "__xchg_wrong_size", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main,
+				loc, name, new CPrimitive(CPrimitives.VOID)));
+		fill(map, "__xadd_wrong_size", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main,
+				loc, name, new CPrimitive(CPrimitives.VOID)));
+		fill(map, "__cmpxchg_wrong_size", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main,
+				loc, name, new CPrimitive(CPrimitives.VOID)));
+		fill(map, "__get_user_bad", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc,
+				name, new CPrimitive(CPrimitives.VOID)));
+		fill(map, "__put_user_bad", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc,
+				name, new CPrimitive(CPrimitives.VOID)));
 
 		/** End <stdlib.h> functions according to 7.22 General utilities <stdlib.h> **/
 
@@ -1333,13 +1366,37 @@ public class StandardFunctionHandler {
 		return builder.build();
 	}
 
-	private Result handleStrCmp(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
-			final String name) {
+	private ExpressionResult handleStrCmp(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 2, name, arguments);
+		return handleMemoryComparison(main, loc, name, arguments[0], arguments[1]);
+	}
+
+	private ExpressionResult handleStrnCmp(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 3, name, arguments);
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
-		final ExpressionResult arg0 =
-				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
+		builder.addAllExceptLrValue((ExpressionResult) main.dispatch(arguments[2]));
+		builder.addAllIncludingLrValue(handleMemoryComparison(main, loc, name, arguments[0], arguments[1]));
+		return builder.build();
+	}
+
+	private ExpressionResult handleMemCmp(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 3, name, arguments);
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		builder.addAllExceptLrValue((ExpressionResult) main.dispatch(arguments[2]));
+		builder.addAllIncludingLrValue(handleMemoryComparison(main, loc, name, arguments[0], arguments[1]));
+		return builder.build();
+	}
+
+	private ExpressionResult handleMemoryComparison(final IDispatcher main, final ILocation loc, final String name,
+			final IASTInitializerClause mem1, final IASTInitializerClause mem2) {
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		final ExpressionResult arg0 = mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, mem1);
 		builder.addDeclarations(arg0.getDeclarations());
 		builder.addStatements(arg0.getStatements());
 		builder.addOverapprox(arg0.getOverapprs());
@@ -1349,8 +1406,7 @@ public class StandardFunctionHandler {
 		builder.addStatements(
 				mMemoryHandler.constructMemsafetyChecksForPointerExpression(loc, arg0.getLrValue().getValue()));
 
-		final ExpressionResult arg1 =
-				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[1]);
+		final ExpressionResult arg1 = mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, mem2);
 		builder.addDeclarations(arg1.getDeclarations());
 		builder.addStatements(arg1.getStatements());
 		builder.addOverapprox(arg1.getOverapprs());
