@@ -94,8 +94,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.e
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
-//import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
-//import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType.Type;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
@@ -632,6 +630,11 @@ public class StandardFunctionHandler {
 				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.UINT128)));
 		fill(map, "__VERIFIER_nondet_ushort",
 				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.USHORT)));
+
+		fill(map, "__VERIFIER_atomic_begin", (main, node, loc, name) -> handleByFunctionCall(main, node, loc, name,
+				new CPrimitive(CPrimitives.VOID)));
+		fill(map, "__VERIFIER_atomic_end", (main, node, loc, name) -> handleByFunctionCall(main, node, loc, name,
+				new CPrimitive(CPrimitives.VOID)));
 
 		/** from assert.h */
 		/** C standard library functions (from assert.h) to define the 'assert' macro */
@@ -2768,6 +2771,28 @@ public class StandardFunctionHandler {
 	private ExpressionResult constructOverapproximationForFunctionCall(final ILocation loc, final String functionName,
 			final CType resultType) {
 		return buildFunctionCall(loc, resultType).addOverapprox(new Overapprox(functionName, loc)).build();
+	}
+
+	private ExpressionResult handleByFunctionCall(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name, final CType resultType) {
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		final IASTInitializerClause[] arguments = node.getArguments();
+		final Expression[] translatedArgs = new Expression[arguments.length];
+		for (int i = 0; i < arguments.length; i++) {
+			final ExpressionResult dispatched = (ExpressionResult) main.dispatch(arguments[i]);
+			builder.addAllExceptLrValue(dispatched);
+			translatedArgs[i] = dispatched.getLrValue().getValue();
+		}
+		VariableLHS[] retValue;
+		if (resultType.isVoidType()) {
+			retValue = new VariableLHS[0];
+		} else {
+			final AuxVarInfo auxVar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, resultType, AUXVAR.RETURNED);
+			builder.addAuxVar(auxVar).addDeclaration(auxVar.getVarDec());
+			retValue = new VariableLHS[] { auxVar.getLhs() };
+		}
+		builder.addStatement(StatementFactory.constructCallStatement(loc, false, retValue, name, translatedArgs));
+		return builder.build();
 	}
 
 	private ExpressionResultBuilder buildFunctionCall(final ILocation loc, final CType resultType) {
