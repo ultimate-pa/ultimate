@@ -26,7 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -113,6 +115,20 @@ public class EmpireAnnotation<PLACE, LETTER> {
 		final long size = mLaw.entrySet().stream()
 				.collect(Collectors.summingLong(x -> sizeComputation.size(x.getValue().getLaw().getFormula())));
 		return size;
+	}
+
+	/**
+	 * Get a List containing the sorted numbers of Regions for all Territories.
+	 *
+	 * @return Sorted List containing the numbers of Regions for all Territories.
+	 */
+	public List<Integer> getRegionPerTerritory() {
+		final List<Integer> regionPerTerritory = new ArrayList<>();
+		for (final Territory<PLACE, LETTER> territory : mEmpire) {
+			regionPerTerritory.add(territory.getRegions().size());
+		}
+		regionPerTerritory.sort(null);
+		return regionPerTerritory;
 	}
 
 	/**

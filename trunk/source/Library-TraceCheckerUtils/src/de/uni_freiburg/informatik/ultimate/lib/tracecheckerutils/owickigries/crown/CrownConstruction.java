@@ -305,6 +305,9 @@ public final class CrownConstruction<PLACE, LETTER> {
 		public static final String NUM_KINGDOMS = "number of kingdoms in crown";
 		public static final String ASSERTION_SIZE = "crown assertion size";
 		public static final String CROWN_SIZE = "crown size";
+		public static final String MIN_REALM_KINGDOM = "Min number of realms per kingdom";
+		public static final String MAX_REALM_KINGDOM = "Max number of realms per kingdom";
+		public static final String MED_REALM_KINGDOM = "Median number of realms per kingdom";
 
 		private final TimeTracker mSettlementTimer = new TimeTracker();
 		private final TimeTracker mCrownTimer = new TimeTracker();
@@ -312,6 +315,9 @@ public final class CrownConstruction<PLACE, LETTER> {
 		private long mNumKingdoms;
 		private long mAssertionSize;
 		private long mCrownSize;
+		private long mMinRealmsKingdom;
+		private long mMaxRealmsKingdom;
+		private long mMedianRealmsKingdom;
 
 		public Statistics() {
 			declare(SETTLEMENT_TIME, () -> mSettlementTimer, KeyType.TT_TIMER_MS);
@@ -320,6 +326,9 @@ public final class CrownConstruction<PLACE, LETTER> {
 			declare(NUM_KINGDOMS, () -> mNumKingdoms, KeyType.COUNTER);
 			declare(ASSERTION_SIZE, () -> mAssertionSize, KeyType.COUNTER);
 			declare(CROWN_SIZE, () -> mCrownSize, KeyType.COUNTER);
+			declare(MIN_REALM_KINGDOM, () -> mMinRealmsKingdom, KeyType.COUNTER);
+			declare(MAX_REALM_KINGDOM, () -> mMaxRealmsKingdom, KeyType.COUNTER);
+			declare(MED_REALM_KINGDOM, () -> mMedianRealmsKingdom, KeyType.COUNTER);
 		}
 
 		private <T> T measureSettlement(final Supplier<T> runner) {
@@ -338,6 +347,11 @@ public final class CrownConstruction<PLACE, LETTER> {
 			mNumKingdoms = crown.getNumKingdoms();
 			mAssertionSize = crown.getAssertionSize();
 			mCrownSize = crown.getCrownSize();
+
+			final List<Integer> realmPerKingdom = crown.getRealmPerKingdom();
+			mMinRealmsKingdom = realmPerKingdom.get(0);
+			mMaxRealmsKingdom = realmPerKingdom.get(realmPerKingdom.size() - 1);
+			mMedianRealmsKingdom = realmPerKingdom.get(realmPerKingdom.size() / 2);
 		}
 	}
 }

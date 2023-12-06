@@ -25,7 +25,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -111,6 +113,15 @@ public final class Crown<PLACE, LETTER> {
 		final long assertionSize =
 				mCrown.stream().collect(Collectors.summingLong(x -> x.getLaw().getConditions().size()));
 		return assertionSize;
+	}
+
+	public List<Integer> getRealmPerKingdom() {
+		final List<Integer> realmPerKingdom = new ArrayList<>();
+		for (final Rook<PLACE, LETTER> rook : mCrown) {
+			realmPerKingdom.add(rook.getKingdom().getRealms().size());
+		}
+		realmPerKingdom.sort(null);
+		return realmPerKingdom;
 	}
 
 	public long getCrownSize() {
