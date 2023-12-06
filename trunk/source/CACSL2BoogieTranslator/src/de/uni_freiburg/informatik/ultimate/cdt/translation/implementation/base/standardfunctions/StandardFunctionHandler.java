@@ -859,7 +859,7 @@ public class StandardFunctionHandler {
 				new CPrimitive(CPrimitives.INT)));
 
 		// https://refspecs.linuxbase.org/LSB_5.0.0/LSB-Core-generic/LSB-Core-generic/baselib---ctype-b-loc.html
-		fill(map, "__ctype_b_loc", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
+		fill(map, "__ctype_b_loc", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 0,
 				new CPointer(new CPointer(new CPrimitive(CPrimitives.SHORT)))));
 
 		// TODO: These functions occur in SV-COMP, are they builtins?
