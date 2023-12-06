@@ -327,6 +327,9 @@ public class StandardFunctionHandler {
 		fill(map, "swscanf", (main, node, loc, name) -> handleScanf(name, main, node, loc, 2));
 		fill(map, "swscanf_s", (main, node, loc, name) -> handleScanf(name, main, node, loc, 2));
 
+		// https://en.cppreference.com/w/c/io/puts
+		fill(map, "puts", this::handlePuts);
+
 		fill(map, "__builtin_memcpy", this::handleMemcpy);
 		fill(map, "__memcpy", this::handleMemcpy);
 		fill(map, "memcpy", this::handleMemcpy);
@@ -2485,10 +2488,10 @@ public class StandardFunctionHandler {
 				new CPrimitive(CPrimitives.INT));
 	}
 
-	private Result handlePrintF(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc) {
+	private ExpressionResult handlePrintFunction(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc) {
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 
-		// 2015-11-05 Matthias: TODO check if int is reasonable here
 		final AuxVarInfo auxvarinfo =
 				mAuxVarInfoBuilder.constructAuxVarInfo(loc, new CPrimitive(CPrimitives.INT), SFO.AUXVAR.NONDET);
 		resultBuilder.addDeclaration(auxvarinfo.getVarDec());
@@ -2508,6 +2511,16 @@ public class StandardFunctionHandler {
 		}
 
 		return resultBuilder.build();
+	}
+
+	private Result handlePrintF(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc) {
+		return handlePrintFunction(main, node, loc);
+	}
+
+	private Result handlePuts(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+			final String name) {
+		checkArguments(loc, 1, name, node.getArguments());
+		return handlePrintFunction(main, node, loc);
 	}
 
 	private boolean isStringLiteral(final IASTInitializerClause expr) {
