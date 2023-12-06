@@ -48,9 +48,9 @@ public final class Crown<PLACE, LETTER> {
 
 	private final BranchingProcess<LETTER, PLACE> mBp;
 
-	public Crown(final BranchingProcess<LETTER, PLACE> bp) {
+	public Crown(final BranchingProcess<LETTER, PLACE> bp, final Set<Rook<PLACE, LETTER>> crown) {
 		mBp = bp;
-		mCrown = new HashSet<>();
+		mCrown = crown;
 	}
 
 	private Set<Set<Condition<LETTER, PLACE>>> getAllCrownCuts() {

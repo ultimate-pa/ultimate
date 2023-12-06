@@ -35,19 +35,19 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 public class Kindred<PLACE, LETTER> {
-	private final Crown<PLACE, LETTER> mCrown;
+	private final Set<Rook<PLACE, LETTER>> mCrownRooks;
 	private final HashRelation<Rook<PLACE, LETTER>, SubterrElement<LETTER, PLACE>> mSubterritories;
 	private final HashRelation<Marking<PLACE>, Rook<PLACE, LETTER>> mMarkingToRook;
 
-	public Kindred(final Crown<PLACE, LETTER> crown) {
-		mCrown = crown;
+	public Kindred(final Set<Rook<PLACE, LETTER>> crownRooks) {
+		mCrownRooks = crownRooks;
 		mSubterritories = computeSubterritories();
 		mMarkingToRook = computeMarkingToRook();
 	}
 
 	private HashRelation<Rook<PLACE, LETTER>, SubterrElement<LETTER, PLACE>> computeSubterritories() {
 		final HashRelation<Rook<PLACE, LETTER>, SubterrElement<LETTER, PLACE>> subterritories = new HashRelation<>();
-		for (final Rook<PLACE, LETTER> rook : mCrown.getRooks()) {
+		for (final Rook<PLACE, LETTER> rook : mCrownRooks) {
 			final Set<SubterrElement<LETTER, PLACE>> subterrElements = rook.getSubterritory();
 			subterritories.addAllPairs(rook, subterrElements);
 		}

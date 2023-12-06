@@ -61,8 +61,6 @@ public final class CrownConstruction<PLACE, LETTER> {
 
 	private final Crown<PLACE, LETTER> mCrown;
 
-	private final Crown<PLACE, LETTER> mPreCrown;
-
 	private final Set<Condition<LETTER, PLACE>> mOrigConds;
 
 	private final Set<Condition<LETTER, PLACE>> mAssertConds;
@@ -77,27 +75,25 @@ public final class CrownConstruction<PLACE, LETTER> {
 	public CrownConstruction(final BranchingProcess<LETTER, PLACE> bp, final Set<Condition<LETTER, PLACE>> origConds,
 			final Set<Condition<LETTER, PLACE>> assertConds, final IPetriNet<LETTER, PLACE> net) {
 		mBp = bp;
-		mCrown = new Crown<>(mBp);
-		mPreCrown = new Crown<>(mBp);
 		mOrigConds = origConds;
 		mAssertConds = assertConds;
 		mPlacesCoRelation = new PlacesCoRelation<>(bp);
 
-		mStatistics.measureSettlement(() -> settlements());
+		final var settlementRooks = mStatistics.measureSettlement(() -> settlements());
+		final var crownRooks = mStatistics.measureCrownComputation(() -> crownComputation(settlementRooks));
+		final var refurbishedRooks = mStatistics.measureRefurbishment(() -> crownRefurbishment(crownRooks));
+		mCrown = new Crown<>(bp, refurbishedRooks);
 
-		final var rooks = mStatistics.measureCrownComputation(() -> crownComputation());
-		mCrown.addRook(rooks);
-
-		mStatistics.measureRefurbishment(() -> crownRefurbishment());
 		mStatistics.measureCrownSize(mCrown.getCrownSize());
 		mStatistics.measureAssertionSize(mCrown.getAssertionSize());
 		mStatistics.measureNumKingdoms(mCrown.getNumKingdoms());
 		assert mCrown.validityAssertion(mPlacesCoRelation, assertConds);
 	}
 
-	private void settlements() {
+	private Set<Rook<PLACE, LETTER>> settlements() {
 		// Create a new rook for each original condition.
 		// Add a to crown a new rook with "capital" and one corelated assertion condition
+		final Set<Rook<PLACE, LETTER>> settlementRooks = new HashSet<>();
 		for (final Condition<LETTER, PLACE> originalCondition : mOrigConds) {
 			final Set<Condition<LETTER, PLACE>> originalConditionSet = Set.of(originalCondition);
 			final Realm<PLACE, LETTER> realm = new Realm<>(ImmutableSet.of(originalConditionSet));
@@ -110,14 +106,14 @@ public final class CrownConstruction<PLACE, LETTER> {
 					final Set<Condition<LETTER, PLACE>> lawConditions = Set.of(assertionCondition);
 					final KingdomLaw<PLACE, LETTER> kingdomLaw = new KingdomLaw<>(ImmutableSet.of(lawConditions));
 					final Rook<PLACE, LETTER> rook = new Rook<>(kingdom, kingdomLaw);
-					mPreCrown.addRook(rook);
+					settlementRooks.add(rook);
 				}
 			}
 		}
+		return settlementRooks;
 	}
 
-	private Set<Rook<PLACE, LETTER>> crownComputation() {
-		final Set<Rook<PLACE, LETTER>> colonizedRooks = mPreCrown.getRooks();
+	private Set<Rook<PLACE, LETTER>> crownComputation(final Set<Rook<PLACE, LETTER>> colonizedRooks) {
 		final Set<Rook<PLACE, LETTER>> reSet = new HashSet<>();
 		for (final Rook<PLACE, LETTER> rook : colonizedRooks) {
 			reSet.addAll(crownExpansionRecursive(rook, new ArrayList<>(mOrigConds), true));
@@ -131,9 +127,9 @@ public final class CrownConstruction<PLACE, LETTER> {
 		return colonizedRooks;
 	}
 
-	private void crownRefurbishment() {
-		final Kindred<PLACE, LETTER> kindred = new Kindred<>(mCrown);
-		final List<Rook<PLACE, LETTER>> crownRooks = new ArrayList<>(mCrown.getRooks());
+	private Set<Rook<PLACE, LETTER>> crownRefurbishment(final Set<Rook<PLACE, LETTER>> rooks) {
+		final Kindred<PLACE, LETTER> kindred = new Kindred<>(rooks);
+		final List<Rook<PLACE, LETTER>> crownRooks = new ArrayList<>(rooks);
 		for (final Rook<PLACE, LETTER> rook : crownRooks) {
 			final Set<Marking<PLACE>> kindredMarkings = kindred.getKindredMarkings(rook);
 			if (kindredMarkings.isEmpty()) {
@@ -156,8 +152,8 @@ public final class CrownConstruction<PLACE, LETTER> {
 						ImmutableSet.of(DataStructureUtils.difference(realm.getConditions(), allKindredConditions));
 				firstKingdom = firstKingdom.addRealm(new Realm<>(newRealmConditions));
 			}
-			mCrown.removeRook(rook);
-			mCrown.addRook(new Rook<>(firstKingdom, rook.getLaw()));
+			rooks.remove(rook);
+			rooks.add(new Rook<>(firstKingdom, rook.getLaw()));
 			for (final Marking<PLACE> marking : splitMarkings) {
 				final Set<Condition<LETTER, PLACE>> markingKindredConds = kindred.getKindredConditions(marking, rook);
 				Kingdom<PLACE, LETTER> secondKingdom = new Kingdom<>(
@@ -165,9 +161,10 @@ public final class CrownConstruction<PLACE, LETTER> {
 				for (final Condition<LETTER, PLACE> condition : markingKindredConds) {
 					secondKingdom = secondKingdom.addRealm(new Realm<>(ImmutableSet.of(Set.of(condition))));
 				}
-				mCrown.addRook(new Rook<>(secondKingdom, rook.getLaw()));
+				rooks.add(new Rook<>(secondKingdom, rook.getLaw()));
 			}
 		}
+		return rooks;
 	}
 
 	// Recursive expansion
@@ -327,16 +324,16 @@ public final class CrownConstruction<PLACE, LETTER> {
 			declare(CROWN_SIZE, () -> mCrownSize, KeyType.COUNTER);
 		}
 
-		private void measureSettlement(final Runnable runner) {
-			mSettlementTimer.measure(runner);
+		private <T> T measureSettlement(final Supplier<T> runner) {
+			return mSettlementTimer.measure(runner);
 		}
 
 		private <T> T measureCrownComputation(final Supplier<T> runner) {
 			return mCrownTimer.measure(runner);
 		}
 
-		private void measureRefurbishment(final Runnable runner) {
-			mRefurbishmentTimer.measure(runner);
+		private <T> T measureRefurbishment(final Supplier<T> runner) {
+			return mRefurbishmentTimer.measure(runner);
 		}
 
 		private void measureNumKingdoms(final long numKingdoms) {
