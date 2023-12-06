@@ -838,6 +838,9 @@ public class StandardFunctionHandler {
 		fill(map, "_setjmp", this::handleSetjmp);
 		fill(map, "setjmp", this::handleSetjmp);
 
+		// https://en.cppreference.com/w/c/chrono/time
+		fill(map, "time", this::handleTime);
+
 		/** End <stdlib.h> functions according to 7.22 General utilities <stdlib.h> **/
 
 		checkFloatSupport(map, dieFloat);
@@ -1564,6 +1567,17 @@ public class StandardFunctionHandler {
 		return builder.build();
 	}
 
+	private Result handleTime(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+			final String name) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 1, name, arguments);
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		// TODO: Also write the return value to the pointer, if it is not NULL
+		builder.addAllExceptLrValue((ExpressionResult) main.dispatch(arguments[0]));
+		builder.addAllIncludingLrValue(handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.LONG)));
+		return builder.build();
+	}
+
 	/**
 	 * TODO pthread support
 	 */
@@ -2242,7 +2256,7 @@ public class StandardFunctionHandler {
 				null);
 	}
 
-	private Result handleVerifierNonDet(final IDispatcher main, final ILocation loc, final CType cType) {
+	private ExpressionResult handleVerifierNonDet(final IDispatcher main, final ILocation loc, final CType cType) {
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 		final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, cType, SFO.AUXVAR.NONDET);
 		resultBuilder.addDeclaration(auxvarinfo.getVarDec());
