@@ -283,7 +283,11 @@ public class FlatSymbolTable {
 		IASTNode cursor = mCHookSkip.apply(hook);
 		while (cursor != null) {
 			if (cursor instanceof IASTTranslationUnit) {
-				mGlobalScope.put(id, val);
+				if (val == null) {
+					mGlobalScope.remove(id);
+				} else {
+					mGlobalScope.put(id, val);
+				}
 				if (DEBUG_ENABLE_STORE_LOGGING) {
 					mLogger.info(String.format("%-50.50s[%-25.25s]: Storing %s to %s",
 							ReflectionUtil.getCallerSignature(4), cursor.getClass().getSimpleName(), id, val));
@@ -311,7 +315,11 @@ public class FlatSymbolTable {
 					mLogger.info(String.format("%-50.50s[%-25.25s]: Storing %s to %s",
 							ReflectionUtil.getCallerSignature(4), cursor.getClass().getSimpleName(), id, val));
 				}
-				scopeTable.put(id, val);
+				if (val == null) {
+					scopeTable.remove(id);
+				} else {
+					scopeTable.put(id, val);
+				}
 				break;
 			}
 			cursor = cursor.getParent();
@@ -331,6 +339,10 @@ public class FlatSymbolTable {
 		tableStore(hook, id, val);
 		mBoogieIdToCId.put(val.getBoogieName(), id);
 		mCDeclToBoogieDecl.put(val.getCDecl(), val.getBoogieDecl());
+	}
+
+	public void removeCSymbol(final IASTNode hook, final String id) {
+		tableStore(hook, id, null);
 	}
 
 	/**

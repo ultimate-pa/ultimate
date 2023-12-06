@@ -33,7 +33,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ce
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
-import de.uni_freiburg.informatik.ultimate.test.decider.SvcompOverflowTestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.decider.SvcompTestResultDeciderNoOverflow;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ColumnDefinition;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ConversionContext;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ColumnDefinition.Aggregate;
@@ -74,7 +74,7 @@ public class SvcompSoundnessBugsOverflow extends AbstractEvalTestSuite {
 
 	@Override
 	protected ITestResultDecider constructITestResultDecider(final UltimateRunDefinition ultimateRunDefinition) {
-		return new SvcompOverflowTestResultDecider(ultimateRunDefinition, false);
+		return new SvcompTestResultDeciderNoOverflow(ultimateRunDefinition, false);
 	}
 
 	@Override

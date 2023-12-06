@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcPredicateSymbol.HornClauseDontCarePredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcPredicateSymbol.HornClauseTruePredicateSymbol;
@@ -81,7 +82,6 @@ public class HcSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 	 *            table (directly or inside an object) should be transferred to this script.
 	 */
 	public HcSymbolTable(final Script hornClauseParserScript, final ManagedScript mgdScript) {
-		super();
 		mNameToSortsToHornClausePredicateSymbol = new NestedMap2<>();
 		mManagedScript = mgdScript;
 
@@ -353,8 +353,8 @@ public class HcSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 	}
 
 	@Override
-	public Map<String, String> getSmtFunction2BoogieFunction() {
-		return mSmtFunction2BoogieFunction;
+	public String translateToBoogieFunction(final String boogieFunction, final IBoogieType type) {
+		return mSmtFunction2BoogieFunction.get(boogieFunction);
 	}
 
 	@Override

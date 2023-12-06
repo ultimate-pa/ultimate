@@ -1,27 +1,26 @@
--
-  entry_type: loop_invariant
+- entry_type: loop_invariant
   metadata:
-    format_version: 0.1
-    uuid: "a2f819d0-c598-4cd4-a1cb-d048e83554d0"
-    creation_time: "2023-08-02T17:02:13+02:00"
+    format_version: '0.1'
+    uuid: e8bd70ae-fde9-4394-8179-f220cb10b9b6
+    creation_time: '2023-10-31T13:36:43+01:00'
     producer:
       name: UNUSED
-      version: UNUSED
+      version: 0.2.3-dev-b094d93-m
     task:
       input_files:
-        - "C:\ultimate\trunk\examples\witness-checking\regression\correctness\const.c"
+      - C:\ultimate\trunk\examples\witness-checking\regression\correctness\const.c
       input_file_hashes:
-        "C:\ultimate\trunk\examples\witness-checking\regression\correctness\const.c": UNUSED
+        C:\ultimate\trunk\examples\witness-checking\regression\correctness\const.c: UNUSED
       specification: UNUSED
       data_model: UNUSED
       language: C
   location:
-    file_name: "C:\ultimate\trunk\examples\witness-checking\regression\correctness\const.c"
+    file_name: C:\ultimate\trunk\examples\witness-checking\regression\correctness\const.c
     file_hash: UNUSED
     line: 13
     column: 0
     function: main
   loop_invariant:
-    string: s / 4294967296 * 4294967296 == s
+    string: (((s / 4294967296) * 4294967296) == s)
     type: assertion
     format: C

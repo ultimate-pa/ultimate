@@ -124,7 +124,7 @@ class CallCheckHelper extends SdHoareTripleCheckHelper<ICallAction> {
 
 		// workaround see preHierIndependent()
 		final UnmodifiableTransFormula locVarAssignTf = call.getLocalVarsAssignment();
-		if (!varsDisjointFromAssignedVars(pre, locVarAssignTf)) {
+		if (!varsDisjointFromOutVars(pre, locVarAssignTf)) {
 			return null;
 		}
 		// TODO: Matthias 7.10.2012 I hoped following would be sufficient. But this is not sufficient when constant
@@ -138,9 +138,10 @@ class CallCheckHelper extends SdHoareTripleCheckHelper<ICallAction> {
 		// }
 		//
 		// workaround for preceding problem
-		if (!varsDisjointFromAssignedVars(post, locVarAssignTf)) {
+		if (!varsDisjointFromOutVars(post, locVarAssignTf)) {
 			return null;
 		}
+
 
 		mStatistics.getSDsCounter().incCa();
 		return Validity.INVALID;
@@ -161,7 +162,7 @@ class CallCheckHelper extends SdHoareTripleCheckHelper<ICallAction> {
 			if (bv.isGlobal()) {
 				continue;
 			}
-			if (locVarAssignTf.getAssignedVars().contains(bv)) {
+			if (locVarAssignTf.getOutVars().keySet().contains(bv)) {
 				if (argumentsRestrictedByPre) {
 					continue;
 				}

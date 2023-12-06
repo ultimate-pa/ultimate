@@ -40,7 +40,6 @@ import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.MergedLocation;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AnnotationCheckResult;
@@ -53,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.AnnotationCheckResul
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AnnotationCheckResult.ProcedureExit;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResultAtElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -210,7 +210,7 @@ public class InvariantChecker {
 				throw new AssertionError(
 						"program point " + programPoint + " is error location but does not have a Check");
 			}
-			if (check.getSpec().equals(Collections.singleton(Check.Spec.POST_CONDITION))) {
+			if (check.getSpec().equals(Collections.singleton(Spec.POST_CONDITION))) {
 				result = new ProcedureExit(location, programPoint.getProcedure());
 			} else {
 				result = new CheckPoint(location, Check.getAnnotation(programPoint));

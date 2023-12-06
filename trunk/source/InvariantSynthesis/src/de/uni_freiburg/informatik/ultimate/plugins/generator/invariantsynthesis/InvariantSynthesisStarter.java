@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessEnsuresClause;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.DangerInvariantResult;
@@ -338,8 +339,7 @@ public class InvariantSynthesisStarter<L extends IIcfgTransition<?>> {
 			if (formula.equals(trueterm)) {
 				continue;
 			}
-			final String inv = backTranslatorService.translateExpressionToString(formula, Term.class);
-			new WitnessInvariant(inv).annotate(locNode);
+			new WitnessInvariant(invResult.getInvariant()).annotate(locNode);
 		}
 	}
 
@@ -359,7 +359,7 @@ public class InvariantSynthesisStarter<L extends IIcfgTransition<?>> {
 						Activator.PLUGIN_NAME, finalNode, backTranslatorService, procName, formula);
 
 				reportResult(result);
-				// TODO: Add setting that controls the generation of those witness invariants
+				new WitnessEnsuresClause(result.getContract()).annotate(finalNode);
 			}
 		}
 	}

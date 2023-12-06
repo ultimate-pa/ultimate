@@ -29,7 +29,7 @@ ultimatedir = os.path.dirname(os.path.realpath(__file__))
 configdir = os.path.join(ultimatedir, "config")
 datadir = os.path.join(ultimatedir, "data")
 witnessdir = ultimatedir
-witnessname = "witness.graphml"
+witnessname = "witness"
 enable_assertions = False
 
 # special strings in ultimate output
@@ -404,6 +404,7 @@ def run_ultimate(ultimate_call, prop, verbose=False):
             if line.find(termination_path_end) != -1:
                 reading_error_path = False
         elif prop.is_data_race():
+            result_msg = "DATA-RACE"
             if line.find(data_race_found_string) != -1:
                 result = "FALSE"
             if line.find(all_spec_string) != -1:
@@ -564,6 +565,10 @@ def check_dir(d):
 
 
 def check_witness_type(witness, type):
+    if not witness.endswith(".graphml"):
+        # Only check the format for GraphML witnesses
+        # TODO: Change this in the future
+        return
     tree = elementtree.parse(witness)
     namespace = "{http://graphml.graphdrawing.org/xmlns}"
     query = ".//{0}graph/{0}data[@key='witness-type']".format(namespace)

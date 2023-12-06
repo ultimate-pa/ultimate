@@ -223,7 +223,7 @@ public class Rational implements Comparable<Rational> {
 		@Override
 		public Rational gcd(final Rational other) {
 			if (other == Rational.ZERO) {
-				return this;
+				return this.abs();
 			}
 			final BigInteger tdenom = denominator();
 			final BigInteger odenom = other.denominator();
@@ -674,18 +674,19 @@ public class Rational implements Comparable<Rational> {
 	}
 
 	/**
-	 * Compute the gcd of two rationals (this and other).  The gcd
-	 * is the rational number, such that dividing this and other with
-	 * the gcd will yield two co-prime integers.
+	 * Compute the gcd of two rationals (this and other). The gcd is the rational
+	 * number, such that dividing this and other with the gcd will yield two
+	 * co-prime integers. The gcd is always non-negative.
+	 *
 	 * @param other the second rational argument.
 	 * @return the gcd of this and other.
 	 */
 	public Rational gcd(final Rational other) {
 		if (this == Rational.ZERO) {
-			return other;
+			return other.abs();
 		}
 		if (other == Rational.ZERO) {
-			return this;
+			return this.abs();
 		}
 		if (other instanceof BigRational) {
 			return other.gcd(this);
@@ -694,8 +695,7 @@ public class Rational implements Comparable<Rational> {
 		/* new denominator = lcm(denom, other.denom) */
 		final int gcddenom = gcd(mDenom, other.mDenom);
 		final long denom = ((long) (mDenom / gcddenom)) * other.mDenom;
-		final long num = gcd(mNum < 0 ? -mNum : mNum,
-				other.mNum < 0 ? -other.mNum : other.mNum);
+		final long num = gcd(mNum < 0 ? -(long) mNum : mNum, other.mNum < 0 ? -(long) other.mNum : other.mNum);
 		return valueOf(num, denom);
 	}
 	/**

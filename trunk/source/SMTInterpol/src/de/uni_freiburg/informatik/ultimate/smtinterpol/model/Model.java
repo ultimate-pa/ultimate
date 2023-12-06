@@ -66,6 +66,8 @@ public class Model implements de.uni_freiburg.informatik.ultimate.logic.Model {
 
 	private final ModelEvaluator mEval;
 
+	private int mModelValueCounter;
+
 	public Model(final Clausifier clausifier, final Theory theory) {
 		mTheory = theory;
 		mSorts.put(theory.getBooleanSort(), new BoolSortInterpretation());
@@ -130,6 +132,7 @@ public class Model implements de.uni_freiburg.informatik.ultimate.logic.Model {
 			}
 		}
 		mEval = new ModelEvaluator(this);
+		mModelValueCounter = 0;
 	}
 
 	public boolean checkTypeValues(final LogProxy logger) {
@@ -156,6 +159,16 @@ public class Model implements de.uni_freiburg.informatik.ultimate.logic.Model {
 			}
 		}
 		return correct;
+	}
+
+	/**
+	 * Get a fresh value. This returns an index that was not yet used for creating a
+	 * model value.
+	 *
+	 * @return the fresh value.
+	 */
+	public int getFreshModelValue() {
+		return mModelValueCounter++;
 	}
 
 	public Term getModelValue(final int index, final Sort sort) {
@@ -314,7 +327,7 @@ public class Model implements de.uni_freiburg.informatik.ultimate.logic.Model {
 			} else if (sort.getSortSymbol().isDatatype()) {
 				interpretation = new DataTypeInterpretation(this, sort);
 			} else {
-				interpretation = new FiniteSortInterpretation();
+				interpretation = new FiniteSortInterpretation(this);
 			}
 			mSorts.put(sort, interpretation);
 		}

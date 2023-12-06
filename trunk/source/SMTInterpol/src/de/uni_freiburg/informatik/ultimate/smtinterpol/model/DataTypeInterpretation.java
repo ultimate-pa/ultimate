@@ -18,17 +18,17 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol.model;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.DataType;
 import de.uni_freiburg.informatik.ultimate.logic.DataType.Constructor;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
-import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
@@ -57,24 +57,30 @@ public class DataTypeInterpretation implements SortInterpretation {
 		return extendFreshOrLast(new HashSet<Sort>());
 	}
 
-	private boolean isInfinite(Sort sort, Set<Sort> visited) {
+	private boolean isInfinite(Sort sort, Map<Sort, Boolean> visited) {
 		final DataType dataType = (DataType) sort.getSortSymbol();
+		if (visited.containsKey(sort)) {
+			return visited.get(sort);
+		}
+		visited.put(sort, true);
 		for (final Constructor constr : dataType.getConstructors()) {
 			for (final Sort argSort : constr.getArgumentSorts()) {
 				final Sort realArgSort = argSort.mapSort(sort.getArguments());
-				if (realArgSort.isNumericSort() || realArgSort.isArraySort() || !realArgSort.isInternal()
-						|| (realArgSort.getSortSymbol().isDatatype() && isInfinite(realArgSort, visited))) {
+				if (realArgSort.isNumericSort() || realArgSort.isArraySort()
+						|| (realArgSort.getSortSymbol().isDatatype() ? isInfinite(realArgSort, visited)
+								: !realArgSort.isInternal())) {
 					return true;
 				}
 			}
 		}
+		visited.put(sort, false);
 		return false;
 	}
 
 	private void findInfiniteConstructor() {
 		final DataType dataType = (DataType) mSort.getSortSymbol();
-		final HashSet<Sort> visited = new HashSet<>();
-		visited.add(mSort);
+		final HashMap<Sort, Boolean> visited = new HashMap<>();
+		visited.put(mSort, true);
 		for (final Constructor constr : dataType.getConstructors()) {
 			final Sort[] argSorts = constr.getArgumentSorts();
 			Sort[] realArgSorts = argSorts;
@@ -87,8 +93,8 @@ public class DataTypeInterpretation implements SortInterpretation {
 			for (int j = 0; j < argSorts.length; j++) {
 				if (realArgSorts[j].isNumericSort() ||
 						realArgSorts[j].isArraySort() ||
-						!realArgSorts[j].isInternal() ||
-						(realArgSorts[j].getSortSymbol().isDatatype() && isInfinite(realArgSorts[j], visited))) {
+						(realArgSorts[j].getSortSymbol().isDatatype() ? isInfinite(realArgSorts[j], visited)
+								: !realArgSorts[j].isInternal())) {
 					mInfiniteConsArg = j;
 					final Sort constrSort = constr.needsReturnOverload() ? mSort : null;
 					mInfiniteConstructor = mModel.getTheory().getFunctionWithResult(constr.getName(), null,
@@ -190,12 +196,11 @@ public class DataTypeInterpretation implements SortInterpretation {
 		return "datatypeSort" + mExistingTerms;
 	}
 
-	public static Rational toRational(final Term constTerm) {
-		return ((Rational) ((ConstantTerm) constTerm).getValue());
-	}
-
 	@Override
 	public Term getModelValue(int idx, final Sort sort) {
+		if (mExistingTerms.size() == 0) {
+			createSomeTerm(new HashSet<Sort>());
+		}
 		while (idx >= mExistingTerms.size()) {
 			extendFresh(sort);
 		}

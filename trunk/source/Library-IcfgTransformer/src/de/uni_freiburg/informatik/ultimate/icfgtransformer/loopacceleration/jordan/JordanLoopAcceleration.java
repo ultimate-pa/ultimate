@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.LoopAccelerationUtils;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan.JordanDecomposition.JordanDecompositionStatus;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.SimultaneousUpdate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.SimultaneousUpdate.NondetArrayWriteConstraints;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.SimultaneousUpdate.SimultaneousUpdateException;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
@@ -156,15 +157,18 @@ public class JordanLoopAcceleration {
 			}
 			for (final Entry<IProgramVar, MultiDimensionalNestedStore> entry : su.getDeterministicArrayWrites()
 					.entrySet()) {
-				if (entry.getValue().getIndices().size() != 1) {
-					throw new AssertionError("Nested stores!");
-				}
-				if (!DataStructureUtils.haveEmptyIntersection(
-						new HashSet<>(Arrays.asList(entry.getValue().getValues().get(0).getFreeVars())), tvOfHavoced)) {
-					throw new UnsupportedOperationException(UNSUPPORTED_PREFIX + " Havoced var is read!");
+				for (int i = 0; i < entry.getValue().getIndices().size(); i++) {
+					if (!DataStructureUtils.haveEmptyIntersection(
+							new HashSet<>(entry.getValue().getIndices().get(i).getFreeVars()), tvOfHavoced)) {
+						throw new UnsupportedOperationException(UNSUPPORTED_PREFIX + " Havoced var is read!");
+					}
+
+					if (!DataStructureUtils.haveEmptyIntersection(
+							new HashSet<>(Arrays.asList(entry.getValue().getValues().get(i).getFreeVars())), tvOfHavoced)) {
+						throw new UnsupportedOperationException(UNSUPPORTED_PREFIX + " Havoced var is read!");
+					}
 				}
 			}
-
 		}
 
 		final Pair<LinearUpdate, String> pair = LinearUpdate.fromSimultaneousUpdate(mgdScript, su);
@@ -249,16 +253,20 @@ public class JordanLoopAcceleration {
 						throw new UnsupportedOperationException("ArrayIndex contains some array variable");
 					}
 				}
+				if (su.getNondetArrayWriteConstraints().get(entry.getKey()).isNondeterministicArrayUpdate(i)) {
+					continue;
+				}
 				final Term value = entry.getValue().getValues().get(i);
 				final Collection<ArrayStore> stores = ArrayStore.extractStores(value, true);
 				if (!stores.isEmpty()) {
-					throw new UnsupportedOperationException("Written value contains store");
+					throw new UnsupportedOperationException("Value contains some stores");
 				}
 
 				final List<MultiDimensionalSelect> selects = MultiDimensionalSelect.extractSelectDeep(value);
 				if (selects.size() > 1) {
 					// FIXME 20230606 Matthias: Occurs sedomly, do not support by now
-					throw new UnsupportedOperationException("Written value contains several selects");
+					throw new UnsupportedOperationException(
+							String.format("Written value contains %s selects: %s", selects.size(), selects));
 				}
 				if (selects.size() == 1) {
 					final MultiDimensionalSelect mds = selects.get(0);
@@ -307,17 +315,20 @@ public class JordanLoopAcceleration {
 				throw new AssertionError(String.format("Contradiction: %s is readonly and modified", pv));
 			}
 		}
-		final NestedMap2<IProgramVar, ArrayIndex, Term> array2Index2values = applySubstitutionToIndexAndValue(mgdScript,
+		final Map<IProgramVar, MultiDimensionalNestedStore> arrayWrites = applySubstitutionToIndexAndValue(mgdScript,
 				substitutionMapping, su.getDeterministicArrayWrites());
-		final ClosedFormOfUpdate res = new ClosedFormOfUpdate(closedFormForProgramVar, array2Index2values);
-		checkIndices(mgdScript, array2Index2values, it);
+		final ClosedFormOfUpdate res = new ClosedFormOfUpdate(closedFormForProgramVar, arrayWrites, su.getNondetArrayWriteConstraints());
+		checkIndices(mgdScript, arrayWrites, it);
 		return res;
 	}
 
 	private static void checkIndices(final ManagedScript mgdScript,
-			final NestedMap2<IProgramVar, ArrayIndex, Term> array2Index2values, final TermVariable it) {
-		for (final Triple<IProgramVar, ArrayIndex, Term> triple : array2Index2values.entrySet()) {
-			checkIndex(mgdScript, triple.getSecond(), it);
+			final Map<IProgramVar, MultiDimensionalNestedStore> array2Index2values, final TermVariable it) {
+		for (final Entry<IProgramVar, MultiDimensionalNestedStore> entry : array2Index2values.entrySet()) {
+			final MultiDimensionalNestedStore mdns = entry.getValue();
+			for (int i = 0; i < mdns.getIndices().size(); i++) {
+				checkIndex(mgdScript, mdns.getIndices().get(i), it);
+			}
 		}
 	}
 
@@ -337,31 +348,23 @@ public class JordanLoopAcceleration {
 			for (final Entry<Monomial, Rational> entry : poly.getMonomial2Coefficient().entrySet()) {
 				final Occurrence occ = entry.getKey().isExclusiveVariable(it);
 				if (occ == Occurrence.NON_EXCLUSIVE_OR_SUBTERM) {
-					throw new UnsupportedOperationException(UNSUPPORTED_PREFIX + " Probably not monotone: " + entry.getKey());
+					throw new UnsupportedOperationException(
+							UNSUPPORTED_PREFIX + " Probably not monotone: " + entry.getKey());
 				} else if (occ == Occurrence.AS_EXCLUSIVE_VARIABlE) {
 					strictlyMonotone = true;
 				}
 			}
-
 		}
 		return strictlyMonotone;
 	}
 
 
-	private static NestedMap2<IProgramVar, ArrayIndex, Term> applySubstitutionToIndexAndValue(
+	private static Map<IProgramVar, MultiDimensionalNestedStore> applySubstitutionToIndexAndValue(
 			final ManagedScript mgdScript, final Map<? extends Term, ? extends Term> substitutionMapping,
 			final Map<IProgramVar, MultiDimensionalNestedStore> map) {
-		final NestedMap2<IProgramVar, ArrayIndex, Term> result = new NestedMap2<>();
+		final Map<IProgramVar, MultiDimensionalNestedStore> result = new HashMap<>();
 		for (final Entry<IProgramVar, MultiDimensionalNestedStore> entry : map.entrySet()) {
-			if (entry.getValue().getIndices().size() != 1) {
-				throw new AssertionError("Nested stores!");
-			}
-			final List<Term> newIndexEntries = entry.getValue().getIndices().get(0).stream()
-					.map(x -> Substitution.apply(mgdScript, substitutionMapping, x)).collect(Collectors.toList());
-			final ArrayIndex newArrayIndex = new ArrayIndex(newIndexEntries);
-			final Term newValue = Substitution.apply(mgdScript, substitutionMapping,
-					entry.getValue().getValues().get(0));
-			result.put(entry.getKey(), newArrayIndex, newValue);
+			result.put(entry.getKey(), entry.getValue().applySubstitution(mgdScript, substitutionMapping));
 		}
 		return result;
 	}
@@ -497,7 +500,7 @@ public class JordanLoopAcceleration {
 				mgdScript, true, PqeTechniques.ALL, SimplificationTechnique.NONE, nnf);
 		// TODO 20220724 Matthias: Simplification after quantifier elimination is typically superfluous.
 		final Term simplified = SmtUtils.simplify(mgdScript, loopAccelerationFormulaWithoutQuantifiers,
-				mgdScript.term(null, "true"), services, SimplificationTechnique.SIMPLIFY_DDA);
+				mgdScript.term(null, "true"), services, SimplificationTechnique.SIMPLIFY_DDA2);
 
 		UnmodifiableTransFormula loopAccelerationFormula;
 		if (quantifyItFinExplicitly) {
@@ -509,7 +512,7 @@ public class JordanLoopAcceleration {
 			Term quantified = SmtUtils.quantifier(mgdScript.getScript(), QuantifiedFormula.EXISTS,
 					Collections.singleton(itFin), simplified);
 			quantified = PartialQuantifierElimination.eliminateCompat(services,
-					mgdScript, true, PqeTechniques.ALL, SimplificationTechnique.SIMPLIFY_DDA, quantified);
+					mgdScript, true, PqeTechniques.ALL, SimplificationTechnique.SIMPLIFY_DDA2, quantified);
 			tfb.setFormula(quantified);
 			loopAccelerationFormula = tfb.finishConstruction(mgdScript);
 		} else {
@@ -639,23 +642,44 @@ public class JordanLoopAcceleration {
 			final ManagedScript mgdScript, final UnmodifiableTransFormula loopTransFormula, final TermVariable itFin,
 			final TermVariable it, final ClosedFormOfUpdate closedFormIt) {
 		final Script script = mgdScript.getScript();
+
+		for (final Entry<IProgramVar, MultiDimensionalNestedStore> entry : closedFormIt.getArrayUpdates().entrySet()) {
+			final IProgramVar array = entry.getKey();
+			final MultiDimensionalNestedStore mdns = entry.getValue();
+			if (mdns.getIndices().size() > 1) {
+				final StringBuilder sb = new StringBuilder();
+				int indexPairs = 0;
+				int movingInLockstep = 0;
+				final List<ArrayIndex> indices = mdns.getIndices();
+				for (int i = 0; i < indices.size(); i++) {
+					for (int j = i + 1; j < indices.size(); j++) {
+						indexPairs++;
+						final ArrayIndex diff = indices.get(i).minus(script, indices.get(j));
+						sb.append(diff);
+						sb.append(" ");
+						if (diff.getFreeVars().isEmpty()) {
+							movingInLockstep++;
+						}
+					}
+				}
+				throw new UnsupportedOperationException(
+						String.format("%s updates on array %s. %s indexPairs, %s moving in lockstep. Differences: %s",
+								indices.size(), array, indexPairs, movingInLockstep, sb.toString()));
+			}
+		}
+
 		final List<Term> arrayUpdateConstraints = new ArrayList<>();
 		// a[k] := v
 		// a' = (store a k v)
 		// ∀idx. ∀it. (0 <= it < itFin ∧ idx=closedForm_k(it)) ==> a'[idx]=closedForm_v(it)
 		//          ∧ (not ∃it. (0 <= it < itFin ∧ idx=closedForm_k(it))) ==> a'[idx]=a[idx]
-		for (final IProgramVar array : closedFormIt.getArrayUpdates().keySet()) {
-			final Set<Entry<ArrayIndex, Term>> entries = closedFormIt.getArrayUpdates().get(array).entrySet();
-			if (entries.size() > 1) {
+		for (final Entry<IProgramVar, MultiDimensionalNestedStore> entry : closedFormIt.getArrayUpdates().entrySet()) {
+			final IProgramVar array = entry.getKey();
+			final MultiDimensionalNestedStore mdns = entry.getValue();
+			if (mdns.getIndices().size() > 1) {
 				throw new UnsupportedOperationException(UNSUPPORTED_PREFIX + " Several updates per array");
 			}
-			final ArrayIndex index;
-			final Term value;
-			{
-				final Entry<ArrayIndex, Term> entry = entries.iterator().next();
-				index = entry.getKey();
-				value = entry.getValue();
-			}
+			final ArrayIndex index = mdns.getIndices().get(0);
 			final List<TermVariable> idx = constructIdxTermVariables(mgdScript, index.size());
 			final Term inRangeIndexEquality;
 			{
@@ -663,31 +687,45 @@ public class JordanLoopAcceleration {
 				final Term iterationRange = constructIterationRange(script, BigInteger.ZERO, it, BigInteger.ONE, itFin);
 				inRangeIndexEquality = SmtUtils.and(script, iterationRange, eq1);
 			}
-			final Term conjunct1;
+			final List<Term> constraints = new ArrayList<>();
 			{
-				final Term valueUpdate = SmtUtils.equality(script,
-						new MultiDimensionalSelect(loopTransFormula.getOutVars().get(array), new ArrayIndex(idx)).toTerm(script),
-						value);
-				final Term impl1 = SmtUtils.implies(script, inRangeIndexEquality, valueUpdate);
+				final Term valueConstraint;
+				final Term arrayCell = new MultiDimensionalSelect(loopTransFormula.getOutVars().get(array),
+						new ArrayIndex(idx)).toTerm(script);
+				if (!closedFormIt.getNondetArrayWriteConstraints().get(array).isNondeterministicArrayUpdate(0)) {
+					// deterministic update: we give the array cell a new value
+					final Term value = mdns.getValues().get(0);
+					final Term valueUpdate = SmtUtils.equality(script, arrayCell, value);
+					valueConstraint = valueUpdate;
+				} else {
+					// nondeterministic update: we add some constraints for the value of the cell.
+					// If there are no constraints, we use `true` and the `inRangeConstraint`
+					// (below) will also become true
+					valueConstraint = closedFormIt.getNondetArrayWriteConstraints().get(array)
+							.constructConstraints(script, 0, arrayCell);
+				}
+				final Term impl1 = SmtUtils.implies(script, inRangeIndexEquality, valueConstraint);
 				final Term quantified = SmtUtils.quantifier(script, QuantifiedFormula.FORALL, Collections.singleton(it),
 						impl1);
-				conjunct1 = PartialQuantifierElimination.eliminate(services, mgdScript, quantified,
-						SimplificationTechnique.SIMPLIFY_DDA);
+				final Term inRangeConstraint = PartialQuantifierElimination.eliminate(services, mgdScript, quantified,
+						SimplificationTechnique.SIMPLIFY_DDA2);
+				constraints.add(inRangeConstraint);
 			}
-			final Term conjunct2;
 			{
 				final Term valueConstancy = SmtUtils.equality(script,
-						new MultiDimensionalSelect(loopTransFormula.getOutVars().get(array), new ArrayIndex(idx)).toTerm(script),
+						new MultiDimensionalSelect(loopTransFormula.getOutVars().get(array), new ArrayIndex(idx))
+								.toTerm(script),
 						new MultiDimensionalSelect(loopTransFormula.getInVars().get(array), new ArrayIndex(idx))
 								.toTerm(script));
 				final Term existsInRangeEquality = SmtUtils.quantifier(script, QuantifiedFormula.EXISTS,
 						Collections.singleton(it), inRangeIndexEquality);
 				final Term quantified = SmtUtils.implies(script,
 						SmtUtils.not(mgdScript.getScript(), existsInRangeEquality), valueConstancy);
-				conjunct2 = PartialQuantifierElimination.eliminate(services, mgdScript, quantified,
-						SimplificationTechnique.SIMPLIFY_DDA);
+				final Term outsideRangeConstraint = PartialQuantifierElimination.eliminate(services, mgdScript,
+						quantified, SimplificationTechnique.SIMPLIFY_DDA2);
+				constraints.add(outsideRangeConstraint);
 			}
-			final Term conjunction = SmtUtils.and(script, conjunct1, conjunct2);
+			final Term conjunction = SmtUtils.and(script, constraints);
 			// No need to apply quantifier elimination to conjunction, each conjunct
 			// addresses a different range hence no conjunct can simplify the other.
 			final Term all2 = SmtUtils.quantifier(script, QuantifiedFormula.FORALL, idx, conjunction);
@@ -1039,7 +1077,7 @@ public class JordanLoopAcceleration {
 		final Term loopAccelerationFormulaWithoutQuantifiers = PartialQuantifierElimination.eliminateCompat(services,
 				mgdScript, true, PqeTechniques.ALL, SimplificationTechnique.NONE, nnf);
 		final Term simplified = SmtUtils.simplify(mgdScript, loopAccelerationFormulaWithoutQuantifiers,
-				mgdScript.term(null, "true"), services, SimplificationTechnique.SIMPLIFY_DDA);
+				mgdScript.term(null, "true"), services, SimplificationTechnique.SIMPLIFY_DDA2);
 
 		// Check correctness of quantifier elimination.
 		assert checkCorrectnessOfQuantifierElimination(logger, script, loopAccelerationTerm, simplified);
@@ -1141,21 +1179,28 @@ public class JordanLoopAcceleration {
 	}
 
 	public static class ClosedFormOfUpdate {
-		final Map<IProgramVar, Term> mScalarUpdates;
-		final NestedMap2<IProgramVar, ArrayIndex, Term> mArrayUpdates;
+		private final Map<IProgramVar, Term> mScalarUpdates;
+		private final Map<IProgramVar, MultiDimensionalNestedStore> mArrayUpdates;
+		private final Map<IProgramVar, NondetArrayWriteConstraints> mNondetArrayWriteConstraints;
 
 		public ClosedFormOfUpdate(final Map<IProgramVar, Term> scalarUpdates,
-				final NestedMap2<IProgramVar, ArrayIndex, Term> arrayUpdates) {
+				final Map<IProgramVar, MultiDimensionalNestedStore> arrayUpdates,
+				final Map<IProgramVar, NondetArrayWriteConstraints> nondetArrayWriteConstraints) {
 			super();
 			mScalarUpdates = scalarUpdates;
 			mArrayUpdates = arrayUpdates;
+			mNondetArrayWriteConstraints = nondetArrayWriteConstraints;
 		}
 		public Map<IProgramVar, Term> getScalarUpdates() {
 			return mScalarUpdates;
 		}
-		public NestedMap2<IProgramVar, ArrayIndex, Term> getArrayUpdates() {
+		public Map<IProgramVar, MultiDimensionalNestedStore> getArrayUpdates() {
 			return mArrayUpdates;
 		}
+		public Map<IProgramVar, NondetArrayWriteConstraints> getNondetArrayWriteConstraints() {
+			return mNondetArrayWriteConstraints;
+		}
+
 	}
 
 	public static class JordanLoopAccelerationResult {

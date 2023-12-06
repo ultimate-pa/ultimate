@@ -89,7 +89,8 @@ WhiteSpace     = {LineTerminator}* | {space}*
   	"function"      { return symbol("function",sym.FUNCTION); }
     "float"			{ return symbol("float",sym.FLOAT, yytext()); }
     "for"			{ return symbol("for",sym.FOR); }
-    "global"		{ return symbol("global",sym.GLOBAL); } 
+    "global"		{ return symbol("global",sym.GLOBAL); }
+    "ghost" 		{ return symbol("ghost",sym.GHOST); }
     "ltl"			{ return symbol("global",sym.LTL); }
     "if"            { return symbol("if",sym.IF); }
 	"impact"		{ return symbol("impact",sym.IMPACT); }

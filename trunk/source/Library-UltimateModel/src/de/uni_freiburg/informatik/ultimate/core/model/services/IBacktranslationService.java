@@ -47,9 +47,9 @@ public interface IBacktranslationService {
 	 *
 	 * @param translator
 	 */
-	public <STE, TTE, SE, TE, SVL, TVL> void addTranslator(ITranslator<STE, TTE, SE, TE, SVL, TVL> translator);
+	<STE, TTE, SE, TE, SVL, TVL, LOC> void addTranslator(ITranslator<STE, TTE, SE, TE, SVL, TVL, LOC> translator);
 
-	public <SE, TE> TE translateExpression(SE expression, Class<SE> sourceExpressionClass);
+	<SE, TE> TE translateExpression(SE expression, Class<SE> sourceExpressionClass);
 
 	/**
 	 * Translate an expression from the output type to a String.
@@ -58,23 +58,25 @@ public interface IBacktranslationService {
 	 * @param clazz
 	 * @return
 	 */
-	public <SE> String translateExpressionToString(SE expression, Class<SE> clazz);
+	<SE> String translateExpressionToString(SE expression, Class<SE> clazz);
 
-	public <STE> List<?> translateTrace(List<STE> trace, Class<STE> clazz);
+	<SE, CTX> String translateExpressionWithContextToString(SE expression, CTX context, Class<SE> clazz);
 
-	public <STE> List<String> translateTraceToHumanReadableString(List<STE> trace, Class<STE> clazz);
+	<STE> List<?> translateTrace(List<STE> trace, Class<STE> clazz);
 
-	public <STE, SE> IProgramExecution<?, ?> translateProgramExecution(IProgramExecution<STE, SE> programExecution);
-	
-	public <SE> ProgramState<?> translateProgramState(ProgramState<SE> programState);
-	
-	public <SE> String translateProgramStateToString(ProgramState<SE> programState);
+	<STE> List<String> translateTraceToHumanReadableString(List<STE> trace, Class<STE> clazz);
 
-	public <STE, SE> IBacktranslatedCFG<?, ?> translateCFG(IBacktranslatedCFG<?, STE> cfg);
+	<STE, SE> IProgramExecution<?, ?> translateProgramExecution(IProgramExecution<STE, SE> programExecution);
+
+	<SE> ProgramState<?> translateProgramState(ProgramState<SE> programState);
+
+	<SE> String translateProgramStateToString(ProgramState<SE> programState);
+
+	<STE, SE> IBacktranslatedCFG<?, ?> translateCFG(IBacktranslatedCFG<?, STE> cfg);
 
 	/**
 	 * Use this if you want to keep a certain state of the backtranslation chain during toolchain execution.
 	 */
-	public IBacktranslationService getTranslationServiceCopy();
+	IBacktranslationService getTranslationServiceCopy();
 
 }

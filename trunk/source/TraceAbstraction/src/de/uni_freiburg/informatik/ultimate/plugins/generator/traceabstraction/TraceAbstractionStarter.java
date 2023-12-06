@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessEnsuresClause;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.InvariantResult;
@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.ProcedureContractRes
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -457,8 +458,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 			if (formula.equals(trueterm)) {
 				continue;
 			}
-			final String inv = backTranslatorService.translateExpressionToString(formula, Term.class);
-			new WitnessInvariant(inv).annotate(locNode);
+			new WitnessInvariant(invResult.getInvariant()).annotate(locNode);
 		}
 	}
 
@@ -478,7 +478,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 						Activator.PLUGIN_NAME, finalNode, backTranslatorService, procName, formula);
 
 				mResultReporter.reportResult(result);
-				// TODO: Add setting that controls the generation of those witness invariants
+				new WitnessEnsuresClause(result.getContract()).annotate(finalNode);
 			}
 		}
 	}

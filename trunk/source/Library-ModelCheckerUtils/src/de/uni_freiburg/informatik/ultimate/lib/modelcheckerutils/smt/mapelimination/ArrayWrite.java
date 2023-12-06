@@ -51,7 +51,7 @@ public class ArrayWrite {
 		} else {
 			arrayTerm = term;
 		}
-		final MultiDimensionalNestedStore mdns = MultiDimensionalNestedStore.convert(script, arrayTerm);
+		final MultiDimensionalNestedStore mdns = MultiDimensionalNestedStore.of(arrayTerm);
 		if (mdns == null) {
 			mOldArray = arrayTerm;
 		} else {

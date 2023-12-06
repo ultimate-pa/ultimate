@@ -325,7 +325,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		// not modifiable globals get index 0
 		// other variables get index 1
 		final Set<IProgramVar> modifiableGlobalsAssignedOnReturn = new HashSet<>();
-		for (final IProgramVar assignedVar : tfReturn.getAssignedVars()) {
+		for (final IProgramVar assignedVar : tfReturn.getOutVars().keySet()) {
 			if (modifiableGlobalsCallee.contains(assignedVar)) {
 				modifiableGlobalsAssignedOnReturn.add(assignedVar);
 			}

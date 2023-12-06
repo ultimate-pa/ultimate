@@ -755,13 +755,14 @@ public abstract class BoogieTransformer {
 			final StructConstructor sConst = (StructConstructor) expr;
 			final Expression[] fieldValues = processExpressions(sConst.getFieldValues());
 			if (fieldValues != sConst.getFieldValues()) {
-				newExpr = new StructConstructor(sConst.getLocation(), sConst.getFieldIdentifiers(), fieldValues);
+				newExpr = new StructConstructor(sConst.getLocation(), sConst.getType(), sConst.getFieldIdentifiers(),
+						fieldValues);
 			}
 		} else if (expr instanceof StructAccessExpression) {
 			final StructAccessExpression sae = (StructAccessExpression) expr;
 			final Expression struct = processExpression(sae.getStruct());
 			if (struct != sae.getStruct()) {
-				newExpr = new StructAccessExpression(sae.getLocation(), struct, sae.getField());
+				newExpr = new StructAccessExpression(sae.getLocation(), sae.getType(), struct, sae.getField());
 			}
 		} else if (expr instanceof BooleanLiteral) {
 		} else if (expr instanceof IntegerLiteral) {

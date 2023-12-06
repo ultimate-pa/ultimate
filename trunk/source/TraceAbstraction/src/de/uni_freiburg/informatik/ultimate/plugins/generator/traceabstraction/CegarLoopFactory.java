@@ -162,7 +162,8 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 					stateFactoryForRefinement);
 		}
 
-		if (FORCE_FINITE_AUTOMATA_FOR_SEQUENTIAL_PROGRAMS && !IcfgUtils.isConcurrent(root)) {
+		if ((FORCE_FINITE_AUTOMATA_FOR_SEQUENTIAL_PROGRAMS && !IcfgUtils.isConcurrent(root))
+				|| witnessAutomaton != null) {
 			return createFiniteAutomataCegarLoop(services, name, root, predicateFactory, errorLocs,
 					rawFloydHoareAutomataFromFile, hoareAnnotationLocs, stateFactoryForRefinement, witnessAutomaton);
 		}
@@ -263,10 +264,6 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 			}
 			return new WitnessAutomatonAbstractionProvider<>(services, predicateFactory, stateFactory, provider,
 					witnessAutomaton, Property.NON_REACHABILITY);
-		}
-
-		if (witnessAutomaton != null) {
-			throw new UnsupportedOperationException("Witness automata not supported for concurrent programs");
 		}
 
 		final var netProvider = createPetriAbstractionProvider(services, predicateFactory, false);

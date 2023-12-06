@@ -1,8 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie;
 
-import java.util.Map;
-
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramFunction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
@@ -15,7 +14,7 @@ public interface ITerm2ExpressionSymbolTable {
 
 	IProgramVar getProgramVar(TermVariable term);
 
-	Map<String, String> getSmtFunction2BoogieFunction();
+	String translateToBoogieFunction(String smtFunctionName, IBoogieType type);
 
 	ILocation getLocation(IProgramVar pv);
 

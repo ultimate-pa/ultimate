@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SMTAffineTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofLiteral;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofRules;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.TimeoutHandler;
 
 @RunWith(JUnit4.class)
 public class EqInterpolatorIntTest {
@@ -105,7 +106,7 @@ public class EqInterpolatorIntTest {
 		@SuppressWarnings("unchecked")
 		final Set<String>[] partition = new Set[] { empty, empty };
 		mInterpolator = new Interpolator(mSolver.getLogger(), null, null, mTheory, partition, new int[partition.length],
-				mSolver.getTimeoutHandler());
+				new TimeoutHandler(mSolver.getTerminationRequest()));
 		final HashSet<Term> bsubTerms = mInterpolator.getSubTerms(bSmt);
 		final HashSet<Term> asubTerms = mInterpolator.getSubTerms(aSmt);
 		for (final Term sub : asubTerms) {
@@ -177,7 +178,7 @@ public class EqInterpolatorIntTest {
 		@SuppressWarnings("unchecked")
 		final Set<String>[] partition = new Set[] { empty, empty };
 		mInterpolator = new Interpolator(mSolver.getLogger(), null, null, mTheory, partition, new int[partition.length],
-				mSolver.getTimeoutHandler());
+				new TimeoutHandler(mSolver.getTerminationRequest()));
 		final HashSet<Term> bsubTerms = mInterpolator.getSubTerms(bSmt);
 		final HashSet<Term> asubTerms = mInterpolator.getSubTerms(aSmt);
 		for (final Term sub : asubTerms) {

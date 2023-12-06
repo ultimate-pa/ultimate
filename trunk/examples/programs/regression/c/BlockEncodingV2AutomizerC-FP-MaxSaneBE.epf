@@ -22,3 +22,9 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding/Rewrite\ not-equals=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding/Minimize\ states\ even\ if\ more\ edges\ are\ added\ than\ removed.=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding/Apply\ optimizations\ until\ nothing\ changes=true
+
+#Sat Oct 07 11:56:16 CEST 2023
+file_export_version=3.0
+@de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=0.2.3
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Check\ assertions\ from\ assert.h=true

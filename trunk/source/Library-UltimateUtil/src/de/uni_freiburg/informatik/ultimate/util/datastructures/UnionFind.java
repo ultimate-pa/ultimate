@@ -421,17 +421,20 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 	}
 
 	/**
-	 * Merge the equivalence classes of the elements e1 and e2. (e1 and e2 do not have to be the representatives of this
-	 * equivalence classes).
+	 * Merge the equivalence classes of the elements e1 and e2. (e1 and e2 do not
+	 * have to be the representatives of this equivalence classes).
 	 *
-	 * @param elem1
-	 *            first element
-	 * @param elem2
-	 *            second element
+	 * @param elem1 first element
+	 * @param elem2 second element
+	 * @return true iff two equivalence classes were merged
 	 */
-	public void union(final E elem1, final E elem2) {
+	public boolean union(final E elem1, final E elem2) {
 		final ImmutableSet<E> set1 = mEquivalenceClass.get(elem1);
 		final ImmutableSet<E> set2 = mEquivalenceClass.get(elem2);
+		if (set1 == set2) {
+			// already in same equivalence class
+			return false;
+		}
 
 		final boolean set1IsLarger = set1.size() > set2.size();
 
@@ -456,6 +459,7 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 		}
 		mRepresentative.put(union, newRep);
 		assert representativesAreMinimal();
+		return true;
 	}
 
 	/**
@@ -525,29 +529,39 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 	 * @return UnionFind with union'ed equivalence classes
 	 */
 	public static <E> UnionFind<E> unionPartitionBlocks(final UnionFind<E> uf1, final UnionFind<E> uf2) {
-		assert uf1.mElementComparator == uf2.mElementComparator;
-
-		final UnionFind<E> result = new UnionFind<>(uf1.mElementComparator);
-		final HashSet<E> todo = new HashSet<>(uf1.getAllElements());
-		while (!todo.isEmpty()) {
-			final E tver1El = todo.iterator().next();
-
-			final E uf1Rep = uf1.find(tver1El);
-			final E uf2Rep = uf2.find(tver1El);
-
-			final E newBlockRep;
-			if (uf1.mElementComparator == null) {
-				// it does not matter which representative we choose
-				newBlockRep = uf1Rep;
-			} else {
-				newBlockRep = uf1.mElementComparator.compare(uf1Rep, uf2Rep) < 0 ? uf1Rep : uf2Rep;
-			}
-
-			final Set<E> newBlock = DataStructureUtils.union(uf1.getEquivalenceClassMembers(tver1El),
-					uf2.getEquivalenceClassMembers(tver1El));
-			result.addEquivalenceClass(ImmutableSet.of(newBlock), newBlockRep);
-			todo.removeAll(newBlock);
+		if (uf1.mElementComparator != uf2.mElementComparator) {
+			throw new AssertionError("Cannot combine partitions with different comparators");
 		}
+
+		final UnionFind<E> result = uf1.clone();
+		for (final Set<E> eq : uf2.getAllEquivalenceClasses()) {
+			final Set<E> newBlock = new HashSet<>();
+			final Set<E> representatives = new HashSet<>();
+			for (final E elem : eq) {
+				final E rep = result.find(elem);
+				if (rep != null) {
+					// is already in result, we memorize the representative for the union operation
+					representatives.add(rep);
+				} else {
+					newBlock.add(elem);
+				}
+			}
+			if (!newBlock.isEmpty()) {
+				E repForNewBlock;
+				if (result.mElementComparator == null) {
+					// take some element as representative
+					repForNewBlock = newBlock.iterator().next();
+				} else {
+					repForNewBlock = result.findMinimalElement(newBlock);
+				}
+				result.addEquivalenceClass(ImmutableSet.of(newBlock), repForNewBlock);
+				representatives.add(repForNewBlock);
+			}
+			// make sure that all members of this uf2 class are in the same equivalence
+			// class of the result.
+			result.union(representatives);
+		}
+		assert result.areMembersConsistent();
 		assert result.representativesAreMinimal();
 		return result;
 	}
@@ -648,4 +662,5 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 		}
 		return true;
 	}
+
 }

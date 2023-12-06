@@ -79,6 +79,7 @@ public final class TranslationSettings {
 	private final FloatingPointRoundingMode mInitialRoundingMode;
 	private final boolean mAdaptMemoryModelResolutionOnPointerCasts;
 	private final int mStringOverapproximationThreshold;
+	private boolean mAllowUndefinedFunctions;
 
 	public TranslationSettings(final IPreferenceProvider ups) {
 		mCheckSignedIntegerBounds = ups.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_SIGNED_INTEGER_BOUNDS);
@@ -128,6 +129,7 @@ public final class TranslationSettings {
 				ups.getBoolean(CACSLPreferenceInitializer.LABEL_ADAPT_MEMORY_MODEL_ON_POINTER_CASTS);
 		mStringOverapproximationThreshold =
 				ups.getInt(CACSLPreferenceInitializer.LABEL_STRING_OVERAPPROXIMATION_THRESHOLD);
+		mAllowUndefinedFunctions = ups.getBoolean(CACSLPreferenceInitializer.LABEL_ALLOW_UNDEFINED_FUNCTIONS);
 	}
 
 	private TranslationSettings(final PointerCheckMode divisionByZeroOfIntegerTypes,
@@ -145,7 +147,6 @@ public final class TranslationSettings {
 			final boolean useStoreChains, final boolean enableFesetround,
 			final FloatingPointRoundingMode initialRoundingMode, final boolean adaptMemoryModelResolutionOnPointerCasts,
 			final int stringOverapproximationThreshold) {
-		super();
 		mDivisionByZeroOfIntegerTypes = divisionByZeroOfIntegerTypes;
 		mDivisionByZeroOfFloatingTypes = divisionByZeroOfFloatingTypes;
 		mBitvectorTranslation = bitvectorTranslation;
@@ -303,6 +304,10 @@ public final class TranslationSettings {
 
 	public int getStringOverapproximationThreshold() {
 		return mStringOverapproximationThreshold;
+	}
+
+	public boolean allowUndefinedFunctions() {
+		return mAllowUndefinedFunctions;
 	}
 
 	public TranslationSettings setMemoryModelPreference(final MemoryModel memoryModel) {

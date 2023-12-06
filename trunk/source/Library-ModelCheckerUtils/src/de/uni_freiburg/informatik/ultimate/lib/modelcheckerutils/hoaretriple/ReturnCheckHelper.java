@@ -65,7 +65,7 @@ public class ReturnCheckHelper extends SdHoareTripleCheckHelper<IReturnAction> {
 	}
 
 	private Validity sdecReturnSelfloopPre(final IPredicate p, final IReturnAction ret) {
-		final Set<IProgramVar> assignedVars = ret.getAssignmentOfReturn().getAssignedVars();
+		final Set<IProgramVar> assignedVars = ret.getAssignmentOfReturn().getOutVars().keySet();
 		for (final IProgramVar bv : p.getVars()) {
 			if (!bv.isGlobal()) {
 				return null;
@@ -82,7 +82,7 @@ public class ReturnCheckHelper extends SdHoareTripleCheckHelper<IReturnAction> {
 	}
 
 	private Validity sdecReturnSelfloopHier(final IPredicate p, final IReturnAction ret) {
-		final Set<IProgramVar> assignedVars = ret.getAssignmentOfReturn().getAssignedVars();
+		final Set<IProgramVar> assignedVars = ret.getAssignmentOfReturn().getOutVars().keySet();
 		final String proc = ret.getPrecedingProcedure();
 		final Set<IProgramNonOldVar> modifiableGlobals = mModifiableGlobals.getModifiedBoogieVars(proc);
 
@@ -132,14 +132,14 @@ public class ReturnCheckHelper extends SdHoareTripleCheckHelper<IReturnAction> {
 		 * !assignedVars.contains(bv)) { mLazyEdgeCheckQueries++; return null; } } }
 		 *
 		 */
-		if (!varsDisjointFromAssignedVars(preLin, ret.getLocalVarsAssignmentOfCall())) {
+		if (!varsDisjointFromOutVars(preLin, ret.getLocalVarsAssignmentOfCall())) {
 			return null;
 		}
 
 		final String proc = ret.getPrecedingProcedure();
 		final Set<IProgramNonOldVar> modifiableGlobals = mModifiableGlobals.getModifiedBoogieVars(proc);
 		final boolean assignedVarsRestrictedByPre = !varsDisjointFromInVars(preLin, ret.getAssignmentOfReturn());
-		final Set<IProgramVar> assignedVars = ret.getAssignmentOfReturn().getAssignedVars();
+		final Set<IProgramVar> assignedVars = ret.getAssignmentOfReturn().getOutVars().keySet();
 		for (final IProgramVar bv : post.getVars()) {
 			if (!continueSdLazyEcReturnLoop(bv, modifiableGlobals, preHier, preLin, assignedVars,
 					assignedVarsRestrictedByPre)) {
@@ -272,7 +272,7 @@ public class ReturnCheckHelper extends SdHoareTripleCheckHelper<IReturnAction> {
 
 	private static boolean isConnectedViaLocalVarsAssignment(final IPredicate hier,
 			final UnmodifiableTransFormula localVarsAssignment, final IPredicate returnPred) {
-		return !varsDisjointFromAssignedVars(returnPred, localVarsAssignment)
+		return !varsDisjointFromOutVars(returnPred, localVarsAssignment)
 				&& !varsDisjointFromInVars(hier, localVarsAssignment);
 	}
 
@@ -281,16 +281,16 @@ public class ReturnCheckHelper extends SdHoareTripleCheckHelper<IReturnAction> {
 	 */
 	private static boolean isSelfConnectedViaLocalVarsAssignment(final IPredicate returnPred,
 			final UnmodifiableTransFormula localVarsAssignment) {
-		return !varsDisjointFromAssignedVars(returnPred, localVarsAssignment);
+		return !varsDisjointFromOutVars(returnPred, localVarsAssignment);
 	}
 
 	private static boolean prePostIndependent(final IPredicate pre, final IReturnAction ret, final IPredicate post) {
 		final UnmodifiableTransFormula returnAssignTf = ret.getAssignmentOfReturn();
-		if (!varsDisjointFromInVars(pre, returnAssignTf) && !varsDisjointFromAssignedVars(post, returnAssignTf)) {
+		if (!varsDisjointFromInVars(pre, returnAssignTf) && !varsDisjointFromOutVars(post, returnAssignTf)) {
 			return false;
 		}
 		final UnmodifiableTransFormula locVarAssignTf = ret.getLocalVarsAssignmentOfCall();
-		if (!varsDisjointFromInVars(post, locVarAssignTf) && !varsDisjointFromAssignedVars(pre, locVarAssignTf)) {
+		if (!varsDisjointFromInVars(post, locVarAssignTf) && !varsDisjointFromOutVars(pre, locVarAssignTf)) {
 			return false;
 		}
 		for (final IProgramVar bv : pre.getVars()) {
@@ -304,7 +304,7 @@ public class ReturnCheckHelper extends SdHoareTripleCheckHelper<IReturnAction> {
 	}
 
 	private boolean hierPostIndependent(final IPredicate hier, final IReturnAction ret, final IPredicate post) {
-		final Set<IProgramVar> assignedVars = ret.getAssignmentOfReturn().getAssignedVars();
+		final Set<IProgramVar> assignedVars = ret.getAssignmentOfReturn().getOutVars().keySet();
 
 		final String proc = ret.getPrecedingProcedure();
 		final Set<IProgramNonOldVar> modifiableGlobals = mModifiableGlobals.getModifiedBoogieVars(proc);

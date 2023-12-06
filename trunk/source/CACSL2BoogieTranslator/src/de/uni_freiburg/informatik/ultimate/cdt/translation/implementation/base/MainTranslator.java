@@ -243,8 +243,8 @@ public class MainTranslator {
 
 		mServices.getStorage().putStorable(IdentifierMapping.getStorageKey(),
 				new IdentifierMapping<>(result.getIdentifierMapping()));
-		final CACSL2BoogieBacktranslator backtranslator =
-				new CACSL2BoogieBacktranslator(mServices, typeSizes, backtranslatorMapping, locationFactory);
+		final CACSL2BoogieBacktranslator backtranslator = new CACSL2BoogieBacktranslator(mServices, typeSizes,
+				backtranslatorMapping, locationFactory, flatSymbolTable);
 		mServices.getBacktranslationService().addTranslator(backtranslator);
 
 		return result;

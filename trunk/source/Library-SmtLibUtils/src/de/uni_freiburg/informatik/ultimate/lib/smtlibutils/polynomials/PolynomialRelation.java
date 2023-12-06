@@ -567,7 +567,7 @@ public class PolynomialRelation implements IBinaryRelation, ITermProvider {
 		return mPolynomialTerm.isVariable(var);
 	}
 
-	public PolynomialRelation negate(final Script script) {
+	public PolynomialRelation negate() {
 		return new PolynomialRelation(mPolynomialTerm, mRelationSymbol.negate());
 	}
 
@@ -660,5 +660,23 @@ public class PolynomialRelation implements IBinaryRelation, ITermProvider {
 		}
 		return new SolvedBinaryRelation(fst.getKey(),
 				SmtUtils.rational2Term(script, rhsAsRational, mPolynomialTerm.getSort()), mRelationSymbol);
+	}
+
+	/**
+	 * Integer inequalities have two logically equivalent
+	 * {@link PolynomialRelation}, one that utilizes a strict relation, one that
+	 * utilizes a non-strict relation. E.g., `x>=1` and `x>0` are logically
+	 * equivalent for integers. This method returns the logically equivalent
+	 * non-strict relation for strict integer relations. Otherwise, this method
+	 * returns the input.
+	 */
+	public PolynomialRelation tryToConvertToEquivalentNonStrictRelation() {
+		if (SmtSortUtils.isIntSort(mPolynomialTerm.getSort()) && mRelationSymbol.isStrictRelation()) {
+			final Rational offset = mRelationSymbol.getOffsetForStrictToNonstrictTransformation();
+			return new PolynomialRelation(mPolynomialTerm.add(offset),
+					mRelationSymbol.getCorrespondingNonStrictRelationSymbol());
+		} else {
+			return this;
+		}
 	}
 }

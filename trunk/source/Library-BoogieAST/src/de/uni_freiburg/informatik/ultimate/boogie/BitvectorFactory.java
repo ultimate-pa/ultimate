@@ -42,15 +42,13 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.ExtendOperation;
 
 /**
- * Boogie does not provide native support for most bitvector operations of
- * SMT-LIB. These operations are however very helpful for modeling C programs.
- * Hence we developed a convention based on the :smtdefined attibute that allows
- * us to give Boogie functions the semantics of SMT-LIB functions.
- * {@link https://github.com/ultimate-pa/ultimate/wiki/Boogie#attribute-defined-directives}
- * Unfortunately, this was not sufficient. We also have to be able to
- * translate SMT functions back to Boogie functions. Because of that
- * we want to have a uniform construction for all function declarations
- * and all function calls. This class provides these constructions.
+ * Boogie does not provide native support for most bitvector operations of SMT-LIB. These operations are however very
+ * helpful for modeling C programs. Hence we developed a convention based on the :smtdefined attibute that allows us to
+ * give Boogie functions the semantics of SMT-LIB functions.
+ * {@link https://github.com/ultimate-pa/ultimate/wiki/Boogie#attribute-defined-directives} Unfortunately, this was not
+ * sufficient. We also have to be able to translate SMT functions back to Boogie functions. Because of that we want to
+ * have a uniform construction for all function declarations and all function calls. This class provides these
+ * constructions.
  *
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
@@ -60,10 +58,9 @@ public class BitvectorFactory {
 
 	public static final String AUXILIARY_FUNCTION_PREFIX = "~";
 
-
 	/**
-	 * @return the matching {@link BvOp} value if the identifier represents a supported
-	 *         bitvector operation, or null if it does not.
+	 * @return the matching {@link BvOp} value if the identifier represents a supported bitvector operation, or null if
+	 *         it does not.
 	 */
 	public static BvOp getSupportedBitvectorOperation(final String identifier) {
 		try {
@@ -73,7 +70,7 @@ public class BitvectorFactory {
 		}
 	}
 
-	public static String generateBoogieFunctionName(final BvOp bvop, final int bitsize) {
+	private static String generateBoogieFunctionName(final BvOp bvop, final int bitsize) {
 		if (bitsize <= 0) {
 			throw new IllegalArgumentException();
 		}
@@ -114,23 +111,20 @@ public class BitvectorFactory {
 		}
 	}
 
-	public static Expression constructUnaryOperation(final ILocation loc, final BvOp bvop,
-			final Expression expr) {
+	public static Expression constructUnaryOperation(final ILocation loc, final BvOp bvop, final Expression expr) {
 		if (expr instanceof BitvecLiteral) {
 			final BitvectorConstant bc = toConstant((BitvecLiteral) expr);
 			final BitvectorConstantOperationResult resBc = BitvectorConstant.apply(bvop, bc);
 			return toBitvectorLiteral(loc, resBc.getBvResult());
-		} else {
-			final String boogieFunctionName = generateBoogieFunctionName(bvop,
-					isBitvectorSort(expr.getType()));
-			final Expression func = ExpressionFactory.constructFunctionApplication(loc, boogieFunctionName,
-					new Expression[] { expr }, (BoogieType) expr.getType());
-			return func;
 		}
+		final String boogieFunctionName = generateBoogieFunctionName(bvop, isBitvectorSort(expr.getType()));
+		final Expression func = ExpressionFactory.constructFunctionApplication(loc, boogieFunctionName,
+				new Expression[] { expr }, (BoogieType) expr.getType());
+		return func;
 	}
 
 	public static Expression constructBinaryOperationForMultipleArguments(final ILocation loc, final BvOp bvop,
-			final Expression... exprs ) {
+			final Expression... exprs) {
 		if (exprs.length <= 1) {
 			throw new IllegalArgumentException("not binary");
 		}
@@ -154,7 +148,8 @@ public class BitvectorFactory {
 
 	/**
 	 *
-	 * @param extension number of bits that are added
+	 * @param extension
+	 *            number of bits that are added
 	 */
 	public static Expression constructExtendOperation(final ILocation loc, final ExtendOperation extendOperation,
 			final BigInteger extension, final Expression operandExpression) {
@@ -171,30 +166,29 @@ public class BitvectorFactory {
 			default:
 				throw new AssertionError("unknown value " + extendOperation);
 			}
-			return ExpressionFactory.createBitvecLiteral(loc, extendedBc.getValue().toString(), extendedBc.getIndex().intValueExact());
-		} else {
-			if (operandExpression.getType() == null) {
-				throw new UnsupportedOperationException("Need type to determine bitsize!");
-			}
-			final int inputBitsize = isBitvectorSort(operandExpression.getType());
-			final int resultBitsize = BigInteger.valueOf(inputBitsize).add(extension).intValueExact();
-			final BoogieType resultBoogieType = BoogieType.createBitvectorType(resultBitsize);
-			final String fullFunctionName = BitvectorFactory.generateBoogieFunctionNameForExtend(extendOperation,
-					inputBitsize, resultBitsize);
-			return ExpressionFactory.constructFunctionApplication(loc, fullFunctionName,
-					new Expression[] { operandExpression }, resultBoogieType);
+			return ExpressionFactory.createBitvecLiteral(loc, extendedBc.getValue().toString(),
+					extendedBc.getIndex().intValueExact());
 		}
+		if (operandExpression.getType() == null) {
+			throw new UnsupportedOperationException("Need type to determine bitsize!");
+		}
+		final int inputBitsize = isBitvectorSort(operandExpression.getType());
+		final int resultBitsize = BigInteger.valueOf(inputBitsize).add(extension).intValueExact();
+		final BoogieType resultBoogieType = BoogieType.createBitvectorType(resultBitsize);
+		final String fullFunctionName =
+				BitvectorFactory.generateBoogieFunctionNameForExtend(extendOperation, inputBitsize, resultBitsize);
+		return ExpressionFactory.constructFunctionApplication(loc, fullFunctionName,
+				new Expression[] { operandExpression }, resultBoogieType);
 	}
 
 	public static String generateBoogieFunctionNameForExtend(final ExtendOperation extendOperation,
 			final int inputBitsize, final int outputBitsize) {
-		return AUXILIARY_FUNCTION_PREFIX + extendOperation.toString() + "From" + inputBitsize
-				+ "To" + outputBitsize;
+		return String.join(AUXILIARY_FUNCTION_PREFIX, "", extendOperation.toString(), Integer.toString(outputBitsize),
+				Integer.toString(inputBitsize));
 	}
 
-
-	public static Expression constructBinaryBitvectorOperation(final ILocation loc,
-			final BvOp sbo, final Expression... args) {
+	public static Expression constructBinaryBitvectorOperation(final ILocation loc, final BvOp sbo,
+			final Expression... args) {
 		assert args.length == 2 : "Binary expression cannot have " + args.length + " arguments";
 		// check if one of the arguments is a neutral or annihilating literal
 		final BitvectorConstant left;
@@ -253,8 +247,8 @@ public class BitvectorFactory {
 			if (bvop == rightSbo) {
 				final Expression innerLeft = rightFunApp.getArguments()[0];
 				if (innerLeft instanceof BitvecLiteral) {
-					final Expression newConst = computeBinaryBitvectorExpression(loc, bvop, left,
-							toConstant((BitvecLiteral) innerLeft));
+					final Expression newConst =
+							computeBinaryBitvectorExpression(loc, bvop, left, toConstant((BitvecLiteral) innerLeft));
 					return constructBitvectorFunctionApplication(loc, bvop,
 							new Expression[] { newConst, rightFunApp.getArguments()[1] });
 				}
@@ -270,8 +264,8 @@ public class BitvectorFactory {
 		return constructBitvectorFunctionApplication(loc, bvop, args);
 	}
 
-	private static Expression computeBinaryBitvectorExpression(final ILocation loc,
-			final BvOp sbo, final BitvectorConstant left, final BitvectorConstant right) {
+	private static Expression computeBinaryBitvectorExpression(final ILocation loc, final BvOp sbo,
+			final BitvectorConstant left, final BitvectorConstant right) {
 		if (sbo.isBoolean()) {
 			final BitvectorConstantOperationResult result = BitvectorConstant.apply(sbo, left, right);
 			assert result.isBoolean();
@@ -285,11 +279,6 @@ public class BitvectorFactory {
 	static BitvectorConstant toConstant(final BitvecLiteral lit) {
 		return new BitvectorConstant(new BigInteger(lit.getValue()), BigInteger.valueOf(lit.getLength()));
 	}
-
-
-
-
-
 
 	/**
 	 * true iff bConst is annihilating (or absorbing) if it is the left operand of op, false otherwise
@@ -464,7 +453,7 @@ public class BitvectorFactory {
 				length);
 	}
 
-	static int isBitvectorSort(final IBoogieType type) {
+	private static int isBitvectorSort(final IBoogieType type) {
 		final int result;
 		if (type instanceof BoogiePrimitiveType) {
 			final BoogiePrimitiveType bpType = (BoogiePrimitiveType) type;
@@ -480,7 +469,6 @@ public class BitvectorFactory {
 		}
 		return result;
 	}
-
 
 	/**
 	 * Construct function application for bitvector operation. No optimizations.
@@ -534,8 +522,5 @@ public class BitvectorFactory {
 			throw new AssertionError("unknown bvop " + bvop);
 		}
 	}
-
-
-
 
 }

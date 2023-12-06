@@ -27,7 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.core.lib.models.annotation;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
@@ -35,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 
 /**
- * An annotation used to mark CFG locations that are the beginning or end of an atomic block, in the sense of SV-COMP's
+ * An annotation used to mark CFG edges that are the beginning or end of an atomic block, in the sense of SV-COMP's
  * __VERIFIER_ATOMIC_* feature or in the sense of "atomic { }" statements in our Boogie dialect.
  *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
@@ -44,87 +43,120 @@ public final class AtomicBlockInfo extends ModernAnnotations {
 
 	private static final long serialVersionUID = -8370873908642083605L;
 
-	private final boolean mBeginAtomic;
-	private final boolean mEndAtomic;
+	private enum Type {
+		START, END, COMPLETE
+	}
 
-	private AtomicBlockInfo(final boolean beginAtomic, final boolean endAtomic) {
-		mBeginAtomic = beginAtomic;
-		mEndAtomic = endAtomic;
+	private final Type mType;
+
+	private AtomicBlockInfo(final Type type) {
+		mType = type;
 	}
 
 	@Override
 	public IAnnotations merge(final IAnnotations other) {
-		if (other instanceof AtomicBlockInfo) {
-			final boolean isBegin = ((AtomicBlockInfo) other).mBeginAtomic || mBeginAtomic;
-			final boolean isEnd = ((AtomicBlockInfo) other).mEndAtomic || mEndAtomic;
-			return new AtomicBlockInfo(isBegin, isEnd);
-		}
+		// We use the default merging behaviour, i.e., merging is not supported.
+		// This annotation should only appear temporarily within CfgBuilder.
+		// It is up to CfgBuilder to make sure it never attempts to merge two instances of this annotation.
 		return super.merge(other);
 	}
 
 	@Override
 	public Map<String, Object> getAnnotationsAsMap() {
-		final Map<String, Object> map = new HashMap<>();
-		map.put("Begin Block", mBeginAtomic);
-		map.put("End Block", mEndAtomic);
-		return map;
+		return Map.of("type", mType);
 	}
 
 	/**
-	 * Determines if the given element (resp., location) is annotated as start of an atomic block.
+	 * Determines if the given element (an edge) is annotated as start of an atomic block.
 	 *
-	 * Note that a location can be both the start of an atomic block and the end of a (preceding) atomic block.
+	 * Note that an edge can be the start of an atomic block or the end, but not both.
 	 *
 	 * @param element
 	 *            The element whose annotation is examined.
 	 * @return true if there is an {@link AtomicBlockInfo} annotation that marks the beginning of an atomic block.
 	 */
 	public static boolean isStartOfAtomicBlock(final IElement element) {
-		final AtomicBlockInfo annotation =
-				ModelUtils.getAnnotation(element, AtomicBlockInfo.class.getName(), AtomicBlockInfo.class::cast);
-		if (annotation != null) {
-			return annotation.mBeginAtomic;
-		}
-		return false;
+		return annotationHasType(element, Type.START);
 	}
 
 	/**
-	 * Determines if the given element (resp., location) is annotated as end of an atomic block.
+	 * Determines if the given element (an edge) is annotated as end of an atomic block.
 	 *
-	 * Note that a location can be both the end of an atomic block and the start of a (succeeding) atomic block.
+	 * Note that an edge can be the start of an atomic block or the end, but not both.
 	 *
 	 * @param element
 	 *            The element whose annotation is examined.
 	 * @return true if there is an {@link AtomicBlockInfo} annotation that marks the end of an atomic block.
 	 */
 	public static boolean isEndOfAtomicBlock(final IElement element) {
-		final AtomicBlockInfo annotation =
-				ModelUtils.getAnnotation(element, AtomicBlockInfo.class.getName(), AtomicBlockInfo.class::cast);
+		return annotationHasType(element, Type.END);
+	}
+
+	/**
+	 * Determines if the given element (an edge) is annotated as the result of a complete atomic block composition.
+	 *
+	 * @param element
+	 *            The element whose annotation is examined.
+	 * @return true if there is an {@link AtomicBlockInfo} annotation that marks a complete atomic block.
+	 */
+	public static boolean isCompleteAtomicBlock(final IElement element) {
+		return annotationHasType(element, Type.COMPLETE);
+	}
+
+	/**
+	 * Marks the given element (an edge) as the beginning of an atomic block.
+	 *
+	 * @param element
+	 *            The edge to be marked.
+	 */
+	public static void addBeginAnnotation(final IElement element) {
+		addAnnotation(element, Type.START);
+	}
+
+	/**
+	 * Marks the given element (an edge) as the end of an atomic block.
+	 *
+	 * @param element
+	 *            The edge to be marked.
+	 */
+	public static void addEndAnnotation(final IElement element) {
+		addAnnotation(element, Type.END);
+	}
+
+	/**
+	 * Marks the given element (an edge) as the result of a complete atomic block composition.
+	 *
+	 * @param element
+	 *            The edge to be marked.
+	 */
+	public static void addCompleteAnnotation(final IElement element) {
+		addAnnotation(element, Type.COMPLETE);
+	}
+
+	/**
+	 * Removes any {@link AtomicBlockInfo} annotation, if present.
+	 *
+	 * @param element
+	 *            The edge from which annotations shall be removed
+	 */
+	public static void removeAnnotation(final IElement element) {
+		element.getPayload().getAnnotations().remove(AtomicBlockInfo.class.getName());
+	}
+
+	private static boolean annotationHasType(final IElement element, final Type type) {
+		final AtomicBlockInfo annotation = ModelUtils.getAnnotation(element, AtomicBlockInfo.class);
 		if (annotation != null) {
-			return annotation.mEndAtomic;
+			return annotation.mType == type;
 		}
 		return false;
 	}
 
-	/**
-	 * Marks the given element (typically, a location) as the beginning of an atomic block.
-	 *
-	 * @param element
-	 *            The location to be marked.
-	 */
-	public static void addBeginAnnotation(final IElement element) {
-		final boolean isEnd = isEndOfAtomicBlock(element);
-		element.getPayload().getAnnotations().put(AtomicBlockInfo.class.getName(), new AtomicBlockInfo(true, isEnd));
-	}
-
-	/**
-	 * Marks the given element (typically, a location) as the end of an atomic block.
-	 *
-	 * @param element
-	 *            The location to be marked.
-	 */
-	public static void addEndAnnotation(final IElement element) {
-		final boolean isBegin = isStartOfAtomicBlock(element);
-		element.getPayload().getAnnotations().put(AtomicBlockInfo.class.getName(), new AtomicBlockInfo(isBegin, true));
+	private static void addAnnotation(final IElement element, final Type type) {
+		final var previous = ModelUtils.getAnnotation(element, AtomicBlockInfo.class);
+		if (previous != null) {
+			throw new UnsupportedOperationException(
+					"Incompatible atomic block annotation: " + previous.mType + " and " + type);
+		}
+		element.getPayload().getAnnotations().put(AtomicBlockInfo.class.getName(), new AtomicBlockInfo(type));
 	}
 }

@@ -566,9 +566,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 				if (trueterm.equals(invariant)) {
 					continue;
 				}
-				final String invStr = backTranslatorService.translateExpressionToString(invariant, Term.class);
-				new WitnessInvariant(invStr).annotate(locNode);
-
+				new WitnessInvariant(invResult.getInvariant()).annotate(locNode);
 			}
 		}
 	}
@@ -779,7 +777,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	private void reportTimeoutResult(final Collection<IcfgLocation> errorLocs) {
 		for (final IcfgLocation errorIpp : errorLocs) {
 			final ILocation origin = ILocation.getAnnotation(errorIpp);
-			StringBuilder timeOutMessage = new StringBuilder("Unable to prove that ")
+			final StringBuilder timeOutMessage = new StringBuilder("Unable to prove that ")
 					.append(Check.getAnnotation(errorIpp).getPositiveMessage());
 			timeOutMessage.append(" (line ").append(origin.getStartLine()).append(")");
 			final TimeoutResultAtElement<IIcfgElement> timeOutRes = new TimeoutResultAtElement<>(errorIpp,

@@ -428,14 +428,6 @@ public class QuantifierEliminationTodos {
 	}
 
 	@Test
-	public void fusibleInequalities01() {
-		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "main_result", "main_m", "main_n"), };
-		final String formulaAsString = "(exists ((main_n_tmp Int)) (and (= (+ main_result (* main_m main_n_tmp)) (* main_n main_m)) (<= 0 main_n_tmp) (not (<= 1 main_n_tmp))))";
-		final String expectedResultAsString = "(= (+ main_result (* main_m 1)) (* main_n main_m))";
-		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
-	}
-
-	@Test
 	public void test01() {
 		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "~waterLevel~0", "~pumpRunning~0", "#NULL.base", "#NULL.offset", "~head~0.base", "~head~0.offset", "~cleanupTimeShifts~0", "~systemActive~0", "#StackHeapBarrier", "old(~methaneLevelCritical~0)", "~methaneLevelCritical~0", "test_~splverifierCounter~0", "old(~waterLevel~0)", "test_~tmp~1"), };
 		final String formulaAsString = "(exists ((|v_old(~methaneLevelCritical~0)_AFTER_CALL_2| Int)) (let ((.cse9 (<= 2 ~waterLevel~0)) (.cse13 (<= ~waterLevel~0 2)) (.cse0 (<= ~cleanupTimeShifts~0 4)) (.cse1 (<= ~head~0.offset 0)) (.cse2 (<= ~pumpRunning~0 0)) (.cse3 (<= 0 |#NULL.base|)) (.cse4 (<= 0 |v_old(~methaneLevelCritical~0)_AFTER_CALL_2|)) (.cse7 (<= 0 ~head~0.offset)) (.cse21 (<= ~waterLevel~0 1)) (.cse8 (<= 1 ~systemActive~0)) (.cse10 (<= |#NULL.offset| 0)) (.cse11 (<= |v_old(~methaneLevelCritical~0)_AFTER_CALL_2| 0)) (.cse12 (<= 4 ~cleanupTimeShifts~0)) (.cse22 (<= 1 ~waterLevel~0)) (.cse14 (<= 0 ~head~0.base)) (.cse15 (<= |#NULL.base| 0)) (.cse16 (<= 0 ~pumpRunning~0)) (.cse17 (<= ~head~0.base 0)) (.cse18 (<= 0 |#NULL.offset|)) (.cse19 (<= 0 |#StackHeapBarrier|)) (.cse20 (<= ~systemActive~0 1))) (and (let ((.cse5 (<= ~methaneLevelCritical~0 1)) (.cse6 (<= 1 ~methaneLevelCritical~0))) (or (and .cse0 .cse1 .cse2 .cse3 .cse4 .cse5 .cse6 .cse7 .cse8 .cse9 .cse10 .cse11 .cse12 .cse13 .cse14 .cse15 .cse16 .cse17 .cse18 .cse19 .cse20) (and .cse0 .cse1 .cse2 .cse3 .cse4 .cse5 .cse6 .cse7 .cse21 .cse8 .cse10 .cse11 .cse12 .cse22 .cse14 .cse15 .cse16 .cse17 .cse18 .cse19 .cse20))) (let ((.cse23 (<= 0 test_~splverifierCounter~0)) (.cse24 (<= |old(~methaneLevelCritical~0)| 0)) (.cse25 (<= 0 |old(~methaneLevelCritical~0)|)) (.cse26 (<= test_~splverifierCounter~0 0)) (.cse27 (<= 1 |old(~waterLevel~0)|)) (.cse28 (<= |old(~waterLevel~0)| 1))) (or (and .cse0 .cse1 .cse2 .cse3 .cse4 .cse7 .cse23 (<= test_~tmp~1 2147483647) .cse24 .cse8 .cse9 .cse10 .cse11 .cse12 .cse25 .cse13 .cse14 .cse26 .cse15 .cse27 .cse16 .cse17 .cse28 (<= 0 (+ test_~tmp~1 2147483648)) .cse18 .cse19 .cse20) (and .cse0 .cse1 .cse2 .cse3 .cse4 .cse7 .cse23 .cse24 .cse21 .cse8 (<= test_~tmp~1 0) .cse10 .cse11 .cse12 (<= 0 test_~tmp~1) .cse25 .cse22 .cse14 .cse26 .cse15 .cse27 .cse16 .cse17 .cse28 .cse18 .cse19 .cse20))))))";
@@ -453,35 +445,58 @@ public class QuantifierEliminationTodos {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	/**
+	 * TODO 2023-10-28 Matthias: Alternating quantifiers can apparently be easily eliminated. But I don't know an
+	 * elimination rule yet.
+	 */
 	@Test
-	public void avt01() {
+	public void chioggiaBeet01() {
 		final FunDecl[] funDecls = new FunDecl[] {
-				new FunDecl(SmtSortUtils::getIntSort, "k"),
-				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a1", "a2"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "a"),
 		};
-		final String formulaAsString = "(exists ((x Int)) (= a2 (store a1 k x)))";
+
+		final String formulaAsString = "(exists ((i Int)) (and (<= 1 i) (forall ((j Int)) (or (< j 0) (< i (+ j 1)) (= (select (select a 3) (* j 4)) 10)))))";
+		final String expectedResultAsString = "(= (select (select a 3) 0) 10)";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, false, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void selfUpdateBug_4ca571b2_Size417() {
+		final FunDecl[] funDecls = new FunDecl[] {
+			new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "v_DerPreprocessor_3", "v_DerPreprocessor_2", "v_ArrVal_175"),
+			new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_$Pointer$.base", "#memory_$Pointer$.offset"),
+			new FunDecl(SmtSortUtils::getIntSort, "v_prenex_6", "v_prenex_7", "v_prenex_4", "v_prenex_5", "v_ArrVal_167", "mutex_lock_ldv_list_add_~new#1.base", "v_prenex_2", "v_prenex_3", "__ldv_list_add_~next.base", "v_prenex_1", "__ldv_list_add_~next.offset", "mutex_lock_#in~m#1.base"),
+		};
+		final String formulaAsString = "(exists ((|v_#memory_$Pointer$.base_BEFORE_CALL_2| (Array Int (Array Int Int)))) (and (= |mutex_lock_#in~m#1.base| (select (select |v_#memory_$Pointer$.base_BEFORE_CALL_2| |mutex_lock_ldv_list_add_~new#1.base|) 0)) (or (and (or (and (= (store |v_#memory_$Pointer$.base_BEFORE_CALL_2| 3 (store (store (store (store (select |v_#memory_$Pointer$.base_BEFORE_CALL_2| 3) (+ __ldv_list_add_~next.offset 4) 3) 4 v_ArrVal_167) 8 3) 0 3)) |#memory_$Pointer$.base|) (= (select (select |#memory_$Pointer$.offset| 3) 0) 4)) (and (= |#memory_$Pointer$.base| (store (store |v_#memory_$Pointer$.base_BEFORE_CALL_2| __ldv_list_add_~next.base (store (select |v_#memory_$Pointer$.base_BEFORE_CALL_2| __ldv_list_add_~next.base) (+ v_prenex_1 4) 3)) 3 (store (store (store (select (store |v_#memory_$Pointer$.base_BEFORE_CALL_2| __ldv_list_add_~next.base (store (select |v_#memory_$Pointer$.base_BEFORE_CALL_2| __ldv_list_add_~next.base) (+ v_prenex_1 4) 3)) 3) 4 (select (select |#memory_$Pointer$.base| 3) 4)) 8 3) 0 3))) (= (select |#memory_$Pointer$.offset| 3) (store v_ArrVal_175 0 4)) (not (= __ldv_list_add_~next.base 3)))) (= |mutex_lock_ldv_list_add_~new#1.base| 3)) (and (not (= |mutex_lock_ldv_list_add_~new#1.base| 3)) (or (and (= (store (store |v_#memory_$Pointer$.base_BEFORE_CALL_2| |mutex_lock_ldv_list_add_~new#1.base| (store (store (select (store |v_#memory_$Pointer$.base_BEFORE_CALL_2| 3 (store (select |v_#memory_$Pointer$.base_BEFORE_CALL_2| 3) (+ v_prenex_7 4) |mutex_lock_ldv_list_add_~new#1.base|)) |mutex_lock_ldv_list_add_~new#1.base|) 4 v_prenex_5) 8 3)) 3 (store (select (store (store |v_#memory_$Pointer$.base_BEFORE_CALL_2| 3 (store (select |v_#memory_$Pointer$.base_BEFORE_CALL_2| 3) (+ v_prenex_7 4) |mutex_lock_ldv_list_add_~new#1.base|)) |mutex_lock_ldv_list_add_~new#1.base| (store (store (select (store |v_#memory_$Pointer$.base_BEFORE_CALL_2| 3 (store (select |v_#memory_$Pointer$.base_BEFORE_CALL_2| 3) (+ v_prenex_7 4) |mutex_lock_ldv_list_add_~new#1.base|)) |mutex_lock_ldv_list_add_~new#1.base|) 4 v_prenex_5) 8 3)) 3) 0 |mutex_lock_ldv_list_add_~new#1.base|)) |#memory_$Pointer$.base|) (not (= (+ v_prenex_7 4) 0)) (= (select (select |#memory_$Pointer$.offset| 3) 0) 4)) (and (= |#memory_$Pointer$.base| (store (store |v_#memory_$Pointer$.base_BEFORE_CALL_2| |mutex_lock_ldv_list_add_~new#1.base| (store (store (select (store |v_#memory_$Pointer$.base_BEFORE_CALL_2| 3 (store (select |v_#memory_$Pointer$.base_BEFORE_CALL_2| 3) 0 |mutex_lock_ldv_list_add_~new#1.base|)) |mutex_lock_ldv_list_add_~new#1.base|) 4 v_prenex_2) 8 3)) 3 (store (select (store (store |v_#memory_$Pointer$.base_BEFORE_CALL_2| 3 (store (select |v_#memory_$Pointer$.base_BEFORE_CALL_2| 3) 0 |mutex_lock_ldv_list_add_~new#1.base|)) |mutex_lock_ldv_list_add_~new#1.base| (store (store (select (store |v_#memory_$Pointer$.base_BEFORE_CALL_2| 3 (store (select |v_#memory_$Pointer$.base_BEFORE_CALL_2| 3) 0 |mutex_lock_ldv_list_add_~new#1.base|)) |mutex_lock_ldv_list_add_~new#1.base|) 4 v_prenex_2) 8 3)) 3) 0 |mutex_lock_ldv_list_add_~new#1.base|))) (= (select (select |#memory_$Pointer$.offset| 3) 0) 4)) (and (= |#memory_$Pointer$.base| (store (store (store |v_#memory_$Pointer$.base_BEFORE_CALL_2| v_prenex_6 (store (select |v_#memory_$Pointer$.base_BEFORE_CALL_2| v_prenex_6) (+ v_prenex_3 4) |mutex_lock_ldv_list_add_~new#1.base|)) |mutex_lock_ldv_list_add_~new#1.base| (store (store (select (store |v_#memory_$Pointer$.base_BEFORE_CALL_2| v_prenex_6 (store (select |v_#memory_$Pointer$.base_BEFORE_CALL_2| v_prenex_6) (+ v_prenex_3 4) |mutex_lock_ldv_list_add_~new#1.base|)) |mutex_lock_ldv_list_add_~new#1.base|) 4 (select (select |#memory_$Pointer$.base| |mutex_lock_ldv_list_add_~new#1.base|) 4)) 8 3)) 3 (store (select (store (store |v_#memory_$Pointer$.base_BEFORE_CALL_2| v_prenex_6 (store (select |v_#memory_$Pointer$.base_BEFORE_CALL_2| v_prenex_6) (+ v_prenex_3 4) |mutex_lock_ldv_list_add_~new#1.base|)) |mutex_lock_ldv_list_add_~new#1.base| (store (store (select (store |v_#memory_$Pointer$.base_BEFORE_CALL_2| v_prenex_6 (store (select |v_#memory_$Pointer$.base_BEFORE_CALL_2| v_prenex_6) (+ v_prenex_3 4) |mutex_lock_ldv_list_add_~new#1.base|)) |mutex_lock_ldv_list_add_~new#1.base|) 4 (select (select |#memory_$Pointer$.base| |mutex_lock_ldv_list_add_~new#1.base|) 4)) 8 3)) 3) 0 |mutex_lock_ldv_list_add_~new#1.base|))) (not (= |mutex_lock_ldv_list_add_~new#1.base| v_prenex_6)) (not (= 3 v_prenex_6)) (= (store (select (store (store (store |#memory_$Pointer$.offset| 3 v_DerPreprocessor_2) v_prenex_6 v_DerPreprocessor_3) |mutex_lock_ldv_list_add_~new#1.base| (select |#memory_$Pointer$.offset| |mutex_lock_ldv_list_add_~new#1.base|)) 3) 0 4) (select |#memory_$Pointer$.offset| 3))) (and (= |#memory_$Pointer$.base| (store (store |v_#memory_$Pointer$.base_BEFORE_CALL_2| |mutex_lock_ldv_list_add_~new#1.base| (store (store (store (select |v_#memory_$Pointer$.base_BEFORE_CALL_2| |mutex_lock_ldv_list_add_~new#1.base|) (+ v_prenex_4 4) |mutex_lock_ldv_list_add_~new#1.base|) 4 (select (select |#memory_$Pointer$.base| |mutex_lock_ldv_list_add_~new#1.base|) 4)) 8 3)) 3 (store (select (store |v_#memory_$Pointer$.base_BEFORE_CALL_2| |mutex_lock_ldv_list_add_~new#1.base| (store (store (store (select |v_#memory_$Pointer$.base_BEFORE_CALL_2| |mutex_lock_ldv_list_add_~new#1.base|) (+ v_prenex_4 4) |mutex_lock_ldv_list_add_~new#1.base|) 4 (select (select |#memory_$Pointer$.base| |mutex_lock_ldv_list_add_~new#1.base|) 4)) 8 3)) 3) 0 |mutex_lock_ldv_list_add_~new#1.base|))) (= (select (select |#memory_$Pointer$.offset| 3) 0) 4)))))))";
 		final String expectedResult = null;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
-	public void avt02() {
+	public void derPreprocessorBug_orig() {
 		final FunDecl[] funDecls = new FunDecl[] {
-				new FunDecl(SmtSortUtils::getIntSort, "k"),
-				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a1", "a2"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "dim1arr"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "mem"),
+				new FunDecl(SmtSortUtils::getIntSort, "base"),
 		};
-		final String formulaAsString = "(forall ((x Int)) (distinct a2 (store a1 k (+ x 1))))";
-		final String expectedResult = "(forall ((x Int)) (not (= (store a1 k (+ x 1)) a2)))";
+		final String formulaAsString = "(forall ((â (Array Int Int))) (or (not (= 4 (select â 8))) (not (= (select (store (store |mem| base dim1arr) 3 (store (store â 8 4) 4 4)) base) â)) (not (= (store (store â 4 0) 8 4) (select |mem| base))) (not (= (select â 4) 0))))";
+		final String expectedResult = null;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	/**
+	 * Looks rather like a self-update bug. Cannot replace by fresh variable
+	 * because the dimension would be higher. Solve probably by resolving
+	 * select-over-store.
+	 */
 	@Test
-	public void avt03() {
+	public void derPreprocessorBug() {
 		final FunDecl[] funDecls = new FunDecl[] {
-				new FunDecl(SmtSortUtils::getIntSort, "k"),
-				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "a1", "a2"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "dim1arr"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "mem"),
+				new FunDecl(SmtSortUtils::getIntSort, "base"),
 		};
-		final String formulaAsString = "(exists ((x Int) (y Int)) (= a2 (store (store a1 k (store (select a1 k) 23 x)) k (store (select (store a1 k (store (select a1 k) 23 x)) k) 42 y))))";
+		final String formulaAsString = "(exists ((â (Array Int Int))) (= (select (store mem 3 (store â 4 4)) base) â))";
 		final String expectedResult = null;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}

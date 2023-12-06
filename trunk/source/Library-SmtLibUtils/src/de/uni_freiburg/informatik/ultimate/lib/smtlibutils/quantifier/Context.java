@@ -113,7 +113,7 @@ public class Context {
 	}
 
 	public Context constructChildContextForQuantifiedFormula(final Script script,
-			final List<TermVariable> quantifiedVars) {
+			final Collection<TermVariable> quantifiedVars) {
 		{
 			// Throw UnsupportedOperationException if there are different variables with same name.
 			final Set<TermVariable> all = Stream
@@ -149,7 +149,7 @@ public class Context {
 	}
 
 	public static Term buildCriticalContraintForQuantifiedFormula(final Script script,
-			final Term parentCriticalConstraint, final List<TermVariable> boundVars,
+			final Term parentCriticalConstraint, final Collection<TermVariable> boundVars,
 			final CcTransformation ccTransformation) {
 		final Term quantified = SmtUtils.quantifier(script, QuantifiedFormula.EXISTS, boundVars,
 				parentCriticalConstraint);

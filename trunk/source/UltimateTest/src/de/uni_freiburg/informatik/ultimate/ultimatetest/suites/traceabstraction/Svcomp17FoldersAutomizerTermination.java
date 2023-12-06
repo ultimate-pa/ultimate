@@ -35,7 +35,7 @@ import java.util.Collection;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
-import de.uni_freiburg.informatik.ultimate.test.decider.SvcompTerminationTestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.decider.SvcompTestResultDeciderTermination;
 import de.uni_freiburg.informatik.ultimate.test.util.DirectoryFileEndingsPair;
 import de.uni_freiburg.informatik.ultimate.test.util.UltimateRunDefinitionGenerator;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.suites.buchiautomizer.AbstractBuchiAutomizerTestSuite;
@@ -145,6 +145,6 @@ public class Svcomp17FoldersAutomizerTermination extends AbstractBuchiAutomizerT
 
 	@Override
 	protected ITestResultDecider constructITestResultDecider(final UltimateRunDefinition urd) {
-		return new SvcompTerminationTestResultDecider(urd, false);
+		return new SvcompTestResultDeciderTermination(urd, false);
 	}
 }

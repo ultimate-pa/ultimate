@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.memoryhandler;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -106,7 +107,7 @@ public final class ConstructRealloc {
 	 * @param main
 	 * @return
 	 */
-	public List<Declaration> declareRealloc(final CHandler main) {
+	public List<Declaration> declareRealloc(final CHandler main, final Collection<HeapDataArray> heapDataArrays) {
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 		final CType voidPointerType = new CPointer(new CPrimitive(CPrimitives.VOID));
 		final CPrimitive sizeT = mTypeSizeAndOffsetComputer.getSizeT();
@@ -166,9 +167,7 @@ public final class ConstructRealloc {
 		bodyStmt.add(mMemoryHandler.getUltimateMemAllocCall(sizeIdExprImpl, resultLhsImpl, ignoreLoc, MemoryArea.HEAP));
 
 		// mem~X[res.base] := mem~X[ptr.base]
-		for (final CPrimitives prim : mMemoryHandler.getRequiredMemoryModelFeatures().getDataOnHeapRequired()) {
-			final HeapDataArray hda = mMemoryHandler.getMemoryModel().getDataHeapArray(prim);
-
+		for (final HeapDataArray hda : heapDataArrays) {
 			final BoogieType innerArrayBoogieType =
 					BoogieType.createArrayType(0, new BoogieType[] { mTypeHandler.getBoogieTypeForPointerComponents() },
 							hda.getArrayContentBoogieType());
@@ -185,28 +184,6 @@ public final class ConstructRealloc {
 							new Expression[] { hda.getIdentifierExpression(),
 									MemoryHandler.getPointerBaseAddress(resultExprImpl, ignoreLoc), select },
 							(BoogieType) hda.getVariableLHS().getType())));
-		}
-
-		if (mMemoryHandler.getRequiredMemoryModelFeatures().isPointerOnHeapRequired()) {
-			final HeapDataArray hda = mMemoryHandler.getMemoryModel().getPointerHeapArray();
-
-			final BoogieType innerArrayBoogieType =
-					BoogieType.createArrayType(0, new BoogieType[] { mTypeHandler.getBoogieTypeForPointerComponents() },
-							hda.getArrayContentBoogieType());
-
-			final Expression select = ExpressionFactory
-					.constructFunctionApplication(ignoreLoc, mMemoryHandler.getNameOfHeapSelectFunction(hda),
-							new Expression[] { hda.getIdentifierExpression(),
-									MemoryHandler.getPointerBaseAddress(ptrIdExprImpl, ignoreLoc), },
-							innerArrayBoogieType);
-
-			bodyStmt.add(StatementFactory.constructSingleAssignmentStatement(ignoreLoc, hda.getVariableLHS(),
-					ExpressionFactory.constructFunctionApplication(ignoreLoc,
-							mMemoryHandler.getNameOfHeapStoreFunction(hda),
-							new Expression[] { hda.getIdentifierExpression(),
-									MemoryHandler.getPointerBaseAddress(resultExprImpl, ignoreLoc), select },
-							(BoogieType) hda.getVariableLHS().getType())));
-
 		}
 
 		final Body procBody =

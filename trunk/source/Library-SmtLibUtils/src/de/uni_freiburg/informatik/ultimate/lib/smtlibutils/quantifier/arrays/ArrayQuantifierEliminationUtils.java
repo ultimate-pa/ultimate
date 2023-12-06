@@ -33,7 +33,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndexEqualityManager;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalSelectOverNestedStore;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalSelectOverStore;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
@@ -42,16 +41,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  *
  */
 public class ArrayQuantifierEliminationUtils {
-
-	public static Term transformMultiDimensionalSelectOverStoreToIte(final MultiDimensionalSelectOverStore mdsos,
-			final ManagedScript mgdScript, final ArrayIndexEqualityManager aiem) {
-		final ArrayIndex selectIndex = mdsos.getSelect().getIndex();
-		final ArrayIndex storeIndex = mdsos.getStore().getIndex();
-		final Term eq = aiem.constructIndexEquality(selectIndex, storeIndex);
-		final Term equalsReplacement = mdsos.constructEqualsReplacement();
-		final Term notEquasReplacement = mdsos.constructNotEqualsReplacement(mgdScript.getScript());
-		return SmtUtils.ite(mgdScript.getScript(), eq, equalsReplacement, notEquasReplacement);
-	}
 
 	public static Term transformMultiDimensionalSelectOverNestedStoreToIte(
 			final MultiDimensionalSelectOverNestedStore mdsos, final ManagedScript mgdScript,

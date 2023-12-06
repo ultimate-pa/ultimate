@@ -239,20 +239,20 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 				super.writeAutomatonToFile(enhancementResult.getSecond().getResult(), filename);
 			}
 
-			// Complement the interpolant automaton
-			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> nia =
-					new ComplementDD<>(new AutomataLibraryServices(getServices()), mPredicateFactoryInterpolantAutomata,
-							dia).getResult();
-			// TODO 2018-08-11 Matthias: Complement not needed since we compute difference.
-			// Furthermore there is a problem because we would have to concatenate operand
-			// with some ∑^* automaton first and we do not yet have an implementation for
-			// that.
-			// assert !accepts(mServices, nia, mCounterexample.getWord(), false) :
-			// "Complementation broken!";
-			// mLogger.info("Complemented interpolant automaton has " + nia.size() + "
-			// states");
-
 			if (mIteration <= mPref.watchIteration() && mPref.artifact() == Artifact.NEG_INTERPOLANT_AUTOMATON) {
+				// Complement the interpolant automaton
+				final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> nia =
+						new ComplementDD<>(new AutomataLibraryServices(getServices()),
+								mPredicateFactoryInterpolantAutomata, dia).getResult();
+				// TODO 2018-08-11 Matthias: Complement not needed since we compute difference.
+				// Furthermore there is a problem because we would have to concatenate operand
+				// with some ∑^* automaton first and we do not yet have an implementation for
+				// that.
+				// assert !accepts(mServices, nia, mCounterexample.getWord(), false) :
+				// "Complementation broken!";
+				// mLogger.info("Complemented interpolant automaton has " + nia.size() + "
+				// states");
+
 				mArtifactAutomaton = nia;
 			}
 			if (USE_ON_DEMAND_RESULT) {

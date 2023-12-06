@@ -114,11 +114,12 @@ public final class BitSubSet<E> extends AbstractCollection<E> {
 		public BitSubSetIterator(final Object[] elements, final BitSet bitset) {
 			mElements = elements;
 			mBitSet = bitset;
+			mIndex = mBitSet.nextSetBit(0);
 		}
 
 		@Override
 		public boolean hasNext() {
-			return mIndex < mBitSet.length();
+			return mIndex >= 0;
 		}
 
 		@Override
@@ -127,9 +128,8 @@ public final class BitSubSet<E> extends AbstractCollection<E> {
 				throw new NoSuchElementException();
 			}
 
-			mIndex = mBitSet.nextSetBit(mIndex);
 			final E elem = (E) mElements[mIndex];
-			mIndex++;
+			mIndex = mBitSet.nextSetBit(mIndex + 1);
 
 			return elem;
 		}

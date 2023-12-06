@@ -1,13 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
 <key id="programfile" attr.name="programfile" for="graph"/>
-<key id="programhash" attr.name="programhash" for="graph"/>
 <key id="sourcecodelang" attr.name="sourcecodelang" for="graph"/>
-<key id="producer" attr.name="producer" for="graph"/>
-<key id="specification" attr.name="specification" for="graph"/>
 <key id="creationtime" attr.name="creationtime" for="graph"/>
 <key id="witness-type" attr.name="witness-type" for="graph"/>
-<key id="architecture" attr.name="architecture" for="graph"/>
 <key id="entry" attr.name="entry" for="node">
 <default>false</default>
 </key>
@@ -30,24 +26,20 @@
 <key id="assumption" attr.name="assumption" for="edge"/>
 <key id="tokens" attr.name="tokens" for="edge"/>
 <key id="originfile" attr.name="originfile" for="edge">
-<default>C:\Users\Frank\Desktop\for_loop.c</default>
+<default>C:\ultimate\trunk\examples\witness-checking\regression\correctness\for_loop.c</default>
 </key>
 <key id="sourcecode" attr.name="sourcecode" for="edge"/>
 <graph edgedefault="directed">
-<data key="programfile">C:\Users\Frank\Desktop\for_loop.c</data>
-<data key="programhash">hash</data>
+<data key="programfile">C:\ultimate\trunk\examples\witness-checking\regression\correctness\for_loop.c</data>
 <data key="sourcecodelang">C</data>
-<data key="producer">ULTIMATE</data>
-<data key="specification">spec</data>
-<data key="creationtime">2023-08-03T11:15:06Z</data>
+<data key="creationtime">2023-10-31T12:36:50Z</data>
 <data key="witness-type">correctness_witness</data>
-<data key="architecture">32bit</data>
 <node id="N0">
 <data key="entry">true</data>
 </node>
 <node id="N1"/>
 <node id="N2">
-<data key="invariant">(((((5 &lt; x &amp;&amp; x &lt;= 6) &amp;&amp; 4 &lt;= i) || (3 == x &amp;&amp; 3 == i)) || (2 == i &amp;&amp; x == 1)) || (i == 1 &amp;&amp; x == 0)) || (i == 0 &amp;&amp; x == 0)</data>
+<data key="invariant">((((((x == 0) &amp;&amp; (i == 0)) || ((x == 3) &amp;&amp; (i == 3))) || ((x == 0) &amp;&amp; (i == 1))) || ((i == 2) &amp;&amp; (x == 1))) || ((x == 6) &amp;&amp; (4 &lt;= i)))</data>
 </node>
 <node id="N3"/>
 <node id="N4"/>
@@ -56,7 +48,6 @@
 <node id="N7"/>
 <node id="N8"/>
 <node id="N9"/>
-<node id="N10"/>
 <edge id="E0" source="N0" target="N1">
 <data key="endline">2</data>
 <data key="startline">2</data>
@@ -84,40 +75,35 @@
 <data key="sourcecode">x += i</data>
 </edge>
 <edge id="E5" source="N4" target="N6">
-<data key="endline">6</data>
-<data key="startline">6</data>
-<data key="sourcecode">[x != 6]</data>
-</edge>
-<edge id="E6" source="N4" target="N7">
-<data key="endline">6</data>
-<data key="startline">6</data>
-<data key="sourcecode">[!(x != 6)]</data>
-</edge>
-<edge id="E7" source="N5" target="N8">
 <data key="endline">3</data>
 <data key="startline">3</data>
-<data key="sourcecode">i++</data>
+<data key="sourcecode">[i&lt;=3]</data>
 </edge>
-<edge id="E8" source="N6" target="N9">
-<data key="endline">7</data>
-<data key="startline">7</data>
-<data key="sourcecode">reach_error()</data>
-</edge>
-<edge id="E9" source="N6" target="N7">
-<data key="endline">7</data>
-<data key="startline">7</data>
-<data key="sourcecode">reach_error()</data>
-</edge>
-<edge id="E10" source="N8" target="N10">
-<data key="endline">3</data>
-<data key="startline">3</data>
-<data key="sourcecode">i++</data>
-</edge>
-<edge id="E11" source="N10" target="N2">
+<edge id="E6" source="N5" target="N2">
 <data key="endline">3</data>
 <data key="enterLoopHead">true</data>
 <data key="startline">3</data>
 <data key="sourcecode">i++</data>
+</edge>
+<edge id="E7" source="N6" target="N7">
+<data key="endline">6</data>
+<data key="startline">6</data>
+<data key="sourcecode">[x != 6]</data>
+</edge>
+<edge id="E8" source="N6" target="N8">
+<data key="endline">6</data>
+<data key="startline">6</data>
+<data key="sourcecode">[!(x != 6)]</data>
+</edge>
+<edge id="E9" source="N7" target="N9">
+<data key="endline">7</data>
+<data key="startline">7</data>
+<data key="sourcecode">reach_error()</data>
+</edge>
+<edge id="E10" source="N7" target="N8">
+<data key="endline">7</data>
+<data key="startline">7</data>
+<data key="sourcecode">reach_error()</data>
 </edge>
 </graph>
 </graphml>

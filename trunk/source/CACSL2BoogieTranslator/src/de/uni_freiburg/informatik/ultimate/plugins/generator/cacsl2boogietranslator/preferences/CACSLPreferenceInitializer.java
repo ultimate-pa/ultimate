@@ -53,7 +53,8 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 	private static final String MAINPROC_DEFAULT = "main";
 	public static final String LABEL_CHECK_ASSERTIONS = "Check assertions from assert.h";
 	private static final String DESC_CHECK_ASSERTIONS =
-			"Check if the assertions from assert.h (currently supported: assert, __assert_fail, __assert_func) never fail.";
+			"Check if the assertions from assert.h (currently supported: assert, static_assert, _Static_assert, "
+					+ "__assert_fail, __assert_func) never fail.";
 	public static final String LABEL_CHECK_POINTER_VALIDITY = "Pointer base address is valid at dereference";
 	public static final String LABEL_CHECK_POINTER_ALLOC = "Pointer to allocated memory at dereference";
 	public static final String LABEL_CHECK_FREE_VALID = "Check if freed pointer was valid";
@@ -134,6 +135,11 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String DESC_STRING_OVERAPPROXIMATION_THRESHOLD = "String literals that require this number of "
 			+ "bytes or more are overapproximated, i.e., Ultimate assumes that the string can contain arbitrary bytes.";
 	private static final int DEFAULT_STRING_OVERAPPROXIMATION_THRESHOLD = 9;
+
+	public static final String LABEL_ALLOW_UNDEFINED_FUNCTIONS = "Allow undefined functions";
+	private static final String DESC_ALLOW_UNDEFINED_FUNCTIONS =
+			"Allow the calls of functions without a definition. In that case they are modeled fully non-deterministically.";
+	private static final boolean DEFAULT_ALLOW_UNDEFINED_FUNCTIONS = true;
 
 	public enum PointerCheckMode {
 		IGNORE, ASSUME, ASSERTandASSUME
@@ -316,7 +322,9 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 						DESC_ADAPT_MEMORY_MODEL_ON_POINTER_CASTS, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_STRING_OVERAPPROXIMATION_THRESHOLD,
 						DEFAULT_STRING_OVERAPPROXIMATION_THRESHOLD, DESC_STRING_OVERAPPROXIMATION_THRESHOLD,
-						PreferenceType.Integer) };
+						PreferenceType.Integer),
+				new UltimatePreferenceItem<>(LABEL_ALLOW_UNDEFINED_FUNCTIONS, DEFAULT_ALLOW_UNDEFINED_FUNCTIONS,
+						DESC_ALLOW_UNDEFINED_FUNCTIONS, PreferenceType.Boolean), };
 
 	}
 }

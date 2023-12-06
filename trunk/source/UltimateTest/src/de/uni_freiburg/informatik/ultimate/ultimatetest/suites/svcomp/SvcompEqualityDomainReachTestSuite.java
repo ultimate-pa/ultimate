@@ -32,7 +32,7 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.benchexec.BenchexecRundefinitionGeneratorPreLog;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
-import de.uni_freiburg.informatik.ultimate.test.decider.SvcompReachTestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.decider.SvcompTestResultDeciderUnreachCall;
 import de.uni_freiburg.informatik.ultimate.test.reporting.IPreTestLog;
 
 /**
@@ -44,7 +44,7 @@ public class SvcompEqualityDomainReachTestSuite extends AbstractSvcompTestSuite 
 
 	@Override
 	protected ITestResultDecider getTestResultDecider(final UltimateRunDefinition urd) {
-		return new SvcompReachTestResultDecider(urd, false);
+		return new SvcompTestResultDeciderUnreachCall(urd, false);
 	}
 
 	@Override

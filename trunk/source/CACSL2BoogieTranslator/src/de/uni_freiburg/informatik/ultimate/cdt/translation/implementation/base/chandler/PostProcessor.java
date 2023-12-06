@@ -780,22 +780,23 @@ public class PostProcessor {
 							DeclarationInformation.DECLARATIONINFO_GLOBAL);
 
 					if (mCHandler.isHeapVar(id)) {
-						final CallStatement ultimateAllocCall;
 						if (MemoryHandler.FIXED_ADDRESSES_FOR_INITIALIZATION) {
 							final Pair<RValue, CallStatement> pair = mMemoryHandler
 									.getUltimateMemAllocInitCall(currentDeclsLoc, en.getValue().getType());
 							final RValue addressRValue = pair.getFirst();
-							ultimateAllocCall = pair.getSecond();
+							final CallStatement ultimateAllocCall = pair.getSecond();
+							staticObjectInitStatements.add(ultimateAllocCall);
 							final AssignmentStatement pointerAssignment = new AssignmentStatement(currentDeclsLoc,
 									new LeftHandSide[] { lhs }, new Expression[] { addressRValue.getValue() });
 							staticObjectInitStatements.add(pointerAssignment);
 						} else {
 							final LocalLValue llVal = new LocalLValue(lhs, en.getValue().getType(), null);
-							ultimateAllocCall =
+							final CallStatement ultimateAllocCall =
 									mMemoryHandler.getUltimateMemAllocCall(llVal, currentDeclsLoc, MemoryArea.STACK);
 							proceduresCalledByUltimateInit.add(MemoryModelDeclarations.ULTIMATE_ALLOC_STACK.name());
+							staticObjectInitStatements.add(ultimateAllocCall);
 						}
-						staticObjectInitStatements.add(ultimateAllocCall);
+
 					}
 
 					final ExpressionResult initRex =
@@ -840,21 +841,6 @@ public class PostProcessor {
 						MemoryHandler.constructOneDimensionalArrayUpdate(translationUnitLoc, zero,
 								mMemoryHandler.getValidArrayLhs(translationUnitLoc), literalThatRepresentsFalse);
 				initStatements.add(0, assignment);
-			}
-			{
-				// set the value of the NULL-constant to NULL = { base : 0,
-				// offset : 0 }
-				final VariableLHS slhs = ExpressionFactory.constructVariableLHS(translationUnitLoc,
-						mTypeHandler.getBoogiePointerType(), SFO.NULL, DeclarationInformation.DECLARATIONINFO_GLOBAL);
-				initStatements.add(0,
-						StatementFactory.constructAssignmentStatement(translationUnitLoc, new LeftHandSide[] { slhs },
-								new Expression[] { ExpressionFactory.constructStructConstructor(translationUnitLoc,
-										new String[] { "base", "offset" },
-										new Expression[] { mTypeSize.constructLiteralForIntegerType(translationUnitLoc,
-												mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO),
-												mTypeSize.constructLiteralForIntegerType(translationUnitLoc,
-														mExpressionTranslation.getCTypeOfPointerComponents(),
-														BigInteger.ZERO) }) }));
 			}
 			{
 				// Add assume(0 < #StackHeapBarrier) to ensure that the null

@@ -2,5 +2,5 @@
        VAL        [__VERIFIER_nondet_float()=NaN, x=NaN]
 [L14]  COND TRUE  x != x
        VAL        [x=NaN]
-[L15]             CodeAnnotStmt[Assertion]
+[L15]             CodeAnnotStmt[Assertion[BooleanLiteral[false]]]
        VAL        [x=NaN]

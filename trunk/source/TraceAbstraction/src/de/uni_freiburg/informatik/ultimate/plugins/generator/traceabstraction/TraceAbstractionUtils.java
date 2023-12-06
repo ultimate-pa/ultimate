@@ -166,7 +166,11 @@ public final class TraceAbstractionUtils {
 			}
 			break;
 		case LoopsAndPotentialCycles:
+			hoareAnnotationLocs.addAll(root.getLoopLocations());
+			hoareAnnotationLocs.addAll(IcfgUtils.getCallerAndCalleePoints(root));
 			hoareAnnotationLocs.addAll(IcfgUtils.getPotentialCycleProgramPoints(root));
+			break;
+		case LoopHeads:
 			hoareAnnotationLocs.addAll(root.getLoopLocations());
 			hoareAnnotationLocs.addAll(IcfgUtils.getCallerAndCalleePoints(root));
 			break;

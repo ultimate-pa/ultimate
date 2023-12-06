@@ -240,7 +240,7 @@ public interface SMTLIBConstants {
 	public String PRODUCE_UNSAT_CORES = ":produce-unsat-cores";
 	public String RANDOM_SEED = ":random-seed";
 	public String REGULAR_OUTPUT_CHANNEL = ":regular-output-channel";
-	public String REPRODUCIBLE_RESOURCE_LIMITS = ":reproducable-resource-limits";
+	public String REPRODUCIBLE_RESOURCE_LIMIT = ":reproducible-resource-limit";
 	public String VERBOSITY = ":verbosity";
 	public String STDOUT = "stdout";
 	public String STDERR = "stderr";

@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
  * @param <STATE>
  *            state type
  */
-public abstract class NwaWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
+public class NwaWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 	private final INestedWordAutomaton<LETTER, STATE> mNwa;
 	private final Map<LETTER, String> mInternalAlphabet;
 	private final Map<LETTER, String> mCallAlphabet;
@@ -64,13 +64,14 @@ public abstract class NwaWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 	 *            nested word automaton
 	 */
 	@SuppressWarnings("squid:S1699")
-	public NwaWriter(final PrintWriter writer, final String name, final INestedWordAutomaton<LETTER, STATE> nwa) {
+	public NwaWriter(final PrintWriter writer, final String name, final INestedWordAutomaton<LETTER, STATE> nwa,
+			final INwaAtsFormatter<LETTER, STATE> formatter) {
 		super(writer);
 		mNwa = nwa;
-		mInternalAlphabet = getAlphabetMapping(mNwa.getVpAlphabet().getInternalAlphabet(), 'a');
-		mCallAlphabet = getAlphabetMapping(mNwa.getVpAlphabet().getCallAlphabet(), 'c');
-		mReturnAlphabet = getAlphabetMapping(mNwa.getVpAlphabet().getReturnAlphabet(), 'r');
-		mStateMapping = getStateMapping(mNwa.getStates());
+		mInternalAlphabet = formatter.getAlphabetMapping(mNwa.getVpAlphabet().getInternalAlphabet(), 'a');
+		mCallAlphabet = formatter.getAlphabetMapping(mNwa.getVpAlphabet().getCallAlphabet(), 'c');
+		mReturnAlphabet = formatter.getAlphabetMapping(mNwa.getVpAlphabet().getReturnAlphabet(), 'r');
+		mStateMapping = formatter.getStateMapping(mNwa.getStates());
 
 		final boolean hasEpsilonTransitions = (mNwa instanceof IEpsilonNestedWordAutomaton);
 		if (hasEpsilonTransitions) {
@@ -125,26 +126,6 @@ public abstract class NwaWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 		}
 		finish();
 	}
-
-	/**
-	 * Constructs the new alphabet.
-	 *
-	 * @param alphabet
-	 *            old alphabet
-	 * @param symbol
-	 *            default symbol
-	 * @return mapping (old alphabet -> new alphabet)
-	 */
-	protected abstract Map<LETTER, String> getAlphabetMapping(final Collection<LETTER> alphabet, final char symbol);
-
-	/**
-	 * Constructs the new states.
-	 *
-	 * @param states
-	 *            old states
-	 * @return new states
-	 */
-	protected abstract Map<STATE, String> getStateMapping(final Collection<STATE> states);
 
 	private void printAlphabets() {
 		printCollectionPrefix("callAlphabet");

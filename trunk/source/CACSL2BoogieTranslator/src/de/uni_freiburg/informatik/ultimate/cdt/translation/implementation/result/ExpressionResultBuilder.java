@@ -176,6 +176,16 @@ public class ExpressionResultBuilder {
 		return this;
 	}
 
+	public ExpressionResultBuilder addAllExceptLrValueAndOverapproximation(final ExpressionResult exprResult) {
+		addStatements(exprResult.getStatements());
+		addDeclarations(exprResult.getDeclarations());
+		addAuxVars(exprResult.getAuxVars());
+		if (exprResult.getNeighbourUnionFields() != null && !exprResult.getNeighbourUnionFields().isEmpty()) {
+			addNeighbourUnionFields(exprResult.getNeighbourUnionFields());
+		}
+		return this;
+	}
+
 	/**
 	 * Add all statements, declarations, auxVars and overapproximations of the supplied {@link ExpressionResult}s to
 	 * this builder.

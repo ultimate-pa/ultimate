@@ -69,6 +69,11 @@ public class AtomicTraceElement<TE> {
 
 		EXPR_EVAL("EXPR"),
 
+		/**
+		 * Used for calls consisting of only a single statement, i.e., which are NOT followed by statements from the
+		 * body of a called procedure and a return. In Boogie, this is also used for calls to procedures without an
+		 * implementation (not, as the name may suggest, for Boogie functions).
+		 */
 		FUNC_CALL("FCALL"),
 
 		FORK("FORK"),

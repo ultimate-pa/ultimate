@@ -62,6 +62,7 @@ public class NestedArrayStore implements ITermProvider {
 		return mValues;
 	}
 
+	@Override
 	public Term toTerm(final Script script) {
 		Term array = mArray;
 		for (int i = 0; i < mIndices.size(); i++) {

@@ -930,6 +930,7 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 			}
 		}
 
+		final List<Statement> localHavocs = new ArrayList<>();
 		if (calleeNode.isImplemented()) {
 			proc = calleeNode.getProcedureWithBody();
 			final Body body = proc.getBody();
@@ -948,6 +949,7 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 				final Statement havocLocalVars = processStatement(new HavocStatement(callLocation, localVarLHSArray));
 				addBacktranslation(havocLocalVars, null);
 				inlinedBody.add(havocLocalVars);
+				localHavocs.add(havocLocalVars);
 			}
 
 			// inline body
@@ -995,6 +997,9 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 			final Statement assignStat = processStatement(new AssignmentStatement(callLocation, inVarLHSs, inVarRHSs));
 			addBacktranslation(assignStat, null);
 			writeToInParams.add(assignStat);
+			final Statement havocInParams = processStatement(new HavocStatement(callLocation, inVarLHSs));
+			addBacktranslation(havocInParams, null);
+			localHavocs.add(havocInParams);
 		}
 
 		// --------- assign out-parameters to target variables from call statement ---------
@@ -1050,6 +1055,7 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 		inlineBlock.addAll(assertEnsures);
 		inlineBlock.addAll(assumeEnsures);
 		inlineBlock.addAll(writeFromOutParams);
+		inlineBlock.addAll(localHavocs);
 		inlineBlock.add(getAssumeCallMarker(ATTR_PREFIX_END_INLINE + procId, callLocation, call, true));
 		return inlineBlock;
 	}

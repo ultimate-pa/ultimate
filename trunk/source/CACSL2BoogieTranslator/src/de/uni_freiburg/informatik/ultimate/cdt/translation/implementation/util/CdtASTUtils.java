@@ -173,16 +173,16 @@ public final class CdtASTUtils {
 		return children.length == 0 ? findSuccessorStatement(cmpStmt) : getFirstOrSuccessorStatement(children[0]);
 	}
 
-	public static IASTFunctionDefinition findScope(final IASTNode current) {
-		IASTNode parent = current.getParent();
-		while (parent != null) {
-			if (parent instanceof IASTFunctionDefinition) {
-				return (IASTFunctionDefinition) parent;
+	public static IASTFunctionDefinition findScope(final IASTNode node) {
+		IASTNode current = node;
+		while (current != null) {
+			if (current instanceof IASTFunctionDefinition) {
+				return (IASTFunctionDefinition) current;
 			}
-			if (parent instanceof IASTTranslationUnit) {
+			if (current instanceof IASTTranslationUnit) {
 				return null;
 			}
-			parent = parent.getParent();
+			current = current.getParent();
 		}
 		return null;
 	}

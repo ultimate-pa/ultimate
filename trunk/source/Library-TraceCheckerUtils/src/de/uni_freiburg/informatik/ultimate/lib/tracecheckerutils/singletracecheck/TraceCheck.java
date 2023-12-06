@@ -426,7 +426,21 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 				for (final var representative : indexedRepresentatives.entrySet()) {
 					final Integer index = representative.getKey();
 					final Term indexedVar = representative.getValue();
-					final Term valueT = funGetValue.apply(indexedVar);
+					final Term valueT;
+					try {
+						valueT = funGetValue.apply(indexedVar);
+					} catch (final UnsupportedOperationException uoe) {
+						// TODO 2023-10-26 Matthias: This is a workaround that makes sure that we don't
+						// crash while using SMTInterpol on quantified formulas. See {@link
+						// IcfgProgramExecutionBuilder#varValAtPos}. If SMTInterpol
+						// is able to produce values for the sorts `Int` and `Bool` this catch block
+						// should be removed.
+						if (uoe.getMessage().equals("Modelproduction for quantifier theory not implemented.")) {
+							continue;
+						} else {
+							throw uoe;
+						}
+					}
 					rpeb.addValueAtVarAssignmentPosition(bv, index, valueT);
 				}
 			}

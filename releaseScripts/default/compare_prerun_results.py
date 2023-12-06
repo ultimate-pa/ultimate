@@ -19,7 +19,7 @@ from requests_html import HTMLSession
 ###############################################################################
 # Configuration:
 #
-root_url = "https://sv-comp.sosy-lab.org/2023/results/results-verified"
+root_url = "https://sv-comp.sosy-lab.org/2024/results/results-verified"
 categories = [
   "unreach-call.ConcurrencySafety-Main",
   "no-data-race.NoDataRace-Main",
@@ -63,7 +63,7 @@ def find_row(rows, title):
 
 def extract_data(rows):
   global data_layout
-  
+
   data = {}
   for key, info in data_layout.items():
     row = find_row(rows, info["row"])
@@ -74,18 +74,18 @@ def extract_data(rows):
       return None
 
   return data
-  
+
 def print_table(category, results):
   print(category)
   print("--------------------------------------------------------------------------------")
-  
+
   print()
   print("| tool            || score   | correct (conf.) | correct true   | correct false   || incorrect | incorrect true | incorrect false |")
   print("|-----------------||---------|-----------------|----------------|-----------------||-----------|----------------|-----------------|")
-  for tool, data in results.items():
+  for tool, data in sorted(results.items(), key=lambda pair: int(pair[1]['raw_score']), reverse=True):
     print(f"| {tool:<15} ||   {data['raw_score']:5} |       {data['correct_confirmed']+data.get('correct_unconfirmed',0):3} ({data['correct_confirmed']:3}) |      {data['correct_true_confirmed']+data.get('correct_true_unconfirmed',0):3} ({data['correct_true_confirmed']:3}) |       {data['correct_false_confirmed']+data.get('correct_falseunconfirmed',0):3} ({data['correct_false_confirmed']:3}) ||       {data['incorrect']:3} |            {data['incorrect_true']:3} |             {data['incorrect_false']:3} |")
   print()
-  
+
   print()
   print()
 
@@ -103,8 +103,8 @@ for category in categories:
   for tool, url in pages.items():
     print("  loading data for " + tool + "...")
     tooldata = HTMLSession().get(f"{root_url}/{url}")
-    tooldata.html.render()
-    
+    tooldata.html.render(retries=3, wait=3, timeout=16)
+
     rows = tooldata.html.find("div.table-body div.tr[role='row']")
     data = extract_data(rows)
     if data is None:
@@ -112,6 +112,8 @@ for category in categories:
       continue
 
     results[category][tool] = data
+
+  print()
 
 print()
 print()

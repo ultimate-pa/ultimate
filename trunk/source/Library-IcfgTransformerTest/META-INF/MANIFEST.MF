@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Library-IcfgTransformerTest
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.icfgtransformer.test
-Bundle-Version: 0.2.3
+Bundle-Version: 0.2.4
 Bundle-RequiredExecutionEnvironment: JavaSE-11
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.test,

@@ -249,8 +249,8 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		} else {
 			mItpAutomata = new UnionNwa<>(mItpAutomata, determinized, mFactory, false);
 		}
-		mAbstraction =
-				new InformationStorage<>(mProgram == null ? mAbstraction : mProgram, mItpAutomata, mFactory, false);
+		mAbstraction = new InformationStorage<>(mProgram == null ? mAbstraction : mProgram, mItpAutomata, mFactory,
+				PartialOrderCegarLoop::isFalseLiteral);
 
 		// augment refinement result with Hoare triple checker to allow re-use by independence providers
 		final var resultWithHtc = addHoareTripleChecker(mRefinementResult, htc);
@@ -349,7 +349,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 			// TODO once this is done, we can also give a more precise return type and avoid casts in getCounterexample
 			visitor = new SleepSetVisitorSearch<>(this::isGoalState, this::isProvenState);
 		} else {
-			visitor = new AcceptingRunSearchVisitor<>(this::isGoalState, this::isProvenState);
+			visitor = new AcceptingRunSearchVisitor<>(this::isGoalState);
 		}
 		if (mPOR.getDfsOrder() instanceof BetterLockstepOrder<?, ?>) {
 			visitor = ((BetterLockstepOrder<L, IPredicate>) mPOR.getDfsOrder()).wrapVisitor(visitor);

@@ -30,20 +30,20 @@
 package de.uni_freiburg.informatik.ultimate.witnessparser;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
+import java.time.ZoneId;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import com.amihaiemil.eoyaml.Node;
-import com.amihaiemil.eoyaml.Yaml;
-import com.amihaiemil.eoyaml.YamlInput;
-import com.amihaiemil.eoyaml.YamlMapping;
-import com.amihaiemil.eoyaml.YamlNode;
-import com.amihaiemil.eoyaml.YamlSequence;
+import org.yaml.snakeyaml.LoaderOptions;
+import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.constructor.SafeConstructor;
 
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.FormatVersion;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Invariant;
@@ -65,115 +65,101 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.WitnessEntry;
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  */
 public class YamlWitnessParser {
+	// Maximal size for witnesses to be parsed
+	// The default is just 3MB, but this is not sufficient for us.
+	private static final int MAXIMAL_SIZE = 50 * 1024 * 1024;
 
-	public static Witness parseWitness(final String yamlInput) throws IOException {
-		final YamlInput witnessInput = Yaml.createYamlInput(yamlInput);
-		return parseWitnessEntries(witnessInput);
-	}
+	// TODO: Make this a map instead with functions as values (i.e. what to do with this versions)
+	private static final List<FormatVersion> SUPPORTED_VERSIONS =
+			List.of(new FormatVersion(0, 1), new FormatVersion(0, 2), new FormatVersion(2, 0));
 
 	public static Witness parseWitness(final File yamlInput) throws IOException {
-		final YamlInput witnessInput = Yaml.createYamlInput(yamlInput);
-		return parseWitnessEntries(witnessInput);
+		final LoaderOptions loaderOptions = new LoaderOptions();
+		loaderOptions.setCodePointLimit(MAXIMAL_SIZE);
+		final List<Map<String, Object>> res =
+				new Yaml(new SafeConstructor(loaderOptions)).load(new FileInputStream(yamlInput));
+		return new Witness(res.stream().flatMap(YamlWitnessParser::parseWitnessEntry).collect(Collectors.toList()));
 	}
 
-	private static Witness parseWitnessEntries(final YamlInput witnessInput) throws IOException {
-		final YamlSequence witnessEntries = witnessInput.readYamlSequence();
-		final List<WitnessEntry> entries = new ArrayList<>();
-
-		for (final YamlNode witnessEntry : witnessEntries) {
-			final WitnessEntry newEntry = parseWitnessEntry(witnessEntry);
-			entries.add(newEntry);
+	private static Stream<WitnessEntry> parseWitnessEntry(final Map<String, Object> entry) {
+		final Metadata metadata = parseMetadata((Map<String, Object>) entry.get("metadata"));
+		switch ((String) entry.get("entry_type")) {
+		case LocationInvariant.NAME: {
+			final Location location = parseLocation((Map<String, Object>) entry.get("location"));
+			final Invariant locationInvariant = parseInvariant((Map<String, String>) entry.get(LocationInvariant.NAME));
+			return Stream.of(new LocationInvariant(metadata, location, locationInvariant));
 		}
-
-		return new Witness(entries);
-	}
-
-	private static WitnessEntry parseWitnessEntry(final YamlNode entry) {
-
-		assert (entry.type() == Node.MAPPING);
-
-		final YamlMapping entryMapping = entry.asMapping();
-		final String entryType = entryMapping.string("entry_type");
-
-		if (entryType.equals(LocationInvariant.NAME)) {
-
-			final Metadata metadata = YamlWitnessParser.parseMetadata(entry);
-			final Location location = YamlWitnessParser.parseLocation(entry);
-			final Invariant locationInvariant = parseInvariant(entry, LocationInvariant.NAME);
-
-			return new LocationInvariant(metadata, location, locationInvariant);
-
+		case LoopInvariant.NAME: {
+			final Location location = parseLocation((Map<String, Object>) entry.get("location"));
+			final Invariant loopInvariant = parseInvariant((Map<String, String>) entry.get(LoopInvariant.NAME));
+			return Stream.of(new LoopInvariant(metadata, location, loopInvariant));
 		}
-		if (entryType.equals(LoopInvariant.NAME)) {
-
-			final Metadata metadata = YamlWitnessParser.parseMetadata(entry);
-			final Location location = YamlWitnessParser.parseLocation(entry);
-			final Invariant loopInvariant = parseInvariant(entry, LoopInvariant.NAME);
-
-			return new LoopInvariant(metadata, location, loopInvariant);
-
+		case "invariant_set":
+		case "entry_set":
+			// TODO: This just transforms the "new" format to the "old" format, maybe change this in the future
+			final List<Map<String, Map<String, Object>>> content =
+					(List<Map<String, Map<String, Object>>>) entry.get("content");
+			return content.stream().map(x -> parseAsSingleEntry(x.get("invariant"), metadata));
+		default:
+			throw new UnsupportedOperationException("Unknown entry type " + entry.get("entry_type"));
 		}
-		// In this case, throw exception -Katie
-		throw new UnsupportedOperationException("Unknown entry type");
 	}
 
-	private static Metadata parseMetadata(final YamlNode entry) {
-		// Method parses metadata mapping from an entry and return new Metadata(...) object
-
-		assert (entry.type() == Node.MAPPING);
-
-		final YamlMapping entryMapping = entry.asMapping();
-		final YamlMapping metadataEntry = entryMapping.yamlMapping("metadata");
-
-		final FormatVersion formatVersion = FormatVersion.fromString(metadataEntry.string("format_version"));
-		final UUID uuid = UUID.fromString(metadataEntry.string("uuid"));
-		final OffsetDateTime creationTime = OffsetDateTime.parse(metadataEntry.string("creation_time"));
-
-		return new Metadata(formatVersion, uuid, creationTime, parseProducer(metadataEntry), parseTask(metadataEntry));
+	private static WitnessEntry parseAsSingleEntry(final Map<String, Object> setEntry, final Metadata metadata) {
+		// Create new metadata with a fresh UUID (because we rely on it as a unique identifier)
+		final Metadata newMetadata = new Metadata(metadata.getFormatVersion(), UUID.randomUUID(),
+				metadata.getCreationTime(), metadata.getProducer(), metadata.getTask());
+		final Location location = parseLocation((Map<String, Object>) setEntry.get("location"));
+		final Invariant invariant =
+				new Invariant((String) setEntry.get("value"), "assertion", (String) setEntry.get("format"));
+		switch ((String) setEntry.get("type")) {
+		case LocationInvariant.NAME:
+			return new LocationInvariant(newMetadata, location, invariant);
+		case LoopInvariant.NAME:
+			return new LocationInvariant(newMetadata, location, invariant);
+		default:
+			throw new UnsupportedOperationException("Unknown entry type " + setEntry.get("type"));
+		}
 	}
 
-	private static Producer parseProducer(final YamlMapping entry) {
-		final YamlMapping producerMapping = entry.asMapping().value("producer").asMapping();
+	private static Metadata parseMetadata(final Map<String, Object> metadata) {
+		final FormatVersion formatVersion = FormatVersion.fromString(metadata.get("format_version").toString());
+		if (!SUPPORTED_VERSIONS.contains(formatVersion)) {
+			throw new UnsupportedOperationException("Unsupported format version " + formatVersion);
+		}
+		final UUID uuid = UUID.fromString((String) metadata.get("uuid"));
+		final Object rawDate = metadata.get("creation_time");
+		final OffsetDateTime creationTime;
+		if (rawDate instanceof Date) {
+			creationTime = OffsetDateTime.ofInstant(((Date) rawDate).toInstant(), ZoneId.systemDefault());
+		} else {
+			creationTime = OffsetDateTime.parse((String) rawDate);
+		}
+		final Producer producer = parseProducer((Map<String, String>) metadata.get("producer"));
+		final Task task = parseTask((Map<String, Object>) metadata.get("task"));
+		return new Metadata(formatVersion, uuid, creationTime, producer, task);
+	}
+
+	private static Producer parseProducer(final Map<String, String> producer) {
 		// TODO: I don't see any reason to parse the optional entries here...
-		return new Producer(producerMapping.string("name"), producerMapping.string("version"));
+		return new Producer(producer.get("name"), producer.get("version"));
 	}
 
-	private static Task parseTask(final YamlNode entry) {
-		final YamlMapping taskMapping = entry.asMapping().value("task").asMapping();
-		final List<String> files = taskMapping.yamlSequence("input_files").values().stream()
-				.map(x -> x.asScalar().value()).collect(Collectors.toList());
-		final var hashesRaw = taskMapping.yamlMapping("input_file_hashes");
-		final Map<String, String> hashes = hashesRaw.keys().stream()
-				.collect(Collectors.toMap(x -> x.asScalar().value(), x -> hashesRaw.string(x)));
-		final String spec = taskMapping.string("specification");
-		final String dataModel = taskMapping.string("data_model");
-		final String language = taskMapping.string("language");
+	private static Task parseTask(final Map<String, Object> task) {
+		final List<String> files = (List<String>) task.get("input_files");
+		final Map<String, String> hashes = (Map<String, String>) task.get("input_file_hashes");
+		final String spec = (String) task.get("specification");
+		final String dataModel = (String) task.get("data_model");
+		final String language = (String) task.get("language");
 		return new Task(files, hashes, spec, dataModel, language);
 	}
 
-	private static Location parseLocation(final YamlNode entry) {
-
-		final YamlNode locationEntry = entry.asMapping().value("location");
-		final YamlMapping locationMapping = locationEntry.asMapping();
-
-		final String fileName = locationMapping.string("file_name");
-		final String fileHash = locationMapping.string("file_hash");
-		final int line = locationMapping.integer("line");
-		final int column = locationMapping.integer("column");
-		final String function = locationMapping.string("function");
-
-		return new Location(fileName, fileHash, line, column, function);
+	private static Location parseLocation(final Map<String, Object> location) {
+		return new Location((String) location.get("file_name"), (String) location.get("file_hash"),
+				(Integer) location.get("line"), (Integer) location.get("column"), (String) location.get("function"));
 	}
 
-	private static Invariant parseInvariant(final YamlNode entry, final String name) {
-		// this method parses an invariant mapping from an entry called 'name' and return new Invariant(...) object
-		final YamlNode invariantEntry = entry.asMapping().value(name);
-		final YamlMapping invariantMapping = invariantEntry.asMapping();
-
-		final String expression = invariantMapping.string("string");
-		final String type = invariantMapping.string("type");
-		final String format = invariantMapping.string("format");
-
-		return new Invariant(expression, type, format);
+	private static Invariant parseInvariant(final Map<String, String> invariant) {
+		return new Invariant(invariant.get("string"), invariant.get("type"), invariant.get("format"));
 	}
 }

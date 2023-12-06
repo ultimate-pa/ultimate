@@ -145,9 +145,16 @@ public class IcfgProgramExecutionBuilder<L extends IAction> {
 		for (final IProgramVar bv : vars) {
 			if (SmtUtils.isSortForWhichWeCanGetValues(bv.getTermVariable().getSort())) {
 				final int assignPos = indexWhereVarWasAssignedTheLastTime(bv, position);
-				final Term value = mVar2Pos2Value.get(bv).get(assignPos);
-				if (value != null) {
-					result.put(bv, value);
+				// TODO 2023-10-26 Matthias: The following if-statement is a workaround that
+				// I introduced because SMTInterpol does not provide values for quantified
+				// formulas. See {@link TraceCheck#computeRcfgProgramExecution}. If SMTInterpol
+				// is able to produce values for the sorts `Int` and `Bool` this if-statement
+				// can be removed.
+				if (mVar2Pos2Value != null && mVar2Pos2Value.containsKey(bv)) {
+					final Term value = mVar2Pos2Value.get(bv).get(assignPos);
+					if (value != null) {
+						result.put(bv, value);
+					}
 				}
 			}
 		}

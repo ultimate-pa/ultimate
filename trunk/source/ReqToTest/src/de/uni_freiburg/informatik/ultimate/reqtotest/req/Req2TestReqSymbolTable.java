@@ -283,7 +283,7 @@ public class Req2TestReqSymbolTable implements IReqSymbolTable, ITerm2Expression
 	}
 
 	@Override
-	public Map<String, String> getSmtFunction2BoogieFunction() {
+	public String translateToBoogieFunction(final String boogieFunction, final IBoogieType type) {
 		throw new UnsupportedOperationException();
 	}
 
