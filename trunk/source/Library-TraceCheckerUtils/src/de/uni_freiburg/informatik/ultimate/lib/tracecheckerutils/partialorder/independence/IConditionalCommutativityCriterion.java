@@ -10,4 +10,5 @@ public interface IConditionalCommutativityCriterion<L extends IIcfgTransition<?>
 	boolean decide(IPredicate state, L a, L b);
 	
 	boolean decide(IPredicate condition);
+	
 }

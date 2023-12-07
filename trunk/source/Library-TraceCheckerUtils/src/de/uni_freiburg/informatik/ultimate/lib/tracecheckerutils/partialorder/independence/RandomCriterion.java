@@ -22,7 +22,7 @@ public class RandomCriterion<L extends IIcfgTransition<?>> implements ICondition
 	
 	@Override
 	public boolean decide(IPredicate condition) {
-		return true;
+		return condition != null;
 	}
 
 }
