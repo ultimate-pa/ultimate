@@ -317,6 +317,7 @@ public class StandardFunctionHandler {
 		// unsound and because we consider wchars as chars.
 		fill(map, "wprintf", (main, node, loc, name) -> handlePrintF(main, node, loc));
 		fill(map, "fprintf", (main, node, loc, name) -> handlePrintFunction(main, node, loc));
+		fill(map, "sprintf", (main, node, loc, name) -> handleSPrintF(main, node, loc));
 		fill(map, "snprintf", (main, node, loc, name) -> handleSnPrintF(main, node, loc));
 
 		// https://en.cppreference.com/w/c/io/fscanf
@@ -1193,6 +1194,94 @@ public class StandardFunctionHandler {
 		final CPrimitive returnType = new CPrimitive(CPrimitives.INT);
 		return new ExpressionResult(new RValue(
 				mExpressionTranslation.constructLiteralForIntegerType(loc, returnType, BigInteger.ZERO), returnType));
+	}
+
+	// Overapproximates sprintf as follows:
+	// ctr:=0; while (*) { havoc aux; *(ptr+ctr) := aux; ctr := ctr + 1; }
+	private Result handleSPrintF(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		assert arguments.length >= 1 : "insufficient arguments to snprintf";
+		final var builder = new ExpressionResultBuilder();
+
+		final Overapprox overAppFlag = new Overapprox("snprintf", loc);
+		builder.addOverapprox(overAppFlag);
+
+		// first argument is ptr
+		final var ptr = mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
+		builder.addAllExceptLrValue(ptr);
+
+		// dispatch remaining arguments (except for string literals)
+		for (int i = 1; i < arguments.length; ++i) {
+			if (isStringLiteral(arguments[i])) {
+				continue;
+			}
+			final ExpressionResult argRes =
+					mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[i]);
+			builder.addAllExceptLrValue(argRes);
+		}
+
+		// declare loop counter ctr
+		final AuxVarInfo ctr = mAuxVarInfoBuilder.constructAuxVarInfo(loc,
+				mExpressionTranslation.getCTypeOfPointerComponents(), SFO.AUXVAR.LOOPCTR);
+		builder.addDeclaration(ctr.getVarDec());
+		builder.addAuxVar(ctr);
+
+		// declare nondet aux var
+		final AuxVarInfo auxvar =
+				mAuxVarInfoBuilder.constructAuxVarInfo(loc, new CPrimitive(CPrimitives.CHAR), SFO.AUXVAR.NONDET);
+		builder.addDeclaration(auxvar.getVarDec());
+		builder.addAuxVar(auxvar);
+
+		// ctr := 0
+		final var zero = mTypeSizes.constructLiteralForIntegerType(loc,
+				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
+		final var initCtr = StatementFactory.constructSingleAssignmentStatement(loc, ctr.getLhs(), zero);
+		builder.addStatement(initCtr);
+
+		final var body = new ArrayList<Statement>();
+
+		// havoc aux;
+		final var havocNondet = new HavocStatement(loc, new VariableLHS[] { auxvar.getLhs() });
+		body.add(havocNondet);
+
+		// *(ptr + ctr) := aux
+		final var ptrOffset = MemoryHandler.getPointerOffset(ptr.getLrValue().getValue(), loc);
+		final Expression newOffset = mExpressionTranslation.constructArithmeticExpression(loc,
+				IASTBinaryExpression.op_plus, ptrOffset, mExpressionTranslation.getCTypeOfPointerComponents(),
+				ctr.getExp(), mExpressionTranslation.getCTypeOfPointerComponents());
+		final var ptrPlusCtr = MemoryHandler.constructPointerFromBaseAndOffset(
+				MemoryHandler.getPointerBaseAddress(ptr.getLrValue().getValue(), loc), newOffset, loc);
+		final var ptrPlusCtrHlv = LRValueFactory.constructHeapLValue(mTypeHandler, ptrPlusCtr, ptr.getCType(), null);
+		final var writeToMem = mMemoryHandler.getWriteCall(loc, ptrPlusCtrHlv, auxvar.getExp(),
+				new CPrimitive(CPrimitives.CHAR), false);
+		for (final var write : writeToMem) {
+			overAppFlag.annotate(write);
+		}
+		body.addAll(writeToMem);
+		if (mDataRaceChecker != null) {
+			mDataRaceChecker.checkOnWrite(builder, loc, ptrPlusCtrHlv);
+		}
+
+		// ctr := ctr + 1
+		final var incrementCtr = StatementFactory.constructSingleAssignmentStatement(loc, ctr.getLhs(),
+				mExpressionTranslation.constructArithmeticIntegerExpression(loc, IASTBinaryExpression.op_plus,
+						ctr.getExp(), mExpressionTranslation.getCTypeOfPointerComponents(),
+						mTypeSizes.constructLiteralForIntegerType(loc,
+								mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ONE),
+						mExpressionTranslation.getCTypeOfPointerComponents()));
+		body.add(incrementCtr);
+
+		final var loop = new WhileStatement(loc, new WildcardExpression(loc), new LoopInvariantSpecification[0],
+				body.toArray(Statement[]::new));
+		builder.addStatement(loop);
+
+		final var ret =
+				mAuxVarInfoBuilder.constructAuxVarInfo(loc, new CPrimitive(CPrimitives.CHAR), SFO.AUXVAR.RETURNED);
+		builder.addAuxVar(ret);
+		builder.addDeclaration(ret.getVarDec());
+		builder.setLrValue(new LocalLValue(ret.getLhs(), new CPrimitive(CPrimitives.CHAR), null));
+
+		return builder.build();
 	}
 
 	// Overapproximates snprintf as follows:
