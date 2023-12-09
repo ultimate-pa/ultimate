@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
  */
 public class CrownsEmpire<PLACE, LETTER> {
 	private final Crown<PLACE, LETTER> mCrown;
-	private final EmpireAnnotation<PLACE, LETTER> mEmpireAnnotation;
+	private final EmpireAnnotation<PLACE> mEmpireAnnotation;
 
 	private final Statistics mStatistics = new Statistics();
 
@@ -71,26 +71,26 @@ public class CrownsEmpire<PLACE, LETTER> {
 		mStatistics.reportEmpire(mEmpireAnnotation);
 	}
 
-	private EmpireAnnotation<PLACE, LETTER> constructEmpireAnnotation(final BasicPredicateFactory factory,
+	private EmpireAnnotation<PLACE> constructEmpireAnnotation(final BasicPredicateFactory factory,
 			final Function<PLACE, IPredicate> placeToAssertion) {
-		final HashMap<Territory<PLACE, LETTER>, TerritoryLaw<PLACE, LETTER>> crownsTerritories = new HashMap<>();
+		final HashMap<Territory<PLACE>, TerritoryLaw<PLACE>> crownsTerritories = new HashMap<>();
 		for (final Rook<PLACE, LETTER> rook : mCrown.getRooks()) {
-			final Territory<PLACE, LETTER> rookTerritory = new Territory<>(rook.getKingdom());
+			final Territory<PLACE> rookTerritory = new Territory<>(rook.getKingdom());
 			if (!crownsTerritories.containsKey(rookTerritory)) {
-				final TerritoryLaw<PLACE, LETTER> law =
+				final TerritoryLaw<PLACE> law =
 						new TerritoryLaw<>(rookTerritory, rook.getLaw(), placeToAssertion, factory);
 				crownsTerritories.put(rookTerritory, law);
 				continue;
 			}
-			final TerritoryLaw<PLACE, LETTER> law = crownsTerritories.remove(rookTerritory);
+			final TerritoryLaw<PLACE> law = crownsTerritories.remove(rookTerritory);
 			law.addRooksAssertion(rook.getLaw());
 			crownsTerritories.put(rookTerritory, law);
 		}
-		final EmpireAnnotation<PLACE, LETTER> empireAnnotation = new EmpireAnnotation<>(crownsTerritories);
+		final EmpireAnnotation<PLACE> empireAnnotation = new EmpireAnnotation<>(crownsTerritories);
 		return empireAnnotation;
 	}
 
-	public EmpireAnnotation<PLACE, LETTER> getEmpireAnnotation() {
+	public EmpireAnnotation<PLACE> getEmpireAnnotation() {
 		return mEmpireAnnotation;
 	}
 
@@ -129,7 +129,7 @@ public class CrownsEmpire<PLACE, LETTER> {
 			declare(MED_REGION_TERRITORY, () -> mMedianRegionsTerritory, KeyType.COUNTER);
 		}
 
-		private void reportEmpire(final EmpireAnnotation<?, ?> empireAnnotation) {
+		private void reportEmpire(final EmpireAnnotation<?> empireAnnotation) {
 			mRegionCount = empireAnnotation.getRegionCount();
 			mEmpireSize = empireAnnotation.getEmpireSize();
 			mLawSize = empireAnnotation.getLawSize();

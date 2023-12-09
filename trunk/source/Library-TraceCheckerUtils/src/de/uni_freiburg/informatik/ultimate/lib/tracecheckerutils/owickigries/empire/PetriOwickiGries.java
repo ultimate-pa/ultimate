@@ -59,7 +59,7 @@ public class PetriOwickiGries<LETTER, PLACE> {
 	private final Set<PLACE> mOriginalPlaces;
 	private final IPetriNet<LETTER, PLACE> mNet;
 	private final Crown<PLACE, LETTER> mCrown;
-	private final EmpireAnnotation<PLACE, LETTER> mEmpireAnnotation;
+	private final EmpireAnnotation<PLACE> mEmpireAnnotation;
 
 	private final Statistics mStatistics = new Statistics();
 
@@ -96,7 +96,7 @@ public class PetriOwickiGries<LETTER, PLACE> {
 		return crownConstruction.getCrown();
 	}
 
-	private EmpireAnnotation<PLACE, LETTER> getEmpireAnnotation(final BasicPredicateFactory factory,
+	private EmpireAnnotation<PLACE> getEmpireAnnotation(final BasicPredicateFactory factory,
 			final Function<PLACE, IPredicate> placeToAssertion) {
 		final CrownsEmpire<PLACE, LETTER> crownsEmpire = mStatistics.measureEmpire(() -> {
 			final CrownsEmpire<PLACE, LETTER> empireConstruction =

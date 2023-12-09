@@ -43,12 +43,10 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
  *
  * @param <PLACE>
  *            The type of program statements
- * @param <LETTER>
- *            The type of places in the Petri program
  */
-public class EmpireAnnotation<PLACE, LETTER> {
-	Set<Territory<PLACE, LETTER>> mEmpire;
-	HashMap<Territory<PLACE, LETTER>, TerritoryLaw<PLACE, LETTER>> mLaw;
+public class EmpireAnnotation<PLACE> {
+	Set<Territory<PLACE>> mEmpire;
+	HashMap<Territory<PLACE>, TerritoryLaw<PLACE>> mLaw;
 
 	/**
 	 * Construct the Empire Annotation with given Territories and Law
@@ -56,18 +54,18 @@ public class EmpireAnnotation<PLACE, LETTER> {
 	 * @param territoryLawMap
 	 *            Map from Territory to corresponding TerritoryLaw object
 	 */
-	public EmpireAnnotation(final HashMap<Territory<PLACE, LETTER>, TerritoryLaw<PLACE, LETTER>> territoryLawMap) {
+	public EmpireAnnotation(final HashMap<Territory<PLACE>, TerritoryLaw<PLACE>> territoryLawMap) {
 		mEmpire = territoryLawMap.keySet();
 		mLaw = territoryLawMap;
 	}
 
-	public Set<Region<PLACE, LETTER>> getColony() {
-		final Set<Region<PLACE, LETTER>> colony =
+	public Set<Region<PLACE>> getColony() {
+		final Set<Region<PLACE>> colony =
 				mEmpire.stream().flatMap(t -> t.getRegions().stream()).collect(Collectors.toSet());
 		return colony;
 	}
 
-	public Set<Territory<PLACE, LETTER>> getTerritories() {
+	public Set<Territory<PLACE>> getTerritories() {
 		return mEmpire;
 	}
 
@@ -78,7 +76,7 @@ public class EmpireAnnotation<PLACE, LETTER> {
 	 *            Territory of which the Law should be returned.
 	 * @return Law corresponding to territory.
 	 */
-	public IPredicate getLaw(final Territory<PLACE, LETTER> territory) {
+	public IPredicate getLaw(final Territory<PLACE> territory) {
 		return mLaw.get(territory).getLaw();
 	}
 
@@ -87,7 +85,7 @@ public class EmpireAnnotation<PLACE, LETTER> {
 	 *
 	 * @return Law Hashtable
 	 */
-	public Map<Territory<PLACE, LETTER>, TerritoryLaw<PLACE, LETTER>> getLaw() {
+	public Map<Territory<PLACE>, TerritoryLaw<PLACE>> getLaw() {
 		return mLaw;
 	}
 
@@ -124,7 +122,7 @@ public class EmpireAnnotation<PLACE, LETTER> {
 	 */
 	public List<Integer> getRegionPerTerritory() {
 		final List<Integer> regionPerTerritory = new ArrayList<>();
-		for (final Territory<PLACE, LETTER> territory : mEmpire) {
+		for (final Territory<PLACE> territory : mEmpire) {
 			regionPerTerritory.add(territory.getRegions().size());
 		}
 		regionPerTerritory.sort(null);

@@ -32,7 +32,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown.Realm;
 
-public class Region<PLACE, LETTER> {
+public class Region<PLACE> {
 
 	/**
 	 * The set of places in Region.
@@ -44,11 +44,11 @@ public class Region<PLACE, LETTER> {
 		mRegion = region;
 	}
 
-	public Region(final Realm<PLACE, LETTER> realm) {
+	public Region(final Realm<PLACE, ?> realm) {
 		mRegion = getRealmPlaces(realm);
 	}
 
-	private Set<PLACE> getRealmPlaces(final Realm<PLACE, LETTER> realm) {
+	private Set<PLACE> getRealmPlaces(final Realm<PLACE, ?> realm) {
 		final Set<PLACE> realmPlaces =
 				realm.getConditions().stream().map(Condition::getPlace).collect(Collectors.toSet());
 		return realmPlaces;
@@ -66,7 +66,7 @@ public class Region<PLACE, LETTER> {
 	 *            over which place corelation is checked.
 	 * @return true if place is NOT corelated to all places in the region. TODO: place corelation!!!!
 	 */
-	public boolean checkCorelation(final IPetriNet<LETTER, PLACE> petriNet) {
+	public <LETTER> boolean checkCorelation(final IPetriNet<LETTER, PLACE> petriNet) {
 		return true;
 	}
 
@@ -79,7 +79,7 @@ public class Region<PLACE, LETTER> {
 		if (obj == null || getClass() != obj.getClass()) {
 			return false;
 		}
-		final Region<PLACE, LETTER> other = (Region<PLACE, LETTER>) obj;
+		final Region<PLACE> other = (Region<PLACE>) obj;
 		return mRegion.equals(other.getPlaces());
 	}
 

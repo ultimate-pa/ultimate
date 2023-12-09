@@ -39,16 +39,14 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
  *
  * @param <PLACE>
  *            The type of places in the Petri program
- * @param <LETTER>
- *            The type of statements in the Petri program
  */
 
-public final class Territory<PLACE, LETTER> {
+public final class Territory<PLACE> {
 
 	/**
 	 * Set of regions in Territory.
 	 */
-	private final Set<Region<PLACE, LETTER>> mTerritory;
+	private final Set<Region<PLACE>> mTerritory;
 
 	/**
 	 * Data structure which contains the different Regions of a Territory.
@@ -56,7 +54,7 @@ public final class Territory<PLACE, LETTER> {
 	 * @param regions
 	 *            Set of regions for which a Territory should be created.
 	 */
-	public Territory(final Set<Region<PLACE, LETTER>> regions) {
+	public Territory(final Set<Region<PLACE>> regions) {
 		mTerritory = regions;
 	}
 
@@ -66,23 +64,23 @@ public final class Territory<PLACE, LETTER> {
 	 * @param kingdom
 	 *            Kingdom for which a corresponding Territory should be created.
 	 */
-	public Territory(final Kingdom<PLACE, LETTER> kingdom) {
+	public Territory(final Kingdom<PLACE, ?> kingdom) {
 		mTerritory = getKingdomRegions(kingdom);
 	}
 
-	private Set<Region<PLACE, LETTER>> getKingdomRegions(final Kingdom<PLACE, LETTER> kingdom) {
-		final Set<Region<PLACE, LETTER>> kingdomRegions =
-				kingdom.getRealms().stream().map(realm -> new Region<PLACE, LETTER>(realm)).collect(Collectors.toSet());
+	private Set<Region<PLACE>> getKingdomRegions(final Kingdom<PLACE, ?> kingdom) {
+		final Set<Region<PLACE>> kingdomRegions =
+				kingdom.getRealms().stream().map(realm -> new Region<>(realm)).collect(Collectors.toSet());
 		return kingdomRegions;
 	}
 
-	private void getAllMarkings(final Set<Region<PLACE, LETTER>> remainingTerritory, final Set<PLACE> currentMarking,
+	private void getAllMarkings(final Set<Region<PLACE>> remainingTerritory, final Set<PLACE> currentMarking,
 			final Set<Marking<PLACE>> treaty) {
 		if (remainingTerritory.isEmpty()) {
 			treaty.add(new Marking<>(ImmutableSet.of(currentMarking)));
 			return;
 		}
-		final Region<PLACE, LETTER> currentRegion = remainingTerritory.iterator().next();
+		final Region<PLACE> currentRegion = remainingTerritory.iterator().next();
 		remainingTerritory.remove(currentRegion);
 
 		for (final PLACE place : currentRegion.getPlaces()) {
@@ -95,7 +93,7 @@ public final class Territory<PLACE, LETTER> {
 	/**
 	 * @return Set of regions in Territory.
 	 */
-	public Set<Region<PLACE, LETTER>> getRegions() {
+	public Set<Region<PLACE>> getRegions() {
 		return mTerritory;
 	}
 
@@ -106,13 +104,13 @@ public final class Territory<PLACE, LETTER> {
 	 */
 	public Set<Marking<PLACE>> getTreaty() {
 		final Set<Marking<PLACE>> treatySet = new HashSet<>();
-		final Set<Region<PLACE, LETTER>> territoryRegions = new HashSet<>(mTerritory);
+		final Set<Region<PLACE>> territoryRegions = new HashSet<>(mTerritory);
 		getAllMarkings(territoryRegions, new HashSet<>(), treatySet);
 		return treatySet;
 	}
 
 	public static <P, L> boolean getRooksTerritoryEquality(final Set<Rook<P, L>> rooks) {
-		final Set<Territory<P, L>> rookTerritories =
+		final Set<Territory<P>> rookTerritories =
 				rooks.stream().map(rook -> new Territory<>(rook.getKingdom())).collect(Collectors.toSet());
 		return (rookTerritories.size() == 1);
 	}
@@ -126,7 +124,7 @@ public final class Territory<PLACE, LETTER> {
 		if (obj == null || getClass() != obj.getClass()) {
 			return false;
 		}
-		final Territory<PLACE, LETTER> other = (Territory<PLACE, LETTER>) obj;
+		final Territory<PLACE> other = (Territory<PLACE>) obj;
 		return mTerritory.equals(other.getRegions());
 	}
 

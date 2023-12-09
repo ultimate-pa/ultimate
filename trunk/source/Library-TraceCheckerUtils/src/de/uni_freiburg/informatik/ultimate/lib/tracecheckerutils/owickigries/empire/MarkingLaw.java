@@ -30,14 +30,14 @@ public class MarkingLaw<PLACE, LETTER> {
 	 * @param factory
 	 *            Factory for IPredicate operations
 	 */
-	public MarkingLaw(final Collection<TerritoryLaw<PLACE, LETTER>> empireLaw, final BasicPredicateFactory factory) {
+	public MarkingLaw(final Collection<TerritoryLaw<PLACE>> empireLaw, final BasicPredicateFactory factory) {
 		mFactory = factory;
 		mMarkingLawMap = getMarkingLaw(empireLaw);
 	}
 
-	private HashMap<Marking<PLACE>, IPredicate> getMarkingLaw(final Collection<TerritoryLaw<PLACE, LETTER>> empireLaw) {
+	private HashMap<Marking<PLACE>, IPredicate> getMarkingLaw(final Collection<TerritoryLaw<PLACE>> empireLaw) {
 		final HashMap<Marking<PLACE>, IPredicate> markingLaw = new HashMap<>();
-		for (final TerritoryLaw<PLACE, LETTER> territoryLaw : empireLaw) {
+		for (final TerritoryLaw<PLACE> territoryLaw : empireLaw) {
 			final Set<Marking<PLACE>> treaty = territoryLaw.getTerritory().getTreaty();
 			for (final Marking<PLACE> marking : treaty) {
 				markingLaw.merge(marking, territoryLaw.getLaw(), (p1, p2) -> mFactory.and(p1, p2));

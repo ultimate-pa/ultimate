@@ -42,11 +42,9 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.cro
  *
  * @param <PLACE>
  *            The type of places in the Petri program
- * @param <LETTER>
- *            The type of statements in the Petri program
  */
-public class TerritoryLaw<PLACE, LETTER> {
-	private final Territory<PLACE, LETTER> mTerritory;
+public class TerritoryLaw<PLACE> {
+	private final Territory<PLACE> mTerritory;
 	private IPredicate mLaw;
 	private final BasicPredicateFactory mFactory;
 	private final Function<PLACE, IPredicate> mPlaceToAssertion;
@@ -63,7 +61,7 @@ public class TerritoryLaw<PLACE, LETTER> {
 	 * @param factory
 	 *            Factory for IPredicate operations
 	 */
-	public TerritoryLaw(final Territory<PLACE, LETTER> territory, final KingdomLaw<PLACE, LETTER> rookLaw,
+	public TerritoryLaw(final Territory<PLACE> territory, final KingdomLaw<PLACE, ?> rookLaw,
 			final Function<PLACE, IPredicate> placeToAssertion, final BasicPredicateFactory factory) {
 		mTerritory = territory;
 		mFactory = factory;
@@ -80,7 +78,7 @@ public class TerritoryLaw<PLACE, LETTER> {
 	 *            Function to map PLACE to an IPredicate assertion.
 	 * @return Conjunction of the rooks assertions.
 	 */
-	final private IPredicate getRooksAssertion(final KingdomLaw<PLACE, LETTER> rookLaw) {
+	final private <LETTER> IPredicate getRooksAssertion(final KingdomLaw<PLACE, LETTER> rookLaw) {
 		final Set<IPredicate> rooksAssertion = new HashSet<>();
 		final Set<Condition<LETTER, PLACE>> assertionConditions = rookLaw.getConditions();
 		for (final Condition<LETTER, PLACE> condition : assertionConditions) {
@@ -97,12 +95,12 @@ public class TerritoryLaw<PLACE, LETTER> {
 	 * @param rookLaw
 	 *            Law for which the assertion should be added.
 	 */
-	public void addRooksAssertion(final KingdomLaw<PLACE, LETTER> rookLaw) {
+	public void addRooksAssertion(final KingdomLaw<PLACE, ?> rookLaw) {
 		final IPredicate rookAssertion = getRooksAssertion(rookLaw);
 		mLaw = mFactory.or(mLaw, rookAssertion);
 	}
 
-	public Territory<PLACE, LETTER> getTerritory() {
+	public Territory<PLACE> getTerritory() {
 		return mTerritory;
 	}
 
@@ -119,7 +117,7 @@ public class TerritoryLaw<PLACE, LETTER> {
 		if (obj == null || getClass() != obj.getClass()) {
 			return false;
 		}
-		final TerritoryLaw<PLACE, LETTER> other = (TerritoryLaw<PLACE, LETTER>) obj;
+		final TerritoryLaw<PLACE> other = (TerritoryLaw<PLACE>) obj;
 		return mTerritory.equals(other.getTerritory());
 	}
 
