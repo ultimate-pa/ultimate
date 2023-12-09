@@ -9,6 +9,10 @@
     <option name="command">${benchmark_path}/../run-test.sh Library-TraceCheckerUtilsTest de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.PetriOwickiGriesTestSuite ${inputfile_name}</option>
   </rundefinition>
 
+  <rundefinition name="NaiveOwickiGriesTestSuite">
+    <option name="command">${benchmark_path}/../run-test.sh Library-TraceCheckerUtilsTest de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.NaiveOwickiGriesTestSuite ${inputfile_name}</option>
+  </rundefinition>
+
   <tasks name="regression">
     <include>../../../trunk/examples/concurrent/OwickiGries/PetriPrograms/*.ats</include>
   </tasks>
