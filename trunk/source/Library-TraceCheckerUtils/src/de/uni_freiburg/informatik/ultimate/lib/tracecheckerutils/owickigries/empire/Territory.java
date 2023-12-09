@@ -133,4 +133,8 @@ public final class Territory<PLACE> {
 		return mTerritory.hashCode();
 	}
 
+	@Override
+	public String toString() {
+		return mTerritory.toString();
+	}
 }

@@ -87,4 +87,9 @@ public class Region<PLACE> {
 	public int hashCode() {
 		return mRegion.hashCode();
 	}
+
+	@Override
+	public String toString() {
+		return mRegion.toString();
+	}
 }
