@@ -25,6 +25,7 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 PROJECT=$1
 CLASS=$2
 FILE=$3
+ASSERTIONS=$(if [[ -z $4 || "$4" == "true" ]]; then echo "-ea"; fi)
 
 cd "$SCRIPT_DIR/../../trunk/source/$PROJECT"
 
@@ -33,7 +34,7 @@ METHOD=$(echo "$FILE" | tr . _)
 # collect class paths for all Ultimate projects
 PROJECT_CLASS_PATHS=($(for dir in "$SCRIPT_DIR/../../trunk/source/"*"/target/classes"; do echo "-cp"; echo "$dir"; done))
 
-PATH="$PATH:$SCRIPT_DIR/adds" java -ea -jar "$SCRIPT_DIR/$JUNIT_JAR" ${PROJECT_CLASS_PATHS[@]} \
+PATH="$PATH:$SCRIPT_DIR/adds" java $ASSERTIONS -jar "$SCRIPT_DIR/$JUNIT_JAR" ${PROJECT_CLASS_PATHS[@]} \
   -cp "$SCRIPT_DIR/../../trunk/source/BA_SiteRepository/target/repository/plugins/org.apache.commons.io_2.6.0.v20190123-2029.jar" \
   --select-method "$CLASS#$METHOD" --details=verbose
 
