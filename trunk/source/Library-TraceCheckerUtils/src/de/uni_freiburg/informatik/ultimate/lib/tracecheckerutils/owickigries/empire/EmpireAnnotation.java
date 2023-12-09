@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -46,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
  */
 public class EmpireAnnotation<PLACE> {
 	Set<Territory<PLACE>> mEmpire;
-	HashMap<Territory<PLACE>, TerritoryLaw<PLACE>> mLaw;
+	Map<Territory<PLACE>, TerritoryLaw<PLACE>> mLaw;
 
 	/**
 	 * Construct the Empire Annotation with given Territories and Law
@@ -54,7 +53,7 @@ public class EmpireAnnotation<PLACE> {
 	 * @param territoryLawMap
 	 *            Map from Territory to corresponding TerritoryLaw object
 	 */
-	public EmpireAnnotation(final HashMap<Territory<PLACE>, TerritoryLaw<PLACE>> territoryLawMap) {
+	public EmpireAnnotation(final Map<Territory<PLACE>, TerritoryLaw<PLACE>> territoryLawMap) {
 		mEmpire = territoryLawMap.keySet();
 		mLaw = territoryLawMap;
 	}

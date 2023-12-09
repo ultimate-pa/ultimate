@@ -103,7 +103,7 @@ public class EmpireValidityCheck<PLACE, LETTER extends IAction> {
 		return petriFloydHoareValidityCheck.isValid();
 	}
 
-	public Validity checkValidity(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+	private Validity checkValidity(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final IIcfgSymbolTable symbolTable, final ModifiableGlobalsTable modifiableGlobals) {
 		final boolean initialMarkingValidity = checkInitialMarking();
 		assert initialMarkingValidity : "Initial markings law does not evaluate to true.";
