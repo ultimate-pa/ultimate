@@ -30,17 +30,23 @@ import java.nio.file.Path;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.junit.runner.RunWith;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataTestFileAST;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 import de.uni_freiburg.informatik.ultimate.test.junitextension.testfactory.FactoryTestRunner;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 @RunWith(FactoryTestRunner.class)
 public class NaiveOwickiGriesTestSuite extends OwickiGriesTestSuite {
@@ -49,20 +55,43 @@ public class NaiveOwickiGriesTestSuite extends OwickiGriesTestSuite {
 			final BoundedPetriNet<SimpleAction, IPredicate> program,
 			final BoundedPetriNet<SimpleAction, IPredicate> refinedPetriNet,
 			final BranchingProcess<SimpleAction, IPredicate> unfolding) throws AutomataLibraryException {
-		// construct Owicki-Gries annotation
+		mLogger.info("Constructing Owicki-Gries proof for Petri program that %s and unfolding that %s",
+				program.sizeInformation(), unfolding.sizeInformation());
+
+		// construct Floyd-Hoare annotation
 		final var floydHoare = new PetriFloydHoare<>(mServices, mMgdScript, mSymbolTable, unfolding,
 				Function.identity(), program, mUnifiers, true, true);
 		final Map<Marking<IPredicate>, IPredicate> petriFloydHoare = floydHoare.getResult();
+		mLogger.info("Computed Floyd-Hoare proof with %d non-trivial markings and assertion size %d",
+				petriFloydHoare.size(), computeFloydHoareSize(petriFloydHoare));
+
+		// check validity of Floyd-Hoare annotation
+		assert checkFloydHoareValidity(program, petriFloydHoare) : "Invalid Floyd-Hoare annotation";
+
+		// construct Owicki-Gries annotation
 		final var construction = new OwickiGriesConstruction<>(mServices, mMgdScript, mSymbolTable,
 				Set.of(SimpleAction.PROCEDURE), program, petriFloydHoare, true);
 		final var annotation = construction.getResult();
+		mLogger.info("Computed Owicki-Gries annotation with %d ghost variables, %d ghost updates, and overall size %d",
+				annotation.getGhostVariables().size(), annotation.getAssignmentMapping().size(), annotation.size());
 
 		// check validity of annotation
-		final var check = new OwickiGriesValidityCheck<>(mServices, mMgdScript, mHtc, annotation,
-				construction.getCoMarkedPlaces());
+		assert new OwickiGriesValidityCheck<>(mServices, mMgdScript, mHtc, annotation, construction.getCoMarkedPlaces())
+				.isValid() != Validity.INVALID : "Invalid Owicki-Gries annotation";
+	}
 
-		if (check.isValid() == Validity.INVALID) {
-			throw new AssertionError("Invalid Owicki-Gries annotation");
-		}
+	private boolean checkFloydHoareValidity(final BoundedPetriNet<SimpleAction, IPredicate> program,
+			final Map<Marking<IPredicate>, IPredicate> petriFloydHoare) throws PetriNetNot1SafeException {
+		final HashRelation<String, IProgramNonOldVar> rel = new HashRelation<>();
+		rel.addAllPairs(SimpleAction.PROCEDURE, mSymbolTable.getGlobals());
+		final var modGlob = new ModifiableGlobalsTable(rel);
+		return new PetriFloydHoareValidityCheck<>(mServices, mMgdScript, mSymbolTable, modGlob, program,
+				petriFloydHoare).isValid() != Validity.INVALID;
+	}
+
+	private static long computeFloydHoareSize(final Map<Marking<IPredicate>, IPredicate> petriFloydHoare) {
+		final DAGSize sizeComputation = new DAGSize();
+		return petriFloydHoare.entrySet().stream()
+				.collect(Collectors.summingLong(x -> sizeComputation.size(x.getValue().getFormula())));
 	}
 }
