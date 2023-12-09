@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.em
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
@@ -55,6 +56,10 @@ public class MarkingLaw<PLACE, LETTER> {
 	 */
 	public IPredicate getMarkingLaw(final Marking<PLACE> marking) {
 		return mMarkingLawMap.get(marking);
+	}
+
+	public Map<Marking<PLACE>, IPredicate> getLawMap() {
+		return mMarkingLawMap;
 	}
 
 	public Set<Marking<PLACE>> getMarkings() {

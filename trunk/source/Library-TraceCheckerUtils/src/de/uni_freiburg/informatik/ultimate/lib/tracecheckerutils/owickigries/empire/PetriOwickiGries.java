@@ -37,9 +37,13 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Branching
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.MonolithicImplicationChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown.Crown;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown.CrownConstruction;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
@@ -48,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
 import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
 import de.uni_freiburg.informatik.ultimate.util.statistics.TimeTracker;
 
-public class PetriOwickiGries<LETTER, PLACE> {
+public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 
 	private final ILogger mLogger;
 
@@ -72,7 +76,9 @@ public class PetriOwickiGries<LETTER, PLACE> {
 	 */
 	public PetriOwickiGries(final IUltimateServiceProvider services, final BranchingProcess<LETTER, PLACE> bp,
 			final IPetriNet<LETTER, PLACE> net, final BasicPredicateFactory factory,
-			final Function<PLACE, IPredicate> placeToAssertion, final MonolithicImplicationChecker implicationChecker) {
+			final Function<PLACE, IPredicate> placeToAssertion, final MonolithicImplicationChecker implicationChecker,
+			final ManagedScript mgdScript, final IIcfgSymbolTable symbolTable,
+			final ModifiableGlobalsTable modifiableGlobals) {
 		mLogger = services.getLoggingService().getLogger(PetriOwickiGries.class);
 
 		mBp = bp;
@@ -86,6 +92,9 @@ public class PetriOwickiGries<LETTER, PLACE> {
 		mAssertionConditions = DataStructureUtils.difference(mConditions, mOriginalConditions);
 		mCrown = getCrown();
 		mEmpireAnnotation = getEmpireAnnotation(factory, placeToAssertion);
+		final MarkingLaw<PLACE, LETTER> markingLaw = new MarkingLaw<>(mEmpireAnnotation.getLaw().values(), factory);
+		final EmpireValidityCheck<PLACE, LETTER> empireValidityCheck = new EmpireValidityCheck<>(markingLaw, net,
+				factory, implicationChecker, services, mgdScript, symbolTable, modifiableGlobals);
 	}
 
 	private Crown<PLACE, LETTER> getCrown() {

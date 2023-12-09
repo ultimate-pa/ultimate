@@ -4,10 +4,17 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.MonolithicImplicationChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.PetriFloydHoareValidityCheck;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
@@ -22,7 +29,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
  * @param <LETTER>
  *            The type of statements in the Petri program
  */
-public class EmpireValidityCheck<PLACE, LETTER> {
+public class EmpireValidityCheck<PLACE, LETTER extends IAction> {
 	private final MarkingLaw<PLACE, LETTER> mMarkingLaw;
 	private final BasicPredicateFactory mFactory;
 	private final IPetriNet<LETTER, PLACE> mNet;
@@ -30,12 +37,14 @@ public class EmpireValidityCheck<PLACE, LETTER> {
 	private final Validity mValidity;
 
 	public EmpireValidityCheck(final MarkingLaw<PLACE, LETTER> markingLaw, final IPetriNet<LETTER, PLACE> net,
-			final BasicPredicateFactory factory, final MonolithicImplicationChecker implicationChecker) {
+			final BasicPredicateFactory factory, final MonolithicImplicationChecker implicationChecker,
+			final IUltimateServiceProvider services, final ManagedScript mgdScript, final IIcfgSymbolTable symbolTable,
+			final ModifiableGlobalsTable modifiableGlobals) {
 		mMarkingLaw = markingLaw;
 		mFactory = factory;
 		mNet = net;
 		mImplicationChecker = implicationChecker;
-		mValidity = checkValidity();
+		mValidity = checkValidity(services, mgdScript, symbolTable, modifiableGlobals);
 		assert mValidity == Validity.VALID : "Empire annotation is not valid";
 	}
 
@@ -56,7 +65,20 @@ public class EmpireValidityCheck<PLACE, LETTER> {
 		return true;
 	}
 
-	public Validity checkValidity() {
+	private Validity checkHoareTriples(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final IIcfgSymbolTable symbolTable, final ModifiableGlobalsTable modifiableGlobals) {
+		final PetriFloydHoareValidityCheck<LETTER, PLACE> petriFloydHoareValidityCheck;
+		try {
+			petriFloydHoareValidityCheck = new PetriFloydHoareValidityCheck<>(services, mgdScript, symbolTable,
+					modifiableGlobals, mNet, mMarkingLaw.getLawMap());
+		} catch (final PetriNetNot1SafeException e) {
+			return Validity.UNKNOWN;
+		}
+		return petriFloydHoareValidityCheck.isValid();
+	}
+
+	public Validity checkValidity(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final IIcfgSymbolTable symbolTable, final ModifiableGlobalsTable modifiableGlobals) {
 		final boolean initialMarkingValidity = checkInitialMarking();
 		assert initialMarkingValidity : "Initial markings law does not evaluate to true.";
 		final boolean finalMarkingValidity = checkFinalMarkings();
@@ -64,7 +86,7 @@ public class EmpireValidityCheck<PLACE, LETTER> {
 		if (!initialMarkingValidity || !finalMarkingValidity) {
 			return Validity.INVALID;
 		}
-		return Validity.VALID;
+		return checkHoareTriples(services, mgdScript, symbolTable, modifiableGlobals);
 	}
 
 	public Validity getValidity() {
