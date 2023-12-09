@@ -6,6 +6,8 @@
           <option name="-tc">../../../trunk/examples/toolchains/C-BIN-BPP.xml</option>
           <option name="-ea" />
   </rundefinition>
+
+  <option name="--force-no-wrapper" />
   
   <resultfiles></resultfiles>
     
@@ -23,7 +25,7 @@
     <includesfile>../../../trunk/examples/svcomp/ReachSafety-ProductLines.set</includesfile>
     <includesfile>../../../trunk/examples/svcomp/ReachSafety-Recursive.set</includesfile>
     <includesfile>../../../trunk/examples/svcomp/ReachSafety-Sequentialized.set</includesfile>
-    <includesfile>../../../trunk/examples/svcomp/ReachSafety-XCSP.set.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/ReachSafety-XCSP.set</includesfile>
     <includesfile>../../../trunk/examples/svcomp/ConcurrencySafety-Main.set</includesfile>
     <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Bitvector.epf</option>
   </tasks>
