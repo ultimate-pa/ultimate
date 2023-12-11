@@ -63,7 +63,7 @@
   <tasks name="NoOverflow32">
     <includesfile>../../../trunk/examples/svcomp/NoOverflows-Main.set</includesfile>
     <includesfile>../../../trunk/examples/svcomp/ConcurrencySafety-NoOverflows.set</includesfile>
-    <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-NoOverflow-32bit-Automizer_Default.epf</option>
+    <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Overflow-32bit-Automizer_Default.epf</option>
   </tasks>
 
   <tasks name="NoOverflow64">
@@ -71,7 +71,7 @@
     <includesfile>../../../trunk/examples/svcomp/SoftwareSystems-coreutils-NoOverflows.set</includesfile>
     <includesfile>../../../trunk/examples/svcomp/SoftwareSystems-uthash-NoOverflows.set</includesfile>
     <includesfile>../../../trunk/examples/svcomp/SoftwareSystems-BusyBox-NoOverflows.set</includesfile>
-    <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-NoOverflow-64bit-Automizer_Default.epf</option>
+    <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Overflow-64bit-Automizer_Default.epf</option>
   </tasks>
   
   <tasks name="Termination64">
