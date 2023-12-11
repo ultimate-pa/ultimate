@@ -65,13 +65,12 @@ public class EmpireValidityCheck<PLACE, LETTER extends IAction> {
 	public EmpireValidityCheck(final MarkingLaw<PLACE, LETTER> markingLaw, final IPetriNet<LETTER, PLACE> net,
 			final BasicPredicateFactory factory, final MonolithicImplicationChecker implicationChecker,
 			final IUltimateServiceProvider services, final ManagedScript mgdScript, final IIcfgSymbolTable symbolTable,
-			final ModifiableGlobalsTable modifiableGlobals) {
+			final ModifiableGlobalsTable modifiableGlobals) throws PetriNetNot1SafeException {
 		mMarkingLaw = markingLaw;
 		mFactory = factory;
 		mNet = net;
 		mImplicationChecker = implicationChecker;
 		mValidity = checkValidity(services, mgdScript, symbolTable, modifiableGlobals);
-		assert mValidity == Validity.VALID : "Empire annotation is not valid";
 	}
 
 	private boolean checkInitialMarking() {
@@ -92,19 +91,17 @@ public class EmpireValidityCheck<PLACE, LETTER extends IAction> {
 	}
 
 	private Validity checkHoareTriples(final IUltimateServiceProvider services, final ManagedScript mgdScript,
-			final IIcfgSymbolTable symbolTable, final ModifiableGlobalsTable modifiableGlobals) {
+			final IIcfgSymbolTable symbolTable, final ModifiableGlobalsTable modifiableGlobals)
+			throws PetriNetNot1SafeException {
 		final PetriFloydHoareValidityCheck<LETTER, PLACE> petriFloydHoareValidityCheck;
-		try {
-			petriFloydHoareValidityCheck = new PetriFloydHoareValidityCheck<>(services, mgdScript, symbolTable,
-					modifiableGlobals, mNet, mMarkingLaw.getLawMap());
-		} catch (final PetriNetNot1SafeException e) {
-			return Validity.UNKNOWN;
-		}
+		petriFloydHoareValidityCheck = new PetriFloydHoareValidityCheck<>(services, mgdScript, symbolTable,
+				modifiableGlobals, mNet, mMarkingLaw.getLawMap());
 		return petriFloydHoareValidityCheck.isValid();
 	}
 
 	private Validity checkValidity(final IUltimateServiceProvider services, final ManagedScript mgdScript,
-			final IIcfgSymbolTable symbolTable, final ModifiableGlobalsTable modifiableGlobals) {
+			final IIcfgSymbolTable symbolTable, final ModifiableGlobalsTable modifiableGlobals)
+			throws PetriNetNot1SafeException {
 		final boolean initialMarkingValidity = checkInitialMarking();
 		assert initialMarkingValidity : "Initial markings law does not evaluate to true.";
 		final boolean finalMarkingValidity = checkFinalMarkings();

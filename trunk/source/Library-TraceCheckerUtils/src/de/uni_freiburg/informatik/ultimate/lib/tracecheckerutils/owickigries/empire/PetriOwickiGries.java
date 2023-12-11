@@ -33,6 +33,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -43,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.MonolithicImplicationChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown.Crown;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown.CrownConstruction;
@@ -93,8 +95,16 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 		mCrown = getCrown();
 		mEmpireAnnotation = getEmpireAnnotation(factory, placeToAssertion);
 		final MarkingLaw<PLACE, LETTER> markingLaw = new MarkingLaw<>(mEmpireAnnotation.getLaw().values(), factory);
-		final EmpireValidityCheck<PLACE, LETTER> empireValidityCheck = new EmpireValidityCheck<>(markingLaw, net,
-				factory, implicationChecker, services, mgdScript, symbolTable, modifiableGlobals);
+
+		mStatistics.measureEmpireValidity(() -> {
+			try {
+				final var checker = new EmpireValidityCheck<>(markingLaw, net, factory, implicationChecker, services,
+						mgdScript, symbolTable, modifiableGlobals);
+				assert checker.getValidity() != Validity.INVALID : "Empire annotation is not valid";
+			} catch (final PetriNetNot1SafeException e) {
+				throw new IllegalArgumentException("Petri program must be 1-safe", e);
+			}
+		});
 	}
 
 	private Crown<PLACE, LETTER> getCrown() {
@@ -134,14 +144,17 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 	private static final class Statistics extends AbstractStatisticsDataProvider {
 		public static final String CROWN_STATISTICS = "Crown construction";
 		public static final String EMPIRE_TIME = "Crown empire time";
+		public static final String EMPIRE_VALIDITY_TIME = "Empire validity check time";
 		public static final String EMPIRE_STATISTICS = "Empire statistics";
 
 		private IStatisticsDataProvider mCrownStatistics;
 		private final TimeTracker mEmpireTime = new TimeTracker();
+		private final TimeTracker mEmpireValidityTime = new TimeTracker();
 		private IStatisticsDataProvider mEmpireStatistics;
 
 		public Statistics() {
 			declare(EMPIRE_TIME, () -> mEmpireTime, KeyType.TT_TIMER_MS);
+			declare(EMPIRE_VALIDITY_TIME, () -> mEmpireValidityTime, KeyType.TT_TIMER_MS);
 			forward(CROWN_STATISTICS, () -> mCrownStatistics);
 			forward(EMPIRE_STATISTICS, () -> mEmpireStatistics);
 		}
@@ -156,6 +169,10 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 
 		private <T> T measureEmpire(final Supplier<T> runner) {
 			return mEmpireTime.measure(runner);
+		}
+
+		private void measureEmpireValidity(final Runnable runner) {
+			mEmpireValidityTime.measure(runner);
 		}
 	}
 }
