@@ -24,3 +24,4 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.smtsolver.external,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder
 Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.lib.tracecheckerutils
+Import-Package: de.uni_freiburg.informatik.ultimate.boogie.ast
