@@ -19,6 +19,7 @@
 
   <rundefinition name="NaiveOwickiGriesTestSuite-NoAssert">
     <option name="command">${benchmark_path}/../run-test.sh Library-TraceCheckerUtilsTest de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.NaiveOwickiGriesTestSuite ${inputfile_name} false</option>
+  </rundefinition>
 
   <tasks name="regression-MemSafety">
     <include>../../../trunk/examples/concurrent/OwickiGries/PetriPrograms/MemSafety.*.ats</include>
