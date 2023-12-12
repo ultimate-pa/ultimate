@@ -63,6 +63,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.proofs.IFinishWithFinalAbstraction;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.proofs.IUpdateOnDifference;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.proofs.IUpdateOnMinimization;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolatingTraceCheckCraig;
@@ -170,7 +171,7 @@ public class CegarLoopSWBnonRecursive<L extends IIcfgTransition<?>> extends NwaC
 	 * @param services
 	 * @param transitionClazz
 	 */
-	public <T extends IUpdateOnDifference<L> & IUpdateOnMinimization<L>> CegarLoopSWBnonRecursive(
+	public <T extends IUpdateOnDifference<L> & IUpdateOnMinimization<L> & IFinishWithFinalAbstraction<INestedWordAutomaton<L, IPredicate>>> CegarLoopSWBnonRecursive(
 			final DebugIdentifier name, final INestedWordAutomaton<L, IPredicate> initialAbstraction,
 			final IIcfg<?> icfg, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final TAPreferences taPrefs, final Set<IcfgLocation> errorLocs, final InterpolationTechnique interpolation,

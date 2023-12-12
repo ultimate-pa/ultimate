@@ -428,11 +428,6 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		throw new UnsupportedOperationException("Error automata not supported for " + PartialOrderCegarLoop.class);
 	}
 
-	@Override
-	protected void computeIcfgHoareAnnotation() {
-		throw new UnsupportedOperationException("Hoare annotation not supported for " + PartialOrderCegarLoop.class);
-	}
-
 	private IDeadEndStore<IPredicate, IPredicate> createDeadEndStore(final StateSplitter<IPredicate> splitter) {
 		assert mDeadEndStore == null : "Already created -- should only be called once";
 

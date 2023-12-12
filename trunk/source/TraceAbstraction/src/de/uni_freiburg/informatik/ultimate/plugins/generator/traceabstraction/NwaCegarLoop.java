@@ -87,9 +87,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.Simplificati
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SMTFeatureExtractionTermClassifier.ScoringMethod;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.cfg2automaton.Cfg2Automaton;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.floydhoare.HoareAnnotationComposer;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.floydhoare.HoareAnnotationExtractor;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.floydhoare.HoareAnnotationFragments;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.proofs.IFinishWithFinalAbstraction;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.proofs.IUpdateOnDifference;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.proofs.IUpdateOnMinimization;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
@@ -138,21 +136,18 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 	private final AStarHeuristic mAStarHeuristic;
 	private final Integer mAStarRandomHeuristicSeed;
 
-	// TODO #proofRefactor
-	private final ProofUpdater<L, ?> mProofUpdater;
-	protected HoareAnnotationFragments<L> mHaf;
+	protected final ProofUpdater<L, ?> mProofUpdater;
 
-	public <T extends IUpdateOnDifference<L> & IUpdateOnMinimization<L>> NwaCegarLoop(final DebugIdentifier name,
-			final INestedWordAutomaton<L, IPredicate> initialAbstraction, final IIcfg<?> rootNode,
-			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final TAPreferences taPrefs,
-			final Set<? extends IcfgLocation> errorLocs, final InterpolationTechnique interpolation,
-			final T proofUpdater, final boolean computeHoareAnnotation, final Set<IPredicate> hoareAnnotationStates,
-			final IUltimateServiceProvider services, final Class<L> transitionClazz,
-			final PredicateFactoryRefinement stateFactoryForRefinement) {
+	public <T extends IUpdateOnDifference<L> & IUpdateOnMinimization<L> & IFinishWithFinalAbstraction<INestedWordAutomaton<L, IPredicate>>> NwaCegarLoop(
+			final DebugIdentifier name, final INestedWordAutomaton<L, IPredicate> initialAbstraction,
+			final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
+			final TAPreferences taPrefs, final Set<? extends IcfgLocation> errorLocs,
+			final InterpolationTechnique interpolation, final T proofUpdater, final boolean computeHoareAnnotation,
+			final Set<IPredicate> hoareAnnotationStates, final IUltimateServiceProvider services,
+			final Class<L> transitionClazz, final PredicateFactoryRefinement stateFactoryForRefinement) {
 		super(name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation,
 				computeHoareAnnotation, services, transitionClazz, stateFactoryForRefinement);
 		mProofUpdater = proofUpdater == null ? null : new ProofUpdater<>(proofUpdater);
-		mHaf = new HoareAnnotationFragments<>(mLogger, hoareAnnotationStates);
 
 		mErrorGeneralizationEngine = new ErrorGeneralizationEngine<>(services);
 
@@ -327,9 +322,7 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 		} else {
 			automatonType = AutomatonType.FLOYD_HOARE;
 			useErrorAutomaton = false;
-			// TODO #proofRefactor
-			exploitSigmaStarConcatOfIa =
-					!mComputeHoareAnnotation && (mProofUpdater == null || mProofUpdater.exploitSigmaStarConcatOfIa());
+			exploitSigmaStarConcatOfIa = mProofUpdater == null || mProofUpdater.exploitSigmaStarConcatOfIa();
 			subtrahendBeforeEnhancement = mInterpolAutomaton;
 			enhanceMode = mPref.interpolantAutomatonEnhancement();
 			subtrahend = enhanceInterpolantAutomaton(enhanceMode, predicateUnifier, htc, subtrahendBeforeEnhancement);
@@ -407,22 +400,11 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 			}
 
 			if (REMOVE_DEAD_ENDS) {
-				// TODO #proofRefactor
-				if (mComputeHoareAnnotation) {
-					final Difference<L, IPredicate> difference = (Difference<L, IPredicate>) diff;
-					mHaf.updateOnIntersection(difference.getFst2snd2res(), difference.getResult());
-				}
 				if (mProofUpdater != null) {
 					final Difference<L, IPredicate> difference = (Difference<L, IPredicate>) diff;
 					mProofUpdater.updateOnIntersection(difference.getFst2snd2res(), difference.getResult());
 				}
-
 				diff.removeDeadEnds();
-
-				// TODO #proofRefactor
-				if (mComputeHoareAnnotation) {
-					mHaf.addDeadEndDoubleDeckers(diff);
-				}
 				if (mProofUpdater != null) {
 					mProofUpdater.addDeadEndDoubleDeckers(diff);
 				}
@@ -514,8 +496,7 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 						: new HashSet<>(Arrays.asList(((IMLPredicate) x).getProgramPoints())));
 		AutomataMinimization<Set<IcfgLocation>, IPredicate, L> am;
 		try {
-			// TODO #proofRefactor
-			final boolean computeOld2New = mComputeHoareAnnotation || mProofUpdater != null;
+			final boolean computeOld2New = mProofUpdater != null;
 			am = new AutomataMinimization<>(getServices(), mAbstraction, minimization, computeOld2New, mIteration,
 					predicateFactoryRefinement, MINIMIZE_EVERY_KTH_ITERATION, mStoredRawInterpolantAutomata,
 					mInterpolAutomaton, MINIMIZATION_TIMEOUT, resultCheckPredFac, lcsProvider, true);
@@ -530,15 +511,7 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 			// postprocessing after minimization
 			final IDoubleDeckerAutomaton<L, IPredicate> newAbstraction = am.getMinimizedAutomaton();
 
-			// extract Hoare annotation
-			// TODO #proofRefactor
-			if (mComputeHoareAnnotation) {
-				final Map<IPredicate, IPredicate> oldState2newState = am.getOldState2newStateMapping();
-				if (oldState2newState == null) {
-					throw new AssertionError("Hoare annotation and " + minimization + " incompatible");
-				}
-				mHaf.updateOnMinimization(oldState2newState, newAbstraction);
-			}
+			// update proof
 			if (mProofUpdater != null) {
 				final Map<IPredicate, IPredicate> oldState2newState = am.getOldState2newStateMapping();
 				if (oldState2newState == null) {
@@ -559,33 +532,11 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 
 	@Override
 	protected void finish() {
+		if (mProofUpdater != null) {
+			mProofUpdater.finish(mAbstraction);
+		}
 		mErrorGeneralizationEngine.reportErrorGeneralizationBenchmarks();
 		super.finish();
-	}
-
-	@Override
-	protected void computeIcfgHoareAnnotation() {
-		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.HoareAnnotationTime.toString());
-		try {
-			final HoareAnnotationComposer clha = computeHoareAnnotationComposer();
-			final HoareAnnotationWriter writer = new HoareAnnotationWriter(mIcfg, mCsToolkit, mPredicateFactory, clha,
-					mServices, mSimplificationTechnique, mXnfConversionTechnique);
-			// writer.addHoareAnnotationToCFG();
-			mCegarLoopBenchmark.addHoareAnnotationData(clha.getHoareAnnotationStatisticsGenerator());
-		} finally {
-			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.HoareAnnotationTime.toString());
-		}
-	}
-
-	protected HoareAnnotationComposer computeHoareAnnotationComposer() {
-		if (mCsToolkit.getManagedScript().isLocked()) {
-			throw new AssertionError("SMTManager must not be locked at the beginning of Hoare annotation computation");
-		}
-		final INestedWordAutomaton<L, IPredicate> abstraction = mAbstraction;
-		new HoareAnnotationExtractor<>(mServices, abstraction, mHaf);
-		final HoareAnnotationComposer clha = new HoareAnnotationComposer(mCsToolkit, mPredicateFactory, mHaf, mServices,
-				mSimplificationTechnique, mXnfConversionTechnique);
-		return clha;
 	}
 
 	private static final boolean checkStoreCounterExamples(final TAPreferences pref) {
@@ -606,8 +557,9 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 
 	// Annoyingly, this wrapper seems currently necessary due to Java's limited support for intersection types.
 	// The alternative is including a type parameter as below in the NwaCegarLoop itself.
-	private static final class ProofUpdater<L, T extends IUpdateOnMinimization<L> & IUpdateOnDifference<L>>
-			implements IUpdateOnMinimization<L>, IUpdateOnDifference<L> {
+	protected static final class ProofUpdater<L, T extends IUpdateOnMinimization<L> & IUpdateOnDifference<L> & IFinishWithFinalAbstraction<INestedWordAutomaton<L, IPredicate>>>
+			implements IUpdateOnMinimization<L>, IUpdateOnDifference<L>,
+			IFinishWithFinalAbstraction<INestedWordAutomaton<L, IPredicate>> {
 		private final T mUpdater;
 
 		public ProofUpdater(final T updater) {
@@ -635,6 +587,11 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 		public void updateOnMinimization(final Map<IPredicate, IPredicate> old2New,
 				final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction) {
 			mUpdater.updateOnMinimization(old2New, abstraction);
+		}
+
+		@Override
+		public void finish(final INestedWordAutomaton<L, IPredicate> finalAbstraction) {
+			mUpdater.finish(finalAbstraction);
 		}
 	}
 }

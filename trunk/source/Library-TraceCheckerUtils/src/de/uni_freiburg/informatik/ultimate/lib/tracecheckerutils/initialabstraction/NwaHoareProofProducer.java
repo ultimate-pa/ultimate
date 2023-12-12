@@ -27,45 +27,72 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction;
 
 import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.ProductNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IOpWithDelayedDeadEndRemoval;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.proofs.IProofPostProcessor;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.proofs.IProofProducer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.floydhoare.HoareAnnotationComposer;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.floydhoare.HoareAnnotationExtractor;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.floydhoare.HoareAnnotationFragments;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.floydhoare.IFloydHoareAnnotation;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.proofs.IFinishWithFinalAbstraction;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.proofs.IUpdateOnDifference;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.proofs.IUpdateOnMinimization;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
-final class NwaHoareProofProducer<L extends IAction, S, PROGRAM, PROOF>
-		implements IProofProducer<PROGRAM, PROOF>, IUpdateOnMinimization<L>, IUpdateOnDifference<L> {
+final class NwaHoareProofProducer<L extends IAction, PROGRAM, PROOF>
+		implements IProofProducer<PROGRAM, PROOF>, IUpdateOnMinimization<L>, IUpdateOnDifference<L>,
+		IFinishWithFinalAbstraction<INestedWordAutomaton<L, IPredicate>> {
 
-	private final INestedWordAutomaton<L, S> mProgram;
-	// private final Set<S> mHoareAnnotationStates;
-	private final IProofPostProcessor<INestedWordAutomaton<L, S>, IFloydHoareAnnotation<IPredicate>, PROGRAM, PROOF> mPost;
+	private final IUltimateServiceProvider mServices;
 
-	private NwaHoareProofProducer(final INestedWordAutomaton<L, S> program, // final Set<S> hoareAnnotationStates,
-			final IProofPostProcessor<INestedWordAutomaton<L, S>, IFloydHoareAnnotation<IPredicate>, PROGRAM, PROOF> postProcessor) {
+	private final INestedWordAutomaton<L, IPredicate> mProgram;
+	private final CfgSmtToolkit mCsToolkit;
+	private final PredicateFactory mPredicateFactory;
+
+	private final HoareProofSettings mPrefs;
+	private final Set<IPredicate> mHoareAnnotationStates;
+
+	private final IProofPostProcessor<INestedWordAutomaton<L, IPredicate>, IFloydHoareAnnotation<IPredicate>, PROGRAM, PROOF> mPost;
+
+	private final HoareAnnotationFragments<L> mHaf;
+
+	private INestedWordAutomaton<L, IPredicate> mFinalAbstraction;
+
+	private NwaHoareProofProducer(final IUltimateServiceProvider services,
+			final INestedWordAutomaton<L, IPredicate> program, final CfgSmtToolkit csToolkit,
+			final PredicateFactory predicateFactory, final HoareProofSettings prefs,
+			final Set<IPredicate> hoareAnnotationStates,
+			final IProofPostProcessor<INestedWordAutomaton<L, IPredicate>, IFloydHoareAnnotation<IPredicate>, PROGRAM, PROOF> postProcessor) {
+		mServices = services;
 		mProgram = program;
-		// mHoareAnnotationStates = hoareAnnotationStates;
-		// mHaf = new HoareAnnotationFragments<>(mLogger, hoareAnnotationStates);
+		mCsToolkit = csToolkit;
+		mPredicateFactory = predicateFactory;
+		mPrefs = prefs;
+		mHoareAnnotationStates = hoareAnnotationStates;
+		mHaf = new HoareAnnotationFragments<>(services.getLoggingService().getLogger(getClass()),
+				hoareAnnotationStates);
 		mPost = postProcessor;
 
 		assert postProcessor.getOriginalProgram() == mProgram;
 	}
 
-	public static <L extends IAction, S>
-			NwaHoareProofProducer<L, S, INestedWordAutomaton<L, S>, IFloydHoareAnnotation<IPredicate>>
-			create(final INestedWordAutomaton<L, S> program
-	// , final Set<S> hoareAnnotationStates
-	) {
-		return new NwaHoareProofProducer<>(program,
-				// hoareAnnotationStates,
+	public static <L extends IAction>
+			NwaHoareProofProducer<L, INestedWordAutomaton<L, IPredicate>, IFloydHoareAnnotation<IPredicate>>
+			create(final IUltimateServiceProvider services, final INestedWordAutomaton<L, IPredicate> program,
+					final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
+					final HoareProofSettings prefs, final Set<IPredicate> hoareAnnotationStates) {
+		return new NwaHoareProofProducer<>(services, program, csToolkit, predicateFactory, prefs, hoareAnnotationStates,
 				IProofPostProcessor.identity(program));
 	}
 
@@ -82,16 +109,45 @@ final class NwaHoareProofProducer<L extends IAction, S, PROGRAM, PROOF>
 
 	@Override
 	public PROOF getOrComputeProof() {
+		// TODO measure time
+		// mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.HoareAnnotationTime.toString());
+		try {
+			final HoareAnnotationComposer clha = computeHoareAnnotationComposer();
+
+			// TODO extract data to IFloydHoareAnnotation
+			// final HoareAnnotationWriter writer = new HmComputeHoareAnnotationoareAnnotationWriter(mIcfg, mCsToolkit,
+			// mPredicateFactory,
+			// clha,
+			// mServices, mSimplificationTechnique, mXnfConversionTechnique);
+			// writer.addHoareAnnotationToCFG();
+
+			// TODO forward statistics
+			// mCegarLoopBenchmark.addHoareAnnotationData(clha.getHoareAnnotationStatisticsGenerator());
+		} finally {
+			// mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.HoareAnnotationTime.toString());
+		}
+
 		// TODO
 		final IFloydHoareAnnotation<IPredicate> floydHoare = null;
 		return mPost.processProof(floydHoare);
 	}
 
+	private HoareAnnotationComposer computeHoareAnnotationComposer() {
+		if (mCsToolkit.getManagedScript().isLocked()) {
+			throw new AssertionError(
+					"ManagedScript must not be locked at the beginning of Hoare annotation computation");
+		}
+		new HoareAnnotationExtractor<>(mServices, mFinalAbstraction, mHaf);
+		final HoareAnnotationComposer clha = new HoareAnnotationComposer(mCsToolkit, mPredicateFactory, mHaf, mServices,
+				mPrefs.getSimplificationTechnique(), mPrefs.getXnfConversionTechnique());
+		return clha;
+	}
+
 	@Override
-	public <OUTPROGRAM, OUTPROOF> NwaHoareProofProducer<L, S, OUTPROGRAM, OUTPROOF>
+	public <OUTPROGRAM, OUTPROOF> NwaHoareProofProducer<L, OUTPROGRAM, OUTPROOF>
 			withPostProcessor(final IProofPostProcessor<PROGRAM, PROOF, OUTPROGRAM, OUTPROOF> postProcessor) {
-		return new NwaHoareProofProducer<>(mProgram, // mHoareAnnotationStates,
-				IProofPostProcessor.compose(mPost, postProcessor));
+		return new NwaHoareProofProducer<>(mServices, mProgram, mCsToolkit, mPredicateFactory, mPrefs,
+				mHoareAnnotationStates, IProofPostProcessor.compose(mPost, postProcessor));
 	}
 
 	@Override
@@ -109,20 +165,22 @@ final class NwaHoareProofProducer<L extends IAction, S, PROGRAM, PROOF>
 	public void updateOnIntersection(
 			final Map<IPredicate, Map<IPredicate, ProductNwa<L, IPredicate>.ProductState>> fst2snd2res,
 			final IDoubleDeckerAutomaton<L, IPredicate> result) {
-		// TODO Auto-generated method stub
-
+		mHaf.updateOnIntersection(fst2snd2res, result);
 	}
 
 	@Override
 	public void addDeadEndDoubleDeckers(final IOpWithDelayedDeadEndRemoval<L, IPredicate> diff) {
-		// TODO Auto-generated method stub
-
+		mHaf.addDeadEndDoubleDeckers(diff);
 	}
 
 	@Override
 	public void updateOnMinimization(final Map<IPredicate, IPredicate> old2New,
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction) {
-		// TODO Auto-generated method stub
+		mHaf.updateOnMinimization(old2New, abstraction);
+	}
 
+	@Override
+	public void finish(final INestedWordAutomaton<L, IPredicate> finalAbstraction) {
+		mFinalAbstraction = finalAbstraction;
 	}
 }

@@ -293,12 +293,6 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 	 */
 	protected abstract boolean refineAbstraction() throws AutomataLibraryException;
 
-	/**
-	 * Add Hoare annotation to the control flow graph. Use the information computed so far annotate the ProgramPoints of
-	 * the control flow graph with invariants.
-	 */
-	protected abstract void computeIcfgHoareAnnotation();
-
 	protected abstract Set<Pair<AbstractInterpolantAutomaton<L>, IPredicateUnifier>> getFloydHoareAutomata();
 
 	/**
@@ -498,6 +492,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 		}
 
 		// TODO #proofRefactor
+		// TODO should proof updaters have methods for sanity checks like this?
 		if (mComputeHoareAnnotation && mPref.getHoareAnnotationPositions() == HoareAnnotationPositions.All) {
 			final var unifier = new PredicateUnifier(mLogger, mServices, mCsToolkit.getManagedScript(),
 					mPredicateFactory, mCsToolkit.getSymbolTable(), mSimplificationTechnique, mXnfConversionTechnique);
@@ -875,12 +870,14 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 			}
 
 			// TODO #proofRefactor
-			if (mComputeHoareAnnotation && mResults.values().stream().anyMatch(a -> a.getResult() == Result.SAFE)) {
-				computeIcfgHoareAnnotation();
-				writeHoareAnnotationToLogger();
-			} else {
-				mLogger.debug("Omitting computation of Hoare annotation");
-			}
+			// TODO make sure CEGAR loops transmit necessary info to proof producers (e.g. in finish() or isAbsEmpty())
+			// TODO let callers decide if they want to extract proofs using CegarLoopResult::hasProvenAnything()
+			// if (mComputeHoareAnnotation && mResults.values().stream().anyMatch(a -> a.getResult() == Result.SAFE)) {
+			// computeIcfgHoareAnnotation();
+			// writeHoareAnnotationToLogger();
+			// } else {
+			// mLogger.debug("Omitting computation of Hoare annotation");
+			// }
 			return new CegarLoopResult<>(mResults, cegarLoopBenchmarkGenerator, getArtifact(), floydHoareAutomata);
 		}
 

@@ -74,4 +74,8 @@ public class CegarLoopResult<L extends IIcfgTransition<?>> {
 	public List<Pair<AbstractInterpolantAutomaton<L>, IPredicateUnifier>> getFloydHoareAutomata() {
 		return mFloydHoareAutomata;
 	}
+
+	public boolean hasProvenAnything() {
+		return mLocalResults.values().stream().anyMatch(a -> a.getResult() == Result.SAFE);
+	}
 }

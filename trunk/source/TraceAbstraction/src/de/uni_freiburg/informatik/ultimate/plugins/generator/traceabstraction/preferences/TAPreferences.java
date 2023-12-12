@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SMTFeat
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.ExternalSolver;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.floydhoare.HoareAnnotationPositions;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.HoareProofSettings;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderMode;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderReductionFacade.OrderType;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings;
@@ -558,4 +559,8 @@ public final class TAPreferences {
 		return mMcrInterpolantMethod;
 	}
 
+	public HoareProofSettings getHoareSettings() {
+		return new HoareProofSettings(computeHoareAnnotation(), getHoareAnnotationPositions(),
+				getSimplificationTechnique(), getXnfConversionTechnique());
+	}
 }

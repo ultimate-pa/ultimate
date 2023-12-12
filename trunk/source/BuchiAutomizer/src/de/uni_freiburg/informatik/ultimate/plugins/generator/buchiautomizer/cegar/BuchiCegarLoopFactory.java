@@ -107,7 +107,8 @@ public class BuchiCegarLoopFactory<L extends IIcfgTransition<?>> {
 				Collections.emptySet());
 		if (!IcfgUtils.isConcurrent(icfg)) {
 			final IInitialAbstractionProvider<L, INestedWordAutomaton<L, IPredicate>> automatonProvider =
-					new NwaInitialAbstractionProvider<>(mServices, stateFactoryForRefinement, true, predicateFactory);
+					new NwaInitialAbstractionProvider<>(mServices, stateFactoryForRefinement, true, predicateFactory,
+							mPrefs.getHoareSettings());
 			return createBuchiAutomatonCegarLoop(icfg, rankVarConstructor, predicateFactory, witnessAutomaton,
 					stateFactoryForRefinement, automatonProvider);
 		}

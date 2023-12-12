@@ -464,8 +464,7 @@ public class TAwAFAsCegarLoop<L extends IIcfgTransition<?>> extends CegarLoopCon
 		mStateFactoryForRefinement.setIteration(super.mIteration);
 
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
-		// TODO #proofRefactor
-		final boolean explointSigmaStarConcatOfIA = !mComputeHoareAnnotation;
+		final boolean explointSigmaStarConcatOfIA = mProofUpdater == null || mProofUpdater.exploitSigmaStarConcatOfIa();
 
 		final INestedWordAutomaton<L, IPredicate> oldAbstraction = mAbstraction;
 		final IHoareTripleChecker htc = getEfficientHoareTripleChecker(); // change to CegarLoopConcurrentAutomata
@@ -495,17 +494,13 @@ public class TAwAFAsCegarLoop<L extends IIcfgTransition<?>> extends CegarLoopCon
 		// checkInductivity
 
 		if (REMOVE_DEAD_ENDS) {
-			// TODO #proofRefactor
-			if (mComputeHoareAnnotation) {
+			if (mProofUpdater != null) {
 				final Difference<L, IPredicate> difference = (Difference<L, IPredicate>) diff;
-				mHaf.updateOnIntersection(difference.getFst2snd2res(), difference.getResult());
+				mProofUpdater.updateOnIntersection(difference.getFst2snd2res(), difference.getResult());
 			}
-
 			diff.removeDeadEnds();
-
-			// TODO #proofRefactor
-			if (mComputeHoareAnnotation) {
-				mHaf.addDeadEndDoubleDeckers(diff);
+			if (mProofUpdater != null) {
+				mProofUpdater.addDeadEndDoubleDeckers(diff);
 			}
 		}
 

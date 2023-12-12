@@ -138,8 +138,7 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 
 		final Set<IcfgLocation> hoareAnnotationLocs;
 		if (mComputeHoareAnnotation) {
-			hoareAnnotationLocs =
-					mPrefs.getHoareAnnotationPositions().getLocations(root);
+			hoareAnnotationLocs = mPrefs.getHoareAnnotationPositions().getLocations(root);
 		} else {
 			hoareAnnotationLocs = Collections.emptySet();
 		}
@@ -263,7 +262,7 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 		if (!isConcurrent) {
 			final IInitialAbstractionProvider<L, INestedWordAutomaton<L, IPredicate>> provider =
 					new NwaInitialAbstractionProvider<>(services, stateFactory, mPrefs.interprocedural(),
-							predicateFactory);
+							predicateFactory, mPrefs.getHoareSettings());
 			if (witnessAutomaton == null) {
 				return provider;
 			}

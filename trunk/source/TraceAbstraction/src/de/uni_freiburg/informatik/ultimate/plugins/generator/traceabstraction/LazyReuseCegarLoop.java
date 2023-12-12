@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.d
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.proofs.IFinishWithFinalAbstraction;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.proofs.IUpdateOnDifference;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.proofs.IUpdateOnMinimization;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
@@ -75,12 +76,12 @@ public class LazyReuseCegarLoop<L extends IIcfgTransition<?>> extends ReuseCegar
 
 	private Pair<INwaOutgoingLetterAndTransitionProvider<L, IPredicate>, IPredicateUnifier> mAutomatonAcceptingCounterexample;
 
-	public <T extends IUpdateOnDifference<L> & IUpdateOnMinimization<L>> LazyReuseCegarLoop(final DebugIdentifier name,
-			final INestedWordAutomaton<L, IPredicate> initialAbstraction, final IIcfg<?> rootNode,
-			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final TAPreferences taPrefs,
-			final Set<? extends IcfgLocation> errorLocs, final InterpolationTechnique interpolation,
-			final T proofUpdater, final boolean computeHoareAnnotation, final Set<IPredicate> hoareAnnotationStates,
-			final IUltimateServiceProvider services,
+	public <T extends IUpdateOnDifference<L> & IUpdateOnMinimization<L> & IFinishWithFinalAbstraction<INestedWordAutomaton<L, IPredicate>>> LazyReuseCegarLoop(
+			final DebugIdentifier name, final INestedWordAutomaton<L, IPredicate> initialAbstraction,
+			final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
+			final TAPreferences taPrefs, final Set<? extends IcfgLocation> errorLocs,
+			final InterpolationTechnique interpolation, final T proofUpdater, final boolean computeHoareAnnotation,
+			final Set<IPredicate> hoareAnnotationStates, final IUltimateServiceProvider services,
 			final List<Pair<AbstractInterpolantAutomaton<L>, IPredicateUnifier>> floydHoareAutomataFromOtherLocations,
 			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFiles,
 			final Class<L> transitionClazz, final PredicateFactoryRefinement stateFactoryForRefinement) {
@@ -189,17 +190,13 @@ public class LazyReuseCegarLoop<L extends IIcfgTransition<?>> extends ReuseCegar
 			dumpOrAppendAutomatonForReuseIfEnabled(reuseAut, reuseAutPair.getSecond());
 
 			if (REMOVE_DEAD_ENDS) {
-				// TODO #proofRefactor
-				if (mComputeHoareAnnotation) {
+				if (mProofUpdater != null) {
 					final Difference<L, IPredicate> difference = (Difference<L, IPredicate>) diff;
-					mHaf.updateOnIntersection(difference.getFst2snd2res(), difference.getResult());
+					mProofUpdater.updateOnIntersection(difference.getFst2snd2res(), difference.getResult());
 				}
-
 				diff.removeDeadEnds();
-
-				// TODO #proofRefactor
-				if (mComputeHoareAnnotation) {
-					mHaf.addDeadEndDoubleDeckers(diff);
+				if (mProofUpdater != null) {
+					mProofUpdater.addDeadEndDoubleDeckers(diff);
 				}
 			}
 

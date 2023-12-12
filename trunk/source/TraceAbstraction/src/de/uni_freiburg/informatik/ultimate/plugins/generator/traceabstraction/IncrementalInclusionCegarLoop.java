@@ -65,6 +65,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHo
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.proofs.IFinishWithFinalAbstraction;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.proofs.IUpdateOnDifference;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.proofs.IUpdateOnMinimization;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
@@ -82,7 +83,7 @@ public class IncrementalInclusionCegarLoop<L extends IIcfgTransition<?>> extends
 	protected final List<AbstractInterpolantAutomaton<L>> mInterpolantAutomata = new ArrayList<>();
 	protected final List<IHoareTripleChecker> mHoareTripleChecker = new ArrayList<>();
 
-	public <T extends IUpdateOnDifference<L> & IUpdateOnMinimization<L>> IncrementalInclusionCegarLoop(
+	public <T extends IUpdateOnDifference<L> & IUpdateOnMinimization<L> & IFinishWithFinalAbstraction<INestedWordAutomaton<L, IPredicate>>> IncrementalInclusionCegarLoop(
 			final DebugIdentifier name, final INestedWordAutomaton<L, IPredicate> initialAbstraction,
 			final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final TAPreferences taPrefs, final Set<? extends IcfgLocation> errorLocs,
@@ -95,10 +96,9 @@ public class IncrementalInclusionCegarLoop<L extends IIcfgTransition<?>> extends
 				stateFactoryForRefinement);
 		mLanguageOperation = languageOperation;
 
-		// TODO #proofRefactor
-		if (mComputeHoareAnnotation) {
+		if (proofUpdater != null) {
 			throw new UnsupportedOperationException(
-					"while using this CEGAR loop computation of Hoare annotation is unsupported ");
+					"while using this CEGAR loop computation of proofs is unsupported ");
 		}
 	}
 
