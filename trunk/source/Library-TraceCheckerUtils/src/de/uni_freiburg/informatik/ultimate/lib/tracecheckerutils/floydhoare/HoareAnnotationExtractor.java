@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.MLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.SPredicate;
@@ -53,8 +53,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
  * @author heizmann@informatik.uni-freiburg.de
  *
  */
-public class HoareAnnotationExtractor<LETTER extends IIcfgTransition<?>>
-		extends DoubleDeckerVisitor<LETTER, IPredicate> {
+public class HoareAnnotationExtractor<LETTER extends IAction> extends DoubleDeckerVisitor<LETTER, IPredicate> {
 
 	Set<DoubleDecker<IPredicate>> mReportedDoubleDeckers = new HashSet<>();
 

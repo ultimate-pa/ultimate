@@ -37,7 +37,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IntersectNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IOpWithDelayedDeadEndRemoval;
@@ -297,8 +296,7 @@ public class HoareAnnotationFragments<LETTER extends IAction> {
 	 * Add all DoubleDeckers dd for which holds. - dd was in the automaton directly after the automaton operation op -
 	 * after dead ends where removed from op dd was no double decker of the automaton any more.
 	 */
-	public void addDeadEndDoubleDeckers(final IOpWithDelayedDeadEndRemoval<LETTER, IPredicate> op)
-			throws AutomataOperationCanceledException {
+	public void addDeadEndDoubleDeckers(final IOpWithDelayedDeadEndRemoval<LETTER, IPredicate> op) {
 		final IPredicate emtpyStack = op.getResult().getEmptyStackState();
 		for (final UpDownEntry<IPredicate> upDownEntry : op.getRemovedUpDownEntry()) {
 			addDoubleDecker(upDownEntry.getDown(), upDownEntry.getUp(), emtpyStack);
