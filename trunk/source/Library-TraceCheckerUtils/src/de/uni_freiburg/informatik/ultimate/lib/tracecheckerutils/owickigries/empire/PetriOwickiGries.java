@@ -94,7 +94,7 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 		mAssertionConditions = DataStructureUtils.difference(mConditions, mOriginalConditions);
 		mCrown = getCrown();
 		mEmpireAnnotation = getEmpireAnnotation(factory, placeToAssertion);
-		final MarkingLaw<PLACE, LETTER> markingLaw = new MarkingLaw<>(mEmpireAnnotation.getLaw().values(), factory);
+		final MarkingLaw<PLACE, LETTER> markingLaw = new MarkingLaw<>(mEmpireAnnotation.getLaw(), factory);
 
 		mStatistics.measureEmpireValidity(() -> {
 			try {

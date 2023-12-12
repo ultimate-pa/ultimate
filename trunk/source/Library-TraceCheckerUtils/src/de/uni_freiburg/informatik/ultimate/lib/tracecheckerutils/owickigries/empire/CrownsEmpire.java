@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.em
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
@@ -71,6 +72,15 @@ public class CrownsEmpire<PLACE, LETTER> {
 		mStatistics.reportEmpire(mEmpireAnnotation);
 	}
 
+	private Map<Territory<PLACE>, IPredicate>
+			getTerritoryIPredicateMap(final HashMap<Territory<PLACE>, TerritoryLaw<PLACE>> crownsTerritories) {
+		final HashMap<Territory<PLACE>, IPredicate> territoryIPredicateMap = new HashMap<>();
+		for (final Territory<PLACE> territory : crownsTerritories.keySet()) {
+			territoryIPredicateMap.put(territory, crownsTerritories.get(territory).getLaw());
+		}
+		return territoryIPredicateMap;
+	}
+
 	private EmpireAnnotation<PLACE> constructEmpireAnnotation(final BasicPredicateFactory factory,
 			final Function<PLACE, IPredicate> placeToAssertion) {
 		final HashMap<Territory<PLACE>, TerritoryLaw<PLACE>> crownsTerritories = new HashMap<>();
@@ -86,7 +96,8 @@ public class CrownsEmpire<PLACE, LETTER> {
 			law.addRooksAssertion(rook.getLaw());
 			crownsTerritories.put(rookTerritory, law);
 		}
-		final EmpireAnnotation<PLACE> empireAnnotation = new EmpireAnnotation<>(crownsTerritories);
+		final Map<Territory<PLACE>, IPredicate> territoryIPredicateMap = getTerritoryIPredicateMap(crownsTerritories);
+		final EmpireAnnotation<PLACE> empireAnnotation = new EmpireAnnotation<>(territoryIPredicateMap);
 		return empireAnnotation;
 	}
 

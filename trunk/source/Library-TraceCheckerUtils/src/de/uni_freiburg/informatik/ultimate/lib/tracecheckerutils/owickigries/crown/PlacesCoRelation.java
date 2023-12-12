@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.ICoRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
-public final class PlacesCoRelation<PLACE, LETTER> {
+final class PlacesCoRelation<PLACE, LETTER> {
 	private final HashRelation<PLACE, PLACE> mCoRelatedPlaces;
 	private final ICoRelation<LETTER, PLACE> mCoRelation;
 

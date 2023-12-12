@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -45,8 +44,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
  * @param <LETTER>
  *            The type of statements in the Petri program
  */
-public class MarkingLaw<PLACE, LETTER> {
-	private final HashMap<Marking<PLACE>, IPredicate> mMarkingLawMap;
+class MarkingLaw<PLACE, LETTER> {
+	private final Map<Marking<PLACE>, IPredicate> mMarkingLawMap;
 	private final BasicPredicateFactory mFactory;
 
 	/**
@@ -57,17 +56,17 @@ public class MarkingLaw<PLACE, LETTER> {
 	 * @param factory
 	 *            Factory for IPredicate operations
 	 */
-	public MarkingLaw(final Collection<TerritoryLaw<PLACE>> empireLaw, final BasicPredicateFactory factory) {
+	public MarkingLaw(final Map<Territory<PLACE>, IPredicate> empireLaw, final BasicPredicateFactory factory) {
 		mFactory = factory;
 		mMarkingLawMap = getMarkingLaw(empireLaw);
 	}
 
-	private HashMap<Marking<PLACE>, IPredicate> getMarkingLaw(final Collection<TerritoryLaw<PLACE>> empireLaw) {
+	private HashMap<Marking<PLACE>, IPredicate> getMarkingLaw(final Map<Territory<PLACE>, IPredicate> empireLaw) {
 		final HashMap<Marking<PLACE>, IPredicate> markingLaw = new HashMap<>();
-		for (final TerritoryLaw<PLACE> territoryLaw : empireLaw) {
-			final Set<Marking<PLACE>> treaty = territoryLaw.getTerritory().getTreaty();
+		for (final Territory<PLACE> territory : empireLaw.keySet()) {
+			final Set<Marking<PLACE>> treaty = territory.getTreaty();
 			for (final Marking<PLACE> marking : treaty) {
-				markingLaw.merge(marking, territoryLaw.getLaw(), (p1, p2) -> mFactory.and(p1, p2));
+				markingLaw.merge(marking, empireLaw.get(territory), (p1, p2) -> mFactory.and(p1, p2));
 			}
 		}
 		return markingLaw;

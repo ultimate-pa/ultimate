@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -43,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.cro
  * @param <PLACE>
  *            The type of places in the Petri program
  */
-public class TerritoryLaw<PLACE> {
+class TerritoryLaw<PLACE> {
 	private final Territory<PLACE> mTerritory;
 	private IPredicate mLaw;
 	private final BasicPredicateFactory mFactory;
@@ -118,11 +119,11 @@ public class TerritoryLaw<PLACE> {
 			return false;
 		}
 		final TerritoryLaw<PLACE> other = (TerritoryLaw<PLACE>) obj;
-		return mTerritory.equals(other.getTerritory());
+		return mTerritory.equals(other.getTerritory()) && mLaw.equals(other.getLaw());
 	}
 
 	@Override
 	public int hashCode() {
-		return mTerritory.hashCode();
+		return Objects.hash(mTerritory, mLaw);
 	}
 }

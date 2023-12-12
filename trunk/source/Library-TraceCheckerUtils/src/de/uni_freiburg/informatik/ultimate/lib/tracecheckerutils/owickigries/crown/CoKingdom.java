@@ -32,7 +32,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Branching
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
-public final class CoKingdom<PLACE, LETTER> {
+final class CoKingdom<PLACE, LETTER> {
 
 	private final Kingdom<PLACE, LETTER> mKingdom;
 	private final Condition<LETTER, PLACE> mCondition;

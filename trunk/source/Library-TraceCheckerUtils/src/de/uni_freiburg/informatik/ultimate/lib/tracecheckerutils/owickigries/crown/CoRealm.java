@@ -33,7 +33,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.ICoRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
-public final class CoRealm<PLACE, LETTER> {
+final class CoRealm<PLACE, LETTER> {
 
 	private final ICoRelation<LETTER, PLACE> mCoRelation;
 	private final Realm<PLACE, LETTER> mRealm;

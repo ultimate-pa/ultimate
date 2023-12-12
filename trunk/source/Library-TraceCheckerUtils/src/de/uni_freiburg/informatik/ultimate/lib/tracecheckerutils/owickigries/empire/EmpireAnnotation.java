@@ -43,17 +43,17 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
  * @param <PLACE>
  *            The type of program statements
  */
-public class EmpireAnnotation<PLACE> {
+class EmpireAnnotation<PLACE> {
 	Set<Territory<PLACE>> mEmpire;
-	Map<Territory<PLACE>, TerritoryLaw<PLACE>> mLaw;
+	Map<Territory<PLACE>, IPredicate> mLaw;
 
 	/**
 	 * Construct the Empire Annotation with given Territories and Law
 	 *
 	 * @param territoryLawMap
-	 *            Map from Territory to corresponding TerritoryLaw object
+	 *            Map from Territory to corresponding IPredicate Law object
 	 */
-	public EmpireAnnotation(final Map<Territory<PLACE>, TerritoryLaw<PLACE>> territoryLawMap) {
+	public EmpireAnnotation(final Map<Territory<PLACE>, IPredicate> territoryLawMap) {
 		mEmpire = territoryLawMap.keySet();
 		mLaw = territoryLawMap;
 	}
@@ -76,7 +76,7 @@ public class EmpireAnnotation<PLACE> {
 	 * @return Law corresponding to territory.
 	 */
 	public IPredicate getLaw(final Territory<PLACE> territory) {
-		return mLaw.get(territory).getLaw();
+		return mLaw.get(territory);
 	}
 
 	/**
@@ -84,7 +84,7 @@ public class EmpireAnnotation<PLACE> {
 	 *
 	 * @return Law Hashtable
 	 */
-	public Map<Territory<PLACE>, TerritoryLaw<PLACE>> getLaw() {
+	public Map<Territory<PLACE>, IPredicate> getLaw() {
 		return mLaw;
 	}
 
@@ -110,7 +110,7 @@ public class EmpireAnnotation<PLACE> {
 	public final long getLawSize() {
 		final DAGSize sizeComputation = new DAGSize();
 		final long size = mLaw.entrySet().stream()
-				.collect(Collectors.summingLong(x -> sizeComputation.size(x.getValue().getLaw().getFormula())));
+				.collect(Collectors.summingLong(x -> sizeComputation.size(x.getValue().getFormula())));
 		return size;
 	}
 

@@ -55,7 +55,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
  * @param <LETTER>
  *            The type of statements in the Petri program
  */
-public class EmpireValidityCheck<PLACE, LETTER extends IAction> {
+class EmpireValidityCheck<PLACE, LETTER extends IAction> {
 	private final MarkingLaw<PLACE, LETTER> mMarkingLaw;
 	private final BasicPredicateFactory mFactory;
 	private final IPetriNet<LETTER, PLACE> mNet;

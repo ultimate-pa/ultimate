@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition
  *            The type of statements in the Petri program
  */
 
-public final class CoRook<PLACE, LETTER> {
+final class CoRook<PLACE, LETTER> {
 
 	private final Rook<PLACE, LETTER> mRook;
 	private final Condition<LETTER, PLACE> mCondition;

@@ -26,6 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown;
 
-public enum ConflictType {
+enum ConflictType {
 	CONFLICT_FREE, CONFLICTING
 }

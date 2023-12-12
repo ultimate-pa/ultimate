@@ -32,7 +32,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.ICoRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
-public final class CoLaw<PLACE, LETTER> {
+final class CoLaw<PLACE, LETTER> {
 
 	private final ICoRelation<LETTER, PLACE> mCoRelation;
 	private final KingdomLaw<PLACE, LETTER> mLaw;

@@ -25,6 +25,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown;
 
-public enum CoRelationType {
+enum CoRelationType {
 	POSITIVE, NEGATIVE, PARTIAL, DIVERGENT, CONTAINS
 }

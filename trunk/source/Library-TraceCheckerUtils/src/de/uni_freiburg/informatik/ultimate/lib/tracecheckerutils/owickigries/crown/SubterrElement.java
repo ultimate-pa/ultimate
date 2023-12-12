@@ -33,7 +33,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
-public class SubterrElement<LETTER, PLACE> {
+class SubterrElement<LETTER, PLACE> {
 	private final Marking<PLACE> mMarking;
 	private final Set<Condition<LETTER, PLACE>> mCoSet;
 
