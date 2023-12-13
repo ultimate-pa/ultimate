@@ -18,17 +18,17 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IP
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IPreconditionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine.ITARefinementStrategy;
 
-public class PostConditionTraceChecker<L extends IIcfgTransition<?>> implements ITraceChecker<L>{
-	
-	
+public class PostConditionTraceChecker<L extends IIcfgTransition<?>> implements ITraceChecker<L> {
 
 	private IUltimateServiceProvider mServices;
 	private IAutomaton<L, IPredicate> mAbstraction;
 	private TaskIdentifier mTaskIdentifier;
 	private IEmptyStackStateFactory<IPredicate> mEmptyStackFactory;
 	private StrategyFactory<L> mStrategyFactory;
-	public PostConditionTraceChecker(final IUltimateServiceProvider services, final IAutomaton<L, IPredicate> abstraction, final TaskIdentifier taskIdentifier,
-			IEmptyStackStateFactory<IPredicate> emptyStackStateFactory, StrategyFactory<L> strategyFactory){
+
+	public PostConditionTraceChecker(final IUltimateServiceProvider services,
+			final IAutomaton<L, IPredicate> abstraction, final TaskIdentifier taskIdentifier,
+			IEmptyStackStateFactory<IPredicate> emptyStackStateFactory, StrategyFactory<L> strategyFactory) {
 
 		mServices = services;
 		mAbstraction = abstraction;
@@ -38,28 +38,26 @@ public class PostConditionTraceChecker<L extends IIcfgTransition<?>> implements 
 	}
 
 	public List<IPredicate> checkTrace(IRun<L, IPredicate> run, IPredicate postCondition) {
-			ITARefinementStrategy<L> strategy = mStrategyFactory.constructStrategy(mServices, run, mAbstraction, mTaskIdentifier, mEmptyStackFactory,
-					IPreconditionProvider.constructDefaultPreconditionProvider(), new PostConditionProvider(postCondition));
+		ITARefinementStrategy<L> strategy = mStrategyFactory.constructStrategy(mServices, run, mAbstraction,
+				mTaskIdentifier, mEmptyStackFactory, IPreconditionProvider.constructDefaultPreconditionProvider(),
+				new PostConditionProvider(postCondition));
+		while (strategy.hasNextFeasilibityCheck()) {
 			ITraceCheckStrategyModule<L, ?> check = strategy.nextFeasibilityCheck();
-			if(check.isCorrect().equals(LBool.UNSAT)) {
-				while(strategy.hasNextFeasilibityCheck()){
-					if (check instanceof InterpolatingTraceCheck) {
-						return ((InterpolatingTraceCheck<?>) check).getIpp().getPredicates();
-					}
-					check = strategy.nextFeasibilityCheck();
-				}
-			}	
+			if (check.isCorrect().equals(LBool.UNSAT) && check instanceof InterpolatingTraceCheck) {
+				return ((InterpolatingTraceCheck<?>) check).getIpp().getPredicates();
+			}
+		}
 		return null;
 	}
-	
-	private class PostConditionProvider implements IPostconditionProvider{
-		
+
+	private class PostConditionProvider implements IPostconditionProvider {
+
 		IPredicate mCondition;
 
 		public PostConditionProvider(IPredicate condition) {
 			mCondition = condition;
 		}
-	
+
 		@Override
 		public IPredicate constructPostcondition(IPredicateUnifier predicateUnifier) {
 			return predicateUnifier.getOrConstructPredicate(mCondition);
