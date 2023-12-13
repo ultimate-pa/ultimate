@@ -1,5 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence;
 
+import java.util.List;
+
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
@@ -24,17 +26,15 @@ public class ConditionalCommutativityChecker<L extends IIcfgTransition<?>> imple
 	}
 	
 	@Override
-	public boolean checkConditionalCommutativity(IRun<L, IPredicate> run, IPredicate state, L a, L b) {
+	public List<IPredicate> checkConditionalCommutativity(IRun<L, IPredicate> run, IPredicate state, L a, L b) {
 		
 		
-		if (Boolean.TRUE.equals(mCriterion.decide(state, a, b))) {
+		if (mCriterion.decide(state, a, b)) {
 			IPredicate condition = mGenerator.generateCondition(state, a.getTransformula(), b.getTransformula());
-			if (Boolean.TRUE.equals(mCriterion.decide(condition))) {
-				
-				return mTraceChecker.checkTrace(run, condition);
-				
+			if (mCriterion.decide(condition)) {			
+				return mTraceChecker.checkTrace(run, condition);		
 			}
 		}
-		return false;
+		return null;
 	}
 }
