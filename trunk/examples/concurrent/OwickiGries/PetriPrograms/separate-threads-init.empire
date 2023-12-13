@@ -1,0 +1,12 @@
+region r0 : { main.l0 }
+region r1 : { main.l1, main.l2 }
+region r2 : { main.l0, main.l1 }
+region r3 : { main.l2 }
+region r4 : { t1.l1, t1.l2, t1.l3 }
+region r5 : { t2.l1, t2.l2, t2.l3 }
+
+law { r0 } : true
+law { r1 } : (= x 1)
+law { r2 } : true
+law { r3 } : (= y 1)
+law { r4, r5 } : (= x 1), (= y 1)
