@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "+//IDN sosy-lab.org//DTD BenchExec table 1.10//EN" "https://www.sosy-lab.org/benchexec/table-1.10.dtd">
+<table>
+  <!-- default columns -->
+  <column title="status"/>
+  <column title="cputime" displayTitle="CPU Time"/>
+  <column title="memory" displayTitle="Memory" sourceUnit="B" displayUnit="MB"/>
+
+  <union>
+    <result filename="*.PetriOwickiGriesTestSuite-WithAssert.xml"/>
+
+    <!-- default columns -->
+    <column title="status"/>
+    <column title="cputime" displayTitle="CPU Time"/>
+    <column title="memory" displayTitle="Memory" sourceUnit="B" displayUnit="MB"/>
+
+    <!-- input program -->
+    <column title="progPlaces" displayTitle="Program Places">Constructing Owicki-Gries proof for Petri program that has (\d+) places</column>
+    <column title="progTrans" displayTitle="Program Transitions">Constructing Owicki-Gries proof for Petri program that has .* (\d+) transitions</column>
+    <column title="progFlow" displayTitle="Program Flow">Constructing Owicki-Gries proof for Petri program that has .* (\d+) flow</column>
+
+    <!-- unfolding of refined net -->
+    <column title="unfConds" displayTitle="Unfolding Conditions">Constructing Owicki-Gries proof for .* unfolding that has (\d+) conditions</column>
+    <column title="unfEvents" displayTitle="Unfolding Events">Constructing Owicki-Gries proof for .* unfolding that has .* (\d+) events</column>
+
+    <column title="setupTime" displayTitle="Setup Time">OwickiGriesTestSuite setup time: (\d+)ms</column>
+
+    <!-- crown -->
+    <column title="settleTime" displayTitle="Settlement Time">PetriOwickiGries Crown Statistics:.* (\d+.\d+)ms settlement time</column>
+    <column title="compTime" displayTitle="Crown Computation Time">PetriOwickiGries Crown Statistics:.* (\d+.\d+)ms crown computation time</column>
+    <column title="refurbTime" displayTitle="Refurbishment Time">PetriOwickiGries Crown Statistics:.* (\d+.\d+)ms crown refurbishment time</column>
+    <column title="kingdCnt" displayTitle="Kingdom Count">PetriOwickiGries Crown Statistics:.* number of kingdoms in crown: (\d+),</column>
+    <column title="assertSize" displayTitle="Assertion Size">PetriOwickiGries Crown Statistics:.* crown assertion size: (\d+),</column>
+    <column title="crownSize" displayTitle="Crown Size">PetriOwickiGries Crown Statistics:.* crown size: (\d+),</column>
+    <column title="realmMin" displayTitle="Realms/Kingdom (min)">PetriOwickiGries Crown Statistics:.* Min number of realms per kingdom: (\d+),</column>
+    <column title="realmMax" displayTitle="Realms/Kingdom (max)">PetriOwickiGries Crown Statistics:.* Max number of realms per kingdom: (\d+),</column>
+    <column title="realmMed" displayTitle="Realms/Kingdom (med)">PetriOwickiGries Crown Statistics:.* Median number of realms per kingdom: (\d+)$</column>
+
+    <!-- empire -->
+    <column title="empireTime" displayTitle="Empire Time">PetriOwickiGries Statistics:.* (\d+\.\d+)ms Crown empire time</column>
+    <column title="empSize" displayTitle="Empire Size">PetriOwickiGries Empire Statistics:.* empire size: (\d+),</column>
+    <column title="lawSize" displayTitle="Law Size">PetriOwickiGries Empire Statistics:.* empire law size: (\d+),</column>
+    <column title="annotSize" displayTitle="Annotation Size">PetriOwickiGries Empire Statistics:.* empire annotation size: (\d+),</column>
+    <column title="regionCnt" displayTitle="Region Count">PetriOwickiGries Empire Statistics:.* number of regions: (\d+)$</column>
+    <column title="regionMin" displayTitle="Regions/Territory (min)">PetriOwickiGries Empire Statistics:.* Min number of regions per territory: (\d+),</column>
+    <column title="regionMax" displayTitle="Regions/Territory (max)">PetriOwickiGries Empire Statistics:.* Max number of regions per territory: (\d+),</column>
+    <column title="regionMed" displayTitle="Regions/Territory (med)">PetriOwickiGries Empire Statistics:.* Median number of regions per territory: (\d+)$</column>
+    <column title="empireValTime" displayTitle="Empire Validity Time">PetriOwickiGries Statistics:.* (\d+\.\d+)ms Empire validity check time</column>
+  </union>
+
+  <union>
+    <result filename="*.NaiveOwickiGriesTestSuite-WithAssert.xml"/>
+    <!-- default columns -->
+    <column title="status"/>
+    <column title="cputime" displayTitle="CPU Time"/>
+    <column title="memory" displayTitle="Memory" sourceUnit="B" displayUnit="MB"/>
+
+    <!-- input program -->
+    <column title="progPlaces" displayTitle="Program Places">Constructing Owicki-Gries proof for Petri program that has (\d+) places</column>
+    <column title="progTrans" displayTitle="Program Transitions">Constructing Owicki-Gries proof for Petri program that has .* (\d+) transitions</column>
+    <column title="progFlow" displayTitle="Program Flow">Constructing Owicki-Gries proof for Petri program that has .* (\d+) flow</column>
+
+    <!-- unfolding of refined net -->
+    <column title="unfConds" displayTitle="Unfolding Conditions">Constructing Owicki-Gries proof for .* unfolding that has (\d+) conditions</column>
+    <column title="unfEvents" displayTitle="Unfolding Events">Constructing Owicki-Gries proof for .* unfolding that has .* (\d+) events</column>
+
+    <column title="setupTime" displayTitle="Setup Time">OwickiGriesTestSuite setup time: (\d+)ms</column>
+
+    <!-- Floyd/Hoare proof -->
+    <column title="fhMark" displayTitle="F/H markings">Computed Floyd-Hoare proof with (\d+) non-trivial markings</column>
+    <column title="fhSize" displayTitle="F/H size">Computed Floyd-Hoare proof with.* assertion size (\d+)$</column>
+
+    <!-- Owicki-Gries proof -->
+    <column title="ogGhost" displayTitle="ghost variables">Computed Owicki-Gries annotation with (\d+) ghost variables</column>
+    <column title="ogUpdates" displayTitle="ghost updates">Computed Owicki-Gries annotation with.* (\d+) ghost updates</column>
+    <column title="ogSize" displayTitle="O/G size">Computed Owicki-Gries annotation with.* overall size (\d+)$</column>
+  </union>
+</table>
