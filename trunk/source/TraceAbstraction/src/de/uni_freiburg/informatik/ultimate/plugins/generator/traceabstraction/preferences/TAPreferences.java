@@ -74,7 +74,6 @@ public final class TAPreferences {
 	private final String mDumpPath;
 	private final InterpolantAutomatonEnhancement mDeterminiation;
 	private final Minimization mMinimize;
-	private final boolean mHoare;
 	private final Concurrency mAutomataTypeConcurrency;
 	private final HoareTripleChecks mHoareTripleChecks;
 	@Reflected(excluded = true)
@@ -125,10 +124,8 @@ public final class TAPreferences {
 
 		mArtifact = mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_ARTIFACT, Artifact.class);
 
-		mHoare = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_HOARE);
-
-		mHoareAnnotationPositions = mHoare ? mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_HOARE_POSITIONS,
-				HoareAnnotationPositions.class) : HoareAnnotationPositions.None;
+		mHoareAnnotationPositions = mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_HOARE_POSITIONS,
+				HoareAnnotationPositions.class);
 
 		mInterpolation = mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_INTERPOLATED_LOCS,
 				InterpolationTechnique.class);
@@ -348,9 +345,10 @@ public final class TAPreferences {
 	}
 
 	// TODO #proofRefactor
+	// TODO #proofRefactor update all settings files to reflect the removal / changes to the corresponding settings
 	@Deprecated
 	public boolean computeHoareAnnotation() {
-		return mHoare;
+		return mHoareAnnotationPositions != HoareAnnotationPositions.None;
 	}
 
 	public HoareAnnotationPositions getHoareAnnotationPositions() {
@@ -560,7 +558,7 @@ public final class TAPreferences {
 	}
 
 	public HoareProofSettings getHoareSettings() {
-		return new HoareProofSettings(computeHoareAnnotation(), getHoareAnnotationPositions(),
-				getSimplificationTechnique(), getXnfConversionTechnique());
+		return new HoareProofSettings(getHoareAnnotationPositions(), getSimplificationTechnique(),
+				getXnfConversionTechnique());
 	}
 }

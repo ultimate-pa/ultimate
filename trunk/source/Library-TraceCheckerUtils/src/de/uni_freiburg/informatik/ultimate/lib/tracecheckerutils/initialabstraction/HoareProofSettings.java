@@ -31,24 +31,20 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversio
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.floydhoare.HoareAnnotationPositions;
 
 public class HoareProofSettings {
-	// TODO: Add HoareAnnotationPositions.NONE in place of this boolean
-	private final boolean mComputeHoareAnnotation;
-
 	private final HoareAnnotationPositions mHoarePositions;
 	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
 
-	public HoareProofSettings(final boolean computeHoareAnnotation, final HoareAnnotationPositions hoarePositions,
+	public HoareProofSettings(final HoareAnnotationPositions hoarePositions,
 			final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique) {
-		mComputeHoareAnnotation = computeHoareAnnotation;
 		mHoarePositions = hoarePositions;
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
 	}
 
 	public boolean computeHoareAnnotation() {
-		return mComputeHoareAnnotation;
+		return mHoarePositions != HoareAnnotationPositions.None;
 	}
 
 	public HoareAnnotationPositions getHoarePositions() {

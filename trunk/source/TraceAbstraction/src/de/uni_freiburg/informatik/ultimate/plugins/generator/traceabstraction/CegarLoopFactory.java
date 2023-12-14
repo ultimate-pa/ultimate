@@ -136,12 +136,7 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 		final CfgSmtToolkit csToolkit = root.getCfgSmtToolkit();
 		final PredicateFactory predicateFactory = constructPredicateFactory(services, csToolkit);
 
-		final Set<IcfgLocation> hoareAnnotationLocs;
-		if (mComputeHoareAnnotation) {
-			hoareAnnotationLocs = mPrefs.getHoareAnnotationPositions().getLocations(root);
-		} else {
-			hoareAnnotationLocs = Collections.emptySet();
-		}
+		final Set<IcfgLocation> hoareAnnotationLocs = mPrefs.getHoareAnnotationPositions().getLocations(root);
 		final PredicateFactoryRefinement stateFactoryForRefinement = new PredicateFactoryRefinement(services,
 				csToolkit.getManagedScript(), predicateFactory, mComputeHoareAnnotation, hoareAnnotationLocs);
 
