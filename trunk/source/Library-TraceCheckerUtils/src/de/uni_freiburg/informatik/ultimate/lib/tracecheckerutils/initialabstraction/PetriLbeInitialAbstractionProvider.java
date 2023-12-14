@@ -30,7 +30,6 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -39,6 +38,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.petrinetlbe.PetriNetLargeBlockEncoding;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
+import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
 /**
  * Transforms an initial abstraction by applying one-shot Petri LBE.
@@ -56,7 +58,8 @@ public class PetriLbeInitialAbstractionProvider<L extends IIcfgTransition<?>>
 	private final IPLBECompositionFactory<L> mCompositionFactory;
 	private final Class<L> mTransitionClazz;
 	private final IndependenceSettings mIndependenceSettings;
-	private final String mPluginId;
+
+	private final Statistics mStatistics = new Statistics();
 
 	/**
 	 * Create a new instance.
@@ -77,14 +80,12 @@ public class PetriLbeInitialAbstractionProvider<L extends IIcfgTransition<?>>
 	public PetriLbeInitialAbstractionProvider(
 			final IInitialAbstractionProvider<L, BoundedPetriNet<L, IPredicate>> underlying,
 			final IUltimateServiceProvider services, final Class<L> transitionClazz,
-			final IndependenceSettings independenceSettings, final IPLBECompositionFactory<L> compositionFactory,
-			final String pluginId) {
+			final IndependenceSettings independenceSettings, final IPLBECompositionFactory<L> compositionFactory) {
 		mUnderlying = underlying;
 		mServices = services;
 		mTransitionClazz = transitionClazz;
 		mIndependenceSettings = independenceSettings;
 		mCompositionFactory = compositionFactory;
-		mPluginId = pluginId;
 	}
 
 	@Override
@@ -97,10 +98,28 @@ public class PetriLbeInitialAbstractionProvider<L extends IIcfgTransition<?>>
 		final BoundedPetriNet<L, IPredicate> lbecfg = lbe.getResult();
 
 		mServices.getBacktranslationService().addTranslator(lbe.getBacktranslator());
-		// TODO add statistics support to IInitialAbstractionProvider
-		mServices.getResultService().reportResult(mPluginId,
-				new StatisticsResult<>(mPluginId, "PetriNetLargeBlockEncoding benchmarks", lbe.getStatistics()));
+		mStatistics.reportLiptonStatistics(lbe);
 
 		return lbecfg;
+	}
+
+	@Override
+	public IStatisticsDataProvider getStatistics() {
+		return mStatistics;
+	}
+
+	private class Statistics extends AbstractStatisticsDataProvider {
+		private static final String LIPTON_STATISTICS = "PetriNetLargeBlockEncoding benchmarks";
+		private static final String UNDERLYING_STATISTICS = "Statistics of underlying abstraction provider";
+
+		public Statistics() {
+			forward(UNDERLYING_STATISTICS, mUnderlying::getStatistics);
+		}
+
+		private void reportLiptonStatistics(final PetriNetLargeBlockEncoding<?> pnlbe) {
+			final var data = new StatisticsData();
+			data.aggregateBenchmarkData(pnlbe.getStatistics());
+			include(LIPTON_STATISTICS, () -> data);
+		}
 	}
 }

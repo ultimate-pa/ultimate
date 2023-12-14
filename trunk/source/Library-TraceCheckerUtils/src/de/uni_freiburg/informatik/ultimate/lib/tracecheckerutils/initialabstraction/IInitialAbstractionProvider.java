@@ -35,6 +35,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.proofs.IProofProducer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
 /**
  * Interface for the computation of the initial abstraction used by a CEGAR loop.
@@ -96,5 +98,9 @@ public interface IInitialAbstractionProvider<L extends IIcfgTransition<?>, A ext
 				+ " does not support producing proofs of type " + proofType.getSimpleName() + suffix);
 	}
 
-	// TODO Add statistics support
+	default IStatisticsDataProvider getStatistics() {
+		return new AbstractStatisticsDataProvider() {
+			// by default, no statistics are reported
+		};
+	}
 }

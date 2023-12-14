@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
 /**
  * Transforms an initial abstraction in the form of a Petri net to a finite automaton.
@@ -112,6 +113,11 @@ public abstract class Petri2FiniteAutomatonAbstractionProvider<L extends IIcfgTr
 			assert res != null;
 			hopelessCache.put(l, res);
 		});
+	}
+
+	@Override
+	public IStatisticsDataProvider getStatistics() {
+		return mUnderlying.getStatistics();
 	}
 
 	/**

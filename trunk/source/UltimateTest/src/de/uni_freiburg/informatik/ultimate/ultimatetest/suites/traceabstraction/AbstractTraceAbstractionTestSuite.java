@@ -31,7 +31,6 @@ import java.util.ArrayList;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker.HoareTripleCheckerStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifierStatisticsGenerator.PredicateUniferStatisticsDefinitions;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.petrinetlbe.PetriNetLargeBlockEncodingBenchmarks;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.CodeCheckBenchmarks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
@@ -69,7 +68,6 @@ public abstract class AbstractTraceAbstractionTestSuite extends AbstractModelChe
 	@Override
 	protected ITestSummary[] constructTestSummaries() {
 		final ArrayList<Class<? extends ICsvProviderProvider<? extends Object>>> benchmarks = new ArrayList<>();
-		benchmarks.add(PetriNetLargeBlockEncodingBenchmarks.class);
 		benchmarks.add(TraceAbstractionBenchmarks.class);
 		benchmarks.add(CodeCheckBenchmarks.class);
 		benchmarks.add(Benchmark.class);
@@ -144,7 +142,6 @@ public abstract class AbstractTraceAbstractionTestSuite extends AbstractModelChe
 				// @formatter:on
 
 		return new ITestSummary[] { new TraceAbstractionTestSummary(this.getClass()),
-				new CsvConcatenator(this.getClass(), PetriNetLargeBlockEncodingBenchmarks.class),
 				new CsvConcatenator(this.getClass(), TraceAbstractionBenchmarks.class),
 				new CsvConcatenator(this.getClass(), CodeCheckBenchmarks.class),
 				// new CsvConcatenator(this.getClass(), StatisticsData.class),

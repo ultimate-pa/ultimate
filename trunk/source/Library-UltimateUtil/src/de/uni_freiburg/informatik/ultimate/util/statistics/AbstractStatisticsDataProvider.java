@@ -87,6 +87,17 @@ public abstract class AbstractStatisticsDataProvider implements IStatisticsDataP
 				Aggregate::appendList, PrettyPrint.list(PrettyPrint::keyColonData, Object::toString));
 	}
 
+	protected final void include(final String key, final Supplier<StatisticsData> getStatistics) {
+		declare(key, getStatistics::get, Aggregate::statisticsDataAggregate, PrettyPrint::keyColonData);
+	}
+
+	protected final void includeAll(final String key, final Supplier<Iterable<StatisticsData>> getStatistics) {
+		declare(key,
+				() -> StreamSupport.stream(getStatistics.get().spliterator(), false)
+						.collect(Collectors.toCollection(ArrayList::new)),
+				Aggregate::appendList, PrettyPrint.list(PrettyPrint::keyColonData, Object::toString));
+	}
+
 	private static StatisticsData toStatisticsData(final IStatisticsDataProvider statistics) {
 		final StatisticsData data = new StatisticsData();
 		data.aggregateBenchmarkData(statistics);

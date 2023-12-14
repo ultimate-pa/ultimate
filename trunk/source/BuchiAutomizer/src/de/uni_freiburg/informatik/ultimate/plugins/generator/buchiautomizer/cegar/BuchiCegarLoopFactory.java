@@ -144,8 +144,7 @@ public class BuchiCegarLoopFactory<L extends IIcfgTransition<?>> {
 		}
 		return new PetriLbeInitialAbstractionProvider<>(petriNetProvider, mServices, mTransitionClazz,
 				mPrefs.lbeIndependenceSettings(),
-				(IPLBECompositionFactory<L>) new IcfgCompositionFactory(mServices, icfg.getCfgSmtToolkit()),
-				Activator.PLUGIN_ID);
+				(IPLBECompositionFactory<L>) new IcfgCompositionFactory(mServices, icfg.getCfgSmtToolkit()));
 	}
 
 	private BuchiAutomatonCegarLoop<L> createBuchiAutomatonCegarLoop(final IIcfg<?> icfg,

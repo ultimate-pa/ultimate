@@ -65,7 +65,6 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.IDeadE
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.IDfsVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.WrapperVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -77,6 +76,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.LoopLockstepOrder.PredicateWithLastThread;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceBuilder;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
 /**
@@ -118,8 +119,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 	private IPersistentSetChoice<L, IPredicate> mPersistent;
 	private final Function<SleepMapReduction<L, IPredicate, IPredicate>, IBudgetFunction<L, IPredicate>> mGetBudget;
 
-	private final List<StatisticsData> mOldIndependenceStatistics = new ArrayList<>();
-	private final List<StatisticsData> mOldPersistentSetStatistics = new ArrayList<>();
+	private final Statistics mStatistics = new Statistics();
 
 	public PartialOrderReductionFacade(final IUltimateServiceProvider services, final PredicateFactory predicateFactory,
 			final IIcfg<?> icfg, final Collection<? extends IcfgLocation> errorLocs, final PartialOrderMode mode,
@@ -161,14 +161,9 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 			return;
 		}
 
-		final StatisticsData indepData = new StatisticsData();
-		indepData.aggregateBenchmarkData(oldRelation.getStatistics());
-		mOldIndependenceStatistics.add(indepData);
-
+		mStatistics.reportIndependenceStatistics(oldRelation);
 		if (mPersistent != null) {
-			final StatisticsData persData = new StatisticsData();
-			persData.aggregateBenchmarkData(mPersistent.getStatistics());
-			mOldPersistentSetStatistics.add(persData);
+			mStatistics.reportPersistentSetStatistics(mPersistent);
 		}
 
 		mIndependenceRelations.set(index, independence);
@@ -408,32 +403,32 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		return new DeadEndOptimizingSearchVisitor<>(visitor, mDeadEndStore, true);
 	}
 
-	public void reportStatistics(final String pluginId) {
-		int i = 0;
-		for (final StatisticsData data : mOldIndependenceStatistics) {
-			mServices.getResultService().reportResult(pluginId,
-					new StatisticsResult<>(pluginId, "Independence relation #" + (i + 1) + " benchmarks", data));
-			i++;
-		}
-
+	public IStatisticsDataProvider getStatistics() {
 		for (final var relation : mIndependenceRelations) {
+			mStatistics.reportIndependenceStatistics(relation);
+		}
+		if (mPersistent != null) {
+			mStatistics.reportPersistentSetStatistics(mPersistent);
+		}
+		return mStatistics;
+	}
+
+	private final class Statistics extends AbstractStatisticsDataProvider {
+		private int mIndependenceStatisticsCounter = 0;
+		private int mPersistentSetStatisticsCounter = 0;
+
+		private void reportIndependenceStatistics(final IIndependenceRelation<?, ?> relation) {
 			final StatisticsData data = new StatisticsData();
 			data.aggregateBenchmarkData(relation.getStatistics());
-			mServices.getResultService().reportResult(pluginId,
-					new StatisticsResult<>(pluginId, "Independence relation #" + (i + 1) + " benchmarks", data));
-			i++;
+			mIndependenceStatisticsCounter++;
+			include("Independence relation #" + mIndependenceStatisticsCounter + " benchmarks", () -> data);
 		}
 
-		for (final StatisticsData data : mOldPersistentSetStatistics) {
-			mServices.getResultService().reportResult(pluginId,
-					new StatisticsResult<>(pluginId, "Persistent set benchmarks", data));
-		}
-
-		if (mPersistent != null) {
-			final StatisticsData persistentData = new StatisticsData();
-			persistentData.aggregateBenchmarkData(mPersistent.getStatistics());
-			mServices.getResultService().reportResult(pluginId,
-					new StatisticsResult<>(pluginId, "Persistent set benchmarks", persistentData));
+		private void reportPersistentSetStatistics(final IPersistentSetChoice<?, ?> persistent) {
+			final StatisticsData data = new StatisticsData();
+			data.aggregateBenchmarkData(persistent.getStatistics());
+			mPersistentSetStatisticsCounter++;
+			include("Persistent sets #" + mPersistentSetStatisticsCounter + " benchmarks", () -> data);
 		}
 	}
 
