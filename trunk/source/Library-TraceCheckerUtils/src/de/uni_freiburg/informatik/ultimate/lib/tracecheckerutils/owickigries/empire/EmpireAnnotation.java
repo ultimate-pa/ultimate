@@ -136,4 +136,9 @@ class EmpireAnnotation<PLACE> {
 	public final long getAnnotationSize() {
 		return getEmpireSize() + getLawSize();
 	}
+
+	@Override
+	public String toString() {
+		return mLaw.toString();
+	}
 }

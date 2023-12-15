@@ -105,6 +105,8 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 				throw new IllegalArgumentException("Petri program must be 1-safe", e);
 			}
 		});
+		final String empireString = mEmpireAnnotation.toString();
+		mLogger.info("Constructed Empire Annotation: %s", empireString);
 	}
 
 	private Crown<PLACE, LETTER> getCrown() {
