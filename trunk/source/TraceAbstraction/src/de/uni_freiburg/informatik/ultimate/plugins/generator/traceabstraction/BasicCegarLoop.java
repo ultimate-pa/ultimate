@@ -171,7 +171,7 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 
 	protected final RelevanceAnalysisMode mFaultLocalizationMode;
 	private final boolean mFaultLocalizationAngelic;
-	private final StrategyFactory<L> mStrategyFactory;
+	protected final StrategyFactory<L> mStrategyFactory;
 	private final PathProgramDumpController<L> mPathProgramDumpController;
 	private final boolean mStoreFloydHoareAutomata;
 	private final Set<Pair<AbstractInterpolantAutomaton<L>, IPredicateUnifier>> mFloydHoareAutomata =
