@@ -141,6 +141,11 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 			"Allow the calls of functions without a definition. In that case they are modeled fully non-deterministically.";
 	private static final boolean DEFAULT_ALLOW_UNDEFINED_FUNCTIONS = true;
 
+	public static final String LABEL_USE_BITABS_TRANSLATION = "Use bitabs translation";
+	private static final String DESC_USE_BITABS_TRANSLATION = "Try to improve the precision using bitabs translation, "
+			+ "i.e. handle bitwise operations in the integer translation more precise.";
+	private static final boolean DEFAULT_USE_BITABS_TRANSLATION = true;
+
 	public enum PointerCheckMode {
 		IGNORE, ASSUME, ASSERTandASSUME
 	}
@@ -324,7 +329,9 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 						DEFAULT_STRING_OVERAPPROXIMATION_THRESHOLD, DESC_STRING_OVERAPPROXIMATION_THRESHOLD,
 						PreferenceType.Integer),
 				new UltimatePreferenceItem<>(LABEL_ALLOW_UNDEFINED_FUNCTIONS, DEFAULT_ALLOW_UNDEFINED_FUNCTIONS,
-						DESC_ALLOW_UNDEFINED_FUNCTIONS, PreferenceType.Boolean), };
+						DESC_ALLOW_UNDEFINED_FUNCTIONS, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_USE_BITABS_TRANSLATION, DEFAULT_USE_BITABS_TRANSLATION,
+						DESC_USE_BITABS_TRANSLATION, PreferenceType.Boolean), };
 
 	}
 }

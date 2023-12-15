@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSy
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
@@ -60,7 +61,9 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ISOIEC9899TC3;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO.AUXVAR;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.BvOp;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -160,6 +163,15 @@ public class IntegerTranslation extends ExpressionTranslation {
 	protected ExpressionResult handleBinaryBitwiseIntegerExpression(final ILocation loc, final int op,
 			final Expression left, final CPrimitive typeLeft, final Expression right, final CPrimitive typeRight,
 			final AuxVarInfoBuilder auxVarInfoBuilder) {
+		if (!mSettings.useBitabsTranslation()) {
+			final AuxVarInfo auxVar = auxVarInfoBuilder.constructAuxVarInfo(loc, typeLeft, AUXVAR.RETURNED);
+			final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+			builder.addAuxVar(auxVar).addDeclaration(auxVar.getVarDec());
+			builder.addOverapprox(new Overapprox("bitwise operation", loc));
+			builder.setLrValue(new RValue(auxVar.getExp(), typeLeft));
+			addAssumeValueInRangeStatements(loc, auxVar.getExp(), typeLeft, builder);
+			return builder.build();
+		}
 		switch (op) {
 		case IASTBinaryExpression.op_binaryAnd:
 		case IASTBinaryExpression.op_binaryAndAssign:

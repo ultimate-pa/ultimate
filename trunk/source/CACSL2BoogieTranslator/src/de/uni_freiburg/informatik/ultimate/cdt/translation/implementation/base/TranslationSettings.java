@@ -80,6 +80,7 @@ public final class TranslationSettings {
 	private final boolean mAdaptMemoryModelResolutionOnPointerCasts;
 	private final int mStringOverapproximationThreshold;
 	private boolean mAllowUndefinedFunctions;
+	private boolean mUseBitabsTranslation;
 
 	public TranslationSettings(final IPreferenceProvider ups) {
 		mCheckSignedIntegerBounds = ups.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_SIGNED_INTEGER_BOUNDS);
@@ -130,6 +131,7 @@ public final class TranslationSettings {
 		mStringOverapproximationThreshold =
 				ups.getInt(CACSLPreferenceInitializer.LABEL_STRING_OVERAPPROXIMATION_THRESHOLD);
 		mAllowUndefinedFunctions = ups.getBoolean(CACSLPreferenceInitializer.LABEL_ALLOW_UNDEFINED_FUNCTIONS);
+		mUseBitabsTranslation = ups.getBoolean(CACSLPreferenceInitializer.LABEL_USE_BITABS_TRANSLATION);
 	}
 
 	private TranslationSettings(final PointerCheckMode divisionByZeroOfIntegerTypes,
@@ -308,6 +310,10 @@ public final class TranslationSettings {
 
 	public boolean allowUndefinedFunctions() {
 		return mAllowUndefinedFunctions;
+	}
+
+	public boolean useBitabsTranslation() {
+		return mUseBitabsTranslation;
 	}
 
 	public TranslationSettings setMemoryModelPreference(final MemoryModel memoryModel) {
