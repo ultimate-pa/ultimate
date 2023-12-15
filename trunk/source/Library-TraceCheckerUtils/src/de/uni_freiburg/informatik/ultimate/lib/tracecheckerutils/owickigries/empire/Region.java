@@ -26,8 +26,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown.Realm;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
@@ -48,16 +46,6 @@ public final class Region<PLACE> {
 
 	public Region(final ImmutableSet<PLACE> region) {
 		mRegion = region;
-	}
-
-	public Region(final Realm<PLACE, ?> realm) {
-		mRegion = getRealmPlaces(realm);
-	}
-
-	private ImmutableSet<PLACE> getRealmPlaces(final Realm<PLACE, ?> realm) {
-		final ImmutableSet<PLACE> realmPlaces =
-				realm.getConditions().stream().map(Condition::getPlace).collect(ImmutableSet.collector());
-		return realmPlaces;
 	}
 
 	/**

@@ -41,8 +41,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
  *
  * @param <PLACE>
  *            The type of places in the Petri program
- * @param <LETTER>
- *            The type of statements in the Petri program
  */
 class MarkingLaw<PLACE> {
 	private final Map<Marking<PLACE>, IPredicate> mMarkingLawMap;

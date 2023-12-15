@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationC
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown.Crown;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown.CrownConstruction;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown.CrownsEmpire;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
@@ -120,8 +121,7 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 	private EmpireAnnotation<PLACE> getEmpireAnnotation(final BasicPredicateFactory factory,
 			final Function<PLACE, IPredicate> placeToAssertion) {
 		final CrownsEmpire<PLACE, LETTER> crownsEmpire = mStatistics.measureEmpire(() -> {
-			final CrownsEmpire<PLACE, LETTER> empireConstruction =
-					new CrownsEmpire<>(mCrown, factory, placeToAssertion);
+			final CrownsEmpire<PLACE, LETTER> empireConstruction = mCrown.getCrownsEmpire(factory, placeToAssertion);
 			return empireConstruction;
 		});
 		mStatistics.reportEmpireStatistics(crownsEmpire);

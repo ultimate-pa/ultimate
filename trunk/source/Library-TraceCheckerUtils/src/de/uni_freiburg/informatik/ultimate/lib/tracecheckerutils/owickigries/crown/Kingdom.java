@@ -31,6 +31,8 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire.Region;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire.Territory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
@@ -145,6 +147,17 @@ public final class Kingdom<PLACE, LETTER> {
 		final Set<Realm<PLACE, LETTER>> kingdomRealms = getRealms().stream().collect(Collectors.toSet());
 		getAllCosets(kingdomRealms, new HashSet<>(), treatySet);
 		return treatySet;
+	}
+
+	/**
+	 * Construct Territory corresponding to Kingdom
+	 *
+	 * @return Territory containing all Regions corresponding to the Realms in Kingdom
+	 */
+	public Territory<PLACE> toTerritory() {
+		final ImmutableSet<Region<PLACE>> regions =
+				mKingdom.stream().map(r -> r.toRegion()).collect(ImmutableSet.collector());
+		return new Territory<>(regions);
 	}
 
 	/**

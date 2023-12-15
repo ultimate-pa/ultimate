@@ -32,6 +32,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.ICoRelation;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire.Region;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
@@ -53,6 +54,11 @@ public final class Realm<PLACE, LETTER> {
 
 	public Realm(final ImmutableSet<Condition<LETTER, PLACE>> realm) {
 		mRealm = realm;
+	}
+
+	private ImmutableSet<PLACE> getPlaces() {
+		final ImmutableSet<PLACE> places = mRealm.stream().map(c -> c.getPlace()).collect(ImmutableSet.collector());
+		return places;
 	}
 
 	private boolean placesNotCorelated(final PlacesCoRelation<PLACE, LETTER> placesCoRelation) {
@@ -174,6 +180,15 @@ public final class Realm<PLACE, LETTER> {
 	 */
 	public boolean contains(final Condition<LETTER, PLACE> condition) {
 		return mRealm.contains(condition);
+	}
+
+	/**
+	 * Construct Region corresponding to Realm
+	 *
+	 * @return Region corresponding to Realm
+	 */
+	public Region<PLACE> toRegion() {
+		return new Region<>(getPlaces());
 	}
 
 	/**

@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.ICoRelation;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire.Territory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -216,6 +217,12 @@ public final class Rook<PLACE, LETTER> {
 		return subterr;
 	}
 
+	public static <P, L> boolean getRooksTerritoryEquality(final Set<Rook<P, L>> rooks) {
+		final Set<Territory<P>> rookTerritories =
+				rooks.stream().map(rook -> rook.getKingdom().toTerritory()).collect(Collectors.toSet());
+		return (rookTerritories.size() == 1);
+	}
+
 	/**
 	 * Get the cosets corresponding to marking in the Rook.
 	 *
@@ -263,8 +270,7 @@ public final class Rook<PLACE, LETTER> {
 	 *            Assertion conditions of the refined Petri net.
 	 */
 	public boolean validityAssertion(final BranchingProcess<LETTER, PLACE> bp,
-			final PlacesCoRelation<PLACE, LETTER> placesCoRelation, final Set<Condition<LETTER, PLACE>> assertConds) {
-		// TODO Dominik 2023-12-05: Why is the parameter assertConds there but not used?
+			final PlacesCoRelation<PLACE, LETTER> placesCoRelation) {
 
 		if (!mKingdom.validityAssertion(placesCoRelation)) {
 			assert false : "invalid kingdom";

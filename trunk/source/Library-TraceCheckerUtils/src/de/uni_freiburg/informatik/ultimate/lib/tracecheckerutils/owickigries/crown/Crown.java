@@ -29,10 +29,13 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
 
 /**
@@ -105,6 +108,12 @@ public final class Crown<PLACE, LETTER> {
 		return false;
 	}
 
+	public CrownsEmpire<PLACE, LETTER> getCrownsEmpire(final BasicPredicateFactory factory,
+			final Function<PLACE, IPredicate> placeToAssertion) {
+		final CrownsEmpire<PLACE, LETTER> crownsEmpire = new CrownsEmpire<>(this, factory, placeToAssertion);
+		return crownsEmpire;
+	}
+
 	public long getNumKingdoms() {
 		return mCrown.size();
 	}
@@ -136,10 +145,9 @@ public final class Crown<PLACE, LETTER> {
 	 * @param assertConds
 	 *            Assertion Conditions of the refined Petri Net
 	 */
-	public boolean validityAssertion(final PlacesCoRelation<PLACE, LETTER> placesCoRelation,
-			final Set<Condition<LETTER, PLACE>> assertConds) {
+	public boolean validityAssertion(final PlacesCoRelation<PLACE, LETTER> placesCoRelation) {
 		for (final Rook<PLACE, LETTER> rook : mCrown) {
-			if (!rook.validityAssertion(mBp, placesCoRelation, assertConds)) {
+			if (!rook.validityAssertion(mBp, placesCoRelation)) {
 				assert false;
 				return false;
 			}

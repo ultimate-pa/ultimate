@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE TraceCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire;
+package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown;
 
 import java.util.HashMap;
 import java.util.List;
@@ -33,8 +33,8 @@ import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown.Crown;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown.Rook;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire.EmpireAnnotation;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire.Territory;
 import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
@@ -75,8 +75,8 @@ public class CrownsEmpire<PLACE, LETTER> {
 	private Map<Territory<PLACE>, IPredicate>
 			getTerritoryIPredicateMap(final HashMap<Territory<PLACE>, TerritoryLaw<PLACE>> crownsTerritories) {
 		final HashMap<Territory<PLACE>, IPredicate> territoryIPredicateMap = new HashMap<>();
-		for (final Territory<PLACE> territory : crownsTerritories.keySet()) {
-			territoryIPredicateMap.put(territory, crownsTerritories.get(territory).getLaw());
+		for (final Map.Entry<Territory<PLACE>, TerritoryLaw<PLACE>> entry : crownsTerritories.entrySet()) {
+			territoryIPredicateMap.put(entry.getKey(), entry.getValue().getLaw());
 		}
 		return territoryIPredicateMap;
 	}
@@ -85,7 +85,7 @@ public class CrownsEmpire<PLACE, LETTER> {
 			final Function<PLACE, IPredicate> placeToAssertion) {
 		final HashMap<Territory<PLACE>, TerritoryLaw<PLACE>> crownsTerritories = new HashMap<>();
 		for (final Rook<PLACE, LETTER> rook : mCrown.getRooks()) {
-			final Territory<PLACE> rookTerritory = new Territory<>(rook.getKingdom());
+			final Territory<PLACE> rookTerritory = rook.getKingdom().toTerritory();
 			if (!crownsTerritories.containsKey(rookTerritory)) {
 				final TerritoryLaw<PLACE> law =
 						new TerritoryLaw<>(rookTerritory, rook.getLaw(), placeToAssertion, factory);

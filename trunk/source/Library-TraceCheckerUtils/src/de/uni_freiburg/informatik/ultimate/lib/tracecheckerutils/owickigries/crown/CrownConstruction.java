@@ -39,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire.Territory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
@@ -85,7 +84,7 @@ public final class CrownConstruction<PLACE, LETTER> {
 		mCrown = new Crown<>(bp, refurbishedRooks);
 
 		mStatistics.reportCrown(mCrown);
-		assert mCrown.validityAssertion(mPlacesCoRelation, assertConds);
+		assert mCrown.validityAssertion(mPlacesCoRelation);
 	}
 
 	private Set<Rook<PLACE, LETTER>> settlements() {
@@ -136,7 +135,7 @@ public final class CrownConstruction<PLACE, LETTER> {
 			final Set<Marking<PLACE>> splitMarkings = new HashSet<>();
 			for (final Marking<PLACE> marking : kindredMarkings) {
 				final Set<Rook<PLACE, LETTER>> kindredRooks = kindred.getKindredRooks(marking);
-				if (!Territory.getRooksTerritoryEquality(kindredRooks)) {
+				if (!Rook.getRooksTerritoryEquality(kindredRooks)) {
 					splitMarkings.add(marking);
 				}
 			}
