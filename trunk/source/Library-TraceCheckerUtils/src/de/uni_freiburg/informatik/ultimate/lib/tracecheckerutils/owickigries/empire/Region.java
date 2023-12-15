@@ -25,22 +25,28 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire;
 
-import java.util.Set;
-import java.util.stream.Collectors;
-
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown.Realm;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
-public class Region<PLACE> {
+/**
+ * Class represents a Region which is a sets of places. Region is an Immutable class.
+ *
+ * @author Matthias Zumkeller (zumkellm@informatik.uni-freiburg.de)
+ *
+ * @param <PLACE>
+ *            The type of places in the Petri program
+ */
+public final class Region<PLACE> {
 
 	/**
 	 * The set of places in Region.
 	 */
 
-	private final Set<PLACE> mRegion;
+	private final ImmutableSet<PLACE> mRegion;
 
-	public Region(final Set<PLACE> region) {
+	public Region(final ImmutableSet<PLACE> region) {
 		mRegion = region;
 	}
 
@@ -48,16 +54,16 @@ public class Region<PLACE> {
 		mRegion = getRealmPlaces(realm);
 	}
 
-	private Set<PLACE> getRealmPlaces(final Realm<PLACE, ?> realm) {
-		final Set<PLACE> realmPlaces =
-				realm.getConditions().stream().map(Condition::getPlace).collect(Collectors.toSet());
+	private ImmutableSet<PLACE> getRealmPlaces(final Realm<PLACE, ?> realm) {
+		final ImmutableSet<PLACE> realmPlaces =
+				realm.getConditions().stream().map(Condition::getPlace).collect(ImmutableSet.collector());
 		return realmPlaces;
 	}
 
 	/**
 	 * @return set of all places in region.
 	 */
-	public Set<PLACE> getPlaces() {
+	public ImmutableSet<PLACE> getPlaces() {
 		return mRegion;
 	}
 

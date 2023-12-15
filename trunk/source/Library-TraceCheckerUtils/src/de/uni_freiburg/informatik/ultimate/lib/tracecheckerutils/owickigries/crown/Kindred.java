@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
-class Kindred<PLACE, LETTER> {
+final class Kindred<PLACE, LETTER> {
 	private final Set<Rook<PLACE, LETTER>> mCrownRooks;
 	private final HashRelation<Rook<PLACE, LETTER>, SubterrElement<LETTER, PLACE>> mSubterritories;
 	private final HashRelation<Marking<PLACE>, Rook<PLACE, LETTER>> mMarkingToRook;

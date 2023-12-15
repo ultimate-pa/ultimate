@@ -55,14 +55,14 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
  * @param <LETTER>
  *            The type of statements in the Petri program
  */
-class EmpireValidityCheck<PLACE, LETTER extends IAction> {
-	private final MarkingLaw<PLACE, LETTER> mMarkingLaw;
+public class EmpireValidityCheck<PLACE, LETTER extends IAction> {
+	private final MarkingLaw<PLACE> mMarkingLaw;
 	private final BasicPredicateFactory mFactory;
 	private final IPetriNet<LETTER, PLACE> mNet;
 	private final MonolithicImplicationChecker mImplicationChecker;
 	private final Validity mValidity;
 
-	public EmpireValidityCheck(final MarkingLaw<PLACE, LETTER> markingLaw, final IPetriNet<LETTER, PLACE> net,
+	public EmpireValidityCheck(final MarkingLaw<PLACE> markingLaw, final IPetriNet<LETTER, PLACE> net,
 			final BasicPredicateFactory factory, final MonolithicImplicationChecker implicationChecker,
 			final IUltimateServiceProvider services, final ManagedScript mgdScript, final IIcfgSymbolTable symbolTable,
 			final ModifiableGlobalsTable modifiableGlobals) throws PetriNetNot1SafeException {

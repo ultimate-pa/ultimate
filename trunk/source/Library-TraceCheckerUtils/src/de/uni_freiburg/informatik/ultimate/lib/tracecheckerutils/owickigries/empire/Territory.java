@@ -35,6 +35,8 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.cro
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
+ * Class represents a Territory which is a set of Regions. Territory is Immutable.
+ *
  * @author Miriam Lagunes (miriam.lagunes@students.uni-freiburg.de)
  *
  * @param <PLACE>
@@ -46,7 +48,7 @@ public final class Territory<PLACE> {
 	/**
 	 * Set of regions in Territory.
 	 */
-	private final Set<Region<PLACE>> mTerritory;
+	private final ImmutableSet<Region<PLACE>> mTerritory;
 
 	/**
 	 * Data structure which contains the different Regions of a Territory.
@@ -54,7 +56,7 @@ public final class Territory<PLACE> {
 	 * @param regions
 	 *            Set of regions for which a Territory should be created.
 	 */
-	public Territory(final Set<Region<PLACE>> regions) {
+	public Territory(final ImmutableSet<Region<PLACE>> regions) {
 		mTerritory = regions;
 	}
 
@@ -68,9 +70,9 @@ public final class Territory<PLACE> {
 		mTerritory = getKingdomRegions(kingdom);
 	}
 
-	private Set<Region<PLACE>> getKingdomRegions(final Kingdom<PLACE, ?> kingdom) {
-		final Set<Region<PLACE>> kingdomRegions =
-				kingdom.getRealms().stream().map(realm -> new Region<>(realm)).collect(Collectors.toSet());
+	private ImmutableSet<Region<PLACE>> getKingdomRegions(final Kingdom<PLACE, ?> kingdom) {
+		final ImmutableSet<Region<PLACE>> kingdomRegions =
+				kingdom.getRealms().stream().map(realm -> new Region<>(realm)).collect(ImmutableSet.collector());
 		return kingdomRegions;
 	}
 
@@ -93,7 +95,7 @@ public final class Territory<PLACE> {
 	/**
 	 * @return Set of regions in Territory.
 	 */
-	public Set<Region<PLACE>> getRegions() {
+	public ImmutableSet<Region<PLACE>> getRegions() {
 		return mTerritory;
 	}
 

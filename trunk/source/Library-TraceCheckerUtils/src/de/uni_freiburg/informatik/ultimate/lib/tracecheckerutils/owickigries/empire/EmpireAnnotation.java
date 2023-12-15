@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
  * @param <PLACE>
  *            The type of program statements
  */
-class EmpireAnnotation<PLACE> {
+public class EmpireAnnotation<PLACE> {
 	Set<Territory<PLACE>> mEmpire;
 	Map<Territory<PLACE>, IPredicate> mLaw;
 
