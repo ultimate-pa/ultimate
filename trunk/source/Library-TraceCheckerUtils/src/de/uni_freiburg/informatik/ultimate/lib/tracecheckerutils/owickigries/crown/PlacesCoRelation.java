@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown;
 
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -52,14 +53,16 @@ final class PlacesCoRelation<PLACE, LETTER> {
 	}
 
 	private final HashRelation<PLACE, PLACE> getAllCorelatedPlaces(final BranchingProcess<LETTER, PLACE> bp) {
-		final Set<PLACE> places =
-				bp.getConditions().stream().map(condition -> condition.getPlace()).collect(Collectors.toSet());
+		final List<PLACE> places =
+				bp.getConditions().stream().map(condition -> condition.getPlace()).collect(Collectors.toList());
 		final HashRelation<PLACE, PLACE> coPlacesHashtable = new HashRelation<>();
-		for (final PLACE place : places) {
-			for (final PLACE place2 : places) {
-				if (!place.equals(place2) && placesCoRelation(place, place2, bp)) {
-					coPlacesHashtable.addPair(place, place2);
-					coPlacesHashtable.addPair(place2, place);
+		for (int i = 0; i < places.size(); i++) {
+			for (int j = i; j < places.size(); j++) {
+				final PLACE place1 = places.get(i);
+				final PLACE place2 = places.get(j);
+				if (!place1.equals(place2) && placesCoRelation(place1, place2, bp)) {
+					coPlacesHashtable.addPair(place1, place2);
+					coPlacesHashtable.addPair(place2, place1);
 				}
 			}
 		}
@@ -68,11 +71,14 @@ final class PlacesCoRelation<PLACE, LETTER> {
 
 	private final boolean placesCoRelation(final PLACE firstPlace, final PLACE secondPlace,
 			final BranchingProcess<LETTER, PLACE> bp) {
+		if (firstPlace.equals(secondPlace)) {
+			return false;
+		}
 		final Set<Condition<LETTER, PLACE>> firstPlaceConditions = bp.getConditions(firstPlace);
 		final Set<Condition<LETTER, PLACE>> secondPlaceConditions = bp.getConditions(secondPlace);
 		for (final Condition<LETTER, PLACE> condition1 : firstPlaceConditions) {
 			for (final Condition<LETTER, PLACE> condition2 : secondPlaceConditions) {
-				if (!condition1.equals(condition2) && mCoRelation.isInCoRelation(condition1, condition2)) {
+				if (mCoRelation.isInCoRelation(condition1, condition2)) {
 					return true;
 				}
 			}

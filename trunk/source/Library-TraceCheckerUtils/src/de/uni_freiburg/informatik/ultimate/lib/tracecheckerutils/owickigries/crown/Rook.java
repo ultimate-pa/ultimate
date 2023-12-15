@@ -144,8 +144,8 @@ public final class Rook<PLACE, LETTER> {
 		final Set<Realm<PLACE, LETTER>> newRealms =
 				getKingdom().getRealms().stream().collect(Collectors.toCollection(HashSet::new));
 		newRealms.remove(getNegKingdom(coRook));
-		final Set<Condition<LETTER, PLACE>> conflictFreeConditions = coRook.getCoKingdom().getConflictFreeConditions();
-		conflictFreeConditions.add(coRook.getCondition());
+		Set<Condition<LETTER, PLACE>> conflictFreeConditions = coRook.getCoKingdom().getConflictFreeConditions();
+		conflictFreeConditions = DataStructureUtils.union(conflictFreeConditions, Set.of(coRook.getCondition()));
 		final Realm<PLACE, LETTER> newRealm = new Realm<>(ImmutableSet.of(conflictFreeConditions));
 		newRealms.add(newRealm);
 		final Kingdom<PLACE, LETTER> kingdom = new Kingdom<>(ImmutableSet.of(newRealms));

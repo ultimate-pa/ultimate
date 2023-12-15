@@ -170,8 +170,9 @@ public final class CrownConstruction<PLACE, LETTER> {
 			final List<Condition<LETTER, PLACE>> troopConditions, final boolean colonizer) {
 		final Set<Rook<PLACE, LETTER>> crownRooks = new HashSet<>();
 		boolean isMaximal = true;
-		final List<Condition<LETTER, PLACE>> conditions = new ArrayList<>(troopConditions);
+		List<Condition<LETTER, PLACE>> conditions = new ArrayList<>(troopConditions);
 		for (final Condition<LETTER, PLACE> condition : troopConditions) {
+			conditions = new ArrayList<>(troopConditions);
 			Rook<PLACE, LETTER> colonyRook;
 			if (colonizer) {
 				colonyRook = colonize(condition, rook);
