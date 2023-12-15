@@ -120,8 +120,8 @@ public final class CrownConstruction<PLACE, LETTER> {
 		for (final Rook<PLACE, LETTER> rook : reSet) {
 			colonizedRooks.addAll(crownExpansionRecursive(rook, new ArrayList<>(mAssertConds), false));
 		}
-		// final Set<Rook<PLACE, LETTER>> colonizedpreRooks = computePreRooks(colonizedRooks);
-		// colonizedRooks.removeAll(colonizedpreRooks);
+		final Set<Rook<PLACE, LETTER>> colonizedpreRooks = computePreRooks(colonizedRooks);
+		colonizedRooks.removeAll(colonizedpreRooks);
 		return colonizedRooks;
 	}
 

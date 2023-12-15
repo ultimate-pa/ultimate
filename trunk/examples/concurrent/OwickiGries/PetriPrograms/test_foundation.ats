@@ -1,0 +1,32 @@
+// Simple test for foundation (and immigration) case in CrownExpansion
+// ------------------------------------------------------
+
+//@ variables (x Int)
+
+//@ semantics [1] { } (= x x)
+//@ semantics [2] { } (= x 0)
+//@ semantics [3] { } (> x 0)
+
+PetriNet program = (
+  alphabet    = { "[1]" "[2]" "[3]" },
+  places      = { "l0" "l1" "l2" "l3" "l4" "l5" "e"},
+  transitions = {
+    ({ "l0" } "[1]" { "l1" "l2" "l5" })
+    ({ "l1" "l2" } "[2]" { "l3" "l4" })
+    ({ "l1" "l2" } "[3]" { "l3" "l4" })
+  },
+  initialMarking = { "l0" },
+  acceptingPlaces = { "e" }
+);
+
+FiniteAutomaton proof = (
+     alphabet      = { "[1]" "[2]" "[3]" },
+     states        = { "true" },
+     initialStates = { "true" },
+     finalStates   = { },
+     transitions   = {
+         ("true"     "[1]" "true")
+         ("true"     "[2]" "true")
+         ("true"     "[3]" "true")
+     }
+);
