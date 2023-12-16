@@ -147,9 +147,18 @@ public class CrownsEmpire<PLACE, LETTER> {
 			mAnnotationSize = empireAnnotation.getAnnotationSize();
 
 			final List<Integer> regionsPerTerritory = empireAnnotation.getRegionPerTerritory();
-			mMinRegionsTerritory = regionsPerTerritory.get(0);
-			mMaxRegionsTerritory = regionsPerTerritory.get(regionsPerTerritory.size() - 1);
-			mMedianRegionsTerritory = regionsPerTerritory.get(regionsPerTerritory.size() / 2);
+			try {
+				mMinRegionsTerritory = regionsPerTerritory.get(0);
+				mMaxRegionsTerritory = regionsPerTerritory.get(regionsPerTerritory.size() - 1);
+				mMedianRegionsTerritory = regionsPerTerritory.get(regionsPerTerritory.size() / 2);
+			} catch (final IndexOutOfBoundsException indexOutOfBoundsException) {
+				System.out
+						.println("IndexOutOfBoundsException caught while calculating Empire (Min/Max/Med) statistics: "
+								+ indexOutOfBoundsException.getMessage());
+				mMinRegionsTerritory = 0;
+				mMaxRegionsTerritory = 0;
+				mMedianRegionsTerritory = 0;
+			}
 		}
 	}
 }
