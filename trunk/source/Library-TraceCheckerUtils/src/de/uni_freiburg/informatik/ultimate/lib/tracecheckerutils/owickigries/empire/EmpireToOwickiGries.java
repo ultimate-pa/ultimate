@@ -1,0 +1,282 @@
+/*
+ * Copyright (C) 2023 Matthias Zumkeller
+ * Copyright (C) 2023 University of Freiburg
+ *
+ * This file is part of the ULTIMATE TraceCheckerUtils Library.
+ *
+ * The ULTIMATE TraceCheckerUtils Library is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE TraceCheckerUtils Library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE TraceCheckerUtils Library. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE TraceCheckerUtils Library, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE TraceCheckerUtils Library grant you additional permission
+ * to convey the resulting work.
+ */
+package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.OwickiGriesAnnotation;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
+
+/**
+ * Construct an Owicki-Gries-Annotation from an EmpireAnnotation.
+ *
+ * @author Matthias Zumkeller (zumkellm@informatik.uni-freiburg.de)
+ *
+ * @param <LETTER>
+ *            The type of places in the Petri program
+ * @param <PLACE>
+ *            The type of statements in the Petri program
+ */
+public class EmpireToOwickiGries<LETTER, PLACE> {
+	private static final SimplificationTechnique SIMPLIFICATION_TECHNIQUE = SimplificationTechnique.SIMPLIFY_DDA;
+	private static final XnfConversionTechnique XNF_CONVERSION_TECHNIQUE =
+			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
+
+	private final EmpireAnnotation<PLACE> mEmpireAnnotation;
+
+	private final ManagedScript mManagedScript;
+	private final Script mScript;
+	private final BasicPredicateFactory mFactory;
+	private final DefaultIcfgSymbolTable mSymbolTable;
+	private final IPetriNet<LETTER, PLACE> mNet;
+
+	private final Map<Region<PLACE>, IProgramVar> mGhostVariables;
+	private final OwickiGriesAnnotation<LETTER, PLACE> mOwickiGriesAnnotation;
+
+	private final Map<Territory<PLACE>, IPredicate> mTerritoryFormulaMap = new HashMap<>();
+
+	/**
+	 * Constructs the Owicki-Gries-Annotation for empireAnnotation.
+	 *
+	 * @param empireAnnotation
+	 *            Corresponding EmpireAnnoation
+	 * @param mgdScript
+	 *            ManagedScript object
+	 * @param services
+	 *            IUltimateServiceProvider object
+	 * @param iLogger
+	 *            ILogger object
+	 * @param symbolTable
+	 *            IIcfgSymbolTable object
+	 * @param procedures
+	 *            Set of string procedures
+	 * @param net
+	 *            Net corresponding to the Empire Annotation
+	 */
+	public EmpireToOwickiGries(final EmpireAnnotation<PLACE> empireAnnotation, final ManagedScript mgdScript,
+			final IUltimateServiceProvider services, final ILogger iLogger, final IIcfgSymbolTable symbolTable,
+			final Set<String> procedures, final IPetriNet<LETTER, PLACE> net) {
+		mEmpireAnnotation = empireAnnotation;
+		mManagedScript = mgdScript;
+		mScript = mManagedScript.getScript();
+		mSymbolTable = new DefaultIcfgSymbolTable(symbolTable, procedures);
+		mFactory = new BasicPredicateFactory(services, mManagedScript, mSymbolTable);
+		mNet = net;
+
+		mGhostVariables = getGhostVariables();
+		final Map<PLACE, IPredicate> formulaMapping = getFormulaMap();
+		final Map<Transition<LETTER, PLACE>, UnmodifiableTransFormula> assignmentMapping =
+				getAssignmentMapping(iLogger, services);
+		final Map<IProgramVar, Term> ghostInitAssignment = getGhostInitAssignment();
+
+		mOwickiGriesAnnotation = new OwickiGriesAnnotation<>(formulaMapping, assignmentMapping,
+				new HashSet<>(mGhostVariables.values()), ghostInitAssignment, mNet, mSymbolTable);
+	}
+
+	/**
+	 * @return map of regions to their corresponding ghost variables
+	 */
+	private Map<Region<PLACE>, IProgramVar> getGhostVariables() {
+		final Map<Region<PLACE>, IProgramVar> ghostVars = new HashMap<>();
+		int i = 0;
+		final Collection<Region<PLACE>> regions = mEmpireAnnotation.getColony();
+		mManagedScript.lock(this);
+		try {
+			for (final Region<PLACE> region : regions) {
+				final TermVariable tVar = mManagedScript.constructFreshTermVariable(region.toString(),
+						SmtSortUtils.getBoolSort(mManagedScript));
+				final IProgramVar pVar = ProgramVarUtils.constructGlobalProgramVarPair(tVar.getName(),
+						SmtSortUtils.getBoolSort(mManagedScript), mManagedScript, this);
+				mSymbolTable.add(pVar);
+				ghostVars.put(region, pVar);
+				i++;
+			}
+			return ghostVars;
+		} finally {
+			mManagedScript.unlock(this);
+		}
+	}
+
+	/**
+	 * @return Map of place to the corresponding formula for each place in net
+	 */
+	private Map<PLACE, IPredicate> getFormulaMap() {
+		final Map<PLACE, IPredicate> formulaMap = new HashMap<>();
+		final IPredicate territoryImplications = getTerritoryImplications();
+		for (final PLACE place : mNet.getPlaces()) {
+			final IPredicate ghostFormula = getPlacesGhostVariableFormula(place);
+			final IPredicate territoryFormula = getPlacesTerritoryFormula(place);
+			final IPredicate placeFormula = mFactory.and(territoryImplications, ghostFormula, territoryFormula);
+			formulaMap.put(place, placeFormula);
+		}
+		return formulaMap;
+	}
+
+	/**
+	 * @return Map of transition to the corresponding formula for each transition in net
+	 */
+	private Map<Transition<LETTER, PLACE>, UnmodifiableTransFormula> getAssignmentMapping(final ILogger iLogger,
+			final IUltimateServiceProvider services) {
+		final Map<Transition<LETTER, PLACE>, UnmodifiableTransFormula> assignmentMapping = new HashMap<>();
+		for (final Transition<LETTER, PLACE> transition : mNet.getTransitions()) {
+			assignmentMapping.put(transition, getTransitionAssignment(transition, iLogger, services));
+		}
+		return assignmentMapping;
+	}
+
+	/**
+	 * @return Map of ghost variable to its init assignment for each ghost variable
+	 */
+	private Map<IProgramVar, Term> getGhostInitAssignment() {
+		final HashMap<IProgramVar, Term> initAssignments = new HashMap<>();
+		final Set<PLACE> initPlaces = mNet.getInitialPlaces();
+		Term initTerm;
+		for (final Region<PLACE> region : mEmpireAnnotation.getColony()) {
+			if (DataStructureUtils.haveEmptyIntersection(region.getPlaces(), initPlaces)) {
+				initTerm = mScript.term("false");
+			} else {
+				initTerm = mScript.term("true");
+			}
+			initAssignments.put(mGhostVariables.get(region), initTerm);
+		}
+		return initAssignments;
+	}
+
+	private Term computeTerritoryTerm(final Territory<PLACE> territory) {
+		final Set<Term> positiveClauses =
+				mGhostVariables.keySet().stream().filter(r -> territory.getRegions().contains(r))
+						.map(r -> mGhostVariables.get(r).getTerm()).collect(Collectors.toSet());
+		final Set<Region<PLACE>> outRegions = mEmpireAnnotation.getOutlanderRegions(territory);
+		final Set<Term> negativeClauses = mGhostVariables.keySet().stream().filter(r -> outRegions.contains(r))
+				.map(r -> SmtUtils.not(mScript, mGhostVariables.get(r).getTerm())).collect(Collectors.toSet());
+		return SmtUtils.and(mScript, DataStructureUtils.union(positiveClauses, negativeClauses));
+	}
+
+	private IPredicate getTerritoryFormula(final Territory<PLACE> territory) {
+		final IPredicate territoryFormula =
+				mTerritoryFormulaMap.computeIfAbsent(territory, t -> mFactory.newPredicate(computeTerritoryTerm(t)));
+		return territoryFormula;
+	}
+
+	private Set<Territory<PLACE>> getPlacesTerritories(final PLACE place) {
+		final Set<Territory<PLACE>> placesTerritories = mEmpireAnnotation.getTerritories().stream()
+				.filter(t -> t.getPlaces().contains(place)).collect(Collectors.toSet());
+		return placesTerritories;
+	}
+
+	IPredicate getTerritoryImplications() {
+		final Set<IPredicate> implicationSet = new HashSet<>();
+		for (final Territory<PLACE> territory : mEmpireAnnotation.getTerritories()) {
+			final IPredicate territoryImplication =
+					mFactory.or(mFactory.not(getTerritoryFormula(territory)), mEmpireAnnotation.getLaw(territory));
+			implicationSet.add(territoryImplication);
+		}
+		return mFactory.and(implicationSet);
+	}
+
+	IPredicate getPlacesGhostVariableFormula(final PLACE place) {
+		final Set<Term> terms = new HashSet<>();
+		for (final Entry<Region<PLACE>, IProgramVar> entry : mGhostVariables.entrySet()) {
+			if (entry.getKey().getPlaces().contains(place)) {
+				terms.add(entry.getValue().getTerm());
+			}
+		}
+		return mFactory.newPredicate(SmtUtils.and(mScript, terms));
+	}
+
+	IPredicate getPlacesTerritoryFormula(final PLACE place) {
+		final Set<Territory<PLACE>> placesTerritories = getPlacesTerritories(place);
+		final Set<IPredicate> placesTerretoriesFormula =
+				placesTerritories.stream().map(t -> getTerritoryFormula(t)).collect(Collectors.toSet());
+		return mFactory.or(placesTerretoriesFormula);
+	}
+
+	private UnmodifiableTransFormula getTransitionAssignment(final Transition<LETTER, PLACE> transition,
+			final ILogger iLogger, final IUltimateServiceProvider services) {
+		final List<UnmodifiableTransFormula> assignments = new ArrayList<>();
+		final Set<PLACE> predecesors = transition.getPredecessors();
+		final Set<PLACE> successors = transition.getSuccessors();
+		final Set<Region<PLACE>> predecesorsRegions = mEmpireAnnotation.getColony().stream()
+				.filter(r -> !DataStructureUtils.haveEmptyIntersection(r.getPlaces(), predecesors))
+				.collect(Collectors.toSet());
+		final Set<Region<PLACE>> successorsRegions = mEmpireAnnotation.getColony().stream()
+				.filter(r -> !DataStructureUtils.haveEmptyIntersection(r.getPlaces(), successors))
+				.collect(Collectors.toSet());
+		// Remove regions from both sets which are contained in both sets
+		final Set<Region<PLACE>> intersectingRegions =
+				DataStructureUtils.intersection(predecesorsRegions, successorsRegions);
+		predecesorsRegions.removeAll(intersectingRegions);
+		successorsRegions.removeAll(intersectingRegions);
+		for (final Region<PLACE> region : predecesorsRegions) {
+			assignments.add(getGhostAssignment(Collections.nCopies(1, mGhostVariables.get(region)), "false"));
+		}
+		for (final Region<PLACE> region : successorsRegions) {
+			assignments.add(getGhostAssignment(Collections.nCopies(1, mGhostVariables.get(region)), "true"));
+		}
+		return TransFormulaUtils.sequentialComposition(iLogger, services, mManagedScript, false, false, false,
+				XNF_CONVERSION_TECHNIQUE, SIMPLIFICATION_TECHNIQUE, assignments);
+	}
+
+	private UnmodifiableTransFormula getGhostAssignment(final Collection<IProgramVar> vars, final String term) {
+		return TransFormulaBuilder.constructAssignment(new ArrayList<>(vars),
+				Collections.nCopies(vars.size(), mScript.term(term)), mSymbolTable, mManagedScript);
+	}
+
+	public OwickiGriesAnnotation<LETTER, PLACE> getAnnotation() {
+		return mOwickiGriesAnnotation;
+	}
+}
