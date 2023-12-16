@@ -27,6 +27,7 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.em
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
@@ -71,6 +72,16 @@ public final class Territory<PLACE> {
 			getAllMarkings(new HashSet<>(remainingTerritory), new HashSet<>(currentMarking), treaty);
 			currentMarking.remove(place);
 		}
+	}
+
+	/**
+	 * Get the union of all places in the Territory's Regions.
+	 *
+	 * @return Set of all places in Territory.
+	 */
+	public Set<PLACE> getPlaces() {
+		final Set<PLACE> places = mTerritory.stream().flatMap(r -> r.getPlaces().stream()).collect(Collectors.toSet());
+		return places;
 	}
 
 	/**

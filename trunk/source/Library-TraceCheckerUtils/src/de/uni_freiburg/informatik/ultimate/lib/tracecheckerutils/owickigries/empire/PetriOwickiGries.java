@@ -80,7 +80,7 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 	public PetriOwickiGries(final IUltimateServiceProvider services, final BranchingProcess<LETTER, PLACE> bp,
 			final IPetriNet<LETTER, PLACE> net, final BasicPredicateFactory factory,
 			final Function<PLACE, IPredicate> placeToAssertion, final MonolithicImplicationChecker implicationChecker,
-			final ManagedScript mgdScript, final IIcfgSymbolTable symbolTable,
+			final ManagedScript mgdScript, final IIcfgSymbolTable symbolTable, final Set<String> procedures,
 			final ModifiableGlobalsTable modifiableGlobals) {
 		mLogger = services.getLoggingService().getLogger(PetriOwickiGries.class);
 
@@ -107,6 +107,8 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 			}
 		});
 		final String empireString = mEmpireAnnotation.toString();
+		final EmpireToOwickiGries<LETTER, PLACE> empireToOwickiGries = new EmpireToOwickiGries<>(mEmpireAnnotation,
+				mgdScript, services, mLogger, symbolTable, procedures, mNet);
 		mLogger.info("Constructed Empire Annotation: %s", empireString);
 	}
 

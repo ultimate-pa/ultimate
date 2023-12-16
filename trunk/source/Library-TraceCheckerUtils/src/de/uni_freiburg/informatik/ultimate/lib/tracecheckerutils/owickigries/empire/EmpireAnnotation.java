@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -34,6 +35,7 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
  * An Empire annotation. Can serve as proof of the program's correctness.
@@ -44,8 +46,8 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
  *            The type of program statements
  */
 public class EmpireAnnotation<PLACE> {
-	Set<Territory<PLACE>> mEmpire;
-	Map<Territory<PLACE>, IPredicate> mLaw;
+	private final Set<Territory<PLACE>> mEmpire;
+	private final Map<Territory<PLACE>, IPredicate> mLaw;
 
 	/**
 	 * Construct the Empire Annotation with given Territories and Law
@@ -58,6 +60,11 @@ public class EmpireAnnotation<PLACE> {
 		mLaw = territoryLawMap;
 	}
 
+	/**
+	 * Get all Regions contained in the Empire.
+	 *
+	 * @return Set of Regions in Empire
+	 */
 	public Set<Region<PLACE>> getColony() {
 		final Set<Region<PLACE>> colony =
 				mEmpire.stream().flatMap(t -> t.getRegions().stream()).collect(Collectors.toSet());
@@ -66,6 +73,26 @@ public class EmpireAnnotation<PLACE> {
 
 	public Set<Territory<PLACE>> getTerritories() {
 		return mEmpire;
+	}
+
+	/**
+	 * Get all regions of the Empire which are not in territory and which dont overlap with any of the territory's
+	 * regions
+	 *
+	 * @param territory
+	 *            Territory to determine the outlander for
+	 * @return Outlander of the Empire wrt. territory
+	 */
+	public Set<Region<PLACE>> getOutlanderRegions(final Territory<PLACE> territory) {
+		final Set<Region<PLACE>> outRegions = DataStructureUtils.difference(getColony(), territory.getRegions());
+		final Set<Region<PLACE>> outlanderRegions = new HashSet<>();
+		final Set<PLACE> places = territory.getPlaces();
+		for (final Region<PLACE> region : outRegions) {
+			if (DataStructureUtils.haveEmptyIntersection(places, region.getPlaces())) {
+				outlanderRegions.add(region);
+			}
+		}
+		return outlanderRegions;
 	}
 
 	/**

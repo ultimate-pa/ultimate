@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries;
 
 import java.nio.file.Path;
+import java.util.Set;
 import java.util.function.Function;
 
 import org.junit.runner.RunWith;
@@ -57,7 +58,8 @@ public class PetriOwickiGriesTestSuite extends OwickiGriesTestSuite {
 		}
 		final var modifiableGlobals = new ModifiableGlobalsTable(modifiesRelation);
 		final var pog = new PetriOwickiGries<>(mServices, unfolding, program, mPredicateFactory, Function.identity(),
-				new MonolithicImplicationChecker(mServices, mMgdScript), mMgdScript, mSymbolTable, modifiableGlobals);
+				new MonolithicImplicationChecker(mServices, mMgdScript), mMgdScript, mSymbolTable,
+				Set.of(SimpleAction.PROCEDURE), modifiableGlobals);
 
 		final StatisticsData data = new StatisticsData();
 		data.aggregateBenchmarkData(pog.getStatistics());
