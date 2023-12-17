@@ -59,7 +59,7 @@ public class PetriLbeInitialAbstractionProvider<L extends IIcfgTransition<?>>
 	private final Class<L> mTransitionClazz;
 	private final IndependenceSettings mIndependenceSettings;
 
-	private final Statistics mStatistics = new Statistics();
+	private final Statistics mStatistics;
 
 	/**
 	 * Create a new instance.
@@ -86,6 +86,8 @@ public class PetriLbeInitialAbstractionProvider<L extends IIcfgTransition<?>>
 		mTransitionClazz = transitionClazz;
 		mIndependenceSettings = independenceSettings;
 		mCompositionFactory = compositionFactory;
+
+		mStatistics = new Statistics();
 	}
 
 	@Override
