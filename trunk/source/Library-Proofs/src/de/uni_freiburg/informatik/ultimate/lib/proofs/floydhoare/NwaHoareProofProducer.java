@@ -54,6 +54,20 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
 import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
 import de.uni_freiburg.informatik.ultimate.util.statistics.TimeTracker;
 
+/**
+ * Produces a Floyd/Hoare annotation for a nested-word automaton.
+ *
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ *
+ * @param <L>
+ *            The type of letters in the program automaton
+ * @param <PROGRAM>
+ *            The type of program for which a proof is produced. By default, this is {@link INestedWordAutomaton}, but
+ *            it may differ if the proof is post-processed (see {@link #withPostProcessor(IProofPostProcessor)}.
+ * @param <PROOF>
+ *            The type of proof which is produced. By default, this is {@link IFloydHoareAnnotation}, but it may differ
+ *            if the proof is post-processed (see {@link #withPostProcessor(IProofPostProcessor)}.
+ */
 public final class NwaHoareProofProducer<L extends IAction, PROGRAM, PROOF>
 		implements IProofProducer<PROGRAM, PROOF>, IUpdateOnMinimization<L>, IUpdateOnDifference<L>,
 		IFinishWithFinalAbstraction<INestedWordAutomaton<L, IPredicate>> {
@@ -93,6 +107,21 @@ public final class NwaHoareProofProducer<L extends IAction, PROGRAM, PROOF>
 		assert postProcessor.getOriginalProgram() == mProgram;
 	}
 
+	/**
+	 * Creates a new proof producer without any postprocessing.
+	 *
+	 * @param <L>
+	 *            the type of letters in the program automaton for which a proof is produced
+	 * @param services
+	 * @param program
+	 * @param csToolkit
+	 * @param predicateFactory
+	 * @param prefs
+	 * @param hoareAnnotationStates
+	 *            The states for which a Hoare annotation shall be produced. This can be a subset of the program
+	 *            automaton's states.
+	 * @return
+	 */
 	public static <L extends IAction>
 			NwaHoareProofProducer<L, INestedWordAutomaton<L, IPredicate>, IFloydHoareAnnotation<IPredicate>>
 			create(final IUltimateServiceProvider services, final INestedWordAutomaton<L, IPredicate> program,
