@@ -89,16 +89,10 @@ public class NwaInitialAbstractionProvider<L extends IIcfgTransition<?>>
 		if (mAbstraction == null) {
 			mAbstraction = Cfg2Automaton.constructAutomatonWithSPredicates(mServices, icfg, mStateFactory, errorLocs,
 					mInterprocedural, mPredicateFactory);
-			mHoareStates = computeHoareStates(icfg, mAbstraction);
+			mHoareStates = NwaHoareProofProducer.computeHoareStates(icfg, mAbstraction, mPrefs.getHoarePositions());
 			mCsToolkit = icfg.getCfgSmtToolkit();
 		}
 		return mAbstraction;
-	}
-
-	private Set<IPredicate> computeHoareStates(final IIcfg<? extends IcfgLocation> icfg,
-			final INestedWordAutomaton<L, IPredicate> abstraction) {
-		// TODO Auto-generated method stub
-		return null;
 	}
 
 	@Override

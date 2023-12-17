@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
@@ -38,8 +39,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.IFinishWithFinalAbstraction;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.IProofPostProcessor;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.IProofProducer;
@@ -96,6 +100,13 @@ public final class NwaHoareProofProducer<L extends IAction, PROGRAM, PROOF>
 					final HoareProofSettings prefs, final Set<IPredicate> hoareAnnotationStates) {
 		return new NwaHoareProofProducer<>(services, program, csToolkit, predicateFactory, prefs, hoareAnnotationStates,
 				IProofPostProcessor.identity(program));
+	}
+
+	public static Set<IPredicate> computeHoareStates(final IIcfg<? extends IcfgLocation> icfg,
+			final INestedWordAutomaton<?, IPredicate> abstraction, final HoareAnnotationPositions hoarePositions) {
+		final var hoareLocs = hoarePositions.getLocations(icfg);
+		return abstraction.getStates().stream()
+				.filter(p -> PredicateUtils.getLocations(p).anyMatch(hoareLocs::contains)).collect(Collectors.toSet());
 	}
 
 	@Override

@@ -349,6 +349,8 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 		}
 	}
 
+	// TODO #proofRefactor superseded by NwaHoareProofProducer::computeHoareStates
+	@Deprecated
 	private static Set<IPredicate> hoareAnnotationStates(final Set<IcfgLocation> hoareAnnotationLocs,
 			final INestedWordAutomaton<?, IPredicate> initialAbstraction) {
 		return initialAbstraction.getStates().stream()
