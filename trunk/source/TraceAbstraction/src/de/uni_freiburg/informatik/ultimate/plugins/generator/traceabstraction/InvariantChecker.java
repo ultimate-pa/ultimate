@@ -72,7 +72,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.TraceCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -334,7 +333,7 @@ public class InvariantChecker {
 		while (!worklistBackward.isEmpty()) {
 			final IcfgEdge edge = worklistBackward.removeFirst();
 			final IcfgLocation loc = edge.getSource();
-			if (icfg.getInitialNodes().contains(loc) || icfg.getLoopLocations().contains(loc)) {
+			if (icfg.getProcedureEntryNodes().get(loc.getProcedure()) == loc || icfg.getLoopLocations().contains(loc)) {
 				startLocs.add(loc);
 			} else {
 				addIncomingEdgesToWorklistIfNotYetSeen(loc, worklistBackward, seenBackward);
@@ -465,10 +464,10 @@ public class InvariantChecker {
 		final IncrementalHoareTripleChecker htc = new IncrementalHoareTripleChecker(mIcfg.getCfgSmtToolkit(), true);
 		final PredicateFactory pf = new PredicateFactory(mServices, mIcfg.getCfgSmtToolkit().getManagedScript(),
 				mIcfg.getCfgSmtToolkit().getSymbolTable());
-		
+
 		final IPredicate precondition;
 		if (mIcfg.getProcedureEntryNodes().get(startLoc.getProcedure()).equals(startLoc)) {
-			TermVarsProc tvp = TraceCheckUtils.getOldVarsEquality(startLoc.getProcedure(),
+			final TermVarsProc tvp = TraceCheckUtils.getOldVarsEquality(startLoc.getProcedure(),
 					mIcfg.getCfgSmtToolkit().getModifiableGlobalsTable(), mIcfg.getCfgSmtToolkit().getManagedScript());
 			precondition = pf.newPredicate(tvp.getFormula());
 		} else {

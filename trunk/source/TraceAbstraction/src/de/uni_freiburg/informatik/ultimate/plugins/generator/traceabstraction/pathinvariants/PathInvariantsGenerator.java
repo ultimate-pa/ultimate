@@ -28,6 +28,7 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants;
 
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -124,8 +125,8 @@ public final class PathInvariantsGenerator<LETTER extends IAction> implements II
 		final Set<? extends IcfgEdge> allowedTransitions =
 				extractTransitionsFromRun(run, icfg.getCfgSmtToolkit().getIcfgEdgeFactory());
 
-		final PathProgram.PathProgramConstructionResult ppResult =
-				PathProgram.constructPathProgram("PathInvariantsPathProgram", icfg, allowedTransitions);
+		final PathProgram.PathProgramConstructionResult ppResult = PathProgram
+				.constructPathProgram("PathInvariantsPathProgram", icfg, allowedTransitions, Collections.emptySet());
 		final IIcfg<IcfgLocation> pathProgram = ppResult.getPathProgram();
 		final Map<IcfgLocation, IcfgLocation> inputIcfgLocs2PathProgramLocs = ppResult.getLocationMapping();
 

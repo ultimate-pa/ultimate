@@ -249,8 +249,8 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 		final Set<? extends IcfgEdge> allowedTransitions = PathInvariantsGenerator.extractTransitionsFromRun(
 				(NestedRun<? extends IAction, IPredicate>) mCounterexample,
 				mIcfg.getCfgSmtToolkit().getIcfgEdgeFactory());
-		final PathProgramConstructionResult ppResult =
-				PathProgram.constructPathProgram("PathInvariantsPathProgram", mIcfg, allowedTransitions);
+		final PathProgramConstructionResult ppResult = PathProgram.constructPathProgram("PathInvariantsPathProgram",
+				mIcfg, allowedTransitions, Collections.emptySet());
 		final IIcfg<IcfgLocation> pathProgram = ppResult.getPathProgram();
 		final PredicateFactory predicateFactory = mPredicateFactory;
 		final IPredicateUnifier predicateUnifier = new PredicateUnifier(mLogger, getServices(),
