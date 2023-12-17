@@ -134,7 +134,7 @@ public final class NwaHoareProofProducer<L extends IAction, A, P>
 	}
 
 	@Override
-	public boolean hasProof() {
+	public boolean isReadyToComputeProof() {
 		return mFinalAbstraction != null;
 	}
 

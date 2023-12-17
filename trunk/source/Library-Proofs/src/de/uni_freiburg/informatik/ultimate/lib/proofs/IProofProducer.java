@@ -35,8 +35,9 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
  * provided to the constructor.
  *
  * Beyond that, proof producers are typically stateful and may gather information necessary to compute a proof, e.g.
- * during verification of the program. The method {@link #hasProof()} can be used to determine if all information to
- * compute a proof has been collected. If so, invoking {@link #getOrComputeProof()} should produce the desired proof.
+ * during verification of the program. The method {@link #isReadyToComputeProof()} can be used to determine if all
+ * information to compute a proof has been collected. If so, invoking {@link #getOrComputeProof()} should produce the
+ * desired proof.
  *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  *
@@ -58,7 +59,7 @@ public interface IProofProducer<PROGRAM, PROOF> {
 	 *
 	 * @return true if a call to {@link #getOrComputeProof()} will succeed, false otherwise.
 	 */
-	boolean hasProof();
+	boolean isReadyToComputeProof();
 
 	/**
 	 * Attempts to compute the proof artifact. If successful, the artifact must be cached and returned again on
