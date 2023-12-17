@@ -348,17 +348,12 @@ public final class CrownConstruction<PLACE, LETTER> {
 			mCrownSize = crown.getCrownSize();
 
 			final List<Integer> realmPerKingdom = crown.getRealmPerKingdom();
-			try {
-				mMinRealmsKingdom = realmPerKingdom.get(0);
-				mMaxRealmsKingdom = realmPerKingdom.get(realmPerKingdom.size() - 1);
-				mMedianRealmsKingdom = realmPerKingdom.get(realmPerKingdom.size() / 2);
-			} catch (final IndexOutOfBoundsException indexOutOfBoundsException) {
-				System.out.println("IndexOutOfBoundsException caught while calculating Crown (Min/Max/Med) statistics: "
-						+ indexOutOfBoundsException.getMessage());
-				mMinRealmsKingdom = 0;
-				mMaxRealmsKingdom = 0;
-				mMedianRealmsKingdom = 0;
-			}
+
+			assert !realmPerKingdom.isEmpty() : "There is no Realm in Crown";
+
+			mMinRealmsKingdom = realmPerKingdom.get(0);
+			mMaxRealmsKingdom = realmPerKingdom.get(realmPerKingdom.size() - 1);
+			mMedianRealmsKingdom = realmPerKingdom.get(realmPerKingdom.size() / 2);
 
 		}
 	}
