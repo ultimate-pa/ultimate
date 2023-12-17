@@ -1,15 +1,13 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import org.junit.Before;
 import org.junit.Test;
 
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+public class RandomCriterionTest<L, S> {
 
-public class RandomCriterionTest<L extends IIcfgTransition<?>> {
-
-	private RandomCriterion<L> criterion;
+	private RandomCriterion<L, S> criterion;
 
 	@Before
 	public void setUp() throws Exception {

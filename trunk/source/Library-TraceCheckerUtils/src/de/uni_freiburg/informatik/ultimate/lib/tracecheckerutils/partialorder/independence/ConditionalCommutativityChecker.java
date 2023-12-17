@@ -31,18 +31,17 @@ import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.ITraceChecker;
 
-public class ConditionalCommutativityChecker<L extends IIcfgTransition<?>>
-		implements IConditionalCommutativityChecker<L> {
+public class ConditionalCommutativityChecker<L extends IAction> implements IConditionalCommutativityChecker<L> {
 
-	private final IConditionalCommutativityCriterion<L> mCriterion;
+	private final IConditionalCommutativityCriterion<L, IPredicate> mCriterion;
 	private final IIndependenceConditionGenerator mGenerator;
 	private final ITraceChecker<L> mTraceChecker;
 
-	public ConditionalCommutativityChecker(final IConditionalCommutativityCriterion<L> criterion,
+	public ConditionalCommutativityChecker(final IConditionalCommutativityCriterion<L, IPredicate> criterion,
 			final IIndependenceRelation<IPredicate, L> independenceRelation,
 			final IIndependenceConditionGenerator generator, final IAutomaton<L, IPredicate> abstraction,
 			final IEmptyStackStateFactory<IPredicate> emptyStackStateFactory, final ITraceChecker<L> traceChecker) {

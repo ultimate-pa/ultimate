@@ -43,11 +43,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.ITraceChecker;
 
-public class ConditionalCommutativityInterpolantProvider<L extends IIcfgTransition<?>> {
+public class ConditionalCommutativityInterpolantProvider<L extends IAction> {
 
 	private final ConditionalCommutativityChecker<L> mChecker;
 	private final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mReduction;
@@ -57,7 +57,7 @@ public class ConditionalCommutativityInterpolantProvider<L extends IIcfgTransiti
 	private IRun<L, IPredicate> mRun;
 
 	public ConditionalCommutativityInterpolantProvider(final IUltimateServiceProvider services,
-			final IConditionalCommutativityCriterion<L> criterion,
+			final IConditionalCommutativityCriterion<L, IPredicate> criterion,
 			final IIndependenceRelation<IPredicate, L> independenceRelation,
 			final IIndependenceConditionGenerator generator, final IAutomaton<L, IPredicate> abstraction,
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> reduction,

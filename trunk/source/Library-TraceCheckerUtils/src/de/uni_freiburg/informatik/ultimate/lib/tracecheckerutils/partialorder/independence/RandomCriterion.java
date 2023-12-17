@@ -25,28 +25,27 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence;
 
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import java.util.Random;
 
-public class RandomCriterion<L extends IIcfgTransition<?>> implements IConditionalCommutativityCriterion<L> {
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 
-	private double mProbability;
-	private Random mRandomGenerator;
+public class RandomCriterion<L, S> implements IConditionalCommutativityCriterion<L, S> {
 
-	public RandomCriterion(double probability, long seed) {
+	private final double mProbability;
+	private final Random mRandomGenerator;
+
+	public RandomCriterion(final double probability, final long seed) {
 		mProbability = probability;
 		mRandomGenerator = new Random(seed);
 	}
 
 	@Override
-	public boolean decide(IPredicate state, L a, L b) {
-
+	public boolean decide(final S state, final L a, final L b) {
 		return (mRandomGenerator.nextInt(100) < (100 * mProbability));
 	}
 
 	@Override
-	public boolean decide(IPredicate condition) {
+	public boolean decide(final IPredicate condition) {
 		return condition != null;
 	}
 
