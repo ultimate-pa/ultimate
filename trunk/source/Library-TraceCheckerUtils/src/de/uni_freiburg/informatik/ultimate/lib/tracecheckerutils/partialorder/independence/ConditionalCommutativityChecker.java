@@ -38,14 +38,14 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.ITraceChecker;
 public class ConditionalCommutativityChecker<L extends IIcfgTransition<?>>
 		implements IConditionalCommutativityChecker<L> {
 
-	private IConditionalCommutativityCriterion<L> mCriterion;
-	private SemanticIndependenceConditionGenerator mGenerator;
-	private ITraceChecker<L> mTraceChecker;
+	private final IConditionalCommutativityCriterion<L> mCriterion;
+	private final SemanticIndependenceConditionGenerator mGenerator;
+	private final ITraceChecker<L> mTraceChecker;
 
-	public ConditionalCommutativityChecker(IConditionalCommutativityCriterion<L> criterion,
-			IIndependenceRelation<IPredicate, L> independenceRelation, SemanticIndependenceConditionGenerator generator,
-			final IAutomaton<L, IPredicate> abstraction, IEmptyStackStateFactory<IPredicate> emptyStackStateFactory,
-			ITraceChecker<L> traceChecker) {
+	public ConditionalCommutativityChecker(final IConditionalCommutativityCriterion<L> criterion,
+			final IIndependenceRelation<IPredicate, L> independenceRelation,
+			final SemanticIndependenceConditionGenerator generator, final IAutomaton<L, IPredicate> abstraction,
+			final IEmptyStackStateFactory<IPredicate> emptyStackStateFactory, final ITraceChecker<L> traceChecker) {
 		mCriterion = criterion;
 		mGenerator = generator;
 		mTraceChecker = traceChecker;
@@ -53,10 +53,11 @@ public class ConditionalCommutativityChecker<L extends IIcfgTransition<?>>
 	}
 
 	@Override
-	public List<IPredicate> checkConditionalCommutativity(IRun<L, IPredicate> run, IPredicate state, L a, L b) {
+	public List<IPredicate> checkConditionalCommutativity(final IRun<L, IPredicate> run, final IPredicate state,
+			final L a, final L b) {
 
 		if (mCriterion.decide(state, a, b)) {
-			IPredicate condition = mGenerator.generateCondition(state, a.getTransformula(), b.getTransformula());
+			final IPredicate condition = mGenerator.generateCondition(state, a.getTransformula(), b.getTransformula());
 			if (mCriterion.decide(condition)) {
 				return mTraceChecker.checkTrace(run, null, condition);
 			}
