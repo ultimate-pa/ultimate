@@ -547,6 +547,7 @@
 		<module>../Library-PDR</module>
 		<module>../Library-PEA</module>
 		<module>../Library-PreferenceJson</module>
+		<module>../Library-Proofs</module>
 		<module>../Library-Sifa</module>
 		<module>../Library-SMTLIB</module>
 		<module>../Library-SmtLibUtils</module>

@@ -2,29 +2,29 @@
  * Copyright (C) 2023 Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  * Copyright (C) 2023 University of Freiburg
  *
- * This file is part of the ULTIMATE TraceCheckerUtils Library.
+ * This file is part of the ULTIMATE Proofs Library.
  *
- * The ULTIMATE TraceCheckerUtils Library is free software: you can redistribute it and/or modify
+ * The ULTIMATE Proofs Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * The ULTIMATE TraceCheckerUtils Library is distributed in the hope that it will be useful,
+ * The ULTIMATE Proofs Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with the ULTIMATE TraceCheckerUtils Library. If not, see <http://www.gnu.org/licenses/>.
+ * along with the ULTIMATE Proofs Library. If not, see <http://www.gnu.org/licenses/>.
  *
  * Additional permission under GNU GPL version 3 section 7:
- * If you modify the ULTIMATE TraceCheckerUtils Library, or any covered work, by linking
+ * If you modify the ULTIMATE Proofs Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
  * containing parts covered by the terms of the Eclipse Public License, the
- * licensors of the ULTIMATE TraceCheckerUtils Library grant you additional permission
+ * licensors of the ULTIMATE Proofs Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction;
+package de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare;
 
 import java.util.Map;
 import java.util.Set;
@@ -42,19 +42,15 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.proofs.IProofPo
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.proofs.IProofProducer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.floydhoare.HoareAnnotationComposer;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.floydhoare.HoareAnnotationExtractor;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.floydhoare.HoareAnnotationFragments;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.floydhoare.IFloydHoareAnnotation;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.proofs.IFinishWithFinalAbstraction;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.proofs.IUpdateOnDifference;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.proofs.IUpdateOnMinimization;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.IFinishWithFinalAbstraction;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.IUpdateOnDifference;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.IUpdateOnMinimization;
 import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
 import de.uni_freiburg.informatik.ultimate.util.statistics.TimeTracker;
 
-final class NwaHoareProofProducer<L extends IAction, PROGRAM, PROOF>
+public final class NwaHoareProofProducer<L extends IAction, PROGRAM, PROOF>
 		implements IProofProducer<PROGRAM, PROOF>, IUpdateOnMinimization<L>, IUpdateOnDifference<L>,
 		IFinishWithFinalAbstraction<INestedWordAutomaton<L, IPredicate>> {
 

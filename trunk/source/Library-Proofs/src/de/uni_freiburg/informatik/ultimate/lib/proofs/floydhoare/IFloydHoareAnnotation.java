@@ -2,30 +2,36 @@
  * Copyright (C) 2023 Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  * Copyright (C) 2023 University of Freiburg
  *
- * This file is part of the ULTIMATE TraceCheckerUtils Library.
+ * This file is part of the ULTIMATE Proofs Library.
  *
- * The ULTIMATE TraceCheckerUtils Library is free software: you can redistribute it and/or modify
+ * The ULTIMATE Proofs Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * The ULTIMATE TraceCheckerUtils Library is distributed in the hope that it will be useful,
+ * The ULTIMATE Proofs Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with the ULTIMATE TraceCheckerUtils Library. If not, see <http://www.gnu.org/licenses/>.
+ * along with the ULTIMATE Proofs Library. If not, see <http://www.gnu.org/licenses/>.
  *
  * Additional permission under GNU GPL version 3 section 7:
- * If you modify the ULTIMATE TraceCheckerUtils Library, or any covered work, by linking
+ * If you modify the ULTIMATE Proofs Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
  * containing parts covered by the terms of the Eclipse Public License, the
- * licensors of the ULTIMATE TraceCheckerUtils Library grant you additional permission
+ * licensors of the ULTIMATE Proofs Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.proofs;
+package de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare;
 
-public interface IFinishWithFinalAbstraction<A> {
-	void finish(A finalAbstraction);
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+
+public interface IFloydHoareAnnotation<S> {
+	IPredicate getPrecondition();
+
+	IPredicate getPostcondition();
+
+	IPredicate getAnnotation(S state);
 }
