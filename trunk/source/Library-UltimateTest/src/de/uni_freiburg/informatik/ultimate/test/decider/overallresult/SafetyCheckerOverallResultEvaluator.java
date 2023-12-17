@@ -33,6 +33,8 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.AnnotationCheckResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.AnnotationCheckResult.AnnotationState;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.DataRaceFoundResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ExceptionOrErrorResult;
@@ -141,6 +143,13 @@ public class SafetyCheckerOverallResultEvaluator implements IOverallResultEvalua
 				return SafetyCheckerOverallResult.EXCEPTION_OR_ERROR;
 			}
 			return null;
+		} else if ((result instanceof AnnotationCheckResult)) {
+			final AnnotationCheckResult<?, ?> acr = (AnnotationCheckResult<?, ?>) result;
+			if (acr.getAnnotationState() == AnnotationState.VALID) {
+				return SafetyCheckerOverallResult.SAFE;
+			} else {
+				return SafetyCheckerOverallResult.UNKNOWN;
+			}
 		} else {
 			return null;
 		}
