@@ -1,0 +1,30 @@
+//@ variables (x Int) (y Int)
+
+//@ semantics [1] {x} (= x 0)
+//@ semantics [2] {y} (= y 0)
+//@ semantics [3] {y} (= y x)
+//@ semantics [4] { } (> y 0)
+
+PetriNet program = (
+	alphabet = { "[1]" "[2]" "[3]" "[4]" },
+	places = { "l0" "l1" "l2" "l3" "l4" "l5" },
+	transitions = {
+		({ "l0" } "[1]" { "l1" "l2" })
+		({ "l1" } "[2]" { "l3" })
+		({ "l2" } "[3]" { "l4" })
+		({ "l3" "l4"} "[4]" { "l5" })
+	},
+	initialMarking = { "l0" },
+	acceptingPlaces = { "l5" }
+);
+
+// Specify in which cases the criterion returns true.
+// We always assume that the criterion will accept the condition if one is specified.
+//@ criterion(1) ({ l1 l2 }, true) [2] [3]
+
+// Specify the condition given by the independence condition generator.
+//@ condition(1) true [2] [3] : (= x 0)
+
+Word ctex1  = [ "[1]" "[3]" "[2]" "[4]" ];
+Word proof1 = [ "true" "true" "true" "(= y 0)" "false" ];
+
