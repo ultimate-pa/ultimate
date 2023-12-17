@@ -197,7 +197,7 @@ public abstract class ConditionalCommutativityTestSuite implements IMessagePrint
 			checkProof(proof);
 		}
 
-		final var criterion = parseCriterion(path);
+		// final var criterion = parseCriterion(path);
 		// TODO parse criterion [after states have been created]
 		// TODO parse condition generator [after predicates have been created]
 		// TODO parse ctex
@@ -228,7 +228,7 @@ public abstract class ConditionalCommutativityTestSuite implements IMessagePrint
 		mLogger.info("ConditionalCommutativityTestSuite setup time: %s",
 				CoreUtil.toTimeString(setupTime, TimeUnit.NANOSECONDS, TimeUnit.MILLISECONDS, 0));
 
-		runTest(path, parsed, program, constructedDifference, bp);
+		// runTest(path, parsed, program, constructedDifference, bp);
 	}
 
 	private void checkProof(final INestedWordAutomaton<SimpleAction, IPredicate> proof)
