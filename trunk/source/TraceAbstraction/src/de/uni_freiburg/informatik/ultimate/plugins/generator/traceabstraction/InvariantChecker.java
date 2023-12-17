@@ -333,7 +333,7 @@ public class InvariantChecker {
 		while (!worklistBackward.isEmpty()) {
 			final IcfgEdge edge = worklistBackward.removeFirst();
 			final IcfgLocation loc = edge.getSource();
-			if (icfg.getProcedureEntryNodes().get(loc.getProcedure()) == loc || icfg.getLoopLocations().contains(loc)) {
+			if (isEntryNode(icfg, loc) || icfg.getLoopLocations().contains(loc)) {
 				startLocs.add(loc);
 			} else {
 				addIncomingEdgesToWorklistIfNotYetSeen(loc, worklistBackward, seenBackward);
@@ -357,6 +357,10 @@ public class InvariantChecker {
 			tpsds.add(tpsd);
 		}
 		return tpsds;
+	}
+
+	private boolean isEntryNode(final IIcfg<IcfgLocation> icfg, final IcfgLocation loc) {
+		return loc == icfg.getProcedureEntryNodes().get(loc.getProcedure());
 	}
 
 	public void addIncomingEdgesToWorklistIfNotYetSeen(final IcfgLocation loc,
