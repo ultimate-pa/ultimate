@@ -59,7 +59,7 @@ public class ConditionalCommutativityInterpolantProvider<L extends IIcfgTransiti
 	public ConditionalCommutativityInterpolantProvider(final IUltimateServiceProvider services,
 			final IConditionalCommutativityCriterion<L> criterion,
 			final IIndependenceRelation<IPredicate, L> independenceRelation,
-			final SemanticIndependenceConditionGenerator generator, final IAutomaton<L, IPredicate> abstraction,
+			final IIndependenceConditionGenerator generator, final IAutomaton<L, IPredicate> abstraction,
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> reduction,
 			final IEmptyStackStateFactory<IPredicate> emptyStackStateFactory, final ITraceChecker<L> traceChecker) {
 		mServices = services;

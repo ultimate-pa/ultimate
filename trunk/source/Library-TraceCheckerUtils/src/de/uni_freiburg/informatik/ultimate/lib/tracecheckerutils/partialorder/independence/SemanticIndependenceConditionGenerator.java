@@ -58,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  */
-public class SemanticIndependenceConditionGenerator {
+public class SemanticIndependenceConditionGenerator implements IIndependenceConditionGenerator {
 	private static final XnfConversionTechnique XNF_CONVERSION_TECHNIQUE =
 			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 	private static final SimplificationTechnique SIMPLIFICATION_TECHNIQUE = SimplificationTechnique.SIMPLIFY_DDA;
@@ -119,20 +119,6 @@ public class SemanticIndependenceConditionGenerator {
 	/**
 	 * Generate a condition under which the given transitions are independent.
 	 *
-	 * @param a
-	 *            The first transition
-	 * @param b
-	 *            The second transition
-	 *
-	 * @return a sufficient condition for independence
-	 */
-	public IPredicate generateCondition(final UnmodifiableTransFormula a, final UnmodifiableTransFormula b) {
-		return generateCondition(null, a, b);
-	}
-
-	/**
-	 * Generate a condition under which the given transitions are independent.
-	 *
 	 * @param context
 	 *            A context that is already known, but not sufficient for commutativity
 	 * @param a
@@ -142,6 +128,7 @@ public class SemanticIndependenceConditionGenerator {
 	 *
 	 * @return a sufficient condition for independence
 	 */
+	@Override
 	public IPredicate generateCondition(final IPredicate context, final UnmodifiableTransFormula a,
 			final UnmodifiableTransFormula b) {
 		// Generate both compositions, possibly adding a guard where applicable

@@ -39,12 +39,12 @@ public class ConditionalCommutativityChecker<L extends IIcfgTransition<?>>
 		implements IConditionalCommutativityChecker<L> {
 
 	private final IConditionalCommutativityCriterion<L> mCriterion;
-	private final SemanticIndependenceConditionGenerator mGenerator;
+	private final IIndependenceConditionGenerator mGenerator;
 	private final ITraceChecker<L> mTraceChecker;
 
 	public ConditionalCommutativityChecker(final IConditionalCommutativityCriterion<L> criterion,
 			final IIndependenceRelation<IPredicate, L> independenceRelation,
-			final SemanticIndependenceConditionGenerator generator, final IAutomaton<L, IPredicate> abstraction,
+			final IIndependenceConditionGenerator generator, final IAutomaton<L, IPredicate> abstraction,
 			final IEmptyStackStateFactory<IPredicate> emptyStackStateFactory, final ITraceChecker<L> traceChecker) {
 		mCriterion = criterion;
 		mGenerator = generator;
