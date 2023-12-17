@@ -26,6 +26,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -69,6 +70,22 @@ public final class Kingdom<PLACE, LETTER> {
 			getAllCosets(new HashSet<>(remainingKingdom), new HashSet<>(currentCoset), treaty);
 			currentCoset.remove(condition);
 		}
+	}
+
+	private boolean isDisjoint() {
+		final List<Realm<PLACE, LETTER>> kingdomRealms = mKingdom.stream().collect(Collectors.toList());
+		for (int i = 0; i < kingdomRealms.size(); i++) {
+			for (int j = i + 1; j < kingdomRealms.size(); j++) {
+				final Realm<PLACE, LETTER> realm1 = kingdomRealms.get(i);
+				final Realm<PLACE, LETTER> realm2 = kingdomRealms.get(j);
+				final Set<Condition<LETTER, PLACE>> intersectingConditions =
+						DataStructureUtils.intersection(realm1.getConditions(), realm2.getConditions());
+				if (!intersectingConditions.isEmpty()) {
+					return false;
+				}
+			}
+		}
+		return true;
 	}
 
 	/**
@@ -180,22 +197,9 @@ public final class Kingdom<PLACE, LETTER> {
 			return false;
 		}
 
-		boolean foundAny = false;
-		Set<Condition<LETTER, PLACE>> intersectionConditions = null;
-		for (final Realm<PLACE, LETTER> realm : mKingdom) {
-			if (!foundAny) {
-				foundAny = true;
-				intersectionConditions = realm.getConditions();
-				continue;
-			}
-
-			// TODO Dominik 2023-12-05: This loop seems suspicious: Whether the assertion fails or not may depend on the
-			// iteration order of the set mKingdom, which is not guaranteed. What are you trying to check here?
-			intersectionConditions = DataStructureUtils.intersection(intersectionConditions, realm.getConditions());
-			if (!intersectionConditions.isEmpty()) {
-				assert false : "Kingdoms Realms are not disjoint";
-				return false;
-			}
+		if (!isDisjoint()) {
+			assert false : "Kingdoms Realms are not disjoint";
+			return false;
 		}
 		return true;
 	}
