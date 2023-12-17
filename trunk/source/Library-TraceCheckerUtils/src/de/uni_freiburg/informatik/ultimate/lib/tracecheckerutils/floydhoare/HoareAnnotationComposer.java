@@ -48,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.ExtendedSimplificationResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
@@ -89,8 +88,7 @@ public class HoareAnnotationComposer {
 	private final IPredicate mSurrogateForEmptyCallPred;
 
 	public HoareAnnotationComposer(final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
-			final HoareAnnotationFragments<?> hoareAnnotationFragments, final IUltimateServiceProvider services,
-			final SimplificationTechnique simplicationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
+			final HoareAnnotationFragments<?> hoareAnnotationFragments, final IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(getClass());
 		mCsToolkit = csToolkit;
@@ -289,6 +287,11 @@ public class HoareAnnotationComposer {
 
 	public Map<IPredicate, IPredicate> getLoc2hoare() {
 		return mLoc2hoare;
+	}
+
+	public IFloydHoareAnnotation<IPredicate> extractAnnotation() {
+		// TODO pre/post
+		return new FloydHoareMapping<>(null, null, mLoc2hoare);
 	}
 
 	/**

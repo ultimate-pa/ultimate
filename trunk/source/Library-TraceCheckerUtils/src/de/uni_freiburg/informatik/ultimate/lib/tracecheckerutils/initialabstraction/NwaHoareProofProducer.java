@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstrac
 
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
@@ -48,7 +49,10 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.floydhoare.IFlo
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.proofs.IFinishWithFinalAbstraction;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.proofs.IUpdateOnDifference;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.proofs.IUpdateOnMinimization;
+import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
+import de.uni_freiburg.informatik.ultimate.util.statistics.TimeTracker;
 
 final class NwaHoareProofProducer<L extends IAction, PROGRAM, PROOF>
 		implements IProofProducer<PROGRAM, PROOF>, IUpdateOnMinimization<L>, IUpdateOnDifference<L>,
@@ -66,8 +70,10 @@ final class NwaHoareProofProducer<L extends IAction, PROGRAM, PROOF>
 	private final IProofPostProcessor<INestedWordAutomaton<L, IPredicate>, IFloydHoareAnnotation<IPredicate>, PROGRAM, PROOF> mPost;
 
 	private final HoareAnnotationFragments<L> mHaf;
-
 	private INestedWordAutomaton<L, IPredicate> mFinalAbstraction;
+
+	private PROOF mProof;
+	private final Statistics mStatistics = new Statistics();
 
 	private NwaHoareProofProducer(final IUltimateServiceProvider services,
 			final INestedWordAutomaton<L, IPredicate> program, final CfgSmtToolkit csToolkit,
@@ -103,32 +109,21 @@ final class NwaHoareProofProducer<L extends IAction, PROGRAM, PROOF>
 
 	@Override
 	public boolean hasProof() {
-		// TODO Auto-generated method stub
-		return false;
+		return mFinalAbstraction != null;
 	}
 
 	@Override
 	public PROOF getOrComputeProof() {
-		// TODO measure time
-		// mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.HoareAnnotationTime.toString());
-		try {
-			final HoareAnnotationComposer clha = computeHoareAnnotationComposer();
-
-			// TODO extract data to IFloydHoareAnnotation
-			// final HoareAnnotationWriter writer = new HmComputeHoareAnnotationoareAnnotationWriter(mIcfg, mCsToolkit,
-			// mPredicateFactory,
-			// clha,
-			// mServices, mSimplificationTechnique, mXnfConversionTechnique);
-			// writer.addHoareAnnotationToCFG();
-
-			// TODO forward statistics
-			// mCegarLoopBenchmark.addHoareAnnotationData(clha.getHoareAnnotationStatisticsGenerator());
-		} finally {
-			// mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.HoareAnnotationTime.toString());
+		if (mProof == null) {
+			mProof = mStatistics.measureProofComputation(this::computeProof);
 		}
+		return mProof;
+	}
 
-		// TODO
-		final IFloydHoareAnnotation<IPredicate> floydHoare = null;
+	private PROOF computeProof() {
+		final HoareAnnotationComposer clha = computeHoareAnnotationComposer();
+		final var floydHoare = clha.extractAnnotation();
+		mStatistics.reportHoareStatistics(clha);
 		return mPost.processProof(floydHoare);
 	}
 
@@ -138,9 +133,7 @@ final class NwaHoareProofProducer<L extends IAction, PROGRAM, PROOF>
 					"ManagedScript must not be locked at the beginning of Hoare annotation computation");
 		}
 		new HoareAnnotationExtractor<>(mServices, mFinalAbstraction, mHaf);
-		final HoareAnnotationComposer clha = new HoareAnnotationComposer(mCsToolkit, mPredicateFactory, mHaf, mServices,
-				mPrefs.getSimplificationTechnique(), mPrefs.getXnfConversionTechnique());
-		return clha;
+		return new HoareAnnotationComposer(mCsToolkit, mPredicateFactory, mHaf, mServices);
 	}
 
 	@Override
@@ -152,8 +145,7 @@ final class NwaHoareProofProducer<L extends IAction, PROGRAM, PROOF>
 
 	@Override
 	public IStatisticsDataProvider getStatistics() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+		return mStatistics;
 	}
 
 	@Override
@@ -182,5 +174,22 @@ final class NwaHoareProofProducer<L extends IAction, PROGRAM, PROOF>
 	@Override
 	public void finish(final INestedWordAutomaton<L, IPredicate> finalAbstraction) {
 		mFinalAbstraction = finalAbstraction;
+	}
+
+	private final class Statistics extends AbstractStatisticsDataProvider {
+		private final TimeTracker mProofTime = new TimeTracker();
+
+		public Statistics() {
+			declare("Hoare annotation time", () -> mProofTime, KeyType.TT_TIMER);
+			forward("Postprocessor statistics", mPost::getStatistics);
+		}
+
+		private <T> T measureProofComputation(final Supplier<T> computation) {
+			return mProofTime.measure(computation);
+		}
+
+		private void reportHoareStatistics(final HoareAnnotationComposer composer) {
+			forward("Hoare annotation statistics", composer::getHoareAnnotationStatisticsGenerator);
+		}
 	}
 }

@@ -50,7 +50,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  *
  * @author heizmann@informatik.uni-freiburg.de
  */
-
+// TODO #proofRefactor get rid of this class
+@Deprecated
 public class HoareAnnotation extends SPredicate {
 
 	private static final String KEY = HoareAnnotation.class.getSimpleName();

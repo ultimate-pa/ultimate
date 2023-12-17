@@ -399,6 +399,13 @@ public class PredicateUtils {
 		return result;
 	}
 
+	public static IcfgLocation getLocation(final IPredicate pred) {
+		if (pred instanceof ISLPredicate) {
+			return ((ISLPredicate) pred).getProgramPoint();
+		}
+		throw new IllegalArgumentException("predicate does not offer program point: " + pred);
+	}
+
 	public static Stream<IcfgLocation> getLocations(final IPredicate pred) {
 		if (pred instanceof ISLPredicate) {
 			return Stream.of(((ISLPredicate) pred).getProgramPoint());
