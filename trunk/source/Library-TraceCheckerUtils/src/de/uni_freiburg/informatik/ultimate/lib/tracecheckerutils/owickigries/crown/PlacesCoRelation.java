@@ -26,12 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown;
 
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.ICoRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
@@ -52,38 +47,19 @@ final class PlacesCoRelation<PLACE, LETTER> {
 		mCoRelatedPlaces = getAllCorelatedPlaces(bp);
 	}
 
-	private final HashRelation<PLACE, PLACE> getAllCorelatedPlaces(final BranchingProcess<LETTER, PLACE> bp) {
-		final List<PLACE> places =
-				bp.getConditions().stream().map(condition -> condition.getPlace()).collect(Collectors.toList());
+	private HashRelation<PLACE, PLACE> getAllCorelatedPlaces(final BranchingProcess<LETTER, PLACE> bp) {
 		final HashRelation<PLACE, PLACE> coPlacesHashtable = new HashRelation<>();
-		for (int i = 0; i < places.size(); i++) {
-			for (int j = i; j < places.size(); j++) {
-				final PLACE place1 = places.get(i);
-				final PLACE place2 = places.get(j);
-				if (!place1.equals(place2) && placesCoRelation(place1, place2, bp)) {
-					coPlacesHashtable.addPair(place1, place2);
-					coPlacesHashtable.addPair(place2, place1);
-				}
-			}
-		}
-		return coPlacesHashtable;
-	}
 
-	private final boolean placesCoRelation(final PLACE firstPlace, final PLACE secondPlace,
-			final BranchingProcess<LETTER, PLACE> bp) {
-		if (firstPlace.equals(secondPlace)) {
-			return false;
-		}
-		final Set<Condition<LETTER, PLACE>> firstPlaceConditions = bp.getConditions(firstPlace);
-		final Set<Condition<LETTER, PLACE>> secondPlaceConditions = bp.getConditions(secondPlace);
-		for (final Condition<LETTER, PLACE> condition1 : firstPlaceConditions) {
-			for (final Condition<LETTER, PLACE> condition2 : secondPlaceConditions) {
-				if (mCoRelation.isInCoRelation(condition1, condition2)) {
-					return true;
-				}
+		for (final var cond : bp.getConditions()) {
+			if (cond.getPredecessorEvent().isCutoffEvent()) {
+				continue;
+			}
+			for (final var other : mCoRelation.computeCoRelatatedConditions(cond)) {
+				coPlacesHashtable.addPair(cond.getPlace(), other.getPlace());
 			}
 		}
-		return false;
+
+		return coPlacesHashtable;
 	}
 
 	/**
