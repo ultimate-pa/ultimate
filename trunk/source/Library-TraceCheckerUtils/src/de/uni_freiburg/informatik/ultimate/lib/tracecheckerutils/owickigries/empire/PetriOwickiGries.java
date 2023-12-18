@@ -107,9 +107,10 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 			}
 		});
 		final String empireString = mEmpireAnnotation.toString();
+		mLogger.info("Constructed Empire Annotation: %s", empireString);
+
 		final EmpireToOwickiGries<LETTER, PLACE> empireToOwickiGries = new EmpireToOwickiGries<>(mEmpireAnnotation,
 				mgdScript, services, mLogger, symbolTable, procedures, mNet);
-		mLogger.info("Constructed Empire Annotation: %s", empireString);
 	}
 
 	private Crown<PLACE, LETTER> getCrown() {
