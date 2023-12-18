@@ -68,7 +68,7 @@
   </target>
 
   <target name="compile" depends="bootstrap">
-    <javac includeantruntime="true" srcdir="${java}" destdir="${classes}" source="8" target="8" />
+    <javac includeantruntime="true" srcdir="${java}" destdir="${classes}" source="17" target="17" />
   </target>
 
   <target name="dist" depends="compile">

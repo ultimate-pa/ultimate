@@ -18,7 +18,7 @@ Export-Package: de.uni_freiburg.informatik.ultimate.lib.pea,
  de.uni_freiburg.informatik.ultimate.lib.pea.test,
  de.uni_freiburg.informatik.ultimate.lib.pea.util,
  de.uni_freiburg.informatik.ultimate.lib.pea.util.z
-Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.lib.pea
 Import-Package: org.apache.xerces.dom,
  org.apache.xerces.parsers
