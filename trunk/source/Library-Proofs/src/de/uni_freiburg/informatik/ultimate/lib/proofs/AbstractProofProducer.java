@@ -71,6 +71,9 @@ public abstract class AbstractProofProducer<A, P, A0, P0> implements IProofProdu
 
 	protected final P0 getOrComputeInternalProof() {
 		if (mInternalProof == null) {
+			if (!isReadyToComputeProof()) {
+				throw new UnsupportedOperationException(getClass().getSimpleName() + " not yet ready to compute proof");
+			}
 			mInternalProof = computeProof();
 		}
 		return mInternalProof;
