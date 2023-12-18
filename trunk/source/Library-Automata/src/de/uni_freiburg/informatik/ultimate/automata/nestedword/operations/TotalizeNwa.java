@@ -387,7 +387,7 @@ public class TotalizeNwa<LETTER, STATE> implements INwaOutgoingLetterAndTransiti
 
 	@Override
 	public Set<LETTER> getAlphabet() {
-		throw new UnsupportedOperationException();
+		return mOperand.getAlphabet();
 	}
 
 	@Override

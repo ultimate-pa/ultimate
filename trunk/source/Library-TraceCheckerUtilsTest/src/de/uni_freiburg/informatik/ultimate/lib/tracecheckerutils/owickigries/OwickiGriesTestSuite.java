@@ -214,11 +214,12 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 		// compute difference of program and proofs
 		DifferencePetriNet<SimpleAction, IPredicate> difference = null;
 		for (final var proof : proofs) {
-			final var loopers = DifferencePairwiseOnDemand.determineUniversalLoopers(proof);
-			final var oldNet = difference == null ? program : difference;
 			final var initialTrueState = DataStructureUtils.getOneAndOnly(proof.getInitialStates(), "initial state");
-			difference = new DifferencePetriNet<>(mAutomataServices, oldNet,
-					new TotalizeNwa<>(proof, initialTrueState, false), loopers);
+			final var totalizedProof = new TotalizeNwa<>(proof, initialTrueState, false);
+
+			final var loopers = DifferencePairwiseOnDemand.determineUniversalLoopers(totalizedProof, proof.getStates());
+			final var oldNet = difference == null ? program : difference;
+			difference = new DifferencePetriNet<>(mAutomataServices, oldNet, totalizedProof, loopers);
 		}
 		assert difference != null : "Difference can only be null if there no proofs, this is checked above";
 
