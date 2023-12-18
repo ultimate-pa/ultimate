@@ -3,7 +3,7 @@ Bundle-Name: Library-ojAlgo
 Bundle-SymbolicName: org.ojalgo
 Bundle-Version: 38.18
 Bundle-ManifestVersion: 2
-Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Ant-Version: Apache Ant 1.9.4
 Created-By: 1.8.0_66-b17 (Oracle Corporation)
 Specification-Title: ojAlgo
