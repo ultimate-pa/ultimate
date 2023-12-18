@@ -55,8 +55,12 @@ public class NaiveOwickiGriesTestSuite extends OwickiGriesTestSuite {
 			final BoundedPetriNet<SimpleAction, IPredicate> program,
 			final BoundedPetriNet<SimpleAction, IPredicate> refinedPetriNet,
 			final BranchingProcess<SimpleAction, IPredicate> unfolding) throws AutomataLibraryException {
-		mLogger.info("Constructing Owicki-Gries proof for Petri program that %s and unfolding that %s",
-				program.sizeInformation(), unfolding.sizeInformation());
+		final long cutoffs =
+				unfolding.getConditions().stream().filter(c -> c.getPredecessorEvent().isCutoffEvent()).count();
+		mLogger.info(
+				"Constructing Owicki-Gries proof for Petri program that %s and unfolding that %s."
+						+ " %d conditions belong to cutoff events",
+				program.sizeInformation(), unfolding.sizeInformation(), cutoffs);
 
 		// construct Floyd-Hoare annotation
 		final var floydHoare = new PetriFloydHoare<>(mServices, mMgdScript, mSymbolTable, unfolding,

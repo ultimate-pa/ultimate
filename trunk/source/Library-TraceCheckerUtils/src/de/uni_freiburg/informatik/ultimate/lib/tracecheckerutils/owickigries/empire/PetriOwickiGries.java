@@ -86,8 +86,11 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 
 		mBp = bp;
 		mNet = net;
-		mLogger.info("Constructing Owicki-Gries proof for Petri program that %s and unfolding that %s",
-				net.sizeInformation(), bp.sizeInformation());
+		final long cutoffs = bp.getConditions().stream().filter(c -> c.getPredecessorEvent().isCutoffEvent()).count();
+		mLogger.info(
+				"Constructing Owicki-Gries proof for Petri program that %s and unfolding that %s."
+						+ " %d conditions belong to cutoff events",
+				net.sizeInformation(), bp.sizeInformation(), cutoffs);
 
 		mOriginalPlaces = mNet.getPlaces();
 		mConditions = mBp.getConditions().stream().collect(Collectors.toSet());
