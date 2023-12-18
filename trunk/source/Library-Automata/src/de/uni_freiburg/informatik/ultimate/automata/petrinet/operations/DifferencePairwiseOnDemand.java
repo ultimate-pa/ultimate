@@ -246,7 +246,7 @@ public final class DifferencePairwiseOnDemand<LETTER, PLACE, CRSF extends IPetri
 
 	private static <LETTER, STATE> boolean isUniversalLooper(final LETTER letter,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa, final Set<STATE> states) {
-		return states.stream().allMatch(state -> hasSelfloop(letter, state, nwa));
+		return states.stream().filter(s -> !nwa.isFinal(s)).allMatch(state -> hasSelfloop(letter, state, nwa));
 	}
 
 	private static <LETTER, STATE> boolean hasSelfloop(final LETTER letter, final STATE state,
