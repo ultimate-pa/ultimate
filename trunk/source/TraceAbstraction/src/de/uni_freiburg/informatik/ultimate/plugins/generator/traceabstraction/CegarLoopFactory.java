@@ -32,7 +32,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -54,7 +53,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.IInitialAbstractionProvider;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.NwaInitialAbstractionProvider;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.PartialOrderAbstractionProvider;
@@ -145,8 +143,7 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 					stateFactoryForRefinement, witnessAutomaton);
 			// TODO extract proof producer from IInitialAbstractionProvider and pass to CEGAR loop
 			return new IncrementalInclusionCegarLoop<>(name, abstraction, root, csToolkit, predicateFactory, mPrefs,
-					errorLocs, mPrefs.interpolation(), null, mComputeHoareAnnotation,
-					hoareAnnotationStates(hoareAnnotationLocs, abstraction), services, languageOperation,
+					errorLocs, mPrefs.interpolation(), null, mComputeHoareAnnotation, services, languageOperation,
 					mTransitionClazz, stateFactoryForRefinement);
 		}
 
@@ -155,8 +152,7 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 					stateFactoryForRefinement, witnessAutomaton);
 			// TODO extract proof producer from IInitialAbstractionProvider and pass to CEGAR loop
 			return new CegarLoopSWBnonRecursive<>(name, abstraction, root, csToolkit, predicateFactory, mPrefs,
-					errorLocs, mPrefs.interpolation(), null, mComputeHoareAnnotation,
-					hoareAnnotationStates(hoareAnnotationLocs, abstraction), services, mTransitionClazz,
+					errorLocs, mPrefs.interpolation(), null, mComputeHoareAnnotation, services, mTransitionClazz,
 					stateFactoryForRefinement);
 		}
 
@@ -224,18 +220,15 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 		switch (mPrefs.getFloydHoareAutomataReuse()) {
 		case EAGER:
 			return new EagerReuseCegarLoop<>(name, initialAbstraction, root, csToolkit, predicateFactory, mPrefs,
-					errorLocs, mPrefs.interpolation(), null, mComputeHoareAnnotation,
-					hoareAnnotationStates(hoareAnnotationLocs, initialAbstraction), services, Collections.emptyList(),
+					errorLocs, mPrefs.interpolation(), null, mComputeHoareAnnotation, services, Collections.emptyList(),
 					rawFloydHoareAutomataFromFile, mTransitionClazz, stateFactoryForRefinement);
 		case LAZY_IN_ORDER:
 			return new LazyReuseCegarLoop<>(name, initialAbstraction, root, csToolkit, predicateFactory, mPrefs,
-					errorLocs, mPrefs.interpolation(), null, mComputeHoareAnnotation,
-					hoareAnnotationStates(hoareAnnotationLocs, initialAbstraction), services, Collections.emptyList(),
+					errorLocs, mPrefs.interpolation(), null, mComputeHoareAnnotation, services, Collections.emptyList(),
 					rawFloydHoareAutomataFromFile, mTransitionClazz, stateFactoryForRefinement);
 		case NONE:
 			return new NwaCegarLoop<>(name, initialAbstraction, root, csToolkit, predicateFactory, mPrefs, errorLocs,
-					mPrefs.interpolation(), null, mComputeHoareAnnotation,
-					hoareAnnotationStates(hoareAnnotationLocs, initialAbstraction), services, mTransitionClazz,
+					mPrefs.interpolation(), null, mComputeHoareAnnotation, services, mTransitionClazz,
 					stateFactoryForRefinement);
 		default:
 			throw new AssertionError("Unknown Setting: " + mPrefs.getFloydHoareAutomataReuse());
@@ -347,15 +340,6 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.InitialAbstractionConstructionTime);
 			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.OverallTime);
 		}
-	}
-
-	// TODO #proofRefactor superseded by NwaHoareProofProducer::computeHoareStates
-	@Deprecated
-	private static Set<IPredicate> hoareAnnotationStates(final Set<IcfgLocation> hoareAnnotationLocs,
-			final INestedWordAutomaton<?, IPredicate> initialAbstraction) {
-		return initialAbstraction.getStates().stream()
-				.filter(p -> PredicateUtils.getLocations(p).anyMatch(hoareAnnotationLocs::contains))
-				.collect(Collectors.toSet());
 	}
 
 	public CegarLoopStatisticsGenerator getStatistics() {

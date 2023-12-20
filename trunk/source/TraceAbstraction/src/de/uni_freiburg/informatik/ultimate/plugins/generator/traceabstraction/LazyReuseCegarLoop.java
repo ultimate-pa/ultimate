@@ -81,14 +81,13 @@ public class LazyReuseCegarLoop<L extends IIcfgTransition<?>> extends ReuseCegar
 			final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final TAPreferences taPrefs, final Set<? extends IcfgLocation> errorLocs,
 			final InterpolationTechnique interpolation, final T proofUpdater, final boolean computeHoareAnnotation,
-			final Set<IPredicate> hoareAnnotationStates, final IUltimateServiceProvider services,
+			final IUltimateServiceProvider services,
 			final List<Pair<AbstractInterpolantAutomaton<L>, IPredicateUnifier>> floydHoareAutomataFromOtherLocations,
 			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFiles,
 			final Class<L> transitionClazz, final PredicateFactoryRefinement stateFactoryForRefinement) {
 		super(name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation,
-				proofUpdater, computeHoareAnnotation, hoareAnnotationStates, services,
-				floydHoareAutomataFromOtherLocations, rawFloydHoareAutomataFromFiles, transitionClazz,
-				stateFactoryForRefinement);
+				proofUpdater, computeHoareAnnotation, services, floydHoareAutomataFromOtherLocations,
+				rawFloydHoareAutomataFromFiles, transitionClazz, stateFactoryForRefinement);
 	}
 
 	@Override

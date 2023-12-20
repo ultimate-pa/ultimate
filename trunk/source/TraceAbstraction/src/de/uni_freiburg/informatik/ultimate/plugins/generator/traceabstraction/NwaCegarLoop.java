@@ -143,8 +143,8 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 			final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final TAPreferences taPrefs, final Set<? extends IcfgLocation> errorLocs,
 			final InterpolationTechnique interpolation, final T proofUpdater, final boolean computeHoareAnnotation,
-			final Set<IPredicate> hoareAnnotationStates, final IUltimateServiceProvider services,
-			final Class<L> transitionClazz, final PredicateFactoryRefinement stateFactoryForRefinement) {
+			final IUltimateServiceProvider services, final Class<L> transitionClazz,
+			final PredicateFactoryRefinement stateFactoryForRefinement) {
 		super(name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation,
 				computeHoareAnnotation, services, transitionClazz, stateFactoryForRefinement);
 		mProofUpdater = proofUpdater == null ? null : new ProofUpdater<>(proofUpdater);
