@@ -68,12 +68,12 @@ public final class Crown<PLACE, LETTER> {
 	}
 
 	private boolean crownContainsAllCuts() {
-		final var crownMarkings = getAllCrownCuts();
+		final var crownCuts = getAllCrownCuts();
 		final var branchingProcessCuts = mBp.computeCuts();
 		for (final ImmutableList<Condition<LETTER, PLACE>> branchingProcessCoset : branchingProcessCuts) {
 			final Set<Condition<LETTER, PLACE>> coset =
 					branchingProcessCoset.stream().map(condition -> condition).collect(Collectors.toSet());
-			if (!crownMarkings.contains(coset)) {
+			if (!crownCuts.contains(coset)) {
 				return false;
 			}
 		}
@@ -157,5 +157,10 @@ public final class Crown<PLACE, LETTER> {
 			return false;
 		}
 		return true;
+	}
+
+	@Override
+	public String toString() {
+		return mCrown.toString();
 	}
 }

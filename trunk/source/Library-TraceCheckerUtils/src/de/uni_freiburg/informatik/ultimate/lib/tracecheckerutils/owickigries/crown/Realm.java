@@ -220,4 +220,9 @@ public final class Realm<PLACE, LETTER> {
 	public int hashCode() {
 		return mRealm.hashCode();
 	}
+
+	@Override
+	public String toString() {
+		return mRealm.toString();
+	}
 }

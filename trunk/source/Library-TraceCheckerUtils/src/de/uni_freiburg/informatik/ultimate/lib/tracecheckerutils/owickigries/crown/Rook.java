@@ -317,4 +317,9 @@ public final class Rook<PLACE, LETTER> {
 	public int hashCode() {
 		return Objects.hash(mKingdom, mLaw);
 	}
+	
+	@Override
+	public String toString() {
+		return "Kingdom: " + mKingdom.toString() + " Law: " + mLaw.toString();
+	}
 }

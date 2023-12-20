@@ -134,4 +134,9 @@ public final class KingdomLaw<PLACE, LETTER> {
 		return mLaw.hashCode();
 	}
 
+	@Override
+	public String toString() {
+		return mLaw.toString();
+	}
+
 }

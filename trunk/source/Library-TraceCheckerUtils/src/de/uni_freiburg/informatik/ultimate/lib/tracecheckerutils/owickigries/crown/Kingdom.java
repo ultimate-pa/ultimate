@@ -221,4 +221,9 @@ public final class Kingdom<PLACE, LETTER> {
 	public int hashCode() {
 		return mKingdom.hashCode();
 	}
+
+	@Override
+	public String toString() {
+		return mKingdom.toString();
+	}
 }
