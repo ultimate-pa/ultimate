@@ -140,4 +140,12 @@ final class CoRealm<PLACE, LETTER> {
 		return mConflictFreeConditions;
 	}
 
+	public Realm<PLACE, LETTER> getRealm() {
+		return mRealm;
+	}
+
+	public Set<Condition<LETTER, PLACE>> getNegConditions() {
+		return mNegRealm;
+	}
+
 }

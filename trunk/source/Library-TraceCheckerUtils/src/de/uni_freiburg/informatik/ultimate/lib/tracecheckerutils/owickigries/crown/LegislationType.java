@@ -26,5 +26,5 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown;
 
 enum LegislationType {
-	APPROVAL, RATIFICATION, ENACTMENT, REJECTION, NULL
+	APPROVAL, RATIFICATION, ENACTMENT, DISCRIMINATION, REJECTION, NULL
 }

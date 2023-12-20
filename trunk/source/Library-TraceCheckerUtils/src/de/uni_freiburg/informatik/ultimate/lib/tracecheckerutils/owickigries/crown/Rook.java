@@ -192,6 +192,16 @@ public final class Rook<PLACE, LETTER> {
 		return new Rook<>(kingdom, law);
 	}
 
+	public Rook<PLACE, LETTER> discrimination(final CoRook<PLACE, LETTER> coRook) {
+		final CoRealm<PLACE, LETTER> partialCoRealm = coRook.getCoKingdom().getParRealms().iterator().next();
+		Realm<PLACE, LETTER> partialRealm = partialCoRealm.getRealm();
+		Kingdom<PLACE, LETTER> kingdom = mKingdom.removeRealm(partialRealm);
+		partialRealm = partialRealm.removeCondition(partialCoRealm.getNegConditions());
+		kingdom = kingdom.addRealm(partialRealm);
+		final KingdomLaw<PLACE, LETTER> law = coRook.getRook().getLaw().addCondition(coRook.getCondition());
+		return new Rook<>(kingdom, law);
+	}
+
 	public Set<Set<Condition<LETTER, PLACE>>> getCensus() {
 		final Set<Set<Condition<LETTER, PLACE>>> treaty = mKingdom.getTreaty();
 		final Set<Set<Condition<LETTER, PLACE>>> census = treaty.stream()
@@ -317,7 +327,7 @@ public final class Rook<PLACE, LETTER> {
 	public int hashCode() {
 		return Objects.hash(mKingdom, mLaw);
 	}
-	
+
 	@Override
 	public String toString() {
 		return "Kingdom: " + mKingdom.toString() + " Law: " + mLaw.toString();

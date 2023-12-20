@@ -48,6 +48,11 @@ final class CoKingdom<PLACE, LETTER> {
 	private Set<Realm<PLACE, LETTER>> mParKingdom;
 
 	/**
+	 * Subset of coRealms which correspond to Realms in Kingdom that have partial corelation wrt. specified condition;
+	 */
+	private Set<CoRealm<PLACE, LETTER>> mParCoRealms;
+
+	/**
 	 * Subset of Realms in Kigmdom that are have negative corelation wrt. specified condition
 	 */
 	private Set<Realm<PLACE, LETTER>> mNegKingdom;
@@ -92,6 +97,7 @@ final class CoKingdom<PLACE, LETTER> {
 		mPosKingdom = new HashSet<>();
 		mNegKingdom = new HashSet<>();
 		mParKingdom = new HashSet<>();
+		mParCoRealms = new HashSet<>();
 		for (final Realm<PLACE, LETTER> realm : mKingdom.getRealms()) {
 			if (realm.contains(mCondition)) {
 				return false;
@@ -106,6 +112,7 @@ final class CoKingdom<PLACE, LETTER> {
 				break;
 			default:
 				mParKingdom.add(realm);
+				mParCoRealms.add(coRealm);
 			}
 		}
 		return true;
@@ -161,6 +168,10 @@ final class CoKingdom<PLACE, LETTER> {
 
 	public Set<Realm<PLACE, LETTER>> getParKingdom() {
 		return mParKingdom;
+	}
+
+	public Set<CoRealm<PLACE, LETTER>> getParRealms() {
+		return mParCoRealms;
 	}
 
 	public Set<Condition<LETTER, PLACE>> getConflictFreeConditions() {

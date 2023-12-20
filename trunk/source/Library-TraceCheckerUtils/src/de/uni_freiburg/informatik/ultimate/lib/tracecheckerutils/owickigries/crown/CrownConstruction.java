@@ -124,54 +124,13 @@ public final class CrownConstruction<PLACE, LETTER> {
 		return colonizedRooks;
 	}
 
-	private Set<Rook<PLACE, LETTER>> crownRefurbishment(final Set<Rook<PLACE, LETTER>> rooks) {
-		final Kindred<PLACE, LETTER> kindred = new Kindred<>(rooks);
-		final List<Rook<PLACE, LETTER>> crownRooks = new ArrayList<>(rooks);
-		for (final Rook<PLACE, LETTER> rook : crownRooks) {
-			final Set<Marking<PLACE>> kindredMarkings = kindred.getKindredMarkings(rook);
-			if (kindredMarkings.isEmpty()) {
-				continue;
-			}
-			final Set<Marking<PLACE>> splitMarkings = new HashSet<>();
-			for (final Marking<PLACE> marking : kindredMarkings) {
-				final Set<Rook<PLACE, LETTER>> kindredRooks = kindred.getKindredRooks(marking);
-				if (!Rook.getRooksTerritoryEquality(kindredRooks)) {
-					splitMarkings.add(marking);
-				}
-			}
-			final Set<Condition<LETTER, PLACE>> allKindredConditions =
-					kindred.getKindredConditions(splitMarkings, rook);
-			final Set<Realm<PLACE, LETTER>> kindredRealms = kindred.getKindredRealms(allKindredConditions, rook);
-			Kingdom<PLACE, LETTER> firstKingdom = new Kingdom<>(
-					ImmutableSet.of(DataStructureUtils.difference(rook.getKingdom().getRealms(), kindredRealms)));
-			for (final Realm<PLACE, LETTER> realm : kindredRealms) {
-				final ImmutableSet<Condition<LETTER, PLACE>> newRealmConditions =
-						ImmutableSet.of(DataStructureUtils.difference(realm.getConditions(), allKindredConditions));
-				firstKingdom = firstKingdom.addRealm(new Realm<>(newRealmConditions));
-			}
-			rooks.remove(rook);
-			rooks.add(new Rook<>(firstKingdom, rook.getLaw()));
-			for (final Marking<PLACE> marking : splitMarkings) {
-				final Set<Condition<LETTER, PLACE>> markingKindredConds = kindred.getKindredConditions(marking, rook);
-				Kingdom<PLACE, LETTER> secondKingdom = new Kingdom<>(
-						ImmutableSet.of(DataStructureUtils.difference(rook.getKingdom().getRealms(), kindredRealms)));
-				for (final Condition<LETTER, PLACE> condition : markingKindredConds) {
-					secondKingdom = secondKingdom.addRealm(new Realm<>(ImmutableSet.of(Set.of(condition))));
-				}
-				rooks.add(new Rook<>(secondKingdom, rook.getLaw()));
-			}
-		}
-		return rooks;
-	}
-
 	// Recursive expansion
 	private Set<Rook<PLACE, LETTER>> crownExpansionRecursive(final Rook<PLACE, LETTER> rook,
 			final List<Condition<LETTER, PLACE>> troopConditions, final boolean colonizer) {
 		final Set<Rook<PLACE, LETTER>> crownRooks = new HashSet<>();
 		boolean isMaximal = true;
-		List<Condition<LETTER, PLACE>> conditions = new ArrayList<>(troopConditions);
+		final List<Condition<LETTER, PLACE>> conditions = new ArrayList<>(troopConditions);
 		for (final Condition<LETTER, PLACE> condition : troopConditions) {
-			conditions = new ArrayList<>(troopConditions);
 			Rook<PLACE, LETTER> colonyRook;
 			if (colonizer) {
 				colonyRook = colonize(condition, rook);
@@ -234,6 +193,46 @@ public final class CrownConstruction<PLACE, LETTER> {
 		return crownRooks;
 	}
 
+	private Set<Rook<PLACE, LETTER>> crownRefurbishment(final Set<Rook<PLACE, LETTER>> rooks) {
+		final Kindred<PLACE, LETTER> kindred = new Kindred<>(rooks);
+		final List<Rook<PLACE, LETTER>> crownRooks = new ArrayList<>(rooks);
+		for (final Rook<PLACE, LETTER> rook : crownRooks) {
+			final Set<Marking<PLACE>> kindredMarkings = kindred.getKindredMarkings(rook);
+			if (kindredMarkings.isEmpty()) {
+				continue;
+			}
+			final Set<Marking<PLACE>> splitMarkings = new HashSet<>();
+			for (final Marking<PLACE> marking : kindredMarkings) {
+				final Set<Rook<PLACE, LETTER>> kindredRooks = kindred.getKindredRooks(marking);
+				if (!Rook.getRooksTerritoryEquality(kindredRooks)) {
+					splitMarkings.add(marking);
+				}
+			}
+			final Set<Condition<LETTER, PLACE>> allKindredConditions =
+					kindred.getKindredConditions(splitMarkings, rook);
+			final Set<Realm<PLACE, LETTER>> kindredRealms = kindred.getKindredRealms(allKindredConditions, rook);
+			Kingdom<PLACE, LETTER> firstKingdom = new Kingdom<>(
+					ImmutableSet.of(DataStructureUtils.difference(rook.getKingdom().getRealms(), kindredRealms)));
+			for (final Realm<PLACE, LETTER> realm : kindredRealms) {
+				final ImmutableSet<Condition<LETTER, PLACE>> newRealmConditions =
+						ImmutableSet.of(DataStructureUtils.difference(realm.getConditions(), allKindredConditions));
+				firstKingdom = firstKingdom.addRealm(new Realm<>(newRealmConditions));
+			}
+			rooks.remove(rook);
+			rooks.add(new Rook<>(firstKingdom, rook.getLaw()));
+			for (final Marking<PLACE> marking : splitMarkings) {
+				final Set<Condition<LETTER, PLACE>> markingKindredConds = kindred.getKindredConditions(marking, rook);
+				Kingdom<PLACE, LETTER> secondKingdom = new Kingdom<>(
+						ImmutableSet.of(DataStructureUtils.difference(rook.getKingdom().getRealms(), kindredRealms)));
+				for (final Condition<LETTER, PLACE> condition : markingKindredConds) {
+					secondKingdom = secondKingdom.addRealm(new Realm<>(ImmutableSet.of(Set.of(condition))));
+				}
+				rooks.add(new Rook<>(secondKingdom, rook.getLaw()));
+			}
+		}
+		return rooks;
+	}
+
 	private Rook<PLACE, LETTER> colonize(final Condition<LETTER, PLACE> condition, final Rook<PLACE, LETTER> rook) {
 		final boolean colonizer = isColonizer(condition);
 		final CoRook<PLACE, LETTER> coRook = new CoRook<>(condition, rook, mBp, colonizer, mPlacesCoRelation);
@@ -267,6 +266,9 @@ public final class CrownConstruction<PLACE, LETTER> {
 			break;
 		case RATIFICATION:
 			colonyRook = rook.ratification(coRook);
+			break;
+		case DISCRIMINATION:
+			colonyRook = rook.discrimination(coRook);
 			break;
 		default:
 			colonyRook = null;

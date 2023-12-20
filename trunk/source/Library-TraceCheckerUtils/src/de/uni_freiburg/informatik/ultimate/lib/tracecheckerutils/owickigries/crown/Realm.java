@@ -123,6 +123,19 @@ public final class Realm<PLACE, LETTER> {
 	}
 
 	/**
+	 * Returns new Realm without the specific condition.
+	 *
+	 * @param condition
+	 *            Condition to be removed.
+	 * @return Realm without condition.
+	 */
+	public Realm<PLACE, LETTER> removeCondition(final Set<Condition<LETTER, PLACE>> conditions) {
+		final var newConditions =
+				mRealm.stream().filter(cond -> !conditions.contains(cond)).collect(ImmutableSet.collector());
+		return new Realm<>(newConditions);
+	}
+
+	/**
 	 * Check if a condition can be added to the realm without violation the corelation restrictions.
 	 *
 	 * @param bp

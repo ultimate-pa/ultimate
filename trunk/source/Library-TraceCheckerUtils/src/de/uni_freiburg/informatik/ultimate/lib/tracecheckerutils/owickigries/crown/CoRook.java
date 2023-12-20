@@ -88,6 +88,9 @@ final class CoRook<PLACE, LETTER> {
 			} else if (mCoKingdom.getCoRelation() == CoRelationType.PARTIAL
 					&& mCoLaw.getCoRelation() == CoRelationType.POSITIVE) {
 				return LegislationType.RATIFICATION;
+			} else if (mCoKingdom.getCoRelation() == CoRelationType.DIVERGENT
+					&& mCoLaw.getCoRelation() == CoRelationType.POSITIVE) {
+				return LegislationType.DISCRIMINATION;
 			} else {
 				return LegislationType.REJECTION;
 			}
