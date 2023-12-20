@@ -208,10 +208,6 @@ public final class PetriNet2FiniteAutomaton<LETTER, PLACE>
 		return mResult;
 	}
 
-	public Map<Marking<PLACE>, PLACE> getStateMap() {
-		return mMarking2State;
-	}
-
 	@Override
 	public boolean checkResult(final IStateFactory<PLACE> stateFactory) throws AutomataLibraryException {
 		return true;
