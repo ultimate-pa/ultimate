@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsOrder;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.dynamicabstraction.DynamicStratifiedReduction.Statistics;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -335,6 +336,12 @@ public abstract class DynamicStratifiedReductionTestsBase implements IMessagePri
 				throw new IllegalStateException("No proof can be made responsible in state " + state);
 			}
 			return mProofs.get(result);
+		}
+
+		@Override
+		public void takeRedStatistics(Statistics<Set<String>> mstatistics) {
+			// TODO Auto-generated method stub
+			
 		}
 	}
 

@@ -395,7 +395,7 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 					
 					// if it is the first encounter with a loop, update the relevant statistics
 					if ( !mStatistics.mContainsLoop) {
-						mStatistics.hasLoop();
+						mStatistics.setContainsLoop();
 						mStatistics.stopLoopless();
 						mStatistics.setProtectedVarsBL(mStateFactory.getAbstractionLevel(state).getValue());
 					}
@@ -502,7 +502,7 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 	}
 
 	public static final class Statistics<H> extends AbstractStatisticsDataProvider {
-		public boolean mContainsLoop = false;  
+		private boolean mContainsLoop = false;  
 		private H mProtectedVars;
 		private H mProtectedVarsBeforeLoop;
 		private TimeTracker mLooplessTime = new TimeTracker();
@@ -514,12 +514,13 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 		// TODO: right key types needed
 			declare("Has Loop", () -> mContainsLoop, KeyType.COUNTER);
 		// TODO: print protected Variables humanly readable?
-			declare("Protected Variables", () -> mProtectedVars, KeyType.COUNTER);
 			declare("Protected Variables before encountering a loop", () -> mProtectedVarsBeforeLoop, KeyType.COUNTER);
-
+			declare("Protected Variables", () -> mProtectedVars, KeyType.COUNTER);
 		}
-	
-		public void hasLoop() {
+		public boolean containsLoop() {
+			return mContainsLoop;
+		}
+		public void setContainsLoop() {
 			mContainsLoop = true;
 		}
 		public void startTotal() {
