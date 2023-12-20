@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?pde version="3.5"?>
 
-<product name="Ultimate-Debug" uid="Debug-E4" id="de.uni_freiburg.informatik.ultimate.core.Debug" application="de.uni_freiburg.informatik.ultimate.core.CoreRCP" version="0.2.4" useFeatures="true" includeLaunchers="true">
+<product name="Ultimate-Debug" uid="Debug-E4" id="de.uni_freiburg.informatik.ultimate.core.Debug" application="de.uni_freiburg.informatik.ultimate.core.CoreRCP" version="0.2.4" type="features" includeLaunchers="true" autoIncludeRequirements="true">
 
    <aboutInfo>
       <image path="/CoreRCP/icons/about.gif"/>

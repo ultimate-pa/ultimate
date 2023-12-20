@@ -170,7 +170,7 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 		mStatistics.stopTotal();
 		if (!mStatistics.mContainsLoop) {
 			mStatistics.stopLoopless();
-			mStatistics.mProtectedVarsBeforeLoop = mStatistics.mProtectedVars;
+			mStatistics.setProtectedVarsBL(mStatistics.mProtectedVars);
 		}
 		mProofManager.takeRedStatistics(mStatistics);
 	}
@@ -295,7 +295,7 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 
 		final boolean isComplete = mDfs.backtrack();
 		H lastProtVars = mStateFactory.getAbstractionLevel(oldState).getValue();
-		mStatistics.mProtectedVars = lastProtVars;
+		mStatistics.setProtectedVars(lastProtVars);
 		debugIndent("backtracking state %s (complete: %s)", oldState, isComplete);
 		debugIndent("final abstraction level of state %s was %s", oldState,
 				lastProtVars);
@@ -397,7 +397,7 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 					if ( !mStatistics.mContainsLoop) {
 						mStatistics.hasLoop();
 						mStatistics.stopLoopless();
-						mStatistics.mProtectedVarsBeforeLoop = mStateFactory.getAbstractionLevel(state).getValue();
+						mStatistics.setProtectedVarsBL(mStateFactory.getAbstractionLevel(state).getValue());
 					}
 					// TODO: don't do this if the state loops back to itself
 					// if we're in a loop instantly use the abstraction hammer
@@ -503,8 +503,8 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 
 	public static final class Statistics<H> extends AbstractStatisticsDataProvider {
 		public boolean mContainsLoop = false;  
-		public H mProtectedVars;
-		public H mProtectedVarsBeforeLoop;
+		private H mProtectedVars;
+		private H mProtectedVarsBeforeLoop;
 		private TimeTracker mLooplessTime = new TimeTracker();
 		private TimeTracker mTotalTime = new TimeTracker();
 		
@@ -533,6 +533,12 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 		}
 		public void stopLoopless() {
 			mLooplessTime.stop();
+		}
+		public void setProtectedVars(H vars) {
+			mProtectedVars = vars;
+		}
+		public void setProtectedVarsBL(H vars) {
+			mProtectedVarsBeforeLoop = vars;
 		}
 
 }
