@@ -45,11 +45,17 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.II
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation.Dependence;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.IDfsVisitor;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.DfsBookkeeping;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.ILattice;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator.ComparisonResult;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
+import de.uni_freiburg.informatik.ultimate.util.statistics.TimeTracker;
 
 /**
  * Implementation of the sleep set automaton using dynamically computed stratified independence relations. Its basically
@@ -77,6 +83,7 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
+	private final static Statistics mStatistics = new Statistics(); 
 
 	private final INwaOutgoingLetterAndTransitionProvider<L, S> mOriginalAutomaton;
 	private final IStratifiedStateFactory<L, S, R, H> mStateFactory;
@@ -140,7 +147,11 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 			final S startingState, final IIndependenceInducedByAbstraction<S, L, H> independence,
 			final IProofManager<H, S> manager) throws AutomataOperationCanceledException {
 		assert NestedWordAutomataUtils.isFiniteAutomaton(originalAutomaton) : "Finite automata only";
-
+		
+		mStatistics.startTotal();
+		mStatistics.startLoopless();
+		
+		
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(DynamicStratifiedReduction.class);
 		mAbstractionLattice = independence.getAbstractionLattice();
@@ -156,6 +167,12 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 		mProofManager = manager;
 
 		traverse();
+		mStatistics.stopTotal();
+		if (!mStatistics.mContainsLoop) {
+			mStatistics.stopLoopless();
+			mStatistics.mProtectedVarsBeforeLoop = mStatistics.mProtectedVars;
+		}
+		mProofManager.takeRedStatistics(mStatistics);
 	}
 
 	/**
@@ -277,10 +294,11 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 		mStateFactory.defineAbstractionLevel(oldState);
 
 		final boolean isComplete = mDfs.backtrack();
-
+		H lastProtVars = mStateFactory.getAbstractionLevel(oldState).getValue();
+		mStatistics.mProtectedVars = lastProtVars;
 		debugIndent("backtracking state %s (complete: %s)", oldState, isComplete);
 		debugIndent("final abstraction level of state %s was %s", oldState,
-				mStateFactory.getAbstractionLevel(oldState).getValue());
+				lastProtVars);
 		mIndentLevel--;
 		mVisitor.backtrackState(oldState, isComplete);
 		return mVisitor.isFinished();
@@ -374,8 +392,14 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 					mAlreadyReduced.put(originalSucc, reductionSucc);
 				} else if (!mStateFactory.getAbstractionLimit(correspRstate).isLocked()) {
 					System.out.println("Found a loop, use abstraction hammer");
-
-					// TODO: dont do this if the state loops back to itself
+					
+					// if it is the first encounter with a loop, update the relevant statistics
+					if ( !mStatistics.mContainsLoop) {
+						mStatistics.hasLoop();
+						mStatistics.stopLoopless();
+						mStatistics.mProtectedVarsBeforeLoop = mStateFactory.getAbstractionLevel(state).getValue();
+					}
+					// TODO: don't do this if the state loops back to itself
 					// if we're in a loop instantly use the abstraction hammer
 
 					reductionSucc = mStateFactory.createStratifiedState(originalSucc,
@@ -417,14 +441,14 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 
 			if ((comp.compare(candidate.getLetter(), letter) < 0) && !currSleepSet.containsKey(candidate.getLetter())) {
 				assert mAlreadyReduced.containsKey(candidate.getSucc()) : "State has already been visited and "
-						+ "should have an reduction state\n";
+						+ "should have a reduction state\n";
 				final H abst_lv =
 						mStateFactory.getAbstractionLevel(mAlreadyReduced.get(candidate.getSucc())).getValue();
 				independence = mIndependenceProvider.getInducedIndependence(abst_lv);
 				if (independence.isIndependent(currentS, candidate.getLetter(), letter) == Dependence.INDEPENDENT) {
 					nextSleepSet.put(candidate.getLetter(), abst_lv);
 
-				} // TODO: finde den fehler
+				}
 			} // Letters from old SleepSet
 
 			else if (currSleepSet.containsKey(candidate.getLetter())) {
@@ -466,8 +490,50 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 				new AbstractionLevel<>(protectedVars, mAbstractionLattice, false), new AbstractionLevel<>(protectedVars,
 						mAbstractionLattice, mStateFactory.getAbstractionLimit(predecState).isLocked()));
 
-		// TODO @Veronika: I removed this as the sleep set was always empty here.
-		//
 		return nextState;
 	}
+
+	
+	
+	// Statistics with special focus on effects of loop handling
+	
+	public static IStatisticsDataProvider getStatistics() {
+		return mStatistics;
+	}
+
+	public static final class Statistics<H> extends AbstractStatisticsDataProvider {
+		public boolean mContainsLoop = false;  
+		public H mProtectedVars;
+		public H mProtectedVarsBeforeLoop;
+		private TimeTracker mLooplessTime = new TimeTracker();
+		private TimeTracker mTotalTime = new TimeTracker();
+		
+		public Statistics() {
+			declare("Time before loop", () -> mLooplessTime, KeyType.TT_TIMER);
+			declare("Time in total", () -> mTotalTime, KeyType.TT_TIMER);
+		// TODO: right key types needed
+			declare("Has Loop", () -> mContainsLoop, KeyType.COUNTER);
+		// TODO: print protected Variables humanly readable?
+			declare("Protected Variables", () -> mProtectedVars, KeyType.COUNTER);
+			declare("Protected Variables before encountering a loop", () -> mProtectedVarsBeforeLoop, KeyType.COUNTER);
+
+		}
+	
+		public void hasLoop() {
+			mContainsLoop = true;
+		}
+		public void startTotal() {
+			mTotalTime.start();
+		}
+		public void stopTotal() {
+			mTotalTime.stop();
+		}
+		public void startLoopless() {
+			mLooplessTime.start();
+		}
+		public void stopLoopless() {
+			mLooplessTime.stop();
+		}
+
+}
 }

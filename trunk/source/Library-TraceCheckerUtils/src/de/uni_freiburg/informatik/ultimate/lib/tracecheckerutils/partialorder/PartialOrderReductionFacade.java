@@ -485,9 +485,13 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>, H> {
 		if (mProofManager != null) {
 			mProofManager.finish();
 			final StatisticsData proofManagerData = new StatisticsData();
+			final StatisticsData dynamicReductionData = new StatisticsData();
 			proofManagerData.aggregateBenchmarkData(mProofManager.getStatistics());
+			dynamicReductionData.aggregateBenchmarkData(mProofManager.getRedStatistics());
 			mServices.getResultService().reportResult(pluginId,
 					new StatisticsResult<>(pluginId, "Proof manager benchmarks", proofManagerData));
+			mServices.getResultService().reportResult(pluginId,
+					new StatisticsResult<>(pluginId, "Reduction benchmarks", dynamicReductionData));
 		}
 	}
 

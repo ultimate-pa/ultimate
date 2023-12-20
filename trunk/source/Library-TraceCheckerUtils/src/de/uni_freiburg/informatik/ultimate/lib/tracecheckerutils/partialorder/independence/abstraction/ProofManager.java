@@ -37,6 +37,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.dynamicabstraction.DynamicStratifiedReduction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.dynamicabstraction.IProofManager;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -47,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
 /**
  * Used by DynamicStratifiedReduction to handle everything related to proofs
@@ -64,7 +66,9 @@ public class ProofManager<L extends IAction, H, P> implements IProofManager<H, I
 	private final IRefinableAbstraction<P, H, L> mAbstraction;
 	private final Function<IPredicate, List<IPredicate>> mGetConjuncts;
 	private final Predicate<IPredicate> mIsErrorState;
-
+	
+	//TODO: Statistiken irgendwie sinnvoll strukturieren...
+	private DynamicStratifiedReduction.Statistics<H> mRedStatistics = new DynamicStratifiedReduction.Statistics();  // part of the statistics collected in Dyn.Strat.Red
 	private final Statistics mStatistics = new Statistics();
 
 	private final List<H> mProofLevels = new ArrayList<>();
@@ -120,6 +124,11 @@ public class ProofManager<L extends IAction, H, P> implements IProofManager<H, I
 
 		// choose the proof that is deemed responsible for state being a proven state
 		final int responsibleProof;
+		
+		if (candidateProofs.size() > 1) {
+			mStatistics.addChoice();
+		}
+		
 		// Priorities:
 		if (candidateProofs.contains(mLastResponsibleProof)) {
 			// (1) last chosen proof
@@ -152,16 +161,26 @@ public class ProofManager<L extends IAction, H, P> implements IProofManager<H, I
 	public IStatisticsDataProvider getStatistics() {
 		return mStatistics;
 	}
+	public void takeRedStatistics(DynamicStratifiedReduction.Statistics<H> red) {
+	// wird von DynamicStratifiedReduction genutzt, um Statistik zu übergeben
+		mRedStatistics = red;
+	}
+	
+	public IStatisticsDataProvider getRedStatistics() {
+		return mRedStatistics;
+	}
 
 	private static final class Statistics extends AbstractStatisticsDataProvider {
 		private int mIrresponsibleProofs = 0;
 		private int mRedundantProofs = 0;
 		private int mProvenStates = 0;
+		private int mChoices = 0;
 
 		public Statistics() {
 			declare("IrresponsibleProofs", () -> mIrresponsibleProofs, KeyType.COUNTER);
 			declare("RedundantProofs", () -> mRedundantProofs, KeyType.COUNTER);
 			declare("ProvenStates", () -> mProvenStates, KeyType.COUNTER);
+			declare("Choices", () -> mChoices, KeyType.COUNTER);
 		}
 
 		public void reportRedundantProof() {
@@ -175,6 +194,10 @@ public class ProofManager<L extends IAction, H, P> implements IProofManager<H, I
 
 		public void addIrresponsibleProofs(final int n) {
 			mIrresponsibleProofs += n;
+		}
+		
+		public void addChoice() {
+			mChoices++;
 		}
 	}
 }
