@@ -173,8 +173,8 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 
 		final IProgressMonitorService progmon = mServices.getProgressMonitorService();
 
-		if (mComputeHoareAnnotation && progmon.continueProcessing() && results.stream().allMatch(
-				a -> a.resultStream().allMatch(r -> r != Result.TIMEOUT && !Result.USER_LIMIT_RESULTS.contains(r)))) {
+		if (mComputeHoareAnnotation && progmon.continueProcessing()
+				&& results.stream().allMatch(a -> a.resultStream().noneMatch(Result::isLimit))) {
 			final IBacktranslationService backTranslatorService = mServices.getBacktranslationService();
 
 			// TODO #proofRefactor
