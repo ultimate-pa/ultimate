@@ -53,7 +53,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverit
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
@@ -61,15 +60,16 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.dangerinvariants.DangerInvariantUtils;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.HoareAnnotation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.FloydHoareMapping;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.FloydHoareUtils;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.IcfgFloydHoareValidityCheck;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
@@ -160,6 +160,7 @@ public class InvariantSynthesisStarter<L extends IIcfgTransition<?>> {
 			return;
 		}
 
+		final FloydHoareMapping<IcfgLocation> floydHoare;
 		final CFGInvariantsGenerator cfgInvGenerator =
 				new CFGInvariantsGenerator(icfg, services, predicateOfInitialLocations, predicateOfErrorLocations,
 						predicateFactory, predicateUnifier, invSynthSettings, icfg.getCfgSmtToolkit(), kindOfInvariant);
@@ -176,26 +177,18 @@ public class InvariantSynthesisStarter<L extends IIcfgTransition<?>> {
 					mLogger.debug(invariants);
 					mOverallResult = Result.UNKNOWN;
 				}
+				floydHoare = null;
 			} else {
 				assert kindOfInvariant == KindOfInvariant.SAFETY;
-
-				// if (mLogger.isDebugEnabled()) {
-				// for (IcfgLocation loc : invariants.keySet()) {
-				// mLogger.debug(loc + ": " + invariants.get(loc));
-				// }
-				// }
-				for (final Entry<IcfgLocation, IPredicate> entry : invariants.entrySet()) {
-					final HoareAnnotation hoareAnnot = predicateFactory.getNewHoareAnnotation(entry.getKey(),
-							icfg.getCfgSmtToolkit().getModifiableGlobalsTable());
-					hoareAnnot.annotate(entry.getKey());
-					hoareAnnot.addInvariant(entry.getValue());
-				}
-				// TODO #proofRefactor
-				FloydHoareUtils.writeHoareAnnotationToLogger(icfg, null, mLogger, true);
+				floydHoare =
+						new FloydHoareMapping<>(predicateOfInitialLocations, predicateOfErrorLocations, invariants);
+				FloydHoareUtils.writeHoareAnnotationToLogger(icfg, floydHoare, mLogger, true);
+				// TODO #proofRefactor pass the annotation 'floydHoare' to other plugins
 				mOverallResult = Result.SAFE;
 			}
 		} else {
 			mOverallResult = Result.UNKNOWN;
+			floydHoare = null;
 		}
 
 		final Map<String, Set<IcfgLocation>> proc2errNodes = icfg.getProcedureErrorNodes();
@@ -213,9 +206,10 @@ public class InvariantSynthesisStarter<L extends IIcfgTransition<?>> {
 		mLogger.debug("Overall result: " + mOverallResult);
 		mLogger.debug("Continue processing: " + mServices.getProgressMonitorService().continueProcessing());
 		if (mOverallResult == Result.SAFE) {
+			assert floydHoare != null;
 			final IBacktranslationService backTranslatorService = mServices.getBacktranslationService();
-			createInvariantResults(icfg, icfg.getCfgSmtToolkit(), backTranslatorService);
-			createProcedureContractResults(icfg, backTranslatorService);
+			createInvariantResults(icfg, floydHoare, backTranslatorService);
+			createProcedureContractResults(icfg, floydHoare, backTranslatorService);
 		}
 		final StatisticsData stat = new StatisticsData();
 		stat.aggregateBenchmarkData(statistics);
@@ -313,11 +307,10 @@ public class InvariantSynthesisStarter<L extends IIcfgTransition<?>> {
 				useUnsatCores, useAbstractInterpretationPredicates, useWPForPathInvariants, useLBE);
 	}
 
-	private void createInvariantResults(final IIcfg<IcfgLocation> icfg, final CfgSmtToolkit csToolkit,
-			final IBacktranslationService backTranslatorService) {
-		assert new IcfgFloydHoareValidityCheck<>(mServices, icfg, true).getResult() : "incorrect Hoare annotation";
-
-		final Term trueterm = csToolkit.getManagedScript().getScript().term("true");
+	private void createInvariantResults(final IIcfg<IcfgLocation> icfg,
+			final FloydHoareMapping<IcfgLocation> annotation, final IBacktranslationService backTranslatorService) {
+		assert new IcfgFloydHoareValidityCheck<>(mServices, icfg, annotation, true)
+				.getResult() : "incorrect Hoare annotation";
 
 		final Set<IcfgLocation> locsForLoopLocations = new HashSet<>();
 
@@ -326,7 +319,7 @@ public class InvariantSynthesisStarter<L extends IIcfgTransition<?>> {
 		// find all locations that have outgoing edges which are annotated with LoopEntry, i.e., all loop candidates
 
 		for (final IcfgLocation locNode : locsForLoopLocations) {
-			final HoareAnnotation hoare = HoareAnnotation.getAnnotation(locNode);
+			final IPredicate hoare = annotation.getAnnotation(locNode);
 			if (hoare == null) {
 				continue;
 			}
@@ -335,7 +328,7 @@ public class InvariantSynthesisStarter<L extends IIcfgTransition<?>> {
 					new InvariantResult<>(Activator.PLUGIN_NAME, locNode, backTranslatorService, formula);
 			reportResult(invResult);
 
-			if (formula.equals(trueterm)) {
+			if (SmtUtils.isTrueLiteral(formula)) {
 				continue;
 			}
 			new WitnessInvariant(invResult.getInvariant()).annotate(locNode);
@@ -343,7 +336,7 @@ public class InvariantSynthesisStarter<L extends IIcfgTransition<?>> {
 	}
 
 	private void createProcedureContractResults(final IIcfg<IcfgLocation> icfg,
-			final IBacktranslationService backTranslatorService) {
+			final FloydHoareMapping<IcfgLocation> annotation, final IBacktranslationService backTranslatorService) {
 		final Map<String, IcfgLocation> finalNodes = icfg.getProcedureExitNodes();
 		for (final Entry<String, IcfgLocation> proc : finalNodes.entrySet()) {
 			final String procName = proc.getKey();
@@ -351,7 +344,7 @@ public class InvariantSynthesisStarter<L extends IIcfgTransition<?>> {
 				continue;
 			}
 			final IcfgLocation finalNode = proc.getValue();
-			final HoareAnnotation hoare = HoareAnnotation.getAnnotation(finalNode);
+			final IPredicate hoare = annotation.getAnnotation(finalNode);
 			if (hoare != null) {
 				final Term formula = hoare.getFormula();
 				final ProcedureContractResult<IIcfgElement, Term> result = new ProcedureContractResult<>(

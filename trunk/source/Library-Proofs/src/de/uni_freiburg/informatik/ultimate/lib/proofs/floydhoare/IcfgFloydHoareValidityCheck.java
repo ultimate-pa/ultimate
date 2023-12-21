@@ -49,9 +49,15 @@ public class IcfgFloydHoareValidityCheck<LOC extends IcfgLocation> extends Floyd
 	private final IIcfg<LOC> mIcfg;
 	private final Set<LOC> mErrorLocs;
 
+	@Deprecated
 	public IcfgFloydHoareValidityCheck(final IUltimateServiceProvider services, final IIcfg<LOC> icfg,
 			final boolean assertValidity) {
 		this(services, icfg, new IcfgHoareAnnotation<>(), assertValidity, MissingAnnotationBehaviour.IGNORE, false);
+	}
+
+	public IcfgFloydHoareValidityCheck(final IUltimateServiceProvider services, final IIcfg<LOC> icfg,
+			final IFloydHoareAnnotation<LOC> annotation, final boolean assertValidity) {
+		this(services, icfg, annotation, assertValidity, MissingAnnotationBehaviour.IGNORE, false);
 	}
 
 	public IcfgFloydHoareValidityCheck(final IUltimateServiceProvider services, final IIcfg<LOC> icfg,
@@ -117,6 +123,7 @@ public class IcfgFloydHoareValidityCheck<LOC extends IcfgLocation> extends Floyd
 				.map(e -> new Pair<>(clazz.cast(e), (LOC) e.getTarget())).collect(Collectors.toList());
 	}
 
+	@Deprecated
 	private static final class IcfgHoareAnnotation<LOC extends IcfgLocation> implements IFloydHoareAnnotation<LOC> {
 		@Override
 		public IPredicate getPrecondition() {
