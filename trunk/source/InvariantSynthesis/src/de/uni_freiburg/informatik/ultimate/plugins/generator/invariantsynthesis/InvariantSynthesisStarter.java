@@ -30,19 +30,14 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.invariantsynthesis
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.DangerInvariantResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.InvariantResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.PositiveResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.ProcedureContractResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovabilityReason;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovableResult;
@@ -69,7 +64,6 @@ import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.FloydHoareUtils
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.IcfgFloydHoareValidityCheck;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
@@ -207,9 +201,14 @@ public class InvariantSynthesisStarter<L extends IIcfgTransition<?>> {
 		mLogger.debug("Continue processing: " + mServices.getProgressMonitorService().continueProcessing());
 		if (mOverallResult == Result.SAFE) {
 			assert floydHoare != null;
+			assert new IcfgFloydHoareValidityCheck<>(services, icfg, floydHoare, true)
+					.getResult() : "incorrect Hoare annotation";
+
 			final IBacktranslationService backTranslatorService = mServices.getBacktranslationService();
-			createInvariantResults(icfg, floydHoare, backTranslatorService);
-			createProcedureContractResults(icfg, floydHoare, backTranslatorService);
+			FloydHoareUtils.createInvariantResults(Activator.PLUGIN_NAME, icfg, floydHoare, backTranslatorService,
+					this::reportResult);
+			FloydHoareUtils.createProcedureContractResults(Activator.PLUGIN_NAME, icfg, floydHoare,
+					backTranslatorService, this::reportResult);
 		}
 		final StatisticsData stat = new StatisticsData();
 		stat.aggregateBenchmarkData(statistics);
@@ -307,55 +306,6 @@ public class InvariantSynthesisStarter<L extends IIcfgTransition<?>> {
 				useUnsatCores, useAbstractInterpretationPredicates, useWPForPathInvariants, useLBE);
 	}
 
-	private void createInvariantResults(final IIcfg<IcfgLocation> icfg,
-			final FloydHoareMapping<IcfgLocation> annotation, final IBacktranslationService backTranslatorService) {
-		assert new IcfgFloydHoareValidityCheck<>(mServices, icfg, annotation, true)
-				.getResult() : "incorrect Hoare annotation";
-
-		final Set<IcfgLocation> locsForLoopLocations = new HashSet<>();
-
-		locsForLoopLocations.addAll(IcfgUtils.getPotentialCycleProgramPoints(icfg));
-		locsForLoopLocations.addAll(icfg.getLoopLocations());
-		// find all locations that have outgoing edges which are annotated with LoopEntry, i.e., all loop candidates
-
-		for (final IcfgLocation locNode : locsForLoopLocations) {
-			final IPredicate hoare = annotation.getAnnotation(locNode);
-			if (hoare == null) {
-				continue;
-			}
-			final Term formula = hoare.getFormula();
-			final InvariantResult<IIcfgElement, Term> invResult =
-					new InvariantResult<>(Activator.PLUGIN_NAME, locNode, backTranslatorService, formula);
-			reportResult(invResult);
-
-			if (SmtUtils.isTrueLiteral(formula)) {
-				continue;
-			}
-			new WitnessInvariant(invResult.getInvariant()).annotate(locNode);
-		}
-	}
-
-	private void createProcedureContractResults(final IIcfg<IcfgLocation> icfg,
-			final FloydHoareMapping<IcfgLocation> annotation, final IBacktranslationService backTranslatorService) {
-		final Map<String, IcfgLocation> finalNodes = icfg.getProcedureExitNodes();
-		for (final Entry<String, IcfgLocation> proc : finalNodes.entrySet()) {
-			final String procName = proc.getKey();
-			if (isAuxilliaryProcedure(procName)) {
-				continue;
-			}
-			final IcfgLocation finalNode = proc.getValue();
-			final IPredicate hoare = annotation.getAnnotation(finalNode);
-			if (hoare != null) {
-				final Term formula = hoare.getFormula();
-				final ProcedureContractResult<IIcfgElement, Term> result = new ProcedureContractResult<>(
-						Activator.PLUGIN_NAME, finalNode, backTranslatorService, procName, formula);
-
-				reportResult(result);
-				// TODO: Add setting that controls the generation of those witness invariants
-			}
-		}
-	}
-
 	private void reportDangerResults(final Map<IcfgLocation, IPredicate> invariants,
 			final Set<IcfgLocation> errorLocations, final IBacktranslationService backtranslator) {
 		final Map<IcfgLocation, Term> map = new HashMap<>();
@@ -378,10 +328,6 @@ public class InvariantSynthesisStarter<L extends IIcfgTransition<?>> {
 		final IcfgLocation errorPP = getErrorPP(pe);
 		reportResult(new UnprovableResult<>(Activator.PLUGIN_NAME, errorPP, mServices.getBacktranslationService(), pe,
 				unproabilityReasons));
-	}
-
-	private static boolean isAuxilliaryProcedure(final String proc) {
-		return "ULTIMATE.init".equals(proc) || "ULTIMATE.start".equals(proc);
 	}
 
 	private void reportResult(final IResult res) {

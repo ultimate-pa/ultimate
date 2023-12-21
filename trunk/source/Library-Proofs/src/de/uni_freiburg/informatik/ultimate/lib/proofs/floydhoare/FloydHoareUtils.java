@@ -26,12 +26,25 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare;
 
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.function.Consumer;
+
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.InvariantResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.ProcedureContractResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgElement;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 public final class FloydHoareUtils {
 	private FloydHoareUtils() {
@@ -75,5 +88,57 @@ public final class FloydHoareUtils {
 		}
 		sb.append(")");
 		return sb.toString();
+	}
+
+	public static void createInvariantResults(final String pluginName, final IIcfg<IcfgLocation> icfg,
+			final IFloydHoareAnnotation<IcfgLocation> annotation, final IBacktranslationService backTranslatorService,
+			final Consumer<InvariantResult<IIcfgElement, Term>> reporter) {
+		final Set<IcfgLocation> locsForLoopLocations = new HashSet<>();
+		locsForLoopLocations.addAll(IcfgUtils.getPotentialCycleProgramPoints(icfg));
+		locsForLoopLocations.addAll(icfg.getLoopLocations());
+		// find all locations that have outgoing edges which are annotated with LoopEntry, i.e., all loop candidates
+
+		for (final IcfgLocation locNode : locsForLoopLocations) {
+			final IPredicate hoare = annotation.getAnnotation(locNode);
+			if (hoare == null) {
+				continue;
+			}
+			final Term formula = hoare.getFormula();
+			final InvariantResult<IIcfgElement, Term> invResult =
+					new InvariantResult<>(pluginName, locNode, backTranslatorService, formula);
+			reporter.accept(invResult);
+
+			if (SmtUtils.isTrueLiteral(formula)) {
+				continue;
+			}
+			// TODO #proofRefactor
+			new WitnessInvariant(invResult.getInvariant()).annotate(locNode);
+		}
+	}
+
+	public static void createProcedureContractResults(final String pluginName, final IIcfg<IcfgLocation> icfg,
+			final IFloydHoareAnnotation<IcfgLocation> annotation, final IBacktranslationService backTranslatorService,
+			final Consumer<ProcedureContractResult<IIcfgElement, Term>> reporter) {
+		final Map<String, IcfgLocation> finalNodes = icfg.getProcedureExitNodes();
+		for (final Entry<String, IcfgLocation> proc : finalNodes.entrySet()) {
+			final String procName = proc.getKey();
+			if (isAuxiliaryProcedure(procName)) {
+				continue;
+			}
+			final IcfgLocation finalNode = proc.getValue();
+			final IPredicate hoare = annotation.getAnnotation(finalNode);
+			if (hoare != null) {
+				final Term formula = hoare.getFormula();
+				final ProcedureContractResult<IIcfgElement, Term> result =
+						new ProcedureContractResult<>(pluginName, finalNode, backTranslatorService, procName, formula);
+
+				reporter.accept(result);
+				// TODO: Add setting that controls the generation of those witness invariants
+			}
+		}
+	}
+
+	private static boolean isAuxiliaryProcedure(final String proc) {
+		return "ULTIMATE.init".equals(proc) || "ULTIMATE.start".equals(proc);
 	}
 }

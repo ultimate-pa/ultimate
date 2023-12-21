@@ -124,7 +124,7 @@ public class IcfgFloydHoareValidityCheck<LOC extends IcfgLocation> extends Floyd
 	}
 
 	@Deprecated
-	private static final class IcfgHoareAnnotation<LOC extends IcfgLocation> implements IFloydHoareAnnotation<LOC> {
+	public static final class IcfgHoareAnnotation<LOC extends IcfgLocation> implements IFloydHoareAnnotation<LOC> {
 		@Override
 		public IPredicate getPrecondition() {
 			return null;

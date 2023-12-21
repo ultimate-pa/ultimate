@@ -534,6 +534,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		return false;
 	}
 
+	// TODO #proofRefactor create IFloydHoareAnnotation and use FloydHoareUtils method
 	private void createInvariantResults(final List<AnnotatedProgramPoint> procRootsToCheck,
 			final IIcfg<IcfgLocation> icfg, final CfgSmtToolkit csToolkit,
 			final IBacktranslationService backTranslatorService) {
