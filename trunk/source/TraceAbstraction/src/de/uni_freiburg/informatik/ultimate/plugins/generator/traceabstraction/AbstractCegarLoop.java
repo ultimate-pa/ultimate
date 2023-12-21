@@ -36,7 +36,6 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -61,7 +60,6 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceled
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainExceptionWrapper;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovabilityReason;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
-import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
@@ -76,7 +74,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.IInterpolantGenerator;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.HoareAnnotation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
@@ -85,7 +82,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.TaskIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.HoareAnnotationPositions;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.NwaFloydHoareValidityCheck;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -109,7 +105,6 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
  */
 public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>> {
 	private static final boolean DUMP_BIGGEST_AUTOMATON = false;
-	private static final boolean EXTENDED_HOARE_ANNOTATION_LOGGING = true;
 
 	protected final ILogger mLogger;
 	protected final SimplificationTechnique mSimplificationTechnique;
@@ -884,55 +879,6 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 		public int remainingErrorLocs() {
 			return mErrorLocs.size() - mResults.size();
 		}
-
-		// TODO #proofRefactor
-		@SuppressWarnings("unchecked")
-		private void writeHoareAnnotationToLogger() {
-			final IIcfg<IcfgLocation> root = (IIcfg<IcfgLocation>) mIcfg;
-			for (final Entry<String, Map<DebugIdentifier, IcfgLocation>> proc2label2pp : root.getProgramPoints()
-					.entrySet()) {
-				for (final IcfgLocation pp : proc2label2pp.getValue().values()) {
-					final HoareAnnotation hoare = HoareAnnotation.getAnnotation(pp);
-
-					if (hoare != null && !SmtUtils.isTrueLiteral(hoare.getFormula())) {
-
-						mLogger.info("At program point %s the Hoare annotation is: %s", prettyPrintProgramPoint(pp),
-								hoare.getFormula());
-					} else if (EXTENDED_HOARE_ANNOTATION_LOGGING) {
-						if (hoare == null) {
-							mLogger.info("For program point %s no Hoare annotation was computed.",
-									prettyPrintProgramPoint(pp));
-						} else {
-							mLogger.info("At program point %s the Hoare annotation is: %s", prettyPrintProgramPoint(pp),
-									hoare.getFormula());
-						}
-					}
-				}
-			}
-		}
-
-		private String prettyPrintProgramPoint(final IcfgLocation pp) {
-			final ILocation loc = ILocation.getAnnotation(pp);
-			if (loc == null) {
-				return "";
-			}
-			final int startLine = loc.getStartLine();
-			final int endLine = loc.getEndLine();
-			final StringBuilder sb = new StringBuilder();
-			sb.append(pp);
-			if (startLine == endLine) {
-				sb.append("(line ");
-				sb.append(startLine);
-			} else {
-				sb.append("(lines ");
-				sb.append(startLine);
-				sb.append(" ");
-				sb.append(endLine);
-			}
-			sb.append(")");
-			return sb.toString();
-		}
-
 	}
 
 }

@@ -47,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovabilityReason;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovableResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
-import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity.Severity;
@@ -61,13 +60,13 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgElement;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.dangerinvariants.DangerInvariantUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.HoareAnnotation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.FloydHoareUtils;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.IcfgFloydHoareValidityCheck;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
@@ -191,7 +190,8 @@ public class InvariantSynthesisStarter<L extends IIcfgTransition<?>> {
 					hoareAnnot.annotate(entry.getKey());
 					hoareAnnot.addInvariant(entry.getValue());
 				}
-				writeHoareAnnotationToLogger(icfg);
+				// TODO #proofRefactor
+				FloydHoareUtils.writeHoareAnnotationToLogger(icfg, null, mLogger, true);
 				mOverallResult = Result.SAFE;
 			}
 		} else {
@@ -361,39 +361,6 @@ public class InvariantSynthesisStarter<L extends IIcfgTransition<?>> {
 				// TODO: Add setting that controls the generation of those witness invariants
 			}
 		}
-	}
-
-	private void writeHoareAnnotationToLogger(final IIcfg<IcfgLocation> root) {
-		for (final Entry<String, Map<DebugIdentifier, IcfgLocation>> proc2label2pp : root.getProgramPoints()
-				.entrySet()) {
-			for (final IcfgLocation pp : proc2label2pp.getValue().values()) {
-				final HoareAnnotation hoare = HoareAnnotation.getAnnotation(pp);
-				if (hoare == null) {
-					mLogger.info("For program point  " + prettyPrintProgramPoint(pp)
-							+ "  no Hoare annotation was computed.");
-				} else {
-					mLogger.info("At program point  " + prettyPrintProgramPoint(pp) + "  the Hoare annotation is:  "
-							+ hoare.getFormula());
-				}
-			}
-		}
-	}
-
-	private static String prettyPrintProgramPoint(final IcfgLocation pp) {
-		final ILocation loc = ILocation.getAnnotation(pp);
-		if (loc == null) {
-			return "";
-		}
-		final int startLine = loc.getStartLine();
-		final int endLine = loc.getEndLine();
-		final StringBuilder sb = new StringBuilder();
-		sb.append(pp);
-		if (startLine == endLine) {
-			sb.append("(line " + startLine + ")");
-		} else {
-			sb.append("(lines " + startLine + " " + endLine + ")");
-		}
-		return sb.toString();
 	}
 
 	private void reportDangerResults(final Map<IcfgLocation, IPredicate> invariants,
