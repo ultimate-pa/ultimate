@@ -109,5 +109,5 @@ Export-Package: cern.clhep,
  org.codehaus.stax2.io,
  org.codehaus.stax2.ri,
  org.codehaus.stax2.validation
-Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Automatic-Module-Name: edu.uci.ics.jung
