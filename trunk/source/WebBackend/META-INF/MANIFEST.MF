@@ -1,5 +1,6 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
+Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.web.backend
 Bundle-Name: WebBackend
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.web.backend;singleton:=true
 Bundle-Version: 0.2.4
