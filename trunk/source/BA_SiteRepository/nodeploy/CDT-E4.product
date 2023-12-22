@@ -15,7 +15,7 @@
 
    <launcherArgs>
       <programArgs>-consoleLog -nosplash</programArgs>
-      <vmArgs>-Dosgi.requiredJavaVersion=1.6 -Xms256m -Xmx1024m</vmArgs>
+      <vmArgs>-Dosgi.requiredJavaVersion=21 -Xms256m -Xmx1024m</vmArgs>
       <vmArgsMac>-XstartOnFirstThread -Dorg.eclipse.swt.internal.carbon.smallFonts</vmArgsMac>
    </launcherArgs>
 
@@ -26,7 +26,7 @@
       startupMessageRect="7,225,320,20"
       startupForegroundColor="FFFFFF" />
    <vm>
-      <windows include="false">org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7</windows>
+      <windows include="false">org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-21</windows>
    </vm>
 
    <plugins>
