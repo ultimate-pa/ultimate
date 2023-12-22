@@ -1,0 +1,500 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?pde version="3.8"?>
+<target name="Ultimate E4.30 MacOS">
+	<environment>
+		<os>macosx</os>
+	</environment>
+	<targetJRE path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-21"/>
+	<launcherArgs>
+		<vmArgs>-ea -Xms4M -Xmx4G</vmArgs>
+	</launcherArgs>
+	<locations>
+		<location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="planner" includeSource="true" type="InstallableUnit">
+			<repository location="https://struebli.informatik.uni-freiburg.de/p2-repository-ultimate-dependencies/"/>
+			<unit id="org.yaml.snakeyaml" version="2.2.0"/>
+			<unit id="com.lmax.disruptor" version="3.3.5"/>
+			<unit id="com.lmax.disruptor.source" version="3.3.5"/>
+		</location>
+		<location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="planner" includeSource="true" type="InstallableUnit">
+			<repository location="https://download.eclipse.org/releases/2023-12"/>
+			<unit id="org.eclipse.equinox.sdk.feature.group" version="3.23.1000.v20231114-0937"/>
+			<unit id="org.eclipse.jdt.feature.group" version="3.19.300.v20231201-0110"/>
+			<unit id="org.eclipse.sdk.feature.group" version="4.30.0.v20231201-0512"/>
+			<unit id="org.eclipse.cdt.feature.group" version="11.4.0.202311271618"/>
+			<unit id="org.eclipse.cdt.sdk.feature.group" version="11.4.0.202311271618"/>
+		</location>
+		<location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="planner" includeSource="true" type="InstallableUnit">
+			<repository location="https://download.eclipse.org/tools/orbit/simrel/orbit-aggregation/2023-12"/>
+			<unit id="org.eclipse.orbit.legacy.feature.group" version="4.30.0.v20231006-1251"/>
+			<unit id="org.eclipse.orbit.maven.aopalliance.feature.group" version="4.30.0"/>
+			<unit id="org.eclipse.orbit.maven.aopalliance.source.feature.group" version="4.30.0"/>
+			<unit id="org.eclipse.orbit.maven.com.github.virtuald.feature.group" version="4.30.0.v20230927-1624"/>
+			<unit id="org.eclipse.orbit.maven.com.github.virtuald.source.feature.group" version="4.30.0.v20230927-1624"/>
+			<unit id="org.eclipse.orbit.maven.com.google.javascript.feature.group" version="4.30.0.v20231114-0833"/>
+			<unit id="org.eclipse.orbit.maven.com.google.javascript.source.feature.group" version="4.30.0.v20231114-0833"/>
+			<unit id="org.eclipse.orbit.maven.com.jcraft.jsch.feature.group" version="4.30.0.v20230916-1400"/>
+			<unit id="org.eclipse.orbit.maven.com.jcraft.jsch.source.feature.group" version="4.30.0.v20230916-1400"/>
+			<unit id="org.eclipse.orbit.maven.com.jcraft.jzlib.feature.group" version="4.30.0.v20230916-1400"/>
+			<unit id="org.eclipse.orbit.maven.com.jcraft.jzlib.source.feature.group" version="4.30.0.v20230916-1400"/>
+			<unit id="org.eclipse.orbit.maven.com.konghq.feature.group" version="4.30.0"/>
+			<unit id="org.eclipse.orbit.maven.com.konghq.source.feature.group" version="4.30.0"/>
+			<unit id="org.eclipse.orbit.maven.com.zaxxer.feature.group" version="4.30.0.v20230929-1000"/>
+			<unit id="org.eclipse.orbit.maven.com.zaxxer.source.feature.group" version="4.30.0.v20230929-1000"/>
+			<unit id="org.eclipse.orbit.maven.hamcrest.core.feature.group" version="4.30.0"/>
+			<unit id="org.eclipse.orbit.maven.hamcrest.core.source.feature.group" version="4.30.0"/>
+			<unit id="org.eclipse.orbit.maven.hamcrest.deprecated.feature.group" version="4.30.0"/>
+			<unit id="org.eclipse.orbit.maven.hamcrest.deprecated.source.feature.group" version="4.30.0"/>
+			<unit id="org.eclipse.orbit.maven.hamcrest.library.feature.group" version="4.30.0"/>
+			<unit id="org.eclipse.orbit.maven.hamcrest.library.source.feature.group" version="4.30.0"/>
+			<unit id="org.eclipse.orbit.maven.javax.wsdl.feature.group" version="4.30.0"/>
+			<unit id="org.eclipse.orbit.maven.javax.wsdl.source.feature.group" version="4.30.0"/>
+			<unit id="org.eclipse.orbit.maven.jdom2.feature.group" version="4.30.0"/>
+			<unit id="org.eclipse.orbit.maven.jdom2.source.feature.group" version="4.30.0"/>
+			<unit id="org.eclipse.orbit.maven.jnr.feature.group" version="4.30.0"/>
+			<unit id="org.eclipse.orbit.maven.jnr.source.feature.group" version="4.30.0"/>
+			<unit id="org.eclipse.orbit.maven.joni.feature.group" version="4.30.0"/>
+			<unit id="org.eclipse.orbit.maven.joni.source.feature.group" version="4.30.0"/>
+			<unit id="org.eclipse.orbit.maven.junit.feature.group" version="4.30.0"/>
+			<unit id="org.eclipse.orbit.maven.junit.source.feature.group" version="4.30.0"/>
+			<unit id="org.eclipse.orbit.maven.lucene.feature.group" version="4.30.0.v20230929-1030"/>
+			<unit id="org.eclipse.orbit.maven.lucene.source.feature.group" version="4.30.0.v20230929-1030"/>
+			<unit id="org.eclipse.orbit.maven.org.antlr.3.2.feature.group" version="4.30.0.v20230929-1400"/>
+			<unit id="org.eclipse.orbit.maven.org.antlr.3.2.source.feature.group" version="4.30.0.v20230929-1400"/>
+			<unit id="org.eclipse.orbit.maven.org.antlr.3.x.feature.group" version="4.30.0.v20230929-1400"/>
+			<unit id="org.eclipse.orbit.maven.org.antlr.3.x.source.feature.group" version="4.30.0.v20230929-1400"/>
+			<unit id="org.eclipse.orbit.maven.org.apache.ant.feature.group" version="4.30.0.v20230922-1200"/>
+			<unit id="org.eclipse.orbit.maven.org.apache.ant.source.feature.group" version="4.30.0.v20230922-1200"/>
+			<unit id="org.eclipse.orbit.maven.org.apache.axis.ant.feature.group" version="4.30.0.v20231107-0937"/>
+			<unit id="org.eclipse.orbit.maven.org.apache.axis.ant.source.feature.group" version="4.30.0.v20231107-0937"/>
+			<unit id="org.eclipse.orbit.maven.org.apache.axis.feature.group" version="4.30.0.v20231107-0937"/>
+			<unit id="org.eclipse.orbit.maven.org.apache.axis.source.feature.group" version="4.30.0.v20231107-0937"/>
+			<unit id="org.eclipse.orbit.maven.org.apache.batik.feature.group" version="4.30.0.v20231009-1000"/>
+			<unit id="org.eclipse.orbit.maven.org.apache.batik.source.feature.group" version="4.30.0.v20231009-1000"/>
+			<unit id="org.eclipse.orbit.maven.org.apache.httpcomponents.client5.httpclient5.feature.group" version="4.30.0"/>
+			<unit id="org.eclipse.orbit.maven.org.apache.httpcomponents.client5.httpclient5.source.feature.group" version="4.30.0"/>
+			<unit id="org.eclipse.orbit.maven.org.apache.httpcomponents.core5.feature.group" version="4.30.0.v20230922-1600"/>
+			<unit id="org.eclipse.orbit.maven.org.apache.httpcomponents.core5.source.feature.group" version="4.30.0.v20230922-1600"/>
+			<unit id="org.eclipse.orbit.maven.org.apache.poi.feature.group" version="4.30.0.v20231007-1530"/>
+			<unit id="org.eclipse.orbit.maven.org.apache.poi.source.feature.group" version="4.30.0.v20231007-1530"/>
+			<unit id="org.eclipse.orbit.maven.org.apache.ws.commons.util.feature.group" version="4.30.0"/>
+			<unit id="org.eclipse.orbit.maven.org.apache.ws.commons.util.source.feature.group" version="4.30.0"/>
+			<unit id="org.eclipse.orbit.maven.org.apache.xmlbeans.feature.group" version="4.30.0.v20230929-1100"/>
+			<unit id="org.eclipse.orbit.maven.org.apache.xmlbeans.source.feature.group" version="4.30.0.v20230929-1100"/>
+			<unit id="org.eclipse.orbit.maven.org.apache.xmlgraphics.feature.group" version="4.30.0.v20230916-1600"/>
+			<unit id="org.eclipse.orbit.maven.org.apache.xmlgraphics.source.feature.group" version="4.30.0.v20230916-1600"/>
+			<unit id="org.eclipse.orbit.maven.org.codelibs.nekohtml.feature.group" version="4.30.0"/>
+			<unit id="org.eclipse.orbit.maven.org.commonmark.feature.group" version="4.30.0.v20230927-1332"/>
+			<unit id="org.eclipse.orbit.maven.org.dom4j.feature.group" version="4.30.0.v20231001-0922"/>
+			<unit id="org.eclipse.orbit.maven.org.jdom.feature.group" version="4.30.0"/>
+			<unit id="org.eclipse.orbit.maven.osgi.all.feature.group" version="4.30.0.v20231116-0814"/>
+			<unit id="org.eclipse.orbit.maven.xalan.feature.group" version="4.30.0.v20230928-1302"/>
+			<unit id="org.eclipse.orbit.maven.xerces.feature.group" version="4.30.0.v20230928-1306"/>
+			<unit id="org.eclipse.orbit.maven.xml-resolver.feature.group" version="4.30.0.v20230928-1222"/>
+			<unit id="org.eclipse.orbit.maven.com.github.jnr.jffi.feature.group" version="4.30.0.v20230912-1130"/>
+			<unit id="org.eclipse.orbit.maven.com.github.jnr.jffi.source.feature.group" version="4.30.0.v20230912-1130"/>
+			<unit id="org.eclipse.orbit.maven.net.java.dev.jna.feature.group" version="4.30.0"/>
+			<unit id="org.eclipse.orbit.maven.net.java.dev.jna.source.feature.group" version="4.30.0"/>
+			<unit id="org.eclipse.orbit.maven.org.codelibs.nekohtml.source.feature.group" version="4.30.0"/>
+			<unit id="org.eclipse.orbit.maven.org.commonmark.source.feature.group" version="4.30.0.v20230927-1332"/>
+			<unit id="org.eclipse.orbit.maven.org.dom4j.source.feature.group" version="4.30.0.v20231001-0922"/>
+			<unit id="org.eclipse.orbit.maven.org.jdom.source.feature.group" version="4.30.0"/>
+			<unit id="org.eclipse.orbit.maven.osgi.all.source.feature.group" version="4.30.0.v20231116-0814"/>
+			<unit id="org.eclipse.orbit.maven.xalan.source.feature.group" version="4.30.0.v20230928-1302"/>
+			<unit id="org.eclipse.orbit.maven.xerces.source.feature.group" version="4.30.0.v20230928-1306"/>
+			<unit id="org.eclipse.orbit.maven.xml-resolver.source.feature.group" version="4.30.0.v20230928-1222"/>
+		</location>
+	</locations>
+	<includeBundles>
+		<plugin id="com.google.gson.source" version="2.10.1"/>
+		<plugin id="com.google.gson" version="2.10.1"/>
+		<plugin id="com.ibm.icu.source" version="74.1.0"/>
+		<plugin id="com.ibm.icu" version="74.1"/>
+		<plugin id="com.sun.xml.bind" version="2.3.3.v20221203-1659"/>
+		<plugin id="org.apache.batik.anim"/>
+		<plugin id="org.apache.batik.anim.source"/>
+		<plugin id="org.apache.batik.constants.source" version="1.17.0.v20231009-1000"/>
+		<plugin id="org.apache.batik.constants" version="1.17.0.v20231009-1000"/>
+		<plugin id="org.apache.batik.css.source" version="1.17.0.v20231009-1000"/>
+		<plugin id="org.apache.batik.css" version="1.17.0.v20231009-1000"/>
+		<plugin id="org.apache.batik.dom.source"/>
+		<plugin id="org.apache.batik.dom.svg.source"/>
+		<plugin id="org.apache.batik.dom.svg"/>
+		<plugin id="org.apache.batik.dom"/>
+		<plugin id="org.apache.batik.i18n.source" version="1.17.0.v20231009-1000"/>
+		<plugin id="org.apache.batik.i18n" version="1.17.0.v20231009-1000"/>
+		<plugin id="org.apache.batik.parser.source"/>
+		<plugin id="org.apache.batik.parser"/>
+		<plugin id="org.apache.batik.svggen.source"/>
+		<plugin id="org.apache.batik.svggen"/>
+		<plugin id="org.apache.batik.util.source" version="1.17.0.v20231009-1000"/>
+		<plugin id="org.apache.batik.util" version="1.17.0.v20231009-1000"/>
+		<plugin id="org.apache.batik.xml.source"/>
+		<plugin id="org.apache.batik.xml"/>
+		<plugin id="org.apache.commons.jxpath" version="1.3"/>
+		<plugin id="org.apache.commons.jxpath.source" version="1.3.0"/>
+		<plugin id="org.apache.commons.logging" version="1.2.0"/>
+		<plugin id="org.apache.commons.logging.source" version="1.2.0"/>
+		<plugin id="org.apache.felix.scr" version="2.2.6"/>
+		<plugin id="org.apache.felix.scr.source" version="2.2.6"/>
+		<plugin id="org.apache.xalan"/>
+		<plugin id="org.apache.xerces"/>
+		<plugin id="org.apache.xml.resolver"/>
+		<plugin id="org.apache.xml.serializer"/>
+		<plugin id="org.apache.xmlgraphics.source" version="2.9.0.v20230916-1600"/>
+		<plugin id="org.apache.xmlgraphics" version="2.9.0.v20230916-1600"/>
+		<plugin id="org.eclipse.cdt.core.native"/>
+		<plugin id="org.eclipse.cdt.core"/>
+		<plugin id="org.eclipse.cdt.core.source"/>
+		<plugin id="org.eclipse.cdt.core.native.source"/>
+		<plugin id="org.eclipse.core.commands.source" version="3.11.200.v20231108-1058"/>
+		<plugin id="org.eclipse.core.commands" version="3.11.200.v20231108-1058"/>
+		<plugin id="org.eclipse.core.databinding.observable.source"/>
+		<plugin id="org.eclipse.core.databinding.observable"/>
+		<plugin id="org.eclipse.core.databinding.property.source"/>
+		<plugin id="org.eclipse.core.databinding.property"/>
+		<plugin id="org.eclipse.core.databinding.source"/>
+		<plugin id="org.eclipse.core.databinding"/>
+		<plugin id="org.eclipse.core.contenttype.source" version="3.9.200.v20230914-0751"/>
+		<plugin id="org.eclipse.core.contenttype" version="3.9.200.v20230914-0751"/>
+		<plugin id="org.eclipse.core.expressions.source" version="3.9.200.v20230921-0857"/>
+		<plugin id="org.eclipse.core.expressions" version="3.9.200.v20230921-0857"/>
+		<plugin id="org.eclipse.core.filebuffers.source"/>
+		<plugin id="org.eclipse.core.filebuffers"/>
+		<plugin id="org.eclipse.core.filesystem.source" version="1.10.200.v20231102-0934"/>
+		<plugin id="org.eclipse.core.filesystem" version="1.10.200.v20231102-0934"/>
+		<plugin id="org.eclipse.core.jobs.source" version="3.15.100.v20230930-1207"/>
+		<plugin id="org.eclipse.core.jobs" version="3.15.100.v20230930-1207"/>
+		<plugin id="org.eclipse.core.resources.source" version="3.20.0.v20231102-0934"/>
+		<plugin id="org.eclipse.core.resources" version="3.20.0.v20231102-0934"/>
+		<plugin id="org.eclipse.core.runtime.source" version="3.30.0.v20231102-0719"/>
+		<plugin id="org.eclipse.core.runtime" version="3.30.0.v20231102-0719"/>
+		<plugin id="org.eclipse.core.variables.source"/>
+		<plugin id="org.eclipse.core.variables"/>
+		<plugin id="org.eclipse.e4.core.commands.source"/>
+		<plugin id="org.eclipse.e4.core.commands"/>
+		<plugin id="org.eclipse.e4.core.contexts.source"/>
+		<plugin id="org.eclipse.e4.core.contexts"/>
+		<plugin id="org.eclipse.e4.core.di.annotations.source"/>
+		<plugin id="org.eclipse.e4.core.di.annotations"/>
+		<plugin id="org.eclipse.e4.core.di.source"/>
+		<plugin id="org.eclipse.e4.core.di"/>
+		<plugin id="org.eclipse.e4.core.di.extensions.source"/>
+		<plugin id="org.eclipse.e4.core.di.extensions"/>
+		<plugin id="org.eclipse.e4.core.di.extensions.supplier.source"/>
+		<plugin id="org.eclipse.e4.core.di.extensions.supplier"/>
+		<plugin id="org.eclipse.e4.core.services.source"/>
+		<plugin id="org.eclipse.e4.core.services"/>
+		<plugin id="org.eclipse.e4.emf.xpath.source"/>
+		<plugin id="org.eclipse.e4.emf.xpath"/>
+		<plugin id="org.eclipse.e4.ui.bindings.source"/>
+		<plugin id="org.eclipse.e4.ui.bindings"/>
+		<plugin id="org.eclipse.e4.ui.css.core.source"/>
+		<plugin id="org.eclipse.e4.ui.css.core"/>
+		<plugin id="org.eclipse.e4.ui.css.swt.source"/>
+		<plugin id="org.eclipse.e4.ui.css.swt.theme.source"/>
+		<plugin id="org.eclipse.e4.ui.css.swt.theme"/>
+		<plugin id="org.eclipse.e4.ui.css.swt"/>
+		<plugin id="org.eclipse.e4.ui.di.source"/>
+		<plugin id="org.eclipse.e4.ui.di"/>
+		<plugin id="org.eclipse.e4.ui.dialogs.source"/>
+		<plugin id="org.eclipse.e4.ui.dialogs"/>
+		<plugin id="org.eclipse.e4.ui.model.workbench.source"/>
+		<plugin id="org.eclipse.e4.ui.model.workbench"/>
+		<plugin id="org.eclipse.e4.ui.services.source"/>
+		<plugin id="org.eclipse.e4.ui.services"/>
+		<plugin id="org.eclipse.e4.ui.widgets.source"/>
+		<plugin id="org.eclipse.e4.ui.widgets"/>
+		<plugin id="org.eclipse.e4.ui.workbench.addons.swt.source"/>
+		<plugin id="org.eclipse.e4.ui.workbench.addons.swt"/>
+		<plugin id="org.eclipse.e4.ui.workbench.renderers.swt.source"/>
+		<plugin id="org.eclipse.e4.ui.workbench.renderers.swt"/>
+		<plugin id="org.eclipse.e4.ui.workbench.source"/>
+		<plugin id="org.eclipse.e4.ui.workbench.swt.source"/>
+		<plugin id="org.eclipse.e4.ui.workbench.swt"/>
+		<plugin id="org.eclipse.e4.ui.workbench"/>
+		<plugin id="org.eclipse.e4.ui.workbench3.source"/>
+		<plugin id="org.eclipse.e4.ui.workbench3"/>
+		<plugin id="org.eclipse.emf.common.source"/>
+		<plugin id="org.eclipse.emf.common"/>
+		<plugin id="org.eclipse.emf.ecore.change.source"/>
+		<plugin id="org.eclipse.emf.ecore.change"/>
+		<plugin id="org.eclipse.emf.ecore.source"/>
+		<plugin id="org.eclipse.emf.ecore.xmi.source"/>
+		<plugin id="org.eclipse.emf.ecore.xmi"/>
+		<plugin id="org.eclipse.emf.ecore"/>
+		<plugin id="org.eclipse.equinox.app.source" version="1.6.400.v20231103-0807"/>
+		<plugin id="org.eclipse.equinox.app" version="1.6.400.v20231103-0807"/>
+		<plugin id="org.eclipse.equinox.bidi.source"/>
+		<plugin id="org.eclipse.equinox.bidi"/>
+		<plugin id="org.eclipse.equinox.common.source" version="3.18.200.v20231106-1826"/>
+		<plugin id="org.eclipse.equinox.common" version="3.18.200.v20231106-1826"/>
+		<plugin id="org.eclipse.equinox.event.source"/>
+		<plugin id="org.eclipse.equinox.event"/>
+		<plugin id="org.eclipse.equinox.preferences" version="3.10.400.v20231102-2218"/>
+		<plugin id="org.eclipse.equinox.preferences.source" version="3.10.400.v20231102-2218"/>
+		<plugin id="org.eclipse.equinox.registry" version="3.11.400.v20231102-2218"/>
+		<plugin id="org.eclipse.equinox.registry.source" version="3.11.400.v20231102-2218"/>
+		<plugin id="org.eclipse.help"/>
+		<plugin id="org.eclipse.jface.databinding.source"/>
+		<plugin id="org.eclipse.jface.databinding"/>
+		<plugin id="org.eclipse.jface"/>
+		<plugin id="org.eclipse.jface.source"/>
+		<plugin id="org.eclipse.ltk.core.refactoring"/>
+		<plugin id="org.eclipse.ltk.core.refactoring.source"/>
+		<plugin id="org.eclipse.osgi.services" version="3.11.200.v20231106-0901"/>
+		<plugin id="org.eclipse.osgi.source" version="3.18.600.v20231110-1900"/>
+		<plugin id="org.eclipse.osgi" version="3.18.600.v20231110-1900"/>
+		<plugin id="org.eclipse.osgi.util"/>
+		<plugin id="org.eclipse.osgi.util.source"/>
+		<plugin id="org.eclipse.swt"/>
+		<plugin id="org.eclipse.text" version="3.13.100.v20230801-1334"/>
+		<plugin id="org.eclipse.text.source" version="3.13.100.v20230801-1334"/>
+		<plugin id="org.eclipse.ui"/>
+		<plugin id="org.eclipse.ui.workbench"/>
+		<plugin id="org.eclipse.ui.workbench.source"/>
+		<plugin id="org.eclipse.urischeme"/>
+		<plugin id="org.eclipse.urischeme.source"/>
+		<plugin id="org.jdom" version="1.1.3.v20230812-1600"/>
+		<plugin id="org.jdom.source" version="1.1.3.v20230812-1600"/>
+		<plugin id="org.apache.log4j"/>
+		<plugin id="org.apache.log4j.source"/>
+		<plugin id="org.junit" version="4.13.2.v20230809-1000"/>
+		<plugin id="org.junit.source" version="4.13.2.v20230809-1000"/>
+		<plugin id="org.eclipse.cdt.codan.core"/>
+		<plugin id="org.eclipse.cdt.codan.core.source"/>
+		<plugin id="org.eclipse.cdt.codan.core.cxx"/>
+		<plugin id="org.eclipse.cdt.codan.core.cxx.source"/>
+		<plugin id="org.eclipse.cdt.codan.ui"/>
+		<plugin id="org.eclipse.cdt.codan.ui.source"/>
+		<plugin id="org.hamcrest.core" version="2.2.0.v20230809-1000"/>
+		<plugin id="org.hamcrest.core.source" version="2.2.0.v20230809-1000"/>
+		<plugin id="org.eclipse.ui.ide"/>
+		<plugin id="org.eclipse.ui.ide.source"/>
+		<plugin id="org.eclipse.ui.console"/>
+		<plugin id="org.eclipse.ui.console.source"/>
+		<plugin id="org.eclipse.ui.navigator"/>
+		<plugin id="org.eclipse.ui.navigator.source"/>
+		<plugin id="org.eclipse.ui.editors"/>
+		<plugin id="org.eclipse.ui.editors.source"/>
+		<plugin id="org.eclipse.jface.text"/>
+		<plugin id="org.eclipse.jface.text.source"/>
+		<plugin id="org.eclipse.ui.source"/>
+		<plugin id="org.eclipse.ui.workbench.texteditor"/>
+		<plugin id="org.eclipse.ui.workbench.texteditor.source"/>
+		<plugin id="org.eclipse.equinox.http.registry"/>
+		<plugin id="org.eclipse.equinox.http.registry.source"/>
+		<plugin id="com.sun.jna" version="5.13.0.v20230812-1000"/>
+		<plugin id="com.sun.jna.source" version="5.13.0.v20230812-1000"/>
+		<plugin id="com.sun.jna.platform" version="5.13.0"/>
+		<plugin id="com.sun.jna.platform.source" version="5.13.0"/>
+		<plugin id="org.eclipse.compare.core.source"/>
+		<plugin id="org.eclipse.compare.core"/>
+		<plugin id="org.eclipse.equinox.p2.metadata"/>
+		<plugin id="org.eclipse.equinox.p2.metadata.source"/>
+		<plugin id="org.eclipse.e4.ui.ide"/>
+		<plugin id="org.eclipse.e4.ui.ide.source"/>
+		<plugin id="org.eclipse.equinox.p2.engine"/>
+		<plugin id="org.eclipse.equinox.p2.engine.source"/>
+		<plugin id="org.eclipse.equinox.p2.core"/>
+		<plugin id="org.eclipse.equinox.p2.core.source"/>
+		<plugin id="org.eclipse.debug.core"/>
+		<plugin id="org.eclipse.debug.core.source"/>
+		<plugin id="org.eclipse.cdt.ui"/>
+		<plugin id="org.eclipse.cdt.ui.source"/>
+		<plugin id="org.eclipse.equinox.p2.metadata.repository"/>
+		<plugin id="org.eclipse.equinox.p2.metadata.repository.source"/>
+		<plugin id="org.eclipse.equinox.p2.repository"/>
+		<plugin id="org.eclipse.equinox.p2.repository.source"/>
+		<plugin id="org.eclipse.ltk.ui.refactoring"/>
+		<plugin id="org.eclipse.ltk.ui.refactoring.source"/>
+		<plugin id="org.eclipse.search"/>
+		<plugin id="org.eclipse.search.source"/>
+		<plugin id="org.eclipse.tools.templates.ui"/>
+		<plugin id="org.eclipse.tools.templates.ui.source"/>
+		<plugin id="org.eclipse.ui.forms"/>
+		<plugin id="org.eclipse.ui.forms.source"/>
+		<plugin id="org.eclipse.ui.navigator.resources"/>
+		<plugin id="org.eclipse.ui.navigator.resources.source"/>
+		<plugin id="org.eclipse.compare"/>
+		<plugin id="org.eclipse.compare.source"/>
+		<plugin id="org.eclipse.ui.views"/>
+		<plugin id="org.eclipse.ui.views.source"/>
+		<plugin id="org.tukaani.xz" version="1.9"/>
+		<plugin id="org.tukaani.xz.source" version="1.9.0"/>
+		<plugin id="org.eclipse.equinox.security"/>
+		<plugin id="org.eclipse.team.ui"/>
+		<plugin id="org.eclipse.team.ui.source"/>
+		<plugin id="org.eclipse.team.core"/>
+		<plugin id="org.eclipse.team.core.source"/>
+		<plugin id="org.eclipse.tools.templates.core"/>
+		<plugin id="org.eclipse.tools.templates.core.source"/>
+		<plugin id="org.eclipse.ui.views.properties.tabbed"/>
+		<plugin id="org.eclipse.ui.views.properties.tabbed.source"/>
+		<plugin id="org.eclipse.jdt.junit.runtime"/>
+		<plugin id="org.eclipse.jdt.junit.runtime.source"/>
+		<plugin id="org.eclipse.jdt.junit4.runtime"/>
+		<plugin id="org.eclipse.jdt.junit4.runtime.source"/>
+		<plugin id="org.eclipse.cdt.managedbuilder.core"/>
+		<plugin id="org.eclipse.cdt.make.core"/>
+		<plugin id="org.eclipse.jdt.annotation" version="2.2.800.v20231029-1039"/>
+		<plugin id="org.eclipse.tools.templates.freemarker"/>
+		<plugin id="org.eclipse.cdt.managedbuilder.core.source"/>
+		<plugin id="org.eclipse.cdt.make.core.source"/>
+		<plugin id="org.eclipse.cdt.build.gcc.core"/>
+		<plugin id="org.eclipse.cdt.build.gcc.core.source"/>
+		<plugin id="org.eclipse.jetty.util"/>
+		<plugin id="org.eclipse.jetty.util.source"/>
+		<plugin id="org.eclipse.jetty.server"/>
+		<plugin id="org.eclipse.jetty.server.source"/>
+		<plugin id="org.eclipse.jetty.security"/>
+		<plugin id="org.eclipse.jetty.security.source"/>
+		<plugin id="org.eclipse.jetty.io"/>
+		<plugin id="org.eclipse.jetty.io.source"/>
+		<plugin id="org.eclipse.jetty.http"/>
+		<plugin id="org.eclipse.jetty.http.source"/>
+		<plugin id="org.eclipse.equinox.security.source"/>
+		<plugin id="org.eclipse.help.source"/>
+		<plugin id="org.eclipse.osgi.services.source" version="3.11.200.v20231106-0901"/>
+		<plugin id="org.yaml.snakeyaml" version="2.2.0"/>
+		<plugin id="com.lmax.disruptor"/>
+		<plugin id="com.lmax.disruptor.source"/>
+		<plugin id="jakarta.xml.bind-api" version="2.3.3"/>
+		<plugin id="jakarta.inject.jakarta.inject-api" version="2.0.1"/>
+		<plugin id="jakarta.activation-api" version="1.2.2"/>
+		<plugin id="jakarta.annotation-api" version="2.1.1"/>
+		<plugin id="javax.servlet-api" version="3.1.0"/>
+		<plugin id="org.eclipse.jetty.servlet-api" version="4.0.6"/>
+		<plugin id="org.apache.commons.commons-io" version="2.15.0"/>
+		<plugin id="org.apache.batik.ext"/>
+		<plugin id="org.apache.batik.awt.util"/>
+		<plugin id="org.freemarker.freemarker" version="2.3.32.stable"/>
+		<plugin id="org.eclipse.jdt.junit5.runtime"/>
+		<plugin id="org.eclipse.jdt.junit5.runtime.source"/>
+		<plugin id="junit-platform-runner" version="1.10.1"/>
+		<plugin id="junit-platform-suite-engine" version="1.10.1"/>
+		<plugin id="junit-platform-suite-commons" version="1.10.1"/>
+		<plugin id="junit-platform-suite-api" version="1.10.1"/>
+		<plugin id="junit-platform-launcher" version="1.10.1"/>
+		<plugin id="junit-platform-engine" version="1.10.1"/>
+		<plugin id="junit-platform-commons" version="1.10.1"/>
+		<plugin id="junit-jupiter-params" version="5.10.1"/>
+		<plugin id="junit-jupiter-migrationsupport" version="5.10.1"/>
+		<plugin id="junit-jupiter-engine" version="5.10.1"/>
+		<plugin id="junit-jupiter-api" version="5.10.1"/>
+		<plugin id="org.apache.logging.log4j.api"/>
+		<plugin id="org.apache.logging.log4j.api.source"/>
+		<plugin id="org.osgi.util.promise.source" version="1.3.0.202212101352"/>
+		<plugin id="org.osgi.util.promise" version="1.3.0.202212101352"/>
+		<plugin id="org.osgi.service.component" version="1.5.1.202212101352"/>
+		<plugin id="org.osgi.service.component.source" version="1.5.1.202212101352"/>
+		<plugin id="org.osgi.service.event" version="1.4.1.202109301733"/>
+		<plugin id="org.osgi.service.event.source" version="1.4.1.202109301733"/>
+		<plugin id="org.osgi.service.prefs" version="1.1.2.202109301733"/>
+		<plugin id="org.osgi.service.prefs.source" version="1.1.2.202109301733"/>
+		<plugin id="jakarta.activation-api.source" version="1.2.2"/>
+		<plugin id="org.opentest4j" version="1.3.0"/>
+		<plugin id="org.opentest4j.source" version="1.3.0"/>
+		<plugin id="org.eclipse.orbit.xml-apis-ext" version="1.0.0.v20230923-0644"/>
+		<plugin id="org.eclipse.orbit.xml-apis-ext.source" version="1.0.0.v20230923-0644"/>
+		<plugin id="org.osgi.util.function" version="1.2.0.202109301733"/>
+		<plugin id="org.osgi.util.function.source" version="1.2.0.202109301733"/>
+		<plugin id="org.apache.commons.commons-beanutils" version="1.9.4"/>
+		<plugin id="org.apache.commons.commons-beanutils.source" version="1.9.4"/>
+		<plugin id="javax.servlet.jsp-api" version="2.3.3"/>
+		<plugin id="javax.servlet.jsp-api.source" version="2.3.3"/>
+		<plugin id="junit-vintage-engine" version="5.10.1"/>
+		<plugin id="junit-vintage-engine.source" version="5.10.1"/>
+		<plugin id="org.eclipse.jetty.servlet-api.source" version="4.0.6"/>
+		<plugin id="slf4j.api.source" version="2.0.9"/>
+		<plugin id="slf4j.api" version="1.7.36"/>
+		<plugin id="org.hamcrest" version="2.2"/>
+		<plugin id="com.sun.el.javax.el" version="3.0.4"/>
+		<plugin id="com.sun.el.javax.el.source" version="3.0.4"/>
+		<plugin id="javax.el-api" version="3.0.3"/>
+		<plugin id="javax.el-api.source" version="3.0.3"/>
+		<plugin id="org.apache.commons.commons-io.source" version="2.15.0"/>
+		<plugin id="org.apache.commons.collections" version="3.2.2"/>
+		<plugin id="org.apache.commons.collections.source" version="3.2.2"/>
+		<plugin id="bcpg" version="1.77"/>
+		<plugin id="bcpg.source" version="1.77.0"/>
+		<plugin id="org.eclipse.search.core"/>
+		<plugin id="org.eclipse.search.core.source"/>
+		<plugin id="org.osgi.util.measurement" version="1.0.2.201802012109"/>
+		<plugin id="org.osgi.util.measurement.source" version="1.0.2.201802012109"/>
+		<plugin id="org.osgi.util.position.source" version="1.0.1.201505202026"/>
+		<plugin id="org.osgi.util.position" version="1.0.1.201505202026"/>
+		<plugin id="org.osgi.util.xml" version="1.0.2.202109301733"/>
+		<plugin id="org.osgi.util.xml.source" version="1.0.2.202109301733"/>
+		<plugin id="org.osgi.service.cm" version="1.6.1.202109301733"/>
+		<plugin id="org.osgi.service.cm.source" version="1.6.1.202109301733"/>
+		<plugin id="org.osgi.service.metatype" version="1.4.1.202109301733"/>
+		<plugin id="org.osgi.service.metatype.source" version="1.4.1.202109301733"/>
+		<plugin id="org.osgi.service.device" version="1.1.1.202109301733"/>
+		<plugin id="org.osgi.service.device.source" version="1.1.1.202109301733"/>
+		<plugin id="org.osgi.service.provisioning" version="1.2.0.201505202024"/>
+		<plugin id="org.osgi.service.provisioning.source" version="1.2.0.201505202024"/>
+		<plugin id="org.osgi.service.upnp" version="1.2.1.202109301733"/>
+		<plugin id="org.osgi.service.upnp.source" version="1.2.1.202109301733"/>
+		<plugin id="org.osgi.service.useradmin" version="1.1.1.202109301733"/>
+		<plugin id="org.osgi.service.useradmin.source" version="1.1.1.202109301733"/>
+		<plugin id="org.osgi.service.wireadmin" version="1.0.2.202109301733"/>
+		<plugin id="org.osgi.service.wireadmin.source" version="1.0.2.202109301733"/>
+		<plugin id="org.apiguardian.api" version="1.1.2"/>
+		<plugin id="org.apiguardian.api.source" version="1.1.2"/>
+		<plugin id="org.eclipse.equinox.p2.artifact.repository"/>
+		<plugin id="org.eclipse.equinox.p2.artifact.repository.source"/>
+		<plugin id="bcutil.source"/>
+		<plugin id="bcprov" version="1.77"/>
+		<plugin id="bcprov.source" version="1.77.0"/>
+		<plugin id="bcpkix"/>
+		<plugin id="bcpkix.source"/>
+		<plugin id="org.eclipse.equinox.p2.jarprocessor"/>
+		<plugin id="org.eclipse.equinox.p2.jarprocessor.source"/>
+		<plugin id="slf4j.simple" version="1.7.36"/>
+		<plugin id="slf4j.simple.source" version="2.0.9"/>
+		<plugin id="slf4j.nop" version="1.7.36"/>
+		<plugin id="slf4j.nop.source" version="1.7.36"/>
+		<plugin id="jakarta.xml.bind-api.source" version="2.3.3"/>
+		<plugin id="org.eclipse.jetty.session"/>
+		<plugin id="org.eclipse.jetty.session.source"/>
+		<plugin id="jakarta.activation-api.source" version="2.1.2"/>
+		<plugin id="jakarta.annotation-api.source" version="2.1.1"/>
+		<plugin id="jakarta.annotation-api.source" version="1.3.5"/>
+		<plugin id="jakarta.inject.jakarta.inject-api.source" version="1.0.5"/>
+		<plugin id="jakarta.inject.jakarta.inject-api.source" version="2.0.1"/>
+		<plugin id="javax.servlet-api.source" version="3.1.0"/>
+		<plugin id="junit-jupiter-api.source" version="5.10.1"/>
+		<plugin id="junit-jupiter-engine.source" version="5.10.1"/>
+		<plugin id="junit-jupiter-migrationsupport.source" version="5.10.1"/>
+		<plugin id="junit-jupiter-params.source" version="5.10.1"/>
+		<plugin id="junit-platform-commons.source" version="1.10.1"/>
+		<plugin id="junit-platform-engine.source" version="1.10.1"/>
+		<plugin id="junit-platform-launcher.source" version="1.10.1"/>
+		<plugin id="junit-platform-runner.source" version="1.10.1"/>
+		<plugin id="junit-platform-suite-api.source" version="1.10.1"/>
+		<plugin id="junit-platform-suite-commons.source" version="1.10.1"/>
+		<plugin id="junit-platform-suite-engine.source" version="1.10.1"/>
+		<plugin id="org.apache.batik.awt.util.source"/>
+		<plugin id="org.apache.batik.ext.source"/>
+		<plugin id="org.apache.xalan.source"/>
+		<plugin id="org.apache.xerces.source"/>
+		<plugin id="org.apache.xml.resolver.source"/>
+		<plugin id="org.apache.xml.serializer.source"/>
+		<plugin id="org.eclipse.jdt.annotation.source" version="2.2.800.v20231029-1039"/>
+		<plugin id="org.eclipse.jdt.annotation.source" version="1.2.100.v20220826-1026"/>
+		<plugin id="org.eclipse.tools.templates.freemarker.source"/>
+		<plugin id="org.freemarker.freemarker.source" version="2.3.32.stable"/>
+		<plugin id="org.hamcrest.core.source" version="1.3.0.v20230809-1000"/>
+		<plugin id="org.hamcrest.source" version="2.2.0"/>
+		<plugin id="org.yaml.snakeyaml.source" version="2.2.0"/>
+		<plugin id="slf4j.api.source" version="1.7.36"/>
+		<plugin id="slf4j.nop.source" version="2.0.9"/>
+		<plugin id="slf4j.simple.source" version="1.7.36"/>
+		<plugin id="bcutil"/>
+		<plugin id="org.eclipse.cdt.core.macosx.source"/>
+		<plugin id="org.eclipse.cdt.core.macosx"/>
+		<plugin id="org.eclipse.core.filesystem.macosx"/>
+		<plugin id="org.eclipse.equinox.security.macosx.source"/>
+		<plugin id="org.eclipse.equinox.security.macosx"/>
+	</includeBundles>
+</target>
