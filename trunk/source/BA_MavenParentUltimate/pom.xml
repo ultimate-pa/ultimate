@@ -20,28 +20,28 @@
 
 		<!-- maven plugin versions -->
 		<!-- https://mvnrepository.com/artifact/org.eclipse.tycho/tycho-core -->
-		<tycho-version>1.7.0</tycho-version>
+		<tycho-version>4.0.8</tycho-version>
 		<!-- https://mvnrepository.com/artifact/org.sonarsource.scanner.maven/sonar-maven-plugin -->
-		<sonar-version>3.9.0.2155</sonar-version>
+		<sonar-version>4.0.0.4121</sonar-version>
 		<!-- https://mvnrepository.com/artifact/org.jacoco/jacoco-maven-plugin -->
-		<jacoco-version>0.8.7</jacoco-version>
+		<jacoco-version>0.8.12</jacoco-version>
 		<!-- https://mvnrepository.com/artifact/org.eclipse.m2e/core -->
-		<m2e-version>1.0.0</m2e-version>
+		<m2e-version>1.6.2</m2e-version>
 		<!-- https://mvnrepository.com/artifact/io.github.git-commit-id/git-commit-id-maven-plugin -->
 		<!-- https://github.com/git-commit-id/git-commit-id-maven-plugin -->
-		<git-commit-id-version>5.0.0</git-commit-id-version>
+		<git-commit-id-version>9.0.1</git-commit-id-version>
 		<!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-clean-plugin -->
-		<maven-clean-version>3.1.0</maven-clean-version>
+		<maven-clean-version>3.4.0</maven-clean-version>
 		<!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-antrun-plugin -->
-		<maven-antrun-version>3.0.0</maven-antrun-version>
+		<maven-antrun-version>3.1.0</maven-antrun-version>
 		<!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-war-plugin -->
-		<maven-war-version>3.3.1</maven-war-version>
+		<maven-war-version>3.4.0</maven-war-version>
 		<!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-assembly-plugin -->
-		<maven-assembly-version>3.3.0</maven-assembly-version>
+		<maven-assembly-version>3.7.1</maven-assembly-version>
 		<!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-resources-plugin -->
-		<maven-resources-version>3.1.0</maven-resources-version>
+		<maven-resources-version>3.3.1</maven-resources-version>
 		<!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-compiler-plugin -->
-		<maven-compiler-version>3.8.1</maven-compiler-version>
+		<maven-compiler-version>3.13.0</maven-compiler-version>
 
 		<!-- reference to workspace root -->
 		<workspaceDir>${basedir}/..</workspaceDir>
@@ -78,7 +78,7 @@
 
 		<!-- Sonar parameters -->
 		<sonar.language>java</sonar.language>
-		<sonar.java.source>11</sonar.java.source>
+		<sonar.java.source>21</sonar.java.source>
 		<sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
 		<sonar.showProfiling>false</sonar.showProfiling>
 		<sonar.verbose>false</sonar.verbose>
@@ -616,10 +616,10 @@
 
 	<profiles>
 		<profile>
-			<id>jdk_gt_1.8</id>
-			<!-- Java > 1.8 uses this profile https://maven.apache.org/enforcer/enforcer-rules/versionRanges.html -->
+			<id>jdk_gt_21</id>
+			<!-- Java > 21 uses this profile https://maven.apache.org/enforcer/enforcer-rules/versionRanges.html -->
 			<activation>
-				<jdk>(1.8,]</jdk>
+				<jdk>(21,]</jdk>
 			</activation>
 
 			<repositories>
@@ -666,11 +666,11 @@
 		</profile>
 
 		<profile>
-			<!-- NOT supported JDK version <= 1.8. -->
-			<id>jdk_leq_1.8</id>
-			<!-- Java < 1.9 uses this profile https://maven.apache.org/enforcer/enforcer-rules/versionRanges.html -->
+			<!-- NOT supported JDK version <= 20 -->
+			<id>jdk_leq_20</id>
+			<!-- Java < 20 uses this profile https://maven.apache.org/enforcer/enforcer-rules/versionRanges.html -->
 			<activation>
-				<jdk>[,1.9)</jdk>
+				<jdk>[,20)</jdk>
 			</activation>
 		</profile>
 
@@ -821,7 +821,7 @@
 				command supplies additional options to the test VM without changing this 
 				pom.xml Further notes: Maven chooses your VM by inspecting JAVA_HOME. Under 
 				Windows, you can show it with echo %JAVA_HOME% and change it temporarily 
-				with set JAVA_HOME=C:\Program Files\Java\jdk1.8.0_05 This profile should 
+				with set JAVA_HOME=C:\Program Files\Java\jdk21.0_05 This profile should 
 				(probably) only be used manually. -->
 			<id>manualtest</id>
 			<build>
