@@ -159,13 +159,13 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 		if ((FORCE_FINITE_AUTOMATA_FOR_SEQUENTIAL_PROGRAMS && !IcfgUtils.isConcurrent(root))
 				|| witnessAutomaton != null) {
 			return createFiniteAutomataCegarLoop(services, name, root, predicateFactory, errorLocs,
-					rawFloydHoareAutomataFromFile, hoareAnnotationLocs, stateFactoryForRefinement, witnessAutomaton);
+					rawFloydHoareAutomataFromFile, stateFactoryForRefinement, witnessAutomaton);
 		}
 
 		switch (mPrefs.getAutomataTypeConcurrency()) {
 		case FINITE_AUTOMATA:
 			return createFiniteAutomataCegarLoop(services, name, root, predicateFactory, errorLocs,
-					rawFloydHoareAutomataFromFile, hoareAnnotationLocs, stateFactoryForRefinement, witnessAutomaton);
+					rawFloydHoareAutomataFromFile, stateFactoryForRefinement, witnessAutomaton);
 		case PARTIAL_ORDER_FA:
 			requireNoReuse("POR-based analysis");
 			requireNoWitnesses(witnessAutomaton, "POR-based analysis");
@@ -209,10 +209,10 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 			final DebugIdentifier name, final IIcfg<IcfgLocation> root, final PredicateFactory predicateFactory,
 			final Set<IcfgLocation> errorLocs,
 			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile,
-			final Set<IcfgLocation> hoareAnnotationLocs, final PredicateFactoryRefinement stateFactoryForRefinement,
+			final PredicateFactoryRefinement stateFactoryForRefinement,
 			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton) {
 
-		// TODO extract proof producer from IInitialAbstractionProvider and pass to CEGAR loops
+		// TODO #proofRefactor extract proof producer from IInitialAbstractionProvider and pass to CEGAR loops
 		final INestedWordAutomaton<L, IPredicate> initialAbstraction = createAutomataAbstraction(services, root,
 				errorLocs, predicateFactory, stateFactoryForRefinement, witnessAutomaton);
 		final CfgSmtToolkit csToolkit = root.getCfgSmtToolkit();
