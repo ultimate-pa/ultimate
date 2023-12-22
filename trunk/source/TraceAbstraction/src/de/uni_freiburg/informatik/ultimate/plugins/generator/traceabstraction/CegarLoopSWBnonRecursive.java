@@ -67,7 +67,6 @@ import de.uni_freiburg.informatik.ultimate.lib.proofs.IFinishWithFinalAbstractio
 import de.uni_freiburg.informatik.ultimate.lib.proofs.IUpdateOnDifference;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.IUpdateOnMinimization;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolatingTraceCheckCraig;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheck;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
@@ -166,7 +165,6 @@ public class CegarLoopSWBnonRecursive<L extends IIcfgTransition<?>> extends NwaC
 	 * @param csToolkit
 	 * @param taPrefs
 	 * @param errorLocs
-	 * @param interpolation
 	 * @param computeHoareAnnotation
 	 * @param services
 	 * @param transitionClazz
@@ -174,11 +172,11 @@ public class CegarLoopSWBnonRecursive<L extends IIcfgTransition<?>> extends NwaC
 	public <T extends IUpdateOnDifference<L> & IUpdateOnMinimization<L> & IFinishWithFinalAbstraction<INestedWordAutomaton<L, IPredicate>>> CegarLoopSWBnonRecursive(
 			final DebugIdentifier name, final INestedWordAutomaton<L, IPredicate> initialAbstraction,
 			final IIcfg<?> icfg, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
-			final TAPreferences taPrefs, final Set<IcfgLocation> errorLocs, final InterpolationTechnique interpolation,
-			final T proofUpdater, final boolean computeHoareAnnotation, final IUltimateServiceProvider services,
+			final TAPreferences taPrefs, final Set<IcfgLocation> errorLocs, final T proofUpdater,
+			final boolean computeHoareAnnotation, final IUltimateServiceProvider services,
 			final Class<L> transitionClazz, final PredicateFactoryRefinement stateFactoryForRefinement) {
-		super(name, initialAbstraction, icfg, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation,
-				proofUpdater, computeHoareAnnotation, services, transitionClazz, stateFactoryForRefinement);
+		super(name, initialAbstraction, icfg, csToolkit, predicateFactory, taPrefs, errorLocs, proofUpdater,
+				computeHoareAnnotation, services, transitionClazz, stateFactoryForRefinement);
 		mErrorPathHistory = new ArrayList<>();
 		mnofStates = new ArrayList<>();
 	}

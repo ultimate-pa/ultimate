@@ -109,7 +109,6 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 	protected final ILogger mLogger;
 	protected final SimplificationTechnique mSimplificationTechnique;
 	protected final XnfConversionTechnique mXnfConversionTechnique;
-	protected final Class<L> mTransitionClazz;
 
 	/**
 	 * Interprocedural control flow graph.
@@ -196,14 +195,12 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 	 * @param taPrefs
 	 * @param errorLocs
 	 * @param logger
-	 * @param transitionClazz
 	 * @param computeHoareAnnotation
 	 */
 	protected AbstractCegarLoop(final IUltimateServiceProvider services, final DebugIdentifier name,
 			final A initialAbstraction, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
-			final Set<? extends IcfgLocation> errorLocs, final ILogger logger, final Class<L> transitionClazz,
-			final boolean computeHoareAnnotation) {
+			final Set<? extends IcfgLocation> errorLocs, final ILogger logger, final boolean computeHoareAnnotation) {
 		mServices = services;
 		mLogger = logger;
 		mSimplificationTechnique = taPrefs.getSimplificationTechnique();
@@ -216,7 +213,6 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 		mPredicateFactory = predicateFactory;
 		mPref = taPrefs;
 		mErrorLocs = errorLocs;
-		mTransitionClazz = transitionClazz;
 		mComputeHoareAnnotation = computeHoareAnnotation;
 		// TODO: TaskIdentifier should probably be provided by caller
 		mTaskIdentifier = new SubtaskFileIdentifier(null, mIcfg.getIdentifier() + "_" + name);

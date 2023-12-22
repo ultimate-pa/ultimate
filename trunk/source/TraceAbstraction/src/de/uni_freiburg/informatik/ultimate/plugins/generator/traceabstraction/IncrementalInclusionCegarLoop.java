@@ -68,7 +68,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.proofs.IFinishWithFinalAbstraction;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.IUpdateOnDifference;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.IUpdateOnMinimization;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.NondeterministicInterpolantAutomaton;
@@ -86,12 +85,12 @@ public class IncrementalInclusionCegarLoop<L extends IIcfgTransition<?>> extends
 	public <T extends IUpdateOnDifference<L> & IUpdateOnMinimization<L> & IFinishWithFinalAbstraction<INestedWordAutomaton<L, IPredicate>>> IncrementalInclusionCegarLoop(
 			final DebugIdentifier name, final INestedWordAutomaton<L, IPredicate> initialAbstraction,
 			final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
-			final TAPreferences taPrefs, final Set<? extends IcfgLocation> errorLocs,
-			final InterpolationTechnique interpolation, final T proofUpdater, final boolean computeHoareAnnotation,
-			final IUltimateServiceProvider services, final LanguageOperation languageOperation,
-			final Class<L> transitionClazz, final PredicateFactoryRefinement stateFactoryForRefinement) {
-		super(name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation,
-				proofUpdater, computeHoareAnnotation, services, transitionClazz, stateFactoryForRefinement);
+			final TAPreferences taPrefs, final Set<? extends IcfgLocation> errorLocs, final T proofUpdater,
+			final boolean computeHoareAnnotation, final IUltimateServiceProvider services,
+			final LanguageOperation languageOperation, final Class<L> transitionClazz,
+			final PredicateFactoryRefinement stateFactoryForRefinement) {
+		super(name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, proofUpdater,
+				computeHoareAnnotation, services, transitionClazz, stateFactoryForRefinement);
 		mLanguageOperation = languageOperation;
 
 		if (proofUpdater != null) {

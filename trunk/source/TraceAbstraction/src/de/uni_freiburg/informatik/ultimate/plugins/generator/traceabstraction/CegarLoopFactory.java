@@ -143,8 +143,8 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 					stateFactoryForRefinement, witnessAutomaton);
 			// TODO extract proof producer from IInitialAbstractionProvider and pass to CEGAR loop
 			return new IncrementalInclusionCegarLoop<>(name, abstraction, root, csToolkit, predicateFactory, mPrefs,
-					errorLocs, mPrefs.interpolation(), null, mComputeHoareAnnotation, services, languageOperation,
-					mTransitionClazz, stateFactoryForRefinement);
+					errorLocs, null, mComputeHoareAnnotation, services, languageOperation, mTransitionClazz,
+					stateFactoryForRefinement);
 		}
 
 		if (mPrefs.interpolantAutomaton() == InterpolantAutomaton.TOTALINTERPOLATION) {
@@ -152,8 +152,7 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 					stateFactoryForRefinement, witnessAutomaton);
 			// TODO extract proof producer from IInitialAbstractionProvider and pass to CEGAR loop
 			return new CegarLoopSWBnonRecursive<>(name, abstraction, root, csToolkit, predicateFactory, mPrefs,
-					errorLocs, mPrefs.interpolation(), null, mComputeHoareAnnotation, services, mTransitionClazz,
-					stateFactoryForRefinement);
+					errorLocs, null, mComputeHoareAnnotation, services, mTransitionClazz, stateFactoryForRefinement);
 		}
 
 		if ((FORCE_FINITE_AUTOMATA_FOR_SEQUENTIAL_PROGRAMS && !IcfgUtils.isConcurrent(root))
@@ -173,7 +172,7 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 			return new PartialOrderCegarLoop<>(name,
 					createPartialOrderAbstraction(services, predicateFactory, stateFactoryForRefinement, root,
 							errorLocs),
-					root, csToolkit, predicateFactory, mPrefs, errorLocs, mPrefs.interpolation(), services,
+					root, csToolkit, predicateFactory, mPrefs, errorLocs, services,
 					factory.createProviders(root, predicateFactory), mTransitionClazz, stateFactoryForRefinement);
 		case PETRI_NET:
 			requireNoReuse("Petri net-based analysis");
@@ -220,16 +219,15 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 		switch (mPrefs.getFloydHoareAutomataReuse()) {
 		case EAGER:
 			return new EagerReuseCegarLoop<>(name, initialAbstraction, root, csToolkit, predicateFactory, mPrefs,
-					errorLocs, mPrefs.interpolation(), null, mComputeHoareAnnotation, services, Collections.emptyList(),
+					errorLocs, null, mComputeHoareAnnotation, services, Collections.emptyList(),
 					rawFloydHoareAutomataFromFile, mTransitionClazz, stateFactoryForRefinement);
 		case LAZY_IN_ORDER:
 			return new LazyReuseCegarLoop<>(name, initialAbstraction, root, csToolkit, predicateFactory, mPrefs,
-					errorLocs, mPrefs.interpolation(), null, mComputeHoareAnnotation, services, Collections.emptyList(),
+					errorLocs, null, mComputeHoareAnnotation, services, Collections.emptyList(),
 					rawFloydHoareAutomataFromFile, mTransitionClazz, stateFactoryForRefinement);
 		case NONE:
 			return new NwaCegarLoop<>(name, initialAbstraction, root, csToolkit, predicateFactory, mPrefs, errorLocs,
-					mPrefs.interpolation(), null, mComputeHoareAnnotation, services, mTransitionClazz,
-					stateFactoryForRefinement);
+					null, mComputeHoareAnnotation, services, mTransitionClazz, stateFactoryForRefinement);
 		default:
 			throw new AssertionError("Unknown Setting: " + mPrefs.getFloydHoareAutomataReuse());
 		}
