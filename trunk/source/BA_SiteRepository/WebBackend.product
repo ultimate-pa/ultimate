@@ -10,34 +10,34 @@
       <programArgs>-nosplash -consoleLog
       </programArgs>
       <vmArgs>-Dosgi.noShutdown=true
-         -Dorg.eclipse.jetty.util.log.class=org.eclipse.jetty.util.log.StdErrLog
-         -DWebBackend.SETTINGS_FILE=\path\to\web.config.properties.dist
+-Dorg.eclipse.jetty.util.log.class=org.eclipse.jetty.util.log.StdErrLog
+-DWebBackend.SETTINGS_FILE=\path\to\web.config.properties.dist
       </vmArgs>
       <vmArgsMac>-XstartOnFirstThread -Dorg.eclipse.swt.internal.carbon.smallFonts
       </vmArgsMac>
    </launcherArgs>
 
-   <windowImages />
+   <windowImages/>
 
    <launcher name="WebBackend">
       <win useIco="false">
-         <bmp />
+         <bmp/>
       </win>
    </launcher>
 
    <vm>
-      <linux include="false">org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-11</linux>
-      <macos include="false">org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-11</macos>
-      <windows include="false">org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-11</windows>
+      <linux include="false">org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-21</linux>
+      <macos include="false">org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-21</macos>
+      <windows include="false">org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-21</windows>
    </vm>
 
    <plugins>
    </plugins>
 
    <features>
-      <feature id="BA_FeatureDependenciesCommon" />
-      <feature id="BA_FeatureUltimateCommon" />
-      <feature id="BA_FeatureWebBackend" />
+      <feature id="BA_FeatureDependenciesCommon"/>
+      <feature id="BA_FeatureUltimateCommon"/>
+      <feature id="BA_FeatureWebBackend"/>
    </features>
 
    <configurations>
@@ -49,7 +49,7 @@
    </configurations>
 
    <preferencesInfo>
-      <targetfile overwrite="false" />
+      <targetfile overwrite="false"/>
    </preferencesInfo>
 
    <cssInfo>
