@@ -4,7 +4,7 @@ Bundle-Name: SMTInterpolTest
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.smtinterpol.test
 Bundle-Version: 0.2.4
 Fragment-Host: de.uni_freiburg.informatik.ultimate.smtinterpol
-Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Require-Bundle: org.junit,
  org.eclipse.osgi
 Import-Package: org.eclipse.core.runtime

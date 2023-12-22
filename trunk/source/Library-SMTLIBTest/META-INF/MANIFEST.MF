@@ -4,7 +4,7 @@ Bundle-Name: de.uni_freiburg.informatik.ultimate.lib.smtlibTest
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.smtlib.test
 Bundle-Version: 0.2.4
 Fragment-Host: de.uni_freiburg.informatik.ultimate.lib.smtlib
-Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Require-Bundle: org.junit
 Export-Package: de.uni_freiburg.informatik.ultimate.logic
 Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.lib.smtlib.test

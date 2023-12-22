@@ -4,6 +4,6 @@ Bundle-Name: Library-ApacheCommonsCLI
 Bundle-SymbolicName: org.apache.commons.cli
 Bundle-Version: 1.3.1
 Bundle-Vendor: http://commons.apache.org
-Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Export-Package: org.apache.commons.cli
 Automatic-Module-Name: org.apache.commons.cli

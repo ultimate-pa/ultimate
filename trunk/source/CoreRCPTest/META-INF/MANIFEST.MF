@@ -5,7 +5,7 @@ Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.core.test
 Bundle-Version: 0.2.4
 Bundle-ActivationPolicy: lazy
 Fragment-Host: de.uni_freiburg.informatik.ultimate.core
-Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Require-Bundle: org.junit,
  de.uni_freiburg.informatik.ultimate.lib.test
 Import-Package: org.junit,

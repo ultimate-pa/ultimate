@@ -4,7 +4,7 @@ Bundle-Name: de.uni_freiburg.informatik.ultimate.lib.sifa.test
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.sifa.test
 Bundle-Version: 0.2.4
 Fragment-Host: de.uni_freiburg.informatik.ultimate.lib.sifa
-Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Require-Bundle: org.junit
 Import-Package: de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex,
  de.uni_freiburg.informatik.ultimate.lib.sifa.regexdag

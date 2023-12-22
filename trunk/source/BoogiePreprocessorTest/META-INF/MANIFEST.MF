@@ -4,6 +4,6 @@ Bundle-Name: BoogiePreprocessorTest
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.boogie.preprocessor.test
 Bundle-Version: 0.2.4
 Fragment-Host: de.uni_freiburg.informatik.ultimate.boogie.preprocessor
-Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Require-Bundle: org.junit
 Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.boogie.preprocessor.test

@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: ACSLParser
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.acsl.parser;singleton:=true
 Bundle-Version: 0.2.4
-Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Export-Package: de.uni_freiburg.informatik.ultimate.acsl.parser,
  de.uni_freiburg.informatik.ultimate.model.acsl,
  de.uni_freiburg.informatik.ultimate.model.acsl.ast

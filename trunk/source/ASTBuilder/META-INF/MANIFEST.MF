@@ -5,5 +5,5 @@ Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.astbuilder
 Bundle-Version: 0.2.4
 Require-Bundle: com.github.jhoenicke.javacup
 Export-Package: de.uni_freiburg.informatik.ultimate.astbuilder
-Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.astbuilder
