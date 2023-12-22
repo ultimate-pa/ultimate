@@ -116,6 +116,26 @@ import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
  */
 public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L, INestedWordAutomaton<L, IPredicate>> {
 
+	private enum AutomatonType {
+		FLOYD_HOARE("FloydHoare", "Fh"), ERROR("Error", "Err");
+
+		private final String mLongString;
+		private final String mShortString;
+
+		AutomatonType(final String longString, final String shortString) {
+			mLongString = longString;
+			mShortString = shortString;
+		}
+
+		public String getLongString() {
+			return mLongString;
+		}
+
+		public String getShortString() {
+			return mShortString;
+		}
+	}
+
 	protected static final int MINIMIZE_EVERY_KTH_ITERATION = 10;
 	protected static final boolean REMOVE_DEAD_ENDS = true;
 	protected static final int MINIMIZATION_TIMEOUT = 1_000;

@@ -136,33 +136,6 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
 public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>>
 		extends AbstractCegarLoop<L, A> {
 
-	public enum AutomatonType {
-		FLOYD_HOARE, ERROR;
-
-		private String mLongString;
-
-		static {
-			FLOYD_HOARE.mLongString = "FloydHoare";
-			ERROR.mLongString = "Error";
-		}
-
-		private String mShortString;
-
-		static {
-			FLOYD_HOARE.mShortString = "Fh";
-			ERROR.mShortString = "Err";
-		}
-
-		public String getLongString() {
-			return mLongString;
-		}
-
-		public String getShortString() {
-			return mShortString;
-		}
-
-	}
-
 	private static final boolean NON_EA_INDUCTIVITY_CHECK = false;
 
 	protected final PredicateFactoryRefinement mStateFactoryForRefinement;
