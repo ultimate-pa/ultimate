@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: JavaCup Plug-in
 Bundle-SymbolicName: com.github.jhoenicke.javacup
 Bundle-Version: 1.2.0
-Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Export-Package: com.github.jhoenicke.javacup.runtime
 Bundle-ClassPath: .
 Automatic-Module-Name: com.github.jhoenicke.javacup
