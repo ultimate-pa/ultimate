@@ -200,9 +200,9 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 	protected AbstractCegarLoop(final IUltimateServiceProvider services, final DebugIdentifier name,
 			final A initialAbstraction, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
-			final Set<? extends IcfgLocation> errorLocs, final ILogger logger, final boolean computeHoareAnnotation) {
+			final Set<? extends IcfgLocation> errorLocs, final boolean computeHoareAnnotation) {
 		mServices = services;
-		mLogger = logger;
+		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mSimplificationTechnique = taPrefs.getSimplificationTechnique();
 		mXnfConversionTechnique = taPrefs.getXnfConversionTechnique();
 		mPrintAutomataLabeling = taPrefs.getAutomataFormat();

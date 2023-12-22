@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.EpsilonNestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaBasis;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
@@ -161,7 +162,7 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 			final IUltimateServiceProvider services, final Class<L> transitionClazz,
 			final PredicateFactoryRefinement stateFactoryForRefinement) {
 		super(services, name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs,
-				services.getLoggingService().getLogger(Activator.PLUGIN_ID), computeHoareAnnotation);
+				computeHoareAnnotation);
 		mPathProgramDumpController = new PathProgramDumpController<>(getServices(), mPref, mIcfg);
 
 		InterpolationTechnique interpolation = taPrefs.interpolation();
@@ -227,7 +228,7 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 	 * Reads a sequence of SMT assertions from a file (line by line), creates a refinement result from them and refines
 	 * the initial abstraction with this result.
 	 */
-	protected final void readInitialProof() {
+	protected final void readInitialProof() throws AutomataLibraryException {
 		final String filename = ILocation.getAnnotation(mIcfg).getFileName() + ".proof.smt2";
 		final Path path = Paths.get(filename).toAbsolutePath();
 		if (Files.notExists(path)) {
@@ -259,8 +260,8 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 				predicates.toArray(IPredicate[]::new));
 
 		final VpAlphabet<L> alphabet;
-		if (mAbstraction instanceof INwaOutgoingLetterAndTransitionProvider<?, ?>) {
-			alphabet = ((INwaOutgoingLetterAndTransitionProvider<L, ?>) mAbstraction).getVpAlphabet();
+		if (mAbstraction instanceof INwaBasis<?, ?>) {
+			alphabet = ((INwaBasis<L, ?>) mAbstraction).getVpAlphabet();
 		} else {
 			alphabet = new VpAlphabet<>(mAbstraction.getAlphabet());
 		}
@@ -283,12 +284,7 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 						false)),
 				new Lazy<>(() -> new MonolithicHoareTripleChecker(mCsToolkit)), new Lazy<>(() -> unifier));
 		mInterpolAutomaton = mRefinementResult.getInfeasibilityProof();
-
-		try {
-			refineAbstraction();
-		} catch (final AutomataLibraryException e) {
-			throw new IllegalStateException(e);
-		}
+		refineAbstraction();
 	}
 
 	@Override
