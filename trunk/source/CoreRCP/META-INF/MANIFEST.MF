@@ -11,7 +11,7 @@ Require-Bundle: org.eclipse.core.runtime;visibility:=reexport,
  de.uni_freiburg.informatik.ultimate.lib.smtlib,
  de.uni_freiburg.informatik.ultimate.lib.util,
  org.apache.log4j,
- org.apache.logging.log4j,
+ org.apache.logging.log4j.api,
  org.apache.commons.lang,
  org.eclipse.core.resources
 Bundle-ActivationPolicy: lazy
