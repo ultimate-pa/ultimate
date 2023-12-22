@@ -13,4 +13,4 @@ Export-Package: de.uni_freiburg.informatik.ultimate.core.model,
  de.uni_freiburg.informatik.ultimate.core.model.services,
  de.uni_freiburg.informatik.ultimate.core.model.translation
 Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.lib.ultimatemodel
-Require-Bundle: javax.xml.bind;bundle-version="2.2.0";visibility:=reexport
+Require-Bundle: jakarta.xml.bind-api;visibility:=reexport

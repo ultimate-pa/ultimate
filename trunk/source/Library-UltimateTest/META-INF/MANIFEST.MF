@@ -25,11 +25,11 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.smtlib,
  de.uni_freiburg.informatik.ultimate.smtsolver.external,
  de.uni_freiburg.informatik.ultimate.smtinterpol,
- javax.activation,
+ jakarta.activation-api,
  org.yaml.snakeyaml
 Import-Package: org.junit,
  org.junit.experimental.categories,
  org.junit.runner,
  org.junit.runners,
- com.sun.xml.bind.v2;version="2.2.0"
+ com.sun.xml.bind.v2
 Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.lib.test
