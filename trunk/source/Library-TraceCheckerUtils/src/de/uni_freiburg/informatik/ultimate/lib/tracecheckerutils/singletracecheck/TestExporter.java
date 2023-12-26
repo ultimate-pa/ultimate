@@ -167,6 +167,7 @@ class TestVector {
 			// addNegativPositionToLinkedList(valuesWithNegativeIndices, position, value);
 		} else {
 			countNonDets += 1;
+
 			addToLinkedList(position, value, type);
 			if (need64Bit) {
 				addToLinkedList64Bit(position, value, type);
@@ -183,6 +184,10 @@ class TestVector {
 			for (int i = values64Bit.size(); i <= index; i = i + 1) {
 				values64Bit.add(null);
 			}
+		}
+		if (valueTerm == null) {
+			values64Bit.set(index, "0");
+			return;
 		}
 		String valueInRange = null;
 		switch (valueTerm.getSort().getName()) {
@@ -305,6 +310,10 @@ class TestVector {
 			for (int i = values.size(); i <= index; i = i + 1) {
 				values.add(null);
 			}
+		}
+		if (valueTerm == null) {
+			values.set(index, "0");
+			return;
 		}
 		String valueInRange = null;
 		switch (valueTerm.getSort().getName()) {
@@ -523,10 +532,9 @@ class TestVector {
 		values.addAll(valuesWithPositiveIndices);
 	}
 
-	public String getNonDetTypeFromName(final String payload) {
+	static public String getNonDetTypeFromName(final String payload) {
 		final Matcher m = Pattern.compile("__VERIFIER_nondet_(\\w*)").matcher(payload);
 		m.find();
-
 		return m.group(1);
 
 	}

@@ -472,7 +472,6 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 			if (SmtUtils.isSortForWhichWeCanGetValues(bv.getTermVariable().getSort())) {
 				boolean evenRepresentative = true;
 				for (final var representative : indexedRepresentatives.entrySet()) {
-
 					final Integer index = representative.getKey();
 					final Term indexedVar = representative.getValue();
 					final Term valueT = funGetValue.apply(indexedVar);
@@ -482,28 +481,28 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 							if (evenRepresentative) {
 								if (index >= 0) { // TODO how can this be an issue?
 
-									assert indexedRepresentatives.entrySet().size() == 2;
-									// TODO Not sure if save, but by far the best solution
-									if (rpeb.mTrace.asList().get(index) instanceof StatementSequence) {
-										final StatementSequence stsq =
-												(StatementSequence) rpeb.mTrace.asList().get(index);
-										if (stsq.getPayload().toString().contains("nondet")) {
-											final String type =
-													testV.getNonDetTypeFromName(stsq.getPayload().toString());
-											testV.addValueAssignment(valueT, index, type);
-											final TermTransferrer test = new TermTransferrer(
-													mCfgManagedScript.getScript(), mTcSmtManager.getScript());
+									if (indexedRepresentatives.entrySet().size() == 2) { // not 100sure if 2 is the
+																							// right index
 
-											final Term varEqValue = SmtUtils.binaryEquality(mTcSmtManager.getScript(),
-													test.transform(indexedVar), test.transform(valueT));
-											final Pair<Term, Term> varValuePair = new Pair<Term, Term>(
-													test.transform(indexedVar), test.transform(valueT));
-											varAssignmentPair.add(varValuePair);
-											varAssignment.add(varEqValue);
-											// System.out.println(varEqValue);
-											// NEW annotate Variabel Assignment to test goal helper state for reuse
-											// later
+										// TODO Not sure if save, but by far the best solution
+										if (rpeb.mTrace.asList().get(index) instanceof StatementSequence) {
+											final StatementSequence stsq =
+													(StatementSequence) rpeb.mTrace.asList().get(index);
+											if (stsq.getPayload().toString().contains("nondet")) {
+												final String type =
+														TestVector.getNonDetTypeFromName(stsq.getPayload().toString());
+												testV.addValueAssignment(valueT, index, type);
+												final TermTransferrer test = new TermTransferrer(
+														mCfgManagedScript.getScript(), mTcSmtManager.getScript());
 
+												final Term varEqValue =
+														SmtUtils.binaryEquality(mTcSmtManager.getScript(),
+																test.transform(indexedVar), test.transform(valueT));
+												final Pair<Term, Term> varValuePair = new Pair<Term, Term>(
+														test.transform(indexedVar), test.transform(valueT));
+												varAssignmentPair.add(varValuePair);
+												varAssignment.add(varEqValue);
+											}
 										}
 									}
 								} else {
@@ -530,7 +529,7 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 				final VarAssignmentReuseAnnotation vaReuseAnno = (VarAssignmentReuseAnnotation) statementBranch
 						.getPayload().getAnnotations().get(VarAssignmentReuseAnnotation.class.getName());
 				vaReuseAnno.setVa(varAssignmentPair);
-
+				vaReuseAnno.mIsNegated = false;
 			} else {
 				assert false;// TODO
 			}
