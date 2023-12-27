@@ -193,7 +193,9 @@ public final class Rook<PLACE, LETTER> {
 	}
 
 	public Rook<PLACE, LETTER> discrimination(final CoRook<PLACE, LETTER> coRook) {
-		final CoRealm<PLACE, LETTER> partialCoRealm = coRook.getCoKingdom().getParRealms().iterator().next();
+		final Set<CoRealm<PLACE, LETTER>> partialCoRealms = coRook.getCoKingdom().getParCoRealms();
+		assert partialCoRealms.size() == 1 : "There is more than one partial CoRealm discrimination case!";
+		final CoRealm<PLACE, LETTER> partialCoRealm = partialCoRealms.iterator().next();
 		Realm<PLACE, LETTER> partialRealm = partialCoRealm.getRealm();
 		Kingdom<PLACE, LETTER> kingdom = mKingdom.removeRealm(partialRealm);
 		partialRealm = partialRealm.removeCondition(partialCoRealm.getNegConditions());

@@ -170,7 +170,7 @@ final class CoKingdom<PLACE, LETTER> {
 		return mParKingdom;
 	}
 
-	public Set<CoRealm<PLACE, LETTER>> getParRealms() {
+	public Set<CoRealm<PLACE, LETTER>> getParCoRealms() {
 		return mParCoRealms;
 	}
 
