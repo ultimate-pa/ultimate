@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Function;
@@ -34,8 +35,11 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Event;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.ICoRelation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
@@ -46,10 +50,13 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.OwickiGriesAnnotation;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.OwickiGriesValidityCheck;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown.Crown;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown.CrownConstruction;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown.CrownsEmpire;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
@@ -68,6 +75,7 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 	private final IPetriNet<LETTER, PLACE> mNet;
 	private final Crown<PLACE, LETTER> mCrown;
 	private final EmpireAnnotation<PLACE> mEmpireAnnotation;
+	private final OwickiGriesAnnotation<LETTER, PLACE> mOwickiGriesAnnotation;
 
 	private final Statistics mStatistics = new Statistics();
 
@@ -94,12 +102,7 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 				net.sizeInformation(), bp.sizeInformation(), cutoffs);
 
 		mOriginalPlaces = mNet.getPlaces();
-		if (IGNORE_CUTOFF_CONDITIONS) {
-			mLogger.info("Ignoring conditions belonging to cutoff events.");
-			mConditions = mBp.getConditions().stream().filter(c -> !isCutoff(c)).collect(Collectors.toSet());
-		} else {
-			mConditions = mBp.getConditions().stream().collect(Collectors.toSet());
-		}
+		mConditions = getConditions();
 		mOriginalConditions = getOrigConditions();
 		mAssertionConditions = DataStructureUtils.difference(mConditions, mOriginalConditions);
 		mCrown = getCrown();
@@ -117,14 +120,25 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 		});
 		final String empireString = mEmpireAnnotation.toString();
 		mLogger.info("Constructed Empire Annotation: %s", empireString);
-
-		final EmpireToOwickiGries<LETTER, PLACE> empireToOwickiGries = new EmpireToOwickiGries<>(mEmpireAnnotation,
-				mgdScript, services, mLogger, symbolTable, procedures, mNet);
-		mLogger.info("Computed Owicki-Gries annotation:\n%s", empireToOwickiGries.getAnnotation());
+		mOwickiGriesAnnotation =
+				getOwickiGriesAnnotation(services, mgdScript, symbolTable, procedures, modifiableGlobals);
+		mLogger.info("Computed Owicki-Gries annotation:\n%s", mOwickiGriesAnnotation);
 	}
 
 	public static final boolean isCutoff(final Condition<?, ?> cond) {
 		return cond.getPredecessorEvent().isCutoffEvent();
+	}
+
+	private HashRelation<Transition<LETTER, PLACE>, PLACE> getCoMarkedPlaces() {
+		final HashRelation<Transition<LETTER, PLACE>, PLACE> coMarkedPlaces = new HashRelation<>();
+		final Collection<Condition<LETTER, PLACE>> conditions = mBp.getConditions();
+		final ICoRelation<LETTER, PLACE> coRelation = mBp.getCoRelation();
+		for (final Condition<LETTER, PLACE> condition : conditions) {
+			for (final Event<LETTER, PLACE> event : coRelation.computeCoRelatatedEvents(condition)) {
+				coMarkedPlaces.addPair(event.getTransition(), condition.getPlace());
+			}
+		}
+		return coMarkedPlaces;
 	}
 
 	private Crown<PLACE, LETTER> getCrown() {
@@ -144,6 +158,30 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 		mStatistics.reportEmpireStatistics(crownsEmpire);
 		mLogger.info("PetriOwickiGries Empire Statistics: %s", crownsEmpire.getStatistics());
 		return crownsEmpire.getEmpireAnnotation();
+	}
+
+	private OwickiGriesAnnotation<LETTER, PLACE> getOwickiGriesAnnotation(final IUltimateServiceProvider services,
+			final ManagedScript mgdScript, final IIcfgSymbolTable symbolTable, final Set<String> procedures,
+			final ModifiableGlobalsTable modifiableGlobals) {
+		final EmpireToOwickiGries<LETTER, PLACE> empireToOwickiGries = new EmpireToOwickiGries<>(mEmpireAnnotation,
+				mgdScript, services, mLogger, symbolTable, procedures, mNet);
+		final OwickiGriesAnnotation<LETTER, PLACE> owickiGriesAnnotation = empireToOwickiGries.getAnnotation();
+		final HashRelation<Transition<LETTER, PLACE>, PLACE> coMarkedPlaces = getCoMarkedPlaces();
+		final OwickiGriesValidityCheck<LETTER, PLACE> owickiGriesValidity = new OwickiGriesValidityCheck<>(services,
+				mgdScript, modifiableGlobals, owickiGriesAnnotation, coMarkedPlaces);
+		assert owickiGriesValidity.isValid() != Validity.INVALID : "Owicki Gries annotation is not valid";
+		return owickiGriesAnnotation;
+	}
+
+	private Set<Condition<LETTER, PLACE>> getConditions() {
+		Set<Condition<LETTER, PLACE>> conditions;
+		if (IGNORE_CUTOFF_CONDITIONS) {
+			mLogger.info("Ignoring conditions belonging to cutoff events.");
+			conditions = mBp.getConditions().stream().filter(c -> !isCutoff(c)).collect(Collectors.toSet());
+		} else {
+			conditions = mBp.getConditions().stream().collect(Collectors.toSet());
+		}
+		return conditions;
 	}
 
 	private Set<Condition<LETTER, PLACE>> getOrigConditions() {
