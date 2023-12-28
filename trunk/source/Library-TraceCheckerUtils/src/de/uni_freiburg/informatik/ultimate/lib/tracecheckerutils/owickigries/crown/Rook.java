@@ -153,6 +153,17 @@ public final class Rook<PLACE, LETTER> {
 		return new Rook<>(kingdom, getLaw());
 	}
 
+	public Rook<PLACE, LETTER> denial(final CoRook<PLACE, LETTER> coRook) {
+		final Set<CoRealm<PLACE, LETTER>> partialCoRealms = coRook.getCoKingdom().getParCoRealms();
+		assert partialCoRealms.size() == 1 : "There is more than one partial CoRealm discrimination case!";
+		final CoRealm<PLACE, LETTER> partialCoRealm = partialCoRealms.iterator().next();
+		Kingdom<PLACE, LETTER> kingdom = mKingdom.removeRealm(partialCoRealm.getRealm());
+		final Set<Condition<LETTER, PLACE>> negativeConditions = partialCoRealm.getNegConditions();
+		negativeConditions.add(coRook.getCondition());
+		kingdom = kingdom.addRealm(new Realm<>(ImmutableSet.of(negativeConditions)));
+		return new Rook<>(kingdom, getLaw());
+	}
+
 	/**
 	 * Add condition to Rook's Law
 	 *
@@ -192,6 +203,15 @@ public final class Rook<PLACE, LETTER> {
 		return new Rook<>(kingdom, law);
 	}
 
+	/**
+	 * Create new Rook containing in its kingdom all positive realms and a new realm containing only the positive
+	 * corelated conditions of the old partial realm. The Law gets created by adding the coRook's condition to the old
+	 * Law.
+	 *
+	 * @param coRook
+	 *            CoRook corresponding to Rook
+	 * @return New Rook as specified above
+	 */
 	public Rook<PLACE, LETTER> discrimination(final CoRook<PLACE, LETTER> coRook) {
 		final Set<CoRealm<PLACE, LETTER>> partialCoRealms = coRook.getCoKingdom().getParCoRealms();
 		assert partialCoRealms.size() == 1 : "There is more than one partial CoRealm discrimination case!";

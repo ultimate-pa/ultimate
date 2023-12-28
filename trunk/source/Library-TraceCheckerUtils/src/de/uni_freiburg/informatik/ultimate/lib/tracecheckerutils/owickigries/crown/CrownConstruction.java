@@ -247,6 +247,9 @@ public final class CrownConstruction<PLACE, LETTER> {
 		case FOUNDATION:
 			colonyRook = rook.foundation(coRook);
 			break;
+		case DENIAL:
+			colonyRook = rook.denial(coRook);
+			break;
 		default:
 			colonyRook = null;
 		}

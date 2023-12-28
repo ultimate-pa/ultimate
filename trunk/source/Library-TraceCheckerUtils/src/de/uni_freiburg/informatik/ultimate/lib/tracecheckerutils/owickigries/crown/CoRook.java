@@ -64,7 +64,8 @@ final class CoRook<PLACE, LETTER> {
 			if (mCoKingdom.getCoRelation() == CoRelationType.POSITIVE
 					&& mCoLaw.getCoRelation() == CoRelationType.POSITIVE) {
 				return ColonizationType.EXPANSION;
-			} else if (mCoKingdom.getCoRelation() == CoRelationType.DIVERGENT) {
+			} else if (mCoKingdom.getCoRelation() == CoRelationType.DIVERGENT
+					&& mCoLaw.getCoRelation() == CoRelationType.POSITIVE) {
 				return ColonizationType.DENIAL;
 			} else if (mCoKingdom.getCoRelation() == CoRelationType.PARTIAL
 					&& mCoLaw.getCoRelation() == CoRelationType.POSITIVE) {
