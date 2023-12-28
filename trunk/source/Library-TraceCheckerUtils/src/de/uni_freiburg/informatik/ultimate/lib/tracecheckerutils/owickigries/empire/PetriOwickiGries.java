@@ -120,6 +120,7 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 
 		final EmpireToOwickiGries<LETTER, PLACE> empireToOwickiGries = new EmpireToOwickiGries<>(mEmpireAnnotation,
 				mgdScript, services, mLogger, symbolTable, procedures, mNet);
+		mLogger.info("Computed Owicki-Gries annotation:\n%s", empireToOwickiGries.getAnnotation());
 	}
 
 	public static final boolean isCutoff(final Condition<?, ?> cond) {

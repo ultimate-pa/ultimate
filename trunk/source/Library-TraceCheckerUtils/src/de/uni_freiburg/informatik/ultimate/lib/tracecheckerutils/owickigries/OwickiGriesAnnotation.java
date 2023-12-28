@@ -26,6 +26,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -69,6 +70,7 @@ public class OwickiGriesAnnotation<LETTER, PLACE> {
 	/**
 	 * "gamma" - annotates transitions with assignments of ghost variables.
 	 */
+	// TODO create specialized class GhostAssignment which only allows assignments (no blocking) and produces formula
 	private final Map<Transition<LETTER, PLACE>, UnmodifiableTransFormula> mAssignmentMapping;
 
 	/**
@@ -146,5 +148,32 @@ public class OwickiGriesAnnotation<LETTER, PLACE> {
 		final long assignSize = mAssignmentMapping.entrySet().stream()
 				.collect(Collectors.summingLong(x -> sizeComputation.size(x.getValue().getFormula())));
 		return initSize + formulaSize + assignSize;
+	}
+
+	@Override
+	public String toString() {
+		final var sb = new StringBuilder();
+
+		sb.append("Assertions:\n");
+		appendEntries(sb, mFormulaMapping);
+
+		sb.append("\nGhost Variables (and initial values):\n");
+		appendEntries(sb, mGhostInitAssignment);
+
+		sb.append("\nGhost Updates:\n");
+		appendEntries(sb, mAssignmentMapping);
+
+		return sb.toString();
+	}
+
+	private static void appendEntries(final StringBuilder sb, final Map<?, ?> map) {
+		int len = 0;
+		for (final var key : map.keySet()) {
+			len = Integer.max(len, Objects.toString(key).length());
+		}
+		for (final var entry : map.entrySet()) {
+			final String keyStr = String.format("%-" + len + "s", entry.getKey());
+			sb.append('\t').append(keyStr).append("  :  ").append(entry.getValue()).append('\n');
+		}
 	}
 }
