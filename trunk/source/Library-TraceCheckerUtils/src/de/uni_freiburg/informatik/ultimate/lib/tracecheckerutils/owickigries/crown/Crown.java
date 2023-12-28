@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Branching
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire.PetriOwickiGries;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
 
 /**
@@ -69,7 +70,7 @@ public final class Crown<PLACE, LETTER> {
 
 	private boolean crownContainsAllCuts() {
 		final var crownCuts = getAllCrownCuts();
-		final var branchingProcessCuts = mBp.computeCuts();
+		final var branchingProcessCuts = mBp.computeCuts(PetriOwickiGries.IGNORE_CUTOFF_CONDITIONS);
 		for (final ImmutableList<Condition<LETTER, PLACE>> branchingProcessCoset : branchingProcessCuts) {
 			final Set<Condition<LETTER, PLACE>> coset =
 					branchingProcessCoset.stream().map(condition -> condition).collect(Collectors.toSet());

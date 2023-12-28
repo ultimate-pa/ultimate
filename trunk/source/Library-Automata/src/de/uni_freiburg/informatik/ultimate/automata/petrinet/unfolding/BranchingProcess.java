@@ -536,10 +536,16 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 	 *
 	 * @return List of all cuts
 	 */
-	public List<ImmutableList<Condition<LETTER, PLACE>>> computeCuts() {
+	public List<ImmutableList<Condition<LETTER, PLACE>>> computeCuts(final boolean ignoreCutoffs) {
 		final var corelation = getCoRelation();
 
-		final Condition<LETTER, PLACE>[] conditions = getConditions().toArray(Condition[]::new);
+		final Condition<LETTER, PLACE>[] conditions;
+		if (ignoreCutoffs) {
+			conditions = getConditions().stream().filter(c -> !c.getPredecessorEvent().isCutoffEvent())
+					.toArray(Condition[]::new);
+		} else {
+			conditions = getConditions().toArray(Condition[]::new);
+		}
 		final var cosets = new ArrayList<ImmutableList<Condition<LETTER, PLACE>>>();
 		final var worklist = new ArrayDeque<Pair<ImmutableList<Condition<LETTER, PLACE>>, Integer>>();
 		worklist.add(new Pair<>(ImmutableList.empty(), 0));

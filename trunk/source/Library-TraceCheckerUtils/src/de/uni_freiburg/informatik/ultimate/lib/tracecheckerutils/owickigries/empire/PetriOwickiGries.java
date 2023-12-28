@@ -56,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
 import de.uni_freiburg.informatik.ultimate.util.statistics.TimeTracker;
 
 public class PetriOwickiGries<LETTER extends IAction, PLACE> {
+	public static final boolean IGNORE_CUTOFF_CONDITIONS = true;
 
 	private final ILogger mLogger;
 
@@ -89,11 +90,16 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 		final long cutoffs = bp.getConditions().stream().filter(c -> c.getPredecessorEvent().isCutoffEvent()).count();
 		mLogger.info(
 				"Constructing Owicki-Gries proof for Petri program that %s and unfolding that %s."
-						+ " %d conditions belong to cutoff events",
+						+ " %d conditions belong to cutoff events.",
 				net.sizeInformation(), bp.sizeInformation(), cutoffs);
 
 		mOriginalPlaces = mNet.getPlaces();
-		mConditions = mBp.getConditions().stream().collect(Collectors.toSet());
+		if (IGNORE_CUTOFF_CONDITIONS) {
+			mLogger.info("Ignoring conditions belonging to cutoff events.");
+			mConditions = mBp.getConditions().stream().filter(c -> !isCutoff(c)).collect(Collectors.toSet());
+		} else {
+			mConditions = mBp.getConditions().stream().collect(Collectors.toSet());
+		}
 		mOriginalConditions = getOrigConditions();
 		mAssertionConditions = DataStructureUtils.difference(mConditions, mOriginalConditions);
 		mCrown = getCrown();
@@ -114,6 +120,10 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 
 		final EmpireToOwickiGries<LETTER, PLACE> empireToOwickiGries = new EmpireToOwickiGries<>(mEmpireAnnotation,
 				mgdScript, services, mLogger, symbolTable, procedures, mNet);
+	}
+
+	public static final boolean isCutoff(final Condition<?, ?> cond) {
+		return cond.getPredecessorEvent().isCutoffEvent();
 	}
 
 	private Crown<PLACE, LETTER> getCrown() {
@@ -137,7 +147,7 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 
 	private Set<Condition<LETTER, PLACE>> getOrigConditions() {
 		final Set<Condition<LETTER, PLACE>> conditions = new HashSet<>();
-		for (final Condition<LETTER, PLACE> cond : mBp.getConditions()) {
+		for (final Condition<LETTER, PLACE> cond : mConditions) {
 			if (mOriginalPlaces.contains(cond.getPlace())) {
 				conditions.add(cond);
 			}
