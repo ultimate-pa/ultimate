@@ -1,0 +1,29 @@
+// Owicki-Gries annotation for program proving only thread bound
+// -------------------------------------------------------------
+
+//@ variables (x Int)
+
+//@ semantics [1] { } true
+//@ semantics [2] { } true
+
+PetriNet program = (
+  alphabet    = { "[1]" "[2]" },
+  places      = { "main.l0" "main.l1" "t.l0" "notInUse" "inUse" "insufficient" },
+  transitions = {
+    ({ "main.l0" "notInUse" } "[1]" { "main.l1" "t.l0" "inUse" })
+    ({ "main.l0" "inUse" } "[1]" { "insufficient" })
+    ({ "main.l1" "t.l0" "inUse" } "[2]" { "main.l0" "notInUse" })
+  },
+  initialMarking = { "main.l0" "notInUse" },
+  acceptingPlaces = { "insufficient" }
+);
+
+FiniteAutomaton proof = (
+     alphabet      = { "[1]" "[2]" },
+     states        = { "true" "false" },
+     initialStates = { "true" },
+     finalStates   = { "false" },
+     transitions   = {
+     }
+);
+
