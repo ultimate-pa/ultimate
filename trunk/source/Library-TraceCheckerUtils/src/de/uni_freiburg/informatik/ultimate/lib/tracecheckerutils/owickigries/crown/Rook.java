@@ -235,6 +235,12 @@ public final class Rook<PLACE, LETTER> {
 		return (rookTerritories.size() == 1);
 	}
 
+	public static <P, L> boolean getRooksTerritoriesUnique(final Set<Rook<P, L>> rooks) {
+		final Set<Territory<P>> rookTerritories =
+				rooks.stream().map(rook -> rook.getKingdom().toTerritory()).collect(Collectors.toSet());
+		return (rookTerritories.size() == rooks.size());
+	}
+
 	/**
 	 * Get the cosets corresponding to marking in the Rook.
 	 *

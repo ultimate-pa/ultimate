@@ -32,6 +32,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
@@ -75,6 +76,27 @@ public final class Crown<PLACE, LETTER> {
 			final Set<Condition<LETTER, PLACE>> coset =
 					branchingProcessCoset.stream().map(condition -> condition).collect(Collectors.toSet());
 			if (!crownCuts.contains(coset)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * Checks if the second condition regarding kindred rooks holds for the Crown.
+	 *
+	 * @return True if all kindred rooks for the same kindred marking belong to the same territory or each belong to a
+	 *         different territory.
+	 */
+	private boolean kindredConditionHolds() {
+		final Kindred<PLACE, LETTER> kindred = new Kindred<>(mCrown);
+		final Set<Marking<PLACE>> kindredMarkings = new HashSet<>();
+		for (final Rook<PLACE, LETTER> rook : mCrown) {
+			kindredMarkings.addAll(kindred.getKindredMarkings(rook));
+		}
+		for (final Marking<PLACE> marking : kindredMarkings) {
+			final Set<Rook<PLACE, LETTER>> kindredRooks = kindred.getKindredRooks(marking);
+			if (!Rook.getRooksTerritoryEquality(kindredRooks) && !Rook.getRooksTerritoriesUnique(kindredRooks)) {
 				return false;
 			}
 		}
@@ -155,6 +177,11 @@ public final class Crown<PLACE, LETTER> {
 		}
 		if (!crownContainsAllCuts()) {
 			assert false : "Crown does not contain all cuts of the refined Petri nets branching process";
+			return false;
+		}
+		if (!kindredConditionHolds()) {
+			assert false : "Not all kindred rooks for the same kindred marking belong to the "
+					+ "same territory or each belong to a different territory";
 			return false;
 		}
 		return true;
