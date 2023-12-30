@@ -158,7 +158,8 @@ public final class Rook<PLACE, LETTER> {
 		assert partialCoRealms.size() == 1 : "There is more than one partial CoRealm discrimination case!";
 		final CoRealm<PLACE, LETTER> partialCoRealm = partialCoRealms.iterator().next();
 		Kingdom<PLACE, LETTER> kingdom = mKingdom.removeRealm(partialCoRealm.getRealm());
-		final Set<Condition<LETTER, PLACE>> negativeConditions = partialCoRealm.getNegConditions();
+		final Set<Condition<LETTER, PLACE>> negativeConditions =
+				DataStructureUtils.intersection(partialCoRealm.getConflictFreeSet(), partialCoRealm.getNegConditions());
 		negativeConditions.add(coRook.getCondition());
 		kingdom = kingdom.addRealm(new Realm<>(ImmutableSet.of(negativeConditions)));
 		return new Rook<>(kingdom, getLaw());
