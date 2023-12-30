@@ -52,6 +52,8 @@ public final class Kingdom<PLACE, LETTER> {
 	 */
 	private final ImmutableSet<Realm<PLACE, LETTER>> mKingdom;
 
+	private Set<Set<Condition<LETTER, PLACE>>> mTreaty = null;
+
 	public Kingdom(final ImmutableSet<Realm<PLACE, LETTER>> kingdom) {
 		mKingdom = kingdom;
 	}
@@ -160,10 +162,14 @@ public final class Kingdom<PLACE, LETTER> {
 	 * @return Treaty of the Kingdom.
 	 */
 	public Set<Set<Condition<LETTER, PLACE>>> getTreaty() {
-		final Set<Set<Condition<LETTER, PLACE>>> treatySet = new HashSet<>();
-		final Set<Realm<PLACE, LETTER>> kingdomRealms = getRealms().stream().collect(Collectors.toSet());
-		getAllCosets(kingdomRealms, new HashSet<>(), treatySet);
-		return treatySet;
+		if (mTreaty == null) {
+			final Set<Set<Condition<LETTER, PLACE>>> treatySet = new HashSet<>();
+			final Set<Realm<PLACE, LETTER>> kingdomRealms = getRealms().stream().collect(Collectors.toSet());
+			getAllCosets(kingdomRealms, new HashSet<>(), treatySet);
+			mTreaty = treatySet;
+		}
+
+		return mTreaty;
 	}
 
 	/**
