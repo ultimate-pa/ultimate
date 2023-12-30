@@ -76,7 +76,7 @@ public class EmpireAnnotation<PLACE> {
 	}
 
 	/**
-	 * Get all regions of the Empire which are not in territory and which dont overlap with any of the territory's
+	 * Get all regions of the Empire which are not in territory and which don't overlap with any of the territory's
 	 * regions
 	 *
 	 * @param territory

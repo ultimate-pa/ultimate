@@ -133,9 +133,15 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 		final HashRelation<Transition<LETTER, PLACE>, PLACE> coMarkedPlaces = new HashRelation<>();
 		final Collection<Condition<LETTER, PLACE>> conditions = mBp.getConditions();
 		final ICoRelation<LETTER, PLACE> coRelation = mBp.getCoRelation();
+		PLACE place;
+		Transition<LETTER, PLACE> transition;
 		for (final Condition<LETTER, PLACE> condition : conditions) {
+			place = condition.getPlace();
 			for (final Event<LETTER, PLACE> event : coRelation.computeCoRelatatedEvents(condition)) {
-				coMarkedPlaces.addPair(event.getTransition(), condition.getPlace());
+				transition = event.getTransition();
+				if (!transition.getPredecessors().contains(place)) {
+					coMarkedPlaces.addPair(transition, place);
+				}
 			}
 		}
 		return coMarkedPlaces;

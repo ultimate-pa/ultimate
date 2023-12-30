@@ -248,20 +248,20 @@ public class EmpireToOwickiGries<LETTER, PLACE> {
 	private UnmodifiableTransFormula getTransitionAssignment(final Transition<LETTER, PLACE> transition,
 			final ILogger iLogger, final IUltimateServiceProvider services) {
 		final List<UnmodifiableTransFormula> assignments = new ArrayList<>();
-		final Set<PLACE> predecesors = transition.getPredecessors();
+		final Set<PLACE> predecessors = transition.getPredecessors();
 		final Set<PLACE> successors = transition.getSuccessors();
-		final Set<Region<PLACE>> predecesorsRegions = mEmpireAnnotation.getColony().stream()
-				.filter(r -> !DataStructureUtils.haveEmptyIntersection(r.getPlaces(), predecesors))
+		final Set<Region<PLACE>> predecessorsRegions = mEmpireAnnotation.getColony().stream()
+				.filter(r -> !DataStructureUtils.haveEmptyIntersection(r.getPlaces(), predecessors))
 				.collect(Collectors.toSet());
 		final Set<Region<PLACE>> successorsRegions = mEmpireAnnotation.getColony().stream()
 				.filter(r -> !DataStructureUtils.haveEmptyIntersection(r.getPlaces(), successors))
 				.collect(Collectors.toSet());
 		// Remove regions from both sets which are contained in both sets
 		final Set<Region<PLACE>> intersectingRegions =
-				DataStructureUtils.intersection(predecesorsRegions, successorsRegions);
-		predecesorsRegions.removeAll(intersectingRegions);
+				DataStructureUtils.intersection(predecessorsRegions, successorsRegions);
+		predecessorsRegions.removeAll(intersectingRegions);
 		successorsRegions.removeAll(intersectingRegions);
-		for (final Region<PLACE> region : predecesorsRegions) {
+		for (final Region<PLACE> region : predecessorsRegions) {
 			assignments.add(getGhostAssignment(Collections.nCopies(1, mGhostVariables.get(region)), "false"));
 		}
 		for (final Region<PLACE> region : successorsRegions) {
