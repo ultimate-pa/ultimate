@@ -201,7 +201,7 @@ public class EmpireToOwickiGries<LETTER, PLACE> {
 				mGhostVariables.keySet().stream().filter(r -> territory.getRegions().contains(r))
 						.map(r -> mGhostVariables.get(r).getTerm()).collect(Collectors.toSet());
 		final Set<Region<PLACE>> outRegions = mEmpireAnnotation.getOutlanderRegions(territory);
-		final Set<Term> negativeClauses = mGhostVariables.keySet().stream().filter(r -> outRegions.contains(r))
+		final Set<Term> negativeClauses = outRegions.stream()
 				.map(r -> SmtUtils.not(mScript, mGhostVariables.get(r).getTerm())).collect(Collectors.toSet());
 		return SmtUtils.and(mScript, DataStructureUtils.union(positiveClauses, negativeClauses));
 	}
