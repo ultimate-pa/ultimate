@@ -37,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.B
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.MonolithicImplicationChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire.PetriOwickiGries;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataTestFileAST;
@@ -58,8 +57,7 @@ public class PetriOwickiGriesTestSuite extends OwickiGriesTestSuite {
 		}
 		final var modifiableGlobals = new ModifiableGlobalsTable(modifiesRelation);
 		final var pog = new PetriOwickiGries<>(mServices, unfolding, program, mPredicateFactory, Function.identity(),
-				new MonolithicImplicationChecker(mServices, mMgdScript), mMgdScript, mSymbolTable,
-				Set.of(SimpleAction.PROCEDURE), modifiableGlobals);
+				mMgdScript, mSymbolTable, Set.of(SimpleAction.PROCEDURE), modifiableGlobals);
 
 		final StatisticsData data = new StatisticsData();
 		data.aggregateBenchmarkData(pog.getStatistics());

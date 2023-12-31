@@ -65,14 +65,23 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.TimeTracker;
 public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 	public static final boolean IGNORE_CUTOFF_CONDITIONS = true;
 
+	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
+	private final ManagedScript mMgdScript;
+	private final BasicPredicateFactory mFactory;
+
+	private final IIcfgSymbolTable mSymbolTable;
+	private final Set<String> mProcedures;
+	private final ModifiableGlobalsTable mModifiableGlobals;
+
+	private final IPetriNet<LETTER, PLACE> mNet;
+	private final Set<PLACE> mOriginalPlaces;
 
 	private final BranchingProcess<LETTER, PLACE> mBp;
 	private final Set<Condition<LETTER, PLACE>> mConditions;
 	private final Set<Condition<LETTER, PLACE>> mOriginalConditions;
 	private final Set<Condition<LETTER, PLACE>> mAssertionConditions;
-	private final Set<PLACE> mOriginalPlaces;
-	private final IPetriNet<LETTER, PLACE> mNet;
+
 	private final Crown<PLACE, LETTER> mCrown;
 	private final EmpireAnnotation<PLACE> mEmpireAnnotation;
 	private final OwickiGriesAnnotation<LETTER, PLACE> mOwickiGriesAnnotation;
@@ -88,41 +97,43 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 	 */
 	public PetriOwickiGries(final IUltimateServiceProvider services, final BranchingProcess<LETTER, PLACE> bp,
 			final IPetriNet<LETTER, PLACE> net, final BasicPredicateFactory factory,
-			final Function<PLACE, IPredicate> placeToAssertion, final MonolithicImplicationChecker implicationChecker,
-			final ManagedScript mgdScript, final IIcfgSymbolTable symbolTable, final Set<String> procedures,
+			final Function<PLACE, IPredicate> placeToAssertion, final ManagedScript mgdScript,
+			final IIcfgSymbolTable symbolTable, final Set<String> procedures,
 			final ModifiableGlobalsTable modifiableGlobals) {
+		mServices = services;
 		mLogger = services.getLoggingService().getLogger(PetriOwickiGries.class);
+		mMgdScript = mgdScript;
+		mFactory = factory;
+
+		mSymbolTable = symbolTable;
+		mProcedures = procedures;
+		mModifiableGlobals = modifiableGlobals;
+
+		mNet = net;
+		mOriginalPlaces = mNet.getPlaces();
 
 		mBp = bp;
-		mNet = net;
-		final long cutoffs = bp.getConditions().stream().filter(c -> c.getPredecessorEvent().isCutoffEvent()).count();
-		mLogger.info(
-				"Constructing Owicki-Gries proof for Petri program that %s and unfolding that %s."
-						+ " %d conditions belong to cutoff events.",
-				net.sizeInformation(), bp.sizeInformation(), cutoffs);
-
-		mOriginalPlaces = mNet.getPlaces();
 		mConditions = getConditions();
 		mOriginalConditions = getOrigConditions();
 		mAssertionConditions = DataStructureUtils.difference(mConditions, mOriginalConditions);
-		mCrown = getCrown();
-		mEmpireAnnotation = getEmpireAnnotation(factory, placeToAssertion);
-		final MarkingLaw<PLACE> markingLaw = new MarkingLaw<>(mEmpireAnnotation.getLaw(), factory);
 
-		mStatistics.measureEmpireValidity(() -> {
-			try {
-				final var checker = new EmpireValidityCheck<>(markingLaw, net, factory, implicationChecker, services,
-						mgdScript, symbolTable, modifiableGlobals);
-				assert checker.getValidity() != Validity.INVALID : "Empire annotation is not valid";
-			} catch (final PetriNetNot1SafeException e) {
-				throw new IllegalArgumentException("Petri program must be 1-safe", e);
-			}
-		});
-		final String empireString = mEmpireAnnotation.toString();
-		mLogger.info("Constructed Empire Annotation: %s", empireString);
-		mOwickiGriesAnnotation =
-				getOwickiGriesAnnotation(services, mgdScript, symbolTable, procedures, modifiableGlobals);
+		final long cutoffs = bp.getConditions().stream().filter(c -> c.getPredecessorEvent().isCutoffEvent()).count();
+		mLogger.info(
+				"Constructing Owicki-Gries proof for Petri program that %s and unfolding that %s."
+						+ " %d conditions are original conditions, %d conditions are assertion conditions."
+						+ " %d conditions belong to cutoff events, %d conditions do not.",
+				net.sizeInformation(), bp.sizeInformation(), mOriginalConditions.size(), mAssertionConditions.size(),
+				cutoffs, mConditions.size() - cutoffs);
+
+		mCrown = getCrown();
+
+		mEmpireAnnotation = getEmpireAnnotation(placeToAssertion);
+		mLogger.info("Constructed Empire Annotation: %s", mEmpireAnnotation);
+		assert checkEmpireValidity() : "Empire annotation is invalid";
+
+		mOwickiGriesAnnotation = getOwickiGriesAnnotation();
 		mLogger.info("Computed Owicki-Gries annotation:\n%s", mOwickiGriesAnnotation);
+		assert checkOwickiGriesValidity() : "Owicki Gries annotation is invalid";
 	}
 
 	public static final boolean isCutoff(final Condition<?, ?> cond) {
@@ -155,10 +166,9 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 		return crownConstruction.getCrown();
 	}
 
-	private EmpireAnnotation<PLACE> getEmpireAnnotation(final BasicPredicateFactory factory,
-			final Function<PLACE, IPredicate> placeToAssertion) {
+	private EmpireAnnotation<PLACE> getEmpireAnnotation(final Function<PLACE, IPredicate> placeToAssertion) {
 		final CrownsEmpire<PLACE, LETTER> crownsEmpire = mStatistics.measureEmpire(() -> {
-			final CrownsEmpire<PLACE, LETTER> empireConstruction = mCrown.getCrownsEmpire(factory, placeToAssertion);
+			final CrownsEmpire<PLACE, LETTER> empireConstruction = mCrown.getCrownsEmpire(mFactory, placeToAssertion);
 			return empireConstruction;
 		});
 		mStatistics.reportEmpireStatistics(crownsEmpire);
@@ -166,17 +176,33 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 		return crownsEmpire.getEmpireAnnotation();
 	}
 
-	private OwickiGriesAnnotation<LETTER, PLACE> getOwickiGriesAnnotation(final IUltimateServiceProvider services,
-			final ManagedScript mgdScript, final IIcfgSymbolTable symbolTable, final Set<String> procedures,
-			final ModifiableGlobalsTable modifiableGlobals) {
+	private boolean checkEmpireValidity() {
+		return mStatistics.measureEmpireValidity(() -> {
+			try {
+				final var implicationChecker = new MonolithicImplicationChecker(mServices, mMgdScript);
+				final MarkingLaw<PLACE> markingLaw = new MarkingLaw<>(mEmpireAnnotation.getLaw(), mFactory);
+				final var checker = new EmpireValidityCheck<>(markingLaw, mNet, mFactory, implicationChecker, mServices,
+						mMgdScript, mSymbolTable, mModifiableGlobals);
+				return checker.getValidity();
+			} catch (final PetriNetNot1SafeException e) {
+				throw new IllegalArgumentException("Petri program must be 1-safe", e);
+			}
+		}) != Validity.INVALID;
+	}
+
+	private OwickiGriesAnnotation<LETTER, PLACE> getOwickiGriesAnnotation() {
 		final EmpireToOwickiGries<LETTER, PLACE> empireToOwickiGries = new EmpireToOwickiGries<>(mEmpireAnnotation,
-				mgdScript, services, mLogger, symbolTable, procedures, mNet);
-		final OwickiGriesAnnotation<LETTER, PLACE> owickiGriesAnnotation = empireToOwickiGries.getAnnotation();
-		final HashRelation<Transition<LETTER, PLACE>, PLACE> coMarkedPlaces = getCoMarkedPlaces();
-		final OwickiGriesValidityCheck<LETTER, PLACE> owickiGriesValidity = new OwickiGriesValidityCheck<>(services,
-				mgdScript, modifiableGlobals, owickiGriesAnnotation, coMarkedPlaces);
-		assert owickiGriesValidity.isValid() != Validity.INVALID : "Owicki Gries annotation is not valid";
-		return owickiGriesAnnotation;
+				mMgdScript, mServices, mLogger, mSymbolTable, mProcedures, mNet);
+		return empireToOwickiGries.getAnnotation();
+	}
+
+	private boolean checkOwickiGriesValidity() {
+		return mStatistics.measureOwickiGriesValidity(() -> {
+			final HashRelation<Transition<LETTER, PLACE>, PLACE> coMarkedPlaces = getCoMarkedPlaces();
+			final OwickiGriesValidityCheck<LETTER, PLACE> owickiGriesValidity = new OwickiGriesValidityCheck<>(
+					mServices, mMgdScript, mModifiableGlobals, mOwickiGriesAnnotation, coMarkedPlaces);
+			return owickiGriesValidity.isValid();
+		}) != Validity.INVALID;
 	}
 
 	private Set<Condition<LETTER, PLACE>> getConditions() {
@@ -208,16 +234,21 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 		public static final String CROWN_STATISTICS = "Crown construction";
 		public static final String EMPIRE_TIME = "Crown empire time";
 		public static final String EMPIRE_VALIDITY_TIME = "Empire validity check time";
+		public static final String OWICKI_GRIES_VALIDITY_TIME = "Owicki-Gries validity check time";
 		public static final String EMPIRE_STATISTICS = "Empire statistics";
 
 		private IStatisticsDataProvider mCrownStatistics;
+		private IStatisticsDataProvider mEmpireStatistics;
+
 		private final TimeTracker mEmpireTime = new TimeTracker();
 		private final TimeTracker mEmpireValidityTime = new TimeTracker();
-		private IStatisticsDataProvider mEmpireStatistics;
+		private final TimeTracker mOwickiGriesValidityTime = new TimeTracker();
 
 		public Statistics() {
 			declare(EMPIRE_TIME, () -> mEmpireTime, KeyType.TT_TIMER_MS);
 			declare(EMPIRE_VALIDITY_TIME, () -> mEmpireValidityTime, KeyType.TT_TIMER_MS);
+			declare(OWICKI_GRIES_VALIDITY_TIME, () -> mOwickiGriesValidityTime, KeyType.TT_TIMER_MS);
+
 			forward(CROWN_STATISTICS, () -> mCrownStatistics);
 			forward(EMPIRE_STATISTICS, () -> mEmpireStatistics);
 		}
@@ -234,8 +265,12 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 			return mEmpireTime.measure(runner);
 		}
 
-		private void measureEmpireValidity(final Runnable runner) {
-			mEmpireValidityTime.measure(runner);
+		private <T> T measureEmpireValidity(final Supplier<T> runner) {
+			return mEmpireValidityTime.measure(runner);
+		}
+
+		private <T> T measureOwickiGriesValidity(final Supplier<T> runner) {
+			return mOwickiGriesValidityTime.measure(runner);
 		}
 	}
 }
