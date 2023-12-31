@@ -26,5 +26,5 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown;
 
 enum ColonizationType {
-	EXPANSION, IMMIGRATION, FOUNDATION, DENIAL, DEFEAT, NULL
+	EXPANSION, IMMIGRATION, FOUNDATION, DENIAL, DEFEAT
 }

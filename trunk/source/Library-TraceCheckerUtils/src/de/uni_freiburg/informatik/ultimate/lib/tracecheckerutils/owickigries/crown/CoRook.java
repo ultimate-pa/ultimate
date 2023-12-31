@@ -60,45 +60,48 @@ final class CoRook<PLACE, LETTER> {
 	}
 
 	private ColonizationType getColonizationStrategy() {
-		if (mIsColonizer) {
-			if (mCoKingdom.getCoRelation() == CoRelationType.POSITIVE
-					&& mCoLaw.getCoRelation() == CoRelationType.POSITIVE) {
-				return ColonizationType.EXPANSION;
-			} else if (mCoKingdom.getCoRelation() == CoRelationType.DIVERGENT
-					&& mCoLaw.getCoRelation() == CoRelationType.POSITIVE) {
-				return ColonizationType.DENIAL;
-			} else if (mCoKingdom.getCoRelation() == CoRelationType.PARTIAL
-					&& mCoLaw.getCoRelation() == CoRelationType.POSITIVE) {
-				if (mCoKingdom.getConflictFree()) {
-					return ColonizationType.IMMIGRATION;
-				}
-				return ColonizationType.FOUNDATION;
-			} else {
-				return ColonizationType.DEFEAT;
-			}
+		if (!mIsColonizer) {
+			return null;
 		}
-		return ColonizationType.NULL;
+
+		if (mCoKingdom.getCoRelation() == CoRelationType.POSITIVE
+				&& mCoLaw.getCoRelation() == CoRelationType.POSITIVE) {
+			return ColonizationType.EXPANSION;
+		}
+		if (mCoKingdom.getCoRelation() == CoRelationType.DIVERGENT
+				&& mCoLaw.getCoRelation() == CoRelationType.POSITIVE) {
+			return ColonizationType.DENIAL;
+		}
+		if (mCoKingdom.getCoRelation() == CoRelationType.PARTIAL && mCoLaw.getCoRelation() == CoRelationType.POSITIVE) {
+			if (mCoKingdom.getConflictFree()) {
+				return ColonizationType.IMMIGRATION;
+			}
+			return ColonizationType.FOUNDATION;
+		}
+		return ColonizationType.DEFEAT;
 	}
 
 	private LegislationType getLegislationStrategy() {
-		if (!mIsColonizer) {
-			if (mCoKingdom.getCoRelation() == CoRelationType.POSITIVE
-					&& mCoLaw.getCoRelation() == CoRelationType.POSITIVE) {
-				return LegislationType.APPROVAL;
-			} else if (mCoKingdom.getCoRelation() == CoRelationType.POSITIVE
-					&& mCoLaw.getCoRelation() == CoRelationType.NEGATIVE) {
-				return LegislationType.ENACTMENT;
-			} else if (mCoKingdom.getCoRelation() == CoRelationType.PARTIAL
-					&& mCoLaw.getCoRelation() == CoRelationType.POSITIVE) {
-				return LegislationType.RATIFICATION;
-			} else if (mCoKingdom.getCoRelation() == CoRelationType.DIVERGENT
-					&& mCoLaw.getCoRelation() == CoRelationType.POSITIVE) {
-				return LegislationType.DISCRIMINATION;
-			} else {
-				return LegislationType.REJECTION;
-			}
+		if (mIsColonizer) {
+			return null;
 		}
-		return LegislationType.NULL;
+
+		if (mCoKingdom.getCoRelation() == CoRelationType.POSITIVE
+				&& mCoLaw.getCoRelation() == CoRelationType.POSITIVE) {
+			return LegislationType.APPROVAL;
+		}
+		if (mCoKingdom.getCoRelation() == CoRelationType.POSITIVE
+				&& mCoLaw.getCoRelation() == CoRelationType.NEGATIVE) {
+			return LegislationType.ENACTMENT;
+		}
+		if (mCoKingdom.getCoRelation() == CoRelationType.PARTIAL && mCoLaw.getCoRelation() == CoRelationType.POSITIVE) {
+			return LegislationType.RATIFICATION;
+		}
+		if (mCoKingdom.getCoRelation() == CoRelationType.DIVERGENT
+				&& mCoLaw.getCoRelation() == CoRelationType.POSITIVE) {
+			return LegislationType.DISCRIMINATION;
+		}
+		return LegislationType.REJECTION;
 	}
 
 	public LegislationType getLegislation() {
