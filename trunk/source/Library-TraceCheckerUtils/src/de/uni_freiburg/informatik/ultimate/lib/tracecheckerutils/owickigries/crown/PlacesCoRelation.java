@@ -27,12 +27,10 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.ICoRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 final class PlacesCoRelation<PLACE, LETTER> {
-	private final HashRelation<PLACE, PLACE> mCoRelatedPlaces;
-	private final ICoRelation<LETTER, PLACE> mCoRelation;
+	private final HashRelation<PLACE, PLACE> mCoRelatedPlaces = new HashRelation<>();
 
 	/**
 	 * Store the pairwise corelation for all original Places of bp.
@@ -43,23 +41,15 @@ final class PlacesCoRelation<PLACE, LETTER> {
 	 *            Original Petri net.
 	 */
 	public PlacesCoRelation(final BranchingProcess<LETTER, PLACE> bp) {
-		mCoRelation = bp.getCoRelation();
-		mCoRelatedPlaces = getAllCorelatedPlaces(bp);
-	}
-
-	private HashRelation<PLACE, PLACE> getAllCorelatedPlaces(final BranchingProcess<LETTER, PLACE> bp) {
-		final HashRelation<PLACE, PLACE> coPlacesHashtable = new HashRelation<>();
-
+		final var coRelation = bp.getCoRelation();
 		for (final var cond : bp.getConditions()) {
 			if (cond.getPredecessorEvent().isCutoffEvent()) {
 				continue;
 			}
-			for (final var other : mCoRelation.computeCoRelatatedConditions(cond)) {
-				coPlacesHashtable.addPair(cond.getPlace(), other.getPlace());
+			for (final var other : coRelation.computeCoRelatatedConditions(cond)) {
+				mCoRelatedPlaces.addPair(cond.getPlace(), other.getPlace());
 			}
 		}
-
-		return coPlacesHashtable;
 	}
 
 	/**
