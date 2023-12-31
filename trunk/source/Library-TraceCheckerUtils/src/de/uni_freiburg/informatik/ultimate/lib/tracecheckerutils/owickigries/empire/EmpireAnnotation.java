@@ -166,6 +166,18 @@ public class EmpireAnnotation<PLACE> {
 
 	@Override
 	public String toString() {
-		return mLaw.toString();
+		if (mLaw.isEmpty()) {
+			return "[empty empire]";
+		}
+		final int keyLen = mLaw.keySet().stream().map(Object::toString).mapToInt(String::length).max().getAsInt();
+		final var sb = new StringBuilder();
+		for (final var entry : mLaw.entrySet()) {
+			sb.append('\t');
+			sb.append(String.format("%-" + keyLen + "s", entry.getKey()));
+			sb.append("  :  ");
+			sb.append(entry.getValue());
+			sb.append('\n');
+		}
+		return sb.toString();
 	}
 }

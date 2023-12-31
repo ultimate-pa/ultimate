@@ -128,7 +128,7 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 		mCrown = getCrown();
 
 		mEmpireAnnotation = getEmpireAnnotation(placeToAssertion);
-		mLogger.info("Constructed Empire Annotation: %s", mEmpireAnnotation);
+		mLogger.info("Constructed Empire Annotation:\n%s", mEmpireAnnotation);
 		assert checkEmpireValidity() : "Empire annotation is invalid";
 
 		mOwickiGriesAnnotation = getOwickiGriesAnnotation();
