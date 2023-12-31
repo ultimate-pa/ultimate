@@ -213,13 +213,20 @@ public final class CrownConstruction<PLACE, LETTER> {
 			final Set<Realm<PLACE, LETTER>> kindredRealms = kindred.getKindredRealms(allKindredConditions, rook);
 			Kingdom<PLACE, LETTER> firstKingdom = new Kingdom<>(
 					ImmutableSet.of(DataStructureUtils.difference(rook.getKingdom().getRealms(), kindredRealms)));
+			boolean addRook = true;
 			for (final Realm<PLACE, LETTER> realm : kindredRealms) {
 				final ImmutableSet<Condition<LETTER, PLACE>> newRealmConditions =
 						ImmutableSet.of(DataStructureUtils.difference(realm.getConditions(), allKindredConditions));
+				if (newRealmConditions.isEmpty()) {
+					addRook = false;
+					break;
+				}
 				firstKingdom = firstKingdom.addRealm(new Realm<>(newRealmConditions));
 			}
 			rooks.remove(rook);
-			rooks.add(new Rook<>(firstKingdom, rook.getLaw()));
+			if (addRook) {
+				rooks.add(new Rook<>(firstKingdom, rook.getLaw()));
+			}
 			for (final Marking<PLACE> marking : splitMarkings) {
 				final Set<Condition<LETTER, PLACE>> markingKindredConds = kindred.getKindredConditions(marking, rook);
 				Kingdom<PLACE, LETTER> secondKingdom = new Kingdom<>(
