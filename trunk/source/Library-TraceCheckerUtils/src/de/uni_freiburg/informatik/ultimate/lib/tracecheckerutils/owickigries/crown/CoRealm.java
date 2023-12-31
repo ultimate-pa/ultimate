@@ -27,6 +27,7 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.cr
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
@@ -74,11 +75,11 @@ final class CoRealm<PLACE, LETTER> {
 	}
 
 	/**
-	 * @return Subset of Realm's conditions corelated to CoRealm' condition.
+	 * @return Subset of Realm's conditions corelated to CoRealm's condition.
 	 */
 	private Set<Condition<LETTER, PLACE>> getPosRealm() {
-		return DataStructureUtils.intersection(mRealm.getConditions(),
-				mCoRelation.computeCoRelatatedConditions(mCondition));
+		return mRealm.getConditions().stream().filter(c -> mCoRelation.isInCoRelation(c, mCondition))
+				.collect(Collectors.toSet());
 	}
 
 	/**
