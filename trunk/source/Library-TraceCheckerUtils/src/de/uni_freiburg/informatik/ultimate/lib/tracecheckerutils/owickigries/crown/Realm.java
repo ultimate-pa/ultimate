@@ -53,6 +53,7 @@ public final class Realm<PLACE, LETTER> {
 	private final ImmutableSet<Condition<LETTER, PLACE>> mRealm;
 
 	public Realm(final ImmutableSet<Condition<LETTER, PLACE>> realm) {
+		assert !realm.isEmpty() : "Realm is empty";
 		mRealm = realm;
 	}
 

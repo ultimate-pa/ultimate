@@ -45,6 +45,7 @@ public final class Region<PLACE> {
 	private final ImmutableSet<PLACE> mRegion;
 
 	public Region(final ImmutableSet<PLACE> region) {
+		assert !region.isEmpty() : "Region is empty";
 		mRegion = region;
 	}
 

@@ -132,7 +132,6 @@ public class EmpireToOwickiGries<LETTER, PLACE> {
 	 */
 	private Map<Region<PLACE>, IProgramVar> getGhostVariables() {
 		final Map<Region<PLACE>, IProgramVar> ghostVars = new HashMap<>();
-		int i = 0;
 		final Collection<Region<PLACE>> regions = mEmpireAnnotation.getColony();
 		mManagedScript.lock(this);
 		try {
@@ -143,7 +142,6 @@ public class EmpireToOwickiGries<LETTER, PLACE> {
 						SmtSortUtils.getBoolSort(mManagedScript), mManagedScript, this);
 				mSymbolTable.add(pVar);
 				ghostVars.put(region, pVar);
-				i++;
 			}
 			return ghostVars;
 		} finally {
