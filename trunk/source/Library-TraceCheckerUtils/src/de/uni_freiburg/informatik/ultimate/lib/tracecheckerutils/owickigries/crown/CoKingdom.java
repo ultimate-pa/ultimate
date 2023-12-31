@@ -25,6 +25,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -146,8 +147,10 @@ final class CoKingdom<PLACE, LETTER> {
 	private Set<Condition<LETTER, PLACE>> getConflictFreeConditions(final BranchingProcess<LETTER, PLACE> bp,
 			final PlacesCoRelation<PLACE, LETTER> placesCoRelation) {
 		if (mNegKingdom.isEmpty()) {
-			return new HashSet<>();
+			return Collections.emptySet();
 		}
+		// TODO This is very dangerous! It's nondeterministic which kingdom is picked!
+		// If there can ever only be one, use DataStructureUtils.getOneAndOnly(mNegKingdom, "negative kingdom").
 		final Realm<PLACE, LETTER> negativeRealm = mNegKingdom.iterator().next();
 		final CoRealm<PLACE, LETTER> negativeCoRealm = negativeRealm.getCoRealm(mCondition, bp, placesCoRelation);
 		mConflictFree = negativeCoRealm.getConflict() == ConflictType.CONFLICT_FREE;
