@@ -126,6 +126,7 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 				cutoffs, mConditions.size() - cutoffs);
 
 		mCrown = getCrown();
+		mLogger.info("Constructed Crown:\n%s", mCrown);
 
 		mEmpireAnnotation = getEmpireAnnotation(placeToAssertion);
 		mLogger.info("Constructed Empire Annotation:\n%s", mEmpireAnnotation);

@@ -189,6 +189,22 @@ public final class Crown<PLACE, LETTER> {
 
 	@Override
 	public String toString() {
-		return mCrown.toString();
+		if (mCrown.isEmpty()) {
+			return "[empty crown]";
+		}
+		final int kingdomLen =
+				mCrown.stream().map(Rook::getKingdom).map(Object::toString).mapToInt(String::length).max().getAsInt();
+
+		final var sb = new StringBuilder();
+		for (final var rook : mCrown) {
+			sb.append('\t');
+			sb.append("Kingdom: ");
+			sb.append(String.format("%-" + kingdomLen + "s", rook.getKingdom()));
+			sb.append("  :  ");
+			sb.append("Law: ");
+			sb.append(rook.getLaw());
+			sb.append('\n');
+		}
+		return sb.toString();
 	}
 }
