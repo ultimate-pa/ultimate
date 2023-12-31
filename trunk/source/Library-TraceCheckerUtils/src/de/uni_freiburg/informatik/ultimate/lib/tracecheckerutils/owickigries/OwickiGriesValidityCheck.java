@@ -52,6 +52,8 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationC
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.CnfTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
@@ -133,10 +135,22 @@ public class OwickiGriesValidityCheck<LETTER extends IAction, PLACE> {
 
 		final var inductivity = mHoareTripleChecker.checkInternal(precondition, composedAction, postcondition);
 		if (inductivity == Validity.INVALID) {
+			final var simplePre = SmtUtils.simplify(mManagedScript, precondition.getFormula(), mServices,
+					SimplificationTechnique.SIMPLIFY_DDA);
+			final var cnfPre = new CnfTransformer(mManagedScript, mServices).transform(simplePre);
+			final var verySimplePre =
+					SmtUtils.simplify(mManagedScript, cnfPre, mServices, SimplificationTechnique.SIMPLIFY_DDA);
+
+			final var simplePost = SmtUtils.simplify(mManagedScript, postcondition.getFormula(), mServices,
+					SimplificationTechnique.SIMPLIFY_DDA);
+			final var cnfPost = new CnfTransformer(mManagedScript, mServices).transform(simplePost);
+			final var verySimplePost =
+					SmtUtils.simplify(mManagedScript, cnfPost, mServices, SimplificationTechnique.SIMPLIFY_DDA);
+
 			mLogger.warn(
 					"Non-inductive transition %s. Invalid Hoare triple:\n"
 							+ "\tprecondition %s\n\ttransition %s\n\tpostcondition %s",
-					transition, precondition, composedAction, postcondition);
+					transition, verySimplePre.toStringDirect(), composedAction, verySimplePost.toStringDirect());
 		}
 
 		return inductivity;
