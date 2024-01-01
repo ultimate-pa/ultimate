@@ -33,7 +33,6 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -70,8 +69,7 @@ public class OwickiGriesAnnotation<LETTER, PLACE> {
 	/**
 	 * "gamma" - annotates transitions with assignments of ghost variables.
 	 */
-	// TODO create specialized class GhostAssignment which only allows assignments (no blocking) and produces formula
-	private final Map<Transition<LETTER, PLACE>, UnmodifiableTransFormula> mAssignmentMapping;
+	private final Map<Transition<LETTER, PLACE>, GhostUpdate> mAssignmentMapping;
 
 	/**
 	 * Set of ghost variables used by the annotation.
@@ -86,33 +84,34 @@ public class OwickiGriesAnnotation<LETTER, PLACE> {
 	/**
 	 * Creates a new Owicki/Gries annotation.
 	 *
+	 * @param net
+	 *            The Petri program that is annotated.
+	 * @param symbolTable
+	 *            A symbol table for the annotation, which includes the program variables as well as the ghost variables
 	 * @param formulaMapping
 	 *            The mapping from places to formulas.
-	 * @param assignmentMapping
-	 *            The annotation of transitions with ghost assignments.
 	 * @param ghostVariables
 	 *            The set of ghost variables used by the annotation.
 	 * @param ghostInitAssignment
 	 *            The initial assignment of ghost variables.
-	 * @param net
-	 *            The Petri program that is annotated.
-	 * @param symbolTable
-	 *            A symbol table for the annotation.
+	 * @param assignmentMapping
+	 *            The annotation of transitions with ghost assignments.
 	 */
-	public OwickiGriesAnnotation(final Map<PLACE, IPredicate> formulaMapping,
-			final Map<Transition<LETTER, PLACE>, UnmodifiableTransFormula> assignmentMapping,
-			final Set<IProgramVar> ghostVariables, final Map<IProgramVar, Term> ghostInitAssignment,
-			final IPetriNet<LETTER, PLACE> net, final IIcfgSymbolTable symbolTable) {
-
+	public OwickiGriesAnnotation(final IPetriNet<LETTER, PLACE> net, final IIcfgSymbolTable symbolTable,
+			final Map<PLACE, IPredicate> formulaMapping, final Set<IProgramVar> ghostVariables,
+			final Map<IProgramVar, Term> ghostInitAssignment,
+			final Map<Transition<LETTER, PLACE>, GhostUpdate> assignmentMapping) {
 		assert ghostInitAssignment.keySet().stream()
 				.allMatch(ghostVariables::contains) : "Initial value only allowed for ghost variables";
+		assert assignmentMapping.values().stream().allMatch(
+				u -> ghostVariables.containsAll(u.getAssignedVariables())) : "Only updates to ghost variables allowed";
 
-		mFormulaMapping = formulaMapping;
-		mAssignmentMapping = assignmentMapping;
-		mGhostVariables = ghostVariables;
-		mGhostInitAssignment = ghostInitAssignment;
 		mPetriNet = net;
 		mSymbolTable = symbolTable;
+		mFormulaMapping = formulaMapping;
+		mGhostVariables = ghostVariables;
+		mGhostInitAssignment = ghostInitAssignment;
+		mAssignmentMapping = assignmentMapping;
 	}
 
 	public IPetriNet<LETTER, PLACE> getPetriNet() {
@@ -127,7 +126,7 @@ public class OwickiGriesAnnotation<LETTER, PLACE> {
 		return mFormulaMapping;
 	}
 
-	public Map<Transition<LETTER, PLACE>, UnmodifiableTransFormula> getAssignmentMapping() {
+	public Map<Transition<LETTER, PLACE>, GhostUpdate> getAssignmentMapping() {
 		return mAssignmentMapping;
 	}
 
@@ -145,8 +144,7 @@ public class OwickiGriesAnnotation<LETTER, PLACE> {
 				.collect(Collectors.summingLong(x -> sizeComputation.size(x.getValue())));
 		final long formulaSize = mFormulaMapping.entrySet().stream()
 				.collect(Collectors.summingLong(x -> sizeComputation.size(x.getValue().getFormula())));
-		final long assignSize = mAssignmentMapping.entrySet().stream()
-				.collect(Collectors.summingLong(x -> sizeComputation.size(x.getValue().getFormula())));
+		final long assignSize = mAssignmentMapping.values().stream().collect(Collectors.summingLong(GhostUpdate::size));
 		return initSize + formulaSize + assignSize;
 	}
 

@@ -25,12 +25,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -38,15 +35,10 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
@@ -54,8 +46,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -76,12 +67,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  *            The type of statements in the Petri program
  */
 public class OwickiGriesConstruction<P, L> {
-	private static final SimplificationTechnique SIMPLIFICATION_TECHNIQUE = SimplificationTechnique.SIMPLIFY_DDA;
-	private static final XnfConversionTechnique XNF_CONVERSION_TECHNIQUE =
-			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
-
-	private final IUltimateServiceProvider mServices;
-	private final ILogger mLogger;
 	private final ManagedScript mManagedScript;
 	private final Script mScript;
 	private final BasicPredicateFactory mFactory;
@@ -103,24 +88,22 @@ public class OwickiGriesConstruction<P, L> {
 	public OwickiGriesConstruction(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final IIcfgSymbolTable symbolTable, final Set<String> procedures, final IPetriNet<L, P> net,
 			final Map<Marking<P>, IPredicate> floydHoare, final boolean useHittingSets) {
-		mServices = services;
-		mLogger = services.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
 		mManagedScript = mgdScript;
 		mScript = mManagedScript.getScript();
 
 		mNet = net;
 		mFloydHoareAnnotation = floydHoare;
 		mSymbolTable = new DefaultIcfgSymbolTable(symbolTable, procedures);
-		mFactory = new BasicPredicateFactory(mServices, mManagedScript, mSymbolTable);
+		mFactory = new BasicPredicateFactory(services, mManagedScript, mSymbolTable);
 
 		mGhostVariables = getGhostVariables();
 		mHittingSet = useHittingSets ? getHittingSet() : null;
 		final Map<P, IPredicate> formulaMapping = getFormulaMapping();
-		final Map<Transition<L, P>, UnmodifiableTransFormula> assignmentMapping = getAssignmentMapping();
+		final Map<Transition<L, P>, GhostUpdate> assignmentMapping = getAssignmentMapping();
 		final Map<IProgramVar, Term> ghostInitAssignment = getGhostInitAssignment();
 
-		mAnnotation = new OwickiGriesAnnotation<>(formulaMapping, assignmentMapping,
-				new HashSet<>(mGhostVariables.values()), ghostInitAssignment, mNet, mSymbolTable);
+		mAnnotation = new OwickiGriesAnnotation<>(mNet, mSymbolTable, formulaMapping,
+				new HashSet<>(mGhostVariables.values()), ghostInitAssignment, assignmentMapping);
 	}
 
 	/**
@@ -280,21 +263,11 @@ public class OwickiGriesConstruction<P, L> {
 
 	/**
 	 *
-	 * @param place
-	 * @return assignment of the place's GhostVariable.
-	 */
-	private UnmodifiableTransFormula getGhostAssignment(final Collection<IProgramVar> vars, final String term) {
-		return TransFormulaBuilder.constructAssignment(new ArrayList<>(vars),
-				Collections.nCopies(vars.size(), mScript.term(term)), mSymbolTable, mManagedScript);
-	}
-
-	/**
-	 *
 	 * @return Map of Places' Ghost Variables assignments to Transitions
 	 *
 	 */
-	private Map<Transition<L, P>, UnmodifiableTransFormula> getAssignmentMapping() {
-		final Map<Transition<L, P>, UnmodifiableTransFormula> assignmentMapping = new HashMap<>();
+	private Map<Transition<L, P>, GhostUpdate> getAssignmentMapping() {
+		final Map<Transition<L, P>, GhostUpdate> assignmentMapping = new HashMap<>();
 		for (final Transition<L, P> transition : mNet.getTransitions()) {
 			assignmentMapping.put(transition, getTransitionAssignment(transition));
 		}
@@ -307,22 +280,27 @@ public class OwickiGriesConstruction<P, L> {
 	 * @return TransFormula of sequential compositions of GhostVariables assignments. GhostVariables of Predecessors
 	 *         Places are assign to false, GhostVariables of Successors Places are assign to true.
 	 */
-	private UnmodifiableTransFormula getTransitionAssignment(final Transition<L, P> transition) {
-		final List<UnmodifiableTransFormula> assignments = new ArrayList<>();
-		Set<P> predecesors = transition.getPredecessors();
-		Set<P> successors = transition.getSuccessors();
-		if (mHittingSet != null) {
-			predecesors = DataStructureUtils.intersection(predecesors, mHittingSet);
-			successors = DataStructureUtils.intersection(successors, mHittingSet);
+	private GhostUpdate getTransitionAssignment(final Transition<L, P> transition) {
+		final Map<IProgramVar, Term> assignments = new HashMap<>();
+
+		final Set<P> predecessors = transition.getPredecessors();
+		final Set<P> successors = transition.getSuccessors();
+
+		final var falseTerm = mScript.term(SMTLIBConstants.FALSE);
+		for (final P place : predecessors) {
+			if ((mHittingSet == null || mHittingSet.contains(place)) && !successors.contains(place)) {
+				assignments.put(mGhostVariables.get(place), falseTerm);
+			}
 		}
-		for (final P place : predecesors) {
-			assignments.add(getGhostAssignment(Collections.nCopies(1, mGhostVariables.get(place)), "false"));
-		}
+
+		final var trueTerm = mScript.term(SMTLIBConstants.TRUE);
 		for (final P place : successors) {
-			assignments.add(getGhostAssignment(Collections.nCopies(1, mGhostVariables.get(place)), "true"));
+			if ((mHittingSet == null || mHittingSet.contains(place)) && !predecessors.contains(place)) {
+				assignments.put(mGhostVariables.get(place), trueTerm);
+			}
 		}
-		return TransFormulaUtils.sequentialComposition(mLogger, mServices, mManagedScript, false, false, false,
-				XNF_CONVERSION_TECHNIQUE, SIMPLIFICATION_TECHNIQUE, assignments);
+
+		return new GhostUpdate(assignments);
 	}
 
 	public OwickiGriesAnnotation<L, P> getResult() {

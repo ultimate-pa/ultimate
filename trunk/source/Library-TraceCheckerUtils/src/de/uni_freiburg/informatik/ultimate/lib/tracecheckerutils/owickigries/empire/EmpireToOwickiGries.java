@@ -26,12 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -39,13 +36,9 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
@@ -53,9 +46,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.GhostUpdate;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.OwickiGriesAnnotation;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -72,12 +65,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
  *            The type of statements in the Petri program
  */
 public class EmpireToOwickiGries<LETTER, PLACE> {
-	private static final SimplificationTechnique SIMPLIFICATION_TECHNIQUE = SimplificationTechnique.SIMPLIFY_DDA;
-	private static final XnfConversionTechnique XNF_CONVERSION_TECHNIQUE =
-			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
-
-	private final IUltimateServiceProvider mServices;
-	private final ILogger mLogger;
 	private final ManagedScript mManagedScript;
 	private final Script mScript;
 	private final BasicPredicateFactory mFactory;
@@ -111,9 +98,6 @@ public class EmpireToOwickiGries<LETTER, PLACE> {
 	public EmpireToOwickiGries(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final IPetriNet<LETTER, PLACE> net, final IIcfgSymbolTable symbolTable, final Set<String> procedures,
 			final EmpireAnnotation<PLACE> empireAnnotation) {
-		mServices = services;
-		mLogger = services.getLoggingService().getLogger(EmpireToOwickiGries.class);
-
 		mManagedScript = mgdScript;
 		mScript = mManagedScript.getScript();
 		mSymbolTable = new DefaultIcfgSymbolTable(symbolTable, procedures);
@@ -124,11 +108,11 @@ public class EmpireToOwickiGries<LETTER, PLACE> {
 
 		mGhostVariables = getGhostVariables();
 		final Map<PLACE, IPredicate> formulaMapping = getFormulaMap();
-		final Map<Transition<LETTER, PLACE>, UnmodifiableTransFormula> assignmentMapping = getAssignmentMapping();
+		final Map<Transition<LETTER, PLACE>, GhostUpdate> assignmentMapping = getAssignmentMapping();
 		final Map<IProgramVar, Term> ghostInitAssignment = getGhostInitAssignment();
 
-		mOwickiGriesAnnotation = new OwickiGriesAnnotation<>(formulaMapping, assignmentMapping,
-				new HashSet<>(mGhostVariables.values()), ghostInitAssignment, mNet, mSymbolTable);
+		mOwickiGriesAnnotation = new OwickiGriesAnnotation<>(mNet, mSymbolTable, formulaMapping,
+				new HashSet<>(mGhostVariables.values()), ghostInitAssignment, assignmentMapping);
 	}
 
 	/**
@@ -171,8 +155,8 @@ public class EmpireToOwickiGries<LETTER, PLACE> {
 	/**
 	 * @return Map of transition to the corresponding formula for each transition in net
 	 */
-	private Map<Transition<LETTER, PLACE>, UnmodifiableTransFormula> getAssignmentMapping() {
-		final Map<Transition<LETTER, PLACE>, UnmodifiableTransFormula> assignmentMapping = new HashMap<>();
+	private Map<Transition<LETTER, PLACE>, GhostUpdate> getAssignmentMapping() {
+		final Map<Transition<LETTER, PLACE>, GhostUpdate> assignmentMapping = new HashMap<>();
 		for (final Transition<LETTER, PLACE> transition : mNet.getTransitions()) {
 			assignmentMapping.put(transition, getTransitionAssignment(transition));
 		}
@@ -246,34 +230,36 @@ public class EmpireToOwickiGries<LETTER, PLACE> {
 		return mFactory.or(placesTerretoriesFormula);
 	}
 
-	private UnmodifiableTransFormula getTransitionAssignment(final Transition<LETTER, PLACE> transition) {
-		final List<UnmodifiableTransFormula> assignments = new ArrayList<>();
-		final Set<PLACE> predecessors = transition.getPredecessors();
-		final Set<PLACE> successors = transition.getSuccessors();
-		final Set<Region<PLACE>> predecessorsRegions = mEmpireAnnotation.getColony().stream()
-				.filter(r -> !DataStructureUtils.haveEmptyIntersection(r.getPlaces(), predecessors))
-				.collect(Collectors.toSet());
-		final Set<Region<PLACE>> successorsRegions = mEmpireAnnotation.getColony().stream()
-				.filter(r -> !DataStructureUtils.haveEmptyIntersection(r.getPlaces(), successors))
-				.collect(Collectors.toSet());
-		// Remove regions from both sets which are contained in both sets
-		final Set<Region<PLACE>> intersectingRegions =
-				DataStructureUtils.intersection(predecessorsRegions, successorsRegions);
-		predecessorsRegions.removeAll(intersectingRegions);
-		successorsRegions.removeAll(intersectingRegions);
-		for (final Region<PLACE> region : predecessorsRegions) {
-			assignments.add(getGhostAssignment(Collections.nCopies(1, mGhostVariables.get(region)), "false"));
-		}
-		for (final Region<PLACE> region : successorsRegions) {
-			assignments.add(getGhostAssignment(Collections.nCopies(1, mGhostVariables.get(region)), "true"));
-		}
-		return TransFormulaUtils.sequentialComposition(mLogger, mServices, mManagedScript, false, false, false,
-				XNF_CONVERSION_TECHNIQUE, SIMPLIFICATION_TECHNIQUE, assignments);
-	}
+	private GhostUpdate getTransitionAssignment(final Transition<LETTER, PLACE> transition) {
+		final Map<IProgramVar, Term> assignments = new HashMap<>();
 
-	private UnmodifiableTransFormula getGhostAssignment(final Collection<IProgramVar> vars, final String term) {
-		return TransFormulaBuilder.constructAssignment(new ArrayList<>(vars),
-				Collections.nCopies(vars.size(), mScript.term(term)), mSymbolTable, mManagedScript);
+		final Set<PLACE> predecessors = transition.getPredecessors();
+		final Set<Region<PLACE>> predecessorRegions = mEmpireAnnotation.getColony().stream()
+				.filter(r -> DataStructureUtils.haveNonEmptyIntersection(r.getPlaces(), predecessors))
+				.collect(Collectors.toSet());
+
+		final Set<PLACE> successors = transition.getSuccessors();
+		final Set<Region<PLACE>> successorRegions = mEmpireAnnotation.getColony().stream()
+				.filter(r -> DataStructureUtils.haveNonEmptyIntersection(r.getPlaces(), successors))
+				.collect(Collectors.toSet());
+
+		// Remove regions from both sets which are both predecessors and successors
+		final Set<Region<PLACE>> intersectingRegions =
+				DataStructureUtils.intersection(predecessorRegions, successorRegions);
+		predecessorRegions.removeAll(intersectingRegions);
+		successorRegions.removeAll(intersectingRegions);
+
+		final var falseTerm = mScript.term(SMTLIBConstants.FALSE);
+		for (final Region<PLACE> region : predecessorRegions) {
+			assignments.put(mGhostVariables.get(region), falseTerm);
+		}
+
+		final var trueTerm = mScript.term(SMTLIBConstants.TRUE);
+		for (final Region<PLACE> region : successorRegions) {
+			assignments.put(mGhostVariables.get(region), trueTerm);
+		}
+
+		return new GhostUpdate(assignments);
 	}
 
 	public OwickiGriesAnnotation<LETTER, PLACE> getAnnotation() {
