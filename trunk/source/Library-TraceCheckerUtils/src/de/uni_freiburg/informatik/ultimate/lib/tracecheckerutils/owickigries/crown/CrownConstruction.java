@@ -92,16 +92,14 @@ public final class CrownConstruction<PLACE, LETTER> {
 		// Add a to crown a new rook with "capital" and one corelated assertion condition
 		final Set<Rook<PLACE, LETTER>> settlementRooks = new HashSet<>();
 		for (final Condition<LETTER, PLACE> originalCondition : mOrigConds) {
-			final Set<Condition<LETTER, PLACE>> originalConditionSet = Set.of(originalCondition);
-			final Realm<PLACE, LETTER> realm = new Realm<>(ImmutableSet.of(originalConditionSet));
-			final Set<Realm<PLACE, LETTER>> realmSet = Set.of(realm);
-			final Kingdom<PLACE, LETTER> kingdom = new Kingdom<>(ImmutableSet.of(realmSet));
+			final Realm<PLACE, LETTER> realm = new Realm<>(ImmutableSet.singleton(originalCondition));
+			final Kingdom<PLACE, LETTER> kingdom = new Kingdom<>(ImmutableSet.singleton(realm));
 			for (final Condition<LETTER, PLACE> assertionCondition : mAssertConds) {
 				final CoKingdom<PLACE, LETTER> coKingdom =
 						new CoKingdom<>(kingdom, assertionCondition, mBp, mPlacesCoRelation);
 				if (coKingdom.getCoRelation() == CoRelationType.POSITIVE) {
-					final Set<Condition<LETTER, PLACE>> lawConditions = Set.of(assertionCondition);
-					final KingdomLaw<PLACE, LETTER> kingdomLaw = new KingdomLaw<>(ImmutableSet.of(lawConditions));
+					final KingdomLaw<PLACE, LETTER> kingdomLaw =
+							new KingdomLaw<>(ImmutableSet.singleton(assertionCondition));
 					final Rook<PLACE, LETTER> rook = new Rook<>(kingdom, kingdomLaw);
 					settlementRooks.add(rook);
 				}
@@ -232,7 +230,7 @@ public final class CrownConstruction<PLACE, LETTER> {
 				Kingdom<PLACE, LETTER> secondKingdom = new Kingdom<>(
 						ImmutableSet.of(DataStructureUtils.difference(rook.getKingdom().getRealms(), kindredRealms)));
 				for (final Condition<LETTER, PLACE> condition : markingKindredConds) {
-					secondKingdom = secondKingdom.addRealm(new Realm<>(ImmutableSet.of(Set.of(condition))));
+					secondKingdom = secondKingdom.addRealm(new Realm<>(ImmutableSet.singleton(condition)));
 				}
 				rooks.add(new Rook<>(secondKingdom, rook.getLaw()));
 			}
