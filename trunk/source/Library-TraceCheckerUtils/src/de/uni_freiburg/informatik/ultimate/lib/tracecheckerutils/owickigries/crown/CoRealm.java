@@ -92,7 +92,7 @@ final class CoRealm<PLACE, LETTER> {
 		final Set<Condition<LETTER, PLACE>> conflictingConditions = new HashSet<>();
 		final PLACE originalPlace = mCondition.getPlace();
 		for (final Condition<LETTER, PLACE> condition : mRealm.getConditions()) {
-			if (placesCoRelation.getPlacesCorelation(originalPlace, condition.getPlace())) {
+			if (!placesCoRelation.getPlacesCorelation(originalPlace, condition.getPlace())) {
 				conflictingConditions.add(condition);
 			}
 		}
