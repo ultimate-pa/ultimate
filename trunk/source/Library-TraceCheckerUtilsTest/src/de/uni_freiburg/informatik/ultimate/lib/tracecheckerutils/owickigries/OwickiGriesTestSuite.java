@@ -154,6 +154,7 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 		final var script = new HistoryRecordingScript(UltimateMocks.createSolver(SOLVER_COMMAND, LOG_LEVEL));
 		script.setLogic(Logics.ALL);
 		mMgdScript = new ManagedScript(mServices, script);
+		mUnifiers.clear();
 	}
 
 	protected abstract void runTest(final Path path, final AutomataTestFileAST ast,
