@@ -40,9 +40,23 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 
-public class GhostUpdate {
+/**
+ * Encapsulates information about the updates performed on ghost variables during a transition.
+ *
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ */
+public final class GhostUpdate {
 	private final Map<IProgramVar, Term> mUpdates;
 
+	/**
+	 * Creates a new instance.
+	 *
+	 * @param updates
+	 *            A map from ghost variables to the terms which are assigned to them. The terms may again use ghost
+	 *            variables, as well as program variables. The assignments are performed concurrently, i.e., an
+	 *            occurrence of a ghost variable in one of these terms always refers to the ghost variable's value
+	 *            before any update has occurred.
+	 */
 	public GhostUpdate(final Map<IProgramVar, Term> updates) {
 		mUpdates = updates;
 
@@ -53,14 +67,34 @@ public class GhostUpdate {
 				e -> e.getValue().equals(e.getKey().getTermVariable())) : "trivial ghost updates are redundant";
 	}
 
+	/**
+	 * The set of variables which are assigned.
+	 */
 	public Set<IProgramVar> getAssignedVariables() {
 		return Collections.unmodifiableSet(mUpdates.keySet());
 	}
 
+	/**
+	 * Determines if the given ghost variable is updated.
+	 *
+	 * @param variable
+	 *            the ghost variable to check
+	 * @return true if this instance may update the value of the ghost variable, false otherwise
+	 */
 	public boolean containsUpdateFor(final IProgramVar variable) {
 		return mUpdates.containsKey(variable);
 	}
 
+	/**
+	 * Retrieves the term which is assigned to the given ghost variable.
+	 *
+	 * @param variable
+	 *            The ghost variable whose assigned expression is determined
+	 * @return the assigned expression
+	 *
+	 * @throws IllegalArgumentException
+	 *             if the given variable is not updated
+	 */
 	public Term getExpressionFor(final IProgramVar variable) {
 		final Term expr = mUpdates.get(variable);
 		if (expr == null) {
@@ -69,6 +103,15 @@ public class GhostUpdate {
 		return expr;
 	}
 
+	/**
+	 * Constructs a transition formula representing the update of ghost variables as prescribed by this instance.
+	 *
+	 * @param mgdScript
+	 *            A script used for the construction
+	 * @param symbolTable
+	 *            A symbol table used for the construction. This must contain all ghost and program variables.
+	 * @return the transition formula
+	 */
 	public UnmodifiableTransFormula makeTransitionFormula(final ManagedScript mgdScript,
 			final IIcfgSymbolTable symbolTable) {
 		final var variables = new ArrayList<IProgramVar>(mUpdates.size());
@@ -80,6 +123,11 @@ public class GhostUpdate {
 		return TransFormulaBuilder.constructAssignment(variables, values, symbolTable, mgdScript);
 	}
 
+	/**
+	 * Computes the size of the ghost update
+	 *
+	 * @return the sum of the DAG sizes of all terms assigned to ghost variables
+	 */
 	public int size() {
 		final DAGSize sizeComputation = new DAGSize();
 		return mUpdates.values().stream().collect(Collectors.summingInt(sizeComputation::size));
