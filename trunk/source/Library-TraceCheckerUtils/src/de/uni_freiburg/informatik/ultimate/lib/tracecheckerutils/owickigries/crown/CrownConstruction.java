@@ -117,8 +117,10 @@ public final class CrownConstruction<PLACE, LETTER> {
 		for (final Rook<PLACE, LETTER> rook : reSet) {
 			colonizedRooks.addAll(crownExpansionRecursive(rook, new ArrayList<>(mAssertConds), false));
 		}
-		final Set<Rook<PLACE, LETTER>> colonizedpreRooks = computePreRooks(colonizedRooks);
-		colonizedRooks.removeAll(colonizedpreRooks);
+
+		// remove pre-rooks
+		colonizedRooks.removeIf(this::containsNonCut);
+
 		return colonizedRooks;
 	}
 
@@ -288,15 +290,8 @@ public final class CrownConstruction<PLACE, LETTER> {
 		return mOrigConds.contains(condition);
 	}
 
-	private Set<Rook<PLACE, LETTER>> computePreRooks(final Set<Rook<PLACE, LETTER>> rooks) {
-		final Set<Rook<PLACE, LETTER>> preRooks =
-				rooks.stream().filter(rook -> containsNonCut(rook)).collect(Collectors.toSet());
-		return preRooks;
-	}
-
 	private boolean containsNonCut(final Rook<PLACE, LETTER> rook) {
-		final Boolean noCut = mContainsNonCut.computeIfAbsent(rook, r -> r.containsNonCut(mBp));
-		return noCut;
+		return mContainsNonCut.computeIfAbsent(rook, r -> r.containsNonCut(mBp));
 	}
 
 	public Crown<PLACE, LETTER> getCrown() {
