@@ -269,7 +269,10 @@ public class OwickiGriesConstruction<P, L> {
 	private Map<Transition<L, P>, GhostUpdate> getAssignmentMapping() {
 		final Map<Transition<L, P>, GhostUpdate> assignmentMapping = new HashMap<>();
 		for (final Transition<L, P> transition : mNet.getTransitions()) {
-			assignmentMapping.put(transition, getTransitionAssignment(transition));
+			final var assignment = getTransitionAssignment(transition);
+			if (assignment != null) {
+				assignmentMapping.put(transition, assignment);
+			}
 		}
 		return assignmentMapping;
 	}
@@ -300,6 +303,9 @@ public class OwickiGriesConstruction<P, L> {
 			}
 		}
 
+		if (assignments.isEmpty()) {
+			return null;
+		}
 		return new GhostUpdate(assignments);
 	}
 

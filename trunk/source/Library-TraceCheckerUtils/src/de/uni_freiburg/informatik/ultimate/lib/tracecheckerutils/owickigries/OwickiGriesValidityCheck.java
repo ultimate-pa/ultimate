@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.B
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.MonolithicHoareTripleChecker;
@@ -210,11 +211,19 @@ public class OwickiGriesValidityCheck<LETTER extends IAction, PLACE> {
 	}
 
 	private IInternalAction getTransitionSeqAction(final Transition<LETTER, PLACE> transition) {
+		final var transitionTf = transition.getSymbol().getTransformula();
+		UnmodifiableTransFormula combinedTf;
+
 		final var ghostUpdate = mAnnotation.getAssignmentMapping().get(transition);
-		final var ghostTransition = ghostUpdate.makeTransitionFormula(mManagedScript, mAnnotation.getSymbolTable());
-		final var actions = Arrays.asList(transition.getSymbol().getTransformula(), ghostTransition);
-		return new BasicInternalAction(null, null, TransFormulaUtils.sequentialComposition(mLogger, mServices,
-				mManagedScript, false, false, false, null, null, actions));
+		if (ghostUpdate == null) {
+			combinedTf = transitionTf;
+		} else {
+			final var ghostTransition = ghostUpdate.makeTransitionFormula(mManagedScript, mAnnotation.getSymbolTable());
+			combinedTf = TransFormulaUtils.sequentialComposition(mLogger, mServices, mManagedScript, false, false,
+					false, null, null, Arrays.asList(transitionTf, ghostTransition));
+		}
+
+		return new BasicInternalAction(null, null, combinedTf);
 	}
 
 	private Set<PLACE> getComarkedPlaces(final Transition<LETTER, PLACE> transition) {

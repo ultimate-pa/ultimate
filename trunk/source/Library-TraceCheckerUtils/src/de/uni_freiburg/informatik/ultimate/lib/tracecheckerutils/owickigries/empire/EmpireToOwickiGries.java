@@ -158,7 +158,10 @@ public class EmpireToOwickiGries<LETTER, PLACE> {
 	private Map<Transition<LETTER, PLACE>, GhostUpdate> getAssignmentMapping() {
 		final Map<Transition<LETTER, PLACE>, GhostUpdate> assignmentMapping = new HashMap<>();
 		for (final Transition<LETTER, PLACE> transition : mNet.getTransitions()) {
-			assignmentMapping.put(transition, getTransitionAssignment(transition));
+			final var assignment = getTransitionAssignment(transition);
+			if (assignment != null) {
+				assignmentMapping.put(transition, assignment);
+			}
 		}
 		return assignmentMapping;
 	}
@@ -259,6 +262,9 @@ public class EmpireToOwickiGries<LETTER, PLACE> {
 			assignments.put(mGhostVariables.get(region), trueTerm);
 		}
 
+		if (assignments.isEmpty()) {
+			return null;
+		}
 		return new GhostUpdate(assignments);
 	}
 
