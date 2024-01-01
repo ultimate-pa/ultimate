@@ -192,8 +192,8 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 	}
 
 	private OwickiGriesAnnotation<LETTER, PLACE> getOwickiGriesAnnotation() {
-		final EmpireToOwickiGries<LETTER, PLACE> empireToOwickiGries = new EmpireToOwickiGries<>(mEmpireAnnotation,
-				mMgdScript, mServices, mLogger, mSymbolTable, mProcedures, mNet);
+		final EmpireToOwickiGries<LETTER, PLACE> empireToOwickiGries =
+				new EmpireToOwickiGries<>(mServices, mMgdScript, mNet, mSymbolTable, mProcedures, mEmpireAnnotation);
 		return empireToOwickiGries.getAnnotation();
 	}
 

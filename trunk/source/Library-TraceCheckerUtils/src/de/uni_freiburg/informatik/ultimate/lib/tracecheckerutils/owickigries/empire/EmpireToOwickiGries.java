@@ -76,51 +76,55 @@ public class EmpireToOwickiGries<LETTER, PLACE> {
 	private static final XnfConversionTechnique XNF_CONVERSION_TECHNIQUE =
 			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 
-	private final EmpireAnnotation<PLACE> mEmpireAnnotation;
-
+	private final IUltimateServiceProvider mServices;
+	private final ILogger mLogger;
 	private final ManagedScript mManagedScript;
 	private final Script mScript;
 	private final BasicPredicateFactory mFactory;
-	private final DefaultIcfgSymbolTable mSymbolTable;
+
 	private final IPetriNet<LETTER, PLACE> mNet;
 
-	private final Map<Region<PLACE>, IProgramVar> mGhostVariables;
-	private final OwickiGriesAnnotation<LETTER, PLACE> mOwickiGriesAnnotation;
+	private final EmpireAnnotation<PLACE> mEmpireAnnotation;
 
+	private final DefaultIcfgSymbolTable mSymbolTable;
+	private final Map<Region<PLACE>, IProgramVar> mGhostVariables;
 	private final Map<Territory<PLACE>, IPredicate> mTerritoryFormulaMap = new HashMap<>();
+
+	private final OwickiGriesAnnotation<LETTER, PLACE> mOwickiGriesAnnotation;
 
 	/**
 	 * Constructs the Owicki-Gries-Annotation for empireAnnotation.
 	 *
-	 * @param empireAnnotation
-	 *            Corresponding EmpireAnnoation
-	 * @param mgdScript
-	 *            ManagedScript object
 	 * @param services
 	 *            IUltimateServiceProvider object
-	 * @param iLogger
-	 *            ILogger object
+	 * @param mgdScript
+	 *            ManagedScript object
+	 * @param net
+	 *            Net corresponding to the Empire Annotation
 	 * @param symbolTable
 	 *            IIcfgSymbolTable object
 	 * @param procedures
 	 *            Set of string procedures
-	 * @param net
-	 *            Net corresponding to the Empire Annotation
+	 * @param empireAnnotation
+	 *            Corresponding EmpireAnnotation
 	 */
-	public EmpireToOwickiGries(final EmpireAnnotation<PLACE> empireAnnotation, final ManagedScript mgdScript,
-			final IUltimateServiceProvider services, final ILogger iLogger, final IIcfgSymbolTable symbolTable,
-			final Set<String> procedures, final IPetriNet<LETTER, PLACE> net) {
-		mEmpireAnnotation = empireAnnotation;
+	public EmpireToOwickiGries(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final IPetriNet<LETTER, PLACE> net, final IIcfgSymbolTable symbolTable, final Set<String> procedures,
+			final EmpireAnnotation<PLACE> empireAnnotation) {
+		mServices = services;
+		mLogger = services.getLoggingService().getLogger(EmpireToOwickiGries.class);
+
 		mManagedScript = mgdScript;
 		mScript = mManagedScript.getScript();
 		mSymbolTable = new DefaultIcfgSymbolTable(symbolTable, procedures);
 		mFactory = new BasicPredicateFactory(services, mManagedScript, mSymbolTable);
+
 		mNet = net;
+		mEmpireAnnotation = empireAnnotation;
 
 		mGhostVariables = getGhostVariables();
 		final Map<PLACE, IPredicate> formulaMapping = getFormulaMap();
-		final Map<Transition<LETTER, PLACE>, UnmodifiableTransFormula> assignmentMapping =
-				getAssignmentMapping(iLogger, services);
+		final Map<Transition<LETTER, PLACE>, UnmodifiableTransFormula> assignmentMapping = getAssignmentMapping();
 		final Map<IProgramVar, Term> ghostInitAssignment = getGhostInitAssignment();
 
 		mOwickiGriesAnnotation = new OwickiGriesAnnotation<>(formulaMapping, assignmentMapping,
@@ -167,11 +171,10 @@ public class EmpireToOwickiGries<LETTER, PLACE> {
 	/**
 	 * @return Map of transition to the corresponding formula for each transition in net
 	 */
-	private Map<Transition<LETTER, PLACE>, UnmodifiableTransFormula> getAssignmentMapping(final ILogger iLogger,
-			final IUltimateServiceProvider services) {
+	private Map<Transition<LETTER, PLACE>, UnmodifiableTransFormula> getAssignmentMapping() {
 		final Map<Transition<LETTER, PLACE>, UnmodifiableTransFormula> assignmentMapping = new HashMap<>();
 		for (final Transition<LETTER, PLACE> transition : mNet.getTransitions()) {
-			assignmentMapping.put(transition, getTransitionAssignment(transition, iLogger, services));
+			assignmentMapping.put(transition, getTransitionAssignment(transition));
 		}
 		return assignmentMapping;
 	}
@@ -243,8 +246,7 @@ public class EmpireToOwickiGries<LETTER, PLACE> {
 		return mFactory.or(placesTerretoriesFormula);
 	}
 
-	private UnmodifiableTransFormula getTransitionAssignment(final Transition<LETTER, PLACE> transition,
-			final ILogger iLogger, final IUltimateServiceProvider services) {
+	private UnmodifiableTransFormula getTransitionAssignment(final Transition<LETTER, PLACE> transition) {
 		final List<UnmodifiableTransFormula> assignments = new ArrayList<>();
 		final Set<PLACE> predecessors = transition.getPredecessors();
 		final Set<PLACE> successors = transition.getSuccessors();
@@ -265,7 +267,7 @@ public class EmpireToOwickiGries<LETTER, PLACE> {
 		for (final Region<PLACE> region : successorsRegions) {
 			assignments.add(getGhostAssignment(Collections.nCopies(1, mGhostVariables.get(region)), "true"));
 		}
-		return TransFormulaUtils.sequentialComposition(iLogger, services, mManagedScript, false, false, false,
+		return TransFormulaUtils.sequentialComposition(mLogger, mServices, mManagedScript, false, false, false,
 				XNF_CONVERSION_TECHNIQUE, SIMPLIFICATION_TECHNIQUE, assignments);
 	}
 
