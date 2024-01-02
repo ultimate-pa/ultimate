@@ -76,8 +76,10 @@ public class NaiveOwickiGriesTestSuite extends OwickiGriesTestSuite {
 		final var construction = new OwickiGriesConstruction<>(mServices, mMgdScript, mSymbolTable,
 				Set.of(SimpleAction.PROCEDURE), program, petriFloydHoare, true);
 		final var annotation = construction.getResult();
-		mLogger.info("Computed Owicki-Gries annotation with %d ghost variables, %d ghost updates, and overall size %d",
-				annotation.getGhostVariables().size(), annotation.getAssignmentMapping().size(), annotation.size());
+		mLogger.info(
+				"Computed Owicki-Gries annotation with %d ghost variables, %d ghost updates, and overall size %d\n%s",
+				annotation.getGhostVariables().size(), annotation.getAssignmentMapping().size(), annotation.size(),
+				annotation);
 
 		// check validity of annotation
 		assert new OwickiGriesValidityCheck<>(mServices, mMgdScript, mHtc, annotation, construction.getCoMarkedPlaces())

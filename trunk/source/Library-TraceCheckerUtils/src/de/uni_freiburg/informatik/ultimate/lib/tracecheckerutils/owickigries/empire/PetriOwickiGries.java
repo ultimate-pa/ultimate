@@ -193,9 +193,14 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 	}
 
 	private OwickiGriesAnnotation<LETTER, PLACE> getOwickiGriesAnnotation() {
-		final EmpireToOwickiGries<LETTER, PLACE> empireToOwickiGries =
-				new EmpireToOwickiGries<>(mServices, mMgdScript, mNet, mSymbolTable, mProcedures, mEmpireAnnotation);
-		return empireToOwickiGries.getAnnotation();
+		final var annotation = mStatistics.measureOwickiGries(() -> {
+			final EmpireToOwickiGries<LETTER, PLACE> empireToOwickiGries = new EmpireToOwickiGries<>(mServices,
+					mMgdScript, mNet, mSymbolTable, mProcedures, mEmpireAnnotation);
+			return empireToOwickiGries.getAnnotation();
+		});
+		mLogger.info("Computed Owicki-Gries annotation with %d ghost variables, %d ghost updates, and overall size %d",
+				annotation.getGhostVariables().size(), annotation.getAssignmentMapping().size(), annotation.size());
+		return annotation;
 	}
 
 	private boolean checkOwickiGriesValidity() {
@@ -233,21 +238,26 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 	}
 
 	private static final class Statistics extends AbstractStatisticsDataProvider {
-		public static final String CROWN_STATISTICS = "Crown construction";
 		public static final String EMPIRE_TIME = "Crown empire time";
+		public static final String OWICKI_GRIES_TIME = "EmpireToOwickiGries time";
+
 		public static final String EMPIRE_VALIDITY_TIME = "Empire validity check time";
 		public static final String OWICKI_GRIES_VALIDITY_TIME = "Owicki-Gries validity check time";
+
+		public static final String CROWN_STATISTICS = "Crown construction";
 		public static final String EMPIRE_STATISTICS = "Empire statistics";
 
 		private IStatisticsDataProvider mCrownStatistics;
 		private IStatisticsDataProvider mEmpireStatistics;
 
 		private final TimeTracker mEmpireTime = new TimeTracker();
+		private final TimeTracker mOwickiGriesTime = new TimeTracker();
 		private final TimeTracker mEmpireValidityTime = new TimeTracker();
 		private final TimeTracker mOwickiGriesValidityTime = new TimeTracker();
 
 		public Statistics() {
 			declare(EMPIRE_TIME, () -> mEmpireTime, KeyType.TT_TIMER_MS);
+			declare(OWICKI_GRIES_TIME, () -> mOwickiGriesTime, KeyType.TT_TIMER_MS);
 			declare(EMPIRE_VALIDITY_TIME, () -> mEmpireValidityTime, KeyType.TT_TIMER_MS);
 			declare(OWICKI_GRIES_VALIDITY_TIME, () -> mOwickiGriesValidityTime, KeyType.TT_TIMER_MS);
 
@@ -265,6 +275,10 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 
 		private <T> T measureEmpire(final Supplier<T> runner) {
 			return mEmpireTime.measure(runner);
+		}
+
+		private <T> T measureOwickiGries(final Supplier<T> runner) {
+			return mOwickiGriesTime.measure(runner);
 		}
 
 		private <T> T measureEmpireValidity(final Supplier<T> runner) {
