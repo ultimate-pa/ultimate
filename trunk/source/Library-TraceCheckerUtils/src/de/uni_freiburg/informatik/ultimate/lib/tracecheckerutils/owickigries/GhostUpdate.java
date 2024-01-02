@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -131,5 +132,40 @@ public final class GhostUpdate {
 	public int size() {
 		final DAGSize sizeComputation = new DAGSize();
 		return mUpdates.values().stream().collect(Collectors.summingInt(sizeComputation::size));
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(mUpdates);
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		final GhostUpdate other = (GhostUpdate) obj;
+		return Objects.equals(mUpdates, other.mUpdates);
+	}
+
+	@Override
+	public String toString() {
+		final var sb1 = new StringBuilder("(");
+		final var sb2 = new StringBuilder("(");
+		for (final var entry : mUpdates.entrySet()) {
+			if (sb1.length() > 1) {
+				sb1.append(", ");
+				sb2.append(", ");
+			}
+			sb1.append(entry.getKey());
+			sb2.append(entry.getValue());
+		}
+		return sb1.toString() + ") := " + sb2.toString() + ")";
 	}
 }
