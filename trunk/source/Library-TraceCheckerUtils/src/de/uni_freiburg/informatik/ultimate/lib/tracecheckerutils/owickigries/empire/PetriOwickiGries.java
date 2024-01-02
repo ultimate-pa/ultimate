@@ -182,8 +182,8 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 			try {
 				final var implicationChecker = new MonolithicImplicationChecker(mServices, mMgdScript);
 				final MarkingLaw<PLACE> markingLaw = new MarkingLaw<>(mEmpireAnnotation.getLaw(), mFactory);
-				final var checker = new EmpireValidityCheck<>(markingLaw, mNet, mFactory, implicationChecker, mServices,
-						mMgdScript, mSymbolTable, mModifiableGlobals);
+				final var checker = new EmpireValidityCheck<>(mServices, mMgdScript, implicationChecker, mFactory, mNet,
+						mSymbolTable, mModifiableGlobals, mEmpireAnnotation);
 				return checker.getValidity();
 			} catch (final PetriNetNot1SafeException e) {
 				throw new IllegalArgumentException("Petri program must be 1-safe", e);

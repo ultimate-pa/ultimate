@@ -26,8 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire;
 
-import java.util.Set;
-
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
@@ -56,21 +54,44 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
  *            The type of statements in the Petri program
  */
 public class EmpireValidityCheck<PLACE, LETTER extends IAction> {
-	private final MarkingLaw<PLACE> mMarkingLaw;
-	private final BasicPredicateFactory mFactory;
-	private final IPetriNet<LETTER, PLACE> mNet;
+	private final IUltimateServiceProvider mServices;
+	private final ManagedScript mMgdScript;
 	private final MonolithicImplicationChecker mImplicationChecker;
+	private final BasicPredicateFactory mFactory;
+
+	private final MarkingLaw<PLACE> mMarkingLaw;
+	private final IPetriNet<LETTER, PLACE> mNet;
 	private final Validity mValidity;
 
-	public EmpireValidityCheck(final MarkingLaw<PLACE> markingLaw, final IPetriNet<LETTER, PLACE> net,
-			final BasicPredicateFactory factory, final MonolithicImplicationChecker implicationChecker,
-			final IUltimateServiceProvider services, final ManagedScript mgdScript, final IIcfgSymbolTable symbolTable,
-			final ModifiableGlobalsTable modifiableGlobals) throws PetriNetNot1SafeException {
-		mMarkingLaw = markingLaw;
-		mFactory = factory;
-		mNet = net;
+	public EmpireValidityCheck(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final MonolithicImplicationChecker implicationChecker, final BasicPredicateFactory factory,
+			final IPetriNet<LETTER, PLACE> net, final IIcfgSymbolTable symbolTable,
+			final ModifiableGlobalsTable modifiableGlobals, final EmpireAnnotation<PLACE> empire)
+			throws PetriNetNot1SafeException {
+		mServices = services;
+		mMgdScript = mgdScript;
 		mImplicationChecker = implicationChecker;
-		mValidity = checkValidity(services, mgdScript, symbolTable, modifiableGlobals);
+		mFactory = factory;
+
+		mNet = net;
+		mMarkingLaw = new MarkingLaw<>(empire.getLaw(), factory);
+
+		mValidity = checkValidity(symbolTable, modifiableGlobals);
+	}
+
+	private Validity checkValidity(final IIcfgSymbolTable symbolTable, final ModifiableGlobalsTable modifiableGlobals)
+			throws PetriNetNot1SafeException {
+		final boolean initialMarkingValidity = checkInitialMarking();
+		assert initialMarkingValidity : "Initial markings law does not evaluate to true.";
+
+		final boolean finalMarkingValidity = checkFinalMarkings();
+		assert finalMarkingValidity : "Final markings law does not evaluate to false";
+
+		if (!initialMarkingValidity || !finalMarkingValidity) {
+			return Validity.INVALID;
+		}
+
+		return checkHoareTriples(symbolTable, modifiableGlobals);
 	}
 
 	private boolean checkInitialMarking() {
@@ -81,35 +102,21 @@ public class EmpireValidityCheck<PLACE, LETTER extends IAction> {
 	}
 
 	private boolean checkFinalMarkings() {
-		final Set<PLACE> acceptingPlaces = mNet.getAcceptingPlaces();
 		for (final Marking<PLACE> marking : mMarkingLaw.getMarkings()) {
-			if (marking.containsAny(acceptingPlaces)) {
+			if (mNet.isAccepting(marking)) {
+				// TODO Why is this automatically a failure?! Shouldn't we use mImplicationChecker here?
 				return false;
 			}
 		}
 		return true;
 	}
 
-	private Validity checkHoareTriples(final IUltimateServiceProvider services, final ManagedScript mgdScript,
-			final IIcfgSymbolTable symbolTable, final ModifiableGlobalsTable modifiableGlobals)
-			throws PetriNetNot1SafeException {
+	private Validity checkHoareTriples(final IIcfgSymbolTable symbolTable,
+			final ModifiableGlobalsTable modifiableGlobals) throws PetriNetNot1SafeException {
 		final PetriFloydHoareValidityCheck<LETTER, PLACE> petriFloydHoareValidityCheck;
-		petriFloydHoareValidityCheck = new PetriFloydHoareValidityCheck<>(services, mgdScript, symbolTable,
+		petriFloydHoareValidityCheck = new PetriFloydHoareValidityCheck<>(mServices, mMgdScript, symbolTable,
 				modifiableGlobals, mNet, mMarkingLaw.getLawMap());
 		return petriFloydHoareValidityCheck.isValid();
-	}
-
-	private Validity checkValidity(final IUltimateServiceProvider services, final ManagedScript mgdScript,
-			final IIcfgSymbolTable symbolTable, final ModifiableGlobalsTable modifiableGlobals)
-			throws PetriNetNot1SafeException {
-		final boolean initialMarkingValidity = checkInitialMarking();
-		assert initialMarkingValidity : "Initial markings law does not evaluate to true.";
-		final boolean finalMarkingValidity = checkFinalMarkings();
-		assert finalMarkingValidity : "Final markings law does not evaluate to false";
-		if (!initialMarkingValidity || !finalMarkingValidity) {
-			return Validity.INVALID;
-		}
-		return checkHoareTriples(services, mgdScript, symbolTable, modifiableGlobals);
 	}
 
 	public Validity getValidity() {
