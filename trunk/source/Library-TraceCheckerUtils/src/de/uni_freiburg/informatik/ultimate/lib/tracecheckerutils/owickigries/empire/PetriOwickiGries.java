@@ -120,10 +120,10 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 		final long cutoffs = bp.getConditions().stream().filter(c -> c.getPredecessorEvent().isCutoffEvent()).count();
 		mLogger.info(
 				"Constructing Owicki-Gries proof for Petri program that %s and unfolding that %s."
-						+ " %d conditions are original conditions, %d conditions are assertion conditions."
-						+ " %d conditions belong to cutoff events, %d conditions do not.",
-				net.sizeInformation(), bp.sizeInformation(), mOriginalConditions.size(), mAssertionConditions.size(),
-				cutoffs, mConditions.size() - cutoffs);
+						+ " %d conditions belong to cutoff events, %d conditions do not."
+						+ " %d conditions are original conditions, %d conditions are assertion conditions.",
+				net.sizeInformation(), bp.sizeInformation(), cutoffs, bp.getConditions().size() - cutoffs,
+				mOriginalConditions.size(), mAssertionConditions.size());
 
 		mCrown = getCrown();
 		mLogger.info("Constructed Crown:\n%s", mCrown);
