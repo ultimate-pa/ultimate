@@ -160,8 +160,6 @@ final class CoKingdom<PLACE, LETTER> {
 		if (mNegKingdom.isEmpty()) {
 			return Collections.emptySet();
 		}
-		// TODO This is very dangerous! It's nondeterministic which kingdom is picked!
-		// If there can ever only be one, use DataStructureUtils.getOneAndOnly(mNegKingdom, "negative kingdom").
 		final Realm<PLACE, LETTER> negativeRealm = DataStructureUtils.getOneAndOnly(mNegKingdom, "negative kingdom");
 		final CoRealm<PLACE, LETTER> negativeCoRealm = negativeRealm.getCoRealm(mCondition, bp, placesCoRelation);
 		return negativeCoRealm.getConflictFreeSet();
