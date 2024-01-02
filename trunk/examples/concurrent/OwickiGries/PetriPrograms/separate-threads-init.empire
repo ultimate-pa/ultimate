@@ -9,4 +9,5 @@ law { r0 } : true
 law { r1 } : (= x 1)
 law { r2 } : true
 law { r3 } : (= y 1)
-law { r4, r5 } : (= x 1), (= y 1)
+law { r4, r5 } : (= x 1)
+law { r4, r5 } : (= y 1)

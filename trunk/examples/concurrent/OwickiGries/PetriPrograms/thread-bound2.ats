@@ -8,28 +8,31 @@
 //@ semantics [2] { } true
 //@ semantics [3] { } true
 //@ semantics [4] { } true
+//@ semantics [5] { } true
+//@ semantics [6] { } true
+//@ semantics [7] { } true
 
 PetriNet program = (
-  alphabet    = { "[0]" "[1]" "[2]" "[3]" "[4]" },
-  places      = { "main.l0" "main.l1" "main.l2" "t1.l0" "t2.l0" "notInUse1" "inUse1" "notInUse2" "inUse2" "insufficient" },
+  alphabet    = { "[0]" "[1]" "[2]" "[3]" "[4]" "[5]" "[6]" "[7]" },
+  places      = { "main.l0" "main.l1" "main.l2" "main.l3" "t1.l0" "t2.l0" "notInUse1" "inUse1" "notInUse2" "inUse2" "insufficient" },
   transitions = {
     ({ "main.l0" "notInUse1" }          "[0]" { "main.l1" "t1.l0" "inUse1" })
-    ({ "main.l0" "inUse1" "notInUse2" } "[0]" { "main.l1" "t2.l0" "inUse2" })
-    ({ "main.l0" "inUse1" "inUse2" }    "[0]" { "insufficient" })
+    ({ "main.l0" "inUse1" "notInUse2" } "[1]" { "main.l1" "t2.l0" "inUse2" })
+    ({ "main.l0" "inUse1" "inUse2" }    "[2]" { "insufficient" })
 
-    ({ "main.l1" "notInUse1" }          "[1]" { "main.l2" "t1.l0" "inUse1" })
-    ({ "main.l1" "inUse1" "notInUse2" } "[1]" { "main.l2" "t2.l0" "inUse2" })
-    ({ "main.l1" "inUse1" "inUse2" }    "[1]" { "insufficient" })
+    ({ "main.l1" "notInUse1" }          "[3]" { "main.l2" "t1.l0" "inUse1" })
+    ({ "main.l1" "inUse1" "notInUse2" } "[4]" { "main.l2" "t2.l0" "inUse1" "inUse2" })
+    ({ "main.l1" "inUse1" "inUse2" }    "[5]" { "insufficient" })
 
-    ({ "main.l2" "t1.l0" "inUse1" } "[2]" { "main.l0" "notInUse1" })
-    ({ "main.l2" "t2.l0" "inUse2" } "[3]" { "main.l0" "notInUse2" })
+    ({ "main.l2" "t1.l0" "inUse1" } "[6]" { "main.l3" "notInUse1" })
+    ({ "main.l3" "t2.l0" "inUse2" } "[7]" { "main.l0" "notInUse2" })
   },
   initialMarking = { "main.l0" "notInUse1" "notInUse2" },
   acceptingPlaces = { "insufficient" }
 );
 
 FiniteAutomaton proof = (
-     alphabet      = { "[1]" "[2]" },
+     alphabet      = { "[0]" "[1]" "[2]" "[3]" "[4]" "[5]" "[6]" "[7]" },
      states        = { "true" "false" },
      initialStates = { "true" },
      finalStates   = { "false" },
