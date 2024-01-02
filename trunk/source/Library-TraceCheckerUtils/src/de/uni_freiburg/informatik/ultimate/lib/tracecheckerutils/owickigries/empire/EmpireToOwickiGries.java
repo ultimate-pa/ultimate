@@ -228,9 +228,9 @@ public class EmpireToOwickiGries<LETTER, PLACE> {
 
 	IPredicate getPlacesTerritoryFormula(final PLACE place) {
 		final Set<Territory<PLACE>> placesTerritories = getPlacesTerritories(place);
-		final Set<IPredicate> placesTerretoriesFormula =
+		final Set<IPredicate> placesTerritoriesFormula =
 				placesTerritories.stream().map(t -> getTerritoryFormula(t)).collect(Collectors.toSet());
-		return mFactory.or(placesTerretoriesFormula);
+		return mFactory.or(placesTerritoriesFormula);
 	}
 
 	private GhostUpdate getTransitionAssignment(final Transition<LETTER, PLACE> transition) {
