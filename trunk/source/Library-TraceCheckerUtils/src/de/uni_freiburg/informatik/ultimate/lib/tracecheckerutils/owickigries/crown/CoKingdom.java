@@ -58,14 +58,10 @@ final class CoKingdom<PLACE, LETTER> {
 	 */
 	private Set<Realm<PLACE, LETTER>> mNegKingdom;
 
-	private final Set<Condition<LETTER, PLACE>> mConflictFreeConditions;
-
 	/**
 	 * Corelation type of condition wrt. Realm.
 	 */
 	private final CoRelationType mCoRel;
-
-	private boolean mConflictFree;
 
 	/**
 	 * Calculates the different corelation and conflict sets and sets them.
@@ -85,7 +81,6 @@ final class CoKingdom<PLACE, LETTER> {
 		mCondition = condition;
 		final boolean success = getCoKingdoms(bp, placesCoRelation);
 		mCoRel = getCoRelType(success);
-		mConflictFreeConditions = getConflictFreeConditions(bp, placesCoRelation);
 	}
 
 	/**
@@ -144,23 +139,6 @@ final class CoKingdom<PLACE, LETTER> {
 		return mCoRel;
 	}
 
-	private Set<Condition<LETTER, PLACE>> getConflictFreeConditions(final BranchingProcess<LETTER, PLACE> bp,
-			final PlacesCoRelation<PLACE, LETTER> placesCoRelation) {
-		if (mNegKingdom.isEmpty()) {
-			return Collections.emptySet();
-		}
-		// TODO This is very dangerous! It's nondeterministic which kingdom is picked!
-		// If there can ever only be one, use DataStructureUtils.getOneAndOnly(mNegKingdom, "negative kingdom").
-		final Realm<PLACE, LETTER> negativeRealm = mNegKingdom.iterator().next();
-		final CoRealm<PLACE, LETTER> negativeCoRealm = negativeRealm.getCoRealm(mCondition, bp, placesCoRelation);
-		mConflictFree = negativeCoRealm.getConflict() == ConflictType.CONFLICT_FREE;
-		return negativeCoRealm.getConflictFreeSet();
-	}
-
-	public boolean getConflictFree() {
-		return mConflictFree;
-	}
-
 	public Set<Realm<PLACE, LETTER>> getNegKingdom() {
 		return mNegKingdom;
 	}
@@ -177,7 +155,15 @@ final class CoKingdom<PLACE, LETTER> {
 		return mParCoRealms;
 	}
 
-	public Set<Condition<LETTER, PLACE>> getConflictFreeConditions() {
-		return mConflictFreeConditions;
+	public Set<Condition<LETTER, PLACE>> getConflictFreeConditions(final BranchingProcess<LETTER, PLACE> bp,
+			final PlacesCoRelation<PLACE, LETTER> placesCoRelation) {
+		if (mNegKingdom.isEmpty()) {
+			return Collections.emptySet();
+		}
+		// TODO This is very dangerous! It's nondeterministic which kingdom is picked!
+		// If there can ever only be one, use DataStructureUtils.getOneAndOnly(mNegKingdom, "negative kingdom").
+		final Realm<PLACE, LETTER> negativeRealm = DataStructureUtils.getOneAndOnly(mNegKingdom, "negative kingdom");
+		final CoRealm<PLACE, LETTER> negativeCoRealm = negativeRealm.getCoRealm(mCondition, bp, placesCoRelation);
+		return negativeCoRealm.getConflictFreeSet();
 	}
 }

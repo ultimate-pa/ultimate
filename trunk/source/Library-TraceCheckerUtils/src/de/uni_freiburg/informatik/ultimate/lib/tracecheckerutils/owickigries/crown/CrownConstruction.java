@@ -248,11 +248,8 @@ public final class CrownConstruction<PLACE, LETTER> {
 		case EXPANSION:
 			colonyRook = rook.expansion(condition);
 			break;
-		case IMMIGRATION:
-			colonyRook = rook.immigration(coRook);
-			break;
-		case FOUNDATION:
-			colonyRook = rook.foundation(coRook);
+		case IMMIGRATION_AND_FOUNDATION:
+			colonyRook = rook.immigrationAndFoundation(coRook, mBp, mPlacesCoRelation);
 			break;
 		case DENIAL:
 			colonyRook = rook.denial(coRook);

@@ -117,35 +117,24 @@ public final class Rook<PLACE, LETTER> {
 	}
 
 	/**
-	 * Adds the condition to the specified existing realm of the rook's Kingdom and returns new Rook containing the
-	 * changes in kingdom.
-	 *
-	 * @param coRook
-	 *            coRook corresponding to Rook
-	 * @return New Rook with condition added to specified realm. TODO: Kindred cases...
-	 */
-	public Rook<PLACE, LETTER> immigration(final CoRook<PLACE, LETTER> coRook) {
-		final Condition<LETTER, PLACE> condition = coRook.getCondition();
-		Realm<PLACE, LETTER> realm = getNegKingdom(coRook);
-		Kingdom<PLACE, LETTER> kingdom = mKingdom.removeRealm(realm);
-		realm = realm.addCondition(condition);
-		kingdom = kingdom.addRealm(realm);
-		return new Rook<>(kingdom, getLaw());
-	}
-
-	/**
 	 * Adds new Realm containing condition and the conflict free conditions to Kingdom and removes the negative Kingdom
 	 * from the set of Realms in Rook.
 	 *
 	 * @param coRook
 	 *            coRook corresponding to Rook
+	 * @param bp
+	 *            Branching Process corresponding to the final refined Petri Net
+	 * @param placesCoRelation
+	 *            Object storing information about the places corelation of bp
 	 * @return New Rook
 	 */
-	public Rook<PLACE, LETTER> foundation(final CoRook<PLACE, LETTER> coRook) {
+	public Rook<PLACE, LETTER> immigrationAndFoundation(final CoRook<PLACE, LETTER> coRook,
+			final BranchingProcess<LETTER, PLACE> bp, final PlacesCoRelation<PLACE, LETTER> placesCoRelation) {
 		final Set<Realm<PLACE, LETTER>> newRealms =
 				getKingdom().getRealms().stream().collect(Collectors.toCollection(HashSet::new));
 		newRealms.remove(getNegKingdom(coRook));
-		Set<Condition<LETTER, PLACE>> conflictFreeConditions = coRook.getCoKingdom().getConflictFreeConditions();
+		Set<Condition<LETTER, PLACE>> conflictFreeConditions =
+				coRook.getCoKingdom().getConflictFreeConditions(bp, placesCoRelation);
 		conflictFreeConditions = DataStructureUtils.union(conflictFreeConditions, Set.of(coRook.getCondition()));
 		final Realm<PLACE, LETTER> newRealm = new Realm<>(ImmutableSet.of(conflictFreeConditions));
 		newRealms.add(newRealm);
@@ -155,8 +144,8 @@ public final class Rook<PLACE, LETTER> {
 
 	public Rook<PLACE, LETTER> denial(final CoRook<PLACE, LETTER> coRook) {
 		final Set<CoRealm<PLACE, LETTER>> partialCoRealms = coRook.getCoKingdom().getParCoRealms();
-		assert partialCoRealms.size() == 1 : "There is more than one partial CoRealm discrimination case!";
-		final CoRealm<PLACE, LETTER> partialCoRealm = partialCoRealms.iterator().next();
+		final CoRealm<PLACE, LETTER> partialCoRealm =
+				DataStructureUtils.getOneAndOnly(partialCoRealms, "partial Co-Realm");
 		Kingdom<PLACE, LETTER> kingdom = mKingdom.removeRealm(partialCoRealm.getRealm());
 		final Set<Condition<LETTER, PLACE>> negativeConditions =
 				DataStructureUtils.intersection(partialCoRealm.getConflictFreeSet(), partialCoRealm.getNegConditions());
