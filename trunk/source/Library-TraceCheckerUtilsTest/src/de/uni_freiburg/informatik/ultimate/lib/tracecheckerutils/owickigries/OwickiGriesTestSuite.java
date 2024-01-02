@@ -130,6 +130,7 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 	protected BasicPredicateFactory mPredicateFactory;
 	protected IHoareTripleChecker mHtc;
 	protected final List<IPredicateUnifier> mUnifiers = new ArrayList<>();
+	protected final Map<String, IPredicate> mProgramPlaceMap = new HashMap<>();
 
 	private long mStartTime = -1L;
 
@@ -137,8 +138,8 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 	public Iterable<OwickiGriesTestCase> createTests() throws IOException {
 		final Path dir = Path.of(TestUtil.getPathFromTrunk("examples/concurrent/OwickiGries/PetriPrograms"));
 		try (final var files = Files.list(dir)) {
-			return files.filter(file -> file.toString().endsWith(".ats")).map(OwickiGriesTestCase::new).sorted()
-					.collect(Collectors.toList());
+			return files.filter(file -> file.toString().endsWith(".ats")).filter(this::includeTest)
+					.map(OwickiGriesTestCase::new).sorted().collect(Collectors.toList());
 		}
 	}
 
@@ -154,7 +155,13 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 		final var script = new HistoryRecordingScript(UltimateMocks.createSolver(SOLVER_COMMAND, LOG_LEVEL));
 		script.setLogic(Logics.ALL);
 		mMgdScript = new ManagedScript(mServices, script);
+
+		mProgramPlaceMap.clear();
 		mUnifiers.clear();
+	}
+
+	protected boolean includeTest(final Path path) {
+		return true;
 	}
 
 	protected abstract void runTest(final Path path, final AutomataTestFileAST ast,
@@ -243,6 +250,14 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 				CoreUtil.toTimeString(setupTime, TimeUnit.NANOSECONDS, TimeUnit.MILLISECONDS, 0));
 
 		runTest(path, parsed, program, constructedDifference, bp);
+	}
+
+	protected ModifiableGlobalsTable computeModifiableGlobals() {
+		final var modifiesRelation = new HashRelation<String, IProgramNonOldVar>();
+		for (final var pv : mSymbolTable.getGlobals()) {
+			modifiesRelation.addPair(SimpleAction.PROCEDURE, pv);
+		}
+		return new ModifiableGlobalsTable(modifiesRelation);
 	}
 
 	private void checkProof(final INestedWordAutomaton<SimpleAction, IPredicate> proof)
@@ -387,20 +402,19 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 		final var parsedNet = new BoundedPetriNet<SimpleAction, IPredicate>(mAutomataServices, parsedAlphabet, false);
 
 		// copy places
-		final var placeMap = new HashMap<String, IPredicate>();
 		final var initialPlaces = net.getInitialPlaces();
 		for (final var place : net.getPlaces()) {
 			final var predPlace = mPredicateFactory.newDebugPredicate(place);
-			placeMap.put(place, predPlace);
+			mProgramPlaceMap.put(place, predPlace);
 			parsedNet.addPlace(predPlace, initialPlaces.contains(place), net.isAccepting(place));
 		}
 
 		// copy transitions
 		for (final var transition : net.getTransitions()) {
 			final var predPreds =
-					transition.getPredecessors().stream().map(placeMap::get).collect(ImmutableSet.collector());
+					transition.getPredecessors().stream().map(mProgramPlaceMap::get).collect(ImmutableSet.collector());
 			final var predSuccs =
-					transition.getSuccessors().stream().map(placeMap::get).collect(ImmutableSet.collector());
+					transition.getSuccessors().stream().map(mProgramPlaceMap::get).collect(ImmutableSet.collector());
 			parsedNet.addTransition(parseAction(id2Action, transition.getSymbol()), predPreds, predSuccs);
 		}
 
@@ -438,7 +452,7 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 		return parsedAut;
 	}
 
-	private IPredicate parsePredicate(final String state, final IPredicateUnifier unifier) {
+	protected IPredicate parsePredicate(final String state, final IPredicateUnifier unifier) {
 		final Term term = SmtParserUtils.parseWithVariables(state, mServices, mMgdScript, mSymbolTable);
 		return unifier.getOrConstructPredicate(term);
 	}

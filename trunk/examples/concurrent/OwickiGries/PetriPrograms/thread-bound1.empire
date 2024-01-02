@@ -1,0 +1,2 @@
+law { {main.l0}, {notInUse} }       :  true
+law { {main.l1}, {inUse}, {t.l0} }  :  true

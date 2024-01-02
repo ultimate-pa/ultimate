@@ -141,10 +141,11 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 		return cond.getPredecessorEvent().isCutoffEvent();
 	}
 
-	private HashRelation<Transition<LETTER, PLACE>, PLACE> getCoMarkedPlaces() {
+	public static <LETTER, PLACE> HashRelation<Transition<LETTER, PLACE>, PLACE>
+			getCoMarkedPlaces(final BranchingProcess<LETTER, PLACE> bp) {
 		final HashRelation<Transition<LETTER, PLACE>, PLACE> coMarkedPlaces = new HashRelation<>();
-		final Collection<Condition<LETTER, PLACE>> conditions = mBp.getConditions();
-		final ICoRelation<LETTER, PLACE> coRelation = mBp.getCoRelation();
+		final Collection<Condition<LETTER, PLACE>> conditions = bp.getConditions();
+		final ICoRelation<LETTER, PLACE> coRelation = bp.getCoRelation();
 		PLACE place;
 		Transition<LETTER, PLACE> transition;
 		for (final Condition<LETTER, PLACE> condition : conditions) {
@@ -199,7 +200,7 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 
 	private boolean checkOwickiGriesValidity() {
 		return mStatistics.measureOwickiGriesValidity(() -> {
-			final HashRelation<Transition<LETTER, PLACE>, PLACE> coMarkedPlaces = getCoMarkedPlaces();
+			final HashRelation<Transition<LETTER, PLACE>, PLACE> coMarkedPlaces = getCoMarkedPlaces(mBp);
 			final OwickiGriesValidityCheck<LETTER, PLACE> owickiGriesValidity = new OwickiGriesValidityCheck<>(
 					mServices, mMgdScript, mModifiableGlobals, mOwickiGriesAnnotation, coMarkedPlaces);
 			return owickiGriesValidity.isValid();

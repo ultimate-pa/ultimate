@@ -1,0 +1,2 @@
+law { {l0} }     :  true
+law { {l1, l2} } : (= (mod x 2) 0)

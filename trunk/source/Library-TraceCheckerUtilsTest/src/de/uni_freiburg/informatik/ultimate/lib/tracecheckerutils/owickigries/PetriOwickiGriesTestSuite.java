@@ -35,13 +35,10 @@ import org.junit.runner.RunWith;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire.PetriOwickiGries;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataTestFileAST;
 import de.uni_freiburg.informatik.ultimate.test.junitextension.testfactory.FactoryTestRunner;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
 @RunWith(FactoryTestRunner.class)
@@ -51,13 +48,8 @@ public class PetriOwickiGriesTestSuite extends OwickiGriesTestSuite {
 			final BoundedPetriNet<SimpleAction, IPredicate> program,
 			final BoundedPetriNet<SimpleAction, IPredicate> refinedPetriNet,
 			final BranchingProcess<SimpleAction, IPredicate> unfolding) throws AutomataLibraryException {
-		final var modifiesRelation = new HashRelation<String, IProgramNonOldVar>();
-		for (final var pv : mSymbolTable.getGlobals()) {
-			modifiesRelation.addPair(SimpleAction.PROCEDURE, pv);
-		}
-		final var modifiableGlobals = new ModifiableGlobalsTable(modifiesRelation);
 		final var pog = new PetriOwickiGries<>(mServices, unfolding, program, mPredicateFactory, Function.identity(),
-				mMgdScript, mSymbolTable, Set.of(SimpleAction.PROCEDURE), modifiableGlobals);
+				mMgdScript, mSymbolTable, Set.of(SimpleAction.PROCEDURE), computeModifiableGlobals());
 
 		final StatisticsData data = new StatisticsData();
 		data.aggregateBenchmarkData(pog.getStatistics());

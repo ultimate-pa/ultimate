@@ -1,0 +1,4 @@
+law { {main.l0}, {notInUse1}, {notInUse2} }                    :  true
+law { {main.l1}, {inUse1},    {notInUse2}, {t1.l0} }           :  true
+law { {main.l2}, {inUse1},    {inUse2},    {t1.l0}, {t2.l0} }  :  true
+law { {main.l3}, {notInUse1}, {inUse2},             {t2.l0} }  :  true
