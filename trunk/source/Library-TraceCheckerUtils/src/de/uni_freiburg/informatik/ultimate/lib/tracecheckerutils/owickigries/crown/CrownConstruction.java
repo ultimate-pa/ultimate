@@ -27,7 +27,6 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.cr
 
 import java.util.ArrayList;
 import java.util.Deque;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -68,10 +67,6 @@ public final class CrownConstruction<PLACE, LETTER> {
 	private final PlacesCoRelation<PLACE> mPlacesCoRelation;
 
 	private final Crown<PLACE, LETTER> mCrown;
-
-	// Store already determined information about a rook containing non cuts to save runtime
-	// TODO let the rook itself store this information
-	private final HashMap<Rook<PLACE, LETTER>, Boolean> mContainsNonCut = new HashMap<>();
 
 	private final Statistics mStatistics = new Statistics();
 
@@ -132,7 +127,7 @@ public final class CrownConstruction<PLACE, LETTER> {
 		}
 
 		// remove pre-rooks
-		colonizedRooks.removeIf(this::containsNonCut);
+		colonizedRooks.removeIf(r -> r.containsNonCut(mBp));
 
 		return colonizedRooks;
 	}
@@ -298,10 +293,6 @@ public final class CrownConstruction<PLACE, LETTER> {
 
 	private boolean isColonizer(final Condition<LETTER, PLACE> condition) {
 		return mOrigConds.contains(condition);
-	}
-
-	private boolean containsNonCut(final Rook<PLACE, LETTER> rook) {
-		return mContainsNonCut.computeIfAbsent(rook, r -> r.containsNonCut(mBp));
 	}
 
 	public Crown<PLACE, LETTER> getCrown() {

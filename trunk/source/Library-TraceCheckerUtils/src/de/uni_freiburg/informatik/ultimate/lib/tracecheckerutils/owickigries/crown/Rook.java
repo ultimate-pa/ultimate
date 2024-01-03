@@ -61,6 +61,8 @@ public final class Rook<PLACE, LETTER> {
 	 */
 	private final KingdomLaw<PLACE, LETTER> mLaw;
 
+	private Boolean mContainsNonCut = null;
+
 	public Rook(final Kingdom<PLACE, LETTER> kingdom, final KingdomLaw<PLACE, LETTER> law) {
 		mKingdom = kingdom;
 		mLaw = law;
@@ -94,12 +96,17 @@ public final class Rook<PLACE, LETTER> {
 	 * @return True if the Rook contains a non cut.
 	 */
 	public boolean containsNonCut(final BranchingProcess<LETTER, PLACE> bp) {
+		if (mContainsNonCut != null) {
+			return mContainsNonCut.booleanValue();
+		}
 		final Set<Set<Condition<LETTER, PLACE>>> census = getCensus();
 		for (final Set<Condition<LETTER, PLACE>> coSet : census) {
 			if (!isCut(coSet, bp)) {
+				mContainsNonCut = true;
 				return true;
 			}
 		}
+		mContainsNonCut = false;
 		return false;
 	}
 
