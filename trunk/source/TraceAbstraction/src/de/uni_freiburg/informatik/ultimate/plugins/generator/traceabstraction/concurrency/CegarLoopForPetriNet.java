@@ -162,7 +162,6 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 	private Set<IPredicate> mProgramPointPlaces;
 
 	private final CounterexampleCache<L> mCounterexampleCache;
-	private BranchingProcess<L, IPredicate> mFinPrefix;
 	private final IPetriNet<L, IPredicate> mInitialNet;
 	private final List<IRefinementEngineResult<L, ?>> mRefinementEngines = new ArrayList<>();
 
@@ -207,8 +206,6 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 			mCoRelationQueries +=
 					finPrefix.getCoRelation().getQueryCounterYes() + finPrefix.getCoRelation().getQueryCounterNo();
 			mCounterexample = unf.getAcceptingRun();
-
-			mFinPrefix = finPrefix;
 		}
 		if (mCounterexample == null) {
 			if (DUMP_OWICKI_GRIES_TEST) {
@@ -256,7 +253,6 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 			if (USE_COUNTEREXAMPLE_CACHE) {
 				final PetriNetRun<L, IPredicate> run =
 						enhancementResult.getSecond().getFinitePrefixOfDifference().getAcceptingRun();
-				mFinPrefix = enhancementResult.getSecond().getFinitePrefixOfDifference().getResult();
 				mCounterexampleCache.setCounterexample(run);
 			}
 
