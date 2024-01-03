@@ -35,10 +35,12 @@ import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
@@ -57,34 +59,44 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.TimeTracker;
  */
 public final class CrownConstruction<PLACE, LETTER> {
 
+	private final ILogger mLogger;
+
 	private final BranchingProcess<LETTER, PLACE> mBp;
-
-	private final Crown<PLACE, LETTER> mCrown;
-
 	private final Set<Condition<LETTER, PLACE>> mOrigConds;
-
 	private final Set<Condition<LETTER, PLACE>> mAssertConds;
 
 	private final PlacesCoRelation<PLACE, LETTER> mPlacesCoRelation;
 
+	private final Crown<PLACE, LETTER> mCrown;
+
 	// Store already determined information about a rook containing non cuts to save runtime
+	// TODO let the rook itself store this information
 	private final HashMap<Rook<PLACE, LETTER>, Boolean> mContainsNonCut = new HashMap<>();
 
 	private final Statistics mStatistics = new Statistics();
 
-	public CrownConstruction(final BranchingProcess<LETTER, PLACE> bp, final Set<Condition<LETTER, PLACE>> origConds,
-			final Set<Condition<LETTER, PLACE>> assertConds, final IPetriNet<LETTER, PLACE> net) {
+	public CrownConstruction(final IUltimateServiceProvider services, final BranchingProcess<LETTER, PLACE> bp,
+			final Set<Condition<LETTER, PLACE>> origConds, final Set<Condition<LETTER, PLACE>> assertConds) {
+		mLogger = services.getLoggingService().getLogger(CrownConstruction.class);
+		mLogger.setLevel(LogLevel.INFO);
+		// TODO add logging output that makes it easy to debug why the final rooks look like they do
+		// TODO (ie which rules were applied)
+		// TODO use mLogger.debug(...) so information is only logged if enabled in the line above
+
 		mBp = bp;
 		mOrigConds = origConds;
 		mAssertConds = assertConds;
 		mPlacesCoRelation = new PlacesCoRelation<>(bp);
 
 		final var settlementRooks = mStatistics.measureSettlement(() -> settlements());
+
 		final var crownRooks = mStatistics.measureCrownComputation(() -> crownComputation(settlementRooks));
+		mLogger.debug("Crown before refurbishment:\n%s\n", new Crown<>(bp, crownRooks));
+
 		final var refurbishedRooks = mStatistics.measureRefurbishment(() -> crownRefurbishment(crownRooks));
 		mCrown = new Crown<>(bp, refurbishedRooks);
-
 		mStatistics.reportCrown(mCrown);
+
 		assert mCrown.validityAssertion(mPlacesCoRelation);
 	}
 
