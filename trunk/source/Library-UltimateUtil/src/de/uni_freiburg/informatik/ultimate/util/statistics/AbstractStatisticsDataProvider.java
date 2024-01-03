@@ -83,6 +83,12 @@ public abstract class AbstractStatisticsDataProvider implements IStatisticsDataP
 		mPrinters.put(key, printer);
 	}
 
+	protected void declareMinMaxMed(final String keySuffix, final MinMaxMed value) {
+		declare("Min " + keySuffix, value::getMinimum, KeyType.COUNTER);
+		declare("Max " + keySuffix, value::getMaximum, KeyType.COUNTER);
+		declare("Median " + keySuffix, value::getMedian, KeyType.COUNTER);
+	}
+
 	protected final void forward(final String key, final Supplier<IStatisticsDataProvider> statistics) {
 		declare(key, () -> toStatisticsData(statistics.get()), Aggregate::statisticsDataAggregate,
 				PrettyPrint::keyColonData);

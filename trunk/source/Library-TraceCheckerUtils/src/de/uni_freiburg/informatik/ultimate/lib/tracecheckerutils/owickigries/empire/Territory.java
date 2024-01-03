@@ -103,6 +103,10 @@ public final class Territory<PLACE> {
 		return treatySet;
 	}
 
+	public int size() {
+		return mTerritory.size();
+	}
+
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean equals(final Object obj) {

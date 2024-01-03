@@ -210,6 +210,10 @@ public final class Kingdom<PLACE, LETTER> {
 		return true;
 	}
 
+	public int size() {
+		return mKingdom.size();
+	}
+
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean equals(final Object obj) {

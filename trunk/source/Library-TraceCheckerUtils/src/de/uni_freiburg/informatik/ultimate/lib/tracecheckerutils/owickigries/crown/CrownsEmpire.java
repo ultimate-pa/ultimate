@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -38,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.emp
 import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
+import de.uni_freiburg.informatik.ultimate.util.statistics.MinMaxMed;
 
 /**
  * Construct an Empire annotation from a Crown.
@@ -118,26 +118,22 @@ public class CrownsEmpire<PLACE, LETTER> {
 		public static final String LAW_SIZE = "empire law size";
 		public static final String ANNOTATION_SIZE = "empire annotation size";
 		public static final String REGION_COUNT = "number of regions";
-		public static final String MIN_REGION_TERRITORY = "Min number of regions per territory";
-		public static final String MAX_REGION_TERRITORY = "Max number of regions per territory";
-		public static final String MED_REGION_TERRITORY = "Median number of regions per territory";
+
+		public static final String REGION_TERRITORY = "number of regions per territory";
 
 		private long mEmpireSize;
 		private long mLawSize;
 		private long mAnnotationSize;
 		private long mRegionCount;
-		private long mMinRegionsTerritory;
-		private long mMaxRegionsTerritory;
-		private long mMedianRegionsTerritory;
+
+		private final MinMaxMed mRegionsPerTerritory = new MinMaxMed();
 
 		public Statistics() {
 			declare(EMPIRE_SIZE, () -> mEmpireSize, KeyType.COUNTER);
 			declare(LAW_SIZE, () -> mLawSize, KeyType.COUNTER);
 			declare(ANNOTATION_SIZE, () -> mAnnotationSize, KeyType.COUNTER);
 			declare(REGION_COUNT, () -> mRegionCount, KeyType.COUNTER);
-			declare(MIN_REGION_TERRITORY, () -> mMinRegionsTerritory, KeyType.COUNTER);
-			declare(MAX_REGION_TERRITORY, () -> mMaxRegionsTerritory, KeyType.COUNTER);
-			declare(MED_REGION_TERRITORY, () -> mMedianRegionsTerritory, KeyType.COUNTER);
+			declareMinMaxMed(REGION_TERRITORY, mRegionsPerTerritory);
 		}
 
 		private void reportEmpire(final EmpireAnnotation<?> empireAnnotation) {
@@ -146,13 +142,7 @@ public class CrownsEmpire<PLACE, LETTER> {
 			mLawSize = empireAnnotation.getLawSize();
 			mAnnotationSize = empireAnnotation.getAnnotationSize();
 
-			final List<Integer> regionsPerTerritory = empireAnnotation.getRegionPerTerritory();
-
-			assert !regionsPerTerritory.isEmpty() : "There is no Territory in the Empire";
-
-			mMinRegionsTerritory = regionsPerTerritory.get(0);
-			mMaxRegionsTerritory = regionsPerTerritory.get(regionsPerTerritory.size() - 1);
-			mMedianRegionsTerritory = regionsPerTerritory.get(regionsPerTerritory.size() / 2);
+			mRegionsPerTerritory.report(empireAnnotation.getTerritories(), Territory::size);
 		}
 	}
 }

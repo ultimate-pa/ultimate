@@ -26,9 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -46,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
  *            The type of program statements
  */
 public class EmpireAnnotation<PLACE> {
-	private final Set<Territory<PLACE>> mEmpire;
 	private final Map<Territory<PLACE>, IPredicate> mLaw;
 
 	/**
@@ -56,7 +54,6 @@ public class EmpireAnnotation<PLACE> {
 	 *            Map from Territory to corresponding IPredicate Law object
 	 */
 	public EmpireAnnotation(final Map<Territory<PLACE>, IPredicate> territoryLawMap) {
-		mEmpire = territoryLawMap.keySet();
 		mLaw = territoryLawMap;
 	}
 
@@ -67,12 +64,12 @@ public class EmpireAnnotation<PLACE> {
 	 */
 	public Set<Region<PLACE>> getColony() {
 		final Set<Region<PLACE>> colony =
-				mEmpire.stream().flatMap(t -> t.getRegions().stream()).collect(Collectors.toSet());
+				mLaw.keySet().stream().flatMap(t -> t.getRegions().stream()).collect(Collectors.toSet());
 		return colony;
 	}
 
 	public Set<Territory<PLACE>> getTerritories() {
-		return mEmpire;
+		return Collections.unmodifiableSet(mLaw.keySet());
 	}
 
 	/**
@@ -121,8 +118,7 @@ public class EmpireAnnotation<PLACE> {
 	 * @return Number of Territories
 	 */
 	public final long getEmpireSize() {
-		final long size = mEmpire.size();
-		return size;
+		return mLaw.size();
 	}
 
 	public final int getRegionCount() {
@@ -139,20 +135,6 @@ public class EmpireAnnotation<PLACE> {
 		final long size = mLaw.entrySet().stream()
 				.collect(Collectors.summingLong(x -> sizeComputation.size(x.getValue().getFormula())));
 		return size;
-	}
-
-	/**
-	 * Get a List containing the sorted numbers of Regions for all Territories.
-	 *
-	 * @return Sorted List containing the numbers of Regions for all Territories.
-	 */
-	public List<Integer> getRegionPerTerritory() {
-		final List<Integer> regionPerTerritory = new ArrayList<>();
-		for (final Territory<PLACE> territory : mEmpire) {
-			regionPerTerritory.add(territory.getRegions().size());
-		}
-		regionPerTerritory.sort(null);
-		return regionPerTerritory;
 	}
 
 	/**
