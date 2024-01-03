@@ -162,7 +162,7 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 
 	private Crown<PLACE, LETTER> getCrown() {
 		final CrownConstruction<PLACE, LETTER> crownConstruction =
-				new CrownConstruction<>(mServices, mBp, mOriginalConditions, mAssertionConditions, mNet);
+				new CrownConstruction<>(mServices, mBp, mOriginalConditions, mAssertionConditions);
 		mStatistics.reportCrownStatistics(crownConstruction);
 		mLogger.info("PetriOwickiGries Crown Statistics: %s", crownConstruction.getStatistics());
 		return crownConstruction.getCrown();
