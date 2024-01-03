@@ -41,165 +41,90 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Event;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateCoverageChecker;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * Constructs an Floyd-Hoare annotation of a Petri program from a branching process of the final refined Petri Net.
+ * Constructs an Floyd-Hoare annotation of a Petri program from the final refined Petri net.
  *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  * @author Miriam Lagunes (miriam.lagunes@students.uni-freiburg.de)
  *
- * @param <P>
- *            The type of places in the Petri program
  * @param <L>
  *            The type of statements in the Petri program
+ * @param <P>
+ *            The type of places in the Petri program
  */
-public class PetriFloydHoare<P, L> {
+public class PetriFloydHoare<L, P> {
 	private final IUltimateServiceProvider mServices;
 	private final ManagedScript mManagedScript;
 	private final BasicPredicateFactory mFactory;
-	private final List<IPredicateUnifier> mPredicateUnifiers;
+	private final Function<P, IPredicate> mAssertionPlaceAnnotation;
+	// TODO should only be a single relation
+	private final List<IPredicateCoverageChecker> mCoverageRelations;
 
 	private final boolean mCoveringSimplification;
 
 	private final IPetriNet<L, P> mOriginalProgram;
-	private final Set<Marking<P>> mOriginalReach;
-	private final Set<P> mOriginalPlaces;
+	private final IPetriNet<L, P> mRefinedNet;
 
-	private final BranchingProcess<L, P> mRefinedUnfolding;
-	private final Function<P, IPredicate> mAssertionPlaceAnnotation;
-	private final Collection<Marking<P>> mRefinedReach;
-	private final Set<P> mAssertionPlaces;
+	private final Set<P> mOriginalPlaces;
 
 	private final Map<Marking<P>, IPredicate> mFloydHoareAnnotation;
 
-	public PetriFloydHoare(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
-			final BranchingProcess<L, P> bp, final Function<P, IPredicate> assertionPlaceAnnotation,
-			final IPetriNet<L, P> net, final List<IPredicateUnifier> predicateUnifiers, final boolean iterativeCosets,
-			final boolean coveringSimplification) {
-		this(services, csToolkit.getManagedScript(), csToolkit.getSymbolTable(), bp, assertionPlaceAnnotation, net,
-				predicateUnifiers, iterativeCosets, coveringSimplification);
+	public PetriFloydHoare(final IUltimateServiceProvider services, final IPetriNet<L, P> program,
+			final CfgSmtToolkit csToolkit, final IPetriNet<L, P> refinedNet,
+			final Function<P, IPredicate> assertionPlaceAnnotation,
+			final List<IPredicateCoverageChecker> coverageRelations, final boolean coveringSimplification) {
+		this(services, csToolkit.getManagedScript(), program, csToolkit.getSymbolTable(), refinedNet,
+				assertionPlaceAnnotation, coverageRelations, coveringSimplification);
 	}
 
 	public PetriFloydHoare(final IUltimateServiceProvider services, final ManagedScript mgdScript,
-			final IIcfgSymbolTable symbolTable, final BranchingProcess<L, P> bp,
-			final Function<P, IPredicate> assertionPlaceAnnotation, final IPetriNet<L, P> net,
-			final List<IPredicateUnifier> predicateUnifiers, final boolean iterativeCosets,
-			final boolean coveringSimplification) {
+			final IPetriNet<L, P> program, final IIcfgSymbolTable symbolTable, final IPetriNet<L, P> refinedNet,
+			final Function<P, IPredicate> assertionPlaceAnnotation,
+			final List<IPredicateCoverageChecker> coverageRelations, final boolean coveringSimplification) {
 		mServices = services;
 		mManagedScript = mgdScript;
-		mPredicateUnifiers = predicateUnifiers;
+		mAssertionPlaceAnnotation = assertionPlaceAnnotation;
+		mCoverageRelations = coverageRelations;
 		mFactory = new BasicPredicateFactory(mServices, mManagedScript, symbolTable);
 
-		mOriginalProgram = net;
-		mRefinedUnfolding = bp;
-		mAssertionPlaceAnnotation = assertionPlaceAnnotation;
+		mOriginalProgram = program;
+		mRefinedNet = refinedNet;
 
-		final var refinedReachablePlaces =
-				mRefinedUnfolding.getConditions().stream().map(Condition::getPlace).collect(Collectors.toSet());
 		mOriginalPlaces = Collections.unmodifiableSet(mOriginalProgram.getPlaces());
-		mAssertionPlaces = DataStructureUtils.difference(refinedReachablePlaces, mOriginalPlaces);
 
-		mRefinedReach = computeReachableMarkings3(mRefinedUnfolding);
-		mOriginalReach = mRefinedReach.stream().map(this::projectToOriginal).collect(Collectors.toSet());
+		final var refinedReach = computeReachableMarkings();
+		final var originalToRefined = projectReachableMarkings(refinedReach);
 
 		mCoveringSimplification = coveringSimplification;
-		if (iterativeCosets) {
-			// TODO this algorithm is very similar to computeReachableMarkings2. Should we remove it?
-			mFloydHoareAnnotation = getCosetAnnotation();
-		} else {
-			mFloydHoareAnnotation = getMaximalAnnotation();
+		mFloydHoareAnnotation = getMaximalAnnotation(originalToRefined);
+	}
+
+	public Map<Marking<P>, IPredicate> getResult() {
+		return mFloydHoareAnnotation;
+	}
+
+	private Map<Marking<P>, List<Marking<P>>> projectReachableMarkings(final Collection<Marking<P>> refinedReach) {
+		final var result = new HashMap<Marking<P>, List<Marking<P>>>();
+		for (final var refinedMark : refinedReach) {
+			final var original = projectToOriginal(refinedMark);
+			result.computeIfAbsent(original, x -> new ArrayList<>()).add(refinedMark);
 		}
+		return result;
 	}
 
-	// computes the reachable markings of the refined net
-	// FIXME This only collects markings represented by local configurations of an event, which does not cover all
-	// reachable markings. This results in unsound annotations.
-	@Deprecated
-	private static <L, P> List<Marking<P>> computeReachableMarkings(final BranchingProcess<L, P> bp) {
-		return bp.getEvents().stream()
-				// small optimization, cut-off event has same condition mark as companion
-				// .filter(e -> !e.isCutoffEvent())
-				.map(Event::getMark).collect(Collectors.toList());
-	}
-
-	// TODO This method can be modified to compute cuts (just omit toMarking() calls), but there are much more efficient
-	// ways to compute the reachable markings.
-	private static <L, P> List<Marking<P>> computeReachableMarkings2(final BranchingProcess<L, P> bp) {
-		final var corelation = bp.getCoRelation();
-
-		final Condition<L, P>[] conditions = bp.getConditions().toArray(Condition[]::new);
-		final var markings = new ArrayList<Marking<P>>();
-
-		// worklist entries have the form Pair<ImmutableList<Condition>, int>(coset, minIndex)
-		// Each pair in the worklist consists of a co-set (as list) and an index which identifies a suffix of the
-		// conditions array. The suffix describes all conditions which may yet be added to the co-set.
-		final var worklist = new ArrayDeque<Pair<ImmutableList<Condition<L, P>>, Integer>>();
-		worklist.add(new Pair<>(ImmutableList.empty(), 0));
-
-		while (!worklist.isEmpty()) {
-			final var pair = worklist.pop();
-			final var coset = pair.getFirst();
-			final int minIndex = pair.getSecond();
-			boolean isMaximal = true;
-
-			ImmutableList<Condition<L, P>> extendedCoset = null;
-
-			// See if any of the remaining candidates in conditions[minIndex..] can be added to the co-set.
-			// If so, add them and push the result on the worklist.
-			for (int i = minIndex; i < conditions.length; ++i) {
-				final Condition<L, P> candidate = conditions[i];
-				final boolean acceptCandidate = corelation.isCoset(coset, candidate);
-				if (acceptCandidate) {
-					// As an optimization, we do not push the extended co-set onto the worklist immediately.
-					// By postponing, we avoid re-checking the co-relation wrt the next few conditions which
-					// can already not be added to coset, let alone extendedCoset.
-					if (extendedCoset != null) {
-						worklist.push(new Pair<>(extendedCoset, i));
-					}
-
-					isMaximal = false;
-					extendedCoset = new ImmutableList<>(candidate, coset);
-				}
-			}
-			if (extendedCoset != null) {
-				worklist.push(new Pair<>(extendedCoset, conditions.length));
-			}
-
-			// See if any condition in conditions[0..minIndex-1] can be added to the coset.
-			// If so, the current co-set is not maximal.
-			// We do not add the extended co-set to the worklist in this case; the algorithm should have done so before.
-			for (int i = 0; isMaximal && i < minIndex; ++i) {
-				isMaximal &= coset.contains(conditions[i]) || !corelation.isCoset(coset, conditions[i]);
-			}
-
-			// If the current coset is maximal, add its marking to the results.
-			if (isMaximal) {
-				markings.add(toMarking(coset));
-			}
-		}
-
-		return markings;
-	}
-
-	// a simple depth-first search of the reachability graph
-	// TODO reduce code duplication: this computes the reachable states of LazyPetriNet2FiniteAutomaton
-	// TODO For that to work, generalize LazyPetriNet2FiniteAutomaton to IPetriNetSuccessorProviders
-	private static <L, P> Collection<Marking<P>> computeReachableMarkings3(final BranchingProcess<L, P> bp) {
-		final var net = bp.getNet();
+	// a depth-first search of the reachability graph
+	private Collection<Marking<P>> computeReachableMarkings() {
+		final var net = mRefinedNet;
 
 		final var result = new LinkedHashSet<Marking<P>>();
 		final var worklist = new ArrayDeque<Marking<P>>();
@@ -230,20 +155,15 @@ public class PetriFloydHoare<P, L> {
 		return result;
 	}
 
-	// ------------------
-	// maximal annotation
-	// ------------------
-
-	/**
-	 * Annotation with MaximalCosets computation
-	 */
-	private Map<Marking<P>, IPredicate> getMaximalAnnotation() {
-		return mOriginalReach.stream().collect(Collectors.toMap(Function.identity(), this::getMarkingAssertion));
+	private Map<Marking<P>, IPredicate>
+			getMaximalAnnotation(final Map<Marking<P>, List<Marking<P>>> originalToRefined) {
+		return originalToRefined.entrySet().stream()
+				.collect(Collectors.toMap(Map.Entry::getKey, e -> getMarkingAssertion(e.getValue())));
 	}
 
-	private IPredicate getMarkingAssertion(final Marking<P> originalMarking) {
+	private IPredicate getMarkingAssertion(final List<Marking<P>> refinedMarkings) {
 		final Set<IPredicate> disjuncts = new HashSet<>();
-		for (final Marking<P> refinedMarking : getRefinedMarkingsForOriginal(originalMarking)) {
+		for (final Marking<P> refinedMarking : refinedMarkings) {
 			disjuncts.add(mFactory.and(getAssertions(refinedMarking)));
 		}
 		return mFactory.or(disjuncts);
@@ -254,13 +174,8 @@ public class PetriFloydHoare<P, L> {
 				refinedMarking.stream().filter(mOriginalPlaces::contains).collect(ImmutableSet.collector()));
 	}
 
-	private Set<Marking<P>> getRefinedMarkingsForOriginal(final Marking<P> originalMarking) {
-		return mRefinedReach.stream().filter(m -> originalMarking.equals(projectToOriginal(m)))
-				.collect(Collectors.toSet());
-	}
-
 	private Set<IPredicate> getAssertions(final Marking<P> refinedMarking) {
-		final var assertPlaces = DataStructureUtils.intersection(refinedMarking.getPlaces(), mAssertionPlaces);
+		final var assertPlaces = DataStructureUtils.difference(refinedMarking.getPlaces(), mOriginalPlaces);
 		final var assertions = assertPlaces.stream().map(mAssertionPlaceAnnotation).collect(Collectors.toSet());
 		if (mCoveringSimplification) {
 			return simplifyAssertions(assertions);
@@ -268,112 +183,10 @@ public class PetriFloydHoare<P, L> {
 		return assertions;
 	}
 
-	// ---------------------------
-	// Iterative co-set annotation
-	// ---------------------------
-
-	/**
-	 * Cuts computation from "greedy" algorithm With simplification
-	 */
-	private Map<Marking<P>, IPredicate> getCosetAnnotation() {
-		final var originalConditions = getOriginalConditions();
-		final var assertionConditions =
-				DataStructureUtils.difference(Set.copyOf(mRefinedUnfolding.getConditions()), originalConditions);
-
-		final Map<Marking<P>, IPredicate> mapping = new HashMap<>();
-
-		// compute maximal co-sets consisting only of original conditions
-		// Note: these are not cuts of the unfolding, as there might be co-related assertion conditions.
-		final Set<Set<Condition<L, P>>> markingCosets = collectCoSets(Collections.emptySet(), originalConditions);
-
-		for (final Set<Condition<L, P>> markCoset : markingCosets) {
-			final Set<Set<Condition<L, P>>> assertConds = collectCoSets(markCoset, assertionConditions);
-			final Set<Set<IPredicate>> markAssertPlaces = new HashSet<>();
-			for (final Set<Condition<L, P>> assertCond : assertConds) {
-				Set<IPredicate> cosetPredicates = getCosetPredicates(assertCond);
-				if (mCoveringSimplification) {
-					cosetPredicates = simplifyAssertions(cosetPredicates);
-				}
-				markAssertPlaces.add(cosetPredicates);
-			}
-			mapping.put(toMarking(markCoset), getMarkingAssertion(markAssertPlaces));
-		}
-		return mapping;
-	}
-
-	private static <L, P> Marking<P> toMarking(final Collection<Condition<L, P>> coset) {
-		return new Marking<>(coset.stream().map(Condition::getPlace).collect(ImmutableSet.collector()));
-	}
-
-	private Set<IPredicate> getCosetPredicates(final Set<Condition<L, P>> coset) {
-		return coset.stream().map(Condition::getPlace).map(mAssertionPlaceAnnotation).collect(Collectors.toSet());
-	}
-
-	private Set<Set<Condition<L, P>>> collectCoSets(final Set<Condition<L, P>> compCoset,
-			final Set<Condition<L, P>> conditions) {
-		final var result = new HashSet<Set<Condition<L, P>>>();
-		collectCoSets(Collections.emptySet(), compCoset, conditions, result);
-		return result;
-	}
-
-	/**
-	 * @param coSet
-	 * @param conditions
-	 * @param maximalCoSets
-	 * @return The set of all cosets which are supersets of the given coset, only contain the given conditions, and are
-	 *         maximal wrt these constraints
-	 */
-	private void collectCoSets(final Set<Condition<L, P>> coSet, final Set<Condition<L, P>> compCoset,
-			final Set<Condition<L, P>> conditions, final Set<Set<Condition<L, P>>> maximalCoSets) {
-		final Set<Set<Condition<L, P>>> largerCoSets = new HashSet<>();
-
-		final Set<Condition<L, P>> remainingConditions = DataStructureUtils.difference(conditions, coSet);
-		for (final Condition<L, P> cond : remainingConditions) {
-			if (mRefinedUnfolding.getCoRelation().isCoset(compCoset, cond)
-					&& mRefinedUnfolding.getCoRelation().isCoset(coSet, cond)) {
-				final var enlargedCoSet = DataStructureUtils.union(coSet, DataStructureUtils.toSet(cond));
-				largerCoSets.add(enlargedCoSet);
-			}
-		}
-
-		if (largerCoSets.isEmpty()) {
-			// the coSet is already maximal
-			maximalCoSets.add(coSet);
-		} else {
-			for (final Set<Condition<L, P>> largerCoSet : largerCoSets) {
-				collectCoSets(largerCoSet, compCoset, remainingConditions, maximalCoSets);
-			}
-		}
-	}
-
-	private Set<Condition<L, P>> getOriginalConditions() {
-		return mRefinedUnfolding.getConditions().stream().filter(cond -> mOriginalPlaces.contains(cond.getPlace()))
-				.collect(Collectors.toSet());
-	}
-
-	// Call this for simple and "greedy" cuts Annotation
-	private IPredicate getMarkingAssertion(final Set<Set<IPredicate>> predicatesForCuts) {
-		final Set<IPredicate> predicates = new HashSet<>();
-		for (final var predicatesForCut : predicatesForCuts) {
-			predicates.add(getCutAssertion(predicatesForCut));
-		}
-		return mFactory.or(predicates);
-	}
-
-	// phi(d) = conjunction(assert(p)) for each p in z(d) (assertion places) -> Cut assertion
-	private IPredicate getCutAssertion(final Set<IPredicate> predicatesForCut) {
-		var predicates = predicatesForCut;
-		if (mCoveringSimplification) {
-			predicates = simplifyAssertions(predicates);
-		}
-		return mFactory.and(predicates);
-	}
-
 	// ------------------------
 	// assertion simplification
 	// ------------------------
 
-	// Set of conditions to set of places
 	private Set<IPredicate> simplifyAssertions(final Set<IPredicate> assertions) {
 		Set<IPredicate> simpleAssertions = assertions;
 		// Check if equiv to false, set all to false;
@@ -391,9 +204,9 @@ public class PetriFloydHoare<P, L> {
 	private Set<IPredicate> getWeakerConditions(final IPredicate condition, Set<IPredicate> assertConditions) {
 		final Set<IPredicate> condImplications = new HashSet<>();
 		assertConditions = DataStructureUtils.difference(assertConditions, Collections.singleton(condition));
-		for (final var predUnifier : mPredicateUnifiers) {
-			condImplications.addAll(DataStructureUtils.intersection(assertConditions,
-					predUnifier.getCoverageRelation().getCoveringPredicates(condition)));
+		for (final var coverage : mCoverageRelations) {
+			condImplications.addAll(
+					DataStructureUtils.intersection(assertConditions, coverage.getCoveringPredicates(condition)));
 		}
 		return condImplications;
 	}
@@ -409,24 +222,12 @@ public class PetriFloydHoare<P, L> {
 	private boolean thereIsStronger(final IPredicate condition, final Set<IPredicate> assertConditions) {
 		final Set<IPredicate> assertPredicates =
 				DataStructureUtils.difference(assertConditions, Collections.singleton(condition));
-		for (final var predUnifier : mPredicateUnifiers) {
-			final Set<IPredicate> coveredPlaces = predUnifier.getCoverageRelation().getCoveredPredicates(condition);
+		for (final var coverage : mCoverageRelations) {
+			final Set<IPredicate> coveredPlaces = coverage.getCoveredPredicates(condition);
 			if (DataStructureUtils.haveNonEmptyIntersection(coveredPlaces, assertPredicates)) {
 				return true;
 			}
 		}
 		return false;
-	}
-
-	// --------------
-	// output methods
-	// --------------
-
-	public Map<Marking<P>, IPredicate> getResult() {
-		return mFloydHoareAnnotation;
-	}
-
-	public IPredicate getAssertion(final Marking<P> marking) {
-		return mFloydHoareAnnotation.get(marking);
 	}
 }

@@ -626,12 +626,11 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 		}
 
 		final long startTime = System.nanoTime();
-		final var predicateUnifiers = mRefinementEngines.stream().map(IRefinementEngineResult::getPredicateUnifier)
-				.collect(Collectors.toList());
-
-		final var floydHoare = new PetriFloydHoare<>(getServices(), mCsToolkit, mFinPrefix, Function.identity(),
-				mInitialNet, predicateUnifiers, mPref.owickiGriesIterativeCosets(),
-				mPref.owickiGriesCoveringSimplification()).getResult();
+		final var coverageRelations = mRefinementEngines.stream()
+				.map(r -> r.getPredicateUnifier().getCoverageRelation()).collect(Collectors.toList());
+		final var floydHoare = new PetriFloydHoare<>(getServices(), mInitialNet, mCsToolkit, mAbstraction,
+				Function.<IPredicate> identity(), coverageRelations, mPref.owickiGriesCoveringSimplification())
+						.getResult();
 
 		try {
 			mLogger.warn("Checking inductivity of Floyd-Hoare annotation for initial Petri net");

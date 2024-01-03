@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Branching
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataTestFileAST;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
@@ -55,16 +56,13 @@ public class NaiveOwickiGriesTestSuite extends OwickiGriesTestSuite {
 			final BoundedPetriNet<SimpleAction, IPredicate> program,
 			final BoundedPetriNet<SimpleAction, IPredicate> refinedPetriNet,
 			final BranchingProcess<SimpleAction, IPredicate> unfolding) throws AutomataLibraryException {
-		final long cutoffs =
-				unfolding.getConditions().stream().filter(c -> c.getPredecessorEvent().isCutoffEvent()).count();
-		mLogger.info(
-				"Constructing Owicki-Gries proof for Petri program that %s and unfolding that %s."
-						+ " %d conditions belong to cutoff events",
-				program.sizeInformation(), unfolding.sizeInformation(), cutoffs);
+		mLogger.info("Constructing Owicki-Gries proof for Petri program that %s.", program.sizeInformation());
 
 		// construct Floyd-Hoare annotation
-		final var floydHoare = new PetriFloydHoare<>(mServices, mMgdScript, mSymbolTable, unfolding,
-				Function.identity(), program, mUnifiers, true, true);
+		final var coverageRelations =
+				mUnifiers.stream().map(IPredicateUnifier::getCoverageRelation).collect(Collectors.toList());
+		final var floydHoare = new PetriFloydHoare<>(mServices, mMgdScript, program, mSymbolTable, refinedPetriNet,
+				Function.identity(), coverageRelations, true);
 		final Map<Marking<IPredicate>, IPredicate> petriFloydHoare = floydHoare.getResult();
 		mLogger.info("Computed Floyd-Hoare proof with %d non-trivial markings and assertion size %d",
 				petriFloydHoare.size(), computeFloydHoareSize(petriFloydHoare));

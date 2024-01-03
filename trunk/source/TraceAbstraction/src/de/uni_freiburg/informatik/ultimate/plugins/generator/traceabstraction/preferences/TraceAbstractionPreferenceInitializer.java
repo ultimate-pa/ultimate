@@ -495,9 +495,6 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	private static final String DESC_ASSERT_CODEBLOCKS_HEURISTIC_SCORE_THRESHOLD =
 			"If Assert CodeBlocks is set to SMT_FEATURE_HEURISTIC and partitioning strategy is THRESHOLD, two partitions are created, one partition contains all terms >= threshold  and one all terms < threshold";
 
-	public static final String LABEL_OG_ITERATIVE_COSETS = "Compute cosets for OwickiGries annotation iteratively";
-	public static final boolean DEF_OG_ITERATIVE_COSETS = false;
-
 	public static final String LABEL_OG_COVERING_SIMPLIFICATION =
 			"Simplify away covered predicates in OwickiGries annotation";
 	public static final boolean DEF_OG_COVERING_SIMPLIFICATION = false;
@@ -715,8 +712,6 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						new UltimatePreferenceItem<>(LABEL_LOOPER_CHECK_PETRI, DEF_LOOPER_CHECK_PETRI,
 								PreferenceType.Combo, LooperCheck.values())),
 
-				new UltimatePreferenceItem<>(LABEL_OG_ITERATIVE_COSETS, DEF_OG_ITERATIVE_COSETS,
-						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_OG_COVERING_SIMPLIFICATION, DEF_OG_COVERING_SIMPLIFICATION,
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_OG_HITTING_SET_OPTIMIZATION, DEF_OG_HITTING_SET_OPTIMIZATION,
