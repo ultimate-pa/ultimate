@@ -182,7 +182,6 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 		return mStatistics.measureEmpireValidity(() -> {
 			try {
 				final var implicationChecker = new MonolithicImplicationChecker(mServices, mMgdScript);
-				final MarkingLaw<PLACE> markingLaw = new MarkingLaw<>(mEmpireAnnotation.getLaw(), mFactory);
 				final var checker = new EmpireValidityCheck<>(mServices, mMgdScript, implicationChecker, mFactory, mNet,
 						mSymbolTable, mModifiableGlobals, mEmpireAnnotation);
 				return checker.getValidity();
