@@ -137,7 +137,6 @@ public final class CrownConstruction<PLACE, LETTER> {
 			final List<Condition<LETTER, PLACE>> troopConditions, final boolean colonizer) {
 		final Set<Rook<PLACE, LETTER>> crownRooks = new HashSet<>();
 		boolean isMaximal = true;
-		final List<Condition<LETTER, PLACE>> conditions = new ArrayList<>(troopConditions);
 		for (final Condition<LETTER, PLACE> condition : troopConditions) {
 			Rook<PLACE, LETTER> colonyRook;
 			if (colonizer) {
@@ -146,14 +145,13 @@ public final class CrownConstruction<PLACE, LETTER> {
 				colonyRook = legislate(condition, rook);
 			}
 			if (colonyRook == null) {
-				conditions.remove(condition);
-			} else {
-				isMaximal = false;
-				final List<Condition<LETTER, PLACE>> ntroops =
-						conditions.stream().filter(cond -> !cond.equals(condition)).collect(Collectors.toList());
-				final Set<Rook<PLACE, LETTER>> expandedRooks = crownExpansionRecursive(colonyRook, ntroops, colonizer);
-				crownRooks.addAll(expandedRooks);
+				continue;
 			}
+			isMaximal = false;
+			final List<Condition<LETTER, PLACE>> ntroops =
+					troopConditions.stream().filter(cond -> !cond.equals(condition)).collect(Collectors.toList());
+			final Set<Rook<PLACE, LETTER>> expandedRooks = crownExpansionRecursive(colonyRook, ntroops, colonizer);
+			crownRooks.addAll(expandedRooks);
 		}
 		if (isMaximal) {
 			crownRooks.add(rook);
