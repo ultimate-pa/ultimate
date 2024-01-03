@@ -62,7 +62,7 @@ final class CoRealm<PLACE, LETTER> {
 	private final ConflictType mConflictType;
 
 	public CoRealm(final Realm<PLACE, LETTER> realm, final Condition<LETTER, PLACE> condition,
-			final BranchingProcess<LETTER, PLACE> bp, final PlacesCoRelation<PLACE, LETTER> placesCoRelation) {
+			final BranchingProcess<LETTER, PLACE> bp, final PlacesCoRelation<PLACE> placesCoRelation) {
 		mCoRelation = bp.getCoRelation();
 		mRealm = realm;
 		mCondition = condition;
@@ -87,8 +87,7 @@ final class CoRealm<PLACE, LETTER> {
 	 *            Object which was initialized with the bp we want to create a proof for
 	 * @return Subset of Realm's conditions for which their places are corelated to the place of condition.
 	 */
-	private Set<Condition<LETTER, PLACE>>
-			getConflictingConditions(final PlacesCoRelation<PLACE, LETTER> placesCoRelation) {
+	private Set<Condition<LETTER, PLACE>> getConflictingConditions(final PlacesCoRelation<PLACE> placesCoRelation) {
 		final Set<Condition<LETTER, PLACE>> conflictingConditions = new HashSet<>();
 		final PLACE originalPlace = mCondition.getPlace();
 		for (final Condition<LETTER, PLACE> condition : mRealm.getConditions()) {

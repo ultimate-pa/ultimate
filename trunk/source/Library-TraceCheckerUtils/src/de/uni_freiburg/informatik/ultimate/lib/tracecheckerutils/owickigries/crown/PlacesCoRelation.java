@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.cr
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
-final class PlacesCoRelation<PLACE, LETTER> {
+final class PlacesCoRelation<PLACE> {
 	private final HashRelation<PLACE, PLACE> mCoRelatedPlaces = new HashRelation<>();
 
 	/**
@@ -40,7 +40,7 @@ final class PlacesCoRelation<PLACE, LETTER> {
 	 * @param net
 	 *            Original Petri net.
 	 */
-	public PlacesCoRelation(final BranchingProcess<LETTER, PLACE> bp) {
+	public <LETTER> PlacesCoRelation(final BranchingProcess<LETTER, PLACE> bp) {
 		final var coRelation = bp.getCoRelation();
 		for (final var cond : bp.getConditions()) {
 			if (cond.getPredecessorEvent().isCutoffEvent()) {

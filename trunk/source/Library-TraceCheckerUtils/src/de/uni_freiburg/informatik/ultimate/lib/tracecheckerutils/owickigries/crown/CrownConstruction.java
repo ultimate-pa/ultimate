@@ -65,7 +65,7 @@ public final class CrownConstruction<PLACE, LETTER> {
 	private final Set<Condition<LETTER, PLACE>> mOrigConds;
 	private final Set<Condition<LETTER, PLACE>> mAssertConds;
 
-	private final PlacesCoRelation<PLACE, LETTER> mPlacesCoRelation;
+	private final PlacesCoRelation<PLACE> mPlacesCoRelation;
 
 	private final Crown<PLACE, LETTER> mCrown;
 

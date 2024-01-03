@@ -49,7 +49,7 @@ final class CoRook<PLACE, LETTER> {
 
 	public CoRook(final Condition<LETTER, PLACE> condition, final Rook<PLACE, LETTER> rook,
 			final BranchingProcess<LETTER, PLACE> bp, final boolean isColonizer,
-			final PlacesCoRelation<PLACE, LETTER> placesCoRelation) {
+			final PlacesCoRelation<PLACE> placesCoRelation) {
 		mRook = rook;
 		mCondition = condition;
 		mIsColonizer = isColonizer;

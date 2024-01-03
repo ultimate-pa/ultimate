@@ -152,7 +152,7 @@ public final class Kingdom<PLACE, LETTER> {
 	 *         condition.
 	 */
 	public CoKingdom<PLACE, LETTER> getCoKingdom(final Condition<LETTER, PLACE> condition,
-			final BranchingProcess<LETTER, PLACE> bp, final PlacesCoRelation<PLACE, LETTER> placesCoRelation) {
+			final BranchingProcess<LETTER, PLACE> bp, final PlacesCoRelation<PLACE> placesCoRelation) {
 		return new CoKingdom<>(this, condition, bp, placesCoRelation);
 	}
 
@@ -190,7 +190,7 @@ public final class Kingdom<PLACE, LETTER> {
 	 * @param placesCoRelation
 	 *            Contains the information about the corelation of the Places.
 	 */
-	public boolean validityAssertion(final PlacesCoRelation<PLACE, LETTER> placesCoRelation) {
+	public boolean validityAssertion(final PlacesCoRelation<PLACE> placesCoRelation) {
 		for (final Realm<PLACE, LETTER> realm : mKingdom) {
 			if (!realm.validityAssertion(placesCoRelation)) {
 				assert false : "invalid realm: " + realm;

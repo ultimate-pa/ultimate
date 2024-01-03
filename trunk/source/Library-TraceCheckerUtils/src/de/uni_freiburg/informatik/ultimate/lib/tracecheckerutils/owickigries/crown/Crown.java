@@ -157,7 +157,7 @@ public final class Crown<PLACE, LETTER> {
 	 * @param assertConds
 	 *            Assertion Conditions of the refined Petri Net
 	 */
-	public boolean validityAssertion(final PlacesCoRelation<PLACE, LETTER> placesCoRelation) {
+	public boolean validityAssertion(final PlacesCoRelation<PLACE> placesCoRelation) {
 		for (final Rook<PLACE, LETTER> rook : mCrown) {
 			if (!rook.validityAssertion(mBp, placesCoRelation)) {
 				assert false;

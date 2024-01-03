@@ -76,7 +76,7 @@ final class CoKingdom<PLACE, LETTER> {
 	 *            Objects which stores the corelation for the original Places of bp
 	 */
 	public CoKingdom(final Kingdom<PLACE, LETTER> kingdom, final Condition<LETTER, PLACE> condition,
-			final BranchingProcess<LETTER, PLACE> bp, final PlacesCoRelation<PLACE, LETTER> placesCoRelation) {
+			final BranchingProcess<LETTER, PLACE> bp, final PlacesCoRelation<PLACE> placesCoRelation) {
 		mKingdom = kingdom;
 		mCondition = condition;
 		final boolean success = getCoKingdoms(bp, placesCoRelation);
@@ -89,7 +89,7 @@ final class CoKingdom<PLACE, LETTER> {
 	 * @param bp
 	 */
 	private boolean getCoKingdoms(final BranchingProcess<LETTER, PLACE> bp,
-			final PlacesCoRelation<PLACE, LETTER> placesCoRelation) {
+			final PlacesCoRelation<PLACE> placesCoRelation) {
 		mPosKingdom = new HashSet<>();
 		mNegKingdom = new HashSet<>();
 		mParKingdom = new HashSet<>();
@@ -156,7 +156,7 @@ final class CoKingdom<PLACE, LETTER> {
 	}
 
 	public Set<Condition<LETTER, PLACE>> getConflictFreeConditions(final BranchingProcess<LETTER, PLACE> bp,
-			final PlacesCoRelation<PLACE, LETTER> placesCoRelation) {
+			final PlacesCoRelation<PLACE> placesCoRelation) {
 		if (mNegKingdom.isEmpty()) {
 			return Collections.emptySet();
 		}

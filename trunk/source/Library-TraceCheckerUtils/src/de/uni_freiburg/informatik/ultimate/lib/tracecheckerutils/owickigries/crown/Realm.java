@@ -62,7 +62,7 @@ public final class Realm<PLACE, LETTER> {
 		return places;
 	}
 
-	private boolean placesNotCorelated(final PlacesCoRelation<PLACE, LETTER> placesCoRelation) {
+	private boolean placesNotCorelated(final PlacesCoRelation<PLACE> placesCoRelation) {
 		final List<Condition<LETTER, PLACE>> realmConditions = new ArrayList<>(mRealm);
 		for (int i = 0; i < realmConditions.size(); i++) {
 			final var place1 = realmConditions.get(i).getPlace();
@@ -182,7 +182,7 @@ public final class Realm<PLACE, LETTER> {
 	 * @return CoRealm with CoRelationType, Positive and Negative corelated conditions.
 	 */
 	public CoRealm<PLACE, LETTER> getCoRealm(final Condition<LETTER, PLACE> condition,
-			final BranchingProcess<LETTER, PLACE> bp, final PlacesCoRelation<PLACE, LETTER> placesCoRelation) {
+			final BranchingProcess<LETTER, PLACE> bp, final PlacesCoRelation<PLACE> placesCoRelation) {
 		return new CoRealm<>(this, condition, bp, placesCoRelation);
 	}
 
@@ -211,7 +211,7 @@ public final class Realm<PLACE, LETTER> {
 	 * @param placesCoRelation
 	 *            Contains the information about the corelation of the Places.
 	 */
-	public boolean validityAssertion(final PlacesCoRelation<PLACE, LETTER> placesCoRelation) {
+	public boolean validityAssertion(final PlacesCoRelation<PLACE> placesCoRelation) {
 		final boolean valid = placesNotCorelated(placesCoRelation);
 		assert valid : "There are Conditions with co-related Places in the Realm";
 		return valid;

@@ -129,7 +129,7 @@ public final class Rook<PLACE, LETTER> {
 	 * @return New Rook
 	 */
 	public Rook<PLACE, LETTER> immigrationAndFoundation(final CoRook<PLACE, LETTER> coRook,
-			final BranchingProcess<LETTER, PLACE> bp, final PlacesCoRelation<PLACE, LETTER> placesCoRelation) {
+			final BranchingProcess<LETTER, PLACE> bp, final PlacesCoRelation<PLACE> placesCoRelation) {
 		final Set<Realm<PLACE, LETTER>> newRealms =
 				getKingdom().getRealms().stream().collect(Collectors.toCollection(HashSet::new));
 		newRealms.remove(getNegKingdom(coRook));
@@ -298,7 +298,7 @@ public final class Rook<PLACE, LETTER> {
 	 *            Assertion conditions of the refined Petri net.
 	 */
 	public boolean validityAssertion(final BranchingProcess<LETTER, PLACE> bp,
-			final PlacesCoRelation<PLACE, LETTER> placesCoRelation) {
+			final PlacesCoRelation<PLACE> placesCoRelation) {
 
 		if (!mKingdom.validityAssertion(placesCoRelation)) {
 			assert false : "invalid kingdom";
