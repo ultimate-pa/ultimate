@@ -33,6 +33,7 @@ import java.util.function.Function;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire.EmpireAnnotation;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire.Region;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire.Territory;
 import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
@@ -120,6 +121,7 @@ public class CrownsEmpire<PLACE, LETTER> {
 		public static final String REGION_COUNT = "number of regions";
 
 		public static final String REGION_TERRITORY = "number of regions per territory";
+		public static final String PLACES_PER_REGION = "number of places per region";
 
 		private long mEmpireSize;
 		private long mLawSize;
@@ -127,6 +129,7 @@ public class CrownsEmpire<PLACE, LETTER> {
 		private long mRegionCount;
 
 		private final MinMaxMed mRegionsPerTerritory = new MinMaxMed();
+		private final MinMaxMed mPlacesPerRegion = new MinMaxMed();
 
 		public Statistics() {
 			declare(EMPIRE_SIZE, () -> mEmpireSize, KeyType.COUNTER);
@@ -134,6 +137,7 @@ public class CrownsEmpire<PLACE, LETTER> {
 			declare(ANNOTATION_SIZE, () -> mAnnotationSize, KeyType.COUNTER);
 			declare(REGION_COUNT, () -> mRegionCount, KeyType.COUNTER);
 			declareMinMaxMed(REGION_TERRITORY, mRegionsPerTerritory);
+			declareMinMaxMed(PLACES_PER_REGION, mPlacesPerRegion);
 		}
 
 		private void reportEmpire(final EmpireAnnotation<?> empireAnnotation) {
@@ -143,6 +147,7 @@ public class CrownsEmpire<PLACE, LETTER> {
 			mAnnotationSize = empireAnnotation.getAnnotationSize();
 
 			mRegionsPerTerritory.report(empireAnnotation.getTerritories(), Territory::size);
+			mPlacesPerRegion.report(empireAnnotation.getColony(), Region::size);
 		}
 	}
 }

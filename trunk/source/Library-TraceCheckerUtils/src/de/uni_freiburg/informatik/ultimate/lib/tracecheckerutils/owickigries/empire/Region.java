@@ -65,6 +65,10 @@ public final class Region<PLACE> {
 		return true;
 	}
 
+	public int size() {
+		return mRegion.size();
+	}
+
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean equals(final Object obj) {
