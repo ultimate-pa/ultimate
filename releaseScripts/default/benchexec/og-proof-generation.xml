@@ -9,12 +9,12 @@
     <option name="command">${benchmark_path}/../run-test.sh Library-TraceCheckerUtilsTest de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.PetriOwickiGriesTestSuite ${inputfile_name} true</option>
   </rundefinition>
 
-  <rundefinition name="PetriOwickiGriesTestSuite-NoAssert">
-    <option name="command">${benchmark_path}/../run-test.sh Library-TraceCheckerUtilsTest de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.PetriOwickiGriesTestSuite ${inputfile_name} false</option>
-  </rundefinition>
-
   <rundefinition name="NaiveOwickiGriesTestSuite-WithAssert">
     <option name="command">${benchmark_path}/../run-test.sh Library-TraceCheckerUtilsTest de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.NaiveOwickiGriesTestSuite ${inputfile_name} true</option>
+  </rundefinition>
+
+  <rundefinition name="PetriOwickiGriesTestSuite-NoAssert">
+    <option name="command">${benchmark_path}/../run-test.sh Library-TraceCheckerUtilsTest de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.PetriOwickiGriesTestSuite ${inputfile_name} false</option>
   </rundefinition>
 
   <rundefinition name="NaiveOwickiGriesTestSuite-NoAssert">
