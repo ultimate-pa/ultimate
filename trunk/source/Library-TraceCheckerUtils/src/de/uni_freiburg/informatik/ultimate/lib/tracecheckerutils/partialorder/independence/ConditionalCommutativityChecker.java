@@ -42,9 +42,7 @@ public class ConditionalCommutativityChecker<L extends IAction> implements ICond
 	private final ITraceChecker<L> mTraceChecker;
 
 	public ConditionalCommutativityChecker(final IConditionalCommutativityCriterion<L, IPredicate> criterion,
-			final IIndependenceRelation<IPredicate, L> independenceRelation,
-			final IIndependenceConditionGenerator generator, final IAutomaton<L, IPredicate> abstraction,
-			final IEmptyStackStateFactory<IPredicate> emptyStackStateFactory, final ITraceChecker<L> traceChecker) {
+			final IIndependenceConditionGenerator generator, final ITraceChecker<L> traceChecker) {
 		mCriterion = criterion;
 		mGenerator = generator;
 		mTraceChecker = traceChecker;

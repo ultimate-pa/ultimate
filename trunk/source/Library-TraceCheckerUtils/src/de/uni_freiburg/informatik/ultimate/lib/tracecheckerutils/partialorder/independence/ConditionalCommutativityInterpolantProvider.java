@@ -65,8 +65,7 @@ public class ConditionalCommutativityInterpolantProvider<L extends IAction> {
 		mServices = services;
 		mReduction = reduction;
 		mEmptyStackStateFactory = emptyStackStateFactory;
-		mChecker = new ConditionalCommutativityChecker<>(criterion, independenceRelation, generator, abstraction,
-				emptyStackStateFactory, traceChecker);
+		mChecker = new ConditionalCommutativityChecker<>(criterion, generator, traceChecker);
 	}
 
 	// constructs a copy of interpolantAutomaton and includes paths and states for conditional commutativity proofs
