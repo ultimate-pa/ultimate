@@ -114,7 +114,7 @@ public class CrownsEmpire<PLACE, LETTER> {
 		return mStatistics;
 	}
 
-	private static final class Statistics extends AbstractStatisticsDataProvider {
+	public static final class Statistics extends AbstractStatisticsDataProvider {
 		public static final String EMPIRE_SIZE = "empire size";
 		public static final String LAW_SIZE = "empire law size";
 		public static final String ANNOTATION_SIZE = "empire annotation size";
@@ -140,7 +140,7 @@ public class CrownsEmpire<PLACE, LETTER> {
 			declareMinMaxMed(PLACES_PER_REGION, mPlacesPerRegion);
 		}
 
-		private void reportEmpire(final EmpireAnnotation<?> empireAnnotation) {
+		public void reportEmpire(final EmpireAnnotation<?> empireAnnotation) {
 			mRegionCount = empireAnnotation.getRegionCount();
 			mEmpireSize = empireAnnotation.getEmpireSize();
 			mLawSize = empireAnnotation.getLawSize();

@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.cr
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
-final class PlacesCoRelation<PLACE> {
+public final class PlacesCoRelation<PLACE> {
 	private final HashRelation<PLACE, PLACE> mCoRelatedPlaces = new HashRelation<>();
 
 	/**

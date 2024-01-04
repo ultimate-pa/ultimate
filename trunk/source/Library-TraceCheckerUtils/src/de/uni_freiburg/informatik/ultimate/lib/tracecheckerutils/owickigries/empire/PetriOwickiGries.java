@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.em
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -55,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.Owi
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown.Crown;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown.CrownConstruction;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown.CrownsEmpire;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown.PlacesCoRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
@@ -76,13 +78,14 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 
 	private final IPetriNet<LETTER, PLACE> mNet;
 	private final Set<PLACE> mOriginalPlaces;
+	private final List<Set<PLACE>> mProofPlaces;
 
 	private final BranchingProcess<LETTER, PLACE> mBp;
 	private final Set<Condition<LETTER, PLACE>> mConditions;
 	private final Set<Condition<LETTER, PLACE>> mOriginalConditions;
 	private final Set<Condition<LETTER, PLACE>> mAssertionConditions;
 
-	private final Crown<PLACE, LETTER> mCrown;
+	// private final Crown<PLACE, LETTER> mCrown;
 	private final EmpireAnnotation<PLACE> mEmpireAnnotation;
 	private final OwickiGriesAnnotation<LETTER, PLACE> mOwickiGriesAnnotation;
 
@@ -99,7 +102,7 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 			final IPetriNet<LETTER, PLACE> net, final BasicPredicateFactory factory,
 			final Function<PLACE, IPredicate> placeToAssertion, final ManagedScript mgdScript,
 			final IIcfgSymbolTable symbolTable, final Set<String> procedures,
-			final ModifiableGlobalsTable modifiableGlobals) {
+			final ModifiableGlobalsTable modifiableGlobals, final List<Set<PLACE>> proofPlaces) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(PetriOwickiGries.class);
 		mMgdScript = mgdScript;
@@ -111,6 +114,7 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 
 		mNet = net;
 		mOriginalPlaces = mNet.getPlaces();
+		mProofPlaces = proofPlaces;
 
 		mBp = bp;
 		mConditions = getConditions();
@@ -125,8 +129,8 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 				net.sizeInformation(), bp.sizeInformation(), cutoffs, bp.getConditions().size() - cutoffs,
 				mOriginalConditions.size(), mAssertionConditions.size());
 
-		mCrown = getCrown();
-		mLogger.info("Constructed Crown:\n%s", mCrown);
+		// mCrown = getCrown();
+		// mLogger.info("Constructed Crown:\n%s", mCrown);
 
 		mEmpireAnnotation = getEmpireAnnotation(placeToAssertion);
 		mLogger.info("Constructed Empire Annotation:\n%s", mEmpireAnnotation);
@@ -169,13 +173,18 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 	}
 
 	private EmpireAnnotation<PLACE> getEmpireAnnotation(final Function<PLACE, IPredicate> placeToAssertion) {
-		final CrownsEmpire<PLACE, LETTER> crownsEmpire = mStatistics.measureEmpire(() -> {
-			final CrownsEmpire<PLACE, LETTER> empireConstruction = mCrown.getCrownsEmpire(mFactory, placeToAssertion);
-			return empireConstruction;
-		});
-		mStatistics.reportEmpireStatistics(crownsEmpire);
-		mLogger.info("PetriOwickiGries Empire Statistics: %s", crownsEmpire.getStatistics());
-		return crownsEmpire.getEmpireAnnotation();
+		final var computation = new EmpireComputation<>(mServices, mFactory, mBp.getNet(), mOriginalPlaces,
+				mProofPlaces, new PlacesCoRelation<>(mBp), placeToAssertion);
+		mStatistics.reportEmpireStatistics(computation);
+		return computation.getEmpire();
+
+		// final CrownsEmpire<PLACE, LETTER> crownsEmpire = mStatistics.measureEmpire(() -> {
+		// final CrownsEmpire<PLACE, LETTER> empireConstruction = mCrown.getCrownsEmpire(mFactory, placeToAssertion);
+		// return empireConstruction;
+		// });
+		// mStatistics.reportEmpireStatistics(crownsEmpire);
+		// mLogger.info("PetriOwickiGries Empire Statistics: %s", crownsEmpire.getStatistics());
+		// return crownsEmpire.getEmpireAnnotation();
 	}
 
 	private boolean checkEmpireValidity() {
@@ -260,12 +269,16 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 			declare(EMPIRE_VALIDITY_TIME, () -> mEmpireValidityTime, KeyType.TT_TIMER_MS);
 			declare(OWICKI_GRIES_VALIDITY_TIME, () -> mOwickiGriesValidityTime, KeyType.TT_TIMER_MS);
 
-			forward(CROWN_STATISTICS, () -> mCrownStatistics);
+			// forward(CROWN_STATISTICS, () -> mCrownStatistics);
 			forward(EMPIRE_STATISTICS, () -> mEmpireStatistics);
 		}
 
 		private void reportCrownStatistics(final CrownConstruction<?, ?> crownConstruction) {
 			mCrownStatistics = crownConstruction.getStatistics();
+		}
+
+		private void reportEmpireStatistics(final EmpireComputation<?, ?> empireComp) {
+			mEmpireStatistics = empireComp.getStatistics();
 		}
 
 		private void reportEmpireStatistics(final CrownsEmpire<?, ?> crownsEmpire) {
