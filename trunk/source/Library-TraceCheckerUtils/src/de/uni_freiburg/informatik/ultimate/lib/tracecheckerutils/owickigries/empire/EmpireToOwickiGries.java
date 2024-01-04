@@ -219,7 +219,7 @@ public class EmpireToOwickiGries<LETTER, PLACE> {
 	IPredicate getPlacesGhostVariableFormula(final PLACE place) {
 		final Set<Term> terms = new HashSet<>();
 		for (final Entry<Region<PLACE>, IProgramVar> entry : mGhostVariables.entrySet()) {
-			if (entry.getKey().getPlaces().contains(place)) {
+			if (entry.getKey().contains(place)) {
 				terms.add(entry.getValue().getTerm());
 			}
 		}

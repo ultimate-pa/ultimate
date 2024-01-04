@@ -49,6 +49,10 @@ public final class Region<PLACE> {
 		mRegion = region;
 	}
 
+	public boolean contains(final PLACE place) {
+		return mRegion.contains(place);
+	}
+
 	/**
 	 * @return set of all places in region.
 	 */
