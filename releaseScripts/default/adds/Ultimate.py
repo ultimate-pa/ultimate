@@ -565,6 +565,10 @@ def check_dir(d):
 
 
 def check_witness_type(witness, type):
+    if not witness.endswith(".graphml"):
+        # Only check the format for GraphML witnesses
+        # TODO: Change this in the future
+        return
     tree = elementtree.parse(witness)
     namespace = "{http://graphml.graphdrawing.org/xmlns}"
     query = ".//{0}graph/{0}data[@key='witness-type']".format(namespace)

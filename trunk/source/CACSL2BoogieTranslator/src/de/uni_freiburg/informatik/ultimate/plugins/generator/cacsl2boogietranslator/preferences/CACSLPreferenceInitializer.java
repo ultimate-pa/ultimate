@@ -136,6 +136,11 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 			+ "bytes or more are overapproximated, i.e., Ultimate assumes that the string can contain arbitrary bytes.";
 	private static final int DEFAULT_STRING_OVERAPPROXIMATION_THRESHOLD = 9;
 
+	public static final String LABEL_ALLOW_UNDEFINED_FUNCTIONS = "Allow undefined functions";
+	private static final String DESC_ALLOW_UNDEFINED_FUNCTIONS =
+			"Allow the calls of functions without a definition. In that case they are modeled fully non-deterministically.";
+	private static final boolean DEFAULT_ALLOW_UNDEFINED_FUNCTIONS = true;
+
 	public enum PointerCheckMode {
 		IGNORE, ASSUME, ASSERTandASSUME
 	}
@@ -317,7 +322,9 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 						DESC_ADAPT_MEMORY_MODEL_ON_POINTER_CASTS, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_STRING_OVERAPPROXIMATION_THRESHOLD,
 						DEFAULT_STRING_OVERAPPROXIMATION_THRESHOLD, DESC_STRING_OVERAPPROXIMATION_THRESHOLD,
-						PreferenceType.Integer) };
+						PreferenceType.Integer),
+				new UltimatePreferenceItem<>(LABEL_ALLOW_UNDEFINED_FUNCTIONS, DEFAULT_ALLOW_UNDEFINED_FUNCTIONS,
+						DESC_ALLOW_UNDEFINED_FUNCTIONS, PreferenceType.Boolean), };
 
 	}
 }

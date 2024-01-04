@@ -344,8 +344,6 @@
 		<plugin id="org.eclipse.help.source"/>
 		<plugin id="org.eclipse.osgi.services.source"/>
 		<plugin id="org.yaml.snakeyaml" version="2.2.0"/>
-		<plugin id="eo-yaml" version="7.0.8"/>
-		<plugin id="eo-yaml.source" version="7.0.8"/>
 		<plugin id="com.lmax.disruptor"/>
 		<plugin id="com.lmax.disruptor.source"/>
 	</includeBundles>

@@ -91,6 +91,10 @@ public class AnnotationCheckResult<ELEM extends IElement, EXPR> extends Abstract
 		return result;
 	}
 
+	public AnnotationState getAnnotationState() {
+		return mAnnotationState;
+	}
+
 	@Override
 	public Severity getSeverity() {
 		switch (mAnnotationState) {

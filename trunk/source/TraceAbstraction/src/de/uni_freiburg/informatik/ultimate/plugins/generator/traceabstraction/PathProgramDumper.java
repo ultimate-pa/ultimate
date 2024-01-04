@@ -179,8 +179,8 @@ public class PathProgramDumper {
 		}
 
 		final Set<? extends IcfgEdge> allowedTransitions = extractTransitionsFromRun(run.getWord());
-		final PathProgram.PathProgramConstructionResult ppResult =
-				PathProgram.constructPathProgram("PathInvariantsPathProgram", icfg, allowedTransitions);
+		final PathProgram.PathProgramConstructionResult ppResult = PathProgram
+				.constructPathProgram("PathInvariantsPathProgram", icfg, allowedTransitions, Collections.emptySet());
 		mPathProgram = ppResult.getPathProgram();
 
 		final List<Declaration> newDeclarations = new ArrayList<>();

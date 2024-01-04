@@ -5,17 +5,15 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Witness.IMapSerializable;
 
-public class InvariantSetEntry implements IMapSerializable {
+public class WitnessSetEntry implements IMapSerializable {
 	private final String mType;
 	private final Location mLocation;
-	private final String mValue;
-	private final String mFormat;
+	private final Map<String, Object> mOtherValues;
 
-	public InvariantSetEntry(final String type, final Location location, final String value, final String format) {
+	public WitnessSetEntry(final String type, final Location location, final Map<String, Object> otherValues) {
 		mType = type;
 		mLocation = location;
-		mValue = value;
-		mFormat = format;
+		mOtherValues = otherValues;
 	}
 
 	public String getType() {
@@ -26,21 +24,12 @@ public class InvariantSetEntry implements IMapSerializable {
 		return mLocation;
 	}
 
-	public String getValue() {
-		return mValue;
-	}
-
-	public String getFormat() {
-		return mFormat;
-	}
-
 	@Override
 	public Map<String, Object> toMap() {
 		final LinkedHashMap<String, Object> result = new LinkedHashMap<>();
 		result.put("type", mType);
 		result.put("location", mLocation.toMap());
-		result.put("value", mValue);
-		result.put("format", mFormat);
+		result.putAll(mOtherValues);
 		return result;
 	}
 
