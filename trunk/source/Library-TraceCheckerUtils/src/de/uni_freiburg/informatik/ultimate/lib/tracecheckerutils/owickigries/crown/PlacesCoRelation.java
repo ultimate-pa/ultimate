@@ -47,7 +47,9 @@ final class PlacesCoRelation<PLACE> {
 				continue;
 			}
 			for (final var other : coRelation.computeCoRelatatedConditions(cond)) {
-				mCoRelatedPlaces.addPair(cond.getPlace(), other.getPlace());
+				if (other != cond) {
+					mCoRelatedPlaces.addPair(cond.getPlace(), other.getPlace());
+				}
 			}
 		}
 	}
