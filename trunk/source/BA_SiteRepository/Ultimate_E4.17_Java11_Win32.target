@@ -40,6 +40,8 @@
 			<unit id="org.yaml.snakeyaml" version="2.2.0"/>
 			<unit id="com.lmax.disruptor" version="3.3.5"/>
 			<unit id="com.lmax.disruptor.source" version="3.3.5"/>
+			<unit id="eo-yaml" version="7.0.8"/>
+			<unit id="eo-yaml.source" version="7.0.8"/>
 		</location>
 	</locations>
 	<includeBundles>

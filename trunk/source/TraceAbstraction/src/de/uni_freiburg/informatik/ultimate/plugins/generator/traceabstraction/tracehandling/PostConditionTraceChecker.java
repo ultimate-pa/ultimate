@@ -62,6 +62,7 @@ public class PostConditionTraceChecker<L extends IIcfgTransition<?>> implements 
 		mStrategyFactory = strategyFactory;
 	}
 
+	@Override
 	public List<IPredicate> checkTrace(IRun<L, IPredicate> run, IPredicate precondition, IPredicate postCondition) {
 		ITARefinementStrategy<L> strategy = mStrategyFactory.constructStrategy(mServices, run, mAbstraction,
 				mTaskIdentifier, mEmptyStackFactory, IPreconditionProvider.constructDefaultPreconditionProvider(),

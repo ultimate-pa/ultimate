@@ -92,6 +92,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.Sl
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.ConditionalCommutativityInterpolantProvider;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.SemanticIndependenceConditionGenerator;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.AbstractionType;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.RandomCriterion;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
@@ -189,11 +190,14 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		final IPredicateUnifier predicateUnifier = mRefinementResult.getPredicateUnifier();
 		final IHoareTripleChecker htc = getHoareTripleChecker();
 		//TODO: take mInterpolantAutomaton and mCounterexample and call ConditionalCommutativityInterpolantProvider
+		//random criterion for testing 
+		//TODO: should later on be replaced by a setting
+		RandomCriterion<L, IPredicate> criterion = new RandomCriterion<>(0.5, 321);
 		PostConditionTraceChecker<L> checker = new PostConditionTraceChecker<>(mServices, mAbstraction, mTaskIdentifier, mFactory, mStrategyFactory);
 		ConditionalCommutativityInterpolantProvider<L> conInterpolantProvider = new ConditionalCommutativityInterpolantProvider<>(
 				mServices, null, null, null, mProgram, mAbstraction, mFactory, checker);
 		//cast should be fine, since isAbstractionEmpty() assigns mCounterexample a IRun<L, IPredicate>
-		conInterpolantProvider.getInterpolants((IRun<L, IPredicate>) mCounterexample, mInterpolAutomaton);
+		mInterpolAutomaton = conInterpolantProvider.getInterpolants((IRun<L, IPredicate>) mCounterexample, mInterpolAutomaton);
 		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> ia = enhanceInterpolantAutomaton(
 				mPref.interpolantAutomatonEnhancement(), predicateUnifier, htc, mInterpolAutomaton);
 		if (ia instanceof AbstractInterpolantAutomaton<?>) {
