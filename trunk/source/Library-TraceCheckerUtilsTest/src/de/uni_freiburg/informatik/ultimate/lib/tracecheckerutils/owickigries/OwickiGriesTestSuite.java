@@ -132,6 +132,7 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 	protected IHoareTripleChecker mHtc;
 	protected final List<IPredicateUnifier> mUnifiers = new ArrayList<>();
 	protected final Map<String, IPredicate> mProgramPlaceMap = new HashMap<>();
+	protected final List<NestedWordAutomaton<SimpleAction, IPredicate>> mProofs = new ArrayList<>();
 
 	private long mStartTime = -1L;
 
@@ -158,6 +159,7 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 		mMgdScript = new ManagedScript(mServices, script);
 
 		mProgramPlaceMap.clear();
+		mProofs.clear();
 		mUnifiers.clear();
 	}
 
@@ -212,19 +214,20 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 
 		// replace strings with parsed transitions and predicates
 		final var program = replaceActions(id2Action, petri);
-		final var proofs =
-				automata.stream().map(aut -> replaceActionsAndStates(id2Action, aut)).collect(Collectors.toList());
+		mProofs.addAll(
+				automata.stream().map(aut -> replaceActionsAndStates(id2Action, aut)).collect(Collectors.toList()));
 
 		// check proofs
-		for (final var proof : proofs) {
+		for (final var proof : mProofs) {
 			checkProof(proof);
 		}
+		mLogger.info("Number of proof automata: %d", mProofs.size());
 
 		// compute difference of program and proofs
 		DifferencePetriNet<SimpleAction, IPredicate> difference = null;
 		final var looperCounts = new ArrayList<Integer>();
 		int i = 0;
-		for (final var proof : proofs) {
+		for (final var proof : mProofs) {
 			final var initialTrueState = DataStructureUtils.getOneAndOnly(proof.getInitialStates(), "initial state");
 			final var totalizedProof = new TotalizeNwa<>(proof, initialTrueState, false);
 

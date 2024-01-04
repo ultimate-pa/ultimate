@@ -19,6 +19,7 @@
     <column title="progTrans"  displayTitle="Program Transitions">Constructing Owicki-Gries proof for Petri program that has .* (\d+) transitions</column>
     <column title="progFlow"   displayTitle="Program Flow">Constructing Owicki-Gries proof for Petri program that has .* (\d+) flow</column>
 
+    <column title="proofCount" displayTitle="Proof Automata">Number of proof automata: (\d+)$</column>
     <column title="minLoopers" displayTitle="Loopers (min)">Loopers in proof automata: min=(\d+),</column>
     <column title="maxLoopers" displayTitle="Loopers (max)">Loopers in proof automata:.* max=(\d+),</column>
     <column title="medLoopers" displayTitle="Loopers (med)">Loopers in proof automata:.* median=(\d+)$</column>
@@ -76,6 +77,7 @@
     <column title="progTrans"  displayTitle="Program Transitions">Constructing Owicki-Gries proof for Petri program that has .* (\d+) transitions</column>
     <column title="progFlow"   displayTitle="Program Flow">Constructing Owicki-Gries proof for Petri program that has .* (\d+) flow</column>
 
+    <column title="proofCount" displayTitle="Proof Automata">Number of proof automata: (\d+)$</column>
     <column title="minLoopers" displayTitle="Loopers (min)">Loopers in proof automata: min=(\d+),</column>
     <column title="maxLoopers" displayTitle="Loopers (max)">Loopers in proof automata:.* max=(\d+),</column>
     <column title="medLoopers" displayTitle="Loopers (med)">Loopers in proof automata:.* median=(\d+)$</column>
@@ -131,6 +133,7 @@
     <column title="progTrans"  displayTitle="Program Transitions">Constructing Owicki-Gries proof for Petri program that has .* (\d+) transitions</column>
     <column title="progFlow"   displayTitle="Program Flow">Constructing Owicki-Gries proof for Petri program that has .* (\d+) flow</column>
 
+    <column title="proofCount" displayTitle="Proof Automata">Number of proof automata: (\d+)$</column>
     <column title="minLoopers" displayTitle="Loopers (min)">Loopers in proof automata: min=(\d+),</column>
     <column title="maxLoopers" displayTitle="Loopers (max)">Loopers in proof automata:.* max=(\d+),</column>
     <column title="medLoopers" displayTitle="Loopers (med)">Loopers in proof automata:.* median=(\d+)$</column>
@@ -168,6 +171,7 @@
     <column title="progTrans"  displayTitle="Program Transitions">Constructing Owicki-Gries proof for Petri program that has .* (\d+) transitions</column>
     <column title="progFlow"   displayTitle="Program Flow">Constructing Owicki-Gries proof for Petri program that has .* (\d+) flow</column>
 
+    <column title="proofCount" displayTitle="Proof Automata">Number of proof automata: (\d+)$</column>
     <column title="minLoopers" displayTitle="Loopers (min)">Loopers in proof automata: min=(\d+),</column>
     <column title="maxLoopers" displayTitle="Loopers (max)">Loopers in proof automata:.* max=(\d+),</column>
     <column title="medLoopers" displayTitle="Loopers (med)">Loopers in proof automata:.* median=(\d+)$</column>
