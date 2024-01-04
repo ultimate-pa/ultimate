@@ -19,6 +19,10 @@
     <column title="progTrans"  displayTitle="Program Transitions">Constructing Owicki-Gries proof for Petri program that has .* (\d+) transitions</column>
     <column title="progFlow"   displayTitle="Program Flow">Constructing Owicki-Gries proof for Petri program that has .* (\d+) flow</column>
 
+    <column title="minLoopers" displayTitle="Loopers (min)">Loopers in proof automata: min=(\d+),</column>
+    <column title="maxLoopers" displayTitle="Loopers (max)">Loopers in proof automata:.* max=(\d+),</column>
+    <column title="medLoopers" displayTitle="Loopers (med)">Loopers in proof automata:.* median=(\d+)$</column>
+
     <!-- unfolding of refined net -->
     <column title="unfConds"    displayTitle="Unfolding Conditions">Constructing Owicki-Gries proof for .* unfolding that has (\d+) conditions</column>
     <column title="unfEvents"   displayTitle="Unfolding Events">Constructing Owicki-Gries proof for .* unfolding that has .* (\d+) events</column>
@@ -72,6 +76,10 @@
     <column title="progTrans"  displayTitle="Program Transitions">Constructing Owicki-Gries proof for Petri program that has .* (\d+) transitions</column>
     <column title="progFlow"   displayTitle="Program Flow">Constructing Owicki-Gries proof for Petri program that has .* (\d+) flow</column>
 
+    <column title="minLoopers" displayTitle="Loopers (min)">Loopers in proof automata: min=(\d+),</column>
+    <column title="maxLoopers" displayTitle="Loopers (max)">Loopers in proof automata:.* max=(\d+),</column>
+    <column title="medLoopers" displayTitle="Loopers (med)">Loopers in proof automata:.* median=(\d+)$</column>
+
     <!-- unfolding of refined net -->
     <column title="unfConds"    displayTitle="Unfolding Conditions">Constructing Owicki-Gries proof for .* unfolding that has (\d+) conditions</column>
     <column title="unfEvents"   displayTitle="Unfolding Events">Constructing Owicki-Gries proof for .* unfolding that has .* (\d+) events</column>
@@ -123,6 +131,10 @@
     <column title="progTrans"  displayTitle="Program Transitions">Constructing Owicki-Gries proof for Petri program that has .* (\d+) transitions</column>
     <column title="progFlow"   displayTitle="Program Flow">Constructing Owicki-Gries proof for Petri program that has .* (\d+) flow</column>
 
+    <column title="minLoopers" displayTitle="Loopers (min)">Loopers in proof automata: min=(\d+),</column>
+    <column title="maxLoopers" displayTitle="Loopers (max)">Loopers in proof automata:.* max=(\d+),</column>
+    <column title="medLoopers" displayTitle="Loopers (med)">Loopers in proof automata:.* median=(\d+)$</column>
+
     <!-- unfolding of refined net -->
     <column title="unfConds"    displayTitle="Unfolding Conditions">Constructing Owicki-Gries proof for .* unfolding that has (\d+) conditions</column>
     <column title="unfEvents"   displayTitle="Unfolding Events">Constructing Owicki-Gries proof for .* unfolding that has .* (\d+) events</column>
@@ -155,6 +167,10 @@
     <column title="progPlaces" displayTitle="Program Places">Constructing Owicki-Gries proof for Petri program that has (\d+) places</column>
     <column title="progTrans"  displayTitle="Program Transitions">Constructing Owicki-Gries proof for Petri program that has .* (\d+) transitions</column>
     <column title="progFlow"   displayTitle="Program Flow">Constructing Owicki-Gries proof for Petri program that has .* (\d+) flow</column>
+
+    <column title="minLoopers" displayTitle="Loopers (min)">Loopers in proof automata: min=(\d+),</column>
+    <column title="maxLoopers" displayTitle="Loopers (max)">Loopers in proof automata:.* max=(\d+),</column>
+    <column title="medLoopers" displayTitle="Loopers (med)">Loopers in proof automata:.* median=(\d+)$</column>
 
     <!-- unfolding of refined net -->
     <column title="unfConds"    displayTitle="Unfolding Conditions">Constructing Owicki-Gries proof for .* unfolding that has (\d+) conditions</column>

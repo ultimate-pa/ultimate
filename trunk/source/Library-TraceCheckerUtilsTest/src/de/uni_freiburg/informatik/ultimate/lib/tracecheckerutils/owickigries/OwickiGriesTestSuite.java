@@ -109,6 +109,7 @@ import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.statistics.MinMaxMed;
 
 /**
  * Test suite for computation of Owicki-Gries annotations for Petri programs.
@@ -221,19 +222,25 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 
 		// compute difference of program and proofs
 		DifferencePetriNet<SimpleAction, IPredicate> difference = null;
+		final var looperCounts = new ArrayList<Integer>();
 		int i = 0;
 		for (final var proof : proofs) {
 			final var initialTrueState = DataStructureUtils.getOneAndOnly(proof.getInitialStates(), "initial state");
 			final var totalizedProof = new TotalizeNwa<>(proof, initialTrueState, false);
 
 			final var loopers = DifferencePairwiseOnDemand.determineUniversalLoopers(totalizedProof, proof.getStates());
-			mLogger.info("%d / %d transitions are loopers in proof %d", loopers.size(), proof.getAlphabet().size(), i);
+			mLogger.info("%d / %d letters are loopers in proof %d", loopers.size(), proof.getAlphabet().size(), i);
+			looperCounts.add(loopers.size());
 
 			final var oldNet = difference == null ? program : difference;
 			difference = new DifferencePetriNet<>(mAutomataServices, oldNet, totalizedProof, loopers);
 			i++;
 		}
 		assert difference != null : "Difference can only be null if there no proofs, this is checked above";
+		final var looperStats = new MinMaxMed();
+		looperStats.report(looperCounts, Integer::longValue);
+		mLogger.info("Loopers in proof automata: min=%d, max=%d, median=%d", looperStats.getMinimum(),
+				looperStats.getMaximum(), looperStats.getMedian());
 
 		final var finPrefix = new FinitePrefix<>(mAutomataServices, difference);
 		final var ctex = finPrefix.getAcceptingRun();
