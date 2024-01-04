@@ -29,18 +29,38 @@ import java.util.Random;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 
+/**
+ * Random criterion for conditional commutativity checking.
+ *
+ * @author Marcel Ebbinghaus
+ *
+ * @param <L>
+ *            The type of letters.
+ * @param <S>
+ *            The type of states.
+ */
 public class RandomCriterion<L, S> implements IConditionalCommutativityCriterion<L, S> {
 
 	private final double mProbability;
 	private final Random mRandomGenerator;
 
+	/**
+	 * Constructs a new random criterion.
+	 *
+	 * @author Marcel Ebbinghaus
+	 *
+	 * @param probability
+	 *            The probability.
+	 * @param seed
+	 *            The random seed.
+	 */
 	public RandomCriterion(final double probability, final long seed) {
 		mProbability = probability;
 		mRandomGenerator = new Random(seed);
 	}
 
 	@Override
-	public boolean decide(final S state, final L a, final L b) {
+	public boolean decide(final S state, final L letter1, final L letter2) {
 		return (mRandomGenerator.nextInt(100) < (100 * mProbability));
 	}
 

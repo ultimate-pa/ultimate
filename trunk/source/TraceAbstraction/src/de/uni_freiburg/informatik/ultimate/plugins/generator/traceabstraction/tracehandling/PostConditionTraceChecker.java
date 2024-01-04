@@ -43,6 +43,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IP
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IPreconditionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine.ITARefinementStrategy;
 
+/**
+ * An implementation of ITraceChecker which checks whether the postcondition holds after the execution of the run.
+ *
+ * @author Marcel Ebbinghaus
+ *
+ *@param <L>
+ *            The type of letters.
+ */
 public class PostConditionTraceChecker<L extends IIcfgTransition<?>> implements ITraceChecker<L> {
 
 	private IUltimateServiceProvider mServices;
@@ -51,6 +59,22 @@ public class PostConditionTraceChecker<L extends IIcfgTransition<?>> implements 
 	private IEmptyStackStateFactory<IPredicate> mEmptyStackFactory;
 	private StrategyFactory<L> mStrategyFactory;
 
+	/**
+	 * Constructs a PostConditionTraceChecker.
+	 *
+	 * @author Marcel Ebbinghaus
+	 *
+	 * @param services
+	 *            Ultimate services.
+	 * @param abstraction
+	 *            The type of letters.
+	 * @param taskIdentifier
+	 *			  Task identifier.
+	 * @param emptyStackStateFactory
+	 *            Factory.  
+	 * @param strategyFactory
+	 *            Strategy factory.    
+	 */
 	public PostConditionTraceChecker(final IUltimateServiceProvider services,
 			final IAutomaton<L, IPredicate> abstraction, final TaskIdentifier taskIdentifier,
 			IEmptyStackStateFactory<IPredicate> emptyStackStateFactory, StrategyFactory<L> strategyFactory) {
@@ -76,9 +100,14 @@ public class PostConditionTraceChecker<L extends IIcfgTransition<?>> implements 
 		return null;
 	}
 
+	/**
+	 * An implementation of IPostconditionProvider which just returns the given condition.
+	 *
+	 * @author Marcel Ebbinghaus   
+	 */
 	private class PostConditionProvider implements IPostconditionProvider {
 
-		IPredicate mCondition;
+		private IPredicate mCondition;
 
 		public PostConditionProvider(IPredicate condition) {
 			mCondition = condition;

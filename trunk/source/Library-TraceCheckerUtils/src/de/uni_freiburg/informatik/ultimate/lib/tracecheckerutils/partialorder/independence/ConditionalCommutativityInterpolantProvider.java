@@ -47,6 +47,15 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.ITraceChecker;
 
+/**
+ * A provider class for the PartialOrderCegarLoop which can be called to extend the current interpolant automaton 
+ * with additional states and transitions allowing conditional commutativity.
+ *
+ * @author Marcel Ebbinghaus
+ *
+ *@param <L>
+ *            The type of letters.
+ */
 public class ConditionalCommutativityInterpolantProvider<L extends IAction> {
 
 	private final ConditionalCommutativityChecker<L> mChecker;
@@ -56,6 +65,26 @@ public class ConditionalCommutativityInterpolantProvider<L extends IAction> {
 	private NestedWordAutomaton<L, IPredicate> mCopy;
 	private IRun<L, IPredicate> mRun;
 
+	/**
+	 * Constructs a new instance of ConditionalCommutativityInterpolantProvider.
+	 *
+	 * @param services
+	 *            Ultimate services
+	 * @param criterion
+	 *            An IConditionalCommutativityCriterion to decide when to check for conditional commutativity
+	 * @param independenceRelation
+	 * 			  The independence relation used for the reduction
+	 * @param generator
+	 * 			  Generator for constructing commutativity conditions
+	 * @param abstraction
+	 * 			  Current abstraction
+	 * @param reduction
+	 * 			  Reduction of abstraction
+	 * @param emptyStackStateFactory
+	 * 			  Factory
+	 * @param traceChecker
+	 * 			  An ITraceChecker responsible for checking whether a condition is feasible 
+	 */
 	public ConditionalCommutativityInterpolantProvider(final IUltimateServiceProvider services,
 			final IConditionalCommutativityCriterion<L, IPredicate> criterion,
 			final IIndependenceRelation<IPredicate, L> independenceRelation,
@@ -68,7 +97,17 @@ public class ConditionalCommutativityInterpolantProvider<L extends IAction> {
 		mChecker = new ConditionalCommutativityChecker<>(criterion, generator, traceChecker);
 	}
 
-	// constructs a copy of interpolantAutomaton and includes paths and states for conditional commutativity proofs
+	/**
+	 * Constructs a copy of interpolantAutomaton and adds states and transitions for conditional commutativity
+	 * along a given run.
+	 *
+	 * @param run
+	 *            The run
+	 * @param interpolantAutomaton
+	 *            The interpolant automaton
+	 * @return mCopy
+	 * 			  The extended copy of interpolantAutomaton 
+	 */
 	public NestedWordAutomaton<L, IPredicate> getInterpolants(final IRun<L, IPredicate> run,
 			final NestedWordAutomaton<L, IPredicate> interpolantAutomaton) {
 		mRun = run;
@@ -120,12 +159,14 @@ public class ConditionalCommutativityInterpolantProvider<L extends IAction> {
 		deque.addAll(interpolantAutomaton.getInitialStates());
 		while (!deque.isEmpty()) {
 			final IPredicate state = deque.pop();
-			copy.addState(interpolantAutomaton.isInitial(state), interpolantAutomaton.isFinal(state), state);
-			for (final OutgoingInternalTransition<L, IPredicate> transition : interpolantAutomaton
-					.internalSuccessors(state)) {
-				copy.addInternalTransition(state, transition.getLetter(), transition.getSucc());
-				deque.push(transition.getSucc());
-			}
+			if (!copy.contains(state)) {
+				copy.addState(interpolantAutomaton.isInitial(state), interpolantAutomaton.isFinal(state), state);
+				for (final OutgoingInternalTransition<L, IPredicate> transition : interpolantAutomaton
+						.internalSuccessors(state)) {
+					copy.addInternalTransition(state, transition.getLetter(), transition.getSucc());
+					deque.push(transition.getSucc());
+				}
+			}	
 		}
 		return copy;
 	}

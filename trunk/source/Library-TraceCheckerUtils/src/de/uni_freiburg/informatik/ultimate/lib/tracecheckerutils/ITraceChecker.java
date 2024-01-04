@@ -30,6 +30,15 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 
+/**
+ * Trace Checker which checks whether a run fulfills a given precondition/postcondition pair.
+ * The meaning of "fulfills" needs to be decided by the implementation.
+ *
+ * @author Marcel Ebbinghaus
+ *
+ * @param <L>
+ *            The type of letters.
+ */
 public interface ITraceChecker<L> {
 
 	public List<IPredicate> checkTrace(IRun<L, IPredicate> run, IPredicate precondition, IPredicate postcondition);

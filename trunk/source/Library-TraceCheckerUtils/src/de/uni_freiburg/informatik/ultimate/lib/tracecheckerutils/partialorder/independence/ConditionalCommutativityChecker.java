@@ -35,12 +35,32 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.ITraceChecker;
 
+/**
+ * Conditional commutativity checker.
+ *
+ * @author Marcel Ebbinghaus
+ *
+ * @param <L>
+ *            The type of letters.
+ */
 public class ConditionalCommutativityChecker<L extends IAction> implements IConditionalCommutativityChecker<L> {
 
 	private final IConditionalCommutativityCriterion<L, IPredicate> mCriterion;
 	private final IIndependenceConditionGenerator mGenerator;
 	private final ITraceChecker<L> mTraceChecker;
 
+	/**
+	 * Constructs a new instance of ConditionalCommutativityChecker.
+	 *
+	 * @author Marcel Ebbinghaus
+	 *
+	 * @param criterion
+	 *            An IConditionalCommutativityCriterion to decide when to check for conditional commutativity
+	 * @param generator
+	 *            Generator for constructing commutativity conditions
+	 * @param traceChecker
+	 *            An ITraceChecker responsible for checking whether a condition is feasible
+	 */
 	public ConditionalCommutativityChecker(final IConditionalCommutativityCriterion<L, IPredicate> criterion,
 			final IIndependenceConditionGenerator generator, final ITraceChecker<L> traceChecker) {
 		mCriterion = criterion;
@@ -49,12 +69,29 @@ public class ConditionalCommutativityChecker<L extends IAction> implements ICond
 
 	}
 
+	/**
+	 * Checks for conditional commutativity.
+	 *
+	 * @author Marcel Ebbinghaus
+	 *
+	 * @param run
+	 *            The run to state
+	 * @param state
+	 *            The state
+	 * @param letter1
+	 *            A letter of an outgoing transition of state
+	 * @param letter2
+	 *            A letter of another outgoing transition of state
+	 * @return
+	 *            A list of predicates which servers as a proof for conditional commutativity.
+	 */
 	@Override
 	public List<IPredicate> checkConditionalCommutativity(final IRun<L, IPredicate> run, final IPredicate state,
-			final L a, final L b) {
+			final L letter1, final L letter2) {
 
-		if (mCriterion.decide(state, a, b)) {
-			final IPredicate condition = mGenerator.generateCondition(state, a.getTransformula(), b.getTransformula());
+		if (mCriterion.decide(state, letter1, letter2)) {
+			final IPredicate condition = mGenerator.generateCondition(state, letter1.getTransformula(),
+					letter2.getTransformula());
 			if (mCriterion.decide(condition)) {
 				return mTraceChecker.checkTrace(run, null, condition);
 			}

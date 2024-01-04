@@ -27,9 +27,19 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.i
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 
+/**
+ * Criterion for conditional commutativity checking.
+ *
+ * @author Marcel Ebbinghaus
+ *
+ * @param <L>
+ *            The type of letters.
+ * @param <S>
+ *            The type of states.
+ */
 public interface IConditionalCommutativityCriterion<L, S> {
 
-	boolean decide(S state, L a, L b);
+	boolean decide(S state, L letter1, L letter2);
 
 	boolean decide(IPredicate condition);
 

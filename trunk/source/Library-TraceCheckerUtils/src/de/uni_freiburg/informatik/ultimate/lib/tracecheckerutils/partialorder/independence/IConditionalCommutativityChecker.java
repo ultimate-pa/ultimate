@@ -30,8 +30,16 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 
+/**
+ * Conditional commutativity checker.
+ *
+ * @author Marcel Ebbinghaus
+ *
+ * @param <L>
+ *            The type of letters.
+ */
 public interface IConditionalCommutativityChecker<L> {
 
-	List<IPredicate> checkConditionalCommutativity(IRun<L, IPredicate> run, IPredicate state, L a, L b);
+	List<IPredicate> checkConditionalCommutativity(IRun<L, IPredicate> run, IPredicate state, L letter1, L letter2);
 
 }
