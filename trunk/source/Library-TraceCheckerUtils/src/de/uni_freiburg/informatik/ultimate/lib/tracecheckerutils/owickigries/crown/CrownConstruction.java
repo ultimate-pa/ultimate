@@ -26,9 +26,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown;
 
 import java.util.ArrayList;
-import java.util.Deque;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -42,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
@@ -69,6 +68,8 @@ public final class CrownConstruction<PLACE, LETTER> {
 	private final Crown<PLACE, LETTER> mCrown;
 
 	private final Statistics mStatistics = new Statistics();
+
+	private final Set<Pair<Condition<LETTER, PLACE>, Rook<PLACE, LETTER>>> mRejectedPairs = new HashSet<>();
 
 	public CrownConstruction(final IUltimateServiceProvider services, final BranchingProcess<LETTER, PLACE> bp,
 			final Set<Condition<LETTER, PLACE>> origConds, final Set<Condition<LETTER, PLACE>> assertConds) {
@@ -120,6 +121,7 @@ public final class CrownConstruction<PLACE, LETTER> {
 		for (final Rook<PLACE, LETTER> rook : colonizedRooks) {
 			reSet.addAll(crownExpansionRecursive(rook, new ArrayList<>(mOrigConds), true));
 		}
+		mRejectedPairs.clear();
 		colonizedRooks.clear();
 		mLogger.debug("Starting Legislation...");
 		for (final Rook<PLACE, LETTER> rook : reSet) {
@@ -138,6 +140,10 @@ public final class CrownConstruction<PLACE, LETTER> {
 		final Set<Rook<PLACE, LETTER>> crownRooks = new HashSet<>();
 		boolean isMaximal = true;
 		for (final Condition<LETTER, PLACE> condition : troopConditions) {
+			final Pair<Condition<LETTER, PLACE>, Rook<PLACE, LETTER>> pair = new Pair<>(condition, rook);
+			if (mRejectedPairs.contains(pair)) {
+				continue;
+			}
 			Rook<PLACE, LETTER> colonyRook;
 			if (colonizer) {
 				colonyRook = colonize(condition, rook);
@@ -145,6 +151,7 @@ public final class CrownConstruction<PLACE, LETTER> {
 				colonyRook = legislate(condition, rook);
 			}
 			if (colonyRook == null) {
+				mRejectedPairs.add(pair);
 				continue;
 			}
 			isMaximal = false;
@@ -156,46 +163,6 @@ public final class CrownConstruction<PLACE, LETTER> {
 		if (isMaximal) {
 			crownRooks.add(rook);
 		}
-		return crownRooks;
-	}
-
-	// Iterative expansion using two stacks
-	private Set<Rook<PLACE, LETTER>> crownExpansionIterative(final Rook<PLACE, LETTER> rook,
-			final List<Condition<LETTER, PLACE>> troopConditions, final boolean colonizer) {
-		final Set<Rook<PLACE, LETTER>> crownRooks = new HashSet<>();
-		final Deque<Rook<PLACE, LETTER>> rookStack = new LinkedList<>();
-		final Deque<List<Condition<LETTER, PLACE>>> conditionStack = new LinkedList<>();
-		rookStack.push(rook);
-		conditionStack.push(troopConditions);
-		boolean isMaximal = true;
-		while (!(rookStack.isEmpty() || conditionStack.isEmpty())) {
-			final Rook<PLACE, LETTER> currentRook = rookStack.pop();
-			final List<Condition<LETTER, PLACE>> currentConditions = conditionStack.pop();
-			isMaximal = true;
-			final List<Condition<LETTER, PLACE>> conditions = new ArrayList<>(currentConditions);
-			for (int i = 0; i < currentConditions.size(); i++) {
-				final Condition<LETTER, PLACE> condition = currentConditions.get(i);
-				Rook<PLACE, LETTER> colonyRook;
-				if (colonizer) {
-					colonyRook = colonize(condition, currentRook);
-				} else {
-					colonyRook = legislate(condition, currentRook);
-				}
-				if (colonyRook == null) {
-					conditions.remove(condition);
-				} else {
-					isMaximal = false;
-					final List<Condition<LETTER, PLACE>> ntroops =
-							conditions.stream().filter(cond -> !cond.equals(condition)).collect(Collectors.toList());
-					rookStack.push(colonyRook);
-					conditionStack.push(ntroops);
-				}
-			}
-			if (isMaximal) {
-				crownRooks.add(currentRook);
-			}
-		}
-
 		return crownRooks;
 	}
 
@@ -257,9 +224,6 @@ public final class CrownConstruction<PLACE, LETTER> {
 			break;
 		case IMMIGRATION_AND_FOUNDATION:
 			colonyRook = rook.immigrationAndFoundation(coRook, mBp, mPlacesCoRelation);
-			break;
-		case DENIAL:
-			colonyRook = rook.denial(coRook);
 			break;
 		default:
 			colonyRook = null;
