@@ -273,6 +273,9 @@ public final class CrownConstruction<PLACE, LETTER> {
 	}
 
 	private Rook<PLACE, LETTER> legislate(final Condition<LETTER, PLACE> condition, final Rook<PLACE, LETTER> rook) {
+		if (rook.getLaw().getConditions().contains(condition)) {
+			return null;
+		}
 		final boolean colonizer = isColonizer(condition);
 		final CoRook<PLACE, LETTER> coRook = new CoRook<>(condition, rook, mBp, colonizer, mPlacesCoRelation);
 		Rook<PLACE, LETTER> colonyRook;

@@ -77,6 +77,9 @@ final class CoLaw<PLACE, LETTER> {
 	 * @return CoRelation type of Law wrt. specified condition.
 	 */
 	private CoRelationType getCoRelType() {
+		if (mLaw.getConditions().contains(mCondition)) {
+			return CoRelationType.CONTAINS;
+		}
 		if (mNegLaw.isEmpty()) {
 			return CoRelationType.POSITIVE;
 		} else if (!mPosLaw.isEmpty()) {
