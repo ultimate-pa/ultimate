@@ -26,5 +26,17 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown;
 
 enum ColonizationType {
-	EXPANSION, IMMIGRATION_AND_FOUNDATION, DENIAL, DEFEAT
+	EXPANSION("Expansion"), IMMIGRATION_AND_FOUNDATION("Immigration and foundation"), DENIAL("Denial"),
+	DEFEAT("Defeat");
+
+	private String mDescription;
+
+	ColonizationType(final String description) {
+		mDescription = description;
+	}
+
+	@Override
+	public String toString() {
+		return mDescription;
+	}
 }

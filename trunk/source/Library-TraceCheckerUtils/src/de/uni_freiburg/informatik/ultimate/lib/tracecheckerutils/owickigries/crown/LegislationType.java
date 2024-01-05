@@ -26,5 +26,17 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown;
 
 enum LegislationType {
-	APPROVAL, RATIFICATION, ENACTMENT, DISCRIMINATION, REJECTION
+	APPROVAL("Approval"), RATIFICATION("Ratification"), ENACTMENT("Enactment"), DISCRIMINATION("Discrimination"),
+	REJECTION("Rejection");
+
+	private String mDescription;
+
+	LegislationType(final String description) {
+		mDescription = description;
+	}
+
+	@Override
+	public String toString() {
+		return mDescription;
+	}
 }

@@ -74,9 +74,6 @@ public final class CrownConstruction<PLACE, LETTER> {
 			final Set<Condition<LETTER, PLACE>> origConds, final Set<Condition<LETTER, PLACE>> assertConds) {
 		mLogger = services.getLoggingService().getLogger(CrownConstruction.class);
 		mLogger.setLevel(LogLevel.INFO);
-		// TODO add logging output that makes it easy to debug why the final rooks look like they do
-		// TODO (ie which rules were applied)
-		// TODO use mLogger.debug(...) so information is only logged if enabled in the line above
 
 		mBp = bp;
 		mOrigConds = origConds;
@@ -117,11 +114,14 @@ public final class CrownConstruction<PLACE, LETTER> {
 	}
 
 	private Set<Rook<PLACE, LETTER>> crownComputation(final Set<Rook<PLACE, LETTER>> colonizedRooks) {
+		mLogger.debug("Starting Crown Computation...");
+		mLogger.debug("Starting Colonization...");
 		final Set<Rook<PLACE, LETTER>> reSet = new HashSet<>();
 		for (final Rook<PLACE, LETTER> rook : colonizedRooks) {
 			reSet.addAll(crownExpansionRecursive(rook, new ArrayList<>(mOrigConds), true));
 		}
 		colonizedRooks.clear();
+		mLogger.debug("Starting Legislation...");
 		for (final Rook<PLACE, LETTER> rook : reSet) {
 			colonizedRooks.addAll(crownExpansionRecursive(rook, new ArrayList<>(mAssertConds), false));
 		}
@@ -250,7 +250,8 @@ public final class CrownConstruction<PLACE, LETTER> {
 		final boolean colonizer = isColonizer(condition);
 		final CoRook<PLACE, LETTER> coRook = new CoRook<>(condition, rook, mBp, colonizer, mPlacesCoRelation);
 		Rook<PLACE, LETTER> colonyRook;
-		switch (coRook.getColonization()) {
+		final ColonizationType colonizationType = coRook.getColonization();
+		switch (colonizationType) {
 		case EXPANSION:
 			colonyRook = rook.expansion(condition);
 			break;
@@ -263,6 +264,11 @@ public final class CrownConstruction<PLACE, LETTER> {
 		default:
 			colonyRook = null;
 		}
+		mLogger.debug("Applied: [" + colonizationType.toString() + "] to Rook: " + rook.toString()
+				+ " with colonizer: [" + condition.toString() + "]");
+		if (colonyRook != null) {
+			mLogger.debug("Constructed new Rook: " + colonyRook.toString());
+		}
 		return colonyRook;
 	}
 
@@ -270,7 +276,8 @@ public final class CrownConstruction<PLACE, LETTER> {
 		final boolean colonizer = isColonizer(condition);
 		final CoRook<PLACE, LETTER> coRook = new CoRook<>(condition, rook, mBp, colonizer, mPlacesCoRelation);
 		Rook<PLACE, LETTER> colonyRook;
-		switch (coRook.getLegislation()) {
+		final LegislationType legislationType = coRook.getLegislation();
+		switch (legislationType) {
 		case APPROVAL:
 			colonyRook = rook.approval(condition);
 			break;
@@ -285,6 +292,11 @@ public final class CrownConstruction<PLACE, LETTER> {
 			break;
 		default:
 			colonyRook = null;
+		}
+		mLogger.debug("Applied: [" + legislationType.toString() + "] to Rook: " + rook.toString()
+				+ " with bill condition: [" + condition.toString() + "]");
+		if (colonyRook != null) {
+			mLogger.debug("Constructed new Rook: " + colonyRook.toString());
 		}
 		return colonyRook;
 	}
