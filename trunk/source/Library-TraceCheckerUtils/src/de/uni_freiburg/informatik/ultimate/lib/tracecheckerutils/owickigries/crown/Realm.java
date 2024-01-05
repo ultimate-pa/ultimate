@@ -126,8 +126,8 @@ public final class Realm<PLACE, LETTER> {
 	/**
 	 * Returns new Realm without the specific condition.
 	 *
-	 * @param condition
-	 *            Condition to be removed.
+	 * @param conditions
+	 *            Conditions to be removed.
 	 * @return Realm without condition.
 	 */
 	public Realm<PLACE, LETTER> removeCondition(final Set<Condition<LETTER, PLACE>> conditions) {

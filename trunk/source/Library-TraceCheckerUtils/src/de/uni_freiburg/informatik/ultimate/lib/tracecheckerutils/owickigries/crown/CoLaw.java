@@ -26,6 +26,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown;
 
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
@@ -69,8 +70,8 @@ final class CoLaw<PLACE, LETTER> {
 	 * @return Subset of Law's conditions corelated to CoLaw's condition.
 	 */
 	private Set<Condition<LETTER, PLACE>> getPosLaw() {
-		return DataStructureUtils.intersection(mLaw.getConditions(),
-				mCoRelation.computeCoRelatatedConditions(mCondition));
+		return mLaw.getConditions().stream().filter(c -> mCoRelation.isInCoRelation(c, mCondition))
+				.collect(Collectors.toSet());
 	}
 
 	/**
