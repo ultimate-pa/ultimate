@@ -186,6 +186,7 @@ public class CfgBuilder {
 	private final Set<String> mAllGotoTargets;
 
 	private final boolean mRemoveAssumeTrueStmt;
+	private final boolean mFutureLiveOptimization;
 
 	public CfgBuilder(final Unit unit, final IUltimateServiceProvider services) throws IOException {
 		mServices = services;
@@ -218,6 +219,8 @@ public class CfgBuilder {
 		}
 		mCtxSwitchOnlyAtAtomicBoundaries =
 				prefs.getBoolean(RcfgPreferenceInitializer.LABEL_CONTEXT_SWITCH_ONLY_AT_ATOMIC_BOUNDARIES);
+
+		mFutureLiveOptimization = prefs.getBoolean(RcfgPreferenceInitializer.LABEL_FUTURE_LIVE);
 
 		mBoogie2Smt = new Boogie2SMT(mgdScript, mBoogieDeclarations, mServices, simplePartialSkolemization);
 		final RCFGBacktranslator backtranslator = new RCFGBacktranslator(mLogger);
@@ -277,6 +280,15 @@ public class CfgBuilder {
 		// Transform CFGs to a recursive CFG
 		for (final Summary se : mImplementationSummarys) {
 			addCallTransitionAndReturnTransition(se, SIMPLIFICATION_TECHNIQUE);
+		}
+
+		if (mFutureLiveOptimization) {
+			if (icfg.getCfgSmtToolkit().getConcurrencyInformation() == null) {
+				LiveIcfgUtils.applyFutureLiveOptimization(mServices, icfg);
+			}
+			{
+				mLogger.info("Ommited future-live optimization because the input is a concurrent program.");
+			}
 		}
 
 		mLogger.info("Performing block encoding");
