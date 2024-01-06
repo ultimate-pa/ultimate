@@ -107,6 +107,26 @@ public final class Territory<PLACE> {
 		return mTerritory.size();
 	}
 
+	public boolean subsumes(final Territory<PLACE> subsumee) {
+		final var bigRegions = new HashSet<>(getRegions());
+		for (final var smallRegion : subsumee.getRegions()) {
+			final var it = bigRegions.iterator();
+			boolean found = false;
+			while (it.hasNext()) {
+				final var bigRegion = it.next();
+				if (bigRegion.getPlaces().containsAll(smallRegion.getPlaces())) {
+					it.remove();
+					found = true;
+					break;
+				}
+			}
+			if (!found) {
+				return false;
+			}
+		}
+		return true;
+	}
+
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean equals(final Object obj) {

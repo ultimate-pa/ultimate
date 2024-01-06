@@ -107,7 +107,7 @@ public class EmpireComputation<L, P> {
 				if (lawPlace.equals(succLawPlace) && territory.equals(succTerritory)) {
 					// do nothing
 					mLogger.debug("\t--> self loop; skipping...");
-				} else if (lawPlace.equals(succLawPlace) && subsumes(succTerritory, territory)) {
+				} else if (lawPlace.equals(succLawPlace) && succTerritory.subsumes(territory)) {
 					subsumed = true;
 
 					// TODO instead of discarding successors for other transitions, should we reuse them?
@@ -242,26 +242,6 @@ public class EmpireComputation<L, P> {
 		// TODO unify Territory instances
 		final var newTerritory = new Territory<>(ImmutableSet.of(regions));
 		return new Pair<>(newTerritory, newLawPlace);
-	}
-
-	private boolean subsumes(final Territory<P> subsumer, final Territory<P> subsumee) {
-		final var bigRegions = new HashSet<>(subsumer.getRegions());
-		for (final var smallRegion : subsumee.getRegions()) {
-			final var it = bigRegions.iterator();
-			boolean found = false;
-			while (it.hasNext()) {
-				final var bigRegion = it.next();
-				if (bigRegion.getPlaces().containsAll(smallRegion.getPlaces())) {
-					it.remove();
-					found = true;
-					break;
-				}
-			}
-			if (!found) {
-				return false;
-			}
-		}
-		return true;
 	}
 
 	private Region<P> findMatchingRegion(final Collection<Region<P>> candidates, final P place,
