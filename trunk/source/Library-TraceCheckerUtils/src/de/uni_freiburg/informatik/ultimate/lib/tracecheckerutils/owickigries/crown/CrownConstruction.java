@@ -26,6 +26,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -81,7 +82,7 @@ public final class CrownConstruction<PLACE, LETTER> {
 		mAssertConds = assertConds;
 		mPlacesCoRelation = new PlacesCoRelation<>(bp);
 
-		final var settlementRooks = mStatistics.measureSettlement(() -> settlements());
+		final var settlementRooks = mStatistics.measureSettlement(() -> settlementsAssertion());
 
 		final var crownRooks = mStatistics.measureCrownComputation(() -> crownComputation(settlementRooks));
 		mLogger.debug("Crown before refurbishment:\n%s\n", new Crown<>(bp, crownRooks));
@@ -114,6 +115,19 @@ public final class CrownConstruction<PLACE, LETTER> {
 		return settlementRooks;
 	}
 
+	private Set<Rook<PLACE, LETTER>> settlementsAssertion() {
+		// Create a new rook for each original condition.
+		// Add a to crown a new rook with "capital" and one corelated assertion condition
+		final Set<Rook<PLACE, LETTER>> settlementRooks = new HashSet<>();
+		final Kingdom<PLACE, LETTER> kingdom = new Kingdom<>(ImmutableSet.of(Collections.emptySet()));
+		for (final Condition<LETTER, PLACE> assertionCondition : mAssertConds) {
+			final KingdomLaw<PLACE, LETTER> kingdomLaw = new KingdomLaw<>(ImmutableSet.singleton(assertionCondition));
+			final Rook<PLACE, LETTER> rook = new Rook<>(kingdom, kingdomLaw);
+			settlementRooks.add(rook);
+		}
+		return settlementRooks;
+	}
+
 	private Set<Rook<PLACE, LETTER>> crownComputation(final Set<Rook<PLACE, LETTER>> colonizedRooks) {
 		mLogger.debug("Starting Crown Computation...");
 		mLogger.debug("Starting Colonization...");
@@ -132,6 +146,47 @@ public final class CrownConstruction<PLACE, LETTER> {
 		colonizedRooks.removeIf(r -> r.containsNonCut(mBp));
 
 		return colonizedRooks;
+	}
+
+	private Set<Rook<PLACE, LETTER>> crownComputationBFS(Set<Rook<PLACE, LETTER>> settledRooks) {
+		mLogger.debug("Starting Crown Computation...");
+		mLogger.debug("Starting Colonization...");
+		for (final Condition<LETTER, PLACE> condition : mOrigConds) {
+			settledRooks = crownExpansionBFS(condition, settledRooks, true);
+		}
+		mLogger.debug("Starting Legislation...");
+		for (final Condition<LETTER, PLACE> condition : mAssertConds) {
+			settledRooks = crownExpansionBFS(condition, settledRooks, false);
+		}
+
+		// remove pre-rooks
+		settledRooks.removeIf(r -> r.containsNonCut(mBp));
+
+		return settledRooks;
+	}
+
+	private Set<Rook<PLACE, LETTER>> crownExpansionBFS(final Condition<LETTER, PLACE> condition,
+			final Set<Rook<PLACE, LETTER>> rooks, final boolean colonizer) {
+		final Set<Rook<PLACE, LETTER>> crownRooks = new HashSet<>();
+		for (final Rook<PLACE, LETTER> rook : rooks) {
+			Set<Rook<PLACE, LETTER>> colonyRooks;
+			if (colonizer) {
+				colonyRooks = colonizeBFS(condition, rook);
+			} else {
+				colonyRooks = legislateBFS(condition, rook);
+			}
+			if (colonyRooks == null) {
+				crownRooks.add(rook);
+				continue;
+			}
+
+			if (!colonizer) {
+				crownRooks.add(rook);
+			}
+
+			crownRooks.addAll(colonyRooks);
+		}
+		return crownRooks;
 	}
 
 	// Recursive expansion
@@ -211,6 +266,67 @@ public final class CrownConstruction<PLACE, LETTER> {
 			}
 		}
 		return rooks;
+	}
+
+	private Set<Rook<PLACE, LETTER>> colonizeBFS(final Condition<LETTER, PLACE> condition,
+			final Rook<PLACE, LETTER> rook) {
+		final boolean colonizer = isColonizer(condition);
+		final CoRook<PLACE, LETTER> coRook = new CoRook<>(condition, rook, mBp, colonizer, mPlacesCoRelation);
+		Rook<PLACE, LETTER> colonyRook;
+		final ColonizationType colonizationType = coRook.getColonization();
+		final Set<Rook<PLACE, LETTER>> colonizedRooks = new HashSet<>();
+		switch (colonizationType) {
+		case EXPANSION:
+			colonyRook = rook.expansion(condition);
+			colonizedRooks.add(colonyRook);
+			colonizedRooks.add(rook);
+			break;
+		case IMMIGRATION_AND_FOUNDATION:
+			colonyRook = rook.immigrationAndFoundation(coRook, mBp, mPlacesCoRelation);
+			colonizedRooks.add(colonyRook);
+			break;
+		default:
+			return null;
+		}
+		mLogger.debug("Applied: [" + colonizationType.toString() + "] to Rook: " + rook.toString()
+				+ " with colonizer: [" + condition.toString() + "]");
+		if (colonyRook != null) {
+			mLogger.debug("Constructed new Rook: " + colonyRook.toString());
+		}
+		return colonizedRooks;
+	}
+
+	private Set<Rook<PLACE, LETTER>> legislateBFS(final Condition<LETTER, PLACE> condition,
+			final Rook<PLACE, LETTER> rook) {
+		if (rook.getLaw().getConditions().contains(condition)) {
+			return null;
+		}
+		final boolean colonizer = isColonizer(condition);
+		final CoRook<PLACE, LETTER> coRook = new CoRook<>(condition, rook, mBp, colonizer, mPlacesCoRelation);
+		Rook<PLACE, LETTER> colonyRook;
+		final LegislationType legislationType = coRook.getLegislation();
+		switch (legislationType) {
+		case APPROVAL:
+			colonyRook = rook.approval(condition);
+			break;
+		case ENACTMENT:
+			colonyRook = rook.enactment(coRook);
+			break;
+		case RATIFICATION:
+			colonyRook = rook.ratification(coRook);
+			break;
+		case DISCRIMINATION:
+			colonyRook = rook.discrimination(coRook);
+			break;
+		default:
+			return null;
+		}
+		mLogger.debug("Applied: [" + legislationType.toString() + "] to Rook: " + rook.toString()
+				+ " with bill condition: [" + condition.toString() + "]");
+		if (colonyRook != null) {
+			mLogger.debug("Constructed new Rook: " + colonyRook.toString());
+		}
+		return Set.of(colonyRook);
 	}
 
 	private Rook<PLACE, LETTER> colonize(final Condition<LETTER, PLACE> condition, final Rook<PLACE, LETTER> rook) {
