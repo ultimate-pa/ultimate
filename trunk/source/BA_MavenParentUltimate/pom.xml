@@ -76,9 +76,15 @@
 		<!-- Encoding settings -->
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
+		<!-- Compiler settings -->
+		<maven.compiler.source>21</maven.compiler.source>
+		<maven.compiler.target>${maven.compiler.source}</maven.compiler.target>
+		<maven.compiler.debug>false</maven.compiler.debug>
+		<maven.compiler.optimize>true</maven.compiler.optimize>
+
 		<!-- Sonar parameters -->
 		<sonar.language>java</sonar.language>
-		<sonar.java.source>21</sonar.java.source>
+		<sonar.java.source>${maven.compiler.source}</sonar.java.source>
 		<sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
 		<sonar.showProfiling>false</sonar.showProfiling>
 		<sonar.verbose>false</sonar.verbose>
@@ -355,7 +361,6 @@
 				<artifactId>target-platform-configuration</artifactId>
 				<version>${tycho-version}</version>
 				<configuration>
-					<!-- TODO: I am not sure if this is necessary. -->
 					<environments>
 						<environment>
 							<os>win32</os>
@@ -434,7 +439,21 @@
 				<version>${tycho-version}</version>
 				<configuration>
 					<encoding>${project.build.sourceEncoding}</encoding>
+					<debug>${maven.compiler.debug}</debug>
+					<compilerId>jdt</compilerId>
+					<useProjectSettings>false</useProjectSettings>
+					<deriveReleaseCompilerArgumentFromTargetLevel>true</deriveReleaseCompilerArgumentFromTargetLevel>
+					<optimize>${maven.compiler.optimize}</optimize>
+					<target>${maven.compiler.target}</target>
 				</configuration>
+				<dependencies>
+					<!-- This dependency provides the implementation of compiler "jdt" with Java 21 support -->
+					<dependency>
+						<groupId>org.eclipse.jdt</groupId>
+						<artifactId>ecj</artifactId>
+						<version>3.38.0</version>
+					</dependency>
+				</dependencies>
 			</plugin>
 		</plugins>
 
@@ -627,27 +646,18 @@
 					You can configure the sopranium.de proxy or look at the original URLs by visiting <url>https://nexus.sopranium.de</url>.
 					The user/password is managed by DD. -->
 				<repository>
-					<id>eclipse-4.17</id>
+					<id>eclipse-2024-06</id>
 					<layout>p2</layout>
-					<url>https://nexus.sopranium.de/repository/eclipse-4.17/</url>
+					<url>https://download.eclipse.org/releases/2024-06</url>
 					<snapshots>
 						<enabled>false</enabled>
 					</snapshots>
 				</repository>
 
 				<repository>
-					<id>cdt-10</id>
+					<id>orbit-aggregation-2024-06</id>
 					<layout>p2</layout>
-					<url>https://nexus.sopranium.de/repository/cdt-10.0/</url>
-					<snapshots>
-						<enabled>false</enabled>
-					</snapshots>
-				</repository>
-
-				<repository>
-					<id>orbit-R20200831200620</id>
-					<layout>p2</layout>
-					<url>https://nexus.sopranium.de/repository/orbit-R20200831200620/</url>
+					<url>https://download.eclipse.org/tools/orbit/simrel/orbit-aggregation/2024-06</url>
 					<snapshots>
 						<enabled>false</enabled>
 					</snapshots>
