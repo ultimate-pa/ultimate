@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ApplicationTermFinder;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -101,11 +101,10 @@ public class MultiDimensionalSelectOverNestedStore {
 	 * @return List of all {@link MultiDimensionalSelectOverNestedStore} that occur
 	 *         in given term.
 	 */
-	public static List<MultiDimensionalSelectOverNestedStore> extractMultiDimensionalSelectOverStores(final Script script,
-			final Term term) {
+	public static List<MultiDimensionalSelectOverNestedStore> extractMultiDimensionalSelectOverStores(
+			final Script script, final Term term) {
 		final List<MultiDimensionalSelectOverNestedStore> result = new ArrayList<>();
-		final Set<ApplicationTerm> allSelectTerms = new ApplicationTermFinder("select", false)
-				.findMatchingSubterms(term);
+		final Set<ApplicationTerm> allSelectTerms = SmtUtils.extractApplicationTerms("select", term, false);
 		for (final ApplicationTerm selectTerm : allSelectTerms) {
 			final MultiDimensionalSelectOverNestedStore mdsos = MultiDimensionalSelectOverNestedStore.convert(script,
 					selectTerm);
@@ -121,11 +120,10 @@ public class MultiDimensionalSelectOverNestedStore {
 	 * @return List of all {@link MultiDimensionalSelectOverNestedStore} that occur
 	 *         in given term and where arr is first operand of the (inner) store.
 	 */
-	public static List<MultiDimensionalSelectOverNestedStore> extractMultiDimensionalSelectOverStores(final Script script,
-			final Term term, final Term arr) {
+	public static List<MultiDimensionalSelectOverNestedStore> extractMultiDimensionalSelectOverStores(
+			final Script script, final Term term, final Term arr) {
 		final List<MultiDimensionalSelectOverNestedStore> result = new ArrayList<>();
-		final Set<ApplicationTerm> allSelectTerms = new ApplicationTermFinder("select", false)
-				.findMatchingSubterms(term);
+		final Set<ApplicationTerm> allSelectTerms = SmtUtils.extractApplicationTerms("select", term, false);
 		for (final ApplicationTerm selectTerm : allSelectTerms) {
 			final MultiDimensionalSelectOverNestedStore mdsos = MultiDimensionalSelectOverNestedStore.convert(script,
 					selectTerm);
