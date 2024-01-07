@@ -48,7 +48,7 @@
 
   <target name="bootstrap" depends="init">
     <mkdir dir="${bootstrap}" />
-    <javac includeantruntime="false" srcdir="${src}" destdir="${bootstrap}" source="8" target="8">
+    <javac includeantruntime="false" srcdir="${src}" destdir="${bootstrap}">
       <exclude name="${package}/anttask/**"/>
     </javac>
     <mkdir dir="${java}" />
@@ -68,7 +68,7 @@
   </target>
 
   <target name="compile" depends="bootstrap">
-    <javac includeantruntime="true" srcdir="${java}" destdir="${classes}" source="17" target="17" />
+    <javac includeantruntime="true" srcdir="${java}" destdir="${classes}" />
   </target>
 
   <target name="dist" depends="compile">
