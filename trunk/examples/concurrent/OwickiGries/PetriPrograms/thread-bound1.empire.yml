@@ -1,0 +1,6 @@
+#valid
+law:
+  - territory: [ [main.l0], [notInUse] ]
+    assertion: true
+  - territory: [ [main.l1], [inUse], [t.l0] ]
+    assertion: true

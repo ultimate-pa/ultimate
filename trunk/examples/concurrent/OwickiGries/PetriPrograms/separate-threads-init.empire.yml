@@ -1,0 +1,20 @@
+#valid
+named_regions:
+  r1: [main.l1, main.l2]
+  r2: [main.l0, main.l1]
+  r3: [t1.l1, t1.l2, t1.l3]
+  r4: [t2.l1, t2.l2, t2.l3]
+law:
+  - territory: [ [main.l0] ]
+    assertion: true
+  - territory: [ r1 ]
+    assertion: (= x 1)
+  - territory: [ r2 ]
+    assertion: true
+  - territory: [ [main.l2] ]
+    assertion: (= y 1)
+  - territory: [ r3, r4 ]
+    assertion: (= x 1)
+  - territory: [ r3, r4 ]
+    assertion: (= y 1)
+

@@ -1,0 +1,6 @@
+#valid
+law:
+  - territory: [ [l0] ]
+    assertion: true
+  - territory: [ [l1], [l2] ]
+    assertion: (>= x 0)

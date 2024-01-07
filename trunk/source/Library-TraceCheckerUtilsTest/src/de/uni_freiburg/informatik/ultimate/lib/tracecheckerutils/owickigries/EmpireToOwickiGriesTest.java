@@ -29,32 +29,28 @@ public class EmpireToOwickiGriesTest extends OwickiGriesTestSuite {
 	protected void runTest(final Path path, final AutomataTestFileAST ast,
 			final BoundedPetriNet<SimpleAction, IPredicate> program,
 			final BoundedPetriNet<SimpleAction, IPredicate> refinedPetriNet,
-			final BranchingProcess<SimpleAction, IPredicate> unfolding) throws AutomataLibraryException {
-		try (var lines = Files.lines(computeEmpirePath(path))) {
-			final var unifier = mUnifiers.get(0);
-			final var implicationChecker = new MonolithicImplicationChecker(mServices, mMgdScript);
-			final var modifiableGlobals = computeModifiableGlobals();
+			final BranchingProcess<SimpleAction, IPredicate> unfolding) throws AutomataLibraryException, IOException {
 
-			final var empire = new EmpireAnnotationParser<>(mProgramPlaceMap::get, s -> parsePredicate(s, unifier),
-					unifier::getOrConstructPredicateForConjunction).parse(lines);
-			mLogger.info("Parsed Empire annotation:\n%s", empire);
+		final var unifier = mUnifiers.get(0);
+		final var implicationChecker = new MonolithicImplicationChecker(mServices, mMgdScript);
+		final var modifiableGlobals = computeModifiableGlobals();
 
-			final var empireCheck = new EmpireValidityCheck<>(mServices, mMgdScript, implicationChecker,
-					mPredicateFactory, program, mSymbolTable, modifiableGlobals, empire);
-			assumeThat("Given empire annotation is not valid", empireCheck.getValidity(), equalTo(Validity.VALID));
+		final var empire = new EmpireAnnotationParser<>(mProgramPlaceMap::get, s -> parsePredicate(s, unifier),
+				unifier::getOrConstructPredicateForConjunction).parse(computeEmpirePath(path));
+		mLogger.info("Parsed Empire annotation:\n%s", empire);
 
-			final var empireToOwickiGries = new EmpireToOwickiGries<>(mServices, mMgdScript, program, mSymbolTable,
-					Set.of(SimpleAction.PROCEDURE), empire);
-			final var owickiGries = empireToOwickiGries.getAnnotation();
-			mLogger.info("Computed Owicki-Gries annotation:\n%s", owickiGries);
+		final var empireCheck = new EmpireValidityCheck<>(mServices, mMgdScript, implicationChecker, mPredicateFactory,
+				program, mSymbolTable, modifiableGlobals, empire);
+		assumeThat("Given empire annotation is not valid", empireCheck.getValidity(), equalTo(Validity.VALID));
 
-			final var owickiGriesCheck = new OwickiGriesValidityCheck<>(mServices, mMgdScript, modifiableGlobals,
-					owickiGries, PetriOwickiGries.getCoMarkedPlaces(unfolding));
-			assertEquals("Computed Owicki-Gries annotation is not valid.", Validity.VALID, owickiGriesCheck.isValid());
-		} catch (final IOException e) {
-			throw new IllegalStateException(e);
-		}
+		final var empireToOwickiGries = new EmpireToOwickiGries<>(mServices, mMgdScript, program, mSymbolTable,
+				Set.of(SimpleAction.PROCEDURE), empire);
+		final var owickiGries = empireToOwickiGries.getAnnotation();
+		mLogger.info("Computed Owicki-Gries annotation:\n%s", owickiGries);
 
+		final var owickiGriesCheck = new OwickiGriesValidityCheck<>(mServices, mMgdScript, modifiableGlobals,
+				owickiGries, PetriOwickiGries.getCoMarkedPlaces(unfolding));
+		assertEquals("Computed Owicki-Gries annotation is not valid.", Validity.VALID, owickiGriesCheck.isValid());
 	}
 
 	@Override
@@ -65,6 +61,6 @@ public class EmpireToOwickiGriesTest extends OwickiGriesTestSuite {
 	private static Path computeEmpirePath(final Path atsPath) {
 		final String filename = atsPath.getFileName().toString();
 		final String basename = filename.substring(0, filename.lastIndexOf('.'));
-		return atsPath.resolveSibling(basename + ".empire");
+		return atsPath.resolveSibling(basename + ".empire.yml");
 	}
 }

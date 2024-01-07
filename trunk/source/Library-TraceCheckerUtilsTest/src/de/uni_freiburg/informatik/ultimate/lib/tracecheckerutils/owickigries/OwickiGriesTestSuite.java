@@ -170,7 +170,7 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 	protected abstract void runTest(final Path path, final AutomataTestFileAST ast,
 			final BoundedPetriNet<SimpleAction, IPredicate> program,
 			final BoundedPetriNet<SimpleAction, IPredicate> refinedPetriNet,
-			final BranchingProcess<SimpleAction, IPredicate> unfolding) throws AutomataLibraryException;
+			final BranchingProcess<SimpleAction, IPredicate> unfolding) throws AutomataLibraryException, IOException;
 
 	private void runTestInternal(final Path path) throws IOException, AutomataLibraryException {
 		mSymbolTable = setupSymbolTable(path);

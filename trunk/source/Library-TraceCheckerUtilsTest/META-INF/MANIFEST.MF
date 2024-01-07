@@ -8,6 +8,7 @@ Bundle-RequiredExecutionEnvironment: JavaSE-11
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.test,
  org.junit,
+ org.yaml.snakeyaml,
  de.uni_freiburg.informatik.ultimate.lib.smtlib,
  de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser,
  de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter,
