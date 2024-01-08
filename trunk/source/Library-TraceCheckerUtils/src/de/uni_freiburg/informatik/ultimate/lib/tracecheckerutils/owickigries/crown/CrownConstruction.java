@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire.PetriOwickiGries;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -195,6 +196,8 @@ public final class CrownConstruction<PLACE, LETTER> {
 		final Set<Rook<PLACE, LETTER>> crownRooks = new HashSet<>();
 		boolean isMaximal = true;
 		for (final Condition<LETTER, PLACE> condition : troopConditions) {
+			assert !PetriOwickiGries.IGNORE_CUTOFF_CONDITIONS
+					|| !PetriOwickiGries.isCutoff(condition) : "unexpected cutoff condition";
 			final Pair<Condition<LETTER, PLACE>, Rook<PLACE, LETTER>> pair = new Pair<>(condition, rook);
 			if (mRejectedPairs.contains(pair)) {
 				continue;
