@@ -25,15 +25,15 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.ITraceChecker;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Conditional commutativity checker.
@@ -48,6 +48,7 @@ public class ConditionalCommutativityChecker<L extends IAction> implements ICond
 	private final IConditionalCommutativityCriterion<L, IPredicate> mCriterion;
 	private final IIndependenceConditionGenerator mGenerator;
 	private final ITraceChecker<L> mTraceChecker;
+	private Map<Pair<L,L>,Integer> mStatementMap;
 
 	/**
 	 * Constructs a new instance of ConditionalCommutativityChecker.
@@ -66,7 +67,7 @@ public class ConditionalCommutativityChecker<L extends IAction> implements ICond
 		mCriterion = criterion;
 		mGenerator = generator;
 		mTraceChecker = traceChecker;
-
+		mStatementMap = new HashMap<>();
 	}
 
 	/**
@@ -88,7 +89,17 @@ public class ConditionalCommutativityChecker<L extends IAction> implements ICond
 	@Override
 	public List<IPredicate> checkConditionalCommutativity(final IRun<L, IPredicate> run, final IPredicate state,
 			final L letter1, final L letter2) {
-
+		
+		//ensures that each pair is checked at most two times
+		Pair<L,L> pair = new Pair<>(letter1,letter2);
+		if (!mStatementMap.containsKey(pair)) {
+			mStatementMap.put(pair, 1);
+		} else if (mStatementMap.get(pair) == 1) {
+			mStatementMap.replace(pair, 2);
+		}	else {
+			return null;
+		}
+		
 		if (mCriterion.decide(state, letter1, letter2)) {
 			final IPredicate condition = mGenerator.generateCondition(state, letter1.getTransformula(),
 					letter2.getTransformula());

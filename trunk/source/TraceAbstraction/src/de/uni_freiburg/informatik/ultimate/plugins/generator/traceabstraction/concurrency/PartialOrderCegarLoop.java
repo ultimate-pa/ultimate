@@ -195,7 +195,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		RandomCriterion<L, IPredicate> criterion = new RandomCriterion<>(0.5, 321);
 		PostConditionTraceChecker<L> checker = new PostConditionTraceChecker<>(mServices, mAbstraction, mTaskIdentifier, mFactory, mStrategyFactory);
 		ConditionalCommutativityInterpolantProvider<L> conInterpolantProvider = new ConditionalCommutativityInterpolantProvider<>(
-				mServices, null, null, null, mProgram, mAbstraction, mFactory, checker);
+				mServices, criterion, null, null, mProgram, mAbstraction, mFactory, checker);
 		//cast should be fine, since isAbstractionEmpty() assigns mCounterexample a IRun<L, IPredicate>
 		mInterpolAutomaton = conInterpolantProvider.getInterpolants((IRun<L, IPredicate>) mCounterexample, mInterpolAutomaton);
 		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> ia = enhanceInterpolantAutomaton(
@@ -511,19 +511,19 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 				// Similarly, there is no point in adding state2 as conjunct if it is "true".
 				if (state1 instanceof PredicateWithConjuncts) {
 					final var conjState1 = (PredicateWithConjuncts) state1;
-					return mPredicateFactory.construct(id -> new PredicateWithConjuncts(id, conjState1.getConjuncts()));
+					return mPredicateFactory.construct(id -> new PredicateWithConjuncts(id, conjState1.getConjuncts(), mCsToolkit.getManagedScript().getScript()));
 				}
 				return mPredicateFactory
-						.construct(id -> new PredicateWithConjuncts(id, ImmutableList.singleton(state1)));
+						.construct(id -> new PredicateWithConjuncts(id, ImmutableList.singleton(state1), mCsToolkit.getManagedScript().getScript()));
 			}
 			if (isFalseLiteral(state2) || isTrueLiteral(state1)) {
 				// If state2 is "false", we ignore all previous conjuncts. This allows us to optimize in #isFalseLiteral
 				// As another (less important) optimization, we also ignore state1 if it is "true".
 				return mPredicateFactory
-						.construct(id -> new PredicateWithConjuncts(id, ImmutableList.singleton(state2)));
+						.construct(id -> new PredicateWithConjuncts(id, ImmutableList.singleton(state2), mCsToolkit.getManagedScript().getScript()));
 			}
 			// In the normal case, we simply add state2 as conjunct.
-			return mPredicateFactory.construct(id -> new PredicateWithConjuncts(id, state1, state2));
+			return mPredicateFactory.construct(id -> new PredicateWithConjuncts(id, state1, state2, mCsToolkit.getManagedScript().getScript()));
 		}
 	}
 
