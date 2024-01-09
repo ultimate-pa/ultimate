@@ -28,110 +28,137 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ITermProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
+ * {@link ITermProvider} for the (rather complex) select over store, where we
+ * have multiple dimensions and nested stores.
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public class MultiDimensionalSelectOverNestedStore {
+public class MultiDimensionalSelectOverNestedStore implements ITermProvider {
 
-	private final MultiDimensionalSelect mSelect;
+	private final ArrayIndex mSelectIndex;
 	private final MultiDimensionalNestedStore mNestedStore;
-	private final Term mTerm;
 
-	public MultiDimensionalSelectOverNestedStore(final Script script, final Term term) {
-		final MultiDimensionalSelect select = MultiDimensionalSelect.of(term);
-		if (!select.getIndex().isEmpty()) {
-			final Term innerArray = select.getArray();
-			if (innerArray instanceof ApplicationTerm) {
-				final MultiDimensionalNestedStore store = MultiDimensionalNestedStore.of(innerArray);
-				if (store != null && store.getIndices().get(0).size() == select.getIndex().size()) {
-					mSelect = select;
-					mNestedStore = store;
-					mTerm = term;
-					return;
-				}
-			}
+	public MultiDimensionalSelectOverNestedStore(final ArrayIndex selectIndex,
+			final MultiDimensionalNestedStore nestedStore) {
+		super();
+		if (selectIndex.size() != nestedStore.getDimension()) {
+			throw new IllegalArgumentException("Incompatible dimensions");
 		}
-		mSelect = null;
-		mNestedStore = null;
-		mTerm = null;
+		mSelectIndex = selectIndex;
+		mNestedStore = nestedStore;
 	}
 
-	public MultiDimensionalSelect getSelect() {
-		return mSelect;
+	public ArrayIndex getSelectIndex() {
+		return mSelectIndex;
 	}
 
 	public MultiDimensionalNestedStore getNestedStore() {
 		return mNestedStore;
 	}
 
-	public Term toTerm() {
-		return mTerm;
+	@Override
+	public Term toTerm(final Script script) {
+		return new MultiDimensionalSelect(mNestedStore.toTerm(script), mSelectIndex).toTerm(script);
 	}
 
-	public static MultiDimensionalSelectOverNestedStore convert(final Script script, final Term term) {
-		final MultiDimensionalSelectOverNestedStore mdsos = new MultiDimensionalSelectOverNestedStore(script, term);
-		if (mdsos.getSelect() == null) {
+	public static MultiDimensionalSelectOverNestedStore of(final Term term) {
+		final MultiDimensionalSelect mds = MultiDimensionalSelect.of(term);
+		if (mds == null) {
 			return null;
-		} else {
-			return mdsos;
 		}
+		final MultiDimensionalNestedStore mdns = MultiDimensionalNestedStore.of(mds.getArray());
+		if (mdns == null) {
+			return null;
+		}
+		if (mds.getDimension() != mdns.getDimension()) {
+			return null;
+		}
+		return new MultiDimensionalSelectOverNestedStore(mds.getIndex(), mdns);
 	}
-
 
 	/**
-	 * @return Term that is equivalent to this {@link MultiDimensionalSelectOverNestedStore}
-	 * if the index of the select and the index of each store are distinct.
+	 * @return Term that is equivalent to this
+	 *         {@link MultiDimensionalSelectOverNestedStore} if the index of the
+	 *         select and the index of each store are distinct.
 	 */
 	public Term constructNotEqualsReplacement(final Script script) {
-		final MultiDimensionalSelect mds = new MultiDimensionalSelect(getNestedStore().getArray(), getSelect().getIndex());
+		final MultiDimensionalSelect mds = new MultiDimensionalSelect(getNestedStore().getArray(), getSelectIndex());
 		return mds.toTerm(script);
 	}
-
 
 	/**
 	 *
 	 * @return List of all {@link MultiDimensionalSelectOverNestedStore} that occur
 	 *         in given term.
 	 */
-	public static List<MultiDimensionalSelectOverNestedStore> extractMultiDimensionalSelectOverStores(
-			final Script script, final Term term) {
+	public static List<MultiDimensionalSelectOverNestedStore> extractMultiDimensionalSelectOverNestedStore(
+			final Term term, final boolean onlyOutermost) {
 		final List<MultiDimensionalSelectOverNestedStore> result = new ArrayList<>();
-		final Set<ApplicationTerm> allSelectTerms = SmtUtils.extractApplicationTerms("select", term, false);
-		for (final ApplicationTerm selectTerm : allSelectTerms) {
-			final MultiDimensionalSelectOverNestedStore mdsos = MultiDimensionalSelectOverNestedStore.convert(script,
-					selectTerm);
-			if (mdsos != null) {
-				result.add(mdsos);
+		final List<MultiDimensionalSelect> mdss = MultiDimensionalSelect.extractSelectShallow(term);
+		for (final MultiDimensionalSelect mds : mdss) {
+			final MultiDimensionalNestedStore mdns = MultiDimensionalNestedStore.of(mds.getArray());
+			if (mdns != null) {
+				result.add(new MultiDimensionalSelectOverNestedStore(mds.getIndex(), mdns));
+				if (!onlyOutermost) {
+					result.addAll(extractMultiDimensionalSelectOverNestedStore(mdns.getArray(), onlyOutermost));
+					for (int i = 0; i < mdns.getIndices().size(); i++) {
+						result.addAll(
+								extractMultiDimensionalSelectOverNestedStore(mdns.getValues().get(i), onlyOutermost));
+						for (int j = 0; j < mdns.getDimension(); j++) {
+							final Term indexEntry = mdns.getIndices().get(i).get(j);
+							result.addAll(extractMultiDimensionalSelectOverNestedStore(indexEntry, onlyOutermost));
+						}
+					}
+
+				}
+			} else {
+				// no MultiDimensionalNestedStore inside or MultiDimensionalNestedStore not
+				// compatible
+				result.addAll(extractMultiDimensionalSelectOverNestedStore(mds.getArray(), onlyOutermost));
+				for (final Term entry : mds.getIndex()) {
+					result.addAll(extractMultiDimensionalSelectOverNestedStore(entry, onlyOutermost));
+				}
 			}
 		}
 		return result;
 	}
 
-	/**
-	 *
-	 * @return List of all {@link MultiDimensionalSelectOverNestedStore} that occur
-	 *         in given term and where arr is first operand of the (inner) store.
-	 */
-	public static List<MultiDimensionalSelectOverNestedStore> extractMultiDimensionalSelectOverStores(
-			final Script script, final Term term, final Term arr) {
-		final List<MultiDimensionalSelectOverNestedStore> result = new ArrayList<>();
-		final Set<ApplicationTerm> allSelectTerms = SmtUtils.extractApplicationTerms("select", term, false);
-		for (final ApplicationTerm selectTerm : allSelectTerms) {
-			final MultiDimensionalSelectOverNestedStore mdsos = MultiDimensionalSelectOverNestedStore.convert(script,
-					selectTerm);
-			if (mdsos != null && mdsos.getNestedStore().getArray() == arr) {
-				result.add(mdsos);
-			}
-		}
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((mNestedStore == null) ? 0 : mNestedStore.hashCode());
+		result = prime * result + ((mSelectIndex == null) ? 0 : mSelectIndex.hashCode());
 		return result;
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		final MultiDimensionalSelectOverNestedStore other = (MultiDimensionalSelectOverNestedStore) obj;
+		if (mNestedStore == null) {
+			if (other.mNestedStore != null)
+				return false;
+		} else if (!mNestedStore.equals(other.mNestedStore))
+			return false;
+		if (mSelectIndex == null) {
+			if (other.mSelectIndex != null)
+				return false;
+		} else if (!mSelectIndex.equals(other.mSelectIndex))
+			return false;
+		return true;
 	}
 
 }

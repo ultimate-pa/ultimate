@@ -366,7 +366,7 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 
 	private Term tryArraySimplification(final Term term) {
 		final List<MultiDimensionalSelectOverNestedStore> list = MultiDimensionalSelectOverNestedStore
-				.extractMultiDimensionalSelectOverStores(mMgdScript.getScript(), term);
+				.extractMultiDimensionalSelectOverNestedStore(term, true);
 		if (list.isEmpty()) {
 			return null;
 		}
@@ -376,20 +376,21 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 				continue;
 			}
 			final ArrayIndex storeIndex = mdsons.getNestedStore().getIndices().get(0);
-			final ArrayIndex selectIndex = mdsons.getSelect().getIndex();
+			final ArrayIndex selectIndex = mdsons.getSelectIndex();
 			final Term idxEquivalence = ArrayIndex.constructIndexEquality(mMgdScript.getScript(), storeIndex,
 					selectIndex);
 			final LBool idxEquivalent = Util.checkSat(mMgdScript.getScript(),
 					SmtUtils.not(mMgdScript.getScript(), idxEquivalence));
 			if (idxEquivalent == LBool.UNSAT) {
-				substitutionMapping.put(mdsons.toTerm(), mdsons.getNestedStore().getValues().get(0));
+				substitutionMapping.put(mdsons.toTerm(mMgdScript.getScript()),
+						mdsons.getNestedStore().getValues().get(0));
 				continue;
 			}
 			final LBool idxNotEquivalent = Util.checkSat(mMgdScript.getScript(), idxEquivalence);
 			if (idxNotEquivalent == LBool.UNSAT) {
 				final MultiDimensionalSelect mds = new MultiDimensionalSelect(mdsons.getNestedStore().getArray(),
-						mdsons.getSelect().getIndex());
-				substitutionMapping.put(mdsons.toTerm(), mds.toTerm(mMgdScript.getScript()));
+						mdsons.getSelectIndex());
+				substitutionMapping.put(mdsons.toTerm(mMgdScript.getScript()), mds.toTerm(mMgdScript.getScript()));
 			}
 		}
 		if (!substitutionMapping.isEmpty()) {
