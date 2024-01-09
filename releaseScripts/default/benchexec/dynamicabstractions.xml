@@ -2,57 +2,57 @@
 <benchmark tool="ultimateautomizer" memlimit="7GB" timelimit="900" hardtimelimit="920" cpuCores="2">
   <resultfiles></resultfiles>
 
-  <option name="--force-no-wrapper" />
-  <option name="--traceabstraction.prune.known.deadend.states.from.previous.iterations">false</option>
+  <option name="&#45;-force-no-wrapper" />
+  <option name="&#45;-traceabstraction.prune.known.deadend.states.from.previous.iterations">false</option>
 
   <rundefinition name="DynamicAbstractions">
     <option name="-s">../../../trunk/examples/settings/gemcutter/DynamicStratifiedAbstractions.epf</option>
-    <option name="--traceabstraction.cegar.restart.behaviour">ONE_CEGAR_PER_ERROR_LOCATION</option>
+    <option name="&#45;-traceabstraction.cegar.restart.behaviour">ONE_CEGAR_PER_ERROR_LOCATION</option>
   </rundefinition>
 
   <rundefinition name="ConcreteCommutativity">
     <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleep.epf</option>
-    <option name="--traceabstraction.cegar.restart.behaviour">ONE_CEGAR_PER_ERROR_LOCATION</option>
+    <option name="&#45;-traceabstraction.cegar.restart.behaviour">ONE_CEGAR_PER_ERROR_LOCATION</option>
   </rundefinition>
 
   <rundefinition name="AbstractCommutativity">
     <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleep.epf</option>
-    <option name="--traceabstraction.cegar.restart.behaviour">ONE_CEGAR_PER_ERROR_LOCATION</option>
-    <option name="--traceabstraction.abstraction.used.for.commutativity.in.por">VARIABLES_GLOBAL</option>
+    <option name="&#45;-traceabstraction.cegar.restart.behaviour">ONE_CEGAR_PER_ERROR_LOCATION</option>
+    <option name="&#45;-traceabstraction.abstraction.used.for.commutativity.in.por">VARIABLES_GLOBAL</option>
   </rundefinition>
 
   <rundefinition name="StratifiedReductionWithOptimalBudget">
     <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleep.epf</option>
-    <option name="--traceabstraction.cegar.restart.behaviour">ONE_CEGAR_PER_ERROR_LOCATION</option>
-    <option name="--traceabstraction.number.of.independence.relations.to.use.for.por">2</option>
-    <option name="--traceabstraction.abstraction.used.for.commutativity.in.por">VARIABLES_GLOBAL</option>
-    <option name="--traceabstraction.abstraction.used.for.commutativity.in.por.#2">NONE</option>
+    <option name="&#45;-traceabstraction.cegar.restart.behaviour">ONE_CEGAR_PER_ERROR_LOCATION</option>
+    <option name="&#45;-traceabstraction.number.of.independence.relations.to.use.for.por">2</option>
+    <option name="&#45;-traceabstraction.abstraction.used.for.commutativity.in.por">VARIABLES_GLOBAL</option>
+    <option name="&#45;-traceabstraction.abstraction.used.for.commutativity.in.por.#2">NONE</option>
   </rundefinition>
 
 
 
   <rundefinition name="DynamicAbstractions_OneCegar">
     <option name="-s">../../../trunk/examples/settings/gemcutter/DynamicStratifiedAbstractions.epf</option>
-    <option name="--traceabstraction.cegar.restart.behaviour">ONLY_ONE_CEGAR</option>
+    <option name="&#45;-traceabstraction.cegar.restart.behaviour">ONLY_ONE_CEGAR</option>
   </rundefinition>
 
   <rundefinition name="ConcreteCommutativity_OneCegar">
     <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleep.epf</option>
-    <option name="--traceabstraction.cegar.restart.behaviour">ONLY_ONE_CEGAR</option>
+    <option name="&#45;-traceabstraction.cegar.restart.behaviour">ONLY_ONE_CEGAR</option>
   </rundefinition>
 
   <rundefinition name="AbstractCommutativity_OneCegar">
     <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleep.epf</option>
-    <option name="--traceabstraction.cegar.restart.behaviour">ONLY_ONE_CEGAR</option>
-    <option name="--traceabstraction.abstraction.used.for.commutativity.in.por">VARIABLES_GLOBAL</option>
+    <option name="&#45;-traceabstraction.cegar.restart.behaviour">ONLY_ONE_CEGAR</option>
+    <option name="&#45;-traceabstraction.abstraction.used.for.commutativity.in.por">VARIABLES_GLOBAL</option>
   </rundefinition>
 
   <rundefinition name="StratifiedReductionWithOptimalBudget_OneCegar">
     <option name="-s">../../../trunk/examples/settings/gemcutter/NewStatesSleep.epf</option>
-    <option name="--traceabstraction.cegar.restart.behaviour">ONLY_ONE_CEGAR</option>
-    <option name="--traceabstraction.number.of.independence.relations.to.use.for.por">2</option>
-    <option name="--traceabstraction.abstraction.used.for.commutativity.in.por">VARIABLES_GLOBAL</option>
-    <option name="--traceabstraction.abstraction.used.for.commutativity.in.por.#2">NONE</option>
+    <option name="&#45;-traceabstraction.cegar.restart.behaviour">ONLY_ONE_CEGAR</option>
+    <option name="&#45;-traceabstraction.number.of.independence.relations.to.use.for.por">2</option>
+    <option name="&#45;-traceabstraction.abstraction.used.for.commutativity.in.por">VARIABLES_GLOBAL</option>
+    <option name="&#45;-traceabstraction.abstraction.used.for.commutativity.in.por.#2">NONE</option>
   </rundefinition>
 
 
@@ -62,8 +62,6 @@
     <include>../../../trunk/examples/svcomp/goblint-regression/13-privatized_58-singlethreaded-lock_true.yml</include>
     <include>../../../trunk/examples/svcomp/goblint-regression/13-privatized_18-first-reads_unknown_2_neg.yml</include>
   </tasks>
-
-
 
   <tasks name="SVCOMP-ConcurrencySafety-Main">
     <option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
@@ -85,12 +83,12 @@
   <tasks name="SVCOMP-Concurrency-SafeDeref">
     <option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
 
-    <option name="--cacsl2boogietranslator.check.unreachability.of.error.function.in.sv-comp.mode">false</option>
-    <option name="--cacsl2boogietranslator.pointer.base.address.is.valid.at.dereference">ASSERTandASSUME</option>
-    <option name="--cacsl2boogietranslator.pointer.to.allocated.memory.at.dereference">ASSERTandASSUME</option>
-    <option name="--cacsl2boogietranslator.check.array.bounds.for.arrays.that.are.off.heap">ASSERTandASSUME</option>
-    <option name="--cacsl2boogietranslator.check.if.freed.pointer.was.valid">true</option>
-    <option name="--cacsl2boogietranslator.adapt.memory.model.on.pointer.casts.if.necessary">true</option>
+    <option name="&#45;-cacsl2boogietranslator.check.unreachability.of.error.function.in.sv-comp.mode">false</option>
+    <option name="&#45;-cacsl2boogietranslator.pointer.base.address.is.valid.at.dereference">ASSERTandASSUME</option>
+    <option name="&#45;-cacsl2boogietranslator.pointer.to.allocated.memory.at.dereference">ASSERTandASSUME</option>
+    <option name="&#45;-cacsl2boogietranslator.check.array.bounds.for.arrays.that.are.off.heap">ASSERTandASSUME</option>
+    <option name="&#45;-cacsl2boogietranslator.check.if.freed.pointer.was.valid">true</option>
+    <option name="&#45;-cacsl2boogietranslator.adapt.memory.model.on.pointer.casts.if.necessary">true</option>
 
     <includesfile>../../../trunk/examples/svcomp/ConcurrencySafety-Main.set</includesfile>
     <propertyfile>../../../trunk/examples/svcomp/properties/valid-memsafety.prp</propertyfile>
@@ -99,8 +97,8 @@
   <tasks name="SVCOMP-Concurrency-NoOverflow">
     <option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
 
-    <option name="--cacsl2boogietranslator.check.unreachability.of.error.function.in.sv-comp.mode">false</option>
-    <option name="--cacsl2boogietranslator.check.absence.of.signed.integer.overflows">true</option>
+    <option name="&#45;-cacsl2boogietranslator.check.unreachability.of.error.function.in.sv-comp.mode">false</option>
+    <option name="&#45;-cacsl2boogietranslator.check.absence.of.signed.integer.overflows">true</option>
 
     <includesfile>../../../trunk/examples/svcomp/ConcurrencySafety-Main.set</includesfile>
     <propertyfile>../../../trunk/examples/svcomp/properties/no-overflow.prp</propertyfile>
@@ -109,8 +107,8 @@
   <tasks name="SVCOMP-Concurrency-NoDataRace">
     <option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
 
-    <option name="--cacsl2boogietranslator.check.unreachability.of.error.function.in.sv-comp.mode">false</option>
-    <option name="--cacsl2boogietranslator.check.absence.of.data.races.in.concurrent.programs">true</option>
+    <option name="&#45;-cacsl2boogietranslator.check.unreachability.of.error.function.in.sv-comp.mode">false</option>
+    <option name="&#45;-cacsl2boogietranslator.check.absence.of.data.races.in.concurrent.programs">true</option>
 
     <includesfile>../../../trunk/examples/svcomp/ConcurrencySafety-Main.set</includesfile>
     <propertyfile>../../../trunk/examples/svcomp/properties/no-data-race.prp</propertyfile>
