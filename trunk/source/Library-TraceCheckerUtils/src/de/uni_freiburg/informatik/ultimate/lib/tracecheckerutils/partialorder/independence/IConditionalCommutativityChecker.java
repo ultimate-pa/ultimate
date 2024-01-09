@@ -25,9 +25,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence;
 
-import java.util.List;
-
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
@@ -40,6 +39,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
  */
 public interface IConditionalCommutativityChecker<L> {
 
-	List<IPredicate> checkConditionalCommutativity(IRun<L, IPredicate> run, IPredicate state, L letter1, L letter2);
+	TracePredicates checkConditionalCommutativity(IRun<L, IPredicate> run, IPredicate state, L letter1, L letter2);
 
 }

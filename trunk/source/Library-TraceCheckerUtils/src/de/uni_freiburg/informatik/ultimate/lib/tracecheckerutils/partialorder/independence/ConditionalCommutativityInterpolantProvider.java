@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.II
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.ITraceChecker;
 
@@ -125,8 +126,11 @@ public class ConditionalCommutativityInterpolantProvider<L extends IAction> {
 				final OutgoingInternalTransition<L, IPredicate> transition1 = transitions.get(j);
 				for (int k = j + 1; k < transitions.size(); k++) {
 					final OutgoingInternalTransition<L, IPredicate> transition2 = transitions.get(k);
-					final List<IPredicate> conPredicates = mChecker.checkConditionalCommutativity(mRun, state,
+					final TracePredicates tracePredicates = mChecker.checkConditionalCommutativity(mRun, state,
 							transition1.getLetter(), transition2.getLetter());
+					List<IPredicate> conPredicates = new ArrayList<>();
+					conPredicates.addAll(tracePredicates.getPredicates());
+					conPredicates.add(tracePredicates.getPostcondition());
 					addToCopy(conPredicates);
 				}
 			}

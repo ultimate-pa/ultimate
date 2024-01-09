@@ -31,6 +31,7 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.ITraceChecker;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -87,7 +88,7 @@ public class ConditionalCommutativityChecker<L extends IAction> implements ICond
 	 *            A list of predicates which servers as a proof for conditional commutativity.
 	 */
 	@Override
-	public List<IPredicate> checkConditionalCommutativity(final IRun<L, IPredicate> run, final IPredicate state,
+	public TracePredicates checkConditionalCommutativity(final IRun<L, IPredicate> run, final IPredicate state,
 			final L letter1, final L letter2) {
 		
 		//ensures that each pair is checked at most two times

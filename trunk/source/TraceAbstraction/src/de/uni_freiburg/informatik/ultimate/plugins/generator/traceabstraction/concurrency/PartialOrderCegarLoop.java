@@ -192,10 +192,11 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		//TODO: take mInterpolantAutomaton and mCounterexample and call ConditionalCommutativityInterpolantProvider
 		//random criterion for testing 
 		//TODO: should later on be replaced by a setting
-		RandomCriterion<L, IPredicate> criterion = new RandomCriterion<>(0.5, 321);
+		RandomCriterion<L, IPredicate> criterion = new RandomCriterion<>(1, 321);
 		PostConditionTraceChecker<L> checker = new PostConditionTraceChecker<>(mServices, mAbstraction, mTaskIdentifier, mFactory, mStrategyFactory);
+		SemanticIndependenceConditionGenerator generator = new SemanticIndependenceConditionGenerator(mServices, mCsToolkit.getManagedScript(), mPredicateFactory, true);
 		ConditionalCommutativityInterpolantProvider<L> conInterpolantProvider = new ConditionalCommutativityInterpolantProvider<>(
-				mServices, criterion, null, null, mProgram, mAbstraction, mFactory, checker);
+				mServices, criterion, mPOR.getIndependence(mIteration), generator, mProgram, mAbstraction, mFactory, checker);
 		//cast should be fine, since isAbstractionEmpty() assigns mCounterexample a IRun<L, IPredicate>
 		mInterpolAutomaton = conInterpolantProvider.getInterpolants((IRun<L, IPredicate>) mCounterexample, mInterpolAutomaton);
 		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> ia = enhanceInterpolantAutomaton(

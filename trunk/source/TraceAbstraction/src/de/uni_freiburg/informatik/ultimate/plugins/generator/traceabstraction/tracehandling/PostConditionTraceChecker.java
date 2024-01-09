@@ -32,6 +32,7 @@ import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.TaskIdentifier;
@@ -87,14 +88,14 @@ public class PostConditionTraceChecker<L extends IIcfgTransition<?>> implements 
 	}
 
 	@Override
-	public List<IPredicate> checkTrace(IRun<L, IPredicate> run, IPredicate precondition, IPredicate postCondition) {
+	public TracePredicates checkTrace(IRun<L, IPredicate> run, IPredicate precondition, IPredicate postCondition) {
 		ITARefinementStrategy<L> strategy = mStrategyFactory.constructStrategy(mServices, run, mAbstraction,
 				mTaskIdentifier, mEmptyStackFactory, IPreconditionProvider.constructDefaultPreconditionProvider(),
 				new PostConditionProvider(postCondition));
 		while (strategy.hasNextFeasilibityCheck()) {
 			ITraceCheckStrategyModule<L, ?> check = strategy.nextFeasibilityCheck();
 			if (check.isCorrect().equals(LBool.UNSAT) && check instanceof InterpolatingTraceCheck) {
-				return ((InterpolatingTraceCheck<?>) check).getIpp().getPredicates();
+				return ((InterpolatingTraceCheck<?>) check).getIpp();
 			}
 		}
 		return null;

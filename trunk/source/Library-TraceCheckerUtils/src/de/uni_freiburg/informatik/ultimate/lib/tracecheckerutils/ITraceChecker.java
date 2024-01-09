@@ -25,9 +25,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils;
 
-import java.util.List;
-
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
@@ -41,6 +40,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
  */
 public interface ITraceChecker<L> {
 
-	public List<IPredicate> checkTrace(IRun<L, IPredicate> run, IPredicate precondition, IPredicate postcondition);
+	public TracePredicates checkTrace(IRun<L, IPredicate> run, IPredicate precondition, IPredicate postcondition);
 
 }
