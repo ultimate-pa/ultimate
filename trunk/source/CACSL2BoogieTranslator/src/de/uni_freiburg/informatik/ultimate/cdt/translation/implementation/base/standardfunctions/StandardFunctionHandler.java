@@ -145,6 +145,11 @@ public class StandardFunctionHandler {
 	 */
 	private static final boolean HAVOC_NONDET_AUXVARS_ALSO_BEFORE = true;
 
+	/**
+	 * See MEMORY_ORDER_SEQ_CST in stdatomic.h
+	 */
+	private static final int MEMORY_ORDER_SEQ_CST = 5;
+
 	private final LocationFactory mLocationFactory;
 
 	private final Map<String, IFunctionModelHandler> mFunctionModels;
@@ -1246,16 +1251,15 @@ public class StandardFunctionHandler {
 	private ExpressionResult buildWrtMemoryOrder(final ILocation loc, final ExpressionResultBuilder atomicBlockBuilder,
 			final ExpressionResult memoryOrder) {
 		// Check the memory order
-		// - "5" means sequential consistency, if this is the case make an atomic block of those statements
+		// - If it is equal to MEMORY_ORDER_SEQ_CST, we can assume sequential consistency and make all statements atomic
 		// - Otherwise we cannot say anything, since we only support sequential consistency (so we just overapproximate)
-		// TODO: Is this always 5?
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder(atomicBlockBuilder);
 		builder.resetStatements(List.of()).addAllExceptLrValue(memoryOrder);
 		final CPrimitive intType = new CPrimitive(CPrimitives.INT);
-		final Expression five =
-				mExpressionTranslation.constructLiteralForIntegerType(loc, intType, BigInteger.valueOf(5));
+		final Expression seqCst = mExpressionTranslation.constructLiteralForIntegerType(loc, intType,
+				BigInteger.valueOf(MEMORY_ORDER_SEQ_CST));
 		final Expression atomicCond = mExpressionTranslation.constructBinaryEqualityExpression(loc,
-				IASTBinaryExpression.op_equals, memoryOrder.getLrValue().getValue(), intType, five, intType);
+				IASTBinaryExpression.op_equals, memoryOrder.getLrValue().getValue(), intType, seqCst, intType);
 		final Statement atomic = new AtomicStatement(loc, atomicBlockBuilder.getStatements().toArray(Statement[]::new));
 		final Statement overapprox = new AssertStatement(loc, ExpressionFactory.createBooleanLiteral(loc, false));
 		new Overapprox("memory order (only sequential consistency is supported)", loc).annotate(overapprox);
