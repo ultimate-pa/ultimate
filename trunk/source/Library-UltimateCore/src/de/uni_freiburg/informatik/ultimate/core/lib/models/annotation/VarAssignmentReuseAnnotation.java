@@ -17,18 +17,27 @@ public class VarAssignmentReuseAnnotation extends ModernAnnotations {
 
 	private static final long serialVersionUID = 1L;
 	private static final String KEY = VarAssignmentReuseAnnotation.class.getName();
+	public boolean secondCheck = false;
+	public boolean mNegatedVA = false;
 	private final Map<String, Object> mMap = new HashMap<>();
 	public ArrayList<Pair<Term, Term>> mVarAssignmentPair = new ArrayList<Pair<Term, Term>>(); // check if negated,
 																								// order corresponds to
 																								// test-case
 	public VarAssignmentReuseAnnotation mVAofOppositeBranch;
-	public boolean mIsNegated = false;
+
 	public boolean mIsActiveTestGoal = true;
 	public boolean mUseCurrentTestGoal = false; // use this test goal instead of a previous
 	public HashSet<VarAssignmentReuseAnnotation> mUnsatWithVAs = new HashSet<>();
 	public Integer checkCount = 1; // is either 1 or 2
 
+	public VarAssignmentReuseAnnotation mDefaultVA = null;
+
+	public boolean mLastChecked = false; // true after checksat, false if in a trace but no
+
+	public Integer mVaOrder = -1;
+
 	public VarAssignmentReuseAnnotation() {
+
 	}
 
 	@Override
@@ -57,16 +66,26 @@ public class VarAssignmentReuseAnnotation extends ModernAnnotations {
 	/*
 	 * Warning replaces the current VA
 	 */
-	public void setVa(final ArrayList<Pair<Term, Term>> varAssignmentPair) {
+	public void setVa(final ArrayList<Pair<Term, Term>> varAssignmentPair, final int vaOrder) {
 		mVarAssignmentPair = varAssignmentPair;
-	}
-
-	// Do not negate here, only flag as negated. Negate the formula when asserting the term
-	public void negateVa() {
-		mIsNegated = true;
+		mVaOrder = vaOrder;
 	}
 
 	public void removeCheck() {
 		mIsActiveTestGoal = false;
+	}
+
+	/*
+	 * there exist only 2 VA's that need to know the default. The first and its opposite
+	 */
+	public VarAssignmentReuseAnnotation setDefaultVa(final VarAssignmentReuseAnnotation defaultVA) {
+		if (mDefaultVA == null) {
+			if (defaultVA != null) {
+				mDefaultVA = defaultVA;
+			} else {
+				mDefaultVA = new VarAssignmentReuseAnnotation();
+			}
+		}
+		return mDefaultVA;
 	}
 }

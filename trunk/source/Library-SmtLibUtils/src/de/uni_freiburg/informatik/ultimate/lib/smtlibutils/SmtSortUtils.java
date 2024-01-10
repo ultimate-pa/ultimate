@@ -112,6 +112,10 @@ public final class SmtSortUtils {
 		return script.sort(REAL_SORT);
 	}
 
+	public static Sort getFloatSort(final Script script, final BigInteger index1, final BigInteger index2) {
+		return script.sort(FLOATINGPOINT_SORT, new String[] { index1.toString(), index2.toString() });
+	}
+
 	/**
 	 * @param size
 	 *            number of bits

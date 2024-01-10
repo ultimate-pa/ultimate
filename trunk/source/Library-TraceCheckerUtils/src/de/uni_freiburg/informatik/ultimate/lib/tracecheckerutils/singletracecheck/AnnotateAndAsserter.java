@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -46,7 +47,9 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.TraceCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
@@ -74,13 +77,17 @@ public class AnnotateAndAsserter<L extends IAction> {
 	protected final TraceCheckStatisticsGenerator mTcbg;
 
 	public boolean mSucessfulReuse = false;
-	// private VarAssignmentReuseAnnotation mVAforReuse = null; //For BitVec, since we have sort problem for a guess
-	private VarAssignmentReuseAnnotation mVAforReuse; // Try to always use an VA,
-														// if problem SORT maybe
-														// just do it for int
+	private VarAssignmentReuseAnnotation mVAforReuse = null;
+	private VarAssignmentReuseAnnotation mCurrentVA;
+	private VarAssignmentReuseAnnotation mDefaultVA;
 	final LinkedHashSet<String> nondetsInTrace = new LinkedHashSet<String>();
+	final LinkedHashSet<String> nondetsInTraceAfterPreviousVA = new LinkedHashSet<String>();
 	final HashMap<String, String> nondetNameToType = new HashMap<>();
-	Integer mTestCaseUniqueIdentifier = 0;
+	private Integer mTestCaseUniqueIdentifier = 0;
+	private final Integer mHighestVaOrderInTrace = -1;
+	private boolean lastVaInTraceIsUsedForReuse = false;
+
+	private final ArrayList<Pair<Term, Term>> mValueAssignmentUsedForReuse = new ArrayList<Pair<Term, Term>>();
 
 	public AnnotateAndAsserter(final ManagedScript mgdScriptTc, final NestedFormulas<L, Term, Term> nestedSSA,
 			final AnnotateAndAssertCodeBlocks<L> aaacb, final TraceCheckStatisticsGenerator tcbg,
@@ -150,96 +157,98 @@ public class AnnotateAndAsserter<L extends IAction> {
 			}
 			pendingContextCode++;
 		}
-		VarAssignmentReuseAnnotation annotationOfCurrentTestGoal = null;
+
 		final boolean reuseVarAssignmentsOfReachableErrorLocatiosn = true;
-		final L lastStmt = mSSA.getTrace().getSymbol(mSSA.getTrace().length() - 1);
-
-		if (lastStmt instanceof StatementSequence) {
-			final StatementSequence lastStmtSeq = (StatementSequence) lastStmt;
-			if (lastStmtSeq.getPayload().getAnnotations().containsKey(VarAssignmentReuseAnnotation.class.getName())) {
-
-				annotationOfCurrentTestGoal = (VarAssignmentReuseAnnotation) lastStmtSeq.getPayload().getAnnotations()
-						.get(VarAssignmentReuseAnnotation.class.getName());
-			}
-			System.out.println("HIER:  " + lastStmtSeq.getSerialNumber());
-		}
 
 		if (reuseVarAssignmentsOfReachableErrorLocatiosn) {
 			boolean reuse = true;
-			mVAforReuse = annotationOfCurrentTestGoal;
+			boolean negatedReuse = false;
+			getCurrentVA();
 			checkTraceForVAandNONDETS();
-			if (mVAforReuse != null) {
-				final ArrayList<Pair<Term, Term>> varAssignmentPairs = mVAforReuse.mVarAssignmentPair;
-				// TODO trying to reuse always if int
-				if (nondetsInTrace.isEmpty() || annotationOfCurrentTestGoal.mUnsatWithVAs.contains(mVAforReuse)) {
-					// // No Reuse
-					System.out.println("NO REUSE");
-					reuse = false;
+			if (mCurrentVA != null && mVAforReuse == null) {
+				mDefaultVA = mCurrentVA.setDefaultVa(mDefaultVA);
+				mDefaultVA = mCurrentVA.mVAofOppositeBranch.setDefaultVa(mDefaultVA);
+				mVAforReuse = mDefaultVA;
+			}
+
+			if (nondetsInTrace.isEmpty() || mCurrentVA == null || mCurrentVA.mUnsatWithVAs.contains(mVAforReuse)) {
+				System.out.println("NO REUSE");
+				reuse = false;
+			} else {
+				reuse = true;
+				final ArrayList<Term> vaPairsAsTerms = checkIfNondetsOfTraceAreInVA(); // TODO
+
+				if (!vaPairsAsTerms.isEmpty()) {
+					Term varAssignmentConjunction = SmtUtils.and(mMgdScriptTc.getScript(), vaPairsAsTerms);
+					if (mVAforReuse.mNegatedVA == true && !vaPairsAsTerms.isEmpty()) {
+						negatedReuse = true;
+						varAssignmentConjunction = SmtUtils.not(mMgdScriptTc.getScript(), varAssignmentConjunction);
+					}
+					mMgdScriptTc.getScript().push(1);
+					mAnnotateAndAssertCodeBlocks.annotateAndAssertTerm(varAssignmentConjunction, "Int");
+					System.out.println("REUSE: " + varAssignmentConjunction);
 				} else {
-					System.out.println(varAssignmentPairs);
-					reuse = true;
-					final ArrayList<Term> vaPairsAsTerms = checkIfNondetsOfTraceAreInVA(); // TODO
-					if (mVAforReuse.equals(annotationOfCurrentTestGoal)) {
-						System.out.println("CURRENT VA is reused");
-					}
-					if (!vaPairsAsTerms.isEmpty() && reuse) { // TODO Needed?
-						Term varAssignmentConjunction = SmtUtils.and(mMgdScriptTc.getScript(), vaPairsAsTerms);
-						if (mVAforReuse.mIsNegated && !vaPairsAsTerms.isEmpty()) {
-							varAssignmentConjunction = SmtUtils.not(mMgdScriptTc.getScript(), varAssignmentConjunction);
-						}
-						mMgdScriptTc.getScript().push(1);
-						mAnnotateAndAssertCodeBlocks.annotateAndAssertTerm(varAssignmentConjunction, "Int");
-						System.out.println("REUSE: " + varAssignmentConjunction);
-					} else {
-						reuse = false;
-					}
+					reuse = false; // Can be empty if previous test goal is "behind" the current. (loops)
+					// In this case previous test goal has not been checked yet.
+
 				}
 			}
+
 			mSatisfiable = mMgdScriptTc.getScript().checkSat();
+
 			if (mSatisfiable == LBool.UNSAT) {
 				if (reuse) {
-					annotationOfCurrentTestGoal.mUnsatWithVAs.add(mVAforReuse);
+					// annotationOfCurrentTestGoal.mUnsatWithVAs.add(mVAforReuse);
 					// annotationOfCurrentTestGoal.mVAofOppositeBranch.setVa(mVAforReuse.mVarAssignmentPair);
 					System.out.println("REUSE UNSAT");
 
 					mMgdScriptTc.getScript().pop(1);
-					annotationOfCurrentTestGoal.mVAofOppositeBranch.removeCheck();
+					if (lastVaInTraceIsUsedForReuse || mVAforReuse.equals(mDefaultVA)) {
+						if (nondetsInTrace.size() == nondetsInTraceAfterPreviousVA.size()
+								+ mVAforReuse.mVarAssignmentPair.size()) {
+							System.out.println("OtherBranchRemoveCheck");
+							mCurrentVA.mVAofOppositeBranch.removeCheck();
+							mCurrentVA.mVAofOppositeBranch.setVa(mValueAssignmentUsedForReuse, mHighestVaOrderInTrace);
+						} else {
+							System.out.println("No OtherBranch Optimopti Sizes dont match");
+						}
+
+					} else {
+						System.out.println("No OtherBranch Optimopti");
+					}
+
+					mVAforReuse.mNegatedVA = true;
 				}
 				// Hier oder vor der IF
 				mSatisfiable = mMgdScriptTc.getScript().checkSat();
-				if (mSatisfiable == LBool.SAT) {
-					// TODO
-					// register new model for 2nd check
-					// annotationOfCurrentTestGoal.setVa(null);
+				if (reuse) {
+
+					if (mCurrentVA.secondCheck == true) {
+						mVAforReuse.mNegatedVA = false;
+					}
+
 				}
+
 			} else if (reuse) {
 				// register "other branch" as not reachable with this VA. Add negated VA to other branch test goal
 				System.out.println("REUSE SUCCESSFULL");
-				if (!mVAforReuse.equals(annotationOfCurrentTestGoal)) {
-					annotationOfCurrentTestGoal.setVa(mVAforReuse.mVarAssignmentPair);
-					if (mVAforReuse.mIsNegated) {
-						// TODO Instead, VA with actual Model vor 2nd Check
-						// mMgdScriptTc.getScript().getModel();
-						// annotationOfCurrentTestGoal.negateVa(); //TODO ??? ACHTUNG DARF NICHT SEIN
 
-					}
-					if (annotationOfCurrentTestGoal.checkCount == 2) {
-						mVAforReuse.negateVa();
-					}
-
+				if (mCurrentVA.secondCheck == true) {
+					mVAforReuse.mNegatedVA = !mVAforReuse.mNegatedVA;
 				}
+
 				mSucessfulReuse = true;
+			}
+			if (reuse) {
+				mCurrentVA.secondCheck = true;
 			}
 		} else {
 			mSatisfiable = mMgdScriptTc.getScript().checkSat();
-			// TODO no reuse, SAT, second checksat we can reuse
-			// TODO guessed reuse UNSAT, checksat sat, we guess the same for second checksat instead of reusing
 		}
+
 		if (mSatisfiable == LBool.UNKNOWN) {
 			System.out.println("UNKNOWN");
 		}
-
-		annotationOfCurrentTestGoal.checkCount += 1;
 
 		// Report benchmarks
 		mTcbg.reportNewCheckSat();
@@ -249,9 +258,14 @@ public class AnnotateAndAsserter<L extends IAction> {
 	}
 
 	private Term createTermFromVA(final String variableAsString, final Term value) {
-		final FunctionSymbol varInCurrentScript = mMgdScriptTc.getScript().getTheory()
-				.getFunction(variableAsString.substring(1, variableAsString.length() - 1));
-		System.out.println(variableAsString);
+		FunctionSymbol varInCurrentScript =
+				mMgdScriptTc.getScript().getTheory().getDeclaredFunctions().get(variableAsString);
+		if (varInCurrentScript == null) {
+			varInCurrentScript = mMgdScriptTc.getScript().getTheory()
+					.getFunction(variableAsString.substring(1, variableAsString.length() - 1));
+			System.out.println(variableAsString);
+		}
+
 		if (varInCurrentScript == null) {
 			throw new AssertionError("unknown var " + variableAsString);
 		}
@@ -267,7 +281,25 @@ public class AnnotateAndAsserter<L extends IAction> {
 				nondetValue = SmtUtils.unfTerm(mMgdScriptTc.getScript(), valueAsAppterm.getFunction().getName(), null,
 						null, valueAsAppterm.getParameters());
 			} else {
-				throw new AssertionError("TODO FLOATINGPOINT_SORT Default vlaue ");
+				// (fp (_ BitVec 1) (_ BitVec eb) (_ BitVec i) (_ FloatingPoint eb sb))
+				// (_ +zero 2 4)
+
+				final String[] indices = new String[2];
+				indices[0] = "0";
+				indices[1] = "0";
+
+				final Term bvConst0 = SmtUtils.rational2Term(mMgdScriptTc.getScript(), Rational.ZERO,
+						SmtSortUtils.getBitvectorSort(mMgdScriptTc.getScript(), 1));
+				final Term bvConst1 = SmtUtils.rational2Term(mMgdScriptTc.getScript(), Rational.ZERO,
+						SmtSortUtils.getBitvectorSort(mMgdScriptTc.getScript(), 8));
+				final Term bvConst2 = SmtUtils.rational2Term(mMgdScriptTc.getScript(), Rational.ZERO,
+						SmtSortUtils.getBitvectorSort(mMgdScriptTc.getScript(), 23));
+				nondetValue =
+						SmtUtils.unfTerm(mMgdScriptTc.getScript(), "fp", null, null, bvConst0, bvConst1, bvConst2);
+
+				// nondetValue = SmtUtils.unfTerm(mMgdScriptTc.getScript(), "_ FloatingPoint 0 0", indices, SmtSortUtils
+				// .getFloatSort(mMgdScriptTc.getScript(), BigInteger.valueOf(8), BigInteger.valueOf(23)));
+
 			}
 			break;
 		}
@@ -284,12 +316,33 @@ public class AnnotateAndAsserter<L extends IAction> {
 			}
 			break;
 		}
-		default: {
-			nondetValue = SmtUtils.constructIntegerValue(mMgdScriptTc.getScript(),
-					SmtSortUtils.getIntSort(mMgdScriptTc), BigInteger.ZERO);
+		case SmtSortUtils.INT_SORT: {
+
+			if (value != null) {
+				nondetValue = SmtUtils.rational2Term(mMgdScriptTc.getScript(),
+						SmtUtils.toRational(((ConstantTerm) value)), SmtSortUtils.getIntSort(mMgdScriptTc));
+			} else {
+				nondetValue = SmtUtils.constructIntegerValue(mMgdScriptTc.getScript(),
+						SmtSortUtils.getIntSort(mMgdScriptTc), BigInteger.ZERO);
+			}
 			break;
 		}
+		case SmtSortUtils.REAL_SORT: {
+
+			if (value != null) {
+				nondetValue = SmtUtils.rational2Term(mMgdScriptTc.getScript(),
+						SmtUtils.toRational(((ConstantTerm) value)), SmtSortUtils.getRealSort(mMgdScriptTc));
+			} else {
+				nondetValue = SmtUtils.constructIntegerValue(mMgdScriptTc.getScript(),
+						SmtSortUtils.getRealSort(mMgdScriptTc), BigInteger.ZERO);
+			}
+			break;
 		}
+		default: {
+			throw new AssertionError("Unexpected Value Sort");
+		}
+		}
+		mValueAssignmentUsedForReuse.add(new Pair<>(nondetVar, nondetValue));
 		return SmtUtils.binaryEquality(mMgdScriptTc.getScript(), nondetVar, nondetValue);
 	}
 
@@ -311,29 +364,61 @@ public class AnnotateAndAsserter<L extends IAction> {
 				if (mSSA.getTrace().getSymbol(i) instanceof StatementSequence) {
 					final StatementSequence statementBranch = (StatementSequence) mSSA.getTrace().getSymbol(i);
 
-					if (statementBranch.toString().startsWith("havoc")
-							&& statementBranch.toString().contains("nondet")) {
-						final String traceTermAsString = mSSA.getFormulaFromNonCallPos(i).toStringDirect();
-						final Pattern pattern = Pattern.compile("\\|.*nondet\\d[^\\|]*\\|", Pattern.CASE_INSENSITIVE);
-						final Matcher matcher = pattern.matcher(traceTermAsString);
-						if (matcher.find()) {
-							final String match = matcher.group();
-							nondetsInTrace.add(match.toString());
-							nondetNameToType.put(match.toString(),
-									TestVector.getNonDetTypeFromName(statementBranch.getPayload().toString()));
+					if (statementBranch.toString().contains("nondet")) {
+
+						final Set<FunctionSymbol> nonTheorySymbolsInTerm =
+								SmtUtils.extractNonTheoryFunctionSymbols(mSSA.getFormulaFromValidNonCallPos(i));
+
+						for (final FunctionSymbol symbol : nonTheorySymbolsInTerm) {
+							final Matcher m = Pattern.compile("__VERIFIER_nondet_(\\w*)")
+									.matcher(statementBranch.getPayload().toString());
+							if (m.find()) {
+								if (symbol.getName().contains("nondet")) {
+									nondetsInTrace.add(symbol.getName());
+									nondetsInTraceAfterPreviousVA.add(symbol.getName());
+									nondetNameToType.put(symbol.getName(), m.group(1));
+
+								}
+							} else {
+								System.out.println(symbol + " not in payload");
+							}
+
 						}
+
+						// final String traceTermAsString = mSSA.getFormulaFromNonCallPos(i).toStringDirect();
+						// final Pattern pattern =
+						// Pattern.compile("\\|[^\\|]*nondet\\d[^\\|]*\\|", Pattern.CASE_INSENSITIVE);
+						// final Matcher matcher = pattern.matcher(traceTermAsString);
+						// if (matcher.find()) {
+						// final String match = matcher.group();
+
+						// }
 
 					}
 					// If VA in Trace returns last found VA
 					if (statementBranch.getPayload().getAnnotations()
 							.containsKey(VarAssignmentReuseAnnotation.class.getName())) {
-						mVAforReuse = (VarAssignmentReuseAnnotation) statementBranch.getPayload().getAnnotations()
-								.get(VarAssignmentReuseAnnotation.class.getName());
+
+						final VarAssignmentReuseAnnotation reuseCandidate =
+								(VarAssignmentReuseAnnotation) statementBranch.getPayload().getAnnotations()
+										.get(VarAssignmentReuseAnnotation.class.getName());
+						if (mVAforReuse == null || reuseCandidate.mVaOrder >= mVAforReuse.mVaOrder) {
+							mVAforReuse = reuseCandidate;
+							System.out.println("reuseCandidate:  " + statementBranch.getSerialNumber()
+									+ " vaOrderNumber: " + reuseCandidate.mVaOrder);
+							lastVaInTraceIsUsedForReuse = true;
+						} else {
+							System.out.println("Last INtrace:  " + statementBranch.getSerialNumber()
+									+ " vaOrderNumber: " + reuseCandidate.mVaOrder);
+							lastVaInTraceIsUsedForReuse = false;
+						}
+
+						// ACHTUNG, dürfen wirklich nur die nondets sein zwischen currentVA und previousVA
+						nondetsInTraceAfterPreviousVA.clear();
 					}
 				}
 			}
 		}
-
 	}
 
 	/*
@@ -346,6 +431,7 @@ public class AnnotateAndAsserter<L extends IAction> {
 		boolean inputBetweenTestGoals = false;
 		int nondetPositionCount = 0;
 		final TestVector testV = new TestVector();
+
 		for (final String nondet : nondetsInTrace) {
 			boolean nondetNotInVA = true;
 			Term value = null;
@@ -359,10 +445,12 @@ public class AnnotateAndAsserter<L extends IAction> {
 					nondetInVA.add(reuseVaTerm);
 					break;
 				}
+
 			}
 
-			if (nondetNotInVA) {
+			if (nondetNotInVA && nondetsInTraceAfterPreviousVA.contains(nondet)) {
 				// TODO verhindern, dass beim 2.checksat das hier nochmal gemacht wird!!
+
 				System.out.println("ALARM: " + nondet + " not in VA");
 				inputBetweenTestGoals = true;
 				value = null; // null will be used as value zero
@@ -388,6 +476,19 @@ public class AnnotateAndAsserter<L extends IAction> {
 		} catch (final Exception e) {
 			// TODO TestGeneration Auto-generated catch block
 			e.printStackTrace();
+		}
+	}
+
+	private void getCurrentVA() {
+		final L lastStmt = mSSA.getTrace().getSymbol(mSSA.getTrace().length() - 1);
+
+		if (lastStmt instanceof StatementSequence) {
+			final StatementSequence lastStmtSeq = (StatementSequence) lastStmt;
+			if (lastStmtSeq.getPayload().getAnnotations().containsKey(VarAssignmentReuseAnnotation.class.getName())) {
+				mCurrentVA = (VarAssignmentReuseAnnotation) lastStmtSeq.getPayload().getAnnotations()
+						.get(VarAssignmentReuseAnnotation.class.getName());
+			}
+			System.out.println("CurrentVA:  " + lastStmtSeq.getSerialNumber());
 		}
 	}
 }

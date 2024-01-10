@@ -400,6 +400,7 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 	 * Compute program execution in the case that the checked specification is violated (result of trace check is SAT).
 	 */
 	private IcfgProgramExecution<L> computeRcfgProgramExecution(final NestedSsaBuilder<L> nsb) {
+		final int vaOrder = -1;
 		final RelevantVariables<L> relVars =
 				new RelevantVariables<>(mNestedFormulas, mCsToolkit.getModifiableGlobalsTable());
 		final IcfgProgramExecutionBuilder<L> rpeb =
@@ -419,7 +420,20 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 					}
 					rpeb.setBranchEncoders(i, beMapping);
 				}
+			} else if (mTrace.getSymbol(i) instanceof StatementSequence) {
+				final StatementSequence statementBranch = (StatementSequence) mTrace.getSymbol(i);
+
+				// If VA in Trace returns last found VA
+				if (statementBranch.getPayload().getAnnotations()
+						.containsKey(VarAssignmentReuseAnnotation.class.getName())) {
+
+					final VarAssignmentReuseAnnotation reuseCandidate = (VarAssignmentReuseAnnotation) statementBranch
+							.getPayload().getAnnotations().get(VarAssignmentReuseAnnotation.class.getName());
+					reuseCandidate.mVaOrder = vaOrder;
+
+				}
 			}
+
 		}
 
 		final Function<Term, Term> funGetValue;
@@ -432,7 +446,7 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 
 		final boolean mTestGeneration = true;
 		if (mTestGeneration) {
-			final TestVector testV = extractTestVector(nsb, funGetValue, rpeb);
+			final TestVector testV = extractTestVector(nsb, funGetValue, rpeb, vaOrder);
 			// testV.addValuesWithNegativeIndex();
 			System.out.println("Amount Of NonDets in TestCase: " + testV.countNonDets);
 			final boolean mExportTests = true;
@@ -461,7 +475,7 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 
 	// does rpeb.addValueAtVarAssignmentPosition and creates a testVector at the same time
 	private TestVector extractTestVector(final NestedSsaBuilder<L> nsb, final Function<Term, Term> funGetValue,
-			final IcfgProgramExecutionBuilder<L> rpeb) {
+			final IcfgProgramExecutionBuilder<L> rpeb, final int vaOrder) {
 		final TestVector testV = new TestVector();
 		final ArrayList<Term> varAssignment = new ArrayList<Term>();
 		final ArrayList<Pair<Term, Term>> varAssignmentPair = new ArrayList<Pair<Term, Term>>();
@@ -481,30 +495,26 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 							if (evenRepresentative) {
 								if (index >= 0) { // TODO how can this be an issue?
 
-									if (indexedRepresentatives.entrySet().size() == 2) { // not 100sure if 2 is the
-																							// right index
+									// TODO Not sure if save, but by far the best solution
+									if (rpeb.mTrace.asList().get(index) instanceof StatementSequence) {
+										final StatementSequence stsq =
+												(StatementSequence) rpeb.mTrace.asList().get(index);
+										if (stsq.getPayload().toString().contains("nondet")) {
+											final String type =
+													TestVector.getNonDetTypeFromName(stsq.getPayload().toString());
+											testV.addValueAssignment(valueT, index, type);
+											final TermTransferrer test = new TermTransferrer(
+													mCfgManagedScript.getScript(), mTcSmtManager.getScript());
 
-										// TODO Not sure if save, but by far the best solution
-										if (rpeb.mTrace.asList().get(index) instanceof StatementSequence) {
-											final StatementSequence stsq =
-													(StatementSequence) rpeb.mTrace.asList().get(index);
-											if (stsq.getPayload().toString().contains("nondet")) {
-												final String type =
-														TestVector.getNonDetTypeFromName(stsq.getPayload().toString());
-												testV.addValueAssignment(valueT, index, type);
-												final TermTransferrer test = new TermTransferrer(
-														mCfgManagedScript.getScript(), mTcSmtManager.getScript());
-
-												final Term varEqValue =
-														SmtUtils.binaryEquality(mTcSmtManager.getScript(),
-																test.transform(indexedVar), test.transform(valueT));
-												final Pair<Term, Term> varValuePair = new Pair<Term, Term>(
-														test.transform(indexedVar), test.transform(valueT));
-												varAssignmentPair.add(varValuePair);
-												varAssignment.add(varEqValue);
-											}
+											final Term varEqValue = SmtUtils.binaryEquality(mTcSmtManager.getScript(),
+													test.transform(indexedVar), test.transform(valueT));
+											final Pair<Term, Term> varValuePair = new Pair<Term, Term>(
+													test.transform(indexedVar), test.transform(valueT));
+											varAssignmentPair.add(varValuePair);
+											varAssignment.add(varEqValue);
 										}
 									}
+
 								} else {
 									System.out.println("unexpected Index for nondet");
 								}
@@ -528,8 +538,8 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 					.containsKey(VarAssignmentReuseAnnotation.class.getName())) {
 				final VarAssignmentReuseAnnotation vaReuseAnno = (VarAssignmentReuseAnnotation) statementBranch
 						.getPayload().getAnnotations().get(VarAssignmentReuseAnnotation.class.getName());
-				vaReuseAnno.setVa(varAssignmentPair);
-				vaReuseAnno.mIsNegated = false;
+				vaReuseAnno.setVa(varAssignmentPair, vaOrder + 1);
+
 			} else {
 				assert false;// TODO
 			}
