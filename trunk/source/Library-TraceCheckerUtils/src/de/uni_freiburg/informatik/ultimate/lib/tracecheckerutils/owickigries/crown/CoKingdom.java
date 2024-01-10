@@ -98,6 +98,9 @@ final class CoKingdom<PLACE, LETTER> {
 			if (realm.contains(mCondition)) {
 				return false;
 			}
+			if (mNegKingdom.size() > 1) {
+				return true;
+			}
 			final CoRealm<PLACE, LETTER> coRealm = new CoRealm<>(realm, mCondition, bp, placesCoRelation);
 			switch (coRealm.getCoRelation()) {
 			case POSITIVE:

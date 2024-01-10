@@ -25,7 +25,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown;
 
-import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -88,14 +87,10 @@ final class CoRealm<PLACE, LETTER> {
 	 * @return Subset of Realm's conditions for which their places are corelated to the place of condition.
 	 */
 	private Set<Condition<LETTER, PLACE>> getConflictingConditions(final PlacesCoRelation<PLACE> placesCoRelation) {
-		final Set<Condition<LETTER, PLACE>> conflictingConditions = new HashSet<>();
 		final PLACE originalPlace = mCondition.getPlace();
-		for (final Condition<LETTER, PLACE> condition : mRealm.getConditions()) {
-			if (placesCoRelation.getPlacesCorelation(originalPlace, condition.getPlace())) {
-				conflictingConditions.add(condition);
-			}
-		}
-		return conflictingConditions;
+		return mRealm.getConditions().stream()
+				.filter(c -> placesCoRelation.getPlacesCorelation(originalPlace, c.getPlace()))
+				.collect(Collectors.toSet());
 	}
 
 	/**
@@ -114,9 +109,10 @@ final class CoRealm<PLACE, LETTER> {
 	 */
 
 	private CoRelationType getCoRelType() {
-		if (mRealm.getConditions().equals(mPosRealm)) {
+		final int realmSize = mRealm.getConditions().size();
+		if (realmSize == mPosRealm.size()) {
 			return CoRelationType.POSITIVE;
-		} else if (mRealm.getConditions().equals(mNegRealm)) {
+		} else if (realmSize == mNegRealm.size()) {
 			return CoRelationType.NEGATIVE;
 		} else {
 			return CoRelationType.PARTIAL;
