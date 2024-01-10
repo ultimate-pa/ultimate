@@ -182,7 +182,7 @@ public final class Rook<PLACE, LETTER> {
 	 */
 	public Rook<PLACE, LETTER> enactment(final CoRook<PLACE, LETTER> coRook) {
 		final KingdomLaw<PLACE, LETTER> law = new KingdomLaw<>(ImmutableSet.singleton(coRook.getCondition()));
-		return new Rook<>(coRook.getRook().getKingdom(), law);
+		return new Rook<>(getKingdom(), law);
 	}
 
 	/**
@@ -195,7 +195,7 @@ public final class Rook<PLACE, LETTER> {
 	public Rook<PLACE, LETTER> ratification(final CoRook<PLACE, LETTER> coRook) {
 		final Kingdom<PLACE, LETTER> kingdom = new Kingdom<>(ImmutableSet.of(coRook.getCoKingdom().getPosKingdom()));
 		final Set<Condition<LETTER, PLACE>> lawConditions =
-				DataStructureUtils.union(coRook.getRook().getLaw().getConditions(), Set.of(coRook.getCondition()));
+				DataStructureUtils.union(getLaw().getConditions(), Set.of(coRook.getCondition()));
 		final KingdomLaw<PLACE, LETTER> law = new KingdomLaw<>(ImmutableSet.of(lawConditions));
 		return new Rook<>(kingdom, law);
 	}
@@ -217,7 +217,7 @@ public final class Rook<PLACE, LETTER> {
 		Kingdom<PLACE, LETTER> kingdom = mKingdom.removeRealm(partialRealm);
 		partialRealm = partialRealm.removeCondition(partialCoRealm.getNegConditions());
 		kingdom = kingdom.addRealm(partialRealm);
-		final KingdomLaw<PLACE, LETTER> law = coRook.getRook().getLaw().addCondition(coRook.getCondition());
+		final KingdomLaw<PLACE, LETTER> law = getLaw().addCondition(coRook.getCondition());
 		return new Rook<>(kingdom, law);
 	}
 

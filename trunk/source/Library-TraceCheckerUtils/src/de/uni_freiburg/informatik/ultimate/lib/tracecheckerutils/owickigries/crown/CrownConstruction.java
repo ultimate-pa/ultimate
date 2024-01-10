@@ -27,6 +27,7 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.cr
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -135,13 +136,13 @@ public final class CrownConstruction<PLACE, LETTER> {
 		mLogger.debug("Starting Colonization...");
 		final Set<Rook<PLACE, LETTER>> reSet = new HashSet<>();
 		for (final Rook<PLACE, LETTER> rook : colonizedRooks) {
-			reSet.addAll(crownExpansionIterative(rook, new ArrayList<>(mOrigConds), true));
+			reSet.addAll(crownExpansionIterative2(rook, new ArrayList<>(mOrigConds), true));
 		}
 		mRejectedPairs.clear();
 		colonizedRooks.clear();
 		mLogger.debug("Starting Legislation...");
 		for (final Rook<PLACE, LETTER> rook : reSet) {
-			colonizedRooks.addAll(crownExpansionIterative(rook, new ArrayList<>(mAssertConds), false));
+			colonizedRooks.addAll(crownExpansionIterative2(rook, new ArrayList<>(mAssertConds), false));
 		}
 
 		// remove pre-rooks
@@ -164,7 +165,8 @@ public final class CrownConstruction<PLACE, LETTER> {
 			}
 			Rook<PLACE, LETTER> colonyRook;
 			if (colonizer) {
-				colonyRook = colonize(condition, rook);
+				final Pair<Rook<PLACE, LETTER>, Boolean> colonyPair = colonize(condition, rook);
+				colonyRook = colonyPair.getFirst();
 			} else {
 				colonyRook = legislate(condition, rook);
 			}
@@ -184,7 +186,6 @@ public final class CrownConstruction<PLACE, LETTER> {
 		return crownRooks;
 	}
 
-	// Iterative expansion using two stacks
 	private Set<Rook<PLACE, LETTER>> crownExpansionIterative(final Rook<PLACE, LETTER> rook,
 			final List<Condition<LETTER, PLACE>> troopConditions, final boolean colonizer) {
 		final Set<Rook<PLACE, LETTER>> crownRooks = new HashSet<>();
@@ -204,7 +205,7 @@ public final class CrownConstruction<PLACE, LETTER> {
 				}
 				Rook<PLACE, LETTER> colonyRook;
 				if (colonizer) {
-					colonyRook = colonize(condition, currentRook);
+					colonyRook = colonize(condition, currentRook).getFirst();
 				} else {
 					colonyRook = legislate(condition, currentRook);
 				}
@@ -223,6 +224,62 @@ public final class CrownConstruction<PLACE, LETTER> {
 			}
 			if (rookStack.isEmpty()) {
 				break;
+			}
+		}
+
+		return crownRooks;
+	}
+
+	// Iterative expansion using BFS
+	private Set<Rook<PLACE, LETTER>> crownExpansionIterative2(final Rook<PLACE, LETTER> rook,
+			final List<Condition<LETTER, PLACE>> troopConditions, final boolean colonizer) {
+		final Set<Rook<PLACE, LETTER>> crownRooks = new HashSet<>();
+		final HashDeque<Rook<PLACE, LETTER>> rookStack = new HashDeque<>();
+		final HashMap<Rook<PLACE, LETTER>, List<Condition<LETTER, PLACE>>> rookConditionMap = new HashMap<>();
+		rookStack.offer(rook);
+		rookConditionMap.put(rook, troopConditions);
+		boolean isMaximal = true;
+		while (!(rookStack.isEmpty())) {
+			final Rook<PLACE, LETTER> currentRook = rookStack.poll();
+			final List<Condition<LETTER, PLACE>> currentConditions =
+					rookConditionMap.computeIfAbsent(currentRook, r -> troopConditions);
+			isMaximal = true;
+			final Set<Condition<LETTER, PLACE>> conditions = new HashSet<>(currentConditions);
+			for (int i = 0; i < currentConditions.size(); i++) {
+				final Condition<LETTER, PLACE> condition = currentConditions.get(i);
+				final Pair<Condition<LETTER, PLACE>, Rook<PLACE, LETTER>> pair = new Pair<>(condition, currentRook);
+				if (mRejectedPairs.contains(pair)) {
+					continue;
+				}
+				Rook<PLACE, LETTER> colonyRook;
+				boolean useAllConds;
+				if (colonizer) {
+					final Pair<Rook<PLACE, LETTER>, Boolean> colonyPair = colonize(condition, currentRook);
+					colonyRook = colonyPair.getFirst();
+					useAllConds = colonyPair.getSecond().booleanValue();
+				} else {
+					colonyRook = legislate(condition, currentRook);
+					useAllConds = false;
+				}
+				if (colonyRook == null) {
+					conditions.remove(condition);
+					mRejectedPairs.add(pair);
+					continue;
+				}
+				isMaximal = false;
+				final List<Condition<LETTER, PLACE>> ntroops;
+				if (useAllConds) {
+					ntroops = currentConditions.stream().filter(cond -> !cond.equals(condition))
+							.collect(Collectors.toList());
+				} else {
+					ntroops = conditions.stream().filter(cond -> !cond.equals(condition)).collect(Collectors.toList());
+				}
+				rookStack.offer(colonyRook);
+				rookConditionMap.put(colonyRook, ntroops);
+			}
+
+			if (isMaximal) {
+				crownRooks.add(currentRook);
 			}
 		}
 
@@ -276,14 +333,17 @@ public final class CrownConstruction<PLACE, LETTER> {
 		return rooks;
 	}
 
-	private Rook<PLACE, LETTER> colonize(final Condition<LETTER, PLACE> condition, final Rook<PLACE, LETTER> rook) {
+	private Pair<Rook<PLACE, LETTER>, Boolean> colonize(final Condition<LETTER, PLACE> condition,
+			final Rook<PLACE, LETTER> rook) {
 		final boolean colonizer = isColonizer(condition);
 		final CoRook<PLACE, LETTER> coRook = new CoRook<>(condition, rook, mBp, colonizer, mPlacesCoRelation);
 		Rook<PLACE, LETTER> colonyRook;
+		Boolean useAllConds = false;
 		final ColonizationType colonizationType = coRook.getColonization();
 		switch (colonizationType) {
 		case EXPANSION:
 			colonyRook = rook.expansion(condition);
+			useAllConds = rook.getKingdom().size() < 2;
 			break;
 		case IMMIGRATION_AND_FOUNDATION:
 			colonyRook = rook.immigrationAndFoundation(coRook, mBp, mPlacesCoRelation);
@@ -296,7 +356,7 @@ public final class CrownConstruction<PLACE, LETTER> {
 		if (colonyRook != null) {
 			mLogger.debug("Constructed new Rook: " + colonyRook.toString());
 		}
-		return colonyRook;
+		return new Pair<>(colonyRook, useAllConds);
 	}
 
 	private Rook<PLACE, LETTER> legislate(final Condition<LETTER, PLACE> condition, final Rook<PLACE, LETTER> rook) {
