@@ -104,10 +104,10 @@ public class ConditionalCommutativityChecker<L extends IAction> implements ICond
 		
 		if (mCriterion.decide(state, letter1, letter2)) {
 			IPredicate condition;
-			if (true) {
-				condition = mGenerator.generateCondition(letter1.getTransformula(), letter2.getTransformula());
-			} else {
+			if (!state.getFormula().toString().equals("don't care")) { 
 				condition = mGenerator.generateCondition(state, letter1.getTransformula(), letter2.getTransformula());
+			} else {
+				condition = mGenerator.generateCondition(letter1.getTransformula(), letter2.getTransformula());
 			}
 			
 			if (mCriterion.decide(condition)) {
