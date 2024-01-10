@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.ITraceChecker;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
 
 /**
  * A provider class for the PartialOrderCegarLoop which can be called to extend the current interpolant automaton 
@@ -113,25 +114,29 @@ public class ConditionalCommutativityInterpolantProvider<L extends IAction> {
 			final NestedWordAutomaton<L, IPredicate> interpolantAutomaton) {
 		mRun = run;
 		mCopy = createCopy(interpolantAutomaton);
-		for (final IPredicate state : mRun.getStateSequence()) {
+		int a=0;
+		for (IPredicate state : mRun.getStateSequence()) {
+			//state = ((SleepPredicate) state);
 			final Iterator<OutgoingInternalTransition<L, IPredicate>> iterator =
-					mReduction.internalSuccessors(state).iterator();
-
+					mReduction.internalSuccessors(((SleepPredicate) state).getUnderlying()).iterator();
 			final List<OutgoingInternalTransition<L, IPredicate>> transitions = new ArrayList<>();
 			while (iterator.hasNext()) {
 				transitions.add(iterator.next());
 			}
-
+			int b=0;
 			for (int j = 0; j < transitions.size(); j++) {
 				final OutgoingInternalTransition<L, IPredicate> transition1 = transitions.get(j);
 				for (int k = j + 1; k < transitions.size(); k++) {
 					final OutgoingInternalTransition<L, IPredicate> transition2 = transitions.get(k);
 					final TracePredicates tracePredicates = mChecker.checkConditionalCommutativity(mRun, state,
 							transition1.getLetter(), transition2.getLetter());
+
 					List<IPredicate> conPredicates = new ArrayList<>();
-					conPredicates.addAll(tracePredicates.getPredicates());
-					conPredicates.add(tracePredicates.getPostcondition());
-					addToCopy(conPredicates);
+					if (tracePredicates != null) {
+						conPredicates.addAll(tracePredicates.getPredicates());
+						conPredicates.add(tracePredicates.getPostcondition());
+						addToCopy(conPredicates);
+					}
 				}
 			}
 		}
@@ -139,14 +144,12 @@ public class ConditionalCommutativityInterpolantProvider<L extends IAction> {
 	}
 
 	private void addToCopy(final List<IPredicate> conPredicates) {
-		if (conPredicates != null) {
 			// add states and transitions to copy
-			mCopy.addState(true, false, conPredicates.get(0));
-			for (Integer i = 1; i < conPredicates.size(); i++) {
-				final IPredicate succPred = conPredicates.get(i);
-				mCopy.addState(false, i.equals(conPredicates.size() - 1), succPred);
-				mCopy.addInternalTransition(conPredicates.get(i - 1), mRun.getWord().getSymbol(i - 1), succPred);
-			}
+		mCopy.addState(true, false, conPredicates.get(0));
+		for (Integer i = 1; i < conPredicates.size(); i++) {
+			final IPredicate succPred = conPredicates.get(i);
+			mCopy.addState(false, i.equals(conPredicates.size() - 1), succPred);
+			mCopy.addInternalTransition(conPredicates.get(i - 1), mRun.getWord().getSymbol(i - 1), succPred);
 		}
 	}
 
@@ -161,16 +164,24 @@ public class ConditionalCommutativityInterpolantProvider<L extends IAction> {
 		// DFS trough interpolantAutomaton to copy states and transitions
 		final Deque<IPredicate> deque = new ArrayDeque<>();
 		deque.addAll(interpolantAutomaton.getInitialStates());
+		for (IPredicate initState : interpolantAutomaton.getInitialStates()) {
+			copy.addState(true, interpolantAutomaton.isFinal(initState), initState);
+		}
 		while (!deque.isEmpty()) {
 			final IPredicate state = deque.pop();
-			if (!copy.contains(state)) {
-				copy.addState(interpolantAutomaton.isInitial(state), interpolantAutomaton.isFinal(state), state);
+			//if (!copy.contains(state)) {
+				//copy.addState(interpolantAutomaton.isInitial(state), interpolantAutomaton.isFinal(state), state);
 				for (final OutgoingInternalTransition<L, IPredicate> transition : interpolantAutomaton
 						.internalSuccessors(state)) {
-					copy.addInternalTransition(state, transition.getLetter(), transition.getSucc());
-					deque.push(transition.getSucc());
+					IPredicate sucState = transition.getSucc();
+					if (!copy.contains(sucState)) {
+						copy.addState(false, interpolantAutomaton.isFinal(sucState), sucState);
+						deque.push(sucState);
+					}
+					copy.addInternalTransition(state, transition.getLetter(), sucState);
+					//deque.push(transition.getSucc());
 				}
-			}	
+			//}	
 		}
 		return copy;
 	}

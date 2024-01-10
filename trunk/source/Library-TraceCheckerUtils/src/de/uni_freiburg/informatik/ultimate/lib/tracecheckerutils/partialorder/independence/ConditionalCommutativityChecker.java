@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.ITraceChecker;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -102,8 +103,13 @@ public class ConditionalCommutativityChecker<L extends IAction> implements ICond
 		}
 		
 		if (mCriterion.decide(state, letter1, letter2)) {
-			final IPredicate condition = mGenerator.generateCondition(state, letter1.getTransformula(),
-					letter2.getTransformula());
+			IPredicate condition;
+			if (true) {
+				condition = mGenerator.generateCondition(letter1.getTransformula(), letter2.getTransformula());
+			} else {
+				condition = mGenerator.generateCondition(state, letter1.getTransformula(), letter2.getTransformula());
+			}
+			
 			if (mCriterion.decide(condition)) {
 				return mTraceChecker.checkTrace(run, null, condition);
 			}
