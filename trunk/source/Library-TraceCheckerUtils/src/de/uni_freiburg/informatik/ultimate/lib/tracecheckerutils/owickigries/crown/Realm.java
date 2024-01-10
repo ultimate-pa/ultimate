@@ -26,6 +26,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
@@ -51,6 +52,8 @@ public final class Realm<PLACE, LETTER> {
 	 * The set of conditions in realm.
 	 */
 	private final ImmutableSet<Condition<LETTER, PLACE>> mRealm;
+
+	private final HashMap<Condition<LETTER, PLACE>, CoRealm<PLACE, LETTER>> mCoRealms = new HashMap<>();
 
 	public Realm(final ImmutableSet<Condition<LETTER, PLACE>> realm) {
 		assert !realm.isEmpty() : "Realm is empty";
@@ -183,7 +186,7 @@ public final class Realm<PLACE, LETTER> {
 	 */
 	public CoRealm<PLACE, LETTER> getCoRealm(final Condition<LETTER, PLACE> condition,
 			final BranchingProcess<LETTER, PLACE> bp, final PlacesCoRelation<PLACE> placesCoRelation) {
-		return new CoRealm<>(this, condition, bp, placesCoRelation);
+		return mCoRealms.computeIfAbsent(condition, c -> new CoRealm<>(this, c, bp, placesCoRelation));
 	}
 
 	/**

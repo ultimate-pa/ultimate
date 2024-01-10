@@ -101,7 +101,7 @@ final class CoKingdom<PLACE, LETTER> {
 			if (mNegKingdom.size() > 1) {
 				return true;
 			}
-			final CoRealm<PLACE, LETTER> coRealm = new CoRealm<>(realm, mCondition, bp, placesCoRelation);
+			final CoRealm<PLACE, LETTER> coRealm = realm.getCoRealm(mCondition, bp, placesCoRelation);
 			switch (coRealm.getCoRelation()) {
 			case POSITIVE:
 				mPosKingdom.add(realm);
