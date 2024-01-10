@@ -137,14 +137,21 @@ public final class Rook<PLACE, LETTER> {
 	 */
 	public Rook<PLACE, LETTER> immigrationAndFoundation(final CoRook<PLACE, LETTER> coRook,
 			final BranchingProcess<LETTER, PLACE> bp, final PlacesCoRelation<PLACE> placesCoRelation) {
+		final Realm<PLACE, LETTER> negativeRealm = getNegKingdom(coRook);
+		final CoRealm<PLACE, LETTER> negativeCoRealm =
+				negativeRealm.getCoRealm(coRook.getCondition(), bp, placesCoRelation);
 		final Set<Realm<PLACE, LETTER>> newRealms =
 				getKingdom().getRealms().stream().collect(Collectors.toCollection(HashSet::new));
-		newRealms.remove(getNegKingdom(coRook));
-		Set<Condition<LETTER, PLACE>> conflictFreeConditions =
-				coRook.getCoKingdom().getConflictFreeConditions(bp, placesCoRelation);
-		conflictFreeConditions = DataStructureUtils.union(conflictFreeConditions, Set.of(coRook.getCondition()));
-		final Realm<PLACE, LETTER> newRealm = new Realm<>(ImmutableSet.of(conflictFreeConditions));
-		newRealms.add(newRealm);
+		newRealms.remove(negativeRealm);
+		if (negativeCoRealm.getConflict() == ConflictType.CONFLICT_FREE) {
+			negativeRealm.addCondition(coRook.getCondition());
+			newRealms.add(negativeRealm);
+		} else {
+			Set<Condition<LETTER, PLACE>> conflictFreeConditions = negativeCoRealm.getConflictFreeSet();
+			conflictFreeConditions = DataStructureUtils.union(conflictFreeConditions, Set.of(coRook.getCondition()));
+			final Realm<PLACE, LETTER> newRealm = new Realm<>(ImmutableSet.of(conflictFreeConditions));
+			newRealms.add(newRealm);
+		}
 		final Kingdom<PLACE, LETTER> kingdom = new Kingdom<>(ImmutableSet.of(newRealms));
 		return new Rook<>(kingdom, getLaw());
 	}

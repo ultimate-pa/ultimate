@@ -25,6 +25,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown;
 
+import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -69,7 +70,13 @@ final class CoRealm<PLACE, LETTER> {
 		mNegRealm = DataStructureUtils.difference(mRealm.getConditions(), mPosRealm);
 		mCoRel = getCoRelType();
 		mConflictingConditions = getConflictingConditions(placesCoRelation);
-		mConflictFreeConditions = DataStructureUtils.difference(mRealm.getConditions(), mConflictingConditions);
+		if (mConflictingConditions.isEmpty()) {
+			mConflictFreeConditions = mRealm.getConditions().stream().collect(Collectors.toSet());
+		} else if (mConflictingConditions.size() == mRealm.getConditions().size()) {
+			mConflictFreeConditions = Collections.emptySet();
+		} else {
+			mConflictFreeConditions = DataStructureUtils.difference(mRealm.getConditions(), mConflictingConditions);
+		}
 		mConflictType = getConflictType();
 	}
 
