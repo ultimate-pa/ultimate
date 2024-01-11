@@ -144,7 +144,7 @@ public final class Rook<PLACE, LETTER> {
 				getKingdom().getRealms().stream().collect(Collectors.toCollection(HashSet::new));
 		newRealms.remove(negativeRealm);
 		if (negativeCoRealm.getConflict() == ConflictType.CONFLICT_FREE) {
-			return coRook.getRook();
+			return this;
 		}
 		Set<Condition<LETTER, PLACE>> conflictFreeConditions = negativeCoRealm.getConflictFreeSet();
 		conflictFreeConditions = DataStructureUtils.union(conflictFreeConditions, Set.of(coRook.getCondition()));
