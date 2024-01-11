@@ -61,11 +61,18 @@ public final class Rook<PLACE, LETTER> {
 	 */
 	private final KingdomLaw<PLACE, LETTER> mLaw;
 
+	private final int mHashCode;
+
 	private Boolean mContainsNonCut = null;
 
 	public Rook(final Kingdom<PLACE, LETTER> kingdom, final KingdomLaw<PLACE, LETTER> law) {
 		mKingdom = kingdom;
 		mLaw = law;
+		mHashCode = getHashCode();
+	}
+
+	private int getHashCode() {
+		return Objects.hash(mKingdom, mLaw);
 	}
 
 	private boolean isCut(final Set<Condition<LETTER, PLACE>> possibleCut, final BranchingProcess<LETTER, PLACE> bp) {
@@ -143,9 +150,6 @@ public final class Rook<PLACE, LETTER> {
 		final Set<Realm<PLACE, LETTER>> newRealms =
 				getKingdom().getRealms().stream().collect(Collectors.toCollection(HashSet::new));
 		newRealms.remove(negativeRealm);
-		if (negativeCoRealm.getConflict() == ConflictType.CONFLICT_FREE) {
-			return this;
-		}
 		Set<Condition<LETTER, PLACE>> conflictFreeConditions = negativeCoRealm.getConflictFreeSet();
 		conflictFreeConditions = DataStructureUtils.union(conflictFreeConditions, Set.of(coRook.getCondition()));
 		final Realm<PLACE, LETTER> newRealm = new Realm<>(ImmutableSet.of(conflictFreeConditions));
@@ -355,7 +359,7 @@ public final class Rook<PLACE, LETTER> {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(mKingdom, mLaw);
+		return mHashCode;
 	}
 
 	@Override

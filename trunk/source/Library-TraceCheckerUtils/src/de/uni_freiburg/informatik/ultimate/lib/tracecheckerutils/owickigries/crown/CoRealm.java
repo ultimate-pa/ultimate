@@ -81,7 +81,7 @@ final class CoRealm<PLACE, LETTER> {
 	/**
 	 * @param placesCoRelation
 	 *            Object which was initialized with the bp we want to create a proof for
-	 * @return Subset of Realm's conditions for which their places are corelated to the place of condition.
+	 * @return Subset of Realm's conditions for which their places are not corelated to the place of condition.
 	 */
 	private Set<Condition<LETTER, PLACE>> getConflicFreeConditions(final PlacesCoRelation<PLACE> placesCoRelation) {
 		final PLACE originalPlace = mCondition.getPlace();

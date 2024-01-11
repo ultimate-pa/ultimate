@@ -30,8 +30,8 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire.Territory;
@@ -81,9 +81,10 @@ class TerritoryLaw<PLACE> {
 	 */
 	final private <LETTER> IPredicate getRooksAssertion(final KingdomLaw<PLACE, LETTER> rookLaw) {
 		final Set<IPredicate> rooksAssertion = new HashSet<>();
-		final Set<Condition<LETTER, PLACE>> assertionConditions = rookLaw.getConditions();
-		for (final Condition<LETTER, PLACE> condition : assertionConditions) {
-			final IPredicate assertion = mPlaceToAssertion.apply(condition.getPlace());
+		final Set<PLACE> assertionPlaces =
+				rookLaw.getConditions().stream().map(c -> c.getPlace()).collect(Collectors.toSet());
+		for (final PLACE place : assertionPlaces) {
+			final IPredicate assertion = mPlaceToAssertion.apply(place);
 			rooksAssertion.add(assertion);
 		}
 		return mFactory.and(rooksAssertion);
