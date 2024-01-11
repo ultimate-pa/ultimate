@@ -25,7 +25,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown;
 
-import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -50,8 +49,6 @@ final class CoRealm<PLACE, LETTER> {
 	 */
 	private final Set<Condition<LETTER, PLACE>> mNegRealm;
 
-	private final Set<Condition<LETTER, PLACE>> mConflictingConditions;
-
 	private final Set<Condition<LETTER, PLACE>> mConflictFreeConditions;
 
 	/**
@@ -69,14 +66,7 @@ final class CoRealm<PLACE, LETTER> {
 		mPosRealm = getPosRealm();
 		mNegRealm = DataStructureUtils.difference(mRealm.getConditions(), mPosRealm);
 		mCoRel = getCoRelType();
-		mConflictingConditions = getConflictingConditions(placesCoRelation);
-		if (mConflictingConditions.isEmpty()) {
-			mConflictFreeConditions = mRealm.getConditions().stream().collect(Collectors.toSet());
-		} else if (mConflictingConditions.size() == mRealm.getConditions().size()) {
-			mConflictFreeConditions = Collections.emptySet();
-		} else {
-			mConflictFreeConditions = DataStructureUtils.difference(mRealm.getConditions(), mConflictingConditions);
-		}
+		mConflictFreeConditions = getConflicFreeConditions(placesCoRelation);
 		mConflictType = getConflictType();
 	}
 
@@ -93,10 +83,10 @@ final class CoRealm<PLACE, LETTER> {
 	 *            Object which was initialized with the bp we want to create a proof for
 	 * @return Subset of Realm's conditions for which their places are corelated to the place of condition.
 	 */
-	private Set<Condition<LETTER, PLACE>> getConflictingConditions(final PlacesCoRelation<PLACE> placesCoRelation) {
+	private Set<Condition<LETTER, PLACE>> getConflicFreeConditions(final PlacesCoRelation<PLACE> placesCoRelation) {
 		final PLACE originalPlace = mCondition.getPlace();
 		return mRealm.getConditions().stream()
-				.filter(c -> placesCoRelation.getPlacesCorelation(originalPlace, c.getPlace()))
+				.filter(c -> !placesCoRelation.getPlacesCorelation(originalPlace, c.getPlace()))
 				.collect(Collectors.toSet());
 	}
 
@@ -133,10 +123,6 @@ final class CoRealm<PLACE, LETTER> {
 
 	public ConflictType getConflict() {
 		return mConflictType;
-	}
-
-	public Set<Condition<LETTER, PLACE>> getConflictingSet() {
-		return mConflictingConditions;
 	}
 
 	public Set<Condition<LETTER, PLACE>> getConflictFreeSet() {
