@@ -30,6 +30,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -235,7 +236,7 @@ public final class CrownConstruction<PLACE, LETTER> {
 			final List<Condition<LETTER, PLACE>> troopConditions, final boolean colonizer) {
 		final Set<Rook<PLACE, LETTER>> crownRooks = new HashSet<>();
 		final HashDeque<Rook<PLACE, LETTER>> rookStack = new HashDeque<>();
-		final HashMap<Rook<PLACE, LETTER>, List<Condition<LETTER, PLACE>>> rookConditionMap = new HashMap<>();
+		final Map<Rook<PLACE, LETTER>, List<Condition<LETTER, PLACE>>> rookConditionMap = new HashMap<>();
 		rookStack.offer(rook);
 		rookConditionMap.put(rook, troopConditions);
 		boolean isMaximal = true;
@@ -351,10 +352,9 @@ public final class CrownConstruction<PLACE, LETTER> {
 		default:
 			colonyRook = null;
 		}
-		mLogger.debug("Applied: [" + colonizationType.toString() + "] to Rook: " + rook.toString()
-				+ " with colonizer: [" + condition.toString() + "]");
+		mLogger.debug("Applied: [%s] to Rook: %s with colonizer: [%s]", colonizationType, rook, condition);
 		if (colonyRook != null) {
-			mLogger.debug("Constructed new Rook: " + colonyRook.toString());
+			mLogger.debug("Constructed new Rook: %s", colonyRook);
 		}
 		return new Pair<>(colonyRook, useAllConds);
 	}
@@ -383,10 +383,9 @@ public final class CrownConstruction<PLACE, LETTER> {
 		default:
 			colonyRook = null;
 		}
-		mLogger.debug("Applied: [" + legislationType.toString() + "] to Rook: " + rook.toString()
-				+ " with bill condition: [" + condition.toString() + "]");
+		mLogger.debug("Applied: [%s] to Rook: %s with colonizer: [%s]", legislationType, rook, condition);
 		if (colonyRook != null) {
-			mLogger.debug("Constructed new Rook: " + colonyRook.toString());
+			mLogger.debug("Constructed new Rook: %s", colonyRook);
 		}
 		return colonyRook;
 	}
