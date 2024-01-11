@@ -136,7 +136,7 @@ public class YamlWitnessParser {
 		}
 		case LoopInvariant.NAME: {
 			final Invariant invariant = new Invariant((String) setEntry.get("value"), "assertion", format);
-			return new LocationInvariant(newMetadata, location, invariant);
+			return new LoopInvariant(newMetadata, location, invariant);
 		}
 		case FunctionContract.NAME:
 			if (metadata.getFormatVersion().getMajor() < 3) {
