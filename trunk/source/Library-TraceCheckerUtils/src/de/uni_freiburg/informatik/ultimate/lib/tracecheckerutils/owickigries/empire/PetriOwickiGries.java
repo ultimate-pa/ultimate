@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Event;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.ICoRelation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
@@ -117,6 +118,8 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 		mOriginalConditions = getOrigConditions();
 		mAssertionConditions = DataStructureUtils.difference(mConditions, mOriginalConditions);
 
+		mLogger.setLevel(LogLevel.INFO);
+
 		final long cutoffs = bp.getConditions().stream().filter(c -> c.getPredecessorEvent().isCutoffEvent()).count();
 		mLogger.info(
 				"Constructing Owicki-Gries proof for Petri program that %s and unfolding that %s."
@@ -126,14 +129,14 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 				mOriginalConditions.size(), mAssertionConditions.size());
 
 		mCrown = getCrown();
-		mLogger.info("Constructed Crown:\n%s", mCrown);
+		mLogger.debug("Constructed Crown:\n%s", mCrown);
 
 		mEmpireAnnotation = getEmpireAnnotation(placeToAssertion);
-		mLogger.info("Constructed Empire Annotation:\n%s", mEmpireAnnotation);
+		mLogger.debug("Constructed Empire Annotation:\n%s", mEmpireAnnotation);
 		assert checkEmpireValidity() : "Empire annotation is invalid";
 
 		mOwickiGriesAnnotation = getOwickiGriesAnnotation();
-		mLogger.info("Computed Owicki-Gries annotation:\n%s", mOwickiGriesAnnotation);
+		mLogger.debug("Computed Owicki-Gries annotation:\n%s", mOwickiGriesAnnotation);
 		assert checkOwickiGriesValidity() : "Owicki Gries annotation is invalid";
 	}
 
