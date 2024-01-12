@@ -421,6 +421,10 @@ public class InvariantChecker {
 						// does not belong to search space
 						continue;
 					}
+					if (seenForward.contains(succEdge)) {
+						// already visited
+						continue;
+					}
 					seenForward.add(succEdge);
 					worklistForward.add(succEdge);
 				}
