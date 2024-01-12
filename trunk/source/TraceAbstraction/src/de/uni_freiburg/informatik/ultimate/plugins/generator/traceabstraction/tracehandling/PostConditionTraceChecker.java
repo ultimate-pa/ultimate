@@ -36,10 +36,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.TaskIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.ITraceCheckStrategyModule;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.ITraceChecker;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolatingTraceCheck;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IPostconditionProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IPreconditionProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine.ITARefinementStrategy;
 
 /**
@@ -57,7 +56,7 @@ public class PostConditionTraceChecker<L extends IIcfgTransition<?>> implements 
 	private TaskIdentifier mTaskIdentifier;
 	private IEmptyStackStateFactory<IPredicate> mEmptyStackFactory;
 	private StrategyFactory<L> mStrategyFactory;
-
+	private IPredicateUnifier mPredicateUnifier;
 	/**
 	 * Constructs a PostConditionTraceChecker.
 	 *
@@ -70,31 +69,46 @@ public class PostConditionTraceChecker<L extends IIcfgTransition<?>> implements 
 	 * @param taskIdentifier
 	 *			  Task identifier.
 	 * @param emptyStackStateFactory
-	 *            Factory.  
+	 *            Factory. 
+	 * @param predicateUnifier
+	 *            predicate unifier. 
 	 * @param strategyFactory
 	 *            Strategy factory.    
 	 */
 	public PostConditionTraceChecker(final IUltimateServiceProvider services,
 			final IAutomaton<L, IPredicate> abstraction, final TaskIdentifier taskIdentifier,
-			IEmptyStackStateFactory<IPredicate> emptyStackStateFactory, StrategyFactory<L> strategyFactory) {
+			IEmptyStackStateFactory<IPredicate> emptyStackStateFactory, IPredicateUnifier predicateUnifier,
+			StrategyFactory<L> strategyFactory) {
 
 		mServices = services;
 		mAbstraction = abstraction;
 		mTaskIdentifier = taskIdentifier;
 		mEmptyStackFactory = emptyStackStateFactory;
+		mPredicateUnifier = predicateUnifier;
 		mStrategyFactory = strategyFactory;
+		
 	}
 
 	@Override
 	public TracePredicates checkTrace(IRun<L, IPredicate> run, IPredicate precondition, IPredicate postCondition) {
-		ITARefinementStrategy<L> strategy = mStrategyFactory.constructStrategy(mServices, run, mAbstraction,
-				mTaskIdentifier, mEmptyStackFactory, IPreconditionProvider.constructDefaultPreconditionProvider(),
-				new PostConditionProvider(postCondition));
+		
+		ITARefinementStrategy<L> strategy =	mStrategyFactory.constructStrategy(mServices, run, mAbstraction,
+				mTaskIdentifier, mEmptyStackFactory, mPredicateUnifier, mPredicateUnifier.getTruePredicate(),
+				mPredicateUnifier.getOrConstructPredicate(postCondition), RefinementStrategy.SMTINTERPOL);
+		/*mStrategyFactory.constructStrategy(mServices, run, mAbstraction,
+		mTaskIdentifier, mEmptyStackFactory, IPreconditionProvider.constructDefaultPreconditionProvider(),
+		new PostConditionProvider(postCondition));*/
+		
 		while (strategy.hasNextFeasilibityCheck()) {
 			ITraceCheckStrategyModule<L, ?> check = strategy.nextFeasibilityCheck();
-			
-			if (check.isCorrect().equals(LBool.UNSAT) && check instanceof InterpolatingTraceCheck) {
-				return ((InterpolatingTraceCheck<?>) check).getIpp();
+			//boolean test = check.isCorrect().equals(LBool.UNSAT);
+			if (check.isCorrect().equals(LBool.UNSAT)) {
+				if (check instanceof IpTcStrategyModuleSmtInterpolCraig) {
+					return ((IpTcStrategyModuleSmtInterpolCraig) check).construct().getIpp();
+				} else if (check instanceof IpTcStrategyModuleSmtInterpolSpWp) {
+					return ((IpTcStrategyModuleSmtInterpolSpWp) check).construct().getIpp();
+				}
+				//return ((InterpolatingTraceCheck<?>) check).getIpp();
 			}
 		}
 		return null;

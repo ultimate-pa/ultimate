@@ -206,10 +206,10 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		}
 		//random criterion for testing, should later on be replaced by a setting
 		RandomCriterion<L, IPredicate> criterion = new RandomCriterion<>(1, 321);
-		PostConditionTraceChecker<L> checker = new PostConditionTraceChecker<>(mServices, mAbstraction, mTaskIdentifier,
-				mFactory, mStrategyFactory);
+		PostConditionTraceChecker<L> checker = new PostConditionTraceChecker<>(mServices, mAbstraction,
+				mTaskIdentifier, mFactory, predicateUnifier, mStrategyFactory);
 		SemanticIndependenceConditionGenerator generator = new SemanticIndependenceConditionGenerator(mServices,
-				mCsToolkit.getManagedScript(), mPredicateFactory, true);
+				mCsToolkit.getManagedScript(), mPredicateFactory, true, true);
 		ConditionalCommutativityInterpolantProvider<L> conInterpolantProvider
 		= new ConditionalCommutativityInterpolantProvider<>(
 				mServices, criterion, mPOR.getIndependence(0), generator, mAbstraction, mAbstraction,

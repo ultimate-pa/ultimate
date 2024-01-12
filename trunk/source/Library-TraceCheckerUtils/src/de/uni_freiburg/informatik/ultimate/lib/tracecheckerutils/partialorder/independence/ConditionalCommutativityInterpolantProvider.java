@@ -137,9 +137,11 @@ public class ConditionalCommutativityInterpolantProvider<L extends IAction> {
 
 					List<IPredicate> conPredicates = new ArrayList<>();
 					if (tracePredicates != null) {
+						conPredicates.add(tracePredicates.getPrecondition());
 						conPredicates.addAll(tracePredicates.getPredicates());
 						conPredicates.add(tracePredicates.getPostcondition());
 						addToCopy(conPredicates);
+						//int debug3 = 0;
 					}
 				}
 			}
@@ -149,10 +151,14 @@ public class ConditionalCommutativityInterpolantProvider<L extends IAction> {
 
 	private void addToCopy(final List<IPredicate> conPredicates) {
 		// add states and transitions to copy
-		mCopy.addState(true, false, conPredicates.get(0));
+		if (!mCopy.contains(conPredicates.get(0))) {
+			mCopy.addState(true, false, conPredicates.get(0));
+		}
 		for (Integer i = 1; i < conPredicates.size(); i++) {
 			final IPredicate succPred = conPredicates.get(i);
-			mCopy.addState(false, i.equals(conPredicates.size() - 1), succPred);
+			if (!mCopy.contains(succPred)) {
+				mCopy.addState(false, false, succPred);
+			}
 			mCopy.addInternalTransition(conPredicates.get(i - 1), mRun.getWord().getSymbol(i - 1), succPred);
 		}
 	}
