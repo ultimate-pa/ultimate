@@ -52,7 +52,7 @@ public final class Kingdom<PLACE, LETTER> {
 	 */
 	private final ImmutableSet<Realm<PLACE, LETTER>> mKingdom;
 
-	private Set<Set<Condition<LETTER, PLACE>>> mTreaty = null;
+	private Set<Set<Condition<LETTER, PLACE>>> mTreaty;
 
 	public Kingdom(final ImmutableSet<Realm<PLACE, LETTER>> kingdom) {
 		mKingdom = kingdom;
@@ -154,6 +154,10 @@ public final class Kingdom<PLACE, LETTER> {
 	public CoKingdom<PLACE, LETTER> getCoKingdom(final Condition<LETTER, PLACE> condition,
 			final BranchingProcess<LETTER, PLACE> bp, final PlacesCoRelation<PLACE> placesCoRelation) {
 		return new CoKingdom<>(this, condition, bp, placesCoRelation);
+	}
+
+	public boolean containsCondition(final Condition<LETTER, PLACE> condition) {
+		return mKingdom.stream().anyMatch(r -> r.getConditions().contains(condition));
 	}
 
 	/**

@@ -94,10 +94,10 @@ final class CoKingdom<PLACE, LETTER> {
 		mNegKingdom = new HashSet<>();
 		mParKingdom = new HashSet<>();
 		mParCoRealms = new HashSet<>();
+		if (mKingdom.containsCondition(mCondition)) {
+			return false;
+		}
 		for (final Realm<PLACE, LETTER> realm : mKingdom.getRealms()) {
-			if (realm.contains(mCondition)) {
-				return false;
-			}
 			if (mNegKingdom.size() > 1) {
 				return true;
 			}

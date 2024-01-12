@@ -32,7 +32,6 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.ICoRelation;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire.Region;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
@@ -137,46 +136,6 @@ public final class Realm<PLACE, LETTER> {
 		final var newConditions =
 				mRealm.stream().filter(cond -> !conditions.contains(cond)).collect(ImmutableSet.collector());
 		return new Realm<>(newConditions);
-	}
-
-	/**
-	 * Check if a condition can be added to the realm without violation the corelation restrictions.
-	 *
-	 * @param bp
-	 *            branching process over which corelation is checked.
-	 * @return true if condition is NOT corelated to all conditions in the region. TODO: itself?? / intersection or
-	 *         isCorelated foreach condition in realm??
-	 */
-	public boolean checkAddCorelation(final Condition<LETTER, PLACE> condition,
-			final BranchingProcess<LETTER, PLACE> bp) {
-		final ICoRelation<LETTER, PLACE> coRelation = bp.getCoRelation();
-		// set of conditions in Branching process to which the specified condition is corelated with.
-		final Set<Condition<LETTER, PLACE>> coConditions = coRelation.computeCoRelatatedConditions(condition);
-		// if the intersection of the coCondition and the realm is empty then the condition is not corelated
-		// to any of the conditions in the realm and hence can be added.
-		if (DataStructureUtils.haveEmptyIntersection(coConditions, mRealm)) {
-			return true;
-		}
-		return false;
-	}
-
-	/**
-	 * @param bp
-	 *            branching process over which corelation is checked.
-	 * @return true if condition is corelated to all conditions in the region. For the addition of a condition into a
-	 *         territory. True AddCorelation to the realm in which the conditionn is added and true checkCorelation to
-	 *         all other realms. TODO: itself?? / intersection or isCorelated foreach condition in realm??
-	 */
-	public boolean checkCorelation(final Condition<LETTER, PLACE> condition, final BranchingProcess<LETTER, PLACE> bp) {
-		final ICoRelation<LETTER, PLACE> coRelation = bp.getCoRelation();
-		// set of conditions in Branching process to which the specified condition is corelated with.
-		final Set<Condition<LETTER, PLACE>> coConditions = coRelation.computeCoRelatatedConditions(condition);
-		// if the intersection of the coCondition and the realm is empty then the condition is not corelated
-		// to any of the conditions in the realm and hence can be added.
-		if (coConditions.containsAll(mRealm)) {
-			return true;
-		}
-		return false;
 	}
 
 	/**
