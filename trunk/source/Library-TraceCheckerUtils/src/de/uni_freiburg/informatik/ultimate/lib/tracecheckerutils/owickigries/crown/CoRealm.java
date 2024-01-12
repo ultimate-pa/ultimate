@@ -31,18 +31,12 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.ICoRelation;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 final class CoRealm<PLACE, LETTER> {
 
 	private final ICoRelation<LETTER, PLACE> mCoRelation;
 	private final Realm<PLACE, LETTER> mRealm;
 	private final Condition<LETTER, PLACE> mCondition;
-
-	/**
-	 * Subset of Realm's condition that are corelated to specified condition;
-	 */
-	private final Set<Condition<LETTER, PLACE>> mPosRealm;
 
 	/**
 	 * Subset of Realm's condition that are not corelated to mCondition;
@@ -63,18 +57,17 @@ final class CoRealm<PLACE, LETTER> {
 		mCoRelation = bp.getCoRelation();
 		mRealm = realm;
 		mCondition = condition;
-		mPosRealm = getPosRealm();
-		mNegRealm = DataStructureUtils.difference(mRealm.getConditions(), mPosRealm);
+		mNegRealm = getNegRealm();
 		mCoRel = getCoRelType();
 		mConflictFreeConditions = getConflicFreeConditions(placesCoRelation);
 		mConflictType = getConflictType();
 	}
 
 	/**
-	 * @return Subset of Realm's conditions corelated to CoRealm's condition.
+	 * @return Subset of Realm's conditions not corelated to CoRealm's condition.
 	 */
-	private Set<Condition<LETTER, PLACE>> getPosRealm() {
-		return mRealm.getConditions().stream().filter(c -> mCoRelation.isInCoRelation(c, mCondition))
+	private Set<Condition<LETTER, PLACE>> getNegRealm() {
+		return mRealm.getConditions().stream().filter(c -> !mCoRelation.isInCoRelation(c, mCondition))
 				.collect(Collectors.toSet());
 	}
 
@@ -107,7 +100,7 @@ final class CoRealm<PLACE, LETTER> {
 
 	private CoRelationType getCoRelType() {
 		final int realmSize = mRealm.getConditions().size();
-		if (realmSize == mPosRealm.size()) {
+		if (mNegRealm.isEmpty()) {
 			return CoRelationType.POSITIVE;
 		} else if (realmSize == mNegRealm.size()) {
 			return CoRelationType.NEGATIVE;
