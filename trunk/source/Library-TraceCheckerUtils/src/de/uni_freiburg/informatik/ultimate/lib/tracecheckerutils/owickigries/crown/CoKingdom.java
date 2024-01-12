@@ -112,6 +112,7 @@ final class CoKingdom<PLACE, LETTER> {
 			default:
 				mParKingdom.add(realm);
 				mParCoRealms.add(coRealm);
+				break;
 			}
 		}
 		return true;

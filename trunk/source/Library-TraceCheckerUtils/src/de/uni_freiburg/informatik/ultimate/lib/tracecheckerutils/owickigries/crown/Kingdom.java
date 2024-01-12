@@ -157,7 +157,12 @@ public final class Kingdom<PLACE, LETTER> {
 	}
 
 	public boolean containsCondition(final Condition<LETTER, PLACE> condition) {
-		return mKingdom.stream().anyMatch(r -> r.getConditions().contains(condition));
+		for (final Realm<PLACE, LETTER> realm : mKingdom) {
+			if (realm.containsCondition(condition)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**

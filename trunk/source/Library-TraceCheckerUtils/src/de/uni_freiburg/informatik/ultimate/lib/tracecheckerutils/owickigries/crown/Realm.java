@@ -154,7 +154,7 @@ public final class Realm<PLACE, LETTER> {
 	 *            Condition whose presence in the realm is to be tested
 	 * @return true if the realm contains condition
 	 */
-	public boolean contains(final Condition<LETTER, PLACE> condition) {
+	public boolean containsCondition(final Condition<LETTER, PLACE> condition) {
 		return mRealm.contains(condition);
 	}
 

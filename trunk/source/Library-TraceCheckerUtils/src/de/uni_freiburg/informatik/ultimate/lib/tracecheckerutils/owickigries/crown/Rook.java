@@ -63,7 +63,7 @@ public final class Rook<PLACE, LETTER> {
 
 	private final int mHashCode;
 
-	private Boolean mContainsNonCut = null;
+	private Boolean mContainsNonCut;
 
 	public Rook(final Kingdom<PLACE, LETTER> kingdom, final KingdomLaw<PLACE, LETTER> law) {
 		mKingdom = kingdom;

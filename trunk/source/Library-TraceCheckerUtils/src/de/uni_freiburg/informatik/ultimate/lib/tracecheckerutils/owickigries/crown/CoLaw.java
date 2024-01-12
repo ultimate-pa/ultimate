@@ -31,7 +31,6 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.ICoRelation;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 final class CoLaw<PLACE, LETTER> {
 
@@ -43,11 +42,6 @@ final class CoLaw<PLACE, LETTER> {
 	 * Subset of Law's condition that are corelated to specified condition;
 	 */
 	private final Set<Condition<LETTER, PLACE>> mPosLaw;
-
-	/**
-	 * Subset of Law's condition that are not corelated to mCondition;
-	 */
-	private final Set<Condition<LETTER, PLACE>> mNegLaw;
 
 	/**
 	 * Corelation type of condition wrt. Law.
@@ -62,7 +56,6 @@ final class CoLaw<PLACE, LETTER> {
 		mLaw = law;
 		mCondition = condition;
 		mPosLaw = getPosLaw();
-		mNegLaw = DataStructureUtils.difference(mLaw.getConditions(), mPosLaw);
 		mCoRel = getCoRelType();
 	}
 
@@ -81,12 +74,12 @@ final class CoLaw<PLACE, LETTER> {
 		if (mLaw.getConditions().contains(mCondition)) {
 			return CoRelationType.CONTAINS;
 		}
-		if (mNegLaw.isEmpty()) {
-			return CoRelationType.POSITIVE;
-		} else if (!mPosLaw.isEmpty()) {
-			return CoRelationType.PARTIAL;
-		} else {
+		if (mPosLaw.isEmpty()) {
 			return CoRelationType.NEGATIVE;
+		} else if (mPosLaw.size() == mLaw.getConditions().size()) {
+			return CoRelationType.POSITIVE;
+		} else {
+			return CoRelationType.PARTIAL;
 		}
 	}
 
