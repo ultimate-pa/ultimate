@@ -75,6 +75,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
  */
 public class AcyclicSubgraphMerger {
 
+	public static final String SUBGRAPH_HAS_A_CYCLE = "Subgraph has a cycle";
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 
@@ -170,7 +171,7 @@ public class AcyclicSubgraphMerger {
 		mEndloc2TransFormula = new HashMap<>();
 		for (final IcfgEdge startSucc : blockEncoded.getSubgraphStartLocation().getOutgoingEdges()) {
 			if (!blockEncoded.getSubgraphEndLocations().contains(startSucc.getTarget())) {
-				throw new AssertionError();
+				throw new IllegalArgumentException(SUBGRAPH_HAS_A_CYCLE);
 			}
 			final IcfgLocation endLoc = startSucc.getTarget();
 			final IcfgLocation endInProjection = blockEncoded.getBacktranslation().get(endLoc);
