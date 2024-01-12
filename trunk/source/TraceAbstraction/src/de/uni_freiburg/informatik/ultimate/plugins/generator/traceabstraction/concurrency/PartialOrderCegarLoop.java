@@ -27,6 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
@@ -184,24 +185,40 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		mProgram = initialAbstraction;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	protected boolean refineAbstraction() throws AutomataLibraryException {
 		// Compute the enhanced interpolant automaton
 		final IPredicateUnifier predicateUnifier = mRefinementResult.getPredicateUnifier();
 		final IHoareTripleChecker htc = getHoareTripleChecker();
+		
 		//TODO: take mInterpolantAutomaton and mCounterexample and call ConditionalCommutativityInterpolantProvider
-		//random criterion for testing 
-		//TODO: should later on be replaced by a setting
-		if (mIteration > 0) {
-			
-		RandomCriterion<L, IPredicate> criterion = new RandomCriterion<>(0.3, 321);
-		PostConditionTraceChecker<L> checker = new PostConditionTraceChecker<>(mServices, mAbstraction, mTaskIdentifier, mFactory, mStrategyFactory);
-		SemanticIndependenceConditionGenerator generator = new SemanticIndependenceConditionGenerator(mServices, mCsToolkit.getManagedScript(), mPredicateFactory, true);
-		ConditionalCommutativityInterpolantProvider<L> conInterpolantProvider = new ConditionalCommutativityInterpolantProvider<>(
-				mServices, criterion, mPOR.getIndependence(0), generator, mAbstraction, mAbstraction, mFactory, checker);
-		//cast should be fine, since isAbstractionEmpty() assigns mCounterexample a IRun<L, IPredicate>
-		mInterpolAutomaton = conInterpolantProvider.getInterpolants((IRun<L, IPredicate>) mCounterexample, mInterpolAutomaton);
+		
+		//get interpolants from mCounterexample
+		ArrayList<IPredicate> predicates = new ArrayList<>();
+		for (IPredicate pred : ((IRun<L, IPredicate>) mCounterexample).getStateSequence()) {
+			IPredicate mlpred = ((SleepPredicate) pred).getUnderlying();
+			if (mlpred instanceof MLPredicateWithInterpolants) {
+				predicates.add(((MLPredicateWithInterpolants) mlpred).getInterpolants());
+			} else {
+				predicates.add(null);
+			}
 		}
+		//random criterion for testing, should later on be replaced by a setting
+		RandomCriterion<L, IPredicate> criterion = new RandomCriterion<>(1, 321);
+		PostConditionTraceChecker<L> checker = new PostConditionTraceChecker<>(mServices, mAbstraction, mTaskIdentifier,
+				mFactory, mStrategyFactory);
+		SemanticIndependenceConditionGenerator generator = new SemanticIndependenceConditionGenerator(mServices,
+				mCsToolkit.getManagedScript(), mPredicateFactory, true);
+		ConditionalCommutativityInterpolantProvider<L> conInterpolantProvider
+		= new ConditionalCommutativityInterpolantProvider<>(
+				mServices, criterion, mPOR.getIndependence(0), generator, mAbstraction, mAbstraction,
+				mFactory, checker);
+		//cast should be fine, since isAbstractionEmpty() assigns mCounterexample a IRun<L, IPredicate>
+		mInterpolAutomaton = conInterpolantProvider.getInterpolants((IRun<L, IPredicate>) mCounterexample,
+				predicates, mInterpolAutomaton);
+		
+		
 		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> ia = enhanceInterpolantAutomaton(
 				mPref.interpolantAutomatonEnhancement(), predicateUnifier, htc, mInterpolAutomaton);
 		if (ia instanceof AbstractInterpolantAutomaton<?>) {
@@ -471,7 +488,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		return mDeadEndStore;
 	}
 
-	private static final class MLPredicateWithInterpolants extends AnnotatedMLPredicate<IPredicate> {
+	public static final class MLPredicateWithInterpolants extends AnnotatedMLPredicate<IPredicate> {
 		protected MLPredicateWithInterpolants(final IMLPredicate underlying, final IPredicate annotation) {
 			super(underlying, annotation);
 		}

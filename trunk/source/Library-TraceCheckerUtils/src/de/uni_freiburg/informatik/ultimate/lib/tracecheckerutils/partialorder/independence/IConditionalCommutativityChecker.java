@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
  */
 public interface IConditionalCommutativityChecker<L> {
 
-	TracePredicates checkConditionalCommutativity(IRun<L, IPredicate> run, IPredicate state, L letter1, L letter2);
+	TracePredicates checkConditionalCommutativity(IRun<L, IPredicate> run, IPredicate predicate, IPredicate state,
+			L letter1, L letter2);
 
 }

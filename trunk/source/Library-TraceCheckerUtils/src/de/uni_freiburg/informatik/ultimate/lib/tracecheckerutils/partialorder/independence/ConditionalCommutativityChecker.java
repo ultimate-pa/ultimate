@@ -26,15 +26,15 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation.Dependence;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.ITraceChecker;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class ConditionalCommutativityChecker<L extends IAction> implements IConditionalCommutativityChecker<L> {
 
 	private final IConditionalCommutativityCriterion<L, IPredicate> mCriterion;
+	private IIndependenceRelation<IPredicate, L> mIndependenceRelation;
 	private final IIndependenceConditionGenerator mGenerator;
 	private final ITraceChecker<L> mTraceChecker;
 	private Map<Pair<L,L>,Integer> mStatementMap;
@@ -59,14 +60,18 @@ public class ConditionalCommutativityChecker<L extends IAction> implements ICond
 	 *
 	 * @param criterion
 	 *            An IConditionalCommutativityCriterion to decide when to check for conditional commutativity
+	 * @param independenceRelation
+	 *            Independence relation for commutativity          
 	 * @param generator
 	 *            Generator for constructing commutativity conditions
 	 * @param traceChecker
 	 *            An ITraceChecker responsible for checking whether a condition is feasible
 	 */
 	public ConditionalCommutativityChecker(final IConditionalCommutativityCriterion<L, IPredicate> criterion,
+			final IIndependenceRelation<IPredicate, L> independenceRelation,
 			final IIndependenceConditionGenerator generator, final ITraceChecker<L> traceChecker) {
 		mCriterion = criterion;
+		mIndependenceRelation = independenceRelation;
 		mGenerator = generator;
 		mTraceChecker = traceChecker;
 		mStatementMap = new HashMap<>();
@@ -79,6 +84,8 @@ public class ConditionalCommutativityChecker<L extends IAction> implements ICond
 	 *
 	 * @param run
 	 *            The run to state
+	 * @param predicate
+	 *            Predicate used as context for condition generation
 	 * @param state
 	 *            The state
 	 * @param letter1
@@ -89,10 +96,14 @@ public class ConditionalCommutativityChecker<L extends IAction> implements ICond
 	 *            A list of predicates which servers as a proof for conditional commutativity.
 	 */
 	@Override
-	public TracePredicates checkConditionalCommutativity(final IRun<L, IPredicate> run, final IPredicate state,
+	public TracePredicates checkConditionalCommutativity(final IRun<L, IPredicate> run, IPredicate predicate,
+			final IPredicate state,
 			final L letter1, final L letter2) {
+		if (mIndependenceRelation.isIndependent(state, letter1, letter2).equals(Dependence.INDEPENDENT)) {
+			return null;
+		}
 		
-		//ensures that each pair is checked at most two times
+		//ensures that each pair is checked at most two times (should later on be removed)
 		Pair<L,L> pair = new Pair<>(letter1,letter2);
 		if (!mStatementMap.containsKey(pair)) {
 			mStatementMap.put(pair, 1);
@@ -104,8 +115,9 @@ public class ConditionalCommutativityChecker<L extends IAction> implements ICond
 		
 		if (mCriterion.decide(state, letter1, letter2)) {
 			IPredicate condition;
-			if (!state.getFormula().toString().equals("don't care")) { 
-				condition = mGenerator.generateCondition(state, letter1.getTransformula(), letter2.getTransformula());
+			if (predicate != null) {
+				condition = mGenerator.generateCondition(predicate, letter1.getTransformula(),
+						letter2.getTransformula());
 			} else {
 				condition = mGenerator.generateCondition(letter1.getTransformula(), letter2.getTransformula());
 			}

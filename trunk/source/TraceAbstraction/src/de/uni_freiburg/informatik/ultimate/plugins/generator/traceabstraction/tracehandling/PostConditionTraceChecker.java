@@ -25,8 +25,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
-import java.util.List;
-
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
@@ -94,6 +92,7 @@ public class PostConditionTraceChecker<L extends IIcfgTransition<?>> implements 
 				new PostConditionProvider(postCondition));
 		while (strategy.hasNextFeasilibityCheck()) {
 			ITraceCheckStrategyModule<L, ?> check = strategy.nextFeasibilityCheck();
+			
 			if (check.isCorrect().equals(LBool.UNSAT) && check instanceof InterpolatingTraceCheck) {
 				return ((InterpolatingTraceCheck<?>) check).getIpp();
 			}
