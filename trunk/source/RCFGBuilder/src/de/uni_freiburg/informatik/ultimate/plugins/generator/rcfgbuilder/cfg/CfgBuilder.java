@@ -283,10 +283,9 @@ public class CfgBuilder {
 		}
 
 		if (mFutureLiveOptimization) {
-			if (icfg.getCfgSmtToolkit().getConcurrencyInformation() == null) {
+			if (icfg.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().isEmpty()) {
 				LiveIcfgUtils.applyFutureLiveOptimization(mServices, icfg);
-			}
-			{
+			} else {
 				mLogger.info("Ommited future-live optimization because the input is a concurrent program.");
 			}
 		}
