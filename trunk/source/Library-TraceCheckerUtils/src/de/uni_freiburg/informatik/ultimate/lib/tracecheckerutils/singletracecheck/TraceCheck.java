@@ -35,6 +35,8 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
@@ -499,9 +501,11 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 									if (rpeb.mTrace.asList().get(index) instanceof StatementSequence) {
 										final StatementSequence stsq =
 												(StatementSequence) rpeb.mTrace.asList().get(index);
-										if (stsq.getPayload().toString().contains("nondet")) {
-											final String type =
-													TestVector.getNonDetTypeFromName(stsq.getPayload().toString());
+
+										final Matcher m = Pattern.compile("__VERIFIER_nondet_(\\w*)")
+												.matcher(stsq.getPayload().toString());
+										if (m.find()) {
+											final String type = m.group(1);
 											testV.addValueAssignment(valueT, index, type);
 											final TermTransferrer test = new TermTransferrer(
 													mCfgManagedScript.getScript(), mTcSmtManager.getScript());
@@ -514,7 +518,6 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 											varAssignment.add(varEqValue);
 										}
 									}
-
 								} else {
 									System.out.println("unexpected Index for nondet");
 								}

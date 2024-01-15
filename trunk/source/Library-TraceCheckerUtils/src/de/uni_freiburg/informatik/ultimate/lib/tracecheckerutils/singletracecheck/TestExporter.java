@@ -531,11 +531,4 @@ class TestVector {
 		values.addAll(valuesWithNegativeIndices);
 		values.addAll(valuesWithPositiveIndices);
 	}
-
-	static public String getNonDetTypeFromName(final String payload) {
-		final Matcher m = Pattern.compile("__VERIFIER_nondet_(\\w*)").matcher(payload);
-		m.find();
-		return m.group(1);
-
-	}
 }
