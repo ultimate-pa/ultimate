@@ -38,6 +38,7 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.ICoRelation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -45,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.emp
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.HashDeque;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
@@ -85,12 +87,19 @@ public final class CrownConstruction<PLACE, LETTER> {
 		mOrigConds = origConds;
 		mAssertConds = assertConds;
 		mPlacesCoRelation = new PlacesCoRelation<>(bp);
+		final Set<Condition<LETTER, PLACE>> singletonConditions = getSingletonConditions();
+		final Set<Condition<LETTER, PLACE>> expansionConditions =
+				DataStructureUtils.difference(mOrigConds, singletonConditions);
+		Set<Rook<PLACE, LETTER>> singletonRooks = buildSingletonRooks(singletonConditions);
+		singletonRooks = combineSingletonRooks(singletonRooks);
+		mLogger.info("Singleton Rooks: %s", singletonRooks);
 
-		final var settlementRooks = mStatistics.measureSettlement(() -> settlements());
+		final var settlementRooks = mStatistics.measureSettlement(() -> settlements(expansionConditions));
 
-		final var crownRooks = mStatistics.measureCrownComputation(() -> crownComputation(settlementRooks));
+		final var crownRooks =
+				mStatistics.measureCrownComputation(() -> crownComputation(settlementRooks, expansionConditions));
 		mLogger.debug("Crown before refurbishment:\n%s\n", new Crown<>(bp, crownRooks));
-
+		crownRooks.addAll(singletonRooks);
 		final var refurbishedRooks = mStatistics.measureRefurbishment(() -> crownRefurbishment(crownRooks));
 		mCrown = new Crown<>(bp, refurbishedRooks);
 		mStatistics.reportCrown(mCrown);
@@ -98,11 +107,64 @@ public final class CrownConstruction<PLACE, LETTER> {
 		assert mCrown.validityAssertion(mPlacesCoRelation);
 	}
 
-	private Set<Rook<PLACE, LETTER>> settlements() {
+	private Set<Condition<LETTER, PLACE>> getSingletonConditions() {
+		final Set<Condition<LETTER, PLACE>> singletonConditions = new HashSet<>();
+		final ICoRelation<LETTER, PLACE> coRelation = mBp.getCoRelation();
+		for (final Condition<LETTER, PLACE> condition : mOrigConds) {
+			final Set<Condition<LETTER, PLACE>> corelatedConditions =
+					coRelation.computeCoRelatatedConditions(condition);
+			corelatedConditions.removeAll(mAssertConds);
+			corelatedConditions.remove(condition);
+			if (corelatedConditions.isEmpty()) {
+				singletonConditions.add(condition);
+			}
+		}
+		return singletonConditions;
+	}
+
+	private Set<Rook<PLACE, LETTER>> buildSingletonRooks(final Set<Condition<LETTER, PLACE>> singletonConditions) {
+		final Set<Rook<PLACE, LETTER>> singletonRooks = new HashSet<>();
+		for (final Condition<LETTER, PLACE> condition : singletonConditions) {
+			final Realm<PLACE, LETTER> singletonRealm = new Realm<>(ImmutableSet.singleton(condition));
+			final Rook<PLACE, LETTER> singletonRook = new Rook<>(new Kingdom<>(ImmutableSet.singleton(singletonRealm)),
+					new KingdomLaw<>(ImmutableSet.empty()));
+			singletonRooks.addAll(crownExpansionIterative2(singletonRook, new ArrayList<>(mAssertConds), false));
+		}
+		return singletonRooks;
+	}
+
+	private Set<Rook<PLACE, LETTER>> combineSingletonRooks(final Set<Rook<PLACE, LETTER>> singletonRooks) {
+		final HashRelation<KingdomLaw<PLACE, LETTER>, Kingdom<PLACE, LETTER>> lawKingdomRelation = new HashRelation<>();
+		for (final Rook<PLACE, LETTER> rook : singletonRooks) {
+			lawKingdomRelation.addPair(rook.getLaw(), rook.getKingdom());
+		}
+		final Set<Rook<PLACE, LETTER>> combinedRooks = new HashSet<>();
+		for (final KingdomLaw<PLACE, LETTER> law : lawKingdomRelation.getDomain()) {
+			final Set<Kingdom<PLACE, LETTER>> kingdoms = lawKingdomRelation.getImage(law);
+			final Rook<PLACE, LETTER> combinedRook = new Rook<>(combineSingletonKingdoms(kingdoms), law);
+			combinedRooks.add(combinedRook);
+		}
+		return combinedRooks;
+	}
+
+	private Kingdom<PLACE, LETTER> combineSingletonKingdoms(final Set<Kingdom<PLACE, LETTER>> singletonKingdoms) {
+		final Set<Condition<LETTER, PLACE>> combinedConditions = new HashSet<>();
+		for (final Kingdom<PLACE, LETTER> kingdom : singletonKingdoms) {
+			assert kingdom.getRealms().size() == 1 : "Kingdom is not a singleton Kingdom";
+			for (final Realm<PLACE, LETTER> realm : kingdom.getRealms()) {
+				assert realm.getConditions().size() == 1 : "Realm is not a singleton Realm";
+				combinedConditions.addAll(realm.getConditions());
+			}
+		}
+		final Realm<PLACE, LETTER> combinedRealm = new Realm<>(ImmutableSet.of(combinedConditions));
+		return new Kingdom<>(ImmutableSet.singleton(combinedRealm));
+	}
+
+	private Set<Rook<PLACE, LETTER>> settlements(final Set<Condition<LETTER, PLACE>> conditions) {
 		// Create a new rook for each original condition.
 		// Add a to crown a new rook with "capital" and one corelated assertion condition
 		final Set<Rook<PLACE, LETTER>> settlementRooks = new HashSet<>();
-		for (final Condition<LETTER, PLACE> originalCondition : mOrigConds) {
+		for (final Condition<LETTER, PLACE> originalCondition : conditions) {
 			final Realm<PLACE, LETTER> realm = new Realm<>(ImmutableSet.singleton(originalCondition));
 			final Kingdom<PLACE, LETTER> kingdom = new Kingdom<>(ImmutableSet.singleton(realm));
 			for (final Condition<LETTER, PLACE> assertionCondition : mAssertConds) {
@@ -132,12 +194,13 @@ public final class CrownConstruction<PLACE, LETTER> {
 		return settlementRooks;
 	}
 
-	private Set<Rook<PLACE, LETTER>> crownComputation(final Set<Rook<PLACE, LETTER>> colonizedRooks) {
+	private Set<Rook<PLACE, LETTER>> crownComputation(final Set<Rook<PLACE, LETTER>> colonizedRooks,
+			final Set<Condition<LETTER, PLACE>> expansionConditions) {
 		mLogger.debug("Starting Crown Computation...");
 		mLogger.debug("Starting Colonization...");
 		final Set<Rook<PLACE, LETTER>> reSet = new HashSet<>();
 		for (final Rook<PLACE, LETTER> rook : colonizedRooks) {
-			reSet.addAll(crownExpansionIterative2(rook, new ArrayList<>(mOrigConds), true));
+			reSet.addAll(crownExpansionIterative2(rook, new ArrayList<>(expansionConditions), true));
 		}
 		mRejectedPairs.clear();
 		colonizedRooks.clear();
