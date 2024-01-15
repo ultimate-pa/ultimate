@@ -7,17 +7,17 @@ Websites:
 <https://ultimate.informatik.uni-freiburg.de/>
 
 Maintainers:
-Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
-Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
-Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
-Frank Schüssele (schuessf@informatik.uni-freiburg.de)
+Daniel Dietsch (<dietsch@informatik.uni-freiburg.de>)
+Matthias Heizmann (<heizmann@informatik.uni-freiburg.de>)
+Dominik Klumpp (<klumpp@informatik.uni-freiburg.de>)
+Frank Schüssele (<schuessf@informatik.uni-freiburg.de>)
 
 This archive also contains binaries for the following theorem provers.
 * Z3 (<https://github.com/Z3Prover/z3>)
   * Linux (z3)
-    Z3 version 4.12.0 - 64 bit build from master 689af3b4d (2022-11-12)
+    Z3 version 4.12.5 - 64 bit build from master 91ca55e5a (2024-01-14)
   * Windows (z3.exe)
-    Z3 version 4.12.0 - 64 bit build from master 689af3b4d (2022-11-12)
+    Z3 version 4.12.5 - 64 bit build from master 91ca55e5a (2024-01-14)
 
 * CVC4 (<http://cvc4.cs.nyu.edu/>)
   * Linux
@@ -41,7 +41,7 @@ This archive also contains binaries for the following theorem provers.
       Note that this version does not output the git hash, but it should be
       the same as the Linux version.
 
-* CVC5 (https://github.com/cvc5/cvc5)
+* CVC5 (<https://github.com/cvc5/cvc5>)
   * Linux (cvc5)
     cvc5 version 1.0.8 from f867bfa
   * Windows (cvc5.exe)
@@ -54,7 +54,7 @@ This archive also contains binaries for the following theorem provers.
     MathSAT5 version 5.6.10 (953b604e7ca7) (May 31 2023 12:36:26, gmp 6.0.0/mpir 3.0.0, msvc 19.12, 64-bit)
 
 For each of these theorem provers, a corresponding license file (z3-LICENSE,
-cvc4-LICENSE, cvc5-license, mathsat-LICENSE) can be found in our archive. Please 
+cvc4-LICENSE, cvc5-license, mathsat-LICENSE) can be found in our archive. Please
 consult these files for additional restrictions regarding your application. If these
 restrictions apply, you must delete the corresponding binaries. This might not
 necessarily affect your application.
