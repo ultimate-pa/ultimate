@@ -141,7 +141,7 @@ public class ConditionalCommutativityInterpolantProvider<L extends IAction> {
 							runPredicates.get(mRun.getStateSequence().indexOf(state))));
 					NestedRun<L, IPredicate> currentRun = (NestedRun<L, IPredicate>) mRun;
 					if (i != mRun.getStateSequence().size() - 1) {
-						currentRun = currentRun.getSubRun(0, i + 1);
+						currentRun = currentRun.getSubRun(0, i);
 					}
 					final TracePredicates tracePredicates = mChecker.checkConditionalCommutativity(currentRun,
 							interpolantPredicates, state, transition1.getLetter(), transition2.getLetter());
