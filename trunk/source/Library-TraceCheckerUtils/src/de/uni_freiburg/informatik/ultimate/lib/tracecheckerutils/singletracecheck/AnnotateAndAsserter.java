@@ -276,31 +276,69 @@ public class AnnotateAndAsserter<L extends IAction> {
 
 		switch (nondetVar.getSort().getName()) {
 		case SmtSortUtils.FLOATINGPOINT_SORT: {
-			if (value != null) {
-				final ApplicationTerm valueAsAppterm = (ApplicationTerm) value;
-				nondetValue = SmtUtils.unfTerm(mMgdScriptTc.getScript(), valueAsAppterm.getFunction().getName(), null,
-						null, valueAsAppterm.getParameters());
+
+			System.out.println(nondetVar.getSort().getIndices()[1]);
+
+			if (nondetVar.getSort().getIndices()[1].equals("24")) {
+				if (value != null) {
+					final ApplicationTerm valueAsAppterm = (ApplicationTerm) value;
+					nondetValue = SmtUtils.unfTerm(mMgdScriptTc.getScript(), valueAsAppterm.getFunction().getName(),
+							null, null, valueAsAppterm.getParameters());
+				} else {
+					// (fp (_ BitVec 1) (_ BitVec eb) (_ BitVec i) (_ FloatingPoint eb sb))
+					// (_ +zero 2 4)
+
+					final String[] indices = new String[2];
+					indices[0] = "0";
+					indices[1] = "0";
+
+					final Term bvConst0 = SmtUtils.rational2Term(mMgdScriptTc.getScript(), Rational.ZERO,
+							SmtSortUtils.getBitvectorSort(mMgdScriptTc.getScript(), 1));
+					final Term bvConst1 = SmtUtils.rational2Term(mMgdScriptTc.getScript(), Rational.ZERO,
+							SmtSortUtils.getBitvectorSort(mMgdScriptTc.getScript(), 8));
+					final Term bvConst2 = SmtUtils.rational2Term(mMgdScriptTc.getScript(), Rational.ZERO,
+							SmtSortUtils.getBitvectorSort(mMgdScriptTc.getScript(), 23));
+					nondetValue =
+							SmtUtils.unfTerm(mMgdScriptTc.getScript(), "fp", null, null, bvConst0, bvConst1, bvConst2);
+
+					// nondetValue = SmtUtils.unfTerm(mMgdScriptTc.getScript(), "_ FloatingPoint 0 0", indices,
+					// SmtSortUtils
+					// .getFloatSort(mMgdScriptTc.getScript(), BigInteger.valueOf(8), BigInteger.valueOf(23)));
+
+				}
+			} else if (nondetVar.getSort().getIndices()[1].equals("53")) {
+
+				if (value != null) {
+					final ApplicationTerm valueAsAppterm = (ApplicationTerm) value;
+					nondetValue = SmtUtils.unfTerm(mMgdScriptTc.getScript(), valueAsAppterm.getFunction().getName(),
+							null, null, valueAsAppterm.getParameters());
+				} else {
+					// (fp (_ BitVec 1) (_ BitVec eb) (_ BitVec i) (_ FloatingPoint eb sb))
+					// (_ +zero 2 4)
+
+					final String[] indices = new String[2];
+					indices[0] = "0";
+					indices[1] = "0";
+
+					final Term bvConst0 = SmtUtils.rational2Term(mMgdScriptTc.getScript(), Rational.ZERO,
+							SmtSortUtils.getBitvectorSort(mMgdScriptTc.getScript(), 1));
+					final Term bvConst1 = SmtUtils.rational2Term(mMgdScriptTc.getScript(), Rational.ZERO,
+							SmtSortUtils.getBitvectorSort(mMgdScriptTc.getScript(), 11));
+					final Term bvConst2 = SmtUtils.rational2Term(mMgdScriptTc.getScript(), Rational.ZERO,
+							SmtSortUtils.getBitvectorSort(mMgdScriptTc.getScript(), 52));
+					nondetValue =
+							SmtUtils.unfTerm(mMgdScriptTc.getScript(), "fp", null, null, bvConst0, bvConst1, bvConst2);
+
+					// nondetValue = SmtUtils.unfTerm(mMgdScriptTc.getScript(), "_ FloatingPoint 0 0", indices,
+					// SmtSortUtils
+					// .getFloatSort(mMgdScriptTc.getScript(), BigInteger.valueOf(8), BigInteger.valueOf(23)));
+
+				}
+
 			} else {
-				// (fp (_ BitVec 1) (_ BitVec eb) (_ BitVec i) (_ FloatingPoint eb sb))
-				// (_ +zero 2 4)
-
-				final String[] indices = new String[2];
-				indices[0] = "0";
-				indices[1] = "0";
-
-				final Term bvConst0 = SmtUtils.rational2Term(mMgdScriptTc.getScript(), Rational.ZERO,
-						SmtSortUtils.getBitvectorSort(mMgdScriptTc.getScript(), 1));
-				final Term bvConst1 = SmtUtils.rational2Term(mMgdScriptTc.getScript(), Rational.ZERO,
-						SmtSortUtils.getBitvectorSort(mMgdScriptTc.getScript(), 8));
-				final Term bvConst2 = SmtUtils.rational2Term(mMgdScriptTc.getScript(), Rational.ZERO,
-						SmtSortUtils.getBitvectorSort(mMgdScriptTc.getScript(), 23));
-				nondetValue =
-						SmtUtils.unfTerm(mMgdScriptTc.getScript(), "fp", null, null, bvConst0, bvConst1, bvConst2);
-
-				// nondetValue = SmtUtils.unfTerm(mMgdScriptTc.getScript(), "_ FloatingPoint 0 0", indices, SmtSortUtils
-				// .getFloatSort(mMgdScriptTc.getScript(), BigInteger.valueOf(8), BigInteger.valueOf(23)));
-
+				throw new AssertionError("Unexpected Float Sort Size");
 			}
+
 			break;
 		}
 		case SmtSortUtils.BITVECTOR_SORT: {
@@ -462,7 +500,7 @@ public class AnnotateAndAsserter<L extends IAction> {
 			// increase at the end of loop
 			nondetPositionCount += 1;
 		}
-		if (inputBetweenTestGoals && mVAforReuse.checkCount == 2) {
+		if (inputBetweenTestGoals) {
 			exportTest(testV);
 		}
 		return nondetInVA;
