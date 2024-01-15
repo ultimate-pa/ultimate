@@ -57,6 +57,7 @@ public class PostConditionTraceChecker<L extends IIcfgTransition<?>> implements 
 	private IEmptyStackStateFactory<IPredicate> mEmptyStackFactory;
 	private StrategyFactory<L> mStrategyFactory;
 	private IPredicateUnifier mPredicateUnifier;
+	
 	/**
 	 * Constructs a PostConditionTraceChecker.
 	 *
@@ -89,26 +90,23 @@ public class PostConditionTraceChecker<L extends IIcfgTransition<?>> implements 
 		
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public TracePredicates checkTrace(IRun<L, IPredicate> run, IPredicate precondition, IPredicate postCondition) {
 		
 		ITARefinementStrategy<L> strategy =	mStrategyFactory.constructStrategy(mServices, run, mAbstraction,
 				mTaskIdentifier, mEmptyStackFactory, mPredicateUnifier, mPredicateUnifier.getTruePredicate(),
 				mPredicateUnifier.getOrConstructPredicate(postCondition), RefinementStrategy.SMTINTERPOL);
-		/*mStrategyFactory.constructStrategy(mServices, run, mAbstraction,
-		mTaskIdentifier, mEmptyStackFactory, IPreconditionProvider.constructDefaultPreconditionProvider(),
-		new PostConditionProvider(postCondition));*/
 		
 		while (strategy.hasNextFeasilibityCheck()) {
 			ITraceCheckStrategyModule<L, ?> check = strategy.nextFeasibilityCheck();
 			//boolean test = check.isCorrect().equals(LBool.UNSAT);
 			if (check.isCorrect().equals(LBool.UNSAT)) {
 				if (check instanceof IpTcStrategyModuleSmtInterpolCraig) {
-					return ((IpTcStrategyModuleSmtInterpolCraig) check).construct().getIpp();
+					return ((IpTcStrategyModuleSmtInterpolCraig<L>) check).construct().getIpp();
 				} else if (check instanceof IpTcStrategyModuleSmtInterpolSpWp) {
-					return ((IpTcStrategyModuleSmtInterpolSpWp) check).construct().getIpp();
+					return ((IpTcStrategyModuleSmtInterpolSpWp<L>) check).construct().getIpp();
 				}
-				//return ((InterpolatingTraceCheck<?>) check).getIpp();
 			}
 		}
 		return null;

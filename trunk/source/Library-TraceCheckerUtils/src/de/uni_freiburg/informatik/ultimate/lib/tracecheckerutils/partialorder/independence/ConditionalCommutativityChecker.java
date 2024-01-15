@@ -26,6 +26,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
@@ -34,7 +35,10 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.II
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateWithConjuncts;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.ITraceChecker;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -52,6 +56,7 @@ public class ConditionalCommutativityChecker<L extends IAction> implements ICond
 	private final IIndependenceConditionGenerator mGenerator;
 	private final ITraceChecker<L> mTraceChecker;
 	private Map<Pair<L,L>,Integer> mStatementMap;
+	private Script mScript;
 
 	/**
 	 * Constructs a new instance of ConditionalCommutativityChecker.
@@ -61,17 +66,20 @@ public class ConditionalCommutativityChecker<L extends IAction> implements ICond
 	 * @param criterion
 	 *            An IConditionalCommutativityCriterion to decide when to check for conditional commutativity
 	 * @param independenceRelation
-	 *            Independence relation for commutativity          
+	 *            Independence relation for commutativity
+	 * @param script
+	 *            Script for conjunction handling           
 	 * @param generator
 	 *            Generator for constructing commutativity conditions
 	 * @param traceChecker
 	 *            An ITraceChecker responsible for checking whether a condition is feasible
 	 */
 	public ConditionalCommutativityChecker(final IConditionalCommutativityCriterion<L, IPredicate> criterion,
-			final IIndependenceRelation<IPredicate, L> independenceRelation,
+			final IIndependenceRelation<IPredicate, L> independenceRelation, Script script,
 			final IIndependenceConditionGenerator generator, final ITraceChecker<L> traceChecker) {
 		mCriterion = criterion;
 		mIndependenceRelation = independenceRelation;
+		mScript = script;
 		mGenerator = generator;
 		mTraceChecker = traceChecker;
 		mStatementMap = new HashMap<>();
@@ -84,8 +92,8 @@ public class ConditionalCommutativityChecker<L extends IAction> implements ICond
 	 *
 	 * @param run
 	 *            The run to state
-	 * @param predicate
-	 *            Predicate used as context for condition generation
+	 * @param predicates
+	 *            Predicates used as context for condition generation
 	 * @param state
 	 *            The state
 	 * @param letter1
@@ -96,10 +104,15 @@ public class ConditionalCommutativityChecker<L extends IAction> implements ICond
 	 *            A list of predicates which servers as a proof for conditional commutativity.
 	 */
 	@Override
-	public TracePredicates checkConditionalCommutativity(final IRun<L, IPredicate> run, IPredicate predicate,
-			final IPredicate state,
-			final L letter1, final L letter2) {
-		if (mIndependenceRelation.isIndependent(state, letter1, letter2).equals(Dependence.INDEPENDENT)) {
+	public TracePredicates checkConditionalCommutativity(final IRun<L, IPredicate> run, List<IPredicate> predicates,
+			final IPredicate state, final L letter1, final L letter2) {
+		IPredicate pred;
+		if (!predicates.isEmpty()) {
+			 pred = new PredicateWithConjuncts(0, new ImmutableList<>(predicates), mScript);
+		} else {
+			pred = state;
+		}
+		if (mIndependenceRelation.isIndependent(pred, letter1, letter2).equals(Dependence.INDEPENDENT)) {
 			return null;
 		}
 		
@@ -115,14 +128,15 @@ public class ConditionalCommutativityChecker<L extends IAction> implements ICond
 		
 		if (mCriterion.decide(state, letter1, letter2)) {
 			IPredicate condition;
-			if (predicate != null) {
-				condition = mGenerator.generateCondition(predicate, letter1.getTransformula(),
+			if (!predicates.isEmpty()) {
+				//pred = new PredicateWithConjuncts(0, new ImmutableList<>(predicates), mScript);
+				condition = mGenerator.generateCondition(pred, letter1.getTransformula(),
 						letter2.getTransformula());
 			} else {
 				condition = mGenerator.generateCondition(letter1.getTransformula(), letter2.getTransformula());
 			}
 			
-			if (mCriterion.decide(condition)) {
+			if (mCriterion.decide(condition) && !condition.getFormula().toString().equals("true")) {
 				return mTraceChecker.checkTrace(run, null, condition);
 			}
 		}
