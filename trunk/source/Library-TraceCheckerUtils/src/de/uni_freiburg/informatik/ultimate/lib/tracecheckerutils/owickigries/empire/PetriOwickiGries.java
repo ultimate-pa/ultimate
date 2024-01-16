@@ -52,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationC
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.IPossibleInterferences;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.OwickiGriesAnnotation;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.OwickiGriesValidityCheck;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.PetriOwickiGriesValidityCheck;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown.Crown;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown.CrownConstruction;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown.CrownsEmpire;
@@ -206,8 +206,9 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 	private boolean checkOwickiGriesValidity() {
 		return mStatistics.measureOwickiGriesValidity(() -> {
 			final var possibleInterferences = getPossibleInterferences(mBp);
-			final OwickiGriesValidityCheck<LETTER, PLACE> owickiGriesValidity = new OwickiGriesValidityCheck<>(
-					mServices, mMgdScript, mNet, mModifiableGlobals, mOwickiGriesAnnotation, possibleInterferences);
+			final PetriOwickiGriesValidityCheck<LETTER, PLACE> owickiGriesValidity =
+					new PetriOwickiGriesValidityCheck<>(mServices, mMgdScript, mNet, mModifiableGlobals,
+							mOwickiGriesAnnotation, possibleInterferences);
 			return owickiGriesValidity.isValid();
 		}) != Validity.INVALID;
 	}

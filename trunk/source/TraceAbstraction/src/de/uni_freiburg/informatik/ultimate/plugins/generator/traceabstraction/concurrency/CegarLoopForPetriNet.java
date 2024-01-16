@@ -88,9 +88,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.I
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.ILooperCheck;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.OwickiGriesConstruction;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.OwickiGriesValidityCheck;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.PetriFloydHoare;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.PetriFloydHoareValidityCheck;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.PetriOwickiGriesValidityCheck;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
@@ -649,8 +649,8 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 		mLogger.info("Computed Owicki-Gries annotation of size " + construction.getResult().size() + " in "
 				+ (constructionTime - startTime) + "ns");
 
-		final OwickiGriesValidityCheck<L, IPredicate> check = new OwickiGriesValidityCheck<>(getServices(), mInitialNet,
-				mCsToolkit, construction.getResult(), construction.getPossibleInterferences());
+		final PetriOwickiGriesValidityCheck<L, IPredicate> check = new PetriOwickiGriesValidityCheck<>(getServices(),
+				mInitialNet, mCsToolkit, construction.getResult(), construction.getPossibleInterferences());
 		final long endTime = System.nanoTime();
 		mLogger.info("Checked inductivity and non-interference of Owicki-Gries annotation in "
 				+ (endTime - constructionTime) + "ns");
