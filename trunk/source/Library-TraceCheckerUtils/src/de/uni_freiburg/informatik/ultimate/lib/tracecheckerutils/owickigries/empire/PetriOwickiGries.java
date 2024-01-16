@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire;
 
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Function;
@@ -51,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.IPossibleInterferences;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.OwickiGriesAnnotation;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.OwickiGriesValidityCheck;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown.Crown;
@@ -144,23 +144,21 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 		return cond.getPredecessorEvent().isCutoffEvent();
 	}
 
-	public static <LETTER, PLACE> HashRelation<Transition<LETTER, PLACE>, PLACE>
-			getCoMarkedPlaces(final BranchingProcess<LETTER, PLACE> bp) {
-		final HashRelation<Transition<LETTER, PLACE>, PLACE> coMarkedPlaces = new HashRelation<>();
-		final Collection<Condition<LETTER, PLACE>> conditions = bp.getConditions();
+	public static <LETTER, PLACE> IPossibleInterferences<Transition<LETTER, PLACE>, PLACE>
+			getPossibleInterferences(final BranchingProcess<LETTER, PLACE> bp) {
+		final HashRelation<PLACE, Transition<LETTER, PLACE>> relation = new HashRelation<>();
 		final ICoRelation<LETTER, PLACE> coRelation = bp.getCoRelation();
-		PLACE place;
-		Transition<LETTER, PLACE> transition;
-		for (final Condition<LETTER, PLACE> condition : conditions) {
-			place = condition.getPlace();
+
+		for (final Condition<LETTER, PLACE> condition : bp.getConditions()) {
+			final PLACE place = condition.getPlace();
 			for (final Event<LETTER, PLACE> event : coRelation.computeCoRelatatedEvents(condition)) {
-				transition = event.getTransition();
+				final Transition<LETTER, PLACE> transition = event.getTransition();
 				if (!transition.getPredecessors().contains(place)) {
-					coMarkedPlaces.addPair(transition, place);
+					relation.addPair(place, transition);
 				}
 			}
 		}
-		return coMarkedPlaces;
+		return IPossibleInterferences.fromRelation(relation);
 	}
 
 	private Crown<PLACE, LETTER> getCrown() {
@@ -207,9 +205,9 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 
 	private boolean checkOwickiGriesValidity() {
 		return mStatistics.measureOwickiGriesValidity(() -> {
-			final HashRelation<Transition<LETTER, PLACE>, PLACE> coMarkedPlaces = getCoMarkedPlaces(mBp);
+			final var possibleInterferences = getPossibleInterferences(mBp);
 			final OwickiGriesValidityCheck<LETTER, PLACE> owickiGriesValidity = new OwickiGriesValidityCheck<>(
-					mServices, mMgdScript, mModifiableGlobals, mOwickiGriesAnnotation, coMarkedPlaces);
+					mServices, mMgdScript, mModifiableGlobals, mOwickiGriesAnnotation, possibleInterferences);
 			return owickiGriesValidity.isValid();
 		}) != Validity.INVALID;
 	}

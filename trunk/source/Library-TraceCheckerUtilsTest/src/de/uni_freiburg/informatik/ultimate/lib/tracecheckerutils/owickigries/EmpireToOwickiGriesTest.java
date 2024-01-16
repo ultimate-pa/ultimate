@@ -49,7 +49,7 @@ public class EmpireToOwickiGriesTest extends OwickiGriesTestSuite {
 		mLogger.info("Computed Owicki-Gries annotation:\n%s", owickiGries);
 
 		final var owickiGriesCheck = new OwickiGriesValidityCheck<>(mServices, mMgdScript, modifiableGlobals,
-				owickiGries, PetriOwickiGries.getCoMarkedPlaces(unfolding));
+				owickiGries, PetriOwickiGries.getPossibleInterferences(unfolding));
 		assertEquals("Computed Owicki-Gries annotation is not valid.", Validity.VALID, owickiGriesCheck.isValid());
 	}
 
