@@ -30,8 +30,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -39,23 +37,21 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 
 /**
- * An Owicki/Gries annotation of a Petri program. Serves as proof of the program's correctness.
+ * An Owicki/Gries annotation of a concurrent program. Serves as proof of the program's correctness.
+ *
+ * We primarily use Owicki/Gries annotations for Petri programs. However, they can also be used for other models of
+ * concurrent programs, such as interprocedural CFGs.
  *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  * @author Miriam Lagunes (miriam.lagunes@students.uni-freiburg.de)
  *
- * @param <LETTER>
- *            The type of program statements
- * @param <PLACE>
- *            The type of places in the Petri program
+ * @param <T>
+ *            The type of transitions in the program model. In Petri programs, this is the type of Petri net
+ *            transitions; in interprocedural CFGs, it's the type of CFG edges.
+ * @param <P>
+ *            The type of places, or program locations, in the program model
  */
-public class OwickiGriesAnnotation<LETTER, PLACE> {
-
-	/**
-	 * The annotated Petri program.
-	 */
-	private final IPetriNet<LETTER, PLACE> mPetriNet;
-
+public class OwickiGriesAnnotation<T, P> {
 	/**
 	 * A symbol table containing both the program symbols and the ghost variables in the annotation.
 	 */
@@ -64,12 +60,12 @@ public class OwickiGriesAnnotation<LETTER, PLACE> {
 	/**
 	 * "omega" - maps a place to a predicate that holds whenever the place has a token.
 	 */
-	private final Map<PLACE, IPredicate> mFormulaMapping;
+	private final Map<P, IPredicate> mFormulaMapping;
 
 	/**
 	 * "gamma" - annotates transitions with assignments of ghost variables.
 	 */
-	private final Map<Transition<LETTER, PLACE>, GhostUpdate> mAssignmentMapping;
+	private final Map<T, GhostUpdate> mAssignmentMapping;
 
 	/**
 	 * Set of ghost variables used by the annotation.
@@ -97,16 +93,14 @@ public class OwickiGriesAnnotation<LETTER, PLACE> {
 	 * @param assignmentMapping
 	 *            The annotation of transitions with ghost assignments.
 	 */
-	public OwickiGriesAnnotation(final IPetriNet<LETTER, PLACE> net, final IIcfgSymbolTable symbolTable,
-			final Map<PLACE, IPredicate> formulaMapping, final Set<IProgramVar> ghostVariables,
-			final Map<IProgramVar, Term> ghostInitAssignment,
-			final Map<Transition<LETTER, PLACE>, GhostUpdate> assignmentMapping) {
+	public OwickiGriesAnnotation(final IIcfgSymbolTable symbolTable, final Map<P, IPredicate> formulaMapping,
+			final Set<IProgramVar> ghostVariables, final Map<IProgramVar, Term> ghostInitAssignment,
+			final Map<T, GhostUpdate> assignmentMapping) {
 		assert ghostInitAssignment.keySet().stream()
 				.allMatch(ghostVariables::contains) : "Initial value only allowed for ghost variables";
 		assert assignmentMapping.values().stream().allMatch(
 				u -> ghostVariables.containsAll(u.getAssignedVariables())) : "Only updates to ghost variables allowed";
 
-		mPetriNet = net;
 		mSymbolTable = symbolTable;
 		mFormulaMapping = formulaMapping;
 		mGhostVariables = ghostVariables;
@@ -114,19 +108,15 @@ public class OwickiGriesAnnotation<LETTER, PLACE> {
 		mAssignmentMapping = assignmentMapping;
 	}
 
-	public IPetriNet<LETTER, PLACE> getPetriNet() {
-		return mPetriNet;
-	}
-
 	public IIcfgSymbolTable getSymbolTable() {
 		return mSymbolTable;
 	}
 
-	public Map<PLACE, IPredicate> getFormulaMapping() {
+	public Map<P, IPredicate> getFormulaMapping() {
 		return mFormulaMapping;
 	}
 
-	public Map<Transition<LETTER, PLACE>, GhostUpdate> getAssignmentMapping() {
+	public Map<T, GhostUpdate> getAssignmentMapping() {
 		return mAssignmentMapping;
 	}
 

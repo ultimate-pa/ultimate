@@ -27,10 +27,10 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -69,46 +69,46 @@ public class OwickiGriesValidityCheck<L extends IAction, P> {
 	private final ILogger mLogger;
 	private final ManagedScript mManagedScript;
 	private final Script mScript;
+	private final IHoareTripleChecker mHoareTripleChecker;
+	private final BasicPredicateFactory mPredicateFactory;
 
 	private final Validity mIsInductive;
 	private final Validity mIsInterferenceFree;
 	private final Validity mIsProgramSafe;
 
-	private final OwickiGriesAnnotation<L, P> mAnnotation;
-	private final Collection<Transition<L, P>> mTransitions;
-	private final Collection<P> mPlaces;
-	private final IHoareTripleChecker mHoareTripleChecker;
-	private final BasicPredicateFactory mPredicateFactory;
+	private final IPetriNet<L, P> mProgram;
+	private final OwickiGriesAnnotation<Transition<L, P>, P> mAnnotation;
 	private final IPossibleInterferences<Transition<L, P>, P> mPossibleInterferences;
 
-	public OwickiGriesValidityCheck(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
-			final OwickiGriesAnnotation<L, P> annotation,
+	public OwickiGriesValidityCheck(final IUltimateServiceProvider services, final IPetriNet<L, P> program,
+			final CfgSmtToolkit csToolkit, final OwickiGriesAnnotation<Transition<L, P>, P> annotation,
 			final IPossibleInterferences<Transition<L, P>, P> possibleInterferences) {
-		this(services, csToolkit.getManagedScript(), new MonolithicHoareTripleChecker(csToolkit), annotation,
+		this(services, csToolkit.getManagedScript(), new MonolithicHoareTripleChecker(csToolkit), program, annotation,
 				possibleInterferences);
 	}
 
 	public OwickiGriesValidityCheck(final IUltimateServiceProvider services, final ManagedScript mgdScript,
-			final ModifiableGlobalsTable modifiableGlobals, final OwickiGriesAnnotation<L, P> annotation,
+			final IPetriNet<L, P> program, final ModifiableGlobalsTable modifiableGlobals,
+			final OwickiGriesAnnotation<Transition<L, P>, P> annotation,
 			final IPossibleInterferences<Transition<L, P>, P> possibleInterferences) {
-		this(services, mgdScript, new MonolithicHoareTripleChecker(mgdScript, modifiableGlobals), annotation,
+		this(services, mgdScript, new MonolithicHoareTripleChecker(mgdScript, modifiableGlobals), program, annotation,
 				possibleInterferences);
 	}
 
 	public OwickiGriesValidityCheck(final IUltimateServiceProvider services, final ManagedScript mgdScript,
-			final IHoareTripleChecker htc, final OwickiGriesAnnotation<L, P> annotation,
+			final IHoareTripleChecker htc, final IPetriNet<L, P> program,
+			final OwickiGriesAnnotation<Transition<L, P>, P> annotation,
 			final IPossibleInterferences<Transition<L, P>, P> possibleInterferences) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(OwickiGriesValidityCheck.class);
 		mManagedScript = mgdScript;
-		mScript = mgdScript.getScript();
-		mAnnotation = annotation;
-		mPredicateFactory = new BasicPredicateFactory(services, mManagedScript, annotation.getSymbolTable());
-		mPossibleInterferences = possibleInterferences;
-
 		mHoareTripleChecker = htc;
-		mTransitions = mAnnotation.getPetriNet().getTransitions();
-		mPlaces = mAnnotation.getPetriNet().getPlaces();
+		mScript = mgdScript.getScript();
+		mPredicateFactory = new BasicPredicateFactory(services, mManagedScript, annotation.getSymbolTable());
+
+		mProgram = program;
+		mAnnotation = annotation;
+		mPossibleInterferences = possibleInterferences;
 
 		mIsInductive = checkInductivity();
 		mIsInterferenceFree = checkNonInterference();
@@ -117,7 +117,7 @@ public class OwickiGriesValidityCheck<L extends IAction, P> {
 
 	private Validity checkInductivity() {
 		Validity result = Validity.VALID;
-		for (final Transition<L, P> transition : mTransitions) {
+		for (final Transition<L, P> transition : mProgram.getTransitions()) {
 			final var check = isInductive(transition);
 			result = result.and(check);
 
@@ -159,7 +159,7 @@ public class OwickiGriesValidityCheck<L extends IAction, P> {
 	private Validity checkNonInterference() {
 		Validity result = Validity.VALID;
 
-		for (final P place : mPlaces) {
+		for (final P place : mProgram.getPlaces()) {
 			final var check = isInterferenceFree(place);
 			result = result.and(check);
 
@@ -250,7 +250,7 @@ public class OwickiGriesValidityCheck<L extends IAction, P> {
 		final MonolithicImplicationChecker checker = new MonolithicImplicationChecker(mServices, mManagedScript);
 
 		Validity result = Validity.VALID;
-		for (final P place : mAnnotation.getPetriNet().getInitialPlaces()) {
+		for (final P place : mProgram.getInitialPlaces()) {
 			final var predicate = getPlacePredicate(place);
 			final var check = checker.checkImplication(initFormula, false, predicate, false);
 			result = result.and(check);
@@ -275,7 +275,7 @@ public class OwickiGriesValidityCheck<L extends IAction, P> {
 
 	private Validity checkAcceptFormula() {
 		Validity result = Validity.VALID;
-		for (final P place : mAnnotation.getPetriNet().getAcceptingPlaces()) {
+		for (final P place : mProgram.getAcceptingPlaces()) {
 			final var predicate = getPlacePredicate(place);
 			final var check = IncrementalPlicationChecker
 					.convertLBool2Validity(SmtUtils.checkSatTerm(mScript, predicate.getFormula()));

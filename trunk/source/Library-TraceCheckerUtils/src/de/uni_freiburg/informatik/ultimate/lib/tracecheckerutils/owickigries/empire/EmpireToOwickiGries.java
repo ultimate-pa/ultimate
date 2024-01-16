@@ -77,7 +77,7 @@ public class EmpireToOwickiGries<LETTER, PLACE> {
 	private final Map<Region<PLACE>, IProgramVar> mGhostVariables;
 	private final Map<Territory<PLACE>, IPredicate> mTerritoryFormulaMap = new HashMap<>();
 
-	private final OwickiGriesAnnotation<LETTER, PLACE> mOwickiGriesAnnotation;
+	private final OwickiGriesAnnotation<Transition<LETTER, PLACE>, PLACE> mOwickiGriesAnnotation;
 
 	/**
 	 * Constructs the Owicki-Gries-Annotation for empireAnnotation.
@@ -111,7 +111,7 @@ public class EmpireToOwickiGries<LETTER, PLACE> {
 		final Map<Transition<LETTER, PLACE>, GhostUpdate> assignmentMapping = getAssignmentMapping();
 		final Map<IProgramVar, Term> ghostInitAssignment = getGhostInitAssignment();
 
-		mOwickiGriesAnnotation = new OwickiGriesAnnotation<>(mNet, mSymbolTable, formulaMapping,
+		mOwickiGriesAnnotation = new OwickiGriesAnnotation<>(mSymbolTable, formulaMapping,
 				new HashSet<>(mGhostVariables.values()), ghostInitAssignment, assignmentMapping);
 	}
 
@@ -268,7 +268,7 @@ public class EmpireToOwickiGries<LETTER, PLACE> {
 		return new GhostUpdate(assignments);
 	}
 
-	public OwickiGriesAnnotation<LETTER, PLACE> getAnnotation() {
+	public OwickiGriesAnnotation<Transition<LETTER, PLACE>, PLACE> getAnnotation() {
 		return mOwickiGriesAnnotation;
 	}
 }

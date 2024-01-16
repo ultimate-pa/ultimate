@@ -80,7 +80,7 @@ public class NaiveOwickiGriesTestSuite extends OwickiGriesTestSuite {
 				annotation);
 
 		// check validity of annotation
-		assert new OwickiGriesValidityCheck<>(mServices, mMgdScript, mHtc, annotation,
+		assert new OwickiGriesValidityCheck<>(mServices, mMgdScript, mHtc, program, annotation,
 				construction.getPossibleInterferences())
 						.isValid() != Validity.INVALID : "Invalid Owicki-Gries annotation";
 	}

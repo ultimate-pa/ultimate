@@ -85,7 +85,7 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 
 	private final Crown<PLACE, LETTER> mCrown;
 	private final EmpireAnnotation<PLACE> mEmpireAnnotation;
-	private final OwickiGriesAnnotation<LETTER, PLACE> mOwickiGriesAnnotation;
+	private final OwickiGriesAnnotation<Transition<LETTER, PLACE>, PLACE> mOwickiGriesAnnotation;
 
 	private final Statistics mStatistics = new Statistics();
 
@@ -192,7 +192,7 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 		}) != Validity.INVALID;
 	}
 
-	private OwickiGriesAnnotation<LETTER, PLACE> getOwickiGriesAnnotation() {
+	private OwickiGriesAnnotation<Transition<LETTER, PLACE>, PLACE> getOwickiGriesAnnotation() {
 		final var annotation = mStatistics.measureOwickiGries(() -> {
 			final EmpireToOwickiGries<LETTER, PLACE> empireToOwickiGries = new EmpireToOwickiGries<>(mServices,
 					mMgdScript, mNet, mSymbolTable, mProcedures, mEmpireAnnotation);
@@ -207,7 +207,7 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 		return mStatistics.measureOwickiGriesValidity(() -> {
 			final var possibleInterferences = getPossibleInterferences(mBp);
 			final OwickiGriesValidityCheck<LETTER, PLACE> owickiGriesValidity = new OwickiGriesValidityCheck<>(
-					mServices, mMgdScript, mModifiableGlobals, mOwickiGriesAnnotation, possibleInterferences);
+					mServices, mMgdScript, mNet, mModifiableGlobals, mOwickiGriesAnnotation, possibleInterferences);
 			return owickiGriesValidity.isValid();
 		}) != Validity.INVALID;
 	}

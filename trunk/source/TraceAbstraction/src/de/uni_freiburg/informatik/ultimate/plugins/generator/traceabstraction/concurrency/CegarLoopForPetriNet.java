@@ -649,8 +649,8 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 		mLogger.info("Computed Owicki-Gries annotation of size " + construction.getResult().size() + " in "
 				+ (constructionTime - startTime) + "ns");
 
-		final OwickiGriesValidityCheck<L, IPredicate> check = new OwickiGriesValidityCheck<>(getServices(), mCsToolkit,
-				construction.getResult(), construction.getPossibleInterferences());
+		final OwickiGriesValidityCheck<L, IPredicate> check = new OwickiGriesValidityCheck<>(getServices(), mInitialNet,
+				mCsToolkit, construction.getResult(), construction.getPossibleInterferences());
 		final long endTime = System.nanoTime();
 		mLogger.info("Checked inductivity and non-interference of Owicki-Gries annotation in "
 				+ (endTime - constructionTime) + "ns");

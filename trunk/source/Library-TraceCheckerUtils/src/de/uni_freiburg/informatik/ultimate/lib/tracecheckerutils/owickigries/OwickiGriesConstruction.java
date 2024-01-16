@@ -77,7 +77,7 @@ public class OwickiGriesConstruction<P, L> {
 
 	private final Set<P> mHittingSet;
 	private final Map<P, IProgramVar> mGhostVariables;
-	private final OwickiGriesAnnotation<L, P> mAnnotation;
+	private final OwickiGriesAnnotation<Transition<L, P>, P> mAnnotation;
 
 	public OwickiGriesConstruction(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
 			final IPetriNet<L, P> net, final Map<Marking<P>, IPredicate> floydHoare, final boolean useHittingSets) {
@@ -102,8 +102,8 @@ public class OwickiGriesConstruction<P, L> {
 		final Map<Transition<L, P>, GhostUpdate> assignmentMapping = getAssignmentMapping();
 		final Map<IProgramVar, Term> ghostInitAssignment = getGhostInitAssignment();
 
-		mAnnotation = new OwickiGriesAnnotation<>(mNet, mSymbolTable, formulaMapping,
-				new HashSet<>(mGhostVariables.values()), ghostInitAssignment, assignmentMapping);
+		mAnnotation = new OwickiGriesAnnotation<>(mSymbolTable, formulaMapping, new HashSet<>(mGhostVariables.values()),
+				ghostInitAssignment, assignmentMapping);
 	}
 
 	/**
@@ -309,7 +309,7 @@ public class OwickiGriesConstruction<P, L> {
 		return new GhostUpdate(assignments);
 	}
 
-	public OwickiGriesAnnotation<L, P> getResult() {
+	public OwickiGriesAnnotation<Transition<L, P>, P> getResult() {
 		return mAnnotation;
 	}
 
