@@ -121,8 +121,8 @@ public class ChcAsserter {
 
 			// record name mapping for backtranslation later
 			if (mAddClauseNames) {
-				final var namedTerm = new NamedTermWrapper(formula);
-				assert namedTerm.isNamed() : "term was not named: " + formula;
+				final var namedTerm = NamedTermWrapper.of(formula);
+				assert namedTerm != null : "term was not named: " + formula;
 				mName2Clause.put(namedTerm.getName(), hc);
 			}
 		}
