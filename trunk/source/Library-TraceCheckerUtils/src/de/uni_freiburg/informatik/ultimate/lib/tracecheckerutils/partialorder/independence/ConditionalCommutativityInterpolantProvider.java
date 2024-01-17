@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.ITraceChecker;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -129,40 +130,68 @@ public class ConditionalCommutativityInterpolantProvider<L extends IAction> {
 			while (iterator.hasNext()) {
 				transitions.add(iterator.next());
 			}
+			if (checkState(state, transitions, i, runPredicates)) {
+				return mCopy;
+			}
+
 			//int debug2=0;
+			/*
 			for (int j = 0; j < transitions.size(); j++) {
 				final OutgoingInternalTransition<L, IPredicate> transition1 = transitions.get(j);
 				for (int k = j + 1; k < transitions.size(); k++) {
 					final OutgoingInternalTransition<L, IPredicate> transition2 = transitions.get(k);
 					List<IPredicate> interpolantPredicates = new ArrayList<>();
-					//IPredicate runPred = runPredicates.get(mRun.getStateSequence().indexOf(state));
-					//interpolantPredicates.add(runPredicates.get(mRun.getStateSequence().indexOf(state)));
 					interpolantPredicates.addAll(getInterpolantPredicates(i,
 							runPredicates.get(mRun.getStateSequence().indexOf(state))));
 					NestedRun<L, IPredicate> currentRun = (NestedRun<L, IPredicate>) mRun;
 					if (i != mRun.getStateSequence().size() - 1) {
 						currentRun = currentRun.getSubRun(0, i);
 					}
-					final TracePredicates tracePredicates = mChecker.checkConditionalCommutativity(currentRun,
-							interpolantPredicates, state, transition1.getLetter(), transition2.getLetter());
-
-					List<IPredicate> conPredicates = new ArrayList<>();
-					
-					if (tracePredicates != null) {
-						conPredicates.add(tracePredicates.getPrecondition());
-						conPredicates.addAll(tracePredicates.getPredicates());
-						conPredicates.add(tracePredicates.getPostcondition());
-						addToCopy(conPredicates);
-						//if the current fragment is already infeasible, we can stop
-						if (conPredicates.get(conPredicates.size() - 2).getFormula().toString().equals("false")) {
-							return mCopy;
-						}
-						//int debug3 = 0;
+					List<IPredicate> conPredicates = check(currentRun, interpolantPredicates, state,
+							transition1.getLetter(), transition2.getLetter());
+					if (!conPredicates.isEmpty() && conPredicates.get(conPredicates.size() - 2).getFormula().toString().equals("false")) {
+						return mCopy;
 					}
+				}
+			}*/
+		}
+		return mCopy;
+	}
+
+	private boolean checkState(IPredicate state, List<OutgoingInternalTransition<L, IPredicate>> transitions, int i, List<IPredicate> runPredicates) {
+		for (int j = 0; j < transitions.size(); j++) {
+			final OutgoingInternalTransition<L, IPredicate> transition1 = transitions.get(j);
+			for (int k = j + 1; k < transitions.size(); k++) {
+				final OutgoingInternalTransition<L, IPredicate> transition2 = transitions.get(k);
+				List<IPredicate> interpolantPredicates = new ArrayList<>();
+				interpolantPredicates.addAll(getInterpolantPredicates(i,
+						runPredicates.get(mRun.getStateSequence().indexOf(state))));
+				NestedRun<L, IPredicate> currentRun = (NestedRun<L, IPredicate>) mRun;
+				if (i != mRun.getStateSequence().size() - 1) {
+					currentRun = currentRun.getSubRun(0, i);
+				}
+				if (checkTransitions(currentRun, interpolantPredicates, state,
+						transition1.getLetter(), transition2.getLetter())) {
+					return true;
 				}
 			}
 		}
-		return mCopy;
+		return false;
+	}
+
+	private boolean checkTransitions(NestedRun<L, IPredicate> currentRun, List<IPredicate> interpolantPredicates, IPredicate state,
+			L letter1, L letter2) {
+		final TracePredicates tracePredicates = mChecker.checkConditionalCommutativity(currentRun,
+				interpolantPredicates, state, letter1, letter2);
+
+		List<IPredicate> conPredicates = new ArrayList<>();
+		if (tracePredicates != null) {
+			conPredicates.add(tracePredicates.getPrecondition());
+			conPredicates.addAll(tracePredicates.getPredicates());
+			conPredicates.add(tracePredicates.getPostcondition());
+			addToCopy(conPredicates);
+		}
+		return (!conPredicates.isEmpty() && SmtUtils.isFalseLiteral(conPredicates.get(conPredicates.size() - 2).getFormula()));
 	}
 
 	private List<IPredicate> getInterpolantPredicates(int runIndex, IPredicate runPredicate) {
@@ -185,7 +214,13 @@ public class ConditionalCommutativityInterpolantProvider<L extends IAction> {
 				Iterator<OutgoingInternalTransition<L, IPredicate>> iterator = mCopy.internalSuccessors(state,
 						mRun.getWord().getSymbol(i)).iterator();
 				while (iterator.hasNext()) {
-					nextWorklist.add(iterator.next().getSucc());
+					IPredicate succ = iterator.next().getSucc();
+					if (SmtUtils.isFalseLiteral(succ.getFormula())) {
+						interpolantPredicates.add(succ);
+						return interpolantPredicates;
+					} else if (!SmtUtils.isTrueLiteral(succ.getFormula())) {
+						nextWorklist.add(succ);
+					}
 				}
 			}
 			if (i == runIndex - 1) {
@@ -207,9 +242,10 @@ public class ConditionalCommutativityInterpolantProvider<L extends IAction> {
 				mCopy.addState(false, false, succPred);
 			}
 			mCopy.addInternalTransition(conPredicates.get(i - 1), mRun.getWord().getSymbol(i - 1), succPred);
+			/*
 			if (succPred.getFormula().toString().equals("false")) {
-				//break;
-			}
+				break;
+			}*/
 		}
 	}
 

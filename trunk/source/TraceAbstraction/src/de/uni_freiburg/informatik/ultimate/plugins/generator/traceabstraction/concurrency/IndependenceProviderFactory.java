@@ -183,8 +183,6 @@ public class IndependenceProviderFactory<L extends IIcfgTransition<?>> {
 				// =========================================================================
 				// Never consider letters of the same thread to be independent.
 				.threadSeparated()
-				//debug
-				.ignoreDebugPredicates()
 				// Retrieve the constructed relation.
 				.build();
 	}

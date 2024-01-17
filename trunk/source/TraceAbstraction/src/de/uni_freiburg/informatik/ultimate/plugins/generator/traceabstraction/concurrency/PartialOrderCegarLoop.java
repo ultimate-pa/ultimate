@@ -83,7 +83,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateWithConjuncts;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.BetterLockstepOrder;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.LoopLockstepOrder.PredicateWithLastThread;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderMode;
@@ -92,6 +94,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.Pa
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.ConditionalCommutativityInterpolantProvider;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.SemanticIndependenceConditionGenerator;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.SemanticIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.AbstractionType;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.RandomCriterion;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
@@ -138,8 +141,8 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 			final IIcfg<IcfgLocation> rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final TAPreferences taPrefs, final Set<IcfgLocation> errorLocs, final InterpolationTechnique interpolation,
 			final IUltimateServiceProvider services,
-			final List<IRefinableIndependenceProvider<L>> independenceProviders, final Class<L> transitionClazz,
-			final PredicateFactoryRefinement stateFactoryForRefinement) {
+			final List<IRefinableIndependenceProvider<L>> independenceProviders,
+			final Class<L> transitionClazz, final PredicateFactoryRefinement stateFactoryForRefinement) {
 		super(name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation, false,
 				Collections.emptySet(), services, transitionClazz, stateFactoryForRefinement);
 
@@ -196,8 +199,9 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		
 		//get interpolants from mCounterexample
 		ArrayList<IPredicate> predicates = new ArrayList<>();
+		//cast should be fine, since isAbstractionEmpty() assigns mCounterexample a IRun<L, IPredicate>
 		for (IPredicate pred : ((IRun<L, IPredicate>) mCounterexample).getStateSequence()) {
-			IPredicate mlpred = ((SleepPredicate) pred).getUnderlying();
+			IPredicate mlpred = ((SleepPredicate<L>) pred).getUnderlying();
 			if (mlpred instanceof MLPredicateWithInterpolants) {
 				predicates.add(((MLPredicateWithInterpolants) mlpred).getInterpolants());
 			} else {
@@ -208,13 +212,13 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		RandomCriterion<L, IPredicate> criterion = new RandomCriterion<>(1, 321);
 		PostConditionTraceChecker<L> checker = new PostConditionTraceChecker<>(mServices, mAbstraction,
 				mTaskIdentifier, mFactory, predicateUnifier, mStrategyFactory);
+		IIndependenceRelation<IPredicate, L> relation = mPOR.getIndependence(0);
 		SemanticIndependenceConditionGenerator generator = new SemanticIndependenceConditionGenerator(mServices,
-				mCsToolkit.getManagedScript(), mPredicateFactory, true, true);
+				mCsToolkit.getManagedScript(), mPredicateFactory, relation.isSymmetric(), true);
 		ConditionalCommutativityInterpolantProvider<L> conInterpolantProvider
 		= new ConditionalCommutativityInterpolantProvider<>(
-				mServices, criterion, mPOR.getIndependence(0), mCsToolkit.getManagedScript().getScript(),
+				mServices, criterion, relation, mCsToolkit.getManagedScript().getScript(),
 				generator, mAbstraction, mFactory, checker);
-		//cast should be fine, since isAbstractionEmpty() assigns mCounterexample a IRun<L, IPredicate>
 		mInterpolAutomaton = conInterpolantProvider.getInterpolants((IRun<L, IPredicate>) mCounterexample,
 				predicates, mInterpolAutomaton);
 		

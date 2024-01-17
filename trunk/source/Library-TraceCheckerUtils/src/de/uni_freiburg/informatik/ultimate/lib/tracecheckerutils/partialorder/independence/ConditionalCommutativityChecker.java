@@ -106,37 +106,49 @@ public class ConditionalCommutativityChecker<L extends IAction> implements ICond
 	@Override
 	public TracePredicates checkConditionalCommutativity(final IRun<L, IPredicate> run, List<IPredicate> predicates,
 			final IPredicate state, final L letter1, final L letter2) {
+		/*
+		mIndependenceRelation.isIndependent(state, letter1, letter2).equals(Dependence.INDEPENDENT);
+		if (!predicates.isEmpty()) {
+			 for (IPredicate pred: predicates) {
+				 if (mIndependenceRelation.isIndependent(pred, letter1, letter2).equals(Dependence.INDEPENDENT)) {
+						return null;
+					}
+			 }
+		} 
+		*/
+		
 		IPredicate pred;
 		if (!predicates.isEmpty()) {
-			 pred = new PredicateWithConjuncts(0, new ImmutableList<>(predicates), mScript);
+			pred  = new PredicateWithConjuncts(0, new ImmutableList<>(predicates), mScript);
 		} else {
 			pred = state;
 		}
+				
 		if (mIndependenceRelation.isIndependent(pred, letter1, letter2).equals(Dependence.INDEPENDENT)) {
-			return null;
-		}
-		
-		//ensures that each pair is checked at most two times (should later on be removed)
-		Pair<L,L> pair = new Pair<>(letter1,letter2);
-		if (!mStatementMap.containsKey(pair)) {
-			mStatementMap.put(pair, 1);
-		} else if (mStatementMap.get(pair) == 1) {
-			mStatementMap.replace(pair, 2);
-		}	else {
 			return null;
 		}
 		
 		if (mCriterion.decide(state, letter1, letter2)) {
 			IPredicate condition;
 			if (!predicates.isEmpty()) {
-				//pred = new PredicateWithConjuncts(0, new ImmutableList<>(predicates), mScript);
-				condition = mGenerator.generateCondition(pred, letter1.getTransformula(),
-						letter2.getTransformula());
+				condition = mGenerator.generateCondition(
+						new PredicateWithConjuncts(0, new ImmutableList<>(predicates), mScript),
+						letter1.getTransformula(), letter2.getTransformula());
 			} else {
 				condition = mGenerator.generateCondition(letter1.getTransformula(), letter2.getTransformula());
 			}
 			
 			if (mCriterion.decide(condition) && !condition.getFormula().toString().equals("true")) {
+				
+				//ensures that each pair is checked at most two times (should later on be removed)
+				Pair<L,L> pair = new Pair<>(letter1,letter2);
+				if (!mStatementMap.containsKey(pair)) {
+					mStatementMap.put(pair, 1);
+				} else if (mStatementMap.get(pair) == 1) {
+					mStatementMap.replace(pair, 2);
+				}	else {
+					return null;
+				}
 				return mTraceChecker.checkTrace(run, null, condition);
 			}
 		}
