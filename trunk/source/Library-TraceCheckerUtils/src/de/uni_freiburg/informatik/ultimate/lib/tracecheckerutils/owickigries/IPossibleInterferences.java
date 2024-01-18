@@ -30,9 +30,43 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
+/**
+ * An interface that specifies the possible interferences in a model of a concurrent program. Specifically, a transition
+ * of the program can <em>possibly interfere</em> with a program location if, while the program is in the given
+ * location, some concurrent thread can execute the action.
+ *
+ * In general, an instance of this interface will present an overapproximation of the transitions that can actually be
+ * executed concurrently. In particular, instances typically would track only what is possible up to control flow,
+ * whereas data flow constraints would be ignored.
+ *
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ *
+ * @param <T>
+ *            The type of transitions in the program model
+ * @param <P>
+ *            The type of program locations in the program model
+ */
 public interface IPossibleInterferences<T, P> {
-	Set<T> getInterferingActions(P place);
+	/**
+	 * Retrieves the set of all transitions that possibly interfere with the given program location
+	 *
+	 * @param location
+	 *            The program location whose possibly interfering transitions shall be retrieved
+	 * @return a set containing all possibly interfering transitions
+	 */
+	Set<T> getInterferingActions(P location);
 
+	/**
+	 * Creates a new instance from the given data.
+	 *
+	 * @param <T>
+	 *            The type of transitions in the program model
+	 * @param <P>
+	 *            The type of program locations in the program model
+	 * @param rel
+	 *            A binary relation from program locations to the possibly interfering transitions
+	 * @return a new instance of the interface
+	 */
 	static <T, P> IPossibleInterferences<T, P> fromRelation(final HashRelation<P, T> rel) {
 		return rel::getImage;
 	}
