@@ -25,6 +25,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries;
 
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -98,6 +99,16 @@ public class OwickiGriesAnnotation<T, P> {
 			final Map<T, GhostUpdate> assignmentMapping) {
 		assert ghostInitAssignment.keySet().stream()
 				.allMatch(ghostVariables::contains) : "Initial value only allowed for ghost variables";
+
+		// TODO should we allow more here? e.g. any term that does not itself contain a ghost variable?
+		// TODO we cannot allow all terms there are, otherwise we might have contradictions: a==!b and b==a
+		// TODO (or, depending how we interpret it, the values depend on an order between ghost initializations)
+		// assert ghostInitAssignment.values().stream().allMatch(
+		// v -> v.getFreeVars().length == 0) : "Initial values must be literal terms without free variables";
+		assert ghostInitAssignment.values().stream().flatMap(t -> Arrays.stream(t.getFreeVars()))
+				.allMatch(v -> ghostVariables.stream().noneMatch(gv -> gv.getTermVariable()
+						.equals(v))) : "Ghost variables initializations must not refer to other ghost variables";
+
 		assert assignmentMapping.values().stream().allMatch(
 				u -> ghostVariables.containsAll(u.getAssignedVariables())) : "Only updates to ghost variables allowed";
 
