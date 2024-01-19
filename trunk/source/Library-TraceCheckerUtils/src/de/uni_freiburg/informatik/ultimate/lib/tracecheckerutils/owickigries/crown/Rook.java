@@ -25,6 +25,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -75,8 +76,8 @@ public final class Rook<PLACE, LETTER> {
 		return Objects.hash(mKingdom, mLaw);
 	}
 
-	private boolean isCut(final Set<Condition<LETTER, PLACE>> possibleCut, final BranchingProcess<LETTER, PLACE> bp) {
-		final Set<Condition<LETTER, PLACE>> allConditions = new HashSet<>(bp.getConditions());
+	private boolean isCut(final Set<Condition<LETTER, PLACE>> possibleCut, final BranchingProcess<LETTER, PLACE> bp,
+			final Set<Condition<LETTER, PLACE>> allConditions) {
 		final Set<Condition<LETTER, PLACE>> missingConditions =
 				DataStructureUtils.difference(allConditions, possibleCut);
 		final ICoRelation<LETTER, PLACE> coRelation = bp.getCoRelation();
@@ -102,13 +103,14 @@ public final class Rook<PLACE, LETTER> {
 	 *            Branching process of the refined Petri net
 	 * @return True if the Rook contains a non cut.
 	 */
-	public boolean containsNonCut(final BranchingProcess<LETTER, PLACE> bp) {
+	public boolean containsNonCut(final BranchingProcess<LETTER, PLACE> bp,
+			final Collection<Condition<LETTER, PLACE>> conditions) {
 		if (mContainsNonCut != null) {
 			return mContainsNonCut.booleanValue();
 		}
 		final Set<Set<Condition<LETTER, PLACE>>> census = getCensus();
 		for (final Set<Condition<LETTER, PLACE>> coSet : census) {
-			if (!isCut(coSet, bp)) {
+			if (!isCut(coSet, bp, new HashSet<>(conditions))) {
 				mContainsNonCut = true;
 				return true;
 			}
@@ -336,7 +338,7 @@ public final class Rook<PLACE, LETTER> {
 			}
 		}
 
-		if (containsNonCut(bp)) {
+		if (containsNonCut(bp, bp.getConditions())) {
 			assert false : "Not all co-sets in census of the Rook are Cuts";
 			return false;
 		}

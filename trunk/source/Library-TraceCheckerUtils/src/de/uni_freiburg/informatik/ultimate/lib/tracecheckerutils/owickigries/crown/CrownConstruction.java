@@ -63,6 +63,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.TimeTracker;
  *            The type of statements in the Petri program
  */
 public final class CrownConstruction<PLACE, LETTER> {
+	public static final boolean SINGLE_ASSERTION_LAWS = false;
 
 	private final ILogger mLogger;
 
@@ -204,13 +205,17 @@ public final class CrownConstruction<PLACE, LETTER> {
 		}
 		mRejectedPairs.clear();
 		colonizedRooks.clear();
+		if (SINGLE_ASSERTION_LAWS) {
+			reSet.removeIf(r -> r.containsNonCut(mBp, mOrigConds));
+			return reSet;
+		}
 		mLogger.debug("Starting Legislation...");
 		for (final Rook<PLACE, LETTER> rook : reSet) {
 			colonizedRooks.addAll(crownExpansionIterative2(rook, new ArrayList<>(mAssertConds), false));
 		}
 
 		// remove pre-rooks
-		colonizedRooks.removeIf(r -> r.containsNonCut(mBp));
+		colonizedRooks.removeIf(r -> r.containsNonCut(mBp, mBp.getConditions()));
 
 		return colonizedRooks;
 	}
