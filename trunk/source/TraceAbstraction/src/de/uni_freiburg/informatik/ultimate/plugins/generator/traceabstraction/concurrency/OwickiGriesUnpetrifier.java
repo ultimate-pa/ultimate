@@ -207,6 +207,7 @@ public class OwickiGriesUnpetrifier<L extends IIcfgTransition<LOC>, P, LOC exten
 		for (final var ghost : ghostVars) {
 			symbolTable.add(ghost);
 		}
+		symbolTable.finishConstruction();
 		return symbolTable;
 	}
 
