@@ -209,8 +209,8 @@ public abstract class OwickiGriesValidityCheck<T, P> {
 
 	// TODO possibly cache?
 	private IPredicate getPrecondition(final T transition) {
-		return mPredicateFactory
-				.and(getPredecessors(transition).stream().map(this::getPlacePredicate).collect(Collectors.toSet()));
+		return mPredicateFactory.and(getPredecessors(transition).stream().map(this::getPlacePredicate)
+				.filter(p -> p != null).collect(Collectors.toSet()));
 	}
 
 	// TODO possibly cache?
