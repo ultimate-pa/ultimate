@@ -48,8 +48,9 @@ public class PetriOwickiGriesTestSuite extends OwickiGriesTestSuite {
 			final BoundedPetriNet<SimpleAction, IPredicate> program,
 			final BoundedPetriNet<SimpleAction, IPredicate> refinedPetriNet,
 			final BranchingProcess<SimpleAction, IPredicate> unfolding) throws AutomataLibraryException {
-		final var pog = new PetriOwickiGries<>(mServices, unfolding, program, mPredicateFactory, Function.identity(),
-				mMgdScript, mSymbolTable, Set.of(SimpleAction.PROCEDURE), computeModifiableGlobals());
+		final var pog = new PetriOwickiGries<>(mServices, unfolding, program, mDiff2OriginalTransition,
+				mPredicateFactory, Function.identity(), mMgdScript, mSymbolTable, Set.of(SimpleAction.PROCEDURE),
+				computeModifiableGlobals());
 
 		final StatisticsData data = new StatisticsData();
 		data.aggregateBenchmarkData(pog.getStatistics());

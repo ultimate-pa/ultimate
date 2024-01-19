@@ -76,6 +76,7 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 	private final ModifiableGlobalsTable mModifiableGlobals;
 
 	private final IPetriNet<LETTER, PLACE> mNet;
+	private final Function<Transition<LETTER, PLACE>, Transition<LETTER, PLACE>> mDiff2OriginalTransition;
 	private final Set<PLACE> mOriginalPlaces;
 
 	private final BranchingProcess<LETTER, PLACE> mBp;
@@ -97,9 +98,10 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 	 *            the original Petri program
 	 */
 	public PetriOwickiGries(final IUltimateServiceProvider services, final BranchingProcess<LETTER, PLACE> bp,
-			final IPetriNet<LETTER, PLACE> net, final BasicPredicateFactory factory,
-			final Function<PLACE, IPredicate> placeToAssertion, final ManagedScript mgdScript,
-			final IIcfgSymbolTable symbolTable, final Set<String> procedures,
+			final IPetriNet<LETTER, PLACE> net,
+			final Function<Transition<LETTER, PLACE>, Transition<LETTER, PLACE>> diff2OriginalTransition,
+			final BasicPredicateFactory factory, final Function<PLACE, IPredicate> placeToAssertion,
+			final ManagedScript mgdScript, final IIcfgSymbolTable symbolTable, final Set<String> procedures,
 			final ModifiableGlobalsTable modifiableGlobals) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(PetriOwickiGries.class);
@@ -112,6 +114,7 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 
 		mNet = net;
 		mOriginalPlaces = mNet.getPlaces();
+		mDiff2OriginalTransition = diff2OriginalTransition;
 
 		mBp = bp;
 		mConditions = getConditions();
@@ -144,17 +147,23 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 		return cond.getPredecessorEvent().isCutoffEvent();
 	}
 
-	public static <LETTER, PLACE> IPossibleInterferences<Transition<LETTER, PLACE>, PLACE>
-			getPossibleInterferences(final BranchingProcess<LETTER, PLACE> bp) {
+	public static <LETTER, PLACE> IPossibleInterferences<Transition<LETTER, PLACE>, PLACE> getPossibleInterferences(
+			final BranchingProcess<LETTER, PLACE> bp, final Set<PLACE> originalPlaces,
+			final Function<Transition<LETTER, PLACE>, Transition<LETTER, PLACE>> diff2OriginalTransition) {
 		final HashRelation<PLACE, Transition<LETTER, PLACE>> relation = new HashRelation<>();
 		final ICoRelation<LETTER, PLACE> coRelation = bp.getCoRelation();
 
 		for (final Condition<LETTER, PLACE> condition : bp.getConditions()) {
 			final PLACE place = condition.getPlace();
+			if (!originalPlaces.contains(place)) {
+				continue;
+			}
 			for (final Event<LETTER, PLACE> event : coRelation.computeCoRelatatedEvents(condition)) {
 				final Transition<LETTER, PLACE> transition = event.getTransition();
 				if (!transition.getPredecessors().contains(place)) {
-					relation.addPair(place, transition);
+					final var originalTransition = diff2OriginalTransition.apply(transition);
+					assert originalTransition != null : "no original transition for " + transition;
+					relation.addPair(place, originalTransition);
 				}
 			}
 		}
@@ -205,7 +214,7 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 
 	private boolean checkOwickiGriesValidity() {
 		return mStatistics.measureOwickiGriesValidity(() -> {
-			final var possibleInterferences = getPossibleInterferences(mBp);
+			final var possibleInterferences = getPossibleInterferences(mBp, mOriginalPlaces, mDiff2OriginalTransition);
 			final PetriOwickiGriesValidityCheck<LETTER, PLACE> owickiGriesValidity =
 					new PetriOwickiGriesValidityCheck<>(mServices, mMgdScript, mNet, mModifiableGlobals,
 							mOwickiGriesAnnotation, possibleInterferences);

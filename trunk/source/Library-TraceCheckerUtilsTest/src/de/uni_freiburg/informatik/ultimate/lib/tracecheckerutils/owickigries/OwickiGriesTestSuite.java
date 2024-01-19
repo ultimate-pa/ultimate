@@ -43,6 +43,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -58,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsDeterministic;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.TotalizeNwa;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.DifferencePairwiseOnDemand;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.DifferencePetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
@@ -134,6 +136,8 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 	protected final Map<String, IPredicate> mProgramPlaceMap = new HashMap<>();
 	protected final List<NestedWordAutomaton<SimpleAction, IPredicate>> mProofs = new ArrayList<>();
 
+	protected Function<Transition<SimpleAction, IPredicate>, Transition<SimpleAction, IPredicate>> mDiff2OriginalTransition;
+
 	private long mStartTime = -1L;
 
 	@TestFactory
@@ -161,6 +165,7 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 		mProgramPlaceMap.clear();
 		mProofs.clear();
 		mUnifiers.clear();
+		mDiff2OriginalTransition = null;
 	}
 
 	protected boolean includeTest(final Path path) {
@@ -225,6 +230,8 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 
 		// compute difference of program and proofs
 		DifferencePetriNet<SimpleAction, IPredicate> difference = null;
+		Function<Transition<SimpleAction, IPredicate>, Transition<SimpleAction, IPredicate>> diff2OriginalTransition =
+				Function.identity();
 		final var looperCounts = new ArrayList<Integer>();
 		int i = 0;
 		for (final var proof : mProofs) {
@@ -236,10 +243,15 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 			looperCounts.add(loopers.size());
 
 			final var oldNet = difference == null ? program : difference;
-			difference = new DifferencePetriNet<>(mAutomataServices, oldNet, totalizedProof, loopers);
+			final var currentDifference = new DifferencePetriNet<>(mAutomataServices, oldNet, totalizedProof, loopers);
+			diff2OriginalTransition =
+					diff2OriginalTransition.compose(t -> currentDifference.getTransitionBacktranslation().get(t));
+			difference = currentDifference;
 			i++;
 		}
 		assert difference != null : "Difference can only be null if there no proofs, this is checked above";
+		mDiff2OriginalTransition = diff2OriginalTransition;
+
 		final var looperStats = new MinMaxMed();
 		looperStats.report(looperCounts, Integer::longValue);
 		mLogger.info("Loopers in proof automata: min=%d, max=%d, median=%d", looperStats.getMinimum(),
@@ -260,6 +272,21 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 				CoreUtil.toTimeString(setupTime, TimeUnit.NANOSECONDS, TimeUnit.MILLISECONDS, 0));
 
 		runTest(path, parsed, program, constructedDifference, bp);
+	}
+
+	private static <L, P> Map<Transition<L, P>, Transition<L, P>> combine(
+			final Map<Transition<L, P>, Transition<L, P>> oldMapping,
+			final Map<Transition<L, P>, Transition<L, P>> newMapping) {
+		if (oldMapping == null) {
+			return newMapping;
+		}
+		final var result = new HashMap<Transition<L, P>, Transition<L, P>>();
+		for (final var newEntry : newMapping.entrySet()) {
+			final var reallyOld = oldMapping.get(newEntry.getValue());
+			assert reallyOld != null : "no back-mapping for " + newEntry.getValue();
+			result.put(newEntry.getKey(), reallyOld);
+		}
+		return result;
 	}
 
 	protected ModifiableGlobalsTable computeModifiableGlobals() {
