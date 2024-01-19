@@ -30,19 +30,17 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
- * Check validity of an implication between two formulas
- * antecedent ==> succedent
- * The check is done incrementally in the sense that we can do it for
- * several succedents.
- * We presume that the succedent may have only variables that occurred in the
- * antecedent (because we have to replace variables by fresh constants and
- * these constants and determined when asserting the antecedent.
+ * Check validity of an implication between two formulas antecedent ==> succedent The check is done incrementally in the
+ * sense that we can do it for several succedents. We presume that the succedent may have only variables that occurred
+ * in the antecedent (because we have to replace variables by fresh constants and these constants and determined when
+ * asserting the antecedent.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
@@ -52,15 +50,23 @@ public class IncrementalPlicationChecker {
 		VALID, INVALID, UNKNOWN, NOT_CHECKED;
 
 		public Validity and(final Validity other) {
+			return and(() -> other);
+		}
+
+		public Validity and(final Supplier<Validity> otherSupplier) {
 			switch (this) {
 			case INVALID:
 				return INVALID;
-			case NOT_CHECKED:
+			case NOT_CHECKED: {
+				final var other = otherSupplier.get();
 				return other == INVALID ? other : this;
-			case UNKNOWN:
+			}
+			case UNKNOWN: {
+				final var other = otherSupplier.get();
 				return (other == NOT_CHECKED || other == INVALID) ? other : this;
+			}
 			case VALID:
-				return other;
+				return otherSupplier.get();
 			default:
 				throw new AssertionError("unexpected validity " + this);
 			}

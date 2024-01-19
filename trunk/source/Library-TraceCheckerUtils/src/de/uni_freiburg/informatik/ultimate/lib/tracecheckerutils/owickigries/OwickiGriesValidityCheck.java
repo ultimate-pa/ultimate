@@ -71,9 +71,9 @@ public abstract class OwickiGriesValidityCheck<T, P> {
 	private final IHoareTripleChecker mHoareTripleChecker;
 	private final BasicPredicateFactory mPredicateFactory;
 
-	private final Validity mIsInductive;
-	private final Validity mIsInterferenceFree;
-	private final Validity mIsProgramSafe;
+	private Validity mIsInductive;
+	private Validity mIsInterferenceFree;
+	private Validity mIsProgramSafe;
 
 	private final OwickiGriesAnnotation<T, P> mAnnotation;
 	private final IPossibleInterferences<T, P> mPossibleInterferences;
@@ -103,10 +103,6 @@ public abstract class OwickiGriesValidityCheck<T, P> {
 
 		mAnnotation = annotation;
 		mPossibleInterferences = possibleInterferences;
-
-		mIsInductive = checkInductivity();
-		mIsInterferenceFree = checkNonInterference();
-		mIsProgramSafe = checkSafety();
 	}
 
 	protected abstract Collection<P> getProgramLocations();
@@ -297,7 +293,28 @@ public abstract class OwickiGriesValidityCheck<T, P> {
 		return result;
 	}
 
+	public Validity isInductive() {
+		if (mIsInductive == null) {
+			mIsInductive = checkInductivity();
+		}
+		return mIsInductive;
+	}
+
+	public Validity isInterferenceFree() {
+		if (mIsInterferenceFree == null) {
+			mIsInterferenceFree = checkNonInterference();
+		}
+		return mIsInterferenceFree;
+	}
+
+	public Validity isProgramSafe() {
+		if (mIsProgramSafe == null) {
+			mIsProgramSafe = checkSafety();
+		}
+		return mIsProgramSafe;
+	}
+
 	public Validity isValid() {
-		return mIsInductive.and(mIsInterferenceFree).and(mIsProgramSafe);
+		return isInductive().and(this::isInterferenceFree).and(this::isProgramSafe);
 	}
 }
