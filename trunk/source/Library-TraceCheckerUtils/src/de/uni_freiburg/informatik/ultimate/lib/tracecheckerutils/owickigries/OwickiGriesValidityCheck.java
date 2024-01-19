@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.CnfTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.util.statistics.MinMaxMed;
 
 /**
  * TODO
@@ -70,6 +71,8 @@ public abstract class OwickiGriesValidityCheck<T, P> {
 	private final Script mScript;
 	private final IHoareTripleChecker mHoareTripleChecker;
 	private final BasicPredicateFactory mPredicateFactory;
+
+	private final List<Integer> mInterferingActions = new ArrayList<>();
 
 	private Validity mIsInductive;
 	private Validity mIsInterferenceFree;
@@ -172,13 +175,20 @@ public abstract class OwickiGriesValidityCheck<T, P> {
 			}
 		}
 
+		final var minMaxMed = new MinMaxMed();
+		minMaxMed.report(mInterferingActions, Integer::longValue);
+		mLogger.info("Interfering actions: min=%d, max=%d, median=%d", minMaxMed.getMinimum(), minMaxMed.getMaximum(),
+				minMaxMed.getMedian());
+
 		return result;
 	}
 
 	private Validity isInterferenceFree(final P place) {
 		Validity result = Validity.VALID;
 
-		for (final T transition : mPossibleInterferences.getInterferingActions(place)) {
+		final var interferingActions = mPossibleInterferences.getInterferingActions(place);
+		mInterferingActions.add(interferingActions.size());
+		for (final T transition : interferingActions) {
 			final var check = isInterferenceFreeForTransition(place, transition);
 			result = result.and(check);
 
