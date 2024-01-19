@@ -65,6 +65,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
  *            The type of statements in the Petri program
  */
 public class EmpireToOwickiGries<LETTER, PLACE> {
+	public static final boolean BUILD_IMPLICATION_DISJUNCTION = false;
+
 	private final ManagedScript mManagedScript;
 	private final Script mScript;
 	private final BasicPredicateFactory mFactory;
@@ -146,7 +148,10 @@ public class EmpireToOwickiGries<LETTER, PLACE> {
 		for (final PLACE place : mNet.getPlaces()) {
 			final IPredicate ghostFormula = getPlacesGhostVariableFormula(place);
 			final IPredicate territoryFormula = getPlacesTerritoryFormula(place);
-			final IPredicate placeFormula = mFactory.and(territoryImplications, ghostFormula, territoryFormula);
+			IPredicate placeFormula = mFactory.and(ghostFormula, territoryFormula);
+			if (!BUILD_IMPLICATION_DISJUNCTION) {
+				placeFormula = mFactory.and(territoryImplications, placeFormula);
+			}
 			formulaMap.put(place, placeFormula);
 		}
 		return formulaMap;
@@ -228,8 +233,15 @@ public class EmpireToOwickiGries<LETTER, PLACE> {
 
 	IPredicate getPlacesTerritoryFormula(final PLACE place) {
 		final Set<Territory<PLACE>> placesTerritories = getPlacesTerritories(place);
-		final Set<IPredicate> placesTerritoriesFormula =
-				placesTerritories.stream().map(t -> getTerritoryFormula(t)).collect(Collectors.toSet());
+		Set<IPredicate> placesTerritoriesFormula;
+		if (BUILD_IMPLICATION_DISJUNCTION) {
+			placesTerritoriesFormula = placesTerritories.stream()
+					.map(t -> mFactory.or(mFactory.not(getTerritoryFormula(t)), mEmpireAnnotation.getLaw(t)))
+					.collect(Collectors.toSet());
+		} else {
+			placesTerritoriesFormula =
+					placesTerritories.stream().map(t -> getTerritoryFormula(t)).collect(Collectors.toSet());
+		}
 		return mFactory.or(placesTerritoriesFormula);
 	}
 
