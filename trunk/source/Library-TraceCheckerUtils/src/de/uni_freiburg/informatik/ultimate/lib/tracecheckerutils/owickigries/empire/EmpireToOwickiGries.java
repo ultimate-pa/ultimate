@@ -66,6 +66,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
  */
 public class EmpireToOwickiGries<LETTER, PLACE> {
 	public static final boolean BUILD_IMPLICATION_DISJUNCTION = false;
+	public static final boolean NO_TERRITORY_IMPLICATIONS_PLACES_MAPPING = true;
 
 	private final ManagedScript mManagedScript;
 	private final Script mScript;
@@ -149,7 +150,7 @@ public class EmpireToOwickiGries<LETTER, PLACE> {
 			final IPredicate ghostFormula = getPlacesGhostVariableFormula(place);
 			final IPredicate territoryFormula = getPlacesTerritoryFormula(place);
 			IPredicate placeFormula = mFactory.and(ghostFormula, territoryFormula);
-			if (!BUILD_IMPLICATION_DISJUNCTION) {
+			if (!BUILD_IMPLICATION_DISJUNCTION && !NO_TERRITORY_IMPLICATIONS_PLACES_MAPPING) {
 				placeFormula = mFactory.and(territoryImplications, placeFormula);
 			}
 			formulaMap.put(place, placeFormula);
@@ -237,6 +238,10 @@ public class EmpireToOwickiGries<LETTER, PLACE> {
 		if (BUILD_IMPLICATION_DISJUNCTION) {
 			placesTerritoriesFormula = placesTerritories.stream()
 					.map(t -> mFactory.or(mFactory.not(getTerritoryFormula(t)), mEmpireAnnotation.getLaw(t)))
+					.collect(Collectors.toSet());
+		} else if (NO_TERRITORY_IMPLICATIONS_PLACES_MAPPING) {
+			placesTerritoriesFormula = placesTerritories.stream()
+					.map(t -> mFactory.and(getTerritoryFormula(t), mEmpireAnnotation.getLaw(t)))
 					.collect(Collectors.toSet());
 		} else {
 			placesTerritoriesFormula =
