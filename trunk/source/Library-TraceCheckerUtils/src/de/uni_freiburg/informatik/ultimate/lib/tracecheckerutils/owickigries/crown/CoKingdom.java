@@ -125,14 +125,13 @@ final class CoKingdom<PLACE, LETTER> {
 		if (!success) {
 			return CoRelationType.CONTAINS;
 		}
-		if (mKingdom.getRealms().size() == mPosKingdom.size()) {
+		final int kingdomSize = mKingdom.getRealms().size();
+		final int posKingdomSize = mPosKingdom.size();
+		if (kingdomSize == posKingdomSize) {
 			return CoRelationType.POSITIVE;
-		} else if (mNegKingdom.size() == 1
-				&& mPosKingdom.containsAll(DataStructureUtils.difference(mKingdom.getRealms(), mNegKingdom))
-				&& !mPosKingdom.isEmpty()) {
+		} else if (mNegKingdom.size() == 1 && posKingdomSize == kingdomSize && !mPosKingdom.isEmpty()) {
 			return CoRelationType.PARTIAL;
-		} else if (mParKingdom.size() == 1
-				&& mPosKingdom.containsAll(DataStructureUtils.difference(mKingdom.getRealms(), mParKingdom))) {
+		} else if (mParKingdom.size() == 1 && posKingdomSize == kingdomSize - 1) {
 			return CoRelationType.DIVERGENT;
 		} else {
 			return CoRelationType.NEGATIVE;

@@ -127,8 +127,7 @@ public final class Rook<PLACE, LETTER> {
 	 * @return Rook with modified Kingdom and the instances law.
 	 */
 	public Rook<PLACE, LETTER> expansion(final Condition<LETTER, PLACE> condition) {
-		final Realm<PLACE, LETTER> realm = new Realm<>(ImmutableSet.singleton(condition));
-		final Kingdom<PLACE, LETTER> newKingdom = mKingdom.addRealm(realm);
+		final Kingdom<PLACE, LETTER> newKingdom = mKingdom.addRealm(new Realm<>(ImmutableSet.singleton(condition)));
 		return new Rook<>(newKingdom, getLaw());
 	}
 
@@ -147,17 +146,8 @@ public final class Rook<PLACE, LETTER> {
 	public Rook<PLACE, LETTER> immigrationAndFoundation(final CoRook<PLACE, LETTER> coRook,
 			final BranchingProcess<LETTER, PLACE> bp, final PlacesCoRelation<PLACE> placesCoRelation) {
 		final Realm<PLACE, LETTER> negativeRealm = getNegKingdom(coRook);
-		final CoRealm<PLACE, LETTER> negativeCoRealm =
-				negativeRealm.getCoRealm(coRook.getCondition(), bp, placesCoRelation);
-		final Set<Realm<PLACE, LETTER>> newRealms =
-				getKingdom().getRealms().stream().collect(Collectors.toCollection(HashSet::new));
-		newRealms.remove(negativeRealm);
-		Set<Condition<LETTER, PLACE>> conflictFreeConditions = negativeCoRealm.getConflictFreeSet();
-		conflictFreeConditions = DataStructureUtils.union(conflictFreeConditions, Set.of(coRook.getCondition()));
-		final Realm<PLACE, LETTER> newRealm = new Realm<>(ImmutableSet.of(conflictFreeConditions));
-		newRealms.add(newRealm);
-		final Kingdom<PLACE, LETTER> kingdom = new Kingdom<>(ImmutableSet.of(newRealms));
-		return new Rook<>(kingdom, getLaw());
+		return new Rook<>(mKingdom.immigrationAndFoundation(negativeRealm, coRook.getCondition(), bp, placesCoRelation),
+				getLaw());
 	}
 
 	public Rook<PLACE, LETTER> denial(final CoRook<PLACE, LETTER> coRook) {
@@ -180,8 +170,7 @@ public final class Rook<PLACE, LETTER> {
 	 * @return New Rook containing condition in its Law
 	 */
 	public Rook<PLACE, LETTER> approval(final Condition<LETTER, PLACE> condition) {
-		final KingdomLaw<PLACE, LETTER> newLaw = mLaw.addCondition(condition);
-		return new Rook<>(getKingdom(), newLaw);
+		return new Rook<>(getKingdom(), mLaw.addCondition(condition));
 	}
 
 	/**
@@ -192,8 +181,7 @@ public final class Rook<PLACE, LETTER> {
 	 * @return New Rook with Law containing solely condition.
 	 */
 	public Rook<PLACE, LETTER> enactment(final CoRook<PLACE, LETTER> coRook) {
-		final KingdomLaw<PLACE, LETTER> law = new KingdomLaw<>(ImmutableSet.singleton(coRook.getCondition()));
-		return new Rook<>(getKingdom(), law);
+		return new Rook<>(getKingdom(), new KingdomLaw<>(ImmutableSet.singleton(coRook.getCondition())));
 	}
 
 	/**

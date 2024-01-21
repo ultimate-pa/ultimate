@@ -192,6 +192,15 @@ public final class Kingdom<PLACE, LETTER> {
 		return new Territory<>(regions);
 	}
 
+	public Kingdom<PLACE, LETTER> immigrationAndFoundation(final Realm<PLACE, LETTER> negativeRealm,
+			final Condition<LETTER, PLACE> condition, final BranchingProcess<LETTER, PLACE> bp,
+			final PlacesCoRelation<PLACE> placesCoRelation) {
+		final Set<Realm<PLACE, LETTER>> newRealms = getRealms().stream().filter(r -> !r.equals(negativeRealm))
+				.collect(Collectors.toCollection(HashSet::new));
+		newRealms.add(negativeRealm.immigrationAndFoundation(condition, bp, placesCoRelation));
+		return new Kingdom<>(ImmutableSet.of(newRealms));
+	}
+
 	/**
 	 * Assert that all realms in the Kingdom are valid, that the kingdom is not empty and that the realms in the kingdom
 	 * are disjoint.

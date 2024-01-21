@@ -26,7 +26,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -182,19 +181,6 @@ public final class CrownConstruction<PLACE, LETTER> {
 		return settlementRooks;
 	}
 
-	private Set<Rook<PLACE, LETTER>> settlementsAssertion() {
-		// Create a new rook for each original condition.
-		// Add a to crown a new rook with "capital" and one corelated assertion condition
-		final Set<Rook<PLACE, LETTER>> settlementRooks = new HashSet<>();
-		final Kingdom<PLACE, LETTER> kingdom = new Kingdom<>(ImmutableSet.of(Collections.emptySet()));
-		for (final Condition<LETTER, PLACE> assertionCondition : mAssertConds) {
-			final KingdomLaw<PLACE, LETTER> kingdomLaw = new KingdomLaw<>(ImmutableSet.singleton(assertionCondition));
-			final Rook<PLACE, LETTER> rook = new Rook<>(kingdom, kingdomLaw);
-			settlementRooks.add(rook);
-		}
-		return settlementRooks;
-	}
-
 	private Set<Rook<PLACE, LETTER>> crownComputation(final Set<Rook<PLACE, LETTER>> colonizedRooks,
 			final Set<Condition<LETTER, PLACE>> expansionConditions) {
 		mLogger.debug("Starting Crown Computation...");
@@ -303,13 +289,13 @@ public final class CrownConstruction<PLACE, LETTER> {
 	private Set<Rook<PLACE, LETTER>> crownExpansionIterative2(final Rook<PLACE, LETTER> rook,
 			final List<Condition<LETTER, PLACE>> troopConditions, final boolean colonizer) {
 		final Set<Rook<PLACE, LETTER>> crownRooks = new HashSet<>();
-		final HashDeque<Rook<PLACE, LETTER>> rookStack = new HashDeque<>();
+		final HashDeque<Rook<PLACE, LETTER>> rookQueue = new HashDeque<>();
 		final Map<Rook<PLACE, LETTER>, List<Condition<LETTER, PLACE>>> rookConditionMap = new HashMap<>();
-		rookStack.offer(rook);
+		rookQueue.offer(rook);
 		rookConditionMap.put(rook, troopConditions);
 		boolean isMaximal = true;
-		while (!(rookStack.isEmpty())) {
-			final Rook<PLACE, LETTER> currentRook = rookStack.poll();
+		while (!(rookQueue.isEmpty())) {
+			final Rook<PLACE, LETTER> currentRook = rookQueue.poll();
 			final List<Condition<LETTER, PLACE>> currentConditions =
 					rookConditionMap.computeIfAbsent(currentRook, r -> troopConditions);
 			isMaximal = true;
@@ -343,7 +329,7 @@ public final class CrownConstruction<PLACE, LETTER> {
 				} else {
 					ntroops = conditions.stream().filter(cond -> !cond.equals(condition)).collect(Collectors.toList());
 				}
-				rookStack.offer(colonyRook);
+				rookQueue.offer(colonyRook);
 				rookConditionMap.put(colonyRook, ntroops);
 			}
 
@@ -375,6 +361,7 @@ public final class CrownConstruction<PLACE, LETTER> {
 			final Set<Realm<PLACE, LETTER>> kindredRealms = kindred.getKindredRealms(allKindredConditions, rook);
 			Kingdom<PLACE, LETTER> firstKingdom = new Kingdom<>(
 					ImmutableSet.of(DataStructureUtils.difference(rook.getKingdom().getRealms(), kindredRealms)));
+			final Set<Realm<PLACE, LETTER>> nonKindredRealms = new HashSet<>();
 			boolean addRook = true;
 			for (final Realm<PLACE, LETTER> realm : kindredRealms) {
 				final ImmutableSet<Condition<LETTER, PLACE>> newRealmConditions =
@@ -383,10 +370,11 @@ public final class CrownConstruction<PLACE, LETTER> {
 					addRook = false;
 					break;
 				}
-				firstKingdom = firstKingdom.addRealm(new Realm<>(newRealmConditions));
+				nonKindredRealms.add(new Realm<>(newRealmConditions));
 			}
 			rooks.remove(rook);
 			if (addRook) {
+				firstKingdom = firstKingdom.addRealm(nonKindredRealms);
 				rooks.add(new Rook<>(firstKingdom, rook.getLaw()));
 			}
 			for (final Marking<PLACE> marking : splitMarkings) {

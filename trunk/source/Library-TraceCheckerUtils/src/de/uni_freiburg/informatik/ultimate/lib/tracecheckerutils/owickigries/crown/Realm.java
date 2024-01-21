@@ -167,6 +167,17 @@ public final class Realm<PLACE, LETTER> {
 		return new Region<>(getPlaces());
 	}
 
+	public Realm<PLACE, LETTER> immigrationAndFoundation(final Condition<LETTER, PLACE> condition,
+			final BranchingProcess<LETTER, PLACE> bp, final PlacesCoRelation<PLACE> placesCoRelation) {
+		final CoRealm<PLACE, LETTER> negativeCoRealm = getCoRealm(condition, bp, placesCoRelation);
+		if (negativeCoRealm.getConflict() == ConflictType.CONFLICT_FREE) {
+			return addCondition(condition);
+		}
+		final Set<Condition<LETTER, PLACE>> conflictFreeConditions =
+				DataStructureUtils.union(negativeCoRealm.getConflictFreeSet(), Set.of(condition));
+		return new Realm<>(ImmutableSet.of(conflictFreeConditions));
+	}
+
 	/**
 	 * Assert that there are no two conditions whose corresponding places are corelated
 	 *
