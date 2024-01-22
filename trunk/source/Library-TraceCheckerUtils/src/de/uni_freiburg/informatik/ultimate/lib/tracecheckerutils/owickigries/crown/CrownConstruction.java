@@ -78,6 +78,8 @@ public final class CrownConstruction<PLACE, LETTER> {
 
 	private final Set<Pair<Condition<LETTER, PLACE>, Rook<PLACE, LETTER>>> mRejectedPairs = new HashSet<>();
 
+	private final Set<Rook<PLACE, LETTER>> mAlreadySeen = new HashSet<>();
+
 	public CrownConstruction(final IUltimateServiceProvider services, final BranchingProcess<LETTER, PLACE> bp,
 			final Set<Condition<LETTER, PLACE>> origConds, final Set<Condition<LETTER, PLACE>> assertConds) {
 		mLogger = services.getLoggingService().getLogger(CrownConstruction.class);
@@ -191,6 +193,7 @@ public final class CrownConstruction<PLACE, LETTER> {
 		}
 		mRejectedPairs.clear();
 		colonizedRooks.clear();
+		mAlreadySeen.clear();
 		if (SINGLE_ASSERTION_LAWS) {
 			reSet.removeIf(r -> r.containsNonCut(mBp, mOrigConds));
 			return reSet;
@@ -296,6 +299,9 @@ public final class CrownConstruction<PLACE, LETTER> {
 		boolean isMaximal = true;
 		while (!(rookQueue.isEmpty())) {
 			final Rook<PLACE, LETTER> currentRook = rookQueue.poll();
+			if (!mAlreadySeen.add(currentRook)) {
+				continue;
+			}
 			final List<Condition<LETTER, PLACE>> currentConditions =
 					rookConditionMap.computeIfAbsent(currentRook, r -> troopConditions);
 			isMaximal = true;
@@ -372,11 +378,12 @@ public final class CrownConstruction<PLACE, LETTER> {
 				}
 				nonKindredRealms.add(new Realm<>(newRealmConditions));
 			}
-			rooks.remove(rook);
-			if (addRook) {
-				firstKingdom = firstKingdom.addRealm(nonKindredRealms);
-				rooks.add(new Rook<>(firstKingdom, rook.getLaw()));
+			if (!addRook) {
+				continue;
 			}
+			rooks.remove(rook);
+			firstKingdom = firstKingdom.addRealm(nonKindredRealms);
+			rooks.add(new Rook<>(firstKingdom, rook.getLaw()));
 			for (final Marking<PLACE> marking : splitMarkings) {
 				final Set<Condition<LETTER, PLACE>> markingKindredConds = kindred.getKindredConditions(marking, rook);
 				Kingdom<PLACE, LETTER> secondKingdom = new Kingdom<>(
