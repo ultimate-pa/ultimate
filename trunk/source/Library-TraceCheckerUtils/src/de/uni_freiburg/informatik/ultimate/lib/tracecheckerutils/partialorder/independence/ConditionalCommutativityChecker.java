@@ -30,10 +30,12 @@ import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.ConditionTransformingIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation.Dependence;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateWithConjuncts;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.ITraceChecker;
@@ -117,11 +119,11 @@ public class ConditionalCommutativityChecker<L extends IAction> implements ICond
 		} 
 		*/
 		
-		IPredicate pred;
+		IPredicate pred = null;
 		if (!predicates.isEmpty()) {
 			pred  = new PredicateWithConjuncts(0, new ImmutableList<>(predicates), mScript);
-		} else {
-			pred = state;
+			pred = new BasicPredicate(0, pred.getProcedures(), pred.getFormula(), pred.getVars(),
+					pred.getFuns(), pred.getClosedFormula());
 		}
 				
 		if (mIndependenceRelation.isIndependent(pred, letter1, letter2).equals(Dependence.INDEPENDENT)) {
@@ -130,7 +132,7 @@ public class ConditionalCommutativityChecker<L extends IAction> implements ICond
 		
 		if (mCriterion.decide(state, letter1, letter2)) {
 			IPredicate condition;
-			if (!predicates.isEmpty()) {
+			if (pred != null) {
 				condition = mGenerator.generateCondition(
 						new PredicateWithConjuncts(0, new ImmutableList<>(predicates), mScript),
 						letter1.getTransformula(), letter2.getTransformula());
