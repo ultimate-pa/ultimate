@@ -49,7 +49,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.LineDirectiveMapping;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.LineOffsetComputer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.PreRunner.PreRunnerResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings.SettingsChange;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.StaticObjectsHandler;
@@ -168,12 +167,9 @@ public class MainTranslator {
 					executePreRun(new FunctionTableBuilder(flatSymbolTable), nodes).getFunctionTable();
 
 			final PreRunner preRunner = executePreRun(new PreRunner(flatSymbolTable, functionTable), nodes);
-			// final NewPreRunner newPreRunner = executePreRun(new NewPreRunner(flatSymbolTable, functionTable,
-			// nameHandler), nodes);
-			final PreRunnerResult preRunnerResult = preRunner.getResult();
 
 			final Set<IASTDeclaration> reachableDeclarations = initReachableDeclarations(nodes, functionTable,
-					preRunnerResult.getFunctionToIndex(), translationSettings.getEntryMethod());
+					preRunner.getResult(), translationSettings.getEntryMethod());
 
 			mLogger.info("Built tables and reachable declarations");
 			final StaticObjectsHandler prerunStaticObjectsHandler = new StaticObjectsHandler(mLogger);
@@ -186,7 +182,7 @@ public class MainTranslator {
 			final CHandler prerunCHandler = new CHandler(mLogger, backtranslatorMapping, translationSettings,
 					flatSymbolTable, functionTable, prerunExpressionTranslation, locationFactory, typeSizes,
 					reachableDeclarations, prerunTypeHandler, reporter, nameHandler, prerunStaticObjectsHandler,
-					preRunnerResult.getFunctionToIndex(), preRunnerResult.getVariablesOnHeap());
+					preRunner.getResult());
 
 			final PRDispatcher prerunDispatcher = new PRDispatcher(prerunCHandler, locationFactory, prerunTypeHandler);
 			prerunDispatcher.dispatch(nodes);
@@ -260,8 +256,7 @@ public class MainTranslator {
 	}
 
 	private Set<IASTDeclaration> initReachableDeclarations(final List<DecoratedUnit> nodes,
-			final Map<String, IASTNode> functionTable, final Map<String, Integer> functionToIndex,
-			final String checkedMethod) {
+			final Map<String, IASTNode> functionTable, final Set<String> functions, final String checkedMethod) {
 		if (!DETERMINIZE_NECESSARY_DECLARATIONS) {
 			return null;
 		}
@@ -289,7 +284,7 @@ public class MainTranslator {
 		}
 		for (final DecoratedUnit du : nodes) {
 			final DetermineNecessaryDeclarations dnd = new DetermineNecessaryDeclarations(checkedMethod,
-					new CTranslationResultReporter(mServices, mLogger), functionTable, functionToIndex);
+					new CTranslationResultReporter(mServices, mLogger), functionTable, functions);
 			du.getRootNode().getCNode().accept(dnd);
 			final Set<IASTDeclaration> decl = dnd.getReachableDeclarationsOrDeclarators();
 			for (final IASTDeclaration d : decl) {

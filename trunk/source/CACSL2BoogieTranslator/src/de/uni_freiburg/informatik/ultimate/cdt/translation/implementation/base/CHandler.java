@@ -342,7 +342,7 @@ public class CHandler {
 
 	private final ExpressionResultTransformer mExprResultTransformer;
 
-	private final Map<String, Integer> mFunctionToIndex;
+	private final Set<String> mFunctions;
 
 	private final Set<IASTNode> mVariablesOnHeap;
 
@@ -378,7 +378,7 @@ public class CHandler {
 	 * Constructor for CHandler in pre-run mode.
 	 *
 	 * @param staticObjectsHandler
-	 * @param functionToIndex
+	 * @param functions
 	 * @param set
 	 *
 	 */
@@ -388,8 +388,7 @@ public class CHandler {
 			final LocationFactory locationFactory, final TypeSizes typeSizes,
 			final Set<IASTDeclaration> reachableDeclarations, final ITypeHandler typeHandler,
 			final CTranslationResultReporter reporter, final INameHandler nameHandler,
-			final StaticObjectsHandler staticObjectsHandler, final Map<String, Integer> functionToIndex,
-			final Set<IASTNode> variablesOnHeap) {
+			final StaticObjectsHandler staticObjectsHandler, final Set<String> functions) {
 		mExpressionTranslation = exprTrans;
 		mIsPrerun = true;
 
@@ -406,8 +405,8 @@ public class CHandler {
 		mStaticObjectsHandler = staticObjectsHandler;
 		mFunctionTable = functionTable;
 
-		mFunctionToIndex = new LinkedHashMap<>(functionToIndex);
-		mVariablesOnHeap = new LinkedHashSet<>(variablesOnHeap);
+		mFunctions = new LinkedHashSet<>(functions);
+		mVariablesOnHeap = new LinkedHashSet<>();
 
 		mContract = new ArrayList<>();
 		mInnerMostLoopLabel = new ArrayDeque<>();
@@ -454,7 +453,7 @@ public class CHandler {
 				mDataRaceChecker);
 
 		mPostProcessor = new PostProcessor(mLogger, mExpressionTranslation, mTypeHandler, mReporter, mAuxVarInfoBuilder,
-				mFunctionToIndex, mTypeSizes, mSymbolTable, mStaticObjectsHandler, mSettings, mProcedureManager,
+				mFunctions, mTypeSizes, mSymbolTable, mStaticObjectsHandler, mSettings, mProcedureManager,
 				mMemoryHandler, mInitHandler, mFunctionHandler, this);
 
 		mIsInLibraryMode = false;
@@ -492,7 +491,7 @@ public class CHandler {
 		// reuse these parts of the old CHandler that have state that was created during
 		// the prerun
 		mVariablesOnHeap = prerunCHandler.mVariablesOnHeap;
-		mFunctionToIndex = prerunCHandler.mFunctionToIndex;
+		mFunctions = prerunCHandler.mFunctions;
 		mBacktranslator = prerunCHandler.mBacktranslator;
 		mLocationFactory = prerunCHandler.mLocationFactory;
 
@@ -548,7 +547,7 @@ public class CHandler {
 				procedureManager, mReporter, mTypeSizes, mSymbolTable, mSettings, mExprResultTransformer,
 				mLocationFactory, mTypeHandler, mCExpressionTranslator, mDataRaceChecker);
 		mPostProcessor = new PostProcessor(mLogger, mExpressionTranslation, mTypeHandler, mReporter, mAuxVarInfoBuilder,
-				mFunctionToIndex, mTypeSizes, mSymbolTable, mStaticObjectsHandler, mSettings, procedureManager,
+				mFunctions, mTypeSizes, mSymbolTable, mStaticObjectsHandler, mSettings, procedureManager,
 				mMemoryHandler, mInitHandler, mFunctionHandler, this);
 		mIsInLibraryMode = !prerunCHandler.mProcedureManager.hasProcedure(mSettings.getEntryMethod());
 
@@ -618,9 +617,10 @@ public class CHandler {
 		final ILocation loc = LocationFactory.createIgnoreCLocation();
 
 		// (alex:) new function pointers
+		int offset = 0;
 		final BigInteger functionPointerPointerBaseValue = BigInteger.valueOf(-1);
-		for (final Entry<String, Integer> en : mFunctionToIndex.entrySet()) {
-			final String funcId = SFO.FUNCTION_ADDRESS + en.getKey();
+		for (final String f : mFunctions) {
+			final String funcId = SFO.FUNCTION_ADDRESS + f;
 			final VarList varList = new VarList(loc, new String[] { funcId }, mTypeHandler.constructPointerType(loc));
 			// would unique make sense here?? -- would potentially add lots of axioms
 			mDeclarations.add(new ConstDeclaration(loc, new Attribute[0], false, varList, null, false));
@@ -628,11 +628,12 @@ public class CHandler {
 			final Expression funcIdExpr = ExpressionFactory.constructIdentifierExpression(loc,
 					mTypeHandler.getBoogiePointerType(), funcId, DeclarationInformation.DECLARATIONINFO_GLOBAL);
 
-			final BigInteger offsetValue = BigInteger.valueOf(en.getValue());
+			final BigInteger offsetValue = BigInteger.valueOf(offset);
 			mDeclarations.add(new Axiom(loc, new Attribute[0],
 					ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, funcIdExpr,
 							mExpressionTranslation.constructPointerForIntegerValues(loc,
 									functionPointerPointerBaseValue, offsetValue))));
+			offset++;
 		}
 
 		mDeclarations.addAll(0, mPostProcessor.postProcess(loc, globalHook));
@@ -1593,7 +1594,7 @@ public class CHandler {
 			useHeap = true;
 			intFromPtr = false;
 			declarationInformation = DeclarationInformation.DECLARATIONINFO_GLOBAL;
-		} else if (mFunctionToIndex.containsKey(cIdMp)) {
+		} else if (mFunctions.contains(cIdMp)) {
 			throw new AssertionError("function not known to function handler");
 		} else {
 			throw new UnsupportedSyntaxException(loc,
