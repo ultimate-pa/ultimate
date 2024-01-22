@@ -46,6 +46,7 @@ public class RedundancyTransformerReq2Pea implements IReq2Pea {
 		final IReqSymbolTable symbolTable = req2pea.getSymboltable();
 		mSymbolTable = symbolTable;
 		Set<String> constVars = mSymbolTable.getConstVars();
+		String deltaIDString = mSymbolTable.getDeltaVarName();
 
 		for (final DeclarationPattern p : mInitPattern) {
 			builder.addInitPattern(p);
@@ -74,8 +75,9 @@ public class RedundancyTransformerReq2Pea implements IReq2Pea {
 			}
 			mReqPeas.add(new ReqPeas(pattern, totalCt2pea));
 			mReqPeas.add(new ReqPeas(pattern, complementCt2pea));
-			mSymbolTable = builder.constructSymbolTable();
+			// mSymbolTable = builder.constructSymbolTable();
 		}
+		mSymbolTable = builder.constructSymbolTable();
 	}
 
 	@Override
