@@ -98,7 +98,7 @@ final class CoKingdom<PLACE, LETTER> {
 			return false;
 		}
 		for (final Realm<PLACE, LETTER> realm : mKingdom.getRealms()) {
-			if (mNegKingdom.size() > 1) {
+			if (mNegKingdom.size() > 1 || mParKingdom.size() > 1) {
 				return true;
 			}
 			final CoRealm<PLACE, LETTER> coRealm = realm.getCoRealm(mCondition, bp, placesCoRelation);
@@ -129,7 +129,7 @@ final class CoKingdom<PLACE, LETTER> {
 		final int posKingdomSize = mPosKingdom.size();
 		if (kingdomSize == posKingdomSize) {
 			return CoRelationType.POSITIVE;
-		} else if (mNegKingdom.size() == 1 && posKingdomSize == kingdomSize && !mPosKingdom.isEmpty()) {
+		} else if (mNegKingdom.size() == 1 && posKingdomSize == kingdomSize - 1 && !mPosKingdom.isEmpty()) {
 			return CoRelationType.PARTIAL;
 		} else if (mParKingdom.size() == 1 && posKingdomSize == kingdomSize - 1) {
 			return CoRelationType.DIVERGENT;
