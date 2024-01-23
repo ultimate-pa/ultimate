@@ -219,9 +219,13 @@ public abstract class ProductNwa<LETTER, STATE> implements INwaOutgoingLetterAnd
 					letter)) {
 				final STATE fstSucc = fstTrans.getSucc();
 				final STATE sndSucc = sndTrans.getSucc();
+				// TODO: Find out what is happening here
+				/*
 				if (isTrapInSnd(sndSucc)) {
 					continue;
+				
 				}
+				*/
 				final STATE resSucc = getOrConstructState(fstSucc, sndSucc);
 				result.add(new OutgoingInternalTransition<>(letter, resSucc));
 			}

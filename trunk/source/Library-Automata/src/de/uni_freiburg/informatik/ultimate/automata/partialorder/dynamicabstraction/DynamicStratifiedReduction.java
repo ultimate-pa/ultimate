@@ -101,7 +101,7 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 	private final DfsBookkeeping<R> mDfs = new DfsBookkeeping<>();
 	private final HashMap<S, R> mAlreadyReduced = new HashMap<>();
 
-	// TODO: use this to find parents for state in backtracking
+	// use this to find parents for state in backtracking
 	private final LinkedList<Pair<R, OutgoingInternalTransition<L, R>>> mStack = new LinkedList<>();
 
 	private int mIndentLevel = -1;
@@ -167,11 +167,13 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 		mProofManager = manager;
 
 		traverse();
-		mStatistics.stopTotal();
 		if (!mStatistics.mContainsLoop) {
 			mStatistics.stopLoopless();
 			mStatistics.setProtectedVarsBL(mStatistics.mProtectedVars);
+		} else {
+			mStatistics.stopLoopTime();
 		}
+		mStatistics.stopTotal();
 		mProofManager.takeRedStatistics(mStatistics);
 	}
 
@@ -397,6 +399,7 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 					if ( !mStatistics.mContainsLoop) {
 						mStatistics.setContainsLoop();
 						mStatistics.stopLoopless();
+						mStatistics.startLoopTime();
 						mStatistics.setProtectedVarsBL(mStateFactory.getAbstractionLevel(state).getValue());
 					}
 					// TODO: don't do this if the state loops back to itself
@@ -505,17 +508,18 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 		private boolean mContainsLoop = false;  
 		private H mProtectedVars;
 		private H mProtectedVarsBeforeLoop;
+		private TimeTracker mLoopTime = new TimeTracker();
 		private TimeTracker mLooplessTime = new TimeTracker();
 		private TimeTracker mTotalTime = new TimeTracker();
 		
 		public Statistics() {
+			// TODO: right key types needed
 			declare("Time before loop", () -> mLooplessTime, KeyType.TT_TIMER);
+			declare("Time in loop,", () -> mLoopTime, KeyType.TT_TIMER);
 			declare("Time in total", () -> mTotalTime, KeyType.TT_TIMER);
-		// TODO: right key types needed
 			declare("Has Loop", () -> mContainsLoop, KeyType.COUNTER);
-		// TODO: print protected Variables humanly readable?
-			declare("Protected Variables before encountering a loop", () -> mProtectedVarsBeforeLoop, KeyType.COUNTER);
 			declare("Protected Variables", () -> mProtectedVars, KeyType.COUNTER);
+			declare("Protected Variables before encountering a loop", () -> mProtectedVarsBeforeLoop, KeyType.COUNTER);
 		}
 		public boolean containsLoop() {
 			return mContainsLoop;
@@ -528,6 +532,12 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 		}
 		public void stopTotal() {
 			mTotalTime.stop();
+		}
+		public void startLoopTime() {
+			mLoopTime.start();
+		}
+		public void stopLoopTime() {
+			mLoopTime.stop();
 		}
 		public void startLoopless() {
 			mLooplessTime.start();

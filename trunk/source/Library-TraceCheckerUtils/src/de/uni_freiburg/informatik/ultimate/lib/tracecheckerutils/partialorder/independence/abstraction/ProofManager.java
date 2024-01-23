@@ -125,7 +125,9 @@ public class ProofManager<L extends IAction, H, P> implements IProofManager<H, I
 		// choose the proof that is deemed responsible for state being a proven state
 		final int responsibleProof;
 		
-		if (candidateProofs.size() > 1) {
+		int nrChoices = candidateProofs.size();
+		mStatistics.addNrChoices(nrChoices);
+		if (nrChoices > 1) {
 			mStatistics.addChoice();
 		}
 		
@@ -172,15 +174,17 @@ public class ProofManager<L extends IAction, H, P> implements IProofManager<H, I
 
 	private static final class Statistics extends AbstractStatisticsDataProvider {
 		private int mIrresponsibleProofs = 0;
-		private int mRedundantProofs = 0;
+		private int mRedundantProofs = 0;	// proofs not used in the last iteration of the cegar loop
 		private int mProvenStates = 0;
-		private int mChoices = 0;
+		private int mChoices = 0; 	// count how often there's more than one proof with false
+		private float mChoicesSum = 0;	// count between how many potential responsible proofs we can chose 
 
 		public Statistics() {
 			declare("IrresponsibleProofs", () -> mIrresponsibleProofs, KeyType.COUNTER);
 			declare("RedundantProofs", () -> mRedundantProofs, KeyType.COUNTER);
 			declare("ProvenStates", () -> mProvenStates, KeyType.COUNTER);
-			declare("Choices", () -> mChoices, KeyType.COUNTER);
+			declare("Times there's more than one choice", () -> mChoices, KeyType.COUNTER);
+			declare("Avg number of choices", () -> (mChoicesSum/mProvenStates), KeyType.COUNTER);
 		}
 
 		public void reportRedundantProof() {
@@ -194,6 +198,9 @@ public class ProofManager<L extends IAction, H, P> implements IProofManager<H, I
 
 		public void addIrresponsibleProofs(final int n) {
 			mIrresponsibleProofs += n;
+		}
+		public void addNrChoices(int i) {
+			mChoicesSum += i;
 		}
 		
 		public void addChoice() {
