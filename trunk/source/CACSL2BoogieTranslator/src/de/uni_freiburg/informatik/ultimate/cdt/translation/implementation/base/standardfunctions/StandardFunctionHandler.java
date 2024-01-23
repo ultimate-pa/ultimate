@@ -1038,8 +1038,7 @@ public class StandardFunctionHandler {
 		checkArguments(loc, 2, name, arguments);
 		final ExpressionResult write = dispatchWrite(main, loc, arguments[0], mExpressionTranslation
 				.constructLiteralForIntegerType(loc, new CPrimitive(CPrimitives.BOOL), BigInteger.ZERO));
-		return buildWrtMemoryOrder(loc, new ExpressionResultBuilder(write),
-				(ExpressionResult) main.dispatch(arguments[1]));
+		return buildWrtMemoryOrder(loc, write, (ExpressionResult) main.dispatch(arguments[1]));
 	}
 
 	private Result handleAtomicTestAndSet(final IDispatcher main, final IASTFunctionCallExpression node,
@@ -1047,39 +1046,59 @@ public class StandardFunctionHandler {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 2, name, arguments);
 		final CPrimitive boolType = new CPrimitive(CPrimitives.BOOL);
-		final ExpressionResult value = new ExpressionResult(new RValue(
-				mExpressionTranslation.constructLiteralForIntegerType(loc, boolType, BigInteger.ONE), boolType));
-		return handleAtomicWriteWithOldResult(loc, arguments[0], value, (ExpressionResult) main.dispatch(arguments[1]),
-				(x, y) -> value, main);
+		final Expression value = mExpressionTranslation.constructLiteralForIntegerType(loc, boolType, BigInteger.ONE);
+		final IASTNode target = arguments[0];
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder(dispatchRead(main, loc, target));
+		builder.addAllExceptLrValue(dispatchWrite(main, loc, target, value));
+		return buildWrtMemoryOrder(loc, builder.build(), (ExpressionResult) main.dispatch(arguments[1]));
 	}
 
 	private Result handleAtomicLoad(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final String name) {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 3, name, arguments);
-		return handleAtomicWrite(main, loc, List.of(new Pair<>(arguments[0], arguments[1])), arguments[2]);
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		final ExpressionResult read = dispatchRead(main, loc, arguments[0]);
+		builder.addAllExceptLrValue(read);
+		final ExpressionResult write = dispatchWrite(main, loc, arguments[1], read.getLrValue().getValue());
+		builder.addAllExceptLrValue(write);
+		// Both the read and the write are atomic
+		return buildWrtMemoryOrder(loc, builder.build(), (ExpressionResult) main.dispatch(arguments[2]));
 	}
 
 	private Result handleAtomicStore(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final String name) {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 3, name, arguments);
-		return handleAtomicWrite(main, loc, List.of(new Pair<>(arguments[1], arguments[0])), arguments[2]);
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		final ExpressionResult read = dispatchRead(main, loc, arguments[1]);
+		builder.addAllExceptLrValue(read);
+		// Make sure that only the write, but not the read is atomic
+		final ExpressionResult write = dispatchWrite(main, loc, arguments[0], read.getLrValue().getValue());
+		builder.addAllExceptLrValue(buildWrtMemoryOrder(loc, write, (ExpressionResult) main.dispatch(arguments[2])));
+		return builder.build();
 	}
 
 	private Result handleAtomicExchange(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 4, name, arguments);
-		return handleAtomicWrite(main, loc,
-				List.of(new Pair<>(arguments[0], arguments[2]), new Pair<>(arguments[1], arguments[0])), arguments[3]);
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		final ExpressionResult read1 = dispatchRead(main, loc, arguments[0]);
+		builder.addAllExceptLrValue(read1);
+		builder.addAllExceptLrValue(dispatchWrite(main, loc, arguments[2], read1.getLrValue().getValue()));
+		final ExpressionResult read2 = dispatchRead(main, loc, arguments[1]);
+		builder.addAllExceptLrValue(read2);
+		builder.addAllExceptLrValue(dispatchWrite(main, loc, arguments[0], read2.getLrValue().getValue()));
+		// All reads and writes are atomic
+		return buildWrtMemoryOrder(loc, builder.build(), (ExpressionResult) main.dispatch(arguments[3]));
 	}
 
 	private Result handleAtomicLoadN(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final String name) {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 2, name, arguments);
-		return buildWrtMemoryOrder(loc, new ExpressionResultBuilder(dispatchRead(main, loc, arguments[0])),
+		return buildWrtMemoryOrder(loc, dispatchRead(main, loc, arguments[0]),
 				(ExpressionResult) main.dispatch(arguments[1]));
 	}
 
@@ -1091,8 +1110,11 @@ public class StandardFunctionHandler {
 		final ExpressionResult valueResult =
 				mExprResultTransformer.transformDecaySwitch((ExpressionResult) main.dispatch(arguments[1]), loc, node);
 		builder.addAllExceptLrValue(valueResult);
-		builder.addAllExceptLrValue(dispatchWrite(main, loc, arguments[0], valueResult.getLrValue().getValue()));
-		return buildWrtMemoryOrder(loc, builder, (ExpressionResult) main.dispatch(arguments[2]));
+		// Make sure that only the write, but not the read is atomic
+		builder.addAllExceptLrValue(
+				buildWrtMemoryOrder(loc, dispatchWrite(main, loc, arguments[0], valueResult.getLrValue().getValue()),
+						(ExpressionResult) main.dispatch(arguments[2])));
+		return builder.build();
 	}
 
 	private Result handleAtomicExchangeN(final IDispatcher main, final IASTFunctionCallExpression node,
@@ -1104,7 +1126,7 @@ public class StandardFunctionHandler {
 				mExprResultTransformer.transformDecaySwitch((ExpressionResult) main.dispatch(arguments[1]), loc, node);
 		builder.addAllExceptLrValue(valueResult);
 		builder.addAllExceptLrValue(dispatchWrite(main, loc, arguments[0], valueResult.getLrValue().getValue()));
-		return buildWrtMemoryOrder(loc, builder, (ExpressionResult) main.dispatch(arguments[2]));
+		return buildWrtMemoryOrder(loc, builder.build(), (ExpressionResult) main.dispatch(arguments[2]));
 	}
 
 	private static boolean isAdressofOperator(final IASTNode node) {
@@ -1172,18 +1194,6 @@ public class StandardFunctionHandler {
 		return builder.build();
 	}
 
-	private Result handleAtomicWrite(final IDispatcher main, final ILocation loc,
-			final List<Pair<IASTInitializerClause, IASTInitializerClause>> srcTargets,
-			final IASTInitializerClause memOrder) {
-		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
-		for (final var srcTarget : srcTargets) {
-			final ExpressionResult read = dispatchRead(main, loc, srcTarget.getFirst());
-			builder.addAllExceptLrValue(read);
-			builder.addAllExceptLrValue(dispatchWrite(main, loc, srcTarget.getSecond(), read.getLrValue().getValue()));
-		}
-		return buildWrtMemoryOrder(loc, builder, (ExpressionResult) main.dispatch(memOrder));
-	}
-
 	private Result handleAtomicFetchAdd(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
 		return handleAtomicFetchOp(main, node, loc, name,
@@ -1232,35 +1242,33 @@ public class StandardFunctionHandler {
 			final ILocation loc, final String name, final BinaryOperator<ExpressionResult> operator) {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 3, name, arguments);
-		return handleAtomicWriteWithOldResult(loc, arguments[0], (ExpressionResult) main.dispatch(arguments[1]),
-				(ExpressionResult) main.dispatch(arguments[2]), operator, main);
-	}
-
-	private Result handleAtomicWriteWithOldResult(final ILocation loc, final IASTNode target,
-			final ExpressionResult valueResult, final ExpressionResult memoryOrder,
-			final BinaryOperator<ExpressionResult> operator, final IDispatcher main) {
+		final ExpressionResult operand =
+				mExprResultTransformer.transformDecaySwitch((ExpressionResult) main.dispatch(arguments[1]), loc, node);
+		final IASTNode target = arguments[0];
 		final ExpressionResult read = dispatchRead(main, loc, target);
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder(read);
-		builder.addAllExceptLrValue(valueResult);
-		final ExpressionResult newValue = operator.apply(read, valueResult);
+		final ExpressionResult newValue = operator.apply(read, operand);
 		builder.addAllExceptLrValue(newValue);
 		builder.addAllExceptLrValue(dispatchWrite(main, loc, target, newValue.getLrValue().getValue()));
-		return buildWrtMemoryOrder(loc, builder, memoryOrder);
+		// Make sure that only the write, but not the read is atomic
+		final ExpressionResult atomicBlock =
+				buildWrtMemoryOrder(loc, builder.build(), (ExpressionResult) main.dispatch(arguments[2]));
+		return new ExpressionResultBuilder().addAllExceptLrValue(operand).addAllIncludingLrValue(atomicBlock).build();
 	}
 
-	private ExpressionResult buildWrtMemoryOrder(final ILocation loc, final ExpressionResultBuilder atomicBlockBuilder,
+	private ExpressionResult buildWrtMemoryOrder(final ILocation loc, final ExpressionResult atomicBlock,
 			final ExpressionResult memoryOrder) {
 		// Check the memory order
 		// - If it is equal to MEMORY_ORDER_SEQ_CST, we can assume sequential consistency and make all statements atomic
 		// - Otherwise we cannot say anything, since we only support sequential consistency (so we just overapproximate)
-		final ExpressionResultBuilder builder = new ExpressionResultBuilder(atomicBlockBuilder);
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder(atomicBlock);
 		builder.resetStatements(List.of()).addAllExceptLrValue(memoryOrder);
 		final CPrimitive intType = new CPrimitive(CPrimitives.INT);
 		final Expression seqCst = mExpressionTranslation.constructLiteralForIntegerType(loc, intType,
 				BigInteger.valueOf(MEMORY_ORDER_SEQ_CST));
 		final Expression atomicCond = mExpressionTranslation.constructBinaryEqualityExpression(loc,
 				IASTBinaryExpression.op_equals, memoryOrder.getLrValue().getValue(), intType, seqCst, intType);
-		final Statement atomic = new AtomicStatement(loc, atomicBlockBuilder.getStatements().toArray(Statement[]::new));
+		final Statement atomic = new AtomicStatement(loc, atomicBlock.getStatements().toArray(Statement[]::new));
 		final Statement overapprox = new AssertStatement(loc, ExpressionFactory.createBooleanLiteral(loc, false));
 		new Overapprox("memory order (only sequential consistency is supported)", loc).annotate(overapprox);
 		new Check(Spec.UNKNOWN).annotate(overapprox);
