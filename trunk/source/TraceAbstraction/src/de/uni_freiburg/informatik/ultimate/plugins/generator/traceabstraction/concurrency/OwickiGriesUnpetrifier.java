@@ -56,11 +56,26 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
+/**
+ * Backtranslates an Owicki-Gries annotation of a Petri program derived from an {@link IIcfg} to an Owicki-Gries
+ * annotation of the original {@link IIcfg}.
+ *
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ *
+ * @param <L>
+ *            The type of transitions in the {@link IIcfg}, which are also used as letters of the Petri program
+ * @param <P>
+ *            The type of places in the Petri program
+ * @param <LOC>
+ *            The type of locations in the {@link IIcfg}
+ */
 public class OwickiGriesUnpetrifier<L extends IIcfgTransition<LOC>, P, LOC extends IcfgLocation> {
-	private final Function<P, LOC> mPlaceToLocation;
-	private final UnaryOperator<L> mUnpetrifyAction;
 	private final ManagedScript mMgdScript;
 	private final BasicPredicateFactory mPredicateFactory;
+
+	private final Function<P, LOC> mPlaceToLocation;
+	private final UnaryOperator<L> mUnpetrifyAction;
+	private final Set<P> mThreadUsageMonitorPlaces;
 
 	private final Map<String, ILocalProgramVar> mThreadIdVars = new HashMap<>();
 	private final Map<ILocalProgramVar, IProgramNonOldVar> mGhostMirrors = new HashMap<>();
@@ -68,16 +83,18 @@ public class OwickiGriesUnpetrifier<L extends IIcfgTransition<LOC>, P, LOC exten
 	private final IPossibleInterferences<L, LOC> mPossibleInterferences;
 	private final OwickiGriesAnnotation<L, LOC> mOwickiGries;
 
-	// TODO info to identify thread usage monitor places
 	// TODO ConcurrencyInformation of petrified CFG?
 	public OwickiGriesUnpetrifier(final IIcfg<LOC> originalIcfg, final IPetriNet<L, P> petrifiedProgram,
 			final IPossibleInterferences<Transition<L, P>, P> petrifiedPossibleInterferences,
 			final OwickiGriesAnnotation<Transition<L, P>, P> annotation, final Function<P, LOC> placeToLocation,
-			final UnaryOperator<L> unpetrifyAction, final BasicPredicateFactory predicateFactory) {
-		mPlaceToLocation = placeToLocation;
-		mUnpetrifyAction = unpetrifyAction;
+			final UnaryOperator<L> unpetrifyAction, final Set<P> threadUsageMonitorPlaces,
+			final BasicPredicateFactory predicateFactory) {
 		mMgdScript = originalIcfg.getCfgSmtToolkit().getManagedScript();
 		mPredicateFactory = predicateFactory;
+
+		mPlaceToLocation = placeToLocation;
+		mUnpetrifyAction = unpetrifyAction;
+		mThreadUsageMonitorPlaces = threadUsageMonitorPlaces;
 
 		mPossibleInterferences = translatePossibleInterferences(petrifiedProgram, petrifiedPossibleInterferences);
 
@@ -218,7 +235,6 @@ public class OwickiGriesUnpetrifier<L extends IIcfgTransition<LOC>, P, LOC exten
 	}
 
 	private boolean isThreadUsageMonitorPlace(final P place) {
-		// TODO
-		return false;
+		return mThreadUsageMonitorPlaces.contains(place);
 	}
 }
