@@ -76,6 +76,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.LinkedHa
 public class ReqSymboltableBuilder {
 
 	private static final BoogieLocation DUMMY_LOC = new BoogieLocation("", -1, -1, -1, -1);
+	private static final Boolean SUPPORT_HISTORY_VARS = false;
 
 	private final ILogger mLogger;
 	private final LinkedHashRelation<String, ErrorInfo> mId2Errors;
@@ -252,7 +253,9 @@ public class ReqSymboltableBuilder {
 			// consts do not need primed variables
 			return;
 		}
-		addVarOneKind(getHistoryVarId(name), type, source, mHistoryVars);
+		if (this.SUPPORT_HISTORY_VARS) {
+			addVarOneKind(getHistoryVarId(name), type, source, mHistoryVars);
+		}
 		addVarOneKind(getPrimedVarId(name), type, source, mPrimedVars);
 	}
 
