@@ -38,4 +38,4 @@
 [L29]  COND FALSE  !(f>0)
 [L32]  COND TRUE   a == 0
 [L38]              __VERIFIER_error()
-       VAL         [a=0, b=0, c=0, d=0, e=0, f=0]
+       VAL         [c=0, e=0]
