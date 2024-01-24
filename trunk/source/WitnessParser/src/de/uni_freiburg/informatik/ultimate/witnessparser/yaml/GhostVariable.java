@@ -71,7 +71,7 @@ public class GhostVariable extends WitnessEntry {
 	@Override
 	public WitnessSetEntry toSetEntry() {
 		return new WitnessSetEntry(NAME, null,
-				Map.of("variable", mVariable, "scope", mScope, "initial", mInitial, "type", mType));
+				Map.of("variable", mVariable, "scope", mScope, "initial", mInitial, "c_type", mType));
 	}
 
 	@Override
