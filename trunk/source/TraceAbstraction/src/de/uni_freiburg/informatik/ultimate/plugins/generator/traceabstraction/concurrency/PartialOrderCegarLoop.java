@@ -95,6 +95,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.Sl
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.ConditionalCommutativityInterpolantProvider;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.SemanticIndependenceConditionGenerator;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.SemanticIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.SleepSetCriterion;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.AbstractionType;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.RandomCriterion;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
@@ -208,8 +209,10 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 				predicates.add(null);
 			}
 		}
-		//random criterion for testing, should later on be replaced by a setting
+		
+		//criterion declaration for testing, should later on be replaced by a setting
 		RandomCriterion<L, IPredicate> criterion = new RandomCriterion<>(1, 321);
+		SleepSetCriterion<L, IPredicate> criterion2 = new SleepSetCriterion<>();
 		PostConditionTraceChecker<L> checker = new PostConditionTraceChecker<>(mServices, mAbstraction,
 				mTaskIdentifier, mFactory, predicateUnifier, mStrategyFactory);
 		IIndependenceRelation<IPredicate, L> relation = mPOR.getIndependence(0);
@@ -217,7 +220,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 				mCsToolkit.getManagedScript(), mPredicateFactory, relation.isSymmetric(), true);
 		ConditionalCommutativityInterpolantProvider<L> conInterpolantProvider
 		= new ConditionalCommutativityInterpolantProvider<>(
-				mServices, criterion, relation, mCsToolkit.getManagedScript().getScript(),
+				mServices, criterion2, relation, mCsToolkit.getManagedScript().getScript(),
 				generator, mAbstraction, mFactory, checker);
 		mInterpolAutomaton = conInterpolantProvider.getInterpolants((IRun<L, IPredicate>) mCounterexample,
 				predicates, mInterpolAutomaton);
