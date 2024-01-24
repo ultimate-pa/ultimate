@@ -1001,8 +1001,8 @@ public class ACSLHandler implements IACSLHandler {
 		final ILocation loc = mLocationFactory.createACSLLocation(node);
 		final CPrimitive resultType = AcslTypeUtils.translateAcslTypeToCType(node.getCastedType());
 		ExpressionResult expr = (ExpressionResult) main.dispatch(node.getExpression());
-		expr = mExprResultTransformer.switchToRValue(expr, loc, main.getAcslHook());
-		return mExprResultTransformer.convertIfNecessary(loc, expr, resultType);
+		expr = mExprResultTransformer.makeRepresentationReadyForConversion(expr, loc, resultType, main.getAcslHook());
+		return mExprResultTransformer.performImplicitConversion(expr, resultType, loc);
 	}
 
 	@Override
