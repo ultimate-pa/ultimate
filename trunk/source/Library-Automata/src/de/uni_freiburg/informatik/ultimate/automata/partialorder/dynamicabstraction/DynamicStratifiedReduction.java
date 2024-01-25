@@ -45,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.II
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation.Dependence;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.IDfsVisitor;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.DfsBookkeeping;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.ILattice;
@@ -54,7 +53,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
-import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.util.statistics.TimeTracker;
 
 /**
@@ -66,11 +64,11 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.TimeTracker;
  *            The type of letters of the input automaton. VariableAbstraction says that they need to be IActions?
  * @param <S>
  *            The type of states of the input automaton.
- * @param <H> 
- * 			  The type of abstraction levels.
- * 
- * @param <R> 
- * 			  The type of states of the reduction automaton.
+ * @param <H>
+ *            The type of abstraction levels.
+ *
+ * @param <R>
+ *            The type of states of the reduction automaton.
  *
  *
  *            - gibt an, welche übergänge da sind - gibt an, welches abstraktionslevel deren target states haben?
@@ -88,7 +86,7 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
-	private final Statistics<H> mStatistics = new Statistics<H>(); 
+	private final Statistics<H> mStatistics = new Statistics<H>();
 
 	private final INwaOutgoingLetterAndTransitionProvider<L, S> mOriginalAutomaton;
 	private final IStratifiedStateFactory<L, S, R, H> mStateFactory;
@@ -128,9 +126,9 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 	 * @param independence
 	 *            provides independence relations for the reduction automaton
 	 * @param manager
-	 * 			  handles everything regarding proofs and proven states
+	 *            handles everything regarding proofs and proven states
 	 * @param stateFactory
-	 * 			  creates and deals with the reduction states
+	 *            creates and deals with the reduction states
 	 * @throws AutomataOperationCanceledException
 	 *             in case of timeout or cancellation
 	 */
@@ -140,17 +138,16 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 			final S startingState, final IIndependenceInducedByAbstraction<S, L, H> independence,
 			final IProofManager<H, S> manager) throws AutomataOperationCanceledException {
 		assert NestedWordAutomataUtils.isFiniteAutomaton(originalAutomaton) : "Finite automata only";
-		
+
 		mStatistics.startTotal();
 		mStatistics.startLoopless();
-		
-		
+
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(DynamicStratifiedReduction.class);
 		mAbstractionLattice = independence.getAbstractionLattice();
 		mStateFactory = stateFactory;
 		mOriginalAutomaton = originalAutomaton;
-		mStartState = (R) mStateFactory.createStratifiedState(startingState,
+		mStartState = mStateFactory.createStratifiedState(startingState,
 				new AbstractionLevel<H>(mAbstractionLattice.getTop(), mAbstractionLattice, false),
 				new AbstractionLevel<H>(mAbstractionLattice.getTop(), mAbstractionLattice, false));
 		mStateFactory.setSleepSet(mStartState, new HashMap<L, H>());
@@ -158,6 +155,8 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 		mIndependenceProvider = independence;
 		mVisitor = visitor;
 		mProofManager = manager;
+		// TODO: stop the test suits complaints
+		mStatistics.setProtectedVars(mAbstractionLattice.getTop());
 
 		traverse();
 		if (!mStatistics.mContainsLoop) {
@@ -169,12 +168,12 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 		mStatistics.stopTotal();
 		mProofManager.takeRedStatistics(mStatistics);
 	}
-	
+
 	/**
 	 * Build and traverse the reduction automaton
-	 * 
+	 *
 	 * @param operand
-	 * 			  The automaton we want to build a reduction automaton of
+	 *            The automaton we want to build a reduction automaton of
 	 * @param services
 	 *            automata services used for logging and timeout management
 	 * @param originalAutomaton
@@ -188,9 +187,9 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 	 * @param independence
 	 *            provides independence relations for the reduction automaton
 	 * @param manager
-	 * 			  handles everything regarding proofs and proven states
+	 *            handles everything regarding proofs and proven states
 	 * @param stateFactory
-	 * 			  creates and deals with the reduction states
+	 *            creates and deals with the reduction states
 	 * @throws AutomataOperationCanceledException
 	 *             in case of timeout or cancellation
 	 */
@@ -209,8 +208,6 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 			logger.warn("DynamicStratifiedReduction did not find any initial state. Returning directly.");
 		}
 	}
-
-
 
 	private void traverse() throws AutomataOperationCanceledException {
 		// add initial state and its outgoing transitions to the worklist
@@ -241,7 +238,10 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 			final R nextState = currentTransition.getSucc();
 			debugIndent("Now exploring transition %s --> %s (label: %s)", currentState, nextState,
 					currentTransition.getLetter());
-			final boolean prune = mVisitor.discoverTransition(currentState, currentTransition.getLetter(), nextState);
+			// use proven states for dead end pruning:
+			final boolean nextStateIsProven = mProofManager.isProvenState(mStateFactory.getOriginalState(nextState));
+			final boolean prune = mVisitor.discoverTransition(currentState, currentTransition.getLetter(), nextState)
+					|| nextStateIsProven;
 			if (mVisitor.isFinished()) {
 				mLogger.debug(ABORT_MSG);
 				return;
@@ -250,10 +250,10 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 			final int stackIndex;
 			if (prune) {
 				debugIndent("-> visitor pruned transition");
-				final var originalState = mStateFactory.getOriginalState(nextState);
-				final boolean isProvenState = mProofManager.isProvenState(originalState);
-				if (isProvenState) {
-					final H freeVars = mProofManager.chooseResponsibleAbstraction(originalState);
+				// if the pruned state is a proven state: add its abstraction level
+				if (nextStateIsProven) {
+					final H freeVars =
+							mProofManager.chooseResponsibleAbstraction(mStateFactory.getOriginalState(nextState));
 					mStateFactory.addToAbstractionLevel(currentState, freeVars);
 				}
 			} else if (!mDfs.isVisited(nextState)) {
@@ -323,11 +323,10 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 		mStateFactory.defineAbstractionLevel(oldState);
 
 		final boolean isComplete = mDfs.backtrack();
-		H lastProtVars = mStateFactory.getAbstractionLevel(oldState).getValue();
+		final H lastProtVars = mStateFactory.getAbstractionLevel(oldState).getValue();
 		mStatistics.setProtectedVars(lastProtVars);
 		debugIndent("backtracking state %s (complete: %s)", oldState, isComplete);
-		debugIndent("final abstraction level of state %s was %s", oldState,
-				lastProtVars);
+		debugIndent("final abstraction level of state %s was %s", oldState, lastProtVars);
 		mIndentLevel--;
 		mVisitor.backtrackState(oldState, isComplete);
 		return mVisitor.isFinished();
@@ -421,9 +420,9 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 					mAlreadyReduced.put(originalSucc, reductionSucc);
 				} else if (!mStateFactory.getAbstractionLimit(correspRstate).isLocked()) {
 					System.out.println("Found a loop, use abstraction hammer");
-					
+
 					// if it is the first encounter with a loop, update the relevant statistics
-					if ( !mStatistics.mContainsLoop) {
+					if (!mStatistics.mContainsLoop) {
 						mStatistics.setContainsLoop();
 						mStatistics.stopLoopless();
 						mStatistics.startLoopTime();
@@ -472,8 +471,7 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 			if ((comp.compare(candidate.getLetter(), letter) < 0) && !currSleepSet.containsKey(candidate.getLetter())) {
 				assert mAlreadyReduced.containsKey(candidate.getSucc()) : "State has already been visited and "
 						+ "should have a reduction state\n";
-				final H abstLv =
-						mStateFactory.getAbstractionLevel(mAlreadyReduced.get(candidate.getSucc())).getValue();
+				final H abstLv = mStateFactory.getAbstractionLevel(mAlreadyReduced.get(candidate.getSucc())).getValue();
 				independence = mIndependenceProvider.getInducedIndependence(abstLv);
 				if (independence.isIndependent(currentS, candidate.getLetter(), letter) == Dependence.INDEPENDENT) {
 					nextSleepSet.put(candidate.getLetter(), abstLv);
@@ -522,26 +520,26 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 		return nextState;
 	}
 
-	
-		
 	public IStatisticsDataProvider getStatistics() {
 		return mStatistics;
 	}
+
 	/**
-	 * Statistics of DSR related to loops and abstracted variables. 
-	 * Will be collected by the proof manager when DSR is finished.
-	 * 
-	 * @param <H> The type of abstraction level used (basically a set of variables)
+	 * Statistics of DSR related to loops and abstracted variables. Will be collected by the proof manager when DSR is
+	 * finished.
+	 *
+	 * @param <H>
+	 *            The type of abstraction level used (basically a set of variables)
 	 */
 
 	public static final class Statistics<H> extends AbstractStatisticsDataProvider {
-		private boolean mContainsLoop;  
+		private boolean mContainsLoop;
 		private H mProtectedVars;
 		private H mProtectedVarsBeforeLoop;
-		private TimeTracker mLoopTime = new TimeTracker();
-		private TimeTracker mLooplessTime = new TimeTracker();
-		private TimeTracker mTotalTime = new TimeTracker();
-		
+		private final TimeTracker mLoopTime = new TimeTracker();
+		private final TimeTracker mLooplessTime = new TimeTracker();
+		private final TimeTracker mTotalTime = new TimeTracker();
+
 		public Statistics() {
 			declare("Time before loop", () -> mLooplessTime, KeyType.TT_TIMER);
 			declare("Time in loop", () -> mLoopTime, KeyType.TT_TIMER);
@@ -550,41 +548,50 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 			declare("Protected Variables", () -> mProtectedVars, KeyType.COUNTER);
 			declare("Protected Variables before encountering a loop", () -> mProtectedVarsBeforeLoop, KeyType.COUNTER);
 		}
-		
+
 		/**
-		 * 
+		 *
 		 * @return true if reduction has encountered a loop before
 		 */
 		public boolean containsLoop() {
 			return mContainsLoop;
 		}
+
 		public void setContainsLoop() {
 			mContainsLoop = true;
 		}
+
 		public void startTotal() {
 			mTotalTime.start();
 		}
+
 		public void stopTotal() {
 			mTotalTime.stop();
 		}
+
 		public void startLoopTime() {
 			mLoopTime.start();
 		}
+
 		public void stopLoopTime() {
 			mLoopTime.stop();
 		}
+
 		public void startLoopless() {
 			mLooplessTime.start();
 		}
+
 		public void stopLoopless() {
 			mLooplessTime.stop();
 		}
-		public void setProtectedVars(H vars) {
+
+		public void setProtectedVars(final H vars) {
 			mProtectedVars = vars;
 		}
-		public void setProtectedVarsBL(H vars) {
+
+		public void setProtectedVarsBL(final H vars) {
 			mProtectedVarsBeforeLoop = vars;
 		}
 
-}
+	}
 }

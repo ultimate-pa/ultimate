@@ -193,7 +193,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 			proofManager = null;
 		} else {
 			proofManager = new ProofManager<>(mServices, stratifiableAbstraction,
-					PartialOrderCegarLoop::getProofConjuncts, this::isErrorState);
+					PartialOrderCegarLoop::getProofConjuncts, this::isErrorState, false);
 		}
 		mProofManager = proofManager;
 

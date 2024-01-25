@@ -66,9 +66,10 @@ public class ProofManager<L extends IAction, H, P> implements IProofManager<H, I
 	private final IRefinableAbstraction<P, H, L> mAbstraction;
 	private final Function<IPredicate, List<IPredicate>> mGetConjuncts;
 	private final Predicate<IPredicate> mIsErrorState;
+	private boolean mUseOrigDef;
 
 	// part of the statistics collected in Dyn.Strat.Red
-	private DynamicStratifiedReduction.Statistics<H> mRedStatistics = new DynamicStratifiedReduction.Statistics();
+	private DynamicStratifiedReduction.Statistics<H> mRedStatistics = new DynamicStratifiedReduction.Statistics<H>();
 	private final Statistics mStatistics = new Statistics();
 	private final List<H> mProofLevels = new ArrayList<>();
 
@@ -79,19 +80,26 @@ public class ProofManager<L extends IAction, H, P> implements IProofManager<H, I
 	private int mLastResponsibleProof = -1;
 	/**
 	 * Construct a new proof manager.
+	 * 
+	 * @param useOrigDef
+	 * 			if true we use the definition of proven state = state that is error loc and has at least one false literal
 	 * @param services
 	 * @param abstraction
 	 * @param getConjuncts
 	 * @param isErrorState
+	 * 			boolean function, returns true if state is an error state ?
 	 */
 	public ProofManager(final IUltimateServiceProvider services, final IRefinableAbstraction<P, H, L> abstraction,
-			final Function<IPredicate, List<IPredicate>> getConjuncts, final Predicate<IPredicate> isErrorState) {
+			final Function<IPredicate, List<IPredicate>> getConjuncts, final Predicate<IPredicate> isErrorState, 
+			boolean useOrigDef) {
 		mLogger = services.getLoggingService().getLogger(getClass());
 		mAbstraction = Objects.requireNonNull(abstraction);
 		mGetConjuncts = Objects.requireNonNull(getConjuncts);
 		mIsErrorState = Objects.requireNonNull(isErrorState);
+		mUseOrigDef = useOrigDef;
 	}
 	/**
+	 * Add the proof found in the last iteration.
 	 * 
 	 * @param proof
 	 * 			proof to be added
@@ -112,8 +120,12 @@ public class ProofManager<L extends IAction, H, P> implements IProofManager<H, I
 	}
 
 	@Override
+	// also increments proven state counter
 	public boolean isProvenState(final IPredicate state) {
-		final var isProven = mGetConjuncts.apply(state).stream().anyMatch(p -> SmtUtils.isFalseLiteral(p.getFormula()));
+		boolean addCon = !mUseOrigDef || mIsErrorState.test(state);
+		final var isProven = addCon && 
+				mGetConjuncts.apply(state).stream().anyMatch(p -> SmtUtils.isFalseLiteral(p.getFormula()));
+		
 		if (isProven) {
 			mStatistics.reportProvenState();
 		}
@@ -125,7 +137,7 @@ public class ProofManager<L extends IAction, H, P> implements IProofManager<H, I
 		// get conjuncts of the state
 		final List<IPredicate> conjuncts = mGetConjuncts.apply(state);
 
-		// identify candidates for responsible proofs (proofs whose conjunct is FALSE)
+		// identify candidates for responsible proofs (proofs whose conjunct is FALSE) 
 		final var candidateProofs = IntStream.range(0, conjuncts.size())
 				.filter(i -> SmtUtils.isFalseLiteral(conjuncts.get(conjuncts.size() - i - 1).getFormula()))
 				.mapToObj(Integer::valueOf).collect(Collectors.toList());
