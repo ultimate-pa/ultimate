@@ -418,11 +418,18 @@ public class MainDispatcher implements IDispatcher {
 		if (mWitnessEntries == null) {
 			return result;
 		}
-		Result rtr = result;
+		final Set<IExtractedWitnessEntry> matchedWitnessEntries = mWitnessEntries.getImage(node);
+		if (!(result instanceof ExpressionResult)) {
+			if (!matchedWitnessEntries.isEmpty()) {
+				mLogger.warn("Unable to annotate " + node.getRawSignature() + " with a witness entry");
+			}
+			return result;
+		}
+		ExpressionResult rtr = (ExpressionResult) result;
 		final ILocation loc = mLocationFactory.createCLocation(node);
-		for (final IExtractedWitnessEntry entry : mWitnessEntries.getImage(node)) {
+		for (final IExtractedWitnessEntry entry : matchedWitnessEntries) {
 			if (mNodeLabelsOfAddedWitnesses.add(entry.getNodeLabels())) {
-				rtr = entry.transform(loc, this, (ExpressionResult) rtr);
+				rtr = entry.transform(loc, this, rtr);
 			}
 		}
 		return rtr;
