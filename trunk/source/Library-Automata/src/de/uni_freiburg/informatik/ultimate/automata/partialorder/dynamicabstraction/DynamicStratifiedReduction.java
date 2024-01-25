@@ -66,6 +66,11 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.TimeTracker;
  *            The type of letters of the input automaton. VariableAbstraction says that they need to be IActions?
  * @param <S>
  *            The type of states of the input automaton.
+ * @param <H> 
+ * 			  The type of abstraction levels.
+ * 
+ * @param <R> 
+ * 			  The type of states of the reduction automaton.
  *
  *
  *            - gibt an, welche übergänge da sind - gibt an, welches abstraktionslevel deren target states haben?
@@ -83,7 +88,7 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
-	private final static Statistics mStatistics = new Statistics(); 
+	private final Statistics<H> mStatistics = new Statistics<H>(); 
 
 	private final INwaOutgoingLetterAndTransitionProvider<L, S> mOriginalAutomaton;
 	private final IStratifiedStateFactory<L, S, R, H> mStateFactory;
@@ -106,22 +111,6 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 
 	private int mIndentLevel = -1;
 
-	public static <L, S, R, H> void traverse(final AutomataLibraryServices services,
-			final INwaOutgoingLetterAndTransitionProvider<L, S> operand, final IDfsOrder<L, S> order,
-			final IStratifiedStateFactory<L, S, R, H> stateFactory, final IDfsVisitor<L, R> visitor,
-			final IIndependenceInducedByAbstraction<S, L, H> independence, final IProofManager<H, S> manager)
-			throws AutomataOperationCanceledException {
-		final var initial =
-				DataStructureUtils.getOnly(operand.getInitialStates(), "There must only be one initial state");
-		if (initial.isPresent()) {
-			new DynamicStratifiedReduction<>(services, operand, order, stateFactory, visitor, initial.get(),
-					independence, manager);
-		} else {
-			final var logger = services.getLoggingService().getLogger(DynamicStratifiedReduction.class);
-			logger.warn("DynamicStratifiedReduction did not find any initial state. Returning directly.");
-		}
-	}
-
 	/**
 	 * Performs a depth-first traversal over the reduction automaton while constructing it. This constructor is called
 	 * purely for its side-effects. (We could also return the finished reduction automaton?)
@@ -138,6 +127,10 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 	 *            startingState of the original automaton
 	 * @param independence
 	 *            provides independence relations for the reduction automaton
+	 * @param manager
+	 * 			  handles everything regarding proofs and proven states
+	 * @param stateFactory
+	 * 			  creates and deals with the reduction states
 	 * @throws AutomataOperationCanceledException
 	 *             in case of timeout or cancellation
 	 */
@@ -158,8 +151,8 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 		mStateFactory = stateFactory;
 		mOriginalAutomaton = originalAutomaton;
 		mStartState = (R) mStateFactory.createStratifiedState(startingState,
-				new AbstractionLevel(mAbstractionLattice.getTop(), mAbstractionLattice, false),
-				new AbstractionLevel(mAbstractionLattice.getTop(), mAbstractionLattice, false));
+				new AbstractionLevel<H>(mAbstractionLattice.getTop(), mAbstractionLattice, false),
+				new AbstractionLevel<H>(mAbstractionLattice.getTop(), mAbstractionLattice, false));
 		mStateFactory.setSleepSet(mStartState, new HashMap<L, H>());
 		mOrder = order;
 		mIndependenceProvider = independence;
@@ -176,14 +169,48 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 		mStatistics.stopTotal();
 		mProofManager.takeRedStatistics(mStatistics);
 	}
-
+	
 	/**
-	 * builds and traverses the reduction automaton
-	 *
-	 *
-	 *
+	 * Build and traverse the reduction automaton
+	 * 
+	 * @param operand
+	 * 			  The automaton we want to build a reduction automaton of
+	 * @param services
+	 *            automata services used for logging and timeout management
+	 * @param originalAutomaton
+	 *            The automaton to be traversed
+	 * @param order
+	 *            The order in which transitions for each state should be explored
+	 * @param visitor
+	 *            A visitor to traverse the automaton
+	 * @param startingState
+	 *            startingState of the original automaton
+	 * @param independence
+	 *            provides independence relations for the reduction automaton
+	 * @param manager
+	 * 			  handles everything regarding proofs and proven states
+	 * @param stateFactory
+	 * 			  creates and deals with the reduction states
 	 * @throws AutomataOperationCanceledException
+	 *             in case of timeout or cancellation
 	 */
+	public static <L, S, R, H> void traverse(final AutomataLibraryServices services,
+			final INwaOutgoingLetterAndTransitionProvider<L, S> operand, final IDfsOrder<L, S> order,
+			final IStratifiedStateFactory<L, S, R, H> stateFactory, final IDfsVisitor<L, R> visitor,
+			final IIndependenceInducedByAbstraction<S, L, H> independence, final IProofManager<H, S> manager)
+			throws AutomataOperationCanceledException {
+		final var initial =
+				DataStructureUtils.getOnly(operand.getInitialStates(), "There must only be one initial state");
+		if (initial.isPresent()) {
+			new DynamicStratifiedReduction<>(services, operand, order, stateFactory, visitor, initial.get(),
+					independence, manager);
+		} else {
+			final var logger = services.getLoggingService().getLogger(DynamicStratifiedReduction.class);
+			logger.warn("DynamicStratifiedReduction did not find any initial state. Returning directly.");
+		}
+	}
+
+
 
 	private void traverse() throws AutomataOperationCanceledException {
 		// add initial state and its outgoing transitions to the worklist
@@ -230,15 +257,15 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 					mStateFactory.addToAbstractionLevel(currentState, freeVars);
 				}
 			} else if (!mDfs.isVisited(nextState)) {
-				// TODO: Compute sleepsets!
+				// Compute sleepsets
 				final Map<L, H> nextSleepSet = createSleepSet(currentState, currentTransition.getLetter());
 				mStateFactory.setSleepSet(nextState, nextSleepSet);
 				for (final Map.Entry<L, H> edge : mStateFactory.getSleepSet(nextState).entrySet()) {
 					mStateFactory.addToAbstractionLimit(nextState, edge.getValue());
 					mStateFactory.addToAbstractionLevel(nextState, edge.getValue());
 				}
-				currentTransition = new OutgoingInternalTransition(currentTransition.getLetter(), nextState);
-				current = new Pair(currentState, currentTransition);
+				currentTransition = new OutgoingInternalTransition<L, R>(currentTransition.getLetter(), nextState);
+				current = new Pair<R, OutgoingInternalTransition<L, R>>(currentState, currentTransition);
 
 				createSuccessors(nextState);
 
@@ -354,12 +381,12 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 		mLogger.debug("  ".repeat(mIndentLevel) + msg, params);
 	}
 
-	// --------------------------------------------------- Stuff for reductionbuilding
+	// --------------------------------------------------- Stuff for reduction building
 	// -----------------------------------------------------------------------------------------
 
 	/**
 	 * get original successor states & transitions and add their reduction states/transitions to the reduction automaton
-	 * and put them on the Worklist
+	 * and put them on the worklist
 	 *
 	 * @param state
 	 *            state whose successors are created
@@ -415,7 +442,7 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 					reductionSucc = correspRstate;
 				}
 				// add state + new reduced transition to worklist
-				mPending.add(new OutgoingInternalTransition(letter, reductionSucc));
+				mPending.add(new OutgoingInternalTransition<L, R>(letter, reductionSucc));
 			}
 		}
 	}
@@ -445,24 +472,23 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 			if ((comp.compare(candidate.getLetter(), letter) < 0) && !currSleepSet.containsKey(candidate.getLetter())) {
 				assert mAlreadyReduced.containsKey(candidate.getSucc()) : "State has already been visited and "
 						+ "should have a reduction state\n";
-				final H abst_lv =
+				final H abstLv =
 						mStateFactory.getAbstractionLevel(mAlreadyReduced.get(candidate.getSucc())).getValue();
-				independence = mIndependenceProvider.getInducedIndependence(abst_lv);
+				independence = mIndependenceProvider.getInducedIndependence(abstLv);
 				if (independence.isIndependent(currentS, candidate.getLetter(), letter) == Dependence.INDEPENDENT) {
-					nextSleepSet.put(candidate.getLetter(), abst_lv);
+					nextSleepSet.put(candidate.getLetter(), abstLv);
 
 				}
 			} // Letters from old SleepSet
-
 			else if (currSleepSet.containsKey(candidate.getLetter())) {
-				final H abst_lv = currSleepSet.get(candidate.getLetter());
-				assert ((mAbstractionLattice.compare(abst_lv,
+				final H abstLv = currSleepSet.get(candidate.getLetter());
+				assert ((mAbstractionLattice.compare(abstLv,
 						mStateFactory.getAbstractionLevel(current).getValue()) == ComparisonResult.STRICTLY_GREATER)
-						|| (mAbstractionLattice.compare(abst_lv, mStateFactory.getAbstractionLevel(current)
+						|| (mAbstractionLattice.compare(abstLv, mStateFactory.getAbstractionLevel(current)
 								.getValue()) == ComparisonResult.EQUAL)) : "Abstractionlevel is supposed to be greater or equal";
-				independence = mIndependenceProvider.getInducedIndependence(abst_lv);
+				independence = mIndependenceProvider.getInducedIndependence(abstLv);
 				if (independence.isIndependent(currentS, candidate.getLetter(), letter) == Dependence.INDEPENDENT) {
-					nextSleepSet.put(candidate.getLetter(), abst_lv);
+					nextSleepSet.put(candidate.getLetter(), abstLv);
 				}
 			}
 
@@ -497,15 +523,19 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 	}
 
 	
-	
-	// Statistics with special focus on effects of loop handling
-	
-	public static IStatisticsDataProvider getStatistics() {
+		
+	public IStatisticsDataProvider getStatistics() {
 		return mStatistics;
 	}
+	/**
+	 * Statistics of DSR related to loops and abstracted variables. 
+	 * Will be collected by the proof manager when DSR is finished.
+	 * 
+	 * @param <H> The type of abstraction level used (basically a set of variables)
+	 */
 
 	public static final class Statistics<H> extends AbstractStatisticsDataProvider {
-		private boolean mContainsLoop = false;  
+		private boolean mContainsLoop;  
 		private H mProtectedVars;
 		private H mProtectedVarsBeforeLoop;
 		private TimeTracker mLoopTime = new TimeTracker();
@@ -513,14 +543,18 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 		private TimeTracker mTotalTime = new TimeTracker();
 		
 		public Statistics() {
-			// TODO: right key types needed
 			declare("Time before loop", () -> mLooplessTime, KeyType.TT_TIMER);
-			declare("Time in loop,", () -> mLoopTime, KeyType.TT_TIMER);
+			declare("Time in loop", () -> mLoopTime, KeyType.TT_TIMER);
 			declare("Time in total", () -> mTotalTime, KeyType.TT_TIMER);
 			declare("Has Loop", () -> mContainsLoop, KeyType.COUNTER);
 			declare("Protected Variables", () -> mProtectedVars, KeyType.COUNTER);
 			declare("Protected Variables before encountering a loop", () -> mProtectedVarsBeforeLoop, KeyType.COUNTER);
 		}
+		
+		/**
+		 * 
+		 * @return true if reduction has encountered a loop before
+		 */
 		public boolean containsLoop() {
 			return mContainsLoop;
 		}

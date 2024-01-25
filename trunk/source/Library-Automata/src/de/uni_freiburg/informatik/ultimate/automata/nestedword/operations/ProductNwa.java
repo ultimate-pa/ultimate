@@ -211,6 +211,7 @@ public abstract class ProductNwa<LETTER, STATE> implements INwaOutgoingLetterAnd
 	}
 
 	private Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(
+	// returns internal successors only, if they are not annotated with false literal
 			final Iterable<OutgoingInternalTransition<LETTER, STATE>> fstInternalSuccs, final STATE snd) {
 		final Collection<OutgoingInternalTransition<LETTER, STATE>> result = new ArrayList<>();
 		for (final OutgoingInternalTransition<LETTER, STATE> fstTrans : fstInternalSuccs) {
@@ -219,13 +220,10 @@ public abstract class ProductNwa<LETTER, STATE> implements INwaOutgoingLetterAnd
 					letter)) {
 				final STATE fstSucc = fstTrans.getSucc();
 				final STATE sndSucc = sndTrans.getSucc();
-				// TODO: Find out what is happening here
-				/*
 				if (isTrapInSnd(sndSucc)) {
 					continue;
-				
 				}
-				*/
+				
 				final STATE resSucc = getOrConstructState(fstSucc, sndSucc);
 				result.add(new OutgoingInternalTransition<>(letter, resSucc));
 			}

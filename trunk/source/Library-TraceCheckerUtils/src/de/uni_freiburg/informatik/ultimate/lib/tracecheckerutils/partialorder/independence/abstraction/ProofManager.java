@@ -66,11 +66,10 @@ public class ProofManager<L extends IAction, H, P> implements IProofManager<H, I
 	private final IRefinableAbstraction<P, H, L> mAbstraction;
 	private final Function<IPredicate, List<IPredicate>> mGetConjuncts;
 	private final Predicate<IPredicate> mIsErrorState;
-	
-	//TODO: Statistiken irgendwie sinnvoll strukturieren...
-	private DynamicStratifiedReduction.Statistics<H> mRedStatistics = new DynamicStratifiedReduction.Statistics();  // part of the statistics collected in Dyn.Strat.Red
-	private final Statistics mStatistics = new Statistics();
 
+	// part of the statistics collected in Dyn.Strat.Red
+	private DynamicStratifiedReduction.Statistics<H> mRedStatistics = new DynamicStratifiedReduction.Statistics();
+	private final Statistics mStatistics = new Statistics();
 	private final List<H> mProofLevels = new ArrayList<>();
 
 	// count how many times each proof has been chosen as responsible
@@ -78,7 +77,13 @@ public class ProofManager<L extends IAction, H, P> implements IProofManager<H, I
 
 	// the proof we chose at the last proven state
 	private int mLastResponsibleProof = -1;
-
+	/**
+	 * Construct a new proof manager.
+	 * @param services
+	 * @param abstraction
+	 * @param getConjuncts
+	 * @param isErrorState
+	 */
 	public ProofManager(final IUltimateServiceProvider services, final IRefinableAbstraction<P, H, L> abstraction,
 			final Function<IPredicate, List<IPredicate>> getConjuncts, final Predicate<IPredicate> isErrorState) {
 		mLogger = services.getLoggingService().getLogger(getClass());
@@ -86,7 +91,11 @@ public class ProofManager<L extends IAction, H, P> implements IProofManager<H, I
 		mGetConjuncts = Objects.requireNonNull(getConjuncts);
 		mIsErrorState = Objects.requireNonNull(isErrorState);
 	}
-
+	/**
+	 * 
+	 * @param proof
+	 * 			proof to be added
+	 */
 	public void addProof(final IRefinementEngineResult<L, P> proof) {
 		final var proofAbstraction = mAbstraction.refine(mAbstraction.getInitial(), proof);
 		mProofLevels.add(proofAbstraction);
@@ -150,9 +159,10 @@ public class ProofManager<L extends IAction, H, P> implements IProofManager<H, I
 		// return abstraction corresponding to the chosen proof
 		return mProofLevels.get(responsibleProof);
 	}
-
+	/**
+	 * collect statistics from last iteration
+	 */
 	public void finish() {
-		// collect statistics from last iteration
 		for (final int i : mProofCounter) {
 			if (i == 0) {
 				mStatistics.reportRedundantProof();
@@ -173,11 +183,11 @@ public class ProofManager<L extends IAction, H, P> implements IProofManager<H, I
 	}
 
 	private static final class Statistics extends AbstractStatisticsDataProvider {
-		private int mIrresponsibleProofs = 0;
-		private int mRedundantProofs = 0;	// proofs not used in the last iteration of the cegar loop
-		private int mProvenStates = 0;
-		private int mChoices = 0; 	// count how often there's more than one proof with false
-		private float mChoicesSum = 0;	// count between how many potential responsible proofs we can chose 
+		private int mIrresponsibleProofs;
+		private int mRedundantProofs;
+		private int mProvenStates;
+		private int mChoices;
+		private double mChoicesSum;	
 
 		public Statistics() {
 			declare("IrresponsibleProofs", () -> mIrresponsibleProofs, KeyType.COUNTER);
@@ -186,23 +196,40 @@ public class ProofManager<L extends IAction, H, P> implements IProofManager<H, I
 			declare("Times there's more than one choice", () -> mChoices, KeyType.COUNTER);
 			declare("Avg number of choices", () -> (mChoicesSum/mProvenStates), KeyType.COUNTER);
 		}
-
+		/**
+		 * Increment the number of redundant proofs (proofs that are definitely superfluous 
+		 * as they are not used in the cegar loop's final iteration.
+		 */
 		public void reportRedundantProof() {
 			mRedundantProofs++;
 			addIrresponsibleProofs(1);
 		}
-
+		/**
+		 * Increment number of proven states by one.
+		 */
 		public void reportProvenState() {
 			mProvenStates++;
 		}
-
+		/**
+		 * Increment number of irresponsible proofs (candidate redundant proofs that were not selected).
+		 * @param n 
+		 * 		number of irresponsible proofs of the state
+		 */
 		public void addIrresponsibleProofs(final int n) {
 			mIrresponsibleProofs += n;
 		}
+		/**
+		 * Count between how many possible responsible proof we had to chose
+		 * 
+		 * @param i 
+		 * 		number of responsible proof candidates
+		 */
 		public void addNrChoices(int i) {
 			mChoicesSum += i;
 		}
-		
+		/**
+		 * Count how often we have more than one responsible proof candidate.
+		 */
 		public void addChoice() {
 			mChoices++;
 		}
