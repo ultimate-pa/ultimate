@@ -104,7 +104,7 @@ public class MultiDimensionalSelectOverNestedStore implements ITermProvider {
 		final List<MultiDimensionalSelect> mdss = MultiDimensionalSelect.extractSelectShallow(term);
 		for (final MultiDimensionalSelect mds : mdss) {
 			final MultiDimensionalNestedStore mdns = MultiDimensionalNestedStore.of(mds.getArray());
-			if (mdns != null) {
+			if (mdns != null && mdns.getDimension() == mds.getDimension()) {
 				result.add(new MultiDimensionalSelectOverNestedStore(mds.getIndex(), mdns));
 				if (!onlyOutermost) {
 					result.addAll(extractMultiDimensionalSelectOverNestedStore(mdns.getArray(), onlyOutermost));
