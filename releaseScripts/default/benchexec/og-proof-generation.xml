@@ -29,4 +29,8 @@
     <include>../../../trunk/examples/concurrent/OwickiGries/PetriPrograms/ConcurrencySafety.*.ats</include>
   </tasks>
 
+  <tasks name="regression-NoDataRace">
+    <include>../../../trunk/examples/concurrent/OwickiGries/PetriPrograms/NoDataRace.*.ats</include>
+  </tasks>
+
 </benchmark>

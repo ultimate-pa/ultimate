@@ -53,7 +53,10 @@
     <column title="regionCnt"     displayTitle="Region Count">PetriOwickiGries Empire Statistics:.* number of regions: (\d+),</column>
     <column title="regionMin"     displayTitle="Regions/Territory (min)">PetriOwickiGries Empire Statistics:.* Min number of regions per territory: (\d+),</column>
     <column title="regionMax"     displayTitle="Regions/Territory (max)">PetriOwickiGries Empire Statistics:.* Max number of regions per territory: (\d+),</column>
-    <column title="regionMed"     displayTitle="Regions/Territory (med)">PetriOwickiGries Empire Statistics:.* Median number of regions per territory: (\d+)$</column>
+    <column title="regionMed"     displayTitle="Regions/Territory (med)">PetriOwickiGries Empire Statistics:.* Median number of regions per territory: (\d+),</column>
+    <column title="regionSizeMin" displayTitle="Places/Region (min)">PetriOwickiGries Empire Statistics:.* Min number of places per region: (\d+),</column>
+    <column title="regionSizeMax" displayTitle="Places/Region (max)">PetriOwickiGries Empire Statistics:.* Max number of places per region: (\d+),</column>
+    <column title="regionSizeMed" displayTitle="Places/Region (med)">PetriOwickiGries Empire Statistics:.* Median number of places per region: (\d+)$</column>
     <column title="empireValTime" displayTitle="Empire Validity Time" sourceUnit="ms">PetriOwickiGries Statistics:.* (\d+\.\d+)ms Empire validity check time</column>
 
     <!-- Owicki-Gries -->
@@ -111,7 +114,10 @@
     <column title="regionCnt"     displayTitle="Region Count">PetriOwickiGries Empire Statistics:.* number of regions: (\d+),</column>
     <column title="regionMin"     displayTitle="Regions/Territory (min)">PetriOwickiGries Empire Statistics:.* Min number of regions per territory: (\d+),</column>
     <column title="regionMax"     displayTitle="Regions/Territory (max)">PetriOwickiGries Empire Statistics:.* Max number of regions per territory: (\d+),</column>
-    <column title="regionMed"     displayTitle="Regions/Territory (med)">PetriOwickiGries Empire Statistics:.* Median number of regions per territory: (\d+)$</column>
+    <column title="regionMed"     displayTitle="Regions/Territory (med)">PetriOwickiGries Empire Statistics:.* Median number of regions per territory: (\d+),</column>
+    <column title="regionSizeMin" displayTitle="Places/Region (min)">PetriOwickiGries Empire Statistics:.* Min number of places per region: (\d+),</column>
+    <column title="regionSizeMax" displayTitle="Places/Region (max)">PetriOwickiGries Empire Statistics:.* Max number of places per region: (\d+),</column>
+    <column title="regionSizeMed" displayTitle="Places/Region (med)">PetriOwickiGries Empire Statistics:.* Median number of places per region: (\d+)$</column>
 
     <!-- Owicki-Gries -->
     <column title="ogTime"       displayTitle="Empire 2 O/G time" sourceUnit="ms">PetriOwickiGries Statistics:.* (\d+\.\d+)ms EmpireToOwickiGries time</column>
@@ -137,14 +143,6 @@
     <column title="minLoopers" displayTitle="Loopers (min)">Loopers in proof automata: min=(\d+),</column>
     <column title="maxLoopers" displayTitle="Loopers (max)">Loopers in proof automata:.* max=(\d+),</column>
     <column title="medLoopers" displayTitle="Loopers (med)">Loopers in proof automata:.* median=(\d+)$</column>
-
-    <!-- unfolding of refined net -->
-    <column title="unfConds"    displayTitle="Unfolding Conditions">Constructing Owicki-Gries proof for .* unfolding that has (\d+) conditions</column>
-    <column title="unfEvents"   displayTitle="Unfolding Events">Constructing Owicki-Gries proof for .* unfolding that has .* (\d+) events</column>
-    <column title="cutConds"    displayTitle="Cutoff conditions">Constructing Owicki-Gries proof for .* unfolding .* (\d+) conditions belong to cutoff events</column>
-    <column title="noCutConds"  displayTitle="Non-Cutoff conditions">Constructing Owicki-Gries proof for .* unfolding .* \d+ conditions belong to cutoff events, (\d+) conditions do not.</column>
-    <column title="origConds"   displayTitle="Original conditions">Constructing Owicki-Gries proof for .* unfolding .* (\d+) conditions are original conditions</column>
-    <column title="asstConds"   displayTitle="Assertion conditions">Constructing Owicki-Gries proof for .* unfolding .* (\d+) conditions are assertion conditions</column>
 
     <column title="setupTime" displayTitle="Setup Time" sourceUnit="ms">OwickiGriesTestSuite setup time: (\d+)ms</column>
 
@@ -175,14 +173,6 @@
     <column title="minLoopers" displayTitle="Loopers (min)">Loopers in proof automata: min=(\d+),</column>
     <column title="maxLoopers" displayTitle="Loopers (max)">Loopers in proof automata:.* max=(\d+),</column>
     <column title="medLoopers" displayTitle="Loopers (med)">Loopers in proof automata:.* median=(\d+)$</column>
-
-    <!-- unfolding of refined net -->
-    <column title="unfConds"    displayTitle="Unfolding Conditions">Constructing Owicki-Gries proof for .* unfolding that has (\d+) conditions</column>
-    <column title="unfEvents"   displayTitle="Unfolding Events">Constructing Owicki-Gries proof for .* unfolding that has .* (\d+) events</column>
-    <column title="cutConds"    displayTitle="Cutoff conditions">Constructing Owicki-Gries proof for .* unfolding .* (\d+) conditions belong to cutoff events</column>
-    <column title="noCutConds"  displayTitle="Non-Cutoff conditions">Constructing Owicki-Gries proof for .* unfolding .* \d+ conditions belong to cutoff events, (\d+) conditions do not.</column>
-    <column title="origConds"   displayTitle="Original conditions">Constructing Owicki-Gries proof for .* unfolding .* (\d+) conditions are original conditions</column>
-    <column title="asstConds"   displayTitle="Assertion conditions">Constructing Owicki-Gries proof for .* unfolding .* (\d+) conditions are assertion conditions</column>
 
     <column title="setupTime" displayTitle="Setup Time" sourceUnit="ms">OwickiGriesTestSuite setup time: (\d+)ms</column>
 
