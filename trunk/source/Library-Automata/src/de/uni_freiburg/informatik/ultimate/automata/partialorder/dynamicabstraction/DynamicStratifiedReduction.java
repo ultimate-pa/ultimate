@@ -155,7 +155,7 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 		mIndependenceProvider = independence;
 		mVisitor = visitor;
 		mProofManager = manager;
-		// TODO: stop the test suits complaints
+		// TODO: stop the test suite's complaints
 		mStatistics.setProtectedVars(mAbstractionLattice.getTop());
 
 		traverse();
