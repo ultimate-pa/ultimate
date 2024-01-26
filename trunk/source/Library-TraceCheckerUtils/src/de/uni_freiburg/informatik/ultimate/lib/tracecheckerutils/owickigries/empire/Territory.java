@@ -80,8 +80,7 @@ public final class Territory<PLACE> {
 	 * @return Set of all places in Territory.
 	 */
 	public Set<PLACE> getPlaces() {
-		final Set<PLACE> places = mTerritory.stream().flatMap(r -> r.getPlaces().stream()).collect(Collectors.toSet());
-		return places;
+		return mTerritory.stream().flatMap(r -> r.getPlaces().stream()).collect(Collectors.toSet());
 	}
 
 	/**

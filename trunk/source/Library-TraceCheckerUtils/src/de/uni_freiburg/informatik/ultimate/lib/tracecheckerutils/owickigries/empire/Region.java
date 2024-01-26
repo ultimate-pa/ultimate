@@ -25,7 +25,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire;
 
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
@@ -58,15 +57,6 @@ public final class Region<PLACE> {
 	 */
 	public ImmutableSet<PLACE> getPlaces() {
 		return mRegion;
-	}
-
-	/**
-	 * @param petriNet
-	 *            over which place corelation is checked.
-	 * @return true if place is NOT corelated to all places in the region. TODO: place corelation!!!!
-	 */
-	public <LETTER> boolean checkCorelation(final IPetriNet<LETTER, PLACE> petriNet) {
-		return true;
 	}
 
 	public int size() {

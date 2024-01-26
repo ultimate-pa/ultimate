@@ -66,10 +66,7 @@ final class Kindred<PLACE, LETTER> {
 
 	private boolean isKindredRookPair(final Set<Set<Condition<LETTER, PLACE>>> rook1Subkingdom,
 			final Set<Set<Condition<LETTER, PLACE>>> rook2Subkingdom) {
-		if (rook1Subkingdom.equals(rook2Subkingdom)) {
-			return false;
-		}
-		return true;
+		return !rook1Subkingdom.equals(rook2Subkingdom);
 	}
 
 	private boolean isKindredMarking(final Marking<PLACE> marking, final Rook<PLACE, LETTER> rook,
@@ -86,14 +83,6 @@ final class Kindred<PLACE, LETTER> {
 			}
 		}
 		return false;
-	}
-
-	private Set<Condition<LETTER, PLACE>> getSubkingdomConditions(final Set<Set<Condition<LETTER, PLACE>>> subkingdom) {
-		Set<Condition<LETTER, PLACE>> subkingdomConditions = new HashSet<>();
-		for (final Set<Condition<LETTER, PLACE>> coSet : subkingdom) {
-			subkingdomConditions = DataStructureUtils.union(subkingdomConditions, coSet);
-		}
-		return subkingdomConditions;
 	}
 
 	/**

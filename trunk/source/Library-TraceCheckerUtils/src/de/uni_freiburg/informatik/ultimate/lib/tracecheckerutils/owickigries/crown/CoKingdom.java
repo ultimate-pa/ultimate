@@ -25,13 +25,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 final class CoKingdom<PLACE, LETTER> {
 
@@ -156,15 +154,5 @@ final class CoKingdom<PLACE, LETTER> {
 
 	public Set<CoRealm<PLACE, LETTER>> getParCoRealms() {
 		return mParCoRealms;
-	}
-
-	public Set<Condition<LETTER, PLACE>> getConflictFreeConditions(final BranchingProcess<LETTER, PLACE> bp,
-			final PlacesCoRelation<PLACE> placesCoRelation) {
-		if (mNegKingdom.isEmpty()) {
-			return Collections.emptySet();
-		}
-		final Realm<PLACE, LETTER> negativeRealm = DataStructureUtils.getOneAndOnly(mNegKingdom, "negative kingdom");
-		final CoRealm<PLACE, LETTER> negativeCoRealm = negativeRealm.getCoRealm(mCondition, bp, placesCoRelation);
-		return negativeCoRealm.getConflictFreeSet();
 	}
 }

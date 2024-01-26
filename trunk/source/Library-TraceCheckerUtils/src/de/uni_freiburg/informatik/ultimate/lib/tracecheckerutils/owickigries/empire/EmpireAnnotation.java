@@ -63,9 +63,7 @@ public class EmpireAnnotation<PLACE> {
 	 * @return Set of Regions in Empire
 	 */
 	public Set<Region<PLACE>> getColony() {
-		final Set<Region<PLACE>> colony =
-				mLaw.keySet().stream().flatMap(t -> t.getRegions().stream()).collect(Collectors.toSet());
-		return colony;
+		return mLaw.keySet().stream().flatMap(t -> t.getRegions().stream()).collect(Collectors.toSet());
 	}
 
 	public Set<Territory<PLACE>> getTerritories() {

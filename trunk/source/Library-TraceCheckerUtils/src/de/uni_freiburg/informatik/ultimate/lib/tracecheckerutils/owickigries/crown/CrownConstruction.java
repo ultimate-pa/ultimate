@@ -126,7 +126,7 @@ public final class CrownConstruction<PLACE, LETTER> {
 					new KingdomLaw<>(ImmutableSet.empty()));
 			singletonRooks.add(singletonRook);
 		}
-		return crownExpansionIterative2(singletonRooks, new ArrayList<>(mAssertConds), false);
+		return crownExpansionIterative(singletonRooks, new ArrayList<>(mAssertConds), false);
 	}
 
 	private Set<Rook<PLACE, LETTER>> combineSingletonRooks(final Set<Rook<PLACE, LETTER>> singletonRooks) {
@@ -182,14 +182,14 @@ public final class CrownConstruction<PLACE, LETTER> {
 		mLogger.debug("Starting Crown Computation...");
 		mLogger.debug("Starting Colonization...");
 		final Set<Rook<PLACE, LETTER>> reSet =
-				crownExpansionIterative2(colonizedRooks, new ArrayList<>(expansionConditions), true);
+				crownExpansionIterative(colonizedRooks, new ArrayList<>(expansionConditions), true);
 		if (SINGLE_ASSERTION_LAWS) {
 			reSet.removeIf(r -> r.containsNonCut(mBp, mOrigConds));
 			return reSet;
 		}
 		mLogger.debug("Starting Legislation...");
 		final Set<Rook<PLACE, LETTER>> legislationRooks =
-				crownExpansionIterative2(reSet, new ArrayList<>(mAssertConds), false);
+				crownExpansionIterative(reSet, new ArrayList<>(mAssertConds), false);
 
 		// remove pre-rooks
 		legislationRooks.removeIf(r -> r.containsNonCut(mBp, mBp.getConditions()));
@@ -229,49 +229,8 @@ public final class CrownConstruction<PLACE, LETTER> {
 		return crownRooks;
 	}
 
-	private Set<Rook<PLACE, LETTER>> crownExpansionIterative(final Rook<PLACE, LETTER> rook,
-			final List<Condition<LETTER, PLACE>> troopConditions, final boolean colonizer) {
-		final Set<Rook<PLACE, LETTER>> crownRooks = new HashSet<>();
-		final HashDeque<Pair<Rook<PLACE, LETTER>, List<Condition<LETTER, PLACE>>>> rookStack = new HashDeque<>();
-		rookStack.offer(new Pair<>(rook, troopConditions));
-		boolean isMaximal = true;
-		while (!(rookStack.isEmpty())) {
-			final Pair<Rook<PLACE, LETTER>, List<Condition<LETTER, PLACE>>> currentPair = rookStack.poll();
-			final Rook<PLACE, LETTER> currentRook = currentPair.getFirst();
-			final List<Condition<LETTER, PLACE>> currentConditions = currentPair.getSecond();
-			isMaximal = true;
-			for (int i = 0; i < currentConditions.size(); i++) {
-				final Condition<LETTER, PLACE> condition = currentConditions.get(i);
-				final Pair<Condition<LETTER, PLACE>, Rook<PLACE, LETTER>> pair = new Pair<>(condition, currentRook);
-
-				Rook<PLACE, LETTER> colonyRook;
-				if (colonizer) {
-					colonyRook = colonize(condition, currentRook).getFirst();
-				} else {
-					colonyRook = legislate(condition, currentRook);
-				}
-				if (colonyRook == null) {
-					continue;
-				}
-				isMaximal = false;
-				final List<Condition<LETTER, PLACE>> ntroops =
-						currentConditions.stream().filter(cond -> !cond.equals(condition)).collect(Collectors.toList());
-				rookStack.offer(new Pair<>(colonyRook, ntroops));
-			}
-
-			if (isMaximal) {
-				crownRooks.add(currentRook);
-			}
-			if (rookStack.isEmpty()) {
-				break;
-			}
-		}
-
-		return crownRooks;
-	}
-
 	// Iterative expansion using BFS
-	private Set<Rook<PLACE, LETTER>> crownExpansionIterative2(final Set<Rook<PLACE, LETTER>> rooks,
+	private Set<Rook<PLACE, LETTER>> crownExpansionIterative(final Set<Rook<PLACE, LETTER>> rooks,
 			final List<Condition<LETTER, PLACE>> troopConditions, final boolean colonizer) {
 		final Set<Rook<PLACE, LETTER>> crownRooks = new HashSet<>();
 		final HashDeque<Rook<PLACE, LETTER>> rookQueue = new HashDeque<>();

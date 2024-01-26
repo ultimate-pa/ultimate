@@ -239,18 +239,40 @@ public final class Rook<PLACE, LETTER> {
 		final Set<Set<Condition<LETTER, PLACE>>> treaty = getKingdom().getTreaty();
 		final Set<SubterrElement<LETTER, PLACE>> subterr = new HashSet<>();
 		for (final Set<Condition<LETTER, PLACE>> set : treaty) {
-			final SubterrElement<LETTER, PLACE> subterrElement = new SubterrElement<>(set);
-			subterr.add(subterrElement);
+			subterr.add(new SubterrElement<>(set));
 		}
 		return subterr;
 	}
 
+	/**
+	 * Check if all Rooks have equal Territories
+	 *
+	 * @param <P>
+	 *            The type of places in the Petri program
+	 * @param <L>
+	 *            The type of statements in the Petri program
+	 * @param rooks
+	 *            Rooks to check equality for the corresponding Territories
+	 * @return True if all Rooks Territories are equal
+	 */
 	public static <P, L> boolean getRooksTerritoryEquality(final Set<Rook<P, L>> rooks) {
 		final Set<Territory<P>> rookTerritories =
 				rooks.stream().map(rook -> rook.getKingdom().toTerritory()).collect(Collectors.toSet());
 		return (rookTerritories.size() == 1);
 	}
 
+	/**
+	 * Check if every Rooks Territories are unique i.e. there is no pair of Rooks in rooks such that their corresponding
+	 * Territories are equal
+	 *
+	 * @param <P>
+	 *            The type of places in the Petri program
+	 * @param <L>
+	 *            The type of statements in the Petri program
+	 * @param rooks
+	 *            Rooks to check uniqueness of their corresponding Territories.
+	 * @return True if all Territories are unique
+	 */
 	public static <P, L> boolean getRooksTerritoriesUnique(final Set<Rook<P, L>> rooks) {
 		final Set<Territory<P>> rookTerritories =
 				rooks.stream().map(rook -> rook.getKingdom().toTerritory()).collect(Collectors.toSet());
