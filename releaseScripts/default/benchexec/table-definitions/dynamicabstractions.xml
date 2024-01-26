@@ -22,13 +22,23 @@
     <column title="proofSize"  displayTitle="# Interpolant States">InterpolantAutomatonStates: (\d+)[^\d]</column>
     <column title="iterationCost" displayTitle="Avg time per iteration" copy="cputime" denominator="iterations" />
 
-    <!-- DynamicStratifiedReduction statistics -->
+    <!-- ProofManager statistics -->
     <column title="irrespProofs"    displayTitle="Irresponsible Proofs (Sum)">IrresponsibleProofs:\s*(\d+),</column>
     <column title="avgIrrespProofs" displayTitle="Irresponsible Proofs (Avg)" copy="irrespProofs" denominator="iterations" />
     <column title="redundantProofs" displayTitle="Redundant Proofs">RedundantProofs:\s*(\d+),</column>
     <column title="percRedundantProofs" displayTitle="Redundant Proofs (%)" copy="redundantProofs" denominator="iterations" displayUnit="%" scaleFactor="100" />
-    <column title="provenStates"    displayTitle="Proven States (Sum)">ProvenStates:\s*(\d+)$</column>
+    <column title="provenStates"    displayTitle="Proven States (Sum)">ProvenStates:\s*(\d+)(,|$)</column>
     <column title="avgProvenStates" displayTitle="Proven States (Avg)" copy="provenStates" denominator="iterations" />
+    <column title="nontrivialChoices" displayTitle="Non-Trivial Choices">Times there's more than one choice: (\d+),</column>
+    <column title="avgNontrivialChoices" displayTitle="Non-Trivial Choices (Avg)" copy="nontrivialChoices" denominator="provenStates" displayUnit="%" scaleFactor="100" />
+
+    <!-- DynamicStratifiedReduction statistics -->
+    <column title="beforeLoopTime" displayTitle="Time before loop" sourceUnit="s">(\d+\.\d+)s Time before loop</column>
+    <column title="loopTime"       displayTitle="Time in loop" sourceUnit="s">(\d+\.\d+)s Time in loop</column>
+    <column title="totalTime"      displayTitle="Reduction time" sourceUnit="s">(\d+\.\d+)s Time in total</column>
+    <!--column title="hasLoop"        displayTitle="has loop">Has Loop: (false|true)</column-->
+    <!--column title="protectedVars"  displayTitle="protectedVars">Protected Variables: \[([^\]]*)\]</column-->
+    <!--column title="protectedVarsBeforeLoop" displayTitle="protectedVarsBeforeLoop">Protected Variables before encountering a loop: \[([^\]]*)\]</column-->
   </result>
 
   <result filename="*.results.ConcreteCommutativity.*.xml" />
