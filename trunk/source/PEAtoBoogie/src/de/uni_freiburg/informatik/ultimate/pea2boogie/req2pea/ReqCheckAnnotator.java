@@ -316,7 +316,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 					ltExpressions.add(pcAndLtExpression);
 				} else {
 					if (phase.getTerminal()) {
-						eqExpressions.add(pcExpression);
+						// eqExpressions.add(pcExpression);
 						ltExpressions.add(pcExpression);
 					}
 				}
@@ -515,36 +515,80 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 			return Collections.emptyList();
 		}
 		final List<Statement> stmtList = new ArrayList<>();
-		List<ReqPeas> totalPeas = new ArrayList<>();
-		List<ReqPeas> complementPeas = new ArrayList<>();
-		for (final ReqPeas reqPeas : mReqPeas) {
-			if (reqPeas.isTotalised()) {
-				totalPeas.add(reqPeas);
-			} else if (reqPeas.isComplemented()) {
-				complementPeas.add(reqPeas);
+
+		ArrayList<Expression> assertionAccept = new ArrayList<>();
+		ArrayList<Expression> assertionDiscard = new ArrayList<>();
+		for (int i = 0; i < mReqPeas.size(); i++) {
+
+			ArrayList<Expression> peaAccepts = new ArrayList<>();
+			ArrayList<Expression> peaDiscards = new ArrayList<>();
+			ReqPeas reqPeas = mReqPeas.get(i);
+			if (reqPeas.isStrict()) {
+				genStrictPeaExpressions(reqPeas, peaDiscards, peaAccepts, bl);
+			} else {
+				Expression pcInSinkExpression = genPcInSinkExpression(reqPeas, bl);
+				peaAccepts.add(ExpressionFactory.constructUnaryExpression(bl, Operator.LOGICNEG, pcInSinkExpression));
+				peaDiscards.add(pcInSinkExpression);
 			}
+			assertionAccept.add(ExpressionFactory.or(bl, peaAccepts));
+			assertionDiscard.add(ExpressionFactory.or(bl, peaDiscards));
 		}
-		for (int i = 0; i < totalPeas.size(); i++) {
-			List<ReqPeas> assertPeas = new ArrayList<>();
-			assertPeas.addAll(totalPeas);
-			assertPeas.remove(i);
-			assertPeas.add(i, complementPeas.get(i));
-			Statement assertStmt = genAssertRedundancy(assertPeas, bl);
-			if (assertStmt != null) {
-				stmtList.add(assertStmt);
+
+		for (int i = 0; i < mReqPeas.size(); i++) {
+			ArrayList<Expression> assertionList = new ArrayList<>();
+			assertionList.addAll(assertionAccept);
+			assertionList.remove(i);
+			assertionList.add(assertionDiscard.get(i));
+			final Expression assertion = ExpressionFactory.and(bl, assertionList);
+			final Expression assertionNegated =
+					ExpressionFactory.constructUnaryExpression(bl, Operator.LOGICNEG, assertion);
+			ArrayList<String> reqIds = new ArrayList<String>();
+			ArrayList<String> peaNames = new ArrayList<String>();
+			for (Entry<CounterTrace, PhaseEventAutomata<CDD>> pea : mReqPeas.get(i).getCounterTrace2Pea()) {
+				peaNames.add(pea.getValue().getName());
+				reqIds.add(mReqPeas.get(i).getPattern().getId());
+			}
+
+			final ReqCheck check = new ReqCheck(Spec.REDUNDANCY, reqIds.toArray(new String[reqIds.size()]),
+					peaNames.toArray(new String[reqIds.size()]));
+			final String label = "REDUNDANT_" + mReqPeas.get(i).getPattern().toString();
+			Statement assertStatement = createAssert(assertionNegated, check, label);
+			if (assertStatement != null) {
+				stmtList.add(assertStatement);
 			}
 		}
 		return stmtList;
 	}
 
-	private Statement genAssertRedundancy(List<ReqPeas> assertPeas, final BoogieLocation bl) {
+	private Statement genAssertRedundancy(List<ReqPeas> assertPeas, int indexPeaToCheck, final BoogieLocation bl) {
 		ArrayList<Expression> assertionList = new ArrayList<>();
+		ArrayList<Expression> assertionAccept = new ArrayList<>();
+		ArrayList<Expression> assertionDiscard = new ArrayList<>();
 		ReqPeas complementedPea = null;
-		for (ReqPeas reqPeas : assertPeas) {
+
+		for (int i = 0; i < assertPeas.size(); i++) {
 			ArrayList<Expression> peaAccepts = new ArrayList<>();
+			ArrayList<Expression> peaDiscards = new ArrayList<>();
+			ReqPeas reqPeas = assertPeas.get(i);
+			if (reqPeas.isStrict()) {
+				genStrictPeaExpressions(reqPeas, peaDiscards, peaAccepts, bl);
+			} else {
+				Expression pcInSinkExpression = genPcInSinkExpression(reqPeas, bl);
+				peaAccepts.add(ExpressionFactory.constructUnaryExpression(bl, Operator.LOGICNEG, pcInSinkExpression));
+				peaDiscards.add(pcInSinkExpression);
+			}
+			assertionAccept.add(ExpressionFactory.or(bl, peaAccepts));
+			assertionDiscard.add(ExpressionFactory.or(bl, peaDiscards));
+		}
+		for (int i = 0; i < assertPeas.size(); i++) {
+
+		}
+		for (ReqPeas<CDD> reqPeas : assertPeas) {
+			ArrayList<Expression> peaAccepts = new ArrayList<>();
+			ArrayList<Expression> peaDiscards = new ArrayList<>();
 			if (reqPeas.isStrict()) {
 				if (reqPeas.isTotalised()) {
-					genStrictPeaExpressions(reqPeas, new ArrayList<Expression>(), peaAccepts, bl);
+					genStrictPeaExpressions(reqPeas, peaDiscards, peaAccepts, bl);
 				}
 				if (reqPeas.isComplemented()) {
 					complementedPea = reqPeas;
