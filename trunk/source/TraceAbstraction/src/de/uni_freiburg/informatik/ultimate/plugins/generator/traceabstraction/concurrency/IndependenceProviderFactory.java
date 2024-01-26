@@ -179,7 +179,8 @@ public class IndependenceProviderFactory<L extends IIcfgTransition<?>> {
 				.withConditionElimination(PartialOrderCegarLoop::isFalseLiteral)
 				// We ignore "don't care" conditions stemming from the initial program automaton states.
 				.withFilteredConditions(p -> !predicateFactory.isDontCare(p))
-				.withDisjunctivePredicates(PartialOrderCegarLoop::getConjuncts)
+				.withDisjunctivePredicatesUnion(PartialOrderCegarLoop::getConjuncts)
+				//.withDisjunctivePredicates(PartialOrderCegarLoop::getConjuncts)
 				// =========================================================================
 				// Never consider letters of the same thread to be independent.
 				.threadSeparated()

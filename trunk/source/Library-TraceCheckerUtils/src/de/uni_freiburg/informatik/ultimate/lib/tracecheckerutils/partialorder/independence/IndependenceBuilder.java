@@ -505,6 +505,13 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 				}
 				return this;
 			}
+
+			public <C extends Collection<IPredicate>> Impl<L>
+			withDisjunctivePredicatesUnion(final Function<IPredicate, C> getDisjuncts) {
+					return unionLeft(new ConditionTransformingIndependenceRelation<>(
+							new DisjunctiveConditionalIndependenceRelation<>(mRelation), getDisjuncts));
+				
+			}
 		}
 	}
 }
