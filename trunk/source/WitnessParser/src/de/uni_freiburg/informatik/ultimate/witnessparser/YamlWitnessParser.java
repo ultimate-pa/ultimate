@@ -142,7 +142,8 @@ public class YamlWitnessParser {
 			if (metadata.getFormatVersion().getMajor() < 3) {
 				throw new UnsupportedOperationException("Function contracts are only allowed in format version >=3.x");
 			}
-			return new FunctionContract(newMetadata, location, (List<String>) setEntry.get("ensures"), format);
+			return new FunctionContract(newMetadata, location, (List<String>) setEntry.get("requires"),
+					(List<String>) setEntry.get("ensures"), format);
 		default:
 			throw new UnsupportedOperationException("Unknown entry type " + setEntry.get("type"));
 		}
