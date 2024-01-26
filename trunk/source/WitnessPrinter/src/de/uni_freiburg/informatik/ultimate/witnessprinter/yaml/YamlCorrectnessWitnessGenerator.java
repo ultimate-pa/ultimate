@@ -10,7 +10,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.UltimateCore;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessEnsuresClause;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessProcedureContract;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
@@ -110,7 +110,7 @@ public class YamlCorrectnessWitnessGenerator {
 			if (loc == null) {
 				continue;
 			}
-			final WitnessEnsuresClause ensures = WitnessEnsuresClause.getAnnotation(pp);
+			final WitnessProcedureContract ensures = WitnessProcedureContract.getAnnotation(pp);
 			if (ensures == null) {
 				continue;
 			}
@@ -122,8 +122,8 @@ public class YamlCorrectnessWitnessGenerator {
 			}
 			final Location witnessLocation =
 					new Location(loc.getFileName(), hash, loc.getStartLine(), column, function);
-			result.add(new FunctionContract(metadataSupplier.get(), witnessLocation, List.of(ensures.getExpression()),
-					getExpressionFormat(ensures.getExpression(), formatVersion)));
+			result.add(new FunctionContract(metadataSupplier.get(), witnessLocation, List.of(ensures.getEnsuresClause()),
+					getExpressionFormat(ensures.getEnsuresClause(), formatVersion)));
 		}
 		return result;
 	}

@@ -36,7 +36,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessEnsuresClause;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessProcedureContract;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.DangerInvariantResult;
@@ -364,7 +364,7 @@ public class InvariantSynthesisStarter<L extends IIcfgTransition<?>> {
 				final ProcedureContractResult<IIcfgElement, Term> result = new ProcedureContractResult<>(
 						Activator.PLUGIN_NAME, exit, backTranslatorService, procName, requiresFormula, ensuresFormula);
 				reportResult(result);
-				new WitnessEnsuresClause(result.getEnsuresResult()).annotate(exit);
+				new WitnessProcedureContract(result.getEnsuresResult()).annotate(exit);
 			}
 		}
 	}
