@@ -69,6 +69,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
@@ -81,6 +82,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.invariantsynthesis.preferences.InvariantSynthesisPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.invariantsynthesis.preferences.InvariantSynthesisPreferenceInitializer.IncreasingStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.InvariantSynthesisSettings;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.AbstractTemplateIncreasingDimensionsStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.AggressiveTemplateIncreasingDimensionsStrategy;
@@ -345,21 +347,24 @@ public class InvariantSynthesisStarter<L extends IIcfgTransition<?>> {
 
 	private void createProcedureContractResults(final IIcfg<IcfgLocation> icfg,
 			final IBacktranslationService backTranslatorService) {
-		final Map<String, IcfgLocation> finalNodes = icfg.getProcedureExitNodes();
-		for (final Entry<String, IcfgLocation> proc : finalNodes.entrySet()) {
-			final String procName = proc.getKey();
+		final Map<String, IcfgLocation> exitNodes = icfg.getProcedureExitNodes();
+		final Map<String, IcfgLocation> entryNodes = icfg.getProcedureEntryNodes();
+		for (final String procName : icfg.getProcedureEntryNodes().keySet()) {
 			if (isAuxilliaryProcedure(procName)) {
 				continue;
 			}
-			final IcfgLocation finalNode = proc.getValue();
-			final HoareAnnotation hoare = HoareAnnotation.getAnnotation(finalNode);
-			if (hoare != null) {
-				final Term formula = hoare.getFormula();
+			final IcfgLocation entry = entryNodes.get(procName);
+			final IcfgLocation exit = exitNodes.get(procName);
+			final HoareAnnotation ensures = HoareAnnotation.getAnnotation(exit);
+			final HoareAnnotation requires = HoareAnnotation.getAnnotation(entry);
+			if (ensures != null) {
+				final Term ensuresFormula = ensures.getFormula();
+				final Term requiresFormula = PredicateUtils.eliminateOldVars(mServices,
+						icfg.getCfgSmtToolkit().getManagedScript(), requires);
 				final ProcedureContractResult<IIcfgElement, Term> result = new ProcedureContractResult<>(
-						Activator.PLUGIN_NAME, finalNode, backTranslatorService, procName, formula);
-
+						Activator.PLUGIN_NAME, exit, backTranslatorService, procName, requiresFormula, ensuresFormula);
 				reportResult(result);
-				new WitnessEnsuresClause(result.getContract()).annotate(finalNode);
+				new WitnessEnsuresClause(result.getEnsuresResult()).annotate(exit);
 			}
 		}
 	}

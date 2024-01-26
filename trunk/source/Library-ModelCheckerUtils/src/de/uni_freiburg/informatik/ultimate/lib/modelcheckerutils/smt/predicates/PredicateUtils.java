@@ -35,7 +35,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
@@ -46,6 +48,8 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
+import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -395,5 +399,14 @@ public class PredicateUtils {
 		final Term result = (PureSubstitution.apply(script, substitutionMapping, postcond.getFormula()));
 		assert result.getFreeVars().length == 0 : "there are free vars";
 		return result;
+	}
+
+	public static Term eliminateOldVars(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final IPredicate p) {
+		final List<TermVariable> oldVars = p.getVars().stream().filter(x -> !x.isOldvar()).map(x -> x.getTermVariable())
+				.collect(Collectors.toList());
+		final Term quantified = SmtUtils.quantifier(mgdScript.getScript(), QuantifiedFormula.EXISTS, oldVars,
+				p.getFormula());
+		return PartialQuantifierElimination.eliminateLight(services, mgdScript, quantified);
 	}
 }
