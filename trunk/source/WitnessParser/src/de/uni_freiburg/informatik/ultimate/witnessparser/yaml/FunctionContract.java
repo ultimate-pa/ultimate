@@ -44,18 +44,24 @@ public class FunctionContract extends WitnessEntry {
 	private final Location mLocation;
 	private final String mFormat;
 	// TODO: Add support for other elements of the contracts
+	private final List<String> mRequires;
 	private final List<String> mEnsures;
 
-	public FunctionContract(final Metadata metadata, final Location location, final List<String> ensures,
-			final String format) {
+	public FunctionContract(final Metadata metadata, final Location location, final List<String> requires,
+			final List<String> ensures, final String format) {
 		super(NAME, metadata);
 		mLocation = location;
 		mFormat = format;
+		mRequires = requires;
 		mEnsures = ensures;
 	}
 
 	public Location getLocation() {
 		return mLocation;
+	}
+
+	public List<String> getRequires() {
+		return mRequires;
 	}
 
 	public List<String> getEnsures() {
@@ -64,7 +70,8 @@ public class FunctionContract extends WitnessEntry {
 
 	@Override
 	public WitnessSetEntry toSetEntry() {
-		return new WitnessSetEntry(NAME, mLocation, Map.of("ensures", mEnsures, "format", mFormat));
+		return new WitnessSetEntry(NAME, mLocation,
+				Map.of("requires", mRequires, "ensures", mEnsures, "format", mFormat));
 	}
 
 	@Override
@@ -78,6 +85,7 @@ public class FunctionContract extends WitnessEntry {
 		result.put("entry_type", NAME);
 		result.put("metadata", mMetadata.toMap());
 		result.put("location", mLocation.toMap());
+		result.put("requires", mRequires);
 		result.put("ensures", mEnsures);
 		result.put("format", mFormat);
 		return result;

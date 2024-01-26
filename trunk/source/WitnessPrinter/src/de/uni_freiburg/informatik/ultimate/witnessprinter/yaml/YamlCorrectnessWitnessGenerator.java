@@ -10,8 +10,8 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.UltimateCore;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessProcedureContract;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessProcedureContract;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -97,7 +97,7 @@ public class YamlCorrectnessWitnessGenerator {
 			// TODO: How could we figure out, if it is a LocationInvariant or LoopInvariant?
 			// For now we only produce loop invariants anyways
 			result.add(new LoopInvariant(metadataSupplier.get(), witnessLocation,
-					new Invariant(invariant, "assertion", getExpressionFormat(invariant, formatVersion))));
+					new Invariant(invariant, "assertion", getExpressionFormat(formatVersion, invariant))));
 		}
 		return result;
 	}
@@ -110,8 +110,8 @@ public class YamlCorrectnessWitnessGenerator {
 			if (loc == null) {
 				continue;
 			}
-			final WitnessProcedureContract ensures = WitnessProcedureContract.getAnnotation(pp);
-			if (ensures == null) {
+			final WitnessProcedureContract contract = WitnessProcedureContract.getAnnotation(pp);
+			if (contract == null) {
 				continue;
 			}
 			// If the column is unknown (-1), use the first position of the line
@@ -120,10 +120,12 @@ public class YamlCorrectnessWitnessGenerator {
 			if (function == null) {
 				continue;
 			}
+			final String requires = contract.getRequiresClause();
+			final String ensures = contract.getEnsuresClause();
 			final Location witnessLocation =
 					new Location(loc.getFileName(), hash, loc.getStartLine(), column, function);
-			result.add(new FunctionContract(metadataSupplier.get(), witnessLocation, List.of(ensures.getEnsuresClause()),
-					getExpressionFormat(ensures.getEnsuresClause(), formatVersion)));
+			result.add(new FunctionContract(metadataSupplier.get(), witnessLocation, List.of(requires),
+					List.of(ensures), getExpressionFormat(formatVersion, requires, ensures)));
 		}
 		return result;
 	}
@@ -132,11 +134,12 @@ public class YamlCorrectnessWitnessGenerator {
 		return getWitness().toYamlString();
 	}
 
-	private static String getExpressionFormat(final String expression, final FormatVersion formatVersion) {
+	private static String getExpressionFormat(final FormatVersion formatVersion, final String... expressions) {
 		if (formatVersion.getMajor() == 0) {
 			return "C";
 		}
-		if (formatVersion.getMajor() < 3 || !containsACSL(expression)) {
+		if (formatVersion.getMajor() < 3
+				|| !Arrays.stream(expressions).anyMatch(YamlCorrectnessWitnessGenerator::containsACSL)) {
 			return "c_expression";
 		}
 		return "acsl";
