@@ -58,23 +58,17 @@ public class RedundancyTransformerReq2Pea implements IReq2Pea {
 			final List<Entry<CounterTrace, PhaseEventAutomata>> ct2pea = reqPea.getCounterTrace2Pea();
 
 			final List<Entry<CounterTrace, PhaseEventAutomata>> totalCt2pea = new ArrayList<>();
-			final List<Entry<CounterTrace, PhaseEventAutomata>> complementCt2pea = new ArrayList<>();
+			// final List<Entry<CounterTrace, PhaseEventAutomata>> complementCt2pea = new ArrayList<>();
 
 			for (Entry<CounterTrace, PhaseEventAutomata> pea : ct2pea) {
 				PhaseEventAutomata peaToComplement = pea.getValue();
 				PEAComplement complementPea = new PEAComplement(peaToComplement, constVars);
 				PhaseEventAutomata totalisedPea = complementPea.getTotalisedPEA();
-				PhaseEventAutomata complementedPEA = complementPea.getComplementPEA();
+
 				totalCt2pea.add(new Pair<>(pea.getKey(), totalisedPea));
-				builder.addPea(pattern, totalisedPea);
-				// Couter traces are not closed under negation so we add the un-negated countertrace
-				complementCt2pea.add(new Pair<>(pea.getKey(), complementedPEA));
-				builder.addPea(pattern, complementedPEA);
 
 			}
 			mReqPeas.add(new ReqPeas(pattern, totalCt2pea));
-			mReqPeas.add(new ReqPeas(pattern, complementCt2pea));
-
 		}
 		mSymbolTable = builder.constructSymbolTable();
 	}
