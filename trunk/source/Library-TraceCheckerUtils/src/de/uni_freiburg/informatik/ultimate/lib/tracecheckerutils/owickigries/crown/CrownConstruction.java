@@ -76,8 +76,6 @@ public final class CrownConstruction<PLACE, LETTER> {
 
 	private final Statistics mStatistics = new Statistics();
 
-	private final Set<Pair<Condition<LETTER, PLACE>, Rook<PLACE, LETTER>>> mRejectedPairs = new HashSet<>();
-
 	public CrownConstruction(final IUltimateServiceProvider services, final BranchingProcess<LETTER, PLACE> bp,
 			final Set<Condition<LETTER, PLACE>> origConds, final Set<Condition<LETTER, PLACE>> assertConds) {
 		mLogger = services.getLoggingService().getLogger(CrownConstruction.class);
@@ -185,7 +183,6 @@ public final class CrownConstruction<PLACE, LETTER> {
 		mLogger.debug("Starting Colonization...");
 		final Set<Rook<PLACE, LETTER>> reSet =
 				crownExpansionIterative2(colonizedRooks, new ArrayList<>(expansionConditions), true);
-		mRejectedPairs.clear();
 		if (SINGLE_ASSERTION_LAWS) {
 			reSet.removeIf(r -> r.containsNonCut(mBp, mOrigConds));
 			return reSet;
@@ -209,9 +206,7 @@ public final class CrownConstruction<PLACE, LETTER> {
 			assert !PetriOwickiGries.IGNORE_CUTOFF_CONDITIONS
 					|| !PetriOwickiGries.isCutoff(condition) : "unexpected cutoff condition";
 			final Pair<Condition<LETTER, PLACE>, Rook<PLACE, LETTER>> pair = new Pair<>(condition, rook);
-			if (mRejectedPairs.contains(pair)) {
-				continue;
-			}
+
 			Rook<PLACE, LETTER> colonyRook;
 			if (colonizer) {
 				final Pair<Rook<PLACE, LETTER>, Boolean> colonyPair = colonize(condition, rook);
@@ -220,7 +215,6 @@ public final class CrownConstruction<PLACE, LETTER> {
 				colonyRook = legislate(condition, rook);
 			}
 			if (colonyRook == null) {
-				mRejectedPairs.add(pair);
 				continue;
 			}
 			isMaximal = false;
@@ -249,9 +243,7 @@ public final class CrownConstruction<PLACE, LETTER> {
 			for (int i = 0; i < currentConditions.size(); i++) {
 				final Condition<LETTER, PLACE> condition = currentConditions.get(i);
 				final Pair<Condition<LETTER, PLACE>, Rook<PLACE, LETTER>> pair = new Pair<>(condition, currentRook);
-				if (mRejectedPairs.contains(pair)) {
-					continue;
-				}
+
 				Rook<PLACE, LETTER> colonyRook;
 				if (colonizer) {
 					colonyRook = colonize(condition, currentRook).getFirst();
@@ -259,7 +251,6 @@ public final class CrownConstruction<PLACE, LETTER> {
 					colonyRook = legislate(condition, currentRook);
 				}
 				if (colonyRook == null) {
-					mRejectedPairs.add(pair);
 					continue;
 				}
 				isMaximal = false;
@@ -286,6 +277,7 @@ public final class CrownConstruction<PLACE, LETTER> {
 		final HashDeque<Rook<PLACE, LETTER>> rookQueue = new HashDeque<>();
 		final Map<Rook<PLACE, LETTER>, List<Condition<LETTER, PLACE>>> rookConditionMap = new HashMap<>();
 		final Set<Rook<PLACE, LETTER>> seenRooks = new HashSet<>();
+		final Set<Pair<Condition<LETTER, PLACE>, Rook<PLACE, LETTER>>> rejectedPairs = new HashSet<>();
 		for (final Rook<PLACE, LETTER> rook : rooks) {
 			rookQueue.offer(rook);
 			rookConditionMap.put(rook, troopConditions);
@@ -303,7 +295,7 @@ public final class CrownConstruction<PLACE, LETTER> {
 			for (int i = 0; i < currentConditions.size(); i++) {
 				final Condition<LETTER, PLACE> condition = currentConditions.get(i);
 				final Pair<Condition<LETTER, PLACE>, Rook<PLACE, LETTER>> pair = new Pair<>(condition, currentRook);
-				if (mRejectedPairs.contains(pair)) {
+				if (rejectedPairs.contains(pair)) {
 					continue;
 				}
 				Rook<PLACE, LETTER> colonyRook;
@@ -318,7 +310,7 @@ public final class CrownConstruction<PLACE, LETTER> {
 				}
 				if (colonyRook == null) {
 					conditions.remove(condition);
-					mRejectedPairs.add(pair);
+					rejectedPairs.add(pair);
 					continue;
 				}
 				isMaximal = false;
