@@ -44,10 +44,18 @@ public class WitnessProcedureContract extends ModernAnnotations {
 	private static final String KEY = WitnessProcedureContract.class.getName();
 
 	@Visualizable
+	private final String mRequiresClause;
+
+	@Visualizable
 	private final String mEnsuresClause;
 
-	public WitnessProcedureContract(final String ensuresClause) {
+	public WitnessProcedureContract(final String requiresClause, final String ensuresClause) {
+		mRequiresClause = requiresClause;
 		mEnsuresClause = ensuresClause;
+	}
+
+	public String getRequiresClause() {
+		return mRequiresClause;
 	}
 
 	public String getEnsuresClause() {
