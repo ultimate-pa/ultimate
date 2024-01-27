@@ -144,7 +144,13 @@ public class LiveIcfgUtils {
 					removedNonLiveVars += outVarsToRemove.size();
 					final boolean eliminateAuxVars = false;
 					final UnmodifiableTransFormula liveTf;
-					if (eliminateAuxVars) {
+					if (eliminateAuxVars || (edge instanceof IIcfgReturnTransition)) {
+						// 20240127 Matthias: Computation of strongest postcondition for return assumes
+						// that Transformula of edge does not have auxvars. If needed we can probably
+						// drop this assumption. However we can keep this assumption if we eliminate the
+						// auxvars here. This should come with minimal extra costs because the formula
+						// of a return (that is obtained from a Boogie program) is always a conjunction
+						// of equalities.
 						final UnmodifiableTransFormula tmp = TransFormulaBuilder.constructCopy(
 								icfg.getCfgSmtToolkit().getManagedScript(), tf, Collections.emptySet(), outVarsToRemove,
 								Collections.emptyMap());
