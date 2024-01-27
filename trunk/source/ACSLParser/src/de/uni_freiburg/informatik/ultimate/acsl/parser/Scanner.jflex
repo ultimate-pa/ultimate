@@ -125,6 +125,7 @@ WhiteSpace     = {LineTerminator}* | {space}*
     "integer"		{ return symbol("integer",sym.INTEGER, yytext()); } 
     "real"			{ return symbol("real",sym.REAL, yytext()); }
     "boolean"		{ return symbol("boolean",sym.BOOLEAN, yytext()); }
+    "_Bool"			{ return symbol("_Bool",sym.BOOL, yytext()); }
     "\\at"			{ return symbol("at",sym.AT); }
     "\\base_addr"	{ return symbol("base_addr",sym.BASE_ADDR); }
     "\\block_length"	{ return symbol("block_length",sym.BLOCK_LENGTH); }

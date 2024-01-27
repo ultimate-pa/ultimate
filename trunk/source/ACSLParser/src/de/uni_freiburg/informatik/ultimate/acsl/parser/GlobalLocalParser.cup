@@ -231,7 +231,7 @@ terminal String CONSTANT;
 terminal String CONSTANT_FLOAT;
 terminal String CONSTANT10;
 terminal String VOID, CHAR, SIGNED, UNSIGNED, SHORT, LONG, DOUBLE, STRUCT, ENUM, UNION;
-terminal String INT, INTEGER, REAL, BOOLEAN, FLOAT;
+terminal String INT, INTEGER, REAL, BOOLEAN, FLOAT, BOOL;
 terminal String STAR;
 terminal LPAR, RPAR, IF, ELSE, COLON, COLON2, COLONCOLON, DOT, DOTDOT, DOTDOTDOT;
 terminal LT, GT, LE, GE, EQ, NE, COMMA, ARROW, EQUAL;
@@ -788,7 +788,8 @@ tabs::=
 type_spec::=
  INTEGER:i {: RESULT = i; :}         
 | REAL:r {: RESULT = r; :}           
-| BOOLEAN:b {: RESULT = b; :}        
+| BOOLEAN:b {: RESULT = b; :}
+| BOOL:b {: RESULT = b; :}
 | VOID:v {: RESULT = v; :}           
 | CHAR:c {: RESULT = c; :}                 
 | SIGNED:s CHAR:c {: RESULT = s + " " + c; :}         
