@@ -66,6 +66,7 @@ public class RedundancyTransformerReq2Pea implements IReq2Pea {
 				PhaseEventAutomata totalisedPea = complementPea.getTotalisedPEA();
 
 				totalCt2pea.add(new Pair<>(pea.getKey(), totalisedPea));
+				builder.addPea(pattern, totalisedPea);
 
 			}
 			mReqPeas.add(new ReqPeas(pattern, totalCt2pea));
