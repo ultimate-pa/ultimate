@@ -34,7 +34,7 @@ import com.github.jhoenicke.javacup.runtime.Symbol;
 space = [\032 \t \012 \r @ ]
 rD = [0-9]
 rO = [0-7]
-rL = [a-zA-Z_]
+rL = [a-zA-Z_"$"]
 rH = [a-fA-F0-9]
 rE = [Ee][+-]? {rD}+
 rP = [Pp][+-]? {rD}+
