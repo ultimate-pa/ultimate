@@ -14,17 +14,17 @@
     <option name="&#45;-witnessparser.only.consider.loop.invariants">false</option>
 
     <!-- update path as needed -->
-    <option name="&#45;-validate">./goblint.2023-12-19_14-39-08.files/${rundefinition_name}/${taskdef_name}/witness.yml</option>
+    <option name="&#45;-validate">./goblint.2023-12-19_14-39-08.files/SV-COMP24_unreach-call/${taskdef_name}/witness.yml</option>
   </rundefinition>
 
-  <tasks name="ConcurrencySafety-Main-correct" expectedVerdict="true">
+  <tasks name="ConcurrencySafety-Main-correct">
      <includesfile>${benchmark_path}/../../../trunk/examples/svcomp/ConcurrencySafety-Main.set</includesfile>
-     <propertyfile>${benchmark_path}/../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
+     <propertyfile expectedverdict="true">${benchmark_path}/../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
   </tasks>
 
-  <tasks name="ConcurrencySafety-Main-incorrect" expectedVerdict="false">
+  <tasks name="ConcurrencySafety-Main-incorrect">
      <includesfile>${benchmark_path}/../../../trunk/examples/svcomp/ConcurrencySafety-Main.set</includesfile>
-     <propertyfile>${benchmark_path}/../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
+     <propertyfile expectedverdict="false">${benchmark_path}/../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
   </tasks>
 </benchmark>
 
