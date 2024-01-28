@@ -52,8 +52,8 @@ public class FunctionContract extends WitnessEntry {
 		super(NAME, metadata);
 		mLocation = location;
 		mFormat = format;
-		mRequires = requires;
-		mEnsures = ensures;
+		mRequires = requires == null ? List.of() : requires;
+		mEnsures = ensures == null ? List.of() : ensures;
 	}
 
 	public Location getLocation() {
@@ -70,8 +70,15 @@ public class FunctionContract extends WitnessEntry {
 
 	@Override
 	public WitnessSetEntry toSetEntry() {
-		return new WitnessSetEntry(NAME, mLocation,
-				Map.of("requires", mRequires, "ensures", mEnsures, "format", mFormat));
+		final LinkedHashMap<String, Object> result = new LinkedHashMap<>();
+		if (!mRequires.isEmpty()) {
+			result.put("requires", mRequires);
+		}
+		if (!mEnsures.isEmpty()) {
+			result.put("ensures", mEnsures);
+		}
+		result.put("format", mFormat);
+		return new WitnessSetEntry(NAME, mLocation, result);
 	}
 
 	@Override
@@ -85,8 +92,12 @@ public class FunctionContract extends WitnessEntry {
 		result.put("entry_type", NAME);
 		result.put("metadata", mMetadata.toMap());
 		result.put("location", mLocation.toMap());
-		result.put("requires", mRequires);
-		result.put("ensures", mEnsures);
+		if (!mRequires.isEmpty()) {
+			result.put("requires", mRequires);
+		}
+		if (!mEnsures.isEmpty()) {
+			result.put("ensures", mEnsures);
+		}
 		result.put("format", mFormat);
 		return result;
 	}
