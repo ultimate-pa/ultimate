@@ -75,4 +75,11 @@ public final class PrettyPrint {
 				((List) data).stream().map(elemPrinter).collect(Collectors.joining(", ", "[ ", " ]")));
 	}
 
+	// function from other branch
+	public static BiFunction<String, Object, String>
+			dataAsTimeMilli(final BiFunction<String, Object, String> pprinter) {
+		return (key, data) -> pprinter.apply(key,
+				CoreUtil.toTimeString((long) data, TimeUnit.NANOSECONDS, TimeUnit.MILLISECONDS, 1));
+	}
+
 }

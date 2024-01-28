@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialCom
  * The abstraction levels for DynamicStratifiedReduction
  *
  * @param <H>
- *            actually a set of Programvariables
+ *            actually a set of program variables
  */
 
 public class AbstractionLevel<H> {
@@ -65,8 +65,7 @@ public class AbstractionLevel<H> {
 	 *            the variables to be added
 	 */
 	public void addToAbstractionLevel(final H vars) {
-		// TODO: check if this is the same for upside down lattice and those bitsubset lattices...
-		this.mValue = this.mLattice.infimum(this.mValue, vars);
+		mValue = mLattice.infimum(mValue, vars);
 	}
 
 	/**
@@ -74,7 +73,7 @@ public class AbstractionLevel<H> {
 	 */
 
 	public void lock() {
-		this.mLocked = true;
+		mLocked = true;
 	}
 
 	/**
@@ -85,7 +84,7 @@ public class AbstractionLevel<H> {
 	 * @return STRICTLY_SMALLER if < level, EQUAL if = level, STRICTLY_GREATER if > level, INCOMPARABLE otherwise
 	 */
 	public ComparisonResult compare(final H level) {
-		return mLattice.compare(this.mValue, level);
+		return mLattice.compare(mValue, level);
 	}
 
 	/**
@@ -94,11 +93,11 @@ public class AbstractionLevel<H> {
 	 * @return the value of the abstraction level
 	 */
 	public H getValue() {
-		return this.mValue;
+		return mValue;
 	}
 
 	public ILattice<H> getLattice() {
-		return this.mLattice;
+		return mLattice;
 
 	}
 
@@ -108,6 +107,6 @@ public class AbstractionLevel<H> {
 	 * @return true if the abstraction level is locked
 	 */
 	public boolean isLocked() {
-		return this.mLocked;
+		return mLocked;
 	}
 }

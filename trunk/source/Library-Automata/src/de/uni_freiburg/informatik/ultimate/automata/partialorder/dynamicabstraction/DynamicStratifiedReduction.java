@@ -159,7 +159,7 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 		mStatistics.setProtectedVars(mAbstractionLattice.getTop());
 
 		traverse();
-		if (!mStatistics.mContainsLoop) {
+		if (!mStatistics.containsLoop()) {
 			mStatistics.stopLoopless();
 			mStatistics.setProtectedVarsBL(mStatistics.mProtectedVars);
 		} else {
@@ -422,7 +422,7 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 					System.out.println("Found a loop, use abstraction hammer");
 
 					// if it is the first encounter with a loop, update the relevant statistics
-					if (!mStatistics.mContainsLoop) {
+					if (!mStatistics.containsLoop()) {
 						mStatistics.setContainsLoop();
 						mStatistics.stopLoopless();
 						mStatistics.startLoopTime();
@@ -533,7 +533,7 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 	 */
 
 	public static final class Statistics<H> extends AbstractStatisticsDataProvider {
-		private boolean mContainsLoop;
+		private int mContainsLoop = 0;
 		private H mProtectedVars;
 		private H mProtectedVarsBeforeLoop;
 		private final TimeTracker mLoopTime = new TimeTracker();
@@ -541,12 +541,14 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 		private final TimeTracker mTotalTime = new TimeTracker();
 
 		public Statistics() {
-			declare("Time before loop", () -> mLooplessTime, KeyType.TT_TIMER);
-			declare("Time in loop", () -> mLoopTime, KeyType.TT_TIMER);
+			declare("Time before loop", () -> mLooplessTime, KeyType.TT_TIMER_MS);
+			declare("Time in loop", () -> mLoopTime, KeyType.TT_TIMER_MS);
 			declare("Time in total", () -> mTotalTime, KeyType.TT_TIMER);
 			declare("Has Loop", () -> mContainsLoop, KeyType.COUNTER);
-			declare("Protected Variables", () -> mProtectedVars, KeyType.COUNTER);
-			declare("Protected Variables before encountering a loop", () -> mProtectedVarsBeforeLoop, KeyType.COUNTER);
+			/*
+			 * declare("Protected Variables", () -> mProtectedVars, KeyType.COUNTER);
+			 * declare("Protected Variables before loop", () -> mProtectedVarsBeforeLoop, KeyType.COUNTER);
+			 */
 		}
 
 		/**
@@ -554,11 +556,11 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 		 * @return true if reduction has encountered a loop before
 		 */
 		public boolean containsLoop() {
-			return mContainsLoop;
+			return mContainsLoop == 1;
 		}
 
 		public void setContainsLoop() {
-			mContainsLoop = true;
+			mContainsLoop = 1;
 		}
 
 		public void startTotal() {

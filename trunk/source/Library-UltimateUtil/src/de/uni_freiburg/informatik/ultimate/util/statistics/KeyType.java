@@ -63,13 +63,14 @@ public enum KeyType {
 	TIMER(() -> 0L, Aggregate::longAdd, PrettyPrint.dataAsTime(PrettyPrint::keyColonData), Converter::identity),
 	MAX_TIMER(() -> 0L, Aggregate::longMax, PrettyPrint.dataAsTime(PrettyPrint::keyColonData), Converter::identity),
 	TT_TIMER(() -> 0L, Aggregate::longAdd, PrettyPrint.dataAsTime(PrettyPrint::dataSpaceKey), Converter::nanos),
+	TT_TIMER_MS(() -> 0L, Aggregate::longAdd, PrettyPrint.dataAsTimeMilli(PrettyPrint::dataSpaceKey), Converter::nanos),
 	TT_MAX_TIMER(() -> 0L, Aggregate::longMax, PrettyPrint.dataAsTime(PrettyPrint::dataSpaceKey), Converter::nanos),
 	IN_CA_RE_COUNTER(InCaReCounter::new, Aggregate::inCaReAdd, PrettyPrint::dataSpaceKey, Converter::identity);
 
 	private final Supplier<Object> mCreate;
 	private final BinaryOperator<Object> mAggregate;
 	private final BiFunction<String, Object, String> mPrettyPrinter;
-	private Function<Object, Object> mConverter;
+	private final Function<Object, Object> mConverter;
 
 	KeyType(final Supplier<Object> create, final BinaryOperator<Object> aggregate,
 			final BiFunction<String, Object, String> prettyprinter, final Function<Object, Object> converter) {
