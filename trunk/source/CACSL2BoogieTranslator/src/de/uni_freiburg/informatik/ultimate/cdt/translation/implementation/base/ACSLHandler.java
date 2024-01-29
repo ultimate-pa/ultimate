@@ -82,6 +82,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultTransformer;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValueFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
@@ -564,27 +565,37 @@ public class ACSLHandler implements IACSLHandler {
 	public Result visit(final IDispatcher main,
 			final de.uni_freiburg.informatik.ultimate.model.acsl.ast.UnaryExpression node) {
 		final ILocation loc = mLocationFactory.createACSLLocation(node);
-		ExpressionResult res = (ExpressionResult) main.dispatch(node.getExpr(), main.getAcslHook());
+		final ExpressionResult res = (ExpressionResult) main.dispatch(node.getExpr(), main.getAcslHook());
 
-		res = mExprResultTransformer.switchToRValue(res, loc, main.getAcslHook());
+		final ExpressionResult resRValue = mExprResultTransformer.switchToRValue(res, loc, main.getAcslHook());
 
 		switch (node.getOperator()) {
 		case LOGICNEG:
-			return mCExpressionTranslator.handleUnaryArithmeticOperators(loc, IASTUnaryExpression.op_not, res);
+			return mCExpressionTranslator.handleUnaryArithmeticOperators(loc, IASTUnaryExpression.op_not, resRValue);
 		case MINUS:
-			return mCExpressionTranslator.handleUnaryArithmeticOperators(loc, IASTUnaryExpression.op_minus, res);
+			return mCExpressionTranslator.handleUnaryArithmeticOperators(loc, IASTUnaryExpression.op_minus, resRValue);
 		case PLUS:
-			return mCExpressionTranslator.handleUnaryArithmeticOperators(loc, IASTUnaryExpression.op_plus, res);
+			return mCExpressionTranslator.handleUnaryArithmeticOperators(loc, IASTUnaryExpression.op_plus, resRValue);
 		case LOGICCOMPLEMENT:
-			return mCExpressionTranslator.handleUnaryArithmeticOperators(loc, IASTUnaryExpression.op_tilde, res);
+			return mCExpressionTranslator.handleUnaryArithmeticOperators(loc, IASTUnaryExpression.op_tilde, resRValue);
 		case POINTER:
 			// TODO: We don't have the hook available here, does null always work here?
-			return mCHandler.handleIndirectionOperator(res, loc, null);
+			return mCHandler.handleIndirectionOperator(resRValue, loc, null);
 		case ADDROF:
+			return handleAddressof(loc, res);
 		default:
 			final String msg = "Unknown or unsupported unary operation: " + node.getOperator();
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
+	}
+
+	private ExpressionResult handleAddressof(final ILocation loc, final ExpressionResult res) {
+		if (!(res.getLrValue() instanceof HeapLValue)) {
+			throw new UnsupportedSyntaxException(loc, "ACSL addressof for variable off-heap");
+		}
+		final RValue rVal =
+				((HeapLValue) res.getLrValue()).getAddressAsPointerRValue(mTypeHandler.getBoogiePointerType());
+		return new ExpressionResultBuilder(res).resetLrValue(rVal).build();
 	}
 
 	@Override
