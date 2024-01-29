@@ -707,7 +707,13 @@ public class ACSLHandler implements IACSLHandler {
 	@Override
 	public Result visit(final IDispatcher main, final Requires node) {
 		mSpecType = ACSLHandler.SPEC_TYPE.REQUIRES;
-		final Expression formula = ((ExpressionResult) main.dispatch(node.getFormula())).getLrValue().getValue();
+		final ILocation loc = mLocationFactory.createACSLLocation(node);
+		final ExpressionResult exprResult = mExprResultTransformer.transformSwitchRexIntToBool(
+				((ExpressionResult) main.dispatch(node.getFormula())), loc, main.getAcslHook());
+		if (!exprResult.getStatements().isEmpty() || !exprResult.getOverapprs().isEmpty()) {
+			throw new UnsupportedSyntaxException(loc, "Requires must be translatable by a single expression");
+		}
+		final Expression formula = exprResult.getLrValue().getValue();
 		final Check check = new Check(Spec.PRE_CONDITION);
 		final ILocation reqLoc = mLocationFactory.createACSLLocation(node);
 		final RequiresSpecification req = new RequiresSpecification(reqLoc, false, formula);
@@ -718,15 +724,13 @@ public class ACSLHandler implements IACSLHandler {
 	@Override
 	public Result visit(final IDispatcher main, final Ensures node) {
 		final ILocation loc = mLocationFactory.createACSLLocation(node);
-		final de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression e = node.getFormula();
-		if (e instanceof FieldAccessExpression || e instanceof ArrayAccessExpression) {
-			// variable declaration not yet translated, hence we cannot
-			// translate this access expression!
-			final String msg = "Ensures specification on struct types is not supported!";
-			throw new UnsupportedSyntaxException(loc, msg);
+		final ExpressionResult exprResult = mExprResultTransformer.transformSwitchRexIntToBool(
+				((ExpressionResult) main.dispatch(node.getFormula())), loc, main.getAcslHook());
+		if (!exprResult.getStatements().isEmpty() || !exprResult.getOverapprs().isEmpty()) {
+			throw new UnsupportedSyntaxException(loc, "Ensures must be translatable by a single expression");
 		}
 		mSpecType = ACSLHandler.SPEC_TYPE.ENSURES;
-		final Expression formula = ((ExpressionResult) main.dispatch(e)).getLrValue().getValue();
+		final Expression formula = exprResult.getLrValue().getValue();
 		final Check check = new Check(Spec.POST_CONDITION);
 		final ILocation ensLoc = mLocationFactory.createACSLLocation(node);
 		final EnsuresSpecification ens = new EnsuresSpecification(ensLoc, false, formula);
