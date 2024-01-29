@@ -1386,7 +1386,12 @@ identifier_or_typename::=
 ;
 
 identifier::=
- IDENTIFIER:i {: RESULT = i;:}
+ IDENTIFIER:i {: RESULT = i; :}
+| GLOBAL      {: RESULT = "global"; :}
+| NEXT        {: RESULT = "X"; :}
+| UNTIL       {: RESULT = "U"; :}
+| WEAKUNTIL   {: RESULT = "WU"; :}
+| RELEASE     {: RESULT = "R"; :}
 ;
 
 bounded_var::=
