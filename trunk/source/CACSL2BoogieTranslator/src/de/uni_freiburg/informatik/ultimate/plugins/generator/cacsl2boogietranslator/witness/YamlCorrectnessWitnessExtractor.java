@@ -28,8 +28,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness;
 
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Stream;
 
 import org.eclipse.cdt.core.dom.ast.ASTGenericVisitor;
 import org.eclipse.cdt.core.dom.ast.IASTFileLocation;
@@ -37,6 +37,7 @@ import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LocationInvariant;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LoopInvariant;
@@ -98,17 +99,53 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 		final Set<String> labels = Set.of(entry.getMetadata().getUuid().toString());
 		if (entry instanceof LoopInvariant) {
 			final String invariant = ((LoopInvariant) entry).getInvariant().getExpression();
-			Stream.concat(matchesBefore.stream(), matchesAfter.stream())
-					.forEach(x -> entries.addPair(x, new ExtractedLoopInvariant(invariant, labels, x)));
+			for (final var match : DataStructureUtils.union(matchesBefore, matchesAfter)) {
+				final Optional<IExtractedWitnessEntry> optional =
+						entries.getImage(match).stream().filter(x -> x instanceof ExtractedLoopInvariant).findAny();
+				if (optional.isPresent()) {
+					final ExtractedLoopInvariant old = (ExtractedLoopInvariant) optional.get();
+					final String newInvariant = conjunctInvariants(old.getInvariant(), invariant);
+					final Set<String> newLables = DataStructureUtils.union(old.getNodeLabels(), labels);
+					entries.addPair(match, new ExtractedLoopInvariant(newInvariant, newLables, match));
+				} else {
+					entries.addPair(match, new ExtractedLoopInvariant(invariant, labels, match));
+				}
+			}
 		} else if (entry instanceof LocationInvariant) {
 			final String invariant = ((LocationInvariant) entry).getInvariant().getExpression();
-			matchesBefore.stream()
-					.forEach(x -> entries.addPair(x, new ExtractedLocationInvariant(invariant, labels, x, true)));
-			matchesAfter.stream()
-					.forEach(x -> entries.addPair(x, new ExtractedLocationInvariant(invariant, labels, x, false)));
+			for (final var match : matchesBefore) {
+				final Optional<IExtractedWitnessEntry> optional = entries.getImage(match).stream().filter(
+						x -> x instanceof ExtractedLocationInvariant && ((ExtractedLocationInvariant) x).isBefore())
+						.findAny();
+				if (optional.isPresent()) {
+					final ExtractedLocationInvariant old = (ExtractedLocationInvariant) optional.get();
+					final String newInvariant = conjunctInvariants(old.getInvariant(), invariant);
+					final Set<String> newLables = DataStructureUtils.union(old.getNodeLabels(), labels);
+					entries.addPair(match, new ExtractedLocationInvariant(newInvariant, newLables, match, true));
+				} else {
+					entries.addPair(match, new ExtractedLocationInvariant(invariant, labels, match, true));
+				}
+			}
+			for (final var match : matchesAfter) {
+				final Optional<IExtractedWitnessEntry> optional = entries.getImage(match).stream().filter(
+						x -> x instanceof ExtractedLocationInvariant && !((ExtractedLocationInvariant) x).isBefore())
+						.findAny();
+				if (optional.isPresent()) {
+					final ExtractedLocationInvariant old = (ExtractedLocationInvariant) optional.get();
+					final String newInvariant = conjunctInvariants(old.getInvariant(), invariant);
+					final Set<String> newLables = DataStructureUtils.union(old.getNodeLabels(), labels);
+					entries.addPair(match, new ExtractedLocationInvariant(newInvariant, newLables, match, false));
+				} else {
+					entries.addPair(match, new ExtractedLocationInvariant(invariant, labels, match, false));
+				}
+			}
 		} else {
 			throw new AssertionError("Unknown witness type " + entry.getClass().getSimpleName());
 		}
+	}
+
+	private static String conjunctInvariants(final String invariant1, final String invariant2) {
+		return "(" + invariant1 + ") && (" + invariant2 + ")";
 	}
 
 	private static final class LineMatchingVisitor extends ASTGenericVisitor {
