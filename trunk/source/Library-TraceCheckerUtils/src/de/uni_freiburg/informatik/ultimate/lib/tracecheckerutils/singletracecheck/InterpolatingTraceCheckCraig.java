@@ -170,6 +170,12 @@ public class InterpolatingTraceCheckCraig<L extends IAction> extends Interpolati
 	}
 
 	private InterpolantComputationStatus handleSmtLibException(final SMTLIBException e) {
+		if (!mServices.getProgressMonitorService().continueProcessing()) {
+			// There was a cancellation request, probably responsible for abnormal solver termination.
+			// Propagate it as a ToolchainCanceledException so appropriate timeout handling can take place.
+			throw new ToolchainCanceledException(getClass(), "while computing interpolants");
+		}
+
 		final String message = throwIfNoMessage(e);
 		if ("Unsupported non-linear arithmetic".equals(message)) {
 			// SMTInterpol was somehow able to determine satisfiability but detects
