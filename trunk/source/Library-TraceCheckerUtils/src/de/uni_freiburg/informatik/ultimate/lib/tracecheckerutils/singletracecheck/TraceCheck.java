@@ -454,7 +454,8 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 			final boolean mExportTests = true;
 			if (mExportTests) {
 				final boolean mExportAllInOneFile = true;
-				exportTest(testV, rpeb.mTrace.hashCode(), mExportAllInOneFile);
+				final String identifier = "" + rpeb.mTrace.hashCode();
+				exportTest(testV, identifier, mExportAllInOneFile);
 			}
 		} else {
 			for (final var entry : nsb.getIndexedVarRepresentative().entrySet()) {
@@ -550,7 +551,7 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 		return testV;
 	}
 
-	private void exportTest(final TestVector testV, final int identifier, final boolean allInOneFile) {
+	private void exportTest(final TestVector testV, final String identifier, final boolean allInOneFile) {
 		try {
 			if (!testV.isEmpty()) {
 				TestExporter.getInstance().exportTests(testV, identifier, allInOneFile);

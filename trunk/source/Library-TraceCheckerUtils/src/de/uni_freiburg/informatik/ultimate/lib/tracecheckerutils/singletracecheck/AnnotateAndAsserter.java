@@ -83,7 +83,7 @@ public class AnnotateAndAsserter<L extends IAction> {
 	final LinkedHashSet<String> nondetsInTrace = new LinkedHashSet<String>();
 	final LinkedHashSet<String> nondetsInTraceAfterPreviousVA = new LinkedHashSet<String>();
 	final HashMap<String, String> nondetNameToType = new HashMap<>();
-	private Integer mTestCaseUniqueIdentifier = 0;
+	private String mTestCaseUniqueIdentifier = "0";
 	private final Integer mHighestVaOrderInTrace = -1;
 	private boolean lastVaInTraceIsUsedForReuse = false;
 
@@ -193,7 +193,10 @@ public class AnnotateAndAsserter<L extends IAction> {
 
 				}
 			}
+			if (mCurrentVA.mUnsatWithVAs.contains(mVAforReuse) && mVAforReuse.mNegatedVA == false) {
+				reuse = false; // Wie kann das überhaupt sein?
 
+			}
 			mSatisfiable = mMgdScriptTc.getScript().checkSat();
 
 			if (mSatisfiable == LBool.UNSAT) {
@@ -201,7 +204,7 @@ public class AnnotateAndAsserter<L extends IAction> {
 					// annotationOfCurrentTestGoal.mUnsatWithVAs.add(mVAforReuse);
 					// annotationOfCurrentTestGoal.mVAofOppositeBranch.setVa(mVAforReuse.mVarAssignmentPair);
 					System.out.println("REUSE UNSAT");
-
+					mCurrentVA.mUnsatWithVAs.add(mVAforReuse);
 					mMgdScriptTc.getScript().pop(1);
 					if (lastVaInTraceIsUsedForReuse || mVAforReuse.equals(mDefaultVA)) {
 						if (nondetsInTrace.size() == nondetsInTraceAfterPreviousVA.size()
@@ -396,7 +399,8 @@ public class AnnotateAndAsserter<L extends IAction> {
 	 * Iterates over trace and returns last VA and all Nondets in trace
 	 */
 	private void checkTraceForVAandNONDETS() {
-		mTestCaseUniqueIdentifier = mSSA.getTrace().hashCode();
+		mTestCaseUniqueIdentifier = mTestCaseUniqueIdentifier + mSSA.getTrace().hashCode();
+		mTestCaseUniqueIdentifier += mSSA.getTrace().getSymbol(mSSA.getTrace().length() - 1).hashCode();
 		if (mSSA.getTrace().length() - 1 > 0) {
 			for (int i = 0; i < mSSA.getTrace().length() - 1; i++) { // dont check current testgoal for va
 				if (mSSA.getTrace().getSymbol(i) instanceof StatementSequence) {

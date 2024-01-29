@@ -47,7 +47,7 @@ public class TestExporter {
 	 * 1: one directory for all programs
 	 * 2: one directory for each program
 	 */
-	public void exportTests(final TestVector testV, final int i, final boolean allInOneFile) throws Exception {
+	public void exportTests(final TestVector testV, final String i, final boolean allInOneFile) throws Exception {
 
 		FileOutputStream output;
 		final String name = "testcase" + i;
