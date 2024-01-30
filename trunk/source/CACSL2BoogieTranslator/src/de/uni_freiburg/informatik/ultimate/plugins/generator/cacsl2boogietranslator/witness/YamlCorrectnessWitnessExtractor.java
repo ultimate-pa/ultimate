@@ -27,9 +27,11 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness;
 
+import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Optional;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.BiConsumer;
 
 import org.eclipse.cdt.core.dom.ast.ASTGenericVisitor;
 import org.eclipse.cdt.core.dom.ast.IASTFileLocation;
@@ -68,13 +70,20 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 
 	@Override
 	protected HashRelation<IASTNode, IExtractedWitnessEntry> computeWitnessEntries() {
+		final Map<IASTNode, ExtractedLoopInvariant> loopInvariants = new HashMap<>();
+		final Map<IASTNode, ExtractedLocationInvariant> locationInvariantsBefore = new HashMap<>();
+		final Map<IASTNode, ExtractedLocationInvariant> locationInvariantsAfter = new HashMap<>();
 		final HashRelation<IASTNode, IExtractedWitnessEntry> rtr = new HashRelation<>();
 		for (final WitnessEntry entry : mWitness.getEntries()) {
 			final int line;
+			final BiConsumer<IASTNode, Boolean> addFunction;
 			if (entry instanceof LocationInvariant && !mCheckOnlyLoopInvariants) {
 				line = ((LocationInvariant) entry).getLocation().getLine();
+				addFunction = (node, before) -> addLocationInvariant((LocationInvariant) entry, node,
+						Boolean.TRUE.equals(before) ? locationInvariantsBefore : locationInvariantsAfter, before);
 			} else if (entry instanceof LoopInvariant) {
 				line = ((LoopInvariant) entry).getLocation().getLine();
+				addFunction = (node, before) -> addLoopInvariant((LoopInvariant) entry, node, loopInvariants);
 			} else {
 				mStats.fail();
 				continue;
@@ -87,61 +96,38 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 				mStats.fail();
 				continue;
 			}
-			extractFromEntry(entry, matchesBefore, matchesAfter, rtr);
+			matchesBefore.forEach(x -> addFunction.accept(x, true));
+			matchesAfter.forEach(x -> addFunction.accept(x, false));
 			mStats.success();
 		}
-
+		loopInvariants.forEach(rtr::addPair);
+		locationInvariantsBefore.forEach(rtr::addPair);
+		locationInvariantsAfter.forEach(rtr::addPair);
 		return rtr;
 	}
 
-	private static void extractFromEntry(final WitnessEntry entry, final Set<IASTNode> matchesBefore,
-			final Set<IASTNode> matchesAfter, final HashRelation<IASTNode, IExtractedWitnessEntry> entries) {
-		final Set<String> labels = Set.of(entry.getMetadata().getUuid().toString());
-		if (entry instanceof LoopInvariant) {
-			final String invariant = ((LoopInvariant) entry).getInvariant().getExpression();
-			for (final var match : DataStructureUtils.union(matchesBefore, matchesAfter)) {
-				final Optional<IExtractedWitnessEntry> optional =
-						entries.getImage(match).stream().filter(x -> x instanceof ExtractedLoopInvariant).findAny();
-				if (optional.isPresent()) {
-					final ExtractedLoopInvariant old = (ExtractedLoopInvariant) optional.get();
-					final String newInvariant = conjunctInvariants(old.getInvariant(), invariant);
-					final Set<String> newLables = DataStructureUtils.union(old.getNodeLabels(), labels);
-					entries.addPair(match, new ExtractedLoopInvariant(newInvariant, newLables, match));
-				} else {
-					entries.addPair(match, new ExtractedLoopInvariant(invariant, labels, match));
-				}
-			}
-		} else if (entry instanceof LocationInvariant) {
-			final String invariant = ((LocationInvariant) entry).getInvariant().getExpression();
-			for (final var match : matchesBefore) {
-				final Optional<IExtractedWitnessEntry> optional = entries.getImage(match).stream().filter(
-						x -> x instanceof ExtractedLocationInvariant && ((ExtractedLocationInvariant) x).isBefore())
-						.findAny();
-				if (optional.isPresent()) {
-					final ExtractedLocationInvariant old = (ExtractedLocationInvariant) optional.get();
-					final String newInvariant = conjunctInvariants(old.getInvariant(), invariant);
-					final Set<String> newLables = DataStructureUtils.union(old.getNodeLabels(), labels);
-					entries.addPair(match, new ExtractedLocationInvariant(newInvariant, newLables, match, true));
-				} else {
-					entries.addPair(match, new ExtractedLocationInvariant(invariant, labels, match, true));
-				}
-			}
-			for (final var match : matchesAfter) {
-				final Optional<IExtractedWitnessEntry> optional = entries.getImage(match).stream().filter(
-						x -> x instanceof ExtractedLocationInvariant && !((ExtractedLocationInvariant) x).isBefore())
-						.findAny();
-				if (optional.isPresent()) {
-					final ExtractedLocationInvariant old = (ExtractedLocationInvariant) optional.get();
-					final String newInvariant = conjunctInvariants(old.getInvariant(), invariant);
-					final Set<String> newLables = DataStructureUtils.union(old.getNodeLabels(), labels);
-					entries.addPair(match, new ExtractedLocationInvariant(newInvariant, newLables, match, false));
-				} else {
-					entries.addPair(match, new ExtractedLocationInvariant(invariant, labels, match, false));
-				}
-			}
-		} else {
-			throw new AssertionError("Unknown witness type " + entry.getClass().getSimpleName());
+	private static void addLocationInvariant(final LocationInvariant current, final IASTNode node,
+			final Map<IASTNode, ExtractedLocationInvariant> locationInvariants, final boolean isBefore) {
+		String invariant = current.getInvariant().getExpression();
+		Set<String> labels = Set.of(current.getMetadata().getUuid().toString());
+		final ExtractedLocationInvariant old = locationInvariants.get(node);
+		if (old != null) {
+			invariant = conjunctInvariants(old.getInvariant(), invariant);
+			labels = DataStructureUtils.union(old.getNodeLabels(), labels);
 		}
+		locationInvariants.put(node, new ExtractedLocationInvariant(invariant, labels, node, isBefore));
+	}
+
+	private static void addLoopInvariant(final LoopInvariant current, final IASTNode node,
+			final Map<IASTNode, ExtractedLoopInvariant> loopInvariants) {
+		String invariant = current.getInvariant().getExpression();
+		Set<String> labels = Set.of(current.getMetadata().getUuid().toString());
+		final ExtractedLoopInvariant old = loopInvariants.get(node);
+		if (old != null) {
+			invariant = conjunctInvariants(old.getInvariant(), invariant);
+			labels = DataStructureUtils.union(old.getNodeLabels(), labels);
+		}
+		loopInvariants.put(node, new ExtractedLoopInvariant(invariant, labels, node));
 	}
 
 	private static String conjunctInvariants(final String invariant1, final String invariant2) {
