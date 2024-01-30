@@ -285,7 +285,7 @@ public class FunctionHandler {
 		final boolean returnTypeIsVoid =
 				returnCType instanceof CPrimitive && ((CPrimitive) returnCType).getType() == CPrimitives.VOID;
 
-		VarList[] in = processInParams(loc, funType, definedProcInfo, node);
+		VarList[] in = processInParams(loc, funType, definedProcInfo, node, StorageClass.IMPLEMENTATION_INPARAM);
 		if (isInParamVoid(in)) {
 			// in-parameter is "void", as in "int foo(void) .." we normalize this to an empty list of in-parameters
 			in = new VarList[0];
@@ -835,7 +835,7 @@ public class FunctionHandler {
 	 * @return
 	 */
 	private VarList[] processInParams(final ILocation loc, final CFunction cFun, final BoogieProcedureInfo procInfo,
-			final IASTNode hook) {
+			final IASTNode hook, final StorageClass storageClass) {
 		final CDeclaration[] paramDecs = cFun.getParameterTypes();
 		final boolean hasUsedVarArgs = cFun.hasVarArgs() && cFun.getVarArgsUsage() == VarArgsUsage.USED;
 		final int size = hasUsedVarArgs ? paramDecs.length + 1 : paramDecs.length;
@@ -852,7 +852,7 @@ public class FunctionHandler {
 			}
 
 			final DeclarationInformation declInformation =
-					new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procInfo.getProcedureName());
+					new DeclarationInformation(storageClass, procInfo.getProcedureName());
 			final String currentParamId = mNameHandler.getInParamIdentifier(currentParamDec.getName(),
 					currentParamDec.getType(), declInformation);
 			in[i] = new VarList(loc, new String[] { currentParamId }, currentParamType);
@@ -1027,7 +1027,7 @@ public class FunctionHandler {
 		// begin new scope for retranslation of ACSL specification
 		mProcedureManager.beginProcedureScope(mCHandler, procInfo);
 
-		final VarList[] in = processInParams(loc, funcType, procInfo, hook);
+		final VarList[] in = processInParams(loc, funcType, procInfo, hook, StorageClass.PROC_FUNC_INPARAM);
 
 		// OUT VARLIST : only one out param in C
 		VarList[] out = new VarList[1];
