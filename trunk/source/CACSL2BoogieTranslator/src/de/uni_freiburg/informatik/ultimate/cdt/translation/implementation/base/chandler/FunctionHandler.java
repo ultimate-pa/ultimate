@@ -285,7 +285,7 @@ public class FunctionHandler {
 		final boolean returnTypeIsVoid =
 				returnCType instanceof CPrimitive && ((CPrimitive) returnCType).getType() == CPrimitives.VOID;
 
-		VarList[] in = processInParams(loc, funType, definedProcInfo, node, StorageClass.IMPLEMENTATION_INPARAM);
+		VarList[] in = processInParams(loc, funType, definedProcInfo, node, true);
 		if (isInParamVoid(in)) {
 			// in-parameter is "void", as in "int foo(void) .." we normalize this to an empty list of in-parameters
 			in = new VarList[0];
@@ -832,10 +832,14 @@ public class FunctionHandler {
 	 * Take the parameter information from the CDeclaration. Make a Varlist from it. Add the parameters to the
 	 * symboltable. Also update procedureToParamCType member.
 	 *
+	 * @param updateSymbolTable
+	 *            set this to true if the symbol table should be updated, false if only the result of this method is of
+	 *            interest and side effects are unwanted
+	 *
 	 * @return
 	 */
 	private VarList[] processInParams(final ILocation loc, final CFunction cFun, final BoogieProcedureInfo procInfo,
-			final IASTNode hook, final StorageClass storageClass) {
+			final IASTNode hook, final boolean updateSymbolTable) {
 		final CDeclaration[] paramDecs = cFun.getParameterTypes();
 		final boolean hasUsedVarArgs = cFun.hasVarArgs() && cFun.getVarArgsUsage() == VarArgsUsage.USED;
 		final int size = hasUsedVarArgs ? paramDecs.length + 1 : paramDecs.length;
@@ -852,13 +856,15 @@ public class FunctionHandler {
 			}
 
 			final DeclarationInformation declInformation =
-					new DeclarationInformation(storageClass, procInfo.getProcedureName());
+					new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procInfo.getProcedureName());
 			final String currentParamId = mNameHandler.getInParamIdentifier(currentParamDec.getName(),
 					currentParamDec.getType(), declInformation);
 			in[i] = new VarList(loc, new String[] { currentParamId }, currentParamType);
 
-			mSymboltable.storeCSymbol(hook, currentParamDec.getName(), new SymbolTableValue(currentParamId, null,
-					currentParamType, currentParamDec, declInformation, null, false));
+			if (updateSymbolTable) {
+				mSymboltable.storeCSymbol(hook, currentParamDec.getName(), new SymbolTableValue(currentParamId, null,
+						currentParamType, currentParamDec, declInformation, null, false));
+			}
 		}
 		if (hasUsedVarArgs) {
 			// Add an additional pointer-argument for the varargs
@@ -1025,9 +1031,9 @@ public class FunctionHandler {
 		final BoogieProcedureInfo procInfo = mProcedureManager.getOrConstructProcedureInfo(methodName);
 
 		// begin new scope for retranslation of ACSL specification
-		mProcedureManager.beginProcedureScope(mCHandler, procInfo);
+		mCHandler.beginScope();
 
-		final VarList[] in = processInParams(loc, funcType, procInfo, hook, StorageClass.PROC_FUNC_INPARAM);
+		final VarList[] in = processInParams(loc, funcType, procInfo, hook, false);
 
 		// OUT VARLIST : only one out param in C
 		VarList[] out = new VarList[1];
@@ -1071,7 +1077,7 @@ public class FunctionHandler {
 		// if possible, find the actual definition of this declaration s.t. we can update the varargs usage
 		procInfo.updateCFunction(updateVarArgsForDeclaration(hook, funcType, loc, methodName));
 		// end scope for retranslation of ACSL specification
-		mProcedureManager.endProcedureScope(mCHandler);
+		mCHandler.endScope();
 	}
 
 	private static CFunction updateVarArgsForDeclaration(final IASTNode node, final CFunction funcType,
