@@ -161,8 +161,7 @@ public class AnnotateAndAsserter<L extends IAction> {
 		final boolean reuseVarAssignmentsOfReachableErrorLocatiosn = true;
 
 		if (reuseVarAssignmentsOfReachableErrorLocatiosn) {
-			boolean reuse = true;
-			boolean negatedReuse = false;
+			boolean reuse;
 			getCurrentVA();
 			checkTraceForVAandNONDETS();
 			if (mCurrentVA != null && mVAforReuse == null) {
@@ -171,9 +170,12 @@ public class AnnotateAndAsserter<L extends IAction> {
 				mVAforReuse = mDefaultVA;
 			}
 
-			if (nondetsInTrace.isEmpty() || mCurrentVA == null || mCurrentVA.mUnsatWithVAs.contains(mVAforReuse)) {
+			if (nondetsInTrace.isEmpty() || mCurrentVA == null) {
 				System.out.println("NO REUSE");
 				reuse = false;
+			} else if (mCurrentVA.mUnsatWithVAs.contains(mVAforReuse) && mVAforReuse.mNegatedVA == false) {
+				reuse = false; // Wie kann das überhaupt sein?
+				System.out.println("NO REUSE since UNSAT With");
 			} else {
 				reuse = true;
 				final ArrayList<Term> vaPairsAsTerms = checkIfNondetsOfTraceAreInVA(); // TODO
@@ -181,7 +183,6 @@ public class AnnotateAndAsserter<L extends IAction> {
 				if (!vaPairsAsTerms.isEmpty()) {
 					Term varAssignmentConjunction = SmtUtils.and(mMgdScriptTc.getScript(), vaPairsAsTerms);
 					if (mVAforReuse.mNegatedVA == true && !vaPairsAsTerms.isEmpty()) {
-						negatedReuse = true;
 						varAssignmentConjunction = SmtUtils.not(mMgdScriptTc.getScript(), varAssignmentConjunction);
 					}
 					mMgdScriptTc.getScript().push(1);
@@ -190,12 +191,7 @@ public class AnnotateAndAsserter<L extends IAction> {
 				} else {
 					reuse = false; // Can be empty if previous test goal is "behind" the current. (loops)
 					// In this case previous test goal has not been checked yet.
-
 				}
-			}
-			if (mCurrentVA.mUnsatWithVAs.contains(mVAforReuse) && mVAforReuse.mNegatedVA == false) {
-				reuse = false; // Wie kann das überhaupt sein?
-
 			}
 			mSatisfiable = mMgdScriptTc.getScript().checkSat();
 
@@ -215,31 +211,24 @@ public class AnnotateAndAsserter<L extends IAction> {
 						} else {
 							System.out.println("No OtherBranch Optimopti Sizes dont match");
 						}
-
 					} else {
 						System.out.println("No OtherBranch Optimopti");
 					}
-
 					mVAforReuse.mNegatedVA = true;
 				}
 				// Hier oder vor der IF
 				mSatisfiable = mMgdScriptTc.getScript().checkSat();
 				if (reuse) {
-
 					if (mCurrentVA.secondCheck == true) {
 						mVAforReuse.mNegatedVA = false;
 					}
-
 				}
-
 			} else if (reuse) {
 				// register "other branch" as not reachable with this VA. Add negated VA to other branch test goal
 				System.out.println("REUSE SUCCESSFULL");
-
 				if (mCurrentVA.secondCheck == true) {
 					mVAforReuse.mNegatedVA = !mVAforReuse.mNegatedVA;
 				}
-
 				mSucessfulReuse = true;
 			}
 			if (reuse) {
@@ -504,7 +493,7 @@ public class AnnotateAndAsserter<L extends IAction> {
 			// increase at the end of loop
 			nondetPositionCount += 1;
 		}
-		if (inputBetweenTestGoals) {
+		if (inputBetweenTestGoals && mVAforReuse.checkCount == 2) {
 			exportTest(testV);
 		}
 		return nondetInVA;

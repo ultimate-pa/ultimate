@@ -535,8 +535,6 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 		}
 		final boolean vaReuse = true;
 		if (vaReuse) {
-
-			// TODO Add empty annotation to unreachable test goals? to prevent a reuse Not sure if needed
 			final IElement statementBranch = (IElement) nsb.mSsa.getTrace().getSymbol(nsb.mSsa.getTrace().length() - 1);
 			if (statementBranch.getPayload().getAnnotations()
 					.containsKey(VarAssignmentReuseAnnotation.class.getName())) {
@@ -544,8 +542,6 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 						.getPayload().getAnnotations().get(VarAssignmentReuseAnnotation.class.getName());
 				vaReuseAnno.setVa(varAssignmentPair, vaOrder + 1);
 
-			} else {
-				assert false;// TODO
 			}
 		}
 		return testV;
