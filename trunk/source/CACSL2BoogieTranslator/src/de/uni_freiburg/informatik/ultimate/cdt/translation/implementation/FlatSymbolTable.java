@@ -42,6 +42,7 @@ import org.eclipse.cdt.core.dom.ast.IASTCompoundStatement;
 import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
 import org.eclipse.cdt.core.dom.ast.IASTForStatement;
+import org.eclipse.cdt.core.dom.ast.IASTFunctionDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTSwitchStatement;
@@ -299,8 +300,8 @@ public class FlatSymbolTable {
 				break;
 			}
 
-			final boolean hasImplicitScope =
-					cursor instanceof IASTFunctionDefinition || cursor instanceof IASTForStatement;
+			final boolean hasImplicitScope = cursor instanceof IASTFunctionDefinition
+					|| cursor instanceof IASTForStatement || cursor instanceof IASTFunctionDeclarator;
 			final boolean hasExplicitScope =
 					cursor instanceof IASTCompoundStatement && !(cursor.getParent() instanceof IASTFunctionDefinition)
 							&& !(cursor.getParent() instanceof IASTForStatement);
