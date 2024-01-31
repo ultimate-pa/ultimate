@@ -1718,6 +1718,10 @@ public class CfgBuilder {
 			// number of edges for code with a lot of branching. Often, all these edges are later reduced through
 			// parallel composition to very few edges (but a timeout occurs before this happens).
 			while (!mSequentialQueue.isEmpty() || !mParallelQueue.isEmpty() || !mComplexSequentialQueue.isEmpty()) {
+				if (!mServices.getProgressMonitorService().continueProcessing()) {
+					throw new ToolchainCanceledException(getClass(), "performing CFG large-block encoding");
+				}
+
 				while (mSequentialQueue.isEmpty() && mParallelQueue.isEmpty() && !mComplexSequentialQueue.isEmpty()) {
 					final BoogieIcfgLocation superfluousPP = mComplexSequentialQueue.pollFirst();
 					composeSequential(superfluousPP);
