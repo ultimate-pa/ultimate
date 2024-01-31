@@ -308,8 +308,7 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 	private boolean backtrack() {
 		final R oldState = mDfs.peek();
 		// search stack for state's parents and update their abstraction levels
-		for (int i = 0; i < mStack.size(); i++) {
-			final Pair<R, OutgoingInternalTransition<L, R>> stackElement = mStack.get(i);
+		for (final var stackElement : mStack) {
 			if (stackElement.getSecond().getSucc() == oldState) {
 				mStateFactory.addToAbstractionLevel(stackElement.getFirst(),
 						mStateFactory.getAbstractionLevel(oldState).getValue());
