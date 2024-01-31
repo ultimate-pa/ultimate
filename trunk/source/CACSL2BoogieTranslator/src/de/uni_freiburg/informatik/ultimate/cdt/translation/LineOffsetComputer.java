@@ -52,6 +52,10 @@ public class LineOffsetComputer {
 	}
 
 	public int getOffset(final int line) {
-		return mLineOffsets.get(line);
+		final Integer res = mLineOffsets.get(line);
+		if (res == null) {
+			throw new UnsupportedOperationException("Unknown line " + line);
+		}
+		return res;
 	}
 }

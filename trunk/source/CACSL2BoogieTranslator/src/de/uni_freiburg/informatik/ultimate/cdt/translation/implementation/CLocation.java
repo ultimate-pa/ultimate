@@ -70,7 +70,7 @@ public class CLocation extends CACSLLocation {
 
 	@Override
 	public int getStartLine() {
-		if (mNode != null) {
+		if (mNode != null && mNode.getFileLocation() != null) {
 			if (mLineDirectiveMapping == null) {
 				return mNode.getFileLocation().getStartingLineNumber();
 			}
@@ -83,7 +83,7 @@ public class CLocation extends CACSLLocation {
 
 	@Override
 	public int getEndLine() {
-		if (mNode != null) {
+		if (mNode != null && mNode.getFileLocation() != null) {
 			if (mLineDirectiveMapping == null) {
 				return mNode.getFileLocation().getEndingLineNumber();
 			}
@@ -96,19 +96,21 @@ public class CLocation extends CACSLLocation {
 
 	@Override
 	public int getStartColumn() {
-		if (mLineOffsetComputer == null) {
+		final int startLine = getStartLine();
+		if (mLineOffsetComputer == null || startLine == -1) {
 			return -1;
 		}
-		final Integer lineOffset = mLineOffsetComputer.getOffset(getStartLine());
+		final int lineOffset = mLineOffsetComputer.getOffset(startLine);
 		return mNode.getFileLocation().getNodeOffset() - lineOffset;
 	}
 
 	@Override
 	public int getEndColumn() {
-		if (mLineOffsetComputer == null) {
+		final int endLine = getEndLine();
+		if (mLineOffsetComputer == null || endLine == -1) {
 			return -1;
 		}
-		final Integer lineOffset = mLineOffsetComputer.getOffset(getEndLine());
+		final int lineOffset = mLineOffsetComputer.getOffset(endLine);
 		return mNode.getFileLocation().getNodeOffset() + mNode.getFileLocation().getNodeLength() - lineOffset;
 	}
 
