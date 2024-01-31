@@ -403,7 +403,7 @@ public class PredicateUtils {
 
 	public static Term eliminateOldVars(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final IPredicate p) {
-		final List<TermVariable> oldVars = p.getVars().stream().filter(x -> !x.isOldvar()).map(x -> x.getTermVariable())
+		final List<TermVariable> oldVars = p.getVars().stream().filter(x -> x.isOldvar()).map(x -> x.getTermVariable())
 				.collect(Collectors.toList());
 		final Term quantified = SmtUtils.quantifier(mgdScript.getScript(), QuantifiedFormula.EXISTS, oldVars,
 				p.getFormula());
