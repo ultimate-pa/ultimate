@@ -109,7 +109,7 @@ public class PartialOrderAbstractionProvider<L extends IIcfgTransition<?>>
 		// setup POR depending on settings
 		final IIndependenceRelation<IPredicate, L> indep =
 				IndependenceBuilder.<L> semantic(mServices, icfg.getCfgSmtToolkit().getManagedScript(), false, false)
-						.withSyntacticCheck().cached().threadSeparated().ignoreDebugPredicates().build();
+						.withSyntacticCheck().cached().threadSeparated().build();
 		final PartialOrderReductionFacade<L> por = new PartialOrderReductionFacade<>(mServices, mPredicateFactory, icfg,
 				errorLocs, mPartialOrderMode, mOrderType, mDfsOrderSeed, List.of(indep), null, null);
 
