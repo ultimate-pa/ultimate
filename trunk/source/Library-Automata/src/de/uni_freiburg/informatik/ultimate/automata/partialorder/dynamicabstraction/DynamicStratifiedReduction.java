@@ -86,7 +86,7 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
-	private final Statistics<H> mStatistics = new Statistics<H>();
+	private final Statistics<H> mStatistics = new Statistics<>();
 
 	private final INwaOutgoingLetterAndTransitionProvider<L, S> mOriginalAutomaton;
 	private final IStratifiedStateFactory<L, S, R, H> mStateFactory;
@@ -142,8 +142,8 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 		mStateFactory = stateFactory;
 		mOriginalAutomaton = originalAutomaton;
 		mStartState = mStateFactory.createStratifiedState(startingState,
-				new AbstractionLevel<H>(mAbstractionLattice.getTop(), mAbstractionLattice, false),
-				new AbstractionLevel<H>(mAbstractionLattice.getTop(), mAbstractionLattice, false));
+				new AbstractionLevel<>(mAbstractionLattice.getTop(), mAbstractionLattice, false),
+				new AbstractionLevel<>(mAbstractionLattice.getTop(), mAbstractionLattice, false));
 		mStateFactory.setSleepSet(mStartState, new HashMap<L, H>());
 		mOrder = order;
 		mIndependenceProvider = independence;
@@ -265,8 +265,8 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 					mStateFactory.addToAbstractionLimit(nextState, edge.getValue());
 					mStateFactory.addToAbstractionLevel(nextState, edge.getValue());
 				}
-				currentTransition = new OutgoingInternalTransition<L, R>(currentTransition.getLetter(), nextState);
-				current = new Pair<R, OutgoingInternalTransition<L, R>>(currentState, currentTransition);
+				currentTransition = new OutgoingInternalTransition<>(currentTransition.getLetter(), nextState);
+				current = new Pair<>(currentState, currentTransition);
 
 				createSuccessors(nextState);
 
@@ -441,7 +441,7 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 					reductionSucc = correspRstate;
 				}
 				// add state + new reduced transition to worklist
-				mPending.add(new OutgoingInternalTransition<L, R>(letter, reductionSucc));
+				mPending.add(new OutgoingInternalTransition<>(letter, reductionSucc));
 			}
 		}
 	}

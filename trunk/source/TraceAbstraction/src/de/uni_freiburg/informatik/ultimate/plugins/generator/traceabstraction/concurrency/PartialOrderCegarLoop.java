@@ -251,12 +251,12 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		}
 
 		// No dead end optimization for dynamic abstractions (dealt with internally)
-		if (mPref.getPartialOrderMode() == PartialOrderMode.DYNAMIC_ABSTRACTIONS ) {
-			mAbstraction = new InformationStorage<>(mProgram == null ? mAbstraction : mProgram, mItpAutomata, mFactory, 
+		if (mPref.getPartialOrderMode() == PartialOrderMode.DYNAMIC_ABSTRACTIONS) {
+			mAbstraction = new InformationStorage<>(mProgram == null ? mAbstraction : mProgram, mItpAutomata, mFactory,
 					x -> false);
 		} else {
 			mAbstraction = new InformationStorage<>(mProgram == null ? mAbstraction : mProgram, mItpAutomata, mFactory,
-				PartialOrderCegarLoop::isFalseLiteral);
+					PartialOrderCegarLoop::isFalseLiteral);
 		}
 		// augment refinement result with Hoare triple checker to allow re-use by independence providers
 		final var resultWithHtc = addHoareTripleChecker(mRefinementResult, htc);
