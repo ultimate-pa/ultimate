@@ -200,7 +200,7 @@ public class ProcedureManager {
 		 * in the sense of this graph, the successors of a procedure are its callers.
 		 */
 		final ISuccessorProvider<BoogieProcedureInfo> successorProvider =
-				new ISuccessorProvider<BoogieProcedureInfo>() {
+				new ISuccessorProvider<>() {
 					@Override
 					public Iterator<BoogieProcedureInfo> getSuccessors(final BoogieProcedureInfo node) {
 						return mInverseCallGraph.getImage(node).iterator();
@@ -569,7 +569,7 @@ public class ProcedureManager {
 			return mCType != null;
 		}
 
-		public void addModifiedGlobals(final Set<VariableLHS> varNames) {
+		public void addModifiedGlobals(final Collection<VariableLHS> varNames) {
 			mModifiedGlobals.addAll(varNames);
 		}
 

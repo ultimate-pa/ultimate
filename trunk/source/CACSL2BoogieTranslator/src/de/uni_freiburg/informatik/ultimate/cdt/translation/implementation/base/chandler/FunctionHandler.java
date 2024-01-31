@@ -39,7 +39,6 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.eclipse.cdt.core.dom.ast.ASTNameCollector;
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
@@ -815,8 +814,7 @@ public class FunctionHandler {
 			if (spec instanceof ModifiesSpecification) {
 				procInfo.setModifiedGlobalsIsUsedDefined(true);
 				final ModifiesSpecification ms = (ModifiesSpecification) spec;
-				procInfo.addModifiedGlobals(
-						Arrays.stream(ms.getIdentifiers()).collect(Collectors.toCollection(LinkedHashSet::new)));
+				procInfo.addModifiedGlobals(Arrays.asList(ms.getIdentifiers()));
 			}
 		}
 		// take care for behavior and completeness
