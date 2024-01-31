@@ -37,7 +37,6 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.dynamicabstraction.DynamicStratifiedReduction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.dynamicabstraction.IProofManager;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -48,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
-import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
 /**
  * Used by DynamicStratifiedReduction to handle everything related to proofs
@@ -68,8 +66,6 @@ public class ProofManager<L extends IAction, H, P> implements IProofManager<H, I
 	private final Predicate<IPredicate> mIsErrorState;
 	private boolean mUseOrigDef;
 
-	// part of the statistics collected in Dyn.Strat.Red
-	private DynamicStratifiedReduction.Statistics<H> mRedStatistics = new DynamicStratifiedReduction.Statistics<H>();
 	private final Statistics mStatistics = new Statistics();
 	private final List<H> mProofLevels = new ArrayList<>();
 
@@ -184,14 +180,6 @@ public class ProofManager<L extends IAction, H, P> implements IProofManager<H, I
 
 	public IStatisticsDataProvider getStatistics() {
 		return mStatistics;
-	}
-	public void takeRedStatistics(DynamicStratifiedReduction.Statistics<H> red) {
-	// wird von DynamicStratifiedReduction genutzt, um Statistik zu übergeben
-		mRedStatistics = red;
-	}
-	
-	public IStatisticsDataProvider getRedStatistics() {
-		return mRedStatistics;
 	}
 
 	private static final class Statistics extends AbstractStatisticsDataProvider {

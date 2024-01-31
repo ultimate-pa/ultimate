@@ -129,19 +129,13 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 	 *            handles everything regarding proofs and proven states
 	 * @param stateFactory
 	 *            creates and deals with the reduction states
-	 * @throws AutomataOperationCanceledException
-	 *             in case of timeout or cancellation
 	 */
 	public DynamicStratifiedReduction(final AutomataLibraryServices services,
 			final INwaOutgoingLetterAndTransitionProvider<L, S> originalAutomaton, final IDfsOrder<L, S> order,
 			final IStratifiedStateFactory<L, S, R, H> stateFactory, final IDfsVisitor<L, R> visitor,
 			final S startingState, final IIndependenceInducedByAbstraction<S, L, H> independence,
-			final IProofManager<H, S> manager) throws AutomataOperationCanceledException {
+			final IProofManager<H, S> manager) {
 		assert NestedWordAutomataUtils.isFiniteAutomaton(originalAutomaton) : "Finite automata only";
-
-		mStatistics.startTotal();
-		mStatistics.startLoopless();
-
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(DynamicStratifiedReduction.class);
 		mAbstractionLattice = independence.getAbstractionLattice();
@@ -157,16 +151,6 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 		mProofManager = manager;
 		// TODO: stop the test suite's complaints
 		mStatistics.setProtectedVars(mAbstractionLattice.getTop());
-
-		traverse();
-		if (!mStatistics.containsLoop()) {
-			mStatistics.stopLoopless();
-			mStatistics.setProtectedVarsBL(mStatistics.mProtectedVars);
-		} else {
-			mStatistics.stopLoopTime();
-		}
-		mStatistics.stopTotal();
-		mProofManager.takeRedStatistics(mStatistics);
 	}
 
 	/**
@@ -201,11 +185,28 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 		final var initial =
 				DataStructureUtils.getOnly(operand.getInitialStates(), "There must only be one initial state");
 		if (initial.isPresent()) {
-			new DynamicStratifiedReduction<>(services, operand, order, stateFactory, visitor, initial.get(),
-					independence, manager);
+			final var dynamicReduction = new DynamicStratifiedReduction<>(services, operand, order, stateFactory,
+					visitor, initial.get(), independence, manager);
+			dynamicReduction.run();
 		} else {
 			final var logger = services.getLoggingService().getLogger(DynamicStratifiedReduction.class);
 			logger.warn("DynamicStratifiedReduction did not find any initial state. Returning directly.");
+		}
+	}
+
+	public void run() throws AutomataOperationCanceledException {
+		mStatistics.startTotal();
+		mStatistics.startLoopless();
+		try {
+			traverse();
+		} finally {
+			if (!mStatistics.containsLoop()) {
+				mStatistics.stopLoopless();
+				mStatistics.setProtectedVarsBL(mStatistics.mProtectedVars);
+			} else {
+				mStatistics.stopLoopTime();
+			}
+			mStatistics.stopTotal();
 		}
 	}
 

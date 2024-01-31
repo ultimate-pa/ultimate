@@ -27,8 +27,6 @@
 
 package de.uni_freiburg.informatik.ultimate.automata.partialorder.dynamicabstraction;
 
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.dynamicabstraction.DynamicStratifiedReduction.Statistics;
-
 /**
  * Used by DynamicStratifiedReduction to handle everything related to proofs
  *
@@ -45,7 +43,4 @@ public interface IProofManager<H, S> {
 	// Chose a proof that is deemed responsible for state being a proven state
 	// return all program variables used in the proof.
 	H chooseResponsibleAbstraction(S state);
-
-	// TODO: sort out statistics... this stub is only needed temporarily
-	void takeRedStatistics(DynamicStratifiedReduction.Statistics<H> mstatistics);
 }

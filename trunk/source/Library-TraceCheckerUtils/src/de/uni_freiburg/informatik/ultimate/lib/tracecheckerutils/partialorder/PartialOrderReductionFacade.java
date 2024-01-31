@@ -54,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetCoverin
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetDelayReduction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.dynamicabstraction.DynamicStratifiedReduction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.dynamicabstraction.IIndependenceInducedByAbstraction;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.dynamicabstraction.IProofManager;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.dynamicabstraction.IStratifiedStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.dynamicabstraction.IndependenceInducedByAbstraction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
@@ -67,6 +68,7 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.Coveri
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.DeadEndOptimizingSearchVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.IDeadEndStore;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.IDfsVisitor;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.TraversalStatisticsVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.WrapperVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
@@ -82,6 +84,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.Lo
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.IRefinableAbstraction;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.ProofManager;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
@@ -131,6 +134,8 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>, H> {
 
 	private final List<StatisticsData> mOldIndependenceStatistics = new ArrayList<>();
 	private final List<StatisticsData> mOldPersistentSetStatistics = new ArrayList<>();
+	private final List<StatisticsData> mDynamicStratifiedStatistics = new ArrayList<>();
+	private final List<StatisticsData> mVisitorStatistics = new ArrayList<>();
 
 	public PartialOrderReductionFacade(final IUltimateServiceProvider services, final PredicateFactory predicateFactory,
 			final IIcfg<?> icfg, final Collection<? extends IcfgLocation> errorLocs, final PartialOrderMode mode,
@@ -350,51 +355,87 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>, H> {
 			((SleepMapStateFactory<?>) mSleepMapFactory).reset();
 		}
 
-		final IIndependenceRelation<IPredicate, L> independence =
-				mIndependenceRelations.isEmpty() ? null : mIndependenceRelations.get(0);
-		switch (mMode) {
-		case SLEEP_DELAY_SET:
-			new SleepSetDelayReduction<>(mAutomataServices, input, mSleepFactory, independence, mDfsOrder, visitor);
-			break;
-		case SLEEP_NEW_STATES:
-			if (mIndependenceRelations.size() == 1) {
-				DepthFirstTraversal.traverse(mAutomataServices,
-						new MinimalSleepSetReduction<>(input, mSleepFactory, independence, mDfsOrder), mDfsOrder,
-						visitor);
-			} else {
-				final var red = new SleepMapReduction<>(input, mIndependenceRelations, mDfsOrder, mSleepMapFactory,
-						mGetBudget.andThen(CachedBudget::new));
-				DepthFirstTraversal.traverse(mAutomataServices, red, mDfsOrder, visitor);
+		final TraversalStatisticsVisitor<L, IPredicate, ?> traversalStatisticsVisitor =
+				new TraversalStatisticsVisitor<>(visitor);
+		try {
+			final IIndependenceRelation<IPredicate, L> independence =
+					mIndependenceRelations.isEmpty() ? null : mIndependenceRelations.get(0);
+			switch (mMode) {
+			case SLEEP_DELAY_SET:
+				new SleepSetDelayReduction<>(mAutomataServices, input, mSleepFactory, independence, mDfsOrder,
+						traversalStatisticsVisitor);
+				break;
+			case SLEEP_NEW_STATES:
+				if (mIndependenceRelations.size() == 1) {
+					DepthFirstTraversal.traverse(mAutomataServices,
+							new MinimalSleepSetReduction<>(input, mSleepFactory, independence, mDfsOrder), mDfsOrder,
+							traversalStatisticsVisitor);
+				} else {
+					final var red = new SleepMapReduction<>(input, mIndependenceRelations, mDfsOrder, mSleepMapFactory,
+							mGetBudget.andThen(CachedBudget::new));
+					DepthFirstTraversal.traverse(mAutomataServices, red, mDfsOrder, traversalStatisticsVisitor);
+				}
+				break;
+			case PERSISTENT_SETS:
+				PersistentSetReduction.applyWithoutSleepSets(mAutomataServices, input, mDfsOrder, mPersistent,
+						traversalStatisticsVisitor);
+				break;
+			case PERSISTENT_SLEEP_DELAY_SET_FIXEDORDER:
+			case PERSISTENT_SLEEP_DELAY_SET:
+				PersistentSetReduction.applyDelaySetReduction(mAutomataServices, input, independence, mDfsOrder,
+						mPersistent, traversalStatisticsVisitor);
+				break;
+			case PERSISTENT_SLEEP_NEW_STATES_FIXEDORDER:
+			case PERSISTENT_SLEEP_NEW_STATES:
+				if (mIndependenceRelations.size() == 1) {
+					PersistentSetReduction.applyNewStateReduction(mAutomataServices, input, independence, mDfsOrder,
+							mSleepFactory, mPersistent, traversalStatisticsVisitor);
+				} else {
+					PersistentSetReduction.applySleepMapReduction(mAutomataServices, input, mIndependenceRelations,
+							mDfsOrder, mSleepMapFactory, mGetBudget.andThen(CachedBudget::new), mPersistent,
+							traversalStatisticsVisitor);
+				}
+				break;
+			case DYNAMIC_ABSTRACTIONS:
+				traverseWithDynamicStratified(mAutomataServices, input, mDfsOrder, mStratifiedFactory,
+						traversalStatisticsVisitor, mAbstractIndependence, mProofManager);
+				break;
+			case NONE:
+				DepthFirstTraversal.traverse(mAutomataServices, input, mDfsOrder, traversalStatisticsVisitor);
+				break;
+			default:
+				throw new UnsupportedOperationException("Unsupported POR mode: " + mMode);
 			}
-			break;
-		case PERSISTENT_SETS:
-			PersistentSetReduction.applyWithoutSleepSets(mAutomataServices, input, mDfsOrder, mPersistent, visitor);
-			break;
-		case PERSISTENT_SLEEP_DELAY_SET_FIXEDORDER:
-		case PERSISTENT_SLEEP_DELAY_SET:
-			PersistentSetReduction.applyDelaySetReduction(mAutomataServices, input, independence, mDfsOrder,
-					mPersistent, visitor);
-			break;
-		case PERSISTENT_SLEEP_NEW_STATES_FIXEDORDER:
-		case PERSISTENT_SLEEP_NEW_STATES:
-			if (mIndependenceRelations.size() == 1) {
-				PersistentSetReduction.applyNewStateReduction(mAutomataServices, input, independence, mDfsOrder,
-						mSleepFactory, mPersistent, visitor);
-			} else {
-				PersistentSetReduction.applySleepMapReduction(mAutomataServices, input, mIndependenceRelations,
-						mDfsOrder, mSleepMapFactory, mGetBudget.andThen(CachedBudget::new), mPersistent, visitor);
-			}
-			break;
-		case DYNAMIC_ABSTRACTIONS:
-			DynamicStratifiedReduction.traverse(mAutomataServices, input, mDfsOrder, mStratifiedFactory, visitor,
-					mAbstractIndependence, mProofManager);
-			break;
-		case NONE:
-			DepthFirstTraversal.traverse(mAutomataServices, input, mDfsOrder, visitor);
-			break;
-		default:
-			throw new UnsupportedOperationException("Unsupported POR mode: " + mMode);
+		} finally {
+			final StatisticsData data = new StatisticsData();
+			data.aggregateBenchmarkData(traversalStatisticsVisitor.getStatistics());
+			mVisitorStatistics.add(data);
 		}
+	}
+
+	<L, S, R, H> void traverseWithDynamicStratified(final AutomataLibraryServices services,
+			final INwaOutgoingLetterAndTransitionProvider<L, S> operand, final IDfsOrder<L, S> order,
+			final IStratifiedStateFactory<L, S, R, H> stateFactory, final IDfsVisitor<L, R> visitor,
+			final IIndependenceInducedByAbstraction<S, L, H> independence, final IProofManager<H, S> manager)
+			throws AutomataOperationCanceledException {
+		final var initial =
+				DataStructureUtils.getOnly(operand.getInitialStates(), "There must only be one initial state");
+		if (initial.isPresent()) {
+			final var dynamicReduction = new DynamicStratifiedReduction<>(services, operand, order, stateFactory,
+					visitor, initial.get(), independence, manager);
+			try {
+				dynamicReduction.run();
+			} finally {
+				final var statistics = dynamicReduction.getStatistics();
+				if (statistics != null) {
+					final StatisticsData data = new StatisticsData();
+					data.aggregateBenchmarkData(statistics);
+					mDynamicStratifiedStatistics.add(data);
+				}
+			}
+		}
+		final var logger = services.getLoggingService().getLogger(DynamicStratifiedReduction.class);
+		logger.warn("DynamicStratifiedReduction did not find any initial state. Returning directly.");
 	}
 
 	/**
@@ -482,16 +523,22 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>, H> {
 					new StatisticsResult<>(pluginId, "Persistent set benchmarks", persistentData));
 		}
 
+		for (final StatisticsData data : mDynamicStratifiedStatistics) {
+			mServices.getResultService().reportResult(pluginId,
+					new StatisticsResult<>(pluginId, "Reduction benchmarks", data));
+		}
+
+		for (final StatisticsData data : mVisitorStatistics) {
+			mServices.getResultService().reportResult(pluginId,
+					new StatisticsResult<>(pluginId, "Visitor Statistics", data));
+		}
+
 		if (mProofManager != null) {
 			mProofManager.finish();
 			final StatisticsData proofManagerData = new StatisticsData();
-			final StatisticsData dynamicReductionData = new StatisticsData();
 			proofManagerData.aggregateBenchmarkData(mProofManager.getStatistics());
-			dynamicReductionData.aggregateBenchmarkData(mProofManager.getRedStatistics());
 			mServices.getResultService().reportResult(pluginId,
 					new StatisticsResult<>(pluginId, "Proof manager benchmarks", proofManagerData));
-			mServices.getResultService().reportResult(pluginId,
-					new StatisticsResult<>(pluginId, "Reduction benchmarks", dynamicReductionData));
 		}
 	}
 
