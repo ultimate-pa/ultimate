@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.eclipse.cdt.core.dom.ast.ASTNameCollector;
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
@@ -798,34 +799,29 @@ public class FunctionHandler {
 	 */
 	private Specification[] makeBoogieSpecFromACSLContract(final IDispatcher main, final List<ACSLNode> contract,
 			final BoogieProcedureInfo procInfo, final IASTDeclarator hook) {
-		Specification[] spec;
-		if (contract == null) {
-			spec = new Specification[0];
-		} else {
-			final List<Specification> specList = new ArrayList<>();
-			for (int i = 0; i < contract.size(); i++) {
-				// retranslate ACSL specification needed e.g., in cases
-				// where ids of function parameters differ from is in ACSL
-				// expression
-				final Result retranslateRes = main.dispatch(contract.get(i), hook);
-				assert retranslateRes instanceof ContractResult;
-				final ContractResult resContr = (ContractResult) retranslateRes;
-				specList.addAll(Arrays.asList(resContr.getSpecs()));
-			}
-			spec = specList.toArray(new Specification[specList.size()]);
-			for (int i = 0; i < spec.length; i++) {
-				if (spec[i] instanceof ModifiesSpecification) {
-					procInfo.setModifiedGlobalsIsUsedDefined(true);
-					final ModifiesSpecification ms = (ModifiesSpecification) spec[i];
-					final LinkedHashSet<VariableLHS> modifiedSet = new LinkedHashSet<>();
-					Collections.addAll(modifiedSet, ms.getIdentifiers());
-					procInfo.addModifiedGlobals(modifiedSet);
-				}
-			}
-			// take care for behavior and completeness
-			mCHandler.clearContract();
+		if (contract == null || contract.isEmpty()) {
+			return new Specification[0];
 		}
-		return spec;
+		final List<Specification> specs = new ArrayList<>();
+		for (final ACSLNode node : contract) {
+			// retranslate ACSL specification needed e.g., in cases where ids of function parameters differ from is in
+			// ACSL expression
+			final Result retranslateRes = main.dispatch(node, hook);
+			assert retranslateRes instanceof ContractResult;
+			final ContractResult resContr = (ContractResult) retranslateRes;
+			specs.addAll(Arrays.asList(resContr.getSpecs()));
+		}
+		for (final Specification spec : specs) {
+			if (spec instanceof ModifiesSpecification) {
+				procInfo.setModifiedGlobalsIsUsedDefined(true);
+				final ModifiesSpecification ms = (ModifiesSpecification) spec;
+				procInfo.addModifiedGlobals(
+						Arrays.stream(ms.getIdentifiers()).collect(Collectors.toCollection(LinkedHashSet::new)));
+			}
+		}
+		// take care for behavior and completeness
+		mCHandler.clearContract();
+		return specs.toArray(Specification[]::new);
 	}
 
 	/**
