@@ -299,9 +299,6 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 			assert mCounterexample == null || accepts(getServices(), mAbstraction, mCounterexample.getWord(),
 					false) : "Counterexample is not accepted by abstraction";
 			return mCounterexample == null;
-		} catch (final AutomataOperationCanceledException e) {
-			finish();
-			throw e;
 		} finally {
 			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.EmptinessCheckTime);
 		}
