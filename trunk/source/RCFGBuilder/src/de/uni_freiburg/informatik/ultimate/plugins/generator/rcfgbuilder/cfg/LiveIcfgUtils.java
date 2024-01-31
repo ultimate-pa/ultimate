@@ -35,6 +35,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
@@ -77,7 +78,7 @@ public class LiveIcfgUtils {
 	 */
 	public static <LOC extends IcfgLocation> void applyFutureLiveOptimization(final IUltimateServiceProvider services,
 			final IIcfg<LOC> icfg) {
-		final HashRelation<IcfgLocation, IProgramVar> liveVarMap = computeFutureLiveVariables(icfg);
+		final HashRelation<IcfgLocation, IProgramVar> liveVarMap = computeFutureLiveVariables(services, icfg);
 		updateTransFormulas(services, icfg, liveVarMap);
 	}
 
@@ -95,11 +96,11 @@ public class LiveIcfgUtils {
 	}
 
 	private static <LOC extends IcfgLocation> HashRelation<IcfgLocation, IProgramVar> computeFutureLiveVariables(
-			final IIcfg<LOC> icfg) {
+			final IUltimateServiceProvider services, final IIcfg<LOC> icfg) {
 		final HashRelation<IcfgLocation, IProgramVar> result = new HashRelation<>();
 		final ArrayDeque<IcfgEdge> worklist = new ArrayDeque<>();
 		initializeMapAndWorklist(icfg, worklist, result);
-		doFixpointIteration(icfg, worklist, result);
+		doFixpointIteration(services, icfg, worklist, result);
 		return result;
 	}
 
@@ -203,9 +204,14 @@ public class LiveIcfgUtils {
 		}
 	}
 
-	private static <LOC extends IcfgLocation> void doFixpointIteration(final IIcfg<LOC> icfg,
-			final ArrayDeque<IcfgEdge> worklist, final HashRelation<IcfgLocation, IProgramVar> result) {
+	private static <LOC extends IcfgLocation> void doFixpointIteration(final IUltimateServiceProvider services,
+			final IIcfg<LOC> icfg, final ArrayDeque<IcfgEdge> worklist,
+			final HashRelation<IcfgLocation, IProgramVar> result) {
 		while (!worklist.isEmpty()) {
+			if (!services.getProgressMonitorService().continueProcessing()) {
+				throw new ToolchainCanceledException(LiveIcfgUtils.class,
+						String.format("doing live variable analysis"));
+			}
 			final IcfgEdge edge = worklist.removeFirst();
 			final IcfgLocation src = edge.getSource();
 			final IcfgLocation target = edge.getTarget();
