@@ -3640,33 +3640,7 @@ public class CHandler {
 			bodyBlock.add(ifStmt);
 		}
 
-		LoopInvariantSpecification[] spec;
-		if (mContract == null) {
-			spec = new LoopInvariantSpecification[0];
-		} else {
-			final List<LoopInvariantSpecification> specList = new ArrayList<>();
-			if (node instanceof IASTForStatement || node instanceof IASTWhileStatement
-					|| node instanceof IASTDoStatement) {
-				for (int i = 0; i < mContract.size(); i++) {
-					// retranslate ACSL specification needed e.g., in cases
-					// where ids of function parameters differ from is in ACSL
-					// expression
-					final Result retranslateRes = main.dispatch(mContract.get(i), node);
-					if (retranslateRes instanceof ContractResult) {
-						final ContractResult resContr = (ContractResult) retranslateRes;
-						assert resContr.getSpecs().length == 1;
-						for (final Specification cSpec : resContr.getSpecs()) {
-							specList.add((LoopInvariantSpecification) cSpec);
-						}
-					} else {
-						specList.add((LoopInvariantSpecification) retranslateRes.getNode());
-					}
-				}
-			}
-			spec = specList.toArray(new LoopInvariantSpecification[specList.size()]);
-			// take care for behavior and completeness
-			clearContract();
-		}
+		final LoopInvariantSpecification[] spec = extractLoopInvariants(main, node);
 
 		// bit of a workaround using an extra builder here..
 		final ExpressionResultBuilder bodyBlockResultBuilder = new ExpressionResultBuilder();
@@ -3699,5 +3673,27 @@ public class CHandler {
 			return result;
 		}
 		return main.transformWithWitness(node, result);
+	}
+
+	private LoopInvariantSpecification[] extractLoopInvariants(final IDispatcher main, final IASTStatement node) {
+		if (mContract == null || mContract.isEmpty()) {
+			return new LoopInvariantSpecification[0];
+		}
+		final List<LoopInvariantSpecification> spec = new ArrayList<>();
+		for (final ACSLNode acsl : mContract) {
+			final Result res = main.dispatch(acsl, node);
+			if (res instanceof ContractResult) {
+				final ContractResult resContr = (ContractResult) res;
+				assert resContr.getSpecs().length == 1;
+				for (final Specification cSpec : resContr.getSpecs()) {
+					spec.add((LoopInvariantSpecification) cSpec);
+				}
+			} else {
+				spec.add((LoopInvariantSpecification) res.getNode());
+			}
+		}
+		// take care for behavior and completeness
+		clearContract();
+		return spec.toArray(LoopInvariantSpecification[]::new);
 	}
 }
