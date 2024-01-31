@@ -34,13 +34,16 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 
 import org.eclipse.cdt.core.dom.ast.ASTGenericVisitor;
-import org.eclipse.cdt.core.dom.ast.IASTFileLocation;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 
+import de.uni_freiburg.informatik.ultimate.cdt.translation.LineOffsetComputer;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Location;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LocationInvariant;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LoopInvariant;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Witness;
@@ -70,27 +73,30 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 
 	@Override
 	protected HashRelation<IASTNode, IExtractedWitnessEntry> computeWitnessEntries() {
+		// TODO: The column extraction happens in LocationFactory, so we create one as a workaround
+		final LocationFactory locationFactory =
+				new LocationFactory(null, new LineOffsetComputer(mTranslationUnit.getRawSignature()));
 		final Map<IASTNode, ExtractedLoopInvariant> loopInvariants = new HashMap<>();
 		final Map<IASTNode, ExtractedLocationInvariant> locationInvariantsBefore = new HashMap<>();
 		final Map<IASTNode, ExtractedLocationInvariant> locationInvariantsAfter = new HashMap<>();
 		final HashRelation<IASTNode, IExtractedWitnessEntry> rtr = new HashRelation<>();
 		for (final WitnessEntry entry : mWitness.getEntries()) {
-			final int line;
+			final Location location;
 			final BiConsumer<IASTNode, Boolean> addFunction;
 			if (entry instanceof LocationInvariant) {
 				if (mCheckOnlyLoopInvariants) {
 					continue;
 				}
-				line = ((LocationInvariant) entry).getLocation().getLine();
+				location = ((LocationInvariant) entry).getLocation();
 				addFunction = (node, before) -> addLocationInvariant((LocationInvariant) entry, node,
 						Boolean.TRUE.equals(before) ? locationInvariantsBefore : locationInvariantsAfter, before);
 			} else if (entry instanceof LoopInvariant) {
-				line = ((LoopInvariant) entry).getLocation().getLine();
+				location = ((LoopInvariant) entry).getLocation();
 				addFunction = (node, before) -> addLoopInvariant((LoopInvariant) entry, node, loopInvariants);
 			} else {
 				throw new UnsupportedOperationException("Unknown entry type " + entry.getClass().getSimpleName());
 			}
-			final LineMatchingVisitor visitor = new LineMatchingVisitor(line);
+			final LineColumnMatchingVisitor visitor = new LineColumnMatchingVisitor(location, locationFactory);
 			visitor.run(mTranslationUnit);
 			final Set<IASTNode> matchesBefore = visitor.getMatchedNodesBefore();
 			final Set<IASTNode> matchesAfter = visitor.getMatchedNodesAfter();
@@ -139,14 +145,16 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 		return "(" + invariant1 + ") && (" + invariant2 + ")";
 	}
 
-	private static final class LineMatchingVisitor extends ASTGenericVisitor {
+	private static final class LineColumnMatchingVisitor extends ASTGenericVisitor {
 		private final Set<IASTNode> mMatchedNodesBefore = new HashSet<>();
 		private final Set<IASTNode> mMatchedNodesAfter = new HashSet<>();
-		private final int mLine;
+		private final Location mLocation;
+		private final LocationFactory mLocationFactory;
 
-		public LineMatchingVisitor(final int line) {
+		public LineColumnMatchingVisitor(final Location location, final LocationFactory locationFactory) {
 			super(true);
-			mLine = line;
+			mLocation = location;
+			mLocationFactory = locationFactory;
 		}
 
 		public void run(final IASTTranslationUnit translationUnit) {
@@ -163,17 +171,17 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 
 		@Override
 		protected int genericVisit(final IASTNode node) {
-			final IASTFileLocation loc = node.getFileLocation();
+			final ILocation loc = mLocationFactory.createCLocation(node);
 			if (loc == null) {
 				return PROCESS_CONTINUE;
 			}
-			// TODO: Check for the column as well (needs some work to extract it from the offset)
-			if (mLine == loc.getStartingLineNumber()) {
+			// TODO: Be more generous about matching columns (e.g. whitespaces between nodes)?
+			if (mLocation.getLine() == loc.getStartLine() && mLocation.getColumn() == loc.getStartColumn()) {
 				mMatchedNodesBefore.add(node);
 				// skip the subtree if a match occurred, but continue with siblings.
 				return PROCESS_SKIP;
 			}
-			if (mLine == loc.getEndingLineNumber()) {
+			if (mLocation.getLine() == loc.getEndLine() && mLocation.getColumn() == loc.getEndColumn()) {
 				mMatchedNodesAfter.add(node);
 				// skip the subtree if a match occurred, but continue with siblings.
 				return PROCESS_SKIP;
