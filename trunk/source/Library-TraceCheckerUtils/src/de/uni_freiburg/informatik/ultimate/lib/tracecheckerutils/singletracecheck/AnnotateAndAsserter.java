@@ -158,7 +158,7 @@ public class AnnotateAndAsserter<L extends IAction> {
 			pendingContextCode++;
 		}
 
-		final boolean reuseVarAssignmentsOfReachableErrorLocatiosn = true;
+		final boolean reuseVarAssignmentsOfReachableErrorLocatiosn = false;
 
 		if (reuseVarAssignmentsOfReachableErrorLocatiosn) {
 			boolean reuse;
@@ -200,9 +200,9 @@ public class AnnotateAndAsserter<L extends IAction> {
 					// annotationOfCurrentTestGoal.mUnsatWithVAs.add(mVAforReuse);
 					// annotationOfCurrentTestGoal.mVAofOppositeBranch.setVa(mVAforReuse.mVarAssignmentPair);
 					System.out.println("REUSE UNSAT");
-					mCurrentVA.mUnsatWithVAs.add(mVAforReuse);
+					// mCurrentVA.mUnsatWithVAs.add(mVAforReuse);
 					mMgdScriptTc.getScript().pop(1);
-					if (lastVaInTraceIsUsedForReuse || mVAforReuse.equals(mDefaultVA)) {
+					if ((lastVaInTraceIsUsedForReuse || mVAforReuse.equals(mDefaultVA)) && !mVAforReuse.mNegatedVA) {
 						if (nondetsInTrace.size() == nondetsInTraceAfterPreviousVA.size()
 								+ mVAforReuse.mVarAssignmentPair.size()) {
 							System.out.println("OtherBranchRemoveCheck");
