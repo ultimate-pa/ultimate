@@ -851,8 +851,11 @@ public class FunctionHandler {
 					currentParamDec.getType(), declInformation);
 			in[i] = new VarList(loc, new String[] { currentParamId }, currentParamType);
 
-			mSymboltable.storeCSymbol(hook, currentParamDec.getName(), new SymbolTableValue(currentParamId, null,
-					currentParamType, currentParamDec, declInformation, null, false));
+			// Workaround for function pointers: We do not insert anything in the symbol table
+			if (hook != null) {
+				mSymboltable.storeCSymbol(hook, currentParamDec.getName(), new SymbolTableValue(currentParamId, null,
+						currentParamType, currentParamDec, declInformation, null, false));
+			}
 		}
 		if (hasUsedVarArgs) {
 			// Add an additional pointer-argument for the varargs
@@ -1019,7 +1022,7 @@ public class FunctionHandler {
 		final BoogieProcedureInfo procInfo = mProcedureManager.getOrConstructProcedureInfo(methodName);
 
 		// begin new scope for retranslation of ACSL specification
-		mProcedureManager.beginProcedureScope(mCHandler, procInfo);
+		mCHandler.beginScope();
 
 		final VarList[] in = processInParams(loc, funcType, procInfo, hook);
 
@@ -1065,7 +1068,7 @@ public class FunctionHandler {
 		// if possible, find the actual definition of this declaration s.t. we can update the varargs usage
 		procInfo.updateCFunction(updateVarArgsForDeclaration(hook, funcType, loc, methodName));
 		// end scope for retranslation of ACSL specification
-		mProcedureManager.endProcedureScope(mCHandler);
+		mCHandler.endScope();
 	}
 
 	private static CFunction updateVarArgsForDeclaration(final IASTNode node, final CFunction funcType,

@@ -2883,7 +2883,7 @@ public class CHandler {
 
 		// this is only to have a minimal symbolTableEntry (containing boogieID) for
 		// translation of the initializer
-		mSymbolTable.storeCSymbol(hook, cDec.getName(),
+		mSymbolTable.storeCSymbol(node, cDec.getName(),
 				new SymbolTableValue(bId, null, null, cDec, declarationInformation, hook, false));
 		final InitializerResult initializer = translateInitializer(main, cDec);
 		cDec.setInitializerResult(initializer);
@@ -3012,7 +3012,7 @@ public class CHandler {
 		// reset the symbol table value with its final contents
 		// TODO: Unnamed struct fields have cDec.getName() == "" ; is this supposed to
 		// happen?
-		mSymbolTable.storeCSymbol(hook, cDec.getName(),
+		mSymbolTable.storeCSymbol(node, cDec.getName(),
 				new SymbolTableValue(bId, boogieDec, translatedType, cDec, declarationInformation, hook, false));
 		return result;
 	}
