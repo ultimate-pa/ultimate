@@ -84,9 +84,11 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 			} else if (entry instanceof LoopInvariant) {
 				line = ((LoopInvariant) entry).getLocation().getLine();
 				addFunction = (node, before) -> addLoopInvariant((LoopInvariant) entry, node, loopInvariants);
-			} else {
+			} else if (mIgnoreUnmatchedEntries) {
 				mStats.fail();
 				continue;
+			} else {
+				throw new UnsupportedOperationException("The witness entry " + entry + " could not be matched.");
 			}
 			final LineMatchingVisitor visitor = new LineMatchingVisitor(line);
 			visitor.run(mTranslationUnit);
