@@ -158,7 +158,7 @@ public class AnnotateAndAsserter<L extends IAction> {
 			pendingContextCode++;
 		}
 
-		final boolean reuseVarAssignmentsOfReachableErrorLocatiosn = false;
+		final boolean reuseVarAssignmentsOfReachableErrorLocatiosn = true;
 
 		if (reuseVarAssignmentsOfReachableErrorLocatiosn) {
 			boolean reuse;

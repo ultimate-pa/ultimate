@@ -533,7 +533,7 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 				}
 			}
 		}
-		final boolean vaReuse = false;
+		final boolean vaReuse = true;
 		if (vaReuse) {
 			final IElement statementBranch = (IElement) nsb.mSsa.getTrace().getSymbol(nsb.mSsa.getTrace().length() - 1);
 			if (statementBranch.getPayload().getAnnotations()
