@@ -77,26 +77,29 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 		for (final WitnessEntry entry : mWitness.getEntries()) {
 			final int line;
 			final BiConsumer<IASTNode, Boolean> addFunction;
-			if (entry instanceof LocationInvariant && !mCheckOnlyLoopInvariants) {
+			if (entry instanceof LocationInvariant) {
+				if (mCheckOnlyLoopInvariants) {
+					continue;
+				}
 				line = ((LocationInvariant) entry).getLocation().getLine();
 				addFunction = (node, before) -> addLocationInvariant((LocationInvariant) entry, node,
 						Boolean.TRUE.equals(before) ? locationInvariantsBefore : locationInvariantsAfter, before);
 			} else if (entry instanceof LoopInvariant) {
 				line = ((LoopInvariant) entry).getLocation().getLine();
 				addFunction = (node, before) -> addLoopInvariant((LoopInvariant) entry, node, loopInvariants);
-			} else if (mIgnoreUnmatchedEntries) {
-				mStats.fail();
-				continue;
 			} else {
-				throw new UnsupportedOperationException("The witness entry " + entry + " could not be matched.");
+				throw new UnsupportedOperationException("Unknown entry type " + entry.getClass().getSimpleName());
 			}
 			final LineMatchingVisitor visitor = new LineMatchingVisitor(line);
 			visitor.run(mTranslationUnit);
 			final Set<IASTNode> matchesBefore = visitor.getMatchedNodesBefore();
 			final Set<IASTNode> matchesAfter = visitor.getMatchedNodesAfter();
 			if (matchesBefore.isEmpty() && matchesAfter.isEmpty()) {
-				mStats.fail();
-				continue;
+				if (mIgnoreUnmatchedEntries) {
+					mStats.fail();
+					continue;
+				}
+				throw new UnsupportedOperationException("The witness entry " + entry + " could not be matched.");
 			}
 			matchesBefore.forEach(x -> addFunction.accept(x, true));
 			matchesAfter.forEach(x -> addFunction.accept(x, false));
