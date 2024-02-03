@@ -270,12 +270,11 @@ public class AnnotateAndAsserter<L extends IAction> {
 		case SmtSortUtils.FLOATINGPOINT_SORT: {
 
 			System.out.println(nondetVar.getSort().getIndices()[1]);
-
 			if (nondetVar.getSort().getIndices()[1].equals("24")) {
 				if (value != null) {
 					final ApplicationTerm valueAsAppterm = (ApplicationTerm) value;
 					nondetValue = SmtUtils.unfTerm(mMgdScriptTc.getScript(), valueAsAppterm.getFunction().getName(),
-							null, null, valueAsAppterm.getParameters());
+							valueAsAppterm.getSort().getIndices(), null, valueAsAppterm.getParameters());
 				} else {
 					// (fp (_ BitVec 1) (_ BitVec eb) (_ BitVec i) (_ FloatingPoint eb sb))
 					// (_ +zero 2 4)
@@ -493,7 +492,7 @@ public class AnnotateAndAsserter<L extends IAction> {
 			// increase at the end of loop
 			nondetPositionCount += 1;
 		}
-		if (inputBetweenTestGoals && mVAforReuse.checkCount == 2) {
+		if (inputBetweenTestGoals) {
 			exportTest(testV);
 		}
 		return nondetInVA;
