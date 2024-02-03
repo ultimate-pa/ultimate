@@ -270,7 +270,8 @@ public final class SmtUtils {
 
 	public static ExtendedSimplificationResult simplifyWithStatistics(final ManagedScript mgdScript, final Term formula,
 			final IUltimateServiceProvider services, final SimplificationTechnique simplificationTechnique) {
-		return simplifyWithStatistics(mgdScript, formula, mgdScript.term(null, "true"), services, simplificationTechnique);
+		return simplifyWithStatistics(mgdScript, formula, mgdScript.term(null, "true"), services,
+				simplificationTechnique);
 	}
 
 	public static ExtendedSimplificationResult simplifyWithStatistics(final ManagedScript mgdScript, final Term formula,
@@ -1333,8 +1334,7 @@ public final class SmtUtils {
 			}
 		}
 		if (SmtSortUtils.isNumericSort(lhs.getSort())) {
-			return PolynomialRelation.of(script, RelationSymbol.convert(functionSymbol), lhs, rhs)
-					.toTerm(script);
+			return PolynomialRelation.of(script, RelationSymbol.convert(functionSymbol), lhs, rhs).toTerm(script);
 		} else {
 			assert SmtSortUtils.isBitvecSort(lhs.getSort());
 			// TODO 20220908 Matthias: Minor improvements still possible. E.g., everything
@@ -1512,6 +1512,9 @@ public final class SmtUtils {
 		case "bvsgt":
 		case "bvsge":
 			result = BitvectorUtils.unfTerm(script, funcname, toBigIntegerArray(indices), params);
+			break;
+		case "fp":
+			result = script.term(funcname, null, null, params);
 			break;
 		default:
 			result = script.term(funcname, indices, resultSort, params);
@@ -1789,9 +1792,8 @@ public final class SmtUtils {
 	}
 
 	/**
-	 * Convert `(div (div a1 ... an) d)` to `(div a1 ... d*an)` if `an` is a
-	 * positive literal and convert it to `(div a1 ... an d)` otherwise. Note that
-	 * the similar transformation would be unsound for negative literals, see
+	 * Convert `(div (div a1 ... an) d)` to `(div a1 ... d*an)` if `an` is a positive literal and convert it to `(div a1
+	 * ... an d)` otherwise. Note that the similar transformation would be unsound for negative literals, see
 	 * {@link PolynomialTest#intDivision10}
 	 */
 	public static Term divIntFlatten(final Script script, final Term divident, final BigInteger divisorBigInt) {
@@ -2306,10 +2308,8 @@ public final class SmtUtils {
 	}
 
 	/**
-	 * @return LBool.UNSAT if the SMT solver was able to prove that the antecedent
-	 *         implies the succedent, LBool.SAT if the SMT was able to prove that
-	 *         the antecent does not imply the succedent, and LBool.UNKNOWN
-	 *         otherwise.
+	 * @return LBool.UNSAT if the SMT solver was able to prove that the antecedent implies the succedent, LBool.SAT if
+	 *         the SMT was able to prove that the antecent does not imply the succedent, and LBool.UNKNOWN otherwise.
 	 */
 	public static LBool checkImplication(final Term antecedent, final Term succedent, final Script script) {
 		final Term notImply = SmtUtils.and(script, antecedent, SmtUtils.not(script, succedent));
@@ -2715,15 +2715,12 @@ public final class SmtUtils {
 	}
 
 	/**
-	 * Auxiliary method that replaces all free variables in a term by constant
-	 * symbols (i.e., 0-ary function symbols). These constant symbols are declared
-	 * in the script. <br>
-	 * Use this method with caution. The constant symbols will live forever in the
-	 * current stack frame, hence this method should be used in combination with
-	 * push/pop in order to remove the constant symbols from the assertion stack
-	 * after they are not needed any more. <br>
-	 * The name for the new constant symbols are defined by the method
-	 * {@link SmtUtils#termVariable2constant}).
+	 * Auxiliary method that replaces all free variables in a term by constant symbols (i.e., 0-ary function symbols).
+	 * These constant symbols are declared in the script. <br>
+	 * Use this method with caution. The constant symbols will live forever in the current stack frame, hence this
+	 * method should be used in combination with push/pop in order to remove the constant symbols from the assertion
+	 * stack after they are not needed any more. <br>
+	 * The name for the new constant symbols are defined by the method {@link SmtUtils#termVariable2constant}).
 	 */
 	public static Term replaceFreeVariablesByConstants(final Script script, final Term term) {
 		final TermVariable[] vars = term.getFreeVars();
