@@ -93,12 +93,13 @@ public class InvariantChecker {
 		ENTRY, LOOP_HEAD, ERROR_LOC, UNKNOWN, LOOP_INVARIANT_ERROR_LOC;
 	}
 
-	public InvariantChecker(final IUltimateServiceProvider services, final IIcfg<IcfgLocation> icfg) {
+	public InvariantChecker(final IUltimateServiceProvider services, final IIcfg<IcfgLocation> icfg,
+			final boolean allowLoopsWithoutAnnotation) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mIcfg = icfg;
 		mLoopLocations = extractLoopLocations(mIcfg);
-		if (!mLoopLocations.getLoopLocWithoutInvariant().isEmpty()) {
+		if (!allowLoopsWithoutAnnotation && !mLoopLocations.getLoopLocWithoutInvariant().isEmpty()) {
 			final List<CategorizedProgramPoint> loopPPwithoutInvariant = new ArrayList<>();
 			for (final IcfgLocation loc : mLoopLocations.getLoopLocWithoutInvariant()) {
 				loopPPwithoutInvariant.add(constructCategorizedProgramPoint(loc));
