@@ -142,7 +142,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 		clrReporter.reportCegarLoopResult(result);
 		clrReporter.reportAllSafeResultIfNecessary(result, errNodesOfAllProc.size());
 
-		mLogger.info("Statistics - iterations: " + abstractCegarLoop.getIteration());
+		// mLogger.info("Statistics - iterations: " + abstractCegarLoop.getIteration());
 		// s_Logger.info("Statistics - biggest abstraction: " +
 		// abstractCegarLoop.mBiggestAbstractionSize + " states");
 		// s_Logger.info("Statistics - biggest abstraction in iteration: " +
@@ -150,7 +150,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 
 		String stat = "";
 		stat += "Statistics:  ";
-		stat += " Iterations " + abstractCegarLoop.getIteration() + ".";
+		// stat += " Iterations " + abstractCegarLoop.getIteration() + ".";
 		stat += " CFG has ";
 		stat += petrifiedIcfg.getProgramPoints().size();
 		stat += " locations,";

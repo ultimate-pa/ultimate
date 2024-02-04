@@ -135,7 +135,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 	/**
 	 * Current Iteration of this CEGAR loop.
 	 */
-	protected int mIteration;
+	private int mIteration;
 
 	/**
 	 * Accepting run of the abstraction obtained in this iteration.
@@ -295,11 +295,11 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 	 */
 	public abstract IElement getArtifact();
 
-	public int getIteration() {
+	protected int getIteration() {
 		return mIteration;
 	}
 
-	public String errorLocs() {
+	private String errorLocs() {
 		final Iterator<? extends IcfgLocation> it = mErrorLocs.iterator();
 		if (!it.hasNext()) {
 			return "[]";
@@ -336,7 +336,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 		return r;
 	}
 
-	public final CegarLoopResult<L> startCegar() {
+	private final CegarLoopResult<L> startCegar() {
 		mIteration = 0;
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("======== Iteration %s == of CEGAR loop == %s ========", mIteration, mName);

@@ -226,7 +226,7 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>>
 
 		if (mPref.hasLimitTraceHistogram() && traceHistogram.getMax() > mPref.getLimitTraceHistogram()) {
 			final String taskDescription =
-					"bailout by trace histogram " + traceHistogram.toString() + " in iteration " + mIteration;
+					"bailout by trace histogram " + traceHistogram.toString() + " in iteration " + getIteration();
 			throw new TaskCanceledException(UserDefinedLimit.TRACE_HISTOGRAM, getClass(), taskDescription);
 		}
 
@@ -303,7 +303,7 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>>
 		mErrorGeneralizationEngine.constructErrorAutomaton(mCounterexample, mPredicateFactory,
 				mRefinementResult.getPredicateUnifier(), mCsToolkit, mSimplificationTechnique, mXnfConversionTechnique,
 				mIcfg.getCfgSmtToolkit().getSymbolTable(), mPredicateFactoryInterpolantAutomata, mAbstraction,
-				mIteration);
+				getIteration());
 
 		mInterpolAutomaton = null;
 		final NestedWordAutomaton<L, IPredicate> resultBeforeEnhancement =
@@ -315,7 +315,7 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>>
 
 	@Override
 	protected boolean refineAbstraction() throws AutomataLibraryException {
-		mStateFactoryForRefinement.setIteration(mIteration);
+		mStateFactoryForRefinement.setIteration(getIteration());
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 
 		final INestedWordAutomaton<L, IPredicate> minuend = mAbstraction;
@@ -329,7 +329,7 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>>
 		final InterpolantAutomatonEnhancement enhanceMode;
 		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> subtrahend;
 		final boolean exploitSigmaStarConcatOfIa;
-		if (mErrorGeneralizationEngine.hasAutomatonInIteration(mIteration)) {
+		if (mErrorGeneralizationEngine.hasAutomatonInIteration(getIteration())) {
 			mErrorGeneralizationEngine.startDifference();
 			automatonType = AutomatonType.ERROR;
 			useErrorAutomaton = true;
@@ -392,7 +392,7 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>>
 				}
 			}
 
-			if (mErrorGeneralizationEngine.hasAutomatonInIteration(mIteration)) {
+			if (mErrorGeneralizationEngine.hasAutomatonInIteration(getIteration())) {
 				mErrorGeneralizationEngine.stopDifference(minuend, mPredicateFactoryInterpolantAutomata,
 						mPredicateFactoryResultChecking, mCounterexample, false);
 				if (mFaultLocalizationMode != RelevanceAnalysisMode.NONE) {
@@ -450,7 +450,7 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>>
 			final AutomatonType automatonType) throws AutomataLibraryException {
 		final RunningTaskInfo runningTaskInfo =
 				getDifferenceTimeoutRunningTaskInfo(minuend, subtrahend, subtrahendBeforeEnhancement, automatonType);
-		if (mErrorGeneralizationEngine.hasAutomatonInIteration(mIteration)) {
+		if (mErrorGeneralizationEngine.hasAutomatonInIteration(getIteration())) {
 			mErrorGeneralizationEngine.stopDifference(minuend, mPredicateFactoryInterpolantAutomata,
 					mPredicateFactoryResultChecking, mCounterexample, true);
 		}
@@ -515,7 +515,7 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>>
 		AutomataMinimization<Set<IcfgLocation>, IPredicate, L> am;
 		try {
 			final boolean computeOld2New = mProofUpdater != null;
-			am = new AutomataMinimization<>(getServices(), mAbstraction, minimization, computeOld2New, mIteration,
+			am = new AutomataMinimization<>(getServices(), mAbstraction, minimization, computeOld2New, getIteration(),
 					predicateFactoryRefinement, MINIMIZE_EVERY_KTH_ITERATION, mStoredRawInterpolantAutomata,
 					mInterpolAutomaton, MINIMIZATION_TIMEOUT, resultCheckPredFac, lcsProvider, true);
 		} catch (final AutomataMinimizationTimeout e) {

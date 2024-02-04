@@ -276,7 +276,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		final IBudgetFunction<L, IPredicate> optBudget = new OptimisticBudget<>(new AutomataLibraryServices(mServices),
 				mPOR.getDfsOrder(), mPOR.getSleepMapFactory(), this::createVisitor, reduction);
 
-		final double switchProbability = mPref.getCoinflipProbability(mIteration);
+		final double switchProbability = mPref.getCoinflipProbability(getIteration());
 		final long seed = mPref.coinflipSeed();
 		switch (mPref.useCoinflip()) {
 		case OFF:

@@ -164,7 +164,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 
 	@Override
 	protected boolean isAbstractionEmpty() throws AutomataOperationCanceledException {
-		if (USE_COUNTEREXAMPLE_CACHE && mIteration != 0) {
+		if (USE_COUNTEREXAMPLE_CACHE && getIteration() != 0) {
 			mCounterexample = mCounterexampleCache.getCounterexample();
 		} else {
 			final boolean cutOffSameTrans = mPref.cutOffRequiresSameTransition();
@@ -206,7 +206,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 
 		if (mPref.hasLimitTraceHistogram() && traceHistogram.getMax() > mPref.getLimitTraceHistogram()) {
 			final String taskDescription =
-					"bailout by trace histogram " + traceHistogram.toString() + " in iteration " + mIteration;
+					"bailout by trace histogram " + traceHistogram.toString() + " in iteration " + getIteration();
 			throw new TaskCanceledException(UserDefinedLimit.TRACE_HISTOGRAM, getClass(), taskDescription);
 		}
 		return false;
@@ -235,7 +235,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 				super.writeAutomatonToFile(enhancementResult.getSecond().getResult(), filename);
 			}
 
-			if (mIteration <= mPref.watchIteration() && mPref.artifact() == Artifact.NEG_INTERPOLANT_AUTOMATON) {
+			if (getIteration() <= mPref.watchIteration() && mPref.artifact() == Artifact.NEG_INTERPOLANT_AUTOMATON) {
 				// Complement the interpolant automaton
 				final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> nia =
 						new ComplementDD<>(new AutomataLibraryServices(getServices()),
@@ -366,7 +366,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 			}
 		}
 
-		mCegarLoopBenchmark.reportAbstractionSize(mAbstraction.size(), mIteration);
+		mCegarLoopBenchmark.reportAbstractionSize(mAbstraction.size(), getIteration());
 		mBiggestAbstractionTransitions = mAbstraction.getTransitions().size();
 
 		assert !acceptsPetriViaFA(getServices(), mAbstraction, mCounterexample.getWord()) : "Intersection broken!";
@@ -377,12 +377,12 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 		// statistic[0] + " internal transitions " + statistic[1] +
 		// "call transitions " + statistic[2]+ " return transitions ");
 
-		if (mIteration <= mPref.watchIteration()
+		if (getIteration() <= mPref.watchIteration()
 				&& (mPref.artifact() == Artifact.ABSTRACTION || mPref.artifact() == Artifact.RCFG)) {
 			mArtifactAutomaton = mAbstraction;
 		}
 		if (mPref.dumpAutomata()) {
-			final String filename = "Abstraction" + mIteration;
+			final String filename = "Abstraction" + getIteration();
 			writeAutomatonToFile(mAbstraction, filename);
 		}
 		return true;
@@ -478,7 +478,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 							(IPetriNet<L, IPredicate>) mAbstraction, raw, universalSubtrahendLoopers);
 				} catch (final AutomataOperationCanceledException tce) {
 					final String taskDescription = generateOnDemandEnhancementCanceledMessage(interpolAutomaton,
-							universalSubtrahendLoopers, mAbstraction.getAlphabet(), mIteration);
+							universalSubtrahendLoopers, mAbstraction.getAlphabet(), getIteration());
 					tce.addRunningTaskInfo(new RunningTaskInfo(getClass(), taskDescription));
 					throw tce;
 				} finally {
@@ -491,7 +491,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 				if (end - start > DEBUG_DUMP_DRYRUNRESULT_THRESHOLD * 1_000_000_000L) {
 					final String filename = new SubtaskIterationIdentifier(mTaskIdentifier, getIteration())
 							+ "_DifferencePairwiseOnDemandInput";
-					final String atsHeaderMessage = "inputs of difference operation in iteration " + mIteration;
+					final String atsHeaderMessage = "inputs of difference operation in iteration " + getIteration();
 					final String atsCode = "PetriNet diff = differencePairwiseOnDemand(net, nwa);";
 					super.writeAutomataToFile(filename, atsHeaderMessage, atsCode,
 							new NamedAutomaton<>("net", mAbstraction), new NamedAutomaton<>("nwa", dia));
@@ -524,7 +524,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 			assert checkInterpolantAutomatonInductivity(dia) : "Not inductive";
 		}
 		if (mPref.dumpAutomata()) {
-			final String filename = "InterpolantAutomatonDeterminized_Iteration" + mIteration;
+			final String filename = "InterpolantAutomatonDeterminized_Iteration" + getIteration();
 			writeAutomatonToFile(dia, filename);
 		}
 		// assert accepts(mServices, dia, mCounterexample.getWord(),

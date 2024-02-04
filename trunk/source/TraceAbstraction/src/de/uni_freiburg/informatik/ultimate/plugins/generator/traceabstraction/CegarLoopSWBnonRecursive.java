@@ -718,7 +718,7 @@ public class CegarLoopSWBnonRecursive<L extends IIcfgTransition<?>> extends NwaC
 		// s_Logger.debug("[" + i + "]: " + mErrorPathHistory.get(i));
 		// }
 
-		mCegarLoopBenchmark.reportAbstractionSize(mAbstraction.size(), mIteration);
+		mCegarLoopBenchmark.reportAbstractionSize(mAbstraction.size(), getIteration());
 
 		mLogger.info("Abstraction has " + mNestedAbstraction.sizeInformation());
 		mLogger.info("Interpolant automaton has " + mInterpolAutomaton.sizeInformation());

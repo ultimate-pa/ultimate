@@ -295,7 +295,7 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 		try {
 			if (mPref.hasLimitPathProgramCount() && mPref.getLimitPathProgramCount() < mStrategyFactory
 					.getPathProgramCache().getPathProgramCount(mCounterexample)) {
-				final String taskDescription = "bailout by path program count limit in iteration " + mIteration;
+				final String taskDescription = "bailout by path program count limit in iteration " + getIteration();
 				throw new TaskCanceledException(UserDefinedLimit.PATH_PROGRAM_ATTEMPTS, getClass(), taskDescription);
 			}
 
@@ -320,7 +320,7 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 		if (feasibility != LBool.SAT) {
 			// dump path program if necessary
 			mPathProgramDumpController.reportPathProgram(mCounterexample, mRefinementResult.somePerfectSequenceFound(),
-					mIteration);
+					getIteration());
 		}
 		if (feasibility != LBool.UNSAT) {
 			mLogger.info("Counterexample %s feasible", feasibility == LBool.SAT ? "is" : "might be");
@@ -455,9 +455,9 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 			return true;
 		}
 		final Set<L> counterexampleLetters = mCounterexample.getWord().asSet();
-		final PathProgramConstructionResult ppcr = PathProgram.constructPathProgram(
-				"PathprogramSubtractedCheckIteration" + mIteration, mIcfg, counterexampleLetters,
-				Collections.emptySet());
+		final PathProgramConstructionResult ppcr =
+				PathProgram.constructPathProgram("PathprogramSubtractedCheckIteration" + getIteration(), mIcfg,
+						counterexampleLetters, Collections.emptySet());
 		final Map<IIcfgTransition<?>, IIcfgTransition<?>> oldTransition2NewTransition =
 				ppcr.getOldTransition2NewTransition();
 		final Map<IIcfgTransition<?>, IIcfgTransition<?>> newTransition2OldTransition =
@@ -511,7 +511,7 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 			} else {
 				printedAutomaton = automaton;
 			}
-			new AutomatonDefinitionPrinter<String, String>(services, "nwa" + mIteration,
+			new AutomatonDefinitionPrinter<String, String>(services, "nwa" + getIteration(),
 					mPref.dumpPath() + File.separator + filename, mPrintAutomataLabeling, "", !mFirstReuseDump,
 					printedAutomaton);
 			mFirstReuseDump = false;
@@ -534,7 +534,7 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 			} catch (final Error e) {
 				// suppress any exception, throw assertion error instead
 			}
-			throw new AssertionError("enhanced interpolant automaton in iteration " + mIteration
+			throw new AssertionError("enhanced interpolant automaton in iteration " + getIteration()
 					+ " broken: counterexample of length " + mCounterexample.getLength() + " not accepted"
 					+ (isOriginalBroken ? " (original was already broken)" : " (original is ok)"));
 		}

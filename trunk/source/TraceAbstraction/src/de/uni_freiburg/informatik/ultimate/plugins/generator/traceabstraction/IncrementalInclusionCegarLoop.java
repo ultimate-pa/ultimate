@@ -205,7 +205,7 @@ public class IncrementalInclusionCegarLoop<L extends IIcfgTransition<?>> extends
 
 	@Override
 	protected boolean refineAbstraction() throws AutomataLibraryException {
-		mStateFactoryForRefinement.setIteration(super.mIteration);
+		mStateFactoryForRefinement.setIteration(getIteration());
 		// howDifferentAreInterpolants(mInterpolAutomaton.getStates());
 
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
@@ -281,7 +281,7 @@ public class IncrementalInclusionCegarLoop<L extends IIcfgTransition<?>> extends
 			if (mPref.dumpAutomata()) {
 				for (int i = 0; i < mInterpolantAutomata.size(); i++) {
 					final String filename =
-							"IncrementalInclusion_Interation" + mIteration + "_InterpolantAutomaton" + i;
+							"IncrementalInclusion_Interation" + getIteration() + "_InterpolantAutomaton" + i;
 					super.writeAutomatonToFile(mInterpolantAutomata.get(i), filename);
 				}
 			}
@@ -305,7 +305,7 @@ public class IncrementalInclusionCegarLoop<L extends IIcfgTransition<?>> extends
 		if (mPref.dumpAutomata()) {
 			for (int i = 0; i < mInterpolantAutomata.size(); i++) {
 				final String filename =
-						"EnhancedInterpolantAutomaton_WhoseConstructionWasStartedIn_Iteration" + mIteration;
+						"EnhancedInterpolantAutomaton_WhoseConstructionWasStartedIn_Iteration" + getIteration();
 				super.writeAutomatonToFile(mInterpolantAutomata.get(i), filename);
 				mInterpolantAutomata.get(i);
 			}

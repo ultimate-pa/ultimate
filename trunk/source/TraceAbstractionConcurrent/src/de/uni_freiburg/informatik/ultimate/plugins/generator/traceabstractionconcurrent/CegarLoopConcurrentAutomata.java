@@ -104,7 +104,7 @@ public class CegarLoopConcurrentAutomata<L extends IIcfgTransition<?>> extends N
 		AutomataMinimization<Set<IcfgLocation>, IMLPredicate, L> am;
 		try {
 			final boolean computeOld2New = mProofUpdater != null;
-			am = new AutomataMinimization<>(getServices(), mAbstraction, minimization, computeOld2New, mIteration,
+			am = new AutomataMinimization<>(getServices(), mAbstraction, minimization, computeOld2New, getIteration(),
 					predicateFactoryRefinement, MINIMIZE_EVERY_KTH_ITERATION, mStoredRawInterpolantAutomata,
 					mInterpolAutomaton, MINIMIZATION_TIMEOUT, resultCheckPredFac, lcsProvider, false);
 		} catch (final AutomataMinimizationTimeout e) {
@@ -140,7 +140,7 @@ public class CegarLoopConcurrentAutomata<L extends IIcfgTransition<?>> extends N
 
 	@Override
 	protected boolean refineAbstraction() throws AutomataLibraryException {
-		mStateFactoryForRefinement.setIteration(super.mIteration);
+		mStateFactoryForRefinement.setIteration(getIteration());
 		// howDifferentAreInterpolants(mInterpolAutomaton.getStates());
 
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
@@ -196,7 +196,7 @@ public class CegarLoopConcurrentAutomata<L extends IIcfgTransition<?>> extends N
 		mAbstraction = diff.getResult();
 		// mDeadEndRemovalTime = diff.getDeadEndRemovalTime();
 		if (mPref.dumpAutomata()) {
-			final String filename = "InterpolantAutomaton_Iteration" + mIteration;
+			final String filename = "InterpolantAutomaton_Iteration" + getIteration();
 			super.writeAutomatonToFile(mInterpolAutomaton, filename);
 		}
 
