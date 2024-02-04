@@ -38,6 +38,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualiz
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
+// TODO #proofRefactor
+@Deprecated
 public class WitnessProcedureContract extends ModernAnnotations {
 
 	private static final long serialVersionUID = 1L;
