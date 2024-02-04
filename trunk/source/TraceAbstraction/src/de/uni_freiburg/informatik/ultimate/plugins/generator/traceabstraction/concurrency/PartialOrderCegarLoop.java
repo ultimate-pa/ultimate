@@ -114,7 +114,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
  *            The type of statements in the program.
  */
 public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
-		extends BasicCegarLoop<L, INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> {
+		extends BasicCegarLoop<L, INwaOutgoingLetterAndTransitionProvider<L, IPredicate>, Object> {
 	private final PartialOrderMode mPartialOrderMode;
 	private final InformationStorageFactory mFactory = new InformationStorageFactory();
 
@@ -134,7 +134,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 			final TAPreferences taPrefs, final Set<IcfgLocation> errorLocs, final IUltimateServiceProvider services,
 			final List<IRefinableIndependenceProvider<L>> independenceProviders, final Class<L> transitionClazz,
 			final PredicateFactoryRefinement stateFactoryForRefinement) {
-		super(name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, false, services,
+		super(name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, null, services,
 				transitionClazz, stateFactoryForRefinement);
 
 		assert !mPref.applyOneShotPOR() : "Turn off one-shot partial order reduction when using this CEGAR loop.";

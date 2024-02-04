@@ -134,8 +134,8 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
  * @param <A>
  *            The type of abstraction refined by the CEGAR loop
  */
-public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>>
-		extends AbstractCegarLoop<L, A> {
+public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>, T>
+		extends AbstractCegarLoop<L, A, T> {
 
 	private static final boolean NON_EA_INDUCTIVITY_CHECK = false;
 
@@ -158,11 +158,10 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 
 	public BasicCegarLoop(final DebugIdentifier name, final A initialAbstraction, final IIcfg<?> rootNode,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final TAPreferences taPrefs,
-			final Set<? extends IcfgLocation> errorLocs, final boolean computeHoareAnnotation,
-			final IUltimateServiceProvider services, final Class<L> transitionClazz,
-			final PredicateFactoryRefinement stateFactoryForRefinement) {
+			final Set<? extends IcfgLocation> errorLocs, final T proofUpdater, final IUltimateServiceProvider services,
+			final Class<L> transitionClazz, final PredicateFactoryRefinement stateFactoryForRefinement) {
 		super(services, name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs,
-				computeHoareAnnotation);
+				proofUpdater);
 		mPathProgramDumpController = new PathProgramDumpController<>(getServices(), mPref, mIcfg);
 
 		InterpolationTechnique interpolation = taPrefs.interpolation();
@@ -174,10 +173,8 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 
 		mStoreFloydHoareAutomata = taPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.NONE;
 		mStateFactoryForRefinement = stateFactoryForRefinement;
-
-		// TODO #proofRefactor
-		mPredicateFactoryInterpolantAutomata = new PredicateFactoryForInterpolantAutomata(
-				super.mCsToolkit.getManagedScript(), mPredicateFactory, computeHoareAnnotation);
+		mPredicateFactoryInterpolantAutomata = new PredicateFactoryForInterpolantAutomata(mCsToolkit.getManagedScript(),
+				mPredicateFactory, proofUpdater != null);
 
 		mPredicateFactoryResultChecking = new PredicateFactoryResultChecking(mPredicateFactory);
 

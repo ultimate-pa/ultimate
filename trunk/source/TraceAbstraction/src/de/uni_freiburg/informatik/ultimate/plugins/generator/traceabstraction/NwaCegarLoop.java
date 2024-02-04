@@ -93,6 +93,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.cfg2automaton.C
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram.PathProgramConstructionResult;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.NwaCegarLoop.ProofUpdater;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization.AutomataMinimizationTimeout;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorabstraction.ErrorGeneralizationEngine;
@@ -114,7 +115,8 @@ import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  */
-public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L, INestedWordAutomaton<L, IPredicate>> {
+public class NwaCegarLoop<L extends IIcfgTransition<?>>
+		extends BasicCegarLoop<L, INestedWordAutomaton<L, IPredicate>, ProofUpdater<L, ?>> {
 
 	private enum AutomatonType {
 		FLOYD_HOARE("FloydHoare", "Fh"), ERROR("Error", "Err");
@@ -155,8 +157,6 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 	private final AStarHeuristic mAStarHeuristic;
 	private final Integer mAStarRandomHeuristicSeed;
 
-	protected final ProofUpdater<L, ?> mProofUpdater;
-
 	public <T extends IUpdateOnDifference<L> & IUpdateOnMinimization<L> & IFinishWithFinalAbstraction<INestedWordAutomaton<L, IPredicate>>> NwaCegarLoop(
 			final DebugIdentifier name, final INestedWordAutomaton<L, IPredicate> initialAbstraction,
 			final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
@@ -164,8 +164,8 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 			final boolean computeHoareAnnotation, final IUltimateServiceProvider services,
 			final Class<L> transitionClazz, final PredicateFactoryRefinement stateFactoryForRefinement) {
 		super(name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs,
-				computeHoareAnnotation, services, transitionClazz, stateFactoryForRefinement);
-		mProofUpdater = proofUpdater == null ? null : new ProofUpdater<>(proofUpdater);
+				proofUpdater == null ? null : new ProofUpdater<>(proofUpdater), services, transitionClazz,
+				stateFactoryForRefinement);
 
 		mErrorGeneralizationEngine = new ErrorGeneralizationEngine<>(services);
 

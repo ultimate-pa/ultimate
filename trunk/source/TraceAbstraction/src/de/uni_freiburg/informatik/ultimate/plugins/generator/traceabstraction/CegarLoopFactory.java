@@ -123,8 +123,8 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 	 *
 	 * @return the newly created CEGAR loop
 	 */
-	public BasicCegarLoop<L, ?> constructCegarLoop(final IUltimateServiceProvider services, final DebugIdentifier name,
-			final IIcfg<IcfgLocation> root, final Set<IcfgLocation> errorLocs,
+	public BasicCegarLoop<L, ?, ?> constructCegarLoop(final IUltimateServiceProvider services,
+			final DebugIdentifier name, final IIcfg<IcfgLocation> root, final Set<IcfgLocation> errorLocs,
 			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton,
 			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile) {
 		mCegarLoopBenchmark = new CegarLoopStatisticsGenerator();
@@ -204,7 +204,7 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 		return new PredicateFactory(services, csToolkit.getManagedScript(), csToolkit.getSymbolTable());
 	}
 
-	private BasicCegarLoop<L, ?> createFiniteAutomataCegarLoop(final IUltimateServiceProvider services,
+	private BasicCegarLoop<L, ?, ?> createFiniteAutomataCegarLoop(final IUltimateServiceProvider services,
 			final DebugIdentifier name, final IIcfg<IcfgLocation> root, final PredicateFactory predicateFactory,
 			final Set<IcfgLocation> errorLocs,
 			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile,

@@ -48,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.F
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.NamedAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaBasis;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
@@ -72,16 +71,13 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskFileIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.TaskIdentifier;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.HoareAnnotationPositions;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.NwaFloydHoareValidityCheck;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.IAbstractionSanityCheck;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -103,7 +99,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
  *
  * @author heizmann@informatik.uni-freiburg.de
  */
-public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>> {
+public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>, T> {
 	private static final boolean DUMP_BIGGEST_AUTOMATON = false;
 
 	protected final ILogger mLogger;
@@ -125,7 +121,11 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 	 * Intermediate layer to encapsulate preferences.
 	 */
 	protected final TAPreferences mPref;
-	protected final boolean mComputeHoareAnnotation;
+
+	/**
+	 * Iteratively computes a proof artifact during CEGAR loop. May be null.
+	 */
+	protected final T mProofUpdater;
 
 	/**
 	 * Set of error location whose reachability is analyzed by this CEGAR loop.
@@ -200,7 +200,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 	protected AbstractCegarLoop(final IUltimateServiceProvider services, final DebugIdentifier name,
 			final A initialAbstraction, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
-			final Set<? extends IcfgLocation> errorLocs, final boolean computeHoareAnnotation) {
+			final Set<? extends IcfgLocation> errorLocs, final T proofUpdater) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mSimplificationTechnique = taPrefs.getSimplificationTechnique();
@@ -213,7 +213,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 		mPredicateFactory = predicateFactory;
 		mPref = taPrefs;
 		mErrorLocs = errorLocs;
-		mComputeHoareAnnotation = computeHoareAnnotation;
+		mProofUpdater = proofUpdater;
 		// TODO: TaskIdentifier should probably be provided by caller
 		mTaskIdentifier = new SubtaskFileIdentifier(null, mIcfg.getIdentifier() + "_" + name);
 		mResultBuilder = new CegarLoopResultBuilder();
@@ -482,15 +482,19 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 			mLogger.info("%s automaton has %s", automatonType, mInterpolAutomaton.sizeInformation());
 		}
 
-		// TODO #proofRefactor
-		// TODO should proof updaters have methods for sanity checks like this?
-		if (mComputeHoareAnnotation && mPref.getHoareAnnotationPositions() == HoareAnnotationPositions.All) {
-			final var unifier = new PredicateUnifier(mLogger, mServices, mCsToolkit.getManagedScript(),
-					mPredicateFactory, mCsToolkit.getSymbolTable(), mSimplificationTechnique, mXnfConversionTechnique);
-			assert NwaFloydHoareValidityCheck.forInterpolantAutomaton(mServices, mCsToolkit.getManagedScript(),
-					new IncrementalHoareTripleChecker(mCsToolkit, false), unifier,
-					(INestedWordAutomaton<L, IPredicate>) mAbstraction, true).getResult() : "Not inductive";
+		if (mProofUpdater != null && mProofUpdater instanceof IAbstractionSanityCheck<?>) {
+			assert ((IAbstractionSanityCheck<A>) mProofUpdater).performSanityCheck(mAbstraction);
 		}
+
+		// TODO #proofRefactor move the code below into Floyd/Hoare proof producer (method performSanityCheck)
+		//
+		// if (mProofUpdater != null && mPref.getHoareAnnotationPositions() == HoareAnnotationPositions.All) {
+		// final var unifier = new PredicateUnifier(mLogger, mServices, mCsToolkit.getManagedScript(),
+		// mPredicateFactory, mCsToolkit.getSymbolTable(), mSimplificationTechnique, mXnfConversionTechnique);
+		// assert NwaFloydHoareValidityCheck.forInterpolantAutomaton(mServices, mCsToolkit.getManagedScript(),
+		// new IncrementalHoareTripleChecker(mCsToolkit, false), unifier,
+		// (INestedWordAutomaton<L, IPredicate>) mAbstraction, true).getResult() : "Not inductive";
+		// }
 
 		if (mIteration <= mPref.watchIteration() && mPref.artifact() == Artifact.ABSTRACTION) {
 			mArtifactAutomaton = mAbstraction;
@@ -860,9 +864,8 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 				floydHoareAutomata = null;
 			}
 
-			// TODO #proofRefactor
-			// TODO make sure CEGAR loops transmit necessary info to proof producers (e.g. in finish() or isAbsEmpty())
-			// TODO let callers decide if they want to extract proofs using CegarLoopResult::hasProvenAnything()
+			// TODO #proofRefactor let CEGAR loops transmit info to proof producers (e.g. in finish() or isAbsEmpty())
+			// TODO #proofRefactor let callers decide what to do with proofs (use CegarLoopResult::hasProvenAnything)
 			// if (mComputeHoareAnnotation && mResults.values().stream().anyMatch(a -> a.getResult() == Result.SAFE)) {
 			// computeIcfgHoareAnnotation();
 			// writeHoareAnnotationToLogger();

@@ -113,7 +113,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 			}
 		}
 
-		BasicCegarLoop<IcfgEdge, ?> abstractCegarLoop;
+		BasicCegarLoop<IcfgEdge, ?, ?> abstractCegarLoop;
 		final AllErrorsAtOnceDebugIdentifier name = TraceAbstractionStarter.AllErrorsAtOnceDebugIdentifier.INSTANCE;
 		final PredicateFactoryRefinement stateFactoryForRefinement = new PredicateFactoryRefinement(mServices,
 				csToolkit.getManagedScript(), predicateFactory, false, Collections.emptySet());

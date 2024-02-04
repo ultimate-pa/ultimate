@@ -98,7 +98,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
 public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
-		extends BasicCegarLoop<L, BoundedPetriNet<L, IPredicate>> {
+		extends BasicCegarLoop<L, BoundedPetriNet<L, IPredicate>, Object> {
 
 	public enum SizeReduction {
 		REMOVE_DEAD, REMOVE_REDUNDANT_FLOW
@@ -151,7 +151,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 			final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final TAPreferences taPrefs, final Set<IcfgLocation> errorLocs, final IUltimateServiceProvider services,
 			final Class<L> transitionClazz, final PredicateFactoryRefinement stateFactoryForRefinement) {
-		super(name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, false, services,
+		super(name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, null, services,
 				transitionClazz, stateFactoryForRefinement);
 		mPetriClStatisticsGenerator = new PetriCegarLoopStatisticsGenerator(mCegarLoopBenchmark);
 		mCounterexampleCache = new CounterexampleCache<>();
@@ -520,8 +520,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 			throw new UnsupportedOperationException();
 		}
 
-		// TODO #proofRefactor
-		if (mComputeHoareAnnotation) {
+		if (mProofUpdater != null) {
 			assert checkInterpolantAutomatonInductivity(dia) : "Not inductive";
 		}
 		if (mPref.dumpAutomata()) {
