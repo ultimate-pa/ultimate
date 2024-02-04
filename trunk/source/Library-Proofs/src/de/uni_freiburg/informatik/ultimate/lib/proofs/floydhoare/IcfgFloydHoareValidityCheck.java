@@ -39,8 +39,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.MonolithicHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.HoareAnnotation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
@@ -115,23 +113,5 @@ public class IcfgFloydHoareValidityCheck<LOC extends IcfgLocation> extends Floyd
 	private <A extends IAction> Iterable<Pair<A, LOC>> getSuccessors(final LOC state, final Class<A> clazz) {
 		return state.getIncomingEdges().stream().filter(clazz::isInstance)
 				.map(e -> new Pair<>(clazz.cast(e), (LOC) e.getTarget())).collect(Collectors.toList());
-	}
-
-	@Deprecated
-	public static final class IcfgHoareAnnotation<LOC extends IcfgLocation> implements IFloydHoareAnnotation<LOC> {
-		@Override
-		public IPredicate getPrecondition() {
-			return null;
-		}
-
-		@Override
-		public IPredicate getPostcondition() {
-			return null;
-		}
-
-		@Override
-		public IPredicate getAnnotation(final LOC state) {
-			return HoareAnnotation.getAnnotation(state);
-		}
 	}
 }

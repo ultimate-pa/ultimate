@@ -68,6 +68,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformat
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.FloydHoareUtils;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.FloydHoareValidityCheck.MissingAnnotationBehaviour;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.IFloydHoareAnnotation;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.IcfgFloydHoareValidityCheck;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.ICopyActionFactory;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
@@ -178,8 +179,8 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 				&& results.stream().allMatch(a -> a.resultStream().noneMatch(Result::isLimit))) {
 			final IBacktranslationService backTranslatorService = mServices.getBacktranslationService();
 
-			// TODO #proofRefactor
-			final var annotation = new IcfgFloydHoareValidityCheck.IcfgHoareAnnotation<>();
+			// TODO #proofRefactor Retrieve the actual annotation and check it
+			final IFloydHoareAnnotation<IcfgLocation> annotation = null;
 			assert new IcfgFloydHoareValidityCheck<>(mServices, icfg, annotation, true,
 					MissingAnnotationBehaviour.IGNORE, true).getResult() : "incorrect Hoare annotation";
 
