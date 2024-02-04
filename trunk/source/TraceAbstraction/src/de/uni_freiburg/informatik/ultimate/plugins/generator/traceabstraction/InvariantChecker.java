@@ -50,11 +50,9 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.AnnotationCheckResul
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AnnotationCheckResult.LoopHead;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AnnotationCheckResult.ProcedureEntry;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AnnotationCheckResult.ProcedureExit;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResultAtElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity;
-import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
@@ -72,7 +70,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.TraceCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -96,20 +93,20 @@ public class InvariantChecker {
 		ENTRY, LOOP_HEAD, ERROR_LOC, UNKNOWN, LOOP_INVARIANT_ERROR_LOC;
 	}
 
-	public InvariantChecker(final IUltimateServiceProvider services, final IIcfg<IcfgLocation> icfg) {
+	public InvariantChecker(final IUltimateServiceProvider services, final IIcfg<IcfgLocation> icfg,
+			final boolean allowLoopsWithoutAnnotation) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mIcfg = icfg;
 		mLoopLocations = extractLoopLocations(mIcfg);
-		if (!mLoopLocations.getLoopLocWithoutInvariant().isEmpty()) {
-
-			final String shortDescription = "Not every loop was annotated with an invariant.";
-			final String longDescription = "Missing invariants at: "
-					+ icfgLocationsToListOfLineNumbers(mLoopLocations.getLoopLocWithoutInvariant());
-			final Severity severity = Severity.ERROR;
-			mResultForUltimateUser = new GenericResultAtElement<>(
-					mLoopLocations.getLoopLocWithoutInvariant().get(0).getOutgoingEdges().get(0), Activator.PLUGIN_ID,
-					mServices.getBacktranslationService(), shortDescription, longDescription, severity);
+		if (!allowLoopsWithoutAnnotation && !mLoopLocations.getLoopLocWithoutInvariant().isEmpty()) {
+			final List<CategorizedProgramPoint> loopPPwithoutInvariant = new ArrayList<>();
+			for (final IcfgLocation loc : mLoopLocations.getLoopLocWithoutInvariant()) {
+				loopPPwithoutInvariant.add(constructCategorizedProgramPoint(loc));
+			}
+			mResultForUltimateUser = new AnnotationCheckResult<>(Activator.PLUGIN_ID,
+					mServices.getBacktranslationService(), Collections.emptyList(), Collections.emptyList(),
+					Collections.emptyList(), Collections.emptyList(), loopPPwithoutInvariant);
 			return;
 		}
 		mLogger.info("Found " + mIcfg.getLoopLocations().size() + " loops.");
@@ -134,6 +131,7 @@ public class InvariantChecker {
 		final Set<TwoPointSubgraphDefinition> validTpsds = new HashSet<>();
 		final Set<TwoPointSubgraphDefinition> unknownTpsds = new HashSet<>();
 		final Map<TwoPointSubgraphDefinition, EdgeCheckResult> invalidTpsds = new HashMap<>();
+		final List<Pair<CategorizedProgramPoint, CategorizedProgramPoint>> nonCycleFreeSubgraphs = new ArrayList<>();
 		for (final TwoPointSubgraphDefinition tpsd : tpsds) {
 			final IcfgLocation startLoc = tpsd.getStartLocation();
 			final IcfgLocation errorLoc = tpsd.getEndLocation();
@@ -141,8 +139,20 @@ public class InvariantChecker {
 			if (!tpsd.getSubgraphEdges().contains(omitEdge)) {
 				omitEdge = null;
 			}
-			final AcyclicSubgraphMerger asm = new AcyclicSubgraphMerger(mServices, mIcfg, tpsd.getSubgraphEdges(),
-					tpsd.getStartLocation(), omitEdge, Collections.singleton(tpsd.getEndLocation()));
+			final AcyclicSubgraphMerger asm;
+			try {
+				asm = new AcyclicSubgraphMerger(mServices, mIcfg, tpsd.getSubgraphEdges(), tpsd.getStartLocation(),
+						omitEdge, Collections.singleton(tpsd.getEndLocation()));
+			} catch (final IllegalArgumentException iae) {
+				if (iae.getMessage().equals(AcyclicSubgraphMerger.SUBGRAPH_HAS_A_CYCLE)) {
+					final CategorizedProgramPoint cppBefore = constructCategorizedProgramPoint(tpsd.getStartLocation());
+					final CategorizedProgramPoint cppAfter = constructCategorizedProgramPoint(tpsd.getEndLocation());
+					nonCycleFreeSubgraphs.add(new Pair<>(cppBefore, cppAfter));
+					continue;
+				} else {
+					throw new AssertionError();
+				}
+			}
 			final UnmodifiableTransFormula tf = asm.getTransFormula(errorLoc);
 			Objects.requireNonNull(tf);
 			final EdgeCheckResult ecr = doCheck(startLoc, tf, errorLoc);
@@ -164,10 +174,10 @@ public class InvariantChecker {
 		}
 		final List<LoopFreeSegment<IcfgEdge>> validSegments = twoPointSubgraphsToSegments(validTpsds);
 		final List<LoopFreeSegment<IcfgEdge>> unknownSegments = twoPointSubgraphsToSegments(unknownTpsds);
-		final List<LoopFreeSegmentWithStatePair<IcfgEdge, Term>> invalidSegments =
-				twoPointSubgraphsToSegments(invalidTpsds);
-		mResultForUltimateUser = new AnnotationCheckResult<>(Activator.PLUGIN_ID,
-				mServices.getBacktranslationService(), validSegments, unknownSegments, invalidSegments);
+		final List<LoopFreeSegmentWithStatePair<IcfgEdge, Term>> invalidSegments = twoPointSubgraphsToSegments(
+				invalidTpsds);
+		mResultForUltimateUser = new AnnotationCheckResult<>(Activator.PLUGIN_ID, mServices.getBacktranslationService(),
+				validSegments, unknownSegments, invalidSegments, nonCycleFreeSubgraphs, Collections.emptyList());
 	}
 
 	private String icfgLocationsToListOfLineNumbers(final List<IcfgLocation> loopLocWithoutInvariant) {
@@ -334,7 +344,7 @@ public class InvariantChecker {
 		while (!worklistBackward.isEmpty()) {
 			final IcfgEdge edge = worklistBackward.removeFirst();
 			final IcfgLocation loc = edge.getSource();
-			if (icfg.getInitialNodes().contains(loc) || icfg.getLoopLocations().contains(loc)) {
+			if (isEntryNode(icfg, loc) || icfg.getLoopLocations().contains(loc)) {
 				startLocs.add(loc);
 			} else {
 				addIncomingEdgesToWorklistIfNotYetSeen(loc, worklistBackward, seenBackward);
@@ -358,6 +368,10 @@ public class InvariantChecker {
 			tpsds.add(tpsd);
 		}
 		return tpsds;
+	}
+
+	private boolean isEntryNode(final IIcfg<IcfgLocation> icfg, final IcfgLocation loc) {
+		return loc == icfg.getProcedureEntryNodes().get(loc.getProcedure());
 	}
 
 	public void addIncomingEdgesToWorklistIfNotYetSeen(final IcfgLocation loc,
@@ -418,6 +432,10 @@ public class InvariantChecker {
 						// does not belong to search space
 						continue;
 					}
+					if (seenForward.contains(succEdge)) {
+						// already visited
+						continue;
+					}
 					seenForward.add(succEdge);
 					worklistForward.add(succEdge);
 				}
@@ -465,10 +483,10 @@ public class InvariantChecker {
 		final IncrementalHoareTripleChecker htc = new IncrementalHoareTripleChecker(mIcfg.getCfgSmtToolkit(), true);
 		final PredicateFactory pf = new PredicateFactory(mServices, mIcfg.getCfgSmtToolkit().getManagedScript(),
 				mIcfg.getCfgSmtToolkit().getSymbolTable());
-		
+
 		final IPredicate precondition;
 		if (mIcfg.getProcedureEntryNodes().get(startLoc.getProcedure()).equals(startLoc)) {
-			TermVarsProc tvp = TraceCheckUtils.getOldVarsEquality(startLoc.getProcedure(),
+			final TermVarsProc tvp = TraceCheckUtils.getOldVarsEquality(startLoc.getProcedure(),
 					mIcfg.getCfgSmtToolkit().getModifiableGlobalsTable(), mIcfg.getCfgSmtToolkit().getManagedScript());
 			precondition = pf.newPredicate(tvp.getFormula());
 		} else {

@@ -42,6 +42,7 @@ import org.eclipse.cdt.core.dom.ast.IASTCompoundStatement;
 import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
 import org.eclipse.cdt.core.dom.ast.IASTForStatement;
+import org.eclipse.cdt.core.dom.ast.IASTFunctionDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTSwitchStatement;
@@ -299,12 +300,7 @@ public class FlatSymbolTable {
 				break;
 			}
 
-			final boolean hasImplicitScope =
-					cursor instanceof IASTFunctionDefinition || cursor instanceof IASTForStatement;
-			final boolean hasExplicitScope =
-					cursor instanceof IASTCompoundStatement && !(cursor.getParent() instanceof IASTFunctionDefinition)
-							&& !(cursor.getParent() instanceof IASTForStatement);
-			if (hasImplicitScope || hasExplicitScope) {
+			if (hasOwnScope(cursor)) {
 				// This node is the scope where values are currently stored inside
 				Map<String, SymbolTableValue> scopeTable = mCTable.get(cursor);
 				if (scopeTable == null) {
@@ -482,7 +478,8 @@ public class FlatSymbolTable {
 	}
 
 	private static boolean hasOwnScope(final IASTNode node) {
-		final boolean hasImplicitScope = node instanceof IASTFunctionDefinition || node instanceof IASTForStatement;
+		final boolean hasImplicitScope = node instanceof IASTFunctionDefinition || node instanceof IASTForStatement
+				|| node instanceof IASTFunctionDeclarator;
 		final boolean hasExplicitScope =
 				node instanceof IASTCompoundStatement && !(node.getParent() instanceof IASTFunctionDefinition)
 						&& !(node.getParent() instanceof IASTForStatement);

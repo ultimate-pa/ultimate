@@ -33,16 +33,19 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessProcedureContract;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.InvariantResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ProcedureContractResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgElement;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
@@ -116,24 +119,32 @@ public final class FloydHoareUtils {
 		}
 	}
 
-	public static void createProcedureContractResults(final String pluginName, final IIcfg<IcfgLocation> icfg,
-			final IFloydHoareAnnotation<IcfgLocation> annotation, final IBacktranslationService backTranslatorService,
+	public static void createProcedureContractResults(final IUltimateServiceProvider services, final String pluginName,
+			final IIcfg<IcfgLocation> icfg, final IFloydHoareAnnotation<IcfgLocation> annotation,
+			final IBacktranslationService backTranslatorService,
 			final Consumer<ProcedureContractResult<IIcfgElement, Term>> reporter) {
-		final Map<String, IcfgLocation> finalNodes = icfg.getProcedureExitNodes();
-		for (final Entry<String, IcfgLocation> proc : finalNodes.entrySet()) {
-			final String procName = proc.getKey();
+		final Map<String, IcfgLocation> exitNodes = icfg.getProcedureExitNodes();
+		final Map<String, IcfgLocation> entryNodes = icfg.getProcedureEntryNodes();
+		for (final Entry<String, IcfgLocation> e : entryNodes.entrySet()) {
+			final String procName = e.getKey();
 			if (isAuxiliaryProcedure(procName)) {
 				continue;
 			}
-			final IcfgLocation finalNode = proc.getValue();
-			final IPredicate hoare = annotation.getAnnotation(finalNode);
-			if (hoare != null) {
-				final Term formula = hoare.getFormula();
-				final ProcedureContractResult<IIcfgElement, Term> result =
-						new ProcedureContractResult<>(pluginName, finalNode, backTranslatorService, procName, formula);
+			final IcfgLocation entry = e.getValue();
+			final IcfgLocation exit = exitNodes.get(procName);
+			final IPredicate requires = annotation.getAnnotation(entry);
+			final IPredicate ensures = annotation.getAnnotation(exit);
+			if (ensures != null) {
+				final Term ensuresFormula = ensures.getFormula();
+				final Term requiresFormula =
+						PredicateUtils.eliminateOldVars(services, icfg.getCfgSmtToolkit().getManagedScript(), requires);
 
+				final ProcedureContractResult<IIcfgElement, Term> result = new ProcedureContractResult<>(pluginName,
+						exit, backTranslatorService, procName, requiresFormula, ensuresFormula);
 				reporter.accept(result);
-				// TODO: Add setting that controls the generation of those witness invariants
+
+				// TODO #proofRefactor
+				new WitnessProcedureContract(result.getReqiresResult(), result.getEnsuresResult()).annotate(exit);
 			}
 		}
 	}

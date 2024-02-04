@@ -58,8 +58,9 @@ public class LocationInvariant extends WitnessEntry {
 	}
 
 	@Override
-	public InvariantSetEntry toInvariantSetEntry() {
-		return new InvariantSetEntry(NAME, mLocation, mInvariant.getExpression(), mInvariant.getFormat());
+	public WitnessSetEntry toSetEntry() {
+		return new WitnessSetEntry(NAME, mLocation,
+				Map.of("value", mInvariant.getExpression(), "format", mInvariant.getFormat()));
 	}
 
 	@Override

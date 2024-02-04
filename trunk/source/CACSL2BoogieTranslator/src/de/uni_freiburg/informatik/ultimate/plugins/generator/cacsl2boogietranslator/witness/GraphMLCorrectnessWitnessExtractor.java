@@ -240,7 +240,12 @@ public class GraphMLCorrectnessWitnessExtractor extends CorrectnessWitnessExtrac
 			printlabel = true;
 		}
 		if (printlabel) {
-			mLogger.warn("  Witness node label is " + dwnode);
+			if (mIgnoreUnmatchedEntries) {
+				mLogger.warn("  Witness node label is " + dwnode);
+			} else {
+				throw new UnsupportedOperationException(
+						"The witness entry " + dwnode.getInvariant() + " could not be matched.");
+			}
 		}
 		final Map<IASTNode, ExtractedWitnessInvariant> possibleMatches = extractInvariants(dwnode, candidateNodes);
 		return possibleMatches;

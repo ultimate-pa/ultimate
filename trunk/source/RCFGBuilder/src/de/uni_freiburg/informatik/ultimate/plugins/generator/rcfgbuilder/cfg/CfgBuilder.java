@@ -186,6 +186,7 @@ public class CfgBuilder {
 	private final Set<String> mAllGotoTargets;
 
 	private final boolean mRemoveAssumeTrueStmt;
+	private final boolean mFutureLiveOptimization;
 
 	public CfgBuilder(final Unit unit, final IUltimateServiceProvider services) throws IOException {
 		mServices = services;
@@ -218,6 +219,8 @@ public class CfgBuilder {
 		}
 		mCtxSwitchOnlyAtAtomicBoundaries =
 				prefs.getBoolean(RcfgPreferenceInitializer.LABEL_CONTEXT_SWITCH_ONLY_AT_ATOMIC_BOUNDARIES);
+
+		mFutureLiveOptimization = prefs.getBoolean(RcfgPreferenceInitializer.LABEL_FUTURE_LIVE);
 
 		mBoogie2Smt = new Boogie2SMT(mgdScript, mBoogieDeclarations, mServices, simplePartialSkolemization);
 		final RCFGBacktranslator backtranslator = new RCFGBacktranslator(mLogger);
@@ -277,6 +280,14 @@ public class CfgBuilder {
 		// Transform CFGs to a recursive CFG
 		for (final Summary se : mImplementationSummarys) {
 			addCallTransitionAndReturnTransition(se, SIMPLIFICATION_TECHNIQUE);
+		}
+
+		if (mFutureLiveOptimization) {
+			if (!IcfgUtils.isConcurrent(icfg)) {
+				LiveIcfgUtils.applyFutureLiveOptimization(mServices, icfg);
+			} else {
+				mLogger.info("Ommited future-live optimization because the input is a concurrent program.");
+			}
 		}
 
 		mLogger.info("Performing block encoding");
@@ -1130,6 +1141,11 @@ public class CfgBuilder {
 			final LoopEntryAnnotation lea = LoopEntryAnnotation.getAnnotation(st);
 			BoogieIcfgLocation locNode = mLabel2LocNodes.get(labelId);
 			if (locNode != null) {
+				// The locNode to which labelId points may have been replaced
+				// by another locNode. Lets follow this map transitively.
+				while (locNode != mLabel2LocNodes.get(locNode.getDebugIdentifier())) {
+					locNode = mLabel2LocNodes.get(locNode.getDebugIdentifier());
+				}
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug("LocNode for " + labelId + " already" + " constructed, namely: " + locNode);
 				}
@@ -1702,6 +1718,10 @@ public class CfgBuilder {
 			// number of edges for code with a lot of branching. Often, all these edges are later reduced through
 			// parallel composition to very few edges (but a timeout occurs before this happens).
 			while (!mSequentialQueue.isEmpty() || !mParallelQueue.isEmpty() || !mComplexSequentialQueue.isEmpty()) {
+				if (!mServices.getProgressMonitorService().continueProcessing()) {
+					throw new ToolchainCanceledException(getClass(), "performing CFG large-block encoding");
+				}
+
 				while (mSequentialQueue.isEmpty() && mParallelQueue.isEmpty() && !mComplexSequentialQueue.isEmpty()) {
 					final BoogieIcfgLocation superfluousPP = mComplexSequentialQueue.pollFirst();
 					composeSequential(superfluousPP);

@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadOther;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadOther;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IReturnAction;
@@ -86,9 +87,20 @@ public class IcfgUtils {
 		})).collect(Collectors.toSet());
 	}
 
+	/**
+	 * Collect all program points that are predecessors or successors of an {@link IIcfgCallTransition}.
+	 */
 	public static <LOC extends IcfgLocation> Set<LOC> getCallerAndCalleePoints(final IIcfg<LOC> icfg) {
 		return new IcfgEdgeIterator(icfg).asStream().filter(e -> e instanceof IIcfgCallTransition<?>)
 				.flatMap(e -> Stream.of((LOC) e.getSource(), (LOC) e.getTarget())).collect(Collectors.toSet());
+	}
+
+	/**
+	 * Collect all program points that are predecessors of an {@link IIcfgReturnTransition}.
+	 */
+	public static <LOC extends IcfgLocation> Set<LOC> getReturnPredecessorPoints(final IIcfg<LOC> icfg) {
+		return new IcfgEdgeIterator(icfg).asStream().filter(e -> e instanceof IIcfgReturnTransition)
+				.map(x -> (LOC) x.getSource()).collect(Collectors.toSet());
 	}
 
 	public static boolean isConcurrent(final IIcfg<?> icfg) {
@@ -188,16 +200,38 @@ public class IcfgUtils {
 		return result;
 	}
 
-	public static <LOC extends IcfgLocation> boolean hasUnreachableProgramPoints(final IIcfg<LOC> icfg) {
-		for (final Entry<String, Map<DebugIdentifier, LOC>> entry : icfg.getProgramPoints().entrySet()) {
-			for (final Entry<DebugIdentifier, LOC> innerEntry : entry.getValue().entrySet()) {
-				final LOC loc = innerEntry.getValue();
-				if (loc.getIncomingEdges().isEmpty() && !isEntry(loc, icfg) && !isExit(loc, icfg)) {
-					return true;
-				}
-			}
+	public static <LOC extends IcfgLocation> boolean areReachableProgramPointsRegistered(final IIcfg<LOC> icfg) {
+		final Set<IcfgLocation> reachableProgramPoints = new IcfgEdgeIterator(icfg).asStream().map(x -> x.getTarget())
+				.collect(Collectors.toSet());
+		reachableProgramPoints.addAll(icfg.getInitialNodes());
+		final Set<LOC> registeredProgramPoints = icfg.getProgramPoints().entrySet().stream()
+				.flatMap(x -> x.getValue().entrySet().stream()).map(Entry::getValue).collect(Collectors.toSet());
+		final Set<IcfgLocation> diff = new HashSet<>(reachableProgramPoints);
+		diff.removeAll(registeredProgramPoints);
+		if (!diff.isEmpty()) {
+			throw new AssertionError("Program points reachable but not registered: " + diff);
 		}
-		return false;
+		return true;
+	}
+
+	public static <LOC extends IcfgLocation> boolean areRegisteredProgramPointsReachable(final IIcfg<LOC> icfg) {
+		final Set<IcfgLocation> reachableProgramPoints = new IcfgEdgeIterator(icfg).asStream().map(x -> x.getTarget())
+				.collect(Collectors.toSet());
+		reachableProgramPoints.addAll(icfg.getInitialNodes());
+		final Set<LOC> registeredProgramPoints = icfg.getProgramPoints().entrySet().stream()
+				.flatMap(x -> x.getValue().entrySet().stream()).map(Entry::getValue).collect(Collectors.toSet());
+		final Set<IcfgLocation> diff = new HashSet<>(registeredProgramPoints);
+		diff.removeAll(reachableProgramPoints);
+		// ExitNodes are registered even if they are not reachable (the optimization
+		// where we omit ExitNodes would require many case distinctions and would only
+		// save a few nodes).
+		final Set<LOC> exitProgramPoints = icfg.getProcedureExitNodes().entrySet().stream().map(Entry::getValue)
+				.collect(Collectors.toSet());
+		diff.removeAll(exitProgramPoints);
+		if (!diff.isEmpty()) {
+			throw new AssertionError("Program points registered but not reachable: " + diff);
+		}
+		return true;
 	}
 
 	/**

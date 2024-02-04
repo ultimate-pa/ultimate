@@ -32,6 +32,7 @@ import java.util.Map.Entry;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Activator;
@@ -50,6 +51,7 @@ public abstract class CorrectnessWitnessExtractor {
 	private final IUltimateServiceProvider mServices;
 	protected final ILogger mLogger;
 	protected final boolean mCheckOnlyLoopInvariants;
+	protected final boolean mIgnoreUnmatchedEntries;
 
 	protected IASTTranslationUnit mTranslationUnit;
 	private HashRelation<IASTNode, IExtractedWitnessEntry> mAST2Entries;
@@ -58,8 +60,9 @@ public abstract class CorrectnessWitnessExtractor {
 	public CorrectnessWitnessExtractor(final IUltimateServiceProvider service) {
 		mServices = service;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		mCheckOnlyLoopInvariants = WitnessParserPreferences.getPrefs(service)
-				.getBoolean(WitnessParserPreferences.LABEL_CW_USE_ONLY_LOOPINVARIANTS);
+		final IPreferenceProvider prefs = WitnessParserPreferences.getPrefs(service);
+		mCheckOnlyLoopInvariants = prefs.getBoolean(WitnessParserPreferences.LABEL_CW_USE_ONLY_LOOPINVARIANTS);
+		mIgnoreUnmatchedEntries = prefs.getBoolean(WitnessParserPreferences.LABEL_IGNORE_UNMATCHED_WITNESS_ENTRIES);
 		mStats = new ExtractionStatistics();
 	}
 

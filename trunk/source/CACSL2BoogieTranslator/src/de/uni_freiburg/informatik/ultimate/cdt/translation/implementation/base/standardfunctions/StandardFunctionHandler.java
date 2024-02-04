@@ -62,6 +62,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.JoinStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
@@ -93,8 +94,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.e
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
-//import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
-//import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType.Type;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
@@ -306,10 +305,19 @@ public class StandardFunctionHandler {
 
 		fill(map, "printf", (main, node, loc, name) -> handlePrintF(main, node, loc));
 
+		// https://en.cppreference.com/w/c/io/fgets
+		fill(map, "fgets", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 2,
+				new CPointer(new CPrimitive(CPrimitives.CHAR))));
+
+		// https://en.cppreference.com/w/c/io/fgetc
+		fill(map, "fgetc", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
+				new CPrimitive(CPrimitives.INT)));
+
 		// TODO 20211105 Matthias: Unsound because our implementation of printf is
 		// unsound and because we consider wchars as chars.
 		fill(map, "wprintf", (main, node, loc, name) -> handlePrintF(main, node, loc));
-
+		fill(map, "fprintf", (main, node, loc, name) -> handlePrintFunction(main, node, loc));
+		fill(map, "sprintf", (main, node, loc, name) -> handleSPrintF(main, node, loc));
 		fill(map, "snprintf", (main, node, loc, name) -> handleSnPrintF(main, node, loc));
 
 		// https://en.cppreference.com/w/c/io/fscanf
@@ -328,6 +336,9 @@ public class StandardFunctionHandler {
 		fill(map, "swscanf", (main, node, loc, name) -> handleScanf(name, main, node, loc, 2));
 		fill(map, "swscanf_s", (main, node, loc, name) -> handleScanf(name, main, node, loc, 2));
 
+		// https://en.cppreference.com/w/c/io/puts
+		fill(map, "puts", this::handlePuts);
+
 		fill(map, "__builtin_memcpy", this::handleMemcpy);
 		fill(map, "__memcpy", this::handleMemcpy);
 		fill(map, "memcpy", this::handleMemcpy);
@@ -335,6 +346,8 @@ public class StandardFunctionHandler {
 		fill(map, "__builtin_memmove", this::handleMemmove);
 		fill(map, "__memmove", this::handleMemmove);
 		fill(map, "memmove", this::handleMemmove);
+
+		fill(map, "memcmp", this::handleMemCmp);
 
 		fill(map, "alloca", this::handleAlloc);
 		fill(map, "__builtin_alloca", this::handleAlloc);
@@ -426,7 +439,10 @@ public class StandardFunctionHandler {
 		fill(map, "strlen", this::handleStrLen);
 		fill(map, "__builtin_strcmp", this::handleStrCmp);
 		fill(map, "strcmp", this::handleStrCmp);
+		fill(map, "strncmp", this::handleStrnCmp);
 		fill(map, "strcpy", this::handleStrCpy);
+		fill(map, "strncpy", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 3,
+				new CPointer(new CPrimitive(CPrimitives.CHAR))));
 
 		/** various float builtins **/
 		fill(map, "nan", (main, node, loc, name) -> handleNaNOrInfinity(loc, name));
@@ -577,6 +593,11 @@ public class StandardFunctionHandler {
 		fill(map, "va_copy", this::handleVaCopy);
 		fill(map, "__builtin_va_copy", this::handleVaCopy);
 
+		// https://www.man7.org/linux/man-pages/man3/ffs.3.html
+		fill(map, "ffs", (main, node, loc, name) -> handleFfs(main, node, loc, name, CPrimitives.INT));
+		fill(map, "ffsl", (main, node, loc, name) -> handleFfs(main, node, loc, name, CPrimitives.LONG));
+		fill(map, "ffsll", (main, node, loc, name) -> handleFfs(main, node, loc, name, CPrimitives.LONGLONG));
+
 		/** SV-COMP and modeling functions **/
 		fill(map, "__VERIFIER_ltl_step", (main, node, loc, name) -> handleLtlStep(main, node, loc));
 		fill(map, "__VERIFIER_error", this::handleErrorFunction);
@@ -626,6 +647,11 @@ public class StandardFunctionHandler {
 				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.UINT128)));
 		fill(map, "__VERIFIER_nondet_ushort",
 				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.USHORT)));
+
+		fill(map, "__VERIFIER_atomic_begin", (main, node, loc, name) -> handleByFunctionCall(main, node, loc, name,
+				new CPrimitive(CPrimitives.VOID)));
+		fill(map, "__VERIFIER_atomic_end", (main, node, loc, name) -> handleByFunctionCall(main, node, loc, name,
+				new CPrimitive(CPrimitives.VOID)));
 
 		/** from assert.h */
 		/** C standard library functions (from assert.h) to define the 'assert' macro */
@@ -820,11 +846,42 @@ public class StandardFunctionHandler {
 		// We cannot handle restoring the environment, so we just check if the function is reachable and create an
 		// overraproximation for that case
 		fill(map, "longjmp", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
-				new CPrimitive(CPrimitives.INT)));
+				new CPrimitive(CPrimitives.VOID)));
 
 		// setjmp https://en.cppreference.com/w/c/program/setjmp
 		fill(map, "_setjmp", this::handleSetjmp);
 		fill(map, "setjmp", this::handleSetjmp);
+
+		// https://en.cppreference.com/w/c/chrono/time
+		fill(map, "time", this::handleTime);
+
+		// https://en.cppreference.com/w/c/string/wide/iswxdigit
+		fill(map, "iswxdigit", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
+				new CPrimitive(CPrimitives.INT)));
+
+		// https://refspecs.linuxbase.org/LSB_5.0.0/LSB-Core-generic/LSB-Core-generic/baselib---ctype-b-loc.html
+		fill(map, "__ctype_b_loc", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 0,
+				new CPointer(new CPointer(new CPrimitive(CPrimitives.SHORT)))));
+
+		// TODO: These functions occur in SV-COMP, are they builtins?
+		fill(map, "__bad_size_call_parameter",
+				(main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
+						new CPrimitive(CPrimitives.VOID)));
+		fill(map, "__bad_percpu_size", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main,
+				loc, name, new CPrimitive(CPrimitives.VOID)));
+		fill(map, "__bad_unaligned_access_size",
+				(main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
+						new CPrimitive(CPrimitives.VOID)));
+		fill(map, "__xchg_wrong_size", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main,
+				loc, name, new CPrimitive(CPrimitives.VOID)));
+		fill(map, "__xadd_wrong_size", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main,
+				loc, name, new CPrimitive(CPrimitives.VOID)));
+		fill(map, "__cmpxchg_wrong_size", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main,
+				loc, name, new CPrimitive(CPrimitives.VOID)));
+		fill(map, "__get_user_bad", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc,
+				name, new CPrimitive(CPrimitives.VOID)));
+		fill(map, "__put_user_bad", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc,
+				name, new CPrimitive(CPrimitives.VOID)));
 
 		/** End <stdlib.h> functions according to 7.22 General utilities <stdlib.h> **/
 
@@ -1002,6 +1059,106 @@ public class StandardFunctionHandler {
 		return builder.addStatements(writes).build();
 	}
 
+	private Result handleFfs(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+			final String name, final CPrimitives argPrimitive) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 1, name, arguments);
+		final ExpressionResult argResult =
+				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
+
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		builder.addAllExceptLrValue(argResult);
+
+		final var resultType = new CPrimitive(CPrimitives.INT);
+		final AuxVarInfo resultInfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, resultType, AUXVAR.NONDET);
+		builder.addDeclaration(resultInfo.getVarDec());
+		builder.addAuxVar(resultInfo);
+
+		final int argSize = mTypeSizes.getSize(argPrimitive);
+		final var argType = new CPrimitive(argPrimitive);
+
+		final var argZero = mExpressionTranslation.constructZero(loc, argType);
+		final var argIsZero = mExpressionTranslation.constructBinaryEqualityExpression(loc,
+				IASTBinaryExpression.op_equals, argResult.getLrValue().getValue(), argType, argZero, argType);
+
+		final Statement[] caseZero, caseNonZero;
+		{
+			// Case "zero": argument is 0, and so is the return value
+			final var resultZero = mExpressionTranslation.constructZero(loc, resultType);
+			final var resultIsZero = mExpressionTranslation.constructBinaryEqualityExpression(loc,
+					IASTBinaryExpression.op_equals, resultInfo.getExp(), resultType, resultZero, resultType);
+			caseZero = new AssumeStatement[] { new AssumeStatement(loc, resultIsZero) };
+		}
+		{
+			final ArrayList<Statement> statements = new ArrayList<>();
+
+			// 1 <= result <= argSize*8
+			final var resultOne =
+					mExpressionTranslation.constructLiteralForIntegerType(loc, resultType, BigInteger.ONE);
+			final long bitsPerByte = 8L;
+			final var sizeExp = mExpressionTranslation.constructLiteralForIntegerType(loc, resultType,
+					BigInteger.valueOf(argSize * bitsPerByte));
+			final var resultInRange = ExpressionFactory.and(loc, List.of(
+					mExpressionTranslation.constructBinaryComparisonIntegerExpression(loc,
+							IASTBinaryExpression.op_lessEqual, resultOne, resultType, resultInfo.getExp(), resultType),
+					mExpressionTranslation.constructBinaryComparisonIntegerExpression(loc,
+							IASTBinaryExpression.op_lessEqual, resultInfo.getExp(), resultType, sizeExp, resultType)));
+			statements.add(new AssumeStatement(loc, resultInRange));
+
+			// expression "~0", which is 11...111 in binary.
+			final var allOnes = mExpressionTranslation.constructUnaryExpression(loc, IASTUnaryExpression.op_tilde,
+					argZero, argType);
+
+			// 0 != arg & (1 << (result-1))
+			// This means that at index "result", the argument has a 1.
+			final var lShiftRes = mExpressionTranslation.handleBitshiftExpression(loc,
+					IASTBinaryExpression.op_shiftLeft,
+					mExpressionTranslation.constructLiteralForIntegerType(loc, argType, BigInteger.ONE), argType,
+					mExpressionTranslation.constructArithmeticIntegerExpression(loc, IASTBinaryExpression.op_minus,
+							resultInfo.getExp(), resultType, resultOne, resultType),
+					resultType, mAuxVarInfoBuilder);
+			builder.addAllExceptLrValueAndStatements(lShiftRes);
+			statements.addAll(lShiftRes.getStatements());
+			final var andRes1 = mExpressionTranslation.handleBinaryBitwiseExpression(loc,
+					IASTBinaryExpression.op_binaryAnd, argResult.getLrValue().getValue(), argType,
+					lShiftRes.getLrValue().getValue(), argType, mAuxVarInfoBuilder);
+			builder.addAllExceptLrValueAndStatements(andRes1);
+			statements.addAll(andRes1.getStatements());
+			final var resultBitIsSet = mExpressionTranslation.constructBinaryEqualityExpression(loc,
+					IASTBinaryExpression.op_notequals, argZero, argType, andRes1.getLrValue().getValue(), argType);
+			statements.add(new AssumeStatement(loc, resultBitIsSet));
+
+			// 0 == arg & (~0 >> |arg|-(result-1))
+			// This means that at all lower indices than "result", the argument has only zeroes.
+			final var rShiftRes = mExpressionTranslation.handleBitshiftExpression(loc,
+					IASTBinaryExpression.op_shiftRight, allOnes, argType,
+					mExpressionTranslation.constructArithmeticIntegerExpression(loc, IASTBinaryExpression.op_minus,
+							sizeExp, resultType,
+							mExpressionTranslation.constructArithmeticIntegerExpression(loc,
+									IASTBinaryExpression.op_minus, resultInfo.getExp(), resultType, resultOne,
+									resultType),
+							resultType),
+					resultType, mAuxVarInfoBuilder);
+			builder.addAllExceptLrValueAndStatements(rShiftRes);
+			statements.addAll(rShiftRes.getStatements());
+			final var andRes2 = mExpressionTranslation.handleBinaryBitwiseExpression(loc,
+					IASTBinaryExpression.op_binaryAnd, argResult.getLrValue().getValue(), argType,
+					rShiftRes.getLrValue().getValue(), argType, mAuxVarInfoBuilder);
+			builder.addAllExceptLrValueAndStatements(andRes2);
+			statements.addAll(andRes2.getStatements());
+			final var firstSetBit = mExpressionTranslation.constructBinaryEqualityExpression(loc,
+					IASTBinaryExpression.op_equals, argZero, argType, andRes2.getLrValue().getValue(), argType);
+			statements.add(new AssumeStatement(loc, firstSetBit));
+
+			caseNonZero = statements.toArray(Statement[]::new);
+		}
+
+		builder.addStatement(new IfStatement(loc, argIsZero, caseZero, caseNonZero));
+		builder.setLrValue(new LocalLValue(resultInfo.getLhs(), resultType, null));
+
+		return builder.build();
+	}
+
 	private Result handleAbs(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final String name, final CPrimitive resultType) {
 		final IASTInitializerClause[] arguments = node.getArguments();
@@ -1037,6 +1194,94 @@ public class StandardFunctionHandler {
 		final CPrimitive returnType = new CPrimitive(CPrimitives.INT);
 		return new ExpressionResult(new RValue(
 				mExpressionTranslation.constructLiteralForIntegerType(loc, returnType, BigInteger.ZERO), returnType));
+	}
+
+	// Overapproximates sprintf as follows:
+	// ctr:=0; while (*) { havoc aux; *(ptr+ctr) := aux; ctr := ctr + 1; }
+	private Result handleSPrintF(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		assert arguments.length >= 1 : "insufficient arguments to snprintf";
+		final var builder = new ExpressionResultBuilder();
+
+		final Overapprox overAppFlag = new Overapprox("snprintf", loc);
+		builder.addOverapprox(overAppFlag);
+
+		// first argument is ptr
+		final var ptr = mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
+		builder.addAllExceptLrValue(ptr);
+
+		// dispatch remaining arguments (except for string literals)
+		for (int i = 1; i < arguments.length; ++i) {
+			if (isStringLiteral(arguments[i])) {
+				continue;
+			}
+			final ExpressionResult argRes =
+					mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[i]);
+			builder.addAllExceptLrValue(argRes);
+		}
+
+		// declare loop counter ctr
+		final AuxVarInfo ctr = mAuxVarInfoBuilder.constructAuxVarInfo(loc,
+				mExpressionTranslation.getCTypeOfPointerComponents(), SFO.AUXVAR.LOOPCTR);
+		builder.addDeclaration(ctr.getVarDec());
+		builder.addAuxVar(ctr);
+
+		// declare nondet aux var
+		final AuxVarInfo auxvar =
+				mAuxVarInfoBuilder.constructAuxVarInfo(loc, new CPrimitive(CPrimitives.CHAR), SFO.AUXVAR.NONDET);
+		builder.addDeclaration(auxvar.getVarDec());
+		builder.addAuxVar(auxvar);
+
+		// ctr := 0
+		final var zero = mTypeSizes.constructLiteralForIntegerType(loc,
+				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
+		final var initCtr = StatementFactory.constructSingleAssignmentStatement(loc, ctr.getLhs(), zero);
+		builder.addStatement(initCtr);
+
+		final var body = new ArrayList<Statement>();
+
+		// havoc aux;
+		final var havocNondet = new HavocStatement(loc, new VariableLHS[] { auxvar.getLhs() });
+		body.add(havocNondet);
+
+		// *(ptr + ctr) := aux
+		final var ptrOffset = MemoryHandler.getPointerOffset(ptr.getLrValue().getValue(), loc);
+		final Expression newOffset = mExpressionTranslation.constructArithmeticExpression(loc,
+				IASTBinaryExpression.op_plus, ptrOffset, mExpressionTranslation.getCTypeOfPointerComponents(),
+				ctr.getExp(), mExpressionTranslation.getCTypeOfPointerComponents());
+		final var ptrPlusCtr = MemoryHandler.constructPointerFromBaseAndOffset(
+				MemoryHandler.getPointerBaseAddress(ptr.getLrValue().getValue(), loc), newOffset, loc);
+		final var ptrPlusCtrHlv = LRValueFactory.constructHeapLValue(mTypeHandler, ptrPlusCtr, ptr.getCType(), null);
+		final var writeToMem = mMemoryHandler.getWriteCall(loc, ptrPlusCtrHlv, auxvar.getExp(),
+				new CPrimitive(CPrimitives.CHAR), false);
+		for (final var write : writeToMem) {
+			overAppFlag.annotate(write);
+		}
+		body.addAll(writeToMem);
+		if (mDataRaceChecker != null) {
+			mDataRaceChecker.checkOnWrite(builder, loc, ptrPlusCtrHlv);
+		}
+
+		// ctr := ctr + 1
+		final var incrementCtr = StatementFactory.constructSingleAssignmentStatement(loc, ctr.getLhs(),
+				mExpressionTranslation.constructArithmeticIntegerExpression(loc, IASTBinaryExpression.op_plus,
+						ctr.getExp(), mExpressionTranslation.getCTypeOfPointerComponents(),
+						mTypeSizes.constructLiteralForIntegerType(loc,
+								mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ONE),
+						mExpressionTranslation.getCTypeOfPointerComponents()));
+		body.add(incrementCtr);
+
+		final var loop = new WhileStatement(loc, new WildcardExpression(loc), new LoopInvariantSpecification[0],
+				body.toArray(Statement[]::new));
+		builder.addStatement(loop);
+
+		final var ret =
+				mAuxVarInfoBuilder.constructAuxVarInfo(loc, new CPrimitive(CPrimitives.CHAR), SFO.AUXVAR.RETURNED);
+		builder.addAuxVar(ret);
+		builder.addDeclaration(ret.getVarDec());
+		builder.setLrValue(new LocalLValue(ret.getLhs(), new CPrimitive(CPrimitives.CHAR), null));
+
+		return builder.build();
 	}
 
 	// Overapproximates snprintf as follows:
@@ -1210,13 +1455,37 @@ public class StandardFunctionHandler {
 		return builder.build();
 	}
 
-	private Result handleStrCmp(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
-			final String name) {
+	private ExpressionResult handleStrCmp(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 2, name, arguments);
+		return handleMemoryComparison(main, loc, name, arguments[0], arguments[1]);
+	}
+
+	private ExpressionResult handleStrnCmp(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 3, name, arguments);
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
-		final ExpressionResult arg0 =
-				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
+		builder.addAllExceptLrValue((ExpressionResult) main.dispatch(arguments[2]));
+		builder.addAllIncludingLrValue(handleMemoryComparison(main, loc, name, arguments[0], arguments[1]));
+		return builder.build();
+	}
+
+	private ExpressionResult handleMemCmp(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 3, name, arguments);
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		builder.addAllExceptLrValue((ExpressionResult) main.dispatch(arguments[2]));
+		builder.addAllIncludingLrValue(handleMemoryComparison(main, loc, name, arguments[0], arguments[1]));
+		return builder.build();
+	}
+
+	private ExpressionResult handleMemoryComparison(final IDispatcher main, final ILocation loc, final String name,
+			final IASTInitializerClause mem1, final IASTInitializerClause mem2) {
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		final ExpressionResult arg0 = mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, mem1);
 		builder.addDeclarations(arg0.getDeclarations());
 		builder.addStatements(arg0.getStatements());
 		builder.addOverapprox(arg0.getOverapprs());
@@ -1226,8 +1495,7 @@ public class StandardFunctionHandler {
 		builder.addStatements(
 				mMemoryHandler.constructMemsafetyChecksForPointerExpression(loc, arg0.getLrValue().getValue()));
 
-		final ExpressionResult arg1 =
-				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[1]);
+		final ExpressionResult arg1 = mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, mem2);
 		builder.addDeclarations(arg1.getDeclarations());
 		builder.addStatements(arg1.getStatements());
 		builder.addOverapprox(arg1.getOverapprs());
@@ -1449,6 +1717,17 @@ public class StandardFunctionHandler {
 		final RValue lrVal = new RValue(tmpExpr, resultType);
 		builder.setLrValue(lrVal);
 
+		return builder.build();
+	}
+
+	private Result handleTime(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+			final String name) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 1, name, arguments);
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		// TODO: Also write the return value to the pointer, if it is not NULL
+		builder.addAllExceptLrValue((ExpressionResult) main.dispatch(arguments[0]));
+		builder.addAllIncludingLrValue(handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.LONG)));
 		return builder.build();
 	}
 
@@ -1870,17 +2149,15 @@ public class StandardFunctionHandler {
 						.addAllExceptLrValue(result).addStatement(createAnnotatedAssertOrAssume(loc, name,
 								mSettings.checkAssertions(), Spec.ASSERT, result.getLrValue().getValue(), errorMsg))
 						.build();
-			} else {
-				/* WARNING: this case should be never reached since the msg should be always a string literal */
-				throw new IncorrectSyntaxException(loc, "Message parameter of static assert is not a string literal");
 			}
-		} else {
-			/* static C11 or C23 assertion with one argument (expr) */
-			checkArguments(loc, 1, name, arguments);
-
-			/* handle as regular assertion */
-			return handleAssert(main, node, loc, name);
+			/* WARNING: this case should be never reached since the msg should be always a string literal */
+			throw new IncorrectSyntaxException(loc, "Message parameter of static assert is not a string literal");
 		}
+		/* static C11 or C23 assertion with one argument (expr) */
+		checkArguments(loc, 1, name, arguments);
+
+		/* handle as regular assertion */
+		return handleAssert(main, node, loc, name);
 	}
 
 	private Result handleBuiltinFegetround(final IDispatcher main, final IASTFunctionCallExpression node,
@@ -2132,7 +2409,7 @@ public class StandardFunctionHandler {
 				null);
 	}
 
-	private Result handleVerifierNonDet(final IDispatcher main, final ILocation loc, final CType cType) {
+	private ExpressionResult handleVerifierNonDet(final IDispatcher main, final ILocation loc, final CType cType) {
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 		final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, cType, SFO.AUXVAR.NONDET);
 		resultBuilder.addDeclaration(auxvarinfo.getVarDec());
@@ -2378,10 +2655,10 @@ public class StandardFunctionHandler {
 				new CPrimitive(CPrimitives.INT));
 	}
 
-	private Result handlePrintF(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc) {
+	private ExpressionResult handlePrintFunction(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc) {
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 
-		// 2015-11-05 Matthias: TODO check if int is reasonable here
 		final AuxVarInfo auxvarinfo =
 				mAuxVarInfoBuilder.constructAuxVarInfo(loc, new CPrimitive(CPrimitives.INT), SFO.AUXVAR.NONDET);
 		resultBuilder.addDeclaration(auxvarinfo.getVarDec());
@@ -2401,6 +2678,16 @@ public class StandardFunctionHandler {
 		}
 
 		return resultBuilder.build();
+	}
+
+	private Result handlePrintF(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc) {
+		return handlePrintFunction(main, node, loc);
+	}
+
+	private Result handlePuts(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+			final String name) {
+		checkArguments(loc, 1, name, node.getArguments());
+		return handlePrintFunction(main, node, loc);
 	}
 
 	private boolean isStringLiteral(final IASTInitializerClause expr) {
@@ -2635,9 +2922,11 @@ public class StandardFunctionHandler {
 		new Check(Spec.UNKNOWN).annotate(unreach);
 		builder.addStatement(new WhileStatement(loc, ExpressionFactory.createBooleanLiteral(loc, true),
 				new LoopInvariantSpecification[0], new Statement[] { unreach }));
-		final AuxVarInfo auxVar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, returnType, AUXVAR.NONDET);
-		builder.addAuxVar(auxVar).addDeclaration(auxVar.getVarDec());
-		builder.setLrValue(new RValue(auxVar.getExp(), returnType));
+		if (!returnType.isVoidType()) {
+			final AuxVarInfo auxVar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, returnType, AUXVAR.NONDET);
+			builder.addAuxVar(auxVar).addDeclaration(auxVar.getVarDec());
+			builder.setLrValue(new RValue(auxVar.getExp(), returnType));
+		}
 		return builder.build();
 	}
 
@@ -2662,6 +2951,28 @@ public class StandardFunctionHandler {
 	private ExpressionResult constructOverapproximationForFunctionCall(final ILocation loc, final String functionName,
 			final CType resultType) {
 		return buildFunctionCall(loc, resultType).addOverapprox(new Overapprox(functionName, loc)).build();
+	}
+
+	private ExpressionResult handleByFunctionCall(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name, final CType resultType) {
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		final IASTInitializerClause[] arguments = node.getArguments();
+		final Expression[] translatedArgs = new Expression[arguments.length];
+		for (int i = 0; i < arguments.length; i++) {
+			final ExpressionResult dispatched = (ExpressionResult) main.dispatch(arguments[i]);
+			builder.addAllExceptLrValue(dispatched);
+			translatedArgs[i] = dispatched.getLrValue().getValue();
+		}
+		VariableLHS[] retValue;
+		if (resultType.isVoidType()) {
+			retValue = new VariableLHS[0];
+		} else {
+			final AuxVarInfo auxVar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, resultType, AUXVAR.RETURNED);
+			builder.addAuxVar(auxVar).addDeclaration(auxVar.getVarDec());
+			retValue = new VariableLHS[] { auxVar.getLhs() };
+		}
+		builder.addStatement(StatementFactory.constructCallStatement(loc, false, retValue, name, translatedArgs));
+		return builder.build();
 	}
 
 	private ExpressionResultBuilder buildFunctionCall(final ILocation loc, final CType resultType) {

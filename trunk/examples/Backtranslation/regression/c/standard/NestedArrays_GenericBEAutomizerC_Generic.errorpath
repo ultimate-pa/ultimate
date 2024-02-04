@@ -28,4 +28,3 @@
 [L15]  EXPR        a[5]
 [L15]  COND TRUE   a[5] == 10
 [L21]              __VERIFIER_error()
-       VAL         [a={7:0}, i=5]

@@ -112,6 +112,7 @@ known_exceptions:
   "UnsupportedOperationException: Incomplete atomic composition (dangling start of atomic block:":
   "UnsupportedOperationException: Incomplete atomic composition (dangling end of atomic block:":
   "identifier is not declared (neither a variable nor a function name): argv in file":
+  "Undeclared variable in ACSL expression":
 
 known_timeouts:
   "Cannot interrupt operation gracefully because timeout expired. Forcing shutdown":

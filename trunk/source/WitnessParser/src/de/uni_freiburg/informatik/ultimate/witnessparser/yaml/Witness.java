@@ -58,9 +58,9 @@ public class Witness extends BasePayloadContainer {
 		return mEntries.toString();
 	}
 
-	public InvariantSet toInvariantSet(final Supplier<Metadata> metadataSupplier) {
-		return new InvariantSet(metadataSupplier.get(),
-				mEntries.stream().map(x -> x.toInvariantSetEntry()).collect(Collectors.toList()));
+	public EntrySet toInvariantSet(final Supplier<Metadata> metadataSupplier) {
+		return new EntrySet(metadataSupplier.get(),
+				mEntries.stream().map(x -> x.toSetEntry()).collect(Collectors.toList()));
 	}
 
 	public String toYamlString() {

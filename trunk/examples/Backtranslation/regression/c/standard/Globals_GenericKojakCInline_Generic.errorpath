@@ -6,13 +6,13 @@
 [L7]   EXPR        ++b
 [L7]               x = ++b
 [L8]               return x;
-       VAL         [\old(b)=5, \result=6, a=6, b=6, x=6]
+       VAL         [\result=6, a=6, x=6]
 [L13]  RET, EXPR   f(a++)
 [L13]  CALL, EXPR  f(f(a++))
 [L7]   EXPR        ++b
 [L7]               x = ++b
 [L8]               return x;
-       VAL         [\old(b)=6, \result=7, a=6, b=7, x=7]
+       VAL         [\result=7, a=6, x=7]
 [L13]  RET, EXPR   f(f(a++))
 [L13]              a = f(f(a++))
 [L15]  COND TRUE   a == x

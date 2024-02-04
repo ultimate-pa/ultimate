@@ -6,11 +6,11 @@
 
 extern void *malloc (size_t __size) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__malloc__)) ;
 
+int test(void* ptr) {
+  return *((int*)ptr);
+}
+
 int main() {
   int x = test( malloc(42) );
   return x;
-}
-
-int test(void* ptr) {
-  return *((int*)ptr);
 }

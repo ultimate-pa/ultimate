@@ -224,10 +224,10 @@ public class IntToBvBackTranslation extends TermTransformer {
 			array = mds.getArray();
 		} else {
 			final MultiDimensionalSelectOverNestedStore mdsons =
-					MultiDimensionalSelectOverNestedStore.convert(mScript, appTerm);
+					MultiDimensionalSelectOverNestedStore.of(appTerm);
 			if (mdsons != null) {
 				// array = mdsons.getNestedStore().getArray();
-				array = mdsons.getSelect().getArray();
+				array = mdsons.getNestedStore().toTerm(mScript);
 			} else {
 				throw new UnsupportedOperationException("unable to compute width: " + appTerm);
 			}

@@ -67,6 +67,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.d
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.BlockEncodingBacktranslator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.FloydHoareUtils;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.FloydHoareValidityCheck.MissingAnnotationBehaviour;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.IcfgFloydHoareValidityCheck;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.ICopyActionFactory;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
@@ -179,12 +180,12 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 
 			// TODO #proofRefactor
 			final var annotation = new IcfgFloydHoareValidityCheck.IcfgHoareAnnotation<>();
-			assert new IcfgFloydHoareValidityCheck<>(mServices, icfg, annotation, true)
-					.getResult() : "incorrect Hoare annotation";
+			assert new IcfgFloydHoareValidityCheck<>(mServices, icfg, annotation, true,
+					MissingAnnotationBehaviour.IGNORE, true).getResult() : "incorrect Hoare annotation";
 
 			FloydHoareUtils.createInvariantResults(Activator.PLUGIN_NAME, icfg, annotation, backTranslatorService,
 					mResultReporter::reportResult);
-			FloydHoareUtils.createProcedureContractResults(Activator.PLUGIN_NAME, icfg, annotation,
+			FloydHoareUtils.createProcedureContractResults(mServices, Activator.PLUGIN_NAME, icfg, annotation,
 					backTranslatorService, mResultReporter::reportResult);
 		}
 		mRootOfNewModel = mArtifact;

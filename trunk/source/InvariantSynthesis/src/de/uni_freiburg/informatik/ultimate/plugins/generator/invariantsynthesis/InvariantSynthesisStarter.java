@@ -74,6 +74,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.invariantsynthesis.preferences.InvariantSynthesisPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.invariantsynthesis.preferences.InvariantSynthesisPreferenceInitializer.IncreasingStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.InvariantSynthesisSettings;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.AbstractTemplateIncreasingDimensionsStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.AggressiveTemplateIncreasingDimensionsStrategy;
@@ -207,7 +208,7 @@ public class InvariantSynthesisStarter<L extends IIcfgTransition<?>> {
 			final IBacktranslationService backTranslatorService = mServices.getBacktranslationService();
 			FloydHoareUtils.createInvariantResults(Activator.PLUGIN_NAME, icfg, floydHoare, backTranslatorService,
 					this::reportResult);
-			FloydHoareUtils.createProcedureContractResults(Activator.PLUGIN_NAME, icfg, floydHoare,
+			FloydHoareUtils.createProcedureContractResults(mServices, Activator.PLUGIN_NAME, icfg, floydHoare,
 					backTranslatorService, this::reportResult);
 		}
 		final StatisticsData stat = new StatisticsData();

@@ -111,6 +111,7 @@ public class HoareAnnotationComposer {
 			combineInter(final NestedMap2<IPredicate, IPredicate, Term> loc2callPred2invariant) {
 		final Map<IPredicate, IPredicate> result = new HashMap<>();
 		for (final IPredicate loc : loc2callPred2invariant.keySet()) {
+			final List<Term> precondDisjuncts = new ArrayList<>();
 			final Map<IPredicate, Term> callpred2invariant = loc2callPred2invariant.get(loc);
 			final List<Term> conjuncts = new ArrayList<>(callpred2invariant.size());
 			for (final Entry<IPredicate, Term> entry : callpred2invariant.entrySet()) {
@@ -128,6 +129,7 @@ public class HoareAnnotationComposer {
 				assert postForCallpred != null : "no post for callpred";
 				final Term precond =
 						renameGlobalsToOldGlobals(postForCallpred, mServices, mCsToolkit.getManagedScript());
+				precondDisjuncts.add(precond);
 
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug("In " + loc + " holds " + entry.getValue() + " for precond " + precond);
@@ -139,8 +141,11 @@ public class HoareAnnotationComposer {
 							new NnfTransformer(mCsToolkit.getManagedScript(), mServices, QuantifierHandling.KEEP)
 									.transform(precondImpliesInvariant);
 				}
+
 				conjuncts.add(precondImpliesInvariant);
 			}
+			final Term precondDisjunction = SmtUtils.or(mCsToolkit.getManagedScript().getScript(), precondDisjuncts);
+			conjuncts.add(precondDisjunction);
 			final Term conjunction = SmtUtils.and(mCsToolkit.getManagedScript().getScript(), conjuncts);
 
 			final Set<IProgramVar> vars = TermVarsProc

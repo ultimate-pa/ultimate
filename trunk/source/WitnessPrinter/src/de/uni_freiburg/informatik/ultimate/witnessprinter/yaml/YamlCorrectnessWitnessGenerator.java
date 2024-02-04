@@ -1,25 +1,25 @@
 package de.uni_freiburg.informatik.ultimate.witnessprinter.yaml;
 
 import java.time.OffsetDateTime;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Deque;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.UltimateCore;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IExplicitEdgesMultigraph;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessProcedureContract;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslatedCFG;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.FormatVersion;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.FunctionContract;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Invariant;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Location;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LoopInvariant;
@@ -32,112 +32,129 @@ import de.uni_freiburg.informatik.ultimate.witnessprinter.preferences.Preference
 
 public class YamlCorrectnessWitnessGenerator {
 	private static final String[] ACSL_SUBSTRING = new String[] { "\\old", "\\result", "exists", "forall" };
-	private static final FormatVersion FORMAT_VERSION = new FormatVersion(2, 0);
 
 	private final ILogger mLogger;
-	private final IBacktranslatedCFG<?, ?> mTranslatedCFG;
-	private final boolean mIsACSLForbidden;
 	private final IPreferenceProvider mPreferences;
+	private final IIcfg<? extends IcfgLocation> mIcfg;
 
-	public YamlCorrectnessWitnessGenerator(final IBacktranslatedCFG<?, ?> translatedCFG, final ILogger logger,
+	public YamlCorrectnessWitnessGenerator(final IIcfg<? extends IcfgLocation> icfg, final ILogger logger,
 			final IUltimateServiceProvider services) {
 		mLogger = logger;
-		mTranslatedCFG = translatedCFG;
+		mIcfg = icfg;
 		mPreferences = PreferenceInitializer.getPreferences(services);
-		mIsACSLForbidden = mPreferences.getBoolean(PreferenceInitializer.LABEL_DO_NOT_USE_ACSL);
 	}
 
 	private Witness getWitness() {
-		final var roots = mTranslatedCFG.getCFGs();
-		if (roots.size() != 1) {
-			throw new UnsupportedOperationException("Cannot generate correctness witnesses in library mode");
-		}
-		final var root = roots.get(0);
-		final Deque<IExplicitEdgesMultigraph<?, ?, ?, ?, ?>> worklist = new ArrayDeque<>();
-
-		final Set<IExplicitEdgesMultigraph<?, ?, ?, ?, ?>> closed = new HashSet<>();
-		worklist.add(root);
-
 		final String producer = mPreferences.getString(PreferenceInitializer.LABEL_GRAPH_DATA_PRODUCER);
 		final String hash = mPreferences.getString(PreferenceInitializer.LABEL_GRAPH_DATA_PROGRAMHASH);
 		final String spec = mPreferences.getString(PreferenceInitializer.LABEL_GRAPH_DATA_SPECIFICATION);
 		final String arch = mPreferences.getString(PreferenceInitializer.LABEL_GRAPH_DATA_ARCHITECTURE);
+		final FormatVersion formatVersion =
+				FormatVersion.fromString(mPreferences.getString(PreferenceInitializer.LABEL_YAML_FORMAT_VERSION));
 		final String version = new UltimateCore().getUltimateVersionString();
-		final String format = getExpressionFormat();
-		final String filename = mTranslatedCFG.getFilename();
-		final Supplier<Metadata> metadataSupplier = () -> new Metadata(FORMAT_VERSION, UUID.randomUUID(),
+		final String filename = ILocation.getAnnotation(mIcfg).getFileName();
+		final Supplier<Metadata> metadataSupplier = () -> new Metadata(formatVersion, UUID.randomUUID(),
 				OffsetDateTime.now(), new Producer(producer, version),
 				new Task(List.of(filename), Map.of(filename, hash), spec, arch, "C"));
 
+		final List<IcfgLocation> allProgramPoints = mIcfg.getProgramPoints().values().stream()
+				.flatMap(x -> x.values().stream()).collect(Collectors.toList());
+
+		// TODO: Should we sort these entries somehow (for consistent result in validation and to improve readability)
+		// e.g. by line number and/or entry type?
 		final List<WitnessEntry> entries = new ArrayList<>();
-		while (!worklist.isEmpty()) {
-			final IExplicitEdgesMultigraph<?, ?, ?, ?, ?> node = worklist.remove();
-			if (!closed.add(node)) {
-				continue;
-			}
-			final Set<Location> locationCandidates = new HashSet<>();
-			for (final var outgoing : node.getOutgoingEdges()) {
-				worklist.add(outgoing.getTarget());
-				final ILocation loc = (ILocation) outgoing.getLabel();
-				if (loc == null) {
-					continue;
-				}
-				// If the column is unknown (-1), use the first position of the line
-				final int column = Math.max(loc.getStartColumn(), 0);
-				final String function = loc.getFunction();
-				if (function == null) {
-					// TODO: Is this possible, maybe for global invariants? What is the expected behavior?
-					continue;
-				}
-				locationCandidates.add(new Location(loc.getFileName(), hash, loc.getStartLine(), column, function));
-			}
-			final String invariant = filterInvariant(node);
-			// TODO: Can we do anything if there are multiple locationCandidates?
-			if (invariant != null && locationCandidates.size() == 1) {
-				// TODO: How could we figure out, if it is a LocationInvariant or LoopInvariant?
-				// For now we only produce loop invariants anyways
-				entries.add(new LoopInvariant(metadataSupplier.get(), locationCandidates.iterator().next(),
-						new Invariant(invariant, "assertion", format)));
-			}
+		entries.addAll(extractLoopInvariants(allProgramPoints, metadataSupplier, hash, formatVersion));
+		if (formatVersion.getMajor() >= 3) {
+			entries.addAll(extractFunctionContracts(allProgramPoints, metadataSupplier, hash, formatVersion));
 		}
 		final Witness witness = new Witness(entries);
-		switch (FORMAT_VERSION.toString()) {
-		case "0.1":
+		if (formatVersion.getMajor() < 2) {
 			return witness;
-		case "2.0":
-			return new Witness(List.of(witness.toInvariantSet(metadataSupplier)));
-		default:
-			throw new UnsupportedOperationException("Unknown format version " + FORMAT_VERSION);
 		}
+		return new Witness(List.of(witness.toInvariantSet(metadataSupplier)));
+	}
+
+	private List<WitnessEntry> extractLoopInvariants(final List<IcfgLocation> programPoints,
+			final Supplier<Metadata> metadataSupplier, final String hash, final FormatVersion formatVersion) {
+		final List<WitnessEntry> result = new ArrayList<>();
+		for (final IcfgLocation pp : programPoints) {
+			final ILocation loc = ILocation.getAnnotation(pp);
+			if (loc == null) {
+				continue;
+			}
+			final String invariant = filterInvariant(WitnessInvariant.getAnnotation(pp), formatVersion);
+			if (invariant == null) {
+				continue;
+			}
+			// If the column is unknown (-1), use the first position of the line
+			final int column = Math.max(loc.getStartColumn(), 0);
+			final String function = loc.getFunction();
+			if (function == null) {
+				continue;
+			}
+			final Location witnessLocation =
+					new Location(loc.getFileName(), hash, loc.getStartLine(), column, function);
+			// TODO: How could we figure out, if it is a LocationInvariant or LoopInvariant?
+			// For now we only produce loop invariants anyways
+			result.add(new LoopInvariant(metadataSupplier.get(), witnessLocation,
+					new Invariant(invariant, "assertion", getExpressionFormat(formatVersion, invariant))));
+		}
+		return result;
+	}
+
+	private static List<WitnessEntry> extractFunctionContracts(final List<IcfgLocation> programPoints,
+			final Supplier<Metadata> metadataSupplier, final String hash, final FormatVersion formatVersion) {
+		final List<WitnessEntry> result = new ArrayList<>();
+		for (final IcfgLocation pp : programPoints) {
+			final ILocation loc = ILocation.getAnnotation(pp);
+			if (loc == null) {
+				continue;
+			}
+			final WitnessProcedureContract contract = WitnessProcedureContract.getAnnotation(pp);
+			if (contract == null) {
+				continue;
+			}
+			// If the column is unknown (-1), use the first position of the line
+			final int column = Math.max(loc.getStartColumn(), 0);
+			final String function = loc.getFunction();
+			if (function == null) {
+				continue;
+			}
+			final String requires = contract.getRequiresClause();
+			final String ensures = contract.getEnsuresClause();
+			final Location witnessLocation =
+					new Location(loc.getFileName(), hash, loc.getStartLine(), column, function);
+			result.add(new FunctionContract(metadataSupplier.get(), witnessLocation, List.of(requires),
+					List.of(ensures), getExpressionFormat(formatVersion, requires, ensures)));
+		}
+		return result;
 	}
 
 	public String makeYamlString() {
 		return getWitness().toYamlString();
 	}
 
-	private String getExpressionFormat() {
-		if (!mIsACSLForbidden) {
-			throw new UnsupportedOperationException("ACSL is not supported in witnesses yet");
-		}
-		switch (FORMAT_VERSION.toString()) {
-		case "0.1":
+	private static String getExpressionFormat(final FormatVersion formatVersion, final String... expressions) {
+		if (formatVersion.getMajor() == 0) {
 			return "C";
-		case "2.0":
-			return "c_expression";
-		default:
-			throw new UnsupportedOperationException("Unknown format version " + FORMAT_VERSION);
 		}
+		if (formatVersion.getMajor() < 3
+				|| !Arrays.stream(expressions).anyMatch(YamlCorrectnessWitnessGenerator::containsACSL)) {
+			return "c_expression";
+		}
+		return "acsl";
 	}
 
-	private String filterInvariant(final IExplicitEdgesMultigraph<?, ?, ?, ?, ?> node) {
-		if (node == null) {
+	private static boolean containsACSL(final String expression) {
+		return Arrays.stream(ACSL_SUBSTRING).anyMatch(expression::contains);
+	}
+
+	private String filterInvariant(final WitnessInvariant invariant, final FormatVersion formatVersion) {
+		if (invariant == null) {
 			return null;
 		}
-		if (node.getLabel() == null) {
-			return null;
-		}
-		final String label = node.getLabel().toString();
-		if (mIsACSLForbidden && label != null && Arrays.stream(ACSL_SUBSTRING).anyMatch(label::contains)) {
+		final String label = invariant.getInvariant();
+		if (formatVersion.getMajor() < 3 && containsACSL(label)) {
 			mLogger.warn("Not writing invariant because ACSL is forbidden: " + label);
 			return null;
 		}

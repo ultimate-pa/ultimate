@@ -538,7 +538,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 			final var floydHoare = computeHoareAnnotation(pr);
 			FloydHoareUtils.createInvariantResults(Activator.PLUGIN_NAME, icfg, floydHoare, backTranslatorService,
 					this::reportResult);
-			FloydHoareUtils.createProcedureContractResults(Activator.PLUGIN_NAME, icfg, floydHoare,
+			FloydHoareUtils.createProcedureContractResults(mServices, Activator.PLUGIN_NAME, icfg, floydHoare,
 					backTranslatorService, this::reportResult);
 		}
 	}

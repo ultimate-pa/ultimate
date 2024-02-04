@@ -1,8 +1,8 @@
 [L3-L4]        requires a.n == 1 && a.d == 0 && a.v == 0.0;
          VAL   [a!d=0, a!n=1, a!v=0.0]
 [L8]           tmp := a;
-         VAL   [a!d=0, a!n=1, a!v=0.0, tmp!d=0, tmp!n=1, tmp!v=0.0]
+         VAL   [a!d=0, a!n=1, a!v=0.0, tmp!d=0, tmp!v=0.0]
 [L9]           tmp!n := a!d;
          VAL   [a!d=0, a!n=1, a!v=0.0, tmp!d=0, tmp!n=0, tmp!v=0.0]
 [L10]          assert tmp == a;
-         VAL   [a!d=0, a!n=1, a!v=0.0, tmp!d=0, tmp!n=0, tmp!v=0.0]
+         VAL   [a!d=0, a!n=1, a!v=0.0]

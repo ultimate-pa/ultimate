@@ -33,10 +33,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Deque;
 import java.util.List;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
@@ -49,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.Storage
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
@@ -63,7 +60,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ModifiesSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RequiresSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructAccessExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
@@ -86,12 +82,12 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultTransformer;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValueFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.BoogieASTUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.CdtASTUtils;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IACSLHandler;
@@ -569,27 +565,37 @@ public class ACSLHandler implements IACSLHandler {
 	public Result visit(final IDispatcher main,
 			final de.uni_freiburg.informatik.ultimate.model.acsl.ast.UnaryExpression node) {
 		final ILocation loc = mLocationFactory.createACSLLocation(node);
-		ExpressionResult res = (ExpressionResult) main.dispatch(node.getExpr(), main.getAcslHook());
+		final ExpressionResult res = (ExpressionResult) main.dispatch(node.getExpr(), main.getAcslHook());
 
-		res = mExprResultTransformer.switchToRValue(res, loc, main.getAcslHook());
+		final ExpressionResult resRValue = mExprResultTransformer.switchToRValue(res, loc, main.getAcslHook());
 
 		switch (node.getOperator()) {
 		case LOGICNEG:
-			return mCExpressionTranslator.handleUnaryArithmeticOperators(loc, IASTUnaryExpression.op_not, res);
+			return mCExpressionTranslator.handleUnaryArithmeticOperators(loc, IASTUnaryExpression.op_not, resRValue);
 		case MINUS:
-			return mCExpressionTranslator.handleUnaryArithmeticOperators(loc, IASTUnaryExpression.op_minus, res);
+			return mCExpressionTranslator.handleUnaryArithmeticOperators(loc, IASTUnaryExpression.op_minus, resRValue);
 		case PLUS:
-			return mCExpressionTranslator.handleUnaryArithmeticOperators(loc, IASTUnaryExpression.op_plus, res);
+			return mCExpressionTranslator.handleUnaryArithmeticOperators(loc, IASTUnaryExpression.op_plus, resRValue);
 		case LOGICCOMPLEMENT:
-			return mCExpressionTranslator.handleUnaryArithmeticOperators(loc, IASTUnaryExpression.op_tilde, res);
+			return mCExpressionTranslator.handleUnaryArithmeticOperators(loc, IASTUnaryExpression.op_tilde, resRValue);
 		case POINTER:
 			// TODO: We don't have the hook available here, does null always work here?
-			return mCHandler.handleIndirectionOperator(res, loc, null);
+			return mCHandler.handleIndirectionOperator(resRValue, loc, null);
 		case ADDROF:
+			return handleAddressof(loc, res);
 		default:
 			final String msg = "Unknown or unsupported unary operation: " + node.getOperator();
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
+	}
+
+	private ExpressionResult handleAddressof(final ILocation loc, final ExpressionResult res) {
+		if (!(res.getLrValue() instanceof HeapLValue)) {
+			throw new UnsupportedSyntaxException(loc, "ACSL addressof for variable off-heap");
+		}
+		final RValue rVal =
+				((HeapLValue) res.getLrValue()).getAddressAsPointerRValue(mTypeHandler.getBoogiePointerType());
+		return new ExpressionResultBuilder(res).resetLrValue(rVal).build();
 	}
 
 	@Override
@@ -707,7 +713,13 @@ public class ACSLHandler implements IACSLHandler {
 	@Override
 	public Result visit(final IDispatcher main, final Requires node) {
 		mSpecType = ACSLHandler.SPEC_TYPE.REQUIRES;
-		final Expression formula = ((ExpressionResult) main.dispatch(node.getFormula())).getLrValue().getValue();
+		final ILocation loc = mLocationFactory.createACSLLocation(node);
+		final ExpressionResult exprResult = mExprResultTransformer.transformSwitchRexIntToBool(
+				((ExpressionResult) main.dispatch(node.getFormula())), loc, main.getAcslHook());
+		if (!exprResult.getStatements().isEmpty() || !exprResult.getOverapprs().isEmpty()) {
+			throw new UnsupportedSyntaxException(loc, "Requires must be translatable by a single expression");
+		}
+		final Expression formula = exprResult.getLrValue().getValue();
 		final Check check = new Check(Spec.PRE_CONDITION);
 		final ILocation reqLoc = mLocationFactory.createACSLLocation(node);
 		final RequiresSpecification req = new RequiresSpecification(reqLoc, false, formula);
@@ -718,15 +730,13 @@ public class ACSLHandler implements IACSLHandler {
 	@Override
 	public Result visit(final IDispatcher main, final Ensures node) {
 		final ILocation loc = mLocationFactory.createACSLLocation(node);
-		final de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression e = node.getFormula();
-		if (e instanceof FieldAccessExpression || e instanceof ArrayAccessExpression) {
-			// variable declaration not yet translated, hence we cannot
-			// translate this access expression!
-			final String msg = "Ensures specification on struct types is not supported!";
-			throw new UnsupportedSyntaxException(loc, msg);
+		final ExpressionResult exprResult = mExprResultTransformer.transformSwitchRexIntToBool(
+				((ExpressionResult) main.dispatch(node.getFormula())), loc, main.getAcslHook());
+		if (!exprResult.getStatements().isEmpty() || !exprResult.getOverapprs().isEmpty()) {
+			throw new UnsupportedSyntaxException(loc, "Ensures must be translatable by a single expression");
 		}
 		mSpecType = ACSLHandler.SPEC_TYPE.ENSURES;
-		final Expression formula = ((ExpressionResult) main.dispatch(e)).getLrValue().getValue();
+		final Expression formula = exprResult.getLrValue().getValue();
 		final Check check = new Check(Spec.POST_CONDITION);
 		final ILocation ensLoc = mLocationFactory.createACSLLocation(node);
 		final EnsuresSpecification ens = new EnsuresSpecification(ensLoc, false, formula);
@@ -831,73 +841,10 @@ public class ACSLHandler implements IACSLHandler {
 
 	@Override
 	public Result visit(final IDispatcher main, final ArrayAccessExpression node) {
-		// handle expressions of the form a[i][j]...
-
-		final ILocation loc = mLocationFactory.createACSLLocation(node);
-
-		// first, dispatch all indices and extract the actual array expression
-		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
-		final Deque<Expression> args = new ArrayDeque<>();
-		de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression arrayExpr = node;
-		while (true) {
-			if (!(arrayExpr instanceof ArrayAccessExpression)) {
-				break;
-			}
-			final ArrayAccessExpression aaExpr = (ArrayAccessExpression) arrayExpr;
-			if (aaExpr.getIndices().length != 1) {
-				throw new AssertionError();
-			}
-			final ExpressionResult arg = (ExpressionResult) main.dispatch(aaExpr.getIndices()[0], main.getAcslHook());
-			args.addFirst(arg.getLrValue().getValue());
-			arrayExpr = aaExpr.getArray();
-			resultBuilder.addAllExceptLrValue(arg);
-		}
-
-		final Expression[] idx = new Expression[args.size()];
-		args.toArray(idx);
-
-		// second, dispatch array expression
-		ExpressionResult idExprRes = (ExpressionResult) main.dispatch(arrayExpr, main.getAcslHook());
-		idExprRes = mExprResultTransformer.switchToRValue(idExprRes, loc, main.getAcslHook());
-		final Expression subExpr = idExprRes.getLrValue().getValue();
-
-		resultBuilder.addAllExceptLrValue(idExprRes);
-
-		// TODO: This does not work for arrays on heap!
-
-		// TODO: compute the CType of returned ResultExpression
-		// basic idea: same as arrayType (below) except the last args.size() entries of
-		// arrayType.getDimensions() have
-		// to be removed for the new type
-		// CArray arrayType = (CArray) idExprRes.lrVal.cType;
-		// CArray arrayType = new CArray(dimensions, idExprRes.lrVal.cType); --> wrong,
-		// i think (alex)
-		// arrayType.getDimensions().length == args.size()
-
-		Expression expr;
-		if (subExpr instanceof IdentifierExpression) {
-			final IdentifierExpression idEx = (IdentifierExpression) subExpr;
-			final String bId = idEx.getIdentifier();
-			final String cId = mSymboltable.getCIdForBoogieId(bId);
-			assert mSymboltable.containsCSymbol(main.getAcslHook(), cId);
-			expr = ExpressionFactory.constructNestedArrayAccessExpression(loc, idEx, idx);
-		} else if (subExpr instanceof StructAccessExpression) {
-			final StructAccessExpression sae = (StructAccessExpression) subExpr;
-			final StructLHS lhs = (StructLHS) BoogieASTUtil.getLHSforExpression(sae);
-			final ASTType t = mTypeHandler.getTypeOfStructLHS(mSymboltable, loc, lhs, main.getAcslHook());
-			if (!(t instanceof ArrayType)) {
-				final String msg = "Type mismatch - cannot take index on a not-array element!";
-				throw new IncorrectSyntaxException(loc, msg);
-			}
-			expr = ExpressionFactory.constructNestedArrayAccessExpression(loc, sae, idx);
-		} else {
-			final String msg = "Unexpected result type on left side of array!";
-			throw new UnsupportedSyntaxException(loc, msg);
-		}
-		// TODO: Ctype
-		final RValue rval = new RValue(expr, new CPrimitive(CPrimitives.INT));
-		resultBuilder.setLrValue(rval);
-		return resultBuilder.build();
+		final ExpressionResult array = (ExpressionResult) main.dispatch(node.getArray(), main.getAcslHook());
+		// TODO: Why does the ACSL-access have a list of indices, but we only dispatch the first one?
+		final ExpressionResult index = (ExpressionResult) main.dispatch(node.getIndices()[0], main.getAcslHook());
+		return mCHandler.handleArraySubscriptExpression(array, index, main.getAcslHook());
 	}
 
 	@Override
@@ -1001,8 +948,8 @@ public class ACSLHandler implements IACSLHandler {
 		final ILocation loc = mLocationFactory.createACSLLocation(node);
 		final CPrimitive resultType = AcslTypeUtils.translateAcslTypeToCType(node.getCastedType());
 		ExpressionResult expr = (ExpressionResult) main.dispatch(node.getExpression());
-		expr = mExprResultTransformer.switchToRValue(expr, loc, main.getAcslHook());
-		return mExprResultTransformer.convertIfNecessary(loc, expr, resultType);
+		expr = mExprResultTransformer.makeRepresentationReadyForConversion(expr, loc, resultType, main.getAcslHook());
+		return mExprResultTransformer.performImplicitConversion(expr, resultType, loc);
 	}
 
 	@Override

@@ -109,8 +109,6 @@ public class CStructOrUnion extends CType implements ICPossibleIncompleteType<CS
 
 	@Override
 	public boolean isIncomplete() {
-		// FIXME: struct may also be incomplete
-		// if last member is array of unknown size
 		return !mIsComplete;
 	}
 
