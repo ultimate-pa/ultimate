@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualiz
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-// TODO #proofRefactor
+// TODO #witnessRefactor Remove this annotation. WitnessPrinter should work with a Floyd/Hoare proof directly.
 @Deprecated
 public class WitnessInvariant extends ModernAnnotations {
 

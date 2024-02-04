@@ -114,7 +114,6 @@ public final class FloydHoareUtils {
 			if (SmtUtils.isTrueLiteral(formula)) {
 				continue;
 			}
-			// TODO #proofRefactor
 			new WitnessInvariant(invResult.getInvariant()).annotate(locNode);
 		}
 	}
@@ -142,8 +141,6 @@ public final class FloydHoareUtils {
 				final ProcedureContractResult<IIcfgElement, Term> result = new ProcedureContractResult<>(pluginName,
 						exit, backTranslatorService, procName, requiresFormula, ensuresFormula);
 				reporter.accept(result);
-
-				// TODO #proofRefactor
 				new WitnessProcedureContract(result.getRequiresResult(), result.getEnsuresResult()).annotate(exit);
 			}
 		}

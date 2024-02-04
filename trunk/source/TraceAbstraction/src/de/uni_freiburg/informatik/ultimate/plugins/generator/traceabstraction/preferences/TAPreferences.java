@@ -344,7 +344,7 @@ public final class TAPreferences {
 		return mAutomataTypeConcurrency;
 	}
 
-	// TODO #proofRefactor
+	// TODO #proofRefactor Remove this method
 	// TODO #proofRefactor update all settings files to reflect the removal / changes to the corresponding settings
 	@Deprecated
 	public boolean computeHoareAnnotation() {
