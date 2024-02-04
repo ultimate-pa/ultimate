@@ -144,7 +144,7 @@ public final class FloydHoareUtils {
 				reporter.accept(result);
 
 				// TODO #proofRefactor
-				new WitnessProcedureContract(result.getReqiresResult(), result.getEnsuresResult()).annotate(exit);
+				new WitnessProcedureContract(result.getRequiresResult(), result.getEnsuresResult()).annotate(exit);
 			}
 		}
 	}

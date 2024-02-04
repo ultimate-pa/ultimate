@@ -62,7 +62,7 @@ public class ProcedureContractResult<ELEM extends IElement, E> extends AbstractR
 		return mEnsures;
 	}
 
-	public String getReqiresResult() {
+	public String getRequiresResult() {
 		return mRequires;
 	}
 
