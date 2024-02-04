@@ -158,6 +158,7 @@ public class AcyclicSubgraphMerger {
 			final IPreferenceProvider ups = beServices.getPreferenceProvider(BlockEncodingPreferences.PLUGIN_ID);
 			ups.put(BlockEncodingPreferences.FXP_REMOVE_SINK_STATES, false);
 			ups.put(BlockEncodingPreferences.FXP_REMOVE_INFEASIBLE_EDGES, false);
+			ups.put(BlockEncodingPreferences.FXP_MINIMIZE_STATES_IGNORE_BLOWUP, true);
 			final BlockEncoder be = new BlockEncoder(mLogger, beServices, projection.getIcfg(),
 					SimplificationTechnique.NONE, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 			blockEncoded = new Subgraph(projection, be.getResult(), be.getBacktranslator().getLocationMapping());
