@@ -56,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.SleepMapReduction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.SleepMapReduction.IBudgetFunction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.AcceptingRunSearchVisitor;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.ConditionalCommutativityCheckerVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.CoveringOptimizationVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.CoveringOptimizationVisitor.CoveringMode;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.DeadEndOptimizingSearchVisitor;
@@ -303,6 +304,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		try {
 			final IDfsVisitor<L, IPredicate> visitor = createVisitor();
 			mPOR.apply(mAbstraction, visitor);
+			//TODO: add request to ConditionalCommutativityCheckerVisitor and restart DFS if required
 			mCounterexample = getCounterexample(visitor);
 			switchToReadonlyMode();
 
@@ -374,6 +376,11 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		if (PartialOrderReductionFacade.ENABLE_COVERING_OPTIMIZATION) {
 			visitor = new CoveringOptimizationVisitor<>(visitor, new SleepSetCoveringRelation<>(mPOR.getSleepFactory()),
 					CoveringMode.PRUNE);
+		}
+		
+		//TODO: relace by a setting
+		if (true) {
+			visitor = new ConditionalCommutativityCheckerVisitor<>(visitor);
 		}
 
 		if (mSupportsDeadEnds) {
