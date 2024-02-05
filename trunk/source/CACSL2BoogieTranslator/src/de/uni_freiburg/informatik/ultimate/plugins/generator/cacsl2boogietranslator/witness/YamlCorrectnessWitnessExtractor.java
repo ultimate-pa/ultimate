@@ -92,7 +92,7 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 						Boolean.TRUE.equals(before) ? locationInvariantsBefore : locationInvariantsAfter, before);
 			} else if (entry instanceof LoopInvariant) {
 				location = ((LoopInvariant) entry).getLocation();
-				addFunction = (node, before) -> addLoopInvariant((LoopInvariant) entry, node, loopInvariants);
+				addFunction = (node, before) -> addLoopInvariant((LoopInvariant) entry, node, loopInvariants, before);
 			} else {
 				throw new UnsupportedOperationException("Unknown entry type " + entry.getClass().getSimpleName());
 			}
@@ -107,6 +107,7 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 				}
 				throw new UnsupportedOperationException("The witness entry " + entry + " could not be matched.");
 			}
+			// TODO: Make sure that the invariant is only matched once
 			matchesBefore.forEach(x -> addFunction.accept(x, true));
 			matchesAfter.forEach(x -> addFunction.accept(x, false));
 			mStats.success();
@@ -130,7 +131,11 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 	}
 
 	private static void addLoopInvariant(final LoopInvariant current, final IASTNode node,
-			final Map<IASTNode, ExtractedLoopInvariant> loopInvariants) {
+			final Map<IASTNode, ExtractedLoopInvariant> loopInvariants, final boolean isBefore) {
+		if (!isBefore) {
+			// Loop invariants should only be matched before the loops
+			return;
+		}
 		String invariant = current.getInvariant().getExpression();
 		Set<String> labels = Set.of(current.getMetadata().getUuid().toString());
 		final ExtractedLoopInvariant old = loopInvariants.get(node);
