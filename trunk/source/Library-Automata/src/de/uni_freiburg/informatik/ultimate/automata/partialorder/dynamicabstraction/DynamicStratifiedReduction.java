@@ -87,6 +87,8 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
 	private final Statistics<H> mStatistics = new Statistics<>();
+	private int mNumStates;
+	private int mDuplStates;
 
 	private final INwaOutgoingLetterAndTransitionProvider<L, S> mOriginalAutomaton;
 	private final IStratifiedStateFactory<L, S, R, H> mStateFactory;
@@ -195,6 +197,7 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 	}
 
 	public void run() throws AutomataOperationCanceledException {
+		mLogger.info("Start building reduction automaton");
 		mStatistics.startTotal();
 		mStatistics.startLoopless();
 		try {
@@ -207,6 +210,8 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 				mStatistics.stopLoopTime();
 			}
 			mStatistics.stopTotal();
+			mLogger.info("Finished building reduction automaton with %s states.", mNumStates);
+			mLogger.info("Copied states %s times.", mDuplStates);
 		}
 	}
 
@@ -411,8 +416,14 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 				 * corresponding reduction state is in the already completed part of the reduction automaton and
 				 * therefore has a higher abstraction level than our current state we create a new reduction state.
 				 */
+				final boolean dupl =
+						(correspRstate != null) ? mStateFactory.getAbstractionLevel(correspRstate).isLocked() : false;
 				R reductionSucc;
-				if (correspRstate == null || mStateFactory.getAbstractionLevel(correspRstate).isLocked()) {
+				if (correspRstate == null || dupl) {
+					if (dupl) {
+						mDuplStates++;
+						mStatistics.incDuplStates();
+					}
 					// only compute sleep set directly before visiting the state!
 					reductionSucc = createNextState(state, originalSucc, letter);
 					// TODO: use replace?
@@ -509,7 +520,8 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 	 */
 
 	private R createNextState(final R predecState, final S originState, final L letter) {
-
+		mNumStates++;
+		mStatistics.incRedStates();
 		// Abstraction limit of the new state is the abstraction limit of its parent + the abstraction levels of the
 		// edges in its sleepset
 		final H protectedVars = mStateFactory.getAbstractionLimit(predecState).getValue();
@@ -533,7 +545,9 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 	 */
 
 	public static final class Statistics<H> extends AbstractStatisticsDataProvider {
-		private int mContainsLoop = 0;
+		private int mContainsLoop;
+		private int mDuplStates;
+		private int mRedStates;
 		private H mProtectedVars;
 		private H mProtectedVarsBeforeLoop;
 		private final TimeTracker mLoopTime = new TimeTracker();
@@ -545,6 +559,9 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 			declare("Time in loop", () -> mLoopTime, KeyType.TT_TIMER_MS);
 			declare("Time in total", () -> mTotalTime, KeyType.TT_TIMER);
 			declare("Has Loop", () -> mContainsLoop, KeyType.COUNTER);
+			declare("Reduction States", () -> mRedStates, KeyType.COUNTER);
+			declare("Duplicate States", () -> mDuplStates, KeyType.COUNTER);
+
 			/*
 			 * declare("Protected Variables", () -> mProtectedVars, KeyType.COUNTER);
 			 * declare("Protected Variables before loop", () -> mProtectedVarsBeforeLoop, KeyType.COUNTER);
@@ -593,6 +610,14 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 
 		public void setProtectedVarsBL(final H vars) {
 			mProtectedVarsBeforeLoop = vars;
+		}
+
+		public void incRedStates() {
+			mRedStates++;
+		}
+
+		public void incDuplStates() {
+			mDuplStates++;
 		}
 
 	}

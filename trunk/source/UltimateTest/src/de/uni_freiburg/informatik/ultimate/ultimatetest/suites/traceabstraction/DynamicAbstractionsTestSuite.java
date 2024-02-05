@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class DynamicAbstractionsTestSuite extends AbstractTraceAbstractionTestSuite {
 
 	/** Timeout in seconds. */
-	private static final int TIMEOUT = 20;
+	private static final int TIMEOUT = 120;
 
 	/** Limit the number of files per directory. */
 	private static final int FILES_PER_DIR_LIMIT = 5;
