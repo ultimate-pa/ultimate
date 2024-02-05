@@ -378,7 +378,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 					CoveringMode.PRUNE);
 		}
 		
-		//TODO: relace by a setting
+		//TODO: replace by a setting
 		if (true) {
 			visitor = new ConditionalCommutativityCheckerVisitor<>(visitor);
 		}
