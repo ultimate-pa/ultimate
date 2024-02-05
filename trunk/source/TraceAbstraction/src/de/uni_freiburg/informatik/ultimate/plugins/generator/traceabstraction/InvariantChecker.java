@@ -524,12 +524,12 @@ public class InvariantChecker {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("The annotation(s) from ");
 		sb.append(getType(startLoc));
-		sb.append(" at line ");
-		// sb.append(startLoc.getStartLine());
+		sb.append(" ");
+		sb.append(startLoc);
 		sb.append(" to ");
-		sb.append(getType(startLoc));
-		sb.append(" at line ");
-		// sb.append(startLoc.getStartLine());
+		sb.append(getType(errorLoc));
+		sb.append(" ");
+		sb.append(errorLoc);
 		sb.append(" is");
 		if (!positive) {
 			sb.append(" NOT");
