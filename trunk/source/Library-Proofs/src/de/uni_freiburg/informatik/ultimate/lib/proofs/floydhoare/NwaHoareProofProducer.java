@@ -44,9 +44,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.AbstractProofProducer;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.IFinishWithFinalAbstraction;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.IProofPostProcessor;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.IProofProducer;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.IUpdateOnDifference;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.IUpdateOnMinimization;
 import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
@@ -68,62 +68,37 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.TimeTracker;
  *            The type of proof which is produced. By default, this is {@link IFloydHoareAnnotation}, but it may differ
  *            if the proof is post-processed (see {@link #withPostProcessor(IProofPostProcessor)}.
  */
-public final class NwaHoareProofProducer<L extends IAction, A, P>
-		extends AbstractProofProducer<A, P, INestedWordAutomaton<L, IPredicate>, IFloydHoareAnnotation<IPredicate>>
-		implements IUpdateOnMinimization<L>, IUpdateOnDifference<L>,
+public final class NwaHoareProofProducer<L extends IAction>
+		implements IProofProducer<INestedWordAutomaton<L, IPredicate>, IFloydHoareAnnotation<IPredicate>>,
+		IUpdateOnMinimization<L>, IUpdateOnDifference<L>,
 		IFinishWithFinalAbstraction<INestedWordAutomaton<L, IPredicate>> {
 
 	private final IUltimateServiceProvider mServices;
+	private final INestedWordAutomaton<L, IPredicate> mProgram;
 	private final CfgSmtToolkit mCsToolkit;
 	private final PredicateFactory mPredicateFactory;
 
 	private final HoareProofSettings mPrefs;
-	private final Set<IPredicate> mHoareAnnotationStates;
 
 	private final HoareAnnotationFragments<L> mHaf;
 	private INestedWordAutomaton<L, IPredicate> mFinalAbstraction;
+
+	private IFloydHoareAnnotation<IPredicate> mProof;
 	private final Statistics mStatistics;
 
-	private NwaHoareProofProducer(final IUltimateServiceProvider services,
+	public NwaHoareProofProducer(final IUltimateServiceProvider services,
 			final INestedWordAutomaton<L, IPredicate> program, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final HoareProofSettings prefs,
-			final Set<IPredicate> hoareAnnotationStates,
-			final IProofPostProcessor<INestedWordAutomaton<L, IPredicate>, IFloydHoareAnnotation<IPredicate>, A, P> postProcessor) {
-		super(program, postProcessor);
-
+			final Set<IPredicate> hoareAnnotationStates) {
 		mServices = services;
+		mProgram = program;
 		mCsToolkit = csToolkit;
 		mPredicateFactory = predicateFactory;
 		mPrefs = prefs;
-		mHoareAnnotationStates = hoareAnnotationStates;
 		mHaf = new HoareAnnotationFragments<>(services.getLoggingService().getLogger(getClass()),
 				hoareAnnotationStates);
 
-		mStatistics = new Statistics(mPost);
-	}
-
-	/**
-	 * Creates a new proof producer without any postprocessing.
-	 *
-	 * @param <L>
-	 *            the type of letters in the program automaton for which a proof is produced
-	 * @param services
-	 * @param program
-	 * @param csToolkit
-	 * @param predicateFactory
-	 * @param prefs
-	 * @param hoareAnnotationStates
-	 *            The states for which a Hoare annotation shall be produced. This can be a subset of the program
-	 *            automaton's states.
-	 * @return
-	 */
-	public static <L extends IAction>
-			NwaHoareProofProducer<L, INestedWordAutomaton<L, IPredicate>, IFloydHoareAnnotation<IPredicate>>
-			create(final IUltimateServiceProvider services, final INestedWordAutomaton<L, IPredicate> program,
-					final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
-					final HoareProofSettings prefs, final Set<IPredicate> hoareAnnotationStates) {
-		return new NwaHoareProofProducer<>(services, program, csToolkit, predicateFactory, prefs, hoareAnnotationStates,
-				IProofPostProcessor.identity(program));
+		mStatistics = new Statistics();
 	}
 
 	public static Set<IPredicate> computeHoareStates(final IIcfg<? extends IcfgLocation> icfg,
@@ -134,12 +109,24 @@ public final class NwaHoareProofProducer<L extends IAction, A, P>
 	}
 
 	@Override
+	public INestedWordAutomaton<L, IPredicate> getProgram() {
+		return mProgram;
+	}
+
+	@Override
 	public boolean isReadyToComputeProof() {
 		return mFinalAbstraction != null;
 	}
 
 	@Override
-	protected IFloydHoareAnnotation<IPredicate> computeProof() {
+	public IFloydHoareAnnotation<IPredicate> getOrComputeProof() {
+		if (mProof == null) {
+			mProof = computeProof();
+		}
+		return mProof;
+	}
+
+	private IFloydHoareAnnotation<IPredicate> computeProof() {
 		return mStatistics.measureProofComputation(() -> {
 			final HoareAnnotationComposer clha = computeHoareAnnotationComposer();
 			final var floydHoare = clha.extractAnnotation();
@@ -155,13 +142,6 @@ public final class NwaHoareProofProducer<L extends IAction, A, P>
 		}
 		new HoareAnnotationExtractor<>(mServices, mFinalAbstraction, mHaf);
 		return new HoareAnnotationComposer(mCsToolkit, mPredicateFactory, mHaf, mServices);
-	}
-
-	@Override
-	public <A2, P2> NwaHoareProofProducer<L, A2, P2>
-			withPostProcessor(final IProofPostProcessor<A, P, A2, P2> postProcessor) {
-		return new NwaHoareProofProducer<>(mServices, mProgram, mCsToolkit, mPredicateFactory, mPrefs,
-				mHoareAnnotationStates, IProofPostProcessor.compose(mPost, postProcessor));
 	}
 
 	@Override
@@ -200,9 +180,8 @@ public final class NwaHoareProofProducer<L extends IAction, A, P>
 	private static final class Statistics extends AbstractStatisticsDataProvider {
 		private final TimeTracker mProofTime = new TimeTracker();
 
-		public Statistics(final IProofPostProcessor<?, ?, ?, ?> post) {
+		public Statistics() {
 			declare("Hoare annotation time", () -> mProofTime, KeyType.TT_TIMER);
-			forward("Postprocessor statistics", post::getStatistics);
 		}
 
 		private <T> T measureProofComputation(final Supplier<T> computation) {

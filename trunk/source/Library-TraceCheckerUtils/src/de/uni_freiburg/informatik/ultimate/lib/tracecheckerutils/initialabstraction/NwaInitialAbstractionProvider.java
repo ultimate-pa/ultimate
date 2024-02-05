@@ -37,8 +37,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.IProofConverter;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.IProofProducer;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.IProofPostProcessor;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.HoareProofSettings;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.IFloydHoareAnnotation;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.NwaHoareProofProducer;
@@ -96,24 +95,19 @@ public class NwaInitialAbstractionProvider<L extends IIcfgTransition<?>>
 	}
 
 	@Override
-	public <PROOF> IProofProducer<INestedWordAutomaton<L, IPredicate>, PROOF>
-			getProofProducer(final Class<PROOF> proofType, final Class<?> proofUpdates) {
+	public <INPROOF, OUTPROOF> IProofPostProcessor<INestedWordAutomaton<L, IPredicate>, INPROOF, IIcfg<?>, OUTPROOF>
+			getProofConverter(final Class<INPROOF> inputProof, final Class<OUTPROOF> outputProof) {
 		if (!mPrefs.computeHoareAnnotation()) {
 			return null;
 		}
 
-		if (proofUpdates == null || proofUpdates.isAssignableFrom(NwaHoareProofProducer.class)) {
-			// TODO implement retrieval of suitable proof converter, if one exists
-			final IProofConverter<INestedWordAutomaton<L, IPredicate>, IFloydHoareAnnotation<IPredicate>, PROOF> converter =
-					null;
-
-			if (converter != null) {
-				return NwaHoareProofProducer
-						.create(mServices, mAbstraction, mCsToolkit, mPredicateFactory, mPrefs, mHoareStates)
-						.withPostProcessor(converter);
-			}
+		// TODO #proofRefactor implement retrieval of suitable proof converter, if one exists
+		final IProofPostProcessor<INestedWordAutomaton<L, IPredicate>, IFloydHoareAnnotation<IPredicate>, IIcfg<?>, OUTPROOF> converter =
+				null;
+		if (converter != null) {
+			return (IProofPostProcessor) converter;
 		}
 
-		return IInitialAbstractionProvider.super.getProofProducer(proofType, proofUpdates);
+		return IInitialAbstractionProvider.super.getProofConverter(inputProof, outputProof);
 	}
 }

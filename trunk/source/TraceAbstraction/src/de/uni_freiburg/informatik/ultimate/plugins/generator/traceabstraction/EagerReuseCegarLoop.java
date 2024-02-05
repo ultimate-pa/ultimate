@@ -48,9 +48,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.d
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.IFinishWithFinalAbstraction;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.IUpdateOnDifference;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.IUpdateOnMinimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -76,17 +73,16 @@ public class EagerReuseCegarLoop<L extends IIcfgTransition<?>> extends ReuseCega
 	private static final boolean IDENTIFY_USELESS_FLOYDHOARE_AUTOMATA = false;
 
 	// TODO can this method be removed?
-	public <T extends IUpdateOnDifference<L> & IUpdateOnMinimization<L> & IFinishWithFinalAbstraction<INestedWordAutomaton<L, IPredicate>>> EagerReuseCegarLoop(
-			final DebugIdentifier name, final INestedWordAutomaton<L, IPredicate> initialAbstraction,
+	public EagerReuseCegarLoop(final DebugIdentifier name, final INestedWordAutomaton<L, IPredicate> initialAbstraction,
 			final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
-			final TAPreferences taPrefs, final Set<? extends IcfgLocation> errorLocs, final T proofUpdater,
-			final boolean computeHoareAnnotation, final IUltimateServiceProvider services,
+			final TAPreferences taPrefs, final Set<? extends IcfgLocation> errorLocs, final boolean computeProof,
+			final IUltimateServiceProvider services,
 			final List<Pair<AbstractInterpolantAutomaton<L>, IPredicateUnifier>> floydHoareAutomataFromOtherLocations,
 			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile,
 			final Class<L> transitionClazz, final PredicateFactoryRefinement stateFactoryForRefinement) {
-		super(name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, proofUpdater,
-				computeHoareAnnotation, services, floydHoareAutomataFromOtherLocations, rawFloydHoareAutomataFromFile,
-				transitionClazz, stateFactoryForRefinement);
+		super(name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, computeProof,
+				services, floydHoareAutomataFromOtherLocations, rawFloydHoareAutomataFromFile, transitionClazz,
+				stateFactoryForRefinement);
 	}
 
 	@Override

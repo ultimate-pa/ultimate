@@ -158,7 +158,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		}
 
 		mArtifact = null;
-		final List<CegarLoopResult<L>> results;
+		final List<CegarLoopResult<L, ?>> results;
 		if (IcfgUtils.isConcurrent(icfg)) {
 			results = analyseConcurrentProgram(icfg);
 		} else {
@@ -209,7 +209,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 	 *            The CFG for the program (unpetrified).
 	 * @return
 	 */
-	private List<CegarLoopResult<L>> analyseConcurrentProgram(final IIcfg<IcfgLocation> icfg) {
+	private List<CegarLoopResult<L, ?>> analyseConcurrentProgram(final IIcfg<IcfgLocation> icfg) {
 		if (icfg.getInitialNodes().size() > 1) {
 			throw new UnsupportedOperationException("Library mode is not supported for concurrent programs. "
 					+ "There must be a unique entry procedure.");
@@ -235,9 +235,9 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 	}
 
 	private static <L extends IIcfgTransition<?>> boolean
-			resultsHaveSufficientInstances(final List<CegarLoopResult<L>> results) {
+			resultsHaveSufficientInstances(final List<CegarLoopResult<L, ?>> results) {
 		boolean res = true;
-		for (final CegarLoopResult<L> r : results) {
+		for (final CegarLoopResult<L, ?> r : results) {
 			if (r.resultStream().allMatch(a -> a != Result.UNSAFE)) {
 				continue;
 			}
@@ -256,7 +256,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 	 *            The CFG for the program
 	 * @return
 	 */
-	private List<CegarLoopResult<L>> analyseSequentialProgram(final IIcfg<IcfgLocation> icfg) {
+	private List<CegarLoopResult<L, ?>> analyseSequentialProgram(final IIcfg<IcfgLocation> icfg) {
 		return analyseProgram(icfg, x -> true);
 	}
 
@@ -271,9 +271,9 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 	 *            returned).
 	 * @return the collection of all analysis results, in order
 	 */
-	private List<CegarLoopResult<L>> analyseProgram(final IIcfg<IcfgLocation> icfg,
-			final Predicate<CegarLoopResult<L>> continueAnalysis) {
-		final List<CegarLoopResult<L>> results = new ArrayList<>();
+	private List<CegarLoopResult<L, ?>> analyseProgram(final IIcfg<IcfgLocation> icfg,
+			final Predicate<CegarLoopResult<L, ?>> continueAnalysis) {
+		final List<CegarLoopResult<L, ?>> results = new ArrayList<>();
 
 		final List<Pair<DebugIdentifier, Set<IcfgLocation>>> errorPartitions = partitionErrorLocations(icfg);
 		final boolean multiplePartitions = errorPartitions.size() > 1;
@@ -296,7 +296,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 			}
 			final TraceAbstractionBenchmarks traceAbstractionBenchmark = createNewBenchmark(name, icfg);
 
-			final CegarLoopResult<L> clres =
+			final CegarLoopResult<L, ?> clres =
 					executeCegarLoop(services, name, icfg, traceAbstractionBenchmark, errorLocs);
 			results.add(clres);
 			finishedErrorSets++;
@@ -405,10 +405,10 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		return List.of(new Pair<>(AllErrorsAtOnceDebugIdentifier.INSTANCE, errNodesOfAllProc));
 	}
 
-	private CegarLoopResult<L> executeCegarLoop(final IUltimateServiceProvider services, final DebugIdentifier name,
+	private CegarLoopResult<L, ?> executeCegarLoop(final IUltimateServiceProvider services, final DebugIdentifier name,
 			final IIcfg<IcfgLocation> icfg, final TraceAbstractionBenchmarks taBenchmark,
 			final Set<IcfgLocation> errorLocs) {
-		final CegarLoopResult<L> clres = mCegarFactory
+		final CegarLoopResult<L, ?> clres = mCegarFactory
 				.constructCegarLoop(services, name, icfg, errorLocs, mWitnessAutomaton, mRawFloydHoareAutomataFromFile)
 				.runCegar();
 
@@ -557,7 +557,8 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		return mRootOfNewModel;
 	}
 
-	private static <L extends IIcfgTransition<?>> boolean hasSufficientThreadInstances(final CegarLoopResult<L> clres) {
+	private static <L extends IIcfgTransition<?>> boolean
+			hasSufficientThreadInstances(final CegarLoopResult<L, ?> clres) {
 		return clres.getResults().entrySet().stream().filter(a -> a.getValue().getResult() == Result.UNSAFE)
 				.noneMatch(a -> isInsufficientThreadsLocation(a.getKey()));
 	}

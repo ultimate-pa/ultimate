@@ -95,6 +95,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskIterationIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult.BasicRefinementEngineResult;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.IProofProducer;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.NwaFloydHoareValidityCheck;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.cfg2automaton.Cfg2Automaton;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
@@ -134,8 +135,8 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
  * @param <A>
  *            The type of abstraction refined by the CEGAR loop
  */
-public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>, T>
-		extends AbstractCegarLoop<L, A, T> {
+public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>, P, T extends IProofProducer<A, P>>
+		extends AbstractCegarLoop<L, A, P, T> {
 
 	private static final boolean NON_EA_INDUCTIVITY_CHECK = false;
 

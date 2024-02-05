@@ -82,6 +82,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateWithConjuncts;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.IProofProducer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.BetterLockstepOrder;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.LoopLockstepOrder.PredicateWithLastThread;
@@ -113,8 +114,8 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
  * @param <L>
  *            The type of statements in the program.
  */
-public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
-		extends BasicCegarLoop<L, INwaOutgoingLetterAndTransitionProvider<L, IPredicate>, Object> {
+public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends
+		BasicCegarLoop<L, INwaOutgoingLetterAndTransitionProvider<L, IPredicate>, Object, IProofProducer<INwaOutgoingLetterAndTransitionProvider<L, IPredicate>, Object>> {
 	private final PartialOrderMode mPartialOrderMode;
 	private final InformationStorageFactory mFactory = new InformationStorageFactory();
 

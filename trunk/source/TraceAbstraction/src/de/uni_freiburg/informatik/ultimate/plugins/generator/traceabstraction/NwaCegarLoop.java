@@ -57,7 +57,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpt
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmptyHeuristic.AStarHeuristic;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmptyHeuristic.IHeuristic;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.ProductNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IOpWithDelayedDeadEndRemoval;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.senwa.DifferenceSenwa;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
@@ -83,9 +82,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskIterationIdentifier;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.IFinishWithFinalAbstraction;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.IUpdateOnDifference;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.IUpdateOnMinimization;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.IFloydHoareAnnotation;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.NwaHoareProofProducer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SMTFeatureExtractionTermClassifier.ScoringMethod;
@@ -93,7 +91,6 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.cfg2automaton.C
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram.PathProgramConstructionResult;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.NwaCegarLoop.ProofUpdater;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization.AutomataMinimizationTimeout;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorabstraction.ErrorGeneralizationEngine;
@@ -115,8 +112,8 @@ import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  */
-public class NwaCegarLoop<L extends IIcfgTransition<?>>
-		extends BasicCegarLoop<L, INestedWordAutomaton<L, IPredicate>, ProofUpdater<L, ?>> {
+public class NwaCegarLoop<L extends IIcfgTransition<?>> extends
+		BasicCegarLoop<L, INestedWordAutomaton<L, IPredicate>, IFloydHoareAnnotation<IPredicate>, NwaHoareProofProducer<L>> {
 
 	private enum AutomatonType {
 		FLOYD_HOARE("FloydHoare", "Fh"), ERROR("Error", "Err");
@@ -157,16 +154,17 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>>
 	private final AStarHeuristic mAStarHeuristic;
 	private final Integer mAStarRandomHeuristicSeed;
 
-	public <T extends IUpdateOnDifference<L> & IUpdateOnMinimization<L> & IFinishWithFinalAbstraction<INestedWordAutomaton<L, IPredicate>>> NwaCegarLoop(
-			final DebugIdentifier name, final INestedWordAutomaton<L, IPredicate> initialAbstraction,
+	public NwaCegarLoop(final DebugIdentifier name, final INestedWordAutomaton<L, IPredicate> initialAbstraction,
 			final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
-			final TAPreferences taPrefs, final Set<? extends IcfgLocation> errorLocs, final T proofUpdater,
-			final boolean computeHoareAnnotation, final IUltimateServiceProvider services,
-			final Class<L> transitionClazz, final PredicateFactoryRefinement stateFactoryForRefinement) {
+			final TAPreferences taPrefs, final Set<? extends IcfgLocation> errorLocs, final boolean computeProof,
+			final IUltimateServiceProvider services, final Class<L> transitionClazz,
+			final PredicateFactoryRefinement stateFactoryForRefinement) {
 		super(name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs,
-				proofUpdater == null ? null : new ProofUpdater<>(proofUpdater), services, transitionClazz,
-				stateFactoryForRefinement);
-
+				computeProof
+						? new NwaHoareProofProducer<L>(services, initialAbstraction, csToolkit, predicateFactory,
+								taPrefs.getHoareSettings(), null /* TODO #proofRefactor */)
+						: null,
+				services, transitionClazz, stateFactoryForRefinement);
 		mErrorGeneralizationEngine = new ErrorGeneralizationEngine<>(services);
 
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
@@ -570,46 +568,6 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>>
 			return SearchStrategy.DFS;
 		default:
 			throw new IllegalArgumentException();
-		}
-	}
-
-	// Annoyingly, this wrapper seems currently necessary due to Java's limited support for intersection types.
-	// The alternative is including a type parameter as below in the NwaCegarLoop itself.
-	protected static final class ProofUpdater<L, T extends IUpdateOnMinimization<L> & IUpdateOnDifference<L> & IFinishWithFinalAbstraction<INestedWordAutomaton<L, IPredicate>>>
-			implements IUpdateOnMinimization<L>, IUpdateOnDifference<L>,
-			IFinishWithFinalAbstraction<INestedWordAutomaton<L, IPredicate>> {
-		private final T mUpdater;
-
-		public ProofUpdater(final T updater) {
-			mUpdater = updater;
-		}
-
-		@Override
-		public boolean exploitSigmaStarConcatOfIa() {
-			return mUpdater.exploitSigmaStarConcatOfIa();
-		}
-
-		@Override
-		public void updateOnIntersection(
-				final Map<IPredicate, Map<IPredicate, ProductNwa<L, IPredicate>.ProductState>> fst2snd2res,
-				final IDoubleDeckerAutomaton<L, IPredicate> result) {
-			mUpdater.updateOnIntersection(fst2snd2res, result);
-		}
-
-		@Override
-		public void addDeadEndDoubleDeckers(final IOpWithDelayedDeadEndRemoval<L, IPredicate> diff) {
-			mUpdater.addDeadEndDoubleDeckers(diff);
-		}
-
-		@Override
-		public void updateOnMinimization(final Map<IPredicate, IPredicate> old2New,
-				final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction) {
-			mUpdater.updateOnMinimization(old2New, abstraction);
-		}
-
-		@Override
-		public void finish(final INestedWordAutomaton<L, IPredicate> finalAbstraction) {
-			mUpdater.finish(finalAbstraction);
 		}
 	}
 }

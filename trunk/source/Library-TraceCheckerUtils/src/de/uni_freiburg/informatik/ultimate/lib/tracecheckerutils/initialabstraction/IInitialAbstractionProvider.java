@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.IProofProducer;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.IProofPostProcessor;
 import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
@@ -77,25 +77,26 @@ public interface IInitialAbstractionProvider<L extends IIcfgTransition<?>, A ext
 			throws AutomataLibraryException;
 
 	/**
-	 * After an initial abstraction has been computed, attempts to create a proof producer for the abstraction.
+	 * After an initial abstraction has been provided, retrieves a proof postprocessor that converts from a proof of the
+	 * provided abstraction to a proof of the underlying {@link IIcfg}.
 	 *
-	 * @param <PROOF>
-	 *            The type of proofs that shall be produced
-	 * @param proofType
-	 *            The type of proofs that shall be produced
-	 * @param proofUpdates
-	 *            If this is non-null, the returned producer must implement this interface. If no such producer can be
-	 *            found, fail instead.
-	 * @return A proof producer satisfying the above constraints.
+	 * @param <INPROOF>
+	 *            The type of proof for the provided abstraction that is given
+	 * @param <OUTPROOF>
+	 *            The type of proof for the original ICFG that shall be produced
+	 * @param inputProof
+	 *            The type of proof for the provided abstraction that is given
+	 * @param outputProof
+	 *            The type of proof for the original ICFG that shall be produced
+	 * @return A proof postprocessor satisfying the above constraints.
 	 * @throws UnsupportedOperationException
-	 *             if no proof producer satisfying the constraints is known
+	 *             if no proof postprocessor satisfying the constraints is known
 	 */
 	// TODO #proofRefactor
-	default <PROOF> IProofProducer<A, PROOF> getProofProducer(final Class<PROOF> proofType,
-			final Class<?> proofUpdates) {
-		final String suffix = proofUpdates == null ? "" : (" while implementing " + proofUpdates.getSimpleName());
+	default <INPROOF, OUTPROOF> IProofPostProcessor<A, INPROOF, IIcfg<?>, OUTPROOF>
+			getProofConverter(final Class<INPROOF> inputProof, final Class<OUTPROOF> outputProof) {
 		throw new UnsupportedOperationException(getClass().getSimpleName()
-				+ " does not support producing proofs of type " + proofType.getSimpleName() + suffix);
+				+ " does not support producing proofs of type " + outputProof.getSimpleName());
 	}
 
 	default IStatisticsDataProvider getStatistics() {

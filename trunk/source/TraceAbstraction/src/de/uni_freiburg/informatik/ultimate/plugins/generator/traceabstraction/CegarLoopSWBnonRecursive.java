@@ -63,9 +63,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.IFinishWithFinalAbstraction;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.IUpdateOnDifference;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.IUpdateOnMinimization;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolatingTraceCheckCraig;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheck;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -165,18 +162,17 @@ public class CegarLoopSWBnonRecursive<L extends IIcfgTransition<?>> extends NwaC
 	 * @param csToolkit
 	 * @param taPrefs
 	 * @param errorLocs
-	 * @param computeHoareAnnotation
+	 * @param computeProof
 	 * @param services
 	 * @param transitionClazz
 	 */
-	public <T extends IUpdateOnDifference<L> & IUpdateOnMinimization<L> & IFinishWithFinalAbstraction<INestedWordAutomaton<L, IPredicate>>> CegarLoopSWBnonRecursive(
-			final DebugIdentifier name, final INestedWordAutomaton<L, IPredicate> initialAbstraction,
-			final IIcfg<?> icfg, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
-			final TAPreferences taPrefs, final Set<IcfgLocation> errorLocs, final T proofUpdater,
-			final boolean computeHoareAnnotation, final IUltimateServiceProvider services,
+	public CegarLoopSWBnonRecursive(final DebugIdentifier name,
+			final INestedWordAutomaton<L, IPredicate> initialAbstraction, final IIcfg<?> icfg,
+			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final TAPreferences taPrefs,
+			final Set<IcfgLocation> errorLocs, final boolean computeProof, final IUltimateServiceProvider services,
 			final Class<L> transitionClazz, final PredicateFactoryRefinement stateFactoryForRefinement) {
-		super(name, initialAbstraction, icfg, csToolkit, predicateFactory, taPrefs, errorLocs, proofUpdater,
-				computeHoareAnnotation, services, transitionClazz, stateFactoryForRefinement);
+		super(name, initialAbstraction, icfg, csToolkit, predicateFactory, taPrefs, errorLocs, computeProof, services,
+				transitionClazz, stateFactoryForRefinement);
 		mErrorPathHistory = new ArrayList<>();
 		mnofStates = new ArrayList<>();
 	}

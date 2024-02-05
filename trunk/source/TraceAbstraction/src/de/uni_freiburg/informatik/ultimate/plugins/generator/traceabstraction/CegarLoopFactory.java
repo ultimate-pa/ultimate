@@ -123,7 +123,7 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 	 *
 	 * @return the newly created CEGAR loop
 	 */
-	public BasicCegarLoop<L, ?, ?> constructCegarLoop(final IUltimateServiceProvider services,
+	public BasicCegarLoop<L, ?, ?, ?> constructCegarLoop(final IUltimateServiceProvider services,
 			final DebugIdentifier name, final IIcfg<IcfgLocation> root, final Set<IcfgLocation> errorLocs,
 			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton,
 			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile) {
@@ -141,9 +141,8 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 		if (languageOperation != LanguageOperation.DIFFERENCE) {
 			final var abstraction = createAutomataAbstraction(services, root, errorLocs, predicateFactory,
 					stateFactoryForRefinement, witnessAutomaton);
-			// TODO extract proof producer from IInitialAbstractionProvider and pass to CEGAR loop
 			return new IncrementalInclusionCegarLoop<>(name, abstraction, root, csToolkit, predicateFactory, mPrefs,
-					errorLocs, null, mComputeHoareAnnotation, services, languageOperation, mTransitionClazz,
+					errorLocs, mComputeHoareAnnotation, services, languageOperation, mTransitionClazz,
 					stateFactoryForRefinement);
 		}
 
@@ -152,7 +151,7 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 					stateFactoryForRefinement, witnessAutomaton);
 			// TODO extract proof producer from IInitialAbstractionProvider and pass to CEGAR loop
 			return new CegarLoopSWBnonRecursive<>(name, abstraction, root, csToolkit, predicateFactory, mPrefs,
-					errorLocs, null, mComputeHoareAnnotation, services, mTransitionClazz, stateFactoryForRefinement);
+					errorLocs, mComputeHoareAnnotation, services, mTransitionClazz, stateFactoryForRefinement);
 		}
 
 		if ((FORCE_FINITE_AUTOMATA_FOR_SEQUENTIAL_PROGRAMS && !IcfgUtils.isConcurrent(root))
@@ -204,14 +203,13 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 		return new PredicateFactory(services, csToolkit.getManagedScript(), csToolkit.getSymbolTable());
 	}
 
-	private BasicCegarLoop<L, ?, ?> createFiniteAutomataCegarLoop(final IUltimateServiceProvider services,
+	private NwaCegarLoop<L> createFiniteAutomataCegarLoop(final IUltimateServiceProvider services,
 			final DebugIdentifier name, final IIcfg<IcfgLocation> root, final PredicateFactory predicateFactory,
 			final Set<IcfgLocation> errorLocs,
 			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile,
 			final PredicateFactoryRefinement stateFactoryForRefinement,
 			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton) {
 
-		// TODO #proofRefactor extract proof producer from IInitialAbstractionProvider and pass to CEGAR loops
 		final INestedWordAutomaton<L, IPredicate> initialAbstraction = createAutomataAbstraction(services, root,
 				errorLocs, predicateFactory, stateFactoryForRefinement, witnessAutomaton);
 		final CfgSmtToolkit csToolkit = root.getCfgSmtToolkit();
@@ -219,15 +217,15 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 		switch (mPrefs.getFloydHoareAutomataReuse()) {
 		case EAGER:
 			return new EagerReuseCegarLoop<>(name, initialAbstraction, root, csToolkit, predicateFactory, mPrefs,
-					errorLocs, null, mComputeHoareAnnotation, services, Collections.emptyList(),
+					errorLocs, mComputeHoareAnnotation, services, Collections.emptyList(),
 					rawFloydHoareAutomataFromFile, mTransitionClazz, stateFactoryForRefinement);
 		case LAZY_IN_ORDER:
 			return new LazyReuseCegarLoop<>(name, initialAbstraction, root, csToolkit, predicateFactory, mPrefs,
-					errorLocs, null, mComputeHoareAnnotation, services, Collections.emptyList(),
+					errorLocs, mComputeHoareAnnotation, services, Collections.emptyList(),
 					rawFloydHoareAutomataFromFile, mTransitionClazz, stateFactoryForRefinement);
 		case NONE:
 			return new NwaCegarLoop<>(name, initialAbstraction, root, csToolkit, predicateFactory, mPrefs, errorLocs,
-					null, mComputeHoareAnnotation, services, mTransitionClazz, stateFactoryForRefinement);
+					mComputeHoareAnnotation, services, mTransitionClazz, stateFactoryForRefinement);
 		default:
 			throw new AssertionError("Unknown Setting: " + mPrefs.getFloydHoareAutomataReuse());
 		}

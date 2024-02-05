@@ -65,9 +65,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHo
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.IFinishWithFinalAbstraction;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.IUpdateOnDifference;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.IUpdateOnMinimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.NondeterministicInterpolantAutomaton;
@@ -82,18 +79,17 @@ public class IncrementalInclusionCegarLoop<L extends IIcfgTransition<?>> extends
 	protected final List<AbstractInterpolantAutomaton<L>> mInterpolantAutomata = new ArrayList<>();
 	protected final List<IHoareTripleChecker> mHoareTripleChecker = new ArrayList<>();
 
-	public <T extends IUpdateOnDifference<L> & IUpdateOnMinimization<L> & IFinishWithFinalAbstraction<INestedWordAutomaton<L, IPredicate>>> IncrementalInclusionCegarLoop(
-			final DebugIdentifier name, final INestedWordAutomaton<L, IPredicate> initialAbstraction,
-			final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
-			final TAPreferences taPrefs, final Set<? extends IcfgLocation> errorLocs, final T proofUpdater,
-			final boolean computeHoareAnnotation, final IUltimateServiceProvider services,
-			final LanguageOperation languageOperation, final Class<L> transitionClazz,
-			final PredicateFactoryRefinement stateFactoryForRefinement) {
-		super(name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, proofUpdater,
-				computeHoareAnnotation, services, transitionClazz, stateFactoryForRefinement);
+	public IncrementalInclusionCegarLoop(final DebugIdentifier name,
+			final INestedWordAutomaton<L, IPredicate> initialAbstraction, final IIcfg<?> rootNode,
+			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final TAPreferences taPrefs,
+			final Set<? extends IcfgLocation> errorLocs, final boolean computeProof,
+			final IUltimateServiceProvider services, final LanguageOperation languageOperation,
+			final Class<L> transitionClazz, final PredicateFactoryRefinement stateFactoryForRefinement) {
+		super(name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, computeProof,
+				services, transitionClazz, stateFactoryForRefinement);
 		mLanguageOperation = languageOperation;
 
-		if (proofUpdater != null) {
+		if (mProofUpdater != null) {
 			throw new UnsupportedOperationException(
 					"while using this CEGAR loop computation of proofs is unsupported ");
 		}

@@ -72,27 +72,5 @@ public interface IProofProducer<PROGRAM, PROOF> {
 	 */
 	PROOF getOrComputeProof();
 
-	/**
-	 * Obtains a new proof producer which applies the given postprocessing to the proof artifact as it would be computed
-	 * by this instance. The returned object should be an instance of the same class as this instance; implementing
-	 * classes are encouraged to specialize the return type of this method.
-	 *
-	 * There is no guarantee that this proof producer remains valid, or if so, that computed proofs are shared between
-	 * the instances.
-	 *
-	 * @param <OUTPROGRAM>
-	 *            The type of program for which the post processor outputs a proof
-	 * @param <OUTPROOF>
-	 *            The type of proof artifact returned by the post processor
-	 * @param postProcessor
-	 *            A post processor to apply to the computed proof. The program returned by
-	 *            {@link IProofPostProcessor#getTransformedProgram()} must equal the program returned by
-	 *            {@link #getProgram()}.
-	 * @return A new proof producer that applies the given post processor after computing a proof, thereby computing a
-	 *         proof for the program returned by {@link IProofPostProcessor#getOriginalProgram()}.
-	 */
-	<OUTPROGRAM, OUTPROOF> IProofProducer<OUTPROGRAM, OUTPROOF>
-			withPostProcessor(IProofPostProcessor<PROGRAM, PROOF, OUTPROGRAM, OUTPROOF> postProcessor);
-
 	IStatisticsDataProvider getStatistics();
 }

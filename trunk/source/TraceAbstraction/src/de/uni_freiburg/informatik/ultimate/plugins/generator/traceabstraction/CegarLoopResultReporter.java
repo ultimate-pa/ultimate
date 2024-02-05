@@ -95,7 +95,7 @@ public final class CegarLoopResultReporter<L extends IIcfgTransition<?>> {
 		mReportFunction = reportFunction;
 	}
 
-	public void reportCegarLoopResult(final CegarLoopResult<L> clres) {
+	public void reportCegarLoopResult(final CegarLoopResult<L, ?> clres) {
 		for (final Entry<IcfgLocation, CegarLoopLocalResult<L>> entry : clres.getResults().entrySet()) {
 			final CegarLoopLocalResult<L> localResult = entry.getValue();
 			final IcfgLocation errorLoc = entry.getKey();
@@ -123,11 +123,11 @@ public final class CegarLoopResultReporter<L extends IIcfgTransition<?>> {
 		}
 	}
 
-	public void reportAllSafeResultIfNecessary(final CegarLoopResult<L> clres, final int numberOfErrorLocs) {
+	public void reportAllSafeResultIfNecessary(final CegarLoopResult<L, ?> clres, final int numberOfErrorLocs) {
 		reportAllSafeResultIfNecessary(Collections.singletonList(clres), numberOfErrorLocs);
 	}
 
-	public void reportAllSafeResultIfNecessary(final Collection<CegarLoopResult<L>> clres,
+	public void reportAllSafeResultIfNecessary(final Collection<CegarLoopResult<L, ?>> clres,
 			final int numberOfErrorLocs) {
 		if (clres.stream().allMatch(a -> a.resultStream().allMatch(r -> r == Result.SAFE))) {
 			final AllSpecificationsHoldResult result =

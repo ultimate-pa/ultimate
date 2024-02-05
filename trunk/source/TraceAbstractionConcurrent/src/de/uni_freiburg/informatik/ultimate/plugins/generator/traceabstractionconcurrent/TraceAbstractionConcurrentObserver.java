@@ -113,27 +113,27 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 			}
 		}
 
-		BasicCegarLoop<IcfgEdge, ?, ?> abstractCegarLoop;
+		BasicCegarLoop<IcfgEdge, ?, ?, ?> basicCegarLoop;
 		final AllErrorsAtOnceDebugIdentifier name = TraceAbstractionStarter.AllErrorsAtOnceDebugIdentifier.INSTANCE;
 		final PredicateFactoryRefinement stateFactoryForRefinement = new PredicateFactoryRefinement(mServices,
 				csToolkit.getManagedScript(), predicateFactory, false, Collections.emptySet());
 
 		if (taPrefs.getAutomataTypeConcurrency() == Concurrency.PETRI_NET) {
 			final IcfgCompositionFactory compositionFactory = new IcfgCompositionFactory(mServices, csToolkit);
-			abstractCegarLoop = new CegarLoopForPetriNet<>(name,
+			basicCegarLoop = new CegarLoopForPetriNet<>(name,
 					CegarLoopFactory.createPetriAbstraction(mServices, compositionFactory, predicateFactory,
 							IcfgEdge.class, taPrefs, false, (IIcfg<IcfgLocation>) petrifiedIcfg, errNodesOfAllProc),
 					petrifiedIcfg, csToolkit, predicateFactory, taPrefs, errNodesOfAllProc, mServices, IcfgEdge.class,
 					stateFactoryForRefinement);
 		} else if (taPrefs.getAutomataTypeConcurrency() == Concurrency.FINITE_AUTOMATA) {
-			abstractCegarLoop = new CegarLoopConcurrentAutomata<>(name, petrifiedIcfg, csToolkit, predicateFactory,
+			basicCegarLoop = new CegarLoopConcurrentAutomata<>(name, petrifiedIcfg, csToolkit, predicateFactory,
 					taPrefs, errNodesOfAllProc, mServices, IcfgEdge.class, stateFactoryForRefinement);
 		} else {
 			throw new IllegalArgumentException();
 		}
 		final TraceAbstractionBenchmarks traceAbstractionBenchmark = new TraceAbstractionBenchmarks(petrifiedIcfg);
-		final CegarLoopResult<IcfgEdge> result = abstractCegarLoop.runCegar();
-		final IStatisticsDataProvider cegarLoopBenchmarkGenerator = abstractCegarLoop.getCegarLoopBenchmark();
+		final CegarLoopResult<IcfgEdge, ?> result = basicCegarLoop.runCegar();
+		final IStatisticsDataProvider cegarLoopBenchmarkGenerator = basicCegarLoop.getCegarLoopBenchmark();
 		traceAbstractionBenchmark.aggregateBenchmarkData(cegarLoopBenchmarkGenerator);
 		reportBenchmark(traceAbstractionBenchmark);
 
@@ -161,19 +161,19 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 		// abstractCegarLoop.mBiggestAbstractionIteration + " had ";
 		// stat += abstractCegarLoop.mBiggestAbstractionSize;
 
-		if (abstractCegarLoop instanceof CegarLoopForPetriNet) {
+		if (basicCegarLoop instanceof CegarLoopForPetriNet) {
 			stat += " conditions ";
-			final CegarLoopForPetriNet<?> clj = (CegarLoopForPetriNet<?>) abstractCegarLoop;
+			final CegarLoopForPetriNet<?> clj = (CegarLoopForPetriNet<?>) basicCegarLoop;
 			stat += "and " + clj.mBiggestAbstractionTransitions + " transitions. ";
 			stat += "Overall " + clj.mCoRelationQueries + "co-relation queries";
-		} else if (abstractCegarLoop instanceof CegarLoopConcurrentAutomata) {
+		} else if (basicCegarLoop instanceof CegarLoopConcurrentAutomata) {
 			stat += " states ";
 		} else {
 			throw new IllegalArgumentException();
 		}
 		mLogger.warn(stat);
 
-		mGraphroot = abstractCegarLoop.getArtifact();
+		mGraphroot = basicCegarLoop.getArtifact();
 
 		return false;
 	}

@@ -79,6 +79,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateCoverageChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskIterationIdentifier;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.IProofProducer;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.ILooperCheck;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
@@ -97,8 +98,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
-public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
-		extends BasicCegarLoop<L, BoundedPetriNet<L, IPredicate>, Object> {
+public class CegarLoopForPetriNet<L extends IIcfgTransition<?>> extends
+		BasicCegarLoop<L, BoundedPetriNet<L, IPredicate>, Object, IProofProducer<BoundedPetriNet<L, IPredicate>, Object>> {
 
 	public enum SizeReduction {
 		REMOVE_DEAD, REMOVE_REDUNDANT_FLOW
