@@ -61,7 +61,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.LinkedScopedHashM
  * @authors Markus Lindenmann, Alexander Nutz
  * @date 12.12.2012
  */
-public class PreRunner extends ASTVisitor {
+public class FunctionPointerVisitor extends ASTVisitor {
 	/**
 	 * The table containing all functions.
 	 */
@@ -83,7 +83,7 @@ public class PreRunner extends ASTVisitor {
 	/**
 	 * Constructor.
 	 */
-	public PreRunner(final FlatSymbolTable symTab, final Map<String, IASTNode> functionTable) {
+	public FunctionPointerVisitor(final FlatSymbolTable symTab, final Map<String, IASTNode> functionTable) {
 		shouldVisitDeclarations = true;
 		shouldVisitParameterDeclarations = true;
 		shouldVisitExpressions = true;

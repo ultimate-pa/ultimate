@@ -166,10 +166,11 @@ public class MainTranslator {
 			final Map<String, IASTNode> functionTable =
 					executePreRun(new FunctionTableBuilder(flatSymbolTable), nodes).getFunctionTable();
 
-			final PreRunner preRunner = executePreRun(new PreRunner(flatSymbolTable, functionTable), nodes);
+			final Set<String> functionPointers =
+					executePreRun(new FunctionPointerVisitor(flatSymbolTable, functionTable), nodes).getResult();
 
 			final Set<IASTDeclaration> reachableDeclarations = initReachableDeclarations(nodes, functionTable,
-					preRunner.getResult(), translationSettings.getEntryMethod());
+					functionPointers, translationSettings.getEntryMethod());
 
 			mLogger.info("Built tables and reachable declarations");
 			final StaticObjectsHandler prerunStaticObjectsHandler = new StaticObjectsHandler(mLogger);
@@ -179,10 +180,10 @@ public class MainTranslator {
 			final ExpressionTranslation prerunExpressionTranslation =
 					createExpressionTranslation(translationSettings, flatSymbolTable, typeSizes, prerunTypeHandler);
 
-			final CHandler prerunCHandler = new CHandler(mLogger, backtranslatorMapping, translationSettings,
-					flatSymbolTable, functionTable, prerunExpressionTranslation, locationFactory, typeSizes,
-					reachableDeclarations, prerunTypeHandler, reporter, nameHandler, prerunStaticObjectsHandler,
-					preRunner.getResult());
+			final CHandler prerunCHandler =
+					new CHandler(mLogger, backtranslatorMapping, translationSettings, flatSymbolTable, functionTable,
+							prerunExpressionTranslation, locationFactory, typeSizes, reachableDeclarations,
+							prerunTypeHandler, reporter, nameHandler, prerunStaticObjectsHandler, functionPointers);
 
 			final PRDispatcher prerunDispatcher = new PRDispatcher(prerunCHandler, locationFactory, prerunTypeHandler);
 			prerunDispatcher.dispatch(nodes);
