@@ -42,5 +42,5 @@ public interface IProofManager<H, S> {
 
 	// Chose a proof that is deemed responsible for state being a proven state
 	// return all program variables used in the proof.
-	H chooseResponsibleAbstraction(S state);
+	H chooseResponsibleAbstraction(S state, AbstractionLevel<H> abstractionLevel);
 }

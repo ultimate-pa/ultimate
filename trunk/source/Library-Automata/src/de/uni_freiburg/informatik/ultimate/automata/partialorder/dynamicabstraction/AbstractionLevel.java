@@ -27,6 +27,7 @@
 
 package de.uni_freiburg.informatik.ultimate.automata.partialorder.dynamicabstraction;
 
+import de.uni_freiburg.informatik.ultimate.util.datastructures.BitSubSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.ILattice;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator.ComparisonResult;
 
@@ -69,7 +70,7 @@ public class AbstractionLevel<H> {
 	}
 
 	/**
-	 * Lock an abstraction level
+	 * Lock an abstraction level (indicate that it has been finalized)
 	 */
 
 	public void lock() {
@@ -108,5 +109,16 @@ public class AbstractionLevel<H> {
 	 */
 	public boolean isLocked() {
 		return mLocked;
+	}
+
+	/**
+	 * Crude way to get the number of variables.
+	 *
+	 * @return number of variables in the abstraction level
+	 */
+	// TODO: do this properly (specify that H needs to be a BitSubSet?)
+	public int numElements() {
+		final BitSubSet<?> sVal = (BitSubSet<?>) mValue;
+		return sVal.size();
 	}
 }

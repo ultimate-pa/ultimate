@@ -151,8 +151,7 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 		mIndependenceProvider = independence;
 		mVisitor = visitor;
 		mProofManager = manager;
-		// TODO: stop the test suite's complaints
-		mStatistics.setProtectedVars(mAbstractionLattice.getTop());
+
 	}
 
 	/**
@@ -258,8 +257,8 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 				debugIndent("-> visitor pruned transition");
 				// if the pruned state is a proven state: add its abstraction level
 				if (nextStateIsProven) {
-					final H freeVars =
-							mProofManager.chooseResponsibleAbstraction(mStateFactory.getOriginalState(nextState));
+					final H freeVars = mProofManager.chooseResponsibleAbstraction(
+							mStateFactory.getOriginalState(nextState), mStateFactory.getAbstractionLevel(nextState));
 					mStateFactory.addToAbstractionLevel(currentState, freeVars);
 				}
 			} else if (!mDfs.isVisited(nextState)) {
@@ -330,6 +329,8 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 		final boolean isComplete = mDfs.backtrack();
 		final H lastProtVars = mStateFactory.getAbstractionLevel(oldState).getValue();
 		mStatistics.setProtectedVars(lastProtVars);
+		mStatistics.setNumProtectedVars(mStateFactory.getAbstractionLevel(oldState).numElements());
+
 		debugIndent("backtracking state %s (complete: %s)", oldState, isComplete);
 		debugIndent("final abstraction level of state %s was %s", oldState, lastProtVars);
 		mIndentLevel--;
@@ -347,7 +348,8 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 		final var originalState = mStateFactory.getOriginalState(state);
 		final boolean isProvenState = mProofManager.isProvenState(originalState);
 		if (isProvenState) {
-			final H freeVars = mProofManager.chooseResponsibleAbstraction(originalState);
+			final H freeVars =
+					mProofManager.chooseResponsibleAbstraction(originalState, mStateFactory.getAbstractionLevel(state));
 			mStateFactory.addToAbstractionLevel(state, freeVars);
 			debugIndent("State is a proven state, additional protected variables are %s", freeVars);
 			debugIndent("State's abstraction level is %s", mStateFactory.getAbstractionLevel(state).getValue());
@@ -550,6 +552,7 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 		private int mRedStates;
 		private H mProtectedVars;
 		private H mProtectedVarsBeforeLoop;
+		private int mNumProtectedVars;
 		private final TimeTracker mLoopTime = new TimeTracker();
 		private final TimeTracker mLooplessTime = new TimeTracker();
 		private final TimeTracker mTotalTime = new TimeTracker();
@@ -561,7 +564,7 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 			declare("Has Loop", () -> mContainsLoop, KeyType.COUNTER);
 			declare("Reduction States", () -> mRedStates, KeyType.COUNTER);
 			declare("Duplicate States", () -> mDuplStates, KeyType.COUNTER);
-
+			declare("Protected Variables", () -> mNumProtectedVars, KeyType.COUNTER);
 			/*
 			 * declare("Protected Variables", () -> mProtectedVars, KeyType.COUNTER);
 			 * declare("Protected Variables before loop", () -> mProtectedVarsBeforeLoop, KeyType.COUNTER);
@@ -610,6 +613,7 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 
 		public void setProtectedVarsBL(final H vars) {
 			mProtectedVarsBeforeLoop = vars;
+
 		}
 
 		public void incRedStates() {
@@ -618,6 +622,15 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 
 		public void incDuplStates() {
 			mDuplStates++;
+		}
+
+		/**
+		 * Set number of protected variables to i
+		 *
+		 * @param i
+		 */
+		public void setNumProtectedVars(final int i) {
+			mNumProtectedVars = i;
 		}
 
 	}

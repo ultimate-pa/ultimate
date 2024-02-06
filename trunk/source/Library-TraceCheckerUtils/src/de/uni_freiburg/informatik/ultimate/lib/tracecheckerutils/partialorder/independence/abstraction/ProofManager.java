@@ -37,6 +37,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.dynamicabstraction.AbstractionLevel;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.dynamicabstraction.IProofManager;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -44,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.BitSubSet;
 import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
@@ -65,7 +67,7 @@ public class ProofManager<L extends IAction, H, P> implements IProofManager<H, I
 	private final Function<IPredicate, List<IPredicate>> mGetConjuncts;
 	private final Predicate<IPredicate> mIsErrorState;
 	private final boolean mUseOrigDef;
-
+	private final String mHeuristic;
 	private final Statistics mStatistics = new Statistics();
 	private final List<H> mProofLevels = new ArrayList<>();
 
@@ -81,6 +83,8 @@ public class ProofManager<L extends IAction, H, P> implements IProofManager<H, I
 	 * @param useOrigDef
 	 *            if true we use the definition of proven state = state that is error loc and has at least one false
 	 *            literal
+	 * @param heuristics
+	 *            options: "basic", "num_var", "var_overlap". heuristic for choosing the responsible proof
 	 * @param services
 	 * @param abstraction
 	 * @param getConjuncts
@@ -89,12 +93,13 @@ public class ProofManager<L extends IAction, H, P> implements IProofManager<H, I
 	 */
 	public ProofManager(final IUltimateServiceProvider services, final IRefinableAbstraction<P, H, L> abstraction,
 			final Function<IPredicate, List<IPredicate>> getConjuncts, final Predicate<IPredicate> isErrorState,
-			final boolean useOrigDef) {
+			final boolean useOrigDef, final String heuristic) {
 		mLogger = services.getLoggingService().getLogger(getClass());
 		mAbstraction = Objects.requireNonNull(abstraction);
 		mGetConjuncts = Objects.requireNonNull(getConjuncts);
 		mIsErrorState = Objects.requireNonNull(isErrorState);
 		mUseOrigDef = useOrigDef;
+		mHeuristic = heuristic;
 	}
 
 	/**
@@ -132,7 +137,7 @@ public class ProofManager<L extends IAction, H, P> implements IProofManager<H, I
 	}
 
 	@Override
-	public H chooseResponsibleAbstraction(final IPredicate state) {
+	public H chooseResponsibleAbstraction(final IPredicate state, final AbstractionLevel<H> stateLv) {
 		// get conjuncts of the state
 		final List<IPredicate> conjuncts = mGetConjuncts.apply(state);
 
@@ -150,17 +155,20 @@ public class ProofManager<L extends IAction, H, P> implements IProofManager<H, I
 		if (nrChoices > 1) {
 			mStatistics.addChoice();
 		}
-
-		// Priorities:
-		if (candidateProofs.contains(mLastResponsibleProof)) {
-			// (1) last chosen proof
-			responsibleProof = mLastResponsibleProof;
-		} else {
-			// (2) number of times chosen (asc.)
-			// (3) refinement round the proof was found in (desc.)
-			responsibleProof = candidateProofs.stream()
-					.sorted(Comparator.<Integer, Integer> comparing(p -> mProofCounter.get(p)).thenComparing(p -> -p))
-					.findFirst().get();
+		// Choose resp proof according to selected heuristic
+		switch (mHeuristic) {
+		case "basic":
+			responsibleProof = chooseBasic(candidateProofs);
+			break;
+		case "num_var":
+			responsibleProof = chooseNumVars(candidateProofs);
+			break;
+		case "var_overlap":
+			responsibleProof = chooseVarOverlap(candidateProofs, stateLv);
+			break;
+		default:
+			responsibleProof = chooseBasic(candidateProofs);
+			break;
 		}
 
 		// update mLastResponsibleProof and mProofCounter
@@ -169,6 +177,68 @@ public class ProofManager<L extends IAction, H, P> implements IProofManager<H, I
 
 		// return abstraction corresponding to the chosen proof
 		return mProofLevels.get(responsibleProof);
+	}
+
+	// Different heuristics for choosing resp. proof:
+
+	/**
+	 * heuristic from thesis
+	 *
+	 * @param candidates
+	 *            proofs among which we can choose
+	 * @return the responsible proof
+	 */
+	public int chooseBasic(final List<Integer> candidates) {
+		// what we did + is documented in thesis
+		// Priorities:
+		int resp;
+		if (candidates.contains(mLastResponsibleProof)) {
+			// (1) last chosen proof
+			resp = mLastResponsibleProof;
+		} else {
+			// (2) number of times chosen (asc.)
+			// (3) refinement round the proof was found in (desc.)
+
+			resp = candidates.stream()
+					.sorted(Comparator.<Integer, Integer> comparing(p -> mProofCounter.get(p)).thenComparing(p -> -p))
+					.findFirst().get();
+		}
+		return resp;
+	}
+
+	/**
+	 * Choose proof according to number of variables it uses
+	 *
+	 * @param candidates
+	 *            proofs from which to choose
+	 * @return responsible proof
+	 */
+	public int chooseNumVars(final List<Integer> candidates) {
+		final int resp;
+		// priorities: (1) nr variables desc (2) iteration desc
+		resp = candidates.stream().sorted(Comparator
+				.<Integer, Integer> comparing(p -> -((BitSubSet<?>) mProofLevels.get(p)).size()).thenComparing(p -> -p))
+				.findFirst().get();
+		return resp;
+	}
+
+	/**
+	 * Choose proof according to number of 'new' variables
+	 *
+	 */
+	private int chooseVarOverlap(final List<Integer> candidates, final AbstractionLevel<H> level) {
+		final int resp;
+		// priorities: (1) number of variables of union of proof variables and state's abstraction level, desc
+		resp = candidates.stream()
+				.sorted(Comparator
+						.<Integer, Integer> comparing(p -> -(helper(level, mProofLevels.get(p)).numElements())))
+				.findFirst().get();
+		return resp;
+	}
+
+	private AbstractionLevel<H> helper(final AbstractionLevel<H> lv, final H vars) {
+		lv.addToAbstractionLevel(vars);
+		return lv;
 	}
 
 	/**
