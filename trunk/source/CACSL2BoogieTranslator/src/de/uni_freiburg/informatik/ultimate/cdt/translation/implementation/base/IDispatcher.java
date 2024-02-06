@@ -99,4 +99,6 @@ public interface IDispatcher {
 	 * @return The result transformed by the witness.
 	 */
 	Result transformWithWitness(final IASTNode node, final Result result);
+
+	List<ACSLNode> getFunctionContractFromWitness(IASTNode node);
 }

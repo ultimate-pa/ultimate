@@ -34,7 +34,9 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 
 import org.eclipse.cdt.core.dom.ast.ASTGenericVisitor;
+import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
+import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.LineOffsetComputer;
@@ -42,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.Locati
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.FunctionContract;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Location;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LocationInvariant;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LoopInvariant;
@@ -72,14 +74,14 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 	}
 
 	@Override
-	protected HashRelation<IASTNode, IExtractedWitnessEntry> computeWitnessEntries() {
+	protected ExtractedCorrectnessWitness extractWitness() {
 		// TODO: The column extraction happens in LocationFactory, so we create one as a workaround
 		final LocationFactory locationFactory =
 				new LocationFactory(null, new LineOffsetComputer(mTranslationUnit.getRawSignature()));
 		final Map<IASTNode, ExtractedLoopInvariant> loopInvariants = new HashMap<>();
 		final Map<IASTNode, ExtractedLocationInvariant> locationInvariantsBefore = new HashMap<>();
 		final Map<IASTNode, ExtractedLocationInvariant> locationInvariantsAfter = new HashMap<>();
-		final HashRelation<IASTNode, IExtractedWitnessEntry> rtr = new HashRelation<>();
+		final ExtractedCorrectnessWitness rtr = new ExtractedCorrectnessWitness();
 		for (final WitnessEntry entry : mWitness.getEntries()) {
 			final Location location;
 			final BiConsumer<IASTNode, Boolean> addFunction;
@@ -93,6 +95,9 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 			} else if (entry instanceof LoopInvariant) {
 				location = ((LoopInvariant) entry).getLocation();
 				addFunction = (node, before) -> addLoopInvariant((LoopInvariant) entry, node, loopInvariants, before);
+			} else if (entry instanceof FunctionContract) {
+				location = ((FunctionContract) entry).getLocation();
+				addFunction = (node, before) -> addFunctionContract((FunctionContract) entry, node, rtr, before);
 			} else {
 				throw new UnsupportedOperationException("Unknown entry type " + entry.getClass().getSimpleName());
 			}
@@ -112,10 +117,26 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 			matchesAfter.forEach(x -> addFunction.accept(x, false));
 			mStats.success();
 		}
-		loopInvariants.forEach(rtr::addPair);
-		locationInvariantsBefore.forEach(rtr::addPair);
-		locationInvariantsAfter.forEach(rtr::addPair);
+		rtr.addWitnessStatements(loopInvariants);
+		rtr.addWitnessStatements(locationInvariantsBefore);
+		rtr.addWitnessStatements(locationInvariantsAfter);
 		return rtr;
+
+	}
+
+	private static void addFunctionContract(final FunctionContract functionContract, final IASTNode node,
+			final ExtractedCorrectnessWitness result, final boolean isBefore) {
+		if (!isBefore) {
+			// Functions contracts should only be matched before definitions / declarations
+			return;
+		}
+		if (!(node instanceof IASTSimpleDeclaration) && !(node instanceof IASTFunctionDefinition)) {
+			throw new UnsupportedOperationException(
+					"Function contract is only allowed at declaration or definition of a function (found "
+							+ node.getClass().getSimpleName() + ")");
+		}
+		result.addFunctionContract(node,
+				new ExtractedFunctionContract(functionContract.getRequires(), functionContract.getEnsures(), node));
 	}
 
 	private static void addLocationInvariant(final LocationInvariant current, final IASTNode node,
@@ -176,6 +197,9 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 
 		@Override
 		protected int genericVisit(final IASTNode node) {
+			if (node instanceof IASTTranslationUnit) {
+				return PROCESS_CONTINUE;
+			}
 			final ILocation loc = mLocationFactory.createCLocation(node);
 			if (loc == null) {
 				return PROCESS_CONTINUE;
@@ -184,7 +208,7 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 			// TODO: For now we are not strict about the columns, we allow 2 before the start-column and 2 after the
 			// end-column. This should be clarified in the SV-COMP rules!
 			if (mLocation.getLine() == loc.getStartLine()
-					&& (mLocation.getColumn() == 0 || (mLocation.getColumn() <= loc.getStartColumn()
+					&& (mLocation.getColumn() == 0 || (mLocation.getColumn() <= loc.getStartColumn() + 1
 							&& mLocation.getColumn() >= loc.getStartColumn() - 2))) {
 				mMatchedNodesBefore.add(node);
 				// skip the subtree if a match occurred, but continue with siblings.

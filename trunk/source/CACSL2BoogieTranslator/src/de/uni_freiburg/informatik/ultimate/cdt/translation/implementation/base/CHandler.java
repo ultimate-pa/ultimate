@@ -235,6 +235,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.ICACSL2BoogieBacktranslatorMapping;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.LTLExpressionExtractor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.MemoryModel;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -1502,8 +1503,12 @@ public class CHandler {
 
 		mCurrentDeclaredTypes.pop();
 		assert declResult.getDeclaration().getType() instanceof CFunction;
-		return mFunctionHandler.handleFunctionDefinition(main, mMemoryHandler, node, declResult.getDeclaration(),
-				mContract, mIsInLibraryMode);
+		final Result result =
+				mFunctionHandler.handleFunctionDefinition(main, mMemoryHandler, node, declResult.getDeclaration(),
+						DataStructureUtils.concat(mContract, main.getFunctionContractFromWitness(node)), mIsInLibraryMode);
+		// take care for behavior and completeness
+		clearContract();
+		return result;
 	}
 
 	public Result visit(final IDispatcher main, final IASTGotoStatement node) {
@@ -2163,8 +2168,10 @@ public class CHandler {
 				}
 
 				// update functionHandler.procedures instead of symbol table
-				mFunctionHandler.handleFunctionDeclarator(main, mLocationFactory.createCLocation(declarator), mContract,
-						cDec, declarator);
+				mFunctionHandler.handleFunctionDeclarator(main, mLocationFactory.createCLocation(declarator),
+						DataStructureUtils.concat(mContract, main.getFunctionContractFromWitness(node)), cDec, declarator);
+				// take care for behavior and completeness
+				clearContract();
 				continue;
 			}
 			intermediateResults.add(handleIASTDeclarator(main, loc, node, declResult, declarator, storageClass));
@@ -2530,7 +2537,7 @@ public class CHandler {
 		mMemoryHandler.endScope();
 	}
 
-	public void clearContract() {
+	private void clearContract() {
 		mContract.clear();
 	}
 
