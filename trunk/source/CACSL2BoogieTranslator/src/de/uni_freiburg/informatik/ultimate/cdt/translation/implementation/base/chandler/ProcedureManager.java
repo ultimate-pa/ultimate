@@ -108,6 +108,7 @@ public class ProcedureManager {
 	private final LinkedHashRelation<BoogieProcedureInfo, BoogieProcedureInfo> mInverseCallGraph;
 
 	private BoogieProcedureInfo mCurrentProcedureInfo;
+	private BoogieProcedureInfo mPreviousProcedureInfo;
 
 	private final ILogger mLogger;
 
@@ -123,12 +124,15 @@ public class ProcedureManager {
 
 	void beginProcedureScope(final CHandler main, final BoogieProcedureInfo currentProcInfo) {
 		assert currentProcInfo != null;
+		// We might have a function declaration inside of another function, so we need to store the old scope and reset
+		// it on endProcedureScope
+		mPreviousProcedureInfo = mCurrentProcedureInfo;
 		mCurrentProcedureInfo = currentProcInfo;
 		main.beginScope();
 	}
 
 	void endProcedureScope(final CHandler main) {
-		mCurrentProcedureInfo = null;
+		mCurrentProcedureInfo = mPreviousProcedureInfo;
 		main.endScope();
 	}
 
@@ -199,13 +203,12 @@ public class ProcedureManager {
 		 * The base graph for the computation of strongly connected components (SCCs) is the inverse call graph. I.e.,
 		 * in the sense of this graph, the successors of a procedure are its callers.
 		 */
-		final ISuccessorProvider<BoogieProcedureInfo> successorProvider =
-				new ISuccessorProvider<>() {
-					@Override
-					public Iterator<BoogieProcedureInfo> getSuccessors(final BoogieProcedureInfo node) {
-						return mInverseCallGraph.getImage(node).iterator();
-					}
-				};
+		final ISuccessorProvider<BoogieProcedureInfo> successorProvider = new ISuccessorProvider<>() {
+			@Override
+			public Iterator<BoogieProcedureInfo> getSuccessors(final BoogieProcedureInfo node) {
+				return mInverseCallGraph.getImage(node).iterator();
+			}
+		};
 
 		final Set<BoogieProcedureInfo> allProcedures = new HashSet<>(mProcedureNameToProcedureInfo.values());
 		final Function<BoogieProcedureInfo, Set<VariableLHS>> initialProcToModGlobals = p -> p.getModifiedGlobals();

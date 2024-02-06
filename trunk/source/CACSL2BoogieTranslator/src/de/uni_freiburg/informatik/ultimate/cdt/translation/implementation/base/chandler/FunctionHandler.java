@@ -1020,7 +1020,7 @@ public class FunctionHandler {
 		final BoogieProcedureInfo procInfo = mProcedureManager.getOrConstructProcedureInfo(methodName);
 
 		// begin new scope for retranslation of ACSL specification
-		mCHandler.beginScope();
+		mProcedureManager.beginProcedureScope(mCHandler, procInfo);
 
 		final VarList[] in = processInParams(loc, funcType, procInfo, hook);
 
@@ -1066,7 +1066,7 @@ public class FunctionHandler {
 		// if possible, find the actual definition of this declaration s.t. we can update the varargs usage
 		procInfo.updateCFunction(updateVarArgsForDeclaration(hook, funcType, loc, methodName));
 		// end scope for retranslation of ACSL specification
-		mCHandler.endScope();
+		mProcedureManager.endProcedureScope(mCHandler);
 	}
 
 	private static CFunction updateVarArgsForDeclaration(final IASTNode node, final CFunction funcType,
