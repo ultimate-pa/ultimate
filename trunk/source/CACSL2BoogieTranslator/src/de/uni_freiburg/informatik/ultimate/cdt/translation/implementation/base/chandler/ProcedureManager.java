@@ -34,7 +34,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -46,9 +45,7 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVisitor;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
@@ -62,7 +59,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
@@ -73,7 +69,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.T
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.StandardFunctionHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UndeclaredFunctionException;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
@@ -154,14 +149,7 @@ public class ProcedureManager {
 	}
 
 	BoogieProcedureInfo getOrConstructProcedureInfo(final String methodName) {
-
-		BoogieProcedureInfo result = mProcedureNameToProcedureInfo.get(methodName);
-		if (result == null) {
-			result = new BoogieProcedureInfo(methodName);
-			mProcedureNameToProcedureInfo.put(methodName, result);
-		}
-
-		return result;
+		return mProcedureNameToProcedureInfo.computeIfAbsent(methodName, BoogieProcedureInfo::new);
 	}
 
 	/**
@@ -193,23 +181,18 @@ public class ProcedureManager {
 	 * @return procedure declarations
 	 */
 	public List<Declaration> computeFinalProcedureDeclarations(final MemoryHandler memoryHandler) {
-		final BoogieProcedureInfo notDeclaredProcedure = isEveryCalledProcedureDeclared();
-		if (notDeclaredProcedure != null) {
-			throw new UndeclaredFunctionException(null, "a function that is called in the program "
-					+ "is not declared in the program: " + notDeclaredProcedure.getProcedureName());
+		for (final BoogieProcedureInfo s : mMethodsCalledBeforeDeclared) {
+			if (!s.hasDeclaration()) {
+				throw new UndeclaredFunctionException(null, "a function that is called in the program "
+						+ "is not declared in the program: " + s.getProcedureName());
+			}
 		}
 
 		/**
 		 * The base graph for the computation of strongly connected components (SCCs) is the inverse call graph. I.e.,
 		 * in the sense of this graph, the successors of a procedure are its callers.
 		 */
-		final ISuccessorProvider<BoogieProcedureInfo> successorProvider = new ISuccessorProvider<>() {
-			@Override
-			public Iterator<BoogieProcedureInfo> getSuccessors(final BoogieProcedureInfo node) {
-				return mInverseCallGraph.getImage(node).iterator();
-			}
-		};
-
+		final ISuccessorProvider<BoogieProcedureInfo> successorProvider = x -> mInverseCallGraph.getImage(x).iterator();
 		final Set<BoogieProcedureInfo> allProcedures = new HashSet<>(mProcedureNameToProcedureInfo.values());
 		final Function<BoogieProcedureInfo, Set<VariableLHS>> initialProcToModGlobals = p -> p.getModifiedGlobals();
 		final Map<BoogieProcedureInfo, Set<VariableLHS>> closedProcToModGlobals =
@@ -224,44 +207,8 @@ public class ProcedureManager {
 			final Specification[] oldSpec = oldProcDecl.getSpecification();
 			final CACSLLocation loc = (CACSLLocation) oldProcDecl.getLocation();
 
-			final Specification[] newSpec;
-			if (procInfo.isModifiedGlobalsIsUsedDefined()) {
-				// modifies clause is user defined --> leave the specification as is
-				newSpec = oldSpec;
-			} else {
-				final Set<VariableLHS> currModClause = closedProcToModGlobals.get(procInfo);
-				assert currModClause != null : "No modifies clause proc " + procedureName;
-
-				procInfo.addModifiedGlobals(currModClause);
-
-				newSpec = Arrays.copyOf(oldSpec, oldSpec.length + 1);
-
-				{
-					/*
-					 * add missing heap arrays If the procedure modifies one heap array, we add all heap arrays. This is
-					 * a workaround. We cannot add all procedures immediately, because we do not know all heap arrays in
-					 * advance since they are added lazily on demand.
-					 *
-					 */
-					final Collection<HeapDataArray> heapDataArrays = memoryHandler.getMemoryModel()
-							.getDataHeapArrays(memoryHandler.getRequiredMemoryModelFeatures());
-					if (containsOneHeapDataArray(currModClause, heapDataArrays)) {
-						for (final HeapDataArray hda : heapDataArrays) {
-							// currModClause.add(hda.getVariableName());
-							procInfo.addModifiedGlobal(hda.getVariableLHS());
-						}
-					}
-				}
-
-				final VariableLHS[] modifyList = new VariableLHS[currModClause.size()];
-				{
-					int i = 0;
-					for (final VariableLHS modifyEntry : currModClause) {
-						modifyList[i++] = modifyEntry;
-					}
-				}
-				newSpec[oldSpec.length] = constructModifiesSpecification(loc, false, modifyList);
-			}
+			final Specification[] newSpec = addModifies(memoryHandler, closedProcToModGlobals.get(procInfo), procInfo,
+					procedureName, oldSpec, loc);
 
 			final Specification[] newSpecWithExtraEnsuresClauses;
 			if (memoryHandler.getRequiredMemoryModelFeatures().isMemoryModelInfrastructureRequired()
@@ -294,6 +241,37 @@ public class ProcedureManager {
 		return updatedDeclarations;
 	}
 
+	private static Specification[] addModifies(final MemoryHandler memoryHandler, final Set<VariableLHS> currModClause,
+			final BoogieProcedureInfo procInfo, final String procedureName, final Specification[] oldSpec,
+			final CACSLLocation loc) {
+		if (procInfo.isModifiedGlobalsIsUsedDefined()) {
+			// modifies clause is user defined --> leave the specification as is
+			return oldSpec;
+		}
+		assert currModClause != null : "No modifies clause proc " + procedureName;
+
+		procInfo.addModifiedGlobals(currModClause);
+
+		final Specification[] result = Arrays.copyOf(oldSpec, oldSpec.length + 1);
+		/*
+		 * add missing heap arrays If the procedure modifies one heap array, we add all heap arrays. This is a
+		 * workaround. We cannot add all procedures immediately, because we do not know all heap arrays in advance since
+		 * they are added lazily on demand.
+		 *
+		 */
+		final Collection<HeapDataArray> heapDataArrays =
+				memoryHandler.getMemoryModel().getDataHeapArrays(memoryHandler.getRequiredMemoryModelFeatures());
+		if (containsOneHeapDataArray(currModClause, heapDataArrays)) {
+			for (final HeapDataArray hda : heapDataArrays) {
+				procInfo.addModifiedGlobal(hda.getVariableLHS());
+			}
+		}
+
+		final VariableLHS[] modifyList = currModClause.stream().toArray(VariableLHS[]::new);
+		result[oldSpec.length] = constructModifiesSpecification(loc, false, modifyList);
+		return result;
+	}
+
 	/**
 	 * only keep variable lhss that refer to the same global variable, i.e., keep only one per identifier String.
 	 *
@@ -314,12 +292,7 @@ public class ProcedureManager {
 
 	private static boolean containsOneHeapDataArray(final Set<VariableLHS> modifySet,
 			final Collection<HeapDataArray> heapDataArrays) {
-		for (final HeapDataArray hda : heapDataArrays) {
-			if (modifySet.contains(hda.getVariableLHS())) {
-				return true;
-			}
-		}
-		return false;
+		return heapDataArrays.stream().anyMatch(hda -> modifySet.contains(hda.getVariableLHS()));
 	}
 
 	void registerCall(final BoogieProcedureInfo caller, final BoogieProcedureInfo callee) {
@@ -328,21 +301,6 @@ public class ProcedureManager {
 		}
 
 		mInverseCallGraph.addPair(callee, caller);
-	}
-
-	/**
-	 * Checks, whether all procedures that are being called in C, were eventually declared within the C program.
-	 *
-	 * @return null if all called procedures were declared, otherwise the identifier of one procedure that was called
-	 *         but not declared.
-	 */
-	private BoogieProcedureInfo isEveryCalledProcedureDeclared() {
-		for (final BoogieProcedureInfo s : mMethodsCalledBeforeDeclared) {
-			if (!s.hasDeclaration()) {
-				return s;
-			}
-		}
-		return null;
 	}
 
 	/**
@@ -523,162 +481,7 @@ public class ProcedureManager {
 				.map(x -> x.getCType()).collect(Collectors.toSet());
 	}
 
-	/**
-	 * Contains information about a procedure in the target Boogie program.
-	 *
-	 * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
-	 */
-	static final class BoogieProcedureInfo {
-
-		/**
-		 * the procedure's name in the Boogie program
-		 */
-		private final String mProcedureName;
-
-		private CFunction mCType;
-
-		private Procedure mDeclaration;
-		private Procedure mImplementation;
-
-		private final Set<VariableLHS> mModifiedGlobals;
-
-		private boolean mModifiedGlobalsIsUsedDefined;
-
-		BoogieProcedureInfo(final String name) {
-			mProcedureName = name;
-			mModifiedGlobals = new LinkedHashSet<>();
-		}
-
-		/**
-		 * replace the existing declaration with another (refined) one
-		 *
-		 * @param procDecl
-		 */
-		public void resetDeclaration(final Procedure declaration) {
-			assert declaration.getSpecification() != null;
-			assert declaration.getBody() == null;
-			mDeclaration = declaration;
-		}
-
-		public boolean hasDeclaration() {
-			return mDeclaration != null;
-		}
-
-		public boolean hasImplementation() {
-			return mImplementation != null;
-		}
-
-		public boolean hasCType() {
-			return mCType != null;
-		}
-
-		public void addModifiedGlobals(final Collection<VariableLHS> varNames) {
-			mModifiedGlobals.addAll(varNames);
-		}
-
-		public void addModifiedGlobal(final VariableLHS varName) {
-			mModifiedGlobals.add(varName);
-		}
-
-		public CFunction getCType() {
-			if (mCType == null) {
-				throw new IllegalStateException("query hasCType before calling this");
-			}
-			return mCType;
-		}
-
-		/**
-		 * Add a parameter to the current function.
-		 */
-		public void updateCFunctionAddParam(final CDeclaration param) {
-			final CDeclaration[] newParams;
-			if (hasCType()) {
-				final CDeclaration[] oldParams = getCType().getParameterTypes();
-				newParams = Arrays.copyOf(oldParams, oldParams.length + 1);
-				newParams[newParams.length - 1] = param;
-			} else {
-				newParams = new CDeclaration[] { param };
-			}
-			updateCFunctionReplaceParams(newParams);
-		}
-
-		/**
-		 * Replace all parameter of the current function with the specified ones.
-		 */
-		public void updateCFunctionReplaceParams(final CDeclaration[] params) {
-			if (hasCType()) {
-				mCType = mCType.newParameter(params);
-			} else {
-				mCType = CFunction.createEmptyCFunction().newParameter(params);
-			}
-		}
-
-		public void updateCFunction(final CFunction funcType) {
-			mCType = funcType;
-		}
-
-		public Procedure getDeclaration() {
-			if (mDeclaration == null) {
-				throw new IllegalStateException("query hasDeclaration() first");
-			}
-			return mDeclaration;
-		}
-
-		public void setDefaultDeclarationAndCType(final ILocation loc, final ASTType intType) {
-			setDefaultDeclaration(loc, intType);
-			mCType = CFunction.createDefaultCFunction();
-		}
-
-		/**
-		 * Sets the Boogie declaration that corresponds to the C declaration "int foo()".
-		 */
-		void setDefaultDeclaration(final ILocation loc, final ASTType intType) {
-			setDeclaration(new Procedure(loc, new Attribute[0], mProcedureName, new String[0], new VarList[0],
-					new VarList[] { new VarList(loc, new String[] { SFO.RES }, intType) }, new Specification[0], null));
-		}
-
-		void setDeclaration(final Procedure declaration) {
-			assert mDeclaration == null : "can only be set once!";
-			assert declaration.getSpecification() != null;
-			assert declaration.getBody() == null;
-			mDeclaration = declaration;
-		}
-
-		public Procedure getImplementation() {
-			return mImplementation;
-		}
-
-		void setImplementation(final Procedure implementation) {
-			assert mImplementation == null : "can only be set once!";
-			assert implementation.getSpecification() == null;
-			assert implementation.getBody() != null;
-			mImplementation = implementation;
-		}
-
-		public boolean isModifiedGlobalsIsUsedDefined() {
-			return mModifiedGlobalsIsUsedDefined;
-		}
-
-		public void setModifiedGlobalsIsUsedDefined(final boolean modifiedGlobalsIsUsedDefined) {
-			mModifiedGlobalsIsUsedDefined = modifiedGlobalsIsUsedDefined;
-		}
-
-		public String getProcedureName() {
-			return mProcedureName;
-		}
-
-		public Set<VariableLHS> getModifiedGlobals() {
-			return Collections.unmodifiableSet(mModifiedGlobals);
-		}
-
-		@Override
-		public String toString() {
-			return mProcedureName + " : " + mCType;
-		}
-
-	}
-
-	class CallAndAssignmentStatementFinder extends BoogieVisitor {
+	private static class CallAndAssignmentStatementFinder extends BoogieVisitor {
 
 		Collection<Statement> mResult = new ArrayList<>();
 
