@@ -817,6 +817,8 @@ public class FunctionHandler {
 				procInfo.addModifiedGlobals(Arrays.asList(ms.getIdentifiers()));
 			}
 		}
+		// take care for behavior and completeness
+		mCHandler.clearContract();
 		return specs.toArray(Specification[]::new);
 	}
 
