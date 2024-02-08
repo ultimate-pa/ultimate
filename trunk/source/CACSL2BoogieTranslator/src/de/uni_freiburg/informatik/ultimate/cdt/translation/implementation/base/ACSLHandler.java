@@ -636,11 +636,6 @@ public class ACSLHandler implements IACSLHandler {
 			throw new UnsupportedOperationException(
 					"not yet implemented: " + "unable to determine CType for variable " + id);
 		}
-
-		// FIXME: dereferencing does not work for ACSL yet, because we cannot pass
-		// the necessary auxiliary statements on.
-		// EDIT: (alex feb 18:) does this fixme still apply?
-
 		final LRValue lrVal;
 		if (mCHandler.isHeapVar(id)) {
 			final IdentifierExpression idExp = ExpressionFactory.constructIdentifierExpression(loc,
