@@ -34,14 +34,23 @@ import java.util.Map;
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  */
 public class LineOffsetComputer {
-	private final Map<Integer, Integer> mLineOffsets;
+	private Map<Integer, Integer> mLineOffsets;
+	private final String mFile;
 
 	public LineOffsetComputer(final String file) {
+		mFile = file;
+	}
+
+	private void computeLineOffsets() {
+		if (mLineOffsets != null) {
+			// Already computed
+			return;
+		}
 		mLineOffsets = new HashMap<>();
 		mLineOffsets.put(1, 0);
 		int offset = 1;
 		int line = 2;
-		for (final char c : file.toCharArray()) {
+		for (final char c : mFile.toCharArray()) {
 			if (c == '\n') {
 				mLineOffsets.put(line, offset);
 				line++;
@@ -51,6 +60,7 @@ public class LineOffsetComputer {
 	}
 
 	public int getOffset(final int line) {
+		computeLineOffsets();
 		final Integer res = mLineOffsets.get(line);
 		if (res == null) {
 			throw new UnsupportedOperationException("Unknown line " + line);
