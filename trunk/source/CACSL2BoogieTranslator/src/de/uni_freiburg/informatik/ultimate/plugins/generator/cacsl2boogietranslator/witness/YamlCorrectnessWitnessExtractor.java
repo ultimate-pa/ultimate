@@ -110,7 +110,7 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 					mStats.fail();
 					continue;
 				}
-				throw new UnsupportedOperationException("The following witness entry could not be matched:" + entry);
+				throw new UnsupportedOperationException("The following witness entry could not be matched: " + entry);
 			}
 			// TODO: Make sure that the invariant is only matched once
 			matchesBefore.forEach(x -> addFunction.accept(x, true));
