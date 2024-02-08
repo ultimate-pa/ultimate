@@ -38,9 +38,8 @@ public class LineOffsetComputer {
 
 	public LineOffsetComputer(final String file) {
 		mLineOffsets = new HashMap<>();
-		// Mimic the behavior of LocationCtxContainer.computeLineOffsets for consistent offsets
 		mLineOffsets.put(1, 0);
-		int offset = 0;
+		int offset = 1;
 		int line = 2;
 		for (final char c : file.toCharArray()) {
 			if (c == '\n') {
