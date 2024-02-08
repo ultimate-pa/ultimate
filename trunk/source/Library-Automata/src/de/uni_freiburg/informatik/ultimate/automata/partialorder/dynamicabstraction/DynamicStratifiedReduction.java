@@ -418,8 +418,18 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 				 * corresponding reduction state is in the already completed part of the reduction automaton and
 				 * therefore has a higher abstraction level than our current state we create a new reduction state.
 				 */
-				final boolean dupl =
+				boolean dupl = false;
+				final boolean left =
 						(correspRstate != null) ? mStateFactory.getAbstractionLevel(correspRstate).isLocked() : false;
+
+				// If the target is an already completed node, check if edge is allowed (only if abstraction limit of
+				// target contains current abstraction limit)
+				if (left) {
+					final ComparisonResult c = mStateFactory.getAbstractionLimit(state)
+							.compare(mStateFactory.getAbstractionLimit(correspRstate).getValue());
+					dupl = !(c == ComparisonResult.EQUAL || c == ComparisonResult.STRICTLY_SMALLER);
+				}
+
 				R reductionSucc;
 				if (correspRstate == null || dupl) {
 					if (dupl) {
@@ -428,7 +438,6 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 					}
 					// only compute sleep set directly before visiting the state!
 					reductionSucc = createNextState(state, originalSucc, letter);
-					// TODO: use replace?
 					mAlreadyReduced.remove(originalSucc);
 					mAlreadyReduced.put(originalSucc, reductionSucc);
 				} else if (!mStateFactory.getAbstractionLimit(correspRstate).isLocked()) {
