@@ -550,7 +550,34 @@ public class CHandler {
 				mFunctions, mTypeSizes, mSymbolTable, mStaticObjectsHandler, mSettings, procedureManager,
 				mMemoryHandler, mInitHandler, mFunctionHandler, this);
 		mIsInLibraryMode = !prerunCHandler.mProcedureManager.hasProcedure(mSettings.getEntryMethod());
+		copyGlobalsFromPrerun(prerunCHandler.mSymbolTable);
+	}
 
+	private void copyGlobalsFromPrerun(final FlatSymbolTable prerunSymbolTable) {
+		final ASTType pointerType = mTypeHandler.constructPointerType(null);
+		for (final var entry : prerunSymbolTable.getGlobalScope().entrySet()) {
+			final String id = entry.getKey();
+			final SymbolTableValue oldStv = entry.getValue();
+			final IASTNode hook = oldStv.getDeclarationNode();
+			final SymbolTableValue stv;
+			if (mVariablesOnHeap.contains(hook)) {
+				// Create a new pointer value
+				final CDeclaration oldDecl = oldStv.getCDecl();
+				final CDeclaration newDecl =
+						new CDeclaration(oldDecl.getType(), oldDecl.getName(), oldDecl.getIASTInitializer(),
+								oldDecl.getInitializer(), true, oldDecl.getStorageClass(), oldDecl.getBitfieldSize());
+				final String bId = mNameHandler.getUniqueIdentifier(hook, oldDecl.getName(), 1, true, oldDecl.getType(),
+						oldStv.getDeclarationInformation());
+				// This is just required for ACSL, so we can ommit the Boogie-declaration
+				stv = new SymbolTableValue(bId, null, pointerType, newDecl, oldStv.getDeclarationInformation(), hook,
+						false);
+				addBoogieIdsOfHeapVars(bId);
+			} else {
+				// Copy the old value to the symbol table
+				stv = oldStv;
+			}
+			mSymbolTable.storeCSymbol(hook, id, stv);
+		}
 	}
 
 	/**
