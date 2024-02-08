@@ -205,18 +205,14 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 				return PROCESS_CONTINUE;
 			}
 			// Match before the AST node, if the line matches and either the column is 0 or the column also matches
-			// TODO: For now we are not strict about the columns, we allow 2 before the start-column and 2 after the
-			// end-column. This should be clarified in the SV-COMP rules!
 			if (mLocation.getLine() == loc.getStartLine()
-					&& (mLocation.getColumn() == 0 || (mLocation.getColumn() <= loc.getStartColumn() + 1
-							&& mLocation.getColumn() >= loc.getStartColumn() - 2))) {
+					&& (mLocation.getColumn() == 0 || mLocation.getColumn() == loc.getStartColumn())) {
 				mMatchedNodesBefore.add(node);
 				// skip the subtree if a match occurred, but continue with siblings.
 				return PROCESS_SKIP;
 			}
 			// Match after the AST node, if both the line and column match
-			if (mLocation.getLine() == loc.getEndLine() && mLocation.getColumn() >= loc.getEndColumn()
-					&& mLocation.getColumn() <= loc.getEndColumn() + 2) {
+			if (mLocation.getLine() == loc.getEndLine() && mLocation.getColumn() == loc.getEndColumn()) {
 				mMatchedNodesAfter.add(node);
 				// skip the subtree if a match occurred, but continue with siblings.
 				return PROCESS_SKIP;
