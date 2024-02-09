@@ -563,12 +563,11 @@ public class CHandler {
 			if (mVariablesOnHeap.contains(hook)) {
 				// Create a new pointer value
 				final CDeclaration oldDecl = oldStv.getCDecl();
-				final CDeclaration newDecl =
-						new CDeclaration(oldDecl.getType(), oldDecl.getName(), oldDecl.getIASTInitializer(),
-								oldDecl.getInitializer(), true, oldDecl.getStorageClass(), oldDecl.getBitfieldSize());
+				// This is just required for ACSL, so we can ommit the Boogie-declaration and the initializers
+				final CDeclaration newDecl = new CDeclaration(oldDecl.getType(), oldDecl.getName(), null, null, true,
+						oldDecl.getStorageClass(), oldDecl.getBitfieldSize());
 				final String bId = mNameHandler.getUniqueIdentifier(hook, oldDecl.getName(), 1, true, oldDecl.getType(),
 						oldStv.getDeclarationInformation());
-				// This is just required for ACSL, so we can ommit the Boogie-declaration
 				stv = new SymbolTableValue(bId, null, pointerType, newDecl, oldStv.getDeclarationInformation(), hook,
 						false);
 				addBoogieIdsOfHeapVars(bId);
