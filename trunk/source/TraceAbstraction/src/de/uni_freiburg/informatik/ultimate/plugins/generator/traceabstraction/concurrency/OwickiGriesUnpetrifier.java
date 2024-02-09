@@ -76,6 +76,7 @@ public class OwickiGriesUnpetrifier<L extends IIcfgTransition<LOC>, P, LOC exten
 
 	private final Function<P, LOC> mPlaceToLocation;
 	private final UnaryOperator<L> mUnpetrifyAction;
+	private final UnaryOperator<TermVariable> mUnpetrifyVariable;
 	private final Set<P> mThreadUsageMonitorPlaces;
 
 	private final Map<String, ILocalProgramVar> mThreadIdVars = new HashMap<>();
@@ -90,11 +91,13 @@ public class OwickiGriesUnpetrifier<L extends IIcfgTransition<LOC>, P, LOC exten
 			final IPetriNet<L, P> petrifiedProgram,
 			final IPossibleInterferences<Transition<L, P>, P> petrifiedPossibleInterferences,
 			final OwickiGriesAnnotation<Transition<L, P>, P> annotation, final Function<P, LOC> placeToLocation,
-			final UnaryOperator<L> unpetrifyAction, final Set<P> threadUsageMonitorPlaces) {
+			final UnaryOperator<L> unpetrifyAction, final UnaryOperator<TermVariable> unpetrifyVariable,
+			final Set<P> threadUsageMonitorPlaces) {
 		mMgdScript = originalIcfg.getCfgSmtToolkit().getManagedScript();
 
 		mPlaceToLocation = placeToLocation;
 		mUnpetrifyAction = unpetrifyAction;
+		mUnpetrifyVariable = unpetrifyVariable;
 		mThreadUsageMonitorPlaces = threadUsageMonitorPlaces;
 
 		mPossibleInterferences = translatePossibleInterferences(petrifiedProgram, petrifiedPossibleInterferences);
@@ -166,12 +169,12 @@ public class OwickiGriesUnpetrifier<L extends IIcfgTransition<LOC>, P, LOC exten
 			final var substitution = new HashMap<TermVariable, Term>();
 			for (final var pv : predicate.getVars()) {
 				if (pv.isGlobal() || pv.getProcedure() == loc.getProcedure()) {
-					continue;
+					substitution.put(pv.getTermVariable(), mUnpetrifyVariable.apply(pv.getTermVariable()));
+				} else {
+					// create ghost variable for original if needed
+					final var ghost = mGhostMirrors.computeIfAbsent((ILocalProgramVar) pv, this::createMirror);
+					substitution.put(pv.getTermVariable(), ghost.getTerm());
 				}
-
-				// create ghost variable for original if needed
-				final var ghost = mGhostMirrors.computeIfAbsent((ILocalProgramVar) pv, this::createMirror);
-				substitution.put(pv.getTermVariable(), ghost.getTerm());
 			}
 
 			// apply substitution if necessary
@@ -215,7 +218,7 @@ public class OwickiGriesUnpetrifier<L extends IIcfgTransition<LOC>, P, LOC exten
 				}
 				final var ghost = mGhostMirrors.get(pv);
 				assert ghost != null;
-				newUpdates.put(ghost, pv.getTerm());
+				newUpdates.put(ghost, mUnpetrifyVariable.apply(pv.getTermVariable()));
 			}
 
 			// TODO add updates of new ghost variables for thread IDs when edge is entryEdge of template

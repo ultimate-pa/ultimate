@@ -93,6 +93,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.Owi
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.ICopyActionFactory;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.OwickiGriesUnpetrifier;
@@ -148,6 +149,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 	// TODO #proofRefactor This is only supposed to be a temporary workaround.
 	private Map<L, L> mTransitionMap;
 	private Set<IPredicate> mThreadMonitorPlaces;
+	private UnaryOperator<TermVariable> mUnpetrifyVariable;
 
 	public TraceAbstractionStarter(final IUltimateServiceProvider services, final IIcfg<IcfgLocation> icfg,
 			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton,
@@ -259,7 +261,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 						final UnaryOperator<L> unpetrifyAction = mTransitionMap::get;
 
 						final var up = new OwickiGriesUnpetrifier(mServices, icfg, net, interf, og, getLoc,
-								unpetrifyAction, mThreadMonitorPlaces);
+								unpetrifyAction, mUnpetrifyVariable, mThreadMonitorPlaces);
 
 						final var icfgOg = up.getResult();
 						final var pI = up.getPossibleInterferences();
@@ -622,10 +624,14 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		mLogger.info("Constructing petrified ICFG for " + numberOfThreadInstances + " thread instances.");
 		final IcfgPetrifier icfgPetrifier = new IcfgPetrifier(mServices, icfg, numberOfThreadInstances, false);
 		final IIcfg<IcfgLocation> petrifiedIcfg = icfgPetrifier.getPetrifiedIcfg();
-		mLocationMap = ((BlockEncodingBacktranslator) icfgPetrifier.getBacktranslator()).getLocationMapping();
-		mServices.getBacktranslationService().addTranslator(icfgPetrifier.getBacktranslator());
 
-		mTransitionMap = (Map) ((BlockEncodingBacktranslator) icfgPetrifier.getBacktranslator()).getEdgeMapping();
+		final var backtranslator = (BlockEncodingBacktranslator) icfgPetrifier.getBacktranslator();
+
+		mLocationMap = backtranslator.getLocationMapping();
+		mServices.getBacktranslationService().addTranslator(backtranslator);
+
+		mTransitionMap = (Map) backtranslator.getEdgeMapping();
+		mUnpetrifyVariable = x -> (TermVariable) backtranslator.translateExpression(x);
 
 		return petrifiedIcfg;
 	}
