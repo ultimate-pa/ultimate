@@ -78,7 +78,7 @@ public class CegarLoopConcurrentAutomata<L extends IIcfgTransition<?>> extends N
 			final Set<? extends IcfgLocation> errorLocs, final IUltimateServiceProvider services,
 			final Class<L> transitionClazz, final PredicateFactoryRefinement stateFactoryForRefinement) {
 		super(name, createInitialAbstraction(services, csToolkit, predicateFactory, taPrefs, rootNode), rootNode,
-				csToolkit, predicateFactory, taPrefs, errorLocs, false, services, transitionClazz,
+				csToolkit, predicateFactory, taPrefs, errorLocs, null, services, transitionClazz,
 				stateFactoryForRefinement);
 	}
 

@@ -156,14 +156,10 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends
 
 	public NwaCegarLoop(final DebugIdentifier name, final INestedWordAutomaton<L, IPredicate> initialAbstraction,
 			final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
-			final TAPreferences taPrefs, final Set<? extends IcfgLocation> errorLocs, final boolean computeProof,
-			final IUltimateServiceProvider services, final Class<L> transitionClazz,
-			final PredicateFactoryRefinement stateFactoryForRefinement) {
-		super(name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs,
-				computeProof
-						? new NwaHoareProofProducer<L>(services, initialAbstraction, csToolkit, predicateFactory,
-								taPrefs.getHoareSettings(), null /* TODO #proofRefactor */)
-						: null,
+			final TAPreferences taPrefs, final Set<? extends IcfgLocation> errorLocs,
+			final NwaHoareProofProducer<L> proofProducer, final IUltimateServiceProvider services,
+			final Class<L> transitionClazz, final PredicateFactoryRefinement stateFactoryForRefinement) {
+		super(name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, proofProducer,
 				services, transitionClazz, stateFactoryForRefinement);
 		mErrorGeneralizationEngine = new ErrorGeneralizationEngine<>(services);
 

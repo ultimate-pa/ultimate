@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.IProofPostProcessor;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.IProofTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.HoareProofSettings;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.IFloydHoareAnnotation;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.NwaHoareProofProducer;
@@ -95,19 +95,24 @@ public class NwaInitialAbstractionProvider<L extends IIcfgTransition<?>>
 	}
 
 	@Override
-	public <INPROOF, OUTPROOF> IProofPostProcessor<INestedWordAutomaton<L, IPredicate>, INPROOF, IIcfg<?>, OUTPROOF>
-			getProofConverter(final Class<INPROOF> inputProof, final Class<OUTPROOF> outputProof) {
+	public <INPROOF, OUTPROOF> OUTPROOF backtranslateProof(final INPROOF inputProof,
+			final Class<OUTPROOF> outputProofType) {
 		if (!mPrefs.computeHoareAnnotation()) {
 			return null;
 		}
 
 		// TODO #proofRefactor implement retrieval of suitable proof converter, if one exists
-		final IProofPostProcessor<INestedWordAutomaton<L, IPredicate>, IFloydHoareAnnotation<IPredicate>, IIcfg<?>, OUTPROOF> converter =
+		final IProofTransformer<INestedWordAutomaton<L, IPredicate>, IFloydHoareAnnotation<IPredicate>, IIcfg<?>, OUTPROOF> converter =
 				null;
 		if (converter != null) {
-			return (IProofPostProcessor) converter;
+			return null; // (IProofTransformer) converter;
 		}
 
-		return IInitialAbstractionProvider.super.getProofConverter(inputProof, outputProof);
+		return IInitialAbstractionProvider.super.backtranslateProof(inputProof, outputProofType);
+	}
+
+	public NwaHoareProofProducer<L> getProofProducer() {
+		return new NwaHoareProofProducer<>(mServices, mAbstraction, mCsToolkit, mPredicateFactory, mPrefs,
+				mHoareStates);
 	}
 }

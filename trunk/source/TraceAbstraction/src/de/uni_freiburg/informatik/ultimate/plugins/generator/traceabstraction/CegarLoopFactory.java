@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.NwaHoareProofProducer;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.IInitialAbstractionProvider;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.NwaInitialAbstractionProvider;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.PartialOrderAbstractionProvider;
@@ -70,6 +71,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.LanguageOperation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessUtils.Property;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
@@ -139,19 +141,18 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 				csToolkit.getManagedScript(), predicateFactory, mComputeHoareAnnotation, hoareAnnotationLocs);
 
 		if (languageOperation != LanguageOperation.DIFFERENCE) {
-			final var abstraction = createAutomataAbstraction(services, root, errorLocs, predicateFactory,
+			final var pair = createAutomataAbstraction(services, root, errorLocs, predicateFactory,
 					stateFactoryForRefinement, witnessAutomaton);
-			return new IncrementalInclusionCegarLoop<>(name, abstraction, root, csToolkit, predicateFactory, mPrefs,
-					errorLocs, mComputeHoareAnnotation, services, languageOperation, mTransitionClazz,
+			return new IncrementalInclusionCegarLoop<>(name, pair.getFirst(), root, csToolkit, predicateFactory, mPrefs,
+					errorLocs, pair.getSecond(), services, languageOperation, mTransitionClazz,
 					stateFactoryForRefinement);
 		}
 
 		if (mPrefs.interpolantAutomaton() == InterpolantAutomaton.TOTALINTERPOLATION) {
-			final var abstraction = createAutomataAbstraction(services, root, errorLocs, predicateFactory,
+			final var pair = createAutomataAbstraction(services, root, errorLocs, predicateFactory,
 					stateFactoryForRefinement, witnessAutomaton);
-			// TODO extract proof producer from IInitialAbstractionProvider and pass to CEGAR loop
-			return new CegarLoopSWBnonRecursive<>(name, abstraction, root, csToolkit, predicateFactory, mPrefs,
-					errorLocs, mComputeHoareAnnotation, services, mTransitionClazz, stateFactoryForRefinement);
+			return new CegarLoopSWBnonRecursive<>(name, pair.getFirst(), root, csToolkit, predicateFactory, mPrefs,
+					errorLocs, pair.getSecond(), services, mTransitionClazz, stateFactoryForRefinement);
 		}
 
 		if ((FORCE_FINITE_AUTOMATA_FOR_SEQUENTIAL_PROGRAMS && !IcfgUtils.isConcurrent(root))
@@ -210,62 +211,68 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 			final PredicateFactoryRefinement stateFactoryForRefinement,
 			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton) {
 
-		final INestedWordAutomaton<L, IPredicate> initialAbstraction = createAutomataAbstraction(services, root,
-				errorLocs, predicateFactory, stateFactoryForRefinement, witnessAutomaton);
+		final var pair = createAutomataAbstraction(services, root, errorLocs, predicateFactory,
+				stateFactoryForRefinement, witnessAutomaton);
+		final INestedWordAutomaton<L, IPredicate> initialAbstraction = pair.getFirst();
+		final NwaHoareProofProducer<L> proofProducer = pair.getSecond();
 		final CfgSmtToolkit csToolkit = root.getCfgSmtToolkit();
 
 		switch (mPrefs.getFloydHoareAutomataReuse()) {
 		case EAGER:
 			return new EagerReuseCegarLoop<>(name, initialAbstraction, root, csToolkit, predicateFactory, mPrefs,
-					errorLocs, mComputeHoareAnnotation, services, Collections.emptyList(),
-					rawFloydHoareAutomataFromFile, mTransitionClazz, stateFactoryForRefinement);
+					errorLocs, proofProducer, services, Collections.emptyList(), rawFloydHoareAutomataFromFile,
+					mTransitionClazz, stateFactoryForRefinement);
 		case LAZY_IN_ORDER:
 			return new LazyReuseCegarLoop<>(name, initialAbstraction, root, csToolkit, predicateFactory, mPrefs,
-					errorLocs, mComputeHoareAnnotation, services, Collections.emptyList(),
-					rawFloydHoareAutomataFromFile, mTransitionClazz, stateFactoryForRefinement);
+					errorLocs, proofProducer, services, Collections.emptyList(), rawFloydHoareAutomataFromFile,
+					mTransitionClazz, stateFactoryForRefinement);
 		case NONE:
 			return new NwaCegarLoop<>(name, initialAbstraction, root, csToolkit, predicateFactory, mPrefs, errorLocs,
-					mComputeHoareAnnotation, services, mTransitionClazz, stateFactoryForRefinement);
+					proofProducer, services, mTransitionClazz, stateFactoryForRefinement);
 		default:
 			throw new AssertionError("Unknown Setting: " + mPrefs.getFloydHoareAutomataReuse());
 		}
 	}
 
-	private INestedWordAutomaton<L, IPredicate> createAutomataAbstraction(final IUltimateServiceProvider services,
-			final IIcfg<IcfgLocation> icfg, final Set<IcfgLocation> errorLocs, final PredicateFactory predicateFactory,
-			final PredicateFactoryRefinement stateFactory,
+	private Pair<INestedWordAutomaton<L, IPredicate>, NwaHoareProofProducer<L>> createAutomataAbstraction(
+			final IUltimateServiceProvider services, final IIcfg<IcfgLocation> icfg, final Set<IcfgLocation> errorLocs,
+			final PredicateFactory predicateFactory, final PredicateFactoryRefinement stateFactory,
 			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton) {
-		return constructInitialAbstraction(createAutomataAbstractionProvider(services, IcfgUtils.isConcurrent(icfg),
-				predicateFactory, stateFactory, witnessAutomaton), icfg, errorLocs);
+		final var pair = createAutomataAbstractionProvider(services, IcfgUtils.isConcurrent(icfg), predicateFactory,
+				stateFactory, witnessAutomaton);
+		final var abstraction = constructInitialAbstraction(pair.getFirst(), icfg, errorLocs);
+		return new Pair<>(abstraction, pair.getSecond());
 	}
 
-	private IInitialAbstractionProvider<L, ? extends INestedWordAutomaton<L, IPredicate>>
+	private Pair<IInitialAbstractionProvider<L, ? extends INestedWordAutomaton<L, IPredicate>>, NwaHoareProofProducer<L>>
 			createAutomataAbstractionProvider(final IUltimateServiceProvider services, final boolean isConcurrent,
 					final PredicateFactory predicateFactory, final PredicateFactoryRefinement stateFactory,
 					final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton) {
 		if (!isConcurrent) {
-			final IInitialAbstractionProvider<L, INestedWordAutomaton<L, IPredicate>> provider =
-					new NwaInitialAbstractionProvider<>(services, stateFactory, mPrefs.interprocedural(),
-							predicateFactory, mPrefs.getHoareSettings());
+			final var provider = new NwaInitialAbstractionProvider<L>(services, stateFactory, mPrefs.interprocedural(),
+					predicateFactory, mPrefs.getHoareSettings());
 			if (witnessAutomaton == null) {
-				return provider;
+				return new Pair<>(provider, provider.getProofProducer());
 			}
-			return new WitnessAutomatonAbstractionProvider<>(services, predicateFactory, stateFactory, provider,
-					witnessAutomaton, Property.NON_REACHABILITY);
+			return new Pair<>(new WitnessAutomatonAbstractionProvider<>(services, predicateFactory, stateFactory,
+					provider, witnessAutomaton, Property.NON_REACHABILITY), null);
 		}
 
 		final var netProvider = createPetriAbstractionProvider(services, predicateFactory, false);
 		if (!mPrefs.applyOneShotPOR()) {
-			return new Petri2FiniteAutomatonAbstractionProvider.Eager<>(netProvider, stateFactory,
+			final var petriProvider = new Petri2FiniteAutomatonAbstractionProvider.Eager<>(netProvider, stateFactory,
 					new AutomataLibraryServices(services));
+			return new Pair<>(petriProvider,
+					petriProvider.getProofProducer(services, predicateFactory, mPrefs.getHoareSettings()));
 		}
-		return new PartialOrderAbstractionProvider<>(
+
+		return new Pair<>(new PartialOrderAbstractionProvider<>(
 				// Partial Order reductions aim to avoid the explicit construction of the full finite automaton.
 				// Hence we use the lazy abstraction provider.
 				new Petri2FiniteAutomatonAbstractionProvider.Lazy<>(netProvider, stateFactory,
 						new AutomataLibraryServices(services)),
 				services, stateFactory, predicateFactory, mPrefs.getPartialOrderMode(), mPrefs.getDfsOrderType(),
-				mPrefs.getDfsOrderSeed());
+				mPrefs.getDfsOrderSeed()), null);
 	}
 
 	@Deprecated

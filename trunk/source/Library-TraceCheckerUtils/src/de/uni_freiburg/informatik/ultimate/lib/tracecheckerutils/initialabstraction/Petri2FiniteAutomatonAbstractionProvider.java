@@ -41,12 +41,17 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeExc
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.LazyPetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.HoareProofSettings;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.NwaHoareProofProducer;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
@@ -132,6 +137,9 @@ public abstract class Petri2FiniteAutomatonAbstractionProvider<L extends IIcfgTr
 	public static class Eager<L extends IIcfgTransition<?>>
 			extends Petri2FiniteAutomatonAbstractionProvider<L, INestedWordAutomaton<L, IPredicate>> {
 
+		private INestedWordAutomaton<L, IPredicate> mAbstraction;
+		private CfgSmtToolkit mCsToolkit;
+
 		/**
 		 * Create a new instance of the provider.
 		 *
@@ -151,11 +159,14 @@ public abstract class Petri2FiniteAutomatonAbstractionProvider<L extends IIcfgTr
 		@Override
 		public INestedWordAutomaton<L, IPredicate> getInitialAbstraction(final IIcfg<? extends IcfgLocation> icfg,
 				final Set<? extends IcfgLocation> errorLocs) throws AutomataLibraryException {
+			mCsToolkit = icfg.getCfgSmtToolkit();
+
 			final IPetriNet<L, IPredicate> net = mUnderlying.getInitialAbstraction(icfg, errorLocs);
 			try {
 				final Map<IcfgLocation, Boolean> hopelessCache = new HashMap<>();
-				return new PetriNet2FiniteAutomaton<>(mServices, mStateFactory, net,
+				mAbstraction = new PetriNet2FiniteAutomaton<>(mServices, mStateFactory, net,
 						s -> areAllLocationsHopeless(hopelessCache, errorLocs, s)).getResult();
+				return mAbstraction;
 			} catch (final PetriNetNot1SafeException e) {
 				final Collection<?> unsafePlaces = e.getUnsafePlaces();
 				if (unsafePlaces == null) {
@@ -165,6 +176,12 @@ public abstract class Petri2FiniteAutomatonAbstractionProvider<L extends IIcfgTr
 				final String proc = unsafePlace.getProgramPoint().getProcedure();
 				throw new IllegalStateException("Petrification does not provide enough thread instances for " + proc);
 			}
+		}
+
+		public NwaHoareProofProducer<L> getProofProducer(final IUltimateServiceProvider services,
+				final PredicateFactory predicateFactory, final HoareProofSettings prefs) {
+			return new NwaHoareProofProducer<>(services, mAbstraction, mCsToolkit, predicateFactory, prefs,
+					mAbstraction.getStates());
 		}
 	}
 

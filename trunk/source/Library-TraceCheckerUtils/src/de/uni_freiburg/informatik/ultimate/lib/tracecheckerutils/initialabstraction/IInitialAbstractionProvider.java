@@ -34,7 +34,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.IProofPostProcessor;
 import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
@@ -93,10 +92,10 @@ public interface IInitialAbstractionProvider<L extends IIcfgTransition<?>, A ext
 	 *             if no proof postprocessor satisfying the constraints is known
 	 */
 	// TODO #proofRefactor
-	default <INPROOF, OUTPROOF> IProofPostProcessor<A, INPROOF, IIcfg<?>, OUTPROOF>
-			getProofConverter(final Class<INPROOF> inputProof, final Class<OUTPROOF> outputProof) {
+	default <INPROOF, OUTPROOF> OUTPROOF backtranslateProof(final INPROOF inputProof,
+			final Class<OUTPROOF> outputProofType) {
 		throw new UnsupportedOperationException(getClass().getSimpleName()
-				+ " does not support producing proofs of type " + outputProof.getSimpleName());
+				+ " does not support producing proofs of type " + outputProofType.getSimpleName());
 	}
 
 	default IStatisticsDataProvider getStatistics() {

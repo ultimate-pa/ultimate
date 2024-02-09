@@ -29,14 +29,14 @@ package de.uni_freiburg.informatik.ultimate.lib.proofs;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
 /**
- * Post-processes a proof artifact of some kind, resulting in a new proof artifact. This post-processing may for
- * instance be intended to accommodate a transformation of the program whose correctness is proven by the proof, or to
- * implement a change of proof format, or both.
+ * Transforms a proof artifact of some kind, resulting in a new proof artifact. This transformation may for instance be
+ * intended to accommodate a transformation of the program whose correctness is proven by the proof, or to implement a
+ * change of proof format, or both.
  *
  * An instance of this interface is always bound to a specific pair of an original program and a transformed program
  * (which may be equal, if no program transformation took place). These programs should not change, and are typically
  * provided to the constructor. If a transformation took place, additional information may also be provided to the
- * constructor, and be used to implement the post-processing.
+ * constructor, and be used to implement this transformation.
  *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  *
@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
  * @param <OUTPROOF>
  *            The type of proof resulting from the post-processing
  */
-public interface IProofPostProcessor<INPROGRAM, INPROOF, OUTPROGRAM, OUTPROOF> {
+public interface IProofTransformer<INPROGRAM, INPROOF, OUTPROGRAM, OUTPROOF> {
 	OUTPROGRAM getOriginalProgram();
 
 	INPROGRAM getTransformedProgram();
@@ -65,8 +65,8 @@ public interface IProofPostProcessor<INPROGRAM, INPROOF, OUTPROGRAM, OUTPROOF> {
 
 	IStatisticsDataProvider getStatistics();
 
-	static <PROGRAM, PROOF> IProofPostProcessor<PROGRAM, PROOF, PROGRAM, PROOF> identity(final PROGRAM program) {
-		return new IProofPostProcessor<>() {
+	static <PROGRAM, PROOF> IProofTransformer<PROGRAM, PROOF, PROGRAM, PROOF> identity(final PROGRAM program) {
+		return new IProofTransformer<>() {
 			@Override
 			public PROGRAM getOriginalProgram() {
 				return program;
@@ -90,11 +90,11 @@ public interface IProofPostProcessor<INPROGRAM, INPROOF, OUTPROGRAM, OUTPROOF> {
 	}
 
 	static <INPROGRAM, INPROOF, MIDPROGRAM, MIDPROOF, OUTPROGRAM, OUTPROOF>
-			IProofPostProcessor<INPROGRAM, INPROOF, OUTPROGRAM, OUTPROOF>
-			compose(final IProofPostProcessor<INPROGRAM, INPROOF, MIDPROGRAM, MIDPROOF> left,
-					final IProofPostProcessor<MIDPROGRAM, MIDPROOF, OUTPROGRAM, OUTPROOF> right) {
+			IProofTransformer<INPROGRAM, INPROOF, OUTPROGRAM, OUTPROOF>
+			compose(final IProofTransformer<INPROGRAM, INPROOF, MIDPROGRAM, MIDPROOF> left,
+					final IProofTransformer<MIDPROGRAM, MIDPROOF, OUTPROGRAM, OUTPROOF> right) {
 		assert right.getTransformedProgram() == left.getOriginalProgram();
-		return new IProofPostProcessor<>() {
+		return new IProofTransformer<>() {
 			@Override
 			public OUTPROGRAM getOriginalProgram() {
 				return right.getOriginalProgram();

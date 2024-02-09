@@ -45,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.IFinishWithFinalAbstraction;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.IProofPostProcessor;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.IProofProducer;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.IUpdateOnDifference;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.IUpdateOnMinimization;
@@ -61,12 +60,6 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.TimeTracker;
  *
  * @param <L>
  *            The type of letters in the program automaton
- * @param <A>
- *            The type of abstraction for which a proof is produced. By default, this is {@link INestedWordAutomaton},
- *            but it may differ if the proof is post-processed (see {@link #withPostProcessor(IProofPostProcessor)}.
- * @param <P>
- *            The type of proof which is produced. By default, this is {@link IFloydHoareAnnotation}, but it may differ
- *            if the proof is post-processed (see {@link #withPostProcessor(IProofPostProcessor)}.
  */
 public final class NwaHoareProofProducer<L extends IAction>
 		implements IProofProducer<INestedWordAutomaton<L, IPredicate>, IFloydHoareAnnotation<IPredicate>>,
