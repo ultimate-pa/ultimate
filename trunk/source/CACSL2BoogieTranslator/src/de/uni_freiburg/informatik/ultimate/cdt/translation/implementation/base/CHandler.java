@@ -3617,6 +3617,9 @@ public class CHandler {
 			final Statement[] elseStmt =
 					CTranslationUtil.createHavocsForAuxVars(condResult.getAuxVars()).toArray(new Statement[0]);
 			ifStmt = new IfStatement(loc, cond, thenStmt.toArray(new Statement[thenStmt.size()]), elseStmt);
+			for (final var oa : condResult.getOverapprs()) {
+				oa.annotate(ifStmt);
+			}
 		}
 
 		if (node instanceof IASTWhileStatement || node instanceof IASTForStatement) {
