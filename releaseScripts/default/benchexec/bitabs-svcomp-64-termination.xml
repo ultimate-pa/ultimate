@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<benchmark tool="ultimateautomizer" memlimit="8GB" timelimit="900" hardtimelimit="920" cpuCores="2">
+  <resultfiles></resultfiles>
+
+  <option name="--force-no-wrapper" />
+  
+  <rundefinition name="Integer-Bitabs">
+    <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Termination-64bit-Automizer_Default.epf</option>
+    <option name="--cacsl2boogietranslator.use.bitabs.translation">true</option>
+  </rundefinition>
+  
+  <rundefinition name="Integer">
+    <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Termination-64bit-Automizer_Default.epf</option>
+    <option name="--cacsl2boogietranslator.use.bitabs.translation">false</option>
+  </rundefinition>
+  
+  <tasks name="Termination-BitVectors">
+    <option name="-tc">../../../trunk/examples/toolchains/BuchiAutomizerCInline.xml</option>
+    <includesfile>../../../trunk/examples/svcomp/Termination-BitVectors.set</includesfile>
+    <propertyfile>../../../trunk/examples/svcomp/properties/termination.prp</propertyfile>
+  </tasks>
+</benchmark>
