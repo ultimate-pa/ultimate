@@ -327,7 +327,7 @@ public abstract class DynamicStratifiedReductionTestsBase implements IMessagePri
 		}
 
 		@Override
-		public Set<String> chooseResponsibleAbstraction(final String state) {
+		public Set<String> chooseResponsibleAbstraction(final String state, AbstractionLevel<Set<String>> level) {
 			// always chooses the proof with the minimal index
 			// TODO @Veronika: Customize this if necessary
 			final int result = Arrays.asList(getProofStates(state)).indexOf("false");
