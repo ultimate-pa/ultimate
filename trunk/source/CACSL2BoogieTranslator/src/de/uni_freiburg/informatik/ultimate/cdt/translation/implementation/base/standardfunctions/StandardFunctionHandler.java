@@ -36,7 +36,6 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.BinaryOperator;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
@@ -440,11 +439,16 @@ public class StandardFunctionHandler {
 		fill(map, "__atomic_store_n", this::handleAtomicStoreN);
 		fill(map, "__atomic_exchange_n", this::handleAtomicExchangeN);
 
-		fill(map, "__atomic_fetch_add", this::handleAtomicFetchAdd);
-		fill(map, "__atomic_fetch_sub", this::handleAtomicFetchSub);
-		fill(map, "__atomic_fetch_and", this::handleAtomicFetchAnd);
-		fill(map, "__atomic_fetch_or", this::handleAtomicFetchOr);
-		fill(map, "__atomic_fetch_xor", this::handleAtomicFetchXor);
+		fill(map, "__atomic_fetch_add",
+				(main, node, loc, name) -> handleAtomicFetch(main, node, loc, name, IASTBinaryExpression.op_plus));
+		fill(map, "__atomic_fetch_sub",
+				(main, node, loc, name) -> handleAtomicFetch(main, node, loc, name, IASTBinaryExpression.op_minus));
+		fill(map, "__atomic_fetch_and",
+				(main, node, loc, name) -> handleAtomicFetch(main, node, loc, name, IASTBinaryExpression.op_binaryAnd));
+		fill(map, "__atomic_fetch_or",
+				(main, node, loc, name) -> handleAtomicFetch(main, node, loc, name, IASTBinaryExpression.op_binaryOr));
+		fill(map, "__atomic_fetch_xor",
+				(main, node, loc, name) -> handleAtomicFetch(main, node, loc, name, IASTBinaryExpression.op_binaryXor));
 
 		fill(map, "__atomic_test_and_set", this::handleAtomicTestAndSet);
 		fill(map, "__atomic_clear", this::handleAtomicClear);
@@ -1194,52 +1198,8 @@ public class StandardFunctionHandler {
 		return builder.build();
 	}
 
-	private Result handleAtomicFetchAdd(final IDispatcher main, final IASTFunctionCallExpression node,
-			final ILocation loc, final String name) {
-		return handleAtomicFetchOp(main, node, loc, name,
-				(x, y) -> new ExpressionResult(new RValue(
-						mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_plus,
-								x.getLrValue().getValue(), (CPrimitive) x.getCType().getUnderlyingType(),
-								y.getLrValue().getValue(), (CPrimitive) y.getCType().getUnderlyingType()),
-						x.getCType())));
-	}
-
-	private Result handleAtomicFetchSub(final IDispatcher main, final IASTFunctionCallExpression node,
-			final ILocation loc, final String name) {
-		return handleAtomicFetchOp(main, node, loc, name,
-				(x, y) -> new ExpressionResult(new RValue(
-						mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_minus,
-								x.getLrValue().getValue(), (CPrimitive) x.getCType().getUnderlyingType(),
-								y.getLrValue().getValue(), (CPrimitive) y.getCType().getUnderlyingType()),
-						x.getCType())));
-	}
-
-	private Result handleAtomicFetchAnd(final IDispatcher main, final IASTFunctionCallExpression node,
-			final ILocation loc, final String name) {
-		return handleAtomicFetchOp(main, node, loc, name,
-				(x, y) -> mExpressionTranslation.handleBinaryBitwiseExpression(loc, IASTBinaryExpression.op_binaryAnd,
-						x.getLrValue().getValue(), (CPrimitive) x.getCType().getUnderlyingType(),
-						y.getLrValue().getValue(), (CPrimitive) y.getCType().getUnderlyingType(), mAuxVarInfoBuilder));
-	}
-
-	private Result handleAtomicFetchOr(final IDispatcher main, final IASTFunctionCallExpression node,
-			final ILocation loc, final String name) {
-		return handleAtomicFetchOp(main, node, loc, name,
-				(x, y) -> mExpressionTranslation.handleBinaryBitwiseExpression(loc, IASTBinaryExpression.op_binaryOr,
-						x.getLrValue().getValue(), (CPrimitive) x.getCType().getUnderlyingType(),
-						y.getLrValue().getValue(), (CPrimitive) y.getCType().getUnderlyingType(), mAuxVarInfoBuilder));
-	}
-
-	private Result handleAtomicFetchXor(final IDispatcher main, final IASTFunctionCallExpression node,
-			final ILocation loc, final String name) {
-		return handleAtomicFetchOp(main, node, loc, name,
-				(x, y) -> mExpressionTranslation.handleBinaryBitwiseExpression(loc, IASTBinaryExpression.op_binaryXor,
-						x.getLrValue().getValue(), (CPrimitive) x.getCType().getUnderlyingType(),
-						y.getLrValue().getValue(), (CPrimitive) y.getCType().getUnderlyingType(), mAuxVarInfoBuilder));
-	}
-
-	private Result handleAtomicFetchOp(final IDispatcher main, final IASTFunctionCallExpression node,
-			final ILocation loc, final String name, final BinaryOperator<ExpressionResult> operator) {
+	private Result handleAtomicFetch(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+			final String name, final int operator) {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 3, name, arguments);
 		final ExpressionResult operand =
@@ -1247,9 +1207,20 @@ public class StandardFunctionHandler {
 		final IASTNode target = arguments[0];
 		final ExpressionResult read = dispatchRead(main, loc, target);
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder(read);
-		final ExpressionResult newValue = operator.apply(read, operand);
-		builder.addAllExceptLrValue(newValue);
-		builder.addAllExceptLrValue(dispatchWrite(main, loc, target, newValue.getLrValue().getValue()));
+		final Expression newValue;
+		final CPrimitive readType = (CPrimitive) read.getCType().getUnderlyingType();
+		final CPrimitive operandType = (CPrimitive) operand.getCType().getUnderlyingType();
+		if (operator == IASTBinaryExpression.op_plus || operator == IASTBinaryExpression.op_minus) {
+			newValue = mExpressionTranslation.constructArithmeticExpression(loc, operator, read.getLrValue().getValue(),
+					readType, operand.getLrValue().getValue(), operandType);
+		} else {
+			final ExpressionResult bitwiseResult =
+					mExpressionTranslation.handleBinaryBitwiseExpression(loc, operator, read.getLrValue().getValue(),
+							readType, operand.getLrValue().getValue(), operandType, mAuxVarInfoBuilder);
+			builder.addAllExceptLrValue(bitwiseResult);
+			newValue = bitwiseResult.getLrValue().getValue();
+		}
+		builder.addAllExceptLrValue(dispatchWrite(main, loc, target, newValue));
 		// Make sure that only the write, but not the read is atomic
 		final ExpressionResult atomicBlock =
 				buildWrtMemoryOrder(loc, builder.build(), (ExpressionResult) main.dispatch(arguments[2]));
