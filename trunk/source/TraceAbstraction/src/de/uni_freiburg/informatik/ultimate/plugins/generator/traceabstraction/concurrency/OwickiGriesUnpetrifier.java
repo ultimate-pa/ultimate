@@ -36,14 +36,15 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ILocalProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -79,18 +80,18 @@ public class OwickiGriesUnpetrifier<L extends IIcfgTransition<LOC>, P, LOC exten
 
 	private final Map<String, ILocalProgramVar> mThreadIdVars = new HashMap<>();
 	private final Map<ILocalProgramVar, IProgramNonOldVar> mGhostMirrors = new HashMap<>();
+	private final DefaultIcfgSymbolTable mSymbolTable;
 
 	private final IPossibleInterferences<L, LOC> mPossibleInterferences;
 	private final OwickiGriesAnnotation<L, LOC> mOwickiGries;
 
 	// TODO ConcurrencyInformation of petrified CFG?
-	public OwickiGriesUnpetrifier(final IIcfg<LOC> originalIcfg, final IPetriNet<L, P> petrifiedProgram,
+	public OwickiGriesUnpetrifier(final IUltimateServiceProvider services, final IIcfg<LOC> originalIcfg,
+			final IPetriNet<L, P> petrifiedProgram,
 			final IPossibleInterferences<Transition<L, P>, P> petrifiedPossibleInterferences,
 			final OwickiGriesAnnotation<Transition<L, P>, P> annotation, final Function<P, LOC> placeToLocation,
-			final UnaryOperator<L> unpetrifyAction, final Set<P> threadUsageMonitorPlaces,
-			final BasicPredicateFactory predicateFactory) {
+			final UnaryOperator<L> unpetrifyAction, final Set<P> threadUsageMonitorPlaces) {
 		mMgdScript = originalIcfg.getCfgSmtToolkit().getManagedScript();
-		mPredicateFactory = predicateFactory;
 
 		mPlaceToLocation = placeToLocation;
 		mUnpetrifyAction = unpetrifyAction;
@@ -98,8 +99,13 @@ public class OwickiGriesUnpetrifier<L extends IIcfgTransition<LOC>, P, LOC exten
 
 		mPossibleInterferences = translatePossibleInterferences(petrifiedProgram, petrifiedPossibleInterferences);
 
+		mSymbolTable = new DefaultIcfgSymbolTable(annotation.getSymbolTable(),
+				originalIcfg.getCfgSmtToolkit().getProcedures());
+		mPredicateFactory = new BasicPredicateFactory(services, mMgdScript, mSymbolTable);
+
 		// compute formula mapping, and collect newly needed ghost variables on the fly
 		final Map<LOC, IPredicate> formulaMapping = computeFormulaMapping(petrifiedProgram, annotation);
+		mSymbolTable.finishConstruction();
 
 		// collect old and new ghost variables
 		final var ghostVars = new HashSet<>(annotation.getGhostVariables());
@@ -112,10 +118,9 @@ public class OwickiGriesUnpetrifier<L extends IIcfgTransition<LOC>, P, LOC exten
 			ghostInits.put(entry.getValue(), entry.getKey().getTerm());
 		}
 
-		final IIcfgSymbolTable symbolTable = buildSymbolTable(originalIcfg, ghostVars);
 		final Map<L, GhostUpdate> ghostUpdates = computeUpdates(petrifiedProgram, annotation);
 
-		mOwickiGries = new OwickiGriesAnnotation<>(symbolTable, formulaMapping, ghostVars, ghostInits, ghostUpdates);
+		mOwickiGries = new OwickiGriesAnnotation<>(mSymbolTable, formulaMapping, ghostVars, ghostInits, ghostUpdates);
 	}
 
 	public OwickiGriesAnnotation<L, LOC> getResult() {
@@ -165,8 +170,7 @@ public class OwickiGriesUnpetrifier<L extends IIcfgTransition<LOC>, P, LOC exten
 				}
 
 				// create ghost variable for original if needed
-				final var ghost = mGhostMirrors.computeIfAbsent((ILocalProgramVar) pv, x -> ProgramVarUtils
-						.constructGlobalProgramVarPair(x.getIdentifier() + "~ghost", x.getSort(), mMgdScript, null));
+				final var ghost = mGhostMirrors.computeIfAbsent((ILocalProgramVar) pv, this::createMirror);
 				substitution.put(pv.getTermVariable(), ghost.getTerm());
 			}
 
@@ -181,6 +185,13 @@ public class OwickiGriesUnpetrifier<L extends IIcfgTransition<LOC>, P, LOC exten
 			result.put(loc, newPredicate);
 		}
 		return result;
+	}
+
+	private ProgramNonOldVar createMirror(final ILocalProgramVar x) {
+		final var pv = ProgramVarUtils.constructGlobalProgramVarPair(x.getGloballyUniqueId() + "~ghost", x.getSort(),
+				mMgdScript, null);
+		mSymbolTable.add(pv);
+		return pv;
 	}
 
 	private Map<L, GhostUpdate> computeUpdates(final IPetriNet<L, P> petrifiedProgram,
@@ -216,16 +227,6 @@ public class OwickiGriesUnpetrifier<L extends IIcfgTransition<LOC>, P, LOC exten
 			}
 		}
 		return result;
-	}
-
-	private IIcfgSymbolTable buildSymbolTable(final IIcfg<LOC> originalIcfg, final Set<IProgramVar> ghostVars) {
-		final var symbolTable = new DefaultIcfgSymbolTable(originalIcfg.getCfgSmtToolkit().getSymbolTable(),
-				originalIcfg.getCfgSmtToolkit().getProcedures());
-		for (final var ghost : ghostVars) {
-			symbolTable.add(ghost);
-		}
-		symbolTable.finishConstruction();
-		return symbolTable;
 	}
 
 	private LOC getLocation(final P place) {
