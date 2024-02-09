@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaBasis;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.IRunningTaskStackProvider;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.TaskCanceledException;
@@ -86,6 +87,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.IPossibleInterferences;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.OwickiGriesAnnotation;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -98,6 +101,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
 /**
@@ -299,8 +303,11 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 	 */
 	protected abstract void computeIcfgHoareAnnotation();
 
-	protected void computeOwickiGriesAnnotation() {
+	protected
+			Triple<IPetriNet<L, IPredicate>, OwickiGriesAnnotation<Transition<L, IPredicate>, IPredicate>, IPossibleInterferences<Transition<L, IPredicate>, IPredicate>>
+			computeOwickiGriesAnnotation() {
 		mLogger.warn("Computation of Owicki-Gries proof not supported by " + getClass().getSimpleName());
+		return null;
 	}
 
 	protected abstract Set<Pair<AbstractInterpolantAutomaton<L>, IPredicateUnifier>> getFloydHoareAutomata();
@@ -501,7 +508,8 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 			mLogger.info("%s automaton has %s", automatonType, mInterpolAutomaton.sizeInformation());
 		}
 
-		if (mComputeHoareAnnotation && mPref.getHoareAnnotationPositions() == HoareAnnotationPositions.All) {
+		if (mComputeHoareAnnotation && mPref.getHoareAnnotationPositions() == HoareAnnotationPositions.All
+				&& mAbstraction instanceof INestedWordAutomaton) {
 			assert new InductivityCheck<>(getServices(), (INestedWordAutomaton<L, IPredicate>) mAbstraction, false,
 					true, new IncrementalHoareTripleChecker(mCsToolkit, false)).getResult() : "Not inductive";
 		}
@@ -874,9 +882,10 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 				floydHoareAutomata = null;
 			}
 
+			Object proof = null;
 			if (mComputeHoareAnnotation && mResults.values().stream().anyMatch(a -> a.getResult() == Result.SAFE)) {
 				if (IcfgUtils.isConcurrent(mIcfg)) {
-					computeOwickiGriesAnnotation();
+					proof = computeOwickiGriesAnnotation();
 				} else {
 					computeIcfgHoareAnnotation();
 					writeHoareAnnotationToLogger();
@@ -884,7 +893,8 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 			} else {
 				mLogger.debug("Omitting computation of Hoare annotation");
 			}
-			return new CegarLoopResult<>(mResults, cegarLoopBenchmarkGenerator, getArtifact(), floydHoareAutomata);
+			return new CegarLoopResult<>(mResults, cegarLoopBenchmarkGenerator, getArtifact(), floydHoareAutomata,
+					proof);
 		}
 
 		public int remainingErrorLocs() {

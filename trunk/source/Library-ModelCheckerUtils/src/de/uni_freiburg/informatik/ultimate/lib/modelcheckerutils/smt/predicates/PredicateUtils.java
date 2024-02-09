@@ -408,4 +408,11 @@ public class PredicateUtils {
 		}
 		return Stream.of();
 	}
+
+	public static IcfgLocation getLocation(final IPredicate pred) {
+		if (pred instanceof ISLPredicate) {
+			return ((ISLPredicate) pred).getProgramPoint();
+		}
+		throw new IllegalArgumentException("does not have a location: " + pred);
+	}
 }

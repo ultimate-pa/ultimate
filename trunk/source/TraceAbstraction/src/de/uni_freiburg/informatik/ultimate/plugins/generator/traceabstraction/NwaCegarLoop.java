@@ -64,6 +64,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.senwa.DifferenceS
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.TaskCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.TaskCanceledException.UserDefinedLimit;
@@ -92,6 +93,8 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.Simplificati
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SMTFeatureExtractionTermClassifier.ScoringMethod;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.cfg2automaton.Cfg2Automaton;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.IPossibleInterferences;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.OwickiGriesAnnotation;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.OwickiGriesConstruction;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.PetriOwickiGriesValidityCheck;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
@@ -112,6 +115,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RelevanceAnalysisMode;
 import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * Subclass of BasicCegarLoop for safety checking based on nested-word automata.
@@ -567,7 +571,14 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 	}
 
 	@Override
-	protected void computeOwickiGriesAnnotation() {
+	protected
+			Triple<IPetriNet<L, IPredicate>, OwickiGriesAnnotation<Transition<L, IPredicate>, IPredicate>, IPossibleInterferences<Transition<L, IPredicate>, IPredicate>>
+			computeOwickiGriesAnnotation() {
+		if (42 / 2 == 3 * 7) {
+			// TODO #proofRefactor This is temporarily disabled because we do not yet support it.
+			return null;
+		}
+
 		assert IcfgUtils.isConcurrent(mIcfg) : "Cannot compute Owicki-Gries for sequential program.";
 		if (mPref.applyOneShotLbe()) {
 			// TODO this should be moved somewhere else, it's not the responsibility of this CEGAR loop
@@ -630,6 +641,9 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 		if (result == Validity.UNKNOWN) {
 			mLogger.warn("Could not confirm validity of Owicki-Gries annotation.");
 		}
+
+		// TODO #proofRefactor
+		return null;
 	}
 
 	private static final boolean checkStoreCounterExamples(final TAPreferences pref) {

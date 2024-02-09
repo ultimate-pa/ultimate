@@ -28,23 +28,31 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessEnsuresClause;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessGhostDeclaration;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessGhostUpdate;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.InvariantResult;
@@ -53,6 +61,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.ProcedureContractRes
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
@@ -72,13 +81,21 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.d
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.ProcedureErrorDebugIdentifier.ProcedureErrorType;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.StringDebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.BlockEncodingBacktranslator;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.HoareAnnotation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.GhostUpdate;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.IPossibleInterferences;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.OwickiGriesAnnotation;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.ICopyActionFactory;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.OwickiGriesUnpetrifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.HoareAnnotationChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
@@ -87,6 +104,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.OrderOfErrorLocations;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
@@ -126,6 +144,10 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 	private Map<IcfgLocation, IcfgLocation> mLocationMap;
 	private final Map<IcfgLocation, IResult> mResultsPerLocation;
 	private final CegarLoopResultReporter<L> mResultReporter;
+
+	// TODO #proofRefactor This is only supposed to be a temporary workaround.
+	private Map<L, L> mTransitionMap;
+	private Set<IPredicate> mThreadMonitorPlaces;
 
 	public TraceAbstractionStarter(final IUltimateServiceProvider services, final IIcfg<IcfgLocation> icfg,
 			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton,
@@ -222,6 +244,95 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 			if (resultsHaveSufficientInstances(results)) {
 				mLogger.info("Analysis of concurrent program completed with " + numberOfThreadInstances
 						+ " thread instances");
+
+				// backtranslate O/G proof and write to Icfg
+				// TODO #proofRefactor This is only supposed to be a temporary workaround.
+				for (final var result : results) {
+					final var proofObj = result.getProof();
+					if (proofObj != null && proofObj instanceof Triple<?, ?, ?>) {
+						final var triple =
+								(Triple<IPetriNet<L, IPredicate>, OwickiGriesAnnotation<Transition<L, IPredicate>, IPredicate>, IPossibleInterferences<Transition<L, IPredicate>, IPredicate>>) proofObj;
+						final var net = triple.getFirst();
+						final var og = triple.getSecond();
+						final var interf = triple.getThird();
+						final Function<IPredicate, IcfgLocation> getLoc = PredicateUtils::getLocation;
+						final UnaryOperator<L> unpetrifyAction = mTransitionMap::get;
+
+						final var up = new OwickiGriesUnpetrifier(mServices, icfg, net, interf, og, getLoc,
+								unpetrifyAction, mThreadMonitorPlaces);
+
+						final var icfgOg = up.getResult();
+						final var pI = up.getPossibleInterferences();
+
+						// TODO check validity on Icfg
+
+						// write to Icfg
+						final var backTranslatorService = mServices.getBacktranslationService();
+						final Set<IProgramVar> failedGhosts = new HashSet<>();
+						for (final var entry : icfgOg.getGhostAssignment().entrySet()) {
+							final var ghost = (IProgramVar) ((Map.Entry) entry).getKey();
+							final var expr = (Term) ((Map.Entry) entry).getValue();
+
+							final var initialValue =
+									backTranslatorService.translateExpressionToString(expr, Term.class);
+							if (initialValue == null) {
+								failedGhosts.add(ghost);
+								continue;
+							}
+							new WitnessGhostDeclaration(ghost.getGloballyUniqueId(), initialValue).annotate(icfg);
+						}
+
+						for (final var entry : icfgOg.getAssignmentMapping().entrySet()) {
+							final var edge = (IIcfgTransition<?>) ((Map.Entry) entry).getKey();
+							final GhostUpdate update = (GhostUpdate) ((Map.Entry) entry).getValue();
+
+							final Map<String, String> ghostUpdate = new HashMap<>();
+							for (final var ghost : update.getAssignedVariables()) {
+								if (failedGhosts.contains(ghost)) {
+									continue;
+								}
+
+								final var context = ILocation.getAnnotation(edge.getSource());
+								final var term = update.getExpressionFor(ghost);
+								final var expression = backTranslatorService
+										.translateExpressionWithContextToString(term, context, Term.class);
+								if (expression == null) {
+									mLogger.warn("Could not translate assignment to ghost variable %s: %s", ghost,
+											term);
+									failedGhosts.add(ghost);
+								} else {
+									ghostUpdate.put(ghost.getGloballyUniqueId(), expression);
+								}
+							}
+							new WitnessGhostUpdate(ghostUpdate).annotate(edge);
+						}
+
+						final var failedGhostTvs =
+								failedGhosts.stream().map(IProgramVar::getTermVariable).collect(Collectors.toSet());
+						for (final var entry : icfgOg.getFormulaMapping().entrySet()) {
+							final IcfgLocation loc = (IcfgLocation) ((Map.Entry) entry).getKey();
+							final Term formula = ((IPredicate) ((Map.Entry) entry).getValue()).getFormula();
+
+							final InvariantResult<IIcfgElement, Term> invResult =
+									new InvariantResult<>(Activator.PLUGIN_NAME, loc, backTranslatorService, formula);
+							mResultReporter.reportResult(invResult);
+							final String invariant = invResult.getInvariant();
+
+							if (SmtUtils.isTrueLiteral(formula)) {
+								continue;
+							}
+
+							final var failedGhost =
+									Arrays.stream(formula.getFreeVars()).filter(failedGhostTvs::contains).findAny();
+							if (failedGhost.isPresent()) {
+								mLogger.warn("Invariant contains ghost variable that was not properly backtranslated. "
+										+ "Invariant: %s. Ghost variable: %s", invariant, failedGhost.get());
+							}
+							new WitnessInvariant(invariant).annotate(loc);
+						}
+					}
+				}
+
 				return results;
 			}
 			assert IcfgUtils.isConcurrent(icfg) : "Insufficient thread instances for sequential program";
@@ -409,6 +520,8 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 				.constructCegarLoop(services, name, icfg, errorLocs, mWitnessAutomaton, mRawFloydHoareAutomataFromFile)
 				.runCegar();
 
+		mThreadMonitorPlaces = mCegarFactory.getThreadMonitorPlaces();
+
 		final StatisticsData cegarStatistics = new StatisticsData();
 		cegarStatistics.aggregateBenchmarkData(clres.getCegarLoopStatisticsGenerator());
 		if (clres.getCegarLoopStatisticsGenerator().getBenchmarkType() instanceof PetriCegarStatisticsType) {
@@ -511,6 +624,9 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		final IIcfg<IcfgLocation> petrifiedIcfg = icfgPetrifier.getPetrifiedIcfg();
 		mLocationMap = ((BlockEncodingBacktranslator) icfgPetrifier.getBacktranslator()).getLocationMapping();
 		mServices.getBacktranslationService().addTranslator(icfgPetrifier.getBacktranslator());
+
+		mTransitionMap = (Map) ((BlockEncodingBacktranslator) icfgPetrifier.getBacktranslator()).getEdgeMapping();
+
 		return petrifiedIcfg;
 	}
 

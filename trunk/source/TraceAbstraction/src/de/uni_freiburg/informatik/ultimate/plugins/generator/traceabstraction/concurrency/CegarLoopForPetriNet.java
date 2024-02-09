@@ -55,10 +55,12 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Remove
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.ComplementDD;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DeterminizeDD;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.PetriNetUtils;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.Difference;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.Difference.LoopSyncMethod;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.DifferencePairwiseOnDemand;
@@ -87,6 +89,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.ILooperCheck;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.IPossibleInterferences;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.OwickiGriesAnnotation;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.OwickiGriesConstruction;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.PetriFloydHoare;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.PetriFloydHoareValidityCheck;
@@ -116,8 +120,8 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 		REMOVE_DEAD, REMOVE_REDUNDANT_FLOW
 	}
 
-	private static final boolean DUMP_OWICKI_GRIES_TEST = true;
-	private static final boolean GENERATE_OWICKI_GRIES_PROOF = false;
+	private static final boolean DUMP_OWICKI_GRIES_TEST = false;
+	private static final boolean GENERATE_OWICKI_GRIES_PROOF = true;
 
 	private final List<INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> mProofAutomata = new ArrayList<>();
 
@@ -612,56 +616,65 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 	}
 
 	@Override
-	protected void computeOwickiGriesAnnotation() {
+	protected
+			Triple<IPetriNet<L, IPredicate>, OwickiGriesAnnotation<Transition<L, IPredicate>, IPredicate>, IPossibleInterferences<Transition<L, IPredicate>, IPredicate>>
+			computeOwickiGriesAnnotation() {
 		if (mPref.applyOneShotLbe()) {
 			// TODO this should be moved somewhere else, it's not the responsibility of this CEGAR loop
 			throw new AssertionError("Owicki-Gries does currently not support Petri net LBE.");
 		}
 		if (!GENERATE_OWICKI_GRIES_PROOF) {
-			return;
+			return null;
 		}
 
 		final long startTime = System.nanoTime();
+
+		// compute the Floyd-Hoare annotation
 		final var coverageRelations = mRefinementEngines.stream()
 				.map(r -> r.getPredicateUnifier().getCoverageRelation()).collect(Collectors.toList());
 		final var floydHoare = new PetriFloydHoare<>(getServices(), mInitialNet, mCsToolkit, mAbstraction,
 				Function.<IPredicate> identity(), coverageRelations, mPref.owickiGriesCoveringSimplification())
 						.getResult();
+		assert checkFloydHoareValidity(floydHoare) : "Invalid Floyd-Hoare annotation";
 
+		// compute the Owicki-Gries annotation
+		final OwickiGriesConstruction<IPredicate, L> construction = new OwickiGriesConstruction<>(getServices(),
+				mCsToolkit, mInitialNet, floydHoare, mPref.owickiGriesHittingSets());
+		assert checkOwickiGriesValidity(construction) : "Invalid Owicki-Gries annotation";
+		mLogger.info("Computed Owicki-Gries annotation of size %d in %dns", construction.getResult().size(),
+				System.nanoTime() - startTime);
+
+		return new Triple<>(mInitialNet, construction.getResult(), construction.getPossibleInterferences());
+	}
+
+	private boolean checkFloydHoareValidity(final Map<Marking<IPredicate>, IPredicate> floydHoare) {
 		try {
 			mLogger.warn("Checking inductivity of Floyd-Hoare annotation for initial Petri net");
 			final var fhValid = new PetriFloydHoareValidityCheck<>(mServices, mCsToolkit.getManagedScript(),
 					mCsToolkit.getSymbolTable(), mCsToolkit.getModifiableGlobalsTable(), mInitialNet, floydHoare)
 							.isValid();
-			if (fhValid == Validity.INVALID) {
-				throw new AssertionError("Invalid Floyd-Hoare annotation of Petri net");
+			if (fhValid == Validity.UNKNOWN) {
+				mLogger.warn("Could not confirm validity of Floyd-Hoare annotation.");
 			}
+			return fhValid != Validity.INVALID;
 		} catch (final PetriNetNot1SafeException e) {
 			throw new AssertionError("Petri net must be one-safe", e);
 		}
+	}
 
-		final OwickiGriesConstruction<IPredicate, L> construction = new OwickiGriesConstruction<>(getServices(),
-				mCsToolkit, mInitialNet, floydHoare, mPref.owickiGriesHittingSets());
-
-		// TODO: simplify the annotation
-
-		final long constructionTime = System.nanoTime();
-		mLogger.info("Computed Owicki-Gries annotation of size " + construction.getResult().size() + " in "
-				+ (constructionTime - startTime) + "ns");
-
+	private boolean checkOwickiGriesValidity(final OwickiGriesConstruction<IPredicate, L> construction) {
+		final long startTime = System.nanoTime();
 		final PetriOwickiGriesValidityCheck<L, IPredicate> check = new PetriOwickiGriesValidityCheck<>(getServices(),
 				mInitialNet, mCsToolkit, construction.getResult(), construction.getPossibleInterferences());
 		final long endTime = System.nanoTime();
-		mLogger.info("Checked inductivity and non-interference of Owicki-Gries annotation in "
-				+ (endTime - constructionTime) + "ns");
+		mLogger.info("Checked inductivity and non-interference of Owicki-Gries annotation in %dns",
+				endTime - startTime);
 
 		final var result = check.isValid();
-		if (result == Validity.INVALID) {
-			throw new AssertionError("Invalid Owicki-Gries annotation");
-		}
 		if (result == Validity.UNKNOWN) {
 			mLogger.warn("Could not confirm validity of Owicki-Gries annotation.");
 		}
+		return result != Validity.INVALID;
 	}
 
 	@Override
