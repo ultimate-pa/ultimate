@@ -181,9 +181,9 @@ public class AnnotateAndAsserter<L extends IAction> {
 				final ArrayList<Term> vaPairsAsTerms = checkIfNondetsOfTraceAreInVA(); // TODO
 
 				if (!vaPairsAsTerms.isEmpty()) {
-					Term varAssignmentConjunction = SmtUtils.and(mMgdScriptTc.getScript(), vaPairsAsTerms);
+					final Term varAssignmentConjunction = SmtUtils.and(mMgdScriptTc.getScript(), vaPairsAsTerms);
 					if (mVAforReuse.mNegatedVA == true && !vaPairsAsTerms.isEmpty()) {
-						varAssignmentConjunction = SmtUtils.not(mMgdScriptTc.getScript(), varAssignmentConjunction);
+						// varAssignmentConjunction = SmtUtils.not(mMgdScriptTc.getScript(), varAssignmentConjunction);
 					}
 					mMgdScriptTc.getScript().push(1);
 					mAnnotateAndAssertCodeBlocks.annotateAndAssertTerm(varAssignmentConjunction, "Int");
@@ -269,7 +269,6 @@ public class AnnotateAndAsserter<L extends IAction> {
 		switch (nondetVar.getSort().getName()) {
 		case SmtSortUtils.FLOATINGPOINT_SORT: {
 
-			System.out.println(nondetVar.getSort().getIndices()[1]);
 			if (nondetVar.getSort().getIndices()[1].equals("24")) {
 				if (value != null) {
 					final ApplicationTerm valueAsAppterm = (ApplicationTerm) value;

@@ -306,6 +306,7 @@ class TestVector {
 	}
 
 	private void addToLinkedList(final Integer index, final Term valueTerm, final String type) {
+
 		if (values.size() <= index) {
 			for (int i = values.size(); i <= index; i = i + 1) {
 				values.add(null);
@@ -318,19 +319,22 @@ class TestVector {
 		String valueInRange = null;
 		switch (valueTerm.getSort().getName()) {
 		case SmtSortUtils.FLOATINGPOINT_SORT: {
-			if (type.equals("float")) {
+			if (type.equals("double")) { // if (type.equals("float")) {
 				if (((ApplicationTerm) valueTerm).getParameters().length == 3) {
 					assert valueTerm instanceof ApplicationTerm;
-					final ApplicationTerm cva = (ApplicationTerm) valueTerm;
-					String sign = cva.getParameters()[0].toStringDirect();
-					sign = sign.replaceAll("[^01]", "");
+					// final ApplicationTerm cva = (ApplicationTerm) valueTerm;
+					final String bitString = valueTerm.toStringDirect();
+					final String floatAsBitString = bitString.replaceAll("[^01]", "");
 
-					String exponent = cva.getParameters()[1].toStringDirect();
-					exponent = exponent.replaceAll("[^01]", "");
-
-					String significant = cva.getParameters()[2].toStringDirect();
-					significant = significant.replaceAll("[^01]", "");
-					final String floatAsBitString = sign + exponent + significant;
+					// String sign = cva.getParameters()[0].toStringDirect();
+					// sign = sign.replaceAll("[^01]", "");
+					//
+					// String exponent = cva.getParameters()[1].toStringDirect();
+					// exponent = exponent.replaceAll("[^01]", "");
+					//
+					// String significant = cva.getParameters()[2].toStringDirect();
+					// significant = significant.replaceAll("[^01]", "");
+					// final String floatAsBitString = sign + exponent + significant;
 					// final int intBits = Integer.parseInt(floatAsBitString, 2);
 					final int intBits = (int) Long.parseLong(floatAsBitString, 2);
 					final float asFloat = Float.intBitsToFloat(intBits);
@@ -350,7 +354,7 @@ class TestVector {
 					}
 					break;
 				}
-			} else if (type.equals("double")) {
+			} else { // if (type.equals("double")) {
 				assert valueTerm instanceof ApplicationTerm;
 				if (((ApplicationTerm) valueTerm).getParameters().length == 3) {
 					final ApplicationTerm cva = (ApplicationTerm) valueTerm;
@@ -381,9 +385,10 @@ class TestVector {
 					}
 					break;
 				}
-			} else {
-				throw new AssertionError("Unexpected Sort For Output Type");
 			}
+			// else {
+			// throw new AssertionError("Unexpected Sort For Output Type" + type);
+			// }
 
 		}
 		case SmtSortUtils.BITVECTOR_SORT: {
