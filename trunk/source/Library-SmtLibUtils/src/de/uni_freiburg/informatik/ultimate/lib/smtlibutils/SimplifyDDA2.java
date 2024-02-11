@@ -309,16 +309,12 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 			final Term modSimplificationResult = tryModSimplification(term);
 			if (modSimplificationResult != null) {
 				termBasedSimplification = modSimplificationResult;
-			} else {
-				termBasedSimplification = term;
 			}
 		}
 		if (ARRAY_SIMPLIFICATION) {
-			final Term arraySimplificationResult = tryArraySimplification(term);
+			final Term arraySimplificationResult = tryArraySimplification(termBasedSimplification);
 			if (arraySimplificationResult != null) {
 				termBasedSimplification = arraySimplificationResult;
-			} else {
-				termBasedSimplification = term;
 			}
 		}
 		if (termBasedSimplification != term) {
