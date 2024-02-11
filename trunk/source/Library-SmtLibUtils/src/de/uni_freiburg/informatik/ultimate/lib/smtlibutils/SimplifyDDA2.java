@@ -269,7 +269,31 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	 */
 	private DescendResult checkRedundancy(final Term term) {
 		final Term result;
+		// Some terms are non-contraining and non-relaxing (e.g., if the critical
+		// constraint is `false`) should we then replace by `true` or by `false`?
+		// We decided for `false` (resp. we first check whether the the term
+		// non-constraining) because we think that `false` is typically better for
+		// verification especially for the invariant-based simplification of our CFG.
 		{
+			// Check if formula is non-relaxing.
+			mNumberOfCheckSatCommands++;
+			final long timeBeforeRelaxingcheck = System.nanoTime();
+			final Term rhs;
+			if (OVERAPPROXIMATE_DIFFCULT_QUANTIFIERS_IN_NODES) {
+				rhs = replaceUniversalQuantifiersByTrue(mMgdScript, term);
+			} else {
+				rhs = term;
+			}
+			final LBool isNonRelaxing = Util.checkSat(mMgdScript.getScript(), rhs);
+			mCheckSatTime += (System.nanoTime() - timeBeforeRelaxingcheck);
+			if (isNonRelaxing == LBool.UNSAT) {
+				mNonRelaxingNodes++;
+				result = mMgdScript.getScript().term("false");
+				return new TermContextTransformationEngine.FinalResultForAscend(result);
+			}
+		}
+		{
+			// Check if formula is non-constraining.
 			final long timeBeforeConstrainigcheck = System.nanoTime();
 			mNumberOfCheckSatCommands++;
 			final Term rhs;
@@ -284,23 +308,6 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 			if (isNonConstraining == LBool.UNSAT) {
 				mNonConstrainingNodes++;
 				result = mMgdScript.getScript().term("true");
-				return new TermContextTransformationEngine.FinalResultForAscend(result);
-			}
-		}
-		{
-			mNumberOfCheckSatCommands++;
-			final long timeBeforeRelaxingcheck = System.nanoTime();
-			final Term rhs;
-			if (OVERAPPROXIMATE_DIFFCULT_QUANTIFIERS_IN_NODES) {
-				rhs = replaceUniversalQuantifiersByTrue(mMgdScript, term);
-			} else {
-				rhs = term;
-			}
-			final LBool isNonRelaxing = Util.checkSat(mMgdScript.getScript(), rhs);
-			mCheckSatTime += (System.nanoTime() - timeBeforeRelaxingcheck);
-			if (isNonRelaxing == LBool.UNSAT) {
-				mNonRelaxingNodes++;
-				result = mMgdScript.getScript().term("false");
 				return new TermContextTransformationEngine.FinalResultForAscend(result);
 			}
 		}
