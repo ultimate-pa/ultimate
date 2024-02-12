@@ -329,11 +329,7 @@ public class CACSL2BoogieBacktranslator
 		final List<AtomicTraceElement<CACSLLocation>> checkedTranslatedATEs = checkForSubtreeInclusion(translatedATEs);
 		assert checkCallStackTarget(mLogger,
 				checkedTranslatedATEs) : "callstack broken after subtree inclusion reduction";
-		if (mBacktranslationWarned) {
-			mServices.getResultService().reportResult(Activator.PLUGIN_ID,
-					new GenericResult(Activator.PLUGIN_ID, UNFINISHED_BACKTRANSLATION,
-							"The program execution was not completely translated back.", Severity.WARNING));
-		}
+		reportUnfinishedBacktranslation("The program execution was not completely translated back.");
 		return new CACSLProgramExecution(initialState, checkedTranslatedATEs, translatedProgramStates,
 				oldPE.isConcurrent());
 	}
