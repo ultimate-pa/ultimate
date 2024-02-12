@@ -128,6 +128,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class CACSL2BoogieBacktranslator
 		extends DefaultTranslator<BoogieASTNode, CACSLLocation, Expression, IASTExpression, String, String, ILocation> {
 
+	private static final boolean DEBUG_ERROR_FOR_UNFINISHED_BACKTRANSLATION = false;
+
 	/**
 	 * {@link VariableType} is used to distinguish various special variables after they are converted to strings.
 	 *
@@ -1562,6 +1564,9 @@ public class CACSL2BoogieBacktranslator
 	}
 
 	private void reportUnfinishedBacktranslation(final String message) {
+		if (DEBUG_ERROR_FOR_UNFINISHED_BACKTRANSLATION) {
+			throw new AssertionError(UNFINISHED_BACKTRANSLATION + ": " + message );
+		}
 		mBacktranslationWarned = true;
 		if (!mGenerateBacktranslationWarnings) {
 			return;
