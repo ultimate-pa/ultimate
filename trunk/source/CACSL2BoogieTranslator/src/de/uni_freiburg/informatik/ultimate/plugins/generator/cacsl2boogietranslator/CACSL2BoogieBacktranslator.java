@@ -128,6 +128,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class CACSL2BoogieBacktranslator
 		extends DefaultTranslator<BoogieASTNode, CACSLLocation, Expression, IASTExpression, String, String, ILocation> {
 
+	/**
+	 * Throw error in cases where we know that the backtranslation is not exact.
+	 */
 	private static final boolean DEBUG_ERROR_FOR_UNFINISHED_BACKTRANSLATION = false;
 
 	/**
