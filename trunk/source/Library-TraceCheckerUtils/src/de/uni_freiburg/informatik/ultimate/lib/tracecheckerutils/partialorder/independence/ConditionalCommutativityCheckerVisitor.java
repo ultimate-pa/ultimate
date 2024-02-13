@@ -1,0 +1,238 @@
+/*
+ * Copyright (C) 2023 Marcel Ebbinghaus
+ *
+ * This file is part of the ULTIMATE TraceCheckerUtils Library.
+ *
+ * The ULTIMATE TraceCheckerUtils Library is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE TraceCheckerUtils Library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE TraceCheckerUtils Library. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE TraceCheckerUtils Library, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE TraceCheckerUtils Library grant you additional permission
+ * to convey the resulting work.
+ */
+package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence;
+
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.IDfsVisitor;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.WrapperVisitor;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.AnnotatedMLPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.MLPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
+
+/**
+ * Visitor for DFS using the conditional commutativity checker.
+ *
+ * @author Marcel Ebbinghaus
+ *
+ * @param <L>
+ *            The type of letters.
+ * @param <V>
+ * 			  Type of the underlying Visitor
+ */
+public class ConditionalCommutativityCheckerVisitor<L extends IIcfgTransition<?>,
+V extends IDfsVisitor<L, IPredicate>> extends WrapperVisitor<L, IPredicate, V> {
+
+	private boolean mAbort = false;
+	private final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mAbstraction;
+	private ConditionalCommutativityChecker<L> mChecker;
+	private final Deque<IPredicate> mStateStack = new ArrayDeque<>();
+	private final Deque<L> mLetterStack = new ArrayDeque<>();
+	private L mPendingLetter;
+	private IPredicate mPendingState;
+	private NestedRun<L, IPredicate> mRun;
+	private TracePredicates mTracePredicates;
+	private IUltimateServiceProvider mServices;
+	private IEmptyStackStateFactory<IPredicate> mEmptyStackStateFactory;
+
+	
+	/**
+	 * Constructs a new instance of ConditionalCommutativityChecker.
+	 *
+	 * @author Marcel Ebbinghaus
+	 *
+	 * @param underlying
+	 *            Underlying Visitor
+	 * @param abstraction
+	 *            Abstraction 
+	 * @param services
+	 *            Ultimate services           
+	 * @param emptyStackStateFactory
+	 *            Factory
+	 * @param checker
+	 *            Instance of ConditionalCommutativityChecker
+	 */
+	public ConditionalCommutativityCheckerVisitor(V underlying, INwaOutgoingLetterAndTransitionProvider<L, IPredicate>
+	abstraction, final IUltimateServiceProvider services,  final IEmptyStackStateFactory<IPredicate>
+	emptyStackStateFactory, ConditionalCommutativityChecker<L> checker) {
+		super(underlying);
+		mAbstraction = abstraction;
+		mChecker = checker;
+		mServices = services;
+		mEmptyStackStateFactory = emptyStackStateFactory;
+	}
+	
+	@Override
+	public boolean addStartState(final IPredicate state) {
+		assert mStateStack.isEmpty() : "start state must be first";
+		mStateStack.addLast(state);
+		mRun = new NestedRun<>(new NestedWord<>(), List.of(state));
+		return mUnderlying.addStartState(state);
+	}
+
+	
+	@Override
+	public boolean discoverTransition(final IPredicate source, final L letter, final IPredicate target) {
+		assert mStateStack.getLast() == source : "Unexpected transition from state " + source;
+		mPendingLetter = letter;
+		mPendingState = target;
+		return mUnderlying.discoverTransition(source, letter, target);
+	}
+	
+	@Override
+	public boolean discoverState(final IPredicate state) {
+		
+		if (mPendingLetter == null) {
+			// Must be initial state
+			assert mStateStack.size() == 1 && mStateStack.getLast() == state : "Unexpected discovery of state " + state;
+		} else {
+			// Pending transition must lead to given state
+			assert mPendingState == state : "Unexpected discovery of state " + state;
+			mLetterStack.addLast(mPendingLetter);
+
+			mRun = mRun.concatenate(new NestedRun<>(new NestedWord<>(mPendingLetter,-2),
+					List.of(mStateStack.getLast(),mPendingState)));
+			mStateStack.addLast(mPendingState);
+			mPendingLetter = null;
+			mPendingState = null;
+		}
+		
+		IPredicate pred = ((SleepPredicate<L>) state).getUnderlying();
+		
+		final Iterator<OutgoingInternalTransition<L, IPredicate>> iterator =
+				mAbstraction.internalSuccessors(pred).iterator();
+		final List<OutgoingInternalTransition<L, IPredicate>> transitions = new ArrayList<>();
+		while (iterator.hasNext()) {
+			transitions.add(iterator.next());
+		}
+		for (int j = 0; j < transitions.size(); j++) {
+			final OutgoingInternalTransition<L, IPredicate> transition1 = transitions.get(j);
+			for (int k = j + 1; k < transitions.size(); k++) {
+				final OutgoingInternalTransition<L, IPredicate> transition2 = transitions.get(k);
+				L letter1 = transition1.getLetter();
+				L letter2 = transition2.getLetter();
+				TracePredicates tracePredicates;
+				if (pred instanceof MLPredicate) {
+					tracePredicates = mChecker.checkConditionalCommutativity(mRun,
+							List.of(), state, letter1, letter2);
+				} else {
+					IPredicate annotation = ((AnnotatedMLPredicate<IPredicate>) pred).getAnnotation();
+					tracePredicates = mChecker.checkConditionalCommutativity(mRun,
+							List.of(annotation), state, letter1, letter2);
+				}
+				if (tracePredicates != null) {
+					mAbort = true;
+					mTracePredicates = tracePredicates;		
+					int debug = 0;
+				}
+
+			}
+		}
+		return mUnderlying.discoverState(state);
+	}
+	
+	@Override
+	public void backtrackState(final IPredicate state, final boolean isComplete) {
+
+		mPendingLetter = null;
+		mPendingState = null;
+
+		mStateStack.removeLast();
+		mLetterStack.pollLast();
+		
+		if (mRun.getStateSequence().size() > 1) {
+			mRun = mRun.getSubRun(0, mRun.getStateSequence().size() - 2);
+		} else {
+			mRun = null;
+		}
+		
+		mUnderlying.backtrackState(state, isComplete);
+	}
+	
+	@Override
+	public boolean isFinished() {
+		final boolean result = mUnderlying.isFinished();
+		return result || mAbort ;
+	}
+	
+	public boolean aborted() {
+		return mAbort;
+	}
+	
+	
+	/**
+	 * Constructs and returns an interpolant automaton if conditional commutativity
+	 * has been detected.
+	 *
+	 * @author Marcel Ebbinghaus
+	 *
+	 * @return
+	 *            interpolant automaton
+	 */	
+	public NestedWordAutomaton<L, IPredicate> getInterpolantAutomaton() {
+		if (mTracePredicates == null) {
+			return null;
+		}
+		List<IPredicate> conPredicates = new ArrayList<>();
+		conPredicates.add(mTracePredicates.getPrecondition());
+		conPredicates.addAll(mTracePredicates.getPredicates());
+		conPredicates.add(mTracePredicates.getPostcondition());
+		final Set<L> alphabet = new HashSet<>();
+		alphabet.addAll(mAbstraction.getAlphabet());
+		final VpAlphabet<L> vpAlphabet = new VpAlphabet<>(alphabet);
+		final NestedWordAutomaton<L, IPredicate> automaton =
+				new NestedWordAutomaton<>(new AutomataLibraryServices(mServices), vpAlphabet, mEmptyStackStateFactory);
+		automaton.addState(true, false, conPredicates.get(0));
+		for (Integer i = 1; i < conPredicates.size(); i++) {
+			final IPredicate succPred = conPredicates.get(i);
+			if (!automaton.contains(succPred)) {
+				automaton.addState(false, SmtUtils.isFalseLiteral(succPred.getFormula()), succPred);
+			}
+			automaton.addInternalTransition(conPredicates.get(i - 1), mRun.getWord().getSymbol(i - 1), succPred);
+		}
+		return automaton;
+	}
+
+}

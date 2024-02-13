@@ -46,4 +46,8 @@ public abstract class AnnotatedMLPredicate<A> extends AnnotatedPredicate<IMLPred
 	public IcfgLocation[] getProgramPoints() {
 		return mUnderlying.getProgramPoints();
 	}
+	
+	public A getAnnotation() {
+		return mAnnotation;
+	}
 }
