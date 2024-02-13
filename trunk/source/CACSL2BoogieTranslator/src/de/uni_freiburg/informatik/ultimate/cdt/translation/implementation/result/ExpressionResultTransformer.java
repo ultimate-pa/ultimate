@@ -38,12 +38,15 @@ import java.util.Set;
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
+import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
+import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
@@ -72,6 +75,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO.AUXVAR;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -1032,6 +1036,97 @@ public class ExpressionResultTransformer {
 		}
 		assert nullPointerConstant.getLrValue().getCType().getUnderlyingType() instanceof CPointer;
 		return nullPointerConstant;
+	}
+
+	/**
+	 * Dispatches a read {@code *pointer}. Uses an optimization that if pointer is of the form {@code &x}, we try to
+	 * avoid putting x on the heap and dispatch {@code x} instead.
+	 *
+	 * @param main
+	 *            Dispatcher
+	 * @param loc
+	 *            Location
+	 * @param pointer
+	 *            Pointer AST-expression
+	 * @return An ExpressionResult for the dispatched pointer read
+	 */
+	public ExpressionResult dispatchPointerRead(final IDispatcher main, final ILocation loc, final IASTNode pointer) {
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		if (isAdressofOperator(pointer)) {
+			final ExpressionResult disp =
+					(ExpressionResult) main.dispatch(((IASTUnaryExpression) pointer).getOperand());
+			if (disp.getLrValue() instanceof LocalLValue) {
+				builder.addAllExceptLrValue(disp);
+				// Introduce an auxvar for the result for consistency, mMemoryHandler.getReadCall also creates an auxvar
+				final AuxVarInfo auxVar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, disp.getCType(), AUXVAR.RETURNED);
+				builder.addAuxVar(auxVar).addDeclaration(auxVar.getVarDec())
+						.setLrValue(new RValue(auxVar.getExp(), disp.getCType()));
+				builder.addStatement(StatementFactory.constructSingleAssignmentStatement(loc, auxVar.getLhs(),
+						disp.getLrValue().getValue()));
+				if (mDataRaceChecker != null) {
+					mDataRaceChecker.checkOnRead(builder, loc, disp.getLrValue());
+				}
+				return builder.build();
+			}
+		}
+		final ExpressionResult disp = transformDecaySwitch((ExpressionResult) main.dispatch(pointer), loc, pointer);
+		builder.addAllExceptLrValue(disp);
+		final ExpressionResult read = mMemoryHandler.getReadCall(disp.getLrValue().getValue(),
+				((CPointer) disp.getCType()).getPointsToType());
+		builder.addAllIncludingLrValue(read);
+		if (mDataRaceChecker != null) {
+			final var heapValue = LRValueFactory.constructHeapLValue(mTypeHandler, disp.getLrValue().getValue(),
+					disp.getCType(), null);
+			mDataRaceChecker.checkOnRead(builder, loc, heapValue);
+		}
+		return builder.build();
+	}
+
+	/**
+	 * Dispatches a write {@code *pointer = value}. Uses an optimization that if pointer is of the form {@code &x}, we
+	 * try to avoid putting x on the heap and dispatch {@code x} instead and assign the value to it.
+	 *
+	 * @param main
+	 *            Dispatcher
+	 * @param loc
+	 *            Location
+	 * @param pointer
+	 *            Pointer AST-expression
+	 * @param value
+	 *            Value of the pointer write
+	 * @return An ExpressionResult for the dispatched pointer write
+	 */
+	public ExpressionResult dispatchPointerWrite(final IDispatcher main, final ILocation loc, final IASTNode pointer,
+			final Expression value) {
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		if (isAdressofOperator(pointer)) {
+			final ExpressionResult disp =
+					(ExpressionResult) main.dispatch(((IASTUnaryExpression) pointer).getOperand());
+			if (disp.getLrValue() instanceof LocalLValue) {
+				builder.addAllExceptLrValue(disp);
+				final LeftHandSide lhs = ((LocalLValue) disp.getLrValue()).getLhs();
+				builder.addStatement(StatementFactory.constructSingleAssignmentStatement(loc, lhs, value));
+				if (mDataRaceChecker != null) {
+					mDataRaceChecker.checkOnWrite(builder, loc, disp.getLrValue());
+				}
+				return builder.build();
+			}
+		}
+		final ExpressionResult disp = decayArrayToPointer((ExpressionResult) main.dispatch(pointer), loc, pointer);
+		builder.addAllExceptLrValue(disp);
+		final var heapValue =
+				LRValueFactory.constructHeapLValue(mTypeHandler, disp.getLrValue().getValue(), disp.getCType(), null);
+		builder.addStatements(mMemoryHandler.getWriteCall(loc, heapValue, value,
+				((CPointer) disp.getCType()).getPointsToType(), false));
+		if (mDataRaceChecker != null) {
+			mDataRaceChecker.checkOnWrite(builder, loc, heapValue);
+		}
+		return builder.build();
+	}
+
+	private static boolean isAdressofOperator(final IASTNode node) {
+		return node instanceof IASTUnaryExpression
+				&& ((IASTUnaryExpression) node).getOperator() == IASTUnaryExpression.op_amper;
 	}
 
 	@FunctionalInterface
