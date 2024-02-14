@@ -256,7 +256,8 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 						final var net = triple.getFirst();
 						final var og = triple.getSecond();
 						final var interf = triple.getThird();
-						final Function<IPredicate, IcfgLocation> getLoc = PredicateUtils::getLocation;
+						final Function<IPredicate, IcfgLocation> getLoc =
+								p -> getOriginalLocation(PredicateUtils.getLocation(p));
 						final UnaryOperator<L> unpetrifyAction = mTransitionMap::get;
 
 						final var up = new OwickiGriesUnpetrifier(mServices, icfg, net, interf, og, getLoc,
