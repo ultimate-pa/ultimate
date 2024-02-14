@@ -56,6 +56,8 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.Pa
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.AbstractionType;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.IndependenceType;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.ProofManager;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.ProofManager.Heuristic;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
@@ -175,9 +177,6 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_INDEPENDENCE_SOLVER_TIMEOUT_POR =
 			"SMT solver timeout for commutativity in POR (in ms)";
 
-	public static final String LABEL_STRATIFIABLE_ABSTRACTION = "Abstraction for dynamic stratified reduction";
-	private static final AbstractionType DEF_STRATIFIABLE_ABSTRACTION = AbstractionType.NONE;
-
 	public static final String LABEL_POR_DFS_ORDER = "DFS Order used in POR";
 	private static final OrderType DEF_POR_DFS_ORDER = OrderType.BY_SERIAL_NUMBER;
 
@@ -195,6 +194,15 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 
 	public static final String LABEL_POR_COINFLIP_INCREMENT = "Coinflip probability increment";
 	private static final int DEF_POR_COINFLIP_INCREMENT = 0;
+
+	public static final String LABEL_STRATIFIABLE_ABSTRACTION = "Abstraction for dynamic stratified reduction";
+	private static final AbstractionType DEF_STRATIFIABLE_ABSTRACTION = AbstractionType.NONE;
+
+	public static final String LABEL_PROVEN_STATES = "Proven states must have error location";
+	private static final boolean DEF_PROVEN_STATES = false;
+
+	public static final String LABEL_RESPONSIBLE_PROOF_HEURISTIC = "Heuristic for choosing responsible proofs";
+	private static final ProofManager.Heuristic DEF_RESPONSIBLE_PROOF_HEURISTIC = Heuristic.BASIC;
 
 	public enum CoinflipMode {
 		OFF, FALLBACK, PURE, COARSE
@@ -742,9 +750,6 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 
 				getIndependenceSettings(2),
 
-				new UltimatePreferenceItem<>(LABEL_STRATIFIABLE_ABSTRACTION, DEF_STRATIFIABLE_ABSTRACTION,
-						PreferenceType.Combo, AbstractionType.values()),
-
 				new UltimatePreferenceItemGroup("Stratified Commutativity: Budget Function",
 						new UltimatePreferenceItem<>(LABEL_POR_COINFLIP_MODE, DEF_POR_COINFLIP_MODE,
 								PreferenceType.Combo, CoinflipMode.values()),
@@ -753,7 +758,14 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						new UltimatePreferenceItem<>(LABEL_POR_COINFLIP_INCREMENT, DEF_POR_COINFLIP_INCREMENT,
 								PreferenceType.Integer),
 						new UltimatePreferenceItem<>(LABEL_POR_COINFLIP_SEED, DEF_POR_COINFLIP_SEED,
-								PreferenceType.Integer)));
+								PreferenceType.Integer)),
+
+				new UltimatePreferenceItemGroup("Dynamic Stratified Reduction",
+						new UltimatePreferenceItem<>(LABEL_STRATIFIABLE_ABSTRACTION, DEF_STRATIFIABLE_ABSTRACTION,
+								PreferenceType.Combo, AbstractionType.values()),
+						new UltimatePreferenceItem<>(LABEL_PROVEN_STATES, DEF_PROVEN_STATES, PreferenceType.Boolean),
+						new UltimatePreferenceItem<>(LABEL_RESPONSIBLE_PROOF_HEURISTIC, DEF_RESPONSIBLE_PROOF_HEURISTIC,
+								PreferenceType.Combo, ProofManager.Heuristic.values())));
 	}
 
 	public UltimatePreferenceItemContainer getPetriLbeSettings() {

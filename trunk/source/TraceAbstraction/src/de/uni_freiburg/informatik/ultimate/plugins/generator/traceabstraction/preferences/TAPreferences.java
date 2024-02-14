@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.Pa
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.AbstractionType;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.IndependenceType;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.ProofManager;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
@@ -425,6 +426,15 @@ public final class TAPreferences {
 
 	public int coinflipSeed() {
 		return mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_POR_COINFLIP_SEED);
+	}
+
+	public boolean provenStatesHaveErrorLocs() {
+		return mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_PROVEN_STATES);
+	}
+
+	public ProofManager.Heuristic responsibleProofHeuristic() {
+		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_RESPONSIBLE_PROOF_HEURISTIC,
+				ProofManager.Heuristic.class);
 	}
 
 	public int getNumberOfIndependenceRelations() {

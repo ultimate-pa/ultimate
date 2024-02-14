@@ -62,12 +62,16 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
  */
 
 public class ProofManager<L extends IAction, H, P> implements IProofManager<H, IPredicate> {
+	public enum Heuristic {
+		BASIC, NUMBER_OF_VARIABLES, VARIABLE_OVERLAP
+	}
+
 	private final ILogger mLogger;
 	private final IRefinableAbstraction<P, H, L> mAbstraction;
 	private final Function<IPredicate, List<IPredicate>> mGetConjuncts;
 	private final Predicate<IPredicate> mIsErrorState;
 	private final boolean mUseOrigDef;
-	private final String mHeuristic;
+	private final Heuristic mHeuristic;
 	private final Statistics mStatistics = new Statistics();
 	private final List<H> mProofLevels = new ArrayList<>();
 
@@ -84,7 +88,7 @@ public class ProofManager<L extends IAction, H, P> implements IProofManager<H, I
 	 *            if true we use the definition of proven state = state that is error loc and has at least one false
 	 *            literal
 	 * @param heuristics
-	 *            options: "basic", "num_var", "var_overlap". heuristic for choosing the responsible proof
+	 *            heuristic for choosing the responsible proof
 	 * @param services
 	 * @param abstraction
 	 * @param getConjuncts
@@ -93,7 +97,7 @@ public class ProofManager<L extends IAction, H, P> implements IProofManager<H, I
 	 */
 	public ProofManager(final IUltimateServiceProvider services, final IRefinableAbstraction<P, H, L> abstraction,
 			final Function<IPredicate, List<IPredicate>> getConjuncts, final Predicate<IPredicate> isErrorState,
-			final boolean useOrigDef, final String heuristic) {
+			final boolean useOrigDef, final Heuristic heuristic) {
 		mLogger = services.getLoggingService().getLogger(getClass());
 		mAbstraction = Objects.requireNonNull(abstraction);
 		mGetConjuncts = Objects.requireNonNull(getConjuncts);
@@ -157,18 +161,17 @@ public class ProofManager<L extends IAction, H, P> implements IProofManager<H, I
 		}
 		// Choose resp proof according to selected heuristic
 		switch (mHeuristic) {
-		case "basic":
+		case BASIC:
 			responsibleProof = chooseBasic(candidateProofs);
 			break;
-		case "num_var":
+		case NUMBER_OF_VARIABLES:
 			responsibleProof = chooseNumVars(candidateProofs);
 			break;
-		case "var_overlap":
+		case VARIABLE_OVERLAP:
 			responsibleProof = chooseVarOverlap(candidateProofs, stateLv);
 			break;
 		default:
-			responsibleProof = chooseBasic(candidateProofs);
-			break;
+			throw new UnsupportedOperationException("unknwon heuristic: " + mHeuristic);
 		}
 
 		// update mLastResponsibleProof and mProofCounter

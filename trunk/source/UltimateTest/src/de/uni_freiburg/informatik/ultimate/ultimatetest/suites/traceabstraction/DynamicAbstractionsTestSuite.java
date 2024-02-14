@@ -76,7 +76,8 @@ public class DynamicAbstractionsTestSuite extends AbstractTraceAbstractionTestSu
 	};
 
 	private static final Pair[] SETTINGS = {
-			new Pair<>("gemcutter/DynamicStratifiedAbstractions.epf", null)
+			new Pair<>("gemcutter/DynamicStratifiedAbstractions.epf", null),
+			new Pair<>("gemcutter/DynamicStratifiedAbstractions-NumberOfVariables.epf", null)
 	};
 
 
