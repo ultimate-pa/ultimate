@@ -166,6 +166,7 @@ V extends IDfsVisitor<L, IPredicate>> extends WrapperVisitor<L, IPredicate, V> {
 					mAbort = true;
 					mTracePredicates = tracePredicates;		
 					int debug = 0;
+					return mUnderlying.discoverState(state);
 				}
 
 			}

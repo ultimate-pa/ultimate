@@ -332,9 +332,11 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 					} else {
 						mItpAutomata = new UnionNwa<>(mItpAutomata, totalInterpol, mFactory, false);
 					}
-
+					// TODO: Hier wird glaube ich im Falle einer infeasible subtrace noch keine infeasibility integriert
+					// InformationStorage nutzt ja die Akzeptanz des fstOperands
 					mAbstraction = new InformationStorage<>(mAbstraction, totalInterpol, mFactory,
 							PartialOrderCegarLoop::isFalseLiteral);
+					// TODO: DeadEnds?
 					return isAbstractionEmpty();
 				} catch (AutomataLibraryException e) {
 					// TODO Auto-generated catch block
