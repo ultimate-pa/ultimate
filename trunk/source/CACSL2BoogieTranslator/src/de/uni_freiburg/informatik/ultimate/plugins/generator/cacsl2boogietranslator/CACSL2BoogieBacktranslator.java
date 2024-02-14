@@ -981,6 +981,16 @@ public class CACSL2BoogieBacktranslator
 			return ((TemporaryPointerExpression) expression).translate();
 		}
 
+		// Dominik 2024-02-14: This is a hack to allow ghost variable backtranslation.
+		// Ghost variables do not have an associated C location.
+		if (expression instanceof IdentifierExpression
+				&& mAuxVars.containsKey(((IdentifierExpression) expression).getIdentifier())) {
+			final String boogieId = ((IdentifierExpression) expression).getIdentifier();
+			final var cVar = mAuxVars.get(boogieId);
+			final var tv = new TranslatedVariable(cVar.toString(), cVar.getCType(), VariableType.AUXVAR);
+			return new FakeExpression(null, tv.getName(), tv.getCType());
+		}
+
 		final ILocation loc = expression.getLocation();
 		if (loc instanceof ACSLLocation) {
 			reportUnfinishedBacktranslation("Expression " + BoogiePrettyPrinter.print(expression)
