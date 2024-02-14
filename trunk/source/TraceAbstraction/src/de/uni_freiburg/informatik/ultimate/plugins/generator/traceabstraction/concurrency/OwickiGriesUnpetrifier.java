@@ -206,6 +206,7 @@ public class OwickiGriesUnpetrifier<L extends IIcfgTransition<LOC>, P, LOC exten
 			final var originalEdge = mUnpetrifyAction.apply(edge);
 			if (result.containsKey(originalEdge)) {
 				// TODO support this, by case split over local thread ID
+				// TODO this also fails for joins if there are multiple JoinThreadOther edges
 				throw new UnsupportedOperationException("Multiple instances of thread not yet supported: " + edge);
 			}
 
