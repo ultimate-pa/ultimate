@@ -27,6 +27,8 @@
 
 package de.uni_freiburg.informatik.ultimate.core.lib.models.annotation;
 
+import java.util.Map;
+
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
@@ -42,27 +44,19 @@ public class WitnessGhostDeclaration extends ModernAnnotations {
 	private static final String KEY = WitnessGhostDeclaration.class.getName();
 
 	@Visualizable
-	private final String mGhost;
+	private final Map<String, String> mGhostsAndInitialValues;
 
-	@Visualizable
-	private final String mInitialValue;
-
-	public WitnessGhostDeclaration(final String ghost, final String initialValue) {
-		mGhost = ghost;
-		mInitialValue = initialValue;
+	public WitnessGhostDeclaration(final Map<String, String> ghostsAndInitialValues) {
+		mGhostsAndInitialValues = ghostsAndInitialValues;
 	}
 
-	public String getGhostVariable() {
-		return mGhost;
-	}
-
-	public String getInitialValue() {
-		return mInitialValue;
+	public Map<String, String> getGhostAndInitialValues() {
+		return mGhostsAndInitialValues;
 	}
 
 	public void annotate(final IElement node) {
 		// Only add an annotation, if the variable was successfully backtranslated
-		if (mGhost != null && mInitialValue != null) {
+		if (mGhostsAndInitialValues != null && !mGhostsAndInitialValues.isEmpty()) {
 			node.getPayload().getAnnotations().put(KEY, this);
 		}
 	}
