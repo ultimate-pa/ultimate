@@ -53,138 +53,139 @@ public class Svcomp24FoldersAutomizerReach extends AbstractTraceAbstractionTestS
 	private static final int FILE_OFFSET = 0;
 
 	private static final String PROPERTY = TestUtil.SVCOMP_PROP_UNREACHCALL;
+	private static final Boolean EXPECTED_RESULT = null;
 
 	// @formatter:off
 	private static final SvcompFolderSubset[] BENCHMARKS = {
 		/***** Category 1. ReachSafety *****/
 		/*** Subcategory    ReachSafety-Arrays ***/
-		new SvcompFolderSubset("examples/svcomp/array-examples/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/array-industry-pattern/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/reducercommutativity/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/array-tiling/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/array-programs/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/array-crafted/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/array-multidimensional/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/array-patterns/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/array-cav19/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/array-lopstr16/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/array-fpi/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/array-examples/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/array-industry-pattern/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/reducercommutativity/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/array-tiling/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/array-programs/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/array-crafted/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/array-multidimensional/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/array-patterns/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/array-cav19/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/array-lopstr16/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/array-fpi/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 
 		/*** Subcategory   ReachSafety-BitVectors ***/
-		new SvcompFolderSubset("examples/svcomp/bitvector/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/bitvector-regression/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/bitvector-loops/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/bitvector/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/bitvector-regression/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/bitvector-loops/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 
 		/*** Subcategory   ReachSafety-Combinations ***/
-		new SvcompFolderSubset("examples/svcomp/combinations/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/combinations/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 
 		/*** Subcategory   ReachSafety-ControlFlow ***/
-		new SvcompFolderSubset("examples/svcomp/ntdrivers-simplified/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/openssl-simplified/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/locks/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/ntdrivers/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/openssl/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/memory-model/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/unsignedintegeroverflow-sas23/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/longjmp/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/ntdrivers-simplified/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/openssl-simplified/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/locks/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/ntdrivers/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/openssl/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/memory-model/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/unsignedintegeroverflow-sas23/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/longjmp/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 
 		/*** Subcategory   ReachSafety-ReachSafety-ECA ***/
-		new SvcompFolderSubset("examples/svcomp/eca-rers2012/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/eca-rers2018/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/psyco/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/eca-programs/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/eca-rers2012/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/eca-rers2018/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/psyco/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/eca-programs/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 
 		/*** Subcategory    ReachSafety-Floats ***/
-		new SvcompFolderSubset("examples/svcomp/floats-cdfpl/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/floats-cbmc-regression/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/float-benchs/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/floats-esbmc-regression/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/float-newlib/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/loop-floats-scientific-comp/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/neural-networks/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/floats-cdfpl/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/floats-cbmc-regression/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/float-benchs/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/floats-esbmc-regression/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/float-newlib/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/loop-floats-scientific-comp/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/neural-networks/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 
 		/*** Subcategory   ??? ***/
-		new SvcompFolderSubset("examples/svcomp/fuzzle-programs/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/fuzzle-programs/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 
 		/*** Subcategory   ??? ***/
-		new SvcompFolderSubset("examples/svcomp/hardness-nfm22/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/hardness-nfm22/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 
 		/*** Subcategory   ReachSafety-Hardware.set ***/
-		new SvcompFolderSubset("examples/svcomp/hardware-verification-array/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/hardware-verification-array/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 		new SvcompFolderSubset("examples/svcomp/hardware-verification-bv/", PROPERTY, true, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 
 		/*** Subcategory   ReachSafety-Heap ***/
-		new SvcompFolderSubset("examples/svcomp/heap-manipulation/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/list-properties/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/ldv-regression/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/ddv-machzwd/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/forester-heap/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/list-ext-properties/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/list-ext2-properties/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/ldv-sets/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/list-simple/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/heap-data/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/list-ext3-properties/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/heap-manipulation/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/list-properties/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/ldv-regression/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/ddv-machzwd/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/forester-heap/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/list-ext-properties/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/list-ext2-properties/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/ldv-sets/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/list-simple/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/heap-data/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/list-ext3-properties/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 
 		/*** Subcategory   ReachSafety-Loops ***/
-		new SvcompFolderSubset("examples/svcomp/loops/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/loop-acceleration/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/loop-invgen/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/loop-lit/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/loop-new/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/loop-industry-pattern/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/loops-crafted-1/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/loop-invariants/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/loop-simple/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/loop-zilu/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/verifythis/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/nla-digbench/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/nla-digbench-scaling/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/loops/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/loop-acceleration/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/loop-invgen/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/loop-lit/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/loop-new/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/loop-industry-pattern/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/loops-crafted-1/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/loop-invariants/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/loop-simple/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/loop-zilu/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/verifythis/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/nla-digbench/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/nla-digbench-scaling/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 
 		/*** Subcategory   ReachSafety-ProductLines ***/
-		new SvcompFolderSubset("examples/svcomp/product-lines/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/product-lines/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 
 		/*** Subcategory   ReachSafety-Recursive ***/
-		new SvcompFolderSubset("examples/svcomp/recursive/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/recursive-simple/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/recursive-with-pointer/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/recursified_loop-crafted/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/recursified_loop-invariants/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/recursified_loop-simple/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/recursified_nla-digbench/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/recursive/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/recursive-simple/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/recursive-with-pointer/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/recursified_loop-crafted/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/recursified_loop-invariants/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/recursified_loop-simple/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/recursified_nla-digbench/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 
 		/*** Subcategory   ReachSafety-Sequentialized ***/
-		new SvcompFolderSubset("examples/svcomp/systemc/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/seq-mthreaded/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/seq-mthreaded-reduced/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/seq-pthread/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/systemc/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/seq-mthreaded/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/seq-mthreaded-reduced/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/seq-pthread/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 
 		/*** Subcategory   ReachSafety-XCSP ***/
-		new SvcompFolderSubset("examples/svcomp/xcsp/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/xcsp/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 
 		/***** Category 6. SoftwareSystems *****/
-		new SvcompFolderSubset("examples/svcomp/aws-c-common/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/aws-c-common/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 
-		new SvcompFolderSubset("examples/svcomp/busybox-1.22.0/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/busybox-1.22.0/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 
-		new SvcompFolderSubset("examples/svcomp/goblint-coreutils/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/goblint-coreutils/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 
 		/*** Subcategory  Systems_DeviceDriversLinux64_ReachSafety ***/
-		new SvcompFolderSubset("examples/svcomp/ldv-linux-3.0/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/ldv-linux-3.4-simple/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/ldv-linux-3.7.3/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/ldv-commit-tester/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/ldv-consumption/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/ldv-linux-3.12-rc1/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/ldv-linux-3.16-rc1/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/ldv-validator-v0.6/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/ldv-validator-v0.8/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/ldv-linux-4.2-rc1/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/ldv-linux-3.14/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/ldv-challenges/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/ldv-linux-4.0-rc1-mav/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/ldv-linux-3.0/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/ldv-linux-3.4-simple/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/ldv-linux-3.7.3/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/ldv-commit-tester/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/ldv-consumption/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/ldv-linux-3.12-rc1/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/ldv-linux-3.16-rc1/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/ldv-validator-v0.6/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/ldv-validator-v0.8/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/ldv-linux-4.2-rc1/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/ldv-linux-3.14/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/ldv-challenges/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/ldv-linux-4.0-rc1-mav/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 
-		new SvcompFolderSubset("examples/svcomp/uthash-2.0.2/", PROPERTY, null, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/uthash-2.0.2/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 
 	};
 

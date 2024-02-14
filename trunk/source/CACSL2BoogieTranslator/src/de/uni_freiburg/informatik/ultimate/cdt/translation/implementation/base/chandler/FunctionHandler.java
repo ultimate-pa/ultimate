@@ -91,7 +91,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.C
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.MainDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.MemoryArea;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager.BoogieProcedureInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
@@ -285,7 +284,7 @@ public class FunctionHandler {
 		final boolean returnTypeIsVoid =
 				returnCType instanceof CPrimitive && ((CPrimitive) returnCType).getType() == CPrimitives.VOID;
 
-		VarList[] in = processInParams(loc, funType, definedProcInfo, node, true);
+		VarList[] in = processInParams(loc, funType, definedProcInfo, node);
 		if (isInParamVoid(in)) {
 			// in-parameter is "void", as in "int foo(void) .." we normalize this to an empty list of in-parameters
 			in = new VarList[0];
@@ -798,48 +797,38 @@ public class FunctionHandler {
 	 */
 	private Specification[] makeBoogieSpecFromACSLContract(final IDispatcher main, final List<ACSLNode> contract,
 			final BoogieProcedureInfo procInfo, final IASTDeclarator hook) {
-		Specification[] spec;
-		if (contract == null) {
-			spec = new Specification[0];
-		} else {
-			final List<Specification> specList = new ArrayList<>();
-			for (int i = 0; i < contract.size(); i++) {
-				// retranslate ACSL specification needed e.g., in cases
-				// where ids of function parameters differ from is in ACSL
-				// expression
-				final Result retranslateRes = main.dispatch(contract.get(i), hook);
-				assert retranslateRes instanceof ContractResult;
-				final ContractResult resContr = (ContractResult) retranslateRes;
-				specList.addAll(Arrays.asList(resContr.getSpecs()));
-			}
-			spec = specList.toArray(new Specification[specList.size()]);
-			for (int i = 0; i < spec.length; i++) {
-				if (spec[i] instanceof ModifiesSpecification) {
-					procInfo.setModifiedGlobalsIsUsedDefined(true);
-					final ModifiesSpecification ms = (ModifiesSpecification) spec[i];
-					final LinkedHashSet<VariableLHS> modifiedSet = new LinkedHashSet<>();
-					Collections.addAll(modifiedSet, ms.getIdentifiers());
-					procInfo.addModifiedGlobals(modifiedSet);
-				}
-			}
-			// take care for behavior and completeness
-			mCHandler.clearContract();
+		if (contract == null || contract.isEmpty()) {
+			return new Specification[0];
 		}
-		return spec;
+		final List<Specification> specs = new ArrayList<>();
+		for (final ACSLNode node : contract) {
+			// retranslate ACSL specification needed e.g., in cases where ids of function parameters differ from is in
+			// ACSL expression
+			final Result retranslateRes = main.dispatch(node, hook);
+			assert retranslateRes instanceof ContractResult;
+			final ContractResult resContr = (ContractResult) retranslateRes;
+			specs.addAll(Arrays.asList(resContr.getSpecs()));
+		}
+		for (final Specification spec : specs) {
+			if (spec instanceof ModifiesSpecification) {
+				procInfo.setModifiedGlobalsIsUsedDefined(true);
+				final ModifiesSpecification ms = (ModifiesSpecification) spec;
+				procInfo.addModifiedGlobals(Arrays.asList(ms.getIdentifiers()));
+			}
+		}
+		// take care for behavior and completeness
+		mCHandler.clearContract();
+		return specs.toArray(Specification[]::new);
 	}
 
 	/**
 	 * Take the parameter information from the CDeclaration. Make a Varlist from it. Add the parameters to the
 	 * symboltable. Also update procedureToParamCType member.
 	 *
-	 * @param updateSymbolTable
-	 *            set this to true if the symbol table should be updated, false if only the result of this method is of
-	 *            interest and side effects are unwanted
-	 *
 	 * @return
 	 */
 	private VarList[] processInParams(final ILocation loc, final CFunction cFun, final BoogieProcedureInfo procInfo,
-			final IASTNode hook, final boolean updateSymbolTable) {
+			final IASTNode hook) {
 		final CDeclaration[] paramDecs = cFun.getParameterTypes();
 		final boolean hasUsedVarArgs = cFun.hasVarArgs() && cFun.getVarArgsUsage() == VarArgsUsage.USED;
 		final int size = hasUsedVarArgs ? paramDecs.length + 1 : paramDecs.length;
@@ -861,7 +850,8 @@ public class FunctionHandler {
 					currentParamDec.getType(), declInformation);
 			in[i] = new VarList(loc, new String[] { currentParamId }, currentParamType);
 
-			if (updateSymbolTable) {
+			// Workaround for function pointers: We do not insert anything in the symbol table
+			if (hook != null) {
 				mSymboltable.storeCSymbol(hook, currentParamDec.getName(), new SymbolTableValue(currentParamId, null,
 						currentParamType, currentParamDec, declInformation, null, false));
 			}
@@ -1008,7 +998,7 @@ public class FunctionHandler {
 
 				// Overwrite the information in the symbolTable for cId, s.t. it
 				// points to the locally declared variable.
-				mSymboltable.storeCSymbol(paramDec, inparamCId, new SymbolTableValue(inparamAuxVarName, inVarDecl, type,
+				mSymboltable.storeCSymbol(parent, inparamCId, new SymbolTableValue(inparamAuxVarName, inVarDecl, type,
 						new CDeclaration(cvar, inparamCId), inparamAuxVarDeclInfo, paramDec, false));
 			}
 		}
@@ -1031,9 +1021,9 @@ public class FunctionHandler {
 		final BoogieProcedureInfo procInfo = mProcedureManager.getOrConstructProcedureInfo(methodName);
 
 		// begin new scope for retranslation of ACSL specification
-		mCHandler.beginScope();
+		mProcedureManager.beginProcedureScope(mCHandler, procInfo);
 
-		final VarList[] in = processInParams(loc, funcType, procInfo, hook, false);
+		final VarList[] in = processInParams(loc, funcType, procInfo, hook);
 
 		// OUT VARLIST : only one out param in C
 		VarList[] out = new VarList[1];
@@ -1077,7 +1067,7 @@ public class FunctionHandler {
 		// if possible, find the actual definition of this declaration s.t. we can update the varargs usage
 		procInfo.updateCFunction(updateVarArgsForDeclaration(hook, funcType, loc, methodName));
 		// end scope for retranslation of ACSL specification
-		mCHandler.endScope();
+		mProcedureManager.endProcedureScope(mCHandler);
 	}
 
 	private static CFunction updateVarArgsForDeclaration(final IASTNode node, final CFunction funcType,

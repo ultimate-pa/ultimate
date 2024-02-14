@@ -38,30 +38,38 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualiz
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public class WitnessEnsuresClause extends ModernAnnotations {
+public class WitnessProcedureContract extends ModernAnnotations {
 
 	private static final long serialVersionUID = 1L;
-	private static final String KEY = WitnessEnsuresClause.class.getName();
+	private static final String KEY = WitnessProcedureContract.class.getName();
 
 	@Visualizable
-	private final String mExpression;
+	private final String mRequiresClause;
 
-	public WitnessEnsuresClause(final String expression) {
-		mExpression = expression;
+	@Visualizable
+	private final String mEnsuresClause;
+
+	public WitnessProcedureContract(final String requiresClause, final String ensuresClause) {
+		mRequiresClause = requiresClause;
+		mEnsuresClause = ensuresClause;
 	}
 
-	public String getExpression() {
-		return mExpression;
+	public String getRequiresClause() {
+		return mRequiresClause;
+	}
+
+	public String getEnsuresClause() {
+		return mEnsuresClause;
 	}
 
 	public void annotate(final IElement node) {
 		// Only add an annotation, if the expression was successfully backtranslated (i.e. is not null)
-		if (mExpression != null) {
+		if (mEnsuresClause != null) {
 			node.getPayload().getAnnotations().put(KEY, this);
 		}
 	}
 
-	public static WitnessEnsuresClause getAnnotation(final IElement node) {
-		return ModelUtils.getAnnotation(node, KEY, a -> (WitnessEnsuresClause) a);
+	public static WitnessProcedureContract getAnnotation(final IElement node) {
+		return ModelUtils.getAnnotation(node, KEY, a -> (WitnessProcedureContract) a);
 	}
 }

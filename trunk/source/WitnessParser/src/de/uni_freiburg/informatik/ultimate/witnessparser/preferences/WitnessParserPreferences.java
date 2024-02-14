@@ -20,6 +20,12 @@ public class WitnessParserPreferences extends UltimatePreferenceInitializer {
 	private static final String DESC_CW_USE_ONLY_LOOPINVARIANTS =
 			"When reading correctness witnesses, only consider invariants at nodes that can be entered with a transition that is labeled with enterLoopHead=true";
 
+	public static final String LABEL_IGNORE_UNMATCHED_WITNESS_ENTRIES =
+			"Ignore witness entries that could not be matched";
+	private static final boolean DEF_IGNORE_UNMATCHED_WITNESS_ENTRIES = false;
+	private static final String DESC_IGNORE_UNMATCHED_WITNESS_ENTRIES =
+			"If set to true we ignore witness entries that could not be matched silently. Otherwise we throw an exception.";
+
 	public WitnessParserPreferences() {
 		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
 	}
@@ -32,10 +38,11 @@ public class WitnessParserPreferences extends UltimatePreferenceInitializer {
 	protected BaseUltimatePreferenceItem[] initDefaultPreferences() {
 		return new UltimatePreferenceItem[] {
 
-				new UltimatePreferenceItem<Boolean>(LABEL_CW_USE_ONLY_LOOPINVARIANTS, DEF_CW_USE_ONLY_LOOPINVARIANTS,
+				new UltimatePreferenceItem<>(LABEL_CW_USE_ONLY_LOOPINVARIANTS, DEF_CW_USE_ONLY_LOOPINVARIANTS,
 						DESC_CW_USE_ONLY_LOOPINVARIANTS, PreferenceType.Boolean),
-
-		};
+				new UltimatePreferenceItem<>(LABEL_IGNORE_UNMATCHED_WITNESS_ENTRIES,
+						DEF_IGNORE_UNMATCHED_WITNESS_ENTRIES, DESC_IGNORE_UNMATCHED_WITNESS_ENTRIES,
+						PreferenceType.Boolean) };
 	}
 
 }

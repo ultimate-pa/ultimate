@@ -129,6 +129,11 @@ public class CACSL2BoogieBacktranslator
 		extends DefaultTranslator<BoogieASTNode, CACSLLocation, Expression, IASTExpression, String, String, ILocation> {
 
 	/**
+	 * Throw error in cases where we know that the backtranslation is not exact.
+	 */
+	private static final boolean DEBUG_ERROR_FOR_UNFINISHED_BACKTRANSLATION = false;
+
+	/**
 	 * {@link VariableType} is used to distinguish various special variables after they are converted to strings.
 	 *
 	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
@@ -344,11 +349,7 @@ public class CACSL2BoogieBacktranslator
 		final List<AtomicTraceElement<CACSLLocation>> checkedTranslatedATEs = checkForSubtreeInclusion(translatedATEs);
 		assert checkCallStackTarget(mLogger,
 				checkedTranslatedATEs) : "callstack broken after subtree inclusion reduction";
-		if (mBacktranslationWarned) {
-			mServices.getResultService().reportResult(Activator.PLUGIN_ID,
-					new GenericResult(Activator.PLUGIN_ID, UNFINISHED_BACKTRANSLATION,
-							"The program execution was not completely translated back.", Severity.WARNING));
-		}
+		reportUnfinishedBacktranslation("The program execution was not completely translated back.");
 		return new CACSLProgramExecution(initialState, checkedTranslatedATEs, translatedProgramStates,
 				oldPE.isConcurrent());
 	}
@@ -1581,6 +1582,9 @@ public class CACSL2BoogieBacktranslator
 	}
 
 	private void reportUnfinishedBacktranslation(final String message) {
+		if (DEBUG_ERROR_FOR_UNFINISHED_BACKTRANSLATION) {
+			throw new AssertionError(UNFINISHED_BACKTRANSLATION + ": " + message );
+		}
 		mBacktranslationWarned = true;
 		if (!mGenerateBacktranslationWarnings) {
 			return;

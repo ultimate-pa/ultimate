@@ -136,13 +136,14 @@ public class YamlWitnessParser {
 		}
 		case LoopInvariant.NAME: {
 			final Invariant invariant = new Invariant((String) setEntry.get("value"), "assertion", format);
-			return new LocationInvariant(newMetadata, location, invariant);
+			return new LoopInvariant(newMetadata, location, invariant);
 		}
 		case FunctionContract.NAME:
 			if (metadata.getFormatVersion().getMajor() < 3) {
 				throw new UnsupportedOperationException("Function contracts are only allowed in format version >=3.x");
 			}
-			return new FunctionContract(newMetadata, location, (List<String>) setEntry.get("ensures"), format);
+			return new FunctionContract(newMetadata, location, (List<String>) setEntry.get("requires"),
+					(List<String>) setEntry.get("ensures"), format);
 		default:
 			throw new UnsupportedOperationException("Unknown entry type " + setEntry.get("type"));
 		}

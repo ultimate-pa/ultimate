@@ -29,11 +29,9 @@
 [L8]               i++
        VAL         [a={7:0}, i=5]
 [L8]   COND FALSE  !(i < 5)
-       VAL         [a={7:0}, i=5]
+       VAL         [a={7:0}]
 [L13]  EXPR        a[0]
 [L13]              a[a[0]] = 10
 [L15]  EXPR        a[5]
-       VAL         [a={7:0}, a[5]=10, i=5]
 [L15]  COND TRUE   a[5] == 10
 [L21]              __VERIFIER_error()
-       VAL         [a={7:0}, i=5]

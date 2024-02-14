@@ -60,7 +60,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.C
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement.StepInfo;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdgeAnnotation;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
@@ -94,7 +93,7 @@ public class GraphMLCorrectnessWitnessExtractor extends CorrectnessWitnessExtrac
 	}
 
 	@Override
-	protected HashRelation<IASTNode, IExtractedWitnessEntry> computeWitnessEntries() {
+	protected ExtractedCorrectnessWitness extractWitness() {
 		Map<IASTNode, ExtractedWitnessInvariant> map = new HashMap<>();
 
 		final Deque<WitnessNode> worklist = new ArrayDeque<>();
@@ -109,8 +108,8 @@ public class GraphMLCorrectnessWitnessExtractor extends CorrectnessWitnessExtrac
 			final Map<IASTNode, ExtractedWitnessInvariant> match = matchWitnessToAstNode(current, mStats);
 			map = mergeMatchesIfNecessary(map, match);
 		}
-		final HashRelation<IASTNode, IExtractedWitnessEntry> rtr = new HashRelation<>();
-		map.forEach(rtr::addPair);
+		final ExtractedCorrectnessWitness rtr = new ExtractedCorrectnessWitness();
+		rtr.addWitnessStatements(map);
 		mLogger.info("Processed " + closed.size() + " nodes");
 		return rtr;
 	}
@@ -240,7 +239,12 @@ public class GraphMLCorrectnessWitnessExtractor extends CorrectnessWitnessExtrac
 			printlabel = true;
 		}
 		if (printlabel) {
-			mLogger.warn("  Witness node label is " + dwnode);
+			if (mIgnoreUnmatchedEntries) {
+				mLogger.warn("  Witness node label is " + dwnode);
+			} else {
+				throw new UnsupportedOperationException(
+						"The witness entry " + dwnode.getInvariant() + " could not be matched.");
+			}
 		}
 		final Map<IASTNode, ExtractedWitnessInvariant> possibleMatches = extractInvariants(dwnode, candidateNodes);
 		return possibleMatches;

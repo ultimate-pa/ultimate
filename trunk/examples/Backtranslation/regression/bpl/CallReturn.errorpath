@@ -33,4 +33,4 @@
 [L19]  RET         call z := inc(y);
        VAL         [y=0, z=16]
 [L20]              assert z == 0;
-       VAL         [y=0, z=16]
+       VAL         [y=0]

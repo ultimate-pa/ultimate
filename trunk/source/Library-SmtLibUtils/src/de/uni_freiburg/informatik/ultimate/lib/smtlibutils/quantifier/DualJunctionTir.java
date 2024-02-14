@@ -97,6 +97,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public class DualJunctionTir extends DualJunctionQuantifierElimination {
 
+	/**
+	 * Throw error if output is very large.
+	 */
+	private static final boolean DEBUG_ERROR_ON_LARGE_OUTPUT = false;
+
 	private static final boolean HANDLE_DER_OPERATOR = false;
 	private static final boolean COMPARE_TO_OLD_RESULT = false;
 	private static final boolean ERROR_FOR_OMEGA_TEST_APPLICABILITY = false;
@@ -720,6 +725,9 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 			if (numberOfResultDualJuncts >= Integer.MAX_VALUE) {
 				throw new UnsupportedOperationException(
 						String.format("Size of result too large: %s xjuncts", numberOfResultDualJuncts));
+			}
+			if (DEBUG_ERROR_ON_LARGE_OUTPUT && numberOfResultDualJuncts >= 50_000) {
+				throw new AssertionError("Too many dualJuncts " + numberOfResultDualJuncts);
 			}
 			final Term[] allCombinations = new Term[Math.toIntExact(numberOfResultDualJuncts)];
 			int i = 0;
