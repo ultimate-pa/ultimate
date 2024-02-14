@@ -1184,8 +1184,8 @@ public class StandardFunctionHandler {
 	 */
 	private ExpressionResult applyMemoryOrder(final ILocation loc, final ExpressionResult body,
 			final ExpressionResult memoryOrder) {
-		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
-		builder.addAllExceptLrValueAndStatements(body).addAllExceptLrValue(memoryOrder);
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder(body);
+		builder.resetStatements(List.of()).addAllExceptLrValue(memoryOrder);
 		final CPrimitive intType = new CPrimitive(CPrimitives.INT);
 		final Expression seqCst = mExpressionTranslation.constructLiteralForIntegerType(loc, intType,
 				BigInteger.valueOf(MEMORY_ORDER_SEQ_CST));
