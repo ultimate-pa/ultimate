@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.witnessprinter.yaml;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -11,6 +12,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.UltimateCore;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessGhostDeclaration;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessGhostUpdate;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessProcedureContract;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -18,12 +21,15 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferencePro
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.FormatVersion;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.FunctionContract;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.GhostUpdate;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.GhostVariable;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Invariant;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Location;
-import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LoopInvariant;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LocationInvariant;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Metadata;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Producer;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Task;
@@ -64,7 +70,12 @@ public class YamlCorrectnessWitnessGenerator {
 		// TODO: Should we sort these entries somehow (for consistent result in validation and to improve readability)
 		// e.g. by line number and/or entry type?
 		final List<WitnessEntry> entries = new ArrayList<>();
+
+		entries.addAll(extractGhostDeclarations(metadataSupplier, hash));
+		entries.addAll(extractGhostUpdates(allProgramPoints, metadataSupplier, hash));
+
 		entries.addAll(extractLoopInvariants(allProgramPoints, metadataSupplier, hash, formatVersion));
+
 		if (formatVersion.getMajor() >= 3) {
 			entries.addAll(extractFunctionContracts(allProgramPoints, metadataSupplier, hash, formatVersion));
 		}
@@ -75,32 +86,85 @@ public class YamlCorrectnessWitnessGenerator {
 		return new Witness(List.of(witness.toInvariantSet(metadataSupplier)));
 	}
 
+	private static List<WitnessEntry> extractGhostUpdates(final List<IcfgLocation> programPoints,
+			final Supplier<Metadata> metadataSupplier, final String hash) {
+		final List<IcfgEdge> allProgramEdges =
+				programPoints.stream().flatMap(l -> l.getOutgoingEdges().stream()).collect(Collectors.toList());
+
+		final List<WitnessEntry> result = new ArrayList<>();
+		for (final IcfgEdge edge : allProgramEdges) {
+			final Location witnessLocation = getLocation(edge.getSource(), hash);
+			if (witnessLocation == null) {
+				continue;
+			}
+
+			final var update = WitnessGhostUpdate.getAnnotation(edge);
+			if (update == null) {
+				continue;
+			}
+
+			for (final var entry : update.getUpdate().entrySet()) {
+				// TODO fix the semantics of ghost updates -- are they simultaneous? Or are they ordered?
+				// In the latter case, modify Owicki-Gries annotations, WitnessGhostUpdate, and YAML format.
+				final var witnessUpdate =
+						new GhostUpdate(metadataSupplier.get(), entry.getKey(), entry.getValue(), witnessLocation);
+				result.add(witnessUpdate);
+			}
+		}
+
+		return result;
+	}
+
+	private List<WitnessEntry> extractGhostDeclarations(final Supplier<Metadata> metadataSupplier, final String hash) {
+		final var witnessDecl = WitnessGhostDeclaration.getAnnotation(mIcfg);
+		if (witnessDecl == null) {
+			return Collections.emptyList();
+		}
+
+		final List<WitnessEntry> result = new ArrayList<>();
+		for (final var entry : witnessDecl.getGhostAndInitialValues().entrySet()) {
+			final var decl =
+					new GhostVariable(metadataSupplier.get(), entry.getKey(), entry.getValue(), "global", "long long");
+			result.add(decl);
+		}
+		return result;
+	}
+
 	private List<WitnessEntry> extractLoopInvariants(final List<IcfgLocation> programPoints,
 			final Supplier<Metadata> metadataSupplier, final String hash, final FormatVersion formatVersion) {
 		final List<WitnessEntry> result = new ArrayList<>();
 		for (final IcfgLocation pp : programPoints) {
-			final ILocation loc = ILocation.getAnnotation(pp);
-			if (loc == null) {
+			final Location witnessLocation = getLocation(pp, hash);
+			if (witnessLocation == null) {
 				continue;
 			}
+
 			final String invariant = filterInvariant(WitnessInvariant.getAnnotation(pp), formatVersion);
 			if (invariant == null) {
 				continue;
 			}
-			// If the column is unknown (-1), use the first position of the line
-			final int column = Math.max(loc.getStartColumn(), 0);
-			final String function = loc.getFunction();
-			if (function == null) {
-				continue;
-			}
-			final Location witnessLocation =
-					new Location(loc.getFileName(), hash, loc.getStartLine(), column, function);
+
 			// TODO: How could we figure out, if it is a LocationInvariant or LoopInvariant?
 			// For now we only produce loop invariants anyways
-			result.add(new LoopInvariant(metadataSupplier.get(), witnessLocation,
+			result.add(new LocationInvariant(metadataSupplier.get(), witnessLocation,
 					new Invariant(invariant, "assertion", getExpressionFormat(formatVersion, invariant))));
 		}
 		return result;
+	}
+
+	private static Location getLocation(final IcfgLocation pp, final String hash) {
+		final ILocation loc = ILocation.getAnnotation(pp);
+		if (loc == null) {
+			return null;
+		}
+
+		// If the column is unknown (-1), use the first position of the line
+		final int column = Math.max(loc.getStartColumn(), 0);
+		final String function = loc.getFunction();
+		if (function == null) {
+			return null;
+		}
+		return new Location(loc.getFileName(), hash, loc.getStartLine(), column, function);
 	}
 
 	private static List<WitnessEntry> extractFunctionContracts(final List<IcfgLocation> programPoints,
