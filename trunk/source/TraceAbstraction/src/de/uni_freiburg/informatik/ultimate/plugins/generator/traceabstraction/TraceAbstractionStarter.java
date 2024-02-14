@@ -281,6 +281,8 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 								failedGhosts.add(ghost);
 								continue;
 							}
+
+							backTranslatorService.declareAndTranslateAuxiliaryVariable(ghost.getTerm());
 							new WitnessGhostDeclaration(ghost.getGloballyUniqueId(), initialValue).annotate(icfg);
 						}
 

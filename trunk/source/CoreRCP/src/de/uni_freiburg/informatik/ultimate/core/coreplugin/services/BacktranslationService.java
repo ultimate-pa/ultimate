@@ -128,4 +128,8 @@ public class BacktranslationService implements IStorable, IBacktranslationServic
 		mTranslatorSequence = null;
 	}
 
+	@Override
+	public <SE, TE> TE declareAndTranslateAuxiliaryVariable(final SE variable) {
+		return mTranslatorSequence.declareAndTranslateAuxiliaryVariable(variable);
+	}
 }

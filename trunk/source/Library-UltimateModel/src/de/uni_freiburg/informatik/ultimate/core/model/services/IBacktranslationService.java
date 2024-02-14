@@ -79,4 +79,5 @@ public interface IBacktranslationService {
 	 */
 	IBacktranslationService getTranslationServiceCopy();
 
+	<SE, TE> TE declareAndTranslateAuxiliaryVariable(SE variable);
 }

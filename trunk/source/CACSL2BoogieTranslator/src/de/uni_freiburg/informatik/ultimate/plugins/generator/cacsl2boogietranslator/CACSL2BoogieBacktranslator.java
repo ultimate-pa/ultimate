@@ -142,7 +142,9 @@ public class CACSL2BoogieBacktranslator
 
 		POINTER_BASE,
 
-		POINTER_OFFSET
+		POINTER_OFFSET,
+
+		AUXVAR
 	}
 
 	private static final String UNFINISHED_BACKTRANSLATION = "Unfinished Backtranslation";
@@ -154,6 +156,8 @@ public class CACSL2BoogieBacktranslator
 	private final TypeSizes mTypeSizes;
 	private final CACSL2BoogieBacktranslatorMapping mMapping;
 	private final FlatSymbolTable mSymbolTable;
+
+	private final Map<String, FakeExpression> mAuxVars = new HashMap<>();
 
 	private boolean mGenerateBacktranslationWarnings;
 	private boolean mBacktranslationWarned;
@@ -170,6 +174,17 @@ public class CACSL2BoogieBacktranslator
 		mTypeSizes = typeSizes;
 		mLocationFactory = locationFactory;
 		mSymbolTable = symbolTable;
+	}
+
+	@Override
+	public IASTExpression declareAndTranslateAuxiliaryVariable(final Expression variable) {
+		final var id = ((IdentifierExpression) variable).getIdentifier();
+		if (mAuxVars.containsKey(id)) {
+			throw new UnsupportedOperationException();
+		}
+		final var cId = new FakeExpression(null, id, null);
+		mAuxVars.put(id, cId);
+		return cId;
 	}
 
 	@Override
@@ -1593,6 +1608,9 @@ public class CACSL2BoogieBacktranslator
 			// invars can only occur in expressions as part of synthetic expressions, and then they represent oldvars
 			final Pair<String, CType> pair = mMapping.getInVar(boogieId, expr.getDeclarationInformation());
 			return new TranslatedVariable(pair.getFirst(), pair.getSecond(), VariableType.INVAR);
+		} else if (mAuxVars.containsKey(boogieId)) {
+			final var cVar = mAuxVars.get(boogieId);
+			return new TranslatedVariable(cVar.toString(), cVar.getCType(), VariableType.AUXVAR);
 		} else if (boogieId.endsWith(SFO.POINTER_BASE)) {
 			// if its base or offset, try again with them stripped
 			final TranslatedVariable base = translateBoogieIdentifier(expr,

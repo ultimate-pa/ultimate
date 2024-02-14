@@ -401,4 +401,8 @@ public class RCFGBacktranslator extends
 		return mTerm2Expression.translate(term);
 	}
 
+	@Override
+	public Expression declareAndTranslateAuxiliaryVariable(final Term variable) {
+		return mTerm2Expression.declareAndTranslateAuxiliaryVariable((TermVariable) variable);
+	}
 }

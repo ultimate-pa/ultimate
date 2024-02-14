@@ -340,4 +340,19 @@ class ModelTranslationContainer implements IBacktranslationService {
 		return CoreUtil.join(mTranslationSequence, ",");
 	}
 
+	@Override
+	public <SE, TE> TE declareAndTranslateAuxiliaryVariable(final SE variable) {
+		final var remaining = prepareTranslatorStackAndCheckSourceExpression(variable.getClass());
+		return declareAndTranslateAuxiliaryVariable(remaining, variable);
+	}
+
+	private <SE, TE> TE declareAndTranslateAuxiliaryVariable(final Stack<ITranslator<?, ?, ?, ?, ?, ?, ?>> remaining,
+			final SE variable) {
+		if (remaining.isEmpty()) {
+			return (TE) variable;
+		}
+		final ITranslator<?, ?, SE, TE, ?, ?, ?> tmp = (ITranslator<?, ?, SE, TE, ?, ?, ?>) remaining.pop();
+		return declareAndTranslateAuxiliaryVariable(remaining, tmp.declareAndTranslateAuxiliaryVariable(variable));
+	}
+
 }
