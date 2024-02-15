@@ -134,12 +134,44 @@ public class RcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<>(LABEL_DUMP_PATH, DEF_DUMP_PATH, PreferenceType.Directory),
 				new UltimatePreferenceItem<>(LABEL_ADDITIONAL_SMT_OPTIONS, DEF_ADDITIONAL_SMT_OPTIONS,
 						PreferenceType.KeyValue),
+				getTestGenerationSettings(),
 
 		};
+	}
+
+	public UltimatePreferenceItem getTestGenerationSettings() {
+		return new UltimatePreferenceItem<>(LABEL_TEST_GEN_REUSE_MODE, DEF_TEST_GEN_REUSE_MODE,
+				DESC_TEST_GEN_REUSE_MODE, PreferenceType.Combo, TestGenReuseMode.values());
 	}
 
 	public static IPreferenceProvider getPreferences(final IUltimateServiceProvider services) {
 		return services.getPreferenceProvider(Activator.PLUGIN_ID);
 	}
 
+	// Test Generation Reuse Mode
+	// ========================================================================
+	private static final TestGenReuseMode DEF_TEST_GEN_REUSE_MODE = TestGenReuseMode.None;
+	public static final String LABEL_TEST_GEN_REUSE_MODE = "Reuse Mode for Test Generation";
+	private static final String DESC_TEST_GEN_REUSE_MODE =
+			"None means no reuse, Reuse is without optimizations, ReuseUNSAT uses all optimiztations";
+
+	/**
+	 * Differnt modes of Reusing Test Cases during Test Generation
+	 *
+	 * @author Max Barth (Max.Barth@gmx.de)
+	 */
+	public enum TestGenReuseMode {
+		/**
+		 * No reuse during Test Generation.
+		 */
+		None,
+		/**
+		 * Simple Reuse just without optimizations
+		 */
+		Reuse,
+		/**
+		 * Reuse UNSAT by removing the check of the other branch and choosing values for inputs between testgoals
+		 */
+		ReuseUNSAT
+	}
 }
