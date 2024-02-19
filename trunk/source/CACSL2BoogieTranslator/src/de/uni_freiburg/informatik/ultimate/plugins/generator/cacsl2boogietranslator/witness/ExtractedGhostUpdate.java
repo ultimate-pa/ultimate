@@ -27,8 +27,10 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Stream;
 
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 
@@ -42,7 +44,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
@@ -100,18 +101,27 @@ public class ExtractedGhostUpdate implements IExtractedWitnessEntry {
 	@Override
 	public ExpressionResult transform(final ILocation loc, final IDispatcher dispatcher,
 			final ExpressionResult expressionResult) {
+		final ExpressionResultBuilder builder =
+				new ExpressionResultBuilder(expressionResult).resetStatements(List.of());
 		final ExpressionResult witness = instrument(loc, dispatcher);
 		final List<Statement> oldstatements = expressionResult.getStatements();
-		List<Statement> newStatements;
 		if (oldstatements.isEmpty()) {
-			newStatements = List.of(new AtomicStatement(loc, witness.getStatements().toArray(Statement[]::new)));
+			builder.addStatement(new AtomicStatement(loc, witness.getStatements().toArray(Statement[]::new)));
 		} else {
-			final int size = witness.getStatements().size();
-			final Statement[] block = witness.getStatements().toArray(new Statement[size + 1]);
-			block[size] = oldstatements.get(0);
-			newStatements = DataStructureUtils.concat(List.of(new AtomicStatement(loc, block)),
-					oldstatements.subList(1, oldstatements.size()));
+			builder.addStatement(new AtomicStatement(loc, makeAtomic(witness.getStatements(), oldstatements.get(0))));
+			builder.addStatements(oldstatements.subList(1, oldstatements.size()));
 		}
-		return new ExpressionResultBuilder(expressionResult).resetStatements(newStatements).build();
+		return builder.build();
+	}
+
+	private static Statement[] makeAtomic(final List<Statement> witnessStatements, final Statement atomicHook) {
+		if (atomicHook instanceof AtomicStatement) {
+			return Stream.concat(witnessStatements.stream(), Arrays.stream(((AtomicStatement) atomicHook).getBody()))
+					.toArray(Statement[]::new);
+		}
+		final int size = witnessStatements.size();
+		final Statement[] block = witnessStatements.toArray(new Statement[size + 1]);
+		block[size] = atomicHook;
+		return block;
 	}
 }
