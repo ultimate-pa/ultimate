@@ -417,7 +417,7 @@ public class MainDispatcher implements IDispatcher {
 		if (mWitnessEntries == null) {
 			return result;
 		}
-		final Set<IExtractedWitnessEntry> matchedWitnessEntries = mWitnessEntries.getWitnessStatements(node);
+		final List<IExtractedWitnessEntry> matchedWitnessEntries = mWitnessEntries.getWitnessStatements(node);
 		if (!(result instanceof ExpressionResult)) {
 			if (!matchedWitnessEntries.isEmpty()) {
 				mLogger.warn("Unable to annotate " + node.getRawSignature() + " with a witness entry");

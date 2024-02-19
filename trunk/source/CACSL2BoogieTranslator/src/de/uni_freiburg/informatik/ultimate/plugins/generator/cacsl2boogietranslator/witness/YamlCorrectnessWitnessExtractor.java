@@ -112,8 +112,8 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 				location = update.getLocation();
 				addFunction = (node, before) -> {
 					if (Boolean.TRUE.equals(before)) {
-						rtr.addWitnessStatement(node, new ExtractedGhostUpdate(update.getVariable(),
-								update.getExpression(), node, Set.of(update.getMetadata().getUuid().toString())));
+						rtr.addGhostUpdate(node, new ExtractedGhostUpdate(update.getVariable(), update.getExpression(),
+								node, Set.of(update.getMetadata().getUuid().toString())));
 					}
 				};
 			} else {
@@ -135,9 +135,9 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 			matchesAfter.forEach(x -> addFunction.accept(x, false));
 			mStats.success();
 		}
-		rtr.addWitnessStatements(loopInvariants);
-		rtr.addWitnessStatements(locationInvariantsBefore);
-		rtr.addWitnessStatements(locationInvariantsAfter);
+		rtr.addInvariants(loopInvariants);
+		rtr.addInvariants(locationInvariantsBefore);
+		rtr.addInvariants(locationInvariantsAfter);
 		return rtr;
 
 	}
