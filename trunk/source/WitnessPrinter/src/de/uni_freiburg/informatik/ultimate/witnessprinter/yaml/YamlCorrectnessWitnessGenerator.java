@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.UltimateCore;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
@@ -120,12 +121,13 @@ public class YamlCorrectnessWitnessGenerator {
 			if (function == null) {
 				continue;
 			}
-			final String requires = contract.getRequiresClause();
-			final String ensures = contract.getEnsuresClause();
+			final List<String> requires = contract.getRequires();
+			final List<String> ensures = contract.getEnsures();
 			final Location witnessLocation =
 					new Location(loc.getFileName(), hash, loc.getStartLine(), column, function);
-			result.add(new FunctionContract(metadataSupplier.get(), witnessLocation, List.of(requires),
-					List.of(ensures), getExpressionFormat(formatVersion, requires, ensures)));
+			result.add(new FunctionContract(metadataSupplier.get(), witnessLocation, requires, ensures,
+					getExpressionFormat(formatVersion,
+							Stream.concat(requires.stream(), ensures.stream()).toArray(String[]::new))));
 		}
 		return result;
 	}

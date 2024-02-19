@@ -27,13 +27,14 @@
 
 package de.uni_freiburg.informatik.ultimate.core.lib.models.annotation;
 
+import java.util.List;
+
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 
 /**
- * Copy and paste of {@link WitnessInvariant}. Makeshift solution. In the future
- * both classes should be merged into one.
+ * Copy and paste of {@link WitnessInvariant}. Makeshift solution. In the future both classes should be merged into one.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
@@ -54,19 +55,16 @@ public class WitnessProcedureContract extends ModernAnnotations {
 		mEnsuresClause = ensuresClause;
 	}
 
-	public String getRequiresClause() {
-		return mRequiresClause;
+	public List<String> getRequires() {
+		return mRequiresClause == null ? List.of() : List.of(mRequiresClause);
 	}
 
-	public String getEnsuresClause() {
-		return mEnsuresClause;
+	public List<String> getEnsures() {
+		return mEnsuresClause == null ? List.of() : List.of(mEnsuresClause);
 	}
 
 	public void annotate(final IElement node) {
-		// Only add an annotation, if the expression was successfully backtranslated (i.e. is not null)
-		if (mEnsuresClause != null) {
-			node.getPayload().getAnnotations().put(KEY, this);
-		}
+		node.getPayload().getAnnotations().put(KEY, this);
 	}
 
 	public static WitnessProcedureContract getAnnotation(final IElement node) {
