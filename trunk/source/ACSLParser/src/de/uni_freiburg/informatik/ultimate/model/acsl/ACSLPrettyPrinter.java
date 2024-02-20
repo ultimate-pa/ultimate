@@ -132,10 +132,10 @@ public class ACSLPrettyPrinter {
 			op = "&";
 			break;
 		case LOGICCOMPLEMENT:
-			op = "!";
+			op = "~";
 			break;
 		case LOGICNEG:
-			op = "~";
+			op = "!";
 			break;
 		case MINUS:
 			op = "-";
