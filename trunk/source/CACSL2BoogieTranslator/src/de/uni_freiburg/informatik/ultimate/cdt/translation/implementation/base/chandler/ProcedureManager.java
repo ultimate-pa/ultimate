@@ -128,6 +128,7 @@ public class ProcedureManager {
 
 	void endProcedureScope(final CHandler main) {
 		mCurrentProcedureInfo = mPreviousProcedureInfo;
+		mPreviousProcedureInfo = null;
 		main.endScope();
 	}
 
