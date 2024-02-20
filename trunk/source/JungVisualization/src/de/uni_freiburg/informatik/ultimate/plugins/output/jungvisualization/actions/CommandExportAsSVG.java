@@ -27,7 +27,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.actions;
 
 import java.io.File;
-import javax.swing.JFileChooser;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 import org.apache.batik.anim.dom.SVGDOMImplementation;
 import org.apache.batik.svggen.SVGGraphics2D;
@@ -65,12 +66,8 @@ public class CommandExportAsSVG extends AbstractHandler {
 		assert editorInput != null;
 		final String svgFilePath = new RcpPreferenceProvider(Activator.PLUGIN_ID)
 				.getString(JungPreferenceValues.LABEL_PATH);
-
-		final JFileChooser chooser = new JFileChooser();
-		chooser.setSelectedFile(new File(svgFilePath + "/default.svg"));
-		chooser.showSaveDialog(null);
-
-		final String filename = chooser.getSelectedFile().getPath();
+		final String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss"));
+		final String filename = new File(svgFilePath, timestamp + ".svg").getAbsolutePath();
 
 		final DOMImplementation impl = SVGDOMImplementation.getDOMImplementation();
 		final String svgNS = SVGDOMImplementation.SVG_NAMESPACE_URI;
@@ -81,7 +78,6 @@ public class CommandExportAsSVG extends AbstractHandler {
 		vv.setDoubleBuffered(false);
 		vv.paint(g.create());
 		vv.setDoubleBuffered(true);
-
 		try {
 			g.stream(filename);
 		} catch (SVGGraphics2DIOException e) {
