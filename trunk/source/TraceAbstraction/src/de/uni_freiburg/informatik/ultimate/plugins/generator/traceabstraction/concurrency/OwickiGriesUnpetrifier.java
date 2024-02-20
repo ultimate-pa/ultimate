@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency;
 
+import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -49,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.P
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.GhostUpdate;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.IPossibleInterferences;
@@ -118,7 +120,10 @@ public class OwickiGriesUnpetrifier<L extends IIcfgTransition<LOC>, P, LOC exten
 		// collect initial values of old and new ghost variables
 		final Map<IProgramVar, Term> ghostInits = new HashMap<>(annotation.getGhostAssignment());
 		for (final var entry : mGhostMirrors.entrySet()) {
-			ghostInits.put(entry.getValue(), entry.getKey().getTerm());
+			// Initialize ghost mirrors to 0. They will be updated when the local variable they mirror is initialized.
+			final var zero =
+					SmtUtils.constructIntegerValue(mMgdScript.getScript(), entry.getKey().getSort(), BigInteger.ZERO);
+			ghostInits.put(entry.getValue(), zero);
 		}
 
 		final Map<L, GhostUpdate> ghostUpdates = computeUpdates(petrifiedProgram, annotation);
@@ -191,8 +196,8 @@ public class OwickiGriesUnpetrifier<L extends IIcfgTransition<LOC>, P, LOC exten
 	}
 
 	private ProgramNonOldVar createMirror(final ILocalProgramVar x) {
-		final var pv = ProgramVarUtils.constructGlobalProgramVarPair(x.getGloballyUniqueId() + "~ghost", x.getSort(),
-				mMgdScript, null);
+		final String varName = x.getGloballyUniqueId().replaceAll("~|#|\\.", "_") + "__ghost";
+		final var pv = ProgramVarUtils.constructGlobalProgramVarPair(varName, x.getSort(), mMgdScript, null);
 		mSymbolTable.add(pv);
 		return pv;
 	}
