@@ -42,6 +42,7 @@ import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratedUnit;
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratorNode;
 import de.uni_freiburg.informatik.ultimate.cdt.parser.MultiparseSymbolTable;
@@ -61,6 +62,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.except
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UndeclaredFunctionException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CHandlerTranslationResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.WrapperNode;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ExceptionOrErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxErrorResult;
@@ -236,6 +238,17 @@ public class MainTranslator {
 				typeHandler, procedureManager, locationFactory, mainCHandler);
 		final MainDispatcher mainDispatcher = new MainDispatcher(mLogger, witnessEntries, locationFactory, typeHandler,
 				mainCHandler, ppHandler, acslHandler);
+
+		if (witnessEntries != null) {
+			// Add the declaration of global ghost variables
+			for (final var ghost : witnessEntries.getGlobalDeclarations()) {
+				final ExpressionResult res = ghost.getDeclaration(mainDispatcher);
+				staticObjectsHandler.addStatementsForUltimateInit(res.getStatements());
+				for (final var d : res.getDeclarations()) {
+					staticObjectsHandler.addGlobalVarDeclarationWithoutCDeclaration((VariableDeclaration) d);
+				}
+			}
+		}
 
 		final CHandlerTranslationResult result = mainDispatcher.dispatch(nodes);
 

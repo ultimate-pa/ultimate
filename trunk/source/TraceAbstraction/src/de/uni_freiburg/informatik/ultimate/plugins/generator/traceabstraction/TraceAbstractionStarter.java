@@ -587,15 +587,19 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 			final IcfgLocation exit = exitNodes.get(procName);
 			final HoareAnnotation ensures = HoareAnnotation.getAnnotation(exit);
 			final HoareAnnotation requires = HoareAnnotation.getAnnotation(entry);
-			if (ensures != null) {
-				final Term ensuresFormula = ensures.getFormula();
-				final Term requiresFormula = PredicateUtils.eliminateOldVars(mServices,
-						icfg.getCfgSmtToolkit().getManagedScript(), requires);
-				final ProcedureContractResult<IIcfgElement, Term> result = new ProcedureContractResult<>(
-						Activator.PLUGIN_NAME, exit, backTranslatorService, procName, requiresFormula, ensuresFormula);
-				mResultReporter.reportResult(result);
-				new WitnessProcedureContract(result.getReqiresResult(), result.getEnsuresResult()).annotate(exit);
+			if (ensures == null) {
+				continue;
 			}
+			final Term ensuresFormula = ensures.getFormula();
+			final Term requiresFormula =
+					PredicateUtils.eliminateOldVars(mServices, icfg.getCfgSmtToolkit().getManagedScript(), requires);
+			final ProcedureContractResult<IIcfgElement, Term> result = new ProcedureContractResult<>(
+					Activator.PLUGIN_NAME, exit, backTranslatorService, procName, requiresFormula, ensuresFormula);
+			if (result.isTrivial()) {
+				continue;
+			}
+			mResultReporter.reportResult(result);
+			new WitnessProcedureContract(result.getReqiresResult(), result.getEnsuresResult()).annotate(exit);
 		}
 	}
 

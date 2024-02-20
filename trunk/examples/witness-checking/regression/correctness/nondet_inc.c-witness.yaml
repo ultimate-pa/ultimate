@@ -1,0 +1,73 @@
+---
+- entry_type: 'ghost_variable'
+  metadata:
+    format_version: '0.1'
+    uuid: '23f32795-b94d-4ac7-a66c-1ffb52124cf8'
+    creation_time: '2023-07-12T17:17:17.000Z'
+    producer:
+      name: 'Ultimate GemCutter'
+      version: '0.2.3-dev'
+    task:
+      input_files:
+        - 'nondet_inc.c'
+      input_file_hashes:
+        nondet_inc.c: 'fa3065a8f9b8e6215da5b42fa91b717ebb3ce9800def22311b93de89c5243a42'
+      specification: 'CHECK( init(main()), LTL(G ! call(reach_error())) )'
+      data_model: 'ILP32'
+      language: 'C'
+  variable: 'g'
+  scope: 'global'
+  type: 'int'
+  initial: '0'
+
+- entry_type: 'location_invariant'
+  metadata:
+    format_version: '0.1'
+    uuid: '50881274-19e0-4783-aa2f-a02c0b7db14a'
+    creation_time: '2023-07-12T17:17:17.000Z'
+    producer:
+      name: 'Ultimate GemCutter'
+      version: '0.2.3-dev'
+    task:
+      input_files:
+        - 'nondet_inc.c'
+      input_file_hashes:
+        nondet_inc.c: 'fa3065a8f9b8e6215da5b42fa91b717ebb3ce9800def22311b93de89c5243a42'
+      specification: 'CHECK( init(main()), LTL(G ! call(reach_error())) )'
+      data_model: 'ILP32'
+      language: 'C'
+  location:
+    file_name: 'nondet_inc.c'
+    file_hash: 'fa3065a8f9b8e6215da5b42fa91b717ebb3ce9800def22311b93de89c5243a42'
+    line: 43
+    column: 29
+    function: 'inc'
+  location_invariant:
+    string: 'x >= g'
+    type: 'assertion'
+    format: 'C'
+
+- entry_type: 'ghost_update'
+  metadata:
+    format_version: '0.1'
+    uuid: '30f30f09-9827-41e5-87a1-0da32ee27ea0'
+    creation_time: '2023-07-12T17:17:17.000Z'
+    producer:
+      name: 'Ultimate GemCutter'
+      version: '0.2.3-dev'
+    task:
+      input_files:
+        - 'nondet_inc.c'
+      input_file_hashes:
+        nondet_inc.c: 'fa3065a8f9b8e6215da5b42fa91b717ebb3ce9800def22311b93de89c5243a42'
+      specification: 'CHECK( init(main()), LTL(G ! call(reach_error())) )'
+      data_model: 'ILP32'
+      language: 'C'
+  variable: 'g'
+  expression: 'val'
+  location:
+    file_name: 'nondet_inc.c'
+    file_hash: 'fa3065a8f9b8e6215da5b42fa91b717ebb3ce9800def22311b93de89c5243a42'
+    line: 57
+    column: 3
+    function: 'main'

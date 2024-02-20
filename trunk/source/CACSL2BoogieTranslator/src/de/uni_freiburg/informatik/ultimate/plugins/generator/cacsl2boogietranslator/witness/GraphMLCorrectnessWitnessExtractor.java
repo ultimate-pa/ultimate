@@ -109,7 +109,7 @@ public class GraphMLCorrectnessWitnessExtractor extends CorrectnessWitnessExtrac
 			map = mergeMatchesIfNecessary(map, match);
 		}
 		final ExtractedCorrectnessWitness rtr = new ExtractedCorrectnessWitness();
-		rtr.addWitnessStatements(map);
+		rtr.addInvariants(map);
 		mLogger.info("Processed " + closed.size() + " nodes");
 		return rtr;
 	}

@@ -3388,12 +3388,12 @@ public class CHandler {
 			final ExpressionResult exprResult = (ExpressionResult) main.dispatch(decl.getExpr(), hook);
 			final ExpressionResult converted = mExprResultTransformer
 					.makeRepresentationReadyForConversionAndRexBoolToInt(exprResult, loc, cType, hook);
-			resultBuilder.addAllExceptLrValue(converted);
 			final VariableLHS lhs =
 					new VariableLHS(loc, mTypeHandler.getBoogieTypeForCType(cType), boogieName, declInfo);
-			final AssignmentStatement assignment =
-					StatementFactory.constructSingleAssignmentStatement(loc, lhs, converted.getLrValue().getValue());
-			mStaticObjectsHandler.addStatementsForUltimateInit(List.of(assignment));
+			final ExpressionResult assignment =
+					makeAssignment(loc, new LocalLValue(lhs, cType, null), List.of(), converted, hook);
+			resultBuilder.addAllExceptLrValueAndStatements(assignment);
+			mStaticObjectsHandler.addStatementsForUltimateInit(assignment.getStatements());
 		}
 	}
 
