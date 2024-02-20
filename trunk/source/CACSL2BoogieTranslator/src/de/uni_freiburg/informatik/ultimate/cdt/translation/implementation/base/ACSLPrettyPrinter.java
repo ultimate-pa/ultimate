@@ -31,6 +31,7 @@ import java.util.Arrays;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLType;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Assertion;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.BinaryExpression;
@@ -38,6 +39,9 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.CastExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.CodeAnnotStmt;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.GhostDeclaration;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.GhostUpdate;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.GlobalGhostDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.OldValueExpression;
@@ -58,8 +62,29 @@ public class ACSLPrettyPrinter {
 		if (node instanceof Expression) {
 			return printExpression((Expression) node);
 		}
+		if (node instanceof GhostDeclaration) {
+			final GhostDeclaration decl = (GhostDeclaration) node;
+			return printGhostDeclaration(decl.getType(), decl.getIdentifier(), decl.getExpr());
+		}
+		if (node instanceof GlobalGhostDeclaration) {
+			final GlobalGhostDeclaration decl = (GlobalGhostDeclaration) node;
+			return printGhostDeclaration(decl.getType(), decl.getIdentifier(), decl.getExpr());
+		}
+		if (node instanceof GhostUpdate) {
+			final GhostUpdate update = (GhostUpdate) node;
+			return String.format("//@ ghost %s = %s;", update.getIdentifier(), printExpression(update.getExpr()));
+		}
 		// TODO: Add more cases
 		return node.toString();
+	}
+
+	private static String printGhostDeclaration(final ACSLType type, final String identifier, final Expression expr) {
+		final StringBuilder sb = new StringBuilder();
+		sb.append("//@ ghost ").append(type.getTypeName()).append(' ').append(identifier);
+		if (expr != null) {
+			sb.append(" = ").append(printExpression(expr));
+		}
+		return sb.append(';').toString();
 	}
 
 	private static String printExpression(final Expression expression) {
