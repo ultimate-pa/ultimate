@@ -26,11 +26,9 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
- * Sleep set criterion for conditional commutativity checking.
+ * Default criterion for conditional commutativity checking.
  *
  * @author Marcel Ebbinghaus
  *
@@ -39,22 +37,16 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
  * @param <S>
  *            The type of states.
  */
-public class SleepSetCriterion<L, S> implements IConditionalCommutativityCriterion<L, S> {
+public class DefaultCriterion<L,S> implements IConditionalCommutativityCriterion<L,S> {
 
-	
-	@SuppressWarnings("unchecked")
 	@Override
 	public boolean decide(S state, L letter1, L letter2) {
-		if (state instanceof SleepPredicate) {
-			ImmutableSet<?> sleepSet = ((SleepPredicate<L>) state).getSleepSet();
-			return (sleepSet.contains(letter1) || sleepSet.contains(letter2));
-		}
-		return false;
+		return true;
 	}
 
 	@Override
 	public boolean decide(IPredicate condition) {
 		return condition != null;
 	}
-
+	
 }

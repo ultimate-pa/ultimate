@@ -75,6 +75,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.MonolithicHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.AnnotatedMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
@@ -98,6 +99,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.Sl
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.ConditionalCommutativityChecker;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.ConditionalCommutativityCheckerVisitor;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.ConditionalCommutativityInterpolantProvider;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.DefaultCriterion;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IConditionalCommutativityCriterion;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.SemanticIndependenceConditionGenerator;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.SemanticIndependenceRelation;
@@ -112,6 +114,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.ConComChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.PostConditionTraceChecker;
 import de.uni_freiburg.informatik.ultimate.util.Lazy;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
@@ -144,6 +147,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	private IDeadEndStore<IPredicate, IPredicate> mDeadEndStore;
 	
 	private IConditionalCommutativityCriterion<L, IPredicate> mCriterion;
+	private ConditionalCommutativityChecker<L> mConComChecker;
 
 	public PartialOrderCegarLoop(final DebugIdentifier name,
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> initialAbstraction,
@@ -195,6 +199,8 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		assert mSupportsDeadEnds == (mDeadEndStore != null);
 
 		mProgram = initialAbstraction;
+		
+		constructConComChecker();
 	}
 
 	@SuppressWarnings("unchecked")
@@ -205,7 +211,8 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		final IHoareTripleChecker htc = getHoareTripleChecker();
 		
 		
-		if (false) {
+		if (mPref.useConditionalCommutativityChecker().equals(ConComChecker.IA)
+				|| mPref.useConditionalCommutativityChecker().equals(ConComChecker.BOTH)) {
 			
 		//get interpolants from mCounterexample
 		ArrayList<IPredicate> predicates = new ArrayList<>();
@@ -311,39 +318,45 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 			mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.EmptinessCheckTime);
 		}
 		try {
-			final IDfsVisitor<L, IPredicate> visitor = createVisitor();
+			IDfsVisitor<L, IPredicate> visitor = createVisitor();
 			mPOR.apply(mAbstraction, visitor);
-			//TODO: add request to ConditionalCommutativityCheckerVisitor and restart DFS if required
-			if (visitor instanceof ConditionalCommutativityCheckerVisitor 
-					&& ((ConditionalCommutativityCheckerVisitor<L, IDfsVisitor<L,IPredicate>>) visitor).aborted()) {
-				
-				 NestedWordAutomaton<L, IPredicate> interpolantAutomaton =
-						 ((ConditionalCommutativityCheckerVisitor<L, IDfsVisitor<L,IPredicate>>) visitor)
-						 .getInterpolantAutomaton();
-				
-				final IPredicate initialSink = DataStructureUtils.getOneAndOnly(interpolantAutomaton.getInitialStates(),
-						"initial state");
-				final TotalizeNwa<L, IPredicate> totalInterpol = new TotalizeNwa<>(interpolantAutomaton, initialSink,
-						true);
-				
-				try {
-					if (mItpAutomata == null) {
-						mItpAutomata = totalInterpol;
-					} else {
-						mItpAutomata = new UnionNwa<>(mItpAutomata, totalInterpol, mFactory, false);
+			if (visitor instanceof ConditionalCommutativityCheckerVisitor) {
+				while (((ConditionalCommutativityCheckerVisitor<L, IDfsVisitor<L,IPredicate>>) visitor).aborted()) {
+					 NestedWordAutomaton<L, IPredicate> interpolantAutomaton =
+							 ((ConditionalCommutativityCheckerVisitor<L, IDfsVisitor<L,IPredicate>>) visitor)
+							 .getInterpolantAutomaton();
+					 
+					final IPredicateUnifier predicateUnifier = ((PostConditionTraceChecker<L>) mConComChecker
+							.getTraceChecker()).getPredicateUnifier();
+							((ConditionalCommutativityCheckerVisitor<L, IDfsVisitor<L,IPredicate>>) visitor)
+							.getPredicateUnifier();
+					final IHoareTripleChecker htc = new MonolithicHoareTripleChecker(mCsToolkit);
+					
+					final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> ia = enhanceInterpolantAutomaton(
+							mPref.interpolantAutomatonEnhancement(), predicateUnifier, htc, interpolantAutomaton);
+					
+					final IPredicate initialSink = DataStructureUtils.getOneAndOnly(interpolantAutomaton
+							.getInitialStates(), "initial state");
+					final TotalizeNwa<L, IPredicate> totalInterpol = new TotalizeNwa<>(ia, initialSink, false);
+					try {
+						if (mItpAutomata == null) {
+							mItpAutomata = totalInterpol;
+						} else {
+							mItpAutomata = new UnionNwa<>(mItpAutomata, totalInterpol, mFactory, false);
+						}
+		
+						mAbstraction = new InformationStorage<>(mProgram == null ? mAbstraction : mProgram,
+								mItpAutomata, mFactory, PartialOrderCegarLoop::isFalseLiteral);
+
+						// TODO: DeadEnds?
+						visitor = createVisitor();
+						mPOR.apply(mAbstraction, visitor);
+					} catch (AutomataLibraryException e) {
+						// Auto-generated catch block
+						e.printStackTrace();
 					}
-					// TODO: Hier wird glaube ich im Falle einer infeasible subtrace noch keine infeasibility integriert
-					// InformationStorage nutzt ja die Akzeptanz des fstOperands
-					mAbstraction = new InformationStorage<>(mAbstraction, totalInterpol, mFactory,
-							PartialOrderCegarLoop::isFalseLiteral);
-					// TODO: DeadEnds?
-					return isAbstractionEmpty();
-				} catch (AutomataLibraryException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					int debug = 0;
 				}
-				int debug = 0;
-				
 			}
 			mCounterexample = getCounterexample(visitor);
 			switchToReadonlyMode();
@@ -356,6 +369,11 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 				mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.EmptinessCheckTime);
 			}
 		}
+	}
+
+	private boolean restartIsAbstractionEmpty(IDfsVisitor<L, IPredicate> visitor) {
+		return false;
+	
 	}
 
 	private IBudgetFunction<L, IPredicate> makeBudget(final SleepMapReduction<L, IPredicate, IPredicate> reduction) {
@@ -424,23 +442,11 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 			visitor = new DeadEndOptimizingSearchVisitor<>(visitor, mDeadEndStore, false);
 		}
 		
-		//TODO: replace by a setting
-		if (true) {
-			mCriterion = new RandomCriterion<>(1, 321);
-			final IIcfgSymbolTable symbolTable = mCsToolkit.getSymbolTable();
-			final IPredicateUnifier predicateUnifier = new PredicateUnifier(mLogger, mServices,
-					mCsToolkit.getManagedScript(), mPredicateFactory, symbolTable,
-					mPref.getSimplificationTechnique(), mPref.getXnfConversionTechnique());
-			PostConditionTraceChecker<L> checker = new PostConditionTraceChecker<>(mServices, mAbstraction,
-					mTaskIdentifier, mFactory, predicateUnifier, mStrategyFactory);
-			IIndependenceRelation<IPredicate, L> relation = mPOR.getIndependence(0);
-			SemanticIndependenceConditionGenerator generator = new SemanticIndependenceConditionGenerator(mServices,
-					mCsToolkit.getManagedScript(), mPredicateFactory, relation.isSymmetric(), true);
-			ConditionalCommutativityChecker<L> conChecker = new ConditionalCommutativityChecker<>(mCriterion, relation,
-					mCsToolkit.getManagedScript().getScript(), generator,
-					checker);
+		if (mPref.useConditionalCommutativityChecker().equals(ConComChecker.DFS)
+				|| mPref.useConditionalCommutativityChecker().equals(ConComChecker.BOTH)) {
 			visitor = new ConditionalCommutativityCheckerVisitor<>(visitor, mAbstraction, mServices, mFactory,
-					conChecker);
+					((PostConditionTraceChecker<L>) mConComChecker.getTraceChecker()).getPredicateUnifier(),
+					mConComChecker);
 		}
 
 		return visitor;
@@ -557,6 +563,39 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		}
 		return mDeadEndStore;
 	}
+	
+	private void constructConComChecker() {
+		if (!mPref.useConditionalCommutativityChecker().equals(ConComChecker.NONE)) {
+			switch (mPref.getConComCheckerCriterion()) {
+			case DEFAULT:
+				mCriterion = new DefaultCriterion<>();
+				break;
+			case RANDOM:
+				mCriterion = new RandomCriterion<>(mPref.getConComCheckerRandomProb(),
+						mPref.getConComCheckerRandomSeed());
+				break;
+			case SLEEP_SET:
+				mCriterion = new SleepSetCriterion<>();
+				break;
+			default:
+				throw new UnsupportedOperationException("PartialOrderCegarLoop currently does not support criterion "
+						+ mPref.getConComCheckerCriterion());
+			}
+			final IIcfgSymbolTable symbolTable = mCsToolkit.getSymbolTable();
+			final IPredicateUnifier predicateUnifier = new PredicateUnifier(mLogger, mServices,
+					mCsToolkit.getManagedScript(), mPredicateFactory, symbolTable,
+					mPref.getSimplificationTechnique(), mPref.getXnfConversionTechnique());
+			PostConditionTraceChecker<L> checker = new PostConditionTraceChecker<>(mServices, mAbstraction,
+					mTaskIdentifier, mFactory, predicateUnifier, mStrategyFactory);
+			IIndependenceRelation<IPredicate, L> relation = mPOR.getIndependence(0);
+			SemanticIndependenceConditionGenerator generator = new SemanticIndependenceConditionGenerator(mServices,
+					mCsToolkit.getManagedScript(), mPredicateFactory, relation.isSymmetric(), true);
+			mConComChecker = new ConditionalCommutativityChecker<>(mCriterion, relation,
+					mCsToolkit.getManagedScript().getScript(), generator,
+					checker);
+	
+		}	
+	}
 
 	public static final class MLPredicateWithInterpolants extends AnnotatedMLPredicate<IPredicate> {
 		protected MLPredicateWithInterpolants(final IMLPredicate underlying, final IPredicate annotation) {
@@ -627,8 +666,8 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		@Override
 		public IPredicate determinize(final Map<IPredicate, Set<IPredicate>> down2up) {
 			// No support for calls and returns means the map should always have a simple structure.
-			IPredicate test = createEmptyStackState();
-			//assert down2up.size() == 1 && down2up.containsKey(createEmptyStackState());
+			//IPredicate test = createEmptyStackState();
+			assert down2up.size() == 1 && down2up.containsKey(createEmptyStackState());
 			final List<IPredicate> conjuncts = down2up.get(createEmptyStackState())
 					// sort predicates to ensure deterministic order
 					.stream().sorted(Comparator.comparingInt(Object::hashCode)).collect(Collectors.toList());
@@ -644,4 +683,5 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 			return mPredicateFactory.and(conjuncts);
 		}
 	}
+	
 }

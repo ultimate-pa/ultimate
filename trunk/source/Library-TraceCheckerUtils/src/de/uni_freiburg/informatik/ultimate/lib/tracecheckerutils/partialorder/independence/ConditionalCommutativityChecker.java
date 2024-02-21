@@ -155,4 +155,8 @@ public class ConditionalCommutativityChecker<L extends IAction> implements ICond
 		}
 		return null;
 	}
+	
+	public ITraceChecker<L> getTraceChecker() {
+		return mTraceChecker;
+	}
 }

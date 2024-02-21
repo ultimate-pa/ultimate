@@ -192,6 +192,18 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		OFF, FALLBACK, PURE, COARSE
 	}
 
+	public static final String LABEL_CON_COM_CHECKER = "Additional conditional commutativity checking";
+	private static final ConComChecker DEF_CON_COM_CHECKER = ConComChecker.NONE;
+	
+	public static final String LABEL_CON_COM_CHECKER_CRITERION = "Criterion for conditional commutativity checking";
+	private static final ConComCheckerCriterion DEF_CON_COM_CHECKER_CRITERION = ConComCheckerCriterion.DEFAULT;
+	
+	public static final String LABEL_CON_COM_CHECKER_RANDOM_PROB = "probability for random criterion, format: (prob,seed)";
+	private static final double DEF_CON_COM_CHECKER_RANDOM_PROB = 1;
+
+	public static final String LABEL_CON_COM_CHECKER_RANDOM_SEED = "seed for random criterion, format: (prob,seed)";
+	private static final int DEF_CON_COM_CHECKER_RANDOM_SEED = 123;
+	
 	// Settings for PetriAutomizer
 	// ========================================================================
 
@@ -725,6 +737,16 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_INDEPENDENCE_SCRIPT_DUMP_PATH, DEF_INDEPENDENCE_SCRIPT_DUMP_PATH,
 						PreferenceType.Directory),
+				
+				new UltimatePreferenceItem<>(LABEL_CON_COM_CHECKER, DEF_CON_COM_CHECKER,
+						PreferenceType.Combo, ConComChecker.values()),
+				new UltimatePreferenceItem<>(LABEL_CON_COM_CHECKER_CRITERION, DEF_CON_COM_CHECKER_CRITERION,
+						PreferenceType.Combo, ConComCheckerCriterion.values()),
+				new UltimatePreferenceItem<>(LABEL_CON_COM_CHECKER_RANDOM_PROB, DEF_CON_COM_CHECKER_RANDOM_PROB,
+						PreferenceType.Double),
+				new UltimatePreferenceItem<>(LABEL_CON_COM_CHECKER_RANDOM_SEED, DEF_CON_COM_CHECKER_RANDOM_SEED,
+						PreferenceType.Integer),
+
 
 				getIndependenceSettings(0),
 
@@ -1046,5 +1068,13 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 
 	public enum PathProgramDumpStop {
 		NEVER, AFTER_FIRST_DUMP, BEFORE_FIRST_DUPLICATE
+	}
+	
+	public enum ConComChecker {
+		NONE, DFS, IA, BOTH
+	}
+	
+	public enum ConComCheckerCriterion {
+		DEFAULT, RANDOM, SLEEP_SET
 	}
 }

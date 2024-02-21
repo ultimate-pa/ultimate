@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Marcel Ebbinghaus
+ * Copyright (C) 2024 Marcel Ebbinghaus
  *
  * This file is part of the ULTIMATE TraceCheckerUtils Library.
  *
@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.AnnotatedMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.MLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
@@ -76,6 +77,7 @@ V extends IDfsVisitor<L, IPredicate>> extends WrapperVisitor<L, IPredicate, V> {
 	private TracePredicates mTracePredicates;
 	private IUltimateServiceProvider mServices;
 	private IEmptyStackStateFactory<IPredicate> mEmptyStackStateFactory;
+	private IPredicateUnifier mPredicateUnifier;
 
 	
 	/**
@@ -91,17 +93,20 @@ V extends IDfsVisitor<L, IPredicate>> extends WrapperVisitor<L, IPredicate, V> {
 	 *            Ultimate services           
 	 * @param emptyStackStateFactory
 	 *            Factory
+	 * @param predicateUnifier
+	 *            predicate unifier
 	 * @param checker
 	 *            Instance of ConditionalCommutativityChecker
 	 */
 	public ConditionalCommutativityCheckerVisitor(V underlying, INwaOutgoingLetterAndTransitionProvider<L, IPredicate>
 	abstraction, final IUltimateServiceProvider services,  final IEmptyStackStateFactory<IPredicate>
-	emptyStackStateFactory, ConditionalCommutativityChecker<L> checker) {
+	emptyStackStateFactory, IPredicateUnifier predicateUnifier, ConditionalCommutativityChecker<L> checker) {
 		super(underlying);
 		mAbstraction = abstraction;
 		mChecker = checker;
 		mServices = services;
 		mEmptyStackStateFactory = emptyStackStateFactory;
+		mPredicateUnifier = predicateUnifier;
 	}
 	
 	@Override
@@ -121,6 +126,7 @@ V extends IDfsVisitor<L, IPredicate>> extends WrapperVisitor<L, IPredicate, V> {
 		return mUnderlying.discoverTransition(source, letter, target);
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
 	public boolean discoverState(final IPredicate state) {
 		
@@ -226,14 +232,25 @@ V extends IDfsVisitor<L, IPredicate>> extends WrapperVisitor<L, IPredicate, V> {
 		final NestedWordAutomaton<L, IPredicate> automaton =
 				new NestedWordAutomaton<>(new AutomataLibraryServices(mServices), vpAlphabet, mEmptyStackStateFactory);
 		automaton.addState(true, false, conPredicates.get(0));
+		automaton.addState(false, true, mPredicateUnifier.getFalsePredicate());
 		for (Integer i = 1; i < conPredicates.size(); i++) {
 			final IPredicate succPred = conPredicates.get(i);
+			final IPredicate prePred = conPredicates.get(i - 1);
+			final L letter = mRun.getWord().getSymbol(i - 1);
 			if (!automaton.contains(succPred)) {
-				automaton.addState(false, SmtUtils.isFalseLiteral(succPred.getFormula()), succPred);
+				automaton.addState(false, false, succPred);
 			}
-			automaton.addInternalTransition(conPredicates.get(i - 1), mRun.getWord().getSymbol(i - 1), succPred);
+			if (SmtUtils.isFalseLiteral(prePred.getFormula())) {
+				automaton.addInternalTransition(prePred, letter, automaton.getFinalStates().iterator().next());
+			}
+			automaton.addInternalTransition(prePred, letter, succPred);
 		}
 		return automaton;
+	}
+	
+	public IPredicateUnifier getPredicateUnifier() {
+		return mPredicateUnifier;
+		
 	}
 
 }

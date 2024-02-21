@@ -111,6 +111,10 @@ public class PostConditionTraceChecker<L extends IIcfgTransition<?>> implements 
 		}
 		return null;
 	}
+	
+	public IPredicateUnifier getPredicateUnifier() {
+		return mPredicateUnifier;
+	}
 
 	/**
 	 * An implementation of IPostconditionProvider which just returns the given condition.
