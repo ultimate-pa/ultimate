@@ -46,7 +46,7 @@ public class AcslTypeUtils {
 			new String[] { "short", "short int", "signed short", "signed short int" };
 	private static final String[] UNSIGNED_SHORT_STRINGS = new String[] { "unsigned short", "unsigned short int" };
 	private static final String[] SIGNED_INT_STRINGS = new String[] { "int", "signed int" };
-	private static final String[] UNSIGNED_INT_STRINGS = new String[] { "unsigned int" };
+	private static final String[] UNSIGNED_INT_STRINGS = new String[] { "unsigned int", "unsigned" };
 	private static final String[] SIGNED_LONG_STRINGS =
 			new String[] { "long", "long int", "signed long", "signed long int" };
 	private static final String[] UNSIGNED_LONG_STRINGS = new String[] { "unsigned long", "unsigned long int" };
