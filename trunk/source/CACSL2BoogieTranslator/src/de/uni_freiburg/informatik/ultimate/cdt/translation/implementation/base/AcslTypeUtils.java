@@ -83,12 +83,18 @@ public class AcslTypeUtils {
 		case "unsigned long long int":
 		case "size_t":
 			return CPrimitives.ULONGLONG;
+		case "__int128":
+			return CPrimitives.INT128;
+		case "unsigned __int128":
+			return CPrimitives.UINT128;
 		case "float":
 			return CPrimitives.FLOAT;
 		case "double":
 			return CPrimitives.DOUBLE;
 		case "long double":
 			return CPrimitives.LONGDOUBLE;
+		case "__float128":
+			return CPrimitives.FLOAT128;
 		case "_Bool":
 			return CPrimitives.BOOL;
 		default:
