@@ -68,6 +68,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.C
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.StandardFunctionHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UndeclaredFunctionException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
@@ -362,6 +363,13 @@ public class ProcedureManager {
 			throw new IllegalStateException("Check for isGlobalScope first");
 		}
 		return mCurrentProcedureInfo.getProcedureName();
+	}
+
+	public CType getReturnTypeOfCurrentProcedure() {
+		if (mCurrentProcedureInfo == null) {
+			throw new IllegalStateException("Check for isGlobalScope first");
+		}
+		return mCurrentProcedureInfo.getCType().getResultType();
 	}
 
 	public CFunction getCFunctionType(final String function) {

@@ -765,11 +765,11 @@ public class ACSLHandler implements IACSLHandler {
 	public Result visit(final IDispatcher main, final ACSLResultExpression node) {
 		final String id = SFO.RES;
 		final CACSLLocation loc = mLocationFactory.createACSLLocation(node);
-		// TODO: what is the right storageclass here? and procedure?..
+		final CType type = mProcedureManager.getReturnTypeOfCurrentProcedure();
 		final IdentifierExpression idEx = ExpressionFactory.constructIdentifierExpression(loc,
-				mTypeHandler.getBoogieTypeForCType(new CPrimitive(CPrimitives.INT)), id,
+				mTypeHandler.getBoogieTypeForCType(type), id,
 				new DeclarationInformation(StorageClass.PROC_FUNC_OUTPARAM, mProcedureManager.getCurrentProcedureID()));
-		return new ExpressionResult(new RValue(idEx, new CPrimitive(CPrimitives.INT)));
+		return new ExpressionResult(new RValue(idEx, type));
 	}
 
 	@Override
