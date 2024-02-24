@@ -1025,6 +1025,9 @@ public class FunctionHandler {
 
 		final VarList[] in = processInParams(loc, funcType, procInfo, hook);
 
+		// if possible, find the actual definition of this declaration s.t. we can update the varargs usage
+		procInfo.updateCFunction(updateVarArgsForDeclaration(hook, funcType, loc, methodName));
+
 		// OUT VARLIST : only one out param in C
 		VarList[] out = new VarList[1];
 
@@ -1063,9 +1066,6 @@ public class FunctionHandler {
 				new Procedure(loc, attr, procInfo.getProcedureName(), typeParams, in, out, spec, null);
 
 		procInfo.resetDeclaration(newDeclaration);
-
-		// if possible, find the actual definition of this declaration s.t. we can update the varargs usage
-		procInfo.updateCFunction(updateVarArgsForDeclaration(hook, funcType, loc, methodName));
 		// end scope for retranslation of ACSL specification
 		mProcedureManager.endProcedureScope(mCHandler);
 	}
