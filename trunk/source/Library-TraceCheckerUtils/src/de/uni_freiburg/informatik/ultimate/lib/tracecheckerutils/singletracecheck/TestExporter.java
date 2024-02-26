@@ -421,8 +421,14 @@ class TestVector {
 				}
 			} else if (type.equals("bool")) {
 				final BigInteger value = new BigInteger(valueInRange);
-				final BigInteger newValue = value.mod(new BigInteger("2"));
-				valueInRange = String.valueOf(newValue);
+				if (value.equals(BigInteger.ZERO)) {
+					valueInRange = String.valueOf("0");
+				} else {
+					valueInRange = String.valueOf("1");
+				}
+				// final BigInteger value = new BigInteger(valueInRange);
+				// final BigInteger newValue = value.mod(new BigInteger("2"));
+				// valueInRange = String.valueOf(newValue);
 			}
 			break;
 		}
@@ -449,8 +455,13 @@ class TestVector {
 
 			switch (type) {
 			case "bool": {
-				final BigInteger newValue = value.mod(new BigInteger("2"));
-				valueInRange = String.valueOf(newValue);
+				if (value.equals(BigInteger.ZERO)) {
+					valueInRange = String.valueOf("0");
+				} else {
+					valueInRange = String.valueOf("1");
+				}
+				// final BigInteger newValue = value.mod(new BigInteger("2"));
+				// valueInRange = String.valueOf(newValue);
 				break;
 			}
 			case "short": {
