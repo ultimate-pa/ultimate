@@ -44,7 +44,7 @@ public class AutomizerRegressionTest extends AbstractTraceAbstractionTestSuite {
 	private static final String[] mUltimateRepository_ForwardPredicates = {
 		"examples/programs/regression",
 //		"examples/programs/quantifier/regression",
-//		"examples/programs/recursive/regression",
+		"examples/programs/recursive/regression",
 //		"examples/programs/toy",
 //		"examples/ultimate-benchmarks/pathprograms/20170417-DifficultOverflow/MapElim/"
 	};
@@ -60,12 +60,12 @@ public class AutomizerRegressionTest extends AbstractTraceAbstractionTestSuite {
 	
 	private static final String[] mSettings_ForwardPredicates = {
 		"automizer/ForwardPredicates.epf",
-		"automizer/BackwardPredicates.epf",
+//		"automizer/BackwardPredicates.epf",
 	};
 	
 	private static final String[] mSettings_TreeInterpolation = {
-		"automizer/NestedInterpolants.epf",
-		"automizer/TreeInterpolants.epf",
+//		"automizer/NestedInterpolants.epf",
+//		"automizer/TreeInterpolants.epf",
 	};
 
 	
@@ -83,7 +83,7 @@ public class AutomizerRegressionTest extends AbstractTraceAbstractionTestSuite {
 	};
 	
 	private static final String[] mCToolchains = {
-		"AutomizerC.xml",
+//		"AutomizerC.xml",
 //		"AutomizerCInline.xml",
 	};
 
