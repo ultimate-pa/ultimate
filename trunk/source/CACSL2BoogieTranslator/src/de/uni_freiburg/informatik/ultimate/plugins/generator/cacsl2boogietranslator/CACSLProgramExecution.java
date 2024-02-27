@@ -30,29 +30,28 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import org.eclipse.cdt.core.dom.ast.IASTExpression;
-
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.core.lib.translation.ProgramExecutionFormatter;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslationValueProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Boogie2ACSL.BacktranslatedExpression;
 
 /**
  *
  * @author dietsch@informatik.uni-freiburg.de
  *
  */
-public class CACSLProgramExecution implements IProgramExecution<CACSLLocation, IASTExpression> {
+public class CACSLProgramExecution implements IProgramExecution<CACSLLocation, BacktranslatedExpression> {
 
-	private final ProgramState<IASTExpression> mInitialState;
-	private final List<ProgramState<IASTExpression>> mProgramStates;
+	private final ProgramState<BacktranslatedExpression> mInitialState;
+	private final List<ProgramState<BacktranslatedExpression>> mProgramStates;
 	private final List<AtomicTraceElement<CACSLLocation>> mTrace;
 	private final boolean mIsConcurrent;
 
-	public CACSLProgramExecution(final ProgramState<IASTExpression> initialState,
+	public CACSLProgramExecution(final ProgramState<BacktranslatedExpression> initialState,
 			final Collection<AtomicTraceElement<CACSLLocation>> trace,
-			final Collection<ProgramState<IASTExpression>> programStates, final boolean isConcurrent) {
+			final Collection<ProgramState<BacktranslatedExpression>> programStates, final boolean isConcurrent) {
 		assert trace != null;
 		assert programStates != null;
 		assert trace.size() == programStates.size() : "Need a program state after each atomic trace element";
@@ -85,18 +84,18 @@ public class CACSLProgramExecution implements IProgramExecution<CACSLLocation, I
 	}
 
 	@Override
-	public ProgramState<IASTExpression> getProgramState(final int i) {
+	public ProgramState<BacktranslatedExpression> getProgramState(final int i) {
 		return mProgramStates.get(i);
 	}
 
 	@Override
-	public ProgramState<IASTExpression> getInitialProgramState() {
+	public ProgramState<BacktranslatedExpression> getInitialProgramState() {
 		return mInitialState;
 	}
 
 	@Override
-	public Class<IASTExpression> getExpressionClass() {
-		return IASTExpression.class;
+	public Class<BacktranslatedExpression> getExpressionClass() {
+		return BacktranslatedExpression.class;
 	}
 
 	@Override
@@ -106,13 +105,13 @@ public class CACSLProgramExecution implements IProgramExecution<CACSLLocation, I
 
 	@Override
 	public String toString() {
-		final ProgramExecutionFormatter<CACSLLocation, IASTExpression> pef =
+		final ProgramExecutionFormatter<CACSLLocation, BacktranslatedExpression> pef =
 				new ProgramExecutionFormatter<>(new CACSLBacktranslationValueProvider());
 		return pef.formatProgramExecution(this);
 	}
 
 	@Override
-	public IBacktranslationValueProvider<CACSLLocation, IASTExpression> getBacktranslationValueProvider() {
+	public IBacktranslationValueProvider<CACSLLocation, BacktranslatedExpression> getBacktranslationValueProvider() {
 		return new CACSLBacktranslationValueProvider();
 	}
 

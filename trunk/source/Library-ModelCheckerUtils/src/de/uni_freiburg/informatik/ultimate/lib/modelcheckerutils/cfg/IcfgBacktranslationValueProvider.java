@@ -35,8 +35,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class IcfgBacktranslationValueProvider<L extends IAction>
-		implements IBacktranslationValueProvider<L, Term> {
+public class IcfgBacktranslationValueProvider<L extends IAction> implements IBacktranslationValueProvider<L, Term> {
 
 	@Override
 	public int getStartLineNumberFromStep(final L step) {
@@ -71,10 +70,5 @@ public class IcfgBacktranslationValueProvider<L extends IAction>
 	@Override
 	public String getStringFromExpression(final Term expression) {
 		return expression.toStringDirect();
-	}
-
-	@Override
-	public boolean containsProcedureCall(final Term expression) {
-		return false;
 	}
 }
