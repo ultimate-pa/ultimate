@@ -25,6 +25,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence;
 
+import java.util.List;
+
+import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
@@ -37,10 +40,13 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
  * @param <S>
  *            The type of states.
  */
-public interface IConditionalCommutativityCriterion<L, S> {
+public interface IConditionalCommutativityCriterion<L> {
 
-	boolean decide(S state, L letter1, L letter2);
+	boolean decide(IPredicate state, IRun<L, IPredicate> run, L letter1, L letter2);
 
 	boolean decide(IPredicate condition);
+
+	void updateCondition(IPredicate condition);
+	
 
 }

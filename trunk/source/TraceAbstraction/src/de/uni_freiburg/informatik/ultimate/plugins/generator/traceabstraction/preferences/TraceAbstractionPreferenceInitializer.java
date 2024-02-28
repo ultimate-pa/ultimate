@@ -1075,6 +1075,6 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	}
 	
 	public enum ConComCheckerCriterion {
-		DEFAULT, RANDOM, SLEEP_SET
+		DEFAULT, RANDOM, SLEEP_SET, LIMITED_CHECKS
 	}
 }

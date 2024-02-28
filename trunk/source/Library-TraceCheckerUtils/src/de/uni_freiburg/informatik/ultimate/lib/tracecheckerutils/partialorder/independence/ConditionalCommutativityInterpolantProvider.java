@@ -45,9 +45,11 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStat
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.ITraceChecker;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.LoopLockstepOrder.PredicateWithLastThread;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 
@@ -90,7 +92,7 @@ public class ConditionalCommutativityInterpolantProvider<L extends IAction> {
 	 * 			  An ITraceChecker responsible for checking whether a condition is feasible 
 	 */
 	public ConditionalCommutativityInterpolantProvider(final IUltimateServiceProvider services,
-			final IConditionalCommutativityCriterion<L, IPredicate> criterion,
+			final IConditionalCommutativityCriterion<L> criterion,
 			final IIndependenceRelation<IPredicate, L> independenceRelation, Script script,
 			final IIndependenceConditionGenerator generator, final INwaOutgoingLetterAndTransitionProvider<L,
 			IPredicate> abstraction, final IEmptyStackStateFactory<IPredicate> emptyStackStateFactory,
@@ -124,8 +126,14 @@ public class ConditionalCommutativityInterpolantProvider<L extends IAction> {
 			IPredicate state = mRun.getStateSequence().get(i);
 			
 			//state = ((SleepPredicate) state);
+			IPredicate pred = ((SleepPredicate<L>) state).getUnderlying();
+			
+			if (pred instanceof PredicateWithLastThread) {
+				pred = ((PredicateWithLastThread) pred).getUnderlying();
+			}
+			
 			final Iterator<OutgoingInternalTransition<L, IPredicate>> iterator =
-					mAbstraction.internalSuccessors(((SleepPredicate<L>) state).getUnderlying()).iterator();
+					mAbstraction.internalSuccessors(pred).iterator();
 			final List<OutgoingInternalTransition<L, IPredicate>> transitions = new ArrayList<>();
 			while (iterator.hasNext()) {
 				transitions.add(iterator.next());
@@ -133,27 +141,6 @@ public class ConditionalCommutativityInterpolantProvider<L extends IAction> {
 			if (checkState(state, transitions, i, runPredicates)) {
 				return mCopy;
 			}
-
-			//int debug2=0;
-			/*
-			for (int j = 0; j < transitions.size(); j++) {
-				final OutgoingInternalTransition<L, IPredicate> transition1 = transitions.get(j);
-				for (int k = j + 1; k < transitions.size(); k++) {
-					final OutgoingInternalTransition<L, IPredicate> transition2 = transitions.get(k);
-					List<IPredicate> interpolantPredicates = new ArrayList<>();
-					interpolantPredicates.addAll(getInterpolantPredicates(i,
-							runPredicates.get(mRun.getStateSequence().indexOf(state))));
-					NestedRun<L, IPredicate> currentRun = (NestedRun<L, IPredicate>) mRun;
-					if (i != mRun.getStateSequence().size() - 1) {
-						currentRun = currentRun.getSubRun(0, i);
-					}
-					List<IPredicate> conPredicates = check(currentRun, interpolantPredicates, state,
-							transition1.getLetter(), transition2.getLetter());
-					if (!conPredicates.isEmpty() && conPredicates.get(conPredicates.size() - 2).getFormula().toString().equals("false")) {
-						return mCopy;
-					}
-				}
-			}*/
 		}
 		return mCopy;
 	}
@@ -196,7 +183,7 @@ public class ConditionalCommutativityInterpolantProvider<L extends IAction> {
 
 	private List<IPredicate> getInterpolantPredicates(int runIndex, IPredicate runPredicate) {
 		List<IPredicate> interpolantPredicates = new ArrayList<>();
-		if (runPredicate != null) {
+		if (runPredicate != null && !SmtUtils.isTrueLiteral(runPredicate.getFormula())) {
 			interpolantPredicates.add(runPredicate);
 		}
 		if (runIndex == 0) {
@@ -216,15 +203,21 @@ public class ConditionalCommutativityInterpolantProvider<L extends IAction> {
 				while (iterator.hasNext()) {
 					IPredicate succ = iterator.next().getSucc();
 					if (SmtUtils.isFalseLiteral(succ.getFormula())) {
+						//interpolantPredicates.add(succ);
+						interpolantPredicates = new ArrayList<>();
 						interpolantPredicates.add(succ);
 						return interpolantPredicates;
-					} else if (!SmtUtils.isTrueLiteral(succ.getFormula())) {
-						nextWorklist.add(succ);
-					}
+					} 
+					nextWorklist.add(succ);
 				}
 			}
 			if (i == runIndex - 1) {
-				interpolantPredicates.addAll(nextWorklist);
+				for (IPredicate pred : nextWorklist) {
+					if (!SmtUtils.isTrueLiteral(pred.getFormula())) {
+						interpolantPredicates.add(pred);
+					}
+				}
+				//interpolantPredicates.addAll(nextWorklist);
 			}
 			worklist = nextWorklist;
 		}

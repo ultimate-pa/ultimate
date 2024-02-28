@@ -25,8 +25,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence;
 
+import java.util.List;
 import java.util.Random;
 
+import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
@@ -36,10 +38,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
  *
  * @param <L>
  *            The type of letters.
- * @param <S>
- *            The type of states.
  */
-public class RandomCriterion<L, S> implements IConditionalCommutativityCriterion<L, S> {
+public class RandomCriterion<L> implements IConditionalCommutativityCriterion<L> {
 
 	private final double mProbability;
 	private final Random mRandomGenerator;
@@ -60,13 +60,19 @@ public class RandomCriterion<L, S> implements IConditionalCommutativityCriterion
 	}
 
 	@Override
-	public boolean decide(final S state, final L letter1, final L letter2) {
+	public boolean decide(final IPredicate state, final IRun<L, IPredicate> run, final L letter1, final L letter2) {
 		return (mRandomGenerator.nextInt(100) < (100 * mProbability));
 	}
 
 	@Override
 	public boolean decide(final IPredicate condition) {
 		return condition != null;
+	}
+
+	@Override
+	public void updateCondition(IPredicate condition) {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

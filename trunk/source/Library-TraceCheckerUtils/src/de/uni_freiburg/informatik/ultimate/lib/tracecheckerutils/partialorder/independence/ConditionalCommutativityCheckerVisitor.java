@@ -47,10 +47,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.AnnotatedMLPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.MLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.LoopLockstepOrder.PredicateWithLastThread;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
 
 /**
@@ -67,7 +69,7 @@ public class ConditionalCommutativityCheckerVisitor<L extends IIcfgTransition<?>
 V extends IDfsVisitor<L, IPredicate>> extends WrapperVisitor<L, IPredicate, V> {
 
 	private boolean mAbort = false;
-	private final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mAbstraction;
+	private INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mAbstraction;
 	private ConditionalCommutativityChecker<L> mChecker;
 	private final Deque<IPredicate> mStateStack = new ArrayDeque<>();
 	private final Deque<L> mLetterStack = new ArrayDeque<>();
@@ -147,26 +149,55 @@ V extends IDfsVisitor<L, IPredicate>> extends WrapperVisitor<L, IPredicate, V> {
 		
 		IPredicate pred = ((SleepPredicate<L>) state).getUnderlying();
 		
+		if (pred instanceof PredicateWithLastThread) {
+			pred = ((PredicateWithLastThread) pred).getUnderlying();
+		}
+		
+		IPredicate annotation = null;
+		if (!(pred instanceof MLPredicate)) {
+			annotation = ((AnnotatedMLPredicate<IPredicate>) pred).getAnnotation();
+			
+			IMLPredicate runPred;
+			IPredicate runState;
+			for (int i = 0; i < (mRun.getLength() - 1); i++) {
+				runState = mRun.getStateSequence().get(i);
+				runPred = ((SleepPredicate<L>) runState).getUnderlying();
+				if (((AnnotatedMLPredicate<IPredicate>) runPred).getUnderlying()
+						.equals(((AnnotatedMLPredicate<IPredicate>) pred).getUnderlying())) {
+					return mUnderlying.discoverState(state);
+				}
+			}
+		}	
+		
+		final Iterator<OutgoingInternalTransition<L, IPredicate>> iterator =
+				mAbstraction.internalSuccessors(state).iterator();
+		final List<OutgoingInternalTransition<L, IPredicate>> transitions = new ArrayList<>();
+		
+		/*
 		final Iterator<OutgoingInternalTransition<L, IPredicate>> iterator =
 				mAbstraction.internalSuccessors(pred).iterator();
 		final List<OutgoingInternalTransition<L, IPredicate>> transitions = new ArrayList<>();
+		*/
+		
 		while (iterator.hasNext()) {
 			transitions.add(iterator.next());
-		}
+		}	
+	
+		
 		for (int j = 0; j < transitions.size(); j++) {
 			final OutgoingInternalTransition<L, IPredicate> transition1 = transitions.get(j);
 			for (int k = j + 1; k < transitions.size(); k++) {
 				final OutgoingInternalTransition<L, IPredicate> transition2 = transitions.get(k);
 				L letter1 = transition1.getLetter();
 				L letter2 = transition2.getLetter();
-				TracePredicates tracePredicates;
-				if (pred instanceof MLPredicate) {
-					tracePredicates = mChecker.checkConditionalCommutativity(mRun,
-							List.of(), state, letter1, letter2);
-				} else {
-					IPredicate annotation = ((AnnotatedMLPredicate<IPredicate>) pred).getAnnotation();
+				TracePredicates tracePredicates;										
+				
+				if (annotation != null && !SmtUtils.isTrueLiteral(annotation.getFormula())) {
 					tracePredicates = mChecker.checkConditionalCommutativity(mRun,
 							List.of(annotation), state, letter1, letter2);
+				} else {
+					tracePredicates = mChecker.checkConditionalCommutativity(mRun,
+							List.of(), state, letter1, letter2);
 				}
 				if (tracePredicates != null) {
 					mAbort = true;
@@ -174,7 +205,6 @@ V extends IDfsVisitor<L, IPredicate>> extends WrapperVisitor<L, IPredicate, V> {
 					int debug = 0;
 					return mUnderlying.discoverState(state);
 				}
-
 			}
 		}
 		return mUnderlying.discoverState(state);
@@ -190,7 +220,7 @@ V extends IDfsVisitor<L, IPredicate>> extends WrapperVisitor<L, IPredicate, V> {
 		mLetterStack.pollLast();
 		
 		if (mRun.getStateSequence().size() > 1) {
-			mRun = mRun.getSubRun(0, mRun.getStateSequence().size() - 2);
+			mRun = mRun.getSubRun(0, mRun.getLength() - 2);		
 		} else {
 			mRun = null;
 		}
@@ -241,7 +271,8 @@ V extends IDfsVisitor<L, IPredicate>> extends WrapperVisitor<L, IPredicate, V> {
 				automaton.addState(false, false, succPred);
 			}
 			if (SmtUtils.isFalseLiteral(prePred.getFormula())) {
-				automaton.addInternalTransition(prePred, letter, automaton.getFinalStates().iterator().next());
+				//automaton.addInternalTransition(prePred, letter, automaton.getFinalStates().iterator().next());
+				return automaton;
 			}
 			automaton.addInternalTransition(prePred, letter, succPred);
 		}
@@ -250,6 +281,11 @@ V extends IDfsVisitor<L, IPredicate>> extends WrapperVisitor<L, IPredicate, V> {
 	
 	public IPredicateUnifier getPredicateUnifier() {
 		return mPredicateUnifier;
+		
+	}
+
+	public void setReduction(INwaOutgoingLetterAndTransitionProvider<L, IPredicate> test) {
+		mAbstraction = test;
 		
 	}
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Marcel Ebbinghaus
+ * Copyright (C) 2024 Marcel Ebbinghaus
  *
  * This file is part of the ULTIMATE TraceAbstraction plug-in.
  *
@@ -37,19 +37,19 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.ITraceCheckStrategyModule;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.ITraceChecker;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IPostconditionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine.ITARefinementStrategy;
 
 /**
- * An implementation of ITraceChecker which checks whether the postcondition holds after the execution of the run.
+ * An implementation of ITraceChecker which checks whether assuming the precondition holds initially,
+ * the postcondition holds after the execution of the run.
  *
  * @author Marcel Ebbinghaus
  *
  *@param <L>
  *            The type of letters.
  */
-public class PostConditionTraceChecker<L extends IIcfgTransition<?>> implements ITraceChecker<L> {
+public class PrePostConditionTraceChecker<L extends IIcfgTransition<?>> implements ITraceChecker<L> {
 
 	private IUltimateServiceProvider mServices;
 	private IAutomaton<L, IPredicate> mAbstraction;
@@ -59,7 +59,7 @@ public class PostConditionTraceChecker<L extends IIcfgTransition<?>> implements 
 	private IPredicateUnifier mPredicateUnifier;
 	
 	/**
-	 * Constructs a PostConditionTraceChecker.
+	 * Constructs a PrePostConditionTraceChecker.
 	 *
 	 * @author Marcel Ebbinghaus
 	 *
@@ -76,7 +76,7 @@ public class PostConditionTraceChecker<L extends IIcfgTransition<?>> implements 
 	 * @param strategyFactory
 	 *            Strategy factory.    
 	 */
-	public PostConditionTraceChecker(final IUltimateServiceProvider services,
+	public PrePostConditionTraceChecker(final IUltimateServiceProvider services,
 			final IAutomaton<L, IPredicate> abstraction, final TaskIdentifier taskIdentifier,
 			IEmptyStackStateFactory<IPredicate> emptyStackStateFactory, IPredicateUnifier predicateUnifier,
 			StrategyFactory<L> strategyFactory) {
@@ -89,13 +89,13 @@ public class PostConditionTraceChecker<L extends IIcfgTransition<?>> implements 
 		mStrategyFactory = strategyFactory;
 		
 	}
-
+	
 	@SuppressWarnings("unchecked")
 	@Override
 	public TracePredicates checkTrace(IRun<L, IPredicate> run, IPredicate preCondition, IPredicate postCondition) {
 		
 		ITARefinementStrategy<L> strategy =	mStrategyFactory.constructStrategy(mServices, run, mAbstraction,
-				mTaskIdentifier, mEmptyStackFactory, mPredicateUnifier, mPredicateUnifier.getTruePredicate(),
+				mTaskIdentifier, mEmptyStackFactory, mPredicateUnifier, mPredicateUnifier.getOrConstructPredicate(preCondition),
 				mPredicateUnifier.getOrConstructPredicate(postCondition), RefinementStrategy.SMTINTERPOL);
 		
 		while (strategy.hasNextFeasilibityCheck()) {
@@ -116,23 +116,5 @@ public class PostConditionTraceChecker<L extends IIcfgTransition<?>> implements 
 		return mPredicateUnifier;
 	}
 
-	/**
-	 * An implementation of IPostconditionProvider which just returns the given condition.
-	 *
-	 * @author Marcel Ebbinghaus   
-	 */
-	private class PostConditionProvider implements IPostconditionProvider {
 
-		private IPredicate mCondition;
-
-		public PostConditionProvider(IPredicate condition) {
-			mCondition = condition;
-		}
-
-		@Override
-		public IPredicate constructPostcondition(IPredicateUnifier predicateUnifier) {
-			return predicateUnifier.getOrConstructPredicate(mCondition);
-		}
-
-	}
 }

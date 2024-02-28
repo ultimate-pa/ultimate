@@ -25,6 +25,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence;
 
+import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
@@ -34,19 +35,25 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
  *
  * @param <L>
  *            The type of letters.
- * @param <S>
- *            The type of states.
  */
-public class DefaultCriterion<L,S> implements IConditionalCommutativityCriterion<L,S> {
+public class DefaultCriterion<L> implements IConditionalCommutativityCriterion<L> {
 
+	
 	@Override
-	public boolean decide(S state, L letter1, L letter2) {
+	public boolean decide(final IPredicate state, final IRun<L, IPredicate> run, final L letter1, final L letter2) {
+		
 		return true;
 	}
 
 	@Override
-	public boolean decide(IPredicate condition) {
+	public boolean decide(final IPredicate condition) {
 		return condition != null;
+	}
+
+	@Override
+	public void updateCondition(IPredicate condition) {
+		// TODO Auto-generated method stub
+		
 	}
 	
 }

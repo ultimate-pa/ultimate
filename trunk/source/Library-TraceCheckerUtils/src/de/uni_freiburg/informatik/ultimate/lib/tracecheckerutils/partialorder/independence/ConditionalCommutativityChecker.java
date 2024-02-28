@@ -52,12 +52,12 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public class ConditionalCommutativityChecker<L extends IAction> implements IConditionalCommutativityChecker<L> {
 
-	private final IConditionalCommutativityCriterion<L, IPredicate> mCriterion;
+	private final IConditionalCommutativityCriterion<L> mCriterion;
 	private IIndependenceRelation<IPredicate, L> mIndependenceRelation;
 	private final IIndependenceConditionGenerator mGenerator;
 	private final ITraceChecker<L> mTraceChecker;
-	private Map<Pair<L,L>,Integer> mStatementMap;
 	private Script mScript;
+	private Map<Pair<L, L>, Integer> mStatementMap;
 
 	/**
 	 * Constructs a new instance of ConditionalCommutativityChecker.
@@ -75,7 +75,7 @@ public class ConditionalCommutativityChecker<L extends IAction> implements ICond
 	 * @param traceChecker
 	 *            An ITraceChecker responsible for checking whether a condition is feasible
 	 */
-	public ConditionalCommutativityChecker(final IConditionalCommutativityCriterion<L, IPredicate> criterion,
+	public ConditionalCommutativityChecker(final IConditionalCommutativityCriterion<L> criterion,
 			final IIndependenceRelation<IPredicate, L> independenceRelation, Script script,
 			final IIndependenceConditionGenerator generator, final ITraceChecker<L> traceChecker) {
 		mCriterion = criterion;
@@ -107,16 +107,6 @@ public class ConditionalCommutativityChecker<L extends IAction> implements ICond
 	@Override
 	public TracePredicates checkConditionalCommutativity(final IRun<L, IPredicate> run, List<IPredicate> predicates,
 			final IPredicate state, final L letter1, final L letter2) {
-		/*
-		mIndependenceRelation.isIndependent(state, letter1, letter2).equals(Dependence.INDEPENDENT);
-		if (!predicates.isEmpty()) {
-			 for (IPredicate pred: predicates) {
-				 if (mIndependenceRelation.isIndependent(pred, letter1, letter2).equals(Dependence.INDEPENDENT)) {
-						return null;
-					}
-			 }
-		} 
-		*/
 		
 		IPredicate pred = null;
 		if (!predicates.isEmpty()) {
@@ -129,7 +119,8 @@ public class ConditionalCommutativityChecker<L extends IAction> implements ICond
 			return null;
 		}
 		
-		if (mCriterion.decide(state, letter1, letter2)) {
+		if (mCriterion.decide(state, run, letter1, letter2)) {
+			
 			IPredicate condition;
 			if (pred != null) {
 				condition = mGenerator.generateCondition(
@@ -141,16 +132,17 @@ public class ConditionalCommutativityChecker<L extends IAction> implements ICond
 			
 			if (mCriterion.decide(condition) && !condition.getFormula().toString().equals("true")) {
 				
-				//ensures that each pair is checked at most two times (should later on be removed)
 				Pair<L,L> pair = new Pair<>(letter1,letter2);
-				if (!mStatementMap.containsKey(pair)) {
-					mStatementMap.put(pair, 1);
-				} else if (mStatementMap.get(pair) == 1) {
-					mStatementMap.replace(pair, 2);
-				}	else {
+				//ensures that a pair which was already successfully checked, is not checked again
+				if (mStatementMap.containsKey(pair)) {
 					return null;
 				}
-				return mTraceChecker.checkTrace(run, null, condition);
+				TracePredicates trace = mTraceChecker.checkTrace(run, null, condition);
+				if (trace != null) {
+						mStatementMap.put(pair, 1);
+						mCriterion.updateCondition(condition);
+				}
+				return trace;
 			}
 		}
 		return null;

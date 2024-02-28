@@ -75,6 +75,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.LoopLockstepOrder.PredicateWithLastThread;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.ConditionalCommutativityCheckerVisitor;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceBuilder;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
@@ -316,9 +317,20 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 			break;
 		case SLEEP_NEW_STATES:
 			if (mIndependenceRelations.size() == 1) {
+				//createBuildVisitor(null, null)
+				INwaOutgoingLetterAndTransitionProvider<L, IPredicate> test = 
+						new MinimalSleepSetReduction<>(input, mSleepFactory, independence, mDfsOrder);
+				
+				if (visitor instanceof DeadEndOptimizingSearchVisitor && ((DeadEndOptimizingSearchVisitor<L, IPredicate, ?>) visitor)
+						.getUnderlying() instanceof ConditionalCommutativityCheckerVisitor) {
+					((ConditionalCommutativityCheckerVisitor<L,?>) ((DeadEndOptimizingSearchVisitor<L, IPredicate, ?>) visitor).getUnderlying()).setReduction(test);
+				}
+				
+				DepthFirstTraversal.traverse(mAutomataServices, test, mDfsOrder, visitor);
+				/*
 				DepthFirstTraversal.traverse(mAutomataServices,
 						new MinimalSleepSetReduction<>(input, mSleepFactory, independence, mDfsOrder), mDfsOrder,
-						visitor);
+						visitor);*/
 			} else {
 				final var red = new SleepMapReduction<>(input, mIndependenceRelations, mDfsOrder, mSleepMapFactory,
 						mGetBudget.andThen(CachedBudget::new));

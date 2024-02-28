@@ -443,7 +443,7 @@ public abstract class ConditionalCommutativityTestSuite implements IMessagePrint
 		return id2Action.get(id);
 	}
 
-	private IConditionalCommutativityCriterion<SimpleAction, IPredicate> parseCriterion(final Path path,
+	private IConditionalCommutativityCriterion<SimpleAction> parseCriterion(final Path path,
 			final Map<Integer, SimpleAction> id2Action, final int iteration, final IPredicateUnifier unifier)
 			throws IOException {
 		final String prefix = "//@ criterion(" + iteration + ") ";
@@ -540,15 +540,15 @@ public abstract class ConditionalCommutativityTestSuite implements IMessagePrint
 		}
 	}
 
-	private static final class TestCriterion<L, S> implements IConditionalCommutativityCriterion<L, S> {
-		private final HashRelation3<S, L, L> mRelation;
+	private static final class TestCriterion<L> implements IConditionalCommutativityCriterion<L> {
+		private final HashRelation3<IPredicate, L, L> mRelation;
 
-		public TestCriterion(final HashRelation3<S, L, L> relation) {
+		public TestCriterion(final HashRelation3<IPredicate, L, L> relation) {
 			mRelation = relation;
 		}
 
 		@Override
-		public boolean decide(final S state, final L a, final L b) {
+		public boolean decide(final IPredicate state, IPredicate predicate, final L a, final L b) {
 			return mRelation.containsTriple(state, a, b);
 		}
 
