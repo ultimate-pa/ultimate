@@ -163,10 +163,11 @@ public final class CegarLoopResultReporter<L extends IIcfgTransition<?>> {
 	private void reportTestGenerationResult(final IcfgLocation errorLoc, final IProgramExecution<L, Term> pe) {
 		final List<UnprovabilityReason> upreasons = UnprovabilityReason.getUnprovabilityReasons(pe);
 		if (!upreasons.isEmpty()) {
-			reportUnproveableResult(errorLoc, pe, upreasons);
+			final IResult cexResult = new TestGenerationResult(mPluginName, true);
+			mReportFunction.accept(errorLoc, cexResult);
 			return;
 		}
-		final IResult cexResult = new TestGenerationResult(mPluginName);
+		final IResult cexResult = new TestGenerationResult(mPluginName, false);
 		mReportFunction.accept(errorLoc, cexResult);
 	}
 

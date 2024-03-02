@@ -360,6 +360,11 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 			return;
 		}
 		mLogger.info("TestGen, Amount of Tests Exported: " + mTestsExported);
+		getIDsOfTestGoalsInTrace();
+		CegarLoopIterations += 1;
+	}
+
+	private void getIDsOfTestGoalsInTrace() {
 		final List<?> a = mCounterexample.getStateSequence();
 		mTestGoalsInCurrentTrace.clear();
 		for (int i = 0; i < a.size(); i++) {
@@ -372,7 +377,6 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 				}
 			}
 		}
-		CegarLoopIterations += 1;
 	}
 
 	private void writeEvalRowLongTrace() {
@@ -424,6 +428,7 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 
 	}
 
+	// TODO coverage calculation is wrong, different from testcov
 	private String readEvalCoverage() {
 		final StringBuilder resultStringBuilder = new StringBuilder();
 		String fileCOntentWithoutLastLine = "";
@@ -549,7 +554,7 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 			subtrahendBeforeEnhancement = mErrorGeneralizationEngine.getResultBeforeEnhancement();
 			subtrahend = mErrorGeneralizationEngine.getResultAfterEnhancement();
 			if (!mTestGeneration.equals(TestGenerationMode.None)) {
-				testGenerationCoverage();
+				// testGenerationCoverage();
 			}
 		} else {
 			automatonType = AutomatonType.FLOYD_HOARE;

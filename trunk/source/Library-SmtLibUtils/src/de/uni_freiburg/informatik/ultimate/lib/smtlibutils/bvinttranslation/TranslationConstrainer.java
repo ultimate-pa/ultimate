@@ -62,11 +62,11 @@ public class TranslationConstrainer {
 		/**
 		 * Overapproximation of all bit-wise functions by auxiliary variables
 		 */
-		NONE
+		NONE,
 		/**
-		 * Overapproximation of all bit-wise functions by uninterpreted function
-		 * symbol
+		 * Overapproximation of all bit-wise functions by uninterpreted function symbol
 		 */
+		MAX
 	}
 
 	public final ConstraintsForBitwiseOperations mMode;
@@ -172,8 +172,7 @@ public class TranslationConstrainer {
 
 	/**
 	 *
-	 * @return true iff the constraints define only an overapproximation of
-	 *         bvand.
+	 * @return true iff the constraints define only an overapproximation of bvand.
 	 */
 	public boolean bvandConstraint(final Term intTerm, final int width) {
 		if (mMode.equals(ConstraintsForBitwiseOperations.NONE)) {
@@ -231,6 +230,14 @@ public class TranslationConstrainer {
 			case NONE: {
 				throw new UnsupportedOperationException("Deal with this mode at the beginning of this method");
 			}
+			case MAX: {
+				final Term lowerBound = mScript.term("<=", Rational.ZERO.toTerm(intSort), apterm);
+				final Term upperBound =
+						mScript.term("<", apterm, SmtUtils.rational2Term(mScript, twoPowWidth, intSort));
+				bvandMAXConstraints(width, translatedLHS, translatedRHS);
+				mBvandConstraintSet.add(lowerBound);
+				mBvandConstraintSet.add(upperBound);
+			}
 			default: {
 				throw new UnsupportedOperationException("Set Mode for bvand Constraints");
 			}
@@ -256,6 +263,52 @@ public class TranslationConstrainer {
 		} else {
 			return SmtUtils.binaryEquality(mScript, mScript.term(mIntand.getName(), translatedLHS, translatedRHS), sum);
 		}
+	}
+
+	private void bvandMAXConstraints(final int width, final Term translatedLHS, final Term translatedRHS) {
+
+		for (int i = 0; i < width; i++) {
+			final BigInteger pow = BigInteger.TWO.pow(i);
+			final Term divisionLHS =
+					SmtUtils.division(mScript, SmtSortUtils.getIntSort(mScript), translatedLHS, SmtUtils.rational2Term(
+							mScript, Rational.valueOf(pow, BigInteger.ONE), SmtSortUtils.getIntSort(mScript)));
+
+			final Term divisionRHS =
+					SmtUtils.division(mScript, SmtSortUtils.getIntSort(mScript), translatedRHS, SmtUtils.rational2Term(
+							mScript, Rational.valueOf(pow, BigInteger.ONE), SmtSortUtils.getIntSort(mScript)));
+
+			final Term divisionmIntand = SmtUtils.division(mScript, SmtSortUtils.getIntSort(mScript),
+					SmtUtils.unfTerm(mScript, mIntand, translatedLHS, translatedRHS), SmtUtils.rational2Term(mScript,
+							Rational.valueOf(pow, BigInteger.ONE), SmtSortUtils.getIntSort(mScript)));
+
+			Term evenVar = mMgdScript.constructFreshTermVariable("evenVar" + i, SmtSortUtils.getIntSort(mScript));
+			evenVar = SmtUtils.termVariable2constant(mScript, (TermVariable) evenVar, true);
+			Term oddVar = mMgdScript.constructFreshTermVariable("oddVar" + i, SmtSortUtils.getIntSort(mScript));
+			oddVar = SmtUtils.termVariable2constant(mScript, (TermVariable) oddVar, true);
+
+			final Term even = SmtUtils.mul(mScript, Rational.valueOf(BigInteger.TWO, BigInteger.ONE), evenVar);
+
+			final Term odd = SmtUtils.sum(mScript, SmtSortUtils.getIntSort(mScript),
+					SmtUtils.mul(mScript, Rational.valueOf(BigInteger.TWO, BigInteger.ONE), oddVar),
+					SmtUtils.rational2Term(mScript, Rational.ONE, SmtSortUtils.getIntSort(mScript)));
+
+			final Term constraintEvenLHS =
+					SmtUtils.not(mScript, SmtUtils.binaryBooleanEquality(mScript, divisionLHS, even));
+			final Term constraintOddLHS = SmtUtils.binaryBooleanEquality(mScript, divisionLHS, odd);
+			final Term constraintEvenRHS =
+					SmtUtils.not(mScript, SmtUtils.binaryBooleanEquality(mScript, divisionRHS, even));
+			final Term constraintOddRHS = SmtUtils.binaryBooleanEquality(mScript, divisionRHS, odd);
+			final Term constraintEvenINTAND =
+					SmtUtils.not(mScript, SmtUtils.binaryBooleanEquality(mScript, divisionmIntand, even));
+			final Term constraintOddINTAND = SmtUtils.binaryBooleanEquality(mScript, divisionmIntand, odd);
+
+			mBvandConstraintSet.add(SmtUtils.binaryBooleanEquality(mScript,
+					SmtUtils.and(mScript, constraintOddLHS, constraintOddRHS), constraintOddINTAND));
+
+			mBvandConstraintSet.add(SmtUtils.binaryBooleanEquality(mScript,
+					SmtUtils.and(mScript, constraintEvenLHS, constraintEvenRHS), constraintEvenINTAND));
+		}
+
 	}
 
 	public Term bvandSUMforReplacement(final int width, final Term translatedLHS, final Term translatedRHS) {

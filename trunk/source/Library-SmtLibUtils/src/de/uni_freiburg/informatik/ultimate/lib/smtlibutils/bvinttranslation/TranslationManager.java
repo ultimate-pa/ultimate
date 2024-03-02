@@ -66,7 +66,7 @@ public class TranslationManager {
 		mReversedVarMap = new LinkedHashMap<>();
 
 		mConstraintSet = new HashSet<>();
-		mTc = new TranslationConstrainer(mMgdScript, cfbo);
+		mTc = new TranslationConstrainer(mMgdScript, ConstraintsForBitwiseOperations.MAX);
 		mIntand = mTc.getIntAndFunctionSymbol();
 
 		mNutzTransformation = useNutzTransformation;
@@ -102,11 +102,12 @@ public class TranslationManager {
 
 	}
 
-	public Triple<Term, Set<Term>, Boolean> translateBvtoIntTransferrer(final Term bitvecFromula, final Script scriptBV, final Script scriptINT) {
+	public Triple<Term, Set<Term>, Boolean> translateBvtoIntTransferrer(final Term bitvecFromula, final Script scriptBV,
+			final Script scriptINT) {
 		mConstraintSet = new HashSet<>();
 		final TranslationConstrainer tc = new TranslationConstrainer(mMgdScript, mCfo);
-		final BvToIntTransferrer bvToInt =
-				new BvToIntTransferrer(scriptBV, scriptINT, mMgdScript, mVariableMap, tc, bitvecFromula.getFreeVars(), mNutzTransformation);
+		final BvToIntTransferrer bvToInt = new BvToIntTransferrer(scriptBV, scriptINT, mMgdScript, mVariableMap, tc,
+				bitvecFromula.getFreeVars(), mNutzTransformation);
 		final Term integerFormulaNoConstraint;
 		try {
 			integerFormulaNoConstraint = bvToInt.transform(bitvecFromula);
@@ -120,7 +121,7 @@ public class TranslationManager {
 		if (!mNutzTransformation) {
 			mConstraintSet.addAll(tc.getConstraints());
 			mConstraintSet.addAll(bvToInt.mArraySelectConstraintMap.values());
-		}else {
+		} else {
 			mConstraintSet.addAll(tc.getBvandConstraints());
 		}
 		if (!mConstraintSet.isEmpty() && !SmtSortUtils.isBoolSort(integerFormulaNoConstraint.getSort())) {
@@ -132,7 +133,6 @@ public class TranslationManager {
 		return new Triple<>(integerFormula, overapproxVariables, isOverapproximation);
 
 	}
-
 
 	/*
 	 * Method to translate from integer back to bit-vector requires mReversedVarMap to be filled returns the translation
