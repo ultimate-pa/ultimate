@@ -397,27 +397,27 @@ class TestVector {
 			m.find();
 			valueInRange = m.group(1);
 			if (type.equals("int") || type.equals("long")) { // if signed
+				final BigInteger value = new BigInteger(valueInRange);
+				if (value.compareTo(new BigInteger("2147483647")) == 1) {
+					// wenn 2147483648 dann -2,147,483,648
+					final BigInteger newValue =
+							new BigInteger("-2147483648").add((value.subtract(new BigInteger("2147483648"))));
+					valueInRange = String.valueOf(newValue);
+				}
 				if (SmtSortUtils.getBitvectorLength(valueTerm.getSort()) <= 32) {
-					final BigInteger value = new BigInteger(valueInRange);
-					if (value.compareTo(new BigInteger("2147483647")) == 1) {
-						// wenn 2147483648 dann -2,147,483,647
-						final BigInteger newValue =
-								new BigInteger("-2147483647").add((value.subtract(new BigInteger("2147483648"))));
-						valueInRange = String.valueOf(newValue);
-					}
 				} else {
 					need64Bit = true;
 				}
 			} else if (type.equals("char")) {
 				final BigInteger value = new BigInteger(valueInRange);
 				if (value.compareTo(new BigInteger("32767")) == 1) {
-					final BigInteger newValue = new BigInteger("-32767").add((value.subtract(new BigInteger("32768"))));
+					final BigInteger newValue = new BigInteger("-32768").add((value.subtract(new BigInteger("32768"))));
 					valueInRange = String.valueOf(newValue);
 				}
 			} else if (type.equals("short")) {
 				final BigInteger value = new BigInteger(valueInRange);
 				if (value.compareTo(new BigInteger("127")) == 1) {
-					final BigInteger newValue = new BigInteger("-127").add((value.subtract(new BigInteger("128"))));
+					final BigInteger newValue = new BigInteger("-128").add((value.subtract(new BigInteger("128"))));
 					valueInRange = String.valueOf(newValue);
 				}
 			} else if (type.equals("bool")) {
@@ -445,7 +445,7 @@ class TestVector {
 			if (type.equals("long")) {
 				if (value.compareTo(new BigInteger("2147483647")) == 1) {
 					need64Bit = true;
-				} else if (value.compareTo(new BigInteger("-2147483647")) == -1) {
+				} else if (value.compareTo(new BigInteger("-2147483648")) == -1) {
 					need64Bit = true;
 				}
 			} else if (type.equals("ulong")) {
@@ -470,9 +470,10 @@ class TestVector {
 				if (value.compareTo(new BigInteger("32767")) == 1) {
 					final BigInteger newValue = value.mod(new BigInteger("32768"));
 					valueInRange = String.valueOf(newValue);
-				} else if (value.compareTo(new BigInteger("-32767")) == -1) {
+				} else if (value.compareTo(new BigInteger("-32768")) == -1) {
 					final BigInteger newValue = value.mod(new BigInteger("32768"));
-					valueInRange = String.valueOf(newValue.negate());
+					// valueInRange = String.valueOf(newValue.negate());
+					valueInRange = String.valueOf(newValue);
 				}
 				break;
 			}
@@ -488,9 +489,10 @@ class TestVector {
 				if (value.compareTo(new BigInteger("2147483647")) == 1) {
 					final BigInteger newValue = value.mod(new BigInteger("2147483648"));
 					valueInRange = String.valueOf(newValue);
-				} else if (value.compareTo(new BigInteger("-2147483647")) == -1) {
+				} else if (value.compareTo(new BigInteger("-2147483648")) == -1) {
 					final BigInteger newValue = value.mod(new BigInteger("2147483648"));
-					valueInRange = String.valueOf(newValue.negate());
+					// valueInRange = String.valueOf(newValue.negate());
+					valueInRange = String.valueOf(newValue);
 				}
 				break;
 			}
@@ -509,9 +511,10 @@ class TestVector {
 				if (value.compareTo(new BigInteger("127")) == 1) {
 					final BigInteger newValue = value.mod(new BigInteger("128"));
 					valueInRange = String.valueOf(newValue);
-				} else if (value.compareTo(new BigInteger("-127")) == -1) {
+				} else if (value.compareTo(new BigInteger("-128")) == -1) {
 					final BigInteger newValue = value.mod(new BigInteger("128"));
-					valueInRange = String.valueOf(newValue.negate());
+					// valueInRange = String.valueOf(newValue.negate());
+					valueInRange = String.valueOf(newValue);
 				}
 				break;
 			}
