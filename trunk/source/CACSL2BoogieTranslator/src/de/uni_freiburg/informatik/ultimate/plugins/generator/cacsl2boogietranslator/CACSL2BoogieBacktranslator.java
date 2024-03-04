@@ -44,7 +44,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTDoStatement;
@@ -1530,37 +1529,11 @@ public class CACSL2BoogieBacktranslator
 					+ " is mapped to a declaration, but is no IdentifierExpression");
 			return null;
 		}
-
-		if (decls.getDeclarators() == null || decls.getDeclarators().length == 0) {
-			throw new IllegalArgumentException("Expression " + BoogiePrettyPrinter.print(expression)
-					+ " is mapped to a declaration without declarators.");
-		}
-
-		if (decls.getDeclarators().length == 1) {
-			final IdentifierExpression orgidexp = (IdentifierExpression) expression;
-			final TranslatedVariable origName = translateIdentifierExpression(orgidexp, context);
-			if (origName == null || origName.getVarType() == VariableType.POINTER_BASE) {
-				return null;
-			}
-			return new FakeExpression(decls, decls.getDeclarators()[0].getName().getRawSignature(),
-					origName.getCType());
-		}
-		// ok, this is a declaration ala "int a,b;", so we use
-		// our backtranslation map to get the real name
-		final IdentifierExpression orgidexp = (IdentifierExpression) expression;
-		final TranslatedVariable origName = translateIdentifierExpression(orgidexp, context);
-		if (origName == null || origName.getVarType() == VariableType.POINTER_BASE) {
+		final TranslatedVariable variable = translateIdentifierExpression((IdentifierExpression) expression, context);
+		if (variable == null || variable.getVarType() == VariableType.POINTER_BASE) {
 			return null;
 		}
-		for (final IASTDeclarator decl : decls.getDeclarators()) {
-			if (origName.getName().indexOf(decl.getName().getRawSignature()) != -1) {
-				return new FakeExpression(decl.getName().getRawSignature());
-			}
-		}
-		reportUnfinishedBacktranslation("IdentifierExpression " + BoogiePrettyPrinter.print(expression)
-				+ " has a CASTSimpleDeclaration, but we were unable to determine the variable name from it: "
-				+ decls.getRawSignature());
-		return null;
+		return new FakeExpression(decls, variable.getName(), variable.getCType());
 	}
 
 	private void reportUnfinishedBacktranslation(final Expression expr) {
