@@ -320,6 +320,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		}
 		try {
 			IDfsVisitor<L, IPredicate> visitor = createVisitor();
+			//Object debugAutomaton4 = new NestedWordAutomatonReachableStates<L,IPredicate>(new AutomataLibraryServices(mServices), mAbstraction);
 			mPOR.apply(mAbstraction, visitor);
 			if (mPref.useConditionalCommutativityChecker().equals(ConComChecker.DFS)
 					|| mPref.useConditionalCommutativityChecker().equals(ConComChecker.BOTH)) {
@@ -342,7 +343,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 							.getInitialStates(), "initial state");
 					final TotalizeNwa<L, IPredicate> totalInterpol = new TotalizeNwa<>(ia, initialSink, false);
 					
-					//debugAutomaton = new NestedWordAutomatonReachableStates<L,IPredicate>(new AutomataLibraryServices(mServices), totalInterpol);
+					//Object debugAutomaton2 = new NestedWordAutomatonReachableStates<L,IPredicate>(new AutomataLibraryServices(mServices), totalInterpol);
 					try {
 						if (mItpAutomata == null) {
 							mItpAutomata = totalInterpol;
@@ -350,7 +351,6 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 							mItpAutomata = new UnionNwa<>(mItpAutomata, totalInterpol, mFactory, false);
 						}
 		
-						//Object debugAutomaton2 = new NestedWordAutomatonReachableStates<L,IPredicate>(new AutomataLibraryServices(mServices), mAbstraction);
 
 						mAbstraction = new InformationStorage<>(mProgram == null ? mAbstraction : mProgram,
 								mItpAutomata, mFactory, PartialOrderCegarLoop::isFalseLiteral);

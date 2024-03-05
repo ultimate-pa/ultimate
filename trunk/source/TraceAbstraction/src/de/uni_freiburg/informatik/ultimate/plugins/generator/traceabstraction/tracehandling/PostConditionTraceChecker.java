@@ -36,6 +36,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.TaskIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.ITraceCheckStrategyModule;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.ITraceChecker;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolatingTraceCheckCraig;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckSpWp;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IPostconditionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
@@ -103,9 +105,20 @@ public class PostConditionTraceChecker<L extends IIcfgTransition<?>> implements 
 			//boolean test = check.isCorrect().equals(LBool.UNSAT);
 			if (check.isCorrect().equals(LBool.UNSAT)) {
 				if (check instanceof IpTcStrategyModuleSmtInterpolCraig) {
-					return ((IpTcStrategyModuleSmtInterpolCraig<L>) check).construct().getIpp();
+					InterpolatingTraceCheckCraig<L> checkCraig =
+							((IpTcStrategyModuleSmtInterpolCraig<L>) check).construct();
+					if (checkCraig.isPerfectSequence()) {
+						return checkCraig.getIpp();
+					}
+					//return ((IpTcStrategyModuleSmtInterpolCraig<L>) check).construct().getIpp();
 				} else if (check instanceof IpTcStrategyModuleSmtInterpolSpWp) {
-					return ((IpTcStrategyModuleSmtInterpolSpWp<L>) check).construct().getIpp();
+					TraceCheckSpWp<L> checkSpWp = ((IpTcStrategyModuleSmtInterpolSpWp<L>) check).construct();
+					if (checkSpWp.isPerfectSequence()) {
+						return checkSpWp.getIpp();
+					}
+					TracePredicates debug = checkSpWp.getIpp();
+					int debug0 = 0;
+					//return ((IpTcStrategyModuleSmtInterpolSpWp<L>) check).construct().getIpp();
 				}
 			}
 		}

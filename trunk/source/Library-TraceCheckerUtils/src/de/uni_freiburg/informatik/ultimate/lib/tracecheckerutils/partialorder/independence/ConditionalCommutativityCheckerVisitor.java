@@ -156,7 +156,7 @@ V extends IDfsVisitor<L, IPredicate>> extends WrapperVisitor<L, IPredicate, V> {
 		IPredicate annotation = null;
 		if (!(pred instanceof MLPredicate)) {
 			annotation = ((AnnotatedMLPredicate<IPredicate>) pred).getAnnotation();
-			
+			/*
 			IMLPredicate runPred;
 			IPredicate runState;
 			for (int i = 0; i < (mRun.getLength() - 1); i++) {
@@ -166,7 +166,7 @@ V extends IDfsVisitor<L, IPredicate>> extends WrapperVisitor<L, IPredicate, V> {
 						.equals(((AnnotatedMLPredicate<IPredicate>) pred).getUnderlying())) {
 					return mUnderlying.discoverState(state);
 				}
-			}
+			}*/
 		}	
 		
 		final Iterator<OutgoingInternalTransition<L, IPredicate>> iterator =
