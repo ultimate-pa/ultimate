@@ -43,11 +43,11 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 
 /**
  * An utilization class for Parameterized Preference Orders
- * 
+ *
  * @author Marcel Ebbinghaus
  *
  * @param <L>
- * 		The type of Icfg transitions
+ *            The type of Icfg transitions
  */
 public class ParameterizedPreferenceOrderUtils<L extends IIcfgTransition<?>> {
 	private Set<IProgramVar> mEffectiveGlobalVars;
@@ -61,6 +61,9 @@ public class ParameterizedPreferenceOrderUtils<L extends IIcfgTransition<?>> {
 		mIcfg = icfg;
 		final List<String> allThreads = new ArrayList<>();
 		allThreads.addAll(IcfgUtils.getAllThreadInstances(icfg).stream().sorted().collect(Collectors.toList()));
+
+		// TODO simplify the code below
+		// TODO also use Icfg initial node instead of relying on name of procedure
 		final String start = "ULTIMATE.start";
 		for (int i = allThreads.indexOf(start); i > 0; i--) {
 			allThreads.set(i, allThreads.get(i - 1));
@@ -74,7 +77,7 @@ public class ParameterizedPreferenceOrderUtils<L extends IIcfgTransition<?>> {
 			final PreferenceOrderHeuristic<L> heuristic = new PreferenceOrderHeuristic<>(icfg, allThreads,
 					mEffectiveGlobalVars, mSharedVarsMapReversed, icfg.getCfgSmtToolkit().getManagedScript());
 			heuristic.computeParameterizedOrder();
-			
+
 			pairList = heuristic.getParameterizedOrderSequence().split("\\s+");
 		} else {
 			pairList = threads.split("\\s+");

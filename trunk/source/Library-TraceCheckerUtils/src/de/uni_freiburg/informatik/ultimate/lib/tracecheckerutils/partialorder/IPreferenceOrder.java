@@ -32,11 +32,10 @@ import java.util.Comparator;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator;
 
 public interface IPreferenceOrder<L, S1, S2> extends IPartialPreferenceOrder<L, S1, S2> {
-
-	Comparator<L> getOrder(S1 stateProgram, S2 stateMonitor);
+	Comparator<L> getOrder(S1 programState, S2 monitorState);
 
 	@Override
-	default IPartialComparator<L> getPartialOrder(final S1 stateProgram, final S2 stateMonitor) {
-		return IPartialComparator.fromNonPartialComparator(this.getOrder(stateProgram, stateMonitor), true);
+	default IPartialComparator<L> getPartialOrder(final S1 programState, final S2 monitorState) {
+		return IPartialComparator.fromNonPartialComparator(getOrder(programState, monitorState), true);
 	}
 }

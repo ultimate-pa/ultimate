@@ -39,13 +39,13 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
 
 /**
  * Implementation of the Parameterized Preference Order.
- * 
+ *
  * @author Marcel Ebbinghaus
  *
  * @param <L>
- * 			The type of letters
+ *            The type of letters
  * @param <S1>
- * 			The type of states
+ *            The type of states
  */
 public class ParameterizedPreferenceOrder<L extends IAction, S1> implements IPreferenceOrder<L, S1, State> {
 	private final List<Integer> mMaxSteps;
@@ -56,15 +56,15 @@ public class ParameterizedPreferenceOrder<L extends IAction, S1> implements IPre
 
 	/**
 	 * Construct a new Parameterized Preference Order.
-	 * 
+	 *
 	 * @param maxSteps
-	 * 			List representing the sequence of maximal steps
+	 *            List representing the sequence of maximal steps
 	 * @param threads
-	 * 			List representing the sequence of threads
+	 *            List representing the sequence of threads
 	 * @param alphabet
-	 * 			The alphabet
+	 *            The alphabet
 	 * @param isStep
-	 * 			Function that determines the step type
+	 *            Function that determines the step type
 	 */
 	public ParameterizedPreferenceOrder(final List<Integer> maxSteps, final List<String> threads,
 			final VpAlphabet<L> alphabet, final java.util.function.Predicate<L> isStep) {
@@ -92,31 +92,31 @@ public class ParameterizedPreferenceOrder<L extends IAction, S1> implements IPre
 
 	/**
 	 * Comparator for the Preference Order.
-	 * 
+	 *
 	 * @author Marcel Ebbinghaus
 	 *
 	 * @param <L>
-	 * 		The type of letters
+	 *            The type of letters
 	 */
 	public static final class PreferenceOrderComparator<L extends IAction> implements Comparator<L> {
 		private final String mLastThread;
-		private final Integer mLastIndex;
+		private final int mLastIndex;
 		private final Comparator<L> mFallback;
 		private final List<String> mThreads;
 
 		/**
 		 * Construct a new Comparator.
-		 * 
+		 *
 		 * @param lastThread
-		 * 		The previous thread
+		 *            The previous thread
 		 * @param lastIndex
-		 * 		The index of the previous thread
+		 *            The index of the previous thread
 		 * @param fallback
-		 * 		A fallback comparator
+		 *            A fallback comparator
 		 * @param threads
-		 * 		List representing the sequence of threads
+		 *            List representing the sequence of threads
 		 */
-		public PreferenceOrderComparator(final String lastThread, final Integer lastIndex, final Comparator<L> fallback,
+		public PreferenceOrderComparator(final String lastThread, final int lastIndex, final Comparator<L> fallback,
 				final List<String> threads) {
 			mLastThread = Objects.requireNonNull(lastThread);
 			mLastIndex = lastIndex;
@@ -130,8 +130,8 @@ public class ParameterizedPreferenceOrder<L extends IAction, S1> implements IPre
 			if (x.getPrecedingProcedure() == mLastThread) {
 				return -1;
 			}
-			
-			//start the comparison from the current index
+
+			// start the comparison from the current index
 			final int xThreadIndex = DataStructureUtils.indexOf(mThreads, x.getPrecedingProcedure(), mLastIndex);
 			final int yThreadIndex = DataStructureUtils.indexOf(mThreads, y.getPrecedingProcedure(), mLastIndex);
 			final boolean xBefore = xThreadIndex < mLastIndex;
@@ -163,7 +163,7 @@ public class ParameterizedPreferenceOrder<L extends IAction, S1> implements IPre
 			}
 			final PreferenceOrderComparator<L> other = (PreferenceOrderComparator<L>) obj;
 			return Objects.equals(mFallback, other.mFallback) && Objects.equals(mLastThread, other.mLastThread)
-					&& Objects.equals(mThreads, other.mThreads) && Objects.equals(mLastIndex, other.mLastIndex);
+					&& Objects.equals(mThreads, other.mThreads) && mLastIndex == other.mLastIndex;
 		}
 	}
 }

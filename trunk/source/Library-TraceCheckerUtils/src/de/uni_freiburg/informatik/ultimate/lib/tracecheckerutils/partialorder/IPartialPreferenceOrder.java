@@ -31,8 +31,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLette
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator;
 
 public interface IPartialPreferenceOrder<L, S1, S2> {
-
-	IPartialComparator<L> getPartialOrder(S1 stateProgram, S2 stateMonitor);
+	IPartialComparator<L> getPartialOrder(S1 programState, S2 monitorState);
 
 	boolean isPositional();
 

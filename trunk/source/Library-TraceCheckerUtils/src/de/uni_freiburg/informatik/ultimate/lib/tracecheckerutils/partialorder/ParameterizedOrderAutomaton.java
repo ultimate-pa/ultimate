@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -81,12 +80,11 @@ public class ParameterizedOrderAutomaton<L extends IAction>
 
 	@Override
 	public Iterable<State> getInitialStates() {
-		final Set<State> initialSet = new HashSet<>();
-		initialSet.add(getOrCreateState(mInitialThread, 0, 0));
-		return initialSet;
+		final var initial = getOrCreateState(mInitialThread, 0, 0);
+		return Set.of(initial);
 	}
 
-	private State getOrCreateState(final String thread, final Integer index, final Integer counter) {
+	private State getOrCreateState(final String thread, final int index, final int counter) {
 		final Map<Integer, State> counterMap = mCreatedStates.get(index);
 		if (counterMap.get(counter) == null) {
 			final State state = new State(thread, index, counter);
@@ -121,11 +119,11 @@ public class ParameterizedOrderAutomaton<L extends IAction>
 	public Iterable<OutgoingInternalTransition<L, State>> internalSuccessors(final State state, final L letter) {
 		if (mIsStep.test(letter)) {
 			if (letter.getPrecedingProcedure() != state.getThread()) {
-				
-				//return Set.of(new OutgoingInternalTransition<>(letter, getOrCreateState(mThreads.get(mThreads.size()-1), mThreads.size()-1 , 0)));
- 
+				// return Set.of(new OutgoingInternalTransition<>(letter,
+				// getOrCreateState(mThreads.get(mThreads.size()-1), mThreads.size()-1 , 0)));
+
 				// return Set.of(new OutgoingInternalTransition<>(letter, state));
- 
+
 				final String nextThread = letter.getPrecedingProcedure();
 				int nextIndex = DataStructureUtils.indexOf(mThreads, nextThread, state.getIndex());
 
@@ -135,19 +133,17 @@ public class ParameterizedOrderAutomaton<L extends IAction>
 							getOrCreateState(mThreads.get(nextIndex), nextIndex, 0)));
 				}
 				return Set.of(new OutgoingInternalTransition<>(letter, getOrCreateState(nextThread, nextIndex, 1)));
-				
 
-			} else if (state.getCounter() == mMaxSteps.get(state.getIndex()) - 1) {
+			}
+			if (state.getCounter() == mMaxSteps.get(state.getIndex()) - 1) {
 				final int nextThreadIndex = ((state.getIndex() + 1) % mThreads.size());
 				return Set.of(new OutgoingInternalTransition<>(letter,
 						getOrCreateState(mThreads.get(nextThreadIndex), nextThreadIndex, 0)));
-			} else {
-				return Set.of(new OutgoingInternalTransition<>(letter,
-						getOrCreateState(state.getThread(), state.getIndex(), state.getCounter() + 1)));
 			}
-		} else {
-			return Set.of(new OutgoingInternalTransition<>(letter, state));
+			return Set.of(new OutgoingInternalTransition<>(letter,
+					getOrCreateState(state.getThread(), state.getIndex(), state.getCounter() + 1)));
 		}
+		return Set.of(new OutgoingInternalTransition<>(letter, state));
 	}
 
 	@Override
@@ -163,10 +159,10 @@ public class ParameterizedOrderAutomaton<L extends IAction>
 
 	public static final class State {
 		private final String mThread;
-		private final Integer mIndex;
-		private final Integer mCounter;
+		private final int mIndex;
+		private final int mCounter;
 
-		public State(final String thread, final Integer index, final Integer counter) {
+		public State(final String thread, final int index, final int counter) {
 			mThread = thread;
 			mIndex = index;
 			mCounter = counter;
@@ -176,11 +172,11 @@ public class ParameterizedOrderAutomaton<L extends IAction>
 			return mThread;
 		}
 
-		public Integer getIndex() {
+		public int getIndex() {
 			return mIndex;
 		}
 
-		public Integer getCounter() {
+		public int getCounter() {
 			return mCounter;
 		}
 
@@ -196,8 +192,7 @@ public class ParameterizedOrderAutomaton<L extends IAction>
 				return false;
 			}
 			final State other = (State) obj;
-			return Objects.equals(mThread, other.mThread) && Objects.equals(mIndex, other.mIndex)
-					&& Objects.equals(mCounter, other.mCounter);
+			return Objects.equals(mThread, other.mThread) && mIndex == other.mIndex && mCounter == other.mCounter;
 		}
 
 		@Override
