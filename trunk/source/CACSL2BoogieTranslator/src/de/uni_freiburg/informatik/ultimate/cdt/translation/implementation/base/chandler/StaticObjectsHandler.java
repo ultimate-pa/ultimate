@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CNamed;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
@@ -121,11 +122,13 @@ public class StaticObjectsHandler {
 		assert boogieDec != null && cDec != null : "Part of global type declaration is null";
 		mTypeDeclarationToCDeclaration.put(boogieDec, cDec);
 		final CType cType = cDec.getType();
-		if (cType.isIncomplete() && !cDec.getType().getUnderlyingType().isVoidType()) {
+		if (cType.isIncomplete() && !cDec.getType().isVoidType()) {
 			if (cType instanceof CStructOrUnion) {
 				mIncompleteType2TypeDecl.put(((CStructOrUnion) cType).getName(), boogieDec);
 			} else if (cType instanceof CEnum) {
 				mIncompleteType2TypeDecl.put(((CEnum) cType).getName(), boogieDec);
+			} else if (cType instanceof CNamed) {
+				// do nothing, this is handled by TypeHandler::redirectNamedType
 			} else {
 				throw new AssertionError("missing support for global incomplete " + cType);
 			}
@@ -154,27 +157,26 @@ public class StaticObjectsHandler {
 				.map(trip -> new Pair<>(trip.getFirst(), trip.getSecond())).collect(Collectors.toList());
 	}
 
-	private Triple<VariableDeclaration, CDeclaration, Integer>
+	private static Triple<VariableDeclaration, CDeclaration, Integer>
 			computeSuitableVarDecl(final Set<Triple<VariableDeclaration, CDeclaration, Integer>> decls) {
 		if (decls.size() == 1) {
 			return decls.iterator().next();
-		} else {
-			Triple<VariableDeclaration, CDeclaration, Integer> suiteableDecl = null;
-			for (final Triple<VariableDeclaration, CDeclaration, Integer> pair : decls) {
-				if (pair.getSecond().getInitializer() != null) {
-					if (suiteableDecl == null) {
-						suiteableDecl = pair;
-					} else {
-						throw new AssertionError("Two decls with initializer " + pair.getSecond().getName());
-					}
+		}
+		Triple<VariableDeclaration, CDeclaration, Integer> suiteableDecl = null;
+		for (final Triple<VariableDeclaration, CDeclaration, Integer> pair : decls) {
+			if (pair.getSecond().getInitializer() != null) {
+				if (suiteableDecl == null) {
+					suiteableDecl = pair;
+				} else {
+					throw new AssertionError("Two decls with initializer " + pair.getSecond().getName());
 				}
 			}
-			if (suiteableDecl == null) {
-				// no declaration has an initializer, pick some
-				suiteableDecl = decls.iterator().next();
-			}
-			return suiteableDecl;
 		}
+		if (suiteableDecl == null) {
+			// no declaration has an initializer, pick some
+			suiteableDecl = decls.iterator().next();
+		}
+		return suiteableDecl;
 	}
 
 	public void addGlobalConstDeclaration(final ConstDeclaration cd, final CDeclaration cDeclaration,

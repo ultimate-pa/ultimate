@@ -57,16 +57,18 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecut
  * @param <TVL>
  *            Target vertex label.
  */
-public interface ITranslator<STE, TTE, SE, TE, SVL, TVL> {
+public interface ITranslator<STE, TTE, SE, TE, SVL, TVL, CTX> {
 
 	/**
 	 * Note: Does not need to preserve instances
 	 */
-	public TE translateExpression(SE expression);
+	TE translateExpression(SE expression);
 
-	public ProgramState<TE> translateProgramState(ProgramState<SE> programState);
+	TE translateExpressionWithContext(SE expression, CTX context);
 
-	public String targetExpressionToString(TE expression);
+	ProgramState<TE> translateProgramState(ProgramState<SE> programState);
+
+	String targetExpressionToString(TE expression);
 
 	/**
 	 * Translate trace that is represented as a list of Source Trace Elements (resp. list of Target Trace Elements).
@@ -75,20 +77,20 @@ public interface ITranslator<STE, TTE, SE, TE, SVL, TVL> {
 	 *
 	 * @return
 	 */
-	public List<TTE> translateTrace(List<STE> trace);
+	List<TTE> translateTrace(List<STE> trace);
 
-	public List<String> targetTraceToString(List<TTE> trace);
+	List<String> targetTraceToString(List<TTE> trace);
 
-	public IProgramExecution<TTE, TE> translateProgramExecution(IProgramExecution<STE, SE> programExecution);
+	IProgramExecution<TTE, TE> translateProgramExecution(IProgramExecution<STE, SE> programExecution);
 
-	public IBacktranslatedCFG<TVL, TTE> translateCFG(IBacktranslatedCFG<SVL, STE> cfg);
+	IBacktranslatedCFG<TVL, TTE> translateCFG(IBacktranslatedCFG<SVL, STE> cfg);
 
-	public Class<? extends STE> getSourceTraceElementClass();
+	Class<? extends STE> getSourceTraceElementClass();
 
-	public Class<? extends TTE> getTargetTraceElementClass();
+	Class<? extends TTE> getTargetTraceElementClass();
 
-	public Class<SE> getSourceExpressionClass();
+	Class<SE> getSourceExpressionClass();
 
-	public Class<TE> getTargetExpressionClass();
+	Class<TE> getTargetExpressionClass();
 
 }

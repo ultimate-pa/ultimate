@@ -29,15 +29,16 @@ package de.uni_freiburg.informatik.ultimate.witnessparser.yaml;
 
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.UUID;
 
-import com.amihaiemil.eoyaml.Yaml;
-import com.amihaiemil.eoyaml.YamlNode;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Witness.IMapSerializable;
 
 /**
  * @author Manuel Bentele (bentele@informatik.uni-freiburg.de)
  */
-public class Metadata implements IYamlProvider {
+public class Metadata implements IMapSerializable {
 
 	private final FormatVersion mFormatVersion;
 	private final UUID mUuid;
@@ -70,11 +71,18 @@ public class Metadata implements IYamlProvider {
 		return mProducer;
 	}
 
+	public Task getTask() {
+		return mTask;
+	}
+
 	@Override
-	public YamlNode toYaml() {
-		return Yaml.createYamlMappingBuilder().add("format_version", mFormatVersion.toString())
-				.add("uuid", mUuid.toString())
-				.add("creation_time", mCreationTime.truncatedTo(ChronoUnit.SECONDS).toString())
-				.add("producer", mProducer.toYaml()).add("task", mTask.toYaml()).build();
+	public Map<String, Object> toMap() {
+		final LinkedHashMap<String, Object> result = new LinkedHashMap<>();
+		result.put("format_version", mFormatVersion.toString());
+		result.put("uuid", mUuid.toString());
+		result.put("creation_time", mCreationTime.truncatedTo(ChronoUnit.SECONDS).toString());
+		result.put("producer", mProducer.toMap());
+		result.put("task", mTask.toMap());
+		return result;
 	}
 }

@@ -66,7 +66,8 @@ public class IteRemover extends NonCoreBooleanSubTermTransformer {
 			iteSubterms = (new ApplicationTermFinder("ite", false)).findMatchingSubterms(result);
 		}
 		assert doesNotContainIteTerm(result) : "not all ite terms were removed";
-		assert (Util.checkSat(mScript.getScript(), mScript.getScript().term("distinct", term, result)) != LBool.SAT);
+		assert (term == result
+				|| Util.checkSat(mScript.getScript(), mScript.getScript().term("distinct", term, result)) != LBool.SAT);
 		return result;
 	}
 

@@ -33,7 +33,6 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -44,8 +43,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessProcedureContract;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.InvariantResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.PositiveResult;
@@ -53,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.ProcedureContractRes
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -73,6 +73,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.d
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.BlockEncodingBacktranslator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.HoareAnnotation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.ICopyActionFactory;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -457,29 +458,35 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 			if (formula.equals(trueterm)) {
 				continue;
 			}
-			final String inv = backTranslatorService.translateExpressionToString(formula, Term.class);
-			new WitnessInvariant(inv).annotate(locNode);
+			new WitnessInvariant(invResult.getInvariant()).annotate(locNode);
 		}
 	}
 
 	private void createProcedureContractResults(final IIcfg<IcfgLocation> icfg,
 			final IBacktranslationService backTranslatorService) {
-		final Map<String, IcfgLocation> finalNodes = icfg.getProcedureExitNodes();
-		for (final Entry<String, IcfgLocation> proc : finalNodes.entrySet()) {
-			final String procName = proc.getKey();
+		final Map<String, IcfgLocation> exitNodes = icfg.getProcedureExitNodes();
+		final Map<String, IcfgLocation> entryNodes = icfg.getProcedureEntryNodes();
+		for (final String procName : icfg.getProcedureEntryNodes().keySet()) {
 			if (isAuxilliaryProcedure(procName)) {
 				continue;
 			}
-			final IcfgLocation finalNode = proc.getValue();
-			final HoareAnnotation hoare = HoareAnnotation.getAnnotation(finalNode);
-			if (hoare != null) {
-				final Term formula = hoare.getFormula();
-				final ProcedureContractResult<IIcfgElement, Term> result = new ProcedureContractResult<>(
-						Activator.PLUGIN_NAME, finalNode, backTranslatorService, procName, formula);
-
-				mResultReporter.reportResult(result);
-				// TODO: Add setting that controls the generation of those witness invariants
+			final IcfgLocation entry = entryNodes.get(procName);
+			final IcfgLocation exit = exitNodes.get(procName);
+			final HoareAnnotation ensures = HoareAnnotation.getAnnotation(exit);
+			final HoareAnnotation requires = HoareAnnotation.getAnnotation(entry);
+			if (ensures == null) {
+				continue;
 			}
+			final Term ensuresFormula = ensures.getFormula();
+			final Term requiresFormula =
+					PredicateUtils.eliminateOldVars(mServices, icfg.getCfgSmtToolkit().getManagedScript(), requires);
+			final ProcedureContractResult<IIcfgElement, Term> result = new ProcedureContractResult<>(
+					Activator.PLUGIN_NAME, exit, backTranslatorService, procName, requiresFormula, ensuresFormula);
+			if (result.isTrivial()) {
+				continue;
+			}
+			mResultReporter.reportResult(result);
+			new WitnessProcedureContract(result.getReqiresResult(), result.getEnsuresResult()).annotate(exit);
 		}
 	}
 

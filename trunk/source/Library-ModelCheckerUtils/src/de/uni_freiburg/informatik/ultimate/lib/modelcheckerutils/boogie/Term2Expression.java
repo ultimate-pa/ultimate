@@ -173,6 +173,10 @@ public final class Term2Expression implements Serializable {
 			params[i] = translate(termParams[i]);
 		}
 		final IBoogieType type = mTypeSortTranslator.getType(symb.getReturnSort());
+		final Expression symbResult = translateWithSymbolTable(symb, type, termParams);
+		if (symbResult != null) {
+			return symbResult;
+		}
 		if (symb.getParameterSorts().length == 0) {
 			if (SmtUtils.isTrueLiteral(term)) {
 				final IBoogieType booleanType = mTypeSortTranslator.getType(SmtSortUtils.getBoolSort(mScript));
@@ -187,9 +191,6 @@ public final class Term2Expression implements Serializable {
 				return new IdentifierExpression(null, mTypeSortTranslator.getType(term.getSort()),
 						((ProgramConst) programFun).getIdentifier(),
 						new DeclarationInformation(StorageClass.GLOBAL, null));
-			}
-			if (mBoogie2SmtSymbolTable.getSmtFunction2BoogieFunction().containsKey(symb.getName())) {
-				return translateWithSymbolTable(symb, type, termParams);
 			}
 			throw new IllegalArgumentException();
 		} else if ("ite".equals(symb.getName())) {
@@ -214,9 +215,8 @@ public final class Term2Expression implements Serializable {
 					return translateBitvectorAccess(type, term);
 				} else if ("concat".equals(symb.getName())) {
 					return translateBitvectorConcat(type, term);
-				} else if (mBoogie2SmtSymbolTable.getSmtFunction2BoogieFunction().containsKey(symb.getName())) {
-					return translateWithSymbolTable(symb, type, termParams);
-				} else if (Arrays.asList(new String[] { "bvsle", "bvslt", "bvsge", "bvsgt", "bvule", "bvult", "bvuge", "bvugt" })
+				} else if (Arrays
+						.asList(new String[] { "bvsle", "bvslt", "bvsge", "bvsgt", "bvule", "bvult", "bvuge", "bvugt" })
 						.contains(symb.getName())) {
 					return BitvectorFactory.constructBinaryOperationForMultipleArguments(null,
 							BvOp.valueOf(symb.getName()), params);
@@ -224,8 +224,7 @@ public final class Term2Expression implements Serializable {
 					return BitvectorFactory.constructExtendOperation(null, ExtendOperation.valueOf(symb.getName()),
 							new BigInteger(symb.getIndices()[0]), params[0]);
 				} else if (Arrays.asList(new String[] { "bvnot", "bvneg" }).contains(symb.getName())) {
-					return BitvectorFactory.constructUnaryOperation(null,
-							BvOp.valueOf(symb.getName()), params[0]);
+					return BitvectorFactory.constructUnaryOperation(null, BvOp.valueOf(symb.getName()), params[0]);
 				} else if (Arrays
 						.asList(new String[] { "bvadd", "bvsub", "bvmul", "bvudiv", "bvurem", "bvsdiv", "bvsrem",
 								"bvsmod", "bvand", "bvor", "bvxor", "bvshl", "bvlshr", "bvashr" })
@@ -284,12 +283,9 @@ public final class Term2Expression implements Serializable {
 							"don't know symbol" + " which is neither leftAssoc, rightAssoc, chainable, or pairwise.");
 				}
 			}
-		} else if (mBoogie2SmtSymbolTable.getSmtFunction2BoogieFunction().containsKey(symb.getName())) {
-			return translateWithSymbolTable(symb, type, termParams);
-		} else {
-			throw new UnsupportedOperationException(
-					"translation of " + symb + " not yet implemented, please contact Matthias");
 		}
+		throw new UnsupportedOperationException(
+				"translation of " + symb + " not yet implemented, please contact Matthias");
 	}
 
 	private Expression translateBitvectorAccess(final IBoogieType type, final ApplicationTerm term) {
@@ -315,7 +311,10 @@ public final class Term2Expression implements Serializable {
 	 */
 	private Expression translateWithSymbolTable(final FunctionSymbol symb, final IBoogieType type,
 			final Term[] termParams) {
-		final String identifier = mBoogie2SmtSymbolTable.getSmtFunction2BoogieFunction().get(symb.getName());
+		final String identifier = mBoogie2SmtSymbolTable.translateToBoogieFunction(symb.getName(), type);
+		if (identifier == null) {
+			return null;
+		}
 		final Expression[] arguments = new Expression[termParams.length];
 		for (int i = 0; i < termParams.length; i++) {
 			arguments[i] = translate(termParams[i]);

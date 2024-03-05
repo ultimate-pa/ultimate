@@ -39,6 +39,7 @@ import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.Junction;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubtermPropertyChecker;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -760,7 +761,7 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 
 
 	public enum ComparisonResult {
-		INCONSISTENT, IMPLIES, EXPLIES, EQUIVALENT, FUSIBLE;
+		INCONSISTENT, IMPLIES, EXPLIES, EQUIVALENT;
 
 		public ComparisonResult switchDirection() {
 			final ComparisonResult result;
@@ -775,9 +776,6 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 				result = EXPLIES;
 				break;
 			case INCONSISTENT:
-				result = this;
-				break;
-			case FUSIBLE:
 				result = this;
 				break;
 			default:
@@ -1049,8 +1047,6 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 		case LEQ:
 			if (lc.compareTo(rc) < 0) {
 				result = ComparisonResult.INCONSISTENT;
-			} else if (lc.compareTo(rc) == 0) {
-				result = ComparisonResult.FUSIBLE;
 			} else {
 				result = null;
 			}
@@ -1123,8 +1119,6 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 		case LESS:
 			if (lc.compareTo(rc) <= 0) {
 				result = ComparisonResult.INCONSISTENT;
-			} else if (lc.compareTo(rc) == 0) {
-				result = ComparisonResult.FUSIBLE;
 			} else {
 				result = null;
 			}
@@ -1167,8 +1161,6 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 		case GEQ:
 			if (lc.compareTo(rc) > 0) {
 				result = ComparisonResult.INCONSISTENT;
-			} else if (lc.compareTo(rc) == 0) {
-				result = ComparisonResult.FUSIBLE;
 			} else {
 				result = null;
 			}
@@ -1241,8 +1233,6 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 		case GREATER:
 			if (lc.compareTo(rc) >= 0) {
 				result = ComparisonResult.INCONSISTENT;
-			} else if (lc.compareTo(rc) == 0) {
-				result = ComparisonResult.FUSIBLE;
 			} else {
 				result = null;
 			}
@@ -1267,6 +1257,73 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 			throw new AssertionError("unknown value: " + rRel);
 		}
 		return result;
+	}
+
+
+	public static boolean areRepresentationsFusible(final Junction junction, final PolynomialRelation lhs,
+			final PolynomialRelation rhs) {
+		if (!lhs.getPolynomialTerm().getSort().equals(rhs.getPolynomialTerm().getSort())) {
+			throw new AssertionError("Cannot compare polynomials of different sorts");
+		}
+		final AbstractGeneralizedAffineTerm<?> lhsTerm = lhs.getPolynomialTerm();
+		final AbstractGeneralizedAffineTerm<?> rhsTerm = rhs.getPolynomialTerm();
+		if (!lhsTerm.getAbstractVariable2Coefficient().equals(rhsTerm.getAbstractVariable2Coefficient())) {
+			throw new AssertionError("incomparable");
+		}
+		if (!lhs.getRelationSymbol().isConvexInequality() && !rhs.getRelationSymbol().isConvexInequality()) {
+			return false;
+		}
+		final RelationSymbol lhsRelationSymbol;
+		final RelationSymbol rhsRelationSymbol;
+		final Rational lhsConstant;
+		final Rational rhsConstant;
+		if (SmtSortUtils.isIntSort(lhs.getPolynomialTerm().getSort())) {
+			lhsRelationSymbol = lhs.getRelationSymbol().getCorrespondingNonStrictRelationSymbol();
+			rhsRelationSymbol = rhs.getRelationSymbol().getCorrespondingNonStrictRelationSymbol();
+			lhsConstant = lhs.getPolynomialTerm().getConstant()
+					.add(lhs.getRelationSymbol().getOffsetForStrictToNonstrictTransformation());
+			rhsConstant = rhs.getPolynomialTerm().getConstant()
+					.add(rhs.getRelationSymbol().getOffsetForStrictToNonstrictTransformation());
+		} else {
+			lhsRelationSymbol = lhs.getRelationSymbol();
+			rhsRelationSymbol = rhs.getRelationSymbol();
+			lhsConstant = lhs.getPolynomialTerm().getConstant();
+			rhsConstant = rhs.getPolynomialTerm().getConstant();
+		}
+		return areRepresentationsFusibleHelper(junction, lhsRelationSymbol, rhsRelationSymbol, lhsConstant,
+				rhsConstant);
+	}
+
+	/**
+	 */
+	private static boolean areRepresentationsFusibleHelper(final Junction junction,
+			final RelationSymbol lhsRelationSymbol, final RelationSymbol rhsRelationSymbol, final Rational lhsConstant,
+			final Rational rhsConstant) {
+		if (!lhsRelationSymbol.isConvexInequality() || !rhsRelationSymbol.isConvexInequality()) {
+			return false;
+		}
+		switch (junction) {
+		case AND:
+			if (lhsRelationSymbol.equals(RelationSymbol.LEQ) && rhsRelationSymbol.equals(RelationSymbol.GEQ)
+					|| lhsRelationSymbol.equals(RelationSymbol.GEQ) && rhsRelationSymbol.equals(RelationSymbol.LEQ)) {
+				if (rhsConstant.equals(lhsConstant)) {
+					return true;
+				}
+			}
+			return false;
+		case OR:
+			if (lhsRelationSymbol.equals(RelationSymbol.LESS) && rhsRelationSymbol.equals(RelationSymbol.GREATER)
+					|| lhsRelationSymbol.equals(RelationSymbol.GREATER)
+							&& rhsRelationSymbol.equals(RelationSymbol.LESS)) {
+				if (rhsConstant.equals(lhsConstant)) {
+					return true;
+				}
+			}
+			return false;
+		default:
+			throw new AssertionError();
+
+		}
 	}
 
 	/**

@@ -26,8 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
-import java.util.Arrays;
-
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -35,7 +33,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.TaskIdentifier;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.ExternalSolver;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
@@ -49,35 +46,18 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracechec
  *
  */
 public class IpTcStrategyModuleMathsat<L extends IIcfgTransition<?>> extends IpTcStrategyModuleSpWp<L> {
-
-	private static final InterpolationTechnique[] SUPPORTED_TECHNIQUES =
-			new InterpolationTechnique[] { InterpolationTechnique.ForwardPredicates,
-					InterpolationTechnique.ForwardPredicates, InterpolationTechnique.BackwardPredicates,
-					InterpolationTechnique.FPandBP, InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect };
-
-	private final InterpolationTechnique mInterpolationTechnique;
-
 	public IpTcStrategyModuleMathsat(final TaskIdentifier taskIdentifier, final IUltimateServiceProvider services,
 			final TaCheckAndRefinementPreferences<L> prefs, final IRun<L, ?> counterExample,
 			final IPredicate precondition, final IPredicate postcondition,
 			final AssertionOrderModulation<L> assertionOrderModulation, final IPredicateUnifier predicateUnifier,
 			final PredicateFactory predicateFactory, final InterpolationTechnique interpolationTechnique) {
 		super(taskIdentifier, services, prefs, counterExample, precondition, postcondition, assertionOrderModulation,
-				predicateUnifier, predicateFactory);
-		mInterpolationTechnique = interpolationTechnique;
-		assert Arrays.stream(SUPPORTED_TECHNIQUES).anyMatch(
-				a -> a == mInterpolationTechnique) : "Unsupported interpolation technique " + mInterpolationTechnique;
+				predicateUnifier, predicateFactory, interpolationTechnique);
 	}
 
 	@Override
-	protected ManagedScript constructManagedScript() {
-		final SolverSettings solverSettings = mPrefs.constructSolverSettings(mTaskIdentifier)
-				.setUseExternalSolver(ExternalSolver.MATHSAT).setSolverMode(SolverMode.External_ModelsAndUnsatCoreMode);
-		return createExternalManagedScript(solverSettings);
-	}
-
-	@Override
-	protected final InterpolationTechnique getInterpolationTechnique() {
-		return mInterpolationTechnique;
+	protected SolverSettings getSolverSettings() {
+		return mPrefs.constructSolverSettings(mTaskIdentifier).setUseExternalSolver(ExternalSolver.MATHSAT)
+				.setSolverMode(SolverMode.External_ModelsAndUnsatCoreMode);
 	}
 }

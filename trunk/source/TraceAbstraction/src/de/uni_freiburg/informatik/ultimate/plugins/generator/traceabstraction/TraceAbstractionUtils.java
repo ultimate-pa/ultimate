@@ -166,9 +166,15 @@ public final class TraceAbstractionUtils {
 			}
 			break;
 		case LoopsAndPotentialCycles:
-			hoareAnnotationLocs.addAll(IcfgUtils.getPotentialCycleProgramPoints(root));
 			hoareAnnotationLocs.addAll(root.getLoopLocations());
 			hoareAnnotationLocs.addAll(IcfgUtils.getCallerAndCalleePoints(root));
+			hoareAnnotationLocs.addAll(IcfgUtils.getReturnPredecessorPoints(root));
+			hoareAnnotationLocs.addAll(IcfgUtils.getPotentialCycleProgramPoints(root));
+			break;
+		case LoopHeads:
+			hoareAnnotationLocs.addAll(root.getLoopLocations());
+			hoareAnnotationLocs.addAll(IcfgUtils.getCallerAndCalleePoints(root));
+			hoareAnnotationLocs.addAll(IcfgUtils.getReturnPredecessorPoints(root));
 			break;
 		default:
 			throw new AssertionError("unknown value " + hoareAnnotationPositions);

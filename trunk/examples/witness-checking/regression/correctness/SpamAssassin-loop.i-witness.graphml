@@ -26,13 +26,13 @@
 <key id="assumption" attr.name="assumption" for="edge"/>
 <key id="tokens" attr.name="tokens" for="edge"/>
 <key id="originfile" attr.name="originfile" for="edge">
-<default>C:\ultimate\trunk\examples\witnesses\regression\SpamAssassin-loop.i</default>
+<default>C:\ultimate\trunk\examples\witness-checking\regression\correctness\SpamAssassin-loop.i</default>
 </key>
 <key id="sourcecode" attr.name="sourcecode" for="edge"/>
 <graph edgedefault="directed">
-<data key="programfile">C:\ultimate\trunk\examples\witnesses\regression\SpamAssassin-loop.i</data>
+<data key="programfile">C:\ultimate\trunk\examples\witness-checking\regression\correctness\SpamAssassin-loop.i</data>
 <data key="sourcecodelang">C</data>
-<data key="creationtime">2023-08-02T13:36:39Z</data>
+<data key="creationtime">2023-10-31T12:49:53Z</data>
 <data key="witness-type">correctness_witness</data>
 <node id="N0">
 <data key="entry">true</data>
@@ -52,17 +52,17 @@
 <node id="N13"/>
 <node id="N14"/>
 <node id="N15">
-<data key="invariant">bufsize == limit + 4 &amp;&amp; 0 &lt;= i</data>
+<data key="invariant">((bufsize == (limit + 4)) &amp;&amp; (0 &lt;= i))</data>
 </node>
 <node id="N16"/>
 <node id="N17"/>
 <node id="N18">
-<data key="invariant">(bufsize == limit + 4 &amp;&amp; 0 &lt;= j) &amp;&amp; 0 &lt;= i</data>
+<data key="invariant">(((bufsize == (limit + 4)) &amp;&amp; (0 &lt;= j)) &amp;&amp; (0 &lt;= i))</data>
 </node>
 <node id="N19"/>
 <node id="N20"/>
 <node id="N21">
-<data key="invariant">(((bufsize == limit + 4 &amp;&amp; i + 1 &lt;= len) &amp;&amp; 0 &lt;= j) &amp;&amp; 5 + j &lt;= bufsize) &amp;&amp; 0 &lt;= i</data>
+<data key="invariant">(((((bufsize == (limit + 4)) &amp;&amp; ((i + 1) &lt;= len)) &amp;&amp; (0 &lt;= j)) &amp;&amp; ((5 + j) &lt;= bufsize)) &amp;&amp; (0 &lt;= i))</data>
 </node>
 <node id="N22"/>
 <node id="N23"/>

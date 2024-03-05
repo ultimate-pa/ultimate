@@ -42,14 +42,16 @@ public class CNamed extends CType {
 
 	/**
 	 * The name that is mapped.
+	 *
+	 * This is the unique name used in the translated Boogie code; not the original C name.
 	 */
 	private final String mName;
 
 	/**
 	 * Constructor.
 	 *
-	 * @param decl
-	 *            the declaration to work on.
+	 * @param name
+	 *            the unique name used in the translated Boogie code
 	 * @param mappedType
 	 *            the type this named type is referring to.
 	 */
@@ -63,7 +65,7 @@ public class CNamed extends CType {
 	/**
 	 * Getter for the named declaration's name.
 	 *
-	 * @return the named declaration's name.
+	 * @return the named declaration's unique name used in the translated Boogie code.
 	 */
 	public String getName() {
 		return mName;

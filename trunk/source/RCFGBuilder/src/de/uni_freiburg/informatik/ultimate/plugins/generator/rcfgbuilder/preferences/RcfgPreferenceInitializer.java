@@ -79,6 +79,10 @@ public class RcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 
 	public static final String LABEL_CODE_BLOCK_SIZE = "Size of a code block";
 
+	public static final String LABEL_CONTEXT_SWITCH_ONLY_AT_ATOMIC_BOUNDARIES =
+			"Only consider context switches at boundaries of atomic blocks";
+	private static final boolean DEF_CONTEXT_SWITCH_ONLY_AT_ATOMIC_BOUNDARIES = false;
+
 	public static final CodeBlockSize DEF_CODE_BLOCK_SIZE = CodeBlockSize.LoopFreeBlock;
 	public static final String LABEL_SIMPLIFY = "Simplify code blocks";
 	public static final String LABEL_CNF = "Convert code blocks to CNF";
@@ -102,6 +106,10 @@ public class RcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 	private static final boolean DEF_REMOVE_ASSUME_TRUE = true;
 	private static final String DESC_REMOVE_ASSUME_TRUE =
 			"Removes all assume true statements while building the RCFG graph. This is in particular useful for concurrent programs.";
+	public static final String LABEL_FUTURE_LIVE = "Future-live optimization";
+	private static final boolean DEF_FUTURE_LIVE = true;
+	private static final String DESC_FUTURE_LIVE =
+			"Remove from outVars the local (non-inparam) variables that are not future live. (We cannot remove global variables since they might be needed for our interprocedural proofs.)";
 
 	public RcfgPreferenceInitializer() {
 		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
@@ -119,12 +127,16 @@ public class RcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<>(LABEL_EXT_SOLVER_LOGIC, DEF_EXT_SOLVER_LOGIC, PreferenceType.String),
 				new UltimatePreferenceItem<>(LABEL_CODE_BLOCK_SIZE, DEF_CODE_BLOCK_SIZE, PreferenceType.Combo,
 						CodeBlockSize.values()),
+				new UltimatePreferenceItem<>(LABEL_CONTEXT_SWITCH_ONLY_AT_ATOMIC_BOUNDARIES,
+						DEF_CONTEXT_SWITCH_ONLY_AT_ATOMIC_BOUNDARIES, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_REMOVE_GOTO_EDGES, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_SIMPLIFY, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_CNF, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_SIMPLE_PARTIAL_SKOLEMIZATION, DEF_SIMPLE_PARTIAL_SKOLEMIZATION,
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_REMOVE_ASSUME_TRUE, DEF_REMOVE_ASSUME_TRUE, DESC_REMOVE_ASSUME_TRUE,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_FUTURE_LIVE, DEF_FUTURE_LIVE, DESC_FUTURE_LIVE,
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_DUMP_TO_FILE, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_DUMP_UNSAT_CORE_BENCHMARK, false, PreferenceType.Boolean),

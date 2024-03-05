@@ -11,6 +11,7 @@
 # License: LGPLv3
 #
 # (C) 2017 Marius Greitschus, University of Freiburg
+# (C) 2023 Daniel Dietsch, University of Freiburg
 
 set -e
 
@@ -52,6 +53,7 @@ NUMCPUS=$(grep -c '^processor' /proc/cpuinfo)
 NUMCPUS=$((NUMCPUS + 1))
 NOUPDATE=false
 DONTREMOVE=false
+WINDOWS=false
 
 ROOT="$(pwd)"
 trap 'cd "${ROOT}"' EXIT
@@ -82,6 +84,12 @@ print_help()
     echo
     echo "  --no-remove-temp            Do not remove temporary files and directories"
     echo "                              after z3 has been built."
+    echo
+    echo "  --windows                   Cross-compile with mingw-w64 for Windows."
+    echo "                              For debian system, you need to"
+    echo "                              - apt-get install mingw-w64"
+    echo "                              - update-alternatives --config x86_64-w64-mingw32-g++"
+    echo "                                and select POSIX compliant threading"
     echo
     echo "  -h | --help                 Print this help."
 }
@@ -179,9 +187,13 @@ compile_z3()
   export CXXFLAGS="${COMMON_FLAGS}"
   export CC=gcc
   export CXX=g++
+  if [ ${WINDOWS} = true ] ; then
+    export CXX=x86_64-w64-mingw32-g++ 
+    export CC=x86_64-w64-mingw32-gcc 
+    export AR=x86_64-w64-mingw32-ar
+  fi
 
-
-  if [ $USE_CMAKE == 1 ] ; then
+  if [ $USE_CMAKE == 1 ] && [ ${WINDOWS} = false ] ; then
     echo "Generating makefiles with cmake"
     mkdir "${BUILD_DIR}"
     cd "${BUILD_DIR}"
@@ -316,6 +328,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --no-remove-temp)
             DONTREMOVE=true
+            shift
+            ;;
+        --windows)
+            WINDOWS=true
             shift
             ;;
         -h|--help)

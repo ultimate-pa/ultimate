@@ -2,7 +2,7 @@
 <feature
       id="BA_FeatureWebBackend"
       label="BA_FeatureWebBackend"
-      version="0.2.3"
+      version="0.2.4"
       arch="x86_64">
 
    <description url="http://www.example.com/description">

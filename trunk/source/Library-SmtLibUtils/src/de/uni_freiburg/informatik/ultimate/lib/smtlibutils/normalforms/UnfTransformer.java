@@ -101,6 +101,10 @@ public class UnfTransformer extends TermTransformer {
 		return;
 	}
 
+	public static Term apply(Script script, Term term) {
+		return new UnfTransformer(script).transform(term);
+	}
+
 
 
 

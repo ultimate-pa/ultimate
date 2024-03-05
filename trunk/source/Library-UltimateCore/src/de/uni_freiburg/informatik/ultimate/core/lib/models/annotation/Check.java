@@ -41,6 +41,8 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IMessageProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 
 /**
@@ -55,110 +57,6 @@ public class Check extends ModernAnnotations {
 
 	private static final String MSG_AND = " and ";
 
-	public enum Spec {
-		/**
-		 * Array Index out of bounds error.
-		 */
-		ARRAY_INDEX,
-		/**
-		 * Pre condition violated.
-		 */
-		PRE_CONDITION,
-		/**
-		 * Post condition violated.
-		 */
-		POST_CONDITION,
-		/**
-		 * Invariant violated.
-		 */
-		INVARIANT,
-		/**
-		 * Assert statement violated.
-		 */
-		ASSERT,
-		/**
-		 * Devision by zero error.
-		 */
-		DIVISION_BY_ZERO,
-		/**
-		 * Integer overflow error.
-		 */
-		INTEGER_OVERFLOW,
-		/**
-		 * Tried to access unallocated memory.
-		 */
-		MEMORY_DEREFERENCE,
-		/**
-		 * Memory leak detected. I.e. missing free!
-		 */
-		MEMORY_LEAK,
-		/**
-		 * Free of unallocated pointer.
-		 */
-		MEMORY_FREE,
-		/**
-		 * Free of unallocated pointer.
-		 */
-		MALLOC_NONNEGATIVE,
-		/**
-		 * Pointer arithmetic that is not allowed by C. E.g. - computing the difference of two pointers that point to
-		 * completely different arrays - comparing pointers that point to completely different arrays
-		 */
-		ILLEGAL_POINTER_ARITHMETIC,
-		/**
-		 * Error function reachable.
-		 */
-		ERROR_FUNCTION,
-		/**
-		 * Not further specified or unknown.
-		 */
-		UNKNOWN,
-		/**
-		 * An LTL property
-		 */
-		LTL,
-		/**
-		 * Invariant of a correctness witness
-		 */
-		WITNESS_INVARIANT,
-		/**
-		 * Unsigned int overflow
-		 */
-		UINT_OVERFLOW,
-		/**
-		 * Undefined behavior according to the standard
-		 */
-		UNDEFINED_BEHAVIOR,
-		/**
-		 * Check for requirements. Checks for rt-inconsistency.
-		 */
-		RTINCONSISTENT,
-		/**
-		 * Check for requirements. Checks for vacuity.
-		 */
-		VACUOUS,
-		/**
-		 * Check for requirements. Checks for consistency.
-		 */
-		CONSISTENCY,
-		/**
-		 * Check for requirements. Checks for incompleteness.
-		 */
-		INCOMPLETE,
-		/**
-		 * Check if a petrified ICFG does provide enough thread instances.
-		 */
-		SUFFICIENT_THREAD_INSTANCES,
-
-		DATA_RACE,
-
-		/***
-		 * Satisfiability of constraint Horn clauses
-		 */
-		CHC_SATISFIABILITY,
-
-	}
-
 	private static final long serialVersionUID = -3753413284642976683L;
 
 	private static final String KEY = Check.class.getName();
@@ -166,165 +64,54 @@ public class Check extends ModernAnnotations {
 	@Visualizable
 	private final Set<Spec> mSpec;
 
-	private final Function<Spec, String> mPosMsgProvider;
+	private final IMessageProvider mMsgProvider;
 
-	private final Function<Spec, String> mNegMsgProvider;
-
-	public Check(final Check.Spec spec) {
+	public Check(final Spec spec) {
 		this(EnumSet.of(spec));
 	}
 
-	public Check(final Check.Spec spec, final Function<Spec, String> funPositiveMessageProvider,
-			final Function<Spec, String> funNegativeMessageProvider) {
-		this(EnumSet.of(spec), funPositiveMessageProvider, funNegativeMessageProvider);
+	public Check(final Spec spec, final IMessageProvider msgProvider) {
+		this(EnumSet.of(spec), msgProvider);
 	}
 
 	public Check(final Set<Spec> newSpec) {
-		this(newSpec, Check::getDefaultPositiveMessage, Check::getDefaultNegativeMessage);
+		this(newSpec, new CheckMessageProvider());
 	}
 
-	public Check(final Set<Spec> newSpec, final Function<Spec, String> funPositiveMessageProvider,
-			final Function<Spec, String> funNegativeMessageProvider) {
+	public Check(final Set<Spec> newSpec, final IMessageProvider msgProvider) {
 		assert !newSpec.isEmpty();
 		mSpec = newSpec;
-		mPosMsgProvider = funPositiveMessageProvider;
-		mNegMsgProvider = funNegativeMessageProvider;
+		mMsgProvider = msgProvider;
 	}
 
 	public Set<Spec> getSpec() {
 		return mSpec;
 	}
 
+	protected IMessageProvider getMessageProvider() {
+		return mMsgProvider;
+	}
+
 	public String getPositiveMessage() {
-		return getMessage(mPosMsgProvider);
+		return getCompoundMessage(mMsgProvider::getPositiveMessage);
 	}
 
 	public String getNegativeMessage() {
-		return getMessage(mNegMsgProvider);
+		return getCompoundMessage(mMsgProvider::getNegativeMessage);
 	}
 
-	private String getMessage(final Function<Spec, String> funMessageProvider) {
+	private String getCompoundMessage(final Function<Spec, String> msgProviderFunc) {
 		final Iterator<Spec> iter = mSpec.iterator();
 		if (mSpec.size() == 1) {
-			return funMessageProvider.apply(iter.next());
+			return msgProviderFunc.apply(iter.next());
 		}
 
 		final StringBuilder sb = new StringBuilder();
 		while (iter.hasNext()) {
-			sb.append(funMessageProvider.apply(iter.next())).append(MSG_AND);
+			sb.append(msgProviderFunc.apply(iter.next())).append(MSG_AND);
 		}
 		sb.delete(sb.length() - MSG_AND.length(), sb.length());
 		return sb.toString();
-	}
-
-	public static String getDefaultPositiveMessage(final Spec spec) {
-		switch (spec) {
-		case ARRAY_INDEX:
-			return "array index is always in bounds";
-		case PRE_CONDITION:
-			return "procedure precondition always holds";
-		case POST_CONDITION:
-			return "procedure postcondition always holds";
-		case INVARIANT:
-			return "loop invariant is valid";
-		case ASSERT:
-			return "assertion always holds";
-		case DIVISION_BY_ZERO:
-			return "division by zero can never occur";
-		case INTEGER_OVERFLOW:
-			return "integer overflow can never occur";
-		case MEMORY_DEREFERENCE:
-			return "pointer dereference always succeeds";
-		case MEMORY_LEAK:
-			return "all allocated memory was freed";
-		case MEMORY_FREE:
-			return "free always succeeds";
-		case MALLOC_NONNEGATIVE:
-			return "input of malloc is always non-negative";
-		case ILLEGAL_POINTER_ARITHMETIC:
-			return "pointer arithmetic is always legal";
-		case ERROR_FUNCTION:
-			return "call to the error function is unreachable";
-		case WITNESS_INVARIANT:
-			return "invariant of correctness witness holds";
-		case UNKNOWN:
-			return "unknown kind of specification holds";
-		case UINT_OVERFLOW:
-			return "there are no unsigned integer over- or underflows";
-		case UNDEFINED_BEHAVIOR:
-			return "there is no undefined behavior";
-		case RTINCONSISTENT:
-			return "rt-consistent";
-		case VACUOUS:
-			return "non-vacuous";
-		case CONSISTENCY:
-			return "consistent";
-		case INCOMPLETE:
-			return "complete";
-		case SUFFICIENT_THREAD_INSTANCES:
-			return "petrification did provide enough thread instances (tool internal message, not intended for end users)";
-		case DATA_RACE:
-			return "there are no data races";
-		case CHC_SATISFIABILITY:
-			return "the set of constraint Horn clauses is satisfiable";
-		default:
-			return "a specification is correct but has no positive message: " + spec;
-		}
-	}
-
-	public static String getDefaultNegativeMessage(final Spec spec) {
-		switch (spec) {
-		case ARRAY_INDEX:
-			return "array index can be out of bounds";
-		case PRE_CONDITION:
-			return "procedure precondition can be violated";
-		case POST_CONDITION:
-			return "procedure postcondition can be violated";
-		case INVARIANT:
-			return "loop invariant can be violated";
-		case ASSERT:
-			return "assertion can be violated";
-		case DIVISION_BY_ZERO:
-			return "possible division by zero";
-		case INTEGER_OVERFLOW:
-			return "integer overflow possible";
-		case MEMORY_DEREFERENCE:
-			return "pointer dereference may fail";
-		case MEMORY_LEAK:
-			return "not all allocated memory was freed";
-		case MEMORY_FREE:
-			return "free of unallocated memory possible";
-		case MALLOC_NONNEGATIVE:
-			return "input of malloc can be negative";
-		case ILLEGAL_POINTER_ARITHMETIC:
-			return "comparison of incompatible pointers";
-		case ERROR_FUNCTION:
-			return "a call to the error function is reachable";
-		case WITNESS_INVARIANT:
-			return "invariant of correctness witness can be violated";
-		case UNKNOWN:
-			return "unknown kind of specification may be violated";
-		case UINT_OVERFLOW:
-			return "an unsigned integer over- or underflow may occur";
-		case UNDEFINED_BEHAVIOR:
-			return "undefined behavior may occur";
-		case RTINCONSISTENT:
-			return "rt-inconsistent";
-		case VACUOUS:
-			return "vacuous";
-		case CONSISTENCY:
-			return "inconsistent";
-		case INCOMPLETE:
-			return "incomplete";
-		case SUFFICIENT_THREAD_INSTANCES:
-			return "petrification did not provide enough thread instances (tool internal message, not intended for end users)";
-		case DATA_RACE:
-			return "the program contains a data race";
-		case CHC_SATISFIABILITY:
-			return "the set of constraint Horn clauses is unsatisfiable";
-		default:
-			return "a specification may be violated but has no negative message: " + spec;
-		}
 	}
 
 	@Override

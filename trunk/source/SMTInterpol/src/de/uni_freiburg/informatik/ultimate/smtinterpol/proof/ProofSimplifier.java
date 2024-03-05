@@ -3600,7 +3600,7 @@ public class ProofSimplifier extends TermTransformer {
 	}
 
 	/**
-	 * Convert a data type project lemma to a minimal proof. This lemma has the form
+	 * Convert a datatype project lemma to a minimal proof. This lemma has the form
 	 * {@code w != cons(v1,...,vn), seli(w) = vi}. The inequality is missing if it
 	 * is implied by reflexivity. The equality is missing if it is a trivial
 	 * disequality.
@@ -3654,11 +3654,10 @@ public class ProofSimplifier extends TermTransformer {
 	}
 
 	/**
-	 * Convert a data type tester lemma to a minimal proof. This lemma has the form
+	 * Convert a datatype tester lemma to a minimal proof. This lemma has the form
 	 * {@code w != cons(v1,...,vn), is_cons(w) = true} or
 	 * {@code w != cons(v1,...,vn), is_cons'(w) = false}. The inequality is missing
-	 * if it is implied by reflexivity. The equality is missing if it is a trivial
-	 * disequality.
+	 * if it is implied by reflexivity.
 	 *
 	 * @param clause       the clause to check
 	 * @param ccAnnotation the argument of the :dt-tester annotation. It has the
@@ -3720,12 +3719,12 @@ public class ProofSimplifier extends TermTransformer {
 	}
 
 	/**
-	 * Convert a data type constructor lemma to a minimal proof. This lemma has the
+	 * Convert a datatype constructor lemma to a minimal proof. This lemma has the
 	 * form {@code is_cons(w) != true, w = cons(sel1(w),...,seln(w))}.
 	 *
 	 * @param clause       the clause to check
-	 * @param ccAnnotation the argument of the :dt-tester annotation. It has the
-	 *                     form {@code (= w (cons (sel1 w) ... (seln w)))}.
+	 * @param ccAnnotation the argument of the :dt-constructor annotation. It has
+	 *                     the form {@code (= w (cons (sel1 w) ... (seln w)))}.
 	 */
 	private Term convertDTConstructor(final ProofLiteral[] clause, final Object[] ccAnnotation) {
 		assert ccAnnotation.length == 1;
@@ -3761,12 +3760,13 @@ public class ProofSimplifier extends TermTransformer {
 	}
 
 	/**
-	 * Convert a data type cases lemma to a minimal proof. This lemma has the form
+	 * Convert a datatype cases lemma to a minimal proof. This lemma has the form
 	 * {@code ((_ is cons1) u1) != false, ... ((_ is consn) un) != false, u1 != u2,  ... u1 != un}.
+	 * The u1 != ui are missing if they are trivial equalities.
 	 *
 	 * @param clause       the clause to check
-	 * @param ccAnnotation the argument of the :dt-tester annotation. It is a list
-	 *                     of the tester terms {@code ((_ is consi) ui)}.
+	 * @param ccAnnotation the argument of the :dt-cases annotation. It is a list of
+	 *                     the tester terms {@code ((_ is consi) ui)}.
 	 */
 	private Term convertDTCases(final ProofLiteral[] clause, final Object[] ccAnnotation) {
 		final Theory theory = clause[0].getAtom().getTheory();
@@ -3807,11 +3807,11 @@ public class ProofSimplifier extends TermTransformer {
 	}
 
 	/**
-	 * Convert a data type cases lemma to a minimal proof. This lemma has the form
-	 * {@code ((_ is cons1) u1) != true, ((_ is cons2) u2) != true, u1 != u2}.
+	 * Convert a datatype uniqueness lemma to a minimal proof. This lemma has the
+	 * form {@code ((_ is cons1) u1) != true, ((_ is cons2) u2) != true, u1 != u2}.
 	 *
 	 * @param clause       the clause to check
-	 * @param ccAnnotation the argument of the :dt-tester annotation. It is a list
+	 * @param ccAnnotation the argument of the :dt-unique annotation. It is a list
 	 *                     of the two tester terms {@code ((_ is consi) ui)}.
 	 */
 	private Term convertDTUnique(final ProofLiteral[] clause, final Object[] ccAnnotation) {
@@ -3862,7 +3862,7 @@ public class ProofSimplifier extends TermTransformer {
 	}
 
 	/**
-	 * Convert a data type dt-injective lemma to a minimal proof. This lemma has the
+	 * Convert a datatype dt-injective lemma to a minimal proof. This lemma has the
 	 * form {@code (cons a1 ... an) != (cons b1 ... bn), ai == bi}
 	 *
 	 * @param clause       the clause to check
@@ -3921,7 +3921,7 @@ public class ProofSimplifier extends TermTransformer {
 	}
 
 	/**
-	 * Convert a data type dt-injective lemma to a minimal proof. This lemma has the
+	 * Convert a datatype dt-disjoint lemma to a minimal proof. This lemma has the
 	 * form {@code (cons a1 ... an) != (cons' b1 ... bn')}, where cons and cons' are
 	 * different constructors.
 	 *
@@ -3980,7 +3980,7 @@ public class ProofSimplifier extends TermTransformer {
 	}
 
 	/**
-	 * Convert a data type dt-cycle lemma to a minimal proof. The lemma is annotated
+	 * Convert a datatype dt-cycle lemma to a minimal proof. The lemma is annotated
 	 * with a cycle {@code a1,b1,a2,b2,..,an} that shows that {@code a1} is equal to
 	 * a constructor call on itself. The lemma must contain {@code ai=bi} negated
 	 * and {@code a(i+1)} is a child of {@code bi} in the sense that either

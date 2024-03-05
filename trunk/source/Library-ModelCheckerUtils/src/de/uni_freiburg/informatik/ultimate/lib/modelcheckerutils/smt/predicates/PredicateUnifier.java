@@ -27,6 +27,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -48,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashNormalForm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtTestGenerationUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
@@ -62,6 +67,7 @@ import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator.ComparisonResult;
@@ -79,6 +85,15 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
  *
  */
 public class PredicateUnifier implements IPredicateUnifier {
+
+	/**
+	 * Option for writing a file if we find a quantified formula and a
+	 * quantifier-free formula that are equivalent. (Rationale: case where
+	 * quantifier elimination is possible but our quantifier elimination is not
+	 * successful.)
+	 *
+	 */
+	private static final boolean DUMP_UNEXPLOITED_ELIMININATION_POSSIBILITIES = false;
 
 	protected final ManagedScript mMgdScript;
 	private final BasicPredicateFactory mPredicateFactory;
@@ -976,6 +991,23 @@ public class PredicateUnifier implements IPredicateUnifier {
 						return other;
 					}
 					mEquivalentGtQuantifiedPredicates.add(other);
+					if (DUMP_UNEXPLOITED_ELIMININATION_POSSIBILITIES) {
+						final String name = String.format("UnexploitedEliminationPossibility_%s_%s_Size%s",
+								Integer.toHexString(other.getFormula().hashCode()),
+								Integer.toHexString(mTerm.hashCode()), new DAGSize().treesize(other.getFormula()));
+						final String testString = SmtTestGenerationUtils.generateQuantifierEliminationTest(name,
+								other.getFormula(), mTerm);
+						try (FileWriter fw = new FileWriter(name + ".txt");
+								BufferedWriter bw = new BufferedWriter(fw);
+								PrintWriter out = new PrintWriter(bw)) {
+							out.println(testString);
+							out.close();
+							bw.close();
+							fw.close();
+						} catch (final IOException e) {
+							throw new AssertionError(e);
+						}
+					}
 				}
 			}
 			// no predicate was equivalent

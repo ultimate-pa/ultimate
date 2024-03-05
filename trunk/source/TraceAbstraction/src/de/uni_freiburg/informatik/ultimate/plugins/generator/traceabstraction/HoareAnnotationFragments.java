@@ -2,22 +2,22 @@
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE TraceAbstraction plug-in.
- * 
+ *
  * The ULTIMATE TraceAbstraction plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE TraceAbstraction plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE TraceAbstraction plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -55,9 +55,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  * Store and maintain fragments of a Hoare Annotation derived during abstraction refinement. If we would neither remove
  * dead ends nor minimize the abstraction this would not be necessary and we could extract the complete Hoare annotation
  * direcly form the final abstraction.
- * 
+ *
  * @author heizmann@informatik.uni-freiburg.de
- * 
+ *
  */
 public class HoareAnnotationFragments<LETTER extends IAction> {
 
@@ -127,7 +127,7 @@ public class HoareAnnotationFragments<LETTER extends IAction> {
 	/**
 	 * Perform an update the HoareAnnotationFragments that became necessary because the abstraction was updated by an
 	 * automaton operation.
-	 * 
+	 *
 	 * WARNING: At the moment we update only the contexts and the context2enry mapping, because we expect the our
 	 * HoareAnnotationFragments stores double deckers that have been removed by a dead end removal.
 	 */
@@ -190,7 +190,7 @@ public class HoareAnnotationFragments<LETTER extends IAction> {
 	/**
 	 * Encapsulates information for updates of the abstraction by automaton operations. Returns all predicates of the
 	 * new abstraction that replace a state of the old abstraction.
-	 * 
+	 *
 	 * WARNING: This does not provide any information about double deckers. This information is only sufficient if we
 	 * store the removed double deckers.
 	 */
@@ -245,7 +245,8 @@ public class HoareAnnotationFragments<LETTER extends IAction> {
 
 	void addDoubleDecker(final IPredicate down, final IPredicate up, final IPredicate emtpy) {
 		final IcfgLocation pp = getProgramPoint(up);
-		if (mHoareAnnotationPos == HoareAnnotationPositions.LoopsAndPotentialCycles
+		if ((mHoareAnnotationPos == HoareAnnotationPositions.LoopsAndPotentialCycles
+				|| mHoareAnnotationPos == HoareAnnotationPositions.LoopHeads)
 				&& !mHoareAnnotationPositions.contains(pp)) {
 			// do not compute Hoare annotation for this program point
 			return;

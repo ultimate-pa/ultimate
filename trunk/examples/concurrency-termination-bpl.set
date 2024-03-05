@@ -1,4 +1,6 @@
 concurrent/bpl/*.bpl
+concurrent/bpl/regression/*.bpl
+concurrent/bpl/termination/*.bpl
 concurrent/bpl/POPL2023/*.bpl
-concurrent/bpl/weaver-benchmarks/generated/*.yml
-concurrent/bpl/weaver-benchmarks/generated/*/*.yml
+concurrent/bpl/weaver-benchmarks/generated/*.bpl
+concurrent/bpl/weaver-benchmarks/generated/*/*.bpl

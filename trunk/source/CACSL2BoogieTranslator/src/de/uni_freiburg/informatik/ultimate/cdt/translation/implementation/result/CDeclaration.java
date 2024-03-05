@@ -144,9 +144,4 @@ public class CDeclaration {
 	public CStorageClass getStorageClass() {
 		return mStorageClass;
 	}
-
-	public CDeclaration createOnHeap() {
-		return new CDeclaration(mType, mName, mCAstInitializer, mInitializer, true, mStorageClass, mBitfieldSize);
-	}
-
 }

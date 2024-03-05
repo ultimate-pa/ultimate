@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 public class ArrayUpdate {
 	private final TermVariable mNewArray;
 	private final MultiDimensionalStore mMultiDimensionalStore;
+	private final Term mStoreAsTerm;
 	private final Term mArrayUpdateTerm;
 	private final boolean mIsNegatedEquality;
 
@@ -98,7 +99,7 @@ public class ArrayUpdate {
 		assert allegedStoreTerm.getParameters().length == 3;
 		assert mNewArray.getSort() == allegedStoreTerm.getSort();
 
-		mMultiDimensionalStore = MultiDimensionalStore.convert(allegedStoreTerm);
+		mMultiDimensionalStore = MultiDimensionalStore.of(allegedStoreTerm);
 		if (mMultiDimensionalStore.getIndex().size() == 0) {
 			throw new ArrayUpdateException("no multidimensional array");
 		}
@@ -110,6 +111,7 @@ public class ArrayUpdate {
 			throw new ArrayUpdateException("old array is no term variable");
 
 		}
+		mStoreAsTerm = allegedStoreTerm;
 	}
 
 	/**
@@ -177,6 +179,10 @@ public class ArrayUpdate {
 		return mIsNegatedEquality;
 	}
 
+	public Term getStoreAsTerm() {
+		return mStoreAsTerm;
+	}
+
 	@Override
 	public String toString() {
 		return mArrayUpdateTerm.toString();
@@ -222,7 +228,7 @@ public class ArrayUpdate {
 				} else {
 					mArrayUpdates.add(au);
 					mStore2TermVariable.put(
-							au.getMultiDimensionalStore().getStoreTerm(),
+							au.getStoreAsTerm(),
 							au.getNewArray());
 				}
 			}
@@ -239,6 +245,7 @@ public class ArrayUpdate {
 		public List<Term> getRemainingTerms() {
 			return remainingTerms;
 		}
+
 	}
 
 

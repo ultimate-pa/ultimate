@@ -64,7 +64,7 @@ import de.uni_freiburg.informatik.ultimate.witnessprinter.yaml.YamlCorrectnessWi
  */
 public class WitnessPrinter implements IOutput {
 	private static final String GRAPHML = ".graphml";
-	private static final String YAML = ".yaml";
+	private static final String YAML = ".yml";
 
 	private ILogger mLogger;
 	private IUltimateServiceProvider mServices;
@@ -154,17 +154,17 @@ public class WitnessPrinter implements IOutput {
 		final IBacktranslationService backtrans = mServices.getBacktranslationService();
 		final BoogieIcfgContainer root = mRCFGCatcher.getModel();
 		final String filename = ILocation.getAnnotation(root).getFileName();
-		final BacktranslatedCFG<?, IcfgEdge> origCfg =
-				new BacktranslatedCFG<>(filename, IcfgGraphProvider.getVirtualRoot(root), IcfgEdge.class);
-		final IBacktranslatedCFG<?, ?> translateCFG = backtrans.translateCFG(origCfg);
 		final List<ResultWitness> witnesses = new ArrayList<>();
 		if (createGraphML) {
+			final BacktranslatedCFG<?, IcfgEdge> origCfg =
+					new BacktranslatedCFG<>(filename, IcfgGraphProvider.getVirtualRoot(root), IcfgEdge.class);
+			final IBacktranslatedCFG<?, ?> translateCFG = backtrans.translateCFG(origCfg);
 			witnesses.add(new ResultWitness(filename, GRAPHML,
 					new CorrectnessWitnessGenerator<>(translateCFG, mLogger, mServices).makeGraphMLString(), result));
 		}
 		if (createYaml) {
 			witnesses.add(new ResultWitness(filename, YAML,
-					new YamlCorrectnessWitnessGenerator(translateCFG, mLogger, mServices).makeYamlString(), result));
+					new YamlCorrectnessWitnessGenerator(root, mLogger, mServices).makeYamlString(), result));
 		}
 		return witnesses;
 	}

@@ -26,8 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
-import java.util.Arrays;
-
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -35,7 +33,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.TaskIdentifier;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
@@ -50,13 +47,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracechec
 public class IpTcStrategyModuleSmtInterpolSpWp<LETTER extends IIcfgTransition<?>>
 		extends IpTcStrategyModuleSpWp<LETTER> {
 
-	private static final InterpolationTechnique[] SUPPORTED_TECHNIQUES =
-			new InterpolationTechnique[] { InterpolationTechnique.ForwardPredicates,
-					InterpolationTechnique.ForwardPredicates, InterpolationTechnique.BackwardPredicates,
-					InterpolationTechnique.FPandBP, InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect };
-
 	private final long mTimeoutInMillis;
-	private final InterpolationTechnique mInterpolationTechnique;
 
 	public IpTcStrategyModuleSmtInterpolSpWp(final TaskIdentifier taskIdentifier,
 			final IUltimateServiceProvider services, final TaCheckAndRefinementPreferences<LETTER> prefs,
@@ -65,25 +56,14 @@ public class IpTcStrategyModuleSmtInterpolSpWp<LETTER extends IIcfgTransition<?>
 			final PredicateFactory predicateFactory, final long timeoutInMillis,
 			final InterpolationTechnique interpolationTechnique) {
 		super(taskIdentifier, services, prefs, counterExample, precondition, postcondition, assertionOrderModulation,
-				predicateUnifier, predicateFactory);
+				predicateUnifier, predicateFactory, interpolationTechnique);
 		mTimeoutInMillis = timeoutInMillis;
-		mInterpolationTechnique = interpolationTechnique;
-		assert Arrays.stream(SUPPORTED_TECHNIQUES).anyMatch(
-				a -> a == mInterpolationTechnique) : "Unsupported interpolation technique " + mInterpolationTechnique;
 	}
 
 	@Override
-	protected ManagedScript constructManagedScript() {
+	protected SolverSettings getSolverSettings() {
 		final long timeout = computeTimeout(mTimeoutInMillis);
-		final SolverMode solverMode = SolverMode.Internal_SMTInterpol;
-
-		final SolverSettings solverSettings = mPrefs.constructSolverSettings(mTaskIdentifier).setSolverMode(solverMode)
+		return mPrefs.constructSolverSettings(mTaskIdentifier).setSolverMode(SolverMode.Internal_SMTInterpol)
 				.setSmtInterpolTimeout(timeout);
-		return createExternalManagedScript(solverSettings);
-	}
-
-	@Override
-	protected final InterpolationTechnique getInterpolationTechnique() {
-		return mInterpolationTechnique;
 	}
 }

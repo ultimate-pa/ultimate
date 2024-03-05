@@ -1230,7 +1230,9 @@ public class TestFileInterpreter implements IMessagePrinter {
 			clazz = Class.forName(qualifiedName);
 		} catch (final ClassNotFoundException e) {
 			mLogger.error("Couldn't load/find class " + qualifiedName);
-			throw new RuntimeException(e);
+			// TODO: In the web interface classes that do not exist anymore are found.
+			// As a workaround we do not crash here, but just return null and continue.
+			return null;
 		}
 		return clazz;
 	}

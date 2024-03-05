@@ -30,12 +30,12 @@
   	<parent>
 		<artifactId>mavenparent</artifactId>
 		<groupId>de.uni_freiburg.informatik.ultimate</groupId>
-		<version>0.2.3</version>
+		<version>0.2.4</version>
 		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
 	</parent>
   
   <groupId>de.uni_freiburg.informatik.ultimate</groupId>
   <artifactId>de.uni_freiburg.informatik.ultimate.smtsolver.external.test</artifactId>
-  <version>0.2.3</version>
+  <version>0.2.4</version>
   <packaging>eclipse-test-plugin</packaging>
 </project>

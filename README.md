@@ -53,7 +53,7 @@ To cite:
 }
 ```
 
-* *Ultimate Automizer and the Search for Perfect Interpolants - (Competition Contribution)*. Heizmann, Chen, Dietsch, Greitschus, Hoenicke, Li, Nutz, Musa, Schilling, Schindler and Podelski, TACAS (SV-COMP) 2018, https://doi.org/10.1007/978-3-319-89963-3_30
+* *Ultimate Automizer and CommuHash Normal Form - (Competition Contribution)*. Heizmann, Barth, Dietsch, Fichtner, Hoenicke, Klumpp, Naouar, Schindler, Schüssele and Podelski, TACAS (SV-COMP) 2023, https://doi.org/10.1007/978-3-319-89963-3_30
 * *Software Model Checking for People Who Love Automata*. Heizmann, Hoenicke and Podelski, CAV 2013, https://doi.org/10.1007/978-3-642-39799-8_2
 * *Refinement of Trace Abstraction*. Heizmann, Hoenicke and Podelski, SAS 2009, https://doi.org/10.1007/978-3-642-03237-0_7
 
@@ -141,6 +141,6 @@ To cite:
 }
 ```
 
-* *Stratified Commutativity in Verification Algorithms for Concurrent Programs*. Farzan, Klumpp and Podelski, POPL 2023 (to appear)
+* *Stratified Commutativity in Verification Algorithms for Concurrent Programs*. Farzan, Klumpp and Podelski, POPL 2023, https://doi.org/10.1145/3571242
 * *Sound Sequentialization for Concurrent Program Verification*. Farzan, Klumpp and Podelski, PLDI 2022, https://doi.org/10.1145/3519939.3523727
 * *Ultimate GemCutter and the Axes of Generalization - (Competition Contribution)*. Klumpp, Dietsch, Heizmann, Schüssele, Ebbinghaus, Farzan and Podelski, TACAS (SV-COMP) 2022, https://doi.org/10.1007/978-3-030-99527-0_35

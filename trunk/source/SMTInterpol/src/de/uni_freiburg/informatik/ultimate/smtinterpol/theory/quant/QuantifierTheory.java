@@ -763,6 +763,10 @@ public class QuantifierTheory implements ITheory {
 		mEMatching.addClause(clause);
 		mInstantiationManager.addClause(clause);
 
+		if (clause.hasArrayIndices()) {
+			mClausifier.getArrayTheory().setNeedDiffIndices();
+		}
+
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Quant: Added clause: " + clause);
 		}

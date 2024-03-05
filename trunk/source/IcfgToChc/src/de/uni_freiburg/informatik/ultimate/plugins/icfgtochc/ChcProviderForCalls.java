@@ -386,6 +386,7 @@ public class ChcProviderForCalls implements IChcProvider {
 						 * pv is local --> if it is assigned by the return, it is new, otherwise we take the one from
 						 * the clause head
 						 */
+						// TODO 2023-11-01 Matthias: Probably have to take `getOutVars().keySet()` instead
 						if (assignmentOfReturn.getAssignedVars().contains(pv)) {
 							firstPredArgs.add(bodyVar.getTermVariable());
 						} else {

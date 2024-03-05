@@ -74,290 +74,290 @@ public class PolynomialRelationTestModBasedSimplification {
 
 	@Test
 	public void bvsmodConstantSimplification01() {
-		final VarDecl[] vars = { new VarDecl(PolynomialRelationTest::getBitvectorSort8, "x") };
+		final FunDecl[] funDecls = { new FunDecl(PolynomialRelationTest::getBitvectorSort8, "x") };
 		final String input = "(= (_ bv3 8) (bvsmod	(bvneg(_ bv9 8))(_ bv4 8)))";
 		final String expected = "true";
-		testSimplification(SOLVER_COMMAND_Z3, input, expected, vars);
+		testSimplification(SOLVER_COMMAND_Z3, input, expected, funDecls);
 	}
 
 	@Test
 	public void bvsmodConstantSimplificationDivZero() {
-		final VarDecl[] vars = { new VarDecl(PolynomialRelationTest::getBitvectorSort8, "x") };
+		final FunDecl[] funDecls = { new FunDecl(PolynomialRelationTest::getBitvectorSort8, "x") };
 		final String input = "(= (_ bv9 8) (bvsmod	(_ bv9 8)(_ bv0 8)))";
 		final String expected = "true";
-		testSimplification(SOLVER_COMMAND_Z3, input, expected, vars);
+		testSimplification(SOLVER_COMMAND_Z3, input, expected, funDecls);
 	}
 
 	@Test
 	public void bvsmodConstantSimplification03() {
-		final VarDecl[] vars = { new VarDecl(PolynomialRelationTest::getBitvectorSort8, "x") };
+		final FunDecl[] funDecls = { new FunDecl(PolynomialRelationTest::getBitvectorSort8, "x") };
 		final String input = "(= (bvneg(_ bv3 8)) (bvsmod	(_ bv9 8)(bvneg(_ bv4 8))))";
 		final String expected = "true";
-		testSimplification(SOLVER_COMMAND_Z3, input, expected, vars);
+		testSimplification(SOLVER_COMMAND_Z3, input, expected, funDecls);
 	}
 
 	@Test
 	public void bvsmodConstantSimplification04() {
-		final VarDecl[] vars = { new VarDecl(PolynomialRelationTest::getBitvectorSort8, "x") };
+		final FunDecl[] funDecls = { new FunDecl(PolynomialRelationTest::getBitvectorSort8, "x") };
 		final String input = "(= (bvneg (_ bv1 8)) (bvsmod	(bvneg(_ bv9 8)) (bvneg(_ bv4 8))))";
 		final String expected = "true";
-		testSimplification(SOLVER_COMMAND_Z3, input, expected, vars);
+		testSimplification(SOLVER_COMMAND_Z3, input, expected, funDecls);
 	}
 
 	@Test
 	public void bvuremConstantSimplificationDivZero() {
-		final VarDecl[] vars = { new VarDecl(PolynomialRelationTest::getBitvectorSort8, "x") };
+		final FunDecl[] funDecls = { new FunDecl(PolynomialRelationTest::getBitvectorSort8, "x") };
 		final String input = "(= (_ bv9 8) (bvurem	(_ bv9 8) (_ bv0 8)))";
 		final String expected = "true";
-		testSimplification(SOLVER_COMMAND_Z3, input, expected, vars);
+		testSimplification(SOLVER_COMMAND_Z3, input, expected, funDecls);
 	}
 
 	@Test
 	public void bvudivConstantSimplificationDivZero() {
-		final VarDecl[] vars = { new VarDecl(PolynomialRelationTest::getBitvectorSort8, "x") };
+		final FunDecl[] funDecls = { new FunDecl(PolynomialRelationTest::getBitvectorSort8, "x") };
 		final String input = "(=  (_ bv255 8) (bvudiv	(_ bv9 8) (_ bv0 8)))";
 		final String expected = "true";
-		testSimplification(SOLVER_COMMAND_Z3, input, expected, vars);
+		testSimplification(SOLVER_COMMAND_Z3, input, expected, funDecls);
 	}
 
 	@Test
 	public void modBasedSimplificationEq01() {
-		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x") };
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x") };
 		final String input = "(= (mod x 256) 256)";
 		final String expected = "false";
-		testSimplification(SOLVER_COMMAND_Z3, input, expected, vars);
+		testSimplification(SOLVER_COMMAND_Z3, input, expected, funDecls);
 	}
 
 	@Test
 	public void modBasedSimplificationEq02() {
-		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x") };
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x") };
 		final String input = "(= (mod x 256) 255)";
 		final String expected = input;
-		testSimplification(SOLVER_COMMAND_Z3, input, expected, vars);
+		testSimplification(SOLVER_COMMAND_Z3, input, expected, funDecls);
 	}
 
 	@Test
 	public void modBasedSimplificationEq03() {
-		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x") };
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x") };
 		final String input = "(= (mod x 256) 0)";
 		final String expected = input;
-		testSimplification(SOLVER_COMMAND_Z3, input, expected, vars);
+		testSimplification(SOLVER_COMMAND_Z3, input, expected, funDecls);
 	}
 
 	@Test
 	public void modBasedSimplificationEq04() {
-		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x") };
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x") };
 		final String input = "(= (mod x 256) (- 1))";
 		final String expected = "false";
-		testSimplification(SOLVER_COMMAND_Z3, input, expected, vars);
+		testSimplification(SOLVER_COMMAND_Z3, input, expected, funDecls);
 	}
 
 	@Test
 	public void modBasedSimplificationDistinct01() {
-		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x") };
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x") };
 		final String input = "(distinct (mod x 256) 256)";
 		final String expected = "true";
-		testSimplification(SOLVER_COMMAND_Z3, input, expected, vars);
+		testSimplification(SOLVER_COMMAND_Z3, input, expected, funDecls);
 	}
 
 	@Test
 	public void modBasedSimplificationDistinct02() {
-		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x") };
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x") };
 		final String input = "(distinct (mod x 256) 255)";
 		final String expected = input;
-		testSimplification(SOLVER_COMMAND_Z3, input, expected, vars);
+		testSimplification(SOLVER_COMMAND_Z3, input, expected, funDecls);
 	}
 
 	@Test
 	public void modBasedSimplificationDistinct03() {
-		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x") };
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x") };
 		final String input = "(distinct (mod x 256) 0)";
 		final String expected = input;
-		testSimplification(SOLVER_COMMAND_Z3, input, expected, vars);
+		testSimplification(SOLVER_COMMAND_Z3, input, expected, funDecls);
 	}
 
 	@Test
 	public void modBasedSimplificationDistinct04() {
-		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x") };
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x") };
 		final String input = "(distinct (mod x 256) (- 1))";
 		final String expected = "true";
-		testSimplification(SOLVER_COMMAND_Z3, input, expected, vars);
+		testSimplification(SOLVER_COMMAND_Z3, input, expected, funDecls);
 	}
 
 	@Test
 	public void modBasedSimplificationLess01() {
-		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x") };
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x") };
 		final String input = "(< (mod x 256) 256)";
 		final String expected = "true";
-		testSimplification(SOLVER_COMMAND_Z3, input, expected, vars);
+		testSimplification(SOLVER_COMMAND_Z3, input, expected, funDecls);
 	}
 
 	@Test
 	public void modBasedSimplificationLess02() {
-		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x") };
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x") };
 		final String input = "(< (mod x 256) 255)";
 		final String expected = input;
-		testSimplification(SOLVER_COMMAND_Z3, input, expected, vars);
+		testSimplification(SOLVER_COMMAND_Z3, input, expected, funDecls);
 	}
 
 	@Test
 	public void modBasedSimplificationLess03() {
-		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x") };
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x") };
 		final String input = "(< (mod x 256) 0)";
 		final String expected = "false";
-		testSimplification(SOLVER_COMMAND_Z3, input, expected, vars);
+		testSimplification(SOLVER_COMMAND_Z3, input, expected, funDecls);
 	}
 
 	@Test
 	public void modBasedSimplificationLess04() {
-		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x") };
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x") };
 		final String input = "(< (mod x 256) (- 1))";
 		final String expected = "false";
-		testSimplification(SOLVER_COMMAND_Z3, input, expected, vars);
+		testSimplification(SOLVER_COMMAND_Z3, input, expected, funDecls);
 	}
 
 	@Test
 	public void modBasedSimplificationGreater01() {
-		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x") };
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x") };
 		final String input = "(> (mod x 256) 256)";
 		final String expected = "false";
-		testSimplification(SOLVER_COMMAND_Z3, input, expected, vars);
+		testSimplification(SOLVER_COMMAND_Z3, input, expected, funDecls);
 	}
 
 	@Test
 	public void modBasedSimplificationGreater02() {
-		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x") };
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x") };
 		final String input = "(> (mod x 256) 255)";
 		final String expected = "false";
-		testSimplification(SOLVER_COMMAND_Z3, input, expected, vars);
+		testSimplification(SOLVER_COMMAND_Z3, input, expected, funDecls);
 	}
 
 	@Test
 	public void modBasedSimplificationGreater03() {
-		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x") };
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x") };
 		final String input = "(> (mod x 256) 0)";
 		final String expected = input;
-		testSimplification(SOLVER_COMMAND_Z3, input, expected, vars);
+		testSimplification(SOLVER_COMMAND_Z3, input, expected, funDecls);
 	}
 
 	@Test
 	public void modBasedSimplificationGreater04() {
-		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x") };
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x") };
 		final String input = "(> (mod x 256) (- 1))";
 		final String expected = "true";
-		testSimplification(SOLVER_COMMAND_Z3, input, expected, vars);
+		testSimplification(SOLVER_COMMAND_Z3, input, expected, funDecls);
 	}
 
 	@Test
 	public void modBasedSimplificationLeq01() {
-		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x") };
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x") };
 		final String input = "(<= (mod x 256) 256)";
 		final String expected = "true";
-		testSimplification(SOLVER_COMMAND_Z3, input, expected, vars);
+		testSimplification(SOLVER_COMMAND_Z3, input, expected, funDecls);
 	}
 
 	@Test
 	public void modBasedSimplificationLeq02() {
-		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x") };
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x") };
 		final String input = "(<= (mod x 256) 255)";
 		final String expected = "true";
-		testSimplification(SOLVER_COMMAND_Z3, input, expected, vars);
+		testSimplification(SOLVER_COMMAND_Z3, input, expected, funDecls);
 	}
 
 	@Test
 	public void modBasedSimplificationLeq03() {
-		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x") };
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x") };
 		final String input = "(<= (mod x 256) 0)";
 		final String expected = input;
-		testSimplification(SOLVER_COMMAND_Z3, input, expected, vars);
+		testSimplification(SOLVER_COMMAND_Z3, input, expected, funDecls);
 	}
 
 	@Test
 	public void modBasedSimplificationLeq04() {
-		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x") };
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x") };
 		final String input = "(<= (mod x 256) (- 1))";
 		final String expected = "false";
-		testSimplification(SOLVER_COMMAND_Z3, input, expected, vars);
+		testSimplification(SOLVER_COMMAND_Z3, input, expected, funDecls);
 	}
 
 	@Test
 	public void modBasedSimplificationGeq01() {
-		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x") };
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x") };
 		final String input = "(>= (mod x 256) 256)";
 		final String expected = "false";
-		testSimplification(SOLVER_COMMAND_Z3, input, expected, vars);
+		testSimplification(SOLVER_COMMAND_Z3, input, expected, funDecls);
 	}
 
 	@Test
 	public void modBasedSimplificationGeq02() {
-		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x") };
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x") };
 		final String input = "(>= (mod x 256) 255)";
 		final String expected = input;
-		testSimplification(SOLVER_COMMAND_Z3, input, expected, vars);
+		testSimplification(SOLVER_COMMAND_Z3, input, expected, funDecls);
 	}
 
 	@Test
 	public void modBasedSimplificationGeq03() {
-		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x") };
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x") };
 		final String input = "(>= (mod x 256) 0)";
 		final String expected = "true";
-		testSimplification(SOLVER_COMMAND_Z3, input, expected, vars);
+		testSimplification(SOLVER_COMMAND_Z3, input, expected, funDecls);
 	}
 
 	@Test
 	public void modBasedSimplificationGeq04() {
-		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x") };
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x") };
 		final String input = "(>= (mod x 256) (- 1))";
 		final String expected = "true";
-		testSimplification(SOLVER_COMMAND_Z3, input, expected, vars);
+		testSimplification(SOLVER_COMMAND_Z3, input, expected, funDecls);
 	}
 
 	@Test
 	public void modBasedSimplificationWithNegativeCoefficients01() {
-		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y") };
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x", "y") };
 		final String input = "(>= (+ (* (- 2) (mod x 256)) (* 2 (mod y 256))) (- 510))";
 		final String expected = "true";
-		testSimplification(SOLVER_COMMAND_Z3, input, expected, vars);
+		testSimplification(SOLVER_COMMAND_Z3, input, expected, funDecls);
 	}
 
 	@Test
 	public void modBasedSimplificationWithNegativeCoefficients02() {
-		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y") };
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x", "y") };
 		final String input = "(>= (+ (* (- 2) (mod x 256)) (* 2 (mod y 256))) (- 509))";
 		final String expected = input;
-		testSimplification(SOLVER_COMMAND_Z3, input, expected, vars);
+		testSimplification(SOLVER_COMMAND_Z3, input, expected, funDecls);
 	}
 
 	@Test
 	public void modBasedSimplificationWithNegativeCoefficients03() {
-		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y") };
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x", "y") };
 		final String input = "(>= (+ (* (- 2) (mod x 256)) (* 2 (mod y 256))) 510)";
 		final String expected = input;
-		testSimplification(SOLVER_COMMAND_Z3, input, expected, vars);
+		testSimplification(SOLVER_COMMAND_Z3, input, expected, funDecls);
 	}
 
 	@Test
 	public void modBasedSimplificationWithNegativeCoefficients04() {
-		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y") };
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x", "y") };
 		final String input = "(>= (+ (* (- 2) (mod x 256)) (* 2 (mod y 256))) 511)";
 		final String expected = "false";
-		testSimplification(SOLVER_COMMAND_Z3, input, expected, vars);
+		testSimplification(SOLVER_COMMAND_Z3, input, expected, funDecls);
 	}
 
 	@Test
 	public void divisorAlwaysPositive() {
-		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y") };
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x", "y") };
 		final String input = "(= y (mod x (- 7)))";
 		final String expected = "(= (mod x 7) y)";
-		testSimplification(SOLVER_COMMAND_Z3, input, expected, vars);
+		testSimplification(SOLVER_COMMAND_Z3, input, expected, funDecls);
 	}
 
 	private void testSimplification(final String solverCommand, final String inputAsString,
-			final String expectedResultAsString, final VarDecl... varDecls) {
+			final String expectedResultAsString, final FunDecl... funDecls) {
 		final Script script = createSolver(solverCommand);
 		script.setLogic(Logics.ALL);
-		for (final VarDecl varDecl : varDecls) {
-			varDecl.declareVars(script);
+		for (final FunDecl funDecl : funDecls) {
+			funDecl.declareFuns(script);
 		}
 		mScript = script;
 		final Term inputAsTerm = TermParseUtils.parseTerm(script, inputAsString);

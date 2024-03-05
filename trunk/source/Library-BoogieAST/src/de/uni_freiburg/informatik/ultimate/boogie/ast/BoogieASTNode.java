@@ -38,9 +38,11 @@ import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.BasePayloadContainer;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.VisualizationNode;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.CheckMessageProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ISimpleAST;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IWalkable;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 
 /**
  *
@@ -136,17 +138,20 @@ public class BoogieASTNode extends BasePayloadContainer implements ISimpleAST<Bo
 			final NamedAttribute[] attrib = ((AssertStatement) node).getAttributes();
 			if (attrib != null && attrib.length > 0) {
 				final String namedAttribStr = BoogiePrettyPrinter.print(attrib);
-				return new Check(Check.Spec.ASSERT,
-						a -> String.format("assertion with attributes \"%s\" always holds", namedAttribStr),
-						a -> String.format("assertion with attributes \"%s\" can be violated", namedAttribStr));
+				final CheckMessageProvider msgProvider = new CheckMessageProvider();
+
+				/* customize result message for assertion specifications with named attributes */
+				msgProvider.registerSpecificationAssertNamedAttributes(namedAttribStr);
+
+				return new Check(Spec.ASSERT, msgProvider);
 			}
-			return new Check(Check.Spec.ASSERT);
+			return new Check(Spec.ASSERT);
 		} else if (node instanceof LoopInvariantSpecification) {
-			return new Check(Check.Spec.INVARIANT);
+			return new Check(Spec.INVARIANT);
 		} else if (node instanceof CallStatement) {
-			return new Check(Check.Spec.PRE_CONDITION);
+			return new Check(Spec.PRE_CONDITION);
 		} else if (node instanceof EnsuresSpecification) {
-			return new Check(Check.Spec.POST_CONDITION);
+			return new Check(Spec.POST_CONDITION);
 		} else if (node == null) {
 			throw new IllegalArgumentException();
 		}

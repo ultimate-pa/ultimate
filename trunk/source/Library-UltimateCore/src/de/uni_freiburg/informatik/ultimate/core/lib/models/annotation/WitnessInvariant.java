@@ -53,7 +53,10 @@ public class WitnessInvariant extends ModernAnnotations {
 	}
 
 	public void annotate(final IElement node) {
-		node.getPayload().getAnnotations().put(KEY, this);
+		// Only add an annotation, if the invariant was succesfully backtranslated (i.e. is not null)
+		if (mInvariant != null) {
+			node.getPayload().getAnnotations().put(KEY, this);
+		}
 	}
 
 	public static WitnessInvariant getAnnotation(final IElement node) {

@@ -49,9 +49,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -366,7 +365,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 	}
 
 	@SafeVarargs
-	private static ReqCheck createReqCheck(final Check.Spec reqSpec,
+	private static ReqCheck createReqCheck(final Spec reqSpec,
 			final Entry<PatternType<?>, PhaseEventAutomata>... req2pea) {
 		if (req2pea == null || req2pea.length == 0) {
 			throw new IllegalArgumentException("subset cannot be null or empty");
@@ -382,7 +381,8 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		return new ReqCheck(reqSpec, reqIds, peaNames);
 	}
 
-	private static ReqCheck createReqCheck(final Spec spec, final PatternType<?> req, final PhaseEventAutomata aut) {
+	private static ReqCheck createReqCheck(final Spec spec, final PatternType<?> req,
+			final PhaseEventAutomata aut) {
 		return createReqCheck(spec, new Pair<>(req, aut));
 	}
 

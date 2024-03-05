@@ -1,6 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.logic;
 
-import java.math.BigInteger;
 import java.util.Arrays;
 
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnifyHash;
@@ -45,7 +44,7 @@ public class IRAWrapperFactory {
 		/*
 		 * First check that paramSorts is correct.
 		 */
-		if (name.equals("ite") && indices == null) {
+		if (name.equals(SMTLIBConstants.ITE) && indices == null) {
 			/* ite expects a bool and two int/real mixed arguments. */
 			if (paramSorts[0] != theory.getBooleanSort()) {
 				return null;
@@ -57,30 +56,28 @@ public class IRAWrapperFactory {
 			/* Create the base function symbol. */
 			fsym = theory.getFunctionWithResult(name, indices, resultType,
 					new Sort[] { theory.getBooleanSort(), realSort, realSort });
-			if (fsym == null) {
-				return null;
-			}
 		} else {
-			/* Else all arguments must be Int or Real. At least one must be Int. */
+			/* Else all arguments must be Int or Real.  */
 			boolean hasInt = false;
+			boolean hasReal = false;
 			for (int i = 0; i < paramSorts.length; i++) {
 				if (paramSorts[i] == intSort) {
 					hasInt = true;
-				} else if (paramSorts[i] != realSort) {
+				} else if (paramSorts[i] == realSort) {
+					hasReal = true;
+				} else {
 					return null;
 				}
 			}
-			if (!hasInt) {
+			/* At least one must be Int and -- except for division -- one must be Real. */
+			if (!hasInt || (!hasReal && !name.equals(SMTLIBConstants.DIVIDE))) {
 				return null;
 			}
 			/* Create the base function symbol. */
 			fsym = theory.getFunctionWithResult(name, indices, resultType, realSort, realSort);
-			if (fsym == null) {
-				return null;
-			}
 			/* Check if the number of parameters is two or the symbol is associative. */
-			if (paramSorts.length != 2 && (paramSorts.length < 2 || (fsym.mFlags & FunctionSymbol.ASSOCMASK) == 0)) {
-				return null;
+			if (paramSorts.length != 2 && (fsym.mFlags & FunctionSymbol.ASSOCMASK) == 0) {
+				throw new SMTLIBException("Function " + name + " is not associative.");
 			}
 		}
 
@@ -94,17 +91,17 @@ public class IRAWrapperFactory {
 		}
 
 		/* Create the wrapping definition */
-		TermVariable[] defVars = new TermVariable[paramSorts.length];
-		Term[] wrappedArgs = new Term[paramSorts.length];
+		final TermVariable[] defVars = new TermVariable[paramSorts.length];
+		final Term[] wrappedArgs = new Term[paramSorts.length];
 		for (int i = 0; i < paramSorts.length; i++) {
 			defVars[i] = theory.createTermVariable("x" + i, paramSorts[i]);
 			wrappedArgs[i] = paramSorts[i] == intSort ? theory.term("to_real", defVars[i]) : defVars[i];
 		}
-		Term definition = theory.term(fsym, wrappedArgs);
+		final Term definition = theory.term(fsym, wrappedArgs);
 		assert definition != null;
 
 		/* Create the function symbol */
-		FunctionSymbol wrapper = new FunctionSymbol(fsym.getName(), fsym.getIndices(), paramSorts, fsym.getReturnSort(),
+		final FunctionSymbol wrapper = new FunctionSymbol(fsym.getName(), fsym.getIndices(), paramSorts, fsym.getReturnSort(),
 				defVars, definition, (fsym.mFlags & ~FunctionSymbol.ASSOCMASK));
 		mInstances.put(hash, wrapper);
 		return wrapper;

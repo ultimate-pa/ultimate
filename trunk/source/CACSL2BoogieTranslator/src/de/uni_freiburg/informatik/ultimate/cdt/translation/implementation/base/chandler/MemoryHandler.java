@@ -61,6 +61,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
@@ -129,9 +130,9 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.MemoryModel;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerCheckMode;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.LinkedScopedHashMap;
@@ -324,7 +325,6 @@ public class MemoryHandler {
 
 		final ArrayList<Declaration> decl = new ArrayList<>();
 
-		decl.add(constructNullPointerConstant());
 		decl.add(constructValidArrayDeclaration());
 		decl.add(constuctLengthArrayDeclaration());
 
@@ -419,7 +419,7 @@ public class MemoryHandler {
 				.contains(MemoryModelDeclarations.C_REALLOC)) {
 			final ConstructRealloc cr = new ConstructRealloc(this, mProcedureManager, (TypeHandler) mTypeHandler,
 					mTypeSizeAndOffsetComputer, mExpressionTranslation);
-			decl.addAll(cr.declareRealloc(main));
+			decl.addAll(cr.declareRealloc(main, heapDataArrays));
 		}
 
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations()
@@ -435,6 +435,11 @@ public class MemoryHandler {
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations()
 				.contains(MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX_LOCK)) {
 			decl.addAll(declarePthreadMutexLock(main, mTypeHandler, tuLoc));
+		}
+
+		if (mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations()
+				.contains(MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX_UNLOCK)) {
+			decl.addAll(declarePthreadMutexUnlock(main, mTypeHandler, tuLoc));
 		}
 
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations()
@@ -484,29 +489,45 @@ public class MemoryHandler {
 		return constructCall(MemoryModelDeclarations.C_MEMSET, loc, resVar, pointer, value, amount);
 	}
 
-	public CallStatement constructPthreadMutexLockCall(final ILocation loc, final Expression pointer,
-			final VariableLHS variableLHS) {
-		return constructCall(MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX_LOCK, loc, variableLHS, pointer);
+	// calls to functions for locks should be atomic, for sound data race detection
+	private static AtomicStatement makeAtomic(final ILocation loc, final Statement statement) {
+		return new AtomicStatement(loc, new Statement[] { statement });
 	}
 
-	public CallStatement constructPthreadMutexTryLockCall(final ILocation loc, final Expression pointer,
+	public Statement constructPthreadMutexLockCall(final ILocation loc, final Expression pointer,
 			final VariableLHS variableLHS) {
-		return constructCall(MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX_TRYLOCK, loc, variableLHS, pointer);
+		return makeAtomic(loc,
+				constructCall(MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX_LOCK, loc, variableLHS, pointer));
 	}
 
-	public CallStatement constructPthreadRwLockReadLockCall(final ILocation loc, final Expression pointer,
+	public Statement constructPthreadMutexUnlockCall(final ILocation loc, final Expression pointer,
 			final VariableLHS variableLHS) {
-		return constructCall(MemoryModelDeclarations.ULTIMATE_PTHREADS_RWLOCK_READLOCK, loc, variableLHS, pointer);
+		return makeAtomic(loc,
+				constructCall(MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX_UNLOCK, loc, variableLHS, pointer));
 	}
 
-	public CallStatement constructPthreadRwLockWriteLockCall(final ILocation loc, final Expression pointer,
+	public Statement constructPthreadMutexTryLockCall(final ILocation loc, final Expression pointer,
 			final VariableLHS variableLHS) {
-		return constructCall(MemoryModelDeclarations.ULTIMATE_PTHREADS_RWLOCK_WRITELOCK, loc, variableLHS, pointer);
+		return makeAtomic(loc,
+				constructCall(MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX_TRYLOCK, loc, variableLHS, pointer));
 	}
 
-	public CallStatement constructPthreadRwLockUnlockCall(final ILocation loc, final Expression pointer,
+	public Statement constructPthreadRwLockReadLockCall(final ILocation loc, final Expression pointer,
 			final VariableLHS variableLHS) {
-		return constructCall(MemoryModelDeclarations.ULTIMATE_PTHREADS_RWLOCK_UNLOCK, loc, variableLHS, pointer);
+		return makeAtomic(loc,
+				constructCall(MemoryModelDeclarations.ULTIMATE_PTHREADS_RWLOCK_READLOCK, loc, variableLHS, pointer));
+	}
+
+	public Statement constructPthreadRwLockWriteLockCall(final ILocation loc, final Expression pointer,
+			final VariableLHS variableLHS) {
+		return makeAtomic(loc,
+				constructCall(MemoryModelDeclarations.ULTIMATE_PTHREADS_RWLOCK_WRITELOCK, loc, variableLHS, pointer));
+	}
+
+	public Statement constructPthreadRwLockUnlockCall(final ILocation loc, final Expression pointer,
+			final VariableLHS variableLHS) {
+		return makeAtomic(loc,
+				constructCall(MemoryModelDeclarations.ULTIMATE_PTHREADS_RWLOCK_UNLOCK, loc, variableLHS, pointer));
 	}
 
 	private CallStatement constructCall(final MemoryModelDeclarations decl, final ILocation loc,
@@ -1176,14 +1197,6 @@ public class MemoryHandler {
 		final VarList vlV =
 				new VarList(ignoreLoc, new String[] { MemoryModelDeclarations.ULTIMATE_VALID.getName() }, validType);
 		return new VariableDeclaration(ignoreLoc, new Attribute[0], new VarList[] { vlV });
-	}
-
-	private VariableDeclaration constructNullPointerConstant() {
-		// NULL Pointer
-		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
-		final VariableDeclaration result = new VariableDeclaration(ignoreLoc, new Attribute[0], new VarList[] {
-				new VarList(ignoreLoc, new String[] { SFO.NULL }, mTypeHandler.constructPointerType(ignoreLoc)) });
-		return result;
 	}
 
 	/**
@@ -2764,6 +2777,32 @@ public class MemoryHandler {
 										.singleton((VariableLHS) CTranslationUtil.convertExpressionToLHS(mutexArray))),
 						// we assume that function is always successful and returns 0
 						ensuresSuccess(tuLoc, res) });
+
+		return new ArrayList<>();
+	}
+
+	/**
+	 * We assume that the mutex type is PTHREAD_MUTEX_NORMAL which means that if we unlock a mutex that has never been
+	 * locked, the behavior is undefined. We use a semantics where unlocking a non-locked mutex is a no-op.
+	 *
+	 * For the return value we follow what GCC did in my experiments. It produced code that returned 0 even if we
+	 * unlocked a non-locked mutex.
+	 */
+	private ArrayList<Declaration> declarePthreadMutexUnlock(final CHandler main, final ITypeHandler typeHandler,
+			final ILocation tuLoc) {
+		final Expression mutexArray = constructMutexArrayIdentifierExpression(tuLoc);
+		final Expression bLFalse = mBooleanArrayHelper.constructFalse();
+
+		declareProcedureWithPointerParam(main, typeHandler, tuLoc,
+				MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX_UNLOCK.getName(), (inputPtr,
+						res) -> new Specification[] {
+								// #PthreadsMutex == old(#PthreadsMutex)[#ptr := false]
+								mProcedureManager.constructEnsuresSpecification(tuLoc, true,
+										ensuresArrayUpdate(tuLoc, bLFalse, inputPtr, mutexArray),
+										Collections.singleton(
+												(VariableLHS) CTranslationUtil.convertExpressionToLHS(mutexArray))),
+								// we assume that function is always successful and returns 0
+								ensuresSuccess(tuLoc, res) });
 
 		return new ArrayList<>();
 	}

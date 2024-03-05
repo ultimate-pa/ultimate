@@ -27,13 +27,15 @@
 
 package de.uni_freiburg.informatik.ultimate.witnessparser.yaml;
 
-import com.amihaiemil.eoyaml.Yaml;
-import com.amihaiemil.eoyaml.YamlNode;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Witness.IMapSerializable;
 
 /**
  * @author Manuel Bentele (bentele@informatik.uni-freiburg.de)
  */
-public class Producer implements IYamlProvider {
+public class Producer implements IMapSerializable {
 	private final String mName;
 	private final String mVersion;
 	private final String mConfiguration;
@@ -74,7 +76,7 @@ public class Producer implements IYamlProvider {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		}
@@ -82,11 +84,11 @@ public class Producer implements IYamlProvider {
 		if (obj instanceof Producer) {
 			final Producer other = Producer.class.cast(obj);
 			// @formatter:off
-			if (this.getName().equals(other.getName()) &&
-				this.getVersion().equals(other.getVersion()) &&
-				this.getConfiguration().equals(other.getConfiguration()) &&
-				this.getDescription().equals(other.getDescription()) &&
-				this.getCommandLine().equals(other.getCommandLine())) {
+			if (getName().equals(other.getName()) &&
+				getVersion().equals(other.getVersion()) &&
+				getConfiguration().equals(other.getConfiguration()) &&
+				getDescription().equals(other.getDescription()) &&
+				getCommandLine().equals(other.getCommandLine())) {
 
 				return true;
 			}
@@ -97,8 +99,10 @@ public class Producer implements IYamlProvider {
 	}
 
 	@Override
-	public YamlNode toYaml() {
-		// TODO: Should we include the optional fields as well?
-		return Yaml.createYamlMappingBuilder().add("name", mName).add("version", mVersion).build();
+	public Map<String, Object> toMap() {
+		final LinkedHashMap<String, Object> result = new LinkedHashMap<>();
+		result.put("name", mName);
+		result.put("version", mVersion);
+		return result;
 	}
 }

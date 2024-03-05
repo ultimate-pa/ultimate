@@ -4,11 +4,11 @@
   	<parent>
 		<artifactId>mavenparent</artifactId>
 		<groupId>de.uni_freiburg.informatik.ultimate</groupId>
-		<version>0.2.3</version>
+		<version>0.2.4</version>
 		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
 	</parent>
   
   <artifactId>BA_FeatureWebBackend</artifactId>
-  <version>0.2.3</version>
+  <version>0.2.4</version>
   <packaging>eclipse-feature</packaging>
 </project>

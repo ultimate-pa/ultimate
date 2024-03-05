@@ -94,6 +94,9 @@ trunk/examples/concurrent/bpl/weaver-benchmarks/weaver
 /trunk/source/ACSLParser/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast/FieldAccessExpression.java
 /trunk/source/ACSLParser/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast/FreeableExpression.java
 /trunk/source/ACSLParser/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast/FunctionApplication.java
+/trunk/source/ACSLParser/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast/GhostUpdate.java
+/trunk/source/ACSLParser/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast/GhostDeclaration.java
+/trunk/source/ACSLParser/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast/GlobalGhostDeclaration.java
 /trunk/source/ACSLParser/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast/GlobalInvariant.java
 /trunk/source/ACSLParser/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast/GlobalLTLInvariant.java
 /trunk/source/ACSLParser/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast/IdentifierExpression.java

@@ -63,7 +63,8 @@ public abstract class NonTerminationArgumentResult<P extends IElement, E> extend
 		boolean first = true;
 		for (final Entry<E, String> entry : state.entrySet()) {
 			final String var = mTranslatorSequence.translateExpressionToString(entry.getKey(), mExprClazz);
-			if (var.contains("UnsupportedOperation")) {
+			// This variable could not be backtranslated or contains an unsupported operation, so we just skip it.
+			if (var == null || var.contains("UnsupportedOperation")) {
 				continue;
 			}
 			if (!first) {

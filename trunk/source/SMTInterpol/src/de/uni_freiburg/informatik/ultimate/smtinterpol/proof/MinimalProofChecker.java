@@ -31,7 +31,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.DataType;
 import de.uni_freiburg.informatik.ultimate.logic.DataType.Constructor;
-import de.uni_freiburg.informatik.ultimate.logic.FormulaLet;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.LambdaTerm;
@@ -878,6 +877,22 @@ public class MinimalProofChecker extends NonRecursive {
 			final HashSet<ProofLiteral> clause = new HashSet<>();
 			for (int i = 0; i < ineqs.length; i++) {
 				clause.add(new ProofLiteral(ineqs[i], false));
+			}
+			return clause.toArray(new ProofLiteral[clause.size()]);
+		}
+		case ":" + ProofRules.MULPOS: {
+			if (!theory.getLogic().isArithmetic()) {
+				reportError("Proof requires arithmetic");
+				return getTrueClause(theory);
+			}
+			final Term[] ineqs = (Term[]) annots[0].getValue();
+			assert annots.length == 0;
+			if (!ProofRules.checkMulPos(ineqs)) {
+				return reportViolatedSideCondition(axiom);
+			}
+			final HashSet<ProofLiteral> clause = new HashSet<>();
+			for (int i = 0; i < ineqs.length; i++) {
+				clause.add(new ProofLiteral(ineqs[i], i == ineqs.length - 1));
 			}
 			return clause.toArray(new ProofLiteral[clause.size()]);
 		}

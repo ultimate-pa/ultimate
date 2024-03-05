@@ -254,6 +254,17 @@ public class QuantClause {
 		return Arrays.asList(mVars).indexOf(var);
 	}
 
+	public boolean hasArrayIndices() {
+		for (int i = 0; i < mVars.length; i++) {
+			for (final ApplicationTerm term : mVarInfos[i].mArrayTermsWithVar) {
+				if (term.getParameters()[1] == mVars[i]) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
 	/**
 	 * Go through the quantified literals in this clause to collect information about the appearing variables. In
 	 * particular, for each variable we collect the lower and upper ground bounds and variable bounds, and the functions

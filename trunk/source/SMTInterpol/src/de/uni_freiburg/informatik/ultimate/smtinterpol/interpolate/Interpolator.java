@@ -252,7 +252,7 @@ public class Interpolator extends NonRecursive {
 			return mInterpolants.get(proofTerm);
 		}
 		if (mCancel.isTerminationRequested()) {
-			throw new SMTLIBException("Timeout exceeded");
+			throw new SMTLIBException("Termination requested (timeout or resource limit)");
 		}
 
 		Term[] interpolants = null;
@@ -272,7 +272,7 @@ public class Interpolator extends NonRecursive {
 	 */
 	private void walkResolutionNode(final Term proofTerm) {
 		if (mCancel.isTerminationRequested()) {
-			throw new SMTLIBException("Timeout exceeded");
+			throw new SMTLIBException("Termination requested (timeout or resource limit)");
 		}
 		// get primary and antecedents
 		final Term resolutionTerm = proofTerm instanceof AnnotatedTerm ? ((AnnotatedTerm) proofTerm).getSubterm()
@@ -301,7 +301,7 @@ public class Interpolator extends NonRecursive {
 	@SuppressWarnings("unused")
 	private void walkLeafNode(final Term leaf) {
 		if (mCancel.isTerminationRequested()) {
-			throw new SMTLIBException("Timeout exceeded");
+			throw new SMTLIBException("Termination requested (timeout or resource limit)");
 		}
 		final InterpolatorClauseInfo leafTermInfo = getClauseTermInfo(leaf);
 		final Term[] clause = leafTermInfo.getLiterals();
@@ -360,6 +360,18 @@ public class Interpolator extends NonRecursive {
 					// Check for unsupported variables and add quantifiers if necessary.
 					interpolants[i] = addQuantifier(interpolants[i], i, clause);
 				}
+				break;
+			}
+			case ":dt-project":
+			case ":dt-cases":
+			case ":dt-cycle":
+			case ":dt-disjoint":
+			case ":dt-injective": 
+			case ":dt-constructor":
+			case ":dt-tester":
+			case ":dt-unique": {
+				final DatatypeInterpolator ipolator = new DatatypeInterpolator(this);
+				interpolants = ipolator.computeDatatypeInterpolants(leafTermInfo);
 				break;
 			}
 			default:
@@ -783,7 +795,7 @@ public class Interpolator extends NonRecursive {
 
 		while (!todoStack.isEmpty()) {
 			if (mCancel.isTerminationRequested()) {
-				throw new SMTLIBException("Timeout exceeded");
+				throw new SMTLIBException("Termination requested (timeout or resource limit)");
 			}
 			final Term proofTerm = todoStack.pop();
 			if (!seen.add(proofTerm)) {
@@ -1436,7 +1448,7 @@ public class Interpolator extends NonRecursive {
 			while (offset.compareTo(kc) <= 0) {
 				Term x;
 				if (mCancel.isTerminationRequested()) {
-					throw new SMTLIBException("Timeout exceeded");
+					throw new SMTLIBException("Termination requested (timeout or resource limit)");
 				}
 				x = sPlusOffset.toSMTLib(mTheory, true);
 				if (theCabs != Rational.ONE) {

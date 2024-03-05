@@ -7,9 +7,9 @@
 [L32]  EXPR        \read(a)
 [L32]              a--
 [L34]  EXPR        \read(a)
-       VAL         [\read(a)=4, a={2:0}, b={3:0}, p1={5:0}, p2={6:0}]
+       VAL         [a={6:0}, p1={5:0}, p2={2:0}]
 [L34]  CALL, EXPR  f(a, &p1, &p2)
-       VAL         [\old(a)=4, p1={5:0}, p2={6:0}]
+       VAL         [\old(a)=4, p1={5:0}, p2={2:0}]
 [L14]  COND TRUE   a == 4
 [L15]  CALL        g(p1, p2)
 [L7]   EXPR        \read(**p2)
@@ -20,9 +20,9 @@
 [L15]  RET         g(p1, p2)
 [L16]              return 1;
 [L34]  RET, EXPR   f(a, &p1, &p2)
-       VAL         [\read(a)=4, a={2:0}, b={3:0}, f(a, &p1, &p2)=1, p1={5:0}, p2={6:0}]
+       VAL         [a={6:0}, p1={5:0}, p2={2:0}]
 [L34]              a = f(a, &p1, &p2)
 [L36]  EXPR        \read(*p1)
 [L36]  COND TRUE   *p1 == 0
 [L44]              __VERIFIER_error()
-       VAL         [a={2:0}, b={3:0}, p1={5:0}, p2={6:0}]
+       VAL         [p2={2:0}]

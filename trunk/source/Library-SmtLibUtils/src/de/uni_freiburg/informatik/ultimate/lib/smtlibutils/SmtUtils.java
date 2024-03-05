@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -122,6 +123,28 @@ public final class SmtUtils {
 	 */
 	public static final String FP_TO_IEEE_BV_EXTENSION = "fp.to_ieee_bv";
 
+
+	/**
+	 * Enum for conjunctions and disjunctions. The toString method returns the
+	 * string that is required to construct a term via {@link Script#term} or
+	 * {@link SmtUtils#unfTerm}
+	 *
+	 */
+	public enum Junction {
+		AND {
+			@Override
+			public String toString() {
+				return "and";
+			}
+		},
+		OR {
+			@Override
+			public String toString() {
+				return "or";
+			}
+		}
+	}
+
 	public enum XnfConversionTechnique {
 		BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION
 	}
@@ -135,16 +158,25 @@ public final class SmtUtils {
 
 		POLY_PAC(false),
 
+		/**
+		 * Simplification that uses the (non-standard) simplify command which is
+		 * implemented by some SMT solvers.
+		 */
+		NATIVE(false),
+
 		NONE(false);
 
-		private final boolean mDecidesFeasibility;
+		private final boolean mDetectsUnsatisfiability;
 
 		SimplificationTechnique(final boolean decidesFeasibility) {
-			mDecidesFeasibility = decidesFeasibility;
+			mDetectsUnsatisfiability = decidesFeasibility;
 		}
 
-		public boolean decidesFeasibility() {
-			return mDecidesFeasibility;
+		/**
+		 * @return true iff this unsatisfiable formulas are simplified to `false`
+		 */
+		public boolean detectsUnsatisfiability() {
+			return mDetectsUnsatisfiability;
 		}
 	}
 
@@ -167,7 +199,7 @@ public final class SmtUtils {
 		return simplify(mgdScript, formula, mgdScript.getScript().term("true"), services, simplificationTechnique);
 	}
 
-	public static Term simplify(final ManagedScript mgdScript, final Term formula, final Term context,
+	public static Term simplify(ManagedScript mgdScript, final Term formula, final Term context,
 			final IUltimateServiceProvider services, final SimplificationTechnique simplificationTechnique) {
 		if (simplificationTechnique == SimplificationTechnique.NONE) {
 			return formula;
@@ -181,92 +213,102 @@ public final class SmtUtils {
 		if (!SmtUtils.isTrueLiteral(context) && simplificationTechnique != SimplificationTechnique.POLY_PAC
 				&& simplificationTechnique != SimplificationTechnique.SIMPLIFY_DDA
 				&& simplificationTechnique != SimplificationTechnique.SIMPLIFY_DDA2
+				&& simplificationTechnique != SimplificationTechnique.NATIVE
 				&& simplificationTechnique != SimplificationTechnique.NONE) {
 			throw new UnsupportedOperationException(
 					simplificationTechnique + " does not support simplification with respect to context");
 		}
 		final long startTime = System.nanoTime();
-		final UndoableWrapperScript undoableScript = new UndoableWrapperScript(mgdScript.getScript());
-		final ManagedScript script = new ManagedScript(services, undoableScript);
-		try {
-			final Term simplified;
-			switch (simplificationTechnique) {
-			case SIMPLIFY_DDA:
-				simplified = new SimplifyDDAWithTimeout(script.getScript(), true, services, context)
+		final Term simplified;
+		switch (simplificationTechnique) {
+		case SIMPLIFY_DDA:
+			final UndoableWrapperScript undoableScript = new UndoableWrapperScript(mgdScript.getScript());
+			mgdScript = new ManagedScript(services, undoableScript);
+			final Term tmp;
+			try {
+				tmp = new SimplifyDDAWithTimeout(mgdScript.getScript(), true, services, context)
 						.getSimplifiedTerm(formula);
-				break;
-			case SIMPLIFY_DDA2:
-				simplified = SimplifyDDA2.simplify(services, script, context, formula);
-				break;
-			case SIMPLIFY_QUICK:
-				simplified = new SimplifyQuick(script.getScript(), services).getSimplifiedTerm(formula);
-				break;
-			case NONE:
-				return formula;
-			case POLY_PAC:
-				simplified = PolyPacSimplificationTermWalker.simplify(services, script, context, formula);
-				break;
-			default:
-				throw new AssertionError(ERROR_MESSAGE_UNKNOWN_ENUM_CONSTANT + simplificationTechnique);
-			}
-			if (logger.isDebugEnabled()) {
-				logger.debug(new DebugMessage("DAG size before simplification {0}, DAG size after simplification {1}",
-						new DagSizePrinter(formula), new DagSizePrinter(simplified)));
-			}
-			final long endTime = System.nanoTime();
-			final long overallTimeMs = (endTime - startTime) / 1_000_000;
-			// write warning if simplification takes more than 5 seconds
-			if (overallTimeMs >= 5000) {
-				final StringBuilder sb = new StringBuilder();
-				sb.append("Spent ").append(CoreUtil.humanReadableTime(overallTimeMs, TimeUnit.MILLISECONDS, 2))
-						.append(" on a formula simplification");
-				if (formula.equals(simplified)) {
-					sb.append(" that was a NOOP. DAG size: ");
-					sb.append(new DagSizePrinter(formula));
-				} else {
-					sb.append(". DAG size of input: ");
-					sb.append(new DagSizePrinter(formula));
-					sb.append(" DAG size of output: ");
-					sb.append(new DagSizePrinter(simplified));
+			} catch (final ToolchainCanceledException t) {
+				// we try to preserve the script if a timeout occurred
+				final int dirtyLevels = undoableScript.restore();
+				if (dirtyLevels > 0) {
+					logger.warn("Removed " + dirtyLevels + " from assertion stack");
 				}
-				sb.append(" (called from ").append(ReflectionUtil.getCallerSignatureFiltered(Set.of(SmtUtils.class)))
-						.append(")");
-				logger.warn(sb);
-				// Matthias 2023-08-01: The following is a hack for writing simplification
-				// benchmarks to a file. We write only if the simplification took at least 5s
-				// (see if above) and if the context is equivalent to true.
-				final boolean writeSimplificationBenchmarksToFile = false;
-				if (writeSimplificationBenchmarksToFile && SmtUtils.isTrueLiteral(context)) {
-					try (FileWriter fw = new FileWriter("SimplificationBenchmark_" + overallTimeMs);
-							BufferedWriter bw = new BufferedWriter(fw);
-							PrintWriter out = new PrintWriter(bw)) {
-						out.println(SmtTestGenerationUtils.generateStringForTestfile(formula));
-						out.close();
-						bw.close();
-						fw.close();
-					} catch (final IOException e) {
-						throw new AssertionError(e);
-					}
-				}
+				throw t;
 			}
-			// TODO: DD 2019-11-19: This call is a dirty hack! SimplifyDDAWithTimeout leaves an empty stack frame open,
-			// but I do not want to try and debug how it is happening.
+			// TODO: DD 2019-11-19: This call is a dirty hack! SimplifyDDAWithTimeout leaves
+			// an empty stack frame open, but I do not want to try and debug how it is
+			// happening.
 			undoableScript.restore();
-			if (simplified != formula) {
-				// TODO: Matthias 2019-11-19 SimplifyDDA can produce nested
-				// conjunctions or disjunctions. Use UnfTransformer to get
-				// rid of these.
-				return new UnfTransformer(script.getScript()).transform(simplified);
+			if (tmp != formula) {
+				// TODO: Matthias 2019-11-19 SimplifyDDA can produce nested conjunctions or
+				// disjunctions. Use UnfTransformer to get rid of these.
+				simplified = new UnfTransformer(mgdScript.getScript()).transform(tmp);
+			} else {
+				simplified = tmp;
 			}
-			return simplified;
-		} catch (final ToolchainCanceledException t) {
-			// we try to preserve the script if a timeout occurred
-			final int dirtyLevels = undoableScript.restore();
-			if (dirtyLevels > 0) {
-				logger.warn("Removed " + dirtyLevels + " from assertion stack");
-			}
-			throw t;
+			break;
+		case SIMPLIFY_DDA2:
+			simplified = SimplifyDDA2.simplify(services, mgdScript, context, formula);
+			break;
+		case SIMPLIFY_QUICK:
+			simplified = new SimplifyQuick(mgdScript.getScript(), services).getSimplifiedTerm(formula);
+			break;
+		case NONE:
+			return formula;
+		case POLY_PAC:
+			simplified = PolyPacSimplificationTermWalker.simplify(services, mgdScript, context, formula);
+			break;
+		case NATIVE:
+			mgdScript.getScript().push(1);
+			mgdScript.getScript().assertTerm(context);
+			simplified = mgdScript.getScript().simplify(formula);
+			mgdScript.getScript().pop(1);
+			break;
+		default:
+			throw new AssertionError(ERROR_MESSAGE_UNKNOWN_ENUM_CONSTANT + simplificationTechnique);
 		}
+		if (logger.isDebugEnabled()) {
+			logger.debug(new DebugMessage("DAG size before simplification {0}, DAG size after simplification {1}",
+					new DagSizePrinter(formula), new DagSizePrinter(simplified)));
+		}
+		final long endTime = System.nanoTime();
+		final long overallTimeMs = (endTime - startTime) / 1_000_000;
+		// write warning if simplification takes more than 5 seconds
+		if (overallTimeMs >= 5000) {
+			final StringBuilder sb = new StringBuilder();
+			sb.append("Spent ").append(CoreUtil.humanReadableTime(overallTimeMs, TimeUnit.MILLISECONDS, 2))
+					.append(" on a formula simplification");
+			if (formula.equals(simplified)) {
+				sb.append(" that was a NOOP. DAG size: ");
+				sb.append(new DagSizePrinter(formula));
+			} else {
+				sb.append(". DAG size of input: ");
+				sb.append(new DagSizePrinter(formula));
+				sb.append(" DAG size of output: ");
+				sb.append(new DagSizePrinter(simplified));
+			}
+			sb.append(" (called from ").append(ReflectionUtil.getCallerSignatureFiltered(Set.of(SmtUtils.class)))
+					.append(")");
+			logger.warn(sb);
+			// Matthias 2023-08-01: The following is a hack for writing simplification
+			// benchmarks to a file. We write only if the simplification took at least 5s
+			// (see if above) and if the context is equivalent to true.
+			final boolean writeSimplificationBenchmarksToFile = false;
+			if (writeSimplificationBenchmarksToFile && SmtUtils.isTrueLiteral(context)) {
+				try (FileWriter fw = new FileWriter("SimplificationBenchmark_" + overallTimeMs);
+						BufferedWriter bw = new BufferedWriter(fw);
+						PrintWriter out = new PrintWriter(bw)) {
+					out.println(SmtTestGenerationUtils.generateStringForTestfile(formula));
+					out.close();
+					bw.close();
+					fw.close();
+				} catch (final IOException e) {
+					throw new AssertionError(e);
+				}
+			}
+		}
+		return simplified;
 	}
 
 	public static ExtendedSimplificationResult simplifyWithStatistics(final ManagedScript mgdScript, final Term formula,
@@ -699,7 +741,7 @@ public final class SmtUtils {
 				}
 				if (funcName.equals("<") || funcName.equals("<=") || funcName.equals(">") || funcName.equals(">=")) {
 					final PolynomialRelation polyRel = PolynomialRelation.of(script, term);
-					return polyRel.negate(script).toTerm(script);
+					return polyRel.negate().toTerm(script);
 				}
 			}
 			return Util.not(script, term);
@@ -862,6 +904,32 @@ public final class SmtUtils {
 	public static Term termVariable2constant(final Script script, final TermVariable tv,
 			final boolean declareConstant) {
 		final String name = removeSmtQuoteCharacters(tv.getName());
+		if (declareConstant) {
+			final Sort resultSort = tv.getSort();
+			script.declareFun(name, new Sort[0], resultSort);
+		}
+		return script.term(name);
+	}
+
+	/**
+	 * This method tries to declare and construct a fresh constant symbol for a
+	 * {@link TermVariable}. We are unable to find out which constants were already
+	 * declared hence we append the hash code of the variable to the identifier of
+	 * the constant symbol and hope that this has not yet been declared.
+	 */
+	public static Map<TermVariable, Term> termVariables2PseudofreshConstants(final Script script,
+			final Collection<TermVariable> termVariables, final boolean declareConstants) {
+		final Map<TermVariable, Term> mapping = new HashMap<>();
+		for (final TermVariable tv : termVariables) {
+			final Term constant = termVariable2PseudofreshConstant(script, tv, declareConstants);
+			mapping.put(tv, constant);
+		}
+		return mapping;
+	}
+
+	private static Term termVariable2PseudofreshConstant(final Script script, final TermVariable tv,
+			final boolean declareConstant) {
+		final String name = removeSmtQuoteCharacters(tv.getName()) + "_fresh_" + tv.hashCode();
 		if (declareConstant) {
 			final Sort resultSort = tv.getSort();
 			script.declareFun(name, new Sort[0], resultSort);
@@ -1573,24 +1641,38 @@ public final class SmtUtils {
 		return result;
 	}
 
+	/**
+	 * Construct store term from the array theory. Uses an optimization for
+	 * (syntactically) similar indices. E.g., if we have a store term of the form
+	 * `(store (store (store (store a k 0) j 1) k 2) j 3)`, the two innermost store
+	 * terms are dropped because the outer store terms use also index k and j.
+	 */
 	public static Term store(final Script script, final Term array, final Term index, final Term value) {
-		final Term result;
-		if (FLATTEN_ARRAY_TERMS) {
-			final Term nestedIdx = getArrayStoreIdx(array);
-			if (nestedIdx != null) {
-				// Check for store-over-store
-				if (nestedIdx.equals(index)) {
-					// Found store-over-store => ignore inner store
-					final ApplicationTerm appArray = (ApplicationTerm) array;
-					result = script.term("store", appArray.getParameters()[0], index, value);
-				} else {
-					result = script.term("store", array, index, value);
-				}
-			} else {
-				result = script.term("store", array, index, value);
+		ArrayStore as = ArrayStore.of(array);
+		if (as == null) {
+			// no nested store
+			return script.term("store", array, index, value);
+		}
+		final Set<Term> indices = new HashSet<>();
+		indices.add(index);
+		// index-value pairs that we will have in the result, pairs of inner stores
+		// at the beginning
+		final ArrayDeque<Pair<Term, Term>> indexValueSequence = new ArrayDeque<>();
+		indexValueSequence.addFirst(new Pair<>(index, value));
+		Term currentArray = array;
+		while (as != null) {
+			// for indices that occurred already in the outer stores, we drop the inner
+			// index-value pairs
+			if (!indices.contains(as.getIndex())) {
+				indexValueSequence.addFirst(new Pair<>(as.getIndex(), as.getValue()));
+				indices.add(as.getIndex());
 			}
-		} else {
-			result = script.term("store", array, index, value);
+			currentArray = as.getArray();
+			as = ArrayStore.of(currentArray);
+		}
+		Term result = currentArray;
+		for (final Pair<Term, Term> indexValue : indexValueSequence) {
+			result = script.term("store", result, indexValue.getFirst(), indexValue.getSecond());
 		}
 		return result;
 	}
@@ -2439,7 +2521,11 @@ public final class SmtUtils {
 	}
 
 	public static boolean isSubterm(final Term term, final Term subterm) {
-		return new SubtermPropertyChecker(x -> x.equals(subterm)).isSatisfiedBySomeSubterm(term);
+		if (subterm instanceof TermVariable) {
+			return Arrays.asList(term.getFreeVars()).contains(subterm);
+		} else {
+			return new SubtermPropertyChecker(x -> x.equals(subterm)).isSatisfiedBySomeSubterm(term);
+		}
 	}
 
 	public static Rational toRational(final long val) {

@@ -554,9 +554,6 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 				throw new RuntimeException(e);
 			}
 		}
-		if (mSleepFactory instanceof SleepSetStateFactoryForRefinement<?>) {
-			((SleepSetStateFactoryForRefinement<?>) mSleepFactory).reset();
-		}
 		if (mSleepMapFactory instanceof SleepMapStateFactory<?>) {
 			((SleepMapStateFactory<?>) mSleepMapFactory).reset();
 		}

@@ -35,6 +35,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.conta
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 
@@ -58,10 +59,6 @@ public class CStructOrUnion extends CType implements ICPossibleIncompleteType<CS
 	 */
 	private CType[] mFieldTypes;
 
-	/**
-	 * Indicates if this represents an incomplete type. If 'this' is complete, this String is empty, otherwise it holds
-	 * the name of the incomplete struct.
-	 */
 	private final String mStructName;
 
 	private List<Integer> mBitFieldWidths;
@@ -79,6 +76,11 @@ public class CStructOrUnion extends CType implements ICPossibleIncompleteType<CS
 	 * @param cDeclSpec
 	 *            the C declaration used.
 	 */
+	public CStructOrUnion(final StructOrUnion isStructOrUnion, final String name, final List<String> fNames,
+			final List<CType> fTypes, final List<Integer> bitFieldWidths) {
+		this(isStructOrUnion, name, fNames.toArray(String[]::new), fTypes.toArray(CType[]::new), bitFieldWidths);
+	}
+
 	public CStructOrUnion(final StructOrUnion isStructOrUnion, final String name, final String[] fNames,
 			final CType[] fTypes, final List<Integer> bitFieldWidths) {
 		// FIXME: integrate those flags -- you will also need to change the equals method if you do
@@ -89,7 +91,7 @@ public class CStructOrUnion extends CType implements ICPossibleIncompleteType<CS
 		mFieldNames = fNames;
 		mFieldTypes = fTypes;
 		mBitFieldWidths = Collections.unmodifiableList(bitFieldWidths);
-		mStructName = name;
+		mStructName = Objects.requireNonNull(name);
 		mIsComplete = true;
 	}
 
@@ -101,14 +103,12 @@ public class CStructOrUnion extends CType implements ICPossibleIncompleteType<CS
 		mFieldNames = new String[0];
 		mFieldTypes = new CType[0];
 		mBitFieldWidths = Collections.emptyList();
-		mStructName = name;
+		mStructName = Objects.requireNonNull(name);
 		mIsComplete = false;
 	}
 
 	@Override
 	public boolean isIncomplete() {
-		// FIXME: struct may also be incomplete
-		// if last member is array of unknown size
 		return !mIsComplete;
 	}
 
@@ -195,10 +195,11 @@ public class CStructOrUnion extends CType implements ICPossibleIncompleteType<CS
 				cvar.getBitFieldWidths());
 	}
 
-	public void complete(final String[] memberNames, final CType[] memberTypes, final List<Integer> bitfieldWidth) {
-		assert memberNames.length == bitfieldWidth.size();
-		mFieldNames = memberNames;
-		mFieldTypes = memberTypes;
+	public void complete(final List<String> memberNames, final List<CType> memberTypes,
+			final List<Integer> bitfieldWidth) {
+		assert memberNames.size() == bitfieldWidth.size();
+		mFieldNames = memberNames.toArray(String[]::new);
+		mFieldTypes = memberTypes.toArray(CType[]::new);
 		mBitFieldWidths = bitfieldWidth;
 		mIsComplete = true;
 	}
@@ -272,7 +273,6 @@ public class CStructOrUnion extends CType implements ICPossibleIncompleteType<CS
 		// reproducible hash codes, but object equality
 		return this == o;
 	}
-
 
 	public static String getPrefix(final StructOrUnion structOrUnion) {
 		switch (structOrUnion) {

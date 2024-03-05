@@ -44,7 +44,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.ITranslator;
 final class BacktranslationServiceMock implements IBacktranslationService {
 
 	@Override
-	public <STE, TTE, SE, TE, SVL, TVL> void addTranslator(final ITranslator<STE, TTE, SE, TE, SVL, TVL> translator) {
+	public <STE, TTE, SE, TE, SVL, TVL, LOC> void
+			addTranslator(final ITranslator<STE, TTE, SE, TE, SVL, TVL, LOC> translator) {
 		// does nothing
 	}
 
@@ -56,6 +57,12 @@ final class BacktranslationServiceMock implements IBacktranslationService {
 	@Override
 	public <SE> String translateExpressionToString(final SE expression, final Class<SE> clazz) {
 		return "";
+	}
+
+	@Override
+	public <SE, CTX> String translateExpressionWithContextToString(final SE expression, final CTX context,
+			final Class<SE> clazz) {
+		return translateExpressionToString(expression, clazz);
 	}
 
 	@Override
@@ -73,14 +80,14 @@ final class BacktranslationServiceMock implements IBacktranslationService {
 			translateProgramExecution(final IProgramExecution<STE, SE> programExecution) {
 		return new ProgramExecutionMock<>(null, null);
 	}
-	
+
 	@Override
 	public <SE> ProgramState<?> translateProgramState(final ProgramState<SE> programState) {
 		return null;
 	}
 
 	@Override
-	public <SE> String translateProgramStateToString(ProgramState<SE> programState) {
+	public <SE> String translateProgramStateToString(final ProgramState<SE> programState) {
 		return null;
 	}
 
@@ -93,7 +100,4 @@ final class BacktranslationServiceMock implements IBacktranslationService {
 	public IBacktranslationService getTranslationServiceCopy() {
 		return this;
 	}
-
-
-
 }

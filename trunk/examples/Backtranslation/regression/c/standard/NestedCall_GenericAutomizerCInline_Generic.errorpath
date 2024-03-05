@@ -10,6 +10,4 @@
 [L11]  RET, EXPR   f(f(a++))
 [L11]              a = f(f(a++))
 [L13]  COND TRUE   a != 8
-       VAL         [a=7]
 [L19]              __VERIFIER_error()
-       VAL         [a=7]

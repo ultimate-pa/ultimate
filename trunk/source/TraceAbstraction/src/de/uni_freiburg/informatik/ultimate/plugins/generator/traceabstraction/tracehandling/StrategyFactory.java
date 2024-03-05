@@ -354,6 +354,19 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 							mPredicateUnifier, mPredicateFactory, timeoutInMillis, technique));
 		}
 
+		public IIpTcStrategyModule<?, L> createIpTcStrategyModuleCVC5(final InterpolationTechnique technique,
+				final AssertCodeBlockOrder... order) {
+			return createIpTcStrategyModuleCVC5(-1, technique, order);
+		}
+
+		public IIpTcStrategyModule<?, L> createIpTcStrategyModuleCVC5(final long timeoutInMillis,
+				final InterpolationTechnique technique, final AssertCodeBlockOrder... order) {
+			return createModuleWrapperIfNecessary(
+					new IpTcStrategyModuleCvc5<>(mTaskIdentifier, mServices, mPrefs, mCounterexample, mPrecondition,
+							mPostcondition, new AssertionOrderModulation<>(mPathProgramCache, mLogger, order),
+							mPredicateUnifier, mPredicateFactory, timeoutInMillis, technique));
+		}
+
 		public IIpTcStrategyModule<?, L> createIpTcStrategyModuleAbstractInterpretation() {
 			isOnlyDefaultPrePostConditions();
 			return createModuleWrapperIfNecessary(new IpTcStrategyModuleAbstractInterpretation<>(mCounterexample,

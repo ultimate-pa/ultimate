@@ -421,27 +421,31 @@ public class ModelTest {
 		final LBool isSat = script.checkSat();
 		Assert.assertEquals(LBool.SAT, isSat);
 		final Model model = script.getModel();
-		Term val = model.evaluate(x);
-		Assert.assertEquals(val, model.evaluate(fx));
-		Assert.assertEquals(val, model.evaluate(script.term("f", fx)));
+		final Term valX = model.evaluate(x);
+		Assert.assertTrue(((ApplicationTerm) valX).getFunction().getName().startsWith("@")
+				&& ((ApplicationTerm) valX).getParameters().length == 0);
+		Assert.assertEquals(valX, model.evaluate(fx));
+		Assert.assertEquals(valX, model.evaluate(script.term("f", fx)));
 		// Test for stack overflows in the evaluation
 		Term testTerm = fx;
 		for (int i = 0; i < 100000; ++i) {
 			testTerm = script.term("f", testTerm);
 		}
-		Assert.assertEquals(val, model.evaluate(testTerm));
+		Assert.assertEquals(valX, model.evaluate(testTerm));
 		// Dynamic completion check
 		// 1. U already has an element in the domain (val)
 		// => all unconstrained elements are mapped to val
-		Assert.assertEquals(val, model.evaluate(script.term("y")));
-		Assert.assertEquals(val, model.evaluate(script.term("f", script.term("y"))));
+		Assert.assertEquals(valX, model.evaluate(script.term("y")));
+		Assert.assertEquals(valX, model.evaluate(script.term("f", script.term("y"))));
 		// 2. V does not have any constrained elements
 		// => all unconstrained elements will map to default (as @0 V)
-		val = script.term("@0", null, v);
 		final Term z1 = script.term("z1");
-		Assert.assertEquals(val, model.evaluate(z1));
+		final Term valZ = model.evaluate(z1);
+		Assert.assertTrue(((ApplicationTerm) valZ).getFunction().getName().startsWith("@")
+				&& ((ApplicationTerm) valZ).getParameters().length == 0);
+		Assert.assertEquals(valZ, model.evaluate(z1));
 		final Term z2 = script.term("z2");
-		Assert.assertEquals(val, model.evaluate(z2));
+		Assert.assertEquals(valZ, model.evaluate(z2));
 		final TermVariable[] args = new TermVariable[] { script.variable("@x", u) };
 		final Set<FunctionSymbol> funcs = new HashSet<>();
 		funcs.add(((ApplicationTerm) fx).getFunction());
@@ -451,9 +455,9 @@ public class ModelTest {
 		funcs.add(((ApplicationTerm) z1).getFunction());
 		funcs.add(((ApplicationTerm) z2).getFunction());
 		Assert.assertEquals(funcs, model.getDefinedFunctions());
-		Assert.assertEquals("(as @0 U)", model.getFunctionDefinition("x", new TermVariable[0]).toString());
-		Assert.assertEquals("(as @0 U)", model.getFunctionDefinition("f", args).toString());
-		Assert.assertEquals("(as @0 U)", model.getFunctionDefinition("g", args).toString());
+		Assert.assertEquals(valX, model.getFunctionDefinition("x", new TermVariable[0]));
+		Assert.assertEquals(valX, model.getFunctionDefinition("f", args));
+		Assert.assertEquals(valX, model.getFunctionDefinition("g", args));
 	}
 
 	@Test

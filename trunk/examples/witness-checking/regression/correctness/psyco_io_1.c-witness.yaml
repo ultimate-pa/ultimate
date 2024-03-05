@@ -1,1 +1,52 @@
-
+- entry_type: loop_invariant
+  metadata:
+    format_version: '0.1'
+    uuid: 54443752-6f65-47db-9f84-e4bfa8b96b08
+    creation_time: '2023-10-31T13:37:16+01:00'
+    producer:
+      name: UNUSED
+      version: 0.2.3-dev-b094d93-m
+    task:
+      input_files:
+      - C:\ultimate\trunk\examples\witness-checking\regression\correctness\psyco_io_1.c
+      input_file_hashes:
+        C:\ultimate\trunk\examples\witness-checking\regression\correctness\psyco_io_1.c: UNUSED
+      specification: UNUSED
+      data_model: UNUSED
+      language: C
+  location:
+    file_name: C:\ultimate\trunk\examples\witness-checking\regression\correctness\psyco_io_1.c
+    file_hash: UNUSED
+    line: 25
+    column: 0
+    function: main
+  loop_invariant:
+    string: ((((q == 2) && (this_sink == 0)) || (q == 0)) || ((q == 3) && !((this_sink == 0))))
+    type: assertion
+    format: C
+- entry_type: loop_invariant
+  metadata:
+    format_version: '0.1'
+    uuid: 803e6ee3-2b7a-4b70-9562-60a595880c6e
+    creation_time: '2023-10-31T13:37:16+01:00'
+    producer:
+      name: UNUSED
+      version: 0.2.3-dev-b094d93-m
+    task:
+      input_files:
+      - C:\ultimate\trunk\examples\witness-checking\regression\correctness\psyco_io_1.c
+      input_file_hashes:
+        C:\ultimate\trunk\examples\witness-checking\regression\correctness\psyco_io_1.c: UNUSED
+      specification: UNUSED
+      data_model: UNUSED
+      language: C
+  location:
+    file_name: C:\ultimate\trunk\examples\witness-checking\regression\correctness\psyco_io_1.c
+    file_hash: UNUSED
+    line: 345
+    column: 0
+    function: main
+  loop_invariant:
+    string: '0'
+    type: assertion
+    format: C

@@ -38,7 +38,7 @@ public class RefereePreferenceInitializer extends UltimatePreferenceInitializer 
 
 	public static final String LABEL_ALLOW_LOOPS_WITHOUT_ANNOTATION = "Allow loops without annotation";
 
-	public static final boolean DEF_ALLOW_LOOPS_WITHOUT_ANNOTATION = false;
+	public static final boolean DEF_ALLOW_LOOPS_WITHOUT_ANNOTATION = true;
 
 	public RefereePreferenceInitializer() {
 		super(Activator.PLUGIN_ID, "Referee");

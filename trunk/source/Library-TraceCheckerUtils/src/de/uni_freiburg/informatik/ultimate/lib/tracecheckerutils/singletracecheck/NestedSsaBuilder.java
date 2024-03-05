@@ -550,6 +550,9 @@ public class NestedSsaBuilder<L extends IAction> {
 		}
 
 		public void versionAssignedVars(final int currentPos) {
+			// TODO Matthias 2023-11-01. If this is a call/return of a recursive procedure
+			// we may give too many variables a new version, since getAssignedVars() returns
+			// also the variables of the old scope.
 			for (final IProgramVar bv : mTF.getAssignedVars()) {
 				final Term versioneered = setCurrentVarVersion(bv, currentPos);
 				mConstants2BoogieVar.put(versioneered, bv);

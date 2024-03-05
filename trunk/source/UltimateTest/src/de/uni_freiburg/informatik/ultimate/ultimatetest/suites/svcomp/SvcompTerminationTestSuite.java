@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.benchexec.BenchexecRundefinitionGeneratorPreLog;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
-import de.uni_freiburg.informatik.ultimate.test.decider.SvcompReachTestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.decider.SvcompTestResultDeciderUnreachCall;
 import de.uni_freiburg.informatik.ultimate.test.reporting.IPreTestLog;
 
 /**
@@ -45,7 +45,7 @@ public class SvcompTerminationTestSuite extends AbstractSvcompTestSuite {
 
 	@Override
 	protected ITestResultDecider getTestResultDecider(final UltimateRunDefinition urd) {
-		return new SvcompReachTestResultDecider(urd, false);
+		return new SvcompTestResultDeciderUnreachCall(urd, false);
 	}
 
 	@Override

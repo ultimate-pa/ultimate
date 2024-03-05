@@ -390,7 +390,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 					+ "relevance analysis.";
 
 	public static final String LABEL_SIMPLIFICATION_TECHNIQUE = "Simplification technique";
-	private static final SimplificationTechnique DEF_SIMPLIFICATION_TECHNIQUE = SimplificationTechnique.SIMPLIFY_DDA;
+	private static final SimplificationTechnique DEF_SIMPLIFICATION_TECHNIQUE = SimplificationTechnique.SIMPLIFY_DDA2;
 
 	public static final String LABEL_XNF_CONVERSION_TECHNIQUE = "Xnf conversion technique";
 	private static final XnfConversionTechnique DEF_XNF_CONVERSION_TECHNIQUE =
@@ -843,7 +843,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	 * Hoare annotation position.
 	 */
 	public enum HoareAnnotationPositions {
-		All, LoopsAndPotentialCycles,
+		All, LoopHeads, LoopsAndPotentialCycles,
 	}
 
 	/**

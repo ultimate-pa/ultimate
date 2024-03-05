@@ -79,7 +79,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @param <TVL>
  *            Target vertex label. Type of the vertex label of a {@link IBacktranslatedCFG} in the target program model.
  */
-public class DefaultTranslator<STE, TTE, SE, TE, SVL, TVL> implements ITranslator<STE, TTE, SE, TE, SVL, TVL> {
+public class DefaultTranslator<STE, TTE, SE, TE, SVL, TVL, CTX>
+		implements ITranslator<STE, TTE, SE, TE, SVL, TVL, CTX> {
 
 	private final Class<? extends STE> mSourceTraceElementType;
 	private final Class<? extends TTE> mTargetTraceElementType;
@@ -160,9 +161,14 @@ public class DefaultTranslator<STE, TTE, SE, TE, SVL, TVL> implements ITranslato
 	}
 
 	@Override
+	public TE translateExpressionWithContext(final SE expression, final CTX context) {
+		return translateExpression(expression);
+	}
+
+	@Override
 	public String targetExpressionToString(final TE expression) {
 		if (expression == null) {
-			return "NULL";
+			return null;
 		}
 		return expression.toString();
 	}
@@ -235,16 +241,17 @@ public class DefaultTranslator<STE, TTE, SE, TE, SVL, TVL> implements ITranslato
 	 *            </ul>
 	 */
 	@SuppressWarnings("unchecked")
-	public static <STE, TTE, SE, TE, SVL, TVL> TE translateExpressionIteratively(final SE expr,
-			final ITranslator<?, ?, ?, ?, ?, ?>... iTranslators) {
+	public static <STE, TTE, SE, TE, SVL, TVL, CTX> TE translateExpressionIteratively(final SE expr,
+			final ITranslator<?, ?, ?, ?, ?, ?, CTX>... iTranslators) {
 		TE result;
 
 		if (iTranslators.length == 0) {
 			result = (TE) expr;
 		} else {
-			final ITranslator<STE, ?, SE, ?, SVL, ?> last =
-					(ITranslator<STE, ?, SE, ?, SVL, ?>) iTranslators[iTranslators.length - 1];
-			final ITranslator<?, ?, ?, ?, ?, ?>[] allButLast = Arrays.copyOf(iTranslators, iTranslators.length - 1);
+			final ITranslator<STE, ?, SE, ?, SVL, ?, CTX> last =
+					(ITranslator<STE, ?, SE, ?, SVL, ?, CTX>) iTranslators[iTranslators.length - 1];
+			final ITranslator<?, ?, ?, ?, ?, ?, CTX>[] allButLast =
+					Arrays.copyOf(iTranslators, iTranslators.length - 1);
 			final Object expressionOfIntermediateType = last.translateExpression(expr);
 			result = (TE) translateExpressionIteratively(expressionOfIntermediateType, allButLast);
 		}
@@ -252,28 +259,31 @@ public class DefaultTranslator<STE, TTE, SE, TE, SVL, TVL> implements ITranslato
 	}
 
 	@SuppressWarnings("unchecked")
-	public static <STE, TTE, SE, TE, SVL, TVL> List<TTE> translateTraceIteratively(final List<STE> trace,
-			final ITranslator<?, ?, ?, ?, ?, ?>... iTranslators) {
+	public static <STE, TTE, SE, TE, SVL, TVL, CTX> List<TTE> translateTraceIteratively(final List<STE> trace,
+			final ITranslator<?, ?, ?, ?, ?, ?, CTX>... iTranslators) {
 		List<TTE> result;
 		if (iTranslators.length == 0) {
 			result = (List<TTE>) trace;
 		} else {
-			final ITranslator<?, ?, ?, ?, ?, ?>[] allButLast = Arrays.copyOf(iTranslators, iTranslators.length - 1);
+			final ITranslator<?, ?, ?, ?, ?, ?, CTX>[] allButLast =
+					Arrays.copyOf(iTranslators, iTranslators.length - 1);
 			result = (List<TTE>) translateTraceIteratively(trace, allButLast);
 		}
 		return result;
 	}
 
 	@SuppressWarnings("unchecked")
-	public static <STE, TTE, SE, TE, SVL, TVL> IProgramExecution<TTE, TE> translateProgramExecutionIteratively(
-			final IProgramExecution<STE, SE> programExecution, final ITranslator<?, ?, ?, ?, ?, ?>... iTranslators) {
+	public static <STE, TTE, SE, TE, SVL, TVL, CTX> IProgramExecution<TTE, TE> translateProgramExecutionIteratively(
+			final IProgramExecution<STE, SE> programExecution,
+			final ITranslator<?, ?, ?, ?, ?, ?, CTX>... iTranslators) {
 		final IProgramExecution<TTE, TE> result;
 		if (iTranslators.length == 0) {
 			result = (IProgramExecution<TTE, TE>) programExecution;
 		} else {
-			final ITranslator<STE, ?, SE, ?, SVL, ?> last =
-					(ITranslator<STE, ?, SE, ?, SVL, ?>) iTranslators[iTranslators.length - 1];
-			final ITranslator<?, ?, ?, ?, ?, ?>[] allButLast = Arrays.copyOf(iTranslators, iTranslators.length - 1);
+			final ITranslator<STE, ?, SE, ?, SVL, ?, CTX> last =
+					(ITranslator<STE, ?, SE, ?, SVL, ?, CTX>) iTranslators[iTranslators.length - 1];
+			final ITranslator<?, ?, ?, ?, ?, ?, CTX>[] allButLast =
+					Arrays.copyOf(iTranslators, iTranslators.length - 1);
 			final IProgramExecution<?, ?> peOfIntermediateType = last.translateProgramExecution(programExecution);
 			result = (IProgramExecution<TTE, TE>) translateProgramExecutionIteratively(peOfIntermediateType,
 					allButLast);

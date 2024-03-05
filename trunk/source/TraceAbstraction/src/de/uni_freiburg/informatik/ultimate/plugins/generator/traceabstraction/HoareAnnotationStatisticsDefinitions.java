@@ -47,13 +47,13 @@ public enum HoareAnnotationStatisticsDefinitions implements IStatisticsElement {
 
 	HoareAnnotationTreeSize(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
-	FomulaSimplifications(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
+	FormulaSimplifications(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
 	FormulaSimplificationTreeSizeReduction(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
 	HoareSimplificationTime(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.NANOS_BEFORE_KEY),
 
-	FomulaSimplificationsInter(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
+	FormulaSimplificationsInter(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
 	FormulaSimplificationTreeSizeReductionInter(Long.class, StatisticsType.LONG_ADDITION,
 			StatisticsType.DATA_BEFORE_KEY),

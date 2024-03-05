@@ -73,4 +73,8 @@ public class IcfgBacktranslationValueProvider<L extends IAction>
 		return expression.toStringDirect();
 	}
 
+	@Override
+	public boolean containsProcedureCall(final Term expression) {
+		return false;
+	}
 }

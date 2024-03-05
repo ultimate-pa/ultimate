@@ -18,6 +18,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.logic;
 
+import static org.junit.Assert.assertTrue;
+
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -37,15 +39,14 @@ public class FunctionTest {
 		final Sort sortArrIntReal = theory.getSort("Array", sortInt, sortReal);
 
 		final FunctionSymbol select = theory.getFunction("select", sortArrIntReal, sortInt);
-		Assert.assertNotNull(select);
 		Assert.assertSame(sortReal, select.getReturnSort());
 
 		final FunctionSymbol store = theory.getFunction("store", sortArrIntReal, sortInt, sortReal);
 		Assert.assertNotNull(store);
 		Assert.assertSame(sortArrIntReal, store.getReturnSort());
 
-		Assert.assertNull(theory.getFunction("select", sortArrIntReal, sortReal));
-		Assert.assertNull(theory.getFunction("store", sortArrIntReal, sortInt, sortInt));
+		assertThrowsSMTLIBException(() -> theory.getFunction("select", sortArrIntReal, sortReal));
+		assertThrowsSMTLIBException(() -> theory.getFunction("store", sortArrIntReal, sortInt, sortInt));
 
 		final Sort sortMyInt = theory.getSort("MyInt");
 		final Sort sortMyReal = theory.getSort("MyReal");
@@ -56,9 +57,9 @@ public class FunctionTest {
 		final Sort listx = theory.getSort("List", typeArgs[0]);
 		theory.declareInternalPolymorphicFunction("nil", typeArgs, new Sort[0], listx, FunctionSymbol.RETURNOVERLOAD);
 
-		Assert.assertNull(theory.getFunction("nil"));
-		Assert.assertNull(theory.getFunctionWithResult("nil", null, sortInt));
-		Assert.assertNull(theory.getFunctionWithResult("nil", null, sortArrMyIntMyReal));
+		assertThrowsSMTLIBException(() -> theory.getFunction("nil"));
+		assertThrowsSMTLIBException(() -> theory.getFunctionWithResult("nil", null, sortInt));
+		assertThrowsSMTLIBException(() -> theory.getFunctionWithResult("nil", null, sortArrMyIntMyReal));
 
 		final Sort listInt = theory.getSort("List", sortInt);
 		final FunctionSymbol nil = theory.getFunctionWithResult("nil", null, listInt);
@@ -87,5 +88,14 @@ public class FunctionTest {
 		final Term t = theory.term(eq, selcarnilmone, Rational.valueOf(10, -15).toTerm(sortReal));
 		Assert.assertSame(theory.getBooleanSort(), t.getSort());
 		Assert.assertEquals("(= (select (car (as nil Heap)) (- 1)) (/ (- 2.0) 3.0))", t.toString());
+	}
+
+	private void assertThrowsSMTLIBException(Runnable code) {
+		try {
+			code.run();
+			assertTrue(false);
+		} catch (final SMTLIBException ex) {
+			return;
+		}
 	}
 }

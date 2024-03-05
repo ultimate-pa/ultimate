@@ -226,7 +226,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.CodeAnnot;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.CodeAnnotStmt;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.CodeStatement;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Contract;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.GlobalGhostDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.GlobalLTLInvariant;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.ICACSL2BoogieBacktranslatorMapping;
@@ -339,7 +342,7 @@ public class CHandler {
 
 	private final ExpressionResultTransformer mExprResultTransformer;
 
-	private final Map<String, Integer> mFunctionToIndex;
+	private final Set<String> mFunctions;
 
 	private final Set<IASTNode> mVariablesOnHeap;
 
@@ -368,11 +371,14 @@ public class CHandler {
 
 	private final boolean mIsInLibraryMode;
 
+	private boolean mIsConcurrent;
+	private boolean mHasThreadLocalVars;
+
 	/**
 	 * Constructor for CHandler in pre-run mode.
 	 *
 	 * @param staticObjectsHandler
-	 * @param functionToIndex
+	 * @param functions
 	 * @param set
 	 *
 	 */
@@ -382,8 +388,7 @@ public class CHandler {
 			final LocationFactory locationFactory, final TypeSizes typeSizes,
 			final Set<IASTDeclaration> reachableDeclarations, final ITypeHandler typeHandler,
 			final CTranslationResultReporter reporter, final INameHandler nameHandler,
-			final StaticObjectsHandler staticObjectsHandler, final Map<String, Integer> functionToIndex,
-			final Set<IASTNode> variablesOnHeap) {
+			final StaticObjectsHandler staticObjectsHandler, final Set<String> functions) {
 		mExpressionTranslation = exprTrans;
 		mIsPrerun = true;
 
@@ -400,8 +405,8 @@ public class CHandler {
 		mStaticObjectsHandler = staticObjectsHandler;
 		mFunctionTable = functionTable;
 
-		mFunctionToIndex = new LinkedHashMap<>(functionToIndex);
-		mVariablesOnHeap = new LinkedHashSet<>(variablesOnHeap);
+		mFunctions = new LinkedHashSet<>(functions);
+		mVariablesOnHeap = new LinkedHashSet<>();
 
 		mContract = new ArrayList<>();
 		mInnerMostLoopLabel = new ArrayDeque<>();
@@ -437,8 +442,8 @@ public class CHandler {
 				mExprResultTransformer, mVariablesOnHeap);
 		mArrayHandler = new ArrayHandler(mSettings, mExpressionTranslation, mTypeHandler, mTypeSizes,
 				mExprResultTransformer, mMemoryHandler, mLocationFactory);
-		mInitHandler = new InitializationHandler(mSettings, mMemoryHandler, mExpressionTranslation, mProcedureManager,
-				mTypeHandler, mAuxVarInfoBuilder, mTypeSizeComputer, mTypeSizes, this, mExprResultTransformer);
+		mInitHandler = new InitializationHandler(mSettings, mMemoryHandler, mExpressionTranslation, mTypeHandler,
+				mAuxVarInfoBuilder, mTypeSizeComputer, mTypeSizes, this, mExprResultTransformer);
 
 		mCExpressionTranslator = new CExpressionTranslator(mSettings, mMemoryHandler, mExpressionTranslation,
 				mExprResultTransformer, mAuxVarInfoBuilder, mTypeSizes, mStaticObjectsHandler);
@@ -448,7 +453,7 @@ public class CHandler {
 				mDataRaceChecker);
 
 		mPostProcessor = new PostProcessor(mLogger, mExpressionTranslation, mTypeHandler, mReporter, mAuxVarInfoBuilder,
-				mFunctionToIndex, mTypeSizes, mSymbolTable, mStaticObjectsHandler, mSettings, mProcedureManager,
+				mFunctions, mTypeSizes, mSymbolTable, mStaticObjectsHandler, mSettings, mProcedureManager,
 				mMemoryHandler, mInitHandler, mFunctionHandler, this);
 
 		mIsInLibraryMode = false;
@@ -486,7 +491,7 @@ public class CHandler {
 		// reuse these parts of the old CHandler that have state that was created during
 		// the prerun
 		mVariablesOnHeap = prerunCHandler.mVariablesOnHeap;
-		mFunctionToIndex = prerunCHandler.mFunctionToIndex;
+		mFunctions = prerunCHandler.mFunctions;
 		mBacktranslator = prerunCHandler.mBacktranslator;
 		mLocationFactory = prerunCHandler.mLocationFactory;
 
@@ -532,8 +537,8 @@ public class CHandler {
 				mExprResultTransformer, mVariablesOnHeap);
 		mArrayHandler = new ArrayHandler(mSettings, mExpressionTranslation, mTypeHandler, mTypeSizes,
 				mExprResultTransformer, mMemoryHandler, mLocationFactory);
-		mInitHandler = new InitializationHandler(mSettings, mMemoryHandler, mExpressionTranslation, procedureManager,
-				mTypeHandler, mAuxVarInfoBuilder, mTypeSizeComputer, mTypeSizes, this, mExprResultTransformer);
+		mInitHandler = new InitializationHandler(mSettings, mMemoryHandler, mExpressionTranslation, mTypeHandler,
+				mAuxVarInfoBuilder, mTypeSizeComputer, mTypeSizes, this, mExprResultTransformer);
 
 		mCExpressionTranslator = new CExpressionTranslator(mSettings, mMemoryHandler, mExpressionTranslation,
 				mExprResultTransformer, mAuxVarInfoBuilder, mTypeSizes, mStaticObjectsHandler);
@@ -542,10 +547,36 @@ public class CHandler {
 				procedureManager, mReporter, mTypeSizes, mSymbolTable, mSettings, mExprResultTransformer,
 				mLocationFactory, mTypeHandler, mCExpressionTranslator, mDataRaceChecker);
 		mPostProcessor = new PostProcessor(mLogger, mExpressionTranslation, mTypeHandler, mReporter, mAuxVarInfoBuilder,
-				mFunctionToIndex, mTypeSizes, mSymbolTable, mStaticObjectsHandler, mSettings, procedureManager,
+				mFunctions, mTypeSizes, mSymbolTable, mStaticObjectsHandler, mSettings, procedureManager,
 				mMemoryHandler, mInitHandler, mFunctionHandler, this);
 		mIsInLibraryMode = !prerunCHandler.mProcedureManager.hasProcedure(mSettings.getEntryMethod());
+		copyGlobalsFromPrerun(prerunCHandler.mSymbolTable);
+	}
 
+	private void copyGlobalsFromPrerun(final FlatSymbolTable prerunSymbolTable) {
+		final ASTType pointerType = mTypeHandler.constructPointerType(null);
+		for (final var entry : prerunSymbolTable.getGlobalScope().entrySet()) {
+			final String id = entry.getKey();
+			final SymbolTableValue oldStv = entry.getValue();
+			final IASTNode hook = oldStv.getDeclarationNode();
+			final SymbolTableValue stv;
+			if (mVariablesOnHeap.contains(hook)) {
+				// Create a new pointer value
+				final CDeclaration oldDecl = oldStv.getCDecl();
+				// This is just required for ACSL, so we can ommit the Boogie-declaration and the initializers
+				final CDeclaration newDecl = new CDeclaration(oldDecl.getType(), oldDecl.getName(), null, null, true,
+						oldDecl.getStorageClass(), oldDecl.getBitfieldSize());
+				final String bId = mNameHandler.getUniqueIdentifier(hook, oldDecl.getName(), 1, true, oldDecl.getType(),
+						oldStv.getDeclarationInformation());
+				stv = new SymbolTableValue(bId, null, pointerType, newDecl, oldStv.getDeclarationInformation(), hook,
+						false);
+				addBoogieIdsOfHeapVars(bId);
+			} else {
+				// Copy the old value to the symbol table
+				stv = oldStv;
+			}
+			mSymbolTable.storeCSymbol(hook, id, stv);
+		}
 	}
 
 	/**
@@ -612,9 +643,10 @@ public class CHandler {
 		final ILocation loc = LocationFactory.createIgnoreCLocation();
 
 		// (alex:) new function pointers
+		int offset = 0;
 		final BigInteger functionPointerPointerBaseValue = BigInteger.valueOf(-1);
-		for (final Entry<String, Integer> en : mFunctionToIndex.entrySet()) {
-			final String funcId = SFO.FUNCTION_ADDRESS + en.getKey();
+		for (final String f : mFunctions) {
+			final String funcId = SFO.FUNCTION_ADDRESS + f;
 			final VarList varList = new VarList(loc, new String[] { funcId }, mTypeHandler.constructPointerType(loc));
 			// would unique make sense here?? -- would potentially add lots of axioms
 			mDeclarations.add(new ConstDeclaration(loc, new Attribute[0], false, varList, null, false));
@@ -622,11 +654,12 @@ public class CHandler {
 			final Expression funcIdExpr = ExpressionFactory.constructIdentifierExpression(loc,
 					mTypeHandler.getBoogiePointerType(), funcId, DeclarationInformation.DECLARATIONINFO_GLOBAL);
 
-			final BigInteger offsetValue = BigInteger.valueOf(en.getValue());
+			final BigInteger offsetValue = BigInteger.valueOf(offset);
 			mDeclarations.add(new Axiom(loc, new Attribute[0],
 					ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, funcIdExpr,
 							mExpressionTranslation.constructPointerForIntegerValues(loc,
 									functionPointerPointerBaseValue, offsetValue))));
+			offset++;
 		}
 
 		mDeclarations.addAll(0, mPostProcessor.postProcess(loc, globalHook));
@@ -642,7 +675,7 @@ public class CHandler {
 		mDeclarations.addAll(mTypeSizeComputer.getConstants());
 		mDeclarations.addAll(mTypeSizeComputer.getAxioms());
 		mDeclarations.addAll(mMemoryHandler.declareMemoryModelInfrastructure(this, loc, mDataRaceChecker));
-		mDeclarations.addAll(mInitHandler.declareInitializationInfrastructure(main, loc));
+		mDeclarations.addAll(mInitHandler.declareInitializationInfrastructure());
 		if (mDataRaceChecker != null) {
 			mDeclarations.addAll(mDataRaceChecker.declareRaceCheckingInfrastructure(loc));
 		}
@@ -665,9 +698,15 @@ public class CHandler {
 		if (!mIsPrerun) {
 			// handle proc. declaration & resolve their transitive modified globals
 			mDeclarations.addAll(mProcedureManager.computeFinalProcedureDeclarations(mMemoryHandler));
-			for (final String functionName : mFunctionHandler.getCalledFunctionsWithoutDefinition()) {
-				mLogger.warn("The function " + functionName
-						+ " is called, but not defined or handled by StandardFunctionHandler.");
+			final Set<String> calledFunctionsWithoutDefinition = mFunctionHandler.getCalledFunctionsWithoutDefinition();
+			if (!calledFunctionsWithoutDefinition.isEmpty()) {
+				final String msg = "The following functions are not defined or handled internally: "
+						+ String.join(", ", calledFunctionsWithoutDefinition);
+				if (mSettings.allowUndefinedFunctions()) {
+					mLogger.warn(msg);
+				} else {
+					throw new UnsupportedSyntaxException(loc, msg);
+				}
 			}
 		}
 
@@ -704,11 +743,20 @@ public class CHandler {
 	}
 
 	public Result visit(final IDispatcher main, final CASTDesignatedInitializer node) {
-		return mInitHandler.handleDesignatedInitializer(main, mLocationFactory, mMemoryHandler, mStructHandler, node);
+		return mInitHandler.handleDesignatedInitializer(main, mLocationFactory, node);
 	}
 
 	public Result visit(final IDispatcher main, final IASTArraySubscriptExpression node) {
-		return mArrayHandler.handleArraySubscriptExpression(main, node);
+		final ILocation loc = mLocationFactory.createCLocation(node);
+		final ExpressionResult array = ((ExpressionResult) main.dispatch(node.getArrayExpression()));
+		final ExpressionResult subscript =
+				mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, node.getArgument());
+		return handleArraySubscriptExpression(array, subscript, node);
+	}
+
+	public ExpressionResult handleArraySubscriptExpression(final ExpressionResult array,
+			final ExpressionResult subscript, final IASTNode hook) {
+		return mArrayHandler.handleArraySubscriptExpression(array, subscript, hook);
 	}
 
 	public Result visit(final IDispatcher main, final IASTASMDeclaration node) {
@@ -734,8 +782,9 @@ public class CHandler {
 		}
 		case IASTBinaryExpression.op_equals:
 		case IASTBinaryExpression.op_notequals: {
-			final ExpressionResult rl = mExprResultTransformer.transformSwitchRexBoolToInt(leftOperand, loc, node);
-			final ExpressionResult rr = mExprResultTransformer.transformSwitchRexBoolToInt(rightOperand, loc, node);
+			final ExpressionResult rl = mExprResultTransformer.transformDecaySwitchRexBoolToInt(leftOperand, loc, node);
+			final ExpressionResult rr =
+					mExprResultTransformer.transformDecaySwitchRexBoolToInt(rightOperand, loc, node);
 			return mCExpressionTranslator.handleEqualityOperators(loc, node.getOperator(), rl, rr);
 		}
 		case IASTBinaryExpression.op_greaterEqual:
@@ -1076,18 +1125,18 @@ public class CHandler {
 			beginScope();
 		}
 
+		Set<AuxVarInfo> auxVars = Set.of();
 		for (final IASTNode child : node.getChildren()) {
 			checkForACSL(main, resultBuilder, child, null, true);
+			resultBuilder.addStatements(CTranslationUtil.createHavocsForAuxVars(auxVars));
 			final Result r = main.dispatch(child);
 			if (r instanceof ExpressionResult) {
 				final ExpressionResult res = (ExpressionResult) r;
 				resultBuilder.addDeclarations(res.getDeclarations());
+				// TODO Frank: We somehow should not copy the overapproximations here
 				resultBuilder.addStatements(res.getStatements());
+				auxVars = res.getAuxVars();
 				expr = res.getLrValue();
-				// if (!((ExpressionResult) r).getOverapprs().isEmpty()) {
-				// throw new AssertionError("Forgot to pass overapproximation flags to statements: " +
-				// ((ExpressionResult) r).getOverapprs());
-				// }
 			} else if (r.getNode() != null && r.getNode() instanceof Body) {
 				assert false : "should not happen, as CompoundStatement now yields an "
 						+ "ExpressionResult or a CompoundStatementExpressionResult";
@@ -1095,6 +1144,7 @@ public class CHandler {
 				final Body b = (Body) r.getNode();
 				resultBuilder.addDeclarations(Arrays.asList(b.getLocalVars()));
 				resultBuilder.addStatements(Arrays.asList(b.getBlock()));
+				auxVars = Set.of();
 			} else if (r instanceof SkipResult) {
 				// skip
 			} else {
@@ -1120,11 +1170,10 @@ public class CHandler {
 		}
 		if (isNewScopeRequired(parent)) {
 			updateStmtsAndDeclsAtScopeEnd(resultBuilder, node);
-			if (ADD_HAVOCS_AT_SCOPE_END) {
-				resultBuilder.addStatements(getHavocsAtScopeEnd(mLocationFactory.createCLocation(node), node));
-			}
+			addHavocsAtScopeEnd(mLocationFactory.createCLocation(node), node, resultBuilder);
 			endScope();
 		}
+		resultBuilder.addStatements(CTranslationUtil.createHavocsForAuxVars(auxVars));
 		return resultBuilder.build();
 	}
 
@@ -1420,35 +1469,11 @@ public class CHandler {
 	public Result visit(final IDispatcher main, final IASTExpressionStatement node) {
 
 		final Result r = main.dispatch(node.getExpression());
-		if (r instanceof ExpressionResult) {
-			final ExpressionResult rExp = (ExpressionResult) r;
-
-			final ArrayList<Statement> stmt = new ArrayList<>(rExp.getStatements());
-			final ArrayList<Declaration> decl = new ArrayList<>(rExp.getDeclarations());
-			final List<Overapprox> overappr = new ArrayList<>();
-			stmt.addAll(CTranslationUtil.createHavocsForAuxVars(rExp.getAuxVars()));
-			overappr.addAll(rExp.getOverapprs());
-			return new ExpressionResult(stmt, rExp.getLrValue(), decl, Collections.emptySet(), overappr);
+		if (r instanceof ExpressionResult || r instanceof SkipResult) {
+			return r;
 		}
 		if (r instanceof ExpressionListResult) {
-			final ArrayList<Statement> stmt = new ArrayList<>();
-			final ArrayList<Declaration> decl = new ArrayList<>();
-			final List<Overapprox> overappr = new ArrayList<>();
-			// final Map<VariableDeclaration, ILocation> emptyAuxVars = new
-			// LinkedHashMap<>(0);
-			for (final ExpressionResult res : ((ExpressionListResult) r).getList()) {
-				if (!res.getStatements().isEmpty()) {
-					stmt.addAll(res.getStatements());
-					decl.addAll(res.getDeclarations());
-					stmt.addAll(CTranslationUtil.createHavocsForAuxVars(res.getAuxVars()));
-					overappr.addAll(res.getOverapprs());
-				}
-			}
-
-			return new ExpressionResult(stmt, null, decl, Collections.emptySet(), overappr);
-		}
-		if (r instanceof SkipResult) {
-			return r;
+			return new ExpressionResultBuilder().addAllExceptLrValue(((ExpressionListResult) r).getList()).build();
 		}
 		final String msg = "We always convert to AssignmentStatement, other options raise this error!";
 		final ILocation loc = mLocationFactory.createCLocation(node);
@@ -1466,14 +1491,23 @@ public class CHandler {
 
 	public Result visit(final IDispatcher main, final IASTFunctionCallExpression node) {
 		final IASTExpression functionName = node.getFunctionNameExpression();
+		final ILocation loc = mLocationFactory.createCLocation(node);
 		if (functionName instanceof IASTIdExpression) {
+			// TODO: This is just a workaround for now to crash when thread local variables are used in a concurrent
+			// program
+			if ("pthread_create".equals(((IASTIdExpression) functionName).getName().toString())) {
+				mIsConcurrent = true;
+				// Only crash for thread local variable in concurrent programs
+				if (mHasThreadLocalVars) {
+					throw new UnsupportedSyntaxException(loc, "Thread local variables are not supported yet.");
+				}
+			}
 			final Result standardFunction =
 					mStandardFunctionHandler.translateStandardFunction(main, node, (IASTIdExpression) functionName);
 			if (standardFunction != null) {
 				return standardFunction;
 			}
 		}
-		final ILocation loc = mLocationFactory.createCLocation(node);
 		return mFunctionHandler.handleFunctionCallExpression(main, loc, functionName, node.getArguments(),
 				mMemoryHandler);
 	}
@@ -1495,6 +1529,7 @@ public class CHandler {
 
 		mCurrentDeclaredTypes.pop();
 		assert declResult.getDeclaration().getType() instanceof CFunction;
+		mContract.addAll(main.getFunctionContractFromWitness(node));
 		return mFunctionHandler.handleFunctionDefinition(main, mMemoryHandler, node, declResult.getDeclaration(),
 				mContract, mIsInLibraryMode);
 	}
@@ -1515,8 +1550,6 @@ public class CHandler {
 
 		// Apply multifile input prefixing transformations to the ID
 		final String cId = node.getName().toString();
-		// cIdMp is only relevant for procedures and global variables
-		final String cIdMp = mSymbolTable.applyMultiparseRenaming(node.getContainingFilename(), cId);
 
 		// deal with builtin constants
 		if ("NULL".equals(cId)) {
@@ -1524,45 +1557,19 @@ public class CHandler {
 					new CPointer(new CPrimitive(CPrimitives.VOID))));
 
 		}
-		if ("__PRETTY_FUNCTION__".equals(cId) || "__FUNCTION__".equals(cId)) {
-			// TODO: Was only in SvComp14Handler, but seems useful anywhere
+		if (List.of("__PRETTY_FUNCTION__", "__FUNCTION__", "__func__").contains(cId)) {
 			final CType returnType = new CPointer(new CPrimitive(CPrimitives.CHAR));
-			// final String tId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.NONDET,
-			// returnType);
-			// final VariableDeclaration tVarDecl = new VariableDeclaration(loc, new
-			// Attribute[0], new VarList[] {
-			// new VarList(loc, new String[] { tId },
-			// main.mTypeHandler.constructPointerType(loc)) });
 			final AuxVarInfo auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, returnType, SFO.AUXVAR.NONDET);
 			final RValue rvalue = new RValue(auxvar.getExp(), returnType);
-			final ArrayList<Declaration> decls = new ArrayList<>();
-			decls.add(auxvar.getVarDec());
-			// final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
-			// auxVars.put(auxvar.getVarDec(), loc);
-			return new ExpressionResult(new ArrayList<Statement>(), rvalue, decls, Collections.singleton(auxvar));
+			return new ExpressionResult(List.of(), rvalue, List.of(auxvar.getVarDec()), Set.of(auxvar));
 		}
-		if (!mSymbolTable.containsCSymbol(node, cIdMp)
-				&& ("NAN".equals(cId) || "INFINITY".equals(cId) || "inf".equals(cId))) {
+		final String cIdMp = mSymbolTable.applyMultiparseRenaming(node.getContainingFilename(), cId);
+		if (!mSymbolTable.containsCSymbol(node, cIdMp) && List.of("NAN", "INFINITY", "inf").contains(cId)) {
 			return mExpressionTranslation.createNanOrInfinity(loc, cId);
 		}
 		if (mExpressionTranslation.isNumberClassificationMacro(cId)) {
 			final RValue rvalue = mExpressionTranslation.handleNumberClassificationMacro(loc, cId);
 			return new ExpressionResult(rvalue);
-		}
-		if ("__func__".equals(cId)) {
-			final CType cType = new CPointer(new CPrimitive(CPrimitives.CHAR));
-			// final String tId = mNameHandler.getTempVarUID(SFO.AUXVAR.NONDET, cType);
-			// final VariableDeclaration tVarDecl = new VariableDeclaration(loc, new
-			// Attribute[0],
-			// new VarList[] { new VarList(loc, new String[] { tId },
-			// mTypeHandler.constructPointerType(loc)) });
-			final AuxVarInfo auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, cType, SFO.AUXVAR.NONDET);
-			final RValue rvalue = new RValue(auxvar.getExp(), cType);
-			final ArrayList<Declaration> decls = new ArrayList<>();
-			decls.add(auxvar.getVarDec());
-			// final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
-			// auxVars.put(auxvar.getVarDec(), loc);
-			return new ExpressionResult(new ArrayList<Statement>(), rvalue, decls, Collections.singleton(auxvar));
 		}
 
 		final String bId;
@@ -1605,17 +1612,15 @@ public class CHandler {
 				}
 				return new ExpressionResult(new RValue(stv.getConstantValue(), cType));
 			}
-			// } else if (mFunctionHandler.getProcedures().keySet().contains(cId)) {
 		} else if (mProcedureManager.hasProcedure(cIdMp)) {
-			// C11 6.3.2.1.4 says: A function designator is an expression that
-			// has function type.
+			// C11 6.3.2.1.4 says: A function designator is an expression that has function type.
 			final CFunction cFunction = mProcedureManager.getCFunctionType(cIdMp);
 			cType = cFunction;
 			bId = SFO.FUNCTION_ADDRESS + cIdMp;
 			useHeap = true;
 			intFromPtr = false;
 			declarationInformation = DeclarationInformation.DECLARATIONINFO_GLOBAL;
-		} else if (mFunctionToIndex.containsKey(cIdMp)) {
+		} else if (mFunctions.contains(cIdMp)) {
 			throw new AssertionError("function not known to function handler");
 		} else {
 			throw new UnsupportedSyntaxException(loc,
@@ -1631,15 +1636,13 @@ public class CHandler {
 
 		LRValue lrVal = null;
 		if (useHeap) {
-			final IdentifierExpression idExp = // new IdentifierExpression(loc, bId);
-					ExpressionFactory.constructIdentifierExpression(loc, mTypeHandler.getBoogiePointerType(), bId,
-							declarationInformation);
-			// convention: the ctype in the symbol table of something that we put on the
-			// heap
+			final IdentifierExpression idExp = ExpressionFactory.constructIdentifierExpression(loc,
+					mTypeHandler.getBoogiePointerType(), bId, declarationInformation);
+			// convention: the ctype in the symbol table of something that we put on the heap
 			// is the same as it would be if we did not put it on heap
 			lrVal = LRValueFactory.constructHeapLValue(mTypeHandler, idExp, cType, intFromPtr, null);
 		} else {
-			final VariableLHS idLhs = // new VariableLHS(loc, bId);
+			final VariableLHS idLhs =
 					ExpressionFactory.constructVariableLHS(loc, boogieType, bId, declarationInformation);
 			lrVal = new LocalLValue(idLhs, cType, false, intFromPtr, null);
 		}
@@ -2047,16 +2050,17 @@ public class CHandler {
 	}
 
 	public Result visit(final IDispatcher main, final IASTProblemDeclaration node) {
-		if (node.getRawSignature().equals("_Noreturn") || node.getRawSignature().equals("noreturn")) {
+		final String signature = node.getRawSignature();
+		if (signature.equals("_Noreturn") || signature.equals("noreturn")) {
 			// Matthias 20230309: It seems like the parser does not support die _Noreturn
 			// function specifier. It considers this as a IASTProblemDeclaration that is a
 			// direct child of the translation unit. As a workaround, we skip this node.
 			return new SkipResult();
-		} else {
-			final ILocation loc = mLocationFactory.createCLocation(node);
-			final String msg = "Syntax error (declaration problem) in C program: " + node.getProblem().getMessage();
-			throw new IncorrectSyntaxException(loc, msg);
+
 		}
+		final ILocation loc = mLocationFactory.createCLocation(node);
+		throw new IncorrectSyntaxException(loc, String.format(
+				"Syntax error (declaration problem) in C program: %s (%s)", node.getProblem().getMessage(), signature));
 	}
 
 	public Result visit(final IDispatcher main, final IASTProblemExpression node) {
@@ -2111,6 +2115,15 @@ public class CHandler {
 			final String msg = "This statement can be removed!";
 			mReporter.warn(loc, msg);
 			return new SkipResult();
+		}
+		// TODO: This is just a workaround for now to crash when thread local variables are used in a concurrent program
+		if (Arrays.stream(node.getDeclSpecifier().getAttributes()).map(x -> String.valueOf(x.getName()))
+				.anyMatch("thread"::equals)) {
+			mHasThreadLocalVars = true;
+			// Only crash for thread local variable in concurrent programs
+			if (mIsConcurrent) {
+				throw new UnsupportedSyntaxException(loc, "Thread local variables are not supported yet.");
+			}
 		}
 
 		// we have an enum declaration
@@ -2177,6 +2190,7 @@ public class CHandler {
 					throw new AssertionError("passing side-effects from DeclaratorResults is not yet implemented");
 				}
 
+				mContract.addAll(main.getFunctionContractFromWitness(node));
 				// update functionHandler.procedures instead of symbol table
 				mFunctionHandler.handleFunctionDeclarator(main, mLocationFactory.createCLocation(declarator), mContract,
 						cDec, declarator);
@@ -2319,25 +2333,13 @@ public class CHandler {
 					resultBuilder.addDeclarations(res.getDeclarations());
 					resultBuilder.addAuxVars(res.getAuxVars());
 					resultBuilder.addOverapprox(res.getOverapprs());
-					for (final Statement s : res.getStatements()) {
-						if (s instanceof BreakStatement) {
-							ifBlock.add(new GotoStatement(locC, new String[] { breakLabelName }));
-						} else {
-							ifBlock.add(s);
-						}
-					}
+					ifBlock.addAll(replaceBreaksWithGotos(locC, res.getStatements(), breakLabelName));
 				}
 				if (r.getNode() != null && r.getNode() instanceof Body) {
 					// we already have a unique naming for variables! -> unfold
 					final Body b = (Body) r.getNode();
 					resultBuilder.addDeclarations(Arrays.asList(b.getLocalVars()));
-					for (final Statement s : b.getBlock()) {
-						if (s instanceof BreakStatement) {
-							ifBlock.add(new GotoStatement(locC, new String[] { breakLabelName }));
-						} else {
-							ifBlock.add(s);
-						}
-					}
+					ifBlock.addAll(replaceBreaksWithGotos(locC, Arrays.asList(b.getBlock()), breakLabelName));
 				}
 			}
 		}
@@ -2375,6 +2377,27 @@ public class CHandler {
 
 		assert resultBuilder.getLrValue() == null;
 		return resultBuilder.build();
+	}
+
+	private static List<Statement> replaceBreaksWithGotos(final ILocation loc, final Collection<Statement> statements,
+			final String label) {
+		final List<Statement> result = new ArrayList<>(statements.size());
+		for (final Statement st : statements) {
+			if (st instanceof BreakStatement) {
+				result.add(new GotoStatement(loc, new String[] { label }));
+			} else if (st instanceof IfStatement) {
+				final IfStatement ifSt = (IfStatement) st;
+				final Statement[] newThen =
+						replaceBreaksWithGotos(loc, Arrays.asList(ifSt.getThenPart()), label).toArray(Statement[]::new);
+				final Statement[] newElse =
+						replaceBreaksWithGotos(loc, Arrays.asList(ifSt.getElsePart()), label).toArray(Statement[]::new);
+				result.add(new IfStatement(loc, ifSt.getCondition(), newThen, newElse));
+			} else {
+				// TODO: Are there any other statements, where breaks should be replaced?
+				result.add(st);
+			}
+		}
+		return result;
 	}
 
 	public Result visit(final IDispatcher main, final IASTTranslationUnit node) {
@@ -2791,16 +2814,22 @@ public class CHandler {
 		}
 	}
 
-	private List<Statement> getHavocsAtScopeEnd(final ILocation loc, final IASTStatement hook) {
-		final List<Statement> havocs = new ArrayList<>();
+	private void addHavocsAtScopeEnd(final ILocation loc, final IASTStatement hook,
+			final ExpressionResultBuilder builder) {
+		if (!ADD_HAVOCS_AT_SCOPE_END) {
+			return;
+		}
+		final List<VariableLHS> vars = new ArrayList<>();
 		for (final SymbolTableValue stv : mSymbolTable.getInnermostCScopeValues(hook)) {
 			if (!stv.isBoogieGlobalVar() && stv.getBoogieDecl() != null) {
 				final VariableLHS lhs = new VariableLHS(loc, stv.getAstType().getBoogieType(), stv.getBoogieName(),
 						stv.getDeclarationInformation());
-				havocs.add(new HavocStatement(loc, new VariableLHS[] { lhs }));
+				vars.add(lhs);
 			}
 		}
-		return havocs;
+		if (!vars.isEmpty()) {
+			builder.addStatement(new HavocStatement(loc, vars.toArray(VariableLHS[]::new)));
+		}
 	}
 
 	/**
@@ -2883,7 +2912,7 @@ public class CHandler {
 
 		// this is only to have a minimal symbolTableEntry (containing boogieID) for
 		// translation of the initializer
-		mSymbolTable.storeCSymbol(hook, cDec.getName(),
+		mSymbolTable.storeCSymbol(node, cDec.getName(),
 				new SymbolTableValue(bId, null, null, cDec, declarationInformation, hook, false));
 		final InitializerResult initializer = translateInitializer(main, cDec);
 		cDec.setInitializerResult(initializer);
@@ -2904,15 +2933,16 @@ public class CHandler {
 
 			mTypeHandler.addDefinedType(bId, new TypesResult(new NamedType(loc, boogieType, cDec.getName(), null),
 					false, false, cDec.getType()));
-			if (cDec.getType().getUnderlyingType().isIncomplete() && !cDec.getType().getUnderlyingType().isVoidType()) {
+			final CType cType = cDec.getType();
+			if (cType.isIncomplete() && !cType.isVoidType()) {
+				final CType underlying = cType.getUnderlyingType();
 				final String identifier;
-				if (cDec.getType().getUnderlyingType() instanceof CStructOrUnion) {
-					identifier = ((CStructOrUnion) cDec.getType().getUnderlyingType()).getName();
-				} else if (cDec.getType().getUnderlyingType() instanceof CEnum) {
-					identifier = ((CEnum) cDec.getType().getUnderlyingType()).getName();
+				if (underlying instanceof CStructOrUnion) {
+					identifier = ((CStructOrUnion) underlying).getName();
+				} else if (underlying instanceof CEnum) {
+					identifier = ((CEnum) underlying).getName();
 				} else {
-					throw new AssertionError(
-							"missing support for global incomplete " + cDec.getType().getUnderlyingType());
+					throw new AssertionError("missing support for global incomplete " + cType);
 				}
 				mTypeHandler.registerNamedIncompleteType(identifier, cDec.getName());
 			}
@@ -3011,7 +3041,7 @@ public class CHandler {
 		// reset the symbol table value with its final contents
 		// TODO: Unnamed struct fields have cDec.getName() == "" ; is this supposed to
 		// happen?
-		mSymbolTable.storeCSymbol(hook, cDec.getName(),
+		mSymbolTable.storeCSymbol(node, cDec.getName(),
 				new SymbolTableValue(bId, boogieDec, translatedType, cDec, declarationInformation, hook, false));
 		return result;
 	}
@@ -3241,6 +3271,12 @@ public class CHandler {
 						mReporter.unsupportedSyntax(loc, msg);
 					}
 				}
+				if (globAcsl instanceof CodeAnnotStmt) {
+					final CodeStatement codeStmt = ((CodeAnnotStmt) globAcsl).getCodeStmt();
+					if (codeStmt instanceof GlobalGhostDeclaration) {
+						handleGhostDeclaration(main, resultBuilder, next, (GlobalGhostDeclaration) codeStmt);
+					}
+				}
 			}
 			// TODO: deal with other global ACSL stuff
 
@@ -3330,6 +3366,37 @@ public class CHandler {
 		}
 	}
 
+	private void handleGhostDeclaration(final IDispatcher main, final ExpressionResultBuilder resultBuilder,
+			final IASTNode hook, final GlobalGhostDeclaration decl) {
+		final ILocation loc = mLocationFactory.createCLocation(hook);
+		final SymbolTableValue oldSymbol = mSymbolTable.findCSymbol(hook, decl.getIdentifier());
+		if (oldSymbol != null) {
+			throw new UnsupportedSyntaxException(loc,
+					String.format("The ghost variable %s shadows another variable.", decl.getIdentifier()));
+		}
+		final String boogieName = SFO.GHOST + decl.getIdentifier();
+		final CType cType = AcslTypeUtils.translateAcslTypeToCType(decl.getType());
+		final ASTType astType = mTypeHandler.cType2AstType(loc, cType);
+		final VariableDeclaration boogieDecl = new VariableDeclaration(loc, new Attribute[0],
+				new VarList[] { new VarList(loc, new String[] { boogieName }, astType) });
+		final CDeclaration cDecl = new CDeclaration(cType, decl.getIdentifier());
+		final DeclarationInformation declInfo = DeclarationInformation.DECLARATIONINFO_GLOBAL;
+		mSymbolTable.storeCSymbol(hook, decl.getIdentifier(),
+				new SymbolTableValue(boogieName, boogieDecl, astType, cDecl, declInfo, hook, false));
+		resultBuilder.addDeclaration(boogieDecl);
+		if (decl.getExpr() != null) {
+			final ExpressionResult exprResult = (ExpressionResult) main.dispatch(decl.getExpr(), hook);
+			final ExpressionResult converted = mExprResultTransformer
+					.makeRepresentationReadyForConversionAndRexBoolToInt(exprResult, loc, cType, hook);
+			final VariableLHS lhs =
+					new VariableLHS(loc, mTypeHandler.getBoogieTypeForCType(cType), boogieName, declInfo);
+			final ExpressionResult assignment =
+					makeAssignment(loc, new LocalLValue(lhs, cType, null), List.of(), converted, hook);
+			resultBuilder.addAllExceptLrValueAndStatements(assignment);
+			mStaticObjectsHandler.addStatementsForUltimateInit(assignment.getStatements());
+		}
+	}
+
 	private void markAsIntFromPointer(final ILocation loc, final String lId, final IASTNode hook) {
 		final String cId4Boogie = mSymbolTable.getCIdForBoogieId(lId);
 		final SymbolTableValue old = mSymbolTable.findCSymbol(hook, cId4Boogie);
@@ -3414,7 +3481,7 @@ public class CHandler {
 	 * Handle the indirection operator according to Section 6.5.3.2 of C11. (The indirection operator is the star for
 	 * pointer dereference.)
 	 */
-	private Result handleIndirectionOperator(final ExpressionResult expr, final ILocation loc, final IASTNode hook) {
+	public Result handleIndirectionOperator(final ExpressionResult expr, final ILocation loc, final IASTNode hook) {
 		final ExpressionResult rop = mExprResultTransformer.makeRepresentationReadyForConversion(expr, loc,
 				new CPointer(new CPrimitive(CPrimitives.VOID)), hook);
 		final RValue rValue = (RValue) rop.getLrValue();
@@ -3457,7 +3524,6 @@ public class CHandler {
 
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 
-		final List<Statement> afterLoopStatements = new ArrayList<>();
 		Result iterator = null;
 		if (node instanceof IASTForStatement) {
 			final IASTForStatement forStmt = (IASTForStatement) node;
@@ -3468,11 +3534,7 @@ public class CHandler {
 				final Result initializer = main.dispatch(cInitStmt);
 				if (initializer instanceof ExpressionResult) {
 					final ExpressionResult rExp = (ExpressionResult) initializer;
-					resultBuilder.addAllExceptLrValue(rExp);
-					// Havoc all variables that are declared in the initializer statement after the loop
-					if (ADD_HAVOCS_AT_SCOPE_END) {
-						afterLoopStatements.addAll(getHavocsAtScopeEnd(loc, cInitStmt));
-					}
+					resultBuilder.addAllExceptLrValueAndHavocAux(rExp);
 				} else if (initializer instanceof SkipResult) {
 					// this is an empty statement in the C Code. We will skip it
 				} else {
@@ -3561,6 +3623,9 @@ public class CHandler {
 			final Statement[] elseStmt =
 					CTranslationUtil.createHavocsForAuxVars(condResult.getAuxVars()).toArray(new Statement[0]);
 			ifStmt = new IfStatement(loc, cond, thenStmt.toArray(new Statement[thenStmt.size()]), elseStmt);
+			for (final var oa : condResult.getOverapprs()) {
+				oa.annotate(ifStmt);
+			}
 		}
 
 		if (node instanceof IASTWhileStatement || node instanceof IASTForStatement) {
@@ -3575,33 +3640,7 @@ public class CHandler {
 			bodyBlock.add(ifStmt);
 		}
 
-		LoopInvariantSpecification[] spec;
-		if (mContract == null) {
-			spec = new LoopInvariantSpecification[0];
-		} else {
-			final List<LoopInvariantSpecification> specList = new ArrayList<>();
-			if (node instanceof IASTForStatement || node instanceof IASTWhileStatement
-					|| node instanceof IASTDoStatement) {
-				for (int i = 0; i < mContract.size(); i++) {
-					// retranslate ACSL specification needed e.g., in cases
-					// where ids of function parameters differ from is in ACSL
-					// expression
-					final Result retranslateRes = main.dispatch(mContract.get(i), node);
-					if (retranslateRes instanceof ContractResult) {
-						final ContractResult resContr = (ContractResult) retranslateRes;
-						assert resContr.getSpecs().length == 1;
-						for (final Specification cSpec : resContr.getSpecs()) {
-							specList.add((LoopInvariantSpecification) cSpec);
-						}
-					} else {
-						specList.add((LoopInvariantSpecification) retranslateRes.getNode());
-					}
-				}
-			}
-			spec = specList.toArray(new LoopInvariantSpecification[specList.size()]);
-			// take care for behavior and completeness
-			clearContract();
-		}
+		final LoopInvariantSpecification[] spec = extractLoopInvariants(main, node);
 
 		// bit of a workaround using an extra builder here..
 		final ExpressionResultBuilder bodyBlockResultBuilder = new ExpressionResultBuilder();
@@ -3620,7 +3659,12 @@ public class CHandler {
 				new WhileStatement(ignoreLocation, ExpressionFactory.createBooleanLiteral(ignoreLocation, true), spec,
 						bodyBlock.toArray(new Statement[bodyBlock.size()]));
 		resultBuilder.getOverappr().stream().forEach(a -> a.annotate(whileStmt));
-		resultBuilder.addStatement(whileStmt).addStatements(afterLoopStatements);
+		resultBuilder.addStatement(whileStmt);
+
+		if (node instanceof IASTForStatement) {
+			// Havoc all variables that are declared in the loop (including the initializer) afterwards
+			addHavocsAtScopeEnd(loc, node, resultBuilder);
+		}
 
 		assert resultBuilder.getLrValue() == null : "there is an lrvalue although there should be none";
 		assert resultBuilder.getAuxVars().isEmpty() : "auxvars were added although they should have been havoced";
@@ -3631,4 +3675,25 @@ public class CHandler {
 		return main.transformWithWitness(node, result);
 	}
 
+	private LoopInvariantSpecification[] extractLoopInvariants(final IDispatcher main, final IASTStatement node) {
+		if (mContract == null || mContract.isEmpty()) {
+			return new LoopInvariantSpecification[0];
+		}
+		final List<LoopInvariantSpecification> spec = new ArrayList<>();
+		for (final ACSLNode acsl : mContract) {
+			final Result res = main.dispatch(acsl, node);
+			if (res instanceof ContractResult) {
+				final ContractResult resContr = (ContractResult) res;
+				assert resContr.getSpecs().length == 1;
+				for (final Specification cSpec : resContr.getSpecs()) {
+					spec.add((LoopInvariantSpecification) cSpec);
+				}
+			} else {
+				spec.add((LoopInvariantSpecification) res.getNode());
+			}
+		}
+		// take care for behavior and completeness
+		clearContract();
+		return spec.toArray(LoopInvariantSpecification[]::new);
+	}
 }

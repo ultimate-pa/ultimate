@@ -1,0 +1,35 @@
+- entry_type: entry_set
+  metadata:
+    format_version: '3.0'
+    uuid: 4bff523e-8c54-4a3a-a353-92f8a69685e2
+    creation_time: '2024-05-02T13:44:37+01:00'
+    producer:
+      name: manual
+      version: '1.0'
+    task:
+      input_files:
+      - singleLine.c
+      input_file_hashes:
+        singleLine.c: UNUSED
+      specification: UNUSED
+      data_model: UNUSED
+      language: C
+  content:
+  - type: loop_invariant
+    location:
+      file_name: singleLine.c
+      file_hash: UNUSED
+      line: 3
+      column: 13
+      function: main
+    format: c_expression
+    value: x == i && i <= n
+  - type: loop_invariant
+    location:
+      file_name: singleLine.c
+      file_hash: UNUSED
+      line: 3
+      column: 42
+      function: main
+    format: c_expression
+    value: x == n - i && i <= n

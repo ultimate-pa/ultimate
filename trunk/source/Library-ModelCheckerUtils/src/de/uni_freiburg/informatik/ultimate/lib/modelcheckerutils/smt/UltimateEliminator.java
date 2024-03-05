@@ -46,8 +46,8 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.UnfTransf
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PrenexNormalForm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierSequence;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierSequence.QuantifiedVariables;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
@@ -150,13 +150,13 @@ public class UltimateEliminator extends WrapperScript {
 	@Override
 	public LBool assertTerm(final Term term) throws SMTLIBException {
 		mNumberOfAssertedTerms++;
-		final NamedTermWrapper ntw = new NamedTermWrapper(term);
-		if (ntw.isNamed()) {
-			// we alredy removed quantifiers
-			mTreeSizeOfAssertedTerms += new DAGSize().treesize(ntw.getUnnamedTerm());
+		final NamedTermWrapper ntw = NamedTermWrapper.of(term);
+		if (ntw != null) {
+			// we already removed quantifiers
+			mTreeSizeOfAssertedTerms += new DAGSize().treesize(ntw.getSubTerm());
 			return mScript.assertTerm(term);
 		}
-		final Term hopfullyQuantifierFree = makeQuantifierFree(ntw.getUnnamedTerm());
+		final Term hopfullyQuantifierFree = makeQuantifierFree(term);
 		mTreeSizeOfAssertedTerms += new DAGSize().treesize(hopfullyQuantifierFree);
 		return mScript.assertTerm(hopfullyQuantifierFree);
 	}

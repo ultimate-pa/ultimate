@@ -32,8 +32,9 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.AnnotationCheckResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.AnnotationCheckResult.AnnotationState;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.DataRaceFoundResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ExceptionOrErrorResult;
@@ -43,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TypeErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovableResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnsupportedSyntaxResult;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.results.ITimeoutResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
@@ -141,6 +143,13 @@ public class SafetyCheckerOverallResultEvaluator implements IOverallResultEvalua
 				return SafetyCheckerOverallResult.EXCEPTION_OR_ERROR;
 			}
 			return null;
+		} else if ((result instanceof AnnotationCheckResult)) {
+			final AnnotationCheckResult<?, ?> acr = (AnnotationCheckResult<?, ?>) result;
+			if (acr.getAnnotationState() == AnnotationState.VALID) {
+				return SafetyCheckerOverallResult.SAFE;
+			} else {
+				return SafetyCheckerOverallResult.UNKNOWN;
+			}
 		} else {
 			return null;
 		}

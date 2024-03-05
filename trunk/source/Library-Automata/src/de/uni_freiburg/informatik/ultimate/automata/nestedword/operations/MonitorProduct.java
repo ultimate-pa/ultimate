@@ -27,6 +27,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations;
 
+import java.util.function.Predicate;
+
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMonitorStateFactory;
@@ -50,6 +52,14 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMonitorStateFa
 public class MonitorProduct<L, S1, S2, S> extends ProductNwa<L, S1, S2, S> {
 	private final IMonitorStateFactory<S1, S2, S> mStateFactory;
 
+	private final Predicate<S2> mIsTrapInSnd;
+
+	public MonitorProduct(final INwaOutgoingLetterAndTransitionProvider<L, S1> fstOperand,
+			final INwaOutgoingLetterAndTransitionProvider<L, S2> sndOperand,
+			final IMonitorStateFactory<S1, S2, S> stateFactory) throws AutomataLibraryException {
+		this(fstOperand, sndOperand, stateFactory, null);
+	}
+
 	/**
 	 * Implementation of the Information Storage Operation for Partial Order Reduction.
 	 *
@@ -64,9 +74,11 @@ public class MonitorProduct<L, S1, S2, S> extends ProductNwa<L, S1, S2, S> {
 	 */
 	public MonitorProduct(final INwaOutgoingLetterAndTransitionProvider<L, S1> fstOperand,
 			final INwaOutgoingLetterAndTransitionProvider<L, S2> sndOperand,
-			final IMonitorStateFactory<S1, S2, S> stateFactory) throws AutomataLibraryException {
+			final IMonitorStateFactory<S1, S2, S> stateFactory, final Predicate<S2> isTrapInSnd)
+			throws AutomataLibraryException {
 		super(fstOperand, sndOperand, stateFactory, false);
 		mStateFactory = stateFactory;
+		mIsTrapInSnd = isTrapInSnd;
 	}
 
 	@Override
@@ -74,5 +86,10 @@ public class MonitorProduct<L, S1, S2, S> extends ProductNwa<L, S1, S2, S> {
 		final S res = mStateFactory.product(fst, snd);
 		final boolean isAccepting = mFstOperand.isFinal(fst);
 		return new ProductState(fst, snd, res, isAccepting);
+	}
+
+	@Override
+	protected boolean isTrapInSnd(final S2 state) {
+		return mIsTrapInSnd != null && mIsTrapInSnd.test(state);
 	}
 }

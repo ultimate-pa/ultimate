@@ -69,6 +69,9 @@ public class MultiDimensionalSelect implements ITermProvider {
 
 	public MultiDimensionalSelect(final Term array, final ArrayIndex index) {
 		super();
+		if (index.isEmpty()) {
+			throw new AssertionError("Zero dimensions are not supported");
+		}
 		mArray = array;
 		mIndex = index;
 	}

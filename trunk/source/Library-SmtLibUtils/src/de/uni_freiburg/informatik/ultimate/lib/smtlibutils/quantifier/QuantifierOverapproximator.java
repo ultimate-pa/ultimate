@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier;
 
+import java.util.EnumSet;
+
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
@@ -43,10 +45,23 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  */
 public class QuantifierOverapproximator extends TermTransformer {
 
+	public enum Quantifier { EXISTS, FORALL };
+
 	private final Script mScript;
+	private final Term mReplacement;
+	private final EnumSet<Quantifier> mReplacedQuantifiers;
 
 	private QuantifierOverapproximator(final Script script) {
 		mScript = script;
+		mReplacement = mScript.term("true");
+		mReplacedQuantifiers = EnumSet.allOf(Quantifier.class);
+	}
+
+	private QuantifierOverapproximator(final Script script, final EnumSet<Quantifier> replacedQuantifiers,
+			final Term replacement) {
+		mScript = script;
+		mReplacement = replacement;
+		mReplacedQuantifiers = replacedQuantifiers;
 	}
 
 	@Override
@@ -64,7 +79,22 @@ public class QuantifierOverapproximator extends TermTransformer {
 			super.convert(term);
 			return;
 		} else if (term instanceof QuantifiedFormula) {
-			setResult(mScript.term("true"));
+			final QuantifiedFormula quantifiedFormula = (QuantifiedFormula) term;
+			if (quantifiedFormula.getQuantifier() == QuantifiedFormula.EXISTS) {
+				if (mReplacedQuantifiers.contains(Quantifier.EXISTS)) {
+					setResult(mReplacement);
+				} else {
+					setResult(term);
+				}
+			} else if (quantifiedFormula.getQuantifier() == QuantifiedFormula.FORALL) {
+				if (mReplacedQuantifiers.contains(Quantifier.FORALL)) {
+					setResult(mReplacement);
+				} else {
+					setResult(term);
+				}
+			} else {
+				throw new AssertionError("Unknown quantifier");
+			}
 			return;
 		} else if (term instanceof TermVariable) {
 			setResult(term);
@@ -83,6 +113,11 @@ public class QuantifierOverapproximator extends TermTransformer {
 
 	public static Term apply(final Script script, final Term term) {
 		return new QuantifierOverapproximator(script).transform(term);
+	}
+
+	public static Term apply(final Script script, final EnumSet<Quantifier> quantifiers, final Term replacement,
+			final Term term) {
+		return new QuantifierOverapproximator(script, quantifiers, replacement).transform(term);
 	}
 
 }

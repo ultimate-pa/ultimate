@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.SPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.GotoEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ParallelComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
@@ -244,7 +245,7 @@ public class WitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 		final Collection<OutgoingInternalTransition<LETTER, IPredicate>> result = new ArrayList<>();
 		for (final OutgoingInternalTransition<LETTER, IPredicate> cfgOut : mControlFlowAutomaton
 				.internalSuccessors(ps.getCfgAutomatonState(), letter)) {
-			final Set<IPredicate> succs = computeSuccessorStates(ps, letter, cfgOut.getSucc());
+			final Set<IPredicate> succs = computeSuccessorStates(false, ps, letter, cfgOut.getSucc());
 			for (final IPredicate succ : succs) {
 				result.add(new OutgoingInternalTransition<>(letter, succ));
 			}
@@ -273,7 +274,7 @@ public class WitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 		final Collection<OutgoingCallTransition<LETTER, IPredicate>> result = new ArrayList<>();
 		for (final OutgoingCallTransition<LETTER, IPredicate> cfgOut : mControlFlowAutomaton
 				.callSuccessors(ps.getCfgAutomatonState(), letter)) {
-			final Set<IPredicate> succs = computeSuccessorStates(ps, letter, cfgOut.getSucc());
+			final Set<IPredicate> succs = computeSuccessorStates(true, ps, letter, cfgOut.getSucc());
 			for (final IPredicate succ : succs) {
 				result.add(new OutgoingCallTransition<>(letter, succ));
 			}
@@ -319,7 +320,7 @@ public class WitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 		final Collection<OutgoingReturnTransition<LETTER, IPredicate>> result = new ArrayList<>();
 		for (final OutgoingReturnTransition<LETTER, IPredicate> cfgOut : mControlFlowAutomaton
 				.returnSuccessors(ps.getCfgAutomatonState(), psHier.getCfgAutomatonState(), letter)) {
-			final Set<IPredicate> succs = computeSuccessorStates(ps, letter, cfgOut.getSucc());
+			final Set<IPredicate> succs = computeSuccessorStates(false, ps, letter, cfgOut.getSucc());
 			for (final IPredicate succ : succs) {
 				result.add(new OutgoingReturnTransition<>(hier, letter, succ));
 			}
@@ -327,7 +328,8 @@ public class WitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 		return result;
 	}
 
-	private Set<IPredicate> computeSuccessorStates(final ProductState ps, final LETTER cb, final IPredicate cfgSucc) {
+	private Set<IPredicate> computeSuccessorStates(final boolean isSuccessorForCall, final ProductState ps,
+			final LETTER cb, final IPredicate cfgSucc) {
 		final Set<IPredicate> result = new LinkedHashSet<>();
 
 		final ArrayDeque<WitnessNode> wsSuccStates = new ArrayDeque<>();
@@ -358,7 +360,11 @@ public class WitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 				}
 			}
 		}
-		if (ps.getStutteringSteps() < STUTTERING_STEPS_LIMIT) {
+		// Workaround for reducing nondeterministic call transitions (on-demand
+		// computation of Floyd-Hoare annotation crashes if we have nondeterministic
+		// call transitions): if we have a matching witness edge we do not all
+		// stuttering edges.
+		if (ps.getStutteringSteps() < STUTTERING_STEPS_LIMIT && (!isSuccessorForCall || result.isEmpty())) {
 			final int stutteringStepsCounter;
 			if (isStateOfInitFunction(ps.mCfgAutomatonState)) {
 				stutteringStepsCounter = ps.getStutteringSteps();
@@ -429,9 +435,16 @@ public class WitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 		} else if (cb instanceof Summary) {
 			final Summary sum = (Summary) cb;
 			return isCompatible(sum.getCallStatement(), we);
+		} else if (cb instanceof GotoEdge) {
+			final GotoEdge gotoEdge = (GotoEdge) cb;
+			return isCompatible(gotoEdge, we);
 		} else {
 			throw new AssertionError("unknown type of LETTER");
 		}
+	}
+
+	boolean isCompatible(final GotoEdge gotoEdge, final WitnessEdge we) {
+		return isCompatible(ILocation.getAnnotation(gotoEdge), we);
 	}
 
 	boolean isCompatible(final Call call, final WitnessEdge we) {

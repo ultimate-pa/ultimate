@@ -92,6 +92,7 @@ public class ProofRules {
 	public final static String TOTAL = "total";
 	public final static String TOTALINT = "total-int";
 	public final static String FARKAS = "farkas";
+	public final static String MULPOS = "mulpos";
 	public final static String TOINTHIGH = "to_int-high";
 	public final static String TOINTLOW = "to_int-low";
 	public final static String MINUSDEF = "-def";
@@ -533,6 +534,22 @@ public class ProofRules {
 	}
 
 	/**
+	 * Axiom stating `- (<=? 0 a) - (<=? 0 b) + (<=? 0 (* a b))`. Here <=? stands
+	 * for `<`, `=`, or `<=`. The inequalities must all be given, including the goal
+	 * inequality. The side condition is that the left-hand side of all inequalities
+	 * is 0, that the right-hand side of the last inequality is equal to the product
+	 * of the other right-hand sides (modulo polynomial simplification), and the
+	 * goal inequality must be <=, or all inequalities must be <.
+	 *
+	 * @param inequalities the literals of the axioms, the last is the goal
+	 *                     inequality
+	 * @return the axiom.
+	 */
+	public Term mulPos(final Term[] inequalities) {
+		return mTheory.annotatedTerm(annotate(":" + MULPOS, inequalities), mAxiom);
+	}
+
+	/**
 	 * Axiom stating `(= (+ a1... an) = result)` where result is equal to the
 	 * polynom addition of polynomials a1 ... an in standard form.
 	 *
@@ -792,6 +809,9 @@ public class ProofRules {
 			poly.mul(new Polynomial(t));
 		}
 		poly.add(Rational.MONE, result);
+		if (!poly.isZero()) {
+			System.err.println("STOP");
+		}
 		return poly.isZero();
 	}
 
@@ -874,7 +894,44 @@ public class ProofRules {
 			sum.add(coeff.negate(), params[1]);
 		}
 		final boolean okay = sum.isConstant() && sum.getConstant().signum() >= (strict ? 0 : 1);
+		if (!okay) {
+			System.err.println("STOP");
+		}
 		return okay;
+	}
+
+	public static boolean checkMulPos(final Term[] inequalities) {
+		final Polynomial prod = new Polynomial();
+		prod.add(Rational.ONE);
+		boolean strict = true;
+		for (int i = 0; i < inequalities.length; i++) {
+			if (!isApplication(SMTLIBConstants.LT, inequalities[i])
+					&& !isApplication(SMTLIBConstants.LEQ, inequalities[i])
+					&& !isApplication(SMTLIBConstants.EQUALS, inequalities[i])) {
+				return false;
+			}
+			if (!isApplication(SMTLIBConstants.LT, inequalities[i])) {
+				strict = false;
+			}
+			final ApplicationTerm appTerm = (ApplicationTerm) inequalities[i];
+			final Term[] params = appTerm.getParameters();
+			if (params.length != 2) {
+				return false;
+			}
+			if (params[0] != Rational.ZERO.toTerm(params[0].getSort())) {
+				return false;
+			}
+			if (i < inequalities.length - 1) {
+				prod.mul(new Polynomial(params[1]));
+			} else {
+				if (!isApplication(SMTLIBConstants.LEQ, inequalities[i])
+						&& (!strict || !isApplication(SMTLIBConstants.LT, inequalities[i]))) {
+					return false;
+				}
+				prod.add(Rational.MONE, params[1]);
+			}
+		}
+		return prod.isZero();
 	}
 
 	public static boolean checkXorParams(final Term[][] xorArgs) {
@@ -1039,6 +1096,7 @@ public class ProofRules {
 					case ":" + TOTAL:
 					case ":" + POLYADD:
 					case ":" + POLYMUL:
+					case ":" + MULPOS:
 					case ":" + DIVIDEDEF:
 					case ":" + MINUSDEF:
 					case ":" + TOREALDEF:

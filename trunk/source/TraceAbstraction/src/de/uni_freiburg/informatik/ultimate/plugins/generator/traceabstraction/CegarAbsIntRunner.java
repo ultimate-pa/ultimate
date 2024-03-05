@@ -212,9 +212,8 @@ public final class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 				}
 			}
 
-			final PathProgram pp =
-					PathProgram.constructPathProgram("absint-pp-iter-" + currentAbsIntIter, mRoot, pathProgramSet)
-							.getPathProgram();
+			final PathProgram pp = PathProgram.constructPathProgram("absint-pp-iter-" + currentAbsIntIter, mRoot,
+					pathProgramSet, Collections.emptySet()).getPathProgram();
 
 			@SuppressWarnings("unchecked")
 			final IAbstractInterpretationResult<?, LETTER, ?> result =

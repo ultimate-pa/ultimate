@@ -1,22 +1,21 @@
--
-  entry_type: loop_invariant
+- entry_type: loop_invariant
   metadata:
-    format_version: 0.1
-    uuid: "e753db52-e5f3-414e-a324-a2a5f8a183a2"
-    creation_time: "2023-08-02T17:02:41+02:00"
+    format_version: '0.1'
+    uuid: 390bf7da-3de6-467b-bcc7-dc8d92010ee9
+    creation_time: '2023-10-31T13:37:07+01:00'
     producer:
       name: UNUSED
-      version: UNUSED
+      version: 0.2.3-dev-b094d93-m
     task:
       input_files:
-        - "C:\ultimate\trunk\examples\witness-checking\regression\correctness\odd.c"
+      - C:\ultimate\trunk\examples\witness-checking\regression\correctness\odd.c
       input_file_hashes:
-        "C:\ultimate\trunk\examples\witness-checking\regression\correctness\odd.c": UNUSED
+        C:\ultimate\trunk\examples\witness-checking\regression\correctness\odd.c: UNUSED
       specification: UNUSED
       data_model: UNUSED
       language: C
   location:
-    file_name: "C:\ultimate\trunk\examples\witness-checking\regression\correctness\odd.c"
+    file_name: C:\ultimate\trunk\examples\witness-checking\regression\correctness\odd.c
     file_hash: UNUSED
     line: 13
     column: 0

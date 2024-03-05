@@ -181,9 +181,9 @@ public class QuantifierUtils {
 	public static String getNameOfCorrespondingJuncts(final int quantifier) {
 		String result;
 		if (quantifier == QuantifiedFormula.EXISTS) {
-			result = "conjuncts";
-		} else if (quantifier == QuantifiedFormula.FORALL) {
 			result = "disjuncts";
+		} else if (quantifier == QuantifiedFormula.FORALL) {
+			result = "conjuncts";
 		} else {
 			throw new AssertionError(UNKNOWN_QUANTIFIER);
 		}
@@ -193,9 +193,9 @@ public class QuantifierUtils {
 	public static String getNameOfDualJuncts(final int quantifier) {
 		String result;
 		if (quantifier == QuantifiedFormula.EXISTS) {
-			result = "disjuncts";
-		} else if (quantifier == QuantifiedFormula.FORALL) {
 			result = "conjuncts";
+		} else if (quantifier == QuantifiedFormula.FORALL) {
+			result = "disjuncts";
 		} else {
 			throw new AssertionError(UNKNOWN_QUANTIFIER);
 		}

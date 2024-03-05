@@ -484,7 +484,7 @@ public final class DebuggingHoareTripleChecker implements IHoareTripleChecker {
 			mHierConstants.beginScope();
 
 			// rename assignedVars to primed vars
-			final Set<IProgramVar> assignedVars = getAssignmentOfReturn().getAssignedVars();
+			final Set<IProgramVar> assignedVars = getAssignmentOfReturn().getOutVars().keySet();
 			Term renamedFormula = renameVarsToPrimedConstants(assignedVars, p.getFormula(), mManagedScript, this);
 
 			final String callee = getPrecedingProcedure();

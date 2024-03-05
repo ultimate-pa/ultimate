@@ -26,7 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator;
 
+import org.eclipse.cdt.core.dom.ast.ASTVisitor;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
+import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IPointerType;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTIdExpression;
@@ -35,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.ACSLLo
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CLocation;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslationValueProvider;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLPrettyPrinter;
 
 /**
  *
@@ -58,7 +61,7 @@ public class CACSLBacktranslationValueProvider implements IBacktranslationValueP
 		if (step instanceof CLocation) {
 			return getStringFromIASTNode(((CLocation) step).getNode());
 		} else if (step instanceof ACSLLocation) {
-			return ((ACSLLocation) step).getNode().toString();
+			return ACSLPrettyPrinter.print(((ACSLLocation) step).getNode());
 		} else {
 			throw new UnsupportedOperationException();
 		}
@@ -104,4 +107,25 @@ public class CACSLBacktranslationValueProvider implements IBacktranslationValueP
 		return step.getFileName();
 	}
 
+	@Override
+	public boolean containsProcedureCall(final IASTExpression expression) {
+		final FunctionCallFinder finder = new FunctionCallFinder();
+		expression.accept(finder);
+		return finder.mFound;
+	}
+
+	private static final class FunctionCallFinder extends ASTVisitor {
+		private boolean mFound;
+
+		public FunctionCallFinder() {
+			super(false);
+			shouldVisitExpressions = true;
+		}
+
+		@Override
+		public int visit(final IASTExpression expression) {
+			mFound |= expression instanceof IASTFunctionCallExpression;
+			return mFound ? PROCESS_ABORT : PROCESS_CONTINUE;
+		}
+	}
 }
