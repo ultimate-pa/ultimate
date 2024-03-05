@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.FloatingPointRoundingMode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.IntegerTranslationMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.MemoryModel;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerCheckMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerIntegerConversion;
@@ -52,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
 public final class TranslationSettings {
 	private final PointerCheckMode mDivisionByZeroOfIntegerTypes;
 	private final PointerCheckMode mDivisionByZeroOfFloatingTypes;
-	private final boolean mBitvectorTranslation;
+	private final IntegerTranslationMode mIntegerTranslationMode;
 	private final boolean mOverapproximateFloatingPointOperations;
 	private final boolean mBitpreciseBitfields;
 	private final PointerCheckMode mCheckArrayAccessOffHeap;
@@ -116,7 +117,8 @@ public final class TranslationSettings {
 		mDivisionByZeroOfFloatingTypes = ups.getEnum(
 				CACSLPreferenceInitializer.LABEL_CHECK_DIVISION_BY_ZERO_OF_FLOATING_TYPES, PointerCheckMode.class);
 		mBitpreciseBitfields = ups.getBoolean(CACSLPreferenceInitializer.LABEL_BITPRECISE_BITFIELDS);
-		mBitvectorTranslation = ups.getBoolean(CACSLPreferenceInitializer.LABEL_BITVECTOR_TRANSLATION);
+		mIntegerTranslationMode =
+				ups.getEnum(CACSLPreferenceInitializer.LABEL_INTEGER_TRANSLATION_MODE, IntegerTranslationMode.class);
 		mOverapproximateFloatingPointOperations =
 				ups.getBoolean(CACSLPreferenceInitializer.LABEL_OVERAPPROXIMATE_FLOATS);
 		mUseConstantArrays = ups.getBoolean(CACSLPreferenceInitializer.LABEL_USE_CONSTANT_ARRAYS);
@@ -133,7 +135,7 @@ public final class TranslationSettings {
 	}
 
 	private TranslationSettings(final PointerCheckMode divisionByZeroOfIntegerTypes,
-			final PointerCheckMode divisionByZeroOfFloatingTypes, final boolean bitvectorTranslation,
+			final PointerCheckMode divisionByZeroOfFloatingTypes, final IntegerTranslationMode integerTranslationMode,
 			final boolean overapproximateFloatingPointOperations, final boolean bitpreciseBitfields,
 			final PointerCheckMode checkArrayAccessOffHeap, final boolean inRange,
 			final PointerIntegerConversion pointerIntegerConversion, final boolean checkIfFreedPointerIsValid,
@@ -149,7 +151,7 @@ public final class TranslationSettings {
 			final int stringOverapproximationThreshold) {
 		mDivisionByZeroOfIntegerTypes = divisionByZeroOfIntegerTypes;
 		mDivisionByZeroOfFloatingTypes = divisionByZeroOfFloatingTypes;
-		mBitvectorTranslation = bitvectorTranslation;
+		mIntegerTranslationMode = integerTranslationMode;
 		mOverapproximateFloatingPointOperations = overapproximateFloatingPointOperations;
 		mBitpreciseBitfields = bitpreciseBitfields;
 		mCheckArrayAccessOffHeap = checkArrayAccessOffHeap;
@@ -202,12 +204,16 @@ public final class TranslationSettings {
 		return new CPrimitive(CPrimitives.LONG);
 	}
 
+	public IntegerTranslationMode getIntegerTranslationMode() {
+		return mIntegerTranslationMode;
+	}
+
 	/**
 	 * if false we translate CPrimitives whose general type is INT to int. If true we translate CPrimitives whose
 	 * general type is INT to identically named types,
 	 */
 	public boolean isBitvectorTranslation() {
-		return mBitvectorTranslation;
+		return mIntegerTranslationMode == IntegerTranslationMode.BITVECTOR;
 	}
 
 	public boolean overapproximateFloatingPointOperations() {
@@ -312,7 +318,7 @@ public final class TranslationSettings {
 
 	public TranslationSettings setMemoryModelPreference(final MemoryModel memoryModel) {
 		return new TranslationSettings(mDivisionByZeroOfIntegerTypes, mDivisionByZeroOfFloatingTypes,
-				mBitvectorTranslation, mOverapproximateFloatingPointOperations, mBitpreciseBitfields,
+				mIntegerTranslationMode, mOverapproximateFloatingPointOperations, mBitpreciseBitfields,
 				mCheckArrayAccessOffHeap, mInRange, mPointerIntegerConversion, mCheckIfFreedPointerIsValid,
 				mPointerBaseValidity, mPointerTargetFullyAllocated, mCheckPointerSubtractionAndComparisonValidity,
 				memoryModel, mFpToIeeeBvExtension, mSmtBoolArraysWorkaround, mEntryMethod, mCheckErrorFunction,

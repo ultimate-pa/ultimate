@@ -37,7 +37,6 @@ import java.util.function.BinaryOperator;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
@@ -66,9 +65,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public class BitabsTranslation {
 	private final TypeSizes mTypeSizes;
+	private final IntegerTranslation mIntegerTranslation;
 
-	public BitabsTranslation(final TypeSizes typeSizes) {
+	public BitabsTranslation(final TypeSizes typeSizes, final IntegerTranslation integerTranslation) {
 		mTypeSizes = typeSizes;
+		mIntegerTranslation = integerTranslation;
 	}
 
 	/**
@@ -466,12 +467,7 @@ public class BitabsTranslation {
 	}
 
 	private Expression applyWraparoundIfNecessary(final ILocation loc, final Expression expr, final CPrimitive type) {
-		if (!mTypeSizes.isUnsigned(type)) {
-			return expr;
-		}
-		final BigInteger maxValuePlusOne = mTypeSizes.getMaxValueOfPrimitiveType(type).add(BigInteger.ONE);
-		return ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHMOD, expr,
-				ExpressionFactory.createIntegerLiteral(loc, maxValuePlusOne.toString()));
+		return mTypeSizes.isUnsigned(type) ? mIntegerTranslation.applyNutzWraparound(loc, type, expr) : expr;
 	}
 
 	private static ExpressionResult handleConstants(final BigInteger leftValue, final BigInteger rightValue,

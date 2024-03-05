@@ -1464,7 +1464,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	}
 
 	@Override
-	public Expression applyWraparound(final ILocation loc, final CPrimitive cPrimitive, final Expression operand) {
+	public Expression applyNutzWraparound(final ILocation loc, final CPrimitive cPrimitive, final Expression operand) {
 		// Nutz transformation not needed in the bitvector translation
 		return operand;
 	}

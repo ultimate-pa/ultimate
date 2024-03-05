@@ -80,7 +80,9 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_CHECK_SIGNED_INTEGER_BOUNDS = "Check absence of signed integer overflows";
 	public static final String LABEL_CHECK_DATA_RACES = "Check absence of data races in concurrent programs";
 	public static final String LABEL_ASSUME_NONDET_VALUES_IN_RANGE = "Assume nondeterminstic values are in range";
-	public static final String LABEL_BITVECTOR_TRANSLATION = "Use bitvectors instead of ints";
+	public static final String LABEL_INTEGER_TRANSLATION_MODE = "Integer translation mode";
+	private static final IntegerTranslationMode DEF_INTEGER_TRANSLATION_MODE =
+			IntegerTranslationMode.INTEGER_CONGRUENCE_BASED;
 	public static final String LABEL_OVERAPPROXIMATE_FLOATS = "Overapproximate operations on floating types";
 	private static final String DESC_OVERAPPROXIMATE_FLOATS =
 			"Overapproximate all operations on floats (including plus, minus, multiplication, conversions, etc.) by "
@@ -243,6 +245,10 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 
 	}
 
+	public enum IntegerTranslationMode {
+		INTEGER_CONGRUENCE_BASED, INTEGER_RANGE_BASED, BITVECTOR
+	}
+
 	public CACSLPreferenceInitializer() {
 		super(Activator.PLUGIN_ID, "C+ACSL to Boogie Translator");
 	}
@@ -282,7 +288,8 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<>(LABEL_CHECK_SIGNED_INTEGER_BOUNDS, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_CHECK_DATA_RACES, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_ASSUME_NONDET_VALUES_IN_RANGE, true, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_BITVECTOR_TRANSLATION, false, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_INTEGER_TRANSLATION_MODE, DEF_INTEGER_TRANSLATION_MODE,
+						PreferenceType.Combo, IntegerTranslationMode.values()),
 				new UltimatePreferenceItem<>(LABEL_OVERAPPROXIMATE_FLOATS, false, DESC_OVERAPPROXIMATE_FLOATS,
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_FP_TO_IEEE_BV_EXTENSION, false, PreferenceType.Boolean),

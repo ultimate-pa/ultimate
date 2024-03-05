@@ -550,7 +550,7 @@ public abstract class ExpressionTranslation {
 	public abstract ExpressionResult constructBuiltinFesetround(final ILocation loc, final RValue arg,
 			AuxVarInfoBuilder auxVarInfoBuilder);
 
-	public abstract Expression applyWraparound(ILocation loc, CPrimitive cPrimitive, Expression operand);
+	public abstract Expression applyNutzWraparound(ILocation loc, CPrimitive cPrimitive, Expression operand);
 
 	public abstract Pair<Expression, Expression> constructOverflowCheckForArithmeticExpression(ILocation loc,
 			int operation, CPrimitive resultType, Expression lhsOperand, Expression rhsOperand);

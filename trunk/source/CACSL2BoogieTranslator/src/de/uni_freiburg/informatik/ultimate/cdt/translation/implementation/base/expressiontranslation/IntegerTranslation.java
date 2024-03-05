@@ -1,7 +1,8 @@
 /*
  * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 Thomas Lang
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2022 Frank Schüssele (schuessf@informatik.uni-freiburg.de)
+ * Copyright (C) 2015-2022 University of Freiburg
  *
  * This file is part of the ULTIMATE CACSL2BoogieTranslator plug-in.
  *
@@ -69,9 +70,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Thomas Lang
+ * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  *
  */
-public class IntegerTranslation extends ExpressionTranslation {
+public abstract class IntegerTranslation extends ExpressionTranslation {
 	private static final String NOT_IMPLEMENTED = "Operation is not yet implemented in non-bitprecise translation.";
 
 	private final BitabsTranslation mBitabsTranslation;
@@ -79,7 +81,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 	public IntegerTranslation(final TypeSizes typeSizeConstants, final TranslationSettings settings,
 			final ITypeHandler typeHandler, final FlatSymbolTable symboltable) {
 		super(typeSizeConstants, settings, typeHandler, symboltable);
-		mBitabsTranslation = new BitabsTranslation(typeSizeConstants);
+		mBitabsTranslation = new BitabsTranslation(typeSizeConstants, this);
 	}
 
 	@Override
@@ -105,7 +107,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 		if (!type1.equals(type2)) {
 			throw new IllegalArgumentException("incompatible types " + type1 + " and " + type2);
 		}
-		final Pair<Expression, Expression> wrapped = applyWraparoundsIfNecessary(loc, exp1, type1, exp2, type2);
+		final Pair<Expression, Expression> wrapped = applyNutzWraparoundsIfNecessary(loc, exp1, type1, exp2, type2);
 		return constructBinaryComparison(loc, nodeOperator, wrapped.getFirst(), wrapped.getSecond());
 	}
 
@@ -137,8 +139,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 		return ExpressionFactory.newBinaryExpression(loc, op, leftExpr, rightExpr);
 	}
 
-	@Override
-	public Expression applyWraparound(final ILocation loc, final CPrimitive cPrimitive, final Expression operand) {
+	protected Expression applyWraparound(final ILocation loc, final CPrimitive cPrimitive, final Expression operand) {
 		if (cPrimitive.getGeneralType() == CPrimitiveCategory.INTTYPE) {
 			if (mTypeSizes.isUnsigned(cPrimitive)) {
 				final BigInteger maxValuePlusOne =
@@ -181,6 +182,9 @@ public class IntegerTranslation extends ExpressionTranslation {
 		}
 	}
 
+	protected abstract Expression applyWraparoundForExpression(final ILocation loc, final CPrimitive type,
+			final Expression expr);
+
 	@Override
 	protected Expression constructUnaryIntegerExpression(final ILocation loc, final int op, final Expression expr,
 			final CPrimitive type) {
@@ -196,14 +200,14 @@ public class IntegerTranslation extends ExpressionTranslation {
 
 	private Expression constructUnaryComplementExpression(final ILocation loc, final Expression expr,
 			final CPrimitive type) {
-		// Transform ~x to -1-x or MAX_VALUE-x (for unsigned, we could also return the same)
+		// Transform ~x to -1-x (for signed) or MAX_VALUE-x (for unsigned)
 		final String subtrahendValue =
 				mTypeSizes.isUnsigned(type) ? mTypeSizes.getMaxValueOfPrimitiveType(type).toString() : "-1";
 		final Expression subtrahend = ExpressionFactory.createIntegerLiteral(loc, subtrahendValue);
 		return ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMINUS, subtrahend, expr);
 	}
 
-	private static Expression constructUnaryMinusExpression(final ILocation loc, final Expression expr,
+	protected Expression constructUnaryMinusExpression(final ILocation loc, final Expression expr,
 			final CPrimitive type) {
 		if (type.getGeneralType() == CPrimitiveCategory.INTTYPE
 				|| type.getGeneralType() == CPrimitiveCategory.FLOATTYPE) {
@@ -226,15 +230,15 @@ public class IntegerTranslation extends ExpressionTranslation {
 		case IASTBinaryExpression.op_multiply:
 		case IASTBinaryExpression.op_plusAssign:
 		case IASTBinaryExpression.op_plus:
-			return constructArithmeticExpression(loc, nodeOperator, leftExp, rightExp);
+			return constructArithmeticExpression(loc, nodeOperator, leftExp, rightExp, leftType);
 		case IASTBinaryExpression.op_divideAssign:
 		case IASTBinaryExpression.op_divide: {
-			final var pair = applyWraparoundsIfNecessary(loc, leftExp, leftType, rightExp, rightType);
+			final var pair = applyNutzWraparoundsIfNecessary(loc, leftExp, leftType, rightExp, rightType);
 			return constructDivExpression(loc, pair.getFirst(), pair.getSecond(), leftType, rightType);
 		}
 		case IASTBinaryExpression.op_moduloAssign:
 		case IASTBinaryExpression.op_modulo: {
-			final var pair = applyWraparoundsIfNecessary(loc, leftExp, leftType, rightExp, rightType);
+			final var pair = applyNutzWraparoundsIfNecessary(loc, leftExp, leftType, rightExp, rightType);
 			return constructModExpression(loc, pair.getFirst(), pair.getSecond(), leftType, rightType);
 		}
 		default:
@@ -242,12 +246,12 @@ public class IntegerTranslation extends ExpressionTranslation {
 		}
 	}
 
-	private Pair<Expression, Expression> applyWraparoundsIfNecessary(final ILocation loc, final Expression left,
+	private Pair<Expression, Expression> applyNutzWraparoundsIfNecessary(final ILocation loc, final Expression left,
 			final CPrimitive leftType, final Expression right, final CPrimitive rightType) {
 		if (mTypeSizes.isUnsigned(leftType)) {
 			assert mTypeSizes.isUnsigned(rightType) : "incompatible types";
 			// Apply wraparound to ensure that Nutz transformation is sound
-			return new Pair<>(applyWraparound(loc, leftType, left), applyWraparound(loc, rightType, right));
+			return new Pair<>(applyNutzWraparound(loc, leftType, left), applyNutzWraparound(loc, rightType, right));
 		}
 		return new Pair<>(left, right);
 	}
@@ -354,20 +358,14 @@ public class IntegerTranslation extends ExpressionTranslation {
 			throw new UnsupportedOperationException("not yet supported: conversion from " + oldType);
 		}
 		if (mTypeSizes.isUnsigned(resultType)) {
-			if (mTypeSizes.isUnsigned(oldType)
-					&& mTypeSizes.getSize(resultType.getType()) > mTypeSizes.getSize(oldType.getType())) {
-				// required for sound Nutz transformation
-				// (see examples/programs/regression/c/NutzTransformation03.c)
-				return applyWraparound(loc, oldType, operand);
-			}
-			return operand;
+			return convertToUnsigned(loc, operand, oldType, resultType);
 		}
 		assert !mTypeSizes.isUnsigned(resultType);
 		final Expression oldWrappedIfUnsigned;
 		if (mTypeSizes.isUnsigned(oldType)) {
 			// required for sound Nutz transformation
 			// (see examples/programs/regression/c/NutzTransformation01.c)
-			oldWrappedIfUnsigned = applyWraparound(loc, oldType, operand);
+			oldWrappedIfUnsigned = applyNutzWraparound(loc, oldType, operand);
 		} else {
 			oldWrappedIfUnsigned = operand;
 		}
@@ -384,7 +382,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 		// If the number is strictly larger than MAX_VALUE we
 		// subtract the cardinality of the data range.
 		final CPrimitive correspondingUnsignedType = mTypeSizes.getCorrespondingUnsignedType(resultType);
-		final Expression wrapped = applyWraparound(loc, correspondingUnsignedType, oldWrappedIfUnsigned);
+		final Expression wrapped = applyNutzWraparound(loc, correspondingUnsignedType, oldWrappedIfUnsigned);
 		final Expression maxValue = mTypeSizes.constructLiteralForIntegerType(loc, oldType,
 				mTypeSizes.getMaxValueOfPrimitiveType(resultType));
 		final Expression condition = ExpressionFactory.newBinaryExpression(loc, Operator.COMPLEQ, wrapped, maxValue);
@@ -392,6 +390,17 @@ public class IntegerTranslation extends ExpressionTranslation {
 				mTypeSizes.getMaxValueOfPrimitiveType(correspondingUnsignedType).add(BigInteger.ONE));
 		return ExpressionFactory.constructIfThenElseExpression(loc, condition, wrapped,
 				ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMINUS, wrapped, range));
+	}
+
+	protected Expression convertToUnsigned(final ILocation loc, final Expression operand, final CPrimitive oldType,
+			final CPrimitive resultType) {
+		if (mTypeSizes.isUnsigned(oldType)
+				&& mTypeSizes.getSize(resultType.getType()) > mTypeSizes.getSize(oldType.getType())) {
+			// required for sound congruence based transformation
+			// (see examples/programs/regression/c/NutzTransformation03.c)
+			return applyNutzWraparound(loc, oldType, operand);
+		}
+		return operand;
 	}
 
 	@Override
@@ -407,12 +416,12 @@ public class IntegerTranslation extends ExpressionTranslation {
 			return;
 		}
 		final CPrimitive cPrimitive = (CPrimitive) CEnum.replaceEnumWithInt(cType.getUnderlyingType());
-		if (mTypeSizes.isUnsigned(cPrimitive)) {
-			// only signed types can be out of range
-			return;
+		if (needsAssumeInRangeStatement(cPrimitive)) {
+			expressionResultBuilder.addStatement(constructAssumeInRangeStatement(mTypeSizes, loc, expr, cPrimitive));
 		}
-		expressionResultBuilder.addStatement(constructAssumeInRangeStatement(mTypeSizes, loc, expr, cPrimitive));
 	}
+
+	protected abstract boolean needsAssumeInRangeStatement(CPrimitive type);
 
 	/**
 	 * Returns "assume (minValue <= lrValue && lrValue <= maxValue)"
@@ -507,11 +516,11 @@ public class IntegerTranslation extends ExpressionTranslation {
 			return ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
 					new Expression[] { exp1, exp2 }, mTypeHandler.getBoogieTypeForCType(type1));
 		}
-		return constructArithmeticExpression(loc, nodeOperator, exp1, exp2);
+		return constructArithmeticExpression(loc, nodeOperator, exp1, exp2, type1);
 	}
 
-	private static Expression constructArithmeticExpression(final ILocation loc, final int nodeOperator,
-			final Expression exp1, final Expression exp2) {
+	private Expression constructArithmeticExpression(final ILocation loc, final int nodeOperator, final Expression exp1,
+			final Expression exp2, final CPrimitive type) {
 		final Operator operator;
 		switch (nodeOperator) {
 		case IASTBinaryExpression.op_minusAssign:
@@ -537,7 +546,8 @@ public class IntegerTranslation extends ExpressionTranslation {
 		default:
 			throw new UnsupportedSyntaxException(loc, "Unknown or unsupported arithmetic expression");
 		}
-		return ExpressionFactory.newBinaryExpression(loc, operator, exp1, exp2);
+		final Expression result = ExpressionFactory.newBinaryExpression(loc, operator, exp1, exp2);
+		return applyWraparoundForExpression(loc, type, result);
 	}
 
 	private String declareBinaryFloatComparisonOverApprox(final ILocation loc, final CPrimitive type) {
@@ -573,7 +583,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 		Expression rightExpr = exp2;
 		if (type1 instanceof CPrimitive && type2 instanceof CPrimitive) {
 			final Pair<Expression, Expression> wrapped =
-					applyWraparoundsIfNecessary(loc, exp1, (CPrimitive) type1, exp2, (CPrimitive) type2);
+					applyNutzWraparoundsIfNecessary(loc, exp1, (CPrimitive) type1, exp2, (CPrimitive) type2);
 			leftExpr = wrapped.getFirst();
 			rightExpr = wrapped.getSecond();
 		}

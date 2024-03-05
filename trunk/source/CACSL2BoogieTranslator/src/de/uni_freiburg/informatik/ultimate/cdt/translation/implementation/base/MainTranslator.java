@@ -56,7 +56,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.BitvectorTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.IntegerTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.IntegerCongruenceTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.IntegerRangeTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UndeclaredFunctionException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
@@ -250,10 +251,16 @@ public class MainTranslator {
 
 	private static ExpressionTranslation createExpressionTranslation(final TranslationSettings translationSettings,
 			final FlatSymbolTable flatSymbolTable, final TypeSizes typeSizes, final TypeHandler typeHandler) {
-		if (translationSettings.isBitvectorTranslation()) {
+		switch (translationSettings.getIntegerTranslationMode()) {
+		case BITVECTOR:
 			return new BitvectorTranslation(typeSizes, translationSettings, flatSymbolTable, typeHandler);
+		case INTEGER_CONGRUENCE_BASED:
+			return new IntegerCongruenceTranslation(typeSizes, translationSettings, typeHandler, flatSymbolTable);
+		case INTEGER_RANGE_BASED:
+			return new IntegerRangeTranslation(typeSizes, translationSettings, typeHandler, flatSymbolTable);
+		default:
+			throw new AssertionError("Unsupported mode " + translationSettings.getIntegerTranslationMode());
 		}
-		return new IntegerTranslation(typeSizes, translationSettings, typeHandler, flatSymbolTable);
 	}
 
 	private Set<IASTDeclaration> initReachableDeclarations(final List<DecoratedUnit> nodes,
