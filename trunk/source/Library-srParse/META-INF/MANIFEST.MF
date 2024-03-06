@@ -2,6 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Library-srParse
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.srparse;singleton:=true
+Bundle-Vendor: Ultimate Program Analysis Team
 Bundle-Version: 1.0.0
 Export-Package: de.uni_freiburg.informatik.ultimate.lib.srparse,
  de.uni_freiburg.informatik.ultimate.lib.srparse.pattern

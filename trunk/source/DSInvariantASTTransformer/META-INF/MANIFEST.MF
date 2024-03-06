@@ -2,6 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: DSI AST Transformer
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.boogie.dsitransformer;singleton:=true
+Bundle-Vendor: Ultimate Program Analysis Team
 Bundle-Version: 0.0.1
 Require-Bundle: de.uni_freiburg.informatik.ultimate.core,
  de.uni_freiburg.informatik.ultimate.lib.core,

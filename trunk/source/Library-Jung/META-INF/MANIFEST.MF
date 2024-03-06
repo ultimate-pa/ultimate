@@ -4,7 +4,7 @@ Bundle-Name: Library-Jung
 Bundle-SymbolicName: edu.uci.ics.jung
 Bundle-Version: 2.0.1
 Bundle-ClassPath: .
-Bundle-Vendor: http://jung.sourceforge.net/
+Bundle-Vendor: JUNG Team - http://jung.sourceforge.net
 Export-Package: cern.clhep,
  cern.colt,
  cern.colt.bitvector,

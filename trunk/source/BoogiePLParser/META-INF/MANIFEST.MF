@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: BoogieParser Plug-in
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.boogie.parser;singleton:=true
 Bundle-Version: 0.2.4
-Bundle-Vendor: Ultimate@Uni
+Bundle-Vendor: Ultimate Program Analysis Team
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.core,
  de.uni_freiburg.informatik.ultimate.lib.boogieast,

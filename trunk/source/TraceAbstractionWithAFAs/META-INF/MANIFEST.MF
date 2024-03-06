@@ -2,6 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: TraceAbstractionWithAFAs
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionwithafas;singleton:=true
+Bundle-Vendor: Ultimate Program Analysis Team
 Bundle-Version: 0.2.4
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionwithafas.Activator
 Require-Bundle: de.uni_freiburg.informatik.ultimate.core,

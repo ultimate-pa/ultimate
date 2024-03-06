@@ -2,6 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: de.uni_freiburg.informatik.ultimate.lib.pathexpressions
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.pathexpressions
+Bundle-Vendor: Ultimate Program Analysis Team
 Bundle-Version: 0.2.4
 Bundle-RequiredExecutionEnvironment: JavaSE-21
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils

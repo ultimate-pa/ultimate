@@ -2,7 +2,8 @@
 <feature
       id="BA_FeatureUltimateDeltaDebugger"
       label="BA_FeatureUltimateDeltaDebugger"
-      version="0.2.4">
+      version="0.2.4"
+      provider-name="Ultimate Program Analysis Team">
 
    <requires>
       <import feature="BA_FeatureDependenciesCommon"/>
