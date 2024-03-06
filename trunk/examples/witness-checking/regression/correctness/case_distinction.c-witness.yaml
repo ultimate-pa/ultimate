@@ -1,0 +1,73 @@
+---
+- entry_type: 'ghost_variable'
+  metadata:
+    format_version: '0.1'
+    uuid: '8c508694-8f92-4950-a722-f0f1489c34c1'
+    creation_time: '2023-07-12T17:17:17.000Z'
+    producer:
+      name: 'Ultimate GemCutter'
+      version: '0.2.3-dev'
+    task:
+      input_files:
+        - 'case_distinction.c'
+      input_file_hashes:
+        case_distinction.c: '52c075e4addc44dcf127098ff65b5bbd001534f018551d6d4a9ae5c36150d1a2'
+      specification: 'CHECK( init(main()), LTL(G ! call(reach_error())) )'
+      data_model: 'ILP32'
+      language: 'C'
+  variable: 'g'
+  scope: 'global'
+  type: 'int'
+  initial: '0'
+
+- entry_type: 'location_invariant'
+  metadata:
+    format_version: '0.1'
+    uuid: '7ad08b37-8b12-40c1-a3c4-fe4fc00cae18'
+    creation_time: '2023-07-12T17:17:17.000Z'
+    producer:
+      name: 'Ultimate GemCutter'
+      version: '0.2.3-dev'
+    task:
+      input_files:
+        - 'case_distinction.c'
+      input_file_hashes:
+        case_distinction.c: '52c075e4addc44dcf127098ff65b5bbd001534f018551d6d4a9ae5c36150d1a2'
+      specification: 'CHECK( init(main()), LTL(G ! call(reach_error())) )'
+      data_model: 'ILP32'
+      language: 'C'
+  location:
+    file_name: 'case_distinction.c'
+    file_hash: '52c075e4addc44dcf127098ff65b5bbd001534f018551d6d4a9ae5c36150d1a2'
+    line: 42
+    column: 29
+    function: 'inc'
+  location_invariant:
+    string: 'g != 1 || x >= 42'
+    type: 'assertion'
+    format: 'C'
+
+- entry_type: 'ghost_update'
+  metadata:
+    format_version: '0.1'
+    uuid: '47eb3f6a-c3c1-4f0f-9d7c-15e6a585bc85'
+    creation_time: '2023-07-12T17:17:17.000Z'
+    producer:
+      name: 'Ultimate GemCutter'
+      version: '0.2.3-dev'
+    task:
+      input_files:
+        - 'case_distinction.c'
+      input_file_hashes:
+        case_distinction.c: '52c075e4addc44dcf127098ff65b5bbd001534f018551d6d4a9ae5c36150d1a2'
+      specification: 'CHECK( init(main()), LTL(G ! call(reach_error())) )'
+      data_model: 'ILP32'
+      language: 'C'
+  variable: 'g'
+  expression: '1'
+  location:
+    file_name: 'case_distinction.c'
+    file_hash: '52c075e4addc44dcf127098ff65b5bbd001534f018551d6d4a9ae5c36150d1a2'
+    line: 55
+    column: 3
+    function: 'main'

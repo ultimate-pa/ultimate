@@ -28,7 +28,9 @@ public class WitnessSetEntry implements IMapSerializable {
 	public Map<String, Object> toMap() {
 		final LinkedHashMap<String, Object> result = new LinkedHashMap<>();
 		result.put("type", mType);
-		result.put("location", mLocation.toMap());
+		if (mLocation != null) {
+			result.put("location", mLocation.toMap());
+		}
 		result.putAll(mOtherValues);
 		return result;
 	}

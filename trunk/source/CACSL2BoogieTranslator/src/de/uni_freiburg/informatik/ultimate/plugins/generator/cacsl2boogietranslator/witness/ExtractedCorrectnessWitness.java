@@ -27,10 +27,14 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness;
 
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 
@@ -43,39 +47,62 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  *
  */
 public class ExtractedCorrectnessWitness {
-	private final HashRelation<IASTNode, IExtractedWitnessEntry> mWitnessStatements = new HashRelation<>();
+	private final HashRelation<IASTNode, ExtractedWitnessInvariant> mInvariants = new HashRelation<>();
+	private final HashRelation<IASTNode, ExtractedGhostUpdate> mGhostUpdates = new HashRelation<>();
 	private final HashRelation<IASTNode, ExtractedFunctionContract> mFunctionContracts = new HashRelation<>();
+	private final Set<IExtractedWitnessDeclaration> mGlobalDeclarations = new HashSet<>();
 
-	public void addWitnessStatement(final IASTNode node, final IExtractedWitnessEntry entry) {
-		mWitnessStatements.addPair(node, entry);
+	public void addInvariant(final IASTNode node, final ExtractedWitnessInvariant invariant) {
+		mInvariants.addPair(node, invariant);
 	}
 
-	public void addWitnessStatements(final Map<IASTNode, ? extends IExtractedWitnessEntry> map) {
-		map.forEach(this::addWitnessStatement);
+	public void addInvariants(final Map<IASTNode, ? extends ExtractedWitnessInvariant> map) {
+		map.forEach(this::addInvariant);
+	}
+
+	public void addGhostUpdate(final IASTNode node, final ExtractedGhostUpdate update) {
+		mGhostUpdates.addPair(node, update);
 	}
 
 	public void addFunctionContract(final IASTNode function, final ExtractedFunctionContract contract) {
 		mFunctionContracts.addPair(function, contract);
 	}
 
-	public Set<IExtractedWitnessEntry> getWitnessStatements(final IASTNode node) {
-		return mWitnessStatements.getImage(node);
+	public void addGlobalDeclaration(final IExtractedWitnessDeclaration decl) {
+		mGlobalDeclarations.add(decl);
+	}
+
+	public List<IExtractedWitnessEntry> getWitnessStatements(final IASTNode node) {
+		// Ensure that invariants are evaluated before the ghost variables are updated
+		return Stream.concat(mGhostUpdates.getImage(node).stream(), mInvariants.getImage(node).stream())
+				.collect(Collectors.toList());
 	}
 
 	public Set<ExtractedFunctionContract> getFunctionContracts(final IASTNode node) {
 		return mFunctionContracts.getImage(node);
 	}
 
+	public Set<IExtractedWitnessDeclaration> getGlobalDeclarations() {
+		return mGlobalDeclarations;
+	}
+
 	public void printWitness(final Consumer<String> printer) {
-		if (mWitnessStatements.isEmpty() && mFunctionContracts.isEmpty()) {
+		if (mInvariants.isEmpty() && mFunctionContracts.isEmpty() && mGlobalDeclarations.isEmpty()
+				&& mGhostUpdates.isEmpty()) {
 			printer.accept("Witness did not contain any usable entries.");
 			return;
 		}
 		printer.accept("Found the following entries in the witness:");
-		for (final Entry<IASTNode, IExtractedWitnessEntry> entry : mWitnessStatements.getSetOfPairs()) {
+		for (final Entry<IASTNode, ExtractedWitnessInvariant> entry : mInvariants.getSetOfPairs()) {
 			printer.accept(entry.getValue().toString());
 		}
 		for (final Entry<IASTNode, ExtractedFunctionContract> entry : mFunctionContracts.getSetOfPairs()) {
+			printer.accept(entry.getValue().toString());
+		}
+		for (final var d : mGlobalDeclarations) {
+			printer.accept(d.toString());
+		}
+		for (final var entry : mGhostUpdates.getSetOfPairs()) {
 			printer.accept(entry.getValue().toString());
 		}
 	}

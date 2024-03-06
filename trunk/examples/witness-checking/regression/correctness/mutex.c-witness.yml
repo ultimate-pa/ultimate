@@ -1,0 +1,67 @@
+- entry_type: entry_set
+  metadata:
+    format_version: '3.0'
+    uuid: '9fe70c07-d457-44f7-b247-ae6ace017f87'
+    creation_time: '2023-07-12T17:17:17.000Z'
+    producer:
+      name: 'Ultimate GemCutter'
+      version: '0.2.3-dev'
+    task:
+      input_files:
+        - 'mutex.c'
+      input_file_hashes:
+        mutex.c: '3534bad51bd38f95bbce0f538e7af27c16bdf2ecf1ae9ce6fcbef6ec3939b2dd'
+      specification: 'CHECK( init(main()), LTL(G ! call(reach_error())) )'
+      data_model: 'ILP32'
+      language: 'C'
+  content:
+  - type: ghost_variable
+    variable: 'g'
+    scope: 'global'
+    c_type: 'int'
+    initial: '0'
+  - type: location_invariant
+    location:
+      file_name: 'mutex.c'
+      file_hash: '3534bad51bd38f95bbce0f538e7af27c16bdf2ecf1ae9ce6fcbef6ec3939b2dd'
+      line: 116
+      column: 0
+      function: 'main'
+    value: 'g == 1 || used == 0'
+    format: 'C'
+  - type: ghost_update
+    location:
+      file_name: 'mutex.c'
+      file_hash: '3534bad51bd38f95bbce0f538e7af27c16bdf2ecf1ae9ce6fcbef6ec3939b2dd'
+      line: 101
+      column: 5
+      function: 'producer'
+    variable: 'g'
+    value: '1'
+  - type: ghost_update
+    location:
+      file_name: 'mutex.c'
+      file_hash: '3534bad51bd38f95bbce0f538e7af27c16bdf2ecf1ae9ce6fcbef6ec3939b2dd'
+      line: 104
+      column: 5
+      function: 'producer'
+    variable: 'g'
+    value: '0'
+  - type: ghost_update
+    location:
+      file_name: 'mutex.c'
+      file_hash: '3534bad51bd38f95bbce0f538e7af27c16bdf2ecf1ae9ce6fcbef6ec3939b2dd'
+      line: 117
+      column: 3
+      function: 'main'
+    variable: 'g'
+    value: '1'
+  - type: ghost_update
+    location:
+      file_name: 'mutex.c'
+      file_hash: '3534bad51bd38f95bbce0f538e7af27c16bdf2ecf1ae9ce6fcbef6ec3939b2dd'
+      line: 119
+      column: 3
+      function: 'main'
+    variable: 'g'
+    value: '0'

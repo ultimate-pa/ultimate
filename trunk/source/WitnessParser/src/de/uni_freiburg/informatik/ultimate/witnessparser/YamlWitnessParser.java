@@ -37,6 +37,7 @@ import java.time.ZoneId;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -47,6 +48,8 @@ import org.yaml.snakeyaml.constructor.SafeConstructor;
 
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.FormatVersion;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.FunctionContract;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.GhostUpdate;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.GhostVariable;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Invariant;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Location;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LocationInvariant;
@@ -66,6 +69,8 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.WitnessEntry;
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  */
 public class YamlWitnessParser {
+	private static final Set<String> ENTRIES_BEFORE_V3 = Set.of(LoopInvariant.NAME, LocationInvariant.NAME);
+
 	// Maximal size for witnesses to be parsed
 	// The default is just 3MB, but this is not sufficient for us.
 	private static final int MAXIMAL_SIZE = 50 * 1024 * 1024;
@@ -100,6 +105,19 @@ public class YamlWitnessParser {
 			final Invariant loopInvariant = parseInvariant((Map<String, String>) entry.get(LoopInvariant.NAME));
 			return Stream.of(new LoopInvariant(metadata, location, loopInvariant));
 		}
+		case GhostVariable.NAME: {
+			final String variable = (String) entry.get("variable");
+			final String initial = (String) entry.get("initial");
+			final String scope = (String) entry.get("scope");
+			final String type = (String) entry.get("type");
+			return Stream.of(new GhostVariable(metadata, variable, initial, scope, type));
+		}
+		case GhostUpdate.NAME: {
+			final Location location = parseLocation((Map<String, Object>) entry.get("location"));
+			final String variable = (String) entry.get("variable");
+			final String expression = (String) entry.get("expression");
+			return Stream.of(new GhostUpdate(metadata, variable, expression, location));
+		}
 		case "invariant_set": {
 			if (formatVersion.getMajor() != 2) {
 				throw new UnsupportedOperationException("invariant_set is only allowed in format version 2.x");
@@ -127,23 +145,36 @@ public class YamlWitnessParser {
 		// Create new metadata with a fresh UUID (because we rely on it as a unique identifier)
 		final Metadata newMetadata = new Metadata(metadata.getFormatVersion(), UUID.randomUUID(),
 				metadata.getCreationTime(), metadata.getProducer(), metadata.getTask());
-		final Location location = parseLocation((Map<String, Object>) setEntry.get("location"));
 		final String format = (String) setEntry.get("format");
-		switch ((String) setEntry.get("type")) {
+		final String type = (String) setEntry.get("type");
+		if (metadata.getFormatVersion().getMajor() < 3 && !ENTRIES_BEFORE_V3.contains(type)) {
+			throw new UnsupportedOperationException(
+					String.format("The type %s is only allowed in format version >=3.x", type));
+		}
+		switch (type) {
 		case LocationInvariant.NAME: {
+			final Location location = parseLocation((Map<String, Object>) setEntry.get("location"));
 			final Invariant invariant = new Invariant((String) setEntry.get("value"), "assertion", format);
 			return new LocationInvariant(newMetadata, location, invariant);
 		}
 		case LoopInvariant.NAME: {
+			final Location location = parseLocation((Map<String, Object>) setEntry.get("location"));
 			final Invariant invariant = new Invariant((String) setEntry.get("value"), "assertion", format);
 			return new LoopInvariant(newMetadata, location, invariant);
 		}
-		case FunctionContract.NAME:
-			if (metadata.getFormatVersion().getMajor() < 3) {
-				throw new UnsupportedOperationException("Function contracts are only allowed in format version >=3.x");
-			}
+		case FunctionContract.NAME: {
+			final Location location = parseLocation((Map<String, Object>) setEntry.get("location"));
 			return new FunctionContract(newMetadata, location, (List<String>) setEntry.get("requires"),
 					(List<String>) setEntry.get("ensures"), format);
+		}
+		case GhostVariable.NAME:
+			return new GhostVariable(newMetadata, (String) setEntry.get("variable"), (String) setEntry.get("initial"),
+					(String) setEntry.get("scope"), (String) setEntry.get("c_type"));
+		case GhostUpdate.NAME: {
+			final Location location = parseLocation((Map<String, Object>) setEntry.get("location"));
+			return new GhostUpdate(newMetadata, (String) setEntry.get("variable"), (String) setEntry.get("value"),
+					location);
+		}
 		default:
 			throw new UnsupportedOperationException("Unknown entry type " + setEntry.get("type"));
 		}
