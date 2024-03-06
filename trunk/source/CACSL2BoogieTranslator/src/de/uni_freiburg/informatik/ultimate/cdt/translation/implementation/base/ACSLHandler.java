@@ -915,7 +915,7 @@ public class ACSLHandler implements IACSLHandler {
 		final ILocation loc = mLocationFactory.createACSLLocation(node);
 
 		final ExpressionResult rIdc = (ExpressionResult) main.dispatch(node.getFormula(), main.getAcslHook());
-		Expression idx = (Expression) rIdc.getNode();
+		Expression idx = rIdc.getLrValue().getValue();
 
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 
