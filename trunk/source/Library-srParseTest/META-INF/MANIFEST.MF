@@ -2,6 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Library-srParseTest
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.srparse.test
+Bundle-Vendor: Ultimate Program Analysis Team
 Bundle-Version: 0.2.4
 Fragment-Host: de.uni_freiburg.informatik.ultimate.lib.srparse
 Bundle-RequiredExecutionEnvironment: JavaSE-21

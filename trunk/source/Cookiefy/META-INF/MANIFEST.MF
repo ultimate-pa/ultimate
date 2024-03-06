@@ -2,6 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Cookiefy
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.cookiefy;singleton:=true
+Bundle-Vendor: Ultimate Program Analysis Team
 Bundle-Version: 0.0.1
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.boogieast,

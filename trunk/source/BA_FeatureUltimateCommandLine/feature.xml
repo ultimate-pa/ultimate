@@ -3,6 +3,7 @@
       id="BA_FeatureUltimateCommandLine"
       label="BA_FeatureUltimateCommandLine"
       version="0.2.4"
+      provider-name="Ultimate Program Analysis Team"
       arch="x86_64">
 
    <requires>

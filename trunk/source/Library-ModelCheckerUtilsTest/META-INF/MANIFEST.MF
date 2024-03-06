@@ -2,6 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Library-ModelCheckerUtilsTest
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.test
+Bundle-Vendor: Ultimate Program Analysis Team
 Bundle-Version: 0.2.4
 Fragment-Host: de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils
 Bundle-RequiredExecutionEnvironment: JavaSE-21

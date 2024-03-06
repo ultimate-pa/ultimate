@@ -2,6 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Referee
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.plugins.generator.referee;singleton:=true
+Bundle-Vendor: Ultimate Program Analysis Team
 Bundle-Version: 0.2.4
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils,

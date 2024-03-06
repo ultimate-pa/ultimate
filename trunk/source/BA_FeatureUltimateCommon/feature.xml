@@ -3,6 +3,7 @@
       id="BA_FeatureUltimateCommon"
       label="BA_FeatureUltimateCommon"
       version="0.2.4"
+      provider-name="Ultimate Program Analysis Team"
       os="linux,win32,macosx"
       arch="x86_64">
 

@@ -2,6 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: CDTPlugin
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.cdt;singleton:=true
+Bundle-Vendor: Ultimate Program Analysis Team
 Bundle-Version: 0.2.4
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.cdt.Activator
 Bundle-ActivationPolicy: lazy

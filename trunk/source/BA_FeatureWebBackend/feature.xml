@@ -3,6 +3,7 @@
       id="BA_FeatureWebBackend"
       label="BA_FeatureWebBackend"
       version="0.2.4"
+      provider-name="Ultimate Program Analysis Team"
       arch="x86_64">
 
    <description url="http://www.example.com/description">

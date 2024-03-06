@@ -3,6 +3,7 @@ Bundle-ManifestVersion: 2
 Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.web.backend
 Bundle-Name: WebBackend
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.web.backend;singleton:=true
+Bundle-Vendor: Ultimate Program Analysis Team
 Bundle-Version: 0.2.4
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.web.backend.Activator
 Bundle-RequiredExecutionEnvironment: JavaSE-21
