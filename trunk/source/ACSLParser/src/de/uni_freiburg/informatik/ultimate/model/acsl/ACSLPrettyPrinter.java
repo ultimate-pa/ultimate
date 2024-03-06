@@ -39,14 +39,17 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.CastExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.CodeAnnotStmt;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.FieldAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.GhostDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.GhostUpdate;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.GlobalGhostDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.OldValueExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.UnaryExpression;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ValidExpression;
 
 /**
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
@@ -105,6 +108,18 @@ public class ACSLPrettyPrinter {
 		}
 		if (expression instanceof UnaryExpression) {
 			return printUnaryExpression((UnaryExpression) expression);
+		}
+		if (expression instanceof IfThenElseExpression) {
+			final IfThenElseExpression ite = (IfThenElseExpression) expression;
+			return String.format("%s ? %s : %s", printExpression(ite.getCondition()),
+					printExpression(ite.getThenPart()), printExpression(ite.getElsePart()));
+		}
+		if (expression instanceof ValidExpression) {
+			return String.format("\\valid(%s)", printExpression(((ValidExpression) expression).getFormula()));
+		}
+		if (expression instanceof FieldAccessExpression) {
+			final FieldAccessExpression f = (FieldAccessExpression) expression;
+			return String.format("(%s).%s", printExpression(f.getStruct()), f.getField());
 		}
 		if (expression instanceof OldValueExpression) {
 			return String.format("\\old(%s)", printExpression(((OldValueExpression) expression).getFormula()));
