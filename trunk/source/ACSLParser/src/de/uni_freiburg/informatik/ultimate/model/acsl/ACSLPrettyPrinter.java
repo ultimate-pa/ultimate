@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.model.acsl;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLResultExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLType;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Assertion;
@@ -114,6 +115,9 @@ public class ACSLPrettyPrinter {
 		if (expression instanceof CastExpression) {
 			final CastExpression cast = (CastExpression) expression;
 			return String.format("(%s) %s", cast.getCastedType().getTypeName(), printExpression(cast.getExpression()));
+		}
+		if (expression instanceof ACSLResultExpression) {
+			return "\\result";
 		}
 		// TODO: Add more cases
 		return expression.toString();
