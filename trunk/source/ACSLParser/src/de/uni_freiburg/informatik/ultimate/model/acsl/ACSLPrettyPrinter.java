@@ -238,6 +238,12 @@ public class ACSLPrettyPrinter {
 		case LOGICXOR:
 			op = "^^";
 			break;
+		case BITSHIFTLEFT:
+			op = "<<";
+			break;
+		case BITSHIFTRIGHT:
+			op = ">>";
+			break;
 		default:
 			throw new AssertionError("Unhandled operator " + expression.getOperator());
 		}
