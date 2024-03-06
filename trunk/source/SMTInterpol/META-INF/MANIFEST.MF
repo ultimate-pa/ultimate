@@ -2,6 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SMTInterpol - an Interpolating SMT Solver
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.smtinterpol
+Bundle-Vendor: Ultimate Program Analysis Team
 Bundle-Version: 2.0.0
 Export-Package: de.uni_freiburg.informatik.ultimate.smtinterpol,
  de.uni_freiburg.informatik.ultimate.smtinterpol.model,
