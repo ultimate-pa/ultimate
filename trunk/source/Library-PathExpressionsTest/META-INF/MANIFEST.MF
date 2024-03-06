@@ -2,6 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: de.uni_freiburg.informatik.ultimate.lib.pathexpressions.test
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.pathexpressions.test
+Bundle-Vendor: Ultimate Program Analysis Team
 Fragment-Host: de.uni_freiburg.informatik.ultimate.lib.pathexpressions
 Bundle-RequiredExecutionEnvironment: JavaSE-21
 Require-Bundle: org.junit

@@ -1,6 +1,7 @@
 Manifest-Version: 1.0
 Bundle-Name: Library-ojAlgo
 Bundle-SymbolicName: org.ojalgo
+Bundle-Vendor: Optimatika - http://ojalgo.org
 Bundle-Version: 38.18
 Bundle-ManifestVersion: 2
 Bundle-RequiredExecutionEnvironment: JavaSE-21
