@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
 
@@ -61,5 +62,9 @@ public class Configuration<S> {
 	@Override
 	public String toString() {
 		return mStates.toString();
+	}
+
+	public Stream<S> stream() {
+		return mStates.stream();
 	}
 }
