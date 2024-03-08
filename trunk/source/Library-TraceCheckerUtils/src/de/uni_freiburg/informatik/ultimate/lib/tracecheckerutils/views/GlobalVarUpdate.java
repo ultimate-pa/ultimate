@@ -3,19 +3,20 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.views;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.UnaryOperator;
 
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.views.ProgramState.ControllerState;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.views.ProgramState.ThreadState;
 
 public class GlobalVarUpdate<S, T> implements IRule<ProgramState<S, T>> {
-	private final Map<S, S> mGlobalUpdate;
-	private final T mPredecessor;
-	private final T mSuccessor;
+	private final UnaryOperator<S> mGlobalUpdate;
+	private final T mSource;
+	private final T mTarget;
 
-	public GlobalVarUpdate(final Map<S, S> globalUpdate, final T predecessor, final T successor) {
+	public GlobalVarUpdate(final T source, final T target, final UnaryOperator<S> globalUpdate) {
 		mGlobalUpdate = globalUpdate;
-		mPredecessor = predecessor;
-		mSuccessor = successor;
+		mSource = source;
+		mTarget = target;
 	}
 
 	@Override
@@ -24,7 +25,7 @@ public class GlobalVarUpdate<S, T> implements IRule<ProgramState<S, T>> {
 			final var state = config.get(i);
 			if (state.isThreadState()) {
 				final var thread = state.getThreadState();
-				if (thread.equals(mPredecessor)) {
+				if (thread.equals(mSource)) {
 					return true;
 				}
 			}
@@ -42,8 +43,11 @@ public class GlobalVarUpdate<S, T> implements IRule<ProgramState<S, T>> {
 			final var state = config.get(i);
 			assert state.isThreadState();
 			final var thread = state.getThreadState();
-			if (thread.equals(mPredecessor)) {
-				result.add(apply(config, i));
+			if (thread.equals(mSource)) {
+				final var succ = apply(config, i);
+				if (succ != null) {
+					result.add(succ);
+				}
 			}
 		}
 
@@ -53,9 +57,14 @@ public class GlobalVarUpdate<S, T> implements IRule<ProgramState<S, T>> {
 	private Configuration<ProgramState<S, T>> apply(final Configuration<ProgramState<S, T>> config, final int i) {
 		final var controllerPred = config.get(0);
 		assert controllerPred.isControllerState();
-		final var controllerSucc = mGlobalUpdate.get(controllerPred.getControllerState());
+
+		final var controllerSucc = mGlobalUpdate.apply(controllerPred.getControllerState());
+		if (controllerSucc == null) {
+			return null;
+		}
+
 		final var subst = Map.<Integer, ProgramState<S, T>> of(0, new ControllerState<S, T>(controllerSucc), i,
-				new ThreadState<>(mSuccessor));
+				new ThreadState<>(mTarget));
 		return config.replace(subst);
 	}
 
