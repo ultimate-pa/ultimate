@@ -4,17 +4,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class LocalRule<S> implements IRule<S> {
-	private final S mPredecessor;
-	private final S mSuccessor;
+	private final S mSource;
+	private final S mTarget;
 
-	private LocalRule(final S predecessor, final S successor) {
-		mPredecessor = predecessor;
-		mSuccessor = successor;
+	public LocalRule(final S source, final S target) {
+		mSource = source;
+		mTarget = target;
 	}
 
 	@Override
 	public boolean isApplicable(final Configuration<S> config) {
-		return config.contains(mPredecessor);
+		return config.contains(mSource);
 	}
 
 	@Override
@@ -23,8 +23,8 @@ public class LocalRule<S> implements IRule<S> {
 
 		for (int i = 0; i < config.size(); ++i) {
 			final S state = config.get(i);
-			if (state.equals(mPredecessor)) {
-				result.add(config.replace(i, mSuccessor));
+			if (state.equals(mSource)) {
+				result.add(config.replace(i, mTarget));
 			}
 		}
 		return result;

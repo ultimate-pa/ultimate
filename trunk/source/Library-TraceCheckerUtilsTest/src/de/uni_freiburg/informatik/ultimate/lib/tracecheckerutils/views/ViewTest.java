@@ -1,7 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.views;
 
 import java.util.List;
-import java.util.function.Function;
+import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -27,12 +27,9 @@ public class ViewTest {
 	}
 
 	public static Program<ProgramState<Integer, IncDecLocation>> mutexN(final int N) {
-		final var incUpdates = IntStream.range(0, N).mapToObj(Integer::valueOf)
-				.collect(Collectors.toMap(Function.identity(), i -> i + 1));
-		final var decUpdates = IntStream.range(1, N + 1).mapToObj(Integer::valueOf)
-				.collect(Collectors.toMap(Function.identity(), i -> i - 1));
-		return new Program<>(null, List.of(new GlobalVarUpdate<>(incUpdates, IncDecLocation.MINUS, IncDecLocation.PLUS),
-				new GlobalVarUpdate<>(decUpdates, IncDecLocation.PLUS, IncDecLocation.MINUS)));
+		return new Program<>(null,
+				List.of(new GlobalVarUpdate<>(IncDecLocation.MINUS, IncDecLocation.PLUS, i -> i < N ? i + 1 : null),
+						new GlobalVarUpdate<>(IncDecLocation.PLUS, IncDecLocation.MINUS, i -> i - 1)));
 	}
 
 	public static Configuration<ProgramState<Integer, IncDecLocation>> mutexNInit(final int N) {
