@@ -1,0 +1,27 @@
+- entry_type: invariant_set
+  metadata:
+    format_version: '2.0'
+    uuid: 65ce53e3-26fb-451b-9601-54a5595fe9ec
+    creation_time: '2024-03-11T17:42:13+01:00'
+    producer:
+      name: UNUSED
+      version: 0.2.4-dev-9743566-m
+    task:
+      input_files:
+      - simple_vardep_2.c
+      input_file_hashes:
+        simple_vardep_2.c: UNUSED
+      specification: UNUSED
+      data_model: UNUSED
+      language: C
+  content:
+  - invariant:
+      type: loop_invariant
+      location:
+        file_name: simple_vardep_2.c
+        file_hash: UNUSED
+        line: 21
+        column: 2
+        function: main
+      value: (((((k / 4294967296) <= ((i * 3) / 4294967296)) && ((k + (((i * 3) / 4294967296) * 4294967296)) == (((k / 4294967296) * 4294967296) + (i * 3)))) && (((i * 2) + (4294967296 * (j / 4294967296))) == (j + ((i / 2147483648) * 4294967296)))) && ((j / 4294967296) <= (i / 2147483648)))
+      format: c_expression

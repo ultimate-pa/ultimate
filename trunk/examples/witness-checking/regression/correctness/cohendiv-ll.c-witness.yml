@@ -1,0 +1,37 @@
+- entry_type: invariant_set
+  metadata:
+    format_version: '2.0'
+    uuid: 230b43f9-646a-4eaf-99c3-f8b329adcae2
+    creation_time: '2024-03-11T17:40:50+01:00'
+    producer:
+      name: UNUSED
+      version: 0.2.4-dev-9743566-m
+    task:
+      input_files:
+      - cohendiv-ll.c
+      input_file_hashes:
+        cohendiv-ll.c: UNUSED
+      specification: UNUSED
+      data_model: UNUSED
+      language: C
+  content:
+  - invariant:
+      type: loop_invariant
+      location:
+        file_name: cohendiv-ll.c
+        file_hash: UNUSED
+        line: 36
+        column: 4
+        function: main
+      value: ((((((q * y) + r) + (a * y)) == (b + x)) && (1 <= y)) && (b == (a * y)))
+      format: c_expression
+  - invariant:
+      type: loop_invariant
+      location:
+        file_name: cohendiv-ll.c
+        file_hash: UNUSED
+        line: 45
+        column: 1
+        function: main
+      value: ((((1 <= r) && ((((q * y) + r) + (a * y)) == (b + x))) && (1 <= y)) && (b == (a * y)))
+      format: c_expression

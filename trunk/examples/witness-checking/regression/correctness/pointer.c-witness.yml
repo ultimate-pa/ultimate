@@ -1,0 +1,18 @@
+- entry_type: invariant_set
+  metadata:
+    format_version: '2.0'
+    uuid: 263ecec9-5d11-463e-84b6-7ce0d26cea7f
+    creation_time: '2024-03-11T17:41:51+01:00'
+    producer:
+      name: UNUSED
+      version: 0.2.4-dev-9743566-m
+    task:
+      input_files:
+      - pointer.c
+      input_file_hashes:
+        pointer.c: UNUSED
+      specification: UNUSED
+      data_model: UNUSED
+      language: C
+  content: [
+    ]
