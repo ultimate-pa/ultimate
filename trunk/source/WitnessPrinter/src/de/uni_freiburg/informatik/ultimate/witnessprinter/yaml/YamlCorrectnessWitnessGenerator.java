@@ -144,7 +144,7 @@ public class YamlCorrectnessWitnessGenerator {
 				|| !Arrays.stream(expressions).anyMatch(YamlCorrectnessWitnessGenerator::containsACSL)) {
 			return "c_expression";
 		}
-		return "acsl";
+		return "acsl_expression";
 	}
 
 	private static boolean containsACSL(final String expression) {
