@@ -18,7 +18,6 @@
     file_name: C:\ultimate\trunk\examples\witness-checking\regression\correctness\odd.c
     file_hash: UNUSED
     line: 13
-    column: 0
     function: main
   loop_invariant:
     string: "x <= (-1 + x) / 2 * 2 + 1"

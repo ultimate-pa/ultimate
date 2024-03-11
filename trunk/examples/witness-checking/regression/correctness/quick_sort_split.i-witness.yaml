@@ -18,7 +18,6 @@
     file_name: C:\ultimate\trunk\examples\witness-checking\regression\correctness\quick_sort_split.i
     file_hash: UNUSED
     line: 596
-    column: 0
     function: main
   loop_invariant:
     string: ((high == 0) && (low == 0))
@@ -44,7 +43,6 @@
     file_name: C:\ultimate\trunk\examples\witness-checking\regression\correctness\quick_sort_split.i
     file_hash: UNUSED
     line: 603
-    column: 0
     function: main
   loop_invariant:
     string: ((high == 0) && (low == 0))
@@ -70,7 +68,6 @@
     file_name: C:\ultimate\trunk\examples\witness-checking\regression\correctness\quick_sort_split.i
     file_hash: UNUSED
     line: 608
-    column: 0
     function: main
   loop_invariant:
     string: ((high == 0) && (low == 0))

@@ -18,7 +18,6 @@
     file_name: C:\ultimate\trunk\examples\witness-checking\regression\correctness\psyco_io_1.c
     file_hash: UNUSED
     line: 25
-    column: 0
     function: main
   loop_invariant:
     string: ((((q == 2) && (this_sink == 0)) || (q == 0)) || ((q == 3) && !((this_sink == 0))))
@@ -44,7 +43,6 @@
     file_name: C:\ultimate\trunk\examples\witness-checking\regression\correctness\psyco_io_1.c
     file_hash: UNUSED
     line: 345
-    column: 0
     function: main
   loop_invariant:
     string: '0'
