@@ -185,9 +185,10 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 			if (loc == null) {
 				return PROCESS_CONTINUE;
 			}
-			// Match before the AST node, if the line matches and either the column is 0 or the column also matches
+			// Match before the AST node, if the line matches and either the column is not present (it can be omitted;
+			// should be matched the first node of the line in that case) or it also matches the AST node
 			if (mLocation.getLine() == loc.getStartLine()
-					&& (mLocation.getColumn() == 0 || mLocation.getColumn() == loc.getStartColumn())) {
+					&& (mLocation.getColumn() == null || mLocation.getColumn() == loc.getStartColumn())) {
 				mMatchedNodes.add(node);
 				// skip the subtree if a match occurred, but continue with siblings.
 				return PROCESS_SKIP;

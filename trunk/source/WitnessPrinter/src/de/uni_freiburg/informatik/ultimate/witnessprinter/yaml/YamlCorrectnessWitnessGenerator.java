@@ -87,14 +87,8 @@ public class YamlCorrectnessWitnessGenerator {
 			if (invariant == null) {
 				continue;
 			}
-			// If the column is unknown (-1), use the first position of the line
-			final int column = Math.max(loc.getStartColumn(), 0);
-			final String function = loc.getFunction();
-			if (function == null) {
-				continue;
-			}
-			final Location witnessLocation =
-					new Location(loc.getFileName(), hash, loc.getStartLine(), column, function);
+			final Location witnessLocation = new Location(loc.getFileName(), hash, loc.getStartLine(),
+					loc.getStartColumn() < 0 ? null : loc.getStartColumn(), loc.getFunction());
 			// TODO: How could we figure out, if it is a LocationInvariant or LoopInvariant?
 			// For now we only produce loop invariants anyways
 			result.add(new LoopInvariant(metadataSupplier.get(), witnessLocation,
@@ -115,16 +109,10 @@ public class YamlCorrectnessWitnessGenerator {
 			if (contract == null) {
 				continue;
 			}
-			// If the column is unknown (-1), use the first position of the line
-			final int column = Math.max(loc.getStartColumn(), 0);
-			final String function = loc.getFunction();
-			if (function == null) {
-				continue;
-			}
 			final List<String> requires = contract.getRequires();
 			final List<String> ensures = contract.getEnsures();
-			final Location witnessLocation =
-					new Location(loc.getFileName(), hash, loc.getStartLine(), column, function);
+			final Location witnessLocation = new Location(loc.getFileName(), hash, loc.getStartLine(),
+					loc.getStartColumn() < 0 ? null : loc.getStartColumn(), loc.getFunction());
 			result.add(new FunctionContract(metadataSupplier.get(), witnessLocation, requires, ensures,
 					getExpressionFormat(formatVersion,
 							Stream.concat(requires.stream(), ensures.stream()).toArray(String[]::new))));
