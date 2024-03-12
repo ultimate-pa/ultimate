@@ -75,6 +75,8 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermClassifier;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.CoverageAnalysis;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.CoverageAnalysis.BackwardCoveringInformation;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.CoverageAnalysisSleepSetPOR;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
@@ -171,11 +173,24 @@ public final class TraceCheckUtils {
 	public static <CL> BackwardCoveringInformation computeCoverageCapability(final IUltimateServiceProvider services,
 			final TracePredicates ipp, final List<CL> controlLocationSequence, final ILogger logger,
 			final IPredicateUnifier predicateUnifier) {
+		if (controlLocationSequence.get(0) instanceof SleepPredicate<?>) {
+			return computeCoverageCapabilitySleepSetPOR(services, ipp, (List<IPredicate>) controlLocationSequence, logger, predicateUnifier);
+		}
 		final de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.CoverageAnalysis<CL> ca =
 				new CoverageAnalysis<>(services, ipp, controlLocationSequence, logger, predicateUnifier);
 		ca.analyze();
 		return ca.getBackwardCoveringInformation();
 	}
+	
+	public static <L extends IAction> BackwardCoveringInformation computeCoverageCapabilitySleepSetPOR(
+			final IUltimateServiceProvider services, final TracePredicates ipp,
+			final List<IPredicate> stateSequence, final ILogger logger,
+			final IPredicateUnifier predicateUnifier) {
+		final CoverageAnalysisSleepSetPOR<L> ca =
+				new CoverageAnalysisSleepSetPOR<>(services, ipp, stateSequence, logger, predicateUnifier);
+		ca.analyze();
+		return ca.getBackwardCoveringInformation();
+	} 
 
 	/***
 	 * Checks whether the given sequence of predicates is inductive. For each i we check if {predicates[i-1]} st_i

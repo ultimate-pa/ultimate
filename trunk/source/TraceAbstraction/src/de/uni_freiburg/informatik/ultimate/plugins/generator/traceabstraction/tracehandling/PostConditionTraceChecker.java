@@ -98,12 +98,13 @@ public class PostConditionTraceChecker<L extends IIcfgTransition<?>> implements 
 		
 		ITARefinementStrategy<L> strategy =	mStrategyFactory.constructStrategy(mServices, run, mAbstraction,
 				mTaskIdentifier, mEmptyStackFactory, mPredicateUnifier, mPredicateUnifier.getTruePredicate(),
-				mPredicateUnifier.getOrConstructPredicate(postCondition), RefinementStrategy.SMTINTERPOL);
+				mPredicateUnifier.getOrConstructPredicate(postCondition), RefinementStrategy.SMTINTERPOLSLEEPSETPOR);
 		
 		while (strategy.hasNextFeasilibityCheck()) {
 			ITraceCheckStrategyModule<L, ?> check = strategy.nextFeasibilityCheck();
 			//boolean test = check.isCorrect().equals(LBool.UNSAT);
 			if (check.isCorrect().equals(LBool.UNSAT)) {
+				/*
 				if (check instanceof IpTcStrategyModuleSmtInterpolCraig) {
 					InterpolatingTraceCheckCraig<L> checkCraig =
 							((IpTcStrategyModuleSmtInterpolCraig<L>) check).construct();
@@ -111,7 +112,16 @@ public class PostConditionTraceChecker<L extends IIcfgTransition<?>> implements 
 						return checkCraig.getIpp();
 					}
 					//return ((IpTcStrategyModuleSmtInterpolCraig<L>) check).construct().getIpp();
-				} else if (check instanceof IpTcStrategyModuleSmtInterpolSpWp) {
+				}*/ 
+				
+				if (check instanceof IpTcStrategyModuleSmtInterpolCraigSleepSetPOR) {
+					InterpolatingTraceCheckCraig<L> checkCraig =
+							((IpTcStrategyModuleSmtInterpolCraigSleepSetPOR<L>) check).construct();
+					if (checkCraig.isPerfectSequence()) {
+						return checkCraig.getIpp();
+					}
+					//return ((IpTcStrategyModuleSmtInterpolCraig<L>) check).construct().getIpp();
+				} /*else if (check instanceof IpTcStrategyModuleSmtInterpolSpWp) {
 					TraceCheckSpWp<L> checkSpWp = ((IpTcStrategyModuleSmtInterpolSpWp<L>) check).construct();
 					if (checkSpWp.isPerfectSequence()) {
 						return checkSpWp.getIpp();
@@ -119,7 +129,7 @@ public class PostConditionTraceChecker<L extends IIcfgTransition<?>> implements 
 					TracePredicates debug = checkSpWp.getIpp();
 					int debug0 = 0;
 					//return ((IpTcStrategyModuleSmtInterpolSpWp<L>) check).construct().getIpp();
-				}
+				}*/
 			}
 		}
 		return null;

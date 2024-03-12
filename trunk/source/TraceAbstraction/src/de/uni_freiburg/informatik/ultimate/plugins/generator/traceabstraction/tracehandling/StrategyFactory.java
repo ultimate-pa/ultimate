@@ -84,6 +84,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.RubberTaipanRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.SifaTaipanRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.SmtInterpolRefinementStrategy;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.SmtInterpolSleepSetPORRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.TaipanRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.ToothlessSifaTaipanRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.ToothlessTaipanRefinementStrategy;
@@ -194,6 +195,8 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 			return new ToothlessTaipanRefinementStrategy<>(strategyModuleFactory, exceptionBlacklist);
 		case SMTINTERPOL:
 			return new SmtInterpolRefinementStrategy<>(strategyModuleFactory, exceptionBlacklist);
+		case SMTINTERPOLSLEEPSETPOR:
+			return new SmtInterpolSleepSetPORRefinementStrategy<>(strategyModuleFactory, exceptionBlacklist);
 		case MAMMOTH:
 			return new MammothRefinementStrategy<>(strategyModuleFactory, exceptionBlacklist);
 		case MAMMOTH_NO_AM:
@@ -306,6 +309,21 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 					new AssertionOrderModulation<>(mPathProgramCache, mLogger, order), mPredicateUnifier,
 					mPredicateFactory, timeoutInMillis, technique));
 		}
+		
+		public IIpTcStrategyModule<?, L> createIpTcStrategyModuleSmtInterpolCraigSleepSetPOR(
+				final InterpolationTechnique technique, final AssertCodeBlockOrder... order) {
+			return createIpTcStrategyModuleSmtInterpolCraigSleepSetPOR(-1, technique, order);
+		}
+
+		public IIpTcStrategyModule<?, L> createIpTcStrategyModuleSmtInterpolCraigSleepSetPOR(final long timeoutInMillis,
+				final InterpolationTechnique technique, final AssertCodeBlockOrder... order) {
+			return createModuleWrapperIfNecessary(new IpTcStrategyModuleSmtInterpolCraigSleepSetPOR<>(mTaskIdentifier, mServices,
+					mPrefs, mCounterexample, mPrecondition, mPostcondition,
+					new AssertionOrderModulation<>(mPathProgramCache, mLogger, order), mPredicateUnifier,
+					mPredicateFactory, timeoutInMillis, technique));
+		}
+		
+		
 
 		public IIpTcStrategyModule<?, L> createIpTcStrategyModuleSmtInterpolSpWp(final InterpolationTechnique technique,
 				final AssertCodeBlockOrder... order) {

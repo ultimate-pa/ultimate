@@ -955,6 +955,10 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		 */
 		SMTINTERPOL,
 		/**
+		 * SMTINTERPOL strategy for POR using sleep sets.
+		 */
+		SMTINTERPOLSLEEPSETPOR,
+		/**
 		 * Strategy that first tries SMTInterpol and then PDR.
 		 */
 		DACHSHUND,
