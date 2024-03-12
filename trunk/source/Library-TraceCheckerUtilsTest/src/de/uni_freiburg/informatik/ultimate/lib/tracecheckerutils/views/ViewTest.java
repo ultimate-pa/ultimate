@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.views;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -79,6 +80,16 @@ public class ViewTest {
 	@Test
 	public void exploreMutex2() {
 		exploreMutex(2);
+	}
+
+	@Test
+	public void abstract3Mutex2() {
+		final var services = UltimateMocks.createUltimateServiceProviderMock();
+		final var va = new ViewAbstraction<>(services, mutexN(2));
+		final var fp = va.computeFixedPoint(Set.of(mutexNInit(3)), 3);
+
+		final var logger = services.getLoggingService().getLogger(getClass());
+		logger.info(fp);
 	}
 
 	@Test
