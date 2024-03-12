@@ -67,7 +67,7 @@ public class GlobalVarUpdate<S, T> implements IRule<ProgramState<S, T>> {
 
 		for (int i = 1; i < config.size(); ++i) {
 			final var state = config.get(i);
-			assert state.isThreadState();
+			assert state.isThreadState() : "config with multiple controllers: " + config;
 			final var thread = state.getThreadState();
 			if (thread.equals(mSource)) {
 				final var succ = apply(config, i);
