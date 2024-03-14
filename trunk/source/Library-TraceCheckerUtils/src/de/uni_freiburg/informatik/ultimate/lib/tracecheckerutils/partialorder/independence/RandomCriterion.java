@@ -25,11 +25,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence;
 
-import java.util.List;
+import java.util.Objects;
 import java.util.Random;
 
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Random criterion for conditional commutativity checking.
@@ -42,7 +43,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 public class RandomCriterion<L> implements IConditionalCommutativityCriterion<L> {
 
 	private final double mProbability;
-	private final Random mRandomGenerator;
+	private long mSeed;
+	//private final Random mRandomGenerator;
 
 	/**
 	 * Constructs a new random criterion.
@@ -56,12 +58,14 @@ public class RandomCriterion<L> implements IConditionalCommutativityCriterion<L>
 	 */
 	public RandomCriterion(final double probability, final long seed) {
 		mProbability = probability;
-		mRandomGenerator = new Random(seed);
+		mSeed = seed;
 	}
 
 	@Override
 	public boolean decide(final IPredicate state, final IRun<L, IPredicate> run, final L letter1, final L letter2) {
-		return (mRandomGenerator.nextInt(100) < (100 * mProbability));
+		Pair<IPredicate, Pair<L,L>> normalized = normalize(state, letter1, letter2);
+		Random random = new Random(mSeed * Objects.hashCode(normalized));
+		return (random.nextInt(100) < (100 * mProbability));
 	}
 
 	@Override
@@ -73,6 +77,10 @@ public class RandomCriterion<L> implements IConditionalCommutativityCriterion<L>
 	public void updateCondition(IPredicate condition) {
 		// TODO Auto-generated method stub
 		
+	}
+	
+	private Pair<IPredicate, Pair<L,L>> normalize(final IPredicate state, final L letter1, final L letter2) {
+		return new Pair<IPredicate, Pair<L,L>>(state, new Pair<>(letter1, letter2));
 	}
 
 }
