@@ -1433,16 +1433,9 @@ public class CHandler {
 	}
 
 	public Result visit(final IDispatcher main, final IASTDefaultStatement node) {
-		final ArrayList<Statement> stmt = new ArrayList<>();
-		final ArrayList<Declaration> decl = new ArrayList<>();
-		// final Map<VariableDeclaration, ILocation> emptyAuxVars = new
-		// LinkedHashMap<>(0);
-		final Set<AuxVarInfo> emptyAuxVars = new LinkedHashSet<>(0);
-		final List<Overapprox> overappr = new ArrayList<>();
-		return new ExpressionResult(stmt,
+		return new ExpressionResult(
 				new RValue(ExpressionFactory.createBooleanLiteral(mLocationFactory.createCLocation(node), true),
-						new CPrimitive(CPrimitives.INT)),
-				decl, emptyAuxVars, overappr);
+						new CPrimitive(CPrimitives.INT)));
 	}
 
 	public Result visit(final IDispatcher main, final IASTDoStatement node) {
@@ -1876,8 +1869,6 @@ public class CHandler {
 		final ILocation loc = mLocationFactory.createCLocation(node);
 		final ArrayList<Statement> stmt = new ArrayList<>();
 		final ArrayList<Declaration> decl = new ArrayList<>();
-		// final Map<VariableDeclaration, ILocation> emptyAuxVars = new
-		// LinkedHashMap<>(0);
 		final List<Overapprox> overappr = new ArrayList<>();
 		final String label = node.getName().toString();
 		stmt.add(new Label(loc, label));
@@ -1935,7 +1926,7 @@ public class CHandler {
 			return new ExpressionResult(rVal);
 		}
 		case IASTLiteralExpression.lk_string_literal:
-			return handleStringLiteralExpression(loc, main, node);
+			return handleStringLiteralExpression(loc, node);
 		case IASTLiteralExpression.lk_false:
 			return new ExpressionResult(
 					new RValue(ExpressionFactory.createBooleanLiteral(loc, false), new CPrimitive(CPrimitives.INT)));
@@ -1953,8 +1944,7 @@ public class CHandler {
 	 * literals are stored in a separate read-only area of the memory. String literals can neither be modified nor
 	 * deallocated.
 	 */
-	private Result handleStringLiteralExpression(final ILocation loc, final IDispatcher main,
-			final IASTLiteralExpression node) {
+	private Result handleStringLiteralExpression(final ILocation loc, final IASTLiteralExpression node) {
 		// Note: We can either use loc here or create a new ignore-loc s.t. the string
 		// literal assignment will not be shown in the backtranslation
 		final ILocation actualLoc = LocationFactory.createIgnoreCLocation(node);
@@ -2159,9 +2149,7 @@ public class CHandler {
 		}
 
 		final TypesResult typeResult = (TypesResult) declSpecifierResult;
-		// Skip will be overwritten in
-		// case of a global or a local
-		// initialized variable
+		// Skip will be overwritten in case of a global or a local initialized variable
 
 		final CStorageClass storageClass = scConstant2StorageClass(node.getDeclSpecifier().getStorageClass());
 
@@ -2267,13 +2255,10 @@ public class CHandler {
 		beginScope();
 		for (final IASTNode child : node.getBody().getChildren()) {
 			if (isFirst && !(child instanceof IASTCaseStatement) && !(child instanceof IASTDefaultStatement)) {
-				// declarations in the beginning of a switch body (i.e. before the first
-				// case/default) are used,
-				// statements are dropped
-				// see example 6.8.4.2-7
+				// declarations in the beginning of a switch body (i.e. before the first case/default) are used,
+				// statements are dropped see example 6.8.4.2-7
 
-				// we need to dispatch the child in order to fill the symbol table with
-				// declarations accordingly
+				// we need to dispatch the child in order to fill the symbol table with declarations accordingly
 				// the result can only contain statements, which we drop.
 				main.dispatch(child);
 
@@ -2369,8 +2354,7 @@ public class CHandler {
 		resultBuilder.addStatement(new Label(loc, breakLabelName));
 		resultBuilder.addStatements(CTranslationUtil.createHavocsForAuxVars(resultBuilder.getAuxVars()));
 
-		// Use body as hook: This is the scope holder for switch statements! (as
-		// controller expression is child of the
+		// Use body as hook: This is the scope holder for switch statements! (as controller expression is child of the
 		// switch itself and may not have scope access.)
 		updateStmtsAndDeclsAtScopeEnd(resultBuilder, node.getBody());
 		endScope();
@@ -2437,10 +2421,8 @@ public class CHandler {
 		checkForACSL(main, acslResultBuilder, node, null, false);
 		mDeclarations.addAll(acslResultBuilder.getDeclarations());
 
-		// The declarations (which are needed for the caller) are handled as a member as
-		// they
-		// do not consist of a Boogie node.
-		// So as a workaround null is returned here
+		// The declarations (which are needed for the caller) are handled as a member as they do not consist of a Boogie
+		// node. So as a workaround null is returned here
 		return null;
 	}
 
@@ -2519,7 +2501,7 @@ public class CHandler {
 			return handleIndirectionOperator(operand, loc, node);
 		}
 		case IASTUnaryExpression.op_amper: {
-			return handleAddressOfOperator(operand, loc, node);
+			return handleAddressOfOperator(operand, node);
 		}
 		case IASTUnaryExpression.op_alignOf:
 		default:
@@ -2605,13 +2587,8 @@ public class CHandler {
 	 * <p>
 	 * Background: Array expressions can be used in place of pointer expressions in C. (An array may "decay" to a
 	 * pointer in C standard terminology.) E.g. when an array is assigned to a pointer variable.
-	 *
-	 *
-	 *
-	 * @param rightLrVal
-	 * @return
 	 */
-	public RValue decayArrayLrValToPointer(final ILocation loc, final LRValue rightLrVal, final IASTNode hook) {
+	public RValue decayArrayLrValToPointer(final LRValue rightLrVal, final IASTNode hook) {
 		assert rightLrVal.getCType().getUnderlyingType() instanceof CArray;
 
 		final Expression newValue;
@@ -2628,7 +2605,7 @@ public class CHandler {
 			}
 			// circumvents Boogie type checking during preprocessing
 			newValue = ExpressionFactory.replaceBoogieType(oldValue, mTypeHandler.getBoogiePointerType());
-			moveArrayAndStructIdsOnHeap(loc, rightLrVal.getUnderlyingType(), oldValue, Collections.emptySet(), hook);
+			moveArrayAndStructIdsOnHeap(rightLrVal.getUnderlyingType(), oldValue, hook);
 		} else if (rightLrVal instanceof RValue) {
 			newValue = rightLrVal.getValue();
 		} else {
@@ -2692,7 +2669,7 @@ public class CHandler {
 				if (address instanceof IdentifierExpression) {
 					final String lId =
 							((IdentifierExpression) ((HeapLValue) leftHandSide).getAddress()).getIdentifier();
-					markAsIntFromPointer(loc, lId, hook);
+					markAsIntFromPointer(lId, hook);
 				} else {
 					// TODO
 				}
@@ -2701,7 +2678,7 @@ public class CHandler {
 				final LeftHandSide value = ((LocalLValue) leftHandSide).getLhs();
 				if (value instanceof VariableLHS) {
 					lId = ((VariableLHS) value).getIdentifier();
-					markAsIntFromPointer(loc, lId, hook);
+					markAsIntFromPointer(lId, hook);
 				} else {
 					// TODO
 				}
@@ -2835,11 +2812,7 @@ public class CHandler {
 	/**
 	 * @return true iff this is called while in prerun mode, false otherwise
 	 */
-	public void moveArrayAndStructIdsOnHeap(final ILocation loc, final CType underlyingType, final Expression expr,
-			final Set<AuxVarInfo> auxVars, final IASTNode hook) {
-
-		final IASTNode exprHook = CTranslationUtil.findExpressionHook(hook);
-
+	public void moveArrayAndStructIdsOnHeap(final CType underlyingType, final Expression expr, final IASTNode hook) {
 		if (!mIsPrerun) {
 			if (underlyingType instanceof CArray) {
 				throw new AssertionError("on-heap/off-heap bug: array has to be on-heap");
@@ -2851,11 +2824,10 @@ public class CHandler {
 		for (final String id : bie.getIds()) {
 			final String cid = mSymbolTable.getCIdForBoogieId(id);
 			if (cid == null) {
-				// expression does not have a corresponding c identifier --> nothing to move on
-				// heap
+				// expression does not have a corresponding c identifier --> nothing to move on heap
 				continue;
 			}
-			final SymbolTableValue value = mSymbolTable.findCSymbol(exprHook, cid);
+			final SymbolTableValue value = mSymbolTable.findCSymbol(CTranslationUtil.findExpressionHook(hook), cid);
 			if (value == null) {
 				throw new AssertionError("no entry in symbol table for C-ID " + cid);
 			}
@@ -2917,12 +2889,8 @@ public class CHandler {
 		final InitializerResult initializer = translateInitializer(main, cDec);
 		cDec.setInitializerResult(initializer);
 
-		final ASTType translatedType;
-		if (onHeap) {
-			translatedType = mTypeHandler.constructPointerType(loc);
-		} else {
-			translatedType = mTypeHandler.cType2AstType(loc, cDec.getType());
-		}
+		final ASTType translatedType =
+				onHeap ? mTypeHandler.constructPointerType(loc) : mTypeHandler.cType2AstType(loc, cDec.getType());
 
 		final Declaration boogieDec;
 		final Result result;
@@ -3125,7 +3093,7 @@ public class CHandler {
 		return !(env instanceof IASTForStatement) && !(env instanceof IASTFunctionDefinition);
 	}
 
-	private void moveIdOnHeap(final ILocation loc, final IdentifierExpression idExpr, final IASTNode hook) {
+	private void moveIdOnHeap(final IdentifierExpression idExpr, final IASTNode hook) {
 		final String id = idExpr.getIdentifier();
 		final String cid = mSymbolTable.getCIdForBoogieId(id);
 		final SymbolTableValue value = mSymbolTable.findCSymbol(hook, cid);
@@ -3397,7 +3365,7 @@ public class CHandler {
 		}
 	}
 
-	private void markAsIntFromPointer(final ILocation loc, final String lId, final IASTNode hook) {
+	private void markAsIntFromPointer(final String lId, final IASTNode hook) {
 		final String cId4Boogie = mSymbolTable.getCIdForBoogieId(lId);
 		final SymbolTableValue old = mSymbolTable.findCSymbol(hook, cId4Boogie);
 		final SymbolTableValue newSTV = old.createMarkedIsIntFromPointer();
@@ -3447,8 +3415,7 @@ public class CHandler {
 	/**
 	 * Handle the address operator according to Section 6.5.3.2 of C11.
 	 */
-	private Result handleAddressOfOperator(final ExpressionResult er, final ILocation loc, final IASTNode hook)
-			throws AssertionError {
+	private Result handleAddressOfOperator(final ExpressionResult er, final IASTNode hook) throws AssertionError {
 		final RValue rVal;
 		if (er.getLrValue() instanceof HeapLValue) {
 			rVal = ((HeapLValue) er.getLrValue()).getAddressAsPointerRValue(mTypeHandler.getBoogiePointerType());
@@ -3464,9 +3431,9 @@ public class CHandler {
 			final Expression expr = er.getLrValue().getValue();
 			if (expr instanceof IdentifierExpression) {
 				final IdentifierExpression idExpr = (IdentifierExpression) expr;
-				moveIdOnHeap(loc, idExpr, hook);
+				moveIdOnHeap(idExpr, hook);
 			} else {
-				moveArrayAndStructIdsOnHeap(loc, er.getLrValue().getUnderlyingType(), expr, er.getAuxVars(), hook);
+				moveArrayAndStructIdsOnHeap(er.getLrValue().getUnderlyingType(), expr, hook);
 			}
 			rVal = convertToPointerRValue(er.getLrValue(), mTypeHandler.getBoogiePointerType());
 		} else if (er.getLrValue() instanceof RValue) {
