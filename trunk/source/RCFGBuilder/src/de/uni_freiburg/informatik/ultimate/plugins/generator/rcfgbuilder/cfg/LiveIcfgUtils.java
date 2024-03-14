@@ -130,6 +130,8 @@ public class LiveIcfgUtils {
 				final Set<IProgramVar> outVarsToRemove = new HashSet<>(tf.getOutVars().keySet());
 				outVarsToRemove.removeAll(futureLiveVars);
 				outVarsToRemove.removeAll(indispensibleLocalVars);
+				// If a variable was havoced before, we still want to havoc it
+				outVarsToRemove.retainAll(tf.getInVars().keySet());
 				{
 					// remove all global vars, they might be needed for our interprocedural proofs.
 					// TODO: optimization only needed if they are past-live at the call
