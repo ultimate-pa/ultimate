@@ -112,7 +112,7 @@ public class PostConditionTraceChecker<L extends IIcfgTransition<?>> implements 
 						return checkCraig.getIpp();
 					}
 					//return ((IpTcStrategyModuleSmtInterpolCraig<L>) check).construct().getIpp();
-				}*/ 
+				}*/
 				
 				if (check instanceof IpTcStrategyModuleSmtInterpolCraigSleepSetPOR) {
 					InterpolatingTraceCheckCraig<L> checkCraig =

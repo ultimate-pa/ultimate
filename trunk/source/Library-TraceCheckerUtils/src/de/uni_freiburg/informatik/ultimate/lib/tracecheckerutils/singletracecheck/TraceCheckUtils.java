@@ -65,6 +65,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHo
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.MonolithicHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
@@ -75,11 +76,13 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermClassifier;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.CoverageAnalysis;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.CoverageAnalysis.BackwardCoveringInformation;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.LoopLockstepOrder.PredicateWithLastThread;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.CoverageAnalysisSleepSetPOR;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Class that contains static methods that are related to the {@link TraceCheck}.
@@ -119,6 +122,31 @@ public final class TraceCheckUtils {
 		}
 		return result;
 	}
+	
+	/**
+	 * Given a stateSequence s_0,...,s_n returns the sequence of pairs (pp, sleepset)_0,...,(pp, sleepset)_n,
+	 * s.t. (pp, sleepset)_i consists of the program points of s_i and the sleep set of s_i.
+	 *
+	 * @param stateSequence
+	 *            sequence of SleepPredicates
+	 * @return sequence of pairs (pp, sleepset)
+	 */
+	public static List<Pair<IcfgLocation[], Set<?>>> getSequenceOfProgramPointsWithSleepSet(final List<?> stateSequence){
+		ArrayList<Pair<IcfgLocation[], Set<?>>> sequence = new ArrayList<>();
+		for (int i = 0; i < stateSequence.size(); i++) {
+			SleepPredicate<?> sleepPred = ((SleepPredicate<?>) stateSequence.get(i));
+			IPredicate pred = sleepPred.getUnderlying();
+			
+			if (pred instanceof PredicateWithLastThread) {
+				pred = ((PredicateWithLastThread) pred).getUnderlying();
+			}
+			ImmutableSet<?> sleepset = sleepPred.getAnnotation();
+			IcfgLocation[] programPpoints = ((IMLPredicate) pred).getProgramPoints();
+			Pair<IcfgLocation[], Set<?>> pair = new Pair<>(programPpoints, sleepset);
+			sequence.add(pair);
+		}
+		return sequence;
+	}
 
 	/**
 	 * Variant of
@@ -138,6 +166,28 @@ public final class TraceCheckUtils {
 		@SuppressWarnings("unchecked")
 		final NestedWord<IcfgEdge> trace = (NestedWord<IcfgEdge>) toNestedWord(traceCheck.getTrace());
 		final List<IcfgLocation> programPoints = getSequenceOfProgramPoints(trace);
+		return computeCoverageCapability(services, traceCheck.getIpp(), programPoints, logger,
+				traceCheck.getPredicateUnifier());
+	}
+	
+	/**
+	 * Variant of
+	 * {@link #computeCoverageCapability(IUltimateServiceProvider, TracePredicates, List, ILogger, IPredicateUnifier)}
+	 * where the sequence of ProgramPoints is not a parameter but computed from the stateSequence for SleepPredicates.
+	 *
+	 * @param services
+	 *            Ultimate services
+	 * @param traceCheck
+	 *            trace checker
+	 * @param stateSequence
+	 *            sequence of SleepPredicate
+	 * @param logger
+	 *            logger
+	 * @return backward covering information
+	 */
+	public static BackwardCoveringInformation computeCoverageCapabilitySleepSet(IUltimateServiceProvider services,
+			final IInterpolantGenerator<?> traceCheck, List<IPredicate> stateSequence,  ILogger logger) {
+		final List<?> programPoints = getSequenceOfProgramPointsWithSleepSet(stateSequence);
 		return computeCoverageCapability(services, traceCheck.getIpp(), programPoints, logger,
 				traceCheck.getPredicateUnifier());
 	}
@@ -173,24 +223,11 @@ public final class TraceCheckUtils {
 	public static <CL> BackwardCoveringInformation computeCoverageCapability(final IUltimateServiceProvider services,
 			final TracePredicates ipp, final List<CL> controlLocationSequence, final ILogger logger,
 			final IPredicateUnifier predicateUnifier) {
-		if (controlLocationSequence.get(0) instanceof SleepPredicate<?>) {
-			return computeCoverageCapabilitySleepSetPOR(services, ipp, (List<IPredicate>) controlLocationSequence, logger, predicateUnifier);
-		}
 		final de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.CoverageAnalysis<CL> ca =
 				new CoverageAnalysis<>(services, ipp, controlLocationSequence, logger, predicateUnifier);
 		ca.analyze();
 		return ca.getBackwardCoveringInformation();
 	}
-	
-	public static <L extends IAction> BackwardCoveringInformation computeCoverageCapabilitySleepSetPOR(
-			final IUltimateServiceProvider services, final TracePredicates ipp,
-			final List<IPredicate> stateSequence, final ILogger logger,
-			final IPredicateUnifier predicateUnifier) {
-		final CoverageAnalysisSleepSetPOR<L> ca =
-				new CoverageAnalysisSleepSetPOR<>(services, ipp, stateSequence, logger, predicateUnifier);
-		ca.analyze();
-		return ca.getBackwardCoveringInformation();
-	} 
 
 	/***
 	 * Checks whether the given sequence of predicates is inductive. For each i we check if {predicates[i-1]} st_i
@@ -409,4 +446,5 @@ public final class TraceCheckUtils {
 		}
 		return result;
 	}
+
 }

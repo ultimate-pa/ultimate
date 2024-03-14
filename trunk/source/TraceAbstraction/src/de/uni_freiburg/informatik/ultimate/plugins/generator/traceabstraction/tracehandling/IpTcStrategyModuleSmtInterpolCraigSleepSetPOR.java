@@ -1,3 +1,28 @@
+/*
+ * Copyright (C) 2024 Marcel Ebbinghaus
+ *
+ * This file is part of the ULTIMATE TraceAbstraction plug-in.
+ *
+ * The ULTIMATE TraceAbstraction plug-in is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE TraceAbstraction plug-in is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE TraceAbstraction plug-in. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
+ * to convey the resulting work.
+ */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
 import java.util.Arrays;
@@ -14,6 +39,14 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverB
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 
+/**
+ * Variant of IpTcStrategyModuleSmtInterpolCraig for POR with sleep sets.
+ * 
+ * @author Marcel Ebbinghaus
+ * 
+ * @param <LETTER>
+ *         The type of letters.
+ */
 public class IpTcStrategyModuleSmtInterpolCraigSleepSetPOR<LETTER extends IIcfgTransition<?>>
 extends IpTcStrategyModuleCraigSleepSetPOR<LETTER> {
 
@@ -23,6 +56,34 @@ private static final InterpolationTechnique[] SUPPORTED_TECHNIQUES = new Interpo
 private final long mTimeoutInMillis;
 private final InterpolationTechnique mInterpolationTechnique;
 
+/**
+ * Constructor.
+ *
+ * @author Marcel Ebbinghaus
+ *
+ * @param taskIdentifier
+ *            taskIdentifier.
+ * @param services
+ *            Ultimate services.  
+ * @param prefs
+ *            Ultimate preferences.   
+ * @param counterExample
+ *            counter example.            
+ * @param precondition
+ *            precondition.            
+ * @param postcondition
+ *            postcondition.            
+ * @param assertionOrderModulation
+ *            assertionOrderModulation.               
+ * @param predicateUnifier
+ *            predicate unifier.            
+ * @param predicateFactory
+ *            factory.            
+ * @param timeoutInMillis
+ *            timeout.            
+ * @param interpolationTechnique
+ *            interpolation technique.                
+ */
 public IpTcStrategyModuleSmtInterpolCraigSleepSetPOR(final TaskIdentifier taskIdentifier,
 	final IUltimateServiceProvider services, final TaCheckAndRefinementPreferences<LETTER> prefs,
 	final IRun<LETTER, ?> counterExample, final IPredicate precondition, final IPredicate postcondition,
