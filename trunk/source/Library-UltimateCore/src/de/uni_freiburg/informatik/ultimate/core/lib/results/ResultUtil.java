@@ -254,6 +254,15 @@ public final class ResultUtil {
 				|| oldResult instanceof UnprovableResult<?, ?, ?>) {
 			return oldResult;
 		}
+		if (oldResult instanceof TestGenerationResult || newResult instanceof TestGenerationResult) {
+			if (newResult instanceof PositiveResult<?>) {
+				return newResult;
+			}
+			if (oldResult instanceof PositiveResult<?>) {
+				return oldResult;
+			}
+			return newResult;
+		}
 		assert oldResult instanceof PositiveResult<?> : "Unsupported location-specific result: " + oldResult;
 		return newResult;
 	}
