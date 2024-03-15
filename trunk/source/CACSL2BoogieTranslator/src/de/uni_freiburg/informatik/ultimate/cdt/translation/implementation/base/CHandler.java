@@ -235,6 +235,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.ICACSL2BoogieBacktranslatorMapping;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.LTLExpressionExtractor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.MemoryModel;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -1438,13 +1439,25 @@ public class CHandler {
 						new CPrimitive(CPrimitives.INT)));
 	}
 
+	/**
+	 * Translates a do-statement {@code do body while (cond);} to {@code while (true) { body; Label: if (!cond) break;
+	 * }}
+	 *
+	 * @param main
+	 *            dispatcher
+	 * @param node
+	 *            AST node
+	 * @return The do-statement translated to a Boogie-Result
+	 */
 	public Result visit(final IDispatcher main, final IASTDoStatement node) {
-		final ExpressionResult condResult = (ExpressionResult) main.dispatch(node.getCondition());
+		final ILocation loc = mLocationFactory.createCLocation(node);
+		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
+		final List<Statement> bodyBlock = new ArrayList<>();
 		final String loopLabel = mNameHandler.getGloballyUniqueIdentifier(SFO.LOOPLABEL);
-		mInnerMostLoopLabel.push(loopLabel);
-		final Result bodyResult = main.dispatch(node.getBody());
-		mInnerMostLoopLabel.pop();
-		return handleLoops(main, node, bodyResult, condResult, loopLabel);
+		handleLoopBody(loc, main, node.getBody(), loopLabel, resultBuilder, bodyBlock);
+		bodyBlock.add(new Label(loc, loopLabel));
+		bodyBlock.addAll(handleLoopCondition(loc, main, node.getCondition(), resultBuilder));
+		return buildLoopResult(main, node, bodyBlock, resultBuilder);
 	}
 
 	public Result visit(final IDispatcher main, final IASTEqualsInitializer node) {
@@ -1477,9 +1490,69 @@ public class CHandler {
 		return mStructHandler.handleFieldReference(main, mExprResultTransformer, node);
 	}
 
+	/**
+	 * Translates a for-statement {@code for (init; cond; iterator) body} to {@code while (true) { if (!cond) break;
+	 * body; Label: iterator; }}
+	 *
+	 * @param main
+	 *            dispatcher
+	 * @param node
+	 *            AST node
+	 * @return The for-statement translated to a Boogie-Result
+	 */
 	public Result visit(final IDispatcher main, final IASTForStatement node) {
+		final ILocation loc = mLocationFactory.createCLocation(node);
+		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
+		// Process initializer (insert before the actual loop)
+		final IASTStatement cInitStmt = node.getInitializerStatement();
+		if (cInitStmt != null) {
+			beginScope();
+			final Result initializer = main.dispatch(cInitStmt);
+			if (initializer instanceof ExpressionResult) {
+				resultBuilder.addAllExceptLrValueAndHavocAux((ExpressionResult) initializer);
+			} else if (initializer instanceof SkipResult) {
+				// This is an empty statement in the C Code. We will skip it
+			} else {
+				throw new UnsupportedSyntaxException(loc,
+						"Uninplemented type of for loop initialization: " + initializer.getClass());
+			}
+		}
+		List<Statement> bodyBlock =
+				new ArrayList<>(handleLoopCondition(loc, main, node.getConditionExpression(), resultBuilder));
 		final String loopLabel = mNameHandler.getGloballyUniqueIdentifier(SFO.LOOPLABEL);
-		return handleLoops(main, node, null, null, loopLabel);
+		handleLoopBody(loc, main, node.getBody(), loopLabel, resultBuilder, bodyBlock);
+		bodyBlock.add(new Label(loc, loopLabel));
+
+		// Insert the translated iterator at the end of the loop (after the loop label)
+		final IASTExpression cItExpr = node.getIterationExpression();
+		if (cItExpr != null) {
+			final Result iterator = main.dispatch(cItExpr);
+			if (iterator instanceof ExpressionListResult) {
+				for (final ExpressionResult el : ((ExpressionListResult) iterator).getList()) {
+					bodyBlock.addAll(el.getStatements());
+					resultBuilder.addDeclarations(el.getDeclarations());
+					bodyBlock.addAll(CTranslationUtil.createHavocsForAuxVars(el.getAuxVars()));
+				}
+			} else if (iterator instanceof ExpressionResult) {
+				final ExpressionResult iteratorRE = (ExpressionResult) iterator;
+				bodyBlock.addAll(iteratorRE.getStatements());
+				resultBuilder.addDeclarations(iteratorRE.getDeclarations());
+				resultBuilder.addOverapprox(iteratorRE.getOverapprs());
+				bodyBlock.addAll(CTranslationUtil.createHavocsForAuxVars(iteratorRE.getAuxVars()));
+			} else {
+				throw new UnsupportedSyntaxException(loc,
+						"Uninplemented type of loop iterator: " + iterator.getClass());
+			}
+		}
+
+		if (cInitStmt != null) {
+			final ExpressionResultBuilder bodyBlockBuilder = new ExpressionResultBuilder().addStatements(bodyBlock);
+			updateStmtsAndDeclsAtScopeEnd(bodyBlockBuilder, node);
+			endScope();
+			resultBuilder.addDeclarations(bodyBlockBuilder.getDeclarations());
+			bodyBlock = bodyBlockBuilder.getStatements();
+		}
+		return buildLoopResult(main, node, bodyBlock, resultBuilder);
 	}
 
 	public Result visit(final IDispatcher main, final IASTFunctionCallExpression node) {
@@ -2510,13 +2583,24 @@ public class CHandler {
 		}
 	}
 
+	/**
+	 * Translates a while-statement {@code while (cond) body} to {@code while (true) { Label: if (!cond) break; body; }}
+	 *
+	 * @param main
+	 *            dispatcher
+	 * @param node
+	 *            AST node
+	 * @return The while-statement translated to a Boogie-Result
+	 */
 	public Result visit(final IDispatcher main, final IASTWhileStatement node) {
-		final ExpressionResult condResult = (ExpressionResult) main.dispatch(node.getCondition());
+		final ILocation loc = mLocationFactory.createCLocation(node);
+		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 		final String loopLabel = mNameHandler.getGloballyUniqueIdentifier(SFO.LOOPLABEL);
-		mInnerMostLoopLabel.push(loopLabel);
-		final Result bodyResult = main.dispatch(node.getBody());
-		mInnerMostLoopLabel.pop();
-		return handleLoops(main, node, bodyResult, condResult, loopLabel);
+		final List<Statement> bodyBlock = new ArrayList<>();
+		bodyBlock.add(new Label(loc, loopLabel));
+		bodyBlock.addAll(handleLoopCondition(loc, main, node.getCondition(), resultBuilder));
+		handleLoopBody(loc, main, node.getBody(), loopLabel, resultBuilder, bodyBlock);
+		return buildLoopResult(main, node, bodyBlock, resultBuilder);
 	}
 
 	public Result visit(final IDispatcher main, final IGNUASTCompoundStatementExpression node) {
@@ -3468,71 +3552,10 @@ public class CHandler {
 				rop.getDeclarations(), rop.getAuxVars(), rop.getOverapprs());
 	}
 
-	/**
-	 * Method that handles loops (for, while, do/while). Each of corresponding visit methods will call this method.
-	 *
-	 * @param main
-	 *            the main IDispatcher
-	 * @param node
-	 *            the node to visit
-	 * @param bodyResult
-	 *            the body component of the corresponding loop
-	 * @param condResult
-	 *            the condition of the loop
-	 * @param loopLabel
-	 * @return a result object holding the translated loop (i.e. a while loop)
-	 */
-	private Result handleLoops(final IDispatcher main, final IASTStatement node, Result bodyResult,
-			ExpressionResult condResult, final String loopLabel) {
-		assert node instanceof IASTWhileStatement || node instanceof IASTDoStatement
-				|| node instanceof IASTForStatement;
-
-		final ILocation loc = mLocationFactory.createCLocation(node);
-
-		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
-
-		Result iterator = null;
-		if (node instanceof IASTForStatement) {
-			final IASTForStatement forStmt = (IASTForStatement) node;
-			// add initialization for this for loop
-			final IASTStatement cInitStmt = forStmt.getInitializerStatement();
-			if (cInitStmt != null) {
-				beginScope();
-				final Result initializer = main.dispatch(cInitStmt);
-				if (initializer instanceof ExpressionResult) {
-					final ExpressionResult rExp = (ExpressionResult) initializer;
-					resultBuilder.addAllExceptLrValueAndHavocAux(rExp);
-				} else if (initializer instanceof SkipResult) {
-					// this is an empty statement in the C Code. We will skip it
-				} else {
-					final String msg = "Uninplemented type of for loop initialization: " + initializer.getClass();
-					throw new UnsupportedSyntaxException(loc, msg);
-				}
-			}
-
-			// translate iterator
-			final IASTExpression cItExpr = forStmt.getIterationExpression();
-			if (cItExpr != null) {
-				iterator = main.dispatch(cItExpr);
-			}
-
-			// translate condition
-			final IASTExpression cCondExpr = forStmt.getConditionExpression();
-			if (cCondExpr != null) {
-				condResult = (ExpressionResult) main.dispatch(cCondExpr);
-			} else {
-				condResult = new ExpressionResult(new RValue(ExpressionFactory.createBooleanLiteral(loc, true),
-						new CPrimitive(CPrimitives.BOOL), true), Collections.emptySet());
-			}
-
-			mInnerMostLoopLabel.push(loopLabel);
-			bodyResult = main.dispatch(forStmt.getBody());
-			mInnerMostLoopLabel.pop();
-		}
-		assert CTranslationUtil.isAuxVarMapComplete(mNameHandler, condResult.getDeclarations(),
-				condResult.getAuxVars());
-
-		List<Statement> bodyBlock = new ArrayList<>();
+	private void handleLoopBody(final ILocation loc, final IDispatcher main, final IASTStatement bodyStmt,
+			final String loopLabel, final ExpressionResultBuilder resultBuilder, final List<Statement> bodyBlock) {
+		mInnerMostLoopLabel.push(loopLabel);
+		final Result bodyResult = main.dispatch(bodyStmt);
 		if (bodyResult instanceof ExpressionResult) {
 			final ExpressionResult re = (ExpressionResult) bodyResult;
 			resultBuilder.addDeclarations(re.getDeclarations());
@@ -3551,80 +3574,41 @@ public class CHandler {
 				throw new UnsupportedSyntaxException(loc, msg);
 			}
 		}
+		mInnerMostLoopLabel.pop();
+	}
 
-		if (node instanceof IASTForStatement) {
-			// add the loop label (continue statements become a jump to the loop label)
-			bodyBlock.add(new Label(loc, loopLabel));
+	private List<Statement> handleLoopCondition(final ILocation loc, final IDispatcher main, final IASTExpression cond,
+			final ExpressionResultBuilder resultBuilder) {
+		if (cond == null) {
+			// If the condition is not present in a for-loop, we can omit the if-statement
+			return List.of();
 		}
+		final ExpressionResult condResult = (ExpressionResult) main.dispatch(cond);
+		assert CTranslationUtil.isAuxVarMapComplete(mNameHandler, condResult.getDeclarations(),
+				condResult.getAuxVars());
+		final ExpressionResult condTransformed =
+				mExprResultTransformer.transformSwitchRexIntToBool(condResult, loc, cond);
+		final List<Statement> result = new ArrayList<>(condTransformed.getStatements());
+		resultBuilder.addDeclarations(condTransformed.getDeclarations());
+		// Insert an if-statement: if (!cond) break;
+		// Make sure to havoc all aux-vars that are created from the translation of cond (in the if and else branches)
+		final Expression negatedCond = ExpressionFactory.constructUnaryExpression(loc,
+				UnaryExpression.Operator.LOGICNEG, condTransformed.getLrValue().getValue());
+		final Statement[] havocs =
+				CTranslationUtil.createHavocsForAuxVars(condTransformed.getAuxVars()).toArray(Statement[]::new);
+		final IfStatement ifStmt = new IfStatement(loc, negatedCond,
+				DataStructureUtils.concat(havocs, new Statement[] { new BreakStatement(loc) }), havocs);
+		condTransformed.getOverapprs().forEach(oa -> oa.annotate(ifStmt));
+		result.add(ifStmt);
+		return result;
+	}
 
-		if (node instanceof IASTForStatement && iterator != null) {
-			// add iterator statements of this for loop
-			if (iterator instanceof ExpressionListResult) {
-				for (final ExpressionResult el : ((ExpressionListResult) iterator).getList()) {
-					bodyBlock.addAll(el.getStatements());
-					resultBuilder.addDeclarations(el.getDeclarations());
-					bodyBlock.addAll(CTranslationUtil.createHavocsForAuxVars(el.getAuxVars()));
-				}
-			} else if (iterator instanceof ExpressionResult) {
-				final ExpressionResult iteratorRE = (ExpressionResult) iterator;
-				bodyBlock.addAll(iteratorRE.getStatements());
-				resultBuilder.addDeclarations(iteratorRE.getDeclarations());
-				resultBuilder.addOverapprox(iteratorRE.getOverapprs());
-				bodyBlock.addAll(CTranslationUtil.createHavocsForAuxVars(iteratorRE.getAuxVars()));
-			} else {
-				final String msg = "Uninplemented type of loop iterator: " + iterator.getClass();
-				throw new UnsupportedSyntaxException(loc, msg);
-			}
-		}
-
-		condResult = mExprResultTransformer.transformSwitchRexIntToBool(condResult, loc, node);
-		resultBuilder.addDeclarations(condResult.getDeclarations());
-		final RValue condRVal = (RValue) condResult.getLrValue();
-		IfStatement ifStmt;
-		{
-			final Expression cond = ExpressionFactory.constructUnaryExpression(loc, UnaryExpression.Operator.LOGICNEG,
-					condRVal.getValue());
-			final ArrayList<Statement> thenStmt =
-					new ArrayList<>(CTranslationUtil.createHavocsForAuxVars(condResult.getAuxVars()));
-			thenStmt.add(new BreakStatement(loc));
-			final Statement[] elseStmt =
-					CTranslationUtil.createHavocsForAuxVars(condResult.getAuxVars()).toArray(new Statement[0]);
-			ifStmt = new IfStatement(loc, cond, thenStmt.toArray(new Statement[thenStmt.size()]), elseStmt);
-			for (final var oa : condResult.getOverapprs()) {
-				oa.annotate(ifStmt);
-			}
-		}
-
-		if (node instanceof IASTWhileStatement || node instanceof IASTForStatement) {
-			bodyBlock.add(0, ifStmt);
-			bodyBlock.addAll(0, condResult.getStatements());
-			if (node instanceof IASTWhileStatement) {
-				bodyBlock.add(0, new Label(loc, loopLabel));
-			}
-		} else if (node instanceof IASTDoStatement) {
-			bodyBlock.add(new Label(loc, loopLabel));
-			bodyBlock.addAll(condResult.getStatements());
-			bodyBlock.add(ifStmt);
-		}
-
+	private ExpressionResult buildLoopResult(final IDispatcher main, final IASTStatement node,
+			final List<Statement> bodyBlock, final ExpressionResultBuilder resultBuilder) {
 		final LoopInvariantSpecification[] spec = extractLoopInvariants(main, node);
-
-		// bit of a workaround using an extra builder here..
-		final ExpressionResultBuilder bodyBlockResultBuilder = new ExpressionResultBuilder();
-		bodyBlockResultBuilder.addStatements(bodyBlock);
-
-		if (node instanceof IASTForStatement && ((IASTForStatement) node).getInitializerStatement() != null) {
-			updateStmtsAndDeclsAtScopeEnd(bodyBlockResultBuilder, node);
-			endScope();
-
-			resultBuilder.addDeclarations(bodyBlockResultBuilder.getDeclarations());
-			bodyBlock = bodyBlockResultBuilder.getStatements();
-		}
-
-		final ILocation ignoreLocation = LocationFactory.createIgnoreCLocation(node);
-		final WhileStatement whileStmt =
-				new WhileStatement(ignoreLocation, ExpressionFactory.createBooleanLiteral(ignoreLocation, true), spec,
-						bodyBlock.toArray(new Statement[bodyBlock.size()]));
+		final ILocation loc = LocationFactory.createIgnoreCLocation(node);
+		final WhileStatement whileStmt = new WhileStatement(loc, ExpressionFactory.createBooleanLiteral(loc, true),
+				spec, bodyBlock.toArray(Statement[]::new));
 		resultBuilder.getOverappr().stream().forEach(a -> a.annotate(whileStmt));
 		resultBuilder.addStatement(whileStmt);
 
@@ -3639,7 +3623,7 @@ public class CHandler {
 		if (mIsPrerun) {
 			return result;
 		}
-		return main.transformWithWitness(node, result);
+		return (ExpressionResult) main.transformWithWitness(node, result);
 	}
 
 	private LoopInvariantSpecification[] extractLoopInvariants(final IDispatcher main, final IASTStatement node) {
