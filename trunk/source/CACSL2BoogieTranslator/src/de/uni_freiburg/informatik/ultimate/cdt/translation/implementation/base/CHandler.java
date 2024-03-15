@@ -3603,8 +3603,8 @@ public class CHandler {
 		return result;
 	}
 
-	private ExpressionResult buildLoopResult(final IDispatcher main, final IASTStatement node,
-			final List<Statement> bodyBlock, final ExpressionResultBuilder resultBuilder) {
+	private Result buildLoopResult(final IDispatcher main, final IASTStatement node, final List<Statement> bodyBlock,
+			final ExpressionResultBuilder resultBuilder) {
 		final LoopInvariantSpecification[] spec = extractLoopInvariants(main, node);
 		final ILocation loc = LocationFactory.createIgnoreCLocation(node);
 		final WhileStatement whileStmt = new WhileStatement(loc, ExpressionFactory.createBooleanLiteral(loc, true),
@@ -3623,7 +3623,7 @@ public class CHandler {
 		if (mIsPrerun) {
 			return result;
 		}
-		return (ExpressionResult) main.transformWithWitness(node, result);
+		return main.transformWithWitness(node, result);
 	}
 
 	private LoopInvariantSpecification[] extractLoopInvariants(final IDispatcher main, final IASTStatement node) {
