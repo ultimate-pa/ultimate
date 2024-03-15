@@ -464,8 +464,7 @@ public class ExpressionResultTransformer {
 		final AuxVarInfo newArrayAuxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, arrayType, SFO.AUXVAR.ARRAYCOPY);
 		final LRValue resultValue = new RValue(newArrayAuxvar.getExp(), arrayType);
 		ExpressionResultBuilder builder = new ExpressionResultBuilder();
-		builder.addDeclaration(newArrayAuxvar.getVarDec());
-		builder.addAuxVar(newArrayAuxvar);
+		builder.addAuxVarWithDeclaration(newArrayAuxvar);
 
 		final Expression newStartAddressBase = MemoryHandler.getPointerBaseAddress(address, loc);
 		final Expression newStartAddressOffset = MemoryHandler.getPointerOffset(address, loc);

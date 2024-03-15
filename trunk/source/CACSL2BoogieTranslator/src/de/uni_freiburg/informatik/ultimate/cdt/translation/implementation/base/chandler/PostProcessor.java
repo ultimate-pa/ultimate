@@ -661,8 +661,7 @@ public class PostProcessor {
 			if (!resultTypeIsVoid) {
 				auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, funcSignature.getReturnType(),
 						SFO.AUXVAR.FUNCPTRRES);
-				builder.addDeclaration(auxvar.getVarDec());
-				builder.addAuxVar(auxvar);
+				builder.addAuxVarWithDeclaration(auxvar);
 				funcCallResult = auxvar.getExp();
 			}
 

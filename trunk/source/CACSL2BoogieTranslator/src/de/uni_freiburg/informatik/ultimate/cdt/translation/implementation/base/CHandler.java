@@ -927,8 +927,7 @@ public class CHandler {
 		final CPrimitive intType = new CPrimitive(CPrimitives.INT);
 		final AuxVarInfo auxvarInfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, intType,
 				new PrimitiveType(loc, BoogieType.TYPE_BOOL, SFO.BOOL), SFO.AUXVAR.SHORTCIRCUIT);
-		builder.addDeclaration(auxvarInfo.getVarDec());
-		builder.addAuxVar(auxvarInfo);
+		builder.addAuxVarWithDeclaration(auxvarInfo);
 		final RValue auxvarRval = new RValue(auxvarInfo.getExp(), intType, true);
 
 		// add auxvar assignment "#t~SHORT~UID = left"
@@ -1163,7 +1162,7 @@ public class CHandler {
 			} else {
 				final AuxVarInfo auxVarInfo =
 						mAuxVarInfoBuilder.constructAuxVarInfo(loc, expr.getCType(), AUXVAR.NONDET);
-				resultBuilder.addAuxVar(auxVarInfo).addDeclaration(auxVarInfo.getVarDec());
+				resultBuilder.addAuxVarWithDeclaration(auxVarInfo);
 				resultBuilder.setLrValue(new RValue(auxVarInfo.getExp(), expr.getCType()));
 				resultBuilder.addStatement(
 						StatementFactory.constructSingleAssignmentStatement(loc, auxVarInfo.getLhs(), expr.getValue()));
@@ -2316,8 +2315,7 @@ public class CHandler {
 		final AuxVarInfo switchAuxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, intType,
 				new PrimitiveType(loc, BoogieType.TYPE_BOOL, SFO.BOOL), SFO.AUXVAR.SWITCH);
 
-		resultBuilder.addDeclaration(switchAuxvar.getVarDec());
-		resultBuilder.addAuxVar(switchAuxvar);
+		resultBuilder.addAuxVarWithDeclaration(switchAuxvar);
 
 		boolean isFirst = true;
 		boolean firstCond = true;
@@ -3264,8 +3262,7 @@ public class CHandler {
 				final AuxVarInfo auxVar =
 						mAuxVarInfoBuilder.constructAuxVarInfo(loc, er.getLrValue().getCType(), SFO.AUXVAR.UNION);
 
-				builder.addDeclaration(auxVar.getVarDec());
-				builder.addAuxVar(auxVar);
+				builder.addAuxVarWithDeclaration(auxVar);
 
 				final RValue tmpVarRVal = new RValue(auxVar.getExp(), er.getLrValue().getCType());
 

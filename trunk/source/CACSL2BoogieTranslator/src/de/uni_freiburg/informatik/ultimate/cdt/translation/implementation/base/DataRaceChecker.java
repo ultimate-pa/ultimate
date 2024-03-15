@@ -193,8 +193,7 @@ public final class DataRaceChecker {
 
 	private Expression createRaceWrite(final ExpressionResultBuilder erb, final ILocation loc) {
 		final AuxVarInfo tmp = mAuxVarInfoBuilder.constructAuxVarInfo(loc, getBoolASTType(), SFO.AUXVAR.NONDET);
-		erb.addDeclaration(tmp.getVarDec());
-		erb.addAuxVar(tmp);
+		erb.addAuxVarWithDeclaration(tmp);
 
 		final Statement havoc = new HavocStatement(loc, new VariableLHS[] { tmp.getLhs() });
 		erb.addStatement(havoc);

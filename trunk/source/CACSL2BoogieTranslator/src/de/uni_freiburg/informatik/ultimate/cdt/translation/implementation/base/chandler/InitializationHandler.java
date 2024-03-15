@@ -791,7 +791,7 @@ public class InitializationHandler {
 	private ExpressionResult makeUnionAuxVarExpressionResult(final ILocation loc, final CType fieldType) {
 		final AuxVarInfo auxVar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, fieldType, SFO.AUXVAR.NONDET);
 		return new ExpressionResultBuilder().setLrValue(new RValue(auxVar.getExp(), fieldType))
-				.addDeclaration(auxVar.getVarDec()).addAuxVar(auxVar)
+				.addAuxVarWithDeclaration(auxVar)
 				.addOverapprox(
 						new Overapprox("initialize union -- havoccing a field without explictit " + "initializer", loc))
 				.build();
@@ -919,8 +919,7 @@ public class InitializationHandler {
 	private LocalLValue obtainAuxVarLocalLValue(final ILocation loc, final CType cType,
 			final ExpressionResultBuilder initialization) {
 		final AuxVarInfo auxVar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, cType);
-		initialization.addDeclaration(auxVar.getVarDec());
-		initialization.addAuxVar(auxVar);
+		initialization.addAuxVarWithDeclaration(auxVar);
 		final LocalLValue arrayLhsToInitialize = new LocalLValue(auxVar.getLhs(), cType, null);
 		initialization.setLrValue(arrayLhsToInitialize);
 		return arrayLhsToInitialize;
@@ -1065,7 +1064,7 @@ public class InitializationHandler {
 
 		final List<Integer> arrayBounds = CTranslationUtil.getConstantDimensionsOfArray(cArrayType, mTypeSizes);
 
-		Integer product = 0;
+		int product = 0;
 		for (int i = 0; i < arrayIndex.size(); i++) {
 			final int factor = i == arrayIndex.size() - 1 ? 1 : arrayBounds.get(i + 1);
 			product = product + factor * arrayIndex.get(i);
@@ -1073,7 +1072,7 @@ public class InitializationHandler {
 		final CPrimitive sizeT = mTypeSetAndOffsetComputer.getSizeT();
 
 		final Expression flatCellNumber =
-				mTypeSizes.constructLiteralForIntegerType(loc, sizeT, new BigInteger(product.toString()));
+				mTypeSizes.constructLiteralForIntegerType(loc, sizeT, new BigInteger(Integer.toString(product)));
 
 		final Expression pointerBase = MemoryHandler.getPointerBaseAddress(arrayBaseAddress.getAddress(), loc);
 		final Expression pointerOffset = MemoryHandler.getPointerOffset(arrayBaseAddress.getAddress(), loc);

@@ -486,8 +486,7 @@ public class BitabsTranslation {
 			final List<Pair<Expression, Expression>> exactCases,
 			final List<Expression> assumptionsForOverapproximation) {
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
-		builder.addDeclaration(auxvarinfo.getVarDec());
-		builder.addAuxVar(auxvarinfo);
+		builder.addAuxVarWithDeclaration(auxvarinfo);
 		final IdentifierExpression auxvar = auxvarinfo.getExp();
 		builder.setLrValue(new RValue(auxvar, resultType));
 		final VariableLHS auxvarLhs = auxvarinfo.getLhs();
