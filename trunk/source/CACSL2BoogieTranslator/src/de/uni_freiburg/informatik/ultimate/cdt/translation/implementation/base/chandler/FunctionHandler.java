@@ -705,7 +705,7 @@ public class FunctionHandler {
 				// If one of the arguments is overapproximated, assign the value to an aux-var and overapproximate this
 				// assignment
 				final AuxVarInfo auxVar =
-						mAuxVarInfoBuilder.constructAuxVarInfo(loc, lrValue.getCType(), AUXVAR.NONDET);
+						mAuxVarInfoBuilder.constructAuxVarInfo(loc, lrValue.getCType(), AUXVAR.RETURNED);
 				functionCallExpressionResultBuilder.addAuxVarWithDeclaration(auxVar);
 				final Statement assign =
 						StatementFactory.constructSingleAssignmentStatement(loc, auxVar.getLhs(), lrValue.getValue());

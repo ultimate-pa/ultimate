@@ -379,6 +379,11 @@ public final class SFO {
 
 		VARARGS_POINTER("varargs"),
 
+		/**
+		 * Auxiliary variable used for the overapproximated result of bitwise operators
+		 */
+		BITWISE("bitwise"),
+
 		;
 
 		private final String mId;

@@ -1161,7 +1161,7 @@ public class CHandler {
 						mMemoryHandler.getReadCall(((HeapLValue) expr).getAddress(), expr.getCType()));
 			} else {
 				final AuxVarInfo auxVarInfo =
-						mAuxVarInfoBuilder.constructAuxVarInfo(loc, expr.getCType(), AUXVAR.NONDET);
+						mAuxVarInfoBuilder.constructAuxVarInfo(loc, expr.getCType(), AUXVAR.RETURNED);
 				resultBuilder.addAuxVarWithDeclaration(auxVarInfo);
 				resultBuilder.setLrValue(new RValue(auxVarInfo.getExp(), expr.getCType()));
 				resultBuilder.addStatement(

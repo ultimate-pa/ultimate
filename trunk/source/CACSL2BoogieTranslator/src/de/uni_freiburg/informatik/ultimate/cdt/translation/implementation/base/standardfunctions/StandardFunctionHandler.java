@@ -1860,7 +1860,7 @@ public class StandardFunctionHandler {
 		} else {
 			// auxvar for joined procedure's return value
 			final CType cType = new CPointer(new CPrimitive(CPrimitives.VOID));
-			final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, cType, SFO.AUXVAR.NONDET);
+			final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, cType, SFO.AUXVAR.RETURNED);
 			builder.addAuxVarWithDeclaration(auxvarinfo);
 			js = new JoinStatement(loc, threadId, new VariableLHS[] { auxvarinfo.getLhs() });
 			builder.addStatement(js);
@@ -2003,7 +2003,7 @@ public class StandardFunctionHandler {
 
 		// auxvar for procedure's return value
 		final CType cType = new CPrimitive(CPrimitives.INT);
-		final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, cType, SFO.AUXVAR.NONDET);
+		final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, cType, SFO.AUXVAR.RETURNED);
 		erb.addAuxVarWithDeclaration(auxvarinfo);
 
 		erb.addStatement(callFactory.apply(loc, index, auxvarinfo.getLhs()));
@@ -2636,7 +2636,7 @@ public class StandardFunctionHandler {
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 
 		final AuxVarInfo auxvarinfo =
-				mAuxVarInfoBuilder.constructAuxVarInfo(loc, new CPrimitive(CPrimitives.INT), SFO.AUXVAR.NONDET);
+				mAuxVarInfoBuilder.constructAuxVarInfo(loc, new CPrimitive(CPrimitives.INT), SFO.AUXVAR.RETURNED);
 		resultBuilder.addAuxVarWithDeclaration(auxvarinfo);
 		resultBuilder.addStatement(new HavocStatement(loc, new VariableLHS[] { auxvarinfo.getLhs() }));
 

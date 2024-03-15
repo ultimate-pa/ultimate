@@ -99,7 +99,7 @@ public class BitabsTranslation {
 		}
 		final Expression zero = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
 
-		final AuxVarInfo auxvarinfo = auxVarInfoBuilder.constructAuxVarInfo(loc, type, SFO.AUXVAR.NONDET);
+		final AuxVarInfo auxvarinfo = auxVarInfoBuilder.constructAuxVarInfo(loc, type, SFO.AUXVAR.BITWISE);
 
 		final Expression auxvar = applyWraparoundIfNecessary(loc, auxvarinfo.getExp(), type);
 		final Expression leftWrapped = applyWraparoundIfNecessary(loc, left, type);
@@ -239,7 +239,7 @@ public class BitabsTranslation {
 
 		final Expression zero = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
 
-		final AuxVarInfo auxvarinfo = auxVarInfoBuilder.constructAuxVarInfo(loc, type, SFO.AUXVAR.NONDET);
+		final AuxVarInfo auxvarinfo = auxVarInfoBuilder.constructAuxVarInfo(loc, type, SFO.AUXVAR.BITWISE);
 		final Expression auxvar = applyWraparoundIfNecessary(loc, auxvarinfo.getExp(), type);
 		final Expression leftWrapped = applyWraparoundIfNecessary(loc, left, type);
 		final Expression rightWrapped = applyWraparoundIfNecessary(loc, right, type);
@@ -346,7 +346,7 @@ public class BitabsTranslation {
 		}
 
 		final Expression zero = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
-		final AuxVarInfo auxvarinfo = auxVarInfoBuilder.constructAuxVarInfo(loc, type, SFO.AUXVAR.NONDET);
+		final AuxVarInfo auxvarinfo = auxVarInfoBuilder.constructAuxVarInfo(loc, type, SFO.AUXVAR.BITWISE);
 		final Expression auxvar = applyWraparoundIfNecessary(loc, auxvarinfo.getExp(), type);
 		final Expression leftWrapped = applyWraparoundIfNecessary(loc, left, type);
 		final Expression rightWrapped = applyWraparoundIfNecessary(loc, right, type);
@@ -451,7 +451,7 @@ public class BitabsTranslation {
 					ExpressionFactory.newBinaryExpression(loc, shiftOperator, leftWrapped, shiftFactorExpr);
 			return new ExpressionResult(new RValue(value, typeLeft));
 		}
-		final AuxVarInfo auxVar = auxVarInfoBuilder.constructAuxVarInfo(loc, typeLeft, SFO.AUXVAR.NONDET);
+		final AuxVarInfo auxVar = auxVarInfoBuilder.constructAuxVarInfo(loc, typeLeft, SFO.AUXVAR.BITWISE);
 		final Expression zero = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
 		final Expression leftEqualsZero =
 				ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, leftWrapped, zero);
