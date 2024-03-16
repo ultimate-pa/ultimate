@@ -1,13 +1,12 @@
 package de.uni_freiburg.informatik.ultimate.web.backend;
 
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.PrintStream;
 import java.nio.file.Path;
 import java.util.EnumSet;
 
 import javax.servlet.DispatcherType;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.eclipse.equinox.app.IApplication;
 import org.eclipse.equinox.app.IApplicationContext;
 import org.eclipse.jetty.server.Server;
@@ -19,14 +18,12 @@ import org.eclipse.jetty.ee8.servlet.ServletContextHandler;
 import org.eclipse.jetty.ee8.servlet.ServletHolder;
 import org.eclipse.jetty.util.resource.PathResourceFactory;
 import org.eclipse.jetty.util.resource.Resource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import de.uni_freiburg.informatik.ultimate.web.backend.util.CrossOriginFilter;
 
 public class WebBackend implements IApplication {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(WebBackend.class);
+	private static final Logger LOGGER = LogManager.getLogger();
 	
 	private Server mJettyServer;
 
@@ -36,9 +33,10 @@ public class WebBackend implements IApplication {
 
 	@Override
 	public Object start(final IApplicationContext context) throws Exception {
+		System.setProperty("org.eclipse.jetty.util.log.class", "org.eclipse.jetty.util.log.LoggerLog");
+
 		Config.load();
 
-		initLogging();
 		initJettyServer();
 
 		mJettyServer.start();
@@ -53,24 +51,6 @@ public class WebBackend implements IApplication {
 			mJettyServer.stop();
 		} catch (final Exception e) {
 			e.printStackTrace();
-		}
-	}
-
-	private static void initLogging() {
-		if (Config.LOG_FILE_PATH.isEmpty()) {
-			LOGGER.info("Logging to stdout/stderr");
-			return;
-		}
-		// Redirect logging to file.
-		FileOutputStream outStream;
-		try {
-			outStream = new FileOutputStream(Config.LOG_FILE_PATH, true);
-			final PrintStream logStream = new PrintStream(outStream);
-			System.setOut(logStream);
-			System.setErr(logStream);
-			LOGGER.info("Logging to '" + Config.LOG_FILE_PATH + "'");
-		} catch (final FileNotFoundException e) {
-			LOGGER.warn("Not able to log to '" + Config.LOG_FILE_PATH + "'");
 		}
 	}
 
@@ -142,5 +122,4 @@ public class WebBackend implements IApplication {
 		cors.setInitParameter(CrossOriginFilter.ALLOWED_METHODS_PARAM, "GET,POST");
 
 	}
-
 }
