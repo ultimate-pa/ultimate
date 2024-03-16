@@ -110,6 +110,22 @@
 			<unit id="org.eclipse.orbit.maven.xml-resolver.feature.group" version="4.32.0"/>
 			<unit id="org.eclipse.orbit.maven.xml-resolver.source.feature.group" version="4.32.0"/>
 		</location>
+		<location includeDependencyDepth="none" includeDependencyScopes="compile" includeSource="true" missingManifest="generate" type="Maven">
+			<dependencies>
+				<dependency>
+					<groupId>org.ops4j.pax.logging</groupId>
+					<artifactId>pax-logging-api</artifactId>
+					<version>2.2.7</version>
+					<type>jar</type>
+				</dependency>
+				<dependency>
+					<groupId>org.ops4j.pax.logging</groupId>
+					<artifactId>pax-logging-log4j2</artifactId>
+					<version>2.2.7</version>
+					<type>jar</type>
+				</dependency>
+			</dependencies>
+		</location>
 	</locations>
 	<includeBundles>
 		<plugin id="com.google.gson.source"/>
@@ -511,5 +527,9 @@
 		<plugin id="org.eclipse.jetty.ee8.security"/>
 		<plugin id="org.eclipse.jetty.ee8.server.source"/>
 		<plugin id="org.eclipse.jetty.ee8.server"/>
+		<plugin id="org.ops4j.pax.logging.pax-logging-api"/>
+		<plugin id="org.ops4j.pax.logging.pax-logging-log4j2"/>
+		<plugin id="org.ops4j.pax.logging.pax-logging-log4j2.source"/>
+		<plugin id="org.ops4j.pax.logging.pax-logging-api.source"/>
 	</includeBundles>
 </target>
