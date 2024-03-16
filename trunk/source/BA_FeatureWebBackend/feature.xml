@@ -23,13 +23,6 @@
    </requires>
 
    <plugin
-         id="javax.servlet"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
          id="org.eclipse.jetty.http"
          download-size="0"
          install-size="0"
@@ -65,7 +58,7 @@
          unpack="false"/>
 
    <plugin
-         id="org.eclipse.jetty.servlet"
+         id="org.eclipse.jetty.servlet-api"
          download-size="0"
          install-size="0"
          version="0.0.0"
