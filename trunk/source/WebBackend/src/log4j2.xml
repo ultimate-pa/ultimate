@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="ERROR">
+	<Appenders>
+		<Appender type="Console" name="STDOUT">
+			<Layout type="PatternLayout">
+				<Pattern>[%d{ISO8601} %-5p L%-5.5L %20.20C{1}]: %m%n</Pattern>
+			</Layout>
+			<Filters>
+				<Filter type="ThresholdFilter" level="ERROR"/>
+			</Filters>
+		</Appender>
+	</Appenders>
+	<Loggers>
+		<Root level="ERROR">
+			<AppenderRef ref="STDOUT" />
+		</Root>
+	</Loggers>
+</Configuration>
