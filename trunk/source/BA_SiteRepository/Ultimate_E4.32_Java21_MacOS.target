@@ -22,6 +22,7 @@
 			<unit id="org.eclipse.equinox.sdk.feature.group" version="3.23.1200.v20240524-2033"/>
 			<unit id="org.eclipse.jdt.feature.group" version="3.19.500.v20240601-0610"/>
 			<unit id="org.eclipse.sdk.feature.group" version="4.32.0.v20240601-0610"/>
+			<unit id="org.eclipse.equinox.server.jetty.feature.group" version="1.11.500.v20240321-1445"/>
 		</location>
 		<location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="planner" includeSource="true" type="InstallableUnit">
 			<repository location="https://download.eclipse.org/tools/orbit/simrel/orbit-aggregation/2024-06"/>
@@ -502,5 +503,13 @@
 		<plugin id="org.eclipse.core.filesystem.macosx"/>
 		<plugin id="org.eclipse.equinox.security.macosx.source"/>
 		<plugin id="org.eclipse.equinox.security.macosx"/>
+		<plugin id="org.eclipse.equinox.http.jetty"/>
+		<plugin id="org.eclipse.equinox.http.jetty.source"/>
+		<plugin id="org.eclipse.jetty.ee8.servlet"/>
+		<plugin id="org.eclipse.jetty.ee8.servlet.source"/>
+		<plugin id="org.eclipse.jetty.ee8.security.source"/>
+		<plugin id="org.eclipse.jetty.ee8.security"/>
+		<plugin id="org.eclipse.jetty.ee8.server.source"/>
+		<plugin id="org.eclipse.jetty.ee8.server"/>
 	</includeBundles>
 </target>
