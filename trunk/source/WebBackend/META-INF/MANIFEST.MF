@@ -17,6 +17,7 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.util,
  org.eclipse.jetty.ee8.server,
  org.eclipse.jetty.ee8.servlet,
  javax.servlet-api,
- com.google.gson,
- slf4j.api
+ org.ops4j.pax.logging.pax-logging-api,
+ org.ops4j.pax.logging.pax-logging-log4j2,
+ com.google.gson
 Export-Package: de.uni_freiburg.informatik.ultimate.web.backend
