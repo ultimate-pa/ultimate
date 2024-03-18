@@ -1058,8 +1058,7 @@ public class ExpressionResultTransformer {
 				builder.addAllExceptLrValue(disp);
 				// Introduce an auxvar for the result for consistency, mMemoryHandler.getReadCall also creates an auxvar
 				final AuxVarInfo auxVar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, disp.getCType(), AUXVAR.RETURNED);
-				builder.addAuxVar(auxVar).addDeclaration(auxVar.getVarDec())
-						.setLrValue(new RValue(auxVar.getExp(), disp.getCType()));
+				builder.addAuxVarWithDeclaration(auxVar).setLrValue(new RValue(auxVar.getExp(), disp.getCType()));
 				builder.addStatement(StatementFactory.constructSingleAssignmentStatement(loc, auxVar.getLhs(),
 						disp.getLrValue().getValue()));
 				if (mDataRaceChecker != null) {
