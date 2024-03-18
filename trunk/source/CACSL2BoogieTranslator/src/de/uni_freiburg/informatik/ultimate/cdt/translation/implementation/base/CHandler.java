@@ -1170,7 +1170,7 @@ public class CHandler {
 		}
 		if (isNewScopeRequired) {
 			updateStmtsAndDeclsAtScopeEnd(resultBuilder, node);
-			addHavocsAtScopeEnd(mLocationFactory.createCLocation(node), node, resultBuilder);
+			addHavocsAtScopeEnd(node, resultBuilder);
 			endScope();
 		}
 		resultBuilder.addStatements(CTranslationUtil.createHavocsForAuxVars(auxVars));
@@ -2870,12 +2870,12 @@ public class CHandler {
 		}
 	}
 
-	private void addHavocsAtScopeEnd(final ILocation loc, final IASTStatement hook,
-			final ExpressionResultBuilder builder) {
+	private void addHavocsAtScopeEnd(final IASTNode hook, final ExpressionResultBuilder builder) {
 		if (!ADD_HAVOCS_AT_SCOPE_END) {
 			return;
 		}
 		final List<VariableLHS> vars = new ArrayList<>();
+		final ILocation loc = LocationFactory.createIgnoreCLocation(hook);
 		for (final SymbolTableValue stv : mSymbolTable.getInnermostCScopeValues(hook)) {
 			if (!stv.isBoogieGlobalVar() && stv.getBoogieDecl() != null) {
 				final VariableLHS lhs = new VariableLHS(loc, stv.getAstType().getBoogieType(), stv.getBoogieName(),
@@ -3597,7 +3597,7 @@ public class CHandler {
 
 		if (node instanceof IASTForStatement) {
 			// Havoc variables declared in the initializer after the loop
-			addHavocsAtScopeEnd(loc, node, resultBuilder);
+			addHavocsAtScopeEnd(node, resultBuilder);
 		}
 
 		assert resultBuilder.getLrValue() == null : "there is an lrvalue although there should be none";
