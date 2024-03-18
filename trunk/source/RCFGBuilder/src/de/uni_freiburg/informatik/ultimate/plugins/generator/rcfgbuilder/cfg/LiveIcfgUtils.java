@@ -130,8 +130,8 @@ public class LiveIcfgUtils {
 				final Set<IProgramVar> outVarsToRemove = new HashSet<>(tf.getOutVars().keySet());
 				outVarsToRemove.removeAll(futureLiveVars);
 				outVarsToRemove.removeAll(indispensibleLocalVars);
-				// If a variable was havoced before, we still want to havoc it
-				outVarsToRemove.retainAll(tf.getInVars().keySet());
+				// If a variable was havoced by this edge, we still want to havoc it
+				removeHavocedVariables(tf, outVarsToRemove);
 				{
 					// remove all global vars, they might be needed for our interprocedural proofs.
 					// TODO: optimization only needed if they are past-live at the call
@@ -171,6 +171,20 @@ public class LiveIcfgUtils {
 		}
 		services.getLoggingService().getLogger(LiveIcfgUtils.class).log(LogLevel.INFO,
 				String.format("Removed %s outVars from TransFormulas that were not future-live.", removedNonLiveVars));
+	}
+
+	/**
+	 * Remove from progVars all {@link IProgramVar} that are havoced in the
+	 * {@link TransFormula}.
+	 */
+	public static void removeHavocedVariables(final TransFormula tf, final Set<IProgramVar> progVars) {
+		final Iterator<IProgramVar> it = progVars.iterator();
+		while (it.hasNext()) {
+			final IProgramVar tv = it.next();
+			if (tf.isHavocedOut(tv)) {
+				it.remove();
+			}
+		}
 	}
 
 	private static UnmodifiableTransFormula eliminateAuxVars(final IUltimateServiceProvider services,
