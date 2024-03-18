@@ -52,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
  *
  */
 public class WitnessRegressionTestSuite extends AbstractRegressionTestSuite {
-
+	private static final List<String> WITNESS_EXTENSIONS = List.of(".graphml", ".yaml", ".yml");
 	private static final long DEFAULT_TIMEOUT = 25 * 1000L;
 
 	public WitnessRegressionTestSuite() {
@@ -72,7 +72,7 @@ public class WitnessRegressionTestSuite extends AbstractRegressionTestSuite {
 			final UltimateRunDefinition def = t.getUltimateRunDefinition();
 			for (final File f : def.getInput()) {
 				final File[] witnesses = f.getParentFile().listFiles(
-						(d, n) -> (n.endsWith(".graphml") || n.endsWith(".yaml")) && n.startsWith(f.getName()));
+						(d, n) -> WITNESS_EXTENSIONS.stream().anyMatch(n::endsWith) && n.startsWith(f.getName()));
 				for (final File witness : witnesses) {
 					final File[] newFiles = DataStructureUtils.concat(def.getInput(), new File[] { witness });
 					final UltimateRunDefinition newDef = new UltimateRunDefinition(newFiles, def.getSettings(),

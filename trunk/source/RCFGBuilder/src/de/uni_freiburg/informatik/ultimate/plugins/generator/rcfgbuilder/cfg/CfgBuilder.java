@@ -1854,10 +1854,26 @@ public class CfgBuilder {
 
 					if (AtomicBlockInfo.isStartOfAtomicBlock(incoming)
 							&& AtomicBlockInfo.isEndOfAtomicBlock(outgoing)) {
-						// When completing an edge from beginning to end of an atomic block, remove the annotations
+						// When completing an edge from beginning to end of an atomic block, mark the block as complete
 						ModelUtils.copyAnnotationsFiltered(incoming, comp, ann -> !(ann instanceof AtomicBlockInfo));
 						ModelUtils.copyAnnotationsFiltered(outgoing, comp, ann -> !(ann instanceof AtomicBlockInfo));
 						AtomicBlockInfo.addCompleteAnnotation(comp);
+					} else if (AtomicBlockInfo.isStartOfAtomicBlock(incoming)
+							&& AtomicBlockInfo.isCompleteAtomicBlock(outgoing)) {
+						// When composing an edge from the beginning of an atomic block with a complete atomic block,
+						// mark the composition as the end of an atomic block.
+						// This situation only occurs with nested atomic blocks.
+						ModelUtils.copyAnnotationsFiltered(incoming, comp, ann -> !(ann instanceof AtomicBlockInfo));
+						ModelUtils.copyAnnotationsFiltered(outgoing, comp, ann -> !(ann instanceof AtomicBlockInfo));
+						AtomicBlockInfo.addBeginAnnotation(comp);
+					} else if (AtomicBlockInfo.isCompleteAtomicBlock(incoming)
+							&& AtomicBlockInfo.isEndOfAtomicBlock(outgoing)) {
+						// When composing a complete atomic block with an edge to the end of the atomic block, mark the
+						// composition as the end of an atomic block.
+						// This situation only occurs with nested atomic blocks.
+						ModelUtils.copyAnnotationsFiltered(incoming, comp, ann -> !(ann instanceof AtomicBlockInfo));
+						ModelUtils.copyAnnotationsFiltered(outgoing, comp, ann -> !(ann instanceof AtomicBlockInfo));
+						AtomicBlockInfo.addEndAnnotation(comp);
 					} else {
 						ModelUtils.copyAnnotations(incoming, comp);
 						ModelUtils.copyAnnotations(outgoing, comp);

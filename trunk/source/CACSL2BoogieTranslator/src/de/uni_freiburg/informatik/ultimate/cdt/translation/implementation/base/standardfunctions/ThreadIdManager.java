@@ -186,8 +186,7 @@ public class ThreadIdManager {
 		// create temporary variable for fork counter value
 		final AuxVarInfo tmpThreadId =
 				mAuxVarInfoBuilder.constructAuxVarInfo(loc, mMemoryHandler.getThreadIdType(), SFO.AUXVAR.PRE_MOD);
-		erb.addDeclaration(tmpThreadId.getVarDec());
-		erb.addAuxVar(tmpThreadId);
+		erb.addAuxVarWithDeclaration(tmpThreadId);
 
 		// assignment: temp variable gets fork counter value
 		final IdentifierExpression forkCount = mMemoryHandler.getPthreadForkCount(loc);

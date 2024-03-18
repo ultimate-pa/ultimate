@@ -18,7 +18,6 @@
     file_name: C:\ultimate\trunk\examples\witness-checking\regression\correctness\pointer.c
     file_hash: UNUSED
     line: 4
-    column: 0
     function: main
   loop_invariant:
     string: ((*p == 2) || (*p == 1))

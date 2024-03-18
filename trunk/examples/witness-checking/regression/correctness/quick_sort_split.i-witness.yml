@@ -1,0 +1,18 @@
+- entry_type: invariant_set
+  metadata:
+    format_version: '2.0'
+    uuid: b72f5d4b-aede-4cf9-8e6f-347318123a62
+    creation_time: '2024-03-11T17:42:08+01:00'
+    producer:
+      name: UNUSED
+      version: 0.2.4-dev-9743566-m
+    task:
+      input_files:
+      - quick_sort_split.i
+      input_file_hashes:
+        quick_sort_split.i: UNUSED
+      specification: UNUSED
+      data_model: UNUSED
+      language: C
+  content: [
+    ]

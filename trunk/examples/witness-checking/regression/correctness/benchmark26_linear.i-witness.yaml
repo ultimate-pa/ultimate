@@ -18,7 +18,6 @@
     file_name: C:\ultimate\trunk\examples\witness-checking\regression\correctness\benchmark26_linear.i
     file_hash: UNUSED
     line: 23
-    column: 0
     function: main
   loop_invariant:
     string: (x < (y + 1))

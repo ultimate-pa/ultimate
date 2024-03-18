@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.ACSLLo
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CLocation;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslationValueProvider;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLPrettyPrinter;
 
 /**
  *
@@ -60,7 +61,7 @@ public class CACSLBacktranslationValueProvider implements IBacktranslationValueP
 		if (step instanceof CLocation) {
 			return getStringFromIASTNode(((CLocation) step).getNode());
 		} else if (step instanceof ACSLLocation) {
-			return ((ACSLLocation) step).getNode().toString();
+			return ACSLPrettyPrinter.print(((ACSLLocation) step).getNode());
 		} else {
 			throw new UnsupportedOperationException();
 		}

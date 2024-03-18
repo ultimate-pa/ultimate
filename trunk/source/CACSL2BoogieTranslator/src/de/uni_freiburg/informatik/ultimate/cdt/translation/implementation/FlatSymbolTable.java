@@ -134,6 +134,10 @@ public class FlatSymbolTable {
 		};
 	}
 
+	public Map<String, SymbolTableValue> getGlobalScope() {
+		return Collections.unmodifiableMap(mGlobalScope);
+	}
+
 	/**
 	 * Implements the generic table lookup
 	 *

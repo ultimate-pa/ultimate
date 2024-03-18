@@ -44,7 +44,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTDoStatement;
@@ -127,6 +126,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public class CACSL2BoogieBacktranslator
 		extends DefaultTranslator<BoogieASTNode, CACSLLocation, Expression, IASTExpression, String, String, ILocation> {
+
+	/**
+	 * Throw error in cases where we know that the backtranslation is not exact.
+	 */
+	private static final boolean DEBUG_ERROR_FOR_UNFINISHED_BACKTRANSLATION = false;
 
 	/**
 	 * {@link VariableType} is used to distinguish various special variables after they are converted to strings.
@@ -330,9 +334,7 @@ public class CACSL2BoogieBacktranslator
 		assert checkCallStackTarget(mLogger,
 				checkedTranslatedATEs) : "callstack broken after subtree inclusion reduction";
 		if (mBacktranslationWarned) {
-			mServices.getResultService().reportResult(Activator.PLUGIN_ID,
-					new GenericResult(Activator.PLUGIN_ID, UNFINISHED_BACKTRANSLATION,
-							"The program execution was not completely translated back.", Severity.WARNING));
+			reportUnfinishedBacktranslation("The program execution was not completely translated back.");
 		}
 		return new CACSLProgramExecution(initialState, checkedTranslatedATEs, translatedProgramStates,
 				oldPE.isConcurrent());
@@ -1527,37 +1529,11 @@ public class CACSL2BoogieBacktranslator
 					+ " is mapped to a declaration, but is no IdentifierExpression");
 			return null;
 		}
-
-		if (decls.getDeclarators() == null || decls.getDeclarators().length == 0) {
-			throw new IllegalArgumentException("Expression " + BoogiePrettyPrinter.print(expression)
-					+ " is mapped to a declaration without declarators.");
-		}
-
-		if (decls.getDeclarators().length == 1) {
-			final IdentifierExpression orgidexp = (IdentifierExpression) expression;
-			final TranslatedVariable origName = translateIdentifierExpression(orgidexp, context);
-			if (origName == null || origName.getVarType() == VariableType.POINTER_BASE) {
-				return null;
-			}
-			return new FakeExpression(decls, decls.getDeclarators()[0].getName().getRawSignature(),
-					origName.getCType());
-		}
-		// ok, this is a declaration ala "int a,b;", so we use
-		// our backtranslation map to get the real name
-		final IdentifierExpression orgidexp = (IdentifierExpression) expression;
-		final TranslatedVariable origName = translateIdentifierExpression(orgidexp, context);
-		if (origName == null || origName.getVarType() == VariableType.POINTER_BASE) {
+		final TranslatedVariable variable = translateIdentifierExpression((IdentifierExpression) expression, context);
+		if (variable == null || variable.getVarType() == VariableType.POINTER_BASE) {
 			return null;
 		}
-		for (final IASTDeclarator decl : decls.getDeclarators()) {
-			if (origName.getName().indexOf(decl.getName().getRawSignature()) != -1) {
-				return new FakeExpression(decl.getName().getRawSignature());
-			}
-		}
-		reportUnfinishedBacktranslation("IdentifierExpression " + BoogiePrettyPrinter.print(expression)
-				+ " has a CASTSimpleDeclaration, but we were unable to determine the variable name from it: "
-				+ decls.getRawSignature());
-		return null;
+		return new FakeExpression(decls, variable.getName(), variable.getCType());
 	}
 
 	private void reportUnfinishedBacktranslation(final Expression expr) {
@@ -1566,6 +1542,9 @@ public class CACSL2BoogieBacktranslator
 	}
 
 	private void reportUnfinishedBacktranslation(final String message) {
+		if (DEBUG_ERROR_FOR_UNFINISHED_BACKTRANSLATION) {
+			throw new AssertionError(UNFINISHED_BACKTRANSLATION + ": " + message );
+		}
 		mBacktranslationWarned = true;
 		if (!mGenerateBacktranslationWarnings) {
 			return;

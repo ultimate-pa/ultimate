@@ -1,0 +1,27 @@
+- entry_type: invariant_set
+  metadata:
+    format_version: '2.0'
+    uuid: e6d93ed7-0dc7-45b7-b0fc-25dc0e3b14b6
+    creation_time: '2024-03-11T17:41:16+01:00'
+    producer:
+      name: UNUSED
+      version: 0.2.4-dev-9743566-m
+    task:
+      input_files:
+      - mannadiv.c
+      input_file_hashes:
+        mannadiv.c: UNUSED
+      specification: UNUSED
+      data_model: UNUSED
+      language: C
+  content:
+  - invariant:
+      type: loop_invariant
+      location:
+        file_name: mannadiv.c
+        file_hash: UNUSED
+        line: 35
+        column: 4
+        function: main
+      value: ((((x2 * y1) + y3) + y2) == x1)
+      format: c_expression

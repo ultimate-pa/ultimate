@@ -31,7 +31,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 import org.eclipse.cdt.core.dom.ast.ASTGenericVisitor;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
@@ -79,57 +79,47 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 		final LocationFactory locationFactory =
 				new LocationFactory(null, new LineOffsetComputer(mTranslationUnit.getRawSignature()));
 		final Map<IASTNode, ExtractedLoopInvariant> loopInvariants = new HashMap<>();
-		final Map<IASTNode, ExtractedLocationInvariant> locationInvariantsBefore = new HashMap<>();
-		final Map<IASTNode, ExtractedLocationInvariant> locationInvariantsAfter = new HashMap<>();
+		final Map<IASTNode, ExtractedLocationInvariant> locationInvariants = new HashMap<>();
 		final ExtractedCorrectnessWitness rtr = new ExtractedCorrectnessWitness();
 		for (final WitnessEntry entry : mWitness.getEntries()) {
 			final Location location;
-			final BiConsumer<IASTNode, Boolean> addFunction;
+			final Consumer<IASTNode> addFunction;
 			if (entry instanceof LocationInvariant) {
 				if (mCheckOnlyLoopInvariants) {
 					continue;
 				}
 				location = ((LocationInvariant) entry).getLocation();
-				addFunction = (node, before) -> addLocationInvariant((LocationInvariant) entry, node,
-						Boolean.TRUE.equals(before) ? locationInvariantsBefore : locationInvariantsAfter, before);
+				addFunction = node -> addLocationInvariant((LocationInvariant) entry, node, locationInvariants);
 			} else if (entry instanceof LoopInvariant) {
 				location = ((LoopInvariant) entry).getLocation();
-				addFunction = (node, before) -> addLoopInvariant((LoopInvariant) entry, node, loopInvariants, before);
+				addFunction = node -> addLoopInvariant((LoopInvariant) entry, node, loopInvariants);
 			} else if (entry instanceof FunctionContract) {
 				location = ((FunctionContract) entry).getLocation();
-				addFunction = (node, before) -> addFunctionContract((FunctionContract) entry, node, rtr, before);
+				addFunction = node -> addFunctionContract((FunctionContract) entry, node, rtr);
 			} else {
 				throw new UnsupportedOperationException("Unknown entry type " + entry.getClass().getSimpleName());
 			}
 			final LineColumnMatchingVisitor visitor = new LineColumnMatchingVisitor(location, locationFactory);
 			visitor.run(mTranslationUnit);
-			final Set<IASTNode> matchesBefore = visitor.getMatchedNodesBefore();
-			final Set<IASTNode> matchesAfter = visitor.getMatchedNodesAfter();
-			if (matchesBefore.isEmpty() && matchesAfter.isEmpty()) {
+			final Set<IASTNode> matches = visitor.getMatchedNodes();
+			if (matches.isEmpty()) {
 				if (mIgnoreUnmatchedEntries) {
 					mStats.fail();
 					continue;
 				}
-				throw new UnsupportedOperationException("The witness entry " + entry + " could not be matched.");
+				throw new UnsupportedOperationException("The following witness entry could not be matched: " + entry);
 			}
-			// TODO: Make sure that the invariant is only matched once
-			matchesBefore.forEach(x -> addFunction.accept(x, true));
-			matchesAfter.forEach(x -> addFunction.accept(x, false));
+			matches.forEach(addFunction);
 			mStats.success();
 		}
 		rtr.addWitnessStatements(loopInvariants);
-		rtr.addWitnessStatements(locationInvariantsBefore);
-		rtr.addWitnessStatements(locationInvariantsAfter);
+		rtr.addWitnessStatements(locationInvariants);
 		return rtr;
 
 	}
 
 	private static void addFunctionContract(final FunctionContract functionContract, final IASTNode node,
-			final ExtractedCorrectnessWitness result, final boolean isBefore) {
-		if (!isBefore) {
-			// Functions contracts should only be matched before definitions / declarations
-			return;
-		}
+			final ExtractedCorrectnessWitness result) {
 		if (!(node instanceof IASTSimpleDeclaration) && !(node instanceof IASTFunctionDefinition)) {
 			throw new UnsupportedOperationException(
 					"Function contract is only allowed at declaration or definition of a function (found "
@@ -140,7 +130,7 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 	}
 
 	private static void addLocationInvariant(final LocationInvariant current, final IASTNode node,
-			final Map<IASTNode, ExtractedLocationInvariant> locationInvariants, final boolean isBefore) {
+			final Map<IASTNode, ExtractedLocationInvariant> locationInvariants) {
 		String invariant = current.getInvariant().getExpression();
 		Set<String> labels = Set.of(current.getMetadata().getUuid().toString());
 		final ExtractedLocationInvariant old = locationInvariants.get(node);
@@ -148,15 +138,11 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 			invariant = conjunctInvariants(old.getInvariant(), invariant);
 			labels = DataStructureUtils.union(old.getNodeLabels(), labels);
 		}
-		locationInvariants.put(node, new ExtractedLocationInvariant(invariant, labels, node, isBefore));
+		locationInvariants.put(node, new ExtractedLocationInvariant(invariant, labels, node, true));
 	}
 
 	private static void addLoopInvariant(final LoopInvariant current, final IASTNode node,
-			final Map<IASTNode, ExtractedLoopInvariant> loopInvariants, final boolean isBefore) {
-		if (!isBefore) {
-			// Loop invariants should only be matched before the loops
-			return;
-		}
+			final Map<IASTNode, ExtractedLoopInvariant> loopInvariants) {
 		String invariant = current.getInvariant().getExpression();
 		Set<String> labels = Set.of(current.getMetadata().getUuid().toString());
 		final ExtractedLoopInvariant old = loopInvariants.get(node);
@@ -172,8 +158,7 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 	}
 
 	private static final class LineColumnMatchingVisitor extends ASTGenericVisitor {
-		private final Set<IASTNode> mMatchedNodesBefore = new HashSet<>();
-		private final Set<IASTNode> mMatchedNodesAfter = new HashSet<>();
+		private final Set<IASTNode> mMatchedNodes = new HashSet<>();
 		private final Location mLocation;
 		private final LocationFactory mLocationFactory;
 
@@ -187,12 +172,8 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 			translationUnit.accept(this);
 		}
 
-		public Set<IASTNode> getMatchedNodesBefore() {
-			return mMatchedNodesBefore;
-		}
-
-		public Set<IASTNode> getMatchedNodesAfter() {
-			return mMatchedNodesAfter;
+		public Set<IASTNode> getMatchedNodes() {
+			return mMatchedNodes;
 		}
 
 		@Override
@@ -204,20 +185,11 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 			if (loc == null) {
 				return PROCESS_CONTINUE;
 			}
-			// Match before the AST node, if the line matches and either the column is 0 or the column also matches
-			// TODO: For now we are not strict about the columns, we allow 2 before the start-column and 2 after the
-			// end-column. This should be clarified in the SV-COMP rules!
+			// Match before the AST node, if the line matches and either the column is not present (it can be omitted;
+			// should be matched the first node of the line in that case) or it also matches the AST node
 			if (mLocation.getLine() == loc.getStartLine()
-					&& (mLocation.getColumn() == 0 || (mLocation.getColumn() <= loc.getStartColumn() + 1
-							&& mLocation.getColumn() >= loc.getStartColumn() - 2))) {
-				mMatchedNodesBefore.add(node);
-				// skip the subtree if a match occurred, but continue with siblings.
-				return PROCESS_SKIP;
-			}
-			// Match after the AST node, if both the line and column match
-			if (mLocation.getLine() == loc.getEndLine() && mLocation.getColumn() >= loc.getEndColumn()
-					&& mLocation.getColumn() <= loc.getEndColumn() + 2) {
-				mMatchedNodesAfter.add(node);
+					&& (mLocation.getColumn() == null || mLocation.getColumn() == loc.getStartColumn())) {
+				mMatchedNodes.add(node);
 				// skip the subtree if a match occurred, but continue with siblings.
 				return PROCESS_SKIP;
 			}
