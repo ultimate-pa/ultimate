@@ -1119,9 +1119,9 @@ public class CHandler {
 			final boolean useRValue) {
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 		LRValue expr = null;
-		final IASTNode parent = node.getParent();
+		final boolean isNewScopeRequired = !(node.getParent() instanceof IASTFunctionDefinition);
 
-		if (isNewScopeRequired(parent)) {
+		if (isNewScopeRequired) {
 			beginScope();
 		}
 
@@ -1168,7 +1168,7 @@ public class CHandler {
 						StatementFactory.constructSingleAssignmentStatement(loc, auxVarInfo.getLhs(), expr.getValue()));
 			}
 		}
-		if (isNewScopeRequired(parent)) {
+		if (isNewScopeRequired) {
 			updateStmtsAndDeclsAtScopeEnd(resultBuilder, node);
 			addHavocsAtScopeEnd(mLocationFactory.createCLocation(node), node, resultBuilder);
 			endScope();
@@ -1502,10 +1502,10 @@ public class CHandler {
 	public Result visit(final IDispatcher main, final IASTForStatement node) {
 		final ILocation loc = mLocationFactory.createCLocation(node);
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
+		beginScope();
 		// Process initializer (insert before the actual loop)
 		final IASTStatement cInitStmt = node.getInitializerStatement();
 		if (cInitStmt != null) {
-			beginScope();
 			final Result initializer = main.dispatch(cInitStmt);
 			if (initializer instanceof ExpressionResult) {
 				resultBuilder.addAllExceptLrValueAndHavocAux((ExpressionResult) initializer);
@@ -1516,7 +1516,7 @@ public class CHandler {
 						"Uninplemented type of for loop initialization: " + initializer.getClass());
 			}
 		}
-		List<Statement> bodyBlock =
+		final List<Statement> bodyBlock =
 				new ArrayList<>(handleLoopCondition(loc, main, node.getConditionExpression(), resultBuilder));
 		final String loopLabel = mNameHandler.getGloballyUniqueIdentifier(SFO.LOOPLABEL);
 		handleLoopBody(loc, main, node.getBody(), loopLabel, resultBuilder, bodyBlock);
@@ -1544,14 +1544,11 @@ public class CHandler {
 			}
 		}
 
-		if (cInitStmt != null) {
-			final ExpressionResultBuilder bodyBlockBuilder = new ExpressionResultBuilder().addStatements(bodyBlock);
-			updateStmtsAndDeclsAtScopeEnd(bodyBlockBuilder, node);
-			endScope();
-			resultBuilder.addDeclarations(bodyBlockBuilder.getDeclarations());
-			bodyBlock = bodyBlockBuilder.getStatements();
-		}
-		return buildLoopResult(main, node, bodyBlock, resultBuilder);
+		final ExpressionResultBuilder bodyBlockBuilder = new ExpressionResultBuilder().addStatements(bodyBlock);
+		updateStmtsAndDeclsAtScopeEnd(bodyBlockBuilder, node);
+		endScope();
+		resultBuilder.addDeclarations(bodyBlockBuilder.getDeclarations());
+		return buildLoopResult(main, node, bodyBlockBuilder.getStatements(), resultBuilder);
 	}
 
 	public Result visit(final IDispatcher main, final IASTFunctionCallExpression node) {
@@ -3164,17 +3161,6 @@ public class CHandler {
 		return new RValue(convertedValue, new CPointer(lrValue.getCType()));
 	}
 
-	/**
-	 * Whether or not a new Scope should be started for this compound statement.
-	 *
-	 * @param env
-	 *            the environment in which the CompoundStatement is.
-	 * @return whether to open a new scope in the symbol table or not.
-	 */
-	private static boolean isNewScopeRequired(final IASTNode env) {
-		return !(env instanceof IASTForStatement) && !(env instanceof IASTFunctionDefinition);
-	}
-
 	private void moveIdOnHeap(final IdentifierExpression idExpr, final IASTNode hook) {
 		final String id = idExpr.getIdentifier();
 		final String cid = mSymbolTable.getCIdForBoogieId(id);
@@ -3610,7 +3596,7 @@ public class CHandler {
 		resultBuilder.addStatement(whileStmt);
 
 		if (node instanceof IASTForStatement) {
-			// Havoc all variables that are declared in the loop (including the initializer) afterwards
+			// Havoc variables declared in the initializer after the loop
 			addHavocsAtScopeEnd(loc, node, resultBuilder);
 		}
 
