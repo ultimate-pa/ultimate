@@ -46,11 +46,11 @@ public class CPrimitive extends CType {
 
 		/* Integer Types */
 		/* char */
-		CHAR(CPrimitiveCategory.INTTYPE),
+		CHAR(CPrimitiveCategory.INTTYPE, "char"),
 		/* signed char */
-		SCHAR(CPrimitiveCategory.INTTYPE),
+		SCHAR(CPrimitiveCategory.INTTYPE, "signed char"),
 		/* unsigned char */
-		UCHAR(CPrimitiveCategory.INTTYPE),
+		UCHAR(CPrimitiveCategory.INTTYPE, "unsigned char"),
 		/* ?? */
 		// WCHAR,
 		/* ?? */
@@ -58,58 +58,60 @@ public class CPrimitive extends CType {
 		/* ?? */
 		// CHAR16,
 		/* short, short int, signed short, signed short int */
-		SHORT(CPrimitiveCategory.INTTYPE),
+		SHORT(CPrimitiveCategory.INTTYPE, "short"),
 		/* unsigned short, unsigned short int */
-		USHORT(CPrimitiveCategory.INTTYPE),
+		USHORT(CPrimitiveCategory.INTTYPE, "unsigned short"),
 		/* int, signed int */
-		INT(CPrimitiveCategory.INTTYPE),
+		INT(CPrimitiveCategory.INTTYPE, "int"),
 		/* unsigned, unsigned int */
-		UINT(CPrimitiveCategory.INTTYPE),
+		UINT(CPrimitiveCategory.INTTYPE, "unsigned"),
 		/* long, long int, signed long, signed long int */
-		LONG(CPrimitiveCategory.INTTYPE),
+		LONG(CPrimitiveCategory.INTTYPE, "long"),
 		/* unsigned long, unsigned long int */
-		ULONG(CPrimitiveCategory.INTTYPE),
+		ULONG(CPrimitiveCategory.INTTYPE, "unsigned long"),
 		/* long long, long long int, signed long long, signed long long int */
-		LONGLONG(CPrimitiveCategory.INTTYPE),
+		LONGLONG(CPrimitiveCategory.INTTYPE, "long long"),
 		/* unsigned long long, unsigned long long int */
-		ULONGLONG(CPrimitiveCategory.INTTYPE),
+		ULONGLONG(CPrimitiveCategory.INTTYPE, "unsigned long long"),
 		/**
 		 * signed __int128 from Section 6.9 of GNU C see https://gcc.gnu.org/onlinedocs/gcc/_005f_005fint128.html
 		 */
-		INT128(CPrimitiveCategory.INTTYPE),
+		INT128(CPrimitiveCategory.INTTYPE, "__int128"),
 		/**
 		 * unsigned __int128 from Section 6.9 of GNU C see https://gcc.gnu.org/onlinedocs/gcc/_005f_005fint128.html
 		 */
-		UINT128(CPrimitiveCategory.INTTYPE),
+		UINT128(CPrimitiveCategory.INTTYPE, "unsigned __int128"),
 		/* _Bool */
-		BOOL(CPrimitiveCategory.INTTYPE),
+		BOOL(CPrimitiveCategory.INTTYPE, "_Bool"),
 		/* Floating Types */
 		/* float */
-		FLOAT(CPrimitiveCategory.FLOATTYPE),
+		FLOAT(CPrimitiveCategory.FLOATTYPE, "float"),
 		/* Float 128 https://gcc.gnu.org/onlinedocs/gcc/Floating-Types.html */
-		FLOAT128(CPrimitiveCategory.FLOATTYPE),
+		FLOAT128(CPrimitiveCategory.FLOATTYPE, "__float128"),
 		/* _Complex float */
-		COMPLEX_FLOAT(CPrimitiveCategory.FLOATTYPE),
+		COMPLEX_FLOAT(CPrimitiveCategory.FLOATTYPE, "_Complex float"),
 		/* double */
-		DOUBLE(CPrimitiveCategory.FLOATTYPE),
+		DOUBLE(CPrimitiveCategory.FLOATTYPE, "double"),
 		/* _Complex double */
-		COMPLEX_DOUBLE(CPrimitiveCategory.FLOATTYPE),
+		COMPLEX_DOUBLE(CPrimitiveCategory.FLOATTYPE, "_Complex double"),
 		/* long double */
-		LONGDOUBLE(CPrimitiveCategory.FLOATTYPE),
+		LONGDOUBLE(CPrimitiveCategory.FLOATTYPE, "long double"),
 		/* _Complex long double */
-		COMPLEX_LONGDOUBLE(CPrimitiveCategory.FLOATTYPE),
+		COMPLEX_LONGDOUBLE(CPrimitiveCategory.FLOATTYPE, "_Complex long double"),
 		// TODO: something with "_imaginary"??
 		/* other type(s) */
 		/**
 		 * C type : void.
 		 */
-		VOID(CPrimitiveCategory.VOID);
-
-		CPrimitives(final CPrimitiveCategory generalprimitive) {
-			mPrimitiveCategory = generalprimitive;
-		}
+		VOID(CPrimitiveCategory.VOID, "void");
 
 		private final CPrimitiveCategory mPrimitiveCategory;
+		private final String mTypeName;
+
+		CPrimitives(final CPrimitiveCategory generalprimitive, final String typeName) {
+			mPrimitiveCategory = generalprimitive;
+			mTypeName = typeName;
+		}
 
 		public boolean isIntegertype() {
 			return mPrimitiveCategory == CPrimitiveCategory.INTTYPE;
@@ -121,6 +123,10 @@ public class CPrimitive extends CType {
 
 		public CPrimitiveCategory getPrimitiveCategory() {
 			return mPrimitiveCategory;
+		}
+
+		public String getTypeName() {
+			return mTypeName;
 		}
 
 	}

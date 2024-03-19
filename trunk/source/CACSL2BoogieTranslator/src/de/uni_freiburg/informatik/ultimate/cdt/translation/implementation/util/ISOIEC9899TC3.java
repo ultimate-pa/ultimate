@@ -459,6 +459,10 @@ public final class ISOIEC9899TC3 {
 		}
 	}
 
+	public static CPrimitive determineTypeForIntegerLiteral(final String integerLiteral, final TypeSizes typeSizes) {
+		return determineCType(new IntegerConstant(integerLiteral), typeSizes);
+	}
+
 	public static Expression constructLiteralForCIntegerLiteral(final ILocation loc, final boolean bitvectorTranslation,
 			final TypeSizes typeSizeConstants, final CPrimitive cType, final BigInteger value) {
 		final Expression resultLiteral;

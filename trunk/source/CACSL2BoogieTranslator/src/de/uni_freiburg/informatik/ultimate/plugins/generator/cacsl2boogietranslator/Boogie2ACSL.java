@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransl
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.List;
 import java.util.function.Consumer;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
@@ -37,13 +38,19 @@ import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.ACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.AcslTypeUtils;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ISOIEC9899TC3;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLPrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLResultExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.BinaryExpression.Operator;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.CastExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.IntegerLiteral;
@@ -59,12 +66,14 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *
  */
 public final class Boogie2ACSL {
+	private final TypeSizes mTypeSizes;
 	private final CACSL2BoogieBacktranslatorMapping mMapping;
 	private final FlatSymbolTable mSymbolTable;
 	private final Consumer<String> mReporter;
 
-	public Boogie2ACSL(final CACSL2BoogieBacktranslatorMapping mapping, final FlatSymbolTable symbolTable,
-			final Consumer<String> reporter) {
+	public Boogie2ACSL(final TypeSizes typeSizes, final CACSL2BoogieBacktranslatorMapping mapping,
+			final FlatSymbolTable symbolTable, final Consumer<String> reporter) {
+		mTypeSizes = typeSizes;
 		mMapping = mapping;
 		mSymbolTable = symbolTable;
 		mReporter = reporter;
@@ -137,12 +146,16 @@ public final class Boogie2ACSL {
 		} else if (mMapping.hasVar(boogieId, expr.getDeclarationInformation())) {
 			final Pair<String, CType> pair = mMapping.getVar(boogieId, expr.getDeclarationInformation());
 			if (isPresentInContext(pair.getFirst(), context)) {
-				return new BacktranslatedExpression(new IdentifierExpression(pair.getFirst()));
+				final var range = getRangeForCType(pair.getSecond());
+				return new BacktranslatedExpression(new IdentifierExpression(pair.getFirst()), pair.getSecond(),
+						range.getFirst(), range.getSecond());
 			}
 		} else if (mMapping.hasInVar(boogieId, expr.getDeclarationInformation())) {
 			// invars can only occur in expressions as part of synthetic expressions, and then they represent oldvars
 			final Pair<String, CType> pair = mMapping.getInVar(boogieId, expr.getDeclarationInformation());
-			return new BacktranslatedExpression(new OldValueExpression(new IdentifierExpression(pair.getFirst())));
+			final var range = getRangeForCType(pair.getSecond());
+			return new BacktranslatedExpression(new OldValueExpression(new IdentifierExpression(pair.getFirst())),
+					pair.getSecond(), range.getFirst(), range.getSecond());
 		}
 		return null;
 	}
@@ -181,6 +194,8 @@ public final class Boogie2ACSL {
 		return binStr;
 	}
 
+	// TODO: Currently we don't care about types here, since function applications should only occur in bitvector
+	// setting, where we should not need any casts.
 	private BacktranslatedExpression translateFunctionApplication(
 			final de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication fun, final ILocation context,
 			final boolean isNegated) {
@@ -291,16 +306,70 @@ public final class Boogie2ACSL {
 
 	private static BacktranslatedExpression
 			translateRealLiteral(final de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral expression) {
+		// TODO: Can we determine the CType here?
 		return new BacktranslatedExpression(new RealLiteral(expression.getValue()));
 	}
 
 	private static BacktranslatedExpression
 			translateBooleanLiteral(final de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral lit) {
-		return new BacktranslatedExpression(new IntegerLiteral(lit.getValue() ? "1" : "0"));
+		final String value = lit.getValue() ? "1" : "0";
+		final BigInteger intValue = new BigInteger(value);
+		return new BacktranslatedExpression(new IntegerLiteral(value), new CPrimitive(CPrimitives.INT), intValue,
+				intValue);
 	}
 
 	private BacktranslatedExpression translateIntegerLiteral(final BigInteger value) {
-		return new BacktranslatedExpression(new IntegerLiteral(value.toString()));
+		final String valueString = value.toString();
+		final CPrimitive type = ISOIEC9899TC3.determineTypeForIntegerLiteral(valueString, mTypeSizes);
+		return new BacktranslatedExpression(new IntegerLiteral(valueString), type, value, value);
+	}
+
+	private CType determineTypeForArithmeticOperation(final CType type1, final CType type2) {
+		if (type1 == null || type2 == null) {
+			return null;
+		}
+		if (!(type1 instanceof CPrimitive) || !(type2 instanceof CPrimitive)) {
+			// TODO: What to do here?
+			return type1;
+		}
+		final CPrimitive prim1 = (CPrimitive) type1;
+		final CPrimitive prim2 = (CPrimitive) type2;
+		if (!prim1.isIntegerType() || !prim2.isIntegerType()) {
+			// TODO: What to do here?
+			return type1;
+		}
+		// If the unsigned type has conversion rank greater than or equal to the rank of the signed type, then the
+		// operand with the signed type is implicitly converted to the unsigned type.
+		if (mTypeSizes.getSize(prim1.getType()) == mTypeSizes.getSize(prim2.getType())) {
+			return mTypeSizes.isUnsigned(prim1) ? prim1 : prim2;
+		}
+		return mTypeSizes.getSize(prim1.getType()) >= mTypeSizes.getSize(prim2.getType()) ? prim1 : prim2;
+	}
+
+	private boolean fitsInType(final BigInteger minValue, final BigInteger maxValue, final CType type) {
+		if (!(type instanceof CPrimitive)) {
+			return true;
+		}
+		final CPrimitive prim = (CPrimitive) type;
+		if (!prim.isIntegerType()) {
+			return true;
+		}
+		return (minValue == null || mTypeSizes.getMinValueOfPrimitiveType(prim).compareTo(minValue) <= 0)
+				&& (maxValue == null || mTypeSizes.getMaxValueOfPrimitiveType(prim).compareTo(maxValue) >= 0);
+	}
+
+	private CType determineTypeForRange(final BigInteger minValue, final BigInteger maxValue) {
+		final List<CPrimitives> orderedTypes = List.of(CPrimitives.CHAR, CPrimitives.UCHAR, CPrimitives.SHORT,
+				CPrimitives.USHORT, CPrimitives.INT, CPrimitives.UINT, CPrimitives.LONG, CPrimitives.ULONG,
+				CPrimitives.LONGLONG, CPrimitives.ULONGLONG, CPrimitives.INT128, CPrimitives.UINT128);
+		for (final CPrimitives prim : orderedTypes) {
+			final CType type = new CPrimitive(prim);
+			if (fitsInType(minValue, maxValue, type)) {
+				return type;
+			}
+		}
+		// If we cannot find a matching type, we do not introduce any casts
+		return null;
 	}
 
 	private BacktranslatedExpression translateBinaryExpression(
@@ -308,44 +377,99 @@ public final class Boogie2ACSL {
 			final boolean isNegated) {
 		final BacktranslatedExpression lhs = translateExpression(expression.getLeft(), context, isNegated);
 		final BacktranslatedExpression rhs = translateExpression(expression.getRight(), context, isNegated);
-
+		final BigInteger leftMinValue = lhs == null ? null : lhs.getMinimalValue();
+		final BigInteger leftMaxValue = lhs == null ? null : lhs.getMaximalValue();
+		final BigInteger rightMinValue = rhs == null ? null : rhs.getMinimalValue();
+		final BigInteger rightMaxValue = rhs == null ? null : rhs.getMaximalValue();
+		final CType leftType = lhs == null ? null : lhs.getCType();
+		final CType rightType = rhs == null ? null : rhs.getCType();
 		final Operator operator;
+		final BigInteger minValue;
+		final BigInteger maxValue;
+		CType resultType;
 		switch (expression.getOperator()) {
 		case ARITHDIV:
 			// TODO: backtranslate from euclidic division properly
+			minValue = leftMinValue == null || rightMaxValue == null ? null : leftMinValue.divide(rightMaxValue);
+			maxValue = leftMaxValue == null || rightMinValue == null ? null : leftMaxValue.divide(rightMinValue);
 			operator = Operator.ARITHDIV;
+			resultType = leftType;
 			break;
 		case ARITHMINUS:
+			minValue = leftMinValue == null || rightMaxValue == null ? null : leftMinValue.subtract(rightMaxValue);
+			maxValue = leftMaxValue == null || rightMinValue == null ? null : leftMaxValue.subtract(rightMinValue);
 			operator = Operator.ARITHMINUS;
+			resultType = determineTypeForArithmeticOperation(leftType, rightType);
 			break;
 		case ARITHMOD:
 			// TODO: backtranslate from euclidic division properly
+			if (rightMinValue != null && rightMinValue.equals(rightMaxValue) && rightMinValue.signum() > 0) {
+				maxValue = rightMinValue.subtract(BigInteger.ONE);
+				minValue = leftMinValue != null && leftMinValue.signum() >= 0 ? BigInteger.ZERO : maxValue.negate();
+			} else {
+				// TODO: I am not quite sure about the minimal/maximal values here, so I just keep them for now
+				minValue = leftMinValue;
+				maxValue = leftMaxValue;
+			}
 			operator = Operator.ARITHMOD;
+			resultType = leftType;
 			break;
 		case ARITHMUL:
+			if (leftMinValue == null || leftMaxValue == null || rightMinValue == null || rightMaxValue == null) {
+				minValue = null;
+				maxValue = null;
+			} else {
+				final List<BigInteger> results =
+						List.of(leftMinValue.multiply(rightMinValue), leftMinValue.multiply(rightMaxValue),
+								leftMaxValue.multiply(rightMinValue), leftMaxValue.multiply(rightMaxValue));
+				minValue = results.stream().min(BigInteger::compareTo).get();
+				maxValue = results.stream().max(BigInteger::compareTo).get();
+			}
 			operator = Operator.ARITHMUL;
+			resultType = determineTypeForArithmeticOperation(leftType, rightType);
 			break;
 		case ARITHPLUS:
+			minValue = leftMinValue == null || rightMaxValue == null ? null : leftMinValue.add(rightMaxValue);
+			maxValue = leftMaxValue == null || rightMinValue == null ? null : leftMaxValue.add(rightMinValue);
 			operator = Operator.ARITHPLUS;
+			resultType = determineTypeForArithmeticOperation(leftType, rightType);
 			break;
 		case COMPEQ:
 		case LOGICIFF:
+			minValue = BigInteger.ZERO;
+			maxValue = BigInteger.ONE;
 			operator = Operator.COMPEQ;
+			resultType = new CPrimitive(CPrimitives.INT);
 			break;
 		case COMPGEQ:
+			minValue = BigInteger.ZERO;
+			maxValue = BigInteger.ONE;
 			operator = Operator.COMPGEQ;
+			resultType = new CPrimitive(CPrimitives.INT);
 			break;
 		case COMPGT:
+			minValue = BigInteger.ZERO;
+			maxValue = BigInteger.ONE;
 			operator = Operator.COMPGT;
+			resultType = new CPrimitive(CPrimitives.INT);
 			break;
 		case COMPLEQ:
+			minValue = BigInteger.ZERO;
+			maxValue = BigInteger.ONE;
 			operator = Operator.COMPLEQ;
+			resultType = new CPrimitive(CPrimitives.INT);
 			break;
 		case COMPLT:
+			minValue = BigInteger.ZERO;
+			maxValue = BigInteger.ONE;
 			operator = Operator.COMPLT;
+			resultType = new CPrimitive(CPrimitives.INT);
 			break;
 		case COMPNEQ:
+			minValue = BigInteger.ZERO;
+			maxValue = BigInteger.ONE;
 			operator = Operator.COMPNEQ;
+			resultType = new CPrimitive(CPrimitives.INT);
 			break;
 		case LOGICAND:
 			if (!isNegated) {
@@ -356,7 +480,10 @@ public final class Boogie2ACSL {
 					return lhs;
 				}
 			}
+			minValue = BigInteger.ZERO;
+			maxValue = BigInteger.ONE;
 			operator = Operator.LOGICAND;
+			resultType = new CPrimitive(CPrimitives.INT);
 			break;
 		case LOGICIMPLIES:
 			if (isNegated && lhs == null) {
@@ -367,7 +494,8 @@ public final class Boogie2ACSL {
 			}
 			// !lhs || rhs
 			return new BacktranslatedExpression(
-					new BinaryExpression(Operator.LOGICOR, lhs.getExpression(), rhs.getExpression()));
+					new BinaryExpression(Operator.LOGICOR, lhs.getExpression(), rhs.getExpression()),
+					new CPrimitive(CPrimitives.INT), BigInteger.ZERO, BigInteger.ONE);
 		case LOGICOR:
 			if (isNegated) {
 				if (lhs == null) {
@@ -377,7 +505,10 @@ public final class Boogie2ACSL {
 					return lhs;
 				}
 			}
+			minValue = BigInteger.ZERO;
+			maxValue = BigInteger.ONE;
 			operator = Operator.LOGICOR;
+			resultType = new CPrimitive(CPrimitives.INT);
 			break;
 		case BITVECCONCAT:
 		case COMPPO:
@@ -388,20 +519,34 @@ public final class Boogie2ACSL {
 		if (lhs == null || rhs == null) {
 			return null;
 		}
-		return new BacktranslatedExpression(new BinaryExpression(operator, lhs.getExpression(), rhs.getExpression()));
+		Expression resultingLhs = lhs.getExpression();
+		if (!fitsInType(minValue, maxValue, resultType)) {
+			resultType = determineTypeForRange(minValue, maxValue);
+			if (resultType != null) {
+				resultingLhs = new CastExpression(AcslTypeUtils.translateCTypeToAcslType(resultType), resultingLhs);
+			}
+		}
+		final Expression resultExpr = new BinaryExpression(operator, resultingLhs, rhs.getExpression());
+		return new BacktranslatedExpression(resultExpr, resultType, minValue, maxValue);
 	}
 
 	private BacktranslatedExpression translateUnaryExpression(
 			final de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression expr, final ILocation context,
 			final boolean isNegated) {
 		final Expression resultExpr;
+		final BigInteger minValue;
+		final BigInteger maxValue;
+		final CType cType;
 		switch (expr.getOperator()) {
 		case ARITHNEGATIVE: {
 			final BacktranslatedExpression innerTrans = translateExpression(expr.getExpr(), context, isNegated);
 			if (innerTrans == null) {
 				return null;
 			}
+			minValue = innerTrans.getMaximalValue() == null ? null : innerTrans.getMaximalValue().negate();
+			maxValue = innerTrans.getMinimalValue() == null ? null : innerTrans.getMinimalValue().negate();
 			resultExpr = new UnaryExpression(UnaryExpression.Operator.MINUS, innerTrans.getExpression());
+			cType = innerTrans.getCType();
 			break;
 		}
 		case LOGICNEG: {
@@ -409,7 +554,10 @@ public final class Boogie2ACSL {
 			if (innerTrans == null) {
 				return null;
 			}
+			minValue = innerTrans.getMaximalValue() == null ? null : innerTrans.getMaximalValue().negate();
+			maxValue = innerTrans.getMinimalValue() == null ? null : innerTrans.getMinimalValue().negate();
 			resultExpr = new UnaryExpression(UnaryExpression.Operator.LOGICNEG, innerTrans.getExpression());
+			cType = innerTrans.getCType();
 			break;
 		}
 		case OLD: {
@@ -417,14 +565,16 @@ public final class Boogie2ACSL {
 			if (innerTrans == null) {
 				return null;
 			}
+			minValue = innerTrans.getMinimalValue();
+			maxValue = innerTrans.getMaximalValue();
 			resultExpr = new OldValueExpression(innerTrans.getExpression());
+			cType = innerTrans.getCType();
 			break;
 		}
 		default:
 			throw new AssertionError("Unhandled case");
 		}
-		return new BacktranslatedExpression(resultExpr);
-
+		return new BacktranslatedExpression(resultExpr, cType, minValue, maxValue);
 	}
 
 	private boolean isPresentInContext(final String cId, final ILocation context) {
@@ -434,15 +584,49 @@ public final class Boogie2ACSL {
 		return mSymbolTable.containsCSymbol(((CLocation) context).getNode(), cId);
 	}
 
+	private Pair<BigInteger, BigInteger> getRangeForCType(final CType type) {
+		if (type == null || !(type.getUnderlyingType() instanceof CPrimitive)) {
+			return new Pair<>(null, null);
+		}
+		final CPrimitive prim = (CPrimitive) type.getUnderlyingType();
+		if (!prim.isIntegerType()) {
+			return new Pair<>(null, null);
+		}
+		return new Pair<>(mTypeSizes.getMinValueOfPrimitiveType(prim), mTypeSizes.getMaxValueOfPrimitiveType(prim));
+	}
+
 	public static final class BacktranslatedExpression {
 		private final Expression mExpression;
+		private final CType mCType;
+		private final BigInteger mMinimalValue;
+		private final BigInteger mMaximalValue;
 
 		public BacktranslatedExpression(final Expression expression) {
+			this(expression, null, null, null);
+		}
+
+		public BacktranslatedExpression(final Expression expression, final CType cType, final BigInteger minimalValue,
+				final BigInteger maximalValue) {
 			mExpression = expression;
+			mCType = cType;
+			mMinimalValue = minimalValue;
+			mMaximalValue = maximalValue;
 		}
 
 		public Expression getExpression() {
 			return mExpression;
+		}
+
+		public CType getCType() {
+			return mCType;
+		}
+
+		private BigInteger getMinimalValue() {
+			return mMinimalValue;
+		}
+
+		private BigInteger getMaximalValue() {
+			return mMaximalValue;
 		}
 
 		@Override

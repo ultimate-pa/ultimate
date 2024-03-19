@@ -135,7 +135,7 @@ public class CACSL2BoogieBacktranslator extends
 		mGenerateBacktranslationWarnings = true;
 		mBacktranslationWarned = false;
 		mLocationFactory = locationFactory;
-		mBoogie2ACSL = new Boogie2ACSL(mapping, symbolTable, this::reportUnfinishedBacktranslation);
+		mBoogie2ACSL = new Boogie2ACSL(typeSizes, mapping, symbolTable, this::reportUnfinishedBacktranslation);
 	}
 
 	@Override
