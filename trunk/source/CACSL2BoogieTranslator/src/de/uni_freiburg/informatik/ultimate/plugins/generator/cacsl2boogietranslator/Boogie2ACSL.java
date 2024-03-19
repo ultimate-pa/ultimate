@@ -320,8 +320,39 @@ public final class Boogie2ACSL {
 
 	private BacktranslatedExpression translateIntegerLiteral(final BigInteger value) {
 		final String valueString = value.toString();
-		final CPrimitive type = ISOIEC9899TC3.determineTypeForIntegerLiteral(valueString, mTypeSizes);
-		return new BacktranslatedExpression(new IntegerLiteral(valueString), type, value, value);
+		final CPrimitive longlong = new CPrimitive(CPrimitives.LONGLONG);
+		if (fitsInType(value, longlong)) {
+			// If the literal fits into long long, we can just use the Boogie literal with a matching type
+			final CPrimitive type = ISOIEC9899TC3.determineTypeForIntegerLiteral(valueString, mTypeSizes);
+			return new BacktranslatedExpression(new IntegerLiteral(valueString), type, value, value);
+		}
+		final CPrimitive ulonglong = new CPrimitive(CPrimitives.ULONGLONG);
+		if (fitsInType(value, ulonglong)) {
+			// If it still fits into unsigned long long we can just append the unsigned suffix
+			return new BacktranslatedExpression(new IntegerLiteral(valueString + "U"), ulonglong, value, value);
+		}
+		final CPrimitive int128 = new CPrimitive(CPrimitives.INT128);
+		final CPrimitive uint128 = new CPrimitive(CPrimitives.UINT128);
+		if (!fitsInType(value, int128) && !fitsInType(value, uint128)) {
+			throw new UnsupportedOperationException(
+					"Unable to backtranslate " + valueString + ", there is no C type to represent it.");
+		}
+		// Otherwise we need to split the literal x to ((x / 2^N) << N) | (x % 2^N)
+		// (where N are the number of bits for long long; using appropriate casts)
+		final CPrimitive resultType = value.signum() >= 0 ? uint128 : int128;
+		final var split =
+				value.abs().divideAndRemainder(mTypeSizes.getMaxValueOfPrimitiveType(ulonglong).add(BigInteger.ONE));
+		final Expression upper = new CastExpression(AcslTypeUtils.translateCTypeToAcslType(resultType),
+				translateIntegerLiteral(split[0]).getExpression());
+		final Expression shift = new IntegerLiteral(String.valueOf(8 * mTypeSizes.getSize(ulonglong.getType())));
+		Expression result = new BinaryExpression(Operator.BITSHIFTLEFT, upper, shift);
+		if (split[1].signum() != 0) {
+			result = new BinaryExpression(Operator.BITOR, result, translateIntegerLiteral(split[1]).getExpression());
+		}
+		if (value.signum() < 0) {
+			result = new UnaryExpression(UnaryExpression.Operator.MINUS, result);
+		}
+		return new BacktranslatedExpression(result, resultType, value, value);
 	}
 
 	private CType determineTypeForArithmeticOperation(final CType type1, final CType type2) {
@@ -344,6 +375,10 @@ public final class Boogie2ACSL {
 			return mTypeSizes.isUnsigned(prim1) ? prim1 : prim2;
 		}
 		return mTypeSizes.getSize(prim1.getType()) >= mTypeSizes.getSize(prim2.getType()) ? prim1 : prim2;
+	}
+
+	private boolean fitsInType(final BigInteger value, final CType type) {
+		return fitsInType(value, value, type);
 	}
 
 	private boolean fitsInType(final BigInteger minValue, final BigInteger maxValue, final CType type) {
