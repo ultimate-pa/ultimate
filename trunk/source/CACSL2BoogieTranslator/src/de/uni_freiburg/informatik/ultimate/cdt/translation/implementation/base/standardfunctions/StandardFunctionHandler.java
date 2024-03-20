@@ -55,8 +55,10 @@ import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
@@ -141,6 +143,11 @@ public class StandardFunctionHandler {
 	 * backward-live to the havoc, otherwise it would be backward-live until the beginning of the procedure.
 	 */
 	private static final boolean HAVOC_NONDET_AUXVARS_ALSO_BEFORE = true;
+
+	/**
+	 * See MEMORY_ORDER_SEQ_CST in stdatomic.h
+	 */
+	private static final int MEMORY_ORDER_SEQ_CST = 5;
 
 	private final LocationFactory mLocationFactory;
 
@@ -420,6 +427,46 @@ public class StandardFunctionHandler {
 		fill(map, "__builtin_add_overflow_p", overapproximateGccOverflowCheck);
 		fill(map, "__builtin_sub_overflow_p", overapproximateGccOverflowCheck);
 		fill(map, "__builtin_mul_overflow_p", overapproximateGccOverflowCheck);
+
+		// Atomic operations https://en.cppreference.com/w/c/atomic
+		// Preprocessing leads to: https://gcc.gnu.org/onlinedocs/gcc/_005f_005fatomic-Builtins.html
+
+		fill(map, "__atomic_load", this::handleAtomicLoad);
+		fill(map, "__atomic_exchange", this::handleAtomicExchange);
+		fill(map, "__atomic_store", this::handleAtomicStore);
+
+		fill(map, "__atomic_load_n", this::handleAtomicLoadN);
+		fill(map, "__atomic_store_n", this::handleAtomicStoreN);
+		fill(map, "__atomic_exchange_n", this::handleAtomicExchangeN);
+
+		fill(map, "__atomic_fetch_add",
+				(main, node, loc, name) -> handleAtomicFetch(main, node, loc, name, IASTBinaryExpression.op_plus));
+		fill(map, "__atomic_fetch_sub",
+				(main, node, loc, name) -> handleAtomicFetch(main, node, loc, name, IASTBinaryExpression.op_minus));
+		fill(map, "__atomic_fetch_and",
+				(main, node, loc, name) -> handleAtomicFetch(main, node, loc, name, IASTBinaryExpression.op_binaryAnd));
+		fill(map, "__atomic_fetch_or",
+				(main, node, loc, name) -> handleAtomicFetch(main, node, loc, name, IASTBinaryExpression.op_binaryOr));
+		fill(map, "__atomic_fetch_xor",
+				(main, node, loc, name) -> handleAtomicFetch(main, node, loc, name, IASTBinaryExpression.op_binaryXor));
+
+		fill(map, "__atomic_test_and_set", this::handleAtomicTestAndSet);
+		fill(map, "__atomic_clear", this::handleAtomicClear);
+
+		fill(map, "__atomic_compare_exchange",
+				(main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
+						new CPrimitive(CPrimitives.BOOL)));
+		fill(map, "__atomic_compare_exchange_n",
+				(main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
+						new CPrimitive(CPrimitives.BOOL)));
+		fill(map, "__atomic_thread_fence", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main,
+				loc, name, new CPrimitive(CPrimitives.VOID)));
+		fill(map, "__atomic_signal_fence", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main,
+				loc, name, new CPrimitive(CPrimitives.VOID)));
+		fill(map, "__atomic_always_lock_free", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
+				name, 2, new CPrimitive(CPrimitives.BOOL)));
+		fill(map, "__atomic_is_lock_free", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name,
+				2, new CPrimitive(CPrimitives.BOOL)));
 
 		/*
 		 * builtin_prefetch according to https://gcc.gnu.org/onlinedocs/gcc-3.4.5/gcc/Other-Builtins.html (state:
@@ -985,6 +1032,176 @@ public class StandardFunctionHandler {
 		} else {
 			throw new UnsupportedOperationException("Unsupported type " + lhs.getClass().getSimpleName());
 		}
+	}
+
+	private Result handleAtomicClear(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+			final String name) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 2, name, arguments);
+		final ExpressionResult write =
+				mExprResultTransformer.dispatchPointerWrite(main, loc, arguments[0], mExpressionTranslation
+						.constructLiteralForIntegerType(loc, new CPrimitive(CPrimitives.BOOL), BigInteger.ZERO));
+		return applyMemoryOrder(loc, write, (ExpressionResult) main.dispatch(arguments[1]));
+	}
+
+	private Result handleAtomicTestAndSet(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 2, name, arguments);
+		final CPrimitive boolType = new CPrimitive(CPrimitives.BOOL);
+		final Expression value = mExpressionTranslation.constructLiteralForIntegerType(loc, boolType, BigInteger.ONE);
+		final IASTNode target = arguments[0];
+		final ExpressionResultBuilder builder =
+				new ExpressionResultBuilder(mExprResultTransformer.dispatchPointerRead(main, loc, target));
+		builder.addAllExceptLrValue(mExprResultTransformer.dispatchPointerWrite(main, loc, target, value));
+		return applyMemoryOrder(loc, builder.build(), (ExpressionResult) main.dispatch(arguments[1]));
+	}
+
+	private Result handleAtomicLoad(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+			final String name) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 3, name, arguments);
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		final ExpressionResult read = mExprResultTransformer.dispatchPointerRead(main, loc, arguments[0]);
+		builder.addAllExceptLrValue(read);
+		final ExpressionResult write =
+				mExprResultTransformer.dispatchPointerWrite(main, loc, arguments[1], read.getLrValue().getValue());
+		builder.addAllExceptLrValue(write);
+		// Both the read and the write are atomic
+		return applyMemoryOrder(loc, builder.build(), (ExpressionResult) main.dispatch(arguments[2]));
+	}
+
+	private Result handleAtomicStore(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+			final String name) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 3, name, arguments);
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		final ExpressionResult read = mExprResultTransformer.dispatchPointerRead(main, loc, arguments[1]);
+		builder.addAllExceptLrValue(read);
+		// Make sure that only the write, but not the read is atomic
+		final ExpressionResult write =
+				mExprResultTransformer.dispatchPointerWrite(main, loc, arguments[0], read.getLrValue().getValue());
+		builder.addAllExceptLrValue(applyMemoryOrder(loc, write, (ExpressionResult) main.dispatch(arguments[2])));
+		return builder.build();
+	}
+
+	private Result handleAtomicExchange(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 4, name, arguments);
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		final ExpressionResult read1 = mExprResultTransformer.dispatchPointerRead(main, loc, arguments[0]);
+		builder.addAllExceptLrValue(read1);
+		builder.addAllExceptLrValue(
+				mExprResultTransformer.dispatchPointerWrite(main, loc, arguments[2], read1.getLrValue().getValue()));
+		final ExpressionResult read2 = mExprResultTransformer.dispatchPointerRead(main, loc, arguments[1]);
+		builder.addAllExceptLrValue(read2);
+		builder.addAllExceptLrValue(
+				mExprResultTransformer.dispatchPointerWrite(main, loc, arguments[0], read2.getLrValue().getValue()));
+		// All reads and writes are atomic
+		return applyMemoryOrder(loc, builder.build(), (ExpressionResult) main.dispatch(arguments[3]));
+	}
+
+	private Result handleAtomicLoadN(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+			final String name) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 2, name, arguments);
+		return applyMemoryOrder(loc, mExprResultTransformer.dispatchPointerRead(main, loc, arguments[0]),
+				(ExpressionResult) main.dispatch(arguments[1]));
+	}
+
+	private Result handleAtomicStoreN(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 3, name, arguments);
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		final ExpressionResult valueResult =
+				mExprResultTransformer.transformDecaySwitch((ExpressionResult) main.dispatch(arguments[1]), loc, node);
+		builder.addAllExceptLrValue(valueResult);
+		// Make sure that only the write, but not the read is atomic
+		builder.addAllExceptLrValue(applyMemoryOrder(loc, mExprResultTransformer.dispatchPointerWrite(main, loc,
+				arguments[0], valueResult.getLrValue().getValue()), (ExpressionResult) main.dispatch(arguments[2])));
+		return builder.build();
+	}
+
+	private Result handleAtomicExchangeN(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 3, name, arguments);
+		final ExpressionResultBuilder builder =
+				new ExpressionResultBuilder(mExprResultTransformer.dispatchPointerRead(main, loc, arguments[0]));
+		final ExpressionResult valueResult =
+				mExprResultTransformer.transformDecaySwitch((ExpressionResult) main.dispatch(arguments[1]), loc, node);
+		builder.addAllExceptLrValue(valueResult);
+		builder.addAllExceptLrValue(mExprResultTransformer.dispatchPointerWrite(main, loc, arguments[0],
+				valueResult.getLrValue().getValue()));
+		return applyMemoryOrder(loc, builder.build(), (ExpressionResult) main.dispatch(arguments[2]));
+	}
+
+	private Result handleAtomicFetch(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+			final String name, final int operator) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 3, name, arguments);
+		final ExpressionResult operand =
+				mExprResultTransformer.transformDecaySwitch((ExpressionResult) main.dispatch(arguments[1]), loc, node);
+		final IASTNode target = arguments[0];
+		final ExpressionResult read = mExprResultTransformer.dispatchPointerRead(main, loc, target);
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder(read);
+		final Expression newValue;
+		final CPrimitive readType = (CPrimitive) read.getCType().getUnderlyingType();
+		final CPrimitive operandType = (CPrimitive) operand.getCType().getUnderlyingType();
+		if (operator == IASTBinaryExpression.op_plus || operator == IASTBinaryExpression.op_minus) {
+			newValue = mExpressionTranslation.constructArithmeticExpression(loc, operator, read.getLrValue().getValue(),
+					readType, operand.getLrValue().getValue(), operandType);
+		} else {
+			final ExpressionResult bitwiseResult =
+					mExpressionTranslation.handleBinaryBitwiseExpression(loc, operator, read.getLrValue().getValue(),
+							readType, operand.getLrValue().getValue(), operandType, mAuxVarInfoBuilder);
+			builder.addAllExceptLrValue(bitwiseResult);
+			newValue = bitwiseResult.getLrValue().getValue();
+		}
+		builder.addAllExceptLrValue(mExprResultTransformer.dispatchPointerWrite(main, loc, target, newValue));
+		// Make sure that only the write, but not the read is atomic
+		final ExpressionResult atomicBlock =
+				applyMemoryOrder(loc, builder.build(), (ExpressionResult) main.dispatch(arguments[2]));
+		return new ExpressionResultBuilder().addAllExceptLrValue(operand).addAllIncludingLrValue(atomicBlock).build();
+	}
+
+	/**
+	 * Apply the {@code memoryOrder} to the {@code body} for stdatomic-library. If the memory order is equal to
+	 * {@code MEMORY_ORDER_SEQ_CST}, we just make all statements atomic. For all other cases we just overapproximate
+	 * (using an {@code assert false}), since we only support sequential consistency.
+	 *
+	 * @param loc
+	 *            The C location
+	 * @param body
+	 *            The body that should be atomic based on the memory order
+	 * @param memoryOrder
+	 *            The memory order
+	 * @return An ExpressionResult representing the translation respecting the memory order
+	 */
+	private ExpressionResult applyMemoryOrder(final ILocation loc, final ExpressionResult body,
+			final ExpressionResult memoryOrder) {
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder(body);
+		builder.resetStatements(List.of()).addAllExceptLrValue(memoryOrder);
+		final CPrimitive intType = new CPrimitive(CPrimitives.INT);
+		final Expression seqCst = mExpressionTranslation.constructLiteralForIntegerType(loc, intType,
+				BigInteger.valueOf(MEMORY_ORDER_SEQ_CST));
+		final Expression atomicCond = mExpressionTranslation.constructBinaryEqualityExpression(loc,
+				IASTBinaryExpression.op_equals, memoryOrder.getLrValue().getValue(), intType, seqCst, intType);
+		final Statement atomic = new AtomicStatement(loc, body.getStatements().toArray(Statement[]::new));
+		final Statement overapproxAssert = new AssertStatement(loc, ExpressionFactory.createBooleanLiteral(loc, false));
+		new Overapprox("memory order (only sequential consistency is supported)", loc).annotate(overapproxAssert);
+		new Check(Spec.UNKNOWN).annotate(overapproxAssert);
+		Statement statement;
+		// Try to avoid unnecessary IfStatements
+		if (atomicCond instanceof BooleanLiteral) {
+			statement = ((BooleanLiteral) atomicCond).getValue() ? atomic : overapproxAssert;
+		} else {
+			statement =
+					new IfStatement(loc, atomicCond, new Statement[] { atomic }, new Statement[] { overapproxAssert });
+		}
+		return builder.addStatement(statement).build();
 	}
 
 	private Result handleVaStart(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
