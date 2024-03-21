@@ -59,7 +59,8 @@ public class AutomizerRegressionTest extends AbstractTraceAbstractionTestSuite {
 	
 	
 	private static final String[] mSettings_ForwardPredicates = {
-		"automizer/ForwardPredicates.epf",
+//		"automizer/ForwardPredicates.epf",
+		"automizer/ForwardPredicates_IcfgBuilder.epf",
 //		"automizer/BackwardPredicates.epf",
 	};
 	
@@ -78,7 +79,8 @@ public class AutomizerRegressionTest extends AbstractTraceAbstractionTestSuite {
 	}
 	
 	private static final String[] mBoogieToolchains = {
-		"AutomizerBpl.xml",
+//		"AutomizerBpl.xml",
+		"AutomizerBpl_IcfgBuilder.xml",
 //		"AutomizerBplInline.xml",
 	};
 	
