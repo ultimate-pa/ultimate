@@ -30,205 +30,356 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.junit.Test;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.views.GlobalRule.Quantifier;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.views.GlobalRule.Range;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.views.ViewTest.BurnsRezine.Burns;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.views.ViewTest.BurnsSimple.B;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.views.ViewTest.Mutex.IncDecLocation;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class ViewTest {
-	enum IncDecLocation {
-		MINUS("⊖"), PLUS("⨁");
+	public static class Mutex implements ITestProgram<ProgramState<Integer, IncDecLocation>> {
+		enum IncDecLocation {
+			MINUS("⊖"), PLUS("⨁");
 
-		private final String mStr;
+			private final String mStr;
 
-		private IncDecLocation(final String str) {
-			mStr = str;
+			private IncDecLocation(final String str) {
+				mStr = str;
+			}
+
+			@Override
+			public String toString() {
+				return mStr;
+			}
+		}
+
+		private final int mBound;
+
+		public Mutex(final int bound) {
+			mBound = bound;
 		}
 
 		@Override
-		public String toString() {
-			return mStr;
+		public Program<ProgramState<Integer, IncDecLocation>> getTransitions() {
+			return new Program<>(null,
+					List.of(new GlobalVarUpdate<>(IncDecLocation.MINUS, IncDecLocation.PLUS,
+							i -> (mBound == -1 || i < mBound) ? i + 1 : null),
+							new GlobalVarUpdate<>(IncDecLocation.PLUS, IncDecLocation.MINUS, i -> i - 1)));
 		}
+
+		@Override
+		public Configuration<ProgramState<Integer, IncDecLocation>> init(final int parameter) {
+			final ProgramState<Integer, IncDecLocation> controller = new ProgramState.ControllerState<>(0);
+			final ProgramState<Integer, IncDecLocation> thread = new ProgramState.ThreadState<>(IncDecLocation.MINUS);
+			final var threads = new ImmutableList<>(
+					IntStream.range(0, parameter).mapToObj(i -> thread).collect(Collectors.toList()));
+			return new Configuration<>(new ImmutableList<>(controller, threads));
+		}
+
+		@Override
+		public boolean isBad(final Configuration<ProgramState<Integer, IncDecLocation>> config) {
+			return config.stream().anyMatch(s -> s.isThreadState() && s.getThreadState() == IncDecLocation.PLUS)
+					&& config.stream().filter(s -> s.isControllerState()).findAny().get().getControllerState() == 0;
+		}
+
 	}
 
-	public static Program<ProgramState<Integer, IncDecLocation>> mutexN(final int N) {
-		return new Program<>(null,
-				List.of(new GlobalVarUpdate<>(IncDecLocation.MINUS, IncDecLocation.PLUS, i -> i < N ? i + 1 : null),
-						new GlobalVarUpdate<>(IncDecLocation.PLUS, IncDecLocation.MINUS, i -> i - 1)));
+	private static <X> Consumer<Configuration<X>> consumeConfiguration(final IUltimateServiceProvider services,
+			final Predicate<Configuration<X>> isBad) {
+		final var logger = services.getLoggingService().getLogger(ViewTest.class);
+		return config -> {
+			logger.info(config);
+			if (isBad != null && isBad.test(config)) {
+				logger.fatal("bad config: %s", config);
+				throw new AssertionError("bad config: " + config);
+			}
+		};
 	}
 
-	public static Configuration<ProgramState<Integer, IncDecLocation>> mutexNInit(final int N) {
-		final ProgramState<Integer, IncDecLocation> controller = new ProgramState.ControllerState<>(0);
-		final ProgramState<Integer, IncDecLocation> thread = new ProgramState.ThreadState<>(IncDecLocation.MINUS);
-		final var threads =
-				new ImmutableList<>(IntStream.range(0, N).mapToObj(i -> thread).collect(Collectors.toList()));
-		return new Configuration<>(new ImmutableList<>(controller, threads));
-	}
-
-	private void exploreMutex(final int N) {
-		final var logger = UltimateMocks.createUltimateServiceProviderMock().getLoggingService().getLogger(getClass());
-		new Explorer<>(mutexN(N), List.of(mutexNInit(N))).dfs(logger::info);
-	}
-
-	@Test
-	public void exploreMutex2() {
-		exploreMutex(2);
-	}
-
-	@Test
-	public void abstract3Mutex2() {
+	private static <X> void explore(final ITestProgram<X> program, final int parameter) {
 		final var services = UltimateMocks.createUltimateServiceProviderMock();
-		final var va = new ViewAbstraction<>(services, mutexN(2));
-		final var fp = va.computeFixedPoint(Set.of(mutexNInit(3)), 3);
+		new Explorer<>(program.getTransitions(), List.of(program.init(parameter)))
+				.dfs(consumeConfiguration(services, program::isBad));
+	}
 
-		final var logger = services.getLoggingService().getLogger(getClass());
+	private static <X> void abstractFp(final ITestProgram<X> program, final int parameter) {
+		final var services = UltimateMocks.createUltimateServiceProviderMock();
+		final var va = new ViewAbstraction<>(services, program.getTransitions());
+		final var fp = va.computeFixedPoint(Set.of(program.init(parameter)), parameter);
+
+		final var logger = services.getLoggingService().getLogger(ViewTest.class);
+		fp.stream().forEach(consumeConfiguration(services, program::isBad));
 		logger.info(fp);
 	}
 
 	@Test
+	public void exploreMutex2() {
+		explore(new Mutex(2), 2);
+	}
+
+	@Test
 	public void exploreMutex3() {
-		exploreMutex(3);
+		explore(new Mutex(3), 3);
 	}
 
 	@Test
 	public void exploreMutex4() {
-		exploreMutex(4);
+		explore(new Mutex(4), 4);
 	}
 
-	public static Program<Pair<IncDecLocation, Integer>> mutexNBroadcast(final int N) {
-		final var rules = new ArrayList<IRule<Pair<IncDecLocation, Integer>>>();
+	@Test
+	public void abstract3Mutex2() {
+		abstractFp(new Mutex(2), 3);
+	}
 
-		final UnaryOperator<Pair<IncDecLocation, Integer>> incBroadcast =
-				st -> new Pair<>(st.getFirst(), st.getSecond() + 1);
-		for (int i = 0; i < N; ++i) {
-			rules.add(new BroadcastRule<>(new Pair<>(IncDecLocation.MINUS, i), new Pair<>(IncDecLocation.PLUS, i + 1),
-					incBroadcast));
+	@Test
+	public void abstract4Mutex3() {
+		abstractFp(new Mutex(3), 4);
+	}
+
+	public static class MutexBroadcast implements ITestProgram<Pair<IncDecLocation, Integer>> {
+		private final int mBound;
+
+		public MutexBroadcast(final int bound) {
+			mBound = bound;
 		}
 
-		final UnaryOperator<Pair<IncDecLocation, Integer>> decBroadcast =
-				st -> new Pair<>(st.getFirst(), st.getSecond() - 1);
-		for (int i = 0; i <= N; ++i) {
-			// implicitly puts a guard on the decrement
-			rules.add(new BroadcastRule<>(new Pair<>(IncDecLocation.PLUS, i), new Pair<>(IncDecLocation.MINUS, i - 1),
-					decBroadcast));
+		@Override
+		public Program<Pair<IncDecLocation, Integer>> getTransitions() {
+			final var rules = new ArrayList<IRule<Pair<IncDecLocation, Integer>>>();
+
+			final UnaryOperator<Pair<IncDecLocation, Integer>> incBroadcast =
+					st -> new Pair<>(st.getFirst(), st.getSecond() + 1);
+			for (int i = 0; i < mBound; ++i) {
+				rules.add(new BroadcastRule<>(new Pair<>(IncDecLocation.MINUS, i),
+						new Pair<>(IncDecLocation.PLUS, i + 1), incBroadcast));
+			}
+
+			final UnaryOperator<Pair<IncDecLocation, Integer>> decBroadcast =
+					st -> new Pair<>(st.getFirst(), st.getSecond() - 1);
+			for (int i = 0; i <= mBound; ++i) {
+				// implicitly puts a guard on the decrement
+				rules.add(new BroadcastRule<>(new Pair<>(IncDecLocation.PLUS, i),
+						new Pair<>(IncDecLocation.MINUS, i - 1), decBroadcast));
+			}
+
+			return new Program<>(null, rules);
 		}
 
-		return new Program<>(null, rules);
-	}
+		@Override
+		public Configuration<Pair<IncDecLocation, Integer>> init(final int parameter) {
+			final var state = new Pair<>(IncDecLocation.MINUS, 0);
+			final var states = new ImmutableList<>(
+					IntStream.range(0, parameter).mapToObj(i -> state).collect(Collectors.toList()));
+			return new Configuration<>(states);
+		}
 
-	public static Configuration<Pair<IncDecLocation, Integer>> mutexNBroadcastInit(final int N) {
-		final var state = new Pair<>(IncDecLocation.MINUS, 0);
-		final var states = new ImmutableList<>(IntStream.range(0, N).mapToObj(i -> state).collect(Collectors.toList()));
-		return new Configuration<>(states);
-	}
+		@Override
+		public boolean isBad(final Configuration<Pair<IncDecLocation, Integer>> config) {
+			return config.stream().anyMatch(s -> s.getFirst() == IncDecLocation.PLUS && s.getSecond() == 0);
+		}
 
-	private void exploreMutexBroadcast(final int N) {
-		final var logger = UltimateMocks.createUltimateServiceProviderMock().getLoggingService().getLogger(getClass());
-		new Explorer<>(mutexNBroadcast(N), List.of(mutexNBroadcastInit(N))).dfs(logger::info);
 	}
 
 	@Test
 	public void exploreMutex2Broadcast() {
-		exploreMutexBroadcast(2);
+		explore(new MutexBroadcast(2), 2);
 	}
 
 	@Test
 	public void exploreMutex3Broadcast() {
-		exploreMutexBroadcast(3);
+		explore(new MutexBroadcast(3), 3);
 	}
 
 	@Test
 	public void exploreMutex4Broadcast() {
-		exploreMutexBroadcast(4);
-	}
-
-	public enum Burns {
-		q1, q2, q3, q4, q5, q6, q7;
-	}
-
-	public static Program<Pair<Burns, Boolean>> burns() {
-		final List<IRule<Pair<Burns, Boolean>>> rules = Arrays.asList(
-				// first rule
-				new LocalRule<>(new Pair<>(Burns.q1, true), new Pair<>(Burns.q2, false)),
-				new LocalRule<>(new Pair<>(Burns.q1, false), new Pair<>(Burns.q2, false)),
-
-				// second rule
-				new GlobalRule<>(new Pair<>(Burns.q2, true), new Pair<>(Burns.q2, true), Range.LESS, Quantifier.EXISTS,
-						Pair::getSecond),
-				new GlobalRule<>(new Pair<>(Burns.q2, false), new Pair<>(Burns.q2, false), Range.LESS,
-						Quantifier.EXISTS, Pair::getSecond),
-
-				// third rule
-				new GlobalRule<>(new Pair<>(Burns.q2, true), new Pair<>(Burns.q3, true), Range.LESS, Quantifier.FORALL,
-						s -> !s.getSecond()),
-				new GlobalRule<>(new Pair<>(Burns.q2, false), new Pair<>(Burns.q3, false), Range.LESS,
-						Quantifier.FORALL, s -> !s.getSecond()),
-
-				// fourth rule
-				new LocalRule<>(new Pair<>(Burns.q3, true), new Pair<>(Burns.q4, true)),
-				new LocalRule<>(new Pair<>(Burns.q3, false), new Pair<>(Burns.q4, true)),
-
-				// fifth rule
-				new GlobalRule<>(new Pair<>(Burns.q3, true), new Pair<>(Burns.q4, true), Range.LESS, Quantifier.EXISTS,
-						Pair::getSecond),
-				new GlobalRule<>(new Pair<>(Burns.q3, false), new Pair<>(Burns.q4, false), Range.LESS,
-						Quantifier.EXISTS, Pair::getSecond),
-
-				// sixth rule
-				new GlobalRule<>(new Pair<>(Burns.q4, true), new Pair<>(Burns.q5, true), Range.LESS, Quantifier.FORALL,
-						s -> !s.getSecond()),
-				new GlobalRule<>(new Pair<>(Burns.q4, false), new Pair<>(Burns.q5, false), Range.LESS,
-						Quantifier.FORALL, s -> !s.getSecond()),
-
-				// seventh rule
-				new GlobalRule<>(new Pair<>(Burns.q5, true), new Pair<>(Burns.q6, true), Range.GREATER,
-						Quantifier.FORALL, s -> !s.getSecond()),
-				new GlobalRule<>(new Pair<>(Burns.q5, false), new Pair<>(Burns.q6, false), Range.GREATER,
-						Quantifier.FORALL, s -> !s.getSecond()),
-
-				// eigth rule
-				new LocalRule<>(new Pair<>(Burns.q6, true), new Pair<>(Burns.q7, false)),
-				new LocalRule<>(new Pair<>(Burns.q6, false), new Pair<>(Burns.q7, false)),
-
-				// ninth rule
-				new LocalRule<>(new Pair<>(Burns.q7, true), new Pair<>(Burns.q1, true)),
-				new LocalRule<>(new Pair<>(Burns.q7, false), new Pair<>(Burns.q1, false))
-
-		);
-
-		return new Program<>(null, rules);
-	}
-
-	public static Configuration<Pair<Burns, Boolean>> burnsInit(final int n) {
-		final var state = new Pair<>(Burns.q1, false);
-		final var states = new ImmutableList<>(IntStream.range(0, n).mapToObj(i -> state).collect(Collectors.toList()));
-		return new Configuration<>(states);
-	}
-
-	private void exploreBurns(final int n) {
-		final var logger = UltimateMocks.createUltimateServiceProviderMock().getLoggingService().getLogger(getClass());
-		new Explorer<>(burns(), List.of(burnsInit(n))).dfs(logger::info);
+		explore(new MutexBroadcast(4), 4);
 	}
 
 	@Test
-	public void exploreBurns2() {
-		exploreBurns(2);
+	public void abstract3MutexBroadcast2() {
+		abstractFp(new MutexBroadcast(2), 3);
 	}
 
 	@Test
-	public void exploreBurns3() {
-		exploreBurns(3);
+	public void abstract4MutexBroadcast3() {
+		abstractFp(new MutexBroadcast(3), 4);
+	}
+
+	// version of Burns protocol as in Ahmed Rezine's PhD thesis
+	public static class BurnsRezine implements ITestProgram<Pair<Burns, Boolean>> {
+		public enum Burns {
+			q1, q2, q3, q4, q5, q6, q7;
+		}
+
+		@Override
+		public Program<Pair<Burns, Boolean>> getTransitions() {
+			final List<IRule<Pair<Burns, Boolean>>> rules = Arrays.asList(
+					// first rule
+					new LocalRule<>(new Pair<>(Burns.q1, true), new Pair<>(Burns.q2, false)),
+					new LocalRule<>(new Pair<>(Burns.q1, false), new Pair<>(Burns.q2, false)),
+
+					// second rule
+					new GlobalRule<>(new Pair<>(Burns.q2, true), new Pair<>(Burns.q2, true), Range.LESS,
+							Quantifier.EXISTS, Pair::getSecond),
+					new GlobalRule<>(new Pair<>(Burns.q2, false), new Pair<>(Burns.q2, false), Range.LESS,
+							Quantifier.EXISTS, Pair::getSecond),
+
+					// third rule
+					new GlobalRule<>(new Pair<>(Burns.q2, true), new Pair<>(Burns.q3, true), Range.LESS,
+							Quantifier.FORALL, s -> !s.getSecond()),
+					new GlobalRule<>(new Pair<>(Burns.q2, false), new Pair<>(Burns.q3, false), Range.LESS,
+							Quantifier.FORALL, s -> !s.getSecond()),
+
+					// fourth rule
+					new LocalRule<>(new Pair<>(Burns.q3, true), new Pair<>(Burns.q4, true)),
+					new LocalRule<>(new Pair<>(Burns.q3, false), new Pair<>(Burns.q4, true)),
+
+					// fifth rule
+					new GlobalRule<>(new Pair<>(Burns.q3, true), new Pair<>(Burns.q4, true), Range.LESS,
+							Quantifier.EXISTS, Pair::getSecond),
+					new GlobalRule<>(new Pair<>(Burns.q3, false), new Pair<>(Burns.q4, false), Range.LESS,
+							Quantifier.EXISTS, Pair::getSecond),
+
+					// sixth rule
+					new GlobalRule<>(new Pair<>(Burns.q4, true), new Pair<>(Burns.q5, true), Range.LESS,
+							Quantifier.FORALL, s -> !s.getSecond()),
+					new GlobalRule<>(new Pair<>(Burns.q4, false), new Pair<>(Burns.q5, false), Range.LESS,
+							Quantifier.FORALL, s -> !s.getSecond()),
+
+					// seventh rule
+					new GlobalRule<>(new Pair<>(Burns.q5, true), new Pair<>(Burns.q6, true), Range.GREATER,
+							Quantifier.FORALL, s -> !s.getSecond()),
+					new GlobalRule<>(new Pair<>(Burns.q5, false), new Pair<>(Burns.q6, false), Range.GREATER,
+							Quantifier.FORALL, s -> !s.getSecond()),
+
+					// eigth rule
+					new LocalRule<>(new Pair<>(Burns.q6, true), new Pair<>(Burns.q7, false)),
+					new LocalRule<>(new Pair<>(Burns.q6, false), new Pair<>(Burns.q7, false)),
+
+					// ninth rule
+					new LocalRule<>(new Pair<>(Burns.q7, true), new Pair<>(Burns.q1, true)),
+					new LocalRule<>(new Pair<>(Burns.q7, false), new Pair<>(Burns.q1, false))
+
+			);
+
+			return new Program<>(null, rules);
+		}
+
+		@Override
+		public Configuration<Pair<Burns, Boolean>> init(final int parameter) {
+			final var state = new Pair<>(Burns.q1, false);
+			final var states = new ImmutableList<>(
+					IntStream.range(0, parameter).mapToObj(i -> state).collect(Collectors.toList()));
+			return new Configuration<>(states);
+		}
+
+		@Override
+		public boolean isBad(final Configuration<Pair<Burns, Boolean>> config) {
+			return config.stream().filter(s -> s.getFirst() == Burns.q6).limit(2).count() > 1;
+		}
 	}
 
 	@Test
-	public void exploreBurns4() {
-		exploreBurns(4);
+	public void exploreBurnsRezine2() {
+		explore(new BurnsRezine(), 2);
+	}
+
+	@Test
+	public void exploreBurnsRezine3() {
+		explore(new BurnsRezine(), 3);
+	}
+
+	@Test
+	public void exploreBurnsRezine4() {
+		explore(new BurnsRezine(), 4);
+	}
+
+	@Test
+	public void abstractBurnsRezine2() {
+		abstractFp(new BurnsRezine(), 2);
+	}
+
+	@Test
+	public void abstractBurnsRezine3() {
+		abstractFp(new BurnsRezine(), 3);
+	}
+
+	public static class BurnsSimple implements ITestProgram<B> {
+		public enum B {
+			green, white, black, yellow, blue, red
+		}
+
+		@Override
+		public Program<B> getTransitions() {
+			final Predicate<B> ybr = Set.of(B.yellow, B.blue, B.red)::contains;
+			final Predicate<B> gwb = Set.of(B.green, B.white, B.black)::contains;
+			return new Program<>(null,
+					List.of(new LocalRule<>(B.green, B.white),
+							new GlobalRule<>(B.white, B.green, Range.LESS, Quantifier.EXISTS, ybr),
+							new GlobalRule<>(B.white, B.black, Range.LESS, Quantifier.FORALL, gwb),
+							new LocalRule<>(B.black, B.yellow),
+							new GlobalRule<>(B.yellow, B.green, Range.LESS, Quantifier.EXISTS, ybr),
+							new GlobalRule<>(B.yellow, B.blue, Range.LESS, Quantifier.FORALL, gwb),
+							new GlobalRule<>(B.blue, B.red, Range.GREATER, Quantifier.FORALL, gwb),
+							new LocalRule<>(B.red, B.green)));
+		}
+
+		@Override
+		public Configuration<B> init(final int parameter) {
+			return new Configuration<>(new ImmutableList<>(
+					IntStream.range(0, parameter).mapToObj(i -> B.green).collect(Collectors.toList())));
+		}
+
+		@Override
+		public boolean isBad(final Configuration<B> config) {
+			return config.stream().filter(s -> s == B.red).limit(2).count() > 1;
+		}
+
+	}
+
+	@Test
+	public void exploreBurnsSimple2() {
+		explore(new BurnsSimple(), 2);
+	}
+
+	@Test
+	public void exploreBurnsSimple3() {
+		explore(new BurnsSimple(), 3);
+	}
+
+	@Test
+	public void exploreBurnsSimple4() {
+		explore(new BurnsSimple(), 4);
+	}
+
+	@Test
+	public void abstractBurnsSimple2() {
+		abstractFp(new BurnsSimple(), 2);
+	}
+
+	@Test
+	public void abstractBurnsSimple3() {
+		abstractFp(new BurnsSimple(), 3);
+	}
+
+	public interface ITestProgram<X> {
+		Program<X> getTransitions();
+
+		Configuration<X> init(int parameter);
+
+		boolean isBad(Configuration<X> config);
 	}
 }
