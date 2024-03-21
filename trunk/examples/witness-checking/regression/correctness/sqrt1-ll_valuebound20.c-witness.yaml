@@ -18,7 +18,6 @@
     file_name: C:\ultimate\trunk\examples\witness-checking\regression\correctness\sqrt1-ll_valuebound20.c
     file_hash: UNUSED
     line: 30
-    column: 0
     function: main
   loop_invariant:
     string: (((((t * 2) + (t * t)) + 1) == (s * 4)) && (t == ((a * 2) + 1)))

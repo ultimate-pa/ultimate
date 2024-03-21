@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2016 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2016 University of Freiburg
+ * Copyright (C) 2024 Frank Schüssele (schuessf@informatik.uni-freiburg.de)
+ * Copyright (C) 2016-2024 University of Freiburg
  *
  * This file is part of the ULTIMATE CACSL2BoogieTranslator plug-in.
  *
@@ -26,74 +27,78 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
-import java.util.Arrays;
-
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLType;
 
 /**
  * Provides static methods for conversion from {@link ACSLType}s to C types.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  */
 public class AcslTypeUtils {
+	public static CType translateAcslTypeToCType(final ACSLType t) {
+		// TODO: Handle non-primitive types as well
+		return new CPrimitive(translatePrimitiveAcslTypeToCType(t));
+	}
 
-	private static final String[] CHAR_STRINGS = new String[] { "char" };
-	private static final String[] SIGNED_CHAR_STRINGS = new String[] { "signed char" };
-	private static final String[] UNSIGNED_CHAR_STRINGS = new String[] { "unsigned char" };
-	private static final String[] SIGNED_SHORT_STRINGS =
-			new String[] { "short", "short int", "signed short", "signed short int" };
-	private static final String[] UNSIGNED_SHORT_STRINGS = new String[] { "unsigned short", "unsigned short int" };
-	private static final String[] SIGNED_INT_STRINGS = new String[] { "int", "signed int" };
-	private static final String[] UNSIGNED_INT_STRINGS = new String[] { "unsigned int" };
-	private static final String[] SIGNED_LONG_STRINGS =
-			new String[] { "long", "long int", "signed long", "signed long int" };
-	private static final String[] UNSIGNED_LONG_STRINGS = new String[] { "unsigned long", "unsigned long int" };
-	private static final String[] SIGNED_LONGLONG_STRINGS =
-			new String[] { "long long", "long long int", "signed long long", "signed long long int" };
-	private static final String[] UNSIGNED_LONGLONG_STRINGS =
-			new String[] { "unsigned long long", "unsigned long long int", "size_t" };
-	private static final String[] FLOAT_STRINGS = new String[] { "char" };
-	private static final String[] DOUBLE_CHAR_STRINGS = new String[] { "signed char" };
-	private static final String[] LONGDOUBLE_STRINGS = new String[] { "unsigned char" };
-	private static final String[] BOOL_STRINGS = new String[] { "_Bool" };
-
-	public static CPrimitive translateAcslTypeToCType(final ACSLType t) {
-		final CPrimitives primitives;
-		if (Arrays.asList(CHAR_STRINGS).contains(t.getTypeName())) {
-			primitives = CPrimitives.CHAR;
-		} else if (Arrays.asList(SIGNED_CHAR_STRINGS).contains(t.getTypeName())) {
-			primitives = CPrimitives.SCHAR;
-		} else if (Arrays.asList(UNSIGNED_CHAR_STRINGS).contains(t.getTypeName())) {
-			primitives = CPrimitives.UCHAR;
-		} else if (Arrays.asList(SIGNED_SHORT_STRINGS).contains(t.getTypeName())) {
-			primitives = CPrimitives.SHORT;
-		} else if (Arrays.asList(UNSIGNED_SHORT_STRINGS).contains(t.getTypeName())) {
-			primitives = CPrimitives.USHORT;
-		} else if (Arrays.asList(SIGNED_INT_STRINGS).contains(t.getTypeName())) {
-			primitives = CPrimitives.INT;
-		} else if (Arrays.asList(UNSIGNED_INT_STRINGS).contains(t.getTypeName())) {
-			primitives = CPrimitives.UINT;
-		} else if (Arrays.asList(SIGNED_LONG_STRINGS).contains(t.getTypeName())) {
-			primitives = CPrimitives.LONG;
-		} else if (Arrays.asList(UNSIGNED_LONG_STRINGS).contains(t.getTypeName())) {
-			primitives = CPrimitives.ULONG;
-		} else if (Arrays.asList(SIGNED_LONGLONG_STRINGS).contains(t.getTypeName())) {
-			primitives = CPrimitives.LONGLONG;
-		} else if (Arrays.asList(UNSIGNED_LONGLONG_STRINGS).contains(t.getTypeName())) {
-			primitives = CPrimitives.ULONGLONG;
-		} else if (Arrays.asList(FLOAT_STRINGS).contains(t.getTypeName())) {
-			primitives = CPrimitives.FLOAT;
-		} else if (Arrays.asList(DOUBLE_CHAR_STRINGS).contains(t.getTypeName())) {
-			primitives = CPrimitives.DOUBLE;
-		} else if (Arrays.asList(LONGDOUBLE_STRINGS).contains(t.getTypeName())) {
-			primitives = CPrimitives.LONGDOUBLE;
-		} else if (Arrays.asList(BOOL_STRINGS).contains(t.getTypeName())) {
-			primitives = CPrimitives.BOOL;
-		} else {
-			throw new UnsupportedOperationException("not yet implemented " + t);
+	private static CPrimitives translatePrimitiveAcslTypeToCType(final ACSLType t) {
+		switch (t.getTypeName()) {
+		case "char":
+			return CPrimitives.CHAR;
+		case "signed char":
+			return CPrimitives.SCHAR;
+		case "unsigned char":
+			return CPrimitives.UCHAR;
+		case "short":
+		case "short int":
+		case "signed short":
+		case "signed short int":
+			return CPrimitives.SHORT;
+		case "unsigned short":
+		case "unsigned short int":
+			return CPrimitives.USHORT;
+		case "int":
+		case "signed int":
+			return CPrimitives.INT;
+		case "unsigned int":
+		case "unsigned":
+			return CPrimitives.UINT;
+		case "long":
+		case "long int":
+		case "signed long":
+		case "signed long int":
+			return CPrimitives.LONG;
+		case "unsigned long":
+		case "unsigned long int":
+			return CPrimitives.ULONG;
+		case "long long":
+		case "long long int":
+		case "signed long long":
+		case "signed long long int":
+			return CPrimitives.LONGLONG;
+		case "unsigned long long":
+		case "unsigned long long int":
+		case "size_t":
+			return CPrimitives.ULONGLONG;
+		case "__int128":
+			return CPrimitives.INT128;
+		case "unsigned __int128":
+			return CPrimitives.UINT128;
+		case "float":
+			return CPrimitives.FLOAT;
+		case "double":
+			return CPrimitives.DOUBLE;
+		case "long double":
+			return CPrimitives.LONGDOUBLE;
+		case "__float128":
+			return CPrimitives.FLOAT128;
+		case "_Bool":
+			return CPrimitives.BOOL;
+		default:
+			throw new UnsupportedOperationException("Unhandled ACSL type " + t);
 		}
-		return new CPrimitive(primitives);
 	}
 }

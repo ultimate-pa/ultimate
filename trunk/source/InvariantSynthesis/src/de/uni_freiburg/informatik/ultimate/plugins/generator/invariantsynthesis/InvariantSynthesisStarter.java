@@ -357,7 +357,8 @@ public class InvariantSynthesisStarter<L extends IIcfgTransition<?>> {
 			final HoareAnnotation ensures = HoareAnnotation.getAnnotation(exit);
 			final HoareAnnotation requires = HoareAnnotation.getAnnotation(entry);
 			if (ensures != null) {
-				final Term ensuresFormula = ensures.getFormula();
+				final Term ensuresFormula =
+						PredicateUtils.eliminateLocalVars(ensures, mServices, icfg.getCfgSmtToolkit());
 				final Term requiresFormula = PredicateUtils.eliminateOldVars(mServices,
 						icfg.getCfgSmtToolkit().getManagedScript(), requires);
 				final ProcedureContractResult<IIcfgElement, Term> result = new ProcedureContractResult<>(

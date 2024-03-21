@@ -313,9 +313,17 @@ public final class UltimateRunDefinitionGenerator {
 		final Map<File, SvcompArchitecture> inputFileToArchitecture =
 				getInputFilesFromYamlFiles(TestUtil.getFiles(dir, ".yml"), sfs.getProperty(), sfs.getExpectedResult());
 		final List<File[]> sourceAndWitnesses = new ArrayList<>();
-		for (final File witness : TestUtil.getFiles(dir, ".graphml", "-witness.yml")) {
+		for (final File witness : TestUtil.getFiles(dir, "-witness.graphml")) {
 			for (final File source : inputFileToArchitecture.keySet()) {
-				if (witness.getPath().startsWith(source.getPath())) {
+				if (source.getPath().concat("-witness.graphml").equals(witness.getPath())) {
+					sourceAndWitnesses.add(new File[] { source, witness });
+					break;
+				}
+			}
+		}
+		for (final File witness : TestUtil.getFiles(dir, "-witness.yml")) {
+			for (final File source : inputFileToArchitecture.keySet()) {
+				if (source.getPath().concat("-witness.yml").equals(witness.getPath())) {
 					sourceAndWitnesses.add(new File[] { source, witness });
 					break;
 				}

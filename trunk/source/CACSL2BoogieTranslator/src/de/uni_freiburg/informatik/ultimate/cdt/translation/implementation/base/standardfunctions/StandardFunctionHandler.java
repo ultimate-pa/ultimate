@@ -55,8 +55,10 @@ import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
@@ -141,6 +143,11 @@ public class StandardFunctionHandler {
 	 * backward-live to the havoc, otherwise it would be backward-live until the beginning of the procedure.
 	 */
 	private static final boolean HAVOC_NONDET_AUXVARS_ALSO_BEFORE = true;
+
+	/**
+	 * See MEMORY_ORDER_SEQ_CST in stdatomic.h
+	 */
+	private static final int MEMORY_ORDER_SEQ_CST = 5;
 
 	private final LocationFactory mLocationFactory;
 
@@ -420,6 +427,46 @@ public class StandardFunctionHandler {
 		fill(map, "__builtin_add_overflow_p", overapproximateGccOverflowCheck);
 		fill(map, "__builtin_sub_overflow_p", overapproximateGccOverflowCheck);
 		fill(map, "__builtin_mul_overflow_p", overapproximateGccOverflowCheck);
+
+		// Atomic operations https://en.cppreference.com/w/c/atomic
+		// Preprocessing leads to: https://gcc.gnu.org/onlinedocs/gcc/_005f_005fatomic-Builtins.html
+
+		fill(map, "__atomic_load", this::handleAtomicLoad);
+		fill(map, "__atomic_exchange", this::handleAtomicExchange);
+		fill(map, "__atomic_store", this::handleAtomicStore);
+
+		fill(map, "__atomic_load_n", this::handleAtomicLoadN);
+		fill(map, "__atomic_store_n", this::handleAtomicStoreN);
+		fill(map, "__atomic_exchange_n", this::handleAtomicExchangeN);
+
+		fill(map, "__atomic_fetch_add",
+				(main, node, loc, name) -> handleAtomicFetch(main, node, loc, name, IASTBinaryExpression.op_plus));
+		fill(map, "__atomic_fetch_sub",
+				(main, node, loc, name) -> handleAtomicFetch(main, node, loc, name, IASTBinaryExpression.op_minus));
+		fill(map, "__atomic_fetch_and",
+				(main, node, loc, name) -> handleAtomicFetch(main, node, loc, name, IASTBinaryExpression.op_binaryAnd));
+		fill(map, "__atomic_fetch_or",
+				(main, node, loc, name) -> handleAtomicFetch(main, node, loc, name, IASTBinaryExpression.op_binaryOr));
+		fill(map, "__atomic_fetch_xor",
+				(main, node, loc, name) -> handleAtomicFetch(main, node, loc, name, IASTBinaryExpression.op_binaryXor));
+
+		fill(map, "__atomic_test_and_set", this::handleAtomicTestAndSet);
+		fill(map, "__atomic_clear", this::handleAtomicClear);
+
+		fill(map, "__atomic_compare_exchange",
+				(main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
+						new CPrimitive(CPrimitives.BOOL)));
+		fill(map, "__atomic_compare_exchange_n",
+				(main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
+						new CPrimitive(CPrimitives.BOOL)));
+		fill(map, "__atomic_thread_fence", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main,
+				loc, name, new CPrimitive(CPrimitives.VOID)));
+		fill(map, "__atomic_signal_fence", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main,
+				loc, name, new CPrimitive(CPrimitives.VOID)));
+		fill(map, "__atomic_always_lock_free", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
+				name, 2, new CPrimitive(CPrimitives.BOOL)));
+		fill(map, "__atomic_is_lock_free", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name,
+				2, new CPrimitive(CPrimitives.BOOL)));
 
 		/*
 		 * builtin_prefetch according to https://gcc.gnu.org/onlinedocs/gcc-3.4.5/gcc/Other-Builtins.html (state:
@@ -939,8 +986,7 @@ public class StandardFunctionHandler {
 		final var builder = new ExpressionResultBuilder();
 
 		final AuxVarInfo retvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, resultType, SFO.AUXVAR.NONDET);
-		builder.addDeclaration(retvar.getVarDec());
-		builder.addAuxVar(retvar);
+		builder.addAuxVarWithDeclaration(retvar);
 		builder.setLrValue(new LocalLValue(retvar.getLhs(), resultType, null));
 
 		// one possible return value: NULL
@@ -949,8 +995,7 @@ public class StandardFunctionHandler {
 
 		// alternative option: return a nondeterministic string of nondeterministic length
 		final AuxVarInfo len = mAuxVarInfoBuilder.constructAuxVarInfo(loc, sizeT, SFO.AUXVAR.NONDET);
-		builder.addDeclaration(len.getVarDec());
-		builder.addAuxVar(len);
+		builder.addAuxVarWithDeclaration(len);
 
 		// allocate memory for a string and end it with a null-char as terminator
 		final var body = new ArrayList<Statement>();
@@ -987,6 +1032,176 @@ public class StandardFunctionHandler {
 		} else {
 			throw new UnsupportedOperationException("Unsupported type " + lhs.getClass().getSimpleName());
 		}
+	}
+
+	private Result handleAtomicClear(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+			final String name) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 2, name, arguments);
+		final ExpressionResult write =
+				mExprResultTransformer.dispatchPointerWrite(main, loc, arguments[0], mExpressionTranslation
+						.constructLiteralForIntegerType(loc, new CPrimitive(CPrimitives.BOOL), BigInteger.ZERO));
+		return applyMemoryOrder(loc, write, (ExpressionResult) main.dispatch(arguments[1]));
+	}
+
+	private Result handleAtomicTestAndSet(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 2, name, arguments);
+		final CPrimitive boolType = new CPrimitive(CPrimitives.BOOL);
+		final Expression value = mExpressionTranslation.constructLiteralForIntegerType(loc, boolType, BigInteger.ONE);
+		final IASTNode target = arguments[0];
+		final ExpressionResultBuilder builder =
+				new ExpressionResultBuilder(mExprResultTransformer.dispatchPointerRead(main, loc, target));
+		builder.addAllExceptLrValue(mExprResultTransformer.dispatchPointerWrite(main, loc, target, value));
+		return applyMemoryOrder(loc, builder.build(), (ExpressionResult) main.dispatch(arguments[1]));
+	}
+
+	private Result handleAtomicLoad(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+			final String name) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 3, name, arguments);
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		final ExpressionResult read = mExprResultTransformer.dispatchPointerRead(main, loc, arguments[0]);
+		builder.addAllExceptLrValue(read);
+		final ExpressionResult write =
+				mExprResultTransformer.dispatchPointerWrite(main, loc, arguments[1], read.getLrValue().getValue());
+		builder.addAllExceptLrValue(write);
+		// Both the read and the write are atomic
+		return applyMemoryOrder(loc, builder.build(), (ExpressionResult) main.dispatch(arguments[2]));
+	}
+
+	private Result handleAtomicStore(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+			final String name) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 3, name, arguments);
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		final ExpressionResult read = mExprResultTransformer.dispatchPointerRead(main, loc, arguments[1]);
+		builder.addAllExceptLrValue(read);
+		// Make sure that only the write, but not the read is atomic
+		final ExpressionResult write =
+				mExprResultTransformer.dispatchPointerWrite(main, loc, arguments[0], read.getLrValue().getValue());
+		builder.addAllExceptLrValue(applyMemoryOrder(loc, write, (ExpressionResult) main.dispatch(arguments[2])));
+		return builder.build();
+	}
+
+	private Result handleAtomicExchange(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 4, name, arguments);
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		final ExpressionResult read1 = mExprResultTransformer.dispatchPointerRead(main, loc, arguments[0]);
+		builder.addAllExceptLrValue(read1);
+		builder.addAllExceptLrValue(
+				mExprResultTransformer.dispatchPointerWrite(main, loc, arguments[2], read1.getLrValue().getValue()));
+		final ExpressionResult read2 = mExprResultTransformer.dispatchPointerRead(main, loc, arguments[1]);
+		builder.addAllExceptLrValue(read2);
+		builder.addAllExceptLrValue(
+				mExprResultTransformer.dispatchPointerWrite(main, loc, arguments[0], read2.getLrValue().getValue()));
+		// All reads and writes are atomic
+		return applyMemoryOrder(loc, builder.build(), (ExpressionResult) main.dispatch(arguments[3]));
+	}
+
+	private Result handleAtomicLoadN(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+			final String name) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 2, name, arguments);
+		return applyMemoryOrder(loc, mExprResultTransformer.dispatchPointerRead(main, loc, arguments[0]),
+				(ExpressionResult) main.dispatch(arguments[1]));
+	}
+
+	private Result handleAtomicStoreN(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 3, name, arguments);
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		final ExpressionResult valueResult =
+				mExprResultTransformer.transformDecaySwitch((ExpressionResult) main.dispatch(arguments[1]), loc, node);
+		builder.addAllExceptLrValue(valueResult);
+		// Make sure that only the write, but not the read is atomic
+		builder.addAllExceptLrValue(applyMemoryOrder(loc, mExprResultTransformer.dispatchPointerWrite(main, loc,
+				arguments[0], valueResult.getLrValue().getValue()), (ExpressionResult) main.dispatch(arguments[2])));
+		return builder.build();
+	}
+
+	private Result handleAtomicExchangeN(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 3, name, arguments);
+		final ExpressionResultBuilder builder =
+				new ExpressionResultBuilder(mExprResultTransformer.dispatchPointerRead(main, loc, arguments[0]));
+		final ExpressionResult valueResult =
+				mExprResultTransformer.transformDecaySwitch((ExpressionResult) main.dispatch(arguments[1]), loc, node);
+		builder.addAllExceptLrValue(valueResult);
+		builder.addAllExceptLrValue(mExprResultTransformer.dispatchPointerWrite(main, loc, arguments[0],
+				valueResult.getLrValue().getValue()));
+		return applyMemoryOrder(loc, builder.build(), (ExpressionResult) main.dispatch(arguments[2]));
+	}
+
+	private Result handleAtomicFetch(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+			final String name, final int operator) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 3, name, arguments);
+		final ExpressionResult operand =
+				mExprResultTransformer.transformDecaySwitch((ExpressionResult) main.dispatch(arguments[1]), loc, node);
+		final IASTNode target = arguments[0];
+		final ExpressionResult read = mExprResultTransformer.dispatchPointerRead(main, loc, target);
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder(read);
+		final Expression newValue;
+		final CPrimitive readType = (CPrimitive) read.getCType().getUnderlyingType();
+		final CPrimitive operandType = (CPrimitive) operand.getCType().getUnderlyingType();
+		if (operator == IASTBinaryExpression.op_plus || operator == IASTBinaryExpression.op_minus) {
+			newValue = mExpressionTranslation.constructArithmeticExpression(loc, operator, read.getLrValue().getValue(),
+					readType, operand.getLrValue().getValue(), operandType);
+		} else {
+			final ExpressionResult bitwiseResult =
+					mExpressionTranslation.handleBinaryBitwiseExpression(loc, operator, read.getLrValue().getValue(),
+							readType, operand.getLrValue().getValue(), operandType, mAuxVarInfoBuilder);
+			builder.addAllExceptLrValue(bitwiseResult);
+			newValue = bitwiseResult.getLrValue().getValue();
+		}
+		builder.addAllExceptLrValue(mExprResultTransformer.dispatchPointerWrite(main, loc, target, newValue));
+		// Make sure that only the write, but not the read is atomic
+		final ExpressionResult atomicBlock =
+				applyMemoryOrder(loc, builder.build(), (ExpressionResult) main.dispatch(arguments[2]));
+		return new ExpressionResultBuilder().addAllExceptLrValue(operand).addAllIncludingLrValue(atomicBlock).build();
+	}
+
+	/**
+	 * Apply the {@code memoryOrder} to the {@code body} for stdatomic-library. If the memory order is equal to
+	 * {@code MEMORY_ORDER_SEQ_CST}, we just make all statements atomic. For all other cases we just overapproximate
+	 * (using an {@code assert false}), since we only support sequential consistency.
+	 *
+	 * @param loc
+	 *            The C location
+	 * @param body
+	 *            The body that should be atomic based on the memory order
+	 * @param memoryOrder
+	 *            The memory order
+	 * @return An ExpressionResult representing the translation respecting the memory order
+	 */
+	private ExpressionResult applyMemoryOrder(final ILocation loc, final ExpressionResult body,
+			final ExpressionResult memoryOrder) {
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder(body);
+		builder.resetStatements(List.of()).addAllExceptLrValue(memoryOrder);
+		final CPrimitive intType = new CPrimitive(CPrimitives.INT);
+		final Expression seqCst = mExpressionTranslation.constructLiteralForIntegerType(loc, intType,
+				BigInteger.valueOf(MEMORY_ORDER_SEQ_CST));
+		final Expression atomicCond = mExpressionTranslation.constructBinaryEqualityExpression(loc,
+				IASTBinaryExpression.op_equals, memoryOrder.getLrValue().getValue(), intType, seqCst, intType);
+		final Statement atomic = new AtomicStatement(loc, body.getStatements().toArray(Statement[]::new));
+		final Statement overapproxAssert = new AssertStatement(loc, ExpressionFactory.createBooleanLiteral(loc, false));
+		new Overapprox("memory order (only sequential consistency is supported)", loc).annotate(overapproxAssert);
+		new Check(Spec.UNKNOWN).annotate(overapproxAssert);
+		Statement statement;
+		// Try to avoid unnecessary IfStatements
+		if (atomicCond instanceof BooleanLiteral) {
+			statement = ((BooleanLiteral) atomicCond).getValue() ? atomic : overapproxAssert;
+		} else {
+			statement =
+					new IfStatement(loc, atomicCond, new Statement[] { atomic }, new Statement[] { overapproxAssert });
+		}
+		return builder.addStatement(statement).build();
 	}
 
 	private Result handleVaStart(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
@@ -1052,8 +1267,7 @@ public class StandardFunctionHandler {
 		builder.addAllExceptLrValue((ExpressionResult) main.dispatch(arguments[1]));
 		final AuxVarInfo auxVarInfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc,
 				new CPointer(new CPrimitive(CPrimitives.CHAR)), AUXVAR.NONDET);
-		builder.addAuxVar(auxVarInfo);
-		builder.addDeclaration(auxVarInfo.getVarDec());
+		builder.addAuxVarWithDeclaration(auxVarInfo);
 		final List<Statement> writes = makeVarargAssignment(loc, dst.getLrValue(), auxVarInfo.getExp());
 		writes.forEach(new Overapprox(name, loc)::annotate);
 		return builder.addStatements(writes).build();
@@ -1071,8 +1285,7 @@ public class StandardFunctionHandler {
 
 		final var resultType = new CPrimitive(CPrimitives.INT);
 		final AuxVarInfo resultInfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, resultType, AUXVAR.NONDET);
-		builder.addDeclaration(resultInfo.getVarDec());
-		builder.addAuxVar(resultInfo);
+		builder.addAuxVarWithDeclaration(resultInfo);
 
 		final int argSize = mTypeSizes.getSize(argPrimitive);
 		final var argType = new CPrimitive(argPrimitive);
@@ -1223,14 +1436,12 @@ public class StandardFunctionHandler {
 		// declare loop counter ctr
 		final AuxVarInfo ctr = mAuxVarInfoBuilder.constructAuxVarInfo(loc,
 				mExpressionTranslation.getCTypeOfPointerComponents(), SFO.AUXVAR.LOOPCTR);
-		builder.addDeclaration(ctr.getVarDec());
-		builder.addAuxVar(ctr);
+		builder.addAuxVarWithDeclaration(ctr);
 
 		// declare nondet aux var
 		final AuxVarInfo auxvar =
 				mAuxVarInfoBuilder.constructAuxVarInfo(loc, new CPrimitive(CPrimitives.CHAR), SFO.AUXVAR.NONDET);
-		builder.addDeclaration(auxvar.getVarDec());
-		builder.addAuxVar(auxvar);
+		builder.addAuxVarWithDeclaration(auxvar);
 
 		// ctr := 0
 		final var zero = mTypeSizes.constructLiteralForIntegerType(loc,
@@ -1277,8 +1488,7 @@ public class StandardFunctionHandler {
 
 		final var ret =
 				mAuxVarInfoBuilder.constructAuxVarInfo(loc, new CPrimitive(CPrimitives.CHAR), SFO.AUXVAR.RETURNED);
-		builder.addAuxVar(ret);
-		builder.addDeclaration(ret.getVarDec());
+		builder.addAuxVarWithDeclaration(ret);
 		builder.setLrValue(new LocalLValue(ret.getLhs(), new CPrimitive(CPrimitives.CHAR), null));
 
 		return builder.build();
@@ -1316,14 +1526,12 @@ public class StandardFunctionHandler {
 		// declare loop counter ctr
 		final AuxVarInfo ctr = mAuxVarInfoBuilder.constructAuxVarInfo(loc,
 				mExpressionTranslation.getCTypeOfPointerComponents(), SFO.AUXVAR.LOOPCTR);
-		builder.addDeclaration(ctr.getVarDec());
-		builder.addAuxVar(ctr);
+		builder.addAuxVarWithDeclaration(ctr);
 
 		// declare nondet aux var
 		final AuxVarInfo auxvar =
 				mAuxVarInfoBuilder.constructAuxVarInfo(loc, new CPrimitive(CPrimitives.CHAR), SFO.AUXVAR.NONDET);
-		builder.addDeclaration(auxvar.getVarDec());
-		builder.addAuxVar(auxvar);
+		builder.addAuxVarWithDeclaration(auxvar);
 
 		// ctr := 0
 		final var zero = mTypeSizes.constructLiteralForIntegerType(loc,
@@ -1377,8 +1585,7 @@ public class StandardFunctionHandler {
 
 		final var ret =
 				mAuxVarInfoBuilder.constructAuxVarInfo(loc, new CPrimitive(CPrimitives.CHAR), SFO.AUXVAR.RETURNED);
-		builder.addAuxVar(ret);
-		builder.addDeclaration(ret.getVarDec());
+		builder.addAuxVarWithDeclaration(ret);
 		builder.setLrValue(new LocalLValue(ret.getLhs(), new CPrimitive(CPrimitives.CHAR), null));
 
 		return builder.build();
@@ -1412,8 +1619,7 @@ public class StandardFunctionHandler {
 
 			final CType type = ((CPointer) arg.getCType()).getPointsToType();
 			final AuxVarInfo auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, type, SFO.AUXVAR.NONDET);
-			builder.addDeclaration(auxvar.getVarDec());
-			builder.addAuxVar(auxvar);
+			builder.addAuxVarWithDeclaration(auxvar);
 
 			// Write a non-deterministic value to the given address, but make sure the value is in range
 			final var lValue =
@@ -1435,8 +1641,7 @@ public class StandardFunctionHandler {
 		// (0 to the number of variables written to)
 		final CPrimitive retValueType = new CPrimitive(CPrimitives.LONG);
 		final AuxVarInfo returnAuxVar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, retValueType, SFO.AUXVAR.NONDET);
-		builder.addAuxVar(returnAuxVar);
-		builder.addDeclaration(returnAuxVar.getVarDec());
+		builder.addAuxVarWithDeclaration(returnAuxVar);
 		final var minValue = mExpressionTranslation.constructLiteralForIntegerType(loc, retValueType, BigInteger.ZERO);
 		final var retVal = returnAuxVar.getExp();
 		final var greaterMin = mExpressionTranslation.constructBinaryComparisonExpression(loc,
@@ -1511,8 +1716,7 @@ public class StandardFunctionHandler {
 		// final VariableDeclaration tmpVarDecl =
 		// SFO.getTempVarVariableDeclaration(tmpId, main.mTypeHandler.cType2AstType(loc, resultType), loc);
 		final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, resultType, SFO.AUXVAR.NONDET);
-		builder.addDeclaration(auxvarinfo.getVarDec());
-		builder.addAuxVar(auxvarinfo);
+		builder.addAuxVarWithDeclaration(auxvarinfo);
 
 		final Overapprox overAppFlag = new Overapprox(name, loc);
 		builder.addOverapprox(overAppFlag);
@@ -1557,8 +1761,7 @@ public class StandardFunctionHandler {
 		for (final Overapprox oa : resultBuilder.getOverappr()) {
 			oa.annotate(call);
 		}
-		resultBuilder.addDeclaration(auxvarinfo.getVarDec());
-		resultBuilder.addAuxVar(auxvarinfo);
+		resultBuilder.addAuxVarWithDeclaration(auxvarinfo);
 		resultBuilder.addStatement(call);
 		resultBuilder.setLrValue(new RValue(auxvarinfo.getExp(), new CPointer(new CPrimitive(CPrimitives.VOID))));
 
@@ -1596,8 +1799,7 @@ public class StandardFunctionHandler {
 		// final VariableDeclaration tmpVarDecl =
 		// SFO.getTempVarVariableDeclaration(tmpId, main.mTypeHandler.cType2AstType(loc, resultType), loc);
 		final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, resultType, SFO.AUXVAR.NONDET);
-		builder.addDeclaration(auxvarinfo.getVarDec());
-		builder.addAuxVar(auxvarinfo);
+		builder.addAuxVarWithDeclaration(auxvarinfo);
 
 		// final IdentifierExpression tmpVarIdExpr = new IdentifierExpression(loc, tmpId);
 		final Overapprox overAppFlag = new Overapprox(methodName, loc);
@@ -1641,8 +1843,7 @@ public class StandardFunctionHandler {
 		// introduce fresh aux variable
 		final CPointer resultType = new CPointer(new CPrimitive(CPrimitives.CHAR));
 		final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, resultType, SFO.AUXVAR.NONDET);
-		builder.addDeclaration(auxvarinfo.getVarDec());
-		builder.addAuxVar(auxvarinfo);
+		builder.addAuxVarWithDeclaration(auxvarinfo);
 
 		final Expression nullExpr = mExpressionTranslation.constructNullPointer(loc);
 
@@ -1780,8 +1981,7 @@ public class StandardFunctionHandler {
 			// auxvar for fork return value (status code)
 			final AuxVarInfo auxvarinfo =
 					mAuxVarInfoBuilder.constructAuxVarInfo(loc, returnValueCType, SFO.AUXVAR.NONDET);
-			builder.addDeclaration(auxvarinfo.getVarDec());
-			builder.addAuxVar(auxvarinfo);
+			builder.addAuxVarWithDeclaration(auxvarinfo);
 			returnValue = auxvarinfo.getExp();
 		}
 		final LRValue val = new RValue(returnValue, returnValueCType);
@@ -1877,9 +2077,8 @@ public class StandardFunctionHandler {
 		} else {
 			// auxvar for joined procedure's return value
 			final CType cType = new CPointer(new CPrimitive(CPrimitives.VOID));
-			final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, cType, SFO.AUXVAR.NONDET);
-			builder.addDeclaration(auxvarinfo.getVarDec());
-			builder.addAuxVar(auxvarinfo);
+			final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, cType, SFO.AUXVAR.RETURNED);
+			builder.addAuxVarWithDeclaration(auxvarinfo);
 			js = new JoinStatement(loc, threadId, new VariableLHS[] { auxvarinfo.getLhs() });
 			builder.addStatement(js);
 			final HeapLValue heapLValue;
@@ -2021,9 +2220,8 @@ public class StandardFunctionHandler {
 
 		// auxvar for procedure's return value
 		final CType cType = new CPrimitive(CPrimitives.INT);
-		final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, cType, SFO.AUXVAR.NONDET);
-		erb.addDeclaration(auxvarinfo.getVarDec());
-		erb.addAuxVar(auxvarinfo);
+		final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, cType, SFO.AUXVAR.RETURNED);
+		erb.addAuxVarWithDeclaration(auxvarinfo);
 
 		erb.addStatement(callFactory.apply(loc, index, auxvarinfo.getLhs()));
 		erb.setLrValue(new RValue(auxvarinfo.getExp(), new CPrimitive(CPrimitives.INT)));
@@ -2215,8 +2413,7 @@ public class StandardFunctionHandler {
 
 		final CPointer voidPointerType = new CPointer(new CPrimitive(CPrimitives.VOID));
 		final AuxVarInfo auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, voidPointerType, SFO.AUXVAR.MEMSETRES);
-		result.addDeclaration(auxvar.getVarDec());
-		result.addAuxVar(auxvar);
+		result.addAuxVarWithDeclaration(auxvar);
 
 		result.addStatement(mMemoryHandler.constructUltimateMemsetCall(loc, dispatchedArgS.getLrValue().getValue(),
 				convertedArgC.getLrValue().getValue(), convertedArgN.getLrValue().getValue(), auxvar.getLhs()));
@@ -2244,7 +2441,7 @@ public class StandardFunctionHandler {
 
 		final CPointer resultType = new CPointer(new CPrimitive(CPrimitives.VOID));
 		final AuxVarInfo auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, resultType, SFO.AUXVAR.MALLOC);
-		result.addDeclaration(auxvar.getVarDec());
+		result.addAuxVarWithDeclaration(auxvar);
 		result.addStatement(mMemoryHandler.getUltimateMemAllocCall(product, auxvar.getLhs(), loc, MemoryArea.HEAP));
 		result.addStatement(mMemoryHandler.constructUltimateMeminitCall(loc, nmemb.getLrValue().getValue(),
 				size.getLrValue().getValue(), product, auxvar.getExp()));
@@ -2293,8 +2490,7 @@ public class StandardFunctionHandler {
 		final ExpressionResultBuilder erb = new ExpressionResultBuilder().addAllExceptLrValue(exprResConverted);
 		final CPointer resultType = new CPointer(new CPrimitive(CPrimitives.VOID));
 		final AuxVarInfo auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, resultType, SFO.AUXVAR.MALLOC);
-		erb.addDeclaration(auxvar.getVarDec());
-		erb.addAuxVar(auxvar);
+		erb.addAuxVarWithDeclaration(auxvar);
 
 		final MemoryArea memArea;
 		if (methodName.equals("malloc")) {
@@ -2358,8 +2554,7 @@ public class StandardFunctionHandler {
 				new VariableLHS[] { auxvarinfo.getLhs() }, reallocMmDecl.getName(),
 				new Expression[] { ptr.getLrValue().getValue(), size.getLrValue().getValue() });
 
-		resultBuilder.addDeclaration(auxvarinfo.getVarDec());
-		resultBuilder.addAuxVar(auxvarinfo);
+		resultBuilder.addAuxVarWithDeclaration(auxvarinfo);
 		resultBuilder.addStatement(call);
 		resultBuilder.setLrValue(new RValue(auxvarinfo.getExp(), new CPointer(new CPrimitive(CPrimitives.VOID))));
 
@@ -2412,8 +2607,7 @@ public class StandardFunctionHandler {
 	private ExpressionResult handleVerifierNonDet(final IDispatcher main, final ILocation loc, final CType cType) {
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 		final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, cType, SFO.AUXVAR.NONDET);
-		resultBuilder.addDeclaration(auxvarinfo.getVarDec());
-		resultBuilder.addAuxVar(auxvarinfo);
+		resultBuilder.addAuxVarWithDeclaration(auxvarinfo);
 		if (HAVOC_NONDET_AUXVARS_ALSO_BEFORE) {
 			resultBuilder.addStatement(new HavocStatement(loc, new VariableLHS[] { auxvarinfo.getLhs() }));
 		}
@@ -2434,8 +2628,7 @@ public class StandardFunctionHandler {
 		final CPrimitive cType = new CPrimitive(CPrimitives.INT);
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 		final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, cType, SFO.AUXVAR.NONDET);
-		resultBuilder.addDeclaration(auxvarinfo.getVarDec());
-		resultBuilder.addAuxVar(auxvarinfo);
+		resultBuilder.addAuxVarWithDeclaration(auxvarinfo);
 
 		final LRValue returnValue = new RValue(auxvarinfo.getExp(), cType);
 		resultBuilder.setLrValue(returnValue);
@@ -2660,8 +2853,8 @@ public class StandardFunctionHandler {
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 
 		final AuxVarInfo auxvarinfo =
-				mAuxVarInfoBuilder.constructAuxVarInfo(loc, new CPrimitive(CPrimitives.INT), SFO.AUXVAR.NONDET);
-		resultBuilder.addDeclaration(auxvarinfo.getVarDec());
+				mAuxVarInfoBuilder.constructAuxVarInfo(loc, new CPrimitive(CPrimitives.INT), SFO.AUXVAR.RETURNED);
+		resultBuilder.addAuxVarWithDeclaration(auxvarinfo);
 		resultBuilder.addStatement(new HavocStatement(loc, new VariableLHS[] { auxvarinfo.getLhs() }));
 
 		final LRValue returnValue = new RValue(auxvarinfo.getExp(), new CPrimitive(CPrimitives.INT));
@@ -2727,8 +2920,7 @@ public class StandardFunctionHandler {
 		final CallStatement call = StatementFactory.constructCallStatement(loc, false,
 				new VariableLHS[] { auxvarinfo.getLhs() }, mmDecl.getName(), new Expression[] {
 						dest.getLrValue().getValue(), src.getLrValue().getValue(), size.getLrValue().getValue() });
-		resultBuilder.addDeclaration(auxvarinfo.getVarDec());
-		resultBuilder.addAuxVar(auxvarinfo);
+		resultBuilder.addAuxVarWithDeclaration(auxvarinfo);
 		resultBuilder.addStatement(call);
 		resultBuilder.setLrValue(new RValue(auxvarinfo.getExp(), new CPointer(new CPrimitive(CPrimitives.VOID))));
 
@@ -2924,7 +3116,7 @@ public class StandardFunctionHandler {
 				new LoopInvariantSpecification[0], new Statement[] { unreach }));
 		if (!returnType.isVoidType()) {
 			final AuxVarInfo auxVar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, returnType, AUXVAR.NONDET);
-			builder.addAuxVar(auxVar).addDeclaration(auxVar.getVarDec());
+			builder.addAuxVarWithDeclaration(auxVar);
 			builder.setLrValue(new RValue(auxVar.getExp(), returnType));
 		}
 		return builder.build();
@@ -2968,7 +3160,7 @@ public class StandardFunctionHandler {
 			retValue = new VariableLHS[0];
 		} else {
 			final AuxVarInfo auxVar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, resultType, AUXVAR.RETURNED);
-			builder.addAuxVar(auxVar).addDeclaration(auxVar.getVarDec());
+			builder.addAuxVarWithDeclaration(auxVar);
 			retValue = new VariableLHS[] { auxVar.getLhs() };
 		}
 		builder.addStatement(StatementFactory.constructCallStatement(loc, false, retValue, name, translatedArgs));
@@ -2978,8 +3170,7 @@ public class StandardFunctionHandler {
 	private ExpressionResultBuilder buildFunctionCall(final ILocation loc, final CType resultType) {
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		final AuxVarInfo auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, resultType, SFO.AUXVAR.NONDET);
-		builder.addDeclaration(auxvar.getVarDec());
-		builder.addAuxVar(auxvar);
+		builder.addAuxVarWithDeclaration(auxvar);
 		builder.setLrValue(new RValue(auxvar.getExp(), resultType));
 		return builder;
 	}

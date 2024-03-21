@@ -485,8 +485,7 @@ public class FlatSymbolTable {
 		final boolean hasImplicitScope = node instanceof IASTFunctionDefinition || node instanceof IASTForStatement
 				|| node instanceof IASTFunctionDeclarator;
 		final boolean hasExplicitScope =
-				node instanceof IASTCompoundStatement && !(node.getParent() instanceof IASTFunctionDefinition)
-						&& !(node.getParent() instanceof IASTForStatement);
+				node instanceof IASTCompoundStatement && !(node.getParent() instanceof IASTFunctionDefinition);
 		return hasImplicitScope || hasExplicitScope;
 	}
 

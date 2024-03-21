@@ -1,0 +1,27 @@
+- entry_type: invariant_set
+  metadata:
+    format_version: '2.0'
+    uuid: 4d143926-0830-43f6-a8cb-f5066b3ee16f
+    creation_time: '2024-03-11T17:40:40+01:00'
+    producer:
+      name: UNUSED
+      version: 0.2.4-dev-9743566-m
+    task:
+      input_files:
+      - benchmark26_linear.i
+      input_file_hashes:
+        benchmark26_linear.i: UNUSED
+      specification: UNUSED
+      data_model: UNUSED
+      language: C
+  content:
+  - invariant:
+      type: loop_invariant
+      location:
+        file_name: benchmark26_linear.i
+        file_hash: UNUSED
+        line: 23
+        column: 2
+        function: main
+      value: (x < (y + 1))
+      format: c_expression

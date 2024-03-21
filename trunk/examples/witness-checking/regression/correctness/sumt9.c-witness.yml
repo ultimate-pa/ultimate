@@ -1,0 +1,27 @@
+- entry_type: invariant_set
+  metadata:
+    format_version: '2.0'
+    uuid: 5e7f6e4b-b4ff-4493-8ada-2dc9ddca977d
+    creation_time: '2024-03-11T17:42:37+01:00'
+    producer:
+      name: UNUSED
+      version: 0.2.4-dev-9743566-m
+    task:
+      input_files:
+      - sumt9.c
+      input_file_hashes:
+        sumt9.c: UNUSED
+      specification: UNUSED
+      data_model: UNUSED
+      language: C
+  content:
+  - invariant:
+      type: loop_invariant
+      location:
+        file_name: sumt9.c
+        file_hash: UNUSED
+        line: 21
+        column: 2
+        function: main
+      value: ((l % 4294967296) == (((((((((i + k) + j) + v3) + v2) + v1) + v6) + v5) + v4) % 4294967296))
+      format: c_expression

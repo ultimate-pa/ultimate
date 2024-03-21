@@ -238,6 +238,14 @@ public final class Term2Expression implements Serializable {
 			} else if (symb.getParameterSorts().length == 1) {
 				if ("not".equals(symb.getName())) {
 					final Expression param = translate(term.getParameters()[0]);
+					if (param instanceof BinaryExpression) {
+						// Translate (not (= (x y)) to x != y
+						final BinaryExpression binary = (BinaryExpression) param;
+						if (binary.getOperator() == Operator.COMPEQ) {
+							return new BinaryExpression(binary.getLoc(), binary.getType(), Operator.COMPNEQ,
+									binary.getLeft(), binary.getRight());
+						}
+					}
 					return new UnaryExpression(null, type, UnaryExpression.Operator.LOGICNEG, param);
 				} else if ("-".equals(symb.getName())) {
 					final Expression param = translate(term.getParameters()[0]);

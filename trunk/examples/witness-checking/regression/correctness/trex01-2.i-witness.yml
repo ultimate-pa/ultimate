@@ -1,0 +1,27 @@
+- entry_type: invariant_set
+  metadata:
+    format_version: '2.0'
+    uuid: c8655dc0-57d9-4a0e-bc5c-2f4201af4e5f
+    creation_time: '2024-03-11T17:42:42+01:00'
+    producer:
+      name: UNUSED
+      version: 0.2.4-dev-9743566-m
+    task:
+      input_files:
+      - trex01-2.i
+      input_file_hashes:
+        trex01-2.i: UNUSED
+      specification: UNUSED
+      data_model: UNUSED
+      language: C
+  content:
+  - invariant:
+      type: loop_invariant
+      location:
+        file_name: trex01-2.i
+        file_hash: UNUSED
+        line: 30
+        column: 2
+        function: f
+      value: (0 < z)
+      format: c_expression

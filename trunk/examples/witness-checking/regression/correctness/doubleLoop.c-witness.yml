@@ -1,0 +1,37 @@
+- entry_type: invariant_set
+  metadata:
+    format_version: '2.0'
+    uuid: 2803d300-9a62-4461-983d-d655b2c8f0c0
+    creation_time: 2024-03-11T17:41+01:00
+    producer:
+      name: UNUSED
+      version: 0.2.4-dev-9743566-m
+    task:
+      input_files:
+      - doubleLoop.c
+      input_file_hashes:
+        doubleLoop.c: UNUSED
+      specification: UNUSED
+      data_model: UNUSED
+      language: C
+  content:
+  - invariant:
+      type: loop_invariant
+      location:
+        file_name: doubleLoop.c
+        file_hash: UNUSED
+        line: 9
+        column: 2
+        function: main
+      value: (((((((x == 3) && ((((-1 + (-1 * y)) / 2) + 2) == 0)) && (i == y)) && (((y + 1) % 2) == 0)) || (((x == 3) && (i == 1)) && (y == 0))) || (((x == 3) && (i == 0)) && (y == 0))) || (((x == 3) && (i == (y + 1))) && ((i + y) == 3)))
+      format: c_expression
+  - invariant:
+      type: loop_invariant
+      location:
+        file_name: doubleLoop.c
+        file_hash: UNUSED
+        line: 6
+        column: 2
+        function: main
+      value: ((((((i == 2) && (x == 1)) && (y == 0)) || (((x == 0) && (i == 1)) && (y == 0))) || (((x == 3) && (i == 3)) && (y == 0))) || (((x == 0) && (i == 0)) && (y == 0)))
+      format: c_expression

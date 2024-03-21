@@ -529,8 +529,14 @@ def create_cli_settings(prop, validate_witness, architecture, c_file):
         ret.append(architecture)
         ret.append("--witnessprinter.graph.data.programhash")
 
-        sha = call_desperate(["sha256sum", c_file[0]])
-        ret.append(sha.communicate()[0].split()[0].decode("utf-8", "ignore"))
+        if is_windows():
+            sha_call = call_desperate(["certutil", "-hashfile", c_file[0],
+                                       "SHA256"])
+            sha = sha_call.communicate()[0].split()[3]
+        else:
+            sha_call = call_desperate(["sha256sum", c_file[0]])
+            sha = sha_call.communicate()[0].split()[0]
+        ret.append(sha.decode("utf-8", "ignore"))
 
     return ret
 

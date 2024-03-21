@@ -18,7 +18,6 @@
     file_name: C:\ultimate\trunk\examples\witness-checking\regression\correctness\test_locks_5.c
     file_hash: UNUSED
     line: 93
-    column: 0
     function: main
   loop_invariant:
     string: '0'

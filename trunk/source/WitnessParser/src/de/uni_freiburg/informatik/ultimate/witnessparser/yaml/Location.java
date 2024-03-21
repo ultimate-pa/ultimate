@@ -40,11 +40,11 @@ public class Location implements IMapSerializable {
 
 	private final String mFileName;
 	private final String mFileHash;
-	private final int mLine;
-	private final int mColumn;
+	private final Integer mLine;
+	private final Integer mColumn;
 	private final String mFunction;
 
-	public Location(final String fileName, final String fileHash, final int line, final int column,
+	public Location(final String fileName, final String fileHash, final Integer line, final Integer column,
 			final String function) {
 		mFileName = fileName;
 		mFileHash = fileHash;
@@ -61,11 +61,11 @@ public class Location implements IMapSerializable {
 		return mFileHash;
 	}
 
-	public int getLine() {
+	public Integer getLine() {
 		return mLine;
 	}
 
-	public int getColumn() {
+	public Integer getColumn() {
 		return mColumn;
 	}
 
@@ -103,8 +103,12 @@ public class Location implements IMapSerializable {
 		result.put("file_name", mFileName);
 		result.put("file_hash", mFileHash);
 		result.put("line", mLine);
-		result.put("column", mColumn);
-		result.put("function", mFunction);
+		if (mColumn != null) {
+			result.put("column", mColumn);
+		}
+		if (mFunction != null) {
+			result.put("function", mFunction);
+		}
 		return result;
 	}
 }

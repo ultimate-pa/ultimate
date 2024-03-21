@@ -18,7 +18,6 @@
     file_name: C:\ultimate\trunk\examples\witness-checking\regression\correctness\const.c
     file_hash: UNUSED
     line: 13
-    column: 0
     function: main
   loop_invariant:
     string: (((s / 4294967296) * 4294967296) == s)

@@ -1,0 +1,27 @@
+- entry_type: invariant_set
+  metadata:
+    format_version: '2.0'
+    uuid: 1c28e92c-dd15-446f-b000-309b90049112
+    creation_time: '2024-03-11T17:41:45+01:00'
+    producer:
+      name: UNUSED
+      version: 0.2.4-dev-9743566-m
+    task:
+      input_files:
+      - n.c11.c
+      input_file_hashes:
+        n.c11.c: UNUSED
+      specification: UNUSED
+      data_model: UNUSED
+      language: C
+  content:
+  - invariant:
+      type: loop_invariant
+      location:
+        file_name: n.c11.c
+        file_hash: UNUSED
+        line: 21
+        column: 3
+        function: main
+      value: ((len % 4294967296) < 5)
+      format: c_expression

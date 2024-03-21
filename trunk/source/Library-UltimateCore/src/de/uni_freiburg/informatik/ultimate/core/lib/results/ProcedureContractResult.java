@@ -28,17 +28,15 @@
 package de.uni_freiburg.informatik.ultimate.core.lib.results;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
-import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithLocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 
 /**
- * Report a procedure contract that holds at ELEM which is a node in an Ultimate
- * model. The contract is given as an expression of type E.
+ * Report a procedure contract that holds at ELEM which is a node in an Ultimate model. The contract is given as an
+ * expression of type E.
  *
  * @author Matthias Heizmann
  */
-public class ProcedureContractResult<ELEM extends IElement, E> extends AbstractResultAtElement<ELEM>
-		implements IResultWithLocation {
+public class ProcedureContractResult<ELEM extends IElement, E> extends AbstractResultAtElement<ELEM> {
 
 	private final String mEnsures;
 	private final String mRequires;
@@ -47,15 +45,25 @@ public class ProcedureContractResult<ELEM extends IElement, E> extends AbstractR
 	/**
 	 * Constructor.
 	 *
-	 * @param location the Location
+	 * @param location
+	 *            the Location
 	 */
-	@SuppressWarnings("unchecked")
 	public ProcedureContractResult(final String plugin, final ELEM position,
-			final IBacktranslationService translatorSequence, final String procedureName, final E requires, final E ensures) {
+			final IBacktranslationService translatorSequence, final String procedureName, final E requires,
+			final E ensures) {
 		super(position, plugin, translatorSequence);
-		this.mProcedureName = procedureName;
-		this.mRequires = mTranslatorSequence.translateExpressionToString(requires, (Class<E>) requires.getClass());
-		this.mEnsures = mTranslatorSequence.translateExpressionToString(ensures, (Class<E>) ensures.getClass());
+		mProcedureName = procedureName;
+		mRequires = translateTerm(requires);
+		mEnsures = translateTerm(ensures);
+	}
+
+	@SuppressWarnings("unchecked")
+	private String translateTerm(final E term) {
+		final String result = mTranslatorSequence.translateExpressionToString(term, (Class<E>) term.getClass());
+		if ("1".equals(result)) {
+			return null;
+		}
+		return result;
 	}
 
 	public String getEnsuresResult() {
@@ -73,14 +81,22 @@ public class ProcedureContractResult<ELEM extends IElement, E> extends AbstractR
 
 	@Override
 	public String getLongDescription() {
-		final StringBuffer sb = new StringBuffer();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("Derived contract for procedure ");
 		sb.append(mProcedureName);
-		sb.append(". ");
-		sb.append("Requires: ");
-		sb.append(mRequires);
-		sb.append("  Ensures: ");
-		sb.append(mEnsures);
+		sb.append(".");
+		if (mRequires != null) {
+			sb.append(" Requires: ");
+			sb.append(mRequires);
+		}
+		if (mEnsures != null) {
+			sb.append(" Ensures: ");
+			sb.append(mEnsures);
+		}
 		return sb.toString();
+	}
+
+	public boolean isTrivial() {
+		return mRequires == null && mEnsures == null;
 	}
 }

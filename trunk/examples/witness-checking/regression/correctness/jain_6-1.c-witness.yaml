@@ -18,7 +18,6 @@
     file_name: C:\ultimate\trunk\examples\witness-checking\regression\correctness\jain_6-1.c
     file_hash: UNUSED
     line: 28
-    column: 0
     function: main
   loop_invariant:
     string: ((((z % 8) == 0) && ((x % 2) == 0)) && (((y * 3) % 4) == 0))

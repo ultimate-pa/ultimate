@@ -18,7 +18,6 @@
     file_name: C:\ultimate\trunk\examples\witness-checking\regression\correctness\apache-get-tag.i
     file_hash: UNUSED
     line: 32
-    column: 0
     function: main
   loop_invariant:
     string: (((t == 0) || (1 <= t)) && (t <= tagbuf_len))
@@ -44,7 +43,6 @@
     file_name: C:\ultimate\trunk\examples\witness-checking\regression\correctness\apache-get-tag.i
     file_hash: UNUSED
     line: 48
-    column: 0
     function: main
   loop_invariant:
     string: ((t <= tagbuf_len) && (1 <= t))

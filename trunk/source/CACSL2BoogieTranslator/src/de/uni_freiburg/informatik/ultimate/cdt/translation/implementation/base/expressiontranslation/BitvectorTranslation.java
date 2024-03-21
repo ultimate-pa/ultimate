@@ -1451,8 +1451,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 					new VariableLHS[] { auxvar.getLhs() }, ULTIMATE_PROC_SET_CURRENT_ROUNDING_MODE, arguments);
 
 			final ExpressionResultBuilder resultBuider = new ExpressionResultBuilder();
-			resultBuider.addDeclaration(auxvar.getVarDec());
-			resultBuider.addAuxVar(auxvar);
+			resultBuider.addAuxVarWithDeclaration(auxvar);
 			resultBuider.addStatement(result);
 			resultBuider.setLrValue(llv);
 			return resultBuider.build();

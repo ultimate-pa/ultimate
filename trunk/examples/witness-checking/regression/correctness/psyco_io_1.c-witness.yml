@@ -1,0 +1,26 @@
+- entry_type: invariant_set
+  metadata:
+    format_version: '2.0'
+    uuid: 81c934ed-6422-47f5-aba4-7c7f7ccfff27
+    creation_time: '2024-03-11T17:41:57+01:00'
+    producer:
+      name: UNUSED
+      version: 0.2.4-dev-9743566-m
+    task:
+      input_files:
+      - psyco_io_1.c
+      input_file_hashes:
+        psyco_io_1.c: UNUSED
+      specification: UNUSED
+      data_model: UNUSED
+      language: C
+  content:
+  - invariant:
+      type: loop_invariant
+      location:
+        file_name: psyco_io_1.c
+        file_hash: UNUSED
+        line: 25
+        function: main
+      value: ((q == 0) && (this_sink == 0))
+      format: c_expression

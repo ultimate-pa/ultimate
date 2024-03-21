@@ -18,7 +18,6 @@
     file_name: C:\ultimate\trunk\examples\witness-checking\regression\correctness\simple_vardep_2.c
     file_hash: UNUSED
     line: 21
-    column: 0
     function: main
   loop_invariant:
     string: (((((k / 4294967296) <= ((i * 3) / 4294967296)) && ((k + (((i * 3) / 4294967296) * 4294967296)) == (((k / 4294967296) * 4294967296) + (i * 3)))) && (((i * 2) + (4294967296 * (j / 4294967296))) == (j + ((i / 2147483648) * 4294967296)))) && ((j / 4294967296) <= (i / 2147483648)))

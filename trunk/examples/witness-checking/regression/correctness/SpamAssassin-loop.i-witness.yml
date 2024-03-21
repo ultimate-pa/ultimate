@@ -1,0 +1,47 @@
+- entry_type: invariant_set
+  metadata:
+    format_version: '2.0'
+    uuid: 7e9b59d0-2674-42b0-acf5-001b1d16b85a
+    creation_time: '2024-03-11T17:42:23+01:00'
+    producer:
+      name: UNUSED
+      version: 0.2.4-dev-9743566-m
+    task:
+      input_files:
+      - SpamAssassin-loop.i
+      input_file_hashes:
+        SpamAssassin-loop.i: UNUSED
+      specification: UNUSED
+      data_model: UNUSED
+      language: C
+  content:
+  - invariant:
+      type: loop_invariant
+      location:
+        file_name: SpamAssassin-loop.i
+        file_hash: UNUSED
+        line: 35
+        column: 4
+        function: main
+      value: (((0 <= j) && (0 <= i)) && ((limit + 4) <= bufsize))
+      format: c_expression
+  - invariant:
+      type: loop_invariant
+      location:
+        file_name: SpamAssassin-loop.i
+        file_hash: UNUSED
+        line: 36
+        column: 6
+        function: main
+      value: ((((((i + 1) <= len) && (0 <= j)) && ((5 + j) <= bufsize)) && (0 <= i)) && ((limit + 4) <= bufsize))
+      format: c_expression
+  - invariant:
+      type: loop_invariant
+      location:
+        file_name: SpamAssassin-loop.i
+        file_hash: UNUSED
+        line: 34
+        column: 2
+        function: main
+      value: ((0 <= i) && ((limit + 4) <= bufsize))
+      format: c_expression

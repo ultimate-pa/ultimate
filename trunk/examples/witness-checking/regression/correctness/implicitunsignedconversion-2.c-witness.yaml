@@ -18,7 +18,6 @@
     file_name: C:\ultimate\trunk\examples\witness-checking\regression\correctness\implicitunsignedconversion-2.c
     file_hash: UNUSED
     line: 14
-    column: 0
     function: main
   loop_invariant:
     string: '0'

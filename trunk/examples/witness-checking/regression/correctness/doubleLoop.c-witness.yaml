@@ -18,7 +18,6 @@
     file_name: C:\ultimate\trunk\examples\witness-checking\regression\correctness\doubleLoop.c
     file_hash: UNUSED
     line: 6
-    column: 0
     function: main
   loop_invariant:
     string: ((((((i == 2) && (x == 1)) && (y == 0)) || (((x == 0) && (i == 1)) && (y == 0))) || (((x == 3) && (i == 3)) && (y == 0))) || (((x == 0) && (i == 0)) && (y == 0)))
@@ -44,7 +43,6 @@
     file_name: C:\ultimate\trunk\examples\witness-checking\regression\correctness\doubleLoop.c
     file_hash: UNUSED
     line: 9
-    column: 0
     function: main
   loop_invariant:
     string: ((((((x == 3) && (i == 1)) && (y == 0)) || (((x == 3) && (i == 0)) && (y == 0))) || (((x == 3) && (i == (y + 1))) && ((i + y) == 3))) || ((((x == 3) && (i == y)) && (((y + 1) / 2) == 2)) && (i <= 3)))
