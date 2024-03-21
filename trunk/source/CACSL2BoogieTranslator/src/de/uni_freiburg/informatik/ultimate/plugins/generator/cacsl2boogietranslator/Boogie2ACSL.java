@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CLocat
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.AcslTypeUtils;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
@@ -48,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLPrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLResultExpression;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.CastExpression;
@@ -131,6 +133,10 @@ public final class Boogie2ACSL {
 			return translateFunctionApplication(
 					(de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication) expression, context,
 					isNegated);
+		}
+		if (expression instanceof de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression) {
+			return translateArrayAccess(
+					(de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression) expression, context);
 		}
 		mReporter.accept(
 				"Expression type not yet supported in backtranslation: " + expression.getClass().getSimpleName());
@@ -629,6 +635,32 @@ public final class Boogie2ACSL {
 			return new Pair<>(null, null);
 		}
 		return new Pair<>(mTypeSizes.getMinValueOfPrimitiveType(prim), mTypeSizes.getMaxValueOfPrimitiveType(prim));
+	}
+
+	private BacktranslatedExpression translateArrayAccess(
+			final de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression expression,
+			final ILocation context) {
+		final BacktranslatedExpression array = translateExpression(expression.getArray(), context);
+		if (array == null) {
+			// TODO: Translate pointer accesses back (i.e. array accesses in the memory array)
+			// - Check if the array is the memory array first
+			// - Then check if the first and second arguments are matching base and offset
+			// TODO: Backtranslate valid accesses properly (\valid of the underlying base)
+			mReporter.accept("Cannot backtranslate array access to array " + expression.getArray());
+			return null;
+		}
+		Expression result = array.getExpression();
+		CType resultType = array.getCType();
+		for (final var index : expression.getIndices()) {
+			final BacktranslatedExpression translatedIndex = translateExpression(index, context);
+			if (translatedIndex == null) {
+				return null;
+			}
+			result = new ArrayAccessExpression(result, new Expression[] { translatedIndex.getExpression() });
+			resultType = ((CArray) resultType).getValueType();
+		}
+		final var range = getRangeForCType(resultType);
+		return new BacktranslatedExpression(result, resultType, range.getFirst(), range.getSecond());
 	}
 
 	public static final class BacktranslatedExpression {
