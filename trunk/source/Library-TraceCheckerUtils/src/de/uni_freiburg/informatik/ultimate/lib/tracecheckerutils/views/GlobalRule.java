@@ -118,7 +118,7 @@ public class GlobalRule<S> implements IRule<S> {
 		final var result = new ArrayList<Configuration<S>>();
 		for (int i = 0; i < config.size(); ++i) {
 			final var state = config.get(i);
-			if (state.equals(mSource)) {
+			if (state.equals(mSource) && checkCondition(config, i)) {
 				result.add(config.replace(i, mTarget));
 			}
 
