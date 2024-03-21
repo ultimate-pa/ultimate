@@ -171,4 +171,9 @@ public class NameHandler implements INameHandler {
 	public boolean isTempVar(final String boogieId) {
 		return mBacktranslator.isTempVar(boogieId);
 	}
+
+	@Override
+	public void addFunction(final String boogieId, final CType returnType) {
+		mBacktranslator.addFunction(boogieId, returnType);
+	}
 }

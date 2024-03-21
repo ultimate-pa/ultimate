@@ -141,8 +141,9 @@ public final class Boogie2ACSL {
 			final de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression expr, final ILocation context) {
 		final String boogieId = expr.getIdentifier();
 		if (boogieId.equals(SFO.RES)) {
-			// TODO: Can we somehow get the return type here?
-			return new BacktranslatedExpression(new ACSLResultExpression());
+			final CType type = mMapping.getReturnTypeOfFunction(expr.getDeclarationInformation().getProcedure());
+			final var range = getRangeForCType(type);
+			return new BacktranslatedExpression(new ACSLResultExpression(), type, range.getFirst(), range.getSecond());
 		} else if (mMapping.hasVar(boogieId, expr.getDeclarationInformation())) {
 			final Pair<String, CType> pair = mMapping.getVar(boogieId, expr.getDeclarationInformation());
 			if (isPresentInContext(pair.getFirst(), context)) {

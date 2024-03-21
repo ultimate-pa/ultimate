@@ -233,6 +233,7 @@ public class FunctionHandler {
 		final CFunction funcType = (CFunction) cDec.getType();
 
 		registerFunctionDeclaration(main, loc, contract, methodName, funcType, hook);
+		mNameHandler.addFunction(methodName, funcType.getResultType());
 
 		return new SkipResult();
 	}
@@ -280,6 +281,7 @@ public class FunctionHandler {
 		final CFunction oldFunType = (CFunction) cDec.getType();
 		final CFunction funType = updateVarArgsUsage(loc, node, oldFunType, definedProcName);
 		final CType returnCType = funType.getResultType();
+		mNameHandler.addFunction(definedProcName, returnCType);
 		definedProcInfo.updateCFunction(funType);
 		final boolean returnTypeIsVoid =
 				returnCType instanceof CPrimitive && ((CPrimitive) returnCType).getType() == CPrimitives.VOID;
