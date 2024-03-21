@@ -98,12 +98,25 @@ public class StatementSequence extends CodeBlock implements IIcfgInternalTransit
 	 * Return, Summary.
 	 */
 	public void addStatement(final Statement st) {
+		addStatement(st, -1);
+	}
+	
+	/**
+	 * Add a new {@link Statement} to this statement sequence at the specified index(use an index of -1 to append to the list). Only internal statements are allowed, i.e., no Call,
+	 * Return, Summary.
+	 */
+	public void addStatement(final Statement st, int index) {
 		if (!(st instanceof AssumeStatement) && !(st instanceof AssignmentStatement) && !(st instanceof HavocStatement)
 				&& !(st instanceof CallStatement)) {
 			throw new IllegalArgumentException("Only Assignment, Assume and HavocStatement allowed in InternalEdge."
 					+ " Additionally CallStatements are allowed if the callee is a procedure without implementation and has an emtpy requires clause.");
 		}
-		mStatements.add(st);
+		if (index == -1) {
+			mStatements.add(st);
+		} else {
+			mStatements.add(index, st);
+		}
+		
 		mPrettyPrintedStatements = null;
 	}
 
