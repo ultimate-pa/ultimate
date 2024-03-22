@@ -142,10 +142,15 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 			invariant = conjunctInvariants(old.getInvariant(), invariant);
 			labels = DataStructureUtils.union(old.getNodeLabels(), labels);
 		}
-		// Insert the invariant before the C-statement
-		// Only if there is a label, insert it afterwards (we want the invariant to hold whenever we reach that label)
-		locationInvariants.put(node,
-				new ExtractedLocationInvariant(invariant, labels, node, !(node instanceof IASTLabelStatement)));
+		// If the node is a label, add the invariant afterwards (i.e. at the nested statement), since we want the
+		// invariant to hold whenever we reach that label
+		final IASTNode resultNode;
+		if (node instanceof IASTLabelStatement) {
+			resultNode = ((IASTLabelStatement) node).getNestedStatement();
+		} else {
+			resultNode = node;
+		}
+		locationInvariants.put(resultNode, new ExtractedLocationInvariant(invariant, labels, node, true));
 	}
 
 	private static void addLoopInvariant(final LoopInvariant current, final IASTNode node,
