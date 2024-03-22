@@ -37,6 +37,7 @@ import org.eclipse.cdt.core.dom.ast.ASTGenericVisitor;
 import org.eclipse.cdt.core.dom.ast.IASTDoStatement;
 import org.eclipse.cdt.core.dom.ast.IASTForStatement;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
+import org.eclipse.cdt.core.dom.ast.IASTLabelStatement;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
@@ -141,7 +142,10 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 			invariant = conjunctInvariants(old.getInvariant(), invariant);
 			labels = DataStructureUtils.union(old.getNodeLabels(), labels);
 		}
-		locationInvariants.put(node, new ExtractedLocationInvariant(invariant, labels, node, true));
+		// Insert the invariant before the C-statement
+		// Only if there is a label, insert it afterwards (we want the invariant to hold whenever we reach that label)
+		locationInvariants.put(node,
+				new ExtractedLocationInvariant(invariant, labels, node, !(node instanceof IASTLabelStatement)));
 	}
 
 	private static void addLoopInvariant(final LoopInvariant current, final IASTNode node,
