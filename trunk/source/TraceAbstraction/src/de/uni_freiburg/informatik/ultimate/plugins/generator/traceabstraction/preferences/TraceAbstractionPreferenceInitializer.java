@@ -195,8 +195,11 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_CON_COM_CHECKER = "Additional conditional commutativity checking";
 	private static final ConComChecker DEF_CON_COM_CHECKER = ConComChecker.NONE;
 	
-	public static final String LABEL_CON_COM_CHECKER_CRITERION = "Criterion for conditional commutativity checking";
+	public static final String LABEL_CON_COM_CHECKER_CRITERION = "Criterion for conditional commutativity checking (use LIMITED_CHECKS for DFS)";
 	private static final ConComCheckerCriterion DEF_CON_COM_CHECKER_CRITERION = ConComCheckerCriterion.DEFAULT;
+	
+	public static final String LABEL_CON_COM_CHECKER_CRITERION_LIMIT = "Limit for LIMITED_CHECKS";
+	private static final int DEF_CON_COM_CHECKER_CRITERION_LIMIT = 2;
 	
 	public static final String LABEL_CON_COM_CHECKER_RANDOM_PROB = "probability for random criterion, format: (prob,seed)";
 	private static final double DEF_CON_COM_CHECKER_RANDOM_PROB = 1;
@@ -742,6 +745,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						PreferenceType.Combo, ConComChecker.values()),
 				new UltimatePreferenceItem<>(LABEL_CON_COM_CHECKER_CRITERION, DEF_CON_COM_CHECKER_CRITERION,
 						PreferenceType.Combo, ConComCheckerCriterion.values()),
+				new UltimatePreferenceItem<>(LABEL_CON_COM_CHECKER_CRITERION_LIMIT, DEF_CON_COM_CHECKER_CRITERION_LIMIT,
+						PreferenceType.Integer),
 				new UltimatePreferenceItem<>(LABEL_CON_COM_CHECKER_RANDOM_PROB, DEF_CON_COM_CHECKER_RANDOM_PROB,
 						PreferenceType.Double),
 				new UltimatePreferenceItem<>(LABEL_CON_COM_CHECKER_RANDOM_SEED, DEF_CON_COM_CHECKER_RANDOM_SEED,

@@ -51,13 +51,15 @@ public class LimitedChecksCriterion<L> implements IConditionalCommutativityCrite
 	private Map<Pair<L,L>, List<IPredicate>> mAlreadyChecked;
 	private List<IPredicate> mAlreadyProofenConditions;
 	private Map<Pair<L, L>, Integer> mStatementMap;
+	private int mLimit;
 	
 	/**
 	 * Constructor.
 	 *
 	 * @author Marcel Ebbinghaus
 	 */
-	public LimitedChecksCriterion() {
+	public LimitedChecksCriterion(int limit) {
+		mLimit = limit;
 		mAlreadyChecked = new HashMap<>();
 		mAlreadyProofenConditions = new ArrayList<>();
 		mStatementMap = new HashMap<>();
@@ -80,8 +82,8 @@ public class LimitedChecksCriterion<L> implements IConditionalCommutativityCrite
 		//ensures that each pair is checked at most two times (should later on be removed)
 		if (!mStatementMap.containsKey(pair)) {
 			mStatementMap.put(pair, 1);
-		} else if (mStatementMap.get(pair) == 1) {
-			mStatementMap.replace(pair, 2);
+		} else if (mStatementMap.get(pair) != mLimit) {
+			mStatementMap.replace(pair, mStatementMap.get(pair) + 1);
 		}	else {
 			return false;
 		}

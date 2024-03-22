@@ -587,7 +587,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 				mCriterion = new SleepSetCriterion<>();
 				break;
 			case LIMITED_CHECKS:
-				mCriterion = new LimitedChecksCriterion<>();
+				mCriterion = new LimitedChecksCriterion<>(mPref.getConComCheckerCriterionLimit());
 				break;
 			default:
 				throw new UnsupportedOperationException("PartialOrderCegarLoop currently does not support criterion "
