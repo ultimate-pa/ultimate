@@ -34,10 +34,13 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 import org.eclipse.cdt.core.dom.ast.ASTGenericVisitor;
+import org.eclipse.cdt.core.dom.ast.IASTDoStatement;
+import org.eclipse.cdt.core.dom.ast.IASTForStatement;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
+import org.eclipse.cdt.core.dom.ast.IASTWhileStatement;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.LineOffsetComputer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
@@ -143,6 +146,11 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 
 	private static void addLoopInvariant(final LoopInvariant current, final IASTNode node,
 			final Map<IASTNode, ExtractedLoopInvariant> loopInvariants) {
+		if (!(node instanceof IASTWhileStatement) && !(node instanceof IASTForStatement)
+				&& !(node instanceof IASTDoStatement)) {
+			throw new UnsupportedOperationException(
+					"Loop invariant is only allowed at loop (found " + node.getClass().getSimpleName() + ")");
+		}
 		String invariant = current.getInvariant().getExpression();
 		Set<String> labels = Set.of(current.getMetadata().getUuid().toString());
 		final ExtractedLoopInvariant old = loopInvariants.get(node);

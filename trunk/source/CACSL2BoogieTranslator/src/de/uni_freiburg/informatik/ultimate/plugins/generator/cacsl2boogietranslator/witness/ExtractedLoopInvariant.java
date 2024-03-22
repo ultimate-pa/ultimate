@@ -89,13 +89,11 @@ public class ExtractedLoopInvariant extends ExtractedWitnessInvariant {
 				statements.add(st);
 			}
 		}
-		if (hasLoop) {
-			return new ExpressionResultBuilder(expressionResult).addAllExceptLrValueAndStatements(invariantExprResult)
-					.resetStatements(statements).build();
+		if (!hasLoop) {
+			throw new UnsupportedOperationException("Invalid location for loop invariant " + loc);
 		}
-		// TODO: We might identify sth. that is not a loop (e.g. goto) as a loop. This should be handled correctly in
-		// GraphMLCorrectnessWitnessExtractor. For this case we just insert an assert (like a location invariant).
-		return new ExpressionResultBuilder(invariantExprResult).addAllIncludingLrValue(expressionResult).build();
+		return new ExpressionResultBuilder(expressionResult).addAllExceptLrValueAndStatements(invariantExprResult)
+				.resetStatements(statements).build();
 	}
 
 	private static Expression tryToExtractLoopInvariant(final ExpressionResult invariantExprResult) {
