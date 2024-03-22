@@ -11,6 +11,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.UltimateCore;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation.LoopEntryType;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessProcedureContract;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -23,6 +25,7 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.FormatVersion;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.FunctionContract;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Invariant;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Location;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LocationInvariant;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LoopInvariant;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Metadata;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Producer;
@@ -89,10 +92,14 @@ public class YamlCorrectnessWitnessGenerator {
 			}
 			final Location witnessLocation = new Location(loc.getFileName(), hash, loc.getStartLine(),
 					loc.getStartColumn() < 0 ? null : loc.getStartColumn(), loc.getFunction());
-			// TODO: How could we figure out, if it is a LocationInvariant or LoopInvariant?
-			// For now we only produce loop invariants anyways
-			result.add(new LoopInvariant(metadataSupplier.get(), witnessLocation,
-					new Invariant(invariant, "assertion", getExpressionFormat(formatVersion, invariant))));
+			final Invariant witnessInvariant =
+					new Invariant(invariant, "assertion", getExpressionFormat(formatVersion, invariant));
+			final LoopEntryAnnotation annot = LoopEntryAnnotation.getAnnotation(pp);
+			if (annot != null && annot.getLoopEntryType() == LoopEntryType.WHILE) {
+				result.add(new LoopInvariant(metadataSupplier.get(), witnessLocation, witnessInvariant));
+			} else {
+				result.add(new LocationInvariant(metadataSupplier.get(), witnessLocation, witnessInvariant));
+			}
 		}
 		return result;
 	}
