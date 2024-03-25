@@ -129,6 +129,7 @@ public class ConditionalCommutativityChecker<L extends IAction> implements ICond
 			} else {
 				condition = mGenerator.generateCondition(letter1.getTransformula(), letter2.getTransformula());
 			}
+			mCriterion.updateCriterion(state, letter1, letter2);
 			
 			if (mCriterion.decide(condition) && !condition.getFormula().toString().equals("true")) {
 				

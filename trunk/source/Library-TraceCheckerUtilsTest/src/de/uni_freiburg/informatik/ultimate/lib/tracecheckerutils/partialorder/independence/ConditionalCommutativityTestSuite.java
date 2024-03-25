@@ -564,6 +564,12 @@ public abstract class ConditionalCommutativityTestSuite implements IMessagePrint
 			// TODO Auto-generated method stub
 			
 		}
+
+		@Override
+		public void updateCriterion(IPredicate state, L letter1, L letter2) {
+			// TODO Auto-generated method stub
+			
+		}
 	}
 
 	private final class ConditionalCommutativityTestCase implements Comparable<ConditionalCommutativityTestCase> {

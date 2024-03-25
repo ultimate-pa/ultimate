@@ -62,4 +62,10 @@ public class SleepSetCriterion<L> implements IConditionalCommutativityCriterion<
 		
 	}
 
+	@Override
+	public void updateCriterion(IPredicate state, L letter1, L letter2) {
+		// TODO Auto-generated method stub
+		
+	}
+
 }

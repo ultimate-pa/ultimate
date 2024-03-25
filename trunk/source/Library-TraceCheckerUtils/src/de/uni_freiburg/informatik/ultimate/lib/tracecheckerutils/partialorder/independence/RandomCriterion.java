@@ -83,4 +83,10 @@ public class RandomCriterion<L> implements IConditionalCommutativityCriterion<L>
 		return new Pair<IPredicate, Pair<L,L>>(state, new Pair<>(letter1, letter2));
 	}
 
+	@Override
+	public void updateCriterion(IPredicate state, L letter1, L letter2) {
+		// TODO Auto-generated method stub
+		
+	}
+
 }

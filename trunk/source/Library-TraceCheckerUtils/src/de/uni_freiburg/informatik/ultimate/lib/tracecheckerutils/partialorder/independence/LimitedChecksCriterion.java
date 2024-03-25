@@ -57,6 +57,9 @@ public class LimitedChecksCriterion<L> implements IConditionalCommutativityCrite
 	 * Constructor.
 	 *
 	 * @author Marcel Ebbinghaus
+	 * 
+	 * @param limit
+	 *     limit
 	 */
 	public LimitedChecksCriterion(int limit) {
 		mLimit = limit;
@@ -79,29 +82,19 @@ public class LimitedChecksCriterion<L> implements IConditionalCommutativityCrite
 			return true;
 		}
 		
-		//ensures that each pair is checked at most two times (should later on be removed)
-		if (!mStatementMap.containsKey(pair)) {
-			mStatementMap.put(pair, 1);
-		} else if (mStatementMap.get(pair) != mLimit) {
-			mStatementMap.replace(pair, mStatementMap.get(pair) + 1);
-		}	else {
+		if (mStatementMap.containsKey(pair) && mStatementMap.get(pair) == mLimit) {
 			return false;
 		}
-
+		
 		IPredicate annotation = ((AnnotatedMLPredicate<IPredicate>) pred).getAnnotation();
-		if (!mAlreadyChecked.containsKey(pair)) {
-			ArrayList<IPredicate> list = new ArrayList<>();
-			list.add(annotation);
-			mAlreadyChecked.put(pair, list);
-		} else {
+		if (mAlreadyChecked.containsKey(pair)) {
 			List<IPredicate> list = mAlreadyChecked.get(pair);
 			for (IPredicate listPred : list) {
 				if (listPred.getFormula().equals(annotation.getFormula())) {
 					return false;
 				}
 			}
-			list.add(annotation);
-		}
+		}	
 		return true;
 	}
 
@@ -118,9 +111,36 @@ public class LimitedChecksCriterion<L> implements IConditionalCommutativityCrite
 		}
 		return true;
 	}
+
+	@Override
+	public void updateCriterion(IPredicate state, L letter1, L letter2) {
+		Pair<L, L> pair = new Pair<>(letter1,letter2);
+		if (!mStatementMap.containsKey(pair)) {
+			mStatementMap.put(pair, 1);
+		} else {
+			mStatementMap.replace(pair, mStatementMap.get(pair) + 1);
+		}
+		
+		IPredicate pred = ((SleepPredicate<L>) state).getUnderlying();
+		if (pred instanceof PredicateWithLastThread) {
+			pred = ((PredicateWithLastThread) pred).getUnderlying();
+		}
+		if (pred instanceof MLPredicate) {
+			return;
+		}
+		IPredicate annotation = ((AnnotatedMLPredicate<IPredicate>) pred).getAnnotation();
+		if (!mAlreadyChecked.containsKey(pair)) {
+			ArrayList<IPredicate> list = new ArrayList<>();
+			list.add(annotation);
+			mAlreadyChecked.put(pair, list);
+		} else {
+			List<IPredicate> list = mAlreadyChecked.get(pair);
+			list.add(annotation);
+		}
+	}
 	
 	@Override
-	public void updateCondition(final IPredicate condition) {
+	public void updateCondition(IPredicate condition) {
 		mAlreadyProofenConditions.add(condition);
 	}
 

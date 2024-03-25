@@ -55,5 +55,11 @@ public class DefaultCriterion<L> implements IConditionalCommutativityCriterion<L
 		// TODO Auto-generated method stub
 		
 	}
+
+	@Override
+	public void updateCriterion(IPredicate state, L letter1, L letter2) {
+		// TODO Auto-generated method stub
+		
+	}
 	
 }
