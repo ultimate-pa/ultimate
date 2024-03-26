@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer.TestGenReuseMode;
@@ -88,6 +89,7 @@ public class AnnotateAndAsserter<L extends IAction> {
 	private String mTestCaseUniqueIdentifier = "0";
 	private final Integer mHighestVaOrderInTrace = -1;
 	private boolean lastVaInTraceIsUsedForReuse = false;
+	private boolean reuseUnsatpossible = true;
 
 	private final ArrayList<Pair<Term, Term>> mValueAssignmentUsedForReuse = new ArrayList<Pair<Term, Term>>();
 	final TestGenReuseMode mTestGenReuseMode;
@@ -105,7 +107,6 @@ public class AnnotateAndAsserter<L extends IAction> {
 
 		mTestGenReuseMode = RcfgPreferenceInitializer.getPreferences(services)
 				.getEnum(RcfgPreferenceInitializer.LABEL_TEST_GEN_REUSE_MODE, TestGenReuseMode.class);
-		System.out.println(mTestGenReuseMode);
 	}
 
 	public void buildAnnotatedSsaAndAssertTerms() {
@@ -173,6 +174,7 @@ public class AnnotateAndAsserter<L extends IAction> {
 				mDefaultVA = mCurrentVA.setDefaultVa(mDefaultVA);
 				mDefaultVA = mCurrentVA.mVAofOppositeBranch.setDefaultVa(mDefaultVA);
 				mVAforReuse = mDefaultVA;
+				System.out.println("Using Default to reuse since this is the first testgoal in the trace");
 			}
 
 			if (nondetsInTrace.isEmpty() || mCurrentVA == null) {
@@ -191,7 +193,8 @@ public class AnnotateAndAsserter<L extends IAction> {
 						// varAssignmentConjunction = SmtUtils.not(mMgdScriptTc.getScript(), varAssignmentConjunction);
 						// mMgdScriptTc.getScript().push(1);
 						// mAnnotateAndAssertCodeBlocks.annotateAndAssertTerm(varAssignmentConjunction, "Int");
-						// System.out.println("Negated REUSE: " + varAssignmentConjunction);
+						System.out.println(
+								"Va was already succesfully reused or No Nondets In Trace" + varAssignmentConjunction);
 						reuse = false;
 					} else {
 						mMgdScriptTc.getScript().push(1);
@@ -199,12 +202,15 @@ public class AnnotateAndAsserter<L extends IAction> {
 						System.out.println("REUSE: " + varAssignmentConjunction);
 					}
 				} else {
+					System.out.println("TODO previous test goal behind the current?");
 					reuse = false; // Can be empty if previous test goal is "behind" the current. (loops)
 					// In this case previous test goal has not been checked yet.
 				}
 			}
 			mSatisfiable = mMgdScriptTc.getScript().checkSat();
-
+			if (reuse) {
+				System.out.println("trying to reuse");
+			}
 			if (mSatisfiable == LBool.UNSAT) {
 				if (reuse) {
 					System.out.println("REUSE UNSAT");
@@ -387,6 +393,7 @@ public class AnnotateAndAsserter<L extends IAction> {
 	private void checkTraceForVAandNONDETS() {
 		mTestCaseUniqueIdentifier = mTestCaseUniqueIdentifier + mSSA.getTrace().hashCode();
 		mTestCaseUniqueIdentifier += mSSA.getTrace().getSymbol(mSSA.getTrace().length() - 1).hashCode();
+		int callcount = 0;
 		if (mSSA.getTrace().length() - 1 > 0) {
 			for (int i = 0; i < mSSA.getTrace().length() - 1; i++) { // dont check current testgoal for va
 				if (mSSA.getTrace().getSymbol(i) instanceof StatementSequence) {
@@ -432,17 +439,18 @@ public class AnnotateAndAsserter<L extends IAction> {
 										.get(VarAssignmentReuseAnnotation.class.getName());
 						if (mVAforReuse == null || reuseCandidate.mVaOrder >= mVAforReuse.mVaOrder) {
 							mVAforReuse = reuseCandidate;
-							System.out.println("reuseCandidate:  " + statementBranch.getSerialNumber()
-									+ " vaOrderNumber: " + reuseCandidate.mVaOrder);
 							lastVaInTraceIsUsedForReuse = true;
 						} else {
-							System.out.println("Last INtrace:  " + statementBranch.getSerialNumber()
-									+ " vaOrderNumber: " + reuseCandidate.mVaOrder);
 							lastVaInTraceIsUsedForReuse = false;
 						}
 
 						// ACHTUNG, dürfen wirklich nur die nondets sein zwischen currentVA und previousVA
 						nondetsInTraceAfterPreviousVA.clear();
+					}
+				} else if (mSSA.getTrace().getSymbol(i) instanceof Call) {
+					callcount += 1;
+					if (callcount > 2) { // Ultiamte call and main call are ok
+						reuseUnsatpossible = false;
 					}
 				}
 			}
@@ -515,22 +523,21 @@ public class AnnotateAndAsserter<L extends IAction> {
 			if (lastStmtSeq.getPayload().getAnnotations().containsKey(VarAssignmentReuseAnnotation.class.getName())) {
 				mCurrentVA = (VarAssignmentReuseAnnotation) lastStmtSeq.getPayload().getAnnotations()
 						.get(VarAssignmentReuseAnnotation.class.getName());
+
 			}
 			System.out.println("CurrentVA:  " + lastStmtSeq.getSerialNumber());
 		}
 	}
 
 	private void removeCheckIfCovered() {
-		if ((lastVaInTraceIsUsedForReuse || mVAforReuse.equals(mDefaultVA)) && !mVAforReuse.mNegatedVA) {
-			if (nondetsInTrace.size() == nondetsInTraceAfterPreviousVA.size() + mVAforReuse.mVarAssignmentPair.size()) {
-				System.out.println("OtherBranchRemoveCheck");
-				mCurrentVA.mVAofOppositeBranch.removeCheck();
-				mCurrentVA.mVAofOppositeBranch.setVa(mValueAssignmentUsedForReuse, mHighestVaOrderInTrace);
-			} else {
-				System.out.println("No OtherBranch Optimopti Sizes dont match");
-			}
+
+		if (reuseUnsatpossible || mCurrentVA.equals(mDefaultVA)) {
+			System.out.println("OtherBranchRemoveCheck");
+			mCurrentVA.mVAofOppositeBranch.removeCheck();
+			mCurrentVA.mVAofOppositeBranch.setVa(mValueAssignmentUsedForReuse, mHighestVaOrderInTrace);
 		} else {
 			System.out.println("No OtherBranch Optimopti");
 		}
+
 	}
 }
