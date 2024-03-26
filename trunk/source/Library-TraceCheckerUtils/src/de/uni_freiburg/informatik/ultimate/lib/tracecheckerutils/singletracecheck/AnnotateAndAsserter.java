@@ -187,7 +187,7 @@ public class AnnotateAndAsserter<L extends IAction> {
 				reuse = true;
 				final ArrayList<Term> vaPairsAsTerms = checkIfNondetsOfTraceAreInVA(); // TODO
 
-				if (!vaPairsAsTerms.isEmpty()) {
+				if (!vaPairsAsTerms.isEmpty() && reuseUnsatpossible) {
 					final Term varAssignmentConjunction = SmtUtils.and(mMgdScriptTc.getScript(), vaPairsAsTerms);
 					if (mVAforReuse.mNegatedVA == true && !vaPairsAsTerms.isEmpty()) {
 						// varAssignmentConjunction = SmtUtils.not(mMgdScriptTc.getScript(), varAssignmentConjunction);
@@ -202,7 +202,7 @@ public class AnnotateAndAsserter<L extends IAction> {
 						System.out.println("REUSE: " + varAssignmentConjunction);
 					}
 				} else {
-					System.out.println("TODO previous test goal behind the current?");
+					System.out.println("TODO Experiment nur reusen wenn keine function calls?");
 					reuse = false; // Can be empty if previous test goal is "behind" the current. (loops)
 					// In this case previous test goal has not been checked yet.
 				}
