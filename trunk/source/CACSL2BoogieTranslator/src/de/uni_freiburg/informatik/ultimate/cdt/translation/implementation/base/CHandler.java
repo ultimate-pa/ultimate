@@ -3589,7 +3589,7 @@ public class CHandler {
 	private Result buildLoopResult(final IDispatcher main, final IASTStatement node, final List<Statement> bodyBlock,
 			final ExpressionResultBuilder resultBuilder) {
 		final LoopInvariantSpecification[] spec = extractLoopInvariants(main, node);
-		final ILocation loc = LocationFactory.createIgnoreCLocation(node);
+		final ILocation loc = mLocationFactory.createCLocation(node);
 		final WhileStatement whileStmt = new WhileStatement(loc, ExpressionFactory.createBooleanLiteral(loc, true),
 				spec, bodyBlock.toArray(Statement[]::new));
 		resultBuilder.getOverappr().stream().forEach(a -> a.annotate(whileStmt));
