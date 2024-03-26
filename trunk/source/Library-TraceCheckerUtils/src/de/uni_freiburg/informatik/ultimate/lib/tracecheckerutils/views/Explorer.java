@@ -54,7 +54,9 @@ public class Explorer<S> {
 
 			for (final var rule : mProgram.getRules()) {
 				if (rule.isApplicable(current)) {
-					stack.addAll(rule.successors(current));
+					final var succs = rule.successors(current);
+					// System.out.printf("successors of %s = %s\n", current, succs);
+					stack.addAll(succs);
 				}
 			}
 		}

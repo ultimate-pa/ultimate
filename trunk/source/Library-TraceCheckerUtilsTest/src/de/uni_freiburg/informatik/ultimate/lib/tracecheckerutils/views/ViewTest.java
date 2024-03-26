@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.views;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -49,6 +50,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class ViewTest {
+	private static final int MAX_ITERATIONS = 100;
+
 	public static class Mutex implements ITestProgram<ProgramState<Integer, IncDecLocation>> {
 		enum IncDecLocation {
 			MINUS("⊖"), PLUS("⨁");
@@ -103,7 +106,7 @@ public class ViewTest {
 			logger.info(config);
 			if (isBad != null && isBad.test(config)) {
 				logger.fatal("bad config: %s", config);
-				throw new AssertionError("bad config: " + config);
+				throw new BadConfigurationException(config);
 			}
 		};
 	}
@@ -115,9 +118,13 @@ public class ViewTest {
 	}
 
 	private static <X> void abstractFp(final ITestProgram<X> program, final int parameter) {
+		abstractFp(program, parameter, -1);
+	}
+
+	private static <X> void abstractFp(final ITestProgram<X> program, final int parameter, final int maxIterations) {
 		final var services = UltimateMocks.createUltimateServiceProviderMock();
 		final var va = new ViewAbstraction<>(services, program.getTransitions());
-		final var fp = va.computeFixedPoint(Set.of(program.init(parameter)), parameter);
+		final var fp = va.computeFixedPoint(Set.of(program.init(parameter)), parameter, 100);
 
 		final var logger = services.getLoggingService().getLogger(ViewTest.class);
 		fp.stream().forEach(consumeConfiguration(services, program::isBad));
@@ -139,9 +146,19 @@ public class ViewTest {
 		explore(new Mutex(4), 4);
 	}
 
+	@Test(expected = BadConfigurationException.class)
+	public void abstract2Mutex2() {
+		abstractFp(new Mutex(2), 2, MAX_ITERATIONS);
+	}
+
 	@Test
 	public void abstract3Mutex2() {
 		abstractFp(new Mutex(2), 3);
+	}
+
+	@Test(expected = BadConfigurationException.class)
+	public void abstract3Mutex3() {
+		abstractFp(new Mutex(3), 3, MAX_ITERATIONS);
 	}
 
 	@Test
@@ -208,9 +225,19 @@ public class ViewTest {
 		explore(new MutexBroadcast(4), 4);
 	}
 
+	@Test(expected = BadConfigurationException.class)
+	public void abstract2MutexBroadcast2() {
+		abstractFp(new MutexBroadcast(2), 2, MAX_ITERATIONS);
+	}
+
 	@Test
 	public void abstract3MutexBroadcast2() {
 		abstractFp(new MutexBroadcast(2), 3);
+	}
+
+	@Test(expected = BadConfigurationException.class)
+	public void abstract3MutexBroadcast3() {
+		abstractFp(new MutexBroadcast(3), 3, MAX_ITERATIONS);
 	}
 
 	@Test
@@ -248,9 +275,9 @@ public class ViewTest {
 					new LocalRule<>(new Pair<>(Burns.q3, false), new Pair<>(Burns.q4, true)),
 
 					// fifth rule
-					new GlobalRule<>(new Pair<>(Burns.q3, true), new Pair<>(Burns.q4, true), Range.LESS,
+					new GlobalRule<>(new Pair<>(Burns.q4, true), new Pair<>(Burns.q1, true), Range.LESS,
 							Quantifier.EXISTS, Pair::getSecond),
-					new GlobalRule<>(new Pair<>(Burns.q3, false), new Pair<>(Burns.q4, false), Range.LESS,
+					new GlobalRule<>(new Pair<>(Burns.q4, false), new Pair<>(Burns.q1, false), Range.LESS,
 							Quantifier.EXISTS, Pair::getSecond),
 
 					// sixth rule
@@ -281,9 +308,7 @@ public class ViewTest {
 		@Override
 		public Configuration<Pair<Burns, Boolean>> init(final int parameter) {
 			final var state = new Pair<>(Burns.q1, false);
-			final var states = new ImmutableList<>(
-					IntStream.range(0, parameter).mapToObj(i -> state).collect(Collectors.toList()));
-			return new Configuration<>(states);
+			return new Configuration<>(repeat(parameter, state));
 		}
 
 		@Override
@@ -375,11 +400,301 @@ public class ViewTest {
 		abstractFp(new BurnsSimple(), 3);
 	}
 
+	public static class Illinois implements ITestProgram<Illinois.Ill> {
+		public enum Ill {
+			invd, dirt, shrd, vlid
+		}
+
+		@Override
+		public Program<Ill> getTransitions() {
+			return new Program<>(null, List.of(
+					// t1
+					new RendezVous<>(Ill.invd, Ill.shrd, Ill.dirt, Ill.shrd),
+					// t2
+					new GlobalRule<>(Ill.invd, Ill.vlid, Range.DISTINCT, Quantifier.FORALL, x -> x == Ill.invd),
+					// t3
+					new BroadcastRule<>(Ill.invd, Ill.dirt, x -> Ill.invd),
+					// t4
+					new LocalRule<>(Ill.dirt, Ill.invd),
+					// t5
+					new ConditionalBroadcast<>(Ill.invd, Ill.shrd, Range.DISTINCT, Quantifier.EXISTS,
+							s -> s == Ill.vlid || s == Ill.shrd, s -> s == Ill.vlid ? Ill.shrd : s),
+					// t6
+					new BroadcastRule<>(Ill.shrd, Ill.dirt, x -> x == Ill.shrd ? Ill.invd : x),
+					// t7
+					new LocalRule<>(Ill.shrd, Ill.invd),
+					// t8
+					new LocalRule<>(Ill.vlid, Ill.invd),
+					// t9
+					new LocalRule<>(Ill.vlid, Ill.dirt)));
+		}
+
+		@Override
+		public Configuration<Ill> init(final int parameter) {
+			return new Configuration<>(repeat(parameter, Ill.invd));
+		}
+
+		@Override
+		public boolean isBad(final Configuration<Ill> config) {
+			return config.stream().filter(x -> x == Ill.dirt || x == Ill.shrd).limit(2).count() >= 2
+					&& config.stream().anyMatch(Ill.dirt::equals);
+		}
+	}
+
+	@Test
+	public void exploreIllinois2() {
+		explore(new Illinois(), 2);
+	}
+
+	@Test
+	public void exploreIllinois3() {
+		explore(new Illinois(), 3);
+	}
+
+	@Test
+	public void exploreIllinois4() {
+		explore(new Illinois(), 4);
+	}
+
+	@Test
+	public void abstractIllinois2() {
+		abstractFp(new Illinois(), 2);
+	}
+
+	@Test
+	public void abstractIllinois3() {
+		abstractFp(new Illinois(), 3);
+	}
+
+	public static class Firefly implements ITestProgram<Firefly.Ffl> {
+		enum Ffl {
+			invd, excl, shrd, dirt
+		}
+
+		@Override
+		public Program<Ffl> getTransitions() {
+			return new Program<>(null, List.of(
+					// t1
+					new RendezVous<>(Ffl.invd, Ffl.shrd, Ffl.dirt, Ffl.shrd),
+					// t2
+					new GlobalRule<>(Ffl.invd, Ffl.excl, Range.DISTINCT, Quantifier.FORALL, Ffl.invd::equals),
+					// t3
+					new ConditionalBroadcast<>(Ffl.invd, Ffl.shrd, Range.DISTINCT, Quantifier.EXISTS,
+							s -> s == Ffl.excl || s == Ffl.shrd, s -> s == Ffl.excl ? Ffl.shrd : s),
+					// t4
+					new LocalRule<>(Ffl.excl, Ffl.dirt),
+					// t5
+					new BroadcastRule<>(Ffl.invd, Ffl.dirt, s -> Ffl.invd),
+					// t6
+					new GlobalRule<>(Ffl.shrd, Ffl.excl, Range.DISTINCT, Quantifier.FORALL, s -> s != Ffl.shrd)));
+		}
+
+		@Override
+		public Configuration<Ffl> init(final int parameter) {
+			return new Configuration<>(repeat(parameter, Ffl.invd));
+		}
+
+		@Override
+		public boolean isBad(final Configuration<Ffl> config) {
+			return (config.stream().anyMatch(Ffl.dirt::equals)
+					&& (config.stream().anyMatch(Ffl.shrd::equals) || config.stream().anyMatch(Ffl.excl::equals)))
+					|| (config.stream().filter(Ffl.dirt::equals).count() >= 2)
+					|| (config.stream().filter(Ffl.excl::equals).count() >= 2);
+		}
+	}
+
+	@Test
+	public void exploreFirefly2() {
+		explore(new Firefly(), 2);
+	}
+
+	@Test
+	public void exploreFirefly3() {
+		explore(new Firefly(), 3);
+	}
+
+	@Test
+	public void exploreFirefly4() {
+		explore(new Firefly(), 4);
+	}
+
+	@Test
+	public void abstractFirefly2() {
+		abstractFp(new Firefly(), 2);
+	}
+
+	@Test
+	public void abstractFirefly3() {
+		abstractFp(new Firefly(), 3);
+	}
+
+	public static class German implements ITestProgram<ProgramState<Pair<Boolean, German.Comm>, German.LocalState>> {
+		enum Comm {
+			eps, reqShr, reqExc
+		}
+
+		enum Q {
+			invl, shrd, excl
+		}
+
+		enum CH1 {
+			eps, reqShr, reqExc
+		}
+
+		enum CH2 {
+			eps, graShr, graExc, invldt
+		}
+
+		enum CH3 {
+			eps, invAck
+		}
+
+		public static class LocalState {
+			private final Q mState;
+			private final CH1 mCh1;
+			private final CH2 mCh2;
+			private final CH3 mCh3;
+			private final boolean mCurClt;
+			private final boolean mSList;
+			private final boolean mIList;
+
+			public LocalState(final Q state, final CH1 ch1, final CH2 ch2, final CH3 ch3, final boolean curClt,
+					final boolean sList, final boolean iList) {
+				mState = state;
+				mCh1 = ch1;
+				mCh2 = ch2;
+				mCh3 = ch3;
+				mCurClt = curClt;
+				mSList = sList;
+				mIList = iList;
+			}
+
+			public static LocalState initial() {
+				return new LocalState(Q.invl, CH1.eps, CH2.eps, CH3.eps, false, false, false);
+			}
+		}
+
+		@Override
+		public Program<ProgramState<Pair<Boolean, Comm>, LocalState>> getTransitions() {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		@Override
+		public Configuration<ProgramState<Pair<Boolean, Comm>, LocalState>> init(final int parameter) {
+			final ProgramState<Pair<Boolean, Comm>, LocalState> local =
+					new ProgramState.ThreadState<>(LocalState.initial());
+			final ProgramState<Pair<Boolean, Comm>, LocalState> global =
+					new ProgramState.ControllerState<>(new Pair<>(false, Comm.eps));
+			return new Configuration<>(new ImmutableList<>(global, repeat(parameter, local)));
+		}
+
+		@Override
+		public boolean isBad(final Configuration<ProgramState<Pair<Boolean, Comm>, LocalState>> config) {
+			final var states = config.stream().filter(ProgramState::isThreadState).map(s -> s.getThreadState().mState)
+					.collect(Collectors.toList());
+			return states.stream().filter(Q.excl::equals).count() > 2
+					|| (states.stream().anyMatch(Q.excl::equals) && states.stream().anyMatch(Q.shrd::equals));
+		}
+	}
+
+	public static class ConditionalBroadcast<S> implements IRule<S> {
+		private final S mSource;
+		private final S mTarget;
+		private final Range mRange;
+		private final Quantifier mQuantifier;
+		private final Predicate<S> mCondition;
+		private final UnaryOperator<S> mBroadcast;
+
+		public ConditionalBroadcast(final S source, final S target, final Range range, final Quantifier quantifier,
+				final Predicate<S> condition, final UnaryOperator<S> broadcast) {
+			mSource = source;
+			mTarget = target;
+			mRange = range;
+			mQuantifier = quantifier;
+			mCondition = condition;
+			mBroadcast = broadcast;
+		}
+
+		@Override
+		public boolean isApplicable(final Configuration<S> config) {
+			for (int i = 0; i < config.size(); ++i) {
+				final var state = config.get(i);
+				if (state.equals(mSource)) {
+					final boolean conditionSatisfied = checkCondition(config, i);
+					if (conditionSatisfied) {
+						return true;
+					}
+				}
+			}
+			return false;
+		}
+
+		private boolean checkCondition(final Configuration<S> config, final int index) {
+			boolean result = mQuantifier.defaultValue();
+			for (int i = 0; i < config.size(); ++i) {
+				if (mRange.satisfies(i, index)) {
+					final var state = config.get(i);
+					result = mQuantifier.combine(result, mCondition.test(state));
+				}
+			}
+			return result;
+		}
+
+		@Override
+		public List<Configuration<S>> successors(final Configuration<S> config) {
+			assert isApplicable(config);
+
+			final var result = new ArrayList<Configuration<S>>();
+			for (int i = 0; i < config.size(); ++i) {
+				final var state = config.get(i);
+				if (state.equals(mSource) && checkCondition(config, i)) {
+					result.add(successor(config, i));
+				}
+
+			}
+			return result;
+		}
+
+		private Configuration<S> successor(final Configuration<S> config, final int index) {
+			final var subst = new HashMap<Integer, S>();
+			subst.put(index, mTarget);
+
+			for (int i = 0; i < config.size(); ++i) {
+				final var state = config.get(i);
+				final var newState = mBroadcast.apply(state);
+				if (i != index && newState != null) {
+					subst.put(i, newState);
+				}
+			}
+
+			return config.replace(subst);
+		}
+
+		@Override
+		public int extensionSize() {
+			return mQuantifier == Quantifier.EXISTS ? 1 : 0;
+		}
+	}
+
+	private static <X> ImmutableList<X> repeat(final int n, final X elem) {
+		return new ImmutableList<>(IntStream.range(0, n).mapToObj(i -> elem).collect(Collectors.toList()));
+	}
+
 	public interface ITestProgram<X> {
 		Program<X> getTransitions();
 
 		Configuration<X> init(int parameter);
 
 		boolean isBad(Configuration<X> config);
+	}
+
+	public static class BadConfigurationException extends RuntimeException {
+		private final Configuration<?> mBadConfig;
+
+		public BadConfigurationException(final Configuration<?> badConfig) {
+			super("Bad configuration: " + badConfig);
+			mBadConfig = badConfig;
+		}
 	}
 }

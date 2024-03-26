@@ -52,16 +52,20 @@ public class ViewAbstraction<S> {
 		mDelta = program.getRules().stream().mapToInt(IRule::extensionSize).max().orElse(0);
 	}
 
-	public Set<Configuration<S>> computeFixedPoint(final Set<Configuration<S>> initial, final int k) {
+	public Set<Configuration<S>> computeFixedPoint(final Set<Configuration<S>> initial, final int k,
+			final int maxIterations) {
 		final var current = new HashSet<>(initial);
 		int iteration = 0;
+		// mLogger.debug("fixpoint iteration %d : %s", iteration, current);
 
 		boolean changed;
 		do {
 			changed = current.addAll(abstractPost(current, k));
 			iteration++;
-			mLogger.info("fixpoint iteration %d", iteration);
-		} while (changed);
+			// mLogger.debug("fixpoint iteration %d : %s", iteration, current);
+		} while (changed && (maxIterations < 0 || iteration <= maxIterations));
+
+		mLogger.info("fixpoint algorithm %s after %d iterations", changed ? "ABORTED" : "finished", iteration);
 
 		return current;
 	}
