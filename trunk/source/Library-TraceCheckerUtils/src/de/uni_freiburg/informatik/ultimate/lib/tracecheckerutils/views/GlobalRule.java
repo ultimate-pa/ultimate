@@ -128,6 +128,6 @@ public class GlobalRule<S> implements IRule<S> {
 
 	@Override
 	public int extensionSize() {
-		return mQuantifier == Quantifier.EXISTS ? 0 : 1;
+		return mQuantifier == Quantifier.EXISTS ? 1 : 0;
 	}
 }
