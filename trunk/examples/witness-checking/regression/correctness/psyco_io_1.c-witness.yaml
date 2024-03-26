@@ -23,7 +23,7 @@
     string: ((((q == 2) && (this_sink == 0)) || (q == 0)) || ((q == 3) && !((this_sink == 0))))
     type: assertion
     format: C
-- entry_type: loop_invariant
+- entry_type: location_invariant
   metadata:
     format_version: '0.1'
     uuid: 803e6ee3-2b7a-4b70-9562-60a595880c6e
@@ -44,7 +44,7 @@
     file_hash: UNUSED
     line: 345
     function: main
-  loop_invariant:
+  location_invariant:
     string: '0'
     type: assertion
     format: C

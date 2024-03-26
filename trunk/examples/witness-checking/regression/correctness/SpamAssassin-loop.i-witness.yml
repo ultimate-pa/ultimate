@@ -26,7 +26,7 @@
       value: (((0 <= j) && (0 <= i)) && ((limit + 4) <= bufsize))
       format: c_expression
   - invariant:
-      type: loop_invariant
+      type: location_invariant
       location:
         file_name: SpamAssassin-loop.i
         file_hash: UNUSED

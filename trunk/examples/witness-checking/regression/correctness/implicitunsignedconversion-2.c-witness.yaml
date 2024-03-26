@@ -1,4 +1,4 @@
-- entry_type: loop_invariant
+- entry_type: location_invariant
   metadata:
     format_version: '0.1'
     uuid: 386b0121-a302-415f-af28-bf0db7c36d11
@@ -19,7 +19,7 @@
     file_hash: UNUSED
     line: 14
     function: main
-  loop_invariant:
+  location_invariant:
     string: '0'
     type: assertion
     format: C

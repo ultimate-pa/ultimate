@@ -23,7 +23,7 @@
     string: (((((2 == this_state) && (q == 3)) || ((4 <= q) && (3 == this_state))) || ((q == 2) && (0 == this_state))) || (q == 0))
     type: assertion
     format: C
-- entry_type: loop_invariant
+- entry_type: location_invariant
   metadata:
     format_version: '0.1'
     uuid: 2a77d60c-1004-4ae8-8366-7d0bb6d4ecd9
@@ -44,7 +44,7 @@
     file_hash: UNUSED
     line: 391
     function: main
-  loop_invariant:
+  location_invariant:
     string: '0'
     type: assertion
     format: C

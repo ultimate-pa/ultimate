@@ -16,7 +16,7 @@
       language: C
   content:
   - invariant:
-      type: loop_invariant
+      type: location_invariant
       location:
         file_name: bitwise.c
         file_hash: UNUSED
