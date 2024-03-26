@@ -96,6 +96,6 @@ public class GlobalVarUpdate<S, T> implements IRule<ProgramState<S, T>> {
 
 	@Override
 	public int extensionSize() {
-		return 0;
+		return 1;
 	}
 }
