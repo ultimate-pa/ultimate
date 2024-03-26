@@ -89,7 +89,7 @@ public class BoogieIcfgContainer extends ModernAnnotations implements IIcfg<Boog
 	 * Note: This map is only used during construction!
 	 *
 	 */
-	final Map<String, BoogieIcfgLocation> mFinalNode;
+	public final Map<String, BoogieIcfgLocation> mFinalNode;
 
 	private final Boogie2SMT mBoogie2SMT;
 	private final CodeBlockFactory mCodeBlockFactory;
