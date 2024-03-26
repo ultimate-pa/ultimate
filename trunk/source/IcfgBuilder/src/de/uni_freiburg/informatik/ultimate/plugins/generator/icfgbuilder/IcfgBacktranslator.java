@@ -62,19 +62,19 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.cfg.BoogieIcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.cfg.Call;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.cfg.ForkThreadCurrent;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.cfg.ForkThreadOther;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.cfg.GotoEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.cfg.JoinThreadCurrent;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.cfg.JoinThreadOther;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.cfg.ParallelComposition;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.cfg.Return;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.cfg.SequentialComposition;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.cfg.StatementSequence;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.cfg.Summary;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ForkThreadCurrent;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ForkThreadOther;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.GotoEdge;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.JoinThreadCurrent;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.JoinThreadOther;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ParallelComposition;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 
 public class IcfgBacktranslator extends
 		DefaultTranslator<IIcfgTransition<IcfgLocation>, BoogieASTNode, Term, Expression, IcfgLocation, String, ILocation> {
