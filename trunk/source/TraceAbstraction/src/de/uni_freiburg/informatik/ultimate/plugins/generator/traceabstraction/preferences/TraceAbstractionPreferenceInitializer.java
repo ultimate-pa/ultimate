@@ -195,11 +195,14 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_CON_COM_CHECKER = "Additional conditional commutativity checking";
 	private static final ConComChecker DEF_CON_COM_CHECKER = ConComChecker.NONE;
 	
-	public static final String LABEL_CON_COM_CHECKER_CRITERION = "Criterion for conditional commutativity checking (use LIMITED_CHECKS for DFS)";
+	public static final String LABEL_CON_COM_CHECKER_CRITERION = "Criterion for conditional commutativity checking";
 	private static final ConComCheckerCriterion DEF_CON_COM_CHECKER_CRITERION = ConComCheckerCriterion.DEFAULT;
 	
-	public static final String LABEL_CON_COM_CHECKER_CRITERION_LIMIT = "Limit for LIMITED_CHECKS";
-	private static final int DEF_CON_COM_CHECKER_CRITERION_LIMIT = 2;
+	public static final String LABEL_CON_COM_CHECKER_LIMITED_CHECKS_CRITERION = "use limited checks (recommended for DFS)";
+	private static final boolean DEF_CON_COM_CHECKER_LIMITED_CHECKS_CRITERION = false;
+	
+	public static final String LABEL_CON_COM_CHECKER_CRITERION_LIMIT = "Limit for limited checks";
+	private static final int DEF_CON_COM_CHECKER_CRITERION_LIMIT = 1;
 	
 	public static final String LABEL_CON_COM_CHECKER_RANDOM_PROB = "probability for random criterion, format: (prob,seed)";
 	private static final double DEF_CON_COM_CHECKER_RANDOM_PROB = 1;
@@ -745,6 +748,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						PreferenceType.Combo, ConComChecker.values()),
 				new UltimatePreferenceItem<>(LABEL_CON_COM_CHECKER_CRITERION, DEF_CON_COM_CHECKER_CRITERION,
 						PreferenceType.Combo, ConComCheckerCriterion.values()),
+				new UltimatePreferenceItem<>(LABEL_CON_COM_CHECKER_LIMITED_CHECKS_CRITERION, DEF_CON_COM_CHECKER_LIMITED_CHECKS_CRITERION,
+						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_CON_COM_CHECKER_CRITERION_LIMIT, DEF_CON_COM_CHECKER_CRITERION_LIMIT,
 						PreferenceType.Integer),
 				new UltimatePreferenceItem<>(LABEL_CON_COM_CHECKER_RANDOM_PROB, DEF_CON_COM_CHECKER_RANDOM_PROB,
@@ -1084,6 +1089,6 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	}
 	
 	public enum ConComCheckerCriterion {
-		DEFAULT, RANDOM, SLEEP_SET, LIMITED_CHECKS
+		DEFAULT, RANDOM, SLEEP_SET
 	}
 }

@@ -105,6 +105,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.in
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.SemanticIndependenceConditionGenerator;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.SemanticIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.SleepSetCriterion;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.WrapperCriterion;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.AbstractionType;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.LimitedChecksCriterion;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.RandomCriterion;
@@ -586,12 +587,13 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 			case SLEEP_SET:
 				mCriterion = new SleepSetCriterion<>();
 				break;
-			case LIMITED_CHECKS:
-				mCriterion = new LimitedChecksCriterion<>(mPref.getConComCheckerCriterionLimit());
-				break;
 			default:
 				throw new UnsupportedOperationException("PartialOrderCegarLoop currently does not support criterion "
 						+ mPref.getConComCheckerCriterion());
+			}
+			if (mPref.useLimitedChecksCriterion()) {
+				LimitedChecksCriterion<L> criterion = new LimitedChecksCriterion<>(mPref.getConComCheckerCriterionLimit());
+				mCriterion = new WrapperCriterion<>(mCriterion, criterion);
 			}
 			final IIcfgSymbolTable symbolTable = mCsToolkit.getSymbolTable();
 			final IPredicateUnifier predicateUnifier = new PredicateUnifier(mLogger, mServices,

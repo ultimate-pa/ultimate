@@ -51,7 +51,7 @@ public class WrapperCriterion<L> implements IConditionalCommutativityCriterion<L
 	 * @param criterion2
 	 *     second criterion
 	 */
-	WrapperCriterion(IConditionalCommutativityCriterion<L> criterion1,
+	public WrapperCriterion(IConditionalCommutativityCriterion<L> criterion1,
 			IConditionalCommutativityCriterion<L> criterion2) {
 		mCriterion1 = criterion1;
 		mCriterion2 = criterion2;
@@ -60,15 +60,19 @@ public class WrapperCriterion<L> implements IConditionalCommutativityCriterion<L
 	@Override
 	public boolean decide(IPredicate state, IRun<L, IPredicate> run, L letter1, L letter2) {
 		boolean result1 = mCriterion1.decide(state, run, letter1, letter2);
-		boolean result2 = mCriterion2.decide(state, run, letter1, letter2);
-		return (result1 && result2);
+		if (!result1) {
+			return false;
+		}
+		return mCriterion2.decide(state, run, letter1, letter2);
 	}
 
 	@Override
 	public boolean decide(IPredicate condition) {
 		boolean result1 = mCriterion1.decide(condition);
-		boolean result2 = mCriterion2.decide(condition);
-		return (result1 && result2);
+		if (!result1) {
+			return false;
+		}
+		return mCriterion2.decide(condition);
 	}
 
 	@Override
