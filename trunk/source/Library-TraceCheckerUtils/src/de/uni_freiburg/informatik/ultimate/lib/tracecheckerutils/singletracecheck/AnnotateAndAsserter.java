@@ -187,7 +187,7 @@ public class AnnotateAndAsserter<L extends IAction> {
 				reuse = true;
 				final ArrayList<Term> vaPairsAsTerms = checkIfNondetsOfTraceAreInVA(); // TODO
 
-				if (!vaPairsAsTerms.isEmpty() && reuseUnsatpossible) {
+				if (!vaPairsAsTerms.isEmpty()) {
 					final Term varAssignmentConjunction = SmtUtils.and(mMgdScriptTc.getScript(), vaPairsAsTerms);
 					if (mVAforReuse.mNegatedVA == true && !vaPairsAsTerms.isEmpty()) {
 						// varAssignmentConjunction = SmtUtils.not(mMgdScriptTc.getScript(), varAssignmentConjunction);
