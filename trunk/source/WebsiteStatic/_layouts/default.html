@@ -1,0 +1,61 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="manifest" href="{{ 'site.webmanifest' | relative_url }}">
+    <link rel="apple-touch-icon" href="{{ 'icon.png' | relative_url }}">
+
+    <link rel="shortcut icon" type="image/x-icon" href="{{ 'favicon.ico' | relative_url }}">
+
+    <link rel="stylesheet" href="{{ 'css/normalize.css' | relative_url }}">
+    <link rel="stylesheet" href="{{ 'css/bootstrap.min.css' | relative_url }}">
+    <link rel="stylesheet" href="{{ 'css/open-iconic-bootstrap.min.css' | relative_url }}">
+    <link rel="stylesheet" href="{{ 'css/main.css' | relative_url }}">
+    <link rel="stylesheet" href="{{ 'css/editor.css' | relative_url }}">
+
+    <meta name="theme-color" content="#fafafa">
+    <meta name="description" content="">
+    <title>Uni-Freiburg : SWT - Ultimate</title>
+
+    <script type="text/javascript" charset="utf-8" src="{{ 'js/vendor/jquery-3.4.1.min.js' | relative_url }}"></script>
+    <script type="text/javascript" charset="utf-8" src="{{ 'js/vendor/modernizr-3.7.1.min.js' | relative_url }}"></script>
+    <script type="text/javascript" charset="utf-8" src="{{ 'js/vendor/bootstrap.bundle.min.js' | relative_url }}"></script>
+    <script type="text/javascript" charset="utf-8" src="{{ 'js/plugins.js' | relative_url }}"></script>
+    {% for file in page.js %}
+    <script type="text/javascript" charset="utf-8" src="{{ 'js/' | append: file | relative_url }}"></script>
+    {% endfor %}
+  </head>
+  <body>
+    <div class="d-flex h-100 flex-column">
+      <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="{{ '/' | relative_url }}"> <img
+          src="{{ 'img/ultimate_logo.png' | relative_url }}" width="30" height="30"
+          class="d-inline-block align-top" alt=""> Ultimate
+        </a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse"
+          data-target="#navbar_content" aria-controls="navbarSupportedContent"
+          aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+    
+        <div class="collapse navbar-collapse" id="navbar_content">
+          <ul class="navbar-nav" id="navbar_breadcrumb">
+          {% if page.url != '/' %}
+            <li class="nav-item active">
+              <a class="nav-link" href="{{ page.url | relative_url }}">{{ page.title }} <span class="sr-only">(current)</span></a>
+            </li>
+          {% endif %}
+          </ul>
+        </div>
+      </nav>
+      <div id="content" class="d-flex flex-column flex-grow-1 p-5">
+        {{ content }}
+      </div>
+      <footer class="bg-light py-2">
+        <a class="float-end mx-2" href="{{ 'imprint/' | relative_url }}">Imprint</a>
+      </footer>
+    </div>
+  </body>
+</html>

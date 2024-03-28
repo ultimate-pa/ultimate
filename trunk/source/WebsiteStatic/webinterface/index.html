@@ -1,0 +1,168 @@
+---
+layout: default
+permalink: /webinterface/
+
+js: [
+  'vendor/handlebars.min-35d3fdb.js',
+  'vendor/ace-min/ace.js',
+  'vendor/interact.min.js',
+  'vendor/lz-string.min.js',
+  'webinterface/config.js',
+  'webinterface/toolinfo.js',
+  'webinterface/helpers.js',
+  'webinterface/handlebars-custom.js',
+  'webinterface/tool_interface.js',
+  'webinterface/main.js',
+]
+---
+
+<div id="editor" class="flex-grow-1 flex-shrink-1"></div>
+<div id="messages" class="bg-light border-top top-shaddow p-1">
+  <div class="text-end">
+    <span id="move-messages" class="oi oi-collapse-right pr-1 float-right messages-actions close"></span>
+  </div>
+  <div id="messages-toasts"></div>
+</div>
+<div id="persistence_link_modal" class="modal fade" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-xl" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Persistent shareable link for current session.</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <h4>Only tool and code sample.</h4>
+        <div class="input-group mb-3">
+            <input id="persistence_link_small_input" type="text" class="form-control"  aria-label="Session link" readonly>
+          <div class="input-group-append">
+            <button id="copy_persistence_link_small_to_clipboard"
+                    class="btn btn-outline-secondary" type="button"
+                    data-toggle="tooltip" data-placement="top" title="Click to copy link to clipboard.">
+              Copy
+            </button>
+          </div>
+        </div>
+        <p>This link is short and includes the tool and the used code example. Changes to the code will be
+          lost. Default settings will be used.</p>
+        <h4>All settings and code.</h4>
+        <div class="input-group mb-3">
+            <input id="persistence_link_input" type="text" class="form-control"  aria-label="Session link" readonly>
+          <div class="input-group-append">
+            <button id="copy_persistence_link_to_clipboard"
+                    class="btn btn-outline-secondary" type="button"
+                    data-toggle="tooltip" data-placement="top" title="Click to copy link to clipboard.">
+              Copy
+            </button>
+          </div>
+        </div>
+        <p>Use this link if you want to preserve all your code and changes to settings. Use this link to share a
+          hand crafted example.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% comment %} "raw" tag is needed because handlebar syntax is similar to liquid. {% endcomment %}
+{% raw %}
+<script id="editor-message" type="text/x-handlebars-template">
+  <div class="toast  {{toast_classes}}" data-type="{{logLvl}}" data-start-line="{{startLNr}}"
+       data-end-line="{{endLNr}}" data-start-col="{{startCol}}" data-end-col="{{endCol}}"
+       role="alert" aria-live="assertive" aria-atomic="true" data-autohide="false">
+    <div class="toast-header">
+      <span class="oi mr-1 {{oi_icon}}"></span>
+      <strong class="mr-auto">{{shortDesc}}</strong>
+      </button>
+    </div>
+    <div class="toast-body">
+      <div class="row">
+        <div class="number">
+          <span>Line</span>
+        </div>
+        <div class="number">
+          <span>Col</span>
+        </div>
+        <div class="col">
+          <span>Description</span>
+        </div>
+      </div>
+      <hr>
+      <div class="row">
+        <div class="number">
+          <span>
+  			{{#ifCond startLNr '!==' -1}}{{startLNr}}{{/ifCond}}
+            {{#ifCond startLNr '===' -1}}-{{/ifCond}}
+  		  </span>
+        </div>
+        <div class="number">
+          <span>
+            {{#ifCond startCol '!==' -1}}{{startCol}}{{/ifCond}}
+            {{#ifCond startCol '===' -1}}-{{/ifCond}}
+          </span>
+        </div>
+        <div class="col">
+          <pre><code class="text-break break-spaces">{{longDesc}}</code></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</script>
+{% endraw %}
+
+
+{% comment %} "raw" tag is needed because handlebar syntax is similar to liquid. {% endcomment %}
+{% raw %}
+<script id="navbar-template" type="text/x-handlebars-template">
+  <ul class="navbar-nav">
+    <li class="nav-item dropdown">
+      <a class="nav-link dropdown-toggle" href="#" id="navbar_language_select_dropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        Choose Language
+      </a>
+      <div class="dropdown-menu">
+        {{#each tool.languages}}
+          <a class="dropdown-item language-selection" href="#"  id="{{this.worker}}" data-language="{{this.language}}">{{this.language}}</a>
+        {{~/each}}
+      </div>
+    </li>
+  </ul>
+  <ul class="navbar-nav ml-auto">
+    <li class="nav-item dropdown">
+      <a class="nav-link dropdown-toggle" href="#" id="navbar_sample_select_dropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        Samples
+      </a>
+      <div id="code_sample_dropdown_menu" class="dropdown-menu dropdown-menu-right">
+      </div>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="#" id="navbar_execute_interface">
+        Execute
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link hidden" href="#" id="navbar_cancel_interface">
+        (Click to cancel)
+      </a>
+    </li>
+    <li class="nav-item dropdown">
+      <a class="nav-link dropdown-toggle" href="#" id="navbar_settings_select_dropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        Settings
+      </a>
+      <div class="dropdown-menu dropdown-menu-right">
+        <h6 id="settings_header" class="dropdown-header">Settings</h6>
+        <div id="settings_dropdown_menu" class="px-4 pt-3">
+        </div>
+        <div class="dropdown-divider"></div>
+        <div class="px-0">
+          <a id="create_persistence_link" class="dropdown-item" href="#">Create sharable link</a>
+        </div>
+        <div class="dropdown-divider"></div>
+        <p id="version_info_text" class="px-4 text-secondary"></p>
+      </div>
+    </li>
+  </ul>
+</script>
+{% endraw %}
