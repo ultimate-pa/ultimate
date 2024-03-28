@@ -52,7 +52,6 @@ import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer.TestGenReuseMode;
@@ -393,7 +392,6 @@ public class AnnotateAndAsserter<L extends IAction> {
 	private void checkTraceForVAandNONDETS() {
 		mTestCaseUniqueIdentifier = mTestCaseUniqueIdentifier + mSSA.getTrace().hashCode();
 		mTestCaseUniqueIdentifier += mSSA.getTrace().getSymbol(mSSA.getTrace().length() - 1).hashCode();
-		int callcount = 0;
 		if (mSSA.getTrace().length() - 1 > 0) {
 			for (int i = 0; i < mSSA.getTrace().length() - 1; i++) { // dont check current testgoal for va
 				if (mSSA.getTrace().getSymbol(i) instanceof StatementSequence) {
@@ -446,11 +444,6 @@ public class AnnotateAndAsserter<L extends IAction> {
 
 						// ACHTUNG, dürfen wirklich nur die nondets sein zwischen currentVA und previousVA
 						nondetsInTraceAfterPreviousVA.clear();
-					}
-				} else if (mSSA.getTrace().getSymbol(i) instanceof Call) {
-					callcount += 1;
-					if (callcount > 2) { // Ultiamte call and main call are ok
-						reuseUnsatpossible = false;
 					}
 				}
 			}
@@ -517,8 +510,10 @@ public class AnnotateAndAsserter<L extends IAction> {
 
 	private void getCurrentVA() {
 		final L lastStmt = mSSA.getTrace().getSymbol(mSSA.getTrace().length() - 1);
-
 		if (lastStmt instanceof StatementSequence) {
+			if (lastStmt.getPrecedingProcedure().equals("main")) {
+				reuseUnsatpossible = false;
+			}
 			final StatementSequence lastStmtSeq = (StatementSequence) lastStmt;
 			if (lastStmtSeq.getPayload().getAnnotations().containsKey(VarAssignmentReuseAnnotation.class.getName())) {
 				mCurrentVA = (VarAssignmentReuseAnnotation) lastStmtSeq.getPayload().getAnnotations()
