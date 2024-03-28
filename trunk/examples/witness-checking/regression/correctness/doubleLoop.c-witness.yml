@@ -21,7 +21,7 @@
         file_name: doubleLoop.c
         file_hash: UNUSED
         line: 9
-        column: 2
+        column: 3
         function: main
       value: (((((((x == 3) && ((((-1 + (-1 * y)) / 2) + 2) == 0)) && (i == y)) && (((y + 1) % 2) == 0)) || (((x == 3) && (i == 1)) && (y == 0))) || (((x == 3) && (i == 0)) && (y == 0))) || (((x == 3) && (i == (y + 1))) && ((i + y) == 3)))
       format: c_expression
@@ -31,7 +31,7 @@
         file_name: doubleLoop.c
         file_hash: UNUSED
         line: 6
-        column: 2
+        column: 3
         function: main
       value: ((((((i == 2) && (x == 1)) && (y == 0)) || (((x == 0) && (i == 1)) && (y == 0))) || (((x == 3) && (i == 3)) && (y == 0))) || (((x == 0) && (i == 0)) && (y == 0)))
       format: c_expression

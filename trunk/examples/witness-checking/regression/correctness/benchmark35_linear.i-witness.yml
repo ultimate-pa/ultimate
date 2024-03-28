@@ -21,7 +21,7 @@
         file_name: benchmark35_linear.i
         file_hash: UNUSED
         line: 22
-        column: 2
+        column: 3
         function: main
       value: (0 < (x + 1))
       format: c_expression

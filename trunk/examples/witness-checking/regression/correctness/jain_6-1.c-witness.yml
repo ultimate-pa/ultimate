@@ -21,7 +21,7 @@
         file_name: jain_6-1.c
         file_hash: UNUSED
         line: 28
-        column: 2
+        column: 3
         function: main
       value: (((((7 * z) % 8) == 0) && ((x % 2) == 0)) && (((y * 3) % 4) == 0))
       format: c_expression

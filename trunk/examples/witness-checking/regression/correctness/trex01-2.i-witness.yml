@@ -21,7 +21,7 @@
         file_name: trex01-2.i
         file_hash: UNUSED
         line: 30
-        column: 2
+        column: 3
         function: f
       value: (0 < z)
       format: c_expression

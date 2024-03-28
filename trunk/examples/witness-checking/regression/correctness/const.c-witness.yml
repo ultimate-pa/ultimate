@@ -21,7 +21,7 @@
         file_name: const.c
         file_hash: UNUSED
         line: 13
-        column: 2
+        column: 3
         function: main
       value: (((s / 4294967296) * 4294967296) == s)
       format: c_expression

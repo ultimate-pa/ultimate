@@ -21,7 +21,7 @@
         file_name: gsv2008.i
         file_hash: UNUSED
         line: 29
-        column: 4
+        column: 5
         function: main
       value: ((x < 0) || (0 < y))
       format: c_expression

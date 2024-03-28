@@ -21,7 +21,7 @@
         file_name: sqrt1-ll_valuebound20.c
         file_hash: UNUSED
         line: 30
-        column: 4
+        column: 5
         function: main
       value: (((((a * 2) + (a * a)) + 1) == s) && (t == ((a * 2) + 1)))
       format: c_expression

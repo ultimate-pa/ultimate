@@ -21,7 +21,7 @@
         file_name: cohendiv-ll.c
         file_hash: UNUSED
         line: 36
-        column: 4
+        column: 5
         function: main
       value: ((((((q * y) + r) + (a * y)) == (b + x)) && (1 <= y)) && (b == (a * y)))
       format: c_expression
@@ -31,7 +31,7 @@
         file_name: cohendiv-ll.c
         file_hash: UNUSED
         line: 45
-        column: 1
+        column: 2
         function: main
       value: ((((1 <= r) && ((((q * y) + r) + (a * y)) == (b + x))) && (1 <= y)) && (b == (a * y)))
       format: c_expression

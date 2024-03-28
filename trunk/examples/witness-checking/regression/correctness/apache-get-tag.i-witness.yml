@@ -21,7 +21,7 @@
         file_name: apache-get-tag.i
         file_hash: UNUSED
         line: 48
-        column: 2
+        column: 3
         function: main
       value: (((1 <= tagbuf_len) && (t <= tagbuf_len)) && (0 <= t))
       format: c_expression
@@ -31,7 +31,7 @@
         file_name: apache-get-tag.i
         file_hash: UNUSED
         line: 32
-        column: 2
+        column: 3
         function: main
       value: ((t <= tagbuf_len) && (0 <= t))
       format: c_expression

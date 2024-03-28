@@ -21,7 +21,7 @@
         file_name: SpamAssassin-loop.i
         file_hash: UNUSED
         line: 35
-        column: 4
+        column: 5
         function: main
       value: (((0 <= j) && (0 <= i)) && ((limit + 4) <= bufsize))
       format: c_expression
@@ -31,7 +31,7 @@
         file_name: SpamAssassin-loop.i
         file_hash: UNUSED
         line: 36
-        column: 6
+        column: 7
         function: main
       value: ((((((i + 1) <= len) && (0 <= j)) && ((5 + j) <= bufsize)) && (0 <= i)) && ((limit + 4) <= bufsize))
       format: c_expression
@@ -41,7 +41,7 @@
         file_name: SpamAssassin-loop.i
         file_hash: UNUSED
         line: 34
-        column: 2
+        column: 3
         function: main
       value: ((0 <= i) && ((limit + 4) <= bufsize))
       format: c_expression

@@ -21,7 +21,7 @@
         file_name: benchmark26_linear.i
         file_hash: UNUSED
         line: 23
-        column: 2
+        column: 3
         function: main
       value: (x < (y + 1))
       format: c_expression

@@ -21,7 +21,7 @@
         file_name: simple_vardep_1.c
         file_hash: UNUSED
         line: 21
-        column: 2
+        column: 3
         function: main
       value: ((((i + j) / 4294967296) <= (k / 4294967296)) && (((((i + j) / 4294967296) * 4294967296) + k) == ((i + j) + ((k / 4294967296) * 4294967296))))
       format: c_expression

@@ -21,7 +21,7 @@
         file_name: overflow_1-1.c
         file_hash: UNUSED
         line: 15
-        column: 2
+        column: 3
         function: main
       value: ((x % 2) == 0)
       format: c_expression
