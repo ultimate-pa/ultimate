@@ -448,16 +448,16 @@ public class AnnotateAndAsserter<L extends IAction> {
 								(VarAssignmentReuseAnnotation) statementBranch.getPayload().getAnnotations()
 										.get(VarAssignmentReuseAnnotation.class.getName());
 
-						// if (mVAforReuse == null || reuseCandidate.mVaOrder >= mVAforReuse.mVaOrder) {
-						mVAforReuse = reuseCandidate;
-						if (!statementBranch.getPrecedingProcedure().equals("main")) {
-							reuseUnsatpossible = false;
+						if (mVAforReuse == null || reuseCandidate.mVaOrder >= mVAforReuse.mVaOrder) {
+							mVAforReuse = reuseCandidate;
+							if (!statementBranch.getPrecedingProcedure().equals("main")) {
+								reuseUnsatpossible = false;
+							} else {
+								reuseUnsatpossible = true;
+							}
 						} else {
-							reuseUnsatpossible = true;
+							reuseUnsatpossible = false;
 						}
-						// } else {
-						// lastVaInTraceIsUsedForReuse = false;
-						// }
 
 						// ACHTUNG, dürfen wirklich nur die nondets sein zwischen currentVA und previousVA
 						nondetsInTraceAfterPreviousVA.clear();
