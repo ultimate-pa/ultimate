@@ -87,7 +87,7 @@ public class AnnotateAndAsserter<L extends IAction> {
 	final HashMap<String, String> nondetNameToType = new HashMap<>();
 	private String mTestCaseUniqueIdentifier = "0";
 	private final Integer mHighestVaOrderInTrace = -1;
-	private boolean lastVaInTraceIsUsedForReuse = false;
+	private final boolean lastVaInTraceIsUsedForReuse = false;
 	private boolean reuseUnsatpossible = true;
 
 	private final ArrayList<Pair<Term, Term>> mValueAssignmentUsedForReuse = new ArrayList<Pair<Term, Term>>();
@@ -184,26 +184,38 @@ public class AnnotateAndAsserter<L extends IAction> {
 				System.out.println("NO REUSE since UNSAT With");
 			} else {
 				reuse = true;
-				final ArrayList<Term> vaPairsAsTerms = checkIfNondetsOfTraceAreInVA(); // TODO
-
-				if (!vaPairsAsTerms.isEmpty()) {
-					final Term varAssignmentConjunction = SmtUtils.and(mMgdScriptTc.getScript(), vaPairsAsTerms);
-					if (mVAforReuse.mNegatedVA == true && !vaPairsAsTerms.isEmpty()) {
-						// varAssignmentConjunction = SmtUtils.not(mMgdScriptTc.getScript(), varAssignmentConjunction);
-						// mMgdScriptTc.getScript().push(1);
-						// mAnnotateAndAssertCodeBlocks.annotateAndAssertTerm(varAssignmentConjunction, "Int");
-						System.out.println(
-								"Va was already succesfully reused or No Nondets In Trace" + varAssignmentConjunction);
-						reuse = false;
+				final ArrayList<Term> vaPairsAsTerms = checkIfNondetsOfTraceAreInVA();
+				if (mTestGenReuseMode.equals(TestGenReuseMode.Reuse)) { // TODO Test Remove after evaluation
+					if (!vaPairsAsTerms.isEmpty() && reuseUnsatpossible) {
+						final Term varAssignmentConjunction = SmtUtils.and(mMgdScriptTc.getScript(), vaPairsAsTerms);
+						if (mVAforReuse.mNegatedVA == true && !vaPairsAsTerms.isEmpty()) {
+							reuse = false;
+						} else {
+							mMgdScriptTc.getScript().push(1);
+							mAnnotateAndAssertCodeBlocks.annotateAndAssertTerm(varAssignmentConjunction, "Int");
+							System.out.println("REUSE: " + varAssignmentConjunction);
+						}
 					} else {
-						mMgdScriptTc.getScript().push(1);
-						mAnnotateAndAssertCodeBlocks.annotateAndAssertTerm(varAssignmentConjunction, "Int");
-						System.out.println("REUSE: " + varAssignmentConjunction);
+						System.out.println("TODO Experiment nur reusen wenn keine function calls?");
+						reuse = false; // Can be empty if previous test goal is "behind" the current. (loops)
+						// In this case previous test goal has not been checked yet.
 					}
 				} else {
-					System.out.println("TODO Experiment nur reusen wenn keine function calls?");
-					reuse = false; // Can be empty if previous test goal is "behind" the current. (loops)
-					// In this case previous test goal has not been checked yet.
+					if (!vaPairsAsTerms.isEmpty()) {
+						final Term varAssignmentConjunction = SmtUtils.and(mMgdScriptTc.getScript(), vaPairsAsTerms);
+						if (mVAforReuse.mNegatedVA == true && !vaPairsAsTerms.isEmpty()) {
+							System.out.println("Va was already succesfully reused or No Nondets In Trace"
+									+ varAssignmentConjunction);
+							reuse = false;
+						} else {
+							mMgdScriptTc.getScript().push(1);
+							mAnnotateAndAssertCodeBlocks.annotateAndAssertTerm(varAssignmentConjunction, "Int");
+							System.out.println("REUSE: " + varAssignmentConjunction);
+						}
+					} else {
+						reuse = false; // Can be empty if previous test goal is "behind" the current. (loops)
+						// In this case previous test goal has not been checked yet.
+					}
 				}
 			}
 			mSatisfiable = mMgdScriptTc.getScript().checkSat();
@@ -435,12 +447,17 @@ public class AnnotateAndAsserter<L extends IAction> {
 						final VarAssignmentReuseAnnotation reuseCandidate =
 								(VarAssignmentReuseAnnotation) statementBranch.getPayload().getAnnotations()
 										.get(VarAssignmentReuseAnnotation.class.getName());
-						if (mVAforReuse == null || reuseCandidate.mVaOrder >= mVAforReuse.mVaOrder) {
-							mVAforReuse = reuseCandidate;
-							lastVaInTraceIsUsedForReuse = true;
+
+						// if (mVAforReuse == null || reuseCandidate.mVaOrder >= mVAforReuse.mVaOrder) {
+						mVAforReuse = reuseCandidate;
+						if (!statementBranch.getPrecedingProcedure().equals("main")) {
+							reuseUnsatpossible = false;
 						} else {
-							lastVaInTraceIsUsedForReuse = false;
+							reuseUnsatpossible = true;
 						}
+						// } else {
+						// lastVaInTraceIsUsedForReuse = false;
+						// }
 
 						// ACHTUNG, dürfen wirklich nur die nondets sein zwischen currentVA und previousVA
 						nondetsInTraceAfterPreviousVA.clear();
@@ -511,9 +528,7 @@ public class AnnotateAndAsserter<L extends IAction> {
 	private void getCurrentVA() {
 		final L lastStmt = mSSA.getTrace().getSymbol(mSSA.getTrace().length() - 1);
 		if (lastStmt instanceof StatementSequence) {
-			if (lastStmt.getPrecedingProcedure().equals("main")) {
-				reuseUnsatpossible = false;
-			}
+
 			final StatementSequence lastStmtSeq = (StatementSequence) lastStmt;
 			if (lastStmtSeq.getPayload().getAnnotations().containsKey(VarAssignmentReuseAnnotation.class.getName())) {
 				mCurrentVA = (VarAssignmentReuseAnnotation) lastStmtSeq.getPayload().getAnnotations()
