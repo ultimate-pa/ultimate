@@ -2,11 +2,17 @@ package de.uni_freiburg.informatik.ultimate.btorutils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 public class AssignmentRule {
 	public DebugIdentifier assignmentLocationIdentifier;
@@ -20,7 +26,59 @@ public class AssignmentRule {
 	}
 
 	public static List<AssignmentRule> getAssignmentsFromTransition(final DebugIdentifier assignmentLocationIdentifier,
-			final TransFormula tf) {
-		return new ArrayList<>();
+			final TransFormula tf, final ManagedScript script) {
+		final List<AssignmentRule> assignmentRules = new ArrayList<>();
+		final Set<IProgramVar> assignedVars = TransFormulaUtils.computeAssignedVars(tf.getInVars(), tf.getOutVars());
+		for (final IProgramVar assignedVar : assignedVars) {
+			boolean foundAssignment = false;
+			if (tf.isHavocedOut(assignedVar)) {
+				assignmentRules.add(
+						new AssignmentRule(assignmentLocationIdentifier, assignedVar, script.getScript().term("true")));
+			} else {
+				final Term formula = tf.getFormula();
+				if (formula instanceof ApplicationTerm) {
+					final ApplicationTerm appFormula = (ApplicationTerm) formula;
+					if (appFormula.getFunction().equals("and")) {
+						for (final Term possibleAssignment : appFormula.getParameters()) {
+							if (possibleAssignment instanceof ApplicationTerm) {
+								final ApplicationTerm appPossibleAssignment = (ApplicationTerm) possibleAssignment;
+								if (appPossibleAssignment.getFunction().equals("=")) {
+									final Term lhsTerm = appPossibleAssignment.getParameters()[0];
+									if (lhsTerm instanceof TermVariable) {
+										final TermVariable lhsVar = (TermVariable) lhsTerm;
+										if (TransFormulaUtils.getProgramVarForTerm(tf, lhsVar).equals(assignedVar)) {
+											assignmentRules.add(new AssignmentRule(assignmentLocationIdentifier,
+													assignedVar, appPossibleAssignment.getParameters()[1]));
+											foundAssignment = true;
+											break;
+										}
+									}
+								}
+							}
+
+						}
+					} else if (SmtUtils.isAtomicFormula(appFormula)) {
+						if (appFormula.getFunction().equals("=")) {
+							final Term lhsTerm = appFormula.getParameters()[0];
+							if (lhsTerm instanceof TermVariable) {
+								final TermVariable lhsVar = (TermVariable) lhsTerm;
+								if (TransFormulaUtils.getProgramVarForTerm(tf, lhsVar).equals(assignedVar)) {
+									assignmentRules.add(new AssignmentRule(assignmentLocationIdentifier, assignedVar,
+											appFormula.getParameters()[1]));
+									foundAssignment = true;
+								}
+							}
+						}
+					} else {
+						throw new UnsupportedOperationException("Transformula not in cnf");
+
+					}
+					if (!foundAssignment) {
+						throw new UnsupportedOperationException("Transformula variable has no assignment");
+					}
+				}
+			}
+		}
+		return assignmentRules;
 	}
 }

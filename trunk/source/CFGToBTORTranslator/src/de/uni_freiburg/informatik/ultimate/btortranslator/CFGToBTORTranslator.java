@@ -82,7 +82,7 @@ public class CFGToBTORTranslator {
 				for (final IcfgEdge edge : outgoing) { // TODO: for loop unnecessary if assignments have no guards
 					final UnmodifiableTransFormula transitionFormula = edge.getTransformula();
 					final List<AssignmentRule> assignments = AssignmentRule
-							.getAssignmentsFromTransition(location.getDebugIdentifier(), transitionFormula);
+							.getAssignmentsFromTransition(location.getDebugIdentifier(), transitionFormula, mScript);
 					for (final AssignmentRule assignment : assignments) {
 						if (variableAssignmentMap.containsKey(assignment.lhs.getGloballyUniqueId())) {
 							variableAssignmentMap.get(assignment.lhs.getGloballyUniqueId()).add(assignment);
@@ -95,13 +95,17 @@ public class CFGToBTORTranslator {
 				}
 			}
 		}
+
 	}
+
+	private BtorExpression updateToExpression(final UpdateRule updateRule) {
+		// TODO: Implement this
+		return new BtorExpression(0, null, null);
+	}
+
+	private BtorExpression assignmentToExpression(final AssignmentRule assignmentRule) {
+		// TODO: Implement this
+		return new BtorExpression(0, null, null);
+	}
+
 }
-
-// gather cfg locations
-// gather cfg transitions
-// gather all constants
-
-// comment
-
-// initialize pc, 0, 1, constants
