@@ -199,6 +199,7 @@ public class AnnotateAndAsserter<L extends IAction> {
 
 			}
 			mSatisfiable = mMgdScriptTc.getScript().checkSat();
+
 			if (reuse) {
 				System.out.println("trying to reuse");
 			}
@@ -429,8 +430,13 @@ public class AnnotateAndAsserter<L extends IAction> {
 										.get(VarAssignmentReuseAnnotation.class.getName());
 
 						if (mVAforReuse == null || reuseCandidate.mVaOrder >= mVAforReuse.mVaOrder) {
-
-							mVAforReuse = reuseCandidate;
+							if (mTestGenReuseMode.equals(TestGenReuseMode.Reuse)) {
+								if (statementBranch.getPrecedingProcedure().equals("main")) {
+									mVAforReuse = reuseCandidate;
+								}
+							} else {
+								mVAforReuse = reuseCandidate;
+							}
 							lastVaInTraceIsUsedForReuse = true;
 							if (!statementBranch.getPrecedingProcedure().equals("main")) {
 								reuseUnsatpossible = false;
