@@ -529,7 +529,7 @@ public class AnnotateAndAsserter<L extends IAction> {
 	}
 
 	private void removeCheckIfCovered() {
-		if (!mVAforReuse.mNegatedVA) {
+		if (mVAforReuse.mNegatedVA) {
 			return;
 		}
 		if (mVAforReuse.equals(mDefaultVA)) {
