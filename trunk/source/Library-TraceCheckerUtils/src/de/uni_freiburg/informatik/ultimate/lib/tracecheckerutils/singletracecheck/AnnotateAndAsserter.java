@@ -185,13 +185,13 @@ public class AnnotateAndAsserter<L extends IAction> {
 				reuse = false; // Wie kann das überhaupt sein?
 				System.out.println("NO REUSE since UNSAT With");
 			} else {
-				reuse = true;
 				final ArrayList<Term> vaPairsAsTerms = checkIfNondetsOfTraceAreInVA();
 				if (!vaPairsAsTerms.isEmpty()) {
 					final Term varAssignmentConjunction = SmtUtils.and(mMgdScriptTc.getScript(), vaPairsAsTerms);
 					mMgdScriptTc.getScript().push(1);
 					mAnnotateAndAssertCodeBlocks.annotateAndAssertTerm(varAssignmentConjunction, "Int");
 					System.out.println("REUSE: " + varAssignmentConjunction);
+					reuse = true;
 				} else {
 					reuse = false; // Can be empty if previous test goal is "behind" the current. (loops)
 					// In this case previous test goal has not been checked yet.
@@ -210,13 +210,11 @@ public class AnnotateAndAsserter<L extends IAction> {
 					if (mTestGenReuseMode.equals(TestGenReuseMode.ReuseUNSAT)) {
 						removeCheckIfCovered();
 					}
-					mVAforReuse.mNegatedVA = true;
-				}
-				// Hier oder vor der IF
-				mSatisfiable = mMgdScriptTc.getScript().checkSat();
-				if (reuse) {
+					mSatisfiable = mMgdScriptTc.getScript().checkSat();
 					if (mCurrentVA.secondCheck == true) {
 						mVAforReuse.mNegatedVA = false;
+					} else {
+						mVAforReuse.mNegatedVA = true;
 					}
 				}
 			} else if (reuse) {
@@ -405,21 +403,8 @@ public class AnnotateAndAsserter<L extends IAction> {
 									nondetNameToType.put(symbol.getName(), m.group(1));
 
 								}
-							} else {
-								System.out.println(symbol + " not in payload");
 							}
-
 						}
-
-						// final String traceTermAsString = mSSA.getFormulaFromNonCallPos(i).toStringDirect();
-						// final Pattern pattern =
-						// Pattern.compile("\\|[^\\|]*nondet\\d[^\\|]*\\|", Pattern.CASE_INSENSITIVE);
-						// final Matcher matcher = pattern.matcher(traceTermAsString);
-						// if (matcher.find()) {
-						// final String match = matcher.group();
-
-						// }
-
 					}
 					// If VA in Trace returns last found VA
 					if (statementBranch.getPayload().getAnnotations()
