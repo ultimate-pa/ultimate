@@ -237,7 +237,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 				mCsToolkit.getManagedScript(), mPredicateFactory, relation.isSymmetric(), true);
 		ConditionalCommutativityInterpolantProvider<L> conInterpolantProvider
 		= new ConditionalCommutativityInterpolantProvider<>(
-				mServices, mCriterion, relation, mCsToolkit.getManagedScript().getScript(),
+				mServices, mCriterion, relation, mCsToolkit.getManagedScript(),
 				generator, mAbstraction, mFactory, checker);
 		mInterpolAutomaton = conInterpolantProvider.getInterpolants((IRun<L, IPredicate>) mCounterexample,
 				predicates, mInterpolAutomaton);
@@ -605,7 +605,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 			SemanticIndependenceConditionGenerator generator = new SemanticIndependenceConditionGenerator(mServices,
 					mCsToolkit.getManagedScript(), mPredicateFactory, relation.isSymmetric(), true);
 			mConComChecker = new ConditionalCommutativityChecker<>(mCriterion, relation,
-					mCsToolkit.getManagedScript().getScript(), generator,
+					mCsToolkit.getManagedScript(), generator,
 					checker);
 	
 		}	

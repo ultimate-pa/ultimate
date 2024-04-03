@@ -204,8 +204,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_CON_COM_CHECKER_CRITERION_LIMIT = "Limit for limited checks";
 	private static final int DEF_CON_COM_CHECKER_CRITERION_LIMIT = 1;
 	
-	public static final String LABEL_CON_COM_CHECKER_RANDOM_PROB = "probability for random criterion";
-	private static final double DEF_CON_COM_CHECKER_RANDOM_PROB = 1;
+	public static final String LABEL_CON_COM_CHECKER_RANDOM_PROB = "probability for random criterion as percentage";
+	private static final int DEF_CON_COM_CHECKER_RANDOM_PROB = 100;
 
 	public static final String LABEL_CON_COM_CHECKER_RANDOM_SEED = "seed for random criterion";
 	private static final int DEF_CON_COM_CHECKER_RANDOM_SEED = 123;
@@ -753,7 +753,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_CON_COM_CHECKER_CRITERION_LIMIT, DEF_CON_COM_CHECKER_CRITERION_LIMIT,
 						PreferenceType.Integer),
 				new UltimatePreferenceItem<>(LABEL_CON_COM_CHECKER_RANDOM_PROB, DEF_CON_COM_CHECKER_RANDOM_PROB,
-						PreferenceType.Double),
+						PreferenceType.Integer),
 				new UltimatePreferenceItem<>(LABEL_CON_COM_CHECKER_RANDOM_SEED, DEF_CON_COM_CHECKER_RANDOM_SEED,
 						PreferenceType.Integer),
 

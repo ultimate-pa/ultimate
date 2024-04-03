@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.ITraceChecker;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.LoopLockstepOrder.PredicateWithLastThread;
@@ -93,7 +94,7 @@ public class ConditionalCommutativityInterpolantProvider<L extends IAction> {
 	 */
 	public ConditionalCommutativityInterpolantProvider(final IUltimateServiceProvider services,
 			final IConditionalCommutativityCriterion<L> criterion,
-			final IIndependenceRelation<IPredicate, L> independenceRelation, Script script,
+			final IIndependenceRelation<IPredicate, L> independenceRelation, ManagedScript script,
 			final IIndependenceConditionGenerator generator, final INwaOutgoingLetterAndTransitionProvider<L,
 			IPredicate> abstraction, final IEmptyStackStateFactory<IPredicate> emptyStackStateFactory,
 			final ITraceChecker<L> traceChecker) {

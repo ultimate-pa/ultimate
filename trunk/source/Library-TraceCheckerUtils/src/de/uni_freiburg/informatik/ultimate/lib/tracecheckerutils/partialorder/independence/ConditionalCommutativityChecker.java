@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateWithConjuncts;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.ITraceChecker;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
@@ -56,8 +57,9 @@ public class ConditionalCommutativityChecker<L extends IAction> implements ICond
 	private IIndependenceRelation<IPredicate, L> mIndependenceRelation;
 	private final IIndependenceConditionGenerator mGenerator;
 	private final ITraceChecker<L> mTraceChecker;
-	private Script mScript;
+	//private Script mScript;
 	private Map<Pair<L, L>, Integer> mStatementMap;
+	private ManagedScript mManagedScript;
 
 	/**
 	 * Constructs a new instance of ConditionalCommutativityChecker.
@@ -76,11 +78,11 @@ public class ConditionalCommutativityChecker<L extends IAction> implements ICond
 	 *            An ITraceChecker responsible for checking whether a condition is feasible
 	 */
 	public ConditionalCommutativityChecker(final IConditionalCommutativityCriterion<L> criterion,
-			final IIndependenceRelation<IPredicate, L> independenceRelation, Script script,
+			final IIndependenceRelation<IPredicate, L> independenceRelation, ManagedScript script,
 			final IIndependenceConditionGenerator generator, final ITraceChecker<L> traceChecker) {
 		mCriterion = criterion;
 		mIndependenceRelation = independenceRelation;
-		mScript = script;
+		mManagedScript = script;
 		mGenerator = generator;
 		mTraceChecker = traceChecker;
 		mStatementMap = new HashMap<>();
@@ -107,10 +109,12 @@ public class ConditionalCommutativityChecker<L extends IAction> implements ICond
 	@Override
 	public TracePredicates checkConditionalCommutativity(final IRun<L, IPredicate> run, List<IPredicate> predicates,
 			final IPredicate state, final L letter1, final L letter2) {
-		
+		if (mManagedScript.isLocked()) {
+			mManagedScript.requestLockRelease();
+		}
 		IPredicate pred = null;
 		if (!predicates.isEmpty()) {
-			pred  = new PredicateWithConjuncts(0, new ImmutableList<>(predicates), mScript);
+			pred  = new PredicateWithConjuncts(0, new ImmutableList<>(predicates), mManagedScript.getScript());
 			pred = new BasicPredicate(0, pred.getProcedures(), pred.getFormula(), pred.getVars(),
 					pred.getFuns(), pred.getClosedFormula());
 		}
@@ -124,7 +128,7 @@ public class ConditionalCommutativityChecker<L extends IAction> implements ICond
 			IPredicate condition;
 			if (pred != null) {
 				condition = mGenerator.generateCondition(
-						new PredicateWithConjuncts(0, new ImmutableList<>(predicates), mScript),
+						new PredicateWithConjuncts(0, new ImmutableList<>(predicates), mManagedScript.getScript()),
 						letter1.getTransformula(), letter2.getTransformula());
 			} else {
 				condition = mGenerator.generateCondition(letter1.getTransformula(), letter2.getTransformula());

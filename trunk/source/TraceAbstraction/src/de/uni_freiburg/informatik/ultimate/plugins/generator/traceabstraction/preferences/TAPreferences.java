@@ -101,7 +101,7 @@ public final class TAPreferences {
 	private ConComCheckerCriterion mConComCheckerCriterion;
 	private boolean mConComCheckerLimitedChecksCriterion;
 	private int mConComCheckerCriterionLimit;
-	private double mConComCheckerRandomProb;
+	private int mConComCheckerRandomProb;
 	private int mConComCheckerRandomSeed;
 
 	public enum Artifact {
@@ -215,7 +215,7 @@ public final class TAPreferences {
 				ConComCheckerCriterion.class);
 		mConComCheckerLimitedChecksCriterion = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_CON_COM_CHECKER_LIMITED_CHECKS_CRITERION);
 		mConComCheckerCriterionLimit = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_CON_COM_CHECKER_CRITERION_LIMIT);
-		mConComCheckerRandomProb = mPrefs.getDouble(TraceAbstractionPreferenceInitializer.LABEL_CON_COM_CHECKER_RANDOM_PROB);
+		mConComCheckerRandomProb = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_CON_COM_CHECKER_RANDOM_PROB);
 		mConComCheckerRandomSeed = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_CON_COM_CHECKER_RANDOM_SEED);
 	}
 
@@ -590,7 +590,7 @@ public final class TAPreferences {
 		return mConComCheckerCriterionLimit;
 	}
 	
-	public double getConComCheckerRandomProb() {
+	public int getConComCheckerRandomProb() {
 		return mConComCheckerRandomProb;
 	}
 	

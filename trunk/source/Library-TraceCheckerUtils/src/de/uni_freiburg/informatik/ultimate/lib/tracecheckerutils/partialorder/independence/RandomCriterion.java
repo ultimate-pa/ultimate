@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public class RandomCriterion<L> implements IConditionalCommutativityCriterion<L> {
 
-	private final double mProbability;
+	private final int mProbability;
 	private long mSeed;
 	//private final Random mRandomGenerator;
 
@@ -56,7 +56,7 @@ public class RandomCriterion<L> implements IConditionalCommutativityCriterion<L>
 	 * @param seed
 	 *            The random seed.
 	 */
-	public RandomCriterion(final double probability, final long seed) {
+	public RandomCriterion(final int probability, final long seed) {
 		mProbability = probability;
 		mSeed = seed;
 	}
@@ -65,7 +65,7 @@ public class RandomCriterion<L> implements IConditionalCommutativityCriterion<L>
 	public boolean decide(final IPredicate state, final IRun<L, IPredicate> run, final L letter1, final L letter2) {
 		Pair<IPredicate, Pair<L,L>> normalized = normalize(state, letter1, letter2);
 		Random random = new Random(mSeed * Objects.hashCode(normalized));
-		return (random.nextInt(100) < (100 * mProbability));
+		return (random.nextInt(100) < mProbability);
 	}
 
 	@Override
