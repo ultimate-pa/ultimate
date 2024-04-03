@@ -33,10 +33,10 @@
     <option name="&#45;-traceabstraction.limit.for.limited.checks">2</option>
   </rundefinition>
 
-  <rundefinition name="IA-Random-0.2-213">
+  <rundefinition name="IA-Random-20-213">
     <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">IA</option>
     <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">RANDOM</option>
-    <option name="&#45;-traceabstraction.probability.for.random.criterion">0.2</option>
+    <option name="&#45;-traceabstraction.probability.for.random.criterion">20</option>
     <option name="&#45;-traceabstraction.seed.for.random.criterion">213</option>
   </rundefinition>
 
@@ -47,38 +47,38 @@
     <option name="&#45;-traceabstraction.limit.for.limited.checks">10</option>
   </rundefinition>
 
-  <rundefinition name="IA-Random-0.5-213">
+  <rundefinition name="IA-Random-50-213">
     <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">IA</option>
     <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">RANDOM</option>
-    <option name="&#45;-traceabstraction.probability.for.random.criterion">0.5</option>
+    <option name="&#45;-traceabstraction.probability.for.random.criterion">50</option>
     <option name="&#45;-traceabstraction.seed.for.random.criterion">213</option>
   </rundefinition>
 
-  <rundefinition name="IA-Random-0.2-546">
+  <rundefinition name="IA-Random-20-546">
     <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">IA</option>
     <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">RANDOM</option>
-    <option name="&#45;-traceabstraction.probability.for.random.criterion">0.2</option>
+    <option name="&#45;-traceabstraction.probability.for.random.criterion">20</option>
     <option name="&#45;-traceabstraction.seed.for.random.criterion">546</option>
   </rundefinition>
 
-  <rundefinition name="DFS-Random-0.2-213">
+  <rundefinition name="DFS-Random-20-213">
     <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">DFS</option>
     <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">RANDOM</option>
-    <option name="&#45;-traceabstraction.probability.for.random.criterion">0.2</option>
+    <option name="&#45;-traceabstraction.probability.for.random.criterion">20</option>
     <option name="&#45;-traceabstraction.seed.for.random.criterion">213</option>
   </rundefinition>
 
-  <rundefinition name="DFS-Random-0.5-213">
+  <rundefinition name="DFS-Random-50-213">
     <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">DFS</option>
     <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">RANDOM</option>
-    <option name="&#45;-traceabstraction.probability.for.random.criterion">0.5</option>
+    <option name="&#45;-traceabstraction.probability.for.random.criterion">50</option>
     <option name="&#45;-traceabstraction.seed.for.random.criterion">213</option>
   </rundefinition>
 
-  <rundefinition name="DFS-Random-0.2-546">
+  <rundefinition name="DFS-Random-20-546">
     <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">DFS</option>
     <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">RANDOM</option>
-    <option name="&#45;-traceabstraction.probability.for.random.criterion">0.2</option>
+    <option name="&#45;-traceabstraction.probability.for.random.criterion">20</option>
     <option name="&#45;-traceabstraction.seed.for.random.criterion">546</option>
   </rundefinition>
 
@@ -103,28 +103,28 @@
     <option name="&#45;-traceabstraction.limit.for.limited.checks">50</option>
   </rundefinition>
 
-  <rundefinition name="DFS-Random-0.2-213-Limit10">
+  <rundefinition name="DFS-Random-20-213-Limit10">
     <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">DFS</option>
     <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">RANDOM</option>
-    <option name="&#45;-traceabstraction.probability.for.random.criterion">0.2</option>
+    <option name="&#45;-traceabstraction.probability.for.random.criterion">20</option>
     <option name="&#45;-traceabstraction.seed.for.random.criterion">213</option>
     <option name="&#45;-traceabstraction.use.limited.checks.recommended.for.dfs">true</option>
     <option name="&#45;-traceabstraction.limit.for.limited.checks">10</option>
   </rundefinition>
 
-  <rundefinition name="DFS-Random-0.5-213-Limit10">
+  <rundefinition name="DFS-Random-50-213-Limit10">
     <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">DFS</option>
     <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">RANDOM</option>
-    <option name="&#45;-traceabstraction.probability.for.random.criterion">0.5</option>
+    <option name="&#45;-traceabstraction.probability.for.random.criterion">50</option>
     <option name="&#45;-traceabstraction.seed.for.random.criterion">213</option>
     <option name="&#45;-traceabstraction.use.limited.checks.recommended.for.dfs">true</option>
     <option name="&#45;-traceabstraction.limit.for.limited.checks">10</option>
   </rundefinition>
 
-  <rundefinition name="DFS-Random-0.2-546-Limit10">
+  <rundefinition name="DFS-Random-20-546-Limit10">
     <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">DFS</option>
     <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">RANDOM</option>
-    <option name="&#45;-traceabstraction.probability.for.random.criterion">0.2</option>
+    <option name="&#45;-traceabstraction.probability.for.random.criterion">20</option>
     <option name="&#45;-traceabstraction.seed.for.random.criterion">546</option>
     <option name="&#45;-traceabstraction.use.limited.checks.recommended.for.dfs">true</option>
     <option name="&#45;-traceabstraction.limit.for.limited.checks">10</option>
