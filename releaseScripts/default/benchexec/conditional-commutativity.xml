@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<benchmark tool="ultimategemcutter" memlimit="8GB" timelimit="900" hardtimelimit="920" cpuCores="2">
+  <resultfiles></resultfiles>
+
+  <option name="&#45;-force-no-wrapper" />
+  <option name="&#45;-full-output" />
+
+  <option name="-s">${benchmark_path}/../../../trunk/examples/settings/gemcutter/NewStatesSleep.epf</option>
+  <option name="&#45;-traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
+
+  <rundefinition name="NONE">
+    <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">NONE</option>
+  </rundefinition>
+
+  <rundefinition name="IA-Default">
+    <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">IA</option>
+    <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">DEFAULT</option>
+  </rundefinition>
+
+  <rundefinition name="DFS-Default">
+    <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">DFS</option>
+    <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">DEFAULT</option>
+  </rundefinition>
+
+  <rundefinition name="DFS-SleepSet">
+    <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">DFS</option>
+    <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">SLEEP_SET</option>
+  </rundefinition>
+
+  <rundefinition name="DFS-SleepSet-Limit2">
+    <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">DFS</option>
+    <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">SLEEP_SET</option>
+    <option name="&#45;-traceabstraction.use.limited.checks.recommended.for.dfs">true</option>
+    <option name="&#45;-traceabstraction.limit.for.limited.checks">2</option>
+  </rundefinition>
+
+  <rundefinition name="IA-Random-0.2-213">
+    <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">IA</option>
+    <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">RANDOM</option>
+    <option name="&#45;-traceabstraction.probability.for.random.criterion">0.2</option>
+    <option name="&#45;-traceabstraction.seed.for.random.criterion">213</option>
+  </rundefinition>
+
+  <rundefinition name="BOTH-Default-Limit10">
+    <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">BOTH</option>
+    <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">DEFAULT</option>
+    <option name="&#45;-traceabstraction.use.limited.checks.recommended.for.dfs">true</option>
+    <option name="&#45;-traceabstraction.limit.for.limited.checks">10</option>
+  </rundefinition>
+
+  <rundefinition name="IA-Random-0.5-213">
+    <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">IA</option>
+    <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">RANDOM</option>
+    <option name="&#45;-traceabstraction.probability.for.random.criterion">0.5</option>
+    <option name="&#45;-traceabstraction.seed.for.random.criterion">213</option>
+  </rundefinition>
+
+  <rundefinition name="IA-Random-0.2-546">
+    <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">IA</option>
+    <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">RANDOM</option>
+    <option name="&#45;-traceabstraction.probability.for.random.criterion">0.2</option>
+    <option name="&#45;-traceabstraction.seed.for.random.criterion">546</option>
+  </rundefinition>
+
+  <rundefinition name="DFS-Random-0.2-213">
+    <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">DFS</option>
+    <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">RANDOM</option>
+    <option name="&#45;-traceabstraction.probability.for.random.criterion">0.2</option>
+    <option name="&#45;-traceabstraction.seed.for.random.criterion">213</option>
+  </rundefinition>
+
+  <rundefinition name="DFS-Random-0.5-213">
+    <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">DFS</option>
+    <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">RANDOM</option>
+    <option name="&#45;-traceabstraction.probability.for.random.criterion">0.5</option>
+    <option name="&#45;-traceabstraction.seed.for.random.criterion">213</option>
+  </rundefinition>
+
+  <rundefinition name="DFS-Random-0.2-546">
+    <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">DFS</option>
+    <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">RANDOM</option>
+    <option name="&#45;-traceabstraction.probability.for.random.criterion">0.2</option>
+    <option name="&#45;-traceabstraction.seed.for.random.criterion">546</option>
+  </rundefinition>
+
+  <rundefinition name="DFS-Default-Limit2">
+    <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">DFS</option>
+    <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">DEFAULT</option>
+    <option name="&#45;-traceabstraction.use.limited.checks.recommended.for.dfs">true</option>
+    <option name="&#45;-traceabstraction.limit.for.limited.checks">2</option>
+  </rundefinition>
+
+  <rundefinition name="DFS-Default-Limit10">
+    <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">DFS</option>
+    <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">DEFAULT</option>
+    <option name="&#45;-traceabstraction.use.limited.checks.recommended.for.dfs">true</option>
+    <option name="&#45;-traceabstraction.limit.for.limited.checks">10</option>
+  </rundefinition>
+
+  <rundefinition name="DFS-Default-Limit50">
+    <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">DFS</option>
+    <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">DEFAULT</option>
+    <option name="&#45;-traceabstraction.use.limited.checks.recommended.for.dfs">true</option>
+    <option name="&#45;-traceabstraction.limit.for.limited.checks">50</option>
+  </rundefinition>
+
+  <rundefinition name="DFS-Random-0.2-213-Limit10">
+    <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">DFS</option>
+    <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">RANDOM</option>
+    <option name="&#45;-traceabstraction.probability.for.random.criterion">0.2</option>
+    <option name="&#45;-traceabstraction.seed.for.random.criterion">213</option>
+    <option name="&#45;-traceabstraction.use.limited.checks.recommended.for.dfs">true</option>
+    <option name="&#45;-traceabstraction.limit.for.limited.checks">10</option>
+  </rundefinition>
+
+  <rundefinition name="DFS-Random-0.5-213-Limit10">
+    <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">DFS</option>
+    <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">RANDOM</option>
+    <option name="&#45;-traceabstraction.probability.for.random.criterion">0.5</option>
+    <option name="&#45;-traceabstraction.seed.for.random.criterion">213</option>
+    <option name="&#45;-traceabstraction.use.limited.checks.recommended.for.dfs">true</option>
+    <option name="&#45;-traceabstraction.limit.for.limited.checks">10</option>
+  </rundefinition>
+
+  <rundefinition name="DFS-Random-0.2-546-Limit10">
+    <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">DFS</option>
+    <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">RANDOM</option>
+    <option name="&#45;-traceabstraction.probability.for.random.criterion">0.2</option>
+    <option name="&#45;-traceabstraction.seed.for.random.criterion">546</option>
+    <option name="&#45;-traceabstraction.use.limited.checks.recommended.for.dfs">true</option>
+    <option name="&#45;-traceabstraction.limit.for.limited.checks">10</option>
+  </rundefinition>
+
+  <rundefinition name="DFS-SleepSet-Limit10">
+    <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">DFS</option>
+    <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">SLEEP_SET</option>
+    <option name="&#45;-traceabstraction.use.limited.checks.recommended.for.dfs">true</option>
+    <option name="&#45;-traceabstraction.limit.for.limited.checks">10</option>
+  </rundefinition>
+
+  <rundefinition name="BOTH-SleepSet-Limit10">
+    <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">BOTH</option>
+    <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">SLEEP_SET</option>
+    <option name="&#45;-traceabstraction.use.limited.checks.recommended.for.dfs">true</option>
+    <option name="&#45;-traceabstraction.limit.for.limited.checks">10</option>
+  </rundefinition>
+
+  <tasks name="single">
+    <include>${benchmark_path}/../../../trunk/examples/svcomp/weaver/parallel-misc-2-unrolled-atomic.wvr.yml</include>
+    <propertyfile expectedverdict="true">${benchmark_path}/../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
+  </tasks>
+
+  <tasks name="SVCOMP-ConcurrencySafety-Main">
+    <option name="-tc">${benchmark_path}../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
+    <includesfile>${benchmark_path}../../../trunk/examples/svcomp/ConcurrencySafety-Main.set</includesfile>
+    <propertyfile>${benchmark_path}../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
+  </tasks>
+
+  <tasks name="Weaver-Boogie">
+    <option name="-tc">${benchmark_path}../../../trunk/examples/toolchains/AutomizerBplInline.xml</option>
+    <includesfile>${benchmark_path}../../../trunk/examples/concurrent/bpl/weaver-benchmarks/WeaverBenchmarks.set</includesfile>
+    <propertyfile>${benchmark_path}../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
+  </tasks>
+</benchmark>
