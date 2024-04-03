@@ -204,10 +204,10 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_CON_COM_CHECKER_CRITERION_LIMIT = "Limit for limited checks";
 	private static final int DEF_CON_COM_CHECKER_CRITERION_LIMIT = 1;
 	
-	public static final String LABEL_CON_COM_CHECKER_RANDOM_PROB = "probability for random criterion, format: (prob,seed)";
+	public static final String LABEL_CON_COM_CHECKER_RANDOM_PROB = "probability for random criterion";
 	private static final double DEF_CON_COM_CHECKER_RANDOM_PROB = 1;
 
-	public static final String LABEL_CON_COM_CHECKER_RANDOM_SEED = "seed for random criterion, format: (prob,seed)";
+	public static final String LABEL_CON_COM_CHECKER_RANDOM_SEED = "seed for random criterion";
 	private static final int DEF_CON_COM_CHECKER_RANDOM_SEED = 123;
 	
 	// Settings for PetriAutomizer
