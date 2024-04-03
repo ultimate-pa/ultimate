@@ -3,7 +3,6 @@
   <resultfiles></resultfiles>
 
   <option name="&#45;-force-no-wrapper" />
-  <option name="&#45;-full-output" />
 
   <option name="-s">${benchmark_path}/../../../trunk/examples/settings/gemcutter/NewStatesSleep.epf</option>
   <option name="&#45;-traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
