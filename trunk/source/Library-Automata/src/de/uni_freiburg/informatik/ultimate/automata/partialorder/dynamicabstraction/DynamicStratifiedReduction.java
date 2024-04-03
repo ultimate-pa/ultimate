@@ -233,11 +233,24 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 			final R currentState = current.getFirst();
 
 			// Backtrack states still on the stack whose exploration has finished.
-			final boolean abort = backtrackUntil(currentState);
-			if (abort) {
+
+			// TODO: is here the best place for loophandling? -- no
+			final BacktrackCases abort = backtrackUntil(currentState);
+			if (abort == BacktrackCases.ABORT) {
 				mLogger.debug(ABORT_MSG);
 				return;
 			}
+			if (abort == BacktrackCases.WRONG_GUESS) {
+				// abandon exploration of current TS and reexplore loop
+				mWorklist.push(current);
+				// It'd be best if we could simply get the TS that led to the loop entry node...
+				// instead add all TS loop entry node -> suc(loop entry node) to worklist and take the topmost
+				createSuccessors(mDfs.peek());
+				current = mWorklist.pop();
+
+			}
+			// assume our backtracking encounters a wrong guess...
+			// return our current TS to the worklist and throw reexpl. TS on top?
 
 			OutgoingInternalTransition<L, R> currentTransition = current.getSecond();
 			final R nextState = currentTransition.getSucc();
@@ -261,6 +274,7 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 							mStateFactory.getOriginalState(nextState), mStateFactory.getAbstractionLevel(nextState));
 					mStateFactory.addToAbstractionLevel(currentState, freeVars);
 				}
+				// TODO: loop handle...
 			} else if (!mDfs.isVisited(nextState)) {
 				// Compute sleepsets
 				final Map<L, H> nextSleepSet = createSleepSet(currentState, currentTransition.getLetter());
@@ -281,6 +295,28 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 					return;
 				}
 			} else if ((stackIndex = mDfs.stackIndexOf(nextState)) != -1) {
+				// TODO: Loop handle marker
+				// If we encounter a loop entry node mark it as such and guess loop's abstraction level
+				if (!mStateFactory.isLoopNode(nextState)) {
+					// what if it already is marked? We are not allowed to change our first guess outside of
+					// backtracking!
+					mStateFactory.addToAbstractionLevel(nextState,
+							mStateFactory.getAbstractionLevel(currentState).getValue());
+					mStateFactory.setGuessedLevel(nextState, mStateFactory.getAbstractionLevel(nextState).getValue());
+					mStateFactory.setAsLoopNode(nextState);
+					mStatistics.guessed++;
+					if (!mStatistics.containsLoop()) {
+						mStatistics.setContainsLoop();
+						mStatistics.stopLoopless();
+						mStatistics.startLoopTime();
+					}
+					mLogger.info("Found a loop edge, guess abstraction level: %s",
+							mStateFactory.guessedLevel(nextState));
+				}
+				// should be superfluous
+				mStateFactory.addToAbstractionLevel(currentState,
+						mStateFactory.getAbstractionLevel(nextState).getValue());
+
 				debugIndent("-> state is on stack -- do not unroll loop");
 				mDfs.updateLoopHead(currentState, new Pair<>(stackIndex, nextState));
 			} else {
@@ -288,9 +324,9 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 				mDfs.backPropagateLoopHead(currentState, nextState);
 			}
 		}
-
-		final boolean abort = backtrackUntil(mStartState);
-		if (abort) {
+		// TODO: what happens if we encounter a missguess here?
+		final BacktrackCases abort = backtrackUntil(mStartState);
+		if (abort == BacktrackCases.ABORT) {
 			mLogger.debug(ABORT_MSG);
 			return;
 		}
@@ -299,19 +335,58 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 		mLogger.debug("traversal completed");
 	}
 
-	private boolean backtrackUntil(final R state) {
-		while (!mDfs.peek().equals(state)) {
-			final boolean abort = backtrack();
-			if (abort) {
-				return true;
-			}
-		}
-		return false;
+	// we kind of need a third possible return to indicate a wrong guess
+	public enum BacktrackCases {
+		ABORT, CONTINUE, WRONG_GUESS
 	}
 
-	private boolean backtrack() {
+	private BacktrackCases backtrackUntil(final R state) {
+		while (!mDfs.peek().equals(state)) {
+			final BacktrackCases abort = backtrack();
+			if (abort != BacktrackCases.CONTINUE) {
+				return abort;
+			}
+		}
+		return BacktrackCases.CONTINUE;
+	}
+
+	private BacktrackCases backtrack() {
 		final R oldState = mDfs.peek();
 		// search stack for state's parents and update their abstraction levels
+		// TODO: how to backtrack a loop entry node?
+		// what we want to do is basically to re-explore the nodes + all its outgoing transitions
+		// just initiate the reexploration here?
+
+		/*
+		 * If the state we're backtracking is a loop entry node:
+		 *
+		 * Check if guessed level <= actual level --> yes: continue the backtrack here --> NO: what if we put all
+		 * outgoing transition of the loop entry node on the stack for reexploration? problem: what do we do with the
+		 * "already reduced" set? we dont want every succ transition of the entry node to be recognized as a left
+		 * edge... just remove them from already reduced? --> add new guess to set of protected variables problem: we'd
+		 * need to perform the reexploration directly or we'll give the wrong abstr. lv to the entry nodes parents...
+		 * --> does that matter, given we only ever add something to it? Problem: Do we need to do sth about the
+		 * bookkeeping?
+		 *
+		 */
+		if (mStateFactory.isLoopNode(oldState)) {
+			final H guess = mStateFactory.guessedLevel(oldState);
+			final AbstractionLevel<H> act_lv = mStateFactory.getAbstractionLevel(oldState);
+			mLogger.info("Backtracking a loop entry edge");
+			mLogger.info("Guessed abstraction level: %s", guess);
+			mLogger.info("Actual level: %s", act_lv);
+			final ComparisonResult c = act_lv.compare(guess);
+			if (!(c == ComparisonResult.EQUAL || c == ComparisonResult.STRICTLY_SMALLER)) {
+				// In case we guessed wrong: stop backtracking, new guess and return to exploration
+				mStatistics.incWrongGuesses();
+				mStatistics.guessed++;
+				mStateFactory.addToAbstractionLimit(oldState, act_lv.getValue());
+				mStateFactory.setGuessedLevel(oldState, mStateFactory.getAbstractionLevel(oldState).getValue());
+				return BacktrackCases.WRONG_GUESS;
+			}
+
+		}
+
 		for (final var stackElement : mStack) {
 			if (stackElement.getSecond().getSucc() == oldState) {
 				mStateFactory.addToAbstractionLevel(stackElement.getFirst(),
@@ -335,7 +410,10 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 		debugIndent("final abstraction level of state %s was %s", oldState, lastProtVars);
 		mIndentLevel--;
 		mVisitor.backtrackState(oldState, isComplete);
-		return mVisitor.isFinished();
+		if (mVisitor.isFinished()) {
+			return BacktrackCases.ABORT;
+		}
+		return BacktrackCases.CONTINUE;
 	}
 
 	// need to create state's outgoing transitions and successors before this
@@ -440,26 +518,25 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 					reductionSucc = createNextState(state, originalSucc, letter);
 					mAlreadyReduced.remove(originalSucc);
 					mAlreadyReduced.put(originalSucc, reductionSucc);
-				} else if (!mStateFactory.getAbstractionLimit(correspRstate).isLocked()) {
-					System.out.println("Found a loop, use abstraction hammer");
-
-					// if it is the first encounter with a loop, update the relevant statistics
-					if (!mStatistics.containsLoop()) {
-						mStatistics.setContainsLoop();
-						mStatistics.stopLoopless();
-						mStatistics.startLoopTime();
-						mStatistics.setProtectedVarsBL(mStateFactory.getAbstractionLevel(state).getValue());
-					}
-					// TODO: don't do this if the state loops back to itself
-					// if we're in a loop instantly use the abstraction hammer
-
-					reductionSucc = mStateFactory.createStratifiedState(originalSucc,
-							new AbstractionLevel<>(mAbstractionLattice.getBottom(), mAbstractionLattice, false),
-							new AbstractionLevel<>(mAbstractionLattice.getBottom(), mAbstractionLattice, true));
-					mAlreadyReduced.remove(originalSucc);
-					mAlreadyReduced.put(originalSucc, reductionSucc);
-
-				} else {
+				}
+				// TODO: Loophandle -- Do we still need any of this?
+				/*
+				 * else if (!mStateFactory.getAbstractionLimit(correspRstate).isLocked()) {
+				 * System.out.println("Found a loop, use abstraction hammer");
+				 *
+				 * // if it is the first encounter with a loop, update the relevant statistics if
+				 * (!mStatistics.containsLoop()) { mStatistics.setContainsLoop(); mStatistics.stopLoopless();
+				 * mStatistics.startLoopTime();
+				 * mStatistics.setProtectedVarsBL(mStateFactory.getAbstractionLevel(state).getValue()); }
+				 *
+				 * reductionSucc = mStateFactory.createStratifiedState(originalSucc, new
+				 * AbstractionLevel<>(mAbstractionLattice.getBottom(), mAbstractionLattice, false), new
+				 * AbstractionLevel<>(mAbstractionLattice.getBottom(), mAbstractionLattice, true));
+				 * mAlreadyReduced.remove(originalSucc); mAlreadyReduced.put(originalSucc, reductionSucc);
+				 *
+				 * }
+				 */
+				else {
 					reductionSucc = correspRstate;
 				}
 				// add state + new reduced transition to worklist
@@ -559,6 +636,8 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 		private int mContainsLoop;
 		private int mDuplStates;
 		private int mRedStates;
+		private int mWrongGuesses;
+		public int guessed;
 		private H mProtectedVars;
 		private H mProtectedVarsBeforeLoop;
 		private int mNumProtectedVars;
@@ -571,6 +650,8 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 			declare("Time in loop", () -> mLoopTime, KeyType.TT_TIMER_MS);
 			declare("Time in total", () -> mTotalTime, KeyType.TT_TIMER);
 			declare("Has Loop", () -> mContainsLoop, KeyType.COUNTER);
+			declare("wrong guesses", () -> mWrongGuesses, KeyType.COUNTER);
+			declare("overall guesses", () -> guessed, KeyType.COUNTER);
 			declare("Reduction States", () -> mRedStates, KeyType.COUNTER);
 			declare("Duplicate States", () -> mDuplStates, KeyType.COUNTER);
 			declare("Protected Variables", () -> mNumProtectedVars, KeyType.COUNTER);
@@ -640,6 +721,10 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 		 */
 		public void setNumProtectedVars(final int i) {
 			mNumProtectedVars = i;
+		}
+
+		public void incWrongGuesses() {
+			mWrongGuesses++;
 		}
 
 	}

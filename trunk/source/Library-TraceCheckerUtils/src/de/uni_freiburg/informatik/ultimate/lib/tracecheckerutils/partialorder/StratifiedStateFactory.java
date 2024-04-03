@@ -130,4 +130,38 @@ public class StratifiedStateFactory<L, H> implements IStratifiedStateFactory<L, 
 			return mSleepMap;
 		}
 	}
+
+	@Override
+	public boolean isLoopNode(final IPredicate state) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public void setAsLoopNode(final IPredicate state) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public H guessedLevel(final IPredicate state) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void setGuessedLevel(final IPredicate state, final H guess) {
+		// TODO Auto-generated method stub
+	}
+
+	/*
+	 * @Override public boolean isLoopNode(final StratifiedReductionState<L, S, H> state) { return state.mLoopNode; }
+	 * 
+	 * @Override public void setAsLoopNode(final StratifiedReductionState<L, S, H> state) { state.mLoopNode = true; }
+	 * 
+	 * @Override public H guessedLevel(final StratifiedReductionState<L, S, H> state) { return state.mGuessedLevel; }
+	 * 
+	 * @Override public void setGuessedLevel(final StratifiedReductionState<L, S, H> state, final H guess) {
+	 * state.mGuessedLevel = guess; }
+	 */
 }

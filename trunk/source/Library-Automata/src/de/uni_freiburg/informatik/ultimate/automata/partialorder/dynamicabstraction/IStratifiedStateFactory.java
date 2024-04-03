@@ -156,6 +156,42 @@ public interface IStratifiedStateFactory<L, S, R, H> extends IEmptyStackStateFac
 	default boolean isLoopCopy(final R state) {
 		return getAbstractionLimit(state).isLocked();
 	}
+
+	/**
+	 * Return true if the state is a loop entry node
+	 *
+	 * @param state
+	 *            the state in question
+	 * @return true state is a loop entry node
+	 */
+	boolean isLoopNode(final R state);
+
+	/**
+	 * Indicate that a state is a loop entry node, i.e. part of a loop and the first state of the loop reached by the
+	 * traversal
+	 *
+	 * @param state
+	 *            state to be marked as loop entry node
+	 */
+	void setAsLoopNode(final R state);
+
+	/**
+	 * Only relevant for loop entry nodes
+	 *
+	 * @param state
+	 *            state of the reduction automaton
+	 * @return abstraction level we guessed the loop to have
+	 *
+	 */
+	H guessedLevel(final R state);
+
+	/**
+	 * Guess a new abstraction level for a loop entry node
+	 *
+	 * @param state
+	 *            state of the reduction automaton, should be a loop entry node
+	 */
+	void setGuessedLevel(R state, H guess);
 }
 
 /**
@@ -209,10 +245,30 @@ class StratifiedStateFactory<L, S, H> implements IStratifiedStateFactory<L, S, S
 	public void setSleepSet(final StratifiedReductionState<L, S, H> state, final Map<L, H> sleepset) {
 		state.mSleepSet = sleepset;
 	}
+
+	@Override
+	public boolean isLoopNode(final StratifiedReductionState<L, S, H> state) {
+		return state.mLoopNode;
+	}
+
+	@Override
+	public void setAsLoopNode(final StratifiedReductionState<L, S, H> state) {
+		state.mLoopNode = true;
+	}
+
+	@Override
+	public H guessedLevel(final StratifiedReductionState<L, S, H> state) {
+		return state.mGuessedLevel;
+	}
+
+	@Override
+	public void setGuessedLevel(final StratifiedReductionState<L, S, H> state, final H guess) {
+		state.mGuessedLevel = guess;
+	}
 }
 
 /**
- * create a state of the reduction automaton for dynamic stratified reduction
+ * Create a state of the reduction automaton for dynamic stratified reduction
  *
  * @param originalState
  *            state of the input automaton
@@ -223,7 +279,7 @@ class StratifiedStateFactory<L, S, H> implements IStratifiedStateFactory<L, S, S
  *            abstraction level is fully defined and no more variables will be added to its value
  * @param abstractionLimit
  *            an object with a set of program variables 'value' and a boolean 'locked' locked = true means that the
- *            state with this abstraction limit is part of a loop copy with this abstraction limit
+ *            state with this abstraction limit is part of a loop copy with this abstraction limit <-- not anymore
  *
  * @return the corresponding state of the reduction automaton
  */
@@ -233,10 +289,13 @@ class StratifiedReductionState<L, S, H> {
 	protected Map<L, H> mSleepSet;
 	protected final AbstractionLevel<H> mAbstractionLevel;
 	protected final AbstractionLevel<H> mAbstractionLimit;
+	protected boolean mLoopNode;
+	protected H mGuessedLevel;
 
 	public StratifiedReductionState(final S state, final AbstractionLevel<H> absLv, final AbstractionLevel<H> absLmt) {
 		mOriginalState = state;
 		mAbstractionLevel = absLv;
 		mAbstractionLimit = absLmt;
+		mLoopNode = false;
 	}
 }
