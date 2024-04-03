@@ -146,6 +146,7 @@
   </rundefinition>
 
   <tasks name="single">
+    <option name="-tc">${benchmark_path}../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
     <include>${benchmark_path}/../../../trunk/examples/svcomp/weaver/parallel-misc-2-unrolled-atomic.wvr.yml</include>
     <propertyfile expectedverdict="true">${benchmark_path}/../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
   </tasks>
