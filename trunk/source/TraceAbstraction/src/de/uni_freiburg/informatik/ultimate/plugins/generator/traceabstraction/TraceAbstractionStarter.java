@@ -40,7 +40,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
@@ -84,8 +83,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
-import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
-import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
 public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 	public enum CegarRestartBehaviour {
@@ -101,7 +98,6 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 	private final IUltimateServiceProvider mServices;
 	private final TAPreferences mPrefs;
 	private final boolean mIsConcurrent;
-	private final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> mWitnessAutomaton;
 	private final CegarLoopFactory<L> mCegarFactory;
 
 	/**
@@ -121,9 +117,10 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 	private Map<IcfgLocation, IcfgLocation> mLocationMap;
 	private final Map<IcfgLocation, IResult> mResultsPerLocation;
 	private final CegarLoopResultReporter<L> mResultReporter;
+	private final WitnessTransformer<L> mWitnessTransformer;
 
 	public TraceAbstractionStarter(final IUltimateServiceProvider services, final IIcfg<IcfgLocation> icfg,
-			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton,
+			final WitnessTransformer<L> witnessTransformer,
 			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile,
 			final Supplier<IPLBECompositionFactory<L>> createCompositionFactory,
 			final ICopyActionFactory<L> copyFactory, final Class<L> transitionClazz) {
@@ -131,7 +128,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mPrefs = new TAPreferences(mServices);
 		mResultsPerLocation = new LinkedHashMap<>();
-		mWitnessAutomaton = witnessAutomaton;
+		mWitnessTransformer = witnessTransformer;
 		mRawFloydHoareAutomataFromFile = rawFloydHoareAutomataFromFile;
 		mIsConcurrent = IcfgUtils.isConcurrent(icfg);
 		mResultReporter = new CegarLoopResultReporter<>(mServices, mLogger, Activator.PLUGIN_ID, Activator.PLUGIN_NAME,
@@ -417,7 +414,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 			final Set<IcfgLocation> errorLocs) {
 		// run the CEGAR loop
 		final var cegarAndProofProducer = mCegarFactory.constructCegarLoop(services, name, icfg, errorLocs,
-				mWitnessAutomaton, mRawFloydHoareAutomataFromFile);
+				mWitnessTransformer, mRawFloydHoareAutomataFromFile);
 		final CegarLoopResult<L> clres = cegarAndProofProducer.getFirst().runCegar();
 
 		// extract a proof from the CEGAR loop (if one exists)

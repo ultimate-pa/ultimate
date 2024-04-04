@@ -31,21 +31,15 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.IInitialAbstractionProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessUtils;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessUtils.Property;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
-import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
-import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
 /**
  * Transforms an initial abstraction by taking the product with a witness automaton.
@@ -56,39 +50,24 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
  *            the type of transitions
  */
 public class WitnessAutomatonAbstractionProvider<L extends IIcfgTransition<?>>
-		implements IInitialAbstractionProvider<L, IDoubleDeckerAutomaton<L, IPredicate>> {
-
-	private final IUltimateServiceProvider mServices;
-	private final PredicateFactory mPredicateFactory;
-	private final PredicateFactoryRefinement mStateFactoryForRefinement;
-	private final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> mWitnessAutomaton;
-
+		implements IInitialAbstractionProvider<L, INestedWordAutomaton<L, IPredicate>> {
+	private final WitnessTransformer<L> mWitnessTransformer;
 	private final IInitialAbstractionProvider<L, ? extends INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> mUnderlying;
+	private final PredicateFactory mPredicateFactory;
 
-	private final ILogger mLogger;
-	private final Property mProperty;
-
-	public WitnessAutomatonAbstractionProvider(final IUltimateServiceProvider services,
-			final PredicateFactory predicateFactory, final PredicateFactoryRefinement stateFactoryForRefinement,
+	public WitnessAutomatonAbstractionProvider(final PredicateFactory predicateFactory,
 			final IInitialAbstractionProvider<L, ? extends INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> underlying,
-			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton,
-			final Property property) {
-		mServices = services;
+			final WitnessTransformer<L> witnessTransformer) {
 		mPredicateFactory = predicateFactory;
-		mStateFactoryForRefinement = stateFactoryForRefinement;
-		mWitnessAutomaton = witnessAutomaton;
+		mWitnessTransformer = witnessTransformer;
 		mUnderlying = underlying;
-		mProperty = property;
-
-		mLogger = services.getLoggingService().getLogger(WitnessAutomatonAbstractionProvider.class);
 	}
 
 	@Override
-	public IDoubleDeckerAutomaton<L, IPredicate> getInitialAbstraction(final IIcfg<? extends IcfgLocation> icfg,
+	public INestedWordAutomaton<L, IPredicate> getInitialAbstraction(final IIcfg<? extends IcfgLocation> icfg,
 			final Set<? extends IcfgLocation> errorLocs) throws AutomataLibraryException {
 		final var abstraction = mUnderlying.getInitialAbstraction(icfg, errorLocs);
-		return WitnessUtils.constructIcfgAndWitnessProduct(mServices, abstraction, mWitnessAutomaton,
-				icfg.getCfgSmtToolkit(), mPredicateFactory, mStateFactoryForRefinement, mLogger, mProperty);
+		return mWitnessTransformer.transform(abstraction, mPredicateFactory);
 	}
 
 	@Override

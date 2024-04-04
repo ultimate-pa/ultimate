@@ -35,8 +35,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonFilteredStates;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainExceptionWrapper;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.FixpointNonTerminationResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.GeometricNonTerminationArgumentResult;
@@ -66,7 +73,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgPetrifi
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
@@ -79,8 +85,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.cega
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.WitnessTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessModelToAutomatonTransformer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessUtils;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessUtils.Property;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataTestFileAST;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
@@ -99,7 +108,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 
 	private final List<IIcfg<?>> mIcfgs;
 	private IElement mRootOfNewModel;
-	private WitnessNode mWitnessNode;
+	private WitnessTransformer<IcfgEdge> mWitnessTransformer;
 	private final List<AutomataTestFileAST> mAutomataTestFileAsts;
 	private boolean mLastModel;
 	private ModelType mCurrentGraphType;
@@ -118,10 +127,16 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			mIcfgs.add((IIcfg<?>) root);
 		}
 		if (root instanceof WitnessNode && mCurrentGraphType.getType() == Type.VIOLATION_WITNESS) {
-			if (mWitnessNode != null) {
+			if (mWitnessTransformer != null) {
 				throw new UnsupportedOperationException("two witness models");
 			}
-			mWitnessNode = (WitnessNode) root;
+			mLogger.warn(
+					"Found a witness automaton. I will only consider traces that are accepted by the witness automaton");
+			final INestedWordAutomaton<WitnessEdge, WitnessNode> witnessAutomaton =
+					new WitnessModelToAutomatonTransformer((WitnessNode) root, mServices).getResult();
+			mWitnessTransformer =
+					(automaton, predicateFactory) -> WitnessUtils.constructGraphMLWitnessProduct(mServices, automaton,
+							extendWitnessAutomaton(witnessAutomaton), predicateFactory, mLogger, Property.TERMINATION);
 		}
 		if (root instanceof AutomataTestFileAST) {
 			mAutomataTestFileAsts.add((AutomataTestFileAST) root);
@@ -129,19 +144,20 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		return false;
 	}
 
-	private <L extends IIcfgTransition<?>> BuchiCegarLoopResult<L> runCegarLoops(final IIcfg<?> icfg,
-			final INestedWordAutomaton<WitnessEdge, WitnessNode> witnessAutomaton,
-			final BuchiCegarLoopFactory<L> factory) throws IOException {
+	private BuchiCegarLoopResult<IcfgEdge> runCegarLoops(final IIcfg<?> icfg,
+			final BuchiCegarLoopFactory<IcfgEdge> factory) throws IOException {
 		if (!IcfgUtils.isConcurrent(icfg)) {
-			return factory.constructCegarLoop(icfg, witnessAutomaton).runCegarLoop();
+			return factory.constructCegarLoop(icfg, mWitnessTransformer).runCegarLoop();
+		}
+		if (mWitnessTransformer != null) {
+			throw new UnsupportedOperationException("Witness validation for concurrency is currently not supported.");
 		}
 		int numberOfThreadInstances = 1;
 		while (true) {
 			final IcfgPetrifier icfgPetrifier = new IcfgPetrifier(mServices, icfg, numberOfThreadInstances, true);
 			mServices.getBacktranslationService().addTranslator(icfgPetrifier.getBacktranslator());
 			final IIcfg<IcfgLocation> petrified = icfgPetrifier.getPetrifiedIcfg();
-			final BuchiCegarLoopResult<L> result =
-					factory.constructCegarLoop(petrified, witnessAutomaton).runCegarLoop();
+			final BuchiCegarLoopResult<IcfgEdge> result = factory.constructCegarLoop(petrified, null).runCegarLoop();
 			if (result.getResult() != Result.INSUFFICIENT_THREADS) {
 				return result;
 			}
@@ -151,10 +167,24 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		}
 	}
 
-	private IIcfg<?> doTerminationAnalysis(final IIcfg<?> icfg,
-			final INestedWordAutomaton<WitnessEdge, WitnessNode> witnessAutomaton) throws IOException, AssertionError {
+	private INestedWordAutomaton<WitnessEdge, WitnessNode> extendWitnessAutomaton(
+			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton) {
+		final AutomataLibraryServices automataServices = new AutomataLibraryServices(mServices);
+		NestedWordAutomatonReachableStates<WitnessEdge, WitnessNode> reach = null;
+		try {
+			reach = new NestedWordAutomatonReachableStates<>(automataServices, witnessAutomaton);
+		} catch (final AutomataOperationCanceledException ex) {
+			final RunningTaskInfo runningTaskInfo = new RunningTaskInfo(this.getClass(), "extending witness automaton");
+			ex.addRunningTaskInfo(runningTaskInfo);
+			throw new ToolchainExceptionWrapper(Activator.PLUGIN_ID, ex);
+		}
+		return new NestedWordAutomatonFilteredStates<>(automataServices, reach, reach.getStates(),
+				reach.getInitialStates(), reach.getStates());
+	}
+
+	private IIcfg<?> doTerminationAnalysis(final IIcfg<?> icfg) throws IOException, AssertionError {
 		final BuchiCegarLoopBenchmarkGenerator benchGen = new BuchiCegarLoopBenchmarkGenerator();
-		final BuchiCegarLoopResult<IcfgEdge> result = runCegarLoops(icfg, witnessAutomaton,
+		final BuchiCegarLoopResult<IcfgEdge> result = runCegarLoops(icfg,
 				new BuchiCegarLoopFactory<>(mServices, new TAPreferences(mServices), IcfgEdge.class, benchGen));
 
 		benchGen.stop(CegarLoopStatisticsDefinitions.OverallTime);
@@ -261,8 +291,8 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 				stemPE = TraceCheckUtils.computeSomeIcfgProgramExecutionWithoutValues(result.getStem());
 			}
 		}
-		final IcfgProgramExecution<IcfgEdge> loopPE = TraceCheckUtils
-				.computeSomeIcfgProgramExecutionWithoutValues(result.getLoop());
+		final IcfgProgramExecution<IcfgEdge> loopPE =
+				TraceCheckUtils.computeSomeIcfgProgramExecutionWithoutValues(result.getLoop());
 		final IcfgEdge hondaAction = result.getLoop().getSymbol(0);
 
 		if (ltlAnnot == null) {
@@ -330,15 +360,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 				throw new UnsupportedOperationException("TraceAbstraction needs an RCFG");
 			}
 			mLogger.info("Analyzing ICFG " + rcfgRootNode.getIdentifier());
-			INestedWordAutomaton<WitnessEdge, WitnessNode> witnessAutomaton;
-			if (mWitnessNode == null) {
-				witnessAutomaton = null;
-			} else {
-				mLogger.warn(
-						"Found a witness automaton. I will only consider traces that are accepted by the witness automaton");
-				witnessAutomaton = new WitnessModelToAutomatonTransformer(mWitnessNode, mServices).getResult();
-			}
-			mRootOfNewModel = doTerminationAnalysis(rcfgRootNode, witnessAutomaton);
+			mRootOfNewModel = doTerminationAnalysis(rcfgRootNode);
 		}
 	}
 
