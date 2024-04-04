@@ -92,17 +92,43 @@ public class StratifiedStateFactory<L, H> implements IStratifiedStateFactory<L, 
 		public void setSleepMap(final Map<L, H> sleepset) {
 			mAnnotation.setSleepMap(sleepset);
 		}
+
+		public H getGuess() {
+			return mAnnotation.getGuess();
+		}
+
+		public boolean isLoopNode() {
+			return mAnnotation.isLoopNode();
+		}
+
+		public void setLoopNode() {
+			mAnnotation.setLoopNode();
+		}
+
+		public void setGuessedLevel(final H guess) {
+			mAnnotation.guess(guess);
+		}
 	}
 
 	private static final class Annotation<L, H> {
 		private final AbstractionLevel<H> mLevel;
 		private final AbstractionLevel<H> mLimit;
+		private H mGuessedLevel;
+		private boolean mLoopEntryNode;
 
 		private Map<L, H> mSleepMap;
 
 		public Annotation(final AbstractionLevel<H> level, final AbstractionLevel<H> limit) {
 			mLevel = level;
 			mLimit = limit;
+		}
+
+		public void guess(final H lvl) {
+			mGuessedLevel = lvl;
+		}
+
+		public void setLoopNode() {
+			mLoopEntryNode = true;
 		}
 
 		public void setSleepMap(final Map<L, H> sleepMap) {
@@ -129,39 +155,34 @@ public class StratifiedStateFactory<L, H> implements IStratifiedStateFactory<L, 
 			}
 			return mSleepMap;
 		}
+
+		public boolean isLoopNode() {
+			return mLoopEntryNode;
+		}
+
+		public H getGuess() {
+			return mGuessedLevel;
+		}
+	}
+
+	// stuff for loophandling
+	@Override
+	public H guessedLevel(final IPredicate state) {
+		return ((StratifiedMLPredicate<L, H>) state).getGuess();
 	}
 
 	@Override
 	public boolean isLoopNode(final IPredicate state) {
-		// TODO Auto-generated method stub
-		return false;
+		return ((StratifiedMLPredicate<L, H>) state).isLoopNode();
 	}
 
 	@Override
 	public void setAsLoopNode(final IPredicate state) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public H guessedLevel(final IPredicate state) {
-		// TODO Auto-generated method stub
-		return null;
+		((StratifiedMLPredicate<L, H>) state).setLoopNode();
 	}
 
 	@Override
 	public void setGuessedLevel(final IPredicate state, final H guess) {
-		// TODO Auto-generated method stub
+		((StratifiedMLPredicate<L, H>) state).setGuessedLevel(guess);
 	}
-
-	/*
-	 * @Override public boolean isLoopNode(final StratifiedReductionState<L, S, H> state) { return state.mLoopNode; }
-	 * 
-	 * @Override public void setAsLoopNode(final StratifiedReductionState<L, S, H> state) { state.mLoopNode = true; }
-	 * 
-	 * @Override public H guessedLevel(final StratifiedReductionState<L, S, H> state) { return state.mGuessedLevel; }
-	 * 
-	 * @Override public void setGuessedLevel(final StratifiedReductionState<L, S, H> state, final H guess) {
-	 * state.mGuessedLevel = guess; }
-	 */
 }

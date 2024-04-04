@@ -195,6 +195,8 @@ public interface IStratifiedStateFactory<L, S, R, H> extends IEmptyStackStateFac
 }
 
 /**
+ * !!! PORFacade uses a different class of the same name (partialorder/StratifiedStateFactory.java) !!!
+ *
  * Class implementing the interface, uses the standard (and only existing) type of dynamic stratified reduction state
  * and abstraction level.
  *

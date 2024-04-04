@@ -247,7 +247,6 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 				// instead add all TS loop entry node -> suc(loop entry node) to worklist and take the topmost
 				createSuccessors(mDfs.peek());
 				current = mWorklist.pop();
-
 			}
 			// assume our backtracking encounters a wrong guess...
 			// return our current TS to the worklist and throw reexpl. TS on top?
@@ -310,7 +309,7 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 						mStatistics.stopLoopless();
 						mStatistics.startLoopTime();
 					}
-					mLogger.info("Found a loop edge, guess abstraction level: %s",
+					mLogger.info("Found a loop edge, guessed abstraction level: %s",
 							mStateFactory.guessedLevel(nextState));
 				}
 				// should be superfluous
@@ -374,9 +373,9 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 			final AbstractionLevel<H> act_lv = mStateFactory.getAbstractionLevel(oldState);
 			mLogger.info("Backtracking a loop entry edge");
 			mLogger.info("Guessed abstraction level: %s", guess);
-			mLogger.info("Actual level: %s", act_lv);
+			mLogger.info("Actual level: %s", act_lv.getValue());
 			final ComparisonResult c = act_lv.compare(guess);
-			if (!(c == ComparisonResult.EQUAL || c == ComparisonResult.STRICTLY_SMALLER)) {
+			if (!(c == ComparisonResult.EQUAL || c == ComparisonResult.STRICTLY_GREATER)) {
 				// In case we guessed wrong: stop backtracking, new guess and return to exploration
 				mStatistics.incWrongGuesses();
 				mStatistics.guessed++;
@@ -503,9 +502,15 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 				// If the target is an already completed node, check if edge is allowed (only if abstraction limit of
 				// target contains current abstraction limit)
 				if (left) {
+					mLogger.info("Current state's abstr. limit: %s",
+							mStateFactory.getAbstractionLimit(state).getValue());
+					mLogger.info("Target state's abstr. limit: %s",
+							mStateFactory.getAbstractionLimit(correspRstate).getValue());
+
 					final ComparisonResult c = mStateFactory.getAbstractionLimit(state)
 							.compare(mStateFactory.getAbstractionLimit(correspRstate).getValue());
-					dupl = !(c == ComparisonResult.EQUAL || c == ComparisonResult.STRICTLY_SMALLER);
+					mLogger.info(c);
+					dupl = !(c == ComparisonResult.EQUAL || c == ComparisonResult.STRICTLY_GREATER);
 				}
 
 				R reductionSucc;
