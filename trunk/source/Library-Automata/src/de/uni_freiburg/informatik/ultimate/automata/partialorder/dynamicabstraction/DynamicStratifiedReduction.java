@@ -230,11 +230,11 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 			}
 
 			var current = mWorklist.pop();
-			final R currentState = current.getFirst();
+			R currentState = current.getFirst();
 
 			// Backtrack states still on the stack whose exploration has finished.
 
-			// TODO: is here the best place for loophandling? -- no
+			// TODO: loop handle marker
 			final BacktrackCases abort = backtrackUntil(currentState);
 			if (abort == BacktrackCases.ABORT) {
 				mLogger.debug(ABORT_MSG);
@@ -242,10 +242,12 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 			}
 			if (abort == BacktrackCases.WRONG_GUESS) {
 				// abandon exploration of current TS and reexplore loop
+				// TODO: communicate this to the visitor
 				mWorklist.push(current);
+				currentState = mDfs.peek();
 				// It'd be best if we could simply get the TS that led to the loop entry node...
 				// instead add all TS loop entry node -> suc(loop entry node) to worklist and take the topmost
-				createSuccessors(mDfs.peek());
+				createSuccessors(currentState);
 				current = mWorklist.pop();
 			}
 			// assume our backtracking encounters a wrong guess...
@@ -428,6 +430,8 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 			final H freeVars =
 					mProofManager.chooseResponsibleAbstraction(originalState, mStateFactory.getAbstractionLevel(state));
 			mStateFactory.addToAbstractionLevel(state, freeVars);
+			mLogger.info("State is a proven state, additional protected variables are %s", freeVars);
+			mLogger.info("State's abstraction level is %s", mStateFactory.getAbstractionLevel(state).getValue());
 			debugIndent("State is a proven state, additional protected variables are %s", freeVars);
 			debugIndent("State's abstraction level is %s", mStateFactory.getAbstractionLevel(state).getValue());
 		}
@@ -498,18 +502,16 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 				boolean dupl = false;
 				final boolean left =
 						(correspRstate != null) ? mStateFactory.getAbstractionLevel(correspRstate).isLocked() : false;
-
 				// If the target is an already completed node, check if edge is allowed (only if abstraction limit of
 				// target contains current abstraction limit)
 				if (left) {
-					mLogger.info("Current state's abstr. limit: %s",
+					debugIndent("Current state's abstr. limit: %s",
 							mStateFactory.getAbstractionLimit(state).getValue());
-					mLogger.info("Target state's abstr. limit: %s",
+					debugIndent("Target state's abstr. limit: %s",
 							mStateFactory.getAbstractionLimit(correspRstate).getValue());
 
 					final ComparisonResult c = mStateFactory.getAbstractionLimit(state)
 							.compare(mStateFactory.getAbstractionLimit(correspRstate).getValue());
-					mLogger.info(c);
 					dupl = !(c == ComparisonResult.EQUAL || c == ComparisonResult.STRICTLY_GREATER);
 				}
 
