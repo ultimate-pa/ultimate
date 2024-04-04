@@ -19,6 +19,7 @@ public class VarAssignmentReuseAnnotation extends ModernAnnotations {
 	private static final String KEY = VarAssignmentReuseAnnotation.class.getName();
 	public boolean secondCheck = false;
 	public boolean mNegatedVA = false;
+	public boolean mCoveredTestGoal = false;
 	private final Map<String, Object> mMap = new HashMap<>();
 	public ArrayList<Pair<Term, Term>> mVarAssignmentPair = new ArrayList<Pair<Term, Term>>(); // check if negated,
 																								// order corresponds to

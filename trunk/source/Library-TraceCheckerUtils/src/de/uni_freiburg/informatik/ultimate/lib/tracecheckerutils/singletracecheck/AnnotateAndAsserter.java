@@ -230,8 +230,11 @@ public class AnnotateAndAsserter<L extends IAction> {
 			}
 		} else {
 			mSatisfiable = mMgdScriptTc.getScript().checkSat();
-		}
 
+		}
+		if (mSatisfiable == LBool.SAT && mCurrentVA != null) {
+			mCurrentVA.mCoveredTestGoal = true;
+		}
 		if (mSatisfiable == LBool.UNKNOWN) {
 			System.out.println("UNKNOWN");
 		}
@@ -515,6 +518,9 @@ public class AnnotateAndAsserter<L extends IAction> {
 
 	private void removeCheckIfCovered() {
 		if (mVAforReuse.mNegatedVA) {
+			return;
+		}
+		if (mCurrentVA.mVAofOppositeBranch.mCoveredTestGoal) {
 			return;
 		}
 		if (mVAforReuse.equals(mDefaultVA)) {
