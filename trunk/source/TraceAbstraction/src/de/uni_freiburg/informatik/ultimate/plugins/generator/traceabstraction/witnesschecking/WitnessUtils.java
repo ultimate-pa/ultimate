@@ -34,50 +34,58 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Remove
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveNonLiveStates;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.LineCoverageCalculator;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Witness;
 
 public class WitnessUtils {
-
 	public enum Property {
 		NON_REACHABILITY, TERMINATION
-	};
+	}
 
 	public WitnessUtils() {
 		// do not instantiate
 	}
 
-	public static <LETTER extends IIcfgTransition<?>> IDoubleDeckerAutomaton<LETTER, IPredicate>
-			constructIcfgAndWitnessProduct(final IUltimateServiceProvider services,
-					final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> abstraction,
-					final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton,
-					final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
-					final PredicateFactoryRefinement stateFactoryForRefinement, final ILogger logger,
-					final Property property) throws AutomataOperationCanceledException {
-		final WitnessProductAutomaton<LETTER> wpa = new WitnessProductAutomaton<>(services, abstraction,
-				witnessAutomaton, csToolkit, predicateFactory, stateFactoryForRefinement);
-
-		final LineCoverageCalculator<LETTER> origCoverage = new LineCoverageCalculator<>(services, abstraction);
-		final IDoubleDeckerAutomaton<LETTER, IPredicate> newAbstraction;
+	private static <LETTER extends IIcfgTransition<?>> IDoubleDeckerAutomaton<LETTER, IPredicate> reduce(
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> automaton, final Property property,
+			final AutomataLibraryServices services) throws AutomataOperationCanceledException {
 		switch (property) {
 		case NON_REACHABILITY:
-			newAbstraction = new RemoveDeadEnds<>(new AutomataLibraryServices(services), wpa).getResult();
-			break;
+			return new RemoveDeadEnds<>(services, automaton).getResult();
 		case TERMINATION:
-			newAbstraction = new RemoveNonLiveStates<>(new AutomataLibraryServices(services), wpa).getResult();
-			break;
+			return new RemoveNonLiveStates<>(services, automaton).getResult();
 		default:
 			throw new AssertionError();
 		}
+	}
+
+	public static <LETTER extends IIcfgTransition<?>> IDoubleDeckerAutomaton<LETTER, IPredicate>
+			constructGraphMLWitnessProduct(final IUltimateServiceProvider services,
+					final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> abstraction,
+					final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton,
+					final PredicateFactory predicateFactory, final ILogger logger, final Property property)
+					throws AutomataOperationCanceledException {
+		final GraphMLWitnessProductAutomaton<LETTER> wpa =
+				new GraphMLWitnessProductAutomaton<>(services, abstraction, witnessAutomaton, predicateFactory);
+		final LineCoverageCalculator<LETTER> origCoverage = new LineCoverageCalculator<>(services, abstraction);
+		final IDoubleDeckerAutomaton<LETTER, IPredicate> newAbstraction =
+				reduce(wpa, property, new AutomataLibraryServices(services));
 		logger.info(wpa.generateBadWitnessInformation());
 		new LineCoverageCalculator<>(services, abstraction, origCoverage).reportCoverage("Witness product");
 		return newAbstraction;
 	}
 
+	public static <LETTER extends IIcfgTransition<?>> IDoubleDeckerAutomaton<LETTER, IPredicate>
+			constructYamlWitnessProduct(final IUltimateServiceProvider services,
+					final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> abstraction,
+					final Witness witness, final PredicateFactory predicateFactory, final ILogger logger,
+					final Property property) throws AutomataOperationCanceledException {
+		// TODO: Implement a witness automaton similar to WitnessProductAutomaton and call reduce on it
+		throw new AssertionError();
+	}
 }
