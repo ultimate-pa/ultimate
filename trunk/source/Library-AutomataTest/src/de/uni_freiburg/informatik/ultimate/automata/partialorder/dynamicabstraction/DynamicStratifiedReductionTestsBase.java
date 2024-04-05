@@ -458,9 +458,8 @@ public abstract class DynamicStratifiedReductionTestsBase implements IMessagePri
 		 * @return abstraction level we guessed the loop to have
 		 *
 		 */
-		H guessedLevel(final R state) {
-			return null;
-		}
+		Set<String> guessedLevel(final R state) {
+			return null;	}
 
 		/**
 		 * Guess a new abstraction level for a loop entry node
