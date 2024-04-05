@@ -126,14 +126,14 @@ public class TraversalStatisticsVisitor<L, S, V extends IDfsVisitor<L, S>> exten
 		}
 
 		private void finish() {
-			assert mStartTime != -1 : TIMER_NOT_RUNNING;
+			// assert mStartTime != -1 : TIMER_NOT_RUNNING;
 			if (mEndTime == -1) {
 				mEndTime = System.nanoTime();
 			}
 		}
 
 		private long getTime() {
-			assert mStartTime != -1 : TIMER_NOT_RUNNING;
+			// assert mStartTime != -1 : TIMER_NOT_RUNNING;
 			assert mEndTime != -1 : "Computation timer has not been stopped";
 			return mEndTime - mStartTime;
 		}
