@@ -311,7 +311,7 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 						mStatistics.stopLoopless();
 						mStatistics.startLoopTime();
 					}
-					mLogger.info("Found a loop edge, guessed abstraction level: %s",
+					debugIndent("Found a loop edge, guessed abstraction level: %s",
 							mStateFactory.guessedLevel(nextState));
 				}
 				// should be superfluous

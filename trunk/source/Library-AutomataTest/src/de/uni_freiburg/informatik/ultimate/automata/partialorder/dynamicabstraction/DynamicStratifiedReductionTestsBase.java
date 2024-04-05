@@ -366,7 +366,6 @@ public abstract class DynamicStratifiedReductionTestsBase implements IMessagePri
 				return existing;
 			}
 
-			// TODO @Veronika It may be nicer to include the parameters in the name.
 			final var name = "s" + mCounter + ": " + state;
 			mCounter++;
 			mMap.put(name, quad);
@@ -435,6 +434,42 @@ public abstract class DynamicStratifiedReductionTestsBase implements IMessagePri
 			mMap.replace(state, new Quad<>(mMap.get(state).getFirst(), (HashMap<String, Set<String>>) sleepset,
 					mMap.get(state).getThird(), mMap.get(state).getFourth()));
 
+		}
+		boolean isLoopNode(final R state) {
+			return false;
+		}
+
+		/**
+		 * Indicate that a state is a loop entry node, i.e. part of a loop and the first state of the loop reached by the
+		 * traversal
+		 *
+		 * @param state
+		 *            state to be marked as loop entry node
+		 */
+		void setAsLoopNode(final R state) {
+			
+		}
+
+		/**
+		 * Only relevant for loop entry nodes
+		 *
+		 * @param state
+		 *            state of the reduction automaton
+		 * @return abstraction level we guessed the loop to have
+		 *
+		 */
+		H guessedLevel(final R state) {
+			return null;
+		}
+
+		/**
+		 * Guess a new abstraction level for a loop entry node
+		 *
+		 * @param state
+		 *            state of the reduction automaton, should be a loop entry node
+		 */
+		void setGuessedLevel(R state, H guess) {
+			
 		}
 	}
 }
