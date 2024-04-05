@@ -435,39 +435,22 @@ public abstract class DynamicStratifiedReductionTestsBase implements IMessagePri
 					mMap.get(state).getThird(), mMap.get(state).getFourth()));
 
 		}
-		boolean isLoopNode(final R state) {
+		@Override
+		public boolean isLoopNode(final R state) {
 			return false;
 		}
 
-		/**
-		 * Indicate that a state is a loop entry node, i.e. part of a loop and the first state of the loop reached by the
-		 * traversal
-		 *
-		 * @param state
-		 *            state to be marked as loop entry node
-		 */
-		void setAsLoopNode(final R state) {
+		@Override
+		public void setAsLoopNode(final R state) { 
 			
 		}
 
-		/**
-		 * Only relevant for loop entry nodes
-		 *
-		 * @param state
-		 *            state of the reduction automaton
-		 * @return abstraction level we guessed the loop to have
-		 *
-		 */
-		Set<String> guessedLevel(final R state) {
+		@Override
+		public Set<String> guessedLevel(final R state) {
 			return null;	}
 
-		/**
-		 * Guess a new abstraction level for a loop entry node
-		 *
-		 * @param state
-		 *            state of the reduction automaton, should be a loop entry node
-		 */
-		void setGuessedLevel(R state, H guess) {
+		@Override
+		public void setGuessedLevel(R state, H guess) {
 			
 		}
 	}
