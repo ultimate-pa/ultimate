@@ -32,8 +32,8 @@ package de.uni_freiburg.informatik.ultimate.btortranslator;
 public class Activator {
 
 	// The plug-in ID
-	public static final String PLUGIN_ID = CfgToBtor.class.getPackage().getName();
+	public static final String PLUGIN_ID = CFGToBTORTranslator.class.getPackage().getName();
 
 	// The plug-in name
-	public static final String PLUGIN_NAME = "CfgToBtor";
+	public static final String PLUGIN_NAME = "CFGToBTORTranslator";
 }
