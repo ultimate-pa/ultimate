@@ -327,7 +327,7 @@ public abstract class DynamicStratifiedReductionTestsBase implements IMessagePri
 		}
 
 		@Override
-		public Set<String> chooseResponsibleAbstraction(final String state, AbstractionLevel<Set<String>> level) {
+		public Set<String> chooseResponsibleAbstraction(final String state, final AbstractionLevel<Set<String>> level) {
 			// always chooses the proof with the minimal index
 			// TODO @Veronika: Customize this if necessary
 			final int result = Arrays.asList(getProofStates(state)).indexOf("false");
@@ -435,23 +435,25 @@ public abstract class DynamicStratifiedReductionTestsBase implements IMessagePri
 					mMap.get(state).getThird(), mMap.get(state).getFourth()));
 
 		}
+
 		@Override
-		public boolean isLoopNode(final R state) {
+		public boolean isLoopNode(final String state) {
 			return false;
 		}
 
 		@Override
-		public void setAsLoopNode(final R state) { 
-			
+		public void setAsLoopNode(final String state) {
+
 		}
 
 		@Override
-		public Set<String> guessedLevel(final R state) {
-			return null;	}
+		public Set<String> guessedLevel(final String state) {
+			return null;
+		}
 
 		@Override
-		public void setGuessedLevel(R state, H guess) {
-			
+		public void setGuessedLevel(final String state, final Set<String> guess) {
+
 		}
 	}
 }
