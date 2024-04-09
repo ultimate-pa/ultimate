@@ -580,13 +580,11 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	
 	private void constructConComChecker() {
 		if (!mPref.useConditionalCommutativityChecker().equals(ConComChecker.NONE)) {
-			//mCriterion = new LoopCriterion<>(mIcfg.getLoopLocations());
 			
 			mCriterion = new DefaultCriterion<>();
 			IConditionalCommutativityCriterion<L> criterion;
 			switch (mPref.getConComCheckerCriterion()) {
 			case DEFAULT:
-				//mCriterion = new DefaultCriterion<>();
 				break;
 			case RANDOM:
 				criterion = new RandomCriterion<>(mPref.getConComCheckerRandomProb(),
@@ -595,6 +593,10 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 				break;
 			case SLEEP_SET:
 				criterion = new SleepSetCriterion<>();
+				mCriterion = new WrapperCriterion<>(mCriterion, criterion);
+				break;
+			case LOOP:
+				criterion = new LoopCriterion<>(mIcfg);
 				mCriterion = new WrapperCriterion<>(mCriterion, criterion);
 				break;
 			default:

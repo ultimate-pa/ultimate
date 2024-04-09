@@ -25,11 +25,22 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.HashSet;
+import java.util.Set;
+
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
  * Loop criterion only for testing!
@@ -41,13 +52,45 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
  */
 public class LoopCriterion<L extends IIcfgTransition<?>> implements IConditionalCommutativityCriterion<L> {
 	
-	public LoopCriterion() {
+	private Set<? extends IcfgLocation> mLoopheads;
+	private Set<IcfgEdge> mLoopEdges;
+	private ArrayDeque<IcfgEdge> mLetterStack;
+
+	public LoopCriterion(IIcfg<? extends IcfgLocation> icfg) {
+		mLoopheads = icfg.getLoopLocations();
+		mLoopEdges = new HashSet<>();
+		
+		for (IcfgLocation loophead : mLoopheads) {
+			mLetterStack = new ArrayDeque<>();
+			for (IcfgEdge edge : loophead.getOutgoingEdges()) {
+				mLetterStack.add(edge);
+				DFS(edge.getTarget(), loophead);
+				mLetterStack.removeLast();
+			}
+		}
+		int i = 0;
+	}
+
+	private void DFS(IcfgLocation loc, IcfgLocation loophead) {
+		
+		if (loc.equals(loophead)) {
+			mLoopEdges.addAll(mLetterStack);
+			return;
+		}
+		for (IcfgEdge edge : loc.getOutgoingEdges()) {
+			if (mLetterStack.contains(edge)) {
+				return;
+			}
+			mLetterStack.add(edge);
+			DFS(edge.getTarget(), loophead);
+			mLetterStack.removeLast();
+		}
 	}
 
 	@Override
 	public boolean decide(IPredicate state, IRun<L, IPredicate> run, L letter1, L letter2) {
-		if (((IAction) letter1).getTransformula().toString().contains("y") &&
-		((IAction) letter2).getTransformula().toString().contains("y")) {
+		
+		if (mLoopEdges.contains(letter1) && mLoopEdges.contains(letter2)) {
 			return true;
 		}
 		return false;
