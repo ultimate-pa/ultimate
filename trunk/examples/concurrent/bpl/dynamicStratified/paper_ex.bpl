@@ -7,17 +7,18 @@
 var A, B : [int]int;
 var N : int;
 var i : int;
+var z : int;
 
 function relU(x : int) returns (int) { if x < 0 then 0 else x }
 
 procedure ULTIMATE.start()
-modifies A, B, i;
+modifies A, B, i, z;
 {
   var m, result : int;
   assume 0 <= m && m < N;
   
   i := 0;
-
+  z := 0;
   fork 1     thread1();
   fork 4,4,4,4     thread1();
   fork 5,5,5,5,5     thread1();
@@ -36,18 +37,20 @@ modifies A, B, i;
 
 // map A relU
 procedure thread1()
-modifies A, i;
+modifies A, i, z;
 {
   while (*) {
     havoc i;
     if (0 <= i && i < N) {
       A[i] := relU(A[i]);
+	  z := z + 1;
     }
   }
 }
 
 // count number of indices with positive value in A and B
 procedure thread2() returns (cnt : int)
+modifies z;
 {
   var j : int;
 
@@ -57,9 +60,11 @@ procedure thread2() returns (cnt : int)
   while (j < N) {
     if (A[j] > 0 && B[j] > 0) {
       cnt := cnt + 1;
+	  z := z + z;
     }
     if (B[j] > 0) {
       cnt := cnt + 1;
+	  z := z - 1;
     }
 
     j := j + 1;
@@ -67,7 +72,7 @@ procedure thread2() returns (cnt : int)
 }
 
 procedure thread3()
-modifies B;
+modifies B, z;
 {
   var k : int;
 
@@ -76,6 +81,7 @@ modifies B;
     havoc k;
     if (0 <= k && k < N) {
     B[k] := k;
+	z := z + 1;
     }
   }
 }
