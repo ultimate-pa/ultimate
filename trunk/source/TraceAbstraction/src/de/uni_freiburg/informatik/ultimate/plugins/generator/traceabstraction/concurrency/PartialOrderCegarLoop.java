@@ -75,6 +75,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.MonolithicHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.AnnotatedMLPredicate;
@@ -108,6 +109,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.in
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.WrapperCriterion;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.AbstractionType;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.LimitedChecksCriterion;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.LoopCriterion;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.RandomCriterion;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
@@ -332,7 +334,9 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 					 
 					final IPredicateUnifier predicateUnifier = ((PostConditionTraceChecker<L>) mConComChecker
 							.getTraceChecker()).getPredicateUnifier();
-					final IHoareTripleChecker htc = new MonolithicHoareTripleChecker(mCsToolkit);
+					//final IHoareTripleChecker htc = new MonolithicHoareTripleChecker(mCsToolkit);
+					final IHoareTripleChecker htc = HoareTripleCheckerUtils.constructEfficientHoareTripleCheckerWithCaching(getServices(),
+							mPref.getHoareTripleChecks(), mCsToolkit, predicateUnifier);
 					
 					final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> ia = enhanceInterpolantAutomaton(
 							mPref.interpolantAutomatonEnhancement(), predicateUnifier, htc, interpolantAutomaton);
@@ -576,23 +580,29 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	
 	private void constructConComChecker() {
 		if (!mPref.useConditionalCommutativityChecker().equals(ConComChecker.NONE)) {
+			//mCriterion = new LoopCriterion<>(mIcfg.getLoopLocations());
+			
+			mCriterion = new DefaultCriterion<>();
+			IConditionalCommutativityCriterion<L> criterion;
 			switch (mPref.getConComCheckerCriterion()) {
 			case DEFAULT:
-				mCriterion = new DefaultCriterion<>();
+				//mCriterion = new DefaultCriterion<>();
 				break;
 			case RANDOM:
-				mCriterion = new RandomCriterion<>(mPref.getConComCheckerRandomProb(),
+				criterion = new RandomCriterion<>(mPref.getConComCheckerRandomProb(),
 						mPref.getConComCheckerRandomSeed());
+				mCriterion = new WrapperCriterion<>(mCriterion, criterion);
 				break;
 			case SLEEP_SET:
-				mCriterion = new SleepSetCriterion<>();
+				criterion = new SleepSetCriterion<>();
+				mCriterion = new WrapperCriterion<>(mCriterion, criterion);
 				break;
 			default:
 				throw new UnsupportedOperationException("PartialOrderCegarLoop currently does not support criterion "
 						+ mPref.getConComCheckerCriterion());
 			}
 			if (mPref.useLimitedChecksCriterion()) {
-				LimitedChecksCriterion<L> criterion = new LimitedChecksCriterion<>(mPref.getConComCheckerCriterionLimit());
+				criterion = new LimitedChecksCriterion<>(mPref.getConComCheckerCriterionLimit());
 				mCriterion = new WrapperCriterion<>(mCriterion, criterion);
 			}
 			final IIcfgSymbolTable symbolTable = mCsToolkit.getSymbolTable();

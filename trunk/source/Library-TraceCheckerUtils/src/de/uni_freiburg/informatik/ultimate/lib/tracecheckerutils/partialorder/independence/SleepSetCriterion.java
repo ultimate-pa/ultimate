@@ -46,7 +46,10 @@ public class SleepSetCriterion<L> implements IConditionalCommutativityCriterion<
 	public boolean decide(final IPredicate state, final IRun<L, IPredicate> run, final L letter1, final L letter2) {
 		if (state instanceof SleepPredicate) {
 			ImmutableSet<?> sleepSet = ((SleepPredicate<L>) state).getSleepSet();
-			return (sleepSet.contains(letter1) || sleepSet.contains(letter2));
+			if (sleepSet.contains(letter1) ^ sleepSet.contains(letter2)) {
+				return true;
+			}
+			//return (sleepSet.contains(letter1) || sleepSet.contains(letter2));
 		}
 		return false;
 	}

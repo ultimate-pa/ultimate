@@ -26,6 +26,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence;
 
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
@@ -42,7 +43,7 @@ public class DefaultCriterion<L> implements IConditionalCommutativityCriterion<L
 	@Override
 	public boolean decide(final IPredicate state, final IRun<L, IPredicate> run, final L letter1, final L letter2) {
 		
-		return true;
+		return !((IAction) letter1).getSucceedingProcedure().equals(((IAction) letter2).getSucceedingProcedure());
 	}
 
 	@Override

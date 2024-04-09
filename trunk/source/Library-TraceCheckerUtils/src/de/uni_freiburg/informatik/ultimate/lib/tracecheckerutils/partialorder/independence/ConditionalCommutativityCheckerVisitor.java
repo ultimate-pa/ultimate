@@ -169,15 +169,16 @@ V extends IDfsVisitor<L, IPredicate>> extends WrapperVisitor<L, IPredicate, V> {
 			}*/
 		}	
 		
+		/*
 		final Iterator<OutgoingInternalTransition<L, IPredicate>> iterator =
 				mAbstraction.internalSuccessors(state).iterator();
 		final List<OutgoingInternalTransition<L, IPredicate>> transitions = new ArrayList<>();
+		*/
 		
-		/*
 		final Iterator<OutgoingInternalTransition<L, IPredicate>> iterator =
 				mAbstraction.internalSuccessors(pred).iterator();
 		final List<OutgoingInternalTransition<L, IPredicate>> transitions = new ArrayList<>();
-		*/
+		
 		
 		while (iterator.hasNext()) {
 			transitions.add(iterator.next());
@@ -285,7 +286,7 @@ V extends IDfsVisitor<L, IPredicate>> extends WrapperVisitor<L, IPredicate, V> {
 	}
 
 	public void setReduction(INwaOutgoingLetterAndTransitionProvider<L, IPredicate> test) {
-		mAbstraction = test;
+		//mAbstraction = test;
 		
 	}
 
