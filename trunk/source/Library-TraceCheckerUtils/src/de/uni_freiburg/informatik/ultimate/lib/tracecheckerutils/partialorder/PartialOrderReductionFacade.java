@@ -280,8 +280,8 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>, H> {
 		case POSITIONAL_RANDOM:
 			return new RandomDfsOrder<>(randomOrderSeed, true, this::normalizePredicate);
 		case LOOP_LOCKSTEP:
-			final var order =
-					new LoopLockstepOrder<L>(icfg, mStateSplitter == null ? null : mStateSplitter::getOriginal);
+			final var stateSplitter = mStateSplitter;
+			final var order = new LoopLockstepOrder<L>(icfg, stateSplitter == null ? null : stateSplitter::getOriginal);
 			mStateSplitter = StateSplitter.extend(mStateSplitter, x -> ((PredicateWithLastThread) x).getUnderlying(),
 					x -> ((PredicateWithLastThread) x).getLastThread());
 			return order;
@@ -414,7 +414,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>, H> {
 	}
 
 	<L, S, R, H> void traverseWithDynamicStratified(final AutomataLibraryServices services,
-			final INwaOutgoingLetterAndTransitionProvider<L, S> operand, final IDfsOrder<L, S> order,
+			final INwaOutgoingLetterAndTransitionProvider<L, S> operand, final IDfsOrder<L, R> order,
 			final IStratifiedStateFactory<L, S, R, H> stateFactory, final IDfsVisitor<L, R> visitor,
 			final IIndependenceInducedByAbstraction<S, L, H> independence, final IProofManager<H, S> manager)
 			throws AutomataOperationCanceledException {

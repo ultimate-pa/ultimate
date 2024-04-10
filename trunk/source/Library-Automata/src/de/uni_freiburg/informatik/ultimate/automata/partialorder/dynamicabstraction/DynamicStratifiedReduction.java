@@ -97,7 +97,7 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 	private final IIndependenceInducedByAbstraction<S, L, H> mIndependenceProvider;
 	private final IProofManager<H, S> mProofManager;
 
-	private final IDfsOrder<L, S> mOrder;
+	private final IDfsOrder<L, R> mOrder;
 	private final IDfsVisitor<L, R> mVisitor;
 
 	private final LinkedList<Pair<R, OutgoingInternalTransition<L, R>>> mWorklist = new LinkedList<>();
@@ -133,7 +133,7 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 	 *            creates and deals with the reduction states
 	 */
 	public DynamicStratifiedReduction(final AutomataLibraryServices services,
-			final INwaOutgoingLetterAndTransitionProvider<L, S> originalAutomaton, final IDfsOrder<L, S> order,
+			final INwaOutgoingLetterAndTransitionProvider<L, S> originalAutomaton, final IDfsOrder<L, R> order,
 			final IStratifiedStateFactory<L, S, R, H> stateFactory, final IDfsVisitor<L, R> visitor,
 			final S startingState, final IIndependenceInducedByAbstraction<S, L, H> independence,
 			final IProofManager<H, S> manager) {
@@ -179,7 +179,7 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 	 *             in case of timeout or cancellation
 	 */
 	public static <L, S, R, H> void traverse(final AutomataLibraryServices services,
-			final INwaOutgoingLetterAndTransitionProvider<L, S> operand, final IDfsOrder<L, S> order,
+			final INwaOutgoingLetterAndTransitionProvider<L, S> operand, final IDfsOrder<L, R> order,
 			final IStratifiedStateFactory<L, S, R, H> stateFactory, final IDfsVisitor<L, R> visitor,
 			final IIndependenceInducedByAbstraction<S, L, H> independence, final IProofManager<H, S> manager)
 			throws AutomataOperationCanceledException {
@@ -455,7 +455,7 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 		} else {
 			final Comparator<OutgoingInternalTransition<L, R>> comp =
 					Comparator.<OutgoingInternalTransition<L, R>, L> comparing(OutgoingInternalTransition::getLetter,
-							mOrder.getOrder(mStateFactory.getOriginalState(state))).reversed();
+							mOrder.getOrder(state)).reversed();
 			StreamSupport.stream(mPending.spliterator(), false).sorted(comp)
 					.forEachOrdered(out -> mWorklist.push(new Pair<>(state, out)));
 			debugIndent("added successor states to worklist");
@@ -564,7 +564,7 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 		final S currentS = mStateFactory.getOriginalState(current);
 		final Map<L, H> currSleepSet = mStateFactory.getSleepSet(current);
 		final Map<L, H> nextSleepSet = new HashMap<>();
-		final Comparator<L> comp = mOrder.getOrder(currentS);
+		final Comparator<L> comp = mOrder.getOrder(current);
 		final Iterator<OutgoingInternalTransition<L, S>> explored =
 				mOriginalAutomaton.internalSuccessors(currentS).iterator();
 
