@@ -60,6 +60,7 @@ public class ConditionalCommutativityChecker<L extends IAction> implements ICond
 	//private Script mScript;
 	private Map<Pair<L, L>, Integer> mStatementMap;
 	private ManagedScript mManagedScript;
+	private IConditionalCommutativityCheckerStatisticsUtils mStatisticsUtils;
 
 	/**
 	 * Constructs a new instance of ConditionalCommutativityChecker.
@@ -79,13 +80,15 @@ public class ConditionalCommutativityChecker<L extends IAction> implements ICond
 	 */
 	public ConditionalCommutativityChecker(final IConditionalCommutativityCriterion<L> criterion,
 			final IIndependenceRelation<IPredicate, L> independenceRelation, ManagedScript script,
-			final IIndependenceConditionGenerator generator, final ITraceChecker<L> traceChecker) {
+			final IIndependenceConditionGenerator generator, final ITraceChecker<L> traceChecker,
+			final IConditionalCommutativityCheckerStatisticsUtils statisticsUtils) {
 		mCriterion = criterion;
 		mIndependenceRelation = independenceRelation;
 		mManagedScript = script;
 		mGenerator = generator;
 		mTraceChecker = traceChecker;
 		mStatementMap = new HashMap<>();
+		mStatisticsUtils = statisticsUtils;
 	}
 
 	/**
@@ -109,6 +112,8 @@ public class ConditionalCommutativityChecker<L extends IAction> implements ICond
 	@Override
 	public TracePredicates checkConditionalCommutativity(final IRun<L, IPredicate> run, List<IPredicate> predicates,
 			final IPredicate state, final L letter1, final L letter2) {
+		
+		mStatisticsUtils.startStopwatch();
 		if (mManagedScript.isLocked()) {
 			mManagedScript.requestLockRelease();
 		}
@@ -120,6 +125,7 @@ public class ConditionalCommutativityChecker<L extends IAction> implements ICond
 		}
 				
 		if (mIndependenceRelation.isIndependent(pred, letter1, letter2).equals(Dependence.INDEPENDENT)) {
+			mStatisticsUtils.stopStopwatch();
 			return null;
 		}
 		
@@ -140,6 +146,7 @@ public class ConditionalCommutativityChecker<L extends IAction> implements ICond
 				Pair<L,L> pair = new Pair<>(letter1,letter2);
 				//ensures that a pair which was already successfully checked, is not checked again
 				if (mStatementMap.containsKey(pair)) {
+					mStatisticsUtils.stopStopwatch();
 					return null;
 				}
 				TracePredicates trace = mTraceChecker.checkTrace(run, null, condition);
@@ -147,13 +154,19 @@ public class ConditionalCommutativityChecker<L extends IAction> implements ICond
 						mStatementMap.put(pair, 1);
 						mCriterion.updateCondition(condition);
 				}
+				mStatisticsUtils.stopStopwatch();
 				return trace;
 			}
 		}
+		mStatisticsUtils.stopStopwatch();
 		return null;
 	}
 	
 	public ITraceChecker<L> getTraceChecker() {
 		return mTraceChecker;
+	}
+
+	public IConditionalCommutativityCheckerStatisticsUtils getStatisticsUtils() {
+		return mStatisticsUtils;
 	}
 }

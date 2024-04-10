@@ -88,7 +88,11 @@ public enum CegarLoopStatisticsDefinitions implements IStatisticsElement {
 
 	RefinementEngineStatistics(StatisticsType.STATISTICS_DATA_AGGREGATION, StatisticsType.KEY_BEFORE_DATA),
 
-	ReuseStatistics(StatisticsType.STATISTICS_DATA_AGGREGATION, StatisticsType.KEY_BEFORE_DATA);
+	ReuseStatistics(StatisticsType.STATISTICS_DATA_AGGREGATION, StatisticsType.KEY_BEFORE_DATA),
+	
+	ConditionalCommutativityCheckTime(StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_NANOS),
+	
+	ConditionalCommutativityDFSRestarts(StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA);
 
 	private final Function<Object, Function<Object, Object>> mAggr;
 	private final Function<String, Function<Object, String>> mPrettyprinter;

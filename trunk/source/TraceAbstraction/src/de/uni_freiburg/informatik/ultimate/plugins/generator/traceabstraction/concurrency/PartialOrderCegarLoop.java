@@ -240,10 +240,10 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		ConditionalCommutativityInterpolantProvider<L> conInterpolantProvider
 		= new ConditionalCommutativityInterpolantProvider<>(
 				mServices, mCriterion, relation, mCsToolkit.getManagedScript(),
-				generator, mAbstraction, mFactory, checker);
+				generator, mAbstraction, mFactory, checker, new ConditionalCommutativityCheckerStatisticsUtils(mCegarLoopBenchmark));
 		mInterpolAutomaton = conInterpolantProvider.getInterpolants((IRun<L, IPredicate>) mCounterexample,
 				predicates, mInterpolAutomaton);
-		}
+		}	
 		
 		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> ia = enhanceInterpolantAutomaton(
 				mPref.interpolantAutomatonEnhancement(), predicateUnifier, htc, mInterpolAutomaton);
@@ -360,9 +360,8 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 						mAbstraction = new InformationStorage<>(mProgram == null ? mAbstraction : mProgram,
 								mItpAutomata, mFactory, PartialOrderCegarLoop::isFalseLiteral);
 						//Object debugAutomaton3 = new NestedWordAutomatonReachableStates<L,IPredicate>(new AutomataLibraryServices(mServices), mAbstraction);
-
-						// TODO: DeadEnds?
 						visitor = createVisitor();
+						mCegarLoopBenchmark.addConditionalCommutativityDFSRestart();
 						mPOR.apply(mAbstraction, visitor);
 					} catch (AutomataLibraryException e) {
 						// Auto-generated catch block
@@ -617,8 +616,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 			SemanticIndependenceConditionGenerator generator = new SemanticIndependenceConditionGenerator(mServices,
 					mCsToolkit.getManagedScript(), mPredicateFactory, relation.isSymmetric(), true);
 			mConComChecker = new ConditionalCommutativityChecker<>(mCriterion, relation,
-					mCsToolkit.getManagedScript(), generator,
-					checker);
+					mCsToolkit.getManagedScript(), generator, checker, new ConditionalCommutativityCheckerStatisticsUtils(mCegarLoopBenchmark));
 	
 		}	
 	}

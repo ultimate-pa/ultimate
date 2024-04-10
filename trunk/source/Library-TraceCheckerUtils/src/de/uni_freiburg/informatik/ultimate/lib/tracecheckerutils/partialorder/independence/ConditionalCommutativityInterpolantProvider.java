@@ -97,12 +97,12 @@ public class ConditionalCommutativityInterpolantProvider<L extends IAction> {
 			final IIndependenceRelation<IPredicate, L> independenceRelation, ManagedScript script,
 			final IIndependenceConditionGenerator generator, final INwaOutgoingLetterAndTransitionProvider<L,
 			IPredicate> abstraction, final IEmptyStackStateFactory<IPredicate> emptyStackStateFactory,
-			final ITraceChecker<L> traceChecker) {
+			final ITraceChecker<L> traceChecker, final IConditionalCommutativityCheckerStatisticsUtils statisticsUtils) {
 		mServices = services;
 		mAbstraction = abstraction;
 		mEmptyStackStateFactory = emptyStackStateFactory;
 		mChecker = new ConditionalCommutativityChecker<>(criterion, independenceRelation, script, generator,
-				traceChecker);
+				traceChecker, statisticsUtils);
 	}
 
 	/**

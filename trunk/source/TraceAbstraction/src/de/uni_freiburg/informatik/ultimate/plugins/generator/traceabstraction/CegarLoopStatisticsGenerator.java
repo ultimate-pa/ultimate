@@ -49,6 +49,7 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 	private final StatisticsData mInterpolantConsolidationBenchmarks = new StatisticsData();
 	private final StatisticsData mPathInvariantsStatistics = new StatisticsData();
 	private final StatisticsData mRefinementEngineStatistics = new StatisticsData();
+	private int mConditionalCommutativityDFSRestarts = 0;
 	private int mIterations = 0;
 	private SizeIterationPair mBiggestAbstraction = new SizeIterationPair(-1, -1);
 	private BackwardCoveringInformation mBCI = new BackwardCoveringInformation(0, 0);
@@ -100,6 +101,10 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 	public void addHoareAnnotationData(final IStatisticsDataProvider hasp) {
 		mHoareAnnotationData.aggregateBenchmarkData(hasp);
 	}
+	
+	public void addConditionalCommutativityDFSRestart() {
+		mConditionalCommutativityDFSRestarts++;
+	}
 
 	/**
 	 * @return true iff size is the new maximum
@@ -139,6 +144,7 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 		case HoareAnnotationTime:
 		case BasicInterpolantAutomatonTime:
 		case InitialAbstractionConstructionTime:
+		case ConditionalCommutativityCheckTime:
 		case DumpTime:
 			try {
 				return getElapsedTime(key);
@@ -177,6 +183,8 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 			return mHoareAnnotationData;
 		case RefinementEngineStatistics:
 			return mRefinementEngineStatistics;
+		case ConditionalCommutativityDFSRestarts:
+			return mConditionalCommutativityDFSRestarts;
 		default:
 			throw new AssertionError("unknown data");
 		}
@@ -196,6 +204,7 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 				CegarLoopStatisticsDefinitions.HoareAnnotationTime.toString(),
 				CegarLoopStatisticsDefinitions.BasicInterpolantAutomatonTime.toString(),
 				CegarLoopStatisticsDefinitions.DumpTime.toString(),
-				CegarLoopStatisticsDefinitions.InitialAbstractionConstructionTime.toString(), };
+				CegarLoopStatisticsDefinitions.InitialAbstractionConstructionTime.toString(),
+				CegarLoopStatisticsDefinitions.ConditionalCommutativityCheckTime.toString()};
 	}
 }
