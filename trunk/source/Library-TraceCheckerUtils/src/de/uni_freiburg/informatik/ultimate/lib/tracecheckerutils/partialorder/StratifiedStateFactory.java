@@ -48,7 +48,7 @@ public class StratifiedStateFactory<L, H> implements IStratifiedStateFactory<L, 
 
 	@Override
 	public IPredicate getOriginalState(final IPredicate state) {
-		return ((AnnotatedMLPredicate<?>) state).getUnderlying();
+		return ((StratifiedMLPredicate<L, H>) state).getUnderlying();
 	}
 
 	@Override
