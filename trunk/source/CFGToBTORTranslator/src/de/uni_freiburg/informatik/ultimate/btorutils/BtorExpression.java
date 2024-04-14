@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.btorutils;
 
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -9,12 +10,21 @@ public class BtorExpression {
 	private final int sort;
 	private final BtorExpressionType type;
 	private final List<BtorExpression> children;
+	private final long constant;
 	private int nid;
 
 	public BtorExpression(final int sort, final BtorExpressionType type, final List<BtorExpression> children) {
 		this.sort = sort;
 		this.type = type;
 		this.children = children;
+		constant = 0;
+	}
+
+	public BtorExpression(final int sort, final long constant) {
+		this.sort = sort;
+		type = BtorExpressionType.CONSTD;
+		children = new ArrayList<>();
+		this.constant = constant;
 	}
 
 	public int getSort() {
@@ -40,8 +50,13 @@ public class BtorExpression {
 			throws IOException {
 		if (children.isEmpty()) {
 			assignnid(currentLine);
-			writer.write(String.valueOf(nid) + " " + type.name().toLowerCase() + " " + String.valueOf(sortMap.get(sort))
-					+ "\n");
+			if (type == BtorExpressionType.CONSTD) {
+				writer.write(String.valueOf(nid) + " " + type.name().toLowerCase() + " "
+						+ String.valueOf(sortMap.get(sort) + " " + String.valueOf(constant)) + "\n");
+			} else {
+				writer.write(String.valueOf(nid) + " " + type.name().toLowerCase() + " "
+						+ String.valueOf(sortMap.get(sort)) + "\n");
+			}
 		} else {
 			for (final BtorExpression child : children) {
 				currentLine = child.dumpExpression(currentLine, writer, sortMap);

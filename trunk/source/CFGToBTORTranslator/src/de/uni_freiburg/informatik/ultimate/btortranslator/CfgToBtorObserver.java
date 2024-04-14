@@ -26,6 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.btortranslator;
 
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+
+import de.uni_freiburg.informatik.ultimate.btorutils.BtorScript;
 import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -67,6 +71,17 @@ public class CfgToBtorObserver extends BaseObserver {
 
 	private void processIcfg(final IIcfg<IcfgLocation> icfg) {
 		final ManagedScript mgdScript = icfg.getCfgSmtToolkit().getManagedScript();
-
+		final CFGToBTOR processor = new CFGToBTOR(mgdScript, mServices);
+		processor.extractLocations(icfg);
+		processor.extractVariables(icfg);
+		processor.extractTransitions(icfg);
+		processor.extractAssignments(icfg);
+		final BtorScript script = processor.generateScript();
+		try {
+			script.dumpScript(new OutputStreamWriter(System.out));
+		} catch (final IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 }

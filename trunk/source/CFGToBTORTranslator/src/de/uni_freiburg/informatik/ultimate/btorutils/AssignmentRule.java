@@ -31,6 +31,9 @@ public class AssignmentRule {
 		final Set<IProgramVar> assignedVars = TransFormulaUtils.computeAssignedVars(tf.getInVars(), tf.getOutVars());
 		for (final IProgramVar assignedVar : assignedVars) {
 			boolean foundAssignment = false;
+			if (!(tf.getOutVars().containsKey(assignedVar))) {
+				continue;
+			}
 			if (tf.isHavocedOut(assignedVar)) {
 				assignmentRules.add(
 						new AssignmentRule(assignmentLocationIdentifier, assignedVar, script.getScript().term("true")));
@@ -38,12 +41,13 @@ public class AssignmentRule {
 				final Term formula = tf.getFormula();
 				if (formula instanceof ApplicationTerm) {
 					final ApplicationTerm appFormula = (ApplicationTerm) formula;
-					if (appFormula.getFunction().equals("and")) {
+					if (appFormula.getFunction().getName().equals("and")) {
 						for (final Term possibleAssignment : appFormula.getParameters()) {
 							if (possibleAssignment instanceof ApplicationTerm) {
 								final ApplicationTerm appPossibleAssignment = (ApplicationTerm) possibleAssignment;
-								if (appPossibleAssignment.getFunction().equals("=")) {
+								if (appPossibleAssignment.getFunction().getName().equals("=")) {
 									final Term lhsTerm = appPossibleAssignment.getParameters()[0];
+									final Term rhsTerm = appPossibleAssignment.getParameters()[1];
 									if (lhsTerm instanceof TermVariable) {
 										final TermVariable lhsVar = (TermVariable) lhsTerm;
 										if (TransFormulaUtils.getProgramVarForTerm(tf, lhsVar).equals(assignedVar)) {
@@ -53,18 +57,36 @@ public class AssignmentRule {
 											break;
 										}
 									}
+									if (rhsTerm instanceof TermVariable) {
+										final TermVariable rhsVar = (TermVariable) rhsTerm;
+										if (TransFormulaUtils.getProgramVarForTerm(tf, rhsVar).equals(assignedVar)) {
+											assignmentRules.add(new AssignmentRule(assignmentLocationIdentifier,
+													assignedVar, appPossibleAssignment.getParameters()[0]));
+											foundAssignment = true;
+											break;
+										}
+									}
 								}
 							}
 
 						}
 					} else if (SmtUtils.isAtomicFormula(appFormula)) {
-						if (appFormula.getFunction().equals("=")) {
+						if (appFormula.getFunction().getName().equals("=")) {
 							final Term lhsTerm = appFormula.getParameters()[0];
 							if (lhsTerm instanceof TermVariable) {
 								final TermVariable lhsVar = (TermVariable) lhsTerm;
 								if (TransFormulaUtils.getProgramVarForTerm(tf, lhsVar).equals(assignedVar)) {
 									assignmentRules.add(new AssignmentRule(assignmentLocationIdentifier, assignedVar,
 											appFormula.getParameters()[1]));
+									foundAssignment = true;
+								}
+							}
+							final Term rhsTerm = appFormula.getParameters()[1];
+							if (rhsTerm instanceof TermVariable) {
+								final TermVariable rhsVar = (TermVariable) rhsTerm;
+								if (TransFormulaUtils.getProgramVarForTerm(tf, rhsVar).equals(assignedVar)) {
+									assignmentRules.add(new AssignmentRule(assignmentLocationIdentifier, assignedVar,
+											appFormula.getParameters()[0]));
 									foundAssignment = true;
 								}
 							}

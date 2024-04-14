@@ -61,4 +61,18 @@ public enum BtorExpressionType {
 
 	ITE,
 
+	CONSTD,
+
+	AND,
+
+	NAND,
+
+	NOR,
+
+	OR,
+
+	XNOR,
+
+	XOR,
+
 }
