@@ -257,7 +257,7 @@ const _AWARDS = [
         id: "svcomp2022",
         competition: "SV-COMP 2022",
         competition_link: "http://sv-comp.sosy-lab.org/2022/",
-        image: "svcomp2022.png",
+        image: "svcomp2022.jpg",
         text: "The ULTIMATE team participated in the 11th Competition on Software Verification (SV-COMP 2022) with four verification tools: Automizer, Kojak, Taipan and, for the first time, GemCutter. We collected several medals and won the demo category <em>NoDataRace</em>.",
         tools: [{
             name: "Automizer",
@@ -306,7 +306,7 @@ const _AWARDS = [
         id: "svcomp2021",
         competition: "SV-COMP 2021",
         competition_link: "http://sv-comp.sosy-lab.org/2021/",
-        image: "svcomp2021.png",
+        image: "svcomp2021.jpg",
         text: "In the 10th Competition on Software Verification (SV-COMP 2021), the ULTIMATE team competed with the verification tools Automizer, Kojak and Taipan. We collected several medals, including (for the fifth time in a row) the gold medal in the category <em>Termination</em>.",
         tools: [{
             name: "Automizer",
@@ -349,7 +349,7 @@ const _AWARDS = [
         id: "svcomp2020",
         competition: "SV-COMP 2020",
         competition_link: "http://sv-comp.sosy-lab.org/2020/",
-        image: "svcomp2020.png",
+        image: "svcomp2020.jpg",
         text: "ULTIMATE Automizer won second place in the <em>Overall</em> ranking of the 9th Competition on Software Verification (SV-COMP 2020). The ULTIMATE team competed with the verification tools Automizer, Kojak and Taipan.",
         tools: [{
             name: "Automizer",
@@ -400,7 +400,7 @@ const _AWARDS = [
         id: "svcomp2019",
         competition: "SV-COMP 2019",
         competition_link: "http://sv-comp.sosy-lab.org/2019/",
-        image: "svcomp2019.png",
+        image: "svcomp2019.jpg",
         text: "Three ULTIMATE verification tools participated in the 8th Competition on Software Verification (SV-COMP 2019): Automizer, Kojak and Taipan. The ULTIMATE team won two gold medals.",
         tools: [{
             name: "Automizer",
