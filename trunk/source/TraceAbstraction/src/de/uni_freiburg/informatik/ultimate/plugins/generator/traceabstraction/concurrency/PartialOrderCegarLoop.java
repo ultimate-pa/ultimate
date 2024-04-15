@@ -98,6 +98,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.Pa
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderReductionFacade;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderReductionFacade.StateSplitter;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.ConditionCriterion;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.ConditionalCommutativityChecker;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.ConditionalCommutativityCheckerVisitor;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.ConditionalCommutativityInterpolantProvider;
@@ -239,8 +240,8 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 				mCsToolkit.getManagedScript(), mPredicateFactory, relation.isSymmetric(), true);
 		ConditionalCommutativityInterpolantProvider<L> conInterpolantProvider
 		= new ConditionalCommutativityInterpolantProvider<>(
-				mServices, mCriterion, relation, mCsToolkit.getManagedScript(),
-				generator, mAbstraction, mFactory, checker, new ConditionalCommutativityCheckerStatisticsUtils(mCegarLoopBenchmark));
+				mServices, mCriterion, relation, mCsToolkit.getManagedScript(), generator, mAbstraction, mFactory,
+				checker, new ConditionalCommutativityCheckerStatisticsUtils(mCegarLoopBenchmark));
 		mInterpolAutomaton = conInterpolantProvider.getInterpolants((IRun<L, IPredicate>) mCounterexample,
 				predicates, mInterpolAutomaton);
 		}	
@@ -335,7 +336,8 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 					final IPredicateUnifier predicateUnifier = ((PostConditionTraceChecker<L>) mConComChecker
 							.getTraceChecker()).getPredicateUnifier();
 					//final IHoareTripleChecker htc = new MonolithicHoareTripleChecker(mCsToolkit);
-					final IHoareTripleChecker htc = HoareTripleCheckerUtils.constructEfficientHoareTripleCheckerWithCaching(getServices(),
+					final IHoareTripleChecker htc = 
+							HoareTripleCheckerUtils.constructEfficientHoareTripleCheckerWithCaching(getServices(),
 							mPref.getHoareTripleChecks(), mCsToolkit, predicateUnifier);
 					
 					final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> ia = enhanceInterpolantAutomaton(
@@ -602,6 +604,12 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 				throw new UnsupportedOperationException("PartialOrderCegarLoop currently does not support criterion "
 						+ mPref.getConComCheckerCriterion());
 			}
+			
+			if (mPref.useConditionCriterion()) {
+				criterion = new ConditionCriterion<>();
+				mCriterion = new WrapperCriterion<>(mCriterion, criterion);
+			}
+			
 			if (mPref.useLimitedChecksCriterion()) {
 				criterion = new LimitedChecksCriterion<>(mPref.getConComCheckerCriterionLimit());
 				mCriterion = new WrapperCriterion<>(mCriterion, criterion);

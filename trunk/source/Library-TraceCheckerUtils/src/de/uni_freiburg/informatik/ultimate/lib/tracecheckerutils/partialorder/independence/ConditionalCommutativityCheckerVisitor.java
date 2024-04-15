@@ -47,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.AnnotatedMLPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.MLPredicate;
@@ -156,17 +155,6 @@ V extends IDfsVisitor<L, IPredicate>> extends WrapperVisitor<L, IPredicate, V> {
 		IPredicate annotation = null;
 		if (!(pred instanceof MLPredicate)) {
 			annotation = ((AnnotatedMLPredicate<IPredicate>) pred).getAnnotation();
-			/*
-			IMLPredicate runPred;
-			IPredicate runState;
-			for (int i = 0; i < (mRun.getLength() - 1); i++) {
-				runState = mRun.getStateSequence().get(i);
-				runPred = ((SleepPredicate<L>) runState).getUnderlying();
-				if (((AnnotatedMLPredicate<IPredicate>) runPred).getUnderlying()
-						.equals(((AnnotatedMLPredicate<IPredicate>) pred).getUnderlying())) {
-					return mUnderlying.discoverState(state);
-				}
-			}*/
 		}	
 		
 		/*
@@ -202,8 +190,7 @@ V extends IDfsVisitor<L, IPredicate>> extends WrapperVisitor<L, IPredicate, V> {
 				}
 				if (tracePredicates != null) {
 					mAbort = true;
-					mTracePredicates = tracePredicates;		
-					int debug = 0;
+					mTracePredicates = tracePredicates;
 					return mUnderlying.discoverState(state);
 				}
 			}

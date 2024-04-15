@@ -103,6 +103,7 @@ public final class TAPreferences {
 	private int mConComCheckerCriterionLimit;
 	private int mConComCheckerRandomProb;
 	private int mConComCheckerRandomSeed;
+	private boolean mConComCheckerConditionCriterion;
 
 	public enum Artifact {
 		ABSTRACTION, INTERPOLANT_AUTOMATON, NEG_INTERPOLANT_AUTOMATON, RCFG
@@ -217,6 +218,7 @@ public final class TAPreferences {
 		mConComCheckerCriterionLimit = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_CON_COM_CHECKER_CRITERION_LIMIT);
 		mConComCheckerRandomProb = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_CON_COM_CHECKER_RANDOM_PROB);
 		mConComCheckerRandomSeed = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_CON_COM_CHECKER_RANDOM_SEED);
+		mConComCheckerConditionCriterion = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_CON_COM_CHECKER_CONDITION_CRITERION);
 	}
 
 	/**
@@ -596,6 +598,10 @@ public final class TAPreferences {
 	
 	public int getConComCheckerRandomSeed() {
 		return mConComCheckerRandomSeed;
+	}
+
+	public boolean useConditionCriterion() {
+		return mConComCheckerConditionCriterion;
 	}	
 
 }

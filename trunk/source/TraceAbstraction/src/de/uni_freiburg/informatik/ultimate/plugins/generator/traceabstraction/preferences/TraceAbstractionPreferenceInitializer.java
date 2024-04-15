@@ -210,6 +210,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_CON_COM_CHECKER_RANDOM_SEED = "seed for random criterion";
 	private static final int DEF_CON_COM_CHECKER_RANDOM_SEED = 123;
 	
+	public static final String LABEL_CON_COM_CHECKER_CONDITION_CRITERION = "use condition criterion (recommended for programs with arrays)";
+	private static final boolean DEF_CON_COM_CHECKER_CONDITION_CRITERION = false;
+	
 	// Settings for PetriAutomizer
 	// ========================================================================
 
@@ -756,6 +759,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						PreferenceType.Integer),
 				new UltimatePreferenceItem<>(LABEL_CON_COM_CHECKER_RANDOM_SEED, DEF_CON_COM_CHECKER_RANDOM_SEED,
 						PreferenceType.Integer),
+				new UltimatePreferenceItem<>(LABEL_CON_COM_CHECKER_CONDITION_CRITERION, DEF_CON_COM_CHECKER_CONDITION_CRITERION,
+						PreferenceType.Boolean),
 
 
 				getIndependenceSettings(0),

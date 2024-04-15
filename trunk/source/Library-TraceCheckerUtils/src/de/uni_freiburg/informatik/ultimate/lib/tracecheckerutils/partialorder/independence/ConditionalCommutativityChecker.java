@@ -39,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateWithConjuncts;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.ITraceChecker;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -57,7 +56,6 @@ public class ConditionalCommutativityChecker<L extends IAction> implements ICond
 	private IIndependenceRelation<IPredicate, L> mIndependenceRelation;
 	private final IIndependenceConditionGenerator mGenerator;
 	private final ITraceChecker<L> mTraceChecker;
-	//private Script mScript;
 	private Map<Pair<L, L>, Integer> mStatementMap;
 	private ManagedScript mManagedScript;
 	private IConditionalCommutativityCheckerStatisticsUtils mStatisticsUtils;
@@ -77,6 +75,8 @@ public class ConditionalCommutativityChecker<L extends IAction> implements ICond
 	 *            Generator for constructing commutativity conditions
 	 * @param traceChecker
 	 *            An ITraceChecker responsible for checking whether a condition is feasible
+	 * @param statisticsUtils
+	 *            An IConditionalCommutativityCheckerStatisticsUtils used for statistics
 	 */
 	public ConditionalCommutativityChecker(final IConditionalCommutativityCriterion<L> criterion,
 			final IIndependenceRelation<IPredicate, L> independenceRelation, ManagedScript script,
