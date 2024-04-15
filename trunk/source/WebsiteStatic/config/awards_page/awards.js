@@ -1,5 +1,139 @@
 const _AWARDS = [
     {
+        id: "svcomp2024",
+        competition: "SV-COMP 2024",
+        competition_link: "http://sv-comp.sosy-lab.org/2024/",
+        image: "svcomp2024.jpg",
+        text: "Yet again, <strong>ULTIMATE Automizer has won the <em>Overall</em> ranking of the 13th Competition on Software Verification (SV-COMP 2024)!</strong> The ULTIMATE team participated with four verification tools (Automizer, GemCutter, Kojak and Taipan), and collected many more prizes.",
+        tools: [
+            {
+                name: "Automizer",
+                id: "automizer",
+                awards: [
+                    {
+                        category: "Overall",
+                        important: true,
+                        medal: "gold"
+                    },
+                    {
+                        category: "NoOverflows",
+                        medal: "gold"
+                    },
+                    {
+                        category: "Termination",
+                        medal: "silver"
+                    },
+                    {
+                        category: "ConcurrencySafety",
+                        medal: "bronze"
+                    },
+                    {
+                        category: "MemSafety",
+                        medal: "bronze"
+                    }
+                ]
+            },
+            {
+                name: "GemCutter",
+                id: "gemcutter",
+                awards: [
+                    {
+                        category: "ConcurrencySafety",
+                        medal: "silver"
+                    }
+                ]
+            },
+            {
+                name: "Taipan",
+                id: "taipan",
+                awards: [
+                    {
+                        category: "Overall",
+                        medal: "bronze"
+                    },
+                    {
+                        category: "FalsificationOverall",
+                        medal: "bronze"
+                    },
+                    {
+                        category: "NoOverflows",
+                        medal: "silver"
+                    }
+                ]
+            },
+            {
+                name: "Automizer Violation Witness Validator",
+                id: "automizer",
+                awards: [
+                    {
+                        category: "Overall",
+                        important: true,
+                        medal: "gold"
+                    },
+                    {
+                        category: "ReachSafety",
+                        medal: "gold"
+                    },
+                    {
+                        category: "SoftwareSystems",
+                        medal: "gold"
+                    },
+                    {
+                        category: "NoOverflows",
+                        medal: "gold"
+                    },
+                    {
+                        category: "Termination",
+                        medal: "gold"
+                    },
+                    {
+                        category: "ConcurrencySafety",
+                        medal: "silver"
+                    },
+                    {
+                        category: "MemSafety",
+                        medal: "bronze"
+                    }
+                ]
+            },
+            {
+                name: "Automizer Correctness Witness Validator",
+                id: "automizer",
+                awards: [
+                    {
+                        category: "Overall (v1.0/v2.0)",
+                        important: true,
+                        medal: "gold"
+                    },
+                    {
+                        category: "ReachSafety (v1.0/v2.0)",
+                        medal: "gold"
+                    },
+                    {
+                        category: "MemSafety (v1.0/v2.0)",
+                        medal: "gold"
+                    },
+                    {
+                        category: "ConcurrencySafety (v1.0)",
+                        medal: "gold"
+                    },
+                    {
+                        category: "NoOverflows (v1.0/v2.0)",
+                        medal: "silver"
+                    },
+                    {
+                        category: "SoftwareSystems (v1.0)",
+                        medal: "silver"
+                    },
+                    {
+                        category: "SoftwareSystems (v2.0)",
+                        medal: "bronze"
+                    }
+                ]
+            }
+        ]
+    },
+    {
         id: "svcomp2023",
         competition: "SV-COMP 2023",
         competition_link: "http://sv-comp.sosy-lab.org/2023/",
