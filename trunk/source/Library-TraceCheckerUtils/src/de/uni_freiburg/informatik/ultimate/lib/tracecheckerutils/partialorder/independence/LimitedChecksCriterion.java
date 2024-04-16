@@ -85,7 +85,7 @@ public class LimitedChecksCriterion<L> implements IConditionalCommutativityCrite
 		if (mStatementMap.containsKey(pair) && mStatementMap.get(pair) == mLimit) {
 			return false;
 		}
-		
+		/*
 		IPredicate annotation = ((AnnotatedMLPredicate<IPredicate>) pred).getAnnotation();
 		if (mAlreadyChecked.containsKey(pair)) {
 			List<IPredicate> list = mAlreadyChecked.get(pair);
@@ -94,21 +94,21 @@ public class LimitedChecksCriterion<L> implements IConditionalCommutativityCrite
 					return false;
 				}
 			}
-		}	
+		}	*/
 		return true;
 	}
 
 	@Override
 	public boolean decide(final IPredicate condition) {
-				
+			
 		if (condition == null) {
 			return false;
-		}
+		}/*
 		for (IPredicate con : mAlreadyProofenConditions) {
 			if (con.getFormula().equals(condition.getFormula())) {
 				return false;
 			}
-		}
+		}*/
 		return true;
 	}
 
@@ -120,7 +120,7 @@ public class LimitedChecksCriterion<L> implements IConditionalCommutativityCrite
 		} else {
 			mStatementMap.replace(pair, mStatementMap.get(pair) + 1);
 		}
-		
+		/*
 		IPredicate pred = ((SleepPredicate<L>) state).getUnderlying();
 		if (pred instanceof PredicateWithLastThread) {
 			pred = ((PredicateWithLastThread) pred).getUnderlying();
@@ -136,12 +136,12 @@ public class LimitedChecksCriterion<L> implements IConditionalCommutativityCrite
 		} else {
 			List<IPredicate> list = mAlreadyChecked.get(pair);
 			list.add(annotation);
-		}
+		}*/
 	}
 	
 	@Override
 	public void updateCondition(IPredicate condition) {
-		mAlreadyProofenConditions.add(condition);
+		//mAlreadyProofenConditions.add(condition);
 	}
 
 }
