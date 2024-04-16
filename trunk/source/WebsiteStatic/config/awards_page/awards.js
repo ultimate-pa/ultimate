@@ -357,7 +357,8 @@ const _AWARDS = [
             awards: [
                 {
                     category: "Overall",
-                    medal: "silver"
+                    medal: "silver",
+                    important: true
                 },
                 {
                     category: "Termination",
