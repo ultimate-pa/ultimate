@@ -7,4 +7,6 @@ public interface IConditionalCommutativityCheckerStatisticsUtils {
 	public void stopStopwatch();
 
 	public void addDFSRestart();
+
+	public void addIAIntegration();
 }

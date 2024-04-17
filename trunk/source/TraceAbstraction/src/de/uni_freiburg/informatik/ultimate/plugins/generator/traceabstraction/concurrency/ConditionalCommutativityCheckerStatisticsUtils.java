@@ -27,4 +27,9 @@ public class ConditionalCommutativityCheckerStatisticsUtils implements IConditio
 		mCegarLoopBenchmark.addConditionalCommutativityDFSRestart();
 	}
 
+	@Override
+	public void addIAIntegration() {
+		mCegarLoopBenchmark.addConditionalCommutativityIAIntegration();	
+	}
+
 }

@@ -92,6 +92,8 @@ public enum CegarLoopStatisticsDefinitions implements IStatisticsElement {
 	
 	ConditionalCommutativityCheckTime(StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_NANOS),
 	
+	ConditionalCommutativityIAIntegrations(StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
+	
 	ConditionalCommutativityDFSRestarts(StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA);
 
 	private final Function<Object, Function<Object, Object>> mAggr;

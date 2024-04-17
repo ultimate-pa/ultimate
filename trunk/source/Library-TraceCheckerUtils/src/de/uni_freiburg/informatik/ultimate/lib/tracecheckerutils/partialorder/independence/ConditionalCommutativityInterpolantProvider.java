@@ -71,6 +71,7 @@ public class ConditionalCommutativityInterpolantProvider<L extends IAction> {
 	private NestedWordAutomaton<L, IPredicate> mCopy;
 	private IRun<L, IPredicate> mRun;
 	private INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mAbstraction;
+	private IConditionalCommutativityCheckerStatisticsUtils mStatisticsUtils;
 
 	/**
 	 * Constructs a new instance of ConditionalCommutativityInterpolantProvider.
@@ -103,6 +104,7 @@ public class ConditionalCommutativityInterpolantProvider<L extends IAction> {
 		mEmptyStackStateFactory = emptyStackStateFactory;
 		mChecker = new ConditionalCommutativityChecker<>(criterion, independenceRelation, script, generator,
 				traceChecker, statisticsUtils);
+		mStatisticsUtils = statisticsUtils;
 	}
 
 	/**
@@ -178,6 +180,7 @@ public class ConditionalCommutativityInterpolantProvider<L extends IAction> {
 			conPredicates.addAll(tracePredicates.getPredicates());
 			conPredicates.add(tracePredicates.getPostcondition());
 			addToCopy(conPredicates);
+			mStatisticsUtils.addIAIntegration();
 		}
 		return (!conPredicates.isEmpty() && SmtUtils.isFalseLiteral(conPredicates.get(conPredicates.size() - 2).getFormula()));
 	}

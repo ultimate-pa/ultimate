@@ -7,5 +7,6 @@
   <column title="memory" displayTitle="Memory" sourceUnit="B" displayUnit="MB"/>
   <column title="iterations" displayTitle="TAR Iterations">OverallIterations:\s*(\d+),</column>
   <column title="checktime" displayTitle="Con. Com. Check Time" sourceUnit="s">ConditionalCommutativityCheckTime: (\d+)s</column>
+  <column title="IAIntegrations" displayTitle="IA Integrations">ConditionalCommutativityIAIntegrations:\s*(\d+),</column>
   <column title="DFSRestarts" displayTitle="DFS Restarts">ConditionalCommutativityDFSRestarts:\s*(\d+),</column>
 </table>
