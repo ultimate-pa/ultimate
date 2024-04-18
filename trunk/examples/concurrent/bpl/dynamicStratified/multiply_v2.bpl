@@ -1,20 +1,25 @@
-var x, y : int;
+/*
+Added a z to the first assertion to sabotage global projection to the proof.
+Result: GP does not abstract c, DSR does
+*/
+var x, y, z : int;
 var a, b, c : int;
 
 procedure ULTIMATE.start()
-modifies x,y;
+modifies x,y,z;
 {
+  z := 0;
   assume a >= 0 && b >= 0;
   fork 1 thread1();
   fork 2,2 thread2();
   join 1;
   join 2,2;
 
-  assert (c == 0) ==> (x == y);
+  assert (c == 0) ==> (x == y) && z != -1;
 }
 
 procedure thread1()
-modifies x;
+modifies x,z;
 {
   var i : int;
 
@@ -23,11 +28,12 @@ modifies x;
   while (i < a) {
     x := x + b;
     i := i + 1;
+    z := z + z;
   }
 }
 
 procedure thread2()
-modifies y;
+modifies y,z;
 {
   var j : int;
 
@@ -37,7 +43,11 @@ modifies y;
     while (j < a) {
       y := y + b;
       j := j + 1;
+      z := z + 1;
     }
+  } else {
+    z := 0;
+    assert z != 1;
   }
 }
 

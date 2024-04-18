@@ -204,7 +204,6 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 		} finally {
 			if (!mStatistics.containsLoop()) {
 				mStatistics.stopLoopless();
-				mStatistics.setProtectedVarsBL(mStatistics.mProtectedVars);
 			} else {
 				mStatistics.stopLoopTime();
 			}
@@ -305,7 +304,7 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 							mStateFactory.getAbstractionLevel(currentState).getValue());
 					mStateFactory.setGuessedLevel(nextState, mStateFactory.getAbstractionLevel(nextState).getValue());
 					mStateFactory.setAsLoopNode(nextState);
-					mStatistics.guessed++;
+					mStatistics.incNumGuesses();
 					if (!mStatistics.containsLoop()) {
 						mStatistics.setContainsLoop();
 						mStatistics.stopLoopless();
@@ -354,34 +353,19 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 	private BacktrackCases backtrack() {
 		final R oldState = mDfs.peek();
 		// search stack for state's parents and update their abstraction levels
-		// TODO: how to backtrack a loop entry node?
-		// what we want to do is basically to re-explore the nodes + all its outgoing transitions
-		// just initiate the reexploration here?
-
-		/*
-		 * If the state we're backtracking is a loop entry node:
-		 *
-		 * Check if guessed level <= actual level --> yes: continue the backtrack here --> NO: what if we put all
-		 * outgoing transition of the loop entry node on the stack for reexploration? problem: what do we do with the
-		 * "already reduced" set? we dont want every succ transition of the entry node to be recognized as a left
-		 * edge... just remove them from already reduced? --> add new guess to set of protected variables problem: we'd
-		 * need to perform the reexploration directly or we'll give the wrong abstr. lv to the entry nodes parents...
-		 * --> does that matter, given we only ever add something to it? Problem: Do we need to do sth about the
-		 * bookkeeping?
-		 *
-		 */
 		if (mStateFactory.isLoopNode(oldState)) {
+			// Check if we guessed loop's abstraction level correctly
 			final H guess = mStateFactory.guessedLevel(oldState);
-			final AbstractionLevel<H> act_lv = mStateFactory.getAbstractionLevel(oldState);
+			final AbstractionLevel<H> actLv = mStateFactory.getAbstractionLevel(oldState);
 			mLogger.info("Backtracking a loop entry edge");
 			mLogger.info("Guessed abstraction level: %s", guess);
-			mLogger.info("Actual level: %s", act_lv.getValue());
-			final ComparisonResult c = act_lv.compare(guess);
+			mLogger.info("Actual level: %s", actLv.getValue());
+			final ComparisonResult c = actLv.compare(guess);
 			if (!(c == ComparisonResult.EQUAL || c == ComparisonResult.STRICTLY_GREATER)) {
 				// In case we guessed wrong: stop backtracking, new guess and return to exploration
 				mStatistics.incWrongGuesses();
-				mStatistics.guessed++;
-				mStateFactory.addToAbstractionLimit(oldState, act_lv.getValue());
+				mStatistics.mNumGuesses++;
+				mStateFactory.addToAbstractionLimit(oldState, actLv.getValue());
 				mStateFactory.setGuessedLevel(oldState, mStateFactory.getAbstractionLevel(oldState).getValue());
 				return BacktrackCases.WRONG_GUESS;
 			}
@@ -525,25 +509,7 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 					reductionSucc = createNextState(state, originalSucc, letter);
 					mAlreadyReduced.remove(originalSucc);
 					mAlreadyReduced.put(originalSucc, reductionSucc);
-				}
-				// TODO: Loophandle -- Do we still need any of this?
-				/*
-				 * else if (!mStateFactory.getAbstractionLimit(correspRstate).isLocked()) {
-				 * System.out.println("Found a loop, use abstraction hammer");
-				 *
-				 * // if it is the first encounter with a loop, update the relevant statistics if
-				 * (!mStatistics.containsLoop()) { mStatistics.setContainsLoop(); mStatistics.stopLoopless();
-				 * mStatistics.startLoopTime();
-				 * mStatistics.setProtectedVarsBL(mStateFactory.getAbstractionLevel(state).getValue()); }
-				 *
-				 * reductionSucc = mStateFactory.createStratifiedState(originalSucc, new
-				 * AbstractionLevel<>(mAbstractionLattice.getBottom(), mAbstractionLattice, false), new
-				 * AbstractionLevel<>(mAbstractionLattice.getBottom(), mAbstractionLattice, true));
-				 * mAlreadyReduced.remove(originalSucc); mAlreadyReduced.put(originalSucc, reductionSucc);
-				 *
-				 * }
-				 */
-				else {
+				} else {
 					reductionSucc = correspRstate;
 				}
 				// add state + new reduced transition to worklist
@@ -644,27 +610,28 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 		private int mDuplStates;
 		private int mRedStates;
 		private int mWrongGuesses;
-		public int guessed;
+		private int mNumGuesses;
 		private H mProtectedVars;
-		private H mProtectedVarsBeforeLoop;
 		private int mNumProtectedVars;
 		private final TimeTracker mLoopTime = new TimeTracker();
 		private final TimeTracker mLooplessTime = new TimeTracker();
 		private final TimeTracker mTotalTime = new TimeTracker();
 
+		/**
+		 * Some basic statistics of DSR.
+		 */
 		public Statistics() {
 			declare("Time before loop", () -> mLooplessTime, KeyType.TT_TIMER_MS);
 			declare("Time in loop", () -> mLoopTime, KeyType.TT_TIMER_MS);
 			declare("Time in total", () -> mTotalTime, KeyType.TT_TIMER);
 			declare("Has Loop", () -> mContainsLoop, KeyType.COUNTER);
 			declare("wrong guesses", () -> mWrongGuesses, KeyType.COUNTER);
-			declare("overall guesses", () -> guessed, KeyType.COUNTER);
+			declare("overall guesses", () -> mNumGuesses, KeyType.COUNTER);
 			declare("Reduction States", () -> mRedStates, KeyType.COUNTER);
 			declare("Duplicate States", () -> mDuplStates, KeyType.COUNTER);
 			declare("Protected Variables", () -> mNumProtectedVars, KeyType.COUNTER);
 			/*
 			 * declare("Protected Variables", () -> mProtectedVars, KeyType.COUNTER);
-			 * declare("Protected Variables before loop", () -> mProtectedVarsBeforeLoop, KeyType.COUNTER);
 			 */
 		}
 
@@ -676,30 +643,51 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 			return mContainsLoop == 1;
 		}
 
+		/**
+		 * Set to one if the program contains a loop
+		 */
 		public void setContainsLoop() {
 			mContainsLoop = 1;
 		}
 
+		/**
+		 * Start timer measuring the total time spent building the reduction.
+		 */
 		public void startTotal() {
 			mTotalTime.start();
 		}
 
+		/**
+		 * Stop timer measuring the total time spent building the reduction.
+		 */
 		public void stopTotal() {
 			mTotalTime.stop();
 		}
 
+		/**
+		 * Start timer measuring the time spent building the reduction after encountering a loop.
+		 */
 		public void startLoopTime() {
 			mLoopTime.start();
 		}
 
+		/**
+		 * Stop timer measuring the time spent building the reduction after encountering a loop.
+		 */
 		public void stopLoopTime() {
 			mLoopTime.stop();
 		}
 
+		/**
+		 * Start timer measuring the time until encountering a loop.
+		 */
 		public void startLoopless() {
 			mLooplessTime.start();
 		}
 
+		/**
+		 * Start timer measuring the time until encountering a loop.
+		 */
 		public void stopLoopless() {
 			mLooplessTime.stop();
 		}
@@ -708,15 +696,16 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 			mProtectedVars = vars;
 		}
 
-		public void setProtectedVarsBL(final H vars) {
-			mProtectedVarsBeforeLoop = vars;
-
-		}
-
+		/**
+		 * Count the number of states of the reduction automaton
+		 */
 		public void incRedStates() {
 			mRedStates++;
 		}
 
+		/**
+		 * Count how often we need to duplicate a reduction state.
+		 */
 		public void incDuplStates() {
 			mDuplStates++;
 		}
@@ -730,8 +719,18 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 			mNumProtectedVars = i;
 		}
 
+		/**
+		 * Count how often our initial guess of a loop's abstraction level is wrong.
+		 */
 		public void incWrongGuesses() {
 			mWrongGuesses++;
+		}
+
+		/**
+		 * Count how often we need to guess a loops abstraction level.
+		 */
+		public void incNumGuesses() {
+			mNumGuesses++;
 		}
 
 	}
