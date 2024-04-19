@@ -433,9 +433,10 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>, H> {
 					mDynamicStratifiedStatistics.add(data);
 				}
 			}
+		} else {
+			final var logger = services.getLoggingService().getLogger(DynamicStratifiedReduction.class);
+			logger.warn("DynamicStratifiedReduction did not find any initial state. Returning directly.");
 		}
-		final var logger = services.getLoggingService().getLogger(DynamicStratifiedReduction.class);
-		logger.warn("DynamicStratifiedReduction did not find any initial state. Returning directly.");
 	}
 
 	/**
