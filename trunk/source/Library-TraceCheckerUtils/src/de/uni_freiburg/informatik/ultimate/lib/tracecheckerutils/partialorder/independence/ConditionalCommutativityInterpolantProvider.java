@@ -149,6 +149,7 @@ public class ConditionalCommutativityInterpolantProvider<L extends IAction> {
 	}
 
 	private boolean checkState(IPredicate state, List<OutgoingInternalTransition<L, IPredicate>> transitions, int i, List<IPredicate> runPredicates) {
+		// TODO check if this works correctly for semi-commutativity
 		for (int j = 0; j < transitions.size(); j++) {
 			final OutgoingInternalTransition<L, IPredicate> transition1 = transitions.get(j);
 			for (int k = j + 1; k < transitions.size(); k++) {
