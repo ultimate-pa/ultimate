@@ -903,12 +903,12 @@ public class BvToIntTransferrer extends TermTransferrer {
 						concatCount += 1;
 						final Term multiplication = SmtUtils.unfTerm(mScript, "*", null,
 								SmtSortUtils.getIntSort(mMgdScript), translatedLHS, maxNumber);
-						if (mNutzTransformation) {
-							moduloCount += 1;
-							setResult(SmtUtils.unfTerm(mScript, "+", null, SmtSortUtils.getIntSort(mMgdScript),
-									multiplication, SmtUtils.mod(mScript, translatedRHS, maxNumber)));
-							return;
-						}
+						// if (mNutzTransformation) {
+						// moduloCount += 1;
+						// setResult(SmtUtils.unfTerm(mScript, "+", null, SmtSortUtils.getIntSort(mMgdScript),
+						// multiplication, SmtUtils.mod(mScript, translatedRHS, maxNumber)));
+						// return;
+						// }
 						setResult(SmtUtils.unfTerm(mScript, "+", null, SmtSortUtils.getIntSort(mMgdScript),
 								multiplication, translatedRHS));
 						return;
@@ -1005,7 +1005,8 @@ public class BvToIntTransferrer extends TermTransferrer {
 				SmtUtils.rational2Term(mScript, Rational.ZERO, intSort));
 		final Term thenTerm = SmtUtils.unfTerm(mScript, "-", null, SmtSortUtils.getIntSort(mMgdScript), maxNumber,
 				SmtUtils.rational2Term(mScript, Rational.ONE, intSort));
-		final Term elseTerm = SmtUtils.unfTerm(mScript, "div", null, SmtSortUtils.getIntSort(mMgdScript), lhs, rhs);
+		final Term elseTerm = SmtUtils.unfTerm(mScript, "div", null, SmtSortUtils.getIntSort(mMgdScript), translatedLHS,
+				translatedRHS);
 		return SmtUtils.ite(mScript, ifTerm, thenTerm, elseTerm);
 	}
 
@@ -1029,13 +1030,13 @@ public class BvToIntTransferrer extends TermTransferrer {
 		return SmtUtils.ite(mScript, ifTerm, thenTerm, elseTerm);
 	}
 
-	private Term translateBvshl(Term translatedLHS, Term translatedRHS, final int width, final Term maxNumber) {
+	private Term translateBvshl(final Term translatedLHS, Term translatedRHS, final int width, final Term maxNumber) {
 		final Sort intSort = SmtSortUtils.getIntSort(mScript);
 
 		if (mNutzTransformation) {
 			moduloCount += 2;
 			translatedRHS = SmtUtils.mod(mScript, translatedRHS, maxNumber);
-			translatedLHS = SmtUtils.mod(mScript, translatedLHS, maxNumber);
+			// translatedLHS = SmtUtils.mod(mScript, translatedLHS, maxNumber);
 		}
 		if (translatedRHS instanceof ConstantTerm) {
 			final Term shift = SmtUtils.unfTerm(mScript, "*", null, SmtSortUtils.getIntSort(mMgdScript), translatedLHS,
@@ -1077,13 +1078,13 @@ public class BvToIntTransferrer extends TermTransferrer {
 		}
 	}
 
-	private Term translateBvlshr(Term translatedLHS, Term translatedRHS, final int width, final Term maxNumber) {
+	private Term translateBvlshr(final Term translatedLHS, Term translatedRHS, final int width, final Term maxNumber) {
 		final Sort intSort = SmtSortUtils.getIntSort(mScript);
 
 		if (mNutzTransformation) {
 			moduloCount += 1;
 			translatedRHS = SmtUtils.mod(mScript, translatedRHS, maxNumber);
-			translatedLHS = SmtUtils.mod(mScript, translatedLHS, maxNumber);
+			// translatedLHS = SmtUtils.mod(mScript, translatedLHS, maxNumber);
 		}
 
 		if (translatedRHS instanceof ConstantTerm) {
@@ -1131,7 +1132,8 @@ public class BvToIntTransferrer extends TermTransferrer {
 					}
 				}
 
-				if (mNutzTransformation && SmtSortUtils.isArraySort(appTerm.getParameters()[0].getSort())) {
+				// This caused the unsoundness in SMTComp23
+				if (false && mNutzTransformation && SmtSortUtils.isArraySort(appTerm.getParameters()[0].getSort())) {
 
 					if (SmtSortUtils.isBitvecSort(appTerm.getParameters()[0].getSort().getArguments()[1])) {
 						final TermVariable quantifiedVar =
