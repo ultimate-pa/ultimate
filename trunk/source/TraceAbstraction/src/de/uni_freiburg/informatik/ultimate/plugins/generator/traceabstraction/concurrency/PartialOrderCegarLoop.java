@@ -43,8 +43,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.DeterminizeNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.InformationStorage;
@@ -298,29 +296,23 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 			mPOR.apply(mAbstraction, visitor);
 			mCounterexample = getCounterexample(visitor);
 			switchToReadonlyMode();
-
-			// DEBUG CODE
-			final var list = mCounterexample.getStateSequence().stream()
-					.map(x -> ((AnnotatedMLPredicate) x).getUnderlying()).collect(Collectors.toList());
-			final var run = new NestedRun<>(NestedWord.nestedWord(mCounterexample.getWord()), list);
-
-			for (int i = 0; i < run.getLength() - 1; ++i) {
-				final var succs = mAbstraction.internalSuccessors(run.getStateAtPosition(i), run.getSymbol(i));
-				boolean hasNext = false;
-				for (final var succ : succs) {
-					hasNext = hasNext || succ.getSucc() == run.getStateAtPosition(i + 1);
-				}
-				if (!hasNext) {
-					mLogger.fatal("Run broken at position %d: transition from %s to %s with symbol %s", i,
-							run.getStateAtPosition(i), run.getStateAtPosition(i + 1), run.getSymbol(i));
-				}
-			}
-
+			/*
+			 * // DEBUG CODE final var list = mCounterexample.getStateSequence().stream() .map(x ->
+			 * ((AnnotatedMLPredicate) x).getUnderlying()).collect(Collectors.toList()); final var run = new
+			 * NestedRun<>(NestedWord.nestedWord(mCounterexample.getWord()), list);
+			 * 
+			 * for (int i = 0; i < run.getLength() - 1; ++i) { final var succs =
+			 * mAbstraction.internalSuccessors(run.getStateAtPosition(i), run.getSymbol(i)); boolean hasNext = false;
+			 * for (final var succ : succs) { hasNext = hasNext || succ.getSucc() == run.getStateAtPosition(i + 1); } if
+			 * (!hasNext) { mLogger.fatal("Run broken at position %d: transition from %s to %s with symbol %s", i,
+			 * run.getStateAtPosition(i), run.getStateAtPosition(i + 1), run.getSymbol(i)); } }
+			 */
 			final boolean accepted =
 					mCounterexample == null || accepts(getServices(), mAbstraction, mCounterexample.getWord(), false);
 			// END DEBUG CODE
 
 			assert accepted : "Counterexample is not accepted by abstraction";
+
 			return mCounterexample == null;
 		} finally {
 			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.EmptinessCheckTime);

@@ -241,12 +241,20 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 			}
 			if (abort == BacktrackCases.WRONG_GUESS) {
 				// abandon exploration of current TS and reexplore loop
-				// TODO: communicate this to the visitor
 				mWorklist.push(current);
 				currentState = mDfs.peek();
 				// It'd be best if we could simply get the TS that led to the loop entry node...
 				// instead add all TS loop entry node -> suc(loop entry node) to worklist and take the topmost
 				createSuccessors(currentState);
+				// relevant part of visit state?
+				final R cs = currentState;
+				final Comparator<OutgoingInternalTransition<L, R>> comp =
+						Comparator.<OutgoingInternalTransition<L, R>, L> comparing(
+								OutgoingInternalTransition::getLetter, mOrder.getOrder(currentState)).reversed();
+				StreamSupport.stream(mPending.spliterator(), false).sorted(comp)
+						.forEachOrdered(out -> mWorklist.push(new Pair<>(cs, out)));
+				mPending.clear();
+
 				current = mWorklist.pop();
 			}
 			// assume our backtracking encounters a wrong guess...
@@ -457,7 +465,7 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 
 	/**
 	 * get original successor states & transitions and add their reduction states/transitions to the reduction automaton
-	 * and put them on the worklist
+	 * and put them on the pending list (for the worklist)
 	 *
 	 * @param state
 	 *            state whose successors are created
