@@ -11,42 +11,30 @@
     <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">NONE</option>
   </rundefinition>
 
+
+
   <rundefinition name="IA-Default">
     <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">IA</option>
     <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">DEFAULT</option>
   </rundefinition>
-
-  <rundefinition name="DFS-Default">
-    <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">DFS</option>
-    <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">DEFAULT</option>
-  </rundefinition>
-
-  <rundefinition name="DFS-SleepSet">
-    <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">DFS</option>
+  
+  <rundefinition name="IA-SleepSet">
+    <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">IA</option>
     <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">SLEEP_SET</option>
   </rundefinition>
-
-  <rundefinition name="DFS-SleepSet-Limit2">
-    <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">DFS</option>
-    <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">SLEEP_SET</option>
-    <option name="&#45;-traceabstraction.use.limited.checks.recommended.for.dfs">true</option>
-    <option name="&#45;-traceabstraction.limit.for.limited.checks">2</option>
+  
+  <rundefinition name="IA-Loop">
+    <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">IA</option>
+    <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">LOOP</option>
   </rundefinition>
-
+  
   <rundefinition name="IA-Random-20-213">
     <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">IA</option>
     <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">RANDOM</option>
     <option name="&#45;-traceabstraction.probability.for.random.criterion">20</option>
     <option name="&#45;-traceabstraction.seed.for.random.criterion">213</option>
   </rundefinition>
-
-  <rundefinition name="BOTH-Default-Limit10">
-    <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">BOTH</option>
-    <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">DEFAULT</option>
-    <option name="&#45;-traceabstraction.use.limited.checks.recommended.for.dfs">true</option>
-    <option name="&#45;-traceabstraction.limit.for.limited.checks">10</option>
-  </rundefinition>
-
+  
   <rundefinition name="IA-Random-50-213">
     <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">IA</option>
     <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">RANDOM</option>
@@ -60,29 +48,15 @@
     <option name="&#45;-traceabstraction.probability.for.random.criterion">20</option>
     <option name="&#45;-traceabstraction.seed.for.random.criterion">546</option>
   </rundefinition>
+  
+  
 
-  <rundefinition name="DFS-Random-20-213">
+  <rundefinition name="DFS-Default">
     <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">DFS</option>
-    <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">RANDOM</option>
-    <option name="&#45;-traceabstraction.probability.for.random.criterion">20</option>
-    <option name="&#45;-traceabstraction.seed.for.random.criterion">213</option>
+    <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">DEFAULT</option>
   </rundefinition>
-
-  <rundefinition name="DFS-Random-50-213">
-    <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">DFS</option>
-    <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">RANDOM</option>
-    <option name="&#45;-traceabstraction.probability.for.random.criterion">50</option>
-    <option name="&#45;-traceabstraction.seed.for.random.criterion">213</option>
-  </rundefinition>
-
-  <rundefinition name="DFS-Random-20-546">
-    <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">DFS</option>
-    <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">RANDOM</option>
-    <option name="&#45;-traceabstraction.probability.for.random.criterion">20</option>
-    <option name="&#45;-traceabstraction.seed.for.random.criterion">546</option>
-  </rundefinition>
-
-  <rundefinition name="DFS-Default-Limit2">
+  
+   <rundefinition name="DFS-Default-Limit2">
     <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">DFS</option>
     <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">DEFAULT</option>
     <option name="&#45;-traceabstraction.use.limited.checks.recommended.for.dfs">true</option>
@@ -101,6 +75,25 @@
     <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">DEFAULT</option>
     <option name="&#45;-traceabstraction.use.limited.checks.recommended.for.dfs">true</option>
     <option name="&#45;-traceabstraction.limit.for.limited.checks">50</option>
+  </rundefinition>
+
+  <rundefinition name="DFS-SleepSet">
+    <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">DFS</option>
+    <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">SLEEP_SET</option>
+  </rundefinition>
+
+  <rundefinition name="DFS-SleepSet-Limit10">
+    <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">DFS</option>
+    <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">SLEEP_SET</option>
+    <option name="&#45;-traceabstraction.use.limited.checks.recommended.for.dfs">true</option>
+    <option name="&#45;-traceabstraction.limit.for.limited.checks">10</option>
+  </rundefinition>
+  
+  <rundefinition name="DFS-Loop-Limit10">
+    <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">DFS</option>
+    <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">LOOP</option>
+    <option name="&#45;-traceabstraction.use.limited.checks.recommended.for.dfs">true</option>
+    <option name="&#45;-traceabstraction.limit.for.limited.checks">10</option>
   </rundefinition>
 
   <rundefinition name="DFS-Random-20-213-Limit10">
@@ -130,9 +123,11 @@
     <option name="&#45;-traceabstraction.limit.for.limited.checks">10</option>
   </rundefinition>
 
-  <rundefinition name="DFS-SleepSet-Limit10">
-    <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">DFS</option>
-    <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">SLEEP_SET</option>
+
+
+  <rundefinition name="BOTH-Default-Limit10">
+    <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">BOTH</option>
+    <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">DEFAULT</option>
     <option name="&#45;-traceabstraction.use.limited.checks.recommended.for.dfs">true</option>
     <option name="&#45;-traceabstraction.limit.for.limited.checks">10</option>
   </rundefinition>
@@ -140,6 +135,13 @@
   <rundefinition name="BOTH-SleepSet-Limit10">
     <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">BOTH</option>
     <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">SLEEP_SET</option>
+    <option name="&#45;-traceabstraction.use.limited.checks.recommended.for.dfs">true</option>
+    <option name="&#45;-traceabstraction.limit.for.limited.checks">10</option>
+  </rundefinition>
+  
+  <rundefinition name="BOTH-Loop-Limit10">
+    <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">BOTH</option>
+    <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">LOOP</option>
     <option name="&#45;-traceabstraction.use.limited.checks.recommended.for.dfs">true</option>
     <option name="&#45;-traceabstraction.limit.for.limited.checks">10</option>
   </rundefinition>
