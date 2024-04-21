@@ -39,17 +39,24 @@ public class BtorExpression {
 		return children;
 	}
 
-	public void assignnid(final int nid) {
+	public long getConstant() {
+		return constant;
+	}
+
+	public boolean assignnid(final int nid) {
 		if (this.nid != 0) {
-			throw new UnsupportedOperationException("nid already set");
+			return false;
 		}
 		this.nid = nid;
+		return true;
 	}
 
 	public int dumpExpression(int currentLine, final OutputStreamWriter writer, final HashMap<Integer, Integer> sortMap)
 			throws IOException {
 		if (children.isEmpty()) {
-			assignnid(currentLine);
+			if (!assignnid(currentLine)) {
+				return currentLine;
+			}
 			if (type == BtorExpressionType.CONSTD) {
 				writer.write(String.valueOf(nid) + " " + type.name().toLowerCase() + " "
 						+ String.valueOf(sortMap.get(sort) + " " + String.valueOf(constant)) + "\n");
@@ -61,7 +68,9 @@ public class BtorExpression {
 			for (final BtorExpression child : children) {
 				currentLine = child.dumpExpression(currentLine, writer, sortMap);
 			}
-			assignnid(currentLine);
+			if (!assignnid(currentLine)) {
+				return currentLine;
+			}
 			writer.write(
 					String.valueOf(nid) + " " + type.name().toLowerCase() + " " + String.valueOf(sortMap.get(sort)));
 			for (final BtorExpression child : children) {
