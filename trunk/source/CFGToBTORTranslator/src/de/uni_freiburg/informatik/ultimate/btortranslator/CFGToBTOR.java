@@ -108,6 +108,7 @@ public class CFGToBTOR {
 		int pc = 1;
 		for (final DebugIdentifier locID : locationUpdateMap.keySet()) {
 			pcMap.put(locID, new BtorExpression(64, pc));
+			System.out.println("locID: " + locID + " pc: " + pc);
 			pc++;
 		}
 		final BtorExpression zero = new BtorExpression(64, BtorExpressionType.ZERO, new ArrayList<>());
@@ -131,12 +132,38 @@ public class CFGToBTOR {
 	}
 
 	private List<BtorExpression> generateVariableUpdateExpressions() {
-		return null;
+		final ArrayList<BtorExpression> updateExpressions = new ArrayList<>();
+		for (final String var : variableAssignmentMap.keySet()) {
+			final BtorExpression varExpression = variableMap.get(var);
+			BtorExpression lastITE = varExpression;
+			for (final AssignmentRule rule : variableAssignmentMap.get(var)) {
+				final BtorExpression rhsExpression = rule.getRHSAsExpression(variableMap);
+				final BtorExpression lineCheck = new BtorExpression(1, BtorExpressionType.EQ,
+						Arrays.asList(pcExpression, pcMap.get(rule.assignmentLocationIdentifier)));
+				lastITE = new BtorExpression(varExpression.getSort(), BtorExpressionType.ITE,
+						Arrays.asList(lineCheck, rhsExpression, lastITE));
+			}
+			final BtorExpression next = new BtorExpression(varExpression.getSort(), BtorExpressionType.NEXT,
+					Arrays.asList(varExpression, lastITE));
+			updateExpressions.add(next);
+		}
+		return updateExpressions;
 	}
 
-	public BtorScript generateScript() {
+	public BtorScript generateScript(final IIcfg<IcfgLocation> icfg) {
 		final BtorExpression pcUpdate = generatePCUpdateExpression();
-		return new BtorScript(Arrays.asList(pcUpdate), Arrays.asList(1, 64));
+		final Set<IcfgLocation> initial = icfg.getInitialNodes();
+		if (initial.size() != 1) {
+			throw new UnsupportedOperationException("Multiple initial states");
+		}
+		final BtorExpression initial_pc = pcMap.get(initial.iterator().next().getDebugIdentifier());
+		final BtorExpression pc_initialization =
+				new BtorExpression(64, BtorExpressionType.INIT, Arrays.asList(pcExpression, initial_pc));
+		final List<BtorExpression> variableUpdateExpressions = generateVariableUpdateExpressions();
+		final List<BtorExpression> allTopLevelExpressions =
+				new ArrayList<>(Arrays.asList(initial_pc, pc_initialization, pcUpdate));
+		allTopLevelExpressions.addAll(variableUpdateExpressions);
+		return new BtorScript(allTopLevelExpressions, Arrays.asList(1, 64));
 	}
 
 }

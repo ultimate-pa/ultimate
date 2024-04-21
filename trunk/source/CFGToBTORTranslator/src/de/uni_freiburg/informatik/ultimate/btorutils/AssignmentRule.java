@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.btorutils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
@@ -18,11 +19,14 @@ public class AssignmentRule {
 	public DebugIdentifier assignmentLocationIdentifier;
 	public IProgramVar lhs;
 	public Term rhs;
+	public TransFormula tf;
 
-	public AssignmentRule(final DebugIdentifier assignmentLocationIdentifier, final IProgramVar lhs, final Term rhs) {
+	public AssignmentRule(final DebugIdentifier assignmentLocationIdentifier, final IProgramVar lhs, final Term rhs,
+			final TransFormula tf) {
 		this.assignmentLocationIdentifier = assignmentLocationIdentifier;
 		this.lhs = lhs;
 		this.rhs = rhs;
+		this.tf = tf;
 	}
 
 	public static List<AssignmentRule> getAssignmentsFromTransition(final DebugIdentifier assignmentLocationIdentifier,
@@ -35,8 +39,8 @@ public class AssignmentRule {
 				continue;
 			}
 			if (tf.isHavocedOut(assignedVar)) {
-				assignmentRules.add(
-						new AssignmentRule(assignmentLocationIdentifier, assignedVar, script.getScript().term("true")));
+				assignmentRules.add(new AssignmentRule(assignmentLocationIdentifier, assignedVar,
+						script.getScript().term("true"), tf));
 			} else {
 				final Term formula = tf.getFormula();
 				if (formula instanceof ApplicationTerm) {
@@ -52,7 +56,7 @@ public class AssignmentRule {
 										final TermVariable lhsVar = (TermVariable) lhsTerm;
 										if (TransFormulaUtils.getProgramVarForTerm(tf, lhsVar).equals(assignedVar)) {
 											assignmentRules.add(new AssignmentRule(assignmentLocationIdentifier,
-													assignedVar, appPossibleAssignment.getParameters()[1]));
+													assignedVar, appPossibleAssignment.getParameters()[1], tf));
 											foundAssignment = true;
 											break;
 										}
@@ -61,7 +65,7 @@ public class AssignmentRule {
 										final TermVariable rhsVar = (TermVariable) rhsTerm;
 										if (TransFormulaUtils.getProgramVarForTerm(tf, rhsVar).equals(assignedVar)) {
 											assignmentRules.add(new AssignmentRule(assignmentLocationIdentifier,
-													assignedVar, appPossibleAssignment.getParameters()[0]));
+													assignedVar, appPossibleAssignment.getParameters()[0], tf));
 											foundAssignment = true;
 											break;
 										}
@@ -77,7 +81,7 @@ public class AssignmentRule {
 								final TermVariable lhsVar = (TermVariable) lhsTerm;
 								if (TransFormulaUtils.getProgramVarForTerm(tf, lhsVar).equals(assignedVar)) {
 									assignmentRules.add(new AssignmentRule(assignmentLocationIdentifier, assignedVar,
-											appFormula.getParameters()[1]));
+											appFormula.getParameters()[1], tf));
 									foundAssignment = true;
 								}
 							}
@@ -86,7 +90,7 @@ public class AssignmentRule {
 								final TermVariable rhsVar = (TermVariable) rhsTerm;
 								if (TransFormulaUtils.getProgramVarForTerm(tf, rhsVar).equals(assignedVar)) {
 									assignmentRules.add(new AssignmentRule(assignmentLocationIdentifier, assignedVar,
-											appFormula.getParameters()[0]));
+											appFormula.getParameters()[0], tf));
 									foundAssignment = true;
 								}
 							}
@@ -102,5 +106,9 @@ public class AssignmentRule {
 			}
 		}
 		return assignmentRules;
+	}
+
+	public BtorExpression getRHSAsExpression(final Map<String, BtorExpression> variableMap) {
+		return TermToBtorUtil.convertRHSToBtorExpression(rhs, tf, variableMap);
 	}
 }

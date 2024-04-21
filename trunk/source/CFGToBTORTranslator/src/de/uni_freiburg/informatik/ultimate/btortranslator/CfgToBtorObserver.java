@@ -76,7 +76,7 @@ public class CfgToBtorObserver extends BaseObserver {
 		processor.extractVariables(icfg);
 		processor.extractTransitions(icfg);
 		processor.extractAssignments(icfg);
-		final BtorScript script = processor.generateScript();
+		final BtorScript script = processor.generateScript(icfg);
 		try {
 			script.dumpScript(new OutputStreamWriter(System.out));
 		} catch (final IOException e) {
