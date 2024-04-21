@@ -35,5 +35,5 @@ public class Activator {
 	public static final String PLUGIN_ID = IcfgBuilder.class.getPackage().getName();
 
 	// The plug-in name
-	public static final String PLUGIN_NAME = "ICFGBuilder";
+	public static final String PLUGIN_NAME = "IcfgBuilder";
 }
