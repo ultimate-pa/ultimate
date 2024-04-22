@@ -56,7 +56,6 @@ public class ConditionalCommutativityChecker<L extends IAction> implements ICond
 	private IIndependenceRelation<IPredicate, L> mIndependenceRelation;
 	private final IIndependenceConditionGenerator mGenerator;
 	private final ITraceChecker<L> mTraceChecker;
-	private Map<Pair<L, L>, Integer> mStatementMap;
 	private ManagedScript mManagedScript;
 	private IConditionalCommutativityCheckerStatisticsUtils mStatisticsUtils;
 
@@ -87,7 +86,6 @@ public class ConditionalCommutativityChecker<L extends IAction> implements ICond
 		mManagedScript = script;
 		mGenerator = generator;
 		mTraceChecker = traceChecker;
-		mStatementMap = new HashMap<>();
 		mStatisticsUtils = statisticsUtils;
 	}
 
@@ -143,15 +141,8 @@ public class ConditionalCommutativityChecker<L extends IAction> implements ICond
 			
 			if (mCriterion.decide(condition) && !condition.getFormula().toString().equals("true")) {
 				
-				Pair<L,L> pair = new Pair<>(letter1,letter2);
-				//ensures that a pair which was already successfully checked, is not checked again
-				if (mStatementMap.containsKey(pair)) {
-					mStatisticsUtils.stopStopwatch();
-					return null;
-				}
 				TracePredicates trace = mTraceChecker.checkTrace(run, null, condition);
 				if (trace != null) {
-						mStatementMap.put(pair, 1);
 						mCriterion.updateCondition(condition);
 				} else if (mTraceChecker.wasImperfectProof()) {
 					mStatisticsUtils.addImperfectProof();
