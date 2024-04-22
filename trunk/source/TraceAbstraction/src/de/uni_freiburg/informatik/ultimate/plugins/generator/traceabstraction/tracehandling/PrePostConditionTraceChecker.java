@@ -116,5 +116,11 @@ public class PrePostConditionTraceChecker<L extends IIcfgTransition<?>> implemen
 		return mPredicateUnifier;
 	}
 
+	@Override
+	public boolean wasImperfectProof() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
 
 }

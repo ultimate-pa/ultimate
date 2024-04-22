@@ -51,6 +51,7 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 	private final StatisticsData mRefinementEngineStatistics = new StatisticsData();
 	private int mConditionalCommutativityIAIntegrations = 0;
 	private int mConditionalCommutativityDFSRestarts = 0;
+	private int mConditionalCommutativityImperfectProofs = 0;
 	private int mIterations = 0;
 	private SizeIterationPair mBiggestAbstraction = new SizeIterationPair(-1, -1);
 	private BackwardCoveringInformation mBCI = new BackwardCoveringInformation(0, 0);
@@ -109,6 +110,10 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 	
 	public void addConditionalCommutativityDFSRestart() {
 		mConditionalCommutativityDFSRestarts++;
+	}
+	
+	public void addConditionalCommutativityImperfectProof() {
+		mConditionalCommutativityImperfectProofs++;
 	}
 
 	/**
@@ -192,6 +197,8 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 			return mConditionalCommutativityIAIntegrations;
 		case ConditionalCommutativityDFSRestarts:
 			return mConditionalCommutativityDFSRestarts;
+		case ConditionalCommutativityImperfectProofs:
+			return mConditionalCommutativityImperfectProofs;
 		default:
 			throw new AssertionError("unknown data");
 		}
@@ -214,4 +221,5 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 				CegarLoopStatisticsDefinitions.InitialAbstractionConstructionTime.toString(),
 				CegarLoopStatisticsDefinitions.ConditionalCommutativityCheckTime.toString()};
 	}
+
 }

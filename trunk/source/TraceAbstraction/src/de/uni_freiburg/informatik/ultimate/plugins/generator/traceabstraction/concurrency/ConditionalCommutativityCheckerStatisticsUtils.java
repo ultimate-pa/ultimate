@@ -32,4 +32,9 @@ public class ConditionalCommutativityCheckerStatisticsUtils implements IConditio
 		mCegarLoopBenchmark.addConditionalCommutativityIAIntegration();	
 	}
 
+	@Override
+	public void addImperfectProof() {
+		mCegarLoopBenchmark.addConditionalCommutativityImperfectProof();	
+	}
+
 }

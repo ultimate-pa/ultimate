@@ -9,4 +9,6 @@ public interface IConditionalCommutativityCheckerStatisticsUtils {
 	public void addDFSRestart();
 
 	public void addIAIntegration();
+
+	public void addImperfectProof();
 }

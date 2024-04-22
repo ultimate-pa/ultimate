@@ -42,4 +42,6 @@ public interface ITraceChecker<L> {
 
 	public TracePredicates checkTrace(IRun<L, IPredicate> run, IPredicate precondition, IPredicate postcondition);
 
+	public boolean wasImperfectProof();
+
 }

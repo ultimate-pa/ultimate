@@ -94,7 +94,9 @@ public enum CegarLoopStatisticsDefinitions implements IStatisticsElement {
 	
 	ConditionalCommutativityIAIntegrations(StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
 	
-	ConditionalCommutativityDFSRestarts(StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA);
+	ConditionalCommutativityDFSRestarts(StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
+	
+	ConditionalCommutativityImperfectProofs(StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA);
 
 	private final Function<Object, Function<Object, Object>> mAggr;
 	private final Function<String, Function<Object, String>> mPrettyprinter;

@@ -153,6 +153,8 @@ public class ConditionalCommutativityChecker<L extends IAction> implements ICond
 				if (trace != null) {
 						mStatementMap.put(pair, 1);
 						mCriterion.updateCondition(condition);
+				} else if (mTraceChecker.wasImperfectProof()) {
+					mStatisticsUtils.addImperfectProof();
 				}
 				mStatisticsUtils.stopStopwatch();
 				return trace;
