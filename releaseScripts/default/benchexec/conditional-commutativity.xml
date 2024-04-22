@@ -77,11 +77,6 @@
     <option name="&#45;-traceabstraction.limit.for.limited.checks">50</option>
   </rundefinition>
 
-  <rundefinition name="DFS-SleepSet">
-    <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">DFS</option>
-    <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">SLEEP_SET</option>
-  </rundefinition>
-
   <rundefinition name="DFS-SleepSet-Limit10">
     <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">DFS</option>
     <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">SLEEP_SET</option>
@@ -89,11 +84,27 @@
     <option name="&#45;-traceabstraction.limit.for.limited.checks">10</option>
   </rundefinition>
   
+   <rundefinition name="DFS-SleepSet-Condition-Limit10">
+    <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">DFS</option>
+    <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">SLEEP_SET</option>
+    <option name="&#45;-traceabstraction.use.limited.checks.recommended.for.dfs">true</option>
+    <option name="&#45;-traceabstraction.limit.for.limited.checks">10</option>
+	<option name="&#45;-traceabstraction.use.condition.criterion.recommended.for.programs.with.arrays">true</option>
+  </rundefinition>
+  
   <rundefinition name="DFS-Loop-Limit10">
     <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">DFS</option>
     <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">LOOP</option>
     <option name="&#45;-traceabstraction.use.limited.checks.recommended.for.dfs">true</option>
     <option name="&#45;-traceabstraction.limit.for.limited.checks">10</option>
+  </rundefinition>
+  
+  <rundefinition name="DFS-Loop-Condition-Limit10">
+    <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">DFS</option>
+    <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">LOOP</option>
+    <option name="&#45;-traceabstraction.use.limited.checks.recommended.for.dfs">true</option>
+    <option name="&#45;-traceabstraction.limit.for.limited.checks">10</option>
+	<option name="&#45;-traceabstraction.use.condition.criterion.recommended.for.programs.with.arrays">true</option>
   </rundefinition>
 
   <rundefinition name="DFS-Random-20-213-Limit10">
