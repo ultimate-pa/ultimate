@@ -298,41 +298,10 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 							new IsEmpty<>(new AutomataLibraryServices(getServices()), abstraction, mSearchStrategy)
 									.getNestedRun();
 				}
-			} else if (mUseHeuristicEmptinessCheck) {
-				mCounterexample = new IsEmptyHeuristic<>(new AutomataLibraryServices(getServices()), abstraction,
-						IHeuristic.getHeuristic(mAStarHeuristic, mScoringMethod, mAStarRandomHeuristicSeed))
-								.getNestedRun();
-
-				assert checkIsEmptyHeuristic(abstraction) : "IsEmptyHeuristic did not match IsEmpty";
 			} else {
-				if (mTestGeneration.equals(TestGenerationMode.Standard)) {
-					mLogger.info(
-							"TestGen, Time spent Search-MultiGoal Preprocess: " + mLongTraceTime / 1000000000 + "s");
-					mLogger.info("TestGen, Coverage during Optimization: " + CoveredLongTrace / mErrorLocs.size());
-
-					final Set<IPredicate> newGoalSet = new HashSet<>();
-					newGoalSet.addAll(mAbstraction.getFinalStates());
-					for (final IPredicate testGoal : mAbstraction.getFinalStates()) {
-						final ISLPredicate testGoalISL = (ISLPredicate) testGoal;
-						if (testGoalISL.getProgramPoint().getPayload().getAnnotations()
-								.containsKey(VarAssignmentReuseAnnotation.class.getName())) {
-							final VarAssignmentReuseAnnotation pLocAnno =
-									(VarAssignmentReuseAnnotation) testGoalISL.getProgramPoint().getPayload()
-											.getAnnotations().get(VarAssignmentReuseAnnotation.class.getName());
-
-							if (!pLocAnno.mIsActiveTestGoal) {
-								newGoalSet.remove(testGoal);
-							}
-						}
-
-					}
-					mCounterexample = runWithModifiedGoalSet(mAbstraction, newGoalSet);
-				} else {
-
-					mCounterexample =
-							new IsEmpty<>(new AutomataLibraryServices(getServices()), abstraction, mSearchStrategy)
-									.getNestedRun();
-				}
+				mCounterexample =
+						new IsEmpty<>(new AutomataLibraryServices(getServices()), abstraction, mSearchStrategy)
+								.getNestedRun();
 			}
 		} finally {
 			if (mWriteEvaluationToFile) {
@@ -522,6 +491,22 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 				mIcfg.getCfgSmtToolkit().getSymbolTable(), mPredicateFactoryInterpolantAutomata, mAbstraction,
 				mIteration);
 		mInterpolAutomaton = null;
+		System.out.println(mAbstraction.getFinalStates().size());
+		for (final IPredicate testGoal : mAbstraction.getFinalStates()) {
+			final ISLPredicate testGoalISL = (ISLPredicate) testGoal;
+			if (testGoalISL.getProgramPoint().getPayload().getAnnotations()
+					.containsKey(VarAssignmentReuseAnnotation.class.getName())) {
+				final VarAssignmentReuseAnnotation pLocAnno =
+						(VarAssignmentReuseAnnotation) testGoalISL.getProgramPoint().getPayload().getAnnotations()
+								.get(VarAssignmentReuseAnnotation.class.getName());
+				if (!pLocAnno.mIsActiveTestGoal) {
+					mErrorGeneralizationEngine.addCoveredTestGoalToErrorAutomaton(testGoal,
+							mAbstraction.internalPredecessors(testGoal));
+				}
+			}
+
+		}
+
 		final NestedWordAutomaton<L, IPredicate> resultBeforeEnhancement =
 				mErrorGeneralizationEngine.getResultBeforeEnhancement();
 		assert isInterpolantAutomatonOfSingleStateType(resultBeforeEnhancement);

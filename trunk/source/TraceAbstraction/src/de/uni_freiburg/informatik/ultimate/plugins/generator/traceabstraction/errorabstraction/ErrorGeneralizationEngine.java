@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
@@ -456,5 +457,13 @@ public class ErrorGeneralizationEngine<L extends IIcfgTransition<?>> implements 
 
 			mLogger.warn(builder);
 		}
+	}
+
+	public void addCoveredTestGoalToErrorAutomaton(final IPredicate testGoal,
+			final Iterable<IncomingInternalTransition<L, IPredicate>> incomingedge) {
+		assert mErrorAutomatonBuilder instanceof SimpleErrorAutomatonBuilder;
+		((SimpleErrorAutomatonBuilder) mErrorAutomatonBuilder).addCoveredTestGoalToErrorAutomaton(testGoal,
+				incomingedge);
+
 	}
 }

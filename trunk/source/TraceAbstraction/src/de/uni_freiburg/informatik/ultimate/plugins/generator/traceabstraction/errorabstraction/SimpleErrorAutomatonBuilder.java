@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.TestGoalAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -129,12 +130,25 @@ public class SimpleErrorAutomatonBuilder<L extends IIcfgTransition<?>> implement
 							mResult.addInternalTransition(f, letter, errorStateAsBP);
 							break;
 						}
-
 					}
-
 				}
 			}
+		}
+	}
 
+	public void addCoveredTestGoalToErrorAutomaton(final IPredicate testGoal,
+			final Iterable<IncomingInternalTransition<L, IPredicate>> incomingedge) {
+
+		final BasicPredicate errorStateAsBP =
+				new BasicPredicate(mResult.size(), null, testGoal.getFormula(), null, null, null);
+		mResult.addState(false, true, errorStateAsBP);
+
+		for (final Iterator<IPredicate> it = mResult.getInitialStates().iterator(); it.hasNext();) {
+			final IPredicate f = it.next();
+
+			final L letter = incomingedge.iterator().next().getLetter();
+			mResult.addInternalTransition(f, letter, errorStateAsBP);
+			break;
 		}
 
 	}
