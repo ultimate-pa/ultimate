@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -35,9 +36,15 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieProgramExecution;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.Multigraph;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.MultigraphEdge;
@@ -198,8 +205,25 @@ public class IcfgBacktranslator extends
 				final BoogieASTNode[] sources = mCodeBlock2Statement.get(st);
 				if (sources != null) {
 					for (final BoogieASTNode source : sources) {
-						ateBuilder.setStepAndElement(source);
-						trace.add(ateBuilder.build());
+						if ((source instanceof WhileStatement || source instanceof IfStatement) && st instanceof AssumeStatement) {
+							final Expression cond;
+							if (source instanceof WhileStatement) {
+								cond = ((WhileStatement)source).getCondition();
+							} else {
+								cond = ((IfStatement)source).getCondition();
+							}
+							final StepInfo info = getStepInfoFromCondition(((AssumeStatement)st).getFormula(), cond);
+							ateBuilder.setElement(source);
+							ateBuilder.setStep(cond);
+							ateBuilder.setStepInfo(EnumSet.of(info));
+							trace.add(ateBuilder.build());	
+							ateBuilder.setStepInfo(StepInfo.NONE);
+						} else{
+							ateBuilder.setStepAndElement(source);
+							trace.add(ateBuilder.build());
+						}
+							
+						
 					}
 
 				} else {
@@ -399,6 +423,39 @@ public class IcfgBacktranslator extends
 	@Override
 	public Expression translateExpression(final Term term) {
 		return mTerm2Expression.translate(term);
+	}
+	// TODO maybe take getStepInfoFromCondition from BoogiePreprocessorBacktranslator
+	private StepInfo getStepInfoFromCondition(final Expression input, final Expression output) {
+		// compare the depth of UnaryExpression in the condition of the assume
+		// and the condition of the mapped conditional to determine if the
+		// condition
+		// evaluated to true or to false
+		if (!(input instanceof UnaryExpression)) {
+			// it is not even an unary expression, it surely evaluates to true
+			return StepInfo.CONDITION_EVAL_TRUE;
+		}
+		final UnaryExpression inputCond = (UnaryExpression) input;
+		if (inputCond.getOperator() != Operator.LOGICNEG) {
+			// it is an unaryCond, but its no negation, so it must be true
+			return StepInfo.CONDITION_EVAL_TRUE;
+		}
+		// now it gets interesting: it is a negation, but is the real
+		// condition also a negation?
+
+		if (!(output instanceof UnaryExpression)) {
+			// nope, so that means it is false
+			return StepInfo.CONDITION_EVAL_FALSE;
+		}
+		final UnaryExpression outputCond = (UnaryExpression) output;
+		if (inputCond.getOperator() != Operator.LOGICNEG) {
+			// it is an unaryCond, but its no negation, so it must be
+			// false
+			return StepInfo.CONDITION_EVAL_FALSE;
+		}
+		// both have outer unary expressions that are logicneg.
+		// now we recurse, because we already stripped the outer
+		// negations
+		return getStepInfoFromCondition(inputCond.getExpr(), outputCond.getExpr());
 	}
 
 }
