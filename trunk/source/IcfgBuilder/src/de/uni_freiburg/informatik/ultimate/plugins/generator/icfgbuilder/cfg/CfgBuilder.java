@@ -853,12 +853,8 @@ public class CfgBuilder {
 			}
 			
 			// backtranslation
-			IfStatement backTranslatorIfTrue = new IfStatement(st.getLoc(), st.getCondition(), st.getThenPart(), st.getElsePart());
-			IfStatement backTranslatorIfFalse = new IfStatement(st.getLoc(), st.getCondition(), st.getThenPart(), st.getElsePart());
-			new ConditionAnnotation(false).annotate(backTranslatorIfTrue);
-			new ConditionAnnotation(true).annotate(backTranslatorIfFalse);
-			mIcfgBacktranslator.putAux(thenStatement, new BoogieASTNode[] { backTranslatorIfTrue });
-			mIcfgBacktranslator.putAux(elseStatement, new BoogieASTNode[] { backTranslatorIfFalse });
+			mIcfgBacktranslator.putAux(thenStatement, new BoogieASTNode[] { st });
+			mIcfgBacktranslator.putAux(elseStatement, new BoogieASTNode[] { st });
 			
 			return buildAssumeSplit(st, thenStatement, thenPart, elseStatement, elsePart);
 		}
@@ -910,12 +906,8 @@ public class CfgBuilder {
 				new ConditionAnnotation(false).annotate(condTrue);
 				new ConditionAnnotation(true).annotate(condFalse);
 			}
-			WhileStatement backTranslatorWhileTrue = new WhileStatement(st.getLoc(), st.getCondition(), st.getInvariants(), st.getBody());
-			WhileStatement backTranslatorWhileFalse = new WhileStatement(st.getLoc(), st.getCondition(), st.getInvariants(), st.getBody());
-			new ConditionAnnotation(false).annotate(backTranslatorWhileTrue);
-			new ConditionAnnotation(true).annotate(backTranslatorWhileFalse);
-			mIcfgBacktranslator.putAux(condTrue, new BoogieASTNode[] { backTranslatorWhileTrue });
-			mIcfgBacktranslator.putAux(condFalse, new BoogieASTNode[] { backTranslatorWhileFalse });
+			mIcfgBacktranslator.putAux(condTrue, new BoogieASTNode[] { st });
+			mIcfgBacktranslator.putAux(condFalse, new BoogieASTNode[] { st });
 			buildAssumeSplit(st, condTrue, buildCodeBlock(((WhileStatement)st).getBody(), start, false), condFalse, currentLocation, afterInvariants);
 			assert (mWhileExits.pop() == currentLocation);
 			return start;
