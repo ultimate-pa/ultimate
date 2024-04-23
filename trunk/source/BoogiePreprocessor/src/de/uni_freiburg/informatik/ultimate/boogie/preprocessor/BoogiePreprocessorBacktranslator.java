@@ -200,25 +200,17 @@ public class BoogiePreprocessorBacktranslator
 			}
 
 			final AtomicTraceElement<BoogieASTNode> ate = programExecution.getTraceElement(i);
-			if (elem instanceof WhileStatement) {
-				assert checkProcedureNames(elem, ate);
+			if (elem instanceof WhileStatement ) {
 				if (ate.getTraceElement() instanceof AssumeStatement) {
+					assert checkProcedureNames(elem, ate);
 					final AssumeStatement assumeStmt = (AssumeStatement) ate.getTraceElement();
 					final WhileStatement stmt = (WhileStatement) elem;
 					final Expression cond = stmt.getCondition();
 					final StepInfo info = getStepInfoFromCondition(assumeStmt.getFormula(), cond);
 					atomicTrace.add(createAtomicTraceElement(ate, stmt, cond, info));
 				} else {
-					final WhileStatement stmt = (WhileStatement) elem;
-					final StepInfo info;
-					if (ConditionAnnotation.getAnnotation(stmt).isNegated()) {
-						info = StepInfo.CONDITION_EVAL_FALSE;
-					} else {
-						info = StepInfo.CONDITION_EVAL_TRUE;
-					}
-					atomicTrace.add(createAtomicTraceElement(ate, stmt, stmt.getCondition(), info));
+					atomicTrace.add(ate);
 				}
-				
 
 			} else if (elem instanceof IfStatement) {
 				assert checkProcedureNames(elem, ate);
@@ -228,14 +220,7 @@ public class BoogiePreprocessorBacktranslator
 					final StepInfo info = getStepInfoFromCondition(assumeStmt.getFormula(), stmt.getCondition());
 					atomicTrace.add(createAtomicTraceElement(ate, stmt, stmt.getCondition(), info));
 				} else {
-					final IfStatement stmt = (IfStatement) elem;
-					final StepInfo info;
-					if (ConditionAnnotation.getAnnotation(stmt).isNegated()) {
-						info = StepInfo.CONDITION_EVAL_FALSE;
-					} else {
-						info = StepInfo.CONDITION_EVAL_TRUE;
-					}
-					atomicTrace.add(createAtomicTraceElement(ate, stmt, stmt.getCondition(), info));
+					atomicTrace.add(ate);
 				}
 
 			} else if (elem instanceof CallStatement) {
