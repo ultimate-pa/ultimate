@@ -58,14 +58,11 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.e
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultTransformer;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValueFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -134,7 +131,7 @@ public class ThreadIdManager {
 
 		final Expression threadId = getOldForkCounterAsTemp(loc, erb);
 		incrementForkCounter(loc, erb);
-		storeThreadId(argument, threadId, dispatcher, loc, hook, erb);
+		erb.addAllExceptLrValue(mExpressionResultTransformer.dispatchPointerWrite(dispatcher, loc, argument, threadId));
 
 		if (UNAMBIGUOUS_THREAD_ID_OPTIMIZATION) {
 			final Integer unambiguousId = getUnambiguousThreadIdCounter(argument);
@@ -212,31 +209,6 @@ public class ThreadIdManager {
 		final AssignmentStatement counterIncrement =
 				new AssignmentStatement(loc, new VariableLHS[] { counterLhs }, new Expression[] { sum });
 		erb.addStatement(counterIncrement);
-	}
-
-	/**
-	 * Stores the thread ID in the location given as first argument of pthread_create, for later use via pthread_join
-	 */
-	private void storeThreadId(final IASTInitializerClause argument, final Expression threadId,
-			final IDispatcher dispatcher, final ILocation loc, final IASTNode hook, final ExpressionResultBuilder erb) {
-		final ExpressionResult tmp =
-				mExpressionResultTransformer.transformDispatchDecaySwitchRexBoolToInt(dispatcher, loc, argument);
-
-		// TODO 2018-10-25 Matthias: conversion not correct. We do not have a void pointer but a pthread_t pointer,
-		// but this incorrectness will currently not have a negative effect
-		final ExpressionResult argThreadIdPointer = mExpressionResultTransformer.performImplicitConversion(tmp,
-				new CPointer(new CPrimitive(CPrimitives.VOID)), loc);
-		erb.addAllExceptLrValue(argThreadIdPointer);
-
-		final HeapLValue heapLValue;
-		if (argThreadIdPointer.getLrValue() instanceof HeapLValue) {
-			heapLValue = (HeapLValue) argThreadIdPointer.getLrValue();
-		} else {
-			heapLValue = LRValueFactory.constructHeapLValue(mTypeHandler, argThreadIdPointer.getLrValue().getValue(),
-					argThreadIdPointer.getLrValue().getCType(), false, null);
-		}
-		erb.addStatements(
-				mMemoryHandler.getWriteCall(loc, heapLValue, threadId, mMemoryHandler.getThreadIdType(), false));
 	}
 
 	private Integer getUnambiguousThreadIdCounter(final IASTInitializerClause argument) {
