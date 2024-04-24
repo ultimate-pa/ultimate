@@ -271,6 +271,9 @@ public class StandardFunctionHandler {
 					1, new CPrimitive(overapprox.getValue())));
 		}
 
+		/** https://www.man7.org/linux/man-pages/man3/sleep.3.html **/
+		fill(map, "sleep", skip);
+
 		/** functions of pthread library **/
 		fill(map, "pthread_create", this::handlePthread_create);
 		fill(map, "pthread_join", this::handlePthread_join);
