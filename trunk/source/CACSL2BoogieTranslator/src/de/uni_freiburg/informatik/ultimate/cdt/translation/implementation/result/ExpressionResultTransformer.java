@@ -34,6 +34,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
@@ -1096,14 +1097,22 @@ public class ExpressionResultTransformer {
 	 */
 	public ExpressionResult dispatchPointerWrite(final IDispatcher main, final ILocation loc, final IASTNode pointer,
 			final Expression value) {
+		return dispatchPointerWrite(main, loc, pointer, type -> new ExpressionResult(new RValue(value, type)));
+	}
+
+	public ExpressionResult dispatchPointerWrite(final IDispatcher main, final ILocation loc, final IASTNode pointer,
+			final Function<CType, ExpressionResult> valueProvider) {
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		if (isAdressofOperator(pointer)) {
 			final ExpressionResult disp =
 					(ExpressionResult) main.dispatch(((IASTUnaryExpression) pointer).getOperand());
 			if (disp.getLrValue() instanceof LocalLValue) {
 				builder.addAllExceptLrValue(disp);
+				final ExpressionResult value = valueProvider.apply(disp.getCType());
+				builder.addAllExceptLrValue(value);
 				final LeftHandSide lhs = ((LocalLValue) disp.getLrValue()).getLhs();
-				builder.addStatement(StatementFactory.constructSingleAssignmentStatement(loc, lhs, value));
+				builder.addStatement(
+						StatementFactory.constructSingleAssignmentStatement(loc, lhs, value.getLrValue().getValue()));
 				if (mDataRaceChecker != null) {
 					mDataRaceChecker.checkOnWrite(builder, loc, disp.getLrValue());
 				}
@@ -1112,10 +1121,13 @@ public class ExpressionResultTransformer {
 		}
 		final ExpressionResult disp = decayArrayToPointer((ExpressionResult) main.dispatch(pointer), loc, pointer);
 		builder.addAllExceptLrValue(disp);
+		final CType valueType = ((CPointer) disp.getCType()).getPointsToType();
+		final ExpressionResult value = valueProvider.apply(valueType);
+		builder.addAllExceptLrValue(value);
 		final var heapValue =
 				LRValueFactory.constructHeapLValue(mTypeHandler, disp.getLrValue().getValue(), disp.getCType(), null);
-		builder.addStatements(mMemoryHandler.getWriteCall(loc, heapValue, value,
-				((CPointer) disp.getCType()).getPointsToType(), false));
+		builder.addStatements(
+				mMemoryHandler.getWriteCall(loc, heapValue, value.getLrValue().getValue(), valueType, false));
 		if (mDataRaceChecker != null) {
 			mDataRaceChecker.checkOnWrite(builder, loc, heapValue);
 		}

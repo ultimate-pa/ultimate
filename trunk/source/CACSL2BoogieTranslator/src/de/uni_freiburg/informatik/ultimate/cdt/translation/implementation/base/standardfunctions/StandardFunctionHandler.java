@@ -36,6 +36,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
@@ -1609,34 +1610,29 @@ public class StandardFunctionHandler {
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 
 		for (int i = 0; i < arguments.length; i++) {
-			if (i < firstArgumentToWrite && isStringLiteral(arguments[i])) {
-				// Don't dispatch string literals
-				continue;
-			}
-			final ExpressionResult arg =
-					mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[i]);
-			builder.addAllExceptLrValue(arg);
 			if (i < firstArgumentToWrite) {
+				// Don't dispatch string literals
+				if (!isStringLiteral(arguments[i])) {
+					builder.addAllExceptLrValue(
+							mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[i]));
+				}
 				continue;
 			}
 
-			final CType type = ((CPointer) arg.getCType()).getPointsToType();
-			final AuxVarInfo auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, type, SFO.AUXVAR.NONDET);
-			builder.addAuxVarWithDeclaration(auxvar);
-
-			// Write a non-deterministic value to the given address, but make sure the value is in range
-			final var lValue =
-					LRValueFactory.constructHeapLValue(mTypeHandler, arg.getLrValue().getValue(), type, null);
-			mExpressionTranslation.addAssumeValueInRangeStatements(loc, auxvar.getExp(), type, builder);
-			final List<Statement> writes = mMemoryHandler.getWriteCall(loc, lValue, auxvar.getExp(), type, false);
+			final Function<CType, ExpressionResult> valueProvider = type -> {
+				final ExpressionResultBuilder valueBuilder = new ExpressionResultBuilder();
+				// Write a non-deterministic value to the given address, but make sure the value is in range
+				final AuxVarInfo auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, type, SFO.AUXVAR.NONDET);
+				valueBuilder.addAuxVarWithDeclaration(auxvar).setLrValue(new RValue(auxvar.getExp(), type));
+				mExpressionTranslation.addAssumeValueInRangeStatements(loc, auxvar.getExp(), type, valueBuilder);
+				return valueBuilder.build();
+			};
+			final ExpressionResult writeResult =
+					mExprResultTransformer.dispatchPointerWrite(main, loc, arguments[i], valueProvider);
 			if (markAsOverapproximation) {
-				writes.forEach(new Overapprox(name, loc)::annotate);
+				writeResult.getStatements().forEach(new Overapprox(name, loc)::annotate);
 			}
-			builder.addStatements(writes);
-
-			if (mDataRaceChecker != null) {
-				mDataRaceChecker.checkOnWrite(builder, loc, lValue);
-			}
+			builder.addAllExceptLrValue(writeResult);
 		}
 
 		// The number of arguments to which sth should be written is returned.
