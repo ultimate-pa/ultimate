@@ -992,6 +992,13 @@ public class MemoryHandler {
 		return as;
 	}
 
+	public Expression checkIfMutexIsUnlocked(final ILocation loc, final Expression mutex) {
+		final ArrayAccessExpression mutexRead = ExpressionFactory.constructNestedArrayAccessExpression(loc,
+				constructMutexArrayIdentifierExpression(loc), new Expression[] { mutex });
+		return ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, mutexRead,
+				mBooleanArrayHelper.constructFalse());
+	}
+
 	public AssignmentStatement constructRwLockArrayAssignment(final ILocation loc, final Expression index,
 			final Expression rhs) {
 		final BoogieArrayType boogieType =
@@ -1692,7 +1699,7 @@ public class MemoryHandler {
 		return constructDeclOfPointerIndexedArray(loc, mBooleanArrayHelper.constructBoolReplacementType(), arrayName);
 	}
 
-	private static CPrimitive getRwLockCounterType() {
+	public CPrimitive getRwLockCounterType() {
 		return new CPrimitive(CPrimitives.SCHAR);
 	}
 

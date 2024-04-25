@@ -2188,11 +2188,8 @@ public class StandardFunctionHandler {
 		builder.addAllExceptLrValue(arg);
 		final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(loc,
 				new CPrimitive(CPrimitives.INT), BigInteger.ZERO);
-		final ArrayAccessExpression mutexRead = ExpressionFactory.constructNestedArrayAccessExpression(loc,
-				mMemoryHandler.constructMutexArrayIdentifierExpression(loc),
-				new Expression[] { arg.getLrValue().getValue() });
 		final AssumeStatement checkUnlocked =
-				new AssumeStatement(loc, ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, mutexRead, zero));
+				new AssumeStatement(loc, mMemoryHandler.checkIfMutexIsUnlocked(loc, arg.getLrValue().getValue()));
 		final AssignmentStatement lock =
 				mMemoryHandler.constructMutexArrayAssignment(loc, arg.getLrValue().getValue(), true);
 		builder.addStatement(new AtomicStatement(loc, new Statement[] { checkUnlocked, lock }));
@@ -2242,13 +2239,10 @@ public class StandardFunctionHandler {
 		builder.addAllExceptLrValue(arg);
 		final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(loc,
 				new CPrimitive(CPrimitives.INT), BigInteger.ZERO);
-		final ArrayAccessExpression mutexRead = ExpressionFactory.constructNestedArrayAccessExpression(loc,
-				mMemoryHandler.constructMutexArrayIdentifierExpression(loc),
-				new Expression[] { arg.getLrValue().getValue() });
-		final Expression isUnlocked = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, mutexRead, zero);
 		final AssignmentStatement lock =
 				mMemoryHandler.constructMutexArrayAssignment(loc, arg.getLrValue().getValue(), true);
-		final Statement ifStmt = StatementFactory.constructIfStatement(loc, isUnlocked,
+		final Statement ifStmt = StatementFactory.constructIfStatement(loc,
+				mMemoryHandler.checkIfMutexIsUnlocked(loc, arg.getLrValue().getValue()),
 				new Statement[] { lock,
 						StatementFactory.constructSingleAssignmentStatement(loc, auxVar.getLhs(), zero) },
 				new Statement[] {
@@ -2270,11 +2264,16 @@ public class StandardFunctionHandler {
 		final ArrayAccessExpression mutexRead = ExpressionFactory.constructNestedArrayAccessExpression(loc,
 				mMemoryHandler.constructRwLockArrayIdentifierExpression(loc),
 				new Expression[] { arg.getLrValue().getValue() });
-		final AssumeStatement checkUnlocked =
-				new AssumeStatement(loc, ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, mutexRead, zero));
-		final Expression increment =
-				ExpressionFactory.newBinaryExpression(loc, Operator.ARITHPLUS, mutexRead, mExpressionTranslation
-						.constructLiteralForIntegerType(loc, new CPrimitive(CPrimitives.INT), BigInteger.ONE));
+		final AssumeStatement checkUnlocked = new AssumeStatement(loc,
+				mExpressionTranslation.constructBinaryComparisonIntegerExpression(loc,
+						IASTBinaryExpression.op_greaterEqual, mutexRead, mMemoryHandler.getRwLockCounterType(),
+						mExpressionTranslation.constructLiteralForIntegerType(loc,
+								mMemoryHandler.getRwLockCounterType(), BigInteger.ZERO),
+						mMemoryHandler.getRwLockCounterType()));
+		final Expression increment = mExpressionTranslation.constructArithmeticIntegerExpression(loc,
+				IASTBinaryExpression.op_plus, mutexRead, mMemoryHandler.getRwLockCounterType(), mExpressionTranslation
+						.constructLiteralForIntegerType(loc, mMemoryHandler.getRwLockCounterType(), BigInteger.ONE),
+				mMemoryHandler.getRwLockCounterType());
 		final AssignmentStatement lock =
 				mMemoryHandler.constructRwLockArrayAssignment(loc, arg.getLrValue().getValue(), increment);
 		builder.addStatement(new AtomicStatement(loc, new Statement[] { checkUnlocked, lock }));
@@ -2294,10 +2293,11 @@ public class StandardFunctionHandler {
 		final ArrayAccessExpression mutexRead = ExpressionFactory.constructNestedArrayAccessExpression(loc,
 				mMemoryHandler.constructRwLockArrayIdentifierExpression(loc),
 				new Expression[] { arg.getLrValue().getValue() });
-		final AssumeStatement checkUnlocked =
-				new AssumeStatement(loc, ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, mutexRead, zero));
+		final AssumeStatement checkUnlocked = new AssumeStatement(loc,
+				ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, mutexRead, mExpressionTranslation
+						.constructLiteralForIntegerType(loc, mMemoryHandler.getRwLockCounterType(), BigInteger.ZERO)));
 		final Expression minusOne = mExpressionTranslation.constructLiteralForIntegerType(loc,
-				new CPrimitive(CPrimitives.INT), BigInteger.ONE.negate());
+				mMemoryHandler.getRwLockCounterType(), BigInteger.ONE.negate());
 		final AssignmentStatement lock =
 				mMemoryHandler.constructRwLockArrayAssignment(loc, arg.getLrValue().getValue(), minusOne);
 		builder.addStatement(new AtomicStatement(loc, new Statement[] { checkUnlocked, lock }));
@@ -2317,11 +2317,19 @@ public class StandardFunctionHandler {
 		final ArrayAccessExpression mutexRead = ExpressionFactory.constructNestedArrayAccessExpression(loc,
 				mMemoryHandler.constructRwLockArrayIdentifierExpression(loc),
 				new Expression[] { arg.getLrValue().getValue() });
-		final Expression isPositive = ExpressionFactory.newBinaryExpression(loc, Operator.COMPGT, mutexRead, zero);
-		final Expression decrement =
-				ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMINUS, mutexRead, mExpressionTranslation
-						.constructLiteralForIntegerType(loc, new CPrimitive(CPrimitives.INT), BigInteger.ONE));
-		final Expression value = ExpressionFactory.constructIfThenElseExpression(loc, isPositive, decrement, zero);
+		final Expression isPositive =
+				mExpressionTranslation.constructBinaryComparisonIntegerExpression(loc,
+						IASTBinaryExpression.op_greaterThan, mutexRead, mMemoryHandler.getRwLockCounterType(),
+						mExpressionTranslation.constructLiteralForIntegerType(loc,
+								mMemoryHandler.getRwLockCounterType(), BigInteger.ZERO),
+						mMemoryHandler.getRwLockCounterType());
+		final Expression decrement = mExpressionTranslation.constructArithmeticIntegerExpression(loc,
+				IASTBinaryExpression.op_minus, mutexRead, mMemoryHandler.getRwLockCounterType(), mExpressionTranslation
+						.constructLiteralForIntegerType(loc, mMemoryHandler.getRwLockCounterType(), BigInteger.ONE),
+				mMemoryHandler.getRwLockCounterType());
+		final Expression value =
+				ExpressionFactory.constructIfThenElseExpression(loc, isPositive, decrement, mExpressionTranslation
+						.constructLiteralForIntegerType(loc, mMemoryHandler.getRwLockCounterType(), BigInteger.ZERO));
 		builder.addStatement(mMemoryHandler.constructRwLockArrayAssignment(loc, arg.getLrValue().getValue(), value));
 		return builder.setLrValue(new RValue(zero, new CPrimitive(CPrimitives.INT))).build();
 	}
