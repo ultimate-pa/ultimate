@@ -96,7 +96,7 @@ public class UltimateInterpolator extends WrapperScript {
 		mCountDeclaredFuns = 0;
 		mAssertStack = new LinkedList<ISmtCommand<Void>>();
 		mLastPush = new LinkedList<Triple<Integer, Pair<Integer, Integer>, Integer>>();
-		mCheckInterpolants = true;
+		mCheckInterpolants = false;
 	}
 
 	/**
