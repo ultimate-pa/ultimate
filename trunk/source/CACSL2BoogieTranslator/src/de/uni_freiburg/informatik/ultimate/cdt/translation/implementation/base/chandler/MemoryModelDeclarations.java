@@ -44,19 +44,7 @@ public enum MemoryModelDeclarations {
 
 	ULTIMATE_PTHREADS_MUTEX("#PthreadsMutex"),
 
-	ULTIMATE_PTHREADS_MUTEX_LOCK("#PthreadsMutexLock"),
-
-	ULTIMATE_PTHREADS_MUTEX_UNLOCK("#PthreadsMutexUnlock"),
-
-	ULTIMATE_PTHREADS_MUTEX_TRYLOCK("#PthreadsMutexTryLock"),
-
 	ULTIMATE_PTHREADS_RWLOCK("#PthreadsRwLock"),
-
-	ULTIMATE_PTHREADS_RWLOCK_READLOCK("#PthreadsRwLockReadLock"),
-
-	ULTIMATE_PTHREADS_RWLOCK_WRITELOCK("#PthreadsRwLockWriteLock"),
-
-	ULTIMATE_PTHREADS_RWLOCK_UNLOCK("#PthreadsRwLockUnlock"),
 
 	ULTIMATE_VALID(SFO.VALID),
 
@@ -105,12 +93,6 @@ public enum MemoryModelDeclarations {
 		} else if (this == MemoryModelDeclarations.ULTIMATE_ALLOC_STACK
 				|| this == MemoryModelDeclarations.ULTIMATE_ALLOC_HEAP) {
 			return allocRequirements(rmmf);
-		} else if (this == ULTIMATE_PTHREADS_MUTEX_LOCK || this == ULTIMATE_PTHREADS_MUTEX_UNLOCK
-				|| this == ULTIMATE_PTHREADS_MUTEX_TRYLOCK) {
-			return rmmf.require(ULTIMATE_PTHREADS_MUTEX);
-		} else if (this == ULTIMATE_PTHREADS_RWLOCK_READLOCK || this == ULTIMATE_PTHREADS_RWLOCK_WRITELOCK
-				|| this == ULTIMATE_PTHREADS_RWLOCK_UNLOCK) {
-			return rmmf.require(ULTIMATE_PTHREADS_RWLOCK);
 		} else {
 			return false;
 		}

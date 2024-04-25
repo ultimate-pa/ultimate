@@ -55,9 +55,11 @@ import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.Storage
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
@@ -2550,21 +2552,11 @@ public class StandardFunctionHandler {
 	 */
 	private Result handlePthread_cond_wait(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
-
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 2, name, arguments);
-
-		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
-
-		final ExpressionResult unlock = createPthread_mutex_unlock(main, loc, arguments[1]);
-		builder.addAllExceptLrValue(unlock);
-
-		final ExpressionResult lock = createPthread_mutex_lock(main, loc, arguments[1]);
-		builder.addAllExceptLrValue(lock);
-
-		builder.setLrValue(new RValue(
-				mTypeSizes.constructLiteralForIntegerType(loc, new CPrimitive(CPrimitives.INT), BigInteger.ZERO),
-				new CPrimitive(CPrimitives.INT)));
+		final ExpressionResultBuilder builder =
+				new ExpressionResultBuilder(handlePthread_mutex_lock(main, arguments[1], loc));
+		builder.addAllExceptLrValue(handlePthread_mutex_unlock(main, arguments[1], loc));
 		return builder.build();
 	}
 
@@ -2574,7 +2566,33 @@ public class StandardFunctionHandler {
 	 */
 	private Result handlePthread_mutex_lock(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
-		return handleLockCall(main, node, loc, name, mMemoryHandler::constructPthreadMutexLockCall);
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 1, name, arguments);
+		return handlePthread_mutex_lock(main, arguments[0], loc);
+	}
+
+	private void setSuccessRValue(final ILocation loc, final ExpressionResultBuilder builder) {
+		final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(loc,
+				new CPrimitive(CPrimitives.INT), BigInteger.ZERO);
+		builder.setLrValue(new RValue(zero, new CPrimitive(CPrimitives.INT)));
+	}
+
+	/**
+	 * We assume that the mutex type is PTHREAD_MUTEX_NORMAL which means that if we lock a mutex that that is already
+	 * locked, then the thread blocks.
+	 */
+	private ExpressionResult handlePthread_mutex_lock(final IDispatcher main, final IASTInitializerClause mutex,
+			final ILocation loc) {
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		final ExpressionResult arg = mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, mutex);
+		builder.addAllExceptLrValue(arg);
+		setSuccessRValue(loc, builder);
+		final AssumeStatement checkUnlocked =
+				new AssumeStatement(loc, mMemoryHandler.checkIfMutexIsUnlocked(loc, arg.getLrValue().getValue()));
+		final AssignmentStatement lock =
+				mMemoryHandler.constructMutexArrayAssignment(loc, arg.getLrValue().getValue(), true);
+		builder.addStatement(new AtomicStatement(loc, new Statement[] { checkUnlocked, lock }));
+		return builder.build();
 	}
 
 	/**
@@ -2583,71 +2601,124 @@ public class StandardFunctionHandler {
 	 * return value we follow what GCC did in my experiments. It produced code that returned 0 even if we unlocked a
 	 * non-locked mutex.
 	 */
-	private Result handlePthread_mutex_unlock(final IDispatcher main, final IASTFunctionCallExpression node,
-			final ILocation loc, final String name) {
-		return handleLockCall(main, node, loc, name, mMemoryHandler::constructPthreadMutexUnlockCall);
+	private ExpressionResult handlePthread_mutex_unlock(final IDispatcher main, final IASTInitializerClause mutex,
+			final ILocation loc) {
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		final ExpressionResult arg = mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, mutex);
+		final AssignmentStatement unlock =
+				mMemoryHandler.constructMutexArrayAssignment(loc, arg.getLrValue().getValue(), false);
+		setSuccessRValue(loc, builder);
+		return builder.addAllExceptLrValue(arg).addStatement(unlock).build();
 	}
 
+	private Result handlePthread_mutex_unlock(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 1, name, arguments);
+		return handlePthread_mutex_unlock(main, arguments[0], loc);
+	}
+
+	/**
+	 * We assume that the mutex type is PTHREAD_MUTEX_NORMAL which means that if we lock a mutex that that is already
+	 * locked, then the function returns an error (non-zero value).
+	 */
 	private Result handlePthread_mutex_trylock(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
-		return handleLockCall(main, node, loc, name, mMemoryHandler::constructPthreadMutexTryLockCall);
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 1, name, arguments);
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		final AuxVarInfo auxVar =
+				mAuxVarInfoBuilder.constructAuxVarInfo(loc, new CPrimitive(CPrimitives.INT), AUXVAR.RETURNED);
+		builder.addAuxVarWithDeclaration(auxVar);
+		final ExpressionResult arg =
+				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
+		builder.addAllExceptLrValue(arg);
+		final AssignmentStatement lock =
+				mMemoryHandler.constructMutexArrayAssignment(loc, arg.getLrValue().getValue(), true);
+		final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(loc,
+				new CPrimitive(CPrimitives.INT), BigInteger.ZERO);
+		final Statement ifStmt = StatementFactory.constructIfStatement(loc,
+				mMemoryHandler.checkIfMutexIsUnlocked(loc, arg.getLrValue().getValue()),
+				new Statement[] { lock,
+						StatementFactory.constructSingleAssignmentStatement(loc, auxVar.getLhs(), zero) },
+				new Statement[] {
+						new AssumeStatement(loc, new BinaryExpression(loc, Operator.COMPNEQ, auxVar.getExp(), zero)) });
+		builder.addStatement(new AtomicStatement(loc, new Statement[] { ifStmt }));
+		return builder.setLrValue(new RValue(auxVar.getExp(), new CPrimitive(CPrimitives.INT))).build();
 	}
 
 	private Result handlePthread_rwlock_rdlock(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
-		return handleLockCall(main, node, loc, name, mMemoryHandler::constructPthreadRwLockReadLockCall);
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 1, name, arguments);
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		final ExpressionResult arg =
+				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
+		builder.addAllExceptLrValue(arg);
+		setSuccessRValue(loc, builder);
+		final ArrayAccessExpression lockRead = ExpressionFactory.constructNestedArrayAccessExpression(loc,
+				mMemoryHandler.constructRwLockArrayIdentifierExpression(loc),
+				new Expression[] { arg.getLrValue().getValue() });
+		final CPrimitive lockType = mMemoryHandler.getRwLockCounterType();
+		final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(loc, lockType, BigInteger.ZERO);
+		final AssumeStatement assumeNonNegative =
+				new AssumeStatement(loc, mExpressionTranslation.constructBinaryComparisonIntegerExpression(loc,
+						IASTBinaryExpression.op_greaterEqual, lockRead, lockType, zero, lockType));
+		final Expression increment = mExpressionTranslation.constructArithmeticIntegerExpression(loc,
+				IASTBinaryExpression.op_plus, lockRead, lockType,
+				mExpressionTranslation.constructLiteralForIntegerType(loc, lockType, BigInteger.ONE), lockType);
+		final AssignmentStatement lock =
+				mMemoryHandler.constructRwLockArrayAssignment(loc, arg.getLrValue().getValue(), increment);
+		builder.addStatement(new AtomicStatement(loc, new Statement[] { assumeNonNegative, lock }));
+		return builder.build();
 	}
 
 	private Result handlePthread_rwlock_wrlock(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
-		return handleLockCall(main, node, loc, name, mMemoryHandler::constructPthreadRwLockWriteLockCall);
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 1, name, arguments);
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		final ExpressionResult arg =
+				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
+		builder.addAllExceptLrValue(arg);
+		setSuccessRValue(loc, builder);
+		final ArrayAccessExpression lockRead = ExpressionFactory.constructNestedArrayAccessExpression(loc,
+				mMemoryHandler.constructRwLockArrayIdentifierExpression(loc),
+				new Expression[] { arg.getLrValue().getValue() });
+		final CPrimitive lockType = mMemoryHandler.getRwLockCounterType();
+		final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(loc, lockType, BigInteger.ZERO);
+		final AssumeStatement assumeEqualsZero =
+				new AssumeStatement(loc, ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, lockRead, zero));
+		final Expression minusOne =
+				mExpressionTranslation.constructLiteralForIntegerType(loc, lockType, BigInteger.ONE.negate());
+		final AssignmentStatement lock =
+				mMemoryHandler.constructRwLockArrayAssignment(loc, arg.getLrValue().getValue(), minusOne);
+		builder.addStatement(new AtomicStatement(loc, new Statement[] { assumeEqualsZero, lock }));
+		return builder.build();
 	}
 
 	private Result handlePthread_rwlock_unlock(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
-		return handleLockCall(main, node, loc, name, mMemoryHandler::constructPthreadRwLockUnlockCall);
-	}
-
-	private ExpressionResult createPthread_mutex_lock(final IDispatcher main, final ILocation loc,
-			final IASTInitializerClause mutex) {
-		return handleLockCall(main, loc, "pthread_mutex_lock", mutex, mMemoryHandler::constructPthreadMutexLockCall);
-	}
-
-	private ExpressionResult createPthread_mutex_unlock(final IDispatcher main, final ILocation loc,
-			final IASTInitializerClause mutex) {
-		return handleLockCall(main, loc, "pthread_mutex_unlock", mutex,
-				mMemoryHandler::constructPthreadMutexUnlockCall);
-	}
-
-	private ExpressionResult handleLockCall(final IDispatcher main, final IASTFunctionCallExpression node,
-			final ILocation loc, final String name, final ILockCallFactory callFactory) {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 1, name, arguments);
-		final IASTInitializerClause lock = arguments[0];
-
-		return handleLockCall(main, loc, name, lock, callFactory);
-	}
-
-	private ExpressionResult handleLockCall(final IDispatcher main, final ILocation loc, final String name,
-			final IASTInitializerClause lock, final ILockCallFactory callFactory) {
-		final ExpressionResultBuilder erb = new ExpressionResultBuilder();
-
-		final ExpressionResult arg = mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, lock);
-		final Expression index = arg.getLrValue().getValue();
-		erb.addAllExceptLrValue(arg);
-
-		// auxvar for procedure's return value
-		final CType cType = new CPrimitive(CPrimitives.INT);
-		final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, cType, SFO.AUXVAR.RETURNED);
-		erb.addAuxVarWithDeclaration(auxvarinfo);
-
-		erb.addStatement(callFactory.apply(loc, index, auxvarinfo.getLhs()));
-		erb.setLrValue(new RValue(auxvarinfo.getExp(), new CPrimitive(CPrimitives.INT)));
-		return erb.build();
-	}
-
-	private interface ILockCallFactory {
-		Statement apply(ILocation loc, Expression index, VariableLHS lhs);
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		final ExpressionResult arg =
+				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
+		builder.addAllExceptLrValue(arg);
+		setSuccessRValue(loc, builder);
+		final ArrayAccessExpression mutexRead = ExpressionFactory.constructNestedArrayAccessExpression(loc,
+				mMemoryHandler.constructRwLockArrayIdentifierExpression(loc),
+				new Expression[] { arg.getLrValue().getValue() });
+		final CPrimitive lockType = mMemoryHandler.getRwLockCounterType();
+		final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(loc, lockType, BigInteger.ZERO);
+		final Expression isPositive = mExpressionTranslation.constructBinaryComparisonIntegerExpression(loc,
+				IASTBinaryExpression.op_greaterThan, mutexRead, lockType, zero, lockType);
+		final Expression decrement = mExpressionTranslation.constructArithmeticIntegerExpression(loc,
+				IASTBinaryExpression.op_minus, mutexRead, lockType,
+				mExpressionTranslation.constructLiteralForIntegerType(loc, lockType, BigInteger.ONE), lockType);
+		final Expression value = ExpressionFactory.constructIfThenElseExpression(loc, isPositive, decrement, zero);
+		builder.addStatement(mMemoryHandler.constructRwLockArrayAssignment(loc, arg.getLrValue().getValue(), value));
+		return builder.build();
 	}
 
 	private Result handlePthread_mutex_init(final IDispatcher main, final IASTFunctionCallExpression node,
@@ -2668,16 +2739,13 @@ public class StandardFunctionHandler {
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
 
-		final CPrimitive returnType = new CPrimitive(CPrimitives.INT);
 		// we assume that function is always successful and returns 0
-		final BigInteger value = BigInteger.ZERO;
 		final Expression index = arg1.getLrValue().getValue();
 		final AssignmentStatement unlockMutex = mMemoryHandler.constructMutexArrayAssignment(loc, index, false);
 		final ExpressionResultBuilder erb = new ExpressionResultBuilder();
 		erb.addAllExceptLrValue(arg1);
 		erb.addStatement(unlockMutex);
-		erb.setLrValue(new RValue(mTypeSizes.constructLiteralForIntegerType(loc, returnType, value),
-				new CPrimitive(CPrimitives.INT)));
+		setSuccessRValue(loc, erb);
 		return erb.build();
 	}
 
