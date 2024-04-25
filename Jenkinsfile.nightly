@@ -19,7 +19,7 @@ pipeline {
   }
   options {
     skipDefaultCheckout()
-    timeout(time: 10, unit: 'HOURS')
+    timeout(time: 12, unit: 'HOURS')
     timestamps()
   }
   environment {
