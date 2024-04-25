@@ -42,7 +42,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -61,7 +60,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
@@ -432,38 +430,8 @@ public class MemoryHandler {
 		}
 
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations()
-				.contains(MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX_LOCK)) {
-			decl.addAll(declarePthreadMutexLock(main, mTypeHandler, tuLoc));
-		}
-
-		if (mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations()
-				.contains(MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX_UNLOCK)) {
-			decl.addAll(declarePthreadMutexUnlock(main, mTypeHandler, tuLoc));
-		}
-
-		if (mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations()
-				.contains(MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX_TRYLOCK)) {
-			decl.addAll(declarePthreadMutexTryLock(main, mTypeHandler, tuLoc));
-		}
-
-		if (mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations()
 				.contains(MemoryModelDeclarations.ULTIMATE_PTHREADS_RWLOCK)) {
 			decl.add(declarePthreadRwLock(tuLoc));
-		}
-
-		if (mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations()
-				.contains(MemoryModelDeclarations.ULTIMATE_PTHREADS_RWLOCK_READLOCK)) {
-			decl.addAll(declarePthreadRwLockReadLock(main, mTypeHandler, tuLoc));
-		}
-
-		if (mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations()
-				.contains(MemoryModelDeclarations.ULTIMATE_PTHREADS_RWLOCK_WRITELOCK)) {
-			decl.addAll(declarePthreadRwLockWriteLock(main, mTypeHandler, tuLoc));
-		}
-
-		if (mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations()
-				.contains(MemoryModelDeclarations.ULTIMATE_PTHREADS_RWLOCK_UNLOCK)) {
-			decl.addAll(declarePthreadRwLockUnlock(main, mTypeHandler, tuLoc));
 		}
 
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations()
@@ -486,47 +454,6 @@ public class MemoryHandler {
 	public CallStatement constructUltimateMemsetCall(final ILocation loc, final Expression pointer,
 			final Expression value, final Expression amount, final VariableLHS resVar) {
 		return constructCall(MemoryModelDeclarations.C_MEMSET, loc, resVar, pointer, value, amount);
-	}
-
-	// calls to functions for locks should be atomic, for sound data race detection
-	private static AtomicStatement makeAtomic(final ILocation loc, final Statement statement) {
-		return new AtomicStatement(loc, new Statement[] { statement });
-	}
-
-	public Statement constructPthreadMutexLockCall(final ILocation loc, final Expression pointer,
-			final VariableLHS variableLHS) {
-		return makeAtomic(loc,
-				constructCall(MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX_LOCK, loc, variableLHS, pointer));
-	}
-
-	public Statement constructPthreadMutexUnlockCall(final ILocation loc, final Expression pointer,
-			final VariableLHS variableLHS) {
-		return makeAtomic(loc,
-				constructCall(MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX_UNLOCK, loc, variableLHS, pointer));
-	}
-
-	public Statement constructPthreadMutexTryLockCall(final ILocation loc, final Expression pointer,
-			final VariableLHS variableLHS) {
-		return makeAtomic(loc,
-				constructCall(MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX_TRYLOCK, loc, variableLHS, pointer));
-	}
-
-	public Statement constructPthreadRwLockReadLockCall(final ILocation loc, final Expression pointer,
-			final VariableLHS variableLHS) {
-		return makeAtomic(loc,
-				constructCall(MemoryModelDeclarations.ULTIMATE_PTHREADS_RWLOCK_READLOCK, loc, variableLHS, pointer));
-	}
-
-	public Statement constructPthreadRwLockWriteLockCall(final ILocation loc, final Expression pointer,
-			final VariableLHS variableLHS) {
-		return makeAtomic(loc,
-				constructCall(MemoryModelDeclarations.ULTIMATE_PTHREADS_RWLOCK_WRITELOCK, loc, variableLHS, pointer));
-	}
-
-	public Statement constructPthreadRwLockUnlockCall(final ILocation loc, final Expression pointer,
-			final VariableLHS variableLHS) {
-		return makeAtomic(loc,
-				constructCall(MemoryModelDeclarations.ULTIMATE_PTHREADS_RWLOCK_UNLOCK, loc, variableLHS, pointer));
 	}
 
 	private CallStatement constructCall(final MemoryModelDeclarations decl, final ILocation loc,
@@ -1063,6 +990,15 @@ public class MemoryHandler {
 						new DeclarationInformation(StorageClass.GLOBAL, null)),
 				getBooleanArrayHelper().constructValue(mutexLocked));
 		return as;
+	}
+
+	public AssignmentStatement constructRwLockArrayAssignment(final ILocation loc, final Expression index,
+			final Expression rhs) {
+		final BoogieArrayType boogieType =
+				BoogieType.createArrayType(0, new BoogieType[] { mTypeHandler.getBoogiePointerType() },
+						mTypeHandler.getBoogieTypeForCType(getRwLockCounterType()));
+		return MemoryHandler.constructOneDimensionalArrayUpdate(loc, index, new VariableLHS(loc, boogieType,
+				SFO.ULTIMATE_PTHREADS_RWLOCK, new DeclarationInformation(StorageClass.GLOBAL, null)), rhs);
 	}
 
 	public Expression constructRwLockArrayIdentifierExpression(final ILocation loc) {
@@ -2752,256 +2688,6 @@ public class MemoryHandler {
 		}
 		// construct empty mmdi
 		return new MemoryModelDeclarationInfo(mmd);
-	}
-
-	/**
-	 * We assume that the mutex type is PTHREAD_MUTEX_NORMAL which means that if we lock a mutex that that is already
-	 * locked, then the thread blocks.
-	 */
-	private ArrayList<Declaration> declarePthreadMutexLock(final CHandler main, final ITypeHandler typeHandler,
-			final ILocation tuLoc) {
-		final Expression mutexArray = constructMutexArrayIdentifierExpression(tuLoc);
-		final Expression bLTrue = mBooleanArrayHelper.constructTrue();
-
-		declareProcedureWithPointerParam(main, typeHandler, tuLoc,
-				MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX_LOCK.getName(), (inputPtr, res) -> new Specification[] {
-						// old(#PthreadsMutex)[#ptr] == false
-						mProcedureManager.constructEnsuresSpecification(tuLoc, true,
-								constructOldMutexUnlockedCheckExpression(tuLoc, inputPtr), Collections.emptySet()),
-						// #PthreadsMutex == old(#PthreadsMutex)[#ptr := true]
-						mProcedureManager.constructEnsuresSpecification(tuLoc, true,
-								ensuresArrayUpdate(tuLoc, bLTrue, inputPtr, mutexArray),
-								Collections
-										.singleton((VariableLHS) CTranslationUtil.convertExpressionToLHS(mutexArray))),
-						// we assume that function is always successful and returns 0
-						ensuresSuccess(tuLoc, res) });
-
-		return new ArrayList<>();
-	}
-
-	/**
-	 * We assume that the mutex type is PTHREAD_MUTEX_NORMAL which means that if we unlock a mutex that has never been
-	 * locked, the behavior is undefined. We use a semantics where unlocking a non-locked mutex is a no-op.
-	 *
-	 * For the return value we follow what GCC did in my experiments. It produced code that returned 0 even if we
-	 * unlocked a non-locked mutex.
-	 */
-	private ArrayList<Declaration> declarePthreadMutexUnlock(final CHandler main, final ITypeHandler typeHandler,
-			final ILocation tuLoc) {
-		final Expression mutexArray = constructMutexArrayIdentifierExpression(tuLoc);
-		final Expression bLFalse = mBooleanArrayHelper.constructFalse();
-
-		declareProcedureWithPointerParam(main, typeHandler, tuLoc,
-				MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX_UNLOCK.getName(), (inputPtr,
-						res) -> new Specification[] {
-								// #PthreadsMutex == old(#PthreadsMutex)[#ptr := false]
-								mProcedureManager.constructEnsuresSpecification(tuLoc, true,
-										ensuresArrayUpdate(tuLoc, bLFalse, inputPtr, mutexArray),
-										Collections.singleton(
-												(VariableLHS) CTranslationUtil.convertExpressionToLHS(mutexArray))),
-								// we assume that function is always successful and returns 0
-								ensuresSuccess(tuLoc, res) });
-
-		return new ArrayList<>();
-	}
-
-	/**
-	 * We assume that the mutex type is PTHREAD_MUTEX_NORMAL which means that if we lock a mutex that that is already
-	 * locked, then the function returns an error (non-zero value).
-	 */
-	private ArrayList<Declaration> declarePthreadMutexTryLock(final CHandler main, final ITypeHandler typeHandler,
-			final ILocation tuLoc) {
-		final Expression zero =
-				mTypeSizes.constructLiteralForIntegerType(tuLoc, new CPrimitive(CPrimitives.INT), BigInteger.ZERO);
-
-		final Expression mutexArray = constructMutexArrayIdentifierExpression(tuLoc);
-		final Expression bLTrue = mBooleanArrayHelper.constructTrue();
-
-		declareProcedureWithPointerParam(main, typeHandler, tuLoc,
-				MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX_TRYLOCK.getName(), (inputPtr, res) -> {
-					// condition: if mutex unlocked
-					final Expression unlocked = constructOldMutexUnlockedCheckExpression(tuLoc, inputPtr);
-
-					// then case: lock the mutex, return 0 (success)
-					final Expression lockUpdate = ensuresArrayUpdate(tuLoc, bLTrue, inputPtr, mutexArray);
-					final Expression successResult =
-							ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ, res, zero);
-
-					// else case: mutex unchanged, return non-zero error value
-					final Expression lockUnchanged =
-							ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ, mutexArray, ExpressionFactory
-									.constructUnaryExpression(tuLoc, UnaryExpression.Operator.OLD, mutexArray));
-					final Expression errorResult = ExpressionFactory.constructUnaryExpression(tuLoc,
-							UnaryExpression.Operator.LOGICNEG, successResult);
-
-					return new Specification[] { mProcedureManager.constructEnsuresSpecification(tuLoc, true,
-							ExpressionFactory.constructIfThenElseExpression(tuLoc, unlocked,
-									ExpressionFactory.and(tuLoc, List.of(lockUpdate, successResult)),
-									ExpressionFactory.and(tuLoc, List.of(lockUnchanged, errorResult))),
-							Collections.singleton((VariableLHS) CTranslationUtil.convertExpressionToLHS(mutexArray))) };
-				});
-		return new ArrayList<>();
-	}
-
-	private ArrayList<Declaration> declarePthreadRwLockReadLock(final CHandler main, final ITypeHandler typeHandler,
-			final ILocation tuLoc) {
-		final Expression rwLockArray = constructRwLockArrayIdentifierExpression(tuLoc);
-
-		declareProcedureWithPointerParam(main, typeHandler, tuLoc,
-				MemoryModelDeclarations.ULTIMATE_PTHREADS_RWLOCK_READLOCK.getName(),
-				(inputPtr, res) -> new Specification[] {
-						// old(#pthreadsRwLock)[#ptr] >= 0
-						mProcedureManager.constructEnsuresSpecification(tuLoc, true,
-								constructOldRwLockComparisonExpression(tuLoc, inputPtr,
-										IASTBinaryExpression.op_greaterEqual),
-								Collections.emptySet()),
-						// #pthreadsRwLock == old(#pthreadsRwLock)[#ptr := old(#pthreadsRwLock)[#ptr]+1]
-						mProcedureManager.constructEnsuresSpecification(tuLoc, true,
-								constructRwLockReadLockUpdate(tuLoc, inputPtr),
-								Collections
-										.singleton((VariableLHS) CTranslationUtil.convertExpressionToLHS(rwLockArray))),
-						// we assume that function is always successful and returns 0
-						ensuresSuccess(tuLoc, res) });
-		return new ArrayList<>();
-	}
-
-	private ArrayList<Declaration> declarePthreadRwLockWriteLock(final CHandler main, final ITypeHandler typeHandler,
-			final ILocation tuLoc) {
-		final Expression rwLockArray = constructRwLockArrayIdentifierExpression(tuLoc);
-
-		declareProcedureWithPointerParam(main, typeHandler, tuLoc,
-				MemoryModelDeclarations.ULTIMATE_PTHREADS_RWLOCK_WRITELOCK.getName(), (inputPtr,
-						res) -> new Specification[] {
-								// old(#pthreadsRwLock)[#ptr] == 0
-								mProcedureManager.constructEnsuresSpecification(tuLoc, true,
-										constructOldRwLockComparisonExpression(tuLoc, inputPtr,
-												IASTBinaryExpression.op_equals),
-										Collections.emptySet()),
-								// #pthreadsRwLock == old(#pthreadsRwLock)[#ptr := -1]
-								mProcedureManager.constructEnsuresSpecification(tuLoc, true,
-										constructRwLockWriteLockUpdate(tuLoc, inputPtr),
-										Collections.singleton(
-												(VariableLHS) CTranslationUtil.convertExpressionToLHS(rwLockArray))),
-								// we assume that function is always successful and returns 0
-								ensuresSuccess(tuLoc, res) });
-		return new ArrayList<>();
-	}
-
-	private ArrayList<Declaration> declarePthreadRwLockUnlock(final CHandler main, final ITypeHandler typeHandler,
-			final ILocation tuLoc) {
-		final Expression rwLockArray = constructRwLockArrayIdentifierExpression(tuLoc);
-		final Expression zero =
-				mTypeSizes.constructLiteralForIntegerType(tuLoc, getRwLockCounterType(), BigInteger.ZERO);
-
-		declareProcedureWithPointerParam(main, typeHandler, tuLoc,
-				MemoryModelDeclarations.ULTIMATE_PTHREADS_RWLOCK_UNLOCK.getName(), (inputPtr, res) -> {
-					final Expression oldLockCounter =
-							ExpressionFactory
-									.constructNestedArrayAccessExpression(tuLoc,
-											ExpressionFactory.constructUnaryExpression(tuLoc,
-													UnaryExpression.Operator.OLD, rwLockArray),
-											new Expression[] { inputPtr });
-					final Expression newLockCounter =
-							mExpressionTranslation
-									.constructArithmeticExpression(tuLoc, IASTBinaryExpression.op_minus, oldLockCounter,
-											getRwLockCounterType(), mTypeSizes.constructLiteralForIntegerType(tuLoc,
-													getRwLockCounterType(), BigInteger.valueOf(1L)),
-											getRwLockCounterType());
-					return new Specification[] {
-							// #pthreadsRwLock == old(#pthreadsRwLock)[#ptr := if old(#pthreadsRwLock)[#ptr] > 0 then
-							// old(#pthreadsRwLock)[#ptr] - 1 else 0]
-							mProcedureManager.constructEnsuresSpecification(tuLoc, true,
-									ensuresArrayUpdate(tuLoc,
-											ExpressionFactory.constructIfThenElseExpression(tuLoc,
-													constructOldRwLockComparisonExpression(tuLoc, inputPtr,
-															IASTBinaryExpression.op_greaterThan),
-													newLockCounter, zero),
-											inputPtr, rwLockArray),
-									Collections.emptySet()),
-							// we assume that function is always successful and returns 0
-							ensuresSuccess(tuLoc, res) };
-				});
-		return new ArrayList<>();
-	}
-
-	// #pthreadsRwLock == old(#pthreadsRwLock)[#ptr := old(#pthreadsRwLock)[#ptr]+1]
-	private Expression constructRwLockReadLockUpdate(final ILocation tuLoc, final Expression inputPtr) {
-		final Expression rwLockArray = constructRwLockArrayIdentifierExpression(tuLoc);
-		final Expression oldLockCounter = ExpressionFactory.constructNestedArrayAccessExpression(tuLoc,
-				ExpressionFactory.constructUnaryExpression(tuLoc, UnaryExpression.Operator.OLD, rwLockArray),
-				new Expression[] { inputPtr });
-		final Expression newLockCounter = mExpressionTranslation.constructArithmeticExpression(tuLoc,
-				IASTBinaryExpression.op_plus, oldLockCounter, getRwLockCounterType(),
-				mTypeSizes.constructLiteralForIntegerType(tuLoc, getRwLockCounterType(), BigInteger.valueOf(1L)),
-				getRwLockCounterType());
-		return ensuresArrayUpdate(tuLoc, newLockCounter, inputPtr, rwLockArray);
-	}
-
-	// #pthreadsRwLock == old(#pthreadsRwLock)[#ptr := -1]
-	private Expression constructRwLockWriteLockUpdate(final ILocation tuLoc, final Expression inputPtr) {
-		final Expression rwLockArray = constructRwLockArrayIdentifierExpression(tuLoc);
-		final Expression newLockCounter =
-				mTypeSizes.constructLiteralForIntegerType(tuLoc, getRwLockCounterType(), BigInteger.valueOf(-1L));
-		return ensuresArrayUpdate(tuLoc, newLockCounter, inputPtr, rwLockArray);
-	}
-
-	// ensures (#res == 0)
-	private EnsuresSpecification ensuresSuccess(final ILocation loc, final Expression res) {
-		final Expression zero =
-				mTypeSizes.constructLiteralForIntegerType(loc, new CPrimitive(CPrimitives.INT), BigInteger.ZERO);
-		return mProcedureManager.constructEnsuresSpecification(loc, true,
-				ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, res, zero), Collections.emptySet());
-	}
-
-	// old(#PthreadsMutex)[#inputPtr] == false
-	private Expression constructOldMutexUnlockedCheckExpression(final ILocation loc, final Expression inputPtr) {
-		final Expression mutexArray = constructMutexArrayIdentifierExpression(loc);
-		final Expression bLFalse = mBooleanArrayHelper.constructFalse();
-
-		return ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ,
-				ExpressionFactory.constructNestedArrayAccessExpression(loc,
-						ExpressionFactory.constructUnaryExpression(loc, UnaryExpression.Operator.OLD, mutexArray),
-						new Expression[] { inputPtr }),
-				bLFalse);
-	}
-
-	// old(#pthreadsRwLock)[#inputPtr] >= 0
-	private Expression constructOldRwLockComparisonExpression(final ILocation loc, final Expression inputPtr,
-			final int op) {
-		final Expression rwLockArray = constructRwLockArrayIdentifierExpression(loc);
-		final Expression lockCounter = ExpressionFactory.constructNestedArrayAccessExpression(loc,
-				ExpressionFactory.constructUnaryExpression(loc, UnaryExpression.Operator.OLD, rwLockArray),
-				new Expression[] { inputPtr });
-		final Expression zero = mExpressionTranslation.constructZero(loc, getRwLockCounterType());
-		return mExpressionTranslation.constructBinaryComparisonExpression(loc, op, lockCounter, getRwLockCounterType(),
-				zero, getRwLockCounterType());
-	}
-
-	private void declareProcedureWithPointerParam(final CHandler main, final ITypeHandler typeHandler,
-			final ILocation tuLoc, final String name,
-			final BiFunction<Expression, Expression, Specification[]> getSpecs) {
-		final String inputPointerIdentifier = "#inputPtr";
-		final ASTType inputPointerAstType =
-				typeHandler.cType2AstType(tuLoc, new CPointer(new CPrimitive(CPrimitives.VOID)));
-		final String resultIdentifier = SFO.RES;
-		final CType resultCType = new CPrimitive(CPrimitives.INT);
-		final ASTType resultAstType = typeHandler.cType2AstType(tuLoc, resultCType);
-		final BoogieType resultBoogieType = typeHandler.getBoogieTypeForCType(resultCType);
-
-		final Expression inputPointerExpression =
-				ExpressionFactory.constructIdentifierExpression(tuLoc, mTypeHandler.getBoogiePointerType(),
-						inputPointerIdentifier, new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, name));
-		final Expression resultIdentifierExpression = ExpressionFactory.constructIdentifierExpression(tuLoc,
-				resultBoogieType, resultIdentifier, new DeclarationInformation(StorageClass.PROC_FUNC_OUTPARAM, name));
-
-		final Procedure procDecl = new Procedure(tuLoc, new Attribute[0], name, new String[0],
-				new VarList[] { new VarList(tuLoc, new String[] { inputPointerIdentifier }, inputPointerAstType) },
-				new VarList[] { new VarList(tuLoc, new String[] { resultIdentifier }, resultAstType) },
-				new Specification[0], null);
-		mProcedureManager.beginCustomProcedure(main, tuLoc, name, procDecl);
-		mProcedureManager.addSpecificationsToCurrentProcedure(
-				Arrays.asList(getSpecs.apply(inputPointerExpression, resultIdentifierExpression)));
-		mProcedureManager.endCustomProcedure(main, name);
 	}
 
 	/**
