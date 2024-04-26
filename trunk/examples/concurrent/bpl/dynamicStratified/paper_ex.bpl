@@ -84,4 +84,5 @@ modifies B, z;
 	z := z + 1;
     }
   }
+  assert z >= 0;
 }
