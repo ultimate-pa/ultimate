@@ -128,6 +128,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.CheckMode;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -2185,28 +2186,38 @@ public class StandardFunctionHandler {
 		builder.setLrValue(new RValue(zero, new CPrimitive(CPrimitives.INT)));
 	}
 
-	private AssignmentStatement constructMutexArrayAssignment(final ILocation loc, final Expression index,
-			final boolean locked) {
+	private ExpressionResult constructMutexArrayAssignment(final IDispatcher main, final ILocation loc,
+			final IASTInitializerClause mutex, final boolean locked) {
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		final ExpressionResult arg = mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, mutex);
+		builder.addAllExceptLrValue(arg);
+		mMemoryHandler.requireMemoryModelFeature(MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX);
 		final BoogieArrayType boogieType = BoogieType.createArrayType(0,
 				new BoogieType[] { mTypeHandler.getBoogiePointerType() },
 				(BoogieType) mMemoryHandler.getBooleanArrayHelper().constructBoolReplacementType().getBoogieType());
-		return MemoryHandler.constructOneDimensionalArrayUpdate(loc, index,
+		builder.addStatement(MemoryHandler.constructOneDimensionalArrayUpdate(loc, arg.getLrValue().getValue(),
 				new VariableLHS(loc, boogieType, SFO.ULTIMATE_PTHREADS_MUTEX,
 						new DeclarationInformation(StorageClass.GLOBAL, null)),
-				mMemoryHandler.getBooleanArrayHelper().constructValue(locked));
+				mMemoryHandler.getBooleanArrayHelper().constructValue(locked)));
+		return builder.build();
 	}
 
-	private Expression checkIfMutexIsUnlocked(final ILocation loc, final Expression mutex) {
+	private ExpressionResult checkIfMutexIsUnlocked(final IDispatcher main, final ILocation loc,
+			final IASTInitializerClause mutex) {
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		final ExpressionResult arg = mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, mutex);
+		builder.addAllExceptLrValue(arg);
 		mMemoryHandler.requireMemoryModelFeature(MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX);
 		final BoogieArrayType boogieType = BoogieType.createArrayType(0,
 				new BoogieType[] { mTypeHandler.getBoogiePointerType() },
 				(BoogieType) mMemoryHandler.getBooleanArrayHelper().constructBoolReplacementType().getBoogieType());
 		final Expression mutexArray = ExpressionFactory.constructIdentifierExpression(loc, boogieType,
 				SFO.ULTIMATE_PTHREADS_MUTEX, new DeclarationInformation(StorageClass.GLOBAL, null));
-		final ArrayAccessExpression mutexRead =
-				ExpressionFactory.constructNestedArrayAccessExpression(loc, mutexArray, new Expression[] { mutex });
-		return ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, mutexRead,
-				mMemoryHandler.getBooleanArrayHelper().constructFalse());
+		final ArrayAccessExpression mutexRead = ExpressionFactory.constructNestedArrayAccessExpression(loc, mutexArray,
+				new Expression[] { arg.getLrValue().getValue() });
+		builder.setLrValue(new RValue(ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, mutexRead,
+				mMemoryHandler.getBooleanArrayHelper().constructFalse()), new CPrimitive(CPrimitives.INT)));
+		return builder.build();
 	}
 
 	/**
@@ -2216,13 +2227,12 @@ public class StandardFunctionHandler {
 	private ExpressionResult handlePthread_mutex_lock(final IDispatcher main, final IASTInitializerClause mutex,
 			final ILocation loc) {
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
-		final ExpressionResult arg = mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, mutex);
-		builder.addAllExceptLrValue(arg);
 		setSuccessRValue(loc, builder);
-		final AssumeStatement checkUnlocked =
-				new AssumeStatement(loc, checkIfMutexIsUnlocked(loc, arg.getLrValue().getValue()));
-		final AssignmentStatement lock = constructMutexArrayAssignment(loc, arg.getLrValue().getValue(), true);
-		builder.addStatement(new AtomicStatement(loc, new Statement[] { checkUnlocked, lock }));
+		final ExpressionResult check = checkIfMutexIsUnlocked(main, loc, mutex);
+		builder.addAllExceptLrValue(check);
+		builder.addStatement(new AssumeStatement(loc, check.getLrValue().getValue()));
+		builder.addAllExceptLrValue(constructMutexArrayAssignment(main, loc, mutex, true));
+		builder.resetStatements(List.of(new AtomicStatement(loc, builder.getStatements().toArray(Statement[]::new))));
 		return builder.build();
 	}
 
@@ -2234,11 +2244,11 @@ public class StandardFunctionHandler {
 	 */
 	private ExpressionResult handlePthread_mutex_unlock(final IDispatcher main, final IASTInitializerClause mutex,
 			final ILocation loc) {
-		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
-		final ExpressionResult arg = mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, mutex);
-		final AssignmentStatement unlock = constructMutexArrayAssignment(loc, arg.getLrValue().getValue(), false);
+		final ExpressionResultBuilder builder =
+				new ExpressionResultBuilder(constructMutexArrayAssignment(main, loc, mutex, false));
 		setSuccessRValue(loc, builder);
-		return builder.addAllExceptLrValue(arg).addStatement(unlock).build();
+		builder.resetStatements(List.of(new AtomicStatement(loc, builder.getStatements().toArray(Statement[]::new))));
+		return builder.build();
 	}
 
 	private Result handlePthread_mutex_unlock(final IDispatcher main, final IASTFunctionCallExpression node,
@@ -2260,17 +2270,16 @@ public class StandardFunctionHandler {
 		final AuxVarInfo auxVar =
 				mAuxVarInfoBuilder.constructAuxVarInfo(loc, new CPrimitive(CPrimitives.INT), AUXVAR.RETURNED);
 		builder.addAuxVarWithDeclaration(auxVar);
-		final ExpressionResult arg =
-				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
-		builder.addAllExceptLrValue(arg);
-		final AssignmentStatement lock = constructMutexArrayAssignment(loc, arg.getLrValue().getValue(), true);
+		final ExpressionResult lock = constructMutexArrayAssignment(main, loc, arguments[0], true);
+		builder.addAllExceptLrValueAndStatements(lock);
 		final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(loc,
 				new CPrimitive(CPrimitives.INT), BigInteger.ZERO);
-		final Statement ifStmt = StatementFactory.constructIfStatement(loc,
-				checkIfMutexIsUnlocked(loc, arg.getLrValue().getValue()),
-				new Statement[] { lock,
-						StatementFactory.constructSingleAssignmentStatement(loc, auxVar.getLhs(), zero) },
-				new Statement[] {
+		final Statement[] lockStatements = DataStructureUtils.concat(lock.getStatements().toArray(Statement[]::new),
+				new Statement[] { StatementFactory.constructSingleAssignmentStatement(loc, auxVar.getLhs(), zero) });
+		final ExpressionResult check = checkIfMutexIsUnlocked(main, loc, arguments[0]);
+		builder.addAllExceptLrValue(check);
+		final Statement ifStmt = StatementFactory.constructIfStatement(loc, check.getLrValue().getValue(),
+				lockStatements, new Statement[] {
 						new AssumeStatement(loc, new BinaryExpression(loc, Operator.COMPNEQ, auxVar.getExp(), zero)) });
 		builder.addStatement(new AtomicStatement(loc, new Statement[] { ifStmt }));
 		return builder.setLrValue(new RValue(auxVar.getExp(), new CPrimitive(CPrimitives.INT))).build();
@@ -2370,8 +2379,6 @@ public class StandardFunctionHandler {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 2, name, arguments);
 
-		final ExpressionResult arg1 =
-				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
 		final ExpressionResult arg2 =
 				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[1]);
 		final boolean isNullPointerLiteral = mMemoryHandler.isNullPointerLiteral(arg2.getLrValue().getValue());
@@ -2381,12 +2388,9 @@ public class StandardFunctionHandler {
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
 
-		// we assume that function is always successful and returns 0
-		final Expression index = arg1.getLrValue().getValue();
-		final AssignmentStatement unlockMutex = constructMutexArrayAssignment(loc, index, false);
-		final ExpressionResultBuilder erb = new ExpressionResultBuilder();
-		erb.addAllExceptLrValue(arg1);
-		erb.addStatement(unlockMutex);
+		// we assume that function is always successful and returns 0 ;
+		final ExpressionResultBuilder erb =
+				new ExpressionResultBuilder(constructMutexArrayAssignment(main, loc, arguments[0], false));
 		setSuccessRValue(loc, erb);
 		return erb.build();
 	}
