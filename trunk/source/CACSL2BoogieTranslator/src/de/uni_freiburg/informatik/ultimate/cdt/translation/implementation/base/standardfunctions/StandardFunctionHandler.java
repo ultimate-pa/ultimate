@@ -74,6 +74,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ReturnStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StringLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.StructAccessExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
@@ -2186,11 +2188,29 @@ public class StandardFunctionHandler {
 		builder.setLrValue(new RValue(zero, new CPrimitive(CPrimitives.INT)));
 	}
 
+	private static boolean isAdressofOperator(final IASTNode node) {
+		return node instanceof IASTUnaryExpression
+				&& ((IASTUnaryExpression) node).getOperator() == IASTUnaryExpression.op_amper;
+	}
+
 	private ExpressionResult constructMutexArrayAssignment(final IDispatcher main, final ILocation loc,
 			final IASTInitializerClause mutex, final boolean locked) {
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		if (isAdressofOperator(mutex)) {
+			final ExpressionResult disp = (ExpressionResult) main.dispatch(((IASTUnaryExpression) mutex).getOperand());
+			if (disp.getLrValue() instanceof LocalLValue) {
+				builder.addAllExceptLrValue(disp);
+				final StructLHS lhs = ExpressionFactory.constructStructAccessLhs(loc, ExpressionFactory
+						.constructStructAccessLhs(loc, ((LocalLValue) disp.getLrValue()).getLhs(), "__data"), "__lock");
+				builder.addStatement(StatementFactory.constructSingleAssignmentStatement(loc, lhs,
+						mExpressionTranslation.constructLiteralForIntegerType(loc, new CPrimitive(CPrimitives.INT),
+								locked ? BigInteger.ZERO : BigInteger.ONE)));
+				return builder.build();
+			}
+		}
 		final ExpressionResult arg = mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, mutex);
 		builder.addAllExceptLrValue(arg);
+		// TODO: Should we also replace the mutex-array by an (on-heap) struct-access?
 		mMemoryHandler.requireMemoryModelFeature(MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX);
 		final BoogieArrayType boogieType = BoogieType.createArrayType(0,
 				new BoogieType[] { mTypeHandler.getBoogiePointerType() },
@@ -2205,12 +2225,28 @@ public class StandardFunctionHandler {
 	private ExpressionResult checkIfMutexIsUnlocked(final IDispatcher main, final ILocation loc,
 			final IASTInitializerClause mutex) {
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		if (isAdressofOperator(mutex)) {
+			final ExpressionResult disp = (ExpressionResult) main.dispatch(((IASTUnaryExpression) mutex).getOperand());
+			if (disp.getLrValue() instanceof LocalLValue) {
+				builder.addAllExceptLrValue(disp);
+				final StructAccessExpression expr = ExpressionFactory.constructStructAccessExpression(loc,
+						ExpressionFactory.constructStructAccessExpression(loc, disp.getLrValue().getValue(), "__data"),
+						"__lock");
+				builder.setLrValue(new RValue(
+						ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, expr,
+								mExpressionTranslation.constructLiteralForIntegerType(loc,
+										new CPrimitive(CPrimitives.INT), BigInteger.ZERO)),
+						new CPrimitive(CPrimitives.INT)));
+				return builder.build();
+			}
+		}
 		final ExpressionResult arg = mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, mutex);
 		builder.addAllExceptLrValue(arg);
 		mMemoryHandler.requireMemoryModelFeature(MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX);
 		final BoogieArrayType boogieType = BoogieType.createArrayType(0,
 				new BoogieType[] { mTypeHandler.getBoogiePointerType() },
 				(BoogieType) mMemoryHandler.getBooleanArrayHelper().constructBoolReplacementType().getBoogieType());
+		// TODO: Should we also replace the mutex-array by an (on-heap) struct-access?
 		final Expression mutexArray = ExpressionFactory.constructIdentifierExpression(loc, boogieType,
 				SFO.ULTIMATE_PTHREADS_MUTEX, new DeclarationInformation(StorageClass.GLOBAL, null));
 		final ArrayAccessExpression mutexRead = ExpressionFactory.constructNestedArrayAccessExpression(loc, mutexArray,
