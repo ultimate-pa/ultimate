@@ -971,52 +971,6 @@ public class MemoryHandler {
 				new DeclarationInformation(StorageClass.GLOBAL, null));
 	}
 
-	public Expression constructMutexArrayIdentifierExpression(final ILocation loc) {
-		requireMemoryModelFeature(MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX);
-		final BoogieArrayType boogieType =
-				BoogieType.createArrayType(0, new BoogieType[] { mTypeHandler.getBoogiePointerType() },
-						(BoogieType) mBooleanArrayHelper.constructBoolReplacementType().getBoogieType());
-		return ExpressionFactory.constructIdentifierExpression(loc, boogieType, SFO.ULTIMATE_PTHREADS_MUTEX,
-				new DeclarationInformation(StorageClass.GLOBAL, null));
-	}
-
-	public AssignmentStatement constructMutexArrayAssignment(final ILocation loc, final Expression index,
-			final boolean mutexLocked) {
-		final BoogieArrayType boogieType =
-				BoogieType.createArrayType(0, new BoogieType[] { mTypeHandler.getBoogiePointerType() },
-						(BoogieType) getBooleanArrayHelper().constructBoolReplacementType().getBoogieType());
-		final AssignmentStatement as = MemoryHandler.constructOneDimensionalArrayUpdate(loc, index,
-				new VariableLHS(loc, boogieType, SFO.ULTIMATE_PTHREADS_MUTEX,
-						new DeclarationInformation(StorageClass.GLOBAL, null)),
-				getBooleanArrayHelper().constructValue(mutexLocked));
-		return as;
-	}
-
-	public Expression checkIfMutexIsUnlocked(final ILocation loc, final Expression mutex) {
-		final ArrayAccessExpression mutexRead = ExpressionFactory.constructNestedArrayAccessExpression(loc,
-				constructMutexArrayIdentifierExpression(loc), new Expression[] { mutex });
-		return ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, mutexRead,
-				mBooleanArrayHelper.constructFalse());
-	}
-
-	public AssignmentStatement constructRwLockArrayAssignment(final ILocation loc, final Expression index,
-			final Expression rhs) {
-		final BoogieArrayType boogieType =
-				BoogieType.createArrayType(0, new BoogieType[] { mTypeHandler.getBoogiePointerType() },
-						mTypeHandler.getBoogieTypeForCType(getRwLockCounterType()));
-		return MemoryHandler.constructOneDimensionalArrayUpdate(loc, index, new VariableLHS(loc, boogieType,
-				SFO.ULTIMATE_PTHREADS_RWLOCK, new DeclarationInformation(StorageClass.GLOBAL, null)), rhs);
-	}
-
-	public Expression constructRwLockArrayIdentifierExpression(final ILocation loc) {
-		requireMemoryModelFeature(MemoryModelDeclarations.ULTIMATE_PTHREADS_RWLOCK);
-		final BoogieArrayType boogieType =
-				BoogieType.createArrayType(0, new BoogieType[] { mTypeHandler.getBoogiePointerType() },
-						mTypeHandler.getBoogieTypeForCType(getRwLockCounterType()));
-		return ExpressionFactory.constructIdentifierExpression(loc, boogieType, SFO.ULTIMATE_PTHREADS_RWLOCK,
-				new DeclarationInformation(StorageClass.GLOBAL, null));
-	}
-
 	public void requireMemoryModelFeature(final MemoryModelDeclarations mmDecl) {
 		mRequiredMemoryModelFeatures.require(mmDecl);
 

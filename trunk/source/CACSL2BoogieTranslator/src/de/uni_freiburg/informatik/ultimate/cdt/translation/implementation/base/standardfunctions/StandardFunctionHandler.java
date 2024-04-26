@@ -77,6 +77,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieArrayType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CExpressionTranslator;
@@ -2183,6 +2185,30 @@ public class StandardFunctionHandler {
 		builder.setLrValue(new RValue(zero, new CPrimitive(CPrimitives.INT)));
 	}
 
+	private AssignmentStatement constructMutexArrayAssignment(final ILocation loc, final Expression index,
+			final boolean locked) {
+		final BoogieArrayType boogieType = BoogieType.createArrayType(0,
+				new BoogieType[] { mTypeHandler.getBoogiePointerType() },
+				(BoogieType) mMemoryHandler.getBooleanArrayHelper().constructBoolReplacementType().getBoogieType());
+		return MemoryHandler.constructOneDimensionalArrayUpdate(loc, index,
+				new VariableLHS(loc, boogieType, SFO.ULTIMATE_PTHREADS_MUTEX,
+						new DeclarationInformation(StorageClass.GLOBAL, null)),
+				mMemoryHandler.getBooleanArrayHelper().constructValue(locked));
+	}
+
+	private Expression checkIfMutexIsUnlocked(final ILocation loc, final Expression mutex) {
+		mMemoryHandler.requireMemoryModelFeature(MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX);
+		final BoogieArrayType boogieType = BoogieType.createArrayType(0,
+				new BoogieType[] { mTypeHandler.getBoogiePointerType() },
+				(BoogieType) mMemoryHandler.getBooleanArrayHelper().constructBoolReplacementType().getBoogieType());
+		final Expression mutexArray = ExpressionFactory.constructIdentifierExpression(loc, boogieType,
+				SFO.ULTIMATE_PTHREADS_MUTEX, new DeclarationInformation(StorageClass.GLOBAL, null));
+		final ArrayAccessExpression mutexRead =
+				ExpressionFactory.constructNestedArrayAccessExpression(loc, mutexArray, new Expression[] { mutex });
+		return ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, mutexRead,
+				mMemoryHandler.getBooleanArrayHelper().constructFalse());
+	}
+
 	/**
 	 * We assume that the mutex type is PTHREAD_MUTEX_NORMAL which means that if we lock a mutex that that is already
 	 * locked, then the thread blocks.
@@ -2194,9 +2220,8 @@ public class StandardFunctionHandler {
 		builder.addAllExceptLrValue(arg);
 		setSuccessRValue(loc, builder);
 		final AssumeStatement checkUnlocked =
-				new AssumeStatement(loc, mMemoryHandler.checkIfMutexIsUnlocked(loc, arg.getLrValue().getValue()));
-		final AssignmentStatement lock =
-				mMemoryHandler.constructMutexArrayAssignment(loc, arg.getLrValue().getValue(), true);
+				new AssumeStatement(loc, checkIfMutexIsUnlocked(loc, arg.getLrValue().getValue()));
+		final AssignmentStatement lock = constructMutexArrayAssignment(loc, arg.getLrValue().getValue(), true);
 		builder.addStatement(new AtomicStatement(loc, new Statement[] { checkUnlocked, lock }));
 		return builder.build();
 	}
@@ -2211,8 +2236,7 @@ public class StandardFunctionHandler {
 			final ILocation loc) {
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		final ExpressionResult arg = mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, mutex);
-		final AssignmentStatement unlock =
-				mMemoryHandler.constructMutexArrayAssignment(loc, arg.getLrValue().getValue(), false);
+		final AssignmentStatement unlock = constructMutexArrayAssignment(loc, arg.getLrValue().getValue(), false);
 		setSuccessRValue(loc, builder);
 		return builder.addAllExceptLrValue(arg).addStatement(unlock).build();
 	}
@@ -2239,18 +2263,35 @@ public class StandardFunctionHandler {
 		final ExpressionResult arg =
 				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
 		builder.addAllExceptLrValue(arg);
-		final AssignmentStatement lock =
-				mMemoryHandler.constructMutexArrayAssignment(loc, arg.getLrValue().getValue(), true);
+		final AssignmentStatement lock = constructMutexArrayAssignment(loc, arg.getLrValue().getValue(), true);
 		final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(loc,
 				new CPrimitive(CPrimitives.INT), BigInteger.ZERO);
 		final Statement ifStmt = StatementFactory.constructIfStatement(loc,
-				mMemoryHandler.checkIfMutexIsUnlocked(loc, arg.getLrValue().getValue()),
+				checkIfMutexIsUnlocked(loc, arg.getLrValue().getValue()),
 				new Statement[] { lock,
 						StatementFactory.constructSingleAssignmentStatement(loc, auxVar.getLhs(), zero) },
 				new Statement[] {
 						new AssumeStatement(loc, new BinaryExpression(loc, Operator.COMPNEQ, auxVar.getExp(), zero)) });
 		builder.addStatement(new AtomicStatement(loc, new Statement[] { ifStmt }));
 		return builder.setLrValue(new RValue(auxVar.getExp(), new CPrimitive(CPrimitives.INT))).build();
+	}
+
+	private AssignmentStatement constructRwLockArrayAssignment(final ILocation loc, final Expression index,
+			final Expression rhs) {
+		final BoogieArrayType boogieType =
+				BoogieType.createArrayType(0, new BoogieType[] { mTypeHandler.getBoogiePointerType() },
+						mTypeHandler.getBoogieTypeForCType(mMemoryHandler.getRwLockCounterType()));
+		return MemoryHandler.constructOneDimensionalArrayUpdate(loc, index, new VariableLHS(loc, boogieType,
+				SFO.ULTIMATE_PTHREADS_RWLOCK, new DeclarationInformation(StorageClass.GLOBAL, null)), rhs);
+	}
+
+	private Expression constructRwLockArrayIdentifierExpression(final ILocation loc) {
+		mMemoryHandler.requireMemoryModelFeature(MemoryModelDeclarations.ULTIMATE_PTHREADS_RWLOCK);
+		final BoogieArrayType boogieType =
+				BoogieType.createArrayType(0, new BoogieType[] { mTypeHandler.getBoogiePointerType() },
+						mTypeHandler.getBoogieTypeForCType(mMemoryHandler.getRwLockCounterType()));
+		return ExpressionFactory.constructIdentifierExpression(loc, boogieType, SFO.ULTIMATE_PTHREADS_RWLOCK,
+				new DeclarationInformation(StorageClass.GLOBAL, null));
 	}
 
 	private Result handlePthread_rwlock_rdlock(final IDispatcher main, final IASTFunctionCallExpression node,
@@ -2263,8 +2304,7 @@ public class StandardFunctionHandler {
 		builder.addAllExceptLrValue(arg);
 		setSuccessRValue(loc, builder);
 		final ArrayAccessExpression lockRead = ExpressionFactory.constructNestedArrayAccessExpression(loc,
-				mMemoryHandler.constructRwLockArrayIdentifierExpression(loc),
-				new Expression[] { arg.getLrValue().getValue() });
+				constructRwLockArrayIdentifierExpression(loc), new Expression[] { arg.getLrValue().getValue() });
 		final CPrimitive lockType = mMemoryHandler.getRwLockCounterType();
 		final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(loc, lockType, BigInteger.ZERO);
 		final AssumeStatement assumeNonNegative =
@@ -2273,8 +2313,7 @@ public class StandardFunctionHandler {
 		final Expression increment = mExpressionTranslation.constructArithmeticIntegerExpression(loc,
 				IASTBinaryExpression.op_plus, lockRead, lockType,
 				mExpressionTranslation.constructLiteralForIntegerType(loc, lockType, BigInteger.ONE), lockType);
-		final AssignmentStatement lock =
-				mMemoryHandler.constructRwLockArrayAssignment(loc, arg.getLrValue().getValue(), increment);
+		final AssignmentStatement lock = constructRwLockArrayAssignment(loc, arg.getLrValue().getValue(), increment);
 		builder.addStatement(new AtomicStatement(loc, new Statement[] { assumeNonNegative, lock }));
 		return builder.build();
 	}
@@ -2289,16 +2328,14 @@ public class StandardFunctionHandler {
 		builder.addAllExceptLrValue(arg);
 		setSuccessRValue(loc, builder);
 		final ArrayAccessExpression lockRead = ExpressionFactory.constructNestedArrayAccessExpression(loc,
-				mMemoryHandler.constructRwLockArrayIdentifierExpression(loc),
-				new Expression[] { arg.getLrValue().getValue() });
+				constructRwLockArrayIdentifierExpression(loc), new Expression[] { arg.getLrValue().getValue() });
 		final CPrimitive lockType = mMemoryHandler.getRwLockCounterType();
 		final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(loc, lockType, BigInteger.ZERO);
 		final AssumeStatement assumeEqualsZero =
 				new AssumeStatement(loc, ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, lockRead, zero));
 		final Expression minusOne =
 				mExpressionTranslation.constructLiteralForIntegerType(loc, lockType, BigInteger.ONE.negate());
-		final AssignmentStatement lock =
-				mMemoryHandler.constructRwLockArrayAssignment(loc, arg.getLrValue().getValue(), minusOne);
+		final AssignmentStatement lock = constructRwLockArrayAssignment(loc, arg.getLrValue().getValue(), minusOne);
 		builder.addStatement(new AtomicStatement(loc, new Statement[] { assumeEqualsZero, lock }));
 		return builder.build();
 	}
@@ -2313,8 +2350,7 @@ public class StandardFunctionHandler {
 		builder.addAllExceptLrValue(arg);
 		setSuccessRValue(loc, builder);
 		final ArrayAccessExpression mutexRead = ExpressionFactory.constructNestedArrayAccessExpression(loc,
-				mMemoryHandler.constructRwLockArrayIdentifierExpression(loc),
-				new Expression[] { arg.getLrValue().getValue() });
+				constructRwLockArrayIdentifierExpression(loc), new Expression[] { arg.getLrValue().getValue() });
 		final CPrimitive lockType = mMemoryHandler.getRwLockCounterType();
 		final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(loc, lockType, BigInteger.ZERO);
 		final Expression isPositive = mExpressionTranslation.constructBinaryComparisonIntegerExpression(loc,
@@ -2323,7 +2359,7 @@ public class StandardFunctionHandler {
 				IASTBinaryExpression.op_minus, mutexRead, lockType,
 				mExpressionTranslation.constructLiteralForIntegerType(loc, lockType, BigInteger.ONE), lockType);
 		final Expression value = ExpressionFactory.constructIfThenElseExpression(loc, isPositive, decrement, zero);
-		builder.addStatement(mMemoryHandler.constructRwLockArrayAssignment(loc, arg.getLrValue().getValue(), value));
+		builder.addStatement(constructRwLockArrayAssignment(loc, arg.getLrValue().getValue(), value));
 		return builder.build();
 	}
 
@@ -2347,7 +2383,7 @@ public class StandardFunctionHandler {
 
 		// we assume that function is always successful and returns 0
 		final Expression index = arg1.getLrValue().getValue();
-		final AssignmentStatement unlockMutex = mMemoryHandler.constructMutexArrayAssignment(loc, index, false);
+		final AssignmentStatement unlockMutex = constructMutexArrayAssignment(loc, index, false);
 		final ExpressionResultBuilder erb = new ExpressionResultBuilder();
 		erb.addAllExceptLrValue(arg1);
 		erb.addStatement(unlockMutex);
