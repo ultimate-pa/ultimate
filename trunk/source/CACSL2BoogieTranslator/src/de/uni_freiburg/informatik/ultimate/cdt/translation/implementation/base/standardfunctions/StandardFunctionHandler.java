@@ -2204,7 +2204,7 @@ public class StandardFunctionHandler {
 						.constructStructAccessLhs(loc, ((LocalLValue) disp.getLrValue()).getLhs(), "__data"), "__lock");
 				builder.addStatement(StatementFactory.constructSingleAssignmentStatement(loc, lhs,
 						mExpressionTranslation.constructLiteralForIntegerType(loc, new CPrimitive(CPrimitives.INT),
-								locked ? BigInteger.ZERO : BigInteger.ONE)));
+								locked ? BigInteger.ONE : BigInteger.ZERO)));
 				return builder.build();
 			}
 		}
