@@ -26,7 +26,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.btortranslator;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 
 import de.uni_freiburg.informatik.ultimate.btorutils.BtorScript;
@@ -76,10 +80,33 @@ public class CfgToBtorObserver extends BaseObserver {
 		processor.extractVariables(icfg);
 		processor.extractTransitions(icfg);
 		processor.extractAssignments(icfg);
+		processor.extractBadStates(icfg);
 		final BtorScript script = processor.generateScript(icfg);
 		try {
-			script.dumpScript(new OutputStreamWriter(System.out));
+			final File btorFile = File.createTempFile("prefix", ".btor2");
+			final FileOutputStream btorFileStream = new FileOutputStream(btorFile);
+			script.dumpScript(new OutputStreamWriter(btorFileStream));
+
+			System.out.println(btorFile.getAbsolutePath());
+
+			final ProcessBuilder processBuilder = new ProcessBuilder();
+			processBuilder.command("/bin/bash", "-c",
+					"/usr/local/bin/btormc --trace-gen-full " + btorFile.getAbsolutePath());
+			final Process process = processBuilder.start();
+			final StringBuilder btormcOutput = new StringBuilder();
+			final BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+			final int exitVal = process.waitFor();
+			String line;
+			while ((line = reader.readLine()) != null) {
+				btormcOutput.append(line + "\n");
+			}
+			System.out.println(btormcOutput.toString());
+			System.out.println(exitVal);
+
 		} catch (final IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (final InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}

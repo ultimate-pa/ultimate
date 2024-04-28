@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.btortranslator;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -29,6 +30,7 @@ public class CFGToBTOR {
 	private final HashMap<DebugIdentifier, List<UpdateRule>> locationUpdateMap;
 	private final HashMap<String, List<AssignmentRule>> variableAssignmentMap;
 	private Map<String, Map<DebugIdentifier, IcfgLocation>> allLocations;
+	private final Set<DebugIdentifier> errorLocations;
 	private final Map<DebugIdentifier, BtorExpression> pcMap;
 	private final BtorExpression pcExpression;
 	ManagedScript mScript;
@@ -39,6 +41,7 @@ public class CFGToBTOR {
 		mService = service;
 		variableMap = new HashMap<>();
 		locationUpdateMap = new HashMap<>();
+		errorLocations = new HashSet<>();
 		variableAssignmentMap = new HashMap<>();
 		pcMap = new HashMap<>();
 		pcExpression = new BtorExpression(64, BtorExpressionType.STATE, new ArrayList<>());
@@ -101,7 +104,13 @@ public class CFGToBTOR {
 				}
 			}
 		}
+	}
 
+	public void extractBadStates(final IIcfg<IcfgLocation> icfg) {
+
+		for (final IcfgLocation errorLocation : IcfgUtils.getErrorLocations(icfg)) {
+			errorLocations.add(errorLocation.getDebugIdentifier());
+		}
 	}
 
 	private BtorExpression generatePCUpdateExpression() {
@@ -150,6 +159,17 @@ public class CFGToBTOR {
 		return updateExpressions;
 	}
 
+	private List<BtorExpression> generateBadExpressions() {
+		final ArrayList<BtorExpression> badExpressions = new ArrayList<>();
+		for (final DebugIdentifier errorLocation : errorLocations) {
+			final BtorExpression eq =
+					new BtorExpression(1, BtorExpressionType.EQ, Arrays.asList(pcExpression, pcMap.get(errorLocation)));
+			final BtorExpression badExpression = new BtorExpression(1, BtorExpressionType.BAD, Arrays.asList(eq));
+			badExpressions.add(badExpression);
+		}
+		return badExpressions;
+	}
+
 	public BtorScript generateScript(final IIcfg<IcfgLocation> icfg) {
 		final BtorExpression pcUpdate = generatePCUpdateExpression();
 		final Set<IcfgLocation> initial = icfg.getInitialNodes();
@@ -162,7 +182,9 @@ public class CFGToBTOR {
 		final List<BtorExpression> variableUpdateExpressions = generateVariableUpdateExpressions();
 		final List<BtorExpression> allTopLevelExpressions =
 				new ArrayList<>(Arrays.asList(initial_pc, pc_initialization, pcUpdate));
+		final List<BtorExpression> badExpressions = generateBadExpressions();
 		allTopLevelExpressions.addAll(variableUpdateExpressions);
+		allTopLevelExpressions.addAll(badExpressions);
 		return new BtorScript(allTopLevelExpressions, Arrays.asList(1, 64));
 	}
 
