@@ -71,10 +71,15 @@ public class BtorExpression {
 			if (!assignnid(currentLine)) {
 				return currentLine;
 			}
-			writer.write(
-					String.valueOf(nid) + " " + type.name().toLowerCase() + " " + String.valueOf(sortMap.get(sort)));
-			for (final BtorExpression child : children) {
-				writer.write(" " + String.valueOf(child.nid));
+			if (type == BtorExpressionType.BAD) {
+				writer.write(String.valueOf(nid) + " " + type.name().toLowerCase() + " "
+						+ String.valueOf(children.get(0).nid));
+			} else {
+				writer.write(String.valueOf(nid) + " " + type.name().toLowerCase() + " "
+						+ String.valueOf(sortMap.get(sort)));
+				for (final BtorExpression child : children) {
+					writer.write(" " + String.valueOf(child.nid));
+				}
 			}
 			writer.write("\n");
 		}
