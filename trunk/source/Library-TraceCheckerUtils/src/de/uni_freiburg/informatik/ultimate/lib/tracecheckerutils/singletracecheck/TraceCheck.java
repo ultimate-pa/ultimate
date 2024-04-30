@@ -45,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.IRunningTaskStack
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.VarAssignmentReuseAnnotation;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -72,6 +71,7 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -154,6 +154,8 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 	protected final AssertCodeBlockOrder mAssertCodeBlockOrder;
 	protected final IIcfgSymbolTable mBoogie2SmtSymbolTable;
 	protected final FeasibilityCheckResult mFeasibilityResult;
+
+	final HashMap<String, String> mProcedureToCallLoc = new HashMap<>();
 
 	/**
 	 * Check if trace fulfills specification given by precondition, postcondition and pending contexts. The
@@ -422,20 +424,11 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 					}
 					rpeb.setBranchEncoders(i, beMapping);
 				}
-			} else if (mTrace.getSymbol(i) instanceof StatementSequence) {
-				final StatementSequence statementBranch = (StatementSequence) mTrace.getSymbol(i);
-
-				// If VA in Trace returns last found VA
-				if (statementBranch.getPayload().getAnnotations()
-						.containsKey(VarAssignmentReuseAnnotation.class.getName())) {
-
-					final VarAssignmentReuseAnnotation reuseCandidate = (VarAssignmentReuseAnnotation) statementBranch
-							.getPayload().getAnnotations().get(VarAssignmentReuseAnnotation.class.getName());
-					reuseCandidate.mVaOrder = vaOrder;
-
-				}
 			}
-
+			if (mTrace.getSymbol(i) instanceof Call) {
+				final Call call = (Call) mTrace.getSymbol(i);
+				mProcedureToCallLoc.put(call.getSucceedingProcedure(), call.getSource().toString());
+			}
 		}
 
 		final Function<Term, Term> funGetValue;
@@ -519,6 +512,7 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 											varAssignment.add(varEqValue);
 										}
 									}
+
 								} else {
 									System.out.println("unexpected Index for nondet");
 								}
@@ -535,13 +529,19 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 		}
 		final boolean vaReuse = true;
 		if (vaReuse) {
-			final IElement statementBranch = (IElement) nsb.mSsa.getTrace().getSymbol(nsb.mSsa.getTrace().length() - 1);
-			if (statementBranch.getPayload().getAnnotations()
-					.containsKey(VarAssignmentReuseAnnotation.class.getName())) {
-				final VarAssignmentReuseAnnotation vaReuseAnno = (VarAssignmentReuseAnnotation) statementBranch
-						.getPayload().getAnnotations().get(VarAssignmentReuseAnnotation.class.getName());
-				vaReuseAnno.setVa(varAssignmentPair, vaOrder + 1);
+			final L stmt = nsb.mSsa.getTrace().getSymbol(nsb.mSsa.getTrace().length() - 1);
+			if (stmt instanceof StatementSequence) {
+				final StatementSequence statementBranch = (StatementSequence) stmt;
+				if (statementBranch.getPayload().getAnnotations()
+						.containsKey(VarAssignmentReuseAnnotation.class.getName())) {
+					final VarAssignmentReuseAnnotation vaReuseAnno = (VarAssignmentReuseAnnotation) statementBranch
+							.getPayload().getAnnotations().get(VarAssignmentReuseAnnotation.class.getName());
 
+					vaReuseAnno.mPrecedingProcedure = statementBranch.getPrecedingProcedure();
+					vaReuseAnno.mLocationOfPrecedingProcedure =
+							mProcedureToCallLoc.get(statementBranch.getPrecedingProcedure());
+					vaReuseAnno.setVa(varAssignmentPair, vaOrder + 1);
+				}
 			}
 		}
 		return testV;

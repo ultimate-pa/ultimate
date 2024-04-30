@@ -25,7 +25,8 @@ public class VarAssignmentReuseAnnotation extends ModernAnnotations {
 																								// order corresponds to
 																								// test-case
 	public VarAssignmentReuseAnnotation mVAofOppositeBranch;
-
+	public String mPrecedingProcedure = "";
+	public String mLocationOfPrecedingProcedure = "";
 	public boolean mIsActiveTestGoal = true;
 	public boolean mUseCurrentTestGoal = false; // use this test goal instead of a previous
 	public HashSet<VarAssignmentReuseAnnotation> mUnsatWithVAs = new HashSet<>();
@@ -88,5 +89,11 @@ public class VarAssignmentReuseAnnotation extends ModernAnnotations {
 			}
 		}
 		return mDefaultVA;
+	}
+
+	public String getPrecedingProcedure() {
+
+		return mPrecedingProcedure;
+
 	}
 }
