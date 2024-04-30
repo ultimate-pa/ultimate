@@ -2,12 +2,90 @@
 <!DOCTYPE table PUBLIC "+//IDN sosy-lab.org//DTD BenchExec table 1.10//EN" "https://www.sosy-lab.org/benchexec/table-1.10.dtd">
 <table> 
   <column title="status"/>
-  <column title="cputime" displayTitle="CPU Time"/>
-  <column title="walltime" displayTitle="Wall Time"/>
-  <column title="memory" displayTitle="Memory" sourceUnit="B" displayUnit="MB"/>
-  <column title="iterations" displayTitle="TAR Iterations">OverallIterations:\s*(\d+)</column>
-  <column title="checktime" displayTitle="Con. Com. Check Time" sourceUnit="s">ConditionalCommutativityCheckTime: (\d+)s</column>
-  <column title="IAIntegrations" displayTitle="IA Integrations">ConditionalCommutativityIAIntegrations:\s*(\d+)</column>
-  <column title="DFSRestarts" displayTitle="DFS Restarts">ConditionalCommutativityDFSRestarts:\s*(\d+)</column>
+  <column title="cputime"         displayTitle="CPU Time"/>
+  <column title="walltime"        displayTitle="Wall Time"/>
+  <column title="memory"          displayTitle="Memory" sourceUnit="B" displayUnit="MB"/>
+  <column title="iterations"      displayTitle="TAR Iterations">OverallIterations:\s*(\d+)</column>
+  <column title="checktime"       displayTitle="Con. Com. Check Time" sourceUnit="s">ConditionalCommutativityCheckTime: (\d+(\.\d+)?)s</column>
+  <column title="IAIntegrations"  displayTitle="IA Integrations">ConditionalCommutativityIAIntegrations:\s*(\d+)</column>
+  <column title="DFSRestarts"     displayTitle="DFS Restarts">ConditionalCommutativityDFSRestarts:\s*(\d+)</column>
   <column title="ImperfectProofs" displayTitle="Imperfect Proofs">ConditionalCommutativityImperfectProofs:\s*(\d+)</column>
+
+  <union>
+    <result filename="conditional-commutativity.*.results.NONE.*.xml" />
+  </union>
+
+  <union>
+    <result filename="conditional-commutativity.*.results.IA-Default.*.xml" />
+  </union>
+  <union>
+    <result filename="conditional-commutativity.*.results.IA-Loop.*.xml" />
+  </union>
+  <union>
+    <result filename="conditional-commutativity.*.results.IA-SleepSet.*.xml" />
+  </union>
+
+  <union>
+    <result filename="aggregated-IA-Random-MIN.*.xml" />
+  </union>
+  <union>
+    <result filename="conditional-commutativity.*.results.IA-Random-20-213.*.xml" />
+  </union>
+  <union>
+    <result filename="conditional-commutativity.*.results.IA-Random-20-546.*.xml" />
+  </union>
+  <union>
+    <result filename="conditional-commutativity.*.results.IA-Random-50-213.*.xml" />
+  </union>
+
+  <union>
+    <result filename="conditional-commutativity.*.results.DFS-Default.*.xml" />
+  </union>
+
+  <union>
+    <result filename="conditional-commutativity.*.results.DFS-Default-Limit2.*.xml" />
+  </union>
+  <union>
+    <result filename="conditional-commutativity.*.results.DFS-Default-Limit10.*.xml" />
+  </union>
+  <union>
+    <result filename="conditional-commutativity.*.results.DFS-Default-Limit50.*.xml" />
+  </union>
+
+  <union>
+    <result filename="conditional-commutativity.*.results.DFS-Loop-Limit10.*.xml" />
+  </union>
+  <union>
+    <result filename="conditional-commutativity.*.results.DFS-Loop-Condition-Limit10.*.xml" />
+  </union>
+
+  <union>
+    <result filename="conditional-commutativity.*.results.DFS-SleepSet-Limit10.*.xml" />
+  </union>
+  <union>
+    <result filename="conditional-commutativity.*.results.DFS-SleepSet-Condition-Limit10.*.xml" />
+  </union>
+
+  <union>
+    <result filename="aggregated-DFS-Random-MIN.*.xml" />
+  </union>
+  <union>
+    <result filename="conditional-commutativity.*.results.DFS-Random-20-213-Limit10.*.xml" />
+  </union>
+  <union>
+    <result filename="conditional-commutativity.*.results.DFS-Random-20-546-Limit10.*.xml" />
+  </union>
+  <union>
+    <result filename="conditional-commutativity.*.results.DFS-Random-50-213-Limit10.*.xml" />
+  </union>
+
+  <union>
+    <result filename="conditional-commutativity.*.results.BOTH-Default-Limit10.*.xml" />
+  </union>
+  <union>
+    <result filename="conditional-commutativity.*.results.BOTH-Loop-Limit10.*.xml" />
+  </union>
+  <union>
+    <result filename="conditional-commutativity.*.results.BOTH-SleepSet-Limit10.*.xml" />
+  </union>
 </table>
