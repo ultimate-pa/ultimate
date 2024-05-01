@@ -1,0 +1,18 @@
+#valid
+named_regions:
+  r1: [main.l1, main.l2]
+law:
+  - territory: [ [main.l0] ]
+    assertion: true
+  - territory: [ r1 ]
+    assertion: (= y 0)
+  - territory: [ [main.l3], [t2.l0] ]
+    assertion: (or (= y 0) (= y |main.x|))
+  - territory: [ [main.l3], [t2.l0] ]
+    assertion: (= |t2.arg| |main.x|)
+  - territory: [ [main.l3], [t2.l1] ]
+    assertion: (or (= y 0) (= y |main.x|))
+  - territory: [ [main.l3], [t2.l1] ]
+    assertion: true
+
+
