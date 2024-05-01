@@ -37,6 +37,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorProvider;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -100,7 +101,7 @@ public class EmpireComputation<L, P> {
 			result.addAll(symbolicExecution(proof));
 			mLogger.debug("==============================================");
 			mLogger.debug("");
-			break;
+			// break;
 		}
 		return result;
 	}
@@ -125,7 +126,10 @@ public class EmpireComputation<L, P> {
 
 			for (final var transition : (Iterable<Transition<L, P>>) getEnabledTransitions(territory, lawPlace,
 					proofPlaces)::iterator) {
-				final var successor = computeSuccessor(territory, lawPlace, transition);
+				final var successor = computeSuccessor(territory, lawPlace, transition, proofPlaces);
+				if (successor == null) {
+					continue;
+				}
 				final var succTerritory = successor.getFirst();
 				final var succLawPlace = successor.getSecond();
 				mLogger.debug("successor of %s under transitions %s is %s", pair, transition, successor);
@@ -221,14 +225,17 @@ public class EmpireComputation<L, P> {
 	}
 
 	private Pair<Territory<P>, P> computeSuccessor(final Territory<P> territory, final P lawPlace,
-			final Transition<L, P> transition) {
+			final Transition<L, P> transition, final Set<P> proofPlaces) {
 		// assert enables(territory, lawPlace, transition) : "transition is not enabled, cannot compute successor";
 
 		final var predecessors = transition.getPredecessors();
 		final var successors = transition.getSuccessors();
+		if (mRefinedNet.isAccepting(new Marking<>(successors))) {
+			return null;
+		}
 		final P newLawPlace =
 				predecessors.contains(lawPlace)
-						? DataStructureUtils.getOneAndOnly(DataStructureUtils.difference(successors, mOriginalPlaces),
+						? DataStructureUtils.getOneAndOnly(DataStructureUtils.intersection(successors, proofPlaces),
 								"law place")
 						: lawPlace;
 
