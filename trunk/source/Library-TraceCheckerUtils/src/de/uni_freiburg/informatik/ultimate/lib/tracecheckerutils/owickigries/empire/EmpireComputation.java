@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorP
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -67,11 +68,10 @@ public class EmpireComputation<L, P> {
 			final List<Set<P>> proofPlaces, final PlacesCoRelation<P> coRelation,
 			final Function<P, IPredicate> assertionPlace2Predicate) {
 		mLogger = services.getLoggingService().getLogger(getClass());
-		// mLogger.setLevel(LogLevel.INFO);
+		mLogger.setLevel(LogLevel.INFO);
 
 		mRefinedNet = refinedNet;
 		mCoRelation = coRelation;
-
 		mOriginalPlaces = originalPlaces;
 		mProofPlaces = proofPlaces;
 		mLogger.debug("proof places: %s", proofPlaces);
@@ -126,6 +126,7 @@ public class EmpireComputation<L, P> {
 
 			for (final var transition : (Iterable<Transition<L, P>>) getEnabledTransitions(territory, lawPlace,
 					proofPlaces)::iterator) {
+
 				final var successor = computeSuccessor(territory, lawPlace, transition, proofPlaces);
 				if (successor == null) {
 					continue;
@@ -230,6 +231,8 @@ public class EmpireComputation<L, P> {
 
 		final var predecessors = transition.getPredecessors();
 		final var successors = transition.getSuccessors();
+		final var predecessorsOriginal = DataStructureUtils.intersection(predecessors, mOriginalPlaces);
+		final var successorsOriginal = DataStructureUtils.intersection(successors, mOriginalPlaces);
 		if (mRefinedNet.isAccepting(new Marking<>(successors))) {
 			return null;
 		}
@@ -248,26 +251,29 @@ public class EmpireComputation<L, P> {
 			}
 		}
 
+		final var remainingRegions = DataStructureUtils.difference(new HashSet<>(territory.getRegions()), regions);
 		if (predecessors.size() != successors.size() || newLawPlace != lawPlace) {
 			for (final var succ : successors) {
 				if (mOriginalPlaces.contains(succ)) {
 					regions.add(new Region<>(ImmutableSet.singleton(succ)));
 				}
 			}
+		} else if (predecessorsOriginal.size() == 1 && successorsOriginal.size() == 1) {
+			final Region<P> matchingRegion = DataStructureUtils.getOneAndOnly(remainingRegions, "remaining region");
+			regions.add(new Region<>(
+					ImmutableSet.of(DataStructureUtils.union(matchingRegion.getPlaces(), successorsOriginal))));
 		} else {
-			final var remainingRegions = new HashSet<>(territory.getRegions());
 			for (final var succ : successors) {
 				if (!mOriginalPlaces.contains(succ)) {
 					continue;
 				}
-				final var match = findMatchingRegion(remainingRegions, succ, territory);
-				if (match == null) {
-					regions.add(new Region<>(ImmutableSet.singleton(succ)));
-				} else {
-					regions.add(
-							new Region<>(ImmutableSet.of(DataStructureUtils.union(match.getPlaces(), Set.of(succ)))));
-					remainingRegions.remove(match);
-				}
+				regions.add(new Region<>(ImmutableSet.singleton(succ)));
+				/*
+				 * final var match = findMatchingRegion(remainingRegions, succ, territory); if (match == null) {
+				 * regions.add(new Region<>(ImmutableSet.singleton(succ))); } else { regions.add( new
+				 * Region<>(ImmutableSet.of(DataStructureUtils.union(match.getPlaces(), Set.of(succ)))));
+				 * remainingRegions.remove(match); }
+				 */
 			}
 		}
 
