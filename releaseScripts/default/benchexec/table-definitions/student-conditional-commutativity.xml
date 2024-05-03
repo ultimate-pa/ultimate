@@ -9,6 +9,8 @@
   <column title="checktime"       displayTitle="Con. Com. Check Time" sourceUnit="s">ConditionalCommutativityCheckTime: (\d+(\.\d+)?)s</column>
   <column title="IAIntegrations"  displayTitle="IA Integrations">ConditionalCommutativityIAIntegrations:\s*(\d+)</column>
   <column title="DFSRestarts"     displayTitle="DFS Restarts">ConditionalCommutativityDFSRestarts:\s*(\d+)</column>
+  <column title="ConditionCalculations" displayTitle="Condition Calculations">ConditionalCommutativityConditionCalculations:\s*(\d+)</column>
+  <column title="TraceChecks" displayTitle="Trace Checks">ConditionalCommutativityTraceChecks:\s*(\d+)</column>
   <column title="ImperfectProofs" displayTitle="Imperfect Proofs">ConditionalCommutativityImperfectProofs:\s*(\d+)</column>
 
   <union>
@@ -24,6 +26,10 @@
   <union>
     <result filename="conditional-commutativity.*.results.IA-SleepSet.*.xml" />
   </union>
+  <union>
+    <result filename="conditional-commutativity.*.results.IA-Forward.*.xml" />
+  </union>
+  
 
   <union>
     <result filename="aggregated-IA-Random-MIN.*.xml" />
@@ -55,15 +61,13 @@
   <union>
     <result filename="conditional-commutativity.*.results.DFS-Loop-Limit10.*.xml" />
   </union>
-  <union>
-    <result filename="conditional-commutativity.*.results.DFS-Loop-Condition-Limit10.*.xml" />
-  </union>
 
   <union>
     <result filename="conditional-commutativity.*.results.DFS-SleepSet-Limit10.*.xml" />
   </union>
-  <union>
-    <result filename="conditional-commutativity.*.results.DFS-SleepSet-Condition-Limit10.*.xml" />
+  
+   <union>
+    <result filename="conditional-commutativity.*.results.DFS-Forward-Limit10.*.xml" />
   </union>
 
   <union>
