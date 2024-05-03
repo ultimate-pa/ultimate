@@ -26,21 +26,15 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence;
 
 import java.util.ArrayDeque;
-import java.util.Deque;
 import java.util.HashSet;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
  * Loop criterion only for testing!
@@ -88,7 +82,7 @@ public class LoopCriterion<L extends IIcfgTransition<?>> implements IConditional
 	}
 
 	@Override
-	public boolean decide(IPredicate state, IRun<L, IPredicate> run, L letter1, L letter2) {
+	public boolean decide(IPredicate state, L letter1, L letter2) {
 		
 		if (mLoopEdges.contains(letter1) && mLoopEdges.contains(letter2)) {
 			return true;
@@ -109,9 +103,10 @@ public class LoopCriterion<L extends IIcfgTransition<?>> implements IConditional
 	}
 
 	@Override
-	public void updateCondition(IPredicate condition) {
+	public void updateAbstraction(INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction) {
 		// TODO Auto-generated method stub
 		
 	}
+
 
 }

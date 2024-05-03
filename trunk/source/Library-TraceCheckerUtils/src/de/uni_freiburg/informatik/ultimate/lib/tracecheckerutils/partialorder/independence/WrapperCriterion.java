@@ -25,7 +25,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence;
 
-import de.uni_freiburg.informatik.ultimate.automata.IRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
@@ -58,12 +58,12 @@ public class WrapperCriterion<L> implements IConditionalCommutativityCriterion<L
 	}
 
 	@Override
-	public boolean decide(IPredicate state, IRun<L, IPredicate> run, L letter1, L letter2) {
-		boolean result1 = mCriterion1.decide(state, run, letter1, letter2);
+	public boolean decide(IPredicate state, L letter1, L letter2) {
+		boolean result1 = mCriterion1.decide(state, letter1, letter2);
 		if (!result1) {
 			return false;
 		}
-		return mCriterion2.decide(state, run, letter1, letter2);
+		return mCriterion2.decide(state, letter1, letter2);
 	}
 
 	@Override
@@ -82,9 +82,9 @@ public class WrapperCriterion<L> implements IConditionalCommutativityCriterion<L
 	}
 
 	@Override
-	public void updateCondition(IPredicate condition) {
-		mCriterion1.updateCondition(condition);
-		mCriterion2.updateCondition(condition);
+	public void updateAbstraction(INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction) {
+		mCriterion1.updateAbstraction(abstraction);
+		mCriterion2.updateAbstraction(abstraction);
 	}
 
 }

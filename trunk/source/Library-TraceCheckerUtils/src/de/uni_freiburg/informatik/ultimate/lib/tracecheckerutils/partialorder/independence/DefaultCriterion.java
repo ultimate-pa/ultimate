@@ -26,8 +26,11 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence;
 
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
  * Default criterion for conditional commutativity checking.
@@ -41,18 +44,17 @@ public class DefaultCriterion<L> implements IConditionalCommutativityCriterion<L
 
 	
 	@Override
-	public boolean decide(final IPredicate state, final IRun<L, IPredicate> run, final L letter1, final L letter2) {
-		
-		return !((IAction) letter1).getSucceedingProcedure().equals(((IAction) letter2).getSucceedingProcedure());
+	public boolean decide(final IPredicate state, final L letter1, final L letter2) {	
+		return true;
 	}
 
 	@Override
 	public boolean decide(final IPredicate condition) {
-		return condition != null;
+		return true;
 	}
 
 	@Override
-	public void updateCondition(IPredicate condition) {
+	public void updateAbstraction(INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction) {
 		// TODO Auto-generated method stub
 		
 	}

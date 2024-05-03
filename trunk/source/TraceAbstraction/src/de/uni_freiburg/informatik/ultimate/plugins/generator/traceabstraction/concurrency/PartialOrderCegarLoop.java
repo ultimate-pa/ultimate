@@ -103,6 +103,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.in
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.ConditionalCommutativityCheckerVisitor;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.ConditionalCommutativityInterpolantProvider;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.DefaultCriterion;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.ForwardCriterion;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IConditionalCommutativityCriterion;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.SemanticIndependenceConditionGenerator;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.SemanticIndependenceRelation;
@@ -238,6 +239,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		IIndependenceRelation<IPredicate, L> relation = mPOR.getIndependence(0);
 		SemanticIndependenceConditionGenerator generator = new SemanticIndependenceConditionGenerator(mServices,
 				mCsToolkit.getManagedScript(), mPredicateFactory, relation.isSymmetric(), true);
+		mCriterion.updateAbstraction(mAbstraction);
 		ConditionalCommutativityInterpolantProvider<L> conInterpolantProvider
 		= new ConditionalCommutativityInterpolantProvider<>(
 				mServices, mCriterion, relation, mCsToolkit.getManagedScript(), generator, mAbstraction, mFactory,
@@ -361,6 +363,8 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 
 						mAbstraction = new InformationStorage<>(mProgram == null ? mAbstraction : mProgram,
 								mItpAutomata, mFactory, PartialOrderCegarLoop::isFalseLiteral);
+						//mCriterion.updateAbstraction(mAbstraction);
+						
 						//Object debugAutomaton3 = new NestedWordAutomatonReachableStates<L,IPredicate>(new AutomataLibraryServices(mServices), mAbstraction);
 						visitor = createVisitor();
 						mCegarLoopBenchmark.addConditionalCommutativityDFSRestart();
@@ -454,6 +458,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		
 		if (mPref.useConditionalCommutativityChecker().equals(ConComChecker.DFS)
 				|| mPref.useConditionalCommutativityChecker().equals(ConComChecker.BOTH)) {
+			mConComChecker.getCriterion().updateAbstraction(mAbstraction);
 			visitor = new ConditionalCommutativityCheckerVisitor<>(visitor, mAbstraction, mServices, mFactory,
 					((PostConditionTraceChecker<L>) mConComChecker.getTraceChecker()).getPredicateUnifier(),
 					mConComChecker);
@@ -582,23 +587,23 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	private void constructConComChecker() {
 		if (!mPref.useConditionalCommutativityChecker().equals(ConComChecker.NONE)) {
 			
-			mCriterion = new DefaultCriterion<>();
 			IConditionalCommutativityCriterion<L> criterion;
 			switch (mPref.getConComCheckerCriterion()) {
 			case DEFAULT:
+				mCriterion = new DefaultCriterion<>();
 				break;
 			case RANDOM:
-				criterion = new RandomCriterion<>(mPref.getConComCheckerRandomProb(),
+				mCriterion = new RandomCriterion<>(mPref.getConComCheckerRandomProb(),
 						mPref.getConComCheckerRandomSeed());
-				mCriterion = new WrapperCriterion<>(mCriterion, criterion);
 				break;
 			case SLEEP_SET:
-				criterion = new SleepSetCriterion<>();
-				mCriterion = new WrapperCriterion<>(mCriterion, criterion);
+				mCriterion = new SleepSetCriterion<>();
+				break;
+			case FORWARD:
+				mCriterion = new ForwardCriterion<>(mAbstraction, mPOR.getIndependence(0));
 				break;
 			case LOOP:
-				criterion = new LoopCriterion<>(mIcfg);
-				mCriterion = new WrapperCriterion<>(mCriterion, criterion);
+				mCriterion = new LoopCriterion<>(mIcfg);
 				break;
 			default:
 				throw new UnsupportedOperationException("PartialOrderCegarLoop currently does not support criterion "
@@ -614,6 +619,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 				criterion = new LimitedChecksCriterion<>(mPref.getConComCheckerCriterionLimit());
 				mCriterion = new WrapperCriterion<>(mCriterion, criterion);
 			}
+			
 			final IIcfgSymbolTable symbolTable = mCsToolkit.getSymbolTable();
 			final IPredicateUnifier predicateUnifier = new PredicateUnifier(mLogger, mServices,
 					mCsToolkit.getManagedScript(), mPredicateFactory, symbolTable,

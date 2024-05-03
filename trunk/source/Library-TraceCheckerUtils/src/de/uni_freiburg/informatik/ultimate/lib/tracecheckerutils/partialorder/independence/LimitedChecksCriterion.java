@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.AnnotatedMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.MLPredicate;
@@ -70,7 +71,7 @@ public class LimitedChecksCriterion<L> implements IConditionalCommutativityCrite
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean decide(final IPredicate state, final IRun<L, IPredicate> run, final L letter1, final L letter2) {
+	public boolean decide(final IPredicate state, final L letter1, final L letter2) {
 		Pair<L, L> pair = new Pair<>(letter1,letter2);
 		IPredicate pred = ((SleepPredicate<L>) state).getUnderlying();
 		
@@ -85,16 +86,6 @@ public class LimitedChecksCriterion<L> implements IConditionalCommutativityCrite
 		if (mStatementMap.containsKey(pair) && mStatementMap.get(pair) == mLimit) {
 			return false;
 		}
-		/*
-		IPredicate annotation = ((AnnotatedMLPredicate<IPredicate>) pred).getAnnotation();
-		if (mAlreadyChecked.containsKey(pair)) {
-			List<IPredicate> list = mAlreadyChecked.get(pair);
-			for (IPredicate listPred : list) {
-				if (listPred.getFormula().equals(annotation.getFormula())) {
-					return false;
-				}
-			}
-		}	*/
 		return true;
 	}
 
@@ -103,12 +94,7 @@ public class LimitedChecksCriterion<L> implements IConditionalCommutativityCrite
 			
 		if (condition == null) {
 			return false;
-		}/*
-		for (IPredicate con : mAlreadyProofenConditions) {
-			if (con.getFormula().equals(condition.getFormula())) {
-				return false;
-			}
-		}*/
+		}
 		return true;
 	}
 
@@ -120,28 +106,12 @@ public class LimitedChecksCriterion<L> implements IConditionalCommutativityCrite
 		} else {
 			mStatementMap.replace(pair, mStatementMap.get(pair) + 1);
 		}
-		/*
-		IPredicate pred = ((SleepPredicate<L>) state).getUnderlying();
-		if (pred instanceof PredicateWithLastThread) {
-			pred = ((PredicateWithLastThread) pred).getUnderlying();
-		}
-		if (pred instanceof MLPredicate) {
-			return;
-		}
-		IPredicate annotation = ((AnnotatedMLPredicate<IPredicate>) pred).getAnnotation();
-		if (!mAlreadyChecked.containsKey(pair)) {
-			ArrayList<IPredicate> list = new ArrayList<>();
-			list.add(annotation);
-			mAlreadyChecked.put(pair, list);
-		} else {
-			List<IPredicate> list = mAlreadyChecked.get(pair);
-			list.add(annotation);
-		}*/
 	}
-	
+
 	@Override
-	public void updateCondition(IPredicate condition) {
-		//mAlreadyProofenConditions.add(condition);
+	public void updateAbstraction(INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction) {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

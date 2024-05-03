@@ -29,6 +29,7 @@ import java.util.Objects;
 import java.util.Random;
 
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -62,7 +63,7 @@ public class RandomCriterion<L> implements IConditionalCommutativityCriterion<L>
 	}
 
 	@Override
-	public boolean decide(final IPredicate state, final IRun<L, IPredicate> run, final L letter1, final L letter2) {
+	public boolean decide(final IPredicate state, final L letter1, final L letter2) {
 		Pair<IPredicate, Pair<L,L>> normalized = normalize(state, letter1, letter2);
 		Random random = new Random(mSeed * Objects.hashCode(normalized));
 		return (random.nextInt(100) < mProbability);
@@ -72,12 +73,6 @@ public class RandomCriterion<L> implements IConditionalCommutativityCriterion<L>
 	public boolean decide(final IPredicate condition) {
 		return condition != null;
 	}
-
-	@Override
-	public void updateCondition(IPredicate condition) {
-		// TODO Auto-generated method stub
-		
-	}
 	
 	private Pair<IPredicate, Pair<L,L>> normalize(final IPredicate state, final L letter1, final L letter2) {
 		return new Pair<IPredicate, Pair<L,L>>(state, new Pair<>(letter1, letter2));
@@ -85,6 +80,12 @@ public class RandomCriterion<L> implements IConditionalCommutativityCriterion<L>
 
 	@Override
 	public void updateCriterion(IPredicate state, L letter1, L letter2) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void updateAbstraction(INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction) {
 		// TODO Auto-generated method stub
 		
 	}

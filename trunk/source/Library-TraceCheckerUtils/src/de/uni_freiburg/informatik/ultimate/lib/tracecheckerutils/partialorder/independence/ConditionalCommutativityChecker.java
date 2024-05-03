@@ -25,9 +25,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
@@ -39,8 +37,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateWithConjuncts;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.ITraceChecker;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
  * Conditional commutativity checker.
@@ -108,13 +107,27 @@ public class ConditionalCommutativityChecker<L extends IAction> implements ICond
 	 *            A list of predicates which servers as a proof for conditional commutativity.
 	 */
 	@Override
-	public TracePredicates checkConditionalCommutativity(final IRun<L, IPredicate> run, List<IPredicate> predicates,
-			final IPredicate state, final L letter1, final L letter2) {
+	public TracePredicates checkConditionalCommutativity(final IRun<L, IPredicate> currentRun,
+			List<IPredicate> predicates, final IPredicate state, final L letter1, final L letter2) {
 		
 		mStatisticsUtils.startStopwatch();
 		if (mManagedScript.isLocked()) {
 			mManagedScript.requestLockRelease();
 		}
+		
+		if (((IAction) letter1).getSucceedingProcedure().equals(((IAction) letter2).getSucceedingProcedure())) {
+			mStatisticsUtils.stopStopwatch();
+			return null;
+		}
+		
+		if (state instanceof SleepPredicate) {
+			ImmutableSet<?> sleepSet = ((SleepPredicate<L>) state).getSleepSet();
+			if (sleepSet.contains(letter1) && sleepSet.contains(letter2)) {
+				mStatisticsUtils.stopStopwatch();
+				return null;
+			}
+		}
+		
 		IPredicate pred = null;
 		if (!predicates.isEmpty()) {
 			pred  = new PredicateWithConjuncts(0, new ImmutableList<>(predicates), mManagedScript.getScript());
@@ -127,8 +140,11 @@ public class ConditionalCommutativityChecker<L extends IAction> implements ICond
 			return null;
 		}
 		
-		if (mCriterion.decide(state, run, letter1, letter2)) {
+		if (mCriterion.decide(state, letter1, letter2)) {
 			
+			if (mManagedScript.isLocked()) {
+				mManagedScript.requestLockRelease();
+			}
 			IPredicate condition;
 			if (pred != null) {
 				condition = mGenerator.generateCondition(
@@ -139,11 +155,11 @@ public class ConditionalCommutativityChecker<L extends IAction> implements ICond
 			}
 			mCriterion.updateCriterion(state, letter1, letter2);
 			
-			if (mCriterion.decide(condition) && !condition.getFormula().toString().equals("true")) {
+			if ((condition != null) && (!condition.getFormula().toString().equals("true")) && mCriterion.decide(condition)) {
 				
-				TracePredicates trace = mTraceChecker.checkTrace(run, null, condition);
+				TracePredicates trace = mTraceChecker.checkTrace(currentRun, null, condition);
 				if (trace != null) {
-						mCriterion.updateCondition(condition);
+						//mCriterion.updateCondition(condition);
 				} else if (mTraceChecker.wasImperfectProof()) {
 					mStatisticsUtils.addImperfectProof();
 				}
@@ -153,6 +169,10 @@ public class ConditionalCommutativityChecker<L extends IAction> implements ICond
 		}
 		mStatisticsUtils.stopStopwatch();
 		return null;
+	}
+	
+	public IConditionalCommutativityCriterion<L> getCriterion() {
+		return mCriterion;
 	}
 	
 	public ITraceChecker<L> getTraceChecker() {

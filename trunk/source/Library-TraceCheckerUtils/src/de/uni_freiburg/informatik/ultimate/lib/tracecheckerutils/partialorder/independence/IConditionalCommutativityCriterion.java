@@ -25,7 +25,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence;
 
-import de.uni_freiburg.informatik.ultimate.automata.IRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
@@ -40,13 +40,12 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
  */
 public interface IConditionalCommutativityCriterion<L> {
 
-	boolean decide(IPredicate state, IRun<L, IPredicate> run, L letter1, L letter2);
+	boolean decide(IPredicate state, L letter1, L letter2);
 
 	boolean decide(IPredicate condition);
 
-	void updateCriterion(IPredicate state, L letter1, L letter2);
+	void updateAbstraction(INwaOutgoingLetterAndTransitionProvider<L,IPredicate> abstraction);
 
-	void updateCondition(IPredicate condition);
-	
+	void updateCriterion(IPredicate state, L letter1, L letter2);
 
 }

@@ -170,8 +170,8 @@ public class ConditionalCommutativityInterpolantProvider<L extends IAction> {
 		return false;
 	}
 
-	private boolean checkTransitions(NestedRun<L, IPredicate> currentRun, List<IPredicate> interpolantPredicates, IPredicate state,
-			L letter1, L letter2) {
+	private boolean checkTransitions(NestedRun<L, IPredicate> currentRun,
+			List<IPredicate> interpolantPredicates, IPredicate state, L letter1, L letter2) {
 		final TracePredicates tracePredicates = mChecker.checkConditionalCommutativity(currentRun,
 				interpolantPredicates, state, letter1, letter2);
 

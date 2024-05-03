@@ -25,7 +25,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence;
 
-import de.uni_freiburg.informatik.ultimate.automata.IRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
@@ -43,7 +43,7 @@ public class SleepSetCriterion<L> implements IConditionalCommutativityCriterion<
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean decide(final IPredicate state, final IRun<L, IPredicate> run, final L letter1, final L letter2) {
+	public boolean decide(final IPredicate state, final L letter1, final L letter2) {
 		if (state instanceof SleepPredicate) {
 			ImmutableSet<?> sleepSet = ((SleepPredicate<L>) state).getSleepSet();
 			// TODO check if this works correctly for semi-commutativity
@@ -61,13 +61,13 @@ public class SleepSetCriterion<L> implements IConditionalCommutativityCriterion<
 	}
 
 	@Override
-	public void updateCondition(IPredicate condition) {
+	public void updateCriterion(IPredicate state, L letter1, L letter2) {
 		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
-	public void updateCriterion(IPredicate state, L letter1, L letter2) {
+	public void updateAbstraction(INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction) {
 		// TODO Auto-generated method stub
 		
 	}

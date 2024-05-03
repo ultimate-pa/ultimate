@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
@@ -549,7 +550,7 @@ public abstract class ConditionalCommutativityTestSuite implements IMessagePrint
 		}
 
 		@Override
-		public boolean decide(final IPredicate state, IRun<L, IPredicate> run, final L a, final L b) {
+		public boolean decide(final IPredicate state, final L a, final L b) {
 			return mRelation.containsTriple(state, a, b);
 		}
 
@@ -558,15 +559,14 @@ public abstract class ConditionalCommutativityTestSuite implements IMessagePrint
 			assert condition != null : "should not invoke criterion with null condition";
 			return true;
 		}
-
 		@Override
-		public void updateCondition(IPredicate condition) {
+		public void updateCriterion(IPredicate state, L letter1, L letter2) {
 			// TODO Auto-generated method stub
 			
 		}
 
 		@Override
-		public void updateCriterion(IPredicate state, L letter1, L letter2) {
+		public void updateAbstraction(INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction) {
 			// TODO Auto-generated method stub
 			
 		}
