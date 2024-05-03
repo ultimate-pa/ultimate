@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking;
 
+import java.util.stream.Collectors;
+
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
@@ -40,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.LineCoverageCalculator;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.ViolationSequence;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Witness;
 
 public class WitnessUtils {
@@ -85,7 +88,11 @@ public class WitnessUtils {
 					final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> abstraction,
 					final Witness witness, final PredicateFactory predicateFactory, final ILogger logger,
 					final Property property) throws AutomataOperationCanceledException {
-		// TODO: Implement a witness automaton similar to WitnessProductAutomaton and call reduce on it
-		throw new AssertionError();
+		final var result = new YamlWitnessProductAutomaton<>(abstraction, witness, predicateFactory);
+		logger.info(
+				"Constructing product of automaton with %d states and violation witness of the following lengths: %s",
+				abstraction.size(), witness.getEntries().stream().map(x -> ((ViolationSequence) x).getContent().size())
+						.collect(Collectors.toList()));
+		return reduce(result, property, new AutomataLibraryServices(services));
 	}
 }
