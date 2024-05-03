@@ -33,6 +33,16 @@ public class ConditionalCommutativityCheckerStatisticsUtils implements IConditio
 	}
 
 	@Override
+	public void addConditionCalculation() {
+		mCegarLoopBenchmark.addConditionalCommutativityConditionCalculation();
+	}
+
+	@Override
+	public void addTraceCheck() {
+		mCegarLoopBenchmark.addConditionalCommutativityTraceCheck();
+	}
+
+	@Override
 	public void addImperfectProof() {
 		mCegarLoopBenchmark.addConditionalCommutativityImperfectProof();	
 	}

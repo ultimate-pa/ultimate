@@ -10,5 +10,10 @@ public interface IConditionalCommutativityCheckerStatisticsUtils {
 
 	public void addIAIntegration();
 
+	public void addConditionCalculation();
+	
+	public void addTraceCheck();
+	
 	public void addImperfectProof();
+	
 }

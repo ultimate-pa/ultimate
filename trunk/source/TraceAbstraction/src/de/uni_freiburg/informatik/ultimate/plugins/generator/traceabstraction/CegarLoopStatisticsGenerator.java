@@ -51,6 +51,8 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 	private final StatisticsData mRefinementEngineStatistics = new StatisticsData();
 	private int mConditionalCommutativityIAIntegrations = 0;
 	private int mConditionalCommutativityDFSRestarts = 0;
+	private int mConditionalCommutativityConditionCalculations = 0;
+	private int mConditionalCommutativityTraceChecks = 0;
 	private int mConditionalCommutativityImperfectProofs = 0;
 	private int mIterations = 0;
 	private SizeIterationPair mBiggestAbstraction = new SizeIterationPair(-1, -1);
@@ -110,6 +112,14 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 	
 	public void addConditionalCommutativityDFSRestart() {
 		mConditionalCommutativityDFSRestarts++;
+	}
+	
+	public void addConditionalCommutativityConditionCalculation() {
+		mConditionalCommutativityConditionCalculations++;
+	}
+	
+	public void addConditionalCommutativityTraceCheck() {
+		mConditionalCommutativityTraceChecks++;
 	}
 	
 	public void addConditionalCommutativityImperfectProof() {
@@ -197,6 +207,10 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 			return mConditionalCommutativityIAIntegrations;
 		case ConditionalCommutativityDFSRestarts:
 			return mConditionalCommutativityDFSRestarts;
+		case ConditionalCommutativityConditionCalculations:
+			return mConditionalCommutativityConditionCalculations;
+		case ConditionalCommutativityTraceChecks:
+			return mConditionalCommutativityTraceChecks;
 		case ConditionalCommutativityImperfectProofs:
 			return mConditionalCommutativityImperfectProofs;
 		default:

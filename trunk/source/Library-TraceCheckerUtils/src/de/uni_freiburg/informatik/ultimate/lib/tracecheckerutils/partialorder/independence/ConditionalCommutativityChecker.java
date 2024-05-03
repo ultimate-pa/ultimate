@@ -153,11 +153,13 @@ public class ConditionalCommutativityChecker<L extends IAction> implements ICond
 			} else {
 				condition = mGenerator.generateCondition(letter1.getTransformula(), letter2.getTransformula());
 			}
+			mStatisticsUtils.addConditionCalculation();
 			mCriterion.updateCriterion(state, letter1, letter2);
 			
 			if ((condition != null) && (!condition.getFormula().toString().equals("true")) && mCriterion.decide(condition)) {
 				
 				TracePredicates trace = mTraceChecker.checkTrace(currentRun, null, condition);
+				mStatisticsUtils.addTraceCheck();
 				if (trace != null) {
 						//mCriterion.updateCondition(condition);
 				} else if (mTraceChecker.wasImperfectProof()) {
