@@ -1,7 +1,8 @@
-//#Safe
+//#Unsafe
 
 /**
  * Loop iterationen in threads müssen um 1 verschoben sein für einfachere Invariante.
+ * error for gpp psl It 11, lls It 12
 **/
 
 var d : int;
@@ -21,7 +22,24 @@ modifies c, d;
 
   join 1 assign x1;
   join 2,2 assign x2;
-  assert (M == N + 1) ==> ((x1 == x2) && (c == N));
+  assert (M == N + 1) ==> ((x1 == x2) && (c == M));
+}
+
+
+procedure expl_comp()
+returns (expl : int)
+modifies c;
+{
+  var i : int;
+ 
+  expl := 0;
+  i := 1;
+
+  while (i < M) {
+    expl :=  (i - 1) * d;
+	i := i+1;
+	c := i;
+  }
 }
 
 procedure rec_comp()
@@ -35,22 +53,6 @@ modifies c;
 
   while (i < N) {
     rec := rec + d;
-	i := i+1;
-	c := i;
-  }
-}
-
-procedure expl_comp()
-returns (expl : int)
-modifies c;
-{
-  var i : int;
- 
-  expl := 0;
-  i := 1;
-
-  while (i < M) {
-    expl :=  (i - 1) * d;
 	i := i+1;
 	c := i;
   }

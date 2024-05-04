@@ -1,5 +1,5 @@
 //#Safe
-
+// GPP verifies  (12 Iterations LoopLockstep, 11 Iteration for PseudoLockstep)
 /**
   * Example where two threads perform same computation. When a thread finishes the computation, it stores the result in global variable (result),
   * and sets a flag to indicate the computation has been performed and the result has been cached.

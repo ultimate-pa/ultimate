@@ -4,7 +4,7 @@
 // Doesn't work for GPP 
 /**
 * Use two different computation methods to compute something. Prove that the end result of both methods is the same.
-* same endpoints
+* Different endpoints
 * 
 **/
 
@@ -35,7 +35,7 @@ modifies x1, c;
   while (i < N) {
 	x1 := 2 * x1;
     i := i + 1;
-	// something that only commutes when we can abstract i and j
+	// something that only commutes when we can abstract i and j?
 	c := i;
 
   }

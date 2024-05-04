@@ -114,7 +114,7 @@ public class StratifiedStateFactory<L, H> implements IStratifiedStateFactory<L, 
 		private final AbstractionLevel<H> mLevel;
 		private final AbstractionLevel<H> mLimit;
 		private H mGuessedLevel;
-		private boolean mLoopEntryNode;
+		private boolean mLoopEntryNode = false;
 
 		private Map<L, H> mSleepMap;
 

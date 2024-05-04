@@ -245,6 +245,7 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 				currentState = mDfs.peek();
 				// It'd be best if we could simply get the TS that led to the loop entry node...
 				// instead add all TS loop entry node -> suc(loop entry node) to worklist and take the topmost
+
 				createSuccessors(currentState);
 				// relevant part of visit state?
 				final R cs = currentState;
@@ -304,10 +305,12 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 				}
 			} else if ((stackIndex = mDfs.stackIndexOf(nextState)) != -1) {
 				// TODO: Loop handle marker
-				// If we encounter a loop entry node mark it as such and guess loop's abstraction level
+				// If we encounter a (new) loop entry node mark it as such and guess loop's abstraction level
 				if (!mStateFactory.isLoopNode(nextState)) {
-					// what if it already is marked? We are not allowed to change our first guess outside of
-					// backtracking!
+					// in case there are any uncommuting left subgraphs of the loop node
+					mStateFactory.addToAbstractionLevel(currentState,
+							mStateFactory.getAbstractionLevel(nextState).getValue());
+
 					mStateFactory.addToAbstractionLevel(nextState,
 							mStateFactory.getAbstractionLevel(currentState).getValue());
 					mStateFactory.setGuessedLevel(nextState, mStateFactory.getAbstractionLevel(nextState).getValue());
@@ -321,9 +324,6 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 					debugIndent("Found a loop edge, guessed abstraction level: %s",
 							mStateFactory.guessedLevel(nextState));
 				}
-				// should be superfluous
-				mStateFactory.addToAbstractionLevel(currentState,
-						mStateFactory.getAbstractionLevel(nextState).getValue());
 
 				debugIndent("-> state is on stack -- do not unroll loop");
 				mDfs.updateLoopHead(currentState, new Pair<>(stackIndex, nextState));
@@ -332,7 +332,6 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 				mDfs.backPropagateLoopHead(currentState, nextState);
 			}
 		}
-		// TODO: what happens if we encounter a missguess here?
 		final BacktrackCases abort = backtrackUntil(mStartState);
 		if (abort == BacktrackCases.ABORT) {
 			mLogger.debug(ABORT_MSG);
@@ -343,7 +342,7 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 		mLogger.debug("traversal completed");
 	}
 
-	// we kind of need a third possible return to indicate a wrong guess
+	// need a third possible return to indicate a wrong guess
 	public enum BacktrackCases {
 		ABORT, CONTINUE, WRONG_GUESS
 	}
@@ -370,6 +369,7 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 			mLogger.info("Actual level: %s", actLv.getValue());
 			final ComparisonResult c = actLv.compare(guess);
 			if (!(c == ComparisonResult.EQUAL || c == ComparisonResult.STRICTLY_GREATER)) {
+				// TODO: throw some exception if the comparison result is actually greater
 				// In case we guessed wrong: stop backtracking, new guess and return to exploration
 				mStatistics.incWrongGuesses();
 				mStatistics.mNumGuesses++;
