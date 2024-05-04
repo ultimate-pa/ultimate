@@ -505,10 +505,12 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 					final ComparisonResult c = mStateFactory.getAbstractionLimit(state)
 							.compare(mStateFactory.getAbstractionLimit(correspRstate).getValue());
 					dupl = !(c == ComparisonResult.EQUAL || c == ComparisonResult.STRICTLY_GREATER);
+					// TODO: Check sleep set compatibility
 				}
 
 				R reductionSucc;
-				if (correspRstate == null || dupl) {
+				// disabled left pruning by changing dupl --> left
+				if (correspRstate == null || left) {
 					if (dupl) {
 						mDuplStates++;
 						mStatistics.incDuplStates();
