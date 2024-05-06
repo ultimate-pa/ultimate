@@ -181,14 +181,14 @@ public class AnnotateAndAsserter<L extends IAction> {
 		if (!mTestGenReuseMode.equals(TestGenReuseMode.None)) {
 			boolean reuse;
 			getCurrentVA();
-			if (mCurrentVA != null && mVAforReuse == null) {
+			if (mCurrentVA != null && mVAforReuse == null && mTestGenReuseMode.equals(TestGenReuseMode.ReuseUNSAT)) {
 				mDefaultVA = mCurrentVA.setDefaultVa(mDefaultVA);
 				mDefaultVA = mCurrentVA.mVAofOppositeBranch.setDefaultVa(mDefaultVA);
 				mVAforReuse = mDefaultVA;
 				System.out.println("Using Default to reuse since this is the first testgoal in the trace");
 			}
 
-			if (nondetsInTrace.isEmpty() || mCurrentVA == null) {
+			if (nondetsInTrace.isEmpty() || mCurrentVA == null || mVAforReuse == null) {
 				System.out.println("NO REUSE");
 				reuse = false;
 			} else if (mVAforReuse.mNegatedVA) {
@@ -433,7 +433,7 @@ public class AnnotateAndAsserter<L extends IAction> {
 	}
 
 	private void ifStatementHasNondetAddToSet(final int i, final StatementSequence statementBranch) {
-		if (mTestGenReuseMode.equals(TestGenReuseMode.ReuseUNSAT)) {
+		if (!mTestGenReuseMode.equals(TestGenReuseMode.None)) {
 			if (statementBranch.toString().contains("nondet")) {
 				final Set<FunctionSymbol> nonTheorySymbolsInTerm =
 						SmtUtils.extractNonTheoryFunctionSymbols(mSSA.getFormulaFromValidNonCallPos(i));
@@ -460,7 +460,7 @@ public class AnnotateAndAsserter<L extends IAction> {
 		for (int i = 0; i < varAssignmentPairs.size(); i++) { // TODO optimize in one loop over all nondets in trace
 			// This "nondet" in Trace is in the VA
 			final String nondetInVA = varAssignmentPairs.get(i).getFirst().toStringDirect();
-			if (nondetsInTrace.contains(nondetInVA)) {
+			if (nondetsInTrace.contains(nondetInVA.substring(1, nondetInVA.length() - 1))) {
 				final Term value = varAssignmentPairs.get(i).getSecond();
 				final Term reuseVaTerm = createTermFromVA(varAssignmentPairs.get(i).getFirst().toStringDirect(), value);
 				nondetsAsTerms.add(reuseVaTerm);
