@@ -325,22 +325,32 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 				DepthFirstTraversal.traverse(mAutomataServices, red, mDfsOrder, visitor);
 			}
 			break;
-		case PERSISTENT_SETS:
-			PersistentSetReduction.applyWithoutSleepSets(mAutomataServices, input, mDfsOrder, mPersistent, visitor);
+		case PERSISTENT_SETS: {
+			final var combinedOrder = PersistentSetReduction.ensureCompatibility(mPersistent, mDfsOrder);
+			final var reduced = new PersistentSetReduction<>(input, mPersistent);
+			DepthFirstTraversal.traverse(mAutomataServices, reduced, combinedOrder, visitor);
 			break;
+		}
 		case PERSISTENT_SLEEP_DELAY_SET_FIXEDORDER:
-		case PERSISTENT_SLEEP_DELAY_SET:
-			PersistentSetReduction.applyDelaySetReduction(mAutomataServices, input, independence, mDfsOrder,
-					mPersistent, visitor);
+		case PERSISTENT_SLEEP_DELAY_SET: {
+			final var combinedOrder = PersistentSetReduction.ensureCompatibility(mPersistent, mDfsOrder);
+			final var reduced = new PersistentSetReduction<>(input, mPersistent);
+			new SleepSetDelayReduction<>(mAutomataServices, reduced, new ISleepSetStateFactory.NoUnrolling<>(),
+					independence, combinedOrder, visitor);
 			break;
+		}
 		case PERSISTENT_SLEEP_NEW_STATES_FIXEDORDER:
 		case PERSISTENT_SLEEP_NEW_STATES:
 			if (mIndependenceRelations.size() == 1) {
-				PersistentSetReduction.applyNewStateReduction(mAutomataServices, input, independence, mDfsOrder,
-						mSleepFactory, mPersistent, visitor);
+				final var combinedOrder = PersistentSetReduction.ensureCompatibility(mPersistent, mDfsOrder);
+				final var reduced = new PersistentSetReduction<>(
+						new MinimalSleepSetReduction<>(input, mSleepFactory, independence, combinedOrder), mPersistent);
+				DepthFirstTraversal.traverse(mAutomataServices, reduced, combinedOrder, visitor);
 			} else {
-				PersistentSetReduction.applySleepMapReduction(mAutomataServices, input, mIndependenceRelations,
-						mDfsOrder, mSleepMapFactory, mGetBudget.andThen(CachedBudget::new), mPersistent, visitor);
+				final var combinedOrder = PersistentSetReduction.ensureCompatibility(mPersistent, mDfsOrder);
+				final var reduced = new PersistentSetReduction<>(new SleepMapReduction<>(input, mIndependenceRelations,
+						combinedOrder, mSleepMapFactory, mGetBudget.andThen(CachedBudget::new)), mPersistent);
+				DepthFirstTraversal.traverse(mAutomataServices, reduced, combinedOrder, visitor);
 			}
 			break;
 		case NONE:
