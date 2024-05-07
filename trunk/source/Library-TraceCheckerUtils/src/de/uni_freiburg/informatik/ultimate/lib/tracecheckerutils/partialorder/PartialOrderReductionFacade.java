@@ -51,7 +51,6 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.MinimalSleepSet
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.MultiPersistentSetChoice;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.PersistentSetReduction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetCoveringRelation;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetDelayReduction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.CachedBudget;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.ISleepMapStateFactory;
@@ -189,12 +188,9 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 			// We need a sleep map factory instead, see #createSleepMapFactory
 			return null;
 		}
-		if (mMode.doesUnrolling()) {
-			final var factory = new SleepSetStateFactoryForRefinement<L>(predicateFactory);
-			mStateSplitter = StateSplitter.extend(mStateSplitter, factory::getOriginalState, factory::getSleepSet);
-			return factory;
-		}
-		return new ISleepSetStateFactory.NoUnrolling<>();
+		final var factory = new SleepSetStateFactoryForRefinement<L>(predicateFactory);
+		mStateSplitter = StateSplitter.extend(mStateSplitter, factory::getOriginalState, factory::getSleepSet);
+		return factory;
 	}
 
 	private ISleepMapStateFactory<L, IPredicate, IPredicate>
@@ -311,9 +307,6 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		final IIndependenceRelation<IPredicate, L> independence =
 				mIndependenceRelations.isEmpty() ? null : mIndependenceRelations.get(0);
 		switch (mMode) {
-		case SLEEP_DELAY_SET:
-			new SleepSetDelayReduction<>(mAutomataServices, input, mSleepFactory, independence, mDfsOrder, visitor);
-			break;
 		case SLEEP_NEW_STATES:
 			if (mIndependenceRelations.size() == 1) {
 				DepthFirstTraversal.traverse(mAutomataServices,
@@ -329,14 +322,6 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 			final var combinedOrder = PersistentSetReduction.ensureCompatibility(mPersistent, mDfsOrder);
 			final var reduced = new PersistentSetReduction<>(input, mPersistent);
 			DepthFirstTraversal.traverse(mAutomataServices, reduced, combinedOrder, visitor);
-			break;
-		}
-		case PERSISTENT_SLEEP_DELAY_SET_FIXEDORDER:
-		case PERSISTENT_SLEEP_DELAY_SET: {
-			final var combinedOrder = PersistentSetReduction.ensureCompatibility(mPersistent, mDfsOrder);
-			final var reduced = new PersistentSetReduction<>(input, mPersistent);
-			new SleepSetDelayReduction<>(mAutomataServices, reduced, new ISleepSetStateFactory.NoUnrolling<>(),
-					independence, combinedOrder, visitor);
 			break;
 		}
 		case PERSISTENT_SLEEP_NEW_STATES_FIXEDORDER:
