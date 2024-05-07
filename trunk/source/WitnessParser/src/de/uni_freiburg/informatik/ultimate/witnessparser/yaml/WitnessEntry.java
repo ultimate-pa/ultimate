@@ -37,19 +37,19 @@ import java.util.Objects;
 public abstract class WitnessEntry {
 
 	private final String mName;
-	protected final Metadata mMetadata;
+	private final String mLabel;
 
-	public WitnessEntry(final String name, final Metadata metadata) {
+	public WitnessEntry(final String name, final String label) {
 		mName = Objects.requireNonNull(name);
-		mMetadata = metadata;
+		mLabel = label;
 	}
 
 	public String getName() {
 		return mName;
 	}
 
-	public Metadata getMetadata() {
-		return mMetadata;
+	public String getLabel() {
+		return mLabel;
 	}
 
 	@Override

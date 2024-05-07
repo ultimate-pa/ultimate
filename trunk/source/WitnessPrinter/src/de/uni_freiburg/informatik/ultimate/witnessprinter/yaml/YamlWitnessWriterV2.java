@@ -30,13 +30,11 @@ package de.uni_freiburg.informatik.ultimate.witnessprinter.yaml;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.FunctionContract;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LocationInvariant;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LoopInvariant;
-import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Metadata;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Witness;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.WitnessEntry;
 
@@ -48,11 +46,11 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.WitnessEntry;
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  */
 public class YamlWitnessWriterV2 extends YamlWitnessWriter {
-	private final Supplier<Metadata> mMetadataSupplier;
+	private final MetadataProvider mMetadataProvider;
 	private final boolean mWriteFunctionContracts;
 
-	public YamlWitnessWriterV2(final Supplier<Metadata> metadataSupplier, final boolean writeFunctionContracts) {
-		mMetadataSupplier = metadataSupplier;
+	public YamlWitnessWriterV2(final MetadataProvider metadataProvider, final boolean writeFunctionContracts) {
+		mMetadataProvider = metadataProvider;
 		mWriteFunctionContracts = writeFunctionContracts;
 	}
 
@@ -64,7 +62,7 @@ public class YamlWitnessWriterV2 extends YamlWitnessWriter {
 				.map(this::asContentMap).collect(Collectors.toList());
 		final Map<String, Object> invariantSet = new LinkedHashMap<>();
 		invariantSet.put("entry_type", "invariant_set");
-		invariantSet.put("metadata", mMetadataSupplier.get().toMap());
+		invariantSet.put("metadata", mMetadataProvider.getFreshMetadata());
 		invariantSet.put("content", content);
 		return formatYaml(List.of(invariantSet));
 	}
@@ -75,13 +73,13 @@ public class YamlWitnessWriterV2 extends YamlWitnessWriter {
 		if (entry instanceof LoopInvariant) {
 			final LoopInvariant loopInvariant = (LoopInvariant) entry;
 			content.put("location", loopInvariant.getLocation().toMap());
-			content.put("value", loopInvariant.getInvariant().getExpression());
-			content.put("format", loopInvariant.getInvariant().getFormat());
+			content.put("value", loopInvariant.getInvariant());
+			content.put("format", loopInvariant.getFormat());
 		} else if (entry instanceof LocationInvariant) {
 			final LocationInvariant locationInvariant = (LocationInvariant) entry;
 			content.put("location", locationInvariant.getLocation().toMap());
-			content.put("value", locationInvariant.getInvariant().getExpression());
-			content.put("format", locationInvariant.getInvariant().getFormat());
+			content.put("value", locationInvariant.getInvariant());
+			content.put("format", locationInvariant.getFormat());
 		} else if (entry instanceof FunctionContract) {
 			final FunctionContract contract = (FunctionContract) entry;
 			content.put("location", contract.getLocation().toMap());

@@ -29,13 +29,11 @@ package de.uni_freiburg.informatik.ultimate.witnessprinter.yaml;
 
 import java.util.List;
 import java.util.Map;
-import java.util.function.Supplier;
 
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.FormatVersion;
-import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Metadata;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Witness;
 
 /**
@@ -49,12 +47,12 @@ public abstract class YamlWitnessWriter {
 	 * Construct a writer for the matching {@code formatVersion}.
 	 */
 	public static YamlWitnessWriter construct(final FormatVersion formatVersion,
-			final Supplier<Metadata> metadataSupplier) {
+			final MetadataProvider metadataProvider) {
 		if (formatVersion.getMajor() == 0) {
-			return new YamlWitnessWriterV0();
+			return new YamlWitnessWriterV0(metadataProvider);
 		}
 		if (formatVersion.getMajor() == 2) {
-			return new YamlWitnessWriterV2(metadataSupplier, formatVersion.getMinor() >= 1);
+			return new YamlWitnessWriterV2(metadataProvider, formatVersion.getMinor() >= 1);
 		}
 		throw new UnsupportedOperationException("Unknown format version " + formatVersion);
 	}
