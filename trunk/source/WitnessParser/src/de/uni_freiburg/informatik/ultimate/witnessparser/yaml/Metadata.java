@@ -33,12 +33,10 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Witness.IMapSerializable;
-
 /**
  * @author Manuel Bentele (bentele@informatik.uni-freiburg.de)
  */
-public class Metadata implements IMapSerializable {
+public class Metadata {
 
 	private final FormatVersion mFormatVersion;
 	private final UUID mUuid;
@@ -75,7 +73,6 @@ public class Metadata implements IMapSerializable {
 		return mTask;
 	}
 
-	@Override
 	public Map<String, Object> toMap() {
 		final LinkedHashMap<String, Object> result = new LinkedHashMap<>();
 		result.put("format_version", mFormatVersion.toString());

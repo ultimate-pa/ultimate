@@ -31,12 +31,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Witness.IMapSerializable;
-
 /**
  * @author Manuel Bentele (bentele@informatik.uni-freiburg.de)
  */
-public class Task implements IMapSerializable {
+public class Task {
 	private final List<String> mInputFiles;
 	private final Map<String, String> mInputFileHashes;
 	private final String mSpecification;
@@ -52,7 +50,6 @@ public class Task implements IMapSerializable {
 		mLanguage = language;
 	}
 
-	@Override
 	public Map<String, Object> toMap() {
 		final LinkedHashMap<String, Object> result = new LinkedHashMap<>();
 		result.put("input_files", mInputFiles);

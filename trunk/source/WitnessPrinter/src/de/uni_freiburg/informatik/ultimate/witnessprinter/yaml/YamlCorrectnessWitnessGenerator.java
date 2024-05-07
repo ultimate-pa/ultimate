@@ -21,6 +21,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.FormatVersion;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.FunctionContract;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Invariant;
@@ -40,76 +41,67 @@ public class YamlCorrectnessWitnessGenerator {
 	private final ILogger mLogger;
 	private final IPreferenceProvider mPreferences;
 	private final IIcfg<? extends IcfgLocation> mIcfg;
+	private final FormatVersion mFormatVersion;
+	private final boolean mIsAcslAllowed;
+	private final String mProgramHash;
+	private final Supplier<Metadata> mMetadataSupplier;
+	private final YamlWitnessWriter mWriter;
 
 	public YamlCorrectnessWitnessGenerator(final IIcfg<? extends IcfgLocation> icfg, final ILogger logger,
 			final IUltimateServiceProvider services) {
 		mLogger = logger;
 		mIcfg = icfg;
 		mPreferences = PreferenceInitializer.getPreferences(services);
+		mFormatVersion =
+				FormatVersion.fromString(mPreferences.getString(PreferenceInitializer.LABEL_YAML_FORMAT_VERSION));
+		mIsAcslAllowed = mFormatVersion.compareTo(new FormatVersion(2, 1)) >= 0;
+		final String producer = mPreferences.getString(PreferenceInitializer.LABEL_GRAPH_DATA_PRODUCER);
+		mProgramHash = mPreferences.getString(PreferenceInitializer.LABEL_GRAPH_DATA_PROGRAMHASH);
+		final String spec = mPreferences.getString(PreferenceInitializer.LABEL_GRAPH_DATA_SPECIFICATION);
+		final String arch = mPreferences.getString(PreferenceInitializer.LABEL_GRAPH_DATA_ARCHITECTURE);
+		final String version = new UltimateCore().getUltimateVersionString();
+		final String filename = ILocation.getAnnotation(mIcfg).getFileName();
+		mMetadataSupplier = () -> new Metadata(mFormatVersion, UUID.randomUUID(), OffsetDateTime.now(),
+				new Producer(producer, version),
+				new Task(List.of(filename), Map.of(filename, mProgramHash), spec, arch, "C"));
+		mWriter = YamlWitnessWriter.construct(mFormatVersion, mMetadataSupplier);
 	}
 
 	private Witness getWitness() {
-		final String producer = mPreferences.getString(PreferenceInitializer.LABEL_GRAPH_DATA_PRODUCER);
-		final String hash = mPreferences.getString(PreferenceInitializer.LABEL_GRAPH_DATA_PROGRAMHASH);
-		final String spec = mPreferences.getString(PreferenceInitializer.LABEL_GRAPH_DATA_SPECIFICATION);
-		final String arch = mPreferences.getString(PreferenceInitializer.LABEL_GRAPH_DATA_ARCHITECTURE);
-		final FormatVersion formatVersion =
-				FormatVersion.fromString(mPreferences.getString(PreferenceInitializer.LABEL_YAML_FORMAT_VERSION));
-		final String version = new UltimateCore().getUltimateVersionString();
-		final String filename = ILocation.getAnnotation(mIcfg).getFileName();
-		final Supplier<Metadata> metadataSupplier = () -> new Metadata(formatVersion, UUID.randomUUID(),
-				OffsetDateTime.now(), new Producer(producer, version),
-				new Task(List.of(filename), Map.of(filename, hash), spec, arch, "C"));
-
 		final List<IcfgLocation> allProgramPoints = mIcfg.getProgramPoints().values().stream()
 				.flatMap(x -> x.values().stream()).collect(Collectors.toList());
-
 		// TODO: Should we sort these entries somehow (for consistent result in validation and to improve readability)
 		// e.g. by line number and/or entry type?
-		final List<WitnessEntry> entries = new ArrayList<>();
-		entries.addAll(extractLoopInvariants(allProgramPoints, metadataSupplier, hash, formatVersion));
-		if (areACSLAndFunctionContractsAllowed(formatVersion)) {
-			entries.addAll(extractFunctionContracts(allProgramPoints, metadataSupplier, hash, formatVersion));
-		}
-		final Witness witness = new Witness(entries);
-		if (formatVersion.getMajor() < 2) {
-			return witness;
-		}
-		return new Witness(List.of(witness.toInvariantSet(metadataSupplier)));
+		final var invariants = extractInvariants(allProgramPoints);
+		final var functionContracts = extractFunctionContracts(allProgramPoints);
+		return new Witness(DataStructureUtils.concat(invariants, functionContracts));
 	}
 
-	private static boolean areACSLAndFunctionContractsAllowed(final FormatVersion formatVersion) {
-		return formatVersion.compareTo(new FormatVersion(2, 1)) >= 0;
-	}
-
-	private List<WitnessEntry> extractLoopInvariants(final List<IcfgLocation> programPoints,
-			final Supplier<Metadata> metadataSupplier, final String hash, final FormatVersion formatVersion) {
+	private List<WitnessEntry> extractInvariants(final List<IcfgLocation> programPoints) {
 		final List<WitnessEntry> result = new ArrayList<>();
 		for (final IcfgLocation pp : programPoints) {
 			final ILocation loc = ILocation.getAnnotation(pp);
 			if (loc == null) {
 				continue;
 			}
-			final String invariant = filterInvariant(WitnessInvariant.getAnnotation(pp), formatVersion);
+			final String invariant = filterInvariant(WitnessInvariant.getAnnotation(pp));
 			if (invariant == null) {
 				continue;
 			}
-			final Location witnessLocation = new Location(loc.getFileName(), hash, loc.getStartLine(),
+			final Location witnessLocation = new Location(loc.getFileName(), mProgramHash, loc.getStartLine(),
 					loc.getStartColumn() < 0 ? null : loc.getStartColumn(), loc.getFunction());
-			final Invariant witnessInvariant =
-					new Invariant(invariant, "assertion", getExpressionFormat(formatVersion, invariant));
+			final Invariant witnessInvariant = new Invariant(invariant, "assertion", getExpressionFormat(invariant));
 			final LoopEntryAnnotation annot = LoopEntryAnnotation.getAnnotation(pp);
 			if (annot != null && annot.getLoopEntryType() == LoopEntryType.WHILE) {
-				result.add(new LoopInvariant(metadataSupplier.get(), witnessLocation, witnessInvariant));
+				result.add(new LoopInvariant(mMetadataSupplier.get(), witnessLocation, witnessInvariant));
 			} else {
-				result.add(new LocationInvariant(metadataSupplier.get(), witnessLocation, witnessInvariant));
+				result.add(new LocationInvariant(mMetadataSupplier.get(), witnessLocation, witnessInvariant));
 			}
 		}
 		return result;
 	}
 
-	private static List<WitnessEntry> extractFunctionContracts(final List<IcfgLocation> programPoints,
-			final Supplier<Metadata> metadataSupplier, final String hash, final FormatVersion formatVersion) {
+	private List<WitnessEntry> extractFunctionContracts(final List<IcfgLocation> programPoints) {
 		final List<WitnessEntry> result = new ArrayList<>();
 		for (final IcfgLocation pp : programPoints) {
 			final ILocation loc = ILocation.getAnnotation(pp);
@@ -122,23 +114,23 @@ public class YamlCorrectnessWitnessGenerator {
 			}
 			final String requires = contract.getRequires();
 			final String ensures = contract.getEnsures();
-			final Location witnessLocation = new Location(loc.getFileName(), hash, loc.getStartLine(),
+			final Location witnessLocation = new Location(loc.getFileName(), mProgramHash, loc.getStartLine(),
 					loc.getStartColumn() < 0 ? null : loc.getStartColumn(), loc.getFunction());
-			result.add(new FunctionContract(metadataSupplier.get(), witnessLocation, requires, ensures,
-					getExpressionFormat(formatVersion, requires, ensures)));
+			result.add(new FunctionContract(mMetadataSupplier.get(), witnessLocation, requires, ensures,
+					getExpressionFormat(requires, ensures)));
 		}
 		return result;
 	}
 
 	public String makeYamlString() {
-		return getWitness().toYamlString();
+		return mWriter.toString(getWitness());
 	}
 
-	private static String getExpressionFormat(final FormatVersion formatVersion, final String... expressions) {
-		if (formatVersion.getMajor() == 0) {
+	private String getExpressionFormat(final String... expressions) {
+		if (mFormatVersion.getMajor() == 0) {
 			return "C";
 		}
-		if (!areACSLAndFunctionContractsAllowed(formatVersion) || Arrays.stream(expressions).filter(Objects::nonNull)
+		if (!mIsAcslAllowed || Arrays.stream(expressions).filter(Objects::nonNull)
 				.noneMatch(YamlCorrectnessWitnessGenerator::containsACSL)) {
 			return "c_expression";
 		}
@@ -149,12 +141,12 @@ public class YamlCorrectnessWitnessGenerator {
 		return Arrays.stream(ACSL_SUBSTRING).anyMatch(expression::contains);
 	}
 
-	private String filterInvariant(final WitnessInvariant invariant, final FormatVersion formatVersion) {
+	private String filterInvariant(final WitnessInvariant invariant) {
 		if (invariant == null) {
 			return null;
 		}
 		final String label = invariant.getInvariant();
-		if (!areACSLAndFunctionContractsAllowed(formatVersion) && containsACSL(label)) {
+		if (!mIsAcslAllowed && containsACSL(label)) {
 			mLogger.warn("Not writing invariant because ACSL is forbidden: " + label);
 			return null;
 		}

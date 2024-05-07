@@ -30,12 +30,10 @@ package de.uni_freiburg.informatik.ultimate.witnessparser.yaml;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Witness.IMapSerializable;
-
 /**
  * @author Manuel Bentele (bentele@informatik.uni-freiburg.de)
  */
-public class Producer implements IMapSerializable {
+public class Producer {
 	private final String mName;
 	private final String mVersion;
 	private final String mConfiguration;
@@ -98,7 +96,6 @@ public class Producer implements IMapSerializable {
 		return false;
 	}
 
-	@Override
 	public Map<String, Object> toMap() {
 		final LinkedHashMap<String, Object> result = new LinkedHashMap<>();
 		result.put("name", mName);

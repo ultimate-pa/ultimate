@@ -29,14 +29,12 @@ package de.uni_freiburg.informatik.ultimate.witnessparser.yaml;
 
 import java.util.Objects;
 
-import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Witness.IMapSerializable;
-
 /**
  * Represents a generic witness type in a YAML-based witness file.
  *
  * @author Manuel Bentele
  */
-public abstract class WitnessEntry implements IMapSerializable {
+public abstract class WitnessEntry {
 
 	private final String mName;
 	protected final Metadata mMetadata;
@@ -52,10 +50,6 @@ public abstract class WitnessEntry implements IMapSerializable {
 
 	public Metadata getMetadata() {
 		return mMetadata;
-	}
-
-	public WitnessSetEntry toSetEntry() {
-		throw new UnsupportedOperationException("Unable to convert " + this);
 	}
 
 	@Override

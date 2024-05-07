@@ -27,9 +27,6 @@
 
 package de.uni_freiburg.informatik.ultimate.witnessparser.yaml;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-
 /**
  * @author Manuel Bentele (bentele@informatik.uni-freiburg.de)
  */
@@ -58,23 +55,7 @@ public class LocationInvariant extends WitnessEntry {
 	}
 
 	@Override
-	public WitnessSetEntry toSetEntry() {
-		return new WitnessSetEntry("invariant", mLocation,
-				Map.of("type", NAME, "value", mInvariant.getExpression(), "format", mInvariant.getFormat()));
-	}
-
-	@Override
 	public String toString() {
 		return getClass().getSimpleName() + " " + mLocation + ": " + mInvariant;
-	}
-
-	@Override
-	public Map<String, Object> toMap() {
-		final LinkedHashMap<String, Object> result = new LinkedHashMap<>();
-		result.put("entry_type", NAME);
-		result.put("metadata", mMetadata.toMap());
-		result.put("location", mLocation.toMap());
-		result.put(NAME, mInvariant.toMap());
-		return result;
 	}
 }
