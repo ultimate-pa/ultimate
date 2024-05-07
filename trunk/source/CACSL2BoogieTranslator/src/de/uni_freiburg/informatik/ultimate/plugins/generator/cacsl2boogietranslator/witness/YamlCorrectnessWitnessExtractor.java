@@ -134,8 +134,8 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 
 	private static void addLocationInvariant(final LocationInvariant current, final IASTNode node,
 			final Map<IASTNode, ExtractedLocationInvariant> locationInvariants) {
-		String invariant = current.getInvariant().getExpression();
-		Set<String> labels = Set.of(current.getMetadata().getUuid().toString());
+		String invariant = current.getInvariant();
+		Set<String> labels = Set.of(current.getLabel());
 		final ExtractedLocationInvariant old = locationInvariants.get(node);
 		if (old != null) {
 			invariant = conjunctInvariants(old.getInvariant(), invariant);
@@ -151,8 +151,8 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 			throw new UnsupportedOperationException(
 					"Loop invariant is only allowed at loop (found " + node.getClass().getSimpleName() + ")");
 		}
-		String invariant = current.getInvariant().getExpression();
-		Set<String> labels = Set.of(current.getMetadata().getUuid().toString());
+		String invariant = current.getInvariant();
+		Set<String> labels = Set.of(current.getLabel());
 		final ExtractedLoopInvariant old = loopInvariants.get(node);
 		if (old != null) {
 			invariant = conjunctInvariants(old.getInvariant(), invariant);

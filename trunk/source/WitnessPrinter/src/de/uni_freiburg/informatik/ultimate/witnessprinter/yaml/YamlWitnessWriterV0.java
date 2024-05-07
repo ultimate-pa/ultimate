@@ -44,6 +44,12 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.WitnessEntry;
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  */
 public class YamlWitnessWriterV0 extends YamlWitnessWriter {
+	private final MetadataProvider mMetadataProvider;
+
+	public YamlWitnessWriterV0(final MetadataProvider metadataProvider) {
+		mMetadataProvider = metadataProvider;
+	}
+
 	@Override
 	public String toString(final Witness witness) {
 		return formatYaml(
@@ -54,20 +60,28 @@ public class YamlWitnessWriterV0 extends YamlWitnessWriter {
 	private Map<String, Object> toMap(final WitnessEntry entry) {
 		if (entry instanceof LoopInvariant) {
 			final LoopInvariant loopInvariant = (LoopInvariant) entry;
+			final LinkedHashMap<String, Object> invariantMap = new LinkedHashMap<>();
+			invariantMap.put("string", loopInvariant.getInvariant());
+			invariantMap.put("type", "assertion");
+			invariantMap.put("format", loopInvariant.getFormat());
 			final LinkedHashMap<String, Object> result = new LinkedHashMap<>();
 			result.put("entry_type", entry.getName());
-			result.put("metadata", loopInvariant.getMetadata().toMap());
+			result.put("metadata", mMetadataProvider.getFreshMetadata());
 			result.put("location", loopInvariant.getLocation().toMap());
-			result.put(entry.getName(), loopInvariant.getInvariant().toMap());
+			result.put(entry.getName(), invariantMap);
 			return result;
 		}
 		if (entry instanceof LocationInvariant) {
 			final LocationInvariant locationInvariant = (LocationInvariant) entry;
+			final LinkedHashMap<String, Object> invariantMap = new LinkedHashMap<>();
+			invariantMap.put("string", locationInvariant.getInvariant());
+			invariantMap.put("type", "assertion");
+			invariantMap.put("format", locationInvariant.getFormat());
 			final LinkedHashMap<String, Object> result = new LinkedHashMap<>();
 			result.put("entry_type", entry.getName());
-			result.put("metadata", locationInvariant.getMetadata().toMap());
+			result.put("metadata", mMetadataProvider.getFreshMetadata());
 			result.put("location", locationInvariant.getLocation().toMap());
-			result.put(entry.getName(), locationInvariant.getInvariant().toMap());
+			result.put(entry.getName(), invariantMap);
 			return result;
 		}
 		throw new UnsupportedOperationException("Unknown entry type " + entry.getName());
