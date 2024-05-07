@@ -27,9 +27,6 @@
 
 package de.uni_freiburg.informatik.ultimate.witnessparser.yaml;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-
 /**
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  */
@@ -66,17 +63,8 @@ public class FunctionContract extends WitnessEntry {
 		return mEnsures;
 	}
 
-	@Override
-	public WitnessSetEntry toSetEntry() {
-		final LinkedHashMap<String, Object> result = new LinkedHashMap<>();
-		if (mRequires != null) {
-			result.put("requires", mRequires);
-		}
-		if (mEnsures != null) {
-			result.put("ensures", mEnsures);
-		}
-		result.put("format", mFormat);
-		return new WitnessSetEntry(NAME, mLocation, result);
+	public String getFormat() {
+		return mFormat;
 	}
 
 	@Override
@@ -90,21 +78,5 @@ public class FunctionContract extends WitnessEntry {
 			sb.append(" ensures ").append(mEnsures);
 		}
 		return sb.toString();
-	}
-
-	@Override
-	public Map<String, Object> toMap() {
-		final LinkedHashMap<String, Object> result = new LinkedHashMap<>();
-		result.put("entry_type", NAME);
-		result.put("metadata", mMetadata.toMap());
-		result.put("location", mLocation.toMap());
-		if (mRequires != null) {
-			result.put("requires", mRequires);
-		}
-		if (mEnsures != null) {
-			result.put("ensures", mEnsures);
-		}
-		result.put("format", mFormat);
-		return result;
 	}
 }

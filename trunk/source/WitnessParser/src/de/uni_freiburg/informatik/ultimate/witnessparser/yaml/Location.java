@@ -31,12 +31,10 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 
-import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Witness.IMapSerializable;
-
 /**
  * @author Manuel Bentele (bentele@informatik.uni-freiburg.de)
  */
-public class Location implements IMapSerializable {
+public class Location {
 
 	private final String mFileName;
 	private final String mFileHash;
@@ -97,7 +95,6 @@ public class Location implements IMapSerializable {
 				&& mLine == other.mLine;
 	}
 
-	@Override
 	public Map<String, Object> toMap() {
 		final LinkedHashMap<String, Object> result = new LinkedHashMap<>();
 		result.put("file_name", mFileName);
