@@ -262,9 +262,24 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 			// return our current TS to the worklist and throw reexpl. TS on top?
 
 			OutgoingInternalTransition<L, R> currentTransition = current.getSecond();
-			final R nextState = currentTransition.getSucc();
+			R nextState = currentTransition.getSucc();
 			debugIndent("Now exploring transition %s --> %s (label: %s)", currentState, nextState,
 					currentTransition.getLetter());
+			int stackIndex;
+			Map<L, H> nextSleepSet = new HashMap<>();
+			// Look for left states & check sleepset compatibility
+			final boolean left = mDfs.isVisited(nextState) && (stackIndex = mDfs.stackIndexOf(nextState)) == -1;
+			if (left) {
+				nextSleepSet = createSleepSet(currentState, currentTransition.getLetter());
+				final boolean sameSleepSet = (nextSleepSet == mStateFactory.getSleepSet(nextState));
+				if (!sameSleepSet) {
+					// copy with different sleepset
+					mStatistics.incDuplStates();
+					nextState = createNextState(currentState, mStateFactory.getOriginalState(nextState),
+							currentTransition.getLetter());
+				}
+			}
+
 			// use proven states for dead end pruning:
 			final boolean nextStateIsProven = mProofManager.isProvenState(mStateFactory.getOriginalState(nextState));
 			final boolean prune = mVisitor.discoverTransition(currentState, currentTransition.getLetter(), nextState)
@@ -274,7 +289,6 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 				return;
 			}
 
-			final int stackIndex;
 			if (prune) {
 				debugIndent("-> visitor pruned transition");
 				// if the pruned state is a proven state: add its abstraction level
@@ -286,7 +300,10 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 				// TODO: loop handle...
 			} else if (!mDfs.isVisited(nextState)) {
 				// Compute sleepsets
-				final Map<L, H> nextSleepSet = createSleepSet(currentState, currentTransition.getLetter());
+				// TODO: reuse computed sleep set for copies of left states?
+				if (!left) {
+					nextSleepSet = createSleepSet(currentState, currentTransition.getLetter());
+				}
 				mStateFactory.setSleepSet(nextState, nextSleepSet);
 				for (final Map.Entry<L, H> edge : mStateFactory.getSleepSet(nextState).entrySet()) {
 					mStateFactory.addToAbstractionLimit(nextState, edge.getValue());
@@ -328,10 +345,12 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 				debugIndent("-> state is on stack -- do not unroll loop");
 				mDfs.updateLoopHead(currentState, new Pair<>(stackIndex, nextState));
 			} else {
+				assert mStateFactory.getAbstractionLevel(nextState).isLocked() : "Unexpected case";
 				debugIndent("-> state was visited before -- no re-exploration");
 				mDfs.backPropagateLoopHead(currentState, nextState);
 			}
 		}
+
 		final BacktrackCases abort = backtrackUntil(mStartState);
 		if (abort == BacktrackCases.ABORT) {
 			mLogger.debug(ABORT_MSG);
@@ -345,6 +364,7 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 	// need a third possible return to indicate a wrong guess
 	public enum BacktrackCases {
 		ABORT, CONTINUE, WRONG_GUESS
+
 	}
 
 	private BacktrackCases backtrackUntil(final R state) {
@@ -505,14 +525,14 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 					final ComparisonResult c = mStateFactory.getAbstractionLimit(state)
 							.compare(mStateFactory.getAbstractionLimit(correspRstate).getValue());
 					dupl = !(c == ComparisonResult.EQUAL || c == ComparisonResult.STRICTLY_GREATER);
-					// TODO: Check sleep set compatibility
+					// sleep set compatibility is only checked directly before visiting
 				}
 
 				R reductionSucc;
 				// disabled left pruning by changing dupl --> left
-				if (correspRstate == null || left) {
+				// TODO: fix & re-enable left pruning
+				if (correspRstate == null || dupl) {
 					if (dupl) {
-						mDuplStates++;
 						mStatistics.incDuplStates();
 					}
 					// only compute sleep set directly before visiting the state!
