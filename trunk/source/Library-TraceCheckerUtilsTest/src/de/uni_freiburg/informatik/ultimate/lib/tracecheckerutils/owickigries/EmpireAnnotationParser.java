@@ -29,14 +29,13 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import org.yaml.snakeyaml.Yaml;
 
@@ -45,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.emp
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire.Region;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire.Territory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class EmpireAnnotationParser<P> {
 	private static final Pattern QUOTED_PLACE_REGEX = Pattern.compile("\\s*\"((\\\"|[^\"])*)\".*");
@@ -85,8 +85,8 @@ public class EmpireAnnotationParser<P> {
 			}
 
 			final var lawDefs = (List<Map<String, Object>>) mapping.get(LAW);
-			final var territoryLawMap = parseLaw(lawDefs, namedRegions);
-			return new EmpireAnnotation<>(territoryLawMap);
+			final var territoryLawSet = parseLaw(lawDefs, namedRegions);
+			return new EmpireAnnotation<>(territoryLawSet);
 		}
 	}
 
@@ -98,9 +98,9 @@ public class EmpireAnnotationParser<P> {
 		return result;
 	}
 
-	private Map<Territory<P>, IPredicate> parseLaw(final List<Map<String, Object>> lawDefs,
+	private Set<Pair<Territory<P>, IPredicate>> parseLaw(final List<Map<String, Object>> lawDefs,
 			final Map<String, Region<P>> namedRegions) {
-		final var result = new HashMap<Territory<P>, List<IPredicate>>();
+		final var result = new HashSet<Pair<Territory<P>, IPredicate>>();
 
 		for (final var mapping : lawDefs) {
 			final var territoryDef = (List<Object>) mapping.get(TERRITORY);
@@ -108,11 +108,10 @@ public class EmpireAnnotationParser<P> {
 
 			final String assertionString = mapping.get(ASSERTION).toString();
 			final var assertion = mParsePredicate.apply(assertionString);
-			result.computeIfAbsent(territory, x -> new ArrayList<>()).add(assertion);
+			result.add(new Pair<>(territory, assertion));
 		}
 
-		return result.entrySet().stream()
-				.collect(Collectors.toMap(Map.Entry::getKey, e -> mConjunction.apply(e.getValue())));
+		return result;
 	}
 
 	private Territory<P> parseTerritory(final List<Object> territoryDef, final Map<String, Region<P>> namedRegions) {

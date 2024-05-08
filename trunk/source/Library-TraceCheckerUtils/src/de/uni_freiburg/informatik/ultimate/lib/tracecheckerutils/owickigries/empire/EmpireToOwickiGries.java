@@ -209,8 +209,8 @@ public class EmpireToOwickiGries<LETTER, PLACE> {
 	IPredicate getTerritoryImplications() {
 		final Set<IPredicate> implicationSet = new HashSet<>();
 		for (final Territory<PLACE> territory : mEmpireAnnotation.getTerritories()) {
-			final IPredicate territoryImplication =
-					mFactory.or(mFactory.not(getTerritoryFormula(territory)), mEmpireAnnotation.getLaw(territory));
+			final IPredicate territoryImplication = mFactory.or(mFactory.not(getTerritoryFormula(territory)),
+					mFactory.and(mEmpireAnnotation.getLawSet(territory)));
 			implicationSet.add(territoryImplication);
 		}
 		return mFactory.and(implicationSet);

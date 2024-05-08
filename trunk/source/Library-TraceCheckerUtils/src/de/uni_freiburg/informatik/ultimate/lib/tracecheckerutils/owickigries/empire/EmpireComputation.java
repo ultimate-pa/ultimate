@@ -29,8 +29,10 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.em
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -62,6 +64,7 @@ public class EmpireComputation<L, P> {
 	private final List<Set<P>> mProofPlaces;
 
 	private final EmpireAnnotation<P> mEmpire;
+	private final Map<P, IPredicate> mPlacePredicateMap = new HashMap<>();
 
 	public EmpireComputation(final IUltimateServiceProvider services, final BasicPredicateFactory predicateFactory,
 			final IPetriNetSuccessorProvider<L, P> refinedNet, final Set<P> originalPlaces,
@@ -77,9 +80,11 @@ public class EmpireComputation<L, P> {
 		mLogger.debug("proof places: %s", proofPlaces);
 		mAssertionPlaces = proofPlaces.stream().flatMap(Set::stream).collect(Collectors.toSet());
 
-		final var result = symbolicExecution();
-		final var lawMap = result.stream().collect(Collectors.toMap(Pair::getFirst,
-				pair -> assertionPlace2Predicate.apply(pair.getSecond()), predicateFactory::and));
+		final var mTerrPlacePairs = symbolicExecution();
+		final var lawMap = mTerrPlacePairs.stream()
+				.map(p -> new Pair<>(p.getFirst(),
+						mPlacePredicateMap.computeIfAbsent(p.getSecond(), assertionPlace2Predicate)))
+				.collect(Collectors.toSet());
 		mEmpire = new EmpireAnnotation<>(lawMap);
 	}
 
@@ -268,12 +273,6 @@ public class EmpireComputation<L, P> {
 					continue;
 				}
 				regions.add(new Region<>(ImmutableSet.singleton(succ)));
-				/*
-				 * final var match = findMatchingRegion(remainingRegions, succ, territory); if (match == null) {
-				 * regions.add(new Region<>(ImmutableSet.singleton(succ))); } else { regions.add( new
-				 * Region<>(ImmutableSet.of(DataStructureUtils.union(match.getPlaces(), Set.of(succ)))));
-				 * remainingRegions.remove(match); }
-				 */
 			}
 		}
 
@@ -315,5 +314,9 @@ public class EmpireComputation<L, P> {
 	private boolean isPositivelyCorelated(final Region<P> region, final P place) {
 		return !region.contains(place)
 				&& region.getPlaces().stream().allMatch(p -> mCoRelation.getPlacesCorelation(place, p));
+	}
+
+	public Map<IPredicate, P> getPredicatePlaceMap() {
+		return mPlacePredicateMap.entrySet().stream().collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey));
 	}
 }

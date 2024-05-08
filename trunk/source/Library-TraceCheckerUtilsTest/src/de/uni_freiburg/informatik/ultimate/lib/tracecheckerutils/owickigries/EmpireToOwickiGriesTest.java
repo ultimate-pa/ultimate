@@ -7,7 +7,9 @@ import static org.junit.Assume.assumeThat;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.junit.runner.RunWith;
 
@@ -20,8 +22,10 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationC
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire.EmpireToOwickiGries;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire.EmpireValidityCheck;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire.PetriOwickiGries;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire.Territory;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataTestFileAST;
 import de.uni_freiburg.informatik.ultimate.test.junitextension.testfactory.FactoryTestRunner;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 @RunWith(FactoryTestRunner.class)
 public class EmpireToOwickiGriesTest extends OwickiGriesTestSuite {
@@ -39,8 +43,20 @@ public class EmpireToOwickiGriesTest extends OwickiGriesTestSuite {
 				unifier::getOrConstructPredicateForConjunction).parse(computeEmpirePath(path));
 		mLogger.info("Parsed Empire annotation:\n%s", empire);
 
+		final var assertionPlaces =
+				mProofs.stream().map(nwa -> nwa.getStates()).flatMap(Set::stream).collect(Collectors.toSet());
+		final var predicatePlaceMap = new HashMap<IPredicate, IPredicate>();
+		for (final Pair<Territory<IPredicate>, IPredicate> pair : empire.getEmpire()) {
+			final var law = pair.getSecond();
+			for (final IPredicate iPredicate : assertionPlaces) {
+				if (law.getFormula().equals(iPredicate.getFormula())) {
+					predicatePlaceMap.put(law, iPredicate);
+				}
+			}
+		}
 		final var empireCheck = new EmpireValidityCheck<>(mServices, mMgdScript, implicationChecker, mPredicateFactory,
-				program, mSymbolTable, modifiableGlobals, empire);
+				program, unfolding.getNet(), mSymbolTable, modifiableGlobals, empire, predicatePlaceMap,
+				assertionPlaces);
 		assumeThat("Given empire annotation is not valid", empireCheck.getValidity(), equalTo(Validity.VALID));
 
 		final var empireToOwickiGries = new EmpireToOwickiGries<>(mServices, mMgdScript, program, mSymbolTable,

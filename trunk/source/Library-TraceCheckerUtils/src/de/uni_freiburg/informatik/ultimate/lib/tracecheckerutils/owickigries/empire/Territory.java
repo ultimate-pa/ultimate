@@ -28,8 +28,12 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.em
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
@@ -125,6 +129,74 @@ public final class Territory<PLACE> {
 			}
 		}
 		return true;
+	}
+
+	public boolean containsMarking(final Marking<PLACE> marking) {
+		final Set<Region<PLACE>> regions = new HashSet<>(getRegions());
+		if (marking.size() != regions.size()) {
+			return false;
+		}
+		for (final PLACE place : marking.getPlaces()) {
+			var found = false;
+			final var it = regions.iterator();
+			while (!found && it.hasNext()) {
+				final var region = it.next();
+				if (region.contains(place)) {
+					found = true;
+					regions.remove(region);
+				}
+			}
+			if (!found) {
+				return false;
+			}
+		}
+		return regions.isEmpty();
+	}
+
+	public <L> boolean enables(final PLACE lawPlace, final Transition<L, PLACE> transition,
+			final Set<PLACE> assertionPlaces) {
+		final var regions = new HashSet<>(getRegions());
+		for (final var place : transition.getPredecessors()) {
+			if (place.equals(lawPlace) || (assertionPlaces.contains(place))) {
+				continue;
+			}
+
+			final var it = regions.iterator();
+			boolean found = false;
+			while (!found && it.hasNext()) {
+				final var region = it.next();
+				if (region.contains(place)) {
+					found = true;
+					it.remove();
+				}
+			}
+			if (!found) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * Get all transitions of a PetriNet that are enabled by the territory.
+	 *
+	 * @param <L>
+	 * @param successorProvider
+	 *            Petri Net successor Provider
+	 * @param lawPlace
+	 *            Law place corresponding to the Territory
+	 * @param assertionPlaces
+	 *            Assertion places of the proof automata
+	 * @return
+	 */
+	public <L> Stream<Transition<L, PLACE>> getEnabledTransitions(
+			final IPetriNetSuccessorProvider<L, PLACE> successorProvider, final PLACE lawPlace,
+			final Set<PLACE> assertionPlaces) {
+
+		final var mayPlaces = DataStructureUtils.union(getPlaces(), Set.of(lawPlace), assertionPlaces);
+		return successorProvider.getSuccessorTransitionProviders(getPlaces(), mayPlaces).stream()
+				.flatMap(provider -> provider.getTransitions().stream())
+				.filter(t -> enables(lawPlace, t, assertionPlaces));
 	}
 
 	@SuppressWarnings("unchecked")

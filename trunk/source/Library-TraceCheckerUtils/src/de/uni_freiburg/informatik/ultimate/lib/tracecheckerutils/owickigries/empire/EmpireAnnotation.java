@@ -32,9 +32,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * An Empire annotation. Can serve as proof of the program's correctness.
@@ -45,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
  *            The type of program statements
  */
 public class EmpireAnnotation<PLACE> {
-	private final Map<Territory<PLACE>, IPredicate> mLaw;
+	private final Set<Pair<Territory<PLACE>, IPredicate>> mEmpire;
 
 	/**
 	 * Construct the Empire Annotation with given Territories and Law
@@ -53,8 +55,13 @@ public class EmpireAnnotation<PLACE> {
 	 * @param territoryLawMap
 	 *            Map from Territory to corresponding IPredicate Law object
 	 */
-	public EmpireAnnotation(final Map<Territory<PLACE>, IPredicate> territoryLawMap) {
-		mLaw = territoryLawMap;
+	public EmpireAnnotation(final Set<Pair<Territory<PLACE>, IPredicate>> territoryLawPairs) {
+		mEmpire = territoryLawPairs;
+	}
+
+	public EmpireAnnotation(final Map<Territory<PLACE>, IPredicate> lawMap) {
+		mEmpire = lawMap.entrySet().stream().map(e -> new Pair<Territory<PLACE>, IPredicate>(e.getKey(), e.getValue()))
+				.collect(Collectors.toSet());
 	}
 
 	/**
@@ -64,12 +71,12 @@ public class EmpireAnnotation<PLACE> {
 	 */
 	public Set<Region<PLACE>> getColony() {
 		final Set<Region<PLACE>> colony =
-				mLaw.keySet().stream().flatMap(t -> t.getRegions().stream()).collect(Collectors.toSet());
+				mEmpire.stream().flatMap(p -> p.getFirst().getRegions().stream()).collect(Collectors.toSet());
 		return colony;
 	}
 
 	public Set<Territory<PLACE>> getTerritories() {
-		return Collections.unmodifiableSet(mLaw.keySet());
+		return Collections.unmodifiableSet(mEmpire.stream().map(p -> p.getFirst()).collect(Collectors.toSet()));
 	}
 
 	/**
@@ -99,17 +106,63 @@ public class EmpireAnnotation<PLACE> {
 	 *            Territory of which the Law should be returned.
 	 * @return Law corresponding to territory.
 	 */
-	public IPredicate getLaw(final Territory<PLACE> territory) {
-		return mLaw.get(territory);
+	public Set<IPredicate> getLawSet(final Territory<PLACE> territory) {
+		return mEmpire.stream().filter(p -> p.getFirst().equals(territory)).map(p -> p.getSecond())
+				.collect(Collectors.toSet());
 	}
 
 	/**
-	 * Get the whole Law Hashtable which contains all (Territory, Law) pairs.
+	 * Return the Set of all Territories of the Empire that contain the given Marking in its treaty.
 	 *
-	 * @return Law Hashtable
+	 * @param marking
+	 * @return Set of Territories containing the Marking
 	 */
-	public Map<Territory<PLACE>, IPredicate> getLaw() {
-		return mLaw;
+	public Set<Pair<Territory<PLACE>, IPredicate>> getMarkingTerritories(final Marking<PLACE> marking) {
+		return mEmpire.stream().filter(p -> p.getFirst().containsMarking(marking)).collect(Collectors.toSet());
+	}
+
+	/**
+	 * Determine all successor (territory, law)-pairs wrt. a territory and transition for given bystanders and successor
+	 * places of a transition. Successor territories only contain all bystander regions and for each successor place one
+	 * region that contains the place.
+	 *
+	 * @param bystanders
+	 *            Set of regions of the predecessor territory that do not contain any predecessor place of the
+	 *            transition.
+	 * @param successorPlaces
+	 *            Successor places of the transition
+	 * @return Set of all successor (territory, law)-pairs
+	 */
+	public Set<Pair<Territory<PLACE>, IPredicate>> getSuccessorPairs(final Set<Region<PLACE>> bystanders,
+			final Set<PLACE> successorPlaces) {
+		final var result = new HashSet<Pair<Territory<PLACE>, IPredicate>>();
+		for (final Pair<Territory<PLACE>, IPredicate> pair : mEmpire) {
+			final var territory = pair.getFirst();
+			if (!territory.getRegions().containsAll(bystanders)
+					|| !territory.getPlaces().containsAll(successorPlaces)) {
+				continue;
+			}
+			final var potentialSuccessors = DataStructureUtils.difference(territory.getRegions(), bystanders).stream()
+					.collect(Collectors.toSet());
+			var discard = false;
+			for (final PLACE succPlace : successorPlaces) {
+				final var succRegions =
+						potentialSuccessors.stream().filter(r -> r.contains(succPlace)).collect(Collectors.toSet());
+				if (succRegions.size() != 1) {
+					discard = true;
+					break;
+				}
+				potentialSuccessors.removeAll(succRegions);
+			}
+			if (!discard) {
+				result.add(pair);
+			}
+		}
+		return result;
+	}
+
+	public Set<Pair<Territory<PLACE>, IPredicate>> getEmpire() {
+		return mEmpire;
 	}
 
 	/**
@@ -118,7 +171,7 @@ public class EmpireAnnotation<PLACE> {
 	 * @return Number of Territories
 	 */
 	public final long getEmpireSize() {
-		return mLaw.size();
+		return mEmpire.size();
 	}
 
 	public final int getRegionCount() {
@@ -132,8 +185,8 @@ public class EmpireAnnotation<PLACE> {
 	 */
 	public final long getLawSize() {
 		final DAGSize sizeComputation = new DAGSize();
-		final long size = mLaw.entrySet().stream()
-				.collect(Collectors.summingLong(x -> sizeComputation.size(x.getValue().getFormula())));
+		final long size =
+				mEmpire.stream().collect(Collectors.summingLong(x -> sizeComputation.size(x.getSecond().getFormula())));
 		return size;
 	}
 
@@ -148,12 +201,12 @@ public class EmpireAnnotation<PLACE> {
 
 	@Override
 	public String toString() {
-		if (mLaw.isEmpty()) {
+		if (mEmpire.isEmpty()) {
 			return "[empty empire]";
 		}
-		final int keyLen = mLaw.keySet().stream().map(Object::toString).mapToInt(String::length).max().getAsInt();
+		final int keyLen = mEmpire.stream().map(Object::toString).mapToInt(String::length).max().getAsInt();
 		final var sb = new StringBuilder();
-		for (final var entry : mLaw.entrySet()) {
+		for (final var entry : mEmpire) {
 			sb.append('\t');
 			sb.append(String.format("%-" + keyLen + "s", entry.getKey()));
 			sb.append("  :  ");
