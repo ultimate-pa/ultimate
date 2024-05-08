@@ -301,11 +301,11 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 			((SleepMapStateFactory<?>) mSleepMapFactory).reset();
 		}
 
-		ITraversal<L> traversal = new BasicTraversal();
+		ITraversal<L> traversal = buildReducedTraversal(mMode, new BasicTraversal());
 		if (mDfsOrder instanceof LoopLockstepOrder<?>) {
 			traversal = new StatefulOrderTraversal(traversal);
 		}
-		buildReducedTraversal(mMode, traversal).traverse(input, mDfsOrder, visitor);
+		traversal.traverse(input, mDfsOrder, visitor);
 	}
 
 	// TODO Maybe this pattern of building traversals can over time replace this class (PartialOrderReductionFacade)
@@ -323,7 +323,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 			return new PersistentSetTraversal(underlying);
 		case PERSISTENT_SLEEP_NEW_STATES:
 		case PERSISTENT_SLEEP_NEW_STATES_FIXEDORDER:
-			return new PersistentSetTraversal(buildSleepTraversal(underlying));
+			return buildSleepTraversal(new PersistentSetTraversal(underlying));
 		default:
 			throw new UnsupportedOperationException("Unsupported POR mode: " + mode);
 		}
