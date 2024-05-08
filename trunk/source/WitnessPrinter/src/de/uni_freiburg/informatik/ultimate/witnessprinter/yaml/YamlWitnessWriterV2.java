@@ -27,12 +27,17 @@
 
 package de.uni_freiburg.informatik.ultimate.witnessprinter.yaml;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.FunctionContract;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.GhostUpdate;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.GhostVariable;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Location;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LocationInvariant;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LoopInvariant;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Witness;
@@ -41,21 +46,25 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.WitnessEntry;
 /**
  * Exports a witness for the format version 2.x to YAML. The format 2.0 is described here:
  * https://sosy-lab.gitlab.io/benchmarking/sv-witnesses/yaml/correctness-witnesses.html <br>
- * Additionally we also export function contracts for version 2.1.
+ * Additionally we also export function contracts for version 2.1, and allow witnesses with ghost variables.
  *
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  */
 public class YamlWitnessWriterV2 extends YamlWitnessWriter {
 	private final MetadataProvider mMetadataProvider;
 	private final boolean mWriteFunctionContracts;
+	private final boolean mAllowGhostVariables;
 
-	public YamlWitnessWriterV2(final MetadataProvider metadataProvider, final boolean writeFunctionContracts) {
+	public YamlWitnessWriterV2(final MetadataProvider metadataProvider, final boolean writeFunctionContracts,
+			final boolean allowGhostVariables) {
 		mMetadataProvider = metadataProvider;
 		mWriteFunctionContracts = writeFunctionContracts;
+		mAllowGhostVariables = allowGhostVariables;
 	}
 
 	@Override
 	public String toString(final Witness witness) {
+		final List<Map<String, Object>> resultEntries = new ArrayList<>();
 		final List<Map<String, Object>> content = witness.getEntries().stream()
 				.filter(x -> x instanceof LoopInvariant || x instanceof LocationInvariant
 						|| (mWriteFunctionContracts && x instanceof FunctionContract))
@@ -64,7 +73,69 @@ public class YamlWitnessWriterV2 extends YamlWitnessWriter {
 		invariantSet.put("entry_type", "invariant_set");
 		invariantSet.put("metadata", mMetadataProvider.getFreshMetadata());
 		invariantSet.put("content", content);
-		return formatYaml(List.of(invariantSet));
+		resultEntries.add(invariantSet);
+		final List<Map<String, Object>> ghostVariables = extractGhostVariables(witness);
+		if (!ghostVariables.isEmpty()) {
+			if (!mAllowGhostVariables) {
+				throw new UnsupportedOperationException("Unsupported witness format for ghost variables");
+			}
+			final Map<String, Object> ghostInstrumentation = new LinkedHashMap<>();
+			ghostInstrumentation.put("entry_type", "ghost_instrumentation");
+			ghostInstrumentation.put("metadata", mMetadataProvider.getFreshMetadata());
+			final LinkedHashMap<String, Object> ghostContent = new LinkedHashMap<>();
+			ghostContent.put("ghost_variables", ghostVariables);
+			ghostContent.put("ghost_updates", extractGhostUpdates(witness));
+			ghostInstrumentation.put("content", ghostContent);
+			resultEntries.add(ghostInstrumentation);
+		}
+		return formatYaml(resultEntries);
+	}
+
+	private static List<Map<String, Object>> extractGhostVariables(final Witness witness) {
+		return witness.getEntries().stream().filter(GhostVariable.class::isInstance)
+				.map(x -> extractGhostVariableMap((GhostVariable) x)).collect(Collectors.toList());
+	}
+
+	private static List<Map<String, Object>> extractGhostUpdates(final Witness witness) {
+		// Group ghost updates by location first
+		final Map<Location, List<GhostUpdate>> locs2Updates = new HashMap<>();
+		for (final var entry : witness.getEntries()) {
+			if (!(entry instanceof GhostUpdate)) {
+				continue;
+			}
+			final GhostUpdate update = (GhostUpdate) entry;
+			locs2Updates.computeIfAbsent(update.getLocation(), x -> new ArrayList<>()).add(update);
+		}
+		final List<Map<String, Object>> result = new ArrayList<>();
+		for (final var entry : locs2Updates.entrySet()) {
+			final Map<String, Object> map = new LinkedHashMap<>();
+			map.put("location", entry.getKey());
+			final List<Map<String, String>> updateMap = entry.getValue().stream()
+					.map(YamlWitnessWriterV2::extractGhostUpdateMap).collect(Collectors.toList());
+			map.put("updates", updateMap);
+			result.add(map);
+		}
+		return result;
+	}
+
+	private static Map<String, String> extractGhostUpdateMap(final GhostUpdate update) {
+		final Map<String, String> result = new LinkedHashMap<>();
+		result.put("variable", update.getName());
+		result.put("value", update.getValue());
+		result.put("format", update.getValueFormat());
+		return result;
+	}
+
+	private static Map<String, Object> extractGhostVariableMap(final GhostVariable variable) {
+		final Map<String, Object> result = new LinkedHashMap<>();
+		result.put("name", variable.getVariable());
+		result.put("type", variable.getType());
+		result.put("scope", variable.getScope());
+		final Map<String, String> initial = new LinkedHashMap<>();
+		initial.put("value", variable.getInitialValue());
+		initial.put("format", variable.getValueFormat());
+		result.put("initial", initial);
+		return result;
 	}
 
 	private Map<String, Object> asContentMap(final WitnessEntry entry) {
