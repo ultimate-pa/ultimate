@@ -42,6 +42,8 @@ import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.SafeConstructor;
 
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.FunctionContract;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.GhostUpdate;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.GhostVariable;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Location;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LocationInvariant;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LoopInvariant;
@@ -82,6 +84,13 @@ public class YamlWitnessParser {
 			final Map<String, String> invariant = (Map<String, String>) entry.get(LoopInvariant.NAME);
 			return Stream.of(new LoopInvariant(location, invariant.get("string"), invariant.get("format")));
 		}
+		case "ghost_instrumentation": {
+			final var content = (Map<String, List<Map<String, Object>>>) entry.get("content");
+			final List<Map<String, Object>> ghostVariables = content.get("ghost_variables");
+			final List<Map<String, Object>> ghostUpdates = content.get("ghost_updates");
+			return Stream.concat(ghostVariables.stream().map(x -> parseGhostVariable(x)),
+					ghostUpdates.stream().flatMap(x -> parseGhostUpdates(x)));
+		}
 		case "invariant_set": {
 			final List<Map<String, Map<String, Object>>> content =
 					(List<Map<String, Map<String, Object>>>) entry.get("content");
@@ -90,6 +99,20 @@ public class YamlWitnessParser {
 		default:
 			throw new UnsupportedOperationException("Unknown entry type " + entry.get("entry_type"));
 		}
+	}
+
+	@SuppressWarnings("unchecked")
+	private static GhostVariable parseGhostVariable(final Map<String, Object> entry) {
+		final var initial = (Map<String, String>) entry.get("initial");
+		return new GhostVariable((String) entry.get("name"), initial.get("value"), initial.get("format"),
+				(String) entry.get("scope"), (String) entry.get("type"));
+	}
+
+	@SuppressWarnings("unchecked")
+	private static Stream<GhostUpdate> parseGhostUpdates(final Map<String, Object> entry) {
+		final Location location = parseLocation((Map<String, Object>) entry.get("location"));
+		final List<Map<String, String>> updates = (List<Map<String, String>>) entry.get("updates");
+		return updates.stream().map(x -> new GhostUpdate(x.get("variable"), x.get("value"), x.get("format"), location));
 	}
 
 	@SuppressWarnings("unchecked")
