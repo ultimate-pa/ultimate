@@ -104,19 +104,25 @@ public final class PersistentSetReduction<L, S> implements INwaOutgoingLetterAnd
 	public Set<L> lettersInternal(final S state) {
 		final var enabled = mOperand.lettersInternal(state);
 		final var persistent = mPersistentSets.persistentSet(state);
+		if (persistent == null) {
+			return enabled;
+		}
 		return DataStructureUtils.difference(enabled, persistent);
 	}
 
 	@Override
 	public Iterable<OutgoingInternalTransition<L, S>> internalSuccessors(final S state) {
 		final var persistent = mPersistentSets.persistentSet(state);
+		if (persistent == null) {
+			return mOperand.internalSuccessors(state);
+		}
 		return new FilteredIterable<>(mOperand.internalSuccessors(state), t -> persistent.contains(t.getLetter()));
 	}
 
 	@Override
 	public Iterable<OutgoingInternalTransition<L, S>> internalSuccessors(final S state, final L letter) {
 		final var persistent = mPersistentSets.persistentSet(state);
-		if (persistent.contains(letter)) {
+		if (persistent == null || persistent.contains(letter)) {
 			return mOperand.internalSuccessors(state, letter);
 		}
 		return Collections.emptyList();
