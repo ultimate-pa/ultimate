@@ -629,6 +629,7 @@ public class CHandler {
 	 */
 
 	public CHandlerTranslationResult visit(final IDispatcher main, final List<DecoratedUnit> units) {
+		final List<Statement> additionalInitializations = handleWitnessDeclarations(main);
 		IASTNode globalHook = null;
 		for (final DecoratedUnit du : units) {
 			if (du.getRootNode().getCNode() != null) {
@@ -664,7 +665,7 @@ public class CHandler {
 			offset++;
 		}
 
-		mDeclarations.addAll(0, mPostProcessor.postProcess(loc, globalHook));
+		mDeclarations.addAll(0, mPostProcessor.postProcess(loc, globalHook, additionalInitializations));
 
 		/*
 		 * this must come after the post processor because the post processor might add declarations when dispatching
@@ -742,6 +743,22 @@ public class CHandler {
 				mDeclarations.toArray(new Declaration[mDeclarations.size()]));
 		propChecks.forEach(x -> x.annotate(boogieUnit));
 		return new CHandlerTranslationResult(boogieUnit, mSymbolTable.getBoogieCIdentifierMapping());
+	}
+
+	private List<Statement> handleWitnessDeclarations(final IDispatcher dispatcher) {
+		final List<Statement> result = new ArrayList<>();
+		for (final var ghost : dispatcher.getWitnessDeclarations()) {
+			final ExpressionResult exprRes = ghost.getInitializationResult(dispatcher);
+			// Collect all statement for initialization to return them and add in PostProcessor
+			result.addAll(exprRes.getStatements());
+			result.addAll(CTranslationUtil.createHavocsForAuxVars(exprRes.getAuxVars()));
+			// Add the declaration of global ghost variables (and possible auxiliary variables)
+			for (final var d : exprRes.getDeclarations()) {
+				mStaticObjectsHandler.addGlobalVarDeclarationWithoutCDeclaration((VariableDeclaration) d);
+			}
+			mStaticObjectsHandler.addGlobalVarDeclarationWithoutCDeclaration(ghost.getDeclaration(mSymbolTable));
+		}
+		return result;
 	}
 
 	public Result visit(final IDispatcher main, final CASTDesignatedInitializer node) {
@@ -3598,8 +3615,8 @@ public class CHandler {
 			final List<Statement> bodyBlock, final ExpressionResultBuilder resultBuilder) {
 		final LoopInvariantSpecification[] spec = extractLoopInvariants(main, node);
 		final ILocation igLoc = LocationFactory.createIgnoreLocation(loc);
-		final WhileStatement whileStmt = new WhileStatement(igLoc,
-				ExpressionFactory.createBooleanLiteral(igLoc, true), spec, bodyBlock.toArray(Statement[]::new));
+		final WhileStatement whileStmt = new WhileStatement(igLoc, ExpressionFactory.createBooleanLiteral(igLoc, true),
+				spec, bodyBlock.toArray(Statement[]::new));
 		resultBuilder.getOverappr().stream().forEach(a -> a.annotate(whileStmt));
 		resultBuilder.addStatement(whileStmt);
 

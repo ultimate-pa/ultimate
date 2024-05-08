@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
 import java.text.ParseException;
 import java.util.List;
+import java.util.Set;
 
 import org.eclipse.cdt.core.dom.ast.IASTASMDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTArrayDeclarator;
@@ -114,6 +115,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.IExtractedWitnessDeclaration;
 
 public class PRDispatcher implements IDispatcher {
 
@@ -412,5 +414,10 @@ public class PRDispatcher implements IDispatcher {
 	@Override
 	public List<ACSLNode> getFunctionContractFromWitness(final IASTNode node) {
 		return List.of();
+	}
+
+	@Override
+	public Set<IExtractedWitnessDeclaration> getWitnessDeclarations() {
+		return Set.of();
 	}
 }

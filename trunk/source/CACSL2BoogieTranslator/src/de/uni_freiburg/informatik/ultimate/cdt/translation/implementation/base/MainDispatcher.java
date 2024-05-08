@@ -201,8 +201,10 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.TypeInvariant;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ValidExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.WildcardExpression;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.ExtractedGhostUpdate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.ExtractedWitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.IExtractedCorrectnessWitness;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.IExtractedWitnessDeclaration;
 
 /**
  * @author Markus Lindenmann
@@ -413,14 +415,21 @@ public class MainDispatcher implements IDispatcher {
 			return result;
 		}
 		final Set<ExtractedWitnessInvariant> matchedWitnessInvariants = mWitness.getInvariants(node);
+		final List<ExtractedGhostUpdate> matchedGhostUpdates = mWitness.getGhostUpdates(node);
+		if (matchedWitnessInvariants.isEmpty() && matchedGhostUpdates.isEmpty()) {
+			return result;
+		}
 		if (!(result instanceof ExpressionResult)) {
-			if (!matchedWitnessInvariants.isEmpty()) {
-				mLogger.warn("Unable to annotate " + node.getRawSignature() + " with a witness entry");
-			}
+			mLogger.warn("Unable to annotate " + node.getRawSignature() + " with a witness entry");
 			return result;
 		}
 		ExpressionResult rtr = (ExpressionResult) result;
 		final ILocation loc = mLocationFactory.createCLocation(node);
+		// Ensure that invariants are evaluated before the ghost variables are updated and that the order of ghost
+		// updates is preserved. Therefore iterate over these objects in reverse order.
+		for (int i = matchedGhostUpdates.size() - 1; i >= 0; i--) {
+			rtr = matchedGhostUpdates.get(i).transform(loc, this, rtr);
+		}
 		for (final ExtractedWitnessInvariant entry : matchedWitnessInvariants) {
 			rtr = entry.transform(loc, this, rtr);
 		}
@@ -782,5 +791,10 @@ public class MainDispatcher implements IDispatcher {
 		}
 		return mWitness.getFunctionContracts(node).stream().flatMap(x -> x.getAcslContractClauses().stream())
 				.collect(Collectors.toList());
+	}
+
+	@Override
+	public Set<IExtractedWitnessDeclaration> getWitnessDeclarations() {
+		return mWitness == null ? Set.of() : mWitness.getGlobalDeclarations();
 	}
 }

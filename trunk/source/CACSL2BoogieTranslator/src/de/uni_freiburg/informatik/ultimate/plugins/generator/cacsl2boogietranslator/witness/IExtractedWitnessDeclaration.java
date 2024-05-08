@@ -27,52 +27,25 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness;
 
-import java.util.List;
-
-import org.eclipse.cdt.core.dom.ast.IASTNode;
-
-import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
-import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 /**
- * Class for a location invariant extracted from the witness
+ * Interface for the declaration that are extracted from witnesses
  *
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  *
  */
-public class ExtractedLocationInvariant extends ExtractedWitnessInvariant {
-	private final boolean mIsBefore;
+public interface IExtractedWitnessDeclaration {
+	/**
+	 * Get the actual declaration.
+	 */
+	VariableDeclaration getDeclaration(FlatSymbolTable symbolTable);
 
-	public ExtractedLocationInvariant(final String invariant, final IASTNode match, final boolean isBefore) {
-		super(invariant, match);
-		mIsBefore = isBefore;
-	}
-
-	public boolean isBefore() {
-		return mIsBefore;
-	}
-
-	@Override
-	public ExpressionResult transform(final ILocation loc, final IDispatcher dispatcher,
-			final ExpressionResult expressionResult) {
-		final ExpressionResult invariantExprResult = instrument(loc, dispatcher);
-		// Make sure that the location invariant (incl. all auxiliary statements) is executed atomically.
-		final Statement invariant =
-				new AtomicStatement(loc, invariantExprResult.getStatements().toArray(Statement[]::new));
-		if (mIsBefore) {
-			return new ExpressionResultBuilder(invariantExprResult).resetStatements(List.of(invariant))
-					.addAllIncludingLrValue(expressionResult).build();
-		}
-		return new ExpressionResultBuilder(expressionResult).addAllExceptLrValueAndStatements(invariantExprResult)
-				.addStatement(invariant).build();
-	}
-
-	@Override
-	public String getLocationDescription() {
-		return "Location invariant " + (mIsBefore ? "before" : "after");
-	}
+	/**
+	 * Get the result of the initialization.
+	 */
+	ExpressionResult getInitializationResult(final IDispatcher dispatcher);
 }
