@@ -217,13 +217,10 @@ public class CfgBuilder {
 	private final boolean mFutureLiveOptimization;
 
 	public CfgBuilder(final Unit unit, final IUltimateServiceProvider services) throws IOException {
-		//this.mBoogie2Smt = null;
-		//this.mIcfgBacktranslator = null;
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		mAddAssumeForEachAssert = prefs.getBoolean(IcfgPreferenceInitializer.LABEL_ASSUME_FOR_ASSERT);
-		//this.mAllGotoTargets = new HashSet<String> ();
 		mRemoveAssumeTrueStmt = prefs.getBoolean(IcfgPreferenceInitializer.LABEL_REMOVE_ASSUME_TRUE);
 
 		final String pathAndFilename = ILocation.getAnnotation(unit).getFileName();
@@ -248,7 +245,6 @@ public class CfgBuilder {
 		} else {
 			mCodeBlockSize = userDefineCodeBlockSize;
 		}
-		//this.mCodeBlockSize = CodeBlockSize.LoopFreeBlock;
 		mCtxSwitchOnlyAtAtomicBoundaries =
 				prefs.getBoolean(IcfgPreferenceInitializer.LABEL_CONTEXT_SWITCH_ONLY_AT_ATOMIC_BOUNDARIES);
 
@@ -688,7 +684,6 @@ public class CfgBuilder {
 			mCurrentProcedureName = procName;
 			mEdges = new HashSet<>();
 			mGotoEdges = new LinkedList<>();
-			//mLabels = new HashSet<>();
 			mNameCache = new HashMap<>();
 			mWhileExits = new Stack<>();
 			mLabelString2Statement = new HashMap<>();
@@ -696,7 +691,6 @@ public class CfgBuilder {
 			final Statement[] statements =
 					mBoogieDeclarations.getProcImplementation().get(procName).getBody().getBlock();
 			if (statements.length == 0) {
-				//throw new UnsupportedOperationException("Procedure contains no statement");
 				mEdges = new HashSet<>();
 			}
 
@@ -946,7 +940,6 @@ public class CfgBuilder {
 					}
 				}
 				if (changed) {
-					//mIcfgBacktranslator not needed?
 					st = assign;
 				}
 			}
@@ -1060,9 +1053,6 @@ public class CfgBuilder {
 				mGotoEdges.add(gotoEdge);
 				mEdges.add(gotoEdge);
 			}
-//			if (st.getLabels().length == 1) {
-//				return getLocNodeForLabel(new StringDebugIdentifier(st.getLabels()[0]), mLabelString2Statement.get(st.getLabels()[0]));
-//			}
 			return newLocation;
 		}
 		
@@ -1093,7 +1083,6 @@ public class CfgBuilder {
 		}
 		
 		private StatementSequence beginAtomicBlockFromBottom(BoogieIcfgLocation currentLocation) {
-			// start atomic block from the bottom
 			StatementSequence newEdge = startNewStatementSequence((BoogieIcfgLocation)currentLocation, Origin.IMPLEMENTATION);
 			AtomicBlockInfo.addEndAnnotation(newEdge);
 			return newEdge;
@@ -1115,13 +1104,10 @@ public class CfgBuilder {
 		}
 		
 		private BoogieIcfgLocation buildAtomic(BoogieIcfgLocation currentLocation, AtomicStatement st) {
-			
-			IIcfgElement curElement = beginAtomicBlockFromBottom(currentLocation);
-			
+			IIcfgElement curElement = beginAtomicBlockFromBottom(currentLocation);			
 			curElement = buildCodeBlock(st.getBody(), curElement, false);
-			
 			return endAtomicBlockAtTop(curElement, st);
-			}
+		}
 		
 		private IIcfgElement buildCall(IIcfgElement currentLocation, CallStatement st) {
 			final String callee = st.getMethodName();
@@ -1157,7 +1143,7 @@ public class CfgBuilder {
 				locNode = (BoogieIcfgLocation) currentLocation;
 			} else {
 				// currentLocation must be either LocNode or StatementSequence
-				throw new IllegalArgumentException();
+				throw new AssertionError();
 			}
 			
 			BoogieIcfgLocation newLocation = new BoogieIcfgLocation(constructLocDebugIdentifier(st), mCurrentProcedureName, false, st);
@@ -1196,8 +1182,6 @@ public class CfgBuilder {
 					mEdges.add(errorCB);
 				}
 			}
-			
-			
 			return newLocation;
 		}
 		
