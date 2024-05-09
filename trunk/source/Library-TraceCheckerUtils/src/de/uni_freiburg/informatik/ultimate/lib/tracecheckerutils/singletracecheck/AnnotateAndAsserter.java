@@ -87,7 +87,7 @@ public class AnnotateAndAsserter<L extends IAction> {
 	final HashMap<String, String> nondetNameToType = new HashMap<>();
 	public ArrayList<VarAssignmentReuseAnnotation> mVAsInPrefix = new ArrayList<VarAssignmentReuseAnnotation>();
 	final HashMap<String, String> procedureToCallLoc = new HashMap<>();
-
+	private int mReuseCandidatePosition = 0;
 	private final Integer mHighestVaOrderInTrace = -1;
 	private final boolean reuseUnsatpossible = true;
 
@@ -151,8 +151,9 @@ public class AnnotateAndAsserter<L extends IAction> {
 			// }
 			// procedureToCallLoc.put(call.getSucceedingProcedure(), call.getSource().toString());
 			// }
-			if (!mTestGenReuseMode.equals(TestGenReuseMode.None)) {
+			if (!mTestGenReuseMode.equals(TestGenReuseMode.None) && reuse) {
 				if (i < mTrace.length() - 1) {
+
 					if (mSSA.getTrace().getSymbol(i) instanceof StatementSequence) {
 						final StatementSequence statementBranch = (StatementSequence) mSSA.getTrace().getSymbol(i);
 
@@ -166,7 +167,8 @@ public class AnnotateAndAsserter<L extends IAction> {
 									(VarAssignmentReuseAnnotation) statementBranch.getPayload().getAnnotations()
 											.get(VarAssignmentReuseAnnotation.class.getName());
 							mVAsInPrefix.add(vaInTrace);
-							if (!vaInTrace.equals(mVAforReuse)) {
+							assert i <= mReuseCandidatePosition;
+							if (i < mReuseCandidatePosition) {
 								if (branchCount < mVAforReuse.mVAsInPrefix.size()) { //
 									if (!mVAforReuse.mVAsInPrefix.get(branchCount).equals(vaInTrace)) {
 										reuse = false;
@@ -174,8 +176,7 @@ public class AnnotateAndAsserter<L extends IAction> {
 								} else {
 									reuse = false;
 								}
-
-							} else {
+							} else if (i == mReuseCandidatePosition) {
 								nondetsInTraceAfterPreviousVA.clear();
 							}
 							branchCount += 1;
@@ -244,7 +245,7 @@ public class AnnotateAndAsserter<L extends IAction> {
 			} else if (mCurrentVA.mUnsatWithVAs.contains(mVAforReuse) && mVAforReuse.mNegatedVA == false) {
 				reuse = false; // Wie kann das überhaupt sein?
 				System.out.println("NO REUSE since UNSAT With");
-			} else {
+			} else if (reuse) {
 				ArrayList<Term> vaPairsAsTerms;
 				if (mTestGenReuseMode.equals(TestGenReuseMode.Reuse)) {
 					vaPairsAsTerms = getNonDetsAsTermsReuse();
@@ -259,12 +260,13 @@ public class AnnotateAndAsserter<L extends IAction> {
 					mMgdScriptTc.getScript().push(1);
 					mAnnotateAndAssertCodeBlocks.annotateAndAssertTerm(varAssignmentConjunction, "Int");
 					System.out.println("REUSE: " + varAssignmentConjunction);
-					reuse = true;
 				} else {
 					reuse = false; // Can be empty if previous test goal is "behind" the current. (loops)
 					// In this case previous test goal has not been checked yet.
 				}
 
+			} else {
+				System.out.println("no reuse because prefix doesnt match");
 			}
 			mSatisfiable = mMgdScriptTc.getScript().checkSat();
 
@@ -461,6 +463,7 @@ public class AnnotateAndAsserter<L extends IAction> {
 					final VarAssignmentReuseAnnotation reuseCandidate = (VarAssignmentReuseAnnotation) statementBranch
 							.getPayload().getAnnotations().get(VarAssignmentReuseAnnotation.class.getName());
 					mVAforReuse = reuseCandidate;
+					mReuseCandidatePosition = i;
 					break;
 				}
 			}
