@@ -35,7 +35,6 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
@@ -131,11 +130,11 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 
 		// mCrown = getCrown();
 		// mLogger.info("Constructed Crown:\n%s", mCrown);
-
-		final var computation = getEmpireComputation(placeToAssertion);
+		final var placesCorelation = new PlacesCoRelation<>(mBp);
+		final var computation = getEmpireComputation(placeToAssertion, placesCorelation);
 		mEmpireAnnotation = computation.getEmpire();
 		mLogger.info("Constructed Empire Annotation:\n%s", mEmpireAnnotation);
-		assert checkEmpireValidity(computation) : "Empire annotation is invalid";
+		assert checkEmpireValidity(computation, placesCorelation) : "Empire annotation is invalid";
 
 		mOwickiGriesAnnotation = getOwickiGriesAnnotation();
 		mLogger.info("Computed Owicki-Gries annotation:\n%s", mOwickiGriesAnnotation);
@@ -174,9 +173,10 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 		return crownConstruction.getCrown();
 	}
 
-	private EmpireComputation<LETTER, PLACE> getEmpireComputation(final Function<PLACE, IPredicate> placeToAssertion) {
+	private EmpireComputation<LETTER, PLACE> getEmpireComputation(final Function<PLACE, IPredicate> placeToAssertion,
+			final PlacesCoRelation<PLACE> placesCoRelation) {
 		final var computation = new EmpireComputation<>(mServices, mFactory, mBp.getNet(), mOriginalPlaces,
-				mProofPlaces, new PlacesCoRelation<>(mBp), placeToAssertion);
+				mProofPlaces, placesCoRelation, placeToAssertion);
 		mStatistics.reportEmpireStatistics(computation);
 		return computation;
 
@@ -189,18 +189,15 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 		// return crownsEmpire.getEmpireAnnotation();
 	}
 
-	private boolean checkEmpireValidity(final EmpireComputation<LETTER, PLACE> empireComputation) {
+	private boolean checkEmpireValidity(final EmpireComputation<LETTER, PLACE> empireComputation,
+			final PlacesCoRelation<PLACE> placesCoRelation) {
 		return mStatistics.measureEmpireValidity(() -> {
-			try {
-				final var implicationChecker = new MonolithicImplicationChecker(mServices, mMgdScript);
-				final var assertionPlaces = mProofPlaces.stream().flatMap(Set::stream).collect(Collectors.toSet());
-				final var checker = new EmpireValidityCheck<>(mServices, mMgdScript, implicationChecker, mFactory, mNet,
-						mBp.getNet(), mSymbolTable, mModifiableGlobals, mEmpireAnnotation,
-						empireComputation.getPredicatePlaceMap(), assertionPlaces);
-				return checker.getValidity();
-			} catch (final PetriNetNot1SafeException e) {
-				throw new IllegalArgumentException("Petri program must be 1-safe", e);
-			}
+			final var implicationChecker = new MonolithicImplicationChecker(mServices, mMgdScript);
+			final var assertionPlaces = mProofPlaces.stream().flatMap(Set::stream).collect(Collectors.toSet());
+			final var checker = new EmpireValidityCheck<>(mServices, mMgdScript, implicationChecker, mFactory, mNet,
+					mBp.getNet(), mModifiableGlobals, mEmpireAnnotation, empireComputation.getPredicatePlaceMap(),
+					assertionPlaces, placesCoRelation);
+			return checker.getValidity();
 		}) != Validity.INVALID;
 	}
 

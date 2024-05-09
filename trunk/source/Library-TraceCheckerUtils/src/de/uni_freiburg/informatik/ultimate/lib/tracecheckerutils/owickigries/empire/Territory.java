@@ -33,6 +33,7 @@ import java.util.stream.Stream;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown.PlacesCoRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
@@ -154,13 +155,41 @@ public final class Territory<PLACE> {
 	}
 
 	public <L> boolean enables(final PLACE lawPlace, final Transition<L, PLACE> transition,
-			final Set<PLACE> assertionPlaces) {
+			final Set<PLACE> assertionPlaces, final PlacesCoRelation<PLACE> placesCoRelation) {
 		final var regions = new HashSet<>(getRegions());
-		for (final var place : transition.getPredecessors()) {
-			if (place.equals(lawPlace) || (assertionPlaces.contains(place))) {
-				continue;
+		final var predecessors = transition.getPredecessors();
+		final var originalPredecessors = DataStructureUtils.difference(predecessors, assertionPlaces);
+		final var containsLaw = predecessors.contains(lawPlace);
+		if (!containsLaw) {
+			final var predecessorAssertions = DataStructureUtils.difference(predecessors, originalPredecessors);
+			final var corelatedToLaw =
+					predecessorAssertions.stream().allMatch(p -> placesCoRelation.getPlacesCorelation(p, lawPlace));
+			if (!corelatedToLaw) {
+				return false;
 			}
+		}
+		for (final var place : originalPredecessors) {
+			final var it = regions.iterator();
+			boolean found = false;
+			while (!found && it.hasNext()) {
+				final var region = it.next();
+				if (region.contains(place)) {
+					found = true;
+					it.remove();
+				}
+			}
+			if (!found) {
+				return false;
+			}
+		}
+		return true;
+	}
 
+	public <L> boolean enables(final Transition<L, PLACE> transition, final Set<PLACE> assertionPlaces) {
+		final var regions = new HashSet<>(getRegions());
+		final var predecessors = transition.getPredecessors();
+		final var originalPredecessors = DataStructureUtils.difference(predecessors, assertionPlaces);
+		for (final var place : originalPredecessors) {
 			final var it = regions.iterator();
 			boolean found = false;
 			while (!found && it.hasNext()) {
@@ -191,12 +220,13 @@ public final class Territory<PLACE> {
 	 */
 	public <L> Stream<Transition<L, PLACE>> getEnabledTransitions(
 			final IPetriNetSuccessorProvider<L, PLACE> successorProvider, final PLACE lawPlace,
-			final Set<PLACE> assertionPlaces) {
-
-		final var mayPlaces = DataStructureUtils.union(getPlaces(), Set.of(lawPlace), assertionPlaces);
+			final Set<PLACE> assertionPlaces, final PlacesCoRelation<PLACE> placesCoRelation) {
+		final Set<PLACE> corelatedAssertions = assertionPlaces.stream()
+				.filter(p -> placesCoRelation.getPlacesCorelation(lawPlace, p)).collect(Collectors.toSet());
+		final var mayPlaces = DataStructureUtils.union(getPlaces(), Set.of(lawPlace), corelatedAssertions);
 		return successorProvider.getSuccessorTransitionProviders(getPlaces(), mayPlaces).stream()
 				.flatMap(provider -> provider.getTransitions().stream())
-				.filter(t -> enables(lawPlace, t, assertionPlaces));
+				.filter(t -> enables(lawPlace, t, assertionPlaces, placesCoRelation));
 	}
 
 	@SuppressWarnings("unchecked")

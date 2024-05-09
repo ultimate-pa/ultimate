@@ -37,11 +37,9 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
@@ -51,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown.PlacesCoRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -81,14 +80,15 @@ public class EmpireValidityCheck<PLACE, LETTER extends IAction> {
 	private final IPetriNet<LETTER, PLACE> mNet;
 	private final IPetriNetSuccessorProvider<LETTER, PLACE> mRefinedNet;
 	private final Set<PLACE> mAssertionPlaces;
+	private final PlacesCoRelation<PLACE> mPlacesCoRelation;
 	private final Validity mValidity;
 
 	public EmpireValidityCheck(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final MonolithicImplicationChecker implicationChecker, final BasicPredicateFactory factory,
 			final IPetriNet<LETTER, PLACE> net, final IPetriNetSuccessorProvider<LETTER, PLACE> refinedNet,
-			final IIcfgSymbolTable symbolTable, final ModifiableGlobalsTable modifiableGlobals,
-			final EmpireAnnotation<PLACE> empire, final Map<IPredicate, PLACE> predicatePlaceMap,
-			final Set<PLACE> assertionPlaces) throws PetriNetNot1SafeException {
+			final ModifiableGlobalsTable modifiableGlobals, final EmpireAnnotation<PLACE> empire,
+			final Map<IPredicate, PLACE> predicatePlaceMap, final Set<PLACE> assertionPlaces,
+			final PlacesCoRelation<PLACE> placesCoRelation) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(EmpireValidityCheck.class);
 		mMgdScript = mgdScript;
@@ -101,12 +101,12 @@ public class EmpireValidityCheck<PLACE, LETTER extends IAction> {
 		mAssertionPlaces = assertionPlaces;
 		mEmpireAnnotation = empire;
 		mPredicatePlaceMap = predicatePlaceMap;
+		mPlacesCoRelation = placesCoRelation;
 
-		mValidity = checkValidity(symbolTable, modifiableGlobals);
+		mValidity = checkValidity();
 	}
 
-	private Validity checkValidity(final IIcfgSymbolTable symbolTable, final ModifiableGlobalsTable modifiableGlobals)
-			throws PetriNetNot1SafeException {
+	private Validity checkValidity() {
 
 		final Set<Pair<Territory<PLACE>, IPredicate>> initialTerritories =
 				mEmpireAnnotation.getMarkingTerritories(new Marking<>(ImmutableSet.copyOf(mNet.getInitialPlaces())));
@@ -151,8 +151,8 @@ public class EmpireValidityCheck<PLACE, LETTER extends IAction> {
 			}
 			final var territory = pair.getFirst();
 			final var law = pair.getSecond();
-			for (final var transition : (Iterable<Transition<LETTER, PLACE>>) territory
-					.getEnabledTransitions(mRefinedNet, mPredicatePlaceMap.get(law), mAssertionPlaces)::iterator) {
+			for (final var transition : (Iterable<Transition<LETTER, PLACE>>) territory.getEnabledTransitions(
+					mRefinedNet, mPredicatePlaceMap.get(law), mAssertionPlaces, mPlacesCoRelation)::iterator) {
 				final var predecessors = DataStructureUtils.difference(transition.getPredecessors(), mAssertionPlaces);
 				final var successors = DataStructureUtils.difference(transition.getSuccessors(), mAssertionPlaces);
 				final var bystanders = territory.getRegions().stream()
@@ -161,15 +161,11 @@ public class EmpireValidityCheck<PLACE, LETTER extends IAction> {
 				final var equivalentTerritories = getEquivalentTerritories(transition, bystanders);
 				final var lawConjunction = getLawConjunction(equivalentTerritories);
 				final var successorPairs = mEmpireAnnotation.getSuccessorPairs(bystanders, successors);
-				Validity valid;
-				final List<Pair<Territory<PLACE>, IPredicate>> strongSuccessors = new ArrayList<>();
-				if (successorPairs.isEmpty()) {
-					valid = checkSuccessorEmptyness(lawConjunction, transition, territory);
-				} else {
-					strongSuccessors.addAll(getStrongSuccessors(successorPairs, lawConjunction, transition, pair));
-					valid = strongSuccessors.isEmpty() ? Validity.INVALID : Validity.VALID;
-				}
-				if (valid != Validity.VALID) {
+				final List<Pair<Territory<PLACE>, IPredicate>> strongSuccessors =
+						getStrongSuccessors(successorPairs, lawConjunction, transition, pair);
+				final Validity successorValidity = strongSuccessors.isEmpty() ? Validity.INVALID : Validity.VALID;
+				final Validity contradiction = checkContradiction(lawConjunction, transition, territory);
+				if ((contradiction != Validity.VALID) && (successorValidity != Validity.VALID)) {
 					return Validity.INVALID;
 				}
 				for (final Pair<Territory<PLACE>, IPredicate> pair2 : strongSuccessors) {
@@ -210,11 +206,13 @@ public class EmpireValidityCheck<PLACE, LETTER extends IAction> {
 		return valid == Validity.VALID;
 	}
 
-	private Validity checkSuccessorEmptyness(final IPredicate lawConjunction,
-			final Transition<LETTER, PLACE> transition, final Territory<PLACE> territory) {
+	private Validity checkContradiction(final IPredicate lawConjunction, final Transition<LETTER, PLACE> transition,
+			final Territory<PLACE> territory) {
+		// final var transPredicate = mFactory.orT(transition.getSymbol().getTransformula().getFormula());
+		// if (mImplicationChecker.checkImplication(lawConjunction, false, transPredicate, false) != Validity.VALID) {
+		// return Validity.VALID;
+		// }
 		if (!checkHoareTriple(lawConjunction, mFactory.or(), transition)) {
-			mLogger.warn("Territory: %s enables transition %s but %s does not evaluate to false", territory, transition,
-					lawConjunction);
 			return Validity.INVALID;
 		}
 		return Validity.VALID;
@@ -230,9 +228,6 @@ public class EmpireValidityCheck<PLACE, LETTER extends IAction> {
 				result.add(succPair);
 			}
 		}
-		if (result.isEmpty()) {
-			mLogger.warn("The Pair %s has no valid strong successor for transition %s", pair, transition);
-		}
 		return result;
 	}
 
@@ -242,8 +237,7 @@ public class EmpireValidityCheck<PLACE, LETTER extends IAction> {
 		for (final Pair<Territory<PLACE>, IPredicate> pair : mEmpireAnnotation.getEmpire()) {
 			final var territory = pair.getFirst();
 			final var law = pair.getSecond();
-			if (!territory.getRegions().containsAll(bystanders)
-					|| !territory.enables(mPredicatePlaceMap.get(law), transition, mAssertionPlaces)) {
+			if (!territory.getRegions().containsAll(bystanders) || !territory.enables(transition, mAssertionPlaces)) {
 				continue;
 			}
 			result.add(pair);

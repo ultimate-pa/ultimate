@@ -191,15 +191,18 @@ public class EmpireComputation<L, P> {
 		// mLogger.debug(" checking enabledness of transition %s (pred: %s, succ: %s) under %s and %s", transition,
 		// transition.getPredecessors(), transition.getSuccessors(), territory, lawPlace);
 		final var regions = new HashSet<>(territory.getRegions());
-		for (final var place : transition.getPredecessors()) {
-			if (place.equals(lawPlace) || (mAssertionPlaces.contains(place) && !proofPlaces.contains(place))) {
-				continue;
-			}
-			if (proofPlaces.contains(place)) {
-				// mLogger.debug(" --> rejected because of predecessor %s", place);
+		final var predecessors = transition.getPredecessors();
+		final var containsLaw = predecessors.contains(lawPlace);
+		final var originalPredecessors = DataStructureUtils.difference(predecessors, mAssertionPlaces);
+		if (!containsLaw) {
+			final var predecessorAssertions = DataStructureUtils.difference(predecessors, originalPredecessors);
+			final var corelatedToLaw =
+					predecessorAssertions.stream().allMatch(p -> mCoRelation.getPlacesCorelation(p, lawPlace));
+			if (!corelatedToLaw) {
 				return false;
 			}
-
+		}
+		for (final var place : originalPredecessors) {
 			final var it = regions.iterator();
 			boolean found = false;
 			while (!found && it.hasNext()) {
@@ -220,8 +223,9 @@ public class EmpireComputation<L, P> {
 
 	private Stream<Transition<L, P>> getEnabledTransitions(final Territory<P> territory, final P lawPlace,
 			final Set<P> proofPlaces) {
-		final var mayPlaces = DataStructureUtils.union(territory.getPlaces(), Set.of(lawPlace),
-				DataStructureUtils.difference(mAssertionPlaces, proofPlaces));
+		final Set<P> corelatedAssertions = mAssertionPlaces.stream()
+				.filter(p -> mCoRelation.getPlacesCorelation(lawPlace, p)).collect(Collectors.toSet());
+		final var mayPlaces = DataStructureUtils.union(territory.getPlaces(), Set.of(lawPlace), corelatedAssertions);
 		// mLogger.debug("Computing successors of %s and %s.", territory, lawPlace);
 		// mLogger.debug(" may places: %s", mayPlaces);
 		// mLogger.debug(" must places: %s", territory.getPlaces());

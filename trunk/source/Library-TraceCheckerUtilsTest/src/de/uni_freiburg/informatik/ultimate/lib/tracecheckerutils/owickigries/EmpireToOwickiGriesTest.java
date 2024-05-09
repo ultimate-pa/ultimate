@@ -19,6 +19,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Branching
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.MonolithicImplicationChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown.PlacesCoRelation;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire.EmpireToOwickiGries;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire.EmpireValidityCheck;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire.PetriOwickiGries;
@@ -55,8 +56,8 @@ public class EmpireToOwickiGriesTest extends OwickiGriesTestSuite {
 			}
 		}
 		final var empireCheck = new EmpireValidityCheck<>(mServices, mMgdScript, implicationChecker, mPredicateFactory,
-				program, unfolding.getNet(), mSymbolTable, modifiableGlobals, empire, predicatePlaceMap,
-				assertionPlaces);
+				program, unfolding.getNet(), modifiableGlobals, empire, predicatePlaceMap, assertionPlaces,
+				new PlacesCoRelation<>(unfolding));
 		assumeThat("Given empire annotation is not valid", empireCheck.getValidity(), equalTo(Validity.VALID));
 
 		final var empireToOwickiGries = new EmpireToOwickiGries<>(mServices, mMgdScript, program, mSymbolTable,
