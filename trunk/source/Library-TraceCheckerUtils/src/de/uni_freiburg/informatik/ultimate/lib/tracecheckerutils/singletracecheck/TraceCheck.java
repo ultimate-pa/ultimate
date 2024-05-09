@@ -540,7 +540,7 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 					vaReuseAnno.mPrecedingProcedure = statementBranch.getPrecedingProcedure();
 					vaReuseAnno.mLocationOfPrecedingProcedure =
 							mProcedureToCallLoc.get(statementBranch.getPrecedingProcedure());
-					vaReuseAnno.setVa(varAssignmentPair, vaOrder + 1);
+					vaReuseAnno.setVa(varAssignmentPair, vaOrder + 1, mAAA.mVAsInPrefix);
 				}
 			}
 		}

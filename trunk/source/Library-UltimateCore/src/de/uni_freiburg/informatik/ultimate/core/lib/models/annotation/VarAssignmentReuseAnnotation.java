@@ -21,9 +21,10 @@ public class VarAssignmentReuseAnnotation extends ModernAnnotations {
 	public boolean mNegatedVA = false;
 	public boolean mCoveredTestGoal = false;
 	private final Map<String, Object> mMap = new HashMap<>();
-	public ArrayList<Pair<Term, Term>> mVarAssignmentPair = new ArrayList<Pair<Term, Term>>(); // check if negated,
-																								// order corresponds to
-																								// test-case
+	public ArrayList<Pair<Term, Term>> mVarAssignmentPair = new ArrayList<Pair<Term, Term>>();
+
+	public ArrayList<VarAssignmentReuseAnnotation> mVAsInPrefix = new ArrayList<VarAssignmentReuseAnnotation>();
+
 	public VarAssignmentReuseAnnotation mVAofOppositeBranch;
 	public String mPrecedingProcedure = "";
 	public String mLocationOfPrecedingProcedure = "";
@@ -68,9 +69,11 @@ public class VarAssignmentReuseAnnotation extends ModernAnnotations {
 	/*
 	 * Warning replaces the current VA
 	 */
-	public void setVa(final ArrayList<Pair<Term, Term>> varAssignmentPair, final int vaOrder) {
+	public void setVa(final ArrayList<Pair<Term, Term>> varAssignmentPair, final int vaOrder,
+			final ArrayList<VarAssignmentReuseAnnotation> VAsInPrefix) {
 		mVarAssignmentPair = varAssignmentPair;
 		mVaOrder = vaOrder;
+		mVAsInPrefix = VAsInPrefix;
 	}
 
 	public void removeCheck() {

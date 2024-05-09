@@ -52,7 +52,6 @@ import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer.TestGenReuseMode;
@@ -86,13 +85,14 @@ public class AnnotateAndAsserter<L extends IAction> {
 	final LinkedHashSet<String> nondetsInTrace = new LinkedHashSet<String>();
 	final LinkedHashSet<String> nondetsInTraceAfterPreviousVA = new LinkedHashSet<String>();
 	final HashMap<String, String> nondetNameToType = new HashMap<>();
-
+	public ArrayList<VarAssignmentReuseAnnotation> mVAsInPrefix = new ArrayList<VarAssignmentReuseAnnotation>();
 	final HashMap<String, String> procedureToCallLoc = new HashMap<>();
 
 	private final Integer mHighestVaOrderInTrace = -1;
-	private boolean reuseUnsatpossible = true;
+	private final boolean reuseUnsatpossible = true;
 
 	private final ArrayList<Pair<Term, Term>> mValueAssignmentUsedForReuse = new ArrayList<Pair<Term, Term>>();
+
 	final TestGenReuseMode mTestGenReuseMode;
 
 	public AnnotateAndAsserter(final ManagedScript mgdScriptTc, final NestedFormulas<L, Term, Term> nestedSSA,
@@ -111,6 +111,10 @@ public class AnnotateAndAsserter<L extends IAction> {
 	}
 
 	public void buildAnnotatedSsaAndAssertTerms() {
+		boolean reuse = true;
+		if (!mTestGenReuseMode.equals(TestGenReuseMode.None)) {
+			getReuseCandidate();
+		}
 		if (mAnnotSSA != null) {
 			throw new AssertionError("already build");
 		}
@@ -123,6 +127,7 @@ public class AnnotateAndAsserter<L extends IAction> {
 
 		final Collection<Integer> callPositions = new ArrayList<>();
 		final Collection<Integer> pendingReturnPositions = new ArrayList<>();
+		int branchCount = 0;
 		for (int i = 0; i < mTrace.length(); i++) {
 			if (mTrace.isCallPosition(i)) {
 				callPositions.add(i);
@@ -139,15 +144,58 @@ public class AnnotateAndAsserter<L extends IAction> {
 				}
 				mAnnotSSA.setFormulaAtNonCallPos(i, mAnnotateAndAssertCodeBlocks.annotateAndAssertNonCall(i));
 			}
-			if (mTrace.getSymbol(i) instanceof Call) {
-				final Call call = (Call) mTrace.getSymbol(i);
-				if (procedureToCallLoc.containsKey(call.getSucceedingProcedure())) {
-					procedureToCallLoc.remove(call.getSucceedingProcedure());
+			// if (mTrace.getSymbol(i) instanceof Call) {
+			// final Call call = (Call) mTrace.getSymbol(i);
+			// if (procedureToCallLoc.containsKey(call.getSucceedingProcedure())) {
+			// procedureToCallLoc.remove(call.getSucceedingProcedure());
+			// }
+			// procedureToCallLoc.put(call.getSucceedingProcedure(), call.getSource().toString());
+			// }
+			if (!mTestGenReuseMode.equals(TestGenReuseMode.None)) {
+				if (i < mTrace.length() - 1) {
+					if (mSSA.getTrace().getSymbol(i) instanceof StatementSequence) {
+						final StatementSequence statementBranch = (StatementSequence) mSSA.getTrace().getSymbol(i);
+
+						ifStatementHasNondetAddToSet(i, statementBranch);
+						// If VA in Trace returns last found VA
+
+						if (statementBranch.getPayload().getAnnotations()
+								.containsKey(VarAssignmentReuseAnnotation.class.getName())) {
+
+							final VarAssignmentReuseAnnotation vaInTrace =
+									(VarAssignmentReuseAnnotation) statementBranch.getPayload().getAnnotations()
+											.get(VarAssignmentReuseAnnotation.class.getName());
+							mVAsInPrefix.add(vaInTrace);
+							if (vaInTrace.equals(mCurrentVA)) {
+								nondetsInTraceAfterPreviousVA.clear();
+							} else if (!vaInTrace.equals(mVAforReuse)) {
+								if (branchCount <= mVAforReuse.mVAsInPrefix.size()) { //
+									if (!mVAforReuse.mVAsInPrefix.get(branchCount).equals(vaInTrace)) {
+										reuse = false;
+									}
+								} else {
+									reuse = false;
+								}
+
+							}
+							branchCount += 1;
+							// mVAforReuse = reuseCandidate;
+							// final String precedingProc = statementBranch.getPrecedingProcedure();
+							// // Check if annotated test-goal and current test-goal are in the same procedure
+							// if (mVAforReuse.getPrecedingProcedure().equals(precedingProc)
+							// &&
+							// mVAforReuse.mLocationOfPrecedingProcedure.equals(procedureToCallLoc.get(precedingProc)))
+							// {
+							// reuseUnsatpossible = true;
+							// } else {
+							// reuseUnsatpossible = false;
+							// }
+							//
+							// // ACHTUNG, dürfen wirklich nur die nondets sein zwischen currentVA und previousVA
+							// nondetsInTraceAfterPreviousVA.clear();
+						}
+					}
 				}
-				procedureToCallLoc.put(call.getSucceedingProcedure(), call.getSource().toString());
-			}
-			if (i < mTrace.length() - 1) {
-				getVAandNONDETS(i);
 			}
 		}
 
@@ -179,7 +227,7 @@ public class AnnotateAndAsserter<L extends IAction> {
 		}
 
 		if (!mTestGenReuseMode.equals(TestGenReuseMode.None)) {
-			boolean reuse;
+
 			getCurrentVA();
 			if (mCurrentVA != null && mVAforReuse == null && mTestGenReuseMode.equals(TestGenReuseMode.ReuseUNSAT)) {
 				mDefaultVA = mCurrentVA.setDefaultVa(mDefaultVA);
@@ -404,32 +452,20 @@ public class AnnotateAndAsserter<L extends IAction> {
 		return identifier;
 	}
 
-	private void getVAandNONDETS(final int i) {
-		if (mSSA.getTrace().getSymbol(i) instanceof StatementSequence) {
-			final StatementSequence statementBranch = (StatementSequence) mSSA.getTrace().getSymbol(i);
-
-			ifStatementHasNondetAddToSet(i, statementBranch);
-			// If VA in Trace returns last found VA
-			if (statementBranch.getPayload().getAnnotations()
-					.containsKey(VarAssignmentReuseAnnotation.class.getName())) {
-
-				final VarAssignmentReuseAnnotation reuseCandidate = (VarAssignmentReuseAnnotation) statementBranch
-						.getPayload().getAnnotations().get(VarAssignmentReuseAnnotation.class.getName());
-
-				mVAforReuse = reuseCandidate;
-				final String precedingProc = statementBranch.getPrecedingProcedure();
-				// Check if annotated test-goal and current test-goal are in the same procedure
-				if (mVAforReuse.getPrecedingProcedure().equals(precedingProc)
-						&& mVAforReuse.mLocationOfPrecedingProcedure.equals(procedureToCallLoc.get(precedingProc))) {
-					reuseUnsatpossible = true;
-				} else {
-					reuseUnsatpossible = false;
+	private void getReuseCandidate() {
+		for (int i = mTrace.length() - 2; i > 0; i--) {
+			if (mSSA.getTrace().getSymbol(i) instanceof StatementSequence) {
+				final StatementSequence statementBranch = (StatementSequence) mSSA.getTrace().getSymbol(i);
+				if (statementBranch.getPayload().getAnnotations()
+						.containsKey(VarAssignmentReuseAnnotation.class.getName())) {
+					final VarAssignmentReuseAnnotation reuseCandidate = (VarAssignmentReuseAnnotation) statementBranch
+							.getPayload().getAnnotations().get(VarAssignmentReuseAnnotation.class.getName());
+					mVAforReuse = reuseCandidate;
+					break;
 				}
-
-				// ACHTUNG, dürfen wirklich nur die nondets sein zwischen currentVA und previousVA
-				nondetsInTraceAfterPreviousVA.clear();
 			}
 		}
+
 	}
 
 	private void ifStatementHasNondetAddToSet(final int i, final StatementSequence statementBranch) {
@@ -550,7 +586,8 @@ public class AnnotateAndAsserter<L extends IAction> {
 		if (mVAforReuse.equals(mDefaultVA)) {
 			System.out.println("OtherBranchRemoveCheckDefault");
 			mCurrentVA.mVAofOppositeBranch.removeCheck();
-			mCurrentVA.mVAofOppositeBranch.setVa(mValueAssignmentUsedForReuse, mHighestVaOrderInTrace);
+			mCurrentVA.mVAofOppositeBranch.setVa(mValueAssignmentUsedForReuse, mHighestVaOrderInTrace,
+					new ArrayList<VarAssignmentReuseAnnotation>());
 			return;
 		}
 
@@ -560,7 +597,7 @@ public class AnnotateAndAsserter<L extends IAction> {
 					+ mVAforReuse.mVarAssignmentPair.size();
 			System.out.println("OtherBranchRemoveCheck");
 			mCurrentVA.mVAofOppositeBranch.removeCheck();
-			mCurrentVA.mVAofOppositeBranch.setVa(mValueAssignmentUsedForReuse, mHighestVaOrderInTrace);
+			mCurrentVA.mVAofOppositeBranch.setVa(mValueAssignmentUsedForReuse, mHighestVaOrderInTrace, mVAsInPrefix);
 
 		}
 	}
