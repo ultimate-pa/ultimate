@@ -209,8 +209,10 @@ public class IcfgBacktranslator extends
 							final Expression cond;
 							if (source instanceof WhileStatement) {
 								cond = ((WhileStatement)source).getCondition();
-							} else {
+							} else if (source instanceof IfStatement) {
 								cond = ((IfStatement)source).getCondition();
+							} else {
+								throw new AssertionError();
 							}
 							final StepInfo info = getStepInfoFromCondition(((AssumeStatement)st).getFormula(), cond);
 							ateBuilder.setElement(source);
@@ -222,8 +224,6 @@ public class IcfgBacktranslator extends
 							ateBuilder.setStepAndElement(source);
 							trace.add(ateBuilder.build());
 						}
-							
-						
 					}
 
 				} else {
