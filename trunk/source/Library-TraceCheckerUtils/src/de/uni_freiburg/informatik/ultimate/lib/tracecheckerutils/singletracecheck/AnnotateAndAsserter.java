@@ -166,10 +166,8 @@ public class AnnotateAndAsserter<L extends IAction> {
 									(VarAssignmentReuseAnnotation) statementBranch.getPayload().getAnnotations()
 											.get(VarAssignmentReuseAnnotation.class.getName());
 							mVAsInPrefix.add(vaInTrace);
-							if (vaInTrace.equals(mCurrentVA)) {
-								nondetsInTraceAfterPreviousVA.clear();
-							} else if (!vaInTrace.equals(mVAforReuse)) {
-								if (branchCount <= mVAforReuse.mVAsInPrefix.size()) { //
+							if (!vaInTrace.equals(mVAforReuse)) {
+								if (branchCount < mVAforReuse.mVAsInPrefix.size()) { //
 									if (!mVAforReuse.mVAsInPrefix.get(branchCount).equals(vaInTrace)) {
 										reuse = false;
 									}
@@ -177,6 +175,8 @@ public class AnnotateAndAsserter<L extends IAction> {
 									reuse = false;
 								}
 
+							} else {
+								nondetsInTraceAfterPreviousVA.clear();
 							}
 							branchCount += 1;
 							// mVAforReuse = reuseCandidate;
