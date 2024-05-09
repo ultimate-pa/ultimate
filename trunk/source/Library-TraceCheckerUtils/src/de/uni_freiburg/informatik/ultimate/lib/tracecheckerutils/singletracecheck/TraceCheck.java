@@ -442,8 +442,6 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 		final boolean mTestGeneration = true;
 		if (mTestGeneration) {
 			final TestVector testV = extractTestVector(nsb, funGetValue, rpeb, vaOrder);
-			// testV.addValuesWithNegativeIndex();
-			System.out.println("Amount Of NonDets in TestCase: " + testV.countNonDets);
 			final boolean mExportTests = true;
 			if (mExportTests) {
 				final boolean mExportAllInOneFile = true;
@@ -513,8 +511,6 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 										}
 									}
 
-								} else {
-									System.out.println("unexpected Index for nondet");
 								}
 								evenRepresentative = !evenRepresentative;
 							} else {
