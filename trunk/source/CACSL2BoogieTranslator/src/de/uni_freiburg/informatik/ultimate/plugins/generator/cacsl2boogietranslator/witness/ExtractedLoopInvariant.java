@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransl
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 
 import org.eclipse.cdt.core.dom.ast.IASTNode;
@@ -54,8 +53,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
  *
  */
 public class ExtractedLoopInvariant extends ExtractedWitnessInvariant {
-	public ExtractedLoopInvariant(final String invariant, final Collection<String> nodeLabel, final IASTNode match) {
-		super(invariant, nodeLabel, match);
+	public ExtractedLoopInvariant(final String invariant, final IASTNode match) {
+		super(invariant, match);
 	}
 
 	@Override

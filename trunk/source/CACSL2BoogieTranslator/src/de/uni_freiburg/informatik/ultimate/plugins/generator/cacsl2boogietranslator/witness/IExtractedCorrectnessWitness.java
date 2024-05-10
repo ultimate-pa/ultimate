@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Frank Schüssele (schuessf@informatik.uni-freiburg.de)
- * Copyright (C) 2023 University of Freiburg
+ * Copyright (C) 2024 Frank Schüssele (schuessf@informatik.uni-freiburg.de)
+ * Copyright (C) 2024 University of Freiburg
  *
  * This file is part of the ULTIMATE CACSL2BoogieTranslator plug-in.
  *
@@ -27,20 +27,21 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness;
 
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
-import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import java.util.List;
+import java.util.Set;
+
+import org.eclipse.cdt.core.dom.ast.IASTNode;
 
 /**
- * Interface for entries extracted from a witness
+ * Stores the information extracted from a correctness witness (commonly used for witnesses in GraphML and YAML)
  *
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  *
  */
-public interface IExtractedWitnessEntry {
-	/**
-	 * Transform an expression result using the information from the given witness entry
-	 */
-	ExpressionResult transform(final ILocation loc, final IDispatcher dispatcher,
-			final ExpressionResult expressionResult);
+public interface IExtractedCorrectnessWitness {
+	Set<ExtractedWitnessInvariant> getInvariants(final IASTNode node);
+
+	Set<ExtractedFunctionContract> getFunctionContracts(final IASTNode node);
+
+	List<String> printAllEntries();
 }

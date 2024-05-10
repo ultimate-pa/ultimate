@@ -33,7 +33,6 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -202,9 +201,8 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.TypeInvariant;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ValidExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.WildcardExpression;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.ExtractedCorrectnessWitness;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.IExtractedWitnessEntry;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.ExtractedWitnessInvariant;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.IExtractedCorrectnessWitness;
 
 /**
  * @author Markus Lindenmann
@@ -226,9 +224,7 @@ public class MainDispatcher implements IDispatcher {
 	 */
 	private DecoratorNode mNextACSLBuffer;
 
-	private final Set<ImmutableSet<String>> mNodeLabelsOfAddedWitnesses;
-
-	private final ExtractedCorrectnessWitness mWitnessEntries;
+	private final IExtractedCorrectnessWitness mWitness;
 
 	private final CHandler mCHandler;
 	private final ITypeHandler mTypeHandler;
@@ -238,12 +234,11 @@ public class MainDispatcher implements IDispatcher {
 	private final IACSLHandler mAcslHandler;
 	private IASTNode mAcslHook;
 
-	public MainDispatcher(final ILogger logger, final ExtractedCorrectnessWitness witnessEntries,
+	public MainDispatcher(final ILogger logger, final IExtractedCorrectnessWitness witness,
 			final LocationFactory locFac, final ITypeHandler typeHandler, final CHandler cHandler,
 			final PreprocessorHandler preprocessorHandler, final IACSLHandler acslHandler) {
 		mLogger = logger;
-		mNodeLabelsOfAddedWitnesses = new LinkedHashSet<>();
-		mWitnessEntries = witnessEntries;
+		mWitness = witness;
 		mLocationFactory = locFac;
 		mTypeHandler = typeHandler;
 		mCHandler = cHandler;
@@ -414,22 +409,20 @@ public class MainDispatcher implements IDispatcher {
 
 	@Override
 	public Result transformWithWitness(final IASTNode node, final Result result) {
-		if (mWitnessEntries == null) {
+		if (mWitness == null) {
 			return result;
 		}
-		final Set<IExtractedWitnessEntry> matchedWitnessEntries = mWitnessEntries.getWitnessStatements(node);
+		final Set<ExtractedWitnessInvariant> matchedWitnessInvariants = mWitness.getInvariants(node);
 		if (!(result instanceof ExpressionResult)) {
-			if (!matchedWitnessEntries.isEmpty()) {
+			if (!matchedWitnessInvariants.isEmpty()) {
 				mLogger.warn("Unable to annotate " + node.getRawSignature() + " with a witness entry");
 			}
 			return result;
 		}
 		ExpressionResult rtr = (ExpressionResult) result;
 		final ILocation loc = mLocationFactory.createCLocation(node);
-		for (final IExtractedWitnessEntry entry : matchedWitnessEntries) {
-			if (mNodeLabelsOfAddedWitnesses.add(entry.getNodeLabels())) {
-				rtr = entry.transform(loc, this, rtr);
-			}
+		for (final ExtractedWitnessInvariant entry : matchedWitnessInvariants) {
+			rtr = entry.transform(loc, this, rtr);
 		}
 		return rtr;
 	}
@@ -784,10 +777,10 @@ public class MainDispatcher implements IDispatcher {
 
 	@Override
 	public List<ACSLNode> getFunctionContractFromWitness(final IASTNode node) {
-		if (mWitnessEntries == null) {
+		if (mWitness == null) {
 			return List.of();
 		}
-		return mWitnessEntries.getFunctionContracts(node).stream().flatMap(x -> x.getAcslContractClauses().stream())
+		return mWitness.getFunctionContracts(node).stream().flatMap(x -> x.getAcslContractClauses().stream())
 				.collect(Collectors.toList());
 	}
 }

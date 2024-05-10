@@ -42,9 +42,8 @@ public class FunctionContract extends WitnessEntry {
 	private final String mRequires;
 	private final String mEnsures;
 
-	public FunctionContract(final Location location, final String requires, final String ensures, final String format,
-			final String label) {
-		super(NAME, label);
+	public FunctionContract(final Location location, final String requires, final String ensures, final String format) {
+		super(NAME);
 		mLocation = location;
 		mFormat = format;
 		mRequires = requires;

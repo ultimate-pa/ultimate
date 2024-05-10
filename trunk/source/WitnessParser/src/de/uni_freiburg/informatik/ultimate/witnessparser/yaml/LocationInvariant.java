@@ -41,8 +41,8 @@ public class LocationInvariant extends WitnessEntry {
 	private final String mInvariant;
 	private final String mFormat;
 
-	public LocationInvariant(final Location location, final String invariant, final String format, final String label) {
-		super(NAME, label);
+	public LocationInvariant(final Location location, final String invariant, final String format) {
+		super(NAME);
 		mLocation = location;
 		mInvariant = invariant;
 		mFormat = format;

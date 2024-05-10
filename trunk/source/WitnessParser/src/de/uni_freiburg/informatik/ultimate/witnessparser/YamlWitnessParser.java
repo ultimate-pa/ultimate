@@ -34,7 +34,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -75,7 +74,6 @@ public class YamlWitnessParser {
 	private static Stream<WitnessEntry> parseWitnessEntry(final Map<String, Object> entry) {
 		final Map<String, Object> metadata = (Map<String, Object>) entry.get("metadata");
 		final FormatVersion formatVersion = FormatVersion.fromString(metadata.get("format_version").toString());
-		final String label = metadata.get("uuid").toString();
 		switch ((String) entry.get("entry_type")) {
 		case LocationInvariant.NAME: {
 			if (formatVersion.getMajor() != 0) {
@@ -84,7 +82,7 @@ public class YamlWitnessParser {
 			}
 			final Location location = parseLocation((Map<String, Object>) entry.get("location"));
 			final Map<String, String> invariant = (Map<String, String>) entry.get(LocationInvariant.NAME);
-			return Stream.of(new LocationInvariant(location, invariant.get("string"), invariant.get("format"), label));
+			return Stream.of(new LocationInvariant(location, invariant.get("string"), invariant.get("format")));
 		}
 		case LoopInvariant.NAME: {
 			if (formatVersion.getMajor() != 0) {
@@ -92,7 +90,7 @@ public class YamlWitnessParser {
 			}
 			final Location location = parseLocation((Map<String, Object>) entry.get("location"));
 			final Map<String, String> invariant = (Map<String, String>) entry.get(LoopInvariant.NAME);
-			return Stream.of(new LoopInvariant(location, invariant.get("string"), invariant.get("format"), label));
+			return Stream.of(new LoopInvariant(location, invariant.get("string"), invariant.get("format")));
 		}
 		case "invariant_set": {
 			if (formatVersion.getMajor() < 2) {
@@ -113,18 +111,15 @@ public class YamlWitnessParser {
 			throw new UnsupportedOperationException("Invalid entry in content " + entry);
 		}
 		final var map = entry.values().iterator().next();
-		// Create a fresh UUID, because we rely on it as a unique identifier
-		final String label = UUID.randomUUID().toString();
 		final Location location = parseLocation((Map<String, Object>) map.get("location"));
 		final String format = (String) map.get("format");
 		switch ((String) map.get("type")) {
 		case LocationInvariant.NAME:
-			return new LocationInvariant(location, (String) map.get("value"), format, label);
+			return new LocationInvariant(location, (String) map.get("value"), format);
 		case LoopInvariant.NAME:
-			return new LoopInvariant(location, (String) map.get("value"), format, label);
+			return new LoopInvariant(location, (String) map.get("value"), format);
 		case FunctionContract.NAME:
-			return new FunctionContract(location, (String) map.get("requires"), (String) map.get("ensures"), format,
-					label);
+			return new FunctionContract(location, (String) map.get("requires"), (String) map.get("ensures"), format);
 		default:
 			throw new UnsupportedOperationException("Invalid entry in content" + entry);
 		}
