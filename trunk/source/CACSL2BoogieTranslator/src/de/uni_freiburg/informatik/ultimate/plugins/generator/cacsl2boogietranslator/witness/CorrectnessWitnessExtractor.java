@@ -27,6 +27,8 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness;
 
+import java.util.List;
+
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 
@@ -51,7 +53,7 @@ public abstract class CorrectnessWitnessExtractor {
 	protected final boolean mIgnoreUnmatchedEntries;
 
 	protected IASTTranslationUnit mTranslationUnit;
-	private ExtractedCorrectnessWitness mAST2Entries;
+	private IExtractedCorrectnessWitness mResult;
 	protected ExtractionStatistics mStats;
 
 	public CorrectnessWitnessExtractor(final IUltimateServiceProvider service) {
@@ -71,8 +73,8 @@ public abstract class CorrectnessWitnessExtractor {
 	 * Get the witness entries, i.e. a relation that maps each {@link IASTNode} to the {@link IExtractedWitnessEntry}s
 	 * that match this location.
 	 */
-	public ExtractedCorrectnessWitness getWitness() {
-		if (mAST2Entries == null) {
+	public IExtractedCorrectnessWitness getWitness() {
+		if (mResult == null) {
 			if (!isReady()) {
 				mLogger.warn("Cannot extract witness if there is no witness");
 				return null;
@@ -82,19 +84,29 @@ public abstract class CorrectnessWitnessExtractor {
 			} else {
 				mLogger.info("Extracting all invariants from correctness witness");
 			}
-			mAST2Entries = extractWitness();
-			mAST2Entries.printWitness(mLogger::info);
+			mResult = extractWitness();
+			printWitness();
 		}
-		return mAST2Entries;
+		return mResult;
+	}
+
+	private void printWitness() {
+		final List<String> entriesAsString = mResult.printAllEntries();
+		if (entriesAsString.isEmpty()) {
+			mLogger.info("Witness did not contain any usable entries.");
+			return;
+		}
+		mLogger.info("Found the following entries in the witness:");
+		entriesAsString.forEach(mLogger::info);
 	}
 
 	protected abstract boolean isReady();
 
 	/**
-	 * Compute the witness entries, i.e. a relation that maps each {@link IASTNode} to the
-	 * {@link IExtractedWitnessEntry}s that match this location.
+	 * Extract the witness, i.e. return an object that provides {@link IExtractedWitnessEntry}s that match a given
+	 * {@link IASTNode}.
 	 */
-	protected abstract ExtractedCorrectnessWitness extractWitness();
+	protected abstract IExtractedCorrectnessWitness extractWitness();
 
 	public static final class ExtractionStatistics {
 		private int mSuccess;

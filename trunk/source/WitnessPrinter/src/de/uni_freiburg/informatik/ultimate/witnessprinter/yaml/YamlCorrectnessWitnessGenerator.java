@@ -80,10 +80,9 @@ public class YamlCorrectnessWitnessGenerator {
 			}
 			final LoopEntryAnnotation annot = LoopEntryAnnotation.getAnnotation(pp);
 			if (annot != null && annot.getLoopEntryType() == LoopEntryType.WHILE) {
-				result.add(new LoopInvariant(getWitnessLocation(loc), invariant, getExpressionFormat(invariant), null));
+				result.add(new LoopInvariant(getWitnessLocation(loc), invariant, getExpressionFormat(invariant)));
 			} else {
-				result.add(new LocationInvariant(getWitnessLocation(loc), invariant, getExpressionFormat(invariant),
-						null));
+				result.add(new LocationInvariant(getWitnessLocation(loc), invariant, getExpressionFormat(invariant)));
 			}
 		}
 		return result;
@@ -103,7 +102,7 @@ public class YamlCorrectnessWitnessGenerator {
 			final String requires = contract.getRequires();
 			final String ensures = contract.getEnsures();
 			result.add(new FunctionContract(getWitnessLocation(loc), requires, ensures,
-					getExpressionFormat(requires, ensures), null));
+					getExpressionFormat(requires, ensures)));
 		}
 		return result;
 	}

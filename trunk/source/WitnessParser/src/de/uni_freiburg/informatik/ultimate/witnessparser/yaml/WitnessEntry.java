@@ -37,19 +37,13 @@ import java.util.Objects;
 public abstract class WitnessEntry {
 
 	private final String mName;
-	private final String mLabel;
 
-	public WitnessEntry(final String name, final String label) {
+	public WitnessEntry(final String name) {
 		mName = Objects.requireNonNull(name);
-		mLabel = label;
 	}
 
 	public String getName() {
 		return mName;
-	}
-
-	public String getLabel() {
-		return mLabel;
 	}
 
 	@Override

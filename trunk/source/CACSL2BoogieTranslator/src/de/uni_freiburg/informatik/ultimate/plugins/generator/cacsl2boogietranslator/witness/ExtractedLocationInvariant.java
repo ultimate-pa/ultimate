@@ -27,8 +27,6 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness;
 
-import java.util.Collection;
-
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
@@ -45,9 +43,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 public class ExtractedLocationInvariant extends ExtractedWitnessInvariant {
 	private final boolean mIsBefore;
 
-	public ExtractedLocationInvariant(final String invariant, final Collection<String> nodeLabel, final IASTNode match,
-			final boolean isBefore) {
-		super(invariant, nodeLabel, match);
+	public ExtractedLocationInvariant(final String invariant, final IASTNode match, final boolean isBefore) {
+		super(invariant, match);
 		mIsBefore = isBefore;
 	}
 

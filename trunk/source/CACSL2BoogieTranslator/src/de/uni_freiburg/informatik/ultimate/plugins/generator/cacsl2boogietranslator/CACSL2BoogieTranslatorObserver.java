@@ -43,8 +43,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.ExtractedCorrectnessWitness;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.GraphMLCorrectnessWitnessExtractor;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.IExtractedCorrectnessWitness;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.YamlCorrectnessWitnessExtractor;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessGraphAnnotation;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
@@ -66,7 +66,7 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 	private WrapperNode mRootNode;
 	private ASTDecorator mInputDecorator;
 	private boolean mLastModel;
-	private ExtractedCorrectnessWitness mWitnessEntries;
+	private IExtractedCorrectnessWitness mWitness;
 
 	public CACSL2BoogieTranslatorObserver(final IUltimateServiceProvider services,
 			final ACSLObjectContainerObserver additionalAnnotationObserver) {
@@ -132,16 +132,16 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 	@Override
 	public void finish() {
 		if (mGraphMLWitnessExtractor.isReady()) {
-			mWitnessEntries = mGraphMLWitnessExtractor.getWitness();
+			mWitness = mGraphMLWitnessExtractor.getWitness();
 		}
 		if (mYamlWitnessExtractor.isReady()) {
-			mWitnessEntries = mYamlWitnessExtractor.getWitness();
+			mWitness = mYamlWitnessExtractor.getWitness();
 		}
 		if (mLastModel) {
 			if (mInputDecorator == null) {
 				throw new IllegalArgumentException("There is no C AST present. Did you parse a C file?");
 			}
-			mRootNode = new MainTranslator(mServices, mLogger, mWitnessEntries, mInputDecorator.getUnits(),
+			mRootNode = new MainTranslator(mServices, mLogger, mWitness, mInputDecorator.getUnits(),
 					mInputDecorator.getSymbolTable(), mAdditionalAnnotationObserver.getAnnotation()).getResult();
 		}
 	}
