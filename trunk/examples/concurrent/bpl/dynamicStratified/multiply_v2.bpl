@@ -1,4 +1,5 @@
 /*
+Doesn't work
 Added a z to the first assertion to sabotage global projection to the proof.
 Result: GP does not abstract c, DSR does
 */

@@ -1,7 +1,4 @@
-
-
-// DSR PLS works in 8 It, LLS not in 13 It.
-// Doesn't work for GPP 
+// Doesn't work
 /**
 * Use two different computation methods to compute something. Prove that the end result of both methods is the same.
 * Different endpoints

@@ -1,7 +1,6 @@
 //#Safe
 /*
  * array-sum-with-log from popl 23 modified to fit only dsr
- this one works for DSR with loop lockstep but not with pseudo lockstep
  */
 
 var stdout : [int]int;

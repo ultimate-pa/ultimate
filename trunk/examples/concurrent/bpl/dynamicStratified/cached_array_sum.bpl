@@ -1,6 +1,6 @@
 /**
 * Compute sum of array elements
-* DSR pseudo-looplockstep
+* Not working anymore
 **/
 
 

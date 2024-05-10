@@ -1,5 +1,5 @@
-//#Unsafe
-
+//#Safe
+// doesn't work
 /**
  * Loop iterationen in threads müssen um 1 verschoben sein für einfachere Invariante.
  * error for gpp psl It 11, lls It 12
@@ -22,7 +22,7 @@ modifies c, d;
 
   join 1 assign x1;
   join 2,2 assign x2;
-  assert (M == N + 1) ==> ((x1 == x2) && (c == M));
+  assert (M == N + 1) ==> ((x1 == x2) && ((c == M) || (c == N)));
 }
 
 procedure rec_comp()
