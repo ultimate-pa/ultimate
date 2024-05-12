@@ -89,7 +89,7 @@ public class AnnotateAndAsserter<L extends IAction> {
 	final HashMap<String, String> procedureToCallLoc = new HashMap<>();
 	private int mReuseCandidatePosition = 0;
 	private final Integer mHighestVaOrderInTrace = -1;
-	private final boolean reuseUnsatpossible = true;
+	private boolean reuseUnsatpossible = true;
 
 	private final ArrayList<Pair<Term, Term>> mValueAssignmentUsedForReuse = new ArrayList<Pair<Term, Term>>();
 
@@ -112,7 +112,7 @@ public class AnnotateAndAsserter<L extends IAction> {
 
 	public void buildAnnotatedSsaAndAssertTerms() {
 		boolean reuse = true;
-		if (!mTestGenReuseMode.equals(TestGenReuseMode.None)) {
+		if (mTestGenReuseMode.equals(TestGenReuseMode.ReuseUNSAT)) {
 			getReuseCandidate();
 		}
 		if (mAnnotSSA != null) {
@@ -144,56 +144,36 @@ public class AnnotateAndAsserter<L extends IAction> {
 				}
 				mAnnotSSA.setFormulaAtNonCallPos(i, mAnnotateAndAssertCodeBlocks.annotateAndAssertNonCall(i));
 			}
-			// if (mTrace.getSymbol(i) instanceof Call) {
-			// final Call call = (Call) mTrace.getSymbol(i);
-			// if (procedureToCallLoc.containsKey(call.getSucceedingProcedure())) {
-			// procedureToCallLoc.remove(call.getSucceedingProcedure());
-			// }
-			// procedureToCallLoc.put(call.getSucceedingProcedure(), call.getSource().toString());
-			// }
-			if (!mTestGenReuseMode.equals(TestGenReuseMode.None) && reuse) {
-				if (i < mTrace.length() - 1) {
 
-					if (mSSA.getTrace().getSymbol(i) instanceof StatementSequence) {
-						final StatementSequence statementBranch = (StatementSequence) mSSA.getTrace().getSymbol(i);
+			// ensure we are not considering currentVA as reuseCandidate
+			if (i < mTrace.length() - 1 && !mTestGenReuseMode.equals(TestGenReuseMode.None)) {
+				if (mSSA.getTrace().getSymbol(i) instanceof StatementSequence) {
+					final StatementSequence statementBranch = (StatementSequence) mSSA.getTrace().getSymbol(i);
+					ifStatementHasNondetAddToSet(i, statementBranch);
+					if (statementBranch.getPayload().getAnnotations()
+							.containsKey(VarAssignmentReuseAnnotation.class.getName())) {
+						final VarAssignmentReuseAnnotation vaInTrace = (VarAssignmentReuseAnnotation) statementBranch
+								.getPayload().getAnnotations().get(VarAssignmentReuseAnnotation.class.getName());
 
-						ifStatementHasNondetAddToSet(i, statementBranch);
-						// If VA in Trace returns last found VA
-
-						if (statementBranch.getPayload().getAnnotations()
-								.containsKey(VarAssignmentReuseAnnotation.class.getName())) {
-
-							final VarAssignmentReuseAnnotation vaInTrace =
-									(VarAssignmentReuseAnnotation) statementBranch.getPayload().getAnnotations()
-											.get(VarAssignmentReuseAnnotation.class.getName());
+						if (mTestGenReuseMode.equals(TestGenReuseMode.ReuseUNSAT) && reuse) {
 							mVAsInPrefix.add(vaInTrace);
 							assert i <= mReuseCandidatePosition;
 							if (i < mReuseCandidatePosition) {
 								if (branchCount < mVAforReuse.mVAsInPrefix.size()) { //
 									if (!mVAforReuse.mVAsInPrefix.get(branchCount).equals(vaInTrace)) {
-										reuse = false;
+										reuseUnsatpossible = false;
 									}
 								} else {
-									reuse = false;
+									reuseUnsatpossible = false;
 								}
 							} else if (i == mReuseCandidatePosition) {
 								nondetsInTraceAfterPreviousVA.clear();
 							}
 							branchCount += 1;
-							// mVAforReuse = reuseCandidate;
-							// final String precedingProc = statementBranch.getPrecedingProcedure();
-							// // Check if annotated test-goal and current test-goal are in the same procedure
-							// if (mVAforReuse.getPrecedingProcedure().equals(precedingProc)
-							// &&
-							// mVAforReuse.mLocationOfPrecedingProcedure.equals(procedureToCallLoc.get(precedingProc)))
-							// {
-							// reuseUnsatpossible = true;
-							// } else {
-							// reuseUnsatpossible = false;
-							// }
-							//
-							// // ACHTUNG, dürfen wirklich nur die nondets sein zwischen currentVA und previousVA
-							// nondetsInTraceAfterPreviousVA.clear();
+
+							// Ensure we do not consider currentVA for reuse
+						} else if (mTestGenReuseMode.equals(TestGenReuseMode.Reuse)) {
+							mVAforReuse = vaInTrace;
 						}
 					}
 				}
@@ -228,13 +208,11 @@ public class AnnotateAndAsserter<L extends IAction> {
 		}
 
 		if (!mTestGenReuseMode.equals(TestGenReuseMode.None)) {
-
 			getCurrentVA();
 			if (mCurrentVA != null && mVAforReuse == null && mTestGenReuseMode.equals(TestGenReuseMode.ReuseUNSAT)) {
 				mDefaultVA = mCurrentVA.setDefaultVa(mDefaultVA);
 				mDefaultVA = mCurrentVA.mVAofOppositeBranch.setDefaultVa(mDefaultVA);
 				mVAforReuse = mDefaultVA;
-				// System.out.println("Using Default to reuse since this is the first testgoal in the trace");
 			}
 
 			if (nondetsInTrace.isEmpty() || mCurrentVA == null || mVAforReuse == null) {
@@ -259,7 +237,7 @@ public class AnnotateAndAsserter<L extends IAction> {
 					final Term varAssignmentConjunction = SmtUtils.and(mMgdScriptTc.getScript(), vaPairsAsTerms);
 					mMgdScriptTc.getScript().push(1);
 					mAnnotateAndAssertCodeBlocks.annotateAndAssertTerm(varAssignmentConjunction, "Int");
-					// System.out.println("REUSE: " + varAssignmentConjunction);
+					System.out.println("REUSE: " + varAssignmentConjunction);
 				} else {
 					reuse = false; // Can be empty if previous test goal is "behind" the current. (loops)
 					// In this case previous test goal has not been checked yet.
@@ -289,7 +267,7 @@ public class AnnotateAndAsserter<L extends IAction> {
 				}
 			} else if (reuse) {
 				// register "other branch" as not reachable with this VA. Add negated VA to other branch test goal
-				// System.out.println("REUSE SUCCESSFULL");
+				System.out.println("REUSE SUCCESSFULL");
 				if (mCurrentVA.secondCheck == true) {
 					mVAforReuse.mNegatedVA = !mVAforReuse.mNegatedVA;
 				}
@@ -455,6 +433,7 @@ public class AnnotateAndAsserter<L extends IAction> {
 	}
 
 	private void getReuseCandidate() {
+		// start after currentVA
 		for (int i = mTrace.length() - 2; i > 0; i--) {
 			if (mSSA.getTrace().getSymbol(i) instanceof StatementSequence) {
 				final StatementSequence statementBranch = (StatementSequence) mSSA.getTrace().getSymbol(i);
@@ -567,19 +546,16 @@ public class AnnotateAndAsserter<L extends IAction> {
 	private void getCurrentVA() {
 		final L lastStmt = mSSA.getTrace().getSymbol(mSSA.getTrace().length() - 1);
 		if (lastStmt instanceof StatementSequence) {
-
 			final StatementSequence lastStmtSeq = (StatementSequence) lastStmt;
 			if (lastStmtSeq.getPayload().getAnnotations().containsKey(VarAssignmentReuseAnnotation.class.getName())) {
 				mCurrentVA = (VarAssignmentReuseAnnotation) lastStmtSeq.getPayload().getAnnotations()
 						.get(VarAssignmentReuseAnnotation.class.getName());
-
 			}
-
-			// System.out.println("CurrentVA: " + lastStmtSeq.getSerialNumber());
 		}
 	}
 
 	private void removeCheckIfCovered() {
+		assert mTestGenReuseMode.equals(TestGenReuseMode.ReuseUNSAT);
 		if (mVAforReuse.mNegatedVA) {
 			return;
 		}
