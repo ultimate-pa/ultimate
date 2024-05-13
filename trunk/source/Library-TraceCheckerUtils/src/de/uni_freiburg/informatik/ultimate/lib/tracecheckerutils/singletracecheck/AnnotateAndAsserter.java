@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer.TestGenReuseMode;
@@ -89,8 +90,7 @@ public class AnnotateAndAsserter<L extends IAction> {
 	final HashMap<String, String> procedureToCallLoc = new HashMap<>();
 	private int mReuseCandidatePosition = 0;
 	private final Integer mHighestVaOrderInTrace = -1;
-	private boolean reuseUnsatpossible = true;
-
+	private boolean reuseUnsatpossible;
 	private final ArrayList<Pair<Term, Term>> mValueAssignmentUsedForReuse = new ArrayList<Pair<Term, Term>>();
 
 	final TestGenReuseMode mTestGenReuseMode;
@@ -105,14 +105,15 @@ public class AnnotateAndAsserter<L extends IAction> {
 		mSSA = nestedSSA;
 		mAnnotateAndAssertCodeBlocks = aaacb;
 		mTcbg = tcbg;
-
 		mTestGenReuseMode = RcfgPreferenceInitializer.getPreferences(services)
 				.getEnum(RcfgPreferenceInitializer.LABEL_TEST_GEN_REUSE_MODE, TestGenReuseMode.class);
+		reuseUnsatpossible = mTestGenReuseMode.equals(TestGenReuseMode.ReuseUNSATmatchPrefix)
+				|| mTestGenReuseMode.equals(TestGenReuseMode.ReuseUNSATmatchCalloc);
 	}
 
 	public void buildAnnotatedSsaAndAssertTerms() {
 		boolean reuse = true;
-		if (mTestGenReuseMode.equals(TestGenReuseMode.ReuseUNSAT)) {
+		if (mTestGenReuseMode.equals(TestGenReuseMode.ReuseUNSATmatchPrefix)) {
 			getReuseCandidate();
 		}
 		if (mAnnotSSA != null) {
@@ -147,6 +148,18 @@ public class AnnotateAndAsserter<L extends IAction> {
 
 			// ensure we are not considering currentVA as reuseCandidate
 			if (i < mTrace.length() - 1 && !mTestGenReuseMode.equals(TestGenReuseMode.None)) {
+
+				// calling loc version
+				if (mTestGenReuseMode.equals(TestGenReuseMode.ReuseUNSATmatchCalloc)) {
+					if (mTrace.getSymbol(i) instanceof Call) {
+						final Call call = (Call) mTrace.getSymbol(i);
+						if (procedureToCallLoc.containsKey(call.getSucceedingProcedure())) {
+							procedureToCallLoc.remove(call.getSucceedingProcedure());
+						}
+						procedureToCallLoc.put(call.getSucceedingProcedure(), call.getSource().toString());
+					}
+				}
+
 				if (mSSA.getTrace().getSymbol(i) instanceof StatementSequence) {
 					final StatementSequence statementBranch = (StatementSequence) mSSA.getTrace().getSymbol(i);
 					ifStatementHasNondetAddToSet(i, statementBranch);
@@ -155,16 +168,16 @@ public class AnnotateAndAsserter<L extends IAction> {
 						final VarAssignmentReuseAnnotation vaInTrace = (VarAssignmentReuseAnnotation) statementBranch
 								.getPayload().getAnnotations().get(VarAssignmentReuseAnnotation.class.getName());
 
-						if (mTestGenReuseMode.equals(TestGenReuseMode.ReuseUNSAT) && reuse) {
+						if (mTestGenReuseMode.equals(TestGenReuseMode.ReuseUNSATmatchPrefix) && reuse) {
 							mVAsInPrefix.add(vaInTrace);
 							assert i <= mReuseCandidatePosition;
 							if (i < mReuseCandidatePosition) {
-								if (branchCount < mVAforReuse.mVAsInPrefix.size()) { //
-									if (!mVAforReuse.mVAsInPrefix.get(branchCount).equals(vaInTrace)) {
-										reuseUnsatpossible = false;
+								if (branchCount < mVAforReuse.mVAsInVAPrefix.size()) { //
+									if (!mVAforReuse.mVAsInVAPrefix.get(branchCount).equals(vaInTrace)) {
+										reuse = false;
 									}
 								} else {
-									reuseUnsatpossible = false;
+									reuse = false;
 								}
 							} else if (i == mReuseCandidatePosition) {
 								nondetsInTraceAfterPreviousVA.clear();
@@ -172,8 +185,20 @@ public class AnnotateAndAsserter<L extends IAction> {
 							branchCount += 1;
 
 							// Ensure we do not consider currentVA for reuse
-						} else if (mTestGenReuseMode.equals(TestGenReuseMode.Reuse)) {
+						} else {
 							mVAforReuse = vaInTrace;
+							nondetsInTraceAfterPreviousVA.clear();
+							if (mTestGenReuseMode.equals(TestGenReuseMode.ReuseUNSATmatchCalloc)) {
+								final String precedingProc = statementBranch.getPrecedingProcedure();
+								// Check if annotated test-goal and current test-goal are in the same procedure
+								// And have the same calling location (incoming icfg edge)
+								if (!mVAforReuse.getPrecedingProcedure().equals(precedingProc)
+										&& mVAforReuse.mLocationOfPrecedingProcedure
+												.equals(procedureToCallLoc.get(precedingProc))) {
+									reuseUnsatpossible = false;
+								}
+							}
+
 						}
 					}
 				}
@@ -209,7 +234,7 @@ public class AnnotateAndAsserter<L extends IAction> {
 
 		if (!mTestGenReuseMode.equals(TestGenReuseMode.None)) {
 			getCurrentVA();
-			if (mCurrentVA != null && mVAforReuse == null && mTestGenReuseMode.equals(TestGenReuseMode.ReuseUNSAT)) {
+			if (mCurrentVA != null && mVAforReuse == null && reuseUnsatpossible) {
 				mDefaultVA = mCurrentVA.setDefaultVa(mDefaultVA);
 				mDefaultVA = mCurrentVA.mVAofOppositeBranch.setDefaultVa(mDefaultVA);
 				mVAforReuse = mDefaultVA;
@@ -225,9 +250,9 @@ public class AnnotateAndAsserter<L extends IAction> {
 				// System.out.println("NO REUSE since UNSAT With");
 			} else if (reuse) {
 				ArrayList<Term> vaPairsAsTerms;
-				if (mTestGenReuseMode.equals(TestGenReuseMode.Reuse)) {
+				if (mTestGenReuseMode.equals(TestGenReuseMode.Reuse) || !reuseUnsatpossible) {
 					vaPairsAsTerms = getNonDetsAsTermsReuse();
-				} else if (mTestGenReuseMode.equals(TestGenReuseMode.ReuseUNSAT)) {
+				} else if (reuseUnsatpossible) {
 					vaPairsAsTerms = getNonDetsAsTermsReuseUNSAT();
 				} else {
 					throw new AssertionError("unexpected Reuse Mode");
@@ -255,7 +280,7 @@ public class AnnotateAndAsserter<L extends IAction> {
 				if (reuse) {
 					// System.out.println("REUSE UNSAT");
 					mMgdScriptTc.getScript().pop(1);
-					if (mTestGenReuseMode.equals(TestGenReuseMode.ReuseUNSAT)) {
+					if (reuseUnsatpossible) {
 						removeCheckIfCovered();
 					}
 					mSatisfiable = mMgdScriptTc.getScript().checkSat();
@@ -488,7 +513,7 @@ public class AnnotateAndAsserter<L extends IAction> {
 	}
 
 	private ArrayList<Term> getNonDetsAsTermsReuseUNSAT() {
-		assert mTestGenReuseMode.equals(TestGenReuseMode.ReuseUNSAT);
+		assert reuseUnsatpossible;
 		final ArrayList<Term> nondetsAsTerms = new ArrayList<Term>();
 		final ArrayList<Pair<Term, Term>> varAssignmentPairs = mVAforReuse.mVarAssignmentPair;
 
@@ -510,7 +535,7 @@ public class AnnotateAndAsserter<L extends IAction> {
 					break;
 				}
 			}
-			if (nondetNotInVA && nondetsInTraceAfterPreviousVA.contains(nondet)) {
+			if (nondetNotInVA && nondetsInTraceAfterPreviousVA.contains(nondet) && reuseUnsatpossible) {
 				// TODO verhindern, dass beim 2.checksat das hier nochmal gemacht wird!!
 
 				// System.out.println("ALARM: " + nondet + " not in VA");
@@ -555,7 +580,7 @@ public class AnnotateAndAsserter<L extends IAction> {
 	}
 
 	private void removeCheckIfCovered() {
-		assert mTestGenReuseMode.equals(TestGenReuseMode.ReuseUNSAT);
+		assert reuseUnsatpossible;
 		if (mVAforReuse.mNegatedVA) {
 			return;
 		}
@@ -570,14 +595,11 @@ public class AnnotateAndAsserter<L extends IAction> {
 			return;
 		}
 
-		if (reuseUnsatpossible) {
-			// amount of nondets in VA + Between testgoals matches total amount of inputs
-			assert nondetsInTrace.size() == nondetsInTraceAfterPreviousVA.size()
-					+ mVAforReuse.mVarAssignmentPair.size();
-			// System.out.println("OtherBranchRemoveCheck");
-			mCurrentVA.mVAofOppositeBranch.removeCheck();
-			mCurrentVA.mVAofOppositeBranch.setVa(mValueAssignmentUsedForReuse, mHighestVaOrderInTrace, mVAsInPrefix);
+		// amount of nondets in VA + Between testgoals matches total amount of inputs
+		assert nondetsInTrace.size() == nondetsInTraceAfterPreviousVA.size() + mVAforReuse.mVarAssignmentPair.size();
+		// System.out.println("OtherBranchRemoveCheck");
+		mCurrentVA.mVAofOppositeBranch.removeCheck();
+		mCurrentVA.mVAofOppositeBranch.setVa(mValueAssignmentUsedForReuse, mHighestVaOrderInTrace, mVAsInPrefix);
 
-		}
 	}
 }

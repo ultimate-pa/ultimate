@@ -172,6 +172,6 @@ public class RcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 		/**
 		 * Reuse UNSAT by removing the check of the other branch and choosing values for inputs between testgoals
 		 */
-		ReuseUNSAT
+		ReuseUNSATmatchPrefix, ReuseUNSATmatchCalloc
 	}
 }

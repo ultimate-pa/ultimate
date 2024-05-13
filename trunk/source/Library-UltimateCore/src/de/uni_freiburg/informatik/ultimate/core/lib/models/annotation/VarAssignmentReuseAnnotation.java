@@ -23,7 +23,7 @@ public class VarAssignmentReuseAnnotation extends ModernAnnotations {
 	private final Map<String, Object> mMap = new HashMap<>();
 	public ArrayList<Pair<Term, Term>> mVarAssignmentPair = new ArrayList<Pair<Term, Term>>();
 
-	public ArrayList<VarAssignmentReuseAnnotation> mVAsInPrefix = new ArrayList<VarAssignmentReuseAnnotation>();
+	public ArrayList<VarAssignmentReuseAnnotation> mVAsInVAPrefix = new ArrayList<VarAssignmentReuseAnnotation>();
 
 	public VarAssignmentReuseAnnotation mVAofOppositeBranch;
 	public String mPrecedingProcedure = "";
@@ -73,7 +73,7 @@ public class VarAssignmentReuseAnnotation extends ModernAnnotations {
 			final ArrayList<VarAssignmentReuseAnnotation> VAsInPrefix) {
 		mVarAssignmentPair = varAssignmentPair;
 		mVaOrder = vaOrder;
-		mVAsInPrefix = VAsInPrefix;
+		mVAsInVAPrefix = VAsInPrefix;
 	}
 
 	public void removeCheck() {
