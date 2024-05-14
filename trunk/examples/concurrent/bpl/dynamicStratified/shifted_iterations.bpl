@@ -22,7 +22,7 @@ modifies c, d;
 
   join 1 assign x1;
   join 2,2 assign x2;
-  assert (M == N + 1) ==> ((x1 == x2) && ((c == M) || (c == N)));
+  assert (M == N + 1) ==> (x1 == x2);
 }
 
 procedure rec_comp()

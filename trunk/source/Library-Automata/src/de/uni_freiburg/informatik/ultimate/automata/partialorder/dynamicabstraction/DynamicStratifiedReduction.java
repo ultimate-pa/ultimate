@@ -262,19 +262,26 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 			// return our current TS to the worklist and throw reexpl. TS on top?
 
 			OutgoingInternalTransition<L, R> currentTransition = current.getSecond();
-			final R nextState = currentTransition.getSucc();
+			R nextState = currentTransition.getSucc();
 			debugIndent("Now exploring transition %s --> %s (label: %s)", currentState, nextState,
 					currentTransition.getLetter());
 			int stackIndex;
-			Map<L, H> nextSleepSet = new HashMap<>();
+
 			// Look for left states & check sleepset compatibility
-			/*
-			 * final boolean left = mDfs.isVisited(nextState) && (stackIndex = mDfs.stackIndexOf(nextState)) == -1; if
-			 * (left) { nextSleepSet = createSleepSet(currentState, currentTransition.getLetter()); final boolean
-			 * sameSleepSet = (nextSleepSet == mStateFactory.getSleepSet(nextState)); if (!sameSleepSet) { // copy with
-			 * different sleepset mStatistics.incDuplStates(); nextState = createNextState(currentState,
-			 * mStateFactory.getOriginalState(nextState), currentTransition.getLetter()); } }
-			 */
+			Map<L, H> nextSleepSet = new HashMap<>();
+			final boolean left = mDfs.isVisited(nextState) && (stackIndex = mDfs.stackIndexOf(nextState)) == -1;
+			if (left) {
+				nextSleepSet = createSleepSet(currentState, currentTransition.getLetter());
+				final boolean sameSleepSet = (nextSleepSet == mStateFactory.getSleepSet(nextState));
+				if (!sameSleepSet) {
+					mStatistics.incDuplStates();
+					mDuplStates++;
+					final S originalSucc = mStateFactory.getOriginalState(nextState);
+					nextState = createNextState(currentState, originalSucc, currentTransition.getLetter());
+					mAlreadyReduced.remove(originalSucc);
+					mAlreadyReduced.put(originalSucc, nextState);
+				}
+			}
 
 			// use proven states for dead end pruning:
 			final boolean nextStateIsProven = mProofManager.isProvenState(mStateFactory.getOriginalState(nextState));
@@ -293,13 +300,12 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 							mStateFactory.getOriginalState(nextState), mStateFactory.getAbstractionLevel(nextState));
 					mStateFactory.addToAbstractionLevel(currentState, freeVars);
 				}
-				// TODO: loop handle...
 			} else if (!mDfs.isVisited(nextState)) {
 				// Compute sleepsets
-				// TODO: reuse computed sleep set for copies of left states?
-				// if (!left) {
-				nextSleepSet = createSleepSet(currentState, currentTransition.getLetter());
-				// }
+				if (!left) {
+					// for copies of left nodes reuse the already computed sleep set
+					nextSleepSet = createSleepSet(currentState, currentTransition.getLetter());
+				}
 				mStateFactory.setSleepSet(nextState, nextSleepSet);
 				for (final Map.Entry<L, H> edge : mStateFactory.getSleepSet(nextState).entrySet()) {
 					mStateFactory.addToAbstractionLimit(nextState, edge.getValue());
@@ -317,10 +323,9 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 					return;
 				}
 			} else if ((stackIndex = mDfs.stackIndexOf(nextState)) != -1) {
-				// TODO: Loop handle marker
 				// If we encounter a (new) loop entry node mark it as such and guess loop's abstraction level
 				if (!mStateFactory.isLoopNode(nextState)) {
-					// in case there are any uncommuting left subgraphs of the loop node
+					// in case there are any uncommuting left siblings of the current node
 					mStateFactory.addToAbstractionLevel(currentState,
 							mStateFactory.getAbstractionLevel(nextState).getValue());
 
@@ -525,11 +530,11 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 				}
 
 				R reductionSucc;
-				// disabled left pruning by changing dupl --> left
-				// TODO: fix & re-enable left pruning
-				if (correspRstate == null || left) {
+				// disable left pruning by changing dupl --> left
+				if (correspRstate == null || dupl) {
 					if (dupl) {
 						mStatistics.incDuplStates();
+						mDuplStates++;
 					}
 					// only compute sleep set directly before visiting the state!
 					reductionSucc = createNextState(state, originalSucc, letter);
