@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
@@ -1114,6 +1115,17 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		} else if ("isinf".equals(floatFunction.getFunctionName())) {
 			final String smtFunctionName = "fp.isInfinite";
 			return constructSmtFloatClassificationFunction(loc, smtFunctionName, argument);
+		} else if ("builtin_isinf_sign".equals(floatFunction.getFunctionName())) {
+			// https://gcc.gnu.org/onlinedocs/gcc/Other-Builtins.html#index-_005f_005fbuiltin_005fisinf_005fsign
+			final CPrimitive intType = new CPrimitive(CPrimitives.INT);
+			final BoogieType boogieInt = mTypeHandler.getBoogieTypeForCType(intType);
+			final Expression zero = constructLiteralForIntegerType(loc, intType, BigInteger.ZERO);
+			final Expression one = constructLiteralForIntegerType(loc, intType, BigInteger.ONE);
+			final Expression minusOne = constructLiteralForIntegerType(loc, intType, BigInteger.ONE.negate());
+			final Expression isPos = constructSmtFloatClassificationFunction(loc, "fp.isPositive", argument).getValue();
+			final Expression posValue = new IfThenElseExpression(loc, boogieInt, isPos, one, minusOne);
+			final Expression isInf = constructSmtFloatClassificationFunction(loc, "fp.isInfinite", argument).getValue();
+			return new RValue(new IfThenElseExpression(loc, boogieInt, isInf, posValue, zero), intType);
 		} else if ("isnormal".equals(floatFunction.getFunctionName())) {
 			final String smtFunctionName = "fp.isNormal";
 			return constructSmtFloatClassificationFunction(loc, smtFunctionName, argument);

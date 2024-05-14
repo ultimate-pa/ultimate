@@ -60,7 +60,8 @@ public class FloatFunction {
 			"remainder", // see 7.12.10.2
 			"copysign", // see 7.12.11.1
 			"fmod", // see 7.12.10.1
-			"fdim" // see 7.12.12.1
+			"fdim", // see 7.12.12.1
+			"builtin_isinf_sign" // https://gcc.gnu.org/onlinedocs/gcc/Other-Builtins.html#index-_005f_005fbuiltin_005fisinf_005fsign
 	};
 
 	private static final String[] TYPE_SUFFIXES = { "f", "d", "l" };
