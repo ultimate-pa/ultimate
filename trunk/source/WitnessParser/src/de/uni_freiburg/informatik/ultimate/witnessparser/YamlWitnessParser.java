@@ -41,7 +41,6 @@ import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.SafeConstructor;
 
-import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.FormatVersion;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.FunctionContract;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Location;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LocationInvariant;
@@ -72,30 +71,18 @@ public class YamlWitnessParser {
 
 	@SuppressWarnings("unchecked")
 	private static Stream<WitnessEntry> parseWitnessEntry(final Map<String, Object> entry) {
-		final Map<String, Object> metadata = (Map<String, Object>) entry.get("metadata");
-		final FormatVersion formatVersion = FormatVersion.fromString(metadata.get("format_version").toString());
 		switch ((String) entry.get("entry_type")) {
 		case LocationInvariant.NAME: {
-			if (formatVersion.getMajor() != 0) {
-				throw new UnsupportedOperationException(
-						LocationInvariant.NAME + " is only allowed in format version 0.x");
-			}
 			final Location location = parseLocation((Map<String, Object>) entry.get("location"));
 			final Map<String, String> invariant = (Map<String, String>) entry.get(LocationInvariant.NAME);
 			return Stream.of(new LocationInvariant(location, invariant.get("string"), invariant.get("format")));
 		}
 		case LoopInvariant.NAME: {
-			if (formatVersion.getMajor() != 0) {
-				throw new UnsupportedOperationException(LoopInvariant.NAME + " is only allowed in format version 0.x");
-			}
 			final Location location = parseLocation((Map<String, Object>) entry.get("location"));
 			final Map<String, String> invariant = (Map<String, String>) entry.get(LoopInvariant.NAME);
 			return Stream.of(new LoopInvariant(location, invariant.get("string"), invariant.get("format")));
 		}
 		case "invariant_set": {
-			if (formatVersion.getMajor() < 2) {
-				throw new UnsupportedOperationException("invariant_set is only allowed in format version >= 2.x");
-			}
 			final List<Map<String, Map<String, Object>>> content =
 					(List<Map<String, Map<String, Object>>>) entry.get("content");
 			return content.stream().map(x -> parseInvariantSetEntry(x));
