@@ -110,6 +110,7 @@ public class ConditionalCommutativityChecker<L extends IAction> implements ICond
 	public TracePredicates checkConditionalCommutativity(final IRun<L, IPredicate> currentRun,
 			List<IPredicate> predicates, final IPredicate state, final L letter1, final L letter2) {
 		
+		try {
 		mStatisticsUtils.startStopwatch();
 		if (mManagedScript.isLocked()) {
 			mManagedScript.requestLockRelease();
@@ -171,6 +172,9 @@ public class ConditionalCommutativityChecker<L extends IAction> implements ICond
 		}
 		mStatisticsUtils.stopStopwatch();
 		return null;
+		} finally {
+			mStatisticsUtils.stopStopwatch();
+		}
 	}
 	
 	public IConditionalCommutativityCriterion<L> getCriterion() {
