@@ -301,20 +301,6 @@ public class CPrimitive extends CType {
 	}
 
 	@Override
-	public boolean isCompatibleWith(final CType o) {
-		final CType oType = o.getUnderlyingType();
-
-		if (oType instanceof CEnum && mGeneralType == CPrimitiveCategory.INTTYPE) {
-			return true;
-		}
-
-		if (oType instanceof CPrimitive) {
-			return mType == ((CPrimitive) oType).mType;
-		}
-		return false;
-	}
-
-	@Override
 	public boolean isIncomplete() {
 		return mType == CPrimitives.VOID;
 	}

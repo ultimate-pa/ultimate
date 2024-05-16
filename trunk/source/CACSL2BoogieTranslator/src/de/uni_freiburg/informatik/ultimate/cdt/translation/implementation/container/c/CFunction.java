@@ -244,28 +244,6 @@ public class CFunction extends CType {
 	}
 
 	@Override
-	public boolean isCompatibleWith(final CType o) {
-		if (o instanceof CPrimitive && ((CPrimitive) o).getType() == CPrimitives.VOID) {
-			return true;
-		}
-
-		if (!(o instanceof CFunction)) {
-			return false;
-		}
-		final CFunction other = (CFunction) o;
-		if (mParamTypes.length != other.mParamTypes.length) {
-			return false;
-		}
-		boolean result = true;
-		result &= mResultType.isCompatibleWith(other.mResultType);
-		for (int i = 0; i < mParamTypes.length; i++) {
-			result &= mParamTypes[i].getType().isCompatibleWith(other.mParamTypes[i].getType());
-		}
-		result &= mTakesVarArgs == other.mTakesVarArgs;
-		return result;
-	}
-
-	@Override
 	public boolean isIncomplete() {
 		// can a CFunction be incomplete? I never checked that carefully
 		return false;
