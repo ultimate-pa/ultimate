@@ -117,14 +117,12 @@ public class ConditionalCommutativityChecker<L extends IAction> implements ICond
 		}
 		
 		if (((IAction) letter1).getSucceedingProcedure().equals(((IAction) letter2).getSucceedingProcedure())) {
-			mStatisticsUtils.stopStopwatch();
 			return null;
 		}
 		
 		if (state instanceof SleepPredicate) {
 			ImmutableSet<?> sleepSet = ((SleepPredicate<L>) state).getSleepSet();
 			if (sleepSet.contains(letter1) && sleepSet.contains(letter2)) {
-				mStatisticsUtils.stopStopwatch();
 				return null;
 			}
 		}
@@ -137,7 +135,6 @@ public class ConditionalCommutativityChecker<L extends IAction> implements ICond
 		}
 				
 		if (mIndependenceRelation.isIndependent(pred, letter1, letter2).equals(Dependence.INDEPENDENT)) {
-			mStatisticsUtils.stopStopwatch();
 			return null;
 		}
 		
@@ -166,11 +163,9 @@ public class ConditionalCommutativityChecker<L extends IAction> implements ICond
 				} else if (mTraceChecker.wasImperfectProof()) {
 					mStatisticsUtils.addImperfectProof();
 				}
-				mStatisticsUtils.stopStopwatch();
 				return trace;
 			}
 		}
-		mStatisticsUtils.stopStopwatch();
 		return null;
 		} finally {
 			mStatisticsUtils.stopStopwatch();
