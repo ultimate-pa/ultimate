@@ -272,9 +272,7 @@ public class CExpressionTranslator {
 			{
 				final CType leftPointsToType = ((CPointer) lType).getPointsToType();
 				final CType rightPointsToType = ((CPointer) rType).getPointsToType();
-				if (!leftPointsToType.equals(rightPointsToType)) {
-					// TODO: Matthias 2015-09-08: Maybe this is too strict and we
-					// have to check leftPointsToType.isCompatibleWith(rightPointsToType)
+				if (!leftPointsToType.isCompatibleWith(rightPointsToType)) {
 					throw new UnsupportedOperationException(
 							"incompatible pointers: pointsto " + leftPointsToType + " " + rightPointsToType);
 				}
