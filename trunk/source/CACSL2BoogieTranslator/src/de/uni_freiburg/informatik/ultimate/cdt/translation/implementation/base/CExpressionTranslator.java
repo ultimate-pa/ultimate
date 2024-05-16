@@ -270,9 +270,9 @@ public class CExpressionTranslator {
 			typeOfResult = mExpressionTranslation.getCTypeOfPointerComponents();
 			CType pointsToType;
 			{
-				final CType leftPointsToType = ((CPointer) lType).getPointsToType();
-				final CType rightPointsToType = ((CPointer) rType).getPointsToType();
-				if (!leftPointsToType.isCompatibleWith(rightPointsToType)) {
+				final CType leftPointsToType = ((CPointer) lType).getPointsToType().getUnderlyingType();
+				final CType rightPointsToType = ((CPointer) rType).getPointsToType().getUnderlyingType();
+				if (!leftPointsToType.equals(rightPointsToType)) {
 					throw new UnsupportedOperationException(
 							"incompatible pointers: pointsto " + leftPointsToType + " " + rightPointsToType);
 				}
