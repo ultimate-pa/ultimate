@@ -57,6 +57,10 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 	public static final String LABEL_CHECK_RT_INCONSISTENCY = "Check rt-inconsistency";
 	private static final boolean DEF_CHECK_RT_INCONSISTENCY = true;
 	private static final String DESC_CHECK_RT_INCONSISTENCY = null;
+	
+	public static final String LABEL_CHECK_STUCK_AT_PROPERTY = "Check stuck-at-property";
+	private static final boolean DEF_CHECK_STUCK_AT_PROPERTY = true;
+	private static final String DESC_CHECK_STUCK_AT_PROPERTY = null;
 
 	public static final String LABEL_USE_EPSILON = "Use epsilon transformation during rt-inconsistency check";
 	private static final boolean DEF_USE_EPSILON = true;
@@ -113,6 +117,8 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 			new UltimatePreferenceItem<>(LABEL_TRANSFOMER_MODE, TRANSFOMER_MODE, DESC_TRANSFOMER_MODE,
 					PreferenceType.Combo, PEATransformerMode.values()),
 			new UltimatePreferenceItem<>(LABEL_CHECK_VACUITY, DEF_CHECK_VACUITY, DESC_CHECK_VACUITY,
+					PreferenceType.Boolean),
+			new UltimatePreferenceItem<>(LABEL_CHECK_STUCK_AT_PROPERTY, DEF_CHECK_STUCK_AT_PROPERTY, DESC_CHECK_STUCK_AT_PROPERTY,
 					PreferenceType.Boolean),
 			new UltimatePreferenceItem<>(LABEL_CHECK_CONSISTENCY, DEF_CHECK_CONSISTENCY, DESC_CHECK_CONSISTENCY,
 					PreferenceType.Boolean),

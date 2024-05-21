@@ -197,7 +197,13 @@ public enum Spec {
 	 */
 	INCOMPLETE(Group.REQUIREMENT,
 			"complete",
-			"incomplete");
+			"incomplete"),
+	/**
+	 * Checks for the stuck-at-proeprty.
+	 */
+	STUCKATPROPERTY(Group.REQUIREMENT,
+			"not stuck",
+			"stuck");
 	// @formatter:on
 
 	/**

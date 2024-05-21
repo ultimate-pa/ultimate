@@ -31,6 +31,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -65,6 +66,8 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType.ReqPe
 import de.uni_freiburg.informatik.ultimate.pea2boogie.Activator;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolTable;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.PeaResultUtil;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.PeaViolablePhases;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.NonStuckAtPropertyConditionGenerator;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.RtInconcistencyConditionGenerator;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.RtInconcistencyConditionGenerator.InvariantInfeasibleException;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.preferences.Pea2BoogiePreferences;
@@ -92,10 +95,12 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 	private boolean mCheckVacuity;
 	private int mCombinationNum;
 	private boolean mCheckConsistency;
+	private boolean mCheckStuckAtProperty;
 	private boolean mReportTrivialConsistency;
 
 	private boolean mSeparateInvariantHandling;
 	private RtInconcistencyConditionGenerator mRtInconcistencyConditionGenerator;
+	private NonStuckAtPropertyConditionGenerator mNonStuckAtPropertyConditionGenerator;
 	private final NormalFormTransformer<Expression> mNormalFormTransformer;
 	private final IReqSymbolTable mSymbolTable;
 	private final List<ReqPeas> mReqPeas;
@@ -132,13 +137,16 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		mCheckConsistency = prefs.getBoolean(Pea2BoogiePreferences.LABEL_CHECK_CONSISTENCY);
 		mReportTrivialConsistency = prefs.getBoolean(Pea2BoogiePreferences.LABEL_REPORT_TRIVIAL_RT_CONSISTENCY);
 		mSeparateInvariantHandling = prefs.getBoolean(Pea2BoogiePreferences.LABEL_RT_INCONSISTENCY_USE_ALL_INVARIANTS);
+		
+		mCheckStuckAtProperty = prefs.getBoolean(Pea2BoogiePreferences.LABEL_CHECK_STUCK_AT_PROPERTY);
 
 		// log preferences
-		mLogger.info(String.format("%s=%s, %s=%s, %s=%s, %s=%s, %s=%s", Pea2BoogiePreferences.LABEL_CHECK_VACUITY,
+		mLogger.info(String.format("%s=%s, %s=%s, %s=%s, %s=%s, %s=%s, %s=%s", Pea2BoogiePreferences.LABEL_CHECK_VACUITY,
 				mCheckVacuity, Pea2BoogiePreferences.LABEL_RT_INCONSISTENCY_RANGE, mCombinationNum,
 				Pea2BoogiePreferences.LABEL_CHECK_CONSISTENCY, mCheckConsistency,
 				Pea2BoogiePreferences.LABEL_REPORT_TRIVIAL_RT_CONSISTENCY, mReportTrivialConsistency,
-				Pea2BoogiePreferences.LABEL_RT_INCONSISTENCY_USE_ALL_INVARIANTS, mSeparateInvariantHandling));
+				Pea2BoogiePreferences.LABEL_RT_INCONSISTENCY_USE_ALL_INVARIANTS, mSeparateInvariantHandling, 
+				Pea2BoogiePreferences.LABEL_CHECK_STUCK_AT_PROPERTY, mCheckStuckAtProperty));
 
 		final List<Declaration> decls = new ArrayList<>();
 		decls.addAll(mSymbolTable.getDeclarations());
@@ -158,6 +166,10 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 			return Collections.emptyList();
 		}
 		mRtInconcistencyConditionGenerator = rticGenerator;
+		
+		final BoogieDeclarations boogieDeclarations = new BoogieDeclarations(decls, mLogger);
+		mNonStuckAtPropertyConditionGenerator = new NonStuckAtPropertyConditionGenerator(mLogger, mServices, mPeaResultUtil, boogieDeclarations, mSymbolTable, mReqPeas);
+		
 		return generateAnnotations();
 	}
 
@@ -170,7 +182,14 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 			annotations.addAll(genChecksNonVacuity(mUnitLocation));
 		}
 		annotations.addAll(genChecksRTInconsistency(mUnitLocation));
+		mLogger.info("/////////// These are the rt consistency ones: " + annotations);
+		mLogger.info("----------- mCheckStuckAtProperty is: -------------" + mCheckStuckAtProperty);
+		if (mCheckStuckAtProperty) {
+			annotations.addAll(genChecksNonStuckAtProperty(mUnitLocation));
+			mLogger.info("/////////// Added annotation: " + annotations);
+		}
 		return annotations;
+		
 	}
 
 	private static List<Statement> genCheckConsistency(final BoogieLocation bl) {
@@ -327,7 +346,6 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 	private Statement genAssertNonVacuous(final PatternType<?> req, final PhaseEventAutomata aut,
 			final BoogieLocation bl) {
 		final Phase[] phases = aut.getPhases();
-
 		// compute the maximal phase number occurring in the automaton.
 		int maxBits = 0;
 		for (final Phase phase : phases) {
@@ -363,6 +381,56 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		final String label = "VACUOUS_" + aut.getName();
 		return createAssert(disjunction, check, label);
 	}
+	
+	// Generate nSAP conditions using mNonStuckAtPropertyConditionGenerator and genAssertNonStuckAtProperty
+	private List<Statement> genChecksNonStuckAtProperty(final BoogieLocation bl) {
+		if (!mCheckStuckAtProperty) {
+			return Collections.emptyList();
+		}
+		final List<Statement> stmtList = new ArrayList<>();
+		Map<PhaseEventAutomata, Expression> toAssert = mNonStuckAtPropertyConditionGenerator.generateNonStuckAtPropertyCondition();
+		PatternType<?> pattern = null;
+		for (PhaseEventAutomata pea : toAssert.keySet()) {
+			// find PEA pattern
+			for (ReqPeas reqPeas : mReqPeas) {
+				for (Entry<CounterTrace, PhaseEventAutomata> ctPea : reqPeas.getCounterTrace2Pea()) {
+					if (ctPea.getValue() == pea) {
+						pattern = reqPeas.getPattern();
+					}
+				}
+			}
+			stmtList.add(genAssertNonStuckAtProperty(pattern, pea, bl, toAssert.get(pea)));
+		}
+		return stmtList;
+	}
+	
+	// generate assertions as for the above properties (I don't really understand it, and it doesn't work...)
+	private Statement genAssertNonStuckAtProperty(final PatternType<?> req, final PhaseEventAutomata aut,
+			final BoogieLocation bl, Expression toAssert) {
+		final ReqCheck check = createReqCheck(Spec.STUCKATPROPERTY, req, aut);
+		final String label = "STUCKATPROPERTY_" + aut.getName();
+		mLogger.info("/////////// Created assertion: ");
+		mLogger.info(toAssert);
+		return createAssert(toAssert, check, label);
+		
+	}
+	
+	/*
+	 * 
+	 * 
+		// was somewhere else to test the last phase detection
+		final List<Declaration> decls = new ArrayList<>();
+		decls.addAll(mSymbolTable.getDeclarations());
+		final BoogieDeclarations boogieDeclarations = new BoogieDeclarations(decls, mLogger);
+		// ----------------- just for testing. added here where PEAs are available. -----------------
+		mPeaViolablePhases = new PeaViolablePhases(mLogger, mServices, mPeaResultUtil, boogieDeclarations, mSymbolTable, aut);
+		mLogger.info("/////////////////////////////////////////////////////////////");
+		mLogger.info("/////////////////////////////////////////////////////////////");
+		mPeaViolablePhases.nonterminalPeaViolablePhases();
+		mLogger.info("/////////////////////////////////////////////////////////////");
+		mLogger.info("/////////////////////////////////////////////////////////////");
+	 */
+	
 
 	@SafeVarargs
 	private static ReqCheck createReqCheck(final Spec reqSpec,
