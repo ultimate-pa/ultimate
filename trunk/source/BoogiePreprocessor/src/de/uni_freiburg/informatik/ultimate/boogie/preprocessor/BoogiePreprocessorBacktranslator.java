@@ -201,6 +201,7 @@ public class BoogiePreprocessorBacktranslator
 
 			final AtomicTraceElement<BoogieASTNode> ate = programExecution.getTraceElement(i);
 			if (elem instanceof WhileStatement ) {
+				// WhileStatements will only be translated here if UnstructureCode is enabled
 				if (ate.getTraceElement() instanceof AssumeStatement) {
 					assert checkProcedureNames(elem, ate);
 					final AssumeStatement assumeStmt = (AssumeStatement) ate.getTraceElement();
@@ -214,6 +215,7 @@ public class BoogiePreprocessorBacktranslator
 
 			} else if (elem instanceof IfStatement) {
 				assert checkProcedureNames(elem, ate);
+				// IfStatements will only be translated here if UnstructureCode is enabled
 				if (ate.getTraceElement() instanceof AssumeStatement) {
 					final AssumeStatement assumeStmt = (AssumeStatement) ate.getTraceElement();
 					final IfStatement stmt = (IfStatement) elem;
