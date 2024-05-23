@@ -153,7 +153,7 @@ public class VerificationResultTransformer {
 		final Spec spec = specs.iterator().next();
 		dieIfUnsupported(spec);
 
-		if (spec == Spec.CONSISTENCY || spec == Spec.VACUOUS) {
+		if (spec == Spec.CONSISTENCY || spec == Spec.VACUOUS || spec == Spec.STUCKATPROPERTY) {
 			// a counterexample for consistency and vacuity means that the requirements are consistent or
 			// non-vacuous
 			isPositive = !isPositive;

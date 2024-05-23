@@ -66,7 +66,6 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType.ReqPe
 import de.uni_freiburg.informatik.ultimate.pea2boogie.Activator;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolTable;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.PeaResultUtil;
-import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.PeaViolablePhases;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.NonStuckAtPropertyConditionGenerator;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.RtInconcistencyConditionGenerator;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.RtInconcistencyConditionGenerator.InvariantInfeasibleException;
@@ -388,7 +387,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 			return Collections.emptyList();
 		}
 		final List<Statement> stmtList = new ArrayList<>();
-		Map<PhaseEventAutomata, Expression> toAssert = mNonStuckAtPropertyConditionGenerator.generateNonStuckAtPropertyCondition();
+		Map<PhaseEventAutomata, List<Expression>> toAssert = mNonStuckAtPropertyConditionGenerator.generateNonStuckAtPropertyCondition();
 		PatternType<?> pattern = null;
 		for (PhaseEventAutomata pea : toAssert.keySet()) {
 			// find PEA pattern
@@ -399,38 +398,24 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 					}
 				}
 			}
-			stmtList.add(genAssertNonStuckAtProperty(pattern, pea, bl, toAssert.get(pea)));
+			int index = 0;
+			for (Expression expr : toAssert.get(pea)) {
+				stmtList.add(genAssertNonStuckAtProperty(pattern, pea, bl, expr, index));
+				index += 1;
+			}
 		}
 		return stmtList;
 	}
 	
 	// generate assertions as for the above properties (I don't really understand it, and it doesn't work...)
 	private Statement genAssertNonStuckAtProperty(final PatternType<?> req, final PhaseEventAutomata aut,
-			final BoogieLocation bl, Expression toAssert) {
+			final BoogieLocation bl, Expression toAssert, int index) {
 		final ReqCheck check = createReqCheck(Spec.STUCKATPROPERTY, req, aut);
-		final String label = "STUCKATPROPERTY_" + aut.getName();
+		final String label = "STUCKATPROPERTY_" + aut.getName() + "_NVP" + index;
 		mLogger.info("/////////// Created assertion: ");
 		mLogger.info(toAssert);
 		return createAssert(toAssert, check, label);
-		
 	}
-	
-	/*
-	 * 
-	 * 
-		// was somewhere else to test the last phase detection
-		final List<Declaration> decls = new ArrayList<>();
-		decls.addAll(mSymbolTable.getDeclarations());
-		final BoogieDeclarations boogieDeclarations = new BoogieDeclarations(decls, mLogger);
-		// ----------------- just for testing. added here where PEAs are available. -----------------
-		mPeaViolablePhases = new PeaViolablePhases(mLogger, mServices, mPeaResultUtil, boogieDeclarations, mSymbolTable, aut);
-		mLogger.info("/////////////////////////////////////////////////////////////");
-		mLogger.info("/////////////////////////////////////////////////////////////");
-		mPeaViolablePhases.nonterminalPeaViolablePhases();
-		mLogger.info("/////////////////////////////////////////////////////////////");
-		mLogger.info("/////////////////////////////////////////////////////////////");
-	 */
-	
 
 	@SafeVarargs
 	private static ReqCheck createReqCheck(final Spec reqSpec,

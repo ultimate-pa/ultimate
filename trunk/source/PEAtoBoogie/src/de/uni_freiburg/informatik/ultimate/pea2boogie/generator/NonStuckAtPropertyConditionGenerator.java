@@ -14,14 +14,12 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieDe
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
-import de.uni_freiburg.informatik.ultimate.lib.pea.Transition;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.ExternalSolver;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType.ReqPeas;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -106,52 +104,84 @@ public class NonStuckAtPropertyConditionGenerator {
 	// Get a list of SMT statements to check for the stuck-at-property.
 	// For each PEA, this is the disjunction of the following statements, for each NVP:
 	// program is in NVP location ==> a transition leaving the NVP can be taken
-	public Map<PhaseEventAutomata, Expression> generateNonStuckAtPropertyCondition(){
-		Map<PhaseEventAutomata, Expression> result = new HashMap<PhaseEventAutomata, Expression>();
-		List<Term> tempTransitionInfo = new ArrayList<>(); // holds the disjunction of the edges
-		List<Term> tempLocationInfo = new ArrayList<>(); // holds the implications of the locations and edges
-		List<Term> tempPhaseInfo = new ArrayList<>(); // holds the disjnction of all phase conditions
-		// for the given pea, get the NVPs via getNonterminalViolablePhases()
+	public Map<PhaseEventAutomata, List<Expression>> generateNonStuckAtPropertyCondition(){
+		Map<PhaseEventAutomata, List<Expression>> result = new HashMap<PhaseEventAutomata, List<Expression>>();
+		// List<Term> tempTransitionInfo = new ArrayList<>(); // holds the disjunction of the edges
+		// List<Term> tempLocationInfo = new ArrayList<>(); // holds the implications of the locations and edges
+		List<Term> nvpPhasesCurrentLocationChecks = new ArrayList<>();
+		List<Term> nonNvpNextPhases = new ArrayList<>();
 		Map<PhaseEventAutomata, List<List<Phase>>> nvps = getNonterminalViolablePhases();
-		// get pattern of the PEA. There must be a better way to structure this, but I just want something that works
-		PatternType<?> pattern = null;
 		for (PhaseEventAutomata pea : nvps.keySet()) {
-			if (!nvps.get(pea).isEmpty()) {
-				for (List<Phase> nvp : nvps.get(pea)) {
-					for (Phase p : nvp) {
-						for (Transition t : p.getTransitions()) {
-						// for each outgoing transition outside of the phase
-							// add conjunction of transition information to temp list
-							if (!nvp.contains(t.getDest())){
-								Term transitionInfo = SmtUtils.and(mScript, mCddToSmt.toSmt(t.getGuard()), 
-										 mCddToSmt.toSmt(new StrictInvariant().genStrictInv(t.getDest().getClockInvariant(), 
-												 t.getResets())),  
-										 mCddToSmt.toSmt(t.getDest().getStateInvariant().prime(mReqSymboltable.getConstVars())));
-								tempTransitionInfo.add(transitionInfo);
-							}
-						}
-						// create implications
-						Term locationInfo = SmtUtils.implies(mScript, SmtUtils.binaryEquality(mScript, 
-								mCddToSmt.getTermVarTerm(mReqSymboltable.getPcName(pea)), 
-								mScript.numeral(Integer.toString(p.getID()))), SmtUtils.or(mScript, tempTransitionInfo));
-						tempLocationInfo.add(locationInfo);
-					}
-					// create disjunctions of implications for 
-					Term phaseInfo = SmtUtils.or(mScript, tempLocationInfo);
-					tempPhaseInfo.add(phaseInfo);
-				// create disjunction of phase information and add to final list
+			Map<Phase, Integer> phaseIndices = getPhaseIndices(pea);
+			nvpPhasesCurrentLocationChecks = new ArrayList<>();
+			nonNvpNextPhases = new ArrayList<>();
+			result.put(pea, new ArrayList<Expression>());
+			for (List<Phase> nvp : nvps.get(pea)) {
+				for (Phase p : nvp) {
+				nvpPhasesCurrentLocationChecks.add(SmtUtils.binaryEquality(mScript, 
+						mCddToSmt.getTermVarTerm(mReqSymboltable.getHistoryVarId(mReqSymboltable.getPcName(pea))), 
+						mScript.numeral(Integer.toString(phaseIndices.get(p)))));
 				}
-				Term totalAssertion = SmtUtils.or(mScript, tempPhaseInfo);
-				result.put(pea, mBoogie2Smt.getTerm2Expression().translate(totalAssertion));
+				for (Phase q : pea.getPhases()) {
+					if (!nvp.contains(q)) {
+						nonNvpNextPhases.add(SmtUtils.binaryEquality(mScript, 
+						mCddToSmt.getTermVarTerm(mReqSymboltable.getPcName(pea)), 
+						mScript.numeral(Integer.toString(phaseIndices.get(q)))));
+					}
+				}
+				Term nvpInfo = SmtUtils.and(mScript, SmtUtils.or(mScript, nonNvpNextPhases), SmtUtils.or(mScript, nvpPhasesCurrentLocationChecks));
+				List<Expression> addResult = result.get(pea);
+				addResult.add(mBoogie2Smt.getTerm2Expression().translate(nvpInfo));
+				result.put(pea, addResult);
 			}
+			
+			//if (!nvps.get(pea).isEmpty()) {
+			/*
+			for (List<Phase> nvp : nvps.get(pea)) {
+				for (Phase p : nvp) {
+					for (Transition t : p.getTransitions()) {
+					// for each outgoing transition outside of the phase
+						// add conjunction of transition information to temp list
+						if (!nvp.contains(t.getDest())){
+							Term transitionInfo = SmtUtils.and(mScript, mCddToSmt.toSmt(t.getGuard()), 
+									 mCddToSmt.toSmt(new StrictInvariant().genStrictInv(t.getDest().getClockInvariant(), 
+											 t.getResets())),  
+									 mCddToSmt.toSmt(t.getDest().getStateInvariant().prime(mReqSymboltable.getConstVars())));
+							tempTransitionInfo.add(transitionInfo);
+							mLogger.info("11111111111111111111111111" + transitionInfo);
+						}
+					}
+					// create implications
+					Term locationInfo = SmtUtils.and(mScript, SmtUtils.binaryEquality(mScript, 
+							mCddToSmt.getTermVarTerm(mReqSymboltable.getPcName(pea)), 
+							mScript.numeral(Integer.toString(phaseIndices.get(p)))), SmtUtils.or(mScript, tempTransitionInfo));
+					tempLocationInfo.add(locationInfo);
+					tempTransitionInfo = new ArrayList<>();
+					mLogger.info("2222222222222222" + locationInfo);
+					mLogger.info("this si the index: " + Integer.toString(phaseIndices.get(p)));
+				}
+				// create disjunctions of implications for 
+				Term phaseInfo = SmtUtils.or(mScript, tempLocationInfo);
+				List<Expression> tempAssert = result.get(pea);
+				tempAssert.add(mBoogie2Smt.getTerm2Expression().translate(phaseInfo));
+				result.put(pea, tempAssert);
+				tempLocationInfo = new ArrayList<>();
+			// create disjunction of phase information and add to final list
+			}
+			*/
+				//Term totalAssertion = SmtUtils.or(mScript, tempPhaseInfo);
+				//result.put(pea, mBoogie2Smt.getTerm2Expression().translate(totalAssertion));
+			//}
 		}
-		
-		// construct the expression and add it and the other necessary information to the list
-		mLogger.info("!!!!! Result of condition generation: ");
-		for (PhaseEventAutomata p : result.keySet()) {
-			mLogger.info(result.get(p));
-		}
-
 		return result;
+	}
+	
+	private Map<Phase, Integer> getPhaseIndices(PhaseEventAutomata pea){
+		Map<Phase, Integer> phaseIdxMap = new HashMap<Phase, Integer>();
+		
+		for (int i = 0; i < pea.getPhases().length; i++) {
+			phaseIdxMap.put(pea.getPhases()[i], i);
+		}
+		return phaseIdxMap;
 	}
 }

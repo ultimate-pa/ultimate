@@ -88,24 +88,24 @@ public class PeaViolablePhases {
 	// This method generates all subsets of location of the given PEA
 	// except for the empty set and the set of all locations 
 	public List<List<Phase>> powerSetPeaPhases() {
-		mLogger.info("All phases: ");
+		//mLogger.info("All phases: ");
 		for (Phase p : mAllPeaPhases) {
-			mLogger.info(p);
+			//mLogger.info(p);
 		}
         generatePowerSetPeaPhases(0, new ArrayList<>());
-        mLogger.info("Complete powerset of phases: " + mPowerSetPhases);
+        //mLogger.info("Complete powerset of phases: " + mPowerSetPhases);
         return mPowerSetPhases;
     }
 	
 	// Helper recursive function for generating the power set
 	// It doesn't have to have this much repetition, does it...? do it better lol
 	public void generatePowerSetPeaPhases(int index, List<Phase> subsetPhases){
-		mLogger.info("Checking phase: " + subsetPhases);
+		//mLogger.info("Checking phase: " + subsetPhases);
         if (index == mAllPeaPhases.length) {
             if (!subsetPhases.isEmpty() && subsetPhases.size() < mAllPeaPhases.length && !mPowerSetPhases.contains(subsetPhases)) {
             	List<Phase> subsetPhasesToAdd = new ArrayList<>(subsetPhases);
             	mPowerSetPhases.add(subsetPhasesToAdd);
-        		mLogger.info("Adding phase: " + subsetPhases);
+        		//mLogger.info("Adding phase: " + subsetPhases);
             }
             return;
         }
@@ -125,7 +125,7 @@ public class PeaViolablePhases {
 			reachabilityMap.put(p, new HashSet<Phase>()); // Initialize map
 			dfsCheckForReachabilityCheck(p, p, phaseSet, reachabilityMap, new HashSet<>());
 		}
-        mLogger.info("Finished reachability Map: ");
+        //mLogger.info("Finished reachability Map: ");
         for (Phase p : reachabilityMap.keySet()) {
         	mLogger.info(p + ": " + reachabilityMap.get(p));
         }
@@ -182,28 +182,28 @@ public class PeaViolablePhases {
 	// CAREFUL: this is checked for the set of locations as a whole, not for a singular phase.
 	// idk if there are weird things that happen when not reseting clocks?
 	public boolean outgoingTransitionsOfPhaseAreTautology(final List<Phase> phaseSet) {
-		mLogger.info("Checking if edges are a tautology:");
+		//mLogger.info("Checking if edges are a tautology:");
 		List<Term> phaseTransitionInfo = new ArrayList<>();
-		mLogger.info("The phase being checked is:");
+		//mLogger.info("The phase being checked is:");
 		for (Phase p : phaseSet) {
-			mLogger.info(p);
-			mLogger.info("The edges being checked are:");
+			//mLogger.info(p);
+			//mLogger.info("The edges being checked are:");
 			for (Transition t : p.getTransitions()) {
-				mLogger.info(t);
-				mLogger.info("With guard and invariants:");
-				mLogger.info(t.getGuard());
-				mLogger.info(t.getDest().getClockInvariant());
-				mLogger.info(t.getDest().getStateInvariant().prime(mReqSymboltable.getConstVars()));
+				//mLogger.info(t);
+				//mLogger.info("With guard and invariants:");
+				//mLogger.info(t.getGuard());
+				//mLogger.info(t.getDest().getClockInvariant());
+				//mLogger.info(t.getDest().getStateInvariant().prime(mReqSymboltable.getConstVars()));
 				phaseTransitionInfo.add(SmtUtils.and(mScript, mCddToSmt.toSmt(t.getGuard()), 
 						mCddToSmt.toSmt(new StrictInvariant().genStrictInv(t.getDest().getClockInvariant(), t.getResets())),  
 						 mCddToSmt.toSmt(t.getDest().getStateInvariant().prime(mReqSymboltable.getConstVars()))));
-				mLogger.info("List was created with each edge formula");
+				//mLogger.info("List was created with each edge formula");
 
 			}
 		}
-		mLogger.info("Testing is there are unsat valuations");
+		//mLogger.info("Testing is there are unsat valuations");
 		final LBool negationIsSat = SmtUtils.checkSatTerm(mScript, SmtUtils.not(mScript, SmtUtils.or(mScript, phaseTransitionInfo)));
-		mLogger.info("Testwas done.");
+		//mLogger.info("Testwas done.");
 		return negationIsSat == LBool.UNSAT;
 	}
 	
@@ -237,29 +237,29 @@ public class PeaViolablePhases {
 	public List<List<Phase>> allPeaViolablePhases() {
 		// Start with the power set of all the the phases of the PEA
 		List<List<Phase>> violablePhases = powerSetPeaPhases();
-		mLogger.info("!!!!! get the power set.");
+		//mLogger.info("!!!!! get the power set.");
 
 		// Check for each set of phases if the phases are mutually reachable via phases of the set
 		// and that the disjunction of their outgoing transitions are a tautology
-		mLogger.info("!!!!! started reachability.");
+		//mLogger.info("!!!!! started reachability.");
 		Iterator<List<Phase>> phaseSetIterator = violablePhases.iterator();
 		while (phaseSetIterator.hasNext()) {
 			List<Phase> phaseSet = phaseSetIterator.next();
-			mLogger.info("!!!!! getting reachability map for: " + phaseSet);
+			//mLogger.info("!!!!! getting reachability map for: " + phaseSet);
 			if (!phaseFulfillsSAPReachabilityCondition(phaseSet)) {
 				phaseSetIterator.remove();
-				mLogger.info("!!!!! removed a phase set: non reachable phases.");
+				//mLogger.info("!!!!! removed a phase set: non reachable phases.");
 			}
 			else if (outgoingTransitionsOfPhaseAreTautology(phaseSet)) {
 				phaseSetIterator.remove();
-				mLogger.info("!!!!! removed a phase set: tautology.");
+				//mLogger.info("!!!!! removed a phase set: tautology.");
 			}
 		}
-		mLogger.info("!!!!! checked reachability.");
+		//mLogger.info("!!!!! checked reachability.");
 		
 		// Remove all sets of phases which are subsets of others remaining
 		violablePhases = removeSubsetPhases(violablePhases);
-		mLogger.info("!!!!! removed subsets.");
+		//mLogger.info("!!!!! removed subsets.");
 		
 		
 		return violablePhases;
@@ -279,7 +279,7 @@ public class PeaViolablePhases {
 				}
 			}
 		}
-		mLogger.info("!!!!! removed non-terminal phases.");
+		//mLogger.info("!!!!! removed non-terminal phases.");
 		mLogger.info("The final set of NVPs is: ");
 		mLogger.info(nonTerminalPhases);
 		return nonTerminalPhases;
