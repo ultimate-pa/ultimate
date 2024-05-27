@@ -656,10 +656,8 @@ public class StandardFunctionHandler {
 
 		fill(map, "__VERIFIER_assume", this::handleVerifierAssume);
 
-		fill(map, "__VERIFIER_nondet_bool",
-				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.BOOL)));
-		fill(map, "__VERIFIER_nondet__Bool",
-				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.BOOL)));
+		fill(map, "__VERIFIER_nondet_bool", (main, node, loc, name) -> handleVerifierNondetBool(main, loc));
+		fill(map, "__VERIFIER_nondet__Bool", (main, node, loc, name) -> handleVerifierNondetBool(main, loc));
 		fill(map, "__VERIFIER_nondet_char",
 				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.CHAR)));
 		fill(map, "__VERIFIER_nondet_pchar",
@@ -2615,6 +2613,26 @@ public class StandardFunctionHandler {
 		return new ExpressionResult(
 				Collections.singletonList(new AssumeStatement(loc, ExpressionFactory.createBooleanLiteral(loc, false))),
 				null);
+	}
+
+	private ExpressionResult handleVerifierNondetBool(final IDispatcher main, final ILocation loc) {
+		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
+		final CPrimitive cType = new CPrimitive(CPrimitives.BOOL);
+		final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, cType, SFO.AUXVAR.NONDET);
+		resultBuilder.addAuxVarWithDeclaration(auxvarinfo);
+		if (HAVOC_NONDET_AUXVARS_ALSO_BEFORE) {
+			resultBuilder.addStatement(new HavocStatement(loc, new VariableLHS[] { auxvarinfo.getLhs() }));
+		}
+		resultBuilder.setLrValue(new RValue(auxvarinfo.getExp(), cType));
+		final Expression isZero = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, auxvarinfo.getExp(),
+				mExpressionTranslation.constructLiteralForIntegerType(loc, cType, BigInteger.ZERO));
+		final Expression isOne = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, auxvarinfo.getExp(),
+				mExpressionTranslation.constructLiteralForIntegerType(loc, cType, BigInteger.ONE));
+		resultBuilder.addStatement(new AssumeStatement(loc, ExpressionFactory.or(loc, List.of(isZero, isOne))));
+
+		assert CTranslationUtil.isAuxVarMapComplete(mNameHandler, resultBuilder.getDeclarations(),
+				resultBuilder.getAuxVars());
+		return resultBuilder.build();
 	}
 
 	private ExpressionResult handleVerifierNonDet(final IDispatcher main, final ILocation loc, final CType cType) {
