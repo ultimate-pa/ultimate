@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransl
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -107,15 +106,15 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 			}
 			final LineColumnMatchingVisitor visitor = new LineColumnMatchingVisitor(location, locationFactory);
 			visitor.run(mTranslationUnit);
-			final Set<IASTNode> matches = visitor.getMatchedNodes();
-			if (matches.isEmpty()) {
+			final IASTNode node = visitor.getMatchedNode();
+			if (node == null) {
 				if (mIgnoreUnmatchedEntries) {
 					mStats.fail();
 					continue;
 				}
 				throw new UnsupportedOperationException("The following witness entry could not be matched: " + entry);
 			}
-			matches.forEach(addFunction);
+			addFunction.accept(node);
 			mStats.success();
 		}
 		loopInvariants.forEach(rtr::addInvariant);
@@ -165,7 +164,7 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 	}
 
 	private static final class LineColumnMatchingVisitor extends ASTGenericVisitor {
-		private final Set<IASTNode> mMatchedNodes = new HashSet<>();
+		private IASTNode mMatchedNode;
 		private final Location mLocation;
 		private final LocationFactory mLocationFactory;
 
@@ -179,8 +178,8 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 			translationUnit.accept(this);
 		}
 
-		public Set<IASTNode> getMatchedNodes() {
-			return mMatchedNodes;
+		public IASTNode getMatchedNode() {
+			return mMatchedNode;
 		}
 
 		@Override
@@ -196,9 +195,9 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 			// should be matched the first node of the line in that case) or it also matches the AST node
 			if (mLocation.getLine() == loc.getStartLine()
 					&& (mLocation.getColumn() == null || mLocation.getColumn() == loc.getStartColumn())) {
-				mMatchedNodes.add(node);
-				// skip the subtree if a match occurred, but continue with siblings.
-				return PROCESS_SKIP;
+				mMatchedNode = node;
+				// Abort the search, since we want the witness entry to be matched at most once.
+				return PROCESS_ABORT;
 			}
 			return PROCESS_CONTINUE;
 		}
