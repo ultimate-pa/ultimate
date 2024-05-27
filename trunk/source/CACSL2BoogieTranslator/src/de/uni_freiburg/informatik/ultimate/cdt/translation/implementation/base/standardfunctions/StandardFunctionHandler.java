@@ -273,7 +273,7 @@ public class StandardFunctionHandler {
 		}
 
 		/** https://www.man7.org/linux/man-pages/man3/sleep.3.html **/
-		fill(map, "sleep", skip);
+		fill(map, "sleep", this::handleSleep);
 
 		/** functions of pthread library **/
 		fill(map, "pthread_create", this::handlePthread_create);
@@ -1929,6 +1929,20 @@ public class StandardFunctionHandler {
 		builder.addAllExceptLrValue((ExpressionResult) main.dispatch(arguments[0]));
 		builder.addAllIncludingLrValue(handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.LONG)));
 		return builder.build();
+	}
+
+	private Result handleSleep(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+			final String name) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 1, name, arguments);
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		builder.addAllExceptLrValue((ExpressionResult) main.dispatch(arguments[0]));
+		// Return a non-deterministic aux-var as an overapproximation
+		// (since we cannot be sure, if the call was interrupted)
+		final CType retType = new CPrimitive(CPrimitives.UINT);
+		final AuxVarInfo auxVar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, retType, AUXVAR.RETURNED);
+		builder.addAuxVarWithDeclaration(auxVar).setLrValue(new RValue(auxVar.getExp(), retType));
+		return builder.addOverapprox(new Overapprox(name, loc)).build();
 	}
 
 	/**
