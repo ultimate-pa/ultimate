@@ -242,6 +242,13 @@ public class IntegerTranslation extends ExpressionTranslation {
 		}
 	}
 
+	@Override
+	public Pair<Expression, ASTType> constructInfinitePrecisionArithmeticIntegerExpression(final ILocation loc,
+			final int nodeOperator, final Expression exp1, final Expression exp2, final CPrimitive type) {
+		return new Pair<>(constructArithmeticExpression(loc, nodeOperator, exp1, exp2),
+				mTypeHandler.cType2AstType(loc, type));
+	}
+
 	private Pair<Expression, Expression> applyWraparoundsIfNecessary(final ILocation loc, final Expression left,
 			final CPrimitive leftType, final Expression right, final CPrimitive rightType) {
 		if (mTypeSizes.isUnsigned(leftType)) {
@@ -392,6 +399,21 @@ public class IntegerTranslation extends ExpressionTranslation {
 				mTypeSizes.getMaxValueOfPrimitiveType(correspondingUnsignedType).add(BigInteger.ONE));
 		return ExpressionFactory.constructIfThenElseExpression(loc, condition, wrapped,
 				ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMINUS, wrapped, range));
+	}
+
+	@Override
+	public Expression convertInfinitePrecisionToType(final ILocation loc, final Expression exp, final CPrimitive type) {
+		if (mTypeSizes.isUnsigned(type)) {
+			return applyWraparound(loc, type, exp);
+		}
+		final CPrimitive unsignedType = mTypeSizes.getCorrespondingUnsignedType(type);
+		final Expression wrapped = applyWraparound(loc, unsignedType, exp);
+		final Expression range = mTypeSizes.constructLiteralForIntegerType(loc, type,
+				mTypeSizes.getMaxValueOfPrimitiveType(unsignedType).add(BigInteger.ONE));
+		final Expression shiftedToType =
+				ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMINUS, wrapped, range);
+		return ExpressionFactory.constructIfThenElseExpression(loc,
+				checkInRangeInfinitePrecision(loc, wrapped, null, type), wrapped, shiftedToType);
 	}
 
 	@Override
@@ -769,6 +791,14 @@ public class IntegerTranslation extends ExpressionTranslation {
 			final Expression expression) {
 		return ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, expression, ExpressionFactory
 				.createIntegerLiteral(loc, mTypeSizes.getMinValueOfPrimitiveType(primType).toString()));
+	}
+
+	@Override
+	public Expression checkInRangeInfinitePrecision(final ILocation loc, final Expression expr, final ASTType inputType,
+			final CPrimitive resultType) {
+		final Expression biggerMin = constructBiggerMinIntExpression(loc, resultType, expr);
+		final Expression smallerMax = constructSmallerMaxIntExpression(loc, resultType, expr);
+		return ExpressionFactory.and(loc, List.of(biggerMin, smallerMax));
 	}
 
 	@Override

@@ -575,4 +575,12 @@ public abstract class ExpressionTranslation {
 
 	public abstract Pair<Expression, Expression> constructOverflowCheckForUnaryExpression(ILocation loc, int operation,
 			CPrimitive resultType, Expression operand);
+
+	public abstract Pair<Expression, ASTType> constructInfinitePrecisionArithmeticIntegerExpression(ILocation loc,
+			int nodeOperator, Expression exp1, Expression exp2, CPrimitive type);
+
+	public abstract Expression checkInRangeInfinitePrecision(ILocation loc, Expression expr, ASTType inputType,
+			CPrimitive resultType);
+
+	public abstract Expression convertInfinitePrecisionToType(ILocation loc, Expression exp, CPrimitive type);
 }
