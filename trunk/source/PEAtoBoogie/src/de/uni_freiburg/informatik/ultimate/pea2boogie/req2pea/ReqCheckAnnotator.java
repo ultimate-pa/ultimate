@@ -167,7 +167,8 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		mRtInconcistencyConditionGenerator = rticGenerator;
 		
 		final BoogieDeclarations boogieDeclarations = new BoogieDeclarations(decls, mLogger);
-		mNonStuckAtPropertyConditionGenerator = new NonStuckAtPropertyConditionGenerator(mLogger, mServices, mPeaResultUtil, boogieDeclarations, mSymbolTable, mReqPeas);
+		mNonStuckAtPropertyConditionGenerator = new NonStuckAtPropertyConditionGenerator(mLogger, mServices, mPeaResultUtil, 
+				boogieDeclarations, mSymbolTable, mReqPeas);
 		
 		return generateAnnotations();
 	}
@@ -181,11 +182,8 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 			annotations.addAll(genChecksNonVacuity(mUnitLocation));
 		}
 		annotations.addAll(genChecksRTInconsistency(mUnitLocation));
-		mLogger.info("/////////// These are the rt consistency ones: " + annotations);
-		mLogger.info("----------- mCheckStuckAtProperty is: -------------" + mCheckStuckAtProperty);
 		if (mCheckStuckAtProperty) {
 			annotations.addAll(genChecksNonStuckAtProperty(mUnitLocation));
-			mLogger.info("/////////// Added annotation: " + annotations);
 		}
 		return annotations;
 		
@@ -390,7 +388,6 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		Map<PhaseEventAutomata, List<Expression>> toAssert = mNonStuckAtPropertyConditionGenerator.generateNonStuckAtPropertyCondition();
 		PatternType<?> pattern = null;
 		for (PhaseEventAutomata pea : toAssert.keySet()) {
-			// find PEA pattern
 			for (ReqPeas reqPeas : mReqPeas) {
 				for (Entry<CounterTrace, PhaseEventAutomata> ctPea : reqPeas.getCounterTrace2Pea()) {
 					if (ctPea.getValue() == pea) {
@@ -412,8 +409,6 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 			final BoogieLocation bl, Expression toAssert, int index) {
 		final ReqCheck check = createReqCheck(Spec.STUCKATPROPERTY, req, aut);
 		final String label = "STUCKATPROPERTY_" + aut.getName() + "_NVP" + index;
-		mLogger.info("/////////// Created assertion: ");
-		mLogger.info(toAssert);
 		return createAssert(toAssert, check, label);
 	}
 

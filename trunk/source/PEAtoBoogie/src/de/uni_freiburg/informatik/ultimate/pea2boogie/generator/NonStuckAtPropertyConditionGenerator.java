@@ -88,11 +88,13 @@ public class NonStuckAtPropertyConditionGenerator {
 		Map<PhaseEventAutomata, List<List<Phase>>> peaNvpMap = new HashMap<PhaseEventAutomata, List<List<Phase>>>();
 		for (ReqPeas reqPeaSet : mReqPeas) {
 			for (final Entry<CounterTrace, PhaseEventAutomata> pea : reqPeaSet.getCounterTrace2Pea()) {
+				
 				peaNvpMap.put(pea.getValue(), new ArrayList<>());
 				PeaViolablePhases peaViolablePhases = new PeaViolablePhases(mLogger, mServices, mPeaResultUtil, 
 						mBoogieDeclarations, mReqSymboltable, pea.getValue());
+				List<List<Phase>> phaseSets = peaViolablePhases.nonterminalPeaViolablePhases();
 				List<List<Phase>> currentPeaNvps = peaNvpMap.get(pea.getValue());
-				for (List<Phase> phaseSet : peaViolablePhases.nonterminalPeaViolablePhases()) {
+				for (List<Phase> phaseSet : phaseSets) {
 					currentPeaNvps.add(phaseSet);
 				}
 	        	peaNvpMap.put(pea.getValue(), currentPeaNvps);
@@ -111,6 +113,7 @@ public class NonStuckAtPropertyConditionGenerator {
 		List<Term> nvpPhasesCurrentLocationChecks = new ArrayList<>();
 		List<Term> nonNvpNextPhases = new ArrayList<>();
 		Map<PhaseEventAutomata, List<List<Phase>>> nvps = getNonterminalViolablePhases();
+		mLogger.info("NVPs: " + nvps);
 		for (PhaseEventAutomata pea : nvps.keySet()) {
 			Map<Phase, Integer> phaseIndices = getPhaseIndices(pea);
 			nvpPhasesCurrentLocationChecks = new ArrayList<>();
