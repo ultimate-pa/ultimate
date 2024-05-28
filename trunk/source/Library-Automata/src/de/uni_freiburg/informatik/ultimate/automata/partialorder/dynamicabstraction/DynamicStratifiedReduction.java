@@ -267,12 +267,13 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 					currentTransition.getLetter());
 			int stackIndex;
 
-			// Look for left states & check sleepset compatibility
+			// Look for left & loop states & check sleepset compatibility
 			Map<L, H> nextSleepSet = new HashMap<>();
-			final boolean left = mDfs.isVisited(nextState) && (stackIndex = mDfs.stackIndexOf(nextState)) == -1;
-			if (left) {
+			boolean dupl = mDfs.isVisited(nextState);
+			if (dupl) {
 				nextSleepSet = createSleepSet(currentState, currentTransition.getLetter());
-				final boolean sameSleepSet = (nextSleepSet == mStateFactory.getSleepSet(nextState));
+				// actually would be sufficient for the old sleepset to be a subset of the newly computed one
+				final boolean sameSleepSet = (nextSleepSet.equals(mStateFactory.getSleepSet(nextState)));
 				if (!sameSleepSet) {
 					mStatistics.incDuplStates();
 					mDuplStates++;
@@ -280,6 +281,8 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 					nextState = createNextState(currentState, originalSucc, currentTransition.getLetter());
 					mAlreadyReduced.remove(originalSucc);
 					mAlreadyReduced.put(originalSucc, nextState);
+				} else {
+					dupl = false;
 				}
 			}
 
@@ -300,10 +303,10 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 							mStateFactory.getOriginalState(nextState), mStateFactory.getAbstractionLevel(nextState));
 					mStateFactory.addToAbstractionLevel(currentState, freeVars);
 				}
-			} else if (!mDfs.isVisited(nextState)) {
+			} else if (dupl || !mDfs.isVisited(nextState)) {
 				// Compute sleepsets
-				if (!left) {
-					// for copies of left nodes reuse the already computed sleep set
+				if (!dupl) {
+					// for copies of left/loop nodes reuse the already computed sleep set
 					nextSleepSet = createSleepSet(currentState, currentTransition.getLetter());
 				}
 				mStateFactory.setSleepSet(nextState, nextSleepSet);
@@ -324,6 +327,8 @@ public class DynamicStratifiedReduction<L, S, R, H> {
 				}
 			} else if ((stackIndex = mDfs.stackIndexOf(nextState)) != -1) {
 				// If we encounter a (new) loop entry node mark it as such and guess loop's abstraction level
+				// check sleepset compatibility
+
 				if (!mStateFactory.isLoopNode(nextState)) {
 					// in case there are any uncommuting left siblings of the current node
 					mStateFactory.addToAbstractionLevel(currentState,
