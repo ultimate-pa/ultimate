@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Manuel Bentele (bentele@informatik.uni-freiburg.de)
- * Copyright (C) 2023 University of Freiburg
+ * Copyright (C) 2024 Helen Meyer (helen.anna.meyer@gmail.com)
+ * Copyright (C) 2024 University of Freiburg
  *
  * This file is part of the ULTIMATE WitnessParser plug-in.
  *
@@ -29,37 +29,27 @@ package de.uni_freiburg.informatik.ultimate.witnessparser.yaml;
 
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.core.lib.models.BasePayloadContainer;
-
 /**
- * @author Manuel Bentele (bentele@informatik.uni-freiburg.de)
+ * entry-based violation Witness / Witness of entry_type "violation_sequence"
+ *
+ * @author Helen Meyer (helen.anna.meyer@gmail.com)
  */
-public class Witness extends BasePayloadContainer {
-	private static final long serialVersionUID = 2111530908758373549L;
+public class ViolationSequence extends WitnessEntry {
 
-	private final List<WitnessEntry> mEntries;
+	private static final String NAME = "violation_sequence";
+	private final List<Segment> mContent;
 
-	public Witness(final List<WitnessEntry> entries) {
-		mEntries = entries;
+	public ViolationSequence(final List<Segment> content) {
+		super(NAME);
+		mContent = content;
 	}
 
-	public List<WitnessEntry> getEntries() {
-		return mEntries;
+	public List<Segment> getContent() {
+		return mContent;
 	}
 
 	@Override
 	public String toString() {
-		return mEntries.toString();
-	}
-
-	public boolean isCorrectnessWitness() {
-		if (mEntries.stream().anyMatch(ViolationSequence.class::isInstance)) {
-			if (!mEntries.stream().allMatch(ViolationSequence.class::isInstance)) {
-				throw new AssertionError(
-						"The witness contains violation sequences and invariants and is thus syntactically invalid.");
-			}
-			return false;
-		}
-		return true;
+		return "Violation sequence: " + mContent;
 	}
 }
