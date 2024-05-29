@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Manuel Bentele (bentele@informatik.uni-freiburg.de)
- * Copyright (C) 2023 University of Freiburg
+ * Copyright (C) 2024 Helen Meyer (helen.anna.meyer@gmail.com)
+ * Copyright (C) 2024 University of Freiburg
  *
  * This file is part of the ULTIMATE WitnessParser plug-in.
  *
@@ -27,39 +27,38 @@
 
 package de.uni_freiburg.informatik.ultimate.witnessparser.yaml;
 
-import java.util.List;
-
-import de.uni_freiburg.informatik.ultimate.core.lib.models.BasePayloadContainer;
-
 /**
- * @author Manuel Bentele (bentele@informatik.uni-freiburg.de)
+ * Waypoints are the basic building blocks of entry-based violation witnesses. A waypoint consists of: type (provided by
+ * the implementation), location, constraint and action (provided by the parent {@link Segment}).
+ *
+ * @author Helen Meyer (helen.anna.meyer@gmail.com)
  */
-public class Witness extends BasePayloadContainer {
-	private static final long serialVersionUID = 2111530908758373549L;
+public abstract class Waypoint {
+	private final Constraint mConstraint;
+	private final Location mLocation;
 
-	private final List<WitnessEntry> mEntries;
-
-	public Witness(final List<WitnessEntry> entries) {
-		mEntries = entries;
+	protected Waypoint(final Constraint constraint, final Location location) {
+		mConstraint = constraint;
+		mLocation = location;
 	}
 
-	public List<WitnessEntry> getEntries() {
-		return mEntries;
+	public Constraint getConstraint() {
+		return mConstraint;
 	}
+
+	public Location getLocation() {
+		return mLocation;
+	}
+
+	public abstract String getType();
 
 	@Override
 	public String toString() {
-		return mEntries.toString();
-	}
-
-	public boolean isCorrectnessWitness() {
-		if (mEntries.stream().anyMatch(ViolationSequence.class::isInstance)) {
-			if (!mEntries.stream().allMatch(ViolationSequence.class::isInstance)) {
-				throw new AssertionError(
-						"The witness contains violation sequences and invariants and is thus syntactically invalid.");
-			}
-			return false;
+		final StringBuilder sb = new StringBuilder();
+		sb.append(getType()).append(' ').append(mLocation);
+		if (mConstraint != null) {
+			sb.append(": ").append(mConstraint);
 		}
-		return true;
+		return sb.toString();
 	}
 }
