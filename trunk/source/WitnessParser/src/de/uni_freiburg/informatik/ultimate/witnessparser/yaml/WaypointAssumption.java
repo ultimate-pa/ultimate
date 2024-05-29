@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Manuel Bentele (bentele@informatik.uni-freiburg.de)
- * Copyright (C) 2023 University of Freiburg
+ * Copyright (C) 2024 Helen Meyer (helen.anna.meyer@gmail.com)
+ * Copyright (C) 2024 University of Freiburg
  *
  * This file is part of the ULTIMATE WitnessParser plug-in.
  *
@@ -27,38 +27,21 @@
 
 package de.uni_freiburg.informatik.ultimate.witnessparser.yaml;
 
-import java.util.List;
-
-import de.uni_freiburg.informatik.ultimate.core.lib.models.BasePayloadContainer;
-
 /**
- * @author Manuel Bentele (bentele@informatik.uni-freiburg.de)
+ * A class which implements the Waypoint of type "assumption"
+ *
+ * @author Helen Meyer (helen.anna.meyer@gmail.com)
  */
-public class Witness extends BasePayloadContainer {
-	private static final long serialVersionUID = 2111530908758373549L;
+public class WaypointAssumption extends Waypoint {
 
-	private final List<WitnessEntry> mEntries;
+	public WaypointAssumption(Constraint constraint, Location location) {
+		super(constraint, location);
 
-	public Witness(final List<WitnessEntry> entries) {
-		mEntries = entries;
-	}
-
-	public List<WitnessEntry> getEntries() {
-		return mEntries;
 	}
 
 	@Override
-	public String toString() {
-		return mEntries.toString();
+	public String getType() {
+		return "assumption";
 	}
 
-	public boolean isCorrectnessWitness() {
-		// TODO: Consistency check with invariants
-		for (final WitnessEntry entry : mEntries) {
-			if (entry instanceof ViolationSequence) {
-				return false;
-			}
-		}
-		return true;
-	}
 }
