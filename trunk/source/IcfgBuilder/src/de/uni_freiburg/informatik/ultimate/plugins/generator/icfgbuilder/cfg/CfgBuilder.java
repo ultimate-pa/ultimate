@@ -2,8 +2,9 @@
  * Copyright (C) 2013-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2010-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2018 Lars Nitzke (lars.nitzke@mailfence.com)
- * Copyright (C) 2015 University of Freiburg
  * Copyright (C) 2024 Niklas Kult (niklas111098@gmail.com)
+ * Copyright (C) 2015 University of Freiburg
+ * 
  *
  * This file is part of the ULTIMATE RCFGBuilder plug-in.
  *
