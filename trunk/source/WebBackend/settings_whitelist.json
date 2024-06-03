@@ -16,7 +16,8 @@
 	],
 	"de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder": [
 		"SMT solver",
-		"Size of a code block"
+		"Size of a code block",
+    "Future-live optimization"
 	],
 	"de.uni_freiburg.informatik.ultimate.source.smtparser": [
 		"SMT solver",
