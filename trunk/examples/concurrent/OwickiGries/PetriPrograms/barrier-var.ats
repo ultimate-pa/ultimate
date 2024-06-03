@@ -1,0 +1,48 @@
+// Simple test for computation of Owicki-Gries annotation with a main thread and a worker thread and a barrier represented by a variable b
+// ---------------------------------------------------------------------------------------------------------------------------------------
+
+//@ variables (z Int) (b Int) (y Int)
+
+//@ semantics [0] {z,b} (and (= z 0) (= b 0))
+//@ semantics [1] {y} (= y 2)
+//@ semantics [2] {z} (= z (+ |old(z)| 1))
+//@ semantics [3] {        } (distinct y 2)
+//@ semantics [4] { }        (= b 1)
+//@ semantics [5] {b}        (= b 1)
+
+PetriNet program = (
+  alphabet    = { "[0]" "[1]" "[2]" "[3]" "[4]" "[5]" },
+  places      = { "main.l0" "main.l1" "main.l2" "main.l3" "worker.l0" "worker.l1" "worker.l2" "worker.l3" "e" },
+  transitions = {
+    ({ "main.l0" "worker.l0" } "[0]" { "main.l1" "worker.l1" })
+    ({ "worker.l1" } "[1]" { "worker.l2" })
+    ({ "main.l1" } "[2]" { "main.l2" })
+    ({ "main.l2" } "[4]" { "main.l3" })
+    ({ "worker.l2" } "[5]" { "worker.l3" })
+    ({ "main.l3" } "[3]" { "e" })
+  },
+  initialMarking = { "main.l0" "worker.l0" },
+  acceptingPlaces = { "e" }
+);
+
+FiniteAutomaton proof = (
+     alphabet      = { "[0]" "[1]" "[2]" "[3]" "[4]" "[5]" },
+     states        = { "true" "(= b 0)" "(and (= b 0) (= y 2))" "(and (= b 1) (= y 2))" "false" },
+     initialStates = { "true" },
+     finalStates   = { "false" },
+     transitions   = {
+       ("true" "[0]" "(= b 0)")
+       ("(= b 0)" "[1]" "(and (= b 0) (= y 2))")
+       ("(= b 0)" "[2]" "(= b 0)")
+       ("(= b 0)" "[4]" "false")
+       ("(and (= b 0) (= y 2))" "[4]" "false")
+       ("(and (= b 0) (= y 2))" "[2]" "(and (= b 0) (= y 2))")
+       ("(and (= b 0) (= y 2))" "[5]" "(and (= b 1) (= y 2))")
+       ("(and (= b 1) (= y 2))" "[2]" "(and (= b 1) (= y 2))")
+       ("(and (= b 1) (= y 2))" "[4]" "(and (= b 1) (= y 2))")
+       ("(and (= b 1) (= y 2))" "[3]" "false")
+     }
+);
+
+
+
