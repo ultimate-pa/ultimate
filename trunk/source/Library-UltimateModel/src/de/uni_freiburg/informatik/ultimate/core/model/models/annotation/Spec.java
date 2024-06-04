@@ -201,7 +201,7 @@ public enum Spec {
 	/**
 	 * Checks for the stuck-at-proeprty.
 	 */
-	STUCKATPROPERTY(Group.REQUIREMENT,
+	STUCKAT(Group.REQUIREMENT,
 			"not stuck",
 			"stuck");
 	// @formatter:on

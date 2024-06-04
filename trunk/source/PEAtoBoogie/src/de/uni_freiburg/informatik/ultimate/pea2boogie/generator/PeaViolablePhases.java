@@ -7,6 +7,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Stack;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -47,8 +48,8 @@ public class PeaViolablePhases {
 
 	private final ILogger mLogger;
 	private final PhaseEventAutomata mPea;
-	private static Phase[] mAllPeaPhases;
-	private static List<List<Phase>> mPowerSetPhases;
+	//private static Phase[] mAllPeaPhases;
+	//private static List<List<Phase>> mPowerSetPhases;
 	
 	// For SMT solving:
 	private static final String SOLVER_LOG_DIR = null;
@@ -62,8 +63,8 @@ public class PeaViolablePhases {
 			final BoogieDeclarations boogieDeclarations, final IReqSymbolTable symboltable, final PhaseEventAutomata pea) {
 		mPea = pea;
 		mLogger = logger;
-		mAllPeaPhases = mPea.getPhases();
-		mPowerSetPhases = new ArrayList<>();
+		//mAllPeaPhases = mPea.getPhases();
+		//mPowerSetPhases = new ArrayList<>();
 		
 		// For SMT solving:
 		mScript = buildSolver(services);
@@ -75,7 +76,6 @@ public class PeaViolablePhases {
 	
 	// Taken from RtInconcistencyConditionGenerator, idk what it does really
 	private static Script buildSolver(final IUltimateServiceProvider services) throws AssertionError {
-
 		SolverSettings settings = SolverBuilder.constructSolverSettings()
 				.setSolverMode(SolverMode.External_ModelsAndUnsatCoreMode).setUseExternalSolver(ExternalSolver.Z3);
 		if (SOLVER_LOG_DIR != null) {
@@ -85,6 +85,7 @@ public class PeaViolablePhases {
 		return SolverBuilder.buildAndInitializeSolver(services, settings, "PeaViolablePhases");
 	}
 	
+	/*
 	// This method generates all subsets of location of the given PEA
 	// except for the empty set and the set of all locations 
 	private List<List<Phase>> powerSetPeaPhases() {
@@ -111,7 +112,7 @@ public class PeaViolablePhases {
         generatePowerSetPeaPhases(index + 1, subsetPhases);
         
 	}
-	
+
 	// Check for each phase in a set of phases which other phases are reachable via phases of the set
 	private Map<Phase, Set<Phase>> getReachabilityBetweenPhasesOfPhaseSet(final List<Phase> phaseSet){
 		Map<Phase, Set<Phase>> reachabilityMap = new HashMap<Phase, Set<Phase>>();
@@ -158,21 +159,6 @@ public class PeaViolablePhases {
 		return allPhasesMutuallyReachableViaPhaseSet;
 	}
 	
-	// Checks for a given phase set if a transition can be taken given any variable and clock valuation
-	private boolean outgoingTransitionsOfPhaseAreTautology(final List<Phase> phaseSet) {
-		List<Term> phaseTransitionInfo = new ArrayList<>();
-		for (Phase p : phaseSet) {
-			for (Transition t : p.getTransitions()) {
-				phaseTransitionInfo.add(SmtUtils.and(mScript, mCddToSmt.toSmt(t.getGuard()), 
-						mCddToSmt.toSmt(new StrictInvariant().genStrictInv(t.getDest().getClockInvariant(), t.getResets())),  
-						 mCddToSmt.toSmt(t.getDest().getStateInvariant().prime(mReqSymboltable.getConstVars()))));
-
-			}
-		}
-		final LBool negationIsSat = SmtUtils.checkSatTerm(mScript, SmtUtils.not(mScript, SmtUtils.or(mScript, phaseTransitionInfo)));
-		return negationIsSat == LBool.UNSAT;
-	}
-	
 	// Removes all lists of phases from the power set which are subsets of another, leaving only maximal lists
 	private List<List<Phase>> removeSubsetPhases(List<List<Phase>> setPhaseSets){
 		List<List<Phase>> maxSubsets = new ArrayList<>();
@@ -197,7 +183,9 @@ public class PeaViolablePhases {
         }
         return supersetPhase.containsAll(subsetPhase);
     }
+    */
 	
+	/*
 	// Checks if a phase cannot become stuck due to clocks
 	// First, get all clock invariants and check if their disjunction is a tautology.
 	// If not, for all clock resets, add a "clock >= 0 || clock < 0" to the formula and check again
@@ -214,7 +202,6 @@ public class PeaViolablePhases {
 		if (clockInvariantsAreTautology == LBool.UNSAT) {
 			phaseSetIsTemporary = false;
 		}
-		/*
 		// this is unnecessary for many phase sets, rewrite to make more efficient
 		List<String> clockResets = getPhaseSetClockResets(subsetPhase);
 		
@@ -230,9 +217,9 @@ public class PeaViolablePhases {
 				}
 			}
 		}
-		*/
 		return phaseSetIsTemporary;
     }
+
 	
 	private List<Term> getClockInvariants(List<Phase> phaseSet){
 		List<Term> clockInvariants = new ArrayList<Term>();
@@ -272,40 +259,199 @@ public class PeaViolablePhases {
 		}
 		return clockResets;
 	}
+	*/
+	private Map<Phase, Set<Phase>> getReachabilityBetweenPhasesOfPhaseSet(final List<Phase> phaseSet){
+		Map<Phase, Set<Phase>> reachabilityMap = new HashMap<Phase, Set<Phase>>();
+		for (Phase p : phaseSet) {
+			reachabilityMap.put(p, new HashSet<Phase>()); // Initialize map
+			dfsCheckForReachabilityCheck(p, p, phaseSet, reachabilityMap, new HashSet<>());
+		}
+		return reachabilityMap;
+	}
 	
-	// Returns a list of phase sets (as lists) which are fulfill all SAP NVP conditions
-	// except that they may be terminal.
-	private List<List<Phase>> allPeaViolablePhases() {
-		// Start with the power set of all the the phases of the PEA
-		List<List<Phase>> violablePhases = powerSetPeaPhases();
-
-		// Check for each set of phases if the phases are mutually reachable via phases of the set
-		// and that the disjunction of their outgoing transitions are a tautology
-		Iterator<List<Phase>> phaseSetIterator = violablePhases.iterator();
-		while (phaseSetIterator.hasNext()) {
-			List<Phase> phaseSet = phaseSetIterator.next();
-			if (!phaseFulfillsSAPReachabilityCondition(phaseSet)) {
-				 phaseSetIterator.remove();
-			}
-			else if (outgoingTransitionsOfPhaseAreTautology(phaseSet)) {
-				phaseSetIterator.remove();
-			}
-			else if (isTemporaryPhase(phaseSet)) {
-				phaseSetIterator.remove();
+	// Helper function for checking the reachability between phases
+	private void dfsCheckForReachabilityCheck(Phase checkingPhase, Phase currentPhase, List<Phase> phaseSet, 
+			Map<Phase, Set<Phase>> reachabilityMap, Set<Phase> checked) {
+		if (checked.contains(currentPhase)) {
+			return;
+		}
+        checked.add(currentPhase);
+        Set<Phase> currentReachablePhases = reachabilityMap.get(currentPhase);
+        if (currentReachablePhases == null) {
+        	currentReachablePhases = new HashSet<>();
+            reachabilityMap.put(currentPhase, currentReachablePhases);
+        }
+        for (Transition t : currentPhase.getTransitions()) {
+            Phase destPhase = t.getDest();
+            if (phaseSet.contains(destPhase)) {
+            	currentReachablePhases.add(destPhase);
+                dfsCheckForReachabilityCheck(checkingPhase, destPhase, phaseSet, reachabilityMap, checked);
+            }
+        }
+	}
+	
+	// Returns true for a given phase set if all phases in the set are reachable from each other
+	// via only phases within the set
+	private boolean phaseFulfillsSAPReachabilityCondition(final List<Phase> phaseSet) {
+		Map<Phase, Set<Phase>> reachabilityMap = getReachabilityBetweenPhasesOfPhaseSet(phaseSet);
+		boolean allPhasesMutuallyReachableViaPhaseSet = true;
+		for (Phase p : reachabilityMap.keySet()) {
+			for (Phase dest : phaseSet) {
+				if (!(reachabilityMap.get(p).contains(dest))) {
+					allPhasesMutuallyReachableViaPhaseSet = false;
+				}
 			}
 		}
-		
-		// Remove all sets of phases which are subsets of others remaining
-		violablePhases = removeSubsetPhases(violablePhases);
-		
-		
-		return violablePhases;
+		return allPhasesMutuallyReachableViaPhaseSet;
 	}
+	
+	private List<List<Phase>> removeSubsetPhases(List<List<Phase>> setPhaseSets){
+		List<List<Phase>> maxSubsets = new ArrayList<>();
+
+        outerLoop:
+        for (List<Phase> currentSet : setPhaseSets) {
+            for (List<Phase> otherSet : setPhaseSets) {
+                if (currentSet != otherSet && isSubsetPhase(currentSet, otherSet)) {
+                    continue outerLoop;
+                }
+            }
+            maxSubsets.add(currentSet);
+        }
+        return maxSubsets;
+	}
+	
+	// Helper function for generating the list of only maximal phase sets
+	private boolean isSubsetPhase(List<Phase> subsetPhase, List<Phase> supersetPhase) {
+        if (subsetPhase.size() > supersetPhase.size()) {
+            return false;
+        }
+        return supersetPhase.containsAll(subsetPhase);
+    }
+	
+	// Checks for a given phase set if a transition can be taken given any variable and clock valuation
+	private boolean outgoingTransitionsOfPhaseAreTautology(List<Phase> phaseSet) {
+		List<Term> phaseTransitionInfo = new ArrayList<>();
+		for (Phase p : phaseSet) {
+			for (Transition t : p.getTransitions()) {
+				phaseTransitionInfo.add(SmtUtils.and(mScript, mCddToSmt.toSmt(t.getGuard()), 
+						mCddToSmt.toSmt(new StrictInvariant().genStrictInv(t.getDest().getClockInvariant(), t.getResets())),  
+						 mCddToSmt.toSmt(t.getDest().getStateInvariant().prime(mReqSymboltable.getConstVars()))));
+
+			}
+		}
+		final LBool negationIsSat = SmtUtils.checkSatTerm(mScript, SmtUtils.not(mScript, 
+				SmtUtils.or(mScript, phaseTransitionInfo)));
+		return negationIsSat == LBool.UNSAT;
+	}
+	
+	private List<List<Phase>> getAllStronglyConnectedLastPhases(){
+		List<List<Phase>> tarjansComponents = runTarjansAlgorithm();
+		mLogger.info("sccs: " + tarjansComponents);
+		List<List<Phase>> tarjansComponentsAndSubcomponents = new ArrayList<List<Phase>>();
+		for (List<Phase> phaseSet : tarjansComponents) {
+			List<List<Phase>> tarjanLastPhases = getLastPhaseTarjanSubsets(phaseSet);
+			for (List<Phase> lastPhase : tarjanLastPhases) {
+				tarjansComponentsAndSubcomponents.add(lastPhase);
+			}
+		}
+		return tarjansComponentsAndSubcomponents;
+	}
+	
+	private List<List<Phase>> runTarjansAlgorithm(){
+		List<List<Phase>> tarjansComponents = new ArrayList<List<Phase>>();
+		int index = 0;
+		Stack<Phase> checkedPhases = new Stack<Phase>();
+		Map<Phase, Integer> indices = new HashMap<Phase, Integer>();
+		Map<Phase, Integer> lowlinks = new HashMap<Phase, Integer>();
+		Map<Phase, Boolean> onStack = new HashMap<Phase, Boolean>();
+		for (Phase p : mPea.getPhases()) {
+			if (!indices.containsKey(p)) {
+				tarjansComponents = tarjansStronglyConnectedComponents(p, index, 
+						checkedPhases, indices, lowlinks, onStack, tarjansComponents);
+			}
+		}
+		return tarjansComponents;
+	}
+	
+	private List<List<Phase>> tarjansStronglyConnectedComponents(Phase phase, int index, 
+			Stack<Phase> checkedPhases, Map<Phase, Integer> indices, Map<Phase, Integer> lowlinks,
+			Map<Phase, Boolean> onStack, List<List<Phase>> tarjansComponents){
+		indices.put(phase, index);
+		lowlinks.put(phase, index);
+		index++;
+		checkedPhases.push(phase);
+		onStack.put(phase, true);
+		
+		for (Transition t : phase.getTransitions()) {
+			Phase otherPhase = t.getDest();
+			if (!indices.containsKey(otherPhase)) {
+				tarjansStronglyConnectedComponents(otherPhase, index, checkedPhases, indices, lowlinks,
+						onStack, tarjansComponents);
+				lowlinks.put(phase, Math.min(lowlinks.get(phase), lowlinks.get(otherPhase)));
+			}
+			else if (onStack.get(otherPhase)) {
+				lowlinks.put(phase, Math.min(lowlinks.get(phase), indices.get(otherPhase)));
+			}
+		}
+
+		List<Phase> stronglyConnectedComponent = new ArrayList<Phase>();
+		if (lowlinks.get(phase) == indices.get(phase)) {
+			boolean done = false;
+			while (!done) {
+				Phase p = checkedPhases.pop();
+				onStack.put(p, false);
+				stronglyConnectedComponent.add(p);
+				if (p == phase) {
+					done = true;
+				}
+			}
+		}
+		tarjansComponents.add(stronglyConnectedComponent);
+		return tarjansComponents;
+	}
+	
+	// Given a strongly connected component, get all subsets which could be last phases
+    private List<List<Phase>> getLastPhaseTarjanSubsets(List<Phase> phaseSet) {
+        List<List<Phase>> allSubPhases = new ArrayList<>();
+        int n = phaseSet.size();
+        int count = 0;
+        int numberOfSubPhases = 1 << n; // 2^n
+        boolean[] addedPhases = new boolean[numberOfSubPhases];
+        
+        for (int i = numberOfSubPhases - 1; i > 0; i--) { // Iterate from largest phase set down
+            if (addedPhases[i]) continue; // Don't check subsets of already detected NVPs
+
+            List<Phase> subPhaseSet = new ArrayList<>();
+            for (int j = 0; j < n; j++) {
+                if ((i & (1 << j)) != 0) {
+                    subPhaseSet.add(phaseSet.get(j));
+                }
+            }
+            count++;
+            if (phaseFulfillsSAPReachabilityCondition(subPhaseSet) && 
+            		!outgoingTransitionsOfPhaseAreTautology(subPhaseSet) 
+                ) {
+                allSubPhases.add(subPhaseSet);
+                markPhaseSubsetAsNVP(i, addedPhases, n);
+            }
+        }
+        return allSubPhases;
+    }
+    
+    // Helper function that tracks which Tarjan component subsets are detected to be NVPs.
+    // This is so that subsets of these sets don't have to be checked
+    private void markPhaseSubsetAsNVP(int setMask, boolean[] added, int n) {
+        for (int subsetMask = setMask; subsetMask > 0; subsetMask = (subsetMask - 1) & setMask) {
+            added[subsetMask] = true;
+        }
+    }
 	
 	// Returns a list of phase sets (as lists) which are fulfill all SAP NVP conditions
 	public List<List<Phase>> nonterminalPeaViolablePhases() {
 		// take the result of the function above and remove any sets which have no outgoing transition not in the set
-		List<List<Phase>> violablePhases = allPeaViolablePhases();
+		List<List<Phase>> violablePhases = getAllStronglyConnectedLastPhases();
+		mLogger.info(violablePhases);
+		violablePhases = removeSubsetPhases(violablePhases);
 		List<List<Phase>> nonTerminalPhases = new ArrayList<List<Phase>>();
 		for (List<Phase> subsetPhase : violablePhases) {
 			for (Phase phase : subsetPhase) {
@@ -316,8 +462,6 @@ public class PeaViolablePhases {
 				}
 			}
 		}
-		mLogger.info("The final set of NVPs for " + mPea.getName() +" is: ");
-		mLogger.info(nonTerminalPhases);
 		return nonTerminalPhases;
 	}
 }

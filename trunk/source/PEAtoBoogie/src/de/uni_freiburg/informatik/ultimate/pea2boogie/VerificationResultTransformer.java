@@ -153,7 +153,7 @@ public class VerificationResultTransformer {
 		final Spec spec = specs.iterator().next();
 		dieIfUnsupported(spec);
 
-		if (spec == Spec.CONSISTENCY || spec == Spec.VACUOUS || spec == Spec.STUCKATPROPERTY) {
+		if (spec == Spec.CONSISTENCY || spec == Spec.VACUOUS || spec == Spec.STUCKAT) {
 			// a counterexample for consistency and vacuity means that the requirements are consistent or
 			// non-vacuous
 			isPositive = !isPositive;
@@ -557,7 +557,7 @@ public class VerificationResultTransformer {
 		case CONSISTENCY:
 		case VACUOUS:
 		case RTINCONSISTENT:
-		case STUCKATPROPERTY:
+		case STUCKAT:
 			return;
 		default:
 			throw new UnsupportedOperationException("Unknown spec type " + spec);

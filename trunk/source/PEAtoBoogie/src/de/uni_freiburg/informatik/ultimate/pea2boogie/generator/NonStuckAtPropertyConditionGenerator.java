@@ -14,6 +14,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieDe
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
+import de.uni_freiburg.informatik.ultimate.lib.pea.Transition;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
@@ -48,7 +49,6 @@ public class NonStuckAtPropertyConditionGenerator {
 	private final IUltimateServiceProvider mServices;
 	private final PeaResultUtil mPeaResultUtil;
 	private final BoogieDeclarations mBoogieDeclarations;
-	
 
 	// Constructor
 	public NonStuckAtPropertyConditionGenerator(final ILogger logger, final IUltimateServiceProvider services, 
@@ -66,8 +66,6 @@ public class NonStuckAtPropertyConditionGenerator {
 		mReqSymboltable = symboltable;
 		mBoogie2Smt = new Boogie2SMT(mManagedScript, boogieDeclarations, services, false);
 		mCddToSmt = new CddToSmt(services, peaResultUtil, mScript, mBoogie2Smt, boogieDeclarations, mReqSymboltable);
-
-
 	}
 	
 	// Taken from RtInconcistencyConditionGenerator, idk what it does really
@@ -81,7 +79,6 @@ public class NonStuckAtPropertyConditionGenerator {
 		}
 		return SolverBuilder.buildAndInitializeSolver(services, settings, "NonStuckAtPropertyConditionGenerator");
 	}
-	
 	
 	// Function which collects the set of NVPs for each PEA in the given specification.
 	private Map<PhaseEventAutomata, List<List<Phase>>> getNonterminalViolablePhases(){
@@ -108,17 +105,22 @@ public class NonStuckAtPropertyConditionGenerator {
 	// program is in NVP location ==> a transition leaving the NVP can be taken
 	public Map<PhaseEventAutomata, List<Expression>> generateNonStuckAtPropertyCondition(){
 		Map<PhaseEventAutomata, List<Expression>> result = new HashMap<PhaseEventAutomata, List<Expression>>();
-		// List<Term> tempTransitionInfo = new ArrayList<>(); // holds the disjunction of the edges
-		// List<Term> tempLocationInfo = new ArrayList<>(); // holds the implications of the locations and edges
+		List<Term> tempTransitionInfo = new ArrayList<>(); // holds the disjunction of the edges
+		List<Term> tempLocationInfo = new ArrayList<>(); // holds the implications of the locations and edges
 		List<Term> nvpPhasesCurrentLocationChecks = new ArrayList<>();
 		List<Term> nonNvpNextPhases = new ArrayList<>();
 		Map<PhaseEventAutomata, List<List<Phase>>> nvps = getNonterminalViolablePhases();
-		mLogger.info("NVPs: " + nvps);
+		for (PhaseEventAutomata pea : nvps.keySet()) {
+			if (!nvps.get(pea).isEmpty()) {
+				mLogger.info("NVPs: " + pea + ": " + nvps.get(pea));
+			}
+		}
 		for (PhaseEventAutomata pea : nvps.keySet()) {
 			Map<Phase, Integer> phaseIndices = getPhaseIndices(pea);
 			nvpPhasesCurrentLocationChecks = new ArrayList<>();
 			nonNvpNextPhases = new ArrayList<>();
 			result.put(pea, new ArrayList<Expression>());
+			
 			for (List<Phase> nvp : nvps.get(pea)) {
 				for (Phase p : nvp) {
 				nvpPhasesCurrentLocationChecks.add(SmtUtils.binaryEquality(mScript, 
@@ -138,8 +140,9 @@ public class NonStuckAtPropertyConditionGenerator {
 				result.put(pea, addResult);
 			}
 			
-			//if (!nvps.get(pea).isEmpty()) {
 			/*
+			//if (!nvps.get(pea).isEmpty()) {
+			
 			for (List<Phase> nvp : nvps.get(pea)) {
 				for (Phase p : nvp) {
 					for (Transition t : p.getTransitions()) {
@@ -149,7 +152,7 @@ public class NonStuckAtPropertyConditionGenerator {
 							Term transitionInfo = SmtUtils.and(mScript, mCddToSmt.toSmt(t.getGuard()), 
 									 mCddToSmt.toSmt(new StrictInvariant().genStrictInv(t.getDest().getClockInvariant(), 
 											 t.getResets())),  
-									 mCddToSmt.toSmt(t.getDest().getStateInvariant().prime(mReqSymboltable.getConstVars())));
+									 mCddToSmt.toSmt(t.getDest().getStateInvariant()));
 							tempTransitionInfo.add(transitionInfo);
 							mLogger.info("11111111111111111111111111" + transitionInfo);
 						}

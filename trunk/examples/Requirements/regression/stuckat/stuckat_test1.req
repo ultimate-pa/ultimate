@@ -1,0 +1,8 @@
+// #TestSpec: rt-inconsistent:; vacuous:; inconsistent:; stuck-at:req1; results:-1
+// 
+Input R is bool
+Input S is bool
+
+req1: Globally, it is always the case that if "R" holds for at least "5.0" time units, then "S" holds afterwards
+req2: Globally, it is always the case that "R" holds
+req3: Globally, it is always the case that if "!R" holds for at least "5.0" time units, then "S" holds afterwards

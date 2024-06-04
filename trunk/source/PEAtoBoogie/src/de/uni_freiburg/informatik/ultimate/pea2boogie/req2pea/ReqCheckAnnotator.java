@@ -407,8 +407,8 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 	// generate assertions as for the above properties (I don't really understand it, and it doesn't work...)
 	private Statement genAssertNonStuckAtProperty(final PatternType<?> req, final PhaseEventAutomata aut,
 			final BoogieLocation bl, Expression toAssert, int index) {
-		final ReqCheck check = createReqCheck(Spec.STUCKATPROPERTY, req, aut);
-		final String label = "STUCKATPROPERTY_" + aut.getName() + "_NVP" + index;
+		final ReqCheck check = createReqCheck(Spec.STUCKAT, req, aut);
+		final String label = "STUCKAT_" + aut.getName() + "_NVP" + index;
 		return createAssert(toAssert, check, label);
 	}
 
