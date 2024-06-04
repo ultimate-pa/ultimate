@@ -1,21 +1,18 @@
 #!/bin/bash
-mkdir StarExecArchive
-mkdir StarExecArchive/bin
-mkdir StarExecArchive/Ultimate
-cp -a ../../../trunk/source/BA_SiteRepository/target/products/UltimateEliminator/linux/gtk/x86_64/* StarExecArchive/Ultimate/
-rm StarExecArchive/Ultimate/Ultimate
-rm StarExecArchive/Ultimate/Ultimate.ini
-cp *LICENSE* StarExecArchive/Ultimate/
-cp starexec_description.txt StarExecArchive/
-cp starexec_run_* StarExecArchive/bin/
-cp smtlib2_trace_executor StarExecArchive/bin/
-cp ../../../trunk/examples/settings/UltimateEliminator/mathsat.epf StarExecArchive/
+mkdir UltimateEliminator
+# mkdir UltimateEliminator/bin
+# mkdir UltimateEliminator/Ultimate
+cp -a ../../../trunk/source/BA_SiteRepository/target/products/UltimateEliminator/linux/gtk/x86_64/* UltimateEliminator/
+rm UltimateEliminator/Ultimate.ini
+#cp *LICENSE* UltimateEliminator/cp smtlib2_trace_executor StarExecArchive/bin/
+cp ../../../trunk/examples/settings/UltimateEliminator/mathsat.epf UltimateEliminator/
+cp ultimateeliminator.sh UltimateEliminator/
 
-cp -LR mathsat StarExecArchive/Ultimate
+cp -LR mathsat UltimateEliminator
 
-cp -a java/jdk-11.0.2 StarExecArchive/Ultimate/
+# cp -a java/jdk-11.0.2 UltimateEliminator/
 
 
-cd StarExecArchive
-zip ../UltimateCommandline.zip -r *
+cd UltimateEliminator
+zip ../UltimateEliminator.zip -r *
 
