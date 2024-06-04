@@ -1,0 +1,12 @@
+#valid
+law:
+  - territory: [ [l0] ]
+    assertion: true
+  - territory: [ [l1], [l2] ]
+    assertion: true
+  - territory: [ [l1], [l5], [l6] ]
+    assertion: true
+  - territory: [ [l2], [l3], [l4] ]
+    assertion: true
+  - territory: [ [l3], [l4], [l5], [l6] ]
+    assertion: true
