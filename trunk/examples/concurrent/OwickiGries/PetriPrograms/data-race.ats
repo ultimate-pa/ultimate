@@ -13,22 +13,22 @@
 
 PetriNet program = (
   alphabet    = { "[0]" "[1]" "[2]" "[3]" "[4]" "[5]" "[6]" },
-  places      = { "m.l0" "t1.l0" "t1.l1" "t1.l2" "t1.l3" "t1.l4" "t2.l0" "t2.l1" "t2.l2" "t2.l3" "t2.l4" "e" },
+  places      = { "m" "t1.l0" "t1.l1" "t1.l2" "t1.l3" "t1.l4" "t2.l0" "t2.l1" "t2.l2" "t2.l3" "t2.l4" "e1" "e2" },
   transitions = {
-    ({ "m.l0" } "[0]" { "t1.l0" "t2.l0" })
+    ({ "m" } "[0]" { "t1.l0" "t2.l0" })
     ({ "t1.l0" } "[1]" { "t1.l1" })
     ({ "t1.l1" } "[6]" { "t1.l2" })
     ({ "t1.l2" } "[3]" { "t1.l3" })
-    ({ "t1.l2" } "[4]" { "e" })
+    ({ "t1.l2" } "[4]" { "e1" })
     ({ "t1.l3" } "[2]" { "t1.l4" })
     ({ "t2.l0" } "[1]" { "t2.l1" })
     ({ "t2.l1" } "[6]" { "t2.l2" })
     ({ "t2.l2" } "[3]" { "t2.l3" })
-    ({ "t2.l2" } "[4]" { "e" })
+    ({ "t2.l2" } "[4]" { "e2" })
     ({ "t2.l3" } "[2]" { "t2.l4" })
   },
-  initialMarking = { "m.l0" },
-  acceptingPlaces = { "e" }
+  initialMarking = { "m" },
+  acceptingPlaces = { "e1" "e2" }
 );
 
 FiniteAutomaton proof = (
