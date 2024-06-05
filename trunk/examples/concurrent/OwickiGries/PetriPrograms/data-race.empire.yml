@@ -1,0 +1,32 @@
+#valid
+named_regions:
+  r1: [t1.l2, t1.l3]
+  r2: [t2.l2, t2.l3]
+law:
+  - territory: [ [m] ]
+    assertion: true
+  - territory: [ [t1.l0], [t2.l0] ]
+    assertion: (and (= c 0) (= s 0))
+  - territory: [ [t1.l1], [t2.l0] ]
+    assertion: (and (= c 0) (= s 1))
+  - territory: [ r1, [t2.l0] ]
+    assertion: (and (= c 1) (= s 1))
+  - territory: [ [t1.l1], [t2.l4] ]
+    assertion: (and (= c 0) (= s 1))
+  - territory: [ r1, [t2.l4] ]
+    assertion: (and (= c 1) (= s 1))
+  - territory: [ [t1.l4], [t2.l0] ]
+    assertion: (and (= c 0) (= s 0))
+  - territory: [ [t1.l0], [t2.l1] ]
+    assertion: (and (= c 0) (= s 1))
+  - territory: [ [t1.l0], r2 ]
+    assertion: (and (= c 1) (= s 1))
+  - territory: [ [t1.l0], [t2.l4] ]
+    assertion: (and (= c 0) (= s 0))
+  - territory: [ [t1.l4], [t2.l1] ]
+    assertion: (and (= c 0) (= s 1))
+  - territory: [ [t1.l4], r2 ]
+    assertion: (and (= c 1) (= s 1))
+  - territory: [ [t1.l4], [t2.l4] ]
+    assertion: (and (= c 0) (= s 0))
+
