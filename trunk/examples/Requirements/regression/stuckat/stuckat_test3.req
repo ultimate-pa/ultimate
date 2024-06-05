@@ -1,0 +1,8 @@
+// #TestSpec: rt-inconsistent:; vacuous:req1; inconsistent:; stuck-at:req1; results:-1
+// 
+// Stuck example in non-typical detected last phase
+Input R is bool
+Input S is bool
+
+req1: After "P", it is always the case that if "R" holds, then "S" previously held
+req2: Globally, it is always the case that "!P && S" holds

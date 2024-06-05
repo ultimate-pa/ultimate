@@ -1,0 +1,8 @@
+// #TestSpec: rt-inconsistent:; vacuous:req1; inconsistent:; stuck-at:req1; results:-1
+// 
+// Stuck example in seeping last phase
+Input R is bool
+Input S is bool
+
+req1: Globally, it is always the case that if "R" holds, then "S" holds for at least "5.0" time units
+req2: Globally, it is always the case that "!R || !S" holds

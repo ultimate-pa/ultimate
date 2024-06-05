@@ -1,0 +1,8 @@
+// #TestSpec: rt-inconsistent:req1; vacuous:req1; inconsistent:; stuck-at:req1; results:-1
+// 
+// Stuck example due to clocks
+Input R is bool
+Input S is bool
+
+req1: Globally, it is always the case that once "R" becomes satisfied, it holds for less than "5.0" time units
+req2: Globally, it is always the case that "R" holds
