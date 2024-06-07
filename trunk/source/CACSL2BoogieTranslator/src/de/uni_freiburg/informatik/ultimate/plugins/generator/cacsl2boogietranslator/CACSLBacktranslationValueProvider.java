@@ -56,6 +56,16 @@ public class CACSLBacktranslationValueProvider
 	}
 
 	@Override
+	public int getStartColumnNumberFromStep(final CACSLLocation step) {
+		return step.getStartColumn();
+	}
+
+	@Override
+	public String getFunctionFromStep(final CACSLLocation step) {
+		return step.getFunction();
+	}
+
+	@Override
 	public String getStringFromStep(final CACSLLocation step) {
 		if (step instanceof CLocation) {
 			return getStringFromIASTNode(((CLocation) step).getNode());

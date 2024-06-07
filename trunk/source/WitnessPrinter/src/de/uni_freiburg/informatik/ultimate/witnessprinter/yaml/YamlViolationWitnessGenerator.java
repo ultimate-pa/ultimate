@@ -100,8 +100,11 @@ public class YamlViolationWitnessGenerator<TE, E> {
 			final TE currentStep = currentATE.getStep();
 			final ProgramState<E> currentState = mExecution.getProgramState(i);
 			final int startLine = mStringProvider.getStartLineNumberFromStep(currentStep);
+			// TODO: Maybe we need some other column here (depending on the entry)?
+			final int startColumn = mStringProvider.getStartColumnNumberFromStep(currentStep);
+			final String function = mStringProvider.getFunctionFromStep(currentStep);
 			// TODO: change "" to function ?
-			final Location currentLocation = new Location(filename, hash, startLine, null, null);
+			final Location currentLocation = new Location(filename, hash, startLine, startColumn, function);
 			// TODO: add WaypointAssumption
 			// Use mProgramStatePrinter.asFormulaString(state,ProgramStatePrinter::checkForAcslAndPointers)
 			if (i == mExecution.getLength() - 1) {
