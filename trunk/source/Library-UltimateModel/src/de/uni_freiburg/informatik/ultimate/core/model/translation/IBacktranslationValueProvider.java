@@ -20,6 +20,10 @@ public interface IBacktranslationValueProvider<TTE, TE> {
 
 	int getEndLineNumberFromStep(TTE step);
 
+	int getStartColumnNumberFromStep(TTE step);
+
+	String getFunctionFromStep(TTE step);
+
 	String getOriginFileNameFromStep(TTE step);
 
 	String getFileNameFromStep(TTE step);

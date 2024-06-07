@@ -32,12 +32,29 @@ public class BoogieBacktranslationValueProvider implements IBacktranslationValue
 	}
 
 	@Override
+	public int getStartColumnNumberFromStep(final BoogieASTNode step) {
+		if (step.getLocation() == null) {
+			return -1;
+		}
+		return step.getLocation().getStartColumn();
+	}
+
+	@Override
 	public String getOriginFileNameFromStep(final BoogieASTNode step) {
 		final ILocation loc = step.getLocation();
 		if (loc == null) {
 			return null;
 		}
 		return loc.getFileName();
+	}
+
+	@Override
+	public String getFunctionFromStep(final BoogieASTNode step) {
+		final ILocation loc = step.getLocation();
+		if (loc == null) {
+			return null;
+		}
+		return loc.getFunction();
 	}
 
 	@Override

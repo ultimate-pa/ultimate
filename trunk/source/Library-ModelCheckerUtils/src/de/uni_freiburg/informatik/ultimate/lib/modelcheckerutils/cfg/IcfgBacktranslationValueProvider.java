@@ -48,6 +48,11 @@ public class IcfgBacktranslationValueProvider<L extends IAction> implements IBac
 	}
 
 	@Override
+	public int getStartColumnNumberFromStep(final L step) {
+		return -1;
+	}
+
+	@Override
 	public String getOriginFileNameFromStep(final L step) {
 		return null;
 	}
@@ -70,5 +75,10 @@ public class IcfgBacktranslationValueProvider<L extends IAction> implements IBac
 	@Override
 	public String getStringFromExpression(final Term expression) {
 		return expression.toStringDirect();
+	}
+
+	@Override
+	public String getFunctionFromStep(final L step) {
+		return null;
 	}
 }
