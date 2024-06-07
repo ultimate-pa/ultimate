@@ -26,14 +26,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.witnessprinter.graphml;
 
-import java.math.BigDecimal;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement.StepInfo;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslationValueProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
+import de.uni_freiburg.informatik.ultimate.witnessprinter.ProgramStatePrinter;
 
 /**
  *
@@ -111,22 +110,8 @@ public class GeneratedWitnessEdge<TE, E> {
 	}
 
 	public String getAssumption() {
-		if (!hasAssumption()) {
-			return null;
-		}
-
-		final StringBuilder sb = new StringBuilder();
-
-		boolean isFirstVariable = true;
-		for (final E variable : mState.getVariables()) {
-			final boolean hasValues = appendValueEqualities(sb, variable, !isFirstVariable);
-			isFirstVariable = isFirstVariable && !hasValues;
-		}
-
-		if (sb.length() > 0) {
-			return sb.toString();
-		}
-		return null;
+		return new ProgramStatePrinter<>(mStringProvider).stateAsExpression(mState,
+				ProgramStatePrinter::isValidCVariable);
 	}
 
 	public String getEnterFunction() {
@@ -175,56 +160,6 @@ public class GeneratedWitnessEdge<TE, E> {
 		}
 
 		return sb.toString();
-	}
-
-	private boolean appendValueEqualities(final StringBuilder sb, final E variable, final boolean addConjunction) {
-		final String varStr = mStringProvider.getStringFromExpression(variable);
-		if (varStr.contains("\\") || varStr.contains("&")) {
-			// is something like read, old, etc.
-			return false;
-		}
-
-		final var valStrings = mState.getValues(variable).stream().map(this::getValueString).filter(Objects::nonNull)
-				.collect(Collectors.toList());
-		if (valStrings.isEmpty()) {
-			return false;
-		}
-
-		// conjunction with possible values of other variables
-		if (addConjunction) {
-			sb.append(" && ");
-		}
-
-		sb.append('(');
-		boolean isFirstValue = true;
-		for (final var valStr : valStrings) {
-			// disjunction with other possible values for the same variable
-			if (!isFirstValue) {
-				sb.append(" || ");
-			}
-
-			sb.append(varStr);
-			sb.append("==");
-			sb.append(valStr);
-
-			isFirstValue = false;
-		}
-		sb.append(')');
-		return true;
-	}
-
-	private String getValueString(final E value) {
-		final String valStr = mStringProvider.getStringFromExpression(value);
-		try {
-			new BigDecimal(valStr);
-		} catch (final NumberFormatException ex) {
-			// this is no valid number literal, maybe its true or false?
-			if (!"true".equalsIgnoreCase(valStr) && !"false".equalsIgnoreCase(valStr)) {
-				// nope, give up
-				return null;
-			}
-		}
-		return valStr;
 	}
 
 	public String getOriginFileName() {

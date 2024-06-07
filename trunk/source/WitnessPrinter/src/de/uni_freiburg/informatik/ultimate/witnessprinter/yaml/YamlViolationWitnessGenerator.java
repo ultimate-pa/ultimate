@@ -29,9 +29,7 @@ package de.uni_freiburg.informatik.ultimate.witnessprinter.yaml;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.UltimateCore;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
@@ -52,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.WaypointFunctionEn
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.WaypointFunctionReturn;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.WaypointTarget;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Witness;
+import de.uni_freiburg.informatik.ultimate.witnessprinter.ProgramStatePrinter;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.preferences.PreferenceInitializer;
 
 /**
@@ -68,10 +67,12 @@ public class YamlViolationWitnessGenerator<TE, E> {
 	private final IProgramExecution<TE, E> mExecution;
 	private final ILogger mLogger;
 	private final String mFilename;
+	private final ProgramStatePrinter<TE, E> mProgramStatePrinter;
 
 	public YamlViolationWitnessGenerator(final IProgramExecution<TE, E> execution, final ILogger logger,
 			final IUltimateServiceProvider services) {
 		mStringProvider = execution.getBacktranslationValueProvider();
+		mProgramStatePrinter = new ProgramStatePrinter<>(mStringProvider);
 		mLogger = logger;
 		mExecution = execution;
 		mServices = services;
@@ -102,6 +103,7 @@ public class YamlViolationWitnessGenerator<TE, E> {
 			// TODO: change "" to function ?
 			final Location currentLocation = new Location(filename, hash, startLine, null, null);
 			// TODO: add WaypointAssumption
+			// Use mProgramStatePrinter.asFormulaString(state,ProgramStatePrinter::checkForAcslAndPointers)
 			if (i == mExecution.getLength() - 1) {
 				content.add(new Segment(List.of(), new WaypointTarget(currentLocation)));
 			}
@@ -129,21 +131,11 @@ public class YamlViolationWitnessGenerator<TE, E> {
 	}
 
 	private Constraint getReturnConstraint(final ProgramState<E> state) {
-		if (state == null) {
+		final String result = mProgramStatePrinter.stateAsExpression(state, "\\result"::equals);
+		if (result == null) {
 			return null;
 		}
-		for (final E variable : state.getVariables()) {
-			final String varName = mStringProvider.getStringFromExpression(variable);
-			if (varName.equals("\\result")) {
-				return new Constraint(formatValue(variable, state.getValues(variable)), "acsl_expression");
-			}
-		}
-		return null;
-	}
-
-	private String formatValue(final E variable, final Collection<E> values) {
-		return values.stream().map(x -> mStringProvider.getStringFromExpression(variable) + " == "
-				+ mStringProvider.getStringFromExpression(x)).collect(Collectors.joining(" || "));
+		return new Constraint(result, "acsl_expression");
 	}
 
 	public String makeYamlString() {
