@@ -27,6 +27,9 @@
 
 package de.uni_freiburg.informatik.ultimate.witnessparser.yaml;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 /**
  * Waypoints are the basic building blocks of entry-based violation witnesses. Technically a waypoint is a mapping with
  * our keys: type, location, constraint and action.
@@ -60,5 +63,24 @@ public abstract class Waypoint {
 			sb.append(": ").append(mConstraint);
 		}
 		return sb.toString();
+	}
+
+	public Map<String, Object> toMap(final String action) {
+		final LinkedHashMap<String, Object> wpMap = new LinkedHashMap<>();
+		wpMap.put("type", getType());
+		wpMap.put("action", action);
+		if (mConstraint != null) {
+			final LinkedHashMap<String, Object> constraintMap = new LinkedHashMap<>();
+
+			constraintMap.put("value", mConstraint.getValue());
+
+			if (mConstraint.getFormat() != null) {
+				constraintMap.put("format", mConstraint.getFormat());
+			}
+			wpMap.put("constraint", constraintMap);
+		}
+		wpMap.put("location", mLocation.toMap());
+
+		return wpMap;
 	}
 }

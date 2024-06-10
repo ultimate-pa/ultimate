@@ -1,4 +1,5 @@
 /*
+ * Copyright (C) 2024 Helen Meyer (helen.anna.meyer@gmail.com)
  * Copyright (C) 2024 Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  * Copyright (C) 2024 University of Freiburg
  *
@@ -40,15 +41,21 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.GhostVariable;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Location;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LocationInvariant;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LoopInvariant;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Segment;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.ViolationSequence;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Waypoint;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Witness;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.WitnessEntry;
 
 /**
  * Exports a witness for the format version 2.x to YAML. The format 2.0 is described here:
  * https://sosy-lab.gitlab.io/benchmarking/sv-witnesses/yaml/correctness-witnesses.html <br>
- * Additionally we also export function contracts for version 2.1, and allow witnesses with ghost variables.
+ * Additionally we also export function contracts for version 2.1, and allow witnesses with ghost variables.<br>
+ * The format for violation witnesses can be found here:
+ * https://sosy-lab.gitlab.io/benchmarking/sv-witnesses/yaml/violation-witnesses.html
  *
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
+ * @author Helen Meyer (helen.anna.meyer@gmail.com)
  */
 public class YamlWitnessWriterV2 extends YamlWitnessWriter {
 	private final MetadataProvider mMetadataProvider;
@@ -64,11 +71,16 @@ public class YamlWitnessWriterV2 extends YamlWitnessWriter {
 
 	@Override
 	public String toString(final Witness witness) {
+		return formatYaml(
+				witness.isCorrectnessWitness() ? writeCorrectnessWitness(witness) : writeViolationWitness(witness));
+	}
+
+	private List<Map<String, Object>> writeCorrectnessWitness(final Witness witness) {
 		final List<Map<String, Object>> resultEntries = new ArrayList<>();
 		final List<Map<String, Object>> content = witness.getEntries().stream()
 				.filter(x -> x instanceof LoopInvariant || x instanceof LocationInvariant
 						|| (mWriteFunctionContracts && x instanceof FunctionContract))
-				.map(this::asContentMap).collect(Collectors.toList());
+				.map(this::asInvariantSetContentMap).collect(Collectors.toList());
 		final Map<String, Object> invariantSet = new LinkedHashMap<>();
 		invariantSet.put("entry_type", "invariant_set");
 		invariantSet.put("metadata", mMetadataProvider.getFreshMetadata());
@@ -88,7 +100,7 @@ public class YamlWitnessWriterV2 extends YamlWitnessWriter {
 			ghostInstrumentation.put("content", ghostContent);
 			resultEntries.add(ghostInstrumentation);
 		}
-		return formatYaml(resultEntries);
+		return resultEntries;
 	}
 
 	private static List<Map<String, Object>> extractGhostVariables(final Witness witness) {
@@ -138,7 +150,7 @@ public class YamlWitnessWriterV2 extends YamlWitnessWriter {
 		return result;
 	}
 
-	private Map<String, Object> asContentMap(final WitnessEntry entry) {
+	private Map<String, Object> asInvariantSetContentMap(final WitnessEntry entry) {
 		final Map<String, Object> content = new LinkedHashMap<>();
 		content.put("type", entry.getName());
 		if (entry instanceof LoopInvariant) {
@@ -165,5 +177,30 @@ public class YamlWitnessWriterV2 extends YamlWitnessWriter {
 			throw new UnsupportedOperationException("Unknown entry type " + entry.getClass().getSimpleName());
 		}
 		return Map.of("invariant", content);
+	}
+
+	private List<Map<String, Object>> writeViolationWitness(final Witness witness) {
+		return witness.getEntries().stream().map(this::formatViolationEntry).collect(Collectors.toList());
+	}
+
+	private Map<String, Object> formatViolationEntry(final WitnessEntry entry) {
+		if (!(entry instanceof ViolationSequence)) {
+			throw new UnsupportedOperationException("Unknown entry type " + entry.getClass().getSimpleName());
+		}
+		final ViolationSequence violationSequence = (ViolationSequence) entry;
+		final Map<String, Object> witnessMap = new LinkedHashMap<>();
+		witnessMap.put("entry_type", "violation_sequence");
+		witnessMap.put("metadata", mMetadataProvider.getFreshMetadata());
+		final List<Map<String, Object>> contentList = new ArrayList<>();
+		for (final Segment segment : violationSequence.getContent()) {
+			final List<Map<String, Object>> segmentList = new ArrayList<>();
+			for (final Waypoint avoidWP : segment.getAvoid()) {
+				segmentList.add(Map.of("waypoint", avoidWP.toMap("avoid")));
+			}
+			segmentList.add(Map.of("waypoint", segment.getFollow().toMap("follow")));
+			contentList.add(Map.of("segment", segmentList));
+		}
+		witnessMap.put("content", contentList);
+		return witnessMap;
 	}
 }
