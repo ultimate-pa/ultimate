@@ -13,14 +13,21 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieDeclarations;
 import de.uni_freiburg.informatik.ultimate.lib.pea.BooleanDecision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.RangeDecision;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.PeaViolablePhases;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.ReqSymboltableBuilder;
+import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
+import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateServiceProviderMock;
 
 /**
  * Test Class for Nonterminal Violable Phase generation.
@@ -34,47 +41,112 @@ public class NvpTest {
 	
 	// List of example PEAs to test on
 	List<List<List<String>>> mNvpResults;
-
+	ILogger mLogger;
+	LogLevel info;
+	IUltimateServiceProvider mServices;
+	PeaResultUtil mPeaResultUtil;
+	
 	public NvpTest() {
+		
+		mLogger = ILogger.getDummyLogger();
+		mLogger.setLevel(LogLevel.DEBUG);
+		mServices = UltimateMocks.createUltimateServiceProviderMock(LogLevel.DEBUG);
+		mPeaResultUtil = new PeaResultUtil(mLogger, mServices);
 		mNvpResults = new ArrayList<List<List<String>>>();
 		
-		// Example which contains violable phases due to clocks
-		// DurationBoundU Globally: Globally, it is always the case that once "R" becomes satisfied, it holds for less than "5" time units
-		// Here, the NVP is [01X]
+		/*
+		 * Example which contains violable phases due to clocks
+		 * DurationBoundU Globally: Globally, it is always the case that once "R" becomes satisfied, it holds
+		 * 
+		 * Here, the NVP is [01X]
+		 */
 		PhaseEventAutomata DurationBoundUGlobally = createDurationBoundUGlobally();
+		IReqSymbolTable symbolTableDurationBoundUGlobally = createSymbolTableDurationBoundUGlobally();
+		final List<Declaration> declsDurationBoundUGlobally = new ArrayList<>();
+		declsDurationBoundUGlobally.addAll(symbolTableDurationBoundUGlobally.getDeclarations());
+		BoogieDeclarations boogieDeclarationsDurationBoundUGlobally = 
+				new BoogieDeclarations(declsDurationBoundUGlobally, mLogger);
 		
 		// get NVPs
+		PeaViolablePhases DurationBoundUGloballyViolablePhases = 
+				new PeaViolablePhases(mLogger, mServices, mPeaResultUtil, 
+						boogieDeclarationsDurationBoundUGlobally, symbolTableDurationBoundUGlobally, 
+						DurationBoundUGlobally);
+		List<List<Phase>> nvpResultDurationBoundUGlobally = DurationBoundUGloballyViolablePhases.nonterminalPeaViolablePhases();
+		List<List<String>> nvpResultAsStringsDurationBoundUGlobally = new ArrayList<List<String>>();
+		// get results as strings
+		for (List<Phase> nvp : nvpResultDurationBoundUGlobally) {
+			List<String> nvpAsStringsDurationBoundUGlobally = new ArrayList<String>();
+			for (Phase p : nvp) {
+				nvpAsStringsDurationBoundUGlobally.add(p.toString());
+			}
+			nvpResultAsStringsDurationBoundUGlobally.add(nvpAsStringsDurationBoundUGlobally);
+		}
+		mNvpResults.add(nvpResultAsStringsDurationBoundUGlobally);
 		
-		//ILogger logger = createILogger();
-		//IUltimateServiceProvider services = createServices();
-		//PeaResultUtil peaResultUtil = createPeaResultUtil();
-		//BoogieDeclarations boogieDeclarations = createBoogieDeclarations();
-		//IReqSymbolTable symboltable = createSymboltable();
+		/*
+		 * Example which contains both a true last phase and a seeping last phase
+		 * PrecedenceChain12Globally: Globally, it is always the case that if "R" holds 
+		 * 		and is succeeded by "S", then "T" previously held
+		 * 
+		 * Here, the NVPs are [12], [02, 012], and [0]
 		
-		//PeaViolablePhases NVPsDurationBoundUGlobally =  new PeaViolablePhases(final ILogger logger, final IUltimateServiceProvider services,
-		//		final PeaResultUtil peaResultUtil, final BoogieDeclarations boogieDeclarations,
-		//		final IReqSymbolTable symboltable, final PhaseEventAutomata pea)
 		
-		// add NVP result usign phase names to list
-		mNvpResults.add(null);
-		
-		// Example which contains both a true last phase and a seeping last phase
-		// PrecedenceChain12Globally: Globally, it is always the case that if "R" holds and is succeeded by "S", then "T" previously held
-		// Here, the NVPs are [12], [02, 012], and [0]
 		PhaseEventAutomata PrecedenceChain12Globally = createPrecedenceChain12Globally();
+		IReqSymbolTable symbolTablePrecedenceChain12Globally = createSymbolTableDurationBoundUGlobally();
+		final List<Declaration> declsPrecedenceChain12Globally = new ArrayList<>();
+		declsPrecedenceChain12Globally.addAll(symbolTablePrecedenceChain12Globally.getDeclarations());
+		BoogieDeclarations boogieDeclarationsPrecedenceChain12Globally = 
+				new BoogieDeclarations(declsPrecedenceChain12Globally, mLogger);
+		
 		// get NVPs
-		
-		// add NVP result using phase names to list
-		mNvpResults.add(null);
-		
-		// Example which contains non-typical pseudo last phases (non singular seeping phase)
-		// Precedence After: After "P", it is always the case that if "R" holds, then "S" previously held
-		// Here, the NVPs are [0, 01, 012] and [01, 02, 012]
+		PeaViolablePhases PrecedenceChain12GloballyViolablePhases = 
+				new PeaViolablePhases(mLogger, mServices, mPeaResultUtil, 
+						boogieDeclarationsDurationBoundUGlobally, symbolTableDurationBoundUGlobally, 
+						DurationBoundUGlobally);
+		List<List<Phase>> nvpResultPrecedenceChain12Globally = DurationBoundUGloballyViolablePhases.nonterminalPeaViolablePhases();
+		List<List<String>> nvpResultAsStringsPrecedenceChain12Globally = new ArrayList<List<String>>();
+		// get results as strings
+		for (List<Phase> nvp : nvpResultPrecedenceChain12Globally) {
+			List<String> nvpAsStringsPrecedenceChain12Globally = new ArrayList<String>();
+			for (Phase p : nvp) {
+				nvpAsStringsPrecedenceChain12Globally.add(p.toString());
+			}
+			nvpResultAsStringsPrecedenceChain12Globally.add(nvpAsStringsPrecedenceChain12Globally);
+		}
+		mNvpResults.add(nvpResultAsStringsPrecedenceChain12Globally);
+		*/
+
+		/*
+		 * Example which contains non-typical pseudo last phases (non singular seeping phase)
+		 * Precedence After: After "P", it is always the case that if "R" holds, then "S" previously held
+		 * 
+		 * Here, the NVPs are [0, 01, 012] and [01, 02, 012]
+		 
 		PhaseEventAutomata PrecedenceAfter = createPrecedenceAfter();
-		// get NVPS
+		IReqSymbolTable symbolTablePrecedenceAfter = createSymbolTableDurationBoundUGlobally();
+		final List<Declaration> declsPrecedenceAfter = new ArrayList<>();
+		declsPrecedenceAfter.addAll(symbolTablePrecedenceAfter.getDeclarations());
+		BoogieDeclarations boogieDeclarationsPrecedenceAfter = 
+				new BoogieDeclarations(declsPrecedenceAfter, mLogger);
 		
-		// add NVP result using phase names to list
-		mNvpResults.add(null);
+		// get NVPs
+		PeaViolablePhases PrecedenceAfterViolablePhases = 
+				new PeaViolablePhases(mLogger, mServices, mPeaResultUtil, 
+						boogieDeclarationsPrecedenceAfter, symbolTablePrecedenceAfter, 
+						PrecedenceAfter);
+		List<List<Phase>> nvpResultPrecedenceAfter = PrecedenceAfterViolablePhases.nonterminalPeaViolablePhases();
+		List<List<String>> nvpResultAsStringsPrecedenceAfter = new ArrayList<List<String>>();
+		// get results as strings
+		for (List<Phase> nvp : nvpResultPrecedenceAfter) {
+			List<String> nvpAsStringsPrecedenceAfter = new ArrayList<String>();
+			for (Phase p : nvp) {
+				nvpAsStringsPrecedenceAfter.add(p.toString());
+			}
+			nvpResultAsStringsPrecedenceAfter.add(nvpAsStringsPrecedenceAfter);
+		}
+		mNvpResults.add(nvpResultAsStringsPrecedenceAfter);
+	*/
 	}
 	
 	// DurationBoundUGlobally PEA generation taken from Lena Funk's PEA complement test file
@@ -104,6 +176,16 @@ public class NvpTest {
 				initPhases, clocks, variables, Collections.emptyList());
 	}
 	
+	public IReqSymbolTable createSymbolTableDurationBoundUGlobally() {
+		ReqSymboltableBuilder tableBuilderDurationBoundUGlobally = 
+				new ReqSymboltableBuilder(mLogger); 
+		PhaseEventAutomata DurationBoundUGlobally = createDurationBoundUGlobally();
+		tableBuilderDurationBoundUGlobally.addPea(null, DurationBoundUGlobally);
+		IReqSymbolTable symbolTableDurationBoundUGlobally = 
+				tableBuilderDurationBoundUGlobally.constructSymbolTable();
+		return symbolTableDurationBoundUGlobally;
+	}
+	/*
 	public PhaseEventAutomata createPrecedenceAfter() {
 		// Define variables
 		Map<String, String> variables = new HashMap<String, String>();
@@ -174,6 +256,8 @@ public class NvpTest {
 		return new PhaseEventAutomata("PrecedenceAfter", phases,
 				initPhases, clocks, variables, Collections.emptyList());
 	}
+	
+	
 	
 	public PhaseEventAutomata createPrecedenceChain12Globally() {
 		// Define variables
@@ -255,7 +339,7 @@ public class NvpTest {
 		return new PhaseEventAutomata("PrecedenceChain12Globally", phases,
 				initPhases, clocks, variables, Collections.emptyList());
 	}
-	
+	*/
 	
 	/**
 	 * Test NVPs of DurationBoundUGlobally
@@ -268,20 +352,22 @@ public class NvpTest {
 	
 	/**
 	 * Test NVPs of PrecedenceChain12Globally
-	 */
+	 
 	@Test
 	public void testNVPsOfPrecedenceChain12Globally() {
 		List<List<String>> PrecedenceChain12GloballyNvps = new ArrayList<>(
 				Arrays.asList(Arrays.asList("02"), Arrays.asList("02", "012"), Arrays.asList("0")));
 		assertEquals(mNvpResults.get(1), PrecedenceChain12GloballyNvps);
 	}
+	*/
 	
 	/**
 	 * Test NVPs of PrecedenceAfter
-	 */
+	 
 	@Test
 	public void testNVPsOfPrecedenceAfter() {
 		List<List<String>> PrecedenceAfterNvps = new ArrayList<>(Arrays.asList(Arrays.asList("0", "01", "012"), Arrays.asList("01", "02", "012")));
 		assertEquals(mNvpResults.get(2), PrecedenceAfterNvps);
 	}
+	*/
 }

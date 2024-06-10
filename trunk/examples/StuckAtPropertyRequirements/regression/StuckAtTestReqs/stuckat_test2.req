@@ -1,4 +1,4 @@
-// #TestSpec: rt-inconsistent:req1; vacuous:req1; inconsistent:; stuck-at:req1; results:-1
+// #TestSpec: stuck-at:req1; results:-1
 // 
 // Stuck example due to clocks
 Input R is bool

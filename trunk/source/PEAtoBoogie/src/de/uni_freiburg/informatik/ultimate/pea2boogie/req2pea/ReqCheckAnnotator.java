@@ -379,7 +379,6 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		return createAssert(disjunction, check, label);
 	}
 	
-	// Generate nSAP conditions using mNonStuckAtPropertyConditionGenerator and genAssertNonStuckAtProperty
 	private List<Statement> genChecksNonStuckAtProperty(final BoogieLocation bl) {
 		if (!mCheckStuckAtProperty) {
 			return Collections.emptyList();
@@ -404,7 +403,6 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		return stmtList;
 	}
 	
-	// generate assertions as for the above properties (I don't really understand it, and it doesn't work...)
 	private Statement genAssertNonStuckAtProperty(final PatternType<?> req, final PhaseEventAutomata aut,
 			final BoogieLocation bl, Expression toAssert, int index) {
 		final ReqCheck check = createReqCheck(Spec.STUCKAT, req, aut);

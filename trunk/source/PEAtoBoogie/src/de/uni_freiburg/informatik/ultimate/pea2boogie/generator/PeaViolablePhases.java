@@ -30,16 +30,8 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolTable;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.PeaResultUtil;
 
 /**
- * This class generates lists of "last phases" for a given PEA.
+ * This class generates a list of Nonterminal Violable Phases for a given PEA.
  * 
- * It can generate lists of phases which satisfy the Nonterminal Violable Phase
- * conditions for the Stuck-At-Property.
- * 
- * It can also generate these NVPs, but including terminal last phases.
- * 
- * Other functions can easily be added to tweak which kind of last phase list
- * one is interested in, like perhaps excluding singular initial phases.
- *
  *
  * @author Abigail Durst <dursta@informatik.uni-freiburg.de>
  */
@@ -48,10 +40,8 @@ public class PeaViolablePhases {
 
 	private final ILogger mLogger;
 	private final PhaseEventAutomata mPea;
-	// private static Phase[] mAllPeaPhases;
-	// private static List<List<Phase>> mPowerSetPhases;
 
-	// For SMT solving:
+	// Needed for SMT formulas:
 	private static final String SOLVER_LOG_DIR = null;
 	private final Script mScript;
 	private final ManagedScript mManagedScript;
@@ -65,7 +55,6 @@ public class PeaViolablePhases {
 		mPea = pea;
 		mLogger = logger;
 
-		// For SMT solving:
 		mScript = buildSolver(services);
 		mManagedScript = new ManagedScript(services, mScript);
 		mReqSymboltable = symboltable;
@@ -73,7 +62,7 @@ public class PeaViolablePhases {
 		mCddToSmt = new CddToSmt(services, peaResultUtil, mScript, mBoogie2Smt, boogieDeclarations, mReqSymboltable);
 	}
 
-	// Taken from RtInconcistencyConditionGenerator, idk what it does really
+	// Taken from RtInconcistencyConditionGenerator
 	private static Script buildSolver(final IUltimateServiceProvider services) throws AssertionError {
 		SolverSettings settings = SolverBuilder.constructSolverSettings()
 				.setSolverMode(SolverMode.External_ModelsAndUnsatCoreMode).setUseExternalSolver(ExternalSolver.Z3);
@@ -84,6 +73,9 @@ public class PeaViolablePhases {
 		return SolverBuilder.buildAndInitializeSolver(services, settings, "PeaViolablePhases");
 	}
 	
+	/*
+	 *  
+	 */
 	private Map<Phase, Set<Phase>> getReachabilityBetweenPhasesOfPhaseSet(final List<Phase> phaseSet) {
 		Map<Phase, Set<Phase>> reachabilityMap = new HashMap<Phase, Set<Phase>>();
 		for (Phase p : phaseSet) {
@@ -172,7 +164,6 @@ public class PeaViolablePhases {
 
 	private List<List<Phase>> getAllStronglyConnectedLastPhases() {
 		List<List<Phase>> tarjansComponents = runTarjansAlgorithm();
-		mLogger.info("sccs: " + tarjansComponents);
 		List<List<Phase>> tarjansComponentsAndSubcomponents = new ArrayList<List<Phase>>();
 		for (List<Phase> phaseSet : tarjansComponents) {
 			List<List<Phase>> tarjanLastPhases = getLastPhaseTarjanSubsets(phaseSet);
@@ -184,6 +175,7 @@ public class PeaViolablePhases {
 	}
 
 	private List<List<Phase>> runTarjansAlgorithm() {
+		mLogger.info("PEA: " + mPea.getName());
 		mLogger.info("Number of locations in PEA: " + mPea.getPhases().length);
 		List<List<Phase>> tarjansComponents = new ArrayList<List<Phase>>();
 		int index = 0;
@@ -264,7 +256,7 @@ public class PeaViolablePhases {
 					&& !outgoingTransitionsOfPhaseAreTautology(subPhaseSet)) {
 				allSubPhases.add(subPhaseSet);
 				markPhaseSubsetAsNVP(i, addedPhases, n);
-				mLogger.info(count);
+				mLogger.info(count + " subsets checked");
 			}
 		}
 		return allSubPhases;
@@ -279,13 +271,16 @@ public class PeaViolablePhases {
 		}
 	}
 
-	// Returns a list of phase sets (as lists) which are fulfill all SAP NVP
-	// conditions
+	/*
+	 * For the PEA of the class instance, generate a list of its Nonterminal Violable Phases
+	 * (each of which is a list of phases)
+	 * 
+	 * These are the sets of phases (PEA locations) which will be checked for the Stuck-At-Property.
+	 */
 	public List<List<Phase>> nonterminalPeaViolablePhases() {
 		// take the result of the function above and remove any sets which have no
 		// outgoing transition not in the set
 		List<List<Phase>> violablePhases = getAllStronglyConnectedLastPhases();
-		mLogger.info(violablePhases);
 		violablePhases = removeSubsetPhases(violablePhases);
 		List<List<Phase>> nonTerminalPhases = new ArrayList<List<Phase>>();
 		for (List<Phase> subsetPhase : violablePhases) {

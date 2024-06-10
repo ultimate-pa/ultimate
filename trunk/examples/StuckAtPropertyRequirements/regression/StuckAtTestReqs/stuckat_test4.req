@@ -1,4 +1,4 @@
-// #TestSpec: rt-inconsistent:; vacuous:req1; inconsistent:; stuck-at:req1; results:-1
+// #TestSpec: stuck-at:req1; results:-1
 // 
 // Stuck example in seeping last phase
 Input R is bool

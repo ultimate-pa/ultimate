@@ -1,6 +1,6 @@
-// #TestSpec: rt-inconsistent:; vacuous:req3; inconsistent:; stuck-at:req1; results:-1
+// #TestSpec: stuck-at:req1, req3; results:-1
 // 
-// Running example (Abby's BSc Thesis)
+// Running example (Abby's BSc Thesis) + third requirement to test unreachable NVPs
 Input R is bool
 Input S is bool
 

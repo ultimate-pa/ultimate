@@ -65,14 +65,14 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class ReqCheckerRegressionTestSuite extends AbstractRegressionTestSuite {
+public class ReqCheckerStuckAtRegressionTestSuite extends AbstractRegressionTestSuite {
 
 	private static final int TIMEOUT = 90_000;
 
-	public ReqCheckerRegressionTestSuite() {
+	public ReqCheckerStuckAtRegressionTestSuite() {
 		super();
 		mTimeout = TIMEOUT;
-		mRootFolder = TestUtil.getPathFromTrunk("examples/Requirements");
+		mRootFolder = TestUtil.getPathFromTrunk("examples/StuckAtPropertyRequirements");
 		mFiletypesToConsider = new String[] { ".req" };
 		mExcludeFilterRegexToolchain = "failure-paths/*";
 
@@ -85,40 +85,30 @@ public class ReqCheckerRegressionTestSuite extends AbstractRegressionTestSuite {
 
 	private static final class ReqCheckerResult {
 
-		private final Set<Set<String>> mRtInconsistent;
-		private final Set<String> mVacuous;
-		private final Set<String> mInconsistent;
+
+		private final Set<String> mStuckAt;
 		private final int mNoResults;
 		private final boolean mIsIrregular;
 
 		private String mOverallResultMessage;
 
-		public ReqCheckerResult(final Set<Set<String>> rtInconsistent, final Set<String> vacuous,
-				final Set<String> inconsistent, final int results) {
-			mRtInconsistent = Objects.requireNonNull(rtInconsistent);
-			mVacuous = Objects.requireNonNull(vacuous);
-			mInconsistent = Objects.requireNonNull(inconsistent);
+		public ReqCheckerResult(final Set<String> stuckAt, final int results) {
+			mStuckAt = Objects.requireNonNull(stuckAt);
 			mNoResults = results;
 			mIsIrregular = false;
 			mOverallResultMessage = createOverallMessage();
 		}
 
 		public ReqCheckerResult() {
-			this(Collections.emptySet(), Collections.emptySet(), Collections.emptySet(), 0);
+			this(Collections.emptySet(), 0);
 		}
 
 		public ReqCheckerResult(final Collection<IResult> flatResults) {
-			final Set<Set<String>> rtInconsistent = new HashSet<>();
-			final Set<String> vacuous = new HashSet<>();
-			final Set<String> inconsistent = new HashSet<>();
+			final Set<String> stuckAt = new HashSet<>();
 
 			int results = 0;
 			for (final IResult result : flatResults) {
-				if (result instanceof RequirementInconsistentErrorResult) {
-					final Set<String> ids = ((RequirementInconsistentErrorResult) result).getIds();
-					inconsistent.addAll(ids);
-					results++;
-				} else if (result instanceof ReqCheckSuccessResult) {
+				if (result instanceof ReqCheckSuccessResult) {
 					results++;
 				} else if (result instanceof ReqCheckFailResult) {
 					final ReqCheck check = ((ReqCheckFailResult<?>) result).getCheck();
@@ -126,14 +116,8 @@ public class ReqCheckerRegressionTestSuite extends AbstractRegressionTestSuite {
 					assert check.getSpec().size() == 1;
 					final Spec spec = check.getSpec().iterator().next();
 					switch (spec) {
-					case RTINCONSISTENT:
-						rtInconsistent.add(ids);
-						break;
-					case VACUOUS:
-						vacuous.addAll(ids);
-						break;
-					case CONSISTENCY:
-						inconsistent.addAll(ids);
+					case STUCKAT:
+						stuckAt.addAll(ids);
 						break;
 					default:
 						throw new UnsupportedOperationException("Unsupported spec: " + spec);
@@ -144,9 +128,7 @@ public class ReqCheckerRegressionTestSuite extends AbstractRegressionTestSuite {
 				} else {
 					mIsIrregular = true;
 					mNoResults = 0;
-					mVacuous = Collections.emptySet();
-					mRtInconsistent = Collections.emptySet();
-					mInconsistent = Collections.emptySet();
+					mStuckAt = Collections.emptySet();
 					mOverallResultMessage = result.getLongDescription();
 					return;
 				}
@@ -154,21 +136,15 @@ public class ReqCheckerRegressionTestSuite extends AbstractRegressionTestSuite {
 
 			mIsIrregular = false;
 			mNoResults = results;
-			mVacuous = vacuous;
-			mRtInconsistent = rtInconsistent;
-			mInconsistent = inconsistent;
+			mStuckAt = stuckAt;
 			mOverallResultMessage = createOverallMessage();
 
 		}
 
 		public ReqCheckerResult merge(final ReqCheckerResult expectedResultForFile) {
-			final Set<Set<String>> newRtInconsistent =
-					DataStructureUtils.union(mRtInconsistent, expectedResultForFile.mRtInconsistent);
-			final Set<String> newVacuous = DataStructureUtils.union(mVacuous, expectedResultForFile.mVacuous);
-			final Set<String> newInconsistent =
-					DataStructureUtils.union(mInconsistent, expectedResultForFile.mInconsistent);
+			final Set<String> newStuckAt = DataStructureUtils.union(mStuckAt, expectedResultForFile.mStuckAt);
 			final int newNoResults = mNoResults + expectedResultForFile.mNoResults;
-			return new ReqCheckerResult(newRtInconsistent, newVacuous, newInconsistent, newNoResults);
+			return new ReqCheckerResult(newStuckAt, newNoResults);
 		}
 
 		public String generateOverallResultMessage() {
@@ -177,21 +153,8 @@ public class ReqCheckerRegressionTestSuite extends AbstractRegressionTestSuite {
 
 		private String createOverallMessage() {
 			final StringBuilder sb = new StringBuilder();
-			sb.append("rt-inconsistent:");
-			for (final Set<String> inc : mRtInconsistent) {
-				for (final String sinc : inc) {
-					sb.append(sinc).append('+');
-				}
-				sb.append(',');
-			}
-			sb.append(';');
-			sb.append("vacuous:");
-			for (final String vac : mVacuous) {
-				sb.append(vac).append(',');
-			}
-			sb.append(';');
-			sb.append("inconsistent:");
-			for (final String inc : mInconsistent) {
+			sb.append("stuck-at:");
+			for (final String inc : mStuckAt) {
 				sb.append(inc).append(',');
 			}
 			sb.append(';');
@@ -218,13 +181,7 @@ public class ReqCheckerRegressionTestSuite extends AbstractRegressionTestSuite {
 			if (mNoResults != -1 && actual.mNoResults != mNoResults) {
 				return false;
 			}
-			if (DataStructureUtils.isDifferent(actual.mInconsistent, mInconsistent)) {
-				return false;
-			}
-			if (DataStructureUtils.isDifferent(actual.mVacuous, mVacuous)) {
-				return false;
-			}
-			if (DataStructureUtils.isDifferent(actual.mRtInconsistent, mRtInconsistent)) {
+			if (DataStructureUtils.isDifferent(actual.mStuckAt, mStuckAt)) {
 				return false;
 			}
 			return true;
@@ -238,14 +195,8 @@ public class ReqCheckerRegressionTestSuite extends AbstractRegressionTestSuite {
 			if (mNoResults != -1 && actual.mNoResults != mNoResults) {
 				return String.format(msg, "Number of results", mNoResults, actual.mNoResults);
 			}
-			if (DataStructureUtils.isDifferent(actual.mInconsistent, mInconsistent)) {
-				return String.format(msg, "Inconsistent requirements", mInconsistent, actual.mInconsistent);
-			}
-			if (DataStructureUtils.isDifferent(actual.mVacuous, mVacuous)) {
-				return String.format(msg, "Vacuous requirements", mVacuous, actual.mVacuous);
-			}
-			if (DataStructureUtils.isDifferent(actual.mRtInconsistent, mRtInconsistent)) {
-				return String.format(msg, "Rt-inconsistent requirements", mRtInconsistent, actual.mRtInconsistent);
+			if (DataStructureUtils.isDifferent(actual.mStuckAt, mStuckAt)) {
+				return String.format(msg, "Stuck-At requirements", mStuckAt, actual.mStuckAt);
 			}
 			return "As expected";
 		}
@@ -379,9 +330,7 @@ public class ReqCheckerRegressionTestSuite extends AbstractRegressionTestSuite {
 		 */
 		private static ReqCheckerResult createExpectedResult(final String substring) {
 			final String[] splitted = substring.split(";");
-			final Set<Set<String>> rtInconsistent = new HashSet<>();
-			final Set<String> vacuous = new HashSet<>();
-			final Set<String> inconsistent = new HashSet<>();
+			final Set<String> stuckAt = new HashSet<>();
 			int results = -1;
 			final Function<String, String> trim = ReqCheckerExpectedResultFinder::trim;
 			for (final String entry : splitted) {
@@ -401,21 +350,8 @@ public class ReqCheckerRegressionTestSuite extends AbstractRegressionTestSuite {
 				}
 
 				switch (keyword) {
-				case "rt-inconsistent":
-					final String[] subsets = value.split(",");
-					for (final String subset : subsets) {
-						final Set<String> subsetSet = Arrays.stream(subset.split("\\+")).map(trim)
-								.filter(a -> !a.isEmpty()).collect(Collectors.toSet());
-						if (!subset.isEmpty()) {
-							rtInconsistent.add(subsetSet);
-						}
-					}
-					break;
-				case "vacuous":
-					Arrays.stream(value.split(",")).map(trim).filter(a -> !a.isEmpty()).forEach(vacuous::add);
-					break;
-				case "inconsistent":
-					Arrays.stream(value.split(",")).map(trim).filter(a -> !a.isEmpty()).forEach(inconsistent::add);
+				case "stuck-at":
+					Arrays.stream(value.split(",")).map(trim).filter(a -> !a.isEmpty()).forEach(stuckAt::add);
 					break;
 				case "results":
 					if (results != -1) {
@@ -436,7 +372,7 @@ public class ReqCheckerRegressionTestSuite extends AbstractRegressionTestSuite {
 					return null;
 				}
 			}
-			return new ReqCheckerResult(rtInconsistent, vacuous, inconsistent, results);
+			return new ReqCheckerResult(stuckAt, results);
 		}
 
 		private static String trim(final String s) {

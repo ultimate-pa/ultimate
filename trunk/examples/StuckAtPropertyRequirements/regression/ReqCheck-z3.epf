@@ -48,11 +48,11 @@ file_export_version=3.0
 
 
 \!/instance/de.uni_freiburg.informatik.ultimate.pea2boogie=
-/instance/de.uni_freiburg.informatik.ultimate.pea2boogie/Always\ use\ all\ invariants\ during\ rt-inconsistency\ checks=true
-/instance/de.uni_freiburg.informatik.ultimate.pea2boogie/Check\ consistency=true
-/instance/de.uni_freiburg.informatik.ultimate.pea2boogie/Check\ rt-inconsistency=true
-/instance/de.uni_freiburg.informatik.ultimate.pea2boogie/Check\ vacuity=true
-/instance/de.uni_freiburg.informatik.ultimate.pea2boogie/Check\ stuck-at=false
-/instance/de.uni_freiburg.informatik.ultimate.pea2boogie/Report\ trivial\ rt-consistency=true
+/instance/de.uni_freiburg.informatik.ultimate.pea2boogie/Always\ use\ all\ invariants\ during\ rt-inconsistency\ checks=false
+/instance/de.uni_freiburg.informatik.ultimate.pea2boogie/Check\ consistency=false
+/instance/de.uni_freiburg.informatik.ultimate.pea2boogie/Check\ rt-inconsistency=false
+/instance/de.uni_freiburg.informatik.ultimate.pea2boogie/Check\ vacuity=false
+/instance/de.uni_freiburg.informatik.ultimate.pea2boogie/Check\ stuck-at=true
+/instance/de.uni_freiburg.informatik.ultimate.pea2boogie/Report\ trivial\ rt-consistency=false
 /instance/de.uni_freiburg.informatik.ultimate.pea2boogie/Rt-inconsistency\ range=2
 @de.uni_freiburg.informatik.ultimate.pea2boogie=0.1.23
