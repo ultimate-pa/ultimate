@@ -29,6 +29,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -313,6 +314,14 @@ public class StandardFunctionHandler {
 		fill(map, "sem_trywait", die);
 		fill(map, "sem_unlink", die);
 		fill(map, "sem_wait", die);
+
+		// Float functions
+		fill(map, "sin",
+				(main, node, loc, name) -> handleSin(main, node, loc, name, new CPrimitive(CPrimitives.DOUBLE)));
+		fill(map, "sinf",
+				(main, node, loc, name) -> handleSin(main, node, loc, name, new CPrimitive(CPrimitives.FLOAT)));
+		fill(map, "sinl",
+				(main, node, loc, name) -> handleSin(main, node, loc, name, new CPrimitive(CPrimitives.LONGDOUBLE)));
 
 		fill(map, "printf", (main, node, loc, name) -> handlePrintF(main, node, loc));
 
@@ -938,6 +947,38 @@ public class StandardFunctionHandler {
 		checkFloatSupport(map, dieFloat);
 
 		return Collections.unmodifiableMap(map);
+	}
+
+	private Result handleSin(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+			final String name, final CPrimitive returnType) {
+		checkArguments(loc, 1, name, node.getArguments());
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		final ExpressionResult arg = mExprResultTransformer
+				.switchToRValue((ExpressionResult) main.dispatch(node.getArguments()[0]), loc, node);
+		builder.addAllExceptLrValue(arg);
+		final AuxVarInfo auxVar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, returnType, AUXVAR.RETURNED);
+		builder.addAuxVarWithDeclaration(auxVar);
+		final ExpressionResult nanResult = mExpressionTranslation.createNan(loc, returnType);
+		builder.addAllExceptLrValue(nanResult);
+		// TODO: Check for +-0 and return +-0 in that case
+		final RValue isFinite = mExpressionTranslation.constructOtherUnaryFloatOperation(loc,
+				FloatFunction.decode("isfinite"), (RValue) arg.getLrValue());
+		final Expression greaterMinusOne = mExpressionTranslation.constructBinaryComparisonFloatingPointExpression(loc,
+				IASTBinaryExpression.op_greaterEqual, auxVar.getExp(), returnType,
+				mExpressionTranslation.constructLiteralForFloatingType(loc, returnType, BigDecimal.ONE.negate()),
+				returnType);
+		final Expression smallerOne = mExpressionTranslation.constructBinaryComparisonFloatingPointExpression(loc,
+				IASTBinaryExpression.op_lessEqual, auxVar.getExp(), returnType,
+				mExpressionTranslation.constructLiteralForFloatingType(loc, returnType, BigDecimal.ONE), returnType);
+		final AssumeStatement assumeInRange =
+				new AssumeStatement(loc, ExpressionFactory.and(loc, List.of(greaterMinusOne, smallerOne)));
+		new Overapprox(name, loc).annotate(assumeInRange);
+		builder.addStatement(
+				StatementFactory.constructIfStatement(loc, isFinite.getValue(), new Statement[] { assumeInRange },
+						new Statement[] { StatementFactory.constructSingleAssignmentStatement(loc, auxVar.getLhs(),
+								nanResult.getLrValue().getValue()) }));
+		builder.setLrValue(new RValue(auxVar.getExp(), returnType));
+		return builder.build();
 	}
 
 	private static void checkFloatSupport(final Map<String, IFunctionModelHandler> map,

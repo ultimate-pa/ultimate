@@ -225,11 +225,6 @@ public class FloatSupportInUltimate {
 
 	private final static Map<String, CPrimitives> OVERAPPROXIMATED_UNARY_FUNCTIONS = new HashMap<>();
 	static {
-		// https://en.cppreference.com/w/c/numeric/math/sin
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("sin", CPrimitives.DOUBLE);
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("sinf", CPrimitives.FLOAT);
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("sinl", CPrimitives.LONGDOUBLE);
-
 		// https://en.cppreference.com/w/c/numeric/math/exp
 		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("exp", CPrimitives.DOUBLE);
 		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("expf", CPrimitives.FLOAT);
