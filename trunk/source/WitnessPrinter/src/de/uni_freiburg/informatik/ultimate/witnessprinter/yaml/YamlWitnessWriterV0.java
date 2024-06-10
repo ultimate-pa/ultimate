@@ -53,6 +53,9 @@ public class YamlWitnessWriterV0 extends YamlWitnessWriter {
 
 	@Override
 	public String toString(final Witness witness) {
+		if (!witness.isCorrectnessWitness()) {
+			throw new UnsupportedOperationException("Violation witnesses are not supported in version 0.1");
+		}
 		// Ignore function contracts in the witness
 		return formatYaml(witness.getEntries().stream().filter(x -> !(x instanceof FunctionContract)).map(this::toMap)
 				.collect(Collectors.toList()));

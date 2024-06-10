@@ -28,8 +28,9 @@
 package de.uni_freiburg.informatik.ultimate.witnessprinter.yaml;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.UltimateCore;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
@@ -45,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.FormatVersion;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Location;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Segment;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.ViolationSequence;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.WaypointAssumption;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.WaypointBranching;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.WaypointFunctionEnter;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.WaypointFunctionReturn;
@@ -59,15 +61,13 @@ import de.uni_freiburg.informatik.ultimate.witnessprinter.preferences.Preference
  * @author Helen Meyer (helen.anna.meyer@gmail.com)
  */
 public class YamlViolationWitnessGenerator<TE, E> {
-	private static final String[] ACSL_SUBSTRING = new String[] { "\\old", "\\result", "exists", "forall" };
-
-	private final IUltimateServiceProvider mServices;
 	private final IPreferenceProvider mPreferences;
 	private final IBacktranslationValueProvider<TE, E> mStringProvider;
 	private final IProgramExecution<TE, E> mExecution;
 	private final ILogger mLogger;
-	private final String mFilename;
+	private final YamlWitnessWriter mWriter;
 	private final ProgramStatePrinter<TE, E> mProgramStatePrinter;
+	private final Map<String, String> mProgramHashes;
 
 	public YamlViolationWitnessGenerator(final IProgramExecution<TE, E> execution, final ILogger logger,
 			final IUltimateServiceProvider services) {
@@ -75,12 +75,8 @@ public class YamlViolationWitnessGenerator<TE, E> {
 		mProgramStatePrinter = new ProgramStatePrinter<>(mStringProvider);
 		mLogger = logger;
 		mExecution = execution;
-		mServices = services;
 		mPreferences = PreferenceInitializer.getPreferences(services);
-		mFilename = mStringProvider.getFileNameFromStep(mExecution.getTraceElement(0).getStep());
-	}
-
-	private Witness getWitness() {
+		final String filename = mStringProvider.getFileNameFromStep(mExecution.getTraceElement(0).getStep());
 		final String producer = mPreferences.getString(PreferenceInitializer.LABEL_GRAPH_DATA_PRODUCER);
 		final String hash = mPreferences.getString(PreferenceInitializer.LABEL_GRAPH_DATA_PROGRAMHASH);
 		final String spec = mPreferences.getString(PreferenceInitializer.LABEL_GRAPH_DATA_SPECIFICATION);
@@ -88,25 +84,30 @@ public class YamlViolationWitnessGenerator<TE, E> {
 		final FormatVersion formatVersion =
 				FormatVersion.fromString(mPreferences.getString(PreferenceInitializer.LABEL_YAML_FORMAT_VERSION));
 		final String version = new UltimateCore().getUltimateVersionString();
-		final String filename = mStringProvider.getFileNameFromStep(mExecution.getTraceElement(0).getStep());
+		mProgramHashes = Map.of(filename, hash);
+		mWriter = YamlWitnessWriter.construct(formatVersion,
+				new MetadataProvider(formatVersion, producer, version, mProgramHashes, spec, arch, "C"));
+	}
 
+	private Witness getWitness() {
 		final List<Segment> content = new ArrayList<>();
-		// final List<Waypoint> currentAvoidWP = null;
-		// String valuation = getValuesAsString(execution.getInitialProgramState());
-
-		// iterate over trace
 		for (int i = 0; i < mExecution.getLength(); i++) {
 			final AtomicTraceElement<TE> currentATE = mExecution.getTraceElement(i);
 			final TE currentStep = currentATE.getStep();
 			final ProgramState<E> currentState = mExecution.getProgramState(i);
 			final int startLine = mStringProvider.getStartLineNumberFromStep(currentStep);
-			// TODO: Maybe we need some other column here (depending on the entry)?
+			// TODO: change column in Location to startColumn once we can calculate the right column
 			final int startColumn = mStringProvider.getStartColumnNumberFromStep(currentStep);
 			final String function = mStringProvider.getFunctionFromStep(currentStep);
-			// TODO: change "" to function ?
-			final Location currentLocation = new Location(filename, hash, startLine, startColumn, function);
-			// TODO: add WaypointAssumption
-			// Use mProgramStatePrinter.asFormulaString(state,ProgramStatePrinter::checkForAcslAndPointers)
+			final String filename = mStringProvider.getFileNameFromStep(currentStep);
+			final Location currentLocation =
+					new Location(filename, mProgramHashes.get(filename), startLine, null, function);
+			if (haveVariablesChanged(mExecution, i)) {
+				final String assumption =
+						mProgramStatePrinter.stateAsExpression(currentState, ProgramStatePrinter::isValidCVariable);
+				final Constraint constraint = new Constraint(assumption, "c_expression");
+				content.add(new Segment(List.of(), new WaypointAssumption(constraint, currentLocation)));
+			}
 			if (i == mExecution.getLength() - 1) {
 				content.add(new Segment(List.of(), new WaypointTarget(currentLocation)));
 			}
@@ -125,12 +126,9 @@ public class YamlViolationWitnessGenerator<TE, E> {
 				final Constraint constraint = getReturnConstraint(currentState);
 				content.add(new Segment(List.of(), new WaypointFunctionReturn(constraint, currentLocation)));
 			}
-
 		}
-
-		final ViolationSequence violationSequence = new ViolationSequence(content);
-
-		return new Witness(List.of(violationSequence));
+		mLogger.info("Generated YAML witness of length %d.", content.size());
+		return new Witness(List.of(new ViolationSequence(content)));
 	}
 
 	private Constraint getReturnConstraint(final ProgramState<E> state) {
@@ -138,26 +136,32 @@ public class YamlViolationWitnessGenerator<TE, E> {
 		if (result == null) {
 			return null;
 		}
+		// TODO: check if result is an acsl_expression
 		return new Constraint(result, "acsl_expression");
 	}
 
+	// checks if the values of the variables have changed compared to the previous State
+	private Boolean haveVariablesChanged(final IProgramExecution<TE, E> execution, final int i) {
+		// besser mit string matching?
+		if (i == 0) {
+			return false;
+		}
+		final ProgramState<E> oldState = execution.getProgramState(i - 1);
+		final ProgramState<E> newState = execution.getProgramState(i);
+		if (oldState == null || newState == null) {
+			return false;
+		}
+
+		final Set<E> newVariables = newState.getVariables();
+		for (final E Var : newVariables) {
+			if (newState.getValues(Var) != oldState.getValues(Var)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	public String makeYamlString() {
-		// TODO: Implement
-		return null;
-	}
-
-	private static String getExpressionFormat(final FormatVersion formatVersion, final String... expressions) {
-		if (formatVersion.getMajor() == 0) {
-			return "C";
-		}
-		if (formatVersion.getMajor() < 3
-				|| !Arrays.stream(expressions).anyMatch(YamlViolationWitnessGenerator::containsACSL)) {
-			return "c_expression";
-		}
-		return "acsl_expression";
-	}
-
-	private static boolean containsACSL(final String expression) {
-		return Arrays.stream(ACSL_SUBSTRING).anyMatch(expression::contains);
+		return mWriter.toString(getWitness());
 	}
 }

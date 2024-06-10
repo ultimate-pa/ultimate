@@ -30,7 +30,7 @@ package de.uni_freiburg.informatik.ultimate.witnessparser.yaml;
 import java.util.List;
 
 /**
- * entry-based violation Witness / Witness of entry_type "violation_sequence"
+ * Witness Entry of Type "violation_sequence". Content is a List of Segments
  *
  * @author Helen Meyer (helen.anna.meyer@gmail.com)
  */
