@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -14,7 +15,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
-import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
@@ -24,10 +24,11 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.RangeDecision;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.DeclarationPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.DeclarationPattern.VariableCategory;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.PeaViolablePhases;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.ReqSymboltableBuilder;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
-import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateServiceProviderMock;
 
 /**
  * Test Class for Nonterminal Violable Phase generation.
@@ -90,10 +91,10 @@ public class NvpTest {
 		 * 		and is succeeded by "S", then "T" previously held
 		 * 
 		 * Here, the NVPs are [12], [02, 012], and [0]
-		
+		 */
 		
 		PhaseEventAutomata PrecedenceChain12Globally = createPrecedenceChain12Globally();
-		IReqSymbolTable symbolTablePrecedenceChain12Globally = createSymbolTableDurationBoundUGlobally();
+		IReqSymbolTable symbolTablePrecedenceChain12Globally = createSymbolTablePrecedenceChain12Globally();
 		final List<Declaration> declsPrecedenceChain12Globally = new ArrayList<>();
 		declsPrecedenceChain12Globally.addAll(symbolTablePrecedenceChain12Globally.getDeclarations());
 		BoogieDeclarations boogieDeclarationsPrecedenceChain12Globally = 
@@ -102,9 +103,9 @@ public class NvpTest {
 		// get NVPs
 		PeaViolablePhases PrecedenceChain12GloballyViolablePhases = 
 				new PeaViolablePhases(mLogger, mServices, mPeaResultUtil, 
-						boogieDeclarationsDurationBoundUGlobally, symbolTableDurationBoundUGlobally, 
-						DurationBoundUGlobally);
-		List<List<Phase>> nvpResultPrecedenceChain12Globally = DurationBoundUGloballyViolablePhases.nonterminalPeaViolablePhases();
+						boogieDeclarationsPrecedenceChain12Globally, symbolTablePrecedenceChain12Globally, 
+						PrecedenceChain12Globally);
+		List<List<Phase>> nvpResultPrecedenceChain12Globally = PrecedenceChain12GloballyViolablePhases.nonterminalPeaViolablePhases();
 		List<List<String>> nvpResultAsStringsPrecedenceChain12Globally = new ArrayList<List<String>>();
 		// get results as strings
 		for (List<Phase> nvp : nvpResultPrecedenceChain12Globally) {
@@ -115,16 +116,16 @@ public class NvpTest {
 			nvpResultAsStringsPrecedenceChain12Globally.add(nvpAsStringsPrecedenceChain12Globally);
 		}
 		mNvpResults.add(nvpResultAsStringsPrecedenceChain12Globally);
-		*/
+
 
 		/*
 		 * Example which contains non-typical pseudo last phases (non singular seeping phase)
 		 * Precedence After: After "P", it is always the case that if "R" holds, then "S" previously held
 		 * 
 		 * Here, the NVPs are [0, 01, 012] and [01, 02, 012]
-		 
+		 */
 		PhaseEventAutomata PrecedenceAfter = createPrecedenceAfter();
-		IReqSymbolTable symbolTablePrecedenceAfter = createSymbolTableDurationBoundUGlobally();
+		IReqSymbolTable symbolTablePrecedenceAfter = createSymbolTablePrecedenceAfter();
 		final List<Declaration> declsPrecedenceAfter = new ArrayList<>();
 		declsPrecedenceAfter.addAll(symbolTablePrecedenceAfter.getDeclarations());
 		BoogieDeclarations boogieDeclarationsPrecedenceAfter = 
@@ -146,7 +147,37 @@ public class NvpTest {
 			nvpResultAsStringsPrecedenceAfter.add(nvpAsStringsPrecedenceAfter);
 		}
 		mNvpResults.add(nvpResultAsStringsPrecedenceAfter);
-	*/
+		
+		/*
+		 * Example of a non-HanforPL PEA with multiple Counter Traces and therefore multiple true last phases.
+		 * Example can be seen in my thesis.
+		 * 
+		 * Here, the NVPs are [0] and [1]
+		 */
+		PhaseEventAutomata MultipleCounterTraces = createMultipleCounterTraces();
+		IReqSymbolTable symbolTableMultipleCounterTraces = createSymbolTableMultipleCounterTraces();
+		final List<Declaration> declsMultipleCounterTraces = new ArrayList<>();
+		declsMultipleCounterTraces.addAll(symbolTableMultipleCounterTraces.getDeclarations());
+		BoogieDeclarations boogieDeclarationsMultipleCounterTraces = 
+				new BoogieDeclarations(declsMultipleCounterTraces, mLogger);
+		
+		// get NVPs
+		PeaViolablePhases MultipleCounterTracesViolablePhases = 
+				new PeaViolablePhases(mLogger, mServices, mPeaResultUtil, 
+						boogieDeclarationsMultipleCounterTraces, symbolTableMultipleCounterTraces, 
+						MultipleCounterTraces);
+		List<List<Phase>> nvpResultMultipleCounterTraces = MultipleCounterTracesViolablePhases.nonterminalPeaViolablePhases();
+		List<List<String>> nvpResultAsStringsMultipleCounterTraces = new ArrayList<List<String>>();
+		// get results as strings
+		for (List<Phase> nvp : nvpResultMultipleCounterTraces) {
+			List<String> nvpAsStringsMultipleCounterTraces = new ArrayList<String>();
+			for (Phase p : nvp) {
+				nvpAsStringsMultipleCounterTraces.add(p.toString());
+			}
+			nvpResultAsStringsMultipleCounterTraces.add(nvpAsStringsMultipleCounterTraces);
+		}
+		mNvpResults.add(nvpResultAsStringsMultipleCounterTraces);
+		
 	}
 	
 	// DurationBoundUGlobally PEA generation taken from Lena Funk's PEA complement test file
@@ -179,13 +210,15 @@ public class NvpTest {
 	public IReqSymbolTable createSymbolTableDurationBoundUGlobally() {
 		ReqSymboltableBuilder tableBuilderDurationBoundUGlobally = 
 				new ReqSymboltableBuilder(mLogger); 
+		DeclarationPattern initPatternR = new DeclarationPattern("R", "bool", VariableCategory.IN);
+		tableBuilderDurationBoundUGlobally.addInitPattern(initPatternR);
 		PhaseEventAutomata DurationBoundUGlobally = createDurationBoundUGlobally();
 		tableBuilderDurationBoundUGlobally.addPea(null, DurationBoundUGlobally);
 		IReqSymbolTable symbolTableDurationBoundUGlobally = 
 				tableBuilderDurationBoundUGlobally.constructSymbolTable();
 		return symbolTableDurationBoundUGlobally;
 	}
-	/*
+	
 	public PhaseEventAutomata createPrecedenceAfter() {
 		// Define variables
 		Map<String, String> variables = new HashMap<String, String>();
@@ -198,6 +231,9 @@ public class NvpTest {
 		CDD notR = r.negate();
 		CDD notS = s.negate();
 		CDD notP = p.negate();
+		CDD rPrime = r.prime(new HashSet<>(Arrays.asList("R")));
+		CDD sPrime = s.prime(new HashSet<>(Arrays.asList("S")));
+		CDD notRprime = rPrime.negate();
 		ArrayList<String> clocks = new ArrayList<String>();
 		
 		// State invariants
@@ -212,14 +248,14 @@ public class NvpTest {
 		// Transition labels
 		CDD from0to01 = CDD.TRUE;
 		CDD from0to012 = CDD.TRUE;
-		CDD from01to0 = s;
+		CDD from01to0 = sPrime;
 		CDD from01to02 = CDD.TRUE;
 		CDD from01to012 = CDD.TRUE;
-		CDD from02to0 = notR.and(s);
-		CDD from02to01 = notR;
+		CDD from02to0 = notRprime.and(sPrime);
+		CDD from02to01 = notRprime;
 		CDD from02to012 = CDD.TRUE;
-		CDD from012to0 = notR.and(s);
-		CDD from012to01 = notR;
+		CDD from012to0 = notRprime.and(sPrime);
+		CDD from012to01 = notRprime;
 		CDD from012to02 = CDD.TRUE;
 
 		final Phase[] phases = new Phase[] { new Phase("0", stateInv0, CDD.TRUE), new Phase("01", stateInv01, clkInv) ,
@@ -257,7 +293,21 @@ public class NvpTest {
 				initPhases, clocks, variables, Collections.emptyList());
 	}
 	
-	
+	public IReqSymbolTable createSymbolTablePrecedenceAfter() {
+		ReqSymboltableBuilder tableBuilderPrecedenceAfter = 
+				new ReqSymboltableBuilder(mLogger); 
+		DeclarationPattern initPatternR = new DeclarationPattern("R", "bool", VariableCategory.IN);
+		tableBuilderPrecedenceAfter.addInitPattern(initPatternR);
+		DeclarationPattern initPatternS = new DeclarationPattern("S", "bool", VariableCategory.IN);
+		tableBuilderPrecedenceAfter.addInitPattern(initPatternS);
+		DeclarationPattern initPatternP = new DeclarationPattern("P", "bool", VariableCategory.IN);
+		tableBuilderPrecedenceAfter.addInitPattern(initPatternP);
+		PhaseEventAutomata PrecedenceAfter = createPrecedenceAfter();
+		tableBuilderPrecedenceAfter.addPea(null, PrecedenceAfter);
+		IReqSymbolTable symbolTablePrecedenceAfter = 
+				tableBuilderPrecedenceAfter.constructSymbolTable();
+		return symbolTablePrecedenceAfter;
+	}
 	
 	public PhaseEventAutomata createPrecedenceChain12Globally() {
 		// Define variables
@@ -271,6 +321,9 @@ public class NvpTest {
 		CDD notR = r.negate();
 		CDD notS = s.negate();
 		CDD notT = t.negate();
+		CDD rPrime = r.prime(new HashSet<>(Arrays.asList("R")));
+		CDD tPrime = t.prime(new HashSet<>(Arrays.asList("T")));
+		CDD notRprime = rPrime.negate();
 		ArrayList<String> clocks = new ArrayList<String>();
 		
 		// State invariants
@@ -287,16 +340,16 @@ public class NvpTest {
 		
 		// Transition labels
 		CDD fromInittoTrue = CDD.TRUE;
-		CDD from0toTrue = notR.and(t);
-		CDD from0to12 = t;
+		CDD from0toTrue = notRprime.and(tPrime);
+		CDD from0to12 = tPrime;
 		CDD from0to012 = CDD.TRUE;
-		CDD from012to2 = notR.and(t);
+		CDD from012to2 = notRprime.and(tPrime);
 		CDD from012to02 = CDD.TRUE;
-		CDD from012to12 = t;
+		CDD from012to12 = tPrime;
 		CDD from02to012 = CDD.TRUE;
-		CDD from02to12 = t;
-		CDD from02to2 = notR.and(t);
-		CDD from12to2 = notR;
+		CDD from02to12 = tPrime;
+		CDD from02to2 = notRprime.and(tPrime);
+		CDD from12to2 = notRprime;
 
 		final Phase[] phases = new Phase[] { new Phase("init", stateInvInit, clkInv), new Phase("true", stateInv, CDD.TRUE), 
 				new Phase("0", stateInv0, clkInv), new Phase("012", stateInv012, clkInv), new Phase("02", stateInv02, clkInv), 
@@ -310,9 +363,9 @@ public class NvpTest {
 		phases[1].addTransition(phases[1], CDD.TRUE, noReset);
 		phases[2].addTransition(phases[2], CDD.TRUE, noReset);
 		phases[3].addTransition(phases[3], CDD.TRUE, noReset);
-		phases[4].addTransition(phases[3], CDD.TRUE, noReset);
-		phases[5].addTransition(phases[3], CDD.TRUE, noReset);
-		phases[6].addTransition(phases[3], CDD.TRUE, noReset);
+		phases[4].addTransition(phases[4], CDD.TRUE, noReset);
+		phases[5].addTransition(phases[5], CDD.TRUE, noReset);
+		phases[6].addTransition(phases[6], CDD.TRUE, noReset);
 
 
 		// outgoing Phase init
@@ -339,7 +392,80 @@ public class NvpTest {
 		return new PhaseEventAutomata("PrecedenceChain12Globally", phases,
 				initPhases, clocks, variables, Collections.emptyList());
 	}
-	*/
+	
+	public IReqSymbolTable createSymbolTablePrecedenceChain12Globally() {
+		ReqSymboltableBuilder tableBuilderPrecedenceChain12Globally = 
+				new ReqSymboltableBuilder(mLogger); 
+		DeclarationPattern initPatternR = new DeclarationPattern("R", "bool", VariableCategory.IN);
+		tableBuilderPrecedenceChain12Globally.addInitPattern(initPatternR);
+		DeclarationPattern initPatternS = new DeclarationPattern("S", "bool", VariableCategory.IN);
+		tableBuilderPrecedenceChain12Globally.addInitPattern(initPatternS);
+		DeclarationPattern initPatternT = new DeclarationPattern("T", "bool", VariableCategory.IN);
+		tableBuilderPrecedenceChain12Globally.addInitPattern(initPatternT);
+		PhaseEventAutomata PrecedenceChain12Globally = createPrecedenceChain12Globally();
+		tableBuilderPrecedenceChain12Globally.addPea(null, PrecedenceChain12Globally);
+		IReqSymbolTable symbolTablePrecedenceChain12Globally = 
+				tableBuilderPrecedenceChain12Globally.constructSymbolTable();
+		return symbolTablePrecedenceChain12Globally;
+	}
+	
+	public PhaseEventAutomata createMultipleCounterTraces() {
+		// Define variables
+		Map<String, String> variables = new HashMap<String, String>();
+		CDD r = BooleanDecision.create("R");
+		CDD s = BooleanDecision.create("S");
+		variables.put("R", "boolean");
+		variables.put("S", "boolean");
+		CDD notR = r.negate();
+		CDD notS = s.negate();
+		ArrayList<String> clocks = new ArrayList<String>();
+		
+		// State invariants
+		CDD stateInv0 = r.and(s);
+		CDD stateInv1 = r.and(notS);
+		CDD stateInv2 = notR.and(s);
+		
+		// Clock invariants
+		CDD clkInv = CDD.TRUE;
+		
+		// Transition labels
+		CDD from0to1 = CDD.TRUE;
+		CDD from1to2 = CDD.TRUE;
+
+		final Phase[] phases = new Phase[] { new Phase("0", stateInv0, clkInv), new Phase("1", stateInv1, CDD.TRUE), 
+				new Phase("2", stateInv2, clkInv)};
+		final Phase[] initPhases = {phases[0]};
+
+		final String[] noReset = new String[0];
+
+		// loop transitions
+		phases[0].addTransition(phases[0], CDD.TRUE, noReset);
+		phases[1].addTransition(phases[1], CDD.TRUE, noReset);
+		phases[2].addTransition(phases[2], CDD.TRUE, noReset);
+		
+		// outgoing Phase 0
+		phases[0].addTransition(phases[1], from0to1, noReset);
+		
+		// outgoing Phase 1
+		phases[1].addTransition(phases[2], from1to2, noReset);
+
+		return new PhaseEventAutomata("MultipleCounterTraces", phases,
+				initPhases, clocks, variables, Collections.emptyList());
+	}
+	
+	public IReqSymbolTable createSymbolTableMultipleCounterTraces() {
+		ReqSymboltableBuilder tableBuilderMultipleCounterTraces = 
+				new ReqSymboltableBuilder(mLogger); 
+		DeclarationPattern initPatternR = new DeclarationPattern("R", "bool", VariableCategory.IN);
+		tableBuilderMultipleCounterTraces.addInitPattern(initPatternR);
+		DeclarationPattern initPatternS = new DeclarationPattern("S", "bool", VariableCategory.IN);
+		tableBuilderMultipleCounterTraces.addInitPattern(initPatternS);
+		PhaseEventAutomata MultipleCounterTraces = createMultipleCounterTraces();
+		tableBuilderMultipleCounterTraces.addPea(null, MultipleCounterTraces);
+		IReqSymbolTable symbolTableMultipleCounterTraces = 
+				tableBuilderMultipleCounterTraces.constructSymbolTable();
+		return symbolTableMultipleCounterTraces;
+	}
 	
 	/**
 	 * Test NVPs of DurationBoundUGlobally
@@ -352,22 +478,29 @@ public class NvpTest {
 	
 	/**
 	 * Test NVPs of PrecedenceChain12Globally
-	 
+	 */
 	@Test
 	public void testNVPsOfPrecedenceChain12Globally() {
 		List<List<String>> PrecedenceChain12GloballyNvps = new ArrayList<>(
-				Arrays.asList(Arrays.asList("02"), Arrays.asList("02", "012"), Arrays.asList("0")));
+				Arrays.asList(Arrays.asList("12"), Arrays.asList("02", "012"), Arrays.asList("0")));
 		assertEquals(mNvpResults.get(1), PrecedenceChain12GloballyNvps);
 	}
-	*/
 	
 	/**
 	 * Test NVPs of PrecedenceAfter
-	 
+	 */
 	@Test
 	public void testNVPsOfPrecedenceAfter() {
-		List<List<String>> PrecedenceAfterNvps = new ArrayList<>(Arrays.asList(Arrays.asList("0", "01", "012"), Arrays.asList("01", "02", "012")));
+		List<List<String>> PrecedenceAfterNvps = new ArrayList<>(Arrays.asList(Arrays.asList("012", "01", "0"), Arrays.asList("012", "02", "01")));
 		assertEquals(mNvpResults.get(2), PrecedenceAfterNvps);
 	}
-	*/
+	
+	/**
+	 * Test NVPs of MultipleCounterTraces
+	 */
+	@Test
+	public void testNVPsOfMultipleCounterTraces() {
+		List<List<String>> MultipleCounterTracesNvps = new ArrayList<>(Arrays.asList(Arrays.asList("1"), Arrays.asList("0")));
+		assertEquals(mNvpResults.get(3), MultipleCounterTracesNvps);
+	}
 }

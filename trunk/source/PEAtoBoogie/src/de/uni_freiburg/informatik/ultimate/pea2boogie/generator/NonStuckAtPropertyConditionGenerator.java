@@ -117,12 +117,13 @@ public class NonStuckAtPropertyConditionGenerator {
 		Map<PhaseEventAutomata, List<List<Phase>>> nvps = getNonterminalViolablePhases();
 		for (PhaseEventAutomata pea : nvps.keySet()) {
 			Map<Phase, Integer> phaseIndices = getPhaseIndices(pea);
-			nvpPhasesPreviousLocationChecks = new ArrayList<>();
-			nvpPhasesCurrentLocationChecks = new ArrayList<>();
+			
 			// nonNvpNextPhases = new ArrayList<>();
 			result.put(pea, new ArrayList<Expression>());
 
 			for (List<Phase> nvp : nvps.get(pea)) {
+				nvpPhasesPreviousLocationChecks = new ArrayList<>();
+				nvpPhasesCurrentLocationChecks = new ArrayList<>();
 				for (Phase p : nvp) {
 					nvpPhasesPreviousLocationChecks.add(SmtUtils.binaryEquality(mScript,
 							mCddToSmt.getTermVarTerm(mReqSymboltable.getHistoryVarId(mReqSymboltable.getPcName(pea))),
