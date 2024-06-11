@@ -26,11 +26,10 @@ public class WitnessSetEntry implements IMapSerializable {
 
 	@Override
 	public Map<String, Object> toMap() {
-		final LinkedHashMap<String, Object> result = new LinkedHashMap<>();
-		result.put("type", mType);
-		result.put("location", mLocation.toMap());
-		result.putAll(mOtherValues);
-		return result;
+		final LinkedHashMap<String, Object> content = new LinkedHashMap<>();
+		content.put("location", mLocation.toMap());
+		content.putAll(mOtherValues);
+		return Map.of(mType, content);
 	}
 
 }

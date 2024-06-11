@@ -101,21 +101,12 @@ public class YamlWitnessParser {
 			return Stream.of(new LoopInvariant(metadata, location, loopInvariant));
 		}
 		case "invariant_set": {
-			if (formatVersion.getMajor() != 2) {
-				throw new UnsupportedOperationException("invariant_set is only allowed in format version 2.x");
+			if (formatVersion.getMajor() < 2) {
+				throw new UnsupportedOperationException("invariant_set is only allowed in format version >= 2.x");
 			}
-			// TODO: This just transforms the "new" format to the "old" format, maybe change this in the future
 			final List<Map<String, Map<String, Object>>> content =
 					(List<Map<String, Map<String, Object>>>) entry.get("content");
-			return content.stream().map(x -> parseAsSingleEntry(x.get("invariant"), metadata));
-		}
-		case "entry_set": {
-			if (formatVersion.getMajor() < 3) {
-				throw new UnsupportedOperationException("entry_set is only allowed in format version >=3.x");
-			}
-			// TODO: This just transforms the "new" format to the "old" format, maybe change this in the future
-			final List<Map<String, Object>> content = (List<Map<String, Object>>) entry.get("content");
-			return content.stream().map(x -> parseAsSingleEntry(x, metadata));
+			return content.stream().map(x -> parseInvariantSetEntry(x, metadata));
 		}
 		default:
 			throw new UnsupportedOperationException("Unknown entry type " + entry.get("entry_type"));
@@ -123,29 +114,31 @@ public class YamlWitnessParser {
 	}
 
 	@SuppressWarnings("unchecked")
-	private static WitnessEntry parseAsSingleEntry(final Map<String, Object> setEntry, final Metadata metadata) {
+	private static WitnessEntry parseInvariantSetEntry(final Map<String, Map<String, Object>> entry,
+			final Metadata metadata) {
+		if (entry.size() != 1) {
+			throw new UnsupportedOperationException("Invalid entry in content " + entry);
+		}
+		final var map = entry.values().iterator().next();
 		// Create new metadata with a fresh UUID (because we rely on it as a unique identifier)
 		final Metadata newMetadata = new Metadata(metadata.getFormatVersion(), UUID.randomUUID(),
 				metadata.getCreationTime(), metadata.getProducer(), metadata.getTask());
-		final Location location = parseLocation((Map<String, Object>) setEntry.get("location"));
-		final String format = (String) setEntry.get("format");
-		switch ((String) setEntry.get("type")) {
+		final Location location = parseLocation((Map<String, Object>) map.get("location"));
+		final String format = (String) map.get("format");
+		switch ((String) map.get("type")) {
 		case LocationInvariant.NAME: {
-			final Invariant invariant = new Invariant((String) setEntry.get("value"), "assertion", format);
+			final Invariant invariant = new Invariant((String) map.get("value"), "assertion", format);
 			return new LocationInvariant(newMetadata, location, invariant);
 		}
 		case LoopInvariant.NAME: {
-			final Invariant invariant = new Invariant((String) setEntry.get("value"), "assertion", format);
+			final Invariant invariant = new Invariant((String) map.get("value"), "assertion", format);
 			return new LoopInvariant(newMetadata, location, invariant);
 		}
 		case FunctionContract.NAME:
-			if (metadata.getFormatVersion().getMajor() < 3) {
-				throw new UnsupportedOperationException("Function contracts are only allowed in format version >=3.x");
-			}
-			return new FunctionContract(newMetadata, location, (List<String>) setEntry.get("requires"),
-					(List<String>) setEntry.get("ensures"), format);
+			return new FunctionContract(newMetadata, location, (String) map.get("requires"),
+					(String) map.get("ensures"), format);
 		default:
-			throw new UnsupportedOperationException("Unknown entry type " + setEntry.get("type"));
+			throw new UnsupportedOperationException("Invalid entry in content" + entry);
 		}
 	}
 

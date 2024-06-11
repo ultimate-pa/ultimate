@@ -787,7 +787,7 @@ public class MainDispatcher implements IDispatcher {
 		if (mWitnessEntries == null) {
 			return List.of();
 		}
-		return mWitnessEntries.getFunctionContracts(node).stream().flatMap(x -> x.transformToAcsl())
+		return mWitnessEntries.getFunctionContracts(node).stream().flatMap(x -> x.getAcslContractClauses().stream())
 				.collect(Collectors.toList());
 	}
 }

@@ -5,10 +5,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.UltimateCore;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation;
@@ -68,7 +68,7 @@ public class YamlCorrectnessWitnessGenerator {
 		// e.g. by line number and/or entry type?
 		final List<WitnessEntry> entries = new ArrayList<>();
 		entries.addAll(extractLoopInvariants(allProgramPoints, metadataSupplier, hash, formatVersion));
-		if (formatVersion.getMajor() >= 3) {
+		if (areACSLAndFunctionContractsAllowed(formatVersion)) {
 			entries.addAll(extractFunctionContracts(allProgramPoints, metadataSupplier, hash, formatVersion));
 		}
 		final Witness witness = new Witness(entries);
@@ -76,6 +76,10 @@ public class YamlCorrectnessWitnessGenerator {
 			return witness;
 		}
 		return new Witness(List.of(witness.toInvariantSet(metadataSupplier)));
+	}
+
+	private static boolean areACSLAndFunctionContractsAllowed(final FormatVersion formatVersion) {
+		return formatVersion.compareTo(new FormatVersion(2, 1)) >= 0;
 	}
 
 	private List<WitnessEntry> extractLoopInvariants(final List<IcfgLocation> programPoints,
@@ -116,13 +120,12 @@ public class YamlCorrectnessWitnessGenerator {
 			if (contract == null) {
 				continue;
 			}
-			final List<String> requires = contract.getRequires();
-			final List<String> ensures = contract.getEnsures();
+			final String requires = contract.getRequires();
+			final String ensures = contract.getEnsures();
 			final Location witnessLocation = new Location(loc.getFileName(), hash, loc.getStartLine(),
 					loc.getStartColumn() < 0 ? null : loc.getStartColumn(), loc.getFunction());
 			result.add(new FunctionContract(metadataSupplier.get(), witnessLocation, requires, ensures,
-					getExpressionFormat(formatVersion,
-							Stream.concat(requires.stream(), ensures.stream()).toArray(String[]::new))));
+					getExpressionFormat(formatVersion, requires, ensures)));
 		}
 		return result;
 	}
@@ -135,8 +138,8 @@ public class YamlCorrectnessWitnessGenerator {
 		if (formatVersion.getMajor() == 0) {
 			return "C";
 		}
-		if (formatVersion.getMajor() < 3
-				|| !Arrays.stream(expressions).anyMatch(YamlCorrectnessWitnessGenerator::containsACSL)) {
+		if (!areACSLAndFunctionContractsAllowed(formatVersion) || Arrays.stream(expressions).filter(Objects::nonNull)
+				.noneMatch(YamlCorrectnessWitnessGenerator::containsACSL)) {
 			return "c_expression";
 		}
 		return "acsl_expression";
@@ -151,7 +154,7 @@ public class YamlCorrectnessWitnessGenerator {
 			return null;
 		}
 		final String label = invariant.getInvariant();
-		if (formatVersion.getMajor() < 3 && containsACSL(label)) {
+		if (!areACSLAndFunctionContractsAllowed(formatVersion) && containsACSL(label)) {
 			mLogger.warn("Not writing invariant because ACSL is forbidden: " + label);
 			return null;
 		}
