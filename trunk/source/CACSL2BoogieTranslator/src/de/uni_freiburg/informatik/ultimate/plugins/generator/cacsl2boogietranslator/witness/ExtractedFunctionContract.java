@@ -27,8 +27,8 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Stream;
 
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 
@@ -46,12 +46,11 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
  *
  */
 public class ExtractedFunctionContract {
-	private final List<String> mRequires;
-	private final List<String> mEnsures;
+	private final String mRequires;
+	private final String mEnsures;
 	private final IASTNode mMatchedNode;
 
-	public ExtractedFunctionContract(final List<String> requires, final List<String> ensures,
-			final IASTNode matchedNode) {
+	public ExtractedFunctionContract(final String requires, final String ensures, final IASTNode matchedNode) {
 		mRequires = requires;
 		mEnsures = ensures;
 		mMatchedNode = matchedNode;
@@ -77,9 +76,15 @@ public class ExtractedFunctionContract {
 		}
 	}
 
-	public Stream<ACSLNode> transformToAcsl() {
+	public List<ACSLNode> getAcslContractClauses() {
+		final List<ACSLNode> result = new ArrayList<>();
 		final ILocation loc = LocationFactory.createIgnoreCLocation(mMatchedNode);
-		return Stream.concat(mRequires.stream().map(x -> parseString(loc, "requires " + x)),
-				mEnsures.stream().map(x -> parseString(loc, "ensures " + x)));
+		if (mRequires != null) {
+			result.add(parseString(loc, "requires " + mRequires));
+		}
+		if (mEnsures != null) {
+			result.add(parseString(loc, "ensures " + mEnsures));
+		}
+		return result;
 	}
 }

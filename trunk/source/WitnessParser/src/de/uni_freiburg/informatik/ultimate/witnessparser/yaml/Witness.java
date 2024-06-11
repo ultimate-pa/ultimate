@@ -58,8 +58,8 @@ public class Witness extends BasePayloadContainer {
 		return mEntries.toString();
 	}
 
-	public EntrySet toInvariantSet(final Supplier<Metadata> metadataSupplier) {
-		return new EntrySet(metadataSupplier.get(),
+	public InvariantSet toInvariantSet(final Supplier<Metadata> metadataSupplier) {
+		return new InvariantSet(metadataSupplier.get(),
 				mEntries.stream().map(x -> x.toSetEntry()).collect(Collectors.toList()));
 	}
 
