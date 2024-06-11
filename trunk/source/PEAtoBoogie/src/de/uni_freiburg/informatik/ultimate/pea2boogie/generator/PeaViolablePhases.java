@@ -239,7 +239,7 @@ public class PeaViolablePhases {
 		int numberOfSubPhases = 1 << n; // 2^n
 		boolean[] addedPhases = new boolean[numberOfSubPhases];
 
-		mLogger.info("check set of size: " + n);
+		mLogger.info("check strongly connected location set of size: " + n);
 
 		for (int i = numberOfSubPhases - 1; i > 0; i--) { // Iterate from largest phase set down
 			if (addedPhases[i])
@@ -256,7 +256,7 @@ public class PeaViolablePhases {
 					&& !outgoingTransitionsOfPhaseAreTautology(subPhaseSet)) {
 				allSubPhases.add(subPhaseSet);
 				markPhaseSubsetAsNVP(i, addedPhases, n);
-				mLogger.info(count + " subsets checked");
+				mLogger.info(count + " of its " + count*n + " subsets checked until NVP found (or done with no NVP found)");
 			}
 		}
 		return allSubPhases;
@@ -292,6 +292,7 @@ public class PeaViolablePhases {
 				}
 			}
 		}
+		mLogger.info("NVPs of " + mPea.getName() + ": " + nonTerminalPhases);
 		return nonTerminalPhases;
 	}
 }
