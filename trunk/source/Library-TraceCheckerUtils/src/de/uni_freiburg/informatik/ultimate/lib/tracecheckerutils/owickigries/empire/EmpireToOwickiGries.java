@@ -58,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
  * Construct an Owicki-Gries-Annotation from an EmpireAnnotation.
  *
  * @author Matthias Zumkeller (zumkellm@informatik.uni-freiburg.de)
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  *
  * @param <LETTER>
  *            The type of places in the Petri program
@@ -142,12 +143,16 @@ public class EmpireToOwickiGries<LETTER, PLACE> {
 	 */
 	private Map<PLACE, IPredicate> getFormulaMap() {
 		final Map<PLACE, IPredicate> formulaMap = new HashMap<>();
-		final IPredicate territoryImplications = getTerritoryImplications();
 		for (final PLACE place : mNet.getPlaces()) {
-			final IPredicate ghostFormula = getPlacesGhostVariableFormula(place);
-			final IPredicate territoryFormula = getPlacesTerritoryFormula(place);
-			final IPredicate placeFormula = mFactory.and(territoryImplications, ghostFormula, territoryFormula);
-			formulaMap.put(place, placeFormula);
+			final var regions =
+					mGhostVariables.keySet().stream().filter(r -> r.contains(place)).collect(Collectors.toList());
+			if (regions.isEmpty()) {
+				formulaMap.put(place, mFactory.or());
+			} else {
+				final var placeFormula =
+						mFactory.and(regions.stream().map(this::computeRegionTerm).collect(Collectors.toList()));
+				formulaMap.put(place, placeFormula);
+			}
 		}
 		return formulaMap;
 	}
@@ -198,6 +203,18 @@ public class EmpireToOwickiGries<LETTER, PLACE> {
 		final IPredicate territoryFormula =
 				mTerritoryFormulaMap.computeIfAbsent(territory, t -> mFactory.newPredicate(computeTerritoryTerm(t)));
 		return territoryFormula;
+	}
+
+	private IPredicate computeRegionTerm(final Region<PLACE> region) {
+		final var regionTerm = mFactory.newPredicate(mGhostVariables.get(region).getTerm());
+		final var territories = mEmpireAnnotation.getTerritories().stream().filter(t -> t.getRegions().contains(region))
+				.collect(Collectors.toList());
+		final var disjunction =
+				mFactory.or(territories.stream().map(this::getTerritoryFormula).collect(Collectors.toList()));
+		final var implications = mFactory.and(territories.stream().map(
+				t -> mFactory.or(mFactory.not(getTerritoryFormula(t)), mFactory.and(mEmpireAnnotation.getLawSet(t))))
+				.collect(Collectors.toList()));
+		return mFactory.and(regionTerm, disjunction, implications);
 	}
 
 	private Set<Territory<PLACE>> getPlacesTerritories(final PLACE place) {
