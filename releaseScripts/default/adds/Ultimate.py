@@ -58,10 +58,10 @@ data_race_error_path_begin_string = "The following path leads to a data race"
 
 class _PropParser:
     prop_regex = re.compile(
-        "^\s*CHECK\s*\(\s*init\s*\((.*)\)\s*,\s*LTL\((.*)\)\s*\)\s*$", re.MULTILINE
+        r"^\s*CHECK\s*\(\s*init\s*\((.*)\)\s*,\s*LTL\((.*)\)\s*\)\s*$", re.MULTILINE
     )
-    funid_regex = re.compile("\s*(\S*)\s*\(.*\)")
-    word_regex = re.compile("\b[^\W\d_]+\b")
+    funid_regex = re.compile(r"\s*(\S*)\s*\(.*\)")
+    word_regex = re.compile(r"\b[^\W\d_]+\b")
     forbidden_words = [
         "valid-free",
         "valid-deref",
@@ -530,8 +530,7 @@ def create_cli_settings(prop, validate_witness, architecture, c_file):
         ret.append("--witnessprinter.graph.data.programhash")
 
         if is_windows():
-            sha_call = call_desperate(["certutil", "-hashfile", c_file[0],
-                                       "SHA256"])
+            sha_call = call_desperate(["certutil", "-hashfile", c_file[0], "SHA256"])
             sha = sha_call.communicate()[0].split()[3]
         else:
             sha_call = call_desperate(["sha256sum", c_file[0]])
