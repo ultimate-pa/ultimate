@@ -24,8 +24,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
@@ -210,20 +212,31 @@ public class MutableAffineTerm {
 		int offset = 0;
 		for (final Map.Entry<LinVar, Rational> me : mSummands.entrySet()) {
 			final LinVar lv = me.getKey();
-			Term convme = lv.getTerm();
+			final Term varTerm = lv.getTerm();
+			Term[] factors;
+			if ((varTerm instanceof ApplicationTerm)
+					&& ((ApplicationTerm) varTerm).getFunction().getName().equals(SMTLIBConstants.MUL)) {
+				factors = ((ApplicationTerm) varTerm).getParameters();
+			} else {
+				factors = new Term[] { varTerm };
+			}
 			// if affine term is integral it may only add integers.
 			assert (!isInt || lv.isInt());
 			assert (!isInt || me.getValue().isIntegral());
 			if (!isInt && lv.isInt()) {
 				final Sort intSort = t.getSort("Int");
 				final FunctionSymbol toReal = t.getFunction("to_real", intSort);
-				convme = t.term(toReal, convme);
+				for (int i = 0; i < factors.length; i++) {
+					factors[i] = t.term(toReal, factors[i]);
+				}
 			}
 			if (!me.getValue().equals(Rational.ONE)) {
-				final Term convfac = me.getValue().toTerm(numSort);
-				convme = t.term(times, convfac, convme);
+				final Term[] newFactors = new Term[factors.length + 1];
+				newFactors[0] = me.getValue().toTerm(numSort);
+				System.arraycopy(factors, 0, newFactors, 1, factors.length);
+				factors = newFactors;
 			}
-			terms[offset++] = convme;
+			terms[offset++] = factors.length == 1 ? factors[0] : t.term(times, factors);
 		}
 		if (terms.length == 0) {
 			return Rational.ZERO.toTerm(numSort);

@@ -128,12 +128,29 @@ public class ModelEvaluator extends TermTransformer {
 			term = ((AnnotatedTerm) term).getSubterm();
 		}
 		if (term instanceof ConstantTerm) {
-			if (!term.getSort().isNumericSort()) {
-				throw new InternalError("Don't know how to evaluate this: " + term);
+			if (term.getSort().isNumericSort()) {
+				final Term result = SMTAffineTerm.convertConstant((ConstantTerm) term).toTerm(term.getSort());
+				setResult(result);
+				return;
+			} else if (term.getSort().isBitVecSort()) {
+				final Object value = ((ConstantTerm) term).getValue();
+				if (value instanceof String) {
+					BigInteger result;
+					final String bitString = (String) value;
+					if (bitString.startsWith("#b")) {
+						result = new BigInteger(bitString.substring(2), 2);
+					} else {
+						assert bitString.startsWith("#x");
+						result = new BigInteger(bitString.substring(2), 16);
+					}
+					setResult(createBitvectorTerm(result, term.getSort()));
+				} else {
+					assert value instanceof BigInteger;
+					setResult(term);
+				}
+				return;
 			}
-			final Term result = SMTAffineTerm.convertConstant((ConstantTerm) term).toTerm(term.getSort());
-			setResult(result);
-			return;
+			throw new InternalError("Don't know how to evaluate this: " + term);
 		}
 		if (term instanceof TermVariable) {
 			if (mLetMap.containsKey(term)) {
@@ -465,6 +482,383 @@ public class ModelEvaluator extends TermTransformer {
 					.provideSortInterpretation(fs.getParameterSorts()[0]);
 			return array.computeDiff(args[0], args[1], fs.getReturnSort());
 		}
+
+		case SMTInterpolConstants.NAT2BV: {
+			assert args.length == 1;
+			final Rational n = rationalValue(args[0]);
+			assert n.isIntegral();
+			final BigInteger mask = getBVModulo(fs.getReturnSort()).subtract(BigInteger.ONE);
+			return createBitvectorTerm(n.numerator().and(mask), fs.getReturnSort());
+		}
+
+		case SMTInterpolConstants.BV2NAT: {
+			assert args.length == 1;
+			final BigInteger value = bitvectorValue(args[0]);
+			return Rational.valueOf(value, BigInteger.ONE).toTerm(fs.getReturnSort());
+		}
+
+		case SMTLIBConstants.BVADD: {
+			final BigInteger mask = getBVModulo(fs.getReturnSort()).subtract(BigInteger.ONE);
+			BigInteger value = bitvectorValue(args[0]);
+			for (int i = 1; i < args.length; i++) {
+				value = value.add(bitvectorValue(args[i]));
+			}
+			value = value.and(mask);
+			return createBitvectorTerm(value, fs.getReturnSort());
+		}
+		case SMTLIBConstants.BVSUB: {
+			final BigInteger mask = getBVModulo(fs.getReturnSort()).subtract(BigInteger.ONE);
+			BigInteger value = bitvectorValue(args[0]);
+			for (int i = 1; i < args.length; i++) {
+				value = value.add(bitvectorValue(args[i]).negate());
+			}
+			value = value.and(mask);
+			return createBitvectorTerm(value, fs.getReturnSort());
+		}
+
+		case SMTLIBConstants.BVMUL: {
+			final BigInteger mask = getBVModulo(fs.getReturnSort()).subtract(BigInteger.ONE);
+			BigInteger value = bitvectorValue(args[0]);
+			for (int i = 1; i < args.length; i++) {
+				value = value.multiply(bitvectorValue(args[i]));
+				value = value.and(mask);
+			}
+			return createBitvectorTerm(value, fs.getReturnSort());
+		}
+
+		case SMTLIBConstants.BVUDIV: {
+			assert args.length == 2;
+			final BigInteger modulo = getBVModulo(fs.getReturnSort());
+			BigInteger value = bitvectorValue(args[0]);
+			final BigInteger arg = bitvectorValue(args[1]);
+			value = arg.signum() == 0 ? modulo.subtract(BigInteger.ONE) : value.divide(arg);
+			return createBitvectorTerm(value, fs.getReturnSort());
+		}
+
+		case SMTLIBConstants.BVUREM: {
+			assert args.length == 2;
+			BigInteger value = bitvectorValue(args[0]);
+			final BigInteger arg = bitvectorValue(args[1]);
+			value = arg.signum() == 0 ? value : value.mod(arg);
+			return createBitvectorTerm(value, fs.getReturnSort());
+		}
+		case SMTLIBConstants.BVSDIV: {
+			assert args.length == 2;
+			final int signBit = getBitVecSize(fs.getReturnSort()) - 1;
+			final BigInteger modulo = getBVModulo(fs.getReturnSort());
+			BigInteger value = bitvectorValue(args[0]);
+			boolean isNegative = value.testBit(signBit);
+			if (isNegative) {
+				value = modulo.subtract(value);
+			}
+			BigInteger arg = bitvectorValue(args[1]);
+			if (arg.testBit(signBit)) {
+				arg = modulo.subtract(arg);
+				isNegative = !isNegative;
+			}
+			value = arg.signum() == 0 ? modulo.subtract(BigInteger.ONE) : value.divide(arg);
+			if (isNegative && value.signum() != 0) {
+				value = modulo.subtract(value);
+			}
+			return createBitvectorTerm(value, fs.getReturnSort());
+		}
+
+		case SMTLIBConstants.BVSREM: {
+			assert args.length == 2;
+			final int signBit = getBitVecSize(fs.getReturnSort()) - 1;
+			final BigInteger modulo = getBVModulo(fs.getReturnSort());
+			BigInteger value = bitvectorValue(args[0]);
+			final boolean isNegative = value.testBit(signBit);
+			if (isNegative) {
+				value = modulo.subtract(value);
+			}
+			BigInteger arg = bitvectorValue(args[1]);
+			if (arg.testBit(signBit)) {
+				arg = modulo.subtract(arg);
+			}
+			value = arg.signum() == 0 ? value : value.mod(arg);
+			if (isNegative && value.signum() != 0) {
+				value = modulo.subtract(value);
+			}
+			return createBitvectorTerm(value, fs.getReturnSort());
+		}
+
+		case SMTLIBConstants.BVSMOD: {
+			assert args.length == 2;
+			final int signBit = getBitVecSize(fs.getReturnSort()) - 1;
+			final BigInteger modulo = getBVModulo(fs.getReturnSort());
+			final BigInteger origValue = bitvectorValue(args[0]);
+			BigInteger value = origValue;
+			if (value.testBit(signBit)) {
+				value = value.subtract(modulo);
+			}
+			BigInteger arg = bitvectorValue(args[1]);
+			final boolean isNegative = arg.testBit(signBit);
+			if (isNegative) {
+				arg = modulo.subtract(arg);
+			}
+			value = arg.signum() == 0 ? origValue : value.mod(arg);
+			if (isNegative && value.signum() != 0) {
+				value = value.add(modulo).subtract(arg);
+			}
+			return createBitvectorTerm(value, fs.getReturnSort());
+		}
+
+		case SMTLIBConstants.BVNOT: {
+			assert args.length == 1;
+			final BigInteger modulo = getBVModulo(fs.getReturnSort());
+			final BigInteger value = bitvectorValue(args[0]).xor(modulo.subtract(BigInteger.ONE));
+			return createBitvectorTerm(value, fs.getReturnSort());
+		}
+
+		case SMTLIBConstants.BVNEG: {
+			assert args.length == 1;
+			final BigInteger modulo = getBVModulo(fs.getReturnSort());
+			BigInteger value = bitvectorValue(args[0]);
+			if (value.signum() != 0) {
+				value = modulo.subtract(value);
+			}
+			return createBitvectorTerm(value, fs.getReturnSort());
+		}
+
+		case SMTLIBConstants.BVAND: {
+			BigInteger value = bitvectorValue(args[0]);
+			for (int i = 1; i < args.length; i++) {
+				final BigInteger arg = bitvectorValue(args[i]);
+				value = value.and(arg);
+			}
+			return createBitvectorTerm(value, fs.getReturnSort());
+		}
+
+		case SMTLIBConstants.BVOR: {
+			BigInteger value = bitvectorValue(args[0]);
+			for (int i = 1; i < args.length; i++) {
+				final BigInteger arg = bitvectorValue(args[i]);
+				value = value.or(arg);
+			}
+			return createBitvectorTerm(value, fs.getReturnSort());
+		}
+
+		case SMTLIBConstants.BVXOR: {
+			BigInteger value = bitvectorValue(args[0]);
+			for (int i = 1; i < args.length; i++) {
+				final BigInteger arg = bitvectorValue(args[i]);
+				value = value.xor(arg);
+			}
+			return createBitvectorTerm(value, fs.getReturnSort());
+		}
+
+		case SMTLIBConstants.BVNAND: {
+			assert args.length == 2;
+			final BigInteger modulo = getBVModulo(fs.getReturnSort());
+			final BigInteger value = modulo.subtract(BigInteger.ONE).subtract(bitvectorValue(args[0]).and(bitvectorValue(args[1])));
+			return createBitvectorTerm(value, fs.getReturnSort());
+		}
+
+		case SMTLIBConstants.BVNOR: {
+			assert args.length == 2;
+			final BigInteger modulo = getBVModulo(fs.getReturnSort());
+			final BigInteger value = modulo.subtract(BigInteger.ONE).subtract(bitvectorValue(args[0]).or(bitvectorValue(args[1])));
+			return createBitvectorTerm(value, fs.getReturnSort());
+		}
+
+		case SMTLIBConstants.BVXNOR: {
+			assert args.length == 2;
+			final BigInteger modulo = getBVModulo(fs.getReturnSort());
+			final BigInteger value = modulo.subtract(BigInteger.ONE).subtract(bitvectorValue(args[0]).xor(bitvectorValue(args[1])));
+			return createBitvectorTerm(value, fs.getReturnSort());
+		}
+
+		case SMTLIBConstants.BVCOMP: {
+			assert args.length == 2;
+			final BigInteger value = bitvectorValue(args[0]).equals(bitvectorValue(args[1])) ? BigInteger.ONE : BigInteger.ZERO;
+			return createBitvectorTerm(value, fs.getReturnSort());
+		}
+
+		case SMTLIBConstants.BVULE: {
+			assert args.length >= 2;
+			boolean result = true;
+			BigInteger lastArg = bitvectorValue(args[0]);
+			for (int i = 1; i < args.length; i++) {
+				final BigInteger nextArg = bitvectorValue(args[i]);
+				result &= lastArg.compareTo(nextArg) <= 0;
+				lastArg = nextArg;
+			}
+			return result ? theory.mTrue : theory.mFalse;
+		}
+		case SMTLIBConstants.BVULT: {
+			assert args.length >= 2;
+			boolean result = true;
+			BigInteger lastArg = bitvectorValue(args[0]);
+			for (int i = 1; i < args.length; i++) {
+				final BigInteger nextArg = bitvectorValue(args[i]);
+				result &= lastArg.compareTo(nextArg) < 0;
+				lastArg = nextArg;
+			}
+			return result ? theory.mTrue : theory.mFalse;
+		}
+		case SMTLIBConstants.BVUGE: {
+			assert args.length >= 2;
+			boolean result = true;
+			BigInteger lastArg = bitvectorValue(args[0]);
+			for (int i = 1; i < args.length; i++) {
+				final BigInteger nextArg = bitvectorValue(args[i]);
+				result &= lastArg.compareTo(nextArg) >= 0;
+				lastArg = nextArg;
+			}
+			return result ? theory.mTrue : theory.mFalse;
+		}
+		case SMTLIBConstants.BVUGT: {
+			assert args.length >= 2;
+			boolean result = true;
+			BigInteger lastArg = bitvectorValue(args[0]);
+			for (int i = 1; i < args.length; i++) {
+				final BigInteger nextArg = bitvectorValue(args[i]);
+				result &= lastArg.compareTo(nextArg) > 0;
+				lastArg = nextArg;
+			}
+			return result ? theory.mTrue : theory.mFalse;
+		}
+		case SMTLIBConstants.BVSLE: {
+			assert args.length >= 2;
+			boolean result = true;
+			final BigInteger signBit = BigInteger.ONE.shiftLeft(getBitVecSize(args[0].getSort()) - 1);
+			BigInteger lastArg = bitvectorValue(args[0]).xor(signBit);
+			for (int i = 1; i < args.length; i++) {
+				final BigInteger nextArg = bitvectorValue(args[i]).xor(signBit);
+				result &= lastArg.compareTo(nextArg) <= 0;
+				lastArg = nextArg;
+			}
+			return result ? theory.mTrue : theory.mFalse;
+		}
+		case SMTLIBConstants.BVSLT: {
+			assert args.length >= 2;
+			boolean result = true;
+			final BigInteger signBit = BigInteger.ONE.shiftLeft(getBitVecSize(args[0].getSort()) - 1);
+			BigInteger lastArg = bitvectorValue(args[0]).xor(signBit);
+			for (int i = 1; i < args.length; i++) {
+				final BigInteger nextArg = bitvectorValue(args[i]).xor(signBit);
+				result &= lastArg.compareTo(nextArg) < 0;
+				lastArg = nextArg;
+			}
+			return result ? theory.mTrue : theory.mFalse;
+		}
+		case SMTLIBConstants.BVSGE: {
+			assert args.length >= 2;
+			boolean result = true;
+			final BigInteger signBit = BigInteger.ONE.shiftLeft(getBitVecSize(args[0].getSort()) - 1);
+			BigInteger lastArg = bitvectorValue(args[0]).xor(signBit);
+			for (int i = 1; i < args.length; i++) {
+				final BigInteger nextArg = bitvectorValue(args[i]).xor(signBit);
+				result &= lastArg.compareTo(nextArg) >= 0;
+				lastArg = nextArg;
+			}
+			return result ? theory.mTrue : theory.mFalse;
+		}
+		case SMTLIBConstants.BVSGT: {
+			assert args.length >= 2;
+			boolean result = true;
+			final BigInteger signBit = BigInteger.ONE.shiftLeft(getBitVecSize(args[0].getSort()) - 1);
+			BigInteger lastArg = bitvectorValue(args[0]).xor(signBit);
+			for (int i = 1; i < args.length; i++) {
+				final BigInteger nextArg = bitvectorValue(args[i]).xor(signBit);
+				result &= lastArg.compareTo(nextArg) > 0;
+				lastArg = nextArg;
+			}
+			return result ? theory.mTrue : theory.mFalse;
+		}
+		case SMTLIBConstants.BVSHL: {
+			final int size = getBitVecSize(fs.getReturnSort());
+			assert args.length == 2;
+			final BigInteger shiftArg = bitvectorValue(args[1]);
+			BigInteger value;
+			if (shiftArg.compareTo(BigInteger.valueOf(size)) < 0) {
+				final BigInteger mask = BigInteger.ONE.shiftLeft(size).subtract(BigInteger.ONE);
+				value = bitvectorValue(args[0]).shiftLeft(shiftArg.intValueExact()).and(mask);
+			} else {
+				value = BigInteger.ZERO;
+			}
+			return createBitvectorTerm(value, fs.getReturnSort());
+		}
+		case SMTLIBConstants.BVLSHR: {
+			final int size = getBitVecSize(fs.getReturnSort());
+			assert args.length == 2;
+			final BigInteger shiftArg = bitvectorValue(args[1]);
+			BigInteger value;
+			if (shiftArg.compareTo(BigInteger.valueOf(size)) < 0) {
+				value = bitvectorValue(args[0]).shiftRight(shiftArg.intValueExact());
+			} else {
+				value = BigInteger.ZERO;
+			}
+			return createBitvectorTerm(value, fs.getReturnSort());
+		}
+		case SMTLIBConstants.BVASHR: {
+			final int size = getBitVecSize(fs.getReturnSort());
+			assert args.length == 2;
+			final BigInteger shiftArg = bitvectorValue(args[1]);
+			BigInteger value = bitvectorValue(args[0]);
+			if (shiftArg.compareTo(BigInteger.valueOf(size)) < 0) {
+				final int shiftInt = shiftArg.intValueExact();
+				final BigInteger signBits = value.testBit(size - 1)
+						? BigInteger.ONE.shiftLeft(size - shiftInt).subtract(BigInteger.ONE).shiftLeft(shiftInt)
+						: BigInteger.ZERO;
+				value = value.shiftRight(shiftInt).or(signBits);
+			} else {
+				value = value.testBit(size - 1) ? BigInteger.ONE.shiftLeft(size).subtract(BigInteger.ONE)
+						: BigInteger.ZERO;
+			}
+			return createBitvectorTerm(value, fs.getReturnSort());
+		}
+		case SMTLIBConstants.CONCAT: {
+			assert args.length == 2;
+			final int size2 = getBitVecSize(args[1].getSort());
+			final BigInteger value = bitvectorValue(args[0]).shiftLeft(size2).or(bitvectorValue(args[1]));
+			return createBitvectorTerm(value, fs.getReturnSort());
+		}
+		case SMTLIBConstants.REPEAT: {
+			assert args.length == 1;
+			final int sizeIn = getBitVecSize(args[0].getSort());
+			final int count = Integer.parseInt(fs.getIndices()[0]);
+			final BigInteger multiplier = BigInteger.ONE.shiftLeft(sizeIn*count).subtract(BigInteger.ONE)
+					.divide(BigInteger.ONE.shiftLeft(sizeIn).subtract(BigInteger.ONE));
+			final BigInteger value = bitvectorValue(args[0]).multiply(multiplier);
+			return createBitvectorTerm(value, fs.getReturnSort());
+		}
+		case SMTLIBConstants.EXTRACT: {
+			assert args.length == 1;
+			final int high = Integer.parseInt(fs.getIndices()[0]);
+			final int low = Integer.parseInt(fs.getIndices()[1]);
+			final BigInteger value = bitvectorValue(args[0]).shiftRight(low)
+					.and(BigInteger.ONE.shiftLeft(high - low + 1).subtract(BigInteger.ONE));
+			return createBitvectorTerm(value, fs.getReturnSort());
+		}
+		case SMTLIBConstants.ZERO_EXTEND: {
+			return createBitvectorTerm(bitvectorValue(args[0]), fs.getReturnSort());
+		}
+		case SMTLIBConstants.SIGN_EXTEND: {
+			assert args.length == 1;
+			final int inputLen = getBitVecSize(args[0].getSort());
+			BigInteger value = bitvectorValue(args[0]);
+			if (value.testBit(inputLen - 1)) {
+				final int outputLen = getBitVecSize(fs.getReturnSort());
+				value = value.add(BigInteger.ONE.shiftLeft(outputLen).subtract(BigInteger.ONE.shiftLeft(inputLen)));
+			}
+			return createBitvectorTerm(value, fs.getReturnSort());
+		}
+		case SMTLIBConstants.ROTATE_LEFT:
+		case SMTLIBConstants.ROTATE_RIGHT: {
+			assert args.length == 1;
+			final int size = getBitVecSize(fs.getReturnSort());
+			int rotateValue = Integer.parseInt(fs.getIndices()[0]);
+			if (fs.getName().equals(SMTLIBConstants.ROTATE_RIGHT)) {
+				rotateValue = size - rotateValue;
+			}
+			final BigInteger mask = BigInteger.ONE.shiftLeft(size).subtract(BigInteger.ONE);
+			BigInteger value = bitvectorValue(args[0]);
+			value = value.shiftLeft(rotateValue).or(value.shiftRight(size - rotateValue)).and(mask);
+			return createBitvectorTerm(value, fs.getReturnSort());
+		}
+
 		case "@EQ": {
 			return lookupFunction(fs, args);
 		}
@@ -495,5 +889,22 @@ public class ModelEvaluator extends TermTransformer {
 
 	private Rational rationalValue(final Term term) {
 		return (Rational) ((ConstantTerm) term).getValue();
+	}
+
+	private BigInteger bitvectorValue(Term t) {
+		return (BigInteger) ((ConstantTerm) t).getValue();
+	}
+
+	private Term createBitvectorTerm(BigInteger value, Sort sort) {
+		return BitVectorInterpretation.BV(value, sort);
+	}
+
+	private int getBitVecSize(Sort sort) {
+		assert sort.isBitVecSort();
+		return Integer.parseInt(sort.getIndices()[0]);
+	}
+
+	private BigInteger getBVModulo(Sort sort) {
+		return BigInteger.ONE.shiftLeft(getBitVecSize(sort));
 	}
 }

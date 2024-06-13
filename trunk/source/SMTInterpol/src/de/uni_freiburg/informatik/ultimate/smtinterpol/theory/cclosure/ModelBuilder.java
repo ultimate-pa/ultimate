@@ -18,6 +18,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure;
 
+import java.math.BigInteger;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -39,9 +40,12 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.model.ArraySortInterpretation;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.model.BitVectorInterpretation;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.model.Model;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.model.NumericSortInterpretation;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.model.SharedTermEvaluator;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.option.SMTInterpolConstants;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.ComputeSCC;
 
 public class ModelBuilder {
@@ -108,6 +112,8 @@ public class ModelBuilder {
 						return datatypeParameters == null ? dependentSort : dependentSort.mapSort(datatypeParameters);
 					}
 				};
+			} else if (sort.isBitVecSort()) {
+				return Collections.singleton(sort.getTheory().getNumericSort()).iterator();
 			} else {
 				return Collections.emptyListIterator();
 			}
@@ -174,6 +180,24 @@ public class ModelBuilder {
 						delayed.add(ccterm);
 						continue;
 					}
+				} else if (ccterm.getFlatTerm().getSort().isBitVecSort()) {
+					value = null;
+					for (final CCTerm member : ccterm.mRepStar.mMembers) {
+						final Term t = member.getFlatTerm();
+						if (t instanceof ApplicationTerm) {
+							if (((ApplicationTerm) t).getFunction().getName().equals("nat2bv")) {
+								final Term arg = ((ApplicationTerm) t).getParameters()[0];
+								final Rational v = mEvaluator.evaluate(arg, mTheory);
+								assert v.isIntegral();
+								BigInteger vInt = v.numerator();
+								final int width = Integer.parseInt(t.getSort().getIndices()[0]);
+								vInt = vInt.mod(BigInteger.ONE.shiftLeft(width));
+								value = BitVectorInterpretation.BV(vInt, t.getSort());
+								break;
+							}
+						}
+					}
+					assert value != null;
 				} else if (ccterm == trueNode.mRepStar) {
 					value = sort.getTheory().mTrue;
 				} else if (sort.isInternal() && sort.getName().equals(SMTLIBConstants.BOOL)) {
@@ -257,6 +281,11 @@ public class ModelBuilder {
 			final FunctionSymbol fs = base.getFunctionSymbol();
 			if (!fs.isIntern() || isUndefinedFor(fs, args)) {
 				model.map(fs, args.toArray(new Term[args.size()]), value);
+			} else if (fs.getName() == SMTInterpolConstants.DIFF) {
+				final ArraySortInterpretation arraySort = (ArraySortInterpretation) model
+						.provideSortInterpretation(fs.getParameterSorts()[0]);
+				assert args.size() == 2;
+				arraySort.addDiff(args.getFirst(), args.getLast(), value);
 			}
 		}
 	}

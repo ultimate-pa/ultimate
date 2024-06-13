@@ -18,10 +18,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol.convert;
 
+import java.math.BigInteger;
 import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -95,7 +97,9 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.quant.QuantLiteral
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.quant.QuantifierTheory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.quant.QuantifierTheory.InstantiationMethod;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.ArrayMap;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.Polynomial;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.ScopedArrayList;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.TermUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
 
 /**
@@ -271,8 +275,8 @@ public class Clausifier {
 					// A negated or is an and of negated formulas. Hence assert all negated
 					// subformulas.
 					for (final Term p : at.getParameters()) {
-						final Term split = mTracker.resolveBinaryTautology(mAxiom, t.term("not", p),
-								ProofConstants.TAUT_OR_POS);
+						final Term split =
+								mTracker.resolveBinaryTautology(mAxiom, t.term("not", p), ProofConstants.TAUT_OR_POS);
 						pushOperation(new AddAsAxiom(split, mSource));
 					}
 					return;
@@ -357,7 +361,6 @@ public class Clausifier {
 		}
 	}
 
-
 	/**
 	 * Collect a single literal to build a clause.
 	 *
@@ -398,8 +401,8 @@ public class Clausifier {
 
 				final ApplicationTerm at = (ApplicationTerm) idx;
 				final ILiteral lit;
-				if (mLiteral.mTmpCtr <= Config.OCC_INLINE_THRESHOLD &&
-						(positive ? (at.getFunction() == theory.mOr || at.getFunction() == theory.mImplies)
+				if (mLiteral.mTmpCtr <= Config.OCC_INLINE_THRESHOLD
+						&& (positive ? (at.getFunction() == theory.mOr || at.getFunction() == theory.mImplies)
 								: at.getFunction() == theory.mAnd)) {
 					final Annotation rule = at.getFunction() == theory.mOr ? ProofConstants.TAUT_OR_NEG
 							: at.getFunction() == theory.mImplies ? ProofConstants.TAUT_IMP_NEG
@@ -482,7 +485,8 @@ public class Clausifier {
 					if (quantified) {
 						rewrite = rewriteBooleanSubterms(at, mClauseBuilder.getSource());
 					}
-					lit = createBooleanLit((ApplicationTerm) mTracker.getProvedTerm(rewrite), mClauseBuilder.getSource());
+					lit = createBooleanLit((ApplicationTerm) mTracker.getProvedTerm(rewrite),
+							mClauseBuilder.getSource());
 				} else {
 					lit = createAnonLiteral(idx, mClauseBuilder.getSource());
 					// aux axioms will always automatically created for quantified formulas
@@ -504,8 +508,8 @@ public class Clausifier {
 				final Term substituted = converted.getFirst();
 				final Term lit = positive ? idx : theory.term(SMTLIBConstants.NOT, idx);
 				final Term negLit = positive ? theory.term(SMTLIBConstants.NOT, idx) : idx;
-				final Term tautology = mTracker.tautology(theory.term(SMTLIBConstants.OR, negLit, substituted),
-						converted.getSecond());
+				final Term tautology =
+						mTracker.tautology(theory.term(SMTLIBConstants.OR, negLit, substituted), converted.getSecond());
 				mClauseBuilder.mCurrentLits.remove(mLiteral);
 				mClauseBuilder.addResolution(tautology, lit);
 				final Term substitutedCanonic = mCompiler.transform(substituted);
@@ -519,8 +523,7 @@ public class Clausifier {
 				// That is, x --> (x != false) and ~x --> (x != true),
 				final Term value = positive ? mTheory.mFalse : mTheory.mTrue;
 				final ILiteral lit = mQuantTheory.getQuantEquality(idx, value, mClauseBuilder.getSource());
-				final Term rewrite =
-						mTracker.intern(idx, (positive ? lit.negate() : lit).getSMTFormula(theory));
+				final Term rewrite = mTracker.intern(idx, (positive ? lit.negate() : lit).getSMTFormula(theory));
 				mClauseBuilder.addLiteral(lit.negate(), idx, rewrite, positive);
 			} else if (idx instanceof MatchTerm) {
 				final ILiteral lit = createAnonLiteral(idx, mClauseBuilder.getSource());
@@ -548,27 +551,25 @@ public class Clausifier {
 	/**
 	 * Object to collect a clause and build it.
 	 *
-	 * The BuildClause collects the literals for a clause and tracks the proof. For
-	 * every clause we build, we collect the literals in this object. It collects
-	 * all resolution steps for all literal rewrites that are done internally.
+	 * The BuildClause collects the literals for a clause and tracks the proof. For every clause we build, we collect
+	 * the literals in this object. It collects all resolution steps for all literal rewrites that are done internally.
 	 *
 	 * <p>
-	 * The BuildClause is also an operation and runs when all its literals are
-	 * collected. It creates the clause and annotates it with its resolution proof.
+	 * The BuildClause is also an operation and runs when all its literals are collected. It creates the clause and
+	 * annotates it with its resolution proof.
 	 *
 	 * @author hoenicke
 	 */
 	private class BuildClause implements Operation {
 		/**
-		 * The term that is collected into a clause. If the head symbol is not an or
-		 * this denotes a unit clause. The unit clause "(or ...)" cannot be collected,
-		 * but must be expanded by the caller.
+		 * The term that is collected into a clause. If the head symbol is not an or this denotes a unit clause. The
+		 * unit clause "(or ...)" cannot be collected, but must be expanded by the caller.
 		 */
 		private final Term mClause;
 		/**
-		 * The array of sub rewrites, one for each subterm in a nested or term. The or
-		 * term must be produced by mRewriteProof. If this array has length one, there
-		 * is no nested or term and only one literal will be collected.
+		 * The array of sub rewrites, one for each subterm in a nested or term. The or term must be produced by
+		 * mRewriteProof. If this array has length one, there is no nested or term and only one literal will be
+		 * collected.
 		 */
 		private Term mProof;
 
@@ -589,9 +590,11 @@ public class Clausifier {
 		}
 
 		/**
-		 * Start collecting a term in a clause.  This creates a literal collector for the literal, unless the
-		 * literal was already collected.
-		 * @param term the disjunct to add to the clause.
+		 * Start collecting a term in a clause. This creates a literal collector for the literal, unless the literal was
+		 * already collected.
+		 *
+		 * @param term
+		 *            the disjunct to add to the clause.
 		 */
 		public void collectLiteral(Term term) {
 			while (isNotTerm(term) && isNotTerm(((ApplicationTerm) term).getParameters()[0])) {
@@ -641,12 +644,15 @@ public class Clausifier {
 		}
 
 		/**
-		 * Add a literal and its rewrite proof. This is called whenever we create a new
-		 * literal. It is expected that every term rewrites to exactly one literal.
+		 * Add a literal and its rewrite proof. This is called whenever we create a new literal. It is expected that
+		 * every term rewrites to exactly one literal.
 		 *
-		 * @param lit      The collected literal.
-		 * @param rewrite  the rewrite proof from the original argument to the literal.
-		 * @param positive True, if the literal occured positive in the original clause.
+		 * @param lit
+		 *            The collected literal.
+		 * @param rewrite
+		 *            the rewrite proof from the original argument to the literal.
+		 * @param positive
+		 *            True, if the literal occured positive in the original clause.
 		 */
 		public void addLiteral(final ILiteral lit, final Term origAtom, final Term rewriteAtom,
 				final boolean positive) {
@@ -661,8 +667,8 @@ public class Clausifier {
 				/* resolve literal from clause */
 				final Term trueFalseTerm = mTracker.getProvedTerm(rewriteAtom);
 				assert positive ? trueFalseTerm == theory.mFalse : trueFalseTerm == theory.mTrue;
-				final Term negTrueFalseTerm = positive ? theory.term(SMTLIBConstants.NOT, trueFalseTerm)
-						: trueFalseTerm;
+				final Term negTrueFalseTerm =
+						positive ? theory.term(SMTLIBConstants.NOT, trueFalseTerm) : trueFalseTerm;
 				final Annotation rule = positive ? ProofConstants.TAUT_FALSE_NEG : ProofConstants.TAUT_TRUE_POS;
 				addResolution(mTracker.tautology(negTrueFalseTerm, rule), mTracker.getProvedTerm(rewriteLiteral));
 			}
@@ -670,13 +676,15 @@ public class Clausifier {
 		}
 
 		/**
-		 * For a quantified clause build the proof for the quantified formula from the
-		 * proof of the clause with free variables.
+		 * For a quantified clause build the proof for the quantified formula from the proof of the clause with free
+		 * variables.
 		 *
-		 * @param lits      the ground literals in the quantified formula.
-		 * @param quantLits the literals containing quantified variables in the
-		 *                  quantified formula
-		 * @param proof     the proof of the clause with free variabless.
+		 * @param lits
+		 *            the ground literals in the quantified formula.
+		 * @param quantLits
+		 *            the literals containing quantified variables in the quantified formula
+		 * @param proof
+		 *            the proof of the clause with free variabless.
 		 * @return the proof for the unit clause containing the forall formula.
 		 */
 		private Term buildQuantifierProof(final Literal[] lits, final QuantLiteral[] quantLits) {
@@ -694,8 +702,8 @@ public class Clausifier {
 				clause = theory.term("or", literals);
 				if (mTracker instanceof ProofTracker) {
 					for (i = 0; i < literals.length; i++) {
-						final Term orPos = mTracker.tautology(theory.term("or", clause, theory.term("not", literals[i])),
-								ProofConstants.TAUT_OR_POS);
+						final Term orPos = mTracker.tautology(
+								theory.term("or", clause, theory.term("not", literals[i])), ProofConstants.TAUT_OR_POS);
 						addResolution(orPos, literals[i]);
 					}
 				}
@@ -710,11 +718,10 @@ public class Clausifier {
 
 		@Override
 		/**
-		 * This performs the action of this clause collector after all literals have
-		 * been collected. It computes the rewrite proof by combining the first step
-		 * with all collected rewrites and adds the rewrite proof to the parent
-		 * collector. If this is the top collector, it sends the rewrite proof to the
-		 * BuildClause object to build the final clause.
+		 * This performs the action of this clause collector after all literals have been collected. It computes the
+		 * rewrite proof by combining the first step with all collected rewrites and adds the rewrite proof to the
+		 * parent collector. If this is the top collector, it sends the rewrite proof to the BuildClause object to build
+		 * the final clause.
 		 */
 		public void perform() {
 			if (mIsTrue) {
@@ -749,8 +756,8 @@ public class Clausifier {
 				}
 			} else {
 				final Term quantifierWithProof = buildQuantifierProof(lits, quantLits);
-				TermVariable[] quantVars = ((QuantifiedFormula) mTracker.getProvedTerm(quantifierWithProof))
-						.getVariables();
+				TermVariable[] quantVars =
+						((QuantifiedFormula) mTracker.getProvedTerm(quantifierWithProof)).getVariables();
 				final DERResult resultFromDER =
 						mQuantTheory.performDestructiveEqualityReasoning(quantVars, lits, quantLits, mSource);
 				if (resultFromDER == null) {
@@ -759,8 +766,8 @@ public class Clausifier {
 					// Build rewrite proof from all-intro, split-subst and derProof
 					final Annotation splitAnnot = ProofConstants.getTautForallNeg(resultFromDER.getSubs());
 					final Term substituted = resultFromDER.getSubstituted();
-					final Term splitProof = mTracker.resolveBinaryTautology(quantifierWithProof, substituted,
-							splitAnnot);
+					final Term splitProof =
+							mTracker.resolveBinaryTautology(quantifierWithProof, substituted, splitAnnot);
 					final Term derProof = resultFromDER.getSimplified();
 					Term rewriteProofAfterDER = mTracker.modusPonens(splitProof, derProof);
 					final Term provedAfterDER = mTracker.getProvedTerm(rewriteProofAfterDER);
@@ -774,8 +781,8 @@ public class Clausifier {
 							for (int i = 0; i < litsAfterDER.length; i++) {
 								orElimParam[i + 1] = litsAfterDER[i];
 							}
-							final Term orElim = mTracker.tautology(theory.term("or", orElimParam),
-									ProofConstants.TAUT_OR_NEG);
+							final Term orElim =
+									mTracker.tautology(theory.term("or", orElimParam), ProofConstants.TAUT_OR_NEG);
 							addResolution(orElim, provedAfterDER);
 						} else if (appTerm.getFunction().getName().equals("false")) {
 							final Term pivot = theory.term("not", appTerm);
@@ -892,9 +899,8 @@ public class Clausifier {
 					mMaxSubMin = Rational.ZERO;
 					return;
 				}
-				final SMTAffineTerm diff = new SMTAffineTerm(mMinValue);
-				diff.negate();
-				diff.add(new SMTAffineTerm(mTerm));
+				final Polynomial diff = new Polynomial(mTerm);
+				diff.add(Rational.MONE, mMinValue);
 				if (!diff.isConstant()) {
 					mIsNotConstant = true;
 					return;
@@ -920,14 +926,13 @@ public class Clausifier {
 					final Sort sort = mTermITE.getSort();
 					final Theory theory = sort.getTheory();
 					final Term zero = Rational.ZERO.toTerm(sort);
-					final SMTAffineTerm diff = new SMTAffineTerm(mTermITE);
-					diff.negate();
-					diff.add(new SMTAffineTerm(mMinValue));
-					final Term lboundAx = theory.term("<=", diff.toTerm(mCompiler, sort), zero);
+					final Polynomial diff = new Polynomial(mMinValue);
+					diff.add(Rational.MONE, mTermITE);
+					final Term lboundAx = theory.term("<=", mCompiler.unifyPolynomial(diff, sort), zero);
 					buildClause(mTracker.tautology(lboundAx, ProofConstants.TAUT_TERM_ITE_BOUND), mSource);
 					diff.add(mMaxSubMin);
-					diff.negate();
-					final Term uboundAx = theory.term("<=", diff.toTerm(mCompiler, sort), zero);
+					diff.mul(Rational.MONE);
+					final Term uboundAx = theory.term("<=", mCompiler.unifyPolynomial(diff, sort), zero);
 					buildClause(mTracker.tautology(uboundAx, ProofConstants.TAUT_TERM_ITE_BOUND), mSource);
 				}
 			}
@@ -1005,6 +1010,25 @@ public class Clausifier {
 		return ccterm;
 	}
 
+	/**
+	 * Enqueue the build of the given CCTerm. This should only be used in
+	 * addTermAxioms or their descendants to trigger the creation of more CCTerms.
+	 * These functions are not allowed to recurse into createCCTerm, as they may be
+	 * called from inside createCCTerm.
+	 *
+	 * @param term   The term for which we should build.
+	 * @param source The source annotations to map lemmas to their corresponding
+	 *               input clause.
+	 */
+	private void buildCCTerm(final Term term, final SourceAnnotation source) {
+		pushOperation(new Operation() {
+			@Override
+			public void perform() {
+				new CCTermBuilder(source).convert(term);
+			}
+		});
+	}
+
 	public int getTermFlags(final Term term) {
 		final Integer flags = mTermDataFlags.get(term);
 		return flags == null ? 0 : (int) flags;
@@ -1054,6 +1078,8 @@ public class Clausifier {
 					/* add axioms for certain built-in functions */
 					if (fs.getName().equals("div")) {
 						addDivideAxioms(at, source);
+					} else if (fs.getName().equals("mod")) {
+						addModuloAxioms(at, source);
 					} else if (fs.getName().equals("to_int")) {
 						addToIntAxioms(at, source);
 					} else if (fs.getName().equals("ite") && fs.getReturnSort() != mTheory.getBooleanSort()) {
@@ -1063,7 +1089,15 @@ public class Clausifier {
 					} else if (fs.getName().equals(SMTInterpolConstants.DIFF)) {
 						addDiffAxiom(at, source);
 						mArrayTheory.notifyDiff((CCAppTerm) ccTerm);
+					} else if (fs.getName().equals("bv2nat")) {
+						addBv2NatAxioms(at, ccTerm, source);
+					} else if (fs.getName().equals("nat2bv")) {
+						addNat2BvAxiom(at, ccTerm, source);
 					}
+				}
+
+				if (term.getSort().isBitVecSort()) {
+					addBitvectorAxiom(term, ccTerm, source);
 				}
 
 				if (term.getSort().isArraySort()) {
@@ -1073,7 +1107,6 @@ public class Clausifier {
 					final boolean isConst = funcName.equals(SMTLIBConstants.CONST);
 					mArrayTheory.notifyArray(getCCTerm(term), isStore, isConst);
 				}
-
 
 				if (fs.isConstructor()) {
 					final DataType returnSort = (DataType) fs.getReturnSort().getSortSymbol();
@@ -1087,8 +1120,8 @@ public class Clausifier {
 					}
 					for (final Constructor constr : returnSort.getConstructors()) {
 						final String[] index = new String[] { constr.getName() };
-						final FunctionSymbol isFs = mTheory.getFunctionWithResult("is", index, null,
-								fs.getReturnSort());
+						final FunctionSymbol isFs =
+								mTheory.getFunctionWithResult("is", index, null, fs.getReturnSort());
 						mCClosure.insertReverseTrigger(isFs, ccTerm, 0,
 								new DTReverseTrigger(mDataTypeTheory, this, isFs, ccTerm));
 					}
@@ -1104,14 +1137,15 @@ public class Clausifier {
 					}
 				}
 				if (needsLA) {
-					final MutableAffineTerm mat = createMutableAffinTerm(new SMTAffineTerm(term), source);
+					final MutableAffineTerm mat = createMutableAffinTerm(new Polynomial(term), source);
 					assert mat.getConstant().mEps == 0;
-					shareLATerm(term, new LASharedTerm(term, mat.getSummands(), mat.getConstant().mReal));
+					if (!mLATerms.containsKey(term)) {
+						shareLATerm(term, new LASharedTerm(term, mat.getSummands(), mat.getConstant().mReal));
+					}
 				}
 			}
-			if (term.getSort() == term.getTheory().getBooleanSort()
-				&& !(term instanceof ApplicationTerm
-						&& ((ApplicationTerm) term).getFunction().getName().startsWith("@AUX"))) {
+			if (term.getSort() == term.getTheory().getBooleanSort() && !(term instanceof ApplicationTerm
+					&& ((ApplicationTerm) term).getFunction().getName().startsWith("@AUX"))) {
 				/* If the term is a boolean term, add it's excluded middle axiom */
 				if (term != term.getTheory().mTrue && term != term.getTheory().mFalse) {
 					addExcludedMiddleAxiom(term, source);
@@ -1123,6 +1157,97 @@ public class Clausifier {
 		}
 		if (!mIsRunning) {
 			run();
+		}
+	}
+
+	/*
+	 * Adds the Axiom that nat2bv(x) equals x mod width Thereby gives an interpretation for nat2bv
+	 */
+	private void addNat2BvAxiom(final ApplicationTerm at, final CCTerm ccTerm, final SourceAnnotation source) {
+		assert at.getFunction().getName() == SMTInterpolConstants.NAT2BV;
+		final Term arg = at.getParameters()[0];
+		if (TermUtils.isApplication(SMTInterpolConstants.BV2NAT, arg)
+				&& ((ApplicationTerm) arg).getParameters()[0].getSort() == at.getSort()) {
+			final Term argarg = ((ApplicationTerm) arg).getParameters()[0];
+			final Term axiom = mTheory.term("=", at, argarg);
+			buildClause(mTracker.tautology(axiom, ProofConstants.TAUT_BV2NAT2BV), source);
+		} else {
+			// nat2bv(n) = nat2bv(n mod 2^bvlen)
+			final int width = Integer.valueOf(at.getSort().getIndices()[0]);
+			final Rational modulus = Rational.valueOf(BigInteger.ONE.shiftLeft(width), BigInteger.ONE);
+			final Term mod = normalizeMod(at.getParameters()[0], modulus);
+			final Term axiom = mTheory.term("=", at, mTheory.term(at.getFunction(), mod));
+			buildClause(mTracker.tautology(axiom, ProofConstants.TAUT_NAT2BV), source);
+		}
+	}
+
+	private Term normalizeMod(final Term lhs, final Rational maxNumber) {
+		final Term rhs = mTheory.rational(maxNumber, mTheory.getSort(SMTLIBConstants.INT));
+		final SMTAffineTerm arg0 = new SMTAffineTerm(lhs);
+		arg0.mod(maxNumber);
+		final Term div = mTheory.term("div", arg0.toTerm(mTheory.getSort(SMTLIBConstants.INT)), rhs);
+		arg0.add(maxNumber.negate(), div);
+		return arg0.toTerm(rhs.getSort());
+	}
+
+	/*
+	 * These method adds Axiom to the Clausifier of the form 0 leq ccTerm leq maxNumber
+	 *
+	 * At this point, we assume that the parameter of bv2nat can only be an uninterpreted function symbol.
+	 */
+	private void addBv2NatAxioms(final ApplicationTerm at, final CCTerm ccTerm, final SourceAnnotation source) {
+		assert at.getFunction().getName() == SMTInterpolConstants.BV2NAT;
+		final int width = Integer.valueOf(at.getParameters()[0].getSort().getIndices()[0]);
+		// maxNumber = 2 ^ width
+		final Rational modulus = Rational.valueOf(BigInteger.ONE.shiftLeft(width), BigInteger.ONE);
+
+		final Term arg = at.getParameters()[0];
+		if (TermUtils.isApplication(SMTInterpolConstants.NAT2BV, arg)) {
+			// bv2nat nat2bv n == n mod maxNumber
+
+			final Term mod = normalizeMod(((ApplicationTerm) arg).getParameters()[0], modulus);
+			final Term axiom = mTheory.term("=", at, mod);
+			buildClause(mTracker.tautology(axiom, ProofConstants.TAUT_NAT2BV), source);
+		} else {
+			// 0 <= bv2nat b < maxNumber
+			final Sort intSort = mTheory.getSort(SMTLIBConstants.INT);
+			final Polynomial leq0LowerBound = new Polynomial();
+			leq0LowerBound.add(Rational.MONE, at);
+			final Polynomial leq0UpperBound = new Polynomial(at);
+			leq0UpperBound.add(modulus.sub(Rational.ONE).negate());
+			final Term zero = Rational.ZERO.toTerm(intSort);
+			final Term axiomLowerBound2 = mTheory.term("<=", leq0LowerBound.toTerm(intSort), zero);
+			final Term axiomUpperBound2 = mTheory.term("<=", leq0UpperBound.toTerm(intSort), zero);
+
+			buildClause(mTracker.tautology(axiomLowerBound2, ProofConstants.TAUT_BV2NATLOW), source);
+			buildClause(mTracker.tautology(axiomUpperBound2, ProofConstants.TAUT_BV2NATHIGH), source);
+		}
+	}
+
+	/*
+	 * These method creates (bv2nat a) and (nat2bv (bv2nat a)) terms for a bitvector
+	 * a, so that the corresponding axioms are created.
+	 *
+	 * But only for bitvectors a that are not nat2bv terms themselves.
+	 */
+	private void addBitvectorAxiom(final Term term, final CCTerm ccTerm, final SourceAnnotation source) {
+		if (TermUtils.isApplication(SMTInterpolConstants.NAT2BV, term)) {
+			final Term arg = ((ApplicationTerm) term).getParameters()[0];
+			if (TermUtils.isApplication(SMTInterpolConstants.BV2NAT, arg)
+					&& ((ApplicationTerm) arg).getParameters()[0].getSort() == term.getSort()) {
+				// this is a nat2bv(bv2nat(x)) term with matching sorts.
+				// We don't do anything.
+				return;
+			}
+
+			// this is a nat2bv(y) term but y is not a matching bv2nat. Create the matching
+			// bv2nat term.
+			buildCCTerm(term.getTheory().term(SMTInterpolConstants.BV2NAT, term), source);
+		} else {
+			// Not a nat2bv bitvector term. Create nat2bv(bv2nat(term)).
+			final Term bv2nat = term.getTheory().term(SMTInterpolConstants.BV2NAT, term);
+			buildCCTerm(term.getTheory().term(SMTInterpolConstants.NAT2BV, term.getSort().getIndices(), null, bv2nat),
+					source);
 		}
 	}
 
@@ -1144,6 +1269,15 @@ public class Clausifier {
 		return laShared.getSummands().keySet().iterator().next();
 	}
 
+	private boolean isMonomial(final Term t) {
+		final Polynomial p = new Polynomial(t);
+		if (p.getSummands().size() != 1) {
+			return false;
+		}
+		final Map.Entry<Map<Term, Integer>, Rational> entry = p.getSummands().entrySet().iterator().next();
+		return !entry.getKey().isEmpty() && entry.getValue() == Rational.ONE;
+	}
+
 	/**
 	 * Create a LinVar for a basic term. The term must be a non-basic (no arithmetic on the outside and not a constant)
 	 * numeric term. This will create a linvar or return an already existing linvar.
@@ -1156,8 +1290,15 @@ public class Clausifier {
 	 */
 	public LinVar createLinVar(final Term term, final SourceAnnotation source) {
 		assert term.getSort().isNumericSort();
-		assert term == SMTAffineTerm.create(term).getSummands().keySet().iterator().next();
-		addTermAxioms(term, source);
+		assert isMonomial(term);
+		if ((term instanceof ApplicationTerm)
+				&& ((ApplicationTerm) term).getFunction().getName().equals(SMTLIBConstants.MUL)) {
+			for (final Term factor : ((ApplicationTerm) term).getParameters()) {
+				addTermAxioms(factor, source);
+			}
+		} else {
+			addTermAxioms(term, source);
+		}
 		LASharedTerm laShared = getLATerm(term);
 		if (laShared == null) {
 			final boolean isint = term.getSort().getName().equals("Int");
@@ -1170,14 +1311,45 @@ public class Clausifier {
 		return laShared.getSummands().keySet().iterator().next();
 	}
 
-	public MutableAffineTerm createMutableAffinTerm(final SMTAffineTerm at, final SourceAnnotation source) {
+	private Term createMonomial(final Map<Term, Integer> monomial) {
+		final Polynomial p = new Polynomial();
+		p.add(Rational.ONE, monomial);
+		return p.toTerm(
+				p.isAllIntSummands() ? mTheory.getSort(SMTLIBConstants.INT) : mTheory.getSort(SMTLIBConstants.REAL));
+	}
+
+	public MutableAffineTerm createMutableAffinTerm(final Polynomial at, final SourceAnnotation source) {
 		final MutableAffineTerm res = new MutableAffineTerm();
-		for (final Map.Entry<Term, Rational> summand : at.getSummands().entrySet()) {
-			final LinVar lv = createLinVar(summand.getKey(), source);
+		for (final Map.Entry<Map<Term, Integer>, Rational> summand : at.getSummands().entrySet()) {
 			final Rational coeff = summand.getValue();
-			res.add(coeff, lv);
+			if (summand.getKey().isEmpty()) {
+				res.add(coeff);
+			} else {
+				final Term monomial = createMonomial(summand.getKey());
+				final LinVar lv = createLinVar(monomial, source);
+				res.add(coeff, lv);
+			}
 		}
-		res.add(at.getConstant());
+		return res;
+	}
+
+	public MutableAffineTerm toMutableAffineTerm(final Polynomial poly) {
+		final MutableAffineTerm res = new MutableAffineTerm();
+		for (final Map.Entry<Map<Term, Integer>, Rational> summand : poly.getSummands().entrySet()) {
+			final Rational coeff = summand.getValue();
+			if (summand.getKey().isEmpty()) {
+				res.add(coeff);
+			} else {
+				final Term monomial = createMonomial(summand.getKey());
+				final LASharedTerm laShared = getLATerm(monomial);
+				if (laShared == null) {
+					return null;
+				}
+				assert laShared.getSummands().size() == 1 && laShared.getOffset() == Rational.ZERO
+						&& laShared.getSummands().values().iterator().next() == Rational.ONE;
+				res.add(coeff, laShared.getSummands().keySet().iterator().next());
+			}
+		}
 		return res;
 	}
 
@@ -1223,11 +1395,14 @@ public class Clausifier {
 			case SMTLIBConstants.CONST:
 			case "@EQ":
 			case "is":
+			case "bv2nat":
+			case "nat2bv":
 				return true;
 			case "div":
 			case "mod":
 			case "/":
-				return SMTAffineTerm.convertConstant((ConstantTerm) appTerm.getParameters()[1]) == Rational.ZERO;
+				final Polynomial divisor = new Polynomial(appTerm.getParameters()[1]);
+				return !divisor.isConstant() || divisor.isZero();
 			default:
 				return false;
 			}
@@ -1236,12 +1411,10 @@ public class Clausifier {
 	}
 
 	/**
-	 * A QuantifiedFormula is either skolemized or the universal quantifier is
-	 * dropped before processing the subformula.
+	 * A QuantifiedFormula is either skolemized or the universal quantifier is dropped before processing the subformula.
 	 *
-	 * In the existential case, the variables are replaced by Skolem functions over
-	 * the free variables. In the universal case, the variables are uniquely
-	 * renamed.
+	 * In the existential case, the variables are replaced by Skolem functions over the free variables. In the universal
+	 * case, the variables are uniquely renamed.
 	 *
 	 * @param positive
 	 * @param qf
@@ -1268,8 +1441,8 @@ public class Clausifier {
 					qf.getQuantifier() == QuantifiedFormula.FORALL);
 			for (int i = 0; i < vars.length; ++i) {
 				final String skolemName = "@skolem." + vars[i].getName() + "." + mSkolemCounter++;
-				final FunctionSymbol fsym = mTheory.declareInternalFunction(
-						skolemName, freeVarSorts, freeVars, skolemTerms[i], FunctionSymbol.UNINTERPRETEDINTERNAL);
+				final FunctionSymbol fsym = mTheory.declareInternalFunction(skolemName, freeVarSorts, freeVars,
+						skolemTerms[i], FunctionSymbol.UNINTERPRETEDINTERNAL);
 				substTerms[i] = mTheory.term(fsym, args);
 			}
 
@@ -1289,9 +1462,8 @@ public class Clausifier {
 				substTerms[i] = mTheory.createFreshTermVariable(vars[i].getName(), vars[i].getSort());
 			}
 
-			rule = qf.getQuantifier() == QuantifiedFormula.EXISTS
-					? ProofConstants.getTautExistsPos(substTerms)
-							: ProofConstants.getTautForallNeg(substTerms);
+			rule = qf.getQuantifier() == QuantifiedFormula.EXISTS ? ProofConstants.getTautExistsPos(substTerms)
+					: ProofConstants.getTautForallNeg(substTerms);
 		}
 
 		final FormulaUnLet unlet = new FormulaUnLet();
@@ -1371,7 +1543,13 @@ public class Clausifier {
 	/**
 	 * Map of differences to equality proxies.
 	 */
-	final ScopedHashMap<SMTAffineTerm, EqualityProxy> mEqualities = new ScopedHashMap<>();
+	final ScopedHashMap<Polynomial, EqualityProxy> mEqualities = new ScopedHashMap<>();
+
+	/**
+	 * Cache to determine if a sort is stably infinite.
+	 */
+	private final HashMap<Sort, Boolean> mInfinityMap = new HashMap<>();
+
 	/**
 	 * Current assertion stack level.
 	 */
@@ -1475,6 +1653,17 @@ public class Clausifier {
 		bc.collectLiteral(mTracker.getProvedTerm(term));
 	}
 
+	public void buildClause(final Annotation rule, final SourceAnnotation source, final Term... clauseLits) {
+		final Theory t = clauseLits[0].getTheory();
+		final Term clauseTerm = clauseLits.length == 1 ? clauseLits[0] : t.term("or", clauseLits);
+		final Term tautology = mTracker.tautology(clauseTerm, rule);
+		final BuildClause bc = new BuildClause(tautology, source);
+		pushOperation(bc);
+		for (final Term lit : clauseLits) {
+			bc.collectLiteral(lit);
+		}
+	}
+
 	public void buildClauseWithTautology(final Term term, final SourceAnnotation source, final Term[] tautLits,
 			final Annotation rule) {
 		final Theory t = term.getTheory();
@@ -1501,8 +1690,7 @@ public class Clausifier {
 		assert term == toPositive(term);
 
 		final int oldFlags = getTermFlags(term);
-		final int auxflag = positive ? Clausifier.POS_AUX_AXIOMS_ADDED
-				: Clausifier.NEG_AUX_AXIOMS_ADDED;
+		final int auxflag = positive ? Clausifier.POS_AUX_AXIOMS_ADDED : Clausifier.NEG_AUX_AXIOMS_ADDED;
 		if ((oldFlags & auxflag) != 0) {
 			// We've already added the aux axioms
 			// Nothing to do
@@ -1529,7 +1717,7 @@ public class Clausifier {
 	public void addAuxAxiomsQuant(final Term term, final Term auxTerm, final SourceAnnotation source) {
 		final int oldFlags = getTermFlags(term);
 		final int auxflag = Clausifier.POS_AUX_AXIOMS_ADDED | Clausifier.NEG_AUX_AXIOMS_ADDED;
-		if ((oldFlags & auxflag) == auxflag ) {
+		if ((oldFlags & auxflag) == auxflag) {
 			// We've already added the aux axioms
 			// Nothing to do
 			return;
@@ -1543,13 +1731,11 @@ public class Clausifier {
 	}
 
 	/**
-	 * Create the clause that states that the (possibly negated) term implies the
-	 * literal lit. This clause is used to define the literal lit, which stands for
-	 * the subformula term or (not term).
+	 * Create the clause that states that the (possibly negated) term implies the literal lit. This clause is used to
+	 * define the literal lit, which stands for the subformula term or (not term).
 	 *
 	 * @param lit
-	 *            The literal for the (possibly negated) term. This must be the
-	 *            canonic literal for the (negated) term.
+	 *            The literal for the (possibly negated) term. This must be the canonic literal for the (negated) term.
 	 * @param term
 	 *            The term.
 	 * @param negative
@@ -1685,7 +1871,7 @@ public class Clausifier {
 					buildAuxClause(lit, axiom, source);
 				}
 			} else {
-				assert lit instanceof QuantEquality;
+				 assert lit instanceof QuantEquality;
 				if (negative) {
 					// (or (= AUX false) term)
 					Term axiom = t.term("or", litTerm, term);
@@ -1722,8 +1908,8 @@ public class Clausifier {
 					rule = ProofConstants.TAUT_MATCH_DEFAULT;
 				} else {
 					// build is-condition
-					final FunctionSymbol isFs = theory.getFunctionWithResult("is", new String[] { c.getName() }, null,
-							dataTerm.getSort());
+					final FunctionSymbol isFs =
+							theory.getFunctionWithResult("is", new String[] { c.getName() }, null, dataTerm.getSort());
 					final Term isTerm = theory.term(isFs, dataTerm);
 					cases.put(c, isTerm);
 					clause.add(theory.term("not", isTerm));
@@ -1779,12 +1965,11 @@ public class Clausifier {
 				mUtils.convertBinaryEq(mTracker.reflexivity(axiom)));
 		buildClause(provedAxiom, source);
 		if (Config.ARRAY_ALWAYS_ADD_READ
-				// HACK: We mean "finite sorts"
-				|| v.getSort() == mTheory.getBooleanSort()) {
+				|| !isStablyInfinite(v.getSort())) {
 			final Term a = store.getParameters()[0];
 			final Term sel = mTheory.term("select", a, i);
 			// Simply create the CCTerm
-			createCCTerm(sel, source);
+			buildCCTerm(sel, source);
 		}
 	}
 
@@ -1801,22 +1986,71 @@ public class Clausifier {
 	public void addDivideAxioms(final ApplicationTerm divTerm, final SourceAnnotation source) {
 		final Theory theory = divTerm.getTheory();
 		final Term[] divParams = divTerm.getParameters();
-		final Rational divisor = (Rational) ((ConstantTerm) divParams[1]).getValue();
-		if (divisor == Rational.ZERO) {
+		final Polynomial divisorPoly = new Polynomial(divParams[1]);
+		if (divisorPoly.isZero()) {
 			/* Do not add any axiom if divisor is 0. */
 			return;
 		}
 		final Term zero = Rational.ZERO.toTerm(divTerm.getSort());
-		final SMTAffineTerm diff = new SMTAffineTerm(divParams[0]);
-		diff.negate(); // -x
-		diff.add(divisor, divTerm); // -x + d * (div x d)
+		final Polynomial diff = new Polynomial(divParams[0]);
+		diff.mul(Rational.MONE); // -x
+		final Polynomial mulD = new Polynomial(divTerm);
+		mulD.mul(divisorPoly); // d * (div x d)
+		diff.add(Rational.ONE, mulD); // -x + d * (div x d)
+
 		// (<= (+ (- x) (* d (div x d))) 0)
-		Term axiom = theory.term("<=", diff.toTerm(mCompiler, divTerm.getSort()), zero);
-		buildClause(mTracker.tautology(axiom, ProofConstants.TAUT_DIV_LOW), source);
+		final Term axiomLow = theory.term("<=", mCompiler.unifyPolynomial(diff, divTerm.getSort()), zero);
+		final Annotation annotLow = new Annotation(ProofConstants.TAUT_DIV_LOW, divTerm);
+		if (divisorPoly.isConstant()) {
+			buildClause(annotLow, source, axiomLow);
+		} else {
+			final Term isZero = theory.term(SMTLIBConstants.EQUALS, divParams[1], zero);
+			buildClause(annotLow, source, isZero, axiomLow);
+		}
+
 		// (not (<= (+ (- x) (* d (div x d) |d|)) 0))
-		diff.add(divisor.abs());
-		axiom = theory.term("not", theory.term("<=", diff.toTerm(mCompiler, divTerm.getSort()), zero));
-		buildClause(mTracker.tautology(axiom, ProofConstants.TAUT_DIV_HIGH), source);
+		final Annotation annotHigh = new Annotation(ProofConstants.TAUT_DIV_HIGH, divTerm);
+		if (divisorPoly.isConstant()) {
+			diff.add(divisorPoly.getConstant().abs());
+			final Term axiomHigh = theory.term("not",
+					theory.term("<=", mCompiler.unifyPolynomial(diff, divTerm.getSort()), zero));
+			buildClause(annotHigh, source, axiomHigh);
+		} else {
+			final Polynomial divisorPlus1 = new Polynomial(divParams[1]);
+			divisorPlus1.add(Rational.ONE);
+			final Term notIsNeg = theory.term(SMTLIBConstants.NOT,
+					theory.term(SMTLIBConstants.LEQ, mCompiler.unifyPolynomial(divisorPlus1, divTerm.getSort()), zero));
+			diff.add(Rational.MONE, divisorPoly);
+			final Term axiomHighMinus = theory.term("not",
+					theory.term("<=", mCompiler.unifyPolynomial(diff, divTerm.getSort()), zero));
+			buildClause(annotHigh, source, notIsNeg, axiomHighMinus);
+			final Term notIsPos = theory.term(SMTLIBConstants.LEQ, divParams[1], zero);
+			diff.add(Rational.TWO, divisorPoly);
+			final Term axiomHighPlus = theory.term("not",
+					theory.term("<=", mCompiler.unifyPolynomial(diff, divTerm.getSort()), zero));
+			buildClause(annotHigh, source, notIsPos, axiomHighPlus);
+		}
+	}
+
+	public void addModuloAxioms(final ApplicationTerm modTerm, final SourceAnnotation source) {
+		final Theory theory = modTerm.getTheory();
+		final Term[] divParams = modTerm.getParameters();
+		final Term divTerm = theory.term("div", divParams[0], divParams[1]);
+		final Polynomial divisorPoly = new Polynomial(divParams[1]);
+		if (divisorPoly.isZero()) {
+			/* Do not add any axiom if divisor is 0. */
+			return;
+		}
+		assert !divisorPoly.isConstant();
+		final Term zero = Rational.ZERO.toTerm(divTerm.getSort());
+		final Term isZero = theory.term(SMTLIBConstants.EQUALS, divParams[1], zero);
+		final Polynomial diff = new Polynomial(divParams[0]);
+		final Polynomial mulD = new Polynomial(divTerm);
+		mulD.mul(divisorPoly); // d * (div x d)
+		diff.add(Rational.MONE, mulD); // x - d * (div x d)
+		// (or (= d 0) (= (mod x d) (+ (- x) (* d (div x d)))))
+		final Term axiom = theory.term("=", modTerm, mCompiler.unifyPolynomial(diff, divTerm.getSort()));
+		buildClause(ProofConstants.TAUT_MODULO, source, isZero, axiom);
 	}
 
 	/**
@@ -1827,16 +2061,16 @@ public class Clausifier {
 		final Theory theory = toIntTerm.getTheory();
 		final Term realTerm = toIntTerm.getParameters()[0];
 		final Term zero = Rational.ZERO.toTerm(realTerm.getSort());
-		final SMTAffineTerm diff = new SMTAffineTerm(realTerm);
-		diff.negate();
+		final Polynomial diff = new Polynomial(realTerm);
+		diff.mul(Rational.MONE);
 		diff.add(Rational.ONE, toIntTerm);
 		// (<= (+ (to_real (to_int x)) (- x)) 0)
-		Term axiom = theory.term("<=", diff.toTerm(mCompiler, realTerm.getSort()), zero);
-		buildClause(mTracker.tautology(axiom, ProofConstants.TAUT_TO_INT_LOW), source);
+		Term axiom = theory.term("<=", mCompiler.unifyPolynomial(diff, realTerm.getSort()), zero);
+		buildClause(mTracker.tautology(axiom, new Annotation(ProofConstants.TAUT_TO_INT_LOW, toIntTerm)), source);
 		// (not (<= (+ (to_real (to_int x)) (- x) 1) 0))
 		diff.add(Rational.ONE);
-		axiom = theory.term("not", theory.term("<=", diff.toTerm(mCompiler, realTerm.getSort()), zero));
-		buildClause(mTracker.tautology(axiom, ProofConstants.TAUT_TO_INT_HIGH), source);
+		axiom = theory.term("not", theory.term("<=", mCompiler.unifyPolynomial(diff, realTerm.getSort()), zero));
+		buildClause(mTracker.tautology(axiom, new Annotation(ProofConstants.TAUT_TO_INT_HIGH, toIntTerm)), source);
 	}
 
 	/**
@@ -1890,8 +2124,8 @@ public class Clausifier {
 				rule = ProofConstants.TAUT_MATCH_DEFAULT;
 			} else {
 				// build is-condition
-				final FunctionSymbol isFs = theory.getFunctionWithResult("is", new String[] { c.getName() }, null,
-						dataTerm.getSort());
+				final FunctionSymbol isFs =
+						theory.getFunctionWithResult("is", new String[] { c.getName() }, null, dataTerm.getSort());
 				final Term isTerm = theory.term(isFs, dataTerm);
 				cases.put(constrs[caseNr], isTerm);
 				clause.add(theory.term("not", isTerm));
@@ -1934,9 +2168,8 @@ public class Clausifier {
 	 * @return the equality proxy.
 	 */
 	public EqualityProxy createEqualityProxy(final Term lhs, final Term rhs, final SourceAnnotation source) {
-		final SMTAffineTerm diff = new SMTAffineTerm(lhs);
-		diff.negate();
-		diff.add(new SMTAffineTerm(rhs));
+		final Polynomial diff = new Polynomial(lhs);
+		diff.add(Rational.MONE, rhs);
 		if (diff.isConstant()) {
 			if (diff.getConstant().equals(Rational.ZERO)) {
 				return EqualityProxy.getTrueProxy();
@@ -1944,7 +2177,7 @@ public class Clausifier {
 				return EqualityProxy.getFalseProxy();
 			}
 		}
-		diff.div(diff.getGcd());
+		diff.mul(diff.getGcd().inverse());
 		Sort sort = lhs.getSort();
 		// normalize equality to integer logic if all variables are integer.
 		if (mTheory.getLogic().isIRA() && sort.getName().equals("Real") && diff.isAllIntSummands()) {
@@ -1961,7 +2194,7 @@ public class Clausifier {
 		if (eqForm != null) {
 			return eqForm;
 		}
-		diff.negate();
+		diff.mul(Rational.MONE);
 		eqForm = mEqualities.get(diff);
 		if (eqForm != null) {
 			return eqForm;
@@ -1974,15 +2207,17 @@ public class Clausifier {
 	/**
 	 * Check if an equality between two terms is trivially true or false.
 	 *
-	 * @param lhs    the left side of the equality
-	 * @param rhs    the right side of the equality
-	 * @param theory the theory
-	 * @return the true (false) term if the equality is trivially true (false), null
-	 *         otherwise.
+	 * @param lhs
+	 *            the left side of the equality
+	 * @param rhs
+	 *            the right side of the equality
+	 * @param theory
+	 *            the theory
+	 * @return the true (false) term if the equality is trivially true (false), null otherwise.
 	 */
 	public static Term checkAndGetTrivialEquality(final Term lhs, final Term rhs, final Theory theory) {
 		// This code corresponds to the check in createEqualityProxy(...)
-		final SMTAffineTerm diff = new SMTAffineTerm(lhs);
+		final Polynomial diff = new Polynomial(lhs);
 		diff.add(Rational.MONE, rhs);
 		if (diff.isConstant()) {
 			if (diff.getConstant().equals(Rational.ZERO)) {
@@ -1991,7 +2226,7 @@ public class Clausifier {
 				return theory.mFalse;
 			}
 		} else {
-			diff.div(diff.getGcd());
+			diff.mul(diff.getGcd().inverse());
 			Sort sort = lhs.getSort();
 			// Normalize equality to integer logic if all variables are integer.
 			if (theory.getLogic().isIRA() && sort.getName().equals("Real") && diff.isAllIntSummands()) {
@@ -2027,8 +2262,8 @@ public class Clausifier {
 		ILiteral lit = getILiteral(term);
 		if (lit == null) {
 			/*
-			 * when inserting a cnf-auxvar (for tseitin-style encoding) in a quantified formula, we need it to depend on the
-			 * currently active quantifiers
+			 * when inserting a cnf-auxvar (for tseitin-style encoding) in a quantified formula, we need it to depend on
+			 * the currently active quantifiers
 			 */
 			if (term.getFreeVars().length > 0) {
 				final Term auxTerm = createQuantAuxTerm(term, source);
@@ -2135,9 +2370,8 @@ public class Clausifier {
 
 	private void setupQuantifiers() {
 		if (mQuantTheory == null) {
-			mQuantTheory =
-					new QuantifierTheory(mTheory, mEngine, this, mInstantiationMethod, mIsUnknownTermDawgsEnabled,
-							mPropagateUnknownTerms, mPropagateUnknownAux);
+			mQuantTheory = new QuantifierTheory(mTheory, mEngine, this, mInstantiationMethod,
+					mIsUnknownTermDawgsEnabled, mPropagateUnknownTerms, mPropagateUnknownAux);
 			mEngine.addTheory(mQuantTheory);
 		}
 	}
@@ -2152,11 +2386,146 @@ public class Clausifier {
 		mPropagateUnknownAux = propagateUnknownAux;
 	}
 
+	private boolean isBasicStablyInfinite(final Sort sort) {
+		assert sort == sort.getRealSort() && !sort.isSortVariable();
+		assert !sort.getSortSymbol().isDatatype() && !sort.isArraySort();
+		if (sort.equals(sort.getTheory().getBooleanSort()) || sort.isBitVecSort()) {
+			// boolean and bitvector sorts are always finite.
+			return false;
+		} else if (!sort.isInternal()) {
+			// uninterpreted sorts are stably infinite unless we have quantifiers.
+			return mQuantTheory == null;
+		} else {
+			// all other internal theories are stably infinite.
+			assert sort.isNumericSort();
+			return true;
+		}
+	}
+
+	/**
+	 * This function determines if a given sort contains only a single element.
+	 *
+	 * @param sort the sort in question.
+	 * @return True if sort is infinite else False
+	 */
+	public boolean isSingleton(Sort sort) {
+		sort = sort.getRealSort();
+		if (sort.isArraySort()) {
+			return isSingleton(sort.getArguments()[1]);
+		} else if (sort.getSortSymbol().isDatatype()) {
+			final Constructor[] cs = ((DataType) sort.getSortSymbol()).getConstructors();
+			if (cs.length != 1) {
+				return false;
+			}
+			final Sort[] datatypeParameters = sort.getArguments();
+			for (Sort argSort : cs[0].getArgumentSorts()) {
+				if (datatypeParameters.length != 0) {
+					argSort = argSort.mapSort(datatypeParameters);
+				}
+				if (!isSingleton(argSort)) {
+					return false;
+				}
+			}
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	/**
+	 * This function determines if a given sort is infinite or not.
+	 *
+	 * @param sort the sort in question.
+	 * @return True if sort is infinite else False
+	 */
+	public boolean isStablyInfinite(Sort sort) {
+		sort = sort.getRealSort();
+		if (!sort.getSortSymbol().isDatatype() && !sort.isArraySort()) {
+			return isBasicStablyInfinite(sort);
+		}
+		final Boolean cacheVal = mInfinityMap.get(sort);
+		if (cacheVal != null) {
+			return cacheVal;
+		}
+		// todo is the stack of sorts, for which we still have to determine the
+		// inifinity.
+		// dependent is the stack of parent sorts, for which we have not determined
+		// infinity yet.
+		// if x is in dependent at the beginning of the while loop, it's guaranteed that
+		// todo contains x at least once and that all elements after the last occurrence
+		// of x are descendents of x.
+		final ArrayDeque<Sort> todo = new ArrayDeque<>();
+		final Set<Sort> dependent = new LinkedHashSet<>();
+		todo.push(sort);
+		todo_loop: while (!todo.isEmpty()) {
+			final Sort currSort = todo.pop();
+			assert currSort.getSortSymbol().isDatatype() || currSort.isArraySort();
+			// we may have already determined the status earlier; in that case just take the
+			// next todo item.
+			if (mInfinityMap.get(currSort) != null) {
+				continue todo_loop;
+			}
+			final Set<Sort> subSorts = new LinkedHashSet<>();
+			// Get all dependent subSorts
+			if (currSort.getSortSymbol().isDatatype()) {
+				final Sort[] datatypeParameters = currSort.getArguments();
+				for (final Constructor c : ((DataType) currSort.getSortSymbol()).getConstructors()) {
+					for (Sort s : c.getArgumentSorts()) {
+						if (datatypeParameters.length > 0) {
+							s = s.mapSort(datatypeParameters);
+						}
+						subSorts.add(s.getRealSort());
+					}
+				}
+			} else {
+				final Sort[] indexElemSort = currSort.getArguments();
+				// special case for arrays: singleton element sort means
+				// array is not stably infinite. In that case we keep the
+				// subSorts empty so we go into the false case.
+				if (!isSingleton(indexElemSort[1])) {
+					subSorts.addAll(Arrays.asList(indexElemSort));
+				}
+			}
+			dependent.add(currSort);
+			// check sub sorts, if one of them is stably infinite then currSort is stably infinite.
+			// if we find a cycle (currSort appears in dependent), currSort also stably infinite.
+			// otherwise we need to check the remaining subSorts first and then try again.
+			final Iterator<Sort> iterator = subSorts.iterator();
+			while (iterator.hasNext()) {
+				final Sort argSort = iterator.next();
+				final Boolean isStablyInfinite = dependent.contains(argSort) ? Boolean.TRUE :
+						argSort.getSortSymbol().isDatatype() || argSort.isArraySort() ? mInfinityMap.get(argSort)
+								: Boolean.valueOf(isBasicStablyInfinite(argSort));
+				if (isStablyInfinite != null) {
+					iterator.remove();
+					if (isStablyInfinite) {
+						mInfinityMap.put(currSort, true);
+						dependent.remove(currSort);
+						continue todo_loop;
+					}
+				}
+			}
+			// If we are here, we did not find any stably infinite arg sort.
+			// subSorts contains all argument sorts that are still undecided.
+			if (!subSorts.isEmpty()) {
+				todo.push(currSort);
+				for (final Sort s : subSorts) {
+					todo.push(s);
+				}
+			} else {
+				// all arg sorts are finite.
+				mInfinityMap.put(currSort, false);
+				dependent.remove(currSort);
+			}
+		}
+		return mInfinityMap.get(sort);
+	}
+
 	public void setLogic(final Logics logic) {
 		// Set up the theories.
 		// Note that order is important: the easier theories should be first,
 		// undecidable theories like quantifier theory should be last.
-		if (logic.isUF() || logic.isArray() || logic.isArithmetic() || logic.isQuantified() || logic.isDatatype()) {
+		if (logic.isUF() || logic.isArray() || logic.isArithmetic() || logic.isQuantified() || logic.isDatatype() || logic.isBitVector()) {
 			// also need UF for div/mod
 			// and for quantifiers for AUX functions
 			setupCClosure();
@@ -2167,7 +2536,7 @@ public class Clausifier {
 		if (logic.isDatatype()) {
 			setupDataTypeTheory();
 		}
-		if (logic.isArithmetic()) {
+		if (logic.isArithmetic() || logic.isBitVector()) {
 			setupLinArithmetic();
 		}
 		if (logic.isQuantified()) {
@@ -2350,6 +2719,7 @@ public class Clausifier {
 			mEqualities.endScope();
 		}
 		mStackLevel -= numpops;
+		mInfinityMap.clear();
 	}
 
 	private ProofNode getProofNewSource(final Term proof, final SourceAnnotation source) {
@@ -2410,13 +2780,14 @@ public class Clausifier {
 	private Literal createLeq0(final ApplicationTerm leq0term, final SourceAnnotation source) {
 		Literal lit = (Literal) getILiteral(leq0term);
 		if (lit == null) {
-			final SMTAffineTerm sum = new SMTAffineTerm(leq0term.getParameters()[0]);
+			assert ((ConstantTerm) leq0term.getParameters()[1]).getValue() == Rational.ZERO;
+			final Polynomial sum = new Polynomial(leq0term.getParameters()[0]);
 			final MutableAffineTerm msum = createMutableAffinTerm(sum, source);
 			lit = mLASolver.generateConstraint(msum, false);
 			setLiteral(leq0term, lit);
 			// we don't need to add any aux axioms for (<= t 0) literal.
-			setTermFlags(leq0term, getTermFlags(leq0term) | Clausifier.POS_AUX_AXIOMS_ADDED
-					| Clausifier.NEG_AUX_AXIOMS_ADDED);
+			setTermFlags(leq0term,
+					getTermFlags(leq0term) | Clausifier.POS_AUX_AXIOMS_ADDED | Clausifier.NEG_AUX_AXIOMS_ADDED);
 		}
 		return lit;
 	}
@@ -2459,8 +2830,7 @@ public class Clausifier {
 				}
 			}
 			setLiteral(term, lit);
-			setTermFlags(term, getTermFlags(term) | Clausifier.POS_AUX_AXIOMS_ADDED
-					| Clausifier.NEG_AUX_AXIOMS_ADDED);
+			setTermFlags(term, getTermFlags(term) | Clausifier.POS_AUX_AXIOMS_ADDED | Clausifier.NEG_AUX_AXIOMS_ADDED);
 		}
 		return lit;
 	}
@@ -2553,10 +2923,12 @@ public class Clausifier {
 		public ILiteral negate() {
 			return mFALSE;
 		}
+
 		@Override
 		public boolean isGround() {
 			return true;
 		}
+
 		@Override
 		public Term getSMTFormula(final Theory theory) {
 			return theory.mTrue;
@@ -2573,10 +2945,12 @@ public class Clausifier {
 		public ILiteral negate() {
 			return mTRUE;
 		}
+
 		@Override
 		public boolean isGround() {
 			return true;
 		}
+
 		@Override
 		public Term getSMTFormula(final Theory theory) {
 			return theory.mFalse;
