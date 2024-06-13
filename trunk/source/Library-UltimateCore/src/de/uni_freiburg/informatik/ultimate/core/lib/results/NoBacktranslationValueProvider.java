@@ -1,5 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.core.lib.results;
 
+import java.util.EnumSet;
+
+import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslationValueProvider;
 
 /**
@@ -25,7 +28,12 @@ public class NoBacktranslationValueProvider<TTE, TE> implements IBacktranslation
 	}
 
 	@Override
-	public int getStartColumnNumberFromStep(final TTE step) {
+	public int getLineNumberFromStep(final TTE step, final EnumSet<AtomicTraceElement.StepInfo> stepInfo) {
+		throw new UnsupportedOperationException(NO_BACKTRANSLATION_VALUE_PROVIDER);
+	}
+
+	@Override
+	public int getColumnNumberFromStep(final TTE step, final EnumSet<AtomicTraceElement.StepInfo> stepInfo) {
 		throw new UnsupportedOperationException(NO_BACKTRANSLATION_VALUE_PROVIDER);
 	}
 
