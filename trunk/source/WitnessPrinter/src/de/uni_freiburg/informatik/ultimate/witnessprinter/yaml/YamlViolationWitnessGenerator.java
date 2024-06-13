@@ -97,7 +97,7 @@ public class YamlViolationWitnessGenerator<TE, E> {
 			final ProgramState<E> currentState = mExecution.getProgramState(i);
 			final int startLine = mStringProvider.getStartLineNumberFromStep(currentStep);
 			// TODO: change column in Location to startColumn once we can calculate the right column
-			final int startColumn = mStringProvider.getStartColumnNumberFromStep(currentStep);
+			// final int startColumn = mStringProvider.getStartColumnNumberFromStep(currentStep);
 			final String function = mStringProvider.getFunctionFromStep(currentStep);
 			final String filename = mStringProvider.getFileNameFromStep(currentStep);
 			final Location currentLocation =
