@@ -113,6 +113,7 @@ public class EmpireComputation<L, P> {
 
 	private Set<Pair<Territory<P>, P>> symbolicExecution(final Set<P> proofPlaces) {
 		final var result = new HashSet<Pair<Territory<P>, P>>();
+		final var bridgeTerritories = new HashSet<Pair<Territory<P>, P>>();
 
 		final var queue = new ArrayDeque<Pair<Territory<P>, P>>();
 		queue.offer(getInitialPair(proofPlaces));
@@ -139,6 +140,8 @@ public class EmpireComputation<L, P> {
 				final var succTerritory = successor.getFirst();
 				final var succLawPlace = successor.getSecond();
 				mLogger.debug("successor of %s under transitions %s is %s", pair, transition, successor);
+				final var numBystanders = territory.getRegions().size()
+						- DataStructureUtils.difference(transition.getPredecessors(), mAssertionPlaces).size();
 
 				if (lawPlace.equals(succLawPlace) && territory.equals(succTerritory)) {
 					// do nothing
@@ -156,6 +159,9 @@ public class EmpireComputation<L, P> {
 
 					mLogger.debug("\t--> subsumption; abandoning %s...", pair);
 					break;
+				} else if (numBystanders > 0 && !lawPlace.equals(succLawPlace)) {
+					bridgeTerritories.add(successor);
+					queue.offer(successor);
 				} else {
 					successors.add(successor);
 					mLogger.debug("\t--> regular successor; adding...");
@@ -169,7 +175,7 @@ public class EmpireComputation<L, P> {
 				queue.offer(succ);
 			}
 		}
-
+		result.addAll(bridgeTerritories);
 		return result;
 	}
 
@@ -240,8 +246,6 @@ public class EmpireComputation<L, P> {
 
 		final var predecessors = transition.getPredecessors();
 		final var successors = transition.getSuccessors();
-		final var predecessorsOriginal = DataStructureUtils.intersection(predecessors, mOriginalPlaces);
-		final var successorsOriginal = DataStructureUtils.intersection(successors, mOriginalPlaces);
 		if (mRefinedNet.isAccepting(new Marking<>(successors))) {
 			return null;
 		}
@@ -261,11 +265,11 @@ public class EmpireComputation<L, P> {
 		}
 
 		final var remainingRegions = DataStructureUtils.difference(new HashSet<>(territory.getRegions()), regions);
+		final var predecessorsOriginal = DataStructureUtils.intersection(predecessors, mOriginalPlaces);
+		final var successorsOriginal = DataStructureUtils.intersection(successors, mOriginalPlaces);
 		if (predecessors.size() != successors.size() || newLawPlace != lawPlace) {
-			for (final var succ : successors) {
-				if (mOriginalPlaces.contains(succ)) {
-					regions.add(new Region<>(ImmutableSet.singleton(succ)));
-				}
+			for (final var succ : successorsOriginal) {
+				regions.add(new Region<>(ImmutableSet.singleton(succ)));
 			}
 		} else if (predecessorsOriginal.size() == 1 && successorsOriginal.size() == 1) {
 			final Region<P> matchingRegion = DataStructureUtils.getOneAndOnly(remainingRegions, "remaining region");
@@ -318,6 +322,10 @@ public class EmpireComputation<L, P> {
 	private boolean isPositivelyCorelated(final Region<P> region, final P place) {
 		return !region.contains(place)
 				&& region.getPlaces().stream().allMatch(p -> mCoRelation.getPlacesCorelation(place, p));
+	}
+
+	private boolean isReplacementSuccessor() {
+		return true;
 	}
 
 	public Map<IPredicate, P> getPredicatePlaceMap() {
