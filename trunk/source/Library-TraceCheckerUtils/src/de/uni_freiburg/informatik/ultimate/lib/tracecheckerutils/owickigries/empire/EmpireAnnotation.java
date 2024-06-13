@@ -144,6 +144,9 @@ public class EmpireAnnotation<PLACE> {
 			}
 			final var potentialSuccessors = DataStructureUtils.difference(territory.getRegions(), bystanders).stream()
 					.collect(Collectors.toSet());
+			if (potentialSuccessors.size() != successorPlaces.size()) {
+				continue;
+			}
 			var discard = false;
 			for (final PLACE succPlace : successorPlaces) {
 				final var succRegions =

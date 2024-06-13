@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -110,8 +109,7 @@ public class EmpireValidityCheck<PLACE, LETTER extends IAction> {
 
 		final Set<Pair<Territory<PLACE>, IPredicate>> initialTerritories =
 				mEmpireAnnotation.getMarkingTerritories(new Marking<>(ImmutableSet.copyOf(mNet.getInitialPlaces())));
-		final var initialValidity = checkInitialTerritories(initialTerritories);
-		if (initialValidity != Validity.VALID) {
+		if (checkInitialTerritories(initialTerritories) != Validity.VALID) {
 			return Validity.INVALID;
 		}
 		if (checkSuccessorValidity(initialTerritories) != Validity.VALID) {
@@ -143,9 +141,7 @@ public class EmpireValidityCheck<PLACE, LETTER extends IAction> {
 
 	private Validity checkSuccessorValidity(final Set<Pair<Territory<PLACE>, IPredicate>> initialTerritories) {
 		final Set<Pair<Territory<PLACE>, IPredicate>> visitedPairs = new HashSet<>();
-		final var queue = new ArrayDeque<Pair<Territory<PLACE>, IPredicate>>(initialTerritories);
-		while (!queue.isEmpty()) {
-			final var pair = queue.poll();
+		for (final var pair : mEmpireAnnotation.getEmpire()) {
 			if (!visitedPairs.add(pair)) {
 				continue;
 			}
@@ -161,23 +157,19 @@ public class EmpireValidityCheck<PLACE, LETTER extends IAction> {
 				final var equivalentTerritories = getEquivalentTerritories(transition, bystanders);
 				final var lawConjunction = getLawConjunction(equivalentTerritories);
 				final var successorPairs = mEmpireAnnotation.getSuccessorPairs(bystanders, successors);
-				final List<Pair<Territory<PLACE>, IPredicate>> strongSuccessors =
-						getStrongSuccessors(successorPairs, lawConjunction, transition, pair);
-				final Validity successorValidity = strongSuccessors.isEmpty() ? Validity.INVALID : Validity.VALID;
+				final Validity successorValidity = successorPairs.isEmpty() ? Validity.INVALID : Validity.VALID;
 				final Validity contradiction = checkContradiction(lawConjunction, transition, territory);
 				if ((contradiction != Validity.VALID) && (successorValidity != Validity.VALID)) {
+					mLogger.warn(
+							"The pair:\n %s \n has no valid successor and does not evaluate to false with \n transition %s",
+							pair, transition.getSymbol().getTransformula());
 					return Validity.INVALID;
 				}
-				for (final Pair<Territory<PLACE>, IPredicate> pair2 : strongSuccessors) {
-					queue.add(pair2);
+				final var hoareValidity = checkHoareValidity(successorPairs, lawConjunction, transition);
+				if (!hoareValidity) {
+					return Validity.INVALID;
 				}
 			}
-		}
-
-		if (!visitedPairs.equals(mEmpireAnnotation.getEmpire())) {
-			mLogger.warn("Not all pairs are reachable from an initial pair. Unreachable pairs:\n %s",
-					DataStructureUtils.difference(mEmpireAnnotation.getEmpire(), visitedPairs));
-			return Validity.INVALID;
 		}
 		return Validity.VALID;
 	}
@@ -216,6 +208,19 @@ public class EmpireValidityCheck<PLACE, LETTER extends IAction> {
 			return Validity.INVALID;
 		}
 		return Validity.VALID;
+	}
+
+	private boolean checkHoareValidity(final Set<Pair<Territory<PLACE>, IPredicate>> successorPairs,
+			final IPredicate lawConjunction, final Transition<LETTER, PLACE> transition) {
+		for (final Pair<Territory<PLACE>, IPredicate> succPair : successorPairs) {
+			final var valid = checkHoareTriple(lawConjunction, succPair.getSecond(), transition);
+			if (!valid) {
+				mLogger.warn("Invalid Hoare Triple\n \tprecondition %s \taction %s \tpostcondition %s", lawConjunction,
+						transition.getSymbol().getTransformula(), succPair.getSecond());
+				return false;
+			}
+		}
+		return true;
 	}
 
 	List<Pair<Territory<PLACE>, IPredicate>> getStrongSuccessors(
