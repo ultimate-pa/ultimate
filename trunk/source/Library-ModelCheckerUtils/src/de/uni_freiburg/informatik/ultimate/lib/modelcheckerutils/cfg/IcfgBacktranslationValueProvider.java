@@ -26,6 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg;
 
+import java.util.EnumSet;
+
+import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslationValueProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -48,7 +51,12 @@ public class IcfgBacktranslationValueProvider<L extends IAction> implements IBac
 	}
 
 	@Override
-	public int getStartColumnNumberFromStep(final L step) {
+	public int getLineNumberFromStep(final L step, final EnumSet<AtomicTraceElement.StepInfo> stepInfo) {
+		return -1;
+	}
+
+	@Override
+	public int getColumnNumberFromStep(final L step, final EnumSet<AtomicTraceElement.StepInfo> stepInfo) {
 		return -1;
 	}
 
