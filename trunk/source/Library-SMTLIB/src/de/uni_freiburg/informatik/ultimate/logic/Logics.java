@@ -64,6 +64,7 @@ public enum Logics {
 	QF_UF     (Features.UF),
 	QF_UFBV   (Features.UF + Features.BV),
 	QF_UFBVDT (Features.UF + Features.BV + Features.DT),
+	QF_UFBVFP (Features.UF + Features.BV + Features.FP),
 	QF_UFBVLIA (Features.UF + Features.BV + Features.LA + Features.IA),
 	QF_UFDT   (Features.UF + Features.DT),
 	QF_UFDTNIA (Features.UF + Features.DT + Features.NA + Features.IA),
@@ -77,6 +78,7 @@ public enum Logics {
 	QF_UFLIRA (Features.UF + Features.LA + Features.IA + Features.RA),
 	QF_UFLRA  (Features.UF + Features.LA + Features.RA),
 	QF_UFNIA  (Features.UF + Features.NA + Features.IA),
+	QF_UFNIRA (Features.UF + Features.NA + Features.IA + Features.RA),
 	QF_UFNRA  (Features.UF + Features.NA + Features.RA),
 
 	ABV       (Features.QU + Features.AX + Features.BV),
