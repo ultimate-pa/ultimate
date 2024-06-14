@@ -109,7 +109,7 @@ pipeline {
       }
       steps {
         withCredentials([string(credentialsId: 'SonarTokenJenkinsPipeline', variable: 'SONAR_TOKEN')]) {
-          withMaven(mavenOpts: '-Xmx4g -Xss4m', options: [jacocoPublisher()], publisherStrategy: 'EXPLICIT') {
+          withMaven(jdk: 'JDK17', mavenOpts: '-Xmx4g -Xss4m', options: [jacocoPublisher()], publisherStrategy: 'EXPLICIT') {
             sh 'cd trunk/source/BA_MavenParentUltimate && mvn sonar:sonar -Pcoverage -Dsonar.host.url=https://sonar.sopranium.de -Dsonar.login=$SONAR_TOKEN'
           }
         }
