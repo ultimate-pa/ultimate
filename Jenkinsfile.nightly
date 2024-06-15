@@ -97,8 +97,8 @@ pipeline {
     //   }
     // }
     stage('Run Sonar') {
-	  tools { 
-        jdk 'JDK17' 
+      tools {
+        jdk 'JDK17'
       }
       when {
         allOf {
