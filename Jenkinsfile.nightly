@@ -97,6 +97,9 @@ pipeline {
     //   }
     // }
     stage('Run Sonar') {
+	  tools { 
+        jdk 'JDK17' 
+      }
       when {
         allOf {
           expression { return currentBuild.result == 'SUCCESS' || currentBuild.result == 'UNSTABLE' }
