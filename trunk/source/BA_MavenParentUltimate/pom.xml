@@ -43,9 +43,6 @@
 		<!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-compiler-plugin -->
 		<maven-compiler-version>3.8.1</maven-compiler-version>
 
-		<maven.compiler.source>11</maven.compiler.source>
-    	<maven.compiler.target>11</maven.compiler.target>
-
 		<!-- reference to workspace root -->
 		<workspaceDir>${basedir}/..</workspaceDir>
 
