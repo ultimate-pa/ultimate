@@ -54,6 +54,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
 public class EmpireComputation<L, P> {
+	public static final boolean SORT_TRANSITIONS = false;
+
 	private final ILogger mLogger;
 
 	private final IPetriNetSuccessorProvider<L, P> mRefinedNet;
@@ -103,7 +105,11 @@ public class EmpireComputation<L, P> {
 		for (final var proof : mProofPlaces) {
 			mLogger.debug("symbolic execution on predicates %s", proof);
 			mLogger.debug("----------------------------------------------");
-			result.addAll(symbolicExecution(proof));
+			if (SORT_TRANSITIONS) {
+				result.addAll(symbolicExecutionSorted(proof));
+			} else {
+				result.addAll(symbolicExecution(proof));
+			}
 			mLogger.debug("==============================================");
 			mLogger.debug("");
 			// break;
@@ -129,9 +135,8 @@ public class EmpireComputation<L, P> {
 
 			final var successors = new ArrayList<Pair<Territory<P>, P>>();
 			boolean subsumed = false;
-
-			for (final var transition : (Iterable<Transition<L, P>>) getEnabledTransitions(territory, lawPlace,
-					proofPlaces)::iterator) {
+			final Stream<Transition<L, P>> enabledTransitions = getEnabledTransitions(territory, lawPlace, proofPlaces);
+			for (final var transition : (Iterable<Transition<L, P>>) enabledTransitions::iterator) {
 
 				final var successor = computeSuccessor(territory, lawPlace, transition, proofPlaces);
 				if (successor == null) {
@@ -159,6 +164,79 @@ public class EmpireComputation<L, P> {
 
 					mLogger.debug("\t--> subsumption; abandoning %s...", pair);
 					break;
+				} else if (numBystanders > 0 && !lawPlace.equals(succLawPlace)) {
+					bridgeTerritories.add(successor);
+					queue.offer(successor);
+				} else {
+					successors.add(successor);
+					mLogger.debug("\t--> regular successor; adding...");
+				}
+			}
+
+			if (!subsumed) {
+				result.add(pair);
+			}
+			for (final var succ : successors) {
+				queue.offer(succ);
+			}
+		}
+		result.addAll(bridgeTerritories);
+		return result;
+	}
+
+	private Set<Pair<Territory<P>, P>> symbolicExecutionSorted(final Set<P> proofPlaces) {
+		final var result = new HashSet<Pair<Territory<P>, P>>();
+		final var bridgeTerritories = new HashSet<Pair<Territory<P>, P>>();
+
+		final var queue = new ArrayDeque<Pair<Territory<P>, P>>();
+		queue.offer(getInitialPair(proofPlaces));
+
+		while (!queue.isEmpty()) {
+			var pair = queue.poll();
+			if (result.contains(pair)) {
+				continue;
+			}
+
+			var territory = pair.getFirst();
+			var lawPlace = pair.getSecond();
+
+			final var successors = new ArrayList<Pair<Territory<P>, P>>();
+			boolean subsumed = false;
+			final Stream<Transition<L, P>> enabledTransitions = getEnabledTransitions(territory, lawPlace, proofPlaces);
+			final var sortedPair = sortEnabledTransitions(enabledTransitions, lawPlace, proofPlaces);
+			final var extendingTransitions = sortedPair.getFirst();
+			final var changingTransitions = sortedPair.getSecond();
+			for (final Transition<L, P> transition : extendingTransitions) {
+				final var successor = extendTerritory(territory, lawPlace, transition, proofPlaces);
+				if (successor == null) {
+					continue;
+				}
+				if (lawPlace.equals(successor.getSecond()) && territory.equals(successor.getFirst())) {
+					// do nothing
+					mLogger.debug("\t--> self loop; skipping...");
+					continue;
+				}
+				subsumed = true;
+				pair = successor;
+				territory = pair.getFirst();
+				lawPlace = pair.getSecond();
+			}
+			queue.offer(pair);
+			for (final var transition : changingTransitions) {
+
+				final var successor = computeTrueSuccessor(territory, lawPlace, transition, proofPlaces);
+				if (successor == null) {
+					continue;
+				}
+				final var succTerritory = successor.getFirst();
+				final var succLawPlace = successor.getSecond();
+				mLogger.debug("successor of %s under transitions %s is %s", pair, transition, successor);
+				final var numBystanders = territory.getRegions().size()
+						- DataStructureUtils.difference(transition.getPredecessors(), mAssertionPlaces).size();
+
+				if (lawPlace.equals(succLawPlace) && territory.equals(succTerritory)) {
+					// do nothing
+					mLogger.debug("\t--> self loop; skipping...");
 				} else if (numBystanders > 0 && !lawPlace.equals(succLawPlace)) {
 					bridgeTerritories.add(successor);
 					queue.offer(successor);
@@ -267,21 +345,79 @@ public class EmpireComputation<L, P> {
 		final var remainingRegions = DataStructureUtils.difference(new HashSet<>(territory.getRegions()), regions);
 		final var predecessorsOriginal = DataStructureUtils.intersection(predecessors, mOriginalPlaces);
 		final var successorsOriginal = DataStructureUtils.intersection(successors, mOriginalPlaces);
-		if (predecessors.size() != successors.size() || newLawPlace != lawPlace) {
-			for (final var succ : successorsOriginal) {
-				regions.add(new Region<>(ImmutableSet.singleton(succ)));
-			}
-		} else if (predecessorsOriginal.size() == 1 && successorsOriginal.size() == 1) {
+		if (lawPlace == newLawPlace && predecessorsOriginal.size() == 1 && successorsOriginal.size() == 1) {
 			final Region<P> matchingRegion = DataStructureUtils.getOneAndOnly(remainingRegions, "remaining region");
 			regions.add(new Region<>(
 					ImmutableSet.of(DataStructureUtils.union(matchingRegion.getPlaces(), successorsOriginal))));
 		} else {
-			for (final var succ : successors) {
-				if (!mOriginalPlaces.contains(succ)) {
-					continue;
-				}
+			for (final var succ : successorsOriginal) {
 				regions.add(new Region<>(ImmutableSet.singleton(succ)));
 			}
+		}
+
+		// TODO unify region instances
+		// TODO unify Territory instances
+		final var newTerritory = new Territory<>(ImmutableSet.of(regions));
+		return new Pair<>(newTerritory, newLawPlace);
+	}
+
+	private Pair<Territory<P>, P> extendTerritory(final Territory<P> territory, final P lawPlace,
+			final Transition<L, P> transition, final Set<P> proofPlaces) {
+		// assert enables(territory, lawPlace, transition) : "transition is not enabled, cannot compute successor";
+
+		final var predecessors = transition.getPredecessors();
+		final var successors = transition.getSuccessors();
+		if (mRefinedNet.isAccepting(new Marking<>(successors))) {
+			return null;
+		}
+		final P newLawPlace = lawPlace;
+
+		final var regions = new HashSet<Region<P>>();
+
+		// add bystanders
+		for (final var region : territory.getRegions()) {
+			if (DataStructureUtils.haveEmptyIntersection(region.getPlaces(), predecessors)) {
+				regions.add(region);
+			}
+		}
+
+		final var remainingRegions = DataStructureUtils.difference(new HashSet<>(territory.getRegions()), regions);
+		final var successorsOriginal = DataStructureUtils.intersection(successors, mOriginalPlaces);
+		final Region<P> matchingRegion = DataStructureUtils.getOneAndOnly(remainingRegions, "remaining region");
+		regions.add(new Region<>(
+				ImmutableSet.of(DataStructureUtils.union(matchingRegion.getPlaces(), successorsOriginal))));
+		final var newTerritory = new Territory<>(ImmutableSet.of(regions));
+		return new Pair<>(newTerritory, newLawPlace);
+	}
+
+	private Pair<Territory<P>, P> computeTrueSuccessor(final Territory<P> territory, final P lawPlace,
+			final Transition<L, P> transition, final Set<P> proofPlaces) {
+		// assert enables(territory, lawPlace, transition) : "transition is not enabled, cannot compute successor";
+
+		final var predecessors = transition.getPredecessors();
+		final var successors = transition.getSuccessors();
+		if (mRefinedNet.isAccepting(new Marking<>(successors))) {
+			return null;
+		}
+		final P newLawPlace =
+				predecessors.contains(lawPlace)
+						? DataStructureUtils.getOneAndOnly(DataStructureUtils.intersection(successors, proofPlaces),
+								"law place")
+						: lawPlace;
+
+		final var regions = new HashSet<Region<P>>();
+
+		// add bystanders
+		for (final var region : territory.getRegions()) {
+			if (DataStructureUtils.haveEmptyIntersection(region.getPlaces(), predecessors)) {
+				regions.add(region);
+			}
+		}
+
+		final var successorsOriginal = DataStructureUtils.intersection(successors, mOriginalPlaces);
+
+		for (final var succ : successorsOriginal) {
+			regions.add(new Region<>(ImmutableSet.singleton(succ)));
 		}
 
 		// TODO unify region instances
@@ -324,8 +460,31 @@ public class EmpireComputation<L, P> {
 				&& region.getPlaces().stream().allMatch(p -> mCoRelation.getPlacesCorelation(place, p));
 	}
 
-	private boolean isReplacementSuccessor() {
-		return true;
+	private Pair<List<Transition<L, P>>, List<Transition<L, P>>> sortEnabledTransitions(
+			final Stream<Transition<L, P>> enabledTransitions, final P oldLawPlace, final Set<P> proofPlaces) {
+		final List<Transition<L, P>> changingLawList = new ArrayList<>();
+		final List<Transition<L, P>> sameLawList = new ArrayList<>();
+		for (final Transition<L, P> transition : (Iterable<Transition<L, P>>) enabledTransitions::iterator) {
+			final var predecessors = transition.getPredecessors();
+			final var successors = transition.getSuccessors();
+			final P newLawPlace =
+					predecessors.contains(oldLawPlace)
+							? DataStructureUtils.getOneAndOnly(DataStructureUtils.intersection(successors, proofPlaces),
+									"law place")
+							: oldLawPlace;
+			if (newLawPlace != oldLawPlace) {
+				changingLawList.add(transition);
+				continue;
+			}
+			final var predecessorsOriginal = DataStructureUtils.intersection(predecessors, mOriginalPlaces);
+			final var successorsOriginal = DataStructureUtils.intersection(successors, mOriginalPlaces);
+			if (predecessorsOriginal.size() == 1 && successorsOriginal.size() == 1) {
+				sameLawList.add(transition);
+				continue;
+			}
+			changingLawList.add(transition);
+		}
+		return new Pair<>(sameLawList, changingLawList);
 	}
 
 	public Map<IPredicate, P> getPredicatePlaceMap() {

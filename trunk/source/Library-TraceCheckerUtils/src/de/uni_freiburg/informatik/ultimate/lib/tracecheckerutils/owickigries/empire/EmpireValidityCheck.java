@@ -161,7 +161,7 @@ public class EmpireValidityCheck<PLACE, LETTER extends IAction> {
 				final Validity contradiction = checkContradiction(lawConjunction, transition, territory);
 				if ((contradiction != Validity.VALID) && (successorValidity != Validity.VALID)) {
 					mLogger.warn(
-							"The pair:\n %s \n has no valid successor and does not evaluate to false with \n transition %s",
+							"The pair:\n \t%s \n \thas no valid successor and does not evaluate to false with \n \ttransition %s",
 							pair, transition.getSymbol().getTransformula());
 					return Validity.INVALID;
 				}
