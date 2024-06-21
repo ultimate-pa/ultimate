@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.witnessprinter;
+package de.uni_freiburg.informatik.ultimate.witnessprinter.graphml;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -42,10 +42,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceEle
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslationValueProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
-import de.uni_freiburg.informatik.ultimate.witnessprinter.graphml.GeneratedWitnessEdge;
-import de.uni_freiburg.informatik.ultimate.witnessprinter.graphml.GeneratedWitnessNode;
-import de.uni_freiburg.informatik.ultimate.witnessprinter.graphml.GeneratedWitnessNodeEdgeFactory;
-import de.uni_freiburg.informatik.ultimate.witnessprinter.graphml.UltimateGraphMLWriter;
 import edu.uci.ics.jung.graph.DirectedSparseGraph;
 import edu.uci.ics.jung.graph.Hypergraph;
 
@@ -56,7 +52,7 @@ import edu.uci.ics.jung.graph.Hypergraph;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class ViolationWitnessGenerator<TE, E> extends BaseWitnessGenerator<TE, E> {
+public class GraphMLViolationWitnessGenerator<TE, E> extends GraphMLBaseWitnessGenerator<TE, E> {
 
 	private final IProgramExecution<TE, E> mStem;
 	private final IProgramExecution<TE, E> mLoop;
@@ -67,7 +63,7 @@ public class ViolationWitnessGenerator<TE, E> extends BaseWitnessGenerator<TE, E
 	/**
 	 * Use this constructor if you want to construct a witness for the violation of a reachability property.
 	 */
-	public ViolationWitnessGenerator(final IProgramExecution<TE, E> stem, final ILogger logger,
+	public GraphMLViolationWitnessGenerator(final IProgramExecution<TE, E> stem, final ILogger logger,
 			final IUltimateServiceProvider services) {
 		this(stem, null, logger, services);
 	}
@@ -75,7 +71,7 @@ public class ViolationWitnessGenerator<TE, E> extends BaseWitnessGenerator<TE, E
 	/**
 	 * Use this constructor if you want to construct a witness for the violation of a liveness property.
 	 */
-	public ViolationWitnessGenerator(final IProgramExecution<TE, E> stem, final IProgramExecution<TE, E> loop,
+	public GraphMLViolationWitnessGenerator(final IProgramExecution<TE, E> stem, final IProgramExecution<TE, E> loop,
 			final ILogger logger, final IUltimateServiceProvider services) {
 		super(services);
 		assert stem != null;

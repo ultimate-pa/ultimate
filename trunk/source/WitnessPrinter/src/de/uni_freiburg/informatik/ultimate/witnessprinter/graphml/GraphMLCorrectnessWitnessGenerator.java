@@ -25,7 +25,7 @@
  * to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.witnessprinter;
+package de.uni_freiburg.informatik.ultimate.witnessprinter.graphml;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -49,10 +49,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceEle
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement.StepInfo;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslatedCFG;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslationValueProvider;
-import de.uni_freiburg.informatik.ultimate.witnessprinter.graphml.GeneratedWitnessEdge;
-import de.uni_freiburg.informatik.ultimate.witnessprinter.graphml.GeneratedWitnessNode;
-import de.uni_freiburg.informatik.ultimate.witnessprinter.graphml.GeneratedWitnessNodeEdgeFactory;
-import de.uni_freiburg.informatik.ultimate.witnessprinter.graphml.UltimateGraphMLWriter;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.preferences.PreferenceInitializer;
 import edu.uci.ics.jung.graph.DirectedOrderedSparseMultigraph;
 import edu.uci.ics.jung.graph.Hypergraph;
@@ -62,7 +58,7 @@ import edu.uci.ics.jung.graph.Hypergraph;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class CorrectnessWitnessGenerator<TTE, TE> extends BaseWitnessGenerator<TTE, TE> {
+public class GraphMLCorrectnessWitnessGenerator<TTE, TE> extends GraphMLBaseWitnessGenerator<TTE, TE> {
 
 	private static final String[] ACSL_SUBSTRING = new String[] { "\\old", "\\result", "exists", "forall" };
 
@@ -72,7 +68,7 @@ public class CorrectnessWitnessGenerator<TTE, TE> extends BaseWitnessGenerator<T
 	private final boolean mIsACSLForbidden;
 
 	@SuppressWarnings("unchecked")
-	public CorrectnessWitnessGenerator(final IBacktranslatedCFG<?, TTE> translatedCFG, final ILogger logger,
+	public GraphMLCorrectnessWitnessGenerator(final IBacktranslatedCFG<?, TTE> translatedCFG, final ILogger logger,
 			final IUltimateServiceProvider services) {
 		super(services);
 		mLogger = logger;

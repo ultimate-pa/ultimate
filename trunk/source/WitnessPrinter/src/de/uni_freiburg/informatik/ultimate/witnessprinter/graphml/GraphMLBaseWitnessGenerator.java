@@ -1,21 +1,20 @@
-package de.uni_freiburg.informatik.ultimate.witnessprinter;
+package de.uni_freiburg.informatik.ultimate.witnessprinter.graphml;
 
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
-import de.uni_freiburg.informatik.ultimate.witnessprinter.graphml.GeneratedWitnessEdge;
-import de.uni_freiburg.informatik.ultimate.witnessprinter.graphml.GeneratedWitnessNode;
+import de.uni_freiburg.informatik.ultimate.witnessprinter.Activator;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.preferences.PreferenceInitializer;
 import edu.uci.ics.jung.graph.Hypergraph;
 import edu.uci.ics.jung.io.GraphMLWriter;
 
-public abstract class BaseWitnessGenerator<TE, E> {
+public abstract class GraphMLBaseWitnessGenerator<TE, E> {
 
 	private final IUltimateServiceProvider mServices;
 
-	public BaseWitnessGenerator(final IUltimateServiceProvider services) {
+	public GraphMLBaseWitnessGenerator(final IUltimateServiceProvider services) {
 		mServices = services;
 	}
 

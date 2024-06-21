@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.witnessprinter;
+package de.uni_freiburg.informatik.ultimate.witnessprinter.graphml;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
