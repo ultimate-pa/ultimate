@@ -258,8 +258,8 @@ public class EmpireComputation<L, P> {
 	}
 
 	private Pair<Territory<P>, P> getInitialPair(final Set<P> proofPlaces) {
-		final var initialLaw = DataStructureUtils.getOneAndOnly(
-				DataStructureUtils.intersection(mRefinedNet.getInitialPlaces(), proofPlaces), "initial law place");
+		final var intersection = DataStructureUtils.intersection(mRefinedNet.getInitialPlaces(), proofPlaces);
+		final var initialLaw = DataStructureUtils.getOneAndOnly(intersection, "initial law place");
 		final var regions = DataStructureUtils.intersection(mRefinedNet.getInitialPlaces(), mOriginalPlaces).stream()
 				.map(p -> new Region<>(ImmutableSet.singleton(p))).collect(ImmutableSet.collector());
 		return new Pair<>(new Territory<>(regions), initialLaw);

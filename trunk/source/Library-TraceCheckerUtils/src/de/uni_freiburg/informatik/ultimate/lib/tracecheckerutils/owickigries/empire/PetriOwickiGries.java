@@ -135,7 +135,6 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 		mEmpireAnnotation = computation.getEmpire();
 		mLogger.info("Constructed Empire Annotation:\n%s", mEmpireAnnotation);
 		assert checkEmpireValidity(computation, placesCorelation) : "Empire annotation is invalid";
-
 		mOwickiGriesAnnotation = getOwickiGriesAnnotation();
 		mLogger.info("Computed Owicki-Gries annotation:\n%s", mOwickiGriesAnnotation);
 		mLogger.info("Owicki-Gries size: %s", mOwickiGriesAnnotation.size());

@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.B
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire.PetriOwickiGries;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire.PetriOwickiGriesFed;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataTestFileAST;
 import de.uni_freiburg.informatik.ultimate.test.junitextension.testfactory.FactoryTestRunner;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
@@ -50,14 +51,21 @@ public class PetriOwickiGriesTestSuite extends OwickiGriesTestSuite {
 			final BoundedPetriNet<SimpleAction, IPredicate> refinedPetriNet,
 			final BranchingProcess<SimpleAction, IPredicate> unfolding) throws AutomataLibraryException {
 		// Assume.assumeTrue("More than one proof", mUnifiers.size() == 1);
+		final var FEDERATION_COMPUTATION = false;
 
 		final var proofPlaces = mProofs.stream().map(nwa -> nwa.getStates()).collect(Collectors.toList());
-
-		final var pog = new PetriOwickiGries<>(mServices, unfolding, program, mPredicateFactory, Function.identity(),
-				mMgdScript, mSymbolTable, Set.of(SimpleAction.PROCEDURE), computeModifiableGlobals(), proofPlaces);
-
 		final StatisticsData data = new StatisticsData();
-		data.aggregateBenchmarkData(pog.getStatistics());
+		if (FEDERATION_COMPUTATION) {
+			final var pog = new PetriOwickiGriesFed<>(mServices, unfolding, program, mPredicateFactory,
+					Function.identity(), mMgdScript, mSymbolTable, Set.of(SimpleAction.PROCEDURE),
+					computeModifiableGlobals(), proofPlaces);
+			data.aggregateBenchmarkData(pog.getStatistics());
+		} else {
+			final var pog = new PetriOwickiGries<>(mServices, unfolding, program, mPredicateFactory,
+					Function.identity(), mMgdScript, mSymbolTable, Set.of(SimpleAction.PROCEDURE),
+					computeModifiableGlobals(), proofPlaces);
+			data.aggregateBenchmarkData(pog.getStatistics());
+		}
 		mLogger.info("PetriOwickiGries Statistics: %s", data);
 	}
 }
