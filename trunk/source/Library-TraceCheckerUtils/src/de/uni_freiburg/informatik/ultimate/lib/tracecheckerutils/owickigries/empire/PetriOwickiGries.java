@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -175,7 +176,7 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 	private EmpireComputation<LETTER, PLACE> getEmpireComputation(final Function<PLACE, IPredicate> placeToAssertion,
 			final PlacesCoRelation<PLACE> placesCoRelation) {
 		final var computation = new EmpireComputation<>(mServices, mFactory, mBp.getNet(), mOriginalPlaces,
-				mProofPlaces, placesCoRelation, placeToAssertion);
+				mProofPlaces, placesCoRelation, placeToAssertion, new ArrayList<>());
 		mStatistics.reportEmpireStatistics(computation);
 		return computation;
 

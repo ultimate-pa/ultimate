@@ -51,7 +51,7 @@ public class PetriOwickiGriesTestSuite extends OwickiGriesTestSuite {
 			final BoundedPetriNet<SimpleAction, IPredicate> refinedPetriNet,
 			final BranchingProcess<SimpleAction, IPredicate> unfolding) throws AutomataLibraryException {
 		// Assume.assumeTrue("More than one proof", mUnifiers.size() == 1);
-		final var FEDERATION_COMPUTATION = false;
+		final var FEDERATION_COMPUTATION = true;
 
 		final var proofPlaces = mProofs.stream().map(nwa -> nwa.getStates()).collect(Collectors.toList());
 		final StatisticsData data = new StatisticsData();

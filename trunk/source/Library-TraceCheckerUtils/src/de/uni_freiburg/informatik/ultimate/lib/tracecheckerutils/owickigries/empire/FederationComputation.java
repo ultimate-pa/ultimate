@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -27,8 +28,9 @@ public class FederationComputation<L, P> {
 		for (final Set<P> set : proofPlaces) {
 			final List<Set<P>> proofSet = new ArrayList<>();
 			proofSet.add(set);
+			final var otherProofPlaces = proofPlaces.stream().filter(s -> !s.equals(set)).collect(Collectors.toList());
 			final var empireComputation = new EmpireComputation<>(services, predicateFactory, refinedNet,
-					originalPlaces, proofSet, coRelation, assertionPlace2Predicate);
+					originalPlaces, proofSet, coRelation, assertionPlace2Predicate, otherProofPlaces);
 			proofEmpireMap.put(set, empireComputation.getEmpire());
 			mPredicatePlaceMap.putAll(empireComputation.getPredicatePlaceMap());
 		}

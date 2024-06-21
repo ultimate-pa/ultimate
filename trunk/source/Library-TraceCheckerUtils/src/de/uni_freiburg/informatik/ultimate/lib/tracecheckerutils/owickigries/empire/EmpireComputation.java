@@ -64,6 +64,7 @@ public class EmpireComputation<L, P> {
 	private final Set<P> mOriginalPlaces;
 	private final Set<P> mAssertionPlaces;
 	private final List<Set<P>> mProofPlaces;
+	private final List<Set<P>> mAllProofPlaces;
 
 	private final EmpireAnnotation<P> mEmpire;
 	private final Map<P, IPredicate> mPlacePredicateMap = new HashMap<>();
@@ -71,7 +72,7 @@ public class EmpireComputation<L, P> {
 	public EmpireComputation(final IUltimateServiceProvider services, final BasicPredicateFactory predicateFactory,
 			final IPetriNetSuccessorProvider<L, P> refinedNet, final Set<P> originalPlaces,
 			final List<Set<P>> proofPlaces, final PlacesCoRelation<P> coRelation,
-			final Function<P, IPredicate> assertionPlace2Predicate) {
+			final Function<P, IPredicate> assertionPlace2Predicate, final List<Set<P>> otherProofPlaces) {
 		mLogger = services.getLoggingService().getLogger(getClass());
 		mLogger.setLevel(LogLevel.INFO);
 
@@ -79,8 +80,11 @@ public class EmpireComputation<L, P> {
 		mCoRelation = coRelation;
 		mOriginalPlaces = originalPlaces;
 		mProofPlaces = proofPlaces;
+		mAllProofPlaces = new ArrayList<>();
+		mAllProofPlaces.addAll(proofPlaces);
+		mAllProofPlaces.addAll(otherProofPlaces);
 		mLogger.debug("proof places: %s", proofPlaces);
-		mAssertionPlaces = proofPlaces.stream().flatMap(Set::stream).collect(Collectors.toSet());
+		mAssertionPlaces = mAllProofPlaces.stream().flatMap(Set::stream).collect(Collectors.toSet());
 
 		final var mTerrPlacePairs = symbolicExecution();
 		final var lawMap = mTerrPlacePairs.stream()
