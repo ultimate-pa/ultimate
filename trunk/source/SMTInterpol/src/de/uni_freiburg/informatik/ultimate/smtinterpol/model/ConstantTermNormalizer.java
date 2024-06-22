@@ -29,41 +29,33 @@ import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 public class ConstantTermNormalizer extends TermTransformer {
 
 	@Override
-	protected void convert(final Term term) {
+	protected void convert(Term term) {
 		if (term instanceof ConstantTerm) {
-			final Term res;
 			final ConstantTerm ct = (ConstantTerm) term;
-			res = convertConstantTerm(term, ct);
-			setResult(res);
+			if (ct.getValue() instanceof BigInteger) {
+				final Rational rat = Rational.valueOf(
+						(BigInteger) ct.getValue(), BigInteger.ONE);
+				setResult(rat.toTerm(term.getSort()));
+			} else if (ct.getValue() instanceof BigDecimal) {
+				final BigDecimal decimal = (BigDecimal) ct.getValue();
+				Rational rat;
+				if (decimal.scale() <= 0) {
+					final BigInteger num = decimal.toBigInteger();
+					rat = Rational.valueOf(num, BigInteger.ONE);
+				} else {
+					final BigInteger num = decimal.unscaledValue();
+					final BigInteger denom = BigInteger.TEN.pow(decimal.scale());
+					rat = Rational.valueOf(num, denom);
+				}
+				setResult(rat.toTerm(term.getSort()));
+			} else if (ct.getValue() instanceof Rational) {
+				setResult(ct);
+			} else {
+				setResult(term);
+			}
 		} else {
 			super.convert(term);
 		}
-	}
-
-	private Term convertConstantTerm(final Term term, final ConstantTerm ct) {
-		final Term res;
-		if (ct.getValue() instanceof BigInteger) {
-			final Rational rat = Rational.valueOf(
-					(BigInteger) ct.getValue(), BigInteger.ONE);
-			res = rat.toTerm(term.getSort());
-		} else if (ct.getValue() instanceof BigDecimal) {
-			final BigDecimal decimal = (BigDecimal) ct.getValue();
-			Rational rat;
-			if (decimal.scale() <= 0) {
-				final BigInteger num = decimal.toBigInteger();
-				rat = Rational.valueOf(num, BigInteger.ONE);
-			} else {
-				final BigInteger num = decimal.unscaledValue();
-				final BigInteger denom = BigInteger.TEN.pow(decimal.scale());
-				rat = Rational.valueOf(num, denom);
-			}
-			res = rat.toTerm(term.getSort());
-		} else if (ct.getValue() instanceof Rational) {
-			res = ct;
-		} else {
-			res = term;
-		}
-		return res;
 	}
 
 }
