@@ -26,6 +26,15 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 
+/**
+ * {@link ConstantTerm}s that have numeric sort (Int, Real) can represent their
+ * value either as {@link BigInteger}, {@link BigDecimal}, or {@link Rational}.
+ * This class helps us to establish a normal form in which values are always
+ * represented by {@link Rational}s.
+ *
+ * @author Matthias Heizmann (matthias.heizmann@iste.uni-stuttgart.de>)
+ *
+ */
 public class ConstantTermNormalizer extends TermTransformer {
 
 	@Override
@@ -40,12 +49,14 @@ public class ConstantTermNormalizer extends TermTransformer {
 		}
 	}
 
-	private Term convertConstantTerm(final Term term, final ConstantTerm ct) {
-		final Term res;
+	private static Term convertConstantTerm(final Term term, final ConstantTerm ct) {
+		if (!ct.getSort().isNumericSort()) {
+			// do nothing, only applicable to numeric sorts
+			return ct;
+		}
 		if (ct.getValue() instanceof BigInteger) {
-			final Rational rat = Rational.valueOf(
-					(BigInteger) ct.getValue(), BigInteger.ONE);
-			res = rat.toTerm(term.getSort());
+			final Rational rat = Rational.valueOf((BigInteger) ct.getValue(), BigInteger.ONE);
+			return rat.toTerm(term.getSort());
 		} else if (ct.getValue() instanceof BigDecimal) {
 			final BigDecimal decimal = (BigDecimal) ct.getValue();
 			Rational rat;
@@ -57,13 +68,13 @@ public class ConstantTermNormalizer extends TermTransformer {
 				final BigInteger denom = BigInteger.TEN.pow(decimal.scale());
 				rat = Rational.valueOf(num, denom);
 			}
-			res = rat.toTerm(term.getSort());
+			return rat.toTerm(term.getSort());
 		} else if (ct.getValue() instanceof Rational) {
-			res = ct;
+			// do nothing, already in normal form
+			return ct;
 		} else {
-			res = term;
+			throw new AssertionError("Value has to be either BigInteger, Decimal, or Rational");
 		}
-		return res;
 	}
 
 }
