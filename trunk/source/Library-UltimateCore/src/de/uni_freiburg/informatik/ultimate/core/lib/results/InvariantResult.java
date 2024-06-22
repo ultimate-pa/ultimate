@@ -28,6 +28,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.core.lib.results;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation.LoopEntryType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 
@@ -39,11 +41,15 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationS
  */
 public class InvariantResult<ELEM extends IElement, E> extends AbstractResultAtElement<ELEM> {
 	private final String mInvariant;
+	private final boolean mIsLoopLocation;
 
 	@SuppressWarnings("unchecked")
 	public InvariantResult(final String plugin, final ELEM element, final IBacktranslationService translatorSequence,
 			final E invariant) {
 		super(element, plugin, translatorSequence);
+		// TODO: Another class instead of this boolean flag?
+		final LoopEntryAnnotation loopAnnot = LoopEntryAnnotation.getAnnotation(element);
+		mIsLoopLocation = loopAnnot != null && loopAnnot.getLoopEntryType() == LoopEntryType.WHILE;
 		mInvariant = translatorSequence.translateExpressionWithContextToString(invariant, getLocation(),
 				(Class<E>) invariant.getClass());
 	}
@@ -54,11 +60,11 @@ public class InvariantResult<ELEM extends IElement, E> extends AbstractResultAtE
 
 	@Override
 	public String getShortDescription() {
-		return "Loop Invariant";
+		return mIsLoopLocation ? "Loop Invariant" : "Location Invariant";
 	}
 
 	@Override
 	public String getLongDescription() {
-		return "Derived loop invariant: " + mInvariant;
+		return (mIsLoopLocation ? "Derived loop invariant: " : "Derived location invariant: ") + mInvariant;
 	}
 }

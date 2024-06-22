@@ -20,7 +20,7 @@
       file_name: singleLine.c
       file_hash: UNUSED
       line: 3
-      column: 13
+      column: 14
       function: main
     format: c_expression
     value: x == i && i <= n
@@ -29,7 +29,7 @@
       file_name: singleLine.c
       file_hash: UNUSED
       line: 3
-      column: 42
+      column: 43
       function: main
     format: c_expression
     value: x == n - i && i <= n

@@ -18,7 +18,6 @@
     file_name: C:\ultimate\trunk\examples\witness-checking\regression\correctness\trex01-2.i
     file_hash: UNUSED
     line: 30
-    column: 0
     function: f
   loop_invariant:
     string: (0 < z)

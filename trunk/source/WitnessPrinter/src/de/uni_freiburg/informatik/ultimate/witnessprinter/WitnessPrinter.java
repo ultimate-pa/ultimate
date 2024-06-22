@@ -54,6 +54,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecut
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgGraphProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
+import de.uni_freiburg.informatik.ultimate.witnessprinter.graphml.GraphMLCorrectnessWitnessGenerator;
+import de.uni_freiburg.informatik.ultimate.witnessprinter.graphml.GraphMLViolationWitnessGenerator;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.yaml.YamlCorrectnessWitnessGenerator;
 
@@ -160,7 +162,8 @@ public class WitnessPrinter implements IOutput {
 					new BacktranslatedCFG<>(filename, IcfgGraphProvider.getVirtualRoot(root), IcfgEdge.class);
 			final IBacktranslatedCFG<?, ?> translateCFG = backtrans.translateCFG(origCfg);
 			witnesses.add(new ResultWitness(filename, GRAPHML,
-					new CorrectnessWitnessGenerator<>(translateCFG, mLogger, mServices).makeGraphMLString(), result));
+					new GraphMLCorrectnessWitnessGenerator<>(translateCFG, mLogger, mServices).makeGraphMLString(),
+					result));
 		}
 		if (createYaml) {
 			witnesses.add(new ResultWitness(filename, YAML,
@@ -183,7 +186,7 @@ public class WitnessPrinter implements IOutput {
 			final IProgramExecution<?, ?> backtransPe = backtrans.translateProgramExecution(cex.getProgramExecution());
 			if (createGraphML) {
 				final String witness =
-						new ViolationWitnessGenerator<>(backtransPe, mLogger, mServices).makeGraphMLString();
+						new GraphMLViolationWitnessGenerator<>(backtransPe, mLogger, mServices).makeGraphMLString();
 				suppliers.add(new ResultWitness(filename, GRAPHML, witness, cex));
 			}
 			// TODO: Add support for YAML
@@ -218,7 +221,7 @@ public class WitnessPrinter implements IOutput {
 				(IProgramExecution<TE, T>) backtrans.translateProgramExecution(cex.getStemExecution());
 		final IProgramExecution<TE, T> loop =
 				(IProgramExecution<TE, T>) backtrans.translateProgramExecution(cex.getLoopExecution());
-		return new ViolationWitnessGenerator<>(stem, loop, mLogger, mServices).makeGraphMLString();
+		return new GraphMLViolationWitnessGenerator<>(stem, loop, mLogger, mServices).makeGraphMLString();
 	}
 
 	@Override

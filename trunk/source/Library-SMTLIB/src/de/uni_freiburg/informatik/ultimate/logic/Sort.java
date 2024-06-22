@@ -327,6 +327,14 @@ public final class Sort {
 	public boolean isArraySort() {
 		return getRealSort().mSymbol.isArray();
 	}
+	
+	/**
+	 * @return true if this is a bit-vector sort.
+	 */
+	public boolean isBitVecSort() {
+		return getName().equals("BitVec");
+	}
+	
 	/**
 	 * Returns true if this is a numeric sort.  Numeric sorts are only the
 	 * sorts Int and Real defined by the corresponding SMTLIB theories.

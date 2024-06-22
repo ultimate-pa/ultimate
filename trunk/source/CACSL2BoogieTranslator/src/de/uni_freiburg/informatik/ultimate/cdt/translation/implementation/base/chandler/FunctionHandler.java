@@ -233,6 +233,7 @@ public class FunctionHandler {
 		final CFunction funcType = (CFunction) cDec.getType();
 
 		registerFunctionDeclaration(main, loc, contract, methodName, funcType, hook);
+		mNameHandler.addFunction(methodName, funcType.getResultType());
 
 		return new SkipResult();
 	}
@@ -280,6 +281,7 @@ public class FunctionHandler {
 		final CFunction oldFunType = (CFunction) cDec.getType();
 		final CFunction funType = updateVarArgsUsage(loc, node, oldFunType, definedProcName);
 		final CType returnCType = funType.getResultType();
+		mNameHandler.addFunction(definedProcName, returnCType);
 		definedProcInfo.updateCFunction(funType);
 		final boolean returnTypeIsVoid =
 				returnCType instanceof CPrimitive && ((CPrimitive) returnCType).getType() == CPrimitives.VOID;
@@ -705,8 +707,8 @@ public class FunctionHandler {
 				// If one of the arguments is overapproximated, assign the value to an aux-var and overapproximate this
 				// assignment
 				final AuxVarInfo auxVar =
-						mAuxVarInfoBuilder.constructAuxVarInfo(loc, lrValue.getCType(), AUXVAR.NONDET);
-				functionCallExpressionResultBuilder.addAuxVar(auxVar).addDeclaration(auxVar.getVarDec());
+						mAuxVarInfoBuilder.constructAuxVarInfo(loc, lrValue.getCType(), AUXVAR.RETURNED);
+				functionCallExpressionResultBuilder.addAuxVarWithDeclaration(auxVar);
 				final Statement assign =
 						StatementFactory.constructSingleAssignmentStatement(loc, auxVar.getLhs(), lrValue.getValue());
 				for (final Overapprox oa : in.getOverapprs()) {
@@ -721,8 +723,7 @@ public class FunctionHandler {
 			final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc,
 					mTypeHandler.constructPointerType(loc), SFO.AUXVAR.VARARGS_POINTER);
 			// Declare the aux-var (it is allocated after the loop when the size is known)
-			functionCallExpressionResultBuilder.addAuxVar(auxvarinfo);
-			functionCallExpressionResultBuilder.addDeclaration(auxvarinfo.getVarDec());
+			functionCallExpressionResultBuilder.addAuxVarWithDeclaration(auxvarinfo);
 			final CPrimitive pointerType = mExpressionTranslation.getCTypeOfPointerComponents();
 			Expression currentOffset =
 					mExpressionTranslation.constructLiteralForIntegerType(loc, pointerType, BigInteger.ZERO);
@@ -1111,8 +1112,7 @@ public class FunctionHandler {
 				final AuxVarInfo auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, astType, SFO.AUXVAR.RETURNED);
 				returnedValue = auxvar.getExp();
 				final VariableLHS returnedValueAsLhs = auxvar.getLhs();
-				builder.addAuxVar(auxvar);
-				builder.addDeclaration(auxvar.getVarDec());
+				builder.addAuxVarWithDeclaration(auxvar);
 
 				call = StatementFactory.constructCallStatement(loc, false, new VariableLHS[] { returnedValueAsLhs },
 						methodName, parameters.toArray(new Expression[parameters.size()]));
@@ -1135,8 +1135,7 @@ public class FunctionHandler {
 
 			returnedValue = auxvar.getExp();
 
-			builder.addDeclaration(auxvar.getVarDec());
-			builder.addAuxVar(auxvar);
+			builder.addAuxVarWithDeclaration(auxvar);
 
 			call = StatementFactory.constructCallStatement(loc, false, new VariableLHS[] { auxvar.getLhs() },
 					methodName, parameters.toArray(new Expression[parameters.size()]));

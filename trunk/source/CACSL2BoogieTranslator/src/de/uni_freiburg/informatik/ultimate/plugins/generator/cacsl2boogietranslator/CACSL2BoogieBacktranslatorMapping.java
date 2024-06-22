@@ -49,13 +49,13 @@ public class CACSL2BoogieBacktranslatorMapping implements ICACSL2BoogieBacktrans
 	private final Map<Pair<String, DeclarationInformation>, Pair<String, CType>> mInVar2CVar;
 	private final Map<Pair<String, DeclarationInformation>, Pair<String, CType>> mVar2CVar;
 	private final Map<String, SFO.AUXVAR> mTempVar2Obj;
-	private final Map<String, String> mFunctionId2Operator;
+	private final Map<String, CType> mFunctions;
 
 	public CACSL2BoogieBacktranslatorMapping() {
 		mInVar2CVar = new HashMap<>();
 		mVar2CVar = new HashMap<>();
 		mTempVar2Obj = new HashMap<>();
-		mFunctionId2Operator = new HashMap<>();
+		mFunctions = new HashMap<>();
 	}
 
 	@Override
@@ -100,8 +100,13 @@ public class CACSL2BoogieBacktranslatorMapping implements ICACSL2BoogieBacktrans
 		return mTempVar2Obj;
 	}
 
-	private void putFunction(final String boogieId, final String cId) {
-		mFunctionId2Operator.put(boogieId, cId);
+	@Override
+	public void addFunction(final String boogieId, final CType returnType) {
+		mFunctions.put(boogieId, returnType);
+	}
+
+	CType getReturnTypeOfFunction(final String boogieId) {
+		return mFunctions.get(boogieId);
 	}
 
 	// Normalizes DeclarationInformation so that parameters of procedure implementations are identified with the

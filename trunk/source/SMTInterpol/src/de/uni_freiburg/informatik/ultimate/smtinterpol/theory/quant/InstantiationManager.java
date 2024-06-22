@@ -41,13 +41,10 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.Config;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.Clausifier;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SMTAffineTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.epr.util.Pair;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.InfinitesimalNumber;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.LASharedTerm;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.LinVar;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.MutableAffineTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.quant.QuantifierTheory.InstanceOrigin;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.quant.QuantifierTheory.InstantiationMethod;
@@ -55,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.quant.Substitution
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.quant.dawg.Dawg;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.quant.ematching.EMatching;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.quant.ematching.EMatching.SubstitutionInfo;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.Polynomial;
 
 /**
  * This class takes care of clause, literal and term instantiation.
@@ -1089,31 +1087,32 @@ public class InstantiationManager {
 	 * @return a MutableAffineTerm if each summand of the SMTAffineTerm either is ground or has an equivalent Term
 	 *         storing a LinVar, null otherwise.
 	 */
-	private MutableAffineTerm buildMutableAffineTerm(final SMTAffineTerm smtAff,
+	private MutableAffineTerm buildMutableAffineTerm(final Polynomial smtAff,
 			final Map<Term, Term> sharedForQuantSmds) {
 		final MutableAffineTerm at = new MutableAffineTerm();
-		for (final Entry<Term, Rational> entry : smtAff.getSummands().entrySet()) {
-			final Term sharedTerm;
-			if (entry.getKey().getFreeVars().length == 0) {
-				sharedTerm = entry.getKey();
-			} else {
-				sharedTerm = sharedForQuantSmds.get(entry.getKey());
-				if (sharedTerm == null) {
-					return null;
+		for (final Entry<Map<Term, Integer>, Rational> entry : smtAff.getSummands().entrySet()) {
+			final Polynomial sharedMonomial = new Polynomial();
+			sharedMonomial.add(entry.getValue());
+			for (final Entry<Term, Integer> factor : entry.getKey().entrySet()) {
+				final Term sharedTerm;
+				if (factor.getKey().getFreeVars().length == 0) {
+					sharedTerm = factor.getKey();
+				} else {
+					sharedTerm = sharedForQuantSmds.get(factor.getKey());
+					if (sharedTerm == null) {
+						return null;
+					}
+				}
+				for (int i = 0; i < factor.getValue(); i++) {
+					sharedMonomial.mul(new Polynomial(sharedTerm));
 				}
 			}
-			final LASharedTerm laTerm = mClausifier.getLATerm(sharedTerm);
-			final Rational coeff = entry.getValue();
-			if (laTerm != null) {
-				for (final Map.Entry<LinVar, Rational> summand : laTerm.getSummands().entrySet()) {
-					at.add(coeff.mul(summand.getValue()), summand.getKey());
-				}
-				at.add(coeff.mul(laTerm.getOffset()));
-			} else {
+			final MutableAffineTerm matMonomial = mClausifier.toMutableAffineTerm(sharedMonomial);
+			if (matMonomial == null) {
 				return null;
 			}
+			at.add(entry.getValue(), matMonomial);
 		}
-		at.add(smtAff.getConstant());
 		return at;
 	}
 
@@ -1421,8 +1420,8 @@ public class InstantiationManager {
 	 * @return the InstanceValue of the substituted literal.
 	 */
 	private InstanceValue evaluateLAEqualityKnownShared(final QuantEquality qEq, final Map<Term, Term> sharedForQuant) {
-		final SMTAffineTerm diff = new SMTAffineTerm(qEq.getLhs());
-		diff.add(Rational.MONE, new SMTAffineTerm(qEq.getRhs()));
+		final Polynomial diff = new Polynomial(qEq.getLhs());
+		diff.add(Rational.MONE, qEq.getRhs());
 
 		final MutableAffineTerm at = buildMutableAffineTerm(diff, sharedForQuant);
 		if (at != null) {
@@ -1449,24 +1448,28 @@ public class InstantiationManager {
 	 * @return the InstanceValue of the substituted literal.
 	 */
 	private InstanceValue evaluateLAEquality(final QuantEquality qEq, final List<Term> subs) {
-		final SMTAffineTerm diff = new SMTAffineTerm(qEq.getLhs());
+		final Polynomial diff = new Polynomial(qEq.getLhs());
 		diff.add(Rational.MONE, qEq.getRhs());
 
 		final QuantClause qClause = qEq.getClause();
 		final TermFinder finder = new TermFinder(qClause.getVars(), subs);
-		final SMTAffineTerm smtAff = finder.findEquivalentAffine(diff);
-		if (smtAff != null) {
-			final InfinitesimalNumber upperBound = mQuantTheory.mLinArSolve.getUpperBound(mClausifier, smtAff);
-			smtAff.negate();
-			final InfinitesimalNumber negLowerBound = mQuantTheory.mLinArSolve.getUpperBound(mClausifier, smtAff);
-			if (upperBound.signum() == 0 && negLowerBound.signum() == 0) {
-				return InstanceValue.TRUE;
-			} else if (upperBound.signum() < 0 || negLowerBound.signum() < 0) {
-				return InstanceValue.FALSE;
-			}
-			return InstanceValue.ONE_UNDEF;
+		final Polynomial smtAff = finder.findEquivalentAffine(diff);
+		if (smtAff == null) {
+			return mDefaultValueForLitDawgs;
 		}
-		return mDefaultValueForLitDawgs;
+		final MutableAffineTerm mat = mClausifier.toMutableAffineTerm(smtAff);
+		if (mat == null) {
+			return mDefaultValueForLitDawgs;
+		}
+		final InfinitesimalNumber upperBound = mQuantTheory.mLinArSolve.getUpperBound(mat);
+		smtAff.mul(Rational.MONE);
+		final InfinitesimalNumber negLowerBound = mQuantTheory.mLinArSolve.getUpperBound(mat);
+		if (upperBound.signum() == 0 && negLowerBound.signum() == 0) {
+			return InstanceValue.TRUE;
+		} else if (upperBound.signum() < 0 || negLowerBound.signum() < 0) {
+			return InstanceValue.FALSE;
+		}
+		return InstanceValue.ONE_UNDEF;
 	}
 
 	/**
@@ -1510,16 +1513,20 @@ public class InstantiationManager {
 	 */
 	private InstanceValue evaluateBoundConstraint(final QuantBoundConstraint qBc, final List<Term> subs) {
 		final TermFinder finder = new TermFinder(qBc.getClause().getVars(), subs);
-		final SMTAffineTerm affine = finder.findEquivalentAffine(qBc.getAffineTerm());
+		final Polynomial affine = finder.findEquivalentAffine(qBc.getAffineTerm());
 		if (affine == null) {
 			return mDefaultValueForLitDawgs;
 		}
-		final InfinitesimalNumber upperBound = mQuantTheory.mLinArSolve.getUpperBound(mClausifier, affine);
+		final MutableAffineTerm mat = mClausifier.toMutableAffineTerm(affine);
+		if (mat == null) {
+			return mDefaultValueForLitDawgs;
+		}
+		final InfinitesimalNumber upperBound = mQuantTheory.mLinArSolve.getUpperBound(mat);
 		if (upperBound.lesseq(InfinitesimalNumber.ZERO)) {
 			return InstanceValue.TRUE;
 		} else {
-			affine.negate();
-			final InfinitesimalNumber lowerBound = mQuantTheory.mLinArSolve.getUpperBound(mClausifier, affine);
+			mat.mul(Rational.MONE);
+			final InfinitesimalNumber lowerBound = mQuantTheory.mLinArSolve.getUpperBound(mat);
 			if (lowerBound.less(InfinitesimalNumber.ZERO)) {
 				return InstanceValue.FALSE;
 			} else {
@@ -1558,24 +1565,33 @@ public class InstantiationManager {
 			return mTerms.get(term);
 		}
 
-		SMTAffineTerm findEquivalentAffine(final SMTAffineTerm smtAff) {
-			for (final Term smd : smtAff.getSummands().keySet()) {
-				enqueueWalker(new FindTerm(smd));
+		Polynomial findEquivalentAffine(final Polynomial smtAff) {
+			for (final Map<Term, Integer> monom : smtAff.getSummands().keySet()) {
+				for (final Term smd : monom.keySet()) {
+					enqueueWalker(new FindTerm(smd));
+				}
 			}
 			run();
 			return buildEquivalentAffine(smtAff);
 		}
 
-		private SMTAffineTerm buildEquivalentAffine(final SMTAffineTerm smtAff) {
-			final SMTAffineTerm instAff = new SMTAffineTerm();
-			for (final Entry<Term, Rational> smd : smtAff.getSummands().entrySet()) {
-				final Term inst = mTerms.get(smd.getKey());
-				if (inst == null) {
-					return null;
+		private Polynomial buildEquivalentAffine(final Polynomial smtAff) {
+			final Polynomial instAff = new Polynomial();
+			for (final Entry<Map<Term, Integer>, Rational> smd : smtAff.getSummands().entrySet()) {
+				final Polynomial instMonom = new Polynomial();
+				instMonom.add(Rational.ONE);
+				for (final Entry<Term, Integer> factors : smd.getKey().entrySet()) {
+					final Term inst = mTerms.get(factors.getKey());
+					if (inst == null) {
+						return null;
+					}
+					final Polynomial instPoly = new Polynomial(inst);
+					for (int i = 0; i < factors.getValue(); i++) {
+						instMonom.mul(instPoly);
+					}
 				}
-				instAff.add(smd.getValue(), inst);
+				instAff.add(smd.getValue(), instMonom);
 			}
-			instAff.add(smtAff.getConstant());
 			return instAff;
 		}
 
@@ -1604,10 +1620,12 @@ public class InstantiationManager {
 								enqueueWalker(new FindTerm(arg));
 							}
 						} else if (func.getName() == "+" || func.getName() == "*" || func.getName() == "-") {
-							final SMTAffineTerm smtAff = new SMTAffineTerm(mTerm);
+							final Polynomial smtAff = new Polynomial(mTerm);
 							enqueueWalker(new FindSharedAffine(mTerm, smtAff));
-							for (final Term smd : smtAff.getSummands().keySet()) {
-								enqueueWalker(new FindTerm(smd));
+							for (final Map<Term,Integer> monom : smtAff.getSummands().keySet()) {
+								for (final Term smd : monom.keySet()) {
+									enqueueWalker(new FindTerm(smd));
+								}
 							}
 						}
 					}
@@ -1647,18 +1665,18 @@ public class InstantiationManager {
 
 		class FindSharedAffine implements Walker {
 			private final Term mTerm;
-			private final SMTAffineTerm mSmtAff;
+			private final Polynomial mSmtAff;
 
-			FindSharedAffine(final Term term, final SMTAffineTerm smtAff) {
+			FindSharedAffine(final Term term, final Polynomial smtAff) {
 				mTerm = term;
 				mSmtAff = smtAff;
 			}
 
 			@Override
 			public void walk(final NonRecursive engine) {
-				final SMTAffineTerm instAffine = buildEquivalentAffine(mSmtAff);
+				final Polynomial instAffine = buildEquivalentAffine(mSmtAff);
 				if (instAffine != null) {
-					final Term instTerm = instAffine.toTerm(mClausifier.getTermCompiler(), mTerm.getSort());
+					final Term instTerm = instAffine.toTerm(mTerm.getSort());
 					// Note: This will often not find a CC term.
 					final CCTerm ccTermRep = mQuantTheory.getCClosure().getCCTermRep(instTerm);
 					if (ccTermRep != null) {

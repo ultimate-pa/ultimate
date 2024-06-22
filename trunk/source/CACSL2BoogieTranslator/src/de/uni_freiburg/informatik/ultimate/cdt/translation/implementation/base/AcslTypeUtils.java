@@ -101,4 +101,13 @@ public class AcslTypeUtils {
 			throw new UnsupportedOperationException("Unhandled ACSL type " + t);
 		}
 	}
+
+	public static ACSLType translateCTypeToAcslType(final CType type) {
+		if (!(type instanceof CPrimitive)) {
+			// TODO: Implement this for other types
+			throw new UnsupportedOperationException(
+					"Currently only primitive types are supported, got " + type.getClass().getSimpleName());
+		}
+		return new ACSLType(((CPrimitive) type).getType().getTypeName());
+	}
 }

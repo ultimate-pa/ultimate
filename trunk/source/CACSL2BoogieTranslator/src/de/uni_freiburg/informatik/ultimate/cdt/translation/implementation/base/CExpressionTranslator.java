@@ -270,11 +270,9 @@ public class CExpressionTranslator {
 			typeOfResult = mExpressionTranslation.getCTypeOfPointerComponents();
 			CType pointsToType;
 			{
-				final CType leftPointsToType = ((CPointer) lType).getPointsToType();
-				final CType rightPointsToType = ((CPointer) rType).getPointsToType();
+				final CType leftPointsToType = ((CPointer) lType).getPointsToType().getUnderlyingType();
+				final CType rightPointsToType = ((CPointer) rType).getPointsToType().getUnderlyingType();
 				if (!leftPointsToType.equals(rightPointsToType)) {
-					// TODO: Matthias 2015-09-08: Maybe this is too strict and we
-					// have to check leftPointsToType.isCompatibleWith(rightPointsToType)
 					throw new UnsupportedOperationException(
 							"incompatible pointers: pointsto " + leftPointsToType + " " + rightPointsToType);
 				}
@@ -567,8 +565,7 @@ public class CExpressionTranslator {
 		// In this case we need a temporary variable for the old value
 		final AuxVarInfo auxvar =
 				mAuxVarInfoBuilder.constructAuxVarInfo(loc, exprRes.getLrValue().getCType(), SFO.AUXVAR.POST_MOD);
-		builder.addDeclaration(auxvar.getVarDec());
-		builder.addAuxVar(auxvar);
+		builder.addAuxVarWithDeclaration(auxvar);
 
 		// assign the old value to the temporary variable
 		final LeftHandSide[] tmpAsLhs = new LeftHandSide[] { auxvar.getLhs() };
@@ -615,8 +612,7 @@ public class CExpressionTranslator {
 		// In this case we need a temporary variable for the new value
 		final AuxVarInfo auxvar =
 				mAuxVarInfoBuilder.constructAuxVarInfo(loc, exprRes.getLrValue().getCType(), SFO.AUXVAR.PRE_MOD);
-		builder.addDeclaration(auxvar.getVarDec());
-		builder.addAuxVar(auxvar);
+		builder.addAuxVarWithDeclaration(auxvar);
 
 		final int op;
 		if (prefixOp == IASTUnaryExpression.op_prefixIncr) {
@@ -841,8 +837,7 @@ public class CExpressionTranslator {
 				auxvar = null;
 			} else {
 				auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, resultCType, SFO.AUXVAR.ITE);
-				resultBuilder.addDeclaration(auxvar.getVarDec());
-				resultBuilder.addAuxVar(auxvar);
+				resultBuilder.addAuxVarWithDeclaration(auxvar);
 			}
 
 			final List<Statement> ifStatements = new ArrayList<>();

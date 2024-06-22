@@ -42,7 +42,7 @@ public class CongRewriteFunctionFactory extends FunctionSymbolFactory {
 		String[] origIndices;
 		if (indices.length > 1) {
 			origIndices = new String[indices.length - 1];
-			System.arraycopy(indices, 0, origIndices, 1, indices.length - 1);
+			System.arraycopy(indices, 1, origIndices, 0, indices.length - 1);
 		} else {
 			origIndices = null;
 		}

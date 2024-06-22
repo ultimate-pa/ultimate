@@ -143,8 +143,9 @@ public class ExpressionResultBuilder {
 		return this;
 	}
 
-	public ExpressionResultBuilder addAuxVar(final AuxVarInfo auxvar) {
+	public ExpressionResultBuilder addAuxVarWithDeclaration(final AuxVarInfo auxvar) {
 		mAuxVars.add(auxvar);
+		mDeclarations.add(auxvar.getVarDec());
 		return this;
 	}
 

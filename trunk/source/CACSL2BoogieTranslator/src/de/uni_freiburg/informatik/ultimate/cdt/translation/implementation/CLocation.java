@@ -101,7 +101,8 @@ public class CLocation extends CACSLLocation {
 			return -1;
 		}
 		final int lineOffset = mLineOffsetComputer.getOffset(startLine);
-		return mNode.getFileLocation().getNodeOffset() - lineOffset;
+		// The offset starts with 0, but the column start with 1 (as specified by the SV-COMP)
+		return mNode.getFileLocation().getNodeOffset() - lineOffset + 1;
 	}
 
 	@Override
@@ -111,7 +112,8 @@ public class CLocation extends CACSLLocation {
 			return -1;
 		}
 		final int lineOffset = mLineOffsetComputer.getOffset(endLine);
-		return mNode.getFileLocation().getNodeOffset() + mNode.getFileLocation().getNodeLength() - lineOffset;
+		// The offset starts with 0, but the column start with 1 (as specified by the SV-COMP)
+		return mNode.getFileLocation().getNodeOffset() + mNode.getFileLocation().getNodeLength() - lineOffset + 1;
 	}
 
 	public IASTNode getNode() {

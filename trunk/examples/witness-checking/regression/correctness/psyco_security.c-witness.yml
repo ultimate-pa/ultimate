@@ -1,0 +1,26 @@
+- entry_type: invariant_set
+  metadata:
+    format_version: '2.0'
+    uuid: 2c72add9-ff11-4450-9f68-0a8a82f3bbbd
+    creation_time: '2024-03-11T17:42:05+01:00'
+    producer:
+      name: UNUSED
+      version: 0.2.4-dev-9743566-m
+    task:
+      input_files:
+      - psyco_security.c
+      input_file_hashes:
+        psyco_security.c: UNUSED
+      specification: UNUSED
+      data_model: UNUSED
+      language: C
+  content:
+  - invariant:
+      type: loop_invariant
+      location:
+        file_name: psyco_security.c
+        file_hash: UNUSED
+        line: 24
+        function: main
+      value: (((4 <= q) && (3 == this_state)) || ((2 != this_state) && (q == 0)))
+      format: c_expression

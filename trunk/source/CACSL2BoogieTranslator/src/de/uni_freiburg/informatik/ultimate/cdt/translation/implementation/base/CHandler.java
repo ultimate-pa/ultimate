@@ -235,6 +235,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.ICACSL2BoogieBacktranslatorMapping;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.LTLExpressionExtractor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.MemoryModel;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -926,8 +927,7 @@ public class CHandler {
 		final CPrimitive intType = new CPrimitive(CPrimitives.INT);
 		final AuxVarInfo auxvarInfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, intType,
 				new PrimitiveType(loc, BoogieType.TYPE_BOOL, SFO.BOOL), SFO.AUXVAR.SHORTCIRCUIT);
-		builder.addDeclaration(auxvarInfo.getVarDec());
-		builder.addAuxVar(auxvarInfo);
+		builder.addAuxVarWithDeclaration(auxvarInfo);
 		final RValue auxvarRval = new RValue(auxvarInfo.getExp(), intType, true);
 
 		// add auxvar assignment "#t~SHORT~UID = left"
@@ -1119,9 +1119,9 @@ public class CHandler {
 			final boolean useRValue) {
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 		LRValue expr = null;
-		final IASTNode parent = node.getParent();
+		final boolean isNewScopeRequired = !(node.getParent() instanceof IASTFunctionDefinition);
 
-		if (isNewScopeRequired(parent)) {
+		if (isNewScopeRequired) {
 			beginScope();
 		}
 
@@ -1161,16 +1161,16 @@ public class CHandler {
 						mMemoryHandler.getReadCall(((HeapLValue) expr).getAddress(), expr.getCType()));
 			} else {
 				final AuxVarInfo auxVarInfo =
-						mAuxVarInfoBuilder.constructAuxVarInfo(loc, expr.getCType(), AUXVAR.NONDET);
-				resultBuilder.addAuxVar(auxVarInfo).addDeclaration(auxVarInfo.getVarDec());
+						mAuxVarInfoBuilder.constructAuxVarInfo(loc, expr.getCType(), AUXVAR.RETURNED);
+				resultBuilder.addAuxVarWithDeclaration(auxVarInfo);
 				resultBuilder.setLrValue(new RValue(auxVarInfo.getExp(), expr.getCType()));
 				resultBuilder.addStatement(
 						StatementFactory.constructSingleAssignmentStatement(loc, auxVarInfo.getLhs(), expr.getValue()));
 			}
 		}
-		if (isNewScopeRequired(parent)) {
+		if (isNewScopeRequired) {
 			updateStmtsAndDeclsAtScopeEnd(resultBuilder, node);
-			addHavocsAtScopeEnd(mLocationFactory.createCLocation(node), node, resultBuilder);
+			addHavocsAtScopeEnd(node, resultBuilder);
 			endScope();
 		}
 		resultBuilder.addStatements(CTranslationUtil.createHavocsForAuxVars(auxVars));
@@ -1433,25 +1433,30 @@ public class CHandler {
 	}
 
 	public Result visit(final IDispatcher main, final IASTDefaultStatement node) {
-		final ArrayList<Statement> stmt = new ArrayList<>();
-		final ArrayList<Declaration> decl = new ArrayList<>();
-		// final Map<VariableDeclaration, ILocation> emptyAuxVars = new
-		// LinkedHashMap<>(0);
-		final Set<AuxVarInfo> emptyAuxVars = new LinkedHashSet<>(0);
-		final List<Overapprox> overappr = new ArrayList<>();
-		return new ExpressionResult(stmt,
+		return new ExpressionResult(
 				new RValue(ExpressionFactory.createBooleanLiteral(mLocationFactory.createCLocation(node), true),
-						new CPrimitive(CPrimitives.INT)),
-				decl, emptyAuxVars, overappr);
+						new CPrimitive(CPrimitives.INT)));
 	}
 
+	/**
+	 * Translates a do-statement {@code do body while (cond);} to {@code while (true) { body; Label: if (!cond) break;
+	 * }}
+	 *
+	 * @param main
+	 *            dispatcher
+	 * @param node
+	 *            AST node
+	 * @return The do-statement translated to a Boogie-Result
+	 */
 	public Result visit(final IDispatcher main, final IASTDoStatement node) {
-		final ExpressionResult condResult = (ExpressionResult) main.dispatch(node.getCondition());
+		final ILocation loc = mLocationFactory.createCLocation(node);
+		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
+		final List<Statement> bodyBlock = new ArrayList<>();
 		final String loopLabel = mNameHandler.getGloballyUniqueIdentifier(SFO.LOOPLABEL);
-		mInnerMostLoopLabel.push(loopLabel);
-		final Result bodyResult = main.dispatch(node.getBody());
-		mInnerMostLoopLabel.pop();
-		return handleLoops(main, node, bodyResult, condResult, loopLabel);
+		handleLoopBody(loc, main, node.getBody(), loopLabel, resultBuilder, bodyBlock);
+		bodyBlock.add(new Label(loc, loopLabel));
+		bodyBlock.addAll(handleLoopCondition(loc, main, node.getCondition(), resultBuilder));
+		return buildLoopResult(main, node, bodyBlock, resultBuilder);
 	}
 
 	public Result visit(final IDispatcher main, final IASTEqualsInitializer node) {
@@ -1484,9 +1489,66 @@ public class CHandler {
 		return mStructHandler.handleFieldReference(main, mExprResultTransformer, node);
 	}
 
+	/**
+	 * Translates a for-statement {@code for (init; cond; iterator) body} to {@code while (true) { if (!cond) break;
+	 * body; Label: iterator; }}
+	 *
+	 * @param main
+	 *            dispatcher
+	 * @param node
+	 *            AST node
+	 * @return The for-statement translated to a Boogie-Result
+	 */
 	public Result visit(final IDispatcher main, final IASTForStatement node) {
+		final ILocation loc = mLocationFactory.createCLocation(node);
+		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
+		beginScope();
+		// Process initializer (insert before the actual loop)
+		final IASTStatement cInitStmt = node.getInitializerStatement();
+		if (cInitStmt != null) {
+			final Result initializer = main.dispatch(cInitStmt);
+			if (initializer instanceof ExpressionResult) {
+				resultBuilder.addAllExceptLrValueAndHavocAux((ExpressionResult) initializer);
+			} else if (initializer instanceof SkipResult) {
+				// This is an empty statement in the C Code. We will skip it
+			} else {
+				throw new UnsupportedSyntaxException(loc,
+						"Uninplemented type of for loop initialization: " + initializer.getClass());
+			}
+		}
+		final List<Statement> bodyBlock =
+				new ArrayList<>(handleLoopCondition(loc, main, node.getConditionExpression(), resultBuilder));
 		final String loopLabel = mNameHandler.getGloballyUniqueIdentifier(SFO.LOOPLABEL);
-		return handleLoops(main, node, null, null, loopLabel);
+		handleLoopBody(loc, main, node.getBody(), loopLabel, resultBuilder, bodyBlock);
+		bodyBlock.add(new Label(loc, loopLabel));
+
+		// Insert the translated iterator at the end of the loop (after the loop label)
+		final IASTExpression cItExpr = node.getIterationExpression();
+		if (cItExpr != null) {
+			final Result iterator = main.dispatch(cItExpr);
+			if (iterator instanceof ExpressionListResult) {
+				for (final ExpressionResult el : ((ExpressionListResult) iterator).getList()) {
+					bodyBlock.addAll(el.getStatements());
+					resultBuilder.addDeclarations(el.getDeclarations());
+					bodyBlock.addAll(CTranslationUtil.createHavocsForAuxVars(el.getAuxVars()));
+				}
+			} else if (iterator instanceof ExpressionResult) {
+				final ExpressionResult iteratorRE = (ExpressionResult) iterator;
+				bodyBlock.addAll(iteratorRE.getStatements());
+				resultBuilder.addDeclarations(iteratorRE.getDeclarations());
+				resultBuilder.addOverapprox(iteratorRE.getOverapprs());
+				bodyBlock.addAll(CTranslationUtil.createHavocsForAuxVars(iteratorRE.getAuxVars()));
+			} else {
+				throw new UnsupportedSyntaxException(loc,
+						"Uninplemented type of loop iterator: " + iterator.getClass());
+			}
+		}
+
+		final ExpressionResultBuilder bodyBlockBuilder = new ExpressionResultBuilder().addStatements(bodyBlock);
+		updateStmtsAndDeclsAtScopeEnd(bodyBlockBuilder, node);
+		endScope();
+		resultBuilder.addDeclarations(bodyBlockBuilder.getDeclarations());
+		return buildLoopResult(main, node, bodyBlockBuilder.getStatements(), resultBuilder);
 	}
 
 	public Result visit(final IDispatcher main, final IASTFunctionCallExpression node) {
@@ -1876,8 +1938,6 @@ public class CHandler {
 		final ILocation loc = mLocationFactory.createCLocation(node);
 		final ArrayList<Statement> stmt = new ArrayList<>();
 		final ArrayList<Declaration> decl = new ArrayList<>();
-		// final Map<VariableDeclaration, ILocation> emptyAuxVars = new
-		// LinkedHashMap<>(0);
 		final List<Overapprox> overappr = new ArrayList<>();
 		final String label = node.getName().toString();
 		stmt.add(new Label(loc, label));
@@ -1935,7 +1995,7 @@ public class CHandler {
 			return new ExpressionResult(rVal);
 		}
 		case IASTLiteralExpression.lk_string_literal:
-			return handleStringLiteralExpression(loc, main, node);
+			return handleStringLiteralExpression(loc, node);
 		case IASTLiteralExpression.lk_false:
 			return new ExpressionResult(
 					new RValue(ExpressionFactory.createBooleanLiteral(loc, false), new CPrimitive(CPrimitives.INT)));
@@ -1953,8 +2013,7 @@ public class CHandler {
 	 * literals are stored in a separate read-only area of the memory. String literals can neither be modified nor
 	 * deallocated.
 	 */
-	private Result handleStringLiteralExpression(final ILocation loc, final IDispatcher main,
-			final IASTLiteralExpression node) {
+	private Result handleStringLiteralExpression(final ILocation loc, final IASTLiteralExpression node) {
 		// Note: We can either use loc here or create a new ignore-loc s.t. the string
 		// literal assignment will not be shown in the backtranslation
 		final ILocation actualLoc = LocationFactory.createIgnoreCLocation(node);
@@ -2159,9 +2218,7 @@ public class CHandler {
 		}
 
 		final TypesResult typeResult = (TypesResult) declSpecifierResult;
-		// Skip will be overwritten in
-		// case of a global or a local
-		// initialized variable
+		// Skip will be overwritten in case of a global or a local initialized variable
 
 		final CStorageClass storageClass = scConstant2StorageClass(node.getDeclSpecifier().getStorageClass());
 
@@ -2255,8 +2312,7 @@ public class CHandler {
 		final AuxVarInfo switchAuxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, intType,
 				new PrimitiveType(loc, BoogieType.TYPE_BOOL, SFO.BOOL), SFO.AUXVAR.SWITCH);
 
-		resultBuilder.addDeclaration(switchAuxvar.getVarDec());
-		resultBuilder.addAuxVar(switchAuxvar);
+		resultBuilder.addAuxVarWithDeclaration(switchAuxvar);
 
 		boolean isFirst = true;
 		boolean firstCond = true;
@@ -2267,13 +2323,10 @@ public class CHandler {
 		beginScope();
 		for (final IASTNode child : node.getBody().getChildren()) {
 			if (isFirst && !(child instanceof IASTCaseStatement) && !(child instanceof IASTDefaultStatement)) {
-				// declarations in the beginning of a switch body (i.e. before the first
-				// case/default) are used,
-				// statements are dropped
-				// see example 6.8.4.2-7
+				// declarations in the beginning of a switch body (i.e. before the first case/default) are used,
+				// statements are dropped see example 6.8.4.2-7
 
-				// we need to dispatch the child in order to fill the symbol table with
-				// declarations accordingly
+				// we need to dispatch the child in order to fill the symbol table with declarations accordingly
 				// the result can only contain statements, which we drop.
 				main.dispatch(child);
 
@@ -2369,8 +2422,7 @@ public class CHandler {
 		resultBuilder.addStatement(new Label(loc, breakLabelName));
 		resultBuilder.addStatements(CTranslationUtil.createHavocsForAuxVars(resultBuilder.getAuxVars()));
 
-		// Use body as hook: This is the scope holder for switch statements! (as
-		// controller expression is child of the
+		// Use body as hook: This is the scope holder for switch statements! (as controller expression is child of the
 		// switch itself and may not have scope access.)
 		updateStmtsAndDeclsAtScopeEnd(resultBuilder, node.getBody());
 		endScope();
@@ -2437,10 +2489,8 @@ public class CHandler {
 		checkForACSL(main, acslResultBuilder, node, null, false);
 		mDeclarations.addAll(acslResultBuilder.getDeclarations());
 
-		// The declarations (which are needed for the caller) are handled as a member as
-		// they
-		// do not consist of a Boogie node.
-		// So as a workaround null is returned here
+		// The declarations (which are needed for the caller) are handled as a member as they do not consist of a Boogie
+		// node. So as a workaround null is returned here
 		return null;
 	}
 
@@ -2519,7 +2569,7 @@ public class CHandler {
 			return handleIndirectionOperator(operand, loc, node);
 		}
 		case IASTUnaryExpression.op_amper: {
-			return handleAddressOfOperator(operand, loc, node);
+			return handleAddressOfOperator(operand, node);
 		}
 		case IASTUnaryExpression.op_alignOf:
 		default:
@@ -2528,13 +2578,24 @@ public class CHandler {
 		}
 	}
 
+	/**
+	 * Translates a while-statement {@code while (cond) body} to {@code while (true) { Label: if (!cond) break; body; }}
+	 *
+	 * @param main
+	 *            dispatcher
+	 * @param node
+	 *            AST node
+	 * @return The while-statement translated to a Boogie-Result
+	 */
 	public Result visit(final IDispatcher main, final IASTWhileStatement node) {
-		final ExpressionResult condResult = (ExpressionResult) main.dispatch(node.getCondition());
+		final ILocation loc = mLocationFactory.createCLocation(node);
+		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 		final String loopLabel = mNameHandler.getGloballyUniqueIdentifier(SFO.LOOPLABEL);
-		mInnerMostLoopLabel.push(loopLabel);
-		final Result bodyResult = main.dispatch(node.getBody());
-		mInnerMostLoopLabel.pop();
-		return handleLoops(main, node, bodyResult, condResult, loopLabel);
+		final List<Statement> bodyBlock = new ArrayList<>();
+		bodyBlock.add(new Label(loc, loopLabel));
+		bodyBlock.addAll(handleLoopCondition(loc, main, node.getCondition(), resultBuilder));
+		handleLoopBody(loc, main, node.getBody(), loopLabel, resultBuilder, bodyBlock);
+		return buildLoopResult(main, node, bodyBlock, resultBuilder);
 	}
 
 	public Result visit(final IDispatcher main, final IGNUASTCompoundStatementExpression node) {
@@ -2605,13 +2666,8 @@ public class CHandler {
 	 * <p>
 	 * Background: Array expressions can be used in place of pointer expressions in C. (An array may "decay" to a
 	 * pointer in C standard terminology.) E.g. when an array is assigned to a pointer variable.
-	 *
-	 *
-	 *
-	 * @param rightLrVal
-	 * @return
 	 */
-	public RValue decayArrayLrValToPointer(final ILocation loc, final LRValue rightLrVal, final IASTNode hook) {
+	public RValue decayArrayLrValToPointer(final LRValue rightLrVal, final IASTNode hook) {
 		assert rightLrVal.getCType().getUnderlyingType() instanceof CArray;
 
 		final Expression newValue;
@@ -2628,7 +2684,7 @@ public class CHandler {
 			}
 			// circumvents Boogie type checking during preprocessing
 			newValue = ExpressionFactory.replaceBoogieType(oldValue, mTypeHandler.getBoogiePointerType());
-			moveArrayAndStructIdsOnHeap(loc, rightLrVal.getUnderlyingType(), oldValue, Collections.emptySet(), hook);
+			moveArrayAndStructIdsOnHeap(rightLrVal.getUnderlyingType(), oldValue, hook);
 		} else if (rightLrVal instanceof RValue) {
 			newValue = rightLrVal.getValue();
 		} else {
@@ -2692,7 +2748,7 @@ public class CHandler {
 				if (address instanceof IdentifierExpression) {
 					final String lId =
 							((IdentifierExpression) ((HeapLValue) leftHandSide).getAddress()).getIdentifier();
-					markAsIntFromPointer(loc, lId, hook);
+					markAsIntFromPointer(lId, hook);
 				} else {
 					// TODO
 				}
@@ -2701,7 +2757,7 @@ public class CHandler {
 				final LeftHandSide value = ((LocalLValue) leftHandSide).getLhs();
 				if (value instanceof VariableLHS) {
 					lId = ((VariableLHS) value).getIdentifier();
-					markAsIntFromPointer(loc, lId, hook);
+					markAsIntFromPointer(lId, hook);
 				} else {
 					// TODO
 				}
@@ -2814,12 +2870,12 @@ public class CHandler {
 		}
 	}
 
-	private void addHavocsAtScopeEnd(final ILocation loc, final IASTStatement hook,
-			final ExpressionResultBuilder builder) {
+	private void addHavocsAtScopeEnd(final IASTNode hook, final ExpressionResultBuilder builder) {
 		if (!ADD_HAVOCS_AT_SCOPE_END) {
 			return;
 		}
 		final List<VariableLHS> vars = new ArrayList<>();
+		final ILocation loc = LocationFactory.createIgnoreCLocation(hook);
 		for (final SymbolTableValue stv : mSymbolTable.getInnermostCScopeValues(hook)) {
 			if (!stv.isBoogieGlobalVar() && stv.getBoogieDecl() != null) {
 				final VariableLHS lhs = new VariableLHS(loc, stv.getAstType().getBoogieType(), stv.getBoogieName(),
@@ -2835,11 +2891,7 @@ public class CHandler {
 	/**
 	 * @return true iff this is called while in prerun mode, false otherwise
 	 */
-	public void moveArrayAndStructIdsOnHeap(final ILocation loc, final CType underlyingType, final Expression expr,
-			final Set<AuxVarInfo> auxVars, final IASTNode hook) {
-
-		final IASTNode exprHook = CTranslationUtil.findExpressionHook(hook);
-
+	public void moveArrayAndStructIdsOnHeap(final CType underlyingType, final Expression expr, final IASTNode hook) {
 		if (!mIsPrerun) {
 			if (underlyingType instanceof CArray) {
 				throw new AssertionError("on-heap/off-heap bug: array has to be on-heap");
@@ -2851,11 +2903,10 @@ public class CHandler {
 		for (final String id : bie.getIds()) {
 			final String cid = mSymbolTable.getCIdForBoogieId(id);
 			if (cid == null) {
-				// expression does not have a corresponding c identifier --> nothing to move on
-				// heap
+				// expression does not have a corresponding c identifier --> nothing to move on heap
 				continue;
 			}
-			final SymbolTableValue value = mSymbolTable.findCSymbol(exprHook, cid);
+			final SymbolTableValue value = mSymbolTable.findCSymbol(CTranslationUtil.findExpressionHook(hook), cid);
 			if (value == null) {
 				throw new AssertionError("no entry in symbol table for C-ID " + cid);
 			}
@@ -2917,12 +2968,8 @@ public class CHandler {
 		final InitializerResult initializer = translateInitializer(main, cDec);
 		cDec.setInitializerResult(initializer);
 
-		final ASTType translatedType;
-		if (onHeap) {
-			translatedType = mTypeHandler.constructPointerType(loc);
-		} else {
-			translatedType = mTypeHandler.cType2AstType(loc, cDec.getType());
-		}
+		final ASTType translatedType =
+				onHeap ? mTypeHandler.constructPointerType(loc) : mTypeHandler.cType2AstType(loc, cDec.getType());
 
 		final Declaration boogieDec;
 		final Result result;
@@ -3114,18 +3161,7 @@ public class CHandler {
 		return new RValue(convertedValue, new CPointer(lrValue.getCType()));
 	}
 
-	/**
-	 * Whether or not a new Scope should be started for this compound statement.
-	 *
-	 * @param env
-	 *            the environment in which the CompoundStatement is.
-	 * @return whether to open a new scope in the symbol table or not.
-	 */
-	private static boolean isNewScopeRequired(final IASTNode env) {
-		return !(env instanceof IASTForStatement) && !(env instanceof IASTFunctionDefinition);
-	}
-
-	private void moveIdOnHeap(final ILocation loc, final IdentifierExpression idExpr, final IASTNode hook) {
+	private void moveIdOnHeap(final IdentifierExpression idExpr, final IASTNode hook) {
 		final String id = idExpr.getIdentifier();
 		final String cid = mSymbolTable.getCIdForBoogieId(id);
 		final SymbolTableValue value = mSymbolTable.findCSymbol(hook, cid);
@@ -3212,8 +3248,7 @@ public class CHandler {
 				final AuxVarInfo auxVar =
 						mAuxVarInfoBuilder.constructAuxVarInfo(loc, er.getLrValue().getCType(), SFO.AUXVAR.UNION);
 
-				builder.addDeclaration(auxVar.getVarDec());
-				builder.addAuxVar(auxVar);
+				builder.addAuxVarWithDeclaration(auxVar);
 
 				final RValue tmpVarRVal = new RValue(auxVar.getExp(), er.getLrValue().getCType());
 
@@ -3397,7 +3432,7 @@ public class CHandler {
 		}
 	}
 
-	private void markAsIntFromPointer(final ILocation loc, final String lId, final IASTNode hook) {
+	private void markAsIntFromPointer(final String lId, final IASTNode hook) {
 		final String cId4Boogie = mSymbolTable.getCIdForBoogieId(lId);
 		final SymbolTableValue old = mSymbolTable.findCSymbol(hook, cId4Boogie);
 		final SymbolTableValue newSTV = old.createMarkedIsIntFromPointer();
@@ -3447,8 +3482,7 @@ public class CHandler {
 	/**
 	 * Handle the address operator according to Section 6.5.3.2 of C11.
 	 */
-	private Result handleAddressOfOperator(final ExpressionResult er, final ILocation loc, final IASTNode hook)
-			throws AssertionError {
+	private Result handleAddressOfOperator(final ExpressionResult er, final IASTNode hook) throws AssertionError {
 		final RValue rVal;
 		if (er.getLrValue() instanceof HeapLValue) {
 			rVal = ((HeapLValue) er.getLrValue()).getAddressAsPointerRValue(mTypeHandler.getBoogiePointerType());
@@ -3464,9 +3498,9 @@ public class CHandler {
 			final Expression expr = er.getLrValue().getValue();
 			if (expr instanceof IdentifierExpression) {
 				final IdentifierExpression idExpr = (IdentifierExpression) expr;
-				moveIdOnHeap(loc, idExpr, hook);
+				moveIdOnHeap(idExpr, hook);
 			} else {
-				moveArrayAndStructIdsOnHeap(loc, er.getLrValue().getUnderlyingType(), expr, er.getAuxVars(), hook);
+				moveArrayAndStructIdsOnHeap(er.getLrValue().getUnderlyingType(), expr, hook);
 			}
 			rVal = convertToPointerRValue(er.getLrValue(), mTypeHandler.getBoogiePointerType());
 		} else if (er.getLrValue() instanceof RValue) {
@@ -3501,71 +3535,10 @@ public class CHandler {
 				rop.getDeclarations(), rop.getAuxVars(), rop.getOverapprs());
 	}
 
-	/**
-	 * Method that handles loops (for, while, do/while). Each of corresponding visit methods will call this method.
-	 *
-	 * @param main
-	 *            the main IDispatcher
-	 * @param node
-	 *            the node to visit
-	 * @param bodyResult
-	 *            the body component of the corresponding loop
-	 * @param condResult
-	 *            the condition of the loop
-	 * @param loopLabel
-	 * @return a result object holding the translated loop (i.e. a while loop)
-	 */
-	private Result handleLoops(final IDispatcher main, final IASTStatement node, Result bodyResult,
-			ExpressionResult condResult, final String loopLabel) {
-		assert node instanceof IASTWhileStatement || node instanceof IASTDoStatement
-				|| node instanceof IASTForStatement;
-
-		final ILocation loc = mLocationFactory.createCLocation(node);
-
-		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
-
-		Result iterator = null;
-		if (node instanceof IASTForStatement) {
-			final IASTForStatement forStmt = (IASTForStatement) node;
-			// add initialization for this for loop
-			final IASTStatement cInitStmt = forStmt.getInitializerStatement();
-			if (cInitStmt != null) {
-				beginScope();
-				final Result initializer = main.dispatch(cInitStmt);
-				if (initializer instanceof ExpressionResult) {
-					final ExpressionResult rExp = (ExpressionResult) initializer;
-					resultBuilder.addAllExceptLrValueAndHavocAux(rExp);
-				} else if (initializer instanceof SkipResult) {
-					// this is an empty statement in the C Code. We will skip it
-				} else {
-					final String msg = "Uninplemented type of for loop initialization: " + initializer.getClass();
-					throw new UnsupportedSyntaxException(loc, msg);
-				}
-			}
-
-			// translate iterator
-			final IASTExpression cItExpr = forStmt.getIterationExpression();
-			if (cItExpr != null) {
-				iterator = main.dispatch(cItExpr);
-			}
-
-			// translate condition
-			final IASTExpression cCondExpr = forStmt.getConditionExpression();
-			if (cCondExpr != null) {
-				condResult = (ExpressionResult) main.dispatch(cCondExpr);
-			} else {
-				condResult = new ExpressionResult(new RValue(ExpressionFactory.createBooleanLiteral(loc, true),
-						new CPrimitive(CPrimitives.BOOL), true), Collections.emptySet());
-			}
-
-			mInnerMostLoopLabel.push(loopLabel);
-			bodyResult = main.dispatch(forStmt.getBody());
-			mInnerMostLoopLabel.pop();
-		}
-		assert CTranslationUtil.isAuxVarMapComplete(mNameHandler, condResult.getDeclarations(),
-				condResult.getAuxVars());
-
-		List<Statement> bodyBlock = new ArrayList<>();
+	private void handleLoopBody(final ILocation loc, final IDispatcher main, final IASTStatement bodyStmt,
+			final String loopLabel, final ExpressionResultBuilder resultBuilder, final List<Statement> bodyBlock) {
+		mInnerMostLoopLabel.push(loopLabel);
+		final Result bodyResult = main.dispatch(bodyStmt);
 		if (bodyResult instanceof ExpressionResult) {
 			final ExpressionResult re = (ExpressionResult) bodyResult;
 			resultBuilder.addDeclarations(re.getDeclarations());
@@ -3584,86 +3557,47 @@ public class CHandler {
 				throw new UnsupportedSyntaxException(loc, msg);
 			}
 		}
+		mInnerMostLoopLabel.pop();
+	}
 
-		if (node instanceof IASTForStatement) {
-			// add the loop label (continue statements become a jump to the loop label)
-			bodyBlock.add(new Label(loc, loopLabel));
+	private List<Statement> handleLoopCondition(final ILocation loc, final IDispatcher main, final IASTExpression cond,
+			final ExpressionResultBuilder resultBuilder) {
+		if (cond == null) {
+			// If the condition is not present in a for-loop, we can omit the if-statement
+			return List.of();
 		}
+		final ExpressionResult condResult = (ExpressionResult) main.dispatch(cond);
+		assert CTranslationUtil.isAuxVarMapComplete(mNameHandler, condResult.getDeclarations(),
+				condResult.getAuxVars());
+		final ExpressionResult condTransformed =
+				mExprResultTransformer.transformSwitchRexIntToBool(condResult, loc, cond);
+		final List<Statement> result = new ArrayList<>(condTransformed.getStatements());
+		resultBuilder.addDeclarations(condTransformed.getDeclarations());
+		// Insert an if-statement: if (!cond) break;
+		// Make sure to havoc all aux-vars that are created from the translation of cond (in the if and else branches)
+		final Expression negatedCond = ExpressionFactory.constructUnaryExpression(loc,
+				UnaryExpression.Operator.LOGICNEG, condTransformed.getLrValue().getValue());
+		final Statement[] havocs =
+				CTranslationUtil.createHavocsForAuxVars(condTransformed.getAuxVars()).toArray(Statement[]::new);
+		final IfStatement ifStmt = new IfStatement(loc, negatedCond,
+				DataStructureUtils.concat(havocs, new Statement[] { new BreakStatement(loc) }), havocs);
+		condTransformed.getOverapprs().forEach(oa -> oa.annotate(ifStmt));
+		result.add(ifStmt);
+		return result;
+	}
 
-		if (node instanceof IASTForStatement && iterator != null) {
-			// add iterator statements of this for loop
-			if (iterator instanceof ExpressionListResult) {
-				for (final ExpressionResult el : ((ExpressionListResult) iterator).getList()) {
-					bodyBlock.addAll(el.getStatements());
-					resultBuilder.addDeclarations(el.getDeclarations());
-					bodyBlock.addAll(CTranslationUtil.createHavocsForAuxVars(el.getAuxVars()));
-				}
-			} else if (iterator instanceof ExpressionResult) {
-				final ExpressionResult iteratorRE = (ExpressionResult) iterator;
-				bodyBlock.addAll(iteratorRE.getStatements());
-				resultBuilder.addDeclarations(iteratorRE.getDeclarations());
-				resultBuilder.addOverapprox(iteratorRE.getOverapprs());
-				bodyBlock.addAll(CTranslationUtil.createHavocsForAuxVars(iteratorRE.getAuxVars()));
-			} else {
-				final String msg = "Uninplemented type of loop iterator: " + iterator.getClass();
-				throw new UnsupportedSyntaxException(loc, msg);
-			}
-		}
-
-		condResult = mExprResultTransformer.transformSwitchRexIntToBool(condResult, loc, node);
-		resultBuilder.addDeclarations(condResult.getDeclarations());
-		final RValue condRVal = (RValue) condResult.getLrValue();
-		IfStatement ifStmt;
-		{
-			final Expression cond = ExpressionFactory.constructUnaryExpression(loc, UnaryExpression.Operator.LOGICNEG,
-					condRVal.getValue());
-			final ArrayList<Statement> thenStmt =
-					new ArrayList<>(CTranslationUtil.createHavocsForAuxVars(condResult.getAuxVars()));
-			thenStmt.add(new BreakStatement(loc));
-			final Statement[] elseStmt =
-					CTranslationUtil.createHavocsForAuxVars(condResult.getAuxVars()).toArray(new Statement[0]);
-			ifStmt = new IfStatement(loc, cond, thenStmt.toArray(new Statement[thenStmt.size()]), elseStmt);
-			for (final var oa : condResult.getOverapprs()) {
-				oa.annotate(ifStmt);
-			}
-		}
-
-		if (node instanceof IASTWhileStatement || node instanceof IASTForStatement) {
-			bodyBlock.add(0, ifStmt);
-			bodyBlock.addAll(0, condResult.getStatements());
-			if (node instanceof IASTWhileStatement) {
-				bodyBlock.add(0, new Label(loc, loopLabel));
-			}
-		} else if (node instanceof IASTDoStatement) {
-			bodyBlock.add(new Label(loc, loopLabel));
-			bodyBlock.addAll(condResult.getStatements());
-			bodyBlock.add(ifStmt);
-		}
-
+	private Result buildLoopResult(final IDispatcher main, final IASTStatement node, final List<Statement> bodyBlock,
+			final ExpressionResultBuilder resultBuilder) {
 		final LoopInvariantSpecification[] spec = extractLoopInvariants(main, node);
-
-		// bit of a workaround using an extra builder here..
-		final ExpressionResultBuilder bodyBlockResultBuilder = new ExpressionResultBuilder();
-		bodyBlockResultBuilder.addStatements(bodyBlock);
-
-		if (node instanceof IASTForStatement && ((IASTForStatement) node).getInitializerStatement() != null) {
-			updateStmtsAndDeclsAtScopeEnd(bodyBlockResultBuilder, node);
-			endScope();
-
-			resultBuilder.addDeclarations(bodyBlockResultBuilder.getDeclarations());
-			bodyBlock = bodyBlockResultBuilder.getStatements();
-		}
-
-		final ILocation ignoreLocation = LocationFactory.createIgnoreCLocation(node);
-		final WhileStatement whileStmt =
-				new WhileStatement(ignoreLocation, ExpressionFactory.createBooleanLiteral(ignoreLocation, true), spec,
-						bodyBlock.toArray(new Statement[bodyBlock.size()]));
+		final ILocation loc = mLocationFactory.createCLocation(node);
+		final WhileStatement whileStmt = new WhileStatement(loc, ExpressionFactory.createBooleanLiteral(loc, true),
+				spec, bodyBlock.toArray(Statement[]::new));
 		resultBuilder.getOverappr().stream().forEach(a -> a.annotate(whileStmt));
 		resultBuilder.addStatement(whileStmt);
 
 		if (node instanceof IASTForStatement) {
-			// Havoc all variables that are declared in the loop (including the initializer) afterwards
-			addHavocsAtScopeEnd(loc, node, resultBuilder);
+			// Havoc variables declared in the initializer after the loop
+			addHavocsAtScopeEnd(node, resultBuilder);
 		}
 
 		assert resultBuilder.getLrValue() == null : "there is an lrvalue although there should be none";

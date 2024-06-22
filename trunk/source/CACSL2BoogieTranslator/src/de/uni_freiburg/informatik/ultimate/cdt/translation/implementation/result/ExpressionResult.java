@@ -33,9 +33,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -87,28 +85,24 @@ public class ExpressionResult extends ResultWithSideEffects {
 
 	public ExpressionResult(final List<Statement> stmt, final LRValue lrVal, final List<Declaration> decl,
 			final Set<AuxVarInfo> auxVars, final List<Overapprox> overapproxList) {
-		this(stmt, lrVal, decl, auxVars, overapproxList, Collections.emptyList());
+		this(stmt, lrVal, decl, auxVars, overapproxList, List.of());
 	}
 
 	public ExpressionResult(final List<Statement> stmt, final LRValue lrVal, final List<Declaration> decl,
 			final Set<AuxVarInfo> auxVars) {
-		this(stmt, lrVal, decl, auxVars, new ArrayList<>(), Collections.emptyList());
-	}
-
-	public ExpressionResult(final LRValue lrVal, final Set<AuxVarInfo> auxVars, final List<Overapprox> overapproxList) {
-		this(new ArrayList<>(), lrVal, new ArrayList<>(), auxVars, overapproxList, Collections.emptyList());
+		this(stmt, lrVal, decl, auxVars, List.of());
 	}
 
 	public ExpressionResult(final List<Statement> stmt, final LRValue lrVal) {
-		this(stmt, lrVal, new ArrayList<>(), new LinkedHashSet<>(), new ArrayList<>(), Collections.emptyList());
+		this(stmt, lrVal, List.of(), Set.of());
 	}
 
 	public ExpressionResult(final LRValue lrVal, final Set<AuxVarInfo> auxVars) {
-		this(new ArrayList<>(), lrVal, new ArrayList<>(), auxVars);
+		this(List.of(), lrVal, List.of(), auxVars);
 	}
 
 	public ExpressionResult(final LRValue lrVal) {
-		this(lrVal, new LinkedHashSet<>());
+		this(lrVal, Set.of());
 	}
 
 	public LRValue getLrValue() {

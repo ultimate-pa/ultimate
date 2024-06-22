@@ -48,10 +48,4 @@ public class NoBacktranslationValueProvider<TTE, TE> implements IBacktranslation
 	public String getOriginFileNameFromStep(final TTE step) {
 		throw new UnsupportedOperationException(NO_BACKTRANSLATION_VALUE_PROVIDER);
 	}
-
-	@Override
-	public boolean containsProcedureCall(final TE expression) {
-		throw new UnsupportedOperationException(NO_BACKTRANSLATION_VALUE_PROVIDER);
-	}
-
 }

@@ -1,7 +1,7 @@
 (set-option :print-success false)
 (set-info :smt-lib-version 2.6)
 (set-logic UF)
-(set-info :status unknown)
+(set-info :status unsat)
 (declare-sort U 0)
 (declare-fun f (U) U)
 (declare-fun a () U)

@@ -64,11 +64,6 @@ public class ResponsePattern extends PatternType<ResponsePattern> {
 			final CDD P = scope.getCdd1();
 			ct = counterTrace(phase(P.negate()), phase(P.negate().and(R).and(S.negate())),
 					phase(P.negate().and(S.negate())), phase(P), phaseT());
-		} else if (scope instanceof SrParseScopeAfterUntil) {
-			final CDD P = scope.getCdd1();
-			final CDD Q = scope.getCdd2();
-			ct = counterTrace(phaseT(), phase(P), phase(Q.negate()), phase(Q.negate().and(R).and(S.negate())),
-					phase(Q.negate().and(S.negate())), phase(Q), phaseT());
 		} else if (scope instanceof SrParseScopeBetween) {
 			final CDD P = scope.getCdd1();
 			final CDD Q = scope.getCdd2();

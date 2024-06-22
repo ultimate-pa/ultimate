@@ -477,7 +477,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 			if (ensures == null) {
 				continue;
 			}
-			final Term ensuresFormula = ensures.getFormula();
+			final Term ensuresFormula = PredicateUtils.eliminateLocalVars(ensures, mServices, icfg.getCfgSmtToolkit());
 			final Term requiresFormula =
 					PredicateUtils.eliminateOldVars(mServices, icfg.getCfgSmtToolkit().getManagedScript(), requires);
 			final ProcedureContractResult<IIcfgElement, Term> result = new ProcedureContractResult<>(

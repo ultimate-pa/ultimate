@@ -1,4 +1,4 @@
-- entry_type: loop_invariant
+- entry_type: location_invariant
   metadata:
     format_version: '0.1'
     uuid: 8ce21bce-088e-45a9-b4dd-9259a1083f4c
@@ -18,9 +18,8 @@
     file_name: C:\ultimate\trunk\examples\witness-checking\regression\correctness\test_locks_5.c
     file_hash: UNUSED
     line: 93
-    column: 0
     function: main
-  loop_invariant:
+  location_invariant:
     string: '0'
     type: assertion
     format: C

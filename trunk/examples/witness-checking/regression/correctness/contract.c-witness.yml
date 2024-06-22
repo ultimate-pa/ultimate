@@ -20,7 +20,7 @@
       file_name: contract.c
       file_hash: UNUSED
       line: 3
-      column: 0
+      column: 1
       function: f
     ensures:
     - global > \old(global) && \result == \old(global)

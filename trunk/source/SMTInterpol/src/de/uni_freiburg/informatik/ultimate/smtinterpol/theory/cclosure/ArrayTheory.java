@@ -935,7 +935,9 @@ public class ArrayTheory implements ITheory {
 					builder.setModelValue(node.mTerm, nodeValue);
 				} else {
 					// this is not a weakly related to a constant array. Use some fresh array.
-					Term nodeValue = model.extendFresh(arraySort);
+					Term nodeValue = hasFiniteIndexSort(arraySort)
+							? model.getSomeValue(arraySort)
+							: model.extendFresh(arraySort);
 					// change all indices to the right select value
 					for (final Entry<CCTerm, CCAppTerm> indexValuePairs : node.mSelects.entrySet()) {
 						final CCTerm index = indexValuePairs.getKey();
@@ -1473,7 +1475,7 @@ public class ArrayTheory implements ITheory {
 				constRep = getValueFromConst(weakRep.mConstTerm).getRepresentative();
 			}
 			if (node == weakRep) {
-				if (mNeedDiffIndexLevel >= 0) {
+				if (mNeedDiffIndexLevel >= 0 || hasFiniteIndexSort(node.mTerm.getFlatTerm().getSort())) {
 					// If we have quantified array indices, we need to handle extensionality for
 					// arrays that are not weakly equivalent. Unless the arrays have different
 					// sorts.
@@ -1522,7 +1524,8 @@ public class ArrayTheory implements ITheory {
 		}
 		for (final SymmetricPair<ArrayNode> equalities : propEqualities) {
 			if (equalities.getFirst().getWeakRepresentative() != equalities.getSecond().getWeakRepresentative()) {
-				assert mNeedDiffIndexLevel >= 0;
+				assert mNeedDiffIndexLevel >= 0
+						|| hasFiniteIndexSort(equalities.getFirst().mTerm.getFlatTerm().getSort());
 				// just create a diff term and let the solver do the rest.
 				final Term diffTerm = mClausifier.getTheory().term(SMTInterpolConstants.DIFF,
 						equalities.getFirst().mTerm.getFlatTerm(), equalities.getSecond().mTerm.getFlatTerm());
@@ -1531,6 +1534,13 @@ public class ArrayTheory implements ITheory {
 		}
 		mTimeBuildWeakEqi += (System.nanoTime() - startTime);
 		return !propEqualities.isEmpty();
+	}
+
+	private boolean hasFiniteIndexSort(Sort sort) {
+		assert sort.isArraySort();
+		assert sort.getArguments().length == 2;
+		final Sort indexSort = sort.getArguments()[0];
+		return !mClausifier.isStablyInfinite(indexSort);
 	}
 
 	CClosure getCClosure() {

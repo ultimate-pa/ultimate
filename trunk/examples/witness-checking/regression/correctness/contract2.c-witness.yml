@@ -20,7 +20,7 @@
       file_name: contract2.c
       file_hash: UNUSED
       line: 1
-      column: 0
+      column: 1
       function: f
     requires:
     - x > 0

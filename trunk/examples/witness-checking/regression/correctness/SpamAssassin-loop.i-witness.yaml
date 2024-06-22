@@ -18,7 +18,6 @@
     file_name: C:\ultimate\trunk\examples\witness-checking\regression\correctness\SpamAssassin-loop.i
     file_hash: UNUSED
     line: 34
-    column: 0
     function: main
   loop_invariant:
     string: ((bufsize == (limit + 4)) && (0 <= i))
@@ -44,13 +43,12 @@
     file_name: C:\ultimate\trunk\examples\witness-checking\regression\correctness\SpamAssassin-loop.i
     file_hash: UNUSED
     line: 35
-    column: 0
     function: main
   loop_invariant:
     string: (((bufsize == (limit + 4)) && (0 <= j)) && (0 <= i))
     type: assertion
     format: C
-- entry_type: loop_invariant
+- entry_type: location_invariant
   metadata:
     format_version: '0.1'
     uuid: 3933dd42-6353-4330-b74b-89e2d6eee003
@@ -70,9 +68,8 @@
     file_name: C:\ultimate\trunk\examples\witness-checking\regression\correctness\SpamAssassin-loop.i
     file_hash: UNUSED
     line: 57
-    column: 0
     function: main
-  loop_invariant:
+  location_invariant:
     string: (((((bufsize == (limit + 4)) && ((i + 1) <= len)) && (0 <= j)) && ((5 + j) <= bufsize)) && (0 <= i))
     type: assertion
     format: C

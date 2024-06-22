@@ -1,0 +1,45 @@
+[
+  {
+    "plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator",
+    "default": "",
+    "visible": false,
+    "name": "Entry function",
+    "id": "cacsl2boogietranslator_entry_function",
+    "type": "string",
+    "key": "Entry function"
+  },
+  {
+    "plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator",
+    "default": true,
+    "visible": false,
+    "name": "Use bitvectors instead of ints",
+    "id": "cacsl2boogietranslator_use_bitvectors_instead_of_ints",
+    "type": "bool",
+    "key": "Use bitvectors instead of ints"
+  },
+  {
+    "plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator",
+    "default": "main",
+    "visible": false,
+    "name": "Memory model",
+    "options": [
+      "HoenickeLindenmann_Original",
+      "HoenickeLindenmann_1ByteResolution",
+      "HoenickeLindenmann_2ByteResolution",
+      "HoenickeLindenmann_4ByteResolution",
+      "HoenickeLindenmann_8ByteResolution"
+    ],
+    "id": "cacsl2boogietranslator_memory_model",
+    "type": "string",
+    "key": "Memory model"
+  },
+  {
+    "plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator",
+    "default": true,
+    "visible": false,
+    "name": "Adapt memory model on pointer casts if necessary",
+    "id": "cacsl2boogietranslator_adapt_memory_model_on_pointer_casts_if_necessary",
+    "type": "bool",
+    "key": "Adapt memory model on pointer casts if necessary"
+  }
+]

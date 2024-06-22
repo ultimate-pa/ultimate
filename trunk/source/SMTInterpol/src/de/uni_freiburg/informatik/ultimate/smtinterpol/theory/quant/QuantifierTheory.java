@@ -39,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.Config;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.LogProxy;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.Clausifier;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SMTAffineTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.TermCompiler;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Clause;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.DPLLAtom;
@@ -53,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CClosure;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.LinArSolve;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.quant.DestructiveEqualityReasoning.DERResult;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.quant.ematching.EMatching;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.Polynomial;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.ScopedArrayList;
 
 /**
@@ -514,31 +514,23 @@ public class QuantifierTheory implements ITheory {
 				newRhs = lhs;
 			}
 		} else {
-			final SMTAffineTerm linAdded = SMTAffineTerm.create(lhs);
-			linAdded.add(Rational.MONE, SMTAffineTerm.create(rhs));
-			linAdded.div(linAdded.getGcd());
+			final Polynomial linAdded = new Polynomial(lhs);
+			linAdded.add(Rational.MONE, rhs);
+			linAdded.mul(linAdded.getGcd().inverse());
 			Rational fac = Rational.ONE;
-			final TermCompiler compiler = mClausifier.getTermCompiler();
-			for (final Term smd : linAdded.getSummands().keySet()) {
-				if (smd instanceof TermVariable) {
+			for (final Map<Term, Integer> smd : linAdded.getSummands().keySet()) {
+				Term singleton = null;
+				if (smd.size() == 1 && smd.values().iterator().next() == 1) {
+					singleton = smd.keySet().iterator().next();
+				}
+				if (singleton instanceof TermVariable) {
 					fac = linAdded.getSummands().get(smd);
-					if (smd.getSort().getName() == "Real") {
-						newLhs = smd;
+					if (singleton.getSort().getName() == "Real" || fac.abs() == Rational.ONE) {
+						newLhs = singleton;
 						linAdded.add(fac.negate(), smd);
-						linAdded.div(fac.negate());
-						newRhs = linAdded.toTerm(compiler, lhs.getSort());
+						linAdded.mul(fac.negate().inverse());
+						newRhs = linAdded.toTerm(lhs.getSort());
 						break;
-					} else {
-						if (fac.abs() == Rational.ONE) {
-							// Isolate first found variable (if exists).
-							newLhs = smd;
-							linAdded.add(fac.negate(), smd);
-							if (fac == Rational.ONE) {
-								linAdded.negate();
-							}
-							newRhs = linAdded.toTerm(compiler, lhs.getSort());
-							break;
-						}
 					}
 				}
 			}
@@ -595,48 +587,52 @@ public class QuantifierTheory implements ITheory {
 	public QuantLiteral getQuantInequality(final boolean positive, final Term lhs, final SourceAnnotation source) {
 
 		boolean rewrite = false; // Set to true when rewriting positive (x-t<=0) into ~(t+1<=x) for x integer
-		final SMTAffineTerm linTerm = SMTAffineTerm.create(lhs);
+		final Polynomial linTerm = new Polynomial(lhs);
 		TermVariable var = null;
 		Rational fac = Rational.ONE;
 		boolean hasUpperBound = false;
-		for (final Term smd : linTerm.getSummands().keySet()) {
-			if (smd instanceof TermVariable) {
-				fac = linTerm.getSummands().get(smd);
-				if (smd.getSort().getName() == "Real") { // In the real case, we normalize the term for this var.
-					var = (TermVariable) smd;
-					if (linTerm.getSummands().get(smd).isNegative()) {
-						hasUpperBound = true;
+		for (final Map<Term, Integer> monom : linTerm.getSummands().keySet()) {
+			if (monom.size() == 1 && monom.values().iterator().next() == 1) {
+				final Term smd = monom.keySet().iterator().next();
+				if (smd instanceof TermVariable) {
+					fac = linTerm.getSummands().get(monom);
+					if (smd.getSort().getName() == "Real") { // In the real case, we normalize the term for this var.
+						var = (TermVariable) smd;
+						if (fac.isNegative()) {
+							hasUpperBound = true;
+						} else {
+							hasUpperBound = false;
+						}
+						break;
 					} else {
-						hasUpperBound = false;
-					}
-					break;
-				} else {
-					if (fac == Rational.MONE) {
-						var = (TermVariable) smd;
-						hasUpperBound = true;
-						break;
-					} else if (fac == Rational.ONE) {
-						var = (TermVariable) smd;
-						hasUpperBound = false;
-						break;
+						if (fac == Rational.MONE) {
+							var = (TermVariable) smd;
+							hasUpperBound = true;
+							break;
+						} else if (fac == Rational.ONE) {
+							var = (TermVariable) smd;
+							hasUpperBound = false;
+							break;
+						}
 					}
 				}
+
 			}
 		}
 		if (positive && var != null && lhs.getSort().getName() == "Int") {
 			// Rewrite positive (x-t<=0) into ~(t+1<=x), or more precisely, ~(-x+t+1<=0) for x integer.
 			// Similarly (t-x<=0) into ~(x-t+1<=0)
 			rewrite = true;
-			linTerm.negate();
+			linTerm.mul(Rational.MONE);
 			linTerm.add(Rational.ONE);
 			hasUpperBound = !hasUpperBound;
 		} else if (var != null && lhs.getSort().getName() == "Real") {
 			// var should have coefficient 1 or -1.
-			linTerm.div(fac.abs());
+			linTerm.mul(fac.abs().inverse());
 		}
 
 		final TermCompiler compiler = mClausifier.getTermCompiler();
-		final Term newLhs = linTerm.toTerm(compiler, lhs.getSort());
+		final Term newLhs = linTerm.toTerm(lhs.getSort());
 		final Term newAtomTerm = mTheory.term("<=", newLhs, Rational.ZERO.toTerm(lhs.getSort()));
 		QuantLiteral atom = (QuantLiteral) mClausifier.getILiteral(newAtomTerm);
 		if (atom != null) {
@@ -648,20 +644,22 @@ public class QuantifierTheory implements ITheory {
 		// Check if the atom is almost uninterpreted.
 		if (var == null) { // (euTerm <= 0), pos. and neg., is essentially and almost uninterpreted.
 			boolean hasOnlyEU = true;
-			for (final Term smd : linTerm.getSummands().keySet()) {
-				hasOnlyEU = hasOnlyEU && QuantUtil.isEssentiallyUninterpreted(smd);
+			for (final Map<Term, Integer> monom : linTerm.getSummands().keySet()) {
+				for (final Term smd : monom.keySet()) {
+					hasOnlyEU = hasOnlyEU && QuantUtil.isEssentiallyUninterpreted(smd);
+				}
 			}
 			if (hasOnlyEU) {
 				atom.mIsEssentiallyUninterpreted = atom.negate().mIsEssentiallyUninterpreted = true;
 			}
 		} else { // (var < var), (var < ground), or (ground < var) are arithmetical and almost uninterpreted
-			final SMTAffineTerm remainderAff = new SMTAffineTerm();
-			remainderAff.add(linTerm);
+			final Polynomial remainderAff = new Polynomial();
+			remainderAff.add(Rational.ONE, linTerm);
 			remainderAff.add(hasUpperBound ? Rational.ONE : Rational.MONE, var);
 			if (!hasUpperBound) {
-				remainderAff.negate();
+				remainderAff.mul(Rational.MONE);
 			}
-			final Term remainder = remainderAff.toTerm(compiler, lhs.getSort());
+			final Term remainder = remainderAff.toTerm(lhs.getSort());
 			if (remainder instanceof TermVariable || remainder.getFreeVars().length == 0) {
 				atom.negate().mIsArithmetical = true;
 			}

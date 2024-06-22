@@ -38,13 +38,13 @@ import java.util.TreeSet;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.Config;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.LogProxy;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.Clausifier;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.EqualityProxy;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SMTAffineTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Clause;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.DPLLAtom;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.DPLLEngine;
@@ -59,18 +59,18 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.util.ScopedArrayList;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
 
 /**
- * Class implementing a decision procedure for linear arithmetic over
- * rationals and integers. An algorithm proposed by Dutertre and de Moura
- * is used. It provides tableau simplification, theory propagation, conflict
- * set generation and interpolation.
+ * Class implementing a decision procedure for linear arithmetic over rationals
+ * and integers. An algorithm proposed by Dutertre and de Moura is used. It
+ * provides tableau simplification, theory propagation, conflict set generation
+ * and interpolation.
  *
- * To build a tableau, we create slack variables for every linear combination
- * of non-basic variables. To be able to recognize recurring linear
- * combinations, we canonicalize every linear combination and remember them the
- * first time we see them. Canonicalization takes advantage of the ordering of
- * non-basic variables. We transform every linear combination to an equivalent
- * one where the greatest common divisor of the coefficient is equal to one
- * and the coefficient of the first non-basic variable is positive.
+ * To build a tableau, we create slack variables for every linear combination of
+ * non-basic variables. To be able to recognize recurring linear combinations,
+ * we canonicalize every linear combination and remember them the first time we
+ * see them. Canonicalization takes advantage of the ordering of non-basic
+ * variables. We transform every linear combination to an equivalent one where
+ * the greatest common divisor of the coefficient is equal to one and the
+ * coefficient of the first non-basic variable is positive.
  *
  * Theory propagation comes in two flavors: bound propagation and bound
  * refinement propagation.
@@ -80,10 +80,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
  * handled the same way.
  *
  * With bound refinement propagation, we propagate bounds from the column
- * (non-basic) variables to a row (basic) variable.  The bound for the row
+ * (non-basic) variables to a row (basic) variable. The bound for the row
  * variable is a simple linear combination of the bounds for the column
- * variables. For the derived bound we create a composite reason to remember
- * the bound.  Then we can use this composite reason as a source for bound
+ * variables. For the derived bound we create a composite reason to remember the
+ * bound. Then we can use this composite reason as a source for bound
  * propagation and propagate all bounds that are weaker than the composite.
  *
  * @author Juergen Christ, Jochen Hoenicke
@@ -91,17 +91,21 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
 public class LinArSolve implements ITheory {
 	/** The Clausifier. */
 	final Clausifier mClausifier;
-	/** The list of all variables (basic and nonbasic, integer and reals) indexed by their matrix position. */
+	/**
+	 * The list of all variables (basic and nonbasic, integer and reals) indexed by
+	 * their matrix position.
+	 */
 	final ScopedArrayList<LinVar> mLinvars;
 	/**
-	 * The tableaux, represented as list of all tableaux row indexed by matrix position. The entries for column
-	 * variables (nonbasic) must be null.
+	 * The tableaux, represented as list of all tableaux row indexed by matrix
+	 * position. The entries for column variables (nonbasic) must be null.
 	 */
 	final ArrayList<TableauxRow> mTableaux;
 	/**
-	 * The tableaux row occurence. For each column variable gives the set of row variables (represented as bitset
-	 * indexed with matrix position), where the tableaux row contains the column variable. The entries for row variables
-	 * must be null.
+	 * The tableaux row occurence. For each column variable gives the set of row
+	 * variables (represented as bitset indexed with matrix position), where the
+	 * tableaux row contains the column variable. The entries for row variables must
+	 * be null.
 	 */
 	final ArrayList<BitSet> mDependentRows;
 	/** All non-basic integer variables. */
@@ -109,10 +113,11 @@ public class LinArSolve implements ITheory {
 	/** The literals that will be propagated. */
 	final Queue<Literal> mProplist;
 	/** The basic variables hashed by their linear combinations. */
-	final ScopedHashMap<Map<LinVar,Rational>,LinVar> mBasics;
-	/** List of all variables outside their bounds.
-	 * I prefer a tree set here since it provides ordering, retrieval of the
-	 * first element, addition of elements and uniqueness of elements!
+	final ScopedHashMap<Map<LinVar, Rational>, LinVar> mBasics;
+	/**
+	 * List of all variables outside their bounds. I prefer a tree set here since it
+	 * provides ordering, retrieval of the first element, addition of elements and
+	 * uniqueness of elements!
 	 */
 	final Set<LinVar> mOob;
 	/// --- Statistics variables ---
@@ -134,8 +139,7 @@ public class LinArSolve implements ITheory {
 	int mNumCuts;
 	int mNumBranches;
 	long mCutGenTime;
-	final ScopedArrayList<LASharedTerm> mSharedVars =
-		new ScopedArrayList<>();
+	final ScopedArrayList<LASharedTerm> mSharedVars = new ScopedArrayList<>();
 
 	/** The next suggested literals */
 	final ArrayDeque<Literal> mSuggestions;
@@ -153,7 +157,16 @@ public class LinArSolve implements ITheory {
 	/** Are we in a check-sat? */
 	private boolean mInCheck = false;
 	/**
+	 * This is -1 if no non-linear var exists, otherwise the push/pop level where
+	 * the first non-linear variable was introduced.
+	 */
+	private int mHasNonLinearVar = -1;
+	/** Current number of pushes. */
+	private int mPushPopLevel = 0;
+
+	/**
 	 * Basic initialization.
+	 *
 	 * @param engine DPLLEngine this theory is used in.
 	 */
 	public LinArSolve(final Clausifier clausifier) {
@@ -194,11 +207,9 @@ public class LinArSolve implements ITheory {
 				if (!v.mBasic) {
 					continue;
 				}
-				assert v.getTightLowerBound().mEps != 0
-						|| v == mConflictVar
+				assert v.getTightLowerBound().mEps != 0 || v == mConflictVar
 						|| v.getDiseq(v.getTightLowerBound().mReal) == null;
-				assert v.getTightUpperBound().mEps != 0
-						|| v == mConflictVar
+				assert v.getTightUpperBound().mEps != 0 || v == mConflictVar
 						|| v.getDiseq(v.getTightUpperBound().mReal) == null;
 				assert v.checkReasonChains();
 			}
@@ -208,10 +219,8 @@ public class LinArSolve implements ITheory {
 
 	private boolean checkoobcontent() {
 		for (final LinVar v : mLinvars) {
-			assert !v.outOfBounds() || mOob.contains(v)
-				: "Variable " + v + " is out of bounds: "
-					+ v.getLowerBound() + "<=" + v.getValue() + "<="
-				+ v.getUpperBound();
+			assert !v.outOfBounds() || mOob.contains(v) : "Variable " + v + " is out of bounds: " + v.getLowerBound()
+					+ "<=" + v.getValue() + "<=" + v.getUpperBound();
 		}
 		return true;
 	}
@@ -219,12 +228,17 @@ public class LinArSolve implements ITheory {
 	/// --- Introduction of variables ---
 	/**
 	 * Add a new non-basic variable.
+	 *
 	 * @param name  Name of the variable
 	 * @param isint Is the variable integer valued
 	 * @param level The assertion stack level for this variable
 	 * @return Newly created variable
 	 */
 	public LinVar addVar(final Term name, final boolean isint, final int level) {
+		if ((name instanceof ApplicationTerm)
+				&& ((ApplicationTerm) name).getFunction().getName().equals(SMTLIBConstants.MUL)) {
+			mHasNonLinearVar = mPushPopLevel;
+		}
 		mClausifier.getLogger().debug("Creating var %s", name);
 		final LinVar var = new LinVar(name, isint, level, mLinvars.size());
 		mLinvars.add(var);
@@ -238,13 +252,14 @@ public class LinArSolve implements ITheory {
 
 	/**
 	 * Add a new basic variable that is defined as linear combination.
-	 * @param factors the linear combination as a map from LinVar to its factor.
-	 *        The map must be normalized, i.e. divided by its gcd.
+	 *
+	 * @param factors the linear combination as a map from LinVar to its factor. The
+	 *                map must be normalized, i.e. divided by its gcd.
 	 * @return Newly created variable
 	 */
 	private LinVar generateLinVar(final TreeMap<LinVar, Rational> factors) {
 		if (factors.size() == 1) {
-			final Map.Entry<LinVar,Rational> me = factors.entrySet().iterator().next();
+			final Map.Entry<LinVar, Rational> me = factors.entrySet().iterator().next();
 			assert me.getValue().equals(Rational.ONE);
 			final LinVar var = me.getKey();
 			return var;
@@ -255,7 +270,7 @@ public class LinArSolve implements ITheory {
 			final LinVar[] vars = new LinVar[factors.size()];
 			final BigInteger[] coeffs = new BigInteger[factors.size()];
 			int i = 0;
-			final TreeMap<LinVar,Rational> curcoeffs = new TreeMap<>();
+			final TreeMap<LinVar, Rational> curcoeffs = new TreeMap<>();
 			boolean isInt = true;
 			for (final Map.Entry<LinVar, Rational> entry : factors.entrySet()) {
 				vars[i] = entry.getKey();
@@ -289,10 +304,11 @@ public class LinArSolve implements ITheory {
 
 	/**
 	 * Generate a bound constraint for <code>at <(=) 0</code>.
-	 * @param at     Affine input term (may be unit term c_i*x_i+c or
-	 * 				 sum_i c_i*x_i+c)
+	 *
+	 * @param at       Affine input term (may be unit term c_i*x_i+c or sum_i
+	 *                 c_i*x_i+c)
 	 * @param strict   Strict bound (< instead of <=)
-	 * @param level		Assertion stack level for the constraint.
+	 * @param level    Assertion stack level for the constraint.
 	 * @param remember Should the variable remember the generated constraint?
 	 * @return
 	 */
@@ -300,22 +316,21 @@ public class LinArSolve implements ITheory {
 		final Rational normFactor = at.getGCD().inverse();
 		at.mul(normFactor);
 		final LinVar var = generateLinVar(getSummandMap(at));
-		return generateConstraint(var, at.mConstant.mReal.negate(),
-				normFactor.isNegative(), strict);
+		return generateConstraint(var, at.mConstant.mReal.negate(), normFactor.isNegative(), strict);
 	}
 
 	private final TreeMap<LinVar, Rational> getSummandMap(final MutableAffineTerm at) {
 		return at.getSummands();
 	}
 
-
 	/**
 	 * Update values of all basic variables depending on some non-basic variable.
+	 *
 	 * @param updateVar the non-basic variable.
 	 * @param newValue  Value to set for this variable.
 	 */
 	void updateVariableValue(final LinVar updateVar, final ExactInfinitesimalNumber newValue) {
-		assert(!updateVar.mBasic);
+		assert (!updateVar.mBasic);
 		final ExactInfinitesimalNumber diff = newValue.sub(updateVar.getValue());
 		updateVar.addValue(diff);
 		for (final MatrixEntry entry : updateVar.getTableauxColumn(this)) {
@@ -331,17 +346,18 @@ public class LinArSolve implements ITheory {
 	}
 
 	/**
-	 * Update bound of a non-basic variable and generate CompositeReasons for
-	 * all its dependent basic variables.
+	 * Update bound of a non-basic variable and generate CompositeReasons for all
+	 * its dependent basic variables.
+	 *
 	 * @param updateVar the non-basic variable.
 	 * @param isUpper   whether upper or lower bound is assigned.
 	 * @param oldBound  the previous bound.
 	 * @param newBound  the new bound.
 	 * @return Conflict clause detected during bound refinement propagations
 	 */
-	private void updateVariable(final LinVar updateVar, final boolean isUpper,
-			final InfinitesimalNumber oldBound, final InfinitesimalNumber newBound) {
-		assert(!updateVar.mBasic);
+	private void updateVariable(final LinVar updateVar, final boolean isUpper, final InfinitesimalNumber oldBound,
+			final InfinitesimalNumber newBound) {
+		assert (!updateVar.mBasic);
 		final ExactInfinitesimalNumber diff = updateVar.getValue().isub(newBound);
 		final boolean changeVar = isUpper ? (diff.signum() < 0) : diff.signum() > 0;
 		if (changeVar) {
@@ -456,35 +472,34 @@ public class LinArSolve implements ITheory {
 
 		LAReason reason = var.mUpper;
 		while (reason != null && reason.getBound().lesseq(bound)) {
-			if ((reason instanceof LiteralReason)
-					&& ((LiteralReason)reason).getLiteral() == literal
+			if ((reason instanceof LiteralReason) && ((LiteralReason) reason).getLiteral() == literal
 					&& reason.getLastLiteral() == reason) {
-				removeLiteralReason((LiteralReason)reason);
+				removeLiteralReason((LiteralReason) reason);
 				break;
 			}
 			reason = reason.getOldReason();
 		}
 		reason = var.mLower;
 		while (reason != null && bound.lesseq(reason.getBound())) {
-			if ((reason instanceof LiteralReason)
-					&& ((LiteralReason)reason).getLiteral() == literal
+			if ((reason instanceof LiteralReason) && ((LiteralReason) reason).getLiteral() == literal
 					&& reason.getLastLiteral() == reason) {
-				removeLiteralReason((LiteralReason)reason);
+				removeLiteralReason((LiteralReason) reason);
 				break;
 			}
 			reason = reason.getOldReason();
 		}
 	}
 
-	/** Check if there is still a pending conflict that must be reported.
+	/**
+	 * Check if there is still a pending conflict that must be reported.
+	 *
 	 * @return the corresponding conflict clause or null, if no conflict pending.
 	 */
 	public Clause checkPendingConflict() {
 		final LinVar var = mConflictVar;
 		if (var != null && var.getTightUpperBound().less(var.getTightLowerBound())) {
 			// we still have a conflict
-			final Explainer explainer = new Explainer(
-					this, getEngine().isProofGenerationEnabled(), null);
+			final Explainer explainer = new Explainer(this, getEngine().isProofGenerationEnabled(), null);
 			InfinitesimalNumber slack = var.getTightLowerBound().sub(var.getTightUpperBound());
 			slack = var.mUpper.explain(explainer, slack, Rational.ONE);
 			slack = var.mLower.explain(explainer, slack, Rational.MONE);
@@ -651,12 +666,12 @@ public class LinArSolve implements ITheory {
 			}
 			// if disequality equals bound, the bound should have
 			// already been refined.
-			//assert !v.getUpperBound().equals(ea.getBound());
-			//assert !v.getLowerBound().equals(ea.getBound());
+			// assert !v.getUpperBound().equals(ea.getBound());
+			// assert !v.getLowerBound().equals(ea.getBound());
 			/*
-			 * FIX: Since we only recompute the epsilons in ensureDisequality,
-			 *      we might try to satisfy an already satisfied disequality. In
-			 *      this case, we return null and have nothing to do.
+			 * FIX: Since we only recompute the epsilons in ensureDisequality, we might try
+			 * to satisfy an already satisfied disequality. In this case, we return null and
+			 * have nothing to do.
 			 */
 			final Literal lit = ensureDisequality(ea);
 			if (lit != null) {
@@ -674,6 +689,9 @@ public class LinArSolve implements ITheory {
 
 	@Override
 	public int checkCompleteness() {
+		if (mHasNonLinearVar >= 0) {
+			return DPLLEngine.INCOMPLETE_THEORY;
+		}
 		return DPLLEngine.COMPLETE;
 	}
 
@@ -696,34 +714,27 @@ public class LinArSolve implements ITheory {
 		return null;
 	}
 
-	private Clause createUnitClause(final Literal literal, final boolean isUpper,
-			final InfinitesimalNumber bound, final LinVar var) {
-		final Explainer explainer = new Explainer(
-				this, getEngine().isProofGenerationEnabled(), literal);
+	private Clause createUnitClause(final Literal literal, final boolean isUpper, final InfinitesimalNumber bound,
+			final LinVar var) {
+		final Explainer explainer = new Explainer(this, getEngine().isProofGenerationEnabled(), literal);
 		if (isUpper) {
 			assert var.getTightUpperBound().less(bound);
 			explainer.addLiteral(literal, Rational.MONE);
 			LAReason reason = var.mUpper;
 			// Find the first oldest reason that explains the bound
-			while (reason.getOldReason() != null
-					&& reason.getOldReason().getBound().less(bound)) {
+			while (reason.getOldReason() != null && reason.getOldReason().getBound().less(bound)) {
 				reason = reason.getOldReason();
 			}
-			reason.explain(explainer,
-					bound.sub(reason.getBound()),
-					Rational.ONE);
+			reason.explain(explainer, bound.sub(reason.getBound()), Rational.ONE);
 		} else {
 			assert bound.less(var.getTightLowerBound());
 			explainer.addLiteral(literal, Rational.ONE);
 			LAReason reason = var.mLower;
 			// Find the first oldest reason that explains the bound
-			while (reason.getOldReason() != null
-					&& bound.less(reason.getOldReason().getBound())) {
+			while (reason.getOldReason() != null && bound.less(reason.getOldReason().getBound())) {
 				reason = reason.getOldReason();
 			}
-			reason.explain(explainer,
-					reason.getBound().sub(bound),
-					Rational.MONE);
+			reason.explain(explainer, reason.getBound().sub(bound), Rational.MONE);
 		}
 		return explainer.createClause(getEngine());
 	}
@@ -732,7 +743,7 @@ public class LinArSolve implements ITheory {
 	public Clause getUnitClause(final Literal literal) {
 		final DPLLAtom atom = literal.getAtom();
 		if (atom instanceof LAEquality) {
-			final LAEquality laeq = (LAEquality)atom;
+			final LAEquality laeq = (LAEquality) atom;
 			final LinVar var = laeq.getVar();
 			if (literal == laeq) {
 				final InfinitesimalNumber bound = new InfinitesimalNumber(laeq.getBound(), 0);
@@ -744,41 +755,35 @@ public class LinArSolve implements ITheory {
 				while (bound.less(lowerReason.getBound())) {
 					lowerReason = lowerReason.getOldReason();
 				}
-				assert upperReason.getBound().equals(bound)
-						&& lowerReason.getBound().equals(bound)
+				assert upperReason.getBound().equals(bound) && lowerReason.getBound().equals(bound)
 						: "Bounds on variable do not match propagated equality bound";
-				final Explainer explainer = new Explainer(
-						this, getEngine().isProofGenerationEnabled(), literal);
-				final LiteralReason uppereq = new LiteralReason(
-						var, var.mUpperLiteral, var.getTightUpperBound().sub(var.getEpsilon()),
-						true, laeq.negate());
+				final Explainer explainer = new Explainer(this, getEngine().isProofGenerationEnabled(), literal);
+				final LiteralReason uppereq = new LiteralReason(var, var.mUpperLiteral,
+						var.getTightUpperBound().sub(var.getEpsilon()), true, laeq.negate());
 				uppereq.setOldReason(upperReason);
 				lowerReason.explain(explainer, var.getEpsilon(), Rational.MONE);
 				explainer.addEQAnnotation(uppereq, Rational.ONE);
 
 				return explainer.createClause(getEngine());
-			} else  {
+			} else {
 				final InfinitesimalNumber bound = new InfinitesimalNumber(laeq.getBound(), 0);
 				// Check if this was propagated due to an upper bound.
 				// We also need to make sure that the upper bound does not
 				// depend on the inequality literal.
 				LAReason upper = var.mUpper;
-				while (laeq.getStackPosition() >= 0
-						&& upper != null
+				while (laeq.getStackPosition() >= 0 && upper != null
 						&& upper.getLastLiteral().getStackPosition() >= laeq.getStackPosition()) {
 					upper = upper.getOldReason();
 				}
-				return createUnitClause(literal, upper != null
-						&& upper.getBound().less(bound), bound, var);
+				return createUnitClause(literal, upper != null && upper.getBound().less(bound), bound, var);
 			}
 		} else if (atom instanceof CCEquality) {
 			return generateEqualityClause(literal);
 		} else {
-			final BoundConstraint bc = (BoundConstraint)atom;
+			final BoundConstraint bc = (BoundConstraint) atom;
 			final LinVar var = bc.getVar();
 			final boolean isUpper = literal.getSign() > 0;
-			return createUnitClause(literal, isUpper,
-					isUpper ? bc.getInverseBound() : bc.getBound(), var);
+			return createUnitClause(literal, isUpper, isUpper ? bc.getInverseBound() : bc.getBound(), var);
 		}
 	}
 
@@ -788,13 +793,12 @@ public class LinArSolve implements ITheory {
 		if (cceq == cclit) {
 			ea = ea.negate();
 		}
-		return new Clause(new Literal[] { cclit, ea },
-				new LeafNode(LeafNode.EQ, EQAnnotation.EQ));
+		return new Clause(new Literal[] { cclit, ea }, new LeafNode(LeafNode.EQ, EQAnnotation.EQ));
 	}
 
 	/**
-	 * Create a new LiteralReason for a newly created and back-propagated
-	 * literal and add the reason to the right position in the reason chain.
+	 * Create a new LiteralReason for a newly created and back-propagated literal
+	 * and add the reason to the right position in the reason chain.
 	 *
 	 * @param var The variable that got a new literal
 	 * @param lit The newly created literal that was inserted as propagated literal.
@@ -827,8 +831,7 @@ public class LinArSolve implements ITheory {
 				while (thereason.getOldReason().getExactBound().less(bound)) {
 					thereason = thereason.getOldReason();
 				}
-				assert (thereason.getExactBound().less(bound)
-						&& bound.less(thereason.getOldReason().getExactBound()));
+				assert (thereason.getExactBound().less(bound) && bound.less(thereason.getOldReason().getExactBound()));
 				reason.setOldReason(thereason.getOldReason());
 				thereason.setOldReason(reason);
 			}
@@ -863,8 +866,7 @@ public class LinArSolve implements ITheory {
 				while (bound.less(thereason.getOldReason().getExactBound())) {
 					thereason = thereason.getOldReason();
 				}
-				assert (thereason.getOldReason().getExactBound().less(bound)
-						&& bound.less(thereason.getExactBound()));
+				assert (thereason.getOldReason().getExactBound().less(bound) && bound.less(thereason.getExactBound()));
 				reason.setOldReason(thereason.getOldReason());
 				thereason.setOldReason(reason);
 			}
@@ -902,12 +904,10 @@ public class LinArSolve implements ITheory {
 			while (bound.mEps == 0 && (ea = var.getDiseq(bound.mReal)) != null) {
 				bound = bound.sub(epsilon);
 				if (ea.getStackPosition() > lastLiteral.getStackPosition()) {
-					lastLiteral = new LiteralReason(var, var.mUpperLiteral, bound,
-							true, ea.negate());
+					lastLiteral = new LiteralReason(var, var.mUpperLiteral, bound, true, ea.negate());
 					var.mUpper = var.mUpperLiteral = lastLiteral;
-				} else  {
-					var.mUpper = var.mUpperLiteral = new LiteralReason(var, var.mUpperLiteral, bound,
-							true, ea.negate(),
+				} else {
+					var.mUpper = var.mUpperLiteral = new LiteralReason(var, var.mUpperLiteral, bound, true, ea.negate(),
 							lastLiteral);
 					lastLiteral.addDependent(var.mUpper);
 				}
@@ -921,14 +921,12 @@ public class LinArSolve implements ITheory {
 				mOob.add(var);
 			}
 
-			for (final BoundConstraint bc
-					: var.mConstraints.subMap(bound, oldBound).values()) {
+			for (final BoundConstraint bc : var.mConstraints.subMap(bound, oldBound).values()) {
 				assert var.getTightUpperBound().lesseq(bc.getBound());
 				mProplist.add(bc);
 			}
-			for (final LAEquality laeq
-					: var.mEqualities.subMap(bound.add(var.getEpsilon()),
-							oldBound.add(var.getEpsilon())).values()) {
+			for (final LAEquality laeq : var.mEqualities
+					.subMap(bound.add(var.getEpsilon()), oldBound.add(var.getEpsilon())).values()) {
 				mProplist.add(laeq.negate());
 			}
 		} else {
@@ -944,13 +942,11 @@ public class LinArSolve implements ITheory {
 			while (bound.mEps == 0 && (ea = var.getDiseq(bound.mReal)) != null) {
 				bound = bound.add(epsilon);
 				if (ea.getStackPosition() > lastLiteral.getStackPosition()) {
-					lastLiteral = new LiteralReason(var, var.mLowerLiteral, bound,
-							false, ea.negate());
+					lastLiteral = new LiteralReason(var, var.mLowerLiteral, bound, false, ea.negate());
 					var.mLower = var.mLowerLiteral = lastLiteral;
-				} else  {
-					var.mLower = var.mLowerLiteral = new LiteralReason(var, var.mLowerLiteral, bound,
-							false, ea.negate(),
-							lastLiteral);
+				} else {
+					var.mLower = var.mLowerLiteral = new LiteralReason(var, var.mLowerLiteral, bound, false,
+							ea.negate(), lastLiteral);
 					lastLiteral.addDependent(var.mLower);
 				}
 				var.mLower.setOldReason(reason);
@@ -963,13 +959,11 @@ public class LinArSolve implements ITheory {
 				mOob.add(var);
 			}
 
-			for (final BoundConstraint bc
-					: var.mConstraints.subMap(oldBound, bound).values()) {
+			for (final BoundConstraint bc : var.mConstraints.subMap(oldBound, bound).values()) {
 				assert bc.getInverseBound().lesseq(var.getTightLowerBound());
 				mProplist.add(bc.negate());
 			}
-			for (final LAEquality laeq
-					: var.mEqualities.subMap(oldBound, bound).values()) {
+			for (final LAEquality laeq : var.mEqualities.subMap(oldBound, bound).values()) {
 				mProplist.add(laeq.negate());
 			}
 		}
@@ -1016,47 +1010,39 @@ public class LinArSolve implements ITheory {
 			final InfinitesimalNumber bound = new InfinitesimalNumber(lasd.getBound(), 0);
 			if (literal.getSign() == 1) {
 				// need to assert ea as upper and lower bound
-				/* we need to take care of propagations:
-				 * x = c ==> x <= c && x >= c should not propagate
-				 * x <= c - k1 or x >= c + k2, but
-				 * x <= c and x >= c
+				/*
+				 * we need to take care of propagations: x = c ==> x <= c && x >= c should not
+				 * propagate x <= c - k1 or x >= c + k2, but x <= c and x >= c
 				 */
 				if (mClausifier.getLogger().isDebugEnabled()) {
-					mClausifier.getLogger().debug("Setting "
-							+ lasd.getVar() + " to " + lasd.getBound());
+					mClausifier.getLogger().debug("Setting " + lasd.getVar() + " to " + lasd.getBound());
 				}
 				if (bound.less(var.getTightUpperBound())) {
-					conflict = setBound(new LiteralReason(var, var.mUpperLiteral, bound,
-							true, literal));
+					conflict = setBound(new LiteralReason(var, var.mUpperLiteral, bound, true, literal));
 				}
 				if (conflict != null) {
 					return conflict;
 				}
 				if (var.getTightLowerBound().less(bound)) {
-					conflict = setBound(new LiteralReason(var, var.mLowerLiteral, bound,
-							false, literal));
+					conflict = setBound(new LiteralReason(var, var.mLowerLiteral, bound, false, literal));
 				}
 			} else {
 				// Disequality constraint
 				var.addDiseq(lasd);
 				if (var.getTightUpperBound().equals(bound)) {
 					conflict = setBound(
-							new LiteralReason(var, var.mUpperLiteral,
-							bound.sub(var.getEpsilon()),
-							true, literal));
+							new LiteralReason(var, var.mUpperLiteral, bound.sub(var.getEpsilon()), true, literal));
 				} else if (var.getTightLowerBound().equals(bound)) {
 					conflict = setBound(
-							new LiteralReason(var, var.mLowerLiteral,
-							bound.add(var.getEpsilon()),
-							false, literal));
+							new LiteralReason(var, var.mLowerLiteral, bound.add(var.getEpsilon()), false, literal));
 				}
 			}
 		} else if (atom instanceof BoundConstraint) {
 			final BoundConstraint bc = (BoundConstraint) atom;
 			final LinVar var = bc.getVar();
 			// Check if the *exact* bound is refined and add this
-			// literal as reason.  This is even done, if we propagated the
-			// literal.  If there is already a composite with the
+			// literal as reason. This is even done, if we propagated the
+			// literal. If there is already a composite with the
 			// same bound, we still may use it later to explain the literal,
 			// see LiteralReason.explain.
 			if (literal == bc) {
@@ -1150,9 +1136,10 @@ public class LinArSolve implements ITheory {
 	}
 
 	private void prepareModel() {
-		/* Shortcut: If info log level is enabled we prepare the model to dump
-		 * it as info message and later on when we have to produce a model.
-		 * This work can be avoided.
+		/*
+		 * Shortcut: If info log level is enabled we prepare the model to dump it as
+		 * info message and later on when we have to produce a model. This work can be
+		 * avoided.
 		 */
 		if (mEps != null) {
 			return;
@@ -1164,8 +1151,7 @@ public class LinArSolve implements ITheory {
 		} else {
 			mEps = maxeps.inverse().ceil().mReal.inverse();
 		}
-		final Map<Rational,Set<ExactInfinitesimalNumber>> sharedPoints =
-				new TreeMap<>();
+		final Map<Rational, Set<ExactInfinitesimalNumber>> sharedPoints = new TreeMap<>();
 		// Do not merge two shared variables that are not yet merged.
 		final Map<ExactInfinitesimalNumber, List<LASharedTerm>> cong = getSharedCongruences();
 		for (final ExactInfinitesimalNumber value : cong.keySet()) {
@@ -1179,8 +1165,7 @@ public class LinArSolve implements ITheory {
 		}
 		// If we cannot choose the current value since we would violate a
 		// disequality, choose a different number.
-		while (prohibitions.contains(mEps)
-				|| hasSharing(sharedPoints, new ExactInfinitesimalNumber(mEps))) {
+		while (prohibitions.contains(mEps) || hasSharing(sharedPoints, new ExactInfinitesimalNumber(mEps))) {
 			mEps = mEps.inverse().add(Rational.ONE).inverse();
 		}
 	}
@@ -1201,16 +1186,15 @@ public class LinArSolve implements ITheory {
 	@Override
 	public void printStatistics(final LogProxy logger) {
 		if (logger.isInfoEnabled()) {
-			logger.info("Number of Bland pivoting-Operations: "
-					+ mNumPivotsBland + "/" + mNumPivots);
+			logger.info("Number of Bland pivoting-Operations: " + mNumPivotsBland + "/" + mNumPivots);
 			int basicVars = 0;
 			for (final LinVar var : mLinvars) {
 				if (!var.isInitiallyBasic()) {
 					basicVars++;
 				}
 			}
-			logger.info("Number of variables: " + mLinvars.size()
-					+ " nonbasic: " + basicVars + " shared: " + mSharedVars.size());
+			logger.info("Number of variables: " + mLinvars.size() + " nonbasic: " + basicVars + " shared: "
+					+ mSharedVars.size());
 			logger.info("Time for fix Oob          : " + mFixTime / 1000000);
 			logger.info("Time for pivoting         : " + mPivotTime / 1000000);
 			logger.info("Time for bound computation: " + mPropBoundTime / 1000000);
@@ -1219,17 +1203,17 @@ public class LinArSolve implements ITheory {
 			logger.info("Composite::createLit: " + mCompositeCreateLit);
 			logger.info("Number of cuts: " + mNumCuts);
 			logger.info("Time for cut-generation: " + mCutGenTime / 1000000);
-			logger.info("Count/Time for getUpperBound: %d / %d.%03d", mCountGetUpperBound, mTimeGetUpperBound / 1000000000, mTimeGetUpperBound / 1000000 % 1000);
+			logger.info("Count/Time for getUpperBound: %d / %d.%03d", mCountGetUpperBound,
+					mTimeGetUpperBound / 1000000000, mTimeGetUpperBound / 1000000 % 1000);
 			logger.info("Number of branchings: " + mNumBranches);
 		}
 	}
 
 	/**
-	 * Pivot nonbasic versus basic variables along a coefficient. After calling this, you need to check for pending
-	 * bound propagations.
+	 * Pivot nonbasic versus basic variables along a coefficient. After calling
+	 * this, you need to check for pending bound propagations.
 	 *
-	 * @param pivotEntry
-	 *            Coefficient specifying basic and nonbasic variable.
+	 * @param pivotEntry Coefficient specifying basic and nonbasic variable.
 	 */
 	final void pivot(final int rowMatrixPos, final int colMatrixPos) {
 		++mNumPivots;
@@ -1288,11 +1272,13 @@ public class LinArSolve implements ITheory {
 		if (Config.PROFILE_TIME) {
 			mPivotTime += System.nanoTime() - starttime;
 		}
-		// mClausifier.getLogger().debug("Pivoting took " + (System.nanoTime() - starttime));
+		// mClausifier.getLogger().debug("Pivoting took " + (System.nanoTime() -
+		// starttime));
 	}
 
 	/**
 	 * Ensure that all integer variables have integral values.
+	 *
 	 * @return Conflict clause or <code>null</code> if formula is satisfiable.
 	 */
 	private Clause ensureIntegrals() {
@@ -1336,13 +1322,13 @@ public class LinArSolve implements ITheory {
 	}
 
 	/**
-	 * Check whether all constraints can be satisfied. Here, we use the set of
-	 * all variables outside their bounds. Rest of this algorithm is copied
-	 * from original paper.
+	 * Check whether all constraints can be satisfied. Here, we use the set of all
+	 * variables outside their bounds. Rest of this algorithm is copied from
+	 * original paper.
 	 *
-	 * If the formula is satisfiable, we additionally search for bound
-	 * refinement propagations and calculate the values of all variables
-	 * simplified out.
+	 * If the formula is satisfiable, we additionally search for bound refinement
+	 * propagations and calculate the values of all variables simplified out.
+	 *
 	 * @return Conflict clause or <code>null</code> if formula is satisfiable.
 	 */
 	@SuppressWarnings("unused")
@@ -1378,16 +1364,17 @@ public class LinArSolve implements ITheory {
 	}
 
 	/**
-	 * Propagate all literals that are implied by the composite bounds computed from the current tableaux. This function
-	 * creates a composite reason to remember why the bound was propagated and to explain the propagated literals later.
+	 * Propagate all literals that are implied by the composite bounds computed from
+	 * the current tableaux. This function creates a composite reason to remember
+	 * why the bound was propagated and to explain the propagated literals later.
 	 *
-	 * @param basic
-	 *            The variable on which literals are propagated
-	 * @param bound
-	 *            The new composite bound of the literal, computed from the tableaux.
-	 * @param isUpper
-	 *            True, if the bound is an upper bound for basic, false, otherwise.
-	 * @return A conflict clause if a conflict was found (one of the literals already set with different polarity).
+	 * @param basic   The variable on which literals are propagated
+	 * @param bound   The new composite bound of the literal, computed from the
+	 *                tableaux.
+	 * @param isUpper True, if the bound is an upper bound for basic, false,
+	 *                otherwise.
+	 * @return A conflict clause if a conflict was found (one of the literals
+	 *         already set with different polarity).
 	 */
 	private Clause propagateBound(final LinVar basic, final InfinitesimalNumber bound, final boolean isUpper) {
 		long start;
@@ -1413,8 +1400,7 @@ public class LinArSolve implements ITheory {
 					reasons[i] = coeff.isNegative() == isUpper ? nb.mLowerLiteral : nb.mUpperLiteral;
 					coeffs[i] = coeff;
 					final LiteralReason lastOfThis = reasons[i].getLastLiteral();
-					if (lastLiteral == null
-						|| lastOfThis.getStackPosition() > lastLiteral.getStackPosition()) {
+					if (lastLiteral == null || lastOfThis.getStackPosition() > lastLiteral.getStackPosition()) {
 						lastLiteral = lastOfThis;
 					}
 				}
@@ -1428,14 +1414,13 @@ public class LinArSolve implements ITheory {
 					reasons[i] = coeffs[i].isNegative() == isUpper ? rowVars[i].mLowerLiteral
 							: rowVars[i].mUpperLiteral;
 					final LiteralReason lastOfThis = reasons[i].getLastLiteral();
-					if (lastLiteral == null
-						|| lastOfThis.getStackPosition() > lastLiteral.getStackPosition()) {
+					if (lastLiteral == null || lastOfThis.getStackPosition() > lastLiteral.getStackPosition()) {
 						lastLiteral = lastOfThis;
 					}
 				}
 			}
-			final CompositeReason newComposite =
-					new CompositeReason(basic, bound, isUpper, reasons, coeffs, lastLiteral);
+			final CompositeReason newComposite = new CompositeReason(basic, bound, isUpper, reasons, coeffs,
+					lastLiteral);
 			lastLiteral.addDependent(newComposite);
 			long mid;
 			if (Config.PROFILE_TIME) {
@@ -1456,27 +1441,26 @@ public class LinArSolve implements ITheory {
 
 	/**
 	 * Generate a bound constraint for a given variable. We use
-	 * {@link BoundConstraint}s to represent bounds for variables
-	 * and linear combination thereof. Those constraints are optimized to
-	 * prevent strict bounds by manipulating the bounds.
-	 * @param var      Variable to set bound on.
-	 * @param bound    Bound to set on <code>var</code>.
+	 * {@link BoundConstraint}s to represent bounds for variables and linear
+	 * combination thereof. Those constraints are optimized to prevent strict bounds
+	 * by manipulating the bounds.
+	 *
+	 * @param var          Variable to set bound on.
+	 * @param bound        Bound to set on <code>var</code>.
 	 * @param isLowerBound Is the bound a lower bound?
-	 * @param strict   Is the bound strict?
+	 * @param strict       Is the bound strict?
 	 * @return Constraint representing this bound.
 	 */
-	private Literal generateConstraint(final LinVar var, final Rational bound,
-			final boolean isLowerBound, final boolean strict) {
-		InfinitesimalNumber rbound = new InfinitesimalNumber(bound,
-				(strict ^ isLowerBound) ? -1 : 0);
+	private Literal generateConstraint(final LinVar var, final Rational bound, final boolean isLowerBound,
+			final boolean strict) {
+		InfinitesimalNumber rbound = new InfinitesimalNumber(bound, (strict ^ isLowerBound) ? -1 : 0);
 		if (var.isInt()) {
 			rbound = rbound.floor();
 		}
-		return generateConstraint(var,rbound,isLowerBound);
+		return generateConstraint(var, rbound, isLowerBound);
 	}
 
-	private Literal generateConstraint(final LinVar var, final InfinitesimalNumber rbound,
-			final boolean isLowerBound) {
+	private Literal generateConstraint(final LinVar var, final InfinitesimalNumber rbound, final boolean isLowerBound) {
 		BoundConstraint bc = var.mConstraints.get(rbound);
 		if (bc == null) {
 			bc = new BoundConstraint(rbound, var, getEngine().getAssertionStackLevel());
@@ -1495,8 +1479,7 @@ public class LinArSolve implements ITheory {
 	/**
 	 * Remove a basic variable from the tableaux.
 	 *
-	 * @param v
-	 *            Basic variable to remove from the tableau.
+	 * @param v Basic variable to remove from the tableau.
 	 */
 	private void removeLinVar(final LinVar v) {
 		if (!v.mBasic) {
@@ -1523,11 +1506,12 @@ public class LinArSolve implements ITheory {
 	}
 
 	/**
-	 * Represents a linvar in terms of the current column (non-basic) variables
-	 * and adds it to the map facs.
-	 * @param lv    The variable to add.
-	 * @param fac   The factor of the variable to add.
-	 * @param facs  The map, where to add it.
+	 * Represents a linvar in terms of the current column (non-basic) variables and
+	 * adds it to the map facs.
+	 *
+	 * @param lv   The variable to add.
+	 * @param fac  The factor of the variable to add.
+	 * @param facs The map, where to add it.
 	 */
 	private void unsimplifyAndAdd(final LinVar lv, final Rational fac, final Map<LinVar, Rational> facs) {
 		if (lv.mBasic) {
@@ -1557,9 +1541,9 @@ public class LinArSolve implements ITheory {
 	/**
 	 * Compute freedom interval for a nonbasic variable.
 	 *
-	 * @param var
-	 *            Nonbasic variable to compute freedom interval for.
-	 * @return the minimum and maximum amount the current nonbasic can be changed without violating any bounds.
+	 * @param var Nonbasic variable to compute freedom interval for.
+	 * @return the minimum and maximum amount the current nonbasic can be changed
+	 *         without violating any bounds.
 	 */
 	private ExactInfinitesimalNumber[] freedom(final LinVar var) {
 		final ExactInfinitesimalNumber value = var.getValue();
@@ -1602,8 +1586,7 @@ public class LinArSolve implements ITheory {
 	 * distinct values, we still compute a lot of stuff.
 	 */
 	private void mutate() {
-		final Map<Rational,Set<ExactInfinitesimalNumber>> sharedPoints =
-				new TreeMap<>();
+		final Map<Rational, Set<ExactInfinitesimalNumber>> sharedPoints = new TreeMap<>();
 		final Set<ExactInfinitesimalNumber> prohib = new TreeSet<>();
 		for (final LinVar mutatingLV : mLinvars) {
 			if (mutatingLV.mBasic || mutatingLV.getTightUpperBound().equals(mutatingLV.getTightLowerBound())) {
@@ -1618,8 +1601,10 @@ public class LinArSolve implements ITheory {
 			Rational gcd = mutatingLV.isInt() ? Rational.ONE : Rational.ZERO;
 			final ExactInfinitesimalNumber exactval = mutatingLV.getValue();
 
-			// prohib gives the differences that we should not choose as they cause a disequality to not hold any more.
-			// sharedPoints gives for each basic factor the current values of the shared variables having that factor.
+			// prohib gives the differences that we should not choose as they cause a
+			// disequality to not hold any more.
+			// sharedPoints gives for each basic factor the current values of the shared
+			// variables having that factor.
 			// this allows us to quickly determine if we get a new shared conflict.
 			sharedPoints.clear();
 			prohib.clear();
@@ -1655,9 +1640,9 @@ public class LinArSolve implements ITheory {
 			// Do not merge two shared variables
 			for (final LASharedTerm sharedVar : mSharedVars) {
 				Rational sharedCoeff = Rational.ZERO;
-				ExactInfinitesimalNumber sharedCurVal =
-						new ExactInfinitesimalNumber(sharedVar.getOffset(), Rational.ZERO);
-				for (final Entry<LinVar,Rational> entry : sharedVar.getSummands().entrySet()) {
+				ExactInfinitesimalNumber sharedCurVal = new ExactInfinitesimalNumber(sharedVar.getOffset(),
+						Rational.ZERO);
+				for (final Entry<LinVar, Rational> entry : sharedVar.getSummands().entrySet()) {
 					final LinVar lv = entry.getKey();
 					final Rational factor = entry.getValue();
 					if (basicFactors.containsKey(lv)) {
@@ -1686,13 +1671,13 @@ public class LinArSolve implements ITheory {
 
 	/**
 	 * Compute the value of each shared variable as exact infinite number.
-	 * @return A map from the value to the list of shared variables that
-	 * have this value.
+	 *
+	 * @return A map from the value to the list of shared variables that have this
+	 *         value.
 	 */
 	Map<ExactInfinitesimalNumber, List<LASharedTerm>> getSharedCongruences() {
 		mClausifier.getLogger().debug("Shared Vars:");
-		final Map<ExactInfinitesimalNumber, List<LASharedTerm>> result =
-			new HashMap<>();
+		final Map<ExactInfinitesimalNumber, List<LASharedTerm>> result = new HashMap<>();
 		for (final LASharedTerm shared : mSharedVars) {
 			ExactInfinitesimalNumber value = new ExactInfinitesimalNumber(shared.getOffset());
 			for (final Entry<LinVar, Rational> entry : shared.getSummands().entrySet()) {
@@ -1733,39 +1718,41 @@ public class LinArSolve implements ITheory {
 			return lbc;
 		}
 		// Here, we have neither inequality. Create one...
-		return usegt
-				? generateConstraint(eq.getVar(), eq.getBound(), false, false).negate()
+		return usegt ? generateConstraint(eq.getVar(), eq.getBound(), false, false).negate()
 				: generateConstraint(eq.getVar(), eq.getBound(), false, true);
 	}
 
 	/**
-	 * Choose a value from a given interval respecting certain prohibitions. The interval is given symbolically by a
-	 * lower and an upper bound. All values prohibited are given in a set. Note that this set might also contain values
-	 * outside the interval. For integer solutions, we also give the lcm such that we can generate an integer solution
-	 * from an integer solution.
+	 * Choose a value from a given interval respecting certain prohibitions. The
+	 * interval is given symbolically by a lower and an upper bound. All values
+	 * prohibited are given in a set. Note that this set might also contain values
+	 * outside the interval. For integer solutions, we also give the lcm such that
+	 * we can generate an integer solution from an integer solution.
 	 *
-	 * If the interval is empty or no value can be found, the current value should be returned.
+	 * If the interval is empty or no value can be found, the current value should
+	 * be returned.
 	 *
-	 * @param lower
-	 *            a negative value giving the maximum amount we can decrease the current non-basic value without
-	 *            violating a bound constraint.
-	 * @param upper
-	 *            a positive value giving the maximum amount we can increase the current non-basic value without
-	 *            violating a bound constraint.
-	 * @param prohibitions
-	 *            Prohibited values. No difference that occurs in this set should be chosen.
-	 * @param sharedPoints
-	 *            A map from shared term factors to current shared term values. The factor determines by how much the
-	 *            shared variable increases or decreases if current non-basic value is changed by one. We do not choose
-	 *            a difference that will create a new collision between shared variables.
-	 * @param lcm
-	 *            Least common multiple of denominators (integer only)
-	 * @return The difference by which current non-basic value should be increased (or decreased if negative).
+	 * @param lower        a negative value giving the maximum amount we can
+	 *                     decrease the current non-basic value without violating a
+	 *                     bound constraint.
+	 * @param upper        a positive value giving the maximum amount we can
+	 *                     increase the current non-basic value without violating a
+	 *                     bound constraint.
+	 * @param prohibitions Prohibited values. No difference that occurs in this set
+	 *                     should be chosen.
+	 * @param sharedPoints A map from shared term factors to current shared term
+	 *                     values. The factor determines by how much the shared
+	 *                     variable increases or decreases if current non-basic
+	 *                     value is changed by one. We do not choose a difference
+	 *                     that will create a new collision between shared
+	 *                     variables.
+	 * @param lcm          Least common multiple of denominators (integer only)
+	 * @return The difference by which current non-basic value should be increased
+	 *         (or decreased if negative).
 	 */
 	private ExactInfinitesimalNumber choose(final ExactInfinitesimalNumber lower, final ExactInfinitesimalNumber upper,
 			final Set<ExactInfinitesimalNumber> prohibitions,
-			final Map<Rational,Set<ExactInfinitesimalNumber>> sharedPoints,
-			final Rational lcm) {
+			final Map<Rational, Set<ExactInfinitesimalNumber>> sharedPoints, final Rational lcm) {
 		// Check if variable is fixed or allowed.
 		final ExactInfinitesimalNumber zero = ExactInfinitesimalNumber.ZERO;
 		if (upper.equals(lower) || (!prohibitions.contains(zero) && !hasSharing(sharedPoints, zero))) {
@@ -1773,10 +1760,12 @@ public class LinArSolve implements ITheory {
 		}
 
 		if (lcm == Rational.POSITIVE_INFINITY) {
-			// we have infinitely many values at our hand.  Just iterate until we found a solution
+			// we have infinitely many values at our hand. Just iterate until we found a
+			// solution
 			// we only change epsilon values
 			if (lower.getRealValue().equals(upper.getRealValue())) {
-				// We can only change epsilons; we either choose as difference upper/2 or lower/2 and half the
+				// We can only change epsilons; we either choose as difference upper/2 or
+				// lower/2 and half the
 				// difference until we find a solution.
 				ExactInfinitesimalNumber curDiff = (upper.signum() > 0 ? upper : lower).div(Rational.TWO);
 				assert curDiff.signum() != 0 && lower.compareTo(curDiff) < 0 && curDiff.compareTo(upper) < 0;
@@ -1788,10 +1777,12 @@ public class LinArSolve implements ITheory {
 			// we have infinitely many epsilons slack either above or below current value.
 			final ExactInfinitesimalNumber step;
 			if (upper.getRealValue().signum() > 0) {
-				// We search linear upwards from starting from the current value, incrementing eps part by one
+				// We search linear upwards from starting from the current value, incrementing
+				// eps part by one
 				step = new ExactInfinitesimalNumber(Rational.ZERO, Rational.ONE);
 			} else {
-				// We search linear downwards from starting from the current value, decrementing eps part by one
+				// We search linear downwards from starting from the current value, decrementing
+				// eps part by one
 				step = new ExactInfinitesimalNumber(Rational.ZERO, Rational.MONE);
 			}
 			ExactInfinitesimalNumber curDiff = step;
@@ -1800,8 +1791,10 @@ public class LinArSolve implements ITheory {
 			}
 			return curDiff;
 		} else {
-			// This is the integer case (or a real variable on which an integer variable depends).
-			// We search upwards and downwards by incrementing and decrementing currentValue by lcm.
+			// This is the integer case (or a real variable on which an integer variable
+			// depends).
+			// We search upwards and downwards by incrementing and decrementing currentValue
+			// by lcm.
 			ExactInfinitesimalNumber up = new ExactInfinitesimalNumber(lcm);
 			ExactInfinitesimalNumber down = up.negate();
 			boolean searchUp = true;
@@ -1833,11 +1826,11 @@ public class LinArSolve implements ITheory {
 	}
 
 	/**
-	 * Test for merging of at least two shared terms.  Shared terms in our
-	 * setting have form <code>c*x+o</code> for variable <code>x</code>.  Given
-	 * a map of <code>c</code> and the current value of <code>c*x+o</code>, and
-	 * the desired difference, we check if two shared terms will be merged by
-	 * this update.
+	 * Test for merging of at least two shared terms. Shared terms in our setting
+	 * have form <code>c*x+o</code> for variable <code>x</code>. Given a map of
+	 * <code>c</code> and the current value of <code>c*x+o</code>, and the desired
+	 * difference, we check if two shared terms will be merged by this update.
+	 *
 	 * @param sharedPoints Map from slope to current value.
 	 * @param diff         Expected difference.
 	 * @return Did this difference merge two shared terms.
@@ -1875,10 +1868,11 @@ public class LinArSolve implements ITheory {
 				final Term rhs = shared2.getTerm();
 				if (lhs.getSort() != rhs.getSort()) {
 					/*
-					 * never merge terms of different sort. Note that mixed int/real equalities are translated to LA in
-					 * the preprocessor.
+					 * never merge terms of different sort. Note that mixed int/real equalities are
+					 * translated to LA in the preprocessor.
 					 *
-					 * We need to remember this term in case there are more shared terms of this sort.
+					 * We need to remember this term in case there are more shared terms of this
+					 * sort.
 					 */
 					if (shared1OtherSort == null) {
 						shared1OtherSort = shared2;
@@ -1927,14 +1921,14 @@ public class LinArSolve implements ITheory {
 		for (final LinVar v : mLinvars) {
 			final ExactInfinitesimalNumber value = v.getValue();
 			if (value.getEpsilon().signum() > 0) {
-				final InfinitesimalNumber diff =
-						v.getUpperBound().sub(new InfinitesimalNumber(value.getRealValue(), 0)).div(value.getEpsilon());
+				final InfinitesimalNumber diff = v.getUpperBound().sub(new InfinitesimalNumber(value.getRealValue(), 0))
+						.div(value.getEpsilon());
 				if (diff.compareTo(maxeps) < 0) {
 					maxeps = diff;
 				}
 			} else if (value.getEpsilon().signum() < 0) {
-				final InfinitesimalNumber diff =
-						v.getLowerBound().sub(new InfinitesimalNumber(value.getRealValue(), 0)).div(value.getEpsilon());
+				final InfinitesimalNumber diff = v.getLowerBound().sub(new InfinitesimalNumber(value.getRealValue(), 0))
+						.div(value.getEpsilon());
 				if (diff.compareTo(maxeps) < 0) {
 					maxeps = diff;
 				}
@@ -2006,8 +2000,7 @@ public class LinArSolve implements ITheory {
 		mCompositeCreateLit++;
 		final int depth = comp.getLastLiteral().getDecideLevel();
 		if (mClausifier.getLogger().isDebugEnabled()) {
-			mClausifier.getLogger().debug("Create Propagated Literal for "
-					+ comp + " @ level " + depth);
+			mClausifier.getLogger().debug("Create Propagated Literal for " + comp + " @ level " + depth);
 		}
 		final LinVar var = comp.getVar();
 		InfinitesimalNumber bound = comp.getBound();
@@ -2017,14 +2010,12 @@ public class LinArSolve implements ITheory {
 		final BoundConstraint bc = new BoundConstraint(bound, var, mClausifier.getStackLevel());
 		final Literal lit = comp.isUpper() ? bc : bc.negate();
 		final int decideLevel = comp.getLastLiteral().getDecideLevel();
-		if (beforeLit != null
-			&& beforeLit.getAtom().getDecideLevel() == decideLevel) {
+		if (beforeLit != null && beforeLit.getAtom().getDecideLevel() == decideLevel) {
 			getEngine().insertPropagatedLiteralBefore(this, lit, beforeLit);
 		} else {
 			getEngine().insertPropagatedLiteral(this, lit, decideLevel);
 		}
-		final InfinitesimalNumber litBound =
-				comp.isUpper() ? bc.getBound() : bc.getInverseBound();
+		final InfinitesimalNumber litBound = comp.isUpper() ? bc.getBound() : bc.getInverseBound();
 		if (!comp.getExactBound().equals(litBound)) {
 			insertReasonOfNewComposite(var, lit);
 		}
@@ -2071,6 +2062,10 @@ public class LinArSolve implements ITheory {
 				mIntVars.remove(var);
 			}
 		}
+		if (mPushPopLevel == mHasNonLinearVar) {
+			mHasNonLinearVar = -1;
+		}
+		mPushPopLevel--;
 		mLinvars.endScope();
 		mSharedVars.endScope();
 		mBasics.endScope();
@@ -2089,35 +2084,25 @@ public class LinArSolve implements ITheory {
 		mBasics.beginScope();
 		mSharedVars.beginScope();
 		mLinvars.beginScope();
+		mPushPopLevel++;
 	}
 
 	@Override
 	public Object[] getStatistics() {
-		return new Object[] {
-			":LA", new Object[][] {
-				{"Pivot", mNumPivots},
-				{"PivotBland", mNumPivotsBland},
-				{"Vars", mLinvars.size()},
-				{"CompLits", mCompositeCreateLit},
-				{"Cuts", mNumCuts},
-				{"Branches", mNumBranches},
-				{"GetUpperBound", mCountGetUpperBound},
-				{"Times", new Object[][]{
-					{"Pivot", mPivotTime / 1000000},
-					{"Fix", mFixTime / 1000000},
-					{"BoundComp", mPropBoundTime / 1000000},
-					{"BoundSet", mPropBoundSetTime / 1000000},
-					{"BoundBack", mBacktrackPropTime / 1000000},
-					{"CutGen", mCutGenTime / 1000000},
-					{"GetUpperBound", mTimeGetUpperBound / 1000000}}
-				}
-			}};
+		return new Object[] { ":LA",
+				new Object[][] { { "Pivot", mNumPivots }, { "PivotBland", mNumPivotsBland },
+						{ "Vars", mLinvars.size() }, { "CompLits", mCompositeCreateLit }, { "Cuts", mNumCuts },
+						{ "Branches", mNumBranches }, { "GetUpperBound", mCountGetUpperBound },
+						{ "Times", new Object[][] { { "Pivot", mPivotTime / 1000000 }, { "Fix", mFixTime / 1000000 },
+								{ "BoundComp", mPropBoundTime / 1000000 }, { "BoundSet", mPropBoundSetTime / 1000000 },
+								{ "BoundBack", mBacktrackPropTime / 1000000 }, { "CutGen", mCutGenTime / 1000000 },
+								{ "GetUpperBound", mTimeGetUpperBound / 1000000 } } } } };
 	}
 
 	/**
-	 * Check whether the LA solver should fill in the value for this term.  This
-	 * is the case, if it is an ApplicationTerm corresponding to a 0-ary
-	 * function.
+	 * Check whether the LA solver should fill in the value for this term. This is
+	 * the case, if it is an ApplicationTerm corresponding to a 0-ary function.
+	 *
 	 * @param term Term to check.
 	 * @return Symbol that gets a value from the LA solver.
 	 */
@@ -2139,8 +2124,8 @@ public class LinArSolve implements ITheory {
 				final FunctionSymbol fsym = getsValueFromLA(term);
 				if (fsym != null) {
 					final Term value = realValue(var).toTerm(term.getSort());
-					final NumericSortInterpretation si =
-							(NumericSortInterpretation) model.provideSortInterpretation(term.getSort());
+					final NumericSortInterpretation si = (NumericSortInterpretation) model
+							.provideSortInterpretation(term.getSort());
 					si.register(value);
 					model.map(fsym, value);
 				}
@@ -2150,37 +2135,15 @@ public class LinArSolve implements ITheory {
 
 	/// --- Query partial model ---
 	/**
-	 * Return some upper bound for an smt affine term that is implied by the current model. This may return
-	 * POSITIVE_INFINITY if no such upper bound is implied or if it is not obvious from the current state.
+	 * Return some upper bound for an smt affine term that is implied by the current
+	 * model. This may return POSITIVE_INFINITY if no such upper bound is implied or
+	 * if it is not obvious from the current state.
 	 *
-	 * @param clausifier
-	 *            The Clausifier used to convert terms to shared terms.
-	 * @param smtTerm
-	 *            The SMT affine term whose bound is to be determined.
-	 * @return An infinitesimal number giving some implied upper bound. There is no guarantee that it is the most strict
-	 *         implied bound.
+	 * @param clausifier The Clausifier used to convert terms to shared terms.
+	 * @param smtTerm    The SMT affine term whose bound is to be determined.
+	 * @return An infinitesimal number giving some implied upper bound. There is no
+	 *         guarantee that it is the most strict implied bound.
 	 */
-	public InfinitesimalNumber getUpperBound(final Clausifier clausifier, final SMTAffineTerm smtTerm) {
-		if (smtTerm.isConstant()) {
-			return new InfinitesimalNumber(smtTerm.getConstant(), 0);
-		}
-		final MutableAffineTerm at = new MutableAffineTerm();
-		for (final Entry<Term, Rational> entry : smtTerm.getSummands().entrySet()) {
-			final LASharedTerm laShared = clausifier.getLATerm(entry.getKey());
-			final Rational coeff = entry.getValue();
-			if (laShared != null) {
-				assert laShared.getSummands().size() == 1 && laShared.getOffset() == Rational.ZERO
-						&& laShared.getSummands().values().iterator().next() == Rational.ONE;
-				at.add(coeff, laShared.getSummands().keySet().iterator().next());
-			} else {
-				return InfinitesimalNumber.POSITIVE_INFINITY;
-			}
-		}
-		at.add(smtTerm.getConstant());
-
-		return getUpperBound(at);
-	}
-
 	public InfinitesimalNumber getUpperBound(final MutableAffineTerm at) {
 		final long start = System.nanoTime();
 		mCountGetUpperBound++;

@@ -104,15 +104,6 @@ public abstract class CType {
 	}
 
 	/**
-	 * This is a special notion of type compatibility that we use for matching function signatures. -- i.e. for the most
-	 * part we say void is "compatible" with everything.. TODO: think about how general this notion is..
-	 *
-	 * @param cT
-	 * @return
-	 */
-	public abstract boolean isCompatibleWith(CType cT);
-
-	/**
 	 * Returns true iff this type is an integer type according to the definition 6.2.5.7 in the C11 standard.
 	 */
 	public boolean isIntegerType() {
