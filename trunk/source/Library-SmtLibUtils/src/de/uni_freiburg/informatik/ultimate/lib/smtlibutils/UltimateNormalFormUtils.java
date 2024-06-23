@@ -51,13 +51,20 @@ public final class UltimateNormalFormUtils {
 
 	private static boolean rootRespectsUltimateNormalForm(final ConstantTerm term) {
 		if (SmtSortUtils.isBitvecSort(term.getSort())) {
-			assert false : "UNF does not support bitvector literals, use instead e.g., (_ bv23 64) to construct a bitvector of length 64 whose decimal value is 23.";
+			if (term.getValue() instanceof BigInteger) {
+				return true;
+			}
+			assert false : "ConstantTerms that have bitvector sort have to use BigInteger";
 			return false;
 		}
-		if (term.getValue() instanceof Rational) {
-			return true;
+		if (SmtSortUtils.isNumericSort(term.getSort())) {
+			if (term.getValue() instanceof Rational) {
+				return true;
+			}
+			assert false : "ConstantTerms have to use Rationals";
+			return false;
 		}
-		assert false : "ConstantTerms have to use Rationals";
+		assert false : "We support only ConstantTerms whose Sort is a numeric sort or a bitvector sort";
 		return false;
 	}
 
