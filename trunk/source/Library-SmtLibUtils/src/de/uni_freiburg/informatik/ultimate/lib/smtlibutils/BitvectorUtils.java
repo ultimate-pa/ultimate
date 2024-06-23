@@ -93,9 +93,11 @@ public final class BitvectorUtils {
 		} else if (term instanceof ConstantTerm) {
 			if (SmtSortUtils.isBitvecSort(term.getSort())) {
 				final ConstantTerm constTerm = (ConstantTerm) term;
-				if (constTerm.getValue() instanceof String) {
+				final BigInteger value;
+				if (constTerm.getValue() instanceof BigInteger) {
+					value = (BigInteger) constTerm.getValue();
+				} else if (constTerm.getValue() instanceof String) {
 					final String bitString = (String) constTerm.getValue();
-					final BigInteger value;
 					if (bitString.startsWith("#b")) {
 						value = new BigInteger(bitString.substring(2), 2);
 					} else if (bitString.startsWith("#x")) {
@@ -103,10 +105,10 @@ public final class BitvectorUtils {
 					} else {
 						throw new AssertionError("Unexpected constant value");
 					}
-					return constructBitvectorConstant(value, term.getSort());
 				} else {
 					throw new UnsupportedOperationException("Unexpected value of bitvector constant");
 				}
+				return constructBitvectorConstant(value, term.getSort());
 			}
 		}
 		return null;
