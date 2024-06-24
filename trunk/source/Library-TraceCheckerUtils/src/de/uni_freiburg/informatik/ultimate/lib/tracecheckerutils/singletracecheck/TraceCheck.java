@@ -440,7 +440,7 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 		}
 
 		final boolean mTestGeneration = true;
-		if (mTestGeneration) {
+		if (mTestGeneration && !mAAA.mSucessfulReuse) { // TODO check for bugs
 			final TestVector testV = extractTestVector(nsb, funGetValue, rpeb, vaOrder);
 			final boolean mExportTests = true;
 			if (mExportTests) {

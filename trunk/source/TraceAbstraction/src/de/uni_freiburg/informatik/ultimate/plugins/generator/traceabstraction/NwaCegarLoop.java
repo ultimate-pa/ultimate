@@ -496,10 +496,17 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 			final ISLPredicate testGoalISL = (ISLPredicate) testGoal;
 			if (testGoalISL.getProgramPoint().getPayload().getAnnotations()
 					.containsKey(VarAssignmentReuseAnnotation.class.getName())) {
-				final VarAssignmentReuseAnnotation pLocAnno =
+
+				final VarAssignmentReuseAnnotation pLocAnnoVA =
 						(VarAssignmentReuseAnnotation) testGoalISL.getProgramPoint().getPayload().getAnnotations()
 								.get(VarAssignmentReuseAnnotation.class.getName());
-				if (!pLocAnno.mIsActiveTestGoal) {
+				// If it contains a VA it should contain a TG
+				assert testGoalISL.getProgramPoint().getPayload().getAnnotations()
+						.containsKey(TestGoalAnnotation.class.getName());
+				final TestGoalAnnotation pLocAnnoTG = (TestGoalAnnotation) testGoalISL.getProgramPoint().getPayload()
+						.getAnnotations().get(TestGoalAnnotation.class.getName());
+
+				if (!pLocAnnoVA.mIsActiveTestGoal || mTestGoalWorkingSet.contains(pLocAnnoTG.mId)) {
 					mErrorGeneralizationEngine.addCoveredTestGoalToErrorAutomaton(testGoal,
 							mAbstraction.internalPredecessors(testGoal));
 				}
@@ -540,6 +547,7 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 			subtrahend = mErrorGeneralizationEngine.getResultAfterEnhancement();
 			if (!mTestGeneration.equals(TestGenerationMode.None)) {
 				// testGenerationCoverage();
+				// mTestGoalTodoStack.removeAll(mTestGoalsInCurrentTrace); // Done by constructing mutli goal automaton
 			}
 		} else {
 			automatonType = AutomatonType.FLOYD_HOARE;
@@ -579,7 +587,6 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 			}
 		}
 		mLogger.info("TestGen, Coverage: " + Covered / mErrorLocs.size());
-		mTestGoalTodoStack.removeAll(mTestGoalsInCurrentTrace);
 
 	}
 

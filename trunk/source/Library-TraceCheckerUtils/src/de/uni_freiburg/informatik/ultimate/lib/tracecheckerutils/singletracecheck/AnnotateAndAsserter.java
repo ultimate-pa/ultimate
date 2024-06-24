@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.VarAssignm
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.BitvectorUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
@@ -53,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer.TestGenReuseMode;
@@ -115,6 +117,9 @@ public class AnnotateAndAsserter<L extends IAction> {
 		boolean reuse = true;
 		if (mTestGenReuseMode.equals(TestGenReuseMode.ReuseUNSATmatchPrefix)) {
 			getReuseCandidate();
+			if (mVAforReuse == null) {
+				reuse = false;
+			}
 		}
 		if (mAnnotSSA != null) {
 			throw new AssertionError("already build");
@@ -167,7 +172,7 @@ public class AnnotateAndAsserter<L extends IAction> {
 							.containsKey(VarAssignmentReuseAnnotation.class.getName())) {
 						final VarAssignmentReuseAnnotation vaInTrace = (VarAssignmentReuseAnnotation) statementBranch
 								.getPayload().getAnnotations().get(VarAssignmentReuseAnnotation.class.getName());
-
+						// prefix
 						if (mTestGenReuseMode.equals(TestGenReuseMode.ReuseUNSATmatchPrefix) && reuse) {
 							mVAsInPrefix.add(vaInTrace);
 							assert i <= mReuseCandidatePosition;
@@ -186,6 +191,7 @@ public class AnnotateAndAsserter<L extends IAction> {
 
 							// Ensure we do not consider currentVA for reuse
 						} else {
+							// default reuse
 							mVAforReuse = vaInTrace;
 							nondetsInTraceAfterPreviousVA.clear();
 							if (mTestGenReuseMode.equals(TestGenReuseMode.ReuseUNSATmatchCalloc)) {
@@ -241,13 +247,14 @@ public class AnnotateAndAsserter<L extends IAction> {
 			}
 
 			if (nondetsInTrace.isEmpty() || mCurrentVA == null || mVAforReuse == null) {
-				// System.out.println("NO REUSE");
 				reuse = false;
 			} else if (mVAforReuse.mNegatedVA) {
 				reuse = false;
 			} else if (mCurrentVA.mUnsatWithVAs.contains(mVAforReuse) && mVAforReuse.mNegatedVA == false) {
 				reuse = false; // Wie kann das überhaupt sein?
 				// System.out.println("NO REUSE since UNSAT With");
+			} else if (mVAforReuse.mVarAssignmentPair.isEmpty()) {
+				reuse = false;
 			} else if (reuse) {
 				ArrayList<Term> vaPairsAsTerms;
 				if (mTestGenReuseMode.equals(TestGenReuseMode.Reuse) || !reuseUnsatpossible) {
@@ -274,7 +281,7 @@ public class AnnotateAndAsserter<L extends IAction> {
 			mSatisfiable = mMgdScriptTc.getScript().checkSat();
 
 			if (reuse) {
-				// System.out.println("trying to reuse");
+				System.out.println("trying to reuse");
 			}
 			if (mSatisfiable == LBool.UNSAT) {
 				if (reuse) {
@@ -307,6 +314,9 @@ public class AnnotateAndAsserter<L extends IAction> {
 		}
 		if (mSatisfiable == LBool.SAT && mCurrentVA != null) {
 			mCurrentVA.mCoveredTestGoal = true;
+
+			// concreteExecution();
+
 		}
 		if (mSatisfiable == LBool.UNKNOWN) {
 			// System.out.println("UNKNOWN");
@@ -317,6 +327,56 @@ public class AnnotateAndAsserter<L extends IAction> {
 		mTcbg.reportNewCodeBlocks(mTrace.length());
 		mTcbg.reportNewAssertedCodeBlocks(mTrace.length());
 		mLogger.info("Conjunction of SSA is " + mSatisfiable);
+	}
+
+	/*
+	 * In test case generation, we have a branching that is followed by a branching into assert true and assert !false.
+	 * Where assert !false is an endpoint.
+	 * The concrete value that reaches assert !false also satisfies assert true, where the program continues.
+	 */
+	private void concreteExecution() {
+		final L word = mTrace.getSymbol(mTrace.length() - 3); // test goal branching. -3 should be the real branching
+																// condition
+
+		System.out.println("Branching word: " + word);
+		if (word instanceof IcfgEdge) {
+			((IcfgEdge) word).getTarget();
+			System.out.println(((IcfgEdge) word).getTarget().getOutgoingEdges());
+		}
+		if (word instanceof CodeBlock) {
+			((CodeBlock) word).getTarget();
+
+			System.out.println(((CodeBlock) word).getTarget().getOutgoingEdges());
+		}
+
+		// word formula
+		System.out.println(((IcfgEdge) word).getTransformula().getFormula());
+
+		for (final IcfgEdge outgoing : ((IcfgEdge) word).getTarget().getOutgoingEdges()) {
+			System.out.println("outgoing: " + outgoing);
+			System.out.println(outgoing.getTransformula().getFormula());
+			System.out.println(outgoing.getTarget());
+			for (final IcfgEdge outgoing2 : outgoing.getTarget().getOutgoingEdges()) {
+				System.out.println("outgoing2: " + outgoing2);
+				System.out.println(outgoing2.getTransformula().getFormula());
+				System.out.println(outgoing2.getTarget());
+				for (final IcfgEdge outgoing3 : outgoing2.getTarget().getOutgoingEdges()) {
+					System.out.println("outgoing3: " + outgoing3);
+					System.out.println(outgoing3.getTransformula().getFormula());
+					System.out.println(outgoing3.getTarget());
+				}
+			}
+		}
+		System.out.println("asd");
+		/*
+		 * letter bekommen wir vom automaten, vlt besser dass dann im tracecheck oder nwa zu machen sogar wobei nich so gut
+		 */
+		// final NestedWord<L> traceContinued = mTrace;
+		// final NestedWord<L> subwordBefore = traceContinued.getSubWord(mTrace.length() - 2, mTrace.length() - 1);
+		// final NestedWord<L> subwordBefore = traceContinued.7getSubWord(mTrace.length() - 2, mTrace.length() - 1);
+
+		// traceContinued.concatenate(new NestedWord<>(((Object) word).getLetter(), -2));
+		// traceContinued.concatenate(subwordBefore);
 	}
 
 	private Term createTermFromVA(final String variableAsString, final Term value) {
@@ -466,9 +526,13 @@ public class AnnotateAndAsserter<L extends IAction> {
 						.containsKey(VarAssignmentReuseAnnotation.class.getName())) {
 					final VarAssignmentReuseAnnotation reuseCandidate = (VarAssignmentReuseAnnotation) statementBranch
 							.getPayload().getAnnotations().get(VarAssignmentReuseAnnotation.class.getName());
-					mVAforReuse = reuseCandidate;
-					mReuseCandidatePosition = i;
-					break;
+					if (!reuseCandidate.mVarAssignmentPair.isEmpty()) {
+						mVAforReuse = reuseCandidate;
+						mReuseCandidatePosition = i;
+						break;
+					} else {
+						mVAforReuse = null;
+					}
 				}
 			}
 		}
@@ -588,7 +652,7 @@ public class AnnotateAndAsserter<L extends IAction> {
 			return;
 		}
 		if (mVAforReuse.equals(mDefaultVA)) {
-			// System.out.println("OtherBranchRemoveCheckDefault");
+			System.out.println("OtherBranchRemoveCheckDefault");
 			mCurrentVA.mVAofOppositeBranch.removeCheck();
 			mCurrentVA.mVAofOppositeBranch.setVa(mValueAssignmentUsedForReuse, mHighestVaOrderInTrace,
 					new ArrayList<VarAssignmentReuseAnnotation>());
@@ -597,7 +661,7 @@ public class AnnotateAndAsserter<L extends IAction> {
 
 		// amount of nondets in VA + Between testgoals matches total amount of inputs
 		assert nondetsInTrace.size() == nondetsInTraceAfterPreviousVA.size() + mVAforReuse.mVarAssignmentPair.size();
-		// System.out.println("OtherBranchRemoveCheck");
+		System.out.println("OtherBranchRemoveCheck");
 		mCurrentVA.mVAofOppositeBranch.removeCheck();
 		mCurrentVA.mVAofOppositeBranch.setVa(mValueAssignmentUsedForReuse, mHighestVaOrderInTrace, mVAsInPrefix);
 
