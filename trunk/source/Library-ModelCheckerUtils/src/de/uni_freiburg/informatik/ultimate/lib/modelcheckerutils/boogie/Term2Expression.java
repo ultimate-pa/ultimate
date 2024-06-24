@@ -408,7 +408,9 @@ public final class Term2Expression implements Serializable {
 			}
 
 			BigInteger decimalValue;
-			if (value.toString().startsWith("#x")) {
+			if (value instanceof BigInteger) {
+				decimalValue = (BigInteger) value;
+			} else if (value.toString().startsWith("#x")) {
 				decimalValue = new BigInteger(value.toString().substring(2), 16);
 			} else if (value.toString().startsWith("#b")) {
 				decimalValue = new BigInteger(value.toString().substring(2), 2);
@@ -519,8 +521,8 @@ public final class Term2Expression implements Serializable {
 			final ILocation loc = mBoogie2SmtSymbolTable.getLocation(pv);
 			final DeclarationInformation declInfo = mBoogie2SmtSymbolTable.getDeclarationInformation(pv);
 			if (pv instanceof LocalProgramVar) {
-				result = new IdentifierExpression(loc, type, translateIdentifier(((LocalProgramVar) pv).getIdentifier()),
-						declInfo);
+				result = new IdentifierExpression(loc, type,
+						translateIdentifier(((LocalProgramVar) pv).getIdentifier()), declInfo);
 			} else if (pv instanceof ProgramNonOldVar) {
 				result = new IdentifierExpression(loc, type,
 						translateIdentifier(((ProgramNonOldVar) pv).getIdentifier()), declInfo);
