@@ -111,7 +111,11 @@ public class TermTransferrer extends TermTransformer {
 			final ConstantTerm ct = (ConstantTerm) term;
 			final Term result;
 			if (ct.getValue() instanceof BigInteger) {
-				result = mNewScript.numeral((BigInteger) ct.getValue());
+				if (sort.isNumericSort()) {
+					result = mNewScript.numeral((BigInteger) ct.getValue());
+				} else {
+					result = mNewScript.getTheory().constant(ct.getValue(), sort);
+				}
 			} else if (ct.getValue() instanceof BigDecimal) {
 				result = mNewScript.decimal((BigDecimal) ct.getValue());
 			} else if (ct.getValue() instanceof Rational) {
