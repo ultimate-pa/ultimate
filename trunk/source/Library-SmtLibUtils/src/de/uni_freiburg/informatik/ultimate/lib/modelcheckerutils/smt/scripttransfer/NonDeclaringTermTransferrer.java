@@ -75,7 +75,11 @@ public final class NonDeclaringTermTransferrer extends TermTransformer {
 			final ConstantTerm ct = (ConstantTerm) term;
 			final Term result;
 			if (ct.getValue() instanceof BigInteger) {
-				result = mScript.numeral((BigInteger) ct.getValue());
+				if (sort.isNumericSort()) {
+					result = mScript.numeral((BigInteger) ct.getValue());
+				} else {
+					result = mScript.getTheory().constant(ct.getValue(), sort);
+				}
 			} else if (ct.getValue() instanceof BigDecimal) {
 				result = mScript.decimal((BigDecimal) ct.getValue());
 			} else if (ct.getValue() instanceof Rational) {
