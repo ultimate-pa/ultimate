@@ -276,6 +276,16 @@ public class StandardFunctionHandler {
 		/** https://www.man7.org/linux/man-pages/man3/sleep.3.html **/
 		fill(map, "sleep", this::handleSleep);
 
+		// https://linux.die.net/man/3/ntohs
+		fill(map, "htonl", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
+				new CPrimitive(CPrimitives.UINT)));
+		fill(map, "htons", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
+				new CPrimitive(CPrimitives.USHORT)));
+		fill(map, "ntohl", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
+				new CPrimitive(CPrimitives.UINT)));
+		fill(map, "ntohs", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
+				new CPrimitive(CPrimitives.USHORT)));
+
 		/** functions of pthread library **/
 		fill(map, "pthread_create", this::handlePthread_create);
 		fill(map, "pthread_join", this::handlePthread_join);
@@ -350,6 +360,22 @@ public class StandardFunctionHandler {
 
 		// https://en.cppreference.com/w/c/io/puts
 		fill(map, "puts", this::handlePuts);
+
+		// https://en.cppreference.com/w/c/io/fflush
+		fill(map, "fflush", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
+				new CPrimitive(CPrimitives.INT)));
+
+		// https://en.cppreference.com/w/c/io/fopen
+		fill(map, "fopen", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
+				new CPointer(new CPrimitive(CPrimitives.VOID))));
+
+		// https://en.cppreference.com/w/c/io/fclose
+		fill(map, "fclose", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
+				new CPrimitive(CPrimitives.INT)));
+
+		// https://en.cppreference.com/w/c/io/feof
+		fill(map, "feof", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
+				new CPrimitive(CPrimitives.INT)));
 
 		fill(map, "__builtin_memcpy", this::handleMemcpy);
 		fill(map, "__memcpy", this::handleMemcpy);
@@ -772,11 +798,67 @@ public class StandardFunctionHandler {
 		fill(map, "strtold", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 2,
 				new CPrimitive(CPrimitives.LONGDOUBLE)));
 
+		/**
+		 * 7.22.1.4 The strtol, strtoll, strtoul, and strtoull functions
+		 *
+		 * see https://en.cppreference.com/w/c/string/byte/strtoul
+		 *
+		 * Interprets an unsigned integer value in a byte string pointed to by str.
+		 *
+		 * We handle this by overapproximation and do not check of range errors.
+		 *
+		 */
+		fill(map, "strtoul", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 3,
+				new CPrimitive(CPrimitives.ULONG)));
+		fill(map, "strtoul", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 3,
+				new CPrimitive(CPrimitives.ULONG)));
+		fill(map, "strtoull", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 3,
+				new CPrimitive(CPrimitives.ULONGLONG)));
+
+		// https://en.cppreference.com/w/c/string/byte/strcat
+		fill(map, "strcat", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
+				new CPointer(new CPrimitive(CPrimitives.CHAR))));
+		// https://en.cppreference.com/w/c/string/byte/strncat
+		fill(map, "strncat", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
+				new CPointer(new CPrimitive(CPrimitives.CHAR))));
+
 		// https://en.cppreference.com/w/c/string/byte/memchr
 		fill(map, "memchr", this::handleMemchr);
 
+		// https://en.cppreference.com/w/c/string/byte/strstr
+		// This is handled the same way as memchr
+		fill(map, "strstr", this::handleMemchr);
+
+		// https://en.cppreference.com/w/cpp/string/byte/strrchr
+		// This is handled the same way as memchr
+		fill(map, "strrchr", this::handleMemchr);
+
 		// https://en.cppreference.com/w/c/string/byte/strerror
 		fill(map, "strerror", this::handleStrerror);
+
+		// https://en.cppreference.com/w/c/string/byte/strspn
+		fill(map, "strspn", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
+				new CPrimitive(CPrimitives.ULONGLONG)));
+
+		// https://en.cppreference.com/w/c/io/putchar
+		fill(map, "putchar", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
+				new CPrimitive(CPrimitives.INT)));
+
+		// https://en.cppreference.com/w/c/io/ferror
+		fill(map, "ferror", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
+				new CPrimitive(CPrimitives.INT)));
+
+		// https://en.cppreference.com/w/c/io/fputs
+		fill(map, "fputs", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
+				new CPrimitive(CPrimitives.INT)));
+
+		// https://en.cppreference.com/w/c/io/fwrite
+		fill(map, "fwrite", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
+				new CPrimitive(CPrimitives.ULONGLONG)));
+
+		// https://en.cppreference.com/w/c/io/setbuf
+		fill(map, "setbuf", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
+				new CPrimitive(CPrimitives.VOID)));
 
 		/**
 		 * 7.22.2.1 The rand function
