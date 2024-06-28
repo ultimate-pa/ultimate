@@ -772,6 +772,9 @@ public class StandardFunctionHandler {
 		fill(map, "strtold", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 2,
 				new CPrimitive(CPrimitives.LONGDOUBLE)));
 
+		// https://en.cppreference.com/w/c/string/byte/memchr
+		fill(map, "memchr", this::handleMemchr);
+
 		/**
 		 * 7.22.2.1 The rand function
 		 *
@@ -980,6 +983,20 @@ public class StandardFunctionHandler {
 		builder.addAllExceptLrValue(nondetString).setLrValue(nondetString.getLrValue());
 
 		return builder.build();
+	}
+
+	private Result handleMemchr(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+			final String name) {
+		final var builder = new ExpressionResultBuilder();
+		checkArguments(loc, 3, name, node.getArguments());
+		for (final var arg : node.getArguments()) {
+			if (!isStringLiteral(arg)) {
+				final var argRes = (ExpressionResult) main.dispatch(arg);
+				builder.addAllExceptLrValue(argRes);
+			}
+		}
+		builder.addOverapprox(new Overapprox(name, loc));
+		return builder.addAllIncludingLrValue(getNondetStringOrNull(loc)).build();
 	}
 
 	private ExpressionResult getNondetStringOrNull(final ILocation loc) {
