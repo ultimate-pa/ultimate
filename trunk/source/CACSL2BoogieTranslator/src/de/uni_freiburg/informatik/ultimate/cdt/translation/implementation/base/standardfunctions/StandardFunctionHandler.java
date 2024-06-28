@@ -775,6 +775,9 @@ public class StandardFunctionHandler {
 		// https://en.cppreference.com/w/c/string/byte/memchr
 		fill(map, "memchr", this::handleMemchr);
 
+		// https://en.cppreference.com/w/c/string/byte/strerror
+		fill(map, "strerror", this::handleStrerror);
+
 		/**
 		 * 7.22.2.1 The rand function
 		 *
@@ -997,6 +1000,13 @@ public class StandardFunctionHandler {
 		}
 		builder.addOverapprox(new Overapprox(name, loc));
 		return builder.addAllIncludingLrValue(getNondetStringOrNull(loc)).build();
+	}
+
+	private Result handleStrerror(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+			final String name) {
+		checkArguments(loc, 1, name, node.getArguments());
+		return new ExpressionResultBuilder((ExpressionResult) main.dispatch(node.getArguments()[0]))
+				.addAllIncludingLrValue(getNondetStringOrNull(loc)).build();
 	}
 
 	private ExpressionResult getNondetStringOrNull(final ILocation loc) {
