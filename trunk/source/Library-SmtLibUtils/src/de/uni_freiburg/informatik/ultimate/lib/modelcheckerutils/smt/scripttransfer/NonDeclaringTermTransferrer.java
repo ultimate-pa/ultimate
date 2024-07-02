@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public final class NonDeclaringTermTransferrer extends TermTransformer {
+public class NonDeclaringTermTransferrer extends TermTransformer {
 
 	private final boolean mApplyLocalSimplifications;
 	private final Script mScript;
