@@ -409,7 +409,7 @@ public class StandardFunctionHandler {
 		 */
 		final IFunctionModelHandler overapproximateGccOverflowCheck = (main, node, loc,
 				name) -> handleByOverapproximation(main, node, loc, name, 3, new CPrimitive(CPrimitives.BOOL));
-		fill(map, "__builtin_add_overflow", overapproximateGccOverflowCheck);
+		fill(map, "__builtin_add_overflow", die);
 		fill(map, "__builtin_sadd_overflow", (main, node, loc, name) -> handleBuiltinOverflow(main, node, loc, name,
 				IASTBinaryExpression.op_plus, new CPrimitive(CPrimitives.INT)));
 		fill(map, "__builtin_saddl_overflow", (main, node, loc, name) -> handleBuiltinOverflow(main, node, loc, name,
@@ -422,7 +422,7 @@ public class StandardFunctionHandler {
 				IASTBinaryExpression.op_plus, new CPrimitive(CPrimitives.ULONG)));
 		fill(map, "__builtin_uaddll_overflow", (main, node, loc, name) -> handleBuiltinOverflow(main, node, loc, name,
 				IASTBinaryExpression.op_plus, new CPrimitive(CPrimitives.ULONGLONG)));
-		fill(map, "__builtin_sub_overflow", overapproximateGccOverflowCheck);
+		fill(map, "__builtin_sub_overflow", die);
 		fill(map, "__builtin_ssub_overflow", (main, node, loc, name) -> handleBuiltinOverflow(main, node, loc, name,
 				IASTBinaryExpression.op_minus, new CPrimitive(CPrimitives.INT)));
 		fill(map, "__builtin_ssubl_overflow", (main, node, loc, name) -> handleBuiltinOverflow(main, node, loc, name,
@@ -435,7 +435,7 @@ public class StandardFunctionHandler {
 				IASTBinaryExpression.op_minus, new CPrimitive(CPrimitives.ULONG)));
 		fill(map, "__builtin_usubll_overflow", (main, node, loc, name) -> handleBuiltinOverflow(main, node, loc, name,
 				IASTBinaryExpression.op_minus, new CPrimitive(CPrimitives.ULONGLONG)));
-		fill(map, "__builtin_mul_overflow", overapproximateGccOverflowCheck);
+		fill(map, "__builtin_mul_overflow", die);
 		fill(map, "__builtin_smul_overflow", (main, node, loc, name) -> handleBuiltinOverflow(main, node, loc, name,
 				IASTBinaryExpression.op_multiply, new CPrimitive(CPrimitives.INT)));
 		fill(map, "__builtin_smull_overflow", (main, node, loc, name) -> handleBuiltinOverflow(main, node, loc, name,
