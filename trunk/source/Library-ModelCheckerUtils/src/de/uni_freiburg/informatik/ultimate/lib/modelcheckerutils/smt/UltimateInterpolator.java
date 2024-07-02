@@ -29,16 +29,14 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.ListIterator;
 import java.util.Set;
 import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubTermFinder;
@@ -50,16 +48,9 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.WrapperScript;
-import de.uni_freiburg.informatik.ultimate.smtsolver.external.SmtCommandUtils.AssertCommand;
-import de.uni_freiburg.informatik.ultimate.smtsolver.external.SmtCommandUtils.DeclareFunCommand;
-import de.uni_freiburg.informatik.ultimate.smtsolver.external.SmtCommandUtils.DefineFunCommand;
-import de.uni_freiburg.informatik.ultimate.smtsolver.external.SmtCommandUtils.ISmtCommand;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  *
@@ -72,31 +63,28 @@ public class UltimateInterpolator extends WrapperScript {
 
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
+	protected final Script mSupportingScript;
 	private final ManagedScript mMgdScript;
+	private final ManagedScript mSupMgdScript;
 	private final HashMap<String, Term> mTermMap;
 	private final ArrayList<Set<Term>> mVarList;
-	private int mFunCount;
-	private int mCountAsserts;
-	private int mCountPush;
-	private int mCountDeclaredFuns;
-	private final Deque<ISmtCommand<Void>> mAssertStack;
-	private final Deque<Triple<Integer, Pair<Integer, Integer>, Integer>> mLastPush;
 	private final boolean mCheckInterpolants;
+	private final TermTransferrer mTransferrer;
+	private final TermTransferrer mReTransferrer;
 
-	public UltimateInterpolator(final IUltimateServiceProvider services, final ILogger logger, final Script script) {
+	public UltimateInterpolator(final IUltimateServiceProvider services, final ILogger logger,
+			final Script script, final Script supportScript) {
 		super(script);
 		mServices = services;
 		mLogger = logger;
+		mSupportingScript = supportScript;
 		mMgdScript = new ManagedScript(services, mScript);
+		mSupMgdScript = new ManagedScript(services, mSupportingScript);
 		mTermMap = new HashMap<String, Term>();
 		mVarList = new ArrayList<Set<Term>>();
-		mFunCount = 0;
-		mCountPush = 0;
-		mCountAsserts = 0;
-		mCountDeclaredFuns = 0;
-		mAssertStack = new LinkedList<ISmtCommand<Void>>();
-		mLastPush = new LinkedList<Triple<Integer, Pair<Integer, Integer>, Integer>>();
-		mCheckInterpolants = false;
+		mCheckInterpolants = true;
+		mTransferrer = new TermTransferrer(mScript, mSupportingScript);
+		mReTransferrer = new TermTransferrer(mSupportingScript, mScript);
 	}
 
 	/**
@@ -111,24 +99,18 @@ public class UltimateInterpolator extends WrapperScript {
 			super.setOption(opt, value);
 		}
 		super.setOption(":interactive-mode", true);
+		mSupportingScript.setOption(":interactive-mode", true);
 	}
 
 	/**
-	 * Set Logic to allow quantifiers.
+	 * Set Logic for supporting script.
 	 */
 	@Override
 	public void setLogic(final String logic) throws UnsupportedOperationException, SMTLIBException {
 		super.setLogic(logic);
+		mSupportingScript.setLogic(logic);
 	}
 	
-	@Override
-	public void declareFun(final String fun, final Sort[] paramSorts, final Sort resultSort) throws SMTLIBException {
-		mScript.push(1);
-		mCountDeclaredFuns++;
-		mAssertStack.push(new DeclareFunCommand(fun, paramSorts, resultSort));
-		super.declareFun(fun, paramSorts, resultSort);
-	}
-
 	/**
 	 * This method maps term Annotations value (name of term) to term Annotations
 	 * subterm (content of term) if the annotation is of sorts :named. Also keeps
@@ -137,9 +119,6 @@ public class UltimateInterpolator extends WrapperScript {
 	 */
 	@Override
 	public LBool assertTerm(final Term term) throws SMTLIBException {
-		mScript.push(1);
-		mCountAsserts++;
-		mAssertStack.push(new AssertCommand(term));
 		if (term instanceof AnnotatedTerm) {
 			final AnnotatedTerm annoTerm = (AnnotatedTerm) term;
 			if (annoTerm.getAnnotations().length == 0) {
@@ -154,53 +133,6 @@ public class UltimateInterpolator extends WrapperScript {
 		return super.assertTerm(term);
 	}
 
-	/********************Section to regulate number of push and pop operation*********************/
-	@Override
-	public Term annotate(final Term t, final Annotation... annotations) throws SMTLIBException {
-		mScript.push(1);
-		mFunCount++;
-		return super.annotate(t, annotations);
-	}
-
-	@Override
-	public void push(final int levels) throws SMTLIBException {
-		if (levels > 0) {
-			mLastPush.push(new Triple<>(levels,
-					new Pair<Integer, Integer>(mCountAsserts, mCountDeclaredFuns), mFunCount));
-			mCountPush = mCountPush + levels;
-		}
-		super.push(levels);
-	}
-
-	@Override
-	public void pop(final int levels) throws SMTLIBException {
-		assert levels <= mCountPush;
-		super.pop(levels + regulatePop(levels));
-	}
-
-	private int regulatePop(final int levels) {
-		int sum = 0;
-		mCountPush = mCountPush - levels;
-		for (int i = 0; i < levels; i++) {
-			Triple<Integer, Pair<Integer, Integer>, Integer> top = mLastPush.pop();
-			final int abs = top.getSecond().getFirst() + top.getSecond().getSecond();
-			for (int j = 0; j < (mCountAsserts + mCountDeclaredFuns) - abs; j++) {
-				mAssertStack.pop();
-			}
-			sum += (mCountAsserts + mCountDeclaredFuns) - abs + mFunCount - top.getThird();
-			mFunCount = top.getThird();
-			mCountAsserts = top.getSecond().getFirst();
-			mCountDeclaredFuns = top.getSecond().getSecond();
-			if (top.getFirst() - 1 > 0) {
-				mLastPush.push(new Triple<>(top.getFirst() - 1,
-						new Pair<Integer, Integer>(mCountAsserts, mCountDeclaredFuns), mFunCount));
-			}
-		}
-		return sum;
-	}
-
-	/*********************************************************************************************/
-
 	@Override
 	public Term[] getInterpolants(Term[] partition, final int[] startOfSubtree) {
 		for (int i = 0; i < partition.length; i++) {
@@ -211,9 +143,7 @@ public class UltimateInterpolator extends WrapperScript {
 				}
 			}
 		}
-		final Term[] uc = mMgdScript.getScript().getUnsatCore();
-		removeAssertions();
-		addDeclaredFuns();
+		final Term[] uc = mScript.getUnsatCore();
 		final Term[] interpolants = new Term[partition.length - 1];
 		getDistinctVariables(partition, uc);
 		for (int i = 0; i < partition.length - 1; i++) {
@@ -225,7 +155,7 @@ public class UltimateInterpolator extends WrapperScript {
 				Term conjunctionTerm;
 				for (Term t : mVarList.get(i)) {
 					String str = SmtUtils.removeSmtQuoteCharacters(t.toString());
-					TermVariable var = mMgdScript.getScript().variable(str, t.getSort());
+					TermVariable var = mScript.variable(str, t.getSort());
 					varSet.add(var);
 					constantToVar.put(t, var);
 				}
@@ -233,20 +163,22 @@ public class UltimateInterpolator extends WrapperScript {
 				if (i == 0) {
 					conjunctionTerm = t;
 				} else {
-					conjunctionTerm = SmtUtils.and(mMgdScript.getScript(), t, interpolants[i - 1]);
+					conjunctionTerm = SmtUtils.and(mScript, t, interpolants[i - 1]);
 				}
 				if (!varSet.isEmpty()) {
-					final Term substitutedTerm = Substitution.apply(mMgdScript.getScript(), constantToVar,
+					final Term substitutedTerm = Substitution.apply(mScript, constantToVar,
 							conjunctionTerm);
-					conjunctionTerm = SmtUtils.quantifier(mMgdScript.getScript(), QuantifiedFormula.EXISTS, varSet,
+					conjunctionTerm = SmtUtils.quantifier(mScript, QuantifiedFormula.EXISTS, varSet,
 							substitutedTerm);
+					final Term transTerm = mTransferrer.transform(conjunctionTerm);
 					// for eliminate: SimplificationTechnique.SIMPLIFY_DDA2
-					conjunctionTerm = PartialQuantifierElimination.eliminateLight(mServices, mMgdScript,
-							conjunctionTerm);
+					final Term transElim = PartialQuantifierElimination.eliminateLight(mServices, mSupMgdScript,
+							transTerm);
+					conjunctionTerm = mReTransferrer.transform(transElim);
 				}
 				interpolants[i] = conjunctionTerm;
 			} else if (i == 0) {
-				interpolants[i] = mMgdScript.getScript().term("true");
+				interpolants[i] = mScript.term("true");
 			} else {
 				interpolants[i] = interpolants[i - 1];
 			}
@@ -254,8 +186,6 @@ public class UltimateInterpolator extends WrapperScript {
 		if (mCheckInterpolants) {
 			assert checkInterpolants(interpolants, partition, uc);
 		}
-		removeDeclaredFuns();
-		addAssertions();
 		return interpolants;
 	}
 
@@ -269,76 +199,6 @@ public class UltimateInterpolator extends WrapperScript {
 		}
 		final Term result = Substitution.apply(mScript, symbToFormula, partition);
 		return result;
-	}
-
-	/**
-	 * Method to remove assertions from script mScript.
-	 */
-	private void removeAssertions() {
-		mScript.pop(mFunCount + mCountAsserts + mCountPush + mCountDeclaredFuns);
-	}
-
-	/**
-	 * Method to add removed assertions and function symbols back to script mScript.
-	 */
-	private void addAssertions() {
-		int counter = 0;
-		ListIterator<ISmtCommand<Void>> value = ((LinkedList<ISmtCommand<Void>>) mAssertStack)
-				.listIterator(mAssertStack.size());
-		ListIterator<Triple<Integer, Pair<Integer, Integer>, Integer>> it =
-				((LinkedList<Triple<Integer, Pair<Integer, Integer>, Integer>>) mLastPush)
-				.listIterator(mLastPush.size());
-		while (value.hasPrevious()) {
-			if (it.hasPrevious()) {
-				final Triple<Integer, Pair<Integer, Integer>, Integer> trip = it.previous();
-				if (trip.getSecond().getFirst() + trip.getSecond().getSecond() == counter) {
-					mScript.push(trip.getFirst());
-				} else {
-					it.next();
-				}
-			}
-			mScript.push(1);
-			final ISmtCommand<Void> cmd = value.previous();
-			cmd.executeWithScript(mScript);
-			if (cmd instanceof AssertCommand) {
-				if (((AssertCommand) cmd).getTerm() instanceof AnnotatedTerm) {
-					addFun((AnnotatedTerm) ((AssertCommand) cmd).getTerm(), mScript);
-				}
-			}
-			counter++;
-		}
-		assert mScript.checkSat() == LBool.UNSAT;
-	}
-	
-	/*
-	 * Method to add declared function symbols to properly use them while generating interpolants.
-	 */
-	private void addDeclaredFuns() {
-		mScript.push(1);
-		for (ISmtCommand<Void> cmd: mAssertStack) {
-			if (cmd instanceof DeclareFunCommand) {
-				cmd.executeWithScript(mScript);
-			}
-		}
-	}
-	
-	/*
-	 * Removes declared funs that were only added to generate interpolants.
-	 */
-	private void removeDeclaredFuns() {
-		mScript.pop(1);
-	}
-
-	/**
-	 * Method to add annotation to term annoT as function symbol to script mScript.
-	 */
-	private void addFun(AnnotatedTerm annoT, Script script) {
-		for (Annotation anno : annoT.getAnnotations()) {
-			mScript.push(1);
-			final DefineFunCommand funCmd = new DefineFunCommand(anno.getValue().toString(), EMPTY_TERM_VARIABLE_ARRAY,
-					annoT.getSubterm().getSort(), annoT.getSubterm());
-			funCmd.executeWithScript(script);
-		}
 	}
 
 	/**
@@ -413,13 +273,10 @@ public class UltimateInterpolator extends WrapperScript {
 	 */
 	private ArrayList<Set<Term>> makeTheory() {
 		final ArrayList<Set<Term>> result = new ArrayList<Set<Term>>();
-		for (ISmtCommand<Void> t : mAssertStack) {
-			if (t instanceof AssertCommand) {
-				final Term temp = ((AssertCommand) t).getTerm();
-				if (!(temp instanceof AnnotatedTerm)) {
-					final Set<Term> subTerm = SubTermFinder.find(temp, new CheckForSubterm(), false);
-					result.add(subTerm);
-				}
+		for (Term t : mScript.getAssertions()) {
+			if (!(t instanceof AnnotatedTerm)) {
+				final Set<Term> subTerm = SubTermFinder.find(t, new CheckForSubterm(), false);
+				result.add(subTerm);
 			}
 		}
 		return result;
@@ -452,26 +309,22 @@ public class UltimateInterpolator extends WrapperScript {
 		if (interpolants.length != partition.length - 1) {
 			return false;
 		}
+		
+		/* Push once on supporting script to remove all assertions at the end of interpolant check */
+		mSupportingScript.push(1);
 
 		/* Add theory onto assertion stack */
-		int theoryPushes = 0;
-		final ArrayList<Term> partSyms = getFunsymbols(partition);
-		for (ISmtCommand<Void> t : mAssertStack) {
-			if (t instanceof AssertCommand) {
-				final Term temp = ((AssertCommand) t).getTerm();
-				if (!(temp instanceof AnnotatedTerm)) {
-					theoryPushes++;
-					mScript.push(1);
-					t.executeWithScript(mScript);
-				}
+		for (Term t : mScript.getAssertions()) {
+			if (!(t instanceof AnnotatedTerm)) {
+				mSupportingScript.assertTerm(mTransferrer.transform(t));
 			}
 		}
+		
+		final ArrayList<Term> partSyms = getFunsymbols(partition);
 		for (Term t : uc) {
 			if (!(partSyms.contains(t))) {
 				final Term theo = mTermMap.get(t.toString());
-				theoryPushes++;
-				mScript.push(1);
-				mScript.assertTerm(theo);
+				mSupportingScript.assertTerm(mTransferrer.transform(theo));
 			}
 		}
 
@@ -480,23 +333,24 @@ public class UltimateInterpolator extends WrapperScript {
 		final ArrayList<Term> fOneSyms = getFunsymbols(ar);
 		final Term fOne = buildTerm(partition[0], fOneSyms);
 		final Term notIOne = SmtUtils.not(mScript, interpolants[0]);
-		mScript.push(1);
-		mScript.assertTerm(SmtUtils.and(mScript, notIOne, fOne));
-		if (mScript.checkSat() == LBool.SAT) {
+		mSupportingScript.push(1);
+		mSupportingScript.assertTerm(mTransferrer.transform(SmtUtils.and(mScript, notIOne, fOne)));
+		if (mSupportingScript.checkSat() == LBool.SAT) {
 			return false;
 		}
-		mScript.pop(1);
+		mSupportingScript.pop(1);
 
 		/* F_n \land I_n needs to be unsat */
 		final Term[] arr = { partition[partition.length - 1] };
 		final ArrayList<Term> fEnSyms = getFunsymbols(arr);
 		final Term fEn = buildTerm(partition[partition.length - 1], fEnSyms);
-		mScript.push(1);
-		mScript.assertTerm(SmtUtils.and(mScript, fEn, interpolants[interpolants.length - 1]));
-		if (mScript.checkSat() == LBool.SAT) {
+		mSupportingScript.push(1);
+		mSupportingScript.assertTerm(mTransferrer.transform(SmtUtils.and(mScript, fEn,
+				interpolants[interpolants.length - 1])));
+		if (mSupportingScript.checkSat() == LBool.SAT) {
 			return false;
 		}
-		mScript.pop(1);
+		mSupportingScript.pop(1);
 
 		/*
 		 * I_{i-1} \land F_i \land \lnot I_i needs to be unsat for all i, 2 <= i <= n-1
@@ -507,16 +361,14 @@ public class UltimateInterpolator extends WrapperScript {
 			final ArrayList<Term> fISyms = getFunsymbols(arra);
 			final Term formI = buildTerm(partition[i], fISyms);
 			final Term notIntI = SmtUtils.not(mScript, interpolants[i]);
-			mScript.push(1);
-			mScript.assertTerm(SmtUtils.and(mScript, intIMinus, formI, notIntI));
-			if (mScript.checkSat() == LBool.SAT) {
+			mSupportingScript.push(1);
+			mSupportingScript.assertTerm(mTransferrer.transform(SmtUtils.and(mScript, intIMinus, formI, notIntI)));
+			if (mSupportingScript.checkSat() == LBool.SAT) {
 				return false;
 			}
-			mScript.pop(1);
+			mSupportingScript.pop(1);
 		}
-		if (theoryPushes > 0) {
-			mScript.pop(theoryPushes);
-		}
+		mSupportingScript.pop(1);
 		return true;
 	}
 
