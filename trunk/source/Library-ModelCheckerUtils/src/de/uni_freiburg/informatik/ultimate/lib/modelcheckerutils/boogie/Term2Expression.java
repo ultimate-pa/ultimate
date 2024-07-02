@@ -406,7 +406,7 @@ public final class Term2Expression implements Serializable {
 			if (indices.length != 1) {
 				throw new AssertionError("BitVec has exactly one index");
 			}
-			final BigInteger bigInteger = getIntegerValueFromBitvectorConstant(term);
+			final BigInteger bigInteger = BitvectorUtils.extractValueFromBitvectorConstant(term);
 			final int length = Integer.valueOf(indices[0]);
 			return new BitvecLiteral(null, type, String.valueOf(bigInteger), length);
 		}
@@ -427,23 +427,6 @@ public final class Term2Expression implements Serializable {
 		} else {
 			throw new UnsupportedOperationException("unknown kind of Term");
 		}
-	}
-
-	private static BigInteger getIntegerValueFromBitvectorConstant(final ConstantTerm term) {
-		assert SmtSortUtils.isBitvecSort(term.getSort());
-		final Object value = term.getValue();
-		final BigInteger result;
-		if (value instanceof BigInteger) {
-			result = (BigInteger) value;
-		} else if (value.toString().startsWith("#x")) {
-			result = new BigInteger(value.toString().substring(2), 16);
-		} else if (value.toString().startsWith("#b")) {
-			result = new BigInteger(value.toString().substring(2), 2);
-		} else {
-			throw new AssertionError(
-					"Value must be stored as BigInterger, hexadecimally endoded string or binarily encoded string");
-		}
-		return result;
 	}
 
 	private static Expression translate(final LetTerm term) {
