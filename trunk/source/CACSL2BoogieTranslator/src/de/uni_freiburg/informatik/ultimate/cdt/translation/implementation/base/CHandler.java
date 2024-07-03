@@ -153,7 +153,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.TypeDeclaration;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
@@ -3598,14 +3597,14 @@ public class CHandler {
 				mExprResultTransformer.transformSwitchRexIntToBool(condResult, loc, cond);
 		final List<Statement> result = new ArrayList<>(condTransformed.getStatements());
 		resultBuilder.addDeclarations(condTransformed.getDeclarations());
-		// Insert an if-statement: if (!cond) break;
+		// Insert an if-statement: if (cond) {} else break;
+		// Note: we could invert the condition and ommit the then branch, but we want to keep the negation consistent in
+		// C and Boogie.
 		// Make sure to havoc all aux-vars that are created from the translation of cond (in the if and else branches)
-		final Expression negatedCond = ExpressionFactory.constructUnaryExpression(loc,
-				UnaryExpression.Operator.LOGICNEG, condTransformed.getLrValue().getValue());
 		final Statement[] havocs =
 				CTranslationUtil.createHavocsForAuxVars(condTransformed.getAuxVars()).toArray(Statement[]::new);
-		final IfStatement ifStmt = new IfStatement(loc, negatedCond,
-				DataStructureUtils.concat(havocs, new Statement[] { new BreakStatement(loc) }), havocs);
+		final IfStatement ifStmt = new IfStatement(loc, condTransformed.getLrValue().getValue(), havocs,
+				DataStructureUtils.concat(havocs, new Statement[] { new BreakStatement(loc) }));
 		condTransformed.getOverapprs().forEach(oa -> oa.annotate(ifStmt));
 		result.add(ifStmt);
 		return result;
