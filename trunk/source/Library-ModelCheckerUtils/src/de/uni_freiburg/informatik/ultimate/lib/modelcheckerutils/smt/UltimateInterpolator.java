@@ -31,6 +31,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -67,8 +68,8 @@ public class UltimateInterpolator extends WrapperScript {
 	private final ManagedScript mMgdScript;
 	private final ManagedScript mSupMgdScript;
 	private final HashMap<String, Term> mTermMap;
-	private final ArrayList<Set<Term>> mVarList;
 	private final boolean mCheckInterpolants;
+	private final boolean mUniversalFlag;
 	private final TermTransferrer mTransferrer;
 	private final TermTransferrer mReTransferrer;
 
@@ -81,8 +82,8 @@ public class UltimateInterpolator extends WrapperScript {
 		mMgdScript = new ManagedScript(services, mScript);
 		mSupMgdScript = new ManagedScript(services, mSupportingScript);
 		mTermMap = new HashMap<String, Term>();
-		mVarList = new ArrayList<Set<Term>>();
-		mCheckInterpolants = true;
+		mCheckInterpolants = false;
+		mUniversalFlag = false;
 		mTransferrer = new TermTransferrer(mScript, mSupportingScript);
 		mReTransferrer = new TermTransferrer(mSupportingScript, mScript);
 	}
@@ -145,7 +146,16 @@ public class UltimateInterpolator extends WrapperScript {
 		}
 		final Term[] uc = mScript.getUnsatCore();
 		final Term[] interpolants = new Term[partition.length - 1];
-		getDistinctVariables(partition, uc);
+		final ArrayList<Set<Term>> varList;
+		final List<Term> list = Arrays.asList(partition);
+		if (mUniversalFlag) {
+			// For universal quantifier, first reverse partition, then reverse resulting list of variables
+			Collections.reverse(list);
+			final Term[] reversedPartition = list.toArray(new Term[0]);
+			varList = getDistinctVariables(reversedPartition, uc);
+		} else {
+			varList = getDistinctVariables(partition, uc);
+		}
 		for (int i = 0; i < partition.length - 1; i++) {
 			final Term[] ar = { partition[i] };
 			final ArrayList<Term> tList = getFunsymbols(ar);
@@ -153,7 +163,7 @@ public class UltimateInterpolator extends WrapperScript {
 				final Set<TermVariable> varSet = new HashSet<TermVariable>();
 				final HashMap<Term, Term> constantToVar = new HashMap<Term, Term>();
 				Term conjunctionTerm;
-				for (Term t : mVarList.get(i)) {
+				for (Term t : varList.get(i)) {
 					String str = SmtUtils.removeSmtQuoteCharacters(t.toString());
 					TermVariable var = mScript.variable(str, t.getSort());
 					varSet.add(var);
@@ -161,14 +171,16 @@ public class UltimateInterpolator extends WrapperScript {
 				}
 				final Term t = buildTerm(partition[i], tList);
 				if (i == 0) {
-					conjunctionTerm = t;
+					conjunctionTerm = mUniversalFlag ? SmtUtils.not(mScript, t) : t;
 				} else {
-					conjunctionTerm = SmtUtils.and(mScript, t, interpolants[i - 1]);
+					conjunctionTerm = mUniversalFlag ? SmtUtils.or(mScript, SmtUtils.not(mScript, t),
+							interpolants[i - 1]) : SmtUtils.and(mScript, t, interpolants[i - 1]);
 				}
 				if (!varSet.isEmpty()) {
 					final Term substitutedTerm = Substitution.apply(mScript, constantToVar,
 							conjunctionTerm);
-					conjunctionTerm = SmtUtils.quantifier(mScript, QuantifiedFormula.EXISTS, varSet,
+					conjunctionTerm = mUniversalFlag ? SmtUtils.quantifier(mScript, QuantifiedFormula.FORALL, varSet,
+							substitutedTerm) : SmtUtils.quantifier(mScript, QuantifiedFormula.EXISTS, varSet,
 							substitutedTerm);
 					final Term transTerm = mTransferrer.transform(conjunctionTerm);
 					// for eliminate: SimplificationTechnique.SIMPLIFY_DDA2
@@ -178,10 +190,15 @@ public class UltimateInterpolator extends WrapperScript {
 				}
 				interpolants[i] = conjunctionTerm;
 			} else if (i == 0) {
-				interpolants[i] = mScript.term("true");
+				interpolants[i] = mUniversalFlag ? mScript.term("false") : mScript.term("true");
 			} else {
 				interpolants[i] = interpolants[i - 1];
 			}
+		}
+		if (mUniversalFlag) {
+			final List<Term> reInterpolants = Arrays.asList(interpolants);
+			Collections.reverse(reInterpolants);
+			Collections.reverse(list);
 		}
 		if (mCheckInterpolants) {
 			assert checkInterpolants(interpolants, partition, uc);
@@ -214,23 +231,25 @@ public class UltimateInterpolator extends WrapperScript {
 	 * @param partition
 	 * @param uc
 	 */
-	private void getDistinctVariables(final Term[] partition, final Term[] uc) {
+	private ArrayList<Set<Term>> getDistinctVariables(final Term[] partition, final Term[] uc) {
+		final ArrayList<Set<Term>> varList = new ArrayList<Set<Term>>();
 		final ArrayList<Set<Term>> theoryExtension = getConstants(uc, partition, false);
 		final ArrayList<Set<Term>> overwriteArray = getConstants(partition, uc, true);
 		final ArrayList<Set<Term>> otherTheory = makeTheory();
 		for (int i = 0; i < overwriteArray.size() - 1; i++) {
-			mVarList.add(new HashSet<Term>());
+			varList.add(new HashSet<Term>());
 			for (Term t : overwriteArray.get(i)) {
 				final Boolean occOverwrite = checkOccurrence(overwriteArray, t, i);
 				final Boolean occTheory = checkOccurrence(theoryExtension, t, -1);
 				final Boolean occOtherTheory = checkOccurrence(otherTheory, t, -1);
 				if (Boolean.TRUE.equals(occOverwrite == false) && Boolean.TRUE.equals(occTheory == false)
 						&& Boolean.TRUE.equals(occOtherTheory == false)) {
-					mVarList.get(i).add(t);
+					varList.get(i).add(t);
 				}
 			}
 		}
-		mVarList.add(new HashSet<Term>());
+		varList.add(new HashSet<Term>());
+		return varList;
 	}
 
 	/**
