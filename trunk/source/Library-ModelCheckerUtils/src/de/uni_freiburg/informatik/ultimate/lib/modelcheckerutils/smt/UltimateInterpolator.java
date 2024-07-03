@@ -145,17 +145,37 @@ public class UltimateInterpolator extends WrapperScript {
 			}
 		}
 		final Term[] uc = mScript.getUnsatCore();
+		final Term[] exInterpolants = existentialSequence(partition, uc);
+		final Term[] allInterpolants = forallSequence(partition, uc);
+		final Term[] interpolants = mUniversalFlag ? allInterpolants : exInterpolants;
+		if (mCheckInterpolants) {
+			assert checkInterpolants(interpolants, partition, uc);
+		}
+		return interpolants;
+	}
+	
+	/** Calls method to generate interpolants using existential quantifier **/
+	private Term[] existentialSequence(Term[] partition, Term[] uc) {
+		return genericInterpolants(partition, uc, false);
+	}
+	
+	/** Calls method to generate interpolants using universal quantifier **/
+	private Term[] forallSequence(Term[] partition, Term[] uc) {
+		final List<Term> list = Arrays.asList(partition);
+		Collections.reverse(list);
+		final Term[] reversedPartition = list.toArray(new Term[0]);
+		Term[] interpolants = genericInterpolants(reversedPartition, uc, true);
+		final List<Term> reInterpolants = Arrays.asList(interpolants);
+		Collections.reverse(reInterpolants);
+		Collections.reverse(list);
+		return interpolants;
+	}
+	
+	/** Can be used to generate interpolants using either universal or existential quantifier **/
+	private Term[] genericInterpolants(Term[] partition, Term[] uc, boolean universalFlag) {
 		final Term[] interpolants = new Term[partition.length - 1];
 		final ArrayList<Set<Term>> varList;
-		final List<Term> list = Arrays.asList(partition);
-		if (mUniversalFlag) {
-			// For universal quantifier, first reverse partition, then reverse resulting list of variables
-			Collections.reverse(list);
-			final Term[] reversedPartition = list.toArray(new Term[0]);
-			varList = getDistinctVariables(reversedPartition, uc);
-		} else {
-			varList = getDistinctVariables(partition, uc);
-		}
+		varList = getDistinctVariables(partition, uc);
 		for (int i = 0; i < partition.length - 1; i++) {
 			final Term[] ar = { partition[i] };
 			final ArrayList<Term> tList = getFunsymbols(ar);
@@ -171,15 +191,15 @@ public class UltimateInterpolator extends WrapperScript {
 				}
 				final Term t = buildTerm(partition[i], tList);
 				if (i == 0) {
-					conjunctionTerm = mUniversalFlag ? SmtUtils.not(mScript, t) : t;
+					conjunctionTerm = universalFlag ? SmtUtils.not(mScript, t) : t;
 				} else {
-					conjunctionTerm = mUniversalFlag ? SmtUtils.or(mScript, SmtUtils.not(mScript, t),
+					conjunctionTerm = universalFlag ? SmtUtils.or(mScript, SmtUtils.not(mScript, t),
 							interpolants[i - 1]) : SmtUtils.and(mScript, t, interpolants[i - 1]);
 				}
 				if (!varSet.isEmpty()) {
 					final Term substitutedTerm = Substitution.apply(mScript, constantToVar,
 							conjunctionTerm);
-					conjunctionTerm = mUniversalFlag ? SmtUtils.quantifier(mScript, QuantifiedFormula.FORALL, varSet,
+					conjunctionTerm = universalFlag ? SmtUtils.quantifier(mScript, QuantifiedFormula.FORALL, varSet,
 							substitutedTerm) : SmtUtils.quantifier(mScript, QuantifiedFormula.EXISTS, varSet,
 							substitutedTerm);
 					final Term transTerm = mTransferrer.transform(conjunctionTerm);
@@ -190,18 +210,10 @@ public class UltimateInterpolator extends WrapperScript {
 				}
 				interpolants[i] = conjunctionTerm;
 			} else if (i == 0) {
-				interpolants[i] = mUniversalFlag ? mScript.term("false") : mScript.term("true");
+				interpolants[i] = universalFlag ? mScript.term("false") : mScript.term("true");
 			} else {
 				interpolants[i] = interpolants[i - 1];
 			}
-		}
-		if (mUniversalFlag) {
-			final List<Term> reInterpolants = Arrays.asList(interpolants);
-			Collections.reverse(reInterpolants);
-			Collections.reverse(list);
-		}
-		if (mCheckInterpolants) {
-			assert checkInterpolants(interpolants, partition, uc);
 		}
 		return interpolants;
 	}
