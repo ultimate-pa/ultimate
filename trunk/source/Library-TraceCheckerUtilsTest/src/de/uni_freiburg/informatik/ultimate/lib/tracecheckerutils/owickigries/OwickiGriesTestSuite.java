@@ -57,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsDeterministic;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.TotalizeNwa;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.DifferencePairwiseOnDemand;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.DifferencePetriNet;
@@ -133,6 +134,7 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 	protected final List<IPredicateUnifier> mUnifiers = new ArrayList<>();
 	protected final Map<String, IPredicate> mProgramPlaceMap = new HashMap<>();
 	protected final List<NestedWordAutomaton<SimpleAction, IPredicate>> mProofs = new ArrayList<>();
+	protected final List<INestedWordAutomaton<SimpleAction, IPredicate>> mTotalizedProofs = new ArrayList<>();
 
 	private long mStartTime = -1L;
 
@@ -160,6 +162,7 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 
 		mProgramPlaceMap.clear();
 		mProofs.clear();
+		mTotalizedProofs.clear();
 		mUnifiers.clear();
 	}
 
@@ -229,7 +232,9 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 		int i = 0;
 		for (final var proof : mProofs) {
 			final var initialTrueState = DataStructureUtils.getOneAndOnly(proof.getInitialStates(), "initial state");
-			final var totalizedProof = new TotalizeNwa<>(proof, initialTrueState, false);
+			final var totalizedProof = new NestedWordAutomatonReachableStates<>(mAutomataServices,
+					new TotalizeNwa<>(proof, initialTrueState, false));
+			mTotalizedProofs.add(totalizedProof);
 
 			final var loopers = DifferencePairwiseOnDemand.determineUniversalLoopers(totalizedProof, proof.getStates());
 			mLogger.info("%d / %d letters are loopers in proof %d", loopers.size(), proof.getAlphabet().size(), i);
