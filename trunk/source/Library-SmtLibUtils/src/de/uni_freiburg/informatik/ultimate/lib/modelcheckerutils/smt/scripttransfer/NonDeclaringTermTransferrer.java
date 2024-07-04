@@ -134,7 +134,7 @@ public class NonDeclaringTermTransferrer extends TermTransformer {
 		final Sort resultSort = fsymb.isReturnOverload() ? transferSort(fsymb.getReturnSort()) : null;
 		final Term result;
 		if (mApplyLocalSimplifications) {
-			result = SmtUtils.unfTerm(mScript, fsymb, newArgs);
+			result = SmtUtils.unfTerm(mScript, fsymb.getName(), fsymb.getIndices(), resultSort, newArgs);
 		} else {
 			result = mScript.term(fsymb.getName(), appTerm.getFunction().getIndices(), resultSort, newArgs);
 		}
