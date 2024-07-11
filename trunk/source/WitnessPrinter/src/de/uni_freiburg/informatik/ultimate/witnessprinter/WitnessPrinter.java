@@ -90,7 +90,8 @@ public class WitnessPrinter implements IOutput {
 
 	@Override
 	public void setInputDefinition(final ModelType graphType) {
-		if ("de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder".equals(graphType.getCreator())) {
+		if ("de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder".equals(graphType.getCreator())
+				|| "de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder".equals(graphType.getCreator())) {
 			mMatchingModel = true;
 		} else {
 			mMatchingModel = false;
