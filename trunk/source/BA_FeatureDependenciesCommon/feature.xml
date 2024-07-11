@@ -39,7 +39,7 @@
          unpack="false"/>
 
    <plugin
-         id="javax.inject"
+         id="jakarta.inject.jakarta.inject-api"
          download-size="0"
          install-size="0"
          version="0.0.0"
@@ -67,7 +67,7 @@
          unpack="false"/>
 
    <plugin
-         id="org.apache.commons.io"
+         id="org.apache.commons.commons-io"
          download-size="0"
          install-size="0"
          version="0.0.0"
@@ -368,7 +368,7 @@
          unpack="false"/>
 
    <plugin
-         id="org.apache.logging.log4j"
+         id="org.apache.logging.log4j.api"
          download-size="0"
          install-size="0"
          version="0.0.0"
@@ -403,13 +403,6 @@
          unpack="false"/>
 
    <plugin
-         id="org.freemarker"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
          id="org.eclipse.cdt.build.gcc.core"
          download-size="0"
          install-size="0"
@@ -424,10 +417,10 @@
          unpack="false"/>
 
    <plugin
-         id="javax.activation"
+         id="jakarta.activation-api"
          download-size="0"
          install-size="0"
-         version="1.1.0.v201211130549"
+         version="0.0.0"
          unpack="false"/>
 
 </feature>
