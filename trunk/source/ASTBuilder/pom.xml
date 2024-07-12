@@ -46,17 +46,27 @@
 				<version>${maven-antrun-version}</version>
 				<executions>
 					<execution>
-						<id>generate parser sources</id>
+						<id>generate-parser-sources</id>
 						<phase>generate-sources</phase>
 						<configuration>
 							<target>
-								<echo>ASTBuilder: workspaceDir is ${workspaceDir}</echo>
-								<echo>ASTBuilder: cupDir is ${cupDir}</echo>
-								<echo>ASTBuilder: astbuilderDir is ${astbuilderDir}</echo>
-						        
-						        <java classname="com.github.jhoenicke.javacup.Main" classpath="${cupDir}" fork="true" dir="${astbuilderDir}" failonerror="true">
-						                <arg value="parser.cup" />
-						        </java>
+								<ant antfile="${basedir}/build.xml">
+									<target name="generate" />
+								</ant>
+							</target>
+						</configuration>
+						<goals>
+							<goal>run</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>clean-parser-sources</id>
+						<phase>clean</phase>
+						<configuration>
+							<target>
+								<ant antfile="${basedir}/build.xml">
+									<target name="clean" />
+								</ant>
 							</target>
 						</configuration>
 						<goals>
@@ -64,21 +74,6 @@
 						</goals>
 					</execution>
 				</executions>
-			</plugin>
-			<plugin>
-				<artifactId>maven-clean-plugin</artifactId>
-				<version>${maven-clean-version}</version>
-				<configuration>
-					<filesets>
-						<fileset>
-							<directory>${astbuilderDir}</directory>
-							<includes>
-								<include>parser.java</include>
-								<include>sym.java</include>
-							</includes>
-						</fileset>
-					</filesets>
-				</configuration>
 			</plugin>
 		</plugins>
 	</build>  
