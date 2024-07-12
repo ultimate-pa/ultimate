@@ -46,29 +46,27 @@
 				<version>${maven-antrun-version}</version>
 				<executions>
 					<execution>
-						<id>generate parser sources</id>
+						<id>generate-parser-sources</id>
 						<phase>generate-sources</phase>
 						<configuration>
 							<target>
-								<echo>ACSLParser: workspaceDir is ${workspaceDir}</echo>
-								<echo>ACSLParser: cupDir is ${cupDir}</echo>
-								<echo>ACSLParser: acslparserDir is ${acslparserDir}</echo>
-								<echo>ACSLParser: flexBinary is ${flexBinary}</echo>
-								<echo>ACSLParser: astbuilderBinaries is ${astbuilderBinaries}</echo>
-								<echo>ACSLParser: acslastDir is ${acslastDir}</echo>
-
-								<java classname="com.github.jhoenicke.javacup.Main" classpath="${cupDir}" fork="true"
-									dir="${acslparserDir}" failonerror="true">
-									<arg value="GlobalLocalParser.cup" />
-								</java>
-								<java jar="${flexBinary}" fork="true" dir="${acslparserDir}" failonerror="true">
-									<arg value="Scanner.jflex" />
-								</java>
-								<java classname="de.uni_freiburg.informatik.ultimate.astbuilder.Main"
-									classpath="${astbuilderBinaries}:${cupDir}" fork="true" dir="${acslastDir}" failonerror="true">
-									<arg value="-acsl" />
-									<arg value="acsl.ast" />
-								</java>
+								<ant antfile="${basedir}/build.xml">
+									<target name="generate" />
+								</ant>
+							</target>
+						</configuration>
+						<goals>
+							<goal>run</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>clean-parser-sources</id>
+						<phase>clean</phase>
+						<configuration>
+							<target>
+								<ant antfile="${basedir}/build.xml">
+									<target name="clean" />
+								</ant>
 							</target>
 						</configuration>
 						<goals>
@@ -76,23 +74,6 @@
 						</goals>
 					</execution>
 				</executions>
-			</plugin>
-			<plugin>
-				<artifactId>maven-clean-plugin</artifactId>
-				<version>${maven-clean-version}</version>
-				<configuration>
-					<filesets>
-						<fileset>
-							<directory>${acslparserDir}</directory>
-							<includes>
-								<include>Parser.java</include>
-								<include>Scanner.java</include>
-								<include>Scanner.java~</include>
-								<include>sym.java</include>
-							</includes>
-						</fileset>
-					</filesets>
-				</configuration>
 			</plugin>
 		</plugins>
 	</build>

@@ -8,7 +8,6 @@ Bundle-RequiredExecutionEnvironment: JavaSE-21
 Export-Package: de.uni_freiburg.informatik.ultimate.acsl.parser,
  de.uni_freiburg.informatik.ultimate.model.acsl,
  de.uni_freiburg.informatik.ultimate.model.acsl.ast
-Bundle-ClassPath: .
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.ultimatemodel,
  com.github.jhoenicke.javacup;visibility:=reexport,
  de.uni_freiburg.informatik.ultimate.astbuilder
