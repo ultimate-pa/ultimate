@@ -1,0 +1,73 @@
+<project name="acsl-parser" default="generate" basedir=".">
+	<property name="pluginDir" location="${basedir}" />
+	<property name="workspaceDir" location="${pluginDir}/.." />
+	<property name="astbuilderDir" location="${workspaceDir}/ASTBuilder/bin" />
+	<property name="cupDir" location="${workspaceDir}/JavaCup/bin" />
+	<property name="flexBinary" location="${workspaceDir}/JavaCup/JFlex.jar" />
+	<property name="astCodeDir" location="${basedir}/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast" />
+	<property name="lexerCodeDir" location="${basedir}/src/de/uni_freiburg/informatik/ultimate/acsl/parser" />
+	<property name="parserCodeDir" location="${lexerCodeDir}" />
+
+	<description>Build automation for ACSL parser</description>
+
+	<target name="generate" depends="generate-ast" />
+	<target name="clean" depends="clean-lexer,clean-parser,clean-ast" />
+
+	<echo level="info">ACSLParser: pluginDir     is ${pluginDir}</echo>
+	<echo level="info">ACSLParser: workspaceDir  is ${workspaceDir}</echo>
+	<echo level="info">ACSLParser: astbuilderDir is ${astbuilderDir}</echo>
+	<echo level="info">ACSLParser: cupDir        is ${cupDir}</echo>
+	<echo level="info">ACSLParser: flexBinary    is ${flexBinary}</echo>
+	<echo level="info">ACSLParser: astCodeDir    is ${astCodeDir}</echo>
+	<echo level="info">ACSLParser: lexerCodeDir  is ${lexerCodeDir}</echo>
+	<echo level="info">ACSLParser: parserCodeDir is ${parserCodeDir}</echo>
+
+	<target name="generate-lexer">
+		<!-- Generate ACSL lexer with the lexer generator JFlex -->
+		<java jar="${flexBinary}" dir="${lexerCodeDir}" fork="true" failonerror="true">
+			<arg value="Scanner.jflex" />
+		</java>
+	</target>
+
+	<target name="generate-parser" depends="generate-lexer">
+		<!-- Generate ACSL parser with the parser generator JavaCup -->
+		<java classname="com.github.jhoenicke.javacup.Main" classpath="${cupDir}" dir="${parserCodeDir}" fork="true" failonerror="true">
+			<arg value="GlobalLocalParser.cup" />
+		</java>
+	</target>
+
+	<target name="generate-ast" depends="generate-parser">
+		<!-- Generate ACSL AST with the AST builder TreeBuilder -->
+		<java classname="de.uni_freiburg.informatik.ultimate.astbuilder.Main" classpath="${astbuilderDir}:${cupDir}" dir="${astCodeDir}" fork="true" failonerror="true">
+			<arg value="-acsl" />
+			<arg value="acsl.ast" />
+		</java>
+	</target>
+
+	<target name="clean-lexer">
+		<!-- Clean generated ACSL lexer files -->
+		<delete verbose="true" failonerror="false">
+			<fileset dir="${lexerCodeDir}" defaultexcludes="false">
+				<include name="Scanner.java" />
+				<include name="Scanner.java~" />
+			</fileset>
+		</delete>
+	</target>
+
+	<target name="clean-parser">
+		<!-- Clean generated ACSL parser files -->
+		<delete verbose="true" failonerror="false">
+			<fileset dir="${parserCodeDir}" defaultexcludes="false">
+				<include name="Parser.java" />
+				<include name="sym.java" />
+			</fileset>
+		</delete>
+	</target>
+
+	<target name="clean-ast">
+		<!-- Clean generated ACSL AST files -->
+		<delete verbose="true" failonerror="false">
+			<fileset dir="${astCodeDir}" includes="*.java" defaultexcludes="false" />
+		</delete>
+	</target>
+</project>
