@@ -30,7 +30,6 @@ package de.uni_freiburg.informatik.ultimate.witnessprinter.yaml;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.UltimateCore;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
@@ -46,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.FormatVersion;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Location;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Segment;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.ViolationSequence;
-import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.WaypointAssumption;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.WaypointBranching;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.WaypointFunctionEnter;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.WaypointFunctionReturn;
@@ -96,18 +94,16 @@ public class YamlViolationWitnessGenerator<TE, E> {
 			final TE currentStep = currentATE.getStep();
 			final ProgramState<E> currentState = mExecution.getProgramState(i);
 			final int startLine = mStringProvider.getLineNumberFromStep(currentStep, currentATE.getStepInfo());
-			// TODO: change column in Location to startColumn once we can calculate the right column
 			final int startColumn = mStringProvider.getColumnNumberFromStep(currentStep, currentATE.getStepInfo());
 			final String function = mStringProvider.getFunctionFromStep(currentStep);
 			final String filename = mStringProvider.getFileNameFromStep(currentStep);
 			final Location currentLocation =
 					new Location(filename, mProgramHashes.get(filename), startLine, startColumn, function);
-			if (haveVariablesChanged(mExecution, i)) {
-				final String assumption =
-						mProgramStatePrinter.stateAsExpression(currentState, ProgramStatePrinter::isValidCVariable);
-				final Constraint constraint = new Constraint(assumption, "c_expression");
-				content.add(new Segment(List.of(), new WaypointAssumption(constraint, currentLocation)));
-			}
+
+			// TODO: Create valid assumption waypoints. We could create assumptions from currentState, but we have to
+			// ensure that the location is valid in the witness. The location of assumption waypoint must point to a
+			// statement or declaration.
+
 			if (i == mExecution.getLength() - 1) {
 				content.add(new Segment(List.of(), new WaypointTarget(currentLocation)));
 			}
@@ -138,27 +134,6 @@ public class YamlViolationWitnessGenerator<TE, E> {
 		}
 		// TODO: check if result is an acsl_expression
 		return new Constraint(result, "acsl_expression");
-	}
-
-	// checks if the values of the variables have changed compared to the previous State
-	private Boolean haveVariablesChanged(final IProgramExecution<TE, E> execution, final int i) {
-		// besser mit string matching?
-		if (i == 0) {
-			return false;
-		}
-		final ProgramState<E> oldState = execution.getProgramState(i - 1);
-		final ProgramState<E> newState = execution.getProgramState(i);
-		if (oldState == null || newState == null) {
-			return false;
-		}
-
-		final Set<E> newVariables = newState.getVariables();
-		for (final E Var : newVariables) {
-			if (newState.getValues(Var) != oldState.getValues(Var)) {
-				return true;
-			}
-		}
-		return false;
 	}
 
 	public String makeYamlString() {
