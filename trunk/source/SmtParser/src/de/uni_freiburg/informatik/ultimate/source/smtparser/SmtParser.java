@@ -276,7 +276,8 @@ public class SmtParser implements ISource {
 			}
 
 			final Script backEnd = SolverBuilder.buildScript(mServices, solverSettings);
-			script = new UltimateInterpolator(mServices, mLogger, backEnd);
+			final Script supportingScript = SolverBuilder.buildScript(mServices, solverSettings);
+			script = new UltimateInterpolator(mServices, mLogger, backEnd, supportingScript);
 			break;
 		}
 
