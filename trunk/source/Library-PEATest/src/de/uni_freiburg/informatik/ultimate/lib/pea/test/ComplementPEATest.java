@@ -248,11 +248,18 @@ public class ComplementPEATest {
 		CDD expectedClkInv = RangeDecision.create("c0" + PEAComplement.COMPLEMENT_POSTFIX, RangeDecision.OP_LTEQ, 5);
 		assertEquals(expectedClkInv, phase1.getClockInvariant());
 		List<Transition<CDD>> phase1OutgoingTransitions = phase1.getTransitions();
+		HashMap<Phase,CDD> expectedSinkGuard = new HashMap();
+		expectedSinkGuard.put(phase1, 
+				RangeDecision.create("c0" + PEAComplement.COMPLEMENT_POSTFIX, RangeDecision.OP_GTEQ, 5));
+		expectedSinkGuard.put(phases.get(0), CDD.FALSE);
 		for (Transition<CDD> transition : phase1OutgoingTransitions) {
 			if (transition.getDest() != sink) {
 				CDD expectedGuard =
 						RangeDecision.create("c0" + PEAComplement.COMPLEMENT_POSTFIX, RangeDecision.OP_LT, 5);
 				assertEquals(expectedGuard, transition.getGuard());
+			}
+			else {
+				assertEquals(expectedSinkGuard.get(transition.getSrc()), transition.getGuard());
 			}
 		}
 		assertTrue(phase1.getModifiedConstraints().size() == 1);

@@ -113,11 +113,11 @@ public class PEAComplement {
 			CDD guardUnprimed = guardCdd.unprime(clockVarSet);
 			if (reset.length > 0) {
 				CDD noResetClockInv = RangeDecision.filterCdd(successorClockInv, reset);
-				guardToSink =
-						guardToSink.or(guardUnprimed.and(successorStateInv).and(RangeDecision.strict(noResetClockInv)));
+				guardToSink =guardToSink.or(guardUnprimed.and(successorStateInv)
+						.and(RangeDecision.strict(noResetClockInv))).and(RangeDecision.strict(clockInv));
 			} else {
-				guardToSink = guardToSink
-						.or(guardUnprimed.and(successorStateInv).and(RangeDecision.strict(successorClockInv)));
+				guardToSink = guardToSink.or(guardUnprimed.and(successorStateInv)
+						.and(RangeDecision.strict(successorClockInv)).and(RangeDecision.strict(clockInv)));
 			}
 		}
 		Set<String> unprimedVars = clockVarSet;
