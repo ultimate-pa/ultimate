@@ -1044,11 +1044,12 @@ public class StandardFunctionHandler {
 		checkArguments(loc, 2, name, arguments);
 		final IPointerReadWrite rw = mExprResultTransformer.dispatchPointerWithOptimization(main, loc, arguments[0]);
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
-		builder.addAllExceptLrValue(rw.getDispatchedResult());
+		final ExpressionResult memoryOrder =
+				mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, arguments[1]);
+		builder.addAllExceptLrValue(rw.getDispatchedResult(), memoryOrder);
 		final ExpressionResult write = rw.getWrite(mExpressionTranslation.constructLiteralForIntegerType(loc,
 				new CPrimitive(CPrimitives.BOOL), BigInteger.ZERO));
-		return builder.addAllExceptLrValue(applyMemoryOrder(loc, write, (ExpressionResult) main.dispatch(arguments[1])))
-				.build();
+		return builder.addAllExceptLrValue(applyMemoryOrder(loc, write, memoryOrder.getLrValue().getValue())).build();
 	}
 
 	private Result handleAtomicTestAndSet(final IDispatcher main, final IASTFunctionCallExpression node,
@@ -1061,8 +1062,10 @@ public class StandardFunctionHandler {
 		final Expression value = mExpressionTranslation.constructLiteralForIntegerType(loc, boolType, BigInteger.ONE);
 		atomicBuilder.addAllExceptLrValue(rw.getWrite(value));
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
-		builder.addAllExceptLrValue(rw.getDispatchedResult()).addAllIncludingLrValue(
-				applyMemoryOrder(loc, atomicBuilder.build(), (ExpressionResult) main.dispatch(arguments[1])));
+		final ExpressionResult memoryOrder =
+				mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, arguments[1]);
+		builder.addAllExceptLrValue(rw.getDispatchedResult(), memoryOrder).addAllIncludingLrValue(
+				applyMemoryOrder(loc, atomicBuilder.build(), memoryOrder.getLrValue().getValue()));
 		return builder.build();
 	}
 
@@ -1073,14 +1076,15 @@ public class StandardFunctionHandler {
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		final IPointerReadWrite rw0 = mExprResultTransformer.dispatchPointerWithOptimization(main, loc, arguments[0]);
 		final IPointerReadWrite rw1 = mExprResultTransformer.dispatchPointerWithOptimization(main, loc, arguments[1]);
-		builder.addAllExceptLrValue(rw0.getDispatchedResult(), rw1.getDispatchedResult());
+		final ExpressionResult memoryOrder =
+				mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, arguments[2]);
+		builder.addAllExceptLrValue(rw0.getDispatchedResult(), rw1.getDispatchedResult(), memoryOrder);
 		final ExpressionResultBuilder atomicBuilder = new ExpressionResultBuilder();
 		final ExpressionResult read = rw0.getRead();
 		atomicBuilder.addAllExceptLrValue(read, rw1.getWrite(read.getLrValue().getValue()));
 		// Both the read and the write are atomic
-		builder.addAllIncludingLrValue(
-				applyMemoryOrder(loc, atomicBuilder.build(), (ExpressionResult) main.dispatch(arguments[2])));
-		return builder.build();
+		return builder.addAllIncludingLrValue(
+				applyMemoryOrder(loc, atomicBuilder.build(), memoryOrder.getLrValue().getValue())).build();
 	}
 
 	private Result handleAtomicStore(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
@@ -1090,12 +1094,14 @@ public class StandardFunctionHandler {
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		final IPointerReadWrite rw0 = mExprResultTransformer.dispatchPointerWithOptimization(main, loc, arguments[0]);
 		final IPointerReadWrite rw1 = mExprResultTransformer.dispatchPointerWithOptimization(main, loc, arguments[1]);
-		builder.addAllExceptLrValue(rw0.getDispatchedResult(), rw1.getDispatchedResult());
+		final ExpressionResult memoryOrder =
+				mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, arguments[2]);
+		builder.addAllExceptLrValue(rw0.getDispatchedResult(), rw1.getDispatchedResult(), memoryOrder);
 		final ExpressionResult read = rw1.getRead();
 		builder.addAllExceptLrValue(read);
 		// Make sure that only the write, but not the read is atomic
-		builder.addAllExceptLrValue(applyMemoryOrder(loc, rw0.getWrite(read.getLrValue().getValue()),
-				(ExpressionResult) main.dispatch(arguments[2])));
+		builder.addAllExceptLrValue(
+				applyMemoryOrder(loc, rw0.getWrite(read.getLrValue().getValue()), memoryOrder.getLrValue().getValue()));
 		return builder.build();
 	}
 
@@ -1107,15 +1113,17 @@ public class StandardFunctionHandler {
 		final IPointerReadWrite rw0 = mExprResultTransformer.dispatchPointerWithOptimization(main, loc, arguments[0]);
 		final IPointerReadWrite rw1 = mExprResultTransformer.dispatchPointerWithOptimization(main, loc, arguments[1]);
 		final IPointerReadWrite rw2 = mExprResultTransformer.dispatchPointerWithOptimization(main, loc, arguments[2]);
-		builder.addAllExceptLrValue(rw0.getDispatchedResult(), rw1.getDispatchedResult(), rw2.getDispatchedResult());
+		final ExpressionResult memoryOrder =
+				mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, arguments[3]);
+		builder.addAllExceptLrValue(rw0.getDispatchedResult(), rw1.getDispatchedResult(), rw2.getDispatchedResult(),
+				memoryOrder);
 		final ExpressionResult read0 = rw0.getRead();
 		final ExpressionResultBuilder atomicBuilder = new ExpressionResultBuilder();
 		final ExpressionResult read1 = rw1.getRead();
 		// All reads and writes are atomic
 		atomicBuilder.addAllExceptLrValue(read0, rw2.getWrite(read0.getLrValue().getValue()), read1,
 				rw0.getWrite(read1.getLrValue().getValue()));
-		builder.addAllExceptLrValue(
-				applyMemoryOrder(loc, atomicBuilder.build(), (ExpressionResult) main.dispatch(arguments[3])));
+		builder.addAllExceptLrValue(applyMemoryOrder(loc, atomicBuilder.build(), memoryOrder.getLrValue().getValue()));
 		return builder.build();
 	}
 
@@ -1124,8 +1132,11 @@ public class StandardFunctionHandler {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 2, name, arguments);
 		final IPointerReadWrite rw = mExprResultTransformer.dispatchPointerWithOptimization(main, loc, arguments[0]);
-		return new ExpressionResultBuilder().addAllExceptLrValue(rw.getDispatchedResult()).addAllIncludingLrValue(
-				applyMemoryOrder(loc, rw.getRead(), (ExpressionResult) main.dispatch(arguments[1]))).build();
+		final ExpressionResult memoryOrder =
+				mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, arguments[1]);
+		return new ExpressionResultBuilder().addAllExceptLrValue(rw.getDispatchedResult(), memoryOrder)
+				.addAllIncludingLrValue(applyMemoryOrder(loc, rw.getRead(), memoryOrder.getLrValue().getValue()))
+				.build();
 	}
 
 	private Result handleAtomicStoreN(final IDispatcher main, final IASTFunctionCallExpression node,
@@ -1136,11 +1147,12 @@ public class StandardFunctionHandler {
 		final IPointerReadWrite rw = mExprResultTransformer.dispatchPointerWithOptimization(main, loc, arguments[0]);
 		final ExpressionResult valueResult =
 				mExprResultTransformer.transformDecaySwitch((ExpressionResult) main.dispatch(arguments[1]), loc, node);
-		builder.addAllExceptLrValue(rw.getDispatchedResult()).addAllExceptLrValue(valueResult);
+		final ExpressionResult memoryOrder =
+				mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, arguments[2]);
+		builder.addAllExceptLrValue(rw.getDispatchedResult(), valueResult, memoryOrder);
 		// Make sure that only the write, but not the read is atomic
-		builder.addAllExceptLrValue(applyMemoryOrder(loc, rw.getWrite(valueResult.getLrValue().getValue()),
-				(ExpressionResult) main.dispatch(arguments[2])));
-		return builder.build();
+		return builder.addAllExceptLrValue(applyMemoryOrder(loc, rw.getWrite(valueResult.getLrValue().getValue()),
+				memoryOrder.getLrValue().getValue())).build();
 	}
 
 	private Result handleAtomicExchangeN(final IDispatcher main, final IASTFunctionCallExpression node,
@@ -1148,16 +1160,16 @@ public class StandardFunctionHandler {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 3, name, arguments);
 		final IPointerReadWrite rw = mExprResultTransformer.dispatchPointerWithOptimization(main, loc, arguments[0]);
-		final ExpressionResultBuilder builder =
-				new ExpressionResultBuilder().addAllExceptLrValue(rw.getDispatchedResult());
 		final ExpressionResult valueResult =
 				mExprResultTransformer.transformDecaySwitch((ExpressionResult) main.dispatch(arguments[1]), loc, node);
-		builder.addAllExceptLrValue(valueResult);
+		final ExpressionResult memoryOrder =
+				mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, arguments[2]);
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		builder.addAllExceptLrValue(rw.getDispatchedResult(), valueResult, memoryOrder);
 		final ExpressionResultBuilder atomicBuilder = new ExpressionResultBuilder(rw.getRead());
 		atomicBuilder.addAllExceptLrValue(rw.getWrite(valueResult.getLrValue().getValue()));
-		builder.addAllIncludingLrValue(
-				applyMemoryOrder(loc, atomicBuilder.build(), (ExpressionResult) main.dispatch(arguments[2])));
-		return builder.build();
+		return builder.addAllIncludingLrValue(
+				applyMemoryOrder(loc, atomicBuilder.build(), memoryOrder.getLrValue().getValue())).build();
 	}
 
 	private Result handleAtomicFetch(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
@@ -1167,8 +1179,10 @@ public class StandardFunctionHandler {
 		final IPointerReadWrite rw = mExprResultTransformer.dispatchPointerWithOptimization(main, loc, arguments[0]);
 		final ExpressionResult operand =
 				mExprResultTransformer.transformDecaySwitch((ExpressionResult) main.dispatch(arguments[1]), loc, node);
+		final ExpressionResult memoryOrder =
+				mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, arguments[2]);
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
-		builder.addAllExceptLrValue(rw.getDispatchedResult(), operand);
+		builder.addAllExceptLrValue(rw.getDispatchedResult(), operand, memoryOrder);
 		final ExpressionResult read = rw.getRead();
 		final ExpressionResultBuilder atomicBuilder = new ExpressionResultBuilder(read);
 		final Expression newValue;
@@ -1186,9 +1200,8 @@ public class StandardFunctionHandler {
 		}
 		atomicBuilder.addAllExceptLrValue(rw.getWrite(newValue));
 		// Make sure that only the write, but not the read is atomic
-		final ExpressionResult atomicBlock =
-				applyMemoryOrder(loc, atomicBuilder.build(), (ExpressionResult) main.dispatch(arguments[2]));
-		return builder.addAllIncludingLrValue(atomicBlock).build();
+		return builder.addAllIncludingLrValue(
+				applyMemoryOrder(loc, atomicBuilder.build(), memoryOrder.getLrValue().getValue())).build();
 	}
 
 	/**
@@ -1205,14 +1218,14 @@ public class StandardFunctionHandler {
 	 * @return An ExpressionResult representing the translation respecting the memory order
 	 */
 	private ExpressionResult applyMemoryOrder(final ILocation loc, final ExpressionResult body,
-			final ExpressionResult memoryOrder) {
+			final Expression memoryOrder) {
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder(body);
-		builder.resetStatements(List.of()).addAllExceptLrValue(memoryOrder);
+		builder.resetStatements(List.of());
 		final CPrimitive intType = new CPrimitive(CPrimitives.INT);
 		final Expression seqCst = mExpressionTranslation.constructLiteralForIntegerType(loc, intType,
 				BigInteger.valueOf(MEMORY_ORDER_SEQ_CST));
 		final Expression atomicCond = mExpressionTranslation.constructBinaryEqualityExpression(loc,
-				IASTBinaryExpression.op_equals, memoryOrder.getLrValue().getValue(), intType, seqCst, intType);
+				IASTBinaryExpression.op_equals, memoryOrder, intType, seqCst, intType);
 		final Statement atomic = new AtomicStatement(loc, body.getStatements().toArray(Statement[]::new));
 		final Statement overapproxAssert = new AssertStatement(loc, ExpressionFactory.createBooleanLiteral(loc, false));
 		new Overapprox("memory order (only sequential consistency is supported)", loc).annotate(overapproxAssert);
