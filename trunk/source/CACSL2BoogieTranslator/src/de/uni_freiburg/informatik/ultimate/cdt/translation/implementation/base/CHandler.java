@@ -1456,7 +1456,7 @@ public class CHandler {
 		handleLoopBody(loc, main, node.getBody(), loopLabel, resultBuilder, bodyBlock);
 		bodyBlock.add(new Label(loc, loopLabel));
 		bodyBlock.addAll(handleLoopCondition(loc, main, node.getCondition(), resultBuilder));
-		return buildLoopResult(main, node, bodyBlock, resultBuilder);
+		return buildLoopResult(main, loc, node, bodyBlock, resultBuilder);
 	}
 
 	public Result visit(final IDispatcher main, final IASTEqualsInitializer node) {
@@ -1548,7 +1548,7 @@ public class CHandler {
 		updateStmtsAndDeclsAtScopeEnd(bodyBlockBuilder, node);
 		endScope();
 		resultBuilder.addDeclarations(bodyBlockBuilder.getDeclarations());
-		return buildLoopResult(main, node, bodyBlockBuilder.getStatements(), resultBuilder);
+		return buildLoopResult(main, loc, node, bodyBlockBuilder.getStatements(), resultBuilder);
 	}
 
 	public Result visit(final IDispatcher main, final IASTFunctionCallExpression node) {
@@ -2595,7 +2595,7 @@ public class CHandler {
 		bodyBlock.add(new Label(loc, loopLabel));
 		bodyBlock.addAll(handleLoopCondition(loc, main, node.getCondition(), resultBuilder));
 		handleLoopBody(loc, main, node.getBody(), loopLabel, resultBuilder, bodyBlock);
-		return buildLoopResult(main, node, bodyBlock, resultBuilder);
+		return buildLoopResult(main, loc, node, bodyBlock, resultBuilder);
 	}
 
 	public Result visit(final IDispatcher main, final IGNUASTCompoundStatementExpression node) {
@@ -3586,12 +3586,12 @@ public class CHandler {
 		return result;
 	}
 
-	private Result buildLoopResult(final IDispatcher main, final IASTStatement node, final List<Statement> bodyBlock,
-			final ExpressionResultBuilder resultBuilder) {
+	private Result buildLoopResult(final IDispatcher main, final ILocation loc, final IASTStatement node,
+			final List<Statement> bodyBlock, final ExpressionResultBuilder resultBuilder) {
 		final LoopInvariantSpecification[] spec = extractLoopInvariants(main, node);
-		final ILocation loc = mLocationFactory.createCLocation(node);
-		final WhileStatement whileStmt = new WhileStatement(loc, ExpressionFactory.createBooleanLiteral(loc, true),
-				spec, bodyBlock.toArray(Statement[]::new));
+		final ILocation igLoc = LocationFactory.createIgnoreLocation(loc);
+		final WhileStatement whileStmt = new WhileStatement(igLoc,
+				ExpressionFactory.createBooleanLiteral(igLoc, true), spec, bodyBlock.toArray(Statement[]::new));
 		resultBuilder.getOverappr().stream().forEach(a -> a.annotate(whileStmt));
 		resultBuilder.addStatement(whileStmt);
 
