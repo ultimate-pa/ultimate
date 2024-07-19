@@ -159,7 +159,7 @@ public class IcfgBacktranslator extends
 			final Integer threadId, final Integer forkedThreadId, final Integer joinedThreadId,
 			final List<AtomicTraceElement<BoogieASTNode>> trace, final Map<TermVariable, Boolean> branchEncoders) {
 
-		final AtomicTraceElementBuilder<BoogieASTNode> ateBuilder = new AtomicTraceElementBuilder<>();
+		AtomicTraceElementBuilder<BoogieASTNode> ateBuilder = new AtomicTraceElementBuilder<>();
 		ateBuilder.setRelevanceInformation(relevanceInformation);
 		ateBuilder.setToStringFunc(BoogiePrettyPrinter.getBoogieToStringProvider());
 		if (threadId != null) {
@@ -219,9 +219,10 @@ public class IcfgBacktranslator extends
 							ateBuilder.setElement(source);
 							ateBuilder.setStep(cond);
 							ateBuilder.setStepInfo(EnumSet.of(info));
-							trace.add(ateBuilder.build());	
-							ateBuilder.setStepInfo(StepInfo.NONE);
-						} else{
+							final AtomicTraceElement<BoogieASTNode> element = ateBuilder.build();
+							trace.add(element);
+							ateBuilder = AtomicTraceElementBuilder.from(element).setStepInfo(StepInfo.NONE);
+						} else {
 							ateBuilder.setStepAndElement(source);
 							trace.add(ateBuilder.build());
 						}
