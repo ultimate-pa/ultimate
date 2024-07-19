@@ -106,6 +106,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.except
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultTransformer;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultTransformer.IPointerReadWrite;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValueFactory;
@@ -1041,23 +1042,28 @@ public class StandardFunctionHandler {
 			final String name) {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 2, name, arguments);
-		final ExpressionResult write =
-				mExprResultTransformer.dispatchPointerWrite(main, loc, arguments[0], mExpressionTranslation
-						.constructLiteralForIntegerType(loc, new CPrimitive(CPrimitives.BOOL), BigInteger.ZERO));
-		return applyMemoryOrder(loc, write, (ExpressionResult) main.dispatch(arguments[1]));
+		final IPointerReadWrite rw = mExprResultTransformer.dispatchPointerWithOptimization(main, loc, arguments[0]);
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		builder.addAllExceptLrValue(rw.getDispatchedResult());
+		final ExpressionResult write = rw.getWrite(mExpressionTranslation.constructLiteralForIntegerType(loc,
+				new CPrimitive(CPrimitives.BOOL), BigInteger.ZERO));
+		return builder.addAllExceptLrValue(applyMemoryOrder(loc, write, (ExpressionResult) main.dispatch(arguments[1])))
+				.build();
 	}
 
 	private Result handleAtomicTestAndSet(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 2, name, arguments);
+		final IPointerReadWrite rw = mExprResultTransformer.dispatchPointerWithOptimization(main, loc, arguments[0]);
+		final ExpressionResultBuilder atomicBuilder = new ExpressionResultBuilder(rw.getRead());
 		final CPrimitive boolType = new CPrimitive(CPrimitives.BOOL);
 		final Expression value = mExpressionTranslation.constructLiteralForIntegerType(loc, boolType, BigInteger.ONE);
-		final IASTNode target = arguments[0];
-		final ExpressionResultBuilder builder =
-				new ExpressionResultBuilder(mExprResultTransformer.dispatchPointerRead(main, loc, target));
-		builder.addAllExceptLrValue(mExprResultTransformer.dispatchPointerWrite(main, loc, target, value));
-		return applyMemoryOrder(loc, builder.build(), (ExpressionResult) main.dispatch(arguments[1]));
+		atomicBuilder.addAllExceptLrValue(rw.getWrite(value));
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		builder.addAllExceptLrValue(rw.getDispatchedResult()).addAllIncludingLrValue(
+				applyMemoryOrder(loc, atomicBuilder.build(), (ExpressionResult) main.dispatch(arguments[1])));
+		return builder.build();
 	}
 
 	private Result handleAtomicLoad(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
@@ -1065,13 +1071,16 @@ public class StandardFunctionHandler {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 3, name, arguments);
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
-		final ExpressionResult read = mExprResultTransformer.dispatchPointerRead(main, loc, arguments[0]);
-		builder.addAllExceptLrValue(read);
-		final ExpressionResult write =
-				mExprResultTransformer.dispatchPointerWrite(main, loc, arguments[1], read.getLrValue().getValue());
-		builder.addAllExceptLrValue(write);
+		final IPointerReadWrite rw0 = mExprResultTransformer.dispatchPointerWithOptimization(main, loc, arguments[0]);
+		final IPointerReadWrite rw1 = mExprResultTransformer.dispatchPointerWithOptimization(main, loc, arguments[1]);
+		builder.addAllExceptLrValue(rw0.getDispatchedResult(), rw1.getDispatchedResult());
+		final ExpressionResultBuilder atomicBuilder = new ExpressionResultBuilder();
+		final ExpressionResult read = rw0.getRead();
+		atomicBuilder.addAllExceptLrValue(read, rw1.getWrite(read.getLrValue().getValue()));
 		// Both the read and the write are atomic
-		return applyMemoryOrder(loc, builder.build(), (ExpressionResult) main.dispatch(arguments[2]));
+		builder.addAllIncludingLrValue(
+				applyMemoryOrder(loc, atomicBuilder.build(), (ExpressionResult) main.dispatch(arguments[2])));
+		return builder.build();
 	}
 
 	private Result handleAtomicStore(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
@@ -1079,12 +1088,14 @@ public class StandardFunctionHandler {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 3, name, arguments);
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
-		final ExpressionResult read = mExprResultTransformer.dispatchPointerRead(main, loc, arguments[1]);
+		final IPointerReadWrite rw0 = mExprResultTransformer.dispatchPointerWithOptimization(main, loc, arguments[0]);
+		final IPointerReadWrite rw1 = mExprResultTransformer.dispatchPointerWithOptimization(main, loc, arguments[1]);
+		builder.addAllExceptLrValue(rw0.getDispatchedResult(), rw1.getDispatchedResult());
+		final ExpressionResult read = rw1.getRead();
 		builder.addAllExceptLrValue(read);
 		// Make sure that only the write, but not the read is atomic
-		final ExpressionResult write =
-				mExprResultTransformer.dispatchPointerWrite(main, loc, arguments[0], read.getLrValue().getValue());
-		builder.addAllExceptLrValue(applyMemoryOrder(loc, write, (ExpressionResult) main.dispatch(arguments[2])));
+		builder.addAllExceptLrValue(applyMemoryOrder(loc, rw0.getWrite(read.getLrValue().getValue()),
+				(ExpressionResult) main.dispatch(arguments[2])));
 		return builder.build();
 	}
 
@@ -1093,24 +1104,28 @@ public class StandardFunctionHandler {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 4, name, arguments);
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
-		final ExpressionResult read1 = mExprResultTransformer.dispatchPointerRead(main, loc, arguments[0]);
-		builder.addAllExceptLrValue(read1);
-		builder.addAllExceptLrValue(
-				mExprResultTransformer.dispatchPointerWrite(main, loc, arguments[2], read1.getLrValue().getValue()));
-		final ExpressionResult read2 = mExprResultTransformer.dispatchPointerRead(main, loc, arguments[1]);
-		builder.addAllExceptLrValue(read2);
-		builder.addAllExceptLrValue(
-				mExprResultTransformer.dispatchPointerWrite(main, loc, arguments[0], read2.getLrValue().getValue()));
+		final IPointerReadWrite rw0 = mExprResultTransformer.dispatchPointerWithOptimization(main, loc, arguments[0]);
+		final IPointerReadWrite rw1 = mExprResultTransformer.dispatchPointerWithOptimization(main, loc, arguments[1]);
+		final IPointerReadWrite rw2 = mExprResultTransformer.dispatchPointerWithOptimization(main, loc, arguments[2]);
+		builder.addAllExceptLrValue(rw0.getDispatchedResult(), rw1.getDispatchedResult(), rw2.getDispatchedResult());
+		final ExpressionResult read0 = rw0.getRead();
+		final ExpressionResultBuilder atomicBuilder = new ExpressionResultBuilder();
+		final ExpressionResult read1 = rw1.getRead();
 		// All reads and writes are atomic
-		return applyMemoryOrder(loc, builder.build(), (ExpressionResult) main.dispatch(arguments[3]));
+		atomicBuilder.addAllExceptLrValue(read0, rw2.getWrite(read0.getLrValue().getValue()), read1,
+				rw0.getWrite(read1.getLrValue().getValue()));
+		builder.addAllExceptLrValue(
+				applyMemoryOrder(loc, atomicBuilder.build(), (ExpressionResult) main.dispatch(arguments[3])));
+		return builder.build();
 	}
 
 	private Result handleAtomicLoadN(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final String name) {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 2, name, arguments);
-		return applyMemoryOrder(loc, mExprResultTransformer.dispatchPointerRead(main, loc, arguments[0]),
-				(ExpressionResult) main.dispatch(arguments[1]));
+		final IPointerReadWrite rw = mExprResultTransformer.dispatchPointerWithOptimization(main, loc, arguments[0]);
+		return new ExpressionResultBuilder().addAllExceptLrValue(rw.getDispatchedResult()).addAllIncludingLrValue(
+				applyMemoryOrder(loc, rw.getRead(), (ExpressionResult) main.dispatch(arguments[1]))).build();
 	}
 
 	private Result handleAtomicStoreN(final IDispatcher main, final IASTFunctionCallExpression node,
@@ -1118,12 +1133,13 @@ public class StandardFunctionHandler {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 3, name, arguments);
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		final IPointerReadWrite rw = mExprResultTransformer.dispatchPointerWithOptimization(main, loc, arguments[0]);
 		final ExpressionResult valueResult =
 				mExprResultTransformer.transformDecaySwitch((ExpressionResult) main.dispatch(arguments[1]), loc, node);
-		builder.addAllExceptLrValue(valueResult);
+		builder.addAllExceptLrValue(rw.getDispatchedResult()).addAllExceptLrValue(valueResult);
 		// Make sure that only the write, but not the read is atomic
-		builder.addAllExceptLrValue(applyMemoryOrder(loc, mExprResultTransformer.dispatchPointerWrite(main, loc,
-				arguments[0], valueResult.getLrValue().getValue()), (ExpressionResult) main.dispatch(arguments[2])));
+		builder.addAllExceptLrValue(applyMemoryOrder(loc, rw.getWrite(valueResult.getLrValue().getValue()),
+				(ExpressionResult) main.dispatch(arguments[2])));
 		return builder.build();
 	}
 
@@ -1131,25 +1147,30 @@ public class StandardFunctionHandler {
 			final ILocation loc, final String name) {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 3, name, arguments);
+		final IPointerReadWrite rw = mExprResultTransformer.dispatchPointerWithOptimization(main, loc, arguments[0]);
 		final ExpressionResultBuilder builder =
-				new ExpressionResultBuilder(mExprResultTransformer.dispatchPointerRead(main, loc, arguments[0]));
+				new ExpressionResultBuilder().addAllExceptLrValue(rw.getDispatchedResult());
 		final ExpressionResult valueResult =
 				mExprResultTransformer.transformDecaySwitch((ExpressionResult) main.dispatch(arguments[1]), loc, node);
 		builder.addAllExceptLrValue(valueResult);
-		builder.addAllExceptLrValue(mExprResultTransformer.dispatchPointerWrite(main, loc, arguments[0],
-				valueResult.getLrValue().getValue()));
-		return applyMemoryOrder(loc, builder.build(), (ExpressionResult) main.dispatch(arguments[2]));
+		final ExpressionResultBuilder atomicBuilder = new ExpressionResultBuilder(rw.getRead());
+		atomicBuilder.addAllExceptLrValue(rw.getWrite(valueResult.getLrValue().getValue()));
+		builder.addAllIncludingLrValue(
+				applyMemoryOrder(loc, atomicBuilder.build(), (ExpressionResult) main.dispatch(arguments[2])));
+		return builder.build();
 	}
 
 	private Result handleAtomicFetch(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final String name, final int operator) {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 3, name, arguments);
+		final IPointerReadWrite rw = mExprResultTransformer.dispatchPointerWithOptimization(main, loc, arguments[0]);
 		final ExpressionResult operand =
 				mExprResultTransformer.transformDecaySwitch((ExpressionResult) main.dispatch(arguments[1]), loc, node);
-		final IASTNode target = arguments[0];
-		final ExpressionResult read = mExprResultTransformer.dispatchPointerRead(main, loc, target);
-		final ExpressionResultBuilder builder = new ExpressionResultBuilder(read);
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		builder.addAllExceptLrValue(rw.getDispatchedResult(), operand);
+		final ExpressionResult read = rw.getRead();
+		final ExpressionResultBuilder atomicBuilder = new ExpressionResultBuilder(read);
 		final Expression newValue;
 		final CPrimitive readType = (CPrimitive) read.getCType().getUnderlyingType();
 		final CPrimitive operandType = (CPrimitive) operand.getCType().getUnderlyingType();
@@ -1160,14 +1181,14 @@ public class StandardFunctionHandler {
 			final ExpressionResult bitwiseResult =
 					mExpressionTranslation.handleBinaryBitwiseExpression(loc, operator, read.getLrValue().getValue(),
 							readType, operand.getLrValue().getValue(), operandType, mAuxVarInfoBuilder);
-			builder.addAllExceptLrValue(bitwiseResult);
+			atomicBuilder.addAllExceptLrValue(bitwiseResult);
 			newValue = bitwiseResult.getLrValue().getValue();
 		}
-		builder.addAllExceptLrValue(mExprResultTransformer.dispatchPointerWrite(main, loc, target, newValue));
+		atomicBuilder.addAllExceptLrValue(rw.getWrite(newValue));
 		// Make sure that only the write, but not the read is atomic
 		final ExpressionResult atomicBlock =
-				applyMemoryOrder(loc, builder.build(), (ExpressionResult) main.dispatch(arguments[2]));
-		return new ExpressionResultBuilder().addAllExceptLrValue(operand).addAllIncludingLrValue(atomicBlock).build();
+				applyMemoryOrder(loc, atomicBuilder.build(), (ExpressionResult) main.dispatch(arguments[2]));
+		return builder.addAllIncludingLrValue(atomicBlock).build();
 	}
 
 	/**
@@ -1625,8 +1646,10 @@ public class StandardFunctionHandler {
 				mExpressionTranslation.addAssumeValueInRangeStatements(loc, auxvar.getExp(), type, valueBuilder);
 				return valueBuilder.build();
 			};
-			final ExpressionResult writeResult =
-					mExprResultTransformer.dispatchPointerWrite(main, loc, arguments[i], valueProvider);
+			final IPointerReadWrite rw =
+					mExprResultTransformer.dispatchPointerWithOptimization(main, loc, arguments[i]);
+			builder.addAllExceptLrValue(rw.getDispatchedResult());
+			final ExpressionResult writeResult = rw.getWrite(valueProvider);
 			if (markAsOverapproximation) {
 				writeResult.getStatements().forEach(new Overapprox(name, loc)::annotate);
 			}
