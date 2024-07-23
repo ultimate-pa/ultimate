@@ -5,7 +5,12 @@ Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.plugins.output.jungvisu
 Bundle-Vendor: Ultimate Program Analysis Team
 Bundle-Version: 0.2.5
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
- edu.uci.ics.jung,
+ wrapped.net.sf.jung.jung-algorithms,
+ wrapped.net.sf.jung.jung-api,
+ wrapped.net.sf.jung.jung-graph-impl,
+ wrapped.net.sf.jung.jung-io,
+ wrapped.net.sf.jung.jung-visualization,
+ com.google.guava,
  de.uni_freiburg.informatik.ultimate.core,
  de.uni_freiburg.informatik.ultimate.gui,
  org.apache.batik.anim,

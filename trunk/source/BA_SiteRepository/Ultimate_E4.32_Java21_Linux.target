@@ -113,6 +113,36 @@
 		<location includeDependencyDepth="none" includeDependencyScopes="compile" includeSource="true" missingManifest="generate" type="Maven">
 			<dependencies>
 				<dependency>
+					<groupId>net.sf.jung</groupId>
+					<artifactId>jung-algorithms</artifactId>
+					<version>2.1.1</version>
+					<type>jar</type>
+				</dependency>
+				<dependency>
+					<groupId>net.sf.jung</groupId>
+					<artifactId>jung-api</artifactId>
+					<version>2.1.1</version>
+					<type>jar</type>
+				</dependency>
+				<dependency>
+					<groupId>net.sf.jung</groupId>
+					<artifactId>jung-graph-impl</artifactId>
+					<version>2.1.1</version>
+					<type>jar</type>
+				</dependency>
+				<dependency>
+					<groupId>net.sf.jung</groupId>
+					<artifactId>jung-io</artifactId>
+					<version>2.1.1</version>
+					<type>jar</type>
+				</dependency>
+				<dependency>
+					<groupId>net.sf.jung</groupId>
+					<artifactId>jung-visualization</artifactId>
+					<version>2.1.1</version>
+					<type>jar</type>
+				</dependency>
+				<dependency>
 					<groupId>org.ops4j.pax.logging</groupId>
 					<artifactId>pax-logging-api</artifactId>
 					<version>2.2.7</version>
@@ -501,5 +531,10 @@
 		<plugin id="org.ops4j.pax.logging.pax-logging-log4j2"/>
 		<plugin id="org.ops4j.pax.logging.pax-logging-log4j2.source"/>
 		<plugin id="org.ops4j.pax.logging.pax-logging-api.source"/>
+		<plugin id="wrapped.net.sf.jung.jung-api"/>
+		<plugin id="wrapped.net.sf.jung.jung-graph-impl"/>
+		<plugin id="wrapped.net.sf.jung.jung-io"/>
+		<plugin id="wrapped.net.sf.jung.jung-visualization"/>
+		<plugin id="wrapped.net.sf.jung.jung-algorithms"/>
 	</includeBundles>
 </target>
