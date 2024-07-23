@@ -38,7 +38,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.apache.commons.collections15.Transformer;
+import com.google.common.base.Function;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.results.InvalidWitnessErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
@@ -177,20 +177,20 @@ public class WitnessAutomatonConstructor {
 
 	private GraphMLReader2<DirectedSparseGraph<WitnessNode, WitnessEdge>, WitnessNode, WitnessEdge>
 			getGraphMLReader(final File file) throws FileNotFoundException {
-		final Transformer<GraphMetadata, DirectedSparseGraph<WitnessNode, WitnessEdge>> graphTransformer =
+		final Function<GraphMetadata, DirectedSparseGraph<WitnessNode, WitnessEdge>> graphTransformer =
 				getGraphTransformer();
-		final Transformer<NodeMetadata, WitnessNode> vertexTransformer = getVertexTransformer();
-		final Transformer<EdgeMetadata, WitnessEdge> edgeTransformer = getEdgeTransformer();
-		final Transformer<HyperEdgeMetadata, WitnessEdge> hyperEdgeTransformer = getHyperEdgeTransformer();
+		final Function<NodeMetadata, WitnessNode> vertexTransformer = getVertexTransformer();
+		final Function<EdgeMetadata, WitnessEdge> edgeTransformer = getEdgeTransformer();
+		final Function<HyperEdgeMetadata, WitnessEdge> hyperEdgeTransformer = getHyperEdgeTransformer();
 		return new GraphMLReader2<>(new FileReader(file), graphTransformer, vertexTransformer, edgeTransformer,
 				hyperEdgeTransformer);
 	}
 
-	private static Transformer<HyperEdgeMetadata, WitnessEdge> getHyperEdgeTransformer() {
+	private static Function<HyperEdgeMetadata, WitnessEdge> getHyperEdgeTransformer() {
 		return arg0 -> null;
 	}
 
-	private Transformer<EdgeMetadata, WitnessEdge> getEdgeTransformer() {
+	private Function<EdgeMetadata, WitnessEdge> getEdgeTransformer() {
 		return data -> {
 
 			final WitnessNode source = createNode(data.getSource());
@@ -226,7 +226,7 @@ public class WitnessAutomatonConstructor {
 		};
 	}
 
-	private Transformer<NodeMetadata, WitnessNode> getVertexTransformer() {
+	private Function<NodeMetadata, WitnessNode> getVertexTransformer() {
 		return data -> {
 			final WitnessNode node = createNode(data.getId());
 
@@ -246,7 +246,7 @@ public class WitnessAutomatonConstructor {
 		};
 	}
 
-	private Transformer<GraphMetadata, DirectedSparseGraph<WitnessNode, WitnessEdge>> getGraphTransformer() {
+	private Function<GraphMetadata, DirectedSparseGraph<WitnessNode, WitnessEdge>> getGraphTransformer() {
 		return gm -> {
 			final String sourcecodelang = gm.getProperty("sourcecodelang");
 			final WitnessType witnesstype = (WitnessType) getEnumProperty(WitnessGraphAnnotation.WitnessType.class, gm,
