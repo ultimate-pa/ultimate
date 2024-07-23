@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.Map.Entry;
 
-import org.apache.commons.collections15.Transformer;
+import com.google.common.base.Function;
 
 import edu.uci.ics.jung.graph.Hypergraph;
 import edu.uci.ics.jung.graph.UndirectedGraph;
@@ -85,15 +85,15 @@ public class UltimateGraphMLWriter<V, E> extends GraphMLWriter<V, E> {
 		}
 
 		// write graph description, if any
-		final String desc = graph_desc.transform(graph);
+		final String desc = graph_desc.apply(graph);
 		if (desc != null) {
 			bw.write("<desc>" + desc + "</desc>\n");
 		}
 
 		// write graph data out if any
 		for (final Entry<String, GraphMLMetadata<Hypergraph<V, E>>> entry : graph_data.entrySet()) {
-			final Transformer<Hypergraph<V, E>, ?> t = entry.getValue().transformer;
-			final Object value = t.transform(graph);
+			final Function<Hypergraph<V, E>, ?> t = entry.getValue().transformer;
+			final Object value = t.apply(graph);
 			if (value != null) {
 				bw.write(format("data", "key", entry.getKey(), value.toString()) + "\n");
 			}

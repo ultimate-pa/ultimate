@@ -6,7 +6,10 @@ Bundle-Vendor: Ultimate Program Analysis Team
 Bundle-Version: 0.2.5
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.witnessparser.Activator
 Require-Bundle: de.uni_freiburg.informatik.ultimate.core,
- edu.uci.ics.jung,
+ wrapped.net.sf.jung.jung-api,
+ wrapped.net.sf.jung.jung-graph-impl,
+ wrapped.net.sf.jung.jung-io,
+ com.google.guava,
  de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.ultimatemodel,
  org.yaml.snakeyaml
