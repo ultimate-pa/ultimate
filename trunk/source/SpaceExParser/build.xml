@@ -1,0 +1,43 @@
+
+<project name="spaceex-parser" default="generate" basedir=".">
+	<property name="pluginDir" location="${basedir}" />
+	<property name="workspaceDir" location="${pluginDir}/.." />
+	<property name="xjcDir" location="${workspaceDir}/BA_SharedJARs" />
+	<property name="xjcSourceDir" location="${pluginDir}/src/de/uni_freiburg/informatik/ultimate/plugins/spaceex/parser" />
+	<property name="xjcTargetDir" location="${pluginDir}/src" />
+	<property name="xjcPkgDir" location="${xjcTargetDir}/de/uni_freiburg/informatik/ultimate/plugins/spaceex/parser/generated" />
+	<property name="xjcPkgName" value="de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated" />
+
+	<description>Build automation for SpaceExParser XML bindings</description>
+
+	<target name="generate" depends="generate-bindings" />
+	<target name="clean" depends="clean-bindings" />
+
+	<echo level="info">LibraryUltimateCore: pluginDir    is ${pluginDir}</echo>
+	<echo level="info">LibraryUltimateCore: workspaceDir is ${workspaceDir}</echo>
+	<echo level="info">LibraryUltimateCore: xjcDir       is ${xjcDir}</echo>
+	<echo level="info">LibraryUltimateCore: xjcSourceDir is ${xjcSourceDir}</echo>
+	<echo level="info">LibraryUltimateCore: xjcTargetDir is ${xjcTargetDir}</echo>
+	<echo level="info">LibraryUltimateCore: xjcPkgDir    is ${xjcPkgDir}</echo>
+	<echo level="info">LibraryUltimateCore: xjcPkgName   is ${xjcPkgName}</echo>
+
+	<taskdef name="xjc" classname="com.sun.tools.xjc.XJCTask">
+		<classpath>
+			<fileset dir="${xjcDir}" includes="*.jar" />
+		</classpath>
+	</taskdef>
+
+	<target name="generate-bindings">
+		<!-- Generate SpaceExParser XML bindings with the Java XML Binding Compiler xjc -->
+		<xjc schema="${xjcSourceDir}/sspaceex.xsd" package="${xjcPkgName}" destdir="${xjcTargetDir}">
+			<produces dir="${xjcPkgDir}" includes="*.java" />
+		</xjc>
+	</target>
+
+	<target name="clean-bindings">
+		<!-- Clean generated SpaceExParser XML binding files -->
+		<delete verbose="true" includeEmptyDirs="false" failonerror="false">
+			<fileset dir="${xjcPkgDir}" />
+		</delete>
+	</target>
+</project>

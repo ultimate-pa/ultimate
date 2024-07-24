@@ -30,7 +30,7 @@ package de.uni_freiburg.informatik.ultimate.core.model;
 import java.io.File;
 import java.io.FileNotFoundException;
 
-import javax.xml.bind.JAXBException;
+import jakarta.xml.bind.JAXBException;
 
 import org.xml.sax.SAXException;
 
