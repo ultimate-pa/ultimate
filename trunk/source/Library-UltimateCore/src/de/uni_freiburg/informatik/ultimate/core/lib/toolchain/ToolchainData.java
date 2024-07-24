@@ -31,7 +31,7 @@ package de.uni_freiburg.informatik.ultimate.core.lib.toolchain;
 import java.io.FileNotFoundException;
 import java.net.MalformedURLException;
 
-import javax.xml.bind.JAXBException;
+import jakarta.xml.bind.JAXBException;
 
 import org.xml.sax.SAXException;
 

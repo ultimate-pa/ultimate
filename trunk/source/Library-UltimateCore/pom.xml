@@ -38,32 +38,27 @@
 				<version>${maven-antrun-version}</version>
 				<executions>
 					<execution>
-						<id>generate parser sources</id>
+						<id>generate-binding-sources</id>
 						<phase>generate-sources</phase>
 						<configuration>
 							<target>
-								<echo>Building toolchain model with xjc</echo>
-								<echo>Library-UltimateCore: workspaceDir is ${workspaceDir}</echo>
-								<echo>Library-UltimateCore: toolchainDir is ${toolchainDir}</echo>
-<!--
-								<exec executable="xjc" failonerror="true" dir="${project.basedir}">
-									<arg value="-d" />
-									<arg value="${workspaceDir}/Library-UltimateCore/src" />
-									<arg value="-p" />
-									<arg value="de.uni_freiburg.informatik.ultimate.core.lib.toolchain" />
-									<arg value="${toolchainDir}/toolchain.xsd" />
-								</exec>
--->			
-								<taskdef name="xjc" classname="com.sun.tools.xjc.XJCTask">
-							    	<classpath>
-							        	<fileset dir="${baSharedJarsDir}" includes="*.jar"/>
-							    	</classpath>
-								</taskdef>
-								
-								<xjc schema="${toolchainDir}/toolchain.xsd" package="de.uni_freiburg.informatik.ultimate.core.lib.toolchain" destdir="${workspaceDir}/Library-UltimateCore/src">
-									<produces dir="${workspaceDir}/Library-UltimateCore/src/de.uni_freiburg.informatik.ultimate.core.lib.toolchain" includes="**/*.java"/>
-								</xjc>
-								
+								<ant antfile="${basedir}/build.xml">
+									<target name="generate" />
+								</ant>
+							</target>
+						</configuration>
+						<goals>
+							<goal>run</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>clean-binding-sources</id>
+						<phase>clean</phase>
+						<configuration>
+							<target>
+								<ant antfile="${basedir}/build.xml">
+									<target name="clean" />
+								</ant>
 							</target>
 						</configuration>
 						<goals>
@@ -71,27 +66,6 @@
 						</goals>
 					</execution>
 				</executions>
-			</plugin>
-			<plugin>
-				<artifactId>maven-clean-plugin</artifactId>
-				<version>${maven-clean-version}</version>
-				<configuration>
-					<filesets>
-						<fileset>
-							<directory>${toolchainDir}</directory>
-							<includes>
-								<include>ObjectFactory.java</include>
-								<include>PluginType.java</include>
-								<include>SerializeType.java</include>
-								<include>SubchainType.java</include>
-								<include>DropmodelType.java</include>
-								<include>ModelIdOnlyType.java</include>
-								<include>ToolchainModelType.java</include>
-								<include>ToolchainListType.java</include>
-							</includes>
-						</fileset>
-					</filesets>
-				</configuration>
 			</plugin>
 		</plugins>
 	</build>
