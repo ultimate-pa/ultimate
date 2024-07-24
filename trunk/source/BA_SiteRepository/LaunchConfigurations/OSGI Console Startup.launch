@@ -275,7 +275,6 @@
 <setEntry value="de.uni_freiburg.informatik.ultimate.witnessparser@default:default"/>
 <setEntry value="de.uni_freiburg.informatik.ultimate.witnessprinter@default:default"/>
 <setEntry value="edu.uci.ics.jung@default:default"/>
-<setEntry value="net.sf.javabdd@default:default"/>
 <setEntry value="net.sourceforge.czt@default:default"/>
 <setEntry value="org.apache.batik@default:default"/>
 <setEntry value="org.apache.commons.cli@default:default"/>
