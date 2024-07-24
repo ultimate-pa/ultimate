@@ -18,4 +18,4 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.ultimatemodel;visibility
  de.uni_freiburg.informatik.ultimate.lib.util,
  de.uni_freiburg.informatik.ultimate.lib.smtlib
 Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.lib.core
-Import-Package: com.sun.xml.bind.v2;version="2.2.0"
+Import-Package: org.glassfish.jaxb.core.v2

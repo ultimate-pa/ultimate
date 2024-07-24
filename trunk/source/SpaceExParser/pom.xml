@@ -50,33 +50,27 @@
 				<version>${maven-antrun-version}</version>
 				<executions>
 					<execution>
-						<id>generate parser sources</id>
+						<id>generate-binding-sources</id>
 						<phase>generate-sources</phase>
 						<configuration>
 							<target>
-								<echo>Building SpaceEx File Parser with xjc</echo>
-								<echo>SpaceEx Parser: workspaceDir is ${workspaceDir}</echo>
-								<echo>SpaceEx Parser: spaceexDir is ${spaceexDir}</echo>
-<!--
-								<exec executable="xjc" failonerror="true">
-									<arg value="-d" />
-									<arg value="${workspaceDir}/SpaceExParser/src" />
-									<arg value="-p" />
-									<arg
-										value="de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated" />
-									<arg value="${spaceexDir}/sspaceex.xsd" />
-								</exec>
--->	
-								<taskdef name="xjc" classname="com.sun.tools.xjc.XJCTask">
-							    	<classpath>
-							        	<fileset dir="${baSharedJarsDir}" includes="*.jar"/>
-							    	</classpath>
-								</taskdef>
-								
-								<xjc schema="${spaceexDir}/sspaceex.xsd" package="de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated" destdir="${workspaceDir}/SpaceExParser/src">
-									<produces dir="${workspaceDir}/SpaceExParser/src/de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated" includes="**/*.java"/>
-								</xjc>
-
+								<ant antfile="${basedir}/build.xml">
+									<target name="generate" />
+								</ant>
+							</target>
+						</configuration>
+						<goals>
+							<goal>run</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>clean-binding-sources</id>
+						<phase>clean</phase>
+						<configuration>
+							<target>
+								<ant antfile="${basedir}/build.xml">
+									<target name="clean" />
+								</ant>
 							</target>
 						</configuration>
 						<goals>
@@ -84,27 +78,6 @@
 						</goals>
 					</execution>
 				</executions>
-			</plugin>
-			<plugin>
-				<artifactId>maven-clean-plugin</artifactId>
-				<version>${maven-clean-version}</version>
-				<configuration>
-					<filesets>
-						<fileset>
-							<directory>${workspaceDir}/SpaceExParser/src/de/uni_freiburg/informatik/ultimate/plugins/spaceex/parser/generated</directory>
-							<includes>
-								<include>BindType.java</include>
-								<include>ComponentType.java</include>
-								<include>LocationType.java</include>
-								<include>ObjectFactory.java</include>
-								<include>package-info.java</include>
-								<include>ParamType.java</include>
-								<include>Sspaceex.java</include>
-								<include>TransitionType.java</include>
-							</includes>
-						</fileset>
-					</filesets>
-				</configuration>
 			</plugin>
 		</plugins>
 	</build>

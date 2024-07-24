@@ -32,5 +32,5 @@ Import-Package: org.junit,
  org.junit.experimental.categories,
  org.junit.runner,
  org.junit.runners,
- com.sun.xml.bind.v2
+ org.glassfish.jaxb.core.v2
 Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.lib.test
