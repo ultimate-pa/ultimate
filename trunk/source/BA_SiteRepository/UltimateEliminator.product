@@ -58,7 +58,6 @@
       <plugin id="de.uni_freiburg.informatik.ultimate.smtsolver.external"/>
       <plugin id="jakarta.activation-api"/>
       <plugin id="jakarta.xml.bind-api"/>
-      <plugin id="net.sf.javabdd"/>
       <plugin id="org.apache.commons.commons-io"/>
       <plugin id="org.apache.commons.lang"/>
       <plugin id="org.apache.log4j"/>

@@ -240,13 +240,6 @@
          unpack="false"/>
 
    <plugin
-         id="net.sf.javabdd"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
          id="de.uni_freiburg.informatik.ultimate.lib.lassoranker"
          download-size="0"
          install-size="0"

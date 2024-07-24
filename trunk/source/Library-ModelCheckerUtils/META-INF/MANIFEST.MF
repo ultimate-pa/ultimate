@@ -35,7 +35,6 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.core,
  de.uni_freiburg.informatik.ultimate.lib.boogieast,
  de.uni_freiburg.informatik.ultimate.smtinterpol,
  de.uni_freiburg.informatik.ultimate.smtsolver.external,
- net.sf.javabdd,
  org.apache.commons.lang,
  de.uni_freiburg.informatik.ultimate.lib.ultimatemodel
 Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.lib.modelcheckerutils
