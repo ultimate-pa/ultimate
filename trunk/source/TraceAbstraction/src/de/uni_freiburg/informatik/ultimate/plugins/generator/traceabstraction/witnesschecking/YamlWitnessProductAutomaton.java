@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.ConditionAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.AnnotatedPredicate;
@@ -159,23 +160,20 @@ public class YamlWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 			return List.of();
 		}
 
-		// add all successors for the case where we don't follow the waypoint
-		counterSuccessors.addAll(
-				getInternalCounterSuccessors(currentUnderlying, letter, currentCounter, countingState.getVSCounter()));
-
 		// for Assumption Waypoints continue with the same state but increase the counter
 		while (currentWP instanceof WaypointAssumption && matchesLocation(letter, currentWP)) {
 			currentCounter++;
-			counterSuccessors.addAll(getInternalCounterSuccessors(currentUnderlying, letter, currentCounter,
-					countingState.getVSCounter()));
 			currentSegment = currentvSeq.getContent().get(currentCounter);
 			currentWP = currentSegment.getFollow();
 		}
-		// if the waypoint matches, add the successors with an increased counter
+
 		if (matchesInternal(letter, currentWP)) {
-			counterSuccessors.addAll(getInternalCounterSuccessors(currentUnderlying, letter, currentCounter + 1,
-					countingState.getVSCounter()));
+			currentCounter++;
 		}
+
+		counterSuccessors.addAll(
+				getInternalCounterSuccessors(currentUnderlying, letter, currentCounter, countingState.getVSCounter()));
+
 		return counterSuccessors;
 	}
 
@@ -184,8 +182,9 @@ public class YamlWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 			final LETTER letter) {
 		final CountingPredicate countingState = (CountingPredicate) state;
 		final IPredicate currentUnderlying = countingState.getUnderlying();
-		final int currentCounter = countingState.getWPCounter();
+		int currentCounter = countingState.getWPCounter();
 		final ArrayList<OutgoingCallTransition<LETTER, IPredicate>> counterSuccessors = new ArrayList<>();
+
 		if (isWitnessFinished(currentCounter, countingState.getVSCounter())) {
 			counterSuccessors.addAll(
 					getCallCounterSuccessors(currentUnderlying, letter, currentCounter, countingState.getVSCounter()));
@@ -194,19 +193,26 @@ public class YamlWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 
 		final ViolationSequence currentvSeq =
 				(ViolationSequence) mWitness.getEntries().get(countingState.getVSCounter());
-		final Segment currentSegment = currentvSeq.getContent().get(currentCounter);
-		final Waypoint currentWP = currentSegment.getFollow();
+		Segment currentSegment = currentvSeq.getContent().get(currentCounter);
+		Waypoint currentWP = currentSegment.getFollow();
 
 		if (currentSegment.getAvoid().stream().anyMatch(x -> matchesCall(letter, x))) {
 			return List.of();
 		}
+
+		while (currentWP instanceof WaypointAssumption && matchesLocation(letter, currentWP)) {
+			currentCounter++;
+			currentSegment = currentvSeq.getContent().get(currentCounter);
+			currentWP = currentSegment.getFollow();
+		}
+
+		if (matchesCall(letter, currentWP)) {
+			currentCounter++;
+		}
+
 		counterSuccessors.addAll(
 				getCallCounterSuccessors(currentUnderlying, letter, currentCounter, countingState.getVSCounter()));
 
-		if (matchesCall(letter, currentWP)) {
-			counterSuccessors.addAll(getCallCounterSuccessors(currentUnderlying, letter, currentCounter + 1,
-					countingState.getVSCounter()));
-		}
 		return counterSuccessors;
 	}
 
@@ -216,7 +222,7 @@ public class YamlWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 		final CountingPredicate countingState = (CountingPredicate) state;
 		final CountingPredicate countingHier = (CountingPredicate) hier;
 		final IPredicate currentUnderlying = countingState.getUnderlying();
-		final int currentCounter = countingState.getWPCounter();
+		int currentCounter = countingState.getWPCounter();
 
 		final ArrayList<OutgoingReturnTransition<LETTER, IPredicate>> counterSuccessors = new ArrayList<>();
 
@@ -227,18 +233,24 @@ public class YamlWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 		}
 		final ViolationSequence currentvSeq =
 				(ViolationSequence) mWitness.getEntries().get(countingState.getVSCounter());
-		final Segment currentSegment = currentvSeq.getContent().get(currentCounter);
-		final Waypoint currentWP = currentSegment.getFollow();
+		Segment currentSegment = currentvSeq.getContent().get(currentCounter);
+		Waypoint currentWP = currentSegment.getFollow();
 
 		if (currentSegment.getAvoid().stream().anyMatch(x -> matchesCall(letter, x))) {
 			return List.of();
 		}
+
+		while (currentWP instanceof WaypointAssumption && matchesLocation(letter, currentWP)) {
+			currentCounter++;
+			currentSegment = currentvSeq.getContent().get(currentCounter);
+			currentWP = currentSegment.getFollow();
+		}
+
+		if (matchesReturn(letter, currentWP)) {
+			currentCounter++;
+		}
 		counterSuccessors.addAll(getReturnCounterSuccessors(currentUnderlying, countingHier, letter, currentCounter,
 				countingState.getVSCounter()));
-		if (matchesReturn(countingHier, currentWP)) {
-			counterSuccessors.addAll(getReturnCounterSuccessors(currentUnderlying, countingHier, letter,
-					currentCounter + 1, countingState.getVSCounter()));
-		}
 		return counterSuccessors;
 	}
 
@@ -317,9 +329,10 @@ public class YamlWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 		return false;
 	}
 
-	private static boolean matchesReturn(final ISLPredicate hier, final Waypoint waypoint) {
+	private boolean matchesReturn(final LETTER statement, final Waypoint waypoint) {
+		final var call = ((IIcfgReturnTransition<?, ?>) statement).getCorrespondingCall();
+		final ILocation hierLoc = ILocation.getAnnotation(call);
 		final Location witnessLoc = waypoint.getLocation();
-		final ILocation hierLoc = ILocation.getAnnotation(hier.getProgramPoint());
 		if (hierLoc != null && hierLoc.getEndLine() == witnessLoc.getLine()
 				&& waypoint instanceof WaypointFunctionReturn) {
 			if (witnessLoc.getColumn() == null) {
