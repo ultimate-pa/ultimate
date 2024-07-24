@@ -531,6 +531,9 @@
 		<plugin id="org.ops4j.pax.logging.pax-logging-log4j2"/>
 		<plugin id="org.ops4j.pax.logging.pax-logging-log4j2.source"/>
 		<plugin id="org.ops4j.pax.logging.pax-logging-api.source"/>
+		<plugin id="com.sun.xml.bind.jaxb-osgi"/>
+		<plugin id="com.sun.xml.bind.jaxb-core"/>
+		<plugin id="com.sun.xml.bind.jaxb-impl"/>
 		<plugin id="wrapped.net.sf.jung.jung-api"/>
 		<plugin id="wrapped.net.sf.jung.jung-graph-impl"/>
 		<plugin id="wrapped.net.sf.jung.jung-io"/>
