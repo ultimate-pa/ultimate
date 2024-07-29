@@ -22,48 +22,27 @@
 				<version>${maven-antrun-version}</version>
 				<executions>
 					<execution>
-						<id>generate parser sources</id>
+						<id>generate-parser-sources</id>
 						<phase>generate-sources</phase>
 						<configuration>
 							<target>
-								<echo>SmtInterpol: workspaceDir is ${workspaceDir}</echo>
-								<echo>SmtInterpol: cupDir is ${cupDir}</echo>
-								<echo>SmtInterpol: flexBinary is ${flexBinary}</echo>
-								<echo>SmtInterpol: smtlibDir is ${smtlibDir}</echo>
-								<echo>SmtInterpol: smtlib2Dir is ${smtlib2Dir}</echo>
-								<echo>SmtInterpol: dimacsDir is ${dimacsDir}</echo>
-
-								<java classname="com.github.jhoenicke.javacup.Main" classpath="${cupDir}" fork="true"
-									dir="${smtlibDir}" failonerror="true">
-									<arg value="smtlib.cup" />
-								</java>
-								<java jar="${flexBinary}" fork="true" dir="${smtlibDir}" failonerror="true">
-									<arg value="smtlib.flex" />
-								</java>
-
-								<java classname="com.github.jhoenicke.javacup.Main" classpath="${cupDir}" fork="true"
-									dir="${smtlib2Dir}" failonerror="true">
-									<arg value="smtlib.cup" />
-								</java>
-								<java jar="${flexBinary}" fork="true" dir="${smtlib2Dir}" failonerror="true">
-									<arg value="smtlib.flex" />
-								</java>
-								
-								<java classname="com.github.jhoenicke.javacup.Main" classpath="${cupDir}" fork="true"
-									dir="${dimacsDir}" failonerror="true">
-									<arg value="dimacs.cup" />
-								</java>
-								<java jar="${flexBinary}" fork="true" dir="${dimacsDir}">
-									<arg value="dimacs.flex" />
-								</java>
-
-								<java classname="com.github.jhoenicke.javacup.Main" classpath="${cupDir}" fork="true"
-								dir="${proofsDir}" failonerror="true">
-								<arg value="proofs.cup" />
-								</java>
-								<java jar="${flexBinary}" fork="true" dir="${proofsDir}">
-									<arg value="proofs.flex" />
-								</java>
+								<ant antfile="${basedir}/build.xml">
+									<target name="generate" />
+								</ant>
+							</target>
+						</configuration>
+						<goals>
+							<goal>run</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>clean-parser-sources</id>
+						<phase>clean</phase>
+						<configuration>
+							<target>
+								<ant antfile="${basedir}/build.xml">
+									<target name="clean" />
+								</ant>
 							</target>
 						</configuration>
 						<goals>
@@ -71,50 +50,6 @@
 						</goals>
 					</execution>
 				</executions>
-			</plugin>
-			<plugin>
-				<artifactId>maven-clean-plugin</artifactId>
-				<version>${maven-clean-version}</version>
-				<configuration>
-					<filesets>
-						<fileset>
-							<directory>${smtlibDir}</directory>
-							<includes>
-								<include>Parser.java</include>
-								<include>Lexer.java</include>
-								<include>Lexer.java~</include>
-								<include>LexerSymbols.java</include>
-							</includes>
-						</fileset>
-						<fileset>
-							<directory>${smtlib2Dir}</directory>
-							<includes>
-								<include>Parser.java</include>
-								<include>Lexer.java</include>
-								<include>Lexer.java~</include>
-								<include>LexerSymbols.java</include>
-							</includes>
-						</fileset>
-						<fileset>
-							<directory>${dimacsDir}</directory>
-							<includes>
-								<include>Parser.java</include>
-								<include>Lexer.java</include>
-								<include>Lexer.java~</include>
-								<include>LexerSymbols.java</include>
-							</includes>
-						</fileset>
-						<fileset>
-							<directory>${proofsDir}</directory>
-							<includes>
-								<include>ProofParser.java</include>
-								<include>ProofLexer.java</include>
-								<include>ProofLexer.java~</include>
-								<include>ProofSymbols.java</include>
-							</includes>
-						</fileset>
-					</filesets>
-				</configuration>
 			</plugin>
 		</plugins>
 	</build>
