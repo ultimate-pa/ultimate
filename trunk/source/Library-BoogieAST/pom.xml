@@ -39,22 +39,27 @@
 				<version>${maven-antrun-version}</version>
 				<executions>
 					<execution>
-						<id>generate parser sources</id>
+						<id>generate-ast-sources</id>
 						<phase>generate-sources</phase>
 						<configuration>
 							<target>
-								<echo>Library-BoogieAST: workspaceDir is ${workspaceDir}</echo>
-								<echo>Library-BoogieAST: cupDir is ${cupDir}</echo>
-								<echo>Library-BoogieAST: astbuilderBinaries is
-									${astbuilderBinaries}</echo>
-								<echo>Library-BoogieAST: boogieastDir is
-									${boogieastDir}</echo>
-								<java classname="de.uni_freiburg.informatik.ultimate.astbuilder.Main"
-									classpath="${astbuilderBinaries}:${cupDir}" fork="true"
-									dir="${boogieastDir}" failonerror="true">
-									<arg value="-ultimatenew" />
-									<arg value="Boogie.ast" />
-								</java>
+								<ant antfile="${basedir}/build.xml">
+									<target name="generate" />
+								</ant>
+							</target>
+						</configuration>
+						<goals>
+							<goal>run</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>clean-ast-sources</id>
+						<phase>clean</phase>
+						<configuration>
+							<target>
+								<ant antfile="${basedir}/build.xml">
+									<target name="clean" />
+								</ant>
 							</target>
 						</configuration>
 						<goals>
@@ -63,23 +68,7 @@
 					</execution>
 				</executions>
 			</plugin>
-			<plugin>
-				<artifactId>maven-clean-plugin</artifactId>
-				<version>${maven-clean-version}</version>
-				<configuration>
-					<filesets>
-						<fileset>
-							<directory>${boogieastDir}</directory>
-							<includes>
-								<include>*.java</include>
-							</includes>
-							<excludes>
-								<exclude>BoogieASTNode.java</exclude>
-							</excludes>
-						</fileset>
-					</filesets>
-				</configuration>
-			</plugin>
 		</plugins>
 	</build>
+
 </project>
