@@ -327,7 +327,7 @@ public class CACSL2BoogieBacktranslator extends
 			builder.setThreadId(ate.getThreadId());
 		}
 		builder.setRelevanceInformation(ate.getRelevanceInformation()).setElement(cloc).setStep(step)
-				.setStepInfo(newSi);
+				.setStepInfo(newSi).setProcedures(ate.getPrecedingProcedure(), ate.getSucceedingProcedure());
 		return builder.build();
 	}
 
