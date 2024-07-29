@@ -27,6 +27,13 @@ public class BtorExpression {
 		this.constant = constant;
 	}
 
+	public BtorExpression(final int sort, final BtorExpressionType type) {
+		this.sort = sort;
+		this.type = type;
+		children = new ArrayList<>();
+		constant = 0;
+	}
+
 	public int getSort() {
 		return sort;
 	}
@@ -71,6 +78,7 @@ public class BtorExpression {
 			if (!assignnid(currentLine)) {
 				return currentLine;
 			}
+			// handling for error locations
 			if (type == BtorExpressionType.BAD) {
 				writer.write(String.valueOf(nid) + " " + type.name().toLowerCase() + " "
 						+ String.valueOf(children.get(0).nid));

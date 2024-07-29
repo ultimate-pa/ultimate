@@ -20,17 +20,19 @@ public class AssignmentRule {
 	public IProgramVar lhs;
 	public Term rhs;
 	public TransFormula tf;
+	public BtorExpression guard;
 
 	public AssignmentRule(final DebugIdentifier assignmentLocationIdentifier, final IProgramVar lhs, final Term rhs,
-			final TransFormula tf) {
+			final TransFormula tf, final BtorExpression guard) {
 		this.assignmentLocationIdentifier = assignmentLocationIdentifier;
 		this.lhs = lhs;
 		this.rhs = rhs;
 		this.tf = tf;
+		this.guard = guard;
 	}
 
 	public static List<AssignmentRule> getAssignmentsFromTransition(final DebugIdentifier assignmentLocationIdentifier,
-			final TransFormula tf, final ManagedScript script) {
+			final TransFormula tf, final ManagedScript script, final BtorExpression guard) {
 		final List<AssignmentRule> assignmentRules = new ArrayList<>();
 		final Set<IProgramVar> assignedVars = TransFormulaUtils.computeAssignedVars(tf.getInVars(), tf.getOutVars());
 		for (final IProgramVar assignedVar : assignedVars) {
@@ -40,7 +42,7 @@ public class AssignmentRule {
 			}
 			if (tf.isHavocedOut(assignedVar)) {
 				assignmentRules.add(new AssignmentRule(assignmentLocationIdentifier, assignedVar,
-						script.getScript().term("true"), tf));
+						script.getScript().term("true"), tf, guard));
 			} else {
 				final Term formula = tf.getFormula();
 				if (formula instanceof ApplicationTerm) {
@@ -56,7 +58,7 @@ public class AssignmentRule {
 										final TermVariable lhsVar = (TermVariable) lhsTerm;
 										if (TransFormulaUtils.getProgramVarForTerm(tf, lhsVar).equals(assignedVar)) {
 											assignmentRules.add(new AssignmentRule(assignmentLocationIdentifier,
-													assignedVar, appPossibleAssignment.getParameters()[1], tf));
+													assignedVar, appPossibleAssignment.getParameters()[1], tf, guard));
 											foundAssignment = true;
 											break;
 										}
@@ -65,7 +67,7 @@ public class AssignmentRule {
 										final TermVariable rhsVar = (TermVariable) rhsTerm;
 										if (TransFormulaUtils.getProgramVarForTerm(tf, rhsVar).equals(assignedVar)) {
 											assignmentRules.add(new AssignmentRule(assignmentLocationIdentifier,
-													assignedVar, appPossibleAssignment.getParameters()[0], tf));
+													assignedVar, appPossibleAssignment.getParameters()[0], tf, guard));
 											foundAssignment = true;
 											break;
 										}
@@ -81,7 +83,7 @@ public class AssignmentRule {
 								final TermVariable lhsVar = (TermVariable) lhsTerm;
 								if (TransFormulaUtils.getProgramVarForTerm(tf, lhsVar).equals(assignedVar)) {
 									assignmentRules.add(new AssignmentRule(assignmentLocationIdentifier, assignedVar,
-											appFormula.getParameters()[1], tf));
+											appFormula.getParameters()[1], tf, guard));
 									foundAssignment = true;
 								}
 							}
@@ -90,7 +92,7 @@ public class AssignmentRule {
 								final TermVariable rhsVar = (TermVariable) rhsTerm;
 								if (TransFormulaUtils.getProgramVarForTerm(tf, rhsVar).equals(assignedVar)) {
 									assignmentRules.add(new AssignmentRule(assignmentLocationIdentifier, assignedVar,
-											appFormula.getParameters()[0], tf));
+											appFormula.getParameters()[0], tf, guard));
 									foundAssignment = true;
 								}
 							}

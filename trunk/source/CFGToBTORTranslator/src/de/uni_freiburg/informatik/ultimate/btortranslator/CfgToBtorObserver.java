@@ -79,10 +79,11 @@ public class CfgToBtorObserver extends BaseObserver {
 		processor.extractLocations(icfg);
 		processor.extractVariables(icfg);
 		processor.extractTransitions(icfg);
-		processor.extractAssignments(icfg);
+		// processor.extractAssignments(icfg);
 		processor.extractBadStates(icfg);
 		final BtorScript script = processor.generateScript(icfg);
 		try {
+			script.dumpScript(new OutputStreamWriter(System.out)); //
 			final File btorFile = File.createTempFile("prefix", ".btor2");
 			final FileOutputStream btorFileStream = new FileOutputStream(btorFile);
 			script.dumpScript(new OutputStreamWriter(btorFileStream));
@@ -90,8 +91,11 @@ public class CfgToBtorObserver extends BaseObserver {
 			System.out.println(btorFile.getAbsolutePath());
 
 			final ProcessBuilder processBuilder = new ProcessBuilder();
-			processBuilder.command("/bin/bash", "-c",
-					"/usr/local/bin/btormc --trace-gen-full " + btorFile.getAbsolutePath());
+			processBuilder.command("/usr/local/bin/btormc", "--trace-gen-full", btorFile.getAbsolutePath());
+
+			// processBuilder.command("/bin/bash", "-c",
+			// "/usr/local/bin/btormc --trace-gen-full " + btorFile.getAbsolutePath());
+
 			final Process process = processBuilder.start();
 			final StringBuilder btormcOutput = new StringBuilder();
 			final BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));

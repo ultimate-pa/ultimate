@@ -25,6 +25,10 @@ public class UpdateRule {
 		return condition;
 	}
 
+	public TransFormula getTransFormula() {
+		return tf;
+	}
+
 	public BtorExpression getConditionAsExpression(final Map<String, BtorExpression> variableMap) {
 		return TermToBtorUtil.convertConditionalToBtorExpression(condition, tf, variableMap);
 	}
