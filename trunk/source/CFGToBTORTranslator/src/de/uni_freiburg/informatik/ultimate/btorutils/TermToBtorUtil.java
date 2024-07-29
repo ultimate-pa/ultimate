@@ -90,6 +90,7 @@ public class TermToBtorUtil {
 		final BtorExpression lhs;
 		final BtorExpression rhs;
 		if (SmtUtils.isTrueLiteral(term)) {
+			// havoc handling
 			return new BtorExpression(64, BtorExpressionType.INPUT, new ArrayList<>());
 		} else if (term instanceof ApplicationTerm) {
 			final ApplicationTerm appTerm = (ApplicationTerm) term;

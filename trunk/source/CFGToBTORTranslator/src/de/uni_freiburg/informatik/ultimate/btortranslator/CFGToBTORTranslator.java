@@ -30,8 +30,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.core.model.IGenerator;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.IOutput;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
@@ -41,17 +40,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 /**
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  */
-public class CFGToBTORTranslator implements IGenerator {
+public class CFGToBTORTranslator implements IOutput {
 
 	private ILogger mLogger;
 	private CfgToBtorObserver mObserver;
 	private IUltimateServiceProvider mServices;
 	private ModelType mOldGraphType;
-
-	@Override
-	public ModelType getOutputDefinition() {
-		return new ModelType(Activator.PLUGIN_ID, ModelType.Type.OTHER, mOldGraphType.getFileNames());
-	}
 
 	@Override
 	public boolean isGuiRequired() {
@@ -89,11 +83,6 @@ public class CFGToBTORTranslator implements IGenerator {
 	@Override
 	public String getPluginID() {
 		return Activator.PLUGIN_ID;
-	}
-
-	@Override
-	public IElement getModel() {
-		return mObserver.getModel();
 	}
 
 	@Override
