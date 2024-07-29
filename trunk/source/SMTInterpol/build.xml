@@ -1,0 +1,160 @@
+<project name="smtinterpol-parser" default="generate" basedir=".">
+	<property name="pluginDir" location="${basedir}" />
+	<property name="workspaceDir" location="${pluginDir}/.." />
+	<property name="cupDir" location="${workspaceDir}/JavaCup/bin" />
+	<property name="flexBinary" location="${workspaceDir}/JavaCup/JFlex.jar" />
+	<property name="smtlibCodeDir" location="${pluginDir}/src/de/uni_freiburg/informatik/ultimate/smtinterpol/smtlib" />
+	<property name="smtlib2CodeDir" location="${pluginDir}/src/de/uni_freiburg/informatik/ultimate/smtinterpol/smtlib2" />
+	<property name="dimacsCodeDir" location="${pluginDir}/src/de/uni_freiburg/informatik/ultimate/smtinterpol/dimacs" />
+	<property name="proofsCodeDir" location="${pluginDir}/src/de/uni_freiburg/informatik/ultimate/smtinterpol/proof/checker" />
+
+	<description>Build automation for SMTInterpol</description>
+
+	<target name="generate" depends="generate-parser-smtlib,generate-parser-smtlib2,generate-parser-dimacs,generate-parser-proofs" />
+	<target name="clean" depends="clean-lexer-smtlib,clean-lexer-smtlib2,clean-lexer-dimacs,clean-lexer-proofs,clean-parser-smtlib,clean-parser-smtlib2,clean-parser-dimacs,clean-parser-proofs" />
+
+	<echo level="info">SMTInterpol: pluginDir      is ${pluginDir}</echo>
+	<echo level="info">SMTInterpol: workspaceDir   is ${workspaceDir}</echo>
+	<echo level="info">SMTInterpol: cupDir         is ${cupDir}</echo>
+	<echo level="info">SMTInterpol: flexBinary     is ${flexBinary}</echo>
+	<echo level="info">SMTInterpol: smtlibCodeDir  is ${smtlibCodeDir}</echo>
+	<echo level="info">SMTInterpol: smtlib2CodeDir is ${smtlib2CodeDir}</echo>
+	<echo level="info">SMTInterpol: dimacsCodeDir  is ${dimacsCodeDir}</echo>
+	<echo level="info">SMTInterpol: proofsCodeDir  is ${proofsCodeDir}</echo>
+
+	<target name="generate-lexer-smtlib">
+		<!-- Generate SMTLib lexer with the lexer generator JFlex -->
+		<java jar="${flexBinary}" dir="${smtlibCodeDir}" fork="true" failonerror="true">
+			<arg value="smtlib.flex" />
+		</java>
+	</target>
+
+	<target name="generate-lexer-smtlib2">
+		<!-- Generate SMTLib2 lexer with the lexer generator JFlex -->
+		<java jar="${flexBinary}" dir="${smtlib2CodeDir}" fork="true" failonerror="true">
+			<arg value="smtlib.flex" />
+		</java>
+	</target>
+
+	<target name="generate-lexer-dimacs">
+		<!-- Generate DIMACS lexer with the lexer generator JFlex -->
+		<java jar="${flexBinary}" dir="${dimacsCodeDir}" fork="true" failonerror="true">
+			<arg value="dimacs.flex" />
+		</java>
+	</target>
+
+	<target name="generate-lexer-proofs">
+		<!-- Generate proofs lexer with the lexer generator JFlex -->
+		<java jar="${flexBinary}" dir="${proofsCodeDir}" fork="true" failonerror="true">
+			<arg value="proofs.flex" />
+		</java>
+	</target>
+
+	<target name="generate-parser-smtlib" depends="generate-lexer-smtlib">
+		<!-- Generate SMTLib parser with the parser generator JavaCup -->
+		<java classname="com.github.jhoenicke.javacup.Main" classpath="${cupDir}" dir="${smtlibCodeDir}" fork="true" failonerror="true">
+			<arg value="smtlib.cup" />
+		</java>
+	</target>
+
+	<target name="generate-parser-smtlib2" depends="generate-lexer-smtlib2">
+		<!-- Generate SMTLib2 parser with the parser generator JavaCup -->
+		<java classname="com.github.jhoenicke.javacup.Main" classpath="${cupDir}" dir="${smtlib2CodeDir}" fork="true" failonerror="true">
+			<arg value="smtlib.cup" />
+		</java>
+	</target>
+
+	<target name="generate-parser-dimacs" depends="generate-lexer-dimacs">
+		<!-- Generate DIMACS parser with the parser generator JavaCup -->
+		<java classname="com.github.jhoenicke.javacup.Main" classpath="${cupDir}" dir="${dimacsCodeDir}" fork="true" failonerror="true">
+			<arg value="dimacs.cup" />
+		</java>
+	</target>
+
+	<target name="generate-parser-proofs" depends="generate-lexer-proofs">
+		<!-- Generate proofs parser with the parser generator JavaCup -->
+		<java classname="com.github.jhoenicke.javacup.Main" classpath="${cupDir}" dir="${proofsCodeDir}" fork="true" failonerror="true">
+			<arg value="proofs.cup" />
+		</java>
+	</target>
+
+	<target name="clean-lexer-smtlib">
+		<!-- Clean generated SMTLib lexer files -->
+		<delete verbose="true" failonerror="false">
+			<fileset dir="${smtlibCodeDir}" defaultexcludes="false">
+				<include name="Lexer.java" />
+				<include name="Lexer.java~" />
+			</fileset>
+		</delete>
+	</target>
+
+	<target name="clean-lexer-smtlib2">
+		<!-- Clean generated SMTLib2 lexer files -->
+		<delete verbose="true" failonerror="false">
+			<fileset dir="${smtlib2CodeDir}" defaultexcludes="false">
+				<include name="Lexer.java" />
+				<include name="Lexer.java~" />
+			</fileset>
+		</delete>
+	</target>
+
+	<target name="clean-lexer-dimacs">
+		<!-- Clean generated DIMACS lexer files -->
+		<delete verbose="true" failonerror="false">
+			<fileset dir="${dimacsCodeDir}" defaultexcludes="false">
+				<include name="Lexer.java" />
+				<include name="Lexer.java~" />
+			</fileset>
+		</delete>
+	</target>
+
+	<target name="clean-lexer-proofs">
+		<!-- Clean generated proofs lexer files -->
+		<delete verbose="true" failonerror="false">
+			<fileset dir="${proofsCodeDir}" defaultexcludes="false">
+				<include name="ProofLexer.java" />
+				<include name="ProofLexer.java~" />
+			</fileset>
+		</delete>
+	</target>
+
+	<target name="clean-parser-smtlib">
+		<!-- Clean generated SMTLib parser files -->
+		<delete verbose="true" failonerror="false">
+			<fileset dir="${smtlibCodeDir}" defaultexcludes="false">
+				<include name="Parser.java" />
+				<include name="LexerSymbols.java" />
+			</fileset>
+		</delete>
+	</target>
+
+	<target name="clean-parser-smtlib2">
+		<!-- Clean generated SMTLib2 parser files -->
+		<delete verbose="true" failonerror="false">
+			<fileset dir="${smtlib2CodeDir}" defaultexcludes="false">
+				<include name="Parser.java" />
+				<include name="LexerSymbols.java" />
+			</fileset>
+		</delete>
+	</target>
+
+	<target name="clean-parser-dimacs">
+		<!-- Clean generated DIMACS parser files -->
+		<delete verbose="true" failonerror="false">
+			<fileset dir="${dimacsCodeDir}" defaultexcludes="false">
+				<include name="Parser.java" />
+				<include name="LexerSymbols.java" />
+			</fileset>
+		</delete>
+	</target>
+
+	<target name="clean-parser-proofs">
+		<!-- Clean generated proofs parser files -->
+		<delete verbose="true" failonerror="false">
+			<fileset dir="${proofsCodeDir}" defaultexcludes="false">
+				<include name="ProofParser.java" />
+				<include name="ProofSymbols.java" />
+			</fileset>
+		</delete>
+	</target>
+</project>
