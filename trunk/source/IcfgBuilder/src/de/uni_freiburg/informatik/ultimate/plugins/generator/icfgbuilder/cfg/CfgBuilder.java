@@ -1042,6 +1042,9 @@ public class CfgBuilder {
 		private BoogieIcfgLocation buildLabel(BoogieIcfgLocation currentLocation, Label st) {
 			BoogieIcfgLocation newLocation = getLocNodeForLabel(new StringDebugIdentifier(st.getName()), st);
 			mergeLocNodes(currentLocation, newLocation, true);
+			if (currentLocation == mIcfg.mFinalNode.get(mCurrentProcedureName)) {
+				mIcfg.mFinalNode.put(mCurrentProcedureName, newLocation);
+			}
 			return newLocation;
 		}
 		
