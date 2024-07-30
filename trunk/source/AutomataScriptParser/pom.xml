@@ -38,31 +38,35 @@
   <artifactId>de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser</artifactId>
   <version>0.2.5</version>
   <packaging>eclipse-plugin</packaging>
-  
-  <build>
+
+	<build>
 		<plugins>
 			<plugin>
 				<artifactId>maven-antrun-plugin</artifactId>
 				<version>${maven-antrun-version}</version>
 				<executions>
 					<execution>
-						<id>generate parser sources</id>
+						<id>generate-parser-sources</id>
 						<phase>generate-sources</phase>
 						<configuration>
 							<target>
-								<echo>AutomataScriptParser: workspaceDir is ${workspaceDir}</echo>
-								<echo>AutomataScriptParser: cupDir is ${cupDir}</echo>
-								<echo>AutomataScriptParser: automatascriptparserDir is ${automatascriptparserDir}</echo>
-								<echo>AutomataScriptParser: flexBinary is ${flexBinary}</echo>
-
-								<java classname="com.github.jhoenicke.javacup.Main" classpath="${cupDir}" fork="true"
-									dir="${automatascriptparserDir}" failonerror="true">
-									<arg line="-parser Parser"/>
-									<arg value="AutomataTestFileGrammar.cup" />
-								</java>
-								<java jar="${flexBinary}" fork="true" dir="${automatascriptparserDir}" failonerror="true">
-									<arg value="AutomataTestFileLexerSpec.jflex" />
-								</java>
+								<ant antfile="${basedir}/build.xml">
+									<target name="generate" />
+								</ant>
+							</target>
+						</configuration>
+						<goals>
+							<goal>run</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>clean-parser-sources</id>
+						<phase>clean</phase>
+						<configuration>
+							<target>
+								<ant antfile="${basedir}/build.xml">
+									<target name="clean" />
+								</ant>
 							</target>
 						</configuration>
 						<goals>
@@ -71,23 +75,7 @@
 					</execution>
 				</executions>
 			</plugin>
-			<plugin>
-				<artifactId>maven-clean-plugin</artifactId>
-				<version>${maven-clean-version}</version>
-				<configuration>
-					<filesets>
-						<fileset>
-							<directory>${automatascriptparserDir}</directory>
-							<includes>
-								<include>Parser.java</include>
-								<include>Lexer.java</include>
-								<include>Lexer.java~</include>
-								<include>sym.java</include>
-							</includes>
-						</fileset>
-					</filesets>
-				</configuration>
-			</plugin>
 		</plugins>
 	</build>
+
 </project>
