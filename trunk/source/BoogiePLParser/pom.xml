@@ -48,23 +48,27 @@
 				<version>${maven-antrun-version}</version>
 				<executions>
 					<execution>
-						<id>generate parser sources</id>
+						<id>generate-parser-sources</id>
 						<phase>generate-sources</phase>
 						<configuration>
 							<target>
-								<echo>BoogiePLParser: workspaceDir is ${workspaceDir}</echo>
-								<echo>BoogiePLParser: cupDir is ${cupDir}</echo>
-								<echo>BoogiePLParser: boogieparserDir is ${boogieparserDir}</echo>
-								<echo>BoogiePLParser: flexBinary is ${flexBinary}</echo>
-
-								<java classname="com.github.jhoenicke.javacup.Main" classpath="${cupDir}" fork="true"
-									dir="${boogieparserDir}" failonerror="true">
-									<arg line="-expect 1" /> <!-- FIXME: Necessary for attributes of assert and assume -->
-									<arg value="Boogie.cup" />
-								</java>
-								<java jar="${flexBinary}" fork="true" dir="${boogieparserDir}" failonerror="true">
-									<arg value="Boogie.flex" />
-								</java>
+								<ant antfile="${basedir}/build.xml">
+									<target name="generate" />
+								</ant>
+							</target>
+						</configuration>
+						<goals>
+							<goal>run</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>clean-parser-sources</id>
+						<phase>clean</phase>
+						<configuration>
+							<target>
+								<ant antfile="${basedir}/build.xml">
+									<target name="clean" />
+								</ant>
 							</target>
 						</configuration>
 						<goals>
@@ -72,23 +76,6 @@
 						</goals>
 					</execution>
 				</executions>
-			</plugin>
-			<plugin>
-				<artifactId>maven-clean-plugin</artifactId>
-				<version>${maven-clean-version}</version>
-				<configuration>
-					<filesets>
-						<fileset>
-							<directory>${boogieparserDir}</directory>
-							<includes>
-								<include>Parser.java</include>
-								<include>Lexer.java</include>
-								<include>Lexer.java~</include>
-								<include>LexerSymbols.java</include>
-							</includes>
-						</fileset>
-					</filesets>
-				</configuration>
 			</plugin>
 		</plugins>
 	</build>
