@@ -1,0 +1,73 @@
+<project name="crocotta-parser" default="generate" basedir=".">
+	<property name="pluginDir" location="${basedir}" />
+	<property name="workspaceDir" location="${pluginDir}/.." />
+	<property name="astbuilderDir" location="${workspaceDir}/ASTBuilder/bin" />
+	<property name="cupDir" location="${workspaceDir}/JavaCup/bin" />
+	<property name="flexBinary" location="${workspaceDir}/JavaCup/JFlex.jar" />
+	<property name="crocparserCodeDir" location="${pluginDir}/src/de/uni_freiburg/informatik/ultimate/crocotta/parser" />
+	<property name="crocastCodeDir" location="${pluginDir}/src/de/uni_freiburg/informatik/ultimate/crocotta/ast" />
+
+	<description>Build automation for Crocotta parser</description>
+
+	<target name="generate" depends="generate-ast" />
+	<target name="clean" depends="clean-lexer,clean-parser,clean-ast" />
+
+	<echo level="info">Crocotta: pluginDir         is ${pluginDir}</echo>
+	<echo level="info">Crocotta: workspaceDir      is ${workspaceDir}</echo>
+	<echo level="info">Crocotta: astbuilderDir     is ${astbuilderDir}</echo>
+	<echo level="info">Crocotta: cupDir            is ${cupDir}</echo>
+	<echo level="info">Crocotta: flexBinary        is ${flexBinary}</echo>
+	<echo level="info">Crocotta: crocparserCodeDir is ${crocparserCodeDir}</echo>
+	<echo level="info">Crocotta: crocastCodeDir    is ${crocastCodeDir}</echo>
+
+	<target name="generate-lexer">
+		<!-- Generate Crocotta lexer with the lexer generator JFlex -->
+		<java jar="${flexBinary}" dir="${crocparserCodeDir}" fork="true" failonerror="true">
+			<arg value="CrocParser.flex" />
+		</java>
+	</target>
+
+	<target name="generate-parser" depends="generate-lexer">
+		<!-- Generate Crocotta parser with the parser generator JavaCup -->
+		<java classname="com.github.jhoenicke.javacup.Main" classpath="${cupDir}" dir="${crocparserCodeDir}" fork="true" failonerror="true">
+			<arg value="CrocParser.cup" />
+		</java>
+	</target>
+
+	<target name="generate-ast" depends="generate-parser">
+		<!-- Generate Crocotta AST with the AST generator TreeBuilder -->
+		<java classname="de.uni_freiburg.informatik.ultimate.astbuilder.Main" classpath="${astbuilderDir}:${cupDir}" dir="${crocastCodeDir}" fork="true" failonerror="true">
+			<arg value="-crocotta" />
+			<arg value="Crocotta.ast" />
+		</java>
+	</target>
+
+	<target name="clean-lexer">
+		<!-- Clean generated Crocotta lexer files -->
+		<delete verbose="true" failonerror="false">
+			<fileset dir="${crocparserCodeDir}" defaultexcludes="false">
+				<include name="CrocLexer.java" />
+				<include name="CrocLexer.java~" />
+			</fileset>
+		</delete>
+	</target>
+
+	<target name="clean-parser">
+		<!-- Clean generated Crocotta parser files -->
+		<delete verbose="true" failonerror="false">
+			<fileset dir="${crocparserCodeDir}" defaultexcludes="false">
+				<include name="CrocParser.java" />
+				<include name="CrocSymbols.java" />
+			</fileset>
+		</delete>
+	</target>
+
+	<target name="clean-ast">
+		<!-- Clean generated Crocotta AST files -->
+		<delete verbose="true" failonerror="false">
+			<fileset dir="${crocastCodeDir}" includes="*.java" defaultexcludes="false">
+				<exclude name="CrocottaQuery.java" />
+			</fileset>
+		</delete>
+	</target>
+</project>
