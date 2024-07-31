@@ -165,6 +165,9 @@ public class YamlWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 			currentCounter++;
 			currentSegment = currentvSeq.getContent().get(currentCounter);
 			currentWP = currentSegment.getFollow();
+			if (currentSegment.getAvoid().stream().anyMatch(x -> matchesInternal(letter, x))) {
+				return List.of();
+			}
 		}
 
 		if (matchesInternal(letter, currentWP)) {
@@ -204,6 +207,9 @@ public class YamlWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 			currentCounter++;
 			currentSegment = currentvSeq.getContent().get(currentCounter);
 			currentWP = currentSegment.getFollow();
+			if (currentSegment.getAvoid().stream().anyMatch(x -> matchesInternal(letter, x))) {
+				return List.of();
+			}
 		}
 
 		if (matchesCall(letter, currentWP)) {
@@ -244,6 +250,9 @@ public class YamlWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 			currentCounter++;
 			currentSegment = currentvSeq.getContent().get(currentCounter);
 			currentWP = currentSegment.getFollow();
+			if (currentSegment.getAvoid().stream().anyMatch(x -> matchesInternal(letter, x))) {
+				return List.of();
+			}
 		}
 
 		if (matchesReturn(letter, currentWP)) {
