@@ -1,7 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.btortranslator;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -15,6 +17,8 @@ import de.uni_freiburg.informatik.ultimate.btorutils.BtorExpressionType;
 import de.uni_freiburg.informatik.ultimate.btorutils.BtorScript;
 import de.uni_freiburg.informatik.ultimate.btorutils.UpdateRule;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
@@ -37,7 +41,7 @@ public class CFGToBTOR {
 	private final Map<DebugIdentifier, BtorExpression> pcMap;
 	private final BtorExpression pcExpression;
 	ManagedScript mScript;
-	IUltimateServiceProvider mService;
+	IUltimateServiceProvider mService;/////
 
 	public CFGToBTOR(final ManagedScript script, final IUltimateServiceProvider service) {
 		mScript = script;
@@ -47,7 +51,7 @@ public class CFGToBTOR {
 		errorLocations = new HashSet<>();
 		variableAssignmentMap = new HashMap<>();
 		pcMap = new HashMap<>();
-		pcExpression = new BtorExpression(64, BtorExpressionType.STATE, new ArrayList<>());
+		pcExpression = new BtorExpression(64, "pc");
 	}
 
 	public void extractVariables(final IIcfg<IcfgLocation> icfg) {
@@ -62,7 +66,7 @@ public class CFGToBTOR {
 				throw new UnsupportedOperationException("sort is not int or bool");
 			}
 
-			final BtorExpression newState = new BtorExpression(sort, BtorExpressionType.STATE, new ArrayList<>());
+			final BtorExpression newState = new BtorExpression(sort, var.getGloballyUniqueId());
 			variableMap.put(var.getGloballyUniqueId(), newState);
 		}
 	}
@@ -218,6 +222,57 @@ public class CFGToBTOR {
 			badExpressions.add(badExpression);
 		}
 		return badExpressions;
+	}
+
+	public IcfgProgramExecution<IcfgEdge> extractErrorTrace(final IIcfg<IcfgLocation> icfg,
+			final ArrayList<Integer> pcList, final Map<Integer, Map<String, Integer>> programStateSequence) {
+		final List<IcfgEdge> edges = new ArrayList<>();
+		final List<IcfgLocation> locs = new ArrayList<>();
+		final Map<Long, DebugIdentifier> pcToDI = new HashMap<>();
+		for (final DebugIdentifier ident : pcMap.keySet()) {
+			pcToDI.put(pcMap.get(ident).getConstant(), ident);
+		}
+		final Map<DebugIdentifier, IcfgLocation> diToLoc = icfg.getProgramPoints().values().iterator().next();
+		for (final Integer pc : pcList) {
+			locs.add(diToLoc.get(pcToDI.get((long) pc)));
+		}
+		for (int i = 0; i < locs.size() - 1; i++) {
+			final IcfgLocation loc = locs.get(i);
+			final IcfgLocation nextLoc = locs.get(i + 1);
+			final List<IcfgEdge> outgoingEdges = loc.getOutgoingEdges();
+			for (final IcfgEdge outgoingEdge : outgoingEdges) {
+				if (outgoingEdge.getTarget().equals(nextLoc)) {
+					edges.add(outgoingEdge);
+					break;
+				}
+			}
+		}
+		final Set<IProgramVar> allVariables = IcfgUtils.collectAllProgramVars(icfg.getCfgSmtToolkit());
+		final Map<Integer, ProgramState<Term>> partialProgramStateMapping = new HashMap<>();
+		for (final Integer sequenceNumber : programStateSequence.keySet()) {
+			if (sequenceNumber == 0) {
+				continue;
+			}
+			final Map<Term, Collection<Term>> programStates = new HashMap<>();
+			final Map<String, Integer> assignmentMapping = programStateSequence.get(sequenceNumber);
+			for (final String varName : assignmentMapping.keySet()) {
+				for (final IProgramVar variable : allVariables) {
+					if (varName.equals(variable.getGloballyUniqueId())) {
+						final Term value = SmtUtils.constructIntValue(mScript.getScript(),
+								BigInteger.valueOf(assignmentMapping.get(varName)));
+						final ArrayList<Term> values = new ArrayList<>();
+						values.add(value);
+						programStates.put(variable.getTerm(), values);
+						break;
+					}
+				}
+			}
+			final ProgramState<Term> ps = new ProgramState<>(programStates, Term.class);
+			partialProgramStateMapping.put(sequenceNumber - 1, ps);
+		}
+
+		return IcfgProgramExecution.create(edges, partialProgramStateMapping);
+
 	}
 
 	public BtorScript generateScript(final IIcfg<IcfgLocation> icfg) {

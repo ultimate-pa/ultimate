@@ -11,6 +11,7 @@ public class BtorExpression {
 	private final BtorExpressionType type;
 	private final List<BtorExpression> children;
 	private final long constant;
+	private final String stateName;
 	private int nid;
 
 	public BtorExpression(final int sort, final BtorExpressionType type, final List<BtorExpression> children) {
@@ -18,6 +19,7 @@ public class BtorExpression {
 		this.type = type;
 		this.children = children;
 		constant = 0;
+		stateName = "";
 	}
 
 	public BtorExpression(final int sort, final long constant) {
@@ -25,6 +27,7 @@ public class BtorExpression {
 		type = BtorExpressionType.CONSTD;
 		children = new ArrayList<>();
 		this.constant = constant;
+		stateName = "";
 	}
 
 	public BtorExpression(final int sort, final BtorExpressionType type) {
@@ -32,6 +35,15 @@ public class BtorExpression {
 		this.type = type;
 		children = new ArrayList<>();
 		constant = 0;
+		stateName = "";
+	}
+
+	public BtorExpression(final int sort, final String name) {
+		this.sort = sort;
+		type = BtorExpressionType.STATE;
+		children = new ArrayList<>();
+		constant = 0;
+		stateName = name;
 	}
 
 	public int getSort() {
@@ -66,7 +78,10 @@ public class BtorExpression {
 			}
 			if (type == BtorExpressionType.CONSTD) {
 				writer.write(String.valueOf(nid) + " " + type.name().toLowerCase() + " "
-						+ String.valueOf(sortMap.get(sort) + " " + String.valueOf(constant)) + "\n");
+						+ String.valueOf(sortMap.get(sort)) + " " + String.valueOf(constant) + "\n");
+			} else if (type == BtorExpressionType.STATE) {
+				writer.write(String.valueOf(nid) + " " + type.name().toLowerCase() + " "
+						+ String.valueOf(sortMap.get(sort)) + " " + stateName + "\n");
 			} else {
 				writer.write(String.valueOf(nid) + " " + type.name().toLowerCase() + " "
 						+ String.valueOf(sortMap.get(sort)) + "\n");

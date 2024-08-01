@@ -73,7 +73,7 @@ public class TermToBtorUtil {
 				return new BtorExpression(1, BtorExpressionType.OR, Arrays.asList(lhs, rhs));
 			case "not":
 				lhs = convertConditionalToBtorExpression(appTerm.getParameters()[0], tf, variableMap);
-				return new BtorExpression(1, BtorExpressionType.NEG, Arrays.asList(lhs));
+				return new BtorExpression(1, BtorExpressionType.NOT, Arrays.asList(lhs));
 			}
 		} else if (term instanceof TermVariable) {
 			return variableMap
