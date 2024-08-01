@@ -32,13 +32,23 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import de.uni_freiburg.informatik.ultimate.btorutils.BtorScript;
 import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgElement;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 
@@ -79,7 +89,6 @@ public class CfgToBtorObserver extends BaseObserver {
 		processor.extractLocations(icfg);
 		processor.extractVariables(icfg);
 		processor.extractTransitions(icfg);
-		// processor.extractAssignments(icfg);
 		processor.extractBadStates(icfg);
 		final BtorScript script = processor.generateScript(icfg);
 		try {
@@ -93,9 +102,6 @@ public class CfgToBtorObserver extends BaseObserver {
 			final ProcessBuilder processBuilder = new ProcessBuilder();
 			processBuilder.command("/usr/local/bin/btormc", "--trace-gen-full", btorFile.getAbsolutePath());
 
-			// processBuilder.command("/bin/bash", "-c",
-			// "/usr/local/bin/btormc --trace-gen-full " + btorFile.getAbsolutePath());
-
 			final Process process = processBuilder.start();
 			final StringBuilder btormcOutput = new StringBuilder();
 			final BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
@@ -104,8 +110,41 @@ public class CfgToBtorObserver extends BaseObserver {
 			while ((line = reader.readLine()) != null) {
 				btormcOutput.append(line + "\n");
 			}
-			System.out.println(btormcOutput.toString());
+			final String btormcWitness = btormcOutput.toString();
+			System.out.println(btormcWitness.toString());
 			System.out.println(exitVal);
+
+			final IIcfgElement rootLocation = icfg.getInitialNodes().iterator().next();
+
+			if (btormcWitness.startsWith("sat")) {
+				final ArrayList<Integer> pcList = new ArrayList<>();
+				final Map<Integer, Map<String, Integer>> programStateSequence = new HashMap<>();
+				final Pattern p = Pattern.compile("([01]{64}) ([a-zA-Z][a-zA-Z0-9_]*)#(\\d+)");
+				final Matcher m = p.matcher(btormcWitness);
+				while (m.find()) {
+					if (m.group(2).equals("pc")) {
+						pcList.add(Integer.parseInt(m.group(1), 2));
+					} else {
+						final int sequenceNumber = Integer.parseInt(m.group(3));
+						if (!programStateSequence.containsKey(sequenceNumber)) {
+							programStateSequence.put(sequenceNumber, new HashMap<>());
+						}
+						programStateSequence.get(sequenceNumber).put(m.group(2), Integer.parseInt(m.group(1), 2));
+
+					}
+				}
+				System.out.println(pcList);
+				System.out.println(programStateSequence);
+				final IcfgProgramExecution<IcfgEdge> pe =
+						processor.extractErrorTrace(icfg, pcList, programStateSequence);
+				final CounterExampleResult nResult = new CounterExampleResult<>(rootLocation, Activator.PLUGIN_ID,
+						mServices.getBacktranslationService(), pe);
+				mServices.getResultService().reportResult(Activator.PLUGIN_ID, nResult);
+			} else {
+				final PositiveResult<IIcfgElement> pResult = new PositiveResult<IIcfgElement>(Activator.PLUGIN_ID,
+						rootLocation, mServices.getBacktranslationService());
+				mServices.getResultService().reportResult(Activator.PLUGIN_ID, pResult);
+			}
 
 		} catch (final IOException e) {
 			// TODO Auto-generated catch block
