@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.pea;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -37,6 +38,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
@@ -579,7 +581,6 @@ public class Trace2PeaCompilerStateless {
 	 *
 	 * @return The test automaton for the countertrace or model-checkable trace
 	 *
-	 * @see de.uni_freiburg.informatik.ultimate.lib.pea.PEATestAutomaton
 	 * @see de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata
 	 * @see de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace.DCPhase
 	 */
@@ -659,7 +660,7 @@ public class Trace2PeaCompilerStateless {
 			mInit = new Phase[initSize];
 			for (int i = 0; i < initSize; i++) {
 				final Transition trans = initTrans.get(i);
-				if (trans.getDest().getName().endsWith("st"))  {
+				if (trans.getDest().getName().endsWith("st")) {
 					/*
 					 * If the first phase is not a true phase we need a special state to enter the garbage state "st"
 					 * only if the predicate of the first phase does not hold.
@@ -721,9 +722,13 @@ public class Trace2PeaCompilerStateless {
 
 		PhaseEventAutomata pea;
 		if (mExitSync != null) {
-			pea = new PEATestAutomaton(mName, phases, mInit, peaClocks, finalPhases).removeUnreachableLocations();
+			pea = new PEATestAutomaton(mName, Arrays.asList(phases), Arrays.asList(mInit), peaClocks, finalPhases)
+					.removeUnreachableLocations();
 		} else {
-			pea = new PhaseEventAutomata(mName, phases, mInit, peaClocks, variables, events, null);
+			pea = new PhaseEventAutomata(
+					mName, Arrays.asList(phases), Arrays.asList(mInit).stream()
+							.map(x -> new InitialTransition(CDD.TRUE, x)).collect(Collectors.toList()),
+					peaClocks, variables, events, null);
 		}
 
 		return pea;

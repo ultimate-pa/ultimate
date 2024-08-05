@@ -268,9 +268,9 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		List<Expression> pcInSinkExpressions = new ArrayList<>();
 		for (Entry<CounterTrace, PhaseEventAutomata> entry : peaList) {
 			PhaseEventAutomata pea = entry.getValue();
-			Phase[] phases = pea.getPhases();
-			for (int i = 0; i < phases.length; i++) {
-				Phase phase = phases[i];
+			List<Phase> phases = pea.getPhases();
+			for (int i = 0; i < phases.size(); i++) {
+				Phase phase = phases.get(i);
 				if (phase.getName().equals(PEAComplement.SINK_NAME)) {
 					Expression expression = genComparePhaseCounter(i, mSymbolTable.getPcName(pea), bl);
 					pcInSinkExpressions.add(expression);
@@ -286,10 +286,10 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		List<Entry<CounterTrace, PhaseEventAutomata>> peaList = strictPea.getCounterTrace2Pea();
 		for (Entry<CounterTrace, PhaseEventAutomata> entry : peaList) {
 			PhaseEventAutomata pea = entry.getValue();
-			Phase[] phases = pea.getPhases();
+			List<Phase> phases = pea.getPhases();
 
-			for (int i = 0; i < phases.length; i++) {
-				Phase phase = phases[i];
+			for (int i = 0; i < phases.size(); i++) {
+				Phase phase = phases.get(i);
 				Expression pcExpression = genComparePhaseCounter(i, mSymbolTable.getPcName(pea), bl);
 				if (!phase.getModifiedConstraints().isEmpty()) {
 					List<RangeDecision> modifiedConstraints = phase.getModifiedConstraints();
@@ -472,7 +472,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 	 */
 	private Statement genAssertNonVacuous(final PatternType<?> req, final PhaseEventAutomata aut,
 			final BoogieLocation bl) {
-		final Phase[] phases = aut.getPhases();
+		final List<Phase> phases = aut.getPhases();
 
 		// compute the maximal phase number occurring in the automaton.
 		int maxBits = 0;
@@ -494,8 +494,8 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		// check that one of those phases is eventually reached.
 		final List<Expression> checkReached = new ArrayList<>();
 		if (pnr > 0) {
-			for (int i = 0; i < phases.length; i++) {
-				final PhaseBits bits = phases[i].getPhaseBits();
+			for (int i = 0; i < phases.size(); i++) {
+				final PhaseBits bits = phases.get(i).getPhaseBits();
 				if (bits == null || (bits.getActive() & (1 << (pnr - 1))) == 0) {
 					checkReached.add(genComparePhaseCounter(i, mSymbolTable.getPcName(aut), bl));
 				}
@@ -544,7 +544,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 					ExpressionFactory.constructUnaryExpression(bl, Operator.LOGICNEG, assertion);
 			ArrayList<String> reqIds = new ArrayList<String>();
 			ArrayList<String> peaNames = new ArrayList<String>();
-			for (Entry<CounterTrace, PhaseEventAutomata<CDD>> pea : mReqPeas.get(i).getCounterTrace2Pea()) {
+			for (Entry<CounterTrace, PhaseEventAutomata> pea : mReqPeas.get(i).getCounterTrace2Pea()) {
 				peaNames.add(pea.getValue().getName());
 				reqIds.add(mReqPeas.get(i).getPattern().getId());
 			}
@@ -583,7 +583,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		for (int i = 0; i < assertPeas.size(); i++) {
 
 		}
-		for (ReqPeas<CDD> reqPeas : assertPeas) {
+		for (ReqPeas reqPeas : assertPeas) {
 			ArrayList<Expression> peaAccepts = new ArrayList<>();
 			ArrayList<Expression> peaDiscards = new ArrayList<>();
 			if (reqPeas.isStrict()) {

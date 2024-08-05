@@ -26,7 +26,6 @@ package de.uni_freiburg.informatik.ultimate.lib.pea;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.Vector;
 
@@ -50,7 +49,8 @@ public class Phase implements Comparable<Phase> {
 
 	private boolean mIsTerminal;
 	private boolean mIsStrict;
-	private Optional<InitialTransition> mInitialTransition;
+	// TODO: make private
+	public InitialTransition mInitialTransition;
 	// clock constraints that have been modified in the complementation procedure
 	// in the case of a phase with a strict clock constraints
 	private final List<RangeDecision> mModifiedConstraints;
@@ -74,7 +74,7 @@ public class Phase implements Comparable<Phase> {
 		incomming = new Vector<>();
 
 		mIsTerminal = true;
-		mInitialTransition = Optional.empty();
+		mInitialTransition = null;
 		mIsStrict = RangeDecision.isStrictLess(clockInv);
 		mModifiedConstraints = new ArrayList<RangeDecision>();
 	}
@@ -273,11 +273,11 @@ public class Phase implements Comparable<Phase> {
 	}
 
 	public void setInitialTransition(InitialTransition initialTransition) {
-		mInitialTransition = Optional.ofNullable(initialTransition);
+		mInitialTransition = initialTransition;
 		isInit = true;
 	}
 
-	public Optional<InitialTransition> getInitialTransition() {
+	public InitialTransition getInitialTransition() {
 		return mInitialTransition;
 	}
 

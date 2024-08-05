@@ -948,13 +948,13 @@ public class LocalizeWriter extends TCSWriter {
 
 			pcVars = new HashSet<>();
 			int numberOfComponents = 0;
-			final Phase[] phases = converter.getPEA().getPhases();
-			for (int i = 0; i < phases.length; i++) {
-				final String[] pcNames = phases[i].getName().split(PhaseEventAutomata.TIMES);
+			final List<Phase> phases = converter.getPEA().getPhases();
+			for (int i = 0; i < phases.size(); i++) {
+				final String[] pcNames = phases.get(i).getName().split(PhaseEventAutomata.TIMES);
 				if (numberOfComponents == 0) {
 					numberOfComponents = pcNames.length;
 				} else if (pcNames.length != numberOfComponents) {
-					throw new LocalizeException(LocalizeException.MALFORMED_LOCATION + phases[i].getName());
+					throw new LocalizeException(LocalizeException.MALFORMED_LOCATION + phases.get(i).getName());
 				}
 				for (int j = 0; j < pcNames.length; j++) {
 					if (!pcVars.contains(pcNames[j])) {

@@ -33,6 +33,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -224,25 +225,25 @@ public class ARMCWriter extends TCSWriter {
 		writer.write("]).\n\n\n\n");
 
 		// Rename phases if necessary
-		final Phase[] phases = converter.getPEA().getPhases();
+		final List<Phase> phases = converter.getPEA().getPhases();
 		final Set<Phase> finalPhases =
 				new HashSet<>(Arrays.asList(((PEATestAutomaton) converter.getPEA()).getFinalPhases()));
 		if (rename) {
-			int stateCounter = phases.length;
-			for (int i = 0; i < phases.length; i++) {
-				if (!finalPhases.contains(phases[i])) {
-					renameMap.put(phases[i].getName(), ARMCString.STATE_NAME + stateCounter);
+			int stateCounter = phases.size();
+			for (int i = 0; i < phases.size(); i++) {
+				if (!finalPhases.contains(phases.get(i))) {
+					renameMap.put(phases.get(i).getName(), ARMCString.STATE_NAME + stateCounter);
 				} else {
-					renameMap.put(phases[i].getName(), ARMCString.ERROR_LOC);
+					renameMap.put(phases.get(i).getName(), ARMCString.ERROR_LOC);
 				}
 				stateCounter--;
 			}
 		} else {// add phase prefix and rename bad states
-			for (int i = 0; i < phases.length; i++) {
-				if (!finalPhases.contains(phases[i])) {
-					renameMap.put(phases[i].getName(), ARMCString.LOC_PREFIX + phases[i].getName());
+			for (int i = 0; i < phases.size(); i++) {
+				if (!finalPhases.contains(phases.get(i))) {
+					renameMap.put(phases.get(i).getName(), ARMCString.LOC_PREFIX + phases.get(i).getName());
 				} else {
-					renameMap.put(phases[i].getName(), ARMCString.ERROR_LOC);
+					renameMap.put(phases.get(i).getName(), ARMCString.ERROR_LOC);
 				}
 			}
 		}

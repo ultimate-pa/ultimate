@@ -180,12 +180,12 @@ public class ReqTestResultUtil {
 			// get current location index of the pea
 			final Expression[] pca = pcs.toArray(new Expression[pcs.size()]);
 			final int pc = Integer.parseInt(((IntegerLiteral) pca[0]).getValue()); // TODO: validation
-			if (pc < pea.getPhases().length / 2) {
+			if (pc < pea.getPhases().size() / 2) {
 				// automaton is in its upper half, so it does not set anything
 				continue;
 			}
 			// get phase invariant and all variables therein
-			final CDD invar = pea.getPhases()[pc].getStateInvariant();
+			final CDD invar = pea.getPhases().get(pc).getStateInvariant();
 			final Set<String> vars = Req2CauseTrackingCDD.getCddVariables(invar);
 			Set<String> effectVars = Collections.emptySet();
 			Set<String> determinedOutputs = Collections.emptySet();
@@ -217,12 +217,12 @@ public class ReqTestResultUtil {
 			// get current location index of the pea
 			final Expression[] pca = pcs.toArray(new Expression[pcs.size()]);
 			final int pc = Integer.parseInt(((IntegerLiteral) pca[0]).getValue()); // TODO: validation
-			if (pc < pea.getPhases().length / 2) {
+			if (pc < pea.getPhases().size() / 2) {
 				// automaton is in its upper half, so it does not use anything
 				continue;
 			}
 			// get phase invariant and all variables therein
-			final CDD invar = pea.getPhases()[pc].getStateInvariant();
+			final CDD invar = pea.getPhases().get(pc).getStateInvariant();
 			final Set<String> vars = Req2CauseTrackingCDD.getCddVariables(invar);
 			if (isInEffectPhase(pea, programState)) {
 				// remove effects if pea is in effect phase
