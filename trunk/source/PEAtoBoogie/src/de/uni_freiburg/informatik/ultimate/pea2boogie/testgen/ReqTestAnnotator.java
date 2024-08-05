@@ -1,7 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.pea2boogie.testgen;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -136,8 +135,7 @@ public class ReqTestAnnotator implements IReq2PeaAnnotator {
 		final String pc = mSymbolTable.getPcName(pea);
 		if (mPea2EffectStore.get(pea).isEffectPhaseIndex(phaseNum)) {
 			final Expression expr = new BinaryExpression(mLocation, BinaryExpression.Operator.COMPEQ,
-					mSymbolTable.getIdentifierExpression(pc),
-					new IntegerLiteral(mLocation, phaseNum.toString()));
+					mSymbolTable.getIdentifierExpression(pc), new IntegerLiteral(mLocation, phaseNum.toString()));
 			disjuncts.add(expr);
 		}
 		return disjuncts;
@@ -149,7 +147,7 @@ public class ReqTestAnnotator implements IReq2PeaAnnotator {
 	private List<Expression> genTransitionEffectTracking(final PhaseEventAutomata pea, final String currentVar,
 			final Integer sourceIndex) {
 		final List<Expression> disjuncts = new ArrayList<>();
-		final List<Phase> phaseList = Arrays.asList(pea.getPhases());
+		final List<Phase> phaseList = pea.getPhases();
 		for (final Transition transition : phaseList.get(sourceIndex).getTransitions()) {
 			final Integer destIndex = phaseList.indexOf(transition.getDest());
 			if (mPea2EffectStore.get(pea).isEffectEdge(sourceIndex, destIndex)) {
@@ -191,7 +189,8 @@ public class ReqTestAnnotator implements IReq2PeaAnnotator {
 	private List<Statement> genTestAssertions() {
 		final List<Statement> statements = new ArrayList<>();
 		for (final Map.Entry<PhaseEventAutomata, ReqEffectStore> entry : mPea2EffectStore.entrySet()) {
-			statements.addAll(genTestPhaseEffectAssertion(entry.getKey(), entry.getValue().getOutputEffectPhaseIndex()));
+			statements
+					.addAll(genTestPhaseEffectAssertion(entry.getKey(), entry.getValue().getOutputEffectPhaseIndex()));
 			statements.addAll(genTestEdgeEffectAssertion(entry.getKey(), entry.getValue().getOutputEffectEdges()));
 		}
 		return statements;
@@ -232,7 +231,7 @@ public class ReqTestAnnotator implements IReq2PeaAnnotator {
 	private List<Statement> genTestEdgeEffectAssertion(final PhaseEventAutomata pea,
 			final Set<Pair<Integer, Integer>> effectEdges) {
 		final List<Statement> statements = new ArrayList<>();
-		for (final Pair<Integer,Integer> edgeIndexes : effectEdges) {
+		for (final Pair<Integer, Integer> edgeIndexes : effectEdges) {
 			final Expression lastExpr = new BinaryExpression(mLocation, BinaryExpression.Operator.COMPEQ,
 					mSymbolTable.getIdentifierExpression(mSymbolTable.getHistoryVarId(mSymbolTable.getPcName(pea))),
 					new IntegerLiteral(mLocation, Integer.toString(edgeIndexes.getKey())));
@@ -243,8 +242,8 @@ public class ReqTestAnnotator implements IReq2PeaAnnotator {
 					new BinaryExpression(mLocation, BinaryExpression.Operator.LOGICAND, thisExpr, lastExpr);
 			final NamedAttribute[] attr = new NamedAttribute[] {
 					new NamedAttribute(mLocation, TEST_ASSERTION_PREFIX + pea.getName(), new Expression[] {}) };
-			final Statement assume =
-					new AssertStatement(mLocation, attr, new UnaryExpression(mLocation, Operator.LOGICNEG, overEdgeIndexes));
+			final Statement assume = new AssertStatement(mLocation, attr,
+					new UnaryExpression(mLocation, Operator.LOGICNEG, overEdgeIndexes));
 			statements.add(assume);
 		}
 

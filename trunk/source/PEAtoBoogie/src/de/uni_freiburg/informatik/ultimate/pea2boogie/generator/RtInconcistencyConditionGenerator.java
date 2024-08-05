@@ -252,8 +252,8 @@ public class RtInconcistencyConditionGenerator {
 	 * @return
 	 */
 	private boolean filterReqs(final PhaseEventAutomata pea) {
-		final Phase[] phases = pea.getPhases();
-		if (phases.length != 1) {
+		final List<Phase> phases = pea.getPhases();
+		if (phases.size() != 1) {
 			// this is not an invariant, filter it out
 			return true;
 		}
@@ -261,8 +261,8 @@ public class RtInconcistencyConditionGenerator {
 			// if we take all invariants, we are finished here
 			return false;
 		}
-		assert phases.length == 1;
-		final Term stateInv = mCddToSmt.toSmt(phases[0].getStateInvariant());
+		assert phases.size() == 1;
+		final Term stateInv = mCddToSmt.toSmt(phases.get(0).getStateInvariant());
 		// this is an invariant with a top-level disjunction, filter it out
 		return SmtUtils.getDisjuncts(stateInv).length != 1;
 	}
@@ -336,7 +336,7 @@ public class RtInconcistencyConditionGenerator {
 				impliesLHS.add(getPcPhaseEquality(mReqSymboltable.getPcName(automaton), phaseIndex));
 
 				// collect NDC(A_i, p_i)
-				outer.add(mPhaseNdcCache.getOrConstruct(automaton.getPhases()[phaseIndex]));
+				outer.add(mPhaseNdcCache.getOrConstruct(automaton.getPhases().get(phaseIndex)));
 			}
 
 			// "compute" NDC(A_1, p_1) ⋀ ... ⋀ NDC(A_n, p_n)
@@ -476,7 +476,7 @@ public class RtInconcistencyConditionGenerator {
 					continue;
 				}
 				primedStateInvariants.put(reqpea.getPattern(),
-						pea.getValue().getPhases()[0].getStateInvariant().prime(mReqSymboltable.getConstVars()));
+						pea.getValue().getPhases().get(0).getStateInvariant().prime(mReqSymboltable.getConstVars()));
 			}
 		}
 
@@ -609,7 +609,7 @@ public class RtInconcistencyConditionGenerator {
 		final int[][] phases = new int[automata.length][];
 		for (int i = 0; i < automata.length; i++) {
 			final PhaseEventAutomata automaton = automata[i];
-			final int phaseCount = automaton.getPhases().length;
+			final int phaseCount = automaton.getPhases().size();
 			phases[i] = new int[phaseCount];
 			for (int j = 0; j < phaseCount; j++) {
 				phases[i][j] = j;

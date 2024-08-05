@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.pea;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -43,9 +44,9 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.util.SimpleSet;
 public class PhaseEventAutomata implements Comparable<Object> {
 
 	public static final String TIMES = "_X_";
-	String mName;
-	Phase[] mPhases;
-	Phase[] mInit;
+	protected final String mName;
+	protected final List<Phase> mPhases;
+	protected final List<InitialTransition> mInit;
 	List<String> mClocks;
 
 	// A map of variables and its types to be used in this PEA.
@@ -57,16 +58,17 @@ public class PhaseEventAutomata implements Comparable<Object> {
 	// Additional declarations needed when processing this PEA.
 	protected List<String> mDeclarations;
 
-	public PhaseEventAutomata(final String name, final Phase[] phases, final Phase[] init) {
+	public PhaseEventAutomata(final String name, final List<Phase> phases, final List<InitialTransition> init) {
 		this(name, phases, init, new ArrayList<String>());
 	}
 
-	public PhaseEventAutomata(final String name, final Phase[] phases, final Phase[] init, final List<String> clocks) {
+	public PhaseEventAutomata(final String name, final List<Phase> phases, final List<InitialTransition> init,
+			final List<String> clocks) {
 		this(name, phases, init, clocks, null, null);
 	}
 
-	public PhaseEventAutomata(final String name, final Phase[] phases, final Phase[] init, final List<String> clocks,
-			final Map<String, String> variables, final List<String> declarations) {
+	public PhaseEventAutomata(final String name, final List<Phase> phases, final List<InitialTransition> init,
+			final List<String> clocks, final Map<String, String> variables, final List<String> declarations) {
 		this(name, phases, init, clocks, variables, null, declarations);
 	}
 
@@ -78,8 +80,9 @@ public class PhaseEventAutomata implements Comparable<Object> {
 	 * @param phases
 	 * @param variables
 	 */
-	public PhaseEventAutomata(final String name, final Phase[] phases, final Phase[] init, final List<String> clocks,
-			final Map<String, String> variables, final Set<String> events, final List<String> declarations) {
+	public PhaseEventAutomata(final String name, final List<Phase> phases, final List<InitialTransition> init,
+			final List<String> clocks, final Map<String, String> variables, final Set<String> events,
+			final List<String> declarations) {
 		if (clocks == null) {
 			mClocks = new ArrayList<>();
 		} else {
@@ -93,11 +96,9 @@ public class PhaseEventAutomata implements Comparable<Object> {
 		mVariables = variables;
 
 		// add initial transition to Phases in initPhases
-		for (Phase phase : mInit) {
-			if (phase.getInitialTransition().isEmpty()) {
-				InitialTransition initialTransition = new InitialTransition(CDD.TRUE, phase);
-				phase.setInitialTransition(initialTransition);
-			}
+		// TODO: remove this, either store all edges in the phases (would be clear) or in the pea, but not both.
+		for (InitialTransition initTrans : init) {
+			initTrans.getDest().setInitialTransition(initTrans);
 		}
 	}
 
@@ -120,16 +121,17 @@ public class PhaseEventAutomata implements Comparable<Object> {
 
 		final List<TodoEntry> todo = new LinkedList<>();
 
-		for (int i = 0; i < mInit.length; i++) {
-			for (int j = 0; j < b.mInit.length; j++) {
-				final CDD sinv = mInit[i].stateInv.and(b.mInit[j].stateInv);
+		for (int i = 0; i < mInit.size(); i++) {
+			for (int j = 0; j < b.mInit.size(); j++) {
+				final CDD sinv = mInit.get(i).getDest().stateInv.and(b.mInit.get(j).getDest().stateInv);
 				if (sinv != CDD.FALSE) {
-					final CDD cinv = mInit[i].clockInv.and(b.mInit[j].clockInv);
-					final Phase p = new Phase(mInit[i].getName() + TIMES + b.mInit[j].getName(), sinv, cinv);
+					final CDD cinv = mInit.get(i).getDest().clockInv.and(b.mInit.get(j).getDest().clockInv);
+					final Phase p = new Phase(
+							mInit.get(i).getDest().getName() + TIMES + b.mInit.get(j).getDest().getName(), sinv, cinv);
 
 					newInit.add(p);
 					newPhases.put(p.getName(), p);
-					todo.add(new TodoEntry(mInit[i], b.mInit[j], p));
+					todo.add(new TodoEntry(mInit.get(i).getDest(), b.mInit.get(j).getDest(), p));
 				}
 			}
 		}
@@ -181,11 +183,13 @@ public class PhaseEventAutomata implements Comparable<Object> {
 
 		final Phase[] allPhases = newPhases.values().toArray(new Phase[newPhases.size()]);
 		final Phase[] initPhases = newInit.toArray(new Phase[newInit.size()]);
+		final ArrayList<InitialTransition> initTransitions = new ArrayList<>();
 
 		// add initial transition to Phases in initPhases
 		for (Phase phase : initPhases) {
 			InitialTransition initialTransition = new InitialTransition(phase.clockInv, phase);
 			phase.setInitialTransition(initialTransition);
+			initTransitions.add(initialTransition);
 		}
 
 		final List<String> newClocks = mergeClockLists(b);
@@ -194,8 +198,8 @@ public class PhaseEventAutomata implements Comparable<Object> {
 
 		final List<String> newDeclarations = mergeDeclarationLists(b);
 
-		return new PhaseEventAutomata(mName + TIMES + b.mName, allPhases, initPhases, newClocks, newVariables,
-				newDeclarations);
+		return new PhaseEventAutomata(mName + TIMES + b.mName, Arrays.asList(allPhases), initTransitions, newClocks,
+				newVariables, newDeclarations);
 	}
 
 	/**
@@ -273,13 +277,18 @@ public class PhaseEventAutomata implements Comparable<Object> {
 	/**
 	 * @return Returns the init.
 	 */
-	public Phase[] getInit() {
-		return mInit;
+	public List<Phase> getInit() {
+		List<Phase> initPhases = new ArrayList<>();
+		for (InitialTransition t : mInit) {
+			initPhases.add(t.getDest());
+		}
+		return initPhases;
 	}
 
 	// Ami gefrickel
 	public void setInit(final Phase[] init2) {
-		mInit = init2;
+		// TODO
+		// mInit = init2;
 	}
 
 	/**
@@ -292,7 +301,7 @@ public class PhaseEventAutomata implements Comparable<Object> {
 	/**
 	 * @return Returns the phases.
 	 */
-	public Phase[] getPhases() {
+	public List<Phase> getPhases() {
 		return mPhases;
 	}
 
@@ -335,16 +344,15 @@ public class PhaseEventAutomata implements Comparable<Object> {
 	}
 
 	public boolean isEmpty() {
-		return getPhases().length <= 0;
+		return getPhases().size() <= 0;
 	}
 
-	// Change by Ami
 	public int getNumberOfLocations() {
-		return getPhases().length;
+		return getPhases().size();
 	}
 
 	public Phase getLocation(final int i) {
-		return getPhases()[i];
+		return getPhases().get(i);
 	}
 
 	public void rename() {
@@ -383,9 +391,9 @@ public class PhaseEventAutomata implements Comparable<Object> {
 	// wird der Guard vereinfacht zu (A)
 	public void simplifyGuards() {
 
-		final Phase[] phases = getPhases();
-		for (int i = 0; i < phases.length; i++) {
-			final Phase phase = phases[i];
+		final List<Phase> phases = getPhases();
+		for (int i = 0; i < phases.size(); i++) {
+			final Phase phase = phases.get(i);
 			final List<Transition> transitions = phase.getTransitions();
 			for (int j = 0; j < transitions.size(); j++) {
 				final Transition trans = transitions.get(j);

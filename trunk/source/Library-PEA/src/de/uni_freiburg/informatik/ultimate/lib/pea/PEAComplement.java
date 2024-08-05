@@ -37,7 +37,7 @@ public class PEAComplement {
 		mComplementPEA = this.complement(mTotalisedPEA);
 	}
 
-	public PEAComplement(PhaseEventAutomata<CDD> PEAtoComplement, Set<String> constVars) {
+	public PEAComplement(PhaseEventAutomata PEAtoComplement, Set<String> constVars) {
 		mPEAtoComplement = PEAtoComplement;
 		mConstVars = constVars;
 		mTotalisedPEA = this.totalise(mPEAtoComplement);
@@ -61,9 +61,9 @@ public class PEAComplement {
 		totalisedPhases.put(sinkPhase.name, sinkPhase);
 
 		// prepare initial phases
-		ArrayList<Phase> totalisedInit = new ArrayList<>();
+		ArrayList<InitialTransition> totalisedInit = new ArrayList<>();
 		for (Phase p : sourcePea.getInit()) {
-			totalisedInit.add(totalisedPhases.get(p.name));
+			totalisedInit.add(new InitialTransition(CDD.TRUE, totalisedPhases.get(p.name)));
 		}
 		if (sinkPhase.isInit) {
 			totalisedInit.add(new InitialTransition(sinkPhase.mInitialTransition.getGuard(), sinkPhase));
@@ -77,10 +77,8 @@ public class PEAComplement {
 			totalizeTransition(phase, sinkPhase, totalisedPhases, clockVarSet);
 		}
 
-		Phase[] totalisedInitArray = totalisedInit.toArray(new Phase[totalisedInit.size()]);
 		PhaseEventAutomata totalisedPEA = new PhaseEventAutomata(addSuffixString(sourcePea.getName(), TOTAL_POSTFIX),
-				totalisedPhases.values().toArray(new Phase[totalisedPhases.size()]), sourcePea.mInit);
-		totalisedPEA.setInit(totalisedInitArray);
+				new ArrayList<Phase>(totalisedPhases.values()), totalisedInit);
 		totalisedPEA.mVariables = new HashMap<String, String>(sourcePea.mVariables);
 
 		for (String s : sourcePea.mClocks) {
@@ -115,10 +113,11 @@ public class PEAComplement {
 			if (reset.length > 0) {
 				CDD noResetClockInv = RangeDecision.filterCdd(successorClockInv, reset);
 				guardToSink =
-						guardToSink.or(guardUnprimed.and(successorStateInv).and(RangeDecision.strict(noResetClockInv)));
+						guardToSink.or(guardUnprimed.and(successorStateInv).and(RangeDecision.strict(noResetClockInv)))
+								.and(RangeDecision.strict(clockInv));
 			} else {
-				guardToSink = guardToSink
-						.or(guardUnprimed.and(successorStateInv).and(RangeDecision.strict(successorClockInv)));
+				guardToSink = guardToSink.or(guardUnprimed.and(successorStateInv)
+						.and(RangeDecision.strict(successorClockInv)).and(RangeDecision.strict(clockInv)));
 			}
 		}
 		Set<String> unprimedVars = clockVarSet;
@@ -176,15 +175,11 @@ public class PEAComplement {
 		}
 		ArrayList<InitialTransition> complementedInit = new ArrayList<>();
 		for (Phase p : sourcePea.getInit()) {
-			complementedInit
-					.add(new InitialTransition(p.mInitialTransition.getGuard(), complementPhases.get(p.name)));
+			complementedInit.add(new InitialTransition(p.mInitialTransition.getGuard(), complementPhases.get(p.name)));
 		}
-		Phase[] complementInitArray = complementedInit.toArray(new Phase[complementedInit.size()]);
-		PhaseEventAutomata complementPEA =
-				new PhaseEventAutomata(addSuffixString(sourcePea.getName(), COMPLEMENT_POSTFIX),
-						phases.toArray(new Phase[phases.size()]), complementInitArray);
+		PhaseEventAutomata complementPEA = new PhaseEventAutomata(
+				addSuffixString(sourcePea.getName(), COMPLEMENT_POSTFIX), phases, complementedInit);
 
-		complementPEA.setInit(complementInitArray);
 		complementPEA.mVariables = sourcePea.mVariables;
 		complementPEA.mVariables = new HashMap<String, String>(sourcePea.mVariables);
 
@@ -202,10 +197,10 @@ public class PEAComplement {
 	 */
 	private void computeInitialTransitionSink(PhaseEventAutomata pea, Phase sinkPhase) {
 		CDD initialTransitionSinkGuard = CDD.FALSE;
-		Phase[] initialPhases = pea.getInit();
+		List<Phase> initialPhases = pea.getInit();
 		for (Phase phase : initialPhases) {
-			assert phase.getInitialTransition().isPresent();
-			InitialTransition initialTransition = phase.getInitialTransition().get();
+			assert phase.getInitialTransition() != null;
+			InitialTransition initialTransition = phase.getInitialTransition();
 			CDD conjunction = phase.getStateInvariant().and(initialTransition.getGuard());
 			initialTransitionSinkGuard = initialTransitionSinkGuard.or(conjunction);
 		}
@@ -248,14 +243,14 @@ public class PEAComplement {
 		return nonStrictClockInvariant;
 	}
 
-	private Map<String, Phase> copyPhases(Phase[] phases, String suffix) {
+	private Map<String, Phase> copyPhases(List<Phase> phases, String suffix) {
 		Map<String, Phase> copy = new HashMap<String, Phase>();
 		for (Phase phase : phases) {
 			Phase copiedPhase = new Phase(phase.name, phase.stateInv, addClockSuffixCDD(phase.clockInv, suffix));
 			copiedPhase.setTerminal(phase.getTerminal());
 			copy.put(copiedPhase.name, copiedPhase);
-			if (phase.getInitialTransition().isPresent()) {
-				InitialTransition initialTransition = phase.getInitialTransition().get();
+			if (phase.getInitialTransition() != null) {
+				InitialTransition initialTransition = phase.getInitialTransition();
 				InitialTransition newInitialTransition =
 						new InitialTransition(initialTransition.getGuard(), copiedPhase);
 				copiedPhase.setInitialTransition(newInitialTransition);

@@ -145,10 +145,10 @@ public final class PEA2TCSConverter {
 	private Iterator<CDD> initDisjunctIterator;
 
 	private int initPhaseCounter;
-	private final Phase[] initPhases;
+	private final List<Phase> initPhases;
 	private final PhaseEventAutomata pea;
 	private int phaseCounter;
-	private final Phase[] phases;
+	private final List<Phase> phases;
 	private final TCSWriter tcsWriter;
 	private Iterator<Transition> transitionIterator;
 	private final Map<String, String> variables;
@@ -179,10 +179,10 @@ public final class PEA2TCSConverter {
 		clocks = pea.getClocks();
 		variables = pea.getVariables();
 
-		if (pea.getPhases().length == 0) {
+		if (pea.getPhases().size() == 0) {
 			throw new RuntimeException("PEA with phase count = 0 is not allowed");
 		}
-		if (pea.getInit().length == 0) {
+		if (pea.getInit().size() == 0) {
 			throw new RuntimeException("PEA with initial phase count = 0 is not allowed");
 		}
 
@@ -193,7 +193,7 @@ public final class PEA2TCSConverter {
 			variables.put(clock, REAL_TYPE);
 		}
 		/* Add program counter to variable list */
-		if (phases.length > 1) {
+		if (phases.size() > 1) {
 			variables.put("pc", ZString.NUM);
 		}
 
@@ -262,12 +262,12 @@ public final class PEA2TCSConverter {
 	 * @return false if there is no next init phase, true otherwise.
 	 */
 	private boolean chooseNextInitPhase() {
-		if (++initPhaseCounter >= initPhases.length) {
+		if (++initPhaseCounter >= initPhases.size()) {
 			return false;
 		}
 
-		final CDD initStateInvariant = initPhases[initPhaseCounter].getStateInvariant().and(globalInvariant);
-		final CDD initClockInvariant = initPhases[initPhaseCounter].getClockInvariant();
+		final CDD initStateInvariant = initPhases.get(initPhaseCounter).getStateInvariant().and(globalInvariant);
+		final CDD initClockInvariant = initPhases.get(initPhaseCounter).getClockInvariant();
 
 		final CDD[] initPhaseDisjuncts = initStateInvariant.and(initClockInvariant).toDNF();
 
@@ -288,8 +288,8 @@ public final class PEA2TCSConverter {
 	 */
 	private boolean chooseNextTransition() {
 		while (transitionIterator == null || !transitionIterator.hasNext()) {
-			if (++phaseCounter < phases.length) {
-				final List<Transition> transitionsForPhase = phases[phaseCounter].getTransitions();
+			if (++phaseCounter < phases.size()) {
+				final List<Transition> transitionsForPhase = phases.get(phaseCounter).getTransitions();
 				transitionIterator = transitionsForPhase.iterator();
 			} else {
 				return false;
@@ -388,7 +388,7 @@ public final class PEA2TCSConverter {
 
 		final CDD constraint = initDisjunct.and(initClockConstraint);
 
-		final String initLoc = initPhases[initPhaseCounter].getName();
+		final String initLoc = initPhases.get(initPhaseCounter).getName();
 
 		return new TransitionConstraint(constraint, initLoc);
 	}

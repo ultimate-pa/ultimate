@@ -133,9 +133,9 @@ public class DOTWriter extends TCSWriter {
 	 */
 	protected void writeInitialTransitions() throws IOException {
 
-		final Phase[] init = pea2write.getInit();
-		for (int i = 0; i < init.length; i++) {
-			String initState = init[i].toString();
+		final List<Phase> init = pea2write.getInit();
+		for (int i = 0; i < init.size(); i++) {
+			String initState = init.get(i).toString();
 			initState = initState.replace("_", "");
 			writer.write("null" + initState + " [shape = plaintext label=\"\"] \n");
 			writer.write("null" + initState + DOTString.TO + initState + DOTString.STOP + "\n");
@@ -155,10 +155,10 @@ public class DOTWriter extends TCSWriter {
 	 * we need to delete(or change) it from the names of the states.
 	 */
 	protected void writeTransitions() throws IOException {
-		final Phase[] phases = pea2write.getPhases();
+		final List<Phase> phases = pea2write.getPhases();
 
-		for (int i = 0; i < phases.length; i++) {
-			final Phase currentPhase = phases[i];
+		for (int i = 0; i < phases.size(); i++) {
+			final Phase currentPhase = phases.get(i);
 			String location = currentPhase.getName();
 			location = location.replace("_", "");
 			String clock = currentPhase.getClockInvariant().toTexString();

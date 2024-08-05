@@ -37,6 +37,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.pea.util.SimpleSet;
 
@@ -55,7 +56,8 @@ public class PEATestAutomaton extends PhaseEventAutomata {
 	 * @param init
 	 * @param clocks
 	 */
-	public PEATestAutomaton(final String name, final Phase[] phases, final Phase[] init, final List<String> clocks) {
+	public PEATestAutomaton(final String name, final List<Phase> phases, final List<Phase> init,
+			final List<String> clocks) {
 		this(name, phases, init, clocks, new Phase[0]);
 	}
 
@@ -67,8 +69,8 @@ public class PEATestAutomaton extends PhaseEventAutomata {
 	 * @param init
 	 * @param clocks
 	 */
-	public PEATestAutomaton(final String name, final Phase[] phases, final Phase[] init, final List<String> clocks,
-			final Phase[] finals) {
+	public PEATestAutomaton(final String name, final List<Phase> phases, final List<Phase> init,
+			final List<String> clocks, final Phase[] finals) {
 		this(name, phases, init, clocks, null, null, finals);
 	}
 
@@ -79,8 +81,8 @@ public class PEATestAutomaton extends PhaseEventAutomata {
 	 * @param phases
 	 * @param init
 	 */
-	public PEATestAutomaton(final String name, final Phase[] phases, final Phase[] init) {
-		super(name, phases, init);
+	public PEATestAutomaton(final String name, final List<Phase> phases, final List<Phase> init) {
+		super(name, phases, init.stream().map(x -> new InitialTransition(CDD.TRUE, x)).collect(Collectors.toList()));
 		finalPhases = new Phase[0];
 	}
 
@@ -96,14 +98,16 @@ public class PEATestAutomaton extends PhaseEventAutomata {
 	 * @param finalPhases
 	 *            if finalPhases is null then a new Phase array is generated for the final phases
 	 */
-	public PEATestAutomaton(final String name, final Phase[] phases, final Phase[] init, final List<String> clocks,
-			final Map<String, String> variables, final List<String> declarations, final Phase[] finalPhases) {
-		super(name, phases, init, clocks, variables, declarations);
+	public PEATestAutomaton(final String name, final List<Phase> phases, final List<Phase> init,
+			final List<String> clocks, final Map<String, String> variables, final List<String> declarations,
+			final Phase[] finalPhases) {
+		super(name, phases, init.stream().map(x -> new InitialTransition(CDD.TRUE, x)).collect(Collectors.toList()),
+				clocks, variables, declarations);
 		this.finalPhases = finalPhases != null ? finalPhases : new Phase[0];
 	}
 
 	public PEATestAutomaton(final PhaseEventAutomata automata) {
-		this(automata.mName, automata.mPhases, automata.mInit, automata.mClocks, automata.mVariables,
+		this(automata.mName, automata.mPhases, automata.getInit(), automata.mClocks, automata.mVariables,
 				automata.mDeclarations, new Phase[0]);
 	}
 
@@ -139,20 +143,22 @@ public class PEATestAutomaton extends PhaseEventAutomata {
 
 		final List<TodoEntry> todo = new LinkedList<>();
 
-		for (int i = 0; i < getInit().length; i++) {
-			for (int j = 0; j < b.getInit().length; j++) {
-				final CDD sinv = getInit()[i].stateInv.and(b.getInit()[j].stateInv);
+		for (int i = 0; i < getInit().size(); i++) {
+			for (int j = 0; j < b.getInit().size(); j++) {
+				final CDD sinv = getInit().get(i).stateInv.and(b.getInit().get(j).stateInv);
 				if (sinv != CDD.FALSE) {
-					final CDD cinv = getInit()[i].clockInv.and(b.getInit()[j].clockInv);
-					final Phase p = new Phase(getInit()[i].getName() + TIMES + b.getInit()[j].getName(), sinv, cinv);
-					if (bIsTestAutomaton && oldFinal.contains(getInit()[i]) && bOldFinal.contains(b.getInit()[j])) {
+					final CDD cinv = getInit().get(i).clockInv.and(b.getInit().get(j).clockInv);
+					final Phase p =
+							new Phase(getInit().get(i).getName() + TIMES + b.getInit().get(j).getName(), sinv, cinv);
+					if (bIsTestAutomaton && oldFinal.contains(getInit().get(i))
+							&& bOldFinal.contains(b.getInit().get(j))) {
 						newFinal.add(p);
-					} else if (!bIsTestAutomaton && oldFinal != null && oldFinal.contains(getInit()[i])) {
+					} else if (!bIsTestAutomaton && oldFinal != null && oldFinal.contains(getInit().get(i))) {
 						newFinal.add(p);
 					}
 					newInit.add(p);
 					newPhases.put(p.getName(), p);
-					todo.add(new TodoEntry(getInit()[i], b.getInit()[j], p));
+					todo.add(new TodoEntry(getInit().get(i), b.getInit().get(j), p));
 				}
 			}
 		}
@@ -214,8 +220,8 @@ public class PEATestAutomaton extends PhaseEventAutomata {
 
 		final List<String> newDeclarations = mergeDeclarationLists(b);
 
-		return new PEATestAutomaton(mName + TIMES + b.mName, allPhases, initPhases, newClocks, newVariables,
-				newDeclarations, finalPhases);
+		return new PEATestAutomaton(mName + TIMES + b.mName, new ArrayList<Phase>(newPhases.values()), newInit,
+				newClocks, newVariables, newDeclarations, finalPhases);
 	}
 
 	public Phase[] getFinalPhases() {
@@ -264,7 +270,7 @@ public class PEATestAutomaton extends PhaseEventAutomata {
 		}
 
 		// check if there are unreachable phases
-		if (reachablePhases.size() == mPhases.length) {
+		if (reachablePhases.size() == mPhases.size()) {
 			return this;
 		}
 
@@ -277,9 +283,9 @@ public class PEATestAutomaton extends PhaseEventAutomata {
 
 		// check if one of the unreachable phases is an inital phase
 		boolean initUnreachable = false;
-		for (final Phase initPhase : mInit) {
-			if (reachablePhases.contains(initPhase)) {
-				newInit.add(initPhase);
+		for (final InitialTransition initialTransition : mInit) {
+			if (reachablePhases.contains(initialTransition.getDest())) {
+				newInit.add(initialTransition.getDest());
 			} else {
 				initUnreachable = true;
 			}
@@ -308,7 +314,6 @@ public class PEATestAutomaton extends PhaseEventAutomata {
 			}
 		}
 
-		return new PEATestAutomaton(mName, newPhases.toArray(new Phase[newPhases.size()]),
-				newInit.toArray(new Phase[newInit.size()]), mClocks, mVariables, mDeclarations, finalPhases);
+		return new PEATestAutomaton(mName, newPhases, newInit, mClocks, mVariables, mDeclarations, finalPhases);
 	}
 }
