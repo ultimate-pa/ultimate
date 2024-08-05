@@ -119,7 +119,7 @@ public class CfgToBtorObserver extends BaseObserver {
 			if (btormcWitness.startsWith("sat")) {
 				final ArrayList<Integer> pcList = new ArrayList<>();
 				final Map<Integer, Map<String, Integer>> programStateSequence = new HashMap<>();
-				final Pattern p = Pattern.compile("([01]{64}) ([a-zA-Z][a-zA-Z0-9_]*)#(\\d+)");
+				final Pattern p = Pattern.compile("([01]+) ([a-zA-Z][a-zA-Z0-9_]*)#(\\d+)");
 				final Matcher m = p.matcher(btormcWitness);
 				while (m.find()) {
 					if (m.group(2).equals("pc")) {

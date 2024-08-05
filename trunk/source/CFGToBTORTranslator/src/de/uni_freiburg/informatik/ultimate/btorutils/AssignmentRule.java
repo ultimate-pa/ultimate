@@ -56,7 +56,8 @@ public class AssignmentRule {
 									final Term rhsTerm = appPossibleAssignment.getParameters()[1];
 									if (lhsTerm instanceof TermVariable) {
 										final TermVariable lhsVar = (TermVariable) lhsTerm;
-										if (TransFormulaUtils.getProgramVarForTerm(tf, lhsVar).equals(assignedVar)) {
+										if (tf.getOutVars().values().contains(lhsVar) && TransFormulaUtils
+												.getProgramVarForTerm(tf, lhsVar).equals(assignedVar)) {
 											assignmentRules.add(new AssignmentRule(assignmentLocationIdentifier,
 													assignedVar, appPossibleAssignment.getParameters()[1], tf, guard));
 											foundAssignment = true;
@@ -65,7 +66,8 @@ public class AssignmentRule {
 									}
 									if (rhsTerm instanceof TermVariable) {
 										final TermVariable rhsVar = (TermVariable) rhsTerm;
-										if (TransFormulaUtils.getProgramVarForTerm(tf, rhsVar).equals(assignedVar)) {
+										if (tf.getOutVars().values().contains(rhsVar) && TransFormulaUtils
+												.getProgramVarForTerm(tf, rhsVar).equals(assignedVar)) {
 											assignmentRules.add(new AssignmentRule(assignmentLocationIdentifier,
 													assignedVar, appPossibleAssignment.getParameters()[0], tf, guard));
 											foundAssignment = true;
@@ -111,6 +113,16 @@ public class AssignmentRule {
 	}
 
 	public BtorExpression getRHSAsExpression(final Map<String, BtorExpression> variableMap) {
-		return TermToBtorUtil.convertRHSToBtorExpression(rhs, tf, variableMap);
+		int sort;
+		if (lhs.getSort().getName() == "Int") {
+			sort = 64;
+		} else if (lhs.getSort().getName() == "Bool") {
+			sort = 1;
+		} else if (lhs.getSort().getName() == "BitVec") {
+			sort = Integer.parseInt(lhs.getSort().getIndices()[0]);
+		} else {
+			throw new UnsupportedOperationException("sort is not int or bool or bitvec");
+		}
+		return TermToBtorUtil.convertRHSToBtorExpression(rhs, tf, variableMap, sort);
 	}
 }

@@ -62,8 +62,10 @@ public class CFGToBTOR {
 				sort = 64;
 			} else if (var.getSort().getName() == "Bool") {
 				sort = 1;
+			} else if (var.getSort().getName() == "BitVec") {
+				sort = Integer.parseInt(var.getSort().getIndices()[0]);
 			} else {
-				throw new UnsupportedOperationException("sort is not int or bool");
+				throw new UnsupportedOperationException("sort is not int or bool or bitvec");
 			}
 
 			final BtorExpression newState = new BtorExpression(sort, var.getGloballyUniqueId());
@@ -193,9 +195,16 @@ public class CFGToBTOR {
 
 	private List<BtorExpression> generateVariableUpdateExpressions() {
 		final ArrayList<BtorExpression> updateExpressions = new ArrayList<>();
-		for (final String var : variableAssignmentMap.keySet()) {
+		for (final String var : variableMap.keySet()) {
 			final BtorExpression varExpression = variableMap.get(var);
 			BtorExpression lastITE = varExpression;
+
+			if (variableAssignmentMap.get(var) == null) {
+				final BtorExpression next = new BtorExpression(varExpression.getSort(), BtorExpressionType.NEXT,
+						Arrays.asList(varExpression, varExpression));
+				updateExpressions.add(next);
+				continue;
+			}
 			for (final AssignmentRule rule : variableAssignmentMap.get(var)) {
 				final BtorExpression rhsExpression = rule.getRHSAsExpression(variableMap);
 				final BtorExpression lineCheck = new BtorExpression(1, BtorExpressionType.EQ,
@@ -205,6 +214,7 @@ public class CFGToBTOR {
 				lastITE = new BtorExpression(varExpression.getSort(), BtorExpressionType.ITE,
 						Arrays.asList(lineAndGuardCheck, rhsExpression, lastITE));
 			}
+
 			final BtorExpression next = new BtorExpression(varExpression.getSort(), BtorExpressionType.NEXT,
 					Arrays.asList(varExpression, lastITE));
 			updateExpressions.add(next);
@@ -258,8 +268,27 @@ public class CFGToBTOR {
 			for (final String varName : assignmentMapping.keySet()) {
 				for (final IProgramVar variable : allVariables) {
 					if (varName.equals(variable.getGloballyUniqueId())) {
-						final Term value = SmtUtils.constructIntValue(mScript.getScript(),
-								BigInteger.valueOf(assignmentMapping.get(varName)));
+						Term value = null;
+						switch (variable.getSort().getName()) {
+						case "Int":
+							value = SmtUtils.constructIntValue(mScript.getScript(),
+									BigInteger.valueOf(assignmentMapping.get(varName)));
+							break;
+						case "Bool":
+							if (Integer.valueOf(assignmentMapping.get(varName)) == 1) {
+								value = mScript.getScript().term("true");
+							} else {
+								value = mScript.getScript().term("false");
+							}
+							break;
+						case "BitVec":
+							value = SmtUtils.constructIntegerValue(mScript.getScript(), variable.getSort(),
+									BigInteger.valueOf(assignmentMapping.get(varName)));
+							break;
+						default:
+							break;
+						}
+
 						final ArrayList<Term> values = new ArrayList<>();
 						values.add(value);
 						programStates.put(variable.getTerm(), values);
@@ -290,7 +319,13 @@ public class CFGToBTOR {
 		final List<BtorExpression> badExpressions = generateBadExpressions();
 		allTopLevelExpressions.addAll(variableUpdateExpressions);
 		allTopLevelExpressions.addAll(badExpressions);
-		return new BtorScript(allTopLevelExpressions, Arrays.asList(1, 64));
+		final Set<Integer> sorts = new HashSet<>();
+		for (final BtorExpression var : variableMap.values()) {
+			sorts.add(var.getSort());
+		}
+		sorts.add(1);
+		sorts.add(64);
+		return new BtorScript(allTopLevelExpressions, new ArrayList<>(sorts));
 	}
 
 }
