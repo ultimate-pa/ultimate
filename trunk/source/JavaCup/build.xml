@@ -4,7 +4,7 @@
   <property name="lib"       location="lib"       />
   <property name="src"       location="src"       />
   <property name="java"      location="java"      />
-  <property name="classes"   location="classes"   />
+  <property name="classes"   location="${bin}"    />
   <property name="bootstrap" location="bootstrap" />
   <property name="dist"      location="dist"      />
   <property name="flex"      location="flex"      />
@@ -68,7 +68,9 @@
   </target>
 
   <target name="compile" depends="bootstrap">
-    <javac includeantruntime="true" srcdir="${java}" destdir="${classes}" />
+    <javac includeantruntime="false" srcdir="${java}" destdir="${classes}">
+      <exclude name="${package}/anttask/**"/>
+    </javac>
   </target>
 
   <target name="dist" depends="compile">
