@@ -44,33 +44,6 @@
 		<!-- reference to workspace root -->
 		<workspaceDir>${basedir}/..</workspaceDir>
 
-		<!-- Various parameters for dependent build files -->
-		<cupDir>${workspaceDir}/JavaCup/target/classes</cupDir>
-		<flexBinary>${workspaceDir}/JavaCup/JFlex.jar</flexBinary>
-		<astbuilderBinaries>${workspaceDir}/ASTBuilder/target/classes</astbuilderBinaries>
-		<acslparserDir>${workspaceDir}/ACSLParser/src/de/uni_freiburg/informatik/ultimate/acsl/parser</acslparserDir>
-		<acslastDir>${workspaceDir}/ACSLParser/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast</acslastDir>
-		<astbuilderDir>${workspaceDir}/ASTBuilder/src/de/uni_freiburg/informatik/ultimate/astbuilder</astbuilderDir>
-		<baSharedJarsDir>${workspaceDir}/BA_SharedJARs</baSharedJarsDir>
-		<boogieparserDir>${workspaceDir}/BoogiePLParser/src/de/uni_freiburg/informatik/ultimate/boogie/parser</boogieparserDir>
-		<boogieastDir>${workspaceDir}/Library-BoogieAST/src/de/uni_freiburg/informatik/ultimate/boogie/ast</boogieastDir>
-		<toolchainDir>${workspaceDir}/Library-UltimateCore/src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain</toolchainDir>
-		<benchexecDir>${workspaceDir}/Library-UltimateTest/src/de/uni_freiburg/informatik/ultimate/test/benchexec/benchmark</benchexecDir>
-		<spaceexDir>${workspaceDir}/SpaceExParser/src/de/uni_freiburg/informatik/ultimate/plugins/spaceex/parser</spaceexDir>
-		<interactiveconsoledir>${workspaceDir}/InteractiveConsole/src/de/uni_freiburg/informatik/ultimate/interactiveconsole</interactiveconsoledir>
-		<smtlibDir>${workspaceDir}/SMTInterpol/src/de/uni_freiburg/informatik/ultimate/smtinterpol/smtlib</smtlibDir>
-		<smtlib2Dir>${workspaceDir}/SMTInterpol/src/de/uni_freiburg/informatik/ultimate/smtinterpol/smtlib2</smtlib2Dir>
-		<dimacsDir>${workspaceDir}/SMTInterpol/src/de/uni_freiburg/informatik/ultimate/smtinterpol/dimacs</dimacsDir>
-		<proofsDir>${workspaceDir}/SMTInterpol/src/de/uni_freiburg/informatik/ultimate/smtinterpol/proof/checker</proofsDir>
-		<externalsmtsolverDir>${workspaceDir}/SMTSolverBridge/src/de/uni_freiburg/informatik/ultimate/smtsolver/external</externalsmtsolverDir>
-		<automatascriptparserDir>${workspaceDir}/AutomataScriptParser/src/de/uni_freiburg/informatik/ultimate/plugins/source/automatascriptparser</automatascriptparserDir>
-		<ltl2autParserDir>${workspaceDir}/LTL2aut/src/de/uni_freiburg/informatik/ultimate/ltl2aut </ltl2autParserDir>
-		<srparseparserDir>${workspaceDir}/Library-srParse/src/de/uni_freiburg/informatik/ultimate/lib/srparse</srparseparserDir>
-		<crocottaDir>${workspaceDir}/Crocotta/src/de/uni_freiburg/informatik/ultimate/crocotta</crocottaDir>
-		<examplesDir>${workspaceDir}/../examples</examplesDir>
-		<websiteHtmlDir>${workspaceDir}/Website/html</websiteHtmlDir>
-		<websiteJsonDir>${workspaceDir}/Website/WebContent/json</websiteJsonDir>
-
 		<!-- Encoding settings -->
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
