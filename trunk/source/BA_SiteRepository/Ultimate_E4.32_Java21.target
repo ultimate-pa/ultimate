@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<target name="Ultimate E4.32">
+	<targetJRE path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-21"/>
+	<launcherArgs>
+		<vmArgs>-ea -Xms4M -Xmx4G</vmArgs>
+	</launcherArgs>
+	<locations>
+		<location includeAllPlatforms="true" includeConfigurePhase="true" includeMode="slicer" includeSource="false" type="InstallableUnit">
+			<repository location="https://struebli.informatik.uni-freiburg.de/p2-repository-ultimate-dependencies/"/>
+			<unit id="com.lmax.disruptor" version="3.3.5"/>
+			<unit id="com.lmax.disruptor.source" version="3.3.5"/>
+			<unit id="org.yaml.snakeyaml" version="2.2.0"/>
+		</location>
+		<location includeAllPlatforms="true" includeConfigurePhase="true" includeMode="slicer" includeSource="false" type="InstallableUnit">
+			<repository location="https://download.eclipse.org/releases/2024-06"/>
+			<unit id="org.eclipse.cdt.feature.group" version="11.6.0.202406041555"/>
+			<unit id="org.eclipse.cdt.sdk.feature.group" version="11.6.0.202406041555"/>
+			<unit id="org.eclipse.equinox.sdk.feature.group" version="3.23.1200.v20240524-2033"/>
+			<unit id="org.eclipse.sdk.feature.group" version="4.32.0.v20240601-0610"/>
+			<unit id="org.eclipse.jdt.feature.group" version="3.19.500.v20240601-0610"/>
+			<unit id="org.eclipse.equinox.server.jetty.feature.group" version="1.11.500.v20240321-1445"/>
+		</location>
+		<location includeAllPlatforms="true" includeConfigurePhase="true" includeMode="slicer" includeSource="false" type="InstallableUnit">
+			<repository location="https://download.eclipse.org/tools/orbit/simrel/orbit-aggregation/2024-06"/>
+			<unit id="org.eclipse.orbit.legacy.feature.group" version="4.32.0.v20240307-0931"/>
+			<unit id="org.eclipse.orbit.maven.aopalliance.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.aopalliance.source.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.com.github.jnr.jffi.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.com.github.jnr.jffi.source.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.com.github.package-url.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.com.github.package-url.source.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.com.github.virtuald.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.com.github.virtuald.source.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.com.google.javascript.feature.group" version="4.32.0.v20240319-0700"/>
+			<unit id="org.eclipse.orbit.maven.com.google.javascript.source.feature.group" version="4.32.0.v20240319-0700"/>
+			<unit id="org.eclipse.orbit.maven.com.jcraft.jsch.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.com.jcraft.jsch.source.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.com.jcraft.jzlib.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.com.jcraft.jzlib.source.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.com.jgoodies.common.feature.group" version="4.32.0.v20240327-0800"/>
+			<unit id="org.eclipse.orbit.maven.com.jgoodies.common.source.feature.group" version="4.32.0.v20240327-0800"/>
+			<unit id="org.eclipse.orbit.maven.com.jgoodies.forms.feature.group" version="4.32.0.v20240327-0800"/>
+			<unit id="org.eclipse.orbit.maven.com.jgoodies.forms.source.feature.group" version="4.32.0.v20240327-0800"/>
+			<unit id="org.eclipse.orbit.maven.com.konghq.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.com.konghq.source.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.com.zaxxer.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.com.zaxxer.source.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.hamcrest.core.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.hamcrest.core.source.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.hamcrest.deprecated.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.hamcrest.deprecated.source.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.hamcrest.library.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.hamcrest.library.source.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.javax.wsdl.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.javax.wsdl.source.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.jdom2.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.jdom2.source.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.jnr.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.jnr.source.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.joni.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.joni.source.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.junit.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.junit.source.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.lucene.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.lucene.source.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.net.java.dev.jna.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.net.java.dev.jna.source.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.org.antlr.3.2.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.org.antlr.3.2.source.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.org.antlr.3.x.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.org.antlr.3.x.source.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.org.apache.ant.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.org.apache.ant.source.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.org.apache.axis.ant.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.org.apache.axis.ant.source.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.org.apache.axis.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.org.apache.axis.source.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.org.apache.batik.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.org.apache.batik.source.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.org.apache.poi.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.org.apache.poi.source.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.org.apache.ws.commons.util.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.org.apache.ws.commons.util.source.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.org.apache.xmlbeans.feature.group" version="4.32.0.v20240527-0800"/>
+			<unit id="org.eclipse.orbit.maven.org.apache.xmlbeans.source.feature.group" version="4.32.0.v20240527-0800"/>
+			<unit id="org.eclipse.orbit.maven.org.apache.xmlgraphics.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.org.apache.xmlgraphics.source.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.org.codelibs.nekohtml.feature.group" version="4.32.0.v20240413-0800"/>
+			<unit id="org.eclipse.orbit.maven.org.codelibs.nekohtml.source.feature.group" version="4.32.0.v20240413-0800"/>
+			<unit id="org.eclipse.orbit.maven.org.commonmark.feature.group" version="4.32.0.v20240316-0700"/>
+			<unit id="org.eclipse.orbit.maven.org.commonmark.source.feature.group" version="4.32.0.v20240316-0700"/>
+			<unit id="org.eclipse.orbit.maven.org.cyclonedx.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.org.cyclonedx.source.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.org.dom4j.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.org.dom4j.source.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.org.jdom.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.org.jdom.source.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.org.pushingpixels.trident.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.org.pushingpixels.trident.source.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.osgi.all.feature.group" version="4.32.0.v20240527-0800"/>
+			<unit id="org.eclipse.orbit.maven.osgi.all.source.feature.group" version="4.32.0.v20240527-0800"/>
+			<unit id="org.eclipse.orbit.maven.xalan.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.xalan.source.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.xerces.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.xerces.source.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.xml-resolver.feature.group" version="4.32.0"/>
+			<unit id="org.eclipse.orbit.maven.xml-resolver.source.feature.group" version="4.32.0"/>
+		</location>
+		<location includeDependencyDepth="indirect" includeDependencyScopes="compile" includeSource="false" missingManifest="generate" type="Maven">
+			<dependencies>
+				<dependency>
+					<groupId>net.sf.jung</groupId>
+					<artifactId>jung-algorithms</artifactId>
+					<version>2.1.1</version>
+					<type>jar</type>
+				</dependency>
+				<dependency>
+					<groupId>net.sf.jung</groupId>
+					<artifactId>jung-api</artifactId>
+					<version>2.1.1</version>
+					<type>jar</type>
+				</dependency>
+				<dependency>
+					<groupId>net.sf.jung</groupId>
+					<artifactId>jung-graph-impl</artifactId>
+					<version>2.1.1</version>
+					<type>jar</type>
+				</dependency>
+				<dependency>
+					<groupId>net.sf.jung</groupId>
+					<artifactId>jung-io</artifactId>
+					<version>2.1.1</version>
+					<type>jar</type>
+				</dependency>
+				<dependency>
+					<groupId>net.sf.jung</groupId>
+					<artifactId>jung-visualization</artifactId>
+					<version>2.1.1</version>
+					<type>jar</type>
+				</dependency>
+				<dependency>
+					<groupId>org.ops4j.pax.logging</groupId>
+					<artifactId>pax-logging-api</artifactId>
+					<version>2.2.7</version>
+					<type>jar</type>
+				</dependency>
+				<dependency>
+					<groupId>org.ops4j.pax.logging</groupId>
+					<artifactId>pax-logging-log4j2</artifactId>
+					<version>2.2.7</version>
+					<type>jar</type>
+				</dependency>
+			</dependencies>
+		</location>
+	</locations>
+</target>
