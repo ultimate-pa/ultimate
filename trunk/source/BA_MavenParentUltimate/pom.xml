@@ -358,6 +358,10 @@
 				<artifactId>target-platform-configuration</artifactId>
 				<version>${tycho-version}</version>
 				<configuration>
+					<executionEnvironmentDefault>JavaSE-21</executionEnvironmentDefault>
+					<target>
+						<file>../BA_SiteRepository/Ultimate_E4.32_Java21.target</file>
+					</target>
 					<environments>
 						<environment>
 							<os>win32</os>
@@ -589,56 +593,6 @@
 	</modules>
 
 	<profiles>
-		<profile>
-			<id>jdk_gt_21</id>
-			<!-- Java > 21 uses this profile https://maven.apache.org/enforcer/enforcer-rules/versionRanges.html -->
-			<activation>
-				<jdk>(21,]</jdk>
-			</activation>
-
-			<repositories>
-				<!-- We proxy repositories via sopranium.de to reduce load and speed up the build in our LAN. 
-					You can configure the sopranium.de proxy or look at the original URLs by visiting <url>https://nexus.sopranium.de</url>.
-					The user/password is managed by DD. -->
-				<repository>
-					<id>eclipse-2024-06</id>
-					<layout>p2</layout>
-					<url>https://download.eclipse.org/releases/2024-06</url>
-					<snapshots>
-						<enabled>false</enabled>
-					</snapshots>
-				</repository>
-
-				<repository>
-					<id>orbit-aggregation-2024-06</id>
-					<layout>p2</layout>
-					<url>https://download.eclipse.org/tools/orbit/simrel/orbit-aggregation/2024-06</url>
-					<snapshots>
-						<enabled>false</enabled>
-					</snapshots>
-				</repository>
-				
-				<repository>
-					<id>p2-repository-ultimate-dependencies</id>
-					<layout>p2</layout>
-					<url>https://struebli.informatik.uni-freiburg.de/p2-repository-ultimate-dependencies/</url>
-					<snapshots>
-						<enabled>false</enabled>
-					</snapshots>
-				</repository>
-				
-			</repositories>
-		</profile>
-
-		<profile>
-			<!-- NOT supported JDK version <= 20 -->
-			<id>jdk_leq_20</id>
-			<!-- Java < 20 uses this profile https://maven.apache.org/enforcer/enforcer-rules/versionRanges.html -->
-			<activation>
-				<jdk>[,20)</jdk>
-			</activation>
-		</profile>
-
 		<profile>
 			<!-- The profile coverage is used to generate junit test case coverage 
 				through jenkins and sonar. It uses all regression tests, but not UltimateTest, 
