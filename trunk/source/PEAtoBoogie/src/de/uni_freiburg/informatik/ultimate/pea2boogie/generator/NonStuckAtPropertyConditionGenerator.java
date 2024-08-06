@@ -14,7 +14,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieDe
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
-import de.uni_freiburg.informatik.ultimate.lib.pea.Transition;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
@@ -33,6 +32,10 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.PeaResultUtil;
  * 
  * 
  * @author Abigail Durst <dursta@informatik.uni-freiburg.de>
+ * 
+ *         TODO: Differentiate between lists and sets. When/why is either used? Match up variable names.
+ * 
+ *         TODO: Name variables/functions better for readability.
  */
 public class NonStuckAtPropertyConditionGenerator {
 
@@ -50,7 +53,22 @@ public class NonStuckAtPropertyConditionGenerator {
 	private final PeaResultUtil mPeaResultUtil;
 	private final BoogieDeclarations mBoogieDeclarations;
 
-	// Constructor
+	/**
+	 * Constructor for an instance of the NonStuckAtPropertyConditionGenerator class.
+	 * 
+	 * @param logger
+	 *            TODO
+	 * @param services
+	 *            TODO
+	 * @param peaResultUtil
+	 *            TODO
+	 * @param boogieDeclarations
+	 *            TODO
+	 * @param symbolTable
+	 *            the IReqSymboltable containing all symbols of the given ReqPeas.
+	 * @param reqPeas
+	 *            the List of ReqPeas representing the set of requirements to be checked for the Stuck-At-Property.
+	 */
 	public NonStuckAtPropertyConditionGenerator(final ILogger logger, final IUltimateServiceProvider services,
 			final PeaResultUtil peaResultUtil, final BoogieDeclarations boogieDeclarations,
 			final IReqSymbolTable symboltable, final List<ReqPeas> reqPeas) {
@@ -68,9 +86,8 @@ public class NonStuckAtPropertyConditionGenerator {
 		mCddToSmt = new CddToSmt(services, peaResultUtil, mScript, mBoogie2Smt, boogieDeclarations, mReqSymboltable);
 	}
 
-	// Taken from RtInconcistencyConditionGenerator, idk what it does really
+	/* Taken from RtInconcistencyConditionGenerator */
 	private static Script buildSolver(final IUltimateServiceProvider services) throws AssertionError {
-
 		SolverSettings settings = SolverBuilder.constructSolverSettings()
 				.setSolverMode(SolverMode.External_ModelsAndUnsatCoreMode).setUseExternalSolver(ExternalSolver.Z3);
 		if (SOLVER_LOG_DIR != null) {
@@ -80,60 +97,65 @@ public class NonStuckAtPropertyConditionGenerator {
 		return SolverBuilder.buildAndInitializeSolver(services, settings, "NonStuckAtPropertyConditionGenerator");
 	}
 
-	// Function which collects the set of NVPs for each PEA in the given
-	// specification.
+	/**
+	 * Returns the set of Nonterminal Violable Phases as a map for the set of requirements/PEAs given to the
+	 * constructor, with an entry for each PEA of each requirement and its NVPs.
+	 * 
+	 * @return A Map of NVPs, whose entries have the form <PEA, NVPs of the PEA (List of Lists of Phases>.
+	 */
 	private Map<PhaseEventAutomata, List<List<Phase>>> getNonterminalViolablePhases() {
 		Map<PhaseEventAutomata, List<List<Phase>>> peaNvpMap = new HashMap<PhaseEventAutomata, List<List<Phase>>>();
 		for (ReqPeas reqPeaSet : mReqPeas) {
-			for (final Entry<CounterTrace, PhaseEventAutomata> pea : reqPeaSet.getCounterTrace2Pea()) {
-
-				peaNvpMap.put(pea.getValue(), new ArrayList<>());
-				PeaViolablePhases peaViolablePhases = new PeaViolablePhases(mLogger, mServices, mPeaResultUtil,
-						mBoogieDeclarations, mReqSymboltable, pea.getValue());
-				List<List<Phase>> phaseSets = peaViolablePhases.nonterminalPeaViolablePhases();
-				List<List<Phase>> currentPeaNvps = peaNvpMap.get(pea.getValue());
-				for (List<Phase> phaseSet : phaseSets) {
-					currentPeaNvps.add(phaseSet);
-				}
-				peaNvpMap.put(pea.getValue(), currentPeaNvps);
-			}
+			peaNvpMap.putAll(getNonterminalViolablePhasesForRequirement(reqPeaSet));
 		}
 		return peaNvpMap;
 	}
 
-	// Get a list of SMT statements to check for the stuck-at-property.
-	// For each PEA, this is the disjunction of the following statements, for each
-	// NVP:
-	// program is in NVP location ==> a transition leaving the NVP can be taken
+	/**
+	 * Returns the set of Nonterminal Violable Phases as a Map for the given requirement, with an entry for each PEA of
+	 * the requirement and its NVPs.
+	 * 
+	 * @return A Map of NVPs, whose entries have the form <PEA, NVPs of the PEA (List of Lists of Phases>.
+	 */
+	private Map<PhaseEventAutomata, List<List<Phase>>> getNonterminalViolablePhasesForRequirement(ReqPeas reqPeaSet) {
+		Map<PhaseEventAutomata, List<List<Phase>>> peaNvpMap = new HashMap<PhaseEventAutomata, List<List<Phase>>>();
+		for (final Entry<CounterTrace, PhaseEventAutomata> pea : reqPeaSet.getCounterTrace2Pea()) {
+			peaNvpMap.put(pea.getValue(), getNonterminalViolablePhasesForPea(pea));
+		}
+		return peaNvpMap;
+	}
+
+	/**
+	 * Returns the set of Nonterminal Violable Phases as a List for the given PEA, of which each element is a List of
+	 * Phases.
+	 * 
+	 * @return A List of NVPs, each of which is a List of Phases.
+	 */
+	private List<List<Phase>> getNonterminalViolablePhasesForPea(Entry<CounterTrace, PhaseEventAutomata> pea) {
+		List<List<Phase>> nvps = new ArrayList<List<Phase>>();
+		PeaViolablePhases peaViolablePhases = new PeaViolablePhases(mLogger, mServices, mPeaResultUtil,
+				mBoogieDeclarations, mReqSymboltable, pea.getValue());
+		List<List<Phase>> phaseSets = peaViolablePhases.nonterminalPeaViolablePhases();
+		for (List<Phase> phaseSet : phaseSets) {
+			nvps.add(phaseSet);
+		}
+		return nvps;
+	}
+
+	/**
+	 * Generates a list of SMT Expressions used to check for the Stuck-At-Property for each PEA in the requirement
+	 * specification. For each NVP, this is a formula of the form "PEA was in NVP ==> PEA is still in NVP"
+	 * 
+	 * @return a Map with entries of the form <PhaseEventAutomaton, List of SMT Expressions to check for the SAP>
+	 */
 	public Map<PhaseEventAutomata, List<Expression>> generateNonStuckAtPropertyCondition() {
 		Map<PhaseEventAutomata, List<Expression>> result = new HashMap<PhaseEventAutomata, List<Expression>>();
-		// List<Term> tempTransitionInfo = new ArrayList<>(); // holds the disjunction
-		// of the edges
-		// List<Term> tempLocationInfo = new ArrayList<>(); // holds the implications of
-		// the locations and edges
-		List<Term> nvpPhasesPreviousLocationChecks = new ArrayList<>();
-		List<Term> nvpPhasesCurrentLocationChecks = new ArrayList<>();
-		// List<Term> nonNvpNextPhases = new ArrayList<>();
 		Map<PhaseEventAutomata, List<List<Phase>>> nvps = getNonterminalViolablePhases();
 		for (PhaseEventAutomata pea : nvps.keySet()) {
 			Map<Phase, Integer> phaseIndices = getPhaseIndices(pea);
-			
-			// nonNvpNextPhases = new ArrayList<>();
 			result.put(pea, new ArrayList<Expression>());
-
 			for (List<Phase> nvp : nvps.get(pea)) {
-				nvpPhasesPreviousLocationChecks = new ArrayList<>();
-				nvpPhasesCurrentLocationChecks = new ArrayList<>();
-				for (Phase p : nvp) {
-					nvpPhasesPreviousLocationChecks.add(SmtUtils.binaryEquality(mScript,
-							mCddToSmt.getTermVarTerm(mReqSymboltable.getHistoryVarId(mReqSymboltable.getPcName(pea))),
-							mScript.numeral(Integer.toString(phaseIndices.get(p)))));
-					nvpPhasesCurrentLocationChecks.add(
-							SmtUtils.binaryEquality(mScript, mCddToSmt.getTermVarTerm(mReqSymboltable.getPcName(pea)),
-									mScript.numeral(Integer.toString(phaseIndices.get(p)))));
-				}
-				Term nvpInfo = SmtUtils.implies(mScript, SmtUtils.or(mScript, nvpPhasesPreviousLocationChecks),
-						SmtUtils.or(mScript, nvpPhasesCurrentLocationChecks));
+				Term nvpInfo = getNonStuckAtProperyTermForNVP(nvp, phaseIndices, pea);
 				List<Expression> addResult = result.get(pea);
 				addResult.add(mBoogie2Smt.getTerm2Expression().translate(nvpInfo));
 				result.put(pea, addResult);
@@ -142,9 +164,44 @@ public class NonStuckAtPropertyConditionGenerator {
 		return result;
 	}
 
+	/**
+	 * Generates the Term (the formula) representing the non-Stuck-At-Property condition for the given NVP, which is the
+	 * formula whose satisfied negation indicated non-fulfillment of the SAP.
+	 * 
+	 * @param nvp
+	 *            the Nonterminal Violable Phase (List of Phases) for which the Term should be generates
+	 * @param phaseIndices
+	 *            the Map which saves each Phase's index
+	 * @param pea
+	 *            the PhaseEventAutomaton of which the NVP is a subset
+	 * @return the Term which represents the nSAPc.
+	 */
+	private Term getNonStuckAtProperyTermForNVP(List<Phase> nvp, Map<Phase, Integer> phaseIndices,
+			PhaseEventAutomata pea) {
+		List<Term> nvpPhasesPreviousLocationChecks = new ArrayList<>();
+		List<Term> nvpPhasesCurrentLocationChecks = new ArrayList<>();
+		for (Phase p : nvp) {
+			nvpPhasesPreviousLocationChecks.add(SmtUtils.binaryEquality(mScript,
+					mCddToSmt.getTermVarTerm(mReqSymboltable.getHistoryVarId(mReqSymboltable.getPcName(pea))),
+					mScript.numeral(Integer.toString(phaseIndices.get(p)))));
+			nvpPhasesCurrentLocationChecks
+					.add(SmtUtils.binaryEquality(mScript, mCddToSmt.getTermVarTerm(mReqSymboltable.getPcName(pea)),
+							mScript.numeral(Integer.toString(phaseIndices.get(p)))));
+		}
+		Term nvpInfo = SmtUtils.implies(mScript, SmtUtils.or(mScript, nvpPhasesPreviousLocationChecks),
+				SmtUtils.or(mScript, nvpPhasesCurrentLocationChecks));
+		return nvpInfo;
+	}
+
+	/**
+	 * Maps each Phase of the given PEA to its index.
+	 * 
+	 * @param pea
+	 *            the PEA whose Phases should be indexed.
+	 * @return the Map containing entries of the form <Phase, index of Phase>
+	 */
 	private Map<Phase, Integer> getPhaseIndices(PhaseEventAutomata pea) {
 		Map<Phase, Integer> phaseIdxMap = new HashMap<Phase, Integer>();
-
 		for (int i = 0; i < pea.getPhases().length; i++) {
 			phaseIdxMap.put(pea.getPhases()[i], i);
 		}
