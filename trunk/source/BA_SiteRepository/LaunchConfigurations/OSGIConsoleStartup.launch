@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<launchConfiguration type="org.eclipse.pde.ui.EquinoxLauncher">
+    <booleanAttribute key="append.args" value="true"/>
+    <booleanAttribute key="automaticAdd" value="true"/>
+    <booleanAttribute key="automaticValidate" value="false"/>
+    <stringAttribute key="bootstrap" value=""/>
+    <stringAttribute key="checked" value="[NONE]"/>
+    <booleanAttribute key="clearConfig" value="false"/>
+    <stringAttribute key="configLocation" value="${workspace_loc}/.metadata/.plugins/org.eclipse.pde.core/OSGIConsoleStartup"/>
+    <booleanAttribute key="default" value="true"/>
+    <booleanAttribute key="default_auto_start" value="true"/>
+    <intAttribute key="default_start_level" value="4"/>
+    <setAttribute key="deselected_workspace_bundles"/>
+    <booleanAttribute key="includeOptional" value="true"/>
+    <booleanAttribute key="org.eclipse.debug.core.ATTR_FORCE_SYSTEM_CONSOLE_ENCODING" value="false"/>
+    <booleanAttribute key="org.eclipse.jdt.launching.ATTR_ATTR_USE_ARGFILE" value="false"/>
+    <booleanAttribute key="org.eclipse.jdt.launching.ATTR_SHOW_CODEDETAILS_IN_EXCEPTION_MESSAGES" value="true"/>
+    <booleanAttribute key="org.eclipse.jdt.launching.ATTR_USE_START_ON_FIRST_THREAD" value="true"/>
+    <stringAttribute key="org.eclipse.jdt.launching.JRE_CONTAINER" value="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-21"/>
+    <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-os ${target.os} -ws ${target.ws} -arch ${target.arch} -nl ${target.nl} -consoleLog -console"/>
+    <stringAttribute key="org.eclipse.jdt.launching.SOURCE_PATH_PROVIDER" value="org.eclipse.pde.ui.workbenchClasspathProvider"/>
+    <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Declipse.ignoreApp=true -Dosgi.noShutdown=true"/>
+    <stringAttribute key="pde.version" value="3.3"/>
+    <setAttribute key="selected_target_bundles"/>
+    <setAttribute key="selected_workspace_bundles">
+        <setEntry value="com.github.jhoenicke.javacup@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.acsl.parser@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.astbuilder@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.boogie.dsitransformer@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.boogie.parser@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.boogie.preprocessor.test@default:false"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.boogie.preprocessor@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.boogie.printer@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.boogie.procedureinliner@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.buchiprogramproduct@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.cdt.parser@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.cdt@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.chcprinter@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.cli@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.constraintparser@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.controller.eliminator@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.cookiefy@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.core.test@default:false"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.core@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.crocotta@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.deltadebugger@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.gui.logging@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.gui.preferencepages@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.gui@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.lib.automata.test@default:false"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.lib.automata@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.lib.boogieast@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.lib.chc@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.lib.core@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.lib.icfgtransformer.test@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.lib.icfgtransformer@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.lib.lassoranker@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.lib.mcr@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.test@default:false"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.lib.mso.test@default:false"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.lib.mso@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.lib.pathexpressions.test@default:false"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.lib.pathexpressions@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.lib.pdr@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.lib.pea.test@default:false"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.lib.pea@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.lib.preferencejson@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.lib.sifa.test@default:false"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.lib.sifa@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.lib.smtlib.test@default:false"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.lib.smtlib@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.lib.smtlibutils@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.lib.srparse.test@default:false"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.lib.srparse@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.lib.test.test@default:false"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.lib.test@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.test@default:false"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.lib.ultimatemodel@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.lib.util.test@default:false"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.lib.util@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.ltl2aut@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.output.cfgconsoleout@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.output.peaexamplegenerator@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.pea2boogie.test@default:false"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.pea2boogie@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.test@default:false"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.plugins.analysis.syntaxchecker@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.plugins.blockencoding@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.plugins.chcsolver@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.plugins.chctoboogie@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.plugins.generator.invariantsynthesis@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.plugins.generator.modsetannotator@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.plugins.generator.referee@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionwithafas@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.plugins.icfgtochc@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.plugins.icfgtransformation@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.plugins.sifa@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.test@default:false"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.regressiontest@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.req.printer@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.reqparser@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.reqtotest@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.reqtotestpowerset@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.smtinterpol.test@default:false"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.smtinterpol@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.smtsolver.external.test@default:false"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.smtsolver.external@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.source.smtparser@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.ultimatetest@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.web.backend@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.witnessparser@default:default"/>
+        <setEntry value="de.uni_freiburg.informatik.ultimate.witnessprinter@default:default"/>
+        <setEntry value="net.sourceforge.czt@default:default"/>
+        <setEntry value="org.apache.commons.cli@default:default"/>
+        <setEntry value="org.apache.commons.lang@default:default"/>
+    </setAttribute>
+    <booleanAttribute key="show_selected_only" value="false"/>
+    <booleanAttribute key="tracing" value="false"/>
+    <booleanAttribute key="useCustomFeatures" value="false"/>
+    <booleanAttribute key="useDefaultConfigArea" value="true"/>
+</launchConfiguration>
