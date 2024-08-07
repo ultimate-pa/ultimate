@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?pde version="3.5"?>
 
-<product name="Ultimate CDT Plugin" uid="CDT-E4" id="org.eclipse.platform.ide" application="org.eclipse.ui.ide.workbench" version="0.0.1" useFeatures="false" includeLaunchers="true">
+<product name="Ultimate-CDTPlugin" uid="CDT-E4" id="org.eclipse.platform.ide" application="org.eclipse.ui.ide.workbench" version="0.0.1" type="bundles" includeLaunchers="true" autoIncludeRequirements="true">
 
    <aboutInfo>
       <image path="eclipse_lg.gif"/>
       <text>
-         %productBlurb
+         Ultimate is a tool for model checking and static program analysis. It provides multiple toolchains which check properties or transform input files.
       </text>
    </aboutInfo>
 
@@ -14,9 +14,10 @@
    </configIni>
 
    <launcherArgs>
-      <programArgs>-consoleLog -nosplash</programArgs>
-      <vmArgs>-Dosgi.requiredJavaVersion=21 -Xms256m -Xmx1024m</vmArgs>
-      <vmArgsMac>-XstartOnFirstThread -Dorg.eclipse.swt.internal.carbon.smallFonts</vmArgsMac>
+      <programArgs>-consoleLog -nosplash
+      </programArgs>
+      <vmArgs>-Xms256m -Xmx1024m
+      </vmArgs>
    </launcherArgs>
 
    <windowImages i16="eclipse16.gif" i32="eclipse32.gif" i48="eclipse48.gif" i64="eclipse16.png" i128="eclipse32.png"/>
@@ -25,6 +26,12 @@
       startupProgressRect="2,290,448,10"
       startupMessageRect="7,225,320,20"
       startupForegroundColor="FFFFFF" />
+   <launcher>
+      <win useIco="false">
+         <bmp/>
+      </win>
+   </launcher>
+
    <vm>
       <windows include="false">org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-21</windows>
    </vm>
@@ -47,7 +54,7 @@
       <plugin id="Library-ModelCheckerUtils"/>
       <plugin id="Library-SMTLIB"/>
       <plugin id="Library-UltimateUtil"/>
-      <plugin id="Library-UltimateUtilTest" fragment="true"/>
+      <plugin id="Library-UltimateUtilTest"/>
       <plugin id="Library-junit-helper"/>
       <plugin id="Library-log4j"/>
       <plugin id="NestedWordAutomata"/>
@@ -58,7 +65,7 @@
       <plugin id="UltimateCore"/>
       <plugin id="ch.qos.logback.classic"/>
       <plugin id="ch.qos.logback.core"/>
-      <plugin id="ch.qos.logback.slf4j" fragment="true"/>
+      <plugin id="ch.qos.logback.slf4j"/>
       <plugin id="com.google.gerrit.common"/>
       <plugin id="com.google.gerrit.prettify"/>
       <plugin id="com.google.gerrit.reviewdb"/>
@@ -68,8 +75,8 @@
       <plugin id="com.google.gwtjsonrpc"/>
       <plugin id="com.google.gwtorm"/>
       <plugin id="com.google.inject"/>
-      <plugin id="com.google.inject.assistedinject" fragment="true"/>
-      <plugin id="com.google.inject.multibindings" fragment="true"/>
+      <plugin id="com.google.inject.assistedinject"/>
+      <plugin id="com.google.inject.multibindings"/>
       <plugin id="com.ibm.icu"/>
       <plugin id="com.jcraft.jsch"/>
       <plugin id="com.jprofiler.integrations.eclipse"/>
@@ -124,8 +131,8 @@
       <plugin id="org.eclipse.cdt.codan.ui"/>
       <plugin id="org.eclipse.cdt.codan.ui.cxx"/>
       <plugin id="org.eclipse.cdt.core"/>
-      <plugin id="org.eclipse.cdt.core.win32" fragment="true"/>
-      <plugin id="org.eclipse.cdt.core.win32.x86_64" fragment="true"/>
+      <plugin id="org.eclipse.cdt.core.win32"/>
+      <plugin id="org.eclipse.cdt.core.win32.x86_64"/>
       <plugin id="org.eclipse.cdt.debug.core"/>
       <plugin id="org.eclipse.cdt.debug.mi.core"/>
       <plugin id="org.eclipse.cdt.debug.mi.ui"/>
@@ -159,16 +166,16 @@
       <plugin id="org.eclipse.core.externaltools"/>
       <plugin id="org.eclipse.core.filebuffers"/>
       <plugin id="org.eclipse.core.filesystem"/>
-      <plugin id="org.eclipse.core.filesystem.win32.x86_64" fragment="true"/>
+      <plugin id="org.eclipse.core.filesystem.win32.x86_64"/>
       <plugin id="org.eclipse.core.jobs"/>
       <plugin id="org.eclipse.core.net"/>
-      <plugin id="org.eclipse.core.net.win32.x86_64" fragment="true"/>
+      <plugin id="org.eclipse.core.net.win32.x86_64"/>
       <plugin id="org.eclipse.core.resources"/>
-      <plugin id="org.eclipse.core.resources.win32.x86_64" fragment="true"/>
+      <plugin id="org.eclipse.core.resources.win32.x86_64"/>
       <plugin id="org.eclipse.core.runtime"/>
       <plugin id="org.eclipse.core.runtime.compatibility"/>
       <plugin id="org.eclipse.core.runtime.compatibility.auth"/>
-      <plugin id="org.eclipse.core.runtime.compatibility.registry" fragment="true"/>
+      <plugin id="org.eclipse.core.runtime.compatibility.registry"/>
       <plugin id="org.eclipse.core.variables"/>
       <plugin id="org.eclipse.cvs"/>
       <plugin id="org.eclipse.debug.core"/>
@@ -197,9 +204,9 @@
       <plugin id="org.eclipse.ecf.identity"/>
       <plugin id="org.eclipse.ecf.provider.filetransfer"/>
       <plugin id="org.eclipse.ecf.provider.filetransfer.httpclient4"/>
-      <plugin id="org.eclipse.ecf.provider.filetransfer.httpclient4.ssl" fragment="true"/>
-      <plugin id="org.eclipse.ecf.provider.filetransfer.ssl" fragment="true"/>
-      <plugin id="org.eclipse.ecf.ssl" fragment="true"/>
+      <plugin id="org.eclipse.ecf.provider.filetransfer.httpclient4.ssl"/>
+      <plugin id="org.eclipse.ecf.provider.filetransfer.ssl"/>
+      <plugin id="org.eclipse.ecf.ssl"/>
       <plugin id="org.eclipse.egit"/>
       <plugin id="org.eclipse.egit.core"/>
       <plugin id="org.eclipse.egit.doc"/>
@@ -233,7 +240,7 @@
       <plugin id="org.eclipse.equinox.jsp.jasper"/>
       <plugin id="org.eclipse.equinox.jsp.jasper.registry"/>
       <plugin id="org.eclipse.equinox.launcher"/>
-      <plugin id="org.eclipse.equinox.launcher.win32.win32.x86_64" fragment="true"/>
+      <plugin id="org.eclipse.equinox.launcher.win32.win32.x86_64"/>
       <plugin id="org.eclipse.equinox.p2.artifact.repository"/>
       <plugin id="org.eclipse.equinox.p2.console"/>
       <plugin id="org.eclipse.equinox.p2.core"/>
@@ -269,7 +276,7 @@
       <plugin id="org.eclipse.equinox.registry"/>
       <plugin id="org.eclipse.equinox.security"/>
       <plugin id="org.eclipse.equinox.security.ui"/>
-      <plugin id="org.eclipse.equinox.security.win32.x86_64" fragment="true"/>
+      <plugin id="org.eclipse.equinox.security.win32.x86_64"/>
       <plugin id="org.eclipse.equinox.simpleconfigurator"/>
       <plugin id="org.eclipse.equinox.simpleconfigurator.manipulator"/>
       <plugin id="org.eclipse.equinox.util"/>
@@ -283,8 +290,8 @@
       <plugin id="org.eclipse.jdt.apt.core"/>
       <plugin id="org.eclipse.jdt.apt.pluggable.core"/>
       <plugin id="org.eclipse.jdt.apt.ui"/>
-      <plugin id="org.eclipse.jdt.compiler.apt" fragment="true"/>
-      <plugin id="org.eclipse.jdt.compiler.tool" fragment="true"/>
+      <plugin id="org.eclipse.jdt.compiler.apt"/>
+      <plugin id="org.eclipse.jdt.compiler.tool"/>
       <plugin id="org.eclipse.jdt.core"/>
       <plugin id="org.eclipse.jdt.core.manipulation"/>
       <plugin id="org.eclipse.jdt.debug"/>
@@ -323,7 +330,7 @@
       <plugin id="org.eclipse.m2e.jdt"/>
       <plugin id="org.eclipse.m2e.launching"/>
       <plugin id="org.eclipse.m2e.lifecyclemapping.defaults"/>
-      <plugin id="org.eclipse.m2e.logback.appender" fragment="true"/>
+      <plugin id="org.eclipse.m2e.logback.appender"/>
       <plugin id="org.eclipse.m2e.logback.configuration"/>
       <plugin id="org.eclipse.m2e.maven.indexer"/>
       <plugin id="org.eclipse.m2e.maven.runtime"/>
@@ -428,7 +435,7 @@
       <plugin id="org.eclipse.recommenders.completion.rcp"/>
       <plugin id="org.eclipse.recommenders.completion.rcp.calls"/>
       <plugin id="org.eclipse.recommenders.completion.rcp.chain"/>
-      <plugin id="org.eclipse.recommenders.completion.rcp.e38" fragment="true"/>
+      <plugin id="org.eclipse.recommenders.completion.rcp.e38"/>
       <plugin id="org.eclipse.recommenders.completion.rcp.overrides"/>
       <plugin id="org.eclipse.recommenders.completion.rcp.subwords"/>
       <plugin id="org.eclipse.recommenders.completion.rcp.templates"/>
@@ -443,14 +450,14 @@
       <plugin id="org.eclipse.recommenders.utils.rcp"/>
       <plugin id="org.eclipse.search"/>
       <plugin id="org.eclipse.swt"/>
-      <plugin id="org.eclipse.swt.win32.win32.x86_64" fragment="true"/>
+      <plugin id="org.eclipse.swt.win32.win32.x86_64"/>
       <plugin id="org.eclipse.team.core"/>
       <plugin id="org.eclipse.team.cvs.core"/>
       <plugin id="org.eclipse.team.cvs.ssh2"/>
       <plugin id="org.eclipse.team.cvs.ui"/>
       <plugin id="org.eclipse.team.svn"/>
       <plugin id="org.eclipse.team.svn.core"/>
-      <plugin id="org.eclipse.team.svn.core.nl1" fragment="true"/>
+      <plugin id="org.eclipse.team.svn.core.nl1"/>
       <plugin id="org.eclipse.team.svn.help"/>
       <plugin id="org.eclipse.team.svn.mylyn"/>
       <plugin id="org.eclipse.team.svn.mylyn.source"/>
@@ -462,7 +469,7 @@
       <plugin id="org.eclipse.team.svn.revision.graph.source"/>
       <plugin id="org.eclipse.team.svn.sources"/>
       <plugin id="org.eclipse.team.svn.ui"/>
-      <plugin id="org.eclipse.team.svn.ui.nl1" fragment="true"/>
+      <plugin id="org.eclipse.team.svn.ui.nl1"/>
       <plugin id="org.eclipse.team.svn.ui.startup"/>
       <plugin id="org.eclipse.team.ui"/>
       <plugin id="org.eclipse.text"/>
@@ -484,7 +491,7 @@
       <plugin id="org.eclipse.ui.views"/>
       <plugin id="org.eclipse.ui.views.log"/>
       <plugin id="org.eclipse.ui.views.properties.tabbed"/>
-      <plugin id="org.eclipse.ui.win32" fragment="true"/>
+      <plugin id="org.eclipse.ui.win32"/>
       <plugin id="org.eclipse.ui.workbench"/>
       <plugin id="org.eclipse.ui.workbench.texteditor"/>
       <plugin id="org.eclipse.update.configurator"/>
@@ -562,7 +569,6 @@
    <configurations>
       <plugin id="org.eclipse.core.runtime" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.equinox.common" autoStart="true" startLevel="2" />
-      <plugin id="org.eclipse.equinox.ds" autoStart="true" startLevel="1" />
       <plugin id="org.eclipse.equinox.simpleconfigurator" autoStart="true" startLevel="1" />
       <plugin id="org.eclipse.osgi" autoStart="true" startLevel="-1" />
       <plugin id="org.eclipse.update.configurator" autoStart="true" startLevel="3" />
