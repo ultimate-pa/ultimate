@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?pde version="3.5"?>
 
-<product name="Ultimate-CommandLine" uid="CLI-E4" id="de.uni_freiburg.informatik.ultimate.core.CLI" application="de.uni_freiburg.informatik.ultimate.core.CoreRCP" version="0.2.5" useFeatures="true" includeLaunchers="true">
+<product name="Ultimate-CommandLine" uid="CLI-E4" id="de.uni_freiburg.informatik.ultimate.core.CLI" application="de.uni_freiburg.informatik.ultimate.core.CoreRCP" version="0.2.5" type="features" includeLaunchers="true" autoIncludeRequirements="true">
 
    <aboutInfo>
       <text>
@@ -13,21 +13,22 @@
    </configIni>
 
    <launcherArgs>
-      <programArgs>--launcher.suppressErrors -nosplash
+      <programArgs>-nosplash -consoleLog
       </programArgs>
       <programArgsLin>-data @user.home/.ultimate
       </programArgsLin>
+      <programArgsMac>-data @user.home/.ultimate
+      </programArgsMac>
       <programArgsWin>-data @user.home\ultimate-data
       </programArgsWin>
-      <vmArgs>-Xmx8g -Xms4M
+      <vmArgs>-Xmx4g -Xms4M
       </vmArgs>
    </launcherArgs>
 
    <windowImages/>
 
-   <splash
-      location="UltimateCore" />
-   <launcher name="Ultimate">
+
+   <launcher name="UltimateCommandLine">
       <win useIco="false">
          <bmp/>
       </win>
