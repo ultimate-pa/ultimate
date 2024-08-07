@@ -13,25 +13,27 @@
    </configIni>
 
    <launcherArgs>
-      <programArgs>--launcher.suppressErrors -nosplash -consoleLog
+      <programArgs>-nosplash -consoleLog
       </programArgs>
       <programArgsLin>-data @user.home/.ultimate
       </programArgsLin>
+      <programArgsMac>-data @user.home/.ultimate
+      </programArgsMac>
       <programArgsWin>-data @user.home\ultimate-data
       </programArgsWin>
-      <vmArgs>-Xmx8g -Xms4m
+      <vmArgs>-Xmx4g -Xms4m
       </vmArgs>
    </launcherArgs>
 
    <windowImages/>
 
-   <splash
-      location="UltimateCore" />
-   <launcher name="Ultimate">
+
+   <launcher name="UltimateEliminator">
       <win useIco="false">
          <bmp/>
       </win>
    </launcher>
+
 
    <vm>
       <linux include="false">org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-21</linux>
