@@ -64,12 +64,15 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.TaskCanceledExcep
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.TaskCanceledException.UserDefinedLimit;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.DangerInvariantResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.InvariantResult;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgElement;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -542,6 +545,23 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 					getServices(), mSimplificationTechnique, mXnfConversionTechnique);
 			writer.addHoareAnnotationToCFG();
 			mCegarLoopBenchmark.addHoareAnnotationData(clha.getHoareAnnotationStatisticsGenerator());
+
+			// Temporary workaround: print invariants in every CEGAR loop
+			final IBacktranslationService backTranslatorService = mServices.getBacktranslationService();
+			final Set<IcfgLocation> locsForLoopLocations = new HashSet<>();
+			locsForLoopLocations.addAll(IcfgUtils.getPotentialCycleProgramPoints(mIcfg));
+			locsForLoopLocations.addAll(mIcfg.getLoopLocations());
+			// find all locations that have outgoing edges which are annotated with LoopEntry, i.e., all loop candidates
+
+			for (final var entry : clha.getLoc2hoare().entrySet()) {
+				final Term formula = entry.getValue().getFormula();
+				final InvariantResult<IIcfgElement, Term> invResult =
+						new InvariantResult<>(Activator.PLUGIN_NAME, entry.getKey(), backTranslatorService, formula);
+				// TODO .reportResult(invResult);
+				mLogger.warn("invariant at location %s :: %s", entry.getKey(), formula);
+				mLogger.warn(invResult);
+			}
+
 		} finally {
 			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.HoareAnnotationTime.toString());
 		}
