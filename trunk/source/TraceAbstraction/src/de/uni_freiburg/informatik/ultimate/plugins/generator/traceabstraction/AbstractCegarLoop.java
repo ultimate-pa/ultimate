@@ -483,19 +483,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 			mLogger.info("%s automaton has %s", automatonType, mInterpolAutomaton.sizeInformation());
 		}
 
-		if (mProofUpdater != null && mProofUpdater instanceof IAbstractionSanityCheck<?>) {
-			assert ((IAbstractionSanityCheck<A>) mProofUpdater).performSanityCheck(mAbstraction);
-		}
-
-		// TODO #proofRefactor move the code below into Floyd/Hoare proof producer (method performSanityCheck)
-		//
-		// if (mProofUpdater != null && mPref.getHoareAnnotationPositions() == HoareAnnotationPositions.All) {
-		// final var unifier = new PredicateUnifier(mLogger, mServices, mCsToolkit.getManagedScript(),
-		// mPredicateFactory, mCsToolkit.getSymbolTable(), mSimplificationTechnique, mXnfConversionTechnique);
-		// assert NwaFloydHoareValidityCheck.forInterpolantAutomaton(mServices, mCsToolkit.getManagedScript(),
-		// new IncrementalHoareTripleChecker(mCsToolkit, false), unifier,
-		// (INestedWordAutomaton<L, IPredicate>) mAbstraction, true).getResult() : "Not inductive";
-		// }
+		performAbstractionSanityCheck();
 
 		if (mIteration <= mPref.watchIteration() && mPref.artifact() == Artifact.ABSTRACTION) {
 			mArtifactAutomaton = mAbstraction;
@@ -506,6 +494,10 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 			final String filename = mIcfg.getIdentifier() + "_BiggestAutomaton";
 			writeAutomatonToFile(mAbstraction, filename);
 		}
+	}
+
+	protected void performAbstractionSanityCheck() {
+		// Empty implementation. Subclasses may override this method.
 	}
 
 	private IcfgLocation getErrorLocFromCounterexample() {

@@ -435,6 +435,18 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends
 		}
 	}
 
+	@Override
+	protected void performAbstractionSanityCheck() {
+		if (mProofUpdater != null && mPref.getHoareAnnotationPositions() == HoareAnnotationPositions.All) {
+			final var unifier = new PredicateUnifier(mLogger, mServices, mCsToolkit.getManagedScript(),
+					mPredicateFactory, mCsToolkit.getSymbolTable(), mSimplificationTechnique, mXnfConversionTechnique);
+			assert NwaFloydHoareValidityCheck
+					.forInterpolantAutomaton(mServices, mCsToolkit.getManagedScript(),
+							new IncrementalHoareTripleChecker(mCsToolkit, false), unifier, mAbstraction, true)
+					.getResult() : "Not inductive";
+		}
+	}
+
 	private RunningTaskInfo executeDifferenceTimeoutActions(final INestedWordAutomaton<L, IPredicate> minuend,
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> subtrahend,
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> subtrahendBeforeEnhancement,
