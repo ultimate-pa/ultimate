@@ -28,10 +28,34 @@ package de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 
+/**
+ * A Floyd/Hoare annotation of a program, which is usually represented as some kind of graph (e.g. ICFG or automaton).
+ * The annotation labels nodes of this graph (called "states") with {@link IPredicate}s.
+ *
+ * A valid annotation satisfies the following criteria:
+ * <ol>
+ * <li>The initial states are labeled by a predicate which is entailed by the annotation's precondition.</li>
+ * <li>For every edge, the annotation of the source state, the label of the edge and the annotation of the target state
+ * form a valid Hoare triple.</li>
+ * <li>Every final / accepting / exit state is labeled by a predicate that entails the annotation's postcondition.</li>
+ * </ol>
+ *
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ *
+ * @param <S>
+ *            the type of states
+ */
 public interface IFloydHoareAnnotation<S> {
 	IPredicate getPrecondition();
 
 	IPredicate getPostcondition();
 
+	/**
+	 * May return {@code null} if no annotation for the given state is known.
+	 *
+	 * @param state
+	 *            a state (control location) of the program
+	 * @return the predicate labeling the given state
+	 */
 	IPredicate getAnnotation(S state);
 }

@@ -30,7 +30,6 @@ package de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -42,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Inters
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IOpWithDelayedDeadEndRemoval;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IOpWithDelayedDeadEndRemoval.UpDownEntry;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -56,9 +54,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  *
  */
 public class HoareAnnotationFragments<LETTER extends IAction> {
-
-	private final ILogger mLogger;
-
 	private final Map<IPredicate, IPredicate> mPred2ProgPoint = new HashMap<>();
 
 	/**
@@ -73,7 +68,7 @@ public class HoareAnnotationFragments<LETTER extends IAction> {
 
 	private final HashRelation<IPredicate, IPredicate> mProgPoint2StatesWithEmptyContext = new HashRelation<>();
 
-	private final Set<IPredicate> mHoareAnnotationPositions;
+	private final Set<IPredicate> mHoareAnnotationStates;
 
 	Map<IPredicate, HashRelation<IPredicate, IPredicate>> getDeadContexts2ProgPoint2Preds() {
 		return mDeadContexts2ProgPoint2Preds;
@@ -91,9 +86,8 @@ public class HoareAnnotationFragments<LETTER extends IAction> {
 		return mContext2Entry;
 	}
 
-	public HoareAnnotationFragments(final ILogger logger, final Set<IPredicate> hoareAnnotationStates) {
-		mLogger = logger;
-		mHoareAnnotationPositions = hoareAnnotationStates;
+	public HoareAnnotationFragments(final Set<IPredicate> hoareAnnotationStates) {
+		mHoareAnnotationStates = hoareAnnotationStates;
 	}
 
 	/**
@@ -126,13 +120,18 @@ public class HoareAnnotationFragments<LETTER extends IAction> {
 	 */
 	private void update(final IUpdate update,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> newAbstraction) {
+
+		// First, we update the mapping mPred2ProgPoint: Each "old state" may (after the update) correspond to one or
+		// more "new states". Hence, these new states represent the same program point that was previously represented
+		// by the "old state".
 		final Set<IPredicate> oldStates;
 		if (mPred2ProgPoint.isEmpty()) {
-			oldStates = mHoareAnnotationPositions;
+			// Initially, mPred2ProgPoint is empty, and the "old states" are the program points themselves.
+			oldStates = mHoareAnnotationStates;
 		} else {
-			oldStates = new HashSet<>(mPred2ProgPoint.keySet());
+			oldStates = mPred2ProgPoint.keySet();
 		}
-		// TODO possibly merge this loop with the next, avoid redundant computation of getNewPredicates
+
 		for (final IPredicate oldState : oldStates) {
 			final IPredicate pp = getProgramPoint(oldState);
 			final List<IPredicate> newStates = update.getNewPredicates(oldState);
@@ -150,6 +149,7 @@ public class HoareAnnotationFragments<LETTER extends IAction> {
 			}
 		}
 
+		// Second, we update the mapping mLiveContexts2ProgPoint2Preds.
 		final Map<IPredicate, HashRelation<IPredicate, IPredicate>> oldLiveContexts2ProgPoint2Preds =
 				mLiveContexts2ProgPoint2Preds;
 		mLiveContexts2ProgPoint2Preds = new HashMap<>();
@@ -166,8 +166,7 @@ public class HoareAnnotationFragments<LETTER extends IAction> {
 				for (int i = 0; i < newContexts.size(); i++) {
 					final HashRelation<IPredicate, IPredicate> hr;
 					if (i == newContexts.size() - 1) {
-						// last iteration, we can use the original hr instead of
-						// copy
+						// last iteration, we can use the original hr instead of copy
 						hr = contextHrPair.getValue();
 					} else {
 						hr = new HashRelation<>();
@@ -263,7 +262,7 @@ public class HoareAnnotationFragments<LETTER extends IAction> {
 
 	void addDoubleDecker(final IPredicate down, final IPredicate up, final IPredicate empty) {
 		final IPredicate pp = getProgramPoint(up);
-		if (!mHoareAnnotationPositions.contains(pp)) {
+		if (!mHoareAnnotationStates.contains(pp)) {
 			// do not compute Hoare annotation for this program point
 			return;
 		}

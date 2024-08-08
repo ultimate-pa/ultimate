@@ -31,6 +31,14 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 
+/**
+ * A simple implementation of {@link IFloydHoareAnnotation} backed by a map.
+ *
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ *
+ * @param <S>
+ *            the type of states which are annotated
+ */
 public class FloydHoareMapping<S> implements IFloydHoareAnnotation<S> {
 	private final IPredicate mPrecondition;
 	private final IPredicate mPostcondition;
@@ -52,6 +60,16 @@ public class FloydHoareMapping<S> implements IFloydHoareAnnotation<S> {
 		this(precondition, postcondition, annotation, null);
 	}
 
+	/**
+	 *
+	 * @param precondition
+	 * @param postcondition
+	 * @param annotation
+	 *            the underlying map from states to their annotations
+	 * @param defaultPredicate
+	 *            A default predicate to be returned when no annotation for a given state is known. If this is
+	 *            {@code null}, an exception is thrown when trying to retrieve the annotation of such states.
+	 */
 	public FloydHoareMapping(final IPredicate precondition, final IPredicate postcondition,
 			final Map<S, IPredicate> annotation, final IPredicate defaultPredicate) {
 		mPrecondition = precondition;

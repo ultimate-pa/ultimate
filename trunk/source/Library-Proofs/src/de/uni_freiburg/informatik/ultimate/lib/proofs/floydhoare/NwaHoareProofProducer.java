@@ -88,8 +88,7 @@ public final class NwaHoareProofProducer<L extends IAction>
 		mCsToolkit = csToolkit;
 		mPredicateFactory = predicateFactory;
 		mPrefs = prefs;
-		mHaf = new HoareAnnotationFragments<>(services.getLoggingService().getLogger(getClass()),
-				hoareAnnotationStates);
+		mHaf = new HoareAnnotationFragments<>(hoareAnnotationStates);
 
 		mStatistics = new Statistics();
 	}
@@ -98,7 +97,8 @@ public final class NwaHoareProofProducer<L extends IAction>
 			final INestedWordAutomaton<?, IPredicate> abstraction, final HoareAnnotationPositions hoarePositions) {
 		final var hoareLocs = hoarePositions.getLocations(icfg);
 		return abstraction.getStates().stream()
-				.filter(p -> PredicateUtils.streamLocations(p).anyMatch(hoareLocs::contains)).collect(Collectors.toSet());
+				.filter(p -> PredicateUtils.streamLocations(p).anyMatch(hoareLocs::contains))
+				.collect(Collectors.toSet());
 	}
 
 	@Override

@@ -98,7 +98,6 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final TAPreferences mPrefs;
-	private final boolean mComputeHoareAnnotation;
 	private final boolean mIsConcurrent;
 	private final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> mWitnessAutomaton;
 	private final CegarLoopFactory<L> mCegarFactory;
@@ -135,11 +134,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		mIsConcurrent = IcfgUtils.isConcurrent(icfg);
 		mResultReporter = new CegarLoopResultReporter<>(mServices, mLogger, Activator.PLUGIN_ID, Activator.PLUGIN_NAME,
 				this::recordLocationResult);
-
-		mComputeHoareAnnotation = mPrefs.computeHoareAnnotation();
-
-		mCegarFactory = new CegarLoopFactory<>(transitionClazz, mPrefs, createCompositionFactory, copyFactory,
-				mComputeHoareAnnotation);
+		mCegarFactory = new CegarLoopFactory<>(transitionClazz, mPrefs, createCompositionFactory, copyFactory);
 
 		runCegarLoops(icfg);
 	}
@@ -175,26 +170,28 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 
 		final IProgressMonitorService progmon = mServices.getProgressMonitorService();
 
-		if (mComputeHoareAnnotation && progmon.continueProcessing()
+		if (progmon.continueProcessing()
 				&& results.stream().allMatch(a -> a.resultStream().noneMatch(Result::isLimit))) {
 			final IBacktranslationService backTranslatorService = mServices.getBacktranslationService();
 
-			// TODO #proofRefactor Retrieve the actual annotation and check it
+			// TODO #proofRefactor Retrieve the actual annotation
 			final IFloydHoareAnnotation<IcfgLocation> annotation = null;
-			assert new IcfgFloydHoareValidityCheck<>(mServices, icfg, annotation, true,
-					MissingAnnotationBehaviour.IGNORE, true).getResult() : "incorrect Hoare annotation";
+			if (annotation != null) {
+				assert new IcfgFloydHoareValidityCheck<>(mServices, icfg, annotation, true,
+						MissingAnnotationBehaviour.IGNORE, true).getResult() : "incorrect Hoare annotation";
 
-			FloydHoareUtils.createInvariantResults(Activator.PLUGIN_NAME, icfg, annotation, backTranslatorService,
-					mResultReporter::reportResult);
-			FloydHoareUtils.createProcedureContractResults(mServices, Activator.PLUGIN_NAME, icfg, annotation,
-					backTranslatorService, mResultReporter::reportResult);
+				FloydHoareUtils.createInvariantResults(Activator.PLUGIN_NAME, icfg, annotation, backTranslatorService,
+						mResultReporter::reportResult);
+				FloydHoareUtils.createProcedureContractResults(mServices, Activator.PLUGIN_NAME, icfg, annotation,
+						backTranslatorService, mResultReporter::reportResult);
+			}
 		}
 		mRootOfNewModel = mArtifact;
 	}
 
 	private void logSettings() {
 		String settings = "Automizer settings:";
-		settings += " Hoare:" + mComputeHoareAnnotation;
+		settings += " Hoare:" + mPrefs.getHoareSettings().getHoarePositions();
 		settings += " " + (mPrefs.differenceSenwa() ? "SeNWA" : "NWA");
 		settings += " Interpolation:" + mPrefs.interpolation();
 		settings += " Determinization: " + mPrefs.interpolantAutomatonEnhancement();

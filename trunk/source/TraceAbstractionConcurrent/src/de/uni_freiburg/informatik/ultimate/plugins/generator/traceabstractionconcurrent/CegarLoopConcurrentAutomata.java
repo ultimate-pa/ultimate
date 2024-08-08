@@ -86,7 +86,7 @@ public class CegarLoopConcurrentAutomata<L extends IIcfgTransition<?>> extends N
 			final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final TAPreferences pref, final IIcfg<?> icfg) {
 		final IEmptyStackStateFactory<IPredicate> predicateFactoryForItp = new PredicateFactoryForInterpolantAutomata(
-				csToolkit.getManagedScript(), predicateFactory, pref.computeHoareAnnotation());
+				csToolkit.getManagedScript(), predicateFactory, pref.getHoareSettings().computeHoareAnnotation());
 		final Cfg2Nwa<L> cFG2NestedWordAutomaton = new Cfg2Nwa<>(icfg, predicateFactoryForItp, csToolkit,
 				predicateFactory, services, pref.getXnfConversionTechnique(), pref.getSimplificationTechnique());
 		return cFG2NestedWordAutomaton.getResult();

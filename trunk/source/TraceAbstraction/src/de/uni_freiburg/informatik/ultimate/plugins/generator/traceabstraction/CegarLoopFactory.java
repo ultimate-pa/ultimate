@@ -93,18 +93,16 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 	private final TAPreferences mPrefs;
 	private final Supplier<IPLBECompositionFactory<L>> mCreateCompositionFactory;
 	private final ICopyActionFactory<L> mCopyFactory;
-	private final boolean mComputeHoareAnnotation;
 
 	private CegarLoopStatisticsGenerator mCegarLoopBenchmark;
 
 	public CegarLoopFactory(final Class<L> transitionClazz, final TAPreferences taPrefs,
 			final Supplier<IPLBECompositionFactory<L>> createCompositionFactory,
-			final ICopyActionFactory<L> copyFactory, final boolean computeHoareAnnotation) {
+			final ICopyActionFactory<L> copyFactory) {
 		mTransitionClazz = transitionClazz;
 		mPrefs = taPrefs;
 		mCreateCompositionFactory = createCompositionFactory;
 		mCopyFactory = copyFactory;
-		mComputeHoareAnnotation = computeHoareAnnotation;
 	}
 
 	/**
@@ -137,8 +135,9 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 		final PredicateFactory predicateFactory = constructPredicateFactory(services, csToolkit);
 
 		final Set<IcfgLocation> hoareAnnotationLocs = mPrefs.getHoareAnnotationPositions().getLocations(root);
-		final PredicateFactoryRefinement stateFactoryForRefinement = new PredicateFactoryRefinement(services,
-				csToolkit.getManagedScript(), predicateFactory, mComputeHoareAnnotation, hoareAnnotationLocs);
+		final PredicateFactoryRefinement stateFactoryForRefinement =
+				new PredicateFactoryRefinement(services, csToolkit.getManagedScript(), predicateFactory,
+						mPrefs.getHoareSettings().computeHoareAnnotation(), hoareAnnotationLocs);
 
 		if (languageOperation != LanguageOperation.DIFFERENCE) {
 			final var pair = createAutomataAbstraction(services, root, errorLocs, predicateFactory,
@@ -280,7 +279,7 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 			final IUltimateServiceProvider services, final IPLBECompositionFactory<L> compositionFactory,
 			final PredicateFactory predicateFactory, final Class<L> transitionClazz, final TAPreferences pref,
 			final boolean removeDead, final IIcfg<IcfgLocation> icfg, final Set<IcfgLocation> errorLocs) {
-		return new CegarLoopFactory<>(transitionClazz, pref, () -> compositionFactory, null, false)
+		return new CegarLoopFactory<>(transitionClazz, pref, () -> compositionFactory, null)
 				.createPetriAbstraction(services, predicateFactory, removeDead, icfg, errorLocs);
 	}
 

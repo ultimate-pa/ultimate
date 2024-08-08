@@ -43,6 +43,14 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
+/**
+ * Checks validity of a Floyd/Hoare annotation for an {@link IIcfg}.
+ *
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ *
+ * @param <LOC>
+ *            the type of locations
+ */
 public class IcfgFloydHoareValidityCheck<LOC extends IcfgLocation> extends FloydHoareValidityCheck<LOC> {
 	private final IIcfg<LOC> mIcfg;
 	private final Set<LOC> mErrorLocs;

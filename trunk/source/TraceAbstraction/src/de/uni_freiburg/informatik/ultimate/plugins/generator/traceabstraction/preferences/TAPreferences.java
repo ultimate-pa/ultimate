@@ -344,13 +344,6 @@ public final class TAPreferences {
 		return mAutomataTypeConcurrency;
 	}
 
-	// TODO #proofRefactor Remove this method
-	// TODO #proofRefactor update all settings files to reflect the removal / changes to the corresponding settings
-	@Deprecated
-	public boolean computeHoareAnnotation() {
-		return mHoareAnnotationPositions != HoareAnnotationPositions.None;
-	}
-
 	public HoareAnnotationPositions getHoareAnnotationPositions() {
 		return mHoareAnnotationPositions;
 	}
@@ -557,6 +550,7 @@ public final class TAPreferences {
 		return mMcrInterpolantMethod;
 	}
 
+	// TODO #proofRefactor update all settings files to reflect the removal / changes to the Hoare/proof settings
 	public HoareProofSettings getHoareSettings() {
 		return new HoareProofSettings(getHoareAnnotationPositions(), getSimplificationTechnique(),
 				getXnfConversionTechnique());

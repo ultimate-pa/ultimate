@@ -210,7 +210,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 
 		mPref = taPrefs;
 		mDefaultStateFactory = new PredicateFactoryForInterpolantAutomata(mCsToolkitWithRankVars.getManagedScript(),
-				predicateFactory, mPref.computeHoareAnnotation());
+				predicateFactory, mPref.getHoareSettings().computeHoareAnnotation());
 
 		final IPreferenceProvider baPref = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 
@@ -301,7 +301,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 
 	public final BuchiCegarLoopResult<L> runCegarLoop() throws IOException {
 		mLogger.info("Interprodecural is " + mPref.interprocedural());
-		mLogger.info("Hoare is " + mPref.computeHoareAnnotation());
+		mLogger.info("Hoare is " + mPref.getHoareSettings().getHoarePositions());
 		mLogger.info("Compute interpolants for " + mInterpolation);
 		mLogger.info("Backedges is " + mPref.interpolantAutomaton());
 		mLogger.info("Determinization is " + mPref.interpolantAutomatonEnhancement());

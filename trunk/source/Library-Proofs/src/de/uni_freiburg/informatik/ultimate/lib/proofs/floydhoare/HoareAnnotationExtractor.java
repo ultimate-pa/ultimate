@@ -86,12 +86,10 @@ public class HoareAnnotationExtractor<LETTER extends IAction> extends DoubleDeck
 	protected Collection<IPredicate> getInitialStates() {
 		final Collection<IPredicate> result = mTraversedNwa.getInitialStates();
 		if (result.size() == 1) {
-			// case where automaton is empty minimized and contains only one
-			// dummy state.
+			// case where automaton is empty, minimized and contains only one dummy state.
 			final IPredicate p = result.iterator().next();
 			if (!(p instanceof SPredicate) && !(p instanceof MLPredicate)) {
 				throw new AssertionError("No State Automaton would be ok");
-				// result = new ArrayList<Predicate>(0);
 			}
 		}
 		return result;

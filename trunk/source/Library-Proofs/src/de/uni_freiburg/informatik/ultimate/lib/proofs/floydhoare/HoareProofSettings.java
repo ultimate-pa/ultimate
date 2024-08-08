@@ -29,6 +29,11 @@ package de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 
+/**
+ * Bundles various settings related to the computation of Floyd/Hoare proofs.
+ *
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ */
 public class HoareProofSettings {
 	private final HoareAnnotationPositions mHoarePositions;
 	private final SimplificationTechnique mSimplificationTechnique;
@@ -42,10 +47,16 @@ public class HoareProofSettings {
 		mXnfConversionTechnique = xnfConversionTechnique;
 	}
 
+	/**
+	 * @return whether or not a Floyd/Hoare proof should be computed at all
+	 */
 	public boolean computeHoareAnnotation() {
 		return mHoarePositions != HoareAnnotationPositions.None;
 	}
 
+	/**
+	 * @return a setting describing for which locations of an ICFG the annotation should be computed
+	 */
 	public HoareAnnotationPositions getHoarePositions() {
 		return mHoarePositions;
 	}

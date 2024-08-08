@@ -41,6 +41,16 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TransformIterator;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
+/**
+ * Checks validity of a Floyd/Hoare annotation for a nested-word automaton.
+ *
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ *
+ * @param <L>
+ *            the type of letters
+ * @param <S>
+ *            the type of states
+ */
 public class NwaFloydHoareValidityCheck<L extends IAction, S> extends FloydHoareValidityCheck<S> {
 	private final INestedWordAutomaton<L, S> mAutomaton;
 
@@ -55,6 +65,10 @@ public class NwaFloydHoareValidityCheck<L extends IAction, S> extends FloydHoare
 		performCheck();
 	}
 
+	/**
+	 * Creates a validity check for an interpolant automaton, i.e., an automaton where the states of the automaton are
+	 * themselves the predicates forming a Floyd/Hoare automaton.
+	 */
 	public static <L extends IAction> NwaFloydHoareValidityCheck<L, IPredicate> forInterpolantAutomaton(
 			final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final IHoareTripleChecker hoareTripleChecker, final IPredicateUnifier unifier,
