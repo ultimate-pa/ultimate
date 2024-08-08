@@ -78,13 +78,6 @@
          unpack="false"/>
 
    <plugin
-         id="org.apache.batik.util.gui"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
          id="org.eclipse.ui"
          download-size="0"
          install-size="0"
@@ -244,7 +237,7 @@
          unpack="false"/>
 
    <plugin
-         id="org.apache.batik.ext.awt"
+         id="org.apache.batik.awt.util"
          download-size="0"
          install-size="0"
          version="0.0.0"
