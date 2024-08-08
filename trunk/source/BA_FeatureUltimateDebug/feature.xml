@@ -7,18 +7,6 @@
       os="linux,win32,macosx"
       arch="x86_64">
 
-   <description url="http://www.example.com/description">
-      [Enter Feature Description here.]
-   </description>
-
-   <copyright url="http://www.example.com/copyright">
-      [Enter Copyright Description here.]
-   </copyright>
-
-   <license url="http://www.example.com/license">
-      [Enter License Description here.]
-   </license>
-
    <requires>
       <import feature="BA_FeatureDependenciesDebugE4"/>
       <import feature="BA_FeatureDependenciesCommon"/>
@@ -27,30 +15,18 @@
 
    <plugin
          id="de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
+         version="0.0.0"/>
 
    <plugin
          id="de.uni_freiburg.informatik.ultimate.gui"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
+         version="0.0.0"/>
 
    <plugin
          id="de.uni_freiburg.informatik.ultimate.gui.preferencepages"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
+         version="0.0.0"/>
 
    <plugin
          id="de.uni_freiburg.informatik.ultimate.gui.logging"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
+         version="0.0.0"/>
 
 </feature>
