@@ -7,8 +7,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -41,10 +43,12 @@ public class ComplementPEATest {
 		PhaseEventAutomata UniversalityGlobally = createUniversalityGloballyPea();
 		PhaseEventAutomata DurationBoundUGlobally = createDurationBoundUGlobally();
 		PhaseEventAutomata durationBoundUGloballyModified = createDurationBoundUGloballyModified();
+		PhaseEventAutomata UniversalityDelayGlobally = createUniversalityDelayGloballyPea();
 
 		mTestAutomata.add(ResponseDelayGlobally);
 		mTestAutomata.add(UniversalityGlobally);
 		mTestAutomata.add(DurationBoundUGlobally);
+		mTestAutomata.add(UniversalityDelayGlobally);
 	}
 
 	// constructs a PEA corresponding to pattern UniversalityGlobally
@@ -166,6 +170,36 @@ public class ComplementPEATest {
 				clocks, variables, Collections.emptyList());
 	}
 
+	/**
+	 * Constructs a PEA corresponding to pattern UniversalityDelayGlobally: Globally, it is always the case that "R" 
+	 * holds after at most "7" time units
+	 * 
+	 * @return the PEA
+	 */
+	public PhaseEventAutomata createUniversalityDelayGloballyPea() {
+		Map<String, String> variables = new HashMap<String, String>();
+		CDD r = BooleanDecision.create("R");
+		variables.put("R", "boolean");
+		CDD clkInv = RangeDecision.create("c0", RangeDecision.OP_LTEQ, 7);
+		CDD clkGuardLoop = RangeDecision.create("c0", RangeDecision.OP_LT, 7);
+		CDD clkGuardProgress = RangeDecision.create("c0", RangeDecision.OP_GTEQ, 7);
+		ArrayList<String> clocks = new ArrayList<String>();
+		clocks.add("c0");
+		final Phase[] phases = new Phase[] { new Phase("0", CDD.TRUE, clkInv), new Phase("1", r, CDD.TRUE) };
+		final String[] noreset = new String[0];
+		
+		// loop transitions
+		phases[0].addTransition(phases[0], clkGuardLoop, noreset);
+		phases[1].addTransition(phases[1], CDD.TRUE, noreset);
+		
+		// progress transition
+		phases[0].addTransition(phases[1], clkGuardProgress, noreset);
+		
+		return new PhaseEventAutomata("UniversalityDelayGlobally", Arrays.asList(phases),
+				Arrays.asList(new InitialTransition[] { new InitialTransition(CDD.TRUE, phases[0]) }),
+				clocks, variables, Collections.emptyList());
+	}
+	
 	public CDD constructMultiClockInvariant() {
 		CDD clkInv1 = RangeDecision.create("clk1", RangeDecision.OP_LTEQ, 5);
 		CDD clkInv2 = RangeDecision.create("clk2", RangeDecision.OP_LT, 6);
@@ -260,6 +294,62 @@ public class ComplementPEATest {
 			}
 		}
 		assertTrue(phase1.getModifiedConstraints().size() == 1);
+	}
+	
+	/**
+	 * Test PEA: UniversalityDelayGlobally
+	 * 
+	 * Case that shows that sink guard must consider non-strict current clock invariant.
+	 */
+	@Test
+	public void testComplementUniversalityDelayGlobally() {
+		PhaseEventAutomata testPEA = mTestAutomata.get(3);
+		PEAComplement complementPEA = new PEAComplement(testPEA);
+		PhaseEventAutomata complementAutomaton = complementPEA.getComplementPEA();
+		List<Phase> phases = complementAutomaton.getPhases();
+		// contains 1 additional location
+		assertTrue(phases.size() == testPEA.getPhases().size() + 1);
+		Phase sink = phases.stream().filter(p -> p.getName().equals("sink")).findAny().orElse(null);
+		// contains sink location that is accepting
+		assertTrue(sink.getName().equals("sink"));
+		assertTrue(sink.getTerminal());
+		// sink should not be initial
+		assertTrue(sink.isInit == false);
+		assertTrue(sink.getInitialTransition() == null);
+		
+		// Check that Clock Invariants are not modified
+		Phase phase0 = phases.get(0);
+		CDD expectedClkInvPhase0 = RangeDecision.create("c0" + PEAComplement.COMPLEMENT_POSTFIX, RangeDecision.OP_LTEQ, 7);
+		assertEquals(expectedClkInvPhase0, phase0.getClockInvariant());
+		Phase phase1 = phases.get(1);
+		CDD expectedClkInvPhase1 = CDD.TRUE;
+		assertEquals(expectedClkInvPhase1, phase1.getClockInvariant());
+		
+		Set<String> ignoreId = new HashSet<>();
+		
+		List<Transition> phase0OutgoingTransitions = phase0.getTransitions();
+		HashMap<Phase, CDD> expectedSinkGuard = new HashMap();
+		expectedSinkGuard.put(phase0,
+				RangeDecision.create("c0" + PEAComplement.COMPLEMENT_POSTFIX, RangeDecision.OP_GT, 7).or(BooleanDecision
+						.create("R").prime(ignoreId).negate()
+						.and(RangeDecision.create("c0" + PEAComplement.COMPLEMENT_POSTFIX, RangeDecision.OP_GTEQ, 7))));
+		expectedSinkGuard.put(phases.get(1), CDD.FALSE);
+		
+		// Check guards of all outgoing transitions from phase 0
+		for (Transition transition : phase0OutgoingTransitions) {
+			if (transition.getDest() == phase0) {
+				CDD expectedGuard =
+						RangeDecision.create("c0" + PEAComplement.COMPLEMENT_POSTFIX, RangeDecision.OP_LT, 7);
+				assertEquals(expectedGuard, transition.getGuard());
+			} else if (transition.getDest() == phase1) { 
+				CDD expectedGuard =
+						RangeDecision.create("c0" + PEAComplement.COMPLEMENT_POSTFIX, RangeDecision.OP_GTEQ, 7);
+				assertEquals(expectedGuard, transition.getGuard());
+			}
+			else {
+				assertEquals(expectedSinkGuard.get(transition.getSrc()), transition.getGuard());
+			}
+		}
 	}
 
 }

@@ -117,7 +117,7 @@ public class PEAComplement {
 								.and(RangeDecision.strict(clockInv));
 			} else {
 				guardToSink = guardToSink.or(guardUnprimed.and(successorStateInv)
-						.and(RangeDecision.strict(successorClockInv)).and(RangeDecision.strict(clockInv)));
+						.and(RangeDecision.strict(successorClockInv)).and(clockInv));
 			}
 		}
 		Set<String> unprimedVars = clockVarSet;
