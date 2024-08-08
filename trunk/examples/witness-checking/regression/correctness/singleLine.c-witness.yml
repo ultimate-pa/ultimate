@@ -1,8 +1,8 @@
-- entry_type: entry_set
+- entry_type: invariant_set
   metadata:
-    format_version: '3.0'
-    uuid: 4bff523e-8c54-4a3a-a353-92f8a69685e2
-    creation_time: '2024-05-02T13:44:37+01:00'
+    format_version: '2.0'
+    uuid: 7a792ada-35b9-49bf-a66e-20e7ef4bd770
+    creation_time: '2024-05-07T12:37:38+02:00'
     producer:
       name: manual
       version: '1.0'
@@ -15,21 +15,23 @@
       data_model: UNUSED
       language: C
   content:
-  - type: loop_invariant
-    location:
-      file_name: singleLine.c
-      file_hash: UNUSED
-      line: 3
-      column: 14
-      function: main
-    format: c_expression
-    value: x == i && i <= n
-  - type: loop_invariant
-    location:
-      file_name: singleLine.c
-      file_hash: UNUSED
-      line: 3
-      column: 43
-      function: main
-    format: c_expression
-    value: x == n - i && i <= n
+  - invariant:
+      location:
+        file_name: singleLine.c
+        file_hash: UNUSED
+        line: 3
+        column: 14
+        function: main
+      format: c_expression
+      type: loop_invariant
+      value: x == i && i <= n
+  - invariant:
+      location:
+        file_name: singleLine.c
+        file_hash: UNUSED
+        line: 3
+        column: 43
+        function: main
+      format: c_expression
+      type: loop_invariant
+      value: x == n - i && i <= n

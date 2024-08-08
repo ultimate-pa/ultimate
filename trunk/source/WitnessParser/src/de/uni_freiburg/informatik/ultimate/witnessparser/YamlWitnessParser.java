@@ -32,12 +32,8 @@ package de.uni_freiburg.informatik.ultimate.witnessparser;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.time.OffsetDateTime;
-import java.time.ZoneId;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -45,15 +41,10 @@ import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.SafeConstructor;
 
-import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.FormatVersion;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.FunctionContract;
-import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Invariant;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Location;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LocationInvariant;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LoopInvariant;
-import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Metadata;
-import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Producer;
-import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Task;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Witness;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.WitnessEntry;
 
@@ -80,42 +71,21 @@ public class YamlWitnessParser {
 
 	@SuppressWarnings("unchecked")
 	private static Stream<WitnessEntry> parseWitnessEntry(final Map<String, Object> entry) {
-		final Metadata metadata = parseMetadata((Map<String, Object>) entry.get("metadata"));
-		final FormatVersion formatVersion = metadata.getFormatVersion();
 		switch ((String) entry.get("entry_type")) {
 		case LocationInvariant.NAME: {
-			if (formatVersion.getMajor() != 0) {
-				throw new UnsupportedOperationException(
-						LocationInvariant.NAME + " is only allowed in format version 0.x");
-			}
 			final Location location = parseLocation((Map<String, Object>) entry.get("location"));
-			final Invariant locationInvariant = parseInvariant((Map<String, String>) entry.get(LocationInvariant.NAME));
-			return Stream.of(new LocationInvariant(metadata, location, locationInvariant));
+			final Map<String, String> invariant = (Map<String, String>) entry.get(LocationInvariant.NAME);
+			return Stream.of(new LocationInvariant(location, invariant.get("string"), invariant.get("format")));
 		}
 		case LoopInvariant.NAME: {
-			if (formatVersion.getMajor() != 0) {
-				throw new UnsupportedOperationException(LoopInvariant.NAME + " is only allowed in format version 0.x");
-			}
 			final Location location = parseLocation((Map<String, Object>) entry.get("location"));
-			final Invariant loopInvariant = parseInvariant((Map<String, String>) entry.get(LoopInvariant.NAME));
-			return Stream.of(new LoopInvariant(metadata, location, loopInvariant));
+			final Map<String, String> invariant = (Map<String, String>) entry.get(LoopInvariant.NAME);
+			return Stream.of(new LoopInvariant(location, invariant.get("string"), invariant.get("format")));
 		}
 		case "invariant_set": {
-			if (formatVersion.getMajor() != 2) {
-				throw new UnsupportedOperationException("invariant_set is only allowed in format version 2.x");
-			}
-			// TODO: This just transforms the "new" format to the "old" format, maybe change this in the future
 			final List<Map<String, Map<String, Object>>> content =
 					(List<Map<String, Map<String, Object>>>) entry.get("content");
-			return content.stream().map(x -> parseAsSingleEntry(x.get("invariant"), metadata));
-		}
-		case "entry_set": {
-			if (formatVersion.getMajor() < 3) {
-				throw new UnsupportedOperationException("entry_set is only allowed in format version >=3.x");
-			}
-			// TODO: This just transforms the "new" format to the "old" format, maybe change this in the future
-			final List<Map<String, Object>> content = (List<Map<String, Object>>) entry.get("content");
-			return content.stream().map(x -> parseAsSingleEntry(x, metadata));
+			return content.stream().map(x -> parseInvariantSetEntry(x));
 		}
 		default:
 			throw new UnsupportedOperationException("Unknown entry type " + entry.get("entry_type"));
@@ -123,69 +93,27 @@ public class YamlWitnessParser {
 	}
 
 	@SuppressWarnings("unchecked")
-	private static WitnessEntry parseAsSingleEntry(final Map<String, Object> setEntry, final Metadata metadata) {
-		// Create new metadata with a fresh UUID (because we rely on it as a unique identifier)
-		final Metadata newMetadata = new Metadata(metadata.getFormatVersion(), UUID.randomUUID(),
-				metadata.getCreationTime(), metadata.getProducer(), metadata.getTask());
-		final Location location = parseLocation((Map<String, Object>) setEntry.get("location"));
-		final String format = (String) setEntry.get("format");
-		switch ((String) setEntry.get("type")) {
-		case LocationInvariant.NAME: {
-			final Invariant invariant = new Invariant((String) setEntry.get("value"), "assertion", format);
-			return new LocationInvariant(newMetadata, location, invariant);
+	private static WitnessEntry parseInvariantSetEntry(final Map<String, Map<String, Object>> entry) {
+		if (entry.size() != 1) {
+			throw new UnsupportedOperationException("Invalid entry in content " + entry);
 		}
-		case LoopInvariant.NAME: {
-			final Invariant invariant = new Invariant((String) setEntry.get("value"), "assertion", format);
-			return new LoopInvariant(newMetadata, location, invariant);
-		}
+		final var map = entry.values().iterator().next();
+		final Location location = parseLocation((Map<String, Object>) map.get("location"));
+		final String format = (String) map.get("format");
+		switch ((String) map.get("type")) {
+		case LocationInvariant.NAME:
+			return new LocationInvariant(location, (String) map.get("value"), format);
+		case LoopInvariant.NAME:
+			return new LoopInvariant(location, (String) map.get("value"), format);
 		case FunctionContract.NAME:
-			if (metadata.getFormatVersion().getMajor() < 3) {
-				throw new UnsupportedOperationException("Function contracts are only allowed in format version >=3.x");
-			}
-			return new FunctionContract(newMetadata, location, (List<String>) setEntry.get("requires"),
-					(List<String>) setEntry.get("ensures"), format);
+			return new FunctionContract(location, (String) map.get("requires"), (String) map.get("ensures"), format);
 		default:
-			throw new UnsupportedOperationException("Unknown entry type " + setEntry.get("type"));
+			throw new UnsupportedOperationException("Invalid entry in content" + entry);
 		}
-	}
-
-	@SuppressWarnings("unchecked")
-	private static Metadata parseMetadata(final Map<String, Object> metadata) {
-		final FormatVersion formatVersion = FormatVersion.fromString(metadata.get("format_version").toString());
-		final UUID uuid = UUID.fromString((String) metadata.get("uuid"));
-		final Object rawDate = metadata.get("creation_time");
-		final OffsetDateTime creationTime;
-		if (rawDate instanceof Date) {
-			creationTime = OffsetDateTime.ofInstant(((Date) rawDate).toInstant(), ZoneId.systemDefault());
-		} else {
-			creationTime = OffsetDateTime.parse((String) rawDate);
-		}
-		final Producer producer = parseProducer((Map<String, String>) metadata.get("producer"));
-		final Task task = parseTask((Map<String, Object>) metadata.get("task"));
-		return new Metadata(formatVersion, uuid, creationTime, producer, task);
-	}
-
-	private static Producer parseProducer(final Map<String, String> producer) {
-		// TODO: I don't see any reason to parse the optional entries here...
-		return new Producer(producer.get("name"), producer.get("version"));
-	}
-
-	@SuppressWarnings("unchecked")
-	private static Task parseTask(final Map<String, Object> task) {
-		final List<String> files = (List<String>) task.get("input_files");
-		final Map<String, String> hashes = (Map<String, String>) task.get("input_file_hashes");
-		final String spec = (String) task.get("specification");
-		final String dataModel = (String) task.get("data_model");
-		final String language = (String) task.get("language");
-		return new Task(files, hashes, spec, dataModel, language);
 	}
 
 	private static Location parseLocation(final Map<String, Object> location) {
 		return new Location((String) location.get("file_name"), (String) location.get("file_hash"),
 				(Integer) location.get("line"), (Integer) location.get("column"), (String) location.get("function"));
-	}
-
-	private static Invariant parseInvariant(final Map<String, String> invariant) {
-		return new Invariant(invariant.get("string"), invariant.get("type"), invariant.get("format"));
 	}
 }

@@ -27,10 +27,6 @@
 
 package de.uni_freiburg.informatik.ultimate.witnessparser.yaml;
 
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
 /**
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  */
@@ -43,61 +39,43 @@ public class FunctionContract extends WitnessEntry {
 
 	private final Location mLocation;
 	private final String mFormat;
-	private final List<String> mRequires;
-	private final List<String> mEnsures;
+	private final String mRequires;
+	private final String mEnsures;
 
-	public FunctionContract(final Metadata metadata, final Location location, final List<String> requires,
-			final List<String> ensures, final String format) {
-		super(NAME, metadata);
+	public FunctionContract(final Location location, final String requires, final String ensures, final String format) {
+		super(NAME);
 		mLocation = location;
 		mFormat = format;
-		mRequires = requires == null ? List.of() : requires;
-		mEnsures = ensures == null ? List.of() : ensures;
+		mRequires = requires;
+		mEnsures = ensures;
 	}
 
 	public Location getLocation() {
 		return mLocation;
 	}
 
-	public List<String> getRequires() {
+	public String getRequires() {
 		return mRequires;
 	}
 
-	public List<String> getEnsures() {
+	public String getEnsures() {
 		return mEnsures;
 	}
 
-	@Override
-	public WitnessSetEntry toSetEntry() {
-		final LinkedHashMap<String, Object> result = new LinkedHashMap<>();
-		if (!mRequires.isEmpty()) {
-			result.put("requires", mRequires);
-		}
-		if (!mEnsures.isEmpty()) {
-			result.put("ensures", mEnsures);
-		}
-		result.put("format", mFormat);
-		return new WitnessSetEntry(NAME, mLocation, result);
+	public String getFormat() {
+		return mFormat;
 	}
 
 	@Override
 	public String toString() {
-		return getClass().getSimpleName() + " " + mLocation + ": requires " + mRequires + ", ensures" + mEnsures;
-	}
-
-	@Override
-	public Map<String, Object> toMap() {
-		final LinkedHashMap<String, Object> result = new LinkedHashMap<>();
-		result.put("entry_type", NAME);
-		result.put("metadata", mMetadata.toMap());
-		result.put("location", mLocation.toMap());
-		if (!mRequires.isEmpty()) {
-			result.put("requires", mRequires);
+		final StringBuilder sb = new StringBuilder(getClass().getSimpleName());
+		sb.append(' ').append(mLocation).append(':');
+		if (mRequires != null) {
+			sb.append(" requires ").append(mRequires);
 		}
-		if (!mEnsures.isEmpty()) {
-			result.put("ensures", mEnsures);
+		if (mEnsures != null) {
+			sb.append(" ensures ").append(mEnsures);
 		}
-		result.put("format", mFormat);
-		return result;
+		return sb.toString();
 	}
 }

@@ -27,9 +27,11 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness;
 
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -46,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.LineOffsetComputer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.FunctionContract;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Location;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LocationInvariant;
@@ -77,13 +79,13 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 	}
 
 	@Override
-	protected ExtractedCorrectnessWitness extractWitness() {
+	protected IExtractedCorrectnessWitness extractWitness() {
 		// TODO: The column extraction happens in LocationFactory, so we create one as a workaround
 		final LocationFactory locationFactory =
 				new LocationFactory(null, new LineOffsetComputer(mTranslationUnit.getRawSignature()));
 		final Map<IASTNode, ExtractedLoopInvariant> loopInvariants = new HashMap<>();
 		final Map<IASTNode, ExtractedLocationInvariant> locationInvariants = new HashMap<>();
-		final ExtractedCorrectnessWitness rtr = new ExtractedCorrectnessWitness();
+		final YamlExtractedCorrectnessWitness rtr = new YamlExtractedCorrectnessWitness();
 		for (final WitnessEntry entry : mWitness.getEntries()) {
 			final Location location;
 			final Consumer<IASTNode> addFunction;
@@ -104,25 +106,25 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 			}
 			final LineColumnMatchingVisitor visitor = new LineColumnMatchingVisitor(location, locationFactory);
 			visitor.run(mTranslationUnit);
-			final Set<IASTNode> matches = visitor.getMatchedNodes();
-			if (matches.isEmpty()) {
+			final IASTNode node = visitor.getMatchedNode();
+			if (node == null) {
 				if (mIgnoreUnmatchedEntries) {
 					mStats.fail();
 					continue;
 				}
 				throw new UnsupportedOperationException("The following witness entry could not be matched: " + entry);
 			}
-			matches.forEach(addFunction);
+			addFunction.accept(node);
 			mStats.success();
 		}
-		rtr.addWitnessStatements(loopInvariants);
-		rtr.addWitnessStatements(locationInvariants);
+		loopInvariants.forEach(rtr::addInvariant);
+		locationInvariants.forEach(rtr::addInvariant);
 		return rtr;
 
 	}
 
 	private static void addFunctionContract(final FunctionContract functionContract, final IASTNode node,
-			final ExtractedCorrectnessWitness result) {
+			final YamlExtractedCorrectnessWitness result) {
 		if (!(node instanceof IASTSimpleDeclaration) && !(node instanceof IASTFunctionDefinition)) {
 			throw new UnsupportedOperationException(
 					"Function contract is only allowed at declaration or definition of a function (found "
@@ -134,14 +136,12 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 
 	private static void addLocationInvariant(final LocationInvariant current, final IASTNode node,
 			final Map<IASTNode, ExtractedLocationInvariant> locationInvariants) {
-		String invariant = current.getInvariant().getExpression();
-		Set<String> labels = Set.of(current.getMetadata().getUuid().toString());
+		String invariant = current.getInvariant();
 		final ExtractedLocationInvariant old = locationInvariants.get(node);
 		if (old != null) {
 			invariant = conjunctInvariants(old.getInvariant(), invariant);
-			labels = DataStructureUtils.union(old.getNodeLabels(), labels);
 		}
-		locationInvariants.put(node, new ExtractedLocationInvariant(invariant, labels, node, true));
+		locationInvariants.put(node, new ExtractedLocationInvariant(invariant, node, true));
 	}
 
 	private static void addLoopInvariant(final LoopInvariant current, final IASTNode node,
@@ -151,14 +151,12 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 			throw new UnsupportedOperationException(
 					"Loop invariant is only allowed at loop (found " + node.getClass().getSimpleName() + ")");
 		}
-		String invariant = current.getInvariant().getExpression();
-		Set<String> labels = Set.of(current.getMetadata().getUuid().toString());
+		String invariant = current.getInvariant();
 		final ExtractedLoopInvariant old = loopInvariants.get(node);
 		if (old != null) {
 			invariant = conjunctInvariants(old.getInvariant(), invariant);
-			labels = DataStructureUtils.union(old.getNodeLabels(), labels);
 		}
-		loopInvariants.put(node, new ExtractedLoopInvariant(invariant, labels, node));
+		loopInvariants.put(node, new ExtractedLoopInvariant(invariant, node));
 	}
 
 	private static String conjunctInvariants(final String invariant1, final String invariant2) {
@@ -166,7 +164,7 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 	}
 
 	private static final class LineColumnMatchingVisitor extends ASTGenericVisitor {
-		private final Set<IASTNode> mMatchedNodes = new HashSet<>();
+		private IASTNode mMatchedNode;
 		private final Location mLocation;
 		private final LocationFactory mLocationFactory;
 
@@ -180,8 +178,8 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 			translationUnit.accept(this);
 		}
 
-		public Set<IASTNode> getMatchedNodes() {
-			return mMatchedNodes;
+		public IASTNode getMatchedNode() {
+			return mMatchedNode;
 		}
 
 		@Override
@@ -197,11 +195,46 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 			// should be matched the first node of the line in that case) or it also matches the AST node
 			if (mLocation.getLine() == loc.getStartLine()
 					&& (mLocation.getColumn() == null || mLocation.getColumn() == loc.getStartColumn())) {
-				mMatchedNodes.add(node);
-				// skip the subtree if a match occurred, but continue with siblings.
-				return PROCESS_SKIP;
+				mMatchedNode = node;
+				// Abort the search, since we want the witness entry to be matched at most once.
+				return PROCESS_ABORT;
 			}
 			return PROCESS_CONTINUE;
+		}
+	}
+
+	private static final class YamlExtractedCorrectnessWitness implements IExtractedCorrectnessWitness {
+		private final HashRelation<IASTNode, ExtractedWitnessInvariant> mInvariants = new HashRelation<>();
+		private final HashRelation<IASTNode, ExtractedFunctionContract> mFunctionContracts = new HashRelation<>();
+
+		private void addInvariant(final IASTNode node, final ExtractedWitnessInvariant entry) {
+			mInvariants.addPair(node, entry);
+		}
+
+		private void addFunctionContract(final IASTNode function, final ExtractedFunctionContract contract) {
+			mFunctionContracts.addPair(function, contract);
+		}
+
+		@Override
+		public Set<ExtractedWitnessInvariant> getInvariants(final IASTNode node) {
+			return mInvariants.getImage(node);
+		}
+
+		@Override
+		public Set<ExtractedFunctionContract> getFunctionContracts(final IASTNode node) {
+			return mFunctionContracts.getImage(node);
+		}
+
+		@Override
+		public List<String> printAllEntries() {
+			final List<String> result = new ArrayList<>();
+			for (final Entry<IASTNode, ExtractedWitnessInvariant> entry : mInvariants.getSetOfPairs()) {
+				result.add(entry.getValue().toString());
+			}
+			for (final Entry<IASTNode, ExtractedFunctionContract> entry : mFunctionContracts.getSetOfPairs()) {
+				result.add(entry.getValue().toString());
+			}
+			return result;
 		}
 	}
 }

@@ -37,10 +37,6 @@ public class FormatVersion implements Comparable<FormatVersion> {
 	protected final int mMajor;
 	protected final int mMinor;
 
-	public FormatVersion() {
-		this(0, 0);
-	}
-
 	public FormatVersion(final int major, final int minor) {
 		validateVersionNumber(major < 0, "Major number of FormatVersion cannot be negative!");
 		validateVersionNumber(minor < 0, "Minor number of FormatVersion cannot be negative!");

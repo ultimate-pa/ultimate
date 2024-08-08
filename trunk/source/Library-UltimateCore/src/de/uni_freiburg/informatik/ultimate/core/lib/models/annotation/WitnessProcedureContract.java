@@ -27,8 +27,6 @@
 
 package de.uni_freiburg.informatik.ultimate.core.lib.models.annotation;
 
-import java.util.List;
-
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
@@ -57,12 +55,12 @@ public class WitnessProcedureContract extends ModernAnnotations {
 		mEnsuresClause = ensuresClause;
 	}
 
-	public List<String> getRequires() {
-		return mRequiresClause == null ? List.of() : List.of(mRequiresClause);
+	public String getRequires() {
+		return mRequiresClause;
 	}
 
-	public List<String> getEnsures() {
-		return mEnsuresClause == null ? List.of() : List.of(mEnsuresClause);
+	public String getEnsures() {
+		return mEnsuresClause;
 	}
 
 	public void annotate(final IElement node) {

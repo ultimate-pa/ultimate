@@ -28,12 +28,6 @@
 package de.uni_freiburg.informatik.ultimate.witnessparser.yaml;
 
 import java.util.List;
-import java.util.Map;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
-
-import org.yaml.snakeyaml.DumperOptions;
-import org.yaml.snakeyaml.Yaml;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.BasePayloadContainer;
 
@@ -58,31 +52,8 @@ public class Witness extends BasePayloadContainer {
 		return mEntries.toString();
 	}
 
-	public EntrySet toInvariantSet(final Supplier<Metadata> metadataSupplier) {
-		return new EntrySet(metadataSupplier.get(),
-				mEntries.stream().map(x -> x.toSetEntry()).collect(Collectors.toList()));
-	}
-
-	public String toYamlString() {
-		final DumperOptions options = new DumperOptions();
-		options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
-		options.setPrettyFlow(true);
-		options.setSplitLines(false);
-		options.setIndent(2);
-		return new Yaml(options).dump(mEntries.stream().map(WitnessEntry::toMap).collect(Collectors.toList()));
-	}
-
 	public boolean isCorrectnessWitness() {
 		// TODO: Check this, when we also support violation witnesses
 		return true;
-	}
-
-	/**
-	 * Interface to transform data to a map for serialization.
-	 *
-	 * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
-	 */
-	public interface IMapSerializable {
-		Map<String, Object> toMap();
 	}
 }

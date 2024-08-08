@@ -1,8 +1,8 @@
-- entry_type: entry_set
+- entry_type: invariant_set
   metadata:
-    format_version: '3.0'
-    uuid: 45befebe-7a0b-4bac-9d4f-25b33879955f
-    creation_time: '2024-02-06T11:15:01+01:00'
+    format_version: '2.1'
+    uuid: 4d9977a1-518f-438d-bef0-bb346400efd9
+    creation_time: '2024-06-08T14:15:48+02:00'
     producer:
       name: manual
       version: '1.0'
@@ -15,15 +15,14 @@
       data_model: UNUSED
       language: C
   content:
-  - type: function_contract
-    location:
-      file_name: contract2.c
-      file_hash: UNUSED
-      line: 1
-      column: 1
-      function: f
-    requires:
-    - x > 0
-    ensures:
-    - \result >= 0
-    format: acsl
+  - invariant:
+      type: function_contract
+      location:
+        file_name: contract2.c
+        file_hash: UNUSED
+        line: 1
+        column: 1
+        function: f
+      requires: x > 0
+      ensures: \result >= 0
+      format: acsl_expression
