@@ -44,10 +44,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.IFinishWithFinalAbstraction;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.IProofProducer;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.IUpdateOnDifference;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.IUpdateOnMinimization;
 import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
@@ -62,9 +59,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.TimeTracker;
  *            The type of letters in the program automaton
  */
 public final class NwaHoareProofProducer<L extends IAction>
-		implements IProofProducer<INestedWordAutomaton<L, IPredicate>, IFloydHoareAnnotation<IPredicate>>,
-		IUpdateOnMinimization<L>, IUpdateOnDifference<L>,
-		IFinishWithFinalAbstraction<INestedWordAutomaton<L, IPredicate>> {
+		implements IProofProducer<INestedWordAutomaton<L, IPredicate>, IFloydHoareAnnotation<IPredicate>> {
 
 	private final IUltimateServiceProvider mServices;
 	private final INestedWordAutomaton<L, IPredicate> mProgram;
@@ -133,6 +128,7 @@ public final class NwaHoareProofProducer<L extends IAction>
 			throw new AssertionError(
 					"ManagedScript must not be locked at the beginning of Hoare annotation computation");
 		}
+		// TODO avoid cast, instead traverse and collect reachable states
 		new HoareAnnotationExtractor<>(mServices, mFinalAbstraction, mHaf);
 		return new HoareAnnotationComposer(mCsToolkit, mPredicateFactory, mHaf, mServices);
 	}
@@ -142,30 +138,25 @@ public final class NwaHoareProofProducer<L extends IAction>
 		return mStatistics;
 	}
 
-	@Override
 	public boolean exploitSigmaStarConcatOfIa() {
 		return false;
 	}
 
-	@Override
 	public void updateOnIntersection(
 			final Map<IPredicate, Map<IPredicate, ProductNwa<L, IPredicate>.ProductState>> fst2snd2res,
 			final IDoubleDeckerAutomaton<L, IPredicate> result) {
 		mHaf.updateOnIntersection(fst2snd2res, result);
 	}
 
-	@Override
 	public void addDeadEndDoubleDeckers(final IOpWithDelayedDeadEndRemoval<L, IPredicate> diff) {
 		mHaf.addDeadEndDoubleDeckers(diff);
 	}
 
-	@Override
 	public void updateOnMinimization(final Map<IPredicate, IPredicate> old2New,
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction) {
 		mHaf.updateOnMinimization(old2New, abstraction);
 	}
 
-	@Override
 	public void finish(final INestedWordAutomaton<L, IPredicate> finalAbstraction) {
 		mFinalAbstraction = finalAbstraction;
 	}

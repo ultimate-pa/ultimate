@@ -77,8 +77,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskFileIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.TaskIdentifier;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.IAbstractionSanityCheck;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.IProofProducer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -100,7 +98,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
  *
  * @author heizmann@informatik.uni-freiburg.de
  */
-public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>, P, T extends IProofProducer<A, P>> {
+public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>> {
 	private static final boolean DUMP_BIGGEST_AUTOMATON = false;
 
 	protected final ILogger mLogger;
@@ -122,11 +120,6 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 	 * Intermediate layer to encapsulate preferences.
 	 */
 	protected final TAPreferences mPref;
-
-	/**
-	 * Iteratively computes a proof artifact during CEGAR loop. May be null.
-	 */
-	protected final T mProofUpdater;
 
 	/**
 	 * Set of error location whose reachability is analyzed by this CEGAR loop.
@@ -201,7 +194,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 	protected AbstractCegarLoop(final IUltimateServiceProvider services, final DebugIdentifier name,
 			final A initialAbstraction, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
-			final Set<? extends IcfgLocation> errorLocs, final T proofUpdater) {
+			final Set<? extends IcfgLocation> errorLocs) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mSimplificationTechnique = taPrefs.getSimplificationTechnique();
@@ -214,7 +207,6 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 		mPredicateFactory = predicateFactory;
 		mPref = taPrefs;
 		mErrorLocs = errorLocs;
-		mProofUpdater = proofUpdater;
 		// TODO: TaskIdentifier should probably be provided by caller
 		mTaskIdentifier = new SubtaskFileIdentifier(null, mIcfg.getIdentifier() + "_" + name);
 		mResultBuilder = new CegarLoopResultBuilder();
@@ -331,13 +323,13 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 	 */
 	protected abstract void finish();
 
-	public final CegarLoopResult<L, P> runCegar() {
-		final CegarLoopResult<L, P> r = startCegar();
+	public final CegarLoopResult<L> runCegar() {
+		final CegarLoopResult<L> r = startCegar();
 		finish();
 		return r;
 	}
 
-	private final CegarLoopResult<L, P> startCegar() {
+	private final CegarLoopResult<L> startCegar() {
 		mIteration = 0;
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("======== Iteration %s == of CEGAR loop == %s ========", mIteration, mName);
@@ -603,7 +595,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 		return parentServices;
 	}
 
-	private CegarLoopResult<L, P> performLimitReachedActions(final IRunningTaskStackProvider e) {
+	private CegarLoopResult<L> performLimitReachedActions(final IRunningTaskStackProvider e) {
 		mLogger.warn("Verification canceled: %s", e.printRunningTaskMessage());
 
 		final Result res;
@@ -847,7 +839,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 
 		}
 
-		public CegarLoopResult<L, P> getResult() {
+		public CegarLoopResult<L> getResult() {
 			final IStatisticsDataProvider cegarLoopBenchmarkGenerator = getCegarLoopBenchmark();
 
 			final List<Pair<AbstractInterpolantAutomaton<L>, IPredicateUnifier>> floydHoareAutomata;
@@ -857,20 +849,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 				floydHoareAutomata = null;
 			}
 
-			// TODO #proofRefactor let CEGAR loops transmit info to proof producers (in isAbstractionEmpty())
-			// TODO #proofRefactor let callers decide what to do with proofs (use CegarLoopResult::hasProvenAnything)
-			P proof;
-			if (mProofUpdater != null && mResults.values().stream().anyMatch(a -> a.getResult() == Result.SAFE)) {
-				assert mProofUpdater.isReadyToComputeProof() : "Not ready to compute proof";
-				mLogger.debug("Computing proof for CEGAR loop...");
-				proof = mProofUpdater.getOrComputeProof();
-			} else {
-				mLogger.debug("Omitting computation of proof for CEGAR loop");
-				proof = null;
-			}
-
-			return new CegarLoopResult<>(mResults, cegarLoopBenchmarkGenerator, getArtifact(), proof,
-					floydHoareAutomata);
+			return new CegarLoopResult<>(mResults, cegarLoopBenchmarkGenerator, getArtifact(), floydHoareAutomata);
 		}
 
 		public int remainingErrorLocs() {

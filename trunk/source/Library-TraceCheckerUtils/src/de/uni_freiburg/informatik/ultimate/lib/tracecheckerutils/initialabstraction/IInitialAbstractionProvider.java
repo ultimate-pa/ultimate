@@ -33,7 +33,6 @@ import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
@@ -59,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
  * @param <A>
  *            The type of the computed abstraction
  */
-public interface IInitialAbstractionProvider<L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>> {
+public interface IInitialAbstractionProvider<L extends IIcfgTransition<?>, A extends IAutomaton<L, ?>> {
 	/**
 	 * Computes the initial abstraction for the given control flow graph and error locations.
 	 *
@@ -74,29 +73,6 @@ public interface IInitialAbstractionProvider<L extends IIcfgTransition<?>, A ext
 	 */
 	A getInitialAbstraction(IIcfg<? extends IcfgLocation> icfg, Set<? extends IcfgLocation> errorLocs)
 			throws AutomataLibraryException;
-
-	/**
-	 * After an initial abstraction has been provided, retrieves a proof postprocessor that converts from a proof of the
-	 * provided abstraction to a proof of the underlying {@link IIcfg}.
-	 *
-	 * @param <INPROOF>
-	 *            The type of proof for the provided abstraction that is given
-	 * @param <OUTPROOF>
-	 *            The type of proof for the original ICFG that shall be produced
-	 * @param inputProof
-	 *            The type of proof for the provided abstraction that is given
-	 * @param outputProof
-	 *            The type of proof for the original ICFG that shall be produced
-	 * @return A proof postprocessor satisfying the above constraints.
-	 * @throws UnsupportedOperationException
-	 *             if no proof postprocessor satisfying the constraints is known
-	 */
-	// TODO #proofRefactor
-	default <INPROOF, OUTPROOF> OUTPROOF backtranslateProof(final INPROOF inputProof,
-			final Class<OUTPROOF> outputProofType) {
-		throw new UnsupportedOperationException(getClass().getSimpleName()
-				+ " does not support producing proofs of type " + outputProofType.getSimpleName());
-	}
 
 	default IStatisticsDataProvider getStatistics() {
 		return new AbstractStatisticsDataProvider() {

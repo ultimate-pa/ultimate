@@ -71,15 +71,16 @@ public abstract class Petri2FiniteAutomatonAbstractionProvider<L extends IIcfgTr
 		implements IInitialAbstractionProvider<L, A> {
 
 	protected final IInitialAbstractionProvider<L, ? extends IPetriNet<L, IPredicate>> mUnderlying;
-	protected final AutomataLibraryServices mServices;
+	protected final IUltimateServiceProvider mServices;
+	protected final AutomataLibraryServices mAutomataServices;
 	protected final IPetriNet2FiniteAutomatonStateFactory<IPredicate> mStateFactory;
 
-	public Petri2FiniteAutomatonAbstractionProvider(
+	public Petri2FiniteAutomatonAbstractionProvider(final IUltimateServiceProvider services,
 			final IInitialAbstractionProvider<L, ? extends IPetriNet<L, IPredicate>> underlying,
-			final IPetriNet2FiniteAutomatonStateFactory<IPredicate> stateFactory,
-			final AutomataLibraryServices services) {
+			final IPetriNet2FiniteAutomatonStateFactory<IPredicate> stateFactory) {
 		mUnderlying = underlying;
 		mServices = services;
+		mAutomataServices = new AutomataLibraryServices(services);
 		mStateFactory = stateFactory;
 	}
 
@@ -136,7 +137,6 @@ public abstract class Petri2FiniteAutomatonAbstractionProvider<L extends IIcfgTr
 	 */
 	public static class Eager<L extends IIcfgTransition<?>>
 			extends Petri2FiniteAutomatonAbstractionProvider<L, INestedWordAutomaton<L, IPredicate>> {
-
 		private INestedWordAutomaton<L, IPredicate> mAbstraction;
 		private CfgSmtToolkit mCsToolkit;
 
@@ -148,12 +148,12 @@ public abstract class Petri2FiniteAutomatonAbstractionProvider<L extends IIcfgTr
 		 * @param stateFactory
 		 *            The state factory used to create the automaton states
 		 * @param services
-		 *            Automata library services used in the transformation
+		 *            services used in the transformation
 		 */
-		public Eager(final IInitialAbstractionProvider<L, ? extends IPetriNet<L, IPredicate>> underlying,
-				final IPetriNet2FiniteAutomatonStateFactory<IPredicate> stateFactory,
-				final AutomataLibraryServices services) {
-			super(underlying, stateFactory, services);
+		public Eager(final IUltimateServiceProvider services,
+				final IInitialAbstractionProvider<L, ? extends IPetriNet<L, IPredicate>> underlying,
+				final IPetriNet2FiniteAutomatonStateFactory<IPredicate> stateFactory) {
+			super(services, underlying, stateFactory);
 		}
 
 		@Override
@@ -164,7 +164,7 @@ public abstract class Petri2FiniteAutomatonAbstractionProvider<L extends IIcfgTr
 			final IPetriNet<L, IPredicate> net = mUnderlying.getInitialAbstraction(icfg, errorLocs);
 			try {
 				final Map<IcfgLocation, Boolean> hopelessCache = new HashMap<>();
-				mAbstraction = new PetriNet2FiniteAutomaton<>(mServices, mStateFactory, net,
+				mAbstraction = new PetriNet2FiniteAutomaton<>(mAutomataServices, mStateFactory, net,
 						s -> areAllLocationsHopeless(hopelessCache, errorLocs, s)).getResult();
 				return mAbstraction;
 			} catch (final PetriNetNot1SafeException e) {
@@ -178,9 +178,9 @@ public abstract class Petri2FiniteAutomatonAbstractionProvider<L extends IIcfgTr
 			}
 		}
 
-		public NwaHoareProofProducer<L> getProofProducer(final IUltimateServiceProvider services,
-				final PredicateFactory predicateFactory, final HoareProofSettings prefs) {
-			return new NwaHoareProofProducer<>(services, mAbstraction, mCsToolkit, predicateFactory, prefs,
+		public NwaHoareProofProducer<L> getProofProducer(final PredicateFactory predicateFactory,
+				final HoareProofSettings hoarePrefs) {
+			return new NwaHoareProofProducer<>(mServices, mAbstraction, mCsToolkit, predicateFactory, hoarePrefs,
 					mAbstraction.getStates());
 		}
 	}
@@ -205,12 +205,12 @@ public abstract class Petri2FiniteAutomatonAbstractionProvider<L extends IIcfgTr
 		 * @param stateFactory
 		 *            The state factory used to create automaton states
 		 * @param services
-		 *            Automata library services used in the transformation
+		 *            services used in the transformation
 		 */
-		public Lazy(final IInitialAbstractionProvider<L, ? extends IPetriNet<L, IPredicate>> underlying,
-				final IPetriNet2FiniteAutomatonStateFactory<IPredicate> stateFactory,
-				final AutomataLibraryServices services) {
-			super(underlying, stateFactory, services);
+		public Lazy(final IUltimateServiceProvider services,
+				final IInitialAbstractionProvider<L, ? extends IPetriNet<L, IPredicate>> underlying,
+				final IPetriNet2FiniteAutomatonStateFactory<IPredicate> stateFactory) {
+			super(services, underlying, stateFactory);
 		}
 
 		@Override
@@ -219,7 +219,7 @@ public abstract class Petri2FiniteAutomatonAbstractionProvider<L extends IIcfgTr
 				throws AutomataLibraryException {
 			final IPetriNet<L, IPredicate> net = mUnderlying.getInitialAbstraction(icfg, errorLocs);
 			final Map<IcfgLocation, Boolean> hopelessCache = new HashMap<>();
-			return new LazyPetriNet2FiniteAutomaton<>(mServices, mStateFactory, net,
+			return new LazyPetriNet2FiniteAutomaton<>(mAutomataServices, mStateFactory, net,
 					s -> areAllLocationsHopeless(hopelessCache, errorLocs, s));
 		}
 	}

@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
  * @param <PROOF>
  *            The type of proof which is produced
  */
-public interface IProofProducer<PROGRAM, PROOF> {
+public interface IProofProducer<PROGRAM, PROOF extends IProof> {
 	/**
 	 * Retrieves the (fixed) program for which this instance computes a proof.
 	 *

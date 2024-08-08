@@ -112,7 +112,7 @@ public class ChcProviderConcurrentWithLbe implements IChcProvider {
 		final PetriInitialAbstractionProvider<IcfgEdge> petriNetProvider =
 				new PetriInitialAbstractionProvider<>(services, predicateFactory, true);
 		final PetriLbeInitialAbstractionProvider<IcfgEdge> lbeProvider =
-				new PetriLbeInitialAbstractionProvider<>(petriNetProvider, services, IcfgEdge.class,
+				new PetriLbeInitialAbstractionProvider<>(services, petriNetProvider, IcfgEdge.class,
 						new IndependenceSettings(), new IcfgCompositionFactory(services, csToolkit));
 		final Set<IcfgLocation> inUseLocs =
 				new HashSet<>(icfg.getCfgSmtToolkit().getConcurrencyInformation().getInUseErrorNodeMap().values());

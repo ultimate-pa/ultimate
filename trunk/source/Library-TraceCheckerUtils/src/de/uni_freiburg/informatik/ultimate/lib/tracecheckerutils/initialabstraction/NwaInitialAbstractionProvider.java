@@ -37,10 +37,11 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.IProofTransformer;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.HoareProofSettings;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.IFloydHoareAnnotation;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.NwaHoareProofProducer;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.TransformFloydHoareAnnotation;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.cfg2automaton.Cfg2Automaton;
 
 /**
@@ -94,25 +95,16 @@ public class NwaInitialAbstractionProvider<L extends IIcfgTransition<?>>
 		return mAbstraction;
 	}
 
-	@Override
-	public <INPROOF, OUTPROOF> OUTPROOF backtranslateProof(final INPROOF inputProof,
-			final Class<OUTPROOF> outputProofType) {
+	public NwaHoareProofProducer<L> getProofProducer() {
 		if (!mPrefs.computeHoareAnnotation()) {
 			return null;
 		}
-
-		// TODO #proofRefactor implement retrieval of suitable proof converter, if one exists
-		final IProofTransformer<INestedWordAutomaton<L, IPredicate>, IFloydHoareAnnotation<IPredicate>, IIcfg<?>, OUTPROOF> converter =
-				null;
-		if (converter != null) {
-			return null; // (IProofTransformer) converter;
-		}
-
-		return IInitialAbstractionProvider.super.backtranslateProof(inputProof, outputProofType);
-	}
-
-	public NwaHoareProofProducer<L> getProofProducer() {
 		return new NwaHoareProofProducer<>(mServices, mAbstraction, mCsToolkit, mPredicateFactory, mPrefs,
 				mHoareStates);
+	}
+
+	public IFloydHoareAnnotation<IcfgLocation> backtranslateProof(final IFloydHoareAnnotation<IPredicate> inputProof) {
+		return new TransformFloydHoareAnnotation<>(inputProof, mAbstraction.getStates(), PredicateUtils::getLocation)
+				.getResult();
 	}
 }

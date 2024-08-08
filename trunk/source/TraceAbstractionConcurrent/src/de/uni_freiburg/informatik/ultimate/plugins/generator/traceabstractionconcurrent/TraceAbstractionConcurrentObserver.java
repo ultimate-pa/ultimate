@@ -113,7 +113,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 			}
 		}
 
-		BasicCegarLoop<IcfgEdge, ?, ?, ?> basicCegarLoop;
+		BasicCegarLoop<IcfgEdge, ?> basicCegarLoop;
 		final AllErrorsAtOnceDebugIdentifier name = TraceAbstractionStarter.AllErrorsAtOnceDebugIdentifier.INSTANCE;
 		final PredicateFactoryRefinement stateFactoryForRefinement = new PredicateFactoryRefinement(mServices,
 				csToolkit.getManagedScript(), predicateFactory, false, Collections.emptySet());
@@ -132,7 +132,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 			throw new IllegalArgumentException();
 		}
 		final TraceAbstractionBenchmarks traceAbstractionBenchmark = new TraceAbstractionBenchmarks(petrifiedIcfg);
-		final CegarLoopResult<IcfgEdge, ?> result = basicCegarLoop.runCegar();
+		final CegarLoopResult<IcfgEdge> result = basicCegarLoop.runCegar();
 		final IStatisticsDataProvider cegarLoopBenchmarkGenerator = basicCegarLoop.getCegarLoopBenchmark();
 		traceAbstractionBenchmark.aggregateBenchmarkData(cegarLoopBenchmarkGenerator);
 		reportBenchmark(traceAbstractionBenchmark);

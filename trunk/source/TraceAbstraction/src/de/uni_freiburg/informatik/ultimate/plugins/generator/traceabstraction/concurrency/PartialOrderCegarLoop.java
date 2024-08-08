@@ -81,7 +81,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateWithConjuncts;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.IProofProducer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.BetterLockstepOrder;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.LoopLockstepOrder.PredicateWithLastThread;
@@ -113,8 +112,8 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
  * @param <L>
  *            The type of statements in the program.
  */
-public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends
-		BasicCegarLoop<L, INwaOutgoingLetterAndTransitionProvider<L, IPredicate>, Object, IProofProducer<INwaOutgoingLetterAndTransitionProvider<L, IPredicate>, Object>> {
+public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
+		extends BasicCegarLoop<L, INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> {
 	private final PartialOrderMode mPartialOrderMode;
 	private final InformationStorageFactory mFactory = new InformationStorageFactory();
 
@@ -134,7 +133,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends
 			final TAPreferences taPrefs, final Set<IcfgLocation> errorLocs, final IUltimateServiceProvider services,
 			final List<IRefinableIndependenceProvider<L>> independenceProviders, final Class<L> transitionClazz,
 			final PredicateFactoryRefinement stateFactoryForRefinement) {
-		super(name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, null, services,
+		super(name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, false, services,
 				transitionClazz, stateFactoryForRefinement);
 
 		assert !mPref.applyOneShotPOR() : "Turn off one-shot partial order reduction when using this CEGAR loop.";

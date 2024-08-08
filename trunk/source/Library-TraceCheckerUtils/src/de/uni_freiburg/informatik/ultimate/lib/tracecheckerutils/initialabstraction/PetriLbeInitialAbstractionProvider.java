@@ -77,10 +77,10 @@ public class PetriLbeInitialAbstractionProvider<L extends IIcfgTransition<?>>
 	 * @param pluginId
 	 *            A plugin ID under which statistics are reported
 	 */
-	public PetriLbeInitialAbstractionProvider(
+	public PetriLbeInitialAbstractionProvider(final IUltimateServiceProvider services,
 			final IInitialAbstractionProvider<L, BoundedPetriNet<L, IPredicate>> underlying,
-			final IUltimateServiceProvider services, final Class<L> transitionClazz,
-			final IndependenceSettings independenceSettings, final IPLBECompositionFactory<L> compositionFactory) {
+			final Class<L> transitionClazz, final IndependenceSettings independenceSettings,
+			final IPLBECompositionFactory<L> compositionFactory) {
 		mUnderlying = underlying;
 		mServices = services;
 		mTransitionClazz = transitionClazz;

@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.IProof;
 
 /**
  * A Floyd/Hoare annotation of a program, which is usually represented as some kind of graph (e.g. ICFG or automaton).
@@ -45,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
  * @param <S>
  *            the type of states
  */
-public interface IFloydHoareAnnotation<S> {
+public interface IFloydHoareAnnotation<S> extends IProof {
 	IPredicate getPrecondition();
 
 	IPredicate getPostcondition();

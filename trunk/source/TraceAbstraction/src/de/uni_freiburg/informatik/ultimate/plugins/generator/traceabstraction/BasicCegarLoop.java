@@ -95,7 +95,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskIterationIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult.BasicRefinementEngineResult;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.IProofProducer;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.NwaFloydHoareValidityCheck;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.cfg2automaton.Cfg2Automaton;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
@@ -135,8 +134,8 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
  * @param <A>
  *            The type of abstraction refined by the CEGAR loop
  */
-public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>, P, T extends IProofProducer<A, P>>
-		extends AbstractCegarLoop<L, A, P, T> {
+public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>>
+		extends AbstractCegarLoop<L, A> {
 
 	private static final boolean NON_EA_INDUCTIVITY_CHECK = false;
 
@@ -159,10 +158,10 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 
 	public BasicCegarLoop(final DebugIdentifier name, final A initialAbstraction, final IIcfg<?> rootNode,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final TAPreferences taPrefs,
-			final Set<? extends IcfgLocation> errorLocs, final T proofUpdater, final IUltimateServiceProvider services,
-			final Class<L> transitionClazz, final PredicateFactoryRefinement stateFactoryForRefinement) {
-		super(services, name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs,
-				proofUpdater);
+			final Set<? extends IcfgLocation> errorLocs, final boolean computeProof,
+			final IUltimateServiceProvider services, final Class<L> transitionClazz,
+			final PredicateFactoryRefinement stateFactoryForRefinement) {
+		super(services, name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs);
 		mPathProgramDumpController = new PathProgramDumpController<>(getServices(), mPref, mIcfg);
 
 		InterpolationTechnique interpolation = taPrefs.interpolation();
@@ -175,7 +174,7 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 		mStoreFloydHoareAutomata = taPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.NONE;
 		mStateFactoryForRefinement = stateFactoryForRefinement;
 		mPredicateFactoryInterpolantAutomata = new PredicateFactoryForInterpolantAutomata(mCsToolkit.getManagedScript(),
-				mPredicateFactory, proofUpdater != null);
+				mPredicateFactory, computeProof);
 
 		mPredicateFactoryResultChecking = new PredicateFactoryResultChecking(mPredicateFactory);
 
