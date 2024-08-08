@@ -133,16 +133,21 @@ public final class FloydHoareUtils {
 			final IcfgLocation exit = exitNodes.get(procName);
 			final IPredicate requires = annotation.getAnnotation(entry);
 			final IPredicate ensures = annotation.getAnnotation(exit);
-			if (ensures != null) {
-				final Term ensuresFormula = ensures.getFormula();
-				final Term requiresFormula =
-						PredicateUtils.eliminateOldVars(services, icfg.getCfgSmtToolkit().getManagedScript(), requires);
-
-				final ProcedureContractResult<IIcfgElement, Term> result = new ProcedureContractResult<>(pluginName,
-						exit, backTranslatorService, procName, requiresFormula, ensuresFormula);
-				reporter.accept(result);
-				new WitnessProcedureContract(result.getRequiresResult(), result.getEnsuresResult()).annotate(exit);
+			if (ensures == null) {
+				continue;
 			}
+			final Term ensuresFormula = PredicateUtils.eliminateLocalVars(ensures, services, icfg.getCfgSmtToolkit());
+			final Term requiresFormula =
+					PredicateUtils.eliminateOldVars(services, icfg.getCfgSmtToolkit().getManagedScript(), requires);
+
+			final ProcedureContractResult<IIcfgElement, Term> result = new ProcedureContractResult<>(pluginName, exit,
+					backTranslatorService, procName, requiresFormula, ensuresFormula);
+			if (result.isTrivial()) {
+				continue;
+			}
+
+			reporter.accept(result);
+			new WitnessProcedureContract(result.getRequiresResult(), result.getEnsuresResult()).annotate(exit);
 		}
 	}
 

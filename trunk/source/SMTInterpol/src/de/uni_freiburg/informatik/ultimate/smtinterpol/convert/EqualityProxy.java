@@ -26,6 +26,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.SourceAnnotation;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCEquality;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.LAEquality;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.Polynomial;
 
 public class EqualityProxy {
 
@@ -78,13 +79,13 @@ public class EqualityProxy {
 
 	public LAEquality createLAEquality() {
 		/* create la part */
-		final SMTAffineTerm affine = SMTAffineTerm.create(mLhs);
-		affine.add(Rational.MONE, SMTAffineTerm.create(mRhs));
+		final Polynomial affine = new Polynomial(mLhs);
+		affine.add(Rational.MONE, mRhs);
 		return mClausifier.getLASolver().createEquality(mClausifier.createMutableAffinTerm(affine, null));
 	}
 
 	public Rational computeNormFactor(final Term lhs, final Term rhs) {
-		final SMTAffineTerm affine = SMTAffineTerm.create(lhs);
+		final Polynomial affine = new Polynomial(lhs);
 		affine.add(Rational.MONE, rhs);
 		return affine.getGcd().inverse();
 	}

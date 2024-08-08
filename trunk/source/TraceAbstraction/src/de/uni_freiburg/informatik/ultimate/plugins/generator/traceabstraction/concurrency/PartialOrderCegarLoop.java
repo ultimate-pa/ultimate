@@ -59,7 +59,6 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.Coveri
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.DeadEndOptimizingSearchVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.IDeadEndStore;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.IDfsVisitor;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.SleepSetVisitorSearch;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.WrapperVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
@@ -314,22 +313,11 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends
 		if (visitor instanceof WrapperVisitor<?, ?, ?>) {
 			visitor = ((WrapperVisitor<L, IPredicate, IDfsVisitor<L, IPredicate>>) visitor).getBaseVisitor();
 		}
-		if (mPartialOrderMode.hasSleepSets() && !mPartialOrderMode.doesUnrolling()) {
-			// TODO Refactor sleep set reductions to full DFS and always use (simpler) AcceptingRunSearchVisitor
-			return ((SleepSetVisitorSearch<L, IPredicate>) visitor).constructRun();
-		}
 		return ((AcceptingRunSearchVisitor<L, IPredicate>) visitor).getAcceptingRun();
 	}
 
 	private IDfsVisitor<L, IPredicate> createVisitor() {
-		IDfsVisitor<L, IPredicate> visitor;
-		if (mPartialOrderMode.hasSleepSets() && !mPartialOrderMode.doesUnrolling()) {
-			// TODO Refactor sleep set reductions to full DFS and always use (simpler) AcceptingRunSearchVisitor
-			// TODO once this is done, we can also give a more precise return type and avoid casts in getCounterexample
-			visitor = new SleepSetVisitorSearch<>(this::isGoalState, this::isProvenState);
-		} else {
-			visitor = new AcceptingRunSearchVisitor<>(this::isGoalState);
-		}
+		IDfsVisitor<L, IPredicate> visitor = new AcceptingRunSearchVisitor<>(this::isGoalState);
 		if (mPOR.getDfsOrder() instanceof BetterLockstepOrder<?, ?>) {
 			visitor = ((BetterLockstepOrder<L, IPredicate>) mPOR.getDfsOrder()).wrapVisitor(visitor);
 		}

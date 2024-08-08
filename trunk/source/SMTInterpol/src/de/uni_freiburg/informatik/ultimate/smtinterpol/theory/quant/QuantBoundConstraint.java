@@ -19,7 +19,7 @@
 package de.uni_freiburg.informatik.ultimate.smtinterpol.theory.quant;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SMTAffineTerm;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.Polynomial;
 
 /**
  * A quantified bound constraint atom of the form "SMTAffineTerm <= 0".
@@ -29,15 +29,15 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SMTAffineTerm;
  */
 public class QuantBoundConstraint extends QuantLiteral {
 
-	private final SMTAffineTerm mSmtAff;
+	private final Polynomial mSmtAff;
 
-	public QuantBoundConstraint(Term term, SMTAffineTerm smtAff) {
+	public QuantBoundConstraint(Term term, Polynomial smtAff) {
 		super(term);
 		mSmtAff = smtAff;
 		mNegated = new NegQuantLiteral(this);
 	}
 
-	public SMTAffineTerm getAffineTerm() {
+	public Polynomial getAffineTerm() {
 		return mSmtAff;
 	}
 }

@@ -1,5 +1,139 @@
 const _AWARDS = [
     {
+        id: "svcomp2024",
+        competition: "SV-COMP 2024",
+        competition_link: "http://sv-comp.sosy-lab.org/2024/",
+        image: "svcomp2024.jpg",
+        text: "Yet again, <strong>ULTIMATE Automizer has won the <em>Overall</em> ranking of the 13th Competition on Software Verification (SV-COMP 2024)!</strong> The ULTIMATE team participated with four verification tools (Automizer, GemCutter, Kojak and Taipan), and collected many more prizes.",
+        tools: [
+            {
+                name: "Automizer",
+                id: "automizer",
+                awards: [
+                    {
+                        category: "Overall",
+                        important: true,
+                        medal: "gold"
+                    },
+                    {
+                        category: "NoOverflows",
+                        medal: "gold"
+                    },
+                    {
+                        category: "Termination",
+                        medal: "silver"
+                    },
+                    {
+                        category: "ConcurrencySafety",
+                        medal: "bronze"
+                    },
+                    {
+                        category: "MemSafety",
+                        medal: "bronze"
+                    }
+                ]
+            },
+            {
+                name: "GemCutter",
+                id: "gemcutter",
+                awards: [
+                    {
+                        category: "ConcurrencySafety",
+                        medal: "silver"
+                    }
+                ]
+            },
+            {
+                name: "Taipan",
+                id: "taipan",
+                awards: [
+                    {
+                        category: "Overall",
+                        medal: "bronze"
+                    },
+                    {
+                        category: "FalsificationOverall",
+                        medal: "bronze"
+                    },
+                    {
+                        category: "NoOverflows",
+                        medal: "silver"
+                    }
+                ]
+            },
+            {
+                name: "Automizer Violation Witness Validator",
+                id: "automizer",
+                awards: [
+                    {
+                        category: "Overall",
+                        important: true,
+                        medal: "gold"
+                    },
+                    {
+                        category: "ReachSafety",
+                        medal: "gold"
+                    },
+                    {
+                        category: "SoftwareSystems",
+                        medal: "gold"
+                    },
+                    {
+                        category: "NoOverflows",
+                        medal: "gold"
+                    },
+                    {
+                        category: "Termination",
+                        medal: "gold"
+                    },
+                    {
+                        category: "ConcurrencySafety",
+                        medal: "silver"
+                    },
+                    {
+                        category: "MemSafety",
+                        medal: "bronze"
+                    }
+                ]
+            },
+            {
+                name: "Automizer Correctness Witness Validator",
+                id: "automizer",
+                awards: [
+                    {
+                        category: "Overall (v1.0/v2.0)",
+                        important: true,
+                        medal: "gold"
+                    },
+                    {
+                        category: "ReachSafety (v1.0/v2.0)",
+                        medal: "gold"
+                    },
+                    {
+                        category: "MemSafety (v1.0/v2.0)",
+                        medal: "gold"
+                    },
+                    {
+                        category: "ConcurrencySafety (v1.0)",
+                        medal: "gold"
+                    },
+                    {
+                        category: "NoOverflows (v1.0/v2.0)",
+                        medal: "silver"
+                    },
+                    {
+                        category: "SoftwareSystems (v1.0)",
+                        medal: "silver"
+                    },
+                    {
+                        category: "SoftwareSystems (v2.0)",
+                        medal: "bronze"
+                    }
+                ]
+            }
+        ]
+    },
+    {
         id: "svcomp2023",
         competition: "SV-COMP 2023",
         competition_link: "http://sv-comp.sosy-lab.org/2023/",
@@ -123,7 +257,7 @@ const _AWARDS = [
         id: "svcomp2022",
         competition: "SV-COMP 2022",
         competition_link: "http://sv-comp.sosy-lab.org/2022/",
-        image: "svcomp2022.png",
+        image: "svcomp2022.jpg",
         text: "The ULTIMATE team participated in the 11th Competition on Software Verification (SV-COMP 2022) with four verification tools: Automizer, Kojak, Taipan and, for the first time, GemCutter. We collected several medals and won the demo category <em>NoDataRace</em>.",
         tools: [{
             name: "Automizer",
@@ -172,7 +306,7 @@ const _AWARDS = [
         id: "svcomp2021",
         competition: "SV-COMP 2021",
         competition_link: "http://sv-comp.sosy-lab.org/2021/",
-        image: "svcomp2021.png",
+        image: "svcomp2021.jpg",
         text: "In the 10th Competition on Software Verification (SV-COMP 2021), the ULTIMATE team competed with the verification tools Automizer, Kojak and Taipan. We collected several medals, including (for the fifth time in a row) the gold medal in the category <em>Termination</em>.",
         tools: [{
             name: "Automizer",
@@ -215,7 +349,7 @@ const _AWARDS = [
         id: "svcomp2020",
         competition: "SV-COMP 2020",
         competition_link: "http://sv-comp.sosy-lab.org/2020/",
-        image: "svcomp2020.png",
+        image: "svcomp2020.jpg",
         text: "ULTIMATE Automizer won second place in the <em>Overall</em> ranking of the 9th Competition on Software Verification (SV-COMP 2020). The ULTIMATE team competed with the verification tools Automizer, Kojak and Taipan.",
         tools: [{
             name: "Automizer",
@@ -223,7 +357,8 @@ const _AWARDS = [
             awards: [
                 {
                     category: "Overall",
-                    medal: "silver"
+                    medal: "silver",
+                    important: true
                 },
                 {
                     category: "Termination",
@@ -266,7 +401,7 @@ const _AWARDS = [
         id: "svcomp2019",
         competition: "SV-COMP 2019",
         competition_link: "http://sv-comp.sosy-lab.org/2019/",
-        image: "svcomp2019.png",
+        image: "svcomp2019.jpg",
         text: "Three ULTIMATE verification tools participated in the 8th Competition on Software Verification (SV-COMP 2019): Automizer, Kojak and Taipan. The ULTIMATE team won two gold medals.",
         tools: [{
             name: "Automizer",

@@ -46,4 +46,5 @@ public interface ICACSL2BoogieBacktranslatorMapping {
 
 	boolean isTempVar(String boogieId);
 
+	void addFunction(String boogieId, CType returnType);
 }

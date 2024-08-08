@@ -14,4 +14,4 @@
        VAL   [e=16777216, f=16777216]
 [L10]        float i = -1.4142;
        VAL   [e=16777216, f=16777216]
-[L11]        CodeAnnotStmt[Assertion[BinaryExpression[COMPNEQ,IdentifierExpression[e],IdentifierExpression[f]]]]
+[L11]        //@ assert (e != f);

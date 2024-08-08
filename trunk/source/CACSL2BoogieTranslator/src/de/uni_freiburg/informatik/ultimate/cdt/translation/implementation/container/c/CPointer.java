@@ -31,7 +31,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c;
 
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 /**
@@ -58,23 +57,6 @@ public class CPointer extends CType {
 
 	public CType getPointsToType() {
 		return mPointsToType;
-	}
-
-	@Override
-	public boolean isCompatibleWith(final CType o) {
-		if (o instanceof CPointer && ((CPointer) o).mPointsToType instanceof CPrimitive
-				&& ((CPrimitive) ((CPointer) o).mPointsToType).getType() == CPrimitives.VOID) {
-			return true;
-		}
-
-		if (super.equals(o)) {
-			return true;
-		}
-		final CType oType = o.getUnderlyingType();
-		if (oType instanceof CPointer) {
-			return mPointsToType.isCompatibleWith(((CPointer) oType).mPointsToType);
-		}
-		return false;
 	}
 
 	public CType getTargetType() {

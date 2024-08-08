@@ -162,7 +162,7 @@ public class SimplificationTest {
 		final String formulaAsString =
 				"(and (= c 1) (exists ((X Int)) (and (= X 1) (or (= (select a X) 5) (= c 0) (and (= d 23) (= X 1))))))";
 		final String expectedResultAsString =
-				"(and (exists ((X Int)) (let ((.cse0 (= X 1))) (and (or (= 5 (select a X)) (and .cse0 (= 23 d))) .cse0))) (= c 1))";
+				"(and (exists ((X Int)) (and (= X 1) (or (= 23 d) (= 5 (select a 1))))) (= c 1))";
 		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, SimplificationTechnique.SIMPLIFY_DDA2,
 				mServices, mLogger, mMgdScript, mCsvWriter);
 	}

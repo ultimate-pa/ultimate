@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
+import java.io.IOException;
+
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -40,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.IPolynomialTerm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialTermTransformer;
+import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -54,6 +57,9 @@ import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
  * @author Leonard Fichtner (leonard.fichtner@web.de)
  */
 public class PolynomialTest {
+
+	private static final boolean DEBUG_WRITE_SCRIPT_TO_FILE = false;
+	private static final String DUMPED_SCRIPT_FILENAME = "PolynomialTestDebugScript" + ".smt2";
 
 	private IUltimateServiceProvider mServices;
 	private Script mScript;
@@ -71,6 +77,13 @@ public class PolynomialTest {
 		mLogger = mServices.getLoggingService().getLogger("lol");
 		final String solverCommand = "z3 SMTLIB2_COMPLIANT=true -memory:2024 -smt2 -in";
 		mScript = UltimateMocks.createSolver(solverCommand, LogLevel.INFO);
+		if (DEBUG_WRITE_SCRIPT_TO_FILE) {
+			try {
+				mScript = new LoggingScript(mScript, DUMPED_SCRIPT_FILENAME, true);
+			} catch (final IOException e) {
+				throw new AssertionError(e);
+			}
+		}
 		mMgdScript = new ManagedScript(mServices, mScript);
 		mScript.setLogic(Logics.ALL);
 		mRealSort = SmtSortUtils.getRealSort(mMgdScript);

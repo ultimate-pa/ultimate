@@ -27,8 +27,6 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness;
 
-import java.util.Map.Entry;
-
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 
@@ -36,7 +34,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferencePro
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Activator;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.witnessparser.preferences.WitnessParserPreferences;
 
 /**
@@ -54,7 +51,7 @@ public abstract class CorrectnessWitnessExtractor {
 	protected final boolean mIgnoreUnmatchedEntries;
 
 	protected IASTTranslationUnit mTranslationUnit;
-	private HashRelation<IASTNode, IExtractedWitnessEntry> mAST2Entries;
+	private ExtractedCorrectnessWitness mAST2Entries;
 	protected ExtractionStatistics mStats;
 
 	public CorrectnessWitnessExtractor(final IUltimateServiceProvider service) {
@@ -74,7 +71,7 @@ public abstract class CorrectnessWitnessExtractor {
 	 * Get the witness entries, i.e. a relation that maps each {@link IASTNode} to the {@link IExtractedWitnessEntry}s
 	 * that match this location.
 	 */
-	public HashRelation<IASTNode, IExtractedWitnessEntry> getWitnessEntries() {
+	public ExtractedCorrectnessWitness getWitness() {
 		if (mAST2Entries == null) {
 			if (!isReady()) {
 				mLogger.warn("Cannot extract witness if there is no witness");
@@ -85,21 +82,10 @@ public abstract class CorrectnessWitnessExtractor {
 			} else {
 				mLogger.info("Extracting all invariants from correctness witness");
 			}
-			mAST2Entries = computeWitnessEntries();
-			printResults(mAST2Entries);
+			mAST2Entries = extractWitness();
+			mAST2Entries.printWitness(mLogger::info);
 		}
 		return mAST2Entries;
-	}
-
-	private void printResults(final HashRelation<IASTNode, IExtractedWitnessEntry> result) {
-		if (result.isEmpty()) {
-			mLogger.info("Witness did not contain any usable entries.");
-			return;
-		}
-		mLogger.info("Found the following entries in the witness:");
-		for (final Entry<IASTNode, IExtractedWitnessEntry> entry : result.getSetOfPairs()) {
-			mLogger.info(entry.getValue().toString());
-		}
 	}
 
 	protected abstract boolean isReady();
@@ -108,7 +94,7 @@ public abstract class CorrectnessWitnessExtractor {
 	 * Compute the witness entries, i.e. a relation that maps each {@link IASTNode} to the
 	 * {@link IExtractedWitnessEntry}s that match this location.
 	 */
-	protected abstract HashRelation<IASTNode, IExtractedWitnessEntry> computeWitnessEntries();
+	protected abstract ExtractedCorrectnessWitness extractWitness();
 
 	public static final class ExtractionStatistics {
 		private int mSuccess;

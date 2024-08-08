@@ -8,8 +8,11 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.UltimateCore;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation.LoopEntryType;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessProcedureContract;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -22,6 +25,7 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.FormatVersion;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.FunctionContract;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Invariant;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Location;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LocationInvariant;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LoopInvariant;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Metadata;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Producer;
@@ -86,18 +90,16 @@ public class YamlCorrectnessWitnessGenerator {
 			if (invariant == null) {
 				continue;
 			}
-			// If the column is unknown (-1), use the first position of the line
-			final int column = Math.max(loc.getStartColumn(), 0);
-			final String function = loc.getFunction();
-			if (function == null) {
-				continue;
+			final Location witnessLocation = new Location(loc.getFileName(), hash, loc.getStartLine(),
+					loc.getStartColumn() < 0 ? null : loc.getStartColumn(), loc.getFunction());
+			final Invariant witnessInvariant =
+					new Invariant(invariant, "assertion", getExpressionFormat(formatVersion, invariant));
+			final LoopEntryAnnotation annot = LoopEntryAnnotation.getAnnotation(pp);
+			if (annot != null && annot.getLoopEntryType() == LoopEntryType.WHILE) {
+				result.add(new LoopInvariant(metadataSupplier.get(), witnessLocation, witnessInvariant));
+			} else {
+				result.add(new LocationInvariant(metadataSupplier.get(), witnessLocation, witnessInvariant));
 			}
-			final Location witnessLocation =
-					new Location(loc.getFileName(), hash, loc.getStartLine(), column, function);
-			// TODO: How could we figure out, if it is a LocationInvariant or LoopInvariant?
-			// For now we only produce loop invariants anyways
-			result.add(new LoopInvariant(metadataSupplier.get(), witnessLocation,
-					new Invariant(invariant, "assertion", getExpressionFormat(formatVersion, invariant))));
 		}
 		return result;
 	}
@@ -114,18 +116,13 @@ public class YamlCorrectnessWitnessGenerator {
 			if (contract == null) {
 				continue;
 			}
-			// If the column is unknown (-1), use the first position of the line
-			final int column = Math.max(loc.getStartColumn(), 0);
-			final String function = loc.getFunction();
-			if (function == null) {
-				continue;
-			}
-			final String requires = contract.getRequiresClause();
-			final String ensures = contract.getEnsuresClause();
-			final Location witnessLocation =
-					new Location(loc.getFileName(), hash, loc.getStartLine(), column, function);
-			result.add(new FunctionContract(metadataSupplier.get(), witnessLocation, List.of(requires),
-					List.of(ensures), getExpressionFormat(formatVersion, requires, ensures)));
+			final List<String> requires = contract.getRequires();
+			final List<String> ensures = contract.getEnsures();
+			final Location witnessLocation = new Location(loc.getFileName(), hash, loc.getStartLine(),
+					loc.getStartColumn() < 0 ? null : loc.getStartColumn(), loc.getFunction());
+			result.add(new FunctionContract(metadataSupplier.get(), witnessLocation, requires, ensures,
+					getExpressionFormat(formatVersion,
+							Stream.concat(requires.stream(), ensures.stream()).toArray(String[]::new))));
 		}
 		return result;
 	}
@@ -142,7 +139,7 @@ public class YamlCorrectnessWitnessGenerator {
 				|| !Arrays.stream(expressions).anyMatch(YamlCorrectnessWitnessGenerator::containsACSL)) {
 			return "c_expression";
 		}
-		return "acsl";
+		return "acsl_expression";
 	}
 
 	private static boolean containsACSL(final String expression) {

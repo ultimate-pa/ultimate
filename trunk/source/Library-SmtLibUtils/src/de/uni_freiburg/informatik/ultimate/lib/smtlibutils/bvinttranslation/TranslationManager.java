@@ -102,11 +102,12 @@ public class TranslationManager {
 
 	}
 
-	public Triple<Term, Set<Term>, Boolean> translateBvtoIntTransferrer(final Term bitvecFormula, final Script scriptBV, final Script scriptINT) {
+	public Triple<Term, Set<Term>, Boolean> translateBvtoIntTransferrer(final Term bitvecFormula, final Script scriptBV,
+			final Script scriptINT) {
 		mConstraintSet = new HashSet<>();
 		final TranslationConstrainer tc = new TranslationConstrainer(mMgdScript, mCfo);
-		final BvToIntTransferrer bvToInt =
-				new BvToIntTransferrer(scriptBV, scriptINT, mMgdScript, mVariableMap, tc, bitvecFormula.getFreeVars(), mNutzTransformation);
+		final BvToIntTransferrer bvToInt = new BvToIntTransferrer(scriptBV, scriptINT, mMgdScript, mVariableMap, tc,
+				bitvecFormula.getFreeVars(), mNutzTransformation);
 		final Term integerFormulaNoConstraint;
 		try {
 			integerFormulaNoConstraint = bvToInt.transform(bitvecFormula);
@@ -119,8 +120,8 @@ public class TranslationManager {
 		final boolean isOverapproximation = bvToInt.wasOverapproximation();
 		if (!mNutzTransformation) {
 			mConstraintSet.addAll(tc.getConstraints());
-			mConstraintSet.addAll(bvToInt.mArraySelectConstraintMap.values());
-		}else {
+			mConstraintSet.addAll(bvToInt.mArrayConstraintMap.values());
+		} else {
 			mConstraintSet.addAll(tc.getBvandConstraints());
 		}
 		if (!mConstraintSet.isEmpty() && !SmtSortUtils.isBoolSort(integerFormulaNoConstraint.getSort())) {
@@ -132,7 +133,6 @@ public class TranslationManager {
 		return new Triple<>(integerFormula, overapproxVariables, isOverapproximation);
 
 	}
-
 
 	/*
 	 * Method to translate from integer back to bit-vector requires mReversedVarMap to be filled returns the translation

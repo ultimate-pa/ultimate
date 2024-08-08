@@ -231,7 +231,7 @@ terminal String CONSTANT;
 terminal String CONSTANT_FLOAT;
 terminal String CONSTANT10;
 terminal String VOID, CHAR, SIGNED, UNSIGNED, SHORT, LONG, DOUBLE, STRUCT, ENUM, UNION;
-terminal String INT, INTEGER, REAL, BOOLEAN, FLOAT, BOOL;
+terminal String INT, INT128, INTEGER, REAL, BOOLEAN, FLOAT, BOOL;
 terminal String STAR;
 terminal LPAR, RPAR, IF, ELSE, COLON, COLON2, COLONCOLON, DOT, DOTDOT, DOTDOTDOT;
 terminal LT, GT, LE, GE, EQ, NE, COMMA, ARROW, EQUAL;
@@ -795,6 +795,8 @@ type_spec::=
 | SIGNED:s CHAR:c {: RESULT = s + " " + c; :}         
 | UNSIGNED:u CHAR:c {: RESULT = u + " " + c; :}       
 | INT:i {: RESULT = i; :}                   
+| INT128:i {: RESULT = i; :}               
+| UNSIGNED:u INT128:i {: RESULT = u + " " + i; :}     
 | SIGNED:s INT:i {: RESULT = s + " " + i; :}           
 | UNSIGNED:u INT:i {: RESULT = u + " " + i; :}         
 | UNSIGNED:u {: RESULT = u; :}       
@@ -1410,6 +1412,7 @@ c_keyword::=
 | FLOAT 
 | IF 
 | INT 
+| INT128
 | LONG 
 | SHORT 
 | SIGNED 

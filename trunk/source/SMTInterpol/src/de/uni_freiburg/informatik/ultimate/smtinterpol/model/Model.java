@@ -71,9 +71,9 @@ public class Model implements de.uni_freiburg.informatik.ultimate.logic.Model {
 	public Model(final Clausifier clausifier, final Theory theory) {
 		mTheory = theory;
 		mSorts.put(theory.getBooleanSort(), new BoolSortInterpretation());
-		if (theory.getLogic().hasIntegers() || theory.getLogic().hasReals()) {
+		if (theory.getLogic().hasIntegers() || theory.getLogic().hasReals() || theory.getLogic().isBitVector()) {
 			final SortInterpretation numericInterpretation = new NumericSortInterpretation();
-			if (theory.getLogic().hasIntegers()) {
+			if (theory.getLogic().hasIntegers() || theory.getLogic().isBitVector()) {
 				mSorts.put(theory.getNumericSort(), numericInterpretation);
 			}
 			if (theory.getLogic().hasReals()) {
@@ -326,6 +326,8 @@ public class Model implements de.uni_freiburg.informatik.ultimate.logic.Model {
 						provideSortInterpretation(sort.getArguments()[1]));
 			} else if (sort.getSortSymbol().isDatatype()) {
 				interpretation = new DataTypeInterpretation(this, sort);
+			} else if (sort.isBitVecSort()) {
+				interpretation = new BitVectorInterpretation();
 			} else {
 				interpretation = new FiniteSortInterpretation(this);
 			}

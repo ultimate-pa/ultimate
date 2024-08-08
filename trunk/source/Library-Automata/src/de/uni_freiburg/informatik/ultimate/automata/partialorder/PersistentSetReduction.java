@@ -26,108 +26,121 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
+import java.util.Collections;
 import java.util.Comparator;
-import java.util.List;
 import java.util.Set;
-import java.util.function.Function;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.CachedBudget;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.ISleepMapStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.SleepMapReduction;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.SleepMapReduction.IBudgetFunction;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.IDfsVisitor;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.WrapperVisitor;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.FilteredIterable;
 
 /**
- * Performs persistent set reduction on top of sleep set reduction. The goal of this is primarily to reduce the size (in
- * number of states) of the reduced automaton, not so much the language. In particular, sleep set reduction with new
- * states already yields a minimal reduction (in terms of the language), hence persistent sets do not achieve any
- * further reduction in this sense. Some further language reduction can possibly be achieved in the delay set case.
+ * Performs persistent set reduction. The goal of this is primarily to reduce the size (in number of states) of the
+ * reduced automaton, not so much the language. In particular, {@link MinimalSleepSetReduction} already yields a minimal
+ * reduction (in terms of the language), hence persistent sets do not achieve any further reduction in this case.
  *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  */
-public final class PersistentSetReduction {
-	private PersistentSetReduction() {
+public final class PersistentSetReduction<L, S> implements INwaOutgoingLetterAndTransitionProvider<L, S> {
+
+	private final INwaOutgoingLetterAndTransitionProvider<L, S> mOperand;
+	private final IPersistentSetChoice<L, S> mPersistentSets;
+
+	public PersistentSetReduction(final INwaOutgoingLetterAndTransitionProvider<L, S> operand,
+			final IPersistentSetChoice<L, S> persistentSets) {
+		assert NestedWordAutomataUtils.isFiniteAutomaton(operand) : "Only finite automata are supported";
+
+		mOperand = operand;
+		mPersistentSets = persistentSets;
 	}
 
-	public static <L, S> void applyWithoutSleepSets(final AutomataLibraryServices services,
-			final INwaOutgoingLetterAndTransitionProvider<L, S> operand, final IDfsOrder<L, S> dfsOrder,
-			final IPersistentSetChoice<L, S> persistent, final IDfsVisitor<L, S> visitor)
-			throws AutomataOperationCanceledException {
-		final IDfsOrder<L, S> combinedOrder = new CompatibleDfsOrder<>(persistent, dfsOrder);
-		final IDfsVisitor<L, S> combinedVisitor = new PersistentSetVisitor<>(persistent, visitor);
-		DepthFirstTraversal.traverse(services, operand, combinedOrder, combinedVisitor);
+	@Override
+	public IStateFactory<S> getStateFactory() {
+		return mOperand.getStateFactory();
 	}
 
-	public static <L, S, R> void applyNewStateReduction(final AutomataLibraryServices services,
-			final INwaOutgoingLetterAndTransitionProvider<L, S> operand,
-			final IIndependenceRelation<S, L> independenceRelation, final IDfsOrder<L, R> dfsOrder,
-			final ISleepSetStateFactory<L, S, R> factory, final IPersistentSetChoice<L, R> persistent,
-			final IDfsVisitor<L, R> visitor) throws AutomataOperationCanceledException {
-		final IDfsOrder<L, R> combinedOrder = new CompatibleDfsOrder<>(persistent, dfsOrder);
-		final IDfsVisitor<L, R> combinedVisitor = new PersistentSetVisitor<>(persistent, visitor);
-		DepthFirstTraversal.traverse(services,
-				new MinimalSleepSetReduction<>(operand, factory, independenceRelation, combinedOrder), combinedOrder,
-				combinedVisitor);
+	@Override
+	public VpAlphabet<L> getVpAlphabet() {
+		return mOperand.getVpAlphabet();
 	}
 
-	public static <L, S, R> void applySleepMapReduction(final AutomataLibraryServices services,
-			final INwaOutgoingLetterAndTransitionProvider<L, S> operand,
-			final List<IIndependenceRelation<S, L>> independenceRelations, final IDfsOrder<L, R> dfsOrder,
-			final ISleepMapStateFactory<L, S, R> factory,
-			final Function<SleepMapReduction<L, S, R>, IBudgetFunction<L, R>> getBudget,
-			final IPersistentSetChoice<L, R> persistent, final IDfsVisitor<L, R> visitor)
-			throws AutomataOperationCanceledException {
-		final IDfsOrder<L, R> combinedOrder = new CompatibleDfsOrder<>(persistent, dfsOrder);
-		final IDfsVisitor<L, R> combinedVisitor = new PersistentSetVisitor<>(persistent, visitor);
-
-		final var red = new SleepMapReduction<>(operand, independenceRelations, combinedOrder, factory,
-				getBudget.andThen(CachedBudget::new));
-		DepthFirstTraversal.traverse(services, red, combinedOrder, combinedVisitor);
+	@Override
+	public S getEmptyStackState() {
+		return mOperand.getEmptyStackState();
 	}
 
-	public static <L, S> void applyDelaySetReduction(final AutomataLibraryServices services,
-			final INwaOutgoingLetterAndTransitionProvider<L, S> operand,
-			final IIndependenceRelation<S, L> independenceRelation, final IDfsOrder<L, S> dfsOrder,
-			final IPersistentSetChoice<L, S> persistent, final IDfsVisitor<L, S> visitor)
-			throws AutomataOperationCanceledException {
-		final IDfsOrder<L, S> combinedOrder = new CompatibleDfsOrder<>(persistent, dfsOrder);
-		final IDfsVisitor<L, S> combinedVisitor = new PersistentSetVisitor<>(persistent, visitor);
-		new SleepSetDelayReduction<>(services, operand, new ISleepSetStateFactory.NoUnrolling<>(), independenceRelation,
-				combinedOrder, combinedVisitor);
+	@Override
+	public Iterable<S> getInitialStates() {
+		return mOperand.getInitialStates();
 	}
 
-	/**
-	 * A visitor that performs persistent set reduction by pruning transitions, and proxies non-pruned calls to an
-	 * underlying visitor implementation.
-	 *
-	 * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
-	 *
-	 * @param <L>
-	 *            The type of letters in the reduced automaton
-	 * @param <S>
-	 *            The type of states in the reduced automaton
-	 */
-	private static class PersistentSetVisitor<L, S> extends WrapperVisitor<L, S, IDfsVisitor<L, S>> {
-		private final IPersistentSetChoice<L, S> mPersistent;
+	@Override
+	public boolean isInitial(final S state) {
+		return mOperand.isInitial(state);
+	}
 
-		public PersistentSetVisitor(final IPersistentSetChoice<L, S> persistent, final IDfsVisitor<L, S> underlying) {
-			super(underlying);
-			mPersistent = persistent;
+	@Override
+	public boolean isFinal(final S state) {
+		return mOperand.isFinal(state);
+	}
+
+	@Override
+	public int size() {
+		return mOperand.size();
+	}
+
+	@Override
+	public String sizeInformation() {
+		return mOperand.sizeInformation();
+	}
+
+	@Override
+	public Set<L> lettersInternal(final S state) {
+		final var enabled = mOperand.lettersInternal(state);
+		final var persistent = mPersistentSets.persistentSet(state);
+		if (persistent == null) {
+			return enabled;
 		}
+		return DataStructureUtils.difference(enabled, persistent);
+	}
 
-		@Override
-		public boolean discoverTransition(final S source, final L letter, final S target) {
-			final Set<L> persistent = mPersistent.persistentSet(source);
-			if (persistent != null && !persistent.contains(letter)) {
-				return true;
-			}
-			return super.discoverTransition(source, letter, target);
+	@Override
+	public Iterable<OutgoingInternalTransition<L, S>> internalSuccessors(final S state) {
+		final var persistent = mPersistentSets.persistentSet(state);
+		if (persistent == null) {
+			return mOperand.internalSuccessors(state);
 		}
+		return new FilteredIterable<>(mOperand.internalSuccessors(state), t -> persistent.contains(t.getLetter()));
+	}
+
+	@Override
+	public Iterable<OutgoingInternalTransition<L, S>> internalSuccessors(final S state, final L letter) {
+		final var persistent = mPersistentSets.persistentSet(state);
+		if (persistent == null || persistent.contains(letter)) {
+			return mOperand.internalSuccessors(state, letter);
+		}
+		return Collections.emptyList();
+	}
+
+	@Override
+	public Iterable<OutgoingCallTransition<L, S>> callSuccessors(final S state, final L letter) {
+		return mOperand.callSuccessors(state, letter);
+	}
+
+	@Override
+	public Iterable<OutgoingReturnTransition<L, S>> returnSuccessors(final S state, final S hier, final L letter) {
+		return mOperand.returnSuccessors(state, hier, letter);
+	}
+
+	public static <L, S> IDfsOrder<L, S> ensureCompatibility(final IPersistentSetChoice<L, S> persistent,
+			final IDfsOrder<L, S> underlying) {
+		return new CompatibleDfsOrder<>(persistent, underlying);
 	}
 
 	/**

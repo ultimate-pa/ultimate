@@ -1575,6 +1575,15 @@ const _CONFIG = {
 					task_id: "REFEREE_C",
 					"frontend_settings": [
 						{
+							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder",
+							"name": "Future-live optimization",
+							"key": "Future-live optimization",
+							"id": "futurelive.optimization",
+							"visible": false,
+							"type": "bool",
+							"default": false
+						},
+						{
 							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator",
 							"default": "",
 							"visible": false,
@@ -1632,7 +1641,17 @@ const _CONFIG = {
 					language: "boogie",
 					id: "boogieReferee",
 					task_id: "REFEREE_BOOGIE",
-					frontend_settings: []
+					frontend_settings: [
+						{
+							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder",
+							"name": "Future-live optimization",
+							"key": "Future-live optimization",
+							"id": "futurelive.optimization",
+							"visible": false,
+							"type": "bool",
+							"default": false
+						}
+					]
 				}
 			]
 		},

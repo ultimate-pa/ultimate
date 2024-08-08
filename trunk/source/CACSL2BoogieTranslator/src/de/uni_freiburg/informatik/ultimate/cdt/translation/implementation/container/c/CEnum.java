@@ -33,7 +33,6 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.conta
 
 import java.util.Arrays;
 
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitiveCategory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 
 /**
@@ -126,33 +125,6 @@ public class CEnum extends CType implements ICPossibleIncompleteType<CEnum> {
 	@Override
 	public CEnum complete(final CEnum cEnum) {
 		return new CEnum(getName(), cEnum.getFieldIds());
-	}
-
-	@Override
-	public boolean isCompatibleWith(final CType o) {
-		if (o instanceof CPrimitive && (((CPrimitive) o).getType() == CPrimitives.VOID
-				|| ((CPrimitive) o).getGeneralType() == CPrimitiveCategory.INTTYPE)) {
-			return true;
-		}
-
-		final CType oType = o.getUnderlyingType();
-		if (!(oType instanceof CEnum)) {
-			return false;
-		}
-
-		final CEnum oEnum = (CEnum) oType;
-		if (!(mIdentifier.equals(oEnum.mIdentifier))) {
-			return false;
-		}
-		if (mNames.length != oEnum.mNames.length) {
-			return false;
-		}
-		for (int i = mNames.length - 1; i >= 0; --i) {
-			if (!(mNames[i].equals(oEnum.mNames[i]))) {
-				return false;
-			}
-		}
-		return true;
 	}
 
 	/**

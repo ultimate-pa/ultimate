@@ -35,10 +35,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.ITerm2ExpressionSymbolTable;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
@@ -420,12 +424,24 @@ public class PredicateUtils {
 		return Stream.of();
 	}
 
-	public static Term eliminateOldVars(final IUltimateServiceProvider services, final ManagedScript mgdScript,
-			final IPredicate p) {
-		final List<TermVariable> oldVars = p.getVars().stream().filter(x -> x.isOldvar()).map(x -> x.getTermVariable())
+	private static Term eliminateVars(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final IPredicate p, final Predicate<IProgramVar> isQuantified) {
+		final List<TermVariable> oldVars = p.getVars().stream().filter(isQuantified).map(IProgramVar::getTermVariable)
 				.collect(Collectors.toList());
 		final Term quantified =
 				SmtUtils.quantifier(mgdScript.getScript(), QuantifiedFormula.EXISTS, oldVars, p.getFormula());
 		return PartialQuantifierElimination.eliminateLight(services, mgdScript, quantified);
+	}
+
+	public static Term eliminateOldVars(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final IPredicate p) {
+		return eliminateVars(services, mgdScript, p, IProgramVar::isOldvar);
+	}
+
+	public static Term eliminateLocalVars(final IPredicate predicate, final IUltimateServiceProvider services,
+			final CfgSmtToolkit cfgToolkit) {
+		final ITerm2ExpressionSymbolTable symbolTable = (ITerm2ExpressionSymbolTable) cfgToolkit.getSymbolTable();
+		return eliminateVars(services, cfgToolkit.getManagedScript(), predicate,
+				x -> symbolTable.getDeclarationInformation(x).getStorageClass().equals(StorageClass.LOCAL));
 	}
 }

@@ -43,7 +43,6 @@ public class FunctionContract extends WitnessEntry {
 
 	private final Location mLocation;
 	private final String mFormat;
-	// TODO: Add support for other elements of the contracts
 	private final List<String> mRequires;
 	private final List<String> mEnsures;
 
@@ -83,7 +82,7 @@ public class FunctionContract extends WitnessEntry {
 
 	@Override
 	public String toString() {
-		return getClass().getSimpleName() + " " + mLocation + ": " + mEnsures;
+		return getClass().getSimpleName() + " " + mLocation + ": requires " + mRequires + ", ensures" + mEnsures;
 	}
 
 	@Override

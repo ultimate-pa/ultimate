@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public final class NonDeclaringTermTransferrer extends TermTransformer {
+public class NonDeclaringTermTransferrer extends TermTransformer {
 
 	private final boolean mApplyLocalSimplifications;
 	private final Script mScript;
@@ -71,31 +71,37 @@ public final class NonDeclaringTermTransferrer extends TermTransformer {
 			final Term result = transferTermVariable((TermVariable) term);
 			setResult(result);
 		} else if (term instanceof ConstantTerm) {
-			final Sort sort = transferSort(term.getSort());
-			final ConstantTerm ct = (ConstantTerm) term;
-			final Term result;
-			if (ct.getValue() instanceof BigInteger) {
-				result = mScript.numeral((BigInteger) ct.getValue());
-			} else if (ct.getValue() instanceof BigDecimal) {
-				result = mScript.decimal((BigDecimal) ct.getValue());
-			} else if (ct.getValue() instanceof Rational) {
-				result = ((Rational) ct.getValue()).toTerm(sort);
-			} else if (ct.getValue() instanceof String) {
-				final String value = (String) ct.getValue();
-				if (value.startsWith("#x")) {
-					result = mScript.hexadecimal(value);
-				} else if (value.startsWith("#b")) {
-					result = mScript.binary(value);
-				} else {
-					throw new AssertionError("unexpected ConstantTerm (maybe not yet implemented)" + term);
-				}
-			} else {
-				throw new AssertionError("unexpected ConstantTerm (maybe not yet implemented)" + term);
-			}
-			setResult(result);
+			setResult(convertConstantTerm((ConstantTerm) term));
 		} else {
 			super.convert(term);
 		}
+	}
+
+	private Term convertConstantTerm(final ConstantTerm term) {
+		final Sort sort = transferSort(term.getSort());
+		final Object value = term.getValue();
+		if (value instanceof BigInteger) {
+			if (sort.isNumericSort()) {
+				return mScript.numeral((BigInteger) value);
+			}
+			return mScript.getTheory().constant(value, sort);
+		}
+		if (value instanceof BigDecimal) {
+			return mScript.decimal((BigDecimal) value);
+		}
+		if (value instanceof Rational) {
+			return ((Rational) value).toTerm(sort);
+		}
+		if (value instanceof String) {
+			final String stringValue = (String) value;
+			if (stringValue.startsWith("#x")) {
+				return mScript.hexadecimal(stringValue);
+			}
+			if (stringValue.startsWith("#b")) {
+				return mScript.binary(stringValue);
+			}
+		}
+		throw new AssertionError("unexpected ConstantTerm (maybe not yet implemented)" + term);
 	}
 
 	TermVariable transferTermVariable(final TermVariable tv) {
@@ -130,7 +136,7 @@ public final class NonDeclaringTermTransferrer extends TermTransformer {
 		final Sort resultSort = fsymb.isReturnOverload() ? transferSort(fsymb.getReturnSort()) : null;
 		final Term result;
 		if (mApplyLocalSimplifications) {
-			result = SmtUtils.unfTerm(mScript, fsymb, newArgs);
+			result = SmtUtils.unfTerm(mScript, fsymb.getName(), fsymb.getIndices(), resultSort, newArgs);
 		} else {
 			result = mScript.term(fsymb.getName(), appTerm.getFunction().getIndices(), resultSort, newArgs);
 		}

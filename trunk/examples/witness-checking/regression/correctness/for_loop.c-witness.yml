@@ -1,0 +1,27 @@
+- entry_type: invariant_set
+  metadata:
+    format_version: '2.0'
+    uuid: 5cba3836-f68d-4436-b11e-dbe72bc4aa49
+    creation_time: '2024-03-11T17:41:03+01:00'
+    producer:
+      name: UNUSED
+      version: 0.2.4-dev-9743566-m
+    task:
+      input_files:
+      - for_loop.c
+      input_file_hashes:
+        for_loop.c: UNUSED
+      specification: UNUSED
+      data_model: UNUSED
+      language: C
+  content:
+  - invariant:
+      type: loop_invariant
+      location:
+        file_name: for_loop.c
+        file_hash: UNUSED
+        line: 3
+        column: 3
+        function: main
+      value: ((((((x == 0) && (i == 0)) || ((x == 3) && (i == 3))) || ((x == 0) && (i == 1))) || ((i == 2) && (x == 1))) || ((x == 6) && (4 <= i)))
+      format: c_expression

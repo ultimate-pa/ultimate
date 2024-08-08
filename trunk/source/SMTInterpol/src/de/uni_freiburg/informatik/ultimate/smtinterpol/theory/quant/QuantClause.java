@@ -36,12 +36,12 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SMTAffineTerm;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.TermCompiler;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.SourceAnnotation;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.ArrayTheory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCAppTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCTerm;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.Polynomial;
 
 /**
  * Represents a clause in the QuantifierTheory. This means, it contains at least one literal with an (implicitly)
@@ -300,9 +300,12 @@ public class QuantClause {
 						}
 					}
 				} else {
-					for (final Term smd : ((QuantBoundConstraint) atom).getAffineTerm().getSummands().keySet()) {
-						if (smd instanceof ApplicationTerm && smd.getFreeVars().length != 0) {
-							addVarArgInfo((ApplicationTerm) smd);
+					for (final Map<Term, Integer> monom : ((QuantBoundConstraint) atom).getAffineTerm().getSummands()
+							.keySet()) {
+						for (final Term factor : monom.keySet()) {
+							if (factor instanceof ApplicationTerm && factor.getFreeVars().length != 0) {
+								addVarArgInfo((ApplicationTerm) factor);
+							}
 						}
 					}
 				}
@@ -320,9 +323,8 @@ public class QuantClause {
 					lowerAffine.add(Rational.MONE);
 					final SMTAffineTerm upperAffine = new SMTAffineTerm(rhs);
 					upperAffine.add(Rational.ONE);
-					final TermCompiler compiler = mQuantTheory.getClausifier().getTermCompiler();
-					final Term lowerBound = lowerAffine.toTerm(compiler, rhs.getSort());
-					final Term upperBound = upperAffine.toTerm(compiler, rhs.getSort());
+					final Term lowerBound = lowerAffine.toTerm(rhs.getSort());
+					final Term upperBound = upperAffine.toTerm(rhs.getSort());
 					varInfo.addLowerGroundBound(lowerBound);
 					varInfo.addUpperGroundBound(upperBound);
 				} else {
@@ -376,10 +378,12 @@ public class QuantClause {
 				}
 			}
 		} else if (func.getName() == "+" || func.getName() == "-" || func.getName() == "*") {
-			final SMTAffineTerm affine = new SMTAffineTerm(qTerm);
-			for (final Term smd : affine.getSummands().keySet()) {
-				if (smd instanceof ApplicationTerm) {
-					addVarArgInfo((ApplicationTerm) smd);
+			final Polynomial affine = new Polynomial(qTerm);
+			for (final Map<Term,Integer> smd : affine.getSummands().keySet()) {
+				for (final Term factor : smd.keySet()) {
+					if (factor instanceof ApplicationTerm) {
+						addVarArgInfo((ApplicationTerm) factor);
+					}
 				}
 			}
 		}
@@ -488,8 +492,7 @@ public class QuantClause {
 							for (final Rational offset : new Rational[] { Rational.ONE, Rational.MONE }) {
 								final SMTAffineTerm idxPlusMinusOneAff = new SMTAffineTerm(indexTerm);
 								idxPlusMinusOneAff.add(offset);
-								final Term shared = idxPlusMinusOneAff.toTerm(
-										mQuantTheory.getClausifier().getTermCompiler(), indexTerm.getSort());
+								final Term shared = idxPlusMinusOneAff.toTerm(indexTerm.getSort());
 								interestingTerms.add(shared);
 							}
 						}

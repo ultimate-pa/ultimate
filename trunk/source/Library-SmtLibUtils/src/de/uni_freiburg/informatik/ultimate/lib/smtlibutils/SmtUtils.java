@@ -2068,27 +2068,19 @@ public final class SmtUtils {
 	 *             if ConstantTerm cannot converted to Rational
 	 */
 	public static Rational toRational(final ConstantTerm constTerm) {
-		assert SmtSortUtils.isNumericSort(constTerm.getSort());
-		final Object value = constTerm.getValue();
-		if (SmtSortUtils.isIntSort(constTerm.getSort())) {
-			if (value instanceof BigInteger) {
-				return Rational.valueOf((BigInteger) value, BigInteger.ONE);
-			}
-			if (value instanceof Rational) {
-				return (Rational) value;
-			}
-		} else if (SmtSortUtils.isRealSort(constTerm.getSort())) {
-			if (value instanceof BigDecimal) {
-				return toRational((BigDecimal) value);
-			}
-			if (value instanceof Rational) {
-				return (Rational) value;
-			}
-			if (value instanceof BigInteger) {
-				return toRational((BigInteger) value);
-			}
+		if (!SmtSortUtils.isNumericSort(constTerm.getSort())) {
+			throw new AssertionError("Can convert only numeric sorts to Rationals");
 		}
-		throw new UnsupportedOperationException("Cannot convert " + constTerm.toStringDirect() + " to Rational");
+		final Object value = constTerm.getValue();
+		if (value instanceof Rational) {
+			return (Rational) value;
+		} else if (value instanceof BigInteger) {
+			return toRational((BigInteger) value);
+		} else if (value instanceof BigDecimal) {
+			return toRational((BigDecimal) value);
+		} else {
+			throw new AssertionError("Value has to be either BigInteger, Decimal, or Rational");
+		}
 	}
 
 	/**
