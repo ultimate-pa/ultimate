@@ -79,6 +79,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.TaskIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngine;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
@@ -238,7 +239,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		mBspm = bspm;
 		mCounterexample = counterexample;
 		final IPredicate honda = counterexample.getLoop().getStateAtPosition(0);
-		mModifiableGlobalsAtHonda = BuchiAutomizerUtils.getLocations(honda).stream()
+		mModifiableGlobalsAtHonda = PredicateUtils.streamLocations(honda)
 				.flatMap(x -> mCsToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(x.getProcedure()).stream())
 				.collect(Collectors.toSet());
 		mLassoCheckIdentifier = lassoCheckIdentifier;

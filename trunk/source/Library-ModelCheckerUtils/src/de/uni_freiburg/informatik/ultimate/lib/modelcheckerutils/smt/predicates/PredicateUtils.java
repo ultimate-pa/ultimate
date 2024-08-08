@@ -414,14 +414,24 @@ public class PredicateUtils {
 		throw new IllegalArgumentException("predicate does not offer program point: " + pred);
 	}
 
-	public static Stream<IcfgLocation> getLocations(final IPredicate pred) {
+	public static Set<IcfgLocation> getLocations(final IPredicate pred) {
+		if (pred instanceof ISLPredicate) {
+			return Set.of(((ISLPredicate) pred).getProgramPoint());
+		}
+		if (pred instanceof IMLPredicate) {
+			return Set.of(((IMLPredicate) pred).getProgramPoints());
+		}
+		throw new UnsupportedOperationException("Unsupported type " + pred.getClass());
+	}
+
+	public static Stream<IcfgLocation> streamLocations(final IPredicate pred) {
 		if (pred instanceof ISLPredicate) {
 			return Stream.of(((ISLPredicate) pred).getProgramPoint());
 		}
 		if (pred instanceof IMLPredicate) {
 			return Arrays.stream(((IMLPredicate) pred).getProgramPoints());
 		}
-		return Stream.of();
+		throw new UnsupportedOperationException("Unsupported type " + pred.getClass());
 	}
 
 	private static Term eliminateVars(final IUltimateServiceProvider services, final ManagedScript mgdScript,

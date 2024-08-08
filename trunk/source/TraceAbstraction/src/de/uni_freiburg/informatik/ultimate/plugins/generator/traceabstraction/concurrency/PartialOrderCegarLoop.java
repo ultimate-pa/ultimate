@@ -27,7 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency;
 
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
@@ -79,6 +78,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.MLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateWithConjuncts;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.IProofProducer;
@@ -350,12 +350,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>> extends
 		assert state instanceof IMLPredicate || state instanceof ISLPredicate : "unexpected type of predicate: "
 				+ state.getClass();
 
-		final boolean isErrorState;
-		if (state instanceof ISLPredicate) {
-			isErrorState = mErrorLocs.contains(((ISLPredicate) state).getProgramPoint());
-		} else {
-			isErrorState = Arrays.stream(((IMLPredicate) state).getProgramPoints()).anyMatch(mErrorLocs::contains);
-		}
+		final boolean isErrorState = PredicateUtils.streamLocations(state).anyMatch(mErrorLocs::contains);
 		return isErrorState && !isProvenState(state);
 	}
 

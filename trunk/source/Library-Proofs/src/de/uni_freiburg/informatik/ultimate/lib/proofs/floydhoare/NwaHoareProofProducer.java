@@ -98,7 +98,7 @@ public final class NwaHoareProofProducer<L extends IAction>
 			final INestedWordAutomaton<?, IPredicate> abstraction, final HoareAnnotationPositions hoarePositions) {
 		final var hoareLocs = hoarePositions.getLocations(icfg);
 		return abstraction.getStates().stream()
-				.filter(p -> PredicateUtils.getLocations(p).anyMatch(hoareLocs::contains)).collect(Collectors.toSet());
+				.filter(p -> PredicateUtils.streamLocations(p).anyMatch(hoareLocs::contains)).collect(Collectors.toSet());
 	}
 
 	@Override
