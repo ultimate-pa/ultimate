@@ -37,11 +37,15 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
@@ -146,16 +150,13 @@ public class HoareAnnotationComposer {
 			}
 			final Term precondDisjunction = SmtUtils.or(mCsToolkit.getManagedScript().getScript(), precondDisjuncts);
 			conjuncts.add(precondDisjunction);
-			final Term conjunction = SmtUtils.and(mCsToolkit.getManagedScript().getScript(), conjuncts);
+			Term conjunction = SmtUtils.and(mCsToolkit.getManagedScript().getScript(), conjuncts);
 
 			final Set<IProgramVar> vars = TermVarsProc
 					.computeTermVarsProc(conjunction, mCsToolkit.getManagedScript(), mCsToolkit.getSymbolTable())
 					.getVars();
-
-			// TODO (2020-09-03 Dominik) Functionality below is probably necessary. Make it work with IPredicate instead
-			// of IcfgLocation.
-			// conjunction = TraceAbstractionUtils.substituteOldVarsOfNonModifiableGlobals(loc.getProcedure(), vars,
-			// conjunction, mCsToolkit.getModifiableGlobalsTable(), mCsToolkit.getManagedScript());
+			conjunction = substituteOldVarsOfNonModifiableGlobals(getRelevantProcedure(loc), vars, conjunction,
+					mCsToolkit.getModifiableGlobalsTable(), mCsToolkit.getManagedScript());
 
 			final ExtendedSimplificationResult simplificationResult = SmtUtils.simplifyWithStatistics(
 					mCsToolkit.getManagedScript(), conjunction, mServices, SimplificationTechnique.SIMPLIFY_DDA);
@@ -172,6 +173,23 @@ public class HoareAnnotationComposer {
 			result.put(loc, pred);
 		}
 		return result;
+	}
+
+	private static String getRelevantProcedure(final IPredicate location) {
+		if (location instanceof ISLPredicate) {
+			return ((ISLPredicate) location).getProgramPoint().getProcedure();
+		}
+		if (location instanceof IMLPredicate) {
+			final var programPoints = ((IMLPredicate) location).getProgramPoints();
+			if (programPoints.length == 1) {
+				return programPoints[0].getProcedure();
+			}
+			// We cannot associate a unique procedure to the location, as multiple threads are running.
+			// We fall back to ULTIMATE.init, as it is the entry point and any global variable modifiable by any thread
+			// must be modifiable by ULTIMATE.init as well.
+			return "ULTIMATE.init";
+		}
+		throw new IllegalArgumentException("unsupported type: " + location.getClass());
 	}
 
 	private NestedMap2<IPredicate, IPredicate, Term> constructLoc2Callpred2DisjunctionMapping(
@@ -295,7 +313,7 @@ public class HoareAnnotationComposer {
 	}
 
 	public IFloydHoareAnnotation<IPredicate> extractAnnotation() {
-		// TODO pre/post
+		// TODO #proofRefactor pre/post
 		return new FloydHoareMapping<>(null, null, mLoc2hoare);
 	}
 
@@ -342,6 +360,33 @@ public class HoareAnnotationComposer {
 			}
 		}
 		final Term result = Substitution.apply(mgdScript, substitutionMapping, ps.getFormula());
+		return result;
+	}
+
+	/**
+	 * For each oldVar in vars that is not modifiable by procedure proc: substitute the oldVar by the corresponding
+	 * globalVar in term and remove the oldvar from vars.
+	 */
+	private static Term substituteOldVarsOfNonModifiableGlobals(final String proc, final Set<IProgramVar> vars,
+			final Term term, final ModifiableGlobalsTable modifiableGlobals, final ManagedScript mgdScript) {
+		final Set<IProgramNonOldVar> modifiableGlobalsOfProc = modifiableGlobals.getModifiedBoogieVars(proc);
+		final List<IProgramVar> replacedOldVars = new ArrayList<>();
+		final Map<Term, Term> substitutionMapping = new HashMap<>();
+		for (final IProgramVar bv : vars) {
+			if (bv instanceof IProgramOldVar) {
+				final IProgramNonOldVar pnov = ((IProgramOldVar) bv).getNonOldVar();
+				if (!modifiableGlobalsOfProc.contains(pnov)) {
+					substitutionMapping.put(bv.getTermVariable(),
+							((IProgramOldVar) bv).getNonOldVar().getTermVariable());
+					replacedOldVars.add(bv);
+				}
+			}
+		}
+		final Term result = Substitution.apply(mgdScript, substitutionMapping, term);
+		for (final IProgramVar bv : replacedOldVars) {
+			vars.remove(bv);
+			vars.add(((IProgramOldVar) bv).getNonOldVar());
+		}
 		return result;
 	}
 }

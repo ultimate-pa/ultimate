@@ -28,10 +28,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -43,22 +40,15 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IReturnAction;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramOldVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerCache;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
@@ -98,33 +88,6 @@ public final class TraceAbstractionUtils {
 		}
 		logger.debug("Finished computation of initial partition.");
 		return new PartitionBackedSetOfPairs<>(partition);
-	}
-
-	/**
-	 * For each oldVar in vars that is not modifiable by procedure proc: substitute the oldVar by the corresponding
-	 * globalVar in term and remove the oldvar from vars.
-	 */
-	public static Term substituteOldVarsOfNonModifiableGlobals(final String proc, final Set<IProgramVar> vars,
-			final Term term, final ModifiableGlobalsTable modifiableGlobals, final ManagedScript mgdScript) {
-		final Set<IProgramNonOldVar> modifiableGlobalsOfProc = modifiableGlobals.getModifiedBoogieVars(proc);
-		final List<IProgramVar> replacedOldVars = new ArrayList<>();
-		final Map<Term, Term> substitutionMapping = new HashMap<>();
-		for (final IProgramVar bv : vars) {
-			if (bv instanceof IProgramOldVar) {
-				final IProgramNonOldVar pnov = ((IProgramOldVar) bv).getNonOldVar();
-				if (!modifiableGlobalsOfProc.contains(pnov)) {
-					substitutionMapping.put(bv.getTermVariable(),
-							((IProgramOldVar) bv).getNonOldVar().getTermVariable());
-					replacedOldVars.add(bv);
-				}
-			}
-		}
-		final Term result = Substitution.apply(mgdScript, substitutionMapping, term);
-		for (final IProgramVar bv : replacedOldVars) {
-			vars.remove(bv);
-			vars.add(((IProgramOldVar) bv).getNonOldVar());
-		}
-		return result;
 	}
 
 	public static <L> String prettyPrintTracePredicates(final NestedWord<L> nestedWord,
