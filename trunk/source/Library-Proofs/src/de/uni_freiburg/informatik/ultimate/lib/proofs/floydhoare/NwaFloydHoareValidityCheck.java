@@ -78,6 +78,25 @@ public class NwaFloydHoareValidityCheck<L extends IAction, S> extends FloydHoare
 				false);
 	}
 
+	/**
+	 * Creates a validity check for an interpolant automaton, i.e., an automaton where the states of the automaton are
+	 * themselves the predicates forming a Floyd/Hoare automaton.
+	 *
+	 * @param precondition
+	 *            The precondition which must entail the annotation of initial states. This may differ from {@code true}
+	 *            in some applications e.g. in BuchiAutomizer. If the precondition is {@code true}, use the overload of
+	 *            this method without this parameter.
+	 */
+	public static <L extends IAction> NwaFloydHoareValidityCheck<L, IPredicate> forInterpolantAutomaton(
+			final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final IHoareTripleChecker hoareTripleChecker, final IPredicateUnifier unifier,
+			final INestedWordAutomaton<L, IPredicate> automaton, final boolean assertValidity,
+			final IPredicate precondition) {
+		return new NwaFloydHoareValidityCheck<>(services, mgdScript, hoareTripleChecker, automaton,
+				new FloydHoareForInterpolantAutomaton(precondition, unifier.getFalsePredicate()), assertValidity,
+				MissingAnnotationBehaviour.THROW, false);
+	}
+
 	@Override
 	protected Iterable<S> getInitialStates() {
 		return mAutomaton.getInitialStates();

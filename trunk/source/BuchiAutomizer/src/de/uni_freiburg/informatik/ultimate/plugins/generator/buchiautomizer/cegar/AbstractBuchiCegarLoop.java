@@ -574,8 +574,10 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 								HoareTripleChecks.INCREMENTAL, mCsToolkitWithRankVars, pu);
 				final BuchiHoareTripleChecker bhtc = new BuchiHoareTripleChecker(ehtc);
 				bhtc.putDecreaseEqualPair(hondaPredicate, rankEqAndSi);
-				assert NwaFloydHoareValidityCheck.forInterpolantAutomaton(mServices,
-						mCsToolkitWithRankVars.getManagedScript(), bhtc, pu, inputAutomaton, true).getResult();
+				assert NwaFloydHoareValidityCheck
+						.forInterpolantAutomaton(mServices, mCsToolkitWithRankVars.getManagedScript(), bhtc, pu,
+								inputAutomaton, true, bspmResult.getStemPrecondition())
+						.getResult();
 
 				assert new BuchiAccepts<>(new AutomataLibraryServices(mServices), inputAutomaton,
 						mCounterexample.getNestedLassoWord()).getResult();
