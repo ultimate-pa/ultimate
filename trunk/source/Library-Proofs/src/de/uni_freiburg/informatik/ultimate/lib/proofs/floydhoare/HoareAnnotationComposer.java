@@ -249,9 +249,7 @@ public class HoareAnnotationComposer {
 	public HashRelation3<IPredicate, IPredicate, Term> constructMappingOld() {
 		final HashRelation3<IPredicate, IPredicate, Term> loc2callpred2invariant = new HashRelation3<>();
 
-		final IPredicate surrogateForEmptyCallPred =
-				mPredicateFactory.newPredicate(mCsToolkit.getManagedScript().getScript().term("true"));
-		addHoareAnnotationForCallPred(loc2callpred2invariant, surrogateForEmptyCallPred,
+		addHoareAnnotationForCallPred(loc2callpred2invariant, mSurrogateForEmptyCallPred,
 				mHoareAnnotationFragments.getProgPoint2StatesWithEmptyContext());
 
 		for (final IPredicate context : mHoareAnnotationFragments.getDeadContexts2ProgPoint2Preds().keySet()) {
@@ -313,8 +311,9 @@ public class HoareAnnotationComposer {
 	}
 
 	public IFloydHoareAnnotation<IPredicate> extractAnnotation() {
-		// TODO #proofRefactor pre/post
-		return new FloydHoareMapping<>(null, null, mLoc2hoare);
+		final var pre = mPredicateFactory.and(); // true
+		final var post = mPredicateFactory.or(); // false
+		return new FloydHoareMapping<>(pre, post, mLoc2hoare);
 	}
 
 	/**

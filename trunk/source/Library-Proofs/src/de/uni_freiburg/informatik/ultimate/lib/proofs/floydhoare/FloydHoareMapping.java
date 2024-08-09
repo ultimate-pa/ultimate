@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare;
 
 import java.util.Map;
+import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
@@ -67,13 +68,12 @@ public class FloydHoareMapping<S> implements IFloydHoareAnnotation<S> {
 	 * @param annotation
 	 *            the underlying map from states to their annotations
 	 * @param defaultPredicate
-	 *            A default predicate to be returned when no annotation for a given state is known. If this is
-	 *            {@code null}, an exception is thrown when trying to retrieve the annotation of such states.
+	 *            A default predicate to be returned when no annotation for a given state is known.
 	 */
 	public FloydHoareMapping(final IPredicate precondition, final IPredicate postcondition,
 			final Map<S, IPredicate> annotation, final IPredicate defaultPredicate) {
-		mPrecondition = precondition;
-		mPostcondition = postcondition;
+		mPrecondition = Objects.requireNonNull(precondition);
+		mPostcondition = Objects.requireNonNull(postcondition);
 		mAnnotation = annotation;
 		mDefaultPredicate = defaultPredicate;
 	}
@@ -90,10 +90,6 @@ public class FloydHoareMapping<S> implements IFloydHoareAnnotation<S> {
 
 	@Override
 	public IPredicate getAnnotation(final S state) {
-		final var predicate = mAnnotation.getOrDefault(state, mDefaultPredicate);
-		if (predicate == null) {
-			throw new IllegalArgumentException("No annotation for " + state);
-		}
-		return predicate;
+		return mAnnotation.getOrDefault(state, mDefaultPredicate);
 	}
 }
