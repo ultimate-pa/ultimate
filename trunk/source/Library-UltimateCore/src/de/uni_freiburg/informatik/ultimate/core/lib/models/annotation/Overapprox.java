@@ -54,9 +54,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecut
 public class Overapprox extends ModernAnnotations {
 
 	private static final long serialVersionUID = -575969312624287029L;
-	public static final String BITVEC = "bitvector operation";
-	public static final String BITSHIFT_OVERFLOW = "overflow check for bitwise shift operation";
-	public static final String FUNC_POINTER = "call of function pointer";
 
 	@Visualizable
 	private final Map<String, ILocation> mReason2Loc;
