@@ -172,7 +172,7 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 				stateFactoryForRefinement, witnessAutomaton);
 		final var abstraction = constructInitialAbstraction(triple.getFirst(), root, errorLocs);
 
-		final var producer = triple.getSecond();
+		final var producer = triple.getSecond().get();
 		final var cegar = createFiniteAutomataCegarLoop(services, name, root, predicateFactory, errorLocs,
 				rawFloydHoareAutomataFromFile, stateFactoryForRefinement, witnessAutomaton, abstraction, producer);
 		final var proofProducer = new BacktranslatingProofProducer<>(root, producer, triple.getThird());
@@ -235,7 +235,7 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 		}
 	}
 
-	private Triple<IInitialAbstractionProvider<L, ? extends INestedWordAutomaton<L, IPredicate>>, NwaHoareProofProducer<L>, Function<IFloydHoareAnnotation<IPredicate>, IFloydHoareAnnotation<IcfgLocation>>>
+	private Triple<IInitialAbstractionProvider<L, ? extends INestedWordAutomaton<L, IPredicate>>, Supplier<NwaHoareProofProducer<L>>, Function<IFloydHoareAnnotation<IPredicate>, IFloydHoareAnnotation<IcfgLocation>>>
 			createAutomataAbstractionProvider(final IUltimateServiceProvider services, final boolean isConcurrent,
 					final PredicateFactory predicateFactory, final PredicateFactoryRefinement stateFactory,
 					final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton) {
@@ -243,7 +243,7 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 			final var provider = new NwaInitialAbstractionProvider<L>(services, stateFactory, mPrefs.interprocedural(),
 					predicateFactory, mPrefs.getHoareSettings());
 			if (witnessAutomaton == null) {
-				return new Triple<>(provider, provider.getProofProducer(), provider::backtranslateProof);
+				return new Triple<>(provider, provider::getProofProducer, provider::backtranslateProof);
 			}
 			return new Triple<>(new WitnessAutomatonAbstractionProvider<>(services, predicateFactory, stateFactory,
 					provider, witnessAutomaton, Property.NON_REACHABILITY), null, null);
@@ -253,7 +253,8 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 		if (!mPrefs.applyOneShotPOR()) {
 			final var provider =
 					new Petri2FiniteAutomatonAbstractionProvider.Eager<>(services, netProvider, stateFactory);
-			return new Triple<>(provider, provider.getProofProducer(predicateFactory, mPrefs.getHoareSettings()), null);
+			return new Triple<>(provider, () -> provider.getProofProducer(predicateFactory, mPrefs.getHoareSettings()),
+					null);
 		}
 
 		return new Triple<>(new PartialOrderAbstractionProvider<>(

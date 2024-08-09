@@ -30,10 +30,12 @@ package de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
@@ -87,7 +89,7 @@ public class HoareAnnotationFragments<LETTER extends IAction> {
 	}
 
 	public HoareAnnotationFragments(final Set<IPredicate> hoareAnnotationStates) {
-		mHoareAnnotationStates = hoareAnnotationStates;
+		mHoareAnnotationStates = Objects.requireNonNull(hoareAnnotationStates);
 	}
 
 	/**
@@ -129,7 +131,7 @@ public class HoareAnnotationFragments<LETTER extends IAction> {
 			// Initially, mPred2ProgPoint is empty, and the "old states" are the program points themselves.
 			oldStates = mHoareAnnotationStates;
 		} else {
-			oldStates = mPred2ProgPoint.keySet();
+			oldStates = new HashSet<>(mPred2ProgPoint.keySet());
 		}
 
 		for (final IPredicate oldState : oldStates) {
