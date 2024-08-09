@@ -143,32 +143,35 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 		final PredicateFactoryRefinement stateFactoryForRefinement =
 				new PredicateFactoryRefinement(services, csToolkit.getManagedScript(), predicateFactory,
 						mPrefs.getHoareSettings().computeHoareAnnotation(), hoareAnnotationLocs);
+		final boolean isConcurrent = IcfgUtils.isConcurrent(root);
 
 		// handle CEGAR loops that are not based on finite automata
-		switch (mPrefs.getAutomataTypeConcurrency()) {
-		case PARTIAL_ORDER_FA:
-			requireNoReuse("POR-based analysis");
-			requireNoWitnesses(witnessAutomaton, "POR-based analysis");
-			final var factory = new IndependenceProviderFactory<>(services, mPrefs, mCopyFactory);
-			final var poCegar = new PartialOrderCegarLoop<>(name,
-					createPartialOrderAbstraction(services, predicateFactory, stateFactoryForRefinement, root,
-							errorLocs),
-					root, csToolkit, predicateFactory, mPrefs, errorLocs, services,
-					factory.createProviders(root, predicateFactory), mTransitionClazz, stateFactoryForRefinement);
-			return new Pair<>(poCegar, null);
-		case PETRI_NET:
-			requireNoReuse("Petri net-based analysis");
-			requireNoWitnesses(witnessAutomaton, "Petri net-based analysis");
-			final var pnCegar = new CegarLoopForPetriNet<>(name,
-					createPetriAbstraction(services, predicateFactory, true, root, errorLocs), root, csToolkit,
-					predicateFactory, mPrefs, errorLocs, services, mTransitionClazz, stateFactoryForRefinement);
-			return new Pair<>(pnCegar, null);
-		default:
-			// do nothing, and fall through to the code below
+		if (isConcurrent) {
+			switch (mPrefs.getAutomataTypeConcurrency()) {
+			case PARTIAL_ORDER_FA:
+				requireNoReuse("POR-based analysis");
+				requireNoWitnesses(witnessAutomaton, "POR-based analysis");
+				final var factory = new IndependenceProviderFactory<>(services, mPrefs, mCopyFactory);
+				final var poCegar = new PartialOrderCegarLoop<>(name,
+						createPartialOrderAbstraction(services, predicateFactory, stateFactoryForRefinement, root,
+								errorLocs),
+						root, csToolkit, predicateFactory, mPrefs, errorLocs, services,
+						factory.createProviders(root, predicateFactory), mTransitionClazz, stateFactoryForRefinement);
+				return new Pair<>(poCegar, null);
+			case PETRI_NET:
+				requireNoReuse("Petri net-based analysis");
+				requireNoWitnesses(witnessAutomaton, "Petri net-based analysis");
+				final var pnCegar = new CegarLoopForPetriNet<>(name,
+						createPetriAbstraction(services, predicateFactory, true, root, errorLocs), root, csToolkit,
+						predicateFactory, mPrefs, errorLocs, services, mTransitionClazz, stateFactoryForRefinement);
+				return new Pair<>(pnCegar, null);
+			default:
+				// do nothing, and fall through to the code below
+			}
 		}
 
 		// handle finite automata-based CEGAR loops
-		final var triple = createAutomataAbstractionProvider(services, IcfgUtils.isConcurrent(root), predicateFactory,
+		final var triple = createAutomataAbstractionProvider(services, isConcurrent, predicateFactory,
 				stateFactoryForRefinement, witnessAutomaton);
 		final var abstraction = constructInitialAbstraction(triple.getFirst(), root, errorLocs);
 
