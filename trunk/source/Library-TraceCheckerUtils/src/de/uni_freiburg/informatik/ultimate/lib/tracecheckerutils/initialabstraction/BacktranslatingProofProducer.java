@@ -34,6 +34,15 @@ import de.uni_freiburg.informatik.ultimate.lib.proofs.IProof;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.IProofProducer;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
+/**
+ * Helper class that wraps a proof producer for an initial abstraction, and backtranslates the produced proof to a proof
+ * for the original {@link IIcfg}.
+ *
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ *
+ * @param <INPROOF>
+ *            The type of proof produced for the initial abstraction
+ */
 public class BacktranslatingProofProducer<INPROOF extends IProof>
 		implements IProofProducer<IIcfg<IcfgLocation>, IProof> {
 	private final IIcfg<IcfgLocation> mIcfg;

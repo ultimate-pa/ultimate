@@ -128,7 +128,6 @@ public final class NwaHoareProofProducer<L extends IAction>
 			throw new AssertionError(
 					"ManagedScript must not be locked at the beginning of Hoare annotation computation");
 		}
-		// TODO avoid cast, instead traverse and collect reachable states
 		new HoareAnnotationExtractor<>(mServices, mFinalAbstraction, mHaf);
 		return new HoareAnnotationComposer(mCsToolkit, mPredicateFactory, mHaf, mServices);
 	}

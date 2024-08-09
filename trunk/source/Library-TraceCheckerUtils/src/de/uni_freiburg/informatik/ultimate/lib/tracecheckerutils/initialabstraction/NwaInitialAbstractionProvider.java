@@ -37,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.HoareProofSettings;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.IFloydHoareAnnotation;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.NwaHoareProofProducer;
@@ -99,12 +98,14 @@ public class NwaInitialAbstractionProvider<L extends IIcfgTransition<?>>
 		if (!mPrefs.computeHoareAnnotation()) {
 			return null;
 		}
+		if (mAbstraction == null) {
+			throw new UnsupportedOperationException("Must create abstraction before creating proof producer");
+		}
 		return new NwaHoareProofProducer<>(mServices, mAbstraction, mCsToolkit, mPredicateFactory, mPrefs,
 				mHoareStates);
 	}
 
 	public IFloydHoareAnnotation<IcfgLocation> backtranslateProof(final IFloydHoareAnnotation<IPredicate> inputProof) {
-		return new TransformFloydHoareAnnotation<>(inputProof, mAbstraction.getStates(), PredicateUtils::getLocation)
-				.getResult();
+		return TransformFloydHoareAnnotation.nwaToIcfg(inputProof, mAbstraction);
 	}
 }

@@ -319,11 +319,6 @@ public class HoareAnnotationComposer {
 	/**
 	 * Construct Predicate which represents the same Predicate as ps, but where all globalVars are renamed to
 	 * oldGlobalVars.
-	 *
-	 * @param services
-	 * @param mgdScript
-	 * @param predicateFactory
-	 * @param simplificationTechnique
 	 */
 	private static IPredicate renameGlobalsToOldGlobals(final IPredicate ps, final IUltimateServiceProvider services,
 			final ManagedScript mgdScript, final BasicPredicateFactory predicateFactory,

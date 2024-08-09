@@ -29,10 +29,25 @@ package de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 
+/**
+ * Represents the Floyd-Hoare automaton for an interpolant automaton, i.e., an automaton whose states are themselves
+ * predicates that form an inductive annotation.
+ *
+ * Hence, an instance of this class does not actually carry any information and is only used in order to provide a
+ * common interface when an {@link IFloydHoareAnnotation} is needed, e.g. for {@link FloydHoareValidityCheck}.
+ *
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ */
 public class FloydHoareForInterpolantAutomaton implements IFloydHoareAnnotation<IPredicate> {
 	private final IPredicate mPrecondition;
 	private final IPredicate mPostcondition;
 
+	/**
+	 * Create an instance with the default precondition (true) and postcondition (false).
+	 *
+	 * @param unifier
+	 *            A predicate unifier used to retrieve predicates representing pre- and postcondition
+	 */
 	public FloydHoareForInterpolantAutomaton(final IPredicateUnifier unifier) {
 		this(unifier.getTruePredicate(), unifier.getFalsePredicate());
 	}

@@ -62,9 +62,13 @@ public class FloydHoareMapping<S> implements IFloydHoareAnnotation<S> {
 	}
 
 	/**
+	 * Create an instance with the specified pre-/postcondition pair and a default fallback predicate for unknown
+	 * states.
 	 *
 	 * @param precondition
+	 *            the precondition (assumed to hold at initial states)
 	 * @param postcondition
+	 *            the postcondition (shown to hold at exit/final states)
 	 * @param annotation
 	 *            the underlying map from states to their annotations
 	 * @param defaultPredicate
