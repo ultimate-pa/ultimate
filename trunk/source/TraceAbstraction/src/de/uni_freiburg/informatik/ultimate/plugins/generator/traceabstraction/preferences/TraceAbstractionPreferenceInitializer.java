@@ -257,7 +257,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	private static final int DEF_WATCHITERATION = 1_000_000;
 
 	public static final String LABEL_HOARE_POSITIONS = "Positions where we compute the Hoare Annotation";
-	private static final HoareAnnotationPositions DEF_HOARE_POSITIONS = HoareAnnotationPositions.All;
+	private static final HoareAnnotationPositions DEF_HOARE_POSITIONS = HoareAnnotationPositions.None;
 
 	// Trace Check Solver
 	// ========================================================================
