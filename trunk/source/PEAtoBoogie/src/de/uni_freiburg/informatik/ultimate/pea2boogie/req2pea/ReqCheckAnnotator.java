@@ -379,6 +379,13 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		return createAssert(disjunction, check, label);
 	}
 	
+	/**
+	 * Generate the list of assertions for the check of the Stuck-At-Property for all peas of the given specification.
+	 * 
+	 * @param bl
+	 *            A boogie location used for all statements.
+	 * @return A list of assertions, each of which indicates a case of the Stuck-At-Property not holding.
+	 */
 	private List<Statement> genChecksNonStuckAtProperty(final BoogieLocation bl) {
 		if (!mCheckStuckAtProperty) {
 			return Collections.emptyList();
@@ -388,11 +395,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		PatternType<?> pattern = null;
 		for (PhaseEventAutomata pea : toAssert.keySet()) {
 			for (ReqPeas reqPeas : mReqPeas) {
-				for (Entry<CounterTrace, PhaseEventAutomata> ctPea : reqPeas.getCounterTrace2Pea()) {
-					if (ctPea.getValue() == pea) {
-						pattern = reqPeas.getPattern();
-					}
-				}
+				pattern = getPeaPattern(reqPeas, pea, pattern);
 			}
 			int index = 0;
 			for (Expression expr : toAssert.get(pea)) {
@@ -403,6 +406,39 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		return stmtList;
 	}
 	
+	/**
+	 * Returns the pattern type of the given PEA if it is part of the given Requirement (of a known pattern type), else unchanged input pattern.
+	 * 
+	 * @param reqPeas 
+	 * 		      a requirement in the specification
+	 * @param pea 
+	 *            a PEA whose pattern should be returned if it is a PEA of reqPeas
+	 * @param pattern 
+	 *            either the previously detected pattern of the PEA or null
+	 * @return a pattern type if PEA of a PEA of reqPeas, which is of a known pattern type, else pattern
+	 */
+	private PatternType<?> getPeaPattern(ReqPeas reqPeas, PhaseEventAutomata pea, PatternType<?> pattern) {
+		for (Entry<CounterTrace, PhaseEventAutomata> ctPea : reqPeas.getCounterTrace2Pea()) {
+			if (ctPea.getValue() == pea) {
+				return reqPeas.getPattern();
+			}
+		}
+		return pattern;
+	}
+	
+	/**
+	 * Generate the assertion that is violated if the requirement represented by the given automaton is stuck. The
+	 * assertion expresses that the automaton always stays in a "Nonterminal Violable Phase" once it has been entered.
+	 * Currently, without a precheck, a PEA is considered stuck in an NVP if the NVP is unreachable.
+	 *
+	 * @param req
+	 *            The requirement for which the Stuck-At-Property is checked.
+	 * @param aut
+	 *            The automaton for which the Stuck-At-Property is checked.
+	 * @param bl
+	 *            A boogie location used for all statements.
+	 * @return The assertion for non-stuckness.
+	 */
 	private Statement genAssertNonStuckAtProperty(final PatternType<?> req, final PhaseEventAutomata aut,
 			final BoogieLocation bl, Expression toAssert, int index) {
 		final ReqCheck check = createReqCheck(Spec.STUCKAT, req, aut);

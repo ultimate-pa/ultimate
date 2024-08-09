@@ -111,17 +111,6 @@ public class PeaViolablePhases {
 		return reachabilityMap;
 	}
 
-	/*
-	 * old recursive version of dfsCheckForReachabilityCheck(..): private void dfsCheckForReachabilityCheck(Phase
-	 * checkingPhase, Phase currentPhase, List<Phase> phaseSet, Map<Phase, Set<Phase>> reachabilityMap, Set<Phase>
-	 * checked) { if (checked.contains(currentPhase)) { return; } checked.add(currentPhase); Set<Phase>
-	 * currentReachablePhases = reachabilityMap.get(currentPhase); if (currentReachablePhases == null) {
-	 * currentReachablePhases = new HashSet<>(); reachabilityMap.put(currentPhase, currentReachablePhases); } for
-	 * (Transition t : currentPhase.getTransitions()) { Phase destPhase = t.getDest(); if (phaseSet.contains(destPhase))
-	 * { currentReachablePhases.add(destPhase); dfsCheckForReachabilityCheck(checkingPhase, destPhase, phaseSet,
-	 * reachabilityMap, checked); } } }
-	 */
-
 	/**
 	 * From the given Phase, it is checked which Phases in the given List of Phases are reachable (via only those Phases
 	 * in the given List of Phases.
@@ -271,83 +260,164 @@ public class PeaViolablePhases {
 	private List<List<Phase>> runTarjansAlgorithm() {
 		mLogger.info("PEA: " + mPea.getName());
 		mLogger.info("Number of locations in PEA: " + mPea.getPhases().length);
-		List<List<Phase>> tarjansComponents = new ArrayList<List<Phase>>();
-		Map<Phase, Integer> indices = new HashMap<>(); // keeps track of each Phase's assigned index
-		Map<Phase, Integer> lowlinks = new HashMap<>(); // keeps track of each Phase's lowlink value (see Tarjan's
-														// Algorithm)
-		Map<Phase, Boolean> onStack = new HashMap<>(); // keeps track of which Phases are in the SCC (in stack sccStack)
-		Stack<Phase> checkedPhases = new Stack<Phase>();
-		int index = 0;
+		List<List<Phase>> tarjansComponents = new ArrayList<>();
+		Map<Phase, Integer> indices = new HashMap<>(); // saves the assigned index of each Phase
+		Map<Phase, Integer> lowlinks = new HashMap<>(); // saves the lowlink value of each Phase (see Tarjan's
+														// algorithm)
+		Map<Phase, Boolean> onStack = new HashMap<>(); // saves which Phases are currently on visitedPhases
+		Stack<Phase> visitedPhases = new Stack<>(); // keeps track of the Phases that have been visited and are being
+													// checked
+		int[] index = { 0 }; // changed to Array, since index is not returned by any function, but must be updated
 		for (Phase startPhase : mPea.getPhases()) {
 			if (!indices.containsKey(startPhase)) {
-				Stack<Phase> checkingPhasesStack = new Stack<>(); // keeps track of which Phases are being checked
-				Stack<Iterator<Transition>> transitionIteratorStack = new Stack<>();
-				checkingPhasesStack.push(startPhase);
-				transitionIteratorStack.push(startPhase.getTransitions().iterator());
-				while (!checkingPhasesStack.isEmpty()) {
-					Phase phaseOnStack = checkingPhasesStack.peek();
-					Iterator<Transition> iterator = transitionIteratorStack.peek();
-					if (!indices.containsKey(phaseOnStack)) {
-						indices.put(phaseOnStack, index);
-						lowlinks.put(phaseOnStack, index); // initial lowlink value is the same as the assigned index
-						index++;
-						checkedPhases.push(phaseOnStack);
-						onStack.put(phaseOnStack, true);
-					}
-					boolean done = true;
-					while (iterator.hasNext()) { // iterate through the transitions to check destination Phases
-						Transition t = iterator.next();
-						Phase otherPhase = t.getDest();
-						if (!indices.containsKey(otherPhase)) { // if otherPhase hasn't been visited yet
-							checkingPhasesStack.push(otherPhase);
-							transitionIteratorStack.push(otherPhase.getTransitions().iterator());
-							done = false;
-							break;
-						} else if (onStack.get(otherPhase)) {
-							lowlinks.put(phaseOnStack, Math.min(lowlinks.get(phaseOnStack), indices.get(otherPhase)));
-						}
-					}
-					if (done) { // save SCC on stack as SCC in the output List
-						if (lowlinks.get(phaseOnStack).equals(indices.get(phaseOnStack))) {
-							List<Phase> stronglyConnectedComponent = new ArrayList<>();
-							Phase p;
-							do {
-								p = checkedPhases.pop();
-								onStack.put(p, false);
-								stronglyConnectedComponent.add(p);
-							} while (p != phaseOnStack);
-							tarjansComponents.add(stronglyConnectedComponent);
-						}
-						checkingPhasesStack.pop();
-						transitionIteratorStack.pop();
-						if (!checkingPhasesStack.isEmpty()) {
-							Phase parentPhase = checkingPhasesStack.peek();
-							lowlinks.put(parentPhase, Math.min(lowlinks.get(parentPhase), lowlinks.get(phaseOnStack)));
-						}
-					}
-				}
+				findStronglyConnectedComponent(startPhase, index, indices, lowlinks, onStack, visitedPhases,
+						tarjansComponents);
 			}
 		}
 		return tarjansComponents;
 	}
 
-	/*
-	 * old recursive version of tarjansStronglyConnectedComponents(..): private List<List<Phase>>
-	 * tarjansStronglyConnectedComponents(Phase phase, int index, Stack<Phase> checkedPhases, Map<Phase, Integer>
-	 * indices, Map<Phase, Integer> lowlinks, Map<Phase, Boolean> onStack, List<List<Phase>> tarjansComponents) {
-	 * indices.put(phase, index); lowlinks.put(phase, index); index++; checkedPhases.push(phase); onStack.put(phase,
-	 * true); for (Transition t : phase.getTransitions()) { Phase otherPhase = t.getDest(); if
-	 * (!indices.containsKey(otherPhase)) { tarjansStronglyConnectedComponents(otherPhase, index, checkedPhases,
-	 * indices, lowlinks, onStack, tarjansComponents); lowlinks.put(phase, Math.min(lowlinks.get(phase),
-	 * lowlinks.get(otherPhase))); } else if (onStack.get(otherPhase)) { lowlinks.put(phase,
-	 * Math.min(lowlinks.get(phase), indices.get(otherPhase))); } }
+	/**
+	 * The body of Tarjan's algorithm which finds the strongly connected component containing the startPhase given.
 	 * 
-	 * List<Phase> stronglyConnectedComponent = new ArrayList<Phase>(); if (lowlinks.get(phase) == indices.get(phase)) {
-	 * boolean done = false; while (!done) { Phase p = checkedPhases.pop(); onStack.put(p, false);
-	 * stronglyConnectedComponent.add(p); if (p == phase) { done = true; } } } if
-	 * (!stronglyConnectedComponent.isEmpty()) { tarjansComponents.add(stronglyConnectedComponent); } return
-	 * tarjansComponents; }
+	 * @param startPhase
+	 *            the Phase whose strongly connected component should be detected
+	 * @param index
+	 *            Array that acts as an Int to assign indices to the Phases
+	 * @param indices
+	 *            the Map that keeps track of the indices assigned to the Phases
+	 * @param lowlinks
+	 *            the Map that keeps track of the lowlink values of each Phase
+	 * @param onStack
+	 *            the Map that keeps track of which Phases are on the visitedPhases Stack
+	 * @param visitedPhases
+	 *            the Stack that keeps track of all Phases which have been visited/checked among all iterations
+	 * @param tarjansComponents
+	 *            the List (in progress) of SCCs (Lists of Phases)
 	 */
+	private void findStronglyConnectedComponent(Phase startPhase, int[] index, Map<Phase, Integer> indices,
+			Map<Phase, Integer> lowlinks, Map<Phase, Boolean> onStack, Stack<Phase> visitedPhases,
+			List<List<Phase>> tarjansComponents) {
+		Stack<Phase> checkingPhasesStack = new Stack<>(); // saves the Phases being checked, in order of the Transitions
+															// being checked
+		Stack<Iterator<Transition>> transitionIteratorStack = new Stack<>(); // allows the DFS check without recursion
+		checkingPhasesStack.push(startPhase);
+		transitionIteratorStack.push(startPhase.getTransitions().iterator());
+		while (!checkingPhasesStack.isEmpty()) {
+			Phase phaseOnStack = checkingPhasesStack.peek();
+			Iterator<Transition> iterator = transitionIteratorStack.peek();
+			if (!indices.containsKey(phaseOnStack)) {
+				assignPhaseIndex(phaseOnStack, index, indices, lowlinks, onStack, visitedPhases);
+			}
+			boolean done = checkTransitions(phaseOnStack, iterator, checkingPhasesStack, transitionIteratorStack,
+					indices, lowlinks, onStack);
+			if (done) {
+				addStronglyConnectedComponent(phaseOnStack, indices, lowlinks, visitedPhases, onStack,
+						tarjansComponents);
+				checkingPhasesStack.pop();
+				transitionIteratorStack.pop();
+				if (!checkingPhasesStack.isEmpty()) {
+					Phase parentPhase = checkingPhasesStack.peek();
+					lowlinks.put(parentPhase, Math.min(lowlinks.get(parentPhase), lowlinks.get(phaseOnStack)));
+				}
+			}
+		}
+	}
+
+	/**
+	 * Helper function of findStronglyConnectedComponent(..) which assigned indices to the Phase given
+	 * 
+	 * @param phase
+	 *            Phase to be indexed
+	 * @param index
+	 *            value to be given to phase
+	 * @param indices
+	 *            Map containing the previously indexed Phases
+	 * @param lowlinks
+	 *            Map containing the current values of each (checked) Phase's lowlink
+	 * @param onStack
+	 *            Map tracking which Phases are on the Stack visitedPhases
+	 * @param visitedPhases
+	 *            Stack tracking which Phases have been visited and are being checked
+	 */
+	private void assignPhaseIndex(Phase phase, int[] index, Map<Phase, Integer> indices, Map<Phase, Integer> lowlinks,
+			Map<Phase, Boolean> onStack, Stack<Phase> visitedPhases) {
+		indices.put(phase, index[0]);
+		lowlinks.put(phase, index[0]);
+		index[0]++;
+		visitedPhases.push(phase);
+		onStack.put(phase, true);
+	}
+
+	/**
+	 * Helper function of findStronglyConnectedComponent(..) which checks the outgoing Transitions of the Iterator for
+	 * destination Phases which haven't been checked yet. If new ones are found, they are added to the Stacks to be
+	 * checked.
+	 * 
+	 * @param phase
+	 *            the Phase on top of checkingPhasesStack which is being checked
+	 * @param iterator
+	 *            the Iterator on top of transitionIteratorStack which is being used to check the Transitions/Phases
+	 * @param checkingPhasesStack
+	 *            the Stack used to track which Phases are being checked
+	 * @param transitionIteratorStack
+	 *            the Stack used to track Transitions being checked
+	 * @param indices
+	 *            the Map tracking the indices assigned to each visited Phase
+	 * @param lowlinks
+	 *            the Map tracking the lowlink values of each visited Phase
+	 * @param onStack
+	 *            the Nap tracking which Phases are on the visitedPhase Stack
+	 * @return True if there are no further Phases to check for the current SCC, else False
+	 */
+	private boolean checkTransitions(Phase phase, Iterator<Transition> iterator, Stack<Phase> checkingPhasesStack,
+			Stack<Iterator<Transition>> transitionIteratorStack, Map<Phase, Integer> indices,
+			Map<Phase, Integer> lowlinks, Map<Phase, Boolean> onStack) {
+		while (iterator.hasNext()) {
+			Transition t = iterator.next();
+			Phase otherPhase = t.getDest();
+
+			if (!indices.containsKey(otherPhase)) {
+				checkingPhasesStack.push(otherPhase);
+				transitionIteratorStack.push(otherPhase.getTransitions().iterator());
+				return false; // there are further Phases to check for inclusion
+			} else if (onStack.get(otherPhase)) {
+				lowlinks.put(phase, Math.min(lowlinks.get(phase), indices.get(otherPhase)));
+			}
+		}
+		return true; // no other Phases need to be checked and the SCC in complete
+	}
+
+	/**
+	 * Helper function of findStronglyConnectedComponent(..) which adds the SCC from the given Stack to the List of SCCs
+	 * given
+	 * 
+	 * @param phase
+	 *            the last Phase of the
+	 * @param indices
+	 *            the Map tracking the indices assigned to each visited Phase
+	 * @param lowlinks
+	 *            the Map tracking the lowlink values of each visited Phase
+	 * @param visitedPhases
+	 *            Stack tracking which Phases have been visited and are being checked
+	 * @param onStack
+	 *            the Nap tracking which Phases are on the visitedPhase Stack
+	 * @param tarjansComponents
+	 *            the List (in progress) of SCCs (Lists of Phases)
+	 */
+	private void addStronglyConnectedComponent(Phase phase, Map<Phase, Integer> indices, Map<Phase, Integer> lowlinks,
+			Stack<Phase> visitedPhases, Map<Phase, Boolean> onStack, List<List<Phase>> tarjansComponents) {
+		if (lowlinks.get(phase).equals(indices.get(phase))) {
+			List<Phase> stronglyConnectedComponent = new ArrayList<>();
+			Phase p;
+			do { // pull SCC from main Stack of Phases being checked
+				p = visitedPhases.pop();
+				onStack.put(p, false);
+				stronglyConnectedComponent.add(p);
+			} while (p != phase);
+			tarjansComponents.add(stronglyConnectedComponent);
+		}
+	}
 
 	/**
 	 * Checks a List of Phases for subsets of Phases which are last phases, i.e. set of Phases which are strongly
