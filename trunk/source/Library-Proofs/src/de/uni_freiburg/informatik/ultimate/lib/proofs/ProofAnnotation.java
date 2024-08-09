@@ -47,20 +47,20 @@ public class ProofAnnotation extends ModernAnnotations {
 	private static final String KEY = ProofAnnotation.class.getName();
 
 	@Visualizable
-	private final List<Object> mProofs;
+	private final List<IProof> mProofs;
 
-	private ProofAnnotation(final List<Object> proofs) {
+	private ProofAnnotation(final List<IProof> proofs) {
 		mProofs = proofs;
 	}
 
-	public List<Object> getProofs() {
+	public List<IProof> getProofs() {
 		return Collections.unmodifiableList(mProofs);
 	}
 
-	public static void addProof(final IElement element, final Object proof) {
+	public static void addProof(final IElement element, final IProof proof) {
 		final IAnnotations annot = element.getPayload().getAnnotations().get(KEY);
 
-		final var proofs = new ArrayList<>();
+		final var proofs = new ArrayList<IProof>();
 		if (annot != null) {
 			proofs.addAll(((ProofAnnotation) annot).getProofs());
 		}
@@ -70,7 +70,7 @@ public class ProofAnnotation extends ModernAnnotations {
 		element.getPayload().getAnnotations().put(KEY, newAnnot);
 	}
 
-	public static List<Object> getProofs(final IElement element) {
+	public static List<IProof> getProofs(final IElement element) {
 		final IAnnotations annot = element.getPayload().getAnnotations().get(KEY);
 		if (annot == null) {
 			return Collections.emptyList();

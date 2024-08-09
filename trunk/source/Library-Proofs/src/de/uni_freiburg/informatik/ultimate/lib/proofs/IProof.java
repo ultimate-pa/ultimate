@@ -26,6 +26,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.proofs;
 
+/**
+ * A marker interface for different kinds of correctness proofs (wrt. different specifications) for a program.
+ *
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ */
 public interface IProof {
-	// only a marker interface
+	// no methods here
 }
