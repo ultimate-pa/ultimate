@@ -249,7 +249,7 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 				return new Triple<>(provider, provider::getProofProducer, provider::backtranslateProof);
 			}
 			return new Triple<>(new WitnessAutomatonAbstractionProvider<>(services, predicateFactory, stateFactory,
-					provider, witnessAutomaton, Property.NON_REACHABILITY), null, null);
+					provider, witnessAutomaton, Property.NON_REACHABILITY), () -> null, null);
 		}
 
 		final var netProvider = createPetriAbstractionProvider(services, predicateFactory, false);
@@ -265,7 +265,7 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 				// Hence we use the lazy abstraction provider.
 				new Petri2FiniteAutomatonAbstractionProvider.Lazy<>(services, netProvider, stateFactory), services,
 				stateFactory, predicateFactory, mPrefs.getPartialOrderMode(), mPrefs.getDfsOrderType(),
-				mPrefs.getDfsOrderSeed()), null, null);
+				mPrefs.getDfsOrderSeed()), () -> null, null);
 	}
 
 	@Deprecated
