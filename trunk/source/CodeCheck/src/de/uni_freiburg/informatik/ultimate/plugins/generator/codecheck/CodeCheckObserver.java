@@ -85,6 +85,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.UnsatCores;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.ProofAnnotation;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.FloydHoareMapping;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.FloydHoareUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
@@ -536,6 +537,11 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 			final IIcfg<IcfgLocation> icfg, final IBacktranslationService backTranslatorService) {
 		for (final AnnotatedProgramPoint pr : procRootsToCheck) {
 			final var floydHoare = computeHoareAnnotation(pr);
+			FloydHoareUtils.writeHoareAnnotationToLogger(icfg, floydHoare, mLogger, true);
+
+			// Annotate the ICFG with the computed Floyd-Hoare annotation, so it can be consumed by other plugins.
+			ProofAnnotation.addProof(icfg, floydHoare);
+
 			FloydHoareUtils.createInvariantResults(Activator.PLUGIN_NAME, icfg, floydHoare, backTranslatorService,
 					this::reportResult);
 			FloydHoareUtils.createProcedureContractResults(mServices, Activator.PLUGIN_NAME, icfg, floydHoare,
