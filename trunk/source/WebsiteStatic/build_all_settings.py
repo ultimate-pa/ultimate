@@ -1,4 +1,4 @@
-#!/bin/python3
+#!/usr/bin/python3
 
 import os
 from build_settings import compute_settings

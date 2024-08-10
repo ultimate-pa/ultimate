@@ -18,10 +18,10 @@ const _CONFIG = {
 	//                       The key is the language of the tool in the frontend; 
 	//                       The value is the file extension to be used by ultimate.
 	code_file_extensions: {
-		c: '.c',
-		boogie: '.bpl',
-		c_pp: '.c',
+		C: '.c',
+		Boogie: '.bpl',
+		C_pp: '.c',
 		automata_script: '.ats',
-		smt: '.smt2'
+		Smt: '.smt2'
 	}
 };
