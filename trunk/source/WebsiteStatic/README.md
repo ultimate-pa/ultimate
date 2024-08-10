@@ -14,11 +14,32 @@ You can start a local server (for development) by running
 ```sh
 jekyll serve
 ```
-The website will then be available under `http://localhost:4000/website/` (the `website/` suffix mirrors the URL when serving the website from `WebBackend`, but can be overriden with the `--baseurl` parameter).
+The website will then be available under `http://localhost:4000/website/`.
+The `website/` suffix mirrors the URL when serving the website from `WebBackend`, but can be overriden with the `--baseurl` parameter.
+For instance, the following command will serve the website from `http://localhost:4000/`:
+```sh
+jekyll serve --baseurl "/"
+```
 
 Serving the website in this way is useful for development:
 If you make changes to the website source code, jekyll will automatically recompile the website,
 and your changes should show up in the browser immediately.
+
+To simply build the website, run
+```sh
+jekyll build
+```
+This will deposit the compiled files into the subfolder `_site/`.
+When building for deployment, do not forget to override the baseurl:
+```sh
+jekyll build --baseurl "/"
+```
+
+For the web interface to work, you must run
+```sh
+./build_all_settings.py
+```
+After running this once, it does not have to be repeated unless you change some settings for the web interface.
 
 ### 1.1 Website Structure
 
@@ -26,18 +47,18 @@ Jekyll configuration can be found in `_config.yml`.
 
 ```
 WebsiteStatic/
-├── _awards                   Awards and medals won by Ultimate in SV-COMP etc.
-├── _layouts                  Jekyll layouts wrapped around content (e.g. header, footer)
-├── _tools                    Detail pages for the different Ultimate tools
-├── bootstrap_dev             see "Configure theme & style" below
-├── css                       Style files for the website
-├── fonts                     Fonts used by the website
-├── img                       Image files used by the website UI
-|   └── awards                Photos and graphics for the awards page
-├── js
-|   ├── vendor                3rd party dependencies
-|   └── webinterface          Scripts needed for the web interface
-└── webinterface
+├── _awards/                  Awards and medals won by Ultimate in SV-COMP etc. (see _awards/README.md for details)
+├── _layouts/                 Jekyll layouts wrapped around content (e.g. header, footer)
+├── _tools/                   Detail pages for the different Ultimate tools (see _tools/README.md for details)
+├── bootstrap_dev/            see "Configure theme & style" below
+├── css/                      Style files for the website
+├── fonts/                    Fonts used by the website
+├── img/                      Image files used by the website UI
+|   └── awards/               Photos and graphics for the awards page
+├── js/
+|   ├── vendor/               3rd party dependencies
+|   └── webinterface/         Scripts needed for the web interface
+└── webinterface/
     ├── code_examples         Code examples that can be selected in the UI
     └── workers               Toolchains and visible settings
 ```
@@ -79,18 +100,18 @@ To add a new tool to the website, follow these steps:
 
 ## 3. Web Interface
 ### 3.1 Glossary
-* **Tool**: An Ultimate tool, for example "Ultimate Automizer".
+- **Tool**: An Ultimate tool, for example "Ultimate Automizer".
   * Defined in [config.js](config/config.js) under the key `tools`.
   * Assigned to a unique `tool.id`.
-* **Worker**: Here a selected tool and a selected language. In Ultimate also called a toolchain.
+- **Worker**: Here a selected tool and a selected language. In Ultimate also called a toolchain.
   * Each tool can have multiple workers. A worker is a dictionary in a list of `workers` in a `tools` entry in [config.js](config/config.js)
   * Each worker of the website needs a unique id `id`.
   * Each worker needs a toolchain XML in [ultimate_toolchain_xmls](config/ultimate_toolchain_xmls) named `<id>.xml`
 
 ### 3.2 Configuration and Setup
 All configuration is set in `config/config.js`.
-* Copy [config/config.dist.js](config/config.dist.js) to `config/config.js`.
-* Edit `config/config.js` to your needs. The `config/config.dist.js` file is commented to guide the configuration.
+- Copy [config/config.dist.js](config/config.dist.js) to `config/config.js`.
+- Edit `config/config.js` to your needs. The `config/config.dist.js` file is commented to guide the configuration.
 
 ### 3.3 Code examples
 All code examples for a specific worker are stored in `webinterface/code_examples/<worker.id>`.

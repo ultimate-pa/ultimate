@@ -96,9 +96,13 @@ defaults:
 #   - vendor/ruby/
 exclude:
   - README.md
+  - _awards/README.md
+  - _tools/README.md
   - serve.sh
   - bootstrap_dev
-  - webinterface/convert_settions.py
+  - build_all_settings.py
+  - build_settings.py
+  - js/webinterface/config.dist.js
   - webinterface/code_examples/refresh_index.py
   - webinterface/code_examples/copy_initial_examples.py
 
