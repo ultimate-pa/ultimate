@@ -67,6 +67,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.d
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.BlockEncodingBacktranslator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.IProof;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.ProofAnnotation;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.FloydHoareUtils;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.FloydHoareValidityCheck.MissingAnnotationBehaviour;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.IFloydHoareAnnotation;
@@ -176,10 +177,15 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 				break;
 			}
 
+			final var proof = result.getProof();
+			if (proof != null) {
+				ProofAnnotation.addProof(icfg, proof);
+			}
+
 			// Currently, we can only work with Floyd-Hoare annotations.
 			// In the future, e.g. Owicki-Gries annotations may be supported as well.
-			if (result.getProof() instanceof IFloydHoareAnnotation<?>) {
-				final var annotation = (IFloydHoareAnnotation<IcfgLocation>) result.getProof();
+			if (proof instanceof IFloydHoareAnnotation<?>) {
+				final var annotation = (IFloydHoareAnnotation<IcfgLocation>) proof;
 				assert new IcfgFloydHoareValidityCheck<>(mServices, icfg, annotation, true,
 						MissingAnnotationBehaviour.IGNORE, true).getResult() : "incorrect Hoare annotation";
 
