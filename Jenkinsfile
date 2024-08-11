@@ -12,8 +12,7 @@ pipeline {
     PATH = "${env.WORKSPACE}/releaseScripts/default/adds:${env.PATH}"
   }
   tools {
-    jdk 'JDK11'
-    maven 'Maven 3.9.8'
+    jdk 'JDK21'
   }
   stages {
     stage('Checkout') {
