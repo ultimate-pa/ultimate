@@ -59,6 +59,9 @@ public class ProcedureContractResult<ELEM extends IElement, E> extends AbstractR
 
 	@SuppressWarnings("unchecked")
 	private String translateTerm(final E term) {
+		if (term == null) {
+			return null;
+		}
 		final String result = mTranslatorSequence.translateExpressionToString(term, (Class<E>) term.getClass());
 		if ("1".equals(result)) {
 			return null;
