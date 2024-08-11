@@ -11,6 +11,9 @@ pipeline {
   environment {
     PATH = "${env.WORKSPACE}/releaseScripts/default/adds:${env.PATH}"
   }
+  tools {
+    jdk 'JDK21'
+  }
   stages {
     stage('Checkout') {
       steps {
