@@ -82,7 +82,7 @@ public class Req2Pea implements IReq2Pea {
 		mResultUtil = new PeaResultUtil(mLogger, mServices);
 
 		final List<PatternType<?>> requirements = replacePrev(reqs);
-		final ReqSymboltableBuilder builder = new ReqSymboltableBuilder(mLogger);
+		final ReqSymboltableBuilder builder = new ReqSymboltableBuilder(mServices, mLogger);
 
 		mDurations = new Durations();
 		for (final DeclarationPattern pattern : init) {

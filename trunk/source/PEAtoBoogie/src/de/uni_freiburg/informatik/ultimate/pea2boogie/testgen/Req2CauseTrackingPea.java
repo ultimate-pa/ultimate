@@ -92,7 +92,7 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 	public void transform(final IReq2Pea req2pea) {
 		final List<ReqPeas> simplePeas = req2pea.getReqPeas();
 		final IReqSymbolTable oldSymbolTable = req2pea.getSymboltable();
-		final ReqSymboltableBuilder builder = new ReqSymboltableBuilder(mLogger);
+		final ReqSymboltableBuilder builder = new ReqSymboltableBuilder(mServices, mLogger);
 		for (final DeclarationPattern p : mInitPattern) {
 			builder.addInitPattern(p);
 			mDurations.addInitPattern(p);

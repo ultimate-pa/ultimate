@@ -59,12 +59,16 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.DeclarationPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.DeclarationPattern.VariableCategory;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.Activator;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolTable;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.preferences.Pea2BoogiePreferences;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.LinkedHashRelation;
 
@@ -76,7 +80,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.LinkedHa
 public class ReqSymboltableBuilder {
 
 	private static final BoogieLocation DUMMY_LOC = new BoogieLocation("", -1, -1, -1, -1);
-	private static final Boolean SUPPORT_HISTORY_VARS = false;
+	private final IUltimateServiceProvider mServices;
+	private final boolean mBuildHistoryVars;
 
 	private final ILogger mLogger;
 	private final LinkedHashRelation<String, ErrorInfo> mId2Errors;
@@ -100,8 +105,11 @@ public class ReqSymboltableBuilder {
 
 	private final UnionFind<String> mEquivalences;
 
-	public ReqSymboltableBuilder(final ILogger logger) {
+	public ReqSymboltableBuilder(final IUltimateServiceProvider services, final ILogger logger) {
 		mLogger = logger;
+		mServices = services;
+		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
+		mBuildHistoryVars = prefs.getBoolean(Pea2BoogiePreferences.LABEL_HISTORY_VARS);
 		mId2Errors = new LinkedHashRelation<>();
 		mId2Type = new LinkedHashMap<>();
 		mId2IdExpr = new LinkedHashMap<>();
@@ -253,7 +261,7 @@ public class ReqSymboltableBuilder {
 			// consts do not need primed variables
 			return;
 		}
-		if (this.SUPPORT_HISTORY_VARS) {
+		if (mBuildHistoryVars) {
 			addVarOneKind(getHistoryVarId(name), type, source, mHistoryVars);
 		}
 		addVarOneKind(getPrimedVarId(name), type, source, mPrimedVars);
