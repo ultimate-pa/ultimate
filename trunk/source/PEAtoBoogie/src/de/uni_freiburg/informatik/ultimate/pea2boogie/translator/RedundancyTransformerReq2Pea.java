@@ -45,7 +45,6 @@ public class RedundancyTransformerReq2Pea implements IReq2Pea {
 		final IReqSymbolTable symbolTable = req2pea.getSymboltable();
 		mSymbolTable = symbolTable;
 		Set<String> constVars = mSymbolTable.getConstVars();
-		String deltaIDString = mSymbolTable.getDeltaVarName();
 
 		for (final DeclarationPattern p : mInitPattern) {
 			builder.addInitPattern(p);
@@ -58,7 +57,6 @@ public class RedundancyTransformerReq2Pea implements IReq2Pea {
 			final List<Entry<CounterTrace, PhaseEventAutomata>> ct2pea = reqPea.getCounterTrace2Pea();
 
 			final List<Entry<CounterTrace, PhaseEventAutomata>> totalCt2pea = new ArrayList<>();
-			// final List<Entry<CounterTrace, PhaseEventAutomata>> complementCt2pea = new ArrayList<>();
 
 			for (Entry<CounterTrace, PhaseEventAutomata> pea : ct2pea) {
 				PhaseEventAutomata peaToComplement = pea.getValue();
