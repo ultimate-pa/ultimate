@@ -219,7 +219,6 @@ public class HoareAnnotationComposer {
 	/**
 	 * Construct mapping for our three cases: - invariants for empty callpred - invariants for dead callpred -
 	 * invariants for live callpred
-	 *
 	 */
 	public HashRelation3<IPredicate, IPredicate, Term> constructLoc2CallPred2DisjunctsMapping() {
 		final HashRelation3<IPredicate, IPredicate, Term> loc2callpred2invariant = new HashRelation3<>();
@@ -244,7 +243,6 @@ public class HoareAnnotationComposer {
 	/**
 	 * Construct mapping for our three cases: - invariants for empty callpred - invariants for dead callpred -
 	 * invariants for live callpred
-	 *
 	 */
 	public HashRelation3<IPredicate, IPredicate, Term> constructMappingOld() {
 		final HashRelation3<IPredicate, IPredicate, Term> loc2callpred2invariant = new HashRelation3<>();
@@ -342,7 +340,6 @@ public class HoareAnnotationComposer {
 	/**
 	 * Construct Term which represents the same set of states as ps, but where all globalVars are renamed to
 	 * oldGlobalVars.
-	 *
 	 */
 	private static Term renameGlobalsToOldGlobals(final IPredicate ps, final IUltimateServiceProvider services,
 			final ManagedScript mgdScript) {
