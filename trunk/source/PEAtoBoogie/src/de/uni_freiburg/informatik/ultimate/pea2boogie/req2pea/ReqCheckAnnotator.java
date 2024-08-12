@@ -603,27 +603,6 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		return mNormalFormTransformer.toNnf(cnf);
 	}
 
-	/**
-	 * Generate the conjunction of a list of expressions.
-	 *
-	 * @param exprs
-	 *            list of expressions.
-	 * @param bl
-	 *            Boogie location.
-	 * @return the CNF of a list of expressions.
-	 */
-	private Expression genConjunction(final List<Expression> exprs, final BoogieLocation bl) {
-		final Iterator<Expression> it = exprs.iterator();
-		if (!it.hasNext()) {
-			return ExpressionFactory.createBooleanLiteral(bl, true);
-		}
-		Expression cnf = it.next();
-		while (it.hasNext()) {
-			cnf = ExpressionFactory.newBinaryExpression(bl, BinaryExpression.Operator.LOGICAND, cnf, it.next());
-		}
-		return mNormalFormTransformer.toNnf(cnf);
-	}
-
 	private Expression genComparePhaseCounter(final int phaseIndex, final String pcName, final BoogieLocation bl) {
 		final IdentifierExpression identifier = mSymbolTable.getIdentifierExpression(pcName);
 		final IntegerLiteral intLiteral = ExpressionFactory.createIntegerLiteral(bl, Integer.toString(phaseIndex));
