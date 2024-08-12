@@ -5,6 +5,7 @@ import static org.junit.Assert.assertEquals;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -25,16 +26,16 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 @RunWith(JUnit4.class)
 public class CddUnitTest {
 
-	ArrayList<Pair<CDD, HashMap<String, Pair<Decision<?>, int[]>>>> mTestCases;
+	List<Pair<CDD, Map<String, Pair<Decision<?>, int[]>>>> mTestCases;
 
 	public CddUnitTest() {
-		mTestCases = new ArrayList<Pair<CDD, HashMap<String, Pair<Decision<?>, int[]>>>>();
+		mTestCases = new ArrayList<Pair<CDD, Map<String, Pair<Decision<?>, int[]>>>>();
 		createTestCase0();
 
 	}
 
 	public void createTestCase0() {
-		HashMap<String, Pair<Decision<?>, int[]>> expected = new HashMap<String, Pair<Decision<?>, int[]>>();
+		Map<String, Pair<Decision<?>, int[]>> expected = new HashMap<String, Pair<Decision<?>, int[]>>();
 
 		CDD a = BooleanDecision.create("a");
 		int[] trueChildA = { 0 };
@@ -68,7 +69,7 @@ public class CddUnitTest {
 		expected.put(c8.getDecision().getVar(), pairC8);
 
 		CDD testCDD = c8.and(a).and(c6).and(c7).and(notb).and(c5);
-		Pair<CDD, HashMap<String, Pair<Decision<?>, int[]>>> testCase = new Pair<>(testCDD, expected);
+		Pair<CDD, Map<String, Pair<Decision<?>, int[]>>> testCase = new Pair<>(testCDD, expected);
 		mTestCases.add(testCase);
 	}
 
@@ -79,9 +80,9 @@ public class CddUnitTest {
 	 * 
 	 */
 	public void getDecisionConjunctionTest0() {
-		Pair<CDD, HashMap<String, Pair<Decision<?>, int[]>>> testCase = mTestCases.get(0);
+		Pair<CDD, Map<String, Pair<Decision<?>, int[]>>> testCase = mTestCases.get(0);
 		CDD testCDD = testCase.getFirst();
-		HashMap<String, Pair<Decision<?>, int[]>> expected = testCase.getSecond();
+		Map<String, Pair<Decision<?>, int[]>> expected = testCase.getSecond();
 		List<Pair<Decision<?>, int[]>> actual = testCDD.getDecisionsConjunction();
 		assertEquals(expected.size(), actual.size());
 		for (Pair<Decision<?>, int[]> Pair : actual) {
