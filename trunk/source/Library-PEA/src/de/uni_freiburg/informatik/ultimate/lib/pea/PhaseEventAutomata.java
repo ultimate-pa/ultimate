@@ -133,9 +133,9 @@ public class PhaseEventAutomata implements Comparable<Object> {
 
 		for (int i = 0; i < mInit.size(); i++) {
 			for (int j = 0; j < b.mInit.size(); j++) {
-				final CDD sinv = mInit.get(i).getDest().stateInv.and(b.mInit.get(j).getDest().stateInv);
+				final CDD sinv = mInit.get(i).getDest().getStateInv().and(b.mInit.get(j).getDest().getStateInv());
 				if (sinv != CDD.FALSE) {
-					final CDD cinv = mInit.get(i).getDest().clockInv.and(b.mInit.get(j).getDest().clockInv);
+					final CDD cinv = mInit.get(i).getDest().getClockInv().and(b.mInit.get(j).getDest().getClockInv());
 					final Phase p = new Phase(
 							mInit.get(i).getDest().getName() + TIMES + b.mInit.get(j).getDest().getName(), sinv, cinv);
 
@@ -147,11 +147,11 @@ public class PhaseEventAutomata implements Comparable<Object> {
 		}
 		while (!todo.isEmpty()) {
 			final TodoEntry entry = todo.remove(0);
-			final CDD srcsinv = entry.p1.stateInv.and(entry.p2.stateInv);
-			final Iterator<?> i = entry.p1.transitions.iterator();
+			final CDD srcsinv = entry.p1.getStateInv().and(entry.p2.getStateInv());
+			final Iterator<?> i = entry.p1.getTransitions().iterator();
 			while (i.hasNext()) {
 				final Transition t1 = (Transition) i.next();
-				final Iterator<?> j = entry.p2.transitions.iterator();
+				final Iterator<?> j = entry.p2.getTransitions().iterator();
 				while (j.hasNext()) {
 					final Transition t2 = (Transition) j.next();
 
@@ -159,7 +159,7 @@ public class PhaseEventAutomata implements Comparable<Object> {
 					if (guard == CDD.FALSE) {
 						continue;
 					}
-					final CDD sinv = t1.getDest().stateInv.and(t2.getDest().stateInv);
+					final CDD sinv = t1.getDest().getStateInv().and(t2.getDest().getStateInv());
 					// This leads to a serious bug -
 					// if (sinv.and(guard) == CDD.FALSE)
 					if (sinv == CDD.FALSE) {
@@ -169,14 +169,14 @@ public class PhaseEventAutomata implements Comparable<Object> {
 						// TODO: Overapproximating for BoogieDecisions because constants will become primed
 						continue;
 					}
-					final CDD cinv = t1.getDest().clockInv.and(t2.getDest().clockInv);
+					final CDD cinv = t1.getDest().getClockInv().and(t2.getDest().getClockInv());
 					final String[] resets = new String[t1.getResets().length + t2.getResets().length];
 					System.arraycopy(t1.getResets(), 0, resets, 0, t1.getResets().length);
 					System.arraycopy(t2.getResets(), 0, resets, t1.getResets().length, t2.getResets().length);
-					final Set<String> stoppedClocks =
-							new SimpleSet<>(t1.getDest().stoppedClocks.size() + t2.getDest().stoppedClocks.size());
-					stoppedClocks.addAll(t1.getDest().stoppedClocks);
-					stoppedClocks.addAll(t2.getDest().stoppedClocks);
+					final Set<String> stoppedClocks = new SimpleSet<>(
+							t1.getDest().getStoppedClocks().size() + t2.getDest().getStoppedClocks().size());
+					stoppedClocks.addAll(t1.getDest().getStoppedClocks());
+					stoppedClocks.addAll(t2.getDest().getStoppedClocks());
 
 					final String newname = t1.getDest().getName() + TIMES + t2.getDest().getName();
 					Phase p = newPhases.get(newname);
@@ -197,7 +197,7 @@ public class PhaseEventAutomata implements Comparable<Object> {
 
 		// add initial transition to Phases in initPhases
 		for (Phase phase : initPhases) {
-			InitialTransition initialTransition = new InitialTransition(phase.clockInv, phase);
+			InitialTransition initialTransition = new InitialTransition(phase.getClockInv(), phase);
 			phase.setInitialTransition(initialTransition);
 			initTransitions.add(initialTransition);
 		}

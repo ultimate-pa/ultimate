@@ -145,9 +145,9 @@ public class PEATestAutomaton extends PhaseEventAutomata {
 
 		for (int i = 0; i < getInit().size(); i++) {
 			for (int j = 0; j < b.getInit().size(); j++) {
-				final CDD sinv = getInit().get(i).stateInv.and(b.getInit().get(j).stateInv);
+				final CDD sinv = getInit().get(i).getStateInv().and(b.getInit().get(j).getStateInv());
 				if (sinv != CDD.FALSE) {
-					final CDD cinv = getInit().get(i).clockInv.and(b.getInit().get(j).clockInv);
+					final CDD cinv = getInit().get(i).getClockInv().and(b.getInit().get(j).getClockInv());
 					final Phase p =
 							new Phase(getInit().get(i).getName() + TIMES + b.getInit().get(j).getName(), sinv, cinv);
 					if (bIsTestAutomaton && oldFinal.contains(getInit().get(i))
@@ -165,10 +165,10 @@ public class PEATestAutomaton extends PhaseEventAutomata {
 
 		while (!todo.isEmpty()) {
 			final TodoEntry entry = todo.remove(0);
-			final Iterator<Transition> i = entry.p1.transitions.iterator();
+			final Iterator<Transition> i = entry.p1.getTransitions().iterator();
 			while (i.hasNext()) {
 				final Transition t1 = i.next();
-				final Iterator<Transition> j = entry.p2.transitions.iterator();
+				final Iterator<Transition> j = entry.p2.getTransitions().iterator();
 				while (j.hasNext()) {
 					final Transition t2 = j.next();
 
@@ -176,19 +176,19 @@ public class PEATestAutomaton extends PhaseEventAutomata {
 					if (guard == CDD.FALSE) {
 						continue;
 					}
-					final CDD sinv = t1.getDest().stateInv.and(t2.getDest().stateInv);
+					final CDD sinv = t1.getDest().getStateInv().and(t2.getDest().getStateInv());
 					if (sinv == CDD.FALSE) {
 						continue;
 					}
-					final CDD cinv = t1.getDest().clockInv.and(t2.getDest().clockInv);
+					final CDD cinv = t1.getDest().getClockInv().and(t2.getDest().getClockInv());
 					final String[] resets = new String[t1.getResets().length + t2.getResets().length];
 					System.arraycopy(t1.getResets(), 0, resets, 0, t1.getResets().length);
 					System.arraycopy(t2.getResets(), 0, resets, t1.getResets().length, t2.getResets().length);
 
-					final Set<String> stoppedClocks =
-							new SimpleSet<>(t1.getDest().stoppedClocks.size() + t2.getDest().stoppedClocks.size());
-					stoppedClocks.addAll(t1.getDest().stoppedClocks);
-					stoppedClocks.addAll(t2.getDest().stoppedClocks);
+					final Set<String> stoppedClocks = new SimpleSet<>(
+							t1.getDest().getStoppedClocks().size() + t2.getDest().getStoppedClocks().size());
+					stoppedClocks.addAll(t1.getDest().getStoppedClocks());
+					stoppedClocks.addAll(t2.getDest().getStoppedClocks());
 
 					final String newname = t1.getDest().getName() + TIMES + t2.getDest().getName();
 					Phase p = newPhases.get(newname);
@@ -299,7 +299,7 @@ public class PEATestAutomaton extends PhaseEventAutomata {
 			if (reachablePhases.contains(phase)) {
 				newPhases.add(phase);
 				final List<Transition> removeList = new ArrayList<>();
-				for (final Transition trans : phase.transitions) {
+				for (final Transition trans : phase.getTransitions()) {
 					if (!reachableTrans.contains(trans)) {
 						removeList.add(trans);
 					}

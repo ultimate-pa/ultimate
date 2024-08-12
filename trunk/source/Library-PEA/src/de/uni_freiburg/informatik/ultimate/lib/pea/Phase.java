@@ -40,17 +40,15 @@ public class Phase implements Comparable<Phase> {
 	private final boolean isEntry;
 	private final boolean isExit;
 	private final Vector<Transition> incomming;
-	String name;
-	CDD stateInv;
-	CDD clockInv;
-	Set<String> stoppedClocks;
-	List<Transition> transitions;
-	public int ID;
+	private String name;
+	private CDD stateInv;
+	private CDD clockInv;
+	private final Set<String> stoppedClocks;
+	private final List<Transition> transitions;
 
 	private boolean mIsTerminal;
 	private boolean mIsStrict;
-	// TODO: make private
-	public InitialTransition mInitialTransition;
+	private InitialTransition mInitialTransition;
 	// clock constraints that have been modified in the complementation procedure
 	// in the case of a phase with a strict clock constraints
 	private final List<RangeDecision> mModifiedConstraints;
@@ -62,8 +60,8 @@ public class Phase implements Comparable<Phase> {
 
 	public Phase(final String name, final CDD stateInv, final CDD clockInv, final Set<String> stoppedClocks) {
 		this.name = name;
-		this.stateInv = stateInv;
-		this.clockInv = clockInv;
+		this.setStateInv(stateInv);
+		this.setClockInv(clockInv);
 		transitions = new ArrayList<>();
 		this.stoppedClocks = stoppedClocks;
 
@@ -104,15 +102,15 @@ public class Phase implements Comparable<Phase> {
 	}
 
 	public CDD getStateInvariant() {
-		return stateInv;
+		return getStateInv();
 	}
 
 	public void setStateInvariant(final CDD inv) {
-		stateInv = inv;
+		setStateInv(inv);
 	}
 
 	public CDD getClockInvariant() {
-		return clockInv;
+		return getClockInv();
 	}
 
 	public Set<String> getStoppedClocks() {
@@ -120,7 +118,7 @@ public class Phase implements Comparable<Phase> {
 	}
 
 	public boolean isStopped(final String clock) {
-		return stoppedClocks.contains(clock);
+		return getStoppedClocks().contains(clock);
 	}
 
 	public List<Transition> getTransitions() {
@@ -130,7 +128,7 @@ public class Phase implements Comparable<Phase> {
 	public Transition getOutgoingTransition(final Phase dest) {
 		Transition result = null;
 
-		for (final Transition transition : transitions) {
+		for (final Transition transition : getTransitions()) {
 			if (transition.getDest().equals(dest)) {
 				result = transition;
 				break;
@@ -142,7 +140,7 @@ public class Phase implements Comparable<Phase> {
 
 	/** @return the transition added or modified */
 	public Transition addTransition(final Phase dest, final CDD guard, final String[] resets) {
-		final Iterator<Transition> it = transitions.iterator();
+		final Iterator<Transition> it = getTransitions().iterator();
 
 		while (it.hasNext()) {
 			final Transition t = it.next();
@@ -155,7 +153,7 @@ public class Phase implements Comparable<Phase> {
 		}
 
 		final Transition t = new Transition(this, guard, resets, dest);
-		transitions.add(t);
+		getTransitions().add(t);
 
 		return t;
 	}
@@ -175,21 +173,21 @@ public class Phase implements Comparable<Phase> {
 	public void dump() {
 		System.err.println("  state " + this + " { ");
 
-		if (stateInv != CDD.TRUE) {
-			System.err.println("    predicate      " + stateInv);
+		if (getStateInv() != CDD.TRUE) {
+			System.err.println("    predicate      " + getStateInv());
 		}
 
-		if (clockInv != CDD.TRUE) {
-			System.err.println("    clockinvariant " + clockInv);
+		if (getClockInv() != CDD.TRUE) {
+			System.err.println("    clockinvariant " + getClockInv());
 		}
 
-		for (final String clock : stoppedClocks) {
+		for (final String clock : getStoppedClocks()) {
 			System.err.println("    stopped " + clock);
 		}
 
 		System.err.println("    transitions {");
 
-		final Iterator<Transition> it = transitions.iterator();
+		final Iterator<Transition> it = getTransitions().iterator();
 
 		while (it.hasNext()) {
 			System.err.println("       " + it.next());
@@ -200,9 +198,10 @@ public class Phase implements Comparable<Phase> {
 	}
 
 	public void dumpDot() {
-		System.out.println("  " + name + " [ label = \"" + stateInv + "\\n" + clockInv + "\" shape=ellipse ]");
+		System.out
+				.println("  " + name + " [ label = \"" + getStateInv() + "\\n" + getClockInv() + "\" shape=ellipse ]");
 
-		final Iterator<Transition> it = transitions.iterator();
+		final Iterator<Transition> it = getTransitions().iterator();
 
 		while (it.hasNext()) {
 			final Transition t = it.next();
@@ -233,7 +232,6 @@ public class Phase implements Comparable<Phase> {
 		return flags;
 	}
 
-	// jf
 	public void setName(final String name) {
 		this.name = name;
 	}
@@ -256,14 +254,6 @@ public class Phase implements Comparable<Phase> {
 		incomming.remove(trans);
 	}
 
-	public void setID(final int ID) {
-		this.ID = ID;
-	}
-
-	public int getID() {
-		return ID;
-	}
-
 	public boolean getTerminal() {
 		return mIsTerminal;
 	}
@@ -278,7 +268,7 @@ public class Phase implements Comparable<Phase> {
 	}
 
 	public InitialTransition getInitialTransition() {
-		return mInitialTransition;
+		return getmInitialTransition();
 	}
 
 	public void setModifiedConstraints(List<RangeDecision> modifiedConstraints) {
@@ -291,5 +281,25 @@ public class Phase implements Comparable<Phase> {
 
 	public boolean isStrict() {
 		return mIsStrict;
+	}
+
+	public CDD getStateInv() {
+		return stateInv;
+	}
+
+	public void setStateInv(CDD stateInv) {
+		this.stateInv = stateInv;
+	}
+
+	public CDD getClockInv() {
+		return clockInv;
+	}
+
+	public void setClockInv(CDD clockInv) {
+		this.clockInv = clockInv;
+	}
+
+	public InitialTransition getmInitialTransition() {
+		return mInitialTransition;
 	}
 }
