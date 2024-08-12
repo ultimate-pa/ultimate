@@ -53,7 +53,6 @@ def main():
     for worker in WORKER_SETTINGS:
         build_settings(worker)
 
-
-
 if __name__ == "__main__":
     main()
+
