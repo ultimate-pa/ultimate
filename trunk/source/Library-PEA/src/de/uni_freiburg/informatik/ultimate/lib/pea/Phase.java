@@ -32,9 +32,7 @@ import java.util.Vector;
 import de.uni_freiburg.informatik.ultimate.lib.pea.util.SimpleSet;
 
 public class Phase implements Comparable<Phase> {
-	int nr;
 
-	// SR 2010-07-09
 	private final boolean isKernel;
 	public boolean isInit;
 	private final boolean isEntry;
@@ -267,10 +265,6 @@ public class Phase implements Comparable<Phase> {
 		isInit = true;
 	}
 
-	public InitialTransition getInitialTransition() {
-		return getmInitialTransition();
-	}
-
 	public void setModifiedConstraints(List<RangeDecision> modifiedConstraints) {
 		mModifiedConstraints.addAll(modifiedConstraints);
 	}
@@ -299,7 +293,7 @@ public class Phase implements Comparable<Phase> {
 		this.clockInv = clockInv;
 	}
 
-	public InitialTransition getmInitialTransition() {
+	public InitialTransition getInitialTransition() {
 		return mInitialTransition;
 	}
 }
