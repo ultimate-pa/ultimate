@@ -11,10 +11,9 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * This class implements an algorithm for complementing Phase Event Automata as described in my bachelors thesis.
- * Documentation to be continued...
- *
- * TODO: split Alg up in multiple methods
+ * This class implements an algorithm for complementing Phase Event Automata as
+ * described in the bachelor thesis "Complementation of Phase Event Automata"
+ * (L. Funk, 2023).
  *
  * @author Lena Funk
  */
@@ -45,7 +44,8 @@ public class PEAComplement {
 	}
 
 	/**
-	 * Totalisation of input pea
+	 * Totalisation of input pea. In a totalised PEA, each location has exactly one
+	 * outgoing transition enabled for each valuation of variables and clock.
 	 * 
 	 * @return the Totalised PEA of mPEAtoComplement
 	 */
@@ -311,7 +311,6 @@ public class PEAComplement {
 					}
 					conjunctionWithSuffix = conjunctionWithSuffix.and(booleanDecision);
 				} else { // boolean decision
-					Decision<BooleanDecision> decision = (Decision<BooleanDecision>) pair.getFirst();
 					CDD booleanDecision = BooleanDecision.create(pair.getFirst().getVar());
 					if (pair.getSecond()[0] == 1) { // when the index of the true child is 1, the decision is negated
 						booleanDecision = booleanDecision.negate();
