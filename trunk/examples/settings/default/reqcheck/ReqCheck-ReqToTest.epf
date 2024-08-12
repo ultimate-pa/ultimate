@@ -26,7 +26,7 @@ file_export_version=3.0
 
 #Tue Jan 14 10:14:05 CET 2020
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Compute\ Hoare\ Annotation\ of\ negated\ interpolant\ automaton,\ abstraction\ and\ CFG=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Positions\ where\ we\ compute\ the\ Hoare\ Annotation=None
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Compute\ trace\ for\ counterexample\ result=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Compute\ statistics\ for\ interpolant\ sequences=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/DifferenceSenwa\ operation\ instead\ classical\ Difference=false

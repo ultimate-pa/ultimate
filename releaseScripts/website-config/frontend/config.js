@@ -214,15 +214,6 @@ const _CONFIG = {
 						},
 						{
 							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction",
-							"name": "Compute Hoare Annotation of negated interpolant automaton, abstraction and CFG",
-							"key": "Compute Hoare Annotation of negated interpolant automaton, abstraction and CFG",
-							"id": "traceabstraction.compute.hoare.annotation.of.negated.interpolant.automaton,.abstraction.and.cfg",
-							"visible": false,
-							"default": true,
-							"type": "bool"
-						},
-						{
-							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction",
 							"name": "Positions where we compute the Hoare Annotation",
 							"key": "Positions where we compute the Hoare Annotation",
 							"id": "traceabstraction.positions.where.we.compute.the.hoare.annotation",
@@ -353,15 +344,6 @@ const _CONFIG = {
 							"visible": false,
 							"default": "External_ModelsAndUnsatCoreMode",
 							"type": "string"
-						},
-						{
-							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction",
-							"name": "Compute Hoare Annotation of negated interpolant automaton, abstraction and CFG",
-							"key": "Compute Hoare Annotation of negated interpolant automaton, abstraction and CFG",
-							"id": "traceabstraction.compute.hoare.annotation.of.negated.interpolant.automaton,.abstraction.and.cfg",
-							"visible": false,
-							"default": true,
-							"type": "bool"
 						},
 						{
 							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction",
@@ -639,15 +621,6 @@ const _CONFIG = {
 						},
 						{
 							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction",
-							"name": "Compute Hoare Annotation of negated interpolant automaton, abstraction and CFG",
-							"key": "Compute Hoare Annotation of negated interpolant automaton, abstraction and CFG",
-							"id": "traceabstraction.compute.hoare.annotation.of.negated.interpolant.automaton,.abstraction.and.cfg",
-							"visible": false,
-							"default": true,
-							"type": "bool"
-						},
-						{
-							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction",
 							"name": "Positions where we compute the Hoare Annotation",
 							"key": "Positions where we compute the Hoare Annotation",
 							"id": "traceabstraction.positions.where.we.compute.the.hoare.annotation",
@@ -778,15 +751,6 @@ const _CONFIG = {
 							"visible": false,
 							"default": "External_ModelsAndUnsatCoreMode",
 							"type": "string"
-						},
-						{
-							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction",
-							"name": "Compute Hoare Annotation of negated interpolant automaton, abstraction and CFG",
-							"key": "Compute Hoare Annotation of negated interpolant automaton, abstraction and CFG",
-							"id": "traceabstraction.compute.hoare.annotation.of.negated.interpolant.automaton,.abstraction.and.cfg",
-							"visible": false,
-							"default": true,
-							"type": "bool"
 						},
 						{
 							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction",
@@ -1102,15 +1066,6 @@ const _CONFIG = {
 						},
 						{
 							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction",
-							"name": "Compute Hoare Annotation of negated interpolant automaton, abstraction and CFG",
-							"key": "Compute Hoare Annotation of negated interpolant automaton, abstraction and CFG",
-							"id": "traceabstraction.compute.hoare.annotation.of.negated.interpolant.automaton,.abstraction.and.cfg",
-							"visible": false,
-							"default": true,
-							"type": "bool"
-						},
-						{
-							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction",
 							"name": "Positions where we compute the Hoare Annotation",
 							"key": "Positions where we compute the Hoare Annotation",
 							"id": "traceabstraction.positions.where.we.compute.the.hoare.annotation",
@@ -1223,15 +1178,6 @@ const _CONFIG = {
 							"visible": false,
 							"default": "USE_PREDICATES",
 							"type": "string"
-						},
-						{
-							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction",
-							"name": "Compute Hoare Annotation of negated interpolant automaton, abstraction and CFG",
-							"key": "Compute Hoare Annotation of negated interpolant automaton, abstraction and CFG",
-							"id": "traceabstraction.compute.hoare.annotation.of.negated.interpolant.automaton,.abstraction.and.cfg",
-							"visible": false,
-							"default": true,
-							"type": "bool"
 						},
 						{
 							"plugin_id": "de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction",
