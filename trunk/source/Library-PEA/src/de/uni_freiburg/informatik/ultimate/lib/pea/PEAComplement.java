@@ -30,18 +30,18 @@ public class PEAComplement {
 
 	private static Set<String> mConstVars;
 
-	public PEAComplement(PhaseEventAutomata PEAtoComplement) {
-		mPEAtoComplement = PEAtoComplement;
+	public PEAComplement(PhaseEventAutomata peaToComplement) {
+		mPEAtoComplement = peaToComplement;
 		mConstVars = Collections.emptySet();
-		mTotalisedPEA = this.totalise(mPEAtoComplement);
-		mComplementPEA = this.complement(mTotalisedPEA);
+		mTotalisedPEA = totalise(mPEAtoComplement);
+		mComplementPEA = complement(mTotalisedPEA);
 	}
 
-	public PEAComplement(PhaseEventAutomata PEAtoComplement, Set<String> constVars) {
-		mPEAtoComplement = PEAtoComplement;
+	public PEAComplement(PhaseEventAutomata peaToComplement, Set<String> constVars) {
+		mPEAtoComplement = peaToComplement;
 		mConstVars = constVars;
-		mTotalisedPEA = this.totalise(mPEAtoComplement);
-		mComplementPEA = this.complement(mTotalisedPEA);
+		mTotalisedPEA = totalise(mPEAtoComplement);
+		mComplementPEA = complement(mTotalisedPEA);
 	}
 
 	/**
