@@ -871,8 +871,8 @@ public final class CDD {
 	 *            cdd
 	 * @return ArrayList<SimplePair<Decision<?>, Integer>> result
 	 */
-	public ArrayList<Pair<Decision<?>, int[]>> getDecisionsConjunction() {
-		ArrayList<Pair<Decision<?>, int[]>> result = new ArrayList<Pair<Decision<?>, int[]>>();
+	public List<Pair<Decision<?>, int[]>> getDecisionsConjunction() {
+		List<Pair<Decision<?>, int[]>> result = new ArrayList<Pair<Decision<?>, int[]>>();
 		// assert !toString().contains("||");
 		CDD node = this;
 
@@ -919,9 +919,9 @@ public final class CDD {
 	 * 
 	 * @return ArrayList<ArrayList<SimplePair<Decision<?>, Integer>>> result the List of conjunction-Lists
 	 */
-	public ArrayList<ArrayList<Pair<Decision<?>, int[]>>> getDecisionsDNF() {
+	public List<List<Pair<Decision<?>, int[]>>> getDecisionsDNF() {
 		CDD[] dnf = toDNF();
-		ArrayList<ArrayList<Pair<Decision<?>, int[]>>> result = new ArrayList<ArrayList<Pair<Decision<?>, int[]>>>();
+		List<List<Pair<Decision<?>, int[]>>> result = new ArrayList<List<Pair<Decision<?>, int[]>>>();
 		for (CDD conjunction : dnf) {
 			result.add(conjunction.getDecisionsConjunction());
 		}
