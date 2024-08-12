@@ -28,7 +28,9 @@ package de.uni_freiburg.informatik.ultimate.lib.pea;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.TreeSet;
 
 public class TimedAutomata {
@@ -41,12 +43,13 @@ public class TimedAutomata {
 
 	private final Collection<String> mClocks;
 	private final State[] mStates;
+	private final Map<Phase, Integer> mPhaseNumber = new HashMap<Phase, Integer>();
 
 	public TimedAutomata(final PhaseEventAutomata pea, final CDD[] preds, final String[] predNames) {
 		mStates = new State[pea.mPhases.size()];
 		mClocks = new TreeSet<>();
 		for (int i = 0; i < pea.mPhases.size(); i++) {
-			pea.mPhases.get(i).nr = i;
+			mPhaseNumber.put(pea.mPhases.get(i), i);
 			mStates[i] = new State();
 			mStates[i].nr = i;
 			mStates[i].props = "dummy";
@@ -59,7 +62,7 @@ public class TimedAutomata {
 			}
 		}
 		for (int i = 0; i < pea.mInit.size(); i++) {
-			mStates[pea.mInit.get(i).getDest().nr].props += " init";
+			mStates[mPhaseNumber.get(pea.mInit.get(i).getDest())].props += " init";
 		}
 		for (int i = 0; i < pea.mPhases.size(); i++) {
 			final Iterator<Transition> it = pea.mPhases.get(i).getTransitions().iterator();
@@ -73,7 +76,7 @@ public class TimedAutomata {
 					e.resets = t.getResets();
 					addClocks(e.guard);
 					addClocks(e.resets);
-					e.dest = mStates[t.getDest().nr];
+					e.dest = mStates[mPhaseNumber.get(t.getDest())];
 					edges.add(e);
 				}
 			}
