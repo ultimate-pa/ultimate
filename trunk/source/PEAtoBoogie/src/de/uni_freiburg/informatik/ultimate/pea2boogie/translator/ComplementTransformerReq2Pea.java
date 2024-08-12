@@ -6,8 +6,8 @@ import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.pea.PEAComplement;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
+import de.uni_freiburg.informatik.ultimate.lib.pea.PEAComplement;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.Durations;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.DeclarationPattern;
@@ -20,15 +20,15 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.ReqCheckAnnotator;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
-* This class constructs from a ReqPea containing one non-composite PEA two ReqPeas, 
-* one that represents the totalised PEA and one that represents the complement PEA
-* 
-* The purpose of this class is to enable the complement check, a check to determine 
-* whether or not two PEAs are complements of each other.
-* 
-* @author lena
-*
-*/
+ * This class constructs from a ReqPea containing one non-composite PEA two ReqPeas, one that represents the totalised
+ * PEA and one that represents the complement PEA
+ * 
+ * The purpose of this class is to enable the complement check, a check to determine whether or not two PEAs are
+ * complements of each other.
+ * 
+ * @author lena
+ *
+ */
 
 public class ComplementTransformerReq2Pea implements IReq2Pea {
 	private final ILogger mLogger;
@@ -39,7 +39,6 @@ public class ComplementTransformerReq2Pea implements IReq2Pea {
 	private final IUltimateServiceProvider mServices;
 	private final Durations mDurations;
 
-
 	public ComplementTransformerReq2Pea(final IUltimateServiceProvider services, final ILogger logger,
 			final List<DeclarationPattern> init) {
 		mServices = services;
@@ -49,10 +48,9 @@ public class ComplementTransformerReq2Pea implements IReq2Pea {
 		mDurations = new Durations();
 	}
 
-
 	@Override
 	public void transform(IReq2Pea req2pea) {
-		final ReqSymboltableBuilder builder = new ReqSymboltableBuilder(mLogger);
+		final ReqSymboltableBuilder builder = new ReqSymboltableBuilder(mServices, mLogger);
 		final List<ReqPeas> peas = req2pea.getReqPeas();
 		if (peas.size() != 1) {
 			mLogger.error("Number of PEAs must be exactly 1.");
@@ -64,16 +62,16 @@ public class ComplementTransformerReq2Pea implements IReq2Pea {
 			builder.addInitPattern(p);
 			mDurations.addInitPattern(p);
 		}
-		ReqPeas reqPeas =  peas.get(0); 
+		ReqPeas reqPeas = peas.get(0);
 		final PatternType<?> pattern = peas.get(0).getPattern();
 		final List<Entry<CounterTrace, PhaseEventAutomata>> ct2pea = reqPeas.getCounterTrace2Pea();
-		
+
 		final List<Entry<CounterTrace, PhaseEventAutomata>> totalCt2pea = new ArrayList<>();
 		final List<Entry<CounterTrace, PhaseEventAutomata>> complementCt2pea = new ArrayList<>();
-		
+
 		for (Entry<CounterTrace, PhaseEventAutomata> pea : ct2pea) {
 			PhaseEventAutomata peaToComplement = pea.getValue();
-			PEAComplement complementPea= new PEAComplement(peaToComplement);
+			PEAComplement complementPea = new PEAComplement(peaToComplement);
 			PhaseEventAutomata totalisedPea = complementPea.getTotalisedPEA();
 			PhaseEventAutomata complementedPEA = complementPea.getComplementPEA();
 			totalCt2pea.add(new Pair<>(pea.getKey(), totalisedPea));
@@ -82,7 +80,7 @@ public class ComplementTransformerReq2Pea implements IReq2Pea {
 			// TODO: add negated DC Formula
 			builder.addPea(pattern, complementedPEA);
 			complementCt2pea.add(new Pair<>(pea.getKey(), complementedPEA));
-			
+
 		}
 		mReqPeas.add(reqPeas);
 		mReqPeas.add(new ReqPeas(pattern, totalCt2pea));
@@ -94,7 +92,6 @@ public class ComplementTransformerReq2Pea implements IReq2Pea {
 	public IReq2PeaAnnotator getAnnotator() {
 		return new ReqCheckAnnotator(mServices, mLogger, mReqPeas, mSymbolTable, mDurations);
 	}
-	
 
 	@Override
 	public List<ReqPeas> getReqPeas() {
@@ -105,7 +102,7 @@ public class ComplementTransformerReq2Pea implements IReq2Pea {
 	public IReqSymbolTable getSymboltable() {
 		return mSymbolTable;
 	}
-	
+
 	@Override
 	public boolean hasErrors() {
 		return mHasErrors;

@@ -99,7 +99,6 @@ public class Req2BoogieTranslator {
 
 	public static final String PROCEDURE_NAME = "myProcedure";
 	private static final String DOUBLE_ZERO = Double.toString(0.0);
-	private static final Boolean SUPPORT_HISTORY_VARS = false;
 	private final Unit mUnit;
 	private final List<ReqPeas> mReqPeas;
 	private final BoogieLocation mUnitLocation;
@@ -111,6 +110,7 @@ public class Req2BoogieTranslator {
 
 	private final IReqSymbolTable mSymboltable;
 	private IReq2PeaAnnotator mReqCheckAnnotator;
+	private final boolean mBuildHistoryVars;
 
 	public Req2BoogieTranslator(final IUltimateServiceProvider services, final ILogger logger,
 			final List<PatternType<?>> patterns) {
@@ -122,8 +122,10 @@ public class Req2BoogieTranslator {
 		mLogger = logger;
 		mServices = services;
 
-		mNormalFormTransformer = new NormalFormTransformer<>(new BoogieExpressionTransformer());
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
+		mBuildHistoryVars = prefs.getBoolean(Pea2BoogiePreferences.LABEL_HISTORY_VARS);
+
+		mNormalFormTransformer = new NormalFormTransformer<>(new BoogieExpressionTransformer());
 
 		List<PatternType<?>> requirements =
 				patterns.stream().filter(a -> !(a instanceof DeclarationPattern)).collect(Collectors.toList());
@@ -518,7 +520,7 @@ public class Req2BoogieTranslator {
 
 	private List<Statement> genStateVarsAssign() {
 		final List<Statement> assignments = new ArrayList<>();
-		if (SUPPORT_HISTORY_VARS) {
+		if (mBuildHistoryVars) {
 			assignments.addAll(mSymboltable.getStateVars().stream().map(this::genStateVarAssignHistory)
 					.collect(Collectors.toList()));
 		}
@@ -565,7 +567,7 @@ public class Req2BoogieTranslator {
 		}
 
 		stmtList.addAll(mReqCheckAnnotator.getStateChecks());
-		if (SUPPORT_HISTORY_VARS) {
+		if (mBuildHistoryVars) {
 			stmtList.addAll(
 					mSymboltable.getPcVars().stream().map(this::genStateVarAssignHistory).collect(Collectors.toList()));
 		}
@@ -672,7 +674,7 @@ public class Req2BoogieTranslator {
 		statements.addAll(genClockInitStmts());
 
 		// Assign the history vars with the initial state as if a small stutter step had occurred initially.
-		if (SUPPORT_HISTORY_VARS) {
+		if (mBuildHistoryVars) {
 			statements.addAll(mSymboltable.getStateVars().stream().map(this::genStateVarAssignHistory)
 					.collect(Collectors.toList()));
 			statements.addAll(
@@ -716,7 +718,7 @@ public class Req2BoogieTranslator {
 		modifiedVarsList.add(mSymboltable.getDeltaVarName());
 		modifiedVarsList.addAll(mSymboltable.getStateVars());
 		modifiedVarsList.addAll(mSymboltable.getPrimedVars());
-		if (SUPPORT_HISTORY_VARS) {
+		if (mBuildHistoryVars) {
 			modifiedVarsList.addAll(mSymboltable.getHistoryVars());
 		}
 		modifiedVarsList.addAll(mSymboltable.getEventVars());

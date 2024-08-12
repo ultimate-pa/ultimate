@@ -41,7 +41,7 @@ public class RedundancyTransformerReq2Pea implements IReq2Pea {
 
 	@Override
 	public void transform(IReq2Pea req2pea) {
-		final ReqSymboltableBuilder builder = new ReqSymboltableBuilder(mLogger);
+		final ReqSymboltableBuilder builder = new ReqSymboltableBuilder(mServices, mLogger);
 		final IReqSymbolTable symbolTable = req2pea.getSymboltable();
 		mSymbolTable = symbolTable;
 		Set<String> constVars = mSymbolTable.getConstVars();
