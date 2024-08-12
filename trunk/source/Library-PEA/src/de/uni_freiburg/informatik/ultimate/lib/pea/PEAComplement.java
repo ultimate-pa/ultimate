@@ -77,13 +77,15 @@ public class PEAComplement {
 			totalizeTransition(phase, sinkPhase, totalisedPhases, clockVarSet);
 		}
 
-		PhaseEventAutomata totalisedPEA = new PhaseEventAutomata(addSuffixString(sourcePea.getName(), TOTAL_POSTFIX),
-				new ArrayList<Phase>(totalisedPhases.values()), totalisedInit);
-		totalisedPEA.mVariables = new HashMap<String, String>(sourcePea.mVariables);
-
-		for (String s : sourcePea.mClocks) {
-			totalisedPEA.mClocks.add(addSuffixString(s, TOTAL_POSTFIX));
+		final List<String> newClocks = new ArrayList<>();
+		for (String s : sourcePea.getClocks()) {
+			newClocks.add(addSuffixString(s, TOTAL_POSTFIX));
 		}
+
+		PhaseEventAutomata totalisedPEA = new PhaseEventAutomata(addSuffixString(sourcePea.getName(), TOTAL_POSTFIX),
+				new ArrayList<Phase>(totalisedPhases.values()), totalisedInit, newClocks,
+				new HashMap<String, String>(sourcePea.getVariables()));
+
 		return totalisedPEA;
 	}
 
@@ -177,15 +179,15 @@ public class PEAComplement {
 		for (Phase p : sourcePea.getInit()) {
 			complementedInit.add(new InitialTransition(p.mInitialTransition.getGuard(), complementPhases.get(p.name)));
 		}
-		PhaseEventAutomata complementPEA = new PhaseEventAutomata(
-				addSuffixString(sourcePea.getName(), COMPLEMENT_POSTFIX), phases, complementedInit);
 
-		complementPEA.mVariables = sourcePea.mVariables;
-		complementPEA.mVariables = new HashMap<String, String>(sourcePea.mVariables);
-
+		final List<String> newClocks = new ArrayList<>();
 		for (String s : sourcePea.getClocks()) {
-			complementPEA.mClocks.add(addSuffixString(s, COMPLEMENT_POSTFIX));
+			newClocks.add(addSuffixString(s, TOTAL_POSTFIX));
 		}
+
+		PhaseEventAutomata complementPEA =
+				new PhaseEventAutomata(addSuffixString(sourcePea.getName(), COMPLEMENT_POSTFIX), phases,
+						complementedInit, newClocks, new HashMap<String, String>(sourcePea.getVariables()));
 
 		return complementPEA;
 	}

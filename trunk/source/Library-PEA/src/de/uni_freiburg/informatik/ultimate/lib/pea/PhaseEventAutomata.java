@@ -47,19 +47,29 @@ public class PhaseEventAutomata implements Comparable<Object> {
 	protected final String mName;
 	protected final List<Phase> mPhases;
 	protected final List<InitialTransition> mInit;
-	List<String> mClocks;
+	protected final List<String> mClocks;
 
 	// A map of variables and its types to be used in this PEA.
-	Map<String, String> mVariables;
+	protected final Map<String, String> mVariables;
 
 	// The set of events used in the PEA.
-	Set<String> mEvents;
+	protected final Set<String> mEvents;
 
 	// Additional declarations needed when processing this PEA.
 	protected List<String> mDeclarations;
 
 	public PhaseEventAutomata(final String name, final List<Phase> phases, final List<InitialTransition> init) {
 		this(name, phases, init, new ArrayList<String>());
+	}
+
+	public PhaseEventAutomata(final String name, final List<Phase> phases, final List<InitialTransition> init,
+			final Map<String, String> variables) {
+		this(name, phases, init, Collections.emptyList(), variables, null, null);
+	}
+
+	public PhaseEventAutomata(final String name, final List<Phase> phases, final List<InitialTransition> init,
+			final List<String> clocks, final Map<String, String> variables) {
+		this(name, phases, init, clocks, variables, null, null);
 	}
 
 	public PhaseEventAutomata(final String name, final List<Phase> phases, final List<InitialTransition> init,
@@ -301,10 +311,6 @@ public class PhaseEventAutomata implements Comparable<Object> {
 
 	public List<String> getClocks() {
 		return mClocks;
-	}
-
-	public void setClocks(final List<String> clocks) {
-		mClocks = clocks;
 	}
 
 	/**
