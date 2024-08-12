@@ -503,14 +503,14 @@ public class RangeDecision extends Decision<RangeDecision> {
 		// get all decision in DNF-Form (each sublist is a conjunction)
 		// the second element of each pair is the index of the decisions true child
 		// this integer is needed to build the atomic CDDs of each decision
-		ArrayList<ArrayList<Pair<Decision<?>, int[]>>> decisionDNF = cdd.getDecisionsDNF();
+		List<List<Pair<Decision<?>, int[]>>> decisionDNF = cdd.getDecisionsDNF();
 		List<String> toRemoveArrayList = Arrays.asList(toRemove);
 
 		ArrayList<CDD> newConjunctions = new ArrayList<>();
 		CDD newDisjunction = CDD.FALSE;
 
 		// look for the decisions to remove in DNF
-		for (ArrayList<Pair<Decision<?>, int[]>> conjunction : decisionDNF) {
+		for (List<Pair<Decision<?>, int[]>> conjunction : decisionDNF) {
 			CDD newConjunction = CDD.TRUE;
 			for (Pair<Decision<?>, int[]> pair : conjunction) {
 				Decision<?> decision = pair.getFirst();
@@ -545,12 +545,12 @@ public class RangeDecision extends Decision<RangeDecision> {
 	 */
 	public static CDD strict(CDD toStrict) {
 		// get list of atomic CDDs and their corresponding true child indices
-		ArrayList<ArrayList<Pair<Decision<?>, int[]>>> decisionDNF = toStrict.getDecisionsDNF();
+		List<List<Pair<Decision<?>, int[]>>> decisionDNF = toStrict.getDecisionsDNF();
 		ArrayList<CDD> newConjunctions = new ArrayList<>();
 		CDD newDisjunction = CDD.FALSE;
 
 		// look for decisions to strictify in DNF
-		for (ArrayList<Pair<Decision<?>, int[]>> conjunction : decisionDNF) {
+		for (List<Pair<Decision<?>, int[]>> conjunction : decisionDNF) {
 			CDD newConjunction = CDD.TRUE;
 			for (Pair<Decision<?>, int[]> pair : conjunction) {
 				Decision<?> decision = pair.getFirst();

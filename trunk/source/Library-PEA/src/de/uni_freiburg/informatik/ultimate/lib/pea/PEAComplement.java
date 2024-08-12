@@ -287,9 +287,9 @@ public class PEAComplement {
 
 	@SuppressWarnings("unchecked")
 	private CDD addClockSuffixCDD(CDD cdd, String suffix) {
-		ArrayList<ArrayList<Pair<Decision<?>, int[]>>> dnfDecisions = cdd.getDecisionsDNF();
+		List<List<Pair<Decision<?>, int[]>>> dnfDecisions = cdd.getDecisionsDNF();
 		ArrayList<CDD> conjunctionsWithSuffix = new ArrayList<>();
-		for (ArrayList<Pair<Decision<?>, int[]>> conjunction : dnfDecisions) {
+		for (List<Pair<Decision<?>, int[]>> conjunction : dnfDecisions) {
 			CDD conjunctionWithSuffix = CDD.TRUE;
 			for (Pair<Decision<?>, int[]> pair : conjunction) {
 				if (pair.getFirst() instanceof RangeDecision) {
