@@ -285,12 +285,6 @@ public class PhaseEventAutomata implements Comparable<Object> {
 		return initPhases;
 	}
 
-	// Ami gefrickel
-	public void setInit(final Phase[] init2) {
-		// TODO
-		// mInit = init2;
-	}
-
 	/**
 	 * @return Returns the name.
 	 */
