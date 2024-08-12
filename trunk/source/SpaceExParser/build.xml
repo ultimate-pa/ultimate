@@ -36,7 +36,7 @@
 
 	<target name="clean-bindings">
 		<!-- Clean generated SpaceExParser XML binding files -->
-		<delete verbose="true" includeEmptyDirs="false">
+		<delete verbose="true" includeEmptyDirs="false" failonerror="false">
 			<fileset dir="${xjcPkgDir}" />
 		</delete>
 	</target>
