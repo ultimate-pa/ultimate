@@ -50,7 +50,7 @@ public class TimedAutomata {
 			mStates[i] = new State();
 			mStates[i].nr = i;
 			mStates[i].props = "dummy";
-			mStates[i].clockInv = filterCDD(pea.mPhases.get(i).clockInv)[0];
+			mStates[i].clockInv = filterCDD(pea.mPhases.get(i).getClockInv())[0];
 			addClocks(mStates[i].clockInv);
 			for (int j = 0; j < preds.length; j++) {
 				if (pea.mPhases.get(i).getStateInvariant().and(preds[j]) != CDD.FALSE) {
@@ -62,7 +62,7 @@ public class TimedAutomata {
 			mStates[pea.mInit.get(i).getDest().nr].props += " init";
 		}
 		for (int i = 0; i < pea.mPhases.size(); i++) {
-			final Iterator<Transition> it = pea.mPhases.get(i).transitions.iterator();
+			final Iterator<Transition> it = pea.mPhases.get(i).getTransitions().iterator();
 			final Collection<Edge> edges = new ArrayList<>();
 			while (it.hasNext()) {
 				final Transition t = it.next();
