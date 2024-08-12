@@ -16,10 +16,8 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.preferences.Pea2BoogiePref
 import de.uni_freiburg.informatik.ultimate.pea2boogie.preferences.Pea2BoogiePreferences.PEATransformerMode;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.testgen.Req2CauseTrackingPeaTransformer;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.testgen.ReqTestResultUtil;
-import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.ComplementTransformer;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.RedundancyTransformer;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.Req2BoogieTranslator;
-import jdk.jshell.spi.ExecutionControl.NotImplementedException;
 
 public class PEAtoBoogieObserver extends BaseObserver {
 
@@ -80,7 +78,6 @@ public class PEAtoBoogieObserver extends BaseObserver {
 
 	private IElement generateReqTestBoogie(final List<PatternType<?>> patterns) {
 		// TODO: would it be nicer to get the symbol table via annotations?
-		// Req2CauseTrackingPeaTransformer baut automaten um 
 		final Req2CauseTrackingPeaTransformer transformer = new Req2CauseTrackingPeaTransformer(mServices, mLogger);
 		final Req2BoogieTranslator translator =
 				new Req2BoogieTranslator(mServices, mLogger, patterns, Collections.singletonList(transformer));
