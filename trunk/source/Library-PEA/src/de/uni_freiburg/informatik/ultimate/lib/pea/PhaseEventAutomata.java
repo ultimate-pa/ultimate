@@ -193,7 +193,7 @@ public class PhaseEventAutomata implements Comparable<Object> {
 
 		final Phase[] allPhases = newPhases.values().toArray(new Phase[newPhases.size()]);
 		final Phase[] initPhases = newInit.toArray(new Phase[newInit.size()]);
-		final ArrayList<InitialTransition> initTransitions = new ArrayList<>();
+		final List<InitialTransition> initTransitions = new ArrayList<>();
 
 		// add initial transition to Phases in initPhases
 		for (Phase phase : initPhases) {
