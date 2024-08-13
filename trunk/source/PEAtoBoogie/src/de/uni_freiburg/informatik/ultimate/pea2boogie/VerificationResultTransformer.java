@@ -153,9 +153,9 @@ public class VerificationResultTransformer {
 		final Spec spec = specs.iterator().next();
 		dieIfUnsupported(spec);
 
-		if (spec == Spec.CONSISTENCY || spec == Spec.VACUOUS) {
-			// a counterexample for consistency and vacuity means that the requirements are consistent or
-			// non-vacuous
+		if (spec == Spec.CONSISTENCY || spec == Spec.VACUOUS || spec == Spec.REDUNDANCY) {
+			// a counterexample for consistency and vacuity and redundancy means that the
+			// requirements are consistent or non-vacuous or non-redundant
 			isPositive = !isPositive;
 		}
 		final IElement element = oldRes.getElement();
