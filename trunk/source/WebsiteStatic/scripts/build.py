@@ -29,10 +29,10 @@ def parse_args() -> argparse.Namespace:
 
 
 def run_jekyll(production_build=False):
-    subprocess.run(["jekyll", "clean"], check=True)
+    subprocess.run(["bundle", "exec", "jekyll", "clean"], check=True)
 
     baseurl_params = ["--baseurl", "/"] if production_build else []
-    subprocess.run(["jekyll", "build", *baseurl_params], check=True)
+    subprocess.run(["bundle", "exec", "jekyll", "build", *baseurl_params], check=True)
 
 
 def copy_webinterface_config(production_build):
