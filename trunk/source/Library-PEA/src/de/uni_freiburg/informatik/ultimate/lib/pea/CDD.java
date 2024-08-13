@@ -917,6 +917,8 @@ public final class CDD {
 	 * trueChild). int trueChild is needed to later build atomic CDDs for each decision, as it is used to determine the
 	 * operation (see getOp())
 	 * 
+	 * TODO: rework this clumsy implementation to avoid nested array lists
+	 * 
 	 * @return ArrayList<ArrayList<SimplePair<Decision<?>, Integer>>> result the List of conjunction-Lists
 	 */
 	public ArrayList<ArrayList<Pair<Decision<?>, int[]>>> getDecisionsDNF() {

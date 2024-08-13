@@ -52,6 +52,9 @@ public class Phase<T> implements Comparable<Phase<T>> {
 	protected InitialTransition<T> mInitialTransition;
 	// clock constraints that have been modified in the complementation procedure
 	// in the case of a phase with a strict clock constraints
+	// TODO: dont represent modified constraints as a member of class Phase, data needed by the algorithm should be
+	// represented in the algorithm
+	// (complementation procedure)
 	protected final List<RangeDecision> mModifiedConstraints;
 
 	/**
