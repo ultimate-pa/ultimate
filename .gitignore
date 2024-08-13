@@ -315,5 +315,6 @@ trunk/source/WebsiteStatic/_site
 trunk/source/WebsiteStatic/.jekyll-cache
 trunk/source/WebsiteStatic/bootstrap_dev/node_modules/
 trunk/source/WebsiteStatic/js/webinterface/config.js
+trunk/source/WebsiteStatic/webinterface/code_examples/
 trunk/source/WebsiteStatic/webinterface/workers/*.json
 !trunk/source/WebsiteStatic/webinterface/workers/*.override.json
