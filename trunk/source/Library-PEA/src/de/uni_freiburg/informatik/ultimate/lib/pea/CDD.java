@@ -857,8 +857,8 @@ public final class CDD {
 
 	/**
 	 * Returns an ArrayList of pairs containing all the Decisions in the CDD. The first element of each pair is a
-	 * Decision<?>, the second element is an int signifying the true child of the decision. If called on CDD.TRUE or
-	 * CDD.FALSE, it will return an empty list.
+	 * Decision<?>, the second element is an int array signifying the true children of the decision. If called on
+	 * CDD.TRUE or CDD.FALSE, it will return an empty list.
 	 * 
 	 * Assertions: 1. The CDD given as the parameter must be a pure conjunction (this assertion is commented out because
 	 * inequality-decisions contain ||)
