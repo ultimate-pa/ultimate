@@ -205,7 +205,7 @@ public class CfgBuilder {
 	private final CodeBlockFactory mCbf;
 	
 	private Stack<BoogieIcfgLocation> mWhileExits; 
-
+	private Stack<BoogieIcfgLocation> mConditionalStarts; 
 	private int mRemovedAssumeTrueStatements = 0;
 
 	private static final SimplificationTechnique SIMPLIFICATION_TECHNIQUE = SimplificationTechnique.POLY_PAC;
@@ -687,6 +687,7 @@ public class CfgBuilder {
 			mGotoEdges = new LinkedList<>();
 			mNameCache = new HashMap<>();
 			mWhileExits = new Stack<>();
+			mConditionalStarts = new Stack<>();
 			mLabelString2Statement = new HashMap<>();
 
 			final Statement[] statements =
@@ -831,8 +832,10 @@ public class CfgBuilder {
 
 		
 		private BoogieIcfgLocation buildIf(BoogieIcfgLocation currentLocation, IfStatement st) {
+			mConditionalStarts.add(currentLocation);
 			IIcfgElement thenPart = buildCodeBlock(((IfStatement)st).getThenPart(), (BoogieIcfgLocation)currentLocation, false);
-			IIcfgElement elsePart = buildCodeBlock(((IfStatement)st).getElsePart(), (BoogieIcfgLocation)currentLocation, false);
+			IIcfgElement elsePart = buildCodeBlock(((IfStatement)st).getElsePart(), mConditionalStarts.peek(), false);
+			currentLocation = mConditionalStarts.pop();
 			AssumeStatement thenStatement;
 			AssumeStatement elseStatement;
 			
@@ -887,9 +890,11 @@ public class CfgBuilder {
 				mergeLocNodes((BoogieIcfgLocation)currentElement, start, false);
 				
 			}
+			
 			mProcLocNodes.put(start.getDebugIdentifier(), start);
 			mIcfg.getLoopLocations().add(start);
 			mWhileExits.add(currentLocation);
+			mConditionalStarts.add(afterInvariants);
 			AssumeStatement condTrue;
 			AssumeStatement condFalse;
 			if (st.getCondition() instanceof WildcardExpression) {
@@ -905,7 +910,10 @@ public class CfgBuilder {
 			mIcfgBacktranslator.putAux(condFalse, new BoogieASTNode[] { st });
 			buildAssumeSplit(st, condTrue, buildCodeBlock(((WhileStatement)st).getBody(), start, false), condFalse, currentLocation, afterInvariants);
 			assert (mWhileExits.pop() == currentLocation);
-			return start;
+			if (mConditionalStarts.peek() != start) {
+				mergeLocNodes(start, mConditionalStarts.peek(), true);
+			}
+			return mConditionalStarts.pop();
 		}
 		
 		private Expression getLHSExpression(final LeftHandSide lhs) {
@@ -1044,6 +1052,10 @@ public class CfgBuilder {
 			mergeLocNodes(currentLocation, newLocation, true);
 			if (currentLocation == mIcfg.mFinalNode.get(mCurrentProcedureName)) {
 				mIcfg.mFinalNode.put(mCurrentProcedureName, newLocation);
+			}
+			if (!mConditionalStarts.empty() && mConditionalStarts.peek() == currentLocation) {
+				mConditionalStarts.pop();
+				mConditionalStarts.add(newLocation);
 			}
 			return newLocation;
 		}
