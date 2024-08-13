@@ -208,8 +208,8 @@ public enum Spec {
 	* Checks for redundancy.
 	*/
 	REDUNDANCY(Group.REQUIREMENT,
-			"redundant",
-			"non-redundant");
+			"non-redundant",
+			"redundant");
 	// @formatter:on
 
 	/**
