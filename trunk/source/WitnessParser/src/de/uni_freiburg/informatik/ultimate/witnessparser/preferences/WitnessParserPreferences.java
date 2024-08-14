@@ -16,7 +16,7 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.Activator;
 public class WitnessParserPreferences extends UltimatePreferenceInitializer {
 
 	public static final String LABEL_CW_USE_ONLY_LOOPINVARIANTS = "Only consider loop invariants";
-	private static final boolean DEF_CW_USE_ONLY_LOOPINVARIANTS = false;
+	private static final boolean DEF_CW_USE_ONLY_LOOPINVARIANTS = true;
 	private static final String DESC_CW_USE_ONLY_LOOPINVARIANTS =
 			"When reading correctness witnesses, only consider invariants at nodes that can be entered with a transition that is labeled with enterLoopHead=true";
 

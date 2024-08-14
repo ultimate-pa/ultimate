@@ -494,7 +494,7 @@ def write_ltl(ltlformula):
     return ltl_file_path
 
 
-def create_cli_settings(prop, validate_witness, architecture, input_files):
+def create_cli_settings(prop, validate_witness, architecture, c_file):
     # append detected init method
     ret = ["--cacsl2boogietranslator.entry.function", prop.get_init_method()]
 
@@ -511,9 +511,6 @@ def create_cli_settings(prop, validate_witness, architecture, input_files):
             "--traceabstraction.compute.hoare.annotation.of.negated.interpolant.automaton,.abstraction.and.cfg"
         )
         ret.append("false")
-    elif validate_witness and any(i.endswith(".graphml") for i in input_files):
-        ret.append("--witnessparser.only.consider.loop.invariants")
-        ret.append("true")
     elif not validate_witness:
         # we are not in validation mode, so we should generate a witness and need
         # to pass some things to the witness printer
@@ -533,10 +530,10 @@ def create_cli_settings(prop, validate_witness, architecture, input_files):
         ret.append("--witnessprinter.graph.data.programhash")
 
         if is_windows():
-            sha_call = call_desperate(["certutil", "-hashfile", input_files[0], "SHA256"])
+            sha_call = call_desperate(["certutil", "-hashfile", c_file[0], "SHA256"])
             sha = sha_call.communicate()[0].split()[3]
         else:
-            sha_call = call_desperate(["sha256sum", input_files[0]])
+            sha_call = call_desperate(["sha256sum", c_file[0]])
             sha = sha_call.communicate()[0].split()[0]
         ret.append(sha.decode("utf-8", "ignore"))
 
