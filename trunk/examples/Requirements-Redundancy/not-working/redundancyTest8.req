@@ -1,0 +1,6 @@
+// #TestSpec: redundant:; results:-1
+Input R is bool
+Input S is bool
+
+ID000: Globally, it is always the case that once "R" becomes satisfied, "S" holds after at most "5" time units for at least "10" time units
+ID001: Globally, it is always the case that once "R" becomes satisfied, "S" holds after at most "7" time units for at least "9" time units
