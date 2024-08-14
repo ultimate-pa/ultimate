@@ -37,15 +37,17 @@ import java.util.Map;
  * @author Helen Meyer (helen.anna.meyer@gmail.com)
  */
 public abstract class Waypoint {
-	private final Constraint mConstraint;
+	private final String mConstraint;
 	private final Location mLocation;
+	private final String mConstraintFormat;
 
-	public Waypoint(final Constraint constraint, final Location location) {
+	public Waypoint(final String constraint, final String constraintFormat, final Location location) {
 		mConstraint = constraint;
+		mConstraintFormat = constraintFormat;
 		mLocation = location;
 	}
 
-	public Constraint getConstraint() {
+	public String getConstraint() {
 		return mConstraint;
 	}
 
@@ -71,11 +73,9 @@ public abstract class Waypoint {
 		wpMap.put("action", action);
 		if (mConstraint != null) {
 			final LinkedHashMap<String, Object> constraintMap = new LinkedHashMap<>();
-
-			constraintMap.put("value", mConstraint.getValue());
-
-			if (mConstraint.getFormat() != null) {
-				constraintMap.put("format", mConstraint.getFormat());
+			constraintMap.put("value", mConstraint);
+			if (mConstraintFormat != null) {
+				constraintMap.put("format", mConstraintFormat);
 			}
 			wpMap.put("constraint", constraintMap);
 		}

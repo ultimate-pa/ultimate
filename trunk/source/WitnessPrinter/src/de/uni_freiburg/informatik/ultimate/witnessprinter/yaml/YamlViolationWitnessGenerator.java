@@ -40,7 +40,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceEle
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslationValueProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
-import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Constraint;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.FormatVersion;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Location;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Segment;
@@ -108,32 +107,21 @@ public class YamlViolationWitnessGenerator<TE, E> {
 				content.add(new Segment(List.of(), new WaypointTarget(currentLocation)));
 			}
 			if (currentATE.hasStepInfo(StepInfo.CONDITION_EVAL_FALSE)) {
-				final Constraint constraint = new Constraint("false", null);
-				content.add(new Segment(List.of(), new WaypointBranching(constraint, currentLocation)));
+				content.add(new Segment(List.of(), new WaypointBranching("false", currentLocation)));
 			}
 			if (currentATE.hasStepInfo(StepInfo.CONDITION_EVAL_TRUE)) {
-				final Constraint constraint = new Constraint("true", null);
-				content.add(new Segment(List.of(), new WaypointBranching(constraint, currentLocation)));
+				content.add(new Segment(List.of(), new WaypointBranching("true", currentLocation)));
 			}
 			if (currentATE.hasStepInfo(StepInfo.PROC_CALL)) {
 				content.add(new Segment(List.of(), new WaypointFunctionEnter(currentLocation)));
 			}
 			if (currentATE.hasStepInfo(StepInfo.PROC_RETURN)) {
-				final Constraint constraint = getReturnConstraint(currentState);
-				content.add(new Segment(List.of(), new WaypointFunctionReturn(constraint, currentLocation)));
+				content.add(new Segment(List.of(), new WaypointFunctionReturn(
+						mProgramStatePrinter.stateAsExpression(currentState, "\\result"::equals), currentLocation)));
 			}
 		}
 		mLogger.info("Generated YAML witness of length %d.", content.size());
 		return new Witness(List.of(new ViolationSequence(content)));
-	}
-
-	private Constraint getReturnConstraint(final ProgramState<E> state) {
-		final String result = mProgramStatePrinter.stateAsExpression(state, "\\result"::equals);
-		if (result == null) {
-			return null;
-		}
-		// TODO: check if result is an acsl_expression
-		return new Constraint(result, "acsl_expression");
 	}
 
 	public String makeYamlString() {
