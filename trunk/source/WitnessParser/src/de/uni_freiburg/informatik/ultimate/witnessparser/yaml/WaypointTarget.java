@@ -34,8 +34,8 @@ package de.uni_freiburg.informatik.ultimate.witnessparser.yaml;
  */
 public class WaypointTarget extends Waypoint {
 
-	public WaypointTarget(Location location) {
-		super(null, location);
+	public WaypointTarget(final Location location) {
+		super(null, null, location);
 	}
 
 	@Override

@@ -34,8 +34,8 @@ package de.uni_freiburg.informatik.ultimate.witnessparser.yaml;
  */
 public class WaypointFunctionEnter extends Waypoint {
 
-	public WaypointFunctionEnter(Location location) {
-		super(null, location);
+	public WaypointFunctionEnter(final Location location) {
+		super(null, null, location);
 	}
 
 	@Override

@@ -42,7 +42,6 @@ import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.SafeConstructor;
 
-import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Constraint;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.FunctionContract;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.GhostUpdate;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.GhostVariable;
@@ -136,10 +135,7 @@ public class YamlWitnessParser {
 	private static Waypoint parseViolationWaypoint(final Map<String, Object> wp) {
 		final Location location = parseLocation((Map<String, Object>) wp.get("location"));
 		final Map<String, String> constraintMap = (Map<String, String>) wp.get("constraint");
-		Constraint constraint = null;
-		if (constraintMap != null) {
-			constraint = new Constraint(constraintMap.get("value"), constraintMap.get("format"));
-		}
+		final String constraint = constraintMap == null ? null : constraintMap.get("value");
 		switch ((String) wp.get("type")) {
 		case "target":
 			return new WaypointTarget(location);
