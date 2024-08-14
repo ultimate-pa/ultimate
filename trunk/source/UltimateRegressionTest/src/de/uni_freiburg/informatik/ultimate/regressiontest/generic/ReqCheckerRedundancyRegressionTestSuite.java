@@ -1,5 +1,4 @@
 /*
- * Copyright (C) 2024 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2024 University of Freiburg
  *
  * This file is part of the ULTIMATE Regression Test Library.
