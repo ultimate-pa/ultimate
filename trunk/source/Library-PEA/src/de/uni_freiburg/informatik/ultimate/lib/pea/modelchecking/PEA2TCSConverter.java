@@ -62,7 +62,7 @@ public final class PEA2TCSConverter {
 	public static final String REAL_TYPE = "\u211D";
 
 	/**
-	 * 
+	 *
 	 */
 	public static final String LEN = "len";
 
@@ -83,7 +83,7 @@ public final class PEA2TCSConverter {
 
 		/**
 		 * Constructor to generate a TransitionConstraint as initial constraint.
-		 * 
+		 *
 		 * @param constraint
 		 * @param initLoc
 		 */
@@ -94,7 +94,7 @@ public final class PEA2TCSConverter {
 
 		/**
 		 * Constructor to generate a TransitionConstraint.
-		 * 
+		 *
 		 * @param constraint
 		 * @param dest
 		 * @param source
@@ -169,8 +169,6 @@ public final class PEA2TCSConverter {
 	 *            The Phase Event Automaton to be transformed
 	 */
 	public PEA2TCSConverter(final TCSWriter tcsWriter, final PhaseEventAutomata pea) {
-		super();
-
 		this.tcsWriter = tcsWriter;
 		this.tcsWriter.setConverter(this);
 		this.pea = pea;
@@ -258,7 +256,7 @@ public final class PEA2TCSConverter {
 	 * This method is similar to chooseNextTransition. It selects the next initial phase depending on the
 	 * initPhaseCounter and calculates the initDisjunctIterator. Disjuncts result from the state and clock invariants
 	 * from the initial phase.
-	 * 
+	 *
 	 * @return false if there is no next init phase, true otherwise.
 	 */
 	private boolean chooseNextInitPhase() {
@@ -282,18 +280,17 @@ public final class PEA2TCSConverter {
 	 * phase. Additionally, chooseNextTransition recalculates the disjuncts list for the next transition, i.e., a list
 	 * of disjuncts resulting from the product of the disjuncts for the guard of the transition and the invariants of
 	 * the target location of this transition.
-	 * 
-	 * 
+	 *
+	 *
 	 * @return boolean Returns true if there is a next transition and false otherwise.
 	 */
 	private boolean chooseNextTransition() {
 		while (transitionIterator == null || !transitionIterator.hasNext()) {
-			if (++phaseCounter < phases.size()) {
-				final List<Transition> transitionsForPhase = phases.get(phaseCounter).getTransitions();
-				transitionIterator = transitionsForPhase.iterator();
-			} else {
+			if (++phaseCounter >= phases.size()) {
 				return false;
 			}
+			final List<Transition> transitionsForPhase = phases.get(phaseCounter).getTransitions();
+			transitionIterator = transitionsForPhase.iterator();
 		}
 		currentTransition = transitionIterator.next();
 
@@ -308,11 +305,9 @@ public final class PEA2TCSConverter {
 		final CDD destClockInvariant = currentTransition.getDest().getClockInvariant();
 		final CDD[] invariantDisjuncts = destStateInvariant.and(destClockInvariant).toDNF();
 
-		final ArrayList<CDD> disjuncts = new ArrayList<>();
-		for (int i = 0; i < transitionDisjuncts.length; i++) {
-			final CDD transDisj = transitionDisjuncts[i];
-			for (int j = 0; j < invariantDisjuncts.length; j++) {
-				final CDD invDisj = invariantDisjuncts[j];
+		final List<CDD> disjuncts = new ArrayList<>();
+		for (final CDD transDisj : transitionDisjuncts) {
+			for (final CDD invDisj : invariantDisjuncts) {
 				disjuncts.add(transDisj.and(invDisj.prime(Collections.emptySet())));
 			}
 		}
@@ -331,12 +326,10 @@ public final class PEA2TCSConverter {
 				} else {
 					cdd = clockUpdatesReset.get(clock);
 				}
+			} else if (currentTransition.getDest().isStopped(clock)) {
+				cdd = stoppedClockUpdates.get(clock);
 			} else {
-				if (currentTransition.getDest().isStopped(clock)) {
-					cdd = stoppedClockUpdates.get(clock);
-				} else {
-					cdd = clockUpdates.get(clock);
-				}
+				cdd = clockUpdates.get(clock);
 			}
 			constraint = constraint.and(cdd);
 		}
@@ -348,7 +341,7 @@ public final class PEA2TCSConverter {
 
 	/**
 	 * Return the list of local declarations belonging to the current PEA.
-	 * 
+	 *
 	 * @return declarations as list of strings
 	 */
 	public List<String> getDeclarations() {
@@ -357,7 +350,7 @@ public final class PEA2TCSConverter {
 
 	/**
 	 * Returns the name of the current PEA.
-	 * 
+	 *
 	 * @return the name as String
 	 */
 	public String getName() {
@@ -367,7 +360,7 @@ public final class PEA2TCSConverter {
 	/**
 	 * Similar to getNextTransition(). This method iterates over the constraints (state and clock invariants) of all
 	 * inital phases of the input PEA and it returns the next disjunct representing the next initial constraint.
-	 * 
+	 *
 	 * @return A TransitionConstraint representing a initial constraint. Returns null if there is no next init
 	 *         constraint.
 	 */
@@ -375,16 +368,13 @@ public final class PEA2TCSConverter {
 		CDD initDisjunct;
 
 		if (initDisjunctIterator.hasNext()) {
-			initDisjunct = initDisjunctIterator.next();
-		} else {
-			/*
-			 * chooseNextInitPhase() reinitialises initDisjunctIterator for the next initial phase if possible
-			 */
-			if (!chooseNextInitPhase()) {
-				return null;
-			}
-			initDisjunct = initDisjunctIterator.next();
+		} else /*
+				 * chooseNextInitPhase() reinitialises initDisjunctIterator for the next initial phase if possible
+				 */
+		if (!chooseNextInitPhase()) {
+			return null;
 		}
+		initDisjunct = initDisjunctIterator.next();
 
 		final CDD constraint = initDisjunct.and(initClockConstraint);
 
@@ -395,18 +385,17 @@ public final class PEA2TCSConverter {
 
 	/**
 	 * Generates the next transition constraint for the current phase event automaton.
-	 * 
+	 *
 	 * This method iterates over all disjuncts from transitions and invariants of the PEA and combines a disjunct for a
 	 * transition and a disjunct from the invariant constraint for the destination of the transition to a Transition
 	 * constraint.
-	 * 
+	 *
 	 * @return a TransitionConstraint object for the next transition.
 	 */
 	public TransitionConstraint getNextTransitionConstraint() {
 		CDD disjunct;
 
 		if (disjunctIterator.hasNext()) {
-			disjunct = disjunctIterator.next();
 		} else {
 			if (!chooseNextTransition()) {
 				return null;
@@ -414,8 +403,8 @@ public final class PEA2TCSConverter {
 			if (!disjunctIterator.hasNext()) {
 				System.out.println();
 			}
-			disjunct = disjunctIterator.next();
 		}
+		disjunct = disjunctIterator.next();
 
 		final CDD constraint = disjunct.and(clockConstraintForCurrentTrans);
 

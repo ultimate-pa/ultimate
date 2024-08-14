@@ -282,32 +282,31 @@ public class RtInconcistencyConditionGenerator {
 	 * Generates an expression that represents the non-deadlock condition (NDC) for a network of PEAs A, where
 	 *
 	 * <pre>
-	 *   A = A_1 || ··· || A_n and A_i = (P_i, V_i, C_i, E_i, s_i, I_i, P^0_i).
+	 *   A = A_1 || Â·Â·Â· || A_n and A_i = (P_i, V_i, C_i, E_i, s_i, I_i, P^0_i).
 	 * </pre>
 	 *
 	 * The NDC of A is then
 	 *
 	 * <pre>
 	 *
-	 *   ⋀ (p_1,...,p_n) ∈ P_1 x ... x P_n
-	 *   pc_1 = p_1 ⋀ ... ⋀ pc_n = p_n  =>  ∃  v' . NDC(A_1, p_1) ⋀ ... ⋀ NDC(A_n, p_n)
+	 *   â‹€ (p_1,...,p_n) âˆˆ P_1 x ... x P_n
+	 *   pc_1 = p_1 â‹€ ... â‹€ pc_n = p_n  =>  âˆƒ  v' . NDC(A_1, p_1) â‹€ ... â‹€ NDC(A_n, p_n)
 	 * </pre>
 	 *
 	 * The NDC(A_i, p_i) is the non-deadlock condition for PEA A_i and phase p_i:
 	 *
 	 * <pre>
-	 *   ⋁ (p,g,X,p') ∈ E_i
-	 *   g ⋀ s'(p') ⋀ strict(I(p'))[X/0]
+	 *   â‹� (p,g,X,p') âˆˆ E_i
+	 *   g â‹€ s'(p') â‹€ strict(I(p'))[X/0]
 	 * </pre>
 	 *
-	 * <code>strict</code> replaces in I(p') all occurrences of c ≤ t by c < t.
+	 * <code>strict</code> replaces in I(p') all occurrences of c â‰¤ t by c < t.
 	 *
 	 */
 	public Expression generateNonDeadlockCondition(final PhaseEventAutomata[] automata) {
 		if (PRINT_PEA_DOT) {
 			mLogger.info("### Printing DOT for Peas ###");
-			for (int i = 0; i < automata.length; ++i) {
-				final PhaseEventAutomata pea = automata[i];
+			for (final PhaseEventAutomata pea : automata) {
 				mLogger.info(pea.getName() + CoreUtil.getPlatformLineSeparator() + DotWriterNew.createDotString(pea));
 			}
 			if (automata.length < 4) {
@@ -339,14 +338,14 @@ public class RtInconcistencyConditionGenerator {
 				outer.add(mPhaseNdcCache.getOrConstruct(automaton.getPhases().get(phaseIndex)));
 			}
 
-			// "compute" NDC(A_1, p_1) ⋀ ... ⋀ NDC(A_n, p_n)
+			// "compute" NDC(A_1, p_1) â‹€ ... â‹€ NDC(A_n, p_n)
 			final Term checkPrimedRhs = SmtUtils.and(mScript, outer);
 
-			// extension: add primed invariant, i.e., a preprocessed collection of ⋀NDC(A_i, p_i)
+			// extension: add primed invariant, i.e., a preprocessed collection of â‹€NDC(A_i, p_i)
 			// for single state PEAs.
 			final Term checkPrimedRhsAndPrimedInvariant = SmtUtils.and(mScript, checkPrimedRhs, mPrimedInvariant);
 
-			// compute ∃ v' . NDC(A_1, p_1) ⋀ ... ⋀ NDC(A_n, p_n), i.e., add quantifier and try to remove it
+			// compute âˆƒ v' . NDC(A_1, p_1) â‹€ ... â‹€ NDC(A_n, p_n), i.e., add quantifier and try to remove it
 			final Term checkRhsAndInvariant = mProjectionCache.getOrConstruct(checkPrimedRhsAndPrimedInvariant);
 			if (checkRhsAndInvariant instanceof QuantifiedFormula) {
 				mQuantified++;
@@ -357,7 +356,7 @@ public class RtInconcistencyConditionGenerator {
 				continue;
 			}
 
-			// "compute" pc_1 = p_1 ⋀ ... ⋀ pc_n = p_n
+			// "compute" pc_1 = p_1 â‹€ ... â‹€ pc_n = p_n
 			final Term rtInconsistencyCheckLhs = SmtUtils.and(mScript, impliesLHS);
 			if (PRINT_INDIVIDUAL_RT_INCONSISTENCY_CHECK) {
 				mLogger.info("%s => %s", rtInconsistencyCheckLhs, checkRhsAndInvariant);

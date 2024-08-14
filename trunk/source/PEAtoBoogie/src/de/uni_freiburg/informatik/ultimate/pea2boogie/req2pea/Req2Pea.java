@@ -181,7 +181,7 @@ public class Req2Pea implements IReq2Pea {
 
 		mLogger.info(String.format("Finished transforming %s requirements to PEAs", patterns.size()));
 
-		return req2automata.entrySet().stream().map(a -> a.getValue()).collect(Collectors.toList());
+		return req2automata.entrySet().stream().map(Entry::getValue).collect(Collectors.toList());
 	}
 
 	@Override
@@ -247,7 +247,7 @@ public class Req2Pea implements IReq2Pea {
 
 		@Override
 		public Expression transform(final FunctionApplication node) {
-			if (!node.getIdentifier().equals("prev")) {
+			if (!"prev".equals(node.getIdentifier())) {
 				return node;
 			}
 
@@ -272,7 +272,7 @@ public class Req2Pea implements IReq2Pea {
 
 			@Override
 			public Expression transform(final FunctionApplication node) {
-				if (node.getIdentifier().equals("prev")) {
+				if ("prev".equals(node.getIdentifier())) {
 					throw new IllegalArgumentException("Unsupported nested FunctionApplication prev().");
 				}
 				return node;

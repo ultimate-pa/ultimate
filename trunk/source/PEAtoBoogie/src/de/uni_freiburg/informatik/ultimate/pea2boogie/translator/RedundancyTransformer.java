@@ -30,9 +30,9 @@ public class RedundancyTransformer implements IReq2PeaTransformer {
 	@Override
 	public IReq2Pea transform(final IReq2Pea req2pea, final List<DeclarationPattern> init,
 			final List<PatternType<?>> requirements) {
-		RedundancyTransformerReq2Pea redundancyTransformerReq2Pea = new RedundancyTransformerReq2Pea(mServices, mLogger, init);
+		final RedundancyTransformerReq2Pea redundancyTransformerReq2Pea =
+				new RedundancyTransformerReq2Pea(mServices, mLogger, init);
 		redundancyTransformerReq2Pea.transform(req2pea);
 		return redundancyTransformerReq2Pea;
 	}
 }
-

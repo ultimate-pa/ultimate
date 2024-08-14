@@ -27,8 +27,7 @@ public class InitialTransition {
 		if (destName.length() < 33) {
 			destName = (destName + "                                 ").substring(0, 33);
 		}
-		final StringBuffer result = new StringBuffer(" -> ").append(destName).append(" guard ").append(mGuard);
-
+		final StringBuilder result = new StringBuilder(" -> ").append(destName).append(" guard ").append(mGuard);
 		return result.toString();
 	}
 }

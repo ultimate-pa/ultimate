@@ -88,7 +88,7 @@ public class PEAtoBoogieObserver extends BaseObserver {
 		mServices.getResultService().registerTransformer("CexReducer", resultTransformer);
 		return translator.getUnit();
 	}
-	
+
 	private IElement generateReqCheckRedundancyBoogie(final List<PatternType<?>> patterns) {
 		final RedundancyTransformer transformer = new RedundancyTransformer(mServices, mLogger);
 		final Req2BoogieTranslator translator =

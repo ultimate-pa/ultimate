@@ -189,7 +189,7 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 			return false;
 		}
 		final PhaseBits pb = location.getPhaseBits();
-		return (pb.isActive(effectDCPhaseIndex) && !pb.isWaiting(effectDCPhaseIndex)) || pb.isExact(effectDCPhaseIndex);
+		return pb.isActive(effectDCPhaseIndex) && !pb.isWaiting(effectDCPhaseIndex) || pb.isExact(effectDCPhaseIndex);
 	}
 
 	private static boolean isEffectTransition(final Phase source, final Transition transition, final int effectDCPhase,
@@ -200,7 +200,7 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 
 	private static void setFlags(final List<Phase> initialPhases) {
 		for (final Phase p : initialPhases) {
-			p.isInit = true;
+			p.setInit(true);
 		}
 	}
 
@@ -228,8 +228,8 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 			final Phase trackingLocation = new Phase(oldPhase.getName() + LOWER_AUTOMATON_SUFFIX, trackingStateInvar,
 					oldPhase.getClockInvariant());
 			newPhases.set(oldPhases.size() + i, trackingLocation);
-			if (oldPhase.isInit) {
-				trackingLocation.isInit = true;
+			if (oldPhase.isInit()) {
+				trackingLocation.setInit(true);
 			}
 		}
 		return newPhases;
@@ -244,7 +244,7 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 			return Collections.emptySet();
 		}
 		for (int i = 0; i < dcFormula.length; i++) {
-			if ((pb.isActive(i) && !pb.isWaiting(i)) || pb.isExact(i)) {
+			if (pb.isActive(i) && !pb.isWaiting(i) || pb.isExact(i)) {
 				final CDD invar = dcFormula[i].getInvariant();
 				final Set<String> cddVars = Req2CauseTrackingCDD.getCddVariables(invar);
 				// if the prior to last phase is a true phase, look ahead and see what we have to do to NOT
@@ -287,7 +287,7 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 	private static List<Phase> getInitialLocations(final List<Phase> phases) {
 		final List<Phase> initialPhases = new ArrayList<>();
 		for (final Phase p : phases) {
-			if (p.isInit) {
+			if (p.isInit()) {
 				initialPhases.add(p);
 			}
 		}
@@ -355,7 +355,7 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 			if (oldLocations.get(i).getOutgoingTransition(oldLocations.get(0)) != null) {
 				newLocations.get(seem + 1).addTransition(newLocations.get(i), clockGuard, new String[0]);
 			}
-			if (oldLocations.get(i).isInit) {
+			if (oldLocations.get(i).isInit()) {
 				newLocations.get(i).addTransition(newLocations.get(seem + 1), CDD.TRUE,
 						clocks.toArray(new String[clocks.size()]));
 			}

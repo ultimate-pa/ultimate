@@ -107,7 +107,7 @@ public class PhaseEventAutomata implements Comparable<Object> {
 
 		// add initial transition to Phases in initPhases
 		// TODO: remove this, either store all edges in the phases (would be clear) or in the pea, but not both.
-		for (InitialTransition initTrans : init) {
+		for (final InitialTransition initTrans : init) {
 			initTrans.getDest().setInitialTransition(initTrans);
 		}
 	}
@@ -162,10 +162,7 @@ public class PhaseEventAutomata implements Comparable<Object> {
 					final CDD sinv = t1.getDest().getStateInv().and(t2.getDest().getStateInv());
 					// This leads to a serious bug -
 					// if (sinv.and(guard) == CDD.FALSE)
-					if (sinv == CDD.FALSE) {
-						continue;
-					}
-					if (guard != CDD.TRUE && srcsinv.and(guard).and(sinv.prime(Collections.emptySet())) == CDD.FALSE) {
+					if ((sinv == CDD.FALSE) || (guard != CDD.TRUE && srcsinv.and(guard).and(sinv.prime(Collections.emptySet())) == CDD.FALSE)) {
 						// TODO: Overapproximating for BoogieDecisions because constants will become primed
 						continue;
 					}
@@ -196,8 +193,8 @@ public class PhaseEventAutomata implements Comparable<Object> {
 		final List<InitialTransition> initTransitions = new ArrayList<>();
 
 		// add initial transition to Phases in initPhases
-		for (Phase phase : initPhases) {
-			InitialTransition initialTransition = new InitialTransition(phase.getClockInv(), phase);
+		for (final Phase phase : initPhases) {
+			final InitialTransition initialTransition = new InitialTransition(phase.getClockInv(), phase);
 			phase.setInitialTransition(initialTransition);
 			initTransitions.add(initialTransition);
 		}
@@ -228,8 +225,7 @@ public class PhaseEventAutomata implements Comparable<Object> {
 		} else if (b.getDeclarations() == null) {
 			newDeclarations = mDeclarations;
 		} else {
-			newDeclarations = new ArrayList<>();
-			newDeclarations.addAll(mDeclarations);
+			newDeclarations = new ArrayList<>(mDeclarations);
 			newDeclarations.addAll(b.getDeclarations());
 		}
 		return newDeclarations;
@@ -273,8 +269,7 @@ public class PhaseEventAutomata implements Comparable<Object> {
 	 */
 	protected List<String> mergeClockLists(final PhaseEventAutomata b) {
 		// Merge clock lists
-		final List<String> newClocks = new ArrayList<>();
-		newClocks.addAll(mClocks);
+		final List<String> newClocks = new ArrayList<>(mClocks);
 		newClocks.addAll(b.getClocks());
 		return newClocks;
 	}
@@ -288,8 +283,8 @@ public class PhaseEventAutomata implements Comparable<Object> {
 	 * @return Returns the init.
 	 */
 	public List<Phase> getInit() {
-		List<Phase> initPhases = new ArrayList<>();
-		for (InitialTransition t : mInit) {
+		final List<Phase> initPhases = new ArrayList<>();
+		for (final InitialTransition t : mInit) {
 			initPhases.add(t.getDest());
 		}
 		return initPhases;
@@ -363,8 +358,7 @@ public class PhaseEventAutomata implements Comparable<Object> {
 			final Phase location = getLocation(i);
 			final String[] result = splitForComponents(location.getName());
 			int maxIndex = 0;
-			for (int j = 0; j < result.length; j++) {
-				final String compName = result[j];
+			for (final String compName : result) {
 				final PEAPhaseIndexMap map = new PEAPhaseIndexMap(compName);
 				if (maxIndex < map.getIndex() - 1) {
 					maxIndex = map.getIndex() - 1;
@@ -381,9 +375,7 @@ public class PhaseEventAutomata implements Comparable<Object> {
 	private static String[] splitForComponents(final String location) {
 		// Create a pattern to match breaks
 		final Pattern p = Pattern.compile("_X_");
-		// Split input with the pattern
-		final String[] result = p.split(location);
-		return result;
+		return p.split(location);
 	}
 
 	// diese Methode vereinfacht die Guards eines PEAS
@@ -392,18 +384,16 @@ public class PhaseEventAutomata implements Comparable<Object> {
 	public void simplifyGuards() {
 
 		final List<Phase> phases = getPhases();
-		for (int i = 0; i < phases.size(); i++) {
-			final Phase phase = phases.get(i);
+		for (final Phase phase : phases) {
 			final List<Transition> transitions = phase.getTransitions();
-			for (int j = 0; j < transitions.size(); j++) {
-				final Transition trans = transitions.get(j);
+			for (final Transition trans : transitions) {
 				trans.simplifyGuard();
 			}
 		}
 	}
 
 	public boolean isStrict() {
-		for (Phase phase : mPhases) {
+		for (final Phase phase : mPhases) {
 			if (phase.isStrict() || !phase.getModifiedConstraints().isEmpty()) {
 				return true;
 			}

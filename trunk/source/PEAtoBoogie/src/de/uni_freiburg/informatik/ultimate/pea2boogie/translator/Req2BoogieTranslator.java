@@ -64,7 +64,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -147,8 +147,8 @@ public class Req2BoogieTranslator {
 			return;
 		}
 
-		List<DeclarationPattern> init = patterns.stream().filter(a -> a instanceof DeclarationPattern)
-				.map(a -> (DeclarationPattern) a).collect(Collectors.toList());
+		List<DeclarationPattern> init = patterns.stream().filter(DeclarationPattern.class::isInstance)
+				.map(DeclarationPattern.class::cast).collect(Collectors.toList());
 
 		if (prefs.getBoolean(Pea2BoogiePreferences.LABEL_GUESS_IN_OUT)) {
 			final ReqInOutGuesser riog = new ReqInOutGuesser(logger, mServices, init, requirements);
@@ -171,9 +171,7 @@ public class Req2BoogieTranslator {
 		// TODO: Add locations to pattern type to generate meaningful boogie locations
 		mUnitLocation = new BoogieLocation("", -1, -1, -1, -1);
 
-		final List<Declaration> decls = new ArrayList<>();
-		decls.addAll(mSymboltable.getDeclarations());
-
+		final List<Declaration> decls = new ArrayList<>(mSymboltable.getDeclarations());
 		decls.add(generateProcedure(init));
 		mUnit = new Unit(mUnitLocation, decls.toArray(new Declaration[decls.size()]));
 		annotateContainedPatternSet(mUnit, mReqPeas, init);
@@ -241,8 +239,7 @@ public class Req2BoogieTranslator {
 	 */
 	private List<Statement> genDelay(final BoogieLocation bl) {
 		final String deltaVarName = mSymboltable.getDeltaVarName();
-		final List<Statement> stmts = new ArrayList<>();
-		stmts.addAll(genHavocStmts(mSymboltable.getPrimedVars()));
+		final List<Statement> stmts = new ArrayList<>(genHavocStmts(mSymboltable.getPrimedVars()));
 		stmts.addAll(genHavocStmts(mSymboltable.getEventVars()));
 		stmts.addAll(genHavocStmts(Collections.singleton(deltaVarName)));
 
@@ -338,8 +335,8 @@ public class Req2BoogieTranslator {
 			throw new IllegalArgumentException();
 		}
 		IfStatement acc = null;
-		for (int i = 0; i < statements.length; i++) {
-			final IfStatement currentIfSmt = (IfStatement) statements[i];
+		for (final Statement statement : statements) {
+			final IfStatement currentIfSmt = (IfStatement) statement;
 			assert currentIfSmt.getElsePart().length == 0;
 			if (acc == null) {
 				acc = currentIfSmt;
@@ -354,8 +351,8 @@ public class Req2BoogieTranslator {
 	private static Statement joinInnerIfSmts(final Statement[] statements, final BoogieLocation bl) {
 
 		final List<Statement> smtList = new ArrayList<>();
-		for (int i = 0; i < statements.length; i++) {
-			final IfStatement oldIfSmt = (IfStatement) statements[i];
+		for (final Statement statement : statements) {
+			final IfStatement oldIfSmt = (IfStatement) statement;
 			if (smtList.isEmpty()) {
 				final BooleanLiteral bLiteral = new BooleanLiteral(bl, false);
 				final AssumeStatement assumeFalse = new AssumeStatement(bl, bLiteral);
@@ -396,7 +393,7 @@ public class Req2BoogieTranslator {
 		// }
 
 		final List<Statement> statements = new ArrayList<>();
-		final Statement[] emptyElseBody = new Statement[0];
+		final Statement[] emptyElseBody = {};
 		for (int i = 0; i < phases.size(); i++) {
 			final Expression ifCon = genComparePhaseCounter(i, pcName, bl);
 			final PeaLocationAnnotation peaLocAnnotation = new PeaLocationAnnotation(
@@ -470,7 +467,7 @@ public class Req2BoogieTranslator {
 			final Phase phase, final BoogieLocation bl) {
 
 		final Statement[] statements = new Statement[phase.getTransitions().size()];
-		final Statement[] emptyArray = new Statement[0];
+		final Statement[] emptyArray = {};
 		final WildcardExpression wce = new WildcardExpression(bl);
 		final List<Transition> transitions = phase.getTransitions();
 		for (int i = 0; i < transitions.size(); i++) {
@@ -508,11 +505,10 @@ public class Req2BoogieTranslator {
 			final BoogieLocation bl) {
 		final List<Phase> phases = automaton.getPhases();
 		final Statement[] statements = new Statement[phases.size()];
-		final Statement[] emptyArray = new Statement[0];
+		final Statement[] emptyArray = {};
 		for (int i = 0; i < phases.size(); i++) {
 			final Expression ifCon = genComparePhaseCounter(i, pcName, bl);
-			final Statement[] outerIfBodySmt =
-					new Statement[] { generateTransitionsFromPhase(automaton, pcName, phases.get(i), bl) };
+			final Statement[] outerIfBodySmt = { generateTransitionsFromPhase(automaton, pcName, phases.get(i), bl) };
 			statements[i] = new IfStatement(bl, ifCon, outerIfBodySmt, emptyArray);
 		}
 		return joinIfSmts(statements, bl);
@@ -556,9 +552,7 @@ public class Req2BoogieTranslator {
 	 * @return Statements of the while-body.
 	 */
 	private Statement[] genWhileLoopBody(final BoogieLocation bl) {
-		final List<Statement> stmtList = new ArrayList<>();
-		stmtList.addAll(genDelay(bl));
-
+		final List<Statement> stmtList = new ArrayList<>(genDelay(bl));
 		for (final ReqPeas reqpea : mReqPeas) {
 			for (final Entry<CounterTrace, PhaseEventAutomata> pea : reqpea.getCounterTrace2Pea()) {
 				stmtList.addAll(genInvariantGuards(reqpea.getPattern(), pea.getValue(),
@@ -598,11 +592,11 @@ public class Req2BoogieTranslator {
 		final List<Phase> phases = aut.getPhases();
 		final List<Phase> initialPhases = aut.getInit();
 		// determine initial phases
-		for (int i = 0; i < phases.size(); i++) {
+		for (final Phase element : phases) {
 
-			for (int j = 0; j < initialPhases.size(); j++) {
-				if (phases.get(i).getName().equals(initialPhases.get(j).getName())) {
-					phases.get(i).setInit(true);
+			for (final Phase element2 : initialPhases) {
+				if (element.getName().equals(element2.getName())) {
+					element.setInit(true);
 					break;
 				}
 			}
@@ -611,7 +605,7 @@ public class Req2BoogieTranslator {
 		// construct or over initial phases
 		Expression acc = null;
 		for (int i = 0; i < phases.size(); i++) {
-			if (!phases.get(i).isInit) {
+			if (!phases.get(i).isInit()) {
 				continue;
 			}
 
@@ -621,10 +615,10 @@ public class Req2BoogieTranslator {
 							ExpressionFactory.createIntegerLiteral(id.getLocation(), Integer.toString(i)));
 			// add assume statement for guard of initial transition (if existent)
 			if (phases.get(i).getInitialTransition() != null) {
-				CDD guard = phases.get(i).getInitialTransition().getGuard();
+				final CDD guard = phases.get(i).getInitialTransition().getGuard();
 				if (guard != CDD.TRUE) {
 					final Expression guardExpr = new CDDTranslator().toBoogie(guard, bl);
-					guardExpr.setType(BoogiePrimitiveType.TYPE_BOOL);
+					guardExpr.setType(BoogieType.TYPE_BOOL);
 					current = ExpressionFactory.newBinaryExpression(id.getLocation(), Operator.LOGICAND, current,
 							guardExpr);
 				}
@@ -669,8 +663,7 @@ public class Req2BoogieTranslator {
 	}
 
 	private Statement[] generateProcedureBody(final BoogieLocation bl, final List<DeclarationPattern> init) {
-		final List<Statement> statements = new ArrayList<>();
-		statements.addAll(genInitialPhasesStmts(bl));
+		final List<Statement> statements = new ArrayList<>(genInitialPhasesStmts(bl));
 		statements.addAll(genClockInitStmts());
 
 		// Assign the history vars with the initial state as if a small stutter step had occurred initially.
@@ -709,11 +702,10 @@ public class Req2BoogieTranslator {
 
 	private Declaration generateProcedure(final List<DeclarationPattern> init) {
 		final BoogieLocation bl = mUnitLocation;
-		final VariableDeclaration[] localVars = new VariableDeclaration[0];
+		final VariableDeclaration[] localVars = {};
 		final Body body = new Body(bl, localVars, generateProcedureBody(bl, init));
-		final List<String> modifiedVarsList = new ArrayList<>();
+		final List<String> modifiedVarsList = new ArrayList<>(mSymboltable.getClockVars());
 
-		modifiedVarsList.addAll(mSymboltable.getClockVars());
 		modifiedVarsList.addAll(mSymboltable.getPcVars());
 		modifiedVarsList.add(mSymboltable.getDeltaVarName());
 		modifiedVarsList.addAll(mSymboltable.getStateVars());
@@ -730,10 +722,10 @@ public class Req2BoogieTranslator {
 		final ModifiesSpecification mod = new ModifiesSpecification(bl, false, modifiedVars);
 		final ModifiesSpecification[] modArray = new ModifiesSpecification[1];
 		modArray[0] = mod;
-		final Attribute[] attribute = new Attribute[0];
-		final String[] typeParams = new String[0];
-		final VarList[] inParams = new VarList[0];
-		final VarList[] outParams = new VarList[0];
+		final Attribute[] attribute = {};
+		final String[] typeParams = {};
+		final VarList[] inParams = {};
+		final VarList[] outParams = {};
 		return new Procedure(bl, attribute, PROCEDURE_NAME, typeParams, inParams, outParams, modArray, body);
 	}
 }

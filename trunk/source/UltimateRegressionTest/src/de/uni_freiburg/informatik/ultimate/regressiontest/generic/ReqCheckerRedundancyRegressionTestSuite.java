@@ -58,11 +58,9 @@ import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
- * Regression tests for Redundancy Mode of ReqAnalyzer. Similar to
- * RequirementsReressionTestSuite.
- * 
- * This test suite only considers redundancy, requirements are not checked for
- * inconsistencies.
+ * Regression tests for Redundancy Mode of ReqAnalyzer. Similar to RequirementsReressionTestSuite.
+ *
+ * This test suite only considers redundancy, requirements are not checked for inconsistencies.
  *
  * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
@@ -73,7 +71,6 @@ public class ReqCheckerRedundancyRegressionTestSuite extends AbstractRegressionT
 	private static final int TIMEOUT = 300_000;
 
 	public ReqCheckerRedundancyRegressionTestSuite() {
-		super();
 		mTimeout = TIMEOUT;
 		mRootFolder = TestUtil.getPathFromTrunk("examples/Requirements-Redundancy");
 		mFiletypesToConsider = new String[] { ".req" };
@@ -109,7 +106,6 @@ public class ReqCheckerRedundancyRegressionTestSuite extends AbstractRegressionT
 			int results = 0;
 			for (final IResult result : flatResults) {
 				if (result instanceof ReqCheckSuccessResult) {
-					results++;
 				} else if (result instanceof ReqCheckFailResult) {
 					final ReqCheck check = ((ReqCheckFailResult<?>) result).getCheck();
 					final Set<String> ids = check.getReqIds();
@@ -122,7 +118,6 @@ public class ReqCheckerRedundancyRegressionTestSuite extends AbstractRegressionT
 					default:
 						throw new UnsupportedOperationException("Unsupported spec: " + spec);
 					}
-					results++;
 				} else if (result instanceof StatisticsResult || result instanceof AssertionsEnabledResult) {
 					continue;
 				} else {
@@ -132,6 +127,7 @@ public class ReqCheckerRedundancyRegressionTestSuite extends AbstractRegressionT
 					mOverallResultMessage = result.getLongDescription();
 					return;
 				}
+				results++;
 			}
 
 			mIsIrregular = false;
@@ -178,10 +174,7 @@ public class ReqCheckerRedundancyRegressionTestSuite extends AbstractRegressionT
 				}
 				return false;
 			}
-			if (mNoResults != -1 && actual.mNoResults != mNoResults) {
-				return false;
-			}
-			if (DataStructureUtils.isDifferent(actual.mRedundant, mRedundant)) {
+			if ((mNoResults != -1 && actual.mNoResults != mNoResults) || DataStructureUtils.isDifferent(actual.mRedundant, mRedundant)) {
 				return false;
 			}
 			return true;

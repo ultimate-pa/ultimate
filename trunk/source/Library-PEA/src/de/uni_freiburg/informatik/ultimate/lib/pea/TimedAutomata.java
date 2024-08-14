@@ -28,8 +28,10 @@ package de.uni_freiburg.informatik.ultimate.lib.pea;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
 
@@ -43,7 +45,7 @@ public class TimedAutomata {
 
 	private final Collection<String> mClocks;
 	private final State[] mStates;
-	private final Map<Phase, Integer> mPhaseNumber = new HashMap<Phase, Integer>();
+	private final Map<Phase, Integer> mPhaseNumber = new HashMap<>();
 
 	public TimedAutomata(final PhaseEventAutomata pea, final CDD[] preds, final String[] predNames) {
 		mStates = new State[pea.mPhases.size()];
@@ -61,8 +63,8 @@ public class TimedAutomata {
 				}
 			}
 		}
-		for (int i = 0; i < pea.mInit.size(); i++) {
-			mStates[mPhaseNumber.get(pea.mInit.get(i).getDest())].props += " init";
+		for (final InitialTransition element : pea.mInit) {
+			mStates[mPhaseNumber.get(element.getDest())].props += " init";
 		}
 		for (int i = 0; i < pea.mPhases.size(); i++) {
 			final Iterator<Transition> it = pea.mPhases.get(i).getTransitions().iterator();
@@ -70,9 +72,9 @@ public class TimedAutomata {
 			while (it.hasNext()) {
 				final Transition t = it.next();
 				final Guard[][] allGuards = filterCDD(t.getGuard());
-				for (int k = 0; k < allGuards.length; k++) {
+				for (final Guard[] guard : allGuards) {
 					final Edge e = new Edge();
-					e.guard = allGuards[k];
+					e.guard = guard;
 					e.resets = t.getResets();
 					addClocks(e.guard);
 					addClocks(e.resets);
@@ -85,9 +87,9 @@ public class TimedAutomata {
 	}
 
 	private Guard[][] filterCDD(final Guard[] gs, final CDD cdd) {
-		if ((cdd.getDecision() instanceof RangeDecision)
+		if (cdd.getDecision() instanceof RangeDecision
 				&& ((RangeDecision) cdd.getDecision()).getVar().indexOf("_X") >= 0) {
-			final ArrayList<Guard[]> myGuards = new ArrayList<>();
+			final List<Guard[]> myGuards = new ArrayList<>();
 			final String clk = ((RangeDecision) cdd.getDecision()).getVar();
 			final int[] limits = ((RangeDecision) cdd.getDecision()).getLimits();
 			for (int i = 0; i < cdd.getChilds().length; i++) {
@@ -95,7 +97,7 @@ public class TimedAutomata {
 					continue;
 				}
 
-				final boolean isEqual = (i > 0 && i < cdd.getChilds().length - 1 && limits[i - 1] / 2 == limits[i] / 2);
+				final boolean isEqual = i > 0 && i < cdd.getChilds().length - 1 && limits[i - 1] / 2 == limits[i] / 2;
 
 				final Guard[] ngs =
 						new Guard[gs.length + (i == 0 || i == cdd.getChilds().length - 1 || isEqual ? 1 : 2)];
@@ -104,20 +106,18 @@ public class TimedAutomata {
 				if (i > 0) {
 					ngs[j] = new Guard();
 					ngs[j].clock = clk;
-					ngs[j].cmp = (isEqual ? OP_EQ : (limits[i - 1] & 1) == 1 ? OP_GT : OP_GTEQ);
+					ngs[j].cmp = isEqual ? OP_EQ : (limits[i - 1] & 1) == 1 ? OP_GT : OP_GTEQ;
 					ngs[j].value = limits[i - 1] / 2;
 					j++;
 				}
 				if (i < cdd.getChilds().length - 1 && !isEqual) {
 					ngs[j] = new Guard();
 					ngs[j].clock = clk;
-					ngs[j].cmp = ((limits[i] & 1) == 0 ? OP_LT : OP_LTEQ);
+					ngs[j].cmp = (limits[i] & 1) == 0 ? OP_LT : OP_LTEQ;
 					ngs[j].value = limits[i] / 2;
 				}
 				final Guard[][] childGuards = filterCDD(ngs, cdd.getChilds()[i]);
-				for (j = 0; j < childGuards.length; j++) {
-					myGuards.add(childGuards[j]);
-				}
+				Collections.addAll(myGuards, childGuards);
 			}
 			return myGuards.toArray(new Guard[myGuards.size()][]);
 		}
@@ -141,14 +141,12 @@ public class TimedAutomata {
 	}
 
 	private void addClocks(final String[] carr) {
-		for (int i = 0; i < carr.length; i++) {
-			mClocks.add(carr[i]);
-		}
+		Collections.addAll(mClocks, carr);
 	}
 
 	private void addClocks(final Guard[] guard) {
-		for (int i = 0; i < guard.length; i++) {
-			mClocks.add(guard[i].clock);
+		for (final Guard element : guard) {
+			mClocks.add(element.clock);
 		}
 	}
 
@@ -157,10 +155,10 @@ public class TimedAutomata {
 			return "TRUE";
 		}
 
-		final StringBuffer sb = new StringBuffer();
+		final StringBuilder sb = new StringBuilder();
 		String delim = "";
-		for (int i = 0; i < guard.length; i++) {
-			sb.append(delim).append(guard[i]);
+		for (final Guard element : guard) {
+			sb.append(delim).append(element);
 			delim = " and ";
 		}
 		return sb.toString();
@@ -170,9 +168,9 @@ public class TimedAutomata {
 		if (resets.length == 0) {
 			return "";
 		}
-		final StringBuffer sb = new StringBuffer("RESET{");
-		for (int i = 0; i < resets.length; i++) {
-			sb.append(" ").append(resets[i]);
+		final StringBuilder sb = new StringBuilder("RESET{");
+		for (final String reset : resets) {
+			sb.append(" ").append(reset);
 		}
 		return sb.append(" }").toString();
 	}
@@ -181,8 +179,8 @@ public class TimedAutomata {
 		System.out.println("/* Complete System */");
 		System.out.println("#locs " + mStates.length);
 		int numEdges = 0;
-		for (int i = 0; i < mStates.length; i++) {
-			numEdges += mStates[i].edges.length;
+		for (final State mState : mStates) {
+			numEdges += mState.edges.length;
 		}
 		System.out.println("#trans " + numEdges);
 		System.out.print("#clocks " + mClocks.size());
@@ -198,8 +196,7 @@ public class TimedAutomata {
 			System.out.println("prop: " + mStates[i].props);
 			System.out.println("invar: " + dumpGuard(mStates[i].clockInv));
 			System.out.println("trans: ");
-			for (int j = 0; j < mStates[i].edges.length; j++) {
-				final Edge e = mStates[i].edges[j];
+			for (final Edge e : mStates[i].edges) {
 				System.out.println(dumpGuard(e.guard) + " => ; " + dumpResets(e.resets) + "; goto " + e.dest.nr);
 			}
 		}

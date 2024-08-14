@@ -40,11 +40,11 @@ public class RedundancyTransformerReq2Pea implements IReq2Pea {
 	}
 
 	@Override
-	public void transform(IReq2Pea req2pea) {
+	public void transform(final IReq2Pea req2pea) {
 		final ReqSymboltableBuilder builder = new ReqSymboltableBuilder(mServices, mLogger);
 		final IReqSymbolTable symbolTable = req2pea.getSymboltable();
 		mSymbolTable = symbolTable;
-		Set<String> constVars = mSymbolTable.getConstVars();
+		final Set<String> constVars = mSymbolTable.getConstVars();
 
 		for (final DeclarationPattern p : mInitPattern) {
 			builder.addInitPattern(p);
@@ -52,16 +52,16 @@ public class RedundancyTransformerReq2Pea implements IReq2Pea {
 		}
 
 		final List<ReqPeas> peas = req2pea.getReqPeas();
-		for (ReqPeas reqPea : peas) {
+		for (final ReqPeas reqPea : peas) {
 			final PatternType<?> pattern = reqPea.getPattern();
 			final List<Entry<CounterTrace, PhaseEventAutomata>> ct2pea = reqPea.getCounterTrace2Pea();
 
 			final List<Entry<CounterTrace, PhaseEventAutomata>> totalCt2pea = new ArrayList<>();
 
-			for (Entry<CounterTrace, PhaseEventAutomata> pea : ct2pea) {
-				PhaseEventAutomata peaToComplement = pea.getValue();
-				PEAComplement complementPea = new PEAComplement(peaToComplement, constVars);
-				PhaseEventAutomata totalisedPea = complementPea.getTotalisedPEA();
+			for (final Entry<CounterTrace, PhaseEventAutomata> pea : ct2pea) {
+				final PhaseEventAutomata peaToComplement = pea.getValue();
+				final PEAComplement complementPea = new PEAComplement(peaToComplement, constVars);
+				final PhaseEventAutomata totalisedPea = complementPea.getTotalisedPEA();
 
 				totalCt2pea.add(new Pair<>(pea.getKey(), totalisedPea));
 				builder.addPea(pattern, totalisedPea);
