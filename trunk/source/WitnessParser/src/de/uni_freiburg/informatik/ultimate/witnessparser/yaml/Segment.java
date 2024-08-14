@@ -36,30 +36,30 @@ import java.util.List;
  * @author Helen Meyer (helen.anna.meyer@gmail.com)
  */
 public class Segment {
-	private final List<Waypoint> mAvoid;
-	private final Waypoint mFollow;
+	private final List<Waypoint> mAvoidWaypoints;
+	private final Waypoint mFollowWaypoint;
 
-	public Segment(final List<Waypoint> avoid, final Waypoint follow) {
-		mAvoid = avoid;
-		mFollow = follow;
+	public Segment(final List<Waypoint> avoidWaypoints, final Waypoint followWaypoint) {
+		mAvoidWaypoints = avoidWaypoints;
+		mFollowWaypoint = followWaypoint;
 	}
 
-	public List<Waypoint> getAvoid() {
-		return mAvoid;
+	public List<Waypoint> getAvoidWaypoints() {
+		return mAvoidWaypoints;
 	}
 
-	public Waypoint getFollow() {
-		return mFollow;
+	public Waypoint getFollowWaypoint() {
+		return mFollowWaypoint;
 	}
 
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("Segment: ");
-		if (!mAvoid.isEmpty()) {
-			sb.append("avoid:").append(mAvoid).append(", ");
+		if (!mAvoidWaypoints.isEmpty()) {
+			sb.append("avoid:").append(mAvoidWaypoints).append(", ");
 		}
-		return sb.append("follow: ").append(mFollow).toString();
+		return sb.append("follow: ").append(mFollowWaypoint).toString();
 	}
 
 }

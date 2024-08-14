@@ -91,7 +91,7 @@ public class WitnessUtils {
 		final var result = new YamlWitnessProductAutomaton<>(abstraction, witness, predicateFactory);
 		logger.info(
 				"Constructing product of automaton with %d states and violation witness of the following lengths: %s",
-				abstraction.size(), witness.getEntries().stream().map(x -> ((ViolationSequence) x).getContent().size())
+				abstraction.size(), witness.getEntries().stream().map(x -> ((ViolationSequence) x).getSegments().size())
 						.collect(Collectors.toList()));
 		return reduce(result, property, new AutomataLibraryServices(services));
 	}

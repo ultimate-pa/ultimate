@@ -37,19 +37,19 @@ import java.util.List;
 public class ViolationSequence extends WitnessEntry {
 
 	private static final String NAME = "violation_sequence";
-	private final List<Segment> mContent;
+	private final List<Segment> mSegments;
 
-	public ViolationSequence(final List<Segment> content) {
+	public ViolationSequence(final List<Segment> segments) {
 		super(NAME);
-		mContent = content;
+		mSegments = segments;
 	}
 
-	public List<Segment> getContent() {
-		return mContent;
+	public List<Segment> getSegments() {
+		return mSegments;
 	}
 
 	@Override
 	public String toString() {
-		return "Violation sequence: " + mContent;
+		return "Violation sequence: " + mSegments;
 	}
 }
