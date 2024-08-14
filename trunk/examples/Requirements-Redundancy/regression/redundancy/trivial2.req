@@ -1,4 +1,4 @@
-// #TestSpec: redundant:req1,req2; results:-1
+// #TestSpec: redundant:req1,req2, req3; results:-1
 Input A IS bool
 Input B IS bool
 
