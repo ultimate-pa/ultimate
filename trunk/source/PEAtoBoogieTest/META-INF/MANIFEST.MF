@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: PEAtoBoogieTest
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.pea2boogie.test
 Bundle-Vendor: Ultimate Program Analysis Team
-Bundle-Version: 0.2.5
+Bundle-Version: 0.3.0
 Fragment-Host: de.uni_freiburg.informatik.ultimate.pea2boogie
 Bundle-RequiredExecutionEnvironment: JavaSE-21
 Require-Bundle: com.github.jhoenicke.javacup,

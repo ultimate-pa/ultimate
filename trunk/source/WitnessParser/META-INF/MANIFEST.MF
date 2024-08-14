@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: WitnessParser
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.witnessparser;singleton:=true
 Bundle-Vendor: Ultimate Program Analysis Team
-Bundle-Version: 0.2.5
+Bundle-Version: 0.3.0
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.witnessparser.Activator
 Require-Bundle: de.uni_freiburg.informatik.ultimate.core,
  wrapped.net.sf.jung.jung-api,
