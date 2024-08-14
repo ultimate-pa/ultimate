@@ -1,3 +1,4 @@
+// #TestSpec: redundant:ID000; results:-1
 Input R is bool
 Input S is bool
 Input Z is bool 
