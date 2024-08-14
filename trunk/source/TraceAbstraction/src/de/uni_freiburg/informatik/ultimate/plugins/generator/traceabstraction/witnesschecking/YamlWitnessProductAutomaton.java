@@ -309,11 +309,11 @@ public class YamlWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 				if (conditionAnnot == null) {
 					return false;
 				}
-				if (waypoint.getConstraint().getValue().equals("false")) {
+				if (waypoint.getConstraint().equals("false")) {
 					return conditionAnnot.isNegated();
 
 				}
-				if (waypoint.getConstraint().getValue().equals("true")) {
+				if (waypoint.getConstraint().equals("true")) {
 					return !conditionAnnot.isNegated();
 				}
 			}
