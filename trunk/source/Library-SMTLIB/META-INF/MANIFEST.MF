@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: de.uni_freiburg.informatik.ultimate.lib.smtlib
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.smtlib
 Bundle-Vendor: Ultimate Program Analysis Team
-Bundle-Version: 0.2.5
+Bundle-Version: 0.3.0
 Bundle-RequiredExecutionEnvironment: JavaSE-21
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.util
 Export-Package: de.uni_freiburg.informatik.ultimate.logic,

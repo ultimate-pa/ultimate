@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: AbstractInterpretationV2Test
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.test
 Bundle-Vendor: Ultimate Program Analysis Team
-Bundle-Version: 0.2.5
+Bundle-Version: 0.3.0
 Fragment-Host: de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2
 Bundle-RequiredExecutionEnvironment: JavaSE-21
 Require-Bundle: de.uni_freiburg.informatik.ultimate.core,

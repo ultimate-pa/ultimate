@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: de.uni_freiburg.informatik.ultimate.lib.sifa.test
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.sifa.test
 Bundle-Vendor: Ultimate Program Analysis Team
-Bundle-Version: 0.2.5
+Bundle-Version: 0.3.0
 Fragment-Host: de.uni_freiburg.informatik.ultimate.lib.sifa
 Bundle-RequiredExecutionEnvironment: JavaSE-21
 Require-Bundle: org.junit

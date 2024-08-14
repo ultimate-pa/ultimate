@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>de.uni_freiburg.informatik.ultimate</groupId>
 	<artifactId>mavenparent</artifactId>
-	<version>0.2.5</version>
+	<version>0.3.0</version>
 	<packaging>pom</packaging>
 
 	<name>Ultimate</name>
@@ -16,7 +16,7 @@
 	</scm>
 
 	<properties>
-		<ultimate-version>0.2.5</ultimate-version>
+		<ultimate-version>0.3.0</ultimate-version>
 
 		<!-- maven plugin versions -->
 		<!-- https://mvnrepository.com/artifact/org.eclipse.tycho/tycho-core -->
@@ -489,7 +489,6 @@
 		<module>../Library-CHC</module>
 		<module>../Library-CZT</module>
 		<module>../Library-IcfgTransformer</module>
-		<module>../Library-JavaBDD</module>
 		<module>../Library-LassoRanker</module>
 		<module>../Library-MCR</module>
 		<module>../Library-ModelCheckerUtils</module>
@@ -618,7 +617,6 @@
 						<configuration>
 							<excludes>
 								<exclude>**/jdd/**/*</exclude>
-								<exclude>**/net/sf/javabdd/**/*</exclude>
 								<exclude>**/com/github/jhoenicke/javacup/**/*</exclude>
 								<exclude>**/org/apache/commons/cli/**/*</exclude>
 								<exclude>**/de/uni_freiburg/informatik/ultimate/ultimatetest/suites/**/*</exclude>
