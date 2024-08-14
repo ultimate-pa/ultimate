@@ -39,7 +39,7 @@ public class VacuousAssignment extends TCSWriter {
 	/**
 	 * Constructor setting output file name and rename flag that indicates whether original location names have to be
 	 * used or whether the locations are renamed into default names.
-	 * 
+	 *
 	 * @param file
 	 * @param rename
 	 */
@@ -196,8 +196,7 @@ public class VacuousAssignment extends TCSWriter {
 				boolean testVacuous = true;
 				final CDD formula = vac.elementAt(j);
 
-				for (int q = 0; q < phases.size(); q++) {
-					final Phase a = phases.get(q);
+				for (final Phase a : phases) {
 					final CDD state = a.getStateInvariant();
 					if (state.and(formula) == CDD.FALSE) {
 						testVacuous = false;
@@ -237,7 +236,7 @@ public class VacuousAssignment extends TCSWriter {
 	public void startWriting() {
 		try {
 			// this.writer = new FileWriter(fileName);
-			writer = new BufferedWriter(new FileWriter(fileName));
+			writer = new BufferedWriter(new FileWriter(mFileName));
 
 			writer.write("Preamble:\n Queries to check for a vacuous satisfaction for PEA");
 			writer.newLine();
@@ -252,7 +251,7 @@ public class VacuousAssignment extends TCSWriter {
 
 	public void stopWriting() throws IOException {
 		writer.close();
-		System.out.println("Successfully written to " + fileName);
+		System.out.println("Successfully written to " + mFileName);
 	}
 
 	@Override
@@ -263,7 +262,7 @@ public class VacuousAssignment extends TCSWriter {
 			this.getVacuousAssignments(pea2write);
 			writer.flush();
 			writer.close();
-			System.out.println("Successfully written to " + fileName);
+			System.out.println("Successfully written to " + mFileName);
 		} catch (final IOException e) {
 			throw new RuntimeException(e);
 		}

@@ -195,9 +195,7 @@ public class ReqSymboltableBuilder {
 	}
 
 	private void updateEquivalences(final PhaseEventAutomata pea) {
-		final Set<String> peaVars = new HashSet<>();
-		// add all variable names
-		peaVars.addAll(pea.getVariables().keySet());
+		final Set<String> peaVars = new HashSet<>(pea.getVariables().keySet());
 		// add all clock names
 		peaVars.addAll(pea.getClocks());
 		// add pc name
@@ -240,7 +238,7 @@ public class ReqSymboltableBuilder {
 		final String funName = "abs";
 		final NamedAttribute builtinAbs = new NamedAttribute(DUMMY_LOC, "builtin",
 				new Expression[] { ExpressionFactory.createStringLiteral(DUMMY_LOC, funName) });
-		final VarList[] inParams = new VarList[] { new VarList(DUMMY_LOC, new String[] { "in" }, intAstType) };
+		final VarList[] inParams = { new VarList(DUMMY_LOC, new String[] { "in" }, intAstType) };
 		final VarList outParam = new VarList(DUMMY_LOC, new String[] { "res" }, intAstType);
 		rtr.put(funName, new FunctionDeclaration(DUMMY_LOC, new Attribute[] { builtinAbs }, funName, new String[0],
 				inParams, outParam));
@@ -353,7 +351,7 @@ public class ReqSymboltableBuilder {
 
 	private static final class ReqSymbolTable implements IReqSymbolTable {
 
-		private static final Attribute[] EMPTY_ATTRIBUTES = new Attribute[0];
+		private static final Attribute[] EMPTY_ATTRIBUTES = {};
 		private final Map<String, BoogieType> mId2Type;
 		private final Map<String, IdentifierExpression> mId2IdExpr;
 		private final Map<String, VariableLHS> mId2VarLHS;

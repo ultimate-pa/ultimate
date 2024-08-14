@@ -63,7 +63,7 @@ public class PEATestAutomaton extends PhaseEventAutomata {
 
 	/**
 	 * Field constructor.
-	 * 
+	 *
 	 * @param name
 	 * @param phases
 	 * @param init
@@ -76,7 +76,7 @@ public class PEATestAutomaton extends PhaseEventAutomata {
 
 	/**
 	 * Field constructor. Fields that are not set remain null.
-	 * 
+	 *
 	 * @param name
 	 * @param phases
 	 * @param init
@@ -88,7 +88,7 @@ public class PEATestAutomaton extends PhaseEventAutomata {
 
 	/**
 	 * Constructor initializing all fields.
-	 * 
+	 *
 	 * @param name
 	 * @param phases
 	 * @param init
@@ -126,7 +126,7 @@ public class PEATestAutomaton extends PhaseEventAutomata {
 		TreeSet<Phase> bOldFinal = null;
 
 		final TreeMap<String, Phase> newPhases = new TreeMap<>();
-		final boolean bIsTestAutomaton = (b instanceof PEATestAutomaton);
+		final boolean bIsTestAutomaton = b instanceof PEATestAutomaton;
 		if (bIsTestAutomaton) {
 			bOldFinal = new TreeSet<>(Arrays.asList(((PEATestAutomaton) b).getFinalPhases()));
 		}
@@ -210,8 +210,8 @@ public class PEATestAutomaton extends PhaseEventAutomata {
 			}
 		}
 
-		final Phase[] allPhases = newPhases.values().toArray(new Phase[newPhases.size()]);
-		final Phase[] initPhases = newInit.toArray(new Phase[newInit.size()]);
+		newPhases.values().toArray(new Phase[newPhases.size()]);
+		newInit.toArray(new Phase[newInit.size()]);
 		final Phase[] finalPhases = newFinal.toArray(new Phase[newFinal.size()]);
 
 		final List<String> newClocks = mergeClockLists(b);
@@ -220,8 +220,8 @@ public class PEATestAutomaton extends PhaseEventAutomata {
 
 		final List<String> newDeclarations = mergeDeclarationLists(b);
 
-		return new PEATestAutomaton(mName + TIMES + b.mName, new ArrayList<Phase>(newPhases.values()), newInit,
-				newClocks, newVariables, newDeclarations, finalPhases);
+		return new PEATestAutomaton(mName + TIMES + b.mName, new ArrayList<>(newPhases.values()), newInit, newClocks,
+				newVariables, newDeclarations, finalPhases);
 	}
 
 	public Phase[] getFinalPhases() {
@@ -236,14 +236,14 @@ public class PEATestAutomaton extends PhaseEventAutomata {
 	 * Computes locations that are backward reachable from final locations and replaces all locations that are not
 	 * reachable with one new location. Note that we do not simple remove unreachable state to avoid deadlock
 	 * introduction in the parallel composition of test automata and model.
-	 * 
+	 *
 	 * @return the simplified test automaton
 	 */
 	public PEATestAutomaton removeUnreachableLocations() {
 		// building up map for more efficient access to incoming transitions
 		final Map<Phase, List<Transition>> incomingTrans = new HashMap<>();
 		for (final Phase phase : mPhases) {
-			incomingTrans.put(phase, new ArrayList<Transition>());
+			incomingTrans.put(phase, new ArrayList<>());
 		}
 		for (final Phase phase : mPhases) {
 			for (final Transition transition : phase.getTransitions()) {
@@ -252,8 +252,8 @@ public class PEATestAutomaton extends PhaseEventAutomata {
 		}
 
 		// collect reachable transitions
-		final HashSet<Phase> reachablePhases = new HashSet<>();
-		final HashSet<Transition> reachableTrans = new HashSet<>();
+		final Set<Phase> reachablePhases = new HashSet<>();
+		final Set<Transition> reachableTrans = new HashSet<>();
 		List<Phase> unworked = Arrays.asList(getFinalPhases());
 		while (!unworked.isEmpty()) {
 			final List<Phase> temp = new ArrayList<>();
@@ -276,7 +276,7 @@ public class PEATestAutomaton extends PhaseEventAutomata {
 
 		// a new phase sinkPhase shall replace the unreachable phases
 		final List<Phase> newPhases = new ArrayList<>();
-		final ArrayList<Phase> newInit = new ArrayList<>();
+		final List<Phase> newInit = new ArrayList<>();
 		final Phase sinkPhase = new Phase("sink");
 		newPhases.add(sinkPhase);
 		sinkPhase.addTransition(sinkPhase, CDD.TRUE, new String[0]);

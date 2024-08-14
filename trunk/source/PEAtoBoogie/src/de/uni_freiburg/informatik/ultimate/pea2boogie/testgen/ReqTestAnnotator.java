@@ -43,7 +43,6 @@ public class ReqTestAnnotator implements IReq2PeaAnnotator {
 	private final Map<PhaseEventAutomata, ReqEffectStore> mPea2EffectStore;
 
 	public static final String TEST_ASSERTION_PREFIX = "testgen_";
-	// public static final String INITIAL_STEP_FLAG = "testgen_initial_step_flag";
 	public static final String TRACKING_VAR_PREFIX = "u_";
 
 	public ReqTestAnnotator(final IUltimateServiceProvider services, final ILogger logger,
@@ -58,9 +57,7 @@ public class ReqTestAnnotator implements IReq2PeaAnnotator {
 
 	@Override
 	public List<Statement> getStateChecks() {
-		final List<Statement> statements = new ArrayList<>();
-		// check that each u_v -> pc_xx == effect(A_r) for every v \in E
-		statements.addAll(genTrackingAssumptions());
+		final List<Statement> statements = new ArrayList<>(genTrackingAssumptions());
 		statements.addAll(genTestAssertions());
 		return statements;
 	}
@@ -72,8 +69,7 @@ public class ReqTestAnnotator implements IReq2PeaAnnotator {
 
 	@Override
 	public List<Statement> getPreChecks() {
-		final List<Statement> statements = new ArrayList<>();
-		return statements;
+		return new ArrayList<>();
 	}
 
 	public static String getTrackingVar(final String ident) {
@@ -89,10 +85,7 @@ public class ReqTestAnnotator implements IReq2PeaAnnotator {
 		for (final String trackedVar : mSymbolTable.getStateVars()) {
 			final List<Expression> disjuncts = new ArrayList<>();
 			final String trackingVar = getTrackingVar(trackedVar);
-			if (mSymbolTable.getInputVars().contains(trackedVar)) {
-				continue;
-			}
-			if (!mSymbolTable.getStateVars().contains(trackingVar)
+			if (mSymbolTable.getInputVars().contains(trackedVar) || !mSymbolTable.getStateVars().contains(trackingVar)
 					&& !mSymbolTable.getOutputVars().contains(trackedVar)) {
 				// the tracking variable was never used and is no output where tracking
 				// is relevant for test formatting thus there is no need generating the invariant
@@ -169,8 +162,7 @@ public class ReqTestAnnotator implements IReq2PeaAnnotator {
 		final Expression thisExpr = new BinaryExpression(mLocation, BinaryExpression.Operator.COMPEQ,
 				mSymbolTable.getIdentifierExpression(peaName),
 				new IntegerLiteral(mLocation, Integer.toString(destIndex)));
-		final Expression expr = new BinaryExpression(mLocation, BinaryExpression.Operator.LOGICAND, lastExpr, thisExpr);
-		return expr;
+		return new BinaryExpression(mLocation, BinaryExpression.Operator.LOGICAND, lastExpr, thisExpr);
 	}
 
 	private Expression genDisjunction(final List<Expression> exprs, final BoogieLocation bl) {
@@ -215,7 +207,7 @@ public class ReqTestAnnotator implements IReq2PeaAnnotator {
 			}
 			final Expression leavingPhaseAssertion =
 					new BinaryExpression(mLocation, BinaryExpression.Operator.LOGICAND, timeToLeave, inLocationExpr);
-			final NamedAttribute[] attr = new NamedAttribute[] { new NamedAttribute(mLocation,
+			final NamedAttribute[] attr = { new NamedAttribute(mLocation,
 					TEST_ASSERTION_PREFIX + pea.getName() + Integer.toString(effectPhaseIndex), new Expression[] {}) };
 			final Statement assrt = new AssertStatement(mLocation, attr,
 					new UnaryExpression(mLocation, UnaryExpression.Operator.LOGICNEG, leavingPhaseAssertion));
@@ -240,8 +232,8 @@ public class ReqTestAnnotator implements IReq2PeaAnnotator {
 					new IntegerLiteral(mLocation, Integer.toString(edgeIndexes.getValue())));
 			final Expression overEdgeIndexes =
 					new BinaryExpression(mLocation, BinaryExpression.Operator.LOGICAND, thisExpr, lastExpr);
-			final NamedAttribute[] attr = new NamedAttribute[] {
-					new NamedAttribute(mLocation, TEST_ASSERTION_PREFIX + pea.getName(), new Expression[] {}) };
+			final NamedAttribute[] attr =
+					{ new NamedAttribute(mLocation, TEST_ASSERTION_PREFIX + pea.getName(), new Expression[] {}) };
 			final Statement assume = new AssertStatement(mLocation, attr,
 					new UnaryExpression(mLocation, Operator.LOGICNEG, overEdgeIndexes));
 			statements.add(assume);
@@ -252,7 +244,6 @@ public class ReqTestAnnotator implements IReq2PeaAnnotator {
 
 	@Override
 	public PeaResultUtil getPeaResultUtil() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 

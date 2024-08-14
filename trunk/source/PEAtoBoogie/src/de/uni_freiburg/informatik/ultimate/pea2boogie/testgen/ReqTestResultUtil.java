@@ -47,9 +47,8 @@ public class ReqTestResultUtil {
 	public IResult convertTraceAbstractionResult(final IResult result) {
 		if (result instanceof CounterExampleResult<?, ?, ?>) {
 			return getTestSteps((CounterExampleResult<?, ?, ?>) result);
-		} else if (result instanceof TimeoutResultAtElement<?>) {
-			// TODO
-		} else if (result instanceof PositiveResult<?>) {
+		}
+		if (result instanceof TimeoutResultAtElement<?> || result instanceof PositiveResult<?>) {
 			// TODO
 		}
 		return result;
@@ -76,8 +75,6 @@ public class ReqTestResultUtil {
 									+ ate.getStep().toString());
 					continue;
 				}
-
-				// testSteps.add(getTestStep(recentProgramState));
 				states.add(recentProgramState);
 				recentProgramState = null;
 			}
@@ -100,7 +97,7 @@ public class ReqTestResultUtil {
 		return new ReqTestResultTest(testSteps, getTestAssertionName(finalElement.getStep()));
 	}
 
-	public class TestRelationNode {
+	public static class TestRelationNode {
 
 		private final PhaseEventAutomata mReq;
 		private final Set<PhaseEventAutomata> mDetermined;
@@ -246,7 +243,7 @@ public class ReqTestResultUtil {
 	 */
 	private Set<PhaseEventAutomata> calculateDeterminingReqs(final String varName,
 			final ProgramState<Expression> programState) {
-		// todo return accodring node of graph here (req1, v, req2) read "req1 enables req2 by setting v"
+		// TODO return accodring node of graph here (req1, v, req2) read "req1 enables req2 by setting v"
 		final Set<PhaseEventAutomata> determiners = new HashSet<>();
 		for (final Entry<PhaseEventAutomata, ReqEffectStore> entry : mReqEffectStore.entrySet()) {
 			final ReqEffectStore reqEffectStore = entry.getValue();
@@ -287,7 +284,7 @@ public class ReqTestResultUtil {
 	 */
 	private Set<PhaseEventAutomata> calculateEntryEffects(final String varName,
 			final ProgramState<Expression> programState) {
-		// todo return accodring node of graph here (req1, v, req2) read "req1 enables req2 by setting v"
+		// TODO return accodring node of graph here (req1, v, req2) read "req1 enables req2 by setting v"
 		final Set<PhaseEventAutomata> determiners = new HashSet<>();
 		for (final Entry<PhaseEventAutomata, ReqEffectStore> entry : mReqEffectStore.entrySet()) {
 			final ReqEffectStore reqEffectStore = entry.getValue();

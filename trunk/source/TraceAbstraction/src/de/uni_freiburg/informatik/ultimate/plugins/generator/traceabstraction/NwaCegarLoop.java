@@ -548,8 +548,7 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 
 			// Temporary workaround: print invariants in every CEGAR loop
 			final IBacktranslationService backTranslatorService = mServices.getBacktranslationService();
-			final Set<IcfgLocation> locsForLoopLocations = new HashSet<>();
-			locsForLoopLocations.addAll(IcfgUtils.getPotentialCycleProgramPoints(mIcfg));
+			final Set<IcfgLocation> locsForLoopLocations = new HashSet<>(IcfgUtils.getPotentialCycleProgramPoints(mIcfg));
 			locsForLoopLocations.addAll(mIcfg.getLoopLocations());
 			// find all locations that have outgoing edges which are annotated with LoopEntry, i.e., all loop candidates
 

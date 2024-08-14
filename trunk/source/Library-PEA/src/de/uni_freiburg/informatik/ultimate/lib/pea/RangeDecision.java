@@ -43,8 +43,8 @@ public class RangeDecision extends Decision<RangeDecision> {
 	public static final int OP_NEQ = 4;
 	public static final int OP_INVALID = 5;
 
-	private static final CDD[] FTF = new CDD[] { CDD.FALSE, CDD.TRUE, CDD.FALSE };
-	private static final CDD[] TFT = new CDD[] { CDD.TRUE, CDD.FALSE, CDD.TRUE };
+	private static final CDD[] FTF = { CDD.FALSE, CDD.TRUE, CDD.FALSE };
+	private static final CDD[] TFT = { CDD.TRUE, CDD.FALSE, CDD.TRUE };
 
 	private final String mVar;
 	private final int[] mLimits;
@@ -80,7 +80,7 @@ public class RangeDecision extends Decision<RangeDecision> {
 		int hash = mVar.hashCode();
 
 		for (int i = 0; i < mLimits.length; i++) {
-			hash = (hash * (i + 13)) ^ mLimits[i];
+			hash = hash * (i + 13) ^ mLimits[i];
 		}
 
 		return hash;
@@ -101,7 +101,8 @@ public class RangeDecision extends Decision<RangeDecision> {
 		}
 
 		if (elems < mLimits.length) {
-			final int[] nlimits = new int[elems++];
+			final int[] nlimits = new int[elems];
+			elems++;
 			final CDD[] nchilds = new CDD[elems];
 			elems = 0;
 
@@ -124,15 +125,15 @@ public class RangeDecision extends Decision<RangeDecision> {
 	public static CDD create(final String var, final int op, final int value) {
 		switch (op) {
 		case OP_EQ:
-			return CDD.create(new RangeDecision(var, new int[] { 2 * value, (2 * value) + 1 }), FTF);
+			return CDD.create(new RangeDecision(var, new int[] { 2 * value, 2 * value + 1 }), FTF);
 		case OP_NEQ:
-			return CDD.create(new RangeDecision(var, new int[] { 2 * value, (2 * value) + 1 }), TFT);
+			return CDD.create(new RangeDecision(var, new int[] { 2 * value, 2 * value + 1 }), TFT);
 		case OP_LT:
 			return CDD.create(new RangeDecision(var, new int[] { 2 * value }), CDD.TRUE_CHILDS);
 		case OP_LTEQ:
-			return CDD.create(new RangeDecision(var, new int[] { (2 * value) + 1 }), CDD.TRUE_CHILDS);
+			return CDD.create(new RangeDecision(var, new int[] { 2 * value + 1 }), CDD.TRUE_CHILDS);
 		case OP_GT:
-			return CDD.create(new RangeDecision(var, new int[] { (2 * value) + 1 }), CDD.FALSE_CHILDS);
+			return CDD.create(new RangeDecision(var, new int[] { 2 * value + 1 }), CDD.FALSE_CHILDS);
 		case OP_GTEQ:
 			return CDD.create(new RangeDecision(var, new int[] { 2 * value }), CDD.FALSE_CHILDS);
 		default:
@@ -146,34 +147,37 @@ public class RangeDecision extends Decision<RangeDecision> {
 		final int[] olimits = ((RangeDecision) other).mLimits;
 
 		/* intersect all intervals */
-		CDD[] nchilds = new CDD[(childs.length + ochilds.length) - 1];
+		CDD[] nchilds = new CDD[childs.length + ochilds.length - 1];
 		int[] nlimits = new int[mLimits.length + olimits.length];
 
 		int nptr = 0;
 		int optr = 0;
 		int tptr = 0;
 
-		while ((optr < olimits.length) || (tptr < mLimits.length)) {
+		while (optr < olimits.length || tptr < mLimits.length) {
 			nchilds[nptr] = childs[tptr].and(ochilds[optr], cache);
 
-			if ((nptr > 0) && (nchilds[nptr] == nchilds[nptr - 1])) {
+			if (nptr > 0 && nchilds[nptr] == nchilds[nptr - 1]) {
 				nptr--;
 			}
 
-			if ((optr == olimits.length) || ((tptr < mLimits.length) && (mLimits[tptr] < olimits[optr]))) {
-				nlimits[nptr++] = mLimits[tptr++];
+			if (optr == olimits.length || tptr < mLimits.length && mLimits[tptr] < olimits[optr]) {
+				nlimits[nptr] = mLimits[tptr];
+				tptr++;
 			} else {
-				if ((tptr < mLimits.length) && (mLimits[tptr] == olimits[optr])) {
+				if (tptr < mLimits.length && mLimits[tptr] == olimits[optr]) {
 					tptr++;
 				}
 
-				nlimits[nptr++] = olimits[optr++];
+				nlimits[nptr] = olimits[optr];
+				optr++;
 			}
+			nptr++;
 		}
 
 		nchilds[nptr] = childs[tptr].and(ochilds[optr], cache);
 
-		if ((nptr > 0) && (nchilds[nptr] == nchilds[nptr - 1])) {
+		if (nptr > 0 && nchilds[nptr] == nchilds[nptr - 1]) {
 			nptr--;
 		}
 
@@ -200,34 +204,37 @@ public class RangeDecision extends Decision<RangeDecision> {
 		final int[] olimits = ((RangeDecision) other).mLimits;
 
 		/* intersect all intervals */
-		CDD[] nchilds = new CDD[(childs.length + ochilds.length) - 1];
+		CDD[] nchilds = new CDD[childs.length + ochilds.length - 1];
 		int[] nlimits = new int[mLimits.length + olimits.length];
 
 		int nptr = 0;
 		int optr = 0;
 		int tptr = 0;
 
-		while ((optr < olimits.length) || (tptr < mLimits.length)) {
+		while (optr < olimits.length || tptr < mLimits.length) {
 			nchilds[nptr] = childs[tptr].or(ochilds[optr], cache);
 
-			if ((nptr > 0) && (nchilds[nptr] == nchilds[nptr - 1])) {
+			if (nptr > 0 && nchilds[nptr] == nchilds[nptr - 1]) {
 				nptr--;
 			}
 
-			if ((optr == olimits.length) || ((tptr < mLimits.length) && (mLimits[tptr] < olimits[optr]))) {
-				nlimits[nptr++] = mLimits[tptr++];
+			if (optr == olimits.length || tptr < mLimits.length && mLimits[tptr] < olimits[optr]) {
+				nlimits[nptr] = mLimits[tptr];
+				tptr++;
 			} else {
-				if ((tptr < mLimits.length) && (mLimits[tptr] == olimits[optr])) {
+				if (tptr < mLimits.length && mLimits[tptr] == olimits[optr]) {
 					tptr++;
 				}
 
-				nlimits[nptr++] = olimits[optr++];
+				nlimits[nptr] = olimits[optr];
+				optr++;
 			}
+			nptr++;
 		}
 
 		nchilds[nptr] = childs[tptr].or(ochilds[optr], cache);
 
-		if ((nptr > 0) && (nchilds[nptr] == nchilds[nptr - 1])) {
+		if (nptr > 0 && nchilds[nptr] == nchilds[nptr - 1]) {
 			nptr--;
 		}
 
@@ -253,7 +260,7 @@ public class RangeDecision extends Decision<RangeDecision> {
 		final int[] olimits = ((RangeDecision) other).mLimits;
 
 		/* intersect all intervals */
-		CDD[] nchilds = new CDD[(childs.length + ochilds.length) - 1];
+		CDD[] nchilds = new CDD[childs.length + ochilds.length - 1];
 		int[] nlimits = new int[mLimits.length + olimits.length];
 
 		int nptr = 0;
@@ -261,10 +268,10 @@ public class RangeDecision extends Decision<RangeDecision> {
 		int tptr = 0;
 		CDD lastass = null;
 
-		while ((optr < olimits.length) || (tptr < mLimits.length)) {
+		while (optr < olimits.length || tptr < mLimits.length) {
 			nchilds[nptr] = childs[tptr].assume(ochilds[optr]);
 
-			if ((nptr > 0) && nchilds[nptr].and(ochilds[optr]).implies(nchilds[nptr - 1])
+			if (nptr > 0 && nchilds[nptr].and(ochilds[optr]).implies(nchilds[nptr - 1])
 					&& nchilds[nptr - 1].and(lastass).implies(nchilds[nptr])) {
 				nchilds[nptr - 1] = nchilds[nptr].and(nchilds[nptr - 1]);
 				nptr--;
@@ -272,20 +279,23 @@ public class RangeDecision extends Decision<RangeDecision> {
 
 			lastass = ochilds[optr];
 
-			if ((optr == olimits.length) || ((tptr < mLimits.length) && (mLimits[tptr] < olimits[optr]))) {
-				nlimits[nptr++] = mLimits[tptr++];
+			if (optr == olimits.length || tptr < mLimits.length && mLimits[tptr] < olimits[optr]) {
+				nlimits[nptr] = mLimits[tptr];
+				tptr++;
 			} else {
-				if ((tptr < mLimits.length) && (mLimits[tptr] == olimits[optr])) {
+				if (tptr < mLimits.length && mLimits[tptr] == olimits[optr]) {
 					tptr++;
 				}
 
-				nlimits[nptr++] = olimits[optr++];
+				nlimits[nptr] = olimits[optr];
+				optr++;
 			}
+			nptr++;
 		}
 
 		nchilds[nptr] = childs[tptr].assume(ochilds[optr]);
 
-		if ((nptr > 0) && nchilds[nptr].and(ochilds[optr]).implies(nchilds[nptr - 1])
+		if (nptr > 0 && nchilds[nptr].and(ochilds[optr]).implies(nchilds[nptr - 1])
 				&& nchilds[nptr - 1].and(lastass).implies(nchilds[nptr])) {
 			nchilds[nptr - 1] = nchilds[nptr].and(nchilds[nptr - 1]);
 			nptr--;
@@ -315,15 +325,15 @@ public class RangeDecision extends Decision<RangeDecision> {
 		int tptr = 0;
 		int optr = 0;
 
-		while ((optr < olimits.length) || (tptr < mLimits.length)) {
+		while (optr < olimits.length || tptr < mLimits.length) {
 			if (!childs[tptr].implies(ochilds[optr])) {
 				return false;
 			}
 
-			if ((optr == olimits.length) || ((tptr < mLimits.length) && (mLimits[tptr] < olimits[optr]))) {
+			if (optr == olimits.length || tptr < mLimits.length && mLimits[tptr] < olimits[optr]) {
 				tptr++;
 			} else {
-				if ((tptr < mLimits.length) && (mLimits[tptr] == olimits[optr])) {
+				if (tptr < mLimits.length && mLimits[tptr] == olimits[optr]) {
 					tptr++;
 				}
 
@@ -374,19 +384,19 @@ public class RangeDecision extends Decision<RangeDecision> {
 	private String getInfixString(final String var, final String leqOp, final String leOp, final String geqOp,
 			final String geOp, final String eqOp, final String andOp, final int childs) {
 		if (childs == 0) {
-			return var + (((mLimits[0] & 1) == 0) ? leOp : leqOp) + (mLimits[0] / 2);
+			return var + ((mLimits[0] & 1) == 0 ? leOp : leqOp) + mLimits[0] / 2;
 		}
 
 		if (childs == mLimits.length) {
-			return var + (((mLimits[mLimits.length - 1] & 1) == 1) ? geOp : geqOp) + (mLimits[mLimits.length - 1] / 2);
+			return var + ((mLimits[mLimits.length - 1] & 1) == 1 ? geOp : geqOp) + mLimits[mLimits.length - 1] / 2;
 		}
 
-		if ((mLimits[childs - 1] / 2) == (mLimits[childs] / 2)) {
-			return var + eqOp + (mLimits[childs] / 2);
+		if (mLimits[childs - 1] / 2 == mLimits[childs] / 2) {
+			return var + eqOp + mLimits[childs] / 2;
 		}
 
-		return var + (((mLimits[childs - 1] & 1) == 1) ? geOp : geqOp) + (mLimits[childs - 1] / 2) + andOp + var
-				+ (((mLimits[childs] & 1) == 0) ? leOp : leqOp) + (mLimits[childs] / 2);
+		return var + ((mLimits[childs - 1] & 1) == 1 ? geOp : geqOp) + mLimits[childs - 1] / 2 + andOp + var
+				+ ((mLimits[childs] & 1) == 0 ? leOp : leqOp) + mLimits[childs] / 2;
 	}
 
 	@Override
@@ -394,27 +404,26 @@ public class RangeDecision extends Decision<RangeDecision> {
 		final String var = "(- T_" + " " + mVar + ")";
 
 		if (trueChildIndex == 0) {
-			return "( " + (((mLimits[0] & 1) == 0) ? " < " : " <= ") + var + " " + (mLimits[0] / 2) + ".0)";
+			return "( " + ((mLimits[0] & 1) == 0 ? " < " : " <= ") + var + " " + mLimits[0] / 2 + ".0)";
 		}
 
 		if (trueChildIndex == mLimits.length) {
-			return "( " + (((mLimits[mLimits.length - 1] & 1) == 1) ? " > " : " >= ") + var + " "
-					+ (mLimits[mLimits.length - 1] / 2) + ".0)";
+			return "( " + ((mLimits[mLimits.length - 1] & 1) == 1 ? " > " : " >= ") + var + " "
+					+ mLimits[mLimits.length - 1] / 2 + ".0)";
 		}
 
-		if ((mLimits[trueChildIndex - 1] / 2) == (mLimits[trueChildIndex] / 2)) {
-			return " (= " + var + " " + (mLimits[trueChildIndex] / 2) + ".0)";
+		if (mLimits[trueChildIndex - 1] / 2 == mLimits[trueChildIndex] / 2) {
+			return " (= " + var + " " + mLimits[trueChildIndex] / 2 + ".0)";
 		}
 
-		return "(and (" + (((mLimits[trueChildIndex - 1] & 1) == 1) ? " < " : " <= ")
-				+ (mLimits[trueChildIndex - 1] / 2) + ".0 " + var + ") ("
-				+ (((mLimits[trueChildIndex] & 1) == 0) ? " < " : ".0 <= ") + var + " " + (mLimits[trueChildIndex] / 2)
-				+ "0. ))";
+		return "(and (" + ((mLimits[trueChildIndex - 1] & 1) == 1 ? " < " : " <= ") + mLimits[trueChildIndex - 1] / 2
+				+ ".0 " + var + ") (" + ((mLimits[trueChildIndex] & 1) == 0 ? " < " : ".0 <= ") + var + " "
+				+ mLimits[trueChildIndex] / 2 + "0. ))";
 	}
 
 	public int getVal(final int trueChildIndex) {
-		if ((trueChildIndex == 0) || (trueChildIndex == 1)) {
-			return (mLimits[0] / 2);
+		if (trueChildIndex == 0 || trueChildIndex == 1) {
+			return mLimits[0] / 2;
 		}
 
 		return -1;
@@ -422,15 +431,15 @@ public class RangeDecision extends Decision<RangeDecision> {
 
 	public int getOp(final int trueChildIndex) {
 		if (trueChildIndex == 0) {
-			return (((mLimits[0] & 1) == 0) ? OP_LT : OP_LTEQ);
+			return (mLimits[0] & 1) == 0 ? OP_LT : OP_LTEQ;
 		}
 
 		if (trueChildIndex == mLimits.length) {
 			// expects 1
-			return (((mLimits[mLimits.length - 1] & 1) == 1) ? OP_GT : OP_GTEQ);
+			return (mLimits[mLimits.length - 1] & 1) == 1 ? OP_GT : OP_GTEQ;
 		}
 
-		if ((mLimits[trueChildIndex - 1] / 2) == (mLimits[trueChildIndex] / 2)) {
+		if (mLimits[trueChildIndex - 1] / 2 == mLimits[trueChildIndex] / 2) {
 			return OP_EQ;
 		}
 
@@ -487,47 +496,47 @@ public class RangeDecision extends Decision<RangeDecision> {
 	/**
 	 * Filters a CDD. Replaces all decisions specified in @param toRemove with the neutral element and returns the
 	 * resulting CDD.
-	 * 
+	 *
 	 * Assertions: - CDD must only contains RangeDecisions
-	 * 
+	 *
 	 * Example: - toFilter: (c1 <= 5 && c2 >= 5 && c4 < 5) || (c1 <= 5 && c3 > 5 && c4 < 5) - toRemove: reset = ["c3".
 	 * "c4"] - result: (c1 && c2) || c1 = c1
-	 * 
+	 *
 	 * @param toFilter
 	 *            the CDD
 	 * @param toRemove
 	 *            the list of names to remove from toFilter
 	 * @return the filtered CDD
 	 */
-	public static CDD filterCdd(CDD cdd, String[] toRemove) {
+	public static CDD filterCdd(final CDD cdd, final String[] toRemove) {
 		// get all decision in DNF-Form (each sublist is a conjunction)
 		// the second element of each pair is the index of the decisions true child
 		// this integer is needed to build the atomic CDDs of each decision
-		List<List<Pair<Decision<?>, int[]>>> decisionDNF = cdd.getDecisionsDNF();
-		List<String> toRemoveArrayList = Arrays.asList(toRemove);
+		final List<List<Pair<Decision<?>, int[]>>> decisionDNF = cdd.getDecisionsDNF();
+		final List<String> toRemoveArrayList = Arrays.asList(toRemove);
 
-		ArrayList<CDD> newConjunctions = new ArrayList<>();
+		final List<CDD> newConjunctions = new ArrayList<>();
 		CDD newDisjunction = CDD.FALSE;
 
 		// look for the decisions to remove in DNF
-		for (List<Pair<Decision<?>, int[]>> conjunction : decisionDNF) {
+		for (final List<Pair<Decision<?>, int[]>> conjunction : decisionDNF) {
 			CDD newConjunction = CDD.TRUE;
-			for (Pair<Decision<?>, int[]> pair : conjunction) {
-				Decision<?> decision = pair.getFirst();
-				assert (decision instanceof RangeDecision);
-				RangeDecision rangeDecision = (RangeDecision) decision;
-				String var = rangeDecision.getVar();
+			for (final Pair<Decision<?>, int[]> pair : conjunction) {
+				final Decision<?> decision = pair.getFirst();
+				assert decision instanceof RangeDecision;
+				final RangeDecision rangeDecision = (RangeDecision) decision;
+				final String var = rangeDecision.getVar();
 				// build a new conjunction without the decision to remove
 				if (!toRemoveArrayList.contains(var)) {
-					int trueChild = pair.getSecond()[0];
-					CDD newRangeDecision =
+					final int trueChild = pair.getSecond()[0];
+					final CDD newRangeDecision =
 							RangeDecision.create(var, rangeDecision.getOp(trueChild), rangeDecision.getVal(trueChild));
 					newConjunction = newConjunction.and(newRangeDecision);
 				}
 			}
 			newConjunctions.add(newConjunction);
 		}
-		for (CDD conjunction : newConjunctions) {
+		for (final CDD conjunction : newConjunctions) {
 			newDisjunction = newDisjunction.or(conjunction);
 		}
 		return newDisjunction;
@@ -535,64 +544,64 @@ public class RangeDecision extends Decision<RangeDecision> {
 
 	/**
 	 * Makes all RangeDecisions in @param CDD strict.
-	 * 
+	 *
 	 * Example: - toStrict: (c1 <= 5 && c2 >= 5 && c4 < 5) || (c1 <= 5 && c3 > 5 && c4 < 5) - result: (c1 < 5 && c2 > 5
 	 * && c4 < 5) || (c1 < 5 && c3 > 5 && c4 < 5)
-	 * 
+	 *
 	 * @param toStrict
 	 *            the CDD
 	 * @return the CDD with all non-strict RangeDecisions changed into strict ones
 	 */
-	public static CDD strict(CDD toStrict) {
+	public static CDD strict(final CDD toStrict) {
 		// get list of atomic CDDs and their corresponding true child indices
-		List<List<Pair<Decision<?>, int[]>>> decisionDNF = toStrict.getDecisionsDNF();
-		ArrayList<CDD> newConjunctions = new ArrayList<>();
+		final List<List<Pair<Decision<?>, int[]>>> decisionDNF = toStrict.getDecisionsDNF();
+		final List<CDD> newConjunctions = new ArrayList<>();
 		CDD newDisjunction = CDD.FALSE;
 
 		// look for decisions to strictify in DNF
-		for (List<Pair<Decision<?>, int[]>> conjunction : decisionDNF) {
+		for (final List<Pair<Decision<?>, int[]>> conjunction : decisionDNF) {
 			CDD newConjunction = CDD.TRUE;
-			for (Pair<Decision<?>, int[]> pair : conjunction) {
-				Decision<?> decision = pair.getFirst();
-				int trueChild = pair.getSecond()[0];
+			for (final Pair<Decision<?>, int[]> pair : conjunction) {
+				final Decision<?> decision = pair.getFirst();
+				final int trueChild = pair.getSecond()[0];
 				assert decision instanceof RangeDecision;
-				RangeDecision rangeDecision = (RangeDecision) decision;
-				String var = rangeDecision.getVar();
-				int op = rangeDecision.getOp(trueChild);
-				int[] limits = rangeDecision.getLimits();
+				final RangeDecision rangeDecision = (RangeDecision) decision;
+				final String var = rangeDecision.getVar();
+				final int op = rangeDecision.getOp(trueChild);
+				final int[] limits = rangeDecision.getLimits();
 				assert limits.length == 1;
 				// check if limit is uneven. if it is, c <= T or c > T
 				// if trueChild is also 0, then it is c <= T and must be strictified
 				if (op == OP_LTEQ) {
 					// create new atomic CDD with strict operation
-					CDD newRangeDecision = RangeDecision.create(var, OP_LT, rangeDecision.getVal(trueChild));
+					final CDD newRangeDecision = RangeDecision.create(var, OP_LT, rangeDecision.getVal(trueChild));
 					newConjunction = newConjunction.and(newRangeDecision);
 				}
 				// check if limit is even. if it is, c >= T or c < T
 				// if trueChild is also 1, then it is c >= T and must be strictified
 				else if (op == OP_GTEQ) {
-					CDD newRangeDecision = RangeDecision.create(var, OP_GT, rangeDecision.getVal(trueChild));
+					final CDD newRangeDecision = RangeDecision.create(var, OP_GT, rangeDecision.getVal(trueChild));
 					newConjunction = newConjunction.and(newRangeDecision);
 				} else {
 					// the RangeDecision is already strict
 					// reuse old decision for atomic CDD
-					CDD newRangeDecision = RangeDecision.create(var, op, rangeDecision.getVal(trueChild));
+					final CDD newRangeDecision = RangeDecision.create(var, op, rangeDecision.getVal(trueChild));
 					newConjunction = newConjunction.and(newRangeDecision);
 				}
 			}
 			newConjunctions.add(newConjunction);
 		}
-		for (CDD conjunction : newConjunctions) {
+		for (final CDD conjunction : newConjunctions) {
 			newDisjunction = newDisjunction.or(conjunction);
 		}
 		return newDisjunction;
 	}
 
-	public static boolean isStrictLess(CDD cdd) {
+	public static boolean isStrictLess(final CDD cdd) {
 		if (cdd == CDD.TRUE || cdd == CDD.FALSE) {
 			return false;
 		}
-		RangeDecision decision = (RangeDecision) cdd.getDecision();
+		final RangeDecision decision = (RangeDecision) cdd.getDecision();
 		if (decision.getOp(0) == OP_LT) {
 			return true;
 		}

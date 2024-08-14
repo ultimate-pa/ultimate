@@ -156,15 +156,14 @@ public class ExpressionFactory {
 
 		if (isLeftLiteral && isRightLiteral) {
 			return computeBinaryExpression(loc, op, left, right);
-		} else if (isLeftLiteral && isCommutative(op)) {
-			if (right instanceof BinaryExpression) {
-				// if possible, try to combine constants
-				// if expression is of the form (op c1 (op c2 x)), make (op c3 x) with c3 == (op c1 c2)
-				final BinaryExpression rightBinExp = ((BinaryExpression) right);
-				if (rightBinExp.getOperator() == op && isLiteral(rightBinExp.getLeft())) {
-					return newBinaryExpression(loc, op, computeBinaryExpression(loc, op, left, rightBinExp.getLeft()),
-							rightBinExp.getRight());
-				}
+		}
+		if ((isLeftLiteral && isCommutative(op)) && (right instanceof BinaryExpression)) {
+			// if possible, try to combine constants
+			// if expression is of the form (op c1 (op c2 x)), make (op c3 x) with c3 == (op c1 c2)
+			final BinaryExpression rightBinExp = (BinaryExpression) right;
+			if (rightBinExp.getOperator() == op && isLiteral(rightBinExp.getLeft())) {
+				return newBinaryExpression(loc, op, computeBinaryExpression(loc, op, left, rightBinExp.getLeft()),
+						rightBinExp.getRight());
 			}
 		}
 		return constructBinaryExpression(loc, op, left, right);
@@ -174,7 +173,8 @@ public class ExpressionFactory {
 			final Expression right) {
 		if (left instanceof BooleanLiteral) {
 			return constructBinExprWithLiteralOpsBool(loc, op, (BooleanLiteral) left, (BooleanLiteral) right);
-		} else if (left instanceof IntegerLiteral) {
+		}
+		if (left instanceof IntegerLiteral) {
 			return constructBinExprWithLiteralOpsInteger(loc, op, (IntegerLiteral) left, (IntegerLiteral) right);
 		} else if (left instanceof RealLiteral) {
 			return constructBinExprWithLiteralOpsReal(loc, op, (RealLiteral) left, (RealLiteral) right);
@@ -470,8 +470,7 @@ public class ExpressionFactory {
 			final int low) {
 		final BigInteger two = BigInteger.valueOf(2);
 		final BigInteger dividedByLow = value.divide(two.pow(low));
-		final BigInteger biresult = dividedByLow.mod(two.pow(high));
-		return biresult;
+		return dividedByLow.mod(two.pow(high));
 	}
 
 	public static Expression and(final ILocation loc, final List<Expression> exprs) {
@@ -537,12 +536,11 @@ public class ExpressionFactory {
 		final Expression innerArrayAccessExpression = constructNestedArrayAccessExpression(loc, array, innerIndices);
 
 		final Expression outerMostIndexValue = indices[indices.length - 1];
-		final Expression[] outerMostIndex = new Expression[] { outerMostIndexValue };
+		final Expression[] outerMostIndex = { outerMostIndexValue };
 
 		final BoogieArrayType arrayType = (BoogieArrayType) innerArrayAccessExpression.getType();
 		final BoogieType newType = TypeCheckHelper.typeCheckArrayAccessExpressionOrLhs(arrayType,
-				Arrays.asList(new BoogieType[] { (BoogieType) outerMostIndexValue.getType() }),
-				new TypeErrorReporter(loc));
+				Arrays.asList((BoogieType) outerMostIndexValue.getType()), new TypeErrorReporter(loc));
 
 		return new ArrayAccessExpression(loc, newType, innerArrayAccessExpression, outerMostIndex);
 	}
@@ -567,14 +565,13 @@ public class ExpressionFactory {
 		final LeftHandSide innerLhs = constructNestedArrayLHS(loc, array, innerIndices);
 
 		final Expression outerMostIndexValue = indices[indices.length - 1];
-		final Expression[] outerMostIndex = new Expression[] { outerMostIndexValue };
+		final Expression[] outerMostIndex = { outerMostIndexValue };
 
 		final BoogieArrayType arrayType = (BoogieArrayType) innerLhs.getType();
 		// final List<BoogieType> indicesTypes = Arrays.stream(innerIndices)
 		// .map(exp -> (BoogieType) exp.getType()).collect(Collectors.toList());
 		final BoogieType lhsType = TypeCheckHelper.typeCheckArrayAccessExpressionOrLhs(arrayType,
-				Arrays.asList(new BoogieType[] { (BoogieType) outerMostIndexValue.getType() }),
-				new TypeErrorReporter(loc));
+				Arrays.asList((BoogieType) outerMostIndexValue.getType()), new TypeErrorReporter(loc));
 
 		return new ArrayLHS(loc, lhsType, innerLhs, outerMostIndex);
 	}
@@ -656,8 +653,7 @@ public class ExpressionFactory {
 			value = value.add(maxValue);
 		}
 		final BigInteger valueInRange = constructBitvectorInRange(value, bitlength);
-		resultLiteral = ExpressionFactory.createBitvecLiteral(loc, valueInRange.toString(), bitlength);
-		return resultLiteral;
+		return ExpressionFactory.createBitvecLiteral(loc, valueInRange.toString(), bitlength);
 	}
 
 	/**
@@ -708,7 +704,8 @@ public class ExpressionFactory {
 		if (oe instanceof ArrayAccessExpression) {
 			return new ArrayAccessExpression(newLoc, newType, ((ArrayAccessExpression) oe).getArray(),
 					((ArrayAccessExpression) oe).getIndices());
-		} else if (oe instanceof ArrayStoreExpression) {
+		}
+		if (oe instanceof ArrayStoreExpression) {
 			return new ArrayStoreExpression(newLoc, newType, ((ArrayStoreExpression) oe).getArray(),
 					((ArrayStoreExpression) oe).getIndices(), ((ArrayStoreExpression) oe).getValue());
 		} else if (oe instanceof BinaryExpression) {
@@ -759,14 +756,16 @@ public class ExpressionFactory {
 		case ARITHMUL:
 			if (left instanceof IntegerLiteral) {
 				return new BigInteger(((IntegerLiteral) left).getValue()).equals(BigInteger.ONE);
-			} else if (left instanceof RealLiteral) {
+			}
+			if (left instanceof RealLiteral) {
 				return toRational(((RealLiteral) left).getValue()).equals(Rational.ONE);
 			}
 			return false;
 		case ARITHPLUS:
 			if (left instanceof IntegerLiteral) {
 				return new BigInteger(((IntegerLiteral) left).getValue()).signum() == 0;
-			} else if (left instanceof RealLiteral) {
+			}
+			if (left instanceof RealLiteral) {
 				return toRational(((RealLiteral) left).getValue()).signum() == 0;
 			}
 			return false;
@@ -868,7 +867,8 @@ public class ExpressionFactory {
 		case ARITHMUL:
 			if (left instanceof IntegerLiteral) {
 				return new BigInteger(((IntegerLiteral) left).getValue()).signum() == 0;
-			} else if (left instanceof RealLiteral) {
+			}
+			if (left instanceof RealLiteral) {
 				return toRational(((RealLiteral) left).getValue()).signum() == 0;
 			}
 			return false;

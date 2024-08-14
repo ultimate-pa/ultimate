@@ -695,25 +695,28 @@ public class Trace2PeaCompilerStateless {
 
 		int phaseNr = 0;
 		if (start != null) {
-			phases[phaseNr++] = start;
+			phases[phaseNr] = start;
+			phaseNr++;
 		}
 		final Iterator<Entry<PhaseBits, Phase>> iter = mAllPhases.entrySet().iterator();
 		while (iter.hasNext()) {
-			phases[phaseNr++] = iter.next().getValue();
+			phases[phaseNr] = iter.next().getValue();
+			phaseNr++;
 		}
 		if (mExitSync != null) {
 			mLogger.debug("Trying to add transitions to final state");
-			phases[phaseNr++] = buildExitSyncTransitions();
+			phases[phaseNr] = buildExitSyncTransitions();
+			phaseNr++;
 			finalPhases[0] = phases[phaseNr - 1];
 		}
-		final ArrayList<String> peaClocks = new ArrayList<>();
-		for (int i = 0; i < mClock.length; i++) {
-			if (mClock[i] != null && !"".equals(mClock[i])) {
-				peaClocks.add(mClock[i]);
+		final List<String> peaClocks = new ArrayList<>();
+		for (final String element : mClock) {
+			if (element != null && !"".equals(element)) {
+				peaClocks.add(element);
 			}
 		}
-		final HashMap<String, String> variables = new HashMap<>();
-		final HashSet<String> events = new HashSet<>();
+		final Map<String, String> variables = new HashMap<>();
+		final Set<String> events = new HashSet<>();
 		for (int i = 0; i < mCountertrace.getPhases().length; i++) {
 			addVariables(mCountertrace.getPhases()[i].getEntryEvents(), variables, events);
 			addVariables(mCountertrace.getPhases()[i].getInvariant(), variables, events);
@@ -734,7 +737,7 @@ public class Trace2PeaCompilerStateless {
 		return pea;
 	}
 
-	private void addVariables(final CDD cdd, final HashMap<String, String> variables, final HashSet<String> events) {
+	private void addVariables(final CDD cdd, final Map<String, String> variables, final Set<String> events) {
 		final Decision<?> dec = cdd.getDecision();
 		if (dec == null) {
 			// may happen for true/false phases

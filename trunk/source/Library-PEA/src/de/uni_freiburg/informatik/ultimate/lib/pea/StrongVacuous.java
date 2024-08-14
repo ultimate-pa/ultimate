@@ -1,29 +1,30 @@
 /**
- * 
+ *
  */
 package de.uni_freiburg.informatik.ultimate.lib.pea;
 
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author OEA1LR
  */
 public class StrongVacuous {
-	private final HashSet<HashSet<CDD>> possiblyVacuous;
-	private HashSet<CDD> possVacuous;
+	private final Set<Set<CDD>> mPossiblyVacuous;
+	private Set<CDD> mPossVacuous;
 	// list of formulas such that the pea this formula was generated from,
 	// gets vacuously satisfied if this formula holds in every state of the parallel product
-	private final HashSet<CDD> possibleVacuousMaker; // list of formulas, such that the pea this formulas was generated
-														// from, cannot be vacuously satisfied
+	private final Set<CDD> mPossibleVacuousMaker; // list of formulas, such that the pea this formulas was generated
+													// from, cannot be vacuously satisfied
 	// however it might lead to a vacuous satisfaction for other peas
-	private final HashSet<HashSet<CDD>> vacuous; // list of the formulae that are really vacuously satisfied
+	private final Set<Set<CDD>> mVacuous; // list of the formulae that are really vacuously satisfied
 
 	public StrongVacuous() {
-		possiblyVacuous = new HashSet<>();
-		possibleVacuousMaker = new HashSet<>();
-		vacuous = new HashSet<>();
+		mPossiblyVacuous = new HashSet<>();
+		mPossibleVacuousMaker = new HashSet<>();
+		mVacuous = new HashSet<>();
 	}
 
 	public void getVacuousAssignments(final PhaseEventAutomata pea) {
@@ -50,7 +51,7 @@ public class StrongVacuous {
 		} else {
 			final int numberOfInitStates = init.size();
 			// note that for patterns we need only up to 5 initial states
-			final HashSet<CDD> possiblyVacuousPerReq = new HashSet<>(numberOfInitStates);
+			final Set<CDD> possiblyVacuousPerReq = new HashSet<>(numberOfInitStates);
 			CDD cdd = CDD.TRUE;
 			for (int i = 0; i < numberOfInitStates; i++) {
 				final Phase initState = init.get(i);
@@ -69,11 +70,11 @@ public class StrongVacuous {
 
 	private void checkPossiblyVacuous(final PhaseEventAutomata pea) {
 		final List<Phase> phases = pea.getPhases();
-		final HashSet<HashSet<CDD>> vac = getPossiblyVacuous();
+		final Set<Set<CDD>> vac = getPossiblyVacuous();
 
-		final Iterator<HashSet<CDD>> vacIt = vac.iterator();
+		final Iterator<Set<CDD>> vacIt = vac.iterator();
 		while (vacIt.hasNext()) {
-			final HashSet<CDD> vacuousPerReq = vacIt.next();
+			final Set<CDD> vacuousPerReq = vacIt.next();
 			final Iterator<CDD> vacPerReq = vacuousPerReq.iterator();
 			boolean testGlobal = true;
 
@@ -92,14 +93,14 @@ public class StrongVacuous {
 				}
 			}
 			if (testGlobal) {
-				this.addToVacuous(vacuousPerReq);
+				addToVacuous(vacuousPerReq);
 			}
 		}
 	}
 
 	private void checkPossibleVacuousMaker(final PhaseEventAutomata pea) {
-		final HashSet<CDD> possMaker = getPossibleVacuousMaker();
-		final HashSet<HashSet<CDD>> vacCandidate = getPossiblyVacuous();
+		final Set<CDD> possMaker = getPossibleVacuousMaker();
+		final Set<Set<CDD>> vacCandidate = getPossiblyVacuous();
 
 		if (possMaker.isEmpty() || vacCandidate.isEmpty()) {
 			System.out.println("no possible vacuous formulas known OR no possible vacuous maker known");
@@ -109,9 +110,9 @@ public class StrongVacuous {
 			while (possMakerIt.hasNext() && !testVacuous) {
 				final CDD formula = possMakerIt.next();
 
-				final Iterator<HashSet<CDD>> possVacIt = vacCandidate.iterator();
+				final Iterator<Set<CDD>> possVacIt = vacCandidate.iterator();
 				while (possVacIt.hasNext()) {
-					final HashSet<CDD> possVacPerReq = possVacIt.next();
+					final Set<CDD> possVacPerReq = possVacIt.next();
 					final Iterator<CDD> possVacPerReqIt = possVacPerReq.iterator();
 					while (possVacPerReqIt.hasNext()) {
 						final CDD state = possVacPerReqIt.next();
@@ -127,7 +128,7 @@ public class StrongVacuous {
 	}
 
 	public void checkVacuousSatisfiability(final PhaseEventAutomata pea) {
-		final HashSet<HashSet<CDD>> vac = getPossiblyVacuous();
+		final Set<Set<CDD>> vac = getPossiblyVacuous();
 
 		if (vac.isEmpty()) {
 			System.out.println("Before checking for vacuous satisfaction, you need to built-up the vacuous-vector");
@@ -137,47 +138,41 @@ public class StrongVacuous {
 		}
 	}
 
-	public HashSet<HashSet<CDD>> getPossiblyVacuous() {
-		return possiblyVacuous;
+	public Set<Set<CDD>> getPossiblyVacuous() {
+		return mPossiblyVacuous;
 	}
 
 	private void addToPossVacuousMaker(final CDD cdd) {
-		possibleVacuousMaker.add(cdd);
+		mPossibleVacuousMaker.add(cdd);
 	}
 
-	private void addToVacuous(final HashSet<CDD> cdd) {
-		vacuous.add(cdd);
+	private void addToVacuous(final Set<CDD> cdd) {
+		mVacuous.add(cdd);
 	}
 
 	private void addToVacuous(final CDD cdd) {
-		final HashSet<CDD> cddSet = new HashSet<>(1);
+		final Set<CDD> cddSet = new HashSet<>(1);
 		cddSet.add(cdd);
-		vacuous.add(cddSet);
+		mVacuous.add(cddSet);
 	}
 
-	private void addToPossiblyVacuous(final HashSet<CDD> set) {
-		possiblyVacuous.add(set);
+	private void addToPossiblyVacuous(final Set<CDD> set) {
+		mPossiblyVacuous.add(set);
 	}
 
-	public HashSet<CDD> getPossibleVacuousMaker() {
-		// TODO Auto-generated method stub
-		return possibleVacuousMaker;
+	public Set<CDD> getPossibleVacuousMaker() {
+		return mPossibleVacuousMaker;
 	}
 
 	private Iterator<CDD> getPossibleVacuousMakerIterator() {
-		return possibleVacuousMaker.iterator();
+		return mPossibleVacuousMaker.iterator();
 	}
 
-	private int getPossibleVacuousMakerLength() {
-		// TODO Auto-generated method stub
-		return possibleVacuousMaker.size();
-	}
-
-	public HashSet<HashSet<CDD>> getVacuous() {
-		return vacuous;
+	public Set<Set<CDD>> getVacuous() {
+		return mVacuous;
 	}
 
 	private void addToPossVacuous(final CDD cdd) {
-		possVacuous.add(cdd);
+		mPossVacuous.add(cdd);
 	}
 }
