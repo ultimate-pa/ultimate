@@ -844,22 +844,23 @@ public final class CDD {
 	}
 
 	/**
-	 * Returns an ArrayList of pairs containing all the Decisions in the CDD. The first element of each pair is a
-	 * Decision<?>, the second element is an int signifying the true child of the decision. If called on CDD.TRUE or
-	 * CDD.FALSE, it will return an empty list.
+	 * Returns an ArrayList of pairs containing all the Decisions in the CDD. The
+	 * first element of each pair is a Decision<?>, the second element is an array
+	 * of integers signifying the positions of all true children of the decision. If
+	 * called on CDD.TRUE or CDD.FALSE, it will return an empty array.
 	 *
-	 * Assertions: 1. The CDD given as the parameter must be a pure conjunction (this assertion is commented out because
-	 * inequality-decisions contain ||)
-	 *
-	 * Example: cdd: a && !b && c5 >= 5 && c6 <= 5 && c7 == 5 && c8 != 5 result: [(a, [0]) (b, [1]), (c5, [1]), (c6,
-	 * [0]), (c7, [1]), (c8, [0, 2])]
+	 * Example: cdd: a && !b && c5 >= 5 && c6 <= 5 && c7 == 5 && c8 != 5 result:
+	 * [(a, [0]) (b, [1]), (c5, [1]), (c6, [0]), (c7, [1]), (c8, [0, 2])]
 	 *
 	 *
-	 * @param CDD
-	 *            cdd
+	 * @param CDD cdd
 	 * @return ArrayList<SimplePair<Decision<?>, Integer>> result
 	 */
 	public List<Pair<Decision<?>, int[]>> getDecisionsConjunction() {
+		// TODO: refactor this method and its depending methods as this methods does
+		// only produce some strange intermediate representation of the CDD's DNF in
+		// order to make transformations on the CDD (in the methods depending on the
+		// produced representation)
 		final List<Pair<Decision<?>, int[]>> result = new ArrayList<>();
 		// assert !toString().contains("||");
 		CDD node = this;
