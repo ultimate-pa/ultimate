@@ -64,6 +64,7 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdgeAnnotation;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNodeAnnotation;
+import de.uni_freiburg.informatik.ultimate.witnessparser.preferences.WitnessParserPreferences;
 
 /**
  *
@@ -74,6 +75,7 @@ public class GraphMLCorrectnessWitnessExtractor extends CorrectnessWitnessExtrac
 	private WitnessNode mWitnessNode;
 	private final Collection<Class<?>> mLoopTypes;
 	private final Collection<Class<?>> mConditionalTypes;
+	private final boolean mCheckOnlyLoopInvariants;
 
 	public GraphMLCorrectnessWitnessExtractor(final IUltimateServiceProvider service) {
 		super(service);
@@ -81,6 +83,7 @@ public class GraphMLCorrectnessWitnessExtractor extends CorrectnessWitnessExtrac
 				IASTWhileStatement.class, IASTForStatement.class });
 		mConditionalTypes = Arrays.asList(new Class[] { IASTDoStatement.class, IASTWhileStatement.class,
 				IASTForStatement.class, IASTIfStatement.class });
+		mCheckOnlyLoopInvariants = mPrefs.getBoolean(WitnessParserPreferences.LABEL_CW_USE_ONLY_LOOPINVARIANTS);
 	}
 
 	public void setWitness(final WitnessNode wnode) {
@@ -95,6 +98,11 @@ public class GraphMLCorrectnessWitnessExtractor extends CorrectnessWitnessExtrac
 	@Override
 	protected IExtractedCorrectnessWitness extractWitness() {
 		Map<IASTNode, LabeledInvariant> map = new HashMap<>();
+		if (mCheckOnlyLoopInvariants) {
+			mLogger.info("Only extracting loop invariants from correctness witness");
+		} else {
+			mLogger.info("Extracting all invariants from correctness witness");
+		}
 
 		final Deque<WitnessNode> worklist = new ArrayDeque<>();
 		final Set<WitnessNode> closed = new HashSet<>();
