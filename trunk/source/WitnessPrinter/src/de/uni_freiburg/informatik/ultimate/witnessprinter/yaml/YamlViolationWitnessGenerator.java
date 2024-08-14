@@ -87,7 +87,7 @@ public class YamlViolationWitnessGenerator<TE, E> {
 	}
 
 	private Witness getWitness() {
-		final List<Segment> content = new ArrayList<>();
+		final List<Segment> segments = new ArrayList<>();
 		for (int i = 0; i < mExecution.getLength(); i++) {
 			final AtomicTraceElement<TE> currentATE = mExecution.getTraceElement(i);
 			final TE currentStep = currentATE.getStep();
@@ -104,24 +104,24 @@ public class YamlViolationWitnessGenerator<TE, E> {
 			// statement or declaration.
 
 			if (i == mExecution.getLength() - 1) {
-				content.add(new Segment(List.of(), new WaypointTarget(currentLocation)));
+				segments.add(new Segment(List.of(), new WaypointTarget(currentLocation)));
 			}
 			if (currentATE.hasStepInfo(StepInfo.CONDITION_EVAL_FALSE)) {
-				content.add(new Segment(List.of(), new WaypointBranching("false", currentLocation)));
+				segments.add(new Segment(List.of(), new WaypointBranching("false", currentLocation)));
 			}
 			if (currentATE.hasStepInfo(StepInfo.CONDITION_EVAL_TRUE)) {
-				content.add(new Segment(List.of(), new WaypointBranching("true", currentLocation)));
+				segments.add(new Segment(List.of(), new WaypointBranching("true", currentLocation)));
 			}
 			if (currentATE.hasStepInfo(StepInfo.PROC_CALL)) {
-				content.add(new Segment(List.of(), new WaypointFunctionEnter(currentLocation)));
+				segments.add(new Segment(List.of(), new WaypointFunctionEnter(currentLocation)));
 			}
 			if (currentATE.hasStepInfo(StepInfo.PROC_RETURN)) {
-				content.add(new Segment(List.of(), new WaypointFunctionReturn(
+				segments.add(new Segment(List.of(), new WaypointFunctionReturn(
 						mProgramStatePrinter.stateAsExpression(currentState, "\\result"::equals), currentLocation)));
 			}
 		}
-		mLogger.info("Generated YAML witness of length %d.", content.size());
-		return new Witness(List.of(new ViolationSequence(content)));
+		mLogger.info("Generated YAML witness of length %d.", segments.size());
+		return new Witness(List.of(new ViolationSequence(segments)));
 	}
 
 	public String makeYamlString() {

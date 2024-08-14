@@ -121,7 +121,7 @@ public class YamlWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 		final ViolationSequence vSequence = (ViolationSequence) mWitness.getEntries().get(annot.getVSCounter());
 
 		return (mAbstraction.isFinal(annot.getUnderlying())
-				&& (annot.getWPCounter() == (vSequence.getContent().size())));
+				&& (annot.getWPCounter() == (vSequence.getSegments().size())));
 	}
 
 	@Override
@@ -152,20 +152,20 @@ public class YamlWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 
 		final ViolationSequence currentvSeq =
 				(ViolationSequence) mWitness.getEntries().get(countingState.getVSCounter());
-		Segment currentSegment = currentvSeq.getContent().get(currentCounter);
-		Waypoint currentWP = currentSegment.getFollow();
+		Segment currentSegment = currentvSeq.getSegments().get(currentCounter);
+		Waypoint currentWP = currentSegment.getFollowWaypoint();
 
 		// return empty List if an avoid WP matches (Assumptions are ignored)
-		if (currentSegment.getAvoid().stream().anyMatch(x -> matchesInternal(letter, x))) {
+		if (currentSegment.getAvoidWaypoints().stream().anyMatch(x -> matchesInternal(letter, x))) {
 			return List.of();
 		}
 
 		// for Assumption Waypoints continue with the same state but increase the counter
 		while (currentWP instanceof WaypointAssumption && matchesLocation(letter, currentWP)) {
 			currentCounter++;
-			currentSegment = currentvSeq.getContent().get(currentCounter);
-			currentWP = currentSegment.getFollow();
-			if (currentSegment.getAvoid().stream().anyMatch(x -> matchesInternal(letter, x))) {
+			currentSegment = currentvSeq.getSegments().get(currentCounter);
+			currentWP = currentSegment.getFollowWaypoint();
+			if (currentSegment.getAvoidWaypoints().stream().anyMatch(x -> matchesInternal(letter, x))) {
 				return List.of();
 			}
 		}
@@ -196,18 +196,18 @@ public class YamlWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 
 		final ViolationSequence currentvSeq =
 				(ViolationSequence) mWitness.getEntries().get(countingState.getVSCounter());
-		Segment currentSegment = currentvSeq.getContent().get(currentCounter);
-		Waypoint currentWP = currentSegment.getFollow();
+		Segment currentSegment = currentvSeq.getSegments().get(currentCounter);
+		Waypoint currentWP = currentSegment.getFollowWaypoint();
 
-		if (currentSegment.getAvoid().stream().anyMatch(x -> matchesCall(letter, x))) {
+		if (currentSegment.getAvoidWaypoints().stream().anyMatch(x -> matchesCall(letter, x))) {
 			return List.of();
 		}
 
 		while (currentWP instanceof WaypointAssumption && matchesLocation(letter, currentWP)) {
 			currentCounter++;
-			currentSegment = currentvSeq.getContent().get(currentCounter);
-			currentWP = currentSegment.getFollow();
-			if (currentSegment.getAvoid().stream().anyMatch(x -> matchesInternal(letter, x))) {
+			currentSegment = currentvSeq.getSegments().get(currentCounter);
+			currentWP = currentSegment.getFollowWaypoint();
+			if (currentSegment.getAvoidWaypoints().stream().anyMatch(x -> matchesInternal(letter, x))) {
 				return List.of();
 			}
 		}
@@ -239,18 +239,18 @@ public class YamlWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 		}
 		final ViolationSequence currentvSeq =
 				(ViolationSequence) mWitness.getEntries().get(countingState.getVSCounter());
-		Segment currentSegment = currentvSeq.getContent().get(currentCounter);
-		Waypoint currentWP = currentSegment.getFollow();
+		Segment currentSegment = currentvSeq.getSegments().get(currentCounter);
+		Waypoint currentWP = currentSegment.getFollowWaypoint();
 
-		if (currentSegment.getAvoid().stream().anyMatch(x -> matchesCall(letter, x))) {
+		if (currentSegment.getAvoidWaypoints().stream().anyMatch(x -> matchesCall(letter, x))) {
 			return List.of();
 		}
 
 		while (currentWP instanceof WaypointAssumption && matchesLocation(letter, currentWP)) {
 			currentCounter++;
-			currentSegment = currentvSeq.getContent().get(currentCounter);
-			currentWP = currentSegment.getFollow();
-			if (currentSegment.getAvoid().stream().anyMatch(x -> matchesInternal(letter, x))) {
+			currentSegment = currentvSeq.getSegments().get(currentCounter);
+			currentWP = currentSegment.getFollowWaypoint();
+			if (currentSegment.getAvoidWaypoints().stream().anyMatch(x -> matchesInternal(letter, x))) {
 				return List.of();
 			}
 		}
@@ -371,7 +371,7 @@ public class YamlWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 
 	private boolean isWitnessFinished(final int counter, final int vsCounter) {
 		final ViolationSequence vSeq = (ViolationSequence) mWitness.getEntries().get(vsCounter);
-		return counter >= vSeq.getContent().size();
+		return counter >= vSeq.getSegments().size();
 	}
 
 	private static final class CountingPredicate extends AnnotatedPredicate<IPredicate, Pair<Integer, Integer>>

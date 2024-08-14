@@ -192,12 +192,12 @@ public class YamlWitnessWriterV2 extends YamlWitnessWriter {
 		witnessMap.put("entry_type", "violation_sequence");
 		witnessMap.put("metadata", mMetadataProvider.getFreshMetadata());
 		final List<Map<String, Object>> contentList = new ArrayList<>();
-		for (final Segment segment : violationSequence.getContent()) {
+		for (final Segment segment : violationSequence.getSegments()) {
 			final List<Map<String, Object>> segmentList = new ArrayList<>();
-			for (final Waypoint avoidWP : segment.getAvoid()) {
+			for (final Waypoint avoidWP : segment.getAvoidWaypoints()) {
 				segmentList.add(Map.of("waypoint", avoidWP.toMap("avoid")));
 			}
-			segmentList.add(Map.of("waypoint", segment.getFollow().toMap("follow")));
+			segmentList.add(Map.of("waypoint", segment.getFollowWaypoint().toMap("follow")));
 			contentList.add(Map.of("segment", segmentList));
 		}
 		witnessMap.put("content", contentList);
