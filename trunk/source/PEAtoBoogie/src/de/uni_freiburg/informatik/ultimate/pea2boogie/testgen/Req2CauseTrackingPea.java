@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.pea2boogie.testgen;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -35,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace.DCPhase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Decision;
+import de.uni_freiburg.informatik.ultimate.lib.pea.InitialTransition;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseBits;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
@@ -91,7 +92,7 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 	public void transform(final IReq2Pea req2pea) {
 		final List<ReqPeas> simplePeas = req2pea.getReqPeas();
 		final IReqSymbolTable oldSymbolTable = req2pea.getSymboltable();
-		final ReqSymboltableBuilder builder = new ReqSymboltableBuilder(mLogger);
+		final ReqSymboltableBuilder builder = new ReqSymboltableBuilder(mServices, mLogger);
 		for (final DeclarationPattern p : mInitPattern) {
 			builder.addInitPattern(p);
 			mDurations.addInitPattern(p);
@@ -130,20 +131,23 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 		// TODO: final Set<String> effectVars = mCddTransformer.getEffectVariables(pattern, id2bounds);
 		// repair old pea
 		setFlags(oldPea.getInit());
-		final Phase[] oldLocations = oldPea.getPhases();
+		final List<Phase> oldLocations = oldPea.getPhases();
 		final int dcEffectPhase = getHighestDCPhase(oldLocations, dcFormula);
 		mLogger.info(new StringBuilder("Effect Variables of ").append(pattern.toString()).append(": ")
 				.append(effectVars.toString()).toString() + ", with effect phase: " + Integer.toString(dcEffectPhase));
-		final Phase[] newLocations = transformLocations(oldPea, oldSymbolTable, effectVars, dcEffectPhase, dcFormula);
-		final Phase[] newInit = getInitialLocations(oldLocations);
+		final List<Phase> newLocations =
+				transformLocations(oldPea, oldSymbolTable, effectVars, dcEffectPhase, dcFormula);
+		final List<Phase> newInit = getInitialLocations(oldLocations);
 		copyOldTransitions(oldPea.getPhases(), newLocations);
 		copyTransitionsToLower(oldLocations, newLocations, effectVars, oldSymbolTable, dcEffectPhase, effectCdd);
 		connectUpperToLowerAutomaton(newLocations, oldLocations, new ArrayList<>(oldPea.getClocks()), dcEffectPhase);
 		final List<String> newClocks = new ArrayList<>(oldPea.getClocks());
 		final Map<String, String> newVariables = new HashMap<>(oldPea.getVariables());
 		newVariables.putAll(mCddTransformer.getTrackingVars());
-		final PhaseEventAutomata newPea = new PhaseEventAutomata(oldPea.getName() + LOWER_AUTOMATON_SUFFIX,
-				newLocations, newInit, newClocks, newVariables, null);
+		final PhaseEventAutomata newPea =
+				new PhaseEventAutomata(oldPea.getName() + LOWER_AUTOMATON_SUFFIX, newLocations,
+						newInit.stream().map(x -> new InitialTransition(CDD.TRUE, x)).collect(Collectors.toList()),
+						newClocks, newVariables, null);
 		final ReqEffectStore reqEffectStore = new ReqEffectStore();
 		reqEffectStore.addEffectVars(effectVars);
 		// remember effect phases and output effect phases
@@ -155,20 +159,20 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 	private static void getOutputEffectLocations(final PhaseEventAutomata oldPea, final ReqEffectStore reqEffectStore,
 			final Set<String> effectVars, final IReqSymbolTable oldSymbolTable, final int dcEffectPhase,
 			final CDD effectCdd) {
-		final Phase[] oldPhases = oldPea.getPhases();
-		final List<Phase> phaseList = Arrays.asList(oldPhases);
-		for (int i = 0; i < oldPhases.length; i++) {
-			final int offset = oldPea.getPhases().length;
+		final List<Phase> oldPhases = oldPea.getPhases();
+		final List<Phase> phaseList = oldPhases;
+		for (int i = 0; i < oldPhases.size(); i++) {
+			final int offset = oldPea.getPhases().size();
 			// decide which pea phases have an effect
 			final int newEffectLocationIndex = offset + i;
-			if (isEffectLocation(oldPhases[i], dcEffectPhase)) {
+			if (isEffectLocation(oldPhases.get(i), dcEffectPhase)) {
 				reqEffectStore.addEffectPhaseIndex(newEffectLocationIndex);
 				if (!Collections.disjoint(effectVars, oldSymbolTable.getOutputVars())) {
 					reqEffectStore.addOutputEffectPhaseIndex(newEffectLocationIndex);
 				}
 			}
 			// decide which pea transitions have an effect
-			for (final Transition t : oldPhases[i].getTransitions()) {
+			for (final Transition t : oldPhases.get(i).getTransitions()) {
 				if (isEffectTransition(t.getSrc(), t, dcEffectPhase, effectCdd)) {
 					final Integer newTargetPhaseIndex = offset + phaseList.indexOf(t.getDest());
 					reqEffectStore.addEffectEdgeIndex(newEffectLocationIndex, newTargetPhaseIndex);
@@ -185,7 +189,7 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 			return false;
 		}
 		final PhaseBits pb = location.getPhaseBits();
-		return (pb.isActive(effectDCPhaseIndex) && !pb.isWaiting(effectDCPhaseIndex)) || pb.isExact(effectDCPhaseIndex);
+		return pb.isActive(effectDCPhaseIndex) && !pb.isWaiting(effectDCPhaseIndex) || pb.isExact(effectDCPhaseIndex);
 	}
 
 	private static boolean isEffectTransition(final Phase source, final Transition transition, final int effectDCPhase,
@@ -194,18 +198,18 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 				&& transition.getGuard().and(effectCdd.negate().prime(Collections.emptySet())) == CDD.FALSE;
 	}
 
-	private static void setFlags(final Phase[] initialPhases) {
+	private static void setFlags(final List<Phase> initialPhases) {
 		for (final Phase p : initialPhases) {
-			p.isInit = true;
+			p.setInit(true);
 		}
 	}
 
-	private Phase[] transformLocations(final PhaseEventAutomata oldPea, final IReqSymbolTable reqSymbolTable,
+	private List<Phase> transformLocations(final PhaseEventAutomata oldPea, final IReqSymbolTable reqSymbolTable,
 			final Set<String> effectVars, final int effectPhase, final DCPhase[] dcFormula) {
-		final Phase[] oldPhases = oldPea.getPhases();
-		final Phase[] newPhases = new Phase[2 * oldPhases.length];
-		for (int i = 0; i < oldPhases.length; i++) {
-			final Phase oldPhase = oldPhases[i];
+		final List<Phase> oldPhases = oldPea.getPhases();
+		final List<Phase> newPhases = new ArrayList<>();
+		for (int i = 0; i < oldPhases.size(); i++) {
+			final Phase oldPhase = oldPhases.get(i);
 
 			// get tracking vars according to phases in location
 			final Set<String> trackThoseVars = getAllToTrackVars(oldPhase, dcFormula, effectPhase, effectVars);
@@ -217,15 +221,15 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 			// reqSymbolTable.getInputVars(), reqSymbolTable.getConstVars(), activePhaseVars, isEffectLocation(oldPhase,
 			// effectPhase));
 			final CDD upperStateInvar = oldPhase.getStateInvariant();
-			newPhases[i] = new Phase(oldPhase.getName(), upperStateInvar, oldPhase.getClockInvariant());
+			newPhases.set(i, new Phase(oldPhase.getName(), upperStateInvar, oldPhase.getClockInvariant()));
 
 			final CDD trackingStateInvar = mCddTransformer.transformInvariantTracking(oldPhase.getStateInvariant(),
 					trackThoseVars, effectVars, isEffectLocation(oldPhase, effectPhase));
 			final Phase trackingLocation = new Phase(oldPhase.getName() + LOWER_AUTOMATON_SUFFIX, trackingStateInvar,
 					oldPhase.getClockInvariant());
-			newPhases[oldPhases.length + i] = trackingLocation;
-			if (oldPhase.isInit) {
-				trackingLocation.isInit = true;
+			newPhases.set(oldPhases.size() + i, trackingLocation);
+			if (oldPhase.isInit()) {
+				trackingLocation.setInit(true);
 			}
 		}
 		return newPhases;
@@ -240,7 +244,7 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 			return Collections.emptySet();
 		}
 		for (int i = 0; i < dcFormula.length; i++) {
-			if ((pb.isActive(i) && !pb.isWaiting(i)) || pb.isExact(i)) {
+			if (pb.isActive(i) && !pb.isWaiting(i) || pb.isExact(i)) {
 				final CDD invar = dcFormula[i].getInvariant();
 				final Set<String> cddVars = Req2CauseTrackingCDD.getCddVariables(invar);
 				// if the prior to last phase is a true phase, look ahead and see what we have to do to NOT
@@ -265,7 +269,7 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 		return toTrackVars;
 	}
 
-	private static int getHighestDCPhase(final Phase[] oldLocations, final DCPhase[] dcFormula) {
+	private static int getHighestDCPhase(final List<Phase> oldLocations, final DCPhase[] dcFormula) {
 		// Find the last phase that is mentioned in automaton. Its the effect phase.
 		int lastDcPhase = 0;
 		for (int i = 0; i < dcFormula.length; i++) {
@@ -280,22 +284,22 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 		return lastDcPhase;
 	}
 
-	private static Phase[] getInitialLocations(final Phase[] phases) {
+	private static List<Phase> getInitialLocations(final List<Phase> phases) {
 		final List<Phase> initialPhases = new ArrayList<>();
 		for (final Phase p : phases) {
-			if (p.isInit) {
+			if (p.isInit()) {
 				initialPhases.add(p);
 			}
 		}
-		return initialPhases.toArray(new Phase[initialPhases.size()]);
+		return initialPhases;
 	}
 
-	private static void copyOldTransitions(final Phase[] oldPhases, final Phase[] newPhases) {
-		final List<Phase> indexList = Arrays.asList(oldPhases);
-		for (int i = 0; i < oldPhases.length; i++) {
-			for (final Transition trans : oldPhases[i].getTransitions()) {
+	private static void copyOldTransitions(final List<Phase> oldPhases, final List<Phase> newLocations) {
+		final List<Phase> indexList = oldPhases;
+		for (int i = 0; i < oldPhases.size(); i++) {
+			for (final Transition trans : oldPhases.get(i).getTransitions()) {
 				final int dest = indexList.indexOf(trans.getDest());
-				newPhases[i].addTransition(newPhases[dest], trans.getGuard(), trans.getResets());
+				newLocations.get(i).addTransition(newLocations.get(dest), trans.getGuard(), trans.getResets());
 			}
 		}
 	}
@@ -304,29 +308,29 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 	 * Copy all transitions from the upper automaton to the lower automaton. Add tracking guards and clock
 	 * transformations in the process.
 	 */
-	private void copyTransitionsToLower(final Phase[] oldLocations, final Phase[] newLocations,
+	private void copyTransitionsToLower(final List<Phase> oldLocations, final List<Phase> newLocations,
 			final Set<String> effectVars, final IReqSymbolTable reqSymbolTable, final int effectDCPhaseId,
 			final CDD effectCdd) {
-		final int seem = newLocations.length / 2;
-		final List<Phase> indexList = Arrays.asList(newLocations);
+		final int seem = newLocations.size() / 2;
+		final List<Phase> indexList = newLocations;
 		// copy edges in first to second automaton
 		for (int i = 0; i < seem; i++) {
-			for (final Transition trans : newLocations[i].getTransitions()) {
+			for (final Transition trans : newLocations.get(i).getTransitions()) {
 				final int dest = indexList.indexOf(trans.getDest());
-				final Phase sourcePhase = newLocations[seem + i];
+				final Phase sourcePhase = newLocations.get(seem + 1);
 				final boolean effectTransition = isEffectTransition(sourcePhase, trans, effectDCPhaseId, effectCdd);
 				// add tracking variables to cdds on the edge
 				CDD guard = mCddTransformer.transformGurad(trans.getGuard(), effectVars, reqSymbolTable.getInputVars(),
 						reqSymbolTable.getConstVars(), effectTransition);
 				// add time bound in lower automaton if effect phase has an upper bound
-				final PhaseBits pbSource = oldLocations[i].getPhaseBits();
-				final PhaseBits pbDest = oldLocations[dest].getPhaseBits();
+				final PhaseBits pbSource = oldLocations.get(i).getPhaseBits();
+				final PhaseBits pbDest = oldLocations.get(dest).getPhaseBits();
 				if (pbSource != null && pbSource.isWaiting(effectDCPhaseId) &&
 				// if pbDest is null, it is a sink state after having waited
 						(pbDest == null || !pbDest.isWaiting(effectDCPhaseId))) {
 					guard = guard.and(mCddTransformer.upperToLowerBoundCdd(sourcePhase.getClockInvariant(), true));
 				}
-				sourcePhase.addTransition(newLocations[seem + dest], guard, trans.getResets());
+				sourcePhase.addTransition(newLocations.get(seem + 1), guard, trans.getResets());
 
 			}
 		}
@@ -339,20 +343,20 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 	 * phase). Add timing bounds so that the test generator can not bail to the upper automaton before all obligations
 	 * are fulfilled.
 	 */
-	private void connectUpperToLowerAutomaton(final Phase[] newLocations, final Phase[] oldLocations,
+	private void connectUpperToLowerAutomaton(final List<Phase> newLocations, final List<Phase> oldLocations,
 			final List<String> clocks, final int effectDCPhaseId) {
-		final int seem = newLocations.length / 2;
+		final int seem = newLocations.size() / 2;
 		for (int i = 0; i < seem; i++) {
 			CDD clockGuard = CDD.TRUE;
-			if (isEffectLocation(oldLocations[i], effectDCPhaseId)) {
-				final CDD oldClockInvar = oldLocations[i].getClockInvariant();
+			if (isEffectLocation(oldLocations.get(i), effectDCPhaseId)) {
+				final CDD oldClockInvar = oldLocations.get(i).getClockInvariant();
 				clockGuard = mCddTransformer.upperToLowerBoundCdd(oldClockInvar, false);
 			}
-			if (oldLocations[i].getOutgoingTransition(oldLocations[0]) != null) {
-				newLocations[seem + i].addTransition(newLocations[i], clockGuard, new String[0]);
+			if (oldLocations.get(i).getOutgoingTransition(oldLocations.get(0)) != null) {
+				newLocations.get(seem + 1).addTransition(newLocations.get(i), clockGuard, new String[0]);
 			}
-			if (oldLocations[i].isInit) {
-				newLocations[i].addTransition(newLocations[seem + i], CDD.TRUE,
+			if (oldLocations.get(i).isInit()) {
+				newLocations.get(i).addTransition(newLocations.get(seem + 1), CDD.TRUE,
 						clocks.toArray(new String[clocks.size()]));
 			}
 		}

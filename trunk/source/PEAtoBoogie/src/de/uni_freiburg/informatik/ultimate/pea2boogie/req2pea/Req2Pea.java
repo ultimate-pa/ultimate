@@ -75,14 +75,14 @@ public class Req2Pea implements IReq2Pea {
 	private final boolean mHasErrors;
 	private final Durations mDurations;
 
-	public Req2Pea(final IUltimateServiceProvider services, final ILogger logger,
-			final List<DeclarationPattern> init, final List<PatternType<?>> reqs) {
+	public Req2Pea(final IUltimateServiceProvider services, final ILogger logger, final List<DeclarationPattern> init,
+			final List<PatternType<?>> reqs) {
 		mLogger = logger;
 		mServices = services;
 		mResultUtil = new PeaResultUtil(mLogger, mServices);
 
 		final List<PatternType<?>> requirements = replacePrev(reqs);
-		final ReqSymboltableBuilder builder = new ReqSymboltableBuilder(mLogger);
+		final ReqSymboltableBuilder builder = new ReqSymboltableBuilder(mServices, mLogger);
 
 		mDurations = new Durations();
 		for (final DeclarationPattern pattern : init) {
@@ -160,7 +160,7 @@ public class Req2Pea implements IReq2Pea {
 				continue;
 			}
 
-			if (pea.getCounterTrace2Pea().stream().map(Entry::getValue).anyMatch(a -> a.getInit().length == 0)) {
+			if (pea.getCounterTrace2Pea().stream().map(Entry::getValue).anyMatch(a -> a.getInit().size() == 0)) {
 				mResultUtil.transformationError(pat, "A PEA is missing its initial phase");
 				continue;
 			}
@@ -181,7 +181,7 @@ public class Req2Pea implements IReq2Pea {
 
 		mLogger.info(String.format("Finished transforming %s requirements to PEAs", patterns.size()));
 
-		return req2automata.entrySet().stream().map(a -> a.getValue()).collect(Collectors.toList());
+		return req2automata.entrySet().stream().map(Entry::getValue).collect(Collectors.toList());
 	}
 
 	@Override
@@ -247,7 +247,7 @@ public class Req2Pea implements IReq2Pea {
 
 		@Override
 		public Expression transform(final FunctionApplication node) {
-			if (!node.getIdentifier().equals("prev")) {
+			if (!"prev".equals(node.getIdentifier())) {
 				return node;
 			}
 
@@ -272,7 +272,7 @@ public class Req2Pea implements IReq2Pea {
 
 			@Override
 			public Expression transform(final FunctionApplication node) {
-				if (node.getIdentifier().equals("prev")) {
+				if ("prev".equals(node.getIdentifier())) {
 					throw new IllegalArgumentException("Unsupported nested FunctionApplication prev().");
 				}
 				return node;

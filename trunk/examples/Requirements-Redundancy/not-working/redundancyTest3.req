@@ -1,0 +1,8 @@
+// #TestSpec: redundant:ID000; results:-1
+Input R is bool
+Input S is bool
+
+ID000: Globally, it is always the case that if "R" holds, then "S" holds after at most "5" time units for at least "10" time units
+ID001: Globally, it is always the case that if "R" holds, then "S" holds after at most "5" time units
+
+// Unable to prove that Requirement ID001 is non-redundant (line -1). Cancelled while NwaCegarLoop was analyzing trace of length 19 with TraceHistMax 6,while InterpolatingTraceCheckCraig was constructing Craig interpolants,while PolyPacSimplificationTermWalker was simplifying a ∧-3-6-4-8-4-12-5-12-5-12-5-12-5-12-7-12-7-12-7-12-7-12-7-12-7-12-7-12-7-12-5-12-5-12-5-12-5-12-5-12-5-12-5-12-5-12-5-12-5-12-4-12-4-12-4-12-4-12-4-12-4-12-4-12-4-12-4-12-4-12-4-12-4-12-4-11-4-11-4-11-4-11-4-11-4-11-4-11-4-11-4-10-4-10-4-10-4-10-4-10-4-10-4-10-4-10-4-10-4-10-4-10-4-10-4-10-4-10-4-10-4-10-3-10-2-10-2-7-2-5-2-5-1 term,while PolyPacSimplificationTermWalker was simplifying 3 xjuncts wrt. a ∧-38-10-8-10-12-12-12-12-12-12-12-12-12-12-12-12-12-12-12-12-12-12-12-12-12-12-12-12-12-12-12-12-12-12-12-12-12-12-12-12-12-12-12-12-12-12-12-12-12-11-12-11-12-11-12-11-12-11-12-11-12-11-12-11-12-10-11-10-11-10-11-10-11-10-11-10-11-10-11-10-11-10-10-10-10-10-10-10-10-10-10-10-10-10-10-10-10-10-10-10-10-7-10-5-10-5-10-4-10-4-10-4-10-3-10-2-10-2-7-2-5-2-5-1 context.

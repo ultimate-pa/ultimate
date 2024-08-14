@@ -170,6 +170,12 @@ public class InterpolatingTraceCheckCraig<L extends IAction> extends Interpolati
 	}
 
 	private InterpolantComputationStatus handleSmtLibException(final SMTLIBException e) {
+		if (!mServices.getProgressMonitorService().continueProcessing()) {
+			// There was a cancellation request, probably responsible for abnormal solver termination.
+			// Propagate it as a ToolchainCanceledException so appropriate timeout handling can take place.
+			throw new ToolchainCanceledException(getClass(), "while computing interpolants");
+		}
+
 		final String message = throwIfNoMessage(e);
 		if ("Unsupported non-linear arithmetic".equals(message)) {
 			// SMTInterpol was somehow able to determine satisfiability but detects
@@ -199,7 +205,7 @@ public class InterpolatingTraceCheckCraig<L extends IAction> extends Interpolati
 	}
 
 	private static boolean isMessageSolverCannotInterpolate(final String message) {
-		return message.startsWith("Cannot interpolate") || message.equals(NestedInterpolantsBuilder.DIFF_IS_UNSUPPORTED)
+		return message.startsWith("Cannot interpolate") || NestedInterpolantsBuilder.DIFF_IS_UNSUPPORTED.equals(message)
 				|| message.startsWith("Unknown lemma type!")
 				|| message.startsWith("Interpolation not supported for quantified formulae");
 	}
@@ -367,11 +373,10 @@ public class InterpolatingTraceCheckCraig<L extends IAction> extends Interpolati
 				// (which is stored in oldPostcondition, since mPostcondition
 				// is already set to null.
 				interpolantAtReturnPosition = oldPostcondition;
-				assert interpolantAtReturnPosition != null;
 			} else {
 				interpolantAtReturnPosition = mInterpolants[returnPosition];
-				assert interpolantAtReturnPosition != null;
 			}
+			assert interpolantAtReturnPosition != null;
 
 			mLogger.info("Compute interpolants for subsequence at non-pending call position " + nonPendingCall);
 			// Compute interpolants for subsequence and add them to interpolants

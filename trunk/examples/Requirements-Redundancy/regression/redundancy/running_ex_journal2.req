@@ -1,0 +1,6 @@
+// #TestSpec:redundant:req1; results:-1
+Input A is bool
+Input B is bool
+
+req1: Globally, it is always the case that if "A" holds, then "B" holds after at most "5" time units
+req2: Globally, it is never the case that "A" holds

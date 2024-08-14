@@ -1,0 +1,9 @@
+// #TestSpec: redundant:req1,req2, req3; results:-1
+Input R is bool
+Input S is bool
+Input T is bool
+Input P is bool
+
+ID000: Globally, it is always the case that if "R" holds, then "S" previously held and was preceded by "T"
+ID001: Globally, it is always the case that if "S" holds, then "R" holds after at most "5" time units
+ID002: After "P", it is always the case that if "S" holds for at least "5" time units, then "R" holds after at most "5" time units
