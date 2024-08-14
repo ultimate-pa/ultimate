@@ -351,7 +351,7 @@ public class ComplementPEATest {
 		final List<Transition> phase0OutgoingTransitions = phase0.getTransitions();
 		final Map<Phase, CDD> expectedSinkGuard = new HashMap<>();
 		expectedSinkGuard.put(phase0,
-				RangeDecision.create("c0" + PEAComplement.COMPLEMENT_POSTFIX, RangeDecision.OP_GT, 7).or(BooleanDecision
+				(BooleanDecision
 						.create("R").prime(ignoreId).negate()
 						.and(RangeDecision.create("c0" + PEAComplement.COMPLEMENT_POSTFIX, RangeDecision.OP_GTEQ, 7))));
 		expectedSinkGuard.put(phases.get(1), CDD.FALSE);
