@@ -34,38 +34,40 @@ import java.util.stream.Collectors;
 import org.junit.runner.RunWith;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Union;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire.PetriOwickiGries;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire.PetriOwickiGriesFed;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataTestFileAST;
 import de.uni_freiburg.informatik.ultimate.test.junitextension.testfactory.FactoryTestRunner;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
 @RunWith(FactoryTestRunner.class)
 public class PetriOwickiGriesTestSuite extends OwickiGriesTestSuite {
+	@SuppressWarnings("unchecked")
 	@Override
 	protected void runTest(final Path path, final AutomataTestFileAST ast,
 			final BoundedPetriNet<SimpleAction, IPredicate> program,
 			final BoundedPetriNet<SimpleAction, IPredicate> refinedPetriNet,
 			final BranchingProcess<SimpleAction, IPredicate> unfolding) throws AutomataLibraryException {
 		// Assume.assumeTrue("More than one proof", mUnifiers.size() == 1);
-		final var FEDERATION_COMPUTATION = true;
-
 		final var proofPlaces = mProofs.stream().map(nwa -> nwa.getStates()).collect(Collectors.toList());
-		final StatisticsData data = new StatisticsData();
-		if (FEDERATION_COMPUTATION) {
-			final var pog = new PetriOwickiGriesFed<>(mServices, unfolding, program, mPredicateFactory,
-					Function.identity(), mMgdScript, mSymbolTable, Set.of(SimpleAction.PROCEDURE),
-					computeModifiableGlobals(), proofPlaces);
-			data.aggregateBenchmarkData(pog.getStatistics());
-		} else {
-			final var pog = new PetriOwickiGries<>(mServices, unfolding, program, mPredicateFactory,
-					Function.identity(), mMgdScript, mSymbolTable, Set.of(SimpleAction.PROCEDURE),
-					computeModifiableGlobals(), proofPlaces);
-			data.aggregateBenchmarkData(pog.getStatistics());
+		final var factory = new PredicateFactoryForInterpolantAutomata(mMgdScript,
+				new PredicateFactory(mServices, mMgdScript, mSymbolTable), true);
+		INwaOutgoingLetterAndTransitionProvider<SimpleAction, IPredicate> product = mProofs.get(0);
+		for (var i = 1; i < mProofs.size(); i++) {
+			final var u = new Union<>(mAutomataServices, factory, product, mProofs.get(i));
+			product = u.getResult();
 		}
+		final StatisticsData data = new StatisticsData();
+		final var pog = new PetriOwickiGries<>(mServices, unfolding, program, mPredicateFactory, Function.identity(),
+				mMgdScript, mSymbolTable, Set.of(SimpleAction.PROCEDURE), computeModifiableGlobals(), proofPlaces,
+				product);
+		data.aggregateBenchmarkData(pog.getStatistics());
 		mLogger.info("PetriOwickiGries Statistics: %s", data);
 	}
 }

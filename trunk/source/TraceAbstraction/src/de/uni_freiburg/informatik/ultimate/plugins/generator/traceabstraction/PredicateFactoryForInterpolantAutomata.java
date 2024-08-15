@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IConcurrentProd
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISenwaStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IUnionStateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -56,7 +57,7 @@ public class PredicateFactoryForInterpolantAutomata
 		implements ISenwaStateFactory<IPredicate>, IBlackWhiteStateFactory<IPredicate>,
 		IBuchiComplementFkvStateFactory<IPredicate>, IBuchiComplementNcsbStateFactory<IPredicate>,
 		IConcurrentProductStateFactory<IPredicate>, IPetriNet2FiniteAutomatonStateFactory<IPredicate>,
-		IMinimizationStateFactory<IPredicate>, IDeterminizeStateFactory<IPredicate> {
+		IMinimizationStateFactory<IPredicate>, IDeterminizeStateFactory<IPredicate>, IUnionStateFactory<IPredicate> {
 
 	protected final boolean mComputeHoareAnnotation;
 	private final IPredicate mEmtpyStack;
@@ -102,6 +103,11 @@ public class PredicateFactoryForInterpolantAutomata
 	@Override
 	public IPredicate merge(final Collection<IPredicate> states) {
 		return mPredicateFactory.or(states);
+	}
+
+	@Override
+	public IPredicate union(final IPredicate state1, final IPredicate state2) {
+		return mPredicateFactory.and(state1, state2);
 	}
 
 	@Override

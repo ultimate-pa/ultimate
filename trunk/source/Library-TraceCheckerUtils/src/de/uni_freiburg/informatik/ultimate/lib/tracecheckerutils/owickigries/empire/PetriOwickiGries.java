@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -35,6 +34,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.MonolithicHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.MonolithicImplicationChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -77,6 +78,7 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 	private final ModifiableGlobalsTable mModifiableGlobals;
 
 	private final IPetriNet<LETTER, PLACE> mNet;
+	private final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> mProduct;
 	private final Set<PLACE> mOriginalPlaces;
 	private final List<Set<PLACE>> mProofPlaces;
 
@@ -102,7 +104,8 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 			final IPetriNet<LETTER, PLACE> net, final BasicPredicateFactory factory,
 			final Function<PLACE, IPredicate> placeToAssertion, final ManagedScript mgdScript,
 			final IIcfgSymbolTable symbolTable, final Set<String> procedures,
-			final ModifiableGlobalsTable modifiableGlobals, final List<Set<PLACE>> proofPlaces) {
+			final ModifiableGlobalsTable modifiableGlobals, final List<Set<PLACE>> proofPlaces,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> product) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(PetriOwickiGries.class);
 		mMgdScript = mgdScript;
@@ -113,6 +116,7 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 		mModifiableGlobals = modifiableGlobals;
 
 		mNet = net;
+		mProduct = product;
 		mOriginalPlaces = mNet.getPlaces();
 		mProofPlaces = proofPlaces;
 
@@ -132,7 +136,9 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 		// mCrown = getCrown();
 		// mLogger.info("Constructed Crown:\n%s", mCrown);
 		final var placesCorelation = new PlacesCoRelation<>(mBp);
-		final var computation = getEmpireComputation(placeToAssertion, placesCorelation);
+		final var implicationChecker = new MonolithicImplicationChecker(services, mgdScript);
+		final var htc = new MonolithicHoareTripleChecker(mgdScript, modifiableGlobals);
+		final var computation = getEmpireComputation(placeToAssertion, placesCorelation, implicationChecker, htc);
 		mEmpireAnnotation = computation.getEmpire();
 		mLogger.info("Constructed Empire Annotation:\n%s", mEmpireAnnotation);
 		assert checkEmpireValidity(computation, placesCorelation) : "Empire annotation is invalid";
@@ -174,9 +180,10 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 	}
 
 	private EmpireComputation<LETTER, PLACE> getEmpireComputation(final Function<PLACE, IPredicate> placeToAssertion,
-			final PlacesCoRelation<PLACE> placesCoRelation) {
-		final var computation = new EmpireComputation<>(mServices, mFactory, mBp.getNet(), mOriginalPlaces,
-				mProofPlaces, placesCoRelation, placeToAssertion, new ArrayList<>());
+			final PlacesCoRelation<PLACE> placesCoRelation, final MonolithicImplicationChecker implicationChecker,
+			final MonolithicHoareTripleChecker mhc) {
+		final var computation = new EmpireComputation<>(mServices, mFactory, mNet, placesCoRelation, placeToAssertion,
+				mProduct, mhc, implicationChecker);
 		mStatistics.reportEmpireStatistics(computation);
 		return computation;
 
