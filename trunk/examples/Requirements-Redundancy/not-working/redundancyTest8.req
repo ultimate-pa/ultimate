@@ -4,3 +4,5 @@ Input S is bool
 
 ID000: Globally, it is always the case that once "R" becomes satisfied, "S" holds after at most "5" time units for at least "10" time units
 ID001: Globally, it is always the case that once "R" becomes satisfied, "S" holds after at most "7" time units for at least "9" time units
+
+// Unable to prove that Requirements ID001, ID001 are non-redundant (line -1). Cancelled while NwaCegarLoop was analyzing trace of length 13 with TraceHistMax 4,while TraceCheckSpWp was constructing backward predicates,while PolyPacSimplificationTermWalker was simplifying a ∨-3-1 term,while PolyPacSimplificationTermWalker was simplifying 3 xjuncts wrt. a ∧-18-3-5-4-6-6-7-7-6-5-4-7-6-7-6-7-3-4-3-4-4-2-1 context.
