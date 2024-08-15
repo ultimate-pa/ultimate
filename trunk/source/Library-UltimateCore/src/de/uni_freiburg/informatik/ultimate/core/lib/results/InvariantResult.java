@@ -34,18 +34,17 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 
 /**
- * Report an invariant that holds at ELEM which is a node in an Ultimate model. The invariant is given as an expression
- * of type E.
+ * Report an invariant that holds at ELEM which is a node in an Ultimate model.
  *
  * @author Matthias Heizmann
  */
-public class InvariantResult<ELEM extends IElement, E> extends AbstractResultAtElement<ELEM> {
+public class InvariantResult<ELEM extends IElement> extends AbstractResultAtElement<ELEM> {
 	private final String mInvariant;
 	private final boolean mIsLoopLocation;
 
 	@SuppressWarnings("unchecked")
-	public InvariantResult(final String plugin, final ELEM element, final IBacktranslationService translatorSequence,
-			final E invariant) {
+	public <E> InvariantResult(final String plugin, final ELEM element,
+			final IBacktranslationService translatorSequence, final E invariant) {
 		super(element, plugin, translatorSequence);
 		// TODO: Another class instead of this boolean flag?
 		final LoopEntryAnnotation loopAnnot = LoopEntryAnnotation.getAnnotation(element);

@@ -31,12 +31,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 
 /**
- * Report a procedure contract that holds at ELEM which is a node in an Ultimate model. The contract is given as an
- * expression of type E.
+ * Report a procedure contract that holds at ELEM which is a node in an Ultimate model.
  *
  * @author Matthias Heizmann
  */
-public class ProcedureContractResult<ELEM extends IElement, E> extends AbstractResultAtElement<ELEM> {
+public class ProcedureContractResult<ELEM extends IElement> extends AbstractResultAtElement<ELEM> {
 
 	private final String mEnsures;
 	private final String mRequires;
@@ -48,7 +47,7 @@ public class ProcedureContractResult<ELEM extends IElement, E> extends AbstractR
 	 * @param location
 	 *            the Location
 	 */
-	public ProcedureContractResult(final String plugin, final ELEM position,
+	public <E> ProcedureContractResult(final String plugin, final ELEM position,
 			final IBacktranslationService translatorSequence, final String procedureName, final E requires,
 			final E ensures) {
 		super(position, plugin, translatorSequence);
@@ -58,7 +57,7 @@ public class ProcedureContractResult<ELEM extends IElement, E> extends AbstractR
 	}
 
 	@SuppressWarnings("unchecked")
-	private String translateTerm(final E term) {
+	private <E> String translateTerm(final E term) {
 		if (term == null) {
 			return null;
 		}

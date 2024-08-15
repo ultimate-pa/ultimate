@@ -95,7 +95,7 @@ public final class FloydHoareUtils {
 
 	public static void createInvariantResults(final String pluginName, final IIcfg<IcfgLocation> icfg,
 			final IFloydHoareAnnotation<IcfgLocation> annotation, final IBacktranslationService backTranslatorService,
-			final Consumer<InvariantResult<IIcfgElement, Term>> reporter) {
+			final Consumer<InvariantResult<IIcfgElement>> reporter) {
 		final Set<IcfgLocation> locsForLoopLocations = new HashSet<>();
 		locsForLoopLocations.addAll(IcfgUtils.getPotentialCycleProgramPoints(icfg));
 		locsForLoopLocations.addAll(icfg.getLoopLocations());
@@ -107,8 +107,8 @@ public final class FloydHoareUtils {
 				continue;
 			}
 			final Term formula = hoare.getFormula();
-			final InvariantResult<IIcfgElement, Term> invResult =
-					new InvariantResult<>(pluginName, locNode, backTranslatorService, formula);
+			final var invResult =
+					new InvariantResult<IIcfgElement>(pluginName, locNode, backTranslatorService, formula);
 			reporter.accept(invResult);
 
 			if (SmtUtils.isTrueLiteral(formula)) {
@@ -121,7 +121,7 @@ public final class FloydHoareUtils {
 	public static void createProcedureContractResults(final IUltimateServiceProvider services, final String pluginName,
 			final IIcfg<IcfgLocation> icfg, final IFloydHoareAnnotation<IcfgLocation> annotation,
 			final IBacktranslationService backTranslatorService,
-			final Consumer<ProcedureContractResult<IIcfgElement, Term>> reporter) {
+			final Consumer<ProcedureContractResult<IIcfgElement>> reporter) {
 		final Map<String, IcfgLocation> exitNodes = icfg.getProcedureExitNodes();
 		final Map<String, IcfgLocation> entryNodes = icfg.getProcedureEntryNodes();
 		for (final Entry<String, IcfgLocation> e : entryNodes.entrySet()) {
@@ -140,8 +140,8 @@ public final class FloydHoareUtils {
 			final Term ensuresFormula = ensures == null ? null
 					: PredicateUtils.eliminateLocalVars(ensures, services, icfg.getCfgSmtToolkit());
 
-			final ProcedureContractResult<IIcfgElement, Term> result = new ProcedureContractResult<>(pluginName, exit,
-					backTranslatorService, procName, requiresFormula, ensuresFormula);
+			final var result = new ProcedureContractResult<IIcfgElement>(pluginName, exit, backTranslatorService,
+					procName, requiresFormula, ensuresFormula);
 			if (result.isTrivial()) {
 				continue;
 			}
