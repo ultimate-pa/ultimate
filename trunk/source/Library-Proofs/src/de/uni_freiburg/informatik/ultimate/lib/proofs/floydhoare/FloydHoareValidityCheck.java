@@ -155,7 +155,8 @@ public abstract class FloydHoareValidityCheck<S> {
 			final IPredicate pred = getAnnotation(initial);
 			if (pred != null) {
 				final var check = mImplChecker.checkImplication(mAnnotation.getPrecondition(), false, pred, false);
-				assert !mAssertValidity || check != Validity.INVALID : "initial condition violated";
+				assert !mAssertValidity || check != Validity.INVALID : "initial condition " + pred
+						+ " not entailed by precondition " + mAnnotation.getPrecondition();
 				result = result.and(check);
 			}
 
@@ -269,7 +270,8 @@ public abstract class FloydHoareValidityCheck<S> {
 		}
 
 		final var check = mImplChecker.checkImplication(pred, false, mAnnotation.getPostcondition(), false);
-		assert !mAssertValidity || check != Validity.INVALID : "safety condition violated";
+		assert !mAssertValidity || check != Validity.INVALID : "post condition " + mAnnotation.getPostcondition()
+				+ "not entailed by condition " + pred + " at state " + state;
 		mIsSafe = mIsSafe.and(check);
 	}
 
