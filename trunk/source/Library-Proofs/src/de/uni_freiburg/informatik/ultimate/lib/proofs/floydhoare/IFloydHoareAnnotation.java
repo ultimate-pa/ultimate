@@ -28,17 +28,21 @@ package de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.IProof;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.PrePostConditionSpecification;
 
 /**
  * A Floyd/Hoare annotation of a program, which is usually represented as some kind of graph (e.g. ICFG or automaton).
  * The annotation labels nodes of this graph (called "states") with {@link IPredicate}s.
  *
- * A valid annotation satisfies the following criteria:
+ * Floyd/Hoare annotations prove {@link PrePostConditionSpecification}s. A valid annotation satisfies the following
+ * criteria:
  * <ol>
- * <li>The initial states are labeled by a predicate which is entailed by the annotation's precondition.</li>
+ * <li>The initial states (as identified by the specification) are labeled by a predicate which is entailed by the
+ * specification's precondition.</li>
  * <li>For every edge, the annotation of the source state, the label of the edge and the annotation of the target state
  * form a valid Hoare triple.</li>
- * <li>Every final / accepting / exit state is labeled by a predicate that entails the annotation's postcondition.</li>
+ * <li>Every final state (according to the specification) is labeled by a predicate that entails the specification's
+ * postcondition.</li>
  * </ol>
  *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
@@ -47,9 +51,11 @@ import de.uni_freiburg.informatik.ultimate.lib.proofs.IProof;
  *            the type of states
  */
 public interface IFloydHoareAnnotation<S> extends IProof {
-	IPredicate getPrecondition();
-
-	IPredicate getPostcondition();
+	/**
+	 * The pre-/postcondition specification proven by this instance.
+	 */
+	@Override
+	PrePostConditionSpecification<S> getSpecification();
 
 	/**
 	 * May return {@code null} if no annotation for the given state is known.

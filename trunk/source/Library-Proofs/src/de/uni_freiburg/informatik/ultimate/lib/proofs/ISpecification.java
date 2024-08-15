@@ -27,16 +27,10 @@
 package de.uni_freiburg.informatik.ultimate.lib.proofs;
 
 /**
- * An interface for different kinds of correctness proofs (wrt. different specifications) for a program.
+ * A marker interface for different kinds of specifications for programs.
  *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  */
-public interface IProof {
-	/**
-	 * The specification which is proven by this instance. Implementing classes or refined interfaces are encouraged to
-	 * specialize this method to restrict the possible types of specifications, if applicable.
-	 *
-	 * @return the specification (the same object, for every call)
-	 */
-	ISpecification getSpecification();
+public interface ISpecification {
+	// no methods yet
 }

@@ -59,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.PrePostConditionSpecification;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.ProofAnnotation;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.FloydHoareMapping;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.FloydHoareUtils;
@@ -175,8 +176,9 @@ public class InvariantSynthesisStarter<L extends IIcfgTransition<?>> {
 				floydHoare = null;
 			} else {
 				assert kindOfInvariant == KindOfInvariant.SAFETY;
-				floydHoare =
-						new FloydHoareMapping<>(predicateOfInitialLocations, predicateOfErrorLocations, invariants);
+
+				floydHoare = new FloydHoareMapping<>(PrePostConditionSpecification.forIcfg(icfg,
+						predicateOfInitialLocations, predicateOfErrorLocations), invariants);
 				FloydHoareUtils.writeHoareAnnotationToLogger(icfg, floydHoare, mLogger, true);
 
 				// Annotate the ICFG with the computed Floyd-Hoare annotation, so it can be consumed by other plugins.

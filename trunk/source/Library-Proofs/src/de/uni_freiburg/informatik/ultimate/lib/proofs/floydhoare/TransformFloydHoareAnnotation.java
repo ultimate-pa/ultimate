@@ -27,14 +27,17 @@
 package de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.PrePostConditionSpecification;
 
 /**
  * Transforms a Floyd-Hoare annotation by applying a function to every state.
@@ -93,14 +96,20 @@ public class TransformFloydHoareAnnotation<S1, S2> {
 			final Set<S1> states) {
 		final var result = new HashMap<S2, IPredicate>();
 
+		final var spec = annotation.getSpecification();
+		final var finalStates = new HashSet<S2>();
 		for (final S1 state : states) {
+			final var transformed = mTransformer.apply(state);
+			if (spec.isFinalState(state)) {
+				finalStates.add(transformed);
+			}
+
 			final IPredicate pred = annotation.getAnnotation(state);
 			if (pred == null) {
 				// there is no annotation for this state
 				continue;
 			}
 
-			final var transformed = mTransformer.apply(state);
 			final var annot = result.get(transformed);
 			if (annot != null) {
 				throw new IllegalStateException(
@@ -109,7 +118,12 @@ public class TransformFloydHoareAnnotation<S1, S2> {
 
 			result.put(transformed, pred);
 		}
-		return new FloydHoareMapping<>(annotation.getPrecondition(), annotation.getPostcondition(), result);
+
+		final var initialStates = spec.getInitialStates().stream().map(mTransformer).collect(Collectors.toSet());
+		final var newSpec = new PrePostConditionSpecification<>(initialStates, finalStates::contains,
+				spec.getPrecondition(), spec.getPostcondition());
+
+		return new FloydHoareMapping<>(newSpec, result);
 	}
 
 	public IFloydHoareAnnotation<S2> getResult() {

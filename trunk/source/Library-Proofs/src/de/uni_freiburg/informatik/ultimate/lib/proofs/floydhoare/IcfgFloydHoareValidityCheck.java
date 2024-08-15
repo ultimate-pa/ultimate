@@ -91,16 +91,6 @@ public class IcfgFloydHoareValidityCheck<LOC extends IcfgLocation> extends Floyd
 	}
 
 	@Override
-	protected Iterable<LOC> getInitialStates() {
-		return mIcfg.getInitialNodes();
-	}
-
-	@Override
-	protected boolean isPostState(final LOC state) {
-		return mErrorLocs.contains(state);
-	}
-
-	@Override
 	protected Iterable<Pair<IInternalAction, LOC>> getInternalSuccessors(final LOC state) {
 		return getSuccessors(state, IInternalAction.class);
 	}

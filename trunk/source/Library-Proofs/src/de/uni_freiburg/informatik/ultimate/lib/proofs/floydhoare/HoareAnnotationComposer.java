@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermVarsProc;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.PrePostConditionSpecification;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.ExtendedSimplificationResult;
@@ -308,10 +309,8 @@ public class HoareAnnotationComposer {
 		return mLoc2hoare;
 	}
 
-	public IFloydHoareAnnotation<IPredicate> extractAnnotation() {
-		final var pre = mPredicateFactory.and(); // true
-		final var post = mPredicateFactory.or(); // false
-		return new FloydHoareMapping<>(pre, post, mLoc2hoare);
+	public IFloydHoareAnnotation<IPredicate> extractAnnotation(final PrePostConditionSpecification<IPredicate> spec) {
+		return new FloydHoareMapping<>(spec, mLoc2hoare);
 	}
 
 	/**

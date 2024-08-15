@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.IProofProducer;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.PrePostConditionSpecification;
 import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
@@ -63,6 +64,7 @@ public final class NwaHoareProofProducer<L extends IAction>
 
 	private final IUltimateServiceProvider mServices;
 	private final INestedWordAutomaton<L, IPredicate> mProgram;
+	private final PrePostConditionSpecification<IPredicate> mSpecification;
 	private final CfgSmtToolkit mCsToolkit;
 	private final PredicateFactory mPredicateFactory;
 
@@ -84,6 +86,9 @@ public final class NwaHoareProofProducer<L extends IAction>
 		mPredicateFactory = predicateFactory;
 		mPrefs = prefs;
 		mHaf = new HoareAnnotationFragments<>(hoareAnnotationStates);
+
+		mSpecification = new PrePostConditionSpecification<>(program.getInitialStates(), program::isFinal,
+				predicateFactory.and(), predicateFactory.or());
 
 		mStatistics = new Statistics();
 	}
@@ -117,7 +122,7 @@ public final class NwaHoareProofProducer<L extends IAction>
 	private IFloydHoareAnnotation<IPredicate> computeProof() {
 		return mStatistics.measureProofComputation(() -> {
 			final HoareAnnotationComposer clha = computeHoareAnnotationComposer();
-			final var floydHoare = clha.extractAnnotation();
+			final var floydHoare = clha.extractAnnotation(mSpecification);
 			mStatistics.reportHoareStatistics(clha);
 			return floydHoare;
 		});

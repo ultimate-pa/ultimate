@@ -74,8 +74,8 @@ public class NwaFloydHoareValidityCheck<L extends IAction, S> extends FloydHoare
 			final IHoareTripleChecker hoareTripleChecker, final IPredicateUnifier unifier,
 			final INestedWordAutomaton<L, IPredicate> automaton, final boolean assertValidity) {
 		return new NwaFloydHoareValidityCheck<>(services, mgdScript, hoareTripleChecker, automaton,
-				new FloydHoareForInterpolantAutomaton(unifier), assertValidity, MissingAnnotationBehaviour.THROW,
-				false);
+				new FloydHoareForInterpolantAutomaton(unifier, automaton), assertValidity,
+				MissingAnnotationBehaviour.THROW, false);
 	}
 
 	/**
@@ -93,18 +93,8 @@ public class NwaFloydHoareValidityCheck<L extends IAction, S> extends FloydHoare
 			final INestedWordAutomaton<L, IPredicate> automaton, final boolean assertValidity,
 			final IPredicate precondition) {
 		return new NwaFloydHoareValidityCheck<>(services, mgdScript, hoareTripleChecker, automaton,
-				new FloydHoareForInterpolantAutomaton(precondition, unifier.getFalsePredicate()), assertValidity,
-				MissingAnnotationBehaviour.THROW, false);
-	}
-
-	@Override
-	protected Iterable<S> getInitialStates() {
-		return mAutomaton.getInitialStates();
-	}
-
-	@Override
-	protected boolean isPostState(final S state) {
-		return mAutomaton.isFinal(state);
+				new FloydHoareForInterpolantAutomaton(precondition, unifier.getFalsePredicate(), automaton),
+				assertValidity, MissingAnnotationBehaviour.THROW, false);
 	}
 
 	@Override

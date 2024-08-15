@@ -85,6 +85,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.UnsatCores;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.PrePostConditionSpecification;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.ProofAnnotation;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.FloydHoareMapping;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.FloydHoareUtils;
@@ -536,7 +537,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	private void createInvariantAndContractResults(final List<AnnotatedProgramPoint> procRootsToCheck,
 			final IIcfg<IcfgLocation> icfg, final IBacktranslationService backTranslatorService) {
 		for (final AnnotatedProgramPoint pr : procRootsToCheck) {
-			final var floydHoare = computeHoareAnnotation(pr);
+			final var floydHoare = computeHoareAnnotation(pr, icfg);
 			FloydHoareUtils.writeHoareAnnotationToLogger(icfg, floydHoare, mLogger, true);
 
 			// Annotate the ICFG with the computed Floyd-Hoare annotation, so it can be consumed by other plugins.
@@ -615,7 +616,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		}
 	}
 
-	private FloydHoareMapping<IcfgLocation> computeHoareAnnotation(final AnnotatedProgramPoint pr) {
+	private FloydHoareMapping<IcfgLocation> computeHoareAnnotation(final AnnotatedProgramPoint pr,
+			final IIcfg<IcfgLocation> icfg) {
 		final Map<IcfgLocation, IPredicate> pp2HoareAnnotation = new HashMap<>();
 		final Map<IcfgLocation, Set<AnnotatedProgramPoint>> pp2app = computeProgramPointToAnnotatedProgramPoints(pr);
 
@@ -628,7 +630,9 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 					SimplificationTechnique.SIMPLIFY_DDA);
 			pp2HoareAnnotation.put(kvp.getKey(), mPredicateUnifier.getOrConstructPredicate(simplifiedOrTerm));
 		}
-		return new FloydHoareMapping<>(mPredicateUnifier, pp2HoareAnnotation);
+
+		return new FloydHoareMapping<>(PrePostConditionSpecification.forIcfg(icfg, mPredicateUnifier),
+				pp2HoareAnnotation);
 	}
 
 	/**

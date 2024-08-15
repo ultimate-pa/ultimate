@@ -26,8 +26,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare;
 
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
+
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.PrePostConditionSpecification;
 
 /**
  * Represents the Floyd-Hoare automaton for an interpolant automaton, i.e., an automaton whose states are themselves
@@ -39,32 +44,33 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  */
 public class FloydHoareForInterpolantAutomaton implements IFloydHoareAnnotation<IPredicate> {
-	private final IPredicate mPrecondition;
-	private final IPredicate mPostcondition;
+	private final PrePostConditionSpecification<IPredicate> mSpec;
 
 	/**
-	 * Create an instance with the default precondition (true) and postcondition (false).
+	 * Create an instance with the default specification.
 	 *
 	 * @param unifier
 	 *            A predicate unifier used to retrieve predicates representing pre- and postcondition
 	 */
-	public FloydHoareForInterpolantAutomaton(final IPredicateUnifier unifier) {
-		this(unifier.getTruePredicate(), unifier.getFalsePredicate());
+	public FloydHoareForInterpolantAutomaton(final IPredicateUnifier unifier,
+			final INwaOutgoingTransitionProvider<?, IPredicate> automaton) {
+		this(unifier.getTruePredicate(), unifier.getFalsePredicate(), automaton);
 	}
 
-	public FloydHoareForInterpolantAutomaton(final IPredicate precondition, final IPredicate postcondition) {
-		mPrecondition = precondition;
-		mPostcondition = postcondition;
+	public FloydHoareForInterpolantAutomaton(final IPredicate precondition, final IPredicate postcondition,
+			final INwaOutgoingTransitionProvider<?, IPredicate> automaton) {
+		this(new PrePostConditionSpecification<>(
+				StreamSupport.stream(automaton.getInitialStates().spliterator(), false).collect(Collectors.toSet()),
+				automaton::isFinal, precondition, postcondition));
+	}
+
+	public FloydHoareForInterpolantAutomaton(final PrePostConditionSpecification<IPredicate> specification) {
+		mSpec = specification;
 	}
 
 	@Override
-	public IPredicate getPrecondition() {
-		return mPrecondition;
-	}
-
-	@Override
-	public IPredicate getPostcondition() {
-		return mPostcondition;
+	public PrePostConditionSpecification<IPredicate> getSpecification() {
+		return mSpec;
 	}
 
 	@Override

@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHo
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.MonolithicImplicationChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.PrePostConditionSpecification;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -63,6 +64,7 @@ public abstract class FloydHoareValidityCheck<S> {
 	private final IHoareTripleChecker mHoareTripleChecker;
 
 	private final IFloydHoareAnnotation<S> mAnnotation;
+	private final PrePostConditionSpecification<S> mSpec;
 
 	private final boolean mAssertValidity;
 	private final MissingAnnotationBehaviour mMissingAnnotations;
@@ -100,6 +102,7 @@ public abstract class FloydHoareValidityCheck<S> {
 		mHoareTripleChecker = hoareTripleChecker;
 
 		mAnnotation = annotation;
+		mSpec = mAnnotation.getSpecification();
 
 		mAssertValidity = assertValidity;
 		mMissingAnnotations = missingAnnotations;
@@ -138,10 +141,6 @@ public abstract class FloydHoareValidityCheck<S> {
 		return isValid() != Validity.INVALID;
 	}
 
-	protected abstract Iterable<S> getInitialStates();
-
-	protected abstract boolean isPostState(S state);
-
 	protected abstract Iterable<Pair<IInternalAction, S>> getInternalSuccessors(S state);
 
 	protected abstract Iterable<Pair<ICallAction, S>> getCallSuccessors(S state);
@@ -150,13 +149,13 @@ public abstract class FloydHoareValidityCheck<S> {
 
 	private Validity checkInitial() {
 		Validity result = Validity.VALID;
-		for (final var initial : getInitialStates()) {
+		for (final var initial : mSpec.getInitialStates()) {
 			// check initial states are labeled with precondition (or weaker)
 			final IPredicate pred = getAnnotation(initial);
 			if (pred != null) {
-				final var check = mImplChecker.checkImplication(mAnnotation.getPrecondition(), false, pred, false);
+				final var check = mImplChecker.checkImplication(mSpec.getPrecondition(), false, pred, false);
 				assert !mAssertValidity || check != Validity.INVALID : "initial condition " + pred
-						+ " not entailed by precondition " + mAnnotation.getPrecondition();
+						+ " not entailed by precondition " + mSpec.getPrecondition();
 				result = result.and(check);
 			}
 
@@ -265,12 +264,12 @@ public abstract class FloydHoareValidityCheck<S> {
 			return;
 		}
 
-		if (pred == null || !isPostState(state)) {
+		if (pred == null || !mSpec.isFinalState(state)) {
 			return;
 		}
 
-		final var check = mImplChecker.checkImplication(pred, false, mAnnotation.getPostcondition(), false);
-		assert !mAssertValidity || check != Validity.INVALID : "post condition " + mAnnotation.getPostcondition()
+		final var check = mImplChecker.checkImplication(pred, false, mSpec.getPostcondition(), false);
+		assert !mAssertValidity || check != Validity.INVALID : "post condition " + mSpec.getPostcondition()
 				+ "not entailed by condition " + pred + " at state " + state;
 		mIsSafe = mIsSafe.and(check);
 	}

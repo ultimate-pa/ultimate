@@ -27,10 +27,9 @@
 package de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare;
 
 import java.util.Map;
-import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.PrePostConditionSpecification;
 
 /**
  * A simple implementation of {@link IFloydHoareAnnotation} backed by a map.
@@ -41,55 +40,36 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
  *            the type of states which are annotated
  */
 public class FloydHoareMapping<S> implements IFloydHoareAnnotation<S> {
-	private final IPredicate mPrecondition;
-	private final IPredicate mPostcondition;
+	private final PrePostConditionSpecification<S> mSpecification;
 	private final Map<S, IPredicate> mAnnotation;
-
 	private final IPredicate mDefaultPredicate;
 
-	public FloydHoareMapping(final IPredicateUnifier unifier, final Map<S, IPredicate> annotation) {
-		this(unifier, annotation, null);
-	}
-
-	public FloydHoareMapping(final IPredicateUnifier unifier, final Map<S, IPredicate> annotation,
-			final IPredicate defaultPredicate) {
-		this(unifier.getTruePredicate(), unifier.getFalsePredicate(), annotation, defaultPredicate);
-	}
-
-	public FloydHoareMapping(final IPredicate precondition, final IPredicate postcondition,
+	public FloydHoareMapping(final PrePostConditionSpecification<S> specification,
 			final Map<S, IPredicate> annotation) {
-		this(precondition, postcondition, annotation, null);
+		this(specification, annotation, null);
 	}
 
 	/**
 	 * Create an instance with the specified pre-/postcondition pair and a default fallback predicate for unknown
 	 * states.
 	 *
-	 * @param precondition
-	 *            the precondition (assumed to hold at initial states)
-	 * @param postcondition
-	 *            the postcondition (shown to hold at exit/final states)
+	 * @param specification
+	 *            The specification proven by the created instance
 	 * @param annotation
 	 *            the underlying map from states to their annotations
 	 * @param defaultPredicate
 	 *            A default predicate to be returned when no annotation for a given state is known.
 	 */
-	public FloydHoareMapping(final IPredicate precondition, final IPredicate postcondition,
-			final Map<S, IPredicate> annotation, final IPredicate defaultPredicate) {
-		mPrecondition = Objects.requireNonNull(precondition);
-		mPostcondition = Objects.requireNonNull(postcondition);
+	public FloydHoareMapping(final PrePostConditionSpecification<S> specification, final Map<S, IPredicate> annotation,
+			final IPredicate defaultPredicate) {
 		mAnnotation = annotation;
 		mDefaultPredicate = defaultPredicate;
+		mSpecification = specification;
 	}
 
 	@Override
-	public IPredicate getPrecondition() {
-		return mPrecondition;
-	}
-
-	@Override
-	public IPredicate getPostcondition() {
-		return mPostcondition;
+	public PrePostConditionSpecification<S> getSpecification() {
+		return mSpecification;
 	}
 
 	@Override
