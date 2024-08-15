@@ -27,10 +27,10 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.IntStream;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.ConditionAnnotation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -47,7 +48,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedIteratorNoopConstruction;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TransformIterator;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Location;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Segment;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.ViolationSequence;
@@ -70,14 +73,14 @@ public class YamlWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 	private final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> mAbstraction;
 	private final Witness mWitness;
 	private final ISLPredicate mEmptyStackState;
-	private final HashSet<CountingPredicate> mAllCountingStates;
+	private final Set<ProductPredicate> mAllProductStates = new HashSet<>();
+	private static final boolean CHECK_ASSUMPTION_LOCATIONS = true;
 
 	public YamlWitnessProductAutomaton(final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> abstraction,
 			final Witness witness, final PredicateFactory predicateFactory) {
 		mAbstraction = abstraction;
 		mWitness = witness;
 		mEmptyStackState = predicateFactory.newEmptyStackPredicate();
-		mAllCountingStates = new HashSet<>();
 	}
 
 	@Deprecated
@@ -97,36 +100,32 @@ public class YamlWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 	}
 
 	@Override
+	/**
+	 * Returns initial ProductPredicates for every initial state of the program automaton and every violation sequence
+	 */
 	public Iterable<IPredicate> getInitialStates() {
-		final Set<IPredicate> result = new HashSet<>();
-		for (final IPredicate s : mAbstraction.getInitialStates()) {
-			for (int i = 0; i < mWitness.getEntries().size(); i++) {
-				final CountingPredicate countingState = new CountingPredicate(s, 0, i);
-				result.add(countingState);
-				mAllCountingStates.add(countingState);
-			}
-		}
-		return result;
+		return () -> new NestedIteratorNoopConstruction<>(mAbstraction.getInitialStates().iterator(), s -> IntStream
+				.range(0, mWitness.getEntries().size()).mapToObj(i -> createProductState(s, 0, i)).iterator());
 	}
 
 	@Override
 	public boolean isInitial(final IPredicate state) {
-		final CountingPredicate annot = (CountingPredicate) state;
-		return mAbstraction.isInitial(annot.getUnderlying()) && annot.getWPCounter() == 0;
+		final ProductPredicate productState = (ProductPredicate) state;
+		return mAbstraction.isInitial(productState.getUnderlying()) && productState.getSegmentCounter() == 0;
 	}
 
 	@Override
 	public boolean isFinal(final IPredicate state) {
-		final CountingPredicate annot = (CountingPredicate) state;
-		final ViolationSequence vSequence = (ViolationSequence) mWitness.getEntries().get(annot.getVSCounter());
-
-		return (mAbstraction.isFinal(annot.getUnderlying())
-				&& (annot.getWPCounter() == (vSequence.getSegments().size())));
+		final ProductPredicate productState = (ProductPredicate) state;
+		final ViolationSequence violationSequence =
+				(ViolationSequence) mWitness.getEntries().get(productState.getViolationSequenceCounter());
+		return mAbstraction.isFinal(productState.getUnderlying())
+				&& productState.getSegmentCounter() == violationSequence.getSegments().size();
 	}
 
 	@Override
 	public int size() {
-		return mAllCountingStates.size();
+		return mAllProductStates.size();
 	}
 
 	@Override
@@ -137,255 +136,149 @@ public class YamlWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, IPredicate>> internalSuccessors(final IPredicate state,
 			final LETTER letter) {
-		final CountingPredicate countingState = (CountingPredicate) state;
-		final IPredicate currentUnderlying = countingState.getUnderlying();
-		int currentCounter = countingState.getWPCounter();
-
-		final ArrayList<OutgoingInternalTransition<LETTER, IPredicate>> counterSuccessors = new ArrayList<>();
-
-		// return successors with the same counter if witness has been fully read
-		if (isWitnessFinished(currentCounter, countingState.getVSCounter())) {
-			counterSuccessors.addAll(getInternalCounterSuccessors(currentUnderlying, letter, currentCounter,
-					countingState.getVSCounter()));
-			return counterSuccessors;
-		}
-
-		final ViolationSequence currentvSeq =
-				(ViolationSequence) mWitness.getEntries().get(countingState.getVSCounter());
-		Segment currentSegment = currentvSeq.getSegments().get(currentCounter);
-		Waypoint currentWP = currentSegment.getFollowWaypoint();
-
-		// return empty List if an avoid WP matches (Assumptions are ignored)
-		if (currentSegment.getAvoidWaypoints().stream().anyMatch(x -> matchesInternal(letter, x))) {
+		final ProductPredicate productState = (ProductPredicate) state;
+		final int successorSegmentCounter = getSuccessorCounter(productState, letter);
+		if (successorSegmentCounter == -1) {
 			return List.of();
 		}
-
-		// for Assumption Waypoints continue with the same state but increase the counter
-		while (currentWP instanceof WaypointAssumption && matchesLocation(letter, currentWP)) {
-			currentCounter++;
-			currentSegment = currentvSeq.getSegments().get(currentCounter);
-			currentWP = currentSegment.getFollowWaypoint();
-			if (currentSegment.getAvoidWaypoints().stream().anyMatch(x -> matchesInternal(letter, x))) {
-				return List.of();
-			}
-		}
-
-		if (matchesInternal(letter, currentWP)) {
-			currentCounter++;
-		}
-
-		counterSuccessors.addAll(
-				getInternalCounterSuccessors(currentUnderlying, letter, currentCounter, countingState.getVSCounter()));
-
-		return counterSuccessors;
+		return () -> new TransformIterator<>(
+				mAbstraction.internalSuccessors(productState.getUnderlying(), letter).iterator(),
+				x -> new OutgoingInternalTransition<>(letter, createProductState(x.getSucc(), successorSegmentCounter,
+						productState.getViolationSequenceCounter())));
 	}
 
 	@Override
 	public Iterable<OutgoingCallTransition<LETTER, IPredicate>> callSuccessors(final IPredicate state,
 			final LETTER letter) {
-		final CountingPredicate countingState = (CountingPredicate) state;
-		final IPredicate currentUnderlying = countingState.getUnderlying();
-		int currentCounter = countingState.getWPCounter();
-		final ArrayList<OutgoingCallTransition<LETTER, IPredicate>> counterSuccessors = new ArrayList<>();
-
-		if (isWitnessFinished(currentCounter, countingState.getVSCounter())) {
-			counterSuccessors.addAll(
-					getCallCounterSuccessors(currentUnderlying, letter, currentCounter, countingState.getVSCounter()));
-			return counterSuccessors;
-		}
-
-		final ViolationSequence currentvSeq =
-				(ViolationSequence) mWitness.getEntries().get(countingState.getVSCounter());
-		Segment currentSegment = currentvSeq.getSegments().get(currentCounter);
-		Waypoint currentWP = currentSegment.getFollowWaypoint();
-
-		if (currentSegment.getAvoidWaypoints().stream().anyMatch(x -> matchesCall(letter, x))) {
+		final ProductPredicate productState = (ProductPredicate) state;
+		final int successorSegmentCounter = getSuccessorCounter(productState, letter);
+		if (successorSegmentCounter == -1) {
 			return List.of();
 		}
-
-		while (currentWP instanceof WaypointAssumption && matchesLocation(letter, currentWP)) {
-			currentCounter++;
-			currentSegment = currentvSeq.getSegments().get(currentCounter);
-			currentWP = currentSegment.getFollowWaypoint();
-			if (currentSegment.getAvoidWaypoints().stream().anyMatch(x -> matchesInternal(letter, x))) {
-				return List.of();
-			}
-		}
-
-		if (matchesCall(letter, currentWP)) {
-			currentCounter++;
-		}
-
-		counterSuccessors.addAll(
-				getCallCounterSuccessors(currentUnderlying, letter, currentCounter, countingState.getVSCounter()));
-
-		return counterSuccessors;
+		return () -> new TransformIterator<>(
+				mAbstraction.callSuccessors(productState.getUnderlying(), letter).iterator(),
+				x -> new OutgoingCallTransition<>(letter, createProductState(x.getSucc(), successorSegmentCounter,
+						productState.getViolationSequenceCounter())));
 	}
 
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, IPredicate>> returnSuccessors(final IPredicate state,
 			final IPredicate hier, final LETTER letter) {
-		final CountingPredicate countingState = (CountingPredicate) state;
-		final CountingPredicate countingHier = (CountingPredicate) hier;
-		final IPredicate currentUnderlying = countingState.getUnderlying();
-		int currentCounter = countingState.getWPCounter();
-
-		final ArrayList<OutgoingReturnTransition<LETTER, IPredicate>> counterSuccessors = new ArrayList<>();
-
-		if (isWitnessFinished(currentCounter, countingState.getVSCounter())) {
-			counterSuccessors.addAll(getReturnCounterSuccessors(currentUnderlying, countingHier, letter, currentCounter,
-					countingState.getVSCounter()));
-			return counterSuccessors;
-		}
-		final ViolationSequence currentvSeq =
-				(ViolationSequence) mWitness.getEntries().get(countingState.getVSCounter());
-		Segment currentSegment = currentvSeq.getSegments().get(currentCounter);
-		Waypoint currentWP = currentSegment.getFollowWaypoint();
-
-		if (currentSegment.getAvoidWaypoints().stream().anyMatch(x -> matchesCall(letter, x))) {
+		final ProductPredicate productState = (ProductPredicate) state;
+		final ProductPredicate productHier = (ProductPredicate) hier;
+		final IPredicate currentUnderlying = productState.getUnderlying();
+		final int successorSegmentCounter = getSuccessorCounter(productState, letter);
+		if (successorSegmentCounter == -1) {
 			return List.of();
 		}
+		return () -> new TransformIterator<>(
+				mAbstraction.returnSuccessors(currentUnderlying, productHier.getUnderlying(), letter).iterator(),
+				x -> new OutgoingReturnTransition<>(productHier, letter, createProductState(x.getSucc(),
+						successorSegmentCounter, productState.getViolationSequenceCounter())));
+	}
 
-		while (currentWP instanceof WaypointAssumption && matchesLocation(letter, currentWP)) {
-			currentCounter++;
-			currentSegment = currentvSeq.getSegments().get(currentCounter);
-			currentWP = currentSegment.getFollowWaypoint();
-			if (currentSegment.getAvoidWaypoints().stream().anyMatch(x -> matchesInternal(letter, x))) {
-				return List.of();
+	/** returns the appropriate segment counter for the successors of the product state and letter */
+	private int getSuccessorCounter(final ProductPredicate productState, final LETTER letter) {
+		int segmentCounter = productState.getSegmentCounter();
+
+		// this is here because there could be multiple Violation Sequences at the same time
+		final ViolationSequence currentViolationSequence =
+				(ViolationSequence) mWitness.getEntries().get(productState.getViolationSequenceCounter());
+
+		// return the unchanged counter if witness has been fully read
+		if (segmentCounter == currentViolationSequence.getSegments().size()) {
+			return segmentCounter;
+		}
+
+		Segment currentSegment = currentViolationSequence.getSegments().get(segmentCounter);
+		Waypoint currentFollowWaypoint = currentSegment.getFollowWaypoint();
+
+		// check if an Avoid Waypoint of the segment matches (Assumption Waypoints are ignored)
+		if (currentSegment.getAvoidWaypoints().stream().anyMatch(x -> matchesWaypoint(letter, x))) {
+			return -1;
+		}
+
+		// check follow assumption waypoints separately because they can match simultaneously with other waypoints
+		while (currentFollowWaypoint instanceof WaypointAssumption
+				&& (!CHECK_ASSUMPTION_LOCATIONS || matchesStartLocation(letter, currentFollowWaypoint))) {
+			segmentCounter++;
+			currentSegment = currentViolationSequence.getSegments().get(segmentCounter);
+			currentFollowWaypoint = currentSegment.getFollowWaypoint();
+			if (currentSegment.getAvoidWaypoints().stream().anyMatch(x -> matchesWaypoint(letter, x))) {
+				return -1;
 			}
 		}
 
-		if (matchesReturn(letter, currentWP)) {
-			currentCounter++;
+		if (matchesWaypoint(letter, currentFollowWaypoint)) {
+			segmentCounter++;
 		}
-		counterSuccessors.addAll(getReturnCounterSuccessors(currentUnderlying, countingHier, letter, currentCounter,
-				countingState.getVSCounter()));
-		return counterSuccessors;
+
+		return segmentCounter;
 	}
 
-	private ArrayList<OutgoingInternalTransition<LETTER, IPredicate>> getInternalCounterSuccessors(
-			final IPredicate state, final LETTER letter, final int counter, final int vsCounter) {
-		final ArrayList<OutgoingInternalTransition<LETTER, IPredicate>> counterSuccessors = new ArrayList<>();
-		final Iterable<OutgoingInternalTransition<LETTER, IPredicate>> noCounterSuccessors =
-				mAbstraction.internalSuccessors(state, letter);
-		for (final OutgoingInternalTransition<LETTER, IPredicate> outTrans : noCounterSuccessors) {
-			final CountingPredicate counterSuccessor = new CountingPredicate(outTrans.getSucc(), counter, vsCounter);
-			counterSuccessors.add(new OutgoingInternalTransition<>(outTrans.getLetter(), counterSuccessor));
-			mAllCountingStates.add(counterSuccessor);
+	/** Checks if the waypoint matches with the statement. Assumption waypoints are not matched */
+	private boolean matchesWaypoint(final LETTER statement, final Waypoint waypoint) {
+		if (waypoint instanceof WaypointBranching && matchesStartLocation(statement, waypoint)) {
+			final ConditionAnnotation conditionAnnot = ConditionAnnotation.getAnnotation(statement);
+			return conditionAnnot != null
+					&& Boolean.parseBoolean(waypoint.getConstraint()) == !conditionAnnot.isNegated();
 		}
-		return counterSuccessors;
-	}
-
-	private ArrayList<OutgoingCallTransition<LETTER, IPredicate>> getCallCounterSuccessors(final IPredicate state,
-			final LETTER letter, final int counter, final int vsCounter) {
-		final ArrayList<OutgoingCallTransition<LETTER, IPredicate>> counterSuccessors = new ArrayList<>();
-		final Iterable<OutgoingCallTransition<LETTER, IPredicate>> noCounterSuccessors =
-				mAbstraction.callSuccessors(state, letter);
-		for (final OutgoingCallTransition<LETTER, IPredicate> outTrans : noCounterSuccessors) {
-			final CountingPredicate counterSuccessor = new CountingPredicate(outTrans.getSucc(), counter, vsCounter);
-			counterSuccessors.add(new OutgoingCallTransition<>(outTrans.getLetter(), counterSuccessor));
-			mAllCountingStates.add(counterSuccessor);
+		if (waypoint instanceof WaypointTarget) {
+			return matchesStartLocation(statement, waypoint);
 		}
-		return counterSuccessors;
-	}
-
-	private ArrayList<OutgoingReturnTransition<LETTER, IPredicate>> getReturnCounterSuccessors(final IPredicate state,
-			final CountingPredicate hier, final LETTER letter, final int counter, final int vsCounter) {
-		final ArrayList<OutgoingReturnTransition<LETTER, IPredicate>> counterSuccessors = new ArrayList<>();
-		final Iterable<OutgoingReturnTransition<LETTER, IPredicate>> noCounterSuccessors =
-				mAbstraction.returnSuccessors(state, hier.getUnderlying(), letter);
-		for (final OutgoingReturnTransition<LETTER, IPredicate> outTrans : noCounterSuccessors) {
-			final CountingPredicate counterSuccessor = new CountingPredicate(outTrans.getSucc(), counter, vsCounter);
-			counterSuccessors.add(new OutgoingReturnTransition<>(hier, outTrans.getLetter(), counterSuccessor));
-			mAllCountingStates.add(counterSuccessor);
+		if (waypoint instanceof WaypointFunctionEnter) {
+			return matchesEndLocation(statement, waypoint);
 		}
-		return counterSuccessors;
-	}
-
-	private boolean matchesInternal(final LETTER statement, final Waypoint waypoint) {
-		if (matchesLocation(statement, waypoint)) {
-			if (waypoint instanceof WaypointBranching) {
-				final ConditionAnnotation conditionAnnot = ConditionAnnotation.getAnnotation(statement);
-				if (conditionAnnot == null) {
-					return false;
-				}
-				if (waypoint.getConstraint().equals("false")) {
-					return conditionAnnot.isNegated();
-
-				}
-				if (waypoint.getConstraint().equals("true")) {
-					return !conditionAnnot.isNegated();
-				}
+		if (waypoint instanceof WaypointFunctionReturn) {
+			if (statement instanceof IIcfgReturnTransition) {
+				// function_return waypoints match the location of the function call
+				return matchesEndLocation(((IIcfgReturnTransition<?, ?>) statement).getCorrespondingCall(), waypoint);
 			}
-			if (waypoint instanceof WaypointTarget) {
-				return true;
-			}
+			return matchesEndLocation(statement, waypoint);
 		}
 		return false;
 	}
 
-	private boolean matchesCall(final LETTER statement, final Waypoint waypoint) {
+	/** Returns true if the start line and column of the statement match the location of the waypoint */
+	private static boolean matchesStartLocation(final IElement statement, final Waypoint waypoint) {
 		final ILocation programLoc = ILocation.getAnnotation(statement);
 		final Location witnessLoc = waypoint.getLocation();
-		if (waypoint instanceof WaypointFunctionEnter && programLoc.getEndLine() == witnessLoc.getLine()) {
-			if (witnessLoc.getColumn() == null) {
-				return true;
-			}
-			if (witnessLoc.getColumn() == programLoc.getEndColumn()) {
-				return true;
-			}
-		}
-		return false;
+		return programLoc.getStartLine() == witnessLoc.getLine()
+				&& (witnessLoc.getColumn() == null || witnessLoc.getColumn() == programLoc.getStartColumn());
 	}
 
-	private boolean matchesReturn(final LETTER statement, final Waypoint waypoint) {
-		final var call = ((IIcfgReturnTransition<?, ?>) statement).getCorrespondingCall();
-		final ILocation hierLoc = ILocation.getAnnotation(call);
-		final Location witnessLoc = waypoint.getLocation();
-		if (hierLoc != null && hierLoc.getEndLine() == witnessLoc.getLine()
-				&& waypoint instanceof WaypointFunctionReturn) {
-			if (witnessLoc.getColumn() == null) {
-				return true;
-			}
-			if (witnessLoc.getColumn() == hierLoc.getEndColumn()) {
-				return true;
-			}
-		}
-
-		return false;
-	}
-
-	private boolean matchesLocation(final LETTER statement, final Waypoint waypoint) {
+	/** Returns true if the end line and column of the statement match the location of the waypoint */
+	private static boolean matchesEndLocation(final IElement statement, final Waypoint waypoint) {
 		final ILocation programLoc = ILocation.getAnnotation(statement);
 		final Location witnessLoc = waypoint.getLocation();
-		if (programLoc.getStartLine() == witnessLoc.getLine()) {
-			if (witnessLoc.getColumn() == null) {
-				return true;
-			}
-			if (witnessLoc.getColumn() == programLoc.getStartColumn()) {
-				return true;
-			}
-		}
-		return false;
+		return programLoc.getEndLine() == witnessLoc.getLine()
+				&& (witnessLoc.getColumn() == null || witnessLoc.getColumn() == programLoc.getEndColumn());
 	}
 
-	private boolean isWitnessFinished(final int counter, final int vsCounter) {
-		final ViolationSequence vSeq = (ViolationSequence) mWitness.getEntries().get(vsCounter);
-		return counter >= vSeq.getSegments().size();
+	/** Creates a ProductPredicate with the counters */
+	private IPredicate createProductState(final IPredicate predicate, final int waypointCounter,
+			final int violationSequenceCounter) {
+		final ProductPredicate result = new ProductPredicate(predicate, waypointCounter, violationSequenceCounter);
+		mAllProductStates.add(result);
+		return result;
 	}
 
-	private static final class CountingPredicate extends AnnotatedPredicate<IPredicate, Pair<Integer, Integer>>
+	/**
+	 * IPredicate annotated with counters for the Violation Sequence and Segments of an entry-based violation witness
+	 */
+	private static final class ProductPredicate extends AnnotatedPredicate<IPredicate, Pair<Integer, Integer>>
 			implements ISLPredicate {
-		public CountingPredicate(final IPredicate underlying, final int wpCounter, final int vsCounter) {
-			super(underlying, new Pair<>(wpCounter, vsCounter));
+		public ProductPredicate(final IPredicate underlying, final int segmentCounter,
+				final int violationSequenceCounter) {
+			super(underlying, new Pair<>(segmentCounter, violationSequenceCounter));
 		}
 
-		public int getWPCounter() {
+		public int getSegmentCounter() {
 			return mAnnotation.getFirst();
 
 		}
 
-		public int getVSCounter() {
+		public int getViolationSequenceCounter() {
 			return mAnnotation.getSecond();
 		}
 
