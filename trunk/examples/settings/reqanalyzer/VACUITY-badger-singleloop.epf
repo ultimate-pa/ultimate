@@ -38,6 +38,7 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Interprocedural\ analysis\ (Nested\ Interpolants)=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Iterations\ until\ the\ model\ checker\ surrenders=10
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Number\ of\ iteration\ whose\ artifact\ is\ visualized=1000000
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Limit\ analysis\ time=900
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Refine\ always\ when\ using\ abstract\ interpretation=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/SMT\ solver=External_DefaultMode
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Stop\ after\ first\ violation\ was\ found=false
@@ -49,19 +50,18 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Use\ weakest\ precondition\ in\ PathInvariants=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/cut-off\ requires\ same\ transition=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/use\ unfolding\ as\ abstraction=false
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Trace\ refinement\ strategy=MAMMOTH_NO_AM
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Trace\ refinement\ strategy=BADGER
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Trace\ refinement\ exception\ blacklist=UNKNOWN
 @de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=0.1.23
 
 #Thu Jan 18 16:49:04 CET 2024
 \!/instance/de.uni_freiburg.informatik.ultimate.pea2boogie=
-/instance/de.uni_freiburg.informatik.ultimate.pea2boogie/Check\ consistency=false
+/instance/de.uni_freiburg.informatik.ultimate.pea2boogie/Check\ consistency=true
 /instance/de.uni_freiburg.informatik.ultimate.pea2boogie/Check\ if\ two\ PEAs\ are\ complements\ of\ each\ other=false
-/instance/de.uni_freiburg.informatik.ultimate.pea2boogie/Check\ redundancy=false
 /instance/de.uni_freiburg.informatik.ultimate.pea2boogie/Check\ rt-inconsistency=false
-/instance/de.uni_freiburg.informatik.ultimate.pea2boogie/Check\ vacuity=false
-/instance/de.uni_freiburg.informatik.ultimate.pea2boogie/PEA\ Transformation\ Mode=REQ_RED
+/instance/de.uni_freiburg.informatik.ultimate.pea2boogie/Check\ vacuity=true
 /instance/de.uni_freiburg.informatik.ultimate.pea2boogie/Use\ epsilon\ transformation\ during\ rt-inconsistency\ check=false
+/instance/de.uni_freiburg.informatik.ultimate.pea2boogie/Generate\ history\ vars\ ('v)\ in\ Encoding=false
 @de.uni_freiburg.informatik.ultimate.pea2boogie=0.2.3
 file_export_version=3.0
 
