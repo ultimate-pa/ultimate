@@ -27,6 +27,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.core.lib.results;
 
+import java.util.Set;
+
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 
@@ -40,6 +43,7 @@ public class ProcedureContractResult<ELEM extends IElement> extends AbstractResu
 	private final String mEnsures;
 	private final String mRequires;
 	private final String mProcedureName;
+	private final Set<Check> mChecks;
 
 	/**
 	 * Constructor.
@@ -49,11 +53,12 @@ public class ProcedureContractResult<ELEM extends IElement> extends AbstractResu
 	 */
 	public <E> ProcedureContractResult(final String plugin, final ELEM position,
 			final IBacktranslationService translatorSequence, final String procedureName, final E requires,
-			final E ensures) {
+			final E ensures, final Set<Check> checks) {
 		super(position, plugin, translatorSequence);
 		mProcedureName = procedureName;
 		mRequires = translateTerm(requires);
 		mEnsures = translateTerm(ensures);
+		mChecks = checks;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -100,5 +105,12 @@ public class ProcedureContractResult<ELEM extends IElement> extends AbstractResu
 
 	public boolean isTrivial() {
 		return mRequires == null && mEnsures == null;
+	}
+
+	/**
+	 * Represents the specifications to whose proof this contract belongs.
+	 */
+	public Set<Check> getChecks() {
+		return mChecks;
 	}
 }

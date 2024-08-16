@@ -59,7 +59,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeIterator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocationIterator;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramOldVar;
@@ -157,12 +156,12 @@ public class IcfgUtils {
 		return procErrorNodes.contains(loc);
 	}
 
+	public static <LOC extends IcfgLocation> Stream<LOC> getAllLocations(final IIcfg<LOC> icfg) {
+		return icfg.getProgramPoints().values().stream().flatMap(x -> x.values().stream());
+	}
+
 	public static <LOC extends IcfgLocation> int getNumberOfLocations(final IIcfg<LOC> icfg) {
-		int result = 0;
-		for (final Entry<String, Map<DebugIdentifier, LOC>> entry : icfg.getProgramPoints().entrySet()) {
-			result += entry.getValue().size();
-		}
-		return result;
+		return (int) getAllLocations(icfg).count();
 	}
 
 	/**

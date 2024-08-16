@@ -29,9 +29,12 @@ package de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessProcedureContract;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.InvariantResult;
@@ -96,10 +99,12 @@ public final class FloydHoareUtils {
 	public static void createInvariantResults(final String pluginName, final IIcfg<IcfgLocation> icfg,
 			final IFloydHoareAnnotation<IcfgLocation> annotation, final IBacktranslationService backTranslatorService,
 			final Consumer<InvariantResult<IIcfgElement>> reporter) {
+		final var checks = getCheckedSpecifications(icfg, annotation);
+
+		// find all locations that have outgoing edges which are annotated with LoopEntry, i.e., all loop candidates
 		final Set<IcfgLocation> locsForLoopLocations = new HashSet<>();
 		locsForLoopLocations.addAll(IcfgUtils.getPotentialCycleProgramPoints(icfg));
 		locsForLoopLocations.addAll(icfg.getLoopLocations());
-		// find all locations that have outgoing edges which are annotated with LoopEntry, i.e., all loop candidates
 
 		for (final IcfgLocation locNode : locsForLoopLocations) {
 			final IPredicate hoare = annotation.getAnnotation(locNode);
@@ -108,7 +113,7 @@ public final class FloydHoareUtils {
 			}
 			final Term formula = hoare.getFormula();
 			final var invResult =
-					new InvariantResult<IIcfgElement>(pluginName, locNode, backTranslatorService, formula);
+					new InvariantResult<IIcfgElement>(pluginName, locNode, backTranslatorService, formula, checks);
 			reporter.accept(invResult);
 
 			if (SmtUtils.isTrueLiteral(formula)) {
@@ -122,6 +127,8 @@ public final class FloydHoareUtils {
 			final IIcfg<IcfgLocation> icfg, final IFloydHoareAnnotation<IcfgLocation> annotation,
 			final IBacktranslationService backTranslatorService,
 			final Consumer<ProcedureContractResult<IIcfgElement>> reporter) {
+		final var checks = getCheckedSpecifications(icfg, annotation);
+
 		final Map<String, IcfgLocation> exitNodes = icfg.getProcedureExitNodes();
 		final Map<String, IcfgLocation> entryNodes = icfg.getProcedureEntryNodes();
 		for (final Entry<String, IcfgLocation> e : entryNodes.entrySet()) {
@@ -141,7 +148,7 @@ public final class FloydHoareUtils {
 					: PredicateUtils.eliminateLocalVars(ensures, services, icfg.getCfgSmtToolkit());
 
 			final var result = new ProcedureContractResult<IIcfgElement>(pluginName, exit, backTranslatorService,
-					procName, requiresFormula, ensuresFormula);
+					procName, requiresFormula, ensuresFormula, checks);
 			if (result.isTrivial()) {
 				continue;
 			}
@@ -149,6 +156,14 @@ public final class FloydHoareUtils {
 			reporter.accept(result);
 			new WitnessProcedureContract(result.getRequiresResult(), result.getEnsuresResult()).annotate(exit);
 		}
+	}
+
+	private static Set<Check> getCheckedSpecifications(final IIcfg<?> icfg,
+			final IFloydHoareAnnotation<IcfgLocation> proof) {
+		final var spec = proof.getSpecification();
+		assert spec.isUnreachabilitySpecification() : "Only unreachability specifications currently supported";
+		return IcfgUtils.getAllLocations(icfg).filter(spec::isFinalState).map(Check::getAnnotation)
+				.filter(Objects::nonNull).collect(Collectors.toSet());
 	}
 
 	private static boolean isAuxiliaryProcedure(final String proc) {

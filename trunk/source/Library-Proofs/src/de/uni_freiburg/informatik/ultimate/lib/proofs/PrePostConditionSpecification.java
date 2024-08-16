@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 
 /**
  * A specification stating that any execution starting in an initial location and with a variable assignment satisfying
@@ -108,5 +109,9 @@ public class PrePostConditionSpecification<S> implements ISpecification {
 
 	public IPredicate getPostcondition() {
 		return mPostcondition;
+	}
+
+	public boolean isUnreachabilitySpecification() {
+		return SmtUtils.isFalseLiteral(mPostcondition.getFormula());
 	}
 }
