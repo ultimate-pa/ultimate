@@ -27,51 +27,83 @@
 package de.uni_freiburg.informatik.ultimate.lib.proofs;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
 
+/**
+ * A specification stating that any execution starting in an initial location and with a variable assignment satisfying
+ * a given precondition must, when (and if) it reaches a final location, have a current variable assignment satisfying a
+ * given postcondition.
+ *
+ * There may be multiple initial locations, and the precondition that holds initially may differ depending on the
+ * initial condition. This is for example needed in interprocedural programs, where (in "library mode") each procedure's
+ * entry node is an initial location, and the corresponding precondition states that g = old(g) for all modifiable
+ * global variables of the procedure.
+ *
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ *
+ * @param <S>
+ *            the type of states (or "locations")
+ */
 public class PrePostConditionSpecification<S> implements ISpecification {
-	private final Collection<S> mInitialStates;
+	private final Map<S, IPredicate> mInitialStates;
 	private final Predicate<S> mIsFinalState;
-
-	private final IPredicate mPrecondition;
 	private final IPredicate mPostcondition;
 
-	public PrePostConditionSpecification(final Collection<S> initialStates, final Predicate<S> isFinalState,
-			final IPredicate precondition, final IPredicate postcondition) {
+	/**
+	 * Creates a new specification.
+	 *
+	 * @param initialStates
+	 *            a map from initial states to the preconditions which may be assumed at each state
+	 * @param isFinalState
+	 *            a predicate identifying final states
+	 * @param postcondition
+	 *            a postcondition that must hold at every final state
+	 */
+	public PrePostConditionSpecification(final Map<S, IPredicate> initialStates, final Predicate<S> isFinalState,
+			final IPredicate postcondition) {
 		mInitialStates = initialStates;
 		mIsFinalState = isFinalState;
-		mPrecondition = Objects.requireNonNull(precondition);
 		mPostcondition = Objects.requireNonNull(postcondition);
 	}
 
 	public static <LOC extends IcfgLocation> PrePostConditionSpecification<LOC> forIcfg(final IIcfg<LOC> icfg,
 			final IPredicateUnifier unifier) {
-		return forIcfg(icfg, unifier.getTruePredicate(), unifier.getFalsePredicate());
+		final var modGlobTable = icfg.getCfgSmtToolkit().getModifiableGlobalsTable();
+		final var script = icfg.getCfgSmtToolkit().getManagedScript().getScript();
+		final var initials = icfg.getInitialNodes().stream()
+				.collect(Collectors.toMap(Function.identity(),
+						l -> PredicateUtils.computeInitialPredicateForProcedure(modGlobTable, script, l.getProcedure(),
+								unifier.getPredicateFactory())));
+		return forIcfg(icfg, initials, unifier.getFalsePredicate());
 	}
 
 	public static <LOC extends IcfgLocation> PrePostConditionSpecification<LOC> forIcfg(final IIcfg<LOC> icfg,
-			final IPredicate precondition, final IPredicate postcondition) {
-		return new PrePostConditionSpecification<>(icfg.getInitialNodes(), l -> IcfgUtils.isErrorLocation(icfg, l),
-				precondition, postcondition);
+			final Map<LOC, IPredicate> initialStates, final IPredicate postcondition) {
+		return new PrePostConditionSpecification<>(initialStates, l -> IcfgUtils.isErrorLocation(icfg, l),
+				postcondition);
 	}
 
 	public Collection<S> getInitialStates() {
-		return mInitialStates;
+		return mInitialStates.keySet();
 	}
 
 	public boolean isFinalState(final S state) {
 		return mIsFinalState.test(state);
 	}
 
-	public IPredicate getPrecondition() {
-		return mPrecondition;
+	public IPredicate getPrecondition(final S initialState) {
+		return mInitialStates.get(initialState);
 	}
 
 	public IPredicate getPostcondition() {

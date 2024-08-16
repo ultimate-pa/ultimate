@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -87,10 +88,24 @@ public final class NwaHoareProofProducer<L extends IAction>
 		mPrefs = prefs;
 		mHaf = new HoareAnnotationFragments<>(hoareAnnotationStates);
 
-		mSpecification = new PrePostConditionSpecification<>(program.getInitialStates(), program::isFinal,
-				predicateFactory.and(), predicateFactory.or());
+		final var initialStates = computeInitialStatesAndPreconditions(program, csToolkit, predicateFactory);
+		mSpecification = new PrePostConditionSpecification<>(initialStates, program::isFinal, predicateFactory.or());
 
 		mStatistics = new Statistics();
+	}
+
+	private static Map<IPredicate, IPredicate> computeInitialStatesAndPreconditions(
+			final INestedWordAutomaton<?, IPredicate> program, final CfgSmtToolkit csToolkit,
+			final PredicateFactory factory) {
+		final var result = new HashMap<IPredicate, IPredicate>();
+		for (final var initial : program.getInitialStates()) {
+			final var loc = PredicateUtils.getSingleLocation(initial);
+			final var precondition =
+					PredicateUtils.computeInitialPredicateForProcedure(csToolkit.getModifiableGlobalsTable(),
+							csToolkit.getManagedScript().getScript(), loc.getProcedure(), factory);
+			result.put(initial, precondition);
+		}
+		return result;
 	}
 
 	public static Set<IPredicate> computeHoareStates(final IIcfg<? extends IcfgLocation> icfg,

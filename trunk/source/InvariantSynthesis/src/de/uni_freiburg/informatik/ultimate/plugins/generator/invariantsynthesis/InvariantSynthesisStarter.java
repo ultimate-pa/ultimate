@@ -33,6 +33,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.DangerInvariantResult;
@@ -177,8 +179,10 @@ public class InvariantSynthesisStarter<L extends IIcfgTransition<?>> {
 			} else {
 				assert kindOfInvariant == KindOfInvariant.SAFETY;
 
-				floydHoare = new FloydHoareMapping<>(PrePostConditionSpecification.forIcfg(icfg,
-						predicateOfInitialLocations, predicateOfErrorLocations), invariants);
+				final var initials = icfg.getInitialNodes().stream()
+						.collect(Collectors.toMap(Function.identity(), l -> predicateOfInitialLocations));
+				floydHoare = new FloydHoareMapping<>(
+						PrePostConditionSpecification.forIcfg(icfg, initials, predicateOfErrorLocations), invariants);
 				FloydHoareUtils.writeHoareAnnotationToLogger(icfg, floydHoare, mLogger, true);
 
 				// Annotate the ICFG with the computed Floyd-Hoare annotation, so it can be consumed by other plugins.

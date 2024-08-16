@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare;
 
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -59,9 +60,8 @@ public class FloydHoareForInterpolantAutomaton implements IFloydHoareAnnotation<
 
 	public FloydHoareForInterpolantAutomaton(final IPredicate precondition, final IPredicate postcondition,
 			final INwaOutgoingTransitionProvider<?, IPredicate> automaton) {
-		this(new PrePostConditionSpecification<>(
-				StreamSupport.stream(automaton.getInitialStates().spliterator(), false).collect(Collectors.toSet()),
-				automaton::isFinal, precondition, postcondition));
+		this(new PrePostConditionSpecification<>(StreamSupport.stream(automaton.getInitialStates().spliterator(), false)
+				.collect(Collectors.toMap(Function.identity(), s -> precondition)), automaton::isFinal, postcondition));
 	}
 
 	public FloydHoareForInterpolantAutomaton(final PrePostConditionSpecification<IPredicate> specification) {

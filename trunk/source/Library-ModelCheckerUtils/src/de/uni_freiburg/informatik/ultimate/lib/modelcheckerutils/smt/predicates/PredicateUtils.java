@@ -414,6 +414,22 @@ public class PredicateUtils {
 		throw new IllegalArgumentException("predicate does not offer program point: " + pred);
 	}
 
+	public static IcfgLocation getSingleLocation(final IPredicate pred) {
+		if (pred instanceof ISLPredicate) {
+			return ((ISLPredicate) pred).getProgramPoint();
+		}
+		if (pred instanceof IMLPredicate) {
+			final var locations = ((IMLPredicate) pred).getProgramPoints();
+			if (locations.length > 1) {
+				throw new IllegalArgumentException("predicate has more than one program point: " + pred);
+			}
+			if (locations.length != 0) {
+				return locations[0];
+			}
+		}
+		throw new IllegalArgumentException("predicate does not offer program point: " + pred);
+	}
+
 	public static Set<IcfgLocation> getLocations(final IPredicate pred) {
 		if (pred instanceof ISLPredicate) {
 			return Set.of(((ISLPredicate) pred).getProgramPoint());
@@ -453,5 +469,13 @@ public class PredicateUtils {
 		final ITerm2ExpressionSymbolTable symbolTable = (ITerm2ExpressionSymbolTable) cfgToolkit.getSymbolTable();
 		return eliminateVars(services, cfgToolkit.getManagedScript(), predicate,
 				x -> symbolTable.getDeclarationInformation(x).getStorageClass().equals(StorageClass.LOCAL));
+	}
+
+	public static IPredicate computeInitialPredicateForProcedure(final ModifiableGlobalsTable modifiableGlobals,
+			final Script script, final String procedure, final BasicPredicateFactory factory) {
+		final var equalities = modifiableGlobals.getModifiedBoogieVars(procedure).stream().map(
+				global -> SmtUtils.equality(script, global.getTermVariable(), global.getOldVar().getTermVariable()))
+				.collect(Collectors.toList());
+		return factory.andT(equalities);
 	}
 }

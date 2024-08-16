@@ -119,9 +119,10 @@ public class TransformFloydHoareAnnotation<S1, S2> {
 			result.put(transformed, pred);
 		}
 
-		final var initialStates = spec.getInitialStates().stream().map(mTransformer).collect(Collectors.toSet());
-		final var newSpec = new PrePostConditionSpecification<>(initialStates, finalStates::contains,
-				spec.getPrecondition(), spec.getPostcondition());
+		final var initialStates =
+				spec.getInitialStates().stream().collect(Collectors.toMap(mTransformer, spec::getPrecondition));
+		final var newSpec =
+				new PrePostConditionSpecification<>(initialStates, finalStates::contains, spec.getPostcondition());
 
 		return new FloydHoareMapping<>(newSpec, result);
 	}

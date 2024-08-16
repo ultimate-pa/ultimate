@@ -153,9 +153,10 @@ public abstract class FloydHoareValidityCheck<S> {
 			// check initial states are labeled with precondition (or weaker)
 			final IPredicate pred = getAnnotation(initial);
 			if (pred != null) {
-				final var check = mImplChecker.checkImplication(mSpec.getPrecondition(), false, pred, false);
-				assert !mAssertValidity || check != Validity.INVALID : "initial condition " + pred
-						+ " not entailed by precondition " + mSpec.getPrecondition();
+				final var precondition = mSpec.getPrecondition(initial);
+				final var check = mImplChecker.checkImplication(precondition, false, pred, false);
+				assert !mAssertValidity || check != Validity.INVALID : "condition " + pred + " at initial location "
+						+ initial + " not entailed by corresponding precondition " + precondition;
 				result = result.and(check);
 			}
 
