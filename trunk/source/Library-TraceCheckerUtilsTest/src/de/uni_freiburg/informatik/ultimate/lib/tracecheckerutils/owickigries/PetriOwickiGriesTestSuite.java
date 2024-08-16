@@ -35,7 +35,9 @@ import org.junit.runner.RunWith;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Union;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.TotalizeNwa;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.UnionNwa;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -44,11 +46,11 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.emp
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataTestFileAST;
 import de.uni_freiburg.informatik.ultimate.test.junitextension.testfactory.FactoryTestRunner;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
 @RunWith(FactoryTestRunner.class)
 public class PetriOwickiGriesTestSuite extends OwickiGriesTestSuite {
-	@SuppressWarnings("unchecked")
 	@Override
 	protected void runTest(final Path path, final AutomataTestFileAST ast,
 			final BoundedPetriNet<SimpleAction, IPredicate> program,
@@ -60,9 +62,15 @@ public class PetriOwickiGriesTestSuite extends OwickiGriesTestSuite {
 				new PredicateFactory(mServices, mMgdScript, mSymbolTable), true);
 		INwaOutgoingLetterAndTransitionProvider<SimpleAction, IPredicate> product = mProofs.get(0);
 		for (var i = 1; i < mProofs.size(); i++) {
-			final var u = new Union<>(mAutomataServices, factory, product, mProofs.get(i));
-			product = u.getResult();
+			final var proof = mProofs.get(i);
+			final var initialTrueState1 = DataStructureUtils.getOneAndOnly(product.getInitialStates(), "initial state");
+			final var totalizedProduct = new TotalizeNwa<>(product, initialTrueState1, false);
+			final var initialTrueState2 = DataStructureUtils.getOneAndOnly(proof.getInitialStates(), "initial state");
+			final var totalizedProof = new TotalizeNwa<>(proof, initialTrueState2, false);
+			final var u = new UnionNwa<>(totalizedProduct, totalizedProof, factory, false);
+			product = u;
 		}
+		product = new NestedWordAutomatonReachableStates<>(mAutomataServices, product);
 		final StatisticsData data = new StatisticsData();
 		final var pog = new PetriOwickiGries<>(mServices, unfolding, program, mPredicateFactory, Function.identity(),
 				mMgdScript, mSymbolTable, Set.of(SimpleAction.PROCEDURE), computeModifiableGlobals(), proofPlaces,

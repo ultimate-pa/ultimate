@@ -39,6 +39,7 @@ import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
@@ -150,6 +151,9 @@ public class EmpireComputation<L, P> {
 					if (importantBridge) {
 						result.add(pair);
 						bridgeTerritories.removeDomainElement(pair);
+						final var newSuccessor = handleBridge(successor, transition);
+						queue.offer(newSuccessor);
+						continue;
 					}
 					subsumed = true;
 
@@ -181,6 +185,18 @@ public class EmpireComputation<L, P> {
 			}
 		}
 		return result;
+	}
+
+	private Pair<Territory<P>, P> handleBridge(final Pair<Territory<P>, P> pair, final Transition<L, P> transition) {
+		final var successors = transition.getSuccessors();
+		final var bystanders = pair.getFirst().getRegions().stream()
+				.filter(r -> DataStructureUtils.haveEmptyIntersection(successors, r.getPlaces()))
+				.collect(Collectors.toSet());
+		for (final P place : successors) {
+			bystanders.add(new Region<>(ImmutableSet.singleton(place)));
+		}
+		final var newTerritory = new Territory<>(ImmutableSet.of(bystanders));
+		return new Pair<>(newTerritory, pair.getSecond());
 	}
 
 	private boolean isImportantBridge(final Pair<Territory<P>, P> prePair, final Pair<Territory<P>, P> succPair,
@@ -258,6 +274,10 @@ public class EmpireComputation<L, P> {
 
 		final var predecessors = transition.getPredecessors();
 		final var successors = transition.getSuccessors();
+
+		if (mNet.isAccepting(new Marking<>(successors))) {
+			return null;
+		}
 
 		// final var succLaw = mProduct.callSuccessors(lawPlace, transition.getSymbol());
 		final var succLaw = mProduct.internalSuccessors(lawPlace, transition.getSymbol());

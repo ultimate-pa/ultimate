@@ -64,6 +64,7 @@ public class EmpireToOwickiGriesTest extends OwickiGriesTestSuite {
 				Set.of(SimpleAction.PROCEDURE), empire);
 		final var owickiGries = empireToOwickiGries.getAnnotation();
 		mLogger.info("Computed Owicki-Gries annotation:\n%s", owickiGries);
+		mLogger.info("Owicki-Gries annotation size: %s", owickiGries.size());
 
 		final var owickiGriesCheck = new OwickiGriesValidityCheck<>(mServices, mMgdScript, modifiableGlobals,
 				owickiGries, PetriOwickiGries.getCoMarkedPlaces(unfolding));

@@ -1,10 +1,10 @@
 #valid
 named_regions:
-  r1: [s.l0, s.l1, s.l2]
+  r1: [s.l1, s.l2]
   r2: [s.l0, s.l1, s.l2, s.l3, s.l4, s.l5]
   r3: [c.l2, c.l4]
   r4: [c.l1, c.l3]
-  r5: [s.l0, s.l1, s.l3]
+  r5: [s.l1, s.l3]
 law:
   - territory: [ [m] ]
     assertion: true
