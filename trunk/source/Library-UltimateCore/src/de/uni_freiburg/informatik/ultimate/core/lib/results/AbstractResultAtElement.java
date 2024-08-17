@@ -27,6 +27,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.core.lib.results;
 
+import java.util.Objects;
+
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithLocation;
@@ -49,7 +51,7 @@ public abstract class AbstractResultAtElement<ELEM extends IElement> extends Abs
 	public AbstractResultAtElement(final ELEM element, final String plugin,
 			final IBacktranslationService translatorSequence) {
 		super(plugin);
-		mElement = element;
+		mElement = Objects.requireNonNull(element, "element of " + getClass().getSimpleName() + " must be non-null");
 		mTranslatorSequence = translatorSequence.getTranslationServiceCopy();
 	}
 

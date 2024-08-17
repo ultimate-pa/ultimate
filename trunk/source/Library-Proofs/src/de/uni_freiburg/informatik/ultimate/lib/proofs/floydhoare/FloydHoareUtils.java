@@ -143,6 +143,8 @@ public final class FloydHoareUtils {
 					: PredicateUtils.eliminateOldVars(services, icfg.getCfgSmtToolkit().getManagedScript(), requires);
 
 			final IcfgLocation exit = exitNodes.get(procName);
+			assert exit != null : "Icfg must contain exit node for every procedure";
+
 			final IPredicate ensures = annotation.getAnnotation(exit);
 			final Term ensuresFormula = ensures == null ? null
 					: PredicateUtils.eliminateLocalVars(ensures, services, icfg.getCfgSmtToolkit());

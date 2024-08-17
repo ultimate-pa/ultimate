@@ -234,6 +234,39 @@ public class IcfgUtils {
 	}
 
 	/**
+	 * Checks an invariant that must hold for {@link IIcfg}s: For every procedure entry node, there must be a
+	 * corresponding procedure exit node, and vice versa. This should hold, even if e.g. the exit node is unreachable.
+	 */
+	public static <LOC extends IcfgLocation> boolean checkMatchingEntryExitNodes(final IIcfg<LOC> icfg) {
+		final var entryNodes = icfg.getProcedureEntryNodes();
+		final var exitNodes = icfg.getProcedureExitNodes();
+
+		for (final var e : entryNodes.entrySet()) {
+			final var proc = e.getKey();
+			assert e.getValue() != null : "Entry node for procedure " + proc + " is null";
+
+			final var exit = exitNodes.get(proc);
+			if (exit == null) {
+				assert false : "No corresponding exit node for entry node with procedure " + proc;
+				return false;
+			}
+		}
+
+		for (final var e : exitNodes.entrySet()) {
+			final var proc = e.getKey();
+			assert e.getValue() != null : "Exit node for procedure " + proc + " is null";
+
+			final var entry = entryNodes.get(proc);
+			if (entry == null) {
+				assert false : "No corresponding entry node for exit node with procedure " + proc;
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/**
 	 * @return true iff loc is entry node of some procedure
 	 */
 	public static <LOC extends IcfgLocation> boolean isEntry(final LOC loc, final IIcfg<LOC> icfg) {
