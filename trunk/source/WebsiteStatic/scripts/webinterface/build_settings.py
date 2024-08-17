@@ -17,7 +17,8 @@ import sys
 import subprocess
 import argparse
 import json
-import re
+
+from .externals import get_ultimate_cli
 
 
 def is_file(value: str) -> str:
@@ -63,19 +64,23 @@ def parse_args() -> argparse.Namespace:
 
 
 def get_ultimate_json(options):
-    output = subprocess.check_output(['Ultimate', *options], stderr=subprocess.DEVNULL)
+    ult_call = get_ultimate_cli()
+    output = subprocess.check_output(
+        ult_call + [*options],
+        stderr=subprocess.DEVNULL,
+    )
 
     # ignore ordinary log lines if they exist
     output = output.splitlines()[-1]
 
-    return json.loads(output)['frontend_settings']
+    return json.loads(output)["frontend_settings"]
 
 
 def get_overrides(path: str):
     if path is None:
         return []
     try:
-        with open(path, 'r') as override_file:
+        with open(path, "r") as override_file:
             return json.load(override_file)
     except OSError as exc:
         print(exc.message)
@@ -84,32 +89,46 @@ def get_overrides(path: str):
 
 def find_entry(entries, id: str):
     for i, entry in enumerate(entries):
-        if entry['id'] == id:
+        if entry["id"] == id:
             return i
     return -1
 
 
 def compute_settings(toolchain, settings, override=None):
     # Read default settings, delta given by epf file, and overrides for web interface
-    defaults  = get_ultimate_json(['-tc', toolchain, '--generate-frontend-json-from-defaults'])
-    delta     = get_ultimate_json(['-tc', toolchain, '-s', settings, '-i', 'dummy', '--generate-frontend-json-from-delta'])
+    defaults = get_ultimate_json(
+        ["-tc", toolchain, "--generate-frontend-json-from-defaults"]
+    )
+    delta = get_ultimate_json(
+        [
+            "-tc",
+            toolchain,
+            "-s",
+            settings,
+            "-i",
+            "dummy",
+            "--generate-frontend-json-from-delta",
+        ]
+    )
     overrides = get_overrides(override)
 
     # Apply overrides to delta settings
     for entry in overrides:
-        delta_index = find_entry(delta, entry['id'])
+        delta_index = find_entry(delta, entry["id"])
         if delta_index < 0:
-            default_index = find_entry(defaults, entry['id'])
+            default_index = find_entry(defaults, entry["id"])
             if default_index < 0:
-                print(f"ERROR: Could not find setting with ID {entry['id']}. Exiting...")
-                print([ entry['id'] for entry in defaults ])
+                print(
+                    f"ERROR: Could not find setting with ID {entry['id']}. Exiting..."
+                )
+                print([entry["id"] for entry in defaults])
                 sys.exit(1)
             default_entry = defaults[default_index]
-            merged_entry = { **default_entry, **entry }
+            merged_entry = {**default_entry, **entry}
             delta.append(merged_entry)
         else:
             delta_entry = delta[delta_index]
-            merged_entry = { **delta_entry, **entry }
+            merged_entry = {**delta_entry, **entry}
             delta[delta_index] = merged_entry
 
     # Return delta settings
@@ -124,4 +143,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
