@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?pde version="3.5"?>
 
-<product name="WebBackend" uid="WebBackend" id="de.uni_freiburg.informatik.ultimate.web.backend.WebBackendProduct" application="de.uni_freiburg.informatik.ultimate.web.backend.WebBackend" version="0.2.2" useFeatures="true" includeLaunchers="true">
+<product name="WebBackend" uid="WebBackend" id="de.uni_freiburg.informatik.ultimate.web.backend.WebBackendProduct" application="de.uni_freiburg.informatik.ultimate.web.backend.WebBackend" version="0.2.4" useFeatures="true" includeLaunchers="true">
 
    <configIni use="default">
    </configIni>
@@ -10,18 +10,18 @@
       <programArgs>-nosplash -consoleLog
       </programArgs>
       <vmArgs>-Dosgi.noShutdown=true
--Dorg.eclipse.jetty.util.log.class=org.eclipse.jetty.util.log.StdErrLog
--DWebBackend.SETTINGS_FILE=\path\to\web.config.properties.dist
+         -Dorg.eclipse.jetty.util.log.class=org.eclipse.jetty.util.log.StdErrLog
+         -DWebBackend.SETTINGS_FILE=\path\to\web.config.properties.dist
       </vmArgs>
       <vmArgsMac>-XstartOnFirstThread -Dorg.eclipse.swt.internal.carbon.smallFonts
       </vmArgsMac>
    </launcherArgs>
 
-   <windowImages/>
+   <windowImages />
 
    <launcher name="WebBackend">
       <win useIco="false">
-         <bmp/>
+         <bmp />
       </win>
    </launcher>
 
@@ -35,9 +35,9 @@
    </plugins>
 
    <features>
-      <feature id="BA_FeatureDependenciesCommon"/>
-      <feature id="BA_FeatureUltimateCommon"/>
-      <feature id="BA_FeatureWebBackend"/>
+      <feature id="BA_FeatureDependenciesCommon" />
+      <feature id="BA_FeatureUltimateCommon" />
+      <feature id="BA_FeatureWebBackend" />
    </features>
 
    <configurations>
@@ -49,7 +49,7 @@
    </configurations>
 
    <preferencesInfo>
-      <targetfile overwrite="false"/>
+      <targetfile overwrite="false" />
    </preferencesInfo>
 
    <cssInfo>
