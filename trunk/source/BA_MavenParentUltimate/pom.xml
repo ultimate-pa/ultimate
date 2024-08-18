@@ -583,7 +583,6 @@
 							<providerHint>junit47</providerHint>
 							<useUIHarness>false</useUIHarness>
 							<useUIThread>false</useUIThread>
-							<reuseForks>false</reuseForks>
 							<showEclipseLog>true</showEclipseLog>
 							<threadCount>1</threadCount>
 							<failIfNoTests>false</failIfNoTests>
@@ -659,7 +658,6 @@
 							<providerHint>junit47</providerHint>
 							<useUIHarness>false</useUIHarness>
 							<useUIThread>false</useUIThread>
-							<reuseForks>false</reuseForks>
 							<showEclipseLog>true</showEclipseLog>
 							<threadCount>1</threadCount>
 							<failIfNoTests>false</failIfNoTests>
@@ -725,7 +723,6 @@
 							<providerHint>junit47</providerHint>
 							<useUIHarness>false</useUIHarness>
 							<useUIThread>false</useUIThread>
-							<reuseForks>false</reuseForks>
 							<showEclipseLog>true</showEclipseLog>
 							<threadCount>1</threadCount>
 							<failIfNoTests>false</failIfNoTests>
