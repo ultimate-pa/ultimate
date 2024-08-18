@@ -98,7 +98,9 @@ public class EmpireComputation<L, P> {
 				.map(p -> new Pair<>(p.getFirst(),
 						mPlacePredicateMap.computeIfAbsent(p.getSecond(), assertionPlace2Predicate)))
 				.collect(Collectors.toSet());
-		mEmpire = new EmpireAnnotation<>(lawMap);
+		final var postProcessing = new PostProcessing<>(services, lawMap, predicateFactory, implicationChecker);
+		final var processedPairs = postProcessing.getProcessedPairs();
+		mEmpire = new EmpireAnnotation<>(processedPairs);
 	}
 
 	public EmpireAnnotation<P> getEmpire() {
@@ -229,8 +231,6 @@ public class EmpireComputation<L, P> {
 		// This can happen because we look at each automaton individually; another automaton not currently considered
 		// may be responsible for the non-reachability.
 
-		// mLogger.debug(" checking enabledness of transition %s (pred: %s, succ: %s) under %s and %s", transition,
-		// transition.getPredecessors(), transition.getSuccessors(), territory, lawPlace);
 		final var lawPredicate = mPlaceToPredicate.apply(lawPlace);
 		final var htFalse = mHc.checkInternal(lawPredicate, (IInternalAction) transition.getSymbol(), mFactory.or());
 		final var accepting = transition.getSuccessors().stream().anyMatch(p -> mNet.isAccepting(p));
@@ -251,26 +251,20 @@ public class EmpireComputation<L, P> {
 				}
 			}
 			if (!found) {
-				// mLogger.debug(" --> rejected because predecessor %s not in any region", place);
 				return false;
 			}
 		}
-		// mLogger.debug(" --> enabled!");
 		return true;
 	}
 
 	private Stream<Transition<L, P>> getEnabledTransitions(final Territory<P> territory, final P lawPlace) {
 		final var mayPlaces = DataStructureUtils.union(territory.getPlaces(), Set.of(lawPlace));
-		// mLogger.debug("Computing successors of %s and %s.", territory, lawPlace);
-		// mLogger.debug(" may places: %s", mayPlaces);
-		// mLogger.debug(" must places: %s", territory.getPlaces());
 		return mNet.getSuccessorTransitionProviders(territory.getPlaces(), mayPlaces).stream()
 				.flatMap(provider -> provider.getTransitions().stream()).filter(t -> enables(territory, lawPlace, t));
 	}
 
 	private Pair<Territory<P>, P> computeSuccessor(final Territory<P> territory, final P lawPlace,
 			final Transition<L, P> transition) {
-		// assert enables(territory, lawPlace, transition) : "transition is not enabled, cannot compute successor";
 
 		final var predecessors = transition.getPredecessors();
 		final var successors = transition.getSuccessors();

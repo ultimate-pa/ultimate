@@ -55,6 +55,17 @@ FiniteAutomaton proof1 = (
        ("(and (= req 1) (= res 0))" "[8]" "false")
        ("(and (= req 1) (< x 0) (= res 1))" "[8]" "(and (= req 1) (< x 0) (= res 1))")
        ("(and (= req 1) (< x 0) (= res 1))" "[9]" "false")
+       ("false" "[0]" "false")
+       ("false" "[1]" "false")
+       ("false" "[2]" "false")
+       ("false" "[3]" "false")
+       ("false" "[4]" "false")
+       ("false" "[5]" "false")
+       ("false" "[6]" "false")
+       ("false" "[7]" "false")
+       ("false" "[8]" "false")
+       ("false" "[9]" "false")
+       ("false" "[10]" "false")
      }
 );
 
@@ -77,6 +88,17 @@ FiniteAutomaton proof2 = (
        ("(and (= req 2) (= res 0))" "[8]" "false")
        ("(and (= req 2) (> x 0) (= res 1))" "[8]" "(and (= req 2) (> x 0) (= res 1))")
        ("(and (= req 2) (> x 0) (= res 1))" "[10]" "false")
+       ("false" "[0]" "false")
+       ("false" "[1]" "false")
+       ("false" "[2]" "false")
+       ("false" "[3]" "false")
+       ("false" "[4]" "false")
+       ("false" "[5]" "false")
+       ("false" "[6]" "false")
+       ("false" "[7]" "false")
+       ("false" "[8]" "false")
+       ("false" "[9]" "false")
+       ("false" "[10]" "false")
      }
 );
 
