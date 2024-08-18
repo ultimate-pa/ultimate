@@ -25,6 +25,10 @@ pipeline {
   environment {
     PATH = "${env.WORKSPACE}/releaseScripts/default/adds:${env.PATH}"
   }
+  tools {
+    jdk 'JDK21'
+    maven 'Maven 3.9.8'
+  }
   stages {
     stage('Checkout') {
       steps {
@@ -96,29 +100,25 @@ pipeline {
     //     }
     //   }
     // }
-    // disabled until ultimate supports Java 17
-    // stage('Run Sonar') {
-    //   tools {
-    //     jdk 'JDK17'
-    //   }
-    //   when {
-    //     allOf {
-    //       expression { return currentBuild.result == 'SUCCESS' || currentBuild.result == 'UNSTABLE' }
-    //       branch 'dev'
-    //       anyOf {
-    //         expression { return !currentBuild.changeSets.isEmpty() }
-    //         triggeredBy cause: 'UserIdCause'
-    //       }
-    //     }
-    //   }
-    //   steps {
-    //     withCredentials([string(credentialsId: 'SonarTokenJenkinsPipeline', variable: 'SONAR_TOKEN')]) {
-    //       withMaven(jdk: 'JDK17', mavenOpts: '-Xmx4g -Xss4m', options: [jacocoPublisher()], publisherStrategy: 'EXPLICIT') {
-    //         sh 'cd trunk/source/BA_MavenParentUltimate && mvn sonar:sonar -Pcoverage -Dsonar.host.url=https://sonar.sopranium.de -Dsonar.login=$SONAR_TOKEN'
-    //       }
-    //     }
-    //   }
-    // }
+    stage('Run Sonar') {
+      when {
+        allOf {
+          expression { return currentBuild.result == 'SUCCESS' || currentBuild.result == 'UNSTABLE' }
+          branch 'dev'
+          anyOf {
+            expression { return !currentBuild.changeSets.isEmpty() }
+            triggeredBy cause: 'UserIdCause'
+          }
+        }
+      }
+      steps {
+        withCredentials([string(credentialsId: 'SonarTokenJenkinsPipeline', variable: 'SONAR_TOKEN')]) {
+          withMaven(mavenOpts: '-Xmx4g -Xss4m', options: [jacocoPublisher()], publisherStrategy: 'EXPLICIT') {
+            sh 'cd trunk/source/BA_MavenParentUltimate && mvn sonar:sonar -Pcoverage -Dsonar.host.url=https://sonar.sopranium.de -Dsonar.login=$SONAR_TOKEN'
+          }
+        }
+      }
+    }
     stage('Deploy nightly build') {
       when {
         allOf {

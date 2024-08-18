@@ -36,8 +36,8 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import javax.xml.bind.JAXBElement;
-import javax.xml.bind.JAXBException;
+import jakarta.xml.bind.JAXBElement;
+import jakarta.xml.bind.JAXBException;
 import javax.xml.namespace.QName;
 
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;

@@ -1,0 +1,37 @@
+<project name="boogie-ast" default="generate" basedir=".">
+	<property name="pluginDir" location="${basedir}" />
+	<property name="workspaceDir" location="${pluginDir}/.." />
+	<property name="astbuilderDir" location="${workspaceDir}/ASTBuilder/bin" />
+	<property name="cupDir" location="${workspaceDir}/JavaCup/bin" />
+	<property name="astCodeDir" location="${pluginDir}/src/de/uni_freiburg/informatik/ultimate/boogie/ast" />
+
+	<description>Build automation for Boogie AST</description>
+
+	<target name="generate" depends="generate-ast" />
+	<target name="clean" depends="clean-ast" />
+
+	<echo level="info">Library-BoogieAST: pluginDir     is ${pluginDir}</echo>
+	<echo level="info">Library-BoogieAST: workspaceDir  is ${workspaceDir}</echo>
+	<echo level="info">Library-BoogieAST: astbuilderDir is ${astbuilderDir}</echo>
+	<echo level="info">Library-BoogieAST: cupDir        is ${cupDir}</echo>
+	<echo level="info">Library-BoogieAST: astCodeDir    is ${astCodeDir}</echo>
+
+	<target name="generate-ast">
+		<!-- Generate Boogie AST with the AST builder TreeBuilder -->
+		<java classname="de.uni_freiburg.informatik.ultimate.astbuilder.Main" classpath="${astbuilderDir}:${cupDir}" dir="${astCodeDir}" fork="true" failonerror="true">
+			<arg value="-ultimatenew" />
+			<arg value="Boogie.ast" />
+		</java>
+	</target>
+
+	<target name="clean-ast">
+		<!-- Clean generated Boogie AST files -->
+		<delete verbose="true" failonerror="false">
+			<fileset dir="${astCodeDir}" defaultexcludes="false">
+				<exclude name="Boogie.ast"/>
+				<exclude name="BoogieASTNode.java"/>
+				<exclude name="package.html"/>
+			</fileset>
+		</delete>
+	</target>
+</project>
