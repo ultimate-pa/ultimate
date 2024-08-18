@@ -14,7 +14,7 @@ Follow the rules already available.
 """
 
 SCRIPT_DIR = osp.abspath(osp.dirname(__file__))
-TRUNK_DIR = osp.join(SCRIPT_DIR, "..", "..", "..", "..", "..")
+TRUNK_DIR = osp.join(SCRIPT_DIR, "..", "..", "..", "..")
 EXAMPLES_DIR = osp.join(TRUNK_DIR, "examples")
 WEBINTERFACE_EXAMPLES_ROOT = osp.join(
     SCRIPT_DIR, "..", "..", "webinterface", "code_examples"
@@ -148,11 +148,15 @@ def copy_examples():
         if not osp.exists(dest):
             os.makedirs(dest)
 
+        count = 0
         for example in examples:
             path = example["path"]
             pattern = example["pattern"]
             for file in glob.glob(rf"{path}/{pattern}"):
                 shutil.copy(file, dest)
+                count = count + 1
+        print(f"  copied {count} examples for {tool}")
+
     print("Done.")
 
 
