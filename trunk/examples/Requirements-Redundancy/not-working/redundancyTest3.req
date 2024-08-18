@@ -1,4 +1,4 @@
-// #TestSpec: redundant:ID000; results:-1
+// #TestSpec: redundant:ID001; results:-1
 Input R is bool
 Input S is bool
 

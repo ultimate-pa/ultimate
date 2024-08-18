@@ -90,9 +90,6 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 			final Location location;
 			final Consumer<IASTNode> addFunction;
 			if (entry instanceof LocationInvariant) {
-				if (mCheckOnlyLoopInvariants) {
-					continue;
-				}
 				location = ((LocationInvariant) entry).getLocation();
 				addFunction = node -> addLocationInvariant((LocationInvariant) entry, node, locationInvariants);
 			} else if (entry instanceof LoopInvariant) {

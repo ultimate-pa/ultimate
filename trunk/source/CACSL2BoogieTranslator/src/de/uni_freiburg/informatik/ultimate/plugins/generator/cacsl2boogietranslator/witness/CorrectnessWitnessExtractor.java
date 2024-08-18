@@ -49,7 +49,7 @@ public abstract class CorrectnessWitnessExtractor {
 
 	private final IUltimateServiceProvider mServices;
 	protected final ILogger mLogger;
-	protected final boolean mCheckOnlyLoopInvariants;
+	protected IPreferenceProvider mPrefs;
 	protected final boolean mIgnoreUnmatchedEntries;
 
 	protected IASTTranslationUnit mTranslationUnit;
@@ -59,9 +59,8 @@ public abstract class CorrectnessWitnessExtractor {
 	public CorrectnessWitnessExtractor(final IUltimateServiceProvider service) {
 		mServices = service;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		final IPreferenceProvider prefs = WitnessParserPreferences.getPrefs(service);
-		mCheckOnlyLoopInvariants = prefs.getBoolean(WitnessParserPreferences.LABEL_CW_USE_ONLY_LOOPINVARIANTS);
-		mIgnoreUnmatchedEntries = prefs.getBoolean(WitnessParserPreferences.LABEL_IGNORE_UNMATCHED_WITNESS_ENTRIES);
+		mPrefs = WitnessParserPreferences.getPrefs(service);
+		mIgnoreUnmatchedEntries = mPrefs.getBoolean(WitnessParserPreferences.LABEL_IGNORE_UNMATCHED_WITNESS_ENTRIES);
 		mStats = new ExtractionStatistics();
 	}
 
@@ -78,11 +77,6 @@ public abstract class CorrectnessWitnessExtractor {
 			if (!isReady()) {
 				mLogger.warn("Cannot extract witness if there is no witness");
 				return null;
-			}
-			if (mCheckOnlyLoopInvariants) {
-				mLogger.info("Only extracting loop invariants from correctness witness");
-			} else {
-				mLogger.info("Extracting all invariants from correctness witness");
 			}
 			mResult = extractWitness();
 			printWitness();
