@@ -1,0 +1,54 @@
+// #Safe
+/*
+ * Simplified version of BugIncorrectHoareAnnotation01.bpl
+ * "java.lang.AssertionError: incorrect Hoare annotation" with backward predicates
+ *
+ * Probably some problem with constant or axiom
+ *
+ * Author: heizmann@informatik.uni-freiburg.de
+ * Date: 2024-08-18
+ *
+ */
+
+
+implementation ULTIMATE.start() returns (){
+    var #t~ret4 : int;
+    call #t~ret4 := main();
+}
+
+implementation funSelect(n : int, fp : bool) returns (res : int){
+    if (fp == trueconst) {
+        // break LBE, compute invariant here
+        while (*) {}
+        res := n - 1;
+    } else {
+        // break LBE, compute invariant here
+        while (*) {}
+        res := n + 1;
+    }
+    return;
+}
+
+
+implementation main() returns (res : int){
+    var x : int;
+
+    x := 5;
+    call x := funSelect(x, false);
+    call x := funSelect(x, true);
+    assert x == 5;
+}
+
+const trueconst : bool;
+axiom trueconst == true;
+
+procedure main() returns (res : int);
+modifies ;
+
+procedure funSelect(n : int, fp : bool) returns (res : int);
+modifies ;
+
+procedure ULTIMATE.start() returns ();
+modifies ;
+modifies ;
+
