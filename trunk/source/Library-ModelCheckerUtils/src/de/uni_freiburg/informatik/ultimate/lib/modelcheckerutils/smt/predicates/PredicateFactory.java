@@ -33,7 +33,6 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
@@ -89,9 +88,8 @@ public class PredicateFactory extends BasicPredicateFactory {
 		return newMLPredicate(programPoints, mDontCareTerm);
 	}
 
-	public HoareAnnotation getNewHoareAnnotation(final IcfgLocation pp,
-			final ModifiableGlobalsTable modifiableGlobalsTable) {
-		return new HoareAnnotation(pp, constructFreshSerialNumber(), this, mMgdScript);
+	public HoareAnnotation getNewHoareAnnotation(final IcfgLocation pp, final IPredicate pred) {
+		return new HoareAnnotation(pp, constructFreshSerialNumber(), this, pred);
 	}
 
 	private static final class NoCallerDebugIdentifier extends DebugIdentifier {

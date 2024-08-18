@@ -67,16 +67,13 @@ public class HoareAnnotationWriter {
 
 	public void addHoareAnnotationToCFG() {
 		for (final Entry<IcfgLocation, IPredicate> entry : mCegarLoopHoareAnnotation.getLoc2hoare().entrySet()) {
-			final HoareAnnotation taAnnot = HoareAnnotation.getAnnotation(entry.getKey());
-			final HoareAnnotation hoareAnnot;
-			if (taAnnot == null) {
-				hoareAnnot =
-						mPredicateFactory.getNewHoareAnnotation(entry.getKey(), mCsToolkit.getModifiableGlobalsTable());
-				hoareAnnot.annotate(entry.getKey());
-			} else {
-				hoareAnnot = taAnnot;
+			final HoareAnnotation existing = HoareAnnotation.getAnnotation(entry.getKey());
+			if (existing != null) {
+				throw new AssertionError();
 			}
-			hoareAnnot.addInvariant(entry.getValue());
+			final HoareAnnotation hoareAnnot = mPredicateFactory.getNewHoareAnnotation(entry.getKey(),
+					entry.getValue());
+			hoareAnnot.annotate(entry.getKey());
 		}
 	}
 }

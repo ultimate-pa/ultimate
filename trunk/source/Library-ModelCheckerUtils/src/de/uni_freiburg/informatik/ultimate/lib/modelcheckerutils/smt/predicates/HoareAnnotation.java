@@ -27,26 +27,15 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
-import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * Specifies properties of a state in a graph representation of a system. These properties are
- * <ul>
- * <li>Name of a location mLocationName</li>
- * <li>Name of a procedure mProcedureName</li>
- * <li>Possible valuations of variables in this state mStateFormulas</li>
- * </ul>
+ * {@link SPredicate} with auxiliary methods.
+ * TODO 2024-08-18 Matthias: We should discuss this class and we should
+ * probably remove this class in the future.
  *
  * @author heizmann@informatik.uni-freiburg.de
  */
@@ -56,38 +45,10 @@ public class HoareAnnotation extends SPredicate {
 	private static final String KEY = HoareAnnotation.class.getSimpleName();
 	private static final long serialVersionUID = 72852101509650437L;
 
-	private final ManagedScript mMgdScript;
-	@Visualizable
-	private final boolean mIsUnknown = false;
-
-	private final List<Term> mInvariants = new ArrayList<>();
-
 	public HoareAnnotation(final IcfgLocation programPoint, final int serialNumber,
-			final PredicateFactory predicateFactory, final ManagedScript mgdScript) {
-		super(programPoint, serialNumber, new String[] { programPoint.getProcedure() },
-				mgdScript.getScript().term("true"), new HashSet<>(), new HashSet<>(), null);
-		mMgdScript = mgdScript;
-	}
-
-	public void addInvariant(final IPredicate pred) {
-		mVars.addAll(pred.getVars());
-		mFunctions.addAll(pred.getFuns());
-		mInvariants.add(pred.getFormula());
-	}
-
-	@Override
-	public Term getFormula() {
-		return SmtUtils.and(mMgdScript.getScript(), mInvariants);
-	}
-
-	@Override
-	public Term getClosedFormula() {
-		return PredicateUtils.computeClosedFormula(getFormula(), mVars, mMgdScript);
-	}
-
-	@Override
-	public boolean isUnknown() {
-		return mIsUnknown;
+			final PredicateFactory predicateFactory, final IPredicate pred) {
+		super(programPoint, serialNumber, pred.getProcedures(), pred.getFormula(), pred.getVars(), pred.getFuns(),
+				pred.getClosedFormula());
 	}
 
 	public void annotate(final IElement node) {

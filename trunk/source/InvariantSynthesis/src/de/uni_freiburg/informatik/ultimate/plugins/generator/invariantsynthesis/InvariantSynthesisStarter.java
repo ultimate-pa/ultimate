@@ -189,9 +189,8 @@ public class InvariantSynthesisStarter<L extends IIcfgTransition<?>> {
 				// }
 				for (final Entry<IcfgLocation, IPredicate> entry : invariants.entrySet()) {
 					final HoareAnnotation hoareAnnot = predicateFactory.getNewHoareAnnotation(entry.getKey(),
-							icfg.getCfgSmtToolkit().getModifiableGlobalsTable());
+							entry.getValue());
 					hoareAnnot.annotate(entry.getKey());
-					hoareAnnot.addInvariant(entry.getValue());
 				}
 				writeHoareAnnotationToLogger(icfg);
 				mOverallResult = Result.SAFE;
