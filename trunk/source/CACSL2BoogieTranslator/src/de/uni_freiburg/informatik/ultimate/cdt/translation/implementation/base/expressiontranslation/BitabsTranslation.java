@@ -30,16 +30,17 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation;
 
 import java.math.BigInteger;
-import java.util.Arrays;
 import java.util.List;
 import java.util.function.BinaryOperator;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
@@ -53,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.OverapproxVariable;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -491,18 +492,19 @@ public class BitabsTranslation {
 		final IdentifierExpression auxvar = auxvarinfo.getExp();
 		builder.setLrValue(new RValue(auxvar, resultType));
 		final VariableLHS auxvarLhs = auxvarinfo.getLhs();
+		final HavocStatement havoc = new HavocStatement(loc, new VariableLHS[] { auxvarLhs });
 		final AssumeStatement assume =
 				new AssumeStatement(loc, ExpressionFactory.and(loc, assumptionsForOverapproximation));
-		new Overapprox(functionName, loc).annotate(assume);
-		Statement[] resultStatements = new Statement[] { assume };
+		Statement resultStatement = new AtomicStatement(loc, new Statement[] { havoc, assume });
+		new OverapproxVariable(functionName, loc).annotate(resultStatement);
 		for (int i = exactCases.size() - 1; i >= 0; i--) {
 			final Pair<Expression, Expression> pair = exactCases.get(i);
 			final Statement assignment =
 					StatementFactory.constructSingleAssignmentStatement(loc, auxvarLhs, pair.getSecond());
 			final Statement ifStatement = StatementFactory.constructIfStatement(loc, pair.getFirst(),
-					new Statement[] { assignment }, resultStatements);
-			resultStatements = new Statement[] { ifStatement };
+					new Statement[] { assignment }, new Statement[] { resultStatement });
+			resultStatement = ifStatement;
 		}
-		return builder.addStatements(Arrays.asList(resultStatements)).build();
+		return builder.addStatement(resultStatement).build();
 	}
 }
