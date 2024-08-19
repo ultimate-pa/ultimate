@@ -42,14 +42,20 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 
 /**
- * A specification stating that any execution starting in an initial location and with a variable assignment satisfying
- * a given precondition must, when (and if) it reaches a final location, have a current variable assignment satisfying a
- * given postcondition.
+ * A specification stating that for every execution that starts in an initial location and with a variable assignment
+ * satisfying a given precondition and ends in a final location, the variable assignment in the last configuration must
+ * satisfy a given postcondition.
  *
  * There may be multiple initial locations, and the precondition that holds initially may differ depending on the
  * initial condition. This is for example needed in interprocedural programs, where (in "library mode") each procedure's
  * entry node is an initial location, and the corresponding precondition states that g = old(g) for all modifiable
  * global variables of the procedure.
+ *
+ * The intuition of the "final" locations can differ depending on the context. For instance, they could consist of the
+ * error locations of a program, or the accepting states of an interpolant automaton, together with the postcondition
+ * {@code false}. In this case, the specification expresses unreachability of these states (see
+ * {@link #isUnreachabilitySpecification()}). Alternatively, one might use the exit location of a program (or procedure)
+ * with a postcondition specifying the expected variable values when the program terminates.
  *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  *
@@ -57,8 +63,19 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
  *            the type of states (or "locations")
  */
 public class PrePostConditionSpecification<S> implements ISpecification {
+	// Initial states and their corresponding preconditions.
+	//
+	// As there are typically relatively few initial states (or just one), listing them explicity should not be
+	// problematic, and it allows to check validity of a proof for this specification by simply performing a DFS
+	// starting from these states.
 	private final Map<S, IPredicate> mInitialStates;
+
+	// "Final" states, i.e., states where the postcondition must hold.
+	//
+	// These are not listed explicitly but only identified by a boolean function, because in some cases (e.g. concurrent
+	// programs) the set of final states can be very large and costly to compute up-front.
 	private final Predicate<S> mIsFinalState;
+
 	private final IPredicate mPostcondition;
 
 	/**
