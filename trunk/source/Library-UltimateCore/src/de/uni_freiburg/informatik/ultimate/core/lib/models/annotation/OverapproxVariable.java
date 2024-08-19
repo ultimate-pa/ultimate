@@ -47,4 +47,7 @@ public class OverapproxVariable extends Overapprox {
 		super(reason2Loc);
 	}
 
+	public OverapproxVariable(final String reason, final ILocation loc) {
+		super(reason, loc);
+	}
 }
