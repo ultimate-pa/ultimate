@@ -222,6 +222,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.OverapproxVariable;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
@@ -2783,17 +2784,30 @@ public class CHandler {
 			} else {
 				rhsWithBitfieldTreatment = rightHandSideValueWithConversionsApplied.getValue();
 			}
-			builder.addStatements(mMemoryHandler.getWriteCall(loc, hlv, rhsWithBitfieldTreatment,
+
+			Expression resultRhs;
+			if (rhsConverted.getOverapprs().isEmpty()) {
+				resultRhs = rhsWithBitfieldTreatment;
+			} else {
+				// If the right-hand-side of the assignment contains an overapproximation, we create an additional
+				// aux-var and annotate the corresponding assignment of the right-hand-side with a variable-based
+				// overapproximation (to ensure that not the whole heap is overapproximated).
+				final AuxVarInfo auxVar = mAuxVarInfoBuilder.constructAuxVarInfo(loc,
+						rightHandSideValueWithConversionsApplied.getCType(), AUXVAR.RETURNED);
+				final Statement assignment = StatementFactory.constructSingleAssignmentStatement(loc, auxVar.getLhs(),
+						rhsWithBitfieldTreatment);
+				for (final var oa : rhsConverted.getOverapprs()) {
+					new OverapproxVariable(oa.getOverapproximatedLocations()).annotate(assignment);
+				}
+				builder.addStatement(assignment);
+				resultRhs = auxVar.getExp();
+			}
+			builder.addStatements(mMemoryHandler.getWriteCall(loc, hlv, resultRhs,
 					rightHandSideValueWithConversionsApplied.getCType(), false));
 
 			// the value of an assignment statement expression is the right hand side of the
 			// assignment
 			builder.setLrValue(rightHandSideValueWithConversionsApplied);
-			for (final Overapprox oa : rhsConverted.getOverapprs()) {
-				for (final Statement stm : builder.getStatements()) {
-					oa.annotate(stm);
-				}
-			}
 
 			if (mDataRaceChecker != null) {
 				mDataRaceChecker.checkOnWrite(builder, loc, leftHandSide);
@@ -2831,9 +2845,7 @@ public class CHandler {
 		builder.addStatement(assignStmt);
 
 		for (final Overapprox oa : rhsConverted.getOverapprs()) {
-			for (final Statement stm : builder.getStatements()) {
-				oa.annotate(stm);
-			}
+			new OverapproxVariable(oa.getOverapproximatedLocations()).annotate(assignStmt);
 		}
 		// TODO: DD 2020-12-02: havocing neighbours should only happen if the field is
 		// really on the stack -- it
