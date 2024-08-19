@@ -76,7 +76,8 @@ public class ReqCheckerRedundancyRegressionTestSuite extends AbstractRegressionT
 	}
 
 	@Override
-	protected ITestResultDecider getTestResultDecider(final UltimateRunDefinition runDefinition) {
+	protected ITestResultDecider getTestResultDecider(final UltimateRunDefinition runDefinition,
+			final String overridenExpectedVerdict) {
 		return new ReqCheckerTestResultDecider(runDefinition, false);
 	}
 
@@ -173,7 +174,8 @@ public class ReqCheckerRedundancyRegressionTestSuite extends AbstractRegressionT
 				}
 				return false;
 			}
-			if ((mNoResults != -1 && actual.mNoResults != mNoResults) || DataStructureUtils.isDifferent(actual.mRedundant, mRedundant)) {
+			if ((mNoResults != -1 && actual.mNoResults != mNoResults)
+					|| DataStructureUtils.isDifferent(actual.mRedundant, mRedundant)) {
 				return false;
 			}
 			return true;
