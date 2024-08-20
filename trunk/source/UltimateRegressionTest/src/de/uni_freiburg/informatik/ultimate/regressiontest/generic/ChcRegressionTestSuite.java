@@ -57,8 +57,10 @@ public class ChcRegressionTestSuite extends AbstractRegressionTestSuite {
 	}
 
 	@Override
-	protected ITestResultDecider getTestResultDecider(final UltimateRunDefinition runDefinition, String overridenExpectedVerdict) {
-		boolean unknownIsSuccess = false;
+	protected ITestResultDecider getTestResultDecider(final UltimateRunDefinition runDefinition,
+			final String overridenExpectedVerdict) {
+		checkNoOverridenVerdict(overridenExpectedVerdict);
+		final boolean unknownIsSuccess = false;
 		return new ChcTestResultDecider(runDefinition, unknownIsSuccess);
 	}
 }

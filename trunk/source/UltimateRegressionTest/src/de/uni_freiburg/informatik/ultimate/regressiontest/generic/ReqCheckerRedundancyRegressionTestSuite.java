@@ -78,6 +78,7 @@ public class ReqCheckerRedundancyRegressionTestSuite extends AbstractRegressionT
 	@Override
 	protected ITestResultDecider getTestResultDecider(final UltimateRunDefinition runDefinition,
 			final String overridenExpectedVerdict) {
+		checkNoOverridenVerdict(overridenExpectedVerdict);
 		return new ReqCheckerTestResultDecider(runDefinition, false);
 	}
 

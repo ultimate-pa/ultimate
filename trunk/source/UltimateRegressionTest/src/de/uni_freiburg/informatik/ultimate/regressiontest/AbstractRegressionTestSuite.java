@@ -335,6 +335,12 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 	protected abstract ITestResultDecider getTestResultDecider(UltimateRunDefinition runDefinition,
 			String overridenExpectedVerdict);
 
+	protected void checkNoOverridenVerdict(final String overridenExpectedVerdict) {
+		if (overridenExpectedVerdict != null) {
+			throw new UnsupportedOperationException(getClass().getSimpleName() + " does not support skipping tests.");
+		}
+	}
+
 	public static final class Config
 			extends de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair<File, File> {
 

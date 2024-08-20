@@ -63,6 +63,7 @@ public class WitnessRegressionTestSuite extends AbstractRegressionTestSuite {
 	@Override
 	protected ITestResultDecider getTestResultDecider(final UltimateRunDefinition runDefinition,
 			final String overridenExpectedVerdict) {
+		checkNoOverridenVerdict(overridenExpectedVerdict);
 		return new WitnessSafetyCheckTestResultDecider(runDefinition);
 	}
 

@@ -79,7 +79,9 @@ public class ReqCheckerRegressionTestSuite extends AbstractRegressionTestSuite {
 	}
 
 	@Override
-	protected ITestResultDecider getTestResultDecider(final UltimateRunDefinition runDefinition, String overridenExpectedVerdict) {
+	protected ITestResultDecider getTestResultDecider(final UltimateRunDefinition runDefinition,
+			final String overridenExpectedVerdict) {
+		checkNoOverridenVerdict(overridenExpectedVerdict);
 		return new ReqCheckerTestResultDecider(runDefinition, false);
 	}
 

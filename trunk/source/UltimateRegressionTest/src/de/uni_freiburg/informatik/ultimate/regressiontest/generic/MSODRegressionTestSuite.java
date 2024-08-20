@@ -51,7 +51,9 @@ public class MSODRegressionTestSuite extends AbstractRegressionTestSuite {
 	}
 
 	@Override
-	protected ITestResultDecider getTestResultDecider(final UltimateRunDefinition runDefinition, String overridenExpectedVerdict) {
+	protected ITestResultDecider getTestResultDecider(final UltimateRunDefinition runDefinition,
+			final String overridenExpectedVerdict) {
+		checkNoOverridenVerdict(overridenExpectedVerdict);
 		final boolean unknownIsSuccess = true;
 		return new MSODTestResultDecider(runDefinition, unknownIsSuccess);
 	}

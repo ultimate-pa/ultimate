@@ -46,7 +46,9 @@ public class CBacktranslationRegressionTestSuite extends AbstractRegressionTestS
 	}
 
 	@Override
-	protected ITestResultDecider getTestResultDecider(final UltimateRunDefinition runDefinition, String overridenExpectedVerdict) {
+	protected ITestResultDecider getTestResultDecider(final UltimateRunDefinition runDefinition,
+			final String overridenExpectedVerdict) {
+		checkNoOverridenVerdict(overridenExpectedVerdict);
 		return new BacktranslationTestResultDecider(runDefinition);
 	}
 }
