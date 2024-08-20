@@ -108,7 +108,7 @@ public class SafetyCheckTestResultDecider extends ThreeTierTestResultDecider<Saf
 				} else {
 					mTestResult = TestResult.FAIL;
 				}
-				mCategory = overallResult + "(Expected to match :" + mOverridenExpectedVerdict + ")";
+				mCategory = overallResult + " (Expected to match :" + mOverridenExpectedVerdict + ")";
 				mMessage = " UltimateResult: " + overallResultMsg;
 				return;
 			}
