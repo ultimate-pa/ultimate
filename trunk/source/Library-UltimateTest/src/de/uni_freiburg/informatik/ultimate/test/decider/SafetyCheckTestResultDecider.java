@@ -28,6 +28,8 @@
 
 package de.uni_freiburg.informatik.ultimate.test.decider;
 
+import java.util.regex.Pattern;
+
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ExceptionOrErrorResult;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.decider.expectedresult.IExpectedResultFinder;
@@ -89,18 +91,6 @@ public class SafetyCheckTestResultDecider extends ThreeTierTestResultDecider<Saf
 		return new SafetyCheckerTestResultEvaluation();
 	}
 
-	private SafetyCheckerOverallResult getOverridenExpectedVerdict() {
-		if (mOverridenExpectedVerdict == null) {
-			return null;
-		}
-		try {
-			return SafetyCheckerOverallResult.valueOf(mOverridenExpectedVerdict);
-		} catch (final IllegalArgumentException e) {
-			// Cannot convert to SafetyCheckerOverallResult, fall back to provided expected result
-			return null;
-		}
-	}
-
 	public class SafetyCheckerTestResultEvaluation implements ITestResultEvaluation<SafetyCheckerOverallResult> {
 		private String mCategory;
 		private String mMessage;
@@ -109,10 +99,17 @@ public class SafetyCheckTestResultDecider extends ThreeTierTestResultDecider<Saf
 		@Override
 		public void evaluateTestResult(final IExpectedResultFinder<SafetyCheckerOverallResult> expectedResultFinder,
 				final IOverallResultEvaluator<SafetyCheckerOverallResult> overallResultDeterminer) {
-			final SafetyCheckerOverallResult expectedVerdict = getOverridenExpectedVerdict();
-			if (expectedVerdict != null) {
-				mMessage = "ExpectedResult (overriden): " + expectedVerdict;
-				compareToOverallResult(expectedVerdict, overallResultDeterminer, true);
+			if (mOverridenExpectedVerdict != null) {
+				final SafetyCheckerOverallResult overallResult = overallResultDeterminer.getOverallResult();
+				final String overallResultMsg = overallResultDeterminer.generateOverallResultMessage();
+				final Pattern pattern = Pattern.compile(mOverridenExpectedVerdict, Pattern.CASE_INSENSITIVE);
+				if (pattern.matcher(overallResult.toString()) != null || pattern.matcher(overallResultMsg) != null) {
+					mTestResult = TestResult.IGNORE;
+				} else {
+					mTestResult = TestResult.FAIL;
+				}
+				mCategory = overallResult + "(Expected to match :" + mOverridenExpectedVerdict + ")";
+				mMessage = " UltimateResult: " + overallResultMsg;
 				return;
 			}
 			evaluateExpectedResult(expectedResultFinder);
@@ -121,7 +118,7 @@ public class SafetyCheckTestResultDecider extends ThreeTierTestResultDecider<Saf
 				// we will not evaluate overall result;
 				return;
 			case EXPECTED_RESULT_FOUND:
-				compareToOverallResult(expectedResultFinder.getExpectedResult(), overallResultDeterminer, false);
+				compareToOverallResult(expectedResultFinder.getExpectedResult(), overallResultDeterminer);
 				return;
 			case NO_EXPECTED_RESULT_FOUND:
 				evaluateOverallResultWithoutExpectedResult(overallResultDeterminer);
@@ -161,8 +158,7 @@ public class SafetyCheckTestResultDecider extends ThreeTierTestResultDecider<Saf
 		}
 
 		private void compareToOverallResult(final SafetyCheckerOverallResult expectedResult,
-				final IOverallResultEvaluator<SafetyCheckerOverallResult> overallResultDeterminer,
-				final boolean skipOnSuccess) {
+				final IOverallResultEvaluator<SafetyCheckerOverallResult> overallResultDeterminer) {
 			final SafetyCheckerOverallResult overallResult = overallResultDeterminer.getOverallResult();
 			final String overallResultMsg = overallResultDeterminer.generateOverallResultMessage();
 
@@ -171,7 +167,7 @@ public class SafetyCheckTestResultDecider extends ThreeTierTestResultDecider<Saf
 			switch (overallResult) {
 			case EXCEPTION_OR_ERROR:
 				mCategory = overallResult + " (Expected:" + expectedResult + ") " + overallResultMsg;
-				mTestResult = skipOnSuccess && expectedResult == overallResult ? TestResult.IGNORE : TestResult.FAIL;
+				mTestResult = TestResult.FAIL;
 				break;
 			case SAFE:
 				if (expectedResult == SafetyCheckerOverallResult.SAFE) {
@@ -194,7 +190,7 @@ public class SafetyCheckTestResultDecider extends ThreeTierTestResultDecider<Saf
 				break;
 			case UNSAFE_OVERAPPROXIMATED:
 				if (expectedResult == overallResult) {
-					mTestResult = skipOnSuccess ? TestResult.IGNORE : TestResult.SUCCESS;
+					mTestResult = TestResult.SUCCESS;
 				} else if (expectedResult == SafetyCheckerOverallResult.UNSAFE) {
 					mTestResult = TestResult.SUCCESS;
 				} else {
@@ -210,12 +206,9 @@ public class SafetyCheckTestResultDecider extends ThreeTierTestResultDecider<Saf
 				}
 				break;
 			case UNKNOWN:
-			case TIMEOUT:
 				// syntax error should always have been found
 				if (expectedResult == SafetyCheckerOverallResult.SYNTAX_ERROR) {
 					mTestResult = TestResult.FAIL;
-				} else if (skipOnSuccess && expectedResult == overallResult) {
-					mTestResult = TestResult.IGNORE;
 				} else {
 					mTestResult = TestResult.UNKNOWN;
 				}
@@ -225,6 +218,14 @@ public class SafetyCheckTestResultDecider extends ThreeTierTestResultDecider<Saf
 					mTestResult = TestResult.SUCCESS;
 				} else {
 					mTestResult = TestResult.FAIL;
+				}
+				break;
+			case TIMEOUT:
+				// syntax error should always have been found
+				if (expectedResult == SafetyCheckerOverallResult.SYNTAX_ERROR) {
+					mTestResult = TestResult.FAIL;
+				} else {
+					mTestResult = TestResult.UNKNOWN;
 				}
 				break;
 			case UNSUPPORTED_SYNTAX:
