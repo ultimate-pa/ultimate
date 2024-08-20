@@ -148,49 +148,15 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 
 	private static void addSkippedTest(final File ignoreFile, final NestedMap3<String, String, String, String> map) {
 		try {
-			final Map<String, List<String>> parsed = new Yaml().load(new FileInputStream(ignoreFile));
+			final Map<String, List<Map<String, String>>> parsed = new Yaml().load(new FileInputStream(ignoreFile));
 			for (final var entry : parsed.entrySet()) {
-				for (final String line : entry.getValue()) {
-					addSkipLine(line, entry.getKey(), map);
+				for (final Map<String, String> triples : entry.getValue()) {
+					map.put(triples.get("task"), triples.get("settings"), triples.get("toolchain"), entry.getKey());
 				}
 			}
 		} catch (final FileNotFoundException e) {
 			// File does not exist, nothing to be ignored
 		}
-	}
-
-	private static void addSkipLine(final String line, final String exptectedVerdict,
-			final NestedMap3<String, String, String, String> map) {
-		if (line.startsWith("//")) {
-			return;
-		}
-		String settings = null;
-		String toolchain = null;
-		String file = null;
-		final String[] args = line.split("\\s+");
-		if (args.length != 3) {
-			return;
-		}
-		for (int i = 0; i < 3; i++) {
-			final String arg = args[i];
-			if (arg.endsWith(".epf")) {
-				if (settings != null) {
-					return;
-				}
-				settings = arg;
-			} else if (arg.endsWith(".xml")) {
-				if (toolchain != null) {
-					return;
-				}
-				toolchain = arg;
-			} else {
-				if (file != null) {
-					return;
-				}
-				file = arg;
-			}
-		}
-		map.put(file, settings, toolchain, exptectedVerdict);
 	}
 
 	protected long getTimeout(final Config rundef, final File file) {

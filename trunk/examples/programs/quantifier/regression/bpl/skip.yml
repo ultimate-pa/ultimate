@@ -1,2 +1,4 @@
 overapproximation:
-- AuxVarInCall.bpl AutomizerBpl-forwardPredicates.epf AutomizerBpl.xml
+- task: AuxVarInCall.bpl
+  settings: AutomizerBpl-forwardPredicates.epf
+  toolchain: AutomizerBpl.xml

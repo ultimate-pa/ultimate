@@ -1,21 +1,45 @@
 TIMEOUT:
-- BugLiveVariables03-Safe.bpl AutomizerBpl-FPandBP.epf AutomizerBpl.xml
-- BugNestedSsaWithPendingContexts.bpl AutomizerBpl-forwardPredicates.epf AutomizerBpl.xml
-- BugNoPredecessorOfReturnTransition.bpl PdrAutomizerBpl.epf PdrAutomizerBpl.xml
-- nestedWhileSimple-Safe.bpl PdrAutomizerBpl.epf PdrAutomizerBpl.xml
+- task: BugLiveVariables03-Safe.bpl
+  settings: AutomizerBpl-FPandBP.epf
+  toolchain: AutomizerBpl.xml
+- task: BugNestedSsaWithPendingContexts.bpl
+  settings: AutomizerBpl-forwardPredicates.epf
+  toolchain: AutomizerBpl.xml
+- task: BugNoPredecessorOfReturnTransition.bpl
+  settings: PdrAutomizerBpl.epf
+  toolchain: PdrAutomizerBpl.xml
+- task: nestedWhileSimple-Safe.bpl
+  settings: PdrAutomizerBpl.epf
+  toolchain: PdrAutomizerBpl.xml
 
 Overapproximation:
-- Overapproximation.bpl AutomizerBpl-nestedInterpolants.epf AutomizerBpl.xml
-- Overapproximation.bpl AutomizerBpl-forwardPredicates.epf AutomizerBpl.xml
-- Overapproximation.bpl AutomizerBpl-FPandBP.epf AutomizerBpl.xml
-- Overapproximation.bpl PdrAutomizerBpl.epf PdrAutomizerBpl.xml
+- task: Overapproximation.bpl
+  settings: AutomizerBpl-nestedInterpolants.epf
+  toolchain: AutomizerBpl.xml
+- task: Overapproximation.bpl
+  settings: AutomizerBpl-forwardPredicates.epf
+  toolchain: AutomizerBpl.xml
+- task: Overapproximation.bpl
+  settings: AutomizerBpl-FPandBP.epf
+  toolchain: AutomizerBpl.xml
+- task: Overapproximation.bpl
+  settings: PdrAutomizerBpl.epf
+  toolchain: PdrAutomizerBpl.xml
 
 # We are unable to backtranslate @diff from SMT to Boogie
 unknown symbol (@diff:
-- BugLiveVariables03-Safe.bpl AutomizerBpl-nestedInterpolants.epf AutomizerBpl.xml
-- BugLiveVariables04-Safe.bpl AutomizerBpl-nestedInterpolants.epf AutomizerBpl.xml
+- task: BugLiveVariables03-Safe.bpl
+  settings: AutomizerBpl-nestedInterpolants.epf
+  toolchain: AutomizerBpl.xml
+- task: BugLiveVariables04-Safe.bpl
+  settings: AutomizerBpl-nestedInterpolants.epf
+  toolchain: AutomizerBpl.xml
 
 # Issue in SMTInterpol
 Const is only supported for infinite index sort:
-- ConstArray.bpl AutomizerBpl-nestedInterpolants.epf AutomizerBpl.xml
-- ConstArray.bpl AutomizerBpl-nestedInterpolants.epf PdrAutomizerBpl.xml
+- task: ConstArray.bpl
+  settings: AutomizerBpl-nestedInterpolants.epf
+  toolchain: AutomizerBpl.xml
+- task: ConstArray.bpl
+  settings: AutomizerBpl-nestedInterpolants.epf
+  toolchain: PdrAutomizerBpl.xml
