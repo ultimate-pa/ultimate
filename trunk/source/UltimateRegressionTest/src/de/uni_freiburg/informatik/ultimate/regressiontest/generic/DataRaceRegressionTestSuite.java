@@ -26,16 +26,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.regressiontest.generic;
 
-import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
-
 import de.uni_freiburg.informatik.ultimate.regressiontest.AbstractRegressionTestSuite;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.decider.SafetyCheckTestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class DataRaceRegressionTestSuite extends AbstractRegressionTestSuite {
 
@@ -43,32 +38,16 @@ public class DataRaceRegressionTestSuite extends AbstractRegressionTestSuite {
 	private static final String ROOT_DIR = TestUtil.getPathFromTrunk("examples/concurrent/pthreads/races");
 	private static final String FILE_ENDING = ".c";
 
-	private final Map<Pair<String, String>, Long> mSpecialTimeouts = new HashMap<>();
-
 	public DataRaceRegressionTestSuite() {
 		super();
 		mTimeout = TIMEOUT;
 		mRootFolder = ROOT_DIR;
 		mFiletypesToConsider = new String[] { FILE_ENDING };
-
-		mSpecialTimeouts.put(new Pair<>("DataRace-32bit-Automizer_Bitvector.epf", "static-array-copy3.c"), 250_000L);
-		mSpecialTimeouts.put(new Pair<>("DataRace-32bit-Automizer_Default.epf", "static-array-copy3.c"), 40_000L);
 	}
 
 	@Override
 	protected ITestResultDecider getTestResultDecider(final UltimateRunDefinition runDefinition,
 			final String overridenExpectedVerdict) {
-		checkNoOverridenVerdict(overridenExpectedVerdict);
-		return new SafetyCheckTestResultDecider(runDefinition, false);
-	}
-
-	@Override
-	protected long getTimeout(final Config config, final File file) {
-		final var pair = new Pair<>(config.getSettingsFile().getName(), file.getName());
-		final var timeout = mSpecialTimeouts.get(pair);
-		if (timeout != null) {
-			return timeout;
-		}
-		return super.getTimeout(config, file);
+		return new SafetyCheckTestResultDecider(runDefinition, false, overridenExpectedVerdict);
 	}
 }
