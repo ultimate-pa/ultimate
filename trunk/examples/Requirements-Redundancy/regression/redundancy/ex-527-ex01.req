@@ -1,4 +1,4 @@
-// #TestSpec: redundant:R1; results: 1
+// #TestSpec: redundant:R1; results: -1
 Input A is int
 Input B is int
 
