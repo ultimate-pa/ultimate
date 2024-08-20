@@ -1,8 +1,6 @@
-// #TestSpec: rt-inconsistent:; vacuous:; inconsistent:; results: 1
+// #TestSpec: redundant:R1; results: 1
 Input A is int
 Input B is int
 
 R1: Globally, it is always the case that "A>B" holds.
 R2: Globally, it is always the case that "A>B+3" holds.
-
-// R1 is redundant
