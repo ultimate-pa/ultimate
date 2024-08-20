@@ -1,3 +1,0 @@
-// Fails due to overapproximation of bitwise operators in the integer translation
-ShiftLeft06.c AutomizerC-SignedIntegerOverflowCheck.epf AutomizerC.xml UNKNOWN
-ShiftLeft07.c AutomizerC-SignedIntegerOverflowCheck.epf AutomizerC.xml UNKNOWN
