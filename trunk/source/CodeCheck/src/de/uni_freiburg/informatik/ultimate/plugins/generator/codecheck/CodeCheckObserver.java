@@ -46,11 +46,9 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.InvariantResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResultAtElement;
@@ -87,7 +85,10 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.UnsatCores;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.DagSizePrinter;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.PrePostConditionSpecification;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.ProofAnnotation;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.FloydHoareMapping;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.FloydHoareUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
@@ -518,8 +519,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 			reportPositiveResults(mErrNodesOfAllProc);
 
 			if (OUTPUT_HOARE_ANNOTATION) {
-				createInvariantResults(procRootsToCheck, icfg, icfg.getCfgSmtToolkit(),
-						mServices.getBacktranslationService());
+				createInvariantAndContractResults(procRootsToCheck, icfg, mServices.getBacktranslationService());
 			}
 		} else if (overallResult == Result.UNSAFE) {
 			reportCounterexampleResult(realErrorProgramExecution);
@@ -534,40 +534,19 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		return false;
 	}
 
-	private void createInvariantResults(final List<AnnotatedProgramPoint> procRootsToCheck,
-			final IIcfg<IcfgLocation> icfg, final CfgSmtToolkit csToolkit,
-			final IBacktranslationService backTranslatorService) {
-		final Term trueterm = csToolkit.getManagedScript().getScript().term("true");
-
-		final Set<IcfgLocation> locsForLoopLocations = new HashSet<>(IcfgUtils.getPotentialCycleProgramPoints(icfg));
-
-		locsForLoopLocations.addAll(icfg.getLoopLocations());
-		// find all locations that have outgoing edges which are annotated with LoopEntry, i.e., all loop candidates
-
+	private void createInvariantAndContractResults(final List<AnnotatedProgramPoint> procRootsToCheck,
+			final IIcfg<IcfgLocation> icfg, final IBacktranslationService backTranslatorService) {
 		for (final AnnotatedProgramPoint pr : procRootsToCheck) {
-			final Map<IcfgLocation, Term> ha = computeHoareAnnotation(pr);
-			for (final Entry<IcfgLocation, Term> kvp : ha.entrySet()) {
-				final IcfgLocation locNode = kvp.getKey();
-				if (!locsForLoopLocations.contains(locNode)) {
-					// only compute loop invariants
-					continue;
-				}
+			final var floydHoare = computeHoareAnnotation(pr, icfg);
+			FloydHoareUtils.writeHoareAnnotationToLogger(icfg, floydHoare, mLogger, true);
 
-				final Term invariant = kvp.getValue();
-				if (invariant == null) {
-					continue;
-				}
-				mLogger.info("Invariant with dag size " + new DagSizePrinter(invariant));
+			// Annotate the ICFG with the computed Floyd-Hoare annotation, so it can be consumed by other plugins.
+			ProofAnnotation.addProof(icfg, floydHoare);
 
-				final InvariantResult<IIcfgElement, Term> invResult =
-						new InvariantResult<>(Activator.PLUGIN_NAME, locNode, backTranslatorService, invariant);
-				reportResult(invResult);
-
-				if (trueterm.equals(invariant)) {
-					continue;
-				}
-				new WitnessInvariant(invResult.getInvariant()).annotate(locNode);
-			}
+			FloydHoareUtils.createInvariantResults(Activator.PLUGIN_NAME, icfg, floydHoare, backTranslatorService,
+					this::reportResult);
+			FloydHoareUtils.createProcedureContractResults(mServices, Activator.PLUGIN_NAME, icfg, floydHoare,
+					backTranslatorService, this::reportResult);
 		}
 	}
 
@@ -637,8 +616,9 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		}
 	}
 
-	private Map<IcfgLocation, Term> computeHoareAnnotation(final AnnotatedProgramPoint pr) {
-		final Map<IcfgLocation, Term> pp2HoareAnnotation = new HashMap<>();
+	private FloydHoareMapping<IcfgLocation> computeHoareAnnotation(final AnnotatedProgramPoint pr,
+			final IIcfg<IcfgLocation> icfg) {
+		final Map<IcfgLocation, IPredicate> pp2HoareAnnotation = new HashMap<>();
 		final Map<IcfgLocation, Set<AnnotatedProgramPoint>> pp2app = computeProgramPointToAnnotatedProgramPoints(pr);
 
 		for (final Entry<IcfgLocation, Set<AnnotatedProgramPoint>> kvp : pp2app.entrySet()) {
@@ -648,9 +628,11 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 					SmtUtils.orWithExtendedLocalSimplification(mCsToolkit.getManagedScript().getScript(), terms);
 			final Term simplifiedOrTerm = SmtUtils.simplify(mCsToolkit.getManagedScript(), orTerm, mServices,
 					SimplificationTechnique.SIMPLIFY_DDA);
-			pp2HoareAnnotation.put(kvp.getKey(), simplifiedOrTerm);
+			pp2HoareAnnotation.put(kvp.getKey(), mPredicateUnifier.getOrConstructPredicate(simplifiedOrTerm));
 		}
-		return pp2HoareAnnotation;
+
+		return new FloydHoareMapping<>(PrePostConditionSpecification.forIcfg(icfg, mPredicateUnifier),
+				pp2HoareAnnotation);
 	}
 
 	/**

@@ -77,6 +77,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskIterationIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.TaskIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.NwaFloydHoareValidityCheck;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
@@ -110,7 +111,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ce
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.NondeterministicInterpolantAutomaton;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.InterpolationPreferenceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
@@ -210,7 +210,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 
 		mPref = taPrefs;
 		mDefaultStateFactory = new PredicateFactoryForInterpolantAutomata(mCsToolkitWithRankVars.getManagedScript(),
-				predicateFactory, mPref.computeHoareAnnotation());
+				predicateFactory, mPref.getHoareSettings().computeHoareAnnotation());
 
 		final IPreferenceProvider baPref = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 
@@ -301,7 +301,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 
 	public final BuchiCegarLoopResult<L> runCegarLoop() throws IOException {
 		mLogger.info("Interprodecural is " + mPref.interprocedural());
-		mLogger.info("Hoare is " + mPref.computeHoareAnnotation());
+		mLogger.info("Hoare is " + mPref.getHoareSettings().getHoarePositions());
 		mLogger.info("Compute interpolants for " + mInterpolation);
 		mLogger.info("Backedges is " + mPref.interpolantAutomaton());
 		mLogger.info("Determinization is " + mPref.interpolantAutomatonEnhancement());
@@ -488,8 +488,9 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 			mTermcompProofBenchmark.reportFiniteModule(mIteration, interpolAutomaton);
 		}
 		mMDBenchmark.reportTrivialModule(mIteration, interpolAutomaton.size());
-		assert new InductivityCheck<>(mServices, interpolAutomaton, false, true,
-				new IncrementalHoareTripleChecker(mCsToolkitWithRankVars, false)).getResult();
+		assert NwaFloydHoareValidityCheck.forInterpolantAutomaton(mServices, mCsToolkitWithRankVars.getManagedScript(),
+				new IncrementalHoareTripleChecker(mCsToolkitWithRankVars, false), traceCheck.getPredicateUnifier(),
+				interpolAutomaton, true).getResult();
 		mBenchmarkGenerator.addEdgeCheckerData(htc.getStatistics());
 		mBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 		return result;
@@ -573,7 +574,11 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 								HoareTripleChecks.INCREMENTAL, mCsToolkitWithRankVars, pu);
 				final BuchiHoareTripleChecker bhtc = new BuchiHoareTripleChecker(ehtc);
 				bhtc.putDecreaseEqualPair(hondaPredicate, rankEqAndSi);
-				assert new InductivityCheck<>(mServices, inputAutomaton, false, true, bhtc).getResult();
+				assert NwaFloydHoareValidityCheck
+						.forInterpolantAutomaton(mServices, mCsToolkitWithRankVars.getManagedScript(), bhtc, pu,
+								inputAutomaton, true, bspmResult.getStemPrecondition())
+						.getResult();
+
 				assert new BuchiAccepts<>(new AutomataLibraryServices(mServices), inputAutomaton,
 						mCounterexample.getNestedLassoWord()).getResult();
 

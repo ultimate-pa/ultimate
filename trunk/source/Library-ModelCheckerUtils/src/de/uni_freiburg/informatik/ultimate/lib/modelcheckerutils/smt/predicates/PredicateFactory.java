@@ -88,10 +88,6 @@ public class PredicateFactory extends BasicPredicateFactory {
 		return newMLPredicate(programPoints, mDontCareTerm);
 	}
 
-	public HoareAnnotation getNewHoareAnnotation(final IcfgLocation pp, final IPredicate pred) {
-		return new HoareAnnotation(pp, constructFreshSerialNumber(), this, pred);
-	}
-
 	private static final class NoCallerDebugIdentifier extends DebugIdentifier {
 
 		public static final NoCallerDebugIdentifier INSTANCE = new NoCallerDebugIdentifier();

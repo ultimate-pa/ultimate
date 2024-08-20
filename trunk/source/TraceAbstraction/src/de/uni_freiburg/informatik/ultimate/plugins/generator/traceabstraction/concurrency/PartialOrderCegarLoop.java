@@ -27,8 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency;
 
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
@@ -64,6 +62,7 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.Wrappe
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IUnionStateFactory;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
@@ -79,6 +78,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.MLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateWithConjuncts;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -89,7 +89,6 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.Pa
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderReductionFacade.StateSplitter;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.AbstractionType;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
@@ -101,6 +100,7 @@ import de.uni_freiburg.informatik.ultimate.util.Lazy;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
 /**
  * A CEGAR loop for concurrent programs, based on finite automata, which uses Partial Order Reduction (POR) in every
@@ -130,12 +130,11 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	public PartialOrderCegarLoop(final DebugIdentifier name,
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> initialAbstraction,
 			final IIcfg<IcfgLocation> rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
-			final TAPreferences taPrefs, final Set<IcfgLocation> errorLocs, final InterpolationTechnique interpolation,
-			final IUltimateServiceProvider services,
+			final TAPreferences taPrefs, final Set<IcfgLocation> errorLocs, final IUltimateServiceProvider services,
 			final List<IRefinableIndependenceProvider<L>> independenceProviders, final Class<L> transitionClazz,
 			final PredicateFactoryRefinement stateFactoryForRefinement) {
-		super(name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation, false,
-				Collections.emptySet(), services, transitionClazz, stateFactoryForRefinement);
+		super(name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, false, services,
+				transitionClazz, stateFactoryForRefinement);
 
 		assert !mPref.applyOneShotPOR() : "Turn off one-shot partial order reduction when using this CEGAR loop.";
 
@@ -276,7 +275,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		final IBudgetFunction<L, IPredicate> optBudget = new OptimisticBudget<>(new AutomataLibraryServices(mServices),
 				mPOR.getDfsOrder(), mPOR.getSleepMapFactory(), this::createVisitor, reduction);
 
-		final double switchProbability = mPref.getCoinflipProbability(mIteration);
+		final double switchProbability = mPref.getCoinflipProbability(getIteration());
 		final long seed = mPref.coinflipSeed();
 		switch (mPref.useCoinflip()) {
 		case OFF:
@@ -300,7 +299,11 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		for (final AbstractInterpolantAutomaton<L> ia : mAbstractItpAutomata) {
 			mCegarLoopBenchmark.reportInterpolantAutomatonStates(ia.size());
 		}
-		mPOR.reportStatistics(Activator.PLUGIN_ID);
+
+		final var data = new StatisticsData();
+		data.aggregateBenchmarkData(mPOR.getStatistics());
+		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
+				new StatisticsResult<>(Activator.PLUGIN_ID, "Partial order reduction statistics", data));
 
 		super.finish();
 	}
@@ -346,12 +349,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		assert state instanceof IMLPredicate || state instanceof ISLPredicate : "unexpected type of predicate: "
 				+ state.getClass();
 
-		final boolean isErrorState;
-		if (state instanceof ISLPredicate) {
-			isErrorState = mErrorLocs.contains(((ISLPredicate) state).getProgramPoint());
-		} else {
-			isErrorState = Arrays.stream(((IMLPredicate) state).getProgramPoints()).anyMatch(mErrorLocs::contains);
-		}
+		final boolean isErrorState = PredicateUtils.streamLocations(state).anyMatch(mErrorLocs::contains);
 		return isErrorState && !isProvenState(state);
 	}
 
@@ -415,11 +413,6 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	@Override
 	protected void constructErrorAutomaton() throws AutomataOperationCanceledException {
 		throw new UnsupportedOperationException("Error automata not supported for " + PartialOrderCegarLoop.class);
-	}
-
-	@Override
-	protected void computeIcfgHoareAnnotation() {
-		throw new UnsupportedOperationException("Hoare annotation not supported for " + PartialOrderCegarLoop.class);
 	}
 
 	private IDeadEndStore<IPredicate, IPredicate> createDeadEndStore(final StateSplitter<IPredicate> splitter) {

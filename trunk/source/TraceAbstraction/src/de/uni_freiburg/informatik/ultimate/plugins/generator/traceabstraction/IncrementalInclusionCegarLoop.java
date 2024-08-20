@@ -62,15 +62,13 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.d
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils.HoareTripleChecks;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.NwaHoareProofProducer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.NondeterministicInterpolantAutomaton;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.LanguageOperation;
@@ -85,16 +83,16 @@ public class IncrementalInclusionCegarLoop<L extends IIcfgTransition<?>> extends
 	public IncrementalInclusionCegarLoop(final DebugIdentifier name,
 			final INestedWordAutomaton<L, IPredicate> initialAbstraction, final IIcfg<?> rootNode,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final TAPreferences taPrefs,
-			final Set<? extends IcfgLocation> errorLocs, final InterpolationTechnique interpolation,
-			final boolean computeHoareAnnotation, final Set<IcfgLocation> hoareAnnotationLocs,
+			final Set<? extends IcfgLocation> errorLocs, final NwaHoareProofProducer<L> proofProducer,
 			final IUltimateServiceProvider services, final LanguageOperation languageOperation,
 			final Class<L> transitionClazz, final PredicateFactoryRefinement stateFactoryForRefinement) {
-		super(name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation,
-				computeHoareAnnotation, hoareAnnotationLocs, services, transitionClazz, stateFactoryForRefinement);
+		super(name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, proofProducer,
+				services, transitionClazz, stateFactoryForRefinement);
 		mLanguageOperation = languageOperation;
-		if (mComputeHoareAnnotation) {
+
+		if (mProofUpdater != null) {
 			throw new UnsupportedOperationException(
-					"while using this CEGAR loop computation of Hoare annotation is unsupported ");
+					"while using this CEGAR loop computation of proofs is unsupported ");
 		}
 	}
 
@@ -204,7 +202,7 @@ public class IncrementalInclusionCegarLoop<L extends IIcfgTransition<?>> extends
 
 	@Override
 	protected boolean refineAbstraction() throws AutomataLibraryException {
-		mStateFactoryForRefinement.setIteration(super.mIteration);
+		mStateFactoryForRefinement.setIteration(getIteration());
 		// howDifferentAreInterpolants(mInterpolAutomaton.getStates());
 
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
@@ -242,8 +240,8 @@ public class IncrementalInclusionCegarLoop<L extends IIcfgTransition<?>> extends
 				switchAllInterpolantAutomataToReadOnlyMode();
 				final INestedWordAutomaton<L, IPredicate> test =
 						new RemoveUnreachable<>(new AutomataLibraryServices(getServices()), determinized).getResult();
-				assert new InductivityCheck<>(getServices(), test, false, true,
-						new IncrementalHoareTripleChecker(mIcfg.getCfgSmtToolkit(), false)).getResult();
+				assert checkInterpolantAutomatonInductivity(test);
+
 				progress = true;
 				break;
 			}
@@ -264,8 +262,7 @@ public class IncrementalInclusionCegarLoop<L extends IIcfgTransition<?>> extends
 				switchAllInterpolantAutomataToReadOnlyMode();
 				final INestedWordAutomaton<L, IPredicate> test =
 						new RemoveUnreachable<>(new AutomataLibraryServices(getServices()), nondet).getResult();
-				assert new InductivityCheck<>(getServices(), test, false, true,
-						new IncrementalHoareTripleChecker(mIcfg.getCfgSmtToolkit(), false)).getResult();
+				assert checkInterpolantAutomatonInductivity(test);
 				progress = true;
 				break;
 			}
@@ -281,7 +278,7 @@ public class IncrementalInclusionCegarLoop<L extends IIcfgTransition<?>> extends
 			if (mPref.dumpAutomata()) {
 				for (int i = 0; i < mInterpolantAutomata.size(); i++) {
 					final String filename =
-							"IncrementalInclusion_Interation" + mIteration + "_InterpolantAutomaton" + i;
+							"IncrementalInclusion_Interation" + getIteration() + "_InterpolantAutomaton" + i;
 					super.writeAutomatonToFile(mInterpolantAutomata.get(i), filename);
 				}
 			}
@@ -305,7 +302,7 @@ public class IncrementalInclusionCegarLoop<L extends IIcfgTransition<?>> extends
 		if (mPref.dumpAutomata()) {
 			for (int i = 0; i < mInterpolantAutomata.size(); i++) {
 				final String filename =
-						"EnhancedInterpolantAutomaton_WhoseConstructionWasStartedIn_Iteration" + mIteration;
+						"EnhancedInterpolantAutomaton_WhoseConstructionWasStartedIn_Iteration" + getIteration();
 				super.writeAutomatonToFile(mInterpolantAutomata.get(i), filename);
 				mInterpolantAutomata.get(i);
 			}

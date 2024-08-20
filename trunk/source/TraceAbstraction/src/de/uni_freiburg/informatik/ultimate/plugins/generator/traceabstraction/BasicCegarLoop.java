@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.EpsilonNestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaBasis;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
@@ -94,6 +95,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskIterationIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult.BasicRefinementEngineResult;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.NwaFloydHoareValidityCheck;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.cfg2automaton.Cfg2Automaton;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
@@ -106,7 +108,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.er
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.NondeterministicInterpolantAutomaton;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
@@ -136,33 +137,6 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
 public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>>
 		extends AbstractCegarLoop<L, A> {
 
-	public enum AutomatonType {
-		FLOYD_HOARE, ERROR;
-
-		private String mLongString;
-
-		static {
-			FLOYD_HOARE.mLongString = "FloydHoare";
-			ERROR.mLongString = "Error";
-		}
-
-		private String mShortString;
-
-		static {
-			FLOYD_HOARE.mShortString = "Fh";
-			ERROR.mShortString = "Err";
-		}
-
-		public String getLongString() {
-			return mLongString;
-		}
-
-		public String getShortString() {
-			return mShortString;
-		}
-
-	}
-
 	private static final boolean NON_EA_INDUCTIVITY_CHECK = false;
 
 	protected final PredicateFactoryRefinement mStateFactoryForRefinement;
@@ -178,20 +152,19 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 			new LinkedHashSet<>();
 
 	protected boolean mFallbackToFpIfInterprocedural = false;
-	protected HoareAnnotationFragments<L> mHaf;
 	protected IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> mRefinementResult;
 
 	private boolean mFirstReuseDump = true;
 
 	public BasicCegarLoop(final DebugIdentifier name, final A initialAbstraction, final IIcfg<?> rootNode,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final TAPreferences taPrefs,
-			final Set<? extends IcfgLocation> errorLocs, InterpolationTechnique interpolation,
-			final boolean computeHoareAnnotation, final Set<IcfgLocation> hoareAnnotationLocs,
+			final Set<? extends IcfgLocation> errorLocs, final boolean computeProof,
 			final IUltimateServiceProvider services, final Class<L> transitionClazz,
 			final PredicateFactoryRefinement stateFactoryForRefinement) {
-		super(services, name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs,
-				services.getLoggingService().getLogger(Activator.PLUGIN_ID), transitionClazz, computeHoareAnnotation);
+		super(services, name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs);
 		mPathProgramDumpController = new PathProgramDumpController<>(getServices(), mPref, mIcfg);
+
+		InterpolationTechnique interpolation = taPrefs.interpolation();
 		if (mFallbackToFpIfInterprocedural && rootNode.getProcedureEntryNodes().size() > 1
 				&& interpolation == InterpolationTechnique.FPandBP) {
 			mLogger.info("fallback from FPandBP to FP because CFG is interprocedural");
@@ -199,11 +172,9 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 		}
 
 		mStoreFloydHoareAutomata = taPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.NONE;
-		mHaf = new HoareAnnotationFragments<>(mLogger, hoareAnnotationLocs, mPref.getHoareAnnotationPositions());
 		mStateFactoryForRefinement = stateFactoryForRefinement;
-
-		mPredicateFactoryInterpolantAutomata = new PredicateFactoryForInterpolantAutomata(
-				super.mCsToolkit.getManagedScript(), mPredicateFactory, computeHoareAnnotation);
+		mPredicateFactoryInterpolantAutomata = new PredicateFactoryForInterpolantAutomata(mCsToolkit.getManagedScript(),
+				mPredicateFactory, computeProof);
 
 		mPredicateFactoryResultChecking = new PredicateFactoryResultChecking(mPredicateFactory);
 
@@ -221,7 +192,7 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 				new TaCheckAndRefinementPreferences<>(getServices(), mPref, interpolation, mSimplificationTechnique,
 						mXnfConversionTechnique, mCsToolkit, mPredicateFactory, mIcfg);
 		mStrategyFactory = new StrategyFactory<>(mLogger, mPref, taCheckAndRefinementPrefs, mIcfg, mPredicateFactory,
-				mPredicateFactoryInterpolantAutomata, mTransitionClazz);
+				mPredicateFactoryInterpolantAutomata, transitionClazz);
 
 		if (mPref.dumpOnlyReuseAutomata()) {
 			// Construct an empty file. We need this empty file in cases where
@@ -254,7 +225,7 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 	 * Reads a sequence of SMT assertions from a file (line by line), creates a refinement result from them and refines
 	 * the initial abstraction with this result.
 	 */
-	protected final void readInitialProof() {
+	protected final void readInitialProof() throws AutomataLibraryException {
 		final String filename = ILocation.getAnnotation(mIcfg).getFileName() + ".proof.smt2";
 		final Path path = Paths.get(filename).toAbsolutePath();
 		if (Files.notExists(path)) {
@@ -286,8 +257,8 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 				predicates.toArray(IPredicate[]::new));
 
 		final VpAlphabet<L> alphabet;
-		if (mAbstraction instanceof INwaOutgoingLetterAndTransitionProvider<?, ?>) {
-			alphabet = ((INwaOutgoingLetterAndTransitionProvider<L, ?>) mAbstraction).getVpAlphabet();
+		if (mAbstraction instanceof INwaBasis<?, ?>) {
+			alphabet = ((INwaBasis<L, ?>) mAbstraction).getVpAlphabet();
 		} else {
 			alphabet = new VpAlphabet<>(mAbstraction.getAlphabet());
 		}
@@ -310,12 +281,7 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 						false)),
 				new Lazy<>(() -> new MonolithicHoareTripleChecker(mCsToolkit)), new Lazy<>(() -> unifier));
 		mInterpolAutomaton = mRefinementResult.getInfeasibilityProof();
-
-		try {
-			refineAbstraction();
-		} catch (final AutomataLibraryException e) {
-			throw new IllegalStateException(e);
-		}
+		refineAbstraction();
 	}
 
 	@Override
@@ -329,7 +295,7 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 		try {
 			if (mPref.hasLimitPathProgramCount() && mPref.getLimitPathProgramCount() < mStrategyFactory
 					.getPathProgramCache().getPathProgramCount(mCounterexample)) {
-				final String taskDescription = "bailout by path program count limit in iteration " + mIteration;
+				final String taskDescription = "bailout by path program count limit in iteration " + getIteration();
 				throw new TaskCanceledException(UserDefinedLimit.PATH_PROGRAM_ATTEMPTS, getClass(), taskDescription);
 			}
 
@@ -354,7 +320,7 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 		if (feasibility != LBool.SAT) {
 			// dump path program if necessary
 			mPathProgramDumpController.reportPathProgram(mCounterexample, mRefinementResult.somePerfectSequenceFound(),
-					mIteration);
+					getIteration());
 		}
 		if (feasibility != LBool.UNSAT) {
 			mLogger.info("Counterexample %s feasible", feasibility == LBool.SAT ? "is" : "might be");
@@ -405,9 +371,7 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 
 		assert isInterpolantAutomatonOfSingleStateType(mInterpolAutomaton);
 		if (NON_EA_INDUCTIVITY_CHECK) {
-			final boolean inductive = new InductivityCheck<>(getServices(), mInterpolAutomaton, false, true,
-					new IncrementalHoareTripleChecker(super.mCsToolkit, false)).getResult();
-
+			final boolean inductive = checkInterpolantAutomatonInductivity(mInterpolAutomaton);
 			if (!inductive) {
 				throw new AssertionError("not inductive");
 			}
@@ -417,12 +381,11 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 				false) : "Interpolant automaton broken!: " + mCounterexample.getWord() + " not accepted";
 
 		// FIXME (Dominik 2020-12-19): The assertion below is problematic, because it has side-effects!
-		// In particular, InductivityCheck calls IncrementalHoareTripleChecker, which in the method unAssertCodeBlock
-		// unlocks a ManagedScript. If assertions are disabled, this remains locked. This leads to exceptions if other
-		// callers try to lock it. With assertions enabled, the line below causes the ManagedScript to be unlocked and
-		// no exceptions occur.
-		assert new InductivityCheck<>(getServices(), mInterpolAutomaton, false, true,
-				new IncrementalHoareTripleChecker(super.mCsToolkit, false)).getResult();
+		// In particular, NwaFloydHoareValidityCheck calls IncrementalHoareTripleChecker, which in the method
+		// unAssertCodeBlock unlocks a ManagedScript. If assertions are disabled, this remains locked. This leads to
+		// exceptions if other callers try to lock it. With assertions enabled, the line below causes the ManagedScript
+		// to be unlocked and no exceptions occur.
+		assert checkInterpolantAutomatonInductivity(mInterpolAutomaton);
 	}
 
 	protected static boolean
@@ -456,8 +419,8 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 		}
 		// Use all edges of the interpolant automaton that is already constructed as an
 		// initial cache for the Hoare triple checker.
-		final HoareTripleCheckerCache initialCache = TraceAbstractionUtils
-				.extractHoareTriplesfromAutomaton(mRefinementResult.getInfeasibilityProof());
+		final HoareTripleCheckerCache initialCache =
+				TraceAbstractionUtils.extractHoareTriplesfromAutomaton(mRefinementResult.getInfeasibilityProof());
 		return HoareTripleCheckerUtils.constructEfficientHoareTripleCheckerWithCaching(getServices(),
 				mPref.getHoareTripleChecks(), mCsToolkit, mRefinementResult.getPredicateUnifier(), initialCache);
 	}
@@ -492,9 +455,9 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 			return true;
 		}
 		final Set<L> counterexampleLetters = mCounterexample.getWord().asSet();
-		final PathProgramConstructionResult ppcr = PathProgram.constructPathProgram(
-				"PathprogramSubtractedCheckIteration" + mIteration, mIcfg, counterexampleLetters,
-				Collections.emptySet());
+		final PathProgramConstructionResult ppcr =
+				PathProgram.constructPathProgram("PathprogramSubtractedCheckIteration" + getIteration(), mIcfg,
+						counterexampleLetters, Collections.emptySet());
 		final Map<IIcfgTransition<?>, IIcfgTransition<?>> oldTransition2NewTransition =
 				ppcr.getOldTransition2NewTransition();
 		final Map<IIcfgTransition<?>, IIcfgTransition<?>> newTransition2OldTransition =
@@ -548,7 +511,7 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 			} else {
 				printedAutomaton = automaton;
 			}
-			new AutomatonDefinitionPrinter<String, String>(services, "nwa" + mIteration,
+			new AutomatonDefinitionPrinter<String, String>(services, "nwa" + getIteration(),
 					mPref.dumpPath() + File.separator + filename, mPrintAutomataLabeling, "", !mFirstReuseDump,
 					printedAutomaton);
 			mFirstReuseDump = false;
@@ -571,15 +534,14 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 			} catch (final Error e) {
 				// suppress any exception, throw assertion error instead
 			}
-			throw new AssertionError("enhanced interpolant automaton in iteration " + mIteration
+			throw new AssertionError("enhanced interpolant automaton in iteration " + getIteration()
 					+ " broken: counterexample of length " + mCounterexample.getLength() + " not accepted"
 					+ (isOriginalBroken ? " (original was already broken)" : " (original is ok)"));
 		}
 		assert isInterpolantAutomatonOfSingleStateType(
 				new RemoveUnreachable<>(new AutomataLibraryServices(getServices()), interpolantAutomaton).getResult());
-		assert new InductivityCheck<>(getServices(),
-				new RemoveUnreachable<>(new AutomataLibraryServices(getServices()), interpolantAutomaton).getResult(),
-				false, true, new IncrementalHoareTripleChecker(super.mCsToolkit, false)).getResult();
+		assert checkInterpolantAutomatonInductivity(
+				new RemoveUnreachable<>(new AutomataLibraryServices(getServices()), interpolantAutomaton).getResult());
 	}
 
 	private void debugLogBrokenInterpolantAutomaton(
@@ -688,6 +650,12 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 			return mFloydHoareAutomata;
 		}
 		throw new IllegalStateException("Floyd-Hoare automata have not been stored");
+	}
+
+	protected boolean checkInterpolantAutomatonInductivity(final INestedWordAutomaton<L, IPredicate> automaton) {
+		return NwaFloydHoareValidityCheck.forInterpolantAutomaton(mServices, mCsToolkit.getManagedScript(),
+				new IncrementalHoareTripleChecker(mCsToolkit, false), mRefinementResult.getPredicateUnifier(),
+				automaton, true).getResult();
 	}
 
 	public IPreconditionProvider getPreconditionProvider() {

@@ -2,7 +2,6 @@
 	"de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction": [
 		"SMT solver",
 		"Compute Interpolants along a Counterexample",
-		"Compute Hoare Annotation of negated interpolant automaton, abstraction and CFG",
 		"Positions where we compute the Hoare Annotation",
 		"Trace refinement exception blacklist",
 		"Trace refinement strategy",

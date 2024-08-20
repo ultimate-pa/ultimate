@@ -32,7 +32,6 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
@@ -40,11 +39,17 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.in
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
-public class CegarLoopResult<L extends IIcfgTransition<?>> {
+/**
+ * Collects result information of a CEGAR loop.
+ *
+ * @param <L>
+ *            The type of transitions in the program analysed by the CEGAR loop
+ */
+public class CegarLoopResult<L> {
+	private final Map<IcfgLocation, CegarLoopLocalResult<L>> mLocalResults;
 	private final IStatisticsDataProvider mCegarLoopStatisticsGenerator;
 	private final IElement mArtifact;
 	private final List<Pair<AbstractInterpolantAutomaton<L>, IPredicateUnifier>> mFloydHoareAutomata;
-	private final Map<IcfgLocation, CegarLoopLocalResult<L>> mLocalResults;
 
 	public CegarLoopResult(final Map<IcfgLocation, CegarLoopLocalResult<L>> localResults,
 			final IStatisticsDataProvider cegarLoopStatisticsGenerator, final IElement artifact,
@@ -69,6 +74,10 @@ public class CegarLoopResult<L extends IIcfgTransition<?>> {
 
 	public IElement getArtifact() {
 		return mArtifact;
+	}
+
+	public boolean hasProvenAnything() {
+		return mLocalResults.values().stream().anyMatch(a -> a.getResult() == Result.SAFE);
 	}
 
 	public List<Pair<AbstractInterpolantAutomaton<L>, IPredicateUnifier>> getFloydHoareAutomata() {

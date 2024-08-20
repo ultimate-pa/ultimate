@@ -1,0 +1,17 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Library-Proofs
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.proofs
+Bundle-Version: 0.2.4
+Bundle-RequiredExecutionEnvironment: JavaSE-11
+Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
+ de.uni_freiburg.informatik.ultimate.lib.smtlib,
+ de.uni_freiburg.informatik.ultimate.lib.automata,
+ de.uni_freiburg.informatik.ultimate.smtinterpol,
+ de.uni_freiburg.informatik.ultimate.lib.smtlibutils,
+ de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils,
+ de.uni_freiburg.informatik.ultimate.lib.util
+Export-Package: 
+ de.uni_freiburg.informatik.ultimate.lib.proofs,
+ de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare
+Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.lib.proofs

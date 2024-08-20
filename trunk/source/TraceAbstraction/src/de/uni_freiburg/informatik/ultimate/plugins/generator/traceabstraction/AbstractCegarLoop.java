@@ -36,7 +36,6 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -49,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.F
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.NamedAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaBasis;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
@@ -61,7 +59,6 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceled
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainExceptionWrapper;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovabilityReason;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
-import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
@@ -74,26 +71,21 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.IInterpolantGenerator;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.HoareAnnotation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskFileIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.TaskIdentifier;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.FloydHoareAutomataReuse;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareAnnotationPositions;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -108,12 +100,10 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
  */
 public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>> {
 	private static final boolean DUMP_BIGGEST_AUTOMATON = false;
-	private static final boolean EXTENDED_HOARE_ANNOTATION_LOGGING = true;
 
 	protected final ILogger mLogger;
 	protected final SimplificationTechnique mSimplificationTechnique;
 	protected final XnfConversionTechnique mXnfConversionTechnique;
-	protected final Class<L> mTransitionClazz;
 
 	/**
 	 * Interprocedural control flow graph.
@@ -130,7 +120,6 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 	 * Intermediate layer to encapsulate preferences.
 	 */
 	protected final TAPreferences mPref;
-	protected final boolean mComputeHoareAnnotation;
 
 	/**
 	 * Set of error location whose reachability is analyzed by this CEGAR loop.
@@ -140,7 +129,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 	/**
 	 * Current Iteration of this CEGAR loop.
 	 */
-	protected int mIteration;
+	private int mIteration;
 
 	/**
 	 * Accepting run of the abstraction obtained in this iteration.
@@ -200,16 +189,14 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 	 * @param taPrefs
 	 * @param errorLocs
 	 * @param logger
-	 * @param transitionClazz
 	 * @param computeHoareAnnotation
 	 */
 	protected AbstractCegarLoop(final IUltimateServiceProvider services, final DebugIdentifier name,
 			final A initialAbstraction, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
-			final Set<? extends IcfgLocation> errorLocs, final ILogger logger, final Class<L> transitionClazz,
-			final boolean computeHoareAnnotation) {
+			final Set<? extends IcfgLocation> errorLocs) {
 		mServices = services;
-		mLogger = logger;
+		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mSimplificationTechnique = taPrefs.getSimplificationTechnique();
 		mXnfConversionTechnique = taPrefs.getXnfConversionTechnique();
 		mPrintAutomataLabeling = taPrefs.getAutomataFormat();
@@ -220,8 +207,6 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 		mPredicateFactory = predicateFactory;
 		mPref = taPrefs;
 		mErrorLocs = errorLocs;
-		mTransitionClazz = transitionClazz;
-		mComputeHoareAnnotation = computeHoareAnnotation;
 		// TODO: TaskIdentifier should probably be provided by caller
 		mTaskIdentifier = new SubtaskFileIdentifier(null, mIcfg.getIdentifier() + "_" + name);
 		mResultBuilder = new CegarLoopResultBuilder();
@@ -292,12 +277,6 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 	 */
 	protected abstract boolean refineAbstraction() throws AutomataLibraryException;
 
-	/**
-	 * Add Hoare annotation to the control flow graph. Use the information computed so far annotate the ProgramPoints of
-	 * the control flow graph with invariants.
-	 */
-	protected abstract void computeIcfgHoareAnnotation();
-
 	protected abstract Set<Pair<AbstractInterpolantAutomaton<L>, IPredicateUnifier>> getFloydHoareAutomata();
 
 	/**
@@ -309,11 +288,11 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 	 */
 	public abstract IElement getArtifact();
 
-	public int getIteration() {
+	protected int getIteration() {
 		return mIteration;
 	}
 
-	public String errorLocs() {
+	private String errorLocs() {
 		final Iterator<? extends IcfgLocation> it = mErrorLocs.iterator();
 		if (!it.hasNext()) {
 			return "[]";
@@ -350,7 +329,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 		return r;
 	}
 
-	public final CegarLoopResult<L> startCegar() {
+	private final CegarLoopResult<L> startCegar() {
 		mIteration = 0;
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("======== Iteration %s == of CEGAR loop == %s ========", mIteration, mName);
@@ -496,10 +475,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 			mLogger.info("%s automaton has %s", automatonType, mInterpolAutomaton.sizeInformation());
 		}
 
-		if (mComputeHoareAnnotation && mPref.getHoareAnnotationPositions() == HoareAnnotationPositions.All) {
-			assert new InductivityCheck<>(getServices(), (INestedWordAutomaton<L, IPredicate>) mAbstraction, false,
-					true, new IncrementalHoareTripleChecker(mCsToolkit, false)).getResult() : "Not inductive";
-		}
+		performAbstractionSanityCheck();
 
 		if (mIteration <= mPref.watchIteration() && mPref.artifact() == Artifact.ABSTRACTION) {
 			mArtifactAutomaton = mAbstraction;
@@ -510,6 +486,10 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 			final String filename = mIcfg.getIdentifier() + "_BiggestAutomaton";
 			writeAutomatonToFile(mAbstraction, filename);
 		}
+	}
+
+	protected void performAbstractionSanityCheck() {
+		// Empty implementation. Subclasses may override this method.
 	}
 
 	private IcfgLocation getErrorLocFromCounterexample() {
@@ -869,66 +849,11 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 				floydHoareAutomata = null;
 			}
 
-			if (mComputeHoareAnnotation && mResults.values().stream().anyMatch(a -> a.getResult() == Result.SAFE)) {
-				computeIcfgHoareAnnotation();
-				writeHoareAnnotationToLogger();
-			} else {
-				mLogger.debug("Omitting computation of Hoare annotation");
-			}
 			return new CegarLoopResult<>(mResults, cegarLoopBenchmarkGenerator, getArtifact(), floydHoareAutomata);
 		}
 
 		public int remainingErrorLocs() {
 			return mErrorLocs.size() - mResults.size();
 		}
-
-		@SuppressWarnings("unchecked")
-		private void writeHoareAnnotationToLogger() {
-			final IIcfg<IcfgLocation> root = (IIcfg<IcfgLocation>) mIcfg;
-			for (final Entry<String, Map<DebugIdentifier, IcfgLocation>> proc2label2pp : root.getProgramPoints()
-					.entrySet()) {
-				for (final IcfgLocation pp : proc2label2pp.getValue().values()) {
-					final HoareAnnotation hoare = HoareAnnotation.getAnnotation(pp);
-
-					if (hoare != null && !SmtUtils.isTrueLiteral(hoare.getFormula())) {
-
-						mLogger.info("At program point %s the Hoare annotation is: %s", prettyPrintProgramPoint(pp),
-								hoare.getFormula());
-					} else if (EXTENDED_HOARE_ANNOTATION_LOGGING) {
-						if (hoare == null) {
-							mLogger.info("For program point %s no Hoare annotation was computed.",
-									prettyPrintProgramPoint(pp));
-						} else {
-							mLogger.info("At program point %s the Hoare annotation is: %s", prettyPrintProgramPoint(pp),
-									hoare.getFormula());
-						}
-					}
-				}
-			}
-		}
-
-		private String prettyPrintProgramPoint(final IcfgLocation pp) {
-			final ILocation loc = ILocation.getAnnotation(pp);
-			if (loc == null) {
-				return "";
-			}
-			final int startLine = loc.getStartLine();
-			final int endLine = loc.getEndLine();
-			final StringBuilder sb = new StringBuilder();
-			sb.append(pp);
-			if (startLine == endLine) {
-				sb.append("(line ");
-				sb.append(startLine);
-			} else {
-				sb.append("(lines ");
-				sb.append(startLine);
-				sb.append(" ");
-				sb.append(endLine);
-			}
-			sb.append(")");
-			return sb.toString();
-		}
-
 	}
-
 }

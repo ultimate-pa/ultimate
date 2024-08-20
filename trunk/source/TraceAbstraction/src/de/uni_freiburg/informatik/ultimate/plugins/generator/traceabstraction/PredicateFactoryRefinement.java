@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
@@ -73,8 +74,14 @@ public class PredicateFactoryRefinement extends PredicateFactoryForInterpolantAu
 	@Override
 	public IPredicate intersection(final IPredicate p1, final IPredicate p2) {
 		if (p1 instanceof IMLPredicate) {
+			final IcfgLocation[] pps = ((IMLPredicate) p1).getProgramPoints();
 			// assert mCsToolkit.isDontCare(p2);
-			assert !mComputeHoareAnnotation;
+			if (Arrays.stream(pps).anyMatch(mHoareAnnotationProgramPoints::contains)) {
+				Term conjunction = mPredicateFactory.and(p1, p2).getFormula();
+				conjunction = new CommuhashNormalForm(mServices, mMgdScript.getScript()).transform(conjunction);
+				// TODO (2020-09-03 Dominik) Possibly support DEBUG_COMPUTE_HISTORY like below?
+				return mPredicateFactory.newMLPredicate(pps, conjunction);
+			}
 			return mPredicateFactory.newMLDontCarePredicate(((IMLPredicate) p1).getProgramPoints());
 		} else if (p1 instanceof ISLPredicate) {
 			final IcfgLocation pp = ((ISLPredicate) p1).getProgramPoint();

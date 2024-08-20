@@ -37,12 +37,14 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.ITerm2ExpressionSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramOldVar;
@@ -405,6 +407,49 @@ public class PredicateUtils {
 		return result;
 	}
 
+	public static IcfgLocation getLocation(final IPredicate pred) {
+		if (pred instanceof ISLPredicate) {
+			return ((ISLPredicate) pred).getProgramPoint();
+		}
+		throw new IllegalArgumentException("predicate does not offer program point: " + pred);
+	}
+
+	public static IcfgLocation getSingleLocation(final IPredicate pred) {
+		if (pred instanceof ISLPredicate) {
+			return ((ISLPredicate) pred).getProgramPoint();
+		}
+		if (pred instanceof IMLPredicate) {
+			final var locations = ((IMLPredicate) pred).getProgramPoints();
+			if (locations.length > 1) {
+				throw new IllegalArgumentException("predicate has more than one program point: " + pred);
+			}
+			if (locations.length != 0) {
+				return locations[0];
+			}
+		}
+		throw new IllegalArgumentException("predicate does not offer program point: " + pred);
+	}
+
+	public static Set<IcfgLocation> getLocations(final IPredicate pred) {
+		if (pred instanceof ISLPredicate) {
+			return Set.of(((ISLPredicate) pred).getProgramPoint());
+		}
+		if (pred instanceof IMLPredicate) {
+			return Set.of(((IMLPredicate) pred).getProgramPoints());
+		}
+		throw new UnsupportedOperationException("Unsupported type " + pred.getClass());
+	}
+
+	public static Stream<IcfgLocation> streamLocations(final IPredicate pred) {
+		if (pred instanceof ISLPredicate) {
+			return Stream.of(((ISLPredicate) pred).getProgramPoint());
+		}
+		if (pred instanceof IMLPredicate) {
+			return Arrays.stream(((IMLPredicate) pred).getProgramPoints());
+		}
+		throw new UnsupportedOperationException("Unsupported type " + pred.getClass());
+	}
+
 	private static Term eliminateVars(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final IPredicate p, final Predicate<IProgramVar> isQuantified) {
 		final List<TermVariable> oldVars = p.getVars().stream().filter(isQuantified).map(IProgramVar::getTermVariable)
@@ -424,5 +469,13 @@ public class PredicateUtils {
 		final ITerm2ExpressionSymbolTable symbolTable = (ITerm2ExpressionSymbolTable) cfgToolkit.getSymbolTable();
 		return eliminateVars(services, cfgToolkit.getManagedScript(), predicate,
 				x -> symbolTable.getDeclarationInformation(x).getStorageClass().equals(StorageClass.LOCAL));
+	}
+
+	public static IPredicate computeInitialPredicateForProcedure(final ModifiableGlobalsTable modifiableGlobals,
+			final Script script, final String procedure, final BasicPredicateFactory factory) {
+		final var equalities = modifiableGlobals.getModifiedBoogieVars(procedure).stream().map(
+				global -> SmtUtils.equality(script, global.getTermVariable(), global.getOldVar().getTermVariable()))
+				.collect(Collectors.toList());
+		return factory.andT(equalities);
 	}
 }

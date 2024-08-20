@@ -30,10 +30,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -64,32 +62,31 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.TaskCanceledExcep
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.TaskCanceledException.UserDefinedLimit;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.DangerInvariantResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.InvariantResult;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgElement;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskIterationIdentifier;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.HoareAnnotationPositions;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.NwaFloydHoareValidityCheck;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.NwaHoareProofProducer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SMTFeatureExtractionTermClassifier.ScoringMethod;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.cfg2automaton.Cfg2Automaton;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram.PathProgramConstructionResult;
@@ -116,6 +113,26 @@ import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
  */
 public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L, INestedWordAutomaton<L, IPredicate>> {
 
+	private enum AutomatonType {
+		FLOYD_HOARE("FloydHoare", "Fh"), ERROR("Error", "Err");
+
+		private final String mLongString;
+		private final String mShortString;
+
+		AutomatonType(final String longString, final String shortString) {
+			mLongString = longString;
+			mShortString = shortString;
+		}
+
+		public String getLongString() {
+			return mLongString;
+		}
+
+		public String getShortString() {
+			return mShortString;
+		}
+	}
+
 	protected static final int MINIMIZE_EVERY_KTH_ITERATION = 10;
 	protected static final boolean REMOVE_DEAD_ENDS = true;
 	protected static final int MINIMIZATION_TIMEOUT = 1_000;
@@ -135,16 +152,17 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 	private final AStarHeuristic mAStarHeuristic;
 	private final Integer mAStarRandomHeuristicSeed;
 
+	protected final NwaHoareProofProducer<L> mProofUpdater;
+
 	public NwaCegarLoop(final DebugIdentifier name, final INestedWordAutomaton<L, IPredicate> initialAbstraction,
 			final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final TAPreferences taPrefs, final Set<? extends IcfgLocation> errorLocs,
-			final InterpolationTechnique interpolation, final boolean computeHoareAnnotation,
-			final Set<IcfgLocation> hoareAnnotationLocs, final IUltimateServiceProvider services,
+			final NwaHoareProofProducer<L> proofProducer, final IUltimateServiceProvider services,
 			final Class<L> transitionClazz, final PredicateFactoryRefinement stateFactoryForRefinement) {
-		super(name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation,
-				computeHoareAnnotation, hoareAnnotationLocs, services, transitionClazz, stateFactoryForRefinement);
-
+		super(name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs,
+				proofProducer != null, services, transitionClazz, stateFactoryForRefinement);
 		mErrorGeneralizationEngine = new ErrorGeneralizationEngine<>(services);
+		mProofUpdater = proofProducer;
 
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		mSearchStrategy = getSearchStrategy(prefs);
@@ -203,7 +221,7 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 
 		if (mPref.hasLimitTraceHistogram() && traceHistogram.getMax() > mPref.getLimitTraceHistogram()) {
 			final String taskDescription =
-					"bailout by trace histogram " + traceHistogram.toString() + " in iteration " + mIteration;
+					"bailout by trace histogram " + traceHistogram.toString() + " in iteration " + getIteration();
 			throw new TaskCanceledException(UserDefinedLimit.TRACE_HISTOGRAM, getClass(), taskDescription);
 		}
 
@@ -280,7 +298,7 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 		mErrorGeneralizationEngine.constructErrorAutomaton(mCounterexample, mPredicateFactory,
 				mRefinementResult.getPredicateUnifier(), mCsToolkit, mSimplificationTechnique, mXnfConversionTechnique,
 				mIcfg.getCfgSmtToolkit().getSymbolTable(), mPredicateFactoryInterpolantAutomata, mAbstraction,
-				mIteration);
+				getIteration());
 
 		mInterpolAutomaton = null;
 		final NestedWordAutomaton<L, IPredicate> resultBeforeEnhancement =
@@ -292,7 +310,7 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 
 	@Override
 	protected boolean refineAbstraction() throws AutomataLibraryException {
-		mStateFactoryForRefinement.setIteration(mIteration);
+		mStateFactoryForRefinement.setIteration(getIteration());
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 
 		final INestedWordAutomaton<L, IPredicate> minuend = mAbstraction;
@@ -306,7 +324,7 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 		final InterpolantAutomatonEnhancement enhanceMode;
 		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> subtrahend;
 		final boolean exploitSigmaStarConcatOfIa;
-		if (mErrorGeneralizationEngine.hasAutomatonInIteration(mIteration)) {
+		if (mErrorGeneralizationEngine.hasAutomatonInIteration(getIteration())) {
 			mErrorGeneralizationEngine.startDifference();
 			automatonType = AutomatonType.ERROR;
 			useErrorAutomaton = true;
@@ -317,7 +335,7 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 		} else {
 			automatonType = AutomatonType.FLOYD_HOARE;
 			useErrorAutomaton = false;
-			exploitSigmaStarConcatOfIa = !mComputeHoareAnnotation;
+			exploitSigmaStarConcatOfIa = mProofUpdater == null || mProofUpdater.exploitSigmaStarConcatOfIa();
 			subtrahendBeforeEnhancement = mInterpolAutomaton;
 			enhanceMode = mPref.interpolantAutomatonEnhancement();
 			subtrahend = enhanceInterpolantAutomaton(enhanceMode, predicateUnifier, htc, subtrahendBeforeEnhancement);
@@ -369,7 +387,7 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 				}
 			}
 
-			if (mErrorGeneralizationEngine.hasAutomatonInIteration(mIteration)) {
+			if (mErrorGeneralizationEngine.hasAutomatonInIteration(getIteration())) {
 				mErrorGeneralizationEngine.stopDifference(minuend, mPredicateFactoryInterpolantAutomata,
 						mPredicateFactoryResultChecking, mCounterexample, false);
 				if (mFaultLocalizationMode != RelevanceAnalysisMode.NONE) {
@@ -395,13 +413,13 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 			}
 
 			if (REMOVE_DEAD_ENDS) {
-				if (mComputeHoareAnnotation) {
+				if (mProofUpdater != null) {
 					final Difference<L, IPredicate> difference = (Difference<L, IPredicate>) diff;
-					mHaf.updateOnIntersection(difference.getFst2snd2res(), difference.getResult());
+					mProofUpdater.updateOnIntersection(difference.getFst2snd2res(), difference.getResult());
 				}
 				diff.removeDeadEnds();
-				if (mComputeHoareAnnotation) {
-					mHaf.addDeadEndDoubleDeckers(diff);
+				if (mProofUpdater != null) {
+					mProofUpdater.addDeadEndDoubleDeckers(diff);
 				}
 			}
 			mAbstraction = diff.getResult();
@@ -421,13 +439,25 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 		}
 	}
 
+	@Override
+	protected void performAbstractionSanityCheck() {
+		if (mProofUpdater != null && mPref.getHoareAnnotationPositions() == HoareAnnotationPositions.All) {
+			final var unifier = new PredicateUnifier(mLogger, mServices, mCsToolkit.getManagedScript(),
+					mPredicateFactory, mCsToolkit.getSymbolTable(), mSimplificationTechnique, mXnfConversionTechnique);
+			assert NwaFloydHoareValidityCheck
+					.forInterpolantAutomaton(mServices, mCsToolkit.getManagedScript(),
+							new IncrementalHoareTripleChecker(mCsToolkit, false), unifier, mAbstraction, true)
+					.getResult() : "Not inductive";
+		}
+	}
+
 	private RunningTaskInfo executeDifferenceTimeoutActions(final INestedWordAutomaton<L, IPredicate> minuend,
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> subtrahend,
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> subtrahendBeforeEnhancement,
 			final AutomatonType automatonType) throws AutomataLibraryException {
 		final RunningTaskInfo runningTaskInfo =
 				getDifferenceTimeoutRunningTaskInfo(minuend, subtrahend, subtrahendBeforeEnhancement, automatonType);
-		if (mErrorGeneralizationEngine.hasAutomatonInIteration(mIteration)) {
+		if (mErrorGeneralizationEngine.hasAutomatonInIteration(getIteration())) {
 			mErrorGeneralizationEngine.stopDifference(minuend, mPredicateFactoryInterpolantAutomata,
 					mPredicateFactoryResultChecking, mCounterexample, true);
 		}
@@ -486,14 +516,12 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 			final PredicateFactoryResultChecking resultCheckPredFac, final Minimization minimization)
 			throws AutomataOperationCanceledException, AutomataLibraryException, AssertionError {
 
-		final Function<IPredicate, Set<IcfgLocation>> lcsProvider =
-				x -> (x instanceof ISLPredicate ? Collections.singleton(((ISLPredicate) x).getProgramPoint())
-						: new HashSet<>(Arrays.asList(((IMLPredicate) x).getProgramPoints())));
 		AutomataMinimization<Set<IcfgLocation>, IPredicate, L> am;
 		try {
-			am = new AutomataMinimization<>(getServices(), mAbstraction, minimization, mComputeHoareAnnotation,
-					mIteration, predicateFactoryRefinement, MINIMIZE_EVERY_KTH_ITERATION, mStoredRawInterpolantAutomata,
-					mInterpolAutomaton, MINIMIZATION_TIMEOUT, resultCheckPredFac, lcsProvider, true);
+			final boolean computeOld2New = mProofUpdater != null;
+			am = new AutomataMinimization<>(getServices(), mAbstraction, minimization, computeOld2New, getIteration(),
+					predicateFactoryRefinement, MINIMIZE_EVERY_KTH_ITERATION, mStoredRawInterpolantAutomata,
+					mInterpolAutomaton, MINIMIZATION_TIMEOUT, resultCheckPredFac, PredicateUtils::getLocations, true);
 		} catch (final AutomataMinimizationTimeout e) {
 			mCegarLoopBenchmark.addAutomataMinimizationData(e.getStatistics());
 			throw e.getAutomataOperationCanceledException();
@@ -505,13 +533,13 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 			// postprocessing after minimization
 			final IDoubleDeckerAutomaton<L, IPredicate> newAbstraction = am.getMinimizedAutomaton();
 
-			// extract Hoare annotation
-			if (mComputeHoareAnnotation) {
+			// update proof
+			if (mProofUpdater != null) {
 				final Map<IPredicate, IPredicate> oldState2newState = am.getOldState2newStateMapping();
 				if (oldState2newState == null) {
-					throw new AssertionError("Hoare annotation and " + minimization + " incompatible");
+					throw new AssertionError("Proof production and " + minimization + " incompatible");
 				}
-				mHaf.updateOnMinimization(oldState2newState, newAbstraction);
+				mProofUpdater.updateOnMinimization(oldState2newState, newAbstraction);
 			}
 
 			// statistics
@@ -526,44 +554,11 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 
 	@Override
 	protected void finish() {
+		if (mProofUpdater != null) {
+			mProofUpdater.finish(mAbstraction);
+		}
 		mErrorGeneralizationEngine.reportErrorGeneralizationBenchmarks();
 		super.finish();
-	}
-
-	@Override
-	protected void computeIcfgHoareAnnotation() {
-		if (mCsToolkit.getManagedScript().isLocked()) {
-			throw new AssertionError("SMTManager must not be locked at the beginning of Hoare annotation computation");
-		}
-		final INestedWordAutomaton<L, IPredicate> abstraction = mAbstraction;
-		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.HoareAnnotationTime.toString());
-		try {
-			new HoareAnnotationExtractor<>(getServices(), abstraction, mHaf);
-			final HoareAnnotationComposer clha = new HoareAnnotationComposer(mCsToolkit, mPredicateFactory, mHaf,
-					getServices(), mSimplificationTechnique, mXnfConversionTechnique);
-			final HoareAnnotationWriter writer = new HoareAnnotationWriter(mIcfg, mCsToolkit, mPredicateFactory, clha,
-					getServices(), mSimplificationTechnique, mXnfConversionTechnique);
-			writer.addHoareAnnotationToCFG();
-			mCegarLoopBenchmark.addHoareAnnotationData(clha.getHoareAnnotationStatisticsGenerator());
-
-			// Temporary workaround: print invariants in every CEGAR loop
-			final IBacktranslationService backTranslatorService = mServices.getBacktranslationService();
-			final Set<IcfgLocation> locsForLoopLocations = new HashSet<>(IcfgUtils.getPotentialCycleProgramPoints(mIcfg));
-			locsForLoopLocations.addAll(mIcfg.getLoopLocations());
-			// find all locations that have outgoing edges which are annotated with LoopEntry, i.e., all loop candidates
-
-			for (final var entry : clha.getLoc2hoare().entrySet()) {
-				final Term formula = entry.getValue().getFormula();
-				final InvariantResult<IIcfgElement, Term> invResult =
-						new InvariantResult<>(Activator.PLUGIN_NAME, entry.getKey(), backTranslatorService, formula);
-				// TODO .reportResult(invResult);
-				mLogger.warn("invariant at location %s :: %s", entry.getKey(), formula);
-				mLogger.warn(invResult);
-			}
-
-		} finally {
-			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.HoareAnnotationTime.toString());
-		}
 	}
 
 	private static final boolean checkStoreCounterExamples(final TAPreferences pref) {

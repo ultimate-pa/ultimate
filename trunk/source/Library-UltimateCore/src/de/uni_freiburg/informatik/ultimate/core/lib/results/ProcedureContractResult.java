@@ -27,20 +27,23 @@
  */
 package de.uni_freiburg.informatik.ultimate.core.lib.results;
 
+import java.util.Set;
+
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 
 /**
- * Report a procedure contract that holds at ELEM which is a node in an Ultimate model. The contract is given as an
- * expression of type E.
+ * Report a procedure contract that holds at ELEM which is a node in an Ultimate model.
  *
  * @author Matthias Heizmann
  */
-public class ProcedureContractResult<ELEM extends IElement, E> extends AbstractResultAtElement<ELEM> {
+public class ProcedureContractResult<ELEM extends IElement> extends AbstractResultAtElement<ELEM> {
 
 	private final String mEnsures;
 	private final String mRequires;
 	private final String mProcedureName;
+	private final Set<Check> mChecks;
 
 	/**
 	 * Constructor.
@@ -48,17 +51,21 @@ public class ProcedureContractResult<ELEM extends IElement, E> extends AbstractR
 	 * @param location
 	 *            the Location
 	 */
-	public ProcedureContractResult(final String plugin, final ELEM position,
+	public <E> ProcedureContractResult(final String plugin, final ELEM position,
 			final IBacktranslationService translatorSequence, final String procedureName, final E requires,
-			final E ensures) {
+			final E ensures, final Set<Check> checks) {
 		super(position, plugin, translatorSequence);
 		mProcedureName = procedureName;
 		mRequires = translateTerm(requires);
 		mEnsures = translateTerm(ensures);
+		mChecks = checks;
 	}
 
 	@SuppressWarnings("unchecked")
-	private String translateTerm(final E term) {
+	private <E> String translateTerm(final E term) {
+		if (term == null) {
+			return null;
+		}
 		final String result = mTranslatorSequence.translateExpressionToString(term, (Class<E>) term.getClass());
 		if ("1".equals(result)) {
 			return null;
@@ -70,7 +77,7 @@ public class ProcedureContractResult<ELEM extends IElement, E> extends AbstractR
 		return mEnsures;
 	}
 
-	public String getReqiresResult() {
+	public String getRequiresResult() {
 		return mRequires;
 	}
 
@@ -98,5 +105,12 @@ public class ProcedureContractResult<ELEM extends IElement, E> extends AbstractR
 
 	public boolean isTrivial() {
 		return mRequires == null && mEnsures == null;
+	}
+
+	/**
+	 * Represents the specifications to whose proof this contract belongs.
+	 */
+	public Set<Check> getChecks() {
+		return mChecks;
 	}
 }

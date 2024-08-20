@@ -30,46 +30,42 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.invariantsynthesis
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessProcedureContract;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.DangerInvariantResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.InvariantResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.PositiveResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.ProcedureContractResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovabilityReason;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovableResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
-import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgElement;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.dangerinvariants.DangerInvariantUtils;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.HoareAnnotation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.PrePostConditionSpecification;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.ProofAnnotation;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.FloydHoareMapping;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.FloydHoareUtils;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.IcfgFloydHoareValidityCheck;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
@@ -94,7 +90,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pa
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.ExponentialConjunctsTemplateIncreasingDimensionsStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.KindOfInvariant;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.MediumTemplateIncreasingDimensionsStrategy;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.HoareAnnotationChecker;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
@@ -163,6 +158,7 @@ public class InvariantSynthesisStarter<L extends IIcfgTransition<?>> {
 			return;
 		}
 
+		final FloydHoareMapping<IcfgLocation> floydHoare;
 		final CFGInvariantsGenerator cfgInvGenerator =
 				new CFGInvariantsGenerator(icfg, services, predicateOfInitialLocations, predicateOfErrorLocations,
 						predicateFactory, predicateUnifier, invSynthSettings, icfg.getCfgSmtToolkit(), kindOfInvariant);
@@ -179,24 +175,24 @@ public class InvariantSynthesisStarter<L extends IIcfgTransition<?>> {
 					mLogger.debug(invariants);
 					mOverallResult = Result.UNKNOWN;
 				}
+				floydHoare = null;
 			} else {
 				assert kindOfInvariant == KindOfInvariant.SAFETY;
 
-				// if (mLogger.isDebugEnabled()) {
-				// for (IcfgLocation loc : invariants.keySet()) {
-				// mLogger.debug(loc + ": " + invariants.get(loc));
-				// }
-				// }
-				for (final Entry<IcfgLocation, IPredicate> entry : invariants.entrySet()) {
-					final HoareAnnotation hoareAnnot = predicateFactory.getNewHoareAnnotation(entry.getKey(),
-							entry.getValue());
-					hoareAnnot.annotate(entry.getKey());
-				}
-				writeHoareAnnotationToLogger(icfg);
+				final var initials = icfg.getInitialNodes().stream()
+						.collect(Collectors.toMap(Function.identity(), l -> predicateOfInitialLocations));
+				floydHoare = new FloydHoareMapping<>(
+						PrePostConditionSpecification.forIcfg(icfg, initials, predicateOfErrorLocations), invariants);
+				FloydHoareUtils.writeHoareAnnotationToLogger(icfg, floydHoare, mLogger, true);
+
+				// Annotate the ICFG with the computed Floyd-Hoare annotation, so it can be consumed by other plugins.
+				ProofAnnotation.addProof(icfg, floydHoare);
+
 				mOverallResult = Result.SAFE;
 			}
 		} else {
 			mOverallResult = Result.UNKNOWN;
+			floydHoare = null;
 		}
 
 		final Map<String, Set<IcfgLocation>> proc2errNodes = icfg.getProcedureErrorNodes();
@@ -214,9 +210,15 @@ public class InvariantSynthesisStarter<L extends IIcfgTransition<?>> {
 		mLogger.debug("Overall result: " + mOverallResult);
 		mLogger.debug("Continue processing: " + mServices.getProgressMonitorService().continueProcessing());
 		if (mOverallResult == Result.SAFE) {
+			assert floydHoare != null;
+			assert new IcfgFloydHoareValidityCheck<>(services, icfg, floydHoare, true)
+					.getResult() : "incorrect Hoare annotation";
+
 			final IBacktranslationService backTranslatorService = mServices.getBacktranslationService();
-			createInvariantResults(icfg, icfg.getCfgSmtToolkit(), backTranslatorService);
-			createProcedureContractResults(icfg, backTranslatorService);
+			FloydHoareUtils.createInvariantResults(Activator.PLUGIN_NAME, icfg, floydHoare, backTranslatorService,
+					this::reportResult);
+			FloydHoareUtils.createProcedureContractResults(mServices, Activator.PLUGIN_NAME, icfg, floydHoare,
+					backTranslatorService, this::reportResult);
 		}
 		final StatisticsData stat = new StatisticsData();
 		stat.aggregateBenchmarkData(statistics);
@@ -314,93 +316,6 @@ public class InvariantSynthesisStarter<L extends IIcfgTransition<?>> {
 				useUnsatCores, useAbstractInterpretationPredicates, useWPForPathInvariants, useLBE);
 	}
 
-	private void createInvariantResults(final IIcfg<IcfgLocation> icfg, final CfgSmtToolkit csToolkit,
-			final IBacktranslationService backTranslatorService) {
-		assert new HoareAnnotationChecker(mServices, icfg, csToolkit).isInductive() : "incorrect Hoare annotation";
-
-		final Term trueterm = csToolkit.getManagedScript().getScript().term("true");
-
-		final Set<IcfgLocation> locsForLoopLocations = new HashSet<>();
-
-		locsForLoopLocations.addAll(IcfgUtils.getPotentialCycleProgramPoints(icfg));
-		locsForLoopLocations.addAll(icfg.getLoopLocations());
-		// find all locations that have outgoing edges which are annotated with LoopEntry, i.e., all loop candidates
-
-		for (final IcfgLocation locNode : locsForLoopLocations) {
-			final HoareAnnotation hoare = HoareAnnotation.getAnnotation(locNode);
-			if (hoare == null) {
-				continue;
-			}
-			final Term formula = hoare.getFormula();
-			final InvariantResult<IIcfgElement, Term> invResult =
-					new InvariantResult<>(Activator.PLUGIN_NAME, locNode, backTranslatorService, formula);
-			reportResult(invResult);
-
-			if (formula.equals(trueterm)) {
-				continue;
-			}
-			new WitnessInvariant(invResult.getInvariant()).annotate(locNode);
-		}
-	}
-
-	private void createProcedureContractResults(final IIcfg<IcfgLocation> icfg,
-			final IBacktranslationService backTranslatorService) {
-		final Map<String, IcfgLocation> exitNodes = icfg.getProcedureExitNodes();
-		final Map<String, IcfgLocation> entryNodes = icfg.getProcedureEntryNodes();
-		for (final String procName : icfg.getProcedureEntryNodes().keySet()) {
-			if (isAuxilliaryProcedure(procName)) {
-				continue;
-			}
-			final IcfgLocation entry = entryNodes.get(procName);
-			final IcfgLocation exit = exitNodes.get(procName);
-			final HoareAnnotation ensures = HoareAnnotation.getAnnotation(exit);
-			final HoareAnnotation requires = HoareAnnotation.getAnnotation(entry);
-			if (ensures != null) {
-				final Term ensuresFormula =
-						PredicateUtils.eliminateLocalVars(ensures, mServices, icfg.getCfgSmtToolkit());
-				final Term requiresFormula = PredicateUtils.eliminateOldVars(mServices,
-						icfg.getCfgSmtToolkit().getManagedScript(), requires);
-				final ProcedureContractResult<IIcfgElement, Term> result = new ProcedureContractResult<>(
-						Activator.PLUGIN_NAME, exit, backTranslatorService, procName, requiresFormula, ensuresFormula);
-				reportResult(result);
-				new WitnessProcedureContract(result.getReqiresResult(), result.getEnsuresResult()).annotate(exit);
-			}
-		}
-	}
-
-	private void writeHoareAnnotationToLogger(final IIcfg<IcfgLocation> root) {
-		for (final Entry<String, Map<DebugIdentifier, IcfgLocation>> proc2label2pp : root.getProgramPoints()
-				.entrySet()) {
-			for (final IcfgLocation pp : proc2label2pp.getValue().values()) {
-				final HoareAnnotation hoare = HoareAnnotation.getAnnotation(pp);
-				if (hoare == null) {
-					mLogger.info("For program point  " + prettyPrintProgramPoint(pp)
-							+ "  no Hoare annotation was computed.");
-				} else {
-					mLogger.info("At program point  " + prettyPrintProgramPoint(pp) + "  the Hoare annotation is:  "
-							+ hoare.getFormula());
-				}
-			}
-		}
-	}
-
-	private static String prettyPrintProgramPoint(final IcfgLocation pp) {
-		final ILocation loc = ILocation.getAnnotation(pp);
-		if (loc == null) {
-			return "";
-		}
-		final int startLine = loc.getStartLine();
-		final int endLine = loc.getEndLine();
-		final StringBuilder sb = new StringBuilder();
-		sb.append(pp);
-		if (startLine == endLine) {
-			sb.append("(line " + startLine + ")");
-		} else {
-			sb.append("(lines " + startLine + " " + endLine + ")");
-		}
-		return sb.toString();
-	}
-
 	private void reportDangerResults(final Map<IcfgLocation, IPredicate> invariants,
 			final Set<IcfgLocation> errorLocations, final IBacktranslationService backtranslator) {
 		final Map<IcfgLocation, Term> map = new HashMap<>();
@@ -423,10 +338,6 @@ public class InvariantSynthesisStarter<L extends IIcfgTransition<?>> {
 		final IcfgLocation errorPP = getErrorPP(pe);
 		reportResult(new UnprovableResult<>(Activator.PLUGIN_NAME, errorPP, mServices.getBacktranslationService(), pe,
 				unproabilityReasons));
-	}
-
-	private static boolean isAuxilliaryProcedure(final String proc) {
-		return "ULTIMATE.init".equals(proc) || "ULTIMATE.start".equals(proc);
 	}
 
 	private void reportResult(final IResult res) {

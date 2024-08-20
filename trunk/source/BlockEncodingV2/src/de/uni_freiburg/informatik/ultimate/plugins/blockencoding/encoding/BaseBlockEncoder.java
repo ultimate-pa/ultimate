@@ -44,6 +44,7 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.BasicIcfg;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -112,6 +113,7 @@ public abstract class BaseBlockEncoder<LOC extends IcfgLocation> implements IEnc
 				root.getProgramPoints().entrySet().stream().flatMap(a -> a.getValue().entrySet().stream())
 						.map(a -> a.getValue()).filter(filter).collect(new DequeCollector<>());
 
+		final var pendingExitLocations = new ArrayList<IcfgLocation>();
 		while (!locationsWithoutInEdge.isEmpty()) {
 			final IcfgLocation current = locationsWithoutInEdge.removeFirst();
 			final List<IcfgEdge> outEdges = new ArrayList<>(current.getOutgoingEdges());
@@ -125,7 +127,22 @@ public abstract class BaseBlockEncoder<LOC extends IcfgLocation> implements IEnc
 				out.disconnectTarget();
 				mRemovedEdges++;
 			}
-			removeDisconnectedLocation(root, current);
+
+			final boolean isExit = IcfgUtils.isExit((LOC) current, root);
+			if (isExit) {
+				// postpone removing the location until all non-exit locations have been removed
+				pendingExitLocations.add(current);
+			} else {
+				removeDisconnectedLocation(root, current);
+			}
+		}
+
+		for (final var exit : pendingExitLocations) {
+			if (!root.getProcedureEntryNodes().containsKey(exit.getProcedure())) {
+				// Only remove the exit location if the corresponding entry location was also removed.
+				// Otherwise, the exit location must remain, even if it is now dead code.
+				removeDisconnectedLocation(root, exit);
+			}
 		}
 	}
 
