@@ -3,8 +3,54 @@ BugLiveVariables03-Safe.bpl AutomizerBpl-FPandBP.epf AutomizerBpl.xml TIMEOUT
 BugNestedSsaWithPendingContexts.bpl AutomizerBpl-forwardPredicates.epf AutomizerBpl.xml TIMEOUT
 BugNoPredecessorOfReturnTransition.bpl PdrAutomizerBpl.epf PdrAutomizerBpl.xml TIMEOUT
 nestedWhileSimple-Safe.bpl PdrAutomizerBpl.epf PdrAutomizerBpl.xml TIMEOUT
+array10_pattern_simplified.c AutomizerC-BitvectorTranslation.epf AutomizerC.xml TIMEOUT
+BitwiseOperations01.c BlockEncodingV2AutomizerC-FP-MaxSaneBE.epf BlockEncodingV2AutomizerC.xml TIMEOUT
+BitwiseOperations02.c BlockEncodingV2AutomizerC-FP-MaxSaneBE.epf BlockEncodingV2AutomizerC.xml TIMEOUT
+bitwiseOrUnsigned.c BlockEncodingV2AutomizerC-FP-MaxSaneBE.epf BlockEncodingV2AutomizerC.xml TIMEOUT
+builtin_ffs.c BlockEncodingV2AutomizerC-FP-MaxSaneBE.epf BlockEncodingV2AutomizerC.xml TIMEOUT
+Acsl01-EnsuresLocal-Safe.c AutomizerC-BitvectorTranslation.epf AutomizerC.xml TIMEOUT
+Acsl03-EnsuresGlobal-Safe.c AutomizerC-BitvectorTranslation.epf AutomizerC.xml TIMEOUT
+Tschingelhorn-Safe.c AutomizerC-BitvectorTranslation.epf AutomizerC.xml TIMEOUT
+ShortCircuit-SideEffect-DoStatement-Safe.c AutomizerC-BitvectorTranslation.epf AutomizerC.xml TIMEOUT
+ShortCircuit-SideEffect-ForStatement-Safe.c AutomizerC-BitvectorTranslation.epf AutomizerC.xml TIMEOUT
+StructPositiveSum-Safe.c AutomizerC-forwardPredicates.epf AutomizerC.xml TIMEOUT
+StructPositiveSum-Safe.c AutomizerC-forwardPredicates_const.epf AutomizerC.xml TIMEOUT
+StructPositiveSum-Safe.c AutomizerC-BitvectorTranslation.epf AutomizerC.xml TIMEOUT
+StructPositiveSum-Safe.c BlockEncodingV2AutomizerC-forwardPredicates.epf BlockEncodingV2AutomizerC.xml TIMEOUT
+StructPositiveSum-Safe.c BlockEncodingV2AutomizerC-FP-MaxSaneBE.epf BlockEncodingV2AutomizerC.xml TIMEOUT
 
-// Overapproximation
+// Unknown, overapproximation of bitwise operations (for integer translation)
+bitwiseOrUnsigned.c AutomizerC-forwardPredicates.epf AutomizerC.xml UNKNOWN
+bitwiseOrUnsigned.c AutomizerC-forwardPredicates_const.epf AutomizerC.xml UNKNOWN
+bitwiseOrUnsigned.c AutomizerC-nestedInterpolants.epf AutomizerC.xml UNKNOWN
+bitwiseOrUnsigned.c AutomizerC-nestedInterpolants_const.epf AutomizerC.xml UNKNOWN
+bitwiseOrUnsigned.c BlockEncodingV2AutomizerC-forwardPredicates.epf BlockEncodingV2AutomizerC.xml UNKNOWN
+bitwiseOrUnsigned.c KojakC-Reach-32Bit-Default.epf KojakC.xml UNKNOWN
+bitwiseOrUnsignedMinimal.c AutomizerC-forwardPredicates.epf AutomizerC.xml UNKNOWN
+bitwiseOrUnsignedMinimal.c AutomizerC-forwardPredicates_const.epf AutomizerC.xml UNKNOWN
+bitwiseOrUnsignedMinimal.c AutomizerC-nestedInterpolants.epf AutomizerC.xml UNKNOWN
+bitwiseOrUnsignedMinimal.c AutomizerC-nestedInterpolants_const.epf AutomizerC.xml UNKNOWN
+bitwiseOrUnsignedMinimal.c BlockEncodingV2AutomizerC-forwardPredicates.epf BlockEncodingV2AutomizerC.xml UNKNOWN
+bitwiseOrUnsignedMinimal.c BlockEncodingV2AutomizerC-FP-MaxSaneBE.epf BlockEncodingV2AutomizerC.xml UNKNOWN
+bitwiseOrUnsignedMinimal.c KojakC-Reach-32Bit-Default.epf KojakC.xml UNKNOWN
+builtin_ffs.c AutomizerC-forwardPredicates.epf AutomizerC.xml UNKNOWN
+builtin_ffs.c AutomizerC-forwardPredicates_const.epf AutomizerC.xml UNKNOWN
+builtin_ffs.c AutomizerC-nestedInterpolants.epf AutomizerC.xml UNKNOWN
+builtin_ffs.c AutomizerC-nestedInterpolants_const.epf AutomizerC.xml UNKNOWN
+builtin_ffs.c BlockEncodingV2AutomizerC-forwardPredicates.epf BlockEncodingV2AutomizerC.xml UNKNOWN
+builtin_ffs.c BlockEncodingV2AutomizerC-FP-MaxSaneBE.epf BlockEncodingV2AutomizerC.xml UNKNOWN
+builtin_ffs.c KojakC-Reach-32Bit-Default.epf KojakC.xml UNKNOWN
+BitwiseOperations02.c AutomizerC-forwardPredicates.epf AutomizerC.xml UNKNOWN
+BitwiseOperations02.c AutomizerC-forwardPredicates_const.epf AutomizerC.xml UNKNOWN
+BitwiseOperations02.c AutomizerC-nestedInterpolants.epf AutomizerC.xml UNKNOWN
+BitwiseOperations02.c AutomizerC-nestedInterpolants_const.epf AutomizerC.xml UNKNOWN
+BitwiseOperations02.c KojakC-Reach-32Bit-Default.epf KojakC.xml UNKNOWN
+
+// Unknown, unable to decide satisfiability of path constraint
+array10_pattern_simplified.c AutomizerC-nestedInterpolants.epf AutomizerC.xml UNKNOWN
+array10_pattern_simplified.c AutomizerC-nestedInterpolants_const.epf AutomizerC.xml UNKNOWN
+
+// Overapproximation, we expect unknown for Automizer
 Overapproximation.bpl AutomizerBpl-nestedInterpolants.epf AutomizerBpl.xml UNKNOWN
 Overapproximation.bpl AutomizerBpl-forwardPredicates.epf AutomizerBpl.xml UNKNOWN
 Overapproximation.bpl AutomizerBpl-FPandBP.epf AutomizerBpl.xml UNKNOWN
@@ -12,3 +58,11 @@ Overapproximation.bpl PdrAutomizerBpl.epf PdrAutomizerBpl.xml UNKNOWN
 
 // The solver is unable to evaluate the formula, PDR cannot handle this
 BugLiveVariables04-Safe.bpl PdrAutomizerBpl.epf PdrAutomizerBpl.xml EXCEPTION_OR_ERROR
+
+// We are unable to backtranslate @diff from SMT to Boogie
+BugLiveVariables03-Safe.bpl AutomizerBpl-nestedInterpolants.epf AutomizerBpl.xml EXCEPTION_OR_ERROR
+BugLiveVariables04-Safe.bpl AutomizerBpl-nestedInterpolants.epf AutomizerBpl.xml EXCEPTION_OR_ERROR
+
+// Const is only supported for infinite index sort in SMTInterpol
+ConstArray.bpl AutomizerBpl-nestedInterpolants.epf AutomizerBpl.xml EXCEPTION_OR_ERROR
+ConstArray.bpl AutomizerBpl-nestedInterpolants.epf PdrAutomizerBpl.xml EXCEPTION_OR_ERROR
