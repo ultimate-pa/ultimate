@@ -6,7 +6,7 @@
 
 Ultimate is a program analysis framework. Ultimate consists of several plugins that perform steps of a program analysis, e.g., parsing source code, transforming programs from one representation to another, or analyzing programs. Toolchains of these plugins can perform complex tasks, e.g., verify that a C program fulfills a given specification.
 
-The [official website](https://ultimate.informatik.uni-freiburg.de/) includes a web interface which allows you to use several toolchains online, a list of all developers, and a list of awards Ultimate received over the years.
+The [official website](https://ultimate-pa.org/) includes a web interface which allows you to use several toolchains online, a list of all developers, and a list of awards Ultimate received over the years.
 
 The available documentation can be found in [our wiki](https://github.com/ultimate-pa/ultimate/wiki).
 
@@ -21,7 +21,7 @@ The main active developers of Ultimate are:
 * Dominik Klumpp (@maul-esel)
 * Frank Schüssele (@schuessf)
 
-You can find an extensive list of past and current contributors [on our website](https://ultimate.informatik.uni-freiburg.de/#developers).
+You can find an extensive list of past and current contributors [on our website](https://ultimate-pa.org/developers/).
 
 ## Verification Tools (SV-COMP)
 
@@ -32,7 +32,7 @@ Contact: Matthias Heizmann
 
 Automizer uses _**trace abstraction**_ to generalize infeasibility proofs for single program traces to Floyd-Hoare automata that cover larger parts of the program. For concurrency, it uses a Petri-net-based automata model.
 
-[More Information & Web Interface](https://ultimate.informatik.uni-freiburg.de/?ui=tool&tool=automizer)
+[More Information & Web Interface](https://ultimate-pa.org/automizer/)
 
 #### Publications about Automizer
 
@@ -62,7 +62,7 @@ Contact: Daniel Dietsch
 
 Taipan uses _**abstract interpretation**_ with various domains to find loop invariants for path programs. Proofs for path programs are combined using automata operations on Floyd-Hoare-automata. If abstract interpretation cannot find a proof, trace abstraction is used. For concurrency, it uses an explicit product of finite automata.
 
-[More Information & Web Interface](https://ultimate.informatik.uni-freiburg.de/?ui=tool&tool=taipan)
+[More Information & Web Interface](https://ultimate-pa.org/taipan/)
 
 #### Publications about Taipan
 
@@ -93,7 +93,7 @@ Contact: Frank Schüssele
 
 Kojak analyses programs using an extension of the _**Lazy Interpolants**_ CEGAR scheme.
 
-[More Information & Web Interface](https://ultimate.informatik.uni-freiburg.de/?ui=tool&tool=kojak)
+[More Information & Web Interface](https://ultimate-pa.org/kojak/)
 
 #### Publications about Kojak
 
@@ -123,6 +123,8 @@ Contact: Dominik Klumpp
 GemCutter is a verifier for concurrent programs based on _**commutativity**_,
 i.e., the observation that for certain statements from different threads, the execution order does not matter.
 It integrates partial order reduction algorithms (that take advantage of commutativity) with a trace abstraction-based CEGAR scheme.
+
+[More Information & Web Interface](https://ultimate-pa.org/gemcutter/)
 
 #### Publications about GemCutter
 

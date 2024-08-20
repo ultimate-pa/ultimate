@@ -1,7 +1,11 @@
 #!/bin/bash
-# This script builds Ultimate with maven and then calls makeZip.sh for all tools that can be deployed.
+# This script builds Ultimate with Maven and then creates deployable zip archives for 
+# all tools.
+# Note that it does no longer build the website, as this requires Ruby and Jekyll.
+# If you want to build the website, use makeWebsite.sh after makeFresh.sh.
 
-## include the makeSettings shared functions
+
+# load shared functions and settings
 DIR="${BASH_SOURCE%/*}"
 if [[ ! -d "$DIR" ]]; then DIR="$PWD"; fi
 . "$DIR/makeSettings.sh"
@@ -47,16 +51,6 @@ create_webbackend_dir() {
   cp -r "$source/"* "$target"
 }
 
-create_webfrontend_dir() {
-  local source="../../trunk/source/BA_SiteRepository/target/products/WebsiteStatic"
-  local target="$(readlink -f WebFrontend)"
-  if [ -d "$target" ] ; then rm -r "$target" ; fi
-  mkdir "$target"
-  echo "Copying WebFrontend"
-  cp -r "$source/"* "$target"
-}
-
 build
 create_tool_zips
 create_webbackend_dir
-create_webfrontend_dir

@@ -11,11 +11,6 @@
  */
 
 
-implementation ULTIMATE.start() returns (){
-    var #t~ret4 : int;
-    call #t~ret4 := main();
-}
-
 implementation funSelect(n : int, fp : bool) returns (res : int){
     if (fp == trueconst) {
         // break LBE, compute invariant here
@@ -30,7 +25,7 @@ implementation funSelect(n : int, fp : bool) returns (res : int){
 }
 
 
-implementation main() returns (res : int){
+implementation ULTIMATE.start() returns (){
     var x : int;
 
     x := 5;
@@ -42,13 +37,11 @@ implementation main() returns (res : int){
 const trueconst : bool;
 axiom trueconst == true;
 
-procedure main() returns (res : int);
-modifies ;
 
 procedure funSelect(n : int, fp : bool) returns (res : int);
 modifies ;
 
 procedure ULTIMATE.start() returns ();
 modifies ;
-modifies ;
+
 

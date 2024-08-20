@@ -79,8 +79,20 @@ is_ming() {
   uname | grep -q "MING"
 }
 
+is_linux() {
+  [[ "$OSTYPE" == "linux-gnu"* ]]
+}
+
+is_macos() {
+  [[ "$OSTYPE" == "darwin"* ]]
+}
+
+is_windows() {
+  [[ "$OSTYPE" == "cygwin" ]] || [[ "$OSTYPE" == "msys" ]] || [[ "$OSTYPE" == "win32" ]]
+}
+
 run_python() {
-  if is_ming ; then
+  if is_windows ; then
     py -3 "$@"
   else
     python3 "$@"

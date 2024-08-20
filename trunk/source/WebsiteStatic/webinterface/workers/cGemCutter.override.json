@@ -1,0 +1,9 @@
+[
+  { "id": "cacsl2boogietranslator_check_absence_of_data_races_in_concurrent_programs", "visible": true },
+  { "id": "cacsl2boogietranslator_check_absence_of_signed_integer_overflows", "visible": true },
+  { "id": "cacsl2boogietranslator_check_division_by_zero", "visible": true },
+  { "id": "cacsl2boogietranslator_check_if_freed_pointer_was_valid", "visible": true },
+  { "id": "cacsl2boogietranslator_pointer_to_allocated_memory_at_dereference", "visible": true },
+  { "id": "cacsl2boogietranslator_check_array_bounds_for_arrays_that_are_off_heap", "visible": true },
+  { "id": "cacsl2boogietranslator_pointer_base_address_is_valid_at_dereference", "visible": true }
+]

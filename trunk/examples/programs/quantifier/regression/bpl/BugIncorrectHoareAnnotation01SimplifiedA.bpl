@@ -10,12 +10,6 @@
  *
  */
 
-
-implementation ULTIMATE.start() returns (){
-    var #t~ret4 : int;
-    call #t~ret4 := main();
-}
-
 implementation funSelect(n : int, fp : int) returns (res : int){
     if (fp == fourtytwo) {
         // break LBE, compute invariant here
@@ -30,7 +24,7 @@ implementation funSelect(n : int, fp : int) returns (res : int){
 }
 
 
-implementation main() returns (res : int){
+implementation ULTIMATE.start() returns (){
     var x : int;
 
     x := 5;
@@ -44,13 +38,9 @@ axiom twentythree == 23;
 const fourtytwo : int;
 axiom fourtytwo == 42;
 
-procedure main() returns (res : int);
+procedure ULTIMATE.start() returns ();
 modifies ;
 
 procedure funSelect(n : int, fp : int) returns (res : int);
-modifies ;
-
-procedure ULTIMATE.start() returns ();
-modifies ;
 modifies ;
 
