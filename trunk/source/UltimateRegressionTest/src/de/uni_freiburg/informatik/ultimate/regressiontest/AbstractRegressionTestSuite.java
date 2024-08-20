@@ -117,12 +117,12 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 		final Predicate<File> filesRegexFilter = getFilesRegexFilter();
 		for (final Config runConfiguration : runConfigurations) {
 			final Collection<File> inputFiles = getInputFiles(filesRegexFilter, runConfiguration);
-			final NestedMap3<String, String, String, String> skippedTests = getSkippedTests(runConfiguration);
+			final NestedMap3<File, String, String, String> skippedTests = getSkippedTests(inputFiles);
 			for (final File inputFile : inputFiles) {
 				final UltimateRunDefinition urd =
 						new UltimateRunDefinition(inputFile, runConfiguration.getSettingsFile(),
 								runConfiguration.getToolchainFile(), getTimeout(runConfiguration, inputFile));
-				final String overridenVerdict = skippedTests.get(inputFile.getName(),
+				final String overridenVerdict = skippedTests.get(inputFile,
 						runConfiguration.getSettingsFile().getName(), runConfiguration.getToolchainFile().getName());
 				rtr.add(buildTestCase(urd, getTestResultDecider(urd, overridenVerdict)));
 			}
@@ -130,28 +130,29 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 		return rtr;
 	}
 
-	private static NestedMap3<String, String, String, String> getSkippedTests(final Config runConfiguration) {
-		final NestedMap3<String, String, String, String> result = new NestedMap3<>();
-		final File settingsDir = runConfiguration.getSettingsFile().getParentFile();
-		final File toolchainDir = runConfiguration.getToolchainFile().getParentFile();
-		if (settingsDir.equals(toolchainDir)) {
-			addSkippedTest(new File(settingsDir, SKIPPED_FILENAME), result);
-		} else if (settingsDir.toString().length() < toolchainDir.toString().length()) {
-			addSkippedTest(new File(settingsDir, SKIPPED_FILENAME), result);
-			addSkippedTest(new File(toolchainDir, SKIPPED_FILENAME), result);
-		} else {
-			addSkippedTest(new File(toolchainDir, SKIPPED_FILENAME), result);
-			addSkippedTest(new File(settingsDir, SKIPPED_FILENAME), result);
-		}
+	/**
+	 * Collect all tests that should be marked as skipped. To do so, all files with SKIPPED_FILENAME next to
+	 * {@code inputFiles} are considered and a NestedMap3 is extracted from.
+	 */
+	private static NestedMap3<File, String, String, String> getSkippedTests(final Collection<File> inputFiles) {
+		final NestedMap3<File, String, String, String> result = new NestedMap3<>();
+		inputFiles.stream().map(x -> new File(x.getParentFile(), SKIPPED_FILENAME)).distinct()
+				.forEach(x -> addSkippedTest(x, result));
 		return result;
 	}
 
-	private static void addSkippedTest(final File ignoreFile, final NestedMap3<String, String, String, String> map) {
+	private static void addSkippedTest(final File ignoreFile, final NestedMap3<File, String, String, String> map) {
 		try {
 			final Map<String, List<Map<String, String>>> parsed = new Yaml().load(new FileInputStream(ignoreFile));
 			for (final var entry : parsed.entrySet()) {
 				for (final Map<String, String> triples : entry.getValue()) {
-					map.put(triples.get("task"), triples.get("settings"), triples.get("toolchain"), entry.getKey());
+					if (triples.values().stream().anyMatch(x -> x.contains("/"))) {
+						throw new UnsupportedOperationException("Invalid filename in ignore-file" + ignoreFile
+								+ ". The filename may only contain a name, not a relative path. "
+								+ "Add a new ignore-file next to the task itself (if desired).");
+					}
+					map.put(new File(ignoreFile.getParentFile(), triples.get("task")), triples.get("settings"),
+							triples.get("toolchain"), entry.getKey());
 				}
 			}
 		} catch (final FileNotFoundException e) {

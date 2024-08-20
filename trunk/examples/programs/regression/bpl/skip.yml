@@ -34,12 +34,3 @@ unknown symbol (@diff:
 - task: BugLiveVariables04-Safe.bpl
   settings: AutomizerBpl-nestedInterpolants.epf
   toolchain: AutomizerBpl.xml
-
-# Issue in SMTInterpol
-Const is only supported for infinite index sort:
-- task: ConstArray.bpl
-  settings: AutomizerBpl-nestedInterpolants.epf
-  toolchain: AutomizerBpl.xml
-- task: ConstArray.bpl
-  settings: AutomizerBpl-nestedInterpolants.epf
-  toolchain: PdrAutomizerBpl.xml
