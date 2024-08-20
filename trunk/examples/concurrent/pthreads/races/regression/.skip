@@ -4,4 +4,4 @@ static-array-copy3.c DataRace-32bit-Automizer_Default.epf DataRace.xml TIMEOUT
 static-array-copy3.c DataRace-32bit-GemCutter_Bitvector.epf DataRace.xml TIMEOUT
 
 // Crash in MathSAT
-static-array-write.c DataRace-32bit-GemCutter_Bitvector.epf DataRace.xml EXCEPTION_OR_ERROR
+struct-array-write.c DataRace-32bit-GemCutter_Bitvector.epf DataRace.xml EXCEPTION_OR_ERROR
