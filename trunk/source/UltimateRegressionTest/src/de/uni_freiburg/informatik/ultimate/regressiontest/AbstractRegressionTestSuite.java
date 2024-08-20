@@ -26,21 +26,22 @@
  */
 package de.uni_freiburg.informatik.ultimate.regressiontest;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.stream.Collectors;
+
+import org.yaml.snakeyaml.Yaml;
 
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
@@ -67,7 +68,7 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 
 	private static final Predicate<File> FILTER_XML = TestUtil.getFileEndingTest(".xml");
 	private static final Predicate<File> FILTER_EPF = TestUtil.getFileEndingTest(".epf");
-	private static final String SKIPPED_FILENAME = ".skip";
+	private static final String SKIPPED_FILENAME = "skip.yml";
 
 	protected long mTimeout;
 	protected String mRootFolder;
@@ -146,17 +147,20 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 	}
 
 	private static void addSkippedTest(final File ignoreFile, final NestedMap3<String, String, String, String> map) {
-		try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(ignoreFile)))) {
-			String line;
-			while ((line = br.readLine()) != null) {
-				addSkipLine(line, map);
+		try {
+			final Map<String, List<String>> parsed = new Yaml().load(new FileInputStream(ignoreFile));
+			for (final var entry : parsed.entrySet()) {
+				for (final String line : entry.getValue()) {
+					addSkipLine(line, entry.getKey(), map);
+				}
 			}
-		} catch (final IOException e) {
-			// Just skip
+		} catch (final FileNotFoundException e) {
+			// File does not exist, nothing to be ignored
 		}
 	}
 
-	private static void addSkipLine(final String line, final NestedMap3<String, String, String, String> map) {
+	private static void addSkipLine(final String line, final String exptectedVerdict,
+			final NestedMap3<String, String, String, String> map) {
 		if (line.startsWith("//")) {
 			return;
 		}
@@ -164,7 +168,7 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 		String toolchain = null;
 		String file = null;
 		final String[] args = line.split("\\s+");
-		if (args.length != 4) {
+		if (args.length != 3) {
 			return;
 		}
 		for (int i = 0; i < 3; i++) {
@@ -186,7 +190,7 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 				file = arg;
 			}
 		}
-		map.put(file, settings, toolchain, args[3]);
+		map.put(file, settings, toolchain, exptectedVerdict);
 	}
 
 	protected long getTimeout(final Config rundef, final File file) {

@@ -1,0 +1,8 @@
+TIMEOUT:
+- static-array-copy3.c DataRace-32bit-Automizer_Bitvector.epf DataRace.xml
+- static-array-copy3.c DataRace-32bit-Automizer_Default.epf DataRace.xml
+- static-array-copy3.c DataRace-32bit-GemCutter_Bitvector.epf DataRace.xml
+
+# Crash in MathSAT
+SMTLIBException.*mathsat:
+- struct-array-write.c DataRace-32bit-GemCutter_Bitvector.epf DataRace.xml

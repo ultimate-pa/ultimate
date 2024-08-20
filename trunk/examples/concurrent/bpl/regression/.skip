@@ -1,6 +1,0 @@
-// Timeout with Automizer, GemCutter succeeds
-MirabelleConcurrentIncrement.bpl ReachSafety-32bit-Automizer.epf ReachSafety.xml TIMEOUT
-concurrent_increment.bpl ReachSafety-32bit-Automizer.epf ReachSafety.xml TIMEOUT
-equal-array-sums.bpl ReachSafety-32bit-Automizer.epf ReachSafety.xml TIMEOUT
-loop-lockstep-example.bpl ReachSafety-32bit-Automizer.epf ReachSafety.xml TIMEOUT
-sum_invariant.bpl ReachSafety-32bit-Automizer.epf ReachSafety.xml TIMEOUT
