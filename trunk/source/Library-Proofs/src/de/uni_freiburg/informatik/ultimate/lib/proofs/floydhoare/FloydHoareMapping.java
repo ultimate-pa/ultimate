@@ -44,14 +44,28 @@ public class FloydHoareMapping<S> implements IFloydHoareAnnotation<S> {
 	private final Map<S, IPredicate> mAnnotation;
 	private final IPredicate mDefaultPredicate;
 
+	/**
+	 * Create an instance with the given specification, where states that are not included in the given map do not have
+	 * any annotation.
+	 *
+	 * See {@link IFloydHoareAnnotation#getAnnotation(Object)} for an explanation of how not having any annotation
+	 * differs from a default predicate (e.g. {@code true}).
+	 *
+	 * @param specification
+	 *            The specification proven by the created instance
+	 * @param annotation
+	 *            the underlying map from states to their annotations
+	 */
 	public FloydHoareMapping(final PrePostConditionSpecification<S> specification,
 			final Map<S, IPredicate> annotation) {
 		this(specification, annotation, null);
 	}
 
 	/**
-	 * Create an instance with the specified pre-/postcondition pair and a default fallback predicate for unknown
-	 * states.
+	 * Create an instance with the given specification, and a default fallback predicate for unknown states.
+	 *
+	 * See {@link IFloydHoareAnnotation#getAnnotation(Object)} for an explanation of how not having any annotation
+	 * differs from a default predicate (e.g. {@code true}).
 	 *
 	 * @param specification
 	 *            The specification proven by the created instance

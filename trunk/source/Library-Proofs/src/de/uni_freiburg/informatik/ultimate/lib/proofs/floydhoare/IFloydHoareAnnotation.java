@@ -58,7 +58,13 @@ public interface IFloydHoareAnnotation<S> extends IProof {
 	PrePostConditionSpecification<S> getSpecification();
 
 	/**
-	 * May return {@code null} if no annotation for the given state is known.
+	 * Retrieves the predicate annotating the given state.
+	 *
+	 * This method may return {@code null} if no annotation for the given state is known. Note that this is different
+	 * from returning {@code true}: If the state is labeled with {@code true}, all outgoing edges whose target node has
+	 * an annotation must correspond to a valid Hoare triple with the precondition {@code true}, otherwise we consider
+	 * the annotation invalid. If the state does not have an annotation (i.e., {@code null} is returned), there are no
+	 * Hoare triples for the outgoing edges that are required to be valid.
 	 *
 	 * @param state
 	 *            a state (control location) of the program
