@@ -327,11 +327,6 @@ public class RtInconcistencyConditionGenerator {
 			assert phaseVector.length == automata.length;
 			final List<Term> outer = new ArrayList<>();
 			final List<Term> impliesLHS = new ArrayList<>();
-
-			final Set<TermVariable> varsInNdc = new HashSet<>();
-			varsInNdc.addAll(Arrays.asList(mPrimedInvariant.getFreeVars()));
-			boolean allElementsVarsDisjunct = true;
-
 			for (int j = 0; j < phaseVector.length; j++) {
 				final PhaseEventAutomata automaton = automata[j];
 				final int phaseIndex = phaseVector[j];
@@ -340,22 +335,7 @@ public class RtInconcistencyConditionGenerator {
 				impliesLHS.add(getPcPhaseEquality(mReqSymboltable.getPcName(automaton), phaseIndex));
 
 				// collect NDC(A_i, p_i)
-				final Term phaseTerm = mPhaseNdcCache.getOrConstruct(automaton.getPhases().get(phaseIndex));
-				outer.add(phaseTerm);
-
-				// check if any elements of the NDC share common variables, if not we can assume that
-				// there may not be any RT-Inconsistency (and can skip the quantifier elimination right away)
-				Set<TermVariable> varsAddedToNdc = new HashSet<>(Arrays.asList(phaseTerm.getFreeVars()));
-				varsAddedToNdc.retainAll(varsInNdc);
-				if (!varsAddedToNdc.isEmpty()) {
-					allElementsVarsDisjunct = false;
-				}
-				varsInNdc.addAll(Arrays.asList(phaseTerm.getFreeVars()));
-			}
-
-			if (allElementsVarsDisjunct) {
-				mLogger.debug("RT inconsistency trivially impossible (variables not instersecting) for TODO");
-				continue;
+				outer.add(mPhaseNdcCache.getOrConstruct(automaton.getPhases().get(phaseIndex)));
 			}
 
 			// "compute" NDC(A_1, p_1) â‹€ ... â‹€ NDC(A_n, p_n)
@@ -562,7 +542,6 @@ public class RtInconcistencyConditionGenerator {
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Removing " + varsToRemove.size() + " variables");
 		}
-
 		final QuantifiedFormula quantifiedFormula = (QuantifiedFormula) SmtUtils.quantifier(mScript,
 				QuantifiedFormula.EXISTS, varsToRemove, simplifiedTerm);
 		if (TRY_SOLVER_BEFORE_QELIM && querySolverIsTrue(quantifiedFormula)) {
