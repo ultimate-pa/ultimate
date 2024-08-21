@@ -75,7 +75,7 @@ public class EmpireValidityCheck<PLACE, LETTER extends IAction> {
 	private final BasicPredicateFactory mFactory;
 
 	private final EmpireAnnotation<PLACE> mEmpireAnnotation;
-	private final Map<IPredicate, PLACE> mPredicatePlaceMap;
+	private final Map<IPredicate, Set<PLACE>> mPredicatePlaceMap;
 	private final IPetriNet<LETTER, PLACE> mNet;
 	private final IPetriNetSuccessorProvider<LETTER, PLACE> mRefinedNet;
 	private final Set<PLACE> mAssertionPlaces;
@@ -86,7 +86,7 @@ public class EmpireValidityCheck<PLACE, LETTER extends IAction> {
 			final MonolithicImplicationChecker implicationChecker, final BasicPredicateFactory factory,
 			final IPetriNet<LETTER, PLACE> net, final IPetriNetSuccessorProvider<LETTER, PLACE> refinedNet,
 			final ModifiableGlobalsTable modifiableGlobals, final EmpireAnnotation<PLACE> empire,
-			final Map<IPredicate, PLACE> predicatePlaceMap, final Set<PLACE> assertionPlaces,
+			final Map<IPredicate, Set<PLACE>> predicatePlaceMap, final Set<PLACE> assertionPlaces,
 			final PlacesCoRelation<PLACE> placesCoRelation) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(EmpireValidityCheck.class);

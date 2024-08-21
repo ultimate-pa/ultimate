@@ -219,14 +219,19 @@ public final class Territory<PLACE> {
 	 * @return
 	 */
 	public <L> Stream<Transition<L, PLACE>> getEnabledTransitions(
-			final IPetriNetSuccessorProvider<L, PLACE> successorProvider, final PLACE lawPlace,
+			final IPetriNetSuccessorProvider<L, PLACE> successorProvider, final Set<PLACE> lawPlaces,
 			final Set<PLACE> assertionPlaces, final PlacesCoRelation<PLACE> placesCoRelation) {
-		final Set<PLACE> corelatedAssertions = assertionPlaces.stream()
-				.filter(p -> placesCoRelation.getPlacesCorelation(lawPlace, p)).collect(Collectors.toSet());
-		final var mayPlaces = DataStructureUtils.union(getPlaces(), Set.of(lawPlace), corelatedAssertions);
-		return successorProvider.getSuccessorTransitionProviders(getPlaces(), mayPlaces).stream()
-				.flatMap(provider -> provider.getTransitions().stream())
-				.filter(t -> enables(lawPlace, t, assertionPlaces, placesCoRelation));
+		Stream<Transition<L, PLACE>> enabledTransitions = Stream.empty();
+		for (final PLACE lawPlace : lawPlaces) {
+			final Set<PLACE> corelatedAssertions = assertionPlaces.stream()
+					.filter(p -> placesCoRelation.getPlacesCorelation(lawPlace, p)).collect(Collectors.toSet());
+			final var mayPlaces = DataStructureUtils.union(getPlaces(), Set.of(lawPlace), corelatedAssertions);
+			enabledTransitions = Stream.concat(enabledTransitions,
+					successorProvider.getSuccessorTransitionProviders(getPlaces(), mayPlaces).stream()
+							.flatMap(provider -> provider.getTransitions().stream())
+							.filter(t -> enables(lawPlace, t, assertionPlaces, placesCoRelation)));
+		}
+		return enabledTransitions;
 	}
 
 	@SuppressWarnings("unchecked")

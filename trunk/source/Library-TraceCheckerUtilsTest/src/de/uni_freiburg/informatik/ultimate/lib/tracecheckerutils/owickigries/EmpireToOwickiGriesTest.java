@@ -46,12 +46,12 @@ public class EmpireToOwickiGriesTest extends OwickiGriesTestSuite {
 
 		final var assertionPlaces =
 				mProofs.stream().map(nwa -> nwa.getStates()).flatMap(Set::stream).collect(Collectors.toSet());
-		final var predicatePlaceMap = new HashMap<IPredicate, IPredicate>();
+		final var predicatePlaceMap = new HashMap<IPredicate, Set<IPredicate>>();
 		for (final Pair<Territory<IPredicate>, IPredicate> pair : empire.getEmpire()) {
 			final var law = pair.getSecond();
 			for (final IPredicate iPredicate : assertionPlaces) {
 				if (law.getFormula().equals(iPredicate.getFormula())) {
-					predicatePlaceMap.put(law, iPredicate);
+					predicatePlaceMap.put(law, Set.of(iPredicate));
 				}
 			}
 		}

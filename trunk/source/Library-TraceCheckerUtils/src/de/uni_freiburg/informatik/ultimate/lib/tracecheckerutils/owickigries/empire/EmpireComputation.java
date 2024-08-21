@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.em
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -73,7 +72,7 @@ public class EmpireComputation<L, P> {
 	private final Function<P, IPredicate> mPlaceToPredicate;
 
 	private final EmpireAnnotation<P> mEmpire;
-	private final Map<P, IPredicate> mPlacePredicateMap = new HashMap<>();
+	private final Map<IPredicate, Set<P>> mPredicatePlacesMap;
 
 	public EmpireComputation(final IUltimateServiceProvider services, final BasicPredicateFactory predicateFactory,
 			final IPetriNet<L, P> net, final PlacesCoRelation<P> coRelation,
@@ -94,12 +93,12 @@ public class EmpireComputation<L, P> {
 		mPlaceToPredicate = assertionPlace2Predicate;
 
 		final var mTerrPlacePairs = symbolicExecution();
-		final var lawMap = mTerrPlacePairs.stream()
-				.map(p -> new Pair<>(p.getFirst(),
-						mPlacePredicateMap.computeIfAbsent(p.getSecond(), assertionPlace2Predicate)))
+		final var territorySetPairs = mTerrPlacePairs.stream().map(p -> new Pair<>(p.getFirst(), Set.of(p.getSecond())))
 				.collect(Collectors.toSet());
-		final var postProcessing = new PostProcessing<>(services, lawMap, predicateFactory, implicationChecker);
+		final var postProcessing = new PostProcessing<>(services, territorySetPairs, predicateFactory,
+				implicationChecker, assertionPlace2Predicate);
 		final var processedPairs = postProcessing.getProcessedPairs();
+		mPredicatePlacesMap = postProcessing.getPredicatePlacesMap();
 		mEmpire = new EmpireAnnotation<>(processedPairs);
 	}
 
@@ -368,7 +367,7 @@ public class EmpireComputation<L, P> {
 		return expandedRegions;
 	}
 
-	public Map<IPredicate, P> getPredicatePlaceMap() {
-		return mPlacePredicateMap.entrySet().stream().collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey));
+	public Map<IPredicate, Set<P>> getPredicatePlaceMap() {
+		return mPredicatePlacesMap;
 	}
 }
