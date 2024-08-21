@@ -59,7 +59,11 @@ git_is_clean() {
 
 get_git_root() {
   if root_dir=$(git rev-parse --show-toplevel 2>/dev/null ) ; then
-    echo "$root_dir"
+    if is_ming ; then
+      cygpath "$root_dir"
+    else
+      echo "$root_dir"
+    fi    
   else
     echo "Not a .git directory: $PWD"
     exit 1

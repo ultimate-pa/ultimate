@@ -18,7 +18,7 @@ import subprocess
 import argparse
 import json
 
-from .externals import get_ultimate_cli
+from externals import get_ultimate_cli
 
 
 def is_file(value: str) -> str:

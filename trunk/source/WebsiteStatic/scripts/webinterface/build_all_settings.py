@@ -1,10 +1,9 @@
 #!/usr/bin/python3
 
 import os
-from .build_settings import compute_settings
+from build_settings import compute_settings
 
-
-SCRIPT_DIR = os.path.dirname(__file__)
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 EPF_ROOT = os.path.join(SCRIPT_DIR, "../../../../examples/settings/")
 WORKER_ROOT = os.path.join(SCRIPT_DIR, "../../webinterface/workers/")
 
