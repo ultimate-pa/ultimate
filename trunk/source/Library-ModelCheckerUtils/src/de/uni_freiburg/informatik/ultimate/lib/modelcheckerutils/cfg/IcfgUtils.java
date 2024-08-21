@@ -270,14 +270,16 @@ public class IcfgUtils {
 	 * @return true iff loc is entry node of some procedure
 	 */
 	public static <LOC extends IcfgLocation> boolean isEntry(final LOC loc, final IIcfg<LOC> icfg) {
-		return icfg.getProcedureEntryNodes().get(loc.getProcedure()).equals(loc);
+		final var entry = icfg.getProcedureEntryNodes().get(loc.getProcedure());
+		return entry.equals(loc);
 	}
 
 	/**
 	 * @return true iff loc is exit node of some procedure
 	 */
 	public static <LOC extends IcfgLocation> boolean isExit(final LOC loc, final IIcfg<LOC> icfg) {
-		return icfg.getProcedureExitNodes().get(loc.getProcedure()).equals(loc);
+		final var exit = icfg.getProcedureExitNodes().get(loc.getProcedure());
+		return loc.equals(exit);
 	}
 
 	/**
