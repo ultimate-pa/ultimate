@@ -252,7 +252,6 @@
 <setEntry value="de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder@default:default"/>
 <setEntry value="de.uni_freiburg.informatik.ultimate.plugins.generator.referee@default:default"/>
 <setEntry value="de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction@default:default"/>
-<setEntry value="de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent@default:default"/>
 <setEntry value="de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionwithafas@default:default"/>
 <setEntry value="de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer@default:default"/>
 <setEntry value="de.uni_freiburg.informatik.ultimate.plugins.icfgtochc@default:default"/>
