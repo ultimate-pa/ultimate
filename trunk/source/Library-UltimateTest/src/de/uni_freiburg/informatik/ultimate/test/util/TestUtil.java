@@ -612,6 +612,8 @@ public final class TestUtil {
 		map.put("#Safe", SafetyCheckerOverallResult.SAFE);
 		map.put("#Unsafe", SafetyCheckerOverallResult.UNSAFE);
 		map.put("#Unknown", SafetyCheckerOverallResult.UNKNOWN);
+		map.put("#ValidAnnotation", SafetyCheckerOverallResult.VALID_ANNOTATION);
+		map.put("#InvalidAnnotation", SafetyCheckerOverallResult.INVALID_ANNOTATION);
 		map.put("#SyntaxError", SafetyCheckerOverallResult.SYNTAX_ERROR);
 		return map;
 	}
