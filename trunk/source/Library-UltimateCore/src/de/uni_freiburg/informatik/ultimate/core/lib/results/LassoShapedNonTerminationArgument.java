@@ -32,8 +32,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecut
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 /**
- * Abstract superclass for Nontermination Arguments where the trace has the
- * form of a lasso.
+ * Abstract superclass for Nontermination Arguments where the trace has the form of a lasso.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <P>
@@ -42,13 +41,18 @@ import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 public class LassoShapedNonTerminationArgument<P extends IElement, E> extends NonTerminationArgumentResult<P, E> {
 
 	private final IProgramExecution<P, E> mStemExecution;
+	private final String mStemExecutionAsString;
 	private final IProgramExecution<P, E> mLoopExecution;
+	private final String mLoopExecutionAsString;
 
-	public LassoShapedNonTerminationArgument(final P element, final String plugin, final IBacktranslationService translatorSequence,
-			final Class<E> exprClass, final IProgramExecution<P, E> stem, final IProgramExecution<P, E> loop) {
+	public LassoShapedNonTerminationArgument(final P element, final String plugin,
+			final IBacktranslationService translatorSequence, final Class<E> exprClass,
+			final IProgramExecution<P, E> stem, final IProgramExecution<P, E> loop) {
 		super(element, plugin, translatorSequence, exprClass);
 		mStemExecution = stem;
+		mStemExecutionAsString = translatorSequence.translateProgramExecution(mStemExecution).toString();
 		mLoopExecution = loop;
+		mLoopExecutionAsString = translatorSequence.translateProgramExecution(mLoopExecution).toString();
 	}
 
 	public IProgramExecution<P, E> getStemExecution() {
@@ -58,7 +62,6 @@ public class LassoShapedNonTerminationArgument<P extends IElement, E> extends No
 	public IProgramExecution<P, E> getLoopExecution() {
 		return mLoopExecution;
 	}
-
 
 	@Override
 	public String getShortDescription() {
@@ -72,14 +75,12 @@ public class LassoShapedNonTerminationArgument<P extends IElement, E> extends No
 		sb.append(CoreUtil.getPlatformLineSeparator());
 		sb.append("Stem:");
 		sb.append(CoreUtil.getPlatformLineSeparator());
-		sb.append(mTranslatorSequence.translateProgramExecution(mStemExecution));
+		sb.append(mStemExecutionAsString);
 		sb.append("Loop:");
 		sb.append(CoreUtil.getPlatformLineSeparator());
-		sb.append(mTranslatorSequence.translateProgramExecution(mLoopExecution));
+		sb.append(mLoopExecutionAsString);
 		sb.append("End of lasso representation.");
 		return sb.toString();
 	}
-
-
 
 }

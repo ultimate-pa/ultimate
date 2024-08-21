@@ -49,7 +49,7 @@ public class GenericResultAtElement<ELEM extends IElement>
 			IBacktranslationService translatorSequence, 
 			String shortDescription, String longDescription,
 			Severity severity) {
-		super(element, plugin, translatorSequence);
+		super(element, plugin);
 		mShortDescription = shortDescription;
 		mLongDescription = longDescription;
 		mSeverity = severity;

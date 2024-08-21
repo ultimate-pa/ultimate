@@ -63,10 +63,10 @@ public class LTLInfiniteCounterExampleResult<ELEM extends IElement, TE extends I
 		sb.append(CoreUtil.getPlatformLineSeparator());
 		sb.append("Stem:");
 		sb.append(CoreUtil.getPlatformLineSeparator());
-		sb.append(mTranslatorSequence.translateProgramExecution(mStem));
+		sb.append(mStemExecutionAsString);
 		sb.append("Loop:");
 		sb.append(CoreUtil.getPlatformLineSeparator());
-		sb.append(mTranslatorSequence.translateProgramExecution(mLoop));
+		sb.append(mLoopExecutionAsString);
 		sb.append("End of lasso representation.");
 		return sb.toString();
 	}

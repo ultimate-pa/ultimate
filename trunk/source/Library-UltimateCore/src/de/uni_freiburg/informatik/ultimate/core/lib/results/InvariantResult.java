@@ -47,9 +47,10 @@ public class InvariantResult<ELEM extends IElement> extends AbstractResultAtElem
 	private final Set<Check> mChecks;
 
 	@SuppressWarnings("unchecked")
+
 	public <E> InvariantResult(final String plugin, final ELEM element,
 			final IBacktranslationService translatorSequence, final E invariant, final Set<Check> checks) {
-		super(element, plugin, translatorSequence);
+		super(element, plugin);
 		// TODO: Another class instead of this boolean flag?
 		final LoopEntryAnnotation loopAnnot = LoopEntryAnnotation.getAnnotation(element);
 		mIsLoopLocation = loopAnnot != null && loopAnnot.getLoopEntryType() == LoopEntryType.WHILE;

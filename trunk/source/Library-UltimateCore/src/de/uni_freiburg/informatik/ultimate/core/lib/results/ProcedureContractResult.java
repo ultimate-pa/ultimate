@@ -54,19 +54,19 @@ public class ProcedureContractResult<ELEM extends IElement> extends AbstractResu
 	public <E> ProcedureContractResult(final String plugin, final ELEM position,
 			final IBacktranslationService translatorSequence, final String procedureName, final E requires,
 			final E ensures, final Set<Check> checks) {
-		super(position, plugin, translatorSequence);
+		super(position, plugin);
 		mProcedureName = procedureName;
-		mRequires = translateTerm(requires);
-		mEnsures = translateTerm(ensures);
+		mRequires = translateTerm(translatorSequence, requires);
+		mEnsures = translateTerm(translatorSequence, ensures);
 		mChecks = checks;
 	}
 
 	@SuppressWarnings("unchecked")
-	private <E> String translateTerm(final E term) {
+	private static <E> String translateTerm(final IBacktranslationService translatorSequence, final E term) {
 		if (term == null) {
 			return null;
 		}
-		final String result = mTranslatorSequence.translateExpressionToString(term, (Class<E>) term.getClass());
+		final String result = translatorSequence.translateExpressionToString(term, (Class<E>) term.getClass());
 		if ("1".equals(result)) {
 			return null;
 		}

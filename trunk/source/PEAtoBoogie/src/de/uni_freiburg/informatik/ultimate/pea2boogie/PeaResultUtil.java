@@ -35,7 +35,6 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
@@ -97,8 +96,7 @@ public class PeaResultUtil {
 
 	public void intrinsicRtConsistencySuccess(final IElement element) {
 		final String plugin = Activator.PLUGIN_ID;
-		final IBacktranslationService translatorSequence = mServices.getBacktranslationService();
-		report(new ReqCheckSuccessResult<>(element, plugin, translatorSequence));
+		report(new ReqCheckSuccessResult<>(element, plugin));
 	}
 
 	public void infeasibleInvariant(final InvariantInfeasibleException ex) {

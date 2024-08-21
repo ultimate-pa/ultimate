@@ -47,7 +47,7 @@ public class TimeoutResultAtElement<E extends IElement> extends AbstractResultAt
 
 	public TimeoutResultAtElement(final E element, final String plugin,
 			final IBacktranslationService translatorSequence, final String longDescription) {
-		super(element, plugin, translatorSequence);
+		super(element, plugin);
 		mLongDescription = longDescription;
 	}
 
