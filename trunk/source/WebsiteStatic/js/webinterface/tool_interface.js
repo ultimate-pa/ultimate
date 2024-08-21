@@ -132,15 +132,17 @@ function set_user_frontend_settings(frontend_settings) {
  * @param user_session_settings
  */
 function load_user_provided_session(user_session_settings) {
-	choose_language(user_session_settings.language);
-	if ('code' in user_session_settings) {
-		_EDITOR.session.setValue(user_session_settings.code);
-	}
-	refresh_navbar();
-	set_user_frontend_settings(user_session_settings.frontend_settings);
-	if (!('code' in user_session_settings)) {
-		load_sample(user_session_settings.sample_source);
-	}
+	choose_language(user_session_settings.language)
+	.then(function() {
+		if ('code' in user_session_settings) {
+			_EDITOR.session.setValue(user_session_settings.code);
+		}
+		refresh_navbar();
+		set_user_frontend_settings(user_session_settings.frontend_settings);
+		if (!('code' in user_session_settings)) {
+			load_sample(user_session_settings.sample_source);
+		}
+	});
 }
 
 /**
@@ -154,8 +156,8 @@ function init_interface_controls() {
 			if (language !== get_current_language()) {
 				clear_editor();
 			}
-			choose_language(language);
-			refresh_navbar();
+			choose_language(language)
+			.then(refresh_navbar);
 		}
 	});
 
@@ -494,12 +496,21 @@ function choose_language(language) {
 		}
 	});
 
+	// Load the frontend settings for the worker.
+	const settings_request = $.getJSON('./workers/' + _CONTEXT.current_worker.id + '.json', function(response) {
+		_CONTEXT.current_worker['frontend_settings'] = response;
+	}).fail(function () {
+		alert("Could not fetch ultimate settings json. Config error.");
+	});
+
 	// Load the ultimate toolchain file.
-	$.get('./workers/' + _CONTEXT.current_worker.id + '.xml', function (response) {
+	const toolchain_request = $.get('./workers/' + _CONTEXT.current_worker.id + '.xml', function (response) {
 		_CONTEXT.current_worker.ultimate_toolchain_xml = response;
 	}).fail(function () {
 		alert("Could not fetch ultimate toolchain xml. Config error.");
 	});
+
+	return $.when(settings_request, toolchain_request);
 }
 
 
