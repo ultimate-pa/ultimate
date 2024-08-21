@@ -1,6 +1,6 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: ICFGBuilder
+Bundle-Name: IcfgBuilder
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder;singleton:=true
 Bundle-Version: 0.2.4
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
