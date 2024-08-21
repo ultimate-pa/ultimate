@@ -613,9 +613,6 @@ public final class TestUtil {
 		map.put("#Unsafe", SafetyCheckerOverallResult.UNSAFE);
 		map.put("#Unknown", SafetyCheckerOverallResult.UNKNOWN);
 		map.put("#SyntaxError", SafetyCheckerOverallResult.SYNTAX_ERROR);
-		// we use the following two keywords for concurrent programs
-		map.put("#cSafe", SafetyCheckerOverallResult.SAFE);
-		map.put("#cUnsafe", SafetyCheckerOverallResult.UNSAFE);
 		return map;
 	}
 
