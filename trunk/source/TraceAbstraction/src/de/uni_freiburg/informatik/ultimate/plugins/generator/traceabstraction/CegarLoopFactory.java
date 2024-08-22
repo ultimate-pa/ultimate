@@ -269,15 +269,6 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 				mPrefs.getDfsOrderSeed()), () -> null, null);
 	}
 
-	@Deprecated
-	public static <L extends IIcfgTransition<?>> BoundedPetriNet<L, IPredicate> createPetriAbstraction(
-			final IUltimateServiceProvider services, final IPLBECompositionFactory<L> compositionFactory,
-			final PredicateFactory predicateFactory, final Class<L> transitionClazz, final TAPreferences pref,
-			final boolean removeDead, final IIcfg<IcfgLocation> icfg, final Set<IcfgLocation> errorLocs) {
-		return new CegarLoopFactory<>(transitionClazz, pref, () -> compositionFactory, null)
-				.createPetriAbstraction(services, predicateFactory, removeDead, icfg, errorLocs);
-	}
-
 	private BoundedPetriNet<L, IPredicate> createPetriAbstraction(final IUltimateServiceProvider services,
 			final PredicateFactory predicateFactory, final boolean removeDead, final IIcfg<IcfgLocation> icfg,
 			final Set<IcfgLocation> errorLocs) {

@@ -3,29 +3,29 @@
  * Copyright (C) 2011-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
  *
- * This file is part of the ULTIMATE TraceAbstractionConcurrent plug-in.
+ * This file is part of the ULTIMATE TraceAbstractionWithAFAs plug-in.
  *
- * The ULTIMATE TraceAbstractionConcurrent plug-in is free software: you can redistribute it and/or modify
+ * The ULTIMATE TraceAbstractionWithAFAs plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * The ULTIMATE TraceAbstractionConcurrent plug-in is distributed in the hope that it will be useful,
+ * The ULTIMATE TraceAbstractionWithAFAs plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with the ULTIMATE TraceAbstractionConcurrent plug-in. If not, see <http://www.gnu.org/licenses/>.
+ * along with the ULTIMATE TraceAbstractionWithAFAs plug-in. If not, see <http://www.gnu.org/licenses/>.
  *
  * Additional permission under GNU GPL version 3 section 7:
- * If you modify the ULTIMATE TraceAbstractionConcurrent plug-in, or any covered work, by linking
+ * If you modify the ULTIMATE TraceAbstractionWithAFAs plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
  * containing parts covered by the terms of the Eclipse Public License, the
- * licensors of the ULTIMATE TraceAbstractionConcurrent plug-in grant you additional permission
+ * licensors of the ULTIMATE TraceAbstractionWithAFAs plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionwithafas;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -97,8 +97,8 @@ public abstract class CFG2Automaton<LETTER extends IIcfgTransition<?>, RESULT> {
 	public abstract RESULT getResult();
 
 	protected void constructProcedureAutomata() {
-		final CodeBlockSize codeBlockSize = RcfgPreferenceInitializer.getPreferences(mServices)
-				.getEnum(RcfgPreferenceInitializer.LABEL_CODE_BLOCK_SIZE, RcfgPreferenceInitializer.CodeBlockSize.class);
+		final CodeBlockSize codeBlockSize = RcfgPreferenceInitializer.getPreferences(mServices).getEnum(
+				RcfgPreferenceInitializer.LABEL_CODE_BLOCK_SIZE, RcfgPreferenceInitializer.CodeBlockSize.class);
 		if (codeBlockSize != CodeBlockSize.SingleStatement) {
 			throw new IllegalArgumentException("Concurrent programs reqire" + "atomic block encoding.");
 		}
@@ -179,7 +179,7 @@ public abstract class CFG2Automaton<LETTER extends IIcfgTransition<?>, RESULT> {
 		mLogger.debug("Step: construct the automaton");
 		// construct the automaton
 		final NestedWordAutomaton<LETTER, IPredicate> nwa = new NestedWordAutomaton<>(
-				new AutomataLibraryServices(mServices), new VpAlphabet<LETTER>(internalAlphabet), mContentFactory);
+				new AutomataLibraryServices(mServices), new VpAlphabet<>(internalAlphabet), mContentFactory);
 
 		IPredicate procedureInitialState = null;
 

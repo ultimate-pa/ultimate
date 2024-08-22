@@ -38,7 +38,6 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.plugins.chctoboogie,
  de.uni_freiburg.informatik.ultimate.reqparser,
  de.uni_freiburg.informatik.ultimate.pea2boogie,
- de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent,
  de.uni_freiburg.informatik.ultimate.lib.srparse,
  de.uni_freiburg.informatik.ultimate.lib.pea,
  de.uni_freiburg.informatik.ultimate.output.peaexamplegenerator
