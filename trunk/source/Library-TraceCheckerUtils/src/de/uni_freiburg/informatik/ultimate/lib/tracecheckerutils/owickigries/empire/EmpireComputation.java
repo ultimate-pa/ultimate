@@ -81,7 +81,7 @@ public class EmpireComputation<L, P> {
 			final MonolithicHoareTripleChecker hoareTripleChecker,
 			final MonolithicImplicationChecker implicationChecker) {
 		mLogger = services.getLoggingService().getLogger(getClass());
-		mLogger.setLevel(LogLevel.INFO);
+		mLogger.setLevel(LogLevel.DEBUG);
 
 		mNet = net;
 		mProduct = product;
@@ -155,6 +155,8 @@ public class EmpireComputation<L, P> {
 						final var newSuccessor = handleBridge(successor, transition);
 						queue.offer(newSuccessor);
 						continue;
+					} else if (!bridgePre.isEmpty()) {
+						bridgeTerritories.addAllPairs(successor, bridgePre);
 					}
 					subsumed = true;
 
@@ -171,6 +173,7 @@ public class EmpireComputation<L, P> {
 				} else if (numBystanders > 0 && !lawPlace.equals(succLawPlace)) {
 					bridgeTerritories.addPair(successor, pair);
 					queue.offer(successor);
+					result.add(pair);
 				} else {
 					successors.add(successor);
 					mLogger.debug("\t--> regular successor; adding...");
@@ -209,9 +212,7 @@ public class EmpireComputation<L, P> {
 			final var bystanders =
 					DataStructureUtils.intersection(prePair.getFirst().getRegions(), pair2.getFirst().getRegions());
 			if (!succPair.getFirst().getRegions().containsAll(bystanders)) {
-				final var allCorelated =
-						succPlaces.stream().allMatch(p -> mCoRelation.getPlacesCorelation(p, pair2.getSecond()));
-				return !allCorelated;
+				return true;
 			}
 		}
 		return false;
