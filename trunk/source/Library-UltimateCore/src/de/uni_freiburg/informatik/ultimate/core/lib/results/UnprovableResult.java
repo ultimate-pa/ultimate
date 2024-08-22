@@ -101,8 +101,10 @@ public class UnprovableResult<ELEM extends IElement, TE extends IElement, E> ext
 		}
 		mUnprovabilityReasons = Objects.requireNonNull(unprovabilityReasons);
 
+		// programExecution may be null
 		mProgramExecution = programExecution;
-		mProgramExecutionAsString = translatorSequence.translateProgramExecution(mProgramExecution).toString();
+		mProgramExecutionAsString = mProgramExecution == null ? null
+				: translatorSequence.translateProgramExecution(mProgramExecution).toString();
 		mFailurePath = ResultUtil.getLocationSequence(programExecution);
 	}
 
@@ -125,7 +127,7 @@ public class UnprovableResult<ELEM extends IElement, TE extends IElement, E> ext
 			sb.append(CoreUtil.getPlatformLineSeparator());
 			sb.append("Possible FailurePath: ");
 			sb.append(CoreUtil.getPlatformLineSeparator());
-			sb.append(getProgramExecutionAsString());
+			sb.append(mProgramExecutionAsString);
 		}
 		return sb.toString();
 	}
