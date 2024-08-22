@@ -12,11 +12,10 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.smtinterpol,
  de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils,
  de.uni_freiburg.informatik.ultimate.boogie.printer,
- de.uni_freiburg.informatik.ultimate.lib.smtlibutils
+ de.uni_freiburg.informatik.ultimate.lib.smtlibutils,
+ de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-11
-Import-Package: de.uni_freiburg.informatik.ultimate.boogie.type,
- de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg
 Export-Package: de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder,
  de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.cfg,
  de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.preferences,
