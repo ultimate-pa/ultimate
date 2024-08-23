@@ -166,8 +166,7 @@ public class ExpressionResultBuilder {
 
 	public ExpressionResultBuilder addAllExceptLrValueAndHavocAux(final ExpressionResult exprResult) {
 		addAllExceptLrValue(exprResult);
-		addStatements(CTranslationUtil.createHavocsForAuxVars(exprResult.getAuxVars()));
-		mAuxVars.clear();
+		havocAuxVars();
 		return this;
 	}
 
@@ -292,6 +291,11 @@ public class ExpressionResultBuilder {
 	@Override
 	public String toString() {
 		return build().toString();
+	}
+
+	public void havocAuxVars() {
+		addStatements(CTranslationUtil.createHavocsForAuxVars(getAuxVars()));
+		clearAuxVars();
 	}
 
 	/**

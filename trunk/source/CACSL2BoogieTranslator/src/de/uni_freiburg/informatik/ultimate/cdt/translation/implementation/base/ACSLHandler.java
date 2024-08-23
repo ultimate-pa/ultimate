@@ -52,7 +52,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.EnsuresSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ModifiesSpecification;
@@ -246,8 +245,7 @@ public class ACSLHandler implements IACSLHandler {
 			overapprItem.annotate(assertStmt);
 		}
 		resultBuilder.addStatement(assertStmt);
-		final List<HavocStatement> havocs = CTranslationUtil.createHavocsForAuxVars(formula.getAuxVars());
-		resultBuilder.addStatements(havocs);
+		resultBuilder.havocAuxVars();
 		final Check check;
 		if (mWitnessInvariantMode) {
 			check = new Check(Spec.WITNESS_INVARIANT);
