@@ -77,10 +77,12 @@ public class AbstractInterpretation implements IAnalysis {
 		final String creator = graphType.getCreator();
 		switch (creator) {
 		case "de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder":
+		case "de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder":
 			mObserver = new ArrayList<>();
 			mObserver.add(new AbstractInterpretationRcfgObserver(mServices));
 			break;
 		default:
+			mLogger.info("Ignoring creator " + creator);
 			mObserver = null;
 			break;
 		}
