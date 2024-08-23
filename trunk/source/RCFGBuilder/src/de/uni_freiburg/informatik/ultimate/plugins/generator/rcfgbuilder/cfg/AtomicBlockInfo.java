@@ -25,10 +25,12 @@
  * licensors of the ULTIMATE Core grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.core.lib.models.annotation;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 
 import java.util.Map;
+import java.util.function.IntPredicate;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.ModernAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
@@ -39,31 +41,40 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotat
  *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  */
-public final class AtomicBlockInfo extends ModernAnnotations {
+final class AtomicBlockInfo extends ModernAnnotations {
 
 	private static final long serialVersionUID = -8370873908642083605L;
 
-	private enum Type {
-		START, END, COMPLETE
-	}
+	private static int START_DELTA = 1;
+	private static int END_DELTA = -1;
 
-	private final Type mType;
+	// Difference of number of atomic blocks opened by the annotated edge and number of atomic blocks closed by the
+	// annotated edge. Hence, positive numbers indicate the start of an atomic block, negative numbers the end, and zero
+	// indicates a complete atomic block.
+	private final int mDelta;
 
-	private AtomicBlockInfo(final Type type) {
-		mType = type;
+	private AtomicBlockInfo(final int delta) {
+		mDelta = delta;
 	}
 
 	@Override
 	public IAnnotations merge(final IAnnotations other) {
-		// We use the default merging behaviour, i.e., merging is not supported.
-		// This annotation should only appear temporarily within CfgBuilder.
-		// It is up to CfgBuilder to make sure it never attempts to merge two instances of this annotation.
+		if (other instanceof AtomicBlockInfo) {
+			final var otherInfo = (AtomicBlockInfo) other;
+			final int combinedDelta = mDelta + otherInfo.mDelta;
+			return new AtomicBlockInfo(combinedDelta);
+		}
 		return super.merge(other);
 	}
 
 	@Override
 	public Map<String, Object> getAnnotationsAsMap() {
-		return Map.of("type", mType);
+		return Map.of("delta", mDelta);
+	}
+
+	@Override
+	public String toString() {
+		return AtomicBlockInfo.class.getSimpleName() + "(" + (mDelta > 0 ? "+" : "") + mDelta + ")";
 	}
 
 	/**
@@ -76,7 +87,7 @@ public final class AtomicBlockInfo extends ModernAnnotations {
 	 * @return true if there is an {@link AtomicBlockInfo} annotation that marks the beginning of an atomic block.
 	 */
 	public static boolean isStartOfAtomicBlock(final IElement element) {
-		return annotationHasType(element, Type.START);
+		return hasAnnotatedDelta(element, d -> d > 0);
 	}
 
 	/**
@@ -89,7 +100,7 @@ public final class AtomicBlockInfo extends ModernAnnotations {
 	 * @return true if there is an {@link AtomicBlockInfo} annotation that marks the end of an atomic block.
 	 */
 	public static boolean isEndOfAtomicBlock(final IElement element) {
-		return annotationHasType(element, Type.END);
+		return hasAnnotatedDelta(element, d -> d < 0);
 	}
 
 	/**
@@ -100,7 +111,7 @@ public final class AtomicBlockInfo extends ModernAnnotations {
 	 * @return true if there is an {@link AtomicBlockInfo} annotation that marks a complete atomic block.
 	 */
 	public static boolean isCompleteAtomicBlock(final IElement element) {
-		return annotationHasType(element, Type.COMPLETE);
+		return hasAnnotatedDelta(element, d -> d == 0);
 	}
 
 	/**
@@ -110,7 +121,7 @@ public final class AtomicBlockInfo extends ModernAnnotations {
 	 *            The edge to be marked.
 	 */
 	public static void addBeginAnnotation(final IElement element) {
-		addAnnotation(element, Type.START);
+		addAnnotation(element, START_DELTA);
 	}
 
 	/**
@@ -120,7 +131,7 @@ public final class AtomicBlockInfo extends ModernAnnotations {
 	 *            The edge to be marked.
 	 */
 	public static void addEndAnnotation(final IElement element) {
-		addAnnotation(element, Type.END);
+		addAnnotation(element, END_DELTA);
 	}
 
 	/**
@@ -130,7 +141,7 @@ public final class AtomicBlockInfo extends ModernAnnotations {
 	 *            The edge to be marked.
 	 */
 	public static void addCompleteAnnotation(final IElement element) {
-		addAnnotation(element, Type.COMPLETE);
+		addAnnotation(element, 0);
 	}
 
 	/**
@@ -143,20 +154,20 @@ public final class AtomicBlockInfo extends ModernAnnotations {
 		element.getPayload().getAnnotations().remove(AtomicBlockInfo.class.getName());
 	}
 
-	private static boolean annotationHasType(final IElement element, final Type type) {
+	private static boolean hasAnnotatedDelta(final IElement element, final IntPredicate condition) {
 		final AtomicBlockInfo annotation = ModelUtils.getAnnotation(element, AtomicBlockInfo.class);
 		if (annotation != null) {
-			return annotation.mType == type;
+			return condition.test(annotation.mDelta);
 		}
 		return false;
 	}
 
-	private static void addAnnotation(final IElement element, final Type type) {
+	private static void addAnnotation(final IElement element, final int delta) {
 		final var previous = ModelUtils.getAnnotation(element, AtomicBlockInfo.class);
 		if (previous != null) {
 			throw new UnsupportedOperationException(
-					"Incompatible atomic block annotation: " + previous.mType + " and " + type);
+					"Incompatible atomic block annotation: " + previous.mDelta + " and " + delta);
 		}
-		element.getPayload().getAnnotations().put(AtomicBlockInfo.class.getName(), new AtomicBlockInfo(type));
+		element.getPayload().getAnnotations().put(AtomicBlockInfo.class.getName(), new AtomicBlockInfo(delta));
 	}
 }
