@@ -176,10 +176,11 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 		final var abstraction = constructInitialAbstraction(triple.getFirst(), root, errorLocs);
 
 		final var producer = triple.getSecond().get();
+		final var backtranslator = triple.getThird();
 		final var cegar = createFiniteAutomataCegarLoop(services, name, root, predicateFactory, errorLocs,
 				rawFloydHoareAutomataFromFile, stateFactoryForRefinement, witnessAutomaton, abstraction, producer);
-		final var proofProducer =
-				producer == null ? null : new BacktranslatingProofProducer<>(root, producer, triple.getThird());
+		final var proofProducer = producer == null || backtranslator == null ? null
+				: new BacktranslatingProofProducer<>(root, producer, backtranslator);
 		return new Pair<>(cegar, proofProducer);
 	}
 

@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction;
 
+import java.util.Objects;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
@@ -55,7 +56,7 @@ public class BacktranslatingProofProducer<INPROOF extends IProof>
 			final Function<INPROOF, ? extends IProof> backtranslator) {
 		mIcfg = icfg;
 		mUnderlying = underlying;
-		mBacktranslator = backtranslator;
+		mBacktranslator = Objects.requireNonNull(backtranslator);
 	}
 
 	@Override
