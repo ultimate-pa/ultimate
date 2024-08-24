@@ -120,9 +120,9 @@ public class PredicateFactoryRefinement extends PredicateFactoryForInterpolantAu
 		if (someElement instanceof ISLPredicate) {
 			final IcfgLocation pp = ((ISLPredicate) someElement).getProgramPoint();
 			if (mHoareAnnotationProgramPoints.contains(pp)) {
-				Term disjuntion = mPredicateFactory.or(states).getFormula();
-				disjuntion = new CommuhashNormalForm(mServices, mMgdScript.getScript()).transform(disjuntion);
-				return mPredicateFactory.newSPredicate(pp, disjuntion);
+				Term disjunction = mPredicateFactory.or(states).getFormula();
+				disjunction = new CommuhashNormalForm(mServices, mMgdScript.getScript()).transform(disjunction);
+				return mPredicateFactory.newSPredicate(pp, disjunction);
 			}
 			return mPredicateFactory.newDontCarePredicate(pp);
 		} else if (someElement instanceof IMLPredicate) {
