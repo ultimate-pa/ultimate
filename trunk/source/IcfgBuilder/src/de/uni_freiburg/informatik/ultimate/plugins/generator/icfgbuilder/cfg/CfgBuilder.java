@@ -4,7 +4,7 @@
  * Copyright (C) 2018 Lars Nitzke (lars.nitzke@mailfence.com)
  * Copyright (C) 2024 Niklas Kult (niklas111098@gmail.com)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  *
  * This file is part of the ULTIMATE RCFGBuilder plug-in.
  *
@@ -160,10 +160,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
 import de.uni_freiburg.informatik.ultimate.util.datastructures.HashDeque;
 
 /**
- * This class generates a recursive control flow graph (in the style of POPL'10 - Heizmann, Hoenicke, Podelski - Nested
- * Interpolants) from an Boogie AST which contains only unstructured Code (i.e., no while (and others??) statements).
- * The input for this classs has to be unstructured Boogie Code (e.g., no while loops) for example the output of the
- * BoogiePreprocessor.
+ * This class generates a recursive control flow graph (in the style of POPL'10
+ * - Heizmann, Hoenicke, Podelski - Nested Interpolants) from an Boogie AST
+ * which contains only unstructured Code (i.e., no while (and others??)
+ * statements). The input for this classs has to be unstructured Boogie Code
+ * (e.g., no while loops) for example the output of the BoogiePreprocessor.
  *
  * @author heizmann@informatik.uni-freiburg.de
  */
@@ -179,8 +180,9 @@ public class CfgBuilder {
 	private final ILogger mLogger;
 
 	/**
-	 * Root Node of this Ultimate model. I use this to store information that should be passed to the next plugin. The
-	 * Successors of this node are exactly the entry nodes of procedures.
+	 * Root Node of this Ultimate model. I use this to store information that should
+	 * be passed to the next plugin. The Successors of this node are exactly the
+	 * entry nodes of procedures.
 	 */
 	private final BoogieIcfgContainer mIcfg;
 
@@ -203,14 +205,13 @@ public class CfgBuilder {
 	private final boolean mAddAssumeForEachAssert;
 
 	private final CodeBlockFactory mCbf;
-	
-	private Stack<BoogieIcfgLocation> mWhileExits; 
-	private Stack<BoogieIcfgLocation> mConditionalStarts; 
-	private int mRemovedAssumeTrueStatements = 0;
+
+	private Stack<BoogieIcfgLocation> mWhileExits;
+	private Stack<BoogieIcfgLocation> mConditionalStarts;
+	private final int mRemovedAssumeTrueStatements = 0;
 
 	private static final SimplificationTechnique SIMPLIFICATION_TECHNIQUE = SimplificationTechnique.POLY_PAC;
-	private static final XnfConversionTechnique XNF_CONVERSION_TECHNIQUE =
-			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
+	private static final XnfConversionTechnique XNF_CONVERSION_TECHNIQUE = XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 
 	private final Set<String> mAllGotoTargets;
 
@@ -230,13 +231,13 @@ public class CfgBuilder {
 		final ManagedScript mgdScript = new ManagedScript(mServices, script);
 
 		mBoogieDeclarations = new BoogieDeclarations(unit, mLogger);
-		final boolean simplePartialSkolemization =
-				prefs.getBoolean(IcfgPreferenceInitializer.LABEL_SIMPLE_PARTIAL_SKOLEMIZATION);
+		final boolean simplePartialSkolemization = prefs
+				.getBoolean(IcfgPreferenceInitializer.LABEL_SIMPLE_PARTIAL_SKOLEMIZATION);
 		final ForkAndGotoInformation fgInfo = new ForkAndGotoInformation(mBoogieDeclarations);
 		mAllGotoTargets = fgInfo.getAllGotoTargets();
 
-		final CodeBlockSize userDefineCodeBlockSize =
-				prefs.getEnum(IcfgPreferenceInitializer.LABEL_CODE_BLOCK_SIZE, CodeBlockSize.class);
+		final CodeBlockSize userDefineCodeBlockSize = prefs.getEnum(IcfgPreferenceInitializer.LABEL_CODE_BLOCK_SIZE,
+				CodeBlockSize.class);
 		if ((userDefineCodeBlockSize == CodeBlockSize.LoopFreeBlock
 				|| userDefineCodeBlockSize == CodeBlockSize.SequenceOfStatements) && fgInfo.hasSomeForkEdge()) {
 			mCodeBlockSize = CodeBlockSize.OneNontrivialStatement;
@@ -246,8 +247,8 @@ public class CfgBuilder {
 		} else {
 			mCodeBlockSize = userDefineCodeBlockSize;
 		}
-		mCtxSwitchOnlyAtAtomicBoundaries =
-				prefs.getBoolean(IcfgPreferenceInitializer.LABEL_CONTEXT_SWITCH_ONLY_AT_ATOMIC_BOUNDARIES);
+		mCtxSwitchOnlyAtAtomicBoundaries = prefs
+				.getBoolean(IcfgPreferenceInitializer.LABEL_CONTEXT_SWITCH_ONLY_AT_ATOMIC_BOUNDARIES);
 
 		mFutureLiveOptimization = prefs.getBoolean(IcfgPreferenceInitializer.LABEL_FUTURE_LIVE);
 
@@ -265,8 +266,7 @@ public class CfgBuilder {
 	/**
 	 * Build a recursive control flow graph for an unstructured boogie program.
 	 *
-	 * @param Unit
-	 *            that encodes a program.
+	 * @param Unit that encodes a program.
 	 * @return RootNode of a recursive control flow graph.
 	 */
 	public IIcfg<BoogieIcfgLocation> createIcfg(final Unit unit) {
@@ -280,21 +280,22 @@ public class CfgBuilder {
 			final Body body = mBoogieDeclarations.getProcImplementation().get(procName).getBody();
 			final Statement firstStatement;
 			if (body.getBlock().length == 0) {
-				firstStatement = new ReturnStatement(mBoogieDeclarations.getProcImplementation().get(procName).getLocation());
+				firstStatement = new ReturnStatement(
+						mBoogieDeclarations.getProcImplementation().get(procName).getLocation());
 			} else {
 				firstStatement = body.getBlock()[0];
 			}
 			final BoogieIcfgLocation entryNode = new BoogieIcfgLocation(new ProcedureEntryDebugIdentifier(procName),
-					procName, false, firstStatement); 
+					procName, false, firstStatement);
 			// We have to use some ASTNode for final and exit node. Let's take
 			// the procedure implementation.
 			final Procedure impl = mBoogieDeclarations.getProcImplementation().get(procName);
 			icfg.getProcedureEntryNodes().put(procName, entryNode);
-			final BoogieIcfgLocation finalNode =
-					new BoogieIcfgLocation(new ProcedureFinalDebugIdentifier(procName), procName, false, impl);
+			final BoogieIcfgLocation finalNode = new BoogieIcfgLocation(new ProcedureFinalDebugIdentifier(procName),
+					procName, false, impl);
 			icfg.mFinalNode.put(procName, finalNode);
-			final BoogieIcfgLocation exitNode =
-					new BoogieIcfgLocation(new ProcedureExitDebugIdentifier(procName), procName, false, impl);
+			final BoogieIcfgLocation exitNode = new BoogieIcfgLocation(new ProcedureExitDebugIdentifier(procName),
+					procName, false, impl);
 			icfg.getProcedureExitNodes().put(procName, exitNode);
 
 			// new RootEdge(mGraphroot, mRootAnnot.mentryNode.get(procName));
@@ -307,7 +308,7 @@ public class CfgBuilder {
 			if (mBoogieDeclarations.getProcImplementation().containsKey(procName)) {
 				procCfgBuilder.buildProcedureCfgFromImplementation(procName);
 			} else {
-				//procCfgBuilder.buildProcedureCfgWithoutImplementation(procName);
+				// procCfgBuilder.buildProcedureCfgWithoutImplementation(procName);
 			}
 		}
 
@@ -374,12 +375,14 @@ public class CfgBuilder {
 	private void ensureAtomicCompositionComplete(final IcfgEdge edge) {
 		if (AtomicBlockInfo.isEndOfAtomicBlock(edge)) {
 			// We must never have any dangling ends of atomic blocks;
-			// such an edge should have been fused with the corresponding start of the atomic block.
+			// such an edge should have been fused with the corresponding start of the
+			// atomic block.
 			throw new UnsupportedOperationException("Incomplete atomic composition (dangling end of atomic block: "
 					+ edge + "). Is there illegal control flow (e.g. loops) within an atomic block?");
 		}
 
-		// If the edge is neither the start nor the end of an atomic block, everything is fine.
+		// If the edge is neither the start nor the end of an atomic block, everything
+		// is fine.
 		if (!AtomicBlockInfo.isStartOfAtomicBlock(edge)) {
 			// Edge may be marked as complete atomic block.
 			// If so, remove the annotation as it is only for internal use.
@@ -395,7 +398,8 @@ public class CfgBuilder {
 			return;
 		}
 
-		// We tolerate nodes without successors inside atomic blocks, such as thread exit locations.
+		// We tolerate nodes without successors inside atomic blocks, such as thread
+		// exit locations.
 		final boolean successorIsSink = successor.getOutgoingEdges().isEmpty();
 		if (!successorIsSink) {
 			throw new UnsupportedOperationException("Incomplete atomic composition (dangling start of atomic block: "
@@ -421,8 +425,8 @@ public class CfgBuilder {
 
 		final SolverMode solverMode = prefs.getEnum(IcfgPreferenceInitializer.LABEL_SOLVER, SolverMode.class);
 
-		final boolean fakeNonIncrementalScript =
-				prefs.getBoolean(IcfgPreferenceInitializer.LABEL_FAKE_NON_INCREMENTAL_SCRIPT);
+		final boolean fakeNonIncrementalScript = prefs
+				.getBoolean(IcfgPreferenceInitializer.LABEL_FAKE_NON_INCREMENTAL_SCRIPT);
 
 		final boolean dumpSmtScriptToFile = prefs.getBoolean(IcfgPreferenceInitializer.LABEL_DUMP_TO_FILE);
 		final boolean compressSmtScript = prefs.getBoolean(IcfgPreferenceInitializer.LABEL_COMPRESS_SMT_DUMP_FILE);
@@ -430,24 +434,24 @@ public class CfgBuilder {
 
 		final String commandExternalSolver = prefs.getString(IcfgPreferenceInitializer.LABEL_EXT_SOLVER_COMMAND);
 
-		final boolean dumpUnsatCoreTrackBenchmark =
-				prefs.getBoolean(IcfgPreferenceInitializer.LABEL_DUMP_UNSAT_CORE_BENCHMARK);
+		final boolean dumpUnsatCoreTrackBenchmark = prefs
+				.getBoolean(IcfgPreferenceInitializer.LABEL_DUMP_UNSAT_CORE_BENCHMARK);
 
-		final boolean dumpMainTrackBenchmark =
-				prefs.getBoolean(IcfgPreferenceInitializer.LABEL_DUMP_MAIN_TRACK_BENCHMARK);
+		final boolean dumpMainTrackBenchmark = prefs
+				.getBoolean(IcfgPreferenceInitializer.LABEL_DUMP_MAIN_TRACK_BENCHMARK);
 
-		final Map<String, String> additionalSmtOptions =
-				prefs.getKeyValueMap(IcfgPreferenceInitializer.LABEL_ADDITIONAL_SMT_OPTIONS);
+		final Map<String, String> additionalSmtOptions = prefs
+				.getKeyValueMap(IcfgPreferenceInitializer.LABEL_ADDITIONAL_SMT_OPTIONS);
 
-		final Logics logicForExternalSolver =
-				Logics.valueOf(prefs.getString(IcfgPreferenceInitializer.LABEL_EXT_SOLVER_LOGIC));
-		final SolverSettings solverSettings =
-				SolverBuilder.constructSolverSettings().setUseFakeIncrementalScript(fakeNonIncrementalScript)
-						.setDumpSmtScriptToFile(dumpSmtScriptToFile, pathOfDumpedScript, filename, compressSmtScript)
-						.setDumpUnsatCoreTrackBenchmark(dumpUnsatCoreTrackBenchmark)
-						.setDumpMainTrackBenchmark(dumpMainTrackBenchmark)
-						.setUseExternalSolver(true, commandExternalSolver, logicForExternalSolver)
-						.setSolverMode(solverMode).setAdditionalOptions(additionalSmtOptions);
+		final Logics logicForExternalSolver = Logics
+				.valueOf(prefs.getString(IcfgPreferenceInitializer.LABEL_EXT_SOLVER_LOGIC));
+		final SolverSettings solverSettings = SolverBuilder.constructSolverSettings()
+				.setUseFakeIncrementalScript(fakeNonIncrementalScript)
+				.setDumpSmtScriptToFile(dumpSmtScriptToFile, pathOfDumpedScript, filename, compressSmtScript)
+				.setDumpUnsatCoreTrackBenchmark(dumpUnsatCoreTrackBenchmark)
+				.setDumpMainTrackBenchmark(dumpMainTrackBenchmark)
+				.setUseExternalSolver(true, commandExternalSolver, logicForExternalSolver).setSolverMode(solverMode)
+				.setAdditionalOptions(additionalSmtOptions);
 
 		return SolverBuilder.buildAndInitializeSolver(services, solverSettings, "CfgBuilderScript");
 	}
@@ -460,20 +464,21 @@ public class CfgBuilder {
 	}
 
 	/**
-	 * Add CallEdge from SummaryEdge source to the entry location of the called procedure. Add ReturnEdge from the
-	 * called procedures exit node to the summary edges target.
+	 * Add CallEdge from SummaryEdge source to the entry location of the called
+	 * procedure. Add ReturnEdge from the called procedures exit node to the summary
+	 * edges target.
 	 *
 	 * @param simplificationTechnique
 	 *
-	 * @param SummaryEdge
-	 *            that summarizes execution of an implemented procedure.
+	 * @param SummaryEdge             that summarizes execution of an implemented
+	 *                                procedure.
 	 */
 	private void addCallTransitionAndReturnTransition(final Summary edge,
 			final SimplificationTechnique simplificationTechnique) {
 		final CallStatement st = edge.getCallStatement();
 		final String callee = st.getMethodName();
-		assert mIcfg.getProcedureEntryNodes().containsKey(callee) : "Source code contains" + " call of " + callee
-				+ " but no such procedure.";
+		assert mIcfg.getProcedureEntryNodes().containsKey(callee)
+				: "Source code contains" + " call of " + callee + " but no such procedure.";
 
 		// Add call transition from callerNode to procedures entry node
 		final BoogieIcfgLocation callerNode = (BoogieIcfgLocation) edge.getSource();
@@ -481,8 +486,8 @@ public class CfgBuilder {
 
 		final String caller = callerNode.getProcedure();
 
-		final TranslationResult arguments2InParams =
-				mIcfg.getBoogie2SMT().getStatements2TransFormula().inParamAssignment(st, simplificationTechnique);
+		final TranslationResult arguments2InParams = mIcfg.getBoogie2SMT().getStatements2TransFormula()
+				.inParamAssignment(st, simplificationTechnique);
 		final TranslationResult outParams2CallerVars = mIcfg.getBoogie2SMT().getStatements2TransFormula()
 				.resultAssignment(st, caller, simplificationTechnique);
 		final Map<String, ILocation> overapproximations = new HashMap<>();
@@ -502,8 +507,8 @@ public class CfgBuilder {
 	}
 
 	/**
-	 * construct error location BoogieASTNode in procedure procName add constructed location to mprocLocNodes and
-	 * mErrorNodes.
+	 * construct error location BoogieASTNode in procedure procName add constructed
+	 * location to mprocLocNodes and mErrorNodes.
 	 *
 	 * @return
 	 */
@@ -546,21 +551,19 @@ public class CfgBuilder {
 		return errorLocNode;
 	}
 
-	public ITranslator<IIcfgTransition<IcfgLocation>, BoogieASTNode, Term, Expression, IcfgLocation, String, ILocation>
-			getBacktranslator() {
+	public ITranslator<IIcfgTransition<IcfgLocation>, BoogieASTNode, Term, Expression, IcfgLocation, String, ILocation> getBacktranslator() {
 		return mIcfgBacktranslator;
 	}
-
-
 
 	/**
 	 * Provides two informations that can be obtained by traversing all statements.
 	 * <ul>
 	 * <li>information whether some {@link ForkStatement} occurs.
-	 * <li>the identifiers of all {@link Label}s that are target of some {@link GotoStatement}
+	 * <li>the identifiers of all {@link Label}s that are target of some
+	 * {@link GotoStatement}
 	 * </ul>
-	 * Expects that the input has been "unstructured", i.e., all {@link WhileStatement}s and {@link IfStatement}s have
-	 * been removed.
+	 * Expects that the input has been "unstructured", i.e., all
+	 * {@link WhileStatement}s and {@link IfStatement}s have been removed.
 	 */
 	private static class ForkAndGotoInformation {
 
@@ -586,14 +589,14 @@ public class CfgBuilder {
 					processStatements(((AtomicStatement) st).getBody());
 				} else if (st instanceof AssignmentStatement || st instanceof AssumeStatement
 						|| st instanceof HavocStatement || st instanceof Label || st instanceof JoinStatement
-						|| st instanceof CallStatement || st instanceof ReturnStatement
-						|| st instanceof AssertStatement || st instanceof BreakStatement) {
+						|| st instanceof CallStatement || st instanceof ReturnStatement || st instanceof AssertStatement
+						|| st instanceof BreakStatement) {
 					// do nothing
 				} else if (st instanceof IfStatement) {
-					processStatements(((IfStatement)st).getThenPart());
-					processStatements(((IfStatement)st).getElsePart());
+					processStatements(((IfStatement) st).getThenPart());
+					processStatements(((IfStatement) st).getElsePart());
 				} else if (st instanceof WhileStatement) {
-					processStatements(((WhileStatement)st).getBody());
+					processStatements(((WhileStatement) st).getBody());
 				} else {
 					throw new UnsupportedOperationException(
 							"Did not expect statement of type " + st.getClass().getSimpleName());
@@ -618,7 +621,8 @@ public class CfgBuilder {
 	private final class ProcedureCfgBuilder {
 
 		/**
-		 * Maps a position identifier to the LocNode that represents this position in the CFG.
+		 * Maps a position identifier to the LocNode that represents this position in
+		 * the CFG.
 		 */
 		private Map<DebugIdentifier, BoogieIcfgLocation> mProcLocNodes;
 
@@ -628,29 +632,32 @@ public class CfgBuilder {
 		private Map<DebugIdentifier, BoogieIcfgLocation> mLabel2LocNodes;
 
 		/**
-		 * Set of all labels that occurred in the procedure. If an element is inserted twice this is an error.
+		 * Set of all labels that occurred in the procedure. If an element is inserted
+		 * twice this is an error.
 		 */
-		//private Set<String> mLabels;
-		
+		// private Set<String> mLabels;
+
 		/**
-		 * Maps the Name of a Label to its Statement. 
+		 * Maps the Name of a Label to its Statement.
 		 */
 		private Map<String, Label> mLabelString2Statement;
-		
+
 		/**
 		 * Name of that last Label for which we constructed a LocNode
 		 */
 		private DebugIdentifier mLastLabelName;
 
 		/**
-		 * Distance to the last LocNode that was constructed as representative of a label.
+		 * Distance to the last LocNode that was constructed as representative of a
+		 * label.
 		 */
 		// int mlocSuffix;
 
 		/**
-		 * Element at which we continue building the CFG. This should be a - LocNode if the last processed Statement was
-		 * a Label or a CallStatement - TransEdge if the last processed Statement was Assume, Assignment, Havoc or
-		 * Assert. - null if the last processed Statement was Goto or Return.
+		 * Element at which we continue building the CFG. This should be a - LocNode if
+		 * the last processed Statement was a Label or a CallStatement - TransEdge if
+		 * the last processed Statement was Assume, Assignment, Havoc or Assert. - null
+		 * if the last processed Statement was Goto or Return.
 		 */
 		IElement mCurrent;
 
@@ -670,16 +677,16 @@ public class CfgBuilder {
 		Set<CodeBlock> mEdges;
 
 		/**
-		 * Stores the number of constructed DebugIdentifiers/Nodes for each line per procedure, to construct unique DebugIdentifiers. 
+		 * Stores the number of constructed DebugIdentifiers/Nodes for each line per
+		 * procedure, to construct unique DebugIdentifiers.
 		 */
 		Map<Integer, Integer> mNameCache;
-		
 
 		/**
-		 * Builds the control flow graph of a single procedure according to a given implementation.
+		 * Builds the control flow graph of a single procedure according to a given
+		 * implementation.
 		 *
-		 * @param Identifier
-		 *            of the procedure for which the CFG will be build.
+		 * @param Identifier of the procedure for which the CFG will be build.
 		 */
 		private void buildProcedureCfgFromImplementation(final String procName) {
 			mCurrentProcedureName = procName;
@@ -690,14 +697,14 @@ public class CfgBuilder {
 			mConditionalStarts = new Stack<>();
 			mLabelString2Statement = new HashMap<>();
 
-			final Statement[] statements =
-					mBoogieDeclarations.getProcImplementation().get(procName).getBody().getBlock();
+			final Statement[] statements = mBoogieDeclarations.getProcImplementation().get(procName).getBody()
+					.getBlock();
 			if (statements.length == 0) {
 				mEdges = new HashSet<>();
 			}
 
 			mLabel2LocNodes = new HashMap<>();
-			
+
 			// find all Labels in procedure
 			findLabels(statements);
 
@@ -714,11 +721,10 @@ public class CfgBuilder {
 				mProcLocNodes.put(mLastLabelName, locNode);
 				mCurrent = locNode;
 			}
-			
+
 			// build cfg
 			BoogieIcfgLocation graph = buildCodeBlock(statements, mIcfg.mFinalNode.get(procName));
-			
-			
+
 			graph = assumeRequires(graph, false);
 			// if procedure has 0 statements
 			if (graph == mIcfg.mFinalNode.get(procName)) {
@@ -727,7 +733,7 @@ public class CfgBuilder {
 			} else {
 				mergeLocNodes(graph, mIcfg.getProcedureEntryNodes().get(procName), true);
 			}
-			
+
 			assertAndAssumeEnsures();
 
 			// Remove auxiliary GotoTransitions
@@ -762,83 +768,83 @@ public class CfgBuilder {
 			removeUnreachableProgramPoints(reachablePPs, constructedPPs, exit);
 
 		}
-		
-		private Boolean isAssuAssiHavoc(Statement st) {
+
+		private Boolean isAssuAssiHavoc(final Statement st) {
 			return st instanceof AssumeStatement || st instanceof AssignmentStatement || st instanceof HavocStatement;
 		}
-		
-		private void findLabels(Statement[] codeblock) {
-			for (Statement statement : codeblock) {
+
+		private void findLabels(final Statement[] codeblock) {
+			for (final Statement statement : codeblock) {
 				if (statement instanceof Label) {
-					mLabelString2Statement.put(((Label)statement).getName(), (Label)statement);
+					mLabelString2Statement.put(((Label) statement).getName(), (Label) statement);
 				} else if (statement instanceof WhileStatement) {
-					findLabels(((WhileStatement)statement).getBody());
+					findLabels(((WhileStatement) statement).getBody());
 				} else if (statement instanceof IfStatement) {
-					findLabels(((IfStatement)statement).getThenPart());
-					findLabels(((IfStatement)statement).getElsePart());
+					findLabels(((IfStatement) statement).getThenPart());
+					findLabels(((IfStatement) statement).getElsePart());
 				} else if (statement instanceof AtomicStatement) {
-					findLabels(((AtomicStatement)statement).getBody());
+					findLabels(((AtomicStatement) statement).getBody());
 				}
 			}
 		}
-		private BoogieIcfgLocation buildCodeBlock(Statement[] codeblock, BoogieIcfgLocation endLoc) {
-			return (BoogieIcfgLocation)buildCodeBlock(codeblock, endLoc, true);
+
+		private BoogieIcfgLocation buildCodeBlock(final Statement[] codeblock, final BoogieIcfgLocation endLoc) {
+			return (BoogieIcfgLocation) buildCodeBlock(codeblock, endLoc, true);
 		}
-		
-		private IIcfgElement buildCodeBlock(Statement[] codeblock, IIcfgElement endLoc, boolean endStatementSequence) {
+
+		private IIcfgElement buildCodeBlock(final Statement[] codeblock, final IIcfgElement endLoc,
+				final boolean endStatementSequence) {
 			IIcfgElement currentLocation = endLoc;
-			for (int i = codeblock.length-1; i >= 0; i--) {
-				Statement st = codeblock[i];
-				if (currentLocation instanceof StatementSequence && !(st instanceof CallStatement || isAssuAssiHavoc(st))) {
-					currentLocation = endStatementSequence((StatementSequence)currentLocation);
+			for (int i = codeblock.length - 1; i >= 0; i--) {
+				final Statement st = codeblock[i];
+				if (currentLocation instanceof StatementSequence
+						&& !(st instanceof CallStatement || isAssuAssiHavoc(st))) {
+					currentLocation = endStatementSequence((StatementSequence) currentLocation);
 				}
-				if(st instanceof WhileStatement) {
-					currentLocation = buildWhile((BoogieIcfgLocation)currentLocation, (WhileStatement) st);
+				if (st instanceof WhileStatement) {
+					currentLocation = buildWhile((BoogieIcfgLocation) currentLocation, (WhileStatement) st);
 				} else if (st instanceof IfStatement) {
-					currentLocation = buildIf((BoogieIcfgLocation)currentLocation, (IfStatement)st);
+					currentLocation = buildIf((BoogieIcfgLocation) currentLocation, (IfStatement) st);
 				} else if (st instanceof AssertStatement) {
-					currentLocation = buildAssert((BoogieIcfgLocation)currentLocation, (AssertStatement)st);
+					currentLocation = buildAssert((BoogieIcfgLocation) currentLocation, (AssertStatement) st);
 				} else if (isAssuAssiHavoc(st)) {
 					currentLocation = buildAssuAssiHavoc(currentLocation, st, Origin.IMPLEMENTATION);
 				} else if (st instanceof ReturnStatement) {
-					currentLocation = buildReturn((BoogieIcfgLocation)currentLocation, (ReturnStatement)st);
+					currentLocation = buildReturn((BoogieIcfgLocation) currentLocation, (ReturnStatement) st);
 				} else if (st instanceof BreakStatement) {
-					currentLocation = buildBreak((BoogieIcfgLocation)currentLocation, (BreakStatement) st);
+					currentLocation = buildBreak((BoogieIcfgLocation) currentLocation, (BreakStatement) st);
 				} else if (st instanceof Label) {
-					currentLocation = buildLabel((BoogieIcfgLocation)currentLocation, (Label)st);
+					currentLocation = buildLabel((BoogieIcfgLocation) currentLocation, (Label) st);
 				} else if (st instanceof GotoStatement) {
-					currentLocation = buildGoto((BoogieIcfgLocation)currentLocation, (GotoStatement)st);
+					currentLocation = buildGoto((BoogieIcfgLocation) currentLocation, (GotoStatement) st);
 				} else if (st instanceof ForkStatement) {
-					currentLocation = buildFork((BoogieIcfgLocation)currentLocation, (ForkStatement)st);
+					currentLocation = buildFork((BoogieIcfgLocation) currentLocation, (ForkStatement) st);
 				} else if (st instanceof JoinStatement) {
-					currentLocation = buildJoin((BoogieIcfgLocation)currentLocation, (JoinStatement)st);
+					currentLocation = buildJoin((BoogieIcfgLocation) currentLocation, (JoinStatement) st);
 				} else if (st instanceof AtomicStatement) {
-					currentLocation = buildAtomic((BoogieIcfgLocation)currentLocation, (AtomicStatement)st);
+					currentLocation = buildAtomic((BoogieIcfgLocation) currentLocation, (AtomicStatement) st);
 				} else if (st instanceof CallStatement) {
-					currentLocation = buildCall(currentLocation, (CallStatement)st);
+					currentLocation = buildCall(currentLocation, (CallStatement) st);
 				} else {
 					throw new UnsupportedOperationException("Statement " + st.getClass() + " not supported");
 				}
-				
 
 			}
 			// end StatementSequence if required
 			if (endStatementSequence && currentLocation instanceof StatementSequence) {
-				currentLocation = endStatementSequence((StatementSequence)currentLocation);
+				currentLocation = endStatementSequence((StatementSequence) currentLocation);
 			}
 			return currentLocation;
 		}
-		
 
-		
-		private BoogieIcfgLocation buildIf(BoogieIcfgLocation currentLocation, IfStatement st) {
+		private BoogieIcfgLocation buildIf(BoogieIcfgLocation currentLocation, final IfStatement st) {
 			mConditionalStarts.add(currentLocation);
-			IIcfgElement thenPart = buildCodeBlock(((IfStatement)st).getThenPart(), (BoogieIcfgLocation)currentLocation, false);
-			IIcfgElement elsePart = buildCodeBlock(((IfStatement)st).getElsePart(), mConditionalStarts.peek(), false);
+			final IIcfgElement thenPart = buildCodeBlock(st.getThenPart(), currentLocation, false);
+			final IIcfgElement elsePart = buildCodeBlock(st.getElsePart(), mConditionalStarts.peek(), false);
 			currentLocation = mConditionalStarts.pop();
 			AssumeStatement thenStatement;
 			AssumeStatement elseStatement;
-			
+
 			// use Assume true statements for WildcardExpression
 			if (st.getCondition() instanceof WildcardExpression) {
 				thenStatement = new AssumeStatement(st.getLocation(), new BooleanLiteral(st.getLocation(), true));
@@ -849,48 +855,50 @@ public class CfgBuilder {
 				new ConditionAnnotation(false).annotate(thenStatement);
 				new ConditionAnnotation(true).annotate(elseStatement);
 			}
-			
+
 			// backtranslation
 			mIcfgBacktranslator.putAux(thenStatement, new BoogieASTNode[] { st });
 			mIcfgBacktranslator.putAux(elseStatement, new BoogieASTNode[] { st });
-			
+
 			return buildAssumeSplit(st, thenStatement, thenPart, elseStatement, elsePart);
 		}
-		
-		private BoogieIcfgLocation buildWhile(BoogieIcfgLocation currentLocation, WhileStatement st) {
-			BoogieIcfgLocation start = new BoogieIcfgLocation(constructLocDebugIdentifier(st), mCurrentProcedureName, false, st);
+
+		private BoogieIcfgLocation buildWhile(final BoogieIcfgLocation currentLocation, final WhileStatement st) {
+			final BoogieIcfgLocation start = new BoogieIcfgLocation(constructLocDebugIdentifier(st),
+					mCurrentProcedureName, false, st);
 			BoogieIcfgLocation afterInvariants;
 			// detect and handle invariants
 			if (st.getInvariants().length == 0) {
 				afterInvariants = start;
 			} else {
-				Statement afterInvSt = new AssignmentStatement(st.getLoc(), null, null);
-				afterInvariants = new BoogieIcfgLocation(constructLocDebugIdentifier(afterInvSt), mCurrentProcedureName, false, afterInvSt);
+				final Statement afterInvSt = new AssignmentStatement(st.getLoc(), null, null);
+				afterInvariants = new BoogieIcfgLocation(constructLocDebugIdentifier(afterInvSt), mCurrentProcedureName,
+						false, afterInvSt);
 				mProcLocNodes.put(afterInvariants.getDebugIdentifier(), afterInvariants);
 				IIcfgElement currentElement = afterInvariants;
 				// build each invariant
-				for (Integer i = st.getInvariants().length-1; i>=0; i--) {
-					LoopInvariantSpecification spec = st.getInvariants()[i];
+				for (Integer i = st.getInvariants().length - 1; i >= 0; i--) {
+					final LoopInvariantSpecification spec = st.getInvariants()[i];
 					if (spec.isFree()) {
-						AssumeStatement newStatement = new AssumeStatement(spec.getLocation(), spec.getFormula());
+						final AssumeStatement newStatement = new AssumeStatement(spec.getLocation(), spec.getFormula());
 						ModelUtils.copyAnnotations(spec, newStatement);
 						currentElement = buildAssuAssiHavoc(currentElement, newStatement, Origin.IMPLEMENTATION);
 					} else {
 						if (currentElement instanceof StatementSequence) {
-							currentElement = endStatementSequence((StatementSequence)currentElement);
+							currentElement = endStatementSequence((StatementSequence) currentElement);
 						}
-						AssertStatement newStatement = new AssertStatement(spec.getLocation(), spec.getFormula());
+						final AssertStatement newStatement = new AssertStatement(spec.getLocation(), spec.getFormula());
 						ModelUtils.copyAnnotations(spec, newStatement);
-						currentElement = buildAssert((BoogieIcfgLocation)currentElement, newStatement);
+						currentElement = buildAssert((BoogieIcfgLocation) currentElement, newStatement);
 					}
 				}
 				if (currentElement instanceof StatementSequence) {
-					currentElement = endStatementSequence((StatementSequence)currentElement);
+					currentElement = endStatementSequence((StatementSequence) currentElement);
 				}
-				mergeLocNodes((BoogieIcfgLocation)currentElement, start, false);
-				
+				mergeLocNodes((BoogieIcfgLocation) currentElement, start, false);
+
 			}
-			
+
 			mProcLocNodes.put(start.getDebugIdentifier(), start);
 			mIcfg.getLoopLocations().add(start);
 			mWhileExits.add(currentLocation);
@@ -908,14 +916,15 @@ public class CfgBuilder {
 			}
 			mIcfgBacktranslator.putAux(condTrue, new BoogieASTNode[] { st });
 			mIcfgBacktranslator.putAux(condFalse, new BoogieASTNode[] { st });
-			buildAssumeSplit(st, condTrue, buildCodeBlock(((WhileStatement)st).getBody(), start, false), condFalse, currentLocation, afterInvariants);
+			buildAssumeSplit(st, condTrue, buildCodeBlock(st.getBody(), start, false), condFalse, currentLocation,
+					afterInvariants);
 			assert (mWhileExits.pop() == currentLocation);
 			if (mConditionalStarts.peek() != start) {
 				mergeLocNodes(start, mConditionalStarts.peek(), true);
 			}
 			return mConditionalStarts.pop();
 		}
-		
+
 		private Expression getLHSExpression(final LeftHandSide lhs) {
 			Expression expr;
 			if (lhs instanceof ArrayLHS) {
@@ -929,8 +938,8 @@ public class CfgBuilder {
 			}
 			return expr;
 		}
-		
-		private IIcfgElement buildAssuAssiHavoc(IIcfgElement currentLocation, Statement st, Origin origin) {
+
+		private IIcfgElement buildAssuAssiHavoc(IIcfgElement currentLocation, Statement st, final Origin origin) {
 			// convert ArrayLHS to ArrayStoreExpression
 			if (st instanceof AssignmentStatement) {
 				final AssignmentStatement assign = (AssignmentStatement) st;
@@ -952,69 +961,74 @@ public class CfgBuilder {
 					st = assign;
 				}
 			}
-			
+
 			switch (mCodeBlockSize) {
 			case OneNontrivialStatement:
 				if (currentLocation instanceof StatementSequence && !StatementSequence.isAssumeTrueStatement(st)
-						&& !((StatementSequence)currentLocation).isTrivial()) {
-					currentLocation = endStatementSequence((StatementSequence)currentLocation);
+						&& !((StatementSequence) currentLocation).isTrivial()) {
+					currentLocation = endStatementSequence((StatementSequence) currentLocation);
 				}
 			case LoopFreeBlock:
 			case SequenceOfStatements:
 				if (currentLocation instanceof StatementSequence) {
-					addStatementToStatementSequence(st, (StatementSequence)currentLocation);
+					addStatementToStatementSequence(st, (StatementSequence) currentLocation);
 					return currentLocation;
 				} else {
-					return startNewStatementSequenceAndAddStatement((BoogieIcfgLocation)currentLocation, st, origin);
+					return startNewStatementSequenceAndAddStatement((BoogieIcfgLocation) currentLocation, st, origin);
 				}
 			case SingleStatement:
 				if (currentLocation instanceof StatementSequence) {
-					if (((StatementSequence)currentLocation).getStatements().isEmpty()) {
-						addStatementToStatementSequence(st, (StatementSequence)currentLocation);
+					if (((StatementSequence) currentLocation).getStatements().isEmpty()) {
+						addStatementToStatementSequence(st, (StatementSequence) currentLocation);
 						return currentLocation;
 					}
-					currentLocation = endStatementSequence((StatementSequence)currentLocation);
+					currentLocation = endStatementSequence((StatementSequence) currentLocation);
 				}
-				StatementSequence sequence = startNewStatementSequenceAndAddStatement((BoogieIcfgLocation)currentLocation, st, origin);
+				final StatementSequence sequence = startNewStatementSequenceAndAddStatement(
+						(BoogieIcfgLocation) currentLocation, st, origin);
 				return endStatementSequence(sequence);
 			default:
 				throw new AssertionError("Unknown value: " + mCodeBlockSize);
 			}
 		}
-		
-		private BoogieIcfgLocation buildAssert(BoogieIcfgLocation currentLocation, AssertStatement st) {
-			BoogieIcfgLocation error = addErrorNode(mCurrentProcedureName, st, mProcLocNodes);
+
+		private BoogieIcfgLocation buildAssert(final BoogieIcfgLocation currentLocation, final AssertStatement st) {
+			final BoogieIcfgLocation error = addErrorNode(mCurrentProcedureName, st, mProcLocNodes);
 			mProcLocNodes.put(error.getDebugIdentifier(), error);
 			AssumeStatement assumeTrue;
 			if (mAddAssumeForEachAssert) {
 				assumeTrue = new AssumeStatement(st.getLocation(), st.getFormula());
 			} else {
-				assumeTrue = new AssumeStatement(st.getLocation(), new BooleanLiteral(st.getLocation(), BoogieType.TYPE_BOOL, true));
+				assumeTrue = new AssumeStatement(st.getLocation(),
+						new BooleanLiteral(st.getLocation(), BoogieType.TYPE_BOOL, true));
 			}
-			
+
 			new ConditionAnnotation(false).annotate(assumeTrue);
-			AssumeStatement assumeFalse = new AssumeStatement(st.getLocation(), getNegation(st.getFormula()));
+			final AssumeStatement assumeFalse = new AssumeStatement(st.getLocation(), getNegation(st.getFormula()));
 			new ConditionAnnotation(true).annotate(assumeFalse);
 			mIcfgBacktranslator.putAux(assumeTrue, new BoogieASTNode[] { st });
 			mIcfgBacktranslator.putAux(assumeFalse, new BoogieASTNode[] { st });
 			return buildAssumeSplit(st, assumeTrue, currentLocation, assumeFalse, error);
 		}
-		
-		
-		private BoogieIcfgLocation buildOneAssume(Statement st, AssumeStatement cond, IIcfgElement loc, BoogieIcfgLocation start) {
-			if (loc instanceof StatementSequence && (mCodeBlockSize == CodeBlockSize.SequenceOfStatements || mCodeBlockSize == CodeBlockSize.LoopFreeBlock
-					|| mCodeBlockSize == CodeBlockSize.OneNontrivialStatement && (((StatementSequence) loc).isTrivial() || StatementSequence.isAssumeTrueStatement(cond)))) {
-				((StatementSequence)loc).addStatement(cond, 0);
+
+		private BoogieIcfgLocation buildOneAssume(final Statement st, final AssumeStatement cond,
+				final IIcfgElement loc, final BoogieIcfgLocation start) {
+			if (loc instanceof StatementSequence && (mCodeBlockSize == CodeBlockSize.SequenceOfStatements
+					|| mCodeBlockSize == CodeBlockSize.LoopFreeBlock
+					|| mCodeBlockSize == CodeBlockSize.OneNontrivialStatement && (((StatementSequence) loc).isTrivial()
+							|| StatementSequence.isAssumeTrueStatement(cond)))) {
+				((StatementSequence) loc).addStatement(cond, 0);
 				ModelUtils.copyAnnotations(st, loc);
 				ModelUtils.copyAnnotations(cond, loc);
-				endStatementSequence((StatementSequence)loc, start);
+				endStatementSequence((StatementSequence) loc, start);
 
 			} else {
 				StatementSequence newEdge1;
 				if (loc instanceof StatementSequence) {
-					newEdge1 = mCbf.constructStatementSequence(start, endStatementSequence((StatementSequence)loc), cond);
+					newEdge1 = mCbf.constructStatementSequence(start, endStatementSequence((StatementSequence) loc),
+							cond);
 				} else {
-					newEdge1 = mCbf.constructStatementSequence(start, (BoogieIcfgLocation)loc, cond);
+					newEdge1 = mCbf.constructStatementSequence(start, (BoogieIcfgLocation) loc, cond);
 				}
 				mEdges.add(newEdge1);
 				ModelUtils.copyAnnotations(st, newEdge1);
@@ -1022,33 +1036,37 @@ public class CfgBuilder {
 			}
 			return start;
 		}
-		
-		private BoogieIcfgLocation buildAssumeSplit(Statement st, AssumeStatement cond1, IIcfgElement loc1, AssumeStatement cond2, IIcfgElement loc2) {
-			BoogieIcfgLocation start = new BoogieIcfgLocation(constructLocDebugIdentifier(st), mCurrentProcedureName, false, st);
+
+		private BoogieIcfgLocation buildAssumeSplit(final Statement st, final AssumeStatement cond1,
+				final IIcfgElement loc1, final AssumeStatement cond2, final IIcfgElement loc2) {
+			final BoogieIcfgLocation start = new BoogieIcfgLocation(constructLocDebugIdentifier(st),
+					mCurrentProcedureName, false, st);
 			mProcLocNodes.put(start.getDebugIdentifier(), start);
 			return buildAssumeSplit(st, cond1, loc1, cond2, loc2, start);
 
 		}
-		
-		private BoogieIcfgLocation buildAssumeSplit(Statement st, AssumeStatement cond1, IIcfgElement loc1, AssumeStatement cond2, IIcfgElement loc2, BoogieIcfgLocation start) {
+
+		private BoogieIcfgLocation buildAssumeSplit(final Statement st, final AssumeStatement cond1,
+				final IIcfgElement loc1, final AssumeStatement cond2, final IIcfgElement loc2,
+				final BoogieIcfgLocation start) {
 			buildOneAssume(st, cond1, loc1, start);
 			buildOneAssume(st, cond2, loc2, start);
 			return start;
 
 		}
-		
-		private BoogieIcfgLocation buildReturn(BoogieIcfgLocation currentLocation, ReturnStatement st) {
+
+		private BoogieIcfgLocation buildReturn(final BoogieIcfgLocation currentLocation, final ReturnStatement st) {
 			return mIcfg.mFinalNode.get(mCurrentProcedureName);
 		}
-		
-		private BoogieIcfgLocation buildBreak(BoogieIcfgLocation currentLocation, BreakStatement st) {
+
+		private BoogieIcfgLocation buildBreak(final BoogieIcfgLocation currentLocation, final BreakStatement st) {
 			ModelUtils.copyAnnotations(st, mWhileExits.peek());
 			new LoopExitAnnotation(LoopExitType.BREAK).annotate(mWhileExits.peek());
 			return mWhileExits.peek();
 		}
-		
-		private BoogieIcfgLocation buildLabel(BoogieIcfgLocation currentLocation, Label st) {
-			BoogieIcfgLocation newLocation = getLocNodeForLabel(new StringDebugIdentifier(st.getName()), st);
+
+		private BoogieIcfgLocation buildLabel(final BoogieIcfgLocation currentLocation, final Label st) {
+			final BoogieIcfgLocation newLocation = getLocNodeForLabel(new StringDebugIdentifier(st.getName()), st);
 			mergeLocNodes(currentLocation, newLocation, true);
 			if (currentLocation == mIcfg.mFinalNode.get(mCurrentProcedureName)) {
 				mIcfg.mFinalNode.put(mCurrentProcedureName, newLocation);
@@ -1059,57 +1077,62 @@ public class CfgBuilder {
 			}
 			return newLocation;
 		}
-		
-		private BoogieIcfgLocation buildGoto(BoogieIcfgLocation currentLocation, GotoStatement st) {
-			BoogieIcfgLocation newLocation = new BoogieIcfgLocation(constructLocDebugIdentifier(st), mCurrentProcedureName, false, st);
+
+		private BoogieIcfgLocation buildGoto(final BoogieIcfgLocation currentLocation, final GotoStatement st) {
+			final BoogieIcfgLocation newLocation = new BoogieIcfgLocation(constructLocDebugIdentifier(st),
+					mCurrentProcedureName, false, st);
 			mProcLocNodes.put(newLocation.getDebugIdentifier(), newLocation);
-			for (String label : st.getLabels()) {
-				GotoEdge gotoEdge = mCbf.constructGotoEdge(newLocation, getLocNodeForLabel(new StringDebugIdentifier(label), mLabelString2Statement.get(label)));
+			for (final String label : st.getLabels()) {
+				final GotoEdge gotoEdge = mCbf.constructGotoEdge(newLocation,
+						getLocNodeForLabel(new StringDebugIdentifier(label), mLabelString2Statement.get(label)));
 				ModelUtils.copyAnnotations(st, gotoEdge);
 				mGotoEdges.add(gotoEdge);
 				mEdges.add(gotoEdge);
 			}
 			return newLocation;
 		}
-		
-		private BoogieIcfgLocation buildFork(BoogieIcfgLocation currentLocation, ForkStatement st) {
-			BoogieIcfgLocation newLocation = new BoogieIcfgLocation(constructLocDebugIdentifier(st), mCurrentProcedureName, false, st);
+
+		private BoogieIcfgLocation buildFork(final BoogieIcfgLocation currentLocation, final ForkStatement st) {
+			final BoogieIcfgLocation newLocation = new BoogieIcfgLocation(constructLocDebugIdentifier(st),
+					mCurrentProcedureName, false, st);
 			mProcLocNodes.put(newLocation.getDebugIdentifier(), newLocation);
 			ForkThreadCurrent newEdge;
 			if (mBoogieDeclarations.getProcImplementation().containsKey(st.getProcedureName())) {
 				newEdge = mCbf.constructForkCurrentThread(newLocation, currentLocation, st, true);
-				ModelUtils.copyAnnotations(st,  newEdge);
+				ModelUtils.copyAnnotations(st, newEdge);
 				mForks.put(newEdge, null);
 			} else {
 				newEdge = mCbf.constructForkCurrentThread(newLocation, currentLocation, st, false);
-				ModelUtils.copyAnnotations(st,  newEdge);
+				ModelUtils.copyAnnotations(st, newEdge);
 			}
 			mEdges.add(newEdge);
 			return newLocation;
 		}
-		
-		private BoogieIcfgLocation buildJoin(BoogieIcfgLocation currentLocation, JoinStatement st) {
-			BoogieIcfgLocation newLocation = new BoogieIcfgLocation(constructLocDebugIdentifier(st), mCurrentProcedureName, false, st);
+
+		private BoogieIcfgLocation buildJoin(final BoogieIcfgLocation currentLocation, final JoinStatement st) {
+			final BoogieIcfgLocation newLocation = new BoogieIcfgLocation(constructLocDebugIdentifier(st),
+					mCurrentProcedureName, false, st);
 			mProcLocNodes.put(newLocation.getDebugIdentifier(), newLocation);
-			JoinThreadCurrent newEdge = mCbf.constructJoinCurrentThread(newLocation, currentLocation, st);
-			ModelUtils.copyAnnotations(st,  newEdge);
+			final JoinThreadCurrent newEdge = mCbf.constructJoinCurrentThread(newLocation, currentLocation, st);
+			ModelUtils.copyAnnotations(st, newEdge);
 			mJoins.add(newEdge);
 			mEdges.add(newEdge);
 			return newLocation;
 		}
-		
-		private StatementSequence beginAtomicBlockFromBottom(BoogieIcfgLocation currentLocation) {
-			StatementSequence newEdge = startNewStatementSequence((BoogieIcfgLocation)currentLocation, Origin.IMPLEMENTATION);
+
+		private IIcfgElement beginAtomicBlockFromBottom(final BoogieIcfgLocation currentLocation) {
+			final StatementSequence newEdge = startNewStatementSequence(currentLocation, Origin.IMPLEMENTATION);
 			AtomicBlockInfo.addEndAnnotation(newEdge);
 			return newEdge;
 		}
 
-		private BoogieIcfgLocation endAtomicBlockAtTop(IIcfgElement curElement, Statement st) {
+		private BoogieIcfgLocation endAtomicBlockAtTop(IIcfgElement curElement, final Statement st) {
 			if (!(curElement instanceof StatementSequence)) {
-				curElement = startNewStatementSequence((BoogieIcfgLocation)curElement, Origin.IMPLEMENTATION);
+				curElement = startNewStatementSequence((BoogieIcfgLocation) curElement, Origin.IMPLEMENTATION);
 			}
 			if (AtomicBlockInfo.isEndOfAtomicBlock(curElement)) {
-				// if current edge is both start and end of an atomic block, it is already atomic -- nothing else to do
+				// if current edge is both start and end of an atomic block, it is already
+				// atomic -- nothing else to do
 				AtomicBlockInfo.removeAnnotation(curElement);
 				AtomicBlockInfo.addCompleteAnnotation(curElement);
 			} else {
@@ -1118,40 +1141,41 @@ public class CfgBuilder {
 			}
 			return endStatementSequence((StatementSequence) curElement, st);
 		}
-		
-		private BoogieIcfgLocation buildAtomic(BoogieIcfgLocation currentLocation, AtomicStatement st) {
-			IIcfgElement curElement = beginAtomicBlockFromBottom(currentLocation);			
+
+		private BoogieIcfgLocation buildAtomic(final BoogieIcfgLocation currentLocation, final AtomicStatement st) {
+			IIcfgElement curElement = beginAtomicBlockFromBottom(currentLocation);
 			curElement = buildCodeBlock(st.getBody(), curElement, false);
 			return endAtomicBlockAtTop(curElement, st);
 		}
-		
-		private IIcfgElement buildCall(IIcfgElement currentLocation, CallStatement st) {
+
+		private IIcfgElement buildCall(final IIcfgElement currentLocation, final CallStatement st) {
 			final String callee = st.getMethodName();
 			if ("__VERIFIER_atomic_begin".equals(callee)) {
 				return endAtomicBlockAtTop(currentLocation, st);
 			}
 			if ("__VERIFIER_atomic_end".equals(callee)) {
 				if (currentLocation instanceof StatementSequence) {
-					return beginAtomicBlockFromBottom(endStatementSequence((StatementSequence)currentLocation));
+					return beginAtomicBlockFromBottom(endStatementSequence((StatementSequence) currentLocation));
 				}
-				return beginAtomicBlockFromBottom((BoogieIcfgLocation)currentLocation);
+				return beginAtomicBlockFromBottom((BoogieIcfgLocation) currentLocation);
 			}
-			
+
 			final List<RequiresSpecification> requiresNonFree = mBoogieDeclarations.getRequiresNonFree().get(callee);
 			final boolean procedureHasImplementation = mBoogieDeclarations.getProcImplementation().containsKey(callee);
 			final boolean nonFreeRequiresIsEmpty = requiresNonFree == null || requiresNonFree.isEmpty();
-			
+
 			if ((mCodeBlockSize == CodeBlockSize.SequenceOfStatements || mCodeBlockSize == CodeBlockSize.LoopFreeBlock)
 					&& !procedureHasImplementation && nonFreeRequiresIsEmpty) {
 				if (currentLocation instanceof BoogieIcfgLocation) {
-					return startNewStatementSequenceAndAddStatement((BoogieIcfgLocation)currentLocation, st, Origin.IMPLEMENTATION);
+					return startNewStatementSequenceAndAddStatement((BoogieIcfgLocation) currentLocation, st,
+							Origin.IMPLEMENTATION);
 				} else if (currentLocation instanceof StatementSequence) {
-					return addStatementToStatementSequence(st, (StatementSequence)currentLocation);
+					return addStatementToStatementSequence(st, (StatementSequence) currentLocation);
 				} else {
 					throw new AssertionError("mCurrent must be CodeBlock or BoogieIcfgLocation");
 				}
 			}
-			
+
 			BoogieIcfgLocation locNode;
 			if (currentLocation instanceof StatementSequence) {
 				locNode = endStatementSequence((StatementSequence) currentLocation, st);
@@ -1161,8 +1185,9 @@ public class CfgBuilder {
 				// currentLocation must be either LocNode or StatementSequence
 				throw new AssertionError();
 			}
-			
-			BoogieIcfgLocation newLocation = new BoogieIcfgLocation(constructLocDebugIdentifier(st), mCurrentProcedureName, false, st);
+
+			final BoogieIcfgLocation newLocation = new BoogieIcfgLocation(constructLocDebugIdentifier(st),
+					mCurrentProcedureName, false, st);
 			mProcLocNodes.put(newLocation.getDebugIdentifier(), newLocation);
 			ModelUtils.mergeAnnotations(st, newLocation);
 			Summary summaryEdge;
@@ -1183,16 +1208,16 @@ public class CfgBuilder {
 					} else {
 						proc = mBoogieDeclarations.getProcSpecification().get(callee);
 					}
-					final Expression violatedRequires =
-							getNegation(new WeakestPrecondition(spec.getFormula(), st, proc).getResult());
+					final Expression violatedRequires = getNegation(
+							new WeakestPrecondition(spec.getFormula(), st, proc).getResult());
 					AssumeStatement assumeSt;
 					assumeSt = new AssumeStatement(st.getLocation(), violatedRequires);
 					final Statement st1 = assumeSt;
 					ModelUtils.copyAnnotations(st, st1);
 					mIcfgBacktranslator.putAux(assumeSt, new BoogieASTNode[] { st, spec });
 					final BoogieIcfgLocation errorLocNode = addErrorNode(mCurrentProcedureName, spec, mProcLocNodes);
-					final StatementSequence errorCB =
-							mCbf.constructStatementSequence(newLocation, errorLocNode, assumeSt, Origin.REQUIRES);
+					final StatementSequence errorCB = mCbf.constructStatementSequence(newLocation, errorLocNode,
+							assumeSt, Origin.REQUIRES);
 					ModelUtils.copyAnnotations(spec, errorCB);
 					ModelUtils.copyAnnotations(spec, errorLocNode);
 					mEdges.add(errorCB);
@@ -1200,53 +1225,53 @@ public class CfgBuilder {
 			}
 			return newLocation;
 		}
-		
-		private BoogieIcfgLocation endStatementSequence(StatementSequence currentLoc, BoogieIcfgLocation loc) {
+
+		private BoogieIcfgLocation endStatementSequence(final StatementSequence currentLoc,
+				final BoogieIcfgLocation loc) {
 			((CodeBlock) currentLoc).connectSource(loc);
 			return loc;
 		}
-		
-		private BoogieIcfgLocation endStatementSequence(StatementSequence currentLoc, Statement st) {
+
+		private BoogieIcfgLocation endStatementSequence(final StatementSequence currentLoc, final Statement st) {
 			final DebugIdentifier locName = constructLocDebugIdentifier(st);
 			final BoogieIcfgLocation locNode = new BoogieIcfgLocation(locName, mCurrentProcedureName, false, st);
 			mProcLocNodes.put(locName, locNode);
 			return endStatementSequence(currentLoc, locNode);
 		}
-		
-		private BoogieIcfgLocation endStatementSequence(StatementSequence currentLoc) {
+
+		private BoogieIcfgLocation endStatementSequence(final StatementSequence currentLoc) {
 			return endStatementSequence(currentLoc, currentLoc.getStatements().get(0));
 		}
 
-		private StatementSequence startNewStatementSequenceAndAddStatement(BoogieIcfgLocation currentLocation, Statement st, final Origin origin) {
+		private StatementSequence startNewStatementSequenceAndAddStatement(final BoogieIcfgLocation currentLocation,
+				final Statement st, final Origin origin) {
 			assert isIntraproceduralBranchFreeStatement(st) : "cannot add statement to code block " + st;
-			final StatementSequence codeBlock =
-					mCbf.constructStatementSequence(null, currentLocation, st, origin);
+			final StatementSequence codeBlock = mCbf.constructStatementSequence(null, currentLocation, st, origin);
 			ModelUtils.copyAnnotations(st, codeBlock);
 			mEdges.add(codeBlock);
 			return codeBlock;
 		}
 
-		private StatementSequence startNewStatementSequence(BoogieIcfgLocation currentLocation, final Origin origin) {
-			final StatementSequence codeBlock =
-					mCbf.constructStatementSequence(null, currentLocation, List.of(), origin);
+		private StatementSequence startNewStatementSequence(final BoogieIcfgLocation currentLocation,
+				final Origin origin) {
+			final StatementSequence codeBlock = mCbf.constructStatementSequence(null, currentLocation, List.of(),
+					origin);
 			mEdges.add(codeBlock);
 			return codeBlock;
 		}
 
-		private StatementSequence addStatementToStatementSequence(final Statement st, StatementSequence currentLoc) {
+		private StatementSequence addStatementToStatementSequence(final Statement st,
+				final StatementSequence currentLoc) {
 			assert isIntraproceduralBranchFreeStatement(st) : "cannot add statement to code block " + st;
 			currentLoc.addStatement(st, 0);
 			ModelUtils.copyAnnotations(st, currentLoc);
 			return currentLoc;
 		}
-		
-		
-		
 
 		/**
-		 * Given constructed and reachable {@link BoogieIcfgLocation}s. Remove the ones that are not reachable (and the
-		 * adjacent edges) from the CFG. Only exception is the exit node of the procedure. (exit node is kept even if
-		 * unreachable).
+		 * Given constructed and reachable {@link BoogieIcfgLocation}s. Remove the ones
+		 * that are not reachable (and the adjacent edges) from the CFG. Only exception
+		 * is the exit node of the procedure. (exit node is kept even if unreachable).
 		 */
 		private void removeUnreachableProgramPoints(final Set<BoogieIcfgLocation> reachablePPs,
 				final Map<DebugIdentifier, BoogieIcfgLocation> constructedPPs, final BoogieIcfgLocation exitPP) {
@@ -1271,7 +1296,8 @@ public class CfgBuilder {
 		}
 
 		/**
-		 * Compute set of {@link BoogieIcfgLocation}s that a reachable from a given starting {@link BoogieIcfgLocation}
+		 * Compute set of {@link BoogieIcfgLocation}s that a reachable from a given
+		 * starting {@link BoogieIcfgLocation}
 		 */
 		private Set<BoogieIcfgLocation> computeReachableLocations(final BoogieIcfgLocation start) {
 			final Set<BoogieIcfgLocation> reachable;
@@ -1293,10 +1319,9 @@ public class CfgBuilder {
 			return reachable;
 		}
 
-
 		/**
-		 * @return List of {@code EnsuresSpecification}s that contains only one {@code EnsuresSpecification} which is
-		 *         true.
+		 * @return List of {@code EnsuresSpecification}s that contains only one
+		 *         {@code EnsuresSpecification} which is true.
 		 */
 		private List<EnsuresSpecification> getDummyEnsuresSpecifications(final ILocation loc) {
 			final Expression dummyExpr = new BooleanLiteral(loc, BoogieType.TYPE_BOOL, true);
@@ -1307,8 +1332,8 @@ public class CfgBuilder {
 		}
 
 		/**
-		 * @return List of {@code RequiresSpecification}s that contains only one {@code RequiresSpecification} which is
-		 *         true.
+		 * @return List of {@code RequiresSpecification}s that contains only one
+		 *         {@code RequiresSpecification} which is true.
 		 */
 		private List<RequiresSpecification> getDummyRequiresSpecifications() {
 			final Expression dummyExpr = new BooleanLiteral(null, BoogieType.TYPE_BOOL, true);
@@ -1319,10 +1344,11 @@ public class CfgBuilder {
 		}
 
 		/**
-		 * Remove GotoEdge from a CFG. If allowMultiplicationOfEdges is false, we try to remove the goto by only merging
-		 * locations. This is not always possible hence there is no guarantee that the goto is removed. If
-		 * allowMultiplicationOfEdges is true, we guarantee that the goto is removed but in some cases will not only
-		 * merge locations but also multiply existing edges.
+		 * Remove GotoEdge from a CFG. If allowMultiplicationOfEdges is false, we try to
+		 * remove the goto by only merging locations. This is not always possible hence
+		 * there is no guarantee that the goto is removed. If allowMultiplicationOfEdges
+		 * is true, we guarantee that the goto is removed but in some cases will not
+		 * only merge locations but also multiply existing edges.
 		 *
 		 * @return true iff we removed the gotoEdge.
 		 */
@@ -1415,8 +1441,9 @@ public class CfgBuilder {
 		/**
 		 * Assert the ensures clause. For each ensures clause expr
 		 * <ul>
-		 * <li>append {@code assume (expr)} between the finalNode and the exitNode of the procedure</li> add an edge
-		 * labeled with {@code assume (not expr)} from the final Node to the errorNode
+		 * <li>append {@code assume (expr)} between the finalNode and the exitNode of
+		 * the procedure</li> add an edge labeled with {@code assume (not expr)} from
+		 * the final Node to the errorNode
 		 */
 		private void assertAndAssumeEnsures() {
 			// Assume the ensures specification at the end of the procedure.
@@ -1435,22 +1462,21 @@ public class CfgBuilder {
 				final AssumeStatement st = new AssumeStatement(spec.getLocation(), spec.getFormula());
 				ModelUtils.copyAnnotations(spec, st);
 				mIcfgBacktranslator.putAux(st, new BoogieASTNode[] { spec });
-				mCurrent = buildAssuAssiHavoc((IIcfgElement)mCurrent, st, Origin.ENSURES);
+				mCurrent = buildAssuAssiHavoc((IIcfgElement) mCurrent, st, Origin.ENSURES);
 			}
 			final BoogieIcfgLocation finalNode = mIcfg.mFinalNode.get(mCurrentProcedureName);
 			mLastLabelName = finalNode.getDebugIdentifier();
 			mProcLocNodes.put(mLastLabelName, finalNode);
 			if (mCurrent instanceof BoogieIcfgLocation) {
-				mergeLocNodes((BoogieIcfgLocation)mCurrent, finalNode, false);
+				mergeLocNodes((BoogieIcfgLocation) mCurrent, finalNode, false);
 			} else {
 				((CodeBlock) mCurrent).connectSource(finalNode);
 			}
-			
 
 			// Violations against the ensures part of the procedure
 			// specification
-			final List<EnsuresSpecification> ensuresNonFree =
-					mBoogieDeclarations.getEnsuresNonFree().get(mCurrentProcedureName);
+			final List<EnsuresSpecification> ensuresNonFree = mBoogieDeclarations.getEnsuresNonFree()
+					.get(mCurrentProcedureName);
 			if (ensuresNonFree != null && !ensuresNonFree.isEmpty()) {
 				for (final EnsuresSpecification spec : ensuresNonFree) {
 					final Expression specExpr = spec.getFormula();
@@ -1460,8 +1486,8 @@ public class CfgBuilder {
 					ModelUtils.copyAnnotations(spec, st);
 					mIcfgBacktranslator.putAux(assumeSt, new BoogieASTNode[] { spec });
 					final BoogieIcfgLocation errorLocNode = addErrorNode(mCurrentProcedureName, spec, mProcLocNodes);
-					final CodeBlock assumeEdge =
-							mCbf.constructStatementSequence(finalNode, errorLocNode, assumeSt, Origin.ENSURES);
+					final CodeBlock assumeEdge = mCbf.constructStatementSequence(finalNode, errorLocNode, assumeSt,
+							Origin.ENSURES);
 					ModelUtils.copyAnnotations(spec, assumeEdge);
 					ModelUtils.copyAnnotations(spec, errorLocNode);
 					mEdges.add(assumeEdge);
@@ -1470,10 +1496,11 @@ public class CfgBuilder {
 		}
 
 		/**
-		 * Assume the requires clause. If the requires clause is empty and dummyRequiresIfEmpty is true add an dummy
-		 * requires specification.
+		 * Assume the requires clause. If the requires clause is empty and
+		 * dummyRequiresIfEmpty is true add an dummy requires specification.
 		 */
-		private BoogieIcfgLocation assumeRequires(BoogieIcfgLocation startNode, boolean dummyRequiresIfEmpty) {
+		private BoogieIcfgLocation assumeRequires(final BoogieIcfgLocation startNode,
+				final boolean dummyRequiresIfEmpty) {
 			// Assume everything mentioned in the requires specification
 			List<RequiresSpecification> requires = mBoogieDeclarations.getRequires().get(mCurrentProcedureName);
 			if ((requires == null || requires.isEmpty()) && dummyRequiresIfEmpty) {
@@ -1481,7 +1508,7 @@ public class CfgBuilder {
 			}
 			IIcfgElement currentElement = startNode;
 			if (requires != null && !requires.isEmpty()) {
-				for (int i = requires.size()-1; i >= 0; i--) {
+				for (int i = requires.size() - 1; i >= 0; i--) {
 					final RequiresSpecification spec = requires.get(i);
 					final AssumeStatement st = new AssumeStatement(spec.getLocation(), spec.getFormula());
 					ModelUtils.copyAnnotations(spec, st);
@@ -1490,10 +1517,10 @@ public class CfgBuilder {
 				}
 			}
 			if (currentElement instanceof StatementSequence) {
-				return endStatementSequence((StatementSequence)currentElement);
+				return endStatementSequence((StatementSequence) currentElement);
 			}
-			return (BoogieIcfgLocation)currentElement;
-			
+			return (BoogieIcfgLocation) currentElement;
+
 		}
 
 		private DebugIdentifier constructLocDebugIdentifier(final Statement stmt) {
@@ -1514,20 +1541,22 @@ public class CfgBuilder {
 		}
 
 		/**
-		 * Get the LocNode that represents a label. If there is already a LocNode that represents this Label return this
-		 * representative. Otherwise construct a new LocNode that becomes the representative for this label.
+		 * Get the LocNode that represents a label. If there is already a LocNode that
+		 * represents this Label return this representative. Otherwise construct a new
+		 * LocNode that becomes the representative for this label.
 		 *
-		 * @param labelId
-		 *            {@link DebugIdentifier} of the Label for which you want the corresponding LocNode.
-		 * @param st
-		 *            Statement whose (Ultimate) Location should be added to this LocNode. If this method is called
-		 *            while processing a GotoStatement the Statement can be set to null, since the Location will be
-		 *            overwritten, when this method is called with the correct Label as second parameter.
+		 * @param labelId {@link DebugIdentifier} of the Label for which you want the
+		 *                corresponding LocNode.
+		 * @param st      Statement whose (Ultimate) Location should be added to this
+		 *                LocNode. If this method is called while processing a
+		 *                GotoStatement the Statement can be set to null, since the
+		 *                Location will be overwritten, when this method is called with
+		 *                the correct Label as second parameter.
 		 * @return LocNode that is the representative for labelName.
 		 */
 		private BoogieIcfgLocation getLocNodeForLabel(final DebugIdentifier labelId, final Statement st) {
 			final ILocation loc = st.getLocation();
-			//final LoopEntryAnnotation lea = LoopEntryAnnotation.getAnnotation(st);
+			// final LoopEntryAnnotation lea = LoopEntryAnnotation.getAnnotation(st);
 			BoogieIcfgLocation locNode = mLabel2LocNodes.get(labelId);
 			if (locNode != null) {
 				// The locNode to which labelId points may have been replaced
@@ -1552,8 +1581,6 @@ public class CfgBuilder {
 			}
 			return locNode;
 		}
-
-
 
 		private boolean isIntraproceduralBranchFreeStatement(final Statement st) {
 			if (st instanceof AssumeStatement) {
@@ -1582,20 +1609,19 @@ public class CfgBuilder {
 			return false;
 		}
 
-
 		/**
-		 * Merge one LocNode into another. The oldLocNode will be merged into the newLocNode. The newLocNode gets
-		 * connected to all incoming/outgoing transitions of the oldLocNode. The oldLocNode looses connections to all
-		 * incoming/outgoing transitions. If the oldLocNode was representative for a Label the new location will from
-		 * now on be the representative of this Label.
+		 * Merge one LocNode into another. The oldLocNode will be merged into the
+		 * newLocNode. The newLocNode gets connected to all incoming/outgoing
+		 * transitions of the oldLocNode. The oldLocNode looses connections to all
+		 * incoming/outgoing transitions. If the oldLocNode was representative for a
+		 * Label the new location will from now on be the representative of this Label.
 		 *
-		 * @param oldLocNode
-		 *            LocNode that gets merged into the newLocNode. Must not represent an error location.
-		 * @param newLocNode
-		 *            LocNode that absorbes the oldLocNode.
-		 * @param copyAllAnnotations
-		 *            If `true` then we copy all annotations from the old node to the new node, if `false` we copy all
-		 *            annotations by the {@link ILocation}.
+		 * @param oldLocNode         LocNode that gets merged into the newLocNode. Must
+		 *                           not represent an error location.
+		 * @param newLocNode         LocNode that absorbes the oldLocNode.
+		 * @param copyAllAnnotations If `true` then we copy all annotations from the old
+		 *                           node to the new node, if `false` we copy all
+		 *                           annotations by the {@link ILocation}.
 		 */
 		private void mergeLocNodes(final BoogieIcfgLocation oldLocNode, final BoogieIcfgLocation newLocNode,
 				final boolean copyAllAnnotations) {
@@ -1674,19 +1700,24 @@ public class CfgBuilder {
 
 			// collect locations inside atomic blocks
 			mAtomicPoints = collectAtomicPoints();
-			assert getAllLocations().allMatch(pp -> !mAtomicPoints.contains(pp)
-					|| allPredecessorsAtomic(pp)) : "Atomic point with unexpected non-atomic predecessor!";
-			assert getAllLocations().allMatch(pp -> !mAtomicPoints.contains(pp)
-					|| allSuccessorsAtomic(pp)) : "Atomic point with unexpected non-atomic successor!";
+			assert getAllLocations().allMatch(pp -> !mAtomicPoints.contains(pp) || allPredecessorsAtomic(pp))
+					: "Atomic point with unexpected non-atomic predecessor!";
+			assert getAllLocations().allMatch(pp -> !mAtomicPoints.contains(pp) || allSuccessorsAtomic(pp))
+					: "Atomic point with unexpected non-atomic successor!";
 
-			// initialize queues of locations that are candidates for different kind of compositions
+			// initialize queues of locations that are candidates for different kind of
+			// compositions
 			getAllLocations().forEach(pp -> considerCompositionCandidate(pp, true));
 
-			// We distinguish 3 types of compositions: straight-line sequential compositions, parallel compositions, and
+			// We distinguish 3 types of compositions: straight-line sequential
+			// compositions, parallel compositions, and
 			// complex sequential compositions.
-			// We employ complex compositions extremely sparingly, as they can lead to the creation of an exponential
-			// number of edges for code with a lot of branching. Often, all these edges are later reduced through
-			// parallel composition to very few edges (but a timeout occurs before this happens).
+			// We employ complex compositions extremely sparingly, as they can lead to the
+			// creation of an exponential
+			// number of edges for code with a lot of branching. Often, all these edges are
+			// later reduced through
+			// parallel composition to very few edges (but a timeout occurs before this
+			// happens).
 			while (!mSequentialQueue.isEmpty() || !mParallelQueue.isEmpty() || !mComplexSequentialQueue.isEmpty()) {
 				while (mSequentialQueue.isEmpty() && mParallelQueue.isEmpty() && !mComplexSequentialQueue.isEmpty()) {
 					final BoogieIcfgLocation superfluousPP = mComplexSequentialQueue.pollFirst();
@@ -1695,8 +1726,8 @@ public class CfgBuilder {
 				}
 
 				while (mSequentialQueue.isEmpty() && !mParallelQueue.isEmpty()) {
-					final Entry<BoogieIcfgLocation, List<CodeBlock>> superfluous =
-							mParallelQueue.entrySet().iterator().next();
+					final Entry<BoogieIcfgLocation, List<CodeBlock>> superfluous = mParallelQueue.entrySet().iterator()
+							.next();
 					final BoogieIcfgLocation pp = superfluous.getKey();
 					final List<CodeBlock> outgoing = superfluous.getValue();
 					mParallelQueue.remove(pp);
@@ -1757,8 +1788,9 @@ public class CfgBuilder {
 		}
 
 		/**
-		 * Determines if the given node is a composition candidate. If so, it is placed in the appropriate queue,
-		 * depending on what kind of composition is to be performed.
+		 * Determines if the given node is a composition candidate. If so, it is placed
+		 * in the appropriate queue, depending on what kind of composition is to be
+		 * performed.
 		 */
 		private void considerCompositionCandidate(final BoogieIcfgLocation pp, final boolean allowComplex) {
 			final SequentialCompositionType seq = classifySequentialCompositionNode(pp);
@@ -1772,16 +1804,20 @@ public class CfgBuilder {
 			if (list != null) {
 				mParallelQueue.put(pp, list);
 			} else if (seq == SequentialCompositionType.COMPLEX && allowComplex) {
-				// An upside-down Y-to-V composition is called "unavoidable" if it has multiple distinct successor
+				// An upside-down Y-to-V composition is called "unavoidable" if it has multiple
+				// distinct successor
 				// nodes, and at least one of them is terminal.
-				// The primary case where this happens are assert statements, as the error location is terminal.
-				// In such cases, other compositions cannot avoid the need for a complex sequential composition
+				// The primary case where this happens are assert statements, as the error
+				// location is terminal.
+				// In such cases, other compositions cannot avoid the need for a complex
+				// sequential composition
 				// (e.g. parallel composition of the outgoing edges is impossible).
 				final boolean isUnavoidable = pp.getIncomingEdges().size() == 1
 						&& pp.getOutgoingNodes().stream().anyMatch(s -> s.getOutgoingEdges().isEmpty())
 						&& pp.getOutgoingNodes().stream().distinct().count() > 1;
 
-				// We prioritize unavoidable upside-down Y-to-V compositions since they must occur at some point anyway,
+				// We prioritize unavoidable upside-down Y-to-V compositions since they must
+				// occur at some point anyway,
 				// and they might in turn enable other, more preferable compositions.
 				if (isUnavoidable) {
 					mComplexSequentialQueue.offerFirst(pp);
@@ -1792,8 +1828,9 @@ public class CfgBuilder {
 		}
 
 		/**
-		 * Performs a (straight-line or Y-to-V) sequential composition. Afterwards, the new predecessors and successors
-		 * are again considered for further compositions.
+		 * Performs a (straight-line or Y-to-V) sequential composition. Afterwards, the
+		 * new predecessors and successors are again considered for further
+		 * compositions.
 		 */
 		private void composeSequential(final BoogieIcfgLocation pp) {
 			assert !pp.getIncomingEdges().isEmpty();
@@ -1820,7 +1857,8 @@ public class CfgBuilder {
 
 					if (AtomicBlockInfo.isStartOfAtomicBlock(incoming)
 							&& AtomicBlockInfo.isEndOfAtomicBlock(outgoing)) {
-						// When completing an edge from beginning to end of an atomic block, remove the annotations
+						// When completing an edge from beginning to end of an atomic block, remove the
+						// annotations
 						ModelUtils.copyAnnotationsFiltered(incoming, comp, ann -> !(ann instanceof AtomicBlockInfo));
 						ModelUtils.copyAnnotationsFiltered(outgoing, comp, ann -> !(ann instanceof AtomicBlockInfo));
 						AtomicBlockInfo.addCompleteAnnotation(comp);
@@ -1859,8 +1897,8 @@ public class CfgBuilder {
 		}
 
 		/**
-		 * Performs a parallel composition. Afterwards, the predecessor and successor are again considered for further
-		 * compositions.
+		 * Performs a parallel composition. Afterwards, the predecessor and successor
+		 * are again considered for further compositions.
 		 */
 		private void composeParallel(final BoogieIcfgLocation pp, final List<CodeBlock> outgoing) {
 			final BoogieIcfgLocation successor = (BoogieIcfgLocation) outgoing.get(0).getTarget();
@@ -1871,7 +1909,8 @@ public class CfgBuilder {
 		}
 
 		/**
-		 * Determines what kind of sequential composition (if any) should be performed at this node.
+		 * Determines what kind of sequential composition (if any) should be performed
+		 * at this node.
 		 */
 		private SequentialCompositionType classifySequentialCompositionNode(final BoogieIcfgLocation pp) {
 			if (pp.getIncomingEdges().isEmpty() || pp.getOutgoingEdges().isEmpty() || mEntryNodes.contains(pp)) {
@@ -1911,8 +1950,10 @@ public class CfgBuilder {
 					return SequentialCompositionType.STRAIGHTLINE;
 				}
 				if (isInAtomicBlock || isBetweenSequencePoints) {
-					// Y-V currently unsupported outside atomic blocks (implementation cannot handle loops properly)
-					// TODO (Dominik 2020-09-16) Check if above comment still holds after Y-to-V fix, may work now (as
+					// Y-V currently unsupported outside atomic blocks (implementation cannot handle
+					// loops properly)
+					// TODO (Dominik 2020-09-16) Check if above comment still holds after Y-to-V
+					// fix, may work now (as
 					// loop entry is reverse Y-to-V).
 					return SequentialCompositionType.COMPLEX;
 				}
@@ -1968,17 +2009,19 @@ public class CfgBuilder {
 				return false;
 			}
 			assert edge instanceof StatementSequence || edge instanceof SequentialComposition
-					|| edge instanceof ParallelComposition || edge instanceof Summary
-					|| edge instanceof GotoEdge : "unexpected type of edge: " + edge.getClass().getSimpleName();
+					|| edge instanceof ParallelComposition || edge instanceof Summary || edge instanceof GotoEdge
+					: "unexpected type of edge: " + edge.getClass().getSimpleName();
 			return true;
 		}
 
 		/**
-		 * Check if ProgramPoint pp has several outgoing edges whose target is the same ProgramPoint.
+		 * Check if ProgramPoint pp has several outgoing edges whose target is the same
+		 * ProgramPoint.
 		 *
-		 * @return For some successor ProgramPoint the list of all outgoing edges whose target is this (successor)
-		 *         ProgramPoint, if there can be such a list with more than one element. Otherwise (each outgoing edge
-		 *         leads to a different ProgramPoint) return null.
+		 * @return For some successor ProgramPoint the list of all outgoing edges whose
+		 *         target is this (successor) ProgramPoint, if there can be such a list
+		 *         with more than one element. Otherwise (each outgoing edge leads to a
+		 *         different ProgramPoint) return null.
 		 */
 		private List<CodeBlock> computeOutgoingCandidatesForParallelComposition(final BoogieIcfgLocation pp) {
 			if (!canBePredecessorOfParallelComposition(pp)) {
@@ -2012,8 +2055,10 @@ public class CfgBuilder {
 				// TODO #FaultLocalization
 				throw new UnsupportedOperationException();
 			case ONLY_ATOMIC_BLOCK:
-				// In order to only perform compositions within atomic blocks, we have this condition.
-				// It would also be sound to return true, as more parallel compositions are not a threat to soundness.
+				// In order to only perform compositions within atomic blocks, we have this
+				// condition.
+				// It would also be sound to return true, as more parallel compositions are not
+				// a threat to soundness.
 				return mAtomicPoints.contains(pp);
 			default:
 				throw new AssertionError("unknown value " + mInternalLbeMode);
@@ -2030,12 +2075,16 @@ public class CfgBuilder {
 				// TODO #FaultLocalization
 				throw new UnsupportedOperationException();
 			case ONLY_ATOMIC_BLOCK:
-				// In order to only perform compositions within atomic blocks, we have this condition.
-				// It would also be sound to return true, as more parallel compositions are not a threat to soundness.
+				// In order to only perform compositions within atomic blocks, we have this
+				// condition.
+				// It would also be sound to return true, as more parallel compositions are not
+				// a threat to soundness.
 				//
 				// In order to catch all possible compositions within atomic blocks,
-				// we would also have to allow error locations and possibly (see atomicModeCorrect) return / exit nodes.
-				// However, this is not strictly necessary, as less parallel compositions are not a threat to soundness.
+				// we would also have to allow error locations and possibly (see
+				// atomicModeCorrect) return / exit nodes.
+				// However, this is not strictly necessary, as less parallel compositions are
+				// not a threat to soundness.
 				return mAtomicPoints.contains(pp);
 			default:
 				throw new AssertionError("unknown value " + mInternalLbeMode);
