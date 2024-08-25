@@ -847,7 +847,8 @@ public class CfgBuilder {
 
 			// use Assume true statements for WildcardExpression
 			if (st.getCondition() instanceof WildcardExpression) {
-				thenStatement = new AssumeStatement(st.getLocation(), new BooleanLiteral(st.getLocation(), true));
+				thenStatement = new AssumeStatement(st.getLocation(),
+						ExpressionFactory.createBooleanLiteral(st.getLocation(), true));
 				elseStatement = thenStatement;
 			} else {
 				thenStatement = new AssumeStatement(st.getLocation(), st.getCondition());
@@ -906,7 +907,8 @@ public class CfgBuilder {
 			AssumeStatement condTrue;
 			AssumeStatement condFalse;
 			if (st.getCondition() instanceof WildcardExpression) {
-				condTrue = new AssumeStatement(st.getLocation(), new BooleanLiteral(st.getLocation(), true));
+				condTrue = new AssumeStatement(st.getLocation(),
+						ExpressionFactory.createBooleanLiteral(st.getLocation(), true));
 				condFalse = condTrue;
 			} else {
 				condTrue = new AssumeStatement(st.getLocation(), st.getCondition());
@@ -1000,7 +1002,7 @@ public class CfgBuilder {
 				assumeTrue = new AssumeStatement(st.getLocation(), st.getFormula());
 			} else {
 				assumeTrue = new AssumeStatement(st.getLocation(),
-						new BooleanLiteral(st.getLocation(), BoogieType.TYPE_BOOL, true));
+						ExpressionFactory.createBooleanLiteral(st.getLocation(), true));
 			}
 
 			new ConditionAnnotation(false).annotate(assumeTrue);
@@ -1150,9 +1152,9 @@ public class CfgBuilder {
 			if ("__VERIFIER_atomic_end".equals(callee)) {
 				final BoogieIcfgLocation locAfterAtomicBlock;
 				if (currentLocation instanceof StatementSequence) {
-					locAfterAtomicBlock = endStatementSequence((StatementSequence)currentLocation);
+					locAfterAtomicBlock = endStatementSequence((StatementSequence) currentLocation);
 				} else if (currentLocation instanceof BoogieIcfgLocation) {
-					locAfterAtomicBlock = (BoogieIcfgLocation)currentLocation;
+					locAfterAtomicBlock = (BoogieIcfgLocation) currentLocation;
 				} else {
 					throw new AssertionError("Expected StatementSequence or BoogieIcfgLocation");
 				}
@@ -1324,7 +1326,7 @@ public class CfgBuilder {
 		 *         {@code EnsuresSpecification} which is true.
 		 */
 		private List<EnsuresSpecification> getDummyEnsuresSpecifications(final ILocation loc) {
-			final Expression dummyExpr = new BooleanLiteral(loc, BoogieType.TYPE_BOOL, true);
+			final Expression dummyExpr = ExpressionFactory.createBooleanLiteral(loc, true);
 			final EnsuresSpecification dummySpec = new EnsuresSpecification(loc, false, dummyExpr);
 			final ArrayList<EnsuresSpecification> dummySpecs = new ArrayList<>(1);
 			dummySpecs.add(dummySpec);
