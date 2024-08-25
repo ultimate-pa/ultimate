@@ -1154,10 +1154,15 @@ public class CfgBuilder {
 				return endAtomicBlockAtTop(currentLocation, st);
 			}
 			if ("__VERIFIER_atomic_end".equals(callee)) {
+				final BoogieIcfgLocation locAfterAtomicBlock;
 				if (currentLocation instanceof StatementSequence) {
-					return beginAtomicBlockFromBottom(endStatementSequence((StatementSequence) currentLocation));
+					locAfterAtomicBlock = endStatementSequence((StatementSequence)currentLocation);
+				} else if (currentLocation instanceof BoogieIcfgLocation) {
+					locAfterAtomicBlock = (BoogieIcfgLocation)currentLocation;
+				} else {
+					throw new AssertionError("Expected StatementSequence or BoogieIcfgLocation");
 				}
-				return beginAtomicBlockFromBottom((BoogieIcfgLocation) currentLocation);
+				return beginAtomicBlockFromBottom(locAfterAtomicBlock);
 			}
 
 			final List<RequiresSpecification> requiresNonFree = mBoogieDeclarations.getRequiresNonFree().get(callee);
