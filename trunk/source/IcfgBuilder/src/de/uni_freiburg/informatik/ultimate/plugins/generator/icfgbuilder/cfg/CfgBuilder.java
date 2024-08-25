@@ -1120,11 +1120,6 @@ public class CfgBuilder {
 			return newLocation;
 		}
 
-		private IIcfgElement beginAtomicBlockFromBottom(final BoogieIcfgLocation currentLocation) {
-			AtomicBlockInfo.addEndAnnotation(currentLocation);
-			return currentLocation;
-		}
-
 		private BoogieIcfgLocation endAtomicBlockAtTop(IIcfgElement curElement, final Statement st) {
 			if (!(curElement instanceof StatementSequence)) {
 				curElement = startNewStatementSequence((BoogieIcfgLocation) curElement, Origin.IMPLEMENTATION);
@@ -1142,8 +1137,8 @@ public class CfgBuilder {
 		}
 
 		private BoogieIcfgLocation buildAtomic(final BoogieIcfgLocation currentLocation, final AtomicStatement st) {
-			IIcfgElement curElement = beginAtomicBlockFromBottom(currentLocation);
-			curElement = buildCodeBlock(st.getBody(), curElement, false);
+			AtomicBlockInfo.addEndAnnotation(currentLocation);
+			final IIcfgElement curElement = buildCodeBlock(st.getBody(), currentLocation, false);
 			return endAtomicBlockAtTop(curElement, st);
 		}
 
@@ -1161,7 +1156,8 @@ public class CfgBuilder {
 				} else {
 					throw new AssertionError("Expected StatementSequence or BoogieIcfgLocation");
 				}
-				return beginAtomicBlockFromBottom(locAfterAtomicBlock);
+				AtomicBlockInfo.addEndAnnotation(locAfterAtomicBlock);
+				return locAfterAtomicBlock;
 			}
 
 			final List<RequiresSpecification> requiresNonFree = mBoogieDeclarations.getRequiresNonFree().get(callee);
