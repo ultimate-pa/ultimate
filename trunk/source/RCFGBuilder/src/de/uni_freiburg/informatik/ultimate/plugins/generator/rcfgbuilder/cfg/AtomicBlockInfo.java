@@ -41,7 +41,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
  *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  */
-final class AtomicBlockInfo extends ModernAnnotations {
+// TODO Matthias 2024-08-25: Class may become again package private after RCFGBuilder was deleted
+final public class AtomicBlockInfo extends ModernAnnotations {
 
 	private static final long serialVersionUID = -8370873908642083605L;
 
