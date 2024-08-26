@@ -145,7 +145,7 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 		mOwickiGriesAnnotation = getOwickiGriesAnnotation();
 		mLogger.info("Computed Owicki-Gries annotation:\n%s", mOwickiGriesAnnotation);
 		mLogger.info("Owicki-Gries size: %s", mOwickiGriesAnnotation.size());
-		// assert checkOwickiGriesValidity() : "Owicki Gries annotation is invalid";
+		assert checkOwickiGriesValidity() : "Owicki Gries annotation is invalid";
 	}
 
 	public static final boolean isCutoff(final Condition<?, ?> cond) {
