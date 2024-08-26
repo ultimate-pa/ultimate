@@ -26,11 +26,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.prefere
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.HashDeque;
 
-class LargeBlockEncoding {
+public class LargeBlockEncoding {
 	/**
 	 * Defines which statements will be composed.
 	 */
-	enum InternalLbeMode {
+	public enum InternalLbeMode {
 		ONLY_ATOMIC_BLOCK, ATOMIC_BLOCK_AND_INBETWEEN_SEQUENCE_POINTS, ALL_EXCEPT_ATOMIC_BOUNDARIES, ALL
 	}
 
