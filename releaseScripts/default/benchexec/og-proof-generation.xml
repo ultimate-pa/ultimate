@@ -9,24 +9,24 @@
     <option name="command">${benchmark_path}/../run-test.sh Library-TraceCheckerUtilsTest de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.PetriOwickiGriesTestSuite ${inputfile_name} true</option>
   </rundefinition>
 
-  <rundefinition name="NaiveOwickiGriesTestSuite-WithAssert">
+  <!--rundefinition name="NaiveOwickiGriesTestSuite-WithAssert">
     <option name="command">${benchmark_path}/../run-test.sh Library-TraceCheckerUtilsTest de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.NaiveOwickiGriesTestSuite ${inputfile_name} true</option>
-  </rundefinition>
+  </rundefinition-->
 
   <rundefinition name="PetriOwickiGriesTestSuite-NoAssert">
     <option name="command">${benchmark_path}/../run-test.sh Library-TraceCheckerUtilsTest de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.PetriOwickiGriesTestSuite ${inputfile_name} false</option>
   </rundefinition>
 
-  <rundefinition name="NaiveOwickiGriesTestSuite-NoAssert">
+  <!--rundefinition name="NaiveOwickiGriesTestSuite-NoAssert">
     <option name="command">${benchmark_path}/../run-test.sh Library-TraceCheckerUtilsTest de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.NaiveOwickiGriesTestSuite ${inputfile_name} false</option>
-  </rundefinition>
-
-  <tasks name="regression-MemSafety">
-    <include>../../../trunk/examples/concurrent/OwickiGries/PetriPrograms/MemSafety.*.ats</include>
-  </tasks>
+  </rundefinition-->
 
   <tasks name="regression-ConcurrencySafety">
     <include>../../../trunk/examples/concurrent/OwickiGries/PetriPrograms/ConcurrencySafety.*.ats</include>
+  </tasks>
+
+  <tasks name="regression-MemSafety">
+    <include>../../../trunk/examples/concurrent/OwickiGries/PetriPrograms/MemSafety.*.ats</include>
   </tasks>
 
 </benchmark>
