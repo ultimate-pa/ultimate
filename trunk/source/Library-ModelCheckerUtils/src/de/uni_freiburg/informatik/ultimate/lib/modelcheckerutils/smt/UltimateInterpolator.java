@@ -31,9 +31,11 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.IntStream;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -69,9 +71,9 @@ public class UltimateInterpolator extends WrapperScript {
 	private final ManagedScript mSupMgdScript;
 	private final HashMap<String, Term> mTermMap;
 	private final boolean mCheckInterpolants;
-	private final boolean mUniversalFlag;
 	private final TermTransferrer mTransferrer;
 	private final TermTransferrer mReTransferrer;
+	private final int mMethod;
 
 	public UltimateInterpolator(final IUltimateServiceProvider services, final ILogger logger,
 			final Script script, final Script supportScript) {
@@ -82,10 +84,10 @@ public class UltimateInterpolator extends WrapperScript {
 		mMgdScript = new ManagedScript(services, mScript);
 		mSupMgdScript = new ManagedScript(services, mSupportingScript);
 		mTermMap = new HashMap<String, Term>();
-		mCheckInterpolants = false;
-		mUniversalFlag = false;
+		mCheckInterpolants = true;
 		mTransferrer = new TermTransferrer(mScript, mSupportingScript);
 		mReTransferrer = new TermTransferrer(mSupportingScript, mScript);
+		mMethod = 3;
 	}
 
 	/**
@@ -111,7 +113,7 @@ public class UltimateInterpolator extends WrapperScript {
 		super.setLogic(logic);
 		mSupportingScript.setLogic(logic);
 	}
-	
+
 	/**
 	 * This method maps term Annotations value (name of term) to term Annotations
 	 * subterm (content of term) if the annotation is of sorts :named. Also keeps
@@ -133,6 +135,30 @@ public class UltimateInterpolator extends WrapperScript {
 		}
 		return super.assertTerm(term);
 	}
+	
+	/* Used for inductive sequences of interpolants */
+	@Override
+	public Term[] getInterpolants(final Term[] partition) throws SMTLIBException, UnsupportedOperationException {
+		final Term[] uc = mScript.getUnsatCore();
+		final Term[] interpolants;
+		switch (mMethod) {
+			case 1:
+				interpolants = existentialSequence(partition, uc);
+				break;
+			case 2:
+				interpolants = forallSequence(partition, uc);
+				break;
+			case 3:
+				interpolants = combinedMethod(partition, uc);
+				break;
+			default:
+				interpolants = existentialSequence(partition, uc);
+		}
+		if (mCheckInterpolants) {
+			assert checkInterpolants(interpolants, partition, uc);
+		}
+		return interpolants;
+	}
 
 	@Override
 	public Term[] getInterpolants(Term[] partition, final int[] startOfSubtree) {
@@ -144,21 +170,98 @@ public class UltimateInterpolator extends WrapperScript {
 				}
 			}
 		}
-		final Term[] uc = mScript.getUnsatCore();
+		// TODO: Tree Interpolation
+		return getInterpolants(partition);
+	}
+	
+	private boolean containsOnlyZeros(int[] arr) {
+	    for (int i = 0; i < arr.length; i++) {
+	        if (arr[i] != 0) {
+	            return false;
+	        }
+	    }
+	    return true;
+	}
+	
+	/** Combines sequence of interpolants using existential quantifier and sequence using universal quantifier
+	 *  in order to minimize amount of quantifiers in resulting sequence of interpolants. **/
+	private Term[] combinedMethod(Term[] partition, Term[] uc) {
 		final Term[] exInterpolants = existentialSequence(partition, uc);
 		final Term[] allInterpolants = forallSequence(partition, uc);
-		final Term[] interpolants = mUniversalFlag ? allInterpolants : exInterpolants;
-		if (mCheckInterpolants) {
-			assert checkInterpolants(interpolants, partition, uc);
+		final Term[] interpolants = new Term[partition.length - 1];
+		final int[] exValues = new int[exInterpolants.length];
+		final int[] allValues = new int[allInterpolants.length];
+		for (int i = 0; i < exValues.length; i++) {
+			/** evaluate interpolant by counting nested quantifiers **/
+			exValues[i] = recFunc(exInterpolants[i], 0, new LinkedList<Integer>());
+			allValues[i] = recFunc(allInterpolants[i], 0, new LinkedList<Integer>());
+		}
+		final int breakNumber = smallestNumber(exValues, allValues);
+		for (int i = 0; i < allInterpolants.length; i++) {
+			interpolants[i] = i < breakNumber ? exInterpolants[i] : allInterpolants[i];
 		}
 		return interpolants;
 	}
 	
+	/* testing new recursive heuristic method to evaluate interpolant */
+	private static int recFunc(Term interpolant, int h, LinkedList<Integer> quantifiers) {
+		if (interpolant instanceof ApplicationTerm) {
+			Term[] param = ((ApplicationTerm) interpolant).getParameters();
+			if (param.length == 0) {
+				return h;
+			}
+			for (Term t: param) {
+				h = recFunc(t, h, quantifiers);
+			}
+		} else if (interpolant instanceof QuantifiedFormula) {
+			Term subForm = ((QuantifiedFormula) interpolant).getSubformula();
+			int quantifier = ((QuantifiedFormula) interpolant).getQuantifier();
+			if (quantifiers.isEmpty()) {
+				h = h + 2;
+			} else {
+				int last = quantifiers.getLast();
+				if (quantifier == last) {
+					h = h + 2;
+				} else {
+					h = h * 2;
+				}
+			}
+			quantifiers.add(quantifier);
+			h = recFunc(subForm, h, quantifiers);
+		}
+		return h;
+	}
+	
+	/**
+	 * @param exNumbers are the mapped heuristic values for existential interpolants
+	 * @param allNumbers are the mapped heuristic values for universal interpolants
+	 * @return integer i that is index where sum of heuristic values from existential interpolants up to
+	 * (but not including) i and the sum of heuristic values starting from (including) i to the end.
+	 */
+	private static int smallestNumber(int[] exNumbers, int[] allNumbers) {
+		int index = -1;
+		if (exNumbers.length <= 0 || exNumbers.length != allNumbers.length) {
+			return index;
+		}
+		int min = IntStream.of(exNumbers).sum() + 1;
+		for (int i = 0; i < exNumbers.length + 1; i++) {
+			int value = 0;
+			for (int j = 0; j < exNumbers.length; j++) {
+				value = j < i ? (value + exNumbers[j]) : (value + allNumbers[j]);
+			}
+			if (value <= min) {
+				min = value;
+				index = i;
+			}
+		}
+		return index;
+	}
+
 	/** Calls method to generate interpolants using existential quantifier **/
 	private Term[] existentialSequence(Term[] partition, Term[] uc) {
 		return genericInterpolants(partition, uc, false);
 	}
-	
+
 	/** Calls method to generate interpolants using universal quantifier **/
 	private Term[] forallSequence(Term[] partition, Term[] uc) {
 		final List<Term> list = Arrays.asList(partition);
@@ -415,6 +518,16 @@ public class UltimateInterpolator extends WrapperScript {
 						&& !("true".equals(t.toString()) || "false".equals(t.toString()))) {
 					return true;
 				}
+			}
+			return false;
+		}
+	}
+	
+	public static class CheckForQuantifier implements Predicate<Term> {
+		@Override
+		public boolean test(Term t) {
+			if (t instanceof QuantifiedFormula) {
+				return true;
 			}
 			return false;
 		}
