@@ -152,6 +152,7 @@ public class EmpireComputation<L, P> {
 					if (importantBridge) {
 						result.add(pair);
 						bridgeTerritories.removeDomainElement(pair);
+						bridgeTerritories.addPair(successor, pair);
 						final var newSuccessor = handleBridge(successor, transition);
 						queue.offer(newSuccessor);
 						continue;
@@ -163,7 +164,7 @@ public class EmpireComputation<L, P> {
 					// TODO instead of discarding successors for other transitions, should we reuse them?
 					// TODO e.g. if size changes, the successor of successor will be the same, no need to discard
 					// TODO and maybe in other cases, we can still augment them?
-					successors.clear();
+					// successors.clear();
 
 					// TODO remember that this transition was already considered; do not consider again for successor
 					queue.offer(successor);
