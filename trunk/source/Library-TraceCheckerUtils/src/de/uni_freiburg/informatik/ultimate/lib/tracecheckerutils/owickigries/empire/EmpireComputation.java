@@ -81,7 +81,7 @@ public class EmpireComputation<L, P> {
 			final MonolithicHoareTripleChecker hoareTripleChecker,
 			final MonolithicImplicationChecker implicationChecker) {
 		mLogger = services.getLoggingService().getLogger(getClass());
-		mLogger.setLevel(LogLevel.DEBUG);
+		mLogger.setLevel(LogLevel.ERROR);
 
 		mNet = net;
 		mProduct = product;

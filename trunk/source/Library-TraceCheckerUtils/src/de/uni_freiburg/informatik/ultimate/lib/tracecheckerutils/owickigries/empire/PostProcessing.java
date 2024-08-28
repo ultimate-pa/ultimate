@@ -62,6 +62,7 @@ public class PostProcessing<P> {
 		mFactory = factory;
 		mImplicationChecker = implicationChecker;
 		mLogger = services.getLoggingService().getLogger(getClass());
+		mLogger.setLevel(LogLevel.ERROR);
 		final var processedPairs = postProcessing();
 		mProcessedPairs = constructPredicatePairs(processedPairs, assertionPlace2Predicate);
 	}
