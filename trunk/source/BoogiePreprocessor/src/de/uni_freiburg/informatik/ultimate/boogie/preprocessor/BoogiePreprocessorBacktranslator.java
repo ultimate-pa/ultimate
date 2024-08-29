@@ -202,29 +202,37 @@ public class BoogiePreprocessorBacktranslator
 
 			final AtomicTraceElement<BoogieASTNode> ate = programExecution.getTraceElement(i);
 			if (elem instanceof WhileStatement ) {
-				// WhileStatements will only be translated here if UnstructureCode is enabled
+				assert checkProcedureNames(elem, ate);
+				// If trace element was an AssumeStatement, the UnstructureCode was used and we
+				// have to compute the StepInfo.
+				final WhileStatement stmt = (WhileStatement) elem;
+				final StepInfo info;
 				if (ate.getTraceElement() instanceof AssumeStatement) {
-					assert checkProcedureNames(elem, ate);
 					final AssumeStatement assumeStmt = (AssumeStatement) ate.getTraceElement();
-					final WhileStatement stmt = (WhileStatement) elem;
 					final Expression cond = stmt.getCondition();
-					final StepInfo info = getStepInfoFromCondition(assumeStmt.getFormula(), cond);
-					atomicTrace.add(createAtomicTraceElement(ate, stmt, cond, info));
+					info = getStepInfoFromCondition(assumeStmt.getFormula(), cond);
 				} else {
-					atomicTrace.add(ate);
+					info = ate.getStepInfo().iterator().next();
+					assert ate.getStepInfo().size() == 1;
+					assert info == StepInfo.CONDITION_EVAL_TRUE || info == StepInfo.CONDITION_EVAL_FALSE;
 				}
+				atomicTrace.add(createAtomicTraceElement(ate, stmt, stmt.getCondition(), info));
 
 			} else if (elem instanceof IfStatement) {
 				assert checkProcedureNames(elem, ate);
-				// IfStatements will only be translated here if UnstructureCode is enabled
+				final IfStatement stmt = (IfStatement) elem;
+				final StepInfo info;
+				// If trace element was an AssumeStatement, the UnstructureCode was used and we
+				// have to compute the StepInfo.
 				if (ate.getTraceElement() instanceof AssumeStatement) {
 					final AssumeStatement assumeStmt = (AssumeStatement) ate.getTraceElement();
-					final IfStatement stmt = (IfStatement) elem;
-					final StepInfo info = getStepInfoFromCondition(assumeStmt.getFormula(), stmt.getCondition());
-					atomicTrace.add(createAtomicTraceElement(ate, stmt, stmt.getCondition(), info));
+					info = getStepInfoFromCondition(assumeStmt.getFormula(), stmt.getCondition());
 				} else {
-					atomicTrace.add(ate);
+					info = ate.getStepInfo().iterator().next();
+					assert ate.getStepInfo().size() == 1;
+					assert info == StepInfo.CONDITION_EVAL_TRUE || info == StepInfo.CONDITION_EVAL_FALSE;
 				}
+				atomicTrace.add(createAtomicTraceElement(ate, stmt, stmt.getCondition(), info));
 
 			} else if (elem instanceof CallStatement) {
 				// for call statements, we rely on the stepinfo of our
