@@ -1117,10 +1117,20 @@ public class CfgBuilder {
 			return newLocation;
 		}
 
-		private IIcfgElement beginAtomicBlockFromBottom(final BoogieIcfgLocation currentLocation) {
+		/**
+		 * Construct auxiliary edge that is labeled by an annotation that indicates that
+		 * an atomic block ends here. We return the source location of the auxiliary
+		 * edge.
+		 * <p>
+		 * (An alternative could be to return an unfinished {@link StatementSequence}.
+		 * This alternative turned our to be too complicated because some cases
+		 * the @link StatementSequence} is empty and {@link CfgBuilder#buildCodeBlock}
+		 * has to take care of this special case.)
+		 */
+		private IIcfgElement beginAtomicBlockFromBottom(final BoogieIcfgLocation currentLocation, final Statement st) {
 			final StatementSequence newEdge = startNewStatementSequence(currentLocation, Origin.IMPLEMENTATION);
 			AtomicBlockInfo.addEndAnnotation(newEdge);
-			return newEdge;
+			return endStatementSequence(newEdge, st);
 		}
 
 		private BoogieIcfgLocation endAtomicBlockAtTop(IIcfgElement curElement, final Statement st) {
@@ -1140,7 +1150,7 @@ public class CfgBuilder {
 		}
 
 		private BoogieIcfgLocation buildAtomic(final BoogieIcfgLocation currentLocation, final AtomicStatement st) {
-			IIcfgElement curElement = beginAtomicBlockFromBottom(currentLocation);
+			IIcfgElement curElement = beginAtomicBlockFromBottom(currentLocation, st);
 			curElement = buildCodeBlock(st.getBody(), curElement, false);
 			return endAtomicBlockAtTop(curElement, st);
 		}
@@ -1159,7 +1169,7 @@ public class CfgBuilder {
 				} else {
 					throw new AssertionError("Expected StatementSequence or BoogieIcfgLocation");
 				}
-				return beginAtomicBlockFromBottom(locAfterAtomicBlock);
+				return beginAtomicBlockFromBottom(locAfterAtomicBlock, st);
 			}
 
 			final List<RequiresSpecification> requiresNonFree = mBoogieDeclarations.getRequiresNonFree().get(callee);
