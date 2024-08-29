@@ -1118,8 +1118,9 @@ public class CfgBuilder {
 		}
 
 		private IIcfgElement beginAtomicBlockFromBottom(final BoogieIcfgLocation currentLocation) {
-			AtomicBlockInfo.addEndAnnotation(currentLocation);
-			return currentLocation;
+			final StatementSequence newEdge = startNewStatementSequence(currentLocation, Origin.IMPLEMENTATION);
+			AtomicBlockInfo.addEndAnnotation(newEdge);
+			return newEdge;
 		}
 
 		private BoogieIcfgLocation endAtomicBlockAtTop(IIcfgElement curElement, final Statement st) {
