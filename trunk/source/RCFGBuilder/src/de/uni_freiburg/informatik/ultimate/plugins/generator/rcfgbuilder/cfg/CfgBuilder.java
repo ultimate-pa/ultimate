@@ -1527,7 +1527,7 @@ public class CfgBuilder {
 			assert mCurrent instanceof CodeBlock : "Start marker for atomic section must be an edge";
 
 			// mark current edge as start of atomic block
-			AtomicBlockInfo.addBeginAnnotation(mCurrent);
+			AtomicBlockInfo.addBeginAnnotation((IIcfgTransition<?>) mCurrent);
 		}
 
 		private void endAtomicBlock(final Statement st) {
@@ -1537,13 +1537,13 @@ public class CfgBuilder {
 			}
 			assert mCurrent instanceof CodeBlock : "End marker for atomic section must be an edge";
 
-			if (AtomicBlockInfo.isStartOfAtomicBlock(mCurrent)) {
+			if (AtomicBlockInfo.isEndOfAtomicBlock((IIcfgTransition<?>) mCurrent)) {
 				// if current edge is both start and end of an atomic block, it is already atomic -- nothing else to do
-				AtomicBlockInfo.removeAnnotation(mCurrent);
-				AtomicBlockInfo.addCompleteAnnotation(mCurrent);
+				AtomicBlockInfo.removeAnnotation((IIcfgTransition<?>) mCurrent);
+				AtomicBlockInfo.addCompleteAnnotation((IIcfgTransition<?>) mCurrent);
 			} else {
 				// mark current edge as end of atomic block
-				AtomicBlockInfo.addEndAnnotation(mCurrent);
+				AtomicBlockInfo.addEndAnnotation((IIcfgTransition<?>) mCurrent);
 			}
 
 			// ensure nothing is appended to current edge
