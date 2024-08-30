@@ -82,8 +82,8 @@ final class AtomicBlockInfo extends ModernAnnotations {
 	 *
 	 * Note that an edge can be the start of an atomic block or the end, but not both.
 	 *
-	 * @param element
-	 *            The element whose annotation is examined.
+	 * @param edge
+	 *            The edge whose annotation is examined.
 	 * @return true if there is an {@link AtomicBlockInfo} annotation that marks the beginning of an atomic block.
 	 */
 	public static boolean isStartOfAtomicBlock(final IIcfgTransition<?> edge) {
@@ -95,8 +95,8 @@ final class AtomicBlockInfo extends ModernAnnotations {
 	 *
 	 * Note that an edge can be the start of an atomic block or the end, but not both.
 	 *
-	 * @param element
-	 *            The element whose annotation is examined.
+	 * @param edge
+	 *            The edge whose annotation is examined.
 	 * @return true if there is an {@link AtomicBlockInfo} annotation that marks the end of an atomic block.
 	 */
 	public static boolean isEndOfAtomicBlock(final IIcfgTransition<?> edge) {
@@ -106,6 +106,8 @@ final class AtomicBlockInfo extends ModernAnnotations {
 	/**
 	 * Determines if the given element (an edge) is annotated as the result of a complete atomic block composition.
 	 *
+	 * @param edge
+	 *            The edge whose annotation is examined.
 	 * @return true if there is an {@link AtomicBlockInfo} annotation that marks a complete atomic block.
 	 */
 	public static boolean isCompleteAtomicBlock(final IIcfgTransition<?> edge) {
@@ -114,6 +116,9 @@ final class AtomicBlockInfo extends ModernAnnotations {
 
 	/**
 	 * Marks the given element (an edge) as the beginning of an atomic block.
+	 *
+	 * @param element
+	 *            The edge to be marked.
 	 */
 	public static void addBeginAnnotation(final IIcfgTransition<?> edge) {
 		addAnnotation(edge, START_DELTA);
@@ -122,6 +127,8 @@ final class AtomicBlockInfo extends ModernAnnotations {
 	/**
 	 * Marks the given element (an edge) as the end of an atomic block.
 	 *
+	 * @param element
+	 *            The edge to be marked.
 	 */
 	public static void addEndAnnotation(final IIcfgTransition<?> edge) {
 		addAnnotation(edge, END_DELTA);
@@ -130,6 +137,8 @@ final class AtomicBlockInfo extends ModernAnnotations {
 	/**
 	 * Marks the given element (an edge) as the result of a complete atomic block composition.
 	 *
+	 * @param element
+	 *            The edge to be marked.
 	 */
 	public static void addCompleteAnnotation(final IIcfgTransition<?> edge) {
 		addAnnotation(edge, 0);
@@ -138,6 +147,8 @@ final class AtomicBlockInfo extends ModernAnnotations {
 	/**
 	 * Removes any {@link AtomicBlockInfo} annotation, if present.
 	 *
+	 * @param element
+	 *            The edge from which annotations shall be removed.
 	 */
 	public static void removeAnnotation(final IIcfgTransition<?> edge) {
 		edge.getPayload().getAnnotations().remove(AtomicBlockInfo.class.getName());
