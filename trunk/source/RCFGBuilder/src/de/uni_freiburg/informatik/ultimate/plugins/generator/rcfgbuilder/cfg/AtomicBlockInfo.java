@@ -34,7 +34,6 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.ModernAnno
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 
 /**
  * An annotation used to mark CFG edges that are the beginning or end of an atomic block, in the sense of SV-COMP's
@@ -87,7 +86,7 @@ final class AtomicBlockInfo extends ModernAnnotations {
 	 *            The element whose annotation is examined.
 	 * @return true if there is an {@link AtomicBlockInfo} annotation that marks the beginning of an atomic block.
 	 */
-	public static <LOC extends IcfgLocation> boolean isStartOfAtomicBlock(final IIcfgTransition<LOC> edge) {
+	public static boolean isStartOfAtomicBlock(final IIcfgTransition<?> edge) {
 		return hasAnnotatedDelta(edge, d -> d > 0);
 	}
 
@@ -100,22 +99,23 @@ final class AtomicBlockInfo extends ModernAnnotations {
 	 *            The element whose annotation is examined.
 	 * @return true if there is an {@link AtomicBlockInfo} annotation that marks the end of an atomic block.
 	 */
-	public static <LOC extends IcfgLocation>  boolean isEndOfAtomicBlock(final IIcfgTransition<LOC> edge) {
+	public static boolean isEndOfAtomicBlock(final IIcfgTransition<?> edge) {
 		return hasAnnotatedDelta(edge, d -> d < 0);
 	}
 
 	/**
 	 * Determines if the given element (an edge) is annotated as the result of a complete atomic block composition.
+	 *
 	 * @return true if there is an {@link AtomicBlockInfo} annotation that marks a complete atomic block.
 	 */
-	public static <LOC extends IcfgLocation>  boolean isCompleteAtomicBlock(final IIcfgTransition<LOC> edge) {
+	public static boolean isCompleteAtomicBlock(final IIcfgTransition<?> edge) {
 		return hasAnnotatedDelta(edge, d -> d == 0);
 	}
 
 	/**
 	 * Marks the given element (an edge) as the beginning of an atomic block.
 	 */
-	public static <LOC extends IcfgLocation>  void addBeginAnnotation(final IIcfgTransition<LOC> edge) {
+	public static void addBeginAnnotation(final IIcfgTransition<?> edge) {
 		addAnnotation(edge, START_DELTA);
 	}
 
@@ -123,7 +123,7 @@ final class AtomicBlockInfo extends ModernAnnotations {
 	 * Marks the given element (an edge) as the end of an atomic block.
 	 *
 	 */
-	public static <LOC extends IcfgLocation>  void addEndAnnotation(final IIcfgTransition<LOC> edge) {
+	public static void addEndAnnotation(final IIcfgTransition<?> edge) {
 		addAnnotation(edge, END_DELTA);
 	}
 
@@ -131,7 +131,7 @@ final class AtomicBlockInfo extends ModernAnnotations {
 	 * Marks the given element (an edge) as the result of a complete atomic block composition.
 	 *
 	 */
-	public static <LOC extends IcfgLocation>  void addCompleteAnnotation(final IIcfgTransition<LOC> edge) {
+	public static void addCompleteAnnotation(final IIcfgTransition<?> edge) {
 		addAnnotation(edge, 0);
 	}
 
@@ -139,12 +139,11 @@ final class AtomicBlockInfo extends ModernAnnotations {
 	 * Removes any {@link AtomicBlockInfo} annotation, if present.
 	 *
 	 */
-	public static <LOC extends IcfgLocation>  void removeAnnotation(final IIcfgTransition<LOC> edge) {
+	public static void removeAnnotation(final IIcfgTransition<?> edge) {
 		edge.getPayload().getAnnotations().remove(AtomicBlockInfo.class.getName());
 	}
 
-	private static <LOC extends IcfgLocation> boolean hasAnnotatedDelta(final IIcfgTransition<LOC> edge,
-			final IntPredicate condition) {
+	private static boolean hasAnnotatedDelta(final IIcfgTransition<?> edge, final IntPredicate condition) {
 		final AtomicBlockInfo annotation = ModelUtils.getAnnotation(edge, AtomicBlockInfo.class);
 		if (annotation != null) {
 			return condition.test(annotation.mDelta);
@@ -152,7 +151,7 @@ final class AtomicBlockInfo extends ModernAnnotations {
 		return false;
 	}
 
-	private static <LOC extends IcfgLocation>  void addAnnotation(final IIcfgTransition<LOC> edge, final int delta) {
+	private static void addAnnotation(final IIcfgTransition<?> edge, final int delta) {
 		final var previous = ModelUtils.getAnnotation(edge, AtomicBlockInfo.class);
 		if (previous != null) {
 			throw new UnsupportedOperationException(
