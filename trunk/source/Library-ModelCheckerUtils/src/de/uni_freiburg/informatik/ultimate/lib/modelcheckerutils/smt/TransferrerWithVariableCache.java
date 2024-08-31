@@ -105,8 +105,8 @@ public class TransferrerWithVariableCache {
 		final Set<IProgramFunction> functions = predicate.getFuns();
 		final Term transferredFormula = transferTerm(predicate.getFormula());
 		final Term transferredClosed = transferTerm(predicate.getClosedFormula());
-		return mFactory.construct(serial -> new BasicPredicate(serial, predicate.getProcedures(), transferredFormula,
-				variables, functions, transferredClosed));
+		return mFactory.construct(
+				serial -> new BasicPredicate(serial, transferredFormula, variables, functions, transferredClosed));
 	}
 
 	public <T extends Term> T transferTerm(final T term) {

@@ -44,9 +44,9 @@ public class SPredicate extends BasicPredicate implements ISLPredicate {
 	@Visualizable
 	protected final IcfgLocation mProgramPoint;
 
-	protected SPredicate(final IcfgLocation programPoint, final int serialNumber, final String[] procedures,
-			final Term term, final Set<IProgramVar> vars, final Set<IProgramFunction> funs, final Term closedFormula) {
-		super(serialNumber, procedures, term, vars, funs, closedFormula);
+	protected SPredicate(final IcfgLocation programPoint, final int serialNumber, final Term term,
+			final Set<IProgramVar> vars, final Set<IProgramFunction> funs, final Term closedFormula) {
+		super(serialNumber, term, vars, funs, closedFormula);
 		mProgramPoint = programPoint;
 	}
 

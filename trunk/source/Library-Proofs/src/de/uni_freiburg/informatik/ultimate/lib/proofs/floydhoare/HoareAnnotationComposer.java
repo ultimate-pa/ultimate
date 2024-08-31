@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermVarsProc;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermVarsFuns;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.PrePostConditionSpecification;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -153,8 +153,8 @@ public class HoareAnnotationComposer {
 			conjuncts.add(precondDisjunction);
 			Term conjunction = SmtUtils.and(mCsToolkit.getManagedScript().getScript(), conjuncts);
 
-			final Set<IProgramVar> vars = TermVarsProc
-					.computeTermVarsProc(conjunction, mCsToolkit.getManagedScript(), mCsToolkit.getSymbolTable())
+			final Set<IProgramVar> vars = TermVarsFuns
+					.computeTermVarsFuns(conjunction, mCsToolkit.getManagedScript(), mCsToolkit.getSymbolTable())
 					.getVars();
 			conjunction = substituteOldVarsOfNonModifiableGlobals(getRelevantProcedure(loc), vars, conjunction,
 					mCsToolkit.getModifiableGlobalsTable(), mCsToolkit.getManagedScript());

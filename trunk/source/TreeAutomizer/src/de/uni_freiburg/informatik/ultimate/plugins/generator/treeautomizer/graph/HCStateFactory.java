@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.lib.chc.HcPredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermVarsProc;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermVarsFuns;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashNormalForm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
@@ -170,7 +170,7 @@ public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersec
 		// ps.add(state1);
 		// ps.add(state2);
 
-		final Set<ApplicationTerm> appTerms = TermVarsProc.findNonTheoryApplicationTerms(conjoinedFormula);
+		final Set<ApplicationTerm> appTerms = TermVarsFuns.findNonTheoryApplicationTerms(conjoinedFormula);
 		final List<FunctionSymbol> funs = appTerms.stream().map(ApplicationTerm::getFunction)
 				.collect(Collectors.toList());
 		return mPredicateFactory.newPredicate(state1PredSymbols, conjoinedFormula,
@@ -216,7 +216,7 @@ public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersec
 			return mPredicateFactory.newPredicate(mergedLocations, mergedFormula, Collections.emptyList(),
 					Collections.emptyList());
 		} else {
-			final Set<ApplicationTerm> appTerms = TermVarsProc.findNonTheoryApplicationTerms(mergedFormula);
+			final Set<ApplicationTerm> appTerms = TermVarsFuns.findNonTheoryApplicationTerms(mergedFormula);
 			final List<FunctionSymbol> funs = appTerms.stream().map(ApplicationTerm::getFunction)
 					.collect(Collectors.toList());
 			return mPredicateFactory.newPredicate(mergedLocations, mergedFormula,

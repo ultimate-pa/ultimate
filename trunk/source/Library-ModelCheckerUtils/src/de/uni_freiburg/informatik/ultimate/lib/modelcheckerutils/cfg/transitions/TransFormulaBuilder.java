@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.TransferrerWithVariableCache;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermVarsProc;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermVarsFuns;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -451,7 +451,7 @@ public class TransFormulaBuilder {
 			if (!consts.isEmpty()) {
 				throw new UnsupportedOperationException("constants not yet supported");
 			}
-			final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(rhs.get(i), mgdScript, symbolTable);
+			final TermVarsFuns tvp = TermVarsFuns.computeTermVarsFuns(rhs.get(i), mgdScript, symbolTable);
 			rhsPvs.addAll(tvp.getVars());
 		}
 

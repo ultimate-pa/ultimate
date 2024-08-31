@@ -343,7 +343,7 @@ public class PredicateUnifier implements IPredicateUnifier {
 			final HashMap<IPredicate, Validity> expliedPredicates, final IPredicate originalPredicate,
 			final UnaryOperator<IPredicate> predicatePostProcessor) {
 
-		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(term, mMgdScript, mSymbolTable);
+		final TermVarsFuns tvp = TermVarsFuns.computeTermVarsFuns(term, mMgdScript, mSymbolTable);
 		mPredicateUnifierBenchmarkGenerator.continueTime();
 		mPredicateUnifierBenchmarkGenerator.incrementGetRequests();
 		assert varsIsSupersetOfFreeTermVariables(term, tvp.getVars());

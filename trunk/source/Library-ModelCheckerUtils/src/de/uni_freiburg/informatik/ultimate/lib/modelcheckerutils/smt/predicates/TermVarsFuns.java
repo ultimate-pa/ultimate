@@ -43,24 +43,18 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
-public class TermVarsProc {
+public class TermVarsFuns {
 	private final Term mTerm;
 	private final Set<IProgramVar> mVars;
 	private final Set<IProgramFunction> mFuns;
-	private final String[] mProcedures;
 	private final Term mClosedTerm;
 
-	public TermVarsProc(final Term term, final Set<IProgramVar> vars, final Set<IProgramFunction> funs,
-			final String[] procedures, final Term closedTerm) {
+	public TermVarsFuns(final Term term, final Set<IProgramVar> vars, final Set<IProgramFunction> funs,
+			final Term closedTerm) {
 		mTerm = term;
 		mVars = vars;
 		mFuns = funs;
-		mProcedures = procedures;
 		mClosedTerm = closedTerm;
-	}
-
-	public String[] getProcedures() {
-		return mProcedures;
 	}
 
 	public Term getFormula() {
@@ -80,37 +74,29 @@ public class TermVarsProc {
 	}
 
 	/**
-	 * Given a term in which every free variable is the TermVariable of a BoogieVar.
-	 * Compute the BoogieVars of the free variables and the procedures of these
-	 * BoogieVariables.
+	 * Given a term in which every free variable is the TermVariable of an {@link IProgramVar}, compute the
+	 * {@link IProgramVar}s of the free variables, and the {@link IProgramFunction}s appearing in the term.
 	 */
-	public static TermVarsProc computeTermVarsProc(final Term term, final ManagedScript mgdScript,
+	public static TermVarsFuns computeTermVarsFuns(final Term term, final ManagedScript mgdScript,
 			final IIcfgSymbolTable symbolTable) {
 		return computeTermVarsProc(term, mgdScript, symbolTable::getProgramVar, symbolTable::getProgramFun);
 	}
 
 	/**
-	 * Given a term in which every free variable is the TermVariable of a BoogieVar.
-	 * Compute the BoogieVars of the free variables and the procedures of these
-	 * BoogieVariables.
+	 * Given a term in which every free variable is the TermVariable of an {@link IProgramVar}, compute the
+	 * {@link IProgramVar}s of the free variables, and the {@link IProgramFunction}s appearing in the term.
 	 */
-	public static TermVarsProc computeTermVarsProc(final Term term, final ManagedScript mgdScript,
+	public static TermVarsFuns computeTermVarsProc(final Term term, final ManagedScript mgdScript,
 			final Function<TermVariable, IProgramVar> funTermVar2ProgVar,
 			final Function<FunctionSymbol, IProgramFunction> funcSymb2ProgFunc) {
 		final HashSet<IProgramVar> vars = new HashSet<>();
-		final Set<String> procs = new HashSet<>();
 		for (final TermVariable tv : term.getFreeVars()) {
 			final IProgramVar bv = funTermVar2ProgVar.apply(tv);
 			if (bv == null) {
 				throw new AssertionError("No corresponding IProgramVar for " + tv);
 			}
 			vars.add(bv);
-			if (bv.getProcedure() != null) {
-				procs.add(bv.getProcedure());
-			}
 		}
-		final Predicate<Term> isNonTheoryApplicationTerm = (x -> ((x instanceof ApplicationTerm)
-				&& !((ApplicationTerm) x).getFunction().isIntern()));
 		final Set<ApplicationTerm> nonTheoryAppTerms = findNonTheoryApplicationTerms(term);
 		Set<IProgramFunction> programFunctions;
 		if (nonTheoryAppTerms.isEmpty()) {
@@ -128,12 +114,12 @@ public class TermVarsProc {
 		}
 
 		final Term closedTerm = PredicateUtils.computeClosedFormula(term, vars, mgdScript);
-		return new TermVarsProc(term, vars, programFunctions, procs.toArray(new String[procs.size()]), closedTerm);
+		return new TermVarsFuns(term, vars, programFunctions, closedTerm);
 	}
 
 	public static Set<ApplicationTerm> findNonTheoryApplicationTerms(final Term term) {
-		final Predicate<Term> isNonTheoryApplicationTerm = (x -> ((x instanceof ApplicationTerm)
-				&& !((ApplicationTerm) x).getFunction().isIntern()));
+		final Predicate<Term> isNonTheoryApplicationTerm =
+				(x -> ((x instanceof ApplicationTerm) && !((ApplicationTerm) x).getFunction().isIntern()));
 		final Set tmp = SubTermFinder.find(term, isNonTheoryApplicationTerm, false);
 		final Set<ApplicationTerm> nonTheoryAppTerms = tmp;
 		return nonTheoryAppTerms;

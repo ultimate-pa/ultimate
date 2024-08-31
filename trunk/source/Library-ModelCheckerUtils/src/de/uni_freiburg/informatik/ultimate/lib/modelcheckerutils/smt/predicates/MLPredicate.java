@@ -47,9 +47,9 @@ public class MLPredicate extends BasicPredicate implements IMLPredicate {
 	@Visualizable
 	protected final IcfgLocation[] mProgramPoints;
 
-	protected MLPredicate(final IcfgLocation[] programPoints, final int serialNumber, final String[] procedures,
-			final Term term, final Set<IProgramVar> vars, final Set<IProgramFunction> funs, final Term closedFormula) {
-		super(serialNumber, procedures, term, vars, funs, closedFormula);
+	protected MLPredicate(final IcfgLocation[] programPoints, final int serialNumber, final Term term,
+			final Set<IProgramVar> vars, final Set<IProgramFunction> funs, final Term closedFormula) {
+		super(serialNumber, term, vars, funs, closedFormula);
 		mProgramPoints = programPoints;
 	}
 

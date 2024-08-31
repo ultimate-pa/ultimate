@@ -116,12 +116,6 @@ public class PredicateWithConjuncts implements IPredicate {
 	}
 
 	@Override
-	public String[] getProcedures() {
-		// TODO compute on-demand (and possibly use partial results when constructed from conjunction)
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
 	public Set<IProgramVar> getVars() {
 		// TODO compute on-demand (and possibly use partial results when constructed from conjunction)
 		throw new UnsupportedOperationException();
@@ -132,6 +126,7 @@ public class PredicateWithConjuncts implements IPredicate {
 		// TODO compute on-demand (and possibly use partial results when constructed from conjunction)
 		throw new UnsupportedOperationException();
 	}
+
 	@Override
 	public String toString() {
 		return mSerial + "#" + mConjuncts.toString();

@@ -68,7 +68,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermVarsProc;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermVarsFuns;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -486,7 +486,7 @@ public class InvariantChecker {
 
 		final IPredicate precondition;
 		if (mIcfg.getProcedureEntryNodes().get(startLoc.getProcedure()).equals(startLoc)) {
-			final TermVarsProc tvp = TraceCheckUtils.getOldVarsEquality(startLoc.getProcedure(),
+			final TermVarsFuns tvp = TraceCheckUtils.getOldVarsEquality(startLoc.getProcedure(),
 					mIcfg.getCfgSmtToolkit().getModifiableGlobalsTable(), mIcfg.getCfgSmtToolkit().getManagedScript());
 			precondition = pf.newPredicate(tvp.getFormula());
 		} else {

@@ -56,7 +56,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 public class BasicPredicateFactory extends SmtFreePredicateFactory {
 
 	protected static final Set<IProgramVar> EMPTY_VARS = Collections.emptySet();
-	protected static final String[] NO_PROCEDURE = new String[0];
 
 	protected final IIcfgSymbolTable mSymbolTable;
 	protected final Script mScript;
@@ -78,32 +77,31 @@ public class BasicPredicateFactory extends SmtFreePredicateFactory {
 	public BasicPredicate newPredicate(final Term term) {
 		assert term == mDontCareTerm
 				|| UltimateNormalFormUtils.respectsUltimateNormalForm(term) : "Term not in UltimateNormalForm";
-		final TermVarsProc termVarsProc = constructTermVarsProc(term);
-		final BasicPredicate predicate = new BasicPredicate(constructFreshSerialNumber(), termVarsProc.getProcedures(),
-				termVarsProc.getFormula(), termVarsProc.getVars(), termVarsProc.getFuns(),
-				termVarsProc.getClosedFormula());
+		final TermVarsFuns termVarsProc = constructTermVarsProc(term);
+		final BasicPredicate predicate = new BasicPredicate(constructFreshSerialNumber(), termVarsProc.getFormula(),
+				termVarsProc.getVars(), termVarsProc.getFuns(), termVarsProc.getClosedFormula());
 		return predicate;
 	}
 
-	protected TermVarsProc constructTermVarsProc(final Term term) {
-		final TermVarsProc termVarsProc;
+	protected TermVarsFuns constructTermVarsProc(final Term term) {
+		final TermVarsFuns termVarsProc;
 		if (term == mDontCareTerm) {
 			termVarsProc = constructDontCare();
 		} else {
-			termVarsProc = TermVarsProc.computeTermVarsProc(term, mMgdScript, mSymbolTable);
+			termVarsProc = TermVarsFuns.computeTermVarsFuns(term, mMgdScript, mSymbolTable);
 		}
 		return termVarsProc;
 	}
 
-	private TermVarsProc constructDontCare() {
-		return new TermVarsProc(mDontCareTerm, EMPTY_VARS, Collections.emptySet(), NO_PROCEDURE, mDontCareTerm);
+	private TermVarsFuns constructDontCare() {
+		return new TermVarsFuns(mDontCareTerm, EMPTY_VARS, Collections.emptySet(), mDontCareTerm);
 	}
 
 	public IPredicate newBuchiPredicate(final Set<IPredicate> inputPreds) {
 		final Term conjunction = andTermFromPreds(inputPreds, SimplificationTechnique.NONE);
-		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(conjunction, mMgdScript, mSymbolTable);
-		return new BuchiPredicate(constructFreshSerialNumber(), tvp.getProcedures(), tvp.getFormula(), tvp.getVars(),
-				tvp.getFuns(), tvp.getClosedFormula(), inputPreds);
+		final TermVarsFuns tvp = TermVarsFuns.computeTermVarsFuns(conjunction, mMgdScript, mSymbolTable);
+		return new BuchiPredicate(constructFreshSerialNumber(), tvp.getFormula(), tvp.getVars(), tvp.getFuns(),
+				tvp.getClosedFormula(), inputPreds);
 	}
 
 	public IPredicate and(final IPredicate... preds) {

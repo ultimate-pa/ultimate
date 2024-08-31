@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.equalityana
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermVarsProc;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermVarsFuns;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -148,12 +148,12 @@ public class EqualitySupportingInvariantAnalysis {
 		} else {
 			invariantCandidateTerm = EqualityAnalysisResult.notEqualTerm(mScript.getScript(), definingDoubleton);
 		}
-		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(invariantCandidateTerm, mScript, mSymbolTable);
-		final IPredicate invariantCandidate = new BasicPredicate(0, tvp.getProcedures(), tvp.getFormula(),
-				tvp.getVars(), tvp.getFuns(), tvp.getClosedFormula());
+		final TermVarsFuns tvp = TermVarsFuns.computeTermVarsFuns(invariantCandidateTerm, mScript, mSymbolTable);
+		final IPredicate invariantCandidate =
+				new BasicPredicate(0, tvp.getFormula(), tvp.getVars(), tvp.getFuns(), tvp.getClosedFormula());
 		final Set<IProgramVar> emptyVarSet = Collections.emptySet();
-		final IPredicate truePredicate = new BasicPredicate(0, new String[0], mScript.getScript().term("true"),
-				emptyVarSet, Collections.emptySet(), mScript.getScript().term("true"));
+		final IPredicate truePredicate = new BasicPredicate(0, mScript.getScript().term("true"), emptyVarSet,
+				Collections.emptySet(), mScript.getScript().term("true"));
 		final LBool impliedByStem = PredicateUtils.isInductiveHelper(mScript.getScript(), truePredicate,
 				invariantCandidate, mOriginalStem, mModifiableGlobalsAtStart, mModifiableGlobalsAtHonda);
 		if (impliedByStem == LBool.UNSAT) {

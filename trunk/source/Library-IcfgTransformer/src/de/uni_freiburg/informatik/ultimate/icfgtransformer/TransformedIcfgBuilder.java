@@ -69,7 +69,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermVarsProc;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermVarsFuns;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -526,7 +526,7 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 		newAxiomsClosed.add(translationResult.getAxiom().getClosedFormula());
 
 		final Term newAxioms = SmtUtils.and(script.getScript(), newAxiomsClosed);
-		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(newAxioms, mgdScript, symbolTable);
+		final TermVarsFuns tvp = TermVarsFuns.computeTermVarsFuns(newAxioms, mgdScript, symbolTable);
 		return new SmtFunctionsAndAxioms(newAxioms, tvp.getFuns(), script);
 	}
 

@@ -47,35 +47,34 @@ public class PredicateFactory extends BasicPredicateFactory {
 
 	public PredicateWithHistory newPredicateWithHistory(final IcfgLocation pp, final Term term,
 			final Map<Integer, Term> history) {
-		final TermVarsProc tvp = constructTermVarsProc(term);
-		final PredicateWithHistory pred = new PredicateWithHistory(pp, constructFreshSerialNumber(),
-				tvp.getProcedures(), tvp.getFormula(), tvp.getVars(), tvp.getFuns(), tvp.getClosedFormula(), history);
+		final TermVarsFuns tvp = constructTermVarsProc(term);
+		final PredicateWithHistory pred = new PredicateWithHistory(pp, constructFreshSerialNumber(), tvp.getFormula(),
+				tvp.getVars(), tvp.getFuns(), tvp.getClosedFormula(), history);
 		return pred;
 	}
 
 	public SPredicate newSPredicate(final IcfgLocation pp, final Term term) {
-		final TermVarsProc termVarsProc = constructTermVarsProc(term);
+		final TermVarsFuns termVarsProc = constructTermVarsProc(term);
 		return newSPredicate(pp, termVarsProc);
 	}
 
-	SPredicate newSPredicate(final IcfgLocation pp, final TermVarsProc termVarsProc) {
-		final SPredicate pred = new SPredicate(pp, constructFreshSerialNumber(), termVarsProc.getProcedures(),
-				termVarsProc.getFormula(), termVarsProc.getVars(), termVarsProc.getFuns(),
-				termVarsProc.getClosedFormula());
+	SPredicate newSPredicate(final IcfgLocation pp, final TermVarsFuns termVarsProc) {
+		final SPredicate pred = new SPredicate(pp, constructFreshSerialNumber(), termVarsProc.getFormula(),
+				termVarsProc.getVars(), termVarsProc.getFuns(), termVarsProc.getClosedFormula());
 		return pred;
 	}
 
 	public ISLPredicate newEmptyStackPredicate() {
 		final IcfgLocation pp = new IcfgLocation(NoCallerDebugIdentifier.INSTANCE, "noCaller");
 		return newSPredicate(pp,
-				new TermVarsProc(mEmptyStackTerm, EMPTY_VARS, Collections.emptySet(), NO_PROCEDURE, mEmptyStackTerm));
+				new TermVarsFuns(mEmptyStackTerm, EMPTY_VARS, Collections.emptySet(), mEmptyStackTerm));
 	}
 
 	public MLPredicate newMLPredicate(final IcfgLocation[] programPoints, final Term term) {
-		final TermVarsProc termVarsProc = constructTermVarsProc(term);
-		final MLPredicate predicate = new MLPredicate(programPoints, constructFreshSerialNumber(),
-				termVarsProc.getProcedures(), termVarsProc.getFormula(), termVarsProc.getVars(), termVarsProc.getFuns(),
-				termVarsProc.getClosedFormula());
+		final TermVarsFuns termVarsProc = constructTermVarsProc(term);
+		final MLPredicate predicate =
+				new MLPredicate(programPoints, constructFreshSerialNumber(), termVarsProc.getFormula(),
+						termVarsProc.getVars(), termVarsProc.getFuns(), termVarsProc.getClosedFormula());
 		return predicate;
 	}
 
