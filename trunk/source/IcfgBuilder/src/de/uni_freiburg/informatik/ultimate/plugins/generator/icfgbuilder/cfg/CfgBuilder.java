@@ -1133,20 +1133,24 @@ public class CfgBuilder {
 			return endStatementSequence(newEdge, st);
 		}
 
-		private BoogieIcfgLocation endAtomicBlockAtTop(IIcfgElement curElement, final Statement st) {
+		private BoogieIcfgLocation endAtomicBlockAtTop(final IIcfgElement curElement, final Statement st) {
+			assert (curElement instanceof BoogieIcfgLocation || curElement instanceof StatementSequence);
+			final StatementSequence stSeq;
 			if (!(curElement instanceof StatementSequence)) {
-				curElement = startNewStatementSequence((BoogieIcfgLocation) curElement, Origin.IMPLEMENTATION);
+				stSeq = startNewStatementSequence((BoogieIcfgLocation) curElement, Origin.IMPLEMENTATION);
+			} else {
+				stSeq = (StatementSequence) curElement;
 			}
-			if (AtomicBlockInfo.isEndOfAtomicBlock(curElement)) {
+			if (AtomicBlockInfo.isEndOfAtomicBlock(stSeq)) {
 				// if current edge is both start and end of an atomic block, it is already
 				// atomic -- nothing else to do
-				AtomicBlockInfo.removeAnnotation(curElement);
-				AtomicBlockInfo.addCompleteAnnotation(curElement);
+				AtomicBlockInfo.removeAnnotation(stSeq);
+				AtomicBlockInfo.addCompleteAnnotation(stSeq);
 			} else {
 				// mark current edge as start of atomic block
-				AtomicBlockInfo.addBeginAnnotation(curElement);
+				AtomicBlockInfo.addBeginAnnotation(stSeq);
 			}
-			return endStatementSequence((StatementSequence) curElement, st);
+			return endStatementSequence(stSeq, st);
 		}
 
 		private BoogieIcfgLocation buildAtomic(final BoogieIcfgLocation currentLocation, final AtomicStatement st) {
