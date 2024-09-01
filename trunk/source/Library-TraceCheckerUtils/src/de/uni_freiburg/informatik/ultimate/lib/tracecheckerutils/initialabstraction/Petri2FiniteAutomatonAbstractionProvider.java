@@ -166,6 +166,7 @@ public abstract class Petri2FiniteAutomatonAbstractionProvider<L extends IIcfgTr
 				final Map<IcfgLocation, Boolean> hopelessCache = new HashMap<>();
 				mAbstraction = new PetriNet2FiniteAutomaton<>(mAutomataServices, mStateFactory, net,
 						s -> areAllLocationsHopeless(hopelessCache, errorLocs, s)).getResult();
+				mServices.getLoggingService().getLogger(getClass()).info(mAbstraction);
 				return mAbstraction;
 			} catch (final PetriNetNot1SafeException e) {
 				final Collection<?> unsafePlaces = e.getUnsafePlaces();
