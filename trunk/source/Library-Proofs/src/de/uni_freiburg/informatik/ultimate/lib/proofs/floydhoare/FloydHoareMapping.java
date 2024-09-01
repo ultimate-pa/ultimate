@@ -90,4 +90,30 @@ public class FloydHoareMapping<S> implements IFloydHoareAnnotation<S> {
 	public IPredicate getAnnotation(final S state) {
 		return mAnnotation.getOrDefault(state, mDefaultPredicate);
 	}
+
+	@Override
+	public String toString() {
+		final var sb = new StringBuilder();
+		sb.append("FloydHoareMapping\n----------------------------------------\n");
+
+		final String defaultState = "all other states";
+
+		int stateColumnLength =
+				mAnnotation.keySet().stream().map(Object::toString).mapToInt(String::length).max().orElse(0);
+		if (mDefaultPredicate != null) {
+			stateColumnLength = Integer.max(stateColumnLength, defaultState.length());
+		}
+		final String format = "%" + stateColumnLength + "s  ::  %s\n";
+
+		for (final var entry : mAnnotation.entrySet()) {
+			sb.append(String.format(format, entry.getKey(), entry.getValue()));
+		}
+		if (mDefaultPredicate != null) {
+			sb.append('\n');
+			sb.append(String.format(format, defaultState, mDefaultPredicate));
+		}
+
+		sb.append("----------------------------------------");
+		return sb.toString();
+	}
 }
