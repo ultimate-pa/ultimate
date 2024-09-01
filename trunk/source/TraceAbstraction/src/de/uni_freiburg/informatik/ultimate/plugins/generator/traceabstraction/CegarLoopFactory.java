@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.IProof;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.IProofProducer;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.IFloydHoareAnnotation;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.NwaHoareProofProducer;
@@ -77,6 +78,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessUtils.Property;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
@@ -179,8 +181,37 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 		final var backtranslator = triple.getThird();
 		final var cegar = createFiniteAutomataCegarLoop(services, name, root, predicateFactory, errorLocs,
 				rawFloydHoareAutomataFromFile, stateFactoryForRefinement, witnessAutomaton, abstraction, producer);
-		final var proofProducer = producer == null || backtranslator == null ? null
-				: new BacktranslatingProofProducer<>(root, producer, backtranslator);
+
+		final IProofProducer<IIcfg<IcfgLocation>, ?> proofProducer;
+		if (producer == null) {
+			proofProducer = null;
+		} else if (backtranslator == null) {
+			proofProducer = new IProofProducer<IIcfg<IcfgLocation>, IProof>() {
+				@Override
+				public IIcfg<IcfgLocation> getProgram() {
+					return root;
+				}
+
+				@Override
+				public boolean isReadyToComputeProof() {
+					return producer.isReadyToComputeProof();
+				}
+
+				@Override
+				public IProof getOrComputeProof() {
+					final var proof = producer.getOrComputeProof();
+					services.getLoggingService().getLogger(getClass()).warn(proof);
+					return null;
+				}
+
+				@Override
+				public IStatisticsDataProvider getStatistics() {
+					return producer.getStatistics();
+				}
+			};
+		} else {
+			proofProducer = new BacktranslatingProofProducer<>(root, producer, backtranslator);
+		}
 		return new Pair<>(cegar, proofProducer);
 	}
 
