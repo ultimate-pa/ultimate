@@ -3,19 +3,21 @@ package de.uni_freiburg.informatik.ultimate.btorutils;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 
 public class BtorScript {
 
 	private final List<BtorExpression> topLevelExpressions;
-	private final List<Integer> sortList;
+	private final List<BtorSort> sortList;
 	private int currentLine;
-	private final HashMap<Integer, Integer> sortMap;
+	private final HashMap<BtorSort, Integer> sortMap;
 	private final StringBuffer text;
 	private boolean textExists;
 
-	public BtorScript(final List<BtorExpression> topLevelExpressions, final List<Integer> sortList) {
+	public BtorScript(final List<BtorExpression> topLevelExpressions, final List<BtorSort> sortList) {
 		this.topLevelExpressions = topLevelExpressions;
 		this.sortList = sortList;
 		sortMap = new HashMap<>();
@@ -33,8 +35,32 @@ public class BtorScript {
 		final ByteArrayOutputStream textStream = new ByteArrayOutputStream();
 		final OutputStreamWriter textStreamWriter = new OutputStreamWriter(textStream);
 
-		for (final int sort : sortList) {
-			textStreamWriter.write(String.valueOf(currentLine) + " sort bitvec " + String.valueOf(sort) + "\n");
+		final Deque<BtorSort> sortWorklist = new ArrayDeque<>(sortList);
+		while (!sortWorklist.isEmpty()) {
+			final BtorSort sort = sortWorklist.pop();
+			if (sort.isArray()) {
+				final BtorSort keySort = sort.keySort;
+				final BtorSort valueSort = sort.valueSort;
+				int keySid = 0;
+				int valueSid = 0;
+				if (valueSort.isArray()) {
+					throw new UnsupportedOperationException("BTOR2 does not support nested array sorts.");
+				}
+				try {
+					keySid = sortMap.get(keySort);
+					valueSid = sortMap.get(valueSort);
+				} catch (final NullPointerException e) {
+					sortWorklist.addLast(sort);
+					continue;
+				}
+
+				textStreamWriter.write(String.valueOf(currentLine) + " sort array " + String.valueOf(keySid) + " "
+						+ String.valueOf(valueSid) + "\n");
+			} else {
+				textStreamWriter
+						.write(String.valueOf(currentLine) + " sort bitvec " + String.valueOf(sort.size) + "\n");
+			}
+
 			sortMap.put(sort, currentLine);
 			currentLine++;
 			textStreamWriter.flush();

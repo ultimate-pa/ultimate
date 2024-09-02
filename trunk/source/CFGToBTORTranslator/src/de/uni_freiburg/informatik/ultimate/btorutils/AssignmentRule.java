@@ -43,6 +43,7 @@ public class AssignmentRule {
 			if (tf.isHavocedOut(assignedVar)) {
 				assignmentRules.add(new AssignmentRule(assignmentLocationIdentifier, assignedVar,
 						script.getScript().term("true"), tf, guard));
+				foundAssignment = true;
 			} else {
 				final Term formula = tf.getFormula();
 				if (formula instanceof ApplicationTerm) {
@@ -99,30 +100,63 @@ public class AssignmentRule {
 								}
 							}
 						}
-					} else {
+					} else if (appFormula.getFunction().getName().equals("or")) {
+						if (appFormula.getParameters().length != 2) {
+							throw new UnsupportedOperationException("Transformula not in cnf");
+						}
+						if (!(appFormula.getParameters()[0] instanceof ApplicationTerm)) {
+							throw new UnsupportedOperationException("Transformula not in cnf");
+						}
+						if (!(appFormula.getParameters()[1] instanceof ApplicationTerm)) {
+							throw new UnsupportedOperationException("Transformula not in cnf");
+						}
+						final ApplicationTerm boolAssignmentRhs = (ApplicationTerm) appFormula.getParameters()[1];
+						final ApplicationTerm boolAssignmentLhs = (ApplicationTerm) appFormula.getParameters()[0];
+						if (!((boolAssignmentLhs.getFunction().getName().equals("and"))
+								&& (boolAssignmentRhs.getFunction().getName().equals("and")))) {
+							throw new UnsupportedOperationException("Transformula not in cnf");
+						}
+						if (boolAssignmentLhs.getParameters().length != 2
+								|| boolAssignmentRhs.getParameters().length != 2) {
+							throw new UnsupportedOperationException("Transformula not in cnf");
+						}
+						if (boolAssignmentRhs.getParameters()[0] instanceof TermVariable) {
+							final TermVariable rhsVar = (TermVariable) boolAssignmentRhs.getParameters()[0];
+							if (TransFormulaUtils.getProgramVarForTerm(tf, rhsVar).equals(assignedVar)) {
+								assignmentRules.add(new AssignmentRule(assignmentLocationIdentifier, assignedVar,
+										boolAssignmentRhs.getParameters()[1], tf, guard));
+								foundAssignment = true;
+							}
+						}
+
+						if (boolAssignmentRhs.getParameters()[1] instanceof TermVariable) {
+							final TermVariable rhsVar = (TermVariable) boolAssignmentRhs.getParameters()[1];
+							if (TransFormulaUtils.getProgramVarForTerm(tf, rhsVar).equals(assignedVar)) {
+								assignmentRules.add(new AssignmentRule(assignmentLocationIdentifier, assignedVar,
+										boolAssignmentRhs.getParameters()[0], tf, guard));
+								foundAssignment = true;
+							}
+						}
+					}
+
+					else {
 						throw new UnsupportedOperationException("Transformula not in cnf");
 
 					}
-					if (!foundAssignment) {
-						throw new UnsupportedOperationException("Transformula variable has no assignment");
-					}
+					// if (!foundAssignment) {
+					// throw new UnsupportedOperationException("Transformula variable has no assignment");
+					// }
 				}
+			}
+			if (!foundAssignment) {
+				throw new UnsupportedOperationException("Transformula variable has no assignment");
 			}
 		}
 		return assignmentRules;
 	}
 
 	public BtorExpression getRHSAsExpression(final Map<String, BtorExpression> variableMap) {
-		int sort;
-		if (lhs.getSort().getName() == "Int") {
-			sort = 64;
-		} else if (lhs.getSort().getName() == "Bool") {
-			sort = 1;
-		} else if (lhs.getSort().getName() == "BitVec") {
-			sort = Integer.parseInt(lhs.getSort().getIndices()[0]);
-		} else {
-			throw new UnsupportedOperationException("sort is not int or bool or bitvec");
-		}
-		return TermToBtorUtil.convertRHSToBtorExpression(rhs, tf, variableMap, sort);
+		final BtorSort sort = new BtorSort(lhs.getSort());
+		return TermToBtorUtil.convertRhsToBtorExpression(rhs, tf, variableMap, sort);
 	}
 }

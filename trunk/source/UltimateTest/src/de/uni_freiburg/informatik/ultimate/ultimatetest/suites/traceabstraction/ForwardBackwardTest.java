@@ -36,8 +36,8 @@ import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimate.test.util.DirectoryFileEndingsPair;
 
 /**
- * Test for the two interpolation techniques "ForwardPredicates" and
- * "BackwardPredicates".
+ * Test for the two interpolation techniques "ForwardPredicates" and "BackwardPredicates".
+ * 
  * @author musab@informatik.uni-freiburg.de, heizmanninformatik.uni-freiburg.de
  *
  */
@@ -113,7 +113,7 @@ public class ForwardBackwardTest extends AbstractTraceAbstractionTestSuite {
 
 	private static final String[] mUltimateRepository = {
 		"examples/programs/regression",
-		"examples/programs/quantifier/regression",
+	//	"examples/programs/quantifier/regression",
 //		"examples/programs/recursive/regression",
 //		"examples/programs/toy",
 //		"examples/programs/20170304-DifficultPathPrograms",
@@ -128,15 +128,15 @@ public class ForwardBackwardTest extends AbstractTraceAbstractionTestSuite {
 	 *
 	 */
 	private static final String[] mSettingsBoogie = {
-		"automizer/ForwardPredicates.epf",
-		"automizer/BackwardPredicates.epf",
+		"automizer/ForwardPredicatesBtorTest.epf",
+//		"automizer/BackwardPredicates.epf",
 	};
 
 	private static final String[] mSettingsC = {
-		"automizer/ForwardPredicates.epf",
-		"automizer/BackwardPredicates.epf",
-		"automizer/ForwardPredicatesBitvector.epf",
-		"automizer/BackwardPredicatesBitvector.epf",
+		"automizer/ForwardPredicatesBtorTest.epf",
+//		"automizer/BackwardPredicates.epf",
+//		"automizer/ForwardPredicatesBitvector.epf",
+//		"automizer/BackwardPredicatesBitvector.epf",
 	};
 
 
@@ -149,13 +149,15 @@ public class ForwardBackwardTest extends AbstractTraceAbstractionTestSuite {
 	}
 
 	private static final String[] mBoogieToolchains = {
-		"AutomizerBpl.xml",
+	//	"AutomizerBpl.xml",
+		"CfgToBtorBpl.xml",
 //		"AutomizerBplInline.xml",
 //		"AutomizerBplInlineTransformedBlockencoded.xml",
 	};
 
 	private static final String[] mCToolchains = {
-		"AutomizerC.xml",
+	//	"AutomizerC.xml",
+	//	"CfgToBtorC.xml",
 //		"AutomizerCInline.xml",
 //		"AutomizerCInlineTransformedBlockencoded.xml",
 	};

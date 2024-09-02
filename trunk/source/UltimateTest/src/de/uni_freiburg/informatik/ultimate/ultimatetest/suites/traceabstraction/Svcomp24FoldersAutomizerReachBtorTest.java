@@ -49,7 +49,7 @@ public class Svcomp24FoldersAutomizerReachBtorTest extends AbstractTraceAbstract
 
 	/** Limit the number of files per directory. */
 	// private static final int FILES_PER_DIR_LIMIT = Integer.MAX_VALUE;
-	private static final int FILES_PER_DIR_LIMIT = 2;
+	private static final int FILES_PER_DIR_LIMIT = 1;
 	private static final int FILE_OFFSET = 0;
 
 	private static final String PROPERTY = TestUtil.SVCOMP_PROP_UNREACHCALL;
@@ -80,8 +80,8 @@ public class Svcomp24FoldersAutomizerReachBtorTest extends AbstractTraceAbstract
 //		new SvcompFolderSubset("examples/svcomp/combinations/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 //
 //		/*** Subcategory   ReachSafety-ControlFlow ***/
-//		new SvcompFolderSubset("examples/svcomp/ntdrivers-simplified/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-//		new SvcompFolderSubset("examples/svcomp/openssl-simplified/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/ntdrivers-simplified/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new SvcompFolderSubset("examples/svcomp/openssl-simplified/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 //		new SvcompFolderSubset("examples/svcomp/locks/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 //		new SvcompFolderSubset("examples/svcomp/ntdrivers/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 //		new SvcompFolderSubset("examples/svcomp/openssl/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
@@ -141,7 +141,7 @@ public class Svcomp24FoldersAutomizerReachBtorTest extends AbstractTraceAbstract
 		new SvcompFolderSubset("examples/svcomp/verifythis/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 		new SvcompFolderSubset("examples/svcomp/nla-digbench/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 		new SvcompFolderSubset("examples/svcomp/nla-digbench-scaling/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-//
+////
 //		/*** Subcategory   ReachSafety-ProductLines ***/
 //		new SvcompFolderSubset("examples/svcomp/product-lines/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 

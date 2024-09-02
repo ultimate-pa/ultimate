@@ -3,13 +3,15 @@ package de.uni_freiburg.informatik.ultimate.btorutils;
 public enum BtorExpressionType {
 	STATE,
 
-	INPUT,
+	INIT,
+
+	CONSTD,
 
 	ONE,
 
 	ZERO,
 
-	INIT,
+	INPUT,
 
 	NEXT,
 
@@ -21,6 +23,12 @@ public enum BtorExpressionType {
 
 	JUSTICE,
 
+	SEXT,
+
+	UEXT,
+
+	SLICE,
+
 	NOT,
 
 	INC,
@@ -28,6 +36,16 @@ public enum BtorExpressionType {
 	DEC,
 
 	NEG,
+
+	REDAND,
+
+	REDOR,
+
+	REDXOR,
+
+	IFF,
+
+	IMPLIES,
 
 	EQ,
 
@@ -49,20 +67,6 @@ public enum BtorExpressionType {
 
 	ULTE,
 
-	ADD,
-
-	MUL,
-
-	SDIV,
-
-	UDIV,
-
-	SUB,
-
-	ITE,
-
-	CONSTD,
-
 	AND,
 
 	NAND,
@@ -74,5 +78,55 @@ public enum BtorExpressionType {
 	XNOR,
 
 	XOR,
+
+	ROL,
+
+	ROR,
+
+	SLL,
+
+	SRA,
+
+	SRL,
+
+	ADD,
+
+	MUL,
+
+	SDIV,
+
+	UDIV,
+
+	SMOD,
+
+	SREM,
+
+	UREM,
+
+	SUB,
+
+	SADDO,
+
+	UADDO,
+
+	SDIVO,
+
+	UDIVO,
+
+	SMULO,
+
+	UMULO,
+
+	SSUBO,
+
+	USUBO,
+
+	CONCAT,
+
+	READ,
+
+	ITE,
+
+	WRITE,
 
 }
