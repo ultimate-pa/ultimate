@@ -68,7 +68,7 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 
 	private static final Predicate<File> FILTER_XML = TestUtil.getFileEndingTest(".xml");
 	private static final Predicate<File> FILTER_EPF = TestUtil.getFileEndingTest(".epf");
-	private static final String SKIPPED_FILENAME = "skip.yml";
+	private static final String SKIPPED_FILENAME = ".testignore";
 
 	protected long mTimeout;
 	protected String mRootFolder;
