@@ -31,6 +31,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+<<<<<<<HEAD=======
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.FunctionContract;>>>>>>>e013bd84b4(Add comment and improve error message)
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LocationInvariant;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LoopInvariant;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Witness;
@@ -52,9 +54,9 @@ public class YamlWitnessWriterV0 extends YamlWitnessWriter {
 
 	@Override
 	public String toString(final Witness witness) {
-		return formatYaml(
-				witness.getEntries().stream().filter(x -> x instanceof LoopInvariant || x instanceof LocationInvariant)
-						.map(this::toMap).collect(Collectors.toList()));
+		// Ignore function contracts in the witness
+		return formatYaml(witness.getEntries().stream().filter(x -> !(x instanceof FunctionContract)).map(this::toMap)
+				.collect(Collectors.toList()));
 	}
 
 	private Map<String, Object> toMap(final WitnessEntry entry) {
@@ -84,6 +86,7 @@ public class YamlWitnessWriterV0 extends YamlWitnessWriter {
 			result.put(entry.getName(), invariantMap);
 			return result;
 		}
-		throw new UnsupportedOperationException("Unknown entry type " + entry.getName());
+		throw new UnsupportedOperationException(
+				"Entry type " + entry.getName() + " is not supported in witness version 0.1.");
 	}
 }
