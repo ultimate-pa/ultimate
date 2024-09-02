@@ -7,14 +7,15 @@ import java.util.HashMap;
 import java.util.List;
 
 public class BtorExpression {
-	private final int sort;
+	private final BtorSort sort;
 	private final BtorExpressionType type;
 	private final List<BtorExpression> children;
 	private final long constant;
 	private final String stateName;
 	private int nid;
+	public static HashMap allExpressions;
 
-	public BtorExpression(final int sort, final BtorExpressionType type, final List<BtorExpression> children) {
+	public BtorExpression(final BtorSort sort, final BtorExpressionType type, final List<BtorExpression> children) {
 		this.sort = sort;
 		this.type = type;
 		this.children = children;
@@ -22,7 +23,7 @@ public class BtorExpression {
 		stateName = "";
 	}
 
-	public BtorExpression(final int sort, final long constant) {
+	public BtorExpression(final BtorSort sort, final long constant) {
 		this.sort = sort;
 		type = BtorExpressionType.CONSTD;
 		children = new ArrayList<>();
@@ -30,7 +31,7 @@ public class BtorExpression {
 		stateName = "";
 	}
 
-	public BtorExpression(final int sort, final BtorExpressionType type) {
+	public BtorExpression(final BtorSort sort, final BtorExpressionType type) {
 		this.sort = sort;
 		this.type = type;
 		children = new ArrayList<>();
@@ -38,7 +39,7 @@ public class BtorExpression {
 		stateName = "";
 	}
 
-	public BtorExpression(final int sort, final String name) {
+	public BtorExpression(final BtorSort sort, final String name) {
 		this.sort = sort;
 		type = BtorExpressionType.STATE;
 		children = new ArrayList<>();
@@ -46,7 +47,7 @@ public class BtorExpression {
 		stateName = name;
 	}
 
-	public int getSort() {
+	public BtorSort getSort() {
 		return sort;
 	}
 
@@ -62,6 +63,43 @@ public class BtorExpression {
 		return constant;
 	}
 
+	public static boolean addExpression(final BtorSort sort, final BtorExpressionType type,
+			final List<BtorExpression> children) {
+		final BtorExpression newExpression = new BtorExpression(sort, type, children);
+		if (allExpressions.containsKey(newExpression)) {
+			return true;
+		}
+		allExpressions.put(newExpression, newExpression);
+		return false;
+	}
+
+	public static boolean addExpression(final BtorSort sort, final long constant) {
+		final BtorExpression newExpression = new BtorExpression(sort, constant);
+		if (allExpressions.containsKey(newExpression)) {
+			return true;
+		}
+		allExpressions.put(newExpression, newExpression);
+		return false;
+	}
+
+	public static boolean addExpression(final BtorSort sort, final BtorExpressionType type) {
+		final BtorExpression newExpression = new BtorExpression(sort, type);
+		if (allExpressions.containsKey(newExpression)) {
+			return true;
+		}
+		allExpressions.put(newExpression, newExpression);
+		return false;
+	}
+
+	public static boolean addExpression(final BtorSort sort, final String name) {
+		final BtorExpression newExpression = new BtorExpression(sort, name);
+		if (allExpressions.containsKey(newExpression)) {
+			return true;
+		}
+		allExpressions.put(newExpression, newExpression);
+		return false;
+	}
+
 	public boolean assignnid(final int nid) {
 		if (this.nid != 0) {
 			return false;
@@ -70,8 +108,8 @@ public class BtorExpression {
 		return true;
 	}
 
-	public int dumpExpression(int currentLine, final OutputStreamWriter writer, final HashMap<Integer, Integer> sortMap)
-			throws IOException {
+	public int dumpExpression(int currentLine, final OutputStreamWriter writer,
+			final HashMap<BtorSort, Integer> sortMap) throws IOException {
 		if (children.isEmpty()) {
 			if (!assignnid(currentLine)) {
 				return currentLine;

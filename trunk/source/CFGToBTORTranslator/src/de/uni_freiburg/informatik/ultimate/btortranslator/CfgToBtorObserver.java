@@ -35,12 +35,15 @@ import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import de.uni_freiburg.informatik.ultimate.btorutils.BtorScript;
 import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.NoResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -51,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
  *
@@ -100,7 +104,8 @@ public class CfgToBtorObserver extends BaseObserver {
 			System.out.println(btorFile.getAbsolutePath());
 
 			final ProcessBuilder processBuilder = new ProcessBuilder();
-			processBuilder.command("/usr/local/bin/btormc", "--trace-gen-full", btorFile.getAbsolutePath());
+			processBuilder.command("/usr/local/bin/btormc", "--trace-gen-full", "--kind", "-kmax", "50",
+					btorFile.getAbsolutePath());
 
 			final Process process = processBuilder.start();
 			final StringBuilder btormcOutput = new StringBuilder();
@@ -115,21 +120,27 @@ public class CfgToBtorObserver extends BaseObserver {
 			System.out.println(exitVal);
 
 			final IIcfgElement rootLocation = icfg.getInitialNodes().iterator().next();
-
-			if (btormcWitness.startsWith("sat")) {
-				final ArrayList<Integer> pcList = new ArrayList<>();
-				final Map<Integer, Map<String, Integer>> programStateSequence = new HashMap<>();
+			final Set<IcfgLocation> errorLocations = icfg.getProcedureErrorNodes().values().iterator().next();
+			if (exitVal != 0) {
+				for (final IcfgLocation errorLocation : errorLocations) {
+					final NoResult<IIcfgElement> unkResult = new NoResult<IIcfgElement>(errorLocation,
+							Activator.PLUGIN_ID, mServices.getBacktranslationService());
+					mServices.getResultService().reportResult(Activator.PLUGIN_ID, unkResult);
+				}
+			} else if (btormcWitness.startsWith("sat")) {
+				final ArrayList<Long> pcList = new ArrayList<>();
+				final Map<Long, Map<String, Long>> programStateSequence = new HashMap<>();
 				final Pattern p = Pattern.compile("([01]+) ([a-zA-Z][a-zA-Z0-9_]*)#(\\d+)");
 				final Matcher m = p.matcher(btormcWitness);
 				while (m.find()) {
 					if (m.group(2).equals("pc")) {
-						pcList.add(Integer.parseInt(m.group(1), 2));
+						pcList.add(Long.parseLong(m.group(1), 2));
 					} else {
-						final int sequenceNumber = Integer.parseInt(m.group(3));
+						final long sequenceNumber = Long.parseUnsignedLong(m.group(3));
 						if (!programStateSequence.containsKey(sequenceNumber)) {
 							programStateSequence.put(sequenceNumber, new HashMap<>());
 						}
-						programStateSequence.get(sequenceNumber).put(m.group(2), Integer.parseInt(m.group(1), 2));
+						programStateSequence.get(sequenceNumber).put(m.group(2), Long.parseUnsignedLong(m.group(1), 2));
 
 					}
 				}
@@ -137,13 +148,20 @@ public class CfgToBtorObserver extends BaseObserver {
 				System.out.println(programStateSequence);
 				final IcfgProgramExecution<IcfgEdge> pe =
 						processor.extractErrorTrace(icfg, pcList, programStateSequence);
-				final CounterExampleResult nResult = new CounterExampleResult<>(rootLocation, Activator.PLUGIN_ID,
-						mServices.getBacktranslationService(), pe);
+				final CounterExampleResult<IcfgLocation, IcfgEdge, Term> nResult =
+						new CounterExampleResult<>(pe.getTraceElement(pe.getLength() - 1).getTraceElement().getTarget(),
+								Activator.PLUGIN_ID, mServices.getBacktranslationService(), pe);
 				mServices.getResultService().reportResult(Activator.PLUGIN_ID, nResult);
 			} else {
-				final PositiveResult<IIcfgElement> pResult = new PositiveResult<IIcfgElement>(Activator.PLUGIN_ID,
-						rootLocation, mServices.getBacktranslationService());
-				mServices.getResultService().reportResult(Activator.PLUGIN_ID, pResult);
+
+				mServices.getResultService().reportResult(Activator.PLUGIN_ID, AllSpecificationsHoldResult
+						.createAllSpecificationsHoldResult(Activator.PLUGIN_ID, errorLocations.size()));
+				for (final IcfgLocation errorLocation : errorLocations) {
+					final PositiveResult<IIcfgElement> pResult = new PositiveResult<>(Activator.PLUGIN_ID,
+							errorLocation, mServices.getBacktranslationService());
+					mServices.getResultService().reportResult(Activator.PLUGIN_ID, pResult);
+				}
+
 			}
 
 		} catch (final IOException e) {

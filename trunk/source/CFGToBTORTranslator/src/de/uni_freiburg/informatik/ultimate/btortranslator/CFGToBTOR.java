@@ -15,6 +15,7 @@ import de.uni_freiburg.informatik.ultimate.btorutils.AssignmentRule;
 import de.uni_freiburg.informatik.ultimate.btorutils.BtorExpression;
 import de.uni_freiburg.informatik.ultimate.btorutils.BtorExpressionType;
 import de.uni_freiburg.informatik.ultimate.btorutils.BtorScript;
+import de.uni_freiburg.informatik.ultimate.btorutils.BtorSort;
 import de.uni_freiburg.informatik.ultimate.btorutils.UpdateRule;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
@@ -51,23 +52,13 @@ public class CFGToBTOR {
 		errorLocations = new HashSet<>();
 		variableAssignmentMap = new HashMap<>();
 		pcMap = new HashMap<>();
-		pcExpression = new BtorExpression(64, "pc");
+		pcExpression = new BtorExpression(new BtorSort(64), "pc");
 	}
 
 	public void extractVariables(final IIcfg<IcfgLocation> icfg) {
 		final Set<IProgramVar> allVariables = IcfgUtils.collectAllProgramVars(icfg.getCfgSmtToolkit());
 		for (final IProgramVar var : allVariables) {
-			int sort;
-			if (var.getSort().getName() == "Int") {
-				sort = 64;
-			} else if (var.getSort().getName() == "Bool") {
-				sort = 1;
-			} else if (var.getSort().getName() == "BitVec") {
-				sort = Integer.parseInt(var.getSort().getIndices()[0]);
-			} else {
-				throw new UnsupportedOperationException("sort is not int or bool or bitvec");
-			}
-
+			final BtorSort sort = new BtorSort(var.getSort());
 			final BtorExpression newState = new BtorExpression(sort, var.getGloballyUniqueId());
 			variableMap.put(var.getGloballyUniqueId(), newState);
 		}
@@ -83,6 +74,16 @@ public class CFGToBTOR {
 				final List<UpdateRule> updateRules = new ArrayList<>();
 				final List<IcfgEdge> outgoing = location.getOutgoingEdges();
 				for (final IcfgEdge edge : outgoing) {
+					// if (edge instanceof Return) {
+					// final Return retEdge = (Return) edge;
+					// final int k = 1 + 1;
+					// icfg.getCfgSmtToolkit().getOutParams()
+					// .get(retEdge.getCorrespondingCall().getSucceedingProcedure());
+					// // retEdge.getCallStatement().getLhs()[0].getIdentifier();
+					// // final BoogieIcfgContainer bicfg = (BoogieIcfgContainer) icfg;
+					// // bicfg.getBoogie2SMT().getBoogie2SmtSymbolTable()
+					//
+					// }
 					final UnmodifiableTransFormula transitionFormula = edge.getTransformula();
 					final Term guard =
 							TransFormulaUtils.computeGuard(transitionFormula, mScript, mService).getFormula();
@@ -132,21 +133,21 @@ public class CFGToBTOR {
 	private BtorExpression generatePCUpdateExpression() {
 		int pc = 1;
 		for (final DebugIdentifier locID : locationUpdateMap.keySet()) {
-			pcMap.put(locID, new BtorExpression(64, pc));
+			pcMap.put(locID, new BtorExpression(new BtorSort(64), pc));
 			System.out.println("locID: " + locID + " pc: " + pc);
 			pc++;
 		}
-		final BtorExpression zero = new BtorExpression(64, BtorExpressionType.ZERO, new ArrayList<>());
+		final BtorExpression zero = new BtorExpression(new BtorSort(64), BtorExpressionType.ZERO, new ArrayList<>());
 		BtorExpression latestITE = zero;
 		for (final DebugIdentifier locID : locationUpdateMap.keySet()) {
 			BtorExpression latestUpdate = zero;
 			final List<UpdateRule> updates = locationUpdateMap.get(locID);
 
-			final BtorExpression lineCheck =
-					new BtorExpression(1, BtorExpressionType.EQ, Arrays.asList(pcExpression, pcMap.get(locID)));
+			final BtorExpression lineCheck = new BtorExpression(new BtorSort(1), BtorExpressionType.EQ,
+					Arrays.asList(pcExpression, pcMap.get(locID)));
 			if (updates.size() == 1) {
 				final BtorExpression guard = updates.get(0).getConditionAsExpression(variableMap);
-				latestUpdate = new BtorExpression(64, BtorExpressionType.ITE,
+				latestUpdate = new BtorExpression(new BtorSort(64), BtorExpressionType.ITE,
 						Arrays.asList(guard, pcMap.get(updates.get(0).getTargetIdentifier()), latestUpdate));
 				generateAssignments(locID, updates.get(0).getTransFormula(), guard);
 
@@ -165,13 +166,13 @@ public class CFGToBTOR {
 				for (final UpdateRule update : updates) {
 					if (SmtUtils.isTrueLiteral(update.getCondition())) {
 						final BtorExpression nondeterministicGuard =
-								new BtorExpression(1, BtorExpressionType.INPUT, new ArrayList<>());
-						latestUpdate = new BtorExpression(64, BtorExpressionType.ITE, Arrays
+								new BtorExpression(new BtorSort(1), BtorExpressionType.INPUT, new ArrayList<>());
+						latestUpdate = new BtorExpression(new BtorSort(64), BtorExpressionType.ITE, Arrays
 								.asList(nondeterministicGuard, pcMap.get(update.getTargetIdentifier()), latestUpdate));
 						generateAssignments(locID, update.getTransFormula(), nondeterministicGuard);
 					} else {
 						final BtorExpression guard = update.getConditionAsExpression(variableMap);
-						latestUpdate = new BtorExpression(64, BtorExpressionType.ITE,
+						latestUpdate = new BtorExpression(new BtorSort(64), BtorExpressionType.ITE,
 								Arrays.asList(guard, pcMap.get(update.getTargetIdentifier()), latestUpdate));
 						generateAssignments(locID, update.getTransFormula(), guard);
 					}
@@ -185,11 +186,11 @@ public class CFGToBTOR {
 			 * BtorExpressionType.ITE, Arrays.asList(nondeterministicGuard,
 			 * pcMap.get(updates.get(0).getTargetIdentifier()), pcMap.get(updates.get(1).getTargetIdentifier()))); }
 			 */
-			latestITE =
-					new BtorExpression(64, BtorExpressionType.ITE, Arrays.asList(lineCheck, latestUpdate, latestITE));
+			latestITE = new BtorExpression(new BtorSort(64), BtorExpressionType.ITE,
+					Arrays.asList(lineCheck, latestUpdate, latestITE));
 		}
 		final BtorExpression next =
-				new BtorExpression(64, BtorExpressionType.NEXT, Arrays.asList(pcExpression, latestITE));
+				new BtorExpression(new BtorSort(64), BtorExpressionType.NEXT, Arrays.asList(pcExpression, latestITE));
 		return next;
 	}
 
@@ -207,10 +208,10 @@ public class CFGToBTOR {
 			}
 			for (final AssignmentRule rule : variableAssignmentMap.get(var)) {
 				final BtorExpression rhsExpression = rule.getRHSAsExpression(variableMap);
-				final BtorExpression lineCheck = new BtorExpression(1, BtorExpressionType.EQ,
+				final BtorExpression lineCheck = new BtorExpression(new BtorSort(1), BtorExpressionType.EQ,
 						Arrays.asList(pcExpression, pcMap.get(rule.assignmentLocationIdentifier)));
-				final BtorExpression lineAndGuardCheck =
-						new BtorExpression(1, BtorExpressionType.AND, Arrays.asList(lineCheck, rule.guard));
+				final BtorExpression lineAndGuardCheck = new BtorExpression(new BtorSort(1), BtorExpressionType.AND,
+						Arrays.asList(lineCheck, rule.guard));
 				lastITE = new BtorExpression(varExpression.getSort(), BtorExpressionType.ITE,
 						Arrays.asList(lineAndGuardCheck, rhsExpression, lastITE));
 			}
@@ -226,24 +227,34 @@ public class CFGToBTOR {
 	private List<BtorExpression> generateBadExpressions() {
 		final ArrayList<BtorExpression> badExpressions = new ArrayList<>();
 		for (final DebugIdentifier errorLocation : errorLocations) {
-			final BtorExpression eq =
-					new BtorExpression(1, BtorExpressionType.EQ, Arrays.asList(pcExpression, pcMap.get(errorLocation)));
-			final BtorExpression badExpression = new BtorExpression(1, BtorExpressionType.BAD, Arrays.asList(eq));
+			final BtorExpression eq = new BtorExpression(new BtorSort(1), BtorExpressionType.EQ,
+					Arrays.asList(pcExpression, pcMap.get(errorLocation)));
+			final BtorExpression badExpression =
+					new BtorExpression(new BtorSort(1), BtorExpressionType.BAD, Arrays.asList(eq));
 			badExpressions.add(badExpression);
 		}
 		return badExpressions;
 	}
 
 	public IcfgProgramExecution<IcfgEdge> extractErrorTrace(final IIcfg<IcfgLocation> icfg,
-			final ArrayList<Integer> pcList, final Map<Integer, Map<String, Integer>> programStateSequence) {
+			final ArrayList<Long> pcList, final Map<Long, Map<String, Long>> programStateSequence) {
 		final List<IcfgEdge> edges = new ArrayList<>();
 		final List<IcfgLocation> locs = new ArrayList<>();
 		final Map<Long, DebugIdentifier> pcToDI = new HashMap<>();
 		for (final DebugIdentifier ident : pcMap.keySet()) {
 			pcToDI.put(pcMap.get(ident).getConstant(), ident);
 		}
-		final Map<DebugIdentifier, IcfgLocation> diToLoc = icfg.getProgramPoints().values().iterator().next();
-		for (final Integer pc : pcList) {
+		// final Map<DebugIdentifier, IcfgLocation> diToLoc = icfg.getProgramPoints().values().iterator().next();
+		final Map<DebugIdentifier, IcfgLocation> diToLoc = new HashMap<>();
+		final Collection<Map<DebugIdentifier, IcfgLocation>> temp = icfg.getProgramPoints().values();
+
+		for (final Map<DebugIdentifier, IcfgLocation> diToLocc : temp) {
+			final Set<DebugIdentifier> keys = diToLocc.keySet();
+			for (final DebugIdentifier key : keys) {
+				diToLoc.put(key, diToLocc.get(key));
+			}
+		}
+		for (final Long pc : pcList) {
 			locs.add(diToLoc.get(pcToDI.get((long) pc)));
 		}
 		for (int i = 0; i < locs.size() - 1; i++) {
@@ -259,12 +270,12 @@ public class CFGToBTOR {
 		}
 		final Set<IProgramVar> allVariables = IcfgUtils.collectAllProgramVars(icfg.getCfgSmtToolkit());
 		final Map<Integer, ProgramState<Term>> partialProgramStateMapping = new HashMap<>();
-		for (final Integer sequenceNumber : programStateSequence.keySet()) {
+		for (final long sequenceNumber : programStateSequence.keySet()) {
 			if (sequenceNumber == 0) {
 				continue;
 			}
 			final Map<Term, Collection<Term>> programStates = new HashMap<>();
-			final Map<String, Integer> assignmentMapping = programStateSequence.get(sequenceNumber);
+			final Map<String, Long> assignmentMapping = programStateSequence.get(sequenceNumber);
 			for (final String varName : assignmentMapping.keySet()) {
 				for (final IProgramVar variable : allVariables) {
 					if (varName.equals(variable.getGloballyUniqueId())) {
@@ -275,7 +286,7 @@ public class CFGToBTOR {
 									BigInteger.valueOf(assignmentMapping.get(varName)));
 							break;
 						case "Bool":
-							if (Integer.valueOf(assignmentMapping.get(varName)) == 1) {
+							if (Long.valueOf(assignmentMapping.get(varName)) == 1) {
 								value = mScript.getScript().term("true");
 							} else {
 								value = mScript.getScript().term("false");
@@ -297,7 +308,7 @@ public class CFGToBTOR {
 				}
 			}
 			final ProgramState<Term> ps = new ProgramState<>(programStates, Term.class);
-			partialProgramStateMapping.put(sequenceNumber - 1, ps);
+			partialProgramStateMapping.put((int) (sequenceNumber - 1), ps);
 		}
 
 		return IcfgProgramExecution.create(edges, partialProgramStateMapping);
@@ -312,19 +323,20 @@ public class CFGToBTOR {
 		}
 		final BtorExpression initial_pc = pcMap.get(initial.iterator().next().getDebugIdentifier());
 		final BtorExpression pc_initialization =
-				new BtorExpression(64, BtorExpressionType.INIT, Arrays.asList(pcExpression, initial_pc));
+				new BtorExpression(new BtorSort(64), BtorExpressionType.INIT, Arrays.asList(pcExpression, initial_pc));
 		final List<BtorExpression> variableUpdateExpressions = generateVariableUpdateExpressions();
 		final List<BtorExpression> allTopLevelExpressions =
 				new ArrayList<>(Arrays.asList(initial_pc, pc_initialization, pcUpdate));
 		final List<BtorExpression> badExpressions = generateBadExpressions();
 		allTopLevelExpressions.addAll(variableUpdateExpressions);
 		allTopLevelExpressions.addAll(badExpressions);
-		final Set<Integer> sorts = new HashSet<>();
+		final Set<BtorSort> sorts = new HashSet<>();
 		for (final BtorExpression var : variableMap.values()) {
 			sorts.add(var.getSort());
+
 		}
-		sorts.add(1);
-		sorts.add(64);
+		sorts.add(new BtorSort(1));
+		sorts.add(new BtorSort(64));
 		return new BtorScript(allTopLevelExpressions, new ArrayList<>(sorts));
 	}
 
