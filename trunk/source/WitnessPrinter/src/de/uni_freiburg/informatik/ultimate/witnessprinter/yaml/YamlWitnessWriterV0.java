@@ -31,8 +31,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-<<<<<<<HEAD=======
-import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.FunctionContract;>>>>>>>e013bd84b4(Add comment and improve error message)
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.FunctionContract;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LocationInvariant;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LoopInvariant;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Witness;
