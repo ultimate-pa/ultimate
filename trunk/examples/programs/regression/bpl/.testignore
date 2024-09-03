@@ -1,36 +1,4 @@
 TIMEOUT:
-- task: BugLiveVariables03-Safe.bpl
-  settings: AutomizerBpl-FPandBP.epf
-  toolchain: AutomizerBpl.xml
-- task: BugNestedSsaWithPendingContexts.bpl
-  settings: AutomizerBpl-forwardPredicates.epf
-  toolchain: AutomizerBpl.xml
-- task: BugNoPredecessorOfReturnTransition.bpl
-  settings: PdrAutomizerBpl.epf
-  toolchain: PdrAutomizerBpl.xml
 - task: nestedWhileSimple-Safe.bpl
   settings: PdrAutomizerBpl.epf
   toolchain: PdrAutomizerBpl.xml
-
-Overapproximation:
-- task: Overapproximation.bpl
-  settings: AutomizerBpl-nestedInterpolants.epf
-  toolchain: AutomizerBpl.xml
-- task: Overapproximation.bpl
-  settings: AutomizerBpl-forwardPredicates.epf
-  toolchain: AutomizerBpl.xml
-- task: Overapproximation.bpl
-  settings: AutomizerBpl-FPandBP.epf
-  toolchain: AutomizerBpl.xml
-- task: Overapproximation.bpl
-  settings: PdrAutomizerBpl.epf
-  toolchain: PdrAutomizerBpl.xml
-
-# We are unable to backtranslate @diff from SMT to Boogie
-unknown symbol (@diff:
-- task: BugLiveVariables03-Safe.bpl
-  settings: AutomizerBpl-nestedInterpolants.epf
-  toolchain: AutomizerBpl.xml
-- task: BugLiveVariables04-Safe.bpl
-  settings: AutomizerBpl-nestedInterpolants.epf
-  toolchain: AutomizerBpl.xml

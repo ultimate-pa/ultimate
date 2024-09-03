@@ -6,3 +6,20 @@ Const is only supported for infinite index sort:
 - task: ConstArray.bpl
   settings: AutomizerBpl-nestedInterpolants.epf
   toolchain: PdrAutomizerBpl.xml
+- task: ConstArray.bpl
+  settings: PdrAutomizerBpl.epf
+  toolchain: PdrAutomizerBpl.xml
+
+Overapproximation:
+- task: Overapproximation.bpl
+  settings: AutomizerBpl-nestedInterpolants.epf
+  toolchain: AutomizerBpl.xml
+- task: Overapproximation.bpl
+  settings: AutomizerBpl-forwardPredicates.epf
+  toolchain: AutomizerBpl.xml
+- task: Overapproximation.bpl
+  settings: AutomizerBpl-FPandBP.epf
+  toolchain: AutomizerBpl.xml
+- task: Overapproximation.bpl
+  settings: PdrAutomizerBpl.epf
+  toolchain: PdrAutomizerBpl.xml
