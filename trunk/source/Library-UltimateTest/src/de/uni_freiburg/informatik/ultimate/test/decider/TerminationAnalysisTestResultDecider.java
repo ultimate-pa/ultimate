@@ -50,6 +50,11 @@ public class TerminationAnalysisTestResultDecider extends
 		super(ultimateRunDefinition, unknownIsJUnitSuccess);
 	}
 
+	public TerminationAnalysisTestResultDecider(final UltimateRunDefinition ultimateRunDefinition,
+			final boolean unknownIsJUnitSuccess, final String overridenExpectedVerdict) {
+		super(ultimateRunDefinition, unknownIsJUnitSuccess, overridenExpectedVerdict);
+	}
+
 	@Override
 	public IExpectedResultFinder<TerminationAnalysisOverallResult> constructExpectedResultFinder() {
 		return new KeywordBasedExpectedResultFinder<>(
@@ -79,6 +84,19 @@ public class TerminationAnalysisTestResultDecider extends
 		public void evaluateTestResult(
 				final IExpectedResultFinder<TerminationAnalysisOverallResult> expectedResultFinder,
 				final IOverallResultEvaluator<TerminationAnalysisOverallResult> overallResultDeterminer) {
+			if (mOverridenExpectedVerdict != null) {
+				final TerminationAnalysisOverallResult overallResult = overallResultDeterminer.getOverallResult();
+				final String overallResultMsg = overallResultDeterminer.generateOverallResultMessage();
+				final Pattern pattern = Pattern.compile(mOverridenExpectedVerdict, Pattern.CASE_INSENSITIVE);
+				if (pattern.matcher(overallResult.toString()) != null || pattern.matcher(overallResultMsg) != null) {
+					mTestResult = TestResult.IGNORE;
+				} else {
+					mTestResult = TestResult.FAIL;
+				}
+				mCategory = overallResult + " (Expected to match :" + mOverridenExpectedVerdict + ")";
+				mMessage = " UltimateResult: " + overallResultMsg;
+				return;
+			}
 			evaluateExpectedResult(expectedResultFinder);
 			switch (expectedResultFinder.getExpectedResultFinderStatus()) {
 			case ERROR:
