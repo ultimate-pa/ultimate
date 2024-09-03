@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.test.decider;
 
+import java.util.regex.Pattern;
+
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.decider.expectedresult.IExpectedResultFinder;
 import de.uni_freiburg.informatik.ultimate.test.decider.expectedresult.KeywordBasedExpectedResultFinder;
