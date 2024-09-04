@@ -52,8 +52,7 @@ public class TerminationRegressionTestSuite extends AbstractRegressionTestSuite 
 	@Override
 	protected ITestResultDecider getTestResultDecider(final UltimateRunDefinition runDefinition,
 			final String overridenExpectedVerdict) {
-		checkNoOverridenVerdict(overridenExpectedVerdict);
-		return new TerminationAnalysisTestResultDecider(runDefinition, false);
+		return new TerminationAnalysisTestResultDecider(runDefinition, false, overridenExpectedVerdict);
 	}
 
 }
