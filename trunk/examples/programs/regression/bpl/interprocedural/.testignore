@@ -7,7 +7,7 @@ TIMEOUT:
   toolchain: AutomizerBpl.xml
 
 # We are unable to backtranslate @diff from SMT to Boogie
-unknown symbol (@diff:
+unknown symbol.*@diff:
 - task: BugLiveVariables03-Safe.bpl
   settings: AutomizerBpl-nestedInterpolants.epf
   toolchain: AutomizerBpl.xml
