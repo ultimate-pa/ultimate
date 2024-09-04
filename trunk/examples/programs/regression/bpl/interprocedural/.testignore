@@ -5,6 +5,9 @@ TIMEOUT:
 - task: BugNestedSsaWithPendingContexts.bpl
   settings: AutomizerBpl-forwardPredicates.epf
   toolchain: AutomizerBpl.xml
+- task: BugNoPredecessorOfReturnTransition.bpl
+  settings: PdrAutomizerBpl.epf
+  toolchain: PdrAutomizerBpl.xml
 
 # We are unable to backtranslate @diff from SMT to Boogie
 unknown symbol.*@diff:
