@@ -33,6 +33,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.IntStream;
@@ -70,10 +71,11 @@ public class UltimateInterpolator extends WrapperScript {
 	private final ManagedScript mMgdScript;
 	private final ManagedScript mSupMgdScript;
 	private final HashMap<String, Term> mTermMap;
+	private final HashMap<Integer, Integer> mCurrentSubtree;
+	private final HashMap<Integer, ArrayList<Integer>> mIncludesNodes;
 	private final boolean mCheckInterpolants;
 	private final TermTransferrer mTransferrer;
 	private final TermTransferrer mReTransferrer;
-	private final int mMethod;
 
 	public UltimateInterpolator(final IUltimateServiceProvider services, final ILogger logger,
 			final Script script, final Script supportScript) {
@@ -84,10 +86,11 @@ public class UltimateInterpolator extends WrapperScript {
 		mMgdScript = new ManagedScript(services, mScript);
 		mSupMgdScript = new ManagedScript(services, mSupportingScript);
 		mTermMap = new HashMap<String, Term>();
-		mCheckInterpolants = true;
+		mCurrentSubtree = new HashMap<Integer, Integer>();
+		mIncludesNodes = new HashMap<Integer, ArrayList<Integer>>();
+		mCheckInterpolants = false;
 		mTransferrer = new TermTransferrer(mScript, mSupportingScript);
 		mReTransferrer = new TermTransferrer(mSupportingScript, mScript);
-		mMethod = 3;
 	}
 
 	/**
@@ -140,20 +143,7 @@ public class UltimateInterpolator extends WrapperScript {
 	@Override
 	public Term[] getInterpolants(final Term[] partition) throws SMTLIBException, UnsupportedOperationException {
 		final Term[] uc = mScript.getUnsatCore();
-		final Term[] interpolants;
-		switch (mMethod) {
-			case 1:
-				interpolants = existentialSequence(partition, uc);
-				break;
-			case 2:
-				interpolants = forallSequence(partition, uc);
-				break;
-			case 3:
-				interpolants = combinedMethod(partition, uc);
-				break;
-			default:
-				interpolants = existentialSequence(partition, uc);
-		}
+		final Term[] interpolants = combinedMethod(partition, uc);
 		if (mCheckInterpolants) {
 			assert checkInterpolants(interpolants, partition, uc);
 		}
@@ -170,11 +160,118 @@ public class UltimateInterpolator extends WrapperScript {
 				}
 			}
 		}
-		// TODO: Tree Interpolation
-		return getInterpolants(partition);
+		// Produce sequence of interpolants if startOfSubtree only contains zeros
+		if (containsOnlyZeros(startOfSubtree)) {
+			return getInterpolants(partition);
+		}
+		final Term[] interpolants = new Term[partition.length - 1];
+		// ArrayList<Set<Term>> constants = writeConstants(partition);
+		for (int i = 0; i < partition.length - 1; i++) {
+			final Term[] ar = { partition[i] };
+			final ArrayList<Term> fIsyms = getFunsymbols(ar);
+			final Term formulaI = buildTerm(partition[i], fIsyms);
+			final ArrayList<Set<Term>> otherTheory = makeTheory();
+			Set<Term> mergedSet = new HashSet<>();
+	        for (Set<Term> set : otherTheory) {
+	            mergedSet.addAll(set);
+	        }
+			if (startOfSubtree[i] == i) {
+				mCurrentSubtree.put(i, i);
+				ArrayList<Integer> list = new ArrayList<Integer>();
+				list.add(i);
+				mIncludesNodes.put(i, list);
+				interpolants[i] = quantifyEliminate(formulaI, i, startOfSubtree, partition, mergedSet);
+				continue;
+			}
+			if (startOfSubtree[i] == startOfSubtree[i - 1]) {
+				mCurrentSubtree.put(startOfSubtree[i], i);
+				mIncludesNodes.get(startOfSubtree[i]).add(i);
+				interpolants[i] = quantifyEliminate(SmtUtils.and(mScript, formulaI, interpolants[i - 1]),
+						i, startOfSubtree, partition, mergedSet);
+			} else {
+				mIncludesNodes.get(startOfSubtree[i]).add(i);
+				interpolants[i] = quantifyEliminate(closeSubtrees(interpolants, formulaI, i, startOfSubtree),
+						i, startOfSubtree, partition, mergedSet);
+			}
+			
+		}
+		return interpolants;
 	}
 	
-	private boolean containsOnlyZeros(int[] arr) {
+	/* quantifies variables that only occur in subtree and also eliminates quantifiers afterwards */
+	private Term quantifyEliminate(Term conjunction, int i, int[] startOfSubtree, Term[] partition,
+			Set<Term> theoryVars) {
+		// get all Constant symbols in subtree and outside subtree
+		final Set<Term> subTreeConstants = new HashSet<Term>();
+		final Set<Term> otherTreeConstants = new HashSet<Term>();
+		final ArrayList<Term> subTree = new ArrayList<Term>();
+		final ArrayList<Term> otherTrees = new ArrayList<Term>();
+		for (Map.Entry<Integer, ArrayList<Integer>> entry: mIncludesNodes.entrySet()) {
+			if (entry.getKey() >= startOfSubtree[i]) {
+				for (Integer k: entry.getValue()) {
+					subTree.add(partition[k]);
+					final Term[] ar = { partition[k] };
+					final ArrayList<Term> fsyms = getFunsymbols(ar);
+					subTreeConstants.addAll(SubTermFinder.find((ApplicationTerm) buildTerm(partition[k], fsyms),
+							new CheckForSubterm(), false));
+				}
+			}
+		}
+		for (Term t: partition) {
+			if (!subTree.contains(t)) {
+				otherTrees.add(t);
+				final Term[] ar = { t };
+				final ArrayList<Term> fsyms = getFunsymbols(ar);
+				otherTreeConstants.addAll(SubTermFinder.find((ApplicationTerm) buildTerm(t, fsyms),
+						new CheckForSubterm(), false));
+			}
+		}
+		// determine all constant symbols that only occur in subtree but not outside subtree
+		final HashMap<Term, Term> constantToVar = new HashMap<Term, Term>();
+		final Set<TermVariable> varSet = new HashSet<TermVariable>();
+		for (Term t: subTreeConstants) {
+			if (!otherTreeConstants.contains(t) && !theoryVars.contains(t)) {
+				String str = SmtUtils.removeSmtQuoteCharacters(t.toString());
+				TermVariable var = mScript.variable(str, t.getSort());
+				varSet.add(var);
+				constantToVar.put(t, var);
+			}
+		}
+		// quantify these constant symbols and eliminate quantifiers
+		if (!varSet.isEmpty()) {
+			final Term substitutedTerm = Substitution.apply(mScript, constantToVar,
+					conjunction);
+			conjunction = SmtUtils.quantifier(mScript, QuantifiedFormula.EXISTS, varSet,
+					substitutedTerm);
+			final Term transTerm = mTransferrer.transform(conjunction);
+			// for eliminate: SimplificationTechnique.SIMPLIFY_DDA2
+			final Term transElim = PartialQuantifierElimination.eliminateLight(mServices, mSupMgdScript,
+					transTerm);
+			conjunction = mReTransferrer.transform(transElim);
+		}
+		return conjunction;
+	}
+	
+	/* Builds interpolant for a node i in the tree that has more than one child, by constructing the conjunction of
+	 * the interpolants of its children and the partition formula at node i.*/
+	private Term closeSubtrees(Term[] interpolants, Term formulaI, int i, int[] sOS) {
+		Term interpolant = formulaI;
+		ArrayList<Integer> toRemove = new ArrayList<Integer>();
+		for (Map.Entry<Integer, Integer> entry: mCurrentSubtree.entrySet()) {
+			if (entry.getKey() >= sOS[i]) {
+				interpolant = SmtUtils.and(mScript, interpolant, interpolants[entry.getValue()]);
+				toRemove.add(entry.getKey());
+			}
+		}
+		for (Integer key: toRemove) {
+			mCurrentSubtree.remove(key);
+		}
+		mCurrentSubtree.put(sOS[i], i);
+		return interpolant;
+	}
+	
+	/* Checks whether the array arr only contains zeros */
+	private static boolean containsOnlyZeros(int[] arr) {
 	    for (int i = 0; i < arr.length; i++) {
 	        if (arr[i] != 0) {
 	            return false;
@@ -523,6 +620,9 @@ public class UltimateInterpolator extends WrapperScript {
 		}
 	}
 	
+	/**
+	 * Predicate that is used to get quantifiers in term.
+	 */
 	public static class CheckForQuantifier implements Predicate<Term> {
 		@Override
 		public boolean test(Term t) {
