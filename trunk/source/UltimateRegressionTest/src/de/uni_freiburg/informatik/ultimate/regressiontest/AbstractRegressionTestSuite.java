@@ -124,7 +124,9 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 								runConfiguration.getToolchainFile(), getTimeout(runConfiguration, inputFile));
 				final String overridenVerdict = skippedTests.get(inputFile,
 						runConfiguration.getSettingsFile().getName(), runConfiguration.getToolchainFile().getName());
-				rtr.add(buildTestCase(urd, getTestResultDecider(urd, overridenVerdict)));
+				final ITestResultDecider decider = overridenVerdict == null ? getTestResultDecider(urd)
+						: getTestResultDecider(urd, overridenVerdict);
+				rtr.add(buildTestCase(urd, decider));
 			}
 		}
 		return rtr;
@@ -303,13 +305,11 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 				.collect(Collectors.toList());
 	}
 
-	protected abstract ITestResultDecider getTestResultDecider(UltimateRunDefinition runDefinition,
-			String overridenExpectedVerdict);
+	protected abstract ITestResultDecider getTestResultDecider(UltimateRunDefinition runDefinition);
 
-	protected void checkNoOverridenVerdict(final String overridenExpectedVerdict) {
-		if (overridenExpectedVerdict != null) {
-			throw new UnsupportedOperationException(getClass().getSimpleName() + " does not support skipping tests.");
-		}
+	protected ITestResultDecider getTestResultDecider(final UltimateRunDefinition runDefinition,
+			final String overridenExpectedVerdict) {
+		throw new UnsupportedOperationException(getClass().getSimpleName() + " does not support skipping tests.");
 	}
 
 	public static final class Config

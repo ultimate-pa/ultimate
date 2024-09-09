@@ -66,9 +66,7 @@ public class C2BoogieRegressionTestSuite extends AbstractRegressionTestSuite {
 	}
 
 	@Override
-	protected ITestResultDecider getTestResultDecider(final UltimateRunDefinition runDefinition,
-			final String overridenExpectedVerdict) {
-		checkNoOverridenVerdict(overridenExpectedVerdict);
+	protected ITestResultDecider getTestResultDecider(final UltimateRunDefinition runDefinition) {
 		return new TranslationTestResultDecider(runDefinition.selectPrimaryInputFile());
 	}
 

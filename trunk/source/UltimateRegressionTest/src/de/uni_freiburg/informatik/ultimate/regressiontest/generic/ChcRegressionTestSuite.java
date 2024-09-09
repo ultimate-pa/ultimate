@@ -51,15 +51,13 @@ public class ChcRegressionTestSuite extends AbstractRegressionTestSuite {
 		mTimeout = DEFAULT_TIMEOUT;
 		mRootFolder = TestUtil.getPathFromTrunk("examples/smtlib/horn/regression");
 
-//		// exclude paths that match the following regex
-//		mExcludeFilterRegex =
+		// // exclude paths that match the following regex
+		// mExcludeFilterRegex =
 		mFiletypesToConsider = new String[] { ".smt2" };
 	}
 
 	@Override
-	protected ITestResultDecider getTestResultDecider(final UltimateRunDefinition runDefinition,
-			final String overridenExpectedVerdict) {
-		checkNoOverridenVerdict(overridenExpectedVerdict);
+	protected ITestResultDecider getTestResultDecider(final UltimateRunDefinition runDefinition) {
 		final boolean unknownIsSuccess = false;
 		return new ChcTestResultDecider(runDefinition, unknownIsSuccess);
 	}
