@@ -31,6 +31,7 @@ datadir = os.path.join(ultimatedir, "data")
 witnessdir = ultimatedir
 witnessname = "witness"
 enable_assertions = False
+referee_strict_validation = True
 
 # special strings in ultimate output
 unsupported_syntax_errorstring = "ShortDescription: Unsupported Syntax"
@@ -54,6 +55,8 @@ termination_path_end = "End of lasso representation."
 overflow_false_string = "overflow possible"
 data_race_found_string = "DataRaceFoundResult"
 data_race_error_path_begin_string = "The following path leads to a data race"
+referee_valid_proof_string = "AnnotationCheckResult: Annotation is a valid proof of correctness."
+referee_invalid_proof_string = "AnnotationCheckResult: Annotation is not a valid proof of correctness."
 
 
 class _PropParser:
@@ -436,6 +439,10 @@ def run_ultimate(ultimate_call, prop, verbose=False):
             if line.find(overflow_false_string) != -1:
                 result = "FALSE"
                 result_msg = "OVERFLOW"
+            if line.find(referee_valid_proof_string) != -1:
+                result = "TRUE"
+            if line.find(referee_invalid_proof_string) != -1:
+                result = "FALSE" if referee_strict_validation else "UNKNOWN"
             if line.find(error_path_begin_string) != -1:
                 reading_error_path = True
             if reading_error_path and line.strip() == "":
