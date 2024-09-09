@@ -1601,11 +1601,7 @@ public class CHandler {
 		final ArrayList<Statement> stmt = new ArrayList<>();
 		final String[] name = { node.getName().toString() };
 		stmt.add(new GotoStatement(mLocationFactory.createCLocation(node), name));
-		final ExpressionResult result = new ExpressionResult(stmt, null);
-		if (mIsPrerun) {
-			return result;
-		}
-		return main.transformWithWitness(node, result);
+		return new ExpressionResult(stmt, null);
 	}
 
 	public Result visit(final IDispatcher main, final IASTIdExpression node) {
@@ -3614,11 +3610,7 @@ public class CHandler {
 
 		assert resultBuilder.getLrValue() == null : "there is an lrvalue although there should be none";
 		assert resultBuilder.getAuxVars().isEmpty() : "auxvars were added although they should have been havoced";
-		final ExpressionResult result = resultBuilder.build();
-		if (mIsPrerun) {
-			return result;
-		}
-		return main.transformWithWitness(node, result);
+		return resultBuilder.build();
 	}
 
 	private LoopInvariantSpecification[] extractLoopInvariants(final IDispatcher main, final IASTStatement node) {
