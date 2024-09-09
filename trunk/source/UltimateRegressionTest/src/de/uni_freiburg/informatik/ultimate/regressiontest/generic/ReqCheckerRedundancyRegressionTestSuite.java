@@ -173,7 +173,8 @@ public class ReqCheckerRedundancyRegressionTestSuite extends AbstractRegressionT
 				}
 				return false;
 			}
-			if ((mNoResults != -1 && actual.mNoResults != mNoResults) || DataStructureUtils.isDifferent(actual.mRedundant, mRedundant)) {
+			if ((mNoResults != -1 && actual.mNoResults != mNoResults)
+					|| DataStructureUtils.isDifferent(actual.mRedundant, mRedundant)) {
 				return false;
 			}
 			return true;

@@ -27,16 +27,21 @@
 package de.uni_freiburg.informatik.ultimate.regressiontest;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.stream.Collectors;
+
+import org.yaml.snakeyaml.Yaml;
 
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
@@ -48,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.test.logs.summaries.TraceAbstractionT
 import de.uni_freiburg.informatik.ultimate.test.reporting.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
 
 /**
  * An {@link AbstractRegressionTestSuite} is a {@link UltimateTestSuite} that automatically generates tests from folders
@@ -62,6 +68,7 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 
 	private static final Predicate<File> FILTER_XML = TestUtil.getFileEndingTest(".xml");
 	private static final Predicate<File> FILTER_EPF = TestUtil.getFileEndingTest(".epf");
+	private static final String SKIPPED_FILENAME = ".testignore";
 
 	protected long mTimeout;
 	protected String mRootFolder;
@@ -110,15 +117,49 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 		final Predicate<File> filesRegexFilter = getFilesRegexFilter();
 		for (final Config runConfiguration : runConfigurations) {
 			final Collection<File> inputFiles = getInputFiles(filesRegexFilter, runConfiguration);
-
+			final NestedMap3<File, String, String, String> skippedTests = getSkippedTests(inputFiles);
 			for (final File inputFile : inputFiles) {
 				final UltimateRunDefinition urd =
 						new UltimateRunDefinition(inputFile, runConfiguration.getSettingsFile(),
 								runConfiguration.getToolchainFile(), getTimeout(runConfiguration, inputFile));
-				rtr.add(buildTestCase(urd, getTestResultDecider(urd)));
+				final String overridenVerdict = skippedTests.get(inputFile,
+						runConfiguration.getSettingsFile().getName(), runConfiguration.getToolchainFile().getName());
+				final ITestResultDecider decider = overridenVerdict == null ? getTestResultDecider(urd)
+						: getTestResultDecider(urd, overridenVerdict);
+				rtr.add(buildTestCase(urd, decider));
 			}
 		}
 		return rtr;
+	}
+
+	/**
+	 * Collect all tests that should be marked as skipped. To do so, all files with SKIPPED_FILENAME next to
+	 * {@code inputFiles} are considered and a NestedMap3 is extracted from.
+	 */
+	private static NestedMap3<File, String, String, String> getSkippedTests(final Collection<File> inputFiles) {
+		final NestedMap3<File, String, String, String> result = new NestedMap3<>();
+		inputFiles.stream().map(x -> new File(x.getParentFile(), SKIPPED_FILENAME)).distinct()
+				.forEach(x -> addSkippedTest(x, result));
+		return result;
+	}
+
+	private static void addSkippedTest(final File ignoreFile, final NestedMap3<File, String, String, String> map) {
+		try {
+			final Map<String, List<Map<String, String>>> parsed = new Yaml().load(new FileInputStream(ignoreFile));
+			for (final var entry : parsed.entrySet()) {
+				for (final Map<String, String> triples : entry.getValue()) {
+					if (triples.values().stream().anyMatch(x -> x.contains("/"))) {
+						throw new UnsupportedOperationException("Invalid filename in ignore-file" + ignoreFile
+								+ ". The filename may only contain a name, not a relative path. "
+								+ "Add a new ignore-file next to the task itself (if desired).");
+					}
+					map.put(new File(ignoreFile.getParentFile(), triples.get("task")), triples.get("settings"),
+							triples.get("toolchain"), entry.getKey());
+				}
+			}
+		} catch (final FileNotFoundException e) {
+			// File does not exist, nothing to be ignored
+		}
 	}
 
 	protected long getTimeout(final Config rundef, final File file) {
@@ -265,6 +306,11 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 	}
 
 	protected abstract ITestResultDecider getTestResultDecider(UltimateRunDefinition runDefinition);
+
+	protected ITestResultDecider getTestResultDecider(final UltimateRunDefinition runDefinition,
+			final String overridenExpectedVerdict) {
+		throw new UnsupportedOperationException(getClass().getSimpleName() + " does not support skipping tests.");
+	}
 
 	public static final class Config
 			extends de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair<File, File> {

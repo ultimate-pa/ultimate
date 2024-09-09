@@ -30,7 +30,8 @@ Require-Bundle: org.junit,
  de.uni_freiburg.informatik.ultimate.plugins.icfgtransformation,
  de.uni_freiburg.informatik.ultimate.lib.sifa,
  de.uni_freiburg.informatik.ultimate.plugins.sifa,
- de.uni_freiburg.informatik.ultimate.plugins.generator.referee
+ de.uni_freiburg.informatik.ultimate.plugins.generator.referee,
+ org.yaml.snakeyaml
 Import-Package: de.uni_freiburg.informatik.ultimate.lib.pea,
  de.uni_freiburg.informatik.ultimate.lib.srparse,
  de.uni_freiburg.informatik.ultimate.lib.srparse.pattern,
