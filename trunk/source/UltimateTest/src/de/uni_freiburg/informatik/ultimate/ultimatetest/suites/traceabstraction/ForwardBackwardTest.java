@@ -128,12 +128,14 @@ public class ForwardBackwardTest extends AbstractTraceAbstractionTestSuite {
 	 *
 	 */
 	private static final String[] mSettingsBoogie = {
-		"automizer/ForwardPredicatesBtorTest.epf",
+//		"automizer/ForwardPredicatesBtorTest.epf",
+		"automizer/ForwardPredicatesBtorTestInlining.epf",
 //		"automizer/BackwardPredicates.epf",
 	};
 
 	private static final String[] mSettingsC = {
-		"automizer/ForwardPredicatesBtorTest.epf",
+		//"automizer/ForwardPredicatesBtorTest.epf",
+		"automizer/ForwardPredicatesBtorTestInlining.epf",
 //		"automizer/BackwardPredicates.epf",
 //		"automizer/ForwardPredicatesBitvector.epf",
 //		"automizer/BackwardPredicatesBitvector.epf",

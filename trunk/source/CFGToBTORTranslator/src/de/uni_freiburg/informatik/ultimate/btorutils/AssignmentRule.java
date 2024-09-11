@@ -3,160 +3,94 @@ package de.uni_freiburg.informatik.ultimate.btorutils;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.Boogie2SMT;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.Expression2Term.IIdentifierTranslator;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 
 public class AssignmentRule {
 	public DebugIdentifier assignmentLocationIdentifier;
 	public IProgramVar lhs;
-	public Term rhs;
+	public Expression rhs;
 	public TransFormula tf;
 	public BtorExpression guard;
+	// Boogie2SmtSymbolTable symTable;
+	Boogie2SMT boogie2SMT;
 
-	public AssignmentRule(final DebugIdentifier assignmentLocationIdentifier, final IProgramVar lhs, final Term rhs,
-			final TransFormula tf, final BtorExpression guard) {
+	public AssignmentRule(final DebugIdentifier assignmentLocationIdentifier, final IProgramVar lhs,
+			final Expression rhs, final TransFormula tf, final BtorExpression guard, final Boogie2SMT boogie2SMT) {
 		this.assignmentLocationIdentifier = assignmentLocationIdentifier;
 		this.lhs = lhs;
 		this.rhs = rhs;
 		this.tf = tf;
 		this.guard = guard;
+		this.boogie2SMT = boogie2SMT;
+		// this.symTable = symTable;
 	}
 
 	public static List<AssignmentRule> getAssignmentsFromTransition(final DebugIdentifier assignmentLocationIdentifier,
-			final TransFormula tf, final ManagedScript script, final BtorExpression guard) {
+			final IcfgEdge icfgEdge, final ManagedScript script, final BtorExpression guard,
+			final Boogie2SMT boogie2SMT) {
 		final List<AssignmentRule> assignmentRules = new ArrayList<>();
-		final Set<IProgramVar> assignedVars = TransFormulaUtils.computeAssignedVars(tf.getInVars(), tf.getOutVars());
-		for (final IProgramVar assignedVar : assignedVars) {
-			boolean foundAssignment = false;
-			if (!(tf.getOutVars().containsKey(assignedVar))) {
-				continue;
-			}
-			if (tf.isHavocedOut(assignedVar)) {
-				assignmentRules.add(new AssignmentRule(assignmentLocationIdentifier, assignedVar,
-						script.getScript().term("true"), tf, guard));
-				foundAssignment = true;
-			} else {
-				final Term formula = tf.getFormula();
-				if (formula instanceof ApplicationTerm) {
-					final ApplicationTerm appFormula = (ApplicationTerm) formula;
-					if (appFormula.getFunction().getName().equals("and")) {
-						for (final Term possibleAssignment : appFormula.getParameters()) {
-							if (possibleAssignment instanceof ApplicationTerm) {
-								final ApplicationTerm appPossibleAssignment = (ApplicationTerm) possibleAssignment;
-								if (appPossibleAssignment.getFunction().getName().equals("=")) {
-									final Term lhsTerm = appPossibleAssignment.getParameters()[0];
-									final Term rhsTerm = appPossibleAssignment.getParameters()[1];
-									if (lhsTerm instanceof TermVariable) {
-										final TermVariable lhsVar = (TermVariable) lhsTerm;
-										if (tf.getOutVars().values().contains(lhsVar) && TransFormulaUtils
-												.getProgramVarForTerm(tf, lhsVar).equals(assignedVar)) {
-											assignmentRules.add(new AssignmentRule(assignmentLocationIdentifier,
-													assignedVar, appPossibleAssignment.getParameters()[1], tf, guard));
-											foundAssignment = true;
-											break;
-										}
-									}
-									if (rhsTerm instanceof TermVariable) {
-										final TermVariable rhsVar = (TermVariable) rhsTerm;
-										if (tf.getOutVars().values().contains(rhsVar) && TransFormulaUtils
-												.getProgramVarForTerm(tf, rhsVar).equals(assignedVar)) {
-											assignmentRules.add(new AssignmentRule(assignmentLocationIdentifier,
-													assignedVar, appPossibleAssignment.getParameters()[0], tf, guard));
-											foundAssignment = true;
-											break;
-										}
-									}
-								}
-							}
-
-						}
-					} else if (SmtUtils.isAtomicFormula(appFormula)) {
-						if (appFormula.getFunction().getName().equals("=")) {
-							final Term lhsTerm = appFormula.getParameters()[0];
-							if (lhsTerm instanceof TermVariable) {
-								final TermVariable lhsVar = (TermVariable) lhsTerm;
-								if (TransFormulaUtils.getProgramVarForTerm(tf, lhsVar).equals(assignedVar)) {
-									assignmentRules.add(new AssignmentRule(assignmentLocationIdentifier, assignedVar,
-											appFormula.getParameters()[1], tf, guard));
-									foundAssignment = true;
-								}
-							}
-							final Term rhsTerm = appFormula.getParameters()[1];
-							if (rhsTerm instanceof TermVariable) {
-								final TermVariable rhsVar = (TermVariable) rhsTerm;
-								if (TransFormulaUtils.getProgramVarForTerm(tf, rhsVar).equals(assignedVar)) {
-									assignmentRules.add(new AssignmentRule(assignmentLocationIdentifier, assignedVar,
-											appFormula.getParameters()[0], tf, guard));
-									foundAssignment = true;
-								}
-							}
-						}
-					} else if (appFormula.getFunction().getName().equals("or")) {
-						if (appFormula.getParameters().length != 2) {
-							throw new UnsupportedOperationException("Transformula not in cnf");
-						}
-						if (!(appFormula.getParameters()[0] instanceof ApplicationTerm)) {
-							throw new UnsupportedOperationException("Transformula not in cnf");
-						}
-						if (!(appFormula.getParameters()[1] instanceof ApplicationTerm)) {
-							throw new UnsupportedOperationException("Transformula not in cnf");
-						}
-						final ApplicationTerm boolAssignmentRhs = (ApplicationTerm) appFormula.getParameters()[1];
-						final ApplicationTerm boolAssignmentLhs = (ApplicationTerm) appFormula.getParameters()[0];
-						if (!((boolAssignmentLhs.getFunction().getName().equals("and"))
-								&& (boolAssignmentRhs.getFunction().getName().equals("and")))) {
-							throw new UnsupportedOperationException("Transformula not in cnf");
-						}
-						if (boolAssignmentLhs.getParameters().length != 2
-								|| boolAssignmentRhs.getParameters().length != 2) {
-							throw new UnsupportedOperationException("Transformula not in cnf");
-						}
-						if (boolAssignmentRhs.getParameters()[0] instanceof TermVariable) {
-							final TermVariable rhsVar = (TermVariable) boolAssignmentRhs.getParameters()[0];
-							if (TransFormulaUtils.getProgramVarForTerm(tf, rhsVar).equals(assignedVar)) {
-								assignmentRules.add(new AssignmentRule(assignmentLocationIdentifier, assignedVar,
-										boolAssignmentRhs.getParameters()[1], tf, guard));
-								foundAssignment = true;
-							}
-						}
-
-						if (boolAssignmentRhs.getParameters()[1] instanceof TermVariable) {
-							final TermVariable rhsVar = (TermVariable) boolAssignmentRhs.getParameters()[1];
-							if (TransFormulaUtils.getProgramVarForTerm(tf, rhsVar).equals(assignedVar)) {
-								assignmentRules.add(new AssignmentRule(assignmentLocationIdentifier, assignedVar,
-										boolAssignmentRhs.getParameters()[0], tf, guard));
-								foundAssignment = true;
-							}
+		if (icfgEdge instanceof StatementSequence) {
+			final List<Statement> statements = ((StatementSequence) icfgEdge).getStatements();
+			for (final Statement statement : statements) {
+				if (statement instanceof AssignmentStatement) {
+					final AssignmentStatement assignmentStatement = (AssignmentStatement) statement;
+					final Expression[] rightHandSides = assignmentStatement.getRhs();
+					final LeftHandSide[] leftHandSides = assignmentStatement.getLhs();
+					for (int i = 0; i < leftHandSides.length; i++) {
+						if (leftHandSides[i] instanceof VariableLHS) {
+							final VariableLHS lhs = (VariableLHS) leftHandSides[i];
+							final IProgramVar assignedVar = boogie2SMT.getBoogie2SmtSymbolTable()
+									.getBoogieVar(lhs.getIdentifier(), lhs.getDeclarationInformation(), false);
+							assignmentRules.add(new AssignmentRule(assignmentLocationIdentifier, assignedVar,
+									rightHandSides[i], icfgEdge.getTransformula(), guard, boogie2SMT));
 						}
 					}
-
-					else {
-						throw new UnsupportedOperationException("Transformula not in cnf");
-
+				} else if (statement instanceof HavocStatement) {
+					final HavocStatement havocStatement = (HavocStatement) statement;
+					final LeftHandSide[] leftHandSides = havocStatement.getIdentifiers();
+					for (int i = 0; i < leftHandSides.length; i++) {
+						if (leftHandSides[i] instanceof VariableLHS) {
+							final VariableLHS lhs = (VariableLHS) leftHandSides[i];
+							final IProgramVar assignedVar = boogie2SMT.getBoogie2SmtSymbolTable()
+									.getBoogieVar(lhs.getIdentifier(), lhs.getDeclarationInformation(), false);
+							assignmentRules.add(new AssignmentRule(assignmentLocationIdentifier, assignedVar, null,
+									icfgEdge.getTransformula(), guard, boogie2SMT));
+						}
 					}
-					// if (!foundAssignment) {
-					// throw new UnsupportedOperationException("Transformula variable has no assignment");
-					// }
 				}
-			}
-			if (!foundAssignment) {
-				throw new UnsupportedOperationException("Transformula variable has no assignment");
 			}
 		}
 		return assignmentRules;
+
 	}
 
 	public BtorExpression getRHSAsExpression(final Map<String, BtorExpression> variableMap) {
 		final BtorSort sort = new BtorSort(lhs.getSort());
-		return TermToBtorUtil.convertRhsToBtorExpression(rhs, tf, variableMap, sort);
+
+		if (rhs != null) {
+			final IIdentifierTranslator[] its = new IIdentifierTranslator[] {
+					boogie2SMT.new LocalVarAndGlobalVarTranslator(), boogie2SMT.createConstOnlyIdentifierTranslator() };
+			final BtorExpression btorexpression = TermToBtorUtil.convertRhsToBtorExpression(
+					boogie2SMT.getExpression2Term().translateToTerm(its, rhs).getTerm(), tf, variableMap, sort,
+					boogie2SMT);
+			return btorexpression;
+		} else {
+			return new BtorExpression(sort, BtorExpressionType.INPUT, new ArrayList<>());
+		}
+
 	}
 }

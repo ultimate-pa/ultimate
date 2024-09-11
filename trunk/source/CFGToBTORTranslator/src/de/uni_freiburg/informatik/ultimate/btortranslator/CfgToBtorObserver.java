@@ -36,6 +36,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -48,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgElement;
@@ -55,6 +57,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 
 /**
  *
@@ -81,15 +85,21 @@ public class CfgToBtorObserver extends BaseObserver {
 	@Override
 	public boolean process(final IElement root) throws Exception {
 		if (root instanceof IIcfg) {
-			processIcfg((IIcfg<IcfgLocation>) root);
+			processIcfg((IIcfg<BoogieIcfgLocation>) root);
 			return false;
 		}
 		return true;
 	}
 
-	private void processIcfg(final IIcfg<IcfgLocation> icfg) {
+	private void processIcfg(final IIcfg<BoogieIcfgLocation> icfg) {
 		final ManagedScript mgdScript = icfg.getCfgSmtToolkit().getManagedScript();
-		final CFGToBTOR processor = new CFGToBTOR(mgdScript, mServices);
+		Boogie2SMT boogie2SMT = null;
+		if (icfg instanceof BoogieIcfgContainer) {
+			final BoogieIcfgContainer bIcfg = (BoogieIcfgContainer) icfg;
+			// symTable = bIcfg.getBoogie2SMT().getBoogie2SmtSymbolTable();
+			boogie2SMT = bIcfg.getBoogie2SMT();
+		}
+		final CFGToBTOR processor = new CFGToBTOR(mgdScript, mServices, boogie2SMT);
 		processor.extractLocations(icfg);
 		processor.extractVariables(icfg);
 		processor.extractTransitions(icfg);
@@ -110,59 +120,70 @@ public class CfgToBtorObserver extends BaseObserver {
 			final Process process = processBuilder.start();
 			final StringBuilder btormcOutput = new StringBuilder();
 			final BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-			final int exitVal = process.waitFor();
+			final boolean timeout = process.waitFor(20, TimeUnit.SECONDS);
 			String line;
-			while ((line = reader.readLine()) != null) {
+			while (timeout && (line = reader.readLine()) != null) {
 				btormcOutput.append(line + "\n");
 			}
 			final String btormcWitness = btormcOutput.toString();
 			System.out.println(btormcWitness.toString());
-			System.out.println(exitVal);
-
-			final IIcfgElement rootLocation = icfg.getInitialNodes().iterator().next();
-			final Set<IcfgLocation> errorLocations = icfg.getProcedureErrorNodes().values().iterator().next();
-			if (exitVal != 0) {
-				for (final IcfgLocation errorLocation : errorLocations) {
-					final NoResult<IIcfgElement> unkResult = new NoResult<IIcfgElement>(errorLocation,
-							Activator.PLUGIN_ID, mServices.getBacktranslationService());
-					mServices.getResultService().reportResult(Activator.PLUGIN_ID, unkResult);
-				}
-			} else if (btormcWitness.startsWith("sat")) {
-				final ArrayList<Long> pcList = new ArrayList<>();
-				final Map<Long, Map<String, Long>> programStateSequence = new HashMap<>();
-				final Pattern p = Pattern.compile("([01]+) ([a-zA-Z][a-zA-Z0-9_]*)#(\\d+)");
-				final Matcher m = p.matcher(btormcWitness);
-				while (m.find()) {
-					if (m.group(2).equals("pc")) {
-						pcList.add(Long.parseLong(m.group(1), 2));
-					} else {
-						final long sequenceNumber = Long.parseUnsignedLong(m.group(3));
-						if (!programStateSequence.containsKey(sequenceNumber)) {
-							programStateSequence.put(sequenceNumber, new HashMap<>());
-						}
-						programStateSequence.get(sequenceNumber).put(m.group(2), Long.parseUnsignedLong(m.group(1), 2));
-
-					}
-				}
-				System.out.println(pcList);
-				System.out.println(programStateSequence);
-				final IcfgProgramExecution<IcfgEdge> pe =
-						processor.extractErrorTrace(icfg, pcList, programStateSequence);
-				final CounterExampleResult<IcfgLocation, IcfgEdge, Term> nResult =
-						new CounterExampleResult<>(pe.getTraceElement(pe.getLength() - 1).getTraceElement().getTarget(),
-								Activator.PLUGIN_ID, mServices.getBacktranslationService(), pe);
-				mServices.getResultService().reportResult(Activator.PLUGIN_ID, nResult);
+			if (timeout) {
+				System.out.println(process.exitValue());
 			} else {
+				System.out.println("timeout");
 
-				mServices.getResultService().reportResult(Activator.PLUGIN_ID, AllSpecificationsHoldResult
-						.createAllSpecificationsHoldResult(Activator.PLUGIN_ID, errorLocations.size()));
-				for (final IcfgLocation errorLocation : errorLocations) {
-					final PositiveResult<IIcfgElement> pResult = new PositiveResult<>(Activator.PLUGIN_ID,
-							errorLocation, mServices.getBacktranslationService());
-					mServices.getResultService().reportResult(Activator.PLUGIN_ID, pResult);
+			}
+			final IIcfgElement rootLocation = icfg.getInitialNodes().iterator().next();
+
+			if (!icfg.getProcedureErrorNodes().values().isEmpty()) {
+				final Set<BoogieIcfgLocation> errorLocations = icfg.getProcedureErrorNodes().values().iterator().next();
+				if (!timeout || process.exitValue() != 0) {
+					for (final BoogieIcfgLocation errorLocation : errorLocations) {
+						final NoResult<IIcfgElement> unkResult = new NoResult<IIcfgElement>(errorLocation,
+								Activator.PLUGIN_ID, mServices.getBacktranslationService());
+						mServices.getResultService().reportResult(Activator.PLUGIN_ID, unkResult);
+					}
+				} else if (btormcWitness.startsWith("sat")) {
+					final ArrayList<Long> pcList = new ArrayList<>();
+					final Map<Long, Map<String, Long>> programStateSequence = new HashMap<>();
+					final Pattern p = Pattern.compile("([01]+) ([a-zA-Z][a-zA-Z0-9_]*)#(\\d+)");
+					final Matcher m = p.matcher(btormcWitness);
+					while (m.find()) {
+						if (m.group(2).equals("pc")) {
+							pcList.add(Long.parseLong(m.group(1), 2));
+						} else {
+							final long sequenceNumber = Long.parseUnsignedLong(m.group(3));
+							if (!programStateSequence.containsKey(sequenceNumber)) {
+								programStateSequence.put(sequenceNumber, new HashMap<>());
+							}
+							programStateSequence.get(sequenceNumber).put(m.group(2),
+									Long.parseUnsignedLong(m.group(1), 2));
+
+						}
+					}
+					System.out.println(pcList);
+					System.out.println(programStateSequence);
+					final IcfgProgramExecution<IcfgEdge> pe =
+							processor.extractErrorTrace(icfg, pcList, programStateSequence);
+					final CounterExampleResult<IcfgLocation, IcfgEdge, Term> nResult = new CounterExampleResult<>(
+							pe.getTraceElement(pe.getLength() - 1).getTraceElement().getTarget(), Activator.PLUGIN_ID,
+							mServices.getBacktranslationService(), pe);
+					mServices.getResultService().reportResult(Activator.PLUGIN_ID, nResult);
+				} else {
+
+					mServices.getResultService().reportResult(Activator.PLUGIN_ID, AllSpecificationsHoldResult
+							.createAllSpecificationsHoldResult(Activator.PLUGIN_ID, errorLocations.size()));
+					for (final IcfgLocation errorLocation : errorLocations) {
+						final PositiveResult<IIcfgElement> pResult = new PositiveResult<>(Activator.PLUGIN_ID,
+								errorLocation, mServices.getBacktranslationService());
+						mServices.getResultService().reportResult(Activator.PLUGIN_ID, pResult);
+					}
+
 				}
 
 			}
+			mServices.getResultService().reportResult(Activator.PLUGIN_ID,
+					AllSpecificationsHoldResult.createAllSpecificationsHoldResult(Activator.PLUGIN_ID, 0));
 
 		} catch (final IOException e) {
 			// TODO Auto-generated catch block
