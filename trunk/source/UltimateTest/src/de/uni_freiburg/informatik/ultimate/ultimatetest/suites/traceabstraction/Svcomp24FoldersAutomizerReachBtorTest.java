@@ -205,6 +205,7 @@ public class Svcomp24FoldersAutomizerReachBtorTest extends AbstractTraceAbstract
 	private static final Pair[] SETTINGS = {
 			new Pair<>("default/automizer/svcomp-Reach-32bit-Automizer_Default.epf", "default/automizer/svcomp-Reach-64bit-Automizer_Default.epf"),
 			new Pair<>("default/automizer/svcomp-Reach-32bit-Automizer_Bitvector.epf", "default/automizer/svcomp-Reach-64bit-Automizer_Bitvector.epf"),
+			new Pair<>("automizer/ForwardPredicatesBtorTestInlining.epf", "automizer/ForwardPredicatesBtorTestInlining.epf"),
 //			new Pair<>("automizer/acceleratedInterpolation/acceleratedTraceCheck_32.epf", "automizer/acceleratedInterpolation/acceleratedTraceCheck_64.epf"),
 //			new Pair<>("default/automizer/svcomp-Reach-32bit-Automizer_Default-FullInlining.epf", "default/automizer/svcomp-Reach-64bit-Automizer_Default-FullInlining.epf"),
 	};

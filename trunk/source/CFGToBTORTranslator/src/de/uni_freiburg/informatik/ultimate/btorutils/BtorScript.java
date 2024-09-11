@@ -44,7 +44,8 @@ public class BtorScript {
 				int keySid = 0;
 				int valueSid = 0;
 				if (valueSort.isArray()) {
-					throw new UnsupportedOperationException("BTOR2 does not support nested array sorts.");
+					final int i = 1 + 1;// throw new UnsupportedOperationException("BTOR2 does not support nested array
+										// sorts.");
 				}
 				try {
 					keySid = sortMap.get(keySort);
