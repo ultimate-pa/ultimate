@@ -1100,7 +1100,7 @@ public class CfgBuilder {
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug("LocNode for " + labelId + " already" + " constructed, namely: " + locNode);
 				}
-				if (st instanceof Label && locNode.getDebugIdentifier() == labelId) {
+				if (st instanceof Label && locNode.getDebugIdentifier().equals(labelId)) {
 					loc.annotate(locNode);
 				}
 				ModelUtils.copyAnnotations(st, locNode);
