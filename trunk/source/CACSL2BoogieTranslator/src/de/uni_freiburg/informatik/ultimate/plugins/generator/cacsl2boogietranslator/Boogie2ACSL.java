@@ -414,6 +414,13 @@ public final class Boogie2ACSL {
 		return null;
 	}
 
+	private BigInteger applyWraparroundIfNecessary(final BigInteger value, final CType type) {
+		if (type instanceof CPrimitive && mTypeSizes.isUnsigned((CPrimitive) type)) {
+			return value.mod(mTypeSizes.getMaxValueOfPrimitiveType((CPrimitive) type).add(BigInteger.ONE));
+		}
+		return value;
+	}
+
 	private BacktranslatedExpression translateBinaryExpression(
 			final de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression expression, final ILocation context,
 			final boolean isNegated) {
@@ -438,10 +445,12 @@ public final class Boogie2ACSL {
 			resultType = leftType;
 			break;
 		case ARITHMINUS:
-			minValue = leftMinValue == null || rightMaxValue == null ? null : leftMinValue.subtract(rightMaxValue);
-			maxValue = leftMaxValue == null || rightMinValue == null ? null : leftMaxValue.subtract(rightMinValue);
-			operator = Operator.ARITHMINUS;
 			resultType = determineTypeForArithmeticOperation(leftType, rightType);
+			minValue = leftMinValue == null || rightMaxValue == null ? null
+					: applyWraparroundIfNecessary(leftMinValue.subtract(rightMaxValue), resultType);
+			maxValue = leftMaxValue == null || rightMinValue == null ? null
+					: applyWraparroundIfNecessary(leftMaxValue.subtract(rightMinValue), resultType);
+			operator = Operator.ARITHMINUS;
 			break;
 		case ARITHMOD:
 			// TODO: backtranslate from euclidic division properly
@@ -465,6 +474,7 @@ public final class Boogie2ACSL {
 			resultType = leftType;
 			break;
 		case ARITHMUL:
+			resultType = determineTypeForArithmeticOperation(leftType, rightType);
 			if (leftMinValue == null || leftMaxValue == null || rightMinValue == null || rightMaxValue == null) {
 				minValue = null;
 				maxValue = null;
@@ -472,17 +482,18 @@ public final class Boogie2ACSL {
 				final List<BigInteger> results =
 						List.of(leftMinValue.multiply(rightMinValue), leftMinValue.multiply(rightMaxValue),
 								leftMaxValue.multiply(rightMinValue), leftMaxValue.multiply(rightMaxValue));
-				minValue = results.stream().min(BigInteger::compareTo).get();
-				maxValue = results.stream().max(BigInteger::compareTo).get();
+				minValue = applyWraparroundIfNecessary(results.stream().min(BigInteger::compareTo).get(), resultType);
+				maxValue = applyWraparroundIfNecessary(results.stream().max(BigInteger::compareTo).get(), resultType);
 			}
 			operator = Operator.ARITHMUL;
-			resultType = determineTypeForArithmeticOperation(leftType, rightType);
 			break;
 		case ARITHPLUS:
-			minValue = leftMinValue == null || rightMaxValue == null ? null : leftMinValue.add(rightMinValue);
-			maxValue = leftMaxValue == null || rightMinValue == null ? null : leftMaxValue.add(rightMaxValue);
-			operator = Operator.ARITHPLUS;
 			resultType = determineTypeForArithmeticOperation(leftType, rightType);
+			minValue = leftMinValue == null || rightMaxValue == null ? null
+					: applyWraparroundIfNecessary(leftMinValue.add(rightMinValue), resultType);
+			maxValue = leftMaxValue == null || rightMinValue == null ? null
+					: applyWraparroundIfNecessary(leftMaxValue.add(rightMaxValue), resultType);
+			operator = Operator.ARITHPLUS;
 			break;
 		case COMPEQ:
 		case LOGICIFF:
