@@ -67,7 +67,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IT
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerCheckMode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.CheckMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerIntegerConversion;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.BvOp;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -146,7 +146,7 @@ public abstract class ExpressionTranslation {
 		}
 		final ExpressionResult result =
 				handleBinaryBitwiseIntegerExpression(loc, nodeOperator, exp1, type1, exp2, type2, auxVarInfoBuilder);
-		if (mSettings.checkSignedIntegerBounds() == PointerCheckMode.IGNORE || !type1.isIntegerType()
+		if (mSettings.checkSignedIntegerBounds() == CheckMode.IGNORE || !type1.isIntegerType()
 				|| mTypeSizes.isUnsigned(type1)) {
 			return result;
 		}
@@ -546,12 +546,11 @@ public abstract class ExpressionTranslation {
 	}
 
 	public void addOverflowCheck(final ILocation loc, final Expression condition, final ExpressionResultBuilder erb) {
-		if (ExpressionFactory.isTrueLiteral(condition)
-				|| mSettings.checkSignedIntegerBounds() == PointerCheckMode.IGNORE) {
+		if (ExpressionFactory.isTrueLiteral(condition) || mSettings.checkSignedIntegerBounds() == CheckMode.IGNORE) {
 			// Avoid the creation of trivial statements
 			return;
 		}
-		if (mSettings.checkSignedIntegerBounds() == PointerCheckMode.ASSERTandASSUME) {
+		if (mSettings.checkSignedIntegerBounds() == CheckMode.ASSERTandASSUME) {
 			final AssertStatement assertSt = new AssertStatement(loc, condition);
 			new Check(Spec.INTEGER_OVERFLOW).annotate(assertSt);
 			erb.addStatement(assertSt);

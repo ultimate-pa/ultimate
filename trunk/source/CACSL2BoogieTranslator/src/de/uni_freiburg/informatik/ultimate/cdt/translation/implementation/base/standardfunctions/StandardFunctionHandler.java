@@ -124,7 +124,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerCheckMode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.CheckMode;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -1385,7 +1385,7 @@ public class StandardFunctionHandler {
 		builder.addAllExceptLrValue(argResult);
 		final Expression expr = argResult.getLrValue().getValue();
 		// abs(MIN_INT) does overflow, so add an assertion for overflow checking
-		if (mSettings.checkSignedIntegerBounds() != PointerCheckMode.IGNORE && resultType.isIntegerType()
+		if (mSettings.checkSignedIntegerBounds() != CheckMode.IGNORE && resultType.isIntegerType()
 				&& !mTypeSizes.isUnsigned(resultType)) {
 			final Expression minInt = mTypeSizes.constructLiteralForIntegerType(loc, resultType,
 					mTypeSizes.getMinValueOfPrimitiveType(resultType));

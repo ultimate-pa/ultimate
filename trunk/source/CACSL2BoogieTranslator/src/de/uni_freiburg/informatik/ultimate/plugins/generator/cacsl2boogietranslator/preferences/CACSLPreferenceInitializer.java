@@ -141,7 +141,7 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 			"Allow the calls of functions without a definition. In that case they are modeled fully non-deterministically.";
 	private static final boolean DEFAULT_ALLOW_UNDEFINED_FUNCTIONS = true;
 
-	public enum PointerCheckMode {
+	public enum CheckMode {
 		IGNORE, ASSUME, ASSERTandASSUME
 	}
 
@@ -255,12 +255,12 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<>(MAINPROC_LABEL, MAINPROC_DEFAULT, MAINPROC_DESC, PreferenceType.String),
 				new UltimatePreferenceItem<>(LABEL_CHECK_ASSERTIONS, false, DESC_CHECK_ASSERTIONS,
 						PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_CHECK_POINTER_VALIDITY, PointerCheckMode.ASSERTandASSUME,
-						PreferenceType.Combo, PointerCheckMode.values()),
-				new UltimatePreferenceItem<>(LABEL_CHECK_POINTER_ALLOC, PointerCheckMode.ASSERTandASSUME,
-						PreferenceType.Combo, PointerCheckMode.values()),
-				new UltimatePreferenceItem<>(LABEL_CHECK_ARRAYACCESSOFFHEAP, PointerCheckMode.ASSERTandASSUME,
-						PreferenceType.Combo, PointerCheckMode.values()),
+				new UltimatePreferenceItem<>(LABEL_CHECK_POINTER_VALIDITY, CheckMode.ASSERTandASSUME,
+						PreferenceType.Combo, CheckMode.values()),
+				new UltimatePreferenceItem<>(LABEL_CHECK_POINTER_ALLOC, CheckMode.ASSERTandASSUME, PreferenceType.Combo,
+						CheckMode.values()),
+				new UltimatePreferenceItem<>(LABEL_CHECK_ARRAYACCESSOFFHEAP, CheckMode.ASSERTandASSUME,
+						PreferenceType.Combo, CheckMode.values()),
 				new UltimatePreferenceItem<>(LABEL_CHECK_FREE_VALID, true, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_CHECK_MEMORY_LEAK_IN_MAIN, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_SVCOMP_MEMTRACK_COMPATIBILITY_MODE, false,
@@ -274,13 +274,13 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<>(LABEL_REPORT_UNSOUNDNESS_WARNING, true, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_BITPRECISE_BITFIELDS, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_CHECK_POINTER_SUBTRACTION_AND_COMPARISON_VALIDITY,
-						PointerCheckMode.ASSERTandASSUME, PreferenceType.Combo, PointerCheckMode.values()),
-				new UltimatePreferenceItem<>(LABEL_CHECK_DIVISION_BY_ZERO_OF_INTEGER_TYPES,
-						PointerCheckMode.ASSERTandASSUME, PreferenceType.Combo, PointerCheckMode.values()),
-				new UltimatePreferenceItem<>(LABEL_CHECK_DIVISION_BY_ZERO_OF_FLOATING_TYPES, PointerCheckMode.IGNORE,
-						PreferenceType.Combo, PointerCheckMode.values()),
-				new UltimatePreferenceItem<>(LABEL_CHECK_SIGNED_INTEGER_BOUNDS, PointerCheckMode.IGNORE,
-						PreferenceType.Combo, PointerCheckMode.values()),
+						CheckMode.ASSERTandASSUME, PreferenceType.Combo, CheckMode.values()),
+				new UltimatePreferenceItem<>(LABEL_CHECK_DIVISION_BY_ZERO_OF_INTEGER_TYPES, CheckMode.ASSERTandASSUME,
+						PreferenceType.Combo, CheckMode.values()),
+				new UltimatePreferenceItem<>(LABEL_CHECK_DIVISION_BY_ZERO_OF_FLOATING_TYPES, CheckMode.IGNORE,
+						PreferenceType.Combo, CheckMode.values()),
+				new UltimatePreferenceItem<>(LABEL_CHECK_SIGNED_INTEGER_BOUNDS, CheckMode.IGNORE, PreferenceType.Combo,
+						CheckMode.values()),
 				new UltimatePreferenceItem<>(LABEL_CHECK_DATA_RACES, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_ASSUME_NONDET_VALUES_IN_RANGE, true, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_BITVECTOR_TRANSLATION, false, PreferenceType.Boolean),
