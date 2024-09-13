@@ -119,6 +119,9 @@ public final class ResultSummarizer {
 					toolchainResult = updateIfLess(toolchainResult, ToolchainResult.CORRECT);
 				} else if (result instanceof TerminationArgumentResult<?, ?>) {
 					toolchainResult = updateIfLess(toolchainResult, ToolchainResult.CORRECT);
+				} else if (result instanceof AnnotationCheckResult<?, ?>) {
+					final ToolchainResult newResult = translateRefereeResult((AnnotationCheckResult<?, ?>) result);
+					toolchainResult = updateIfLess(toolchainResult, newResult);
 				} else if (result instanceof ExceptionOrErrorResult) {
 					toolchainResult = updateIfLess(toolchainResult, ToolchainResult.ERROR);
 				} else if (result instanceof TerminationAnalysisResult) {
@@ -143,6 +146,21 @@ public final class ResultSummarizer {
 		}
 		mSummary = toolchainResult;
 		mDescription = description;
+	}
+
+	private static ToolchainResult translateRefereeResult(final AnnotationCheckResult<?, ?> result) {
+		switch (result.getAnnotationState()) {
+		case INVALID:
+			// We do not return INCORRECT here, as an INVALID annotation differs from a bug in the program.
+			// We do not want to return UNPROVABLE either, so as to distinguish INVALID annotations from UNKNOWN.
+			return ToolchainResult.ERROR;
+		case UNKNOWN:
+			return ToolchainResult.UNPROVABLE;
+		case VALID:
+			return ToolchainResult.CORRECT;
+		default:
+			throw new AssertionError("unknown annotation state: " + result.getAnnotationState());
+		}
 	}
 
 	private static ToolchainResult updateIfLess(final ToolchainResult current, final ToolchainResult desired) {
