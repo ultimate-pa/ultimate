@@ -151,9 +151,8 @@ public final class ResultSummarizer {
 	private static ToolchainResult translateRefereeResult(final AnnotationCheckResult<?, ?> result) {
 		switch (result.getAnnotationState()) {
 		case INVALID:
-			// We do not return INCORRECT here, as an INVALID annotation differs from a bug in the program.
-			// We do not want to return UNPROVABLE either, so as to distinguish INVALID annotations from UNKNOWN.
-			return ToolchainResult.ERROR;
+			// While the program need not be INCORRECT, the program's supposedly inductive annotation / the witness is.
+			return ToolchainResult.INCORRECT;
 		case UNKNOWN:
 			return ToolchainResult.UNPROVABLE;
 		case VALID:
