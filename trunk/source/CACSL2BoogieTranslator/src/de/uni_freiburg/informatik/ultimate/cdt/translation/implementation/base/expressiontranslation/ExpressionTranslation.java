@@ -35,6 +35,8 @@ import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
@@ -42,7 +44,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CExpressionTranslator;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
@@ -63,7 +64,10 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ISOIEC9899TC3;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ISOIEC9899TC3.FloatingPointLiteral;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerCheckMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerIntegerConversion;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.BvOp;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -142,20 +146,20 @@ public abstract class ExpressionTranslation {
 		}
 		final ExpressionResult result =
 				handleBinaryBitwiseIntegerExpression(loc, nodeOperator, exp1, type1, exp2, type2, auxVarInfoBuilder);
-		if (!mSettings.checkSignedIntegerBounds() || !type1.isIntegerType() || mTypeSizes.isUnsigned(type1)) {
+		if (mSettings.checkSignedIntegerBounds() == PointerCheckMode.IGNORE || !type1.isIntegerType()
+				|| mTypeSizes.isUnsigned(type1)) {
 			return result;
 		}
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		// TODO: Is this really a overflow or some other undefined behavior?
-		CExpressionTranslator.addOverflowAssertion(loc,
-				constructTypeCheckForShift(loc, exp1, type1, type2, exp2, nodeOperator), builder);
+		addOverflowCheck(loc, constructTypeCheckForShift(loc, exp1, type1, type2, exp2, nodeOperator), builder);
 		builder.addAllIncludingLrValue(result);
 		if (nodeOperator == IASTBinaryExpression.op_shiftLeft
 				|| nodeOperator == IASTBinaryExpression.op_shiftLeftAssign) {
 			final Pair<Expression, Expression> checks =
 					constructOverflowCheckForLeftShift(loc, type1, exp1, exp2, result);
-			CExpressionTranslator.addOverflowAssertion(loc, checks.getFirst(), builder);
-			CExpressionTranslator.addOverflowAssertion(loc, checks.getSecond(), builder);
+			addOverflowCheck(loc, checks.getFirst(), builder);
+			addOverflowCheck(loc, checks.getSecond(), builder);
 		}
 		return builder.build();
 	}
@@ -539,6 +543,21 @@ public abstract class ExpressionTranslation {
 			attributes = new Attribute[] { attribute1, attribute2 };
 		}
 		return attributes;
+	}
+
+	public void addOverflowCheck(final ILocation loc, final Expression condition, final ExpressionResultBuilder erb) {
+		if (ExpressionFactory.isTrueLiteral(condition)
+				|| mSettings.checkSignedIntegerBounds() == PointerCheckMode.IGNORE) {
+			// Avoid the creation of trivial statements
+			return;
+		}
+		if (mSettings.checkSignedIntegerBounds() == PointerCheckMode.ASSERTandASSUME) {
+			final AssertStatement assertSt = new AssertStatement(loc, condition);
+			new Check(Spec.INTEGER_OVERFLOW).annotate(assertSt);
+			erb.addStatement(assertSt);
+		} else {
+			erb.addStatement(new AssumeStatement(loc, condition));
+		}
 	}
 
 	public abstract Expression transformBitvectorToFloat(ILocation loc, Expression bitvector, CPrimitives floatType);

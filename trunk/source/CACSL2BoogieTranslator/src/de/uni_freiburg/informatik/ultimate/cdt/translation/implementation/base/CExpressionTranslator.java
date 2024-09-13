@@ -1000,7 +1000,8 @@ public class CExpressionTranslator {
 	private void addIntegerBoundsCheck(final ILocation loc, final ExpressionResultBuilder erb,
 			final CPrimitive resultType, final int operation, final Expression... operands) {
 
-		if (!mSettings.checkSignedIntegerBounds() || !resultType.isIntegerType() || mTypeSizes.isUnsigned(resultType)) {
+		if (mSettings.checkSignedIntegerBounds() == PointerCheckMode.IGNORE || !resultType.isIntegerType()
+				|| mTypeSizes.isUnsigned(resultType)) {
 			// nothing to do
 			return;
 		}
@@ -1016,20 +1017,8 @@ public class CExpressionTranslator {
 		} else {
 			throw new AssertionError("no such operation");
 		}
-		addOverflowAssertion(loc, inBoundsCheck.getFirst(), erb);
-		addOverflowAssertion(loc, inBoundsCheck.getSecond(), erb);
-	}
-
-	// TODO: Is this the right place for this method?
-	public static void addOverflowAssertion(final ILocation loc, final Expression condition,
-			final ExpressionResultBuilder erb) {
-		if (ExpressionFactory.isTrueLiteral(condition)) {
-			// Avoid the creation of "assert true" statements
-			return;
-		}
-		final AssertStatement assertSt = new AssertStatement(loc, condition);
-		new Check(Spec.INTEGER_OVERFLOW).annotate(assertSt);
-		erb.addStatement(assertSt);
+		mExpressionTranslation.addOverflowCheck(loc, inBoundsCheck.getFirst(), erb);
+		mExpressionTranslation.addOverflowCheck(loc, inBoundsCheck.getSecond(), erb);
 	}
 
 	/**

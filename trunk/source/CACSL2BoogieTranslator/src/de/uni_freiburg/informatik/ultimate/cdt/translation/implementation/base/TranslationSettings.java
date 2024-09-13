@@ -71,7 +71,7 @@ public final class TranslationSettings {
 	private final boolean mIsSvcompMemtrackCompatibilityMode;
 	private final boolean mCheckAllocationPurity;
 	private final boolean mCheckMemoryLeakInMain;
-	private final boolean mCheckSignedIntegerBounds;
+	private final PointerCheckMode mCheckSignedIntegerBounds;
 	private final boolean mCheckDataRaces;
 	private final boolean mUseConstantArrays;
 	private final boolean mUseStoreChains;
@@ -82,7 +82,8 @@ public final class TranslationSettings {
 	private boolean mAllowUndefinedFunctions;
 
 	public TranslationSettings(final IPreferenceProvider ups) {
-		mCheckSignedIntegerBounds = ups.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_SIGNED_INTEGER_BOUNDS);
+		mCheckSignedIntegerBounds =
+				ups.getEnum(CACSLPreferenceInitializer.LABEL_CHECK_SIGNED_INTEGER_BOUNDS, PointerCheckMode.class);
 		mCheckDataRaces = ups.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_DATA_RACES);
 		mIsSvcompMemtrackCompatibilityMode =
 				ups.getBoolean(CACSLPreferenceInitializer.LABEL_SVCOMP_MEMTRACK_COMPATIBILITY_MODE);
@@ -143,8 +144,8 @@ public final class TranslationSettings {
 			final boolean smtBoolArraysWorkaround, final String checkedMethod, final boolean checkErrorFunction,
 			final boolean checkSvcompErrorFunction, final boolean isSvcompMemtrackCompatibilityMode,
 			final boolean checkAllocationPurity, final boolean checkMemoryLeakInMain,
-			final boolean checkSignedIntegerBounds, final boolean checkDataRaces, final boolean useConstantArrays,
-			final boolean useStoreChains, final boolean enableFesetround,
+			final PointerCheckMode checkSignedIntegerBounds, final boolean checkDataRaces,
+			final boolean useConstantArrays, final boolean useStoreChains, final boolean enableFesetround,
 			final FloatingPointRoundingMode initialRoundingMode, final boolean adaptMemoryModelResolutionOnPointerCasts,
 			final int stringOverapproximationThreshold) {
 		mDivisionByZeroOfIntegerTypes = divisionByZeroOfIntegerTypes;
@@ -270,7 +271,7 @@ public final class TranslationSettings {
 		return mCheckMemoryLeakInMain;
 	}
 
-	public boolean checkSignedIntegerBounds() {
+	public PointerCheckMode checkSignedIntegerBounds() {
 		return mCheckSignedIntegerBounds;
 	}
 

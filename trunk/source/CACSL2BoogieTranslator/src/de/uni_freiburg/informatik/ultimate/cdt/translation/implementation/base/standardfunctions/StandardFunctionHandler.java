@@ -124,6 +124,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerCheckMode;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -1384,14 +1385,13 @@ public class StandardFunctionHandler {
 		builder.addAllExceptLrValue(argResult);
 		final Expression expr = argResult.getLrValue().getValue();
 		// abs(MIN_INT) does overflow, so add an assertion for overflow checking
-		if (mSettings.checkSignedIntegerBounds() && resultType.isIntegerType() && !mTypeSizes.isUnsigned(resultType)) {
+		if (mSettings.checkSignedIntegerBounds() != PointerCheckMode.IGNORE && resultType.isIntegerType()
+				&& !mTypeSizes.isUnsigned(resultType)) {
 			final Expression minInt = mTypeSizes.constructLiteralForIntegerType(loc, resultType,
 					mTypeSizes.getMinValueOfPrimitiveType(resultType));
 			final Expression biggerMinInt = mExpressionTranslation.constructBinaryComparisonExpression(loc,
 					IASTBinaryExpression.op_greaterThan, expr, resultType, minInt, resultType);
-			final AssertStatement biggerMinIntStmt = new AssertStatement(loc, biggerMinInt);
-			new Check(Spec.INTEGER_OVERFLOW).annotate(biggerMinIntStmt);
-			builder.addStatement(biggerMinIntStmt);
+			mExpressionTranslation.addOverflowCheck(loc, biggerMinInt, builder);
 		}
 		// Construct if x > 0 then x else -x as LrValue for abs(x)
 		final Expression positive = mExpressionTranslation.constructBinaryComparisonExpression(loc,

@@ -233,7 +233,7 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 
 		private final SmtRoundingMode mSmtRoundingMode;
 
-		private FloatingPointRoundingMode(final SmtRoundingMode smtRoundingMode) {
+		FloatingPointRoundingMode(final SmtRoundingMode smtRoundingMode) {
 			mSmtRoundingMode = smtRoundingMode;
 		}
 
@@ -279,7 +279,8 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 						PointerCheckMode.ASSERTandASSUME, PreferenceType.Combo, PointerCheckMode.values()),
 				new UltimatePreferenceItem<>(LABEL_CHECK_DIVISION_BY_ZERO_OF_FLOATING_TYPES, PointerCheckMode.IGNORE,
 						PreferenceType.Combo, PointerCheckMode.values()),
-				new UltimatePreferenceItem<>(LABEL_CHECK_SIGNED_INTEGER_BOUNDS, false, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_CHECK_SIGNED_INTEGER_BOUNDS, PointerCheckMode.IGNORE,
+						PreferenceType.Combo, PointerCheckMode.values()),
 				new UltimatePreferenceItem<>(LABEL_CHECK_DATA_RACES, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_ASSUME_NONDET_VALUES_IN_RANGE, true, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_BITVECTOR_TRANSLATION, false, PreferenceType.Boolean),
