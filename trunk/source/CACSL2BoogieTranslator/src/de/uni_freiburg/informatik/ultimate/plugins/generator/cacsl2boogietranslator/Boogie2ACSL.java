@@ -479,8 +479,8 @@ public final class Boogie2ACSL {
 			resultType = determineTypeForArithmeticOperation(leftType, rightType);
 			break;
 		case ARITHPLUS:
-			minValue = leftMinValue == null || rightMaxValue == null ? null : leftMinValue.add(rightMaxValue);
-			maxValue = leftMaxValue == null || rightMinValue == null ? null : leftMaxValue.add(rightMinValue);
+			minValue = leftMinValue == null || rightMaxValue == null ? null : leftMinValue.add(rightMinValue);
+			maxValue = leftMaxValue == null || rightMinValue == null ? null : leftMaxValue.add(rightMaxValue);
 			operator = Operator.ARITHPLUS;
 			resultType = determineTypeForArithmeticOperation(leftType, rightType);
 			break;
