@@ -447,7 +447,15 @@ public final class Boogie2ACSL {
 			// TODO: backtranslate from euclidic division properly
 			if (rightMinValue != null && rightMinValue.equals(rightMaxValue) && rightMinValue.signum() > 0) {
 				maxValue = rightMinValue.subtract(BigInteger.ONE);
-				minValue = leftMinValue != null && leftMinValue.signum() >= 0 ? BigInteger.ZERO : maxValue.negate();
+				if (leftMinValue != null && leftMinValue.signum() >= 0) {
+					if (leftMaxValue != null && leftMaxValue.compareTo(rightMinValue) < 0) {
+						// Avoid unnecessary modulo, it does not have any effect (since the lhs is already "in range")
+						return lhs;
+					}
+					minValue = BigInteger.ZERO;
+				} else {
+					minValue = maxValue.negate();
+				}
 			} else {
 				// TODO: I am not quite sure about the minimal/maximal values here, so I just keep them for now
 				minValue = leftMinValue;
