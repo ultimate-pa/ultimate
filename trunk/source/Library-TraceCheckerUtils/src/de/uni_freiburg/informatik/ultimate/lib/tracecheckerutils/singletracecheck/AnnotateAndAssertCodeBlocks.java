@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletraceche
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheck.TraceCheckLock;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
@@ -49,6 +50,10 @@ public class AnnotateAndAssertCodeBlocks<L extends IAction> {
 
 	protected final Script mScript;
 	protected final ManagedScript mMgdScript;
+	protected final ManagedScript mCfgManagedScript; // used for optimization during trace check, dann must not
+														// interdict
+														// interpolation
+	TermTransferrer mTermTransferrer = null;
 	protected final Object mScriptLockOwner;
 	protected final NestedWord<L> mTrace;
 
@@ -66,15 +71,26 @@ public class AnnotateAndAssertCodeBlocks<L extends IAction> {
 	protected static final String PENDINGCONTEXT = "_PendingContext";
 	protected static final String LOCVARASSIGN_PENDINGCONTEXT = "_LocVarAssignPendingContext";
 	protected static final String OLDVARASSIGN_PENDINGCONTEXT = "_OldVarAssignPendingContext";
+	Object mReuseLock;
+	boolean mCfgMgdScriptTcLockedBySbElse = false;
 
 	public AnnotateAndAssertCodeBlocks(final ManagedScript csToolkit, final TraceCheckLock scriptLockOwner,
-			final NestedFormulas<L, Term, Term> nestedSSA, final ILogger logger) {
+			final NestedFormulas<L, Term, Term> nestedSSA, final ILogger logger, final ManagedScript cfgMgdScriptTc,
+			final Object reuseLock) {
 		mLogger = logger;
 		mMgdScript = csToolkit;
 		mScriptLockOwner = scriptLockOwner;
 		mScript = csToolkit.getScript();
 		mTrace = nestedSSA.getTrace();
 		mSSA = nestedSSA;
+
+		// For Reuse Solver call:
+		mCfgManagedScript = cfgMgdScriptTc;
+		mReuseLock = reuseLock;
+		if (mReuseLock != null && mCfgManagedScript != null) {
+			mTermTransferrer = new TermTransferrer(mMgdScript.getScript(), mCfgManagedScript.getScript());
+		}
+
 	}
 
 	protected Term annotateAndAssertPrecondition() {
@@ -187,6 +203,9 @@ public class AnnotateAndAssertCodeBlocks<L extends IAction> {
 	}
 
 	protected Term annotateAndAssertTerm(final Term term, final String name) {
+		if (mCfgManagedScript != null && mReuseLock != null && !mCfgMgdScriptTcLockedBySbElse) {
+			annotateAndAssertTermToCFGscript(term, name);
+		}
 		assert term.getFreeVars().length == 0 : "Term has free vars";
 		final Annotation annot = new Annotation(":named", name);
 		final Term annotTerm = mScript.annotate(term, annot);
@@ -195,10 +214,19 @@ public class AnnotateAndAssertCodeBlocks<L extends IAction> {
 		return constantRepresentingAnnotatedTerm;
 	}
 
+	protected void annotateAndAssertTermToCFGscript(final Term term, final String name) {
+		assert term.getFreeVars().length == 0 : "Term has free vars";
+		mTermTransferrer.transform(term);
+		final Annotation annot = new Annotation(":named", name);
+		final Term annotTerm = mCfgManagedScript.getScript().annotate(term, annot);
+		mCfgManagedScript.assertTerm(mReuseLock, annotTerm);
+		// final Term constantRepresentingAnnotatedTerm = mCFGMgdScriptTc.getScript().term(name);
+
+	}
+
 	/**
-	 * Represents one conjunct in an annotated SSA. The annotated term is the term
-	 * submitted to the solver (we have to use these named terms in order to obtain
-	 * an unsatisfiable core).
+	 * Represents one conjunct in an annotated SSA. The annotated term is the term submitted to the solver (we have to
+	 * use these named terms in order to obtain an unsatisfiable core).
 	 *
 	 */
 	public static class AnnotatedSsaConjunct {

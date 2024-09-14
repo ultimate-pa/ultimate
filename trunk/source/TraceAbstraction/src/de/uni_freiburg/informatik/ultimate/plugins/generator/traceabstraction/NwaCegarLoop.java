@@ -29,19 +29,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -147,17 +139,7 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 	// TestGeneration
 	private final ArrayList<Integer> mTestGoalTodoStack = new ArrayList<>();
 	private final Set<Integer> mTestGoalWorkingSet = new HashSet<>();
-	private final Set<Integer> mTestGoalsInCurrentTrace = new HashSet<>();
 	private Integer mCurrentTestGoalId;
-
-	// TestGeneration Statistiks
-	private final boolean mWriteEvaluationToFile = false; // TODO add setting or remove in final version
-	private final long startTime = System.nanoTime();
-	private int CegarLoopIterations = 1;
-	private double Covered = 0;
-	private double CoveredLongTrace = 0;
-	private double mLongTraceTime = 0;
-	private int mTestsExported = 0;
 
 	public NwaCegarLoop(final DebugIdentifier name, final INestedWordAutomaton<L, IPredicate> initialAbstraction,
 			final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
@@ -174,7 +156,6 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 		mSearchStrategy = getSearchStrategy(prefs);
 		mStoredRawInterpolantAutomata = checkStoreCounterExamples(mPref) ? new ArrayList<>() : null;
 
-		// Heuristic Emptiness Check
 		mUseHeuristicEmptinessCheck = taPrefs.useHeuristicEmptinessCheck();
 		mScoringMethod = taPrefs.getHeuristicEmptinessCheckScoringMethod();
 		mAStarHeuristic = taPrefs.getHeuristicEmptinessCheckAStarHeuristic();
@@ -185,10 +166,6 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 				mTestGoalTodoStack.add(i); // maybe dont fill it fully up
 			}
 			mCurrentTestGoalId = mTestGoalTodoStack.size() - 1;
-			if (mWriteEvaluationToFile) {
-				writeEvalRowLongTrace();
-				writeEvalTestCaseNewRow();
-			}
 		}
 	}
 
@@ -292,7 +269,6 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 					} else {
 						mTestGeneration = TestGenerationMode.Standard;
 					}
-					mLongTraceTime = System.nanoTime() - startTime;
 
 					mCounterexample =
 							new IsEmpty<>(new AutomataLibraryServices(getServices()), abstraction, mSearchStrategy)
@@ -304,119 +280,8 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 								.getNestedRun();
 			}
 		} finally {
-			if (mWriteEvaluationToFile) {
-				final long estimatedTime = System.nanoTime() - startTime;
-				if (mTestGeneration.equals(TestGenerationMode.SearchMultiGoal)) {
-					mLongTraceTime = System.nanoTime() - startTime;
-					writeEvalRow(estimatedTime, mLongTraceTime);
-				}
-			}
 			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.EmptinessCheckTime);
 		}
-		if (mCounterexample == null) {
-			mLogger.info("TestGen, CEGAR Iterations: " + CegarLoopIterations);
-			mLogger.info("TestGen, Coverage: " + Covered / mErrorLocs.size());
-			if (mTestGeneration.equals(TestGenerationMode.SearchMultiGoal)) {
-				mLongTraceTime = System.nanoTime() - startTime;
-				mLogger.info("TestGen, Time spent Sear-MultiGoal Preprocess: " + mLongTraceTime);
-				mLogger.info("TestGen, Coverage during Optimization: " + CoveredLongTrace / mErrorLocs.size());
-			}
-			mLogger.info("TestGen, Amount of Tests Exported: " + mTestsExported);
-			final long estimatedTime = System.nanoTime() - startTime;
-			if (mWriteEvaluationToFile) {
-				writeEvalRow(estimatedTime, mLongTraceTime);
-			}
-			return;
-		}
-		mLogger.info("TestGen, Amount of Tests Exported: " + mTestsExported);
-		getIDsOfTestGoalsInTrace();
-		CegarLoopIterations += 1;
-	}
-
-	private void getIDsOfTestGoalsInTrace() {
-		final List<?> a = mCounterexample.getStateSequence();
-		mTestGoalsInCurrentTrace.clear();
-		for (int i = 0; i < a.size(); i++) {
-			if (a.get(i) instanceof ISLPredicate) {
-				final ISLPredicate stmt = (ISLPredicate) a.get(i);
-				if (stmt.getProgramPoint().getPayload().getAnnotations()
-						.containsKey(TestGoalAnnotation.class.getName())) {
-					mTestGoalsInCurrentTrace.add(((TestGoalAnnotation) stmt.getProgramPoint().getPayload()
-							.getAnnotations().get(TestGoalAnnotation.class.getName())).mId);
-				}
-			}
-		}
-	}
-
-	private void writeEvalRowLongTrace() {
-		try (FileWriter fw = new FileWriter("C:\\Users\\maxba\\ultimate\\testcomp\\TestGenerationEval2.csv", true);
-
-				BufferedWriter bw = new BufferedWriter(fw);
-				PrintWriter out = new PrintWriter(bw)) {
-			out.println(String.format("%s", mTestGeneration.equals(TestGenerationMode.SearchMultiGoal)));
-		} catch (final IOException e) {
-			throw new AssertionError(e);
-		}
-	}
-
-	private void writeEvalTestCaseNewRow() {
-		final File fold = new File("C:\\Users\\maxba\\ultimate\\testcomp\\TestGenerationEvalCoverage.csv");
-		if (fold.exists() && !fold.isDirectory()) {
-			try (FileWriter fw =
-					new FileWriter("C:\\Users\\maxba\\ultimate\\testcomp\\TestGenerationEvalTestCases.csv", true);
-
-					BufferedWriter bw = new BufferedWriter(fw);
-					PrintWriter out = new PrintWriter(bw)) {
-				out.print("\n");
-			} catch (final IOException e) {
-				throw new AssertionError(e);
-			}
-		}
-	}
-
-	private void writeEvalRow(final long estimatedTime, final double mLongTraceTime2) {
-		String asd = "";
-		final File fold = new File("TestGenerationEvalCoverage.csv");
-		if (fold.exists() && !fold.isDirectory()) {
-			asd = readEvalCoverage();
-			fold.delete();
-		}
-
-		try (FileWriter fw = new FileWriter("TestGenerationEvalCoverage.csv", true);
-
-				BufferedWriter bw = new BufferedWriter(fw);
-				PrintWriter out = new PrintWriter(bw)) {
-			fw.write(asd);
-			out.println(
-					String.format("Time: %s, Coverage: %s , LongTraceTime %s, CoverageLongTrace: %s, Iterations: %s",
-							estimatedTime / 1000, Covered / mErrorLocs.size(), mLongTraceTime2 / 1000,
-							CoveredLongTrace / mErrorLocs.size(), CegarLoopIterations));
-		} catch (final IOException e) {
-			throw new AssertionError(e);
-		}
-
-	}
-
-	// TODO coverage calculation is wrong, different from testcov
-	private String readEvalCoverage() {
-		final StringBuilder resultStringBuilder = new StringBuilder();
-		String fileCOntentWithoutLastLine = "";
-		try (final FileReader fr = new FileReader("TestGenerationEvalCoverage.csv");
-				final BufferedReader br = new BufferedReader(fr)) {
-			String line;
-
-			while ((line = br.readLine()) != null) {
-				fileCOntentWithoutLastLine = resultStringBuilder.toString();
-				resultStringBuilder.append(line).append("\n");
-
-			}
-			if (CegarLoopIterations == 1) {
-				return resultStringBuilder.toString();
-			}
-		} catch (final IOException e) {
-			throw new AssertionError(e);
-		}
-		return fileCOntentWithoutLastLine;
 	}
 
 	private boolean checkIsEmptyHeuristic(final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction)
@@ -491,7 +356,6 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 				mIcfg.getCfgSmtToolkit().getSymbolTable(), mPredicateFactoryInterpolantAutomata, mAbstraction,
 				mIteration);
 		mInterpolAutomaton = null;
-		System.out.println(mAbstraction.getFinalStates().size());
 		for (final IPredicate testGoal : mAbstraction.getFinalStates()) {
 			final ISLPredicate testGoalISL = (ISLPredicate) testGoal;
 			if (testGoalISL.getProgramPoint().getPayload().getAnnotations()
@@ -511,8 +375,9 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 							mAbstraction.internalPredecessors(testGoal));
 				}
 			}
-
 		}
+
+		mCegarLoopBenchmark.reportErrorAutomatonCreated();
 
 		final NestedWordAutomaton<L, IPredicate> resultBeforeEnhancement =
 				mErrorGeneralizationEngine.getResultBeforeEnhancement();
@@ -571,23 +436,6 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 				(INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction,
 				(NestedWord<L>) mCounterexample.getWord()).getResult();
 		return !stillAccepted;
-	}
-
-	// TestGoal Coverage for Statistic and removing covered TestGoals form Stack
-	private void testGenerationCoverage() {
-		mTestsExported += 1;
-		for (final Integer testgoal : mTestGoalsInCurrentTrace) {
-			if (mTestGoalTodoStack.contains(testgoal)) {
-				Covered += 1;
-				if (mTestGeneration.equals(TestGenerationMode.SearchMultiGoal)) {
-					CoveredLongTrace += 1;
-					mLogger.info("TestGen, Time spent Sear-MultiGoal Preprocess: " + mLongTraceTime);
-					mLogger.info("TestGen, Coverage: " + CoveredLongTrace / mErrorLocs.size());
-				}
-			}
-		}
-		mLogger.info("TestGen, Coverage: " + Covered / mErrorLocs.size());
-
 	}
 
 	private void computeAutomataDifference(final INestedWordAutomaton<L, IPredicate> minuend,

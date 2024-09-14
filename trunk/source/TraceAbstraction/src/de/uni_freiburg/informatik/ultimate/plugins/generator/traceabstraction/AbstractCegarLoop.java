@@ -494,6 +494,8 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 							+ destroyedStorables.stream().collect(Collectors.joining(",")));
 				}
 			}
+			mLogger.info("CEGAR Iteration stats: " + ((CegarStatisticsType) mCegarLoopBenchmark.getBenchmarkType())
+					.prettyprintBenchmarkDataNoStopWatch(mCegarLoopBenchmark, true));
 		}
 		mResultBuilder.addResultForAllRemaining(Result.USER_LIMIT_ITERATIONS);
 

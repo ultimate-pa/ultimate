@@ -56,6 +56,9 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 	private int mInterpolantAutomatonStates = 0;
 	private int mPathProgramHistogramMaximum = 0;
 
+	// Test Case generation statistics:
+	private int mErrorAutomatonCreated = 0;
+
 	@Override
 	public Collection<String> getKeys() {
 		return getBenchmarkType().getKeys();
@@ -177,6 +180,8 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 			return mHoareAnnotationData;
 		case RefinementEngineStatistics:
 			return mRefinementEngineStatistics;
+		case ErrorAutomatonCreated:
+			return mErrorAutomatonCreated;
 		default:
 			throw new AssertionError("unknown data");
 		}
@@ -197,5 +202,9 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 				CegarLoopStatisticsDefinitions.BasicInterpolantAutomatonTime.toString(),
 				CegarLoopStatisticsDefinitions.DumpTime.toString(),
 				CegarLoopStatisticsDefinitions.InitialAbstractionConstructionTime.toString(), };
+	}
+
+	public void reportErrorAutomatonCreated() {
+		mErrorAutomatonCreated++;
 	}
 }

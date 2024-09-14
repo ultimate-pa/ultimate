@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.VarAssignm
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.BitvectorUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
@@ -50,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
@@ -69,8 +71,10 @@ public class AnnotateAndAsserter<L extends IAction> {
 	protected final ILogger mLogger;
 
 	protected final ManagedScript mMgdScriptTc;
+	protected ManagedScript mCfgManagedScript;
 	protected final NestedWord<L> mTrace;
-
+	final TermTransferrer mTermTransferrer;
+	Object mReuseLock;
 	protected LBool mSatisfiable;
 	protected final NestedFormulas<L, Term, Term> mSSA;
 	protected ModifiableNestedFormulas<L, Term, Term> mAnnotSSA;
@@ -92,27 +96,46 @@ public class AnnotateAndAsserter<L extends IAction> {
 	private final Integer mHighestVaOrderInTrace = -1;
 	private boolean reuseUnsatpossible;
 	private final ArrayList<Pair<Term, Term>> mValueAssignmentUsedForReuse = new ArrayList<Pair<Term, Term>>();
-
-	final TestGenReuseMode mTestGenReuseMode;
+	private final TraceCheckStatisticsGenerator mTraceCheckBenchmarkGenerator;
+	private final TestGenReuseMode mTestGenReuseMode;
 
 	public AnnotateAndAsserter(final ManagedScript mgdScriptTc, final NestedFormulas<L, Term, Term> nestedSSA,
 			final AnnotateAndAssertCodeBlocks<L> aaacb, final TraceCheckStatisticsGenerator tcbg,
-			final IUltimateServiceProvider services) {
+			final IUltimateServiceProvider services, final ManagedScript cfgMgdScriptTc, final Object reuseLock,
+			final TraceCheckStatisticsGenerator traceCheckStatisticsGenerator, final boolean noReuse) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(TraceCheckerUtils.PLUGIN_ID);
 		mMgdScriptTc = mgdScriptTc;
+		mCfgManagedScript = cfgMgdScriptTc;
 		mTrace = nestedSSA.getTrace();
 		mSSA = nestedSSA;
 		mAnnotateAndAssertCodeBlocks = aaacb;
 		mTcbg = tcbg;
-		mTestGenReuseMode = RcfgPreferenceInitializer.getPreferences(services)
-				.getEnum(RcfgPreferenceInitializer.LABEL_TEST_GEN_REUSE_MODE, TestGenReuseMode.class);
+		mTraceCheckBenchmarkGenerator = traceCheckStatisticsGenerator;
+		mReuseLock = reuseLock;
+		mTermTransferrer = new TermTransferrer(mMgdScriptTc.getScript(), mCfgManagedScript.getScript());
+		if (noReuse || mCfgManagedScript.isLocked()) {
+			mTestGenReuseMode = TestGenReuseMode.None;
+			mAnnotateAndAssertCodeBlocks.mCfgMgdScriptTcLockedBySbElse = true;
+		} else {
+			mTestGenReuseMode = RcfgPreferenceInitializer.getPreferences(services)
+					.getEnum(RcfgPreferenceInitializer.LABEL_TEST_GEN_REUSE_MODE, TestGenReuseMode.class);
+		}
 		reuseUnsatpossible = mTestGenReuseMode.equals(TestGenReuseMode.ReuseUNSATmatchPrefix)
 				|| mTestGenReuseMode.equals(TestGenReuseMode.ReuseUNSATmatchCalloc);
 	}
 
 	public void buildAnnotatedSsaAndAssertTerms() {
-		boolean reuse = true;
+		mTraceCheckBenchmarkGenerator.reportTraceChecks();
+		boolean reuse = false;
+		if (!mTestGenReuseMode.equals(TestGenReuseMode.None)) {
+			System.out.println("Lock");
+
+			mCfgManagedScript.lock(mReuseLock);
+			mCfgManagedScript.push(mReuseLock, 1);
+			reuse = true;
+		}
+
 		if (mTestGenReuseMode.equals(TestGenReuseMode.ReuseUNSATmatchPrefix)) {
 			getReuseCandidate();
 			if (mVAforReuse == null) {
@@ -173,7 +196,8 @@ public class AnnotateAndAsserter<L extends IAction> {
 						// prefix
 						if (mTestGenReuseMode.equals(TestGenReuseMode.ReuseUNSATmatchPrefix) && reuse) {
 							mVAsInPrefix.add(vaInTrace);
-							assert i <= mReuseCandidatePosition;
+							assert i <= mReuseCandidatePosition; // we check only branches, (not current VA)
+
 							if (i < mReuseCandidatePosition) {
 								if (branchCount < mVAforReuse.mVAsInVAPrefix.size()) { //
 									if (!mVAforReuse.mVAsInVAPrefix.get(branchCount).equals(vaInTrace)) {
@@ -264,57 +288,29 @@ public class AnnotateAndAsserter<L extends IAction> {
 				}
 
 				if (!vaPairsAsTerms.isEmpty()) {
-					final Term varAssignmentConjunction = SmtUtils.and(mMgdScriptTc.getScript(), vaPairsAsTerms);
-					mMgdScriptTc.getScript().push(1);
-					mAnnotateAndAssertCodeBlocks.annotateAndAssertTerm(varAssignmentConjunction, "Int");
+					final Term varAssignmentConjunction = SmtUtils.and(mCfgManagedScript.getScript(), vaPairsAsTerms);
+					mAnnotateAndAssertCodeBlocks.annotateAndAssertTermToCFGscript(varAssignmentConjunction, "Int");
 					System.out.println("REUSE: " + varAssignmentConjunction);
 				} else {
 					reuse = false; // Can be empty if previous test goal is "behind" the current. (loops)
 					// In this case previous test goal has not been checked yet.
 				}
-
 			} else {
 				// System.out.println("no reuse because prefix doesnt match");
 			}
-			mSatisfiable = mMgdScriptTc.getScript().checkSat();
-
-			if (reuse) {
-				System.out.println("trying to reuse");
-			}
-			if (mSatisfiable == LBool.UNSAT) {
-				if (reuse) {
-					// System.out.println("REUSE UNSAT");
-					mMgdScriptTc.getScript().pop(1);
-					if (reuseUnsatpossible) {
-						removeCheckIfCovered();
-					}
-					mSatisfiable = mMgdScriptTc.getScript().checkSat();
-					if (mCurrentVA.secondCheck == true) {
-						mVAforReuse.mNegatedVA = false;
-					} else {
-						mVAforReuse.mNegatedVA = true;
-					}
-				}
-			} else if (reuse) {
-				// register "other branch" as not reachable with this VA. Add negated VA to other branch test goal
-				System.out.println("REUSE SUCCESSFULL");
-				if (mCurrentVA.secondCheck == true) {
-					mVAforReuse.mNegatedVA = !mVAforReuse.mNegatedVA;
-				}
-				mSucessfulReuse = true;
-			}
-			if (reuse) {
-				mCurrentVA.secondCheck = true;
-			}
-		} else {
-			mSatisfiable = mMgdScriptTc.getScript().checkSat();
-
 		}
-		if (mSatisfiable == LBool.SAT && mCurrentVA != null) {
-			mCurrentVA.mCoveredTestGoal = true;
-
-			// concreteExecution();
-
+		if (reuse) {
+			System.out.println("REUSE CFG Script CHecksat");
+			mTraceCheckBenchmarkGenerator.reportReuseTried();
+			reuseCheckSAT();
+		} else {
+			System.out.println("NO REUSE TC Script CHecksat");
+			mSatisfiable = mMgdScriptTc.getScript().checkSat();
+		}
+		if (!mTestGenReuseMode.equals(TestGenReuseMode.None)) {
+			System.out.println("UnLock");
+			mCfgManagedScript.pop(mReuseLock, 1);
+			mCfgManagedScript.unlock(mReuseLock);
 		}
 		if (mSatisfiable == LBool.UNKNOWN) {
 			// System.out.println("UNKNOWN");
@@ -325,21 +321,65 @@ public class AnnotateAndAsserter<L extends IAction> {
 		mTcbg.reportNewCodeBlocks(mTrace.length());
 		mTcbg.reportNewAssertedCodeBlocks(mTrace.length());
 		mLogger.info("Conjunction of SSA is " + mSatisfiable);
+
 	}
 
-	private Term createTermFromVA(final String variableAsString, final Term value) {
-		FunctionSymbol varInCurrentScript =
-				mMgdScriptTc.getScript().getTheory().getDeclaredFunctions().get(variableAsString);
+	private void reuseCheckSAT() {
+		System.out.println("trying to reuse");
+
+		final LBool reuseResult = mCfgManagedScript.getScript().checkSat();
+		System.out.println("REUSE Result: " + reuseResult);
+
+		if (reuseResult == LBool.SAT) {
+			// register "other branch" as not reachable with this VA. Add negated VA to other branch test goal
+			System.out.println("REUSE SUCCESSFULL");
+			mTraceCheckBenchmarkGenerator.reportSuccessfullReuse();
+			// We check the same branch twice, for branch encoder
+			if (mCurrentVA.secondCheck == true) {
+				mVAforReuse.mNegatedVA = !mVAforReuse.mNegatedVA;
+			}
+			if (mCurrentVA != null) {
+				mCurrentVA.mCoveredTestGoal = true;
+				// concreteExecution();
+			}
+			mSucessfulReuse = true;
+			// Since we do not create a counterexample after successfull reuse, we have to annotate here.
+			mCurrentVA.setVa(mValueAssignmentUsedForReuse, mHighestVaOrderInTrace, mVAsInPrefix);
+			mSatisfiable = reuseResult;
+		} else {
+			if (reuseUnsatpossible) {
+				removeCheckIfCovered();
+			}
+			if (mCurrentVA.secondCheck == true) {
+				mVAforReuse.mNegatedVA = false;
+			} else {
+				mVAforReuse.mNegatedVA = true;
+			}
+
+			mSatisfiable = mMgdScriptTc.getScript().checkSat();
+		}
+
+		mCurrentVA.secondCheck = true;
+	}
+
+	private Term createTermFromVA(final String variableAsString, final Term valueTCscript) {
+		Term value = null;
+		if (valueTCscript != null) {
+			value = mTermTransferrer.transform(valueTCscript);
+		}
+
+		final Script reuseScript = mCfgManagedScript.getScript();
+		FunctionSymbol varInCurrentScript = reuseScript.getTheory().getDeclaredFunctions().get(variableAsString);
 		if (varInCurrentScript == null) {
-			varInCurrentScript = mMgdScriptTc.getScript().getTheory()
-					.getFunction(variableAsString.substring(1, variableAsString.length() - 1));
+			varInCurrentScript =
+					reuseScript.getTheory().getFunction(variableAsString.substring(1, variableAsString.length() - 1));
 		}
 
 		if (varInCurrentScript == null) {
 			throw new AssertionError("unknown var " + variableAsString);
 		}
 
-		final Term nondetVar = SmtUtils.unfTerm(mMgdScriptTc.getScript(), varInCurrentScript);
+		final Term nondetVar = SmtUtils.unfTerm(reuseScript, varInCurrentScript);
 
 		final Term nondetValue;
 
@@ -349,7 +389,7 @@ public class AnnotateAndAsserter<L extends IAction> {
 			if (nondetVar.getSort().getIndices()[1].equals("24")) {
 				if (value != null) {
 					final ApplicationTerm valueAsAppterm = (ApplicationTerm) value;
-					nondetValue = SmtUtils.unfTerm(mMgdScriptTc.getScript(), valueAsAppterm.getFunction().getName(),
+					nondetValue = SmtUtils.unfTerm(reuseScript, valueAsAppterm.getFunction().getName(),
 							valueAsAppterm.getSort().getIndices(), null, valueAsAppterm.getParameters());
 				} else {
 					// (fp (_ BitVec 1) (_ BitVec eb) (_ BitVec i) (_ FloatingPoint eb sb))
@@ -359,14 +399,13 @@ public class AnnotateAndAsserter<L extends IAction> {
 					indices[0] = "0";
 					indices[1] = "0";
 
-					final Term bvConst0 = SmtUtils.rational2Term(mMgdScriptTc.getScript(), Rational.ZERO,
-							SmtSortUtils.getBitvectorSort(mMgdScriptTc.getScript(), 1));
-					final Term bvConst1 = SmtUtils.rational2Term(mMgdScriptTc.getScript(), Rational.ZERO,
-							SmtSortUtils.getBitvectorSort(mMgdScriptTc.getScript(), 8));
-					final Term bvConst2 = SmtUtils.rational2Term(mMgdScriptTc.getScript(), Rational.ZERO,
-							SmtSortUtils.getBitvectorSort(mMgdScriptTc.getScript(), 23));
-					nondetValue =
-							SmtUtils.unfTerm(mMgdScriptTc.getScript(), "fp", null, null, bvConst0, bvConst1, bvConst2);
+					final Term bvConst0 = SmtUtils.rational2Term(reuseScript, Rational.ZERO,
+							SmtSortUtils.getBitvectorSort(reuseScript, 1));
+					final Term bvConst1 = SmtUtils.rational2Term(reuseScript, Rational.ZERO,
+							SmtSortUtils.getBitvectorSort(reuseScript, 8));
+					final Term bvConst2 = SmtUtils.rational2Term(reuseScript, Rational.ZERO,
+							SmtSortUtils.getBitvectorSort(reuseScript, 23));
+					nondetValue = SmtUtils.unfTerm(reuseScript, "fp", null, null, bvConst0, bvConst1, bvConst2);
 
 					// nondetValue = SmtUtils.unfTerm(mMgdScriptTc.getScript(), "_ FloatingPoint 0 0", indices,
 					// SmtSortUtils
@@ -377,8 +416,8 @@ public class AnnotateAndAsserter<L extends IAction> {
 
 				if (value != null) {
 					final ApplicationTerm valueAsAppterm = (ApplicationTerm) value;
-					nondetValue = SmtUtils.unfTerm(mMgdScriptTc.getScript(), valueAsAppterm.getFunction().getName(),
-							null, null, valueAsAppterm.getParameters());
+					nondetValue = SmtUtils.unfTerm(reuseScript, valueAsAppterm.getFunction().getName(), null, null,
+							valueAsAppterm.getParameters());
 				} else {
 					// (fp (_ BitVec 1) (_ BitVec eb) (_ BitVec i) (_ FloatingPoint eb sb))
 					// (_ +zero 2 4)
@@ -387,18 +426,17 @@ public class AnnotateAndAsserter<L extends IAction> {
 					indices[0] = "0";
 					indices[1] = "0";
 
-					final Term bvConst0 = SmtUtils.rational2Term(mMgdScriptTc.getScript(), Rational.ZERO,
-							SmtSortUtils.getBitvectorSort(mMgdScriptTc.getScript(), 1));
-					final Term bvConst1 = SmtUtils.rational2Term(mMgdScriptTc.getScript(), Rational.ZERO,
-							SmtSortUtils.getBitvectorSort(mMgdScriptTc.getScript(), 11));
-					final Term bvConst2 = SmtUtils.rational2Term(mMgdScriptTc.getScript(), Rational.ZERO,
-							SmtSortUtils.getBitvectorSort(mMgdScriptTc.getScript(), 52));
-					nondetValue =
-							SmtUtils.unfTerm(mMgdScriptTc.getScript(), "fp", null, null, bvConst0, bvConst1, bvConst2);
+					final Term bvConst0 = SmtUtils.rational2Term(reuseScript, Rational.ZERO,
+							SmtSortUtils.getBitvectorSort(reuseScript, 1));
+					final Term bvConst1 = SmtUtils.rational2Term(reuseScript, Rational.ZERO,
+							SmtSortUtils.getBitvectorSort(reuseScript, 11));
+					final Term bvConst2 = SmtUtils.rational2Term(reuseScript, Rational.ZERO,
+							SmtSortUtils.getBitvectorSort(reuseScript, 52));
+					nondetValue = SmtUtils.unfTerm(reuseScript, "fp", null, null, bvConst0, bvConst1, bvConst2);
 
-					// nondetValue = SmtUtils.unfTerm(mMgdScriptTc.getScript(), "_ FloatingPoint 0 0", indices,
+					// nondetValue = SmtUtils.unfTerm(reuseScript, "_ FloatingPoint 0 0", indices,
 					// SmtSortUtils
-					// .getFloatSort(mMgdScriptTc.getScript(), BigInteger.valueOf(8), BigInteger.valueOf(23)));
+					// .getFloatSort(reuseScript, BigInteger.valueOf(8), BigInteger.valueOf(23)));
 
 				}
 
@@ -412,11 +450,11 @@ public class AnnotateAndAsserter<L extends IAction> {
 			if (value != null) {
 				final ApplicationTerm valueAsAppterm = (ApplicationTerm) value;
 				final BigInteger constValue = new BigInteger(valueAsAppterm.getFunction().getName().substring(2));
-				nondetValue = BitvectorUtils.constructTerm(mMgdScriptTc.getScript(),
+				nondetValue = BitvectorUtils.constructTerm(reuseScript,
 						BitvectorUtils.constructBitvectorConstant(constValue, nondetVar.getSort()));
 			} else {
 				final BigInteger constValue = BigInteger.ZERO;
-				nondetValue = BitvectorUtils.constructTerm(mMgdScriptTc.getScript(),
+				nondetValue = BitvectorUtils.constructTerm(reuseScript,
 						BitvectorUtils.constructBitvectorConstant(constValue, nondetVar.getSort()));
 			}
 			break;
@@ -424,22 +462,22 @@ public class AnnotateAndAsserter<L extends IAction> {
 		case SmtSortUtils.INT_SORT: {
 
 			if (value != null) {
-				nondetValue = SmtUtils.rational2Term(mMgdScriptTc.getScript(),
-						SmtUtils.toRational(((ConstantTerm) value)), SmtSortUtils.getIntSort(mMgdScriptTc));
+				nondetValue = SmtUtils.rational2Term(reuseScript, SmtUtils.toRational(((ConstantTerm) value)),
+						SmtSortUtils.getIntSort(mMgdScriptTc));
 			} else {
-				nondetValue = SmtUtils.constructIntegerValue(mMgdScriptTc.getScript(),
-						SmtSortUtils.getIntSort(mMgdScriptTc), BigInteger.ZERO);
+				nondetValue = SmtUtils.constructIntegerValue(reuseScript, SmtSortUtils.getIntSort(mMgdScriptTc),
+						BigInteger.ZERO);
 			}
 			break;
 		}
 		case SmtSortUtils.REAL_SORT: {
 
 			if (value != null) {
-				nondetValue = SmtUtils.rational2Term(mMgdScriptTc.getScript(),
-						SmtUtils.toRational(((ConstantTerm) value)), SmtSortUtils.getRealSort(mMgdScriptTc));
+				nondetValue = SmtUtils.rational2Term(reuseScript, SmtUtils.toRational(((ConstantTerm) value)),
+						SmtSortUtils.getRealSort(mMgdScriptTc));
 			} else {
-				nondetValue = SmtUtils.constructIntegerValue(mMgdScriptTc.getScript(),
-						SmtSortUtils.getRealSort(mMgdScriptTc), BigInteger.ZERO);
+				nondetValue = SmtUtils.constructIntegerValue(reuseScript, SmtSortUtils.getRealSort(mMgdScriptTc),
+						BigInteger.ZERO);
 			}
 			break;
 		}
@@ -448,7 +486,7 @@ public class AnnotateAndAsserter<L extends IAction> {
 		}
 		}
 		mValueAssignmentUsedForReuse.add(new Pair<>(nondetVar, nondetValue));
-		return SmtUtils.binaryEquality(mMgdScriptTc.getScript(), nondetVar, nondetValue);
+		return SmtUtils.binaryEquality(reuseScript, nondetVar, nondetValue);
 	}
 
 	public LBool isInputSatisfiable() {
@@ -554,6 +592,7 @@ public class AnnotateAndAsserter<L extends IAction> {
 				inputBetweenTestGoals = true;
 				value = null; // null will be used as value zero
 				final Term reuseVaTerm = createTermFromVA(nondet, value);
+
 				nondetsAsTerms.add(reuseVaTerm);
 			}
 
@@ -562,9 +601,9 @@ public class AnnotateAndAsserter<L extends IAction> {
 			nondetPositionCount += 1;
 		}
 		if (inputBetweenTestGoals) {
+			mTraceCheckBenchmarkGenerator.reportInputVectorsExtended();
 			exportTest(testV);
 		}
-
 		return nondetsAsTerms;
 
 	}
@@ -572,6 +611,7 @@ public class AnnotateAndAsserter<L extends IAction> {
 	private void exportTest(final TestVector testV) {
 		try {
 			if (!testV.isEmpty()) {
+				mTraceCheckBenchmarkGenerator.reportTestExported();
 				TestExporter.getInstance().exportTests(testV, getUniqueIdentifierForTestCaseName(), true);
 			}
 		} catch (final Exception e) {
@@ -599,6 +639,8 @@ public class AnnotateAndAsserter<L extends IAction> {
 		if (mCurrentVA.mVAofOppositeBranch.mCoveredTestGoal) {
 			return;
 		}
+		mTraceCheckBenchmarkGenerator.reportSuccessfullReuse();
+		mTraceCheckBenchmarkGenerator.reportUNSAToptimizations();
 		if (mVAforReuse.equals(mDefaultVA)) {
 			System.out.println("OtherBranchRemoveCheckDefault");
 			mCurrentVA.mVAofOppositeBranch.removeCheck();

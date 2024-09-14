@@ -58,6 +58,14 @@ public class TraceCheckStatisticsGenerator extends StatisticsGeneratorWithStopwa
 	private int mPerfectInterpolantSequences = 0;
 	private BackwardCoveringInformation mInterpolantCoveringCapability = new BackwardCoveringInformation(0, 0);
 
+	// Test Case generation statistics:
+	private int mTraceChecks = 0;
+	private int mTestsExported = 0;
+	private int mReusesTried = 0;
+	private int mInputVectorsExtended = 0;
+	private int UNSAToptimizations = 0;
+	private int mSucessfullReuses = 0;
+
 	private final boolean mCollectInterpolatSequenceStatistics;
 
 	public TraceCheckStatisticsGenerator(final boolean collectInterpolatSequenceStatistics) {
@@ -174,6 +182,20 @@ public class TraceCheckStatisticsGenerator extends StatisticsGeneratorWithStopwa
 			return mPerfectInterpolantSequences;
 		case InterpolantCoveringCapability:
 			return mInterpolantCoveringCapability;
+
+		// Test Case Generation:
+		case TraceChecks:
+			return mTraceChecks;
+		case TestsExported:
+			return mTestsExported;
+		case ReusesTried:
+			return mReusesTried;
+		case InputVectorsExtended:
+			return mInputVectorsExtended;
+		case UNSAToptimizations:
+			return UNSAToptimizations;
+		case SucessfullReuses:
+			return mSucessfullReuses;
 		default:
 			throw new AssertionError("unknown data");
 		}
@@ -193,6 +215,31 @@ public class TraceCheckStatisticsGenerator extends StatisticsGeneratorWithStopwa
 
 	public boolean isCollectingInterpolantSequenceStatistics() {
 		return mCollectInterpolatSequenceStatistics;
+	}
+
+	// Test Case Generation:
+	public void reportTraceChecks() {
+		mTraceChecks++;
+	}
+
+	public void reportTestExported() {
+		mTestsExported++;
+	}
+
+	public void reportReuseTried() {
+		mReusesTried++;
+	}
+
+	public void reportInputVectorsExtended() {
+		mInputVectorsExtended++;
+	}
+
+	public void reportUNSAToptimizations() {
+		UNSAToptimizations++;
+	}
+
+	public void reportSuccessfullReuse() {
+		mSucessfullReuses++;
 	}
 
 }
