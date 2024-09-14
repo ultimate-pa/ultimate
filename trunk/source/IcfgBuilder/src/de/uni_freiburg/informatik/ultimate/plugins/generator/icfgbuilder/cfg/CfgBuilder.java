@@ -1008,30 +1008,41 @@ public class CfgBuilder {
 			return buildAssumeSplit(st, assumeTrue, currentLocation, assumeFalse, error);
 		}
 
-		private BoogieIcfgLocation buildOneAssume(final Statement st, final AssumeStatement cond,
-				final IIcfgElement loc, final BoogieIcfgLocation start) {
-			if (loc instanceof StatementSequence && (mCodeBlockSize == CodeBlockSize.SequenceOfStatements
+		/**
+		 * Prepend an {@link AssumeStatement} to part of our ICFG that we currently
+		 * build.
+		 *
+		 * @param st      {@link Statement} from which the the {@link AssumeStatement}
+		 *                originates.
+		 * @param cond    Condition represented by an {@link AssumeStatement}.
+		 * @param current Part of the ICFG that we currently build. Either a
+		 *                {@link StatementSequence} or an {@link IcfgLocation}.
+		 * @param srcLoc  The {@link IcfgLocation} the becomes the source location of
+		 *                the edge that contains the {@link AssumeStatement}.
+		 */
+		private void prependOneAssume(final Statement st, final AssumeStatement cond, final IIcfgElement current,
+				final BoogieIcfgLocation srcLoc) {
+			if (current instanceof StatementSequence && (mCodeBlockSize == CodeBlockSize.SequenceOfStatements
 					|| mCodeBlockSize == CodeBlockSize.LoopFreeBlock
-					|| mCodeBlockSize == CodeBlockSize.OneNontrivialStatement && (((StatementSequence) loc).isTrivial()
-							|| StatementSequence.isAssumeTrueStatement(cond)))) {
-				((StatementSequence) loc).addStatement(cond, 0);
-				ModelUtils.copyAnnotations(st, loc);
-				ModelUtils.copyAnnotations(cond, loc);
-				endStatementSequence((StatementSequence) loc, start);
-
+					|| mCodeBlockSize == CodeBlockSize.OneNontrivialStatement
+							&& (((StatementSequence) current).isTrivial()
+									|| StatementSequence.isAssumeTrueStatement(cond)))) {
+				((StatementSequence) current).addStatement(cond, 0);
+				ModelUtils.copyAnnotations(st, current);
+				ModelUtils.copyAnnotations(cond, current);
+				endStatementSequence((StatementSequence) current, srcLoc);
 			} else {
 				StatementSequence newEdge1;
-				if (loc instanceof StatementSequence) {
-					newEdge1 = mCbf.constructStatementSequence(start, endStatementSequence((StatementSequence) loc),
-							cond);
+				if (current instanceof StatementSequence) {
+					newEdge1 = mCbf.constructStatementSequence(srcLoc,
+							endStatementSequence((StatementSequence) current), cond);
 				} else {
-					newEdge1 = mCbf.constructStatementSequence(start, (BoogieIcfgLocation) loc, cond);
+					newEdge1 = mCbf.constructStatementSequence(srcLoc, (BoogieIcfgLocation) current, cond);
 				}
 				mEdges.add(newEdge1);
 				ModelUtils.copyAnnotations(st, newEdge1);
 				ModelUtils.copyAnnotations(cond, newEdge1);
 			}
-			return start;
 		}
 
 		private BoogieIcfgLocation buildAssumeSplit(final Statement st, final AssumeStatement cond1,
@@ -1046,8 +1057,8 @@ public class CfgBuilder {
 		private BoogieIcfgLocation buildAssumeSplit(final Statement st, final AssumeStatement cond1,
 				final IIcfgElement loc1, final AssumeStatement cond2, final IIcfgElement loc2,
 				final BoogieIcfgLocation start) {
-			buildOneAssume(st, cond1, loc1, start);
-			buildOneAssume(st, cond2, loc2, start);
+			prependOneAssume(st, cond1, loc1, start);
+			prependOneAssume(st, cond2, loc2, start);
 			return start;
 
 		}
