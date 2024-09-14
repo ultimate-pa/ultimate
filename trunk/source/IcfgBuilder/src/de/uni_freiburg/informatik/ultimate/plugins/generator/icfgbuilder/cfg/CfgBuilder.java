@@ -856,7 +856,9 @@ public class CfgBuilder {
 			mIcfgBacktranslator.putAux(thenStatement, new BoogieASTNode[] { st });
 			mIcfgBacktranslator.putAux(elseStatement, new BoogieASTNode[] { st });
 
-			return buildAssumeSplit(st, thenStatement, thenPart, elseStatement, elsePart);
+			final BoogieIcfgLocation srcLoc = buildNewIcfgLocation(st);
+			buildBranching(st, thenStatement, thenPart, elseStatement, elsePart, srcLoc);
+			return srcLoc;
 		}
 
 		private BoogieIcfgLocation buildWhile(final BoogieIcfgLocation currentLocation, final WhileStatement st) {
@@ -1005,7 +1007,9 @@ public class CfgBuilder {
 			new ConditionAnnotation(true).annotate(assumeFalse);
 			mIcfgBacktranslator.putAux(assumeTrue, new BoogieASTNode[] { st });
 			mIcfgBacktranslator.putAux(assumeFalse, new BoogieASTNode[] { st });
-			return buildAssumeSplit(st, assumeTrue, currentLocation, assumeFalse, error);
+			final BoogieIcfgLocation srcLoc = buildNewIcfgLocation(st);
+			buildBranching(st, assumeTrue, currentLocation, assumeFalse, error, srcLoc);
+			return srcLoc;
 		}
 
 		/**
@@ -1045,12 +1049,10 @@ public class CfgBuilder {
 			}
 		}
 
-		private BoogieIcfgLocation buildAssumeSplit(final Statement st, final AssumeStatement cond1,
-				final IIcfgElement loc1, final AssumeStatement cond2, final IIcfgElement loc2) {
+		private BoogieIcfgLocation buildNewIcfgLocation(final Statement st) {
 			final BoogieIcfgLocation start = new BoogieIcfgLocation(constructLocDebugIdentifier(st),
 					mCurrentProcedureName, false, st);
 			mProcLocNodes.put(start.getDebugIdentifier(), start);
-			buildBranching(st, cond1, loc1, cond2, loc2, start);
 			return start;
 		}
 
