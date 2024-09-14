@@ -913,7 +913,7 @@ public class CfgBuilder {
 			}
 			mIcfgBacktranslator.putAux(condTrue, new BoogieASTNode[] { st });
 			mIcfgBacktranslator.putAux(condFalse, new BoogieASTNode[] { st });
-			buildAssumeSplit(st, condTrue, buildCodeBlock(st.getBody(), start, false), condFalse, currentLocation,
+			buildBranching(st, condTrue, buildCodeBlock(st.getBody(), start, false), condFalse, currentLocation,
 					afterInvariants);
 			assert (mWhileExits.pop() == currentLocation);
 			if (mConditionalStarts.peek() != start) {
@@ -1050,17 +1050,23 @@ public class CfgBuilder {
 			final BoogieIcfgLocation start = new BoogieIcfgLocation(constructLocDebugIdentifier(st),
 					mCurrentProcedureName, false, st);
 			mProcLocNodes.put(start.getDebugIdentifier(), start);
-			return buildAssumeSplit(st, cond1, loc1, cond2, loc2, start);
-
+			buildBranching(st, cond1, loc1, cond2, loc2, start);
+			return start;
 		}
 
-		private BoogieIcfgLocation buildAssumeSplit(final Statement st, final AssumeStatement cond1,
-				final IIcfgElement loc1, final AssumeStatement cond2, final IIcfgElement loc2,
-				final BoogieIcfgLocation start) {
-			prependOneAssume(st, cond1, loc1, start);
-			prependOneAssume(st, cond2, loc2, start);
-			return start;
-
+		/**
+		 * Build a branching that connects two parts of the ICFG. We prepend an
+		 * {@link AssumeStatement} to each part of the ICFG.
+		 *
+		 * @param st {@link Statement} from which the the branching originates.
+		 * @param srcLoc The {@link IcfgLocation} the becomes the source location of
+		 *                the edges that contains the {@link AssumeStatement}s.
+		 */
+		private void buildBranching(final Statement st, final AssumeStatement cond1,
+				final IIcfgElement part1, final AssumeStatement cond2, final IIcfgElement part2,
+				final BoogieIcfgLocation srcLoc) {
+			prependOneAssume(st, cond1, part1, srcLoc);
+			prependOneAssume(st, cond2, part2, srcLoc);
 		}
 
 		private BoogieIcfgLocation buildReturn(final BoogieIcfgLocation currentLocation, final ReturnStatement st) {
