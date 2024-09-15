@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 public class ProcedureErrorDebugIdentifier extends StringDebugIdentifier {
 
 	public enum ProcedureErrorType {
-		ASSERT_VIOLATION, REQUIRES_VIOLATION, ENSURES_VIOLATION, INUSE_VIOLATION
+		ASSERT_VIOLATION, REQUIRES_VIOLATION, ENSURES_VIOLATION, INUSE_VIOLATION, LOOP_INVARIANT_VIOLATION
 	}
 
 	private final int mId;
