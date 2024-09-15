@@ -879,6 +879,7 @@ public class CfgBuilder {
 					final LoopInvariantSpecification spec = st.getInvariants()[i];
 					if (spec.isFree()) {
 						final AssumeStatement newStatement = new AssumeStatement(spec.getLocation(), spec.getFormula());
+						mIcfgBacktranslator.putAux(newStatement, new BoogieASTNode[] { spec });
 						ModelUtils.copyAnnotations(spec, newStatement);
 						currentElement = buildAssuAssiHavoc(currentElement, newStatement, Origin.IMPLEMENTATION);
 					} else {
