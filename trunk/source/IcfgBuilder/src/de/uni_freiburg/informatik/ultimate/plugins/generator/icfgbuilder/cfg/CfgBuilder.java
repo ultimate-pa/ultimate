@@ -528,6 +528,8 @@ public class CfgBuilder {
 			type = ProcedureErrorType.REQUIRES_VIOLATION;
 		} else if (boogieASTNode instanceof ForkStatement) {
 			type = ProcedureErrorType.INUSE_VIOLATION;
+		} else if (boogieASTNode instanceof LoopInvariantSpecification) {
+			type = ProcedureErrorType.LOOP_INVARIANT_VIOLATION;
 		} else {
 			throw new IllegalArgumentException();
 		}
@@ -886,16 +888,14 @@ public class CfgBuilder {
 						if (currentElement instanceof StatementSequence) {
 							currentElement = endStatementSequence((StatementSequence) currentElement);
 						}
-						final AssertStatement newStatement = new AssertStatement(spec.getLocation(), spec.getFormula());
-						ModelUtils.copyAnnotations(spec, newStatement);
-						currentElement = buildAssert((BoogieIcfgLocation) currentElement, newStatement);
+						currentElement = buildBranchingToNewErrorLocation((BoogieIcfgLocation) currentElement,
+								spec.getFormula(), spec);
 					}
 				}
 				if (currentElement instanceof StatementSequence) {
 					currentElement = endStatementSequence((StatementSequence) currentElement);
 				}
 				mergeLocNodes((BoogieIcfgLocation) currentElement, loopEntryLoc, false);
-
 			}
 
 			mProcLocNodes.put(loopEntryLoc.getDebugIdentifier(), loopEntryLoc);
@@ -991,23 +991,28 @@ public class CfgBuilder {
 		}
 
 		private BoogieIcfgLocation buildAssert(final BoogieIcfgLocation currentLocation, final AssertStatement st) {
-			final BoogieIcfgLocation error = addErrorNode(mCurrentProcedureName, st, mProcLocNodes);
+			return buildBranchingToNewErrorLocation(currentLocation, st.getFormula(), st);
+		}
+
+		private BoogieIcfgLocation buildBranchingToNewErrorLocation(final BoogieIcfgLocation currentLocation,
+				final Expression formula, final BoogieASTNode origin) {
+			final BoogieIcfgLocation error = addErrorNode(mCurrentProcedureName, origin, mProcLocNodes);
 			mProcLocNodes.put(error.getDebugIdentifier(), error);
 			AssumeStatement assumeTrue;
 			if (mAddAssumeForEachAssert) {
-				assumeTrue = new AssumeStatement(st.getLocation(), st.getFormula());
+				assumeTrue = new AssumeStatement(origin.getLocation(), formula);
 			} else {
-				assumeTrue = new AssumeStatement(st.getLocation(),
-						ExpressionFactory.createBooleanLiteral(st.getLocation(), true));
+				assumeTrue = new AssumeStatement(origin.getLocation(),
+						ExpressionFactory.createBooleanLiteral(origin.getLocation(), true));
 			}
 
 			new ConditionAnnotation(false).annotate(assumeTrue);
-			final AssumeStatement assumeFalse = new AssumeStatement(st.getLocation(), getNegation(st.getFormula()));
+			final AssumeStatement assumeFalse = new AssumeStatement(origin.getLocation(), getNegation(formula));
 			new ConditionAnnotation(true).annotate(assumeFalse);
-			mIcfgBacktranslator.putAux(assumeTrue, new BoogieASTNode[] { st });
-			mIcfgBacktranslator.putAux(assumeFalse, new BoogieASTNode[] { st });
-			final BoogieIcfgLocation srcLoc = buildNewIcfgLocation(st);
-			buildBranching(st, assumeTrue, currentLocation, assumeFalse, error, srcLoc);
+			mIcfgBacktranslator.putAux(assumeTrue, new BoogieASTNode[] { origin });
+			mIcfgBacktranslator.putAux(assumeFalse, new BoogieASTNode[] { origin });
+			final BoogieIcfgLocation srcLoc = buildNewIcfgLocation(origin);
+			buildBranching(origin, assumeTrue, currentLocation, assumeFalse, error, srcLoc);
 			return srcLoc;
 		}
 
@@ -1015,42 +1020,42 @@ public class CfgBuilder {
 		 * Prepend an {@link AssumeStatement} to part of our ICFG that we currently
 		 * build.
 		 *
-		 * @param st      {@link Statement} from which the the {@link AssumeStatement}
-		 *                originates.
+		 * @param origin {@link BoogieASTNode} from which the the
+		 *                {@link AssumeStatement} originates.
 		 * @param cond    Condition represented by an {@link AssumeStatement}.
 		 * @param current Part of the ICFG that we currently build. Either a
 		 *                {@link StatementSequence} or an {@link IcfgLocation}.
 		 * @param srcLoc  The {@link IcfgLocation} the becomes the source location of
 		 *                the edge that contains the {@link AssumeStatement}.
 		 */
-		private void prependOneAssume(final Statement st, final AssumeStatement cond, final IIcfgElement current,
-				final BoogieIcfgLocation srcLoc) {
+		private void prependOneAssume(final BoogieASTNode origin, final AssumeStatement cond,
+				final IIcfgElement current, final BoogieIcfgLocation srcLoc) {
 			if (current instanceof StatementSequence && (mCodeBlockSize == CodeBlockSize.SequenceOfStatements
 					|| mCodeBlockSize == CodeBlockSize.LoopFreeBlock
 					|| mCodeBlockSize == CodeBlockSize.OneNontrivialStatement
 							&& (((StatementSequence) current).isTrivial()
 									|| StatementSequence.isAssumeTrueStatement(cond)))) {
 				((StatementSequence) current).addStatement(cond, 0);
-				ModelUtils.copyAnnotations(st, current);
+				ModelUtils.copyAnnotations(origin, current);
 				ModelUtils.copyAnnotations(cond, current);
 				endStatementSequence((StatementSequence) current, srcLoc);
 			} else {
-				StatementSequence newEdge1;
+				StatementSequence newEdge;
 				if (current instanceof StatementSequence) {
-					newEdge1 = mCbf.constructStatementSequence(srcLoc,
+					newEdge = mCbf.constructStatementSequence(srcLoc,
 							endStatementSequence((StatementSequence) current), cond);
 				} else {
-					newEdge1 = mCbf.constructStatementSequence(srcLoc, (BoogieIcfgLocation) current, cond);
+					newEdge = mCbf.constructStatementSequence(srcLoc, (BoogieIcfgLocation) current, cond);
 				}
-				mEdges.add(newEdge1);
-				ModelUtils.copyAnnotations(st, newEdge1);
-				ModelUtils.copyAnnotations(cond, newEdge1);
+				mEdges.add(newEdge);
+				ModelUtils.copyAnnotations(origin, newEdge);
+				ModelUtils.copyAnnotations(cond, newEdge);
 			}
 		}
 
-		private BoogieIcfgLocation buildNewIcfgLocation(final Statement st) {
-			final BoogieIcfgLocation start = new BoogieIcfgLocation(constructLocDebugIdentifier(st),
-					mCurrentProcedureName, false, st);
+		private BoogieIcfgLocation buildNewIcfgLocation(final BoogieASTNode astNode) {
+			final BoogieIcfgLocation start = new BoogieIcfgLocation(constructLocDebugIdentifier(astNode),
+					mCurrentProcedureName, false, astNode);
 			mProcLocNodes.put(start.getDebugIdentifier(), start);
 			return start;
 		}
@@ -1059,15 +1064,15 @@ public class CfgBuilder {
 		 * Build a branching that connects two parts of the ICFG. We prepend an
 		 * {@link AssumeStatement} to each part of the ICFG.
 		 *
-		 * @param st {@link Statement} from which the the branching originates.
+		 * @param origin {@link BoogieASTNode} from which the the branching originates.
 		 * @param srcLoc The {@link IcfgLocation} the becomes the source location of
 		 *                the edges that contains the {@link AssumeStatement}s.
 		 */
-		private void buildBranching(final Statement st, final AssumeStatement cond1,
+		private void buildBranching(final BoogieASTNode origin, final AssumeStatement cond1,
 				final IIcfgElement part1, final AssumeStatement cond2, final IIcfgElement part2,
 				final BoogieIcfgLocation srcLoc) {
-			prependOneAssume(st, cond1, part1, srcLoc);
-			prependOneAssume(st, cond2, part2, srcLoc);
+			prependOneAssume(origin, cond1, part1, srcLoc);
+			prependOneAssume(origin, cond2, part2, srcLoc);
 		}
 
 		private BoogieIcfgLocation buildReturn(final BoogieIcfgLocation currentLocation, final ReturnStatement st) {
@@ -1557,8 +1562,8 @@ public class CfgBuilder {
 
 		}
 
-		private DebugIdentifier constructLocDebugIdentifier(final Statement stmt) {
-			final ILocation location = stmt.getLocation();
+		private DebugIdentifier constructLocDebugIdentifier(final BoogieASTNode astNode) {
+			final ILocation location = astNode.getLocation();
 			final int startLine = location.getStartLine();
 			Integer value = mNameCache.get(startLine);
 			if (value == null) {
@@ -1567,7 +1572,7 @@ public class CfgBuilder {
 				value = value + 1;
 			}
 			mNameCache.put(startLine, value);
-			final LoopEntryAnnotation lea = LoopEntryAnnotation.getAnnotation(stmt);
+			final LoopEntryAnnotation lea = LoopEntryAnnotation.getAnnotation(astNode);
 			if (lea != null && lea.getLoopEntryType() == LoopEntryType.WHILE) {
 				return new LoopEntryDebugIdentifier(startLine, value);
 			}
