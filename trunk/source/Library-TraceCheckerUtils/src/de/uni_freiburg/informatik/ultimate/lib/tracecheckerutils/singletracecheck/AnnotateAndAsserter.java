@@ -73,7 +73,7 @@ public class AnnotateAndAsserter<L extends IAction> {
 	protected final ManagedScript mMgdScriptTc;
 	protected ManagedScript mCfgManagedScript;
 	protected final NestedWord<L> mTrace;
-	final TermTransferrer mTermTransferrer;
+	TermTransferrer mTermTransferrer = null;
 	Object mReuseLock;
 	protected LBool mSatisfiable;
 	protected final NestedFormulas<L, Term, Term> mSSA;
@@ -113,11 +113,12 @@ public class AnnotateAndAsserter<L extends IAction> {
 		mTcbg = tcbg;
 		mTraceCheckBenchmarkGenerator = traceCheckStatisticsGenerator;
 		mReuseLock = reuseLock;
-		mTermTransferrer = new TermTransferrer(mMgdScriptTc.getScript(), mCfgManagedScript.getScript());
-		if (noReuse || mCfgManagedScript.isLocked()) {
+
+		if (noReuse || mCfgManagedScript.isLocked() || mCfgManagedScript == null) {
 			mTestGenReuseMode = TestGenReuseMode.None;
 			mAnnotateAndAssertCodeBlocks.mCfgMgdScriptTcLockedBySbElse = true;
 		} else {
+			mTermTransferrer = new TermTransferrer(mMgdScriptTc.getScript(), mCfgManagedScript.getScript());
 			mTestGenReuseMode = RcfgPreferenceInitializer.getPreferences(services)
 					.getEnum(RcfgPreferenceInitializer.LABEL_TEST_GEN_REUSE_MODE, TestGenReuseMode.class);
 		}

@@ -349,6 +349,11 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 			}
 			result = new FeasibilityCheckResult(isSafe, tcru, false);
 		} catch (final SMTLIBException e) {
+			if (!mTestGenReuseMode.equals(TestGenReuseMode.None)) {
+				System.out.println("UnLock");
+				mCfgManagedScript.pop(mReuseLock, 1);
+				mCfgManagedScript.unlock(mReuseLock);
+			}
 			if (!mServices.getProgressMonitorService().continueProcessing()) {
 				// there was a cancellation request, probably responsible for
 				// abnormal solver termination
