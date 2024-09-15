@@ -861,13 +861,13 @@ public class CfgBuilder {
 			return srcLoc;
 		}
 
-		private BoogieIcfgLocation buildWhile(final BoogieIcfgLocation currentLocation, final WhileStatement st) {
-			final BoogieIcfgLocation start = new BoogieIcfgLocation(constructLocDebugIdentifier(st),
+		private BoogieIcfgLocation buildWhile(final BoogieIcfgLocation targetLoc, final WhileStatement st) {
+			final BoogieIcfgLocation loopEntryLoc = new BoogieIcfgLocation(constructLocDebugIdentifier(st),
 					mCurrentProcedureName, false, st);
 			BoogieIcfgLocation afterInvariants;
 			// detect and handle invariants
 			if (st.getInvariants().length == 0) {
-				afterInvariants = start;
+				afterInvariants = loopEntryLoc;
 			} else {
 				final Statement afterInvSt = new AssignmentStatement(st.getLoc(), null, null);
 				afterInvariants = new BoogieIcfgLocation(constructLocDebugIdentifier(afterInvSt), mCurrentProcedureName,
@@ -893,13 +893,13 @@ public class CfgBuilder {
 				if (currentElement instanceof StatementSequence) {
 					currentElement = endStatementSequence((StatementSequence) currentElement);
 				}
-				mergeLocNodes((BoogieIcfgLocation) currentElement, start, false);
+				mergeLocNodes((BoogieIcfgLocation) currentElement, loopEntryLoc, false);
 
 			}
 
-			mProcLocNodes.put(start.getDebugIdentifier(), start);
-			mIcfg.getLoopLocations().add(start);
-			mWhileExits.add(currentLocation);
+			mProcLocNodes.put(loopEntryLoc.getDebugIdentifier(), loopEntryLoc);
+			mIcfg.getLoopLocations().add(loopEntryLoc);
+			mWhileExits.add(targetLoc);
 			mConditionalStarts.add(afterInvariants);
 			AssumeStatement condTrue;
 			AssumeStatement condFalse;
@@ -915,13 +915,11 @@ public class CfgBuilder {
 			}
 			mIcfgBacktranslator.putAux(condTrue, new BoogieASTNode[] { st });
 			mIcfgBacktranslator.putAux(condFalse, new BoogieASTNode[] { st });
-			buildBranching(st, condTrue, buildCodeBlock(st.getBody(), start, false), condFalse, currentLocation,
+			buildBranching(st, condTrue, buildCodeBlock(st.getBody(), loopEntryLoc, false), condFalse, targetLoc,
 					afterInvariants);
-			assert (mWhileExits.pop() == currentLocation);
-			if (mConditionalStarts.peek() != start) {
-				mergeLocNodes(start, mConditionalStarts.peek(), true);
-			}
-			return mConditionalStarts.pop();
+			assert (mWhileExits.pop() == targetLoc);
+			mConditionalStarts.pop();
+			return loopEntryLoc;
 		}
 
 		private Expression getLHSExpression(final LeftHandSide lhs) {
