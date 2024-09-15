@@ -7,6 +7,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
+import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -66,6 +67,15 @@ public class PolynomialTermTransformer extends TermTransformer {
 			setResult(result);
 			return;
 		}
+
+		// When encountering a term of the form (* (div t1 t2) t2), we replace it by the term (- t1 (mod t1 t2)).
+		// The class MulDivModRewriter ensures that TermTransformer descends into the subterms t1 and t2.
+		final MulDivModRewriter mulDivModRewriter = MulDivModRewriter.forTerm(term);
+		if (mulDivModRewriter != null) {
+			mulDivModRewriter.run(this);
+			return;
+		}
+
 		// Otherwise, if the term represents an "polynomial function" we tell
 		// TermTransformer to descend to subformulas.
 		if (isPolynomialFunction(term)) {
@@ -330,5 +340,86 @@ public class PolynomialTermTransformer extends TermTransformer {
 			}
 		}
 		return result;
+	}
+
+	/**
+	 * Helper class that rewrites terms of the form (* (div t1 t2) t2) to the form (- t1 (mod t1 t2)).
+	 *
+	 * The idea is that the latter form is more useful on polynomial relations, as an occurrence of t1 on the other side
+	 * of the relation can be eliminated along with the first occurrence in (- t1 (mod t1 t2)).
+	 *
+	 * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+	 */
+	private static class MulDivModRewriter implements Walker {
+		private final Term mNumerator;
+		private final Term mDivisorFactor;
+
+		private MulDivModRewriter(final Term numerator, final Term divisorFactor) {
+			mNumerator = numerator;
+			mDivisorFactor = divisorFactor;
+		}
+
+		public void run(final PolynomialTermTransformer engine) {
+			engine.enqueueWalker(this);
+			engine.pushTerm(mDivisorFactor);
+			engine.pushTerm(mNumerator);
+
+		}
+
+		@Override
+		public void walk(final NonRecursive engine) {
+			final PolynomialTermTransformer transformer = (PolynomialTermTransformer) engine;
+			final Term[] oldArgs = new Term[] { mNumerator, mDivisorFactor };
+			final Term[] newArgs = transformer.getConverted(oldArgs);
+			final IPolynomialTerm[] polynomialArgs = castAndCheckForNonPolynomialArguments(newArgs);
+			if (polynomialArgs == null) {
+				transformer.inputIsNotPolynomial();
+				return;
+			}
+
+			final var result = subtract(new IPolynomialTerm[] { polynomialArgs[0],
+					polynomialArgs[0].mod(transformer.mScript, polynomialArgs[1]) });
+			transformer.castAndSetResult(result);
+		}
+
+		/**
+		 * Determines if the given term has the form (* (div t1 t2) t2), and if so, creates a {@link MulDivModRewriter}
+		 * instance for rewriting the given term into (- t1 (mod t1 t2)).
+		 *
+		 * @param term
+		 * @return a suitable instance, or {@code null} if the given term does not have the required form
+		 */
+		public static MulDivModRewriter forTerm(final Term term) {
+			if (!(term instanceof ApplicationTerm)) {
+				return null;
+			}
+			final var appTerm = (ApplicationTerm) term;
+			if (!appTerm.getFunction().getName().equals("*") || appTerm.getParameters().length != 2) {
+				// TODO should we add support for more than 2 parameters?
+				return null;
+			}
+			final var params = appTerm.getParameters();
+			final var result = forTerms(params[0], params[1]);
+			if (result == null) {
+				return forTerms(params[1], params[0]);
+			}
+			return result;
+		}
+
+		private static MulDivModRewriter forTerms(final Term div, final Term other) {
+			if (!(div instanceof ApplicationTerm)) {
+				return null;
+			}
+			final var appTerm = (ApplicationTerm) div;
+			if (!appTerm.getFunction().getName().equals("div") || appTerm.getParameters().length != 2) {
+				// TODO should we add support for more than 2 parameters?
+				return null;
+			}
+			final var params = appTerm.getParameters();
+			if (params[1].equals(other)) {
+				return new MulDivModRewriter(params[0], other);
+			}
+			return null;
+		}
 	}
 }
