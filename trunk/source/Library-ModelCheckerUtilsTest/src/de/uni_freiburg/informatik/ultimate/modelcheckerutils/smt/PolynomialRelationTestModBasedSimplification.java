@@ -368,6 +368,22 @@ public class PolynomialRelationTestModBasedSimplification {
 		testSimplification(SOLVER_COMMAND_Z3, input, expected, funDecls);
 	}
 
+	@Test
+	public void intMulDivMod03() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x") };
+		final String input = "(= (- x (mod x 256)) (* 256 (div x 256)))";
+		final String expected = "true";
+		testSimplification(SOLVER_COMMAND_Z3, input, expected, funDecls);
+	}
+
+	@Test
+	public void intMulDivMod04() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x") };
+		final String input = "(= (* (div x 256) 256) (- x (mod x 256) 1))";
+		final String expected = "false";
+		testSimplification(SOLVER_COMMAND_Z3, input, expected, funDecls);
+	}
+
 	private void testSimplification(final String solverCommand, final String inputAsString,
 			final String expectedResultAsString, final FunDecl... funDecls) {
 		final Script script = createSolver(solverCommand);
