@@ -121,6 +121,9 @@ public class AnnotateAndAsserter<L extends IAction> {
 			mTermTransferrer = new TermTransferrer(mMgdScriptTc.getScript(), mCfgManagedScript.getScript());
 			mTestGenReuseMode = RcfgPreferenceInitializer.getPreferences(services)
 					.getEnum(RcfgPreferenceInitializer.LABEL_TEST_GEN_REUSE_MODE, TestGenReuseMode.class);
+			if (!mTestGenReuseMode.equals(TestGenReuseMode.None)) {
+				mAnnotateAndAssertCodeBlocks.setUpReuse(cfgMgdScriptTc, reuseLock);
+			}
 		}
 		reuseUnsatpossible = mTestGenReuseMode.equals(TestGenReuseMode.ReuseUNSATmatchPrefix)
 				|| mTestGenReuseMode.equals(TestGenReuseMode.ReuseUNSATmatchCalloc);
@@ -367,6 +370,7 @@ public class AnnotateAndAsserter<L extends IAction> {
 		Term value = null;
 		if (valueTCscript != null) {
 			value = mTermTransferrer.transform(valueTCscript);
+			// value = mTermTransferrer.tr
 		}
 
 		final Script reuseScript = mCfgManagedScript.getScript();
@@ -531,11 +535,10 @@ public class AnnotateAndAsserter<L extends IAction> {
 			if (statementBranch.toString().contains("nondet")) {
 				final Set<FunctionSymbol> nonTheorySymbolsInTerm =
 						SmtUtils.extractNonTheoryFunctionSymbols(mSSA.getFormulaFromValidNonCallPos(i));
-
-				for (final FunctionSymbol symbol : nonTheorySymbolsInTerm) {
-					final Matcher m = Pattern.compile("__VERIFIER_nondet_(\\w*)")
-							.matcher(statementBranch.getPayload().toString());
-					if (m.find()) {
+				final Matcher m =
+						Pattern.compile("__VERIFIER_nondet_(\\w*)").matcher(statementBranch.getPayload().toString());
+				if (m.find()) {
+					for (final FunctionSymbol symbol : nonTheorySymbolsInTerm) {
 						if (symbol.getName().contains("nondet")) {
 							nondetsInTrace.add(symbol.getName());
 							nondetsInTraceAfterPreviousVA.add(symbol.getName());

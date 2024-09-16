@@ -50,9 +50,9 @@ public class AnnotateAndAssertCodeBlocks<L extends IAction> {
 
 	protected final Script mScript;
 	protected final ManagedScript mMgdScript;
-	protected final ManagedScript mCfgManagedScript; // used for optimization during trace check, dann must not
-														// interdict
-														// interpolation
+	protected ManagedScript mCfgManagedScript; // used for optimization during trace check, dann must not
+												// interdict
+												// interpolation
 	TermTransferrer mTermTransferrer = null;
 	protected final Object mScriptLockOwner;
 	protected final NestedWord<L> mTrace;
@@ -222,6 +222,18 @@ public class AnnotateAndAssertCodeBlocks<L extends IAction> {
 		mCfgManagedScript.assertTerm(mReuseLock, annotTerm);
 		// final Term constantRepresentingAnnotatedTerm = mCFGMgdScriptTc.getScript().term(name);
 
+	}
+
+	public void setUpReuse(final ManagedScript cfgScript, final Object lock) {
+		if (mCfgManagedScript == null) {
+			mCfgManagedScript = cfgScript;
+		}
+		if (mReuseLock == null) {
+			mReuseLock = lock;
+		}
+		if (mReuseLock != null && mCfgManagedScript != null) {
+			mTermTransferrer = new TermTransferrer(mMgdScript.getScript(), mCfgManagedScript.getScript());
+		}
 	}
 
 	/**
