@@ -54,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadOther;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgSummaryTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -63,7 +64,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.SmtFreePredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 public class Cfg2Automaton<LETTER extends IIcfgTransition<?>> {
@@ -207,8 +207,8 @@ public class Cfg2Automaton<LETTER extends IIcfgTransition<?>> {
 								// graph-reachable in the ICFG
 							}
 						}
-					} else if (edge instanceof Summary) {
-						final Summary summaryEdge = (Summary) edge;
+					} else if (edge instanceof IIcfgSummaryTransition<?>) {
+						final IIcfgSummaryTransition<?> summaryEdge = (IIcfgSummaryTransition<?>) edge;
 						if (summaryEdge.calledProcedureHasImplementation()) {
 							if (!interprocedural) {
 								nwa.addInternalTransition(state, letterProvider.apply(summaryEdge), succState);
@@ -363,7 +363,7 @@ public class Cfg2Automaton<LETTER extends IIcfgTransition<?>> {
 					} else if (edge instanceof IIcfgReturnTransition<?, ?>) {
 						throw new UnsupportedOperationException(
 								"unsupported for concurrent analysis " + edge.getClass().getSimpleName());
-					} else if (edge instanceof Summary) {
+					} else if (edge instanceof IIcfgSummaryTransition<?>) {
 						throw new UnsupportedOperationException(
 								"unsupported for concurrent analysis " + edge.getClass().getSimpleName());
 					} else {
@@ -458,8 +458,8 @@ public class Cfg2Automaton<LETTER extends IIcfgTransition<?>> {
 						if (!intraproceduralAnalysis) {
 							returnAlphabet.add((LETTER) edge);
 						}
-					} else if (edge instanceof Summary) {
-						final Summary summary = (Summary) edge;
+					} else if (edge instanceof IIcfgSummaryTransition<?>) {
+						final IIcfgSummaryTransition<?> summary = (IIcfgSummaryTransition<?>) edge;
 						if (summary.calledProcedureHasImplementation()) {
 							// do nothing if analysis is interprocedural
 							// add summary otherwise
