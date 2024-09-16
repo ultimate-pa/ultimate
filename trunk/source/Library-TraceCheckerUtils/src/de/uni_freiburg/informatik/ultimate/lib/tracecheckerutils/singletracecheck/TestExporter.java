@@ -441,6 +441,10 @@ class TestVector {
 		}
 		case SmtSortUtils.INT_SORT: {
 			valueInRange = valueTerm.toStringDirect().replaceAll("[\\(\\)\\s]", "");
+			if (valueInRange.contains(".")) {
+				valueInRange = valueInRange.split("\\.")[0];
+
+			}
 			final BigInteger value = new BigInteger(valueInRange);
 			if (type.equals("long")) {
 				if (value.compareTo(new BigInteger("2147483647")) == 1) {
