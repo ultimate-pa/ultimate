@@ -582,7 +582,7 @@ public final class Boogie2ACSL {
 			if (innerTrans == null) {
 				return null;
 			}
-			range = innerTrans.getRange().negate();
+			range = BigInterval.booleanRange();
 			resultExpr = new UnaryExpression(UnaryExpression.Operator.LOGICNEG, innerTrans.getExpression());
 			cType = innerTrans.getCType();
 			break;
