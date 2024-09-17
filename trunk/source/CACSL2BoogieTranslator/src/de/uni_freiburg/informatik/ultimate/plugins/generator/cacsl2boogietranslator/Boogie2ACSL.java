@@ -165,6 +165,7 @@ public final class Boogie2ACSL {
 			return new BacktranslatedExpression(new OldValueExpression(new IdentifierExpression(pair.getFirst())),
 					pair.getSecond(), range);
 		}
+		mReporter.accept("Unknown variable: " + expr.getIdentifier());
 		return null;
 	}
 
