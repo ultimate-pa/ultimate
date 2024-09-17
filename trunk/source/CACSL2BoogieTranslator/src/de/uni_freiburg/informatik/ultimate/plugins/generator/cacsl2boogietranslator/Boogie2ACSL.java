@@ -431,8 +431,9 @@ public final class Boogie2ACSL {
 		CType resultType;
 		switch (expression.getOperator()) {
 		case ARITHDIV:
-			// TODO: backtranslate from euclidic division properly
-			range = leftRange.divide(rightRange);
+			range = leftRange.euclideanDivide(rightRange);
+
+			// TODO: properly backtranslate from euclidean division to C truncating division
 			operator = Operator.ARITHDIV;
 			resultType = leftType;
 			break;
@@ -442,9 +443,6 @@ public final class Boogie2ACSL {
 			operator = Operator.ARITHMINUS;
 			break;
 		case ARITHMOD:
-		// TODO: backtranslate from euclidic division properly
-		// (range calculation below is for euclidic division)
-		{
 			if (rightRange.isStrictlyPositive()) {
 				final var minModRange =
 						new BigInterval(BigInteger.ZERO, rightRange.getMinValue().subtract(BigInteger.ONE));
@@ -457,8 +455,8 @@ public final class Boogie2ACSL {
 			final var maxRightMinusOne =
 					absRightRange.getMaxValue() == null ? null : absRightRange.getMaxValue().subtract(BigInteger.ONE);
 			range = new BigInterval(BigInteger.ZERO, maxRightMinusOne);
-		}
 
+			// TODO: properly backtranslate from euclidean modulo (mod) to C remainder (%)
 			operator = Operator.ARITHMOD;
 			resultType = leftType;
 			break;

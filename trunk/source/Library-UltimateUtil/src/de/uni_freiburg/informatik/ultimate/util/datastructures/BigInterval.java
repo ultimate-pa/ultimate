@@ -78,7 +78,11 @@ public class BigInterval {
 	}
 
 	public boolean isStrictlyPositive() {
-		return mMinValue != null && mMinValue.signum() >= 1;
+		return mMinValue != null && mMinValue.signum() == 1;
+	}
+
+	public boolean isStrictlyNegative() {
+		return mMaxValue != null && mMaxValue.signum() == -1;
 	}
 
 	public boolean contains(final BigInterval subset) {
@@ -143,13 +147,68 @@ public class BigInterval {
 		return new BigInterval(minValue, maxValue);
 	}
 
-	public BigInterval divide(final BigInterval divisor) {
-		// TODO Dominik 2024-09-15 unsure if this is sound (when some bounds are negative)
-		final var minValue =
-				mMinValue == null || divisor.mMaxValue == null ? null : mMinValue.divide(divisor.mMaxValue);
-		final var maxValue =
-				mMaxValue == null || divisor.mMinValue == null ? null : mMaxValue.divide(divisor.mMinValue);
+	public BigInterval euclideanDivide(final BigInterval divisor) {
+		if (divisor.contains(BigInteger.ZERO)) {
+			// Division by zero is unspecified, so we assume it can yield any number.
+			return unbounded();
+		}
+		if (divisor.isStrictlyNegative()) {
+			// Use property of euclidean division for negative divisors
+			// (https://www.microsoft.com/en-us/research/publication/division-and-modulus-for-computer-scientists/)
+			return euclideanDivide(divisor.negate()).negate();
+		}
+
+		assert divisor.isStrictlyPositive();
+
+		final BigInteger minValue;
+		if (mMinValue == null) {
+			// If this interval is unbounded from below, the quotient interval (with positive divisor) will be as well.
+			minValue = null;
+		} else if (mMinValue.signum() < 0) {
+			// If the lower bound is negative, divide it by the smallest possible (positive) value to get the new bound.
+			minValue = euclideanDivide(mMinValue, divisor.mMinValue);
+		} else if (divisor.mMaxValue != null) {
+			// If the lower bound is positive or zero, divide it by the largest possible (positive) value.
+			// This requires of course that there is a largest possible value in the divisor.
+			minValue = euclideanDivide(mMinValue, divisor.mMaxValue);
+		} else {
+			// Final case: if the divisor is unbounded from above, the quotient can be as small as zero
+			// (e.g. by taking the divisor to be mMinValue+1)
+			minValue = BigInteger.ZERO;
+		}
+
+		final BigInteger maxValue;
+		if (mMaxValue == null) {
+			// If this interval is unbounded from below, the quotient interval (with positive divisor) will be as well.
+			maxValue = null;
+		} else if (mMaxValue.signum() >= 0) {
+			// If the upper bound is positive or zero, divide it by the smallest possible (positive) value.
+			maxValue = euclideanDivide(mMaxValue, divisor.mMinValue);
+		} else if (divisor.mMaxValue != null) {
+			// If the upper bound is negative, divide it by the largest possible (positive) value.
+			// This requires of course that there is a largest possible value in the divisor.
+			maxValue = euclideanDivide(mMaxValue, divisor.mMaxValue);
+		} else {
+			// Final case: if the divisor is unbounded from above, the quotient can be as large as zero
+			// (e.g. by taking the divisor to be |mMaxValue|+1)
+			maxValue = BigInteger.ZERO;
+		}
+
 		return new BigInterval(minValue, maxValue);
+	}
+
+	private static BigInteger euclideanDivide(final BigInteger dividend, final BigInteger divisor) {
+		assert !BigInteger.ZERO.equals(divisor) : "divisor ZERO not supported";
+
+		// https://www.microsoft.com/en-us/research/publication/division-and-modulus-for-computer-scientists/
+		final var quotient = dividend.divide(divisor);
+		if (dividend.signum() >= 0) {
+			return quotient;
+		}
+		if (quotient.signum() > 0) {
+			return quotient.subtract(BigInteger.ONE);
+		}
+		return quotient.add(BigInteger.ONE);
 	}
 
 	public BigInterval euclideanModulo(final BigInteger divisor) {
