@@ -155,10 +155,14 @@ public class BigInterval {
 	public BigInterval euclideanModulo(final BigInteger divisor) {
 		assert !BigInteger.ZERO.equals(divisor) : "divisor ZERO not supported";
 
+		// For euclidean modulo, divisors D and (- D) yield the same result. So we take the absolute value.
+		// (https://www.microsoft.com/en-us/research/publication/division-and-modulus-for-computer-scientists/)
+		final var absDivisor = divisor.abs();
+
 		final var length = length();
-		if (length != null && length.compareTo(divisor) < 0) {
-			final var lowerMod = mMinValue.mod(divisor);
-			final var upperMod = mMaxValue.mod(divisor);
+		if (length != null && length.compareTo(absDivisor) < 0) {
+			final var lowerMod = mMinValue.mod(absDivisor);
+			final var upperMod = mMaxValue.mod(absDivisor);
 			if (upperMod.compareTo(lowerMod) >= 0) {
 				return new BigInterval(lowerMod, upperMod);
 			}
@@ -167,6 +171,6 @@ public class BigInterval {
 		// If the interval has infinite length or finite length >= divisor, we get the entire range for modulo.
 		// Alternatively, the interval might have length < divisor, but contains both a k*divisor (modulo will be 0) and
 		// k*divisor-1 (modulo will be divisor-1), so the smallest interval encompassing all values is the entire range.
-		return new BigInterval(BigInteger.ZERO, divisor.subtract(BigInteger.ONE));
+		return new BigInterval(BigInteger.ZERO, absDivisor.subtract(BigInteger.ONE));
 	}
 }
