@@ -98,6 +98,8 @@ public class AnnotateAndAsserter<L extends IAction> {
 	private final ArrayList<Pair<Term, Term>> mValueAssignmentUsedForReuse = new ArrayList<Pair<Term, Term>>();
 	private final TraceCheckStatisticsGenerator mTraceCheckBenchmarkGenerator;
 	private final TestGenReuseMode mTestGenReuseMode;
+	private boolean mReuseWithCFGscript = true;
+	private boolean mCFGscriptLockedByUS = false;
 
 	public AnnotateAndAsserter(final ManagedScript mgdScriptTc, final NestedFormulas<L, Term, Term> nestedSSA,
 			final AnnotateAndAssertCodeBlocks<L> aaacb, final TraceCheckStatisticsGenerator tcbg,
@@ -114,16 +116,18 @@ public class AnnotateAndAsserter<L extends IAction> {
 		mTraceCheckBenchmarkGenerator = traceCheckStatisticsGenerator;
 		mReuseLock = reuseLock;
 
+		mTestGenReuseMode = RcfgPreferenceInitializer.getPreferences(services)
+				.getEnum(RcfgPreferenceInitializer.LABEL_TEST_GEN_REUSE_MODE, TestGenReuseMode.class);
+
 		if (noReuse || mCfgManagedScript.isLocked() || mCfgManagedScript == null) {
-			mTestGenReuseMode = TestGenReuseMode.None;
+			mReuseWithCFGscript = false;
 			mAnnotateAndAssertCodeBlocks.mCfgMgdScriptTcLockedBySbElse = true;
 		} else {
 			mTermTransferrer = new TermTransferrer(mMgdScriptTc.getScript(), mCfgManagedScript.getScript());
-			mTestGenReuseMode = RcfgPreferenceInitializer.getPreferences(services)
-					.getEnum(RcfgPreferenceInitializer.LABEL_TEST_GEN_REUSE_MODE, TestGenReuseMode.class);
-			if (!mTestGenReuseMode.equals(TestGenReuseMode.None)) {
-				mAnnotateAndAssertCodeBlocks.setUpReuse(cfgMgdScriptTc, reuseLock);
-			}
+
+			// if (!mTestGenReuseMode.equals(TestGenReuseMode.None)) {
+			mAnnotateAndAssertCodeBlocks.setUpReuse(cfgMgdScriptTc, reuseLock);
+			// }
 		}
 		reuseUnsatpossible = mTestGenReuseMode.equals(TestGenReuseMode.ReuseUNSATmatchPrefix)
 				|| mTestGenReuseMode.equals(TestGenReuseMode.ReuseUNSATmatchCalloc);
@@ -132,12 +136,15 @@ public class AnnotateAndAsserter<L extends IAction> {
 	public void buildAnnotatedSsaAndAssertTerms() {
 		mTraceCheckBenchmarkGenerator.reportTraceChecks();
 		boolean reuse = false;
-		if (!mTestGenReuseMode.equals(TestGenReuseMode.None)) {
+		if (mReuseWithCFGscript) {
 			System.out.println("Lock");
-
+			mCFGscriptLockedByUS = true;
 			mCfgManagedScript.lock(mReuseLock);
 			mCfgManagedScript.push(mReuseLock, 1);
-			reuse = true;
+
+			if (!mTestGenReuseMode.equals(TestGenReuseMode.None)) {
+				reuse = true;
+			}
 		}
 
 		if (mTestGenReuseMode.equals(TestGenReuseMode.ReuseUNSATmatchPrefix)) {
@@ -200,21 +207,22 @@ public class AnnotateAndAsserter<L extends IAction> {
 						// prefix
 						if (mTestGenReuseMode.equals(TestGenReuseMode.ReuseUNSATmatchPrefix) && reuse) {
 							mVAsInPrefix.add(vaInTrace);
-							assert i <= mReuseCandidatePosition; // we check only branches, (not current VA)
-
-							if (i < mReuseCandidatePosition) {
-								if (branchCount < mVAforReuse.mVAsInVAPrefix.size()) { //
-									if (!mVAforReuse.mVAsInVAPrefix.get(branchCount).equals(vaInTrace)) {
+							if (i <= mReuseCandidatePosition) { // we check only branches, (not current VA)
+								if (i < mReuseCandidatePosition) {
+									if (branchCount < mVAforReuse.mVAsInVAPrefix.size()) { //
+										if (!mVAforReuse.mVAsInVAPrefix.get(branchCount).equals(vaInTrace)) {
+											reuse = false;
+										}
+									} else {
 										reuse = false;
 									}
-								} else {
-									reuse = false;
+								} else if (i == mReuseCandidatePosition) {
+									nondetsInTraceAfterPreviousVA.clear();
 								}
-							} else if (i == mReuseCandidatePosition) {
-								nondetsInTraceAfterPreviousVA.clear();
+								branchCount += 1;
+							} else {
+								reuse = false;
 							}
-							branchCount += 1;
-
 							// Ensure we do not consider currentVA for reuse
 						} else {
 							// default reuse
@@ -307,15 +315,26 @@ public class AnnotateAndAsserter<L extends IAction> {
 			System.out.println("REUSE CFG Script CHecksat");
 			mTraceCheckBenchmarkGenerator.reportReuseTried();
 			reuseCheckSAT();
-		} else {
-			System.out.println("NO REUSE TC Script CHecksat");
-			mSatisfiable = mMgdScriptTc.getScript().checkSat();
-		}
-		if (!mTestGenReuseMode.equals(TestGenReuseMode.None)) {
 			System.out.println("UnLock");
 			mCfgManagedScript.pop(mReuseLock, 1);
 			mCfgManagedScript.unlock(mReuseLock);
+			mCFGscriptLockedByUS = false;
+		} else {
+			if (mCFGscriptLockedByUS) {
+				System.out.println("UnLock");
+				mCfgManagedScript.pop(mReuseLock, 1);
+				mCfgManagedScript.unlock(mReuseLock);
+				mCFGscriptLockedByUS = false;
+			}
+
+			System.out.println("NO REUSE TC Script CHecksat");
+			mSatisfiable = mMgdScriptTc.getScript().checkSat();
 		}
+		// if (!mTestGenReuseMode.equals(TestGenReuseMode.None)) {
+		// System.out.println("UnLock");
+		// mCfgManagedScript.pop(mReuseLock, 1);
+		// mCfgManagedScript.unlock(mReuseLock);
+		// }
 		if (mSatisfiable == LBool.UNKNOWN) {
 			// System.out.println("UNKNOWN");
 		}
