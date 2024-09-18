@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheck;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrderType;
@@ -131,7 +132,6 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 	protected final ManagedScript mCfgManagedScript;
 	protected final ManagedScript mTcSmtManager;
 	protected final TraceCheckLock mTraceCheckLock = new TraceCheckLock();
-	protected final TraceCheckLock mReuseLock = new TraceCheckLock();
 
 	/**
 	 * Maps a procedure name to the set of global variables which may be modified by the procedure. The set of variables
@@ -240,13 +240,9 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 					cleanupAndUnlockSolver();
 				}
 			} else if (computeRcfgProgramExecution && feasibilityResult.getLBool() == LBool.SAT) {
-				if (!mAAA.mSucessfulReuse) {
-					icfgProgramExecution = computeRcfgProgramExecutionAndDecodeBranches(managedScriptTc);
-					if (icfgProgramExecution != null) {
-						providesIcfgProgramExecution = true;
-					}
-				} else {
-					providesIcfgProgramExecution = false;
+				icfgProgramExecution = computeRcfgProgramExecutionAndDecodeBranches(managedScriptTc);
+				if (icfgProgramExecution != null) {
+					providesIcfgProgramExecution = true;
 				}
 				mTraceCheckFinished = true;
 			} else if (!feasibilityResult.isSolverCrashed()) {
@@ -331,8 +327,7 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 					mServices);
 		} else {
 			mAAA = new AnnotateAndAsserter<>(mTcSmtManager, ssa, getAnnotateAndAsserterCodeBlocks(ssa),
-					mTraceCheckBenchmarkGenerator, mServices, mCfgManagedScript, mReuseLock,
-					mTraceCheckBenchmarkGenerator, false);
+					mTraceCheckBenchmarkGenerator, mServices);
 			// Report the asserted code blocks
 			// mTraceCheckBenchmarkGenerator.reportnewAssertedCodeBlocks(mTrace.length());
 		}
@@ -349,11 +344,6 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 			}
 			result = new FeasibilityCheckResult(isSafe, tcru, false);
 		} catch (final SMTLIBException e) {
-			if (!mTestGenReuseMode.equals(TestGenReuseMode.None)) {
-				System.out.println("UnLock");
-				mCfgManagedScript.pop(mReuseLock, 1);
-				mCfgManagedScript.unlock(mReuseLock);
-			}
 			if (!mServices.getProgressMonitorService().continueProcessing()) {
 				// there was a cancellation request, probably responsible for
 				// abnormal solver termination
@@ -435,7 +425,7 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 					final Map<TermVariable, Boolean> beMapping = new HashMap<>();
 					for (final TermVariable tv : tf.getBranchEncoders()) {
 						final String nameOfConstant = NestedSsaBuilder.branchEncoderConstantName(tv, i);
-						final Term indexedBe = getIndexed(nameOfConstant);
+						final Term indexedBe = mTcSmtManager.getScript().term(nameOfConstant);
 						final Term value = getValue(indexedBe);
 						final Boolean booleanValue = getBooleanValue(value);
 						beMapping.put(tv, booleanValue);
@@ -450,13 +440,12 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 		}
 
 		final Function<Term, Term> funGetValue;
-		// TODO check if this works
-		// if (mCfgManagedScript != mTcSmtManager) {
-		// funGetValue = a -> new TermTransferrer(mTcSmtManager.getScript(), mCfgManagedScript.getScript())
-		// .transform(getValue(a));
-		// } else {
-		funGetValue = this::getValue;
-		// }
+		if (mCfgManagedScript != mTcSmtManager) {
+			funGetValue = a -> new TermTransferrer(mTcSmtManager.getScript(), mCfgManagedScript.getScript())
+					.transform(getValue(a));
+		} else {
+			funGetValue = this::getValue;
+		}
 
 		final boolean mTestGeneration = true;
 		if (mTestGeneration && !mAAA.mSucessfulReuse) { // TODO check for bugs
@@ -518,11 +507,12 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 										if (m.find()) {
 											final String type = m.group(1);
 											testV.addValueAssignment(valueT, index, type);
-
+											final TermTransferrer test = new TermTransferrer(
+													mCfgManagedScript.getScript(), mTcSmtManager.getScript());
 											final Term varEqValue = SmtUtils.binaryEquality(mTcSmtManager.getScript(),
-													indexedVar, valueT);
-											final Pair<Term, Term> varValuePair =
-													new Pair<Term, Term>(indexedVar, valueT);
+													test.transform(indexedVar), test.transform(valueT));
+											final Pair<Term, Term> varValuePair = new Pair<Term, Term>(
+													test.transform(indexedVar), test.transform(valueT));
 											varAssignmentPair.add(varValuePair);
 											varAssignment.add(varEqValue);
 										}
@@ -573,17 +563,7 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 	}
 
 	protected AnnotateAndAssertCodeBlocks<L> getAnnotateAndAsserterCodeBlocks(final NestedFormulas<L, Term, Term> ssa) {
-		if (mTestGenReuseMode.equals(TestGenReuseMode.None)) {
-			return new AnnotateAndAssertCodeBlocks<>(mTcSmtManager, mTraceCheckLock, ssa, mLogger, null, null);
-		} else {
-			return new AnnotateAndAssertCodeBlocks<>(mTcSmtManager, mTraceCheckLock, ssa, mLogger, mCfgManagedScript,
-					mReuseLock);
-		}
-
-	}
-
-	private Term getIndexed(final String nameOfConstant) {
-		return mTcSmtManager.getScript().term(nameOfConstant);
+		return new AnnotateAndAssertCodeBlocks<>(mTcSmtManager, mTraceCheckLock, ssa, mLogger);
 	}
 
 	private Term getValue(final Term term) {
@@ -651,9 +631,9 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 
 	protected void cleanupAndUnlockSolver() {
 		mTcSmtManager.echo(mTraceCheckLock, new QuotedObject("finished trace check"));
-		// if (mAAA.mSucessfulReuse) {
-		// mTcSmtManager.pop(mTraceCheckLock, 1);
-		// }
+		if (mAAA.mSucessfulReuse) {
+			mTcSmtManager.pop(mTraceCheckLock, 1);
+		}
 		mAAA.mSucessfulReuse = false;
 		mTcSmtManager.pop(mTraceCheckLock, 1);
 		mTcSmtManager.unlock(mTraceCheckLock);

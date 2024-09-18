@@ -74,7 +74,7 @@ public class AnnotateAndAssertConjunctsOfCodeBlocks<L extends IAction> extends A
 			final NestedFormulas<L, Term, Term> nestedSSA,
 			final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> nestedFormulas, final ILogger logger,
 			final ManagedScript mgdScriptCfg) {
-		super(mgdScriptTc, scriptLockOwner, nestedSSA, logger, null, null);
+		super(mgdScriptTc, scriptLockOwner, nestedSSA, logger);
 		mNestedFormulas = nestedFormulas;
 		mCsToolkitPredicates = mgdScriptCfg;
 	}
