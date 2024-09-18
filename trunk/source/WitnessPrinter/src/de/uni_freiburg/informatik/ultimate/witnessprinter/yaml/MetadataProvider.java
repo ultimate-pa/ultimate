@@ -55,15 +55,26 @@ public class MetadataProvider {
 	private final String mLanguage;
 
 	public MetadataProvider(final FormatVersion formatVersion, final String producer, final String producerVersion,
-			final Map<String, String> programHashes, final String specification, final String dataModel,
+			final Map<String, String> programHashes, final String specification, final String architecture,
 			final String language) {
 		mFormatVersion = formatVersion;
 		mProducer = producer;
 		mProducerVersion = producerVersion;
 		mProgramHashes = programHashes;
 		mSpecification = specification;
-		mDataModel = dataModel;
+		mDataModel = getDataModel(architecture);
 		mLanguage = language;
+	}
+
+	private static String getDataModel(final String architecture) {
+		if (architecture.contains("32")) {
+			return "ILP32";
+		}
+		if (architecture.contains("64")) {
+			return "LP64";
+		}
+		// Fallback, in case we don't set the architecture (UNUSED)
+		return architecture;
 	}
 
 	/**
