@@ -327,6 +327,7 @@ public class AnnotateAndAsserter<L extends IAction> {
 			mCurrentVA.setVa(mValueAssignmentUsedForReuse, mHighestVaOrderInTrace, mVAsInPrefix);
 
 		} else {
+			mMgdScriptTc.getScript().pop(1);
 			if (reuseUnsatpossible) {
 				removeCheckIfCovered();
 			}

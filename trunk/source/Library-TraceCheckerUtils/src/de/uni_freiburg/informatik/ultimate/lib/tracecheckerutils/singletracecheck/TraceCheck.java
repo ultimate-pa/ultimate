@@ -240,9 +240,16 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 					cleanupAndUnlockSolver();
 				}
 			} else if (computeRcfgProgramExecution && feasibilityResult.getLBool() == LBool.SAT) {
-				icfgProgramExecution = computeRcfgProgramExecutionAndDecodeBranches(managedScriptTc);
-				if (icfgProgramExecution != null) {
-					providesIcfgProgramExecution = true;
+				if (!mAAA.mSucessfulReuse) {
+					icfgProgramExecution = computeRcfgProgramExecutionAndDecodeBranches(managedScriptTc);
+					if (icfgProgramExecution != null) {
+						providesIcfgProgramExecution = true;
+					}
+				} else {
+					providesIcfgProgramExecution = false;
+					// icfgProgramExecution = computeRcfgProgramExecutionAndDecodeBranches(managedScriptTc);
+					// if (icfgProgramExecution != null) {
+					// providesIcfgProgramExecution = true;
 				}
 				mTraceCheckFinished = true;
 			} else if (!feasibilityResult.isSolverCrashed()) {
