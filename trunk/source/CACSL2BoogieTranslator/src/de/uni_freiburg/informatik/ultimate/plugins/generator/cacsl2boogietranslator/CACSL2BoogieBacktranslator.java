@@ -583,9 +583,17 @@ public class CACSL2BoogieBacktranslator extends
 		final Map<BacktranslatedExpression, Collection<BacktranslatedExpression>> translatedStateMap = new HashMap<>();
 		final ProgramState<Expression> compressedProgramState = compressProgramState(programState);
 
+		// Suppress backtranslation warnings for program states
+		// We just skip variables like pointers or aux-vars in the programs states
+		// TODO: This is a bit hacky, but we need to distinguish the translation of invariants and program states.
+		final boolean generateOld = mGenerateBacktranslationWarnings;
+		final boolean warnedOld = mBacktranslationWarned;
+		mGenerateBacktranslationWarnings = false;
 		for (final Expression varName : compressedProgramState.getVariables()) {
 			translateProgramStateEntry(varName, compressedProgramState, translatedStateMap);
 		}
+		mGenerateBacktranslationWarnings = generateOld;
+		mBacktranslationWarned = warnedOld;
 		return new ProgramState<>(translatedStateMap, BacktranslatedExpression.class);
 
 	}
