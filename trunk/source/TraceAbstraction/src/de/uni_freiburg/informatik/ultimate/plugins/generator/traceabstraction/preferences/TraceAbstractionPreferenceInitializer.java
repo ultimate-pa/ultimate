@@ -1090,7 +1090,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	}
 	
 	public enum ConComChecker {
-		NONE, DFS, IA, BOTH
+		NONE, DFS, IA, BOTH, COUNTEREXAMPLE
 	}
 	
 	public enum ConComCheckerCriterion {

@@ -250,6 +250,10 @@ public class ConditionalCommutativityInterpolantProvider<L extends IAction> {
 	private NestedWordAutomaton<L, IPredicate>
 			createCopy(final NestedWordAutomaton<L, IPredicate> interpolantAutomaton) {
 
+		if (interpolantAutomaton == null) {
+			return createEmptyAutomaton();
+		}
+		
 		final Set<L> alphabet = new HashSet<>();
 		alphabet.addAll(interpolantAutomaton.getAlphabet());
 		final VpAlphabet<L> vpAlphabet = new VpAlphabet<>(alphabet);
@@ -274,6 +278,17 @@ public class ConditionalCommutativityInterpolantProvider<L extends IAction> {
 				}
 		}
 		return copy;
+	}
+
+	private NestedWordAutomaton<L, IPredicate> createEmptyAutomaton() {
+		
+		final Set<L> alphabet = new HashSet<>();
+		alphabet.addAll(mAbstraction.getAlphabet());
+		final VpAlphabet<L> vpAlphabet = new VpAlphabet<>(alphabet);
+		final NestedWordAutomaton<L, IPredicate> automaton =
+				new NestedWordAutomaton<>(new AutomataLibraryServices(mServices), vpAlphabet, mEmptyStackStateFactory);
+			
+		return automaton;
 	}
 
 }
