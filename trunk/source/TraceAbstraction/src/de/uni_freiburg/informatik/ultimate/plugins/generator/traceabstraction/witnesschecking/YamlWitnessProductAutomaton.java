@@ -187,41 +187,24 @@ public class YamlWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 
 	/** returns the appropriate segment counter for the successors of the product state and letter */
 	private int getSuccessorCounter(final ProductPredicate productState, final LETTER letter) {
-		int segmentCounter = productState.getSegmentCounter();
-
-		// this is here because there could be multiple Violation Sequences at the same time
-		final ViolationSequence currentViolationSequence =
-				(ViolationSequence) mWitness.getEntries().get(productState.getViolationSequenceCounter());
-
-		// return the unchanged counter if witness has been fully read
-		if (segmentCounter == currentViolationSequence.getSegments().size()) {
-			return segmentCounter;
-		}
-
-		Segment currentSegment = currentViolationSequence.getSegments().get(segmentCounter);
-		Waypoint currentFollowWaypoint = currentSegment.getFollowWaypoint();
-
-		// check if an Avoid Waypoint of the segment matches (Assumption Waypoints are ignored)
-		if (currentSegment.getAvoidWaypoints().stream().anyMatch(x -> matchesWaypoint(letter, x))) {
-			return -1;
-		}
-
-		// check follow assumption waypoints separately because they can match simultaneously with other waypoints
-		while (currentFollowWaypoint instanceof WaypointAssumption
-				&& (!CHECK_ASSUMPTION_LOCATIONS || matchesStartLocation(letter, currentFollowWaypoint))) {
-			segmentCounter++;
-			currentSegment = currentViolationSequence.getSegments().get(segmentCounter);
-			currentFollowWaypoint = currentSegment.getFollowWaypoint();
+		final List<Segment> segments =
+				((ViolationSequence) mWitness.getEntries().get(productState.getViolationSequenceCounter()))
+						.getSegments();
+		for (int sCounter = productState.getSegmentCounter(); sCounter < segments.size(); sCounter++) {
+			final Segment currentSegment = segments.get(sCounter);
+			// check if an Avoid Waypoint of the segment matches (Assumption Waypoints are ignored)
 			if (currentSegment.getAvoidWaypoints().stream().anyMatch(x -> matchesWaypoint(letter, x))) {
 				return -1;
 			}
+			final Waypoint currentFollowWaypoint = currentSegment.getFollowWaypoint();
+			// check follow assumption waypoints separately because they can match simultaneously with other waypoints
+			if (currentFollowWaypoint instanceof WaypointAssumption
+					&& (!CHECK_ASSUMPTION_LOCATIONS || matchesStartLocation(letter, currentFollowWaypoint))) {
+				continue;
+			}
+			return matchesWaypoint(letter, currentFollowWaypoint) ? sCounter + 1 : sCounter;
 		}
-
-		if (matchesWaypoint(letter, currentFollowWaypoint)) {
-			segmentCounter++;
-		}
-
-		return segmentCounter;
+		return segments.size();
 	}
 
 	/** Checks if the waypoint matches with the statement. Assumption waypoints are not matched */
