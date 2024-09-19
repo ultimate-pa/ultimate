@@ -436,6 +436,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 							mAbstraction = new InformationStorage<>(mProgram == null ? mAbstraction : mProgram,
 									mItpAutomata, mFactory, PartialOrderCegarLoop::isFalseLiteral);
 							visitor = createVisitor();
+							mConComChecker.getCriterion().updateAbstraction(mAbstraction);
 							mPOR.apply(mAbstraction, visitor);
 							mCounterexample = getCounterexample(visitor);
 							continueWithInfProof = (mCounterexample == null);
