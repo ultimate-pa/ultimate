@@ -114,30 +114,30 @@ NestedWordAutomaton access1Model = (
 
 NestedWordAutomaton access2Model = (
   callAlphabet = {},
-  internalAlphabet = {"1request" "1assume2crit" "1release" "2request" "2assume1crit" "2release"},
+  internalAlphabet = {"1request" "1assume2critAccess" "1release" "2request" "2assume1crit" "2release"},
   returnAlphabet = {},
-  states = {"2safe" "2crit" "false"},
+  states = {"2safe" "2critAccess" "false"},
   initialStates = {"2safe"},
   finalStates = {"false"},
   callTransitions = {},
   internalTransitions = {
 	("2safe" "1request" "2safe")
-	("2safe" "2request" "2crit")
+	("2safe" "2request" "2critAccess")
 	("2safe" "1release" "2safe")
 	("2safe" "2release" "2safe")
-	("2safe" "1assume2crit" "false")
+	("2safe" "1assume2critAccess" "false")
 	("2safe" "2assume1crit" "2safe")
-	("2crit" "1request" "2crit")
-	("2crit" "2request" "2crit")
-	("2crit" "1release" "2crit")
-	("2crit" "2release" "2safe")
-	("2crit" "1assume2crit" "2crit")
-	("2crit" "2assume1crit" "2crit")
+	("2critAccess" "1request" "2critAccess")
+	("2critAccess" "2request" "2critAccess")
+	("2critAccess" "1release" "2critAccess")
+	("2critAccess" "2release" "2safe")
+	("2critAccess" "1assume2critAccess" "2critAccess")
+	("2critAccess" "2assume1crit" "2critAccess")
 	("false" "1request" "false")
 	("false" "2request" "false")
 	("false" "1release" "false")
 	("false" "2release" "false")
-	("false" "1assume2crit" "false")
+	("false" "1assume2critAccess" "false")
 	("false" "2assume1crit" "false")
 	}, 
   returnTransitions = {}
