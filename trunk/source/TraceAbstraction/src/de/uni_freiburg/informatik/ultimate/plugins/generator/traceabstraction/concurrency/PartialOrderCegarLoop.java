@@ -410,9 +410,11 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 					
 					NestedWordAutomaton<L, IPredicate> interpolantAutomaton = conInterpolantProvider.getInterpolants(
 							(IRun<L, IPredicate>) mCounterexample, predicates, null);
-
 					//check if interpolantAutomaton is empty
 					if (!interpolantAutomaton.getInitialStates().isEmpty()) {
+						if (!interpolantAutomaton.contains(predicateUnifier.getFalsePredicate())) {
+							interpolantAutomaton.addState(false, true, predicateUnifier.getFalsePredicate());
+						}
 						final IHoareTripleChecker htc = 
 								HoareTripleCheckerUtils.constructEfficientHoareTripleCheckerWithCaching(getServices(),
 								mPref.getHoareTripleChecks(), mCsToolkit, predicateUnifier);

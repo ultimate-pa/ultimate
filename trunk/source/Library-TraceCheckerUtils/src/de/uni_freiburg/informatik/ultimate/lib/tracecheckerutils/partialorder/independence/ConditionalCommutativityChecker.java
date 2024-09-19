@@ -25,6 +25,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence;
 
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
@@ -159,6 +161,19 @@ public class ConditionalCommutativityChecker<L extends IAction> implements ICond
 				TracePredicates trace = mTraceChecker.checkTrace(currentRun, null, condition);
 				mStatisticsUtils.addTraceCheck();
 				if (trace != null) {
+					int debug0 = 0;
+					/*
+					try {
+					      FileWriter myWriter = new FileWriter("C:\\Users\\ebbim\\Desktop\\test.txt", true);
+					      myWriter.write("state: " + pred + ", letter1: "
+					      + letter1.getTransformula().getFormula() + ", letter2: "
+					    		  + letter2.getTransformula().getFormula() + ", con: " + condition + "\n");
+					      myWriter.close();
+					      System.out.println("Successfully wrote to the file.");
+					    } catch (IOException e) {
+					      System.out.println("An error occurred.");
+					      e.printStackTrace();
+					    }*/
 						//mCriterion.updateCondition(condition);
 				} else if (mTraceChecker.wasImperfectProof()) {
 					mStatisticsUtils.addImperfectProof();
