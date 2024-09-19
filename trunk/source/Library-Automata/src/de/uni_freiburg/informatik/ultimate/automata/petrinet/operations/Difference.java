@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.P
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBlackWhiteStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
@@ -165,6 +166,10 @@ public final class Difference<LETTER, PLACE, CRSF extends IPetriNet2FiniteAutoma
 			final LoopSyncMethod loopSyncMethod, final DifferencePairwiseOnDemand<LETTER, PLACE, ?> inputDpod,
 			final boolean removeRedundantFlow) throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		super(services);
+		if (DataStructureUtils.haveNonEmptyIntersection(originalMinuend.getPlaces(), subtrahendDfa.getStates())) {
+			throw new UnsupportedOperationException(
+					"Difference is only supported for operands with distinct places / states.");
+		}
 		mSubtrahend = subtrahendDfa;
 		mContentFactory = factory;
 		mLoopSyncMethod = loopSyncMethod;
