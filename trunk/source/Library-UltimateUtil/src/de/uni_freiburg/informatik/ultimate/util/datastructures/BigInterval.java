@@ -41,6 +41,8 @@ public class BigInterval {
 	public BigInterval(final BigInteger minValue, final BigInteger maxValue) {
 		mMinValue = minValue;
 		mMaxValue = maxValue;
+		assert mMinValue == null || mMaxValue == null
+				|| maxValue.compareTo(minValue) >= 0 : "empty interval not supported";
 	}
 
 	public static BigInterval unbounded() {
@@ -97,6 +99,24 @@ public class BigInterval {
 		final boolean minBoundOk = mMinValue == null || mMinValue.compareTo(element) <= 0;
 		final boolean maxBoundOk = mMaxValue == null || mMaxValue.compareTo(element) >= 0;
 		return minBoundOk && maxBoundOk;
+	}
+
+	public BigInterval join(final BigInterval other) {
+		final var minValue = mMinValue == null || other.mMinValue == null ? null : mMinValue.min(other.mMinValue);
+		final var maxValue = mMaxValue == null || other.mMaxValue == null ? null : mMaxValue.max(other.mMaxValue);
+		return new BigInterval(minValue, maxValue);
+	}
+
+	public BigInterval intersect(final BigInterval other) {
+		final var minValue = mMinValue == null ? other.mMinValue
+				: other.mMinValue == null ? mMinValue : mMinValue.max(other.mMinValue);
+		final var maxValue = mMaxValue == null ? other.mMaxValue
+				: other.mMaxValue == null ? mMaxValue : mMaxValue.min(other.mMaxValue);
+		if (maxValue.compareTo(mMinValue) < 0) {
+			// empty interval not supported
+			return null;
+		}
+		return new BigInterval(minValue, maxValue);
 	}
 
 	public BigInterval negate() {
@@ -231,5 +251,48 @@ public class BigInterval {
 		// Alternatively, the interval might have length < divisor, but contains both a k*divisor (modulo will be 0) and
 		// k*divisor-1 (modulo will be divisor-1), so the smallest interval encompassing all values is the entire range.
 		return new BigInterval(BigInteger.ZERO, absDivisor.subtract(BigInteger.ONE));
+	}
+
+	// Code adapted from https://stackoverflow.com/a/56918042 (there shown for truncating remainder)
+	public BigInterval euclideanModulo(final BigInterval divisor) {
+		if (divisor.contains(BigInteger.ZERO)) {
+			// Modulo resp. division by zero is unspecified, so we assume it can yield any number.
+			return unbounded();
+		}
+
+		if (divisor.isSingleton()) {
+			return euclideanModulo(divisor.mMinValue);
+		}
+
+		// For euclidean modulo, divisors D and (- D) yield the same result. So we take the absolute value.
+		// (https://www.microsoft.com/en-us/research/publication/division-and-modulus-for-computer-scientists/)
+		final var absDivisor = divisor.abs();
+
+		final var length = length();
+		if (length != null && absDivisor.mMaxValue != null && length.compareTo(absDivisor.mMaxValue) >= 0) {
+			// If length is greater than the largest possible divisor, the interval contains all possible mod values.
+			return new BigInterval(BigInteger.ZERO, absDivisor.mMaxValue.subtract(BigInteger.ONE));
+		}
+		if (length != null && length.compareTo(absDivisor.mMinValue) >= 0) {
+			// If the length is somewhere inside the interval of possible divisors, we split into two cases:
+			// all divisors up to length, and all greater divisors.
+			// For divisors up to length, we know (as in the previous case) that we can get all possible mod values (for
+			// the new sub-interval of divisors); for divisors greater than length, we use a recursive call.
+			// (NOTE that the recursion depth should be limited to 2, as length is outside the new sub-interval.)
+			final var lowerHalf = new BigInterval(BigInteger.ZERO, length.subtract(BigInteger.ONE));
+			final var upperHalf = euclideanModulo(new BigInterval(length.add(BigInteger.ONE), absDivisor.mMaxValue));
+			return lowerHalf.join(upperHalf);
+		}
+		if (absDivisor.mMinValue.compareTo(mMaxValue) > 0) {
+			// trivial case: modulo is guaranteed to have no effect
+			return this;
+		}
+		if (absDivisor.mMaxValue != null && absDivisor.mMaxValue.compareTo(mMaxValue) > 0) {
+			return new BigInterval(BigInteger.ZERO, mMaxValue);
+		}
+
+		// fallback to imprecise approximation
+		return new BigInterval(BigInteger.ZERO,
+				absDivisor.mMaxValue == null ? null : absDivisor.mMaxValue.subtract(BigInteger.ONE));
 	}
 }

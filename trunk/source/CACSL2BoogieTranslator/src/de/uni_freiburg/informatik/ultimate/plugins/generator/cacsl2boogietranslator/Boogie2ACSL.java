@@ -451,10 +451,7 @@ public final class Boogie2ACSL {
 					return lhs;
 				}
 			}
-			final var absRightRange = rightRange.abs();
-			final var maxRightMinusOne =
-					absRightRange.getMaxValue() == null ? null : absRightRange.getMaxValue().subtract(BigInteger.ONE);
-			range = new BigInterval(BigInteger.ZERO, maxRightMinusOne);
+			range = leftRange.euclideanModulo(rightRange);
 
 			// TODO: properly backtranslate from euclidean modulo (mod) to C remainder (%)
 			operator = Operator.ARITHMOD;
