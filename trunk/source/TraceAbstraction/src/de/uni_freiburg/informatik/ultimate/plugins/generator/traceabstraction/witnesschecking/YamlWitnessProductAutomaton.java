@@ -116,10 +116,18 @@ public class YamlWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 
 	@Override
 	public boolean isFinal(final IPredicate state) {
+		// A product state is accepting, if the underlying state is accepting, the the witness was fully read, and the
+		// previous waypoint was a target.
 		final ProductPredicate productState = (ProductPredicate) state;
+		if (productState.getSegmentCounter() == 0) {
+			// Therefore we cannot accept, if no segment was read.
+			return false;
+		}
 		final ViolationSequence violationSequence =
 				(ViolationSequence) mWitness.getEntries().get(productState.getViolationSequenceCounter());
-		return mAbstraction.isFinal(productState.getUnderlying())
+		final Segment previousSegment = violationSequence.getSegments().get(productState.getSegmentCounter() - 1);
+		return previousSegment.getFollowWaypoint() instanceof WaypointTarget
+				&& mAbstraction.isFinal(productState.getUnderlying())
 				&& productState.getSegmentCounter() == violationSequence.getSegments().size();
 	}
 
