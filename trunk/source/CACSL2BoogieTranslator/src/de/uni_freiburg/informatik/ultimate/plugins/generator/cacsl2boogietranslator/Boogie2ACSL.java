@@ -424,6 +424,9 @@ public final class Boogie2ACSL {
 		switch (expression.getOperator()) {
 		case ARITHDIV:
 			range = leftRange.euclideanDivide(rightRange);
+			if (range.isSingleton()) {
+				return translateIntegerLiteral(range.getMinValue());
+			}
 
 			// TODO: properly backtranslate from euclidean division to C truncating division
 			operator = Operator.ARITHDIV;
