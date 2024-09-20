@@ -115,7 +115,7 @@ public class ACSLPrettyPrinter {
 		}
 		if (expression instanceof IfThenElseExpression) {
 			final IfThenElseExpression ite = (IfThenElseExpression) expression;
-			return String.format("%s ? %s : %s", printExpression(ite.getCondition()),
+			return String.format("(%s ? %s : %s)", printExpression(ite.getCondition()),
 					printExpression(ite.getThenPart()), printExpression(ite.getElsePart()));
 		}
 		if (expression instanceof ValidExpression) {
