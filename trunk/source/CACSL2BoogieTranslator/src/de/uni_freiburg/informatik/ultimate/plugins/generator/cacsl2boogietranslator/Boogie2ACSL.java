@@ -419,7 +419,7 @@ public final class Boogie2ACSL {
 		final BigInterval rightRange = rhs.getRange();
 		final BigInterval resultRange = leftRange.euclideanDivide(rightRange);
 		final Expression baseExpr = new BinaryExpression(Operator.ARITHDIV, lhs.getExpression(), rhs.getExpression());
-		if (leftRange.isStrictlyPositive()) {
+		if (leftRange.isStrictlyNonNegative()) {
 			if (resultRange.isSingleton()) {
 				return translateIntegerLiteral(resultRange.getMinValue());
 			}
@@ -467,7 +467,7 @@ public final class Boogie2ACSL {
 		}
 		final Expression baseExpr = new BinaryExpression(Operator.ARITHMOD, lhs.getExpression(), rhs.getExpression());
 		final BigInterval resultRange = leftRange.euclideanModulo(rightRange);
-		if (leftRange.isStrictlyPositive()) {
+		if (leftRange.isStrictlyNonNegative()) {
 			return new BacktranslatedExpression(baseExpr, lhs.getCType(), resultRange);
 		}
 		// If the left operand might be negative, we need to translate euclidian modulo to remainder
