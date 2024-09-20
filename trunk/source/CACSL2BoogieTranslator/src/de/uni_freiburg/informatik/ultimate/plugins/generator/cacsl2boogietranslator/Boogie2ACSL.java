@@ -434,16 +434,16 @@ public final class Boogie2ACSL {
 				new BinaryExpression(Operator.ARITHDIV, lhs.getExpression(), rhs.getExpression()),
 				new IntegerLiteral("1"));
 		final Expression expr;
-		if (rightRange.isStrictlyPositive()) {
+		if (rightRange.isStrictlyNonNegative()) {
 			expr = posExpr;
-		} else if (rightRange.isStrictlyNegative()) {
+		} else if (rightRange.isStrictlyNonPositive()) {
 			expr = negExpr;
 		} else {
 			expr = new IfThenElseExpression(
 					new BinaryExpression(Operator.COMPGEQ, rhs.getExpression(), new IntegerLiteral("0")), posExpr,
 					negExpr);
 		}
-		if (leftRange.isStrictlyNegative()) {
+		if (leftRange.isStrictlyNonPositive()) {
 			return new BacktranslatedExpression(expr, lhs.getCType(), resultRange);
 		}
 		return new BacktranslatedExpression(new IfThenElseExpression(
@@ -477,16 +477,16 @@ public final class Boogie2ACSL {
 		final Expression negExpr = new BinaryExpression(Operator.ARITHMINUS,
 				new BinaryExpression(Operator.ARITHMOD, lhs.getExpression(), rhs.getExpression()), rhs.getExpression());
 		final Expression expr;
-		if (rightRange.isStrictlyPositive()) {
+		if (rightRange.isStrictlyNonNegative()) {
 			expr = posExpr;
-		} else if (rightRange.isStrictlyNegative()) {
+		} else if (rightRange.isStrictlyNonPositive()) {
 			expr = negExpr;
 		} else {
 			expr = new IfThenElseExpression(
 					new BinaryExpression(Operator.COMPGEQ, rhs.getExpression(), new IntegerLiteral("0")), posExpr,
 					negExpr);
 		}
-		if (leftRange.isStrictlyNegative()) {
+		if (leftRange.isStrictlyNonPositive()) {
 			return new BacktranslatedExpression(expr, lhs.getCType(), resultRange);
 		}
 		return new BacktranslatedExpression(new IfThenElseExpression(

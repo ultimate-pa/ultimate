@@ -87,6 +87,14 @@ public class BigInterval {
 		return mMaxValue != null && mMaxValue.signum() == -1;
 	}
 
+	public boolean isStrictlyNonNegative() {
+		return mMaxValue != null && mMaxValue.signum() >= 0;
+	}
+
+	public boolean isStrictlyNonPositive() {
+		return mMinValue != null && mMinValue.signum() <= 0;
+	}
+
 	public boolean contains(final BigInterval subset) {
 		final boolean minBoundOk =
 				mMinValue == null || (subset.mMinValue != null && mMinValue.compareTo(subset.mMinValue) <= 0);
