@@ -95,6 +95,10 @@ public class BigInterval {
 		return mMinValue != null && mMinValue.signum() <= 0;
 	}
 
+	public boolean isZero() {
+		return isSingleton() && mMinValue.signum() == 0;
+	}
+
 	public boolean contains(final BigInterval subset) {
 		final boolean minBoundOk =
 				mMinValue == null || (subset.mMinValue != null && mMinValue.compareTo(subset.mMinValue) <= 0);
