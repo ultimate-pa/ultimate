@@ -540,7 +540,6 @@ public final class Boogie2ACSL {
 			operator = Operator.ARITHPLUS;
 			break;
 		case COMPEQ:
-		case LOGICIFF:
 			range = BigInterval.booleanRange();
 			operator = Operator.COMPEQ;
 			resultType = new CPrimitive(CPrimitives.INT);
@@ -583,17 +582,6 @@ public final class Boogie2ACSL {
 			operator = Operator.LOGICAND;
 			resultType = new CPrimitive(CPrimitives.INT);
 			break;
-		case LOGICIMPLIES:
-			if (isNegated && lhs == null) {
-				return rhs;
-			}
-			if (lhs == null || rhs == null) {
-				return null;
-			}
-			// !lhs || rhs
-			return new BacktranslatedExpression(
-					new BinaryExpression(Operator.LOGICOR, lhs.getExpression(), rhs.getExpression()),
-					new CPrimitive(CPrimitives.INT), BigInterval.booleanRange());
 		case LOGICOR:
 			if (isNegated) {
 				if (lhs == null) {
@@ -607,11 +595,9 @@ public final class Boogie2ACSL {
 			operator = Operator.LOGICOR;
 			resultType = new CPrimitive(CPrimitives.INT);
 			break;
-		case BITVECCONCAT:
-		case COMPPO:
-			return null;
 		default:
-			throw new AssertionError("Unknown operator " + expression.getOperator());
+			mReporter.accept("Operator not supported: " + expression.getOperator());
+			return null;
 		}
 		if (lhs == null || rhs == null) {
 			return null;
@@ -665,7 +651,8 @@ public final class Boogie2ACSL {
 			break;
 		}
 		default:
-			throw new AssertionError("Unhandled case");
+			mReporter.accept("Operator not supported: " + expr.getOperator());
+			return null;
 		}
 		return new BacktranslatedExpression(resultExpr, cType, range);
 	}
