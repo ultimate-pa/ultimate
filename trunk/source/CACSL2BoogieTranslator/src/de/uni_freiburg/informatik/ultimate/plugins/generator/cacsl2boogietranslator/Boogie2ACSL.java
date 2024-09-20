@@ -409,14 +409,6 @@ public final class Boogie2ACSL {
 		return null;
 	}
 
-	private BigInterval applyWraparoundIfNecessary(final BigInterval range, final CType type) {
-		if (type instanceof CPrimitive && mTypeSizes.isUnsigned((CPrimitive) type)) {
-			final var divisor = mTypeSizes.getMaxValueOfPrimitiveType((CPrimitive) type).add(BigInteger.ONE);
-			return range.euclideanModulo(divisor);
-		}
-		return range;
-	}
-
 	private BacktranslatedExpression translateBinaryExpression(
 			final de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression expression, final ILocation context,
 			final boolean isNegated) {
@@ -439,7 +431,7 @@ public final class Boogie2ACSL {
 			break;
 		case ARITHMINUS:
 			resultType = determineTypeForArithmeticOperation(leftType, rightType);
-			range = applyWraparoundIfNecessary(leftRange.subtract(rightRange), resultType);
+			range = leftRange.subtract(rightRange);
 			operator = Operator.ARITHMINUS;
 			break;
 		case ARITHMOD:
@@ -459,12 +451,12 @@ public final class Boogie2ACSL {
 			break;
 		case ARITHMUL:
 			resultType = determineTypeForArithmeticOperation(leftType, rightType);
-			range = applyWraparoundIfNecessary(leftRange.multiply(rightRange), resultType);
+			range = leftRange.multiply(rightRange);
 			operator = Operator.ARITHMUL;
 			break;
 		case ARITHPLUS:
 			resultType = determineTypeForArithmeticOperation(leftType, rightType);
-			range = applyWraparoundIfNecessary(leftRange.add(rightRange), resultType);
+			range = leftRange.add(rightRange);
 			operator = Operator.ARITHPLUS;
 			break;
 		case COMPEQ:
