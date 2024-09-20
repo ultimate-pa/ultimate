@@ -671,10 +671,10 @@ public final class Boogie2ACSL {
 	}
 
 	private boolean isPresentInContext(final String cId, final ILocation context) {
-		if (context == null || !(context instanceof CLocation)) {
-			return true;
+		if (context instanceof CLocation) {
+			return mSymbolTable.containsCSymbol(((CLocation) context).getNode(), cId);
 		}
-		return mSymbolTable.containsCSymbol(((CLocation) context).getNode(), cId);
+		return true;
 	}
 
 	private BigInterval getRangeForCType(final CType type) {
