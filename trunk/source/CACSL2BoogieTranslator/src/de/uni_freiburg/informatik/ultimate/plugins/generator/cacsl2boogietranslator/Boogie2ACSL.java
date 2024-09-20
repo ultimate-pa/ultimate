@@ -417,13 +417,13 @@ public final class Boogie2ACSL {
 		}
 		final BigInterval leftRange = lhs.getRange();
 		final BigInterval rightRange = rhs.getRange();
-		final BigInterval baseRange = leftRange.euclideanDivide(rightRange);
+		final BigInterval resultRange = leftRange.euclideanDivide(rightRange);
 		final Expression baseExpr = new BinaryExpression(Operator.ARITHDIV, lhs.getExpression(), rhs.getExpression());
 		if (leftRange.isStrictlyPositive()) {
-			if (baseRange.isSingleton()) {
-				return translateIntegerLiteral(baseRange.getMinValue());
+			if (resultRange.isSingleton()) {
+				return translateIntegerLiteral(resultRange.getMinValue());
 			}
-			return new BacktranslatedExpression(baseExpr, lhs.getCType(), baseRange);
+			return new BacktranslatedExpression(baseExpr, lhs.getCType(), resultRange);
 		}
 		// If the left operand might be negative, we need to translate euclidian modulo to remainder
 		// (they only coincide, if the left operand is positive)
@@ -433,29 +433,22 @@ public final class Boogie2ACSL {
 		final Expression negExpr = new BinaryExpression(Operator.ARITHPLUS,
 				new BinaryExpression(Operator.ARITHDIV, lhs.getExpression(), rhs.getExpression()),
 				new IntegerLiteral("1"));
-		final BigInterval one = BigInterval.singleton(BigInteger.ONE);
-		final BigInterval posRange = baseRange.subtract(one);
-		final BigInterval negRange = baseRange.add(one);
 		final Expression expr;
-		final BigInterval range;
 		if (rightRange.isStrictlyPositive()) {
 			expr = posExpr;
-			range = posRange;
 		} else if (rightRange.isStrictlyNegative()) {
 			expr = negExpr;
-			range = negRange;
 		} else {
 			expr = new IfThenElseExpression(
 					new BinaryExpression(Operator.COMPGEQ, rhs.getExpression(), new IntegerLiteral("0")), posExpr,
 					negExpr);
-			range = posRange.join(negRange);
 		}
 		if (leftRange.isStrictlyNegative()) {
-			return new BacktranslatedExpression(expr, lhs.getCType(), range);
+			return new BacktranslatedExpression(expr, lhs.getCType(), resultRange);
 		}
 		return new BacktranslatedExpression(new IfThenElseExpression(
 				new BinaryExpression(Operator.COMPGEQ, lhs.getExpression(), new IntegerLiteral("0")), baseExpr, expr),
-				lhs.getCType(), range.join(baseRange));
+				lhs.getCType(), resultRange);
 	}
 
 	private BacktranslatedExpression translateModulo(final BacktranslatedExpression lhs,
@@ -473,9 +466,9 @@ public final class Boogie2ACSL {
 			}
 		}
 		final Expression baseExpr = new BinaryExpression(Operator.ARITHMOD, lhs.getExpression(), rhs.getExpression());
-		final BigInterval baseRange = leftRange.euclideanModulo(rightRange);
+		final BigInterval resultRange = leftRange.euclideanModulo(rightRange);
 		if (leftRange.isStrictlyPositive()) {
-			return new BacktranslatedExpression(baseExpr, lhs.getCType(), baseRange);
+			return new BacktranslatedExpression(baseExpr, lhs.getCType(), resultRange);
 		}
 		// If the left operand might be negative, we need to translate euclidian modulo to remainder
 		// (they only coincide, if the left operand is positive)
@@ -483,28 +476,22 @@ public final class Boogie2ACSL {
 				new BinaryExpression(Operator.ARITHMOD, lhs.getExpression(), rhs.getExpression()), rhs.getExpression());
 		final Expression negExpr = new BinaryExpression(Operator.ARITHMINUS,
 				new BinaryExpression(Operator.ARITHMOD, lhs.getExpression(), rhs.getExpression()), rhs.getExpression());
-		final BigInterval posRange = baseRange.subtract(rhs.getRange());
-		final BigInterval negRange = baseRange.add(rhs.getRange());
 		final Expression expr;
-		final BigInterval range;
 		if (rightRange.isStrictlyPositive()) {
 			expr = posExpr;
-			range = posRange;
 		} else if (rightRange.isStrictlyNegative()) {
 			expr = negExpr;
-			range = negRange;
 		} else {
 			expr = new IfThenElseExpression(
 					new BinaryExpression(Operator.COMPGEQ, rhs.getExpression(), new IntegerLiteral("0")), posExpr,
 					negExpr);
-			range = posRange.join(negRange);
 		}
 		if (leftRange.isStrictlyNegative()) {
-			return new BacktranslatedExpression(expr, lhs.getCType(), range);
+			return new BacktranslatedExpression(expr, lhs.getCType(), resultRange);
 		}
 		return new BacktranslatedExpression(new IfThenElseExpression(
 				new BinaryExpression(Operator.COMPGEQ, lhs.getExpression(), new IntegerLiteral("0")), baseExpr, expr),
-				lhs.getCType(), range.join(baseRange));
+				lhs.getCType(), resultRange);
 	}
 
 	private BacktranslatedExpression translateBinaryExpression(
