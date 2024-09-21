@@ -120,7 +120,7 @@ public class AnnotateAndAsserter<L extends IAction> {
 		if (mTestGenReuseMode.equals(TestGenReuseMode.ReuseUNSATmatchPrefix)) {
 			getReuseCandidate();
 			if (mVAforReuse == null) {
-				reuse = false;
+				reuse = true;
 			}
 		}
 		if (mAnnotSSA != null) {
@@ -154,6 +154,7 @@ public class AnnotateAndAsserter<L extends IAction> {
 			}
 
 			// ensure we are not considering currentVA as reuseCandidate
+
 			if (i < mTrace.length() - 1 && !mTestGenReuseMode.equals(TestGenReuseMode.None)) {
 
 				// calling loc version
@@ -244,12 +245,13 @@ public class AnnotateAndAsserter<L extends IAction> {
 
 		if (!mTestGenReuseMode.equals(TestGenReuseMode.None)) {
 			getCurrentVA();
-			if (mCurrentVA != null && mVAforReuse == null && reuseUnsatpossible) {
+
+			if (mCurrentVA != null && mVAforReuse == null && reuseUnsatpossible && branchCount == 0) {
 				mDefaultVA = mCurrentVA.setDefaultVa(mDefaultVA);
 				mDefaultVA = mCurrentVA.mVAofOppositeBranch.setDefaultVa(mDefaultVA);
 				mVAforReuse = mDefaultVA;
+				reuse = true;
 			}
-
 			if (nondetsInTrace.isEmpty() || mCurrentVA == null || mVAforReuse == null) {
 				reuse = false;
 			} else if (mVAforReuse.mNegatedVA) {
@@ -257,9 +259,10 @@ public class AnnotateAndAsserter<L extends IAction> {
 			} else if (mCurrentVA.mUnsatWithVAs.contains(mVAforReuse) && mVAforReuse.mNegatedVA == false) {
 				reuse = false; // Wie kann das überhaupt sein?
 				// System.out.println("NO REUSE since UNSAT With");
-			} else if (mVAforReuse.mVarAssignmentPair.isEmpty()) {
+			} else if (mVAforReuse.mVarAssignmentPair.isEmpty() && !mVAforReuse.equals(mDefaultVA)) {
 				reuse = false;
-			} else if (reuse) {
+			}
+			if (reuse) {
 				ArrayList<Term> vaPairsAsTerms;
 				if (mTestGenReuseMode.equals(TestGenReuseMode.Reuse) || !reuseUnsatpossible) {
 					vaPairsAsTerms = getNonDetsAsTermsReuse();
@@ -331,7 +334,7 @@ public class AnnotateAndAsserter<L extends IAction> {
 			if (reuseUnsatpossible) {
 				removeCheckIfCovered();
 			}
-			if (mCurrentVA.secondCheck == true) {
+			if (mCurrentVA.secondCheck == true) { // can this even be the case?
 				mVAforReuse.mNegatedVA = false;
 			} else {
 				mVAforReuse.mNegatedVA = true;
