@@ -34,6 +34,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
+import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
+
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.ACSLLocation;
@@ -160,9 +162,17 @@ public final class Boogie2ACSL {
 				return new BacktranslatedExpression(new IdentifierExpression(pair.getFirst()), pair.getSecond(), range);
 			}
 		} else if (mMapping.hasInVar(boogieId, expr.getDeclarationInformation())) {
-			// invars can only occur in expressions as part of synthetic expressions, and then they represent oldvars
 			final Pair<String, CType> pair = mMapping.getInVar(boogieId, expr.getDeclarationInformation());
 			final var range = getRangeForCType(pair.getSecond());
+
+			if (context instanceof CLocation && ((CLocation) context).getNode() instanceof IASTFunctionDefinition) {
+				// In the context of a function definition, i.e., when backtranslating a contract, we can backtranslate
+				// invars directly.
+				return new BacktranslatedExpression(new IdentifierExpression(pair.getFirst()), pair.getSecond(), range);
+			}
+
+			// In all other contexts, in particular for invariants inside a function body, we use \old() to indicate
+			// that we are referring to the original value of the parameter in C (because params can be re-assigned).
 			return new BacktranslatedExpression(new OldValueExpression(new IdentifierExpression(pair.getFirst())),
 					pair.getSecond(), range);
 		}
