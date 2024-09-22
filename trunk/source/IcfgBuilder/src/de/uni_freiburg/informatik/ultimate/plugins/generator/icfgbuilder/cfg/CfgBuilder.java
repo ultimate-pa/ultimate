@@ -794,7 +794,7 @@ public class CfgBuilder {
 			for (int i = codeblock.length - 1; i >= 0; i--) {
 				final Statement st = codeblock[i];
 				if (currentLocation instanceof StatementSequence
-						&& !(st instanceof CallStatement || isAssuAssiHavoc(st))) {
+						&& !(st instanceof CallStatement || isAssuAssiHavoc(st) || st instanceof Label)) {
 					currentLocation = endStatementSequence((StatementSequence) currentLocation);
 				}
 				if (st instanceof WhileStatement) {
@@ -810,7 +810,7 @@ public class CfgBuilder {
 				} else if (st instanceof BreakStatement) {
 					currentLocation = buildBreak((BoogieIcfgLocation) currentLocation, (BreakStatement) st);
 				} else if (st instanceof Label) {
-					currentLocation = buildLabel((BoogieIcfgLocation) currentLocation, (Label) st);
+					currentLocation = buildLabel(currentLocation, (Label) st);
 				} else if (st instanceof GotoStatement) {
 					currentLocation = buildGoto((BoogieIcfgLocation) currentLocation, (GotoStatement) st);
 				} else if (st instanceof ForkStatement) {
@@ -1075,16 +1075,16 @@ public class CfgBuilder {
 			return mWhileExits.peek();
 		}
 
-		private BoogieIcfgLocation buildLabel(final BoogieIcfgLocation currentLocation, final Label st) {
+		private BoogieIcfgLocation buildLabel(final IIcfgElement currentElement, final Label st) {
 			final BoogieIcfgLocation newLocation = getLocNodeForLabel(new StringDebugIdentifier(st.getName()), st);
-			mergeLocNodes(currentLocation, newLocation, true);
-			if (currentLocation == mIcfg.mFinalNode.get(mCurrentProcedureName)) {
-				mIcfg.mFinalNode.put(mCurrentProcedureName, newLocation);
-			}
-			if (!mConditionalStarts.empty() && mConditionalStarts.peek() == currentLocation) {
-				mConditionalStarts.pop();
-				mConditionalStarts.add(newLocation);
-			}
+			// TODO Matthias 2024-09-23: This is one of several auxiliary statements that we
+			// add while constructing an ICFG. If we want to support the next step operator
+			// of LTL we have to define the semantics of a step in Boogie. For this we have
+			// to find out what auxiliry statements we add.
+			final AssumeStatement assume = new AssumeStatement(st.getLocation(),
+					ExpressionFactory.createBooleanLiteral(st.getLocation(), true));
+			final StatementSequence stseq = prependStatement(assume, currentElement);
+			endStatementSequence(stseq, newLocation);
 			return newLocation;
 		}
 
