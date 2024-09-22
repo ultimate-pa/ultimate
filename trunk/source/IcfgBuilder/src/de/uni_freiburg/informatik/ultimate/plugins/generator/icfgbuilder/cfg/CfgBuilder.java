@@ -839,27 +839,29 @@ public class CfgBuilder {
 			final IIcfgElement thenPart = buildCodeBlock(st.getThenPart(), currentLocation, false);
 			final IIcfgElement elsePart = buildCodeBlock(st.getElsePart(), mConditionalStarts.peek(), false);
 			currentLocation = mConditionalStarts.pop();
-			AssumeStatement thenStatement;
-			AssumeStatement elseStatement;
+			final AssumeStatement thenCondition;
+			final AssumeStatement elseCondition;
 
 			// use Assume true statements for WildcardExpression
 			if (st.getCondition() instanceof WildcardExpression) {
-				thenStatement = new AssumeStatement(st.getLocation(),
+				thenCondition = new AssumeStatement(st.getLocation(),
 						ExpressionFactory.createBooleanLiteral(st.getLocation(), true));
-				elseStatement = thenStatement;
+				elseCondition = thenCondition;
 			} else {
-				thenStatement = new AssumeStatement(st.getLocation(), st.getCondition());
-				elseStatement = new AssumeStatement(st.getLocation(), getNegation(st.getCondition()));
-				new ConditionAnnotation(false).annotate(thenStatement);
-				new ConditionAnnotation(true).annotate(elseStatement);
+				thenCondition = new AssumeStatement(st.getLocation(), st.getCondition());
+				elseCondition = new AssumeStatement(st.getLocation(), getNegation(st.getCondition()));
+				new ConditionAnnotation(false).annotate(thenCondition);
+				new ConditionAnnotation(true).annotate(elseCondition);
 			}
 
 			// backtranslation
-			mIcfgBacktranslator.putAux(thenStatement, new BoogieASTNode[] { st });
-			mIcfgBacktranslator.putAux(elseStatement, new BoogieASTNode[] { st });
+			mIcfgBacktranslator.putAux(thenCondition, new BoogieASTNode[] { st });
+			mIcfgBacktranslator.putAux(elseCondition, new BoogieASTNode[] { st });
 
 			final BoogieIcfgLocation srcLoc = buildNewIcfgLocation(st);
-			buildBranching(st, thenStatement, thenPart, elseStatement, elsePart, srcLoc);
+			ModelUtils.copyAnnotations(st, thenCondition);
+			ModelUtils.copyAnnotations(st, thenCondition);
+			buildBranching(thenCondition, thenPart, elseCondition, elsePart, srcLoc);
 			return srcLoc;
 		}
 
@@ -902,8 +904,8 @@ public class CfgBuilder {
 			mIcfg.getLoopLocations().add(loopEntryLoc);
 			mWhileExits.add(targetLoc);
 			mConditionalStarts.add(afterInvariants);
-			AssumeStatement condTrue;
-			AssumeStatement condFalse;
+			final AssumeStatement condTrue;
+			final AssumeStatement condFalse;
 			if (st.getCondition() instanceof WildcardExpression) {
 				condTrue = new AssumeStatement(st.getLocation(),
 						ExpressionFactory.createBooleanLiteral(st.getLocation(), true));
@@ -916,7 +918,9 @@ public class CfgBuilder {
 			}
 			mIcfgBacktranslator.putAux(condTrue, new BoogieASTNode[] { st });
 			mIcfgBacktranslator.putAux(condFalse, new BoogieASTNode[] { st });
-			buildBranching(st, condTrue, buildCodeBlock(st.getBody(), loopEntryLoc, false), condFalse, targetLoc,
+			ModelUtils.copyAnnotations(st, condTrue);
+			ModelUtils.copyAnnotations(st, condFalse);
+			buildBranching(condTrue, buildCodeBlock(st.getBody(), loopEntryLoc, false), condFalse, targetLoc,
 					afterInvariants);
 			assert (mWhileExits.pop() == targetLoc);
 			mConditionalStarts.pop();
@@ -998,21 +1002,23 @@ public class CfgBuilder {
 				final Expression formula, final BoogieASTNode origin) {
 			final BoogieIcfgLocation error = addErrorNode(mCurrentProcedureName, origin, mProcLocNodes);
 			mProcLocNodes.put(error.getDebugIdentifier(), error);
-			AssumeStatement assumeTrue;
+			final AssumeStatement condNotError;
 			if (mAddAssumeForEachAssert) {
-				assumeTrue = new AssumeStatement(origin.getLocation(), formula);
+				condNotError = new AssumeStatement(origin.getLocation(), formula);
 			} else {
-				assumeTrue = new AssumeStatement(origin.getLocation(),
+				condNotError = new AssumeStatement(origin.getLocation(),
 						ExpressionFactory.createBooleanLiteral(origin.getLocation(), true));
 			}
 
-			new ConditionAnnotation(false).annotate(assumeTrue);
-			final AssumeStatement assumeFalse = new AssumeStatement(origin.getLocation(), getNegation(formula));
-			new ConditionAnnotation(true).annotate(assumeFalse);
-			mIcfgBacktranslator.putAux(assumeTrue, new BoogieASTNode[] { origin });
-			mIcfgBacktranslator.putAux(assumeFalse, new BoogieASTNode[] { origin });
+			new ConditionAnnotation(false).annotate(condNotError);
+			final AssumeStatement condError = new AssumeStatement(origin.getLocation(), getNegation(formula));
+			new ConditionAnnotation(true).annotate(condError);
+			mIcfgBacktranslator.putAux(condNotError, new BoogieASTNode[] { origin });
+			mIcfgBacktranslator.putAux(condError, new BoogieASTNode[] { origin });
 			final BoogieIcfgLocation srcLoc = buildNewIcfgLocation(origin);
-			buildBranching(origin, assumeTrue, currentLocation, assumeFalse, error, srcLoc);
+			ModelUtils.copyAnnotations(origin, condNotError);
+			ModelUtils.copyAnnotations(origin, condError);
+			buildBranching(condNotError, currentLocation, condError, error, srcLoc);
 			return srcLoc;
 		}
 
@@ -1020,15 +1026,13 @@ public class CfgBuilder {
 		 * Prepend an {@link AssumeStatement} to part of our ICFG that we currently
 		 * build.
 		 *
-		 * @param origin {@link BoogieASTNode} from which the the
-		 *                {@link AssumeStatement} originates.
 		 * @param cond    Condition represented by an {@link AssumeStatement}.
 		 * @param current Part of the ICFG that we currently build. Either a
 		 *                {@link StatementSequence} or an {@link IcfgLocation}.
 		 * @param srcLoc  The {@link IcfgLocation} the becomes the source location of
 		 *                the edge that contains the {@link AssumeStatement}.
 		 */
-		private void prependOneAssume(final BoogieASTNode origin, final AssumeStatement cond,
+		private void prependOneAssume(final AssumeStatement cond,
 				final IIcfgElement current, final BoogieIcfgLocation srcLoc) {
 			if (current instanceof StatementSequence && (mCodeBlockSize == CodeBlockSize.SequenceOfStatements
 					|| mCodeBlockSize == CodeBlockSize.LoopFreeBlock
@@ -1036,7 +1040,6 @@ public class CfgBuilder {
 							&& (((StatementSequence) current).isTrivial()
 									|| StatementSequence.isAssumeTrueStatement(cond)))) {
 				((StatementSequence) current).addStatement(cond, 0);
-				ModelUtils.copyAnnotations(origin, current);
 				ModelUtils.copyAnnotations(cond, current);
 				endStatementSequence((StatementSequence) current, srcLoc);
 			} else {
@@ -1048,7 +1051,6 @@ public class CfgBuilder {
 					newEdge = mCbf.constructStatementSequence(srcLoc, (BoogieIcfgLocation) current, cond);
 				}
 				mEdges.add(newEdge);
-				ModelUtils.copyAnnotations(origin, newEdge);
 				ModelUtils.copyAnnotations(cond, newEdge);
 			}
 		}
@@ -1068,11 +1070,10 @@ public class CfgBuilder {
 		 * @param srcLoc The {@link IcfgLocation} the becomes the source location of
 		 *                the edges that contains the {@link AssumeStatement}s.
 		 */
-		private void buildBranching(final BoogieASTNode origin, final AssumeStatement cond1,
-				final IIcfgElement part1, final AssumeStatement cond2, final IIcfgElement part2,
-				final BoogieIcfgLocation srcLoc) {
-			prependOneAssume(origin, cond1, part1, srcLoc);
-			prependOneAssume(origin, cond2, part2, srcLoc);
+		private void buildBranching(final AssumeStatement cond1, final IIcfgElement part1, final AssumeStatement cond2,
+				final IIcfgElement part2, final BoogieIcfgLocation srcLoc) {
+			prependOneAssume(cond1, part1, srcLoc);
+			prependOneAssume(cond2, part2, srcLoc);
 		}
 
 		private BoogieIcfgLocation buildReturn(final BoogieIcfgLocation currentLocation, final ReturnStatement st) {
