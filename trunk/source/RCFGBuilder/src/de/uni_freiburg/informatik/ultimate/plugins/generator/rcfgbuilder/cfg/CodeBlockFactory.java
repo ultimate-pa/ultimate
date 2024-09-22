@@ -44,7 +44,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence.Origin;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.SerialProvider;
 
 /**
@@ -143,13 +142,8 @@ public class CodeBlockFactory implements IStorable {
 	}
 
 	public StatementSequence constructStatementSequence(final BoogieIcfgLocation source,
-			final BoogieIcfgLocation target, final Statement st, final Origin origin) {
-		return new StatementSequence(makeFreshSerial(), source, target, st, origin, mLogger);
-	}
-
-	public StatementSequence constructStatementSequence(final BoogieIcfgLocation source,
-			final BoogieIcfgLocation target, final List<Statement> stmts, final Origin origin) {
-		return new StatementSequence(makeFreshSerial(), source, target, stmts, origin, mLogger);
+			final BoogieIcfgLocation target, final List<Statement> stmts) {
+		return new StatementSequence(makeFreshSerial(), source, target, stmts, mLogger);
 	}
 
 	public Summary constructSummary(final BoogieIcfgLocation source, final BoogieIcfgLocation target,
@@ -174,8 +168,7 @@ public class CodeBlockFactory implements IStorable {
 			return copy;
 		} else if (codeBlock instanceof StatementSequence) {
 			final List<Statement> statements = ((StatementSequence) codeBlock).getStatements();
-			final Origin origin = ((StatementSequence) codeBlock).getOrigin();
-			final StatementSequence copy = this.constructStatementSequence(source, target, statements, origin);
+			final StatementSequence copy = this.constructStatementSequence(source, target, statements);
 			copy.setTransitionFormula(codeBlock.getTransformula());
 			return copy;
 		} else if (codeBlock instanceof Summary) {

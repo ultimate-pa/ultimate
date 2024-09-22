@@ -123,7 +123,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBacktranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.WeakestPrecondition;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence.Origin;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer.CodeBlockSize;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.TransFormulaAdder;
@@ -796,7 +795,7 @@ public class CfgBuilder {
 									+ " then the last Statement must not be a Label, Return or Goto."
 									+ " (i.e. this is not the first Statement of the block)";
 				}
-				processAssuAssiHavoStatement(st, Origin.IMPLEMENTATION);
+				processAssuAssiHavoStatement(st);
 			}
 
 			else if (st instanceof AssertStatement) {
@@ -1009,7 +1008,7 @@ public class CfgBuilder {
 				final AssumeStatement st = new AssumeStatement(spec.getLocation(), spec.getFormula());
 				ModelUtils.copyAnnotations(spec, st);
 				mRcfgBacktranslator.putAux(st, new BoogieASTNode[] { spec });
-				processAssuAssiHavoStatement(st, Origin.ENSURES);
+				processAssuAssiHavoStatement(st);
 			}
 			final BoogieIcfgLocation exitNode = mIcfg.getProcedureExitNodes().get(mCurrentProcedureName);
 			mLastLabelName = exitNode.getDebugIdentifier();
@@ -1030,7 +1029,7 @@ public class CfgBuilder {
 					mRcfgBacktranslator.putAux(assumeSt, new BoogieASTNode[] { spec });
 					final BoogieIcfgLocation errorLocNode = addErrorNode(mCurrentProcedureName, spec, mProcLocNodes);
 					final CodeBlock assumeEdge =
-							mCbf.constructStatementSequence(finalNode, errorLocNode, assumeSt, Origin.ENSURES);
+							mCbf.constructStatementSequence(finalNode, errorLocNode, assumeSt);
 					ModelUtils.copyAnnotations(spec, assumeEdge);
 					ModelUtils.copyAnnotations(spec, errorLocNode);
 					mEdges.add(assumeEdge);
@@ -1053,7 +1052,7 @@ public class CfgBuilder {
 					final AssumeStatement st = new AssumeStatement(spec.getLocation(), spec.getFormula());
 					ModelUtils.copyAnnotations(spec, st);
 					mRcfgBacktranslator.putAux(st, new BoogieASTNode[] { spec });
-					processAssuAssiHavoStatement(st, Origin.REQUIRES);
+					processAssuAssiHavoStatement(st);
 				}
 			}
 		}
@@ -1158,9 +1157,9 @@ public class CfgBuilder {
 			}
 		}
 
-		private void processAssuAssiHavoStatement(final Statement st, final Origin origin) {
+		private void processAssuAssiHavoStatement(final Statement st) {
 			if (mCurrent instanceof BoogieIcfgLocation) {
-				startNewStatementSequenceAndAddStatement(st, origin);
+				startNewStatementSequenceAndAddStatement(st);
 			} else if (mCurrent instanceof CodeBlock) {
 				switch (mCodeBlockSize) {
 				case LoopFreeBlock:
@@ -1172,12 +1171,12 @@ public class CfgBuilder {
 						addStatementToStatementSequenceThatIsCurrentlyBuilt(st);
 					} else {
 						endCurrentStatementSequence(st);
-						startNewStatementSequenceAndAddStatement(st, origin);
+						startNewStatementSequenceAndAddStatement(st);
 					}
 					break;
 				case SingleStatement:
 					endCurrentStatementSequence(st);
-					startNewStatementSequenceAndAddStatement(st, origin);
+					startNewStatementSequenceAndAddStatement(st);
 					break;
 				default:
 					throw new AssertionError("Unknown value: " + mCodeBlockSize);
@@ -1197,18 +1196,18 @@ public class CfgBuilder {
 			mProcLocNodes.put(locName, locNode);
 		}
 
-		private void startNewStatementSequenceAndAddStatement(final Statement st, final Origin origin) {
+		private void startNewStatementSequenceAndAddStatement(final Statement st) {
 			assert isIntraproceduralBranchFreeStatement(st) : "cannot add statement to code block " + st;
 			final StatementSequence codeBlock =
-					mCbf.constructStatementSequence((BoogieIcfgLocation) mCurrent, null, st, origin);
+					mCbf.constructStatementSequence((BoogieIcfgLocation) mCurrent, null, st);
 			ModelUtils.copyAnnotations(st, codeBlock);
 			mEdges.add(codeBlock);
 			mCurrent = codeBlock;
 		}
 
-		private void startNewStatementSequence(final Origin origin) {
+		private void startNewStatementSequence() {
 			final StatementSequence codeBlock =
-					mCbf.constructStatementSequence((BoogieIcfgLocation) mCurrent, null, List.of(), origin);
+					mCbf.constructStatementSequence((BoogieIcfgLocation) mCurrent, null, List.of());
 			mEdges.add(codeBlock);
 			mCurrent = codeBlock;
 		}
@@ -1258,7 +1257,7 @@ public class CfgBuilder {
 			mRcfgBacktranslator.putAux(assumeError, new BoogieASTNode[] { st });
 			final BoogieIcfgLocation errorLocNode = addErrorNode(mCurrentProcedureName, st, mProcLocNodes);
 			final StatementSequence assumeErrorCB =
-					mCbf.constructStatementSequence(locNode, errorLocNode, assumeError, Origin.ASSERT);
+					mCbf.constructStatementSequence(locNode, errorLocNode, assumeError);
 			ModelUtils.copyAnnotations(st, errorLocNode);
 			ModelUtils.copyAnnotations(st, assumeErrorCB);
 			mEdges.add(assumeErrorCB);
@@ -1279,7 +1278,7 @@ public class CfgBuilder {
 			ModelUtils.copyAnnotations(st, st1);
 			mRcfgBacktranslator.putAux(assumeSafe, new BoogieASTNode[] { st });
 			final StatementSequence assumeSafeCB =
-					mCbf.constructStatementSequence(locNode, null, assumeSafe, Origin.ASSERT);
+					mCbf.constructStatementSequence(locNode, null, assumeSafe);
 			ModelUtils.copyAnnotations(st, assumeSafeCB);
 			// add a new TransEdge labeled with st as successor of the
 			// last constructed LocNode
@@ -1340,7 +1339,7 @@ public class CfgBuilder {
 			if ((mCodeBlockSize == CodeBlockSize.SequenceOfStatements || mCodeBlockSize == CodeBlockSize.LoopFreeBlock)
 					&& !procedureHasImplementation && nonFreeRequiresIsEmpty) {
 				if (mCurrent instanceof BoogieIcfgLocation) {
-					startNewStatementSequenceAndAddStatement(st, Origin.IMPLEMENTATION);
+					startNewStatementSequenceAndAddStatement(st);
 				} else if (mCurrent instanceof CodeBlock) {
 					addStatementToStatementSequenceThatIsCurrentlyBuilt(st);
 				} else {
@@ -1406,7 +1405,7 @@ public class CfgBuilder {
 					mRcfgBacktranslator.putAux(assumeSt, new BoogieASTNode[] { st, spec });
 					final BoogieIcfgLocation errorLocNode = addErrorNode(mCurrentProcedureName, spec, mProcLocNodes);
 					final StatementSequence errorCB =
-							mCbf.constructStatementSequence(locNode, errorLocNode, assumeSt, Origin.REQUIRES);
+							mCbf.constructStatementSequence(locNode, errorLocNode, assumeSt);
 					ModelUtils.copyAnnotations(spec, errorCB);
 					ModelUtils.copyAnnotations(spec, errorLocNode);
 					mEdges.add(errorCB);
@@ -1523,7 +1522,7 @@ public class CfgBuilder {
 			assert mCurrent instanceof BoogieIcfgLocation : "Atomic section must begin with ICFG location";
 
 			// start a new edge
-			startNewStatementSequence(Origin.IMPLEMENTATION);
+			startNewStatementSequence();
 			assert mCurrent instanceof CodeBlock : "Start marker for atomic section must be an edge";
 
 			// mark current edge as start of atomic block
@@ -1533,7 +1532,7 @@ public class CfgBuilder {
 		private void endAtomicBlock(final Statement st) {
 			// ensure mCurrent is an edge rather than a location
 			if (!(mCurrent instanceof CodeBlock)) {
-				startNewStatementSequence(Origin.IMPLEMENTATION);
+				startNewStatementSequence();
 			}
 			assert mCurrent instanceof CodeBlock : "End marker for atomic section must be an edge";
 

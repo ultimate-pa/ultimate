@@ -45,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence.Origin;
 
 public class AssumptionBuilder {
 
@@ -98,6 +97,6 @@ public class AssumptionBuilder {
 	public static CodeBlock constructCodeBlock(final CodeBlockFactory codeBlockFactory, final Statement... statements) {
 		final List<Statement> statementList =
 				Arrays.stream(statements).filter(stmt -> stmt != null).collect(Collectors.toList());
-		return codeBlockFactory.constructStatementSequence(null, null, statementList, Origin.IMPLEMENTATION);
+		return codeBlockFactory.constructStatementSequence(null, null, statementList);
 	}
 }

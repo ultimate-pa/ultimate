@@ -60,32 +60,20 @@ public class StatementSequence extends CodeBlock implements IIcfgInternalTransit
 	private static final long serialVersionUID = -1780068525981157749L;
 	private static final boolean ADD_SERIAL_NUMBER_IN_TO_STRING_REPRESENTATION = false;
 
-	public enum Origin {
-		ENSURES, REQUIRES, IMPLEMENTATION, ASSERT
-	}
-
 	private final List<Statement> mStatements;
 	private String mPrettyPrintedStatements;
 	/**
 	 * mOrigin stores the origin of this InternalEdge, which could be either be the ensures specification, the requires
 	 * specification or the implementation of a program.
 	 */
-	private final Origin mOrigin;
-
 	StatementSequence(final int serialNumber, final BoogieIcfgLocation source, final BoogieIcfgLocation target,
 			final Statement st, final ILogger logger) {
-		this(serialNumber, source, target, Collections.singletonList(st), Origin.IMPLEMENTATION, logger);
+		this(serialNumber, source, target, Collections.singletonList(st), logger);
 	}
 
 	StatementSequence(final int serialNumber, final BoogieIcfgLocation source, final BoogieIcfgLocation target,
-			final Statement st, final Origin origin, final ILogger logger) {
-		this(serialNumber, source, target, Collections.singletonList(st), origin, logger);
-	}
-
-	StatementSequence(final int serialNumber, final BoogieIcfgLocation source, final BoogieIcfgLocation target,
-			final List<Statement> stmts, final Origin origin, final ILogger logger) {
+			final List<Statement> stmts, final ILogger logger) {
 		super(serialNumber, source, target, logger);
-		mOrigin = origin;
 		mStatements = new ArrayList<>();
 		if (stmts != null && !stmts.isEmpty()) {
 			stmts.forEach(this::addStatement);
@@ -122,10 +110,6 @@ public class StatementSequence extends CodeBlock implements IIcfgInternalTransit
 			mPrettyPrintedStatements = sb.toString();
 		}
 		return mPrettyPrintedStatements;
-	}
-
-	public Origin getOrigin() {
-		return mOrigin;
 	}
 
 	@Override

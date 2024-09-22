@@ -69,7 +69,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence.Origin;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
@@ -642,7 +641,7 @@ public final class ProductGenerator {
 			targetpp = mResultProgramPointsProduct.get((BoogieIcfgLocation) summary.getTarget(), autTrans.getSucc());
 			final List<CodeBlock> sumAndSs = new ArrayList<>();
 			final StatementSequence seq = mCodeblockFactory.constructStatementSequence(productSourceLoc, targetpp,
-					checkLetter(autTrans.getLetter()), Origin.IMPLEMENTATION);
+					checkLetter(autTrans.getLetter()));
 
 			tfb.addTransFormula(seq, ((BoogieIcfgLocation) summary.getSource()).getProcedure());
 
@@ -819,9 +818,9 @@ public final class ProductGenerator {
 		assert currentpp != null;
 		assert targetpp != null;
 		if (originalSS == null) {
-			newSS = mCodeblockFactory.constructStatementSequence(currentpp, targetpp, stmts, Origin.IMPLEMENTATION);
+			newSS = mCodeblockFactory.constructStatementSequence(currentpp, targetpp, stmts);
 		} else {
-			newSS = mCodeblockFactory.constructStatementSequence(currentpp, targetpp, stmts, originalSS.getOrigin());
+			newSS = mCodeblockFactory.constructStatementSequence(currentpp, targetpp, stmts);
 		}
 
 		mapNewEdge2OldEdge(newSS, originalSS);
