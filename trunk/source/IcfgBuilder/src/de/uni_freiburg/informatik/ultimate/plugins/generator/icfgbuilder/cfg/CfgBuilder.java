@@ -868,7 +868,7 @@ public class CfgBuilder {
 		private BoogieIcfgLocation buildWhile(final BoogieIcfgLocation targetLoc, final WhileStatement st) {
 			final BoogieIcfgLocation loopEntryLoc = new BoogieIcfgLocation(constructLocDebugIdentifier(st),
 					mCurrentProcedureName, false, st);
-			BoogieIcfgLocation afterInvariants;
+			final BoogieIcfgLocation afterInvariants;
 			// detect and handle invariants
 			if (st.getInvariants().length == 0) {
 				afterInvariants = loopEntryLoc;
@@ -941,7 +941,10 @@ public class CfgBuilder {
 			return expr;
 		}
 
-		private IIcfgElement buildAssuAssiHavoc(IIcfgElement currentLocation, Statement st, final Origin origin) {
+		private IIcfgElement buildAssuAssiHavoc(final IIcfgElement currentElement, Statement st, final Origin origin) {
+			// FIXME Matthias 2024-09-22: This code is extremely problematic because it
+			// changes the original statement, we should handle this case in the
+			// BoogiePreprocessor
 			// convert ArrayLHS to ArrayStoreExpression
 			if (st instanceof AssignmentStatement) {
 				final AssignmentStatement assign = (AssignmentStatement) st;
@@ -964,31 +967,45 @@ public class CfgBuilder {
 				}
 			}
 
+			final StatementSequence stseq = prependStatement(st, currentElement, origin);
+			if (mCodeBlockSize == CodeBlockSize.SingleStatement) {
+				return endStatementSequence(stseq);
+			} else {
+				return stseq;
+			}
+		}
+
+		/**
+		 * Prepend a {@link Statement} to part of our ICFG that we currently build.
+		 *
+		 * @param currentElement Part of the ICFG that we currently build. Either a
+		 *                       {@link StatementSequence} or an {@link IcfgLocation}.
+		 */
+		private StatementSequence prependStatement(final Statement st, IIcfgElement currentElement, final Origin origin)
+				throws AssertionError {
 			switch (mCodeBlockSize) {
 			case OneNontrivialStatement:
-				if (currentLocation instanceof StatementSequence && !StatementSequence.isAssumeTrueStatement(st)
-						&& !((StatementSequence) currentLocation).isTrivial()) {
-					currentLocation = endStatementSequence((StatementSequence) currentLocation);
+				if (currentElement instanceof StatementSequence && !StatementSequence.isAssumeTrueStatement(st)
+						&& !((StatementSequence) currentElement).isTrivial()) {
+					currentElement = endStatementSequence((StatementSequence) currentElement);
 				}
 			case LoopFreeBlock:
 			case SequenceOfStatements:
-				if (currentLocation instanceof StatementSequence) {
-					addStatementToStatementSequence(st, (StatementSequence) currentLocation);
-					return currentLocation;
+				if (currentElement instanceof StatementSequence) {
+					addStatementToStatementSequence(st, (StatementSequence) currentElement);
+					return (StatementSequence) currentElement;
 				} else {
-					return startNewStatementSequenceAndAddStatement((BoogieIcfgLocation) currentLocation, st, origin);
+					return startNewStatementSequenceAndAddStatement((BoogieIcfgLocation) currentElement, st, origin);
 				}
 			case SingleStatement:
-				if (currentLocation instanceof StatementSequence) {
-					if (((StatementSequence) currentLocation).getStatements().isEmpty()) {
-						addStatementToStatementSequence(st, (StatementSequence) currentLocation);
-						return currentLocation;
+				if (currentElement instanceof StatementSequence) {
+					if (((StatementSequence) currentElement).getStatements().isEmpty()) {
+						addStatementToStatementSequence(st, (StatementSequence) currentElement);
+						return (StatementSequence) currentElement;
 					}
-					currentLocation = endStatementSequence((StatementSequence) currentLocation);
+					currentElement = endStatementSequence((StatementSequence) currentElement);
 				}
-				final StatementSequence sequence = startNewStatementSequenceAndAddStatement(
-						(BoogieIcfgLocation) currentLocation, st, origin);
-				return endStatementSequence(sequence);
+				return startNewStatementSequenceAndAddStatement((BoogieIcfgLocation) currentElement, st, origin);
 			default:
 				throw new AssertionError("Unknown value: " + mCodeBlockSize);
 			}
@@ -1022,39 +1039,6 @@ public class CfgBuilder {
 			return srcLoc;
 		}
 
-		/**
-		 * Prepend an {@link AssumeStatement} to part of our ICFG that we currently
-		 * build.
-		 *
-		 * @param cond    Condition represented by an {@link AssumeStatement}.
-		 * @param current Part of the ICFG that we currently build. Either a
-		 *                {@link StatementSequence} or an {@link IcfgLocation}.
-		 * @param srcLoc  The {@link IcfgLocation} the becomes the source location of
-		 *                the edge that contains the {@link AssumeStatement}.
-		 */
-		private void prependOneAssume(final AssumeStatement cond,
-				final IIcfgElement current, final BoogieIcfgLocation srcLoc) {
-			if (current instanceof StatementSequence && (mCodeBlockSize == CodeBlockSize.SequenceOfStatements
-					|| mCodeBlockSize == CodeBlockSize.LoopFreeBlock
-					|| mCodeBlockSize == CodeBlockSize.OneNontrivialStatement
-							&& (((StatementSequence) current).isTrivial()
-									|| StatementSequence.isAssumeTrueStatement(cond)))) {
-				((StatementSequence) current).addStatement(cond, 0);
-				ModelUtils.copyAnnotations(cond, current);
-				endStatementSequence((StatementSequence) current, srcLoc);
-			} else {
-				StatementSequence newEdge;
-				if (current instanceof StatementSequence) {
-					newEdge = mCbf.constructStatementSequence(srcLoc,
-							endStatementSequence((StatementSequence) current), cond);
-				} else {
-					newEdge = mCbf.constructStatementSequence(srcLoc, (BoogieIcfgLocation) current, cond);
-				}
-				mEdges.add(newEdge);
-				ModelUtils.copyAnnotations(cond, newEdge);
-			}
-		}
-
 		private BoogieIcfgLocation buildNewIcfgLocation(final BoogieASTNode astNode) {
 			final BoogieIcfgLocation start = new BoogieIcfgLocation(constructLocDebugIdentifier(astNode),
 					mCurrentProcedureName, false, astNode);
@@ -1066,14 +1050,16 @@ public class CfgBuilder {
 		 * Build a branching that connects two parts of the ICFG. We prepend an
 		 * {@link AssumeStatement} to each part of the ICFG.
 		 *
-		 * @param origin {@link BoogieASTNode} from which the the branching originates.
-		 * @param srcLoc The {@link IcfgLocation} the becomes the source location of
-		 *                the edges that contains the {@link AssumeStatement}s.
+		 * @param srcLoc The {@link IcfgLocation} the becomes the source location of the
+		 *               edges that contains the {@link AssumeStatement}s.
 		 */
 		private void buildBranching(final AssumeStatement cond1, final IIcfgElement part1, final AssumeStatement cond2,
 				final IIcfgElement part2, final BoogieIcfgLocation srcLoc) {
-			prependOneAssume(cond1, part1, srcLoc);
-			prependOneAssume(cond2, part2, srcLoc);
+
+			final StatementSequence branch1 = prependStatement(cond1, part1, Origin.IMPLEMENTATION);
+			endStatementSequence(branch1, srcLoc);
+			final StatementSequence branch2 = prependStatement(cond2, part2, Origin.IMPLEMENTATION);
+			endStatementSequence(branch2, srcLoc);
 		}
 
 		private BoogieIcfgLocation buildReturn(final BoogieIcfgLocation currentLocation, final ReturnStatement st) {
@@ -1216,7 +1202,7 @@ public class CfgBuilder {
 				}
 			}
 
-			BoogieIcfgLocation locNode;
+			final BoogieIcfgLocation locNode;
 			if (currentLocation instanceof StatementSequence) {
 				locNode = endStatementSequence((StatementSequence) currentLocation, st);
 			} else if (currentLocation instanceof BoogieIcfgLocation) {
@@ -1266,21 +1252,20 @@ public class CfgBuilder {
 			return newLocation;
 		}
 
-		private BoogieIcfgLocation endStatementSequence(final StatementSequence currentLoc,
-				final BoogieIcfgLocation loc) {
-			((CodeBlock) currentLoc).connectSource(loc);
+		private BoogieIcfgLocation endStatementSequence(final StatementSequence stseq, final BoogieIcfgLocation loc) {
+			((CodeBlock) stseq).connectSource(loc);
 			return loc;
 		}
 
-		private BoogieIcfgLocation endStatementSequence(final StatementSequence currentLoc, final Statement st) {
+		private BoogieIcfgLocation endStatementSequence(final StatementSequence stseq, final Statement st) {
 			final DebugIdentifier locName = constructLocDebugIdentifier(st);
 			final BoogieIcfgLocation locNode = new BoogieIcfgLocation(locName, mCurrentProcedureName, false, st);
 			mProcLocNodes.put(locName, locNode);
-			return endStatementSequence(currentLoc, locNode);
+			return endStatementSequence(stseq, locNode);
 		}
 
-		private BoogieIcfgLocation endStatementSequence(final StatementSequence currentLoc) {
-			return endStatementSequence(currentLoc, currentLoc.getStatements().get(0));
+		private BoogieIcfgLocation endStatementSequence(final StatementSequence stseq) {
+			return endStatementSequence(stseq, stseq.getStatements().get(0));
 		}
 
 		private StatementSequence startNewStatementSequenceAndAddStatement(final BoogieIcfgLocation currentLocation,
@@ -1300,12 +1285,11 @@ public class CfgBuilder {
 			return codeBlock;
 		}
 
-		private StatementSequence addStatementToStatementSequence(final Statement st,
-				final StatementSequence currentLoc) {
+		private StatementSequence addStatementToStatementSequence(final Statement st, final StatementSequence stseq) {
 			assert isIntraproceduralBranchFreeStatement(st) : "cannot add statement to code block " + st;
-			currentLoc.addStatement(st, 0);
-			ModelUtils.copyAnnotations(st, currentLoc);
-			return currentLoc;
+			stseq.addStatement(st, 0);
+			ModelUtils.copyAnnotations(st, stseq);
+			return stseq;
 		}
 
 		/**
