@@ -977,11 +977,15 @@ public class CfgBuilder {
 		/**
 		 * Prepend a {@link Statement} to part of our ICFG that we currently build.
 		 *
+		 * @param st             A {@link Statement} that is either an
+		 *                       {@link AssumeStatement}, an
+		 *                       {@link AssignmentStatement}, or a
+		 *                       {@link HavocStatement}.
 		 * @param currentElement Part of the ICFG that we currently build. Either a
 		 *                       {@link StatementSequence} or an {@link IcfgLocation}.
 		 */
-		private StatementSequence prependStatement(final Statement st, IIcfgElement currentElement)
-				throws AssertionError {
+		private StatementSequence prependStatement(final Statement st, IIcfgElement currentElement) {
+			assert st instanceof AssumeStatement || st instanceof AssignmentStatement || st instanceof HavocStatement;
 			switch (mCodeBlockSize) {
 			case OneNontrivialStatement:
 				if (currentElement instanceof StatementSequence && !StatementSequence.isAssumeTrueStatement(st)
