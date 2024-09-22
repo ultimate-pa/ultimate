@@ -2,6 +2,6 @@
 <name>BoogieRefereeTC</name>
 <toolchain>
 	<plugin id="de.uni_freiburg.informatik.ultimate.boogie.preprocessor"/>
-	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder"/>
+	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder"/>
 	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.referee"/>
 </toolchain></rundefinition>

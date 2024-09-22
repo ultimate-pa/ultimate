@@ -13,7 +13,7 @@
 		"Partial Order Reduction in concurrent analysis",
 		"DFS Order used in POR"
 	],
-	"de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder": [
+	"de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder": [
 		"SMT solver",
 		"Size of a code block",
 		"Future-live optimization"

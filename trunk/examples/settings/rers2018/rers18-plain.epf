@@ -1,18 +1,18 @@
 #Thu Sep 06 13:55:32 CEST 2018
-\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Add\ additional\ assume\ for\ each\ assert=true
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Convert\ code\ blocks\ to\ CNF=false
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Dump\ SMT\ script\ to\ file=false
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Dump\ main\ track\ benchmark\ to\ file=false
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Dump\ unsat\ core\ track\ benchmark\ to\ file=false
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Fake\ non-incremental\ script=false
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Remove\ goto\ edges\ from\ RCFG=true
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/SMT\ solver=Internal_SMTInterpol
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Simplify\ code\ blocks=true
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Size\ of\ a\ code\ block=SequenceOfStatements
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Skolemize\ terms=true
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Translate\ Boogie\ integers\ to\ SMT\ bitvectors=false
-@de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=0.1.23
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder/Add\ additional\ assume\ for\ each\ assert=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder/Convert\ code\ blocks\ to\ CNF=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder/Dump\ SMT\ script\ to\ file=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder/Dump\ main\ track\ benchmark\ to\ file=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder/Dump\ unsat\ core\ track\ benchmark\ to\ file=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder/Fake\ non-incremental\ script=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder/Remove\ goto\ edges\ from\ RCFG=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder/SMT\ solver=Internal_SMTInterpol
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder/Simplify\ code\ blocks=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder/Size\ of\ a\ code\ block=SequenceOfStatements
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder/Skolemize\ terms=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder/Translate\ Boogie\ integers\ to\ SMT\ bitvectors=false
+@de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder=0.1.23
 file_export_version=3.0
 #Thu Sep 06 13:55:32 CEST 2018
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=
