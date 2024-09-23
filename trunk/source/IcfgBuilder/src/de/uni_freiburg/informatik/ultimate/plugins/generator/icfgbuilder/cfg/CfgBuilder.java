@@ -1083,6 +1083,7 @@ public class CfgBuilder {
 			// to find out what auxiliry statements we add.
 			final AssumeStatement assume = new AssumeStatement(st.getLocation(),
 					ExpressionFactory.createBooleanLiteral(st.getLocation(), true));
+			mIcfgBacktranslator.putAux(assume, new BoogieASTNode[] { st });
 			final StatementSequence stseq = prependStatement(assume, currentElement);
 			endStatementSequence(stseq, newLocation);
 			return newLocation;
