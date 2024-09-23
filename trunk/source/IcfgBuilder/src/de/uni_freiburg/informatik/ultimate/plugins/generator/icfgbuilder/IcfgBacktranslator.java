@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression.Operator;
@@ -225,6 +226,8 @@ public class IcfgBacktranslator extends
 						final AtomicTraceElement<BoogieASTNode> element = ateBuilder.build();
 						trace.add(element);
 						ateBuilder = AtomicTraceElementBuilder.from(element).setStepInfo(StepInfo.NONE);
+					} else if (source instanceof Label) {
+						// Add nothing to trace, we do not want to see labels in error trace.
 					} else {
 						ateBuilder.setStepAndElement(source);
 						trace.add(ateBuilder.build());
