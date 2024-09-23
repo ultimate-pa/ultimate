@@ -39,13 +39,12 @@ import java.util.Map.Entry;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieProgramExecution;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression.Operator;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.Multigraph;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.MultigraphEdge;
@@ -205,29 +204,31 @@ public class IcfgBacktranslator extends
 			for (final Statement st : ss.getStatements()) {
 				final BoogieASTNode[] sources = mCodeBlock2Statement.get(st);
 				if (sources != null) {
-					for (final BoogieASTNode source : sources) {
-						if ((source instanceof WhileStatement || source instanceof IfStatement) && st instanceof AssumeStatement) {
-							final Expression cond;
-							if (source instanceof WhileStatement) {
-								cond = ((WhileStatement)source).getCondition();
-							} else if (source instanceof IfStatement) {
-								cond = ((IfStatement)source).getCondition();
-							} else {
-								throw new AssertionError();
-							}
-							final StepInfo info = getStepInfoFromCondition(((AssumeStatement)st).getFormula(), cond);
-							ateBuilder.setElement(source);
-							ateBuilder.setStep(cond);
-							ateBuilder.setStepInfo(EnumSet.of(info));
-							final AtomicTraceElement<BoogieASTNode> element = ateBuilder.build();
-							trace.add(element);
-							ateBuilder = AtomicTraceElementBuilder.from(element).setStepInfo(StepInfo.NONE);
-						} else {
-							ateBuilder.setStepAndElement(source);
-							trace.add(ateBuilder.build());
-						}
+					if (sources.length != 1) {
+						throw new AssertionError("This list is a singleton except for Call statements");
 					}
-
+					final BoogieASTNode source = sources[0];
+					if ((source instanceof WhileStatement || source instanceof IfStatement)
+							&& st instanceof AssumeStatement) {
+						final Expression cond;
+						if (source instanceof WhileStatement) {
+							cond = ((WhileStatement) source).getCondition();
+						} else if (source instanceof IfStatement) {
+							cond = ((IfStatement) source).getCondition();
+						} else {
+							throw new AssertionError();
+						}
+						final StepInfo info = getStepInfoFromCondition(((AssumeStatement) st).getFormula(), cond);
+						ateBuilder.setElement(source);
+						ateBuilder.setStep(cond);
+						ateBuilder.setStepInfo(EnumSet.of(info));
+						final AtomicTraceElement<BoogieASTNode> element = ateBuilder.build();
+						trace.add(element);
+						ateBuilder = AtomicTraceElementBuilder.from(element).setStepInfo(StepInfo.NONE);
+					} else {
+						ateBuilder.setStepAndElement(source);
+						trace.add(ateBuilder.build());
+					}
 				} else {
 					ateBuilder.setStepAndElement(st);
 					trace.add(ateBuilder.build());
