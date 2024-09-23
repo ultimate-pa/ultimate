@@ -515,9 +515,6 @@ public final class Boogie2ACSL {
 			}
 			resultType = determineTypeForArithmeticOperation(leftType, rightType);
 			range = leftRange.subtract(rightRange);
-			if (range.isSingleton()) {
-				return translateIntegerLiteral(range.getMinValue());
-			}
 			operator = Operator.ARITHMINUS;
 			break;
 		case ARITHMOD:
@@ -525,9 +522,6 @@ public final class Boogie2ACSL {
 		case ARITHMUL:
 			resultType = determineTypeForArithmeticOperation(leftType, rightType);
 			range = leftRange.multiply(rightRange);
-			if (range.isSingleton()) {
-				return translateIntegerLiteral(range.getMinValue());
-			}
 			operator = Operator.ARITHMUL;
 			break;
 		case ARITHPLUS:
@@ -539,9 +533,6 @@ public final class Boogie2ACSL {
 			}
 			resultType = determineTypeForArithmeticOperation(leftType, rightType);
 			range = leftRange.add(rightRange);
-			if (range.isSingleton()) {
-				return translateIntegerLiteral(range.getMinValue());
-			}
 			operator = Operator.ARITHPLUS;
 			break;
 		case COMPEQ:
@@ -606,6 +597,9 @@ public final class Boogie2ACSL {
 		}
 		if (lhs == null || rhs == null) {
 			return null;
+		}
+		if (range.isSingleton()) {
+			return translateIntegerLiteral(range.getMinValue());
 		}
 		Expression resultingLhs = lhs.getExpression();
 		if (!fitsInType(range, resultType)) {
