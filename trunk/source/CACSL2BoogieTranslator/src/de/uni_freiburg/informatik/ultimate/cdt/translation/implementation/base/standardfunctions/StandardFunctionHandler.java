@@ -294,6 +294,7 @@ public class StandardFunctionHandler {
 		fill(map, "pthread_mutex_trylock", this::handlePthread_mutex_trylock);
 		fill(map, "pthread_mutex_unlock", this::handlePthread_mutex_unlock);
 		fill(map, "pthread_exit", this::handlePthread_exit);
+		fill(map, "pthread_detach", this::handlePthread_detach);
 		fill(map, "pthread_cond_init", this::handlePthread_success);
 		fill(map, "pthread_cond_wait", this::handlePthread_cond_wait);
 		fill(map, "pthread_cond_signal", this::handlePthread_success);
@@ -2244,6 +2245,27 @@ public class StandardFunctionHandler {
 		erb.addStatement(new ReturnStatement(loc));
 
 		return erb.build();
+	}
+
+	private Result handlePthread_detach(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+		// See https://man7.org/linux/man-pages/man3/pthread_detach.3.html
+		// "The pthread_detach() function marks the thread identified by thread as detached. When a detached thread
+		// terminates, its resources are automatically released back to the system without the need for another thread
+		// to join with the terminated thread."
+		// "On success, pthread_detach() returns 0; on error, it returns an error number."
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 1, name, arguments);
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		// The function just releases resources, without any other effect.
+		// Therefore we just dispatch the argument and return a non-deterministic value (indicating success)
+		builder.addAllExceptLrValue(
+				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]));
+		final CType retType = new CPrimitive(CPrimitives.INT);
+		final AuxVarInfo retValue = mAuxVarInfoBuilder.constructAuxVarInfo(loc, retType);
+		builder.addAuxVarWithDeclaration(retValue);
+		mExpressionTranslation.addAssumeValueInRangeStatements(loc, retValue.getExp(), retType, builder);
+		return builder.setLrValue(new RValue(retValue.getExp(), retType)).build();
 	}
 
 	/**
