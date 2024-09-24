@@ -32,6 +32,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.function.BiFunction;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
@@ -46,9 +47,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.ITraceChecker;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.LoopLockstepOrder.PredicateWithLastThread;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
@@ -97,13 +98,14 @@ public class ConditionalCommutativityInterpolantProvider<L extends IAction> {
 			final IIndependenceRelation<IPredicate, L> independenceRelation, final ManagedScript script,
 			final IIndependenceConditionGenerator generator,
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction,
-			final IEmptyStackStateFactory<IPredicate> emptyStackStateFactory, final ITraceChecker<L> traceChecker,
+			final IEmptyStackStateFactory<IPredicate> emptyStackStateFactory,
+			final BiFunction<IRun<L, IPredicate>, IPredicate, IRefinementStrategy<L>> buildStrategy,
 			final IConditionalCommutativityCheckerStatisticsUtils statisticsUtils) {
 		mServices = services;
 		mAbstraction = abstraction;
 		mEmptyStackStateFactory = emptyStackStateFactory;
-		mChecker = new ConditionalCommutativityChecker<>(criterion, independenceRelation, script, generator,
-				traceChecker, statisticsUtils);
+		mChecker = new ConditionalCommutativityChecker<>(services, criterion, independenceRelation, script, generator,
+				buildStrategy, statisticsUtils);
 		mStatisticsUtils = statisticsUtils;
 	}
 
@@ -168,19 +170,18 @@ public class ConditionalCommutativityInterpolantProvider<L extends IAction> {
 
 	private boolean checkTransitions(final NestedRun<L, IPredicate> currentRun,
 			final List<IPredicate> interpolantPredicates, final IPredicate state, final L letter1, final L letter2) {
-		final TracePredicates tracePredicates =
+		final var refinementResult =
 				mChecker.checkConditionalCommutativity(currentRun, interpolantPredicates, state, letter1, letter2);
 
-		final List<IPredicate> conPredicates = new ArrayList<>();
-		if (tracePredicates != null) {
-			conPredicates.add(tracePredicates.getPrecondition());
-			conPredicates.addAll(tracePredicates.getPredicates());
-			conPredicates.add(tracePredicates.getPostcondition());
-			addToCopy(conPredicates);
+		if (refinementResult != null) {
+			boolean containsFalseBeforeEnd = false;
+			for (final var tracePredicates : refinementResult.getInfeasibilityProof()) {
+				containsFalseBeforeEnd = addToCopy(tracePredicates.getTracePredicates()) || containsFalseBeforeEnd;
+			}
 			mStatisticsUtils.addIAIntegration();
+			return containsFalseBeforeEnd;
 		}
-		return (!conPredicates.isEmpty()
-				&& SmtUtils.isFalseLiteral(conPredicates.get(conPredicates.size() - 2).getFormula()));
+		return false;
 	}
 
 	private List<IPredicate> getInterpolantPredicates(final int runIndex, final IPredicate runPredicate) {
@@ -226,18 +227,29 @@ public class ConditionalCommutativityInterpolantProvider<L extends IAction> {
 		return interpolantPredicates;
 	}
 
-	private void addToCopy(final List<IPredicate> conPredicates) {
+	private boolean addToCopy(final TracePredicates tracePredicates) {
+		// TODO Here we probably need to unify the new predicates with the predicate unifier for the original automaton
 		// add states and transitions to copy
-		if (!mCopy.contains(conPredicates.get(0))) {
-			mCopy.addState(true, false, conPredicates.get(0));
+		if (!mCopy.contains(tracePredicates.getPrecondition())) {
+			mCopy.addState(true, false, tracePredicates.getPrecondition());
 		}
-		for (Integer i = 1; i < conPredicates.size(); i++) {
-			final IPredicate succPred = conPredicates.get(i);
+		boolean containsFalse = false;
+		final var predicates = tracePredicates.getPredicates();
+		for (int i = 0; i < predicates.size(); i++) {
+			final IPredicate succPred = predicates.get(i);
 			if (!mCopy.contains(succPred)) {
 				mCopy.addState(false, false, succPred);
 			}
-			mCopy.addInternalTransition(conPredicates.get(i - 1), mRun.getWord().getSymbol(i - 1), succPred);
+			containsFalse = containsFalse || SmtUtils.isFalseLiteral(succPred.getFormula());
+			final var prev = i == 0 ? tracePredicates.getPrecondition() : predicates.get(i - 1);
+			mCopy.addInternalTransition(prev, mRun.getWord().getSymbol(i - 1), succPred);
 		}
+		if (!mCopy.contains(tracePredicates.getPostcondition())) {
+			mCopy.addState(false, false, tracePredicates.getPostcondition());
+		}
+		mCopy.addInternalTransition(predicates.get(predicates.size() - 1), mRun.getWord().getSymbol(predicates.size()),
+				tracePredicates.getPostcondition());
+		return containsFalse;
 	}
 
 	private NestedWordAutomaton<L, IPredicate>

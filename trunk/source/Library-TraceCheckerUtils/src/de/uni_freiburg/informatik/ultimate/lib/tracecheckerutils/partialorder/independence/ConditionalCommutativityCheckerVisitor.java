@@ -27,29 +27,28 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.i
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Deque;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.IDfsVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.WrapperVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.AnnotatedMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.MLPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.LoopLockstepOrder.PredicateWithLastThread;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
@@ -76,10 +75,9 @@ public class ConditionalCommutativityCheckerVisitor<L extends IIcfgTransition<?>
 	private L mPendingLetter;
 	private IPredicate mPendingState;
 	private NestedRun<L, IPredicate> mRun;
-	private TracePredicates mTracePredicates;
+	private IRefinementEngineResult<L, Collection<QualifiedTracePredicates>> mRefinementResult;
 	private final IUltimateServiceProvider mServices;
 	private final IEmptyStackStateFactory<IPredicate> mEmptyStackStateFactory;
-	private final IPredicateUnifier mPredicateUnifier;
 
 	/**
 	 * Constructs a new instance of ConditionalCommutativityChecker.
@@ -102,13 +100,12 @@ public class ConditionalCommutativityCheckerVisitor<L extends IIcfgTransition<?>
 	public ConditionalCommutativityCheckerVisitor(final V underlying,
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction,
 			final IUltimateServiceProvider services, final IEmptyStackStateFactory<IPredicate> emptyStackStateFactory,
-			final IPredicateUnifier predicateUnifier, final ConditionalCommutativityChecker<L> checker) {
+			final ConditionalCommutativityChecker<L> checker) {
 		super(underlying);
 		mAbstraction = abstraction;
 		mChecker = checker;
 		mServices = services;
 		mEmptyStackStateFactory = emptyStackStateFactory;
-		mPredicateUnifier = predicateUnifier;
 	}
 
 	@Override
@@ -179,17 +176,17 @@ public class ConditionalCommutativityCheckerVisitor<L extends IIcfgTransition<?>
 				final OutgoingInternalTransition<L, IPredicate> transition2 = transitions.get(k);
 				final L letter1 = transition1.getLetter();
 				final L letter2 = transition2.getLetter();
-				TracePredicates tracePredicates;
+				IRefinementEngineResult<L, Collection<QualifiedTracePredicates>> refinementResult;
 
 				if (annotation != null && !SmtUtils.isTrueLiteral(annotation.getFormula())) {
-					tracePredicates =
+					refinementResult =
 							mChecker.checkConditionalCommutativity(mRun, List.of(annotation), state, letter1, letter2);
 				} else {
-					tracePredicates = mChecker.checkConditionalCommutativity(mRun, List.of(), state, letter1, letter2);
+					refinementResult = mChecker.checkConditionalCommutativity(mRun, List.of(), state, letter1, letter2);
 				}
-				if (tracePredicates != null) {
+				if (refinementResult != null) {
 					mAbort = true;
-					mTracePredicates = tracePredicates;
+					mRefinementResult = refinementResult;
 					return mUnderlying.discoverState(state);
 				}
 			}
@@ -235,42 +232,42 @@ public class ConditionalCommutativityCheckerVisitor<L extends IIcfgTransition<?>
 	// TODO TODO This should be moved out of the visitor.
 	// TODO Similar code exists for the different cond-comm approaches, and probably elsewhere in Ultimate. Reuse it!
 	public NestedWordAutomaton<L, IPredicate> getInterpolantAutomaton() {
-		if (mTracePredicates == null) {
+		if (mRefinementResult == null) {
 			return null;
 		}
-		final List<IPredicate> conPredicates = new ArrayList<>();
-		conPredicates.add(mTracePredicates.getPrecondition());
-		conPredicates.addAll(mTracePredicates.getPredicates());
-		conPredicates.add(mTracePredicates.getPostcondition());
-		final Set<L> alphabet = new HashSet<>();
-		alphabet.addAll(mAbstraction.getAlphabet());
-		final VpAlphabet<L> vpAlphabet = new VpAlphabet<>(alphabet);
-		final NestedWordAutomaton<L, IPredicate> automaton =
-				new NestedWordAutomaton<>(new AutomataLibraryServices(mServices), vpAlphabet, mEmptyStackStateFactory);
-		automaton.addState(true, false, conPredicates.get(0));
-		automaton.addState(false, true, mPredicateUnifier.getFalsePredicate());
-		for (Integer i = 1; i < conPredicates.size(); i++) {
-			final IPredicate succPred = conPredicates.get(i);
-			final IPredicate prePred = conPredicates.get(i - 1);
-			final L letter = mRun.getWord().getSymbol(i - 1);
-			if (!automaton.contains(succPred)) {
-				automaton.addState(false, false, succPred);
+		final NestedWordAutomaton<L, IPredicate> automaton = new NestedWordAutomaton<>(
+				new AutomataLibraryServices(mServices), mAbstraction.getVpAlphabet(), mEmptyStackStateFactory);
+
+		for (final var qtp : mRefinementResult.getInfeasibilityProof()) {
+			final var tracePredicates = qtp.getTracePredicates();
+			automaton.addState(true, false, tracePredicates.getPrecondition());
+			automaton.addState(false, true, getPredicateUnifier().getFalsePredicate());
+
+			final var predicates = tracePredicates.getPredicates();
+			for (int i = 0; i < predicates.size(); i++) {
+				final IPredicate succPred = predicates.get(i);
+				final IPredicate prePred = i == 0 ? tracePredicates.getPrecondition() : predicates.get(i - 1);
+				final L letter = mRun.getWord().getSymbol(i - 1);
+				if (!automaton.contains(succPred)) {
+					automaton.addState(false, false, succPred);
+				}
+				if (SmtUtils.isFalseLiteral(prePred.getFormula())) {
+					// automaton.addInternalTransition(prePred, letter, automaton.getFinalStates().iterator().next());
+					return automaton;
+				}
+				automaton.addInternalTransition(prePred, letter, succPred);
 			}
-			if (SmtUtils.isFalseLiteral(prePred.getFormula())) {
-				// automaton.addInternalTransition(prePred, letter, automaton.getFinalStates().iterator().next());
-				return automaton;
+			if (!automaton.contains(tracePredicates.getPostcondition())) {
+				automaton.addState(false, false, tracePredicates.getPostcondition());
 			}
-			automaton.addInternalTransition(prePred, letter, succPred);
+			automaton.addInternalTransition(predicates.get(predicates.size() - 1),
+					mRun.getWord().getSymbol(predicates.size()), tracePredicates.getPostcondition());
 		}
 		return automaton;
 	}
 
 	// TODO This should be moved out of the visitor.
 	public IPredicateUnifier getPredicateUnifier() {
-		return mPredicateUnifier;
-	}
-
-	public void setReduction(final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> test) {
-		// mAbstraction = test;
+		return mRefinementResult.getPredicateUnifier();
 	}
 }

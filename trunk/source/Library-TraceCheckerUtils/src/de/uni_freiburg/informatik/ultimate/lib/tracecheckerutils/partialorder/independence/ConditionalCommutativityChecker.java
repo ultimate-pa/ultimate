@@ -25,18 +25,25 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.function.BiFunction;
 
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation.Dependence;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateWithConjuncts;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.AutomatonFreeRefinementEngine;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.ITraceChecker;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
@@ -50,13 +57,15 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
  *            The type of letters.
  */
 public class ConditionalCommutativityChecker<L extends IAction> {
+	private final IUltimateServiceProvider mServices;
+	private final ILogger mLogger;
 
 	private final IConditionalCommutativityCriterion<L> mCriterion;
 	private final IIndependenceRelation<IPredicate, L> mIndependenceRelation;
 	private final IIndependenceConditionGenerator mGenerator;
-	private final ITraceChecker<L> mTraceChecker;
 	private final ManagedScript mManagedScript;
 	private final IConditionalCommutativityCheckerStatisticsUtils mStatisticsUtils;
+	private final BiFunction<IRun<L, IPredicate>, IPredicate, IRefinementStrategy<L>> mBuildStrategy;
 
 	/**
 	 * Constructs a new instance of ConditionalCommutativityChecker.
@@ -71,22 +80,25 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 	 *            Script for conjunction handling
 	 * @param generator
 	 *            Generator for constructing commutativity conditions
-	 * @param traceChecker
-	 *            An {@link ITraceChecker} responsible for checking whether a condition is feasible
 	 * @param statisticsUtils
 	 *            An {@link IConditionalCommutativityCheckerStatisticsUtils} used for statistics
 	 */
 	// TODO What does it mean that a condition is "feasible"?
-	public ConditionalCommutativityChecker(final IConditionalCommutativityCriterion<L> criterion,
+	public ConditionalCommutativityChecker(final IUltimateServiceProvider services,
+			final IConditionalCommutativityCriterion<L> criterion,
 			final IIndependenceRelation<IPredicate, L> independenceRelation, final ManagedScript script,
-			final IIndependenceConditionGenerator generator, final ITraceChecker<L> traceChecker,
+			final IIndependenceConditionGenerator generator,
+			final BiFunction<IRun<L, IPredicate>, IPredicate, IRefinementStrategy<L>> buildStrategy,
 			final IConditionalCommutativityCheckerStatisticsUtils statisticsUtils) {
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(getClass());
+
 		mCriterion = criterion;
 		mIndependenceRelation = independenceRelation;
 		mManagedScript = script;
 		mGenerator = generator;
-		mTraceChecker = traceChecker;
 		mStatisticsUtils = statisticsUtils;
+		mBuildStrategy = buildStrategy;
 	}
 
 	/**
@@ -106,77 +118,82 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 	 *            A letter of another outgoing transition of state
 	 * @return A list of predicates which serves as a proof for conditional commutativity.
 	 */
-	public TracePredicates checkConditionalCommutativity(final IRun<L, IPredicate> currentRun,
-			final List<IPredicate> predicates, final IPredicate state, final L letter1, final L letter2) {
-
+	// TODO method description is very vague (not more helpful than the method name)
+	public IRefinementEngineResult<L, Collection<QualifiedTracePredicates>> checkConditionalCommutativity(
+			final IRun<L, IPredicate> currentRun, final List<IPredicate> predicates, final IPredicate state,
+			final L letter1, final L letter2) {
 		try {
 			mStatisticsUtils.startStopwatch();
-			if (mManagedScript.isLocked()) {
-				mManagedScript.requestLockRelease();
-			}
-
-			if (((IAction) letter1).getSucceedingProcedure().equals(((IAction) letter2).getSucceedingProcedure())) {
-				return null;
-			}
-
-			if (state instanceof SleepPredicate) {
-				final ImmutableSet<?> sleepSet = ((SleepPredicate<L>) state).getSleepSet();
-				if (sleepSet.contains(letter1) && sleepSet.contains(letter2)) {
-					return null;
-				}
-			}
-
-			IPredicate pred = null;
-			if (!predicates.isEmpty()) {
-				pred = new PredicateWithConjuncts(0, new ImmutableList<>(predicates), mManagedScript.getScript());
-				pred = new BasicPredicate(0, pred.getFormula(), pred.getVars(), pred.getFuns(),
-						pred.getClosedFormula());
-			}
-
-			if (mIndependenceRelation.isIndependent(pred, letter1, letter2).equals(Dependence.INDEPENDENT)) {
-				return null;
-			}
-
-			if (mCriterion.decide(state, letter1, letter2)) {
-
-				if (mManagedScript.isLocked()) {
-					mManagedScript.requestLockRelease();
-				}
-				IPredicate condition;
-				if (pred != null) {
-					condition = mGenerator.generateCondition(
-							new PredicateWithConjuncts(0, new ImmutableList<>(predicates), mManagedScript.getScript()),
-							letter1.getTransformula(), letter2.getTransformula());
-				} else {
-					condition = mGenerator.generateCondition(letter1.getTransformula(), letter2.getTransformula());
-				}
-				mStatisticsUtils.addConditionCalculation();
-				mCriterion.updateCriterion(state, letter1, letter2);
-
-				if ((condition != null) && (!condition.getFormula().toString().equals("true"))
-						&& mCriterion.decide(condition)) {
-
-					final TracePredicates trace = mTraceChecker.checkTrace(currentRun, null, condition);
-					mStatisticsUtils.addTraceCheck();
-					if (trace != null) {
-						// mCriterion.updateCondition(condition);
-					} else if (mTraceChecker.wasImperfectProof()) {
-						mStatisticsUtils.addImperfectProof();
-					}
-					return trace;
-				}
-			}
-			return null;
+			return checkConditionalCommutativityInternal(currentRun, predicates, state, letter1, letter2);
 		} finally {
 			mStatisticsUtils.stopStopwatch();
 		}
 	}
 
-	public IConditionalCommutativityCriterion<L> getCriterion() {
-		return mCriterion;
+	private IRefinementEngineResult<L, Collection<QualifiedTracePredicates>> checkConditionalCommutativityInternal(
+			final IRun<L, IPredicate> currentRun, final List<IPredicate> predicates, final IPredicate state,
+			final L letter1, final L letter2) {
+		if (mManagedScript.isLocked()) {
+			mManagedScript.requestLockRelease();
+		}
+
+		// TODO use ThreadSeparatingIndependenceRelation (possibly make this a parameter)
+		if (letter1.getSucceedingProcedure().equals(letter2.getSucceedingProcedure())) {
+			return null;
+		}
+
+		// TODO this is brittle, let caller decide how one extracts a sleep set from the states
+		if (state instanceof SleepPredicate) {
+			final ImmutableSet<?> sleepSet = ((SleepPredicate<L>) state).getSleepSet();
+			if (sleepSet.contains(letter1) && sleepSet.contains(letter2)) {
+				return null;
+			}
+		}
+
+		IPredicate pred = null;
+		if (!predicates.isEmpty()) {
+			// TODO why not pass an ImmutableList directly?
+			// TODO avoid re-assigning local variables
+			// TODO avoid creating BasicPredicate instances with a fixed ID, this can lead to unsoundness
+			// (use a predicate factory instead, or let the caller pass a predicate rather than a list)
+			pred = new PredicateWithConjuncts(0, new ImmutableList<>(predicates), mManagedScript.getScript());
+			pred = new BasicPredicate(0, pred.getFormula(), pred.getVars(), pred.getFuns(), pred.getClosedFormula());
+		}
+
+		// TODO This does not accurately reflect how independence is checked in most configurations.
+		// TODO There, each conjunct is considered separately.
+		// TODO By passing the given context as predicate directly, this mismatch can be avoided.
+		if (mIndependenceRelation.isIndependent(pred, letter1, letter2).equals(Dependence.INDEPENDENT)) {
+			return null;
+		}
+
+		if (mCriterion.decide(state, letter1, letter2)) {
+			// TODO When is this needed? Unlocking the script used by interpolant automata can be very expensive.
+			if (mManagedScript.isLocked()) {
+				mManagedScript.requestLockRelease();
+			}
+			IPredicate condition;
+			if (pred != null) {
+				// TODO Why is pred not reused here?
+				condition = mGenerator.generateCondition(
+						new PredicateWithConjuncts(0, new ImmutableList<>(predicates), mManagedScript.getScript()),
+						letter1.getTransformula(), letter2.getTransformula());
+			} else {
+				condition = mGenerator.generateCondition(letter1.getTransformula(), letter2.getTransformula());
+			}
+			mStatisticsUtils.addConditionCalculation();
+			mCriterion.updateCriterion(state, letter1, letter2);
+
+			if (condition != null && !SmtUtils.isTrueLiteral(condition.getFormula()) && mCriterion.decide(condition)) {
+				final var strategy = mBuildStrategy.apply(currentRun, condition);
+				final var afe = new AutomatonFreeRefinementEngine<>(mServices, mLogger, strategy);
+				return afe.getResult();
+			}
+		}
+		return null;
 	}
 
-	public ITraceChecker<L> getTraceChecker() {
-		return mTraceChecker;
+	public IConditionalCommutativityCriterion<L> getCriterion() {
+		return mCriterion;
 	}
 }
