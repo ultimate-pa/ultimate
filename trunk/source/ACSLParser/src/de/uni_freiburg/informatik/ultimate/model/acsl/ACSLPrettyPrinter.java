@@ -79,7 +79,7 @@ public class ACSLPrettyPrinter {
 			return String.format("//@ ghost %s = %s;", update.getIdentifier(), printExpression(update.getExpr()));
 		}
 		if (node instanceof LoopInvariant) {
-			return "//@ loop invariant" + printExpression(((LoopInvariant) node).getFormula()) + ";";
+			return "//@ loop invariant " + printExpression(((LoopInvariant) node).getFormula()) + ";";
 		}
 		// TODO: Add more cases
 		return node.toString();
