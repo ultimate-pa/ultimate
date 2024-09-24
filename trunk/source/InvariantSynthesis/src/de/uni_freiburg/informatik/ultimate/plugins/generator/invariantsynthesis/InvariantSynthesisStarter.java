@@ -218,7 +218,7 @@ public class InvariantSynthesisStarter<L extends IIcfgTransition<?>> {
 			FloydHoareUtils.createInvariantResults(Activator.PLUGIN_NAME, icfg, floydHoare, backTranslatorService,
 					this::reportResult);
 			FloydHoareUtils.createProcedureContractResults(mServices, Activator.PLUGIN_NAME, icfg, floydHoare,
-					backTranslatorService, this::reportResult);
+					backTranslatorService, this::reportResult, false);
 		}
 		final StatisticsData stat = new StatisticsData();
 		stat.aggregateBenchmarkData(statistics);

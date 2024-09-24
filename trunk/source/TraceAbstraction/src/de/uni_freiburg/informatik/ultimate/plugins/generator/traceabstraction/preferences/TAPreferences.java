@@ -555,4 +555,8 @@ public final class TAPreferences {
 		return new HoareProofSettings(getHoareAnnotationPositions(), getSimplificationTechnique(),
 				getXnfConversionTechnique());
 	}
+
+	public boolean encodeModifiesInResult() {
+		return mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_ENCODE_MODIFIES_IN_ENSURES);
+	}
 }

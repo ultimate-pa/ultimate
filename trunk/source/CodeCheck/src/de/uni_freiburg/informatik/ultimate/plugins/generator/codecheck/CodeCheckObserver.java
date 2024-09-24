@@ -546,7 +546,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 			FloydHoareUtils.createInvariantResults(Activator.PLUGIN_NAME, icfg, floydHoare, backTranslatorService,
 					this::reportResult);
 			FloydHoareUtils.createProcedureContractResults(mServices, Activator.PLUGIN_NAME, icfg, floydHoare,
-					backTranslatorService, this::reportResult);
+					backTranslatorService, this::reportResult, false);
 		}
 	}
 

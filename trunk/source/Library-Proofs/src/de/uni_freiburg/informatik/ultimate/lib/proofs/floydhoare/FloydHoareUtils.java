@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
@@ -132,7 +133,7 @@ public final class FloydHoareUtils {
 	public static void createProcedureContractResults(final IUltimateServiceProvider services, final String pluginName,
 			final IIcfg<IcfgLocation> icfg, final IFloydHoareAnnotation<IcfgLocation> annotation,
 			final IBacktranslationService backTranslatorService,
-			final Consumer<ProcedureContractResult<IIcfgElement>> reporter) {
+			final Consumer<ProcedureContractResult<IIcfgElement>> reporter, final boolean encodeModifiesInEnsures) {
 		final var checks = getCheckedSpecifications(icfg, annotation);
 		final var csToolkit = icfg.getCfgSmtToolkit();
 		final var logger = services.getLoggingService().getLogger(FloydHoareUtils.class);
@@ -168,8 +169,19 @@ public final class FloydHoareUtils {
 			checkPermissibleVariables(ensuresFormula, permissibleForEnsures(procName, csToolkit),
 					"ensures for " + procName);
 
+			// If encodeModifiesInEnsures is true, add "x == old(x)" for all non-modifiable globals to ensures clause.
+			final Term ensuresWithModifies;
+			if (encodeModifiesInEnsures && ensuresFormula == null) {
+				ensuresWithModifies = getModifiesEquality(procName, csToolkit);
+			} else if (encodeModifiesInEnsures) {
+				ensuresWithModifies = SmtUtils.and(csToolkit.getManagedScript().getScript(), ensuresFormula,
+						getModifiesEquality(procName, csToolkit));
+			} else {
+				ensuresWithModifies = ensuresFormula;
+			}
+
 			final var result = new ProcedureContractResult<IIcfgElement>(pluginName, exit, backTranslatorService,
-					procName, requiresFormula, ensuresFormula, checks);
+					procName, requiresFormula, ensuresWithModifies, checks);
 			if (result.isTrivial()) {
 				continue;
 			}
@@ -209,6 +221,15 @@ public final class FloydHoareUtils {
 		final var outParams = csToolkit.getOutParams().get(procedure).stream();
 		return Stream.concat(Stream.concat(nonOldGlobals.stream(), oldGlobals), Stream.concat(inParams, outParams))
 				.map(IProgramVar::getTermVariable).collect(Collectors.toSet());
+	}
+
+	private static Term getModifiesEquality(final String procedure, final CfgSmtToolkit csToolkit) {
+		final Script script = csToolkit.getManagedScript().getScript();
+		final var conjuncts = csToolkit.getSymbolTable().getGlobals().stream()
+				.filter(pv -> !csToolkit.getModifiableGlobalsTable().isModifiable(pv, procedure))
+				.map(pv -> SmtUtils.equality(script, pv.getTermVariable(), pv.getOldVar().getTermVariable()))
+				.collect(Collectors.toList());
+		return SmtUtils.and(script, conjuncts);
 	}
 
 	private static Set<Check> getCheckedSpecifications(final IIcfg<?> icfg,

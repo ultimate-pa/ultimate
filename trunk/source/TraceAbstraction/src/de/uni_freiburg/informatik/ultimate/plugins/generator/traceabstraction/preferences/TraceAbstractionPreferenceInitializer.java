@@ -492,6 +492,13 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	private static final String DESC_ASSERT_CODEBLOCKS_HEURISTIC_SCORE_THRESHOLD =
 			"If Assert CodeBlocks is set to SMT_FEATURE_HEURISTIC and partitioning strategy is THRESHOLD, two partitions are created, one partition contains all terms >= threshold  and one all terms < threshold";
 
+	public static final String LABEL_ENCODE_MODIFIES_IN_ENSURES =
+			"Encode 'modifies' clause in 'ensures' clause of contracts";
+	private static final boolean DEF_ENCODE_MODIFIES_IN_ENSURES = false;
+	private static final String DESC_ENCODE_MODIFIES_IN_ENSURES =
+			"When enabled, the 'modifies' clauses of procedures are encoded in the generated procedure contracts"
+					+ " by appending equality of the form 'x == old(x)'.";
+
 	/**
 	 * Constructor.
 	 */
@@ -542,6 +549,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						new IUltimatePreferenceItemValidator.IntegerValidator(0, 1_0000_000)),
 				new UltimatePreferenceItem<>(LABEL_HOARE_POSITIONS, DEF_HOARE_POSITIONS, PreferenceType.Combo,
 						HoareAnnotationPositions.values()),
+				new UltimatePreferenceItem<>(LABEL_ENCODE_MODIFIES_IN_ENSURES, DEF_ENCODE_MODIFIES_IN_ENSURES,
+						DESC_ENCODE_MODIFIES_IN_ENSURES, true, PreferenceType.Boolean),
 
 				new UltimatePreferenceItem<>(LABEL_USE_PREDICATE_TRIE_BASED_PREDICATE_UNIFIER,
 						DEF_USE_PREDICATE_TRIE_BASED_PREDICATE_UNIFIER, DESC_USE_PREDICATE_TRIE_BASED_PREDICATE_UNIFIER,
