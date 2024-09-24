@@ -66,6 +66,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionSt
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IUnionStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
@@ -107,6 +108,8 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.in
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.SemanticIndependenceConditionGenerator;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.SleepSetCriterion;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.WrapperCriterion;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
@@ -457,6 +460,23 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	private boolean restartIsAbstractionEmpty(final IDfsVisitor<L, IPredicate> visitor) {
 		return false;
 
+	}
+
+	@Override
+	protected Pair<LBool, IProgramExecution<L, Term>> isCounterexampleFeasible()
+			throws AutomataOperationCanceledException {
+		if (true /* TODO */) {
+			// TODO try commutativity proof
+			// TODO if succeeds: return UNSAT
+		}
+		return super.isCounterexampleFeasible();
+	}
+
+	@Override
+	protected void constructInterpolantAutomaton() throws AutomataOperationCanceledException {
+		// TODO if we did a commutativity proof, set mInterpolantAutomaton to the appropriate automaton
+		// TODO else: call super method (see below)
+		super.constructInterpolantAutomaton();
 	}
 
 	private IBudgetFunction<L, IPredicate> makeBudget(final SleepMapReduction<L, IPredicate, IPredicate> reduction) {
