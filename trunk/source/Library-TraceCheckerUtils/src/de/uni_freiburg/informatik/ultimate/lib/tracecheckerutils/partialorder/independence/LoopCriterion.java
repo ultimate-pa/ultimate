@@ -62,7 +62,6 @@ public class LoopCriterion<L extends IIcfgTransition<?>> implements IConditional
 				mLetterStack.removeLast();
 			}
 		}
-		final int i = 0;
 	}
 
 	private void DFS(final IcfgLocation loc, final IcfgLocation loophead) {

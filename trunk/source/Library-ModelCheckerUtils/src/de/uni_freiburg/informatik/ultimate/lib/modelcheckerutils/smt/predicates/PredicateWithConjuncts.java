@@ -49,7 +49,6 @@ public class PredicateWithConjuncts implements IPredicate {
 	protected final Script mScript;
 	private Term mFormula;
 	private Term mClosedFormula;
-	private final String[] mProcedures;
 	private final Set<IProgramVar> mVars;
 	private final Set<IProgramFunction> mFuns;
 	private IPredicate mOld;
@@ -70,7 +69,6 @@ public class PredicateWithConjuncts implements IPredicate {
 		mSerial = serialNumber;
 		mConjuncts = conjuncts;
 		mScript = script;
-		mProcedures = new String[0];
 		mVars = new HashSet<>();
 		mFuns = new HashSet<>();
 
@@ -93,7 +91,6 @@ public class PredicateWithConjuncts implements IPredicate {
 			final Script script) {
 		mSerial = serialNumber;
 		mScript = script;
-		mProcedures = new String[0];
 		mVars = new HashSet<>();
 		mFuns = new HashSet<>();
 		mOld = old;

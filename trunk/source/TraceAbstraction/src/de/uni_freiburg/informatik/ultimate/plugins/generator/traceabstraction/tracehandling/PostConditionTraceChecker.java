@@ -38,7 +38,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.I
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.ITraceChecker;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolatingTraceCheckCraig;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IPostconditionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine.ITARefinementStrategy;
 
@@ -119,24 +118,6 @@ public class PostConditionTraceChecker<L extends IIcfgTransition<?>> implements 
 
 	public IPredicateUnifier getPredicateUnifier() {
 		return mPredicateUnifier;
-	}
-
-	/**
-	 * An implementation of IPostconditionProvider which just returns the given condition.
-	 *
-	 * @author Marcel Ebbinghaus
-	 */
-	private class PostConditionProvider implements IPostconditionProvider {
-		private final IPredicate mCondition;
-
-		public PostConditionProvider(final IPredicate condition) {
-			mCondition = condition;
-		}
-
-		@Override
-		public IPredicate constructPostcondition(final IPredicateUnifier predicateUnifier) {
-			return predicateUnifier.getOrConstructPredicate(mCondition);
-		}
 	}
 
 	@Override

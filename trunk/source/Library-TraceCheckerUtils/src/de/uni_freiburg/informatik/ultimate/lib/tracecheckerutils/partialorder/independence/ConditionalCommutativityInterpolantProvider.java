@@ -126,7 +126,6 @@ public class ConditionalCommutativityInterpolantProvider<L extends IAction> {
 		for (int i = 0; i < mRun.getStateSequence().size(); i++) {
 			final IPredicate state = mRun.getStateSequence().get(i);
 
-			// state = ((SleepPredicate) state);
 			IPredicate pred = ((SleepPredicate<L>) state).getUnderlying();
 
 			if (pred instanceof PredicateWithLastThread) {
@@ -241,9 +240,6 @@ public class ConditionalCommutativityInterpolantProvider<L extends IAction> {
 				mCopy.addState(false, false, succPred);
 			}
 			mCopy.addInternalTransition(conPredicates.get(i - 1), mRun.getWord().getSymbol(i - 1), succPred);
-			/*
-			 * if (succPred.getFormula().toString().equals("false")) { break; }
-			 */
 		}
 	}
 

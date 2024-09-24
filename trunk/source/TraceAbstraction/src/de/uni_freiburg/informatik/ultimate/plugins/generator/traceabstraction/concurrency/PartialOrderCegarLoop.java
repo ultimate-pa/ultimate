@@ -380,7 +380,6 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 						// Auto-generated catch block
 						e.printStackTrace();
 					}
-					final int debug = 0;
 				}
 			}
 			mCounterexample = getCounterexample(visitor);

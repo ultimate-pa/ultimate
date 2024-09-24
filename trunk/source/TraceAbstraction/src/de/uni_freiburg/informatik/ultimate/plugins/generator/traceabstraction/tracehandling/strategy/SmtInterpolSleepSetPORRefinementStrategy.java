@@ -38,26 +38,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
  * @author Marcel Ebbinghaus
  */
 public class SmtInterpolSleepSetPORRefinementStrategy<L extends IIcfgTransition<?>> extends BasicRefinementStrategy<L> {
-	/**
-	 * Constructor.
-	 *
-	 * @author Marcel Ebbinghaus
-	 *
-	 * @param factory
-	 *            factory.
-	 * @param exceptionBlacklist
-	 *            exceptionBlacklist.
-	 */
 	@SuppressWarnings("unchecked")
 	public SmtInterpolSleepSetPORRefinementStrategy(final StrategyFactory<L>.StrategyModuleFactory factory,
 			final RefinementStrategyExceptionBlacklist exceptionBlacklist) {
 		super(factory,
 				new IIpTcStrategyModule[] { factory.createIpTcStrategyModuleSmtInterpolCraigSleepSetPOR(
-						InterpolationTechnique.Craig_NestedInterpolation)/*
-																			 * , factory.
-																			 * createIpTcStrategyModuleSmtInterpolSpWp(
-																			 * InterpolationTechnique.ForwardPredicates)
-																			 */ },
+						InterpolationTechnique.Craig_NestedInterpolation) },
 				factory.createIpAbStrategyModuleStraightlineAll(), exceptionBlacklist);
 	}
 

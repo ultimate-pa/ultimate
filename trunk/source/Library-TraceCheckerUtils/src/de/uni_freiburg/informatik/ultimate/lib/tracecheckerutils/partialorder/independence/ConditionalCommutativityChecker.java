@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
  * @param <L>
  *            The type of letters.
  */
-public class ConditionalCommutativityChecker<L extends IAction> implements IConditionalCommutativityChecker<L> {
+public class ConditionalCommutativityChecker<L extends IAction> {
 
 	private final IConditionalCommutativityCriterion<L> mCriterion;
 	private final IIndependenceRelation<IPredicate, L> mIndependenceRelation;
@@ -105,7 +105,6 @@ public class ConditionalCommutativityChecker<L extends IAction> implements ICond
 	 *            A letter of another outgoing transition of state
 	 * @return A list of predicates which servers as a proof for conditional commutativity.
 	 */
-	@Override
 	public TracePredicates checkConditionalCommutativity(final IRun<L, IPredicate> currentRun,
 			final List<IPredicate> predicates, final IPredicate state, final L letter1, final L letter2) {
 
@@ -159,14 +158,6 @@ public class ConditionalCommutativityChecker<L extends IAction> implements ICond
 					final TracePredicates trace = mTraceChecker.checkTrace(currentRun, null, condition);
 					mStatisticsUtils.addTraceCheck();
 					if (trace != null) {
-						final int debug0 = 0;
-						/*
-						 * try { FileWriter myWriter = new FileWriter("C:\\Users\\ebbim\\Desktop\\test.txt", true);
-						 * myWriter.write("state: " + pred + ", letter1: " + letter1.getTransformula().getFormula() +
-						 * ", letter2: " + letter2.getTransformula().getFormula() + ", con: " + condition + "\n");
-						 * myWriter.close(); System.out.println("Successfully wrote to the file."); } catch (IOException
-						 * e) { System.out.println("An error occurred."); e.printStackTrace(); }
-						 */
 						// mCriterion.updateCondition(condition);
 					} else if (mTraceChecker.wasImperfectProof()) {
 						mStatisticsUtils.addImperfectProof();
@@ -186,9 +177,5 @@ public class ConditionalCommutativityChecker<L extends IAction> implements ICond
 
 	public ITraceChecker<L> getTraceChecker() {
 		return mTraceChecker;
-	}
-
-	public IConditionalCommutativityCheckerStatisticsUtils getStatisticsUtils() {
-		return mStatisticsUtils;
 	}
 }

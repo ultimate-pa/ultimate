@@ -25,9 +25,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
@@ -46,24 +44,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *            The type of letters.
  */
 public class LimitedChecksCriterion<L> implements IConditionalCommutativityCriterion<L> {
-	private final Map<Pair<L, L>, List<IPredicate>> mAlreadyChecked;
-	private final List<IPredicate> mAlreadyProofenConditions;
-	private final Map<Pair<L, L>, Integer> mStatementMap;
+	private final Map<Pair<L, L>, Integer> mStatementMap = new HashMap<>();
 	private final int mLimit;
 
-	/**
-	 * Constructor.
-	 *
-	 * @author Marcel Ebbinghaus
-	 *
-	 * @param limit
-	 *            limit
-	 */
 	public LimitedChecksCriterion(final int limit) {
 		mLimit = limit;
-		mAlreadyChecked = new HashMap<>();
-		mAlreadyProofenConditions = new ArrayList<>();
-		mStatementMap = new HashMap<>();
 	}
 
 	@SuppressWarnings("unchecked")
