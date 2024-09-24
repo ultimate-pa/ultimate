@@ -16,12 +16,17 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.II
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult.BasicRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.ITraceChecker;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.util.Lazy;
 
 public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 
@@ -52,8 +57,8 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 	}
 	
 
-	public NestedWordAutomaton<L, IPredicate> getInterpolants(IRun<L, IPredicate> run,
-			List<IPredicate> runPredicates) {
+	public BasicRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> getInterpolants(IRun<L, IPredicate> run,
+			List<IPredicate> runPredicates, IPredicateUnifier predicateUnifier) {
 		mRun = run;
 		
 		for (int i = 0; i < mRun.getStateSequence().size()-2; i++) {
@@ -82,8 +87,19 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 					conPredicates.add(tracePredicates.getPrecondition());
 					conPredicates.addAll(tracePredicates.getPredicates());
 					conPredicates.add(tracePredicates.getPostcondition());
-					//mStatisticsUtils.addIAIntegration();
-					return constructInterpolantAutomaton(conPredicates);
+					mStatisticsUtils.addIAIntegration();
+					NestedWordAutomaton<L, IPredicate> automaton = constructInterpolantAutomaton(conPredicates);
+					
+					if (!automaton.contains(predicateUnifier.getFalsePredicate())) {
+						automaton.addState(false, true, predicateUnifier.getFalsePredicate());
+					}
+					
+					BasicRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> refinementResult = 
+							new BasicRefinementEngineResult<>(LBool.UNSAT, automaton, null, false,
+							List.of(new QualifiedTracePredicates(tracePredicates, getClass(), false)),
+							new Lazy<>(() -> null), new Lazy<>(() -> predicateUnifier));
+					
+					return refinementResult;
 				}
 			}	
 

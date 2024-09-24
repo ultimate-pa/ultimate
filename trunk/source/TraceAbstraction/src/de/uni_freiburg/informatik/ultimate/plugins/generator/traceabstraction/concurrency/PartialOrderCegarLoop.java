@@ -75,6 +75,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.MonolithicHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.AnnotatedMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
@@ -87,6 +90,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateWithConjuncts;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult.BasicRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.BetterLockstepOrder;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.LoopLockstepOrder.PredicateWithLastThread;
@@ -154,6 +158,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	private IConditionalCommutativityCriterion<L> mCriterion;
 	private ConditionalCommutativityChecker<L> mConComChecker;
 	private IDfsVisitor<L, IPredicate> mConComVisitor;
+	private boolean mCounterexampleConComFound;
 
 	public PartialOrderCegarLoop(final DebugIdentifier name,
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> initialAbstraction,
@@ -484,30 +489,17 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 							mPOR.getDfsOrder(), mCsToolkit.getManagedScript(), generator, mAbstraction, mFactory, checker,
 							new ConditionalCommutativityCheckerStatisticsUtils(mCegarLoopBenchmark));
 
-			final NestedWordAutomaton<L, IPredicate> interpolantAutomaton = conCounterexampleChecker
-					.getInterpolants((IRun<L, IPredicate>) mCounterexample, predicates);
-			
+			 mRefinementResult = conCounterexampleChecker
+					.getInterpolants((IRun<L, IPredicate>) mCounterexample, predicates, predicateUnifier);
 
-			if (interpolantAutomaton != null) {
-				
-				if (!interpolantAutomaton.contains(predicateUnifier.getFalsePredicate())) {
-					interpolantAutomaton.addState(false, true, predicateUnifier.getFalsePredicate());
-				}
-				// is the following needed or redundant?
-				final IHoareTripleChecker htc =
-						HoareTripleCheckerUtils.constructEfficientHoareTripleCheckerWithCaching(getServices(),
-								mPref.getHoareTripleChecks(), mCsToolkit, predicateUnifier);
-
-				final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> ia = enhanceInterpolantAutomaton(
-						mPref.interpolantAutomatonEnhancement(), predicateUnifier, htc, interpolantAutomaton);
-
-				final IPredicate initialSink = DataStructureUtils
-						.getOneAndOnly(interpolantAutomaton.getInitialStates(), "initial state");
-				final TotalizeNwa<L, IPredicate> totalInterpol = new TotalizeNwa<>(ia, initialSink, false);
-				
+			if (mRefinementResult != null) {
+				mCounterexampleConComFound = true;
+				mInterpolAutomaton = mRefinementResult.getInfeasibilityProof();
 				// TODO if succeeds: return UNSAT
+				return new Pair<>(LBool.UNSAT,null);
 			}
 		}
+		mCounterexampleConComFound = false;
 		return super.isCounterexampleFeasible();
 	}
 
@@ -515,7 +507,9 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	protected void constructInterpolantAutomaton() throws AutomataOperationCanceledException {
 		// TODO if we did a commutativity proof, set mInterpolantAutomaton to the appropriate automaton
 		// TODO else: call super method (see below)
-		super.constructInterpolantAutomaton();
+		if (!mCounterexampleConComFound) {
+			super.constructInterpolantAutomaton();
+		}
 	}
 
 	private IBudgetFunction<L, IPredicate> makeBudget(final SleepMapReduction<L, IPredicate, IPredicate> reduction) {
