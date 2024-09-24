@@ -141,7 +141,7 @@ public final class TraceCheckUtils {
 			if (pred instanceof PredicateWithLastThread) {
 				pred = ((PredicateWithLastThread) pred).getUnderlying();
 			}
-			final ImmutableSet<?> sleepset = sleepPred.getAnnotation();
+			final ImmutableSet<?> sleepset = sleepPred.getSleepSet();
 			final IcfgLocation[] programPpoints = ((IMLPredicate) pred).getProgramPoints();
 			final Pair<IcfgLocation[], Set<?>> pair = new Pair<>(programPpoints, sleepset);
 			sequence.add(pair);

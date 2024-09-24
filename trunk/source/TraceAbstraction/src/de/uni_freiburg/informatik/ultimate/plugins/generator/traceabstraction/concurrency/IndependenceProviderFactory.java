@@ -179,8 +179,10 @@ public class IndependenceProviderFactory<L extends IIcfgTransition<?>> {
 				.withConditionElimination(PartialOrderCegarLoop::isFalseLiteral)
 				// We ignore "don't care" conditions stemming from the initial program automaton states.
 				.withFilteredConditions(p -> !predicateFactory.isDontCare(p))
+				// TODO (Dominik 2024-09-24): We cannot generally change GemCutter's independence relation in this way.
+				// TODO This is likely very expensive!
 				.withDisjunctivePredicatesUnion(PartialOrderCegarLoop::getConjuncts)
-				//.withDisjunctivePredicates(PartialOrderCegarLoop::getConjuncts)
+				// .withDisjunctivePredicates(PartialOrderCegarLoop::getConjuncts)
 				// =========================================================================
 				// Never consider letters of the same thread to be independent.
 				.threadSeparated()

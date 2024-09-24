@@ -276,10 +276,11 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 		}
 
 		// Write the refinement result and interpolant automaton to the class fields, and call #refineAbstraction.
-		mRefinementResult = new BasicRefinementEngineResult<>(LBool.UNSAT, nwa, null, false,
-				List.of(new QualifiedTracePredicates(new TracePredicates(truePred, falsePred, predicates), getClass(),
-						false)),
-				new Lazy<>(() -> new MonolithicHoareTripleChecker(mCsToolkit)), new Lazy<>(() -> unifier));
+		mRefinementResult =
+				new BasicRefinementEngineResult<>(LBool.UNSAT, nwa, null, false,
+						List.of(new QualifiedTracePredicates(new TracePredicates(truePred, falsePred, predicates),
+								getClass(), false)),
+						new Lazy<>(() -> new MonolithicHoareTripleChecker(mCsToolkit)), new Lazy<>(unifier));
 		mInterpolAutomaton = mRefinementResult.getInfeasibilityProof();
 		refineAbstraction();
 	}
@@ -299,6 +300,8 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 				throw new TaskCanceledException(UserDefinedLimit.PATH_PROGRAM_ATTEMPTS, getClass(), taskDescription);
 			}
 
+			// TODO This code should not be needed here. If it is, that points to an issue somewhere else
+			// (i.e. some other class did not properly release its lock on the script)
 			if (mCsToolkit.getManagedScript().isLocked()) {
 				mCsToolkit.getManagedScript().requestLockRelease();
 			}

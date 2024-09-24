@@ -177,7 +177,6 @@ public class MinimalSleepSetReduction<L, S, R> implements INwaOutgoingLetterAndT
 				.filter(x -> comp.compare(x, letter) < 0 && !currentSleepSet.contains(x));
 
 		// TODO factor out sleep set successor computation
-		// TODO: integrate DFS-Approach here?
 		final ImmutableSet<L> succSleepSet =
 				getSleepSet(ImmutableSet.of((Set<L>) Set.of(Stream.concat(currentSleepSet.stream(), explored)
 						.filter(l -> mIndependence.isIndependent(currentState, letter, l) == Dependence.INDEPENDENT)

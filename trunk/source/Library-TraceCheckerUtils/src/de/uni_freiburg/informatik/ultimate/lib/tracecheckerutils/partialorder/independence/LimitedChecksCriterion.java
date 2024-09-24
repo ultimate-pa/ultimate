@@ -54,6 +54,7 @@ public class LimitedChecksCriterion<L> implements IConditionalCommutativityCrite
 	@Override
 	public boolean decide(final IPredicate state, final L letter1, final L letter2) {
 		final Pair<L, L> pair = new Pair<>(letter1, letter2);
+		// TODO this unpacking of the state is very brittle, it will fail for many configurations.
 		IPredicate pred = ((SleepPredicate<L>) state).getUnderlying();
 
 		if (pred instanceof PredicateWithLastThread) {
@@ -61,6 +62,7 @@ public class LimitedChecksCriterion<L> implements IConditionalCommutativityCrite
 		}
 
 		if ((pred instanceof MLPredicate)) {
+			// TODO What is the purpose of this case?
 			return true;
 		}
 
@@ -84,7 +86,7 @@ public class LimitedChecksCriterion<L> implements IConditionalCommutativityCrite
 		if (!mStatementMap.containsKey(pair)) {
 			mStatementMap.put(pair, 1);
 		} else {
-			mStatementMap.replace(pair, mStatementMap.get(pair) + 1);
+			mStatementMap.put(pair, mStatementMap.get(pair) + 1);
 		}
 	}
 }

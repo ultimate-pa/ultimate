@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.ITraceChecker;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.LoopLockstepOrder.PredicateWithLastThread;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
  * A provider class for the PartialOrderCegarLoop which can be called to extend the current interpolant automaton with
@@ -126,18 +127,14 @@ public class ConditionalCommutativityInterpolantProvider<L extends IAction> {
 		for (int i = 0; i < mRun.getStateSequence().size(); i++) {
 			final IPredicate state = mRun.getStateSequence().get(i);
 
+			// TODO this unpacking of the state is brittle, it will fail for many configurations
 			IPredicate pred = ((SleepPredicate<L>) state).getUnderlying();
 
 			if (pred instanceof PredicateWithLastThread) {
 				pred = ((PredicateWithLastThread) pred).getUnderlying();
 			}
 
-			final Iterator<OutgoingInternalTransition<L, IPredicate>> iterator =
-					mAbstraction.internalSuccessors(pred).iterator();
-			final List<OutgoingInternalTransition<L, IPredicate>> transitions = new ArrayList<>();
-			while (iterator.hasNext()) {
-				transitions.add(iterator.next());
-			}
+			final var transitions = DataStructureUtils.asList(mAbstraction.internalSuccessors(pred).iterator());
 			if (checkState(state, transitions, i, runPredicates)) {
 				return mCopy;
 			}
@@ -281,7 +278,6 @@ public class ConditionalCommutativityInterpolantProvider<L extends IAction> {
 		final VpAlphabet<L> vpAlphabet = new VpAlphabet<>(alphabet);
 		final NestedWordAutomaton<L, IPredicate> automaton =
 				new NestedWordAutomaton<>(new AutomataLibraryServices(mServices), vpAlphabet, mEmptyStackStateFactory);
-
 		return automaton;
 	}
 }

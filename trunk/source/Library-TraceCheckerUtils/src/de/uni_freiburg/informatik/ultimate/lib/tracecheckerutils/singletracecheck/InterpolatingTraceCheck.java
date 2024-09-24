@@ -115,8 +115,6 @@ public abstract class InterpolatingTraceCheck<L extends IAction> extends TraceCh
 	 *            <p>
 	 *            interpolatedPositions has to be sorted (ascending) and its entries have to be smaller than or equal to
 	 *            mTrace.size()
-	 * @param mPedicateUnifier
-	 *            A IPredicateUnifier in which precondition, postcondition and all pending contexts are representatives.
 	 * @param interpolation
 	 *            Method that is used to compute the interpolants.
 	 */

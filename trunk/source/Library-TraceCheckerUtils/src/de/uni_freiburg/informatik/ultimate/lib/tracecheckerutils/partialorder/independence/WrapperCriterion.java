@@ -36,20 +36,11 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
  * @param <L>
  *            The type of letters.
  */
+// TODO Change the name to reflect what it does
 public class WrapperCriterion<L> implements IConditionalCommutativityCriterion<L> {
 	private final IConditionalCommutativityCriterion<L> mCriterion1;
 	private final IConditionalCommutativityCriterion<L> mCriterion2;
 
-	/**
-	 * Constructor.
-	 *
-	 * @author Marcel Ebbinghaus
-	 *
-	 * @param criterion1
-	 *            first criterion
-	 * @param criterion2
-	 *            second criterion
-	 */
 	public WrapperCriterion(final IConditionalCommutativityCriterion<L> criterion1,
 			final IConditionalCommutativityCriterion<L> criterion2) {
 		mCriterion1 = criterion1;

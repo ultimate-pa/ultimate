@@ -29,7 +29,7 @@ import java.util.Objects;
 import java.util.Random;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * Random criterion for conditional commutativity checking.
@@ -42,7 +42,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class RandomCriterion<L> implements IConditionalCommutativityCriterion<L> {
 	private final int mProbability;
 	private final long mSeed;
-	// private final Random mRandomGenerator;
 
 	/**
 	 * Constructs a new random criterion.
@@ -61,17 +60,19 @@ public class RandomCriterion<L> implements IConditionalCommutativityCriterion<L>
 
 	@Override
 	public boolean decide(final IPredicate state, final L letter1, final L letter2) {
-		final Pair<IPredicate, Pair<L, L>> normalized = normalize(state, letter1, letter2);
+		final var normalized = normalize(state, letter1, letter2);
 		final Random random = new Random(mSeed * Objects.hashCode(normalized));
 		return (random.nextInt(100) < mProbability);
 	}
 
 	@Override
 	public boolean decide(final IPredicate condition) {
+		// TODO Why is this check performed in the RandomCriterion?
 		return condition != null;
 	}
 
-	private Pair<IPredicate, Pair<L, L>> normalize(final IPredicate state, final L letter1, final L letter2) {
-		return new Pair<>(state, new Pair<>(letter1, letter2));
+	private Triple<IPredicate, L, L> normalize(final IPredicate state, final L letter1, final L letter2) {
+		// TODO Is any real normalization needed?
+		return new Triple<>(state, letter1, letter2);
 	}
 }

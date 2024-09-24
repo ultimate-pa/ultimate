@@ -33,15 +33,20 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
  * Trace Checker which checks whether a run fulfills a given precondition/postcondition pair. The meaning of "fulfills"
  * needs to be decided by the implementation.
  *
+ * TODO (Dominik 2024-09-24): What possibly different notions of "fulfilling" (or "satisfying") a
+ * precondition/postcondition pair could there be?!
+ *
  * @author Marcel Ebbinghaus
  *
  * @param <L>
  *            The type of letters.
  */
+// TODO We need to figure out how to appropriately use the existing trace checks (with different strategies, etc.)
 public interface ITraceChecker<L> {
-
+	// TODO documentation
+	// TODO Why is the run needed, as opposed to just the trace? Which automaton does the run belong to?
 	public TracePredicates checkTrace(IRun<L, IPredicate> run, IPredicate precondition, IPredicate postcondition);
 
+	// TODO documentation
 	public boolean wasImperfectProof();
-
 }

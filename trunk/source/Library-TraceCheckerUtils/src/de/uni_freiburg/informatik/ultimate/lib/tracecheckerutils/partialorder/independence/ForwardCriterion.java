@@ -48,6 +48,7 @@ public class ForwardCriterion<L extends IIcfgTransition<?>> implements IConditio
 	@Override
 	public boolean decide(IPredicate state, final L letter1, final L letter2) {
 		IPredicate nextState;
+		// TODO this unpacking of the state is brittle, it will fail for many configurations
 		state = ((SleepPredicate) state).getUnderlying();
 		if (state instanceof PredicateWithLastThread) {
 			state = ((PredicateWithLastThread) state).getUnderlying();
@@ -80,7 +81,7 @@ public class ForwardCriterion<L extends IIcfgTransition<?>> implements IConditio
 
 	@Override
 	public boolean decide(final IPredicate condition) {
-		// TODO Auto-generated method stub
+		// no filtering based on condition
 		return true;
 	}
 

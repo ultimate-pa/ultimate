@@ -745,6 +745,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_INDEPENDENCE_SCRIPT_DUMP_PATH, DEF_INDEPENDENCE_SCRIPT_DUMP_PATH,
 						PreferenceType.Directory),
 
+				// TODO introduce a group or similar
 				new UltimatePreferenceItem<>(LABEL_CON_COM_CHECKER, DEF_CON_COM_CHECKER, PreferenceType.Combo,
 						ConComChecker.values()),
 				new UltimatePreferenceItem<>(LABEL_CON_COM_CHECKER_CRITERION, DEF_CON_COM_CHECKER_CRITERION,
@@ -962,6 +963,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		/**
 		 * SMTINTERPOL strategy for POR using sleep sets.
 		 */
+		// TODO Why do we need this?!
 		SMTINTERPOLSLEEPSETPOR,
 		/**
 		 * Strategy that first tries SMTInterpol and then PDR.

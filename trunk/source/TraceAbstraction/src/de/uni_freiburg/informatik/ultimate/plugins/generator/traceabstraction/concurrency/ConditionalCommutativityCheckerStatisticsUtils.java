@@ -4,6 +4,9 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.in
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 
+// TODO decouple statistics from CegarLoopStatisticsGenerator!
+// The classes for conditional commutativity should collect their own statistics,
+// which may in the end be added to the CEGAR loop's statistics.
 public class ConditionalCommutativityCheckerStatisticsUtils implements IConditionalCommutativityCheckerStatisticsUtils {
 
 	private final CegarLoopStatisticsGenerator mCegarLoopBenchmark;

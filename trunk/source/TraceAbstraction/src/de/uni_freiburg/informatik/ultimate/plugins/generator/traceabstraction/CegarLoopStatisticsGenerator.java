@@ -49,6 +49,9 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 	private final StatisticsData mInterpolantConsolidationBenchmarks = new StatisticsData();
 	private final StatisticsData mPathInvariantsStatistics = new StatisticsData();
 	private final StatisticsData mRefinementEngineStatistics = new StatisticsData();
+
+	// TODO Conditional commutativity statistics should not be inlined here.
+	// TODO They should be collected in their own statistics object, which may then be added here.
 	private int mConditionalCommutativityIAIntegrations = 0;
 	private int mConditionalCommutativityDFSRestarts = 0;
 	private int mConditionalCommutativityConditionCalculations = 0;

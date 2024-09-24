@@ -36,7 +36,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
  *            The type of letters.
  */
 public class ConditionCriterion<L> implements IConditionalCommutativityCriterion<L> {
-
 	@Override
 	public boolean decide(final IPredicate state, final L letter1, final L letter2) {
 		return true;
@@ -44,6 +43,7 @@ public class ConditionCriterion<L> implements IConditionalCommutativityCriterion
 
 	@Override
 	public boolean decide(final IPredicate condition) {
+		// TODO Look at the AST of the formula rather than using toString!
 		final String conditionString = condition.toString();
 		final boolean debug = conditionString.contains("forall") && conditionString.contains("select");
 		return !debug;

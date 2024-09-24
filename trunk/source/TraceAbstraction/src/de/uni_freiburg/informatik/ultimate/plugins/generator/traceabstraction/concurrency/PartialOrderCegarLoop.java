@@ -298,6 +298,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		final ArrayList<IPredicate> predicates = new ArrayList<>();
 		// cast should be fine, since isAbstractionEmpty() assigns mCounterexample a IRun<L, IPredicate>
 		for (final IPredicate pred : ((IRun<L, IPredicate>) mCounterexample).getStateSequence()) {
+			// TODO use StateSplitter for this; the current form likely won't work for many configurations
 			IPredicate mlpred = ((SleepPredicate<L>) pred).getUnderlying();
 			if (mlpred instanceof PredicateWithLastThread) {
 				mlpred = ((PredicateWithLastThread) mlpred).getUnderlying();
@@ -305,6 +306,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 			if (mlpred instanceof MLPredicateWithInterpolants) {
 				predicates.add(((MLPredicateWithInterpolants) mlpred).getInterpolants());
 			} else {
+				// TODO When can this happen? If it should never happen, throw an error instead.
 				predicates.add(null);
 			}
 		}
@@ -325,6 +327,8 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	@Override
 	protected boolean isAbstractionEmpty() throws AutomataOperationCanceledException {
 		switchToOnDemandConstructionMode();
+
+		// TODO this check should not be needed! If it is, this points to a bug (non-stopped watch) somewhere else!
 		if (!mCegarLoopBenchmark.getRunningStopwatches().get("EmptinessCheckTime")) {
 			mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.EmptinessCheckTime);
 		}
@@ -343,7 +347,6 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 
 					final IPredicateUnifier predicateUnifier =
 							((PostConditionTraceChecker<L>) mConComChecker.getTraceChecker()).getPredicateUnifier();
-					// final IHoareTripleChecker htc = new MonolithicHoareTripleChecker(mCsToolkit);
 					final IHoareTripleChecker htc =
 							HoareTripleCheckerUtils.constructEfficientHoareTripleCheckerWithCaching(getServices(),
 									mPref.getHoareTripleChecks(), mCsToolkit, predicateUnifier);
@@ -387,7 +390,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 			assert mCounterexample == null || accepts(getServices(), mAbstraction, mCounterexample.getWord(),
 					false) : "Counterexample is not accepted by abstraction";
 
-			// check condional commutativity along mCounterexample
+			// check conditional commutativity along mCounterexample
 			// @formatter:off
 			/*
 			if (mPref.useConditionalCommutativityChecker().equals(ConComChecker.COUNTEREXAMPLE)) {

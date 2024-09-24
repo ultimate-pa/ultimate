@@ -30,6 +30,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 /**
  * Default criterion for conditional commutativity checking.
  *
+ * TODO This documentation does not explain anything. What does "default" mean?
+ *
  * @author Marcel Ebbinghaus
  *
  * @param <L>

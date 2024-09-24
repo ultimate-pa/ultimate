@@ -434,6 +434,14 @@ public class DataStructureUtils {
 		return s.filter(a -> c.isAssignableFrom(a.getClass())).map(c::cast);
 	}
 
+	public static <T> List<T> asList(final Iterator<T> it) {
+		final List<T> list = new ArrayList<>();
+		while (it.hasNext()) {
+			list.add(it.next());
+		}
+		return list;
+	}
+
 	/**
 	 * Converts a stream into an unmodifiable set (as returned by {@link Set#of()}.
 	 *

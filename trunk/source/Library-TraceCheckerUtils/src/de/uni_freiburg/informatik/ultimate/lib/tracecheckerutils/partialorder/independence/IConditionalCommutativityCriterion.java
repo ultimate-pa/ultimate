@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
  * @param <S>
  *            The type of states.
  */
+// TODO needs documentation
 public interface IConditionalCommutativityCriterion<L> {
 	boolean decide(IPredicate state, L letter1, L letter2);
 

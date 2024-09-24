@@ -90,6 +90,9 @@ public enum CegarLoopStatisticsDefinitions implements IStatisticsElement {
 
 	ReuseStatistics(StatisticsType.STATISTICS_DATA_AGGREGATION, StatisticsType.KEY_BEFORE_DATA),
 
+	// TODO Conditional commutativity statistics should not be inlined here.
+	// TODO They should be collected in their own statistics object, which may then be referenced here
+	// TODO (see e.g. usages of STATISTICS_DATA_AGGREGATION above).
 	ConditionalCommutativityCheckTime(StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_NANOS),
 
 	ConditionalCommutativityIAIntegrations(StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),

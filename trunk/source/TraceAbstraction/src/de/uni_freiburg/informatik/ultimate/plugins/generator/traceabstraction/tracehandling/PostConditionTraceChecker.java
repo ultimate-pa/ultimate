@@ -100,17 +100,16 @@ public class PostConditionTraceChecker<L extends IIcfgTransition<?>> implements 
 
 		while (strategy.hasNextFeasilibityCheck()) {
 			final ITraceCheckStrategyModule<L, ?> check = strategy.nextFeasibilityCheck();
-			// boolean test = check.isCorrect().equals(LBool.UNSAT);
 			mImperfectProof = false;
 			if (check.isCorrect().equals(LBool.UNSAT)
 					&& check instanceof IpTcStrategyModuleSmtInterpolCraigSleepSetPOR) {
 				final InterpolatingTraceCheckCraig<L> checkCraig =
 						((IpTcStrategyModuleSmtInterpolCraigSleepSetPOR<L>) check).construct();
+				// TODO Is this really the right place for checking if the proof is perfect?
 				if (checkCraig.isPerfectSequence()) {
 					return checkCraig.getIpp();
 				}
 				mImperfectProof = true;
-				// return checkCraig.getIpp();
 			}
 		}
 		return null;

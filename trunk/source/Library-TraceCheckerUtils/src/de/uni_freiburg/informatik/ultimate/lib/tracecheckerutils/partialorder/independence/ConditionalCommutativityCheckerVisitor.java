@@ -70,6 +70,7 @@ public class ConditionalCommutativityCheckerVisitor<L extends IIcfgTransition<?>
 	private boolean mAbort = false;
 	private final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mAbstraction;
 	private final ConditionalCommutativityChecker<L> mChecker;
+	// TODO keeping the state and letter stacks in addition to the run seems redundant
 	private final Deque<IPredicate> mStateStack = new ArrayDeque<>();
 	private final Deque<L> mLetterStack = new ArrayDeque<>();
 	private L mPendingLetter;
@@ -145,6 +146,7 @@ public class ConditionalCommutativityCheckerVisitor<L extends IIcfgTransition<?>
 			mPendingState = null;
 		}
 
+		// TODO this unpacking of the state will fail for many configurations
 		IPredicate pred = ((SleepPredicate<L>) state).getUnderlying();
 
 		if (pred instanceof PredicateWithLastThread) {
@@ -230,6 +232,8 @@ public class ConditionalCommutativityCheckerVisitor<L extends IIcfgTransition<?>
 	 *
 	 * @return interpolant automaton
 	 */
+	// TODO TODO This should be moved out of the visitor.
+	// TODO Similar code exists for the different cond-comm approaches, and probably elsewhere in Ultimate. Reuse it!
 	public NestedWordAutomaton<L, IPredicate> getInterpolantAutomaton() {
 		if (mTracePredicates == null) {
 			return null;
@@ -261,6 +265,7 @@ public class ConditionalCommutativityCheckerVisitor<L extends IIcfgTransition<?>
 		return automaton;
 	}
 
+	// TODO This should be moved out of the visitor.
 	public IPredicateUnifier getPredicateUnifier() {
 		return mPredicateUnifier;
 	}

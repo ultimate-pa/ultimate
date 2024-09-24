@@ -64,7 +64,7 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 	 * @author Marcel Ebbinghaus
 	 *
 	 * @param criterion
-	 *            An IConditionalCommutativityCriterion to decide when to check for conditional commutativity
+	 *            An {@link IConditionalCommutativityCriterion} to decide when to check for conditional commutativity
 	 * @param independenceRelation
 	 *            Independence relation for commutativity
 	 * @param script
@@ -72,10 +72,11 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 	 * @param generator
 	 *            Generator for constructing commutativity conditions
 	 * @param traceChecker
-	 *            An ITraceChecker responsible for checking whether a condition is feasible
+	 *            An {@link ITraceChecker} responsible for checking whether a condition is feasible
 	 * @param statisticsUtils
-	 *            An IConditionalCommutativityCheckerStatisticsUtils used for statistics
+	 *            An {@link IConditionalCommutativityCheckerStatisticsUtils} used for statistics
 	 */
+	// TODO What does it mean that a condition is "feasible"?
 	public ConditionalCommutativityChecker(final IConditionalCommutativityCriterion<L> criterion,
 			final IIndependenceRelation<IPredicate, L> independenceRelation, final ManagedScript script,
 			final IIndependenceConditionGenerator generator, final ITraceChecker<L> traceChecker,
@@ -103,7 +104,7 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 	 *            A letter of an outgoing transition of state
 	 * @param letter2
 	 *            A letter of another outgoing transition of state
-	 * @return A list of predicates which servers as a proof for conditional commutativity.
+	 * @return A list of predicates which serves as a proof for conditional commutativity.
 	 */
 	public TracePredicates checkConditionalCommutativity(final IRun<L, IPredicate> currentRun,
 			final List<IPredicate> predicates, final IPredicate state, final L letter1, final L letter2) {

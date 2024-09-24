@@ -63,8 +63,9 @@ public class LoopCriterion<L extends IIcfgTransition<?>> implements IConditional
 		}
 	}
 
+	// TODO What does this method do exactly?
+	// TODO It should likely not be here
 	private void DFS(final IcfgLocation loc, final IcfgLocation loophead) {
-
 		if (loc.equals(loophead)) {
 			mLoopEdges.addAll(mLetterStack);
 			return;
@@ -81,15 +82,12 @@ public class LoopCriterion<L extends IIcfgTransition<?>> implements IConditional
 
 	@Override
 	public boolean decide(final IPredicate state, final L letter1, final L letter2) {
-		if (mLoopEdges.contains(letter1) && mLoopEdges.contains(letter2)) {
-			return true;
-		}
-		return false;
+		return mLoopEdges.contains(letter1) && mLoopEdges.contains(letter2);
 	}
 
 	@Override
 	public boolean decide(final IPredicate condition) {
-		// TODO Auto-generated method stub
+		// no filtering based on condition
 		return true;
 	}
 }

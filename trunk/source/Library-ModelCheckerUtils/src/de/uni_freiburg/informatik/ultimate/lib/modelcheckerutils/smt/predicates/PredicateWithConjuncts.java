@@ -43,9 +43,14 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
  *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  */
+// TODO Consider undoing the implementations here, and explicitly throw errors.
+// Reason: GemCutter's performance crucially relies on the fact that these methods are not (routinely) called, as this
+// is usually not needed and has significant performance impact!
 public class PredicateWithConjuncts implements IPredicate {
 	protected final int mSerial;
 	protected final ImmutableList<IPredicate> mConjuncts;
+
+	// TODO Predicates should not hold a reference to the Script!
 	protected final Script mScript;
 	private Term mFormula;
 	private Term mClosedFormula;
@@ -93,6 +98,8 @@ public class PredicateWithConjuncts implements IPredicate {
 		mScript = script;
 		mVars = new HashSet<>();
 		mFuns = new HashSet<>();
+
+		// TODO keeping the reference to the old predicates costs can be extremely expensive in terms of memory!
 		mOld = old;
 		mNew = newConjunct;
 
@@ -175,6 +182,7 @@ public class PredicateWithConjuncts implements IPredicate {
 	public Set<IProgramVar> getVars() {
 		// compute on-demand (and possibly use partial results when constructed from conjunction)
 		if (mVars.isEmpty()) {
+			// TODO why is this a check for emptiness, not null? The set may be legitimately empty.
 			if (mOld != null) {
 				mVars.addAll(mOld.getVars());
 				mVars.addAll(mNew.getVars());
@@ -191,6 +199,7 @@ public class PredicateWithConjuncts implements IPredicate {
 	public Set<IProgramFunction> getFuns() {
 		// compute on-demand (and possibly use partial results when constructed from conjunction)
 		if (mFuns.isEmpty()) {
+			// TODO why is this a check for emptiness, not null? The set may be legitimately empty.
 			if (mOld != null) {
 				mFuns.addAll(mOld.getFuns());
 				mFuns.addAll(mNew.getFuns());

@@ -66,7 +66,8 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 			final L letter1 = mRun.getWord().getSymbol(i);
 			final L letter2 = mRun.getWord().getSymbol(i + 1);
 
-			if (((SleepPredicate<L>) state).getAnnotation().contains(letter2)
+			// TODO this is brittle, it will not work for many configurations
+			if (((SleepPredicate<L>) state).getSleepSet().contains(letter2)
 					|| (mDFSOrder.getOrder(state).compare(letter1, letter2) > 0)) {
 
 				final IPredicate runPredicate = runPredicates.get(i);
