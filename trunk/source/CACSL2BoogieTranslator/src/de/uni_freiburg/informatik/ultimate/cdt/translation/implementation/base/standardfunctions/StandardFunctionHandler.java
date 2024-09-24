@@ -341,7 +341,8 @@ public class StandardFunctionHandler {
 		fill(map, "wprintf", (main, node, loc, name) -> handlePrintF(main, node, loc));
 		fill(map, "fprintf", (main, node, loc, name) -> handlePrintFunction(main, node, loc));
 		fill(map, "sprintf", (main, node, loc, name) -> handleSPrintF(main, node, loc));
-		fill(map, "snprintf", (main, node, loc, name) -> handleSnPrintF(main, node, loc));
+		fill(map, "snprintf", this::handleSnPrintF);
+		fill(map, "swprintf", this::handleSnPrintF);
 
 		// https://en.cppreference.com/w/c/io/fscanf
 		fill(map, "scanf", (main, node, loc, name) -> handleScanf(name, main, node, loc, 1));
@@ -862,6 +863,18 @@ public class StandardFunctionHandler {
 		// https://en.cppreference.com/w/c/io/setbuf
 		fill(map, "setbuf", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
 				new CPrimitive(CPrimitives.VOID)));
+
+		// https://en.cppreference.com/w/c/io/vfprintf
+		fill(map, "vprintf", (main, node, loc, name) -> handlePrintF(main, node, loc));
+		fill(map, "vfprintf", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
+				new CPrimitive(CPrimitives.INT)));
+		fill(map, "vsprintf", this::handleSnPrintF);
+		fill(map, "vsnprintf", this::handleSnPrintF);
+		fill(map, "vprintf_s", (main, node, loc, name) -> handlePrintF(main, node, loc));
+		fill(map, "vfprintf_s", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
+				new CPrimitive(CPrimitives.INT)));
+		fill(map, "vsprintf_s", this::handleSnPrintF);
+		fill(map, "vsnprintf_s", this::handleSnPrintF);
 
 		/**
 		 * 7.22.2.1 The rand function
@@ -1610,12 +1623,13 @@ public class StandardFunctionHandler {
 
 	// Overapproximates snprintf as follows:
 	// ctr:=0; while (*) { assume ctr < len; havoc aux; *(ptr+ctr) := aux; ctr := ctr + 1; }
-	private Result handleSnPrintF(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc) {
+	private Result handleSnPrintF(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+			final String name) {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		assert arguments.length >= 2 : "insufficient arguments to snprintf";
 		final var builder = new ExpressionResultBuilder();
 
-		final Overapprox overAppFlag = new Overapprox("snprintf", loc);
+		final Overapprox overAppFlag = new Overapprox(name, loc);
 		builder.addOverapprox(overAppFlag);
 
 		// first argument is ptr
