@@ -28,7 +28,6 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.i
 import java.util.HashMap;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.MLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.LoopLockstepOrder.PredicateWithLastThread;
@@ -87,10 +86,5 @@ public class LimitedChecksCriterion<L> implements IConditionalCommutativityCrite
 		} else {
 			mStatementMap.replace(pair, mStatementMap.get(pair) + 1);
 		}
-	}
-
-	@Override
-	public void updateAbstraction(final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction) {
-		// TODO Auto-generated method stub
 	}
 }

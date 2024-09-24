@@ -25,7 +25,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
@@ -45,15 +44,5 @@ public class DefaultCriterion<L> implements IConditionalCommutativityCriterion<L
 	@Override
 	public boolean decide(final IPredicate condition) {
 		return true;
-	}
-
-	@Override
-	public void updateAbstraction(final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction) {
-		// TODO Auto-generated method stub
-	}
-
-	@Override
-	public void updateCriterion(final IPredicate state, final L letter1, final L letter2) {
-		// TODO Auto-generated method stub
 	}
 }

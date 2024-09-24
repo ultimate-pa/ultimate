@@ -25,7 +25,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
@@ -48,15 +47,5 @@ public class ConditionCriterion<L> implements IConditionalCommutativityCriterion
 		final String conditionString = condition.toString();
 		final boolean debug = conditionString.contains("forall") && conditionString.contains("select");
 		return !debug;
-	}
-
-	@Override
-	public void updateCriterion(final IPredicate state, final L letter1, final L letter2) {
-		// TODO Auto-generated method stub
-	}
-
-	@Override
-	public void updateAbstraction(final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction) {
-		// TODO Auto-generated method stub
 	}
 }

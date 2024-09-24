@@ -29,7 +29,6 @@ import java.util.ArrayDeque;
 import java.util.HashSet;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
@@ -92,15 +91,5 @@ public class LoopCriterion<L extends IIcfgTransition<?>> implements IConditional
 	public boolean decide(final IPredicate condition) {
 		// TODO Auto-generated method stub
 		return true;
-	}
-
-	@Override
-	public void updateCriterion(final IPredicate state, final L letter1, final L letter2) {
-		// TODO Auto-generated method stub
-	}
-
-	@Override
-	public void updateAbstraction(final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction) {
-		// TODO Auto-generated method stub
 	}
 }

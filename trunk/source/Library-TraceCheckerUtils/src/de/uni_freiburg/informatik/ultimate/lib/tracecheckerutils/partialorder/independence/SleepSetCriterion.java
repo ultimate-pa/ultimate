@@ -25,7 +25,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
@@ -56,15 +55,5 @@ public class SleepSetCriterion<L> implements IConditionalCommutativityCriterion<
 	@Override
 	public boolean decide(final IPredicate condition) {
 		return condition != null;
-	}
-
-	@Override
-	public void updateCriterion(final IPredicate state, final L letter1, final L letter2) {
-		// TODO Auto-generated method stub
-	}
-
-	@Override
-	public void updateAbstraction(final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction) {
-		// TODO Auto-generated method stub
 	}
 }

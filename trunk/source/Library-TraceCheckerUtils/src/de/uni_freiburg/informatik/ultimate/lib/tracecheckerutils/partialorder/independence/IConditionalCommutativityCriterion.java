@@ -43,7 +43,11 @@ public interface IConditionalCommutativityCriterion<L> {
 
 	boolean decide(IPredicate condition);
 
-	void updateAbstraction(INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction);
+	default void updateAbstraction(final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction) {
+		// most criteria do not need to do anything here
+	}
 
-	void updateCriterion(IPredicate state, L letter1, L letter2);
+	default void updateCriterion(final IPredicate state, final L letter1, final L letter2) {
+		// most criteria do not need to do anything here
+	}
 }

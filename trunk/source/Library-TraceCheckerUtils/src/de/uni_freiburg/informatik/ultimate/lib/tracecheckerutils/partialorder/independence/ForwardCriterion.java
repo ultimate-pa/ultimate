@@ -88,9 +88,4 @@ public class ForwardCriterion<L extends IIcfgTransition<?>> implements IConditio
 	public void updateAbstraction(final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction) {
 		mAbstraction = abstraction;
 	}
-
-	@Override
-	public void updateCriterion(final IPredicate state, final L letter1, final L letter2) {
-		// TODO Auto-generated method stub
-	}
 }
