@@ -30,7 +30,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransl
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
  * Interface for entries extracted from a witness
@@ -39,8 +38,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
  *
  */
 public interface IExtractedWitnessEntry {
-	ImmutableSet<String> getNodeLabels();
-
 	/**
 	 * Transform an expression result using the information from the given witness entry
 	 */

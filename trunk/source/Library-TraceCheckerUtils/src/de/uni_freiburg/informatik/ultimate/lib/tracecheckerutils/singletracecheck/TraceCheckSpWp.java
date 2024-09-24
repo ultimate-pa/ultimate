@@ -254,7 +254,7 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 			}
 			if (mLogger.isInfoEnabled()) {
 				final String logMessage = "Trace formula consists of " + numberOfConjunctsInTrace + " conjuncts, "
-						+ unsatCore.size() + " conjunts are in the unsatisfiable core";
+						+ unsatCore.size() + " conjuncts are in the unsatisfiable core";
 				// if 50% or more of all conjucts are in the unsat core we output a warning
 				if (unsatCore.size() * 2 >= numberOfConjunctsInTrace) {
 					mLogger.warn(logMessage);

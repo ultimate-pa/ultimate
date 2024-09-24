@@ -1,7 +1,8 @@
 /*
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2023-2024 Frank Schüssele (schuessf@informatik.uni-freiburg.de)
+ * Copyright (C) 2024 University of Freiburg
  *
  * This file is part of the ULTIMATE CACSL2BoogieTranslator plug-in.
  *
@@ -27,8 +28,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -44,41 +43,30 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTDoStatement;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTForStatement;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTFunctionCallExpression;
-import org.eclipse.cdt.internal.core.dom.parser.c.CASTFunctionDeclarator;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTFunctionDefinition;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTIfStatement;
-import org.eclipse.cdt.internal.core.dom.parser.c.CASTSimpleDeclaration;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTTranslationUnit;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTWhileStatement;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieBacktranslationValueProvider;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieProgramExecution;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieTransformer;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BitVectorAccessExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.GeneratedBoogieAstTransformer;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.GeneratedBoogieAstVisitor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.JoinStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression.Operator;
@@ -90,13 +78,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CLocat
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CNamed;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.Multigraph;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.MultigraphEdge;
@@ -117,6 +98,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceEle
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslatedCFG;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Boogie2ACSL.BacktranslatedExpression;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -125,51 +107,35 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *
  * @author dietsch@informatik.uni-freiburg.de
  */
-public class CACSL2BoogieBacktranslator
-		extends DefaultTranslator<BoogieASTNode, CACSLLocation, Expression, IASTExpression, String, String, ILocation> {
+public class CACSL2BoogieBacktranslator extends
+		DefaultTranslator<BoogieASTNode, CACSLLocation, Expression, BacktranslatedExpression, String, String, ILocation> {
 
 	/**
-	 * {@link VariableType} is used to distinguish various special variables after they are converted to strings.
-	 *
-	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+	 * Throw error in cases where we know that the backtranslation is not exact.
 	 */
-	private enum VariableType {
-		RESULT,
-
-		INVAR,
-
-		NORMAL,
-
-		POINTER_BASE,
-
-		POINTER_OFFSET
-	}
+	private static final boolean DEBUG_ERROR_FOR_UNFINISHED_BACKTRANSLATION = false;
 
 	private static final String UNFINISHED_BACKTRANSLATION = "Unfinished Backtranslation";
-	private static final boolean ALLOW_ACSL_FEATURES = true;
 
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final LocationFactory mLocationFactory;
-	private final TypeSizes mTypeSizes;
 	private final CACSL2BoogieBacktranslatorMapping mMapping;
-	private final FlatSymbolTable mSymbolTable;
-
 	private boolean mGenerateBacktranslationWarnings;
 	private boolean mBacktranslationWarned;
+	private final Boogie2ACSL mBoogie2ACSL;
 
 	public CACSL2BoogieBacktranslator(final IUltimateServiceProvider services, final TypeSizes typeSizes,
 			final CACSL2BoogieBacktranslatorMapping mapping, final LocationFactory locationFactory,
 			final FlatSymbolTable symbolTable) {
-		super(BoogieASTNode.class, CACSLLocation.class, Expression.class, IASTExpression.class);
+		super(BoogieASTNode.class, CACSLLocation.class, Expression.class, BacktranslatedExpression.class);
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mMapping = mapping;
 		mGenerateBacktranslationWarnings = true;
 		mBacktranslationWarned = false;
-		mTypeSizes = typeSizes;
 		mLocationFactory = locationFactory;
-		mSymbolTable = symbolTable;
+		mBoogie2ACSL = new Boogie2ACSL(typeSizes, mapping, symbolTable, this::reportUnfinishedBacktranslation);
 	}
 
 	@Override
@@ -184,7 +150,8 @@ public class CACSL2BoogieBacktranslator
 				.collect(Collectors.toList());
 		final IProgramExecution<BoogieASTNode, Expression> tracePE =
 				new BoogieProgramExecution(Collections.emptyMap(), ateTrace, false);
-		final IProgramExecution<CACSLLocation, IASTExpression> translatedPE = translateProgramExecution(tracePE);
+		final IProgramExecution<CACSLLocation, BacktranslatedExpression> translatedPE =
+				translateProgramExecution(tracePE);
 		final List<CACSLLocation> translatedTrace = new ArrayList<>();
 
 		for (int i = 0; i < translatedPE.getLength(); ++i) {
@@ -196,18 +163,18 @@ public class CACSL2BoogieBacktranslator
 	}
 
 	@Override
-	public IProgramExecution<CACSLLocation, IASTExpression>
+	public IProgramExecution<CACSLLocation, BacktranslatedExpression>
 			translateProgramExecution(final IProgramExecution<BoogieASTNode, Expression> oldPE) {
 
 		assert checkCallStackSourceProgramExecution(mLogger,
 				oldPE) : "callstack of initial program execution already broken";
 
 		// initial state
-		ProgramState<IASTExpression> initialState = translateProgramState(oldPE.getInitialProgramState());
+		ProgramState<BacktranslatedExpression> initialState = translateProgramState(oldPE.getInitialProgramState());
 
 		// translate trace and program state in tandem
 		final List<AtomicTraceElement<CACSLLocation>> translatedATEs = new ArrayList<>();
-		final List<ProgramState<IASTExpression>> translatedProgramStates = new ArrayList<>();
+		final List<ProgramState<BacktranslatedExpression>> translatedProgramStates = new ArrayList<>();
 		for (int i = 0; i < oldPE.getLength(); ++i) {
 
 			final AtomicTraceElement<BoogieASTNode> ate = oldPE.getTraceElement(i);
@@ -308,10 +275,10 @@ public class CACSL2BoogieBacktranslator
 		// reason must be the null node itself
 		// remove all ATEs where the step node is null
 		final Iterator<AtomicTraceElement<CACSLLocation>> iter = translatedATEs.iterator();
-		final Iterator<ProgramState<IASTExpression>> iterPs = translatedProgramStates.iterator();
+		final Iterator<ProgramState<BacktranslatedExpression>> iterPs = translatedProgramStates.iterator();
 		while (iter.hasNext()) {
 			final CACSLLocation step = iter.next().getStep();
-			final ProgramState<IASTExpression> programStateAfter = iterPs.next();
+			final ProgramState<BacktranslatedExpression> programStateAfter = iterPs.next();
 			if (!(step instanceof CLocation)) {
 				continue;
 			}
@@ -330,9 +297,7 @@ public class CACSL2BoogieBacktranslator
 		assert checkCallStackTarget(mLogger,
 				checkedTranslatedATEs) : "callstack broken after subtree inclusion reduction";
 		if (mBacktranslationWarned) {
-			mServices.getResultService().reportResult(Activator.PLUGIN_ID,
-					new GenericResult(Activator.PLUGIN_ID, UNFINISHED_BACKTRANSLATION,
-							"The program execution was not completely translated back.", Severity.WARNING));
+			reportUnfinishedBacktranslation("The program execution was not completely translated back.");
 		}
 		return new CACSLProgramExecution(initialState, checkedTranslatedATEs, translatedProgramStates,
 				oldPE.isConcurrent());
@@ -362,7 +327,7 @@ public class CACSL2BoogieBacktranslator
 			builder.setThreadId(ate.getThreadId());
 		}
 		builder.setRelevanceInformation(ate.getRelevanceInformation()).setElement(cloc).setStep(step)
-				.setStepInfo(newSi);
+				.setStepInfo(newSi).setProcedures(ate.getPrecedingProcedure(), ate.getSucceedingProcedure());
 		return builder.build();
 	}
 
@@ -419,7 +384,7 @@ public class CACSL2BoogieBacktranslator
 	private int handleCASTFunctionCallExpression(final IProgramExecution<BoogieASTNode, Expression> programExecution,
 			final int index, final CASTFunctionCallExpression fcall, final CLocation cloc,
 			final List<AtomicTraceElement<CACSLLocation>> translatedAtoTraceElems,
-			final List<ProgramState<IASTExpression>> translatedProgramStates) {
+			final List<ProgramState<BacktranslatedExpression>> translatedProgramStates) {
 		// directly after the function call expression we find
 		// for each argument a CASTFunctionDefinition / AssignmentStatement that
 		// maps the input variable to a new local one (because boogie function
@@ -481,7 +446,7 @@ public class CACSL2BoogieBacktranslator
 	private int handleNonCallDuringCASTFunctionCallExpression(
 			final IProgramExecution<BoogieASTNode, Expression> programExecution, final int index, final CLocation cloc,
 			final List<AtomicTraceElement<CACSLLocation>> translatedAtoTraceElems,
-			final List<ProgramState<IASTExpression>> translatedProgramStates,
+			final List<ProgramState<BacktranslatedExpression>> translatedProgramStates,
 			final AtomicTraceElement<BoogieASTNode> currentATE, final BoogieASTNode currentTraceElement) {
 		// this is some special case, e.g. an assert false or a havoc or a fork or a join
 		final EnumSet<StepInfo> stepInfo;
@@ -610,41 +575,42 @@ public class CACSL2BoogieBacktranslator
 	}
 
 	@Override
-	public ProgramState<IASTExpression> translateProgramState(final ProgramState<Expression> programState) {
+	public ProgramState<BacktranslatedExpression> translateProgramState(final ProgramState<Expression> programState) {
 		if (programState == null) {
 			// cannot translate nothin'
 			return null;
 		}
-		final Map<IASTExpression, Collection<IASTExpression>> translatedStateMap = new HashMap<>();
+		final Map<BacktranslatedExpression, Collection<BacktranslatedExpression>> translatedStateMap = new HashMap<>();
 		final ProgramState<Expression> compressedProgramState = compressProgramState(programState);
 
+		// Suppress backtranslation warnings for program states
+		// We just skip variables like pointers or aux-vars in the programs states
+		// TODO: This is a bit hacky, but we need to distinguish the translation of invariants and program states.
+		final boolean generateOld = mGenerateBacktranslationWarnings;
+		final boolean warnedOld = mBacktranslationWarned;
+		mGenerateBacktranslationWarnings = false;
 		for (final Expression varName : compressedProgramState.getVariables()) {
 			translateProgramStateEntry(varName, compressedProgramState, translatedStateMap);
 		}
-		return new ProgramState<>(translatedStateMap, IASTExpression.class);
+		mGenerateBacktranslationWarnings = generateOld;
+		mBacktranslationWarned = warnedOld;
+		return new ProgramState<>(translatedStateMap, BacktranslatedExpression.class);
 
 	}
 
 	private void translateProgramStateEntry(final Expression varName,
 			final ProgramState<Expression> compressedProgramState,
-			final Map<IASTExpression, Collection<IASTExpression>> translatedStateMap) {
+			final Map<BacktranslatedExpression, Collection<BacktranslatedExpression>> translatedStateMap) {
 		// first, translate name
-		final IASTExpression newVarName = translateExpression(varName);
+		final BacktranslatedExpression newVarName = translateExpressionForProgramState(varName);
 		if (newVarName == null) {
 			return;
 		}
-		final CType cType;
-		if (newVarName instanceof FakeExpression) {
-			cType = ((FakeExpression) newVarName).getCType();
-		} else {
-			cType = null;
-		}
-
 		// then, translate values
 		final Collection<Expression> varValues = compressedProgramState.getValues(varName);
-		final Collection<IASTExpression> newVarValues = new ArrayList<>();
+		final Collection<BacktranslatedExpression> newVarValues = new ArrayList<>();
 		for (final Expression varValue : varValues) {
-			final IASTExpression newVarValue = translateExpression(varValue, cType, newVarName.getParent(), null);
+			final BacktranslatedExpression newVarValue = translateExpressionForProgramState(varValue);
 			if (newVarValue != null) {
 				newVarValues.add(newVarValue);
 			}
@@ -652,7 +618,7 @@ public class CACSL2BoogieBacktranslator
 
 		// finally, merge with possibly existing values for this name
 		if (!newVarValues.isEmpty()) {
-			final Collection<IASTExpression> oldVarValues = translatedStateMap.put(newVarName, newVarValues);
+			final Collection<BacktranslatedExpression> oldVarValues = translatedStateMap.put(newVarName, newVarValues);
 			if (oldVarValues != null) {
 				newVarValues.addAll(oldVarValues);
 			}
@@ -861,13 +827,8 @@ public class CACSL2BoogieBacktranslator
 				} else if (cnode instanceof CASTForStatement) {
 					// same as while
 					final CASTForStatement forStmt = (CASTForStatement) cnode;
-					// If there is a condition in the for-loop use it as a location.
-					// Otherwise fall back to a dummy "1" expression (with for-loop as backing location).
-					IASTExpression condition = forStmt.getConditionExpression();
-					if (condition == null) {
-						condition = new FakeExpression(forStmt, "1", null);
-					}
-					edge = new MultigraphEdge<>(currentSource, mLocationFactory.createCLocation(condition), lastTarget);
+					edge = new MultigraphEdge<>(currentSource,
+							mLocationFactory.createCLocation(forStmt.getConditionExpression()), lastTarget);
 					new ConditionAnnotation(isNegated).annotate(edge);
 				} else if (cnode instanceof CASTFunctionCallExpression) {
 					edge = new MultigraphEdge<>(currentSource, cloc, lastTarget);
@@ -945,629 +906,45 @@ public class CACSL2BoogieBacktranslator
 		}
 	}
 
-	@Override
-	public IASTExpression translateExpressionWithContext(final Expression expression, final ILocation context) {
-		return translateExpression(expression, null, null, context);
-	}
-
-	@Override
-	public IASTExpression translateExpression(final Expression expression) {
-		return translateExpression(expression, null, null, null);
-	}
-
-	private IASTExpression translateExpression(final Expression expression, final CType cType, final IASTNode hook,
-			final ILocation context) {
-		if (expression instanceof UnaryExpression) {
-			return translateUnaryExpression((UnaryExpression) expression, cType, context);
-		}
-
+	private BacktranslatedExpression translateExpressionForProgramState(final Expression expression) {
+		// Translate TemporaryPointerExpression properly
 		if (expression instanceof TemporaryPointerExpression) {
-			return ((TemporaryPointerExpression) expression).translate();
-		}
-
-		final ILocation loc = expression.getLocation();
-		if (loc instanceof ACSLLocation) {
-			reportUnfinishedBacktranslation("Expression " + BoogiePrettyPrinter.print(expression)
-					+ " has an ACSLNode, but we do not support it yet");
-			return null;
-
-		}
-
-		if (loc instanceof CLocation) {
-			final CLocation cloc = (CLocation) loc;
-
-			if (cloc.ignoreDuringBacktranslation()) {
-				// this should lead to nothing
-				return null;
-			}
-
-			final IASTNode cnode = cloc.getNode();
-			if (cnode == null) {
-				reportUnfinishedBacktranslation(
-						"Expression " + BoogiePrettyPrinter.print(expression) + " has no C AST node");
-				return null;
-			}
-
-			// TODO: This seems problematic, because we mainly use the backtranslated expression to be printed.
-			// if (cnode instanceof IASTExpression) {
-			// return (IASTExpression) cnode;
-			// } else
-			if (cnode instanceof CASTTranslationUnit) {
-				// expressions that map to CASTTranslationUnit dont need to
-				// be backtranslated
-				return null;
-			} else if (cnode instanceof CASTSimpleDeclaration) {
-				return handleExpressionCASTSimpleDeclaration(expression, (CASTSimpleDeclaration) cnode, context);
-			} else if (cnode instanceof CASTFunctionDefinition) {
-				if (expression instanceof IdentifierExpression) {
-					final IdentifierExpression orgidexp = (IdentifierExpression) expression;
-					final TranslatedVariable origName = translateIdentifierExpression(orgidexp, context);
-					if (origName != null && origName.getVarType() != VariableType.POINTER_BASE) {
-						return new FakeExpression(cnode, origName.toString(), origName.getCType());
-					}
+			final TemporaryPointerExpression pointer = (TemporaryPointerExpression) expression;
+			final Expression base = pointer.mBase;
+			if (base instanceof IdentifierExpression) {
+				final IdentifierExpression id = (IdentifierExpression) base;
+				final String name = id.getIdentifier();
+				// If the base is of the form a!base, just translate a accordingly
+				if (name.endsWith(SFO.POINTER_BASE)) {
+					final String originalName = name.substring(0, name.length() - SFO.POINTER_BASE.length() - 1);
+					return translateExpression(new IdentifierExpression(id.getLoc(), id.getType(), originalName,
+							id.getDeclarationInformation()));
 				}
-				reportUnfinishedBacktranslation("Expression " + BoogiePrettyPrinter.print(expression)
-						+ " has a CASTFunctionDefinition but is no IdentifierExpression: "
-						+ expression.getClass().getSimpleName());
-				return null;
-			} else if (cnode instanceof CASTFunctionDeclarator) {
-
-				// this may be a function application:
-				// - #res is the return value of the function
-
-				if (expression instanceof IdentifierExpression) {
-					final IdentifierExpression iexpr = (IdentifierExpression) expression;
-					final TranslatedVariable origName = translateIdentifierExpression(iexpr, context);
-					if (origName != null && origName.getVarType() != VariableType.POINTER_BASE) {
-						return new FakeExpression(cnode, origName.getName(), origName.getCType());
-					}
-				}
-				// reportUnfinishedBacktranslation("Expression " + BoogiePrettyPrinter.print(expression)
-				// + " has a C AST node but it is no IASTExpression: " + cnode.getClass());
-				// return null;
-				// } else {
-				// reportUnfinishedBacktranslation("Expression " + BoogiePrettyPrinter.print(expression)
-				// + " has a C AST node but it is no IASTExpression: " + cnode.getClass());
-				// return null;
 			}
-		} else if (expression instanceof BinaryExpression) {
-			return translateBinaryExpression(cType, (BinaryExpression) expression, hook, context);
-		} else if (expression instanceof IntegerLiteral) {
-			return translateIntegerLiteral(cType, (IntegerLiteral) expression, hook);
-		} else if (expression instanceof BooleanLiteral) {
-			return translateBooleanLiteral((BooleanLiteral) expression);
-		} else if (expression instanceof RealLiteral) {
-			return translateRealLiteral((RealLiteral) expression);
-		} else if (expression instanceof BitvecLiteral) {
-			return translateBitvecLiteral(cType, (BitvecLiteral) expression, hook);
-		} else if (expression instanceof FunctionApplication) {
-			return translateFunctionApplication(cType, (FunctionApplication) expression, context);
-		} else if (expression instanceof BitVectorAccessExpression) {
-			final BitVectorAccessExpression bva = (BitVectorAccessExpression) expression;
-			final IASTExpression bv = translateExpression(bva.getBitvec(), cType, hook, context);
-			final int start = bva.getStart();
-			final int end = bva.getEnd();
-			if (start == 0) {
-				return new FakeExpression(String.format("(%s & %d)", bv, (1L << end) - 1));
-			}
-			return new FakeExpression(String.format("((%s >> %d) & %d)", bv, start, (1L << (end - start)) - 1));
+			// Otherwise create a value like {base:offset}
+			// This is not a real ACSL-expression, so we wrap it simply into an IdentifierExpression
+			return new BacktranslatedExpression(
+					new de.uni_freiburg.informatik.ultimate.model.acsl.ast.IdentifierExpression(
+							"{" + translateExpression(base) + ":" + translateExpression(pointer.mOffset) + "}"));
 		}
-		// TODO: Translate ArrayAccessExpressions
-		// TODO: Translate quantifiers if ALLOW_ACSL_FEATURES=true
-		reportUnfinishedBacktranslation(expression);
-		return null;
+		return translateExpression(expression);
 	}
 
-	private IASTExpression translateUnaryExpression(final UnaryExpression expr, final CType cType,
-			final ILocation context) throws AssertionError {
-		final IASTExpression innerTrans = translateExpressionWithContext(expr.getExpr(), context);
-		if (innerTrans == null) {
-			return null;
-		}
-		final String op;
-		switch (expr.getOperator()) {
-		case ARITHNEGATIVE:
-			op = "-";
-			break;
-		case LOGICNEG:
-			op = "!";
-			break;
-		case OLD:
-			if (!ALLOW_ACSL_FEATURES) {
-				return null;
-			}
-			op = "\\old";
-			break;
-		default:
-			throw new AssertionError("Unhandled case");
-		}
-		final CType newCType;
-		if (innerTrans instanceof FakeExpression) {
-			newCType = ((FakeExpression) innerTrans).getCType();
-		} else {
-			newCType = cType;
-		}
-		return new FakeExpression(innerTrans, String.format("%s(%s)", op, innerTrans.getRawSignature()), newCType);
-	}
-
-	private IASTExpression translateBinaryExpression(final CType cType, final BinaryExpression expression,
-			final IASTNode hook, final ILocation context) {
-		final IASTExpression lhs = translateExpression(expression.getLeft(), cType, hook, context);
-		final IASTExpression rhs = translateExpression(expression.getRight(), cType, hook, context);
-		final String result;
-		switch (expression.getOperator()) {
-		case ARITHDIV:
-			result = String.format("(%s / %s)", lhs, rhs);
-			break;
-		case ARITHMINUS:
-			result = String.format("(%s - %s)", lhs, rhs);
-			break;
-		case ARITHMOD:
-			result = String.format("(%s %% %s)", lhs, rhs);
-			break;
-		case ARITHMUL:
-			result = String.format("(%s * %s)", lhs, rhs);
-			break;
-		case ARITHPLUS:
-			result = String.format("(%s + %s)", lhs, rhs);
-			break;
-		case BITVECCONCAT:
-			return null;
-		case COMPEQ:
-			result = String.format("(%s == %s)", lhs, rhs);
-			break;
-		case COMPGEQ:
-			result = String.format("(%s >= %s)", lhs, rhs);
-			break;
-		case COMPGT:
-			result = String.format("(%s > %s)", lhs, rhs);
-			break;
-		case COMPLEQ:
-			result = String.format("(%s <= %s)", lhs, rhs);
-			break;
-		case COMPLT:
-			result = String.format("(%s < %s)", lhs, rhs);
-			break;
-		case COMPNEQ:
-			result = String.format("(%s != %s)", lhs, rhs);
-			break;
-		case COMPPO:
-			return null;
-		case LOGICAND:
-			// TODO: This is only an overapproximation, if the expression is in NNF, can we assume this?
-			if (lhs == null) {
-				return rhs;
-			}
-			if (rhs == null) {
-				return lhs;
-			}
-			result = String.format("(%s && %s)", lhs, rhs);
-			break;
-		case LOGICIFF:
-			result = String.format("(%s == %s)", lhs, rhs);
-			break;
-		case LOGICIMPLIES:
-			result = String.format("(!%s || %s)", lhs, rhs);
-			break;
-		case LOGICOR:
-			result = String.format("(%s || %s)", lhs, rhs);
-			break;
-		default:
-			throw new AssertionError("Unknown operator " + expression.getOperator());
-		}
-		if (lhs == null || rhs == null) {
-			return null;
-		}
-		return new FakeExpression(result);
-	}
-
-	private IASTExpression translateFunctionApplication(final CType cType, final FunctionApplication fun,
+	@Override
+	public BacktranslatedExpression translateExpressionWithContext(final Expression expression,
 			final ILocation context) {
-		final IASTExpression[] translatedArguments = new IASTExpression[fun.getArguments().length];
-		for (int i = 0; i < fun.getArguments().length; i++) {
-			translatedArguments[i] = translateExpressionWithContext(fun.getArguments()[i], context);
-			if (translatedArguments[i] == null) {
-				return null;
-			}
-		}
-		final String function = fun.getIdentifier();
-		final Pair<String, Integer> reversed = SFO.reverseBoogieFunctionName(function);
-		if (reversed == null) {
-			reportUnfinishedBacktranslation("Cannot identify Boogie2SMT function " + function);
-			return null;
-		}
-		final Integer bitSize = reversed.getSecond();
-
-		switch (reversed.getFirst()) {
-		case "sign_extend":
-		case "zero_extend":
-			// TODO: This might be problematic for signed types!
-			return translatedArguments[0];
-		case "fp":
-			if (Arrays.stream(fun.getArguments()).allMatch(BitvecLiteral.class::isInstance)) {
-				// this function is used to construct floating points
-				return createFakeFloat((BitvecLiteral) fun.getArguments()[0], (BitvecLiteral) fun.getArguments()[1],
-						(BitvecLiteral) fun.getArguments()[2]);
-			}
-			reportUnfinishedBacktranslation("fp can only be backtranslated, if the arguments are literals: " + fun);
-			return null;
-		case "NaN":
-			return new FakeExpression(String.valueOf(Float.NaN));
-		case "bvadd":
-			return new FakeExpression(
-					String.format("((%s + %s) %% %d)", translatedArguments[0], translatedArguments[1], 1L << bitSize));
-		case "bvmul":
-			return new FakeExpression(String.format("(%s * %s)", translatedArguments[0], translatedArguments[1]));
-		case "bvsub":
-			return new FakeExpression(
-					String.format("((%s - %s) %% %d)", translatedArguments[0], translatedArguments[1], 1L << bitSize));
-		case "bvand":
-			return new FakeExpression(String.format("(%s & %s)", translatedArguments[0], translatedArguments[1]));
-		case "bvor":
-			return new FakeExpression(String.format("(%s | %s)", translatedArguments[0], translatedArguments[1]));
-		case "bvxor":
-			return new FakeExpression(String.format("(%s ^ %s)", translatedArguments[0], translatedArguments[1]));
-		case "bvshl":
-			return new FakeExpression(String.format("(%s << %s)", translatedArguments[0], translatedArguments[1]));
-		case "bvashr":
-			return new FakeExpression(String.format("(%s >> %s)", translatedArguments[0], translatedArguments[1]));
-		case "bvslt":
-		case "bvult":
-			return new FakeExpression(String.format("(%s < %s)", translatedArguments[0], translatedArguments[1]));
-		case "bvsle":
-		case "bvule":
-			return new FakeExpression(String.format("(%s <= %s)", translatedArguments[0], translatedArguments[1]));
-		case "bvsgt":
-		case "bvugt":
-			return new FakeExpression(String.format("(%s > %s)", translatedArguments[0], translatedArguments[1]));
-		case "bvsge":
-		case "bvuge":
-			return new FakeExpression(String.format("(%s >= %s)", translatedArguments[0], translatedArguments[1]));
-		case "bvsdiv":
-		case "bvudiv":
-			return new FakeExpression(String.format("(%s / %s)", translatedArguments[0], translatedArguments[1]));
-		case "bvsrem":
-		case "bvurem":
-			return new FakeExpression(String.format("(%s %% %s)", translatedArguments[0], translatedArguments[1]));
-		case "bvneg":
-			return new FakeExpression(String.format("-(%s)", translatedArguments[0]));
-		case "bvnot":
-			return new FakeExpression(String.format("~(%s)", translatedArguments[0]));
-		default:
-			reportUnfinishedBacktranslation("Missing case for function " + function);
-			return null;
-		}
+		return mBoogie2ACSL.translateExpression(expression, context);
 	}
 
-	private static IASTExpression createFakeFloat(final BitvecLiteral sign, final BitvecLiteral exponent,
-			final BitvecLiteral fraction) {
-		// TODO: Should we rather represent this C-float using scientific notation (e.g. -1.57E13)?
-		final String bit = bitvecToString(sign) + bitvecToString(exponent) + bitvecToString(fraction);
-		final BigDecimal f = getDecimalFromBinaryString(bit);
-		return new FakeExpression(f.toPlainString());
-	}
-
-	private static BigDecimal getDecimalFromBinaryString(final String binary) {
-		final int len = binary.length();
-		if (len == 32) {
-			final int intBits = Integer.parseUnsignedInt(binary, 2);
-			final float floatValue = Float.intBitsToFloat(intBits);
-			return BigDecimal.valueOf(floatValue);
-		} else if (len == 64) {
-			final long longBits = Long.parseUnsignedLong(binary, 2);
-			final double doubleValue = Double.longBitsToDouble(longBits);
-			return BigDecimal.valueOf(doubleValue);
-		} else {
-			throw new IllegalArgumentException("Unsupported length: " + len);
-		}
-	}
-
-	private static String bitvecToString(final BitvecLiteral lit) {
-		final String binStr = new BigInteger(lit.getValue()).toString(2);
-		assert binStr.length() <= lit.getLength() : "Binary string cannot be longer than bitvector literal length";
-		final int missingZeros = lit.getLength() - binStr.length();
-		if (missingZeros > 0) {
-			final String formatStr = "%" + lit.getLength() + "s";
-			return String.format(formatStr, binStr).replace(' ', '0');
-		}
-		return binStr;
-	}
-
-	private IASTExpression translateIntegerLiteral(final CType cType, final IntegerLiteral lit, final IASTNode hook) {
-		final String value;
-		if (cType == null) {
-			value = lit.getValue();
-		} else if (cType instanceof CPointer) {
-			return translateIntegerLiteral(new CPrimitive(CPrimitives.INT), lit, hook);
-		} else if (cType instanceof CEnum) {
-			return translateIntegerLiteral(new CPrimitive(CPrimitives.INT), lit, hook);
-		} else if (cType instanceof CNamed) {
-			return translateIntegerLiteral(cType.getUnderlyingType(), lit, hook);
-		} else {
-			final BigInteger extractedValue = mTypeSizes.extractIntegerValue(lit, cType);
-			value = String.valueOf(extractedValue);
-		}
-		checkLiteral(cType, lit, value);
-		return new FakeExpression(value);
-	}
-
-	private IASTExpression translateBitvecLiteral(final CType cType, final BitvecLiteral lit, final IASTNode hook) {
-		final String value;
-		if (cType == null) {
-			value = naiveBitvecLiteralValueExtraction(lit);
-		} else if (cType instanceof CNamed) {
-			if (cType.getUnderlyingType() != null) {
-				return translateBitvecLiteral(cType.getUnderlyingType(), lit, hook);
-			}
-			reportUnfinishedBacktranslation("cannot tranlate BitvecLiteral " + BoogiePrettyPrinter.print(lit)
-					+ " for unknown CNamed CType " + cType);
-			return null;
-		} else if (cType instanceof CPrimitive) {
-			// literal C primitives that are represented as bitvectors have to be converted back according to their
-			// translation, but it seems that AExpression is incomplete
-			final CPrimitive primitive = (CPrimitive) cType.getUnderlyingType();
-			if (primitive.isIntegerType()) {
-				value = String.valueOf(mTypeSizes.extractIntegerValue(lit, cType));
-			} else if (primitive.isFloatingType()) {
-				value = naiveBitvecLiteralValueExtraction(lit);
-				reportUnfinishedBacktranslation(
-						"using integer-interpretation for bitvector literal with floating type because of unification failure: "
-								+ BoogiePrettyPrinter.print(lit) + "=" + value);
-			} else {
-				reportUnfinishedBacktranslation("cannot tranlate BitvecLiteral " + BoogiePrettyPrinter.print(lit)
-						+ " representing " + primitive.getType());
-				return null;
-			}
-		} else {
-			final BigInteger extractedValue = mTypeSizes.extractIntegerValue(lit, cType);
-			value = String.valueOf(extractedValue);
-		}
-		checkLiteral(cType, lit, value);
-		return new FakeExpression(value);
-	}
-
-	private IASTExpression translateRealLiteral(final RealLiteral lit) {
-		checkLiteral(null, lit, lit.getValue());
-		return new FakeExpression(lit.getValue());
-	}
-
-	private IASTExpression translateBooleanLiteral(final BooleanLiteral lit) {
-		final String value = lit.getValue() ? "1" : "0";
-		checkLiteral(null, lit, value);
-		return new FakeExpression(value);
-	}
-
-	private void checkLiteral(final CType cType, final Expression expr, final String value) {
-		if (value == null || "null".equals(value)) {
-			if (cType == null) {
-				reportUnfinishedBacktranslation(expr);
-			} else {
-				reportUnfinishedBacktranslation(expr.getClass().getSimpleName() + " " + BoogiePrettyPrinter.print(expr)
-						+ " could not be translated for associated CType " + cType);
-			}
-		} else if (value.contains("~fp~LONGDOUBLE")) {
-			reportUnfinishedBacktranslation(expr);
-		}
-	}
-
-	private IASTExpression translateArrayAccessExpression(final ArrayAccessExpression access, final CType ctype,
-			final IASTNode hook, final ILocation context) {
-		if (access.getArray() instanceof IdentifierExpression) {
-			final String id = ((IdentifierExpression) access.getArray()).getIdentifier();
-			if (SFO.LENGTH.equals(id)) {
-				reportUnfinishedBacktranslation(access);
-				return null;
-			}
-			if (SFO.VALID.equals(id)) {
-				if (!ALLOW_ACSL_FEATURES) {
-					return null;
-				}
-				final IASTExpression argument = translateExpression(access.getIndices()[0], ctype, hook, context);
-				if (argument == null) {
-					reportUnfinishedBacktranslation(access);
-					return null;
-				}
-				return new FakeExpression(String.format("\\valid(%s)", argument));
-			}
-		}
-		final IASTExpression deref = tryToExtractPointerDereference(access, context);
-		if (deref != null) {
-			return deref;
-		}
-		final IASTExpression array = translateExpression(access.getArray(), ctype, hook, context);
-		if (array == null) {
-			reportUnfinishedBacktranslation(access);
-			return null;
-		}
-		final IASTExpression[] indices = new IASTExpression[access.getIndices().length];
-		for (int i = 0; i < access.getIndices().length; i++) {
-			indices[i] = translateExpression(access.getIndices()[i], ctype, hook, context);
-			if (indices[i] == null) {
-				reportUnfinishedBacktranslation(access);
-				return null;
-			}
-		}
-		final StringBuilder sb = new StringBuilder();
-		sb.append(array);
-		for (final IASTExpression index : indices) {
-			sb.append('[').append(index).append(']');
-		}
-		return new FakeExpression(sb.toString());
-	}
-
-	private IASTExpression tryToExtractPointerDereference(final ArrayAccessExpression access, final ILocation context) {
-		Expression array = null;
-		Expression base = null;
-		Expression offset = null;
-		if (access.getIndices().length == 2) {
-			array = access.getArray();
-			base = access.getIndices()[0];
-			offset = access.getIndices()[1];
-		}
-		if (access.getArray() instanceof ArrayAccessExpression && access.getIndices().length == 1) {
-			final ArrayAccessExpression subAccess = (ArrayAccessExpression) access.getArray();
-			if (subAccess.getIndices().length == 1) {
-				array = subAccess.getArray();
-				base = subAccess.getIndices()[0];
-				offset = access.getIndices()[0];
-			}
-		}
-		if (array == null || !(array instanceof IdentifierExpression)
-				|| !((IdentifierExpression) array).getIdentifier().startsWith(SFO.MEMORY)) {
-			return null;
-		}
-		final BigInteger factor = tryToGetAdditionalFactor(base, offset, context);
-		if (factor == null) {
-			return null;
-		}
-		final IASTExpression baseTranslated = translateExpressionWithContext(base, context);
-		if (factor.signum() > 0) {
-			return new FakeExpression(String.format("*(%s + %s)", baseTranslated, factor));
-		}
-		assert factor.signum() == 0;
-		return new FakeExpression("*" + baseTranslated);
-	}
-
-	private BigInteger tryToGetAdditionalFactor(final Expression base, final Expression offset,
-			final ILocation context) {
-		boolean isOld;
-		if (isPointerBase(base)) {
-			isOld = false;
-		} else if (isOldPointerBase(base)) {
-			isOld = true;
-		} else {
-			return null;
-		}
-		final String name = getPointerName(base, isOld);
-		if (isPointerOffsetFor(offset, name, isOld)) {
-			return BigInteger.ZERO;
-		}
-		Expression factorCandidate = null;
-		if (offset instanceof BinaryExpression) {
-			final BinaryExpression.Operator op = ((BinaryExpression) offset).getOperator();
-			if (op != BinaryExpression.Operator.ARITHPLUS) {
-				return null;
-			}
-			final Expression left = ((BinaryExpression) offset).getLeft();
-			final Expression right = ((BinaryExpression) offset).getRight();
-			if (isPointerOffsetFor(left, name, isOld)) {
-				factorCandidate = right;
-			} else if (isPointerOffsetFor(right, name, isOld)) {
-				factorCandidate = left;
-			}
-		}
-		if (offset instanceof FunctionApplication) {
-			final FunctionApplication function = (FunctionApplication) offset;
-			final var reversed = SFO.reverseBoogieFunctionName(function.getIdentifier());
-			if (reversed == null || !"bvadd".equals(reversed.getFirst())) {
-				return null;
-			}
-			final Expression left = function.getArguments()[0];
-			final Expression right = function.getArguments()[1];
-			if (isPointerOffsetFor(left, name, isOld)) {
-				factorCandidate = right;
-			} else if (isPointerOffsetFor(right, name, isOld)) {
-				factorCandidate = left;
-			}
-		}
-		// TODO: This just works for the addition of constants, add more cases (like a!offset + 4 * x)
-		final BigInteger extracted = mTypeSizes.extractIntegerValue(factorCandidate, mTypeSizes.getSizeT());
-		if (extracted == null) {
-			return null;
-		}
-		IdentifierExpression baseVar;
-		if (isOld) {
-			baseVar = (IdentifierExpression) ((UnaryExpression) base).getExpr();
-		} else {
-			baseVar = (IdentifierExpression) base;
-		}
-		final Integer size = getSizeOfValueType(translateIdentifierExpression(baseVar, context).getCType());
-		if (size == null) {
-			return null;
-		}
-		final BigInteger[] divRemainder = extracted.divideAndRemainder(BigInteger.valueOf(size));
-		if (divRemainder[1].signum() != 0) {
-			// The extracted value is not divisible by the type size, so we cannot extract a dereference
-			return null;
-		}
-		return divRemainder[0];
-	}
-
-	private Integer getSizeOfValueType(final CType type) {
-		CType valueType = null;
-		if (type instanceof CPointer) {
-			valueType = ((CPointer) type).getPointsToType();
-		}
-		if (type instanceof CArray) {
-			valueType = ((CArray) type).getValueType();
-		}
-		// TODO: More cases?
-		if (valueType == null || !(valueType instanceof CPrimitive)) {
-			return null;
-		}
-		return mTypeSizes.getSize(((CPrimitive) valueType).getType());
-	}
-
-	private static String naiveBitvecLiteralValueExtraction(final BitvecLiteral lit) {
-		final String value = lit.getValue();
-		BigInteger decimalValue = new BigInteger(value);
-
-		// this is only the isSigned case
-		final BigInteger maxRepresentablePositiveValuePlusOne = BigInteger.TWO.pow(lit.getLength() - 1);
-		if (decimalValue.compareTo(maxRepresentablePositiveValuePlusOne) >= 0) {
-			final BigInteger numberOfValues = BigInteger.TWO.pow(lit.getLength());
-			decimalValue = decimalValue.subtract(numberOfValues);
-		}
-		return String.valueOf(decimalValue);
-	}
-
-	private IASTExpression handleExpressionCASTSimpleDeclaration(final Expression expression,
-			final CASTSimpleDeclaration decls, final ILocation context) {
-		// this should only happen for IdentifierExpressions
-		if (!(expression instanceof IdentifierExpression)) {
-			reportUnfinishedBacktranslation("Expression " + BoogiePrettyPrinter.print(expression)
-					+ " is mapped to a declaration, but is no IdentifierExpression");
-			return null;
-		}
-
-		if (decls.getDeclarators() == null || decls.getDeclarators().length == 0) {
-			throw new IllegalArgumentException("Expression " + BoogiePrettyPrinter.print(expression)
-					+ " is mapped to a declaration without declarators.");
-		}
-
-		if (decls.getDeclarators().length == 1) {
-			final IdentifierExpression orgidexp = (IdentifierExpression) expression;
-			final TranslatedVariable origName = translateIdentifierExpression(orgidexp, context);
-			if (origName == null || origName.getVarType() == VariableType.POINTER_BASE) {
-				return null;
-			}
-			return new FakeExpression(decls, decls.getDeclarators()[0].getName().getRawSignature(),
-					origName.getCType());
-		}
-		// ok, this is a declaration ala "int a,b;", so we use
-		// our backtranslation map to get the real name
-		final IdentifierExpression orgidexp = (IdentifierExpression) expression;
-		final TranslatedVariable origName = translateIdentifierExpression(orgidexp, context);
-		if (origName == null || origName.getVarType() == VariableType.POINTER_BASE) {
-			return null;
-		}
-		for (final IASTDeclarator decl : decls.getDeclarators()) {
-			if (origName.getName().indexOf(decl.getName().getRawSignature()) != -1) {
-				return new FakeExpression(decl.getName().getRawSignature());
-			}
-		}
-		reportUnfinishedBacktranslation("IdentifierExpression " + BoogiePrettyPrinter.print(expression)
-				+ " has a CASTSimpleDeclaration, but we were unable to determine the variable name from it: "
-				+ decls.getRawSignature());
-		return null;
-	}
-
-	private void reportUnfinishedBacktranslation(final Expression expr) {
-		reportUnfinishedBacktranslation(
-				expr.getClass().getSimpleName() + " " + BoogiePrettyPrinter.print(expr) + " could not be translated");
+	@Override
+	public BacktranslatedExpression translateExpression(final Expression expression) {
+		return translateExpressionWithContext(expression, null);
 	}
 
 	private void reportUnfinishedBacktranslation(final String message) {
+		if (DEBUG_ERROR_FOR_UNFINISHED_BACKTRANSLATION) {
+			throw new AssertionError(UNFINISHED_BACKTRANSLATION + ": " + message);
+		}
 		mBacktranslationWarned = true;
 		if (!mGenerateBacktranslationWarnings) {
 			return;
@@ -1576,46 +953,6 @@ public class CACSL2BoogieBacktranslator
 		mLogger.warn(fullMessage);
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
 				new GenericResult(Activator.PLUGIN_ID, UNFINISHED_BACKTRANSLATION, fullMessage, Severity.WARNING));
-	}
-
-	private TranslatedVariable translateIdentifierExpression(final IdentifierExpression expr, final ILocation context) {
-		return translateBoogieIdentifier(expr, expr.getIdentifier(), context);
-	}
-
-	private TranslatedVariable translateBoogieIdentifier(final IdentifierExpression expr, final String boogieId,
-			final ILocation context) {
-		if (boogieId.equals(SFO.RES) && ALLOW_ACSL_FEATURES) {
-			return new TranslatedVariable("\\result", null, VariableType.RESULT);
-		} else if (mMapping.hasVar(boogieId, expr.getDeclarationInformation())) {
-			final Pair<String, CType> pair = mMapping.getVar(boogieId, expr.getDeclarationInformation());
-			if (isPresentInContext(pair.getFirst(), context)) {
-				return new TranslatedVariable(pair.getFirst(), pair.getSecond(), VariableType.NORMAL);
-			}
-		} else if (mMapping.hasInVar(boogieId, expr.getDeclarationInformation()) && ALLOW_ACSL_FEATURES) {
-			// invars can only occur in expressions as part of synthetic expressions, and then they represent oldvars
-			final Pair<String, CType> pair = mMapping.getInVar(boogieId, expr.getDeclarationInformation());
-			return new TranslatedVariable(pair.getFirst(), pair.getSecond(), VariableType.INVAR);
-		} else if (boogieId.endsWith(SFO.POINTER_BASE)) {
-			// if its base or offset, try again with them stripped
-			final TranslatedVariable base = translateBoogieIdentifier(expr,
-					boogieId.substring(0, boogieId.length() - SFO.POINTER_BASE.length() - 1), context);
-			if (base == null) {
-				return null;
-			}
-			return new TranslatedVariable(base.getName(), base.getCType(), VariableType.POINTER_BASE);
-		} else if (boogieId.endsWith(SFO.POINTER_OFFSET)) {
-			// TODO: Do not backtranslate offsets, might lead to wrong invariants
-			return null;
-		}
-		reportUnfinishedBacktranslation("unknown boogie variable " + boogieId);
-		return null;
-	}
-
-	private boolean isPresentInContext(final String cId, final ILocation context) {
-		if (context == null || !(context instanceof CLocation)) {
-			return true;
-		}
-		return mSymbolTable.containsCSymbol(((CLocation) context).getNode(), cId);
 	}
 
 	private static IRelevanceInformation mergeRelevaneInformation(final IRelevanceInformation... relInfos) {
@@ -1765,7 +1102,7 @@ public class CACSL2BoogieBacktranslator
 		}
 	}
 
-	private class TemporaryPointerExpression extends Expression {
+	private static class TemporaryPointerExpression extends Expression {
 
 		private static final long serialVersionUID = 1L;
 		private final Expression mBase;
@@ -1775,21 +1112,6 @@ public class CACSL2BoogieBacktranslator
 			super(loc);
 			mBase = base;
 			mOffset = offset;
-		}
-
-		public IASTExpression translate() {
-			if (mBase instanceof IdentifierExpression) {
-				// its a declaration or an access
-				final TranslatedVariable variable = translateIdentifierExpression((IdentifierExpression) mBase, null);
-				if (variable == null) {
-					return null;
-				}
-				return new FakeExpression(null, variable.toString(), variable.getCType());
-			}
-			// some kind of value
-			final IASTExpression base = translateExpression(mBase);
-			final IASTExpression offset = translateExpression(mOffset);
-			return new FakeExpression(base, "{" + base.getRawSignature() + ":" + offset.getRawSignature() + "}", null);
 		}
 
 		@Override
@@ -1807,58 +1129,4 @@ public class CACSL2BoogieBacktranslator
 			return null;
 		}
 	}
-
-	private static final class TranslatedVariable extends Expression {
-		private static final long serialVersionUID = 1L;
-		private final String mName;
-		private final CType mCType;
-		private final VariableType mVarType;
-
-		public TranslatedVariable(final String name, final CType cType, final VariableType varType) {
-			super(null);
-			mName = name;
-			mCType = cType;
-			mVarType = varType;
-
-		}
-
-		public String getName() {
-			return mName;
-		}
-
-		public CType getCType() {
-			return mCType;
-		}
-
-		public VariableType getVarType() {
-			return mVarType;
-		}
-
-		@Override
-		public void accept(final GeneratedBoogieAstVisitor visitor) {
-			// nothing to accept here
-		}
-
-		@Override
-		public Expression accept(final GeneratedBoogieAstTransformer visitor) {
-			return null;
-		}
-
-		@Override
-		public String toString() {
-			switch (mVarType) {
-			case INVAR:
-				return "\\old(" + mName + ")";
-			case NORMAL:
-			case POINTER_BASE:
-			case POINTER_OFFSET:
-				return mName;
-			case RESULT:
-				return "\\result";
-			default:
-				throw new UnsupportedOperationException("VariableType " + mVarType + " not yet implemented");
-			}
-		}
-	}
-
 }

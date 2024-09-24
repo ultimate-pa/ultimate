@@ -58,7 +58,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence.Origin;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.TransFormulaAdder;
 
 /**
@@ -243,7 +242,7 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 		stmtLists.add(assumeStmt);
 		stmtLists.addAll(mStatementExtractor.process(transition));
 		final CodeBlock result =
-				mCodeBlockFactory.constructStatementSequence(null, null, stmtLists, Origin.IMPLEMENTATION);
+				mCodeBlockFactory.constructStatementSequence(null, null, stmtLists);
 		mTransformulaBuilder.addTransitionFormulas(result, transition.getPrecedingProcedure(), mSimplificationTechnique);
 
 		if (mLogger.isDebugEnabled()) {

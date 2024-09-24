@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.pea;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -43,31 +44,41 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.util.SimpleSet;
 public class PhaseEventAutomata implements Comparable<Object> {
 
 	public static final String TIMES = "_X_";
-
-	String mName;
-	Phase[] mPhases;
-	Phase[] mInit;
-	List<String> mClocks;
+	protected final String mName;
+	protected final List<Phase> mPhases;
+	protected final List<InitialTransition> mInit;
+	protected final List<String> mClocks;
 
 	// A map of variables and its types to be used in this PEA.
-	Map<String, String> mVariables;
+	protected final Map<String, String> mVariables;
 
 	// The set of events used in the PEA.
-	Set<String> mEvents;
+	protected final Set<String> mEvents;
 
 	// Additional declarations needed when processing this PEA.
 	protected List<String> mDeclarations;
 
-	public PhaseEventAutomata(final String name, final Phase[] phases, final Phase[] init) {
+	public PhaseEventAutomata(final String name, final List<Phase> phases, final List<InitialTransition> init) {
 		this(name, phases, init, new ArrayList<String>());
 	}
 
-	public PhaseEventAutomata(final String name, final Phase[] phases, final Phase[] init, final List<String> clocks) {
+	public PhaseEventAutomata(final String name, final List<Phase> phases, final List<InitialTransition> init,
+			final Map<String, String> variables) {
+		this(name, phases, init, Collections.emptyList(), variables, null, null);
+	}
+
+	public PhaseEventAutomata(final String name, final List<Phase> phases, final List<InitialTransition> init,
+			final List<String> clocks, final Map<String, String> variables) {
+		this(name, phases, init, clocks, variables, null, null);
+	}
+
+	public PhaseEventAutomata(final String name, final List<Phase> phases, final List<InitialTransition> init,
+			final List<String> clocks) {
 		this(name, phases, init, clocks, null, null);
 	}
 
-	public PhaseEventAutomata(final String name, final Phase[] phases, final Phase[] init, final List<String> clocks,
-			final Map<String, String> variables, final List<String> declarations) {
+	public PhaseEventAutomata(final String name, final List<Phase> phases, final List<InitialTransition> init,
+			final List<String> clocks, final Map<String, String> variables, final List<String> declarations) {
 		this(name, phases, init, clocks, variables, null, declarations);
 	}
 
@@ -79,8 +90,9 @@ public class PhaseEventAutomata implements Comparable<Object> {
 	 * @param phases
 	 * @param variables
 	 */
-	public PhaseEventAutomata(final String name, final Phase[] phases, final Phase[] init, final List<String> clocks,
-			final Map<String, String> variables, final Set<String> events, final List<String> declarations) {
+	public PhaseEventAutomata(final String name, final List<Phase> phases, final List<InitialTransition> init,
+			final List<String> clocks, final Map<String, String> variables, final Set<String> events,
+			final List<String> declarations) {
 		if (clocks == null) {
 			mClocks = new ArrayList<>();
 		} else {
@@ -92,6 +104,12 @@ public class PhaseEventAutomata implements Comparable<Object> {
 		mName = name;
 		mPhases = phases;
 		mVariables = variables;
+
+		// add initial transition to Phases in initPhases
+		// TODO: remove this, either store all edges in the phases (would be clear) or in the pea, but not both.
+		for (final InitialTransition initTrans : init) {
+			initTrans.getDest().setInitialTransition(initTrans);
+		}
 	}
 
 	public PhaseEventAutomata parallel(final PhaseEventAutomata b) {
@@ -113,26 +131,27 @@ public class PhaseEventAutomata implements Comparable<Object> {
 
 		final List<TodoEntry> todo = new LinkedList<>();
 
-		for (int i = 0; i < mInit.length; i++) {
-			for (int j = 0; j < b.mInit.length; j++) {
-				final CDD sinv = mInit[i].stateInv.and(b.mInit[j].stateInv);
+		for (int i = 0; i < mInit.size(); i++) {
+			for (int j = 0; j < b.mInit.size(); j++) {
+				final CDD sinv = mInit.get(i).getDest().getStateInv().and(b.mInit.get(j).getDest().getStateInv());
 				if (sinv != CDD.FALSE) {
-					final CDD cinv = mInit[i].clockInv.and(b.mInit[j].clockInv);
-					final Phase p = new Phase(mInit[i].getName() + TIMES + b.mInit[j].getName(), sinv, cinv);
+					final CDD cinv = mInit.get(i).getDest().getClockInv().and(b.mInit.get(j).getDest().getClockInv());
+					final Phase p = new Phase(
+							mInit.get(i).getDest().getName() + TIMES + b.mInit.get(j).getDest().getName(), sinv, cinv);
 
 					newInit.add(p);
 					newPhases.put(p.getName(), p);
-					todo.add(new TodoEntry(mInit[i], b.mInit[j], p));
+					todo.add(new TodoEntry(mInit.get(i).getDest(), b.mInit.get(j).getDest(), p));
 				}
 			}
 		}
 		while (!todo.isEmpty()) {
 			final TodoEntry entry = todo.remove(0);
-			final CDD srcsinv = entry.p1.stateInv.and(entry.p2.stateInv);
-			final Iterator<?> i = entry.p1.transitions.iterator();
+			final CDD srcsinv = entry.p1.getStateInv().and(entry.p2.getStateInv());
+			final Iterator<?> i = entry.p1.getTransitions().iterator();
 			while (i.hasNext()) {
 				final Transition t1 = (Transition) i.next();
-				final Iterator<?> j = entry.p2.transitions.iterator();
+				final Iterator<?> j = entry.p2.getTransitions().iterator();
 				while (j.hasNext()) {
 					final Transition t2 = (Transition) j.next();
 
@@ -140,24 +159,21 @@ public class PhaseEventAutomata implements Comparable<Object> {
 					if (guard == CDD.FALSE) {
 						continue;
 					}
-					final CDD sinv = t1.getDest().stateInv.and(t2.getDest().stateInv);
+					final CDD sinv = t1.getDest().getStateInv().and(t2.getDest().getStateInv());
 					// This leads to a serious bug -
 					// if (sinv.and(guard) == CDD.FALSE)
-					if (sinv == CDD.FALSE) {
-						continue;
-					}
-					if (guard != CDD.TRUE && srcsinv.and(guard).and(sinv.prime(Collections.emptySet())) == CDD.FALSE) {
+					if ((sinv == CDD.FALSE) || (guard != CDD.TRUE && srcsinv.and(guard).and(sinv.prime(Collections.emptySet())) == CDD.FALSE)) {
 						// TODO: Overapproximating for BoogieDecisions because constants will become primed
 						continue;
 					}
-					final CDD cinv = t1.getDest().clockInv.and(t2.getDest().clockInv);
+					final CDD cinv = t1.getDest().getClockInv().and(t2.getDest().getClockInv());
 					final String[] resets = new String[t1.getResets().length + t2.getResets().length];
 					System.arraycopy(t1.getResets(), 0, resets, 0, t1.getResets().length);
 					System.arraycopy(t2.getResets(), 0, resets, t1.getResets().length, t2.getResets().length);
-					final Set<String> stoppedClocks =
-							new SimpleSet<>(t1.getDest().stoppedClocks.size() + t2.getDest().stoppedClocks.size());
-					stoppedClocks.addAll(t1.getDest().stoppedClocks);
-					stoppedClocks.addAll(t2.getDest().stoppedClocks);
+					final Set<String> stoppedClocks = new SimpleSet<>(
+							t1.getDest().getStoppedClocks().size() + t2.getDest().getStoppedClocks().size());
+					stoppedClocks.addAll(t1.getDest().getStoppedClocks());
+					stoppedClocks.addAll(t2.getDest().getStoppedClocks());
 
 					final String newname = t1.getDest().getName() + TIMES + t2.getDest().getName();
 					Phase p = newPhases.get(newname);
@@ -174,6 +190,14 @@ public class PhaseEventAutomata implements Comparable<Object> {
 
 		final Phase[] allPhases = newPhases.values().toArray(new Phase[newPhases.size()]);
 		final Phase[] initPhases = newInit.toArray(new Phase[newInit.size()]);
+		final List<InitialTransition> initTransitions = new ArrayList<>();
+
+		// add initial transition to Phases in initPhases
+		for (final Phase phase : initPhases) {
+			final InitialTransition initialTransition = new InitialTransition(phase.getClockInv(), phase);
+			phase.setInitialTransition(initialTransition);
+			initTransitions.add(initialTransition);
+		}
 
 		final List<String> newClocks = mergeClockLists(b);
 
@@ -181,8 +205,8 @@ public class PhaseEventAutomata implements Comparable<Object> {
 
 		final List<String> newDeclarations = mergeDeclarationLists(b);
 
-		return new PhaseEventAutomata(mName + TIMES + b.mName, allPhases, initPhases, newClocks, newVariables,
-				newDeclarations);
+		return new PhaseEventAutomata(mName + TIMES + b.mName, Arrays.asList(allPhases), initTransitions, newClocks,
+				newVariables, newDeclarations);
 	}
 
 	/**
@@ -201,8 +225,7 @@ public class PhaseEventAutomata implements Comparable<Object> {
 		} else if (b.getDeclarations() == null) {
 			newDeclarations = mDeclarations;
 		} else {
-			newDeclarations = new ArrayList<>();
-			newDeclarations.addAll(mDeclarations);
+			newDeclarations = new ArrayList<>(mDeclarations);
 			newDeclarations.addAll(b.getDeclarations());
 		}
 		return newDeclarations;
@@ -246,8 +269,7 @@ public class PhaseEventAutomata implements Comparable<Object> {
 	 */
 	protected List<String> mergeClockLists(final PhaseEventAutomata b) {
 		// Merge clock lists
-		final List<String> newClocks = new ArrayList<>();
-		newClocks.addAll(mClocks);
+		final List<String> newClocks = new ArrayList<>(mClocks);
 		newClocks.addAll(b.getClocks());
 		return newClocks;
 	}
@@ -260,13 +282,12 @@ public class PhaseEventAutomata implements Comparable<Object> {
 	/**
 	 * @return Returns the init.
 	 */
-	public Phase[] getInit() {
-		return mInit;
-	}
-
-	// Ami gefrickel
-	public void setInit(final Phase[] init2) {
-		mInit = init2;
+	public List<Phase> getInit() {
+		final List<Phase> initPhases = new ArrayList<>();
+		for (final InitialTransition t : mInit) {
+			initPhases.add(t.getDest());
+		}
+		return initPhases;
 	}
 
 	/**
@@ -279,16 +300,12 @@ public class PhaseEventAutomata implements Comparable<Object> {
 	/**
 	 * @return Returns the phases.
 	 */
-	public Phase[] getPhases() {
+	public List<Phase> getPhases() {
 		return mPhases;
 	}
 
 	public List<String> getClocks() {
 		return mClocks;
-	}
-
-	public void setClocks(final List<String> clocks) {
-		mClocks = clocks;
 	}
 
 	/**
@@ -322,16 +339,15 @@ public class PhaseEventAutomata implements Comparable<Object> {
 	}
 
 	public boolean isEmpty() {
-		return getPhases().length <= 0;
+		return getPhases().size() <= 0;
 	}
 
-	// Change by Ami
 	public int getNumberOfLocations() {
-		return getPhases().length;
+		return getPhases().size();
 	}
 
 	public Phase getLocation(final int i) {
-		return getPhases()[i];
+		return getPhases().get(i);
 	}
 
 	public void rename() {
@@ -342,8 +358,7 @@ public class PhaseEventAutomata implements Comparable<Object> {
 			final Phase location = getLocation(i);
 			final String[] result = splitForComponents(location.getName());
 			int maxIndex = 0;
-			for (int j = 0; j < result.length; j++) {
-				final String compName = result[j];
+			for (final String compName : result) {
 				final PEAPhaseIndexMap map = new PEAPhaseIndexMap(compName);
 				if (maxIndex < map.getIndex() - 1) {
 					maxIndex = map.getIndex() - 1;
@@ -360,9 +375,7 @@ public class PhaseEventAutomata implements Comparable<Object> {
 	private static String[] splitForComponents(final String location) {
 		// Create a pattern to match breaks
 		final Pattern p = Pattern.compile("_X_");
-		// Split input with the pattern
-		final String[] result = p.split(location);
-		return result;
+		return p.split(location);
 	}
 
 	// diese Methode vereinfacht die Guards eines PEAS
@@ -370,14 +383,29 @@ public class PhaseEventAutomata implements Comparable<Object> {
 	// wird der Guard vereinfacht zu (A)
 	public void simplifyGuards() {
 
-		final Phase[] phases = getPhases();
-		for (int i = 0; i < phases.length; i++) {
-			final Phase phase = phases[i];
+		final List<Phase> phases = getPhases();
+		for (final Phase phase : phases) {
 			final List<Transition> transitions = phase.getTransitions();
-			for (int j = 0; j < transitions.size(); j++) {
-				final Transition trans = transitions.get(j);
+			for (final Transition trans : transitions) {
 				trans.simplifyGuard();
 			}
 		}
+	}
+
+	public boolean isStrict() {
+		for (final Phase phase : mPhases) {
+			if (phase.isStrict() || !phase.getModifiedConstraints().isEmpty()) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public boolean isTotalised() {
+		return mName.endsWith(PEAComplement.TOTAL_POSTFIX);
+	}
+
+	public boolean isComplemented() {
+		return mName.endsWith(PEAComplement.COMPLEMENT_POSTFIX);
 	}
 }

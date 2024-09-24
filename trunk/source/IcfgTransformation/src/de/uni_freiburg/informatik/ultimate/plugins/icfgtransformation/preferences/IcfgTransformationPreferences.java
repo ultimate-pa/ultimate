@@ -131,6 +131,8 @@ public class IcfgTransformationPreferences extends UltimatePreferenceInitializer
 
 		BV_TO_INT_SUM, BV_TO_INT_BITWISE, BV_TO_INT_LAZY, BV_TO_INT_NONE,
 
+		ABSTRACT_INTERPRETATION_BASED_SIMPLIFICATION,
+
 	}
 
 	/**

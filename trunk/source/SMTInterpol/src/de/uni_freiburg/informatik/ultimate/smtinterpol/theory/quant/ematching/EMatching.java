@@ -36,7 +36,6 @@ import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.Config;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SMTAffineTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.epr.util.Pair;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.epr.util.Triple;
@@ -47,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.quant.QuantLiteral
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.quant.QuantUtil;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.quant.QuantifierTheory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.quant.dawg.Dawg;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.Polynomial;
 
 /**
  * The E-Matching engine. Patterns are compiled to code that will be executed step by step in order to find new
@@ -109,13 +109,13 @@ public class EMatching {
 							patterns.add(eq.getRhs());
 						}
 					} else {
-						final SMTAffineTerm lhsAff = new SMTAffineTerm(lhs);
-						final SMTAffineTerm rhsAff = new SMTAffineTerm(eq.getRhs());
+						final Polynomial lhsAff = new Polynomial(lhs);
+						final Polynomial rhsAff = new Polynomial(eq.getRhs());
 						patterns.addAll(getSubPatterns(lhsAff));
 						patterns.addAll(getSubPatterns(rhsAff));
 					}
 				} else {
-					final SMTAffineTerm affine = ((QuantBoundConstraint) qAtom).getAffineTerm();
+					final Polynomial affine = ((QuantBoundConstraint) qAtom).getAffineTerm();
 					patterns.addAll(getSubPatterns(affine));
 				}
 				if (patterns.isEmpty() || !QuantUtil.containsAppTermsForEachVar(qAtom)) {
@@ -139,7 +139,7 @@ public class EMatching {
 	/**
 	 * Remove everything related to the given clause in the E-Matching engine. This should be called when a pop command
 	 * removes a quantified clause.
-	 * 
+	 *
 	 * @param qClause
 	 *            The quantified clause that is removed.
 	 */
@@ -161,7 +161,7 @@ public class EMatching {
 
 	/**
 	 * This should be called after a pop command.
-	 * 
+	 *
 	 * @param clauses
 	 *            The current quantified clauses.
 	 */
@@ -175,12 +175,14 @@ public class EMatching {
 		}
 	}
 
-	private Collection<Term> getSubPatterns(final SMTAffineTerm at) {
+	private Collection<Term> getSubPatterns(final Polynomial at) {
 		assert QuantUtil.containsArithmeticOnQuantOnlyAtTopLevel(at);
 		final Collection<Term> patterns = new LinkedHashSet<>();
-		for (final Term smd : at.getSummands().keySet()) {
-			if (!(smd instanceof TermVariable) && smd.getFreeVars().length != 0) {
-				patterns.add(smd);
+		for (final Map<Term, Integer> monom : at.getSummands().keySet()) {
+			for (final Term smd : monom.keySet()) {
+				if (!(smd instanceof TermVariable) && smd.getFreeVars().length != 0) {
+					patterns.add(smd);
+				}
 			}
 		}
 		return patterns;
@@ -427,7 +429,7 @@ public class EMatching {
 	/**
 	 * Check if substitutions for this literal are searched for by E-matching. This is the case if the literal contains
 	 * arithmetic only on top level, and each variable appears at least once as argument of an uninterpreted function.
-	 * 
+	 *
 	 * @param qLit
 	 *            the literal to check.
 	 * @return true if handled by E-matching.
@@ -440,7 +442,7 @@ public class EMatching {
 	 * Check if substitutions for this literal are partially searched for by E-matching. This is the case if the literal
 	 * contains arithmetic only on top level, but some variable does not appear as argument of an uninterpreted
 	 * function.
-	 * 
+	 *
 	 * @param qLit
 	 *            the literal to check.
 	 * @return true if handled by E-matching.

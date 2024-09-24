@@ -59,7 +59,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayUpdate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
-import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -224,10 +223,11 @@ public class TransFormulaLRWithArrayCells {
 			disjunctsWithUpdateConstraints[i] = Substitution.apply(mScript, mSelect2CellVariable[i],
 					SmtUtils.and(mScript.getScript(), conjuncts));
 		}
-		final Term resultDisjuntion = SmtUtils.or(mScript.getScript(), disjunctsWithUpdateConstraints);
+		final Term resultDisjunction = SmtUtils.or(mScript.getScript(), disjunctsWithUpdateConstraints);
 		final HashSet<TermVariable> auxVars = new HashSet<>(cvb.getAuxVars());
 
-		final Term result = PartialQuantifierElimination.eliminate(mServices, mScript, resultDisjuntion,
+		final Term result =
+				PartialQuantifierElimination.eliminate(mServices, mScript, resultDisjunction,
 				mSimplificationTechnique);
 		assert SmtUtils.isArrayFree(result) : "Result contains still arrays!";
 

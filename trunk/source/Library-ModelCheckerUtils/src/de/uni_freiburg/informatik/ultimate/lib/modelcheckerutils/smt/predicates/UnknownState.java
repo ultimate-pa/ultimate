@@ -83,11 +83,6 @@ public class UnknownState implements ISLPredicate {
 	}
 
 	@Override
-	public String[] getProcedures() {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
 	public Term getClosedFormula() {
 		throw new UnsupportedOperationException();
 	}

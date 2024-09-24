@@ -6,24 +6,39 @@
           <option name="-tc">../../../trunk/examples/toolchains/C-BIN-BPP.xml</option>
           <option name="-ea" />
   </rundefinition>
+
+  <option name="--force-no-wrapper" />
+  
+  <resultfiles></resultfiles>
     
   <tasks name="ReachSafety32">
     <includesfile>../../../trunk/examples/svcomp/ReachSafety-Arrays.set</includesfile>
     <includesfile>../../../trunk/examples/svcomp/ReachSafety-BitVectors.set</includesfile>
     <includesfile>../../../trunk/examples/svcomp/ReachSafety-ControlFlow.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/ReachSafety-Combinations.set</includesfile>
     <includesfile>../../../trunk/examples/svcomp/ReachSafety-ECA.set</includesfile>
     <includesfile>../../../trunk/examples/svcomp/ReachSafety-Floats.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/ReachSafety-Hardness.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/ReachSafety-Hardware.set</includesfile>
     <includesfile>../../../trunk/examples/svcomp/ReachSafety-Heap.set</includesfile>
     <includesfile>../../../trunk/examples/svcomp/ReachSafety-Loops.set</includesfile>
     <includesfile>../../../trunk/examples/svcomp/ReachSafety-ProductLines.set</includesfile>
     <includesfile>../../../trunk/examples/svcomp/ReachSafety-Recursive.set</includesfile>
     <includesfile>../../../trunk/examples/svcomp/ReachSafety-Sequentialized.set</includesfile>
-	<includesfile>../../../trunk/examples/svcomp/ConcurrencySafety-Main.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/ReachSafety-XCSP.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/ConcurrencySafety-Main.set</includesfile>
     <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Bitvector.epf</option>
   </tasks>
 
   <tasks name="ReachSafety64">
-    <includesfile>../../../trunk/examples/svcomp/Systems_DeviceDriversLinux64_ReachSafety.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/SoftwareSystems-DeviceDriversLinux64Large-ReachSafety.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/SoftwareSystems-DeviceDriversLinux64-ReachSafety.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/SoftwareSystems-coreutils-ReachSafety.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/SoftwareSystems-AWS-C-Common-ReachSafety.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/SoftwareSystems-BusyBox-ReachSafety.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/SoftwareSystems-OpenBSD-ReachSafety.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/SoftwareSystems-coreutils-ReachSafety.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/ReachSafety-Fuzzle.set</includesfile>
     <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-64bit-Automizer_Bitvector.epf</option>
   </tasks>
 
@@ -32,13 +47,41 @@
     <includesfile>../../../trunk/examples/svcomp/MemSafety-Heap.set</includesfile>
     <includesfile>../../../trunk/examples/svcomp/MemSafety-LinkedLists.set</includesfile>
     <includesfile>../../../trunk/examples/svcomp/MemSafety-Other.set</includesfile>
-	<includesfile>../../../trunk/examples/svcomp/MemSafety-TerminCrafted.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/ConcurrencySafety-MemSafety.set</includesfile>
     <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-DerefFreeMemtrack-32bit-Automizer_Bitvector.epf</option>
   </tasks>
 
   <tasks name="MemSafety64">
-    <includesfile>../../../trunk/examples/svcomp/Systems_BusyBox_MemSafety.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/MemSafety-Juliet.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/SoftwareSystems-BusyBox-MemSafety.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/SoftwareSystems-coreutils-MemSafety.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/SoftwareSystems-DeviceDriversLinux64-MemSafety.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/SoftwareSystems-OpenBSD-MemSafety.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/SoftwareSystems-SQLite-MemSafety.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/SoftwareSystems-uthash-MemSafety.set</includesfile>
     <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-DerefFreeMemtrack-64bit-Automizer_Bitvector.epf</option>
   </tasks>
 
+  <tasks name="NoOverflow32">
+    <includesfile>../../../trunk/examples/svcomp/NoOverflows-Main.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/ConcurrencySafety-NoOverflows.set</includesfile>
+    <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Overflow-32bit-Automizer_Bitvector.epf</option>
+  </tasks>
+
+  <tasks name="NoOverflow64">
+    <includesfile>../../../trunk/examples/svcomp/NoOverflows-Juliet.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/SoftwareSystems-coreutils-NoOverflows.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/SoftwareSystems-uthash-NoOverflows.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/SoftwareSystems-BusyBox-NoOverflows.set</includesfile>
+    <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Overflow-64bit-Automizer_Bitvector.epf</option>
+  </tasks>
+
+  <tasks name="Termination64">
+    <includesfile>../../../trunk/examples/svcomp/Termination-MainControlFlow.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/Termination-MainHeap.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/Termination-Other.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/Termination-BitVectors.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/SoftwareSystems-DeviceDriversLinux64-Termination.set</includesfile>
+    <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Termination-64bit-Automizer_Bitvector.epf</option>
+  </tasks>
 </benchmark>

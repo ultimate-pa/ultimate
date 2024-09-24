@@ -65,9 +65,17 @@ public final class SMTAffineTerm {
 			Rational factor = Rational.ONE;
 			if (subterm instanceof ApplicationTerm && ((ApplicationTerm) subterm).getFunction().getName() == "*") {
 				final Term[] params = ((ApplicationTerm) subterm).getParameters();
-				assert params.length == 2;
-				factor = convertConstant((ConstantTerm) parseConstant(params[0]));
-				subterm = params[1];
+				final Term constant = parseConstant(params[0]);
+				if (constant instanceof ConstantTerm) {
+					factor = convertConstant((ConstantTerm) constant);
+					if (params.length == 2) {
+						subterm = params[1];
+					} else {
+						final Term[] remainder = new Term[params.length - 1];
+						System.arraycopy(params, 1, remainder, 0, remainder.length);
+						subterm = subterm.getTheory().term(((ApplicationTerm) subterm).getFunction(), remainder);
+					}
+				}
 			}
 			if (subterm instanceof ApplicationTerm && ((ApplicationTerm) subterm).getFunction().getName() == "-"
 					&& ((ApplicationTerm) subterm).getParameters().length == 1) {
@@ -101,8 +109,7 @@ public final class SMTAffineTerm {
 		Term numerator;
 		Rational denominator;
 		boolean isNegated = false;
-		if (term instanceof ApplicationTerm
-				&& ((ApplicationTerm) term).getFunction().getName().equals("/")) {
+		if (term instanceof ApplicationTerm && ((ApplicationTerm) term).getFunction().getName().equals("/")) {
 			final Term[] params = ((ApplicationTerm) term).getParameters();
 			numerator = params[0];
 			if (isToReal(params[1])) {
@@ -186,7 +193,7 @@ public final class SMTAffineTerm {
 	public static Rational convertConstant(final ConstantTerm term) {
 		Rational constant;
 		final Object value = term.getValue();
-		if (value instanceof BigInteger) {
+		if (value instanceof BigInteger) { //TODO value of bitvec constant can be String!
 			constant = Rational.valueOf((BigInteger) value, BigInteger.ONE);
 		} else if (value instanceof BigDecimal) {
 			final BigDecimal decimal = (BigDecimal) value;
@@ -239,22 +246,6 @@ public final class SMTAffineTerm {
 
 	public Map<Term, Rational> getSummands() {
 		return mSummands;
-	}
-
-	/**
-	 * Convert this affine term to a plain SMTLib term.
-	 *
-	 * @param unifier
-	 *            the term compiler object that contains the normalization map.
-	 * @param sort
-	 *            the expected sort
-	 */
-	public Term toTerm(final TermCompiler unifier, final Sort sort) {
-		final Term term = toTerm(sort);
-		if (term instanceof ApplicationTerm && ((ApplicationTerm) term).getFunction().getName().equals("+")) {
-			return unifier.unifySummation((ApplicationTerm) term);
-		}
-		return term;
 	}
 
 	/**
@@ -335,5 +326,29 @@ public final class SMTAffineTerm {
 	@Override
 	public int hashCode() {
 		return HashUtils.hashJenkins(mConstant.hashCode(), mSummands);
+	}
+
+	public final static Rational constDiv(final Rational c0, final Rational c1) {
+		final Rational div = c0.div(c1);
+		return c1.isNegative() ? div.ceil() : div.floor();
+	}
+
+	public static Rational mod(final Rational c0, final Rational c1) {
+		final Rational mod = c0.sub(constDiv(c0, c1).mul(c1));
+		return mod;
+	}
+
+	public void mod(Rational maxNumber) {
+		final Iterator<Map.Entry<Term, Rational>> mapIterator = mSummands.entrySet().iterator();
+		while(mapIterator.hasNext()) {
+			final Map.Entry<Term, Rational> entry = mapIterator.next();
+			final Rational newValue = SMTAffineTerm.mod(entry.getValue(), maxNumber);
+			if (newValue == Rational.ZERO) {
+				mapIterator.remove();
+			} else{
+				entry.setValue(newValue);
+			}
+		}
+		mConstant = SMTAffineTerm.mod(mConstant, maxNumber);
 	}
 }

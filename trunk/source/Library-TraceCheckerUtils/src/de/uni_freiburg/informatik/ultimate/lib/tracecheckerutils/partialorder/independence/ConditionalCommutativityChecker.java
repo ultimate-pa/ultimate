@@ -25,8 +25,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence;
 
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
@@ -54,11 +52,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 public class ConditionalCommutativityChecker<L extends IAction> implements IConditionalCommutativityChecker<L> {
 
 	private final IConditionalCommutativityCriterion<L> mCriterion;
-	private IIndependenceRelation<IPredicate, L> mIndependenceRelation;
+	private final IIndependenceRelation<IPredicate, L> mIndependenceRelation;
 	private final IIndependenceConditionGenerator mGenerator;
 	private final ITraceChecker<L> mTraceChecker;
-	private ManagedScript mManagedScript;
-	private IConditionalCommutativityCheckerStatisticsUtils mStatisticsUtils;
+	private final ManagedScript mManagedScript;
+	private final IConditionalCommutativityCheckerStatisticsUtils mStatisticsUtils;
 
 	/**
 	 * Constructs a new instance of ConditionalCommutativityChecker.
@@ -70,7 +68,7 @@ public class ConditionalCommutativityChecker<L extends IAction> implements ICond
 	 * @param independenceRelation
 	 *            Independence relation for commutativity
 	 * @param script
-	 *            Script for conjunction handling           
+	 *            Script for conjunction handling
 	 * @param generator
 	 *            Generator for constructing commutativity conditions
 	 * @param traceChecker
@@ -79,7 +77,7 @@ public class ConditionalCommutativityChecker<L extends IAction> implements ICond
 	 *            An IConditionalCommutativityCheckerStatisticsUtils used for statistics
 	 */
 	public ConditionalCommutativityChecker(final IConditionalCommutativityCriterion<L> criterion,
-			final IIndependenceRelation<IPredicate, L> independenceRelation, ManagedScript script,
+			final IIndependenceRelation<IPredicate, L> independenceRelation, final ManagedScript script,
 			final IIndependenceConditionGenerator generator, final ITraceChecker<L> traceChecker,
 			final IConditionalCommutativityCheckerStatisticsUtils statisticsUtils) {
 		mCriterion = criterion;
@@ -105,92 +103,87 @@ public class ConditionalCommutativityChecker<L extends IAction> implements ICond
 	 *            A letter of an outgoing transition of state
 	 * @param letter2
 	 *            A letter of another outgoing transition of state
-	 * @return
-	 *            A list of predicates which servers as a proof for conditional commutativity.
+	 * @return A list of predicates which servers as a proof for conditional commutativity.
 	 */
 	@Override
 	public TracePredicates checkConditionalCommutativity(final IRun<L, IPredicate> currentRun,
-			List<IPredicate> predicates, final IPredicate state, final L letter1, final L letter2) {
-		
+			final List<IPredicate> predicates, final IPredicate state, final L letter1, final L letter2) {
+
 		try {
-		mStatisticsUtils.startStopwatch();
-		if (mManagedScript.isLocked()) {
-			mManagedScript.requestLockRelease();
-		}
-		
-		if (((IAction) letter1).getSucceedingProcedure().equals(((IAction) letter2).getSucceedingProcedure())) {
-			return null;
-		}
-		
-		if (state instanceof SleepPredicate) {
-			ImmutableSet<?> sleepSet = ((SleepPredicate<L>) state).getSleepSet();
-			if (sleepSet.contains(letter1) && sleepSet.contains(letter2)) {
-				return null;
-			}
-		}
-		
-		IPredicate pred = null;
-		if (!predicates.isEmpty()) {
-			pred  = new PredicateWithConjuncts(0, new ImmutableList<>(predicates), mManagedScript.getScript());
-			pred = new BasicPredicate(0, pred.getProcedures(), pred.getFormula(), pred.getVars(),
-					pred.getFuns(), pred.getClosedFormula());
-		}
-				
-		if (mIndependenceRelation.isIndependent(pred, letter1, letter2).equals(Dependence.INDEPENDENT)) {
-			return null;
-		}
-		
-		if (mCriterion.decide(state, letter1, letter2)) {
-			
+			mStatisticsUtils.startStopwatch();
 			if (mManagedScript.isLocked()) {
 				mManagedScript.requestLockRelease();
 			}
-			IPredicate condition;
-			if (pred != null) {
-				condition = mGenerator.generateCondition(
-						new PredicateWithConjuncts(0, new ImmutableList<>(predicates), mManagedScript.getScript()),
-						letter1.getTransformula(), letter2.getTransformula());
-			} else {
-				condition = mGenerator.generateCondition(letter1.getTransformula(), letter2.getTransformula());
+
+			if (((IAction) letter1).getSucceedingProcedure().equals(((IAction) letter2).getSucceedingProcedure())) {
+				return null;
 			}
-			mStatisticsUtils.addConditionCalculation();
-			mCriterion.updateCriterion(state, letter1, letter2);
-			
-			if ((condition != null) && (!condition.getFormula().toString().equals("true")) && mCriterion.decide(condition)) {
-				
-				TracePredicates trace = mTraceChecker.checkTrace(currentRun, null, condition);
-				mStatisticsUtils.addTraceCheck();
-				if (trace != null) {
-					int debug0 = 0;
-					/*
-					try {
-					      FileWriter myWriter = new FileWriter("C:\\Users\\ebbim\\Desktop\\test.txt", true);
-					      myWriter.write("state: " + pred + ", letter1: "
-					      + letter1.getTransformula().getFormula() + ", letter2: "
-					    		  + letter2.getTransformula().getFormula() + ", con: " + condition + "\n");
-					      myWriter.close();
-					      System.out.println("Successfully wrote to the file.");
-					    } catch (IOException e) {
-					      System.out.println("An error occurred.");
-					      e.printStackTrace();
-					    }*/
-						//mCriterion.updateCondition(condition);
-				} else if (mTraceChecker.wasImperfectProof()) {
-					mStatisticsUtils.addImperfectProof();
+
+			if (state instanceof SleepPredicate) {
+				final ImmutableSet<?> sleepSet = ((SleepPredicate<L>) state).getSleepSet();
+				if (sleepSet.contains(letter1) && sleepSet.contains(letter2)) {
+					return null;
 				}
-				return trace;
 			}
-		}
-		return null;
+
+			IPredicate pred = null;
+			if (!predicates.isEmpty()) {
+				pred = new PredicateWithConjuncts(0, new ImmutableList<>(predicates), mManagedScript.getScript());
+				pred = new BasicPredicate(0, pred.getFormula(), pred.getVars(), pred.getFuns(),
+						pred.getClosedFormula());
+			}
+
+			if (mIndependenceRelation.isIndependent(pred, letter1, letter2).equals(Dependence.INDEPENDENT)) {
+				return null;
+			}
+
+			if (mCriterion.decide(state, letter1, letter2)) {
+
+				if (mManagedScript.isLocked()) {
+					mManagedScript.requestLockRelease();
+				}
+				IPredicate condition;
+				if (pred != null) {
+					condition = mGenerator.generateCondition(
+							new PredicateWithConjuncts(0, new ImmutableList<>(predicates), mManagedScript.getScript()),
+							letter1.getTransformula(), letter2.getTransformula());
+				} else {
+					condition = mGenerator.generateCondition(letter1.getTransformula(), letter2.getTransformula());
+				}
+				mStatisticsUtils.addConditionCalculation();
+				mCriterion.updateCriterion(state, letter1, letter2);
+
+				if ((condition != null) && (!condition.getFormula().toString().equals("true"))
+						&& mCriterion.decide(condition)) {
+
+					final TracePredicates trace = mTraceChecker.checkTrace(currentRun, null, condition);
+					mStatisticsUtils.addTraceCheck();
+					if (trace != null) {
+						final int debug0 = 0;
+						/*
+						 * try { FileWriter myWriter = new FileWriter("C:\\Users\\ebbim\\Desktop\\test.txt", true);
+						 * myWriter.write("state: " + pred + ", letter1: " + letter1.getTransformula().getFormula() +
+						 * ", letter2: " + letter2.getTransformula().getFormula() + ", con: " + condition + "\n");
+						 * myWriter.close(); System.out.println("Successfully wrote to the file."); } catch (IOException
+						 * e) { System.out.println("An error occurred."); e.printStackTrace(); }
+						 */
+						// mCriterion.updateCondition(condition);
+					} else if (mTraceChecker.wasImperfectProof()) {
+						mStatisticsUtils.addImperfectProof();
+					}
+					return trace;
+				}
+			}
+			return null;
 		} finally {
 			mStatisticsUtils.stopStopwatch();
 		}
 	}
-	
+
 	public IConditionalCommutativityCriterion<L> getCriterion() {
 		return mCriterion;
 	}
-	
+
 	public ITraceChecker<L> getTraceChecker() {
 		return mTraceChecker;
 	}

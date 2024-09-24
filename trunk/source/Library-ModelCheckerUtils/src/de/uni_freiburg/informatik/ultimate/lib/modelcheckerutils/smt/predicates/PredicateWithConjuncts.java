@@ -30,8 +30,6 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates
 import java.util.HashSet;
 import java.util.Set;
 
-import org.apache.commons.lang3.ArrayUtils;
-
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramFunction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -51,9 +49,9 @@ public class PredicateWithConjuncts implements IPredicate {
 	protected final Script mScript;
 	private Term mFormula;
 	private Term mClosedFormula;
-	private String[] mProcedures;
-	private Set<IProgramVar> mVars;
-	private Set<IProgramFunction> mFuns;
+	private final String[] mProcedures;
+	private final Set<IProgramVar> mVars;
+	private final Set<IProgramFunction> mFuns;
 	private IPredicate mOld;
 	private IPredicate mNew;
 
@@ -67,7 +65,8 @@ public class PredicateWithConjuncts implements IPredicate {
 	 * @param script
 	 *            A script to handle conjunction of terms.
 	 */
-	public PredicateWithConjuncts(final int serialNumber, final ImmutableList<IPredicate> conjuncts, Script script) {
+	public PredicateWithConjuncts(final int serialNumber, final ImmutableList<IPredicate> conjuncts,
+			final Script script) {
 		mSerial = serialNumber;
 		mConjuncts = conjuncts;
 		mScript = script;
@@ -88,10 +87,10 @@ public class PredicateWithConjuncts implements IPredicate {
 	 * @param newConjunct
 	 *            A new conjunct to be added. Should not be an instance of this class (otherwise, nesting occurs).
 	 * @param script
-	 *            A script to handle conjunction of terms.            
+	 *            A script to handle conjunction of terms.
 	 */
 	public PredicateWithConjuncts(final int serialNumber, final IPredicate old, final IPredicate newConjunct,
-			Script script) {
+			final Script script) {
 		mSerial = serialNumber;
 		mScript = script;
 		mProcedures = new String[0];
@@ -136,12 +135,12 @@ public class PredicateWithConjuncts implements IPredicate {
 	@Override
 	public Term getFormula() {
 		// compute on-demand (and possibly use partial results when constructed from conjunction)
-		if (mFormula == null) {			
+		if (mFormula == null) {
 			if (mOld != null) {
 				mFormula = SmtUtils.and(mScript, mOld.getFormula(), mNew.getFormula());
 			} else {
 				Term term = null;
-				for (IPredicate conjunct : mConjuncts) {
+				for (final IPredicate conjunct : mConjuncts) {
 					if (term == null) {
 						term = conjunct.getFormula();
 					} else {
@@ -157,12 +156,12 @@ public class PredicateWithConjuncts implements IPredicate {
 	@Override
 	public Term getClosedFormula() {
 		// compute on-demand (and possibly use partial results when constructed from conjunction)
-		if (mClosedFormula == null) {			
+		if (mClosedFormula == null) {
 			if (mOld != null) {
 				mClosedFormula = SmtUtils.and(mScript, mOld.getClosedFormula(), mNew.getClosedFormula());
 			} else {
 				Term term = null;
-				for (IPredicate conjunct : mConjuncts) {
+				for (final IPredicate conjunct : mConjuncts) {
 					if (term == null) {
 						term = conjunct.getClosedFormula();
 					} else {
@@ -176,22 +175,6 @@ public class PredicateWithConjuncts implements IPredicate {
 	}
 
 	@Override
-	public String[] getProcedures() {
-		// compute on-demand (and possibly use partial results when constructed from conjunction)
-		if (mProcedures.length == 0) {
-			if (mOld != null) {
-				ArrayUtils.addAll(mProcedures, mOld.getProcedures());
-				ArrayUtils.addAll(mProcedures, mNew.getProcedures());
-			} else {
-				for (IPredicate conjunct : mConjuncts) {
-					ArrayUtils.addAll(mProcedures, conjunct.getProcedures());
-				}
-			}
-		}
-		return mProcedures;
-	}
-
-	@Override
 	public Set<IProgramVar> getVars() {
 		// compute on-demand (and possibly use partial results when constructed from conjunction)
 		if (mVars.isEmpty()) {
@@ -199,7 +182,7 @@ public class PredicateWithConjuncts implements IPredicate {
 				mVars.addAll(mOld.getVars());
 				mVars.addAll(mNew.getVars());
 			} else {
-				for (IPredicate conjunct : mConjuncts) {
+				for (final IPredicate conjunct : mConjuncts) {
 					mVars.addAll(conjunct.getVars());
 				}
 			}
@@ -215,14 +198,14 @@ public class PredicateWithConjuncts implements IPredicate {
 				mFuns.addAll(mOld.getFuns());
 				mFuns.addAll(mNew.getFuns());
 			} else {
-				for (IPredicate conjunct : mConjuncts) {
+				for (final IPredicate conjunct : mConjuncts) {
 					mFuns.addAll(conjunct.getFuns());
 				}
 			}
 		}
 		return mFuns;
 	}
-	
+
 	@Override
 	public String toString() {
 		return mSerial + "#" + mConjuncts.toString();

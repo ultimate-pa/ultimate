@@ -27,10 +27,14 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness;
 
-import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
@@ -45,9 +49,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 public class ExtractedLocationInvariant extends ExtractedWitnessInvariant {
 	private final boolean mIsBefore;
 
-	public ExtractedLocationInvariant(final String invariant, final Collection<String> nodeLabel, final IASTNode match,
-			final boolean isBefore) {
-		super(invariant, nodeLabel, match);
+	public ExtractedLocationInvariant(final String invariant, final IASTNode match, final boolean isBefore) {
+		super(invariant, match);
 		mIsBefore = isBefore;
 	}
 
@@ -59,10 +62,23 @@ public class ExtractedLocationInvariant extends ExtractedWitnessInvariant {
 	public ExpressionResult transform(final ILocation loc, final IDispatcher dispatcher,
 			final ExpressionResult expressionResult) {
 		final ExpressionResult invariantExprResult = instrument(loc, dispatcher);
+		final ExpressionResultBuilder erb =
+				new ExpressionResultBuilder(expressionResult).addAllExceptLrValueAndStatements(invariantExprResult);
+
+		// Make sure that the location invariant (incl. all auxiliary statements) is executed atomically.
+		final Statement invariant =
+				new AtomicStatement(loc, invariantExprResult.getStatements().toArray(Statement[]::new));
+
+		// Insert the location invariant at the appropriate location.
 		if (mIsBefore) {
-			return new ExpressionResultBuilder(invariantExprResult).addAllIncludingLrValue(expressionResult).build();
+			// Push location invariants after leading labels, if there are any.
+			final var statements = expressionResult.getStatements();
+			final List<Statement> labels =
+					statements.stream().takeWhile(Label.class::isInstance).collect(Collectors.toList());
+			final List<Statement> remainder = statements.subList(labels.size(), statements.size());
+			return erb.resetStatements(labels).addStatement(invariant).addStatements(remainder).build();
 		}
-		return new ExpressionResultBuilder(expressionResult).addAllExceptLrValue(invariantExprResult).build();
+		return erb.addStatement(invariant).build();
 	}
 
 	@Override

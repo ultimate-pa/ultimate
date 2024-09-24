@@ -69,7 +69,6 @@ import de.uni_freiburg.informatik.ultimate.ltl2aut.preferences.PreferenceInitial
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence.Origin;
 import de.uni_freiburg.informatik.ultimate.util.simplifier.NormalFormTransformer;
 
 /**
@@ -239,7 +238,7 @@ public class Never2Automaton {
 		for (final Expression expr : simplify(checkExpr.getExpression())) {
 			final List<Statement> stmts = new ArrayList<>(preStmts);
 			stmts.add(new AssumeStatement(loc, expr));
-			rtr.add(mCodeblockFactory.constructStatementSequence(null, null, stmts, Origin.ASSERT));
+			rtr.add(mCodeblockFactory.constructStatementSequence(null, null, stmts));
 		}
 		return rtr;
 	}

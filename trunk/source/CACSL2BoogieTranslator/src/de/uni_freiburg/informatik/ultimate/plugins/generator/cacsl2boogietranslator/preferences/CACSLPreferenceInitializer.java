@@ -136,7 +136,12 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 			+ "bytes or more are overapproximated, i.e., Ultimate assumes that the string can contain arbitrary bytes.";
 	private static final int DEFAULT_STRING_OVERAPPROXIMATION_THRESHOLD = 9;
 
-	public enum PointerCheckMode {
+	public static final String LABEL_ALLOW_UNDEFINED_FUNCTIONS = "Allow undefined functions";
+	private static final String DESC_ALLOW_UNDEFINED_FUNCTIONS =
+			"Allow the calls of functions without a definition. In that case they are modeled fully non-deterministically.";
+	private static final boolean DEFAULT_ALLOW_UNDEFINED_FUNCTIONS = true;
+
+	public enum CheckMode {
 		IGNORE, ASSUME, ASSERTandASSUME
 	}
 
@@ -228,7 +233,7 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 
 		private final SmtRoundingMode mSmtRoundingMode;
 
-		private FloatingPointRoundingMode(final SmtRoundingMode smtRoundingMode) {
+		FloatingPointRoundingMode(final SmtRoundingMode smtRoundingMode) {
 			mSmtRoundingMode = smtRoundingMode;
 		}
 
@@ -250,12 +255,12 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<>(MAINPROC_LABEL, MAINPROC_DEFAULT, MAINPROC_DESC, PreferenceType.String),
 				new UltimatePreferenceItem<>(LABEL_CHECK_ASSERTIONS, false, DESC_CHECK_ASSERTIONS,
 						PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_CHECK_POINTER_VALIDITY, PointerCheckMode.ASSERTandASSUME,
-						PreferenceType.Combo, PointerCheckMode.values()),
-				new UltimatePreferenceItem<>(LABEL_CHECK_POINTER_ALLOC, PointerCheckMode.ASSERTandASSUME,
-						PreferenceType.Combo, PointerCheckMode.values()),
-				new UltimatePreferenceItem<>(LABEL_CHECK_ARRAYACCESSOFFHEAP, PointerCheckMode.ASSERTandASSUME,
-						PreferenceType.Combo, PointerCheckMode.values()),
+				new UltimatePreferenceItem<>(LABEL_CHECK_POINTER_VALIDITY, CheckMode.ASSERTandASSUME,
+						PreferenceType.Combo, CheckMode.values()),
+				new UltimatePreferenceItem<>(LABEL_CHECK_POINTER_ALLOC, CheckMode.ASSERTandASSUME, PreferenceType.Combo,
+						CheckMode.values()),
+				new UltimatePreferenceItem<>(LABEL_CHECK_ARRAYACCESSOFFHEAP, CheckMode.ASSERTandASSUME,
+						PreferenceType.Combo, CheckMode.values()),
 				new UltimatePreferenceItem<>(LABEL_CHECK_FREE_VALID, true, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_CHECK_MEMORY_LEAK_IN_MAIN, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_SVCOMP_MEMTRACK_COMPATIBILITY_MODE, false,
@@ -269,12 +274,13 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<>(LABEL_REPORT_UNSOUNDNESS_WARNING, true, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_BITPRECISE_BITFIELDS, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_CHECK_POINTER_SUBTRACTION_AND_COMPARISON_VALIDITY,
-						PointerCheckMode.ASSERTandASSUME, PreferenceType.Combo, PointerCheckMode.values()),
-				new UltimatePreferenceItem<>(LABEL_CHECK_DIVISION_BY_ZERO_OF_INTEGER_TYPES,
-						PointerCheckMode.ASSERTandASSUME, PreferenceType.Combo, PointerCheckMode.values()),
-				new UltimatePreferenceItem<>(LABEL_CHECK_DIVISION_BY_ZERO_OF_FLOATING_TYPES, PointerCheckMode.IGNORE,
-						PreferenceType.Combo, PointerCheckMode.values()),
-				new UltimatePreferenceItem<>(LABEL_CHECK_SIGNED_INTEGER_BOUNDS, false, PreferenceType.Boolean),
+						CheckMode.ASSERTandASSUME, PreferenceType.Combo, CheckMode.values()),
+				new UltimatePreferenceItem<>(LABEL_CHECK_DIVISION_BY_ZERO_OF_INTEGER_TYPES, CheckMode.ASSERTandASSUME,
+						PreferenceType.Combo, CheckMode.values()),
+				new UltimatePreferenceItem<>(LABEL_CHECK_DIVISION_BY_ZERO_OF_FLOATING_TYPES, CheckMode.IGNORE,
+						PreferenceType.Combo, CheckMode.values()),
+				new UltimatePreferenceItem<>(LABEL_CHECK_SIGNED_INTEGER_BOUNDS, CheckMode.IGNORE, PreferenceType.Combo,
+						CheckMode.values()),
 				new UltimatePreferenceItem<>(LABEL_CHECK_DATA_RACES, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_ASSUME_NONDET_VALUES_IN_RANGE, true, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_BITVECTOR_TRANSLATION, false, PreferenceType.Boolean),
@@ -317,7 +323,9 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 						DESC_ADAPT_MEMORY_MODEL_ON_POINTER_CASTS, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_STRING_OVERAPPROXIMATION_THRESHOLD,
 						DEFAULT_STRING_OVERAPPROXIMATION_THRESHOLD, DESC_STRING_OVERAPPROXIMATION_THRESHOLD,
-						PreferenceType.Integer) };
+						PreferenceType.Integer),
+				new UltimatePreferenceItem<>(LABEL_ALLOW_UNDEFINED_FUNCTIONS, DEFAULT_ALLOW_UNDEFINED_FUNCTIONS,
+						DESC_ALLOW_UNDEFINED_FUNCTIONS, PreferenceType.Boolean), };
 
 	}
 }

@@ -35,6 +35,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.LoopAccelerators;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils.HoareTripleChecks;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.RefinementStrategyExceptionBlacklist;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.HoareAnnotationPositions;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.HoareProofSettings;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SMTFeatureExtractionTermClassifier.ScoringMethod;
@@ -54,7 +56,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.ConComCheckerCriterion;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.FloydHoareAutomataReuse;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.FloydHoareAutomataReuseEnhancement;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareAnnotationPositions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.McrInterpolantMethod;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
@@ -75,7 +76,6 @@ public final class TAPreferences {
 	private final String mDumpPath;
 	private final InterpolantAutomatonEnhancement mDeterminiation;
 	private final Minimization mMinimize;
-	private final boolean mHoare;
 	private final Concurrency mAutomataTypeConcurrency;
 	private final HoareTripleChecks mHoareTripleChecks;
 	@Reflected(excluded = true)
@@ -132,8 +132,6 @@ public final class TAPreferences {
 		mWatchIteration = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_WATCHITERATION);
 
 		mArtifact = mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_ARTIFACT, Artifact.class);
-
-		mHoare = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_HOARE);
 
 		mHoareAnnotationPositions = mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_HOARE_POSITIONS,
 				HoareAnnotationPositions.class);
@@ -363,10 +361,6 @@ public final class TAPreferences {
 
 	public Concurrency getAutomataTypeConcurrency() {
 		return mAutomataTypeConcurrency;
-	}
-
-	public boolean computeHoareAnnotation() {
-		return mHoare;
 	}
 
 	public HoareAnnotationPositions getHoareAnnotationPositions() {
@@ -604,4 +598,9 @@ public final class TAPreferences {
 		return mConComCheckerConditionCriterion;
 	}	
 
+	// TODO #proofRefactor update all settings files to reflect the removal / changes to the Hoare/proof settings
+	public HoareProofSettings getHoareSettings() {
+		return new HoareProofSettings(getHoareAnnotationPositions(), getSimplificationTechnique(),
+				getXnfConversionTechnique());
+	}
 }

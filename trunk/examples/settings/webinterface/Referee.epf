@@ -2,3 +2,13 @@
 file_export_version=3.0
 @UltimateCore=0.0.1
 /instance/UltimateCore/Generate\ benchmark\ results=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Future-live\ optimization=false
+
+@de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=0.0.1
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Entry\ function=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Use\ bitvectors\ instead\ of\ ints=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Memory\ model=main
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Adapt\ memory\ model\ on\ pointer\ casts\ if\ necessary=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Report\ unsoundness\ warnings=false
+

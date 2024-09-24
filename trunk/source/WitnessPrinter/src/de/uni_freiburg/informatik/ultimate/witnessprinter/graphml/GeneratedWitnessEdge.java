@@ -178,10 +178,6 @@ public class GeneratedWitnessEdge<TE, E> {
 	}
 
 	private boolean appendValueEqualities(final StringBuilder sb, final E variable, final boolean addConjunction) {
-		if (mStringProvider.containsProcedureCall(variable)) {
-			return false;
-		}
-
 		final String varStr = mStringProvider.getStringFromExpression(variable);
 		if (varStr.contains("\\") || varStr.contains("&")) {
 			// is something like read, old, etc.

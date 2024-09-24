@@ -37,7 +37,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -60,11 +59,12 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.C
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement.StepInfo;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdgeAnnotation;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNodeAnnotation;
+import de.uni_freiburg.informatik.ultimate.witnessparser.preferences.WitnessParserPreferences;
 
 /**
  *
@@ -75,6 +75,7 @@ public class GraphMLCorrectnessWitnessExtractor extends CorrectnessWitnessExtrac
 	private WitnessNode mWitnessNode;
 	private final Collection<Class<?>> mLoopTypes;
 	private final Collection<Class<?>> mConditionalTypes;
+	private final boolean mCheckOnlyLoopInvariants;
 
 	public GraphMLCorrectnessWitnessExtractor(final IUltimateServiceProvider service) {
 		super(service);
@@ -82,6 +83,7 @@ public class GraphMLCorrectnessWitnessExtractor extends CorrectnessWitnessExtrac
 				IASTWhileStatement.class, IASTForStatement.class });
 		mConditionalTypes = Arrays.asList(new Class[] { IASTDoStatement.class, IASTWhileStatement.class,
 				IASTForStatement.class, IASTIfStatement.class });
+		mCheckOnlyLoopInvariants = mPrefs.getBoolean(WitnessParserPreferences.LABEL_CW_USE_ONLY_LOOPINVARIANTS);
 	}
 
 	public void setWitness(final WitnessNode wnode) {
@@ -94,8 +96,13 @@ public class GraphMLCorrectnessWitnessExtractor extends CorrectnessWitnessExtrac
 	}
 
 	@Override
-	protected HashRelation<IASTNode, IExtractedWitnessEntry> computeWitnessEntries() {
-		Map<IASTNode, ExtractedWitnessInvariant> map = new HashMap<>();
+	protected IExtractedCorrectnessWitness extractWitness() {
+		Map<IASTNode, LabeledInvariant> map = new HashMap<>();
+		if (mCheckOnlyLoopInvariants) {
+			mLogger.info("Only extracting loop invariants from correctness witness");
+		} else {
+			mLogger.info("Extracting all invariants from correctness witness");
+		}
 
 		final Deque<WitnessNode> worklist = new ArrayDeque<>();
 		final Set<WitnessNode> closed = new HashSet<>();
@@ -106,17 +113,15 @@ public class GraphMLCorrectnessWitnessExtractor extends CorrectnessWitnessExtrac
 				continue;
 			}
 			worklist.addAll(current.getOutgoingNodes());
-			final Map<IASTNode, ExtractedWitnessInvariant> match = matchWitnessToAstNode(current, mStats);
+			final var match = matchWitnessToAstNode(current, mStats);
 			map = mergeMatchesIfNecessary(map, match);
 		}
-		final HashRelation<IASTNode, IExtractedWitnessEntry> rtr = new HashRelation<>();
-		map.forEach(rtr::addPair);
 		mLogger.info("Processed " + closed.size() + " nodes");
-		return rtr;
+		return new GraphMLExtractedCorrectnessWitness(map);
 	}
 
-	protected Map<IASTNode, ExtractedWitnessInvariant> mergeMatchesIfNecessary(
-			final Map<IASTNode, ExtractedWitnessInvariant> mapA, final Map<IASTNode, ExtractedWitnessInvariant> mapB) {
+	protected Map<IASTNode, LabeledInvariant> mergeMatchesIfNecessary(final Map<IASTNode, LabeledInvariant> mapA,
+			final Map<IASTNode, LabeledInvariant> mapB) {
 		if (mapA == null || mapA.isEmpty()) {
 			return mapB;
 		}
@@ -124,17 +129,17 @@ public class GraphMLCorrectnessWitnessExtractor extends CorrectnessWitnessExtrac
 			return mapA;
 		}
 
-		final Map<IASTNode, ExtractedWitnessInvariant> rtr = new HashMap<>(mapA.size());
-		for (final Entry<IASTNode, ExtractedWitnessInvariant> entryB : mapB.entrySet()) {
-			final ExtractedWitnessInvariant aWitnessInvariant = mapA.get(entryB.getKey());
+		final Map<IASTNode, LabeledInvariant> rtr = new HashMap<>(mapA.size());
+		for (final var entryB : mapB.entrySet()) {
+			final var aWitnessInvariant = mapA.get(entryB.getKey());
 			if (aWitnessInvariant == null) {
 				rtr.put(entryB.getKey(), entryB.getValue());
 			} else {
 				rtr.put(entryB.getKey(), mergeAndWarn(aWitnessInvariant, entryB.getValue()));
 			}
 		}
-		for (final Entry<IASTNode, ExtractedWitnessInvariant> entryA : mapA.entrySet()) {
-			final ExtractedWitnessInvariant aWitnessInvariant = mapB.get(entryA.getKey());
+		for (final var entryA : mapA.entrySet()) {
+			final var aWitnessInvariant = mapB.get(entryA.getKey());
 			if (aWitnessInvariant == null) {
 				rtr.put(entryA.getKey(), entryA.getValue());
 			} else {
@@ -144,9 +149,8 @@ public class GraphMLCorrectnessWitnessExtractor extends CorrectnessWitnessExtrac
 		return rtr;
 	}
 
-	private ExtractedWitnessInvariant mergeAndWarn(final ExtractedWitnessInvariant invA,
-			final ExtractedWitnessInvariant invB) {
-		final ExtractedWitnessInvariant newInvariant = mergeInvariants(invA, invB);
+	private LabeledInvariant mergeAndWarn(final LabeledInvariant invA, final LabeledInvariant invB) {
+		final LabeledInvariant newInvariant = mergeInvariants(invA, invB);
 		mLogger.warn("Merging invariants");
 		mLogger.warn("  " + invA.toString());
 		mLogger.warn("  " + invB.toString());
@@ -154,16 +158,15 @@ public class GraphMLCorrectnessWitnessExtractor extends CorrectnessWitnessExtrac
 		return newInvariant;
 	}
 
-	private static ExtractedWitnessInvariant mergeInvariants(final ExtractedWitnessInvariant ewi1,
-			final ExtractedWitnessInvariant ewi2) {
+	private static LabeledInvariant mergeInvariants(final LabeledInvariant ewi1, final LabeledInvariant ewi2) {
 		if (ewi2 == null) {
 			return ewi1;
 		}
 		if (ewi1.getRelatedAstNode() != ewi2.getRelatedAstNode()) {
 			throw new IllegalArgumentException("Cannot merge WitnessInvariants that are matched to different nodes");
 		}
-		final String invariant1 = ewi1.getInvariant();
-		final String invariant2 = ewi2.getInvariant();
+		final String invariant1 = ewi1.getInvariant().getInvariant();
+		final String invariant2 = ewi2.getInvariant().getInvariant();
 		String newInvariant;
 		if (invariant1.equals(invariant2)) {
 			newInvariant = invariant1;
@@ -179,16 +182,21 @@ public class GraphMLCorrectnessWitnessExtractor extends CorrectnessWitnessExtrac
 			newInvariant = builder.toString();
 		}
 
-		final Set<String> newNodeLabels = DataStructureUtils.union(ewi1.getNodeLabels(), ewi2.getNodeLabels());
+		final ImmutableSet<String> newNodeLabels =
+				ImmutableSet.of(DataStructureUtils.union(ewi1.getLabels(), ewi2.getLabels()));
+		ExtractedWitnessInvariant result;
 		// If one of the invariants is a loop invariant, the result should be as well
-		if (ewi1 instanceof ExtractedLoopInvariant || ewi2 instanceof ExtractedLoopInvariant) {
-			return new ExtractedLoopInvariant(newInvariant, newNodeLabels, ewi1.getRelatedAstNode());
+		if (ewi1.getInvariant() instanceof ExtractedLoopInvariant
+				|| ewi2.getInvariant() instanceof ExtractedLoopInvariant) {
+			result = new ExtractedLoopInvariant(newInvariant, ewi1.getRelatedAstNode());
+		} else {
+			result = new ExtractedLocationInvariant(newInvariant, ewi1.getRelatedAstNode(),
+					((ExtractedLocationInvariant) ewi1.getInvariant()).isBefore());
 		}
-		return new ExtractedLocationInvariant(newInvariant, newNodeLabels, ewi1.getRelatedAstNode(),
-				((ExtractedLocationInvariant) ewi1).isBefore());
+		return new LabeledInvariant(result, newNodeLabels);
 	}
 
-	private Map<IASTNode, ExtractedWitnessInvariant> matchWitnessToAstNode(final WitnessNode current,
+	private Map<IASTNode, LabeledInvariant> matchWitnessToAstNode(final WitnessNode current,
 			final ExtractionStatistics stats) {
 		final WitnessNodeAnnotation annot = WitnessNodeAnnotation.getAnnotation(current);
 		if (annot == null) {
@@ -198,7 +206,7 @@ public class GraphMLCorrectnessWitnessExtractor extends CorrectnessWitnessExtrac
 		if (invariant == null || "true".equalsIgnoreCase(invariant)) {
 			return Collections.emptyMap();
 		}
-		final Map<IASTNode, ExtractedWitnessInvariant> ast2invariant = matchWitnessToAstNode(current);
+		final var ast2invariant = matchWitnessToAstNode(current);
 		if (ast2invariant == null || ast2invariant.isEmpty()) {
 			mLogger.error("Could not match witness node to any AST node: " + current);
 			stats.fail();
@@ -208,7 +216,7 @@ public class GraphMLCorrectnessWitnessExtractor extends CorrectnessWitnessExtrac
 		return ast2invariant;
 	}
 
-	private Map<IASTNode, ExtractedWitnessInvariant> matchWitnessToAstNode(final WitnessNode wnode) {
+	private Map<IASTNode, LabeledInvariant> matchWitnessToAstNode(final WitnessNode wnode) {
 		final Set<DecoratedWitnessEdge> edges = new HashSet<>();
 		edges.addAll(convertAndFilterEdges(wnode.getIncomingEdges(), true));
 		edges.addAll(convertAndFilterEdges(wnode.getOutgoingEdges(), false));
@@ -240,19 +248,23 @@ public class GraphMLCorrectnessWitnessExtractor extends CorrectnessWitnessExtrac
 			printlabel = true;
 		}
 		if (printlabel) {
-			mLogger.warn("  Witness node label is " + dwnode);
+			if (mIgnoreUnmatchedEntries) {
+				mLogger.warn("  Witness node label is " + dwnode);
+			} else {
+				throw new UnsupportedOperationException(
+						"The witness entry " + dwnode.getInvariant() + " could not be matched.");
+			}
 		}
-		final Map<IASTNode, ExtractedWitnessInvariant> possibleMatches = extractInvariants(dwnode, candidateNodes);
-		return possibleMatches;
+		return extractInvariants(dwnode, candidateNodes);
 	}
 
-	private Map<IASTNode, ExtractedWitnessInvariant> extractInvariants(final DecoratedWitnessNode dwnode,
+	private Map<IASTNode, LabeledInvariant> extractInvariants(final DecoratedWitnessNode dwnode,
 			final Set<MatchedASTNode> candidateNodes) {
 
 		// filter matches s.t. edges that cross procedure boundaries are eliminated
 		filterScopeChanges(dwnode, candidateNodes);
 
-		Map<IASTNode, ExtractedWitnessInvariant> rtr = new HashMap<>();
+		Map<IASTNode, LabeledInvariant> rtr = new HashMap<>();
 		rtr = mergeMatchesIfNecessary(rtr, extractLoopInvariants(dwnode, candidateNodes));
 
 		if (mCheckOnlyLoopInvariants) {
@@ -266,7 +278,7 @@ public class GraphMLCorrectnessWitnessExtractor extends CorrectnessWitnessExtrac
 		return rtr;
 	}
 
-	private Map<IASTNode, ExtractedWitnessInvariant> extractLoopInvariants(final DecoratedWitnessNode dwnode,
+	private Map<IASTNode, LabeledInvariant> extractLoopInvariants(final DecoratedWitnessNode dwnode,
 			final Set<MatchedASTNode> candidateNodes) {
 		final Set<MatchedASTNode> loopHeads;
 		if (mCheckOnlyLoopInvariants) {
@@ -278,7 +290,7 @@ public class GraphMLCorrectnessWitnessExtractor extends CorrectnessWitnessExtrac
 		}
 		candidateNodes.removeAll(loopHeads);
 
-		final Map<IASTNode, ExtractedWitnessInvariant> down = tryMatchLoopInvariantsDownwards(dwnode, loopHeads);
+		final var down = tryMatchLoopInvariantsDownwards(dwnode, loopHeads);
 		if (loopHeads.isEmpty()) {
 			// downward matching matched everything, nothing more to do.
 			return down;
@@ -292,7 +304,7 @@ public class GraphMLCorrectnessWitnessExtractor extends CorrectnessWitnessExtrac
 		mLogger.warn("Downward matching could not match anything");
 
 		// try to match the remaining loop heads upwards
-		final Map<IASTNode, ExtractedWitnessInvariant> up = tryMatchLoopInvariantsUpwards(dwnode, loopHeads);
+		final var up = tryMatchLoopInvariantsUpwards(dwnode, loopHeads);
 		if (!loopHeads.isEmpty()) {
 			mLogger.warn("Could not match the following loop heads:");
 			loopHeads.stream().forEach(a -> mLogger.warn("  " + a.toStringSimple()));
@@ -301,11 +313,12 @@ public class GraphMLCorrectnessWitnessExtractor extends CorrectnessWitnessExtrac
 		return mergeMatchesIfNecessary(down, up);
 	}
 
-	private Map<IASTNode, ExtractedWitnessInvariant> tryMatchLoopInvariantsDownwards(final DecoratedWitnessNode dwnode,
+	private Map<IASTNode, LabeledInvariant> tryMatchLoopInvariantsDownwards(final DecoratedWitnessNode dwnode,
 			final Set<MatchedASTNode> loopHeads) {
 
-		final Map<IASTNode, ExtractedWitnessInvariant> rtr = new HashMap<>();
+		final Map<IASTNode, LabeledInvariant> rtr = new HashMap<>();
 		final Iterator<MatchedASTNode> iter = loopHeads.iterator();
+		final ImmutableSet<String> labels = ImmutableSet.of(Set.of(dwnode.getName()));
 		while (iter.hasNext()) {
 			final MatchedASTNode loopHead = iter.next();
 			final Set<IASTStatement> loopStatements = CdtASTUtils.findDesiredType(loopHead.getNode(), mLoopTypes);
@@ -313,18 +326,18 @@ public class GraphMLCorrectnessWitnessExtractor extends CorrectnessWitnessExtrac
 				continue;
 			}
 			mLogger.info("Matched downward: " + loopHead.toStringSimple());
-			loopStatements.stream()
-					.map(a -> new ExtractedLoopInvariant(dwnode.getInvariant(),
-							Collections.singletonList(dwnode.getName()), a))
-					.forEach(a -> rtr.put(a.getRelatedAstNode(), a));
+			for (final var node : loopStatements) {
+				final ExtractedLoopInvariant loopInvariant = new ExtractedLoopInvariant(dwnode.getInvariant(), node);
+				rtr.put(node, new LabeledInvariant(loopInvariant, labels));
+			}
 			iter.remove();
 		}
 		return rtr;
 	}
 
-	private Map<IASTNode, ExtractedWitnessInvariant> tryMatchLoopInvariantsUpwards(final DecoratedWitnessNode dwnode,
+	private Map<IASTNode, LabeledInvariant> tryMatchLoopInvariantsUpwards(final DecoratedWitnessNode dwnode,
 			final Set<MatchedASTNode> loopHeads) {
-		final Map<IASTNode, ExtractedWitnessInvariant> rtr = new HashMap<>();
+		final Map<IASTNode, LabeledInvariant> rtr = new HashMap<>();
 		final IASTNode commonParent = findCommonParentStatement(loopHeads);
 		if (commonParent == null) {
 			// if there is no common parent, we cannot match upwards
@@ -346,20 +359,24 @@ public class GraphMLCorrectnessWitnessExtractor extends CorrectnessWitnessExtrac
 		if (loopStatements.isEmpty()) {
 			return rtr;
 		}
-		loopStatements.stream().map(
-				a -> new ExtractedLoopInvariant(dwnode.getInvariant(), Collections.singletonList(dwnode.getName()), a))
-				.forEach(a -> rtr.put(a.getRelatedAstNode(), a));
+		final ImmutableSet<String> labels = ImmutableSet.of(Set.of(dwnode.getName()));
+		for (final var node : loopStatements) {
+			final ExtractedLoopInvariant loopInvariant = new ExtractedLoopInvariant(dwnode.getInvariant(), node);
+			rtr.put(node, new LabeledInvariant(loopInvariant, labels));
+		}
 		loopHeads.clear();
 		return rtr;
 	}
 
-	private static Map<IASTNode, ExtractedWitnessInvariant>
-			extractStatementInvariants(final DecoratedWitnessNode dwnode, final Set<MatchedASTNode> candidateNodes) {
-		final Map<IASTNode, ExtractedWitnessInvariant> rtr = new HashMap<>();
-		candidateNodes.stream()
-				.map(a -> new ExtractedLocationInvariant(dwnode.getInvariant(),
-						Collections.singletonList(dwnode.getName()), a.getNode(), !a.isIncoming()))
-				.forEach(a -> rtr.put(a.getRelatedAstNode(), a));
+	private static Map<IASTNode, LabeledInvariant> extractStatementInvariants(final DecoratedWitnessNode dwnode,
+			final Set<MatchedASTNode> candidateNodes) {
+		final Map<IASTNode, LabeledInvariant> rtr = new HashMap<>();
+		final ImmutableSet<String> labels = ImmutableSet.of(Set.of(dwnode.getName()));
+		for (final var node : candidateNodes) {
+			final ExtractedLocationInvariant invariant =
+					new ExtractedLocationInvariant(dwnode.getInvariant(), node.getNode(), !node.isIncoming());
+			rtr.put(node.getNode(), new LabeledInvariant(invariant, labels));
+		}
 		candidateNodes.clear();
 		return rtr;
 	}
@@ -709,5 +726,74 @@ public class GraphMLCorrectnessWitnessExtractor extends CorrectnessWitnessExtrac
 
 	private interface IHasIncoming {
 		boolean isIncoming();
+	}
+
+	private static final class LabeledInvariant {
+		private final ExtractedWitnessInvariant mInvariant;
+		private final ImmutableSet<String> mLabels;
+
+		public LabeledInvariant(final ExtractedWitnessInvariant invariant, final ImmutableSet<String> labels) {
+			super();
+			mInvariant = invariant;
+			mLabels = labels;
+		}
+
+		public ExtractedWitnessInvariant getInvariant() {
+			return mInvariant;
+		}
+
+		public IASTNode getRelatedAstNode() {
+			return mInvariant.getRelatedAstNode();
+		}
+
+		public ImmutableSet<String> getLabels() {
+			return mLabels;
+		}
+	}
+
+	/**
+	 * Stores the invariants extracted from a correctness witness in GraphML. To ensure that each invariant is only
+	 * instrumented once, store the labels of the GraphML nodes alongside.
+	 */
+	private static final class GraphMLExtractedCorrectnessWitness implements IExtractedCorrectnessWitness {
+		private final Map<IASTNode, LabeledInvariant> mInvariants;
+		private final Set<ImmutableSet<String>> mNodeLabelsOfAddedWitnesses = new HashSet<>();
+
+		private GraphMLExtractedCorrectnessWitness(final Map<IASTNode, LabeledInvariant> invariants) {
+			mInvariants = invariants;
+		}
+
+		@Override
+		public Set<ExtractedWitnessInvariant> getInvariants(final IASTNode node) {
+			final LabeledInvariant match = mInvariants.get(node);
+			// Make sure that each invariant is only matched once
+			if (match == null || !mNodeLabelsOfAddedWitnesses.add(match.getLabels())) {
+				return Set.of();
+			}
+			return Set.of(match.getInvariant());
+		}
+
+		@Override
+		public Set<ExtractedFunctionContract> getFunctionContracts(final IASTNode node) {
+			// GraphML witnesses do not contain any function contracts
+			return Set.of();
+		}
+
+		@Override
+		public List<ExtractedGhostUpdate> getGhostUpdates(final IASTNode node) {
+			// GraphML witnesses do not contain any ghost updates
+			return List.of();
+		}
+
+		@Override
+		public Set<IExtractedWitnessDeclaration> getGlobalDeclarations() {
+			// GraphML witnesses do not contain any global declarations
+			return Set.of();
+		}
+
+		@Override
+		public List<String> printAllEntries() {
+			return mInvariants.values().stream().map(x -> x.getInvariant().toString()).collect(Collectors.toList());
+		}
 	}
 }

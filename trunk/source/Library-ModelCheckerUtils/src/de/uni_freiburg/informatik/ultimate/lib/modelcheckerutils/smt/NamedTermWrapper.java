@@ -26,23 +26,47 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt;
 
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ITermWrapper;
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
+ * Wrapper for named terms. Allows us to access name and subterm directly. Named
+ * terms are defined in 3.6.6 of the SMT-LIB 2.6 standard
+ * http://smtlib.cs.uiowa.edu/language.shtml This class has a shortcoming, it
+ * does not work for terms with several attributes. We however presume that such
+ * terms will not occur in our applications.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
-public final class NamedTermWrapper {
+public final class NamedTermWrapper implements ITermWrapper {
 
 	final Term mOriginalTerm;
-	final Term mUnnamedTerm;
-	final boolean mIsNamed;
+	final Term mSubTerm;
 	final String mName;
 
-	public NamedTermWrapper(final Term term) {
-		mOriginalTerm = term;
+	public NamedTermWrapper(final Term originalTerm, final Term subTerm, final String name) {
+		super();
+		mOriginalTerm = originalTerm;
+		mSubTerm = subTerm;
+		mName = name;
+	}
+
+	@Override
+	public Term getTerm() {
+		return mOriginalTerm;
+	}
+
+	public Term getSubTerm() {
+		return mSubTerm;
+	}
+
+	public String getName() {
+		return mName;
+	}
+
+	public static NamedTermWrapper of(final Term term) {
 		if (term instanceof AnnotatedTerm) {
 			final AnnotatedTerm annotTerm = (AnnotatedTerm) term;
 			final Annotation[] annot = annotTerm.getAnnotations();
@@ -50,35 +74,14 @@ public final class NamedTermWrapper {
 				if (annot[0].getKey().equals(":named")) {
 					final Object value = annot[0].getValue();
 					if (value instanceof String) {
-						mName = (String) value;
-						mUnnamedTerm = annotTerm.getSubterm();
-						mIsNamed = true;
-						return;
+						final String name = (String) value;
+						return new NamedTermWrapper(term, annotTerm.getSubterm(), name);
 					}
 				}
 			}
 		}
-		mIsNamed = false;
-		mName = null;
-		mUnnamedTerm = mOriginalTerm;
+		return null;
 	}
-
-	public Term getOriginalTerm() {
-		return mOriginalTerm;
-	}
-
-	public Term getUnnamedTerm() {
-		return mUnnamedTerm;
-	}
-
-	public boolean isNamed() {
-		return mIsNamed;
-	}
-
-	public String getName() {
-		return mName;
-	}
-
 
 
 

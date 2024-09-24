@@ -5,4 +5,4 @@
 [L11]              r := 3;
        VAL         [a=0, r=3]
 [L16]              assert r != 3;
-       VAL         [a=0, r=3]
+       VAL         [a=0]

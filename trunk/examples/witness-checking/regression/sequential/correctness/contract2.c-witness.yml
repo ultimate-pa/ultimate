@@ -1,0 +1,28 @@
+- entry_type: invariant_set
+  metadata:
+    format_version: '2.1'
+    uuid: 4d9977a1-518f-438d-bef0-bb346400efd9
+    creation_time: '2024-06-08T14:15:48+02:00'
+    producer:
+      name: manual
+      version: '1.0'
+    task:
+      input_files:
+      - contract2.c
+      input_file_hashes:
+        contract.c: UNUSED
+      specification: UNUSED
+      data_model: UNUSED
+      language: C
+  content:
+  - invariant:
+      type: function_contract
+      location:
+        file_name: contract2.c
+        file_hash: UNUSED
+        line: 1
+        column: 1
+        function: f
+      requires: x > 0
+      ensures: \result >= 0
+      format: acsl_expression

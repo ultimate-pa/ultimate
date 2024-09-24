@@ -452,11 +452,6 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 				}
 
 				@Override
-				public String[] getProcedures() {
-					throw new UnsupportedOperationException();
-				}
-
-				@Override
 				public Term getFormula() {
 					throw new UnsupportedOperationException();
 				}

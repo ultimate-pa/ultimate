@@ -1,0 +1,25 @@
+- entry_type: loop_invariant
+  metadata:
+    format_version: '0.1'
+    uuid: 46eca826-9a84-49cd-9de4-6b19aabf6f8f
+    creation_time: '2023-10-31T13:37:42+01:00'
+    producer:
+      name: UNUSED
+      version: 0.2.3-dev-b094d93-m
+    task:
+      input_files:
+      - C:\ultimate\trunk\examples\witness-checking\regression\correctness\sqrt1-ll_valuebound20.c
+      input_file_hashes:
+        C:\ultimate\trunk\examples\witness-checking\regression\correctness\sqrt1-ll_valuebound20.c: UNUSED
+      specification: UNUSED
+      data_model: UNUSED
+      language: C
+  location:
+    file_name: C:\ultimate\trunk\examples\witness-checking\regression\correctness\sqrt1-ll_valuebound20.c
+    file_hash: UNUSED
+    line: 30
+    function: main
+  loop_invariant:
+    string: (((((t * 2) + (t * t)) + 1) == (s * 4)) && (t == ((a * 2) + 1)))
+    type: assertion
+    format: C

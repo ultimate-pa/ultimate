@@ -22,8 +22,9 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Overapproximate\ operations\ on\ floating\ types=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Use\ constant\ arrays=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Check\ unreachability\ of\ reach_error\ function=false
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Check\ absence\ of\ signed\ integer\ overflows=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Check\ absence\ of\ signed\ integer\ overflows=ASSERTandASSUME
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Adapt\ memory\ model\ on\ pointer\ casts\ if\ necessary=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Allow\ undefined\ functions=false
 @de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=0.0.1
 
 
@@ -49,7 +50,6 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Use\ separate\ solver\ for\ trace\ checks=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/SMT\ solver=External_ModelsAndUnsatCoreMode
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Command\ for\ external\ solver=z3 SMTLIB2_COMPLIANT\=true -memory\:2024 -smt2 -in
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Compute\ Hoare\ Annotation\ of\ negated\ interpolant\ automaton,\ abstraction\ and\ CFG=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Positions\ where\ we\ compute\ the\ Hoare\ Annotation=LoopHeads
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Trace\ refinement\ strategy=CAMEL
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Automaton\ type\ used\ in\ concurrency\ analysis=PARTIAL_ORDER_FA

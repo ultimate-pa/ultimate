@@ -46,8 +46,8 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.UnfTransf
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PrenexNormalForm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierSequence;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierSequence.QuantifiedVariables;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
@@ -150,13 +150,13 @@ public class UltimateEliminator extends WrapperScript {
 	@Override
 	public LBool assertTerm(final Term term) throws SMTLIBException {
 		mNumberOfAssertedTerms++;
-		final NamedTermWrapper ntw = new NamedTermWrapper(term);
-		if (ntw.isNamed()) {
-			// we alredy removed quantifiers
-			mTreeSizeOfAssertedTerms += new DAGSize().treesize(ntw.getUnnamedTerm());
+		final NamedTermWrapper ntw = NamedTermWrapper.of(term);
+		if (ntw != null) {
+			// we already removed quantifiers
+			mTreeSizeOfAssertedTerms += new DAGSize().treesize(ntw.getSubTerm());
 			return mScript.assertTerm(term);
 		}
-		final Term hopfullyQuantifierFree = makeQuantifierFree(ntw.getUnnamedTerm());
+		final Term hopfullyQuantifierFree = makeQuantifierFree(term);
 		mTreeSizeOfAssertedTerms += new DAGSize().treesize(hopfullyQuantifierFree);
 		return mScript.assertTerm(hopfullyQuantifierFree);
 	}
@@ -169,7 +169,8 @@ public class UltimateEliminator extends WrapperScript {
 			mLogger.info("Copy this to one of our JUnit test files:\n"
 					+ SmtTestGenerationUtils.generateStringForTestfile(unf));
 		}
-		final Term lessQuantifier = PartialQuantifierElimination.eliminateCompat(mServices, mMgdScript, SimplificationTechnique.SIMPLIFY_DDA, unf);
+		final Term lessQuantifier = PartialQuantifierElimination.eliminateCompat(mServices, mMgdScript,
+				SimplificationTechnique.SIMPLIFY_DDA2, unf);
 		// TODO futher optimizations. E.g., overapproximation by replacing all
 		// quantified formulas.
 		if (!QuantifierUtils.isQuantifierFree(lessQuantifier)) {
@@ -272,7 +273,8 @@ public class UltimateEliminator extends WrapperScript {
 		final Term letFree = new FormulaUnLet().transform(term);
 		final Term annotationFree = new AnnotationRemover().transform(letFree);
 		final Term unf = new UnfTransformer(mMgdScript.getScript()).transform(annotationFree);
-		final Term lessQuantifier = PartialQuantifierElimination.eliminateCompat(mServices, mMgdScript, SimplificationTechnique.SIMPLIFY_DDA, unf);
+		final Term lessQuantifier = PartialQuantifierElimination.eliminateCompat(mServices, mMgdScript,
+				SimplificationTechnique.SIMPLIFY_DDA2, unf);
 		final IResult result = constructResult("simplify", String.valueOf(lessQuantifier));
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result );
 		return lessQuantifier;

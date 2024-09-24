@@ -231,7 +231,7 @@ terminal String CONSTANT;
 terminal String CONSTANT_FLOAT;
 terminal String CONSTANT10;
 terminal String VOID, CHAR, SIGNED, UNSIGNED, SHORT, LONG, DOUBLE, STRUCT, ENUM, UNION;
-terminal String INT, INTEGER, REAL, BOOLEAN, FLOAT;
+terminal String INT, INT128, INTEGER, REAL, BOOLEAN, FLOAT, BOOL;
 terminal String STAR;
 terminal LPAR, RPAR, IF, ELSE, COLON, COLON2, COLONCOLON, DOT, DOTDOT, DOTDOTDOT;
 terminal LT, GT, LE, GE, EQ, NE, COMMA, ARROW, EQUAL;
@@ -503,7 +503,7 @@ lexpr_inner::=
 | lexpr_inner:e1 STAR lexpr_inner:e2 {: RESULT = setNodeLocationFromSymbols(new BinaryExpression(BinaryExpression.Operator.ARITHMUL, e1, e2), e1$, e2$); :} 
 | lexpr_inner:e1 SLASH lexpr_inner:e2 {: RESULT = setNodeLocationFromSymbols(new BinaryExpression(BinaryExpression.Operator.ARITHDIV, e1, e2), e1$, e2$); :}
 | lexpr_inner:e1 PERCENT lexpr_inner:e2 {: RESULT = setNodeLocationFromSymbols(new BinaryExpression(BinaryExpression.Operator.ARITHMOD, e1, e2), e1$, e2$); :} 
-| lexpr_inner:e ARROW identifier_or_typename:i {: RESULT = setNodeLocationFromSymbols(new FieldAccessExpression(e, i), e$, i$); :} // TODO Deref e
+| lexpr_inner:e ARROW identifier_or_typename:i {: RESULT = setNodeLocationFromSymbols(new FieldAccessExpression(new UnaryExpression(UnaryExpression.Operator.POINTER, e), i), e$, i$); :}
 | lexpr_inner:e DOT identifier_or_typename:i {: RESULT = setNodeLocationFromSymbols(new FieldAccessExpression(e, i), e$, i$); :}
 | lexpr_inner:l LSQUARE range:e RSQUARE:r {: RESULT = setNodeLocationFromSymbols(new NotDefinedExpression(), l$, r$); :}
 | lexpr_inner:array LSQUARE lexpr:indices RSQUARE:r {: RESULT = setNodeLocationFromSymbols(new ArrayAccessExpression(array, new Expression[] {indices}), array$, r$); :}
@@ -788,12 +788,15 @@ tabs::=
 type_spec::=
  INTEGER:i {: RESULT = i; :}         
 | REAL:r {: RESULT = r; :}           
-| BOOLEAN:b {: RESULT = b; :}        
+| BOOLEAN:b {: RESULT = b; :}
+| BOOL:b {: RESULT = b; :}
 | VOID:v {: RESULT = v; :}           
 | CHAR:c {: RESULT = c; :}                 
 | SIGNED:s CHAR:c {: RESULT = s + " " + c; :}         
 | UNSIGNED:u CHAR:c {: RESULT = u + " " + c; :}       
 | INT:i {: RESULT = i; :}                   
+| INT128:i {: RESULT = i; :}               
+| UNSIGNED:u INT128:i {: RESULT = u + " " + i; :}     
 | SIGNED:s INT:i {: RESULT = s + " " + i; :}           
 | UNSIGNED:u INT:i {: RESULT = u + " " + i; :}         
 | UNSIGNED:u {: RESULT = u; :}       
@@ -1385,7 +1388,12 @@ identifier_or_typename::=
 ;
 
 identifier::=
- IDENTIFIER:i {: RESULT = i;:}
+ IDENTIFIER:i {: RESULT = i; :}
+| GLOBAL      {: RESULT = "global"; :}
+| NEXT        {: RESULT = "X"; :}
+| UNTIL       {: RESULT = "U"; :}
+| WEAKUNTIL   {: RESULT = "WU"; :}
+| RELEASE     {: RESULT = "R"; :}
 ;
 
 bounded_var::=
@@ -1404,6 +1412,7 @@ c_keyword::=
 | FLOAT 
 | IF 
 | INT 
+| INT128
 | LONG 
 | SHORT 
 | SIGNED 

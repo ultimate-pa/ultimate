@@ -54,7 +54,7 @@ public class PositiveResult<ELEM extends IElement> extends AbstractResultAtEleme
 	 *            the location
 	 */
 	public PositiveResult(final String plugin, final ELEM position, final IBacktranslationService translatorSequence) {
-		super(position, plugin, translatorSequence);
+		super(position, plugin);
 		mCheckedSpecification = Check.getAnnotation(position);
 	}
 

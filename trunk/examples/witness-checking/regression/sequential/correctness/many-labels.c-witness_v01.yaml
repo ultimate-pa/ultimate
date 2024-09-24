@@ -1,0 +1,25 @@
+- entry_type: location_invariant
+  metadata:
+    format_version: '0.1'
+    uuid: 386b0121-a302-415f-af28-bf0db7c36d11
+    creation_time: '2024-09-07T13:26:54+01:00'
+    producer:
+      name: UNUSED
+      version: 0.2.4-dev-25b2402-m
+    task:
+      input_files:
+      - C:\ultimate\trunk\examples\witness-checking\regression\correctness\many-labels.c
+      input_file_hashes:
+        C:\ultimate\trunk\examples\witness-checking\regression\correctness\many-labels.c: UNUSED
+      specification: UNUSED
+      data_model: UNUSED
+      language: C
+  location:
+    file_name: C:\ultimate\trunk\examples\witness-checking\regression\correctness\many-labels.c
+    file_hash: UNUSED
+    line: 29
+    function: main
+  location_invariant:
+    string: '0'
+    type: assertion
+    format: C

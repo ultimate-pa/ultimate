@@ -107,7 +107,8 @@ public class BuchiCegarLoopFactory<L extends IIcfgTransition<?>> {
 				Collections.emptySet());
 		if (!IcfgUtils.isConcurrent(icfg)) {
 			final IInitialAbstractionProvider<L, INestedWordAutomaton<L, IPredicate>> automatonProvider =
-					new NwaInitialAbstractionProvider<>(mServices, stateFactoryForRefinement, true, predicateFactory);
+					new NwaInitialAbstractionProvider<>(mServices, stateFactoryForRefinement, true, predicateFactory,
+							mPrefs.getHoareSettings());
 			return createBuchiAutomatonCegarLoop(icfg, rankVarConstructor, predicateFactory, witnessAutomaton,
 					stateFactoryForRefinement, automatonProvider);
 		}
@@ -116,8 +117,8 @@ public class BuchiCegarLoopFactory<L extends IIcfgTransition<?>> {
 				.getEnum(BuchiAutomizerPreferenceInitializer.LABEL_AUTOMATON_TYPE, AutomatonTypeConcurrent.class);
 		switch (automatonTypeConcurrent) {
 		case BUCHI_AUTOMATON:
-			final var automatonProvider = new Petri2FiniteAutomatonAbstractionProvider.Lazy<>(petriNetProvider,
-					stateFactoryForRefinement, new AutomataLibraryServices(mServices));
+			final var automatonProvider = new Petri2FiniteAutomatonAbstractionProvider.Lazy<>(mServices,
+					petriNetProvider, stateFactoryForRefinement);
 			return createBuchiAutomatonCegarLoop(icfg, rankVarConstructor, predicateFactory, witnessAutomaton,
 					stateFactoryForRefinement, automatonProvider);
 		case BUCHI_PETRI_NET:
@@ -141,10 +142,9 @@ public class BuchiCegarLoopFactory<L extends IIcfgTransition<?>> {
 		if (!mPrefs.applyOneShotLbe()) {
 			return petriNetProvider;
 		}
-		return new PetriLbeInitialAbstractionProvider<>(petriNetProvider, mServices, mTransitionClazz,
+		return new PetriLbeInitialAbstractionProvider<>(mServices, petriNetProvider, mTransitionClazz,
 				mPrefs.lbeIndependenceSettings(),
-				(IPLBECompositionFactory<L>) new IcfgCompositionFactory(mServices, icfg.getCfgSmtToolkit()),
-				Activator.PLUGIN_ID);
+				(IPLBECompositionFactory<L>) new IcfgCompositionFactory(mServices, icfg.getCfgSmtToolkit()));
 	}
 
 	private BuchiAutomatonCegarLoop<L> createBuchiAutomatonCegarLoop(final IIcfg<?> icfg,

@@ -12,7 +12,7 @@ file_export_version=3.0
 @de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=0.0.1
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Compute\ Interpolants\ along\ a\ Counterexample=Craig_NestedInterpolation
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Compute\ Hoare\ Annotation\ of\ negated\ interpolant\ automaton,\ abstraction\ and\ CFG=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Positions\ where\ we\ compute\ the\ Hoare\ Annotation=All
 #Sat Mar 15 16:00:32 CET 2014
 file_export_version=3.0
 @de.uni_freiburg.informatik.ultimate.core=0.0.1

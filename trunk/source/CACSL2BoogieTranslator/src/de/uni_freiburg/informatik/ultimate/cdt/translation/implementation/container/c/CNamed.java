@@ -102,14 +102,6 @@ public class CNamed extends CType {
 	}
 
 	@Override
-	public boolean isCompatibleWith(final CType o) {
-		if (o == null) {
-			return false;
-		}
-		return getUnderlyingType().isCompatibleWith(o.getUnderlyingType());
-	}
-
-	@Override
 	public boolean isIncomplete() {
 		return getUnderlyingType().isIncomplete();
 	}

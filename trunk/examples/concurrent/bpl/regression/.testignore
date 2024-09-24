@@ -1,0 +1,17 @@
+# Timeout with Automizer, GemCutter succeeds
+TIMEOUT:
+- task: MirabelleConcurrentIncrement.bpl
+  settings: ReachSafety-32bit-Automizer.epf
+  toolchain: ReachSafety.xml
+- task: concurrent_increment.bpl
+  settings: ReachSafety-32bit-Automizer.epf
+  toolchain: ReachSafety.xml
+- task: equal-array-sums.bpl
+  settings: ReachSafety-32bit-Automizer.epf
+  toolchain: ReachSafety.xml
+- task: loop-lockstep-example.bpl
+  settings: ReachSafety-32bit-Automizer.epf
+  toolchain: ReachSafety.xml
+- task: sum_invariant.bpl
+  settings: ReachSafety-32bit-Automizer.epf
+  toolchain: ReachSafety.xml

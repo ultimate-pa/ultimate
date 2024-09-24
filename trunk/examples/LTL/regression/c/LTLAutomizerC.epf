@@ -121,7 +121,7 @@ file_export_version=3.0
 #Fri Dec 09 13:35:39 CET 2016
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/sizeof\ float=4
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/sizeof\ int=4
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Check\ absence\ of\ signed\ integer\ overflows=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Check\ absence\ of\ signed\ integer\ overflows=IGNORE
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/sizeof\ char=1
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/sizeof\ short=2
 @de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=0.0.1
@@ -205,7 +205,7 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding/Create\ interprocedural\ compositions=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding/Iterate\ optimizations\ for\ n\ times\ (<\=0\ means\ until\ nothing\ changes)=0
 #Fri Dec 09 13:35:39 CET 2016
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Positions\ where\ we\ compute\ the\ Hoare\ Annotation=All
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Positions\ where\ we\ compute\ the\ Hoare\ Annotation=None
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/LanguageOperation=DIFFERENCE
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Number\ of\ iteration\ whose\ artifact\ is\ visualized=1000000
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/SMT\ solver=Internal_SMTInterpol
@@ -237,7 +237,6 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Xnf\ conversion\ technique=BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Non-flow-sensitive\ error\ trace\ relevance\ analysis=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Interprocedural\ analysis\ (Nested\ Interpolants)=true
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Compute\ Hoare\ Annotation\ of\ negated\ interpolant\ automaton,\ abstraction\ and\ CFG=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Fake\ non-incremental\ script=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Interpolant\ automaton\ enhancement=PREDICATE_ABSTRACTION
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Trace\ refinement\ strategy=FIXED_PREFERENCES

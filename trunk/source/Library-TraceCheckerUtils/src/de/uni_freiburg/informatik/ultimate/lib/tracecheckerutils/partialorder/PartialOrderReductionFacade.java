@@ -51,7 +51,6 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.MinimalSleepSet
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.MultiPersistentSetChoice;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.PersistentSetReduction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetCoveringRelation;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.SleepSetDelayReduction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.CachedBudget;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.ISleepMapStateFactory;
@@ -65,7 +64,6 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.IDeadE
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.IDfsVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.WrapperVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -75,9 +73,10 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.LoopLockstepOrder.PredicateWithLastThread;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.ConditionalCommutativityCheckerVisitor;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceBuilder;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
 /**
@@ -119,8 +118,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 	private IPersistentSetChoice<L, IPredicate> mPersistent;
 	private final Function<SleepMapReduction<L, IPredicate, IPredicate>, IBudgetFunction<L, IPredicate>> mGetBudget;
 
-	private final List<StatisticsData> mOldIndependenceStatistics = new ArrayList<>();
-	private final List<StatisticsData> mOldPersistentSetStatistics = new ArrayList<>();
+	private final Statistics mStatistics = new Statistics();
 
 	public PartialOrderReductionFacade(final IUltimateServiceProvider services, final PredicateFactory predicateFactory,
 			final IIcfg<?> icfg, final Collection<? extends IcfgLocation> errorLocs, final PartialOrderMode mode,
@@ -162,14 +160,9 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 			return;
 		}
 
-		final StatisticsData indepData = new StatisticsData();
-		indepData.aggregateBenchmarkData(oldRelation.getStatistics());
-		mOldIndependenceStatistics.add(indepData);
-
+		mStatistics.reportIndependenceStatistics(oldRelation);
 		if (mPersistent != null) {
-			final StatisticsData persData = new StatisticsData();
-			persData.aggregateBenchmarkData(mPersistent.getStatistics());
-			mOldPersistentSetStatistics.add(persData);
+			mStatistics.reportPersistentSetStatistics(mPersistent);
 		}
 
 		mIndependenceRelations.set(index, independence);
@@ -190,12 +183,9 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 			// We need a sleep map factory instead, see #createSleepMapFactory
 			return null;
 		}
-		if (mMode.doesUnrolling()) {
-			final var factory = new SleepSetStateFactoryForRefinement<L>(predicateFactory);
-			mStateSplitter = StateSplitter.extend(mStateSplitter, factory::getOriginalState, factory::getSleepSet);
-			return factory;
-		}
-		return new ISleepSetStateFactory.NoUnrolling<>();
+		final var factory = new SleepSetStateFactoryForRefinement<L>(predicateFactory);
+		mStateSplitter = StateSplitter.extend(mStateSplitter, factory::getOriginalState, factory::getSleepSet);
+		return factory;
 	}
 
 	private ISleepMapStateFactory<L, IPredicate, IPredicate>
@@ -300,56 +290,130 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 	 *            A visitor that traverses the reduced automaton
 	 * @throws AutomataOperationCanceledException
 	 */
-	public void apply(INwaOutgoingLetterAndTransitionProvider<L, IPredicate> input,
+	public void apply(final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> input,
 			final IDfsVisitor<L, IPredicate> visitor) throws AutomataOperationCanceledException {
-		if (mDfsOrder instanceof LoopLockstepOrder<?>) {
-			input = ((LoopLockstepOrder<L>) mDfsOrder).wrapAutomaton(input);
-		}
 		if (mSleepMapFactory instanceof SleepMapStateFactory<?>) {
 			((SleepMapStateFactory<?>) mSleepMapFactory).reset();
 		}
 
-		final IIndependenceRelation<IPredicate, L> independence =
-				mIndependenceRelations.isEmpty() ? null : mIndependenceRelations.get(0);
-		switch (mMode) {
-		case SLEEP_DELAY_SET:
-			new SleepSetDelayReduction<>(mAutomataServices, input, mSleepFactory, independence, mDfsOrder, visitor);
-			break;
-		case SLEEP_NEW_STATES:
-			if (mIndependenceRelations.size() == 1) {
-				//createBuildVisitor(null, null)
-				DepthFirstTraversal.traverse(mAutomataServices,
-						new MinimalSleepSetReduction<>(input, mSleepFactory, independence, mDfsOrder), mDfsOrder,
-						visitor);
-			} else {
-				final var red = new SleepMapReduction<>(input, mIndependenceRelations, mDfsOrder, mSleepMapFactory,
-						mGetBudget.andThen(CachedBudget::new));
-				DepthFirstTraversal.traverse(mAutomataServices, red, mDfsOrder, visitor);
-			}
-			break;
-		case PERSISTENT_SETS:
-			PersistentSetReduction.applyWithoutSleepSets(mAutomataServices, input, mDfsOrder, mPersistent, visitor);
-			break;
-		case PERSISTENT_SLEEP_DELAY_SET_FIXEDORDER:
-		case PERSISTENT_SLEEP_DELAY_SET:
-			PersistentSetReduction.applyDelaySetReduction(mAutomataServices, input, independence, mDfsOrder,
-					mPersistent, visitor);
-			break;
-		case PERSISTENT_SLEEP_NEW_STATES_FIXEDORDER:
-		case PERSISTENT_SLEEP_NEW_STATES:
-			if (mIndependenceRelations.size() == 1) {
-				PersistentSetReduction.applyNewStateReduction(mAutomataServices, input, independence, mDfsOrder,
-						mSleepFactory, mPersistent, visitor);
-			} else {
-				PersistentSetReduction.applySleepMapReduction(mAutomataServices, input, mIndependenceRelations,
-						mDfsOrder, mSleepMapFactory, mGetBudget.andThen(CachedBudget::new), mPersistent, visitor);
-			}
-			break;
+		ITraversal<L> traversal = buildReducedTraversal(mMode, new BasicTraversal());
+		if (mDfsOrder instanceof LoopLockstepOrder<?>) {
+			traversal = new StatefulOrderTraversal(traversal);
+		}
+		traversal.traverse(input, mDfsOrder, visitor);
+	}
+
+	// TODO Maybe this pattern of building traversals can over time replace this class (PartialOrderReductionFacade)
+	// which has grown bloated, full of special cases, and inflexible.
+	// It remains to see if we can integrate dead end pruning, covering optimizations, stateful orders, state splitters,
+	// DPOR, dynamic stratification, etc. into this pattern.
+	// Some fields of this class may become fields of the respective ITraversal implementations.
+	private ITraversal<L> buildReducedTraversal(final PartialOrderMode mode, final ITraversal<L> underlying) {
+		switch (mode) {
 		case NONE:
-			DepthFirstTraversal.traverse(mAutomataServices, input, mDfsOrder, visitor);
-			break;
+			return underlying;
+		case SLEEP_NEW_STATES:
+			return buildSleepTraversal(underlying);
+		case PERSISTENT_SETS:
+			return new PersistentSetTraversal(underlying);
+		case PERSISTENT_SLEEP_NEW_STATES:
+		case PERSISTENT_SLEEP_NEW_STATES_FIXEDORDER:
+			return buildSleepTraversal(new PersistentSetTraversal(underlying));
 		default:
-			throw new UnsupportedOperationException("Unsupported POR mode: " + mMode);
+			throw new UnsupportedOperationException("Unsupported POR mode: " + mode);
+		}
+	}
+
+	private ITraversal<L> buildSleepTraversal(final ITraversal<L> underlying) {
+		if (mIndependenceRelations.size() > 1) {
+			return new SleepMapTraversal(underlying);
+		}
+		return new SleepSetTraversal(underlying);
+	}
+
+	private interface ITraversal<L> {
+		// TODO make this method generic in the state type <S> (once we no longer rely on IPredicate everywhere)
+		void traverse(INwaOutgoingLetterAndTransitionProvider<L, IPredicate> automaton, IDfsOrder<L, IPredicate> order,
+				IDfsVisitor<L, IPredicate> visitor) throws AutomataOperationCanceledException;
+	}
+
+	private class BasicTraversal implements ITraversal<L> {
+		@Override
+		public void traverse(final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> automaton,
+				final IDfsOrder<L, IPredicate> order, final IDfsVisitor<L, IPredicate> visitor)
+				throws AutomataOperationCanceledException {
+			DepthFirstTraversal.traverse(mAutomataServices, automaton, order, visitor);
+		}
+	}
+
+	private class StatefulOrderTraversal implements ITraversal<L> {
+		private final ITraversal<L> mUnderlying;
+
+		public StatefulOrderTraversal(final ITraversal<L> underlying) {
+			mUnderlying = underlying;
+		}
+
+		@Override
+		public void traverse(final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> automaton,
+				final IDfsOrder<L, IPredicate> order, final IDfsVisitor<L, IPredicate> visitor)
+				throws AutomataOperationCanceledException {
+			// TODO once we generally support stateful orders, use the given order (which might wrap the stateful order)
+			final var statefulOrder = (LoopLockstepOrder<L>) mDfsOrder;
+			mUnderlying.traverse(statefulOrder.wrapAutomaton(automaton), order, visitor);
+		}
+	}
+
+	private class SleepSetTraversal implements ITraversal<L> {
+		private final ITraversal<L> mUnderlying;
+
+		public SleepSetTraversal(final ITraversal<L> underlying) {
+			mUnderlying = underlying;
+		}
+
+		@Override
+		public void traverse(final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> automaton,
+				final IDfsOrder<L, IPredicate> order, final IDfsVisitor<L, IPredicate> visitor)
+				throws AutomataOperationCanceledException {
+			assert !mIndependenceRelations.isEmpty() : "Sleep sets require an independence relation";
+			final IIndependenceRelation<IPredicate, L> independence = mIndependenceRelations.get(0);
+			final var reduction = new MinimalSleepSetReduction<>(automaton, mSleepFactory, independence, order);
+			mUnderlying.traverse(reduction, order, visitor);
+		}
+	}
+
+	private class SleepMapTraversal implements ITraversal<L> {
+		private final ITraversal<L> mUnderlying;
+
+		public SleepMapTraversal(final ITraversal<L> underlying) {
+			mUnderlying = underlying;
+		}
+
+		@Override
+		public void traverse(final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> automaton,
+				final IDfsOrder<L, IPredicate> order, final IDfsVisitor<L, IPredicate> visitor)
+				throws AutomataOperationCanceledException {
+			assert mIndependenceRelations.size() > 1 : "Sleep maps require multiple independence relations";
+			final var reduction = new SleepMapReduction<>(automaton, mIndependenceRelations, order, mSleepMapFactory,
+					mGetBudget.andThen(CachedBudget::new));
+			mUnderlying.traverse(reduction, order, visitor);
+		}
+
+	}
+
+	private class PersistentSetTraversal implements ITraversal<L> {
+		private final ITraversal<L> mUnderlying;
+
+		public PersistentSetTraversal(final ITraversal<L> underlying) {
+			mUnderlying = underlying;
+		}
+
+		@Override
+		public void traverse(final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> automaton,
+				final IDfsOrder<L, IPredicate> order, final IDfsVisitor<L, IPredicate> visitor)
+				throws AutomataOperationCanceledException {
+			final var combinedOrder = PersistentSetReduction.ensureCompatibility(mPersistent, order);
+			final var reduced = new PersistentSetReduction<>(automaton, mPersistent);
+			mUnderlying.traverse(reduced, combinedOrder, visitor);
 		}
 	}
 
@@ -410,32 +474,32 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		return new DeadEndOptimizingSearchVisitor<>(visitor, mDeadEndStore, true);
 	}
 
-	public void reportStatistics(final String pluginId) {
-		int i = 0;
-		for (final StatisticsData data : mOldIndependenceStatistics) {
-			mServices.getResultService().reportResult(pluginId,
-					new StatisticsResult<>(pluginId, "Independence relation #" + (i + 1) + " benchmarks", data));
-			i++;
-		}
-
+	public IStatisticsDataProvider getStatistics() {
 		for (final var relation : mIndependenceRelations) {
+			mStatistics.reportIndependenceStatistics(relation);
+		}
+		if (mPersistent != null) {
+			mStatistics.reportPersistentSetStatistics(mPersistent);
+		}
+		return mStatistics;
+	}
+
+	private final class Statistics extends AbstractStatisticsDataProvider {
+		private int mIndependenceStatisticsCounter = 0;
+		private int mPersistentSetStatisticsCounter = 0;
+
+		private void reportIndependenceStatistics(final IIndependenceRelation<?, ?> relation) {
 			final StatisticsData data = new StatisticsData();
 			data.aggregateBenchmarkData(relation.getStatistics());
-			mServices.getResultService().reportResult(pluginId,
-					new StatisticsResult<>(pluginId, "Independence relation #" + (i + 1) + " benchmarks", data));
-			i++;
+			mIndependenceStatisticsCounter++;
+			include("Independence relation #" + mIndependenceStatisticsCounter + " benchmarks", () -> data);
 		}
 
-		for (final StatisticsData data : mOldPersistentSetStatistics) {
-			mServices.getResultService().reportResult(pluginId,
-					new StatisticsResult<>(pluginId, "Persistent set benchmarks", data));
-		}
-
-		if (mPersistent != null) {
-			final StatisticsData persistentData = new StatisticsData();
-			persistentData.aggregateBenchmarkData(mPersistent.getStatistics());
-			mServices.getResultService().reportResult(pluginId,
-					new StatisticsResult<>(pluginId, "Persistent set benchmarks", persistentData));
+		private void reportPersistentSetStatistics(final IPersistentSetChoice<?, ?> persistent) {
+			final StatisticsData data = new StatisticsData();
+			data.aggregateBenchmarkData(persistent.getStatistics());
+			mPersistentSetStatisticsCounter++;
+			include("Persistent sets #" + mPersistentSetStatisticsCounter + " benchmarks", () -> data);
 		}
 	}
 

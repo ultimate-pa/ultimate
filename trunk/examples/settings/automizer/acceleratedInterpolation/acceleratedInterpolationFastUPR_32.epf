@@ -31,7 +31,7 @@ file_export_version=3.0
 #Wed Mar 25 14:34:39 CET 2020
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=
 file_export_version=3.0
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Compute\ Hoare\ Annotation\ of\ negated\ interpolant\ automaton,\ abstraction\ and\ CFG=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Positions\ where\ we\ compute\ the\ Hoare\ Annotation=All
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Trace\ refinement\ strategy=ACCELERATED_INTERPOLATION
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Trace\ refinement\ strategy\ used\ in\ Accelerated\ Interpolation=CAMEL
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Use\ separate\ solver\ for\ trace\ checks=false

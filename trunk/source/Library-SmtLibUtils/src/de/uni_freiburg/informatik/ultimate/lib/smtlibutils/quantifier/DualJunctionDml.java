@@ -68,9 +68,8 @@ import de.uni_freiburg.informatik.ultimate.util.ArithmeticUtils;
 /**
  * Div-mod liberation (DML) for conjunctions (resp. disjunctions). <br>
  *
- * TODO: PolyPac, DER, PolyPac for each candidate. Drop candidates where DER is
- * not successful and x occurred on disjuntion. Rationale: elimination only
- * after distributivity anyway.
+ * TODO: PolyPac, DER, PolyPac for each candidate. Drop candidates where DER is not successful and x occurred on
+ * disjunction. Rationale: elimination only after distributivity anyway.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Katharina Wagner

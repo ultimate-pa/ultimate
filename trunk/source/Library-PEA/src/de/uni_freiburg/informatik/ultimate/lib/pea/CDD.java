@@ -37,6 +37,7 @@ import java.util.Set;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnifyHash;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * A CDD (constraint decision diagram) represents a logical quantifier free formula in a BDD like structure. This
@@ -72,12 +73,12 @@ public final class CDD {
 	/**
 	 * Useful child array to create a boolean decision.
 	 */
-	public static final CDD[] TRUE_CHILDS = new CDD[] { CDD.TRUE, CDD.FALSE };
+	public static final CDD[] TRUE_CHILDS = { CDD.TRUE, CDD.FALSE };
 
 	/**
 	 * Useful child array to create a negated boolean decision.
 	 */
-	public static final CDD[] FALSE_CHILDS = new CDD[] { CDD.FALSE, CDD.TRUE };
+	public static final CDD[] FALSE_CHILDS = { CDD.FALSE, CDD.TRUE };
 
 	/**
 	 * Hash to keep all equal CDDs identical.
@@ -104,21 +105,17 @@ public final class CDD {
 		int depth = 0;
 
 		if (childs != null) {
-			for (int i = 0; i < childs.length; i++) {
-				depth = max(depth, childs[i].mDepth + 1);
-				timed = timed || childs[i].isTimed();
+			for (final CDD child : childs) {
+				depth = max(depth, child.mDepth + 1);
+				timed = timed || child.isTimed();
 			}
 		}
 		mDepth = depth;
 		mTimed = timed;
 	}
 
-	private static int min(final int a, final int b) {
-		return ((a < b) ? a : b);
-	}
-
 	private static int max(final int a, final int b) {
-		return ((a > b) ? a : b);
+		return a > b ? a : b;
 	}
 
 	public int getDepth() {
@@ -142,7 +139,7 @@ public final class CDD {
 		int hashcode = decision.hashCode();
 
 		for (int i = 0; i < childs.length; i++) {
-			hashcode = (hashcode * (11 + i)) ^ childs[i].hashCode();
+			hashcode = hashcode * (11 + i) ^ childs[i].hashCode();
 		}
 		final Iterator<CDD> iter = UNIFY_HASH.iterateHashCode(hashcode).iterator();
 
@@ -173,35 +170,35 @@ public final class CDD {
 	 * @return true iff other CDD is implied by this one.
 	 */
 	public boolean implies(final CDD other) {
-		if ((this == FALSE) || (other == TRUE)) {
+		if (this == FALSE || other == TRUE) {
 			return true;
 		}
 
-		if ((this == TRUE) || (other == FALSE)) {
+		if (this == TRUE || other == FALSE) {
 			return false;
 		}
 
 		final int cmpTo = DECISION_COMPARATOR.compare(mDecision, other.mDecision);
 
 		if (cmpTo < 0) {
-			for (int i = 0; i < mChilds.length; i++) {
-				if (!mChilds[i].implies(other)) {
+			for (final CDD mChild : mChilds) {
+				if (!mChild.implies(other)) {
 					return false;
 				}
 			}
 
 			return true;
-		} else if (cmpTo > 0) {
-			for (int i = 0; i < other.mChilds.length; i++) {
-				if (!implies(other.mChilds[i])) {
-					return false;
-				}
-			}
-
-			return true;
-		} else {
+		}
+		if (cmpTo <= 0) {
 			return mDecision.implies(other.mDecision, mChilds, other.mChilds);
 		}
+		for (final CDD mChild : other.mChilds) {
+			if (!implies(mChild)) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	/**
@@ -234,11 +231,11 @@ public final class CDD {
 	 * @return the conjunction of the CDDs.
 	 */
 	public CDD and(final CDD other) {
-		if ((other == CDD.FALSE) || (this == CDD.TRUE)) {
+		if (other == CDD.FALSE || this == CDD.TRUE) {
 			return other;
 		}
 
-		if ((other == CDD.TRUE) || (this == CDD.FALSE)) {
+		if (other == CDD.TRUE || this == CDD.FALSE) {
 			return this;
 		}
 
@@ -253,11 +250,11 @@ public final class CDD {
 	 * @return the conjunction of the CDDs.
 	 */
 	public CDD and(final CDD other, final Map<CDD, Map<CDD, CDD>> cache) {
-		if ((other == CDD.FALSE) || (this == CDD.TRUE)) {
+		if (other == CDD.FALSE || this == CDD.TRUE) {
 			return other;
 		}
 
-		if ((other == CDD.TRUE) || (this == CDD.FALSE)) {
+		if (other == CDD.TRUE || this == CDD.FALSE) {
 			return this;
 		}
 
@@ -304,11 +301,11 @@ public final class CDD {
 	 * @return the disjunction of the CDDs.
 	 */
 	public CDD or(final CDD other) {
-		if ((other == CDD.FALSE) || (this == CDD.TRUE)) {
+		if (other == CDD.FALSE || this == CDD.TRUE) {
 			return this;
 		}
 
-		if ((other == CDD.TRUE) || (this == CDD.FALSE)) {
+		if (other == CDD.TRUE || this == CDD.FALSE) {
 			return other;
 		}
 
@@ -317,11 +314,11 @@ public final class CDD {
 	}
 
 	public CDD or(final CDD other, final Map<CDD, Map<CDD, CDD>> cache) {
-		if ((other == CDD.FALSE) || (this == CDD.TRUE)) {
+		if (other == CDD.FALSE || this == CDD.TRUE) {
 			return this;
 		}
 
-		if ((other == CDD.TRUE) || (this == CDD.FALSE)) {
+		if (other == CDD.TRUE || this == CDD.FALSE) {
 			return other;
 		}
 
@@ -377,11 +374,11 @@ public final class CDD {
 	 */
 	public CDD assume(CDD assumption) {
 		while (true) {
-			if ((this == TRUE) || (assumption == FALSE)) {
+			if (this == TRUE || assumption == FALSE) {
 				return TRUE;
 			}
 
-			if ((this == FALSE) || (assumption == TRUE)) {
+			if (this == FALSE || assumption == TRUE) {
 				return this;
 			}
 
@@ -403,7 +400,7 @@ public final class CDD {
 				for (int i = 0; i < mChilds.length; i++) {
 					final CDD newC = mChilds[i].assume(assumption);
 
-					if ((newChilds == null) && (newC != mChilds[i])) {
+					if (newChilds == null && newC != mChilds[i]) {
 						newChilds = new CDD[mChilds.length];
 						System.arraycopy(mChilds, 0, newChilds, 0, i);
 					}
@@ -436,35 +433,33 @@ public final class CDD {
 			return new CDD[] {};
 		}
 
-		final ArrayList<CDD> dnf = new ArrayList<>();
+		final List<CDD> dnf = new ArrayList<>();
 
 		for (int i = 0; i < mChilds.length; i++) {
 			final CDD[] cdnf = mChilds[i].toDNF();
 
 			// isDominated optimization as in toString
 			if (childDominates(i)) {
-				for (int j = 0; j < cdnf.length; j++) {
-					if (!dnf.contains(cdnf[j])) {
-						dnf.add(cdnf[j]);
+				for (final CDD element : cdnf) {
+					if (!dnf.contains(element)) {
+						dnf.add(element);
 					}
 				}
 			} else {
-				for (int j = 0; j < cdnf.length; j++) {
+				for (final CDD element : cdnf) {
 					// extended isDominated check:
 					// checks whether a single conjunction term of the DNF dominates
 					// all childs. In this case we do not need to consider the current decision.
-					if (cddDominates(i, cdnf[j])) {
-						if (!dnf.contains(cdnf[j])) {
-							dnf.add(cdnf[j]);
+					if (cddDominates(i, element)) {
+						if (!dnf.contains(element)) {
+							dnf.add(element);
 						}
 					} else {
 						final CDD[] newchilds = new CDD[mChilds.length];
 
-						for (int k = 0; k < newchilds.length; k++) {
-							newchilds[k] = FALSE;
-						}
+						Arrays.fill(newchilds, FALSE);
 
-						newchilds[i] = cdnf[j];
+						newchilds[i] = element;
 
 						final CDD newCDD = create(mDecision, newchilds);
 
@@ -483,8 +478,7 @@ public final class CDD {
 		final CDD[] dnfList = toDNF();
 		CDD result = CDD.FALSE;
 
-		for (int i = 0; i < dnfList.length; i++) {
-			final CDD literal = dnfList[i];
+		for (final CDD literal : dnfList) {
 			result = result.or(literal);
 		}
 
@@ -505,37 +499,35 @@ public final class CDD {
 			return new CDD[] { this };
 		}
 
-		final ArrayList<CDD> cnf = new ArrayList<>();
+		final List<CDD> cnf = new ArrayList<>();
 
 		for (int i = 0; i < mChilds.length; i++) {
 			final CDD[] ccnf = mChilds[i].toCNF();
 
 			// isDominated optimization similar to toString and toCDD
 			if (childIsDominated(i)) {
-				for (int j = 0; j < ccnf.length; j++) {
-					if (!cnf.contains(ccnf[j])) {
-						cnf.add(ccnf[j]);
+				for (final CDD element : ccnf) {
+					if (!cnf.contains(element)) {
+						cnf.add(element);
 					}
 				}
 			} else {
-				for (int j = 0; j < ccnf.length; j++) {
+				for (final CDD element : ccnf) {
 					// extended isDominated check:
 					// checks whether a single disjunction term of the CNF is dominated
 					// by all childs. In this case we do not need to consider the current decision.
-					if (cddIsDominated(i, ccnf[j])) {
-						if (!cnf.contains(ccnf[j])) {
-							cnf.add(ccnf[j]);
+					if (cddIsDominated(i, element)) {
+						if (!cnf.contains(element)) {
+							cnf.add(element);
 						}
 					} else {
 						// we construct a CDD for the disjunction of this decision and the
 						// disjunction term ccnf[i].
 						final CDD[] newchilds = new CDD[mChilds.length];
 
-						for (int k = 0; k < newchilds.length; k++) {
-							newchilds[k] = TRUE;
-						}
+						Arrays.fill(newchilds, TRUE);
 
-						newchilds[i] = ccnf[j];
+						newchilds[i] = element;
 
 						final CDD newCDD = create(mDecision, newchilds);
 
@@ -554,8 +546,7 @@ public final class CDD {
 		final CDD[] cnfList = toCNF();
 		CDD result = CDD.TRUE;
 
-		for (int i = 0; i < cnfList.length; i++) {
-			final CDD literal = cnfList[i];
+		for (final CDD literal : cnfList) {
 			result = result.and(literal);
 		}
 
@@ -575,18 +566,6 @@ public final class CDD {
 	}
 
 	/**
-	 * Check whether a given childs in the current node is dominated (i.e. logically implied) by all other childs. This
-	 * function should only be called by subclasses of Decision.
-	 *
-	 * @param i
-	 *            the index of the child to check.
-	 * @return true, if childs[j] implies childs[i] for all j.
-	 */
-	public boolean childIsDominated(final int i) {
-		return cddIsDominated(i, mChilds[i]);
-	}
-
-	/**
 	 * Check whether a given CDD dominates (i.e. logically implies) all childs (besides the child given by i) of this
 	 * CDD.
 	 *
@@ -598,12 +577,24 @@ public final class CDD {
 	 */
 	private boolean cddDominates(final int i, final CDD cdd) {
 		for (int j = 0; j < mChilds.length; j++) {
-			if ((j != i) && !cdd.implies(mChilds[j])) {
+			if (j != i && !cdd.implies(mChilds[j])) {
 				return false;
 			}
 		}
 
 		return true;
+	}
+
+	/**
+	 * Check whether a given childs in the current node is dominated (i.e. logically implied) by all other childs. This
+	 * function should only be called by subclasses of Decision.
+	 *
+	 * @param i
+	 *            the index of the child to check.
+	 * @return true, if childs[j] implies childs[i] for all j.
+	 */
+	public boolean childIsDominated(final int i) {
+		return cddIsDominated(i, mChilds[i]);
 	}
 
 	/**
@@ -618,7 +609,7 @@ public final class CDD {
 	 */
 	private boolean cddIsDominated(final int i, final CDD cdd) {
 		for (int j = 0; j < mChilds.length; j++) {
-			if ((j != i) && !mChilds[j].implies(cdd)) {
+			if (j != i && !mChilds[j].implies(cdd)) {
 				return false;
 			}
 		}
@@ -635,7 +626,7 @@ public final class CDD {
 	}
 
 	public CDD prime(final Set<String> ignoredIds) {
-		if ((this == CDD.TRUE) || (this == CDD.FALSE)) {
+		if (this == CDD.TRUE || this == CDD.FALSE) {
 			return this;
 		}
 		if (mPrimeCache != null) {
@@ -663,12 +654,12 @@ public final class CDD {
 	 *         A&B, A||B)
 	 */
 	public boolean isAtomic() {
-		return ((getChilds()[0] == CDD.TRUE) || (getChilds()[0] == CDD.FALSE))
-				&& ((getChilds()[1] == CDD.TRUE) || (getChilds()[1] == CDD.FALSE));
+		return (getChilds()[0] == CDD.TRUE || getChilds()[0] == CDD.FALSE)
+				&& (getChilds()[1] == CDD.TRUE || getChilds()[1] == CDD.FALSE);
 	}
 
 	public CDD unprime(final Set<String> ignoredIds) {
-		if ((this == CDD.TRUE) || (this == CDD.FALSE)) {
+		if (this == CDD.TRUE || this == CDD.FALSE) {
 			return this;
 		}
 
@@ -831,12 +822,10 @@ public final class CDD {
 
 			if (childDominates(i)) {
 				disjuncts.add(funCdd2Str.apply(mChilds[i]));
+			} else if (mChilds[i] != CDD.TRUE) {
+				disjuncts.add("(" + funDecision2Str.apply(i) + andStr + funCdd2Str.apply(mChilds[i]) + ")");
 			} else {
-				if (mChilds[i] != CDD.TRUE) {
-					disjuncts.add("(" + funDecision2Str.apply(i) + andStr + funCdd2Str.apply(mChilds[i]) + ")");
-				} else {
-					disjuncts.add(funDecision2Str.apply(i));
-				}
+				disjuncts.add(funDecision2Str.apply(i));
 			}
 		}
 		if (disjuncts.size() == 1) {
@@ -852,6 +841,80 @@ public final class CDD {
 		}
 		sb.append(")");
 		return sb.toString();
+	}
+
+	/**
+	 * Returns an ArrayList of pairs containing all the Decisions in the CDD. The
+	 * first element of each pair is a Decision<?>, the second element is an array
+	 * of integers signifying the positions of all true children of the decision. If
+	 * called on CDD.TRUE or CDD.FALSE, it will return an empty array.
+	 *
+	 * Example: cdd: a && !b && c5 >= 5 && c6 <= 5 && c7 == 5 && c8 != 5 result:
+	 * [(a, [0]) (b, [1]), (c5, [1]), (c6, [0]), (c7, [1]), (c8, [0, 2])]
+	 *
+	 *
+	 * @param CDD cdd
+	 * @return ArrayList<SimplePair<Decision<?>, Integer>> result
+	 */
+	public List<Pair<Decision<?>, int[]>> getDecisionsConjunction() {
+		// TODO: refactor this method and its depending methods as this methods does
+		// only produce some strange intermediate representation of the CDD's DNF in
+		// order to make transformations on the CDD (in the methods depending on the
+		// produced representation)
+		final List<Pair<Decision<?>, int[]>> result = new ArrayList<>();
+		// assert !toString().contains("||");
+		CDD node = this;
+
+		while (node.getChilds() != null) {
+			final CDD[] childs = node.getChilds();
+			final CDD childLeft = childs[0];
+			final CDD childRight = childs[1];
+			final Decision<?> decision = node.getDecision();
+			// check which operation
+			if (childLeft == CDD.FALSE) {
+				// c > T, c >= T, c == T
+				// trueChild is [1]
+				final int[] trueChilds = { 1 };
+				final Pair<Decision<?>, int[]> pair = new Pair<>(decision, trueChilds);
+				result.add(pair);
+				node = childRight;
+			} else {
+				// (childRight == CDD.FALSE) because the CDD is a conjunction
+				// c < T, c <= T, c != T
+				if (childs.length == 3) {
+					// c != T
+					// trueChild is [0, 2]
+					final int[] trueChilds = { 0, 2 };
+					final Pair<Decision<?>, int[]> pair = new Pair<>(decision, trueChilds);
+					result.add(pair);
+				} else {
+					// c > T, c >= T
+					// trueChild is [0]
+					final int[] trueChilds = { 0 };
+					final Pair<Decision<?>, int[]> pair = new Pair<>(decision, trueChilds);
+					result.add(pair);
+				}
+				node = childLeft;
+			}
+
+		}
+		return result;
+	}
+
+	/**
+	 * Converts a CDD into DNF, and, for each conjunction, collects a List of Pairs (Decision<?> decision, int
+	 * trueChild). int trueChild is needed to later build atomic CDDs for each decision, as it is used to determine the
+	 * operation (see getOp())
+	 *
+	 * @return ArrayList<ArrayList<SimplePair<Decision<?>, Integer>>> result the List of conjunction-Lists
+	 */
+	public List<List<Pair<Decision<?>, int[]>>> getDecisionsDNF() {
+		final CDD[] dnf = toDNF();
+		final List<List<Pair<Decision<?>, int[]>>> result = new ArrayList<>();
+		for (final CDD conjunction : dnf) {
+			result.add(conjunction.getDecisionsConjunction());
+		}
+		return result;
 	}
 
 }

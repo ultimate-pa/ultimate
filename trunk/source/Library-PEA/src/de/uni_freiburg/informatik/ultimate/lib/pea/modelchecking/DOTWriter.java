@@ -93,7 +93,7 @@ public class DOTWriter extends TCSWriter {
 	@Override
 	public void write() {
 		try {
-			writer = new FileWriter(fileName);
+			writer = new FileWriter(mFileName);
 			// init();
 			writePreamble();
 			writeInitialTransitions();
@@ -101,7 +101,7 @@ public class DOTWriter extends TCSWriter {
 			writeClose();
 			writer.flush();
 			writer.close();
-			System.out.println("Successfully written to " + fileName);
+			System.out.println("Successfully written to " + mFileName);
 		} catch (final IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -133,9 +133,9 @@ public class DOTWriter extends TCSWriter {
 	 */
 	protected void writeInitialTransitions() throws IOException {
 
-		final Phase[] init = pea2write.getInit();
-		for (int i = 0; i < init.length; i++) {
-			String initState = init[i].toString();
+		final List<Phase> init = pea2write.getInit();
+		for (final Phase element : init) {
+			String initState = element.toString();
 			initState = initState.replace("_", "");
 			writer.write("null" + initState + " [shape = plaintext label=\"\"] \n");
 			writer.write("null" + initState + DOTString.TO + initState + DOTString.STOP + "\n");
@@ -155,10 +155,10 @@ public class DOTWriter extends TCSWriter {
 	 * we need to delete(or change) it from the names of the states.
 	 */
 	protected void writeTransitions() throws IOException {
-		final Phase[] phases = pea2write.getPhases();
+		final List<Phase> phases = pea2write.getPhases();
 
-		for (int i = 0; i < phases.length; i++) {
-			final Phase currentPhase = phases[i];
+		for (int i = 0; i < phases.size(); i++) {
+			final Phase currentPhase = phases.get(i);
 			String location = currentPhase.getName();
 			location = location.replace("_", "");
 			String clock = currentPhase.getClockInvariant().toTexString();
@@ -190,8 +190,8 @@ public class DOTWriter extends TCSWriter {
 
 				String result = " ";
 				if (reset.length > 0) {
-					for (int j = 0; j < reset.length; j++) {
-						result = result + reset[j] + " := 0 ";
+					for (final String element : reset) {
+						result = result + element + " := 0 ";
 					}
 				}
 				result = result.replace("_", "");

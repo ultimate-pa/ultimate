@@ -513,8 +513,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 		// -> so basically we create a new instance of the CodeBlock,
 		// this is necessary to avoid mixing of the models
 		if (cb instanceof StatementSequence) {
-			copyOfCodeBlock = mCbf.constructStatementSequence(null, null, ((StatementSequence) cb).getStatements(),
-					((StatementSequence) cb).getOrigin());
+			copyOfCodeBlock = mCbf.constructStatementSequence(null, null, ((StatementSequence) cb).getStatements());
 		} else if (cb instanceof Call) {
 			copyOfCodeBlock = mCbf.constructCall(null, null, ((Call) cb).getCallStatement());
 		} else if (cb instanceof Return) {

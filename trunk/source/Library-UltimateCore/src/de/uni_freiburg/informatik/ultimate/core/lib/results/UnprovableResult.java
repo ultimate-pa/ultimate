@@ -73,10 +73,11 @@ public class UnprovableResult<ELEM extends IElement, TE extends IElement, E> ext
 		implements IResultWithFiniteTrace<TE, E>, IFailedAnalysisResult {
 
 	private final Check mCheckedSpecification;
-	private final IProgramExecution<TE, E> mProgramExecution;
-	private final List<ILocation> mFailurePath;
 	private final List<UnprovabilityReason> mUnprovabilityReasons;
-	private String mProgramExecutionAsString;
+
+	private final IProgramExecution<TE, E> mProgramExecution;
+	private final String mProgramExecutionAsString;
+	private final List<ILocation> mFailurePath;
 
 	public UnprovableResult(final String plugin, final ELEM position, final IBacktranslationService translatorSequence,
 			final IProgramExecution<TE, E> programExecution) {
@@ -91,16 +92,20 @@ public class UnprovableResult<ELEM extends IElement, TE extends IElement, E> ext
 
 	public UnprovableResult(final String plugin, final ELEM position, final IBacktranslationService translatorSequence,
 			final IProgramExecution<TE, E> programExecution, final List<UnprovabilityReason> unprovabilityReasons) {
-		super(position, plugin, translatorSequence);
+		super(position, plugin);
 		final Check check = Check.getAnnotation(position);
 		if (check == null) {
 			mCheckedSpecification = new Check(Spec.UNKNOWN);
 		} else {
 			mCheckedSpecification = check;
 		}
-		mProgramExecution = programExecution;
-		mFailurePath = ResultUtil.getLocationSequence(programExecution);
 		mUnprovabilityReasons = Objects.requireNonNull(unprovabilityReasons);
+
+		// programExecution may be null
+		mProgramExecution = programExecution;
+		mProgramExecutionAsString = mProgramExecution == null ? null
+				: translatorSequence.translateProgramExecution(mProgramExecution).toString();
+		mFailurePath = ResultUtil.getLocationSequence(programExecution);
 	}
 
 	public Check getCheckedSpecification() {
@@ -122,15 +127,12 @@ public class UnprovableResult<ELEM extends IElement, TE extends IElement, E> ext
 			sb.append(CoreUtil.getPlatformLineSeparator());
 			sb.append("Possible FailurePath: ");
 			sb.append(CoreUtil.getPlatformLineSeparator());
-			sb.append(getProgramExecutionAsString());
+			sb.append(mProgramExecutionAsString);
 		}
 		return sb.toString();
 	}
 
 	public String getProgramExecutionAsString() {
-		if (mProgramExecutionAsString == null) {
-			mProgramExecutionAsString = mTranslatorSequence.translateProgramExecution(mProgramExecution).toString();
-		}
 		return mProgramExecutionAsString;
 	}
 

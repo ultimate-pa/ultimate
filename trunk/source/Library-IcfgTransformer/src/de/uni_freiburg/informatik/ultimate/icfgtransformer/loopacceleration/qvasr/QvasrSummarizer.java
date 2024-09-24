@@ -229,8 +229,8 @@ public class QvasrSummarizer {
 				}
 			}
 		}
-		final IPredicate guardPred = new BasicPredicate(0, new String[0], script.getScript().term("true"),
-				Collections.emptySet(), Collections.emptySet(), script.getScript().term("true"));
+		final IPredicate guardPred = new BasicPredicate(0, script.getScript().term("true"), Collections.emptySet(),
+				Collections.emptySet(), script.getScript().term("true"));
 		final Term post = predTransformer.strongestPostcondition(guardPred, tf);
 		final Term postSub = Substitution.apply(script, defaultToOut, post);
 		qvasrDimensionConjunction.add(postSub);

@@ -109,7 +109,7 @@ public abstract class SpWpInterpolantProvider<LETTER extends IIcfgTransition<?>>
 		}
 		// Eliminate all stores (using case distinction on index equalities)
 		final var stores =
-				MultiDimensionalSelectOverNestedStore.extractMultiDimensionalSelectOverStores(mScript, result);
+				MultiDimensionalSelectOverNestedStore.extractMultiDimensionalSelectOverNestedStore(result, false);
 		for (final var m : stores) {
 			result = MultiDimensionalSelectOverStoreEliminationUtils.replace(mManagedScript, mAiem, result, m);
 		}

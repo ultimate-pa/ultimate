@@ -31,20 +31,18 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 
-import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Witness.IMapSerializable;
-
 /**
  * @author Manuel Bentele (bentele@informatik.uni-freiburg.de)
  */
-public class Location implements IMapSerializable {
+public class Location {
 
 	private final String mFileName;
 	private final String mFileHash;
-	private final int mLine;
-	private final int mColumn;
+	private final Integer mLine;
+	private final Integer mColumn;
 	private final String mFunction;
 
-	public Location(final String fileName, final String fileHash, final int line, final int column,
+	public Location(final String fileName, final String fileHash, final Integer line, final Integer column,
 			final String function) {
 		mFileName = fileName;
 		mFileHash = fileHash;
@@ -61,11 +59,11 @@ public class Location implements IMapSerializable {
 		return mFileHash;
 	}
 
-	public int getLine() {
+	public Integer getLine() {
 		return mLine;
 	}
 
-	public int getColumn() {
+	public Integer getColumn() {
 		return mColumn;
 	}
 
@@ -97,14 +95,17 @@ public class Location implements IMapSerializable {
 				&& mLine == other.mLine;
 	}
 
-	@Override
 	public Map<String, Object> toMap() {
 		final LinkedHashMap<String, Object> result = new LinkedHashMap<>();
 		result.put("file_name", mFileName);
 		result.put("file_hash", mFileHash);
 		result.put("line", mLine);
-		result.put("column", mColumn);
-		result.put("function", mFunction);
+		if (mColumn != null) {
+			result.put("column", mColumn);
+		}
+		if (mFunction != null) {
+			result.put("function", mFunction);
+		}
 		return result;
 	}
 }

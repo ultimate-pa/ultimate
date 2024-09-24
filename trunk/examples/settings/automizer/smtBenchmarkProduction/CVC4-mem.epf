@@ -24,7 +24,7 @@ file_export_version=3.0
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Hoare\ triple\ checks=MONOLITHIC
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Compute\ Interpolants\ along\ a\ Counterexample=ForwardPredicates
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Compute\ Hoare\ Annotation\ of\ negated\ interpolant\ automaton,\ abstraction\ and\ CFG=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Positions\ where\ we\ compute\ the\ Hoare\ Annotation=None
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Interplant\ automaton\ enhancement=EAGER
 
 #Sat Oct 18 16:33:01 CEST 2014

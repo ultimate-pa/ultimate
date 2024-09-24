@@ -77,37 +77,21 @@ public final class BitvectorUtils {
 	 *         returned.
 	 */
 	public static BitvectorConstant constructBitvectorConstant(final Term term) {
-		if (term instanceof ApplicationTerm) {
-			if (SmtSortUtils.isBitvecSort(term.getSort())) {
-				if (term.getSort().getIndices().length == 1) {
-					final ApplicationTerm appTerm = (ApplicationTerm) term;
-					final FunctionSymbol symb = appTerm.getFunction();
-					if (isBitvectorConstant(symb)) {
-						assert (symb.getName().startsWith("bv"));
-						final String valueString = symb.getName().substring(2);
-						final BigInteger value = new BigInteger(valueString);
-						return constructBitvectorConstant(value, term.getSort());
-					}
-				}
+		if (!SmtSortUtils.isBitvecSort(term.getSort())) {
+			return null;
+		}
+		if (term instanceof ApplicationTerm && term.getSort().getIndices().length == 1) {
+			final FunctionSymbol symb = ((ApplicationTerm) term).getFunction();
+			if (!isBitvectorConstant(symb)) {
+				return null;
 			}
-		} else if (term instanceof ConstantTerm) {
-			if (SmtSortUtils.isBitvecSort(term.getSort())) {
-				final ConstantTerm constTerm = (ConstantTerm) term;
-				if (constTerm.getValue() instanceof String) {
-					final String bitString = (String) constTerm.getValue();
-					final BigInteger value;
-					if (bitString.startsWith("#b")) {
-						value = new BigInteger(bitString.substring(2), 2);
-					} else if (bitString.startsWith("#x")) {
-						value = new BigInteger(bitString.substring(2), 16);
-					} else {
-						throw new AssertionError("Unexpected constant value");
-					}
-					return constructBitvectorConstant(value, term.getSort());
-				} else {
-					throw new UnsupportedOperationException("Unexpected value of bitvector constant");
-				}
-			}
+			assert symb.getName().startsWith("bv");
+			final String valueString = symb.getName().substring(2);
+			return constructBitvectorConstant(new BigInteger(valueString), term.getSort());
+		}
+		if (term instanceof ConstantTerm) {
+			final BigInteger value = extractValueFromBitvectorConstant((ConstantTerm) term);
+			return constructBitvectorConstant(value, term.getSort());
 		}
 		return null;
 	}
@@ -115,6 +99,24 @@ public final class BitvectorUtils {
 	public static BitvectorConstant constructBitvectorConstant(final BigInteger value, final Sort sort) {
 		final String index = sort.getIndices()[0];
 		return new BitvectorConstant(value, index);
+	}
+
+	public static BigInteger extractValueFromBitvectorConstant(final ConstantTerm term) {
+		if (!SmtSortUtils.isBitvecSort(term.getSort())) {
+			throw new AssertionError("Sort must be bitvector sort, got " + term.getSort());
+		}
+		final Object value = term.getValue();
+		if (value instanceof BigInteger) {
+			return (BigInteger) value;
+		}
+		if (value.toString().startsWith("#x")) {
+			return new BigInteger(value.toString().substring(2), 16);
+		}
+		if (value.toString().startsWith("#b")) {
+			return new BigInteger(value.toString().substring(2), 2);
+		}
+		throw new AssertionError(
+				"Value must be stored as BigInterger, hexadecimally endoded string or binarily encoded string");
 	}
 
 	/**
@@ -147,8 +149,8 @@ public final class BitvectorUtils {
 		return true;
 	}
 
-	public static Term unfTerm(final Script script, final String funcname,
-			final BigInteger[] indices, final Term... params) {
+	public static Term unfTerm(final Script script, final String funcname, final BigInteger[] indices,
+			final Term... params) {
 		final Term result;
 		final BvOp bvop = BvOp.valueOf(funcname);
 		switch (bvop) {

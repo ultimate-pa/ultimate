@@ -32,12 +32,8 @@ package de.uni_freiburg.informatik.ultimate.witnessparser;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.time.OffsetDateTime;
-import java.time.ZoneId;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -45,15 +41,12 @@ import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.SafeConstructor;
 
-import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.FormatVersion;
-import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Invariant;
-import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.InvariantSet;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.FunctionContract;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.GhostUpdate;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.GhostVariable;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Location;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LocationInvariant;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LoopInvariant;
-import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Metadata;
-import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Producer;
-import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Task;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Witness;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.WitnessEntry;
 
@@ -70,10 +63,6 @@ public class YamlWitnessParser {
 	// The default is just 3MB, but this is not sufficient for us.
 	private static final int MAXIMAL_SIZE = 50 * 1024 * 1024;
 
-	// TODO: Make this a map instead with functions as values (i.e. what to do with this versions)
-	private static final List<FormatVersion> SUPPORTED_VERSIONS =
-			List.of(new FormatVersion(0, 1), new FormatVersion(0, 2), new FormatVersion(2, 0));
-
 	public static Witness parseWitness(final File yamlInput) throws IOException {
 		final LoaderOptions loaderOptions = new LoaderOptions();
 		loaderOptions.setCodePointLimit(MAXIMAL_SIZE);
@@ -82,84 +71,72 @@ public class YamlWitnessParser {
 		return new Witness(res.stream().flatMap(YamlWitnessParser::parseWitnessEntry).collect(Collectors.toList()));
 	}
 
+	@SuppressWarnings("unchecked")
 	private static Stream<WitnessEntry> parseWitnessEntry(final Map<String, Object> entry) {
-		final Metadata metadata = parseMetadata((Map<String, Object>) entry.get("metadata"));
 		switch ((String) entry.get("entry_type")) {
 		case LocationInvariant.NAME: {
 			final Location location = parseLocation((Map<String, Object>) entry.get("location"));
-			final Invariant locationInvariant = parseInvariant((Map<String, String>) entry.get(LocationInvariant.NAME));
-			return Stream.of(new LocationInvariant(metadata, location, locationInvariant));
+			final Map<String, String> invariant = (Map<String, String>) entry.get(LocationInvariant.NAME);
+			return Stream.of(new LocationInvariant(location, invariant.get("string"), invariant.get("format")));
 		}
 		case LoopInvariant.NAME: {
 			final Location location = parseLocation((Map<String, Object>) entry.get("location"));
-			final Invariant loopInvariant = parseInvariant((Map<String, String>) entry.get(LoopInvariant.NAME));
-			return Stream.of(new LoopInvariant(metadata, location, loopInvariant));
+			final Map<String, String> invariant = (Map<String, String>) entry.get(LoopInvariant.NAME);
+			return Stream.of(new LoopInvariant(location, invariant.get("string"), invariant.get("format")));
 		}
-		case InvariantSet.NAME:
-			// TODO: This just transforms the "new" format to the "old" format, maybe change this in the future
+		case "ghost_instrumentation": {
+			final var content = (Map<String, List<Map<String, Object>>>) entry.get("content");
+			final List<Map<String, Object>> ghostVariables = content.get("ghost_variables");
+			final List<Map<String, Object>> ghostUpdates = content.get("ghost_updates");
+			return Stream.concat(ghostVariables.stream().map(x -> parseGhostVariable(x)),
+					ghostUpdates.stream().flatMap(x -> parseGhostUpdates(x)));
+		}
+		case "invariant_set": {
 			final List<Map<String, Map<String, Object>>> content =
 					(List<Map<String, Map<String, Object>>>) entry.get("content");
-			return content.stream().map(x -> parseAsSingleEntry(x.get("invariant"), metadata));
+			return content.stream().map(x -> parseInvariantSetEntry(x));
+		}
 		default:
 			throw new UnsupportedOperationException("Unknown entry type " + entry.get("entry_type"));
 		}
 	}
 
-	private static WitnessEntry parseAsSingleEntry(final Map<String, Object> setEntry, final Metadata metadata) {
-		// Create new metadata with a fresh UUID (because we rely on it as a unique identifier)
-		final Metadata newMetadata = new Metadata(metadata.getFormatVersion(), UUID.randomUUID(),
-				metadata.getCreationTime(), metadata.getProducer(), metadata.getTask());
-		final Location location = parseLocation((Map<String, Object>) setEntry.get("location"));
-		final Invariant invariant =
-				new Invariant((String) setEntry.get("value"), "assertion", (String) setEntry.get("format"));
-		switch ((String) setEntry.get("type")) {
+	@SuppressWarnings("unchecked")
+	private static GhostVariable parseGhostVariable(final Map<String, Object> entry) {
+		final var initial = (Map<String, String>) entry.get("initial");
+		return new GhostVariable((String) entry.get("name"), initial.get("value"), initial.get("format"),
+				(String) entry.get("scope"), (String) entry.get("type"));
+	}
+
+	@SuppressWarnings("unchecked")
+	private static Stream<GhostUpdate> parseGhostUpdates(final Map<String, Object> entry) {
+		final Location location = parseLocation((Map<String, Object>) entry.get("location"));
+		final List<Map<String, String>> updates = (List<Map<String, String>>) entry.get("updates");
+		return updates.stream().map(x -> new GhostUpdate(x.get("variable"), x.get("value"), x.get("format"), location));
+	}
+
+	@SuppressWarnings("unchecked")
+	private static WitnessEntry parseInvariantSetEntry(final Map<String, Map<String, Object>> entry) {
+		if (entry.size() != 1) {
+			throw new UnsupportedOperationException("Invalid entry in content " + entry);
+		}
+		final var map = entry.values().iterator().next();
+		final Location location = parseLocation((Map<String, Object>) map.get("location"));
+		final String format = (String) map.get("format");
+		switch ((String) map.get("type")) {
 		case LocationInvariant.NAME:
-			return new LocationInvariant(newMetadata, location, invariant);
+			return new LocationInvariant(location, (String) map.get("value"), format);
 		case LoopInvariant.NAME:
-			return new LocationInvariant(newMetadata, location, invariant);
+			return new LoopInvariant(location, (String) map.get("value"), format);
+		case FunctionContract.NAME:
+			return new FunctionContract(location, (String) map.get("requires"), (String) map.get("ensures"), format);
 		default:
-			throw new UnsupportedOperationException("Unknown entry type " + setEntry.get("type"));
+			throw new UnsupportedOperationException("Invalid entry in content" + entry);
 		}
-	}
-
-	private static Metadata parseMetadata(final Map<String, Object> metadata) {
-		final FormatVersion formatVersion = FormatVersion.fromString(metadata.get("format_version").toString());
-		if (!SUPPORTED_VERSIONS.contains(formatVersion)) {
-			throw new UnsupportedOperationException("Unsupported format version " + formatVersion);
-		}
-		final UUID uuid = UUID.fromString((String) metadata.get("uuid"));
-		final Object rawDate = metadata.get("creation_time");
-		final OffsetDateTime creationTime;
-		if (rawDate instanceof Date) {
-			creationTime = OffsetDateTime.ofInstant(((Date) rawDate).toInstant(), ZoneId.systemDefault());
-		} else {
-			creationTime = OffsetDateTime.parse((String) rawDate);
-		}
-		final Producer producer = parseProducer((Map<String, String>) metadata.get("producer"));
-		final Task task = parseTask((Map<String, Object>) metadata.get("task"));
-		return new Metadata(formatVersion, uuid, creationTime, producer, task);
-	}
-
-	private static Producer parseProducer(final Map<String, String> producer) {
-		// TODO: I don't see any reason to parse the optional entries here...
-		return new Producer(producer.get("name"), producer.get("version"));
-	}
-
-	private static Task parseTask(final Map<String, Object> task) {
-		final List<String> files = (List<String>) task.get("input_files");
-		final Map<String, String> hashes = (Map<String, String>) task.get("input_file_hashes");
-		final String spec = (String) task.get("specification");
-		final String dataModel = (String) task.get("data_model");
-		final String language = (String) task.get("language");
-		return new Task(files, hashes, spec, dataModel, language);
 	}
 
 	private static Location parseLocation(final Map<String, Object> location) {
 		return new Location((String) location.get("file_name"), (String) location.get("file_hash"),
 				(Integer) location.get("line"), (Integer) location.get("column"), (String) location.get("function"));
-	}
-
-	private static Invariant parseInvariant(final Map<String, String> invariant) {
-		return new Invariant(invariant.get("string"), invariant.get("type"), invariant.get("format"));
 	}
 }

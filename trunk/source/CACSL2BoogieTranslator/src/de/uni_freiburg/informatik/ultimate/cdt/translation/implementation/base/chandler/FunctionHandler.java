@@ -91,7 +91,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.C
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.MainDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.MemoryArea;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager.BoogieProcedureInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
@@ -234,6 +233,7 @@ public class FunctionHandler {
 		final CFunction funcType = (CFunction) cDec.getType();
 
 		registerFunctionDeclaration(main, loc, contract, methodName, funcType, hook);
+		mNameHandler.addFunction(methodName, funcType.getResultType());
 
 		return new SkipResult();
 	}
@@ -281,11 +281,12 @@ public class FunctionHandler {
 		final CFunction oldFunType = (CFunction) cDec.getType();
 		final CFunction funType = updateVarArgsUsage(loc, node, oldFunType, definedProcName);
 		final CType returnCType = funType.getResultType();
+		mNameHandler.addFunction(definedProcName, returnCType);
 		definedProcInfo.updateCFunction(funType);
 		final boolean returnTypeIsVoid =
 				returnCType instanceof CPrimitive && ((CPrimitive) returnCType).getType() == CPrimitives.VOID;
 
-		VarList[] in = processInParams(loc, funType, definedProcInfo, node, true);
+		VarList[] in = processInParams(loc, funType, definedProcInfo, node);
 		if (isInParamVoid(in)) {
 			// in-parameter is "void", as in "int foo(void) .." we normalize this to an empty list of in-parameters
 			in = new VarList[0];
@@ -523,7 +524,6 @@ public class FunctionHandler {
 		}
 
 		final String rawName = ((IASTIdExpression) functionName).getName().toString();
-		mCalledFunctions.add(rawName);
 		// Resolve the function name (might be prefixed by multiparse)
 		final String methodName = mSymboltable.applyMultiparseRenaming(functionName.getContainingFilename(), rawName);
 
@@ -532,7 +532,7 @@ public class FunctionHandler {
 			// A 'real' function in the symbol table has a IASTFunctionDefinition as the parent of the declarator.
 			return handleFunctionPointerCall(loc, main, functionName, arguments, memoryHandler);
 		}
-
+		mCalledFunctions.add(rawName);
 		return handleFunctionCallGivenNameAndArguments(main, loc, methodName, arguments, memoryHandler);
 	}
 
@@ -631,10 +631,6 @@ public class FunctionHandler {
 
 		final BoogieProcedureInfo calleeProcInfo;
 		if (!mProcedureManager.hasProcedure(calleeName)) {
-			/*
-			 * "implicit function declaration", assume it was declared as int foo(); (thus the signature can be
-			 * completed by the first call, which we are dispatching here)
-			 */
 			mLogger.warn("implicit declaration of function " + calleeName);
 			mProcedureManager.registerProcedure(calleeName);
 			calleeProcInfo = mProcedureManager.getProcedureInfo(calleeName);
@@ -711,8 +707,8 @@ public class FunctionHandler {
 				// If one of the arguments is overapproximated, assign the value to an aux-var and overapproximate this
 				// assignment
 				final AuxVarInfo auxVar =
-						mAuxVarInfoBuilder.constructAuxVarInfo(loc, lrValue.getCType(), AUXVAR.NONDET);
-				functionCallExpressionResultBuilder.addAuxVar(auxVar).addDeclaration(auxVar.getVarDec());
+						mAuxVarInfoBuilder.constructAuxVarInfo(loc, lrValue.getCType(), AUXVAR.RETURNED);
+				functionCallExpressionResultBuilder.addAuxVarWithDeclaration(auxVar);
 				final Statement assign =
 						StatementFactory.constructSingleAssignmentStatement(loc, auxVar.getLhs(), lrValue.getValue());
 				for (final Overapprox oa : in.getOverapprs()) {
@@ -727,8 +723,7 @@ public class FunctionHandler {
 			final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc,
 					mTypeHandler.constructPointerType(loc), SFO.AUXVAR.VARARGS_POINTER);
 			// Declare the aux-var (it is allocated after the loop when the size is known)
-			functionCallExpressionResultBuilder.addAuxVar(auxvarinfo);
-			functionCallExpressionResultBuilder.addDeclaration(auxvarinfo.getVarDec());
+			functionCallExpressionResultBuilder.addAuxVarWithDeclaration(auxvarinfo);
 			final CPrimitive pointerType = mExpressionTranslation.getCTypeOfPointerComponents();
 			Expression currentOffset =
 					mExpressionTranslation.constructLiteralForIntegerType(loc, pointerType, BigInteger.ZERO);
@@ -803,48 +798,38 @@ public class FunctionHandler {
 	 */
 	private Specification[] makeBoogieSpecFromACSLContract(final IDispatcher main, final List<ACSLNode> contract,
 			final BoogieProcedureInfo procInfo, final IASTDeclarator hook) {
-		Specification[] spec;
-		if (contract == null) {
-			spec = new Specification[0];
-		} else {
-			final List<Specification> specList = new ArrayList<>();
-			for (int i = 0; i < contract.size(); i++) {
-				// retranslate ACSL specification needed e.g., in cases
-				// where ids of function parameters differ from is in ACSL
-				// expression
-				final Result retranslateRes = main.dispatch(contract.get(i), hook);
-				assert retranslateRes instanceof ContractResult;
-				final ContractResult resContr = (ContractResult) retranslateRes;
-				specList.addAll(Arrays.asList(resContr.getSpecs()));
-			}
-			spec = specList.toArray(new Specification[specList.size()]);
-			for (int i = 0; i < spec.length; i++) {
-				if (spec[i] instanceof ModifiesSpecification) {
-					procInfo.setModifiedGlobalsIsUsedDefined(true);
-					final ModifiesSpecification ms = (ModifiesSpecification) spec[i];
-					final LinkedHashSet<VariableLHS> modifiedSet = new LinkedHashSet<>();
-					Collections.addAll(modifiedSet, ms.getIdentifiers());
-					procInfo.addModifiedGlobals(modifiedSet);
-				}
-			}
-			// take care for behavior and completeness
-			mCHandler.clearContract();
+		if (contract == null || contract.isEmpty()) {
+			return new Specification[0];
 		}
-		return spec;
+		final List<Specification> specs = new ArrayList<>();
+		for (final ACSLNode node : contract) {
+			// retranslate ACSL specification needed e.g., in cases where ids of function parameters differ from is in
+			// ACSL expression
+			final Result retranslateRes = main.dispatch(node, hook);
+			assert retranslateRes instanceof ContractResult;
+			final ContractResult resContr = (ContractResult) retranslateRes;
+			specs.addAll(Arrays.asList(resContr.getSpecs()));
+		}
+		for (final Specification spec : specs) {
+			if (spec instanceof ModifiesSpecification) {
+				procInfo.setModifiedGlobalsIsUsedDefined(true);
+				final ModifiesSpecification ms = (ModifiesSpecification) spec;
+				procInfo.addModifiedGlobals(Arrays.asList(ms.getIdentifiers()));
+			}
+		}
+		// take care for behavior and completeness
+		mCHandler.clearContract();
+		return specs.toArray(Specification[]::new);
 	}
 
 	/**
 	 * Take the parameter information from the CDeclaration. Make a Varlist from it. Add the parameters to the
 	 * symboltable. Also update procedureToParamCType member.
 	 *
-	 * @param updateSymbolTable
-	 *            set this to true if the symbol table should be updated, false if only the result of this method is of
-	 *            interest and side effects are unwanted
-	 *
 	 * @return
 	 */
 	private VarList[] processInParams(final ILocation loc, final CFunction cFun, final BoogieProcedureInfo procInfo,
-			final IASTNode hook, final boolean updateSymbolTable) {
+			final IASTNode hook) {
 		final CDeclaration[] paramDecs = cFun.getParameterTypes();
 		final boolean hasUsedVarArgs = cFun.hasVarArgs() && cFun.getVarArgsUsage() == VarArgsUsage.USED;
 		final int size = hasUsedVarArgs ? paramDecs.length + 1 : paramDecs.length;
@@ -866,7 +851,8 @@ public class FunctionHandler {
 					currentParamDec.getType(), declInformation);
 			in[i] = new VarList(loc, new String[] { currentParamId }, currentParamType);
 
-			if (updateSymbolTable) {
+			// Workaround for function pointers: We do not insert anything in the symbol table
+			if (hook != null) {
 				mSymboltable.storeCSymbol(hook, currentParamDec.getName(), new SymbolTableValue(currentParamId, null,
 						currentParamType, currentParamDec, declInformation, null, false));
 			}
@@ -1013,7 +999,7 @@ public class FunctionHandler {
 
 				// Overwrite the information in the symbolTable for cId, s.t. it
 				// points to the locally declared variable.
-				mSymboltable.storeCSymbol(paramDec, inparamCId, new SymbolTableValue(inparamAuxVarName, inVarDecl, type,
+				mSymboltable.storeCSymbol(parent, inparamCId, new SymbolTableValue(inparamAuxVarName, inVarDecl, type,
 						new CDeclaration(cvar, inparamCId), inparamAuxVarDeclInfo, paramDec, false));
 			}
 		}
@@ -1036,9 +1022,12 @@ public class FunctionHandler {
 		final BoogieProcedureInfo procInfo = mProcedureManager.getOrConstructProcedureInfo(methodName);
 
 		// begin new scope for retranslation of ACSL specification
-		mCHandler.beginScope();
+		mProcedureManager.beginProcedureScope(mCHandler, procInfo);
 
-		final VarList[] in = processInParams(loc, funcType, procInfo, hook, false);
+		final VarList[] in = processInParams(loc, funcType, procInfo, hook);
+
+		// if possible, find the actual definition of this declaration s.t. we can update the varargs usage
+		procInfo.updateCFunction(updateVarArgsForDeclaration(hook, funcType, loc, methodName));
 
 		// OUT VARLIST : only one out param in C
 		VarList[] out = new VarList[1];
@@ -1078,11 +1067,8 @@ public class FunctionHandler {
 				new Procedure(loc, attr, procInfo.getProcedureName(), typeParams, in, out, spec, null);
 
 		procInfo.resetDeclaration(newDeclaration);
-
-		// if possible, find the actual definition of this declaration s.t. we can update the varargs usage
-		procInfo.updateCFunction(updateVarArgsForDeclaration(hook, funcType, loc, methodName));
 		// end scope for retranslation of ACSL specification
-		mCHandler.endScope();
+		mProcedureManager.endProcedureScope(mCHandler);
 	}
 
 	private static CFunction updateVarArgsForDeclaration(final IASTNode node, final CFunction funcType,
@@ -1126,8 +1112,7 @@ public class FunctionHandler {
 				final AuxVarInfo auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, astType, SFO.AUXVAR.RETURNED);
 				returnedValue = auxvar.getExp();
 				final VariableLHS returnedValueAsLhs = auxvar.getLhs();
-				builder.addAuxVar(auxvar);
-				builder.addDeclaration(auxvar.getVarDec());
+				builder.addAuxVarWithDeclaration(auxvar);
 
 				call = StatementFactory.constructCallStatement(loc, false, new VariableLHS[] { returnedValueAsLhs },
 						methodName, parameters.toArray(new Expression[parameters.size()]));
@@ -1150,8 +1135,7 @@ public class FunctionHandler {
 
 			returnedValue = auxvar.getExp();
 
-			builder.addDeclaration(auxvar.getVarDec());
-			builder.addAuxVar(auxvar);
+			builder.addAuxVarWithDeclaration(auxvar);
 
 			call = StatementFactory.constructCallStatement(loc, false, new VariableLHS[] { auxvar.getLhs() },
 					methodName, parameters.toArray(new Expression[parameters.size()]));

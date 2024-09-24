@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.pea;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -37,6 +38,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
@@ -579,7 +581,6 @@ public class Trace2PeaCompilerStateless {
 	 *
 	 * @return The test automaton for the countertrace or model-checkable trace
 	 *
-	 * @see de.uni_freiburg.informatik.ultimate.lib.pea.PEATestAutomaton
 	 * @see de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata
 	 * @see de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace.DCPhase
 	 */
@@ -659,7 +660,7 @@ public class Trace2PeaCompilerStateless {
 			mInit = new Phase[initSize];
 			for (int i = 0; i < initSize; i++) {
 				final Transition trans = initTrans.get(i);
-				if (trans.getDest().getName().endsWith("st"))  {
+				if (trans.getDest().getName().endsWith("st")) {
 					/*
 					 * If the first phase is not a true phase we need a special state to enter the garbage state "st"
 					 * only if the predicate of the first phase does not hold.
@@ -694,25 +695,28 @@ public class Trace2PeaCompilerStateless {
 
 		int phaseNr = 0;
 		if (start != null) {
-			phases[phaseNr++] = start;
+			phases[phaseNr] = start;
+			phaseNr++;
 		}
 		final Iterator<Entry<PhaseBits, Phase>> iter = mAllPhases.entrySet().iterator();
 		while (iter.hasNext()) {
-			phases[phaseNr++] = iter.next().getValue();
+			phases[phaseNr] = iter.next().getValue();
+			phaseNr++;
 		}
 		if (mExitSync != null) {
 			mLogger.debug("Trying to add transitions to final state");
-			phases[phaseNr++] = buildExitSyncTransitions();
+			phases[phaseNr] = buildExitSyncTransitions();
+			phaseNr++;
 			finalPhases[0] = phases[phaseNr - 1];
 		}
-		final ArrayList<String> peaClocks = new ArrayList<>();
-		for (int i = 0; i < mClock.length; i++) {
-			if (mClock[i] != null && !"".equals(mClock[i])) {
-				peaClocks.add(mClock[i]);
+		final List<String> peaClocks = new ArrayList<>();
+		for (final String element : mClock) {
+			if (element != null && !"".equals(element)) {
+				peaClocks.add(element);
 			}
 		}
-		final HashMap<String, String> variables = new HashMap<>();
-		final HashSet<String> events = new HashSet<>();
+		final Map<String, String> variables = new HashMap<>();
+		final Set<String> events = new HashSet<>();
 		for (int i = 0; i < mCountertrace.getPhases().length; i++) {
 			addVariables(mCountertrace.getPhases()[i].getEntryEvents(), variables, events);
 			addVariables(mCountertrace.getPhases()[i].getInvariant(), variables, events);
@@ -721,15 +725,19 @@ public class Trace2PeaCompilerStateless {
 
 		PhaseEventAutomata pea;
 		if (mExitSync != null) {
-			pea = new PEATestAutomaton(mName, phases, mInit, peaClocks, finalPhases).removeUnreachableLocations();
+			pea = new PEATestAutomaton(mName, Arrays.asList(phases), Arrays.asList(mInit), peaClocks, finalPhases)
+					.removeUnreachableLocations();
 		} else {
-			pea = new PhaseEventAutomata(mName, phases, mInit, peaClocks, variables, events, null);
+			pea = new PhaseEventAutomata(
+					mName, Arrays.asList(phases), Arrays.asList(mInit).stream()
+							.map(x -> new InitialTransition(CDD.TRUE, x)).collect(Collectors.toList()),
+					peaClocks, variables, events, null);
 		}
 
 		return pea;
 	}
 
-	private void addVariables(final CDD cdd, final HashMap<String, String> variables, final HashSet<String> events) {
+	private void addVariables(final CDD cdd, final Map<String, String> variables, final Set<String> events) {
 		final Decision<?> dec = cdd.getDecision();
 		if (dec == null) {
 			// may happen for true/false phases

@@ -43,10 +43,10 @@ public class SPredicateWithWitnessNode extends SPredicate {
 	private final WitnessNode mWitnessNode;
 	private final Integer mStutteringSteps;
 
-	protected SPredicateWithWitnessNode(final IcfgLocation programPoint, final int serialNumber,
-			final String[] procedures, final Term term, final Set<IProgramVar> vars, final Set<IProgramFunction> funs,
-			final Term closedFormula, final WitnessNode witnessNode, final Integer stutteringSteps) {
-		super(programPoint, serialNumber, procedures, term, vars, funs, closedFormula);
+	protected SPredicateWithWitnessNode(final IcfgLocation programPoint, final int serialNumber, final Term term,
+			final Set<IProgramVar> vars, final Set<IProgramFunction> funs, final Term closedFormula,
+			final WitnessNode witnessNode, final Integer stutteringSteps) {
+		super(programPoint, serialNumber, term, vars, funs, closedFormula);
 		mWitnessNode = witnessNode;
 		mStutteringSteps = stutteringSteps;
 	}
@@ -55,7 +55,7 @@ public class SPredicateWithWitnessNode extends SPredicate {
 			final WitnessNode witnessNode, final Integer stutteringSteps) {
 		return fac.construct((serial, script) -> {
 			final Term trueTerm = script.term("true");
-			return new SPredicateWithWitnessNode(programPoint, serial, new String[0], trueTerm, Collections.emptySet(),
+			return new SPredicateWithWitnessNode(programPoint, serial, trueTerm, Collections.emptySet(),
 					Collections.emptySet(), trueTerm, witnessNode, stutteringSteps);
 		});
 	}

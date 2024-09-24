@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.IInitialAbstractionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessUtils.Property;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
@@ -90,4 +91,8 @@ public class WitnessAutomatonAbstractionProvider<L extends IIcfgTransition<?>>
 				icfg.getCfgSmtToolkit(), mPredicateFactory, mStateFactoryForRefinement, mLogger, mProperty);
 	}
 
+	@Override
+	public IStatisticsDataProvider getStatistics() {
+		return mUnderlying.getStatistics();
+	}
 }

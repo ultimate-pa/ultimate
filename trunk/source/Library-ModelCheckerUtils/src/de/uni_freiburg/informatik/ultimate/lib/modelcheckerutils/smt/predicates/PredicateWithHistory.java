@@ -42,10 +42,10 @@ public class PredicateWithHistory extends SPredicate {
 	@Visualizable
 	private final Map<Integer, Term> mHistory;
 
-	protected PredicateWithHistory(final IcfgLocation programPoint, final int serialNumber, final String[] procedures,
-			final Term formula, final Set<IProgramVar> vars, final Set<IProgramFunction> funs, final Term closedFormula,
+	protected PredicateWithHistory(final IcfgLocation programPoint, final int serialNumber, final Term formula,
+			final Set<IProgramVar> vars, final Set<IProgramFunction> funs, final Term closedFormula,
 			final Map<Integer, Term> history) {
-		super(programPoint, serialNumber, procedures, formula, vars, funs, closedFormula);
+		super(programPoint, serialNumber, formula, vars, funs, closedFormula);
 		mHistory = history;
 	}
 

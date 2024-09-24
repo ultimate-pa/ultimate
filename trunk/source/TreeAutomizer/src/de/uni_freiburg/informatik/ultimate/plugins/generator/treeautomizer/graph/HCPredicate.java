@@ -70,7 +70,7 @@ public class HCPredicate extends BasicPredicate {
 	protected HCPredicate(final HcPredicateSymbol programPoint, final int serialNumber, final Term term,
 			final Set<IProgramVar> vars, final Set<IProgramFunction> funs, final Term closedFormula,
 			final List<TermVariable> variables, final int dontCare) {
-		super(serialNumber, new String[0], term, vars, funs, closedFormula);
+		super(serialNumber, term, vars, funs, closedFormula);
 		mHcPredicateSymbols = Collections.singleton(programPoint);
 		mVariables = variables;
 	}
@@ -84,7 +84,7 @@ public class HCPredicate extends BasicPredicate {
 	protected HCPredicate(final Set<HcPredicateSymbol> programPoints, final int serialNumber, final Term term,
 			final Set<IProgramVar> vars, final Set<IProgramFunction> funs, final Term closedFormula,
 			final List<TermVariable> variables) {
-		super(serialNumber, new String[0], term, vars, funs, closedFormula);
+		super(serialNumber, term, vars, funs, closedFormula);
 		mHcPredicateSymbols = programPoints;
 		mVariables = variables;
 	}

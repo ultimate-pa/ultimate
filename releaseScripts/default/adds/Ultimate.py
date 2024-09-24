@@ -31,6 +31,7 @@ datadir = os.path.join(ultimatedir, "data")
 witnessdir = ultimatedir
 witnessname = "witness"
 enable_assertions = False
+referee_strict_validation = True
 
 # special strings in ultimate output
 unsupported_syntax_errorstring = "ShortDescription: Unsupported Syntax"
@@ -54,14 +55,16 @@ termination_path_end = "End of lasso representation."
 overflow_false_string = "overflow possible"
 data_race_found_string = "DataRaceFoundResult"
 data_race_error_path_begin_string = "The following path leads to a data race"
+referee_valid_proof_string = "AnnotationCheckResult: Annotation is a valid proof of correctness."
+referee_invalid_proof_string = "AnnotationCheckResult: Annotation is not a valid proof of correctness."
 
 
 class _PropParser:
     prop_regex = re.compile(
-        "^\s*CHECK\s*\(\s*init\s*\((.*)\)\s*,\s*LTL\((.*)\)\s*\)\s*$", re.MULTILINE
+        r"^\s*CHECK\s*\(\s*init\s*\((.*)\)\s*,\s*LTL\((.*)\)\s*\)\s*$", re.MULTILINE
     )
-    funid_regex = re.compile("\s*(\S*)\s*\(.*\)")
-    word_regex = re.compile("\b[^\W\d_]+\b")
+    funid_regex = re.compile(r"\s*(\S*)\s*\(.*\)")
+    word_regex = re.compile(r"\b[^\W\d_]+\b")
     forbidden_words = [
         "valid-free",
         "valid-deref",
@@ -404,6 +407,7 @@ def run_ultimate(ultimate_call, prop, verbose=False):
             if line.find(termination_path_end) != -1:
                 reading_error_path = False
         elif prop.is_data_race():
+            result_msg = "DATA-RACE"
             if line.find(data_race_found_string) != -1:
                 result = "FALSE"
             if line.find(all_spec_string) != -1:
@@ -435,6 +439,10 @@ def run_ultimate(ultimate_call, prop, verbose=False):
             if line.find(overflow_false_string) != -1:
                 result = "FALSE"
                 result_msg = "OVERFLOW"
+            if line.find(referee_valid_proof_string) != -1:
+                result = "TRUE"
+            if line.find(referee_invalid_proof_string) != -1:
+                result = "FALSE" if referee_strict_validation else "UNKNOWN"
             if line.find(error_path_begin_string) != -1:
                 reading_error_path = True
             if reading_error_path and line.strip() == "":
@@ -507,9 +515,9 @@ def create_cli_settings(prop, validate_witness, architecture, c_file):
         # we need to disable hoare triple generation as workaround for an internal bug
         # but only for reachability witness validation
         ret.append(
-            "--traceabstraction.compute.hoare.annotation.of.negated.interpolant.automaton,.abstraction.and.cfg"
+            "--traceabstraction.positions.where.we.compute.the.hoare.annotation"
         )
-        ret.append("false")
+        ret.append("None")
     elif not validate_witness:
         # we are not in validation mode, so we should generate a witness and need
         # to pass some things to the witness printer
@@ -528,8 +536,13 @@ def create_cli_settings(prop, validate_witness, architecture, c_file):
         ret.append(architecture)
         ret.append("--witnessprinter.graph.data.programhash")
 
-        sha = call_desperate(["sha256sum", c_file[0]])
-        ret.append(sha.communicate()[0].split()[0].decode("utf-8", "ignore"))
+        if is_windows():
+            sha_call = call_desperate(["certutil", "-hashfile", c_file[0], "SHA256"])
+            sha = sha_call.communicate()[0].split()[3]
+        else:
+            sha_call = call_desperate(["sha256sum", c_file[0]])
+            sha = sha_call.communicate()[0].split()[0]
+        ret.append(sha.decode("utf-8", "ignore"))
 
     return ret
 
@@ -564,6 +577,10 @@ def check_dir(d):
 
 
 def check_witness_type(witness, type):
+    if not witness.endswith(".graphml"):
+        # Only check the format for GraphML witnesses
+        # TODO: Change this in the future
+        return
     tree = elementtree.parse(witness)
     namespace = "{http://graphml.graphdrawing.org/xmlns}"
     query = ".//{0}graph/{0}data[@key='witness-type']".format(namespace)

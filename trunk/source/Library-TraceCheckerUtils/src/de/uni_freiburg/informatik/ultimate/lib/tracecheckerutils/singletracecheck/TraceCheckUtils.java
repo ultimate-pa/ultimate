@@ -69,7 +69,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermVarsProc;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermVarsFuns;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -395,7 +395,7 @@ public final class TraceCheckUtils {
 	 * Returns a predicate which states that old(g)=g for all global variables g that are modifiable by procedure proc
 	 * according to ModifiableGlobalVariableManager modGlobVarManager.
 	 */
-	public static TermVarsProc getOldVarsEquality(final String proc,
+	public static TermVarsFuns getOldVarsEquality(final String proc,
 			final ModifiableGlobalsTable modifiableGlobalsTable, final ManagedScript mgdScript) {
 		final Set<IProgramVar> vars = new HashSet<>();
 		Term term = mgdScript.getScript().term("true");
@@ -408,8 +408,7 @@ public final class TraceCheckUtils {
 			final Term equality = SmtUtils.binaryEquality(mgdScript.getScript(), tv, tvOld);
 			term = SmtUtils.and(mgdScript.getScript(), term, equality);
 		}
-		final String[] procs = new String[0];
-		final TermVarsProc result = new TermVarsProc(term, vars, Collections.emptySet(), procs,
+		final TermVarsFuns result = new TermVarsFuns(term, vars, Collections.emptySet(),
 				PredicateUtils.computeClosedFormula(term, vars, mgdScript));
 		return result;
 	}

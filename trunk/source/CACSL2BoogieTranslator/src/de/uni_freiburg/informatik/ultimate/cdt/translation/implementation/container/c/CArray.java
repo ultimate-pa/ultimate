@@ -39,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 
 /**
@@ -120,28 +119,6 @@ public class CArray extends CType {
 		id.append(mValueType.toString());
 		id.append("#");
 		return id.toString();
-	}
-
-	@Override
-	public boolean isCompatibleWith(final CType o) {
-		if (o instanceof CPrimitive && ((CPrimitive) o).getType() == CPrimitives.VOID) {
-			return true;
-		}
-
-		final CType oType = o.getUnderlyingType();
-		if (!(oType instanceof CArray)) {
-			return false;
-		}
-
-		final CArray oArr = (CArray) oType;
-		if (!mValueType.isCompatibleWith(oArr.mValueType)) {
-			return false;
-		}
-		if (!mBound.equals(oArr.mBound)) {
-			return false;
-		}
-
-		return true;
 	}
 
 	@Override

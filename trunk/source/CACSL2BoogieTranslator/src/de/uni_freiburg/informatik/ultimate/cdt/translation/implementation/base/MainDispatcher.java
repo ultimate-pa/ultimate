@@ -33,9 +33,9 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.eclipse.cdt.core.dom.ast.IASTASMDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTArrayDeclarator;
@@ -133,7 +133,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IACSLHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLResultExpression;
@@ -202,9 +201,10 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.TypeInvariant;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ValidExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.WildcardExpression;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.IExtractedWitnessEntry;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.ExtractedGhostUpdate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.ExtractedWitnessInvariant;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.IExtractedCorrectnessWitness;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.IExtractedWitnessDeclaration;
 
 /**
  * @author Markus Lindenmann
@@ -226,9 +226,7 @@ public class MainDispatcher implements IDispatcher {
 	 */
 	private DecoratorNode mNextACSLBuffer;
 
-	private final Set<ImmutableSet<String>> mNodeLabelsOfAddedWitnesses;
-
-	private final HashRelation<IASTNode, IExtractedWitnessEntry> mWitnessEntries;
+	private final IExtractedCorrectnessWitness mWitness;
 
 	private final CHandler mCHandler;
 	private final ITypeHandler mTypeHandler;
@@ -238,13 +236,11 @@ public class MainDispatcher implements IDispatcher {
 	private final IACSLHandler mAcslHandler;
 	private IASTNode mAcslHook;
 
-	public MainDispatcher(final ILogger logger,
-			final HashRelation<IASTNode, IExtractedWitnessEntry> witnessEntries, final LocationFactory locFac,
-			final ITypeHandler typeHandler, final CHandler cHandler, final PreprocessorHandler preprocessorHandler,
-			final IACSLHandler acslHandler) {
+	public MainDispatcher(final ILogger logger, final IExtractedCorrectnessWitness witness,
+			final LocationFactory locFac, final ITypeHandler typeHandler, final CHandler cHandler,
+			final PreprocessorHandler preprocessorHandler, final IACSLHandler acslHandler) {
 		mLogger = logger;
-		mNodeLabelsOfAddedWitnesses = new LinkedHashSet<>();
-		mWitnessEntries = witnessEntries;
+		mWitness = witness;
 		mLocationFactory = locFac;
 		mTypeHandler = typeHandler;
 		mCHandler = cHandler;
@@ -415,15 +411,27 @@ public class MainDispatcher implements IDispatcher {
 
 	@Override
 	public Result transformWithWitness(final IASTNode node, final Result result) {
-		if (mWitnessEntries == null) {
+		if (mWitness == null) {
 			return result;
 		}
-		Result rtr = result;
+		final Set<ExtractedWitnessInvariant> matchedWitnessInvariants = mWitness.getInvariants(node);
+		final List<ExtractedGhostUpdate> matchedGhostUpdates = mWitness.getGhostUpdates(node);
+		if (matchedWitnessInvariants.isEmpty() && matchedGhostUpdates.isEmpty()) {
+			return result;
+		}
+		if (!(result instanceof ExpressionResult)) {
+			mLogger.warn("Unable to annotate " + node.getRawSignature() + " with a witness entry");
+			return result;
+		}
+		ExpressionResult rtr = (ExpressionResult) result;
 		final ILocation loc = mLocationFactory.createCLocation(node);
-		for (final IExtractedWitnessEntry entry : mWitnessEntries.getImage(node)) {
-			if (mNodeLabelsOfAddedWitnesses.add(entry.getNodeLabels())) {
-				rtr = entry.transform(loc, this, (ExpressionResult) rtr);
-			}
+		// Ensure that invariants are evaluated before the ghost variables are updated and that the order of ghost
+		// updates is preserved. Therefore iterate over these objects in reverse order.
+		for (int i = matchedGhostUpdates.size() - 1; i >= 0; i--) {
+			rtr = matchedGhostUpdates.get(i).transform(loc, this, rtr);
+		}
+		for (final ExtractedWitnessInvariant entry : matchedWitnessInvariants) {
+			rtr = entry.transform(loc, this, rtr);
 		}
 		return rtr;
 	}
@@ -774,5 +782,19 @@ public class MainDispatcher implements IDispatcher {
 				&& !(acslNode.getParent().getCNode() instanceof IASTCompoundStatement)) {
 			throw new IllegalArgumentException("The location of the given ACSL holding decorator node is unexpected!");
 		}
+	}
+
+	@Override
+	public List<ACSLNode> getFunctionContractFromWitness(final IASTNode node) {
+		if (mWitness == null) {
+			return List.of();
+		}
+		return mWitness.getFunctionContracts(node).stream().flatMap(x -> x.getAcslContractClauses().stream())
+				.collect(Collectors.toList());
+	}
+
+	@Override
+	public Set<IExtractedWitnessDeclaration> getWitnessDeclarations() {
+		return mWitness == null ? Set.of() : mWitness.getGlobalDeclarations();
 	}
 }

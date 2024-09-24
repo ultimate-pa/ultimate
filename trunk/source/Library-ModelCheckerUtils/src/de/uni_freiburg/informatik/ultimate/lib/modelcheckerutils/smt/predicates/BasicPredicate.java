@@ -41,27 +41,19 @@ import de.uni_freiburg.informatik.ultimate.util.HashUtils;
  */
 public class BasicPredicate extends ModernAnnotations implements IPredicate {
 	private static final long serialVersionUID = -2257982001512157622L;
-	protected final String[] mProcedures;
 	protected Term mFormula;
 	protected final Term mClosedFormula;
 	protected final Set<IProgramVar> mVars;
 	protected final Set<IProgramFunction> mFunctions;
 	protected final int mSerialNumber;
 
-	public BasicPredicate(final int serialNumber, final String[] procedures, final Term term,
-			final Set<IProgramVar> vars, final Set<IProgramFunction> functions, final Term closedFormula) {
+	public BasicPredicate(final int serialNumber, final Term term, final Set<IProgramVar> vars,
+			final Set<IProgramFunction> functions, final Term closedFormula) {
 		mFormula = term;
 		mClosedFormula = closedFormula;
-		mProcedures = procedures;
 		mVars = vars;
 		mFunctions = functions;
 		mSerialNumber = serialNumber;
-	}
-
-	@Override
-	@Visualizable
-	public String[] getProcedures() {
-		return mProcedures;
 	}
 
 	/**

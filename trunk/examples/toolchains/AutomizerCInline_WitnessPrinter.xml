@@ -1,5 +1,5 @@
 <rundefinition>
-<name>Automizer for C (with Inlining and Witnessprinting)</name>
+<name>Ultimate Toolchain</name>
 <toolchain>
 	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator"/>
 	<plugin id="de.uni_freiburg.informatik.ultimate.boogie.procedureinliner"/>

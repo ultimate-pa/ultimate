@@ -101,7 +101,11 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	private static final boolean VALUE_WITNESS_DELETE_GRAPHML = false;
 	public static final String LABEL_DO_NOT_USE_ACSL = "Do not use ACSL";
 	private static final Boolean VALUE_DO_NOT_USE_ACSL = true;
-	private static final String DESC_DO_NOT_USE_ACSL = "Prevent the generation of invariants which require ACSL syntax";
+	private static final String DESC_DO_NOT_USE_ACSL =
+			"Prevent the generation of invariants in GraphML which require ACSL syntax";
+
+	public static final String LABEL_YAML_FORMAT_VERSION = "YAML Format version";
+	private static final String VALUE_YAML_FORMAT_VERSION = "2.0";
 
 	public PreferenceInitializer() {
 		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
@@ -137,6 +141,8 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 						PreferenceType.Boolean, new WitnessVerifierValidator()),
 				new UltimatePreferenceItem<>(LABEL_DO_NOT_USE_ACSL, VALUE_DO_NOT_USE_ACSL, DESC_DO_NOT_USE_ACSL,
 						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_YAML_FORMAT_VERSION, VALUE_YAML_FORMAT_VERSION,
+						PreferenceType.String),
 
 				new UltimatePreferenceItemGroup("Witness passthrough",
 						new UltimatePreferenceItem<>(LABEL_GRAPH_DATA_SPECIFICATION, UNUSED_GRAPH_DATA,

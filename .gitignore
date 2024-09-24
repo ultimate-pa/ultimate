@@ -6,7 +6,9 @@
 **/.recommenders/*
 **/.gitignore
 **/.idea/*
+**/__pycache__/
 hs_err_pid*
+*.md.backup
 
 /releaseScripts/default/DeltaDebugger-linux/*
 /releaseScripts/default/DeltaDebugger-win32/*
@@ -16,6 +18,8 @@ hs_err_pid*
 /releaseScripts/default/UGemCutter-win32/*
 /releaseScripts/default/UKojak-linux/*
 /releaseScripts/default/UKojak-win32/*
+/releaseScripts/default/UReferee-linux/*
+/releaseScripts/default/UReferee-win32/*
 /releaseScripts/default/UTaipan-linux/*
 /releaseScripts/default/UTaipan-win32/*
 /releaseScripts/default/UTaipan-win32/
@@ -309,5 +313,12 @@ trunk/examples/concurrent/bpl/weaver-benchmarks/weaver
 /trunk/runtime-Debug-E4.product
 /trunk/runtime-WebBackend.product
 
+trunk/source/WebsiteStatic/_site
+trunk/source/WebsiteStatic/.jekyll-cache
 trunk/source/WebsiteStatic/bootstrap_dev/node_modules/
-trunk/source/WebsiteStatic/config/config.js
+trunk/source/WebsiteStatic/bootstrap_dev/*.css
+trunk/source/WebsiteStatic/bootstrap_dev/*.css.map
+trunk/source/WebsiteStatic/js/webinterface/config.js
+trunk/source/WebsiteStatic/webinterface/code_examples/
+trunk/source/WebsiteStatic/webinterface/workers/*.json
+!trunk/source/WebsiteStatic/webinterface/workers/*.override.json

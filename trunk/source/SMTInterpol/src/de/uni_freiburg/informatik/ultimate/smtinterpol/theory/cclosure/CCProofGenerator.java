@@ -32,13 +32,13 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SMTAffineTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Clause;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofLiteral;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofRules;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCAnnotation.RuleKind;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.EQAnnotation;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.Polynomial;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.SymmetricPair;
 
 /**
@@ -688,7 +688,7 @@ public class CCProofGenerator {
 	private boolean isTrivialDisequality(final SymmetricPair<CCTerm> termPair) {
 		final CCTerm first = termPair.getFirst();
 		final CCTerm second = termPair.getSecond();
-		final SMTAffineTerm smtAffine = SMTAffineTerm.create(first.getFlatTerm());
+		final Polynomial smtAffine = new Polynomial(first.getFlatTerm());
 		smtAffine.add(Rational.MONE, second.getFlatTerm());
 		if (smtAffine.isConstant()) {
 			return smtAffine.getConstant() != Rational.ZERO;

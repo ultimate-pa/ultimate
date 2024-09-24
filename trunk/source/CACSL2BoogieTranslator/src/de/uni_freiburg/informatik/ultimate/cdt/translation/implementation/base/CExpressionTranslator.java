@@ -79,7 +79,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerCheckMode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.CheckMode;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -270,11 +270,9 @@ public class CExpressionTranslator {
 			typeOfResult = mExpressionTranslation.getCTypeOfPointerComponents();
 			CType pointsToType;
 			{
-				final CType leftPointsToType = ((CPointer) lType).getPointsToType();
-				final CType rightPointsToType = ((CPointer) rType).getPointsToType();
+				final CType leftPointsToType = ((CPointer) lType).getPointsToType().getUnderlyingType();
+				final CType rightPointsToType = ((CPointer) rType).getPointsToType().getUnderlyingType();
 				if (!leftPointsToType.equals(rightPointsToType)) {
-					// TODO: Matthias 2015-09-08: Maybe this is too strict and we
-					// have to check leftPointsToType.isCompatibleWith(rightPointsToType)
 					throw new UnsupportedOperationException(
 							"incompatible pointers: pointsto " + leftPointsToType + " " + rightPointsToType);
 				}
@@ -567,8 +565,7 @@ public class CExpressionTranslator {
 		// In this case we need a temporary variable for the old value
 		final AuxVarInfo auxvar =
 				mAuxVarInfoBuilder.constructAuxVarInfo(loc, exprRes.getLrValue().getCType(), SFO.AUXVAR.POST_MOD);
-		builder.addDeclaration(auxvar.getVarDec());
-		builder.addAuxVar(auxvar);
+		builder.addAuxVarWithDeclaration(auxvar);
 
 		// assign the old value to the temporary variable
 		final LeftHandSide[] tmpAsLhs = new LeftHandSide[] { auxvar.getLhs() };
@@ -615,8 +612,7 @@ public class CExpressionTranslator {
 		// In this case we need a temporary variable for the new value
 		final AuxVarInfo auxvar =
 				mAuxVarInfoBuilder.constructAuxVarInfo(loc, exprRes.getLrValue().getCType(), SFO.AUXVAR.PRE_MOD);
-		builder.addDeclaration(auxvar.getVarDec());
-		builder.addAuxVar(auxvar);
+		builder.addAuxVarWithDeclaration(auxvar);
 
 		final int op;
 		if (prefixOp == IASTUnaryExpression.op_prefixIncr) {
@@ -841,8 +837,7 @@ public class CExpressionTranslator {
 				auxvar = null;
 			} else {
 				auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, resultCType, SFO.AUXVAR.ITE);
-				resultBuilder.addDeclaration(auxvar.getVarDec());
-				resultBuilder.addAuxVar(auxvar);
+				resultBuilder.addAuxVarWithDeclaration(auxvar);
 			}
 
 			final List<Statement> ifStatements = new ArrayList<>();
@@ -915,7 +910,7 @@ public class CExpressionTranslator {
 		final Expression divisor = divisorExpRes.getLrValue().getValue();
 		final CPrimitive divisorType = (CPrimitive) divisorExpRes.getLrValue().getCType();
 
-		final PointerCheckMode checkMode;
+		final CheckMode checkMode;
 		if (divisorType.isIntegerType()) {
 			checkMode = mSettings.getDivisionByZeroOfIntegerTypes();
 		} else if (divisorType.isFloatingType()) {
@@ -924,7 +919,7 @@ public class CExpressionTranslator {
 			throw new UnsupportedOperationException("cannot check division by zero for type " + divisorType);
 		}
 
-		if (checkMode == PointerCheckMode.IGNORE) {
+		if (checkMode == CheckMode.IGNORE) {
 			return divisorExpRes;
 		}
 
@@ -943,9 +938,9 @@ public class CExpressionTranslator {
 		}
 
 		final Statement additionalStatement;
-		if (checkMode == PointerCheckMode.ASSUME) {
+		if (checkMode == CheckMode.ASSUME) {
 			additionalStatement = new AssumeStatement(loc, divisorNotZero);
-		} else if (checkMode == PointerCheckMode.ASSERTandASSUME) {
+		} else if (checkMode == CheckMode.ASSERTandASSUME) {
 			additionalStatement = new AssertStatement(loc, divisorNotZero);
 			final Check check = new Check(Spec.DIVISION_BY_ZERO);
 			check.annotate(additionalStatement);
@@ -1005,7 +1000,8 @@ public class CExpressionTranslator {
 	private void addIntegerBoundsCheck(final ILocation loc, final ExpressionResultBuilder erb,
 			final CPrimitive resultType, final int operation, final Expression... operands) {
 
-		if (!mSettings.checkSignedIntegerBounds() || !resultType.isIntegerType() || mTypeSizes.isUnsigned(resultType)) {
+		if (mSettings.checkSignedIntegerBounds() == CheckMode.IGNORE || !resultType.isIntegerType()
+				|| mTypeSizes.isUnsigned(resultType)) {
 			// nothing to do
 			return;
 		}
@@ -1021,20 +1017,8 @@ public class CExpressionTranslator {
 		} else {
 			throw new AssertionError("no such operation");
 		}
-		addOverflowAssertion(loc, inBoundsCheck.getFirst(), erb);
-		addOverflowAssertion(loc, inBoundsCheck.getSecond(), erb);
-	}
-
-	// TODO: Is this the right place for this method?
-	public static void addOverflowAssertion(final ILocation loc, final Expression condition,
-			final ExpressionResultBuilder erb) {
-		if (ExpressionFactory.isTrueLiteral(condition)) {
-			// Avoid the creation of "assert true" statements
-			return;
-		}
-		final AssertStatement assertSt = new AssertStatement(loc, condition);
-		new Check(Spec.INTEGER_OVERFLOW).annotate(assertSt);
-		erb.addStatement(assertSt);
+		mExpressionTranslation.addOverflowCheck(loc, inBoundsCheck.getFirst(), erb);
+		mExpressionTranslation.addOverflowCheck(loc, inBoundsCheck.getSecond(), erb);
 	}
 
 	/**
@@ -1056,7 +1040,7 @@ public class CExpressionTranslator {
 	private ExpressionResultBuilder addBaseEqualityCheck(final ILocation loc, final Expression leftPtr,
 			final Expression rightPtr, final ExpressionResultBuilder erb) {
 
-		if (mSettings.getPointerSubtractionAndComparisonValidityCheckMode() == PointerCheckMode.IGNORE) {
+		if (mSettings.getPointerSubtractionAndComparisonValidityCheckMode() == CheckMode.IGNORE) {
 			// do not check anything
 			return erb;
 		}

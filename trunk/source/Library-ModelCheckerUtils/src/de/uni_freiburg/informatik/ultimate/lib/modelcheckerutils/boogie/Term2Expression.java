@@ -238,6 +238,14 @@ public final class Term2Expression implements Serializable {
 			} else if (symb.getParameterSorts().length == 1) {
 				if ("not".equals(symb.getName())) {
 					final Expression param = translate(term.getParameters()[0]);
+					if (param instanceof BinaryExpression) {
+						// Translate (not (= (x y)) to x != y
+						final BinaryExpression binary = (BinaryExpression) param;
+						if (binary.getOperator() == Operator.COMPEQ) {
+							return new BinaryExpression(binary.getLoc(), binary.getType(), Operator.COMPNEQ,
+									binary.getLeft(), binary.getRight());
+						}
+					}
 					return new UnaryExpression(null, type, UnaryExpression.Operator.LOGICNEG, param);
 				} else if ("-".equals(symb.getName())) {
 					final Expression param = translate(term.getParameters()[0]);
@@ -398,17 +406,9 @@ public final class Term2Expression implements Serializable {
 			if (indices.length != 1) {
 				throw new AssertionError("BitVec has exactly one index");
 			}
-
-			BigInteger decimalValue;
-			if (value.toString().startsWith("#x")) {
-				decimalValue = new BigInteger(value.toString().substring(2), 16);
-			} else if (value.toString().startsWith("#b")) {
-				decimalValue = new BigInteger(value.toString().substring(2), 2);
-			} else {
-				throw new UnsupportedOperationException("only hexadecimal values and boolean values supported yet");
-			}
+			final BigInteger bigInteger = BitvectorUtils.extractValueFromBitvectorConstant(term);
 			final int length = Integer.valueOf(indices[0]);
-			return new BitvecLiteral(null, type, String.valueOf(decimalValue), length);
+			return new BitvecLiteral(null, type, String.valueOf(bigInteger), length);
 		}
 		if (value instanceof String) {
 			return new StringLiteral(null, type, value.toString());
@@ -511,8 +511,8 @@ public final class Term2Expression implements Serializable {
 			final ILocation loc = mBoogie2SmtSymbolTable.getLocation(pv);
 			final DeclarationInformation declInfo = mBoogie2SmtSymbolTable.getDeclarationInformation(pv);
 			if (pv instanceof LocalProgramVar) {
-				result = new IdentifierExpression(loc, type, translateIdentifier(((LocalProgramVar) pv).getIdentifier()),
-						declInfo);
+				result = new IdentifierExpression(loc, type,
+						translateIdentifier(((LocalProgramVar) pv).getIdentifier()), declInfo);
 			} else if (pv instanceof ProgramNonOldVar) {
 				result = new IdentifierExpression(loc, type,
 						translateIdentifier(((ProgramNonOldVar) pv).getIdentifier()), declInfo);

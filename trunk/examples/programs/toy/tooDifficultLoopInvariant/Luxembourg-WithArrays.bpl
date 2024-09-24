@@ -1,7 +1,7 @@
 //#Safe
 /*
  * Variation of the Luxembourg example with arrays.
- * The loop invariant (x > y && 1000-a[y]<=a[x]) allows us to prove correctness.
+ * The loop invariant (x > y && 1000-a[y]>=a[x]) allows us to prove correctness.
  * 
  * Date: 2016-04-15
  * Author: heizmann@informatik.uni-freiburg.de

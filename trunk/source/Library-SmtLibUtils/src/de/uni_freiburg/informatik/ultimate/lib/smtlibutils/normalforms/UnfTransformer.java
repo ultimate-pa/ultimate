@@ -30,6 +30,7 @@ import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
@@ -71,9 +72,14 @@ public class UnfTransformer extends TermTransformer {
 				super.convert(term);
 			}
 		} else if (term instanceof ConstantTerm) {
-			final ConstantTerm constTerm = (ConstantTerm) term;
-			final Rational rational = SmtUtils.toRational(constTerm);
-			final Term normalized = rational.toTerm(term.getSort());
+			final Term normalized;
+			if (!SmtSortUtils.isNumericSort(term.getSort())) {
+				normalized = term;
+			} else {
+				final ConstantTerm constTerm = (ConstantTerm) term;
+				final Rational rational = SmtUtils.toRational(constTerm);
+				normalized = rational.toTerm(term.getSort());
+			}
 			setResult(normalized);
 			return;
 		} else {
@@ -101,7 +107,7 @@ public class UnfTransformer extends TermTransformer {
 		return;
 	}
 
-	public static Term apply(Script script, Term term) {
+	public static Term apply(final Script script, final Term term) {
 		return new UnfTransformer(script).transform(term);
 	}
 

@@ -42,15 +42,19 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecut
 public class NonterminatingLassoResult<ELEM extends IElement, TE extends IElement, EXP>
 		extends AbstractResultAtElement<ELEM> implements IResultWithInfiniteLassoTrace<TE, EXP> {
 
-	protected final IProgramExecution<TE, EXP> mStem;
-	protected final IProgramExecution<TE, EXP> mLoop;
+	private final IProgramExecution<TE, EXP> mStemExecution;
+	protected final String mStemExecutionAsString;
+	private final IProgramExecution<TE, EXP> mLoopExecution;
+	protected final String mLoopExecutionAsString;
 
 	public NonterminatingLassoResult(final ELEM position, final String plugin,
 			final IBacktranslationService translatorSequence, final IProgramExecution<TE, EXP> stem,
 			final IProgramExecution<TE, EXP> loop) {
-		super(position, plugin, translatorSequence);
-		mStem = stem;
-		mLoop = loop;
+		super(position, plugin);
+		mStemExecution = stem;
+		mStemExecutionAsString = translatorSequence.translateProgramExecution(mStemExecution).toString();
+		mLoopExecution = loop;
+		mLoopExecutionAsString = translatorSequence.translateProgramExecution(mLoopExecution).toString();
 	}
 
 	@Override
@@ -65,21 +69,21 @@ public class NonterminatingLassoResult<ELEM extends IElement, TE extends IElemen
 		sb.append(System.getProperty("line.separator"));
 		sb.append("Stem:");
 		sb.append(System.getProperty("line.separator"));
-		sb.append(mTranslatorSequence.translateProgramExecution(mStem));
+		sb.append(mStemExecutionAsString);
 		sb.append("Loop:");
 		sb.append(System.getProperty("line.separator"));
-		sb.append(mTranslatorSequence.translateProgramExecution(mLoop));
+		sb.append(mLoopExecutionAsString);
 		sb.append("End of lasso representation.");
 		return sb.toString();
 	}
 
 	@Override
 	public IProgramExecution<TE, EXP> getStem() {
-		return mStem;
+		return mStemExecution;
 	}
 
 	@Override
 	public IProgramExecution<TE, EXP> getLasso() {
-		return mLoop;
+		return mLoopExecution;
 	}
 }

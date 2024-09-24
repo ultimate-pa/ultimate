@@ -1,294 +1,97 @@
-<!doctype html>
-<html>
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+---
+js: [ "redirect_legacy_urls.js" ]
+---
+<div class="row" id="description">
+  <div class="col-12">
+    <p><span style="font-variant:small-caps">Ultimate</span> is a program analysis framework.
+      <span style="font-variant:small-caps">Ultimate</span> consists of several plugins that perform steps of an
+      program analysis, e.g., parsing source code, transforming programs from one representation to another,
+      or analyze programs. Toolchains of these plugins can perform complex tasks, e.g., verify that a C
+      program fulfills a given specification.
+    </p>
+  </div>
+</div>
 
-<link rel="manifest" href="site.webmanifest">
-<link rel="apple-touch-icon" href="icon.png">
 
-<link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
-
-<link rel="stylesheet" href="css/normalize.css">
-<link rel="stylesheet" href="css/bootstrap.min.css">
-<link rel="stylesheet" href="css/open-iconic-bootstrap.min.css">
-<link rel="stylesheet" href="css/main.css">
-<link rel="stylesheet" href="css/editor.css">
-
-<meta name="theme-color" content="#fafafa">
-<meta name="description" content="">
-<title>Uni-Freiburg : SWT - Ultimate</title>
-</head>
-<body>
-	<div class="d-flex h-100 flex-column">
-		<nav class="navbar navbar-expand-lg navbar-light bg-light">
-			<a class="navbar-brand" href="./"> <img
-				src="img/ultimate_logo.png" width="30" height="30"
-				class="d-inline-block align-top" alt=""> Ultimate
-			</a>
-			<button class="navbar-toggler" type="button" data-toggle="collapse"
-				data-target="#navbar_content" aria-controls="navbarSupportedContent"
-				aria-expanded="false" aria-label="Toggle navigation">
-				<span class="navbar-toggler-icon"></span>
-			</button>
-
-			<div class="collapse navbar-collapse" id="navbar_content"></div>
-		</nav>
-		<div id="content" class="d-flex flex-column flex-grow-1"></div>
-		<footer class="bg-light py-2"><a class="float-end mx-2" href="?ui=imprint">Imprint</a></footer>
-	</div>
-
-	<script id="editor-message" type="text/x-handlebars-template">
-  <div class="toast  {{toast_classes}}" data-type="{{logLvl}}" data-start-line="{{startLNr}}"
-       data-end-line="{{endLNr}}" data-start-col="{{startCol}}" data-end-col="{{endCol}}"
-       role="alert" aria-live="assertive" aria-atomic="true" data-autohide="false">
-    <div class="toast-header">
-      <span class="oi mr-1 {{oi_icon}}"></span>
-      <strong class="mr-auto">{{shortDesc}}</strong>
-      </button>
-    </div>
-    <div class="toast-body">
-      <div class="row">
-        <div class="number">
-          <span>Line</span>
+<div class="row" id="tools">
+  <h3>Tools</h3>
+  <div class="col-12 mb-4">
+    <div class="card-group">
+      {% for tool in site.tools %}
+      <div class="card border-secondary shadow mb-3 tool-card border-start">
+        <div class="card-header">
+          <a class="link-primary" href="{{ tool.url | relative_url }}">{{tool.title}}</a>
+          <span class="float-end">
+          {% for lang in tool.languages %}
+          <span class="badge bg-secondary">{{lang.language}}</span>
+          {% endfor %}</span></div>
+        <div class="card-body text-black-70">
+          <p class="card-text text-justify">{{tool.description}}</p>
         </div>
-        <div class="number">
-          <span>Col</span>
-        </div>
-        <div class="col">
-          <span>Description</span>
+        <div class="card-footer text-right">
+          <a href="{{ tool.url | relative_url }}" class="btn btn-secondary">Read more</a>
+          <a href="{{ 'webinterface/?tool=' | append: tool.tool_id | relative_url }}" class="btn btn-secondary">Try online</a>
         </div>
       </div>
-      <hr>
-      <div class="row">
-        <div class="number">
-          <span>
-  			{{#ifCond startLNr '!==' -1}}{{startLNr}}{{/ifCond}}
-            {{#ifCond startLNr '===' -1}}-{{/ifCond}}
-  		  </span>
-        </div>
-        <div class="number">
-          <span>
-            {{#ifCond startCol '!==' -1}}{{startCol}}{{/ifCond}}
-            {{#ifCond startCol '===' -1}}-{{/ifCond}}
-          </span>
-        </div>
-        <div class="col">
-          <pre><code class="text-break break-spaces">{{longDesc}}</code></pre>
-        </div>
-      </div>
+      {% endfor %}
     </div>
   </div>
-</script>
-	<script id="tool-interface-template" type="text/x-handlebars-template">
-  <div id="editor" class="flex-grow-1 flex-shrink-1"></div>
-  <div id="messages" class="bg-light border-top top-shaddow p-1">
-    <div class="text-end">
-      <span id="move-messages" class="oi oi-collapse-right pr-1 float-right messages-actions close"></span>
-    </div>
-    <div id="messages-toasts"></div>
-  </div>
-  <div id="persistence_link_modal" class="modal fade" tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-xl" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Persistent shareable link for current session.</h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-        <div class="modal-body">
-          <h4>Only tool and code sample.</h4>
-          <div class="input-group mb-3">
-              <input id="persistence_link_small_input" type="text" class="form-control"  aria-label="Session link" readonly>
-            <div class="input-group-append">
-              <button id="copy_persistence_link_small_to_clipboard"
-                      class="btn btn-outline-secondary" type="button"
-                      data-toggle="tooltip" data-placement="top" title="Click to copy link to clipboard.">
-                Copy
-              </button>
-            </div>
-          </div>
-          <p>This link is short and includes the tool and the used code example. Changes to the code will be
-            lost. Default settings will be used.</p>
-          <h4>All settings and code.</h4>
-          <div class="input-group mb-3">
-              <input id="persistence_link_input" type="text" class="form-control"  aria-label="Session link" readonly>
-            <div class="input-group-append">
-              <button id="copy_persistence_link_to_clipboard"
-                      class="btn btn-outline-secondary" type="button"
-                      data-toggle="tooltip" data-placement="top" title="Click to copy link to clipboard.">
-                Copy
-              </button>
-            </div>
-          </div>
-          <p>Use this link if you want to preserve all your code and changes to settings. Use this link to share a
-            hand crafted example.</p>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-        </div>
-      </div>
-    </div>
-  </div>
-</script>
-	<script id="landing-page-template" type="text/x-handlebars-template">
-  <div class="row" id="description"></div>
-  <div class="row tools">
-    <h3>Tools</h3>
-    <div class="col-12 mb-4">
-      <div class="card-group">
-        {{#each tools}}
-        <div class="card border-secondary shadow mb-3 tool-card border-start">
-          <div class="card-header">
-            <a class="link-primary" href="?ui=tool&tool={{this.id}}">{{this.name}}</a>
-            <span class="float-end">
-            {{#each this.languages}}
-            <span class="badge bg-secondary">{{this}}</span>
-            {{~/each}}</span></div>
-          <div class="card-body text-black-70">
-            <p class="card-text text-justify">{{this.description}}</p>
-          </div>
-          <div class="card-footer text-right">
-            <a href="?ui=tool&tool={{this.id}}" class="btn btn-secondary">Read more</a>
-            <a href="?ui=int&tool={{this.id}}" class="btn btn-secondary">Try online</a>
-          </div>
-        </div>
-        {{~/each}}
-      </div>
-    </div>
-  </div>
-  <div class="row" id="awards"></div>
-  <div class="row" id="development"></div>
-  <div class="row" id="developers"></div>
-  <div class="row" id="dependencies"></div>
-</script>
-  <script id="awards-page-template" type="text/x-handlebars-template">
-  <h1>Awards</h1>
-  {{#each this}}
-    <div class="card mb-3">
-      <div class="row g-0 border-bottom">
-        <div class="col-md-2">
-          <img src="img/awards/{{this.image}}" class="img-fluid rounded-start"/>
-        </div>
-        <div class="col-md-10">
-          <div class="card-body">
-            <h4 class="card-title"><a href="{{this.competition_link}}">{{this.competition}}</a></h4>
-            <p class="card-text">{{{this.text}}}</p>
-            <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#{{this.id}}-award-details" aria-expanded="false" aria-controls="{{this.id}}-award-details">
-              <span class="text-collapsed">Show</span><span class="text-expanded">Hide</span> details
-            </button>
-          </div>
-        </div>
-      </div>
-      <div class="row">
-        <div id="{{this.id}}-award-details" class="collapse">
-        <ul class="list-group list-group-flush">
-          {{#each this.tools}}
-          <li class="list-group-item">
-            <h6><a href="?ui=tool&tool={{this.id}}">Ultimate {{this.name}}</a></h6>
-            {{#each this.awards}}
-              <span class="m-1 d-inline-block" style="{{#if this.important}}font-size:2em;{{~/if}}">
-                <img class="img-fluid d-inline-block" src="img/awards/medals/{{this.medal}}.svg" style="max-height: 2em; max-width: auto" />
-                {{this.category}}
-              </span>
-            {{~/each}}
-          </li>
-          {{~/each}}
-        </ul>
-        </div>
-      </div>
-    </div>
-  {{~/each}}
-</script>
-	<script id="navbar-template" type="text/x-handlebars-template">
-  <ul class="navbar-nav">
-    {{#ifCond context.url.ui '===' 'awards'}}
-      <li class="nav-item active">
-        <a class="nav-link" href="?ui=awards">Awards <span class="sr-only">(current)</span></a>
-      </li>
-    {{/ifCond}}
-    {{#ifCond context.url.ui '===' 'developers'}}
-      <li class="nav-item active">
-        <a class="nav-link" href="?ui=developers">Developers <span class="sr-only">(current)</span></a>
-      </li>
-    {{/ifCond}}
-    {{#ifCond context.url.ui '===' 'imprint'}}
-      <li class="nav-item active">
-        <a class="nav-link" href="?ui=imprint">Imprint <span class="sr-only">(current)</span></a>
-      </li>
-    {{/ifCond}}
-    {{#ifCond context.url.ui '!==' 'home'}}
-      <li class="nav-item active">
-        <a class="nav-link" href="?ui=tool&tool={{context.url.tool}}">{{context.tool.name}} <span class="sr-only">(current)</span></a>
-      </li>
-    {{/ifCond}}
-    {{#ifCond context.url.ui '===' 'int'}}
-      <li class="nav-item dropdown">
-        <a class="nav-link dropdown-toggle" href="#" id="navbar_language_select_dropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-          Choose Language
-        </a>
-        <div class="dropdown-menu">
-          {{#each context.tool.workers}}
-            <a class="dropdown-item language-selection" href="#"  id="{{this.id}}" data-language="{{this.language}}">{{this.language}}</a>
-          {{~/each}}
-        </div>
-      </li>
-    {{/ifCond}}
-  </ul>
-  {{#ifCond context.url.ui '===' 'int'}}
-  <ul class="navbar-nav ml-auto">
-    <li class="nav-item dropdown">
-      <a class="nav-link dropdown-toggle" href="#" id="navbar_sample_select_dropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-        Samples
-      </a>
-      <div id="code_sample_dropdown_menu" class="dropdown-menu dropdown-menu-right">
-      </div>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link" href="#" id="navbar_execute_interface">
-        Execute
-      </a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link hidden" href="#" id="navbar_cancel_interface">
-        (Click to cancel)
-      </a>
-    </li>
-    <li class="nav-item dropdown">
-      <a class="nav-link dropdown-toggle" href="#" id="navbar_settings_select_dropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-        Settings
-      </a>
-      <div class="dropdown-menu dropdown-menu-right">
-        <h6 id="settings_header" class="dropdown-header">Settings</h6>
-        <div id="settings_dropdown_menu" class="px-4 pt-3">
-        </div>
-        <div class="dropdown-divider"></div>
-        <div class="px-0">
-          <a id="create_persistence_link" class="dropdown-item" href="#">Create sharable link</a>
-        </div>
-        <div class="dropdown-divider"></div>
-        <p id="version_info_text" class="px-4 text-secondary"></p>
-      </div>
-    </li>
-  </ul>
-  {{/ifCond}}
-</script>
+</div>
 
-	<script type="text/javascript" charset="utf-8" src="config/config.js"></script>
-	<script type="text/javascript" charset="utf-8" src="config/awards_page/awards.js"></script>
-	<script src="js/vendor/modernizr-3.7.1.min.js"></script>
-	<script src="js/vendor/jquery-3.4.1.min.js"></script>
-	<script src="js/vendor/bootstrap.bundle.min.js"></script>
-	<script src="js/vendor/handlebars.min-35d3fdb.js"></script>
-	<script src="js/handlebars-custom.js"></script>
-	<script src="js/vendor/ace-min/ace.js"></script>
-	<script src="js/vendor/interact.min.js"></script>
-	<script src="js/vendor/lz-string.min.js"></script>
-	<script src="js/helpers.js"></script>
-	<script src="js/plugins.js"></script>
-	<script src="js/tool_interface.js"></script>
-	<script src="js/main.js"></script>
 
-</body>
-</html>
+<div class="row" id="awards">
+  <h3><a href="{{ 'awards/' | relative_url }}">Awards</a></h3>
+  <p class="col-12 mb-4">
+    ULTIMATE tools have won many prizes at competitions
+    like the <a href="https://sv-comp.sosy-lab.org/">International  Competition on Software Verification (SV-COMP)</a>
+    or the <a href="https://termination-portal.org/wiki/Termination_Portal">Termination Competition</a>.
+    ULTIMATE Automizer has won the <em>Overall</em> ranking of SV-COMP four times (2016, 2017, 2023 and 2024).
+    Find more information <a href="{{ 'awards/' | relative_url }}">here</a>.
+  </p>
+</div>
+
+
+<div class="row" id="development">
+  <h3>Development</h3>
+  <div class="col-12">
+    <p>
+      The <span style="font-variant:small-caps">Ultimate</span> <a href="https://github.com/ultimate-pa/ultimate">source code and some documentation</a> is available at GitHub.
+      <br />
+      The core of <span style="font-variant:small-caps">Ultimate</span> and many plugins are subject to the LGPLv3 license with a linking exception to Eclipse RCP and Eclipse CDT.
+    </p>
+  </div>
+</div>
+
+
+<div class="row" id="developers">
+  <h3><a href="{{ 'developers/' | relative_url }}">Developers</a></h3>
+  <div class="col-12">
+    <p>
+      The current main developers of <span style="font-variant:small-caps">Ultimate</span> are:
+
+      <br />
+      <br /> <a href="https://swt.informatik.uni-freiburg.de/staff/dietsch">Daniel Dietsch</a>
+      <br /> <a href="https://swt.informatik.uni-freiburg.de/staff/klumpp">Dominik Klumpp</a>
+      <br /> <a href="https://swt.informatik.uni-freiburg.de/staff/schuessele">Frank Schüssele</a>
+      <br /> <a href="https://swt.informatik.uni-freiburg.de/staff/heizmann">Matthias Heizmann</a>
+      <br />
+      <br />
+
+      <a name="developers"></a>Most <span style="font-variant:small-caps">Ultimate</span> developers are students and researchers in the <a href="https://swt.informatik.uni-freiburg.de/">software engineering group of Andreas Podelski</a> at the <a href="https://www.uni-freiburg.de/">University of Freiburg</a>.
+      Current and former developers of <span style="font-variant:small-caps">Ultimate</span> can be found <a href="{{ 'developers/' | relative_url }}">here</a>.
+    </p>
+  </div>
+</div>
+
+
+<div class="row" id="dependencies">
+  <h3>Development</h3>
+  <div class="col-12">
+    <p>
+      The <span style="font-variant:small-caps">Ultimate</span> <a href="https://github.com/ultimate-pa/ultimate">source code and some documentation</a> is available at GitHub.
+
+      <br />
+      The core of <span style="font-variant:small-caps">Ultimate</span> and many plugins are subject to the LGPLv3 license with a linking exception to Eclipse RCP and Eclipse CDT.
+    </p>
+  </div>
+</div>

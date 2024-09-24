@@ -1,0 +1,18 @@
+- entry_type: invariant_set
+  metadata:
+    format_version: '2.0'
+    uuid: 0dd29eb6-1831-4ab4-aa2d-dcb15d65c9a7
+    creation_time: '2024-03-11T17:42:40+01:00'
+    producer:
+      name: UNUSED
+      version: 0.2.4-dev-9743566-m
+    task:
+      input_files:
+      - test_locks_5.c
+      input_file_hashes:
+        test_locks_5.c: UNUSED
+      specification: UNUSED
+      data_model: UNUSED
+      language: C
+  content: [
+    ]

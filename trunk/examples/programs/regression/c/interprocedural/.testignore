@@ -1,0 +1,10 @@
+TIMEOUT:
+- task: Acsl01-EnsuresLocal-Safe.c
+  settings: AutomizerC-BitvectorTranslation.epf
+  toolchain: AutomizerC.xml
+- task: Acsl03-EnsuresGlobal-Safe.c
+  settings: AutomizerC-BitvectorTranslation.epf
+  toolchain: AutomizerC.xml
+- task: Tschingelhorn-Safe.c
+  settings: AutomizerC-BitvectorTranslation.epf
+  toolchain: AutomizerC.xml

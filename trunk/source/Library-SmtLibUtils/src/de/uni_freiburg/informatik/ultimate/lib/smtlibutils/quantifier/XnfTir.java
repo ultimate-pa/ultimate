@@ -300,7 +300,7 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 		}
 		resultAtoms.addAll(termsWithoutEliminatee);
 		if (!antiDer.isEmpty()) {
-			resultAtoms.add(bi.buildCorrespondingFiniteJuntion());
+			resultAtoms.add(bi.buildCorrespondingFiniteJunction());
 		}
 		final Term result = QuantifierUtils.applyDualFiniteConnective(script, quantifier, resultAtoms);
 		assert !Arrays.asList(result.getFreeVars()).contains(eliminatee) : "not eliminated";
@@ -443,7 +443,7 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 			mAntiDer = antiDer;
 		}
 
-		Term buildCorrespondingFiniteJuntion() {
+		Term buildCorrespondingFiniteJunction() {
 			final ArrayList<Term> resultCorrespondingFiniteJuncts = new ArrayList<>();
 			for (int i = 0; i < Math.pow(2, mAntiDer.size()); i++) {
 				final ArrayList<Term> resultAtoms = new ArrayList<>();

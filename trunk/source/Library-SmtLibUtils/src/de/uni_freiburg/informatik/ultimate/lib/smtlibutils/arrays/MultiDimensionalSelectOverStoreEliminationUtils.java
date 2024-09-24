@@ -43,7 +43,7 @@ public class MultiDimensionalSelectOverStoreEliminationUtils {
 
 	public static Term replace(final ManagedScript mgdScript, final ArrayIndexEqualityManager aiem, final Term term,
 			final MultiDimensionalSelectOverNestedStore mdsos) {
-		final Map<Term, Term> substitutionMapping = Collections.singletonMap(mdsos.toTerm(),
+		final Map<Term, Term> substitutionMapping = Collections.singletonMap(mdsos.toTerm(mgdScript.getScript()),
 				ArrayQuantifierEliminationUtils.transformMultiDimensionalSelectOverNestedStoreToIte(mdsos, mgdScript,
 						aiem));
 		final Term resultWithIte = Substitution.apply(mgdScript, substitutionMapping, term);

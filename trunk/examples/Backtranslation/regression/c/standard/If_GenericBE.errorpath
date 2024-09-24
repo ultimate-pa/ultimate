@@ -4,4 +4,3 @@
 [L14]              b = 3
 [L20]  COND TRUE   b == 3
 [L26]              __VERIFIER_error()
-       VAL         [a=0, b=3]

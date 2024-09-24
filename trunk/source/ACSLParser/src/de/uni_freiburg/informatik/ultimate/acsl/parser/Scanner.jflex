@@ -34,7 +34,7 @@ import com.github.jhoenicke.javacup.runtime.Symbol;
 space = [\032 \t \012 \r @ ]
 rD = [0-9]
 rO = [0-7]
-rL = [a-zA-Z_]
+rL = [a-zA-Z_"$"]
 rH = [a-fA-F0-9]
 rE = [Ee][+-]? {rD}+
 rP = [Pp][+-]? {rD}+
@@ -125,6 +125,8 @@ WhiteSpace     = {LineTerminator}* | {space}*
     "integer"		{ return symbol("integer",sym.INTEGER, yytext()); } 
     "real"			{ return symbol("real",sym.REAL, yytext()); }
     "boolean"		{ return symbol("boolean",sym.BOOLEAN, yytext()); }
+    "_Bool"			{ return symbol("_Bool",sym.BOOL, yytext()); }
+    "__int128"		{ return symbol("__int128",sym.INT128, yytext()); }
     "\\at"			{ return symbol("at",sym.AT); }
     "\\base_addr"	{ return symbol("base_addr",sym.BASE_ADDR); }
     "\\block_length"	{ return symbol("block_length",sym.BLOCK_LENGTH); }

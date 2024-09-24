@@ -37,8 +37,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
-
 /**
  * @author Markus Lindenmann
  * @date 18.09.2012
@@ -109,8 +107,6 @@ public class CStructOrUnion extends CType implements ICPossibleIncompleteType<CS
 
 	@Override
 	public boolean isIncomplete() {
-		// FIXME: struct may also be incomplete
-		// if last member is array of unknown size
 		return !mIsComplete;
 	}
 
@@ -204,37 +200,6 @@ public class CStructOrUnion extends CType implements ICPossibleIncompleteType<CS
 		mFieldTypes = memberTypes.toArray(CType[]::new);
 		mBitFieldWidths = bitfieldWidth;
 		mIsComplete = true;
-	}
-
-	@Override
-	public boolean isCompatibleWith(final CType o) {
-		if (o == null) {
-			return false;
-		}
-		if (this == o) {
-			return true;
-		}
-		if (o instanceof CPrimitive && ((CPrimitive) o).getType() == CPrimitives.VOID) {
-			return true;
-		}
-		final CType oType = o.getUnderlyingType();
-		if (!(oType instanceof CStructOrUnion)) {
-			return false;
-		}
-
-		final CStructOrUnion oStruct = (CStructOrUnion) oType;
-		if (mFieldNames.length != oStruct.mFieldNames.length) {
-			return false;
-		}
-		if (mFieldTypes.length != oStruct.mFieldTypes.length) {
-			return false;
-		}
-		for (int i = mFieldTypes.length - 1; i >= 0; --i) {
-			if (!(mFieldTypes[i].equals(oStruct.mFieldTypes[i]))) {
-				return false;
-			}
-		}
-		return true;
 	}
 
 	public List<Integer> getBitFieldWidths() {

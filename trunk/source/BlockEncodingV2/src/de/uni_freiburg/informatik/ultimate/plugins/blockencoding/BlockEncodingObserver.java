@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -97,6 +98,7 @@ public class BlockEncodingObserver implements IUnmanagedObserver {
 					new IcfgDuplicator(mLogger, mServices, toolkit.getManagedScript(), mBacktranslator)
 							.copy(originalIcfg, true);
 			mResult = new BlockEncoder(mLogger, mServices, mBacktranslator, edgeBuilder, copiedIcfg).getResult();
+			assert IcfgUtils.checkMatchingEntryExitNodes(mResult) : "Entry nodes and exit nodes do not match";
 			return false;
 		}
 		return true;

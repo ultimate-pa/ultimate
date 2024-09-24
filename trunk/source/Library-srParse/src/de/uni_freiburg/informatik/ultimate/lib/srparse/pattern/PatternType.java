@@ -209,7 +209,7 @@ public abstract class PatternType<T extends PatternType<?>> {
 			suffix = mScope.getClass().getSimpleName().substring(12);
 		}
 		final String className = getClass().getSimpleName();
-		return suffix + "_" + className.replaceAll("Pattern", "");
+		return suffix + "_" + className.replace("Pattern", "");
 	}
 
 	@Override
@@ -225,12 +225,7 @@ public abstract class PatternType<T extends PatternType<?>> {
 	public int hashCode() {
 		// note that mId and mPea are deliberately not part of the hash code or the
 		// equality comparison
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + (mCdds == null ? 0 : mCdds.hashCode());
-		result = prime * result + (mDurations == null ? 0 : mDurations.hashCode());
-		result = prime * result + (mScope == null ? 0 : mScope.hashCode());
-		return result;
+		return Objects.hash(mCdds, mDurations, mScope);
 	}
 
 	@Override
@@ -240,32 +235,17 @@ public abstract class PatternType<T extends PatternType<?>> {
 		if (this == obj) {
 			return true;
 		}
-		if (obj == null) {
-			return false;
-		}
-		if (getClass() != obj.getClass()) {
+		if ((obj == null) || (getClass() != obj.getClass())) {
 			return false;
 		}
 		final PatternType<?> other = (PatternType<?>) obj;
-		if (mDurations == null) {
-			if (other.mDurations != null) {
-				return false;
-			}
-		} else if (!mDurations.equals(other.mDurations)) {
+		if (!Objects.equals(mDurations, other.mDurations)) {
 			return false;
 		}
-		if (mScope == null) {
-			if (other.mScope != null) {
-				return false;
-			}
-		} else if (!mScope.equals(other.mScope)) {
+		if (!Objects.equals(mScope, other.mScope)) {
 			return false;
 		}
-		if (mCdds == null) {
-			if (other.mCdds != null) {
-				return false;
-			}
-		} else if (!mCdds.equals(other.mCdds)) {
+		if (!Objects.equals(mCdds, other.mCdds)) {
 			return false;
 		}
 		return true;
@@ -294,6 +274,36 @@ public abstract class PatternType<T extends PatternType<?>> {
 
 		public List<Entry<CounterTrace, PhaseEventAutomata>> getCounterTrace2Pea() {
 			return mPeas;
+		}
+
+		public boolean isStrict() {
+			for (final Entry<CounterTrace, PhaseEventAutomata> entry : mPeas) {
+				final PhaseEventAutomata automata = entry.getValue();
+				if (automata.isStrict()) {
+					return true;
+				}
+			}
+			return false;
+		}
+
+		public boolean isTotalised() {
+			for (final Entry<CounterTrace, PhaseEventAutomata> entry : mPeas) {
+				final PhaseEventAutomata automaton = entry.getValue();
+				if (!automaton.isTotalised()) {
+					return false;
+				}
+			}
+			return true;
+		}
+
+		public boolean isComplemented() {
+			for (final Entry<CounterTrace, PhaseEventAutomata> entry : mPeas) {
+				final PhaseEventAutomata automaton = entry.getValue();
+				if (!automaton.isComplemented()) {
+					return false;
+				}
+			}
+			return true;
 		}
 	}
 

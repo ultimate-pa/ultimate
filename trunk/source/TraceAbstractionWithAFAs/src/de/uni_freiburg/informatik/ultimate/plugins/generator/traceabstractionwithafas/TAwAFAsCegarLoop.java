@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionwithafas;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -34,6 +35,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Stack;
+import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -42,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.alternating.AA_MergedUnion;
 import de.uni_freiburg.informatik.ultimate.automata.alternating.AlternatingAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.alternating.BooleanExpression;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
@@ -50,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Differ
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IOpWithDelayedDeadEndRemoval;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.senwa.DifferenceSenwa;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
@@ -61,8 +65,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.MonolithicHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
@@ -80,14 +84,17 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.dataflowdag.TraceCodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.NwaCegarLoop;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryResultChecking;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization.AutomataMinimizationTimeout;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent.CegarLoopConcurrentAutomata;
 
-public class TAwAFAsCegarLoop<L extends IIcfgTransition<?>> extends CegarLoopConcurrentAutomata<L> {
+public class TAwAFAsCegarLoop<L extends IIcfgTransition<?>> extends NwaCegarLoop<L> {
 
 	private final PredicateUnifier mPredicateUnifier;
 
@@ -99,12 +106,69 @@ public class TAwAFAsCegarLoop<L extends IIcfgTransition<?>> extends CegarLoopCon
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
 			final Set<? extends IcfgLocation> errorLocs, final IUltimateServiceProvider services,
 			final Class<L> transitionClazz, final PredicateFactoryRefinement stateFactoryForRefinement) {
-		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, services, transitionClazz,
+		super(name, createInitialAbstraction(services, csToolkit, predicateFactory, taPrefs, rootNode), rootNode,
+				csToolkit, predicateFactory, taPrefs, errorLocs, null, services, transitionClazz,
 				stateFactoryForRefinement);
 		mPredicateUnifier = new PredicateUnifier(mLogger, services, csToolkit.getManagedScript(), predicateFactory,
 				rootNode.getCfgSmtToolkit().getSymbolTable(), mSimplificationTechnique, mXnfConversionTechnique,
 				predicateFactory.newPredicate(csToolkit.getManagedScript().getScript().term("true")),
 				predicateFactory.newPredicate(csToolkit.getManagedScript().getScript().term("false")));
+	}
+
+	private static <L extends IIcfgTransition<?>> INestedWordAutomaton<L, IPredicate> createInitialAbstraction(
+			final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
+			final PredicateFactory predicateFactory, final TAPreferences pref, final IIcfg<?> icfg) {
+		final IEmptyStackStateFactory<IPredicate> predicateFactoryForItp = new PredicateFactoryForInterpolantAutomata(
+				csToolkit.getManagedScript(), predicateFactory, pref.getHoareSettings().computeHoareAnnotation());
+		final Cfg2Nwa<L> cFG2NestedWordAutomaton = new Cfg2Nwa<>(icfg, predicateFactoryForItp, csToolkit,
+				predicateFactory, services, pref.getXnfConversionTechnique(), pref.getSimplificationTechnique());
+		return cFG2NestedWordAutomaton.getResult();
+	}
+
+	private static <E> Set<E> asHashSet(final E[] array) {
+		return new HashSet<>(Arrays.asList(array));
+	}
+
+	@Override
+	protected void minimizeAbstraction(final PredicateFactoryRefinement predicateFactoryRefinement,
+			final PredicateFactoryResultChecking resultCheckPredFac, final Minimization minimization)
+			throws AutomataOperationCanceledException, AutomataLibraryException, AssertionError {
+		final Function<IMLPredicate, Set<IcfgLocation>> lcsProvider = x -> asHashSet(x.getProgramPoints());
+		AutomataMinimization<Set<IcfgLocation>, IMLPredicate, L> am;
+		try {
+			final boolean computeOld2New = mProofUpdater != null;
+			am = new AutomataMinimization<>(getServices(), mAbstraction, minimization, computeOld2New, getIteration(),
+					predicateFactoryRefinement, MINIMIZE_EVERY_KTH_ITERATION, mStoredRawInterpolantAutomata,
+					mInterpolAutomaton, MINIMIZATION_TIMEOUT, resultCheckPredFac, lcsProvider, false);
+		} catch (final AutomataMinimizationTimeout e) {
+			mCegarLoopBenchmark.addAutomataMinimizationData(e.getStatistics());
+			throw e.getAutomataOperationCanceledException();
+		}
+		mCegarLoopBenchmark.addAutomataMinimizationData(am.getStatistics());
+
+		final boolean newAutomatonWasBuilt = am.newAutomatonWasBuilt();
+
+		if (newAutomatonWasBuilt) {
+			// postprocessing after minimization
+			final IDoubleDeckerAutomaton<L, IPredicate> newAbstraction = am.getMinimizedAutomaton();
+
+			// update proof
+			if (mProofUpdater != null) {
+				final Map<IPredicate, IPredicate> oldState2newState = am.getOldState2newStateMapping();
+				if (oldState2newState == null) {
+					throw new AssertionError("Hoare annotation and " + minimization + " incompatible");
+				}
+				mProofUpdater.updateOnMinimization(oldState2newState, newAbstraction);
+			}
+
+			// statistics
+			final int oldSize = mAbstraction.size();
+			final int newSize = newAbstraction.size();
+			assert oldSize == 0 || oldSize >= newSize : "Minimization increased state space";
+
+			// use result
+			mAbstraction = newAbstraction;
+		}
 	}
 
 	@Override
@@ -463,12 +527,12 @@ public class TAwAFAsCegarLoop<L extends IIcfgTransition<?>> extends CegarLoopCon
 
 	@Override
 	protected boolean refineAbstraction() throws AutomataLibraryException { // copied
-		mStateFactoryForRefinement.setIteration(super.mIteration);
+		mStateFactoryForRefinement.setIteration(getIteration());
 
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
-		final boolean explointSigmaStarConcatOfIA = !mComputeHoareAnnotation;
+		final boolean explointSigmaStarConcatOfIA = mProofUpdater == null || mProofUpdater.exploitSigmaStarConcatOfIa();
 
-		final INestedWordAutomaton<L, IPredicate> oldAbstraction = (INestedWordAutomaton<L, IPredicate>) mAbstraction;
+		final INestedWordAutomaton<L, IPredicate> oldAbstraction = mAbstraction;
 		final IHoareTripleChecker htc = getEfficientHoareTripleChecker(); // change to CegarLoopConcurrentAutomata
 		mLogger.debug("Start constructing difference");
 		assert oldAbstraction.getStateFactory() == mInterpolAutomaton.getStateFactory();
@@ -491,26 +555,25 @@ public class TAwAFAsCegarLoop<L extends IIcfgTransition<?>> extends CegarLoopCon
 					oldAbstraction, determinized, psd2, explointSigmaStarConcatOfIA);
 		}
 		assert !mCsToolkit.getManagedScript().isLocked();
-		assert new InductivityCheck<>(getServices(), mInterpolAutomaton, false, true,
-				new IncrementalHoareTripleChecker(mCsToolkit, false)).getResult();
+		assert checkInterpolantAutomatonInductivity(mInterpolAutomaton);
 		// do the following check only to obtain logger messages of
 		// checkInductivity
 
 		if (REMOVE_DEAD_ENDS) {
-			if (mComputeHoareAnnotation) {
+			if (mProofUpdater != null) {
 				final Difference<L, IPredicate> difference = (Difference<L, IPredicate>) diff;
-				mHaf.updateOnIntersection(difference.getFst2snd2res(), difference.getResult());
+				mProofUpdater.updateOnIntersection(difference.getFst2snd2res(), difference.getResult());
 			}
 			diff.removeDeadEnds();
-			if (mComputeHoareAnnotation) {
-				mHaf.addDeadEndDoubleDeckers(diff);
+			if (mProofUpdater != null) {
+				mProofUpdater.addDeadEndDoubleDeckers(diff);
 			}
 		}
 
 		mAbstraction = diff.getResult();
 		// mDeadEndRemovalTime = diff.getDeadEndRemovalTime();
 		if (mPref.dumpAutomata()) {
-			final String filename = "InterpolantAutomaton_Iteration" + mIteration;
+			final String filename = "InterpolantAutomaton_Iteration" + getIteration();
 			super.writeAutomatonToFile(mInterpolAutomaton, filename);
 		}
 

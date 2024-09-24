@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IEqualit
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence.Origin;
 
 /**
  * Default equality provider for domains that deal with Boogie statements, variables, code blocks, and expressions.
@@ -91,7 +90,7 @@ public class DefaultEqualityProvider<STATE extends IAbstractState<STATE>>
 		final AssumeStatement assumeStatement = new AssumeStatement(null, formula);
 
 		final CodeBlock assumeCodeBlock = mCodeBlockFactory.constructStatementSequence(null, null,
-				new ArrayList<>(Arrays.asList(assumeStatement)), Origin.IMPLEMENTATION);
+				new ArrayList<>(Arrays.asList(assumeStatement)));
 
 		final Collection<STATE> postReturn = mPostOperator.apply(state, assumeCodeBlock);
 		assert postReturn.size() == 1;

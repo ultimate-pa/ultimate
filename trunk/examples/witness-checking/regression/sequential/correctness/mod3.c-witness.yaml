@@ -1,0 +1,25 @@
+- entry_type: loop_invariant
+  metadata:
+    format_version: '0.1'
+    uuid: 1a3338f0-6e3e-4b3f-8513-45d4dfbd65ae
+    creation_time: '2023-10-31T13:37:03+01:00'
+    producer:
+      name: UNUSED
+      version: 0.2.3-dev-b094d93-m
+    task:
+      input_files:
+      - C:\ultimate\trunk\examples\witness-checking\regression\correctness\mod3.c
+      input_file_hashes:
+        C:\ultimate\trunk\examples\witness-checking\regression\correctness\mod3.c: UNUSED
+      specification: UNUSED
+      data_model: UNUSED
+      language: C
+  location:
+    file_name: C:\ultimate\trunk\examples\witness-checking\regression\correctness\mod3.c
+    file_hash: UNUSED
+    line: 18
+    function: main
+  loop_invariant:
+    string: ((x < (((4294967296 * (x / 4294967296)) + 1) + ((((-4294967296 * (x / 4294967296)) + x) / 3) * 3))) || (y == 1))
+    type: assertion
+    format: C

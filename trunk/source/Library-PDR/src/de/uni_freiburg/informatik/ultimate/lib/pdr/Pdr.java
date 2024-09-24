@@ -196,8 +196,8 @@ public class Pdr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 		mIcfg = prefs.getIcfgContainer();
 		mSymbolTable = mIcfg.getCfgSmtToolkit().getSymbolTable();
 
-		final PathProgramConstructionResult pp =
-				PathProgram.constructPathProgram("errorPP", mIcfg, new HashSet<>(counterexample));
+		final PathProgramConstructionResult pp = PathProgram.constructPathProgram("errorPP", mIcfg,
+				new HashSet<>(counterexample), Collections.emptySet());
 
 		mPpIcfg = pp.getPathProgram();
 		mCsToolkit = mPpIcfg.getCfgSmtToolkit();
@@ -573,8 +573,8 @@ public class Pdr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 					 * Get the procedure in form of a trace.
 					 */
 					final List<L> procTrace = getProcedureTrace(returnTrans);
-					final PathProgramConstructionResult pp =
-							PathProgram.constructPathProgram("procErrorPP", mIcfg, new HashSet<>(procTrace));
+					final PathProgramConstructionResult pp = PathProgram.constructPathProgram("procErrorPP", mIcfg,
+							new HashSet<>(procTrace), Collections.emptySet());
 					final Set<IcfgLocation> errorLocOfProc = new HashSet<>();
 					errorLocOfProc.add(returnTrans.getTarget());
 
@@ -661,7 +661,7 @@ public class Pdr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 						 * Get the rest of the program as a trace.
 						 */
 						final PathProgramConstructionResult subPP =
-								PathProgram.constructPathProgram("procErrorPP", mIcfg, new HashSet<>(subTrace));
+								PathProgram.constructPathProgram("procErrorPP", mIcfg, new HashSet<>(subTrace), null);
 						final ArrayDeque<ProofObligation> subTracePo = new ArrayDeque<>();
 						subTracePo.add(newLocalProofObligation);
 						final LBool subTraceResult = computePdr(subPP.getPathProgram(), subTracePo);

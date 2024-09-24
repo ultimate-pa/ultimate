@@ -1,0 +1,10 @@
+// #TestSpec: redundant:ID000; results:-1
+Input R is bool
+Input S is bool
+Input Z is bool 
+Input Y is bool 
+
+ID000: Globally, it is always the case that "R" holds
+ID001: Globally, it is always the case that "R && S" holds
+ID002: Globally, it is always the case that "R && Y" holds
+ID003: Globally, it is always the case that "Z" holds

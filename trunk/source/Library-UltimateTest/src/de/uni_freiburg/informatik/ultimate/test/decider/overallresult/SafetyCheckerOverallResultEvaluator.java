@@ -33,6 +33,8 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.AnnotationCheckResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.AnnotationCheckResult.AnnotationState;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.DataRaceFoundResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ExceptionOrErrorResult;
@@ -75,9 +77,11 @@ public class SafetyCheckerOverallResultEvaluator implements IOverallResultEvalua
 		//@formatter:off
 		//categories are ordered by priority, with the first being the lowest
 		final SafetyCheckerOverallResult[] categoriesOrderedBySignificance = new SafetyCheckerOverallResult[] {
+				SafetyCheckerOverallResult.VALID_ANNOTATION,
 				SafetyCheckerOverallResult.SAFE,
 				SafetyCheckerOverallResult.TIMEOUT,
 				SafetyCheckerOverallResult.UNKNOWN,
+				SafetyCheckerOverallResult.INVALID_ANNOTATION,
 				SafetyCheckerOverallResult.UNSAFE,
 				SafetyCheckerOverallResult.UNSAFE_MEMTRACK,
 				SafetyCheckerOverallResult.UNSAFE_FREE,
@@ -141,6 +145,19 @@ public class SafetyCheckerOverallResultEvaluator implements IOverallResultEvalua
 				return SafetyCheckerOverallResult.EXCEPTION_OR_ERROR;
 			}
 			return null;
+		} else if ((result instanceof AnnotationCheckResult)) {
+			final AnnotationCheckResult<?, ?> acr = (AnnotationCheckResult<?, ?>) result;
+			final AnnotationState as = acr.getAnnotationState();
+			switch (as) {
+			case INVALID:
+				return SafetyCheckerOverallResult.INVALID_ANNOTATION;
+			case UNKNOWN:
+				return SafetyCheckerOverallResult.UNKNOWN;
+			case VALID:
+				return SafetyCheckerOverallResult.VALID_ANNOTATION;
+			default:
+				throw new AssertionError("Unknown value" + as);
+			}
 		} else {
 			return null;
 		}
@@ -174,6 +191,9 @@ public class SafetyCheckerOverallResultEvaluator implements IOverallResultEvalua
 			return concatenateShortDescriptions(getMostSignificantResults());
 		case UNSUPPORTED_SYNTAX:
 			return getMostSignificantResults().toString();
+		case INVALID_ANNOTATION:
+		case VALID_ANNOTATION:
+			return concatenateShortDescriptions(getMostSignificantResults());
 		default:
 			throw new AssertionError("unknown overall result");
 		}

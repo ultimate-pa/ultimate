@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.Expressi
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.SmtFunctionsAndAxioms;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramConst;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermVarsProc;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermVarsFuns;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -90,7 +90,7 @@ public class Boogie2SMT {
 
 		final List<Term> axiomList = declareAxioms(boogieDeclarations, script, mExpression2Term,
 				mBoogie2SmtSymbolTable);
-		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(SmtUtils.and(script, axiomList), mScript,
+		final TermVarsFuns tvp = TermVarsFuns.computeTermVarsFuns(SmtUtils.and(script, axiomList), mScript,
 				mBoogie2SmtSymbolTable);
 		assert tvp.getVars().isEmpty() : "axioms must not have variables";
 		if (!(script instanceof HistoryRecordingScript)) {

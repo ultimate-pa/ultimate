@@ -9,6 +9,7 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.core,
  de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.smtlibutils,
  de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils,
+ de.uni_freiburg.informatik.ultimate.lib.proofs,
  de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils,
  de.uni_freiburg.informatik.ultimate.boogie.preprocessor,
  de.uni_freiburg.informatik.ultimate.lib.smtlib,
@@ -17,7 +18,6 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.core,
  de.uni_freiburg.informatik.ultimate.smtinterpol,
  de.uni_freiburg.informatik.ultimate.lib.automata,
  de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction,
- de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent,
  de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions
 Bundle-RequiredExecutionEnvironment: JavaSE-11
 Bundle-ActivationPolicy: lazy

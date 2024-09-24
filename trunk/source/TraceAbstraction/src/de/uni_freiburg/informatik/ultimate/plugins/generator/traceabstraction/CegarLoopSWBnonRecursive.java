@@ -59,16 +59,14 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.NwaHoareProofProducer;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolatingTraceCheckCraig;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheck;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
 
@@ -165,20 +163,18 @@ public class CegarLoopSWBnonRecursive<L extends IIcfgTransition<?>> extends NwaC
 	 * @param csToolkit
 	 * @param taPrefs
 	 * @param errorLocs
-	 * @param interpolation
-	 * @param computeHoareAnnotation
+	 * @param computeProof
 	 * @param services
 	 * @param transitionClazz
 	 */
 	public CegarLoopSWBnonRecursive(final DebugIdentifier name,
 			final INestedWordAutomaton<L, IPredicate> initialAbstraction, final IIcfg<?> icfg,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final TAPreferences taPrefs,
-			final Set<IcfgLocation> errorLocs, final InterpolationTechnique interpolation,
-			final boolean computeHoareAnnotation, final Set<IcfgLocation> hoareAnnotationLocs,
+			final Set<IcfgLocation> errorLocs, final NwaHoareProofProducer<L> proofProducer,
 			final IUltimateServiceProvider services, final Class<L> transitionClazz,
 			final PredicateFactoryRefinement stateFactoryForRefinement) {
-		super(name, initialAbstraction, icfg, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation,
-				computeHoareAnnotation, hoareAnnotationLocs, services, transitionClazz, stateFactoryForRefinement);
+		super(name, initialAbstraction, icfg, csToolkit, predicateFactory, taPrefs, errorLocs, proofProducer, services,
+				transitionClazz, stateFactoryForRefinement);
 		mErrorPathHistory = new ArrayList<>();
 		mnofStates = new ArrayList<>();
 	}
@@ -329,8 +325,7 @@ public class CegarLoopSWBnonRecursive<L extends IIcfgTransition<?>> extends NwaC
 		mLogger.debug("Epimorphism:");
 		mEpimorphism.print();
 
-		assert new InductivityCheck<>(getServices(), mInterpolAutomaton, false, true,
-				new IncrementalHoareTripleChecker(mCsToolkit, false)).getResult() : "Not inductive";
+		assert checkInterpolantAutomatonInductivity(mInterpolAutomaton) : "Not inductive";
 
 		mnofStates.add(mAbstraction.size());
 		int ii = 0;
@@ -721,7 +716,7 @@ public class CegarLoopSWBnonRecursive<L extends IIcfgTransition<?>> extends NwaC
 		// s_Logger.debug("[" + i + "]: " + mErrorPathHistory.get(i));
 		// }
 
-		mCegarLoopBenchmark.reportAbstractionSize(mAbstraction.size(), mIteration);
+		mCegarLoopBenchmark.reportAbstractionSize(mAbstraction.size(), getIteration());
 
 		mLogger.info("Abstraction has " + mNestedAbstraction.sizeInformation());
 		mLogger.info("Interpolant automaton has " + mInterpolAutomaton.sizeInformation());

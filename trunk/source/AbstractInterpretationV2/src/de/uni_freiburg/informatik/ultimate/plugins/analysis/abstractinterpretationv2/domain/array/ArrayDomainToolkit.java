@@ -49,7 +49,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence.Origin;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class ArrayDomainToolkit<STATE extends IAbstractState<STATE>> {
@@ -157,7 +156,7 @@ public class ArrayDomainToolkit<STATE extends IAbstractState<STATE>> {
 			return currentState;
 		}
 		final CodeBlock codeBlock =
-				mCodeBlockFactory.constructStatementSequence(null, null, statement, Origin.IMPLEMENTATION);
+				mCodeBlockFactory.constructStatementSequence(null, null, statement);
 		final Collection<STATE> newStates = mSubDomain.getPostOperator().apply(currentState, codeBlock);
 		if (newStates.isEmpty()) {
 			return mSubDomain.createBottomState();

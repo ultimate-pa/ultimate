@@ -1,0 +1,27 @@
+- entry_type: invariant_set
+  metadata:
+    format_version: '2.1'
+    uuid: bc08d0d7-1899-4427-b183-4fc2476e3a06
+    creation_time: '2024-06-08T14:15:43+02:00'
+    producer:
+      name: manual
+      version: '1.0'
+    task:
+      input_files:
+      - contract.c
+      input_file_hashes:
+        contract.c: UNUSED
+      specification: UNUSED
+      data_model: UNUSED
+      language: C
+  content:
+  - invariant:
+      type: function_contract
+      location:
+        file_name: contract.c
+        file_hash: UNUSED
+        line: 3
+        column: 1
+        function: f
+      ensures: global > \old(global) && \result == \old(global)
+      format: acsl_expression
