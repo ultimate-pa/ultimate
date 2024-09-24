@@ -809,8 +809,10 @@ public class StandardFunctionHandler {
 		 * We handle this by overapproximation and do not check of range errors.
 		 *
 		 */
-		fill(map, "strtoul", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 3,
-				new CPrimitive(CPrimitives.ULONG)));
+		fill(map, "strtol", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 3,
+				new CPrimitive(CPrimitives.LONG)));
+		fill(map, "strtoll", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 3,
+				new CPrimitive(CPrimitives.LONGLONG)));
 		fill(map, "strtoul", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 3,
 				new CPrimitive(CPrimitives.ULONG)));
 		fill(map, "strtoull", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 3,
