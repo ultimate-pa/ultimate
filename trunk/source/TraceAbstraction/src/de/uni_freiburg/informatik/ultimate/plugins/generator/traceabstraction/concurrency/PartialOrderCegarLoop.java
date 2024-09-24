@@ -97,6 +97,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.Sl
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.ConditionCriterion;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.ConditionalCommutativityChecker;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.ConditionalCommutativityCheckerVisitor;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.ConditionalCommutativityCounterexampleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.ConditionalCommutativityInterpolantProvider;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.DefaultCriterion;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.ForwardCriterion;
@@ -387,6 +388,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 					false) : "Counterexample is not accepted by abstraction";
 
 			// check condional commutativity along mCounterexample
+			/*
 			if (mPref.useConditionalCommutativityChecker().equals(ConComChecker.COUNTEREXAMPLE)) {
 				boolean continueWithInfProof = (mCounterexample == null);
 				while (!continueWithInfProof) {
@@ -447,7 +449,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 					}
 				}
 
-			}
+			}*/
 			switchToReadonlyMode();
 			return mCounterexample == null;
 		} finally {
@@ -465,9 +467,46 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	@Override
 	protected Pair<LBool, IProgramExecution<L, Term>> isCounterexampleFeasible()
 			throws AutomataOperationCanceledException {
-		if (true /* TODO */) {
-			// TODO try commutativity proof
-			// TODO if succeeds: return UNSAT
+		if (mPref.useConditionalCommutativityChecker().equals(ConComChecker.COUNTEREXAMPLE)) {
+			
+			final ArrayList<IPredicate> predicates = getCounterexamplePredicates();
+			final IPredicateUnifier predicateUnifier =
+					((PostConditionTraceChecker<L>) mConComChecker.getTraceChecker()).getPredicateUnifier();
+			final PostConditionTraceChecker<L> checker = new PostConditionTraceChecker<>(mServices,
+					mAbstraction, mTaskIdentifier, mFactory, predicateUnifier, mStrategyFactory);
+			final IIndependenceRelation<IPredicate, L> relation = mPOR.getIndependence(0);
+			final SemanticIndependenceConditionGenerator generator = new SemanticIndependenceConditionGenerator(
+					mServices, mCsToolkit.getManagedScript(), mPredicateFactory, relation.isSymmetric(), true);
+			mCriterion.updateAbstraction(mAbstraction);
+			
+			final ConditionalCommutativityCounterexampleChecker<L> conCounterexampleChecker =
+					new ConditionalCommutativityCounterexampleChecker<>(mServices, mCriterion, relation,
+							mPOR.getDfsOrder(), mCsToolkit.getManagedScript(), generator, mAbstraction, mFactory, checker,
+							new ConditionalCommutativityCheckerStatisticsUtils(mCegarLoopBenchmark));
+
+			final NestedWordAutomaton<L, IPredicate> interpolantAutomaton = conCounterexampleChecker
+					.getInterpolants((IRun<L, IPredicate>) mCounterexample, predicates);
+			
+
+			if (interpolantAutomaton != null) {
+				
+				if (!interpolantAutomaton.contains(predicateUnifier.getFalsePredicate())) {
+					interpolantAutomaton.addState(false, true, predicateUnifier.getFalsePredicate());
+				}
+				// is the following needed or redundant?
+				final IHoareTripleChecker htc =
+						HoareTripleCheckerUtils.constructEfficientHoareTripleCheckerWithCaching(getServices(),
+								mPref.getHoareTripleChecks(), mCsToolkit, predicateUnifier);
+
+				final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> ia = enhanceInterpolantAutomaton(
+						mPref.interpolantAutomatonEnhancement(), predicateUnifier, htc, interpolantAutomaton);
+
+				final IPredicate initialSink = DataStructureUtils
+						.getOneAndOnly(interpolantAutomaton.getInitialStates(), "initial state");
+				final TotalizeNwa<L, IPredicate> totalInterpol = new TotalizeNwa<>(ia, initialSink, false);
+				
+				// TODO if succeeds: return UNSAT
+			}
 		}
 		return super.isCounterexampleFeasible();
 	}
