@@ -53,10 +53,9 @@ public abstract class StatisticsGeneratorWithStopwatches {
 	}
 
 	public abstract String[] getStopwatches();
-	
+
 	public Map<String, Boolean> getRunningStopwatches() {
 		return mRunningStopwatches;
-		
 	}
 
 	public void start(final Object stopwatchName) {
@@ -120,9 +119,6 @@ public abstract class StatisticsGeneratorWithStopwatches {
 	}
 
 	public class StopwatchStillRunningException extends Exception {
-
 		private static final long serialVersionUID = 47519007262609785L;
-
 	}
-
 }

@@ -25,12 +25,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence;
 
-import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
  * Default criterion for conditional commutativity checking.
@@ -41,10 +37,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
  *            The type of letters.
  */
 public class DefaultCriterion<L> implements IConditionalCommutativityCriterion<L> {
-
-	
 	@Override
-	public boolean decide(final IPredicate state, final L letter1, final L letter2) {	
+	public boolean decide(final IPredicate state, final L letter1, final L letter2) {
 		return true;
 	}
 
@@ -54,15 +48,12 @@ public class DefaultCriterion<L> implements IConditionalCommutativityCriterion<L
 	}
 
 	@Override
-	public void updateAbstraction(INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction) {
+	public void updateAbstraction(final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction) {
 		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
-	public void updateCriterion(IPredicate state, L letter1, L letter2) {
+	public void updateCriterion(final IPredicate state, final L letter1, final L letter2) {
 		// TODO Auto-generated method stub
-		
 	}
-	
 }

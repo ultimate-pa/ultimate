@@ -39,18 +39,16 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
  *            The type of letters.
  */
 public class SleepSetCriterion<L> implements IConditionalCommutativityCriterion<L> {
-
-	
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean decide(final IPredicate state, final L letter1, final L letter2) {
 		if (state instanceof SleepPredicate) {
-			ImmutableSet<?> sleepSet = ((SleepPredicate<L>) state).getSleepSet();
+			final ImmutableSet<?> sleepSet = ((SleepPredicate<L>) state).getSleepSet();
 			// TODO check if this works correctly for semi-commutativity
 			if (sleepSet.contains(letter1) ^ sleepSet.contains(letter2)) {
 				return true;
 			}
-			//return (sleepSet.contains(letter1) || sleepSet.contains(letter2));
+			// return (sleepSet.contains(letter1) || sleepSet.contains(letter2));
 		}
 		return false;
 	}
@@ -61,15 +59,12 @@ public class SleepSetCriterion<L> implements IConditionalCommutativityCriterion<
 	}
 
 	@Override
-	public void updateCriterion(IPredicate state, L letter1, L letter2) {
+	public void updateCriterion(final IPredicate state, final L letter1, final L letter2) {
 		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
-	public void updateAbstraction(INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction) {
+	public void updateAbstraction(final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction) {
 		// TODO Auto-generated method stub
-		
 	}
-
 }

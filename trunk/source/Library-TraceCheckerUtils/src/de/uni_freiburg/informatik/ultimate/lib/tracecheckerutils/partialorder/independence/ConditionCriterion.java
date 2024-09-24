@@ -39,27 +39,24 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 public class ConditionCriterion<L> implements IConditionalCommutativityCriterion<L> {
 
 	@Override
-	public boolean decide(IPredicate state, L letter1, L letter2) {
+	public boolean decide(final IPredicate state, final L letter1, final L letter2) {
 		return true;
 	}
 
 	@Override
-	public boolean decide(IPredicate condition) {
-		String conditionString = condition.toString();
-		boolean debug = conditionString.contains("forall") && conditionString.contains("select");
+	public boolean decide(final IPredicate condition) {
+		final String conditionString = condition.toString();
+		final boolean debug = conditionString.contains("forall") && conditionString.contains("select");
 		return !debug;
 	}
 
 	@Override
-	public void updateCriterion(IPredicate state, L letter1, L letter2) {
+	public void updateCriterion(final IPredicate state, final L letter1, final L letter2) {
 		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
-	public void updateAbstraction(INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction) {
+	public void updateAbstraction(final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction) {
 		// TODO Auto-generated method stub
-		
 	}
-
 }

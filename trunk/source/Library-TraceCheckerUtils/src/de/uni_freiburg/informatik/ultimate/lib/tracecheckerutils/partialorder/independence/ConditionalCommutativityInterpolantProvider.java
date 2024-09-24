@@ -45,22 +45,20 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStat
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.ITraceChecker;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.LoopLockstepOrder.PredicateWithLastThread;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 
 /**
- * A provider class for the PartialOrderCegarLoop which can be called to extend the current interpolant automaton 
- * with additional states and transitions allowing conditional commutativity.
+ * A provider class for the PartialOrderCegarLoop which can be called to extend the current interpolant automaton with
+ * additional states and transitions allowing conditional commutativity.
  *
  * @author Marcel Ebbinghaus
  *
- *@param <L>
+ * @param <L>
  *            The type of letters.
  */
 public class ConditionalCommutativityInterpolantProvider<L extends IAction> {
@@ -70,8 +68,8 @@ public class ConditionalCommutativityInterpolantProvider<L extends IAction> {
 	private final IEmptyStackStateFactory<IPredicate> mEmptyStackStateFactory;
 	private NestedWordAutomaton<L, IPredicate> mCopy;
 	private IRun<L, IPredicate> mRun;
-	private INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mAbstraction;
-	private IConditionalCommutativityCheckerStatisticsUtils mStatisticsUtils;
+	private final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mAbstraction;
+	private final IConditionalCommutativityCheckerStatisticsUtils mStatisticsUtils;
 
 	/**
 	 * Constructs a new instance of ConditionalCommutativityInterpolantProvider.
@@ -81,24 +79,25 @@ public class ConditionalCommutativityInterpolantProvider<L extends IAction> {
 	 * @param criterion
 	 *            An IConditionalCommutativityCriterion to decide when to check for conditional commutativity
 	 * @param independenceRelation
-	 * 			  The independence relation used for the reduction
+	 *            The independence relation used for the reduction
 	 * @param script
-	 * 			  Script for conjunction handling 
+	 *            Script for conjunction handling
 	 * @param generator
-	 * 			  Generator for constructing commutativity conditions
+	 *            Generator for constructing commutativity conditions
 	 * @param abstraction
-	 * 			  Current abstraction
+	 *            Current abstraction
 	 * @param emptyStackStateFactory
-	 * 			  Factory
+	 *            Factory
 	 * @param traceChecker
-	 * 			  An ITraceChecker responsible for checking whether a condition is feasible 
+	 *            An ITraceChecker responsible for checking whether a condition is feasible
 	 */
 	public ConditionalCommutativityInterpolantProvider(final IUltimateServiceProvider services,
 			final IConditionalCommutativityCriterion<L> criterion,
-			final IIndependenceRelation<IPredicate, L> independenceRelation, ManagedScript script,
-			final IIndependenceConditionGenerator generator, final INwaOutgoingLetterAndTransitionProvider<L,
-			IPredicate> abstraction, final IEmptyStackStateFactory<IPredicate> emptyStackStateFactory,
-			final ITraceChecker<L> traceChecker, final IConditionalCommutativityCheckerStatisticsUtils statisticsUtils) {
+			final IIndependenceRelation<IPredicate, L> independenceRelation, final ManagedScript script,
+			final IIndependenceConditionGenerator generator,
+			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction,
+			final IEmptyStackStateFactory<IPredicate> emptyStackStateFactory, final ITraceChecker<L> traceChecker,
+			final IConditionalCommutativityCheckerStatisticsUtils statisticsUtils) {
 		mServices = services;
 		mAbstraction = abstraction;
 		mEmptyStackStateFactory = emptyStackStateFactory;
@@ -108,33 +107,32 @@ public class ConditionalCommutativityInterpolantProvider<L extends IAction> {
 	}
 
 	/**
-	 * Constructs a copy of interpolantAutomaton and adds states and transitions for conditional commutativity
-	 * along a given run.
+	 * Constructs a copy of interpolantAutomaton and adds states and transitions for conditional commutativity along a
+	 * given run.
 	 *
 	 * @param run
 	 *            The run
-	 * @param runPredicates 
+	 * @param runPredicates
 	 *            Predicates used as context for the generator
 	 * @param interpolantAutomaton
 	 *            The interpolant automaton
-	 * @return mCopy
-	 * 			  The extended copy of interpolantAutomaton 
+	 * @return mCopy The extended copy of interpolantAutomaton
 	 */
 	public NestedWordAutomaton<L, IPredicate> getInterpolants(final IRun<L, IPredicate> run,
-			List<IPredicate> runPredicates, final NestedWordAutomaton<L, IPredicate> interpolantAutomaton) {
+			final List<IPredicate> runPredicates, final NestedWordAutomaton<L, IPredicate> interpolantAutomaton) {
 		mRun = run;
 		mCopy = createCopy(interpolantAutomaton);
-		//int debug1=0;
+		// int debug1=0;
 		for (int i = 0; i < mRun.getStateSequence().size(); i++) {
-			IPredicate state = mRun.getStateSequence().get(i);
-			
-			//state = ((SleepPredicate) state);
+			final IPredicate state = mRun.getStateSequence().get(i);
+
+			// state = ((SleepPredicate) state);
 			IPredicate pred = ((SleepPredicate<L>) state).getUnderlying();
-			
+
 			if (pred instanceof PredicateWithLastThread) {
 				pred = ((PredicateWithLastThread) pred).getUnderlying();
 			}
-			
+
 			final Iterator<OutgoingInternalTransition<L, IPredicate>> iterator =
 					mAbstraction.internalSuccessors(pred).iterator();
 			final List<OutgoingInternalTransition<L, IPredicate>> transitions = new ArrayList<>();
@@ -148,21 +146,23 @@ public class ConditionalCommutativityInterpolantProvider<L extends IAction> {
 		return mCopy;
 	}
 
-	private boolean checkState(IPredicate state, List<OutgoingInternalTransition<L, IPredicate>> transitions, int i, List<IPredicate> runPredicates) {
+	private boolean checkState(final IPredicate state,
+			final List<OutgoingInternalTransition<L, IPredicate>> transitions, final int i,
+			final List<IPredicate> runPredicates) {
 		// TODO check if this works correctly for semi-commutativity
 		for (int j = 0; j < transitions.size(); j++) {
 			final OutgoingInternalTransition<L, IPredicate> transition1 = transitions.get(j);
 			for (int k = j + 1; k < transitions.size(); k++) {
 				final OutgoingInternalTransition<L, IPredicate> transition2 = transitions.get(k);
-				List<IPredicate> interpolantPredicates = new ArrayList<>();
-				interpolantPredicates.addAll(getInterpolantPredicates(i,
-						runPredicates.get(mRun.getStateSequence().indexOf(state))));
+				final List<IPredicate> interpolantPredicates = new ArrayList<>();
+				interpolantPredicates
+						.addAll(getInterpolantPredicates(i, runPredicates.get(mRun.getStateSequence().indexOf(state))));
 				NestedRun<L, IPredicate> currentRun = (NestedRun<L, IPredicate>) mRun;
 				if (i != mRun.getStateSequence().size() - 1) {
 					currentRun = currentRun.getSubRun(0, i);
 				}
-				if (checkTransitions(currentRun, interpolantPredicates, state,
-						transition1.getLetter(), transition2.getLetter())) {
+				if (checkTransitions(currentRun, interpolantPredicates, state, transition1.getLetter(),
+						transition2.getLetter())) {
 					return true;
 				}
 			}
@@ -170,12 +170,12 @@ public class ConditionalCommutativityInterpolantProvider<L extends IAction> {
 		return false;
 	}
 
-	private boolean checkTransitions(NestedRun<L, IPredicate> currentRun,
-			List<IPredicate> interpolantPredicates, IPredicate state, L letter1, L letter2) {
-		final TracePredicates tracePredicates = mChecker.checkConditionalCommutativity(currentRun,
-				interpolantPredicates, state, letter1, letter2);
+	private boolean checkTransitions(final NestedRun<L, IPredicate> currentRun,
+			final List<IPredicate> interpolantPredicates, final IPredicate state, final L letter1, final L letter2) {
+		final TracePredicates tracePredicates =
+				mChecker.checkConditionalCommutativity(currentRun, interpolantPredicates, state, letter1, letter2);
 
-		List<IPredicate> conPredicates = new ArrayList<>();
+		final List<IPredicate> conPredicates = new ArrayList<>();
 		if (tracePredicates != null) {
 			conPredicates.add(tracePredicates.getPrecondition());
 			conPredicates.addAll(tracePredicates.getPredicates());
@@ -183,10 +183,11 @@ public class ConditionalCommutativityInterpolantProvider<L extends IAction> {
 			addToCopy(conPredicates);
 			mStatisticsUtils.addIAIntegration();
 		}
-		return (!conPredicates.isEmpty() && SmtUtils.isFalseLiteral(conPredicates.get(conPredicates.size() - 2).getFormula()));
+		return (!conPredicates.isEmpty()
+				&& SmtUtils.isFalseLiteral(conPredicates.get(conPredicates.size() - 2).getFormula()));
 	}
 
-	private List<IPredicate> getInterpolantPredicates(int runIndex, IPredicate runPredicate) {
+	private List<IPredicate> getInterpolantPredicates(final int runIndex, final IPredicate runPredicate) {
 		List<IPredicate> interpolantPredicates = new ArrayList<>();
 		if (runPredicate != null && !SmtUtils.isTrueLiteral(runPredicate.getFormula())) {
 			interpolantPredicates.add(runPredicate);
@@ -194,35 +195,35 @@ public class ConditionalCommutativityInterpolantProvider<L extends IAction> {
 		if (runIndex == 0) {
 			return interpolantPredicates;
 		}
-		
-		//traverse mCopy and add 
+
+		// traverse mCopy and add
 		List<IPredicate> worklist = new ArrayList<>();
-		for (IPredicate initState : mCopy.getInitialStates()) {
+		for (final IPredicate initState : mCopy.getInitialStates()) {
 			worklist.add(initState);
 		}
 		for (int i = 0; i < runIndex; i++) {
-			List<IPredicate> nextWorklist = new ArrayList<>();
-			for (IPredicate state : worklist) {
-				Iterator<OutgoingInternalTransition<L, IPredicate>> iterator = mCopy.internalSuccessors(state,
-						mRun.getWord().getSymbol(i)).iterator();
+			final List<IPredicate> nextWorklist = new ArrayList<>();
+			for (final IPredicate state : worklist) {
+				final Iterator<OutgoingInternalTransition<L, IPredicate>> iterator =
+						mCopy.internalSuccessors(state, mRun.getWord().getSymbol(i)).iterator();
 				while (iterator.hasNext()) {
-					IPredicate succ = iterator.next().getSucc();
+					final IPredicate succ = iterator.next().getSucc();
 					if (SmtUtils.isFalseLiteral(succ.getFormula())) {
-						//interpolantPredicates.add(succ);
+						// interpolantPredicates.add(succ);
 						interpolantPredicates = new ArrayList<>();
 						interpolantPredicates.add(succ);
 						return interpolantPredicates;
-					} 
+					}
 					nextWorklist.add(succ);
 				}
 			}
 			if (i == runIndex - 1) {
-				for (IPredicate pred : nextWorklist) {
+				for (final IPredicate pred : nextWorklist) {
 					if (!SmtUtils.isTrueLiteral(pred.getFormula())) {
 						interpolantPredicates.add(pred);
 					}
 				}
-				//interpolantPredicates.addAll(nextWorklist);
+				// interpolantPredicates.addAll(nextWorklist);
 			}
 			worklist = nextWorklist;
 		}
@@ -241,19 +242,17 @@ public class ConditionalCommutativityInterpolantProvider<L extends IAction> {
 			}
 			mCopy.addInternalTransition(conPredicates.get(i - 1), mRun.getWord().getSymbol(i - 1), succPred);
 			/*
-			if (succPred.getFormula().toString().equals("false")) {
-				break;
-			}*/
+			 * if (succPred.getFormula().toString().equals("false")) { break; }
+			 */
 		}
 	}
 
 	private NestedWordAutomaton<L, IPredicate>
 			createCopy(final NestedWordAutomaton<L, IPredicate> interpolantAutomaton) {
-
 		if (interpolantAutomaton == null) {
 			return createEmptyAutomaton();
 		}
-		
+
 		final Set<L> alphabet = new HashSet<>();
 		alphabet.addAll(interpolantAutomaton.getAlphabet());
 		final VpAlphabet<L> vpAlphabet = new VpAlphabet<>(alphabet);
@@ -262,33 +261,31 @@ public class ConditionalCommutativityInterpolantProvider<L extends IAction> {
 		// DFS trough interpolantAutomaton to copy states and transitions
 		final Deque<IPredicate> deque = new ArrayDeque<>();
 		deque.addAll(interpolantAutomaton.getInitialStates());
-		for (IPredicate initState : interpolantAutomaton.getInitialStates()) {
+		for (final IPredicate initState : interpolantAutomaton.getInitialStates()) {
 			copy.addState(true, interpolantAutomaton.isFinal(initState), initState);
 		}
 		while (!deque.isEmpty()) {
 			final IPredicate state = deque.pop();
-				for (final OutgoingInternalTransition<L, IPredicate> transition : interpolantAutomaton
-						.internalSuccessors(state)) {
-					IPredicate sucState = transition.getSucc();
-					if (!copy.contains(sucState)) {
-						copy.addState(false, interpolantAutomaton.isFinal(sucState), sucState);
-						deque.push(sucState);
-					}
-					copy.addInternalTransition(state, transition.getLetter(), sucState);
+			for (final OutgoingInternalTransition<L, IPredicate> transition : interpolantAutomaton
+					.internalSuccessors(state)) {
+				final IPredicate sucState = transition.getSucc();
+				if (!copy.contains(sucState)) {
+					copy.addState(false, interpolantAutomaton.isFinal(sucState), sucState);
+					deque.push(sucState);
 				}
+				copy.addInternalTransition(state, transition.getLetter(), sucState);
+			}
 		}
 		return copy;
 	}
 
 	private NestedWordAutomaton<L, IPredicate> createEmptyAutomaton() {
-		
 		final Set<L> alphabet = new HashSet<>();
 		alphabet.addAll(mAbstraction.getAlphabet());
 		final VpAlphabet<L> vpAlphabet = new VpAlphabet<>(alphabet);
 		final NestedWordAutomaton<L, IPredicate> automaton =
 				new NestedWordAutomaton<>(new AutomataLibraryServices(mServices), vpAlphabet, mEmptyStackStateFactory);
-			
+
 		return automaton;
 	}
-
 }

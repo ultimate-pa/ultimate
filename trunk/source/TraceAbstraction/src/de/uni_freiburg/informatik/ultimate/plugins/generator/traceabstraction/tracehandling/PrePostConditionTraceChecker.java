@@ -41,23 +41,22 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine.ITARefinementStrategy;
 
 /**
- * An implementation of ITraceChecker which checks whether assuming the precondition holds initially,
- * the postcondition holds after the execution of the run.
+ * An implementation of ITraceChecker which checks whether assuming the precondition holds initially, the postcondition
+ * holds after the execution of the run.
  *
  * @author Marcel Ebbinghaus
  *
- *@param <L>
+ * @param <L>
  *            The type of letters.
  */
 public class PrePostConditionTraceChecker<L extends IIcfgTransition<?>> implements ITraceChecker<L> {
+	private final IUltimateServiceProvider mServices;
+	private final IAutomaton<L, IPredicate> mAbstraction;
+	private final TaskIdentifier mTaskIdentifier;
+	private final IEmptyStackStateFactory<IPredicate> mEmptyStackFactory;
+	private final StrategyFactory<L> mStrategyFactory;
+	private final IPredicateUnifier mPredicateUnifier;
 
-	private IUltimateServiceProvider mServices;
-	private IAutomaton<L, IPredicate> mAbstraction;
-	private TaskIdentifier mTaskIdentifier;
-	private IEmptyStackStateFactory<IPredicate> mEmptyStackFactory;
-	private StrategyFactory<L> mStrategyFactory;
-	private IPredicateUnifier mPredicateUnifier;
-	
 	/**
 	 * Constructs a PrePostConditionTraceChecker.
 	 *
@@ -68,18 +67,18 @@ public class PrePostConditionTraceChecker<L extends IIcfgTransition<?>> implemen
 	 * @param abstraction
 	 *            The type of letters.
 	 * @param taskIdentifier
-	 *			  Task identifier.
+	 *            Task identifier.
 	 * @param emptyStackStateFactory
-	 *            Factory. 
+	 *            Factory.
 	 * @param predicateUnifier
-	 *            predicate unifier. 
+	 *            predicate unifier.
 	 * @param strategyFactory
-	 *            Strategy factory.    
+	 *            Strategy factory.
 	 */
 	public PrePostConditionTraceChecker(final IUltimateServiceProvider services,
 			final IAutomaton<L, IPredicate> abstraction, final TaskIdentifier taskIdentifier,
-			IEmptyStackStateFactory<IPredicate> emptyStackStateFactory, IPredicateUnifier predicateUnifier,
-			StrategyFactory<L> strategyFactory) {
+			final IEmptyStackStateFactory<IPredicate> emptyStackStateFactory, final IPredicateUnifier predicateUnifier,
+			final StrategyFactory<L> strategyFactory) {
 
 		mServices = services;
 		mAbstraction = abstraction;
@@ -87,20 +86,22 @@ public class PrePostConditionTraceChecker<L extends IIcfgTransition<?>> implemen
 		mEmptyStackFactory = emptyStackStateFactory;
 		mPredicateUnifier = predicateUnifier;
 		mStrategyFactory = strategyFactory;
-		
+
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	@Override
-	public TracePredicates checkTrace(IRun<L, IPredicate> run, IPredicate preCondition, IPredicate postCondition) {
-		
-		ITARefinementStrategy<L> strategy =	mStrategyFactory.constructStrategy(mServices, run, mAbstraction,
-				mTaskIdentifier, mEmptyStackFactory, mPredicateUnifier, mPredicateUnifier.getOrConstructPredicate(preCondition),
-				mPredicateUnifier.getOrConstructPredicate(postCondition), RefinementStrategy.SMTINTERPOL);
-		
+	public TracePredicates checkTrace(final IRun<L, IPredicate> run, final IPredicate preCondition,
+			final IPredicate postCondition) {
+
+		final ITARefinementStrategy<L> strategy =
+				mStrategyFactory.constructStrategy(mServices, run, mAbstraction, mTaskIdentifier, mEmptyStackFactory,
+						mPredicateUnifier, mPredicateUnifier.getOrConstructPredicate(preCondition),
+						mPredicateUnifier.getOrConstructPredicate(postCondition), RefinementStrategy.SMTINTERPOL);
+
 		while (strategy.hasNextFeasilibityCheck()) {
-			ITraceCheckStrategyModule<L, ?> check = strategy.nextFeasibilityCheck();
-			//boolean test = check.isCorrect().equals(LBool.UNSAT);
+			final ITraceCheckStrategyModule<L, ?> check = strategy.nextFeasibilityCheck();
+			// boolean test = check.isCorrect().equals(LBool.UNSAT);
 			if (check.isCorrect().equals(LBool.UNSAT)) {
 				if (check instanceof IpTcStrategyModuleSmtInterpolCraig) {
 					return ((IpTcStrategyModuleSmtInterpolCraig<L>) check).construct().getIpp();
@@ -111,7 +112,7 @@ public class PrePostConditionTraceChecker<L extends IIcfgTransition<?>> implemen
 		}
 		return null;
 	}
-	
+
 	public IPredicateUnifier getPredicateUnifier() {
 		return mPredicateUnifier;
 	}
@@ -121,6 +122,4 @@ public class PrePostConditionTraceChecker<L extends IIcfgTransition<?>> implemen
 		// TODO Auto-generated method stub
 		return false;
 	}
-
-
 }

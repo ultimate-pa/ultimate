@@ -41,75 +41,75 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracechec
 
 /**
  * Variant of IpTcStrategyModuleSmtInterpolCraig for POR with sleep sets.
- * 
+ *
  * @author Marcel Ebbinghaus
- * 
+ *
  * @param <LETTER>
- *         The type of letters.
+ *            The type of letters.
  */
 public class IpTcStrategyModuleSmtInterpolCraigSleepSetPOR<LETTER extends IIcfgTransition<?>>
-extends IpTcStrategyModuleCraigSleepSetPOR<LETTER> {
+		extends IpTcStrategyModuleCraigSleepSetPOR<LETTER> {
 
-private static final InterpolationTechnique[] SUPPORTED_TECHNIQUES = new InterpolationTechnique[] {
-	InterpolationTechnique.Craig_NestedInterpolation, InterpolationTechnique.Craig_TreeInterpolation, };
+	private static final InterpolationTechnique[] SUPPORTED_TECHNIQUES = new InterpolationTechnique[] {
+			InterpolationTechnique.Craig_NestedInterpolation, InterpolationTechnique.Craig_TreeInterpolation, };
 
-private final long mTimeoutInMillis;
-private final InterpolationTechnique mInterpolationTechnique;
+	private final long mTimeoutInMillis;
+	private final InterpolationTechnique mInterpolationTechnique;
 
-/**
- * Constructor.
- *
- * @author Marcel Ebbinghaus
- *
- * @param taskIdentifier
- *            taskIdentifier.
- * @param services
- *            Ultimate services.  
- * @param prefs
- *            Ultimate preferences.   
- * @param counterExample
- *            counter example.            
- * @param precondition
- *            precondition.            
- * @param postcondition
- *            postcondition.            
- * @param assertionOrderModulation
- *            assertionOrderModulation.               
- * @param predicateUnifier
- *            predicate unifier.            
- * @param predicateFactory
- *            factory.            
- * @param timeoutInMillis
- *            timeout.            
- * @param interpolationTechnique
- *            interpolation technique.                
- */
-public IpTcStrategyModuleSmtInterpolCraigSleepSetPOR(final TaskIdentifier taskIdentifier,
-	final IUltimateServiceProvider services, final TaCheckAndRefinementPreferences<LETTER> prefs,
-	final IRun<LETTER, ?> counterExample, final IPredicate precondition, final IPredicate postcondition,
-	final AssertionOrderModulation<LETTER> assertionOrderModulation, final IPredicateUnifier predicateUnifier,
-	final PredicateFactory predicateFactory, final long timeoutInMillis,
-	final InterpolationTechnique interpolationTechnique) {
-super(taskIdentifier, services, prefs, counterExample, precondition, postcondition, assertionOrderModulation,
-		predicateUnifier, predicateFactory);
-mTimeoutInMillis = timeoutInMillis;
-mInterpolationTechnique = interpolationTechnique;
-assert Arrays.stream(SUPPORTED_TECHNIQUES).anyMatch(
-		a -> a == mInterpolationTechnique) : "Unsupported interpolation technique " + mInterpolationTechnique;
-}
+	/**
+	 * Constructor.
+	 *
+	 * @author Marcel Ebbinghaus
+	 *
+	 * @param taskIdentifier
+	 *            taskIdentifier.
+	 * @param services
+	 *            Ultimate services.
+	 * @param prefs
+	 *            Ultimate preferences.
+	 * @param counterExample
+	 *            counter example.
+	 * @param precondition
+	 *            precondition.
+	 * @param postcondition
+	 *            postcondition.
+	 * @param assertionOrderModulation
+	 *            assertionOrderModulation.
+	 * @param predicateUnifier
+	 *            predicate unifier.
+	 * @param predicateFactory
+	 *            factory.
+	 * @param timeoutInMillis
+	 *            timeout.
+	 * @param interpolationTechnique
+	 *            interpolation technique.
+	 */
+	public IpTcStrategyModuleSmtInterpolCraigSleepSetPOR(final TaskIdentifier taskIdentifier,
+			final IUltimateServiceProvider services, final TaCheckAndRefinementPreferences<LETTER> prefs,
+			final IRun<LETTER, ?> counterExample, final IPredicate precondition, final IPredicate postcondition,
+			final AssertionOrderModulation<LETTER> assertionOrderModulation, final IPredicateUnifier predicateUnifier,
+			final PredicateFactory predicateFactory, final long timeoutInMillis,
+			final InterpolationTechnique interpolationTechnique) {
+		super(taskIdentifier, services, prefs, counterExample, precondition, postcondition, assertionOrderModulation,
+				predicateUnifier, predicateFactory);
+		mTimeoutInMillis = timeoutInMillis;
+		mInterpolationTechnique = interpolationTechnique;
+		assert Arrays.stream(SUPPORTED_TECHNIQUES).anyMatch(
+				a -> a == mInterpolationTechnique) : "Unsupported interpolation technique " + mInterpolationTechnique;
+	}
 
-@Override
-protected ManagedScript constructManagedScript() {
-final long timeout = computeTimeout(mTimeoutInMillis);
-final SolverMode solverMode = SolverMode.Internal_SMTInterpol;
+	@Override
+	protected ManagedScript constructManagedScript() {
+		final long timeout = computeTimeout(mTimeoutInMillis);
+		final SolverMode solverMode = SolverMode.Internal_SMTInterpol;
 
-final SolverSettings solverSettings = mPrefs.constructSolverSettings(mTaskIdentifier).setSolverMode(solverMode)
-		.setSmtInterpolTimeout(timeout);
-return createExternalManagedScript(solverSettings);
-}
+		final SolverSettings solverSettings = mPrefs.constructSolverSettings(mTaskIdentifier).setSolverMode(solverMode)
+				.setSmtInterpolTimeout(timeout);
+		return createExternalManagedScript(solverSettings);
+	}
 
-@Override
-protected final InterpolationTechnique getInterpolationTechnique() {
-return mInterpolationTechnique;
-}
+	@Override
+	protected final InterpolationTechnique getInterpolationTechnique() {
+		return mInterpolationTechnique;
+	}
 }

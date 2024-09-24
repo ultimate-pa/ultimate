@@ -30,9 +30,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.AnnotatedMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.MLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.LoopLockstepOrder.PredicateWithLastThread;
@@ -48,41 +46,40 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *            The type of letters.
  */
 public class LimitedChecksCriterion<L> implements IConditionalCommutativityCriterion<L> {
+	private final Map<Pair<L, L>, List<IPredicate>> mAlreadyChecked;
+	private final List<IPredicate> mAlreadyProofenConditions;
+	private final Map<Pair<L, L>, Integer> mStatementMap;
+	private final int mLimit;
 
-	private Map<Pair<L,L>, List<IPredicate>> mAlreadyChecked;
-	private List<IPredicate> mAlreadyProofenConditions;
-	private Map<Pair<L, L>, Integer> mStatementMap;
-	private int mLimit;
-	
 	/**
 	 * Constructor.
 	 *
 	 * @author Marcel Ebbinghaus
-	 * 
+	 *
 	 * @param limit
-	 *     limit
+	 *            limit
 	 */
-	public LimitedChecksCriterion(int limit) {
+	public LimitedChecksCriterion(final int limit) {
 		mLimit = limit;
 		mAlreadyChecked = new HashMap<>();
 		mAlreadyProofenConditions = new ArrayList<>();
 		mStatementMap = new HashMap<>();
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean decide(final IPredicate state, final L letter1, final L letter2) {
-		Pair<L, L> pair = new Pair<>(letter1,letter2);
+		final Pair<L, L> pair = new Pair<>(letter1, letter2);
 		IPredicate pred = ((SleepPredicate<L>) state).getUnderlying();
-		
+
 		if (pred instanceof PredicateWithLastThread) {
 			pred = ((PredicateWithLastThread) pred).getUnderlying();
 		}
-		
+
 		if ((pred instanceof MLPredicate)) {
 			return true;
 		}
-		
+
 		if (mStatementMap.containsKey(pair) && mStatementMap.get(pair) == mLimit) {
 			return false;
 		}
@@ -91,7 +88,6 @@ public class LimitedChecksCriterion<L> implements IConditionalCommutativityCrite
 
 	@Override
 	public boolean decide(final IPredicate condition) {
-			
 		if (condition == null) {
 			return false;
 		}
@@ -99,8 +95,8 @@ public class LimitedChecksCriterion<L> implements IConditionalCommutativityCrite
 	}
 
 	@Override
-	public void updateCriterion(IPredicate state, L letter1, L letter2) {
-		Pair<L, L> pair = new Pair<>(letter1,letter2);
+	public void updateCriterion(final IPredicate state, final L letter1, final L letter2) {
+		final Pair<L, L> pair = new Pair<>(letter1, letter2);
 		if (!mStatementMap.containsKey(pair)) {
 			mStatementMap.put(pair, 1);
 		} else {
@@ -109,9 +105,7 @@ public class LimitedChecksCriterion<L> implements IConditionalCommutativityCrite
 	}
 
 	@Override
-	public void updateAbstraction(INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction) {
+	public void updateAbstraction(final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction) {
 		// TODO Auto-generated method stub
-		
 	}
-
 }

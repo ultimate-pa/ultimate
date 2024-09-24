@@ -195,25 +195,27 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 
 	public static final String LABEL_CON_COM_CHECKER = "Additional conditional commutativity checking";
 	private static final ConComChecker DEF_CON_COM_CHECKER = ConComChecker.NONE;
-	
+
 	public static final String LABEL_CON_COM_CHECKER_CRITERION = "Criterion for conditional commutativity checking";
 	private static final ConComCheckerCriterion DEF_CON_COM_CHECKER_CRITERION = ConComCheckerCriterion.DEFAULT;
-	
-	public static final String LABEL_CON_COM_CHECKER_LIMITED_CHECKS_CRITERION = "use limited checks (recommended for DFS)";
+
+	public static final String LABEL_CON_COM_CHECKER_LIMITED_CHECKS_CRITERION =
+			"use limited checks (recommended for DFS)";
 	private static final boolean DEF_CON_COM_CHECKER_LIMITED_CHECKS_CRITERION = false;
-	
+
 	public static final String LABEL_CON_COM_CHECKER_CRITERION_LIMIT = "Limit for limited checks";
 	private static final int DEF_CON_COM_CHECKER_CRITERION_LIMIT = 1;
-	
+
 	public static final String LABEL_CON_COM_CHECKER_RANDOM_PROB = "probability for random criterion as percentage";
 	private static final int DEF_CON_COM_CHECKER_RANDOM_PROB = 100;
 
 	public static final String LABEL_CON_COM_CHECKER_RANDOM_SEED = "seed for random criterion";
 	private static final int DEF_CON_COM_CHECKER_RANDOM_SEED = 123;
-	
-	public static final String LABEL_CON_COM_CHECKER_CONDITION_CRITERION = "use condition criterion (recommended for programs with arrays)";
+
+	public static final String LABEL_CON_COM_CHECKER_CONDITION_CRITERION =
+			"use condition criterion (recommended for programs with arrays)";
 	private static final boolean DEF_CON_COM_CHECKER_CONDITION_CRITERION = false;
-	
+
 	// Settings for PetriAutomizer
 	// ========================================================================
 
@@ -742,22 +744,21 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_INDEPENDENCE_SCRIPT_DUMP_PATH, DEF_INDEPENDENCE_SCRIPT_DUMP_PATH,
 						PreferenceType.Directory),
-				
-				new UltimatePreferenceItem<>(LABEL_CON_COM_CHECKER, DEF_CON_COM_CHECKER,
-						PreferenceType.Combo, ConComChecker.values()),
+
+				new UltimatePreferenceItem<>(LABEL_CON_COM_CHECKER, DEF_CON_COM_CHECKER, PreferenceType.Combo,
+						ConComChecker.values()),
 				new UltimatePreferenceItem<>(LABEL_CON_COM_CHECKER_CRITERION, DEF_CON_COM_CHECKER_CRITERION,
 						PreferenceType.Combo, ConComCheckerCriterion.values()),
-				new UltimatePreferenceItem<>(LABEL_CON_COM_CHECKER_LIMITED_CHECKS_CRITERION, DEF_CON_COM_CHECKER_LIMITED_CHECKS_CRITERION,
-						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_CON_COM_CHECKER_LIMITED_CHECKS_CRITERION,
+						DEF_CON_COM_CHECKER_LIMITED_CHECKS_CRITERION, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_CON_COM_CHECKER_CRITERION_LIMIT, DEF_CON_COM_CHECKER_CRITERION_LIMIT,
 						PreferenceType.Integer),
 				new UltimatePreferenceItem<>(LABEL_CON_COM_CHECKER_RANDOM_PROB, DEF_CON_COM_CHECKER_RANDOM_PROB,
 						PreferenceType.Integer),
 				new UltimatePreferenceItem<>(LABEL_CON_COM_CHECKER_RANDOM_SEED, DEF_CON_COM_CHECKER_RANDOM_SEED,
 						PreferenceType.Integer),
-				new UltimatePreferenceItem<>(LABEL_CON_COM_CHECKER_CONDITION_CRITERION, DEF_CON_COM_CHECKER_CONDITION_CRITERION,
-						PreferenceType.Boolean),
-
+				new UltimatePreferenceItem<>(LABEL_CON_COM_CHECKER_CONDITION_CRITERION,
+						DEF_CON_COM_CHECKER_CONDITION_CRITERION, PreferenceType.Boolean),
 
 				getIndependenceSettings(0),
 
@@ -1077,11 +1078,11 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public enum PathProgramDumpStop {
 		NEVER, AFTER_FIRST_DUMP, BEFORE_FIRST_DUPLICATE
 	}
-	
+
 	public enum ConComChecker {
 		NONE, DFS, IA, BOTH, COUNTEREXAMPLE
 	}
-	
+
 	public enum ConComCheckerCriterion {
 		DEFAULT, RANDOM, SLEEP_SET, FORWARD, LOOP
 	}

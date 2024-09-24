@@ -97,13 +97,13 @@ public final class TAPreferences {
 
 	private final IndependenceSettings[] mPorIndependenceSettings;
 	private final IndependenceSettings mLbeIndependenceSettings;
-	private ConComChecker mConComChecker;
-	private ConComCheckerCriterion mConComCheckerCriterion;
-	private boolean mConComCheckerLimitedChecksCriterion;
-	private int mConComCheckerCriterionLimit;
-	private int mConComCheckerRandomProb;
-	private int mConComCheckerRandomSeed;
-	private boolean mConComCheckerConditionCriterion;
+	private final ConComChecker mConComChecker;
+	private final ConComCheckerCriterion mConComCheckerCriterion;
+	private final boolean mConComCheckerLimitedChecksCriterion;
+	private final int mConComCheckerCriterionLimit;
+	private final int mConComCheckerRandomProb;
+	private final int mConComCheckerRandomSeed;
+	private final boolean mConComCheckerConditionCriterion;
 
 	public enum Artifact {
 		ABSTRACTION, INTERPOLANT_AUTOMATON, NEG_INTERPOLANT_AUTOMATON, RCFG
@@ -207,16 +207,21 @@ public final class TAPreferences {
 				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_SEMICOMM_PLBE),
 				IndependenceSettings.DEFAULT_SOLVER /* currently ignored; not exposed as setting */,
 				IndependenceSettings.DEFAULT_SOLVER_TIMEOUT /* currently ignored; not exposed as setting */);
-		
-		mConComChecker = mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_CON_COM_CHECKER,
-				ConComChecker.class);
+
+		mConComChecker =
+				mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_CON_COM_CHECKER, ConComChecker.class);
 		mConComCheckerCriterion = mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_CON_COM_CHECKER_CRITERION,
 				ConComCheckerCriterion.class);
-		mConComCheckerLimitedChecksCriterion = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_CON_COM_CHECKER_LIMITED_CHECKS_CRITERION);
-		mConComCheckerCriterionLimit = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_CON_COM_CHECKER_CRITERION_LIMIT);
-		mConComCheckerRandomProb = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_CON_COM_CHECKER_RANDOM_PROB);
-		mConComCheckerRandomSeed = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_CON_COM_CHECKER_RANDOM_SEED);
-		mConComCheckerConditionCriterion = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_CON_COM_CHECKER_CONDITION_CRITERION);
+		mConComCheckerLimitedChecksCriterion =
+				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_CON_COM_CHECKER_LIMITED_CHECKS_CRITERION);
+		mConComCheckerCriterionLimit =
+				mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_CON_COM_CHECKER_CRITERION_LIMIT);
+		mConComCheckerRandomProb =
+				mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_CON_COM_CHECKER_RANDOM_PROB);
+		mConComCheckerRandomSeed =
+				mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_CON_COM_CHECKER_RANDOM_SEED);
+		mConComCheckerConditionCriterion =
+				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_CON_COM_CHECKER_CONDITION_CRITERION);
 	}
 
 	/**
@@ -568,35 +573,35 @@ public final class TAPreferences {
 	public McrInterpolantMethod getMcrInterpolantMethod() {
 		return mMcrInterpolantMethod;
 	}
-	
+
 	public ConComChecker useConditionalCommutativityChecker() {
 		return mConComChecker;
-		
+
 	}
 
 	public ConComCheckerCriterion getConComCheckerCriterion() {
 		return mConComCheckerCriterion;
 	}
-	
+
 	public boolean useLimitedChecksCriterion() {
 		return mConComCheckerLimitedChecksCriterion;
 	}
-	
+
 	public int getConComCheckerCriterionLimit() {
 		return mConComCheckerCriterionLimit;
 	}
-	
+
 	public int getConComCheckerRandomProb() {
 		return mConComCheckerRandomProb;
 	}
-	
+
 	public int getConComCheckerRandomSeed() {
 		return mConComCheckerRandomSeed;
 	}
 
 	public boolean useConditionCriterion() {
 		return mConComCheckerConditionCriterion;
-	}	
+	}
 
 	// TODO #proofRefactor update all settings files to reflect the removal / changes to the Hoare/proof settings
 	public HoareProofSettings getHoareSettings() {

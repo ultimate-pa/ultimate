@@ -105,23 +105,23 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 	public void addHoareAnnotationData(final IStatisticsDataProvider hasp) {
 		mHoareAnnotationData.aggregateBenchmarkData(hasp);
 	}
-	
+
 	public void addConditionalCommutativityIAIntegration() {
 		mConditionalCommutativityIAIntegrations++;
 	}
-	
+
 	public void addConditionalCommutativityDFSRestart() {
 		mConditionalCommutativityDFSRestarts++;
 	}
-	
+
 	public void addConditionalCommutativityConditionCalculation() {
 		mConditionalCommutativityConditionCalculations++;
 	}
-	
+
 	public void addConditionalCommutativityTraceCheck() {
 		mConditionalCommutativityTraceChecks++;
 	}
-	
+
 	public void addConditionalCommutativityImperfectProof() {
 		mConditionalCommutativityImperfectProofs++;
 	}
@@ -233,7 +233,7 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 				CegarLoopStatisticsDefinitions.BasicInterpolantAutomatonTime.toString(),
 				CegarLoopStatisticsDefinitions.DumpTime.toString(),
 				CegarLoopStatisticsDefinitions.InitialAbstractionConstructionTime.toString(),
-				CegarLoopStatisticsDefinitions.ConditionalCommutativityCheckTime.toString()};
+				CegarLoopStatisticsDefinitions.ConditionalCommutativityCheckTime.toString() };
 	}
 
 }

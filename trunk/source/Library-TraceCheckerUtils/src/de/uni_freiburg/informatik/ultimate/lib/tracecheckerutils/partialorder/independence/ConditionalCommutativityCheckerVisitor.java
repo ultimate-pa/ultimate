@@ -62,25 +62,24 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.Sl
  * @param <L>
  *            The type of letters.
  * @param <V>
- * 			  Type of the underlying Visitor
+ *            Type of the underlying Visitor
  */
-public class ConditionalCommutativityCheckerVisitor<L extends IIcfgTransition<?>,
-V extends IDfsVisitor<L, IPredicate>> extends WrapperVisitor<L, IPredicate, V> {
+public class ConditionalCommutativityCheckerVisitor<L extends IIcfgTransition<?>, V extends IDfsVisitor<L, IPredicate>>
+		extends WrapperVisitor<L, IPredicate, V> {
 
 	private boolean mAbort = false;
-	private INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mAbstraction;
-	private ConditionalCommutativityChecker<L> mChecker;
+	private final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mAbstraction;
+	private final ConditionalCommutativityChecker<L> mChecker;
 	private final Deque<IPredicate> mStateStack = new ArrayDeque<>();
 	private final Deque<L> mLetterStack = new ArrayDeque<>();
 	private L mPendingLetter;
 	private IPredicate mPendingState;
 	private NestedRun<L, IPredicate> mRun;
 	private TracePredicates mTracePredicates;
-	private IUltimateServiceProvider mServices;
-	private IEmptyStackStateFactory<IPredicate> mEmptyStackStateFactory;
-	private IPredicateUnifier mPredicateUnifier;
+	private final IUltimateServiceProvider mServices;
+	private final IEmptyStackStateFactory<IPredicate> mEmptyStackStateFactory;
+	private final IPredicateUnifier mPredicateUnifier;
 
-	
 	/**
 	 * Constructs a new instance of ConditionalCommutativityChecker.
 	 *
@@ -89,9 +88,9 @@ V extends IDfsVisitor<L, IPredicate>> extends WrapperVisitor<L, IPredicate, V> {
 	 * @param underlying
 	 *            Underlying Visitor
 	 * @param abstraction
-	 *            Abstraction 
+	 *            Abstraction
 	 * @param services
-	 *            Ultimate services           
+	 *            Ultimate services
 	 * @param emptyStackStateFactory
 	 *            Factory
 	 * @param predicateUnifier
@@ -99,9 +98,10 @@ V extends IDfsVisitor<L, IPredicate>> extends WrapperVisitor<L, IPredicate, V> {
 	 * @param checker
 	 *            Instance of ConditionalCommutativityChecker
 	 */
-	public ConditionalCommutativityCheckerVisitor(V underlying, INwaOutgoingLetterAndTransitionProvider<L, IPredicate>
-	abstraction, final IUltimateServiceProvider services,  final IEmptyStackStateFactory<IPredicate>
-	emptyStackStateFactory, IPredicateUnifier predicateUnifier, ConditionalCommutativityChecker<L> checker) {
+	public ConditionalCommutativityCheckerVisitor(final V underlying,
+			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction,
+			final IUltimateServiceProvider services, final IEmptyStackStateFactory<IPredicate> emptyStackStateFactory,
+			final IPredicateUnifier predicateUnifier, final ConditionalCommutativityChecker<L> checker) {
 		super(underlying);
 		mAbstraction = abstraction;
 		mChecker = checker;
@@ -109,7 +109,7 @@ V extends IDfsVisitor<L, IPredicate>> extends WrapperVisitor<L, IPredicate, V> {
 		mEmptyStackStateFactory = emptyStackStateFactory;
 		mPredicateUnifier = predicateUnifier;
 	}
-	
+
 	@Override
 	public boolean addStartState(final IPredicate state) {
 		assert mStateStack.isEmpty() : "start state must be first";
@@ -118,7 +118,6 @@ V extends IDfsVisitor<L, IPredicate>> extends WrapperVisitor<L, IPredicate, V> {
 		return mUnderlying.addStartState(state);
 	}
 
-	
 	@Override
 	public boolean discoverTransition(final IPredicate source, final L letter, final IPredicate target) {
 		assert mStateStack.getLast() == source : "Unexpected transition from state " + source;
@@ -126,11 +125,11 @@ V extends IDfsVisitor<L, IPredicate>> extends WrapperVisitor<L, IPredicate, V> {
 		mPendingState = target;
 		return mUnderlying.discoverTransition(source, letter, target);
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean discoverState(final IPredicate state) {
-		
+
 		if (mPendingLetter == null) {
 			// Must be initial state
 			assert mStateStack.size() == 1 && mStateStack.getLast() == state : "Unexpected discovery of state " + state;
@@ -139,55 +138,52 @@ V extends IDfsVisitor<L, IPredicate>> extends WrapperVisitor<L, IPredicate, V> {
 			assert mPendingState == state : "Unexpected discovery of state " + state;
 			mLetterStack.addLast(mPendingLetter);
 
-			mRun = mRun.concatenate(new NestedRun<>(new NestedWord<>(mPendingLetter,-2),
-					List.of(mStateStack.getLast(),mPendingState)));
+			mRun = mRun.concatenate(new NestedRun<>(new NestedWord<>(mPendingLetter, -2),
+					List.of(mStateStack.getLast(), mPendingState)));
 			mStateStack.addLast(mPendingState);
 			mPendingLetter = null;
 			mPendingState = null;
 		}
-		
+
 		IPredicate pred = ((SleepPredicate<L>) state).getUnderlying();
-		
+
 		if (pred instanceof PredicateWithLastThread) {
 			pred = ((PredicateWithLastThread) pred).getUnderlying();
 		}
-		
+
 		IPredicate annotation = null;
 		if (!(pred instanceof MLPredicate)) {
 			annotation = ((AnnotatedMLPredicate<IPredicate>) pred).getAnnotation();
-		}	
-		
+		}
+
 		/*
-		final Iterator<OutgoingInternalTransition<L, IPredicate>> iterator =
-				mAbstraction.internalSuccessors(state).iterator();
-		final List<OutgoingInternalTransition<L, IPredicate>> transitions = new ArrayList<>();
-		*/
-		
+		 * final Iterator<OutgoingInternalTransition<L, IPredicate>> iterator =
+		 * mAbstraction.internalSuccessors(state).iterator(); final List<OutgoingInternalTransition<L, IPredicate>>
+		 * transitions = new ArrayList<>();
+		 */
+
 		final Iterator<OutgoingInternalTransition<L, IPredicate>> iterator =
 				mAbstraction.internalSuccessors(pred).iterator();
 		final List<OutgoingInternalTransition<L, IPredicate>> transitions = new ArrayList<>();
-		
-		
+
 		while (iterator.hasNext()) {
 			transitions.add(iterator.next());
-		}	
-	
-		
+		}
+
 		// TODO check if this works correctly for semi-commutativity
 		for (int j = 0; j < transitions.size(); j++) {
 			final OutgoingInternalTransition<L, IPredicate> transition1 = transitions.get(j);
 			for (int k = j + 1; k < transitions.size(); k++) {
 				final OutgoingInternalTransition<L, IPredicate> transition2 = transitions.get(k);
-				L letter1 = transition1.getLetter();
-				L letter2 = transition2.getLetter();
-				TracePredicates tracePredicates;										
-				
+				final L letter1 = transition1.getLetter();
+				final L letter2 = transition2.getLetter();
+				TracePredicates tracePredicates;
+
 				if (annotation != null && !SmtUtils.isTrueLiteral(annotation.getFormula())) {
-					tracePredicates = mChecker.checkConditionalCommutativity(mRun,
-							List.of(annotation), state, letter1, letter2);
+					tracePredicates =
+							mChecker.checkConditionalCommutativity(mRun, List.of(annotation), state, letter1, letter2);
 				} else {
-					tracePredicates = mChecker.checkConditionalCommutativity(mRun,
-							List.of(), state, letter1, letter2);
+					tracePredicates = mChecker.checkConditionalCommutativity(mRun, List.of(), state, letter1, letter2);
 				}
 				if (tracePredicates != null) {
 					mAbort = true;
@@ -198,7 +194,7 @@ V extends IDfsVisitor<L, IPredicate>> extends WrapperVisitor<L, IPredicate, V> {
 		}
 		return mUnderlying.discoverState(state);
 	}
-	
+
 	@Override
 	public void backtrackState(final IPredicate state, final boolean isComplete) {
 
@@ -207,41 +203,38 @@ V extends IDfsVisitor<L, IPredicate>> extends WrapperVisitor<L, IPredicate, V> {
 
 		mStateStack.removeLast();
 		mLetterStack.pollLast();
-		
+
 		if (mRun.getStateSequence().size() > 1) {
-			mRun = mRun.getSubRun(0, mRun.getLength() - 2);		
+			mRun = mRun.getSubRun(0, mRun.getLength() - 2);
 		} else {
 			mRun = null;
 		}
-		
+
 		mUnderlying.backtrackState(state, isComplete);
 	}
-	
+
 	@Override
 	public boolean isFinished() {
 		final boolean result = mUnderlying.isFinished();
-		return result || mAbort ;
+		return result || mAbort;
 	}
-	
+
 	public boolean aborted() {
 		return mAbort;
 	}
-	
-	
+
 	/**
-	 * Constructs and returns an interpolant automaton if conditional commutativity
-	 * has been detected.
+	 * Constructs and returns an interpolant automaton if conditional commutativity has been detected.
 	 *
 	 * @author Marcel Ebbinghaus
 	 *
-	 * @return
-	 *            interpolant automaton
-	 */	
+	 * @return interpolant automaton
+	 */
 	public NestedWordAutomaton<L, IPredicate> getInterpolantAutomaton() {
 		if (mTracePredicates == null) {
 			return null;
 		}
-		List<IPredicate> conPredicates = new ArrayList<>();
+		final List<IPredicate> conPredicates = new ArrayList<>();
 		conPredicates.add(mTracePredicates.getPrecondition());
 		conPredicates.addAll(mTracePredicates.getPredicates());
 		conPredicates.add(mTracePredicates.getPostcondition());
@@ -260,22 +253,19 @@ V extends IDfsVisitor<L, IPredicate>> extends WrapperVisitor<L, IPredicate, V> {
 				automaton.addState(false, false, succPred);
 			}
 			if (SmtUtils.isFalseLiteral(prePred.getFormula())) {
-				//automaton.addInternalTransition(prePred, letter, automaton.getFinalStates().iterator().next());
+				// automaton.addInternalTransition(prePred, letter, automaton.getFinalStates().iterator().next());
 				return automaton;
 			}
 			automaton.addInternalTransition(prePred, letter, succPred);
 		}
 		return automaton;
 	}
-	
+
 	public IPredicateUnifier getPredicateUnifier() {
 		return mPredicateUnifier;
-		
 	}
 
-	public void setReduction(INwaOutgoingLetterAndTransitionProvider<L, IPredicate> test) {
-		//mAbstraction = test;
-		
+	public void setReduction(final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> test) {
+		// mAbstraction = test;
 	}
-
 }

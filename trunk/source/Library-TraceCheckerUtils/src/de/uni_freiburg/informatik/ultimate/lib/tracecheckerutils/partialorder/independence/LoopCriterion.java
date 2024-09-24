@@ -45,33 +45,33 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
  *            The type of letters.
  */
 public class LoopCriterion<L extends IIcfgTransition<?>> implements IConditionalCommutativityCriterion<L> {
-	
-	private Set<? extends IcfgLocation> mLoopheads;
-	private Set<IcfgEdge> mLoopEdges;
+
+	private final Set<? extends IcfgLocation> mLoopheads;
+	private final Set<IcfgEdge> mLoopEdges;
 	private ArrayDeque<IcfgEdge> mLetterStack;
 
-	public LoopCriterion(IIcfg<? extends IcfgLocation> icfg) {
+	public LoopCriterion(final IIcfg<? extends IcfgLocation> icfg) {
 		mLoopheads = icfg.getLoopLocations();
 		mLoopEdges = new HashSet<>();
-		
-		for (IcfgLocation loophead : mLoopheads) {
+
+		for (final IcfgLocation loophead : mLoopheads) {
 			mLetterStack = new ArrayDeque<>();
-			for (IcfgEdge edge : loophead.getOutgoingEdges()) {
+			for (final IcfgEdge edge : loophead.getOutgoingEdges()) {
 				mLetterStack.add(edge);
 				DFS(edge.getTarget(), loophead);
 				mLetterStack.removeLast();
 			}
 		}
-		int i = 0;
+		final int i = 0;
 	}
 
-	private void DFS(IcfgLocation loc, IcfgLocation loophead) {
-		
+	private void DFS(final IcfgLocation loc, final IcfgLocation loophead) {
+
 		if (loc.equals(loophead)) {
 			mLoopEdges.addAll(mLetterStack);
 			return;
 		}
-		for (IcfgEdge edge : loc.getOutgoingEdges()) {
+		for (final IcfgEdge edge : loc.getOutgoingEdges()) {
 			if (mLetterStack.contains(edge)) {
 				return;
 			}
@@ -82,8 +82,7 @@ public class LoopCriterion<L extends IIcfgTransition<?>> implements IConditional
 	}
 
 	@Override
-	public boolean decide(IPredicate state, L letter1, L letter2) {
-		
+	public boolean decide(final IPredicate state, final L letter1, final L letter2) {
 		if (mLoopEdges.contains(letter1) && mLoopEdges.contains(letter2)) {
 			return true;
 		}
@@ -91,22 +90,18 @@ public class LoopCriterion<L extends IIcfgTransition<?>> implements IConditional
 	}
 
 	@Override
-	public boolean decide(IPredicate condition) {
+	public boolean decide(final IPredicate condition) {
 		// TODO Auto-generated method stub
 		return true;
 	}
 
 	@Override
-	public void updateCriterion(IPredicate state, L letter1, L letter2) {
+	public void updateCriterion(final IPredicate state, final L letter1, final L letter2) {
 		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
-	public void updateAbstraction(INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction) {
+	public void updateAbstraction(final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction) {
 		// TODO Auto-generated method stub
-		
 	}
-
-
 }

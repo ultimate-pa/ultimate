@@ -39,13 +39,11 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
  *            The type of states.
  */
 public interface IConditionalCommutativityCriterion<L> {
-
 	boolean decide(IPredicate state, L letter1, L letter2);
 
 	boolean decide(IPredicate condition);
 
-	void updateAbstraction(INwaOutgoingLetterAndTransitionProvider<L,IPredicate> abstraction);
+	void updateAbstraction(INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction);
 
 	void updateCriterion(IPredicate state, L letter1, L letter2);
-
 }

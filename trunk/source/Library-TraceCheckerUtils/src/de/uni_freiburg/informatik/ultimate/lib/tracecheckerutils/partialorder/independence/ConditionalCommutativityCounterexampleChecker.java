@@ -30,20 +30,20 @@ import de.uni_freiburg.informatik.ultimate.util.Lazy;
 
 public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 
-	
-	private IUltimateServiceProvider mServices;
-	private INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mAbstraction;
-	private IEmptyStackStateFactory<IPredicate> mEmptyStackStateFactory;
-	private ConditionalCommutativityChecker<L> mChecker;
-	private IConditionalCommutativityCheckerStatisticsUtils mStatisticsUtils;
+	private final IUltimateServiceProvider mServices;
+	private final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mAbstraction;
+	private final IEmptyStackStateFactory<IPredicate> mEmptyStackStateFactory;
+	private final ConditionalCommutativityChecker<L> mChecker;
+	private final IConditionalCommutativityCheckerStatisticsUtils mStatisticsUtils;
 	private IRun<L, IPredicate> mRun;
-	private IIndependenceRelation<IPredicate, L> mIndependenceRelation;
-	private IDfsOrder<L, IPredicate> mDFSOrder;
+	private final IIndependenceRelation<IPredicate, L> mIndependenceRelation;
+	private final IDfsOrder<L, IPredicate> mDFSOrder;
 
 	public ConditionalCommutativityCounterexampleChecker(final IUltimateServiceProvider services,
-			final IConditionalCommutativityCriterion<L> criterion, final IIndependenceRelation<IPredicate, L> independenceRelation,
-			IDfsOrder<L, IPredicate> DFSOrder, ManagedScript script, final IIndependenceConditionGenerator generator,
-			final INwaOutgoingLetterAndTransitionProvider<L,IPredicate> abstraction,
+			final IConditionalCommutativityCriterion<L> criterion,
+			final IIndependenceRelation<IPredicate, L> independenceRelation, final IDfsOrder<L, IPredicate> DFSOrder,
+			final ManagedScript script, final IIndependenceConditionGenerator generator,
+			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction,
 			final IEmptyStackStateFactory<IPredicate> emptyStackStateFactory, final ITraceChecker<L> traceChecker,
 			final IConditionalCommutativityCheckerStatisticsUtils statisticsUtils) {
 		mServices = services;
@@ -55,22 +55,22 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 				traceChecker, statisticsUtils);
 		mStatisticsUtils = statisticsUtils;
 	}
-	
 
-	public BasicRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> getInterpolants(IRun<L, IPredicate> run,
-			List<IPredicate> runPredicates, IPredicateUnifier predicateUnifier) {
+	public BasicRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> getInterpolants(
+			final IRun<L, IPredicate> run, final List<IPredicate> runPredicates,
+			final IPredicateUnifier predicateUnifier) {
 		mRun = run;
-		
-		for (int i = 0; i < mRun.getStateSequence().size()-2; i++) {
-			IPredicate state = mRun.getStateSequence().get(i);
-			L letter1 = mRun.getWord().getSymbol(i);
-			L letter2 = mRun.getWord().getSymbol(i+1);
+
+		for (int i = 0; i < mRun.getStateSequence().size() - 2; i++) {
+			final IPredicate state = mRun.getStateSequence().get(i);
+			final L letter1 = mRun.getWord().getSymbol(i);
+			final L letter2 = mRun.getWord().getSymbol(i + 1);
 
 			if (((SleepPredicate<L>) state).getAnnotation().contains(letter2)
 					|| (mDFSOrder.getOrder(state).compare(letter1, letter2) > 0)) {
-				
-				IPredicate runPredicate = runPredicates.get(i);
-				List<IPredicate> interpolantPredicates = new ArrayList<>();
+
+				final IPredicate runPredicate = runPredicates.get(i);
+				final List<IPredicate> interpolantPredicates = new ArrayList<>();
 				if (runPredicate != null && !SmtUtils.isTrueLiteral(runPredicate.getFormula())) {
 					interpolantPredicates.add(runPredicate);
 				}
@@ -78,45 +78,42 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 				if (i != mRun.getStateSequence().size() - 1) {
 					currentRun = currentRun.getSubRun(0, i);
 				}
-				
+
 				final TracePredicates tracePredicates = mChecker.checkConditionalCommutativity(currentRun,
 						interpolantPredicates, state, letter1, letter2);
-				
-				List<IPredicate> conPredicates = new ArrayList<>();
+
+				final List<IPredicate> conPredicates = new ArrayList<>();
 				if (tracePredicates != null) {
 					conPredicates.add(tracePredicates.getPrecondition());
 					conPredicates.addAll(tracePredicates.getPredicates());
 					conPredicates.add(tracePredicates.getPostcondition());
 					mStatisticsUtils.addIAIntegration();
-					NestedWordAutomaton<L, IPredicate> automaton = constructInterpolantAutomaton(conPredicates);
-					
+					final NestedWordAutomaton<L, IPredicate> automaton = constructInterpolantAutomaton(conPredicates);
+
 					if (!automaton.contains(predicateUnifier.getFalsePredicate())) {
 						automaton.addState(false, true, predicateUnifier.getFalsePredicate());
 					}
-					
-					BasicRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> refinementResult = 
+
+					final BasicRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> refinementResult =
 							new BasicRefinementEngineResult<>(LBool.UNSAT, automaton, null, false,
-							List.of(new QualifiedTracePredicates(tracePredicates, getClass(), false)),
-							new Lazy<>(() -> null), new Lazy<>(() -> predicateUnifier));
-					
+									List.of(new QualifiedTracePredicates(tracePredicates, getClass(), false)),
+									new Lazy<>(() -> null), new Lazy<>(() -> predicateUnifier));
+
 					return refinementResult;
 				}
-			}	
-
+			}
 		}
-		
+
 		return null;
 	}
-	
 
-
-	private NestedWordAutomaton<L, IPredicate> constructInterpolantAutomaton(List<IPredicate> conPredicates) {
+	private NestedWordAutomaton<L, IPredicate> constructInterpolantAutomaton(final List<IPredicate> conPredicates) {
 		final Set<L> alphabet = new HashSet<>();
 		alphabet.addAll(mAbstraction.getAlphabet());
 		final VpAlphabet<L> vpAlphabet = new VpAlphabet<>(alphabet);
 		final NestedWordAutomaton<L, IPredicate> automaton =
 				new NestedWordAutomaton<>(new AutomataLibraryServices(mServices), vpAlphabet, mEmptyStackStateFactory);
-		
+
 		automaton.addState(true, false, conPredicates.get(0));
 		for (Integer i = 1; i < conPredicates.size(); i++) {
 			final IPredicate succPred = conPredicates.get(i);
@@ -124,7 +121,6 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 				automaton.addState(false, false, succPred);
 			}
 			automaton.addInternalTransition(conPredicates.get(i - 1), mRun.getWord().getSymbol(i - 1), succPred);
-
 		}
 		return automaton;
 	}

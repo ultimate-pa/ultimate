@@ -37,29 +37,28 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
  *            The type of letters.
  */
 public class WrapperCriterion<L> implements IConditionalCommutativityCriterion<L> {
-	
-	private IConditionalCommutativityCriterion<L> mCriterion1;
-	private IConditionalCommutativityCriterion<L> mCriterion2;
+	private final IConditionalCommutativityCriterion<L> mCriterion1;
+	private final IConditionalCommutativityCriterion<L> mCriterion2;
 
 	/**
 	 * Constructor.
 	 *
 	 * @author Marcel Ebbinghaus
-	 * 
+	 *
 	 * @param criterion1
-	 *     first criterion
+	 *            first criterion
 	 * @param criterion2
-	 *     second criterion
+	 *            second criterion
 	 */
-	public WrapperCriterion(IConditionalCommutativityCriterion<L> criterion1,
-			IConditionalCommutativityCriterion<L> criterion2) {
+	public WrapperCriterion(final IConditionalCommutativityCriterion<L> criterion1,
+			final IConditionalCommutativityCriterion<L> criterion2) {
 		mCriterion1 = criterion1;
 		mCriterion2 = criterion2;
 	}
 
 	@Override
-	public boolean decide(IPredicate state, L letter1, L letter2) {
-		boolean result1 = mCriterion1.decide(state, letter1, letter2);
+	public boolean decide(final IPredicate state, final L letter1, final L letter2) {
+		final boolean result1 = mCriterion1.decide(state, letter1, letter2);
 		if (!result1) {
 			return false;
 		}
@@ -67,8 +66,8 @@ public class WrapperCriterion<L> implements IConditionalCommutativityCriterion<L
 	}
 
 	@Override
-	public boolean decide(IPredicate condition) {
-		boolean result1 = mCriterion1.decide(condition);
+	public boolean decide(final IPredicate condition) {
+		final boolean result1 = mCriterion1.decide(condition);
 		if (!result1) {
 			return false;
 		}
@@ -76,15 +75,14 @@ public class WrapperCriterion<L> implements IConditionalCommutativityCriterion<L
 	}
 
 	@Override
-	public void updateCriterion(IPredicate state, L letter1, L letter2) {
+	public void updateCriterion(final IPredicate state, final L letter1, final L letter2) {
 		mCriterion1.updateCriterion(state, letter1, letter2);
 		mCriterion2.updateCriterion(state, letter1, letter2);
 	}
 
 	@Override
-	public void updateAbstraction(INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction) {
+	public void updateAbstraction(final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction) {
 		mCriterion1.updateAbstraction(abstraction);
 		mCriterion2.updateAbstraction(abstraction);
 	}
-
 }

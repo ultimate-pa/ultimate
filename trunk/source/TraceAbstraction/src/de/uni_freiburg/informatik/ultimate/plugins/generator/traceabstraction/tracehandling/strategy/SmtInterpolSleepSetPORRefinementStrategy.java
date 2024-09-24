@@ -34,11 +34,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
 
 /**
  * Variant of SmTInterpolRefinementStrategy for POR with sleep sets.
- * 
+ *
  * @author Marcel Ebbinghaus
  */
 public class SmtInterpolSleepSetPORRefinementStrategy<L extends IIcfgTransition<?>> extends BasicRefinementStrategy<L> {
-
 	/**
 	 * Constructor.
 	 *
@@ -47,16 +46,18 @@ public class SmtInterpolSleepSetPORRefinementStrategy<L extends IIcfgTransition<
 	 * @param factory
 	 *            factory.
 	 * @param exceptionBlacklist
-	 *            exceptionBlacklist.    
+	 *            exceptionBlacklist.
 	 */
 	@SuppressWarnings("unchecked")
 	public SmtInterpolSleepSetPORRefinementStrategy(final StrategyFactory<L>.StrategyModuleFactory factory,
 			final RefinementStrategyExceptionBlacklist exceptionBlacklist) {
 		super(factory,
-				new IIpTcStrategyModule[] {
-						factory.createIpTcStrategyModuleSmtInterpolCraigSleepSetPOR(
-								InterpolationTechnique.Craig_NestedInterpolation)/*,
-						factory.createIpTcStrategyModuleSmtInterpolSpWp(InterpolationTechnique.ForwardPredicates)*/ },
+				new IIpTcStrategyModule[] { factory.createIpTcStrategyModuleSmtInterpolCraigSleepSetPOR(
+						InterpolationTechnique.Craig_NestedInterpolation)/*
+																			 * , factory.
+																			 * createIpTcStrategyModuleSmtInterpolSpWp(
+																			 * InterpolationTechnique.ForwardPredicates)
+																			 */ },
 				factory.createIpAbStrategyModuleStraightlineAll(), exceptionBlacklist);
 	}
 

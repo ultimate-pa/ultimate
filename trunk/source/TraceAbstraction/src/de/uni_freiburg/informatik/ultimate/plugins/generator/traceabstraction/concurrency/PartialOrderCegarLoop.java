@@ -75,9 +75,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.MonolithicHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.AnnotatedMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
@@ -90,7 +87,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateWithConjuncts;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult.BasicRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.BetterLockstepOrder;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.LoopLockstepOrder.PredicateWithLastThread;
@@ -393,6 +389,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 					false) : "Counterexample is not accepted by abstraction";
 
 			// check condional commutativity along mCounterexample
+			// @formatter:off
 			/*
 			if (mPref.useConditionalCommutativityChecker().equals(ConComChecker.COUNTEREXAMPLE)) {
 				boolean continueWithInfProof = (mCounterexample == null);
@@ -455,6 +452,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 				}
 
 			}*/
+			// @formatter:on
 			switchToReadonlyMode();
 			return mCounterexample == null;
 		} finally {
@@ -473,30 +471,30 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	protected Pair<LBool, IProgramExecution<L, Term>> isCounterexampleFeasible()
 			throws AutomataOperationCanceledException {
 		if (mPref.useConditionalCommutativityChecker().equals(ConComChecker.COUNTEREXAMPLE)) {
-			
+
 			final ArrayList<IPredicate> predicates = getCounterexamplePredicates();
 			final IPredicateUnifier predicateUnifier =
 					((PostConditionTraceChecker<L>) mConComChecker.getTraceChecker()).getPredicateUnifier();
-			final PostConditionTraceChecker<L> checker = new PostConditionTraceChecker<>(mServices,
-					mAbstraction, mTaskIdentifier, mFactory, predicateUnifier, mStrategyFactory);
+			final PostConditionTraceChecker<L> checker = new PostConditionTraceChecker<>(mServices, mAbstraction,
+					mTaskIdentifier, mFactory, predicateUnifier, mStrategyFactory);
 			final IIndependenceRelation<IPredicate, L> relation = mPOR.getIndependence(0);
 			final SemanticIndependenceConditionGenerator generator = new SemanticIndependenceConditionGenerator(
 					mServices, mCsToolkit.getManagedScript(), mPredicateFactory, relation.isSymmetric(), true);
 			mCriterion.updateAbstraction(mAbstraction);
-			
+
 			final ConditionalCommutativityCounterexampleChecker<L> conCounterexampleChecker =
 					new ConditionalCommutativityCounterexampleChecker<>(mServices, mCriterion, relation,
-							mPOR.getDfsOrder(), mCsToolkit.getManagedScript(), generator, mAbstraction, mFactory, checker,
-							new ConditionalCommutativityCheckerStatisticsUtils(mCegarLoopBenchmark));
+							mPOR.getDfsOrder(), mCsToolkit.getManagedScript(), generator, mAbstraction, mFactory,
+							checker, new ConditionalCommutativityCheckerStatisticsUtils(mCegarLoopBenchmark));
 
-			 mRefinementResult = conCounterexampleChecker
-					.getInterpolants((IRun<L, IPredicate>) mCounterexample, predicates, predicateUnifier);
+			mRefinementResult = conCounterexampleChecker.getInterpolants((IRun<L, IPredicate>) mCounterexample,
+					predicates, predicateUnifier);
 
 			if (mRefinementResult != null) {
 				mCounterexampleConComFound = true;
 				mInterpolAutomaton = mRefinementResult.getInfeasibilityProof();
 				// TODO if succeeds: return UNSAT
-				return new Pair<>(LBool.UNSAT,null);
+				return new Pair<>(LBool.UNSAT, null);
 			}
 		}
 		mCounterexampleConComFound = false;
@@ -824,5 +822,4 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 			return mPredicateFactory.and(conjuncts);
 		}
 	}
-
 }

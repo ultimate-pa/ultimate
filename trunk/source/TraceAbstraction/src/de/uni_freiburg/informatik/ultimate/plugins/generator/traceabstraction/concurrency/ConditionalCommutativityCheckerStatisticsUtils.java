@@ -6,12 +6,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ce
 
 public class ConditionalCommutativityCheckerStatisticsUtils implements IConditionalCommutativityCheckerStatisticsUtils {
 
-	private CegarLoopStatisticsGenerator mCegarLoopBenchmark;
+	private final CegarLoopStatisticsGenerator mCegarLoopBenchmark;
 
-	public ConditionalCommutativityCheckerStatisticsUtils(CegarLoopStatisticsGenerator cegarLoopBenchmark) {
+	public ConditionalCommutativityCheckerStatisticsUtils(final CegarLoopStatisticsGenerator cegarLoopBenchmark) {
 		mCegarLoopBenchmark = cegarLoopBenchmark;
 	}
-	
+
 	@Override
 	public void startStopwatch() {
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.ConditionalCommutativityCheckTime);
@@ -29,7 +29,7 @@ public class ConditionalCommutativityCheckerStatisticsUtils implements IConditio
 
 	@Override
 	public void addIAIntegration() {
-		mCegarLoopBenchmark.addConditionalCommutativityIAIntegration();	
+		mCegarLoopBenchmark.addConditionalCommutativityIAIntegration();
 	}
 
 	@Override
@@ -44,7 +44,6 @@ public class ConditionalCommutativityCheckerStatisticsUtils implements IConditio
 
 	@Override
 	public void addImperfectProof() {
-		mCegarLoopBenchmark.addConditionalCommutativityImperfectProof();	
+		mCegarLoopBenchmark.addConditionalCommutativityImperfectProof();
 	}
-
 }

@@ -40,8 +40,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
  *            The type of letters.
  */
 public interface IConditionalCommutativityChecker<L> {
-
-	TracePredicates checkConditionalCommutativity(IRun<L, IPredicate> run, List<IPredicate> predicates, IPredicate state,
-			L letter1, L letter2);
-
+	TracePredicates checkConditionalCommutativity(IRun<L, IPredicate> run, List<IPredicate> predicates,
+			IPredicate state, L letter1, L letter2);
 }

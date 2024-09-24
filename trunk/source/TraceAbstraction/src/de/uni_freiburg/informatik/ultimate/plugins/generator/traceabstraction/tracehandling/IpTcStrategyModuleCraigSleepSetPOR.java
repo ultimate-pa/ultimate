@@ -45,72 +45,72 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracechec
 
 /**
  * Variant of IpTcStrategyModuleCraig for POR with sleep sets.
- * 
+ *
  * @author Marcel Ebbinghaus
- * 
+ *
  * @param <LETTER>
- *         The type of letters.
+ *            The type of letters.
  */
 public abstract class IpTcStrategyModuleCraigSleepSetPOR<LETTER extends IIcfgTransition<?>>
-extends IpTcStrategyModuleTraceCheck<InterpolatingTraceCheckCraig<LETTER>, LETTER> {
+		extends IpTcStrategyModuleTraceCheck<InterpolatingTraceCheckCraig<LETTER>, LETTER> {
 
-/**
- * Constructor.
- *
- * @author Marcel Ebbinghaus
- *
- * @param taskIdentifier
- *            taskIdentifier.
- * @param services
- *            Ultimate services.  
- * @param prefs
- *            Ultimate preferences.   
- * @param counterExample
- *            counter example.            
- * @param precondition
- *            precondition.            
- * @param postcondition
- *            postcondition.            
- * @param assertionOrderModulation
- *            assertionOrderModulation.               
- * @param predicateUnifier
- *            predicate unifier.            
- * @param predicateFactory
- *            factory.                           
- */
-public IpTcStrategyModuleCraigSleepSetPOR(final TaskIdentifier taskIdentifier, final IUltimateServiceProvider services,
-	final TaCheckAndRefinementPreferences<LETTER> prefs, final IRun<LETTER, ?> counterExample,
-	final IPredicate precondition, final IPredicate postcondition,
-	final AssertionOrderModulation<LETTER> assertionOrderModulation, final IPredicateUnifier predicateUnifier,
-	final PredicateFactory predicateFactory) {
-super(taskIdentifier, services, prefs, counterExample, precondition, postcondition, assertionOrderModulation,
-		predicateUnifier, predicateFactory);
-}
+	/**
+	 * Constructor.
+	 *
+	 * @author Marcel Ebbinghaus
+	 *
+	 * @param taskIdentifier
+	 *            taskIdentifier.
+	 * @param services
+	 *            Ultimate services.
+	 * @param prefs
+	 *            Ultimate preferences.
+	 * @param counterExample
+	 *            counter example.
+	 * @param precondition
+	 *            precondition.
+	 * @param postcondition
+	 *            postcondition.
+	 * @param assertionOrderModulation
+	 *            assertionOrderModulation.
+	 * @param predicateUnifier
+	 *            predicate unifier.
+	 * @param predicateFactory
+	 *            factory.
+	 */
+	public IpTcStrategyModuleCraigSleepSetPOR(final TaskIdentifier taskIdentifier,
+			final IUltimateServiceProvider services, final TaCheckAndRefinementPreferences<LETTER> prefs,
+			final IRun<LETTER, ?> counterExample, final IPredicate precondition, final IPredicate postcondition,
+			final AssertionOrderModulation<LETTER> assertionOrderModulation, final IPredicateUnifier predicateUnifier,
+			final PredicateFactory predicateFactory) {
+		super(taskIdentifier, services, prefs, counterExample, precondition, postcondition, assertionOrderModulation,
+				predicateUnifier, predicateFactory);
+	}
 
-@Override
-protected InterpolatingTraceCheckCraig<LETTER> construct() {
-final InterpolationTechnique interpolationTechnique = getInterpolationTechnique();
-assert interpolationTechnique == InterpolationTechnique.Craig_NestedInterpolation
-		|| interpolationTechnique == InterpolationTechnique.Craig_TreeInterpolation;
+	@Override
+	protected InterpolatingTraceCheckCraig<LETTER> construct() {
+		final InterpolationTechnique interpolationTechnique = getInterpolationTechnique();
+		assert interpolationTechnique == InterpolationTechnique.Craig_NestedInterpolation
+				|| interpolationTechnique == InterpolationTechnique.Craig_TreeInterpolation;
 
-final AssertCodeBlockOrder assertionOrder =
-		mAssertionOrderModulation.get(mCounterexample, interpolationTechnique);
-final XnfConversionTechnique xnfConversionTechnique = mPrefs.getXnfConversionTechnique();
-final SimplificationTechnique simplificationTechnique = mPrefs.getSimplificationTechnique();
-final ManagedScript managedScript = constructManagedScript();
+		final AssertCodeBlockOrder assertionOrder =
+				mAssertionOrderModulation.get(mCounterexample, interpolationTechnique);
+		final XnfConversionTechnique xnfConversionTechnique = mPrefs.getXnfConversionTechnique();
+		final SimplificationTechnique simplificationTechnique = mPrefs.getSimplificationTechnique();
+		final ManagedScript managedScript = constructManagedScript();
 
-final boolean instanticateArrayExt = true;
-final boolean innerRecursiveNestedInterpolationCall = false;
-return new InterpolatingTraceCheckCraig<>(mPrecondition, mPostcondition, new TreeMap<Integer, IPredicate>(),
-		NestedWord.nestedWord(mCounterexample.getWord()),
-		TraceCheckUtils.getSequenceOfProgramPointsWithSleepSet(mCounterexample.getStateSequence()), mServices,
-		mPrefs.getCfgSmtToolkit(), managedScript, mPredicateFactory, mPredicateUnifier, assertionOrder,
-		mPrefs.computeCounterexample(), mPrefs.collectInterpolantStatistics(), interpolationTechnique,
-		instanticateArrayExt, xnfConversionTechnique, simplificationTechnique,
-		innerRecursiveNestedInterpolationCall);
-}
+		final boolean instanticateArrayExt = true;
+		final boolean innerRecursiveNestedInterpolationCall = false;
+		return new InterpolatingTraceCheckCraig<>(mPrecondition, mPostcondition, new TreeMap<Integer, IPredicate>(),
+				NestedWord.nestedWord(mCounterexample.getWord()),
+				TraceCheckUtils.getSequenceOfProgramPointsWithSleepSet(mCounterexample.getStateSequence()), mServices,
+				mPrefs.getCfgSmtToolkit(), managedScript, mPredicateFactory, mPredicateUnifier, assertionOrder,
+				mPrefs.computeCounterexample(), mPrefs.collectInterpolantStatistics(), interpolationTechnique,
+				instanticateArrayExt, xnfConversionTechnique, simplificationTechnique,
+				innerRecursiveNestedInterpolationCall);
+	}
 
-protected abstract ManagedScript constructManagedScript();
+	protected abstract ManagedScript constructManagedScript();
 
-protected abstract InterpolationTechnique getInterpolationTechnique();
+	protected abstract InterpolationTechnique getInterpolationTechnique();
 }

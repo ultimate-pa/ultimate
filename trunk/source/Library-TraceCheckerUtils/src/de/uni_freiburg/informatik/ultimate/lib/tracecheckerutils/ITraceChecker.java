@@ -30,8 +30,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
- * Trace Checker which checks whether a run fulfills a given precondition/postcondition pair.
- * The meaning of "fulfills" needs to be decided by the implementation.
+ * Trace Checker which checks whether a run fulfills a given precondition/postcondition pair. The meaning of "fulfills"
+ * needs to be decided by the implementation.
  *
  * @author Marcel Ebbinghaus
  *

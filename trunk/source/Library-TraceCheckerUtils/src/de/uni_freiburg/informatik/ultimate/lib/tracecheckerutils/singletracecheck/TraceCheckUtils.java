@@ -122,27 +122,28 @@ public final class TraceCheckUtils {
 		}
 		return result;
 	}
-	
+
 	/**
-	 * Given a stateSequence s_0,...,s_n returns the sequence of pairs (pp, sleepset)_0,...,(pp, sleepset)_n,
-	 * s.t. (pp, sleepset)_i consists of the program points of s_i and the sleep set of s_i.
+	 * Given a stateSequence s_0,...,s_n returns the sequence of pairs (pp, sleepset)_0,...,(pp, sleepset)_n, s.t. (pp,
+	 * sleepset)_i consists of the program points of s_i and the sleep set of s_i.
 	 *
 	 * @param stateSequence
 	 *            sequence of SleepPredicates
 	 * @return sequence of pairs (pp, sleepset)
 	 */
-	public static List<Pair<IcfgLocation[], Set<?>>> getSequenceOfProgramPointsWithSleepSet(final List<?> stateSequence){
-		ArrayList<Pair<IcfgLocation[], Set<?>>> sequence = new ArrayList<>();
+	public static List<Pair<IcfgLocation[], Set<?>>>
+			getSequenceOfProgramPointsWithSleepSet(final List<?> stateSequence) {
+		final ArrayList<Pair<IcfgLocation[], Set<?>>> sequence = new ArrayList<>();
 		for (int i = 0; i < stateSequence.size(); i++) {
-			SleepPredicate<?> sleepPred = ((SleepPredicate<?>) stateSequence.get(i));
+			final SleepPredicate<?> sleepPred = ((SleepPredicate<?>) stateSequence.get(i));
 			IPredicate pred = sleepPred.getUnderlying();
-			
+
 			if (pred instanceof PredicateWithLastThread) {
 				pred = ((PredicateWithLastThread) pred).getUnderlying();
 			}
-			ImmutableSet<?> sleepset = sleepPred.getAnnotation();
-			IcfgLocation[] programPpoints = ((IMLPredicate) pred).getProgramPoints();
-			Pair<IcfgLocation[], Set<?>> pair = new Pair<>(programPpoints, sleepset);
+			final ImmutableSet<?> sleepset = sleepPred.getAnnotation();
+			final IcfgLocation[] programPpoints = ((IMLPredicate) pred).getProgramPoints();
+			final Pair<IcfgLocation[], Set<?>> pair = new Pair<>(programPpoints, sleepset);
 			sequence.add(pair);
 		}
 		return sequence;
@@ -169,7 +170,7 @@ public final class TraceCheckUtils {
 		return computeCoverageCapability(services, traceCheck.getIpp(), programPoints, logger,
 				traceCheck.getPredicateUnifier());
 	}
-	
+
 	/**
 	 * Variant of
 	 * {@link #computeCoverageCapability(IUltimateServiceProvider, TracePredicates, List, ILogger, IPredicateUnifier)}
@@ -185,8 +186,8 @@ public final class TraceCheckUtils {
 	 *            logger
 	 * @return backward covering information
 	 */
-	public static BackwardCoveringInformation computeCoverageCapabilitySleepSet(IUltimateServiceProvider services,
-			final IInterpolantGenerator<?> traceCheck, List<IPredicate> stateSequence,  ILogger logger) {
+	public static BackwardCoveringInformation computeCoverageCapabilitySleepSet(final IUltimateServiceProvider services,
+			final IInterpolantGenerator<?> traceCheck, final List<IPredicate> stateSequence, final ILogger logger) {
 		final List<?> programPoints = getSequenceOfProgramPointsWithSleepSet(stateSequence);
 		return computeCoverageCapability(services, traceCheck.getIpp(), programPoints, logger,
 				traceCheck.getPredicateUnifier());
@@ -418,15 +419,15 @@ public final class TraceCheckUtils {
 	 */
 	public static <L extends IAction> NestedFormulas<L, UnmodifiableTransFormula, IPredicate> decoupleArrayValues(
 			final ManagedScript mgdScript, final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> nf) {
-		final ModifiableNestedFormulas<L, UnmodifiableTransFormula, IPredicate> result = new ModifiableNestedFormulas<>(
-				nf.getTrace(), new TreeMap<>());
+		final ModifiableNestedFormulas<L, UnmodifiableTransFormula, IPredicate> result =
+				new ModifiableNestedFormulas<>(nf.getTrace(), new TreeMap<>());
 		result.setPrecondition(nf.getPrecondition());
 		result.setPostcondition(nf.getPostcondition());
 		for (int i = 0; i < nf.getTrace().length(); i++) {
 			if (nf.getTrace().isCallPosition(i)) {
 				{
-					final UnmodifiableTransFormula decoupledLocalVarAssignment = TransFormulaUtils
-							.decoupleArrayValues(nf.getLocalVarAssignment(i), mgdScript);
+					final UnmodifiableTransFormula decoupledLocalVarAssignment =
+							TransFormulaUtils.decoupleArrayValues(nf.getLocalVarAssignment(i), mgdScript);
 					result.setLocalVarAssignmentAtPos(i, decoupledLocalVarAssignment);
 				}
 				// globalVarAssignment and oldVarAssignment are equalities an cannot be affected
@@ -434,8 +435,8 @@ public final class TraceCheckUtils {
 				result.setGlobalVarAssignmentAtPos(i, nf.getGlobalVarAssignment(i));
 				result.setOldVarAssignmentAtPos(i, nf.getOldVarAssignment(i));
 			} else {
-				final UnmodifiableTransFormula decoupled = TransFormulaUtils
-						.decoupleArrayValues(nf.getFormulaFromNonCallPos(i), mgdScript);
+				final UnmodifiableTransFormula decoupled =
+						TransFormulaUtils.decoupleArrayValues(nf.getFormulaFromNonCallPos(i), mgdScript);
 				result.setFormulaAtNonCallPos(i, decoupled);
 				if (nf.getTrace().isPendingReturn(i)) {
 					result.setPendingContext(i, nf.getPendingContext(i));
