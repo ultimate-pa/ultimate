@@ -54,6 +54,7 @@ public class ConditionalCommutativityInterpolantAutomatonProvider<L extends IAct
 	private IEmptyStackStateFactory<IPredicate> mFactory;
 	private IPredicateUnifier mPredicateUnifier;
 	private IUltimateServiceProvider mServices;
+	private NestedWordAutomaton<L, IPredicate> mAutomaton;
 
 	/**
 	 * Constructs a new instance of ConditionalCommutativityInterpolantAutomatonProvider.
@@ -80,8 +81,8 @@ public class ConditionalCommutativityInterpolantAutomatonProvider<L extends IAct
 	}
 
 	/**
-	 * Constructs and returns an interpolant automaton from a list of predicates and a word. Make sure that the given
-	 * predicates are a proof for the given word!
+	 * Extends the interpolant automaton using a list of predicates and a word. Make sure predicates are a proof for the
+	 * given word!
 	 *
 	 * @author Marcel Ebbinghaus
 	 *
@@ -91,23 +92,51 @@ public class ConditionalCommutativityInterpolantAutomatonProvider<L extends IAct
 	 *            Word, i.e. a sequence of letters
 	 * @return interpolant automaton
 	 */
-	public NestedWordAutomaton<L, IPredicate> constructInterpolantAutomaton(final List<IPredicate> predicates,
-			final Word<L> word) {
-		final Set<L> alphabet = new HashSet<>();
-		alphabet.addAll(mAbstraction.getAlphabet());
-		final VpAlphabet<L> vpAlphabet = new VpAlphabet<>(alphabet);
-		final NestedWordAutomaton<L, IPredicate> automaton =
-				new NestedWordAutomaton<>(new AutomataLibraryServices(mServices), vpAlphabet, mFactory);
-
-		automaton.addState(true, false, predicates.get(0));
-		automaton.addState(false, true, mPredicateUnifier.getFalsePredicate());
+	public void addToInterpolantAutomaton(final List<IPredicate> predicates, final Word<L> word) {
+		if (!mAutomaton.contains(predicates.get(0))) {
+			mAutomaton.addState(true, false, predicates.get(0));
+		}
+		if (!mAutomaton.contains(mPredicateUnifier.getFalsePredicate())) {
+			mAutomaton.addState(false, true, mPredicateUnifier.getFalsePredicate());
+		}
 		for (Integer i = 1; i < predicates.size(); i++) {
 			final IPredicate succPred = predicates.get(i);
-			if (!automaton.contains(succPred)) {
-				automaton.addState(false, false, succPred);
+			if (!mAutomaton.contains(succPred)) {
+				mAutomaton.addState(false, false, succPred);
 			}
-			automaton.addInternalTransition(predicates.get(i - 1), word.getSymbol(i - 1), succPred);
+			mAutomaton.addInternalTransition(predicates.get(i - 1), word.getSymbol(i - 1), succPred);
 		}
-		return automaton;
+	}
+
+	/**
+	 * Sets the interpolant automaton to the given interpolant automaton and constructs an empty automaton if null is
+	 * given. Make sure that the given automaton is an interpolant automaton!
+	 * 
+	 * @author Marcel Ebbinghaus
+	 *
+	 * @param automaton
+	 *            The given interpolant automaton
+	 */
+	public void setInterPolantAutomaton(NestedWordAutomaton<L, IPredicate> automaton) {
+		if (automaton != null) {
+			mAutomaton = automaton;
+		} else {
+			final Set<L> alphabet = new HashSet<>();
+			alphabet.addAll(mAbstraction.getAlphabet());
+			final VpAlphabet<L> vpAlphabet = new VpAlphabet<>(alphabet);
+			final NestedWordAutomaton<L, IPredicate> mAutomaton =
+					new NestedWordAutomaton<>(new AutomataLibraryServices(mServices), vpAlphabet, mFactory);
+		}
+	}
+
+	/**
+	 * Returns the interpolant automaton.
+	 *
+	 * @author Marcel Ebbinghaus
+	 *
+	 * @return interpolant automaton
+	 */
+	public NestedWordAutomaton<L, IPredicate> getInterpolantAutomaton() {
+		return mAutomaton;
 	}
 }

@@ -225,8 +225,6 @@ public class ConditionalCommutativityCheckerVisitor<L extends IIcfgTransition<?>
 	 *
 	 * @return interpolant automaton
 	 */
-	// TODO TODO This should be moved out of the visitor.
-	// TODO Similar code exists for the different cond-comm approaches, and probably elsewhere in Ultimate. Reuse it!
 	public NestedWordAutomaton<L, IPredicate> getInterpolantAutomaton() {
 		if (mTracePredicates == null) {
 			return null;
@@ -239,19 +237,8 @@ public class ConditionalCommutativityCheckerVisitor<L extends IIcfgTransition<?>
 		ConditionalCommutativityInterpolantAutomatonProvider<L> conComInterpolantProvider =
 				new ConditionalCommutativityInterpolantAutomatonProvider<>(mServices, mAbstraction,
 						mEmptyStackStateFactory, mPredicateUnifier);
-		return conComInterpolantProvider.constructInterpolantAutomaton(conPredicates, mRun.getWord());
-
-		/*
-		 * final Set<L> alphabet = new HashSet<>(); alphabet.addAll(mAbstraction.getAlphabet()); final VpAlphabet<L>
-		 * vpAlphabet = new VpAlphabet<>(alphabet); final NestedWordAutomaton<L, IPredicate> automaton = new
-		 * NestedWordAutomaton<>(new AutomataLibraryServices(mServices), vpAlphabet, mEmptyStackStateFactory);
-		 * automaton.addState(true, false, conPredicates.get(0)); automaton.addState(false, true,
-		 * mPredicateUnifier.getFalsePredicate()); for (Integer i = 1; i < conPredicates.size(); i++) { final IPredicate
-		 * succPred = conPredicates.get(i); final IPredicate prePred = conPredicates.get(i - 1); final L letter =
-		 * mRun.getWord().getSymbol(i - 1); if (!automaton.contains(succPred)) { automaton.addState(false, false,
-		 * succPred); } if (SmtUtils.isFalseLiteral(prePred.getFormula())) { // automaton.addInternalTransition(prePred,
-		 * letter, automaton.getFinalStates().iterator().next()); return automaton; }
-		 * automaton.addInternalTransition(prePred, letter, succPred); } return automaton;
-		 */
+		conComInterpolantProvider.setInterPolantAutomaton(null);
+		conComInterpolantProvider.addToInterpolantAutomaton(conPredicates, mRun.getWord());
+		return conComInterpolantProvider.getInterpolantAutomaton();
 	}
 }

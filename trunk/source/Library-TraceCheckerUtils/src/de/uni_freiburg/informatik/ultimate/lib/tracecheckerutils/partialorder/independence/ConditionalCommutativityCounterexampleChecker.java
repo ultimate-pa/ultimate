@@ -121,8 +121,9 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 					ConditionalCommutativityInterpolantAutomatonProvider<L> conComInterpolantProvider =
 							new ConditionalCommutativityInterpolantAutomatonProvider<>(mServices, mAbstraction,
 									mEmptyStackStateFactory, predicateUnifier);
-					final NestedWordAutomaton<L, IPredicate> automaton =
-							conComInterpolantProvider.constructInterpolantAutomaton(conPredicates, mRun.getWord());
+					conComInterpolantProvider.setInterPolantAutomaton(null);
+					conComInterpolantProvider.addToInterpolantAutomaton(conPredicates, mRun.getWord());
+					final NestedWordAutomaton<L, IPredicate> automaton = conComInterpolantProvider.getInterpolantAutomaton();
 					
 
 					final BasicRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> refinementResult =
@@ -137,33 +138,5 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 
 		return null;
 	}
-
-	
-	/**
-	 * Constructs and returns an interpolant automaton if conditional commutativity has been detected.
-	 *
-	 * @author Marcel Ebbinghaus
-	 *
-	 * @return interpolant automaton
-	 */
-	/*
-	public NestedWordAutomaton<L, IPredicate> constructInterpolantAutomaton(final List<IPredicate> conPredicates) {
-		final Set<L> alphabet = new HashSet<>();
-		alphabet.addAll(mAbstraction.getAlphabet());
-		final VpAlphabet<L> vpAlphabet = new VpAlphabet<>(alphabet);
-		final NestedWordAutomaton<L, IPredicate> automaton =
-				new NestedWordAutomaton<>(new AutomataLibraryServices(mServices), vpAlphabet, mEmptyStackStateFactory);
-
-		automaton.addState(true, false, conPredicates.get(0));
-		automaton.addState(false, true, mPredicateUnifier.getFalsePredicate());
-		for (Integer i = 1; i < conPredicates.size(); i++) {
-			final IPredicate succPred = conPredicates.get(i);
-			if (!automaton.contains(succPred)) {
-				automaton.addState(false, false, succPred);
-			}
-			automaton.addInternalTransition(conPredicates.get(i - 1), mRun.getWord().getSymbol(i - 1), succPred);
-		}
-		return automaton;
-	}*/
 
 }
