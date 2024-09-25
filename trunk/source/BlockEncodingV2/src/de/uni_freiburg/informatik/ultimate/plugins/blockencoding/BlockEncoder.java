@@ -327,6 +327,11 @@ public final class BlockEncoder {
 			return true;
 		}
 
+		final Set<?> loopHeads = icfg.getLoopLocations();
+		if (loopHeads.contains(node)) {
+			return true;
+		}
+
 		return false;
 	}
 
