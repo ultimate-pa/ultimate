@@ -60,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.witnessprinter.graphml.GraphMLCorrect
 import de.uni_freiburg.informatik.ultimate.witnessprinter.graphml.GraphMLViolationWitnessGenerator;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.yaml.YamlCorrectnessWitnessGenerator;
+import de.uni_freiburg.informatik.ultimate.witnessprinter.yaml.YamlViolationWitnessGenerator;
 
 /**
  *
@@ -196,7 +197,11 @@ public class WitnessPrinter implements IOutput {
 						new GraphMLViolationWitnessGenerator<>(backtransPe, mLogger, mServices).makeGraphMLString();
 				suppliers.add(new ResultWitness(filename, GRAPHML, witness, cex));
 			}
-			// TODO: Add support for YAML
+			if (createYaml) {
+				final String witness =
+						new YamlViolationWitnessGenerator<>(backtransPe, mLogger, mServices).makeYamlString();
+				suppliers.add(new ResultWitness(filename, YAML, witness, cex));
+			}
 		}
 		return suppliers;
 	}
