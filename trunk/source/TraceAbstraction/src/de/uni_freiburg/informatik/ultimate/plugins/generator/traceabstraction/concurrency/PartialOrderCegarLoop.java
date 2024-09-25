@@ -297,17 +297,22 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	private ArrayList<IPredicate> getCounterexamplePredicates() {
 		final ArrayList<IPredicate> predicates = new ArrayList<>();
 		// cast should be fine, since isAbstractionEmpty() assigns mCounterexample a IRun<L, IPredicate>
-		for (final IPredicate pred : ((IRun<L, IPredicate>) mCounterexample).getStateSequence()) {
-			// TODO use StateSplitter for this; the current form likely won't work for many configurations
-			IPredicate mlpred = ((SleepPredicate<L>) pred).getUnderlying();
-			if (mlpred instanceof PredicateWithLastThread) {
-				mlpred = ((PredicateWithLastThread) mlpred).getUnderlying();
+		for (IPredicate pred : ((IRun<L, IPredicate>) mCounterexample).getStateSequence()) {
+			
+			final PartialOrderReductionFacade.StateSplitter<IPredicate> splitter = mPOR.getStateSplitter();
+			if (splitter != null) {
+				pred = splitter.getOriginal(pred);
 			}
-			if (mlpred instanceof MLPredicateWithInterpolants) {
-				predicates.add(((MLPredicateWithInterpolants) mlpred).getInterpolants());
-			} else {
+			
+			if (pred instanceof MLPredicateWithInterpolants) {
+				predicates.add(((MLPredicateWithInterpolants) pred).getInterpolants());
+			} else if (pred instanceof MLPredicate){
 				// TODO When can this happen? If it should never happen, throw an error instead.
+				// It can also be just an MLPredicate (during the first iteration) which doesn't have interpolants
+				// but maybe we should do a case distinction outside of this method instead
 				predicates.add(null);
+			} else {
+				throw new IllegalArgumentException("Predicate not supported: " + pred.getClass());
 			}
 		}
 		return predicates;
@@ -328,14 +333,9 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	protected boolean isAbstractionEmpty() throws AutomataOperationCanceledException {
 		switchToOnDemandConstructionMode();
 
-		// TODO this check should not be needed! If it is, this points to a bug (non-stopped watch) somewhere else!
-		if (!mCegarLoopBenchmark.getRunningStopwatches().get("EmptinessCheckTime")) {
-			mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.EmptinessCheckTime);
-		}
+		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.EmptinessCheckTime);
 		try {
 			IDfsVisitor<L, IPredicate> visitor = createVisitor();
-			// Object debugAutomaton4 = new NestedWordAutomatonReachableStates<L,IPredicate>(new
-			// AutomataLibraryServices(mServices), mAbstraction);
 			mPOR.apply(mAbstraction, visitor);
 			if (mPref.useConditionalCommutativityChecker().equals(ConComChecker.DFS)
 					|| mPref.useConditionalCommutativityChecker().equals(ConComChecker.BOTH)) {
@@ -354,15 +354,10 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 					final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> ia = enhanceInterpolantAutomaton(
 							mPref.interpolantAutomatonEnhancement(), predicateUnifier, htc, interpolantAutomaton);
 
-					// Object debugAutomaton = new NestedWordAutomatonReachableStates<L,IPredicate>(new
-					// AutomataLibraryServices(mServices), ia);
-
 					final IPredicate initialSink =
 							DataStructureUtils.getOneAndOnly(interpolantAutomaton.getInitialStates(), "initial state");
 					final TotalizeNwa<L, IPredicate> totalInterpol = new TotalizeNwa<>(ia, initialSink, false);
 
-					// Object debugAutomaton2 = new NestedWordAutomatonReachableStates<L,IPredicate>(new
-					// AutomataLibraryServices(mServices), totalInterpol);
 					try {
 						if (mItpAutomata == null) {
 							mItpAutomata = totalInterpol;
@@ -372,10 +367,6 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 
 						mAbstraction = new InformationStorage<>(mProgram == null ? mAbstraction : mProgram,
 								mItpAutomata, mFactory, PartialOrderCegarLoop::isFalseLiteral);
-						// mCriterion.updateAbstraction(mAbstraction);
-
-						// Object debugAutomaton3 = new NestedWordAutomatonReachableStates<L,IPredicate>(new
-						// AutomataLibraryServices(mServices), mAbstraction);
 						visitor = createVisitor();
 						mCegarLoopBenchmark.addConditionalCommutativityDFSRestart();
 						mPOR.apply(mAbstraction, visitor);
@@ -458,15 +449,10 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 			switchToReadonlyMode();
 			return mCounterexample == null;
 		} finally {
-			if (mCegarLoopBenchmark.getRunningStopwatches().get("EmptinessCheckTime")) {
+			if (mCegarLoopBenchmark.getRunningStopwatches().get("EmptinessCheckTime").equals(Boolean.TRUE)) {
 				mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.EmptinessCheckTime);
 			}
 		}
-	}
-
-	private boolean restartIsAbstractionEmpty(final IDfsVisitor<L, IPredicate> visitor) {
-		return false;
-
 	}
 
 	@Override
@@ -572,7 +558,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 			mConComChecker.getCriterion().updateAbstraction(mAbstraction);
 			visitor = new ConditionalCommutativityCheckerVisitor<>(visitor, mAbstraction, mServices, mFactory,
 					((PostConditionTraceChecker<L>) mConComChecker.getTraceChecker()).getPredicateUnifier(),
-					mConComChecker);
+					mPOR.getStateSplitter(), mConComChecker);
 			mConComVisitor = visitor;
 		}
 
@@ -736,7 +722,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		}
 	}
 
-	public static final class MLPredicateWithInterpolants extends AnnotatedMLPredicate<IPredicate> {
+	private static final class MLPredicateWithInterpolants extends AnnotatedMLPredicate<IPredicate> {
 		protected MLPredicateWithInterpolants(final IMLPredicate underlying, final IPredicate annotation) {
 			super(underlying, annotation);
 		}
@@ -807,7 +793,6 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		@Override
 		public IPredicate determinize(final Map<IPredicate, Set<IPredicate>> down2up) {
 			// No support for calls and returns means the map should always have a simple structure.
-			// IPredicate test = createEmptyStackState();
 			assert down2up.size() == 1 && down2up.containsKey(createEmptyStackState());
 			final List<IPredicate> conjuncts = down2up.get(createEmptyStackState())
 					// sort predicates to ensure deterministic order

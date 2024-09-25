@@ -62,6 +62,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
  * @param <L>
  *            The type of letters.
  */
+// TODO: move the automaton construction to ConditionalCommutativityInterpolantAutomatonProvider and then rename this
+// class
 public class ConditionalCommutativityInterpolantProvider<L extends IAction> {
 
 	private final ConditionalCommutativityChecker<L> mChecker;
@@ -91,6 +93,8 @@ public class ConditionalCommutativityInterpolantProvider<L extends IAction> {
 	 *            Factory
 	 * @param traceChecker
 	 *            An ITraceChecker responsible for checking whether a condition is feasible
+	 * @param statisticsUtils
+	 *            Statistics
 	 */
 	public ConditionalCommutativityInterpolantProvider(final IUltimateServiceProvider services,
 			final IConditionalCommutativityCriterion<L> criterion,
@@ -143,7 +147,7 @@ public class ConditionalCommutativityInterpolantProvider<L extends IAction> {
 	}
 
 	private boolean checkState(final IPredicate state,
-			final List<OutgoingInternalTransition<L, IPredicate>> transitions, final int i,
+			final List<OutgoingInternalTransition<L, IPredicate>> transitions, final int index,
 			final List<IPredicate> runPredicates) {
 		// TODO check if this works correctly for semi-commutativity
 		for (int j = 0; j < transitions.size(); j++) {
@@ -151,11 +155,11 @@ public class ConditionalCommutativityInterpolantProvider<L extends IAction> {
 			for (int k = j + 1; k < transitions.size(); k++) {
 				final OutgoingInternalTransition<L, IPredicate> transition2 = transitions.get(k);
 				final List<IPredicate> interpolantPredicates = new ArrayList<>();
-				interpolantPredicates
-						.addAll(getInterpolantPredicates(i, runPredicates.get(mRun.getStateSequence().indexOf(state))));
+				interpolantPredicates.addAll(
+						getInterpolantPredicates(index, runPredicates.get(mRun.getStateSequence().indexOf(state))));
 				NestedRun<L, IPredicate> currentRun = (NestedRun<L, IPredicate>) mRun;
-				if (i != mRun.getStateSequence().size() - 1) {
-					currentRun = currentRun.getSubRun(0, i);
+				if (index != mRun.getStateSequence().size() - 1) {
+					currentRun = currentRun.getSubRun(0, index);
 				}
 				if (checkTransitions(currentRun, interpolantPredicates, state, transition1.getLetter(),
 						transition2.getLetter())) {

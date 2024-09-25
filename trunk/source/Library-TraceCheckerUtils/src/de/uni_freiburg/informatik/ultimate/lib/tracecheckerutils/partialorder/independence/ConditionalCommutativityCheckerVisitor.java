@@ -25,9 +25,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Deque;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -52,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.MLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.LoopLockstepOrder.PredicateWithLastThread;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderReductionFacade.StateSplitter;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
 
 /**
@@ -70,9 +69,6 @@ public class ConditionalCommutativityCheckerVisitor<L extends IIcfgTransition<?>
 	private boolean mAbort = false;
 	private final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mAbstraction;
 	private final ConditionalCommutativityChecker<L> mChecker;
-	// TODO keeping the state and letter stacks in addition to the run seems redundant
-	private final Deque<IPredicate> mStateStack = new ArrayDeque<>();
-	private final Deque<L> mLetterStack = new ArrayDeque<>();
 	private L mPendingLetter;
 	private IPredicate mPendingState;
 	private NestedRun<L, IPredicate> mRun;
@@ -80,6 +76,7 @@ public class ConditionalCommutativityCheckerVisitor<L extends IIcfgTransition<?>
 	private final IUltimateServiceProvider mServices;
 	private final IEmptyStackStateFactory<IPredicate> mEmptyStackStateFactory;
 	private final IPredicateUnifier mPredicateUnifier;
+	private StateSplitter<IPredicate> mSplitter;
 
 	/**
 	 * Constructs a new instance of ConditionalCommutativityChecker.
@@ -96,15 +93,19 @@ public class ConditionalCommutativityCheckerVisitor<L extends IIcfgTransition<?>
 	 *            Factory
 	 * @param predicateUnifier
 	 *            predicate unifier
+	 * @param splitter
+	 *            state splitter to retrieve predicates
 	 * @param checker
 	 *            Instance of ConditionalCommutativityChecker
 	 */
 	public ConditionalCommutativityCheckerVisitor(final V underlying,
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction,
 			final IUltimateServiceProvider services, final IEmptyStackStateFactory<IPredicate> emptyStackStateFactory,
-			final IPredicateUnifier predicateUnifier, final ConditionalCommutativityChecker<L> checker) {
+			final IPredicateUnifier predicateUnifier, final StateSplitter<IPredicate> splitter,
+			final ConditionalCommutativityChecker<L> checker) {
 		super(underlying);
 		mAbstraction = abstraction;
+		mSplitter = splitter;
 		mChecker = checker;
 		mServices = services;
 		mEmptyStackStateFactory = emptyStackStateFactory;
@@ -113,15 +114,15 @@ public class ConditionalCommutativityCheckerVisitor<L extends IIcfgTransition<?>
 
 	@Override
 	public boolean addStartState(final IPredicate state) {
-		assert mStateStack.isEmpty() : "start state must be first";
-		mStateStack.addLast(state);
+		assert mRun == null : "start state must be first";
 		mRun = new NestedRun<>(new NestedWord<>(), List.of(state));
 		return mUnderlying.addStartState(state);
 	}
 
 	@Override
 	public boolean discoverTransition(final IPredicate source, final L letter, final IPredicate target) {
-		assert mStateStack.getLast() == source : "Unexpected transition from state " + source;
+		assert mRun.getStateSequence().get(mRun.getLength() - 1) == source : "Unexpected transition from state "
+				+ source;
 		mPendingLetter = letter;
 		mPendingState = target;
 		return mUnderlying.discoverTransition(source, letter, target);
@@ -133,36 +134,31 @@ public class ConditionalCommutativityCheckerVisitor<L extends IIcfgTransition<?>
 
 		if (mPendingLetter == null) {
 			// Must be initial state
-			assert mStateStack.size() == 1 && mStateStack.getLast() == state : "Unexpected discovery of state " + state;
+			assert mRun.getLength() == 1
+					&& mRun.getStateSequence().get(mRun.getLength() - 1) == state : "Unexpected discovery of state "
+							+ state;
 		} else {
 			// Pending transition must lead to given state
 			assert mPendingState == state : "Unexpected discovery of state " + state;
-			mLetterStack.addLast(mPendingLetter);
 
 			mRun = mRun.concatenate(new NestedRun<>(new NestedWord<>(mPendingLetter, -2),
-					List.of(mStateStack.getLast(), mPendingState)));
-			mStateStack.addLast(mPendingState);
+					List.of(mRun.getStateSequence().get(mRun.getLength() - 1), mPendingState)));
 			mPendingLetter = null;
 			mPendingState = null;
 		}
 
+		IPredicate pred = mSplitter.getOriginal(state);
 		// TODO this unpacking of the state will fail for many configurations
-		IPredicate pred = ((SleepPredicate<L>) state).getUnderlying();
+		/*
+		 * IPredicate pred = ((SleepPredicate<L>) state).getUnderlying(); if (pred instanceof PredicateWithLastThread) {
+		 * pred = ((PredicateWithLastThread) pred).getUnderlying(); }
+		 */
 
-		if (pred instanceof PredicateWithLastThread) {
-			pred = ((PredicateWithLastThread) pred).getUnderlying();
-		}
-
+		// TODO We need to have access on the annotation
 		IPredicate annotation = null;
 		if (!(pred instanceof MLPredicate)) {
 			annotation = ((AnnotatedMLPredicate<IPredicate>) pred).getAnnotation();
 		}
-
-		/*
-		 * final Iterator<OutgoingInternalTransition<L, IPredicate>> iterator =
-		 * mAbstraction.internalSuccessors(state).iterator(); final List<OutgoingInternalTransition<L, IPredicate>>
-		 * transitions = new ArrayList<>();
-		 */
 
 		final Iterator<OutgoingInternalTransition<L, IPredicate>> iterator =
 				mAbstraction.internalSuccessors(pred).iterator();
@@ -203,9 +199,6 @@ public class ConditionalCommutativityCheckerVisitor<L extends IIcfgTransition<?>
 		mPendingLetter = null;
 		mPendingState = null;
 
-		mStateStack.removeLast();
-		mLetterStack.pollLast();
-
 		if (mRun.getStateSequence().size() > 1) {
 			mRun = mRun.getSubRun(0, mRun.getLength() - 2);
 		} else {
@@ -242,35 +235,23 @@ public class ConditionalCommutativityCheckerVisitor<L extends IIcfgTransition<?>
 		conPredicates.add(mTracePredicates.getPrecondition());
 		conPredicates.addAll(mTracePredicates.getPredicates());
 		conPredicates.add(mTracePredicates.getPostcondition());
-		final Set<L> alphabet = new HashSet<>();
-		alphabet.addAll(mAbstraction.getAlphabet());
-		final VpAlphabet<L> vpAlphabet = new VpAlphabet<>(alphabet);
-		final NestedWordAutomaton<L, IPredicate> automaton =
-				new NestedWordAutomaton<>(new AutomataLibraryServices(mServices), vpAlphabet, mEmptyStackStateFactory);
-		automaton.addState(true, false, conPredicates.get(0));
-		automaton.addState(false, true, mPredicateUnifier.getFalsePredicate());
-		for (Integer i = 1; i < conPredicates.size(); i++) {
-			final IPredicate succPred = conPredicates.get(i);
-			final IPredicate prePred = conPredicates.get(i - 1);
-			final L letter = mRun.getWord().getSymbol(i - 1);
-			if (!automaton.contains(succPred)) {
-				automaton.addState(false, false, succPred);
-			}
-			if (SmtUtils.isFalseLiteral(prePred.getFormula())) {
-				// automaton.addInternalTransition(prePred, letter, automaton.getFinalStates().iterator().next());
-				return automaton;
-			}
-			automaton.addInternalTransition(prePred, letter, succPred);
-		}
-		return automaton;
-	}
 
-	// TODO This should be moved out of the visitor.
-	public IPredicateUnifier getPredicateUnifier() {
-		return mPredicateUnifier;
-	}
+		ConditionalCommutativityInterpolantAutomatonProvider<L> conComInterpolantProvider =
+				new ConditionalCommutativityInterpolantAutomatonProvider<>(mServices, mAbstraction,
+						mEmptyStackStateFactory, mPredicateUnifier);
+		return conComInterpolantProvider.constructInterpolantAutomaton(conPredicates, mRun.getWord());
 
-	public void setReduction(final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> test) {
-		// mAbstraction = test;
+		/*
+		 * final Set<L> alphabet = new HashSet<>(); alphabet.addAll(mAbstraction.getAlphabet()); final VpAlphabet<L>
+		 * vpAlphabet = new VpAlphabet<>(alphabet); final NestedWordAutomaton<L, IPredicate> automaton = new
+		 * NestedWordAutomaton<>(new AutomataLibraryServices(mServices), vpAlphabet, mEmptyStackStateFactory);
+		 * automaton.addState(true, false, conPredicates.get(0)); automaton.addState(false, true,
+		 * mPredicateUnifier.getFalsePredicate()); for (Integer i = 1; i < conPredicates.size(); i++) { final IPredicate
+		 * succPred = conPredicates.get(i); final IPredicate prePred = conPredicates.get(i - 1); final L letter =
+		 * mRun.getWord().getSymbol(i - 1); if (!automaton.contains(succPred)) { automaton.addState(false, false,
+		 * succPred); } if (SmtUtils.isFalseLiteral(prePred.getFormula())) { // automaton.addInternalTransition(prePred,
+		 * letter, automaton.getFinalStates().iterator().next()); return automaton; }
+		 * automaton.addInternalTransition(prePred, letter, succPred); } return automaton;
+		 */
 	}
 }

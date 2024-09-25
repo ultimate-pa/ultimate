@@ -100,6 +100,7 @@ public class PredicateWithConjuncts implements IPredicate {
 		mFuns = new HashSet<>();
 
 		// TODO keeping the reference to the old predicates costs can be extremely expensive in terms of memory!
+		// but it allows to extend the old predicate with the new conjunct instead of rebuilding it all
 		mOld = old;
 		mNew = newConjunct;
 

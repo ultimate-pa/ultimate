@@ -1,3 +1,28 @@
+/*
+ * Copyright (C) 2024 Marcel Ebbinghaus
+ *
+ * This file is part of the ULTIMATE TraceCheckerUtils Library.
+ *
+ * The ULTIMATE TraceCheckerUtils Library is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE TraceCheckerUtils Library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE TraceCheckerUtils Library. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE TraceCheckerUtils Library, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE TraceCheckerUtils Library grant you additional permission
+ * to convey the resulting work.
+ */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence;
 
 import java.util.ArrayList;
@@ -38,6 +63,7 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 	private IRun<L, IPredicate> mRun;
 	private final IIndependenceRelation<IPredicate, L> mIndependenceRelation;
 	private final IDfsOrder<L, IPredicate> mDFSOrder;
+	private IPredicateUnifier mPredicateUnifier;
 
 	public ConditionalCommutativityCounterexampleChecker(final IUltimateServiceProvider services,
 			final IConditionalCommutativityCriterion<L> criterion,
@@ -60,6 +86,7 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 			final IRun<L, IPredicate> run, final List<IPredicate> runPredicates,
 			final IPredicateUnifier predicateUnifier) {
 		mRun = run;
+		mPredicateUnifier = predicateUnifier;
 
 		for (int i = 0; i < mRun.getStateSequence().size() - 2; i++) {
 			final IPredicate state = mRun.getStateSequence().get(i);
@@ -89,11 +116,14 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 					conPredicates.addAll(tracePredicates.getPredicates());
 					conPredicates.add(tracePredicates.getPostcondition());
 					mStatisticsUtils.addIAIntegration();
-					final NestedWordAutomaton<L, IPredicate> automaton = constructInterpolantAutomaton(conPredicates);
-
-					if (!automaton.contains(predicateUnifier.getFalsePredicate())) {
-						automaton.addState(false, true, predicateUnifier.getFalsePredicate());
-					}
+					//final NestedWordAutomaton<L, IPredicate> automaton = constructInterpolantAutomaton(conPredicates);
+					
+					ConditionalCommutativityInterpolantAutomatonProvider<L> conComInterpolantProvider =
+							new ConditionalCommutativityInterpolantAutomatonProvider<>(mServices, mAbstraction,
+									mEmptyStackStateFactory, predicateUnifier);
+					final NestedWordAutomaton<L, IPredicate> automaton =
+							conComInterpolantProvider.constructInterpolantAutomaton(conPredicates, mRun.getWord());
+					
 
 					final BasicRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> refinementResult =
 							new BasicRefinementEngineResult<>(LBool.UNSAT, automaton, null, false,
@@ -108,7 +138,16 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 		return null;
 	}
 
-	private NestedWordAutomaton<L, IPredicate> constructInterpolantAutomaton(final List<IPredicate> conPredicates) {
+	
+	/**
+	 * Constructs and returns an interpolant automaton if conditional commutativity has been detected.
+	 *
+	 * @author Marcel Ebbinghaus
+	 *
+	 * @return interpolant automaton
+	 */
+	/*
+	public NestedWordAutomaton<L, IPredicate> constructInterpolantAutomaton(final List<IPredicate> conPredicates) {
 		final Set<L> alphabet = new HashSet<>();
 		alphabet.addAll(mAbstraction.getAlphabet());
 		final VpAlphabet<L> vpAlphabet = new VpAlphabet<>(alphabet);
@@ -116,6 +155,7 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 				new NestedWordAutomaton<>(new AutomataLibraryServices(mServices), vpAlphabet, mEmptyStackStateFactory);
 
 		automaton.addState(true, false, conPredicates.get(0));
+		automaton.addState(false, true, mPredicateUnifier.getFalsePredicate());
 		for (Integer i = 1; i < conPredicates.size(); i++) {
 			final IPredicate succPred = conPredicates.get(i);
 			if (!automaton.contains(succPred)) {
@@ -124,6 +164,6 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 			automaton.addInternalTransition(conPredicates.get(i - 1), mRun.getWord().getSymbol(i - 1), succPred);
 		}
 		return automaton;
-	}
+	}*/
 
 }
