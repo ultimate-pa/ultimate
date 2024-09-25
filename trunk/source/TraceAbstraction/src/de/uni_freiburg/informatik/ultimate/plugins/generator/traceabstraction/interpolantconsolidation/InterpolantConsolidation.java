@@ -120,7 +120,7 @@ public class InterpolantConsolidation<TC extends IInterpolantGenerator<LETTER>, 
 		mInterpolantConsolidationBenchmarkGenerator = new InterpolantConsolidationBenchmarkGenerator();
 
 		final InterpolantComputationStatus status = mIpTc.getInterpolantComputationStatus();
-		if (status.wasComputationSuccesful()) {
+		if (status.wasComputationSuccessful()) {
 			mInterpolantsConsolidationSuccessful = computeInterpolants(new AllIntegers());
 		} else {
 			mInterpolantsConsolidationSuccessful = false;

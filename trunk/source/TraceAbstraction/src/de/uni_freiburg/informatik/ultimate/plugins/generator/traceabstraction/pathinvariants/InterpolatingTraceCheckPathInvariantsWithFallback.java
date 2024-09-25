@@ -84,7 +84,7 @@ public class InterpolatingTraceCheckPathInvariantsWithFallback<LETTER extends IA
 			mTraceCheckFinished = true;
 			cleanupAndUnlockSolver();
 			computeInterpolants(new AllIntegers(), InterpolationTechnique.PathInvariants);
-			if (!mInterpolantComputationStatus.wasComputationSuccesful()) {
+			if (!mInterpolantComputationStatus.wasComputationSuccessful()) {
 				final String message = "invariant synthesis failed";
 				final String taskDescription =
 						"trying to synthesize invariant for path program " + mPathInvariantsStats;
@@ -104,7 +104,7 @@ public class InterpolatingTraceCheckPathInvariantsWithFallback<LETTER extends IA
 		final IPredicate[] interpolants = pathInvariantsGenerator.getInterpolants();
 		if (interpolants == null) {
 			assert !pathInvariantsGenerator.getInterpolantComputationStatus()
-					.wasComputationSuccesful() : "null only allowed if computation was not successful";
+					.wasComputationSuccessful() : "null only allowed if computation was not successful";
 		} else {
 			if (interpolants.length != mTrace.length() - 1) {
 				throw new AssertionError("inkorrekt number of interpolants. "

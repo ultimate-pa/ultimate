@@ -81,7 +81,7 @@ public class InterpolantComputationStatus {
 		mException = exception;
 	}
 
-	public boolean wasComputationSuccesful() {
+	public boolean wasComputationSuccessful() {
 		return mComputationSuccessful;
 	}
 

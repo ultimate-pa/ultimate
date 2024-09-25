@@ -144,7 +144,7 @@ public class AcceleratedTraceCheck<L extends IIcfgTransition<?>> implements IInt
 				break;
 			case UNSAT:
 				final InterpolantComputationStatus itpCompStatus = tc.getInterpolantComputationStatus();
-				if (itpCompStatus.wasComputationSuccesful()) {
+				if (itpCompStatus.wasComputationSuccessful()) {
 					mInterpolants = tc.getForwardIpp().getPredicates().toArray(new IPredicate[0]);
 				} else {
 					throw new UnsupportedOperationException(
