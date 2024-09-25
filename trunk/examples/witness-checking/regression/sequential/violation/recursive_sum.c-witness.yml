@@ -1,0 +1,135 @@
+- entry_type: violation_sequence
+  metadata:
+    format_version: '2.0'
+    uuid: a824e988-efa4-4904-9d03-671d752ff5b6
+    creation_time: '2024-07-17T10:52:50+02:00'
+    producer:
+      name: UNUSED
+      version: 0.2.4-yaml-violation-witnesses-ff72a30
+    task:
+      input_files:
+      - C:\ultimate\trunk\examples\witness-checking\regression\violation\recursive_sum.c
+      input_file_hashes:
+        C:\ultimate\trunk\examples\witness-checking\regression\violation\recursive_sum.c: UNUSED
+      specification: UNUSED
+      data_model: UNUSED
+      language: C
+  content:
+  - segment:
+    - waypoint:
+        type: function_enter
+        location:
+          file_name: C:\ultimate\trunk\examples\witness-checking\regression\violation\recursive_sum.c
+          file_hash: UNUSED
+          line: 8
+          column: 13
+          function: main
+        action: follow
+  - segment:
+    - waypoint:
+        type: branching
+        constraint:
+          value: 'false'
+        location:
+          file_name: C:\ultimate\trunk\examples\witness-checking\regression\violation\recursive_sum.c
+          file_hash: UNUSED
+          line: 2
+          column: 3
+          function: sum
+        action: follow
+  - segment:
+    - waypoint:
+        type: function_enter
+        location:
+          file_name: C:\ultimate\trunk\examples\witness-checking\regression\violation\recursive_sum.c
+          file_hash: UNUSED
+          line: 3
+          column: 18
+          function: sum
+        action: follow
+  - segment:
+    - waypoint:
+        type: branching
+        constraint:
+          value: 'false'
+        location:
+          file_name: C:\ultimate\trunk\examples\witness-checking\regression\violation\recursive_sum.c
+          file_hash: UNUSED
+          line: 2
+          column: 3
+          function: sum
+        action: follow
+  - segment:
+    - waypoint:
+        type: function_enter
+        location:
+          file_name: C:\ultimate\trunk\examples\witness-checking\regression\violation\recursive_sum.c
+          file_hash: UNUSED
+          line: 3
+          column: 18
+          function: sum
+        action: follow
+  - segment:
+    - waypoint:
+        type: branching
+        constraint:
+          value: 'true'
+        location:
+          file_name: C:\ultimate\trunk\examples\witness-checking\regression\violation\recursive_sum.c
+          file_hash: UNUSED
+          line: 2
+          column: 3
+          function: sum
+        action: follow
+  - segment:
+    - waypoint:
+        type: function_return
+        location:
+          file_name: C:\ultimate\trunk\examples\witness-checking\regression\violation\recursive_sum.c
+          file_hash: UNUSED
+          line: 3
+          column: 18
+          function: sum
+        action: follow
+  - segment:
+    - waypoint:
+        type: function_return
+        location:
+          file_name: C:\ultimate\trunk\examples\witness-checking\regression\violation\recursive_sum.c
+          file_hash: UNUSED
+          line: 3
+          column: 18
+          function: sum
+        action: follow
+  - segment:
+    - waypoint:
+        type: function_return
+        location:
+          file_name: C:\ultimate\trunk\examples\witness-checking\regression\violation\recursive_sum.c
+          file_hash: UNUSED
+          line: 8
+          column: 13
+          function: main
+        action: follow
+  - segment:
+    - waypoint:
+        type: branching
+        constraint:
+          value: 'true'
+        location:
+          file_name: C:\ultimate\trunk\examples\witness-checking\regression\violation\recursive_sum.c
+          file_hash: UNUSED
+          line: 8
+          column: 3
+          function: main
+        action: follow
+  - segment:
+    - waypoint:
+        type: target
+        location:
+          file_name: C:\ultimate\trunk\examples\witness-checking\regression\violation\recursive_sum.c
+          file_hash: UNUSED
+          line: 8
+          column: 20
+          function: main
+        action: follow

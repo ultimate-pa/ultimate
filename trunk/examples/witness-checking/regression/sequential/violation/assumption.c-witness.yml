@@ -1,0 +1,52 @@
+- entry_type: violation_sequence
+  metadata:
+    format_version: '2.0'
+    uuid: a37e5c87-7796-45a9-81cd-845b2c27540e
+    creation_time: '2024-07-03T16:26:17+02:00'
+    producer:
+      name: manual
+      version: manual
+    task:
+      input_files:
+      - C:\ultimate\trunk\examples\witness-checking\regression\violation\assumption.c
+      input_file_hashes:
+        C:\ultimate\trunk\examples\witness-checking\regression\violation\assumption.c: UNUSED
+      specification: UNUSED
+      data_model: UNUSED
+      language: C
+  content:
+  - segment:
+    - waypoint:
+        type: assumption
+        constraint:
+          value: 'x >= 0'
+          format: c_expression
+        location:
+          file_name: C:\ultimate\trunk\examples\witness-checking\regression\violation\assumption.c
+          file_hash: UNUSED
+          line: 3
+          column: 3
+          function: main
+        action: follow
+  - segment:
+    - waypoint:
+        type: branching
+        constraint:
+          value: 'true'
+        location:
+          file_name: C:\ultimate\trunk\examples\witness-checking\regression\violation\assumption.c
+          file_hash: UNUSED
+          line: 3
+          column: 3
+          function: main
+        action: follow
+  - segment:
+    - waypoint:
+        type: target
+        location:
+          file_name: C:\ultimate\trunk\examples\witness-checking\regression\violation\assumption.c
+          file_hash: UNUSED
+          line: 3
+          column: 15
+          function: main
+        action: follow
