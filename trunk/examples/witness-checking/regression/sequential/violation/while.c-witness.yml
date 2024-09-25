@@ -1,0 +1,48 @@
+- entry_type: violation_sequence
+  metadata:
+    format_version: '2.0'
+    uuid: 002685c9-3af2-4d29-9495-288f92bed8cb
+    creation_time: '2024-07-03T17:26:36+02:00'
+    producer:
+      name: UNUSED
+      version: 0.2.4-dev-3404799-m
+    task:
+      input_files:
+      - C:\ultimate\trunk\examples\witness-checking\regression\violation\while.c
+      input_file_hashes:
+        C:\ultimate\trunk\examples\witness-checking\regression\violation\while.c: UNUSED
+      specification: UNUSED
+      data_model: UNUSED
+      language: C
+  content:
+  - segment:
+    - waypoint:
+        type: branching
+        constraint:
+          value: 'true'
+        location:
+          file_name: C:\ultimate\trunk\examples\witness-checking\regression\violation\while.c
+          file_hash: UNUSED
+          line: 3
+          function: main
+        action: follow
+  - segment:
+    - waypoint:
+        type: branching
+        constraint:
+          value: 'false'
+        location:
+          file_name: C:\ultimate\trunk\examples\witness-checking\regression\violation\while.c
+          file_hash: UNUSED
+          line: 3
+          function: main
+        action: follow
+  - segment:
+    - waypoint:
+        type: target
+        location:
+          file_name: C:\ultimate\trunk\examples\witness-checking\regression\violation\while.c
+          file_hash: UNUSED
+          line: 4
+          function: main
+        action: follow
