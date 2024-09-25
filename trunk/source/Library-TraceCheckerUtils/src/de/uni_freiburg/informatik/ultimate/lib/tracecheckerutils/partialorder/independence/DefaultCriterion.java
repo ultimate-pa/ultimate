@@ -28,9 +28,8 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.i
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
- * Default criterion for conditional commutativity checking.
- *
- * TODO This documentation does not explain anything. What does "default" mean?
+ * Default criterion for conditional commutativity checking, which represents the case where no criterion should be
+ * used.
  *
  * @author Marcel Ebbinghaus
  *

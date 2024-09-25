@@ -383,9 +383,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 			switchToReadonlyMode();
 			return mCounterexample == null;
 		} finally {
-			if (mCegarLoopBenchmark.getRunningStopwatches().get("EmptinessCheckTime").equals(Boolean.TRUE)) {
-				mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.EmptinessCheckTime);
-			}
+			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.EmptinessCheckTime);
 		}
 	}
 
@@ -621,7 +619,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 				mCriterion = new SleepSetCriterion<>();
 				break;
 			case FORWARD:
-				mCriterion = new ForwardCriterion<>(mAbstraction, mPOR.getIndependence(0));
+				mCriterion = new ForwardCriterion<>(mAbstraction, mPOR.getIndependence(0), mPOR.getStateSplitter());
 				break;
 			case LOOP:
 				mCriterion = new LoopCriterion<>(mIcfg);

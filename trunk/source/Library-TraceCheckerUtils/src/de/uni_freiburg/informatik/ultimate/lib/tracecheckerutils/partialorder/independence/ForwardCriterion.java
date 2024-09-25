@@ -31,29 +31,44 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.II
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation.Dependence;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.LoopLockstepOrder.PredicateWithLastThread;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderReductionFacade.StateSplitter;
 
+/**
+ * Forward criterion which checks whether one of the letters commutes with any other letter in its successor state.
+ * 
+ * @author Marcel Ebbinghaus
+ *
+ * @param <L>
+ *            Letter type
+ */
 public class ForwardCriterion<L extends IIcfgTransition<?>> implements IConditionalCommutativityCriterion<L> {
 
 	private INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mAbstraction;
 	private final IIndependenceRelation<IPredicate, L> mIndependenceRelation;
+	private StateSplitter<IPredicate> mStateSplitter;
 
+	/**
+	 * Constructor.
+	 * 
+	 * @param abstraction
+	 *            Abstraction
+	 * @param independenceRelation
+	 *            The used independence relation
+	 * @param splitter
+	 *            Splitter to retrieve the predicate
+	 */
 	public ForwardCriterion(final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction,
-			final IIndependenceRelation<IPredicate, L> independenceRelation) {
+			final IIndependenceRelation<IPredicate, L> independenceRelation, final StateSplitter<IPredicate> splitter) {
 		mAbstraction = abstraction;
 		mIndependenceRelation = independenceRelation;
+		mStateSplitter = splitter;
 	}
 
 	@Override
 	public boolean decide(IPredicate state, final L letter1, final L letter2) {
 		IPredicate nextState;
-		// TODO this unpacking of the state is brittle, it will fail for many configurations
-		state = ((SleepPredicate) state).getUnderlying();
-		if (state instanceof PredicateWithLastThread) {
-			state = ((PredicateWithLastThread) state).getUnderlying();
-		}
 
+		state = mStateSplitter.getOriginal(state);
 		for (final OutgoingInternalTransition<L, IPredicate> transition : mAbstraction.internalSuccessors(state,
 				letter1)) {
 			nextState = transition.getSucc();

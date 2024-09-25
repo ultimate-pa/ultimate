@@ -54,12 +54,6 @@ public abstract class StatisticsGeneratorWithStopwatches {
 
 	public abstract String[] getStopwatches();
 
-	// TODO This should not be made available publicly
-	@Deprecated
-	public Map<String, Boolean> getRunningStopwatches() {
-		return mRunningStopwatches;
-	}
-
 	public void start(final Object stopwatchName) {
 		start(stopwatchName.toString());
 	}

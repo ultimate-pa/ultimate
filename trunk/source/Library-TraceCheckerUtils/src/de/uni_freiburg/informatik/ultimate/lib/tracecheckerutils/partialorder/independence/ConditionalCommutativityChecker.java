@@ -158,9 +158,7 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 
 					final TracePredicates trace = mTraceChecker.checkTrace(currentRun, null, condition);
 					mStatisticsUtils.addTraceCheck();
-					if (trace != null) {
-						// mCriterion.updateCondition(condition);
-					} else if (mTraceChecker.wasImperfectProof()) {
+					if (mTraceChecker.wasImperfectProof()) {
 						mStatisticsUtils.addImperfectProof();
 					}
 					return trace;

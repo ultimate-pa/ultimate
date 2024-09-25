@@ -31,6 +31,7 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.MLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.LoopLockstepOrder.PredicateWithLastThread;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderReductionFacade.StateSplitter;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -54,22 +55,7 @@ public class LimitedChecksCriterion<L> implements IConditionalCommutativityCrite
 	@Override
 	public boolean decide(final IPredicate state, final L letter1, final L letter2) {
 		final Pair<L, L> pair = new Pair<>(letter1, letter2);
-		// TODO this unpacking of the state is very brittle, it will fail for many configurations.
-		IPredicate pred = ((SleepPredicate<L>) state).getUnderlying();
-
-		if (pred instanceof PredicateWithLastThread) {
-			pred = ((PredicateWithLastThread) pred).getUnderlying();
-		}
-
-		if ((pred instanceof MLPredicate)) {
-			// TODO What is the purpose of this case?
-			return true;
-		}
-
-		if (mStatementMap.containsKey(pair) && mStatementMap.get(pair) == mLimit) {
-			return false;
-		}
-		return true;
+		return !(mStatementMap.containsKey(pair) && mStatementMap.get(pair) == mLimit);
 	}
 
 	@Override

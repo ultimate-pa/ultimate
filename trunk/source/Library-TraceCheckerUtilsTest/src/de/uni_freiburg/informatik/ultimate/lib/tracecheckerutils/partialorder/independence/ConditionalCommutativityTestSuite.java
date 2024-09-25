@@ -559,17 +559,6 @@ public abstract class ConditionalCommutativityTestSuite implements IMessagePrint
 			assert condition != null : "should not invoke criterion with null condition";
 			return true;
 		}
-		@Override
-		public void updateCriterion(IPredicate state, L letter1, L letter2) {
-			// TODO Auto-generated method stub
-			
-		}
-
-		@Override
-		public void updateAbstraction(INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction) {
-			// TODO Auto-generated method stub
-			
-		}
 	}
 
 	private final class ConditionalCommutativityTestCase implements Comparable<ConditionalCommutativityTestCase> {

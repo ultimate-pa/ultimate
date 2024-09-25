@@ -124,8 +124,7 @@ public class ConditionalCommutativityInterpolantAutomatonProvider<L extends IAct
 			final Set<L> alphabet = new HashSet<>();
 			alphabet.addAll(mAbstraction.getAlphabet());
 			final VpAlphabet<L> vpAlphabet = new VpAlphabet<>(alphabet);
-			final NestedWordAutomaton<L, IPredicate> mAutomaton =
-					new NestedWordAutomaton<>(new AutomataLibraryServices(mServices), vpAlphabet, mFactory);
+			mAutomaton = new NestedWordAutomaton<>(new AutomataLibraryServices(mServices), vpAlphabet, mFactory);
 		}
 	}
 

@@ -35,19 +35,51 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
  *
  * @param <L>
  *            The type of letters.
- * @param <S>
- *            The type of states.
  */
-// TODO needs documentation
 public interface IConditionalCommutativityCriterion<L> {
+
+	/**
+	 * Decide whether we should check for the conditional commutativity of letter1 and letter2 under the given state.
+	 * 
+	 * @param state
+	 *            State
+	 * @param letter1
+	 *            A letter, which should be from an outgoing transition of the given state
+	 * @param letter2
+	 *            Another letter, which should be from an outgoing transition of the given state
+	 * @return true if we should check and false otherwise
+	 */
 	boolean decide(IPredicate state, L letter1, L letter2);
 
+	/**
+	 * Decide whether we should try to proof the given commutativity condition.
+	 * 
+	 * @param condition
+	 *            A commutativity condition
+	 * @return true if we should check and false otherwise
+	 */
 	boolean decide(IPredicate condition);
 
+	/**
+	 * Allows to update the abstraction. Most criteria do not need to do implement this method.
+	 * 
+	 * @param abstraction
+	 *            The abstraction
+	 */
 	default void updateAbstraction(final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction) {
-		// most criteria do not need to do anything here
 	}
 
+	/**
+	 * Allows to update the criterion using the given state and letters. Most criteria do not need to do implement this
+	 * method.
+	 * 
+	 * @param state
+	 *            State
+	 * @param letter1
+	 *            A letter
+	 * @param letter2
+	 *            Another letter
+	 */
 	default void updateCriterion(final IPredicate state, final L letter1, final L letter2) {
 		// most criteria do not need to do anything here
 	}
