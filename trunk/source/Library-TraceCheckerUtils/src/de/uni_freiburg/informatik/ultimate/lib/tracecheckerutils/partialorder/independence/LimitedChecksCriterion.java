@@ -60,9 +60,6 @@ public class LimitedChecksCriterion<L> implements IConditionalCommutativityCrite
 
 	@Override
 	public boolean decide(final IPredicate condition) {
-		if (condition == null) {
-			return false;
-		}
 		return true;
 	}
 

@@ -52,6 +52,6 @@ public class SleepSetCriterion<L> implements IConditionalCommutativityCriterion<
 
 	@Override
 	public boolean decide(final IPredicate condition) {
-		return condition != null;
+		return true;
 	}
 }

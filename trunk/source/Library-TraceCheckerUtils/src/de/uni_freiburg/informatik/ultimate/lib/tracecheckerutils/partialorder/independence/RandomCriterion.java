@@ -67,8 +67,7 @@ public class RandomCriterion<L> implements IConditionalCommutativityCriterion<L>
 
 	@Override
 	public boolean decide(final IPredicate condition) {
-		// TODO Why is this check performed in the RandomCriterion?
-		return condition != null;
+		return true;
 	}
 
 	private Triple<IPredicate, L, L> normalize(final IPredicate state, final L letter1, final L letter2) {

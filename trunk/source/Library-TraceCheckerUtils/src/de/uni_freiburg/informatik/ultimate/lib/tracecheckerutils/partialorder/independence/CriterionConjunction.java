@@ -37,11 +37,11 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
  *            The type of letters.
  */
 // TODO Change the name to reflect what it does
-public class WrapperCriterion<L> implements IConditionalCommutativityCriterion<L> {
+public class CriterionConjunction<L> implements IConditionalCommutativityCriterion<L> {
 	private final IConditionalCommutativityCriterion<L> mCriterion1;
 	private final IConditionalCommutativityCriterion<L> mCriterion2;
 
-	public WrapperCriterion(final IConditionalCommutativityCriterion<L> criterion1,
+	public CriterionConjunction(final IConditionalCommutativityCriterion<L> criterion1,
 			final IConditionalCommutativityCriterion<L> criterion2) {
 		mCriterion1 = criterion1;
 		mCriterion2 = criterion2;

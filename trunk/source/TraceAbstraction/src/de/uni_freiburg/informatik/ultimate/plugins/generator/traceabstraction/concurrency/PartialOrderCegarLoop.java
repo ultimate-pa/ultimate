@@ -99,6 +99,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.in
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.ConditionalCommutativityCheckerVisitor;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.ConditionalCommutativityCounterexampleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.ConditionalCommutativityInterpolantChecker;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.CriterionConjunction;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.DefaultCriterion;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.ForwardCriterion;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IConditionalCommutativityCriterion;
@@ -108,7 +109,6 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.in
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.RandomCriterion;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.SemanticIndependenceConditionGenerator;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.SleepSetCriterion;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.WrapperCriterion;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
@@ -631,12 +631,12 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 
 			if (mPref.useConditionCriterion()) {
 				criterion = new ConditionCriterion<>();
-				mCriterion = new WrapperCriterion<>(mCriterion, criterion);
+				mCriterion = new CriterionConjunction<>(mCriterion, criterion);
 			}
 
 			if (mPref.useLimitedChecksCriterion()) {
 				criterion = new LimitedChecksCriterion<>(mPref.getConComCheckerCriterionLimit());
-				mCriterion = new WrapperCriterion<>(mCriterion, criterion);
+				mCriterion = new CriterionConjunction<>(mCriterion, criterion);
 			}
 
 			final IIcfgSymbolTable symbolTable = mCsToolkit.getSymbolTable();
