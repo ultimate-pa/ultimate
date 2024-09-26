@@ -155,6 +155,8 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	private ConditionalCommutativityChecker<L> mConComChecker;
 	private IDfsVisitor<L, IPredicate> mConComVisitor;
 	private boolean mCounterexampleConComFound;
+	private ConditionalCommutativityStatisticsGenerator mConComCheckerBenchmark =
+			new ConditionalCommutativityStatisticsGenerator();
 
 	public PartialOrderCegarLoop(final DebugIdentifier name,
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> initialAbstraction,
@@ -229,10 +231,12 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 			mCriterion.updateAbstraction(mAbstraction);
 			final ConditionalCommutativityInterpolantChecker<L> conInterpolantProvider =
 					new ConditionalCommutativityInterpolantChecker<>(mServices, mCriterion, relation,
-							mCsToolkit.getManagedScript(), generator, mAbstraction, mFactory, checker,
-							predicateUnifier, new ConditionalCommutativityCheckerStatisticsUtils(mCegarLoopBenchmark));
+							mCsToolkit.getManagedScript(), generator, mAbstraction, mFactory, checker, predicateUnifier,
+							new ConditionalCommutativityCheckerStatisticsUtils(mConComCheckerBenchmark = new ConditionalCommutativityStatisticsGenerator()),
+							mPOR.getStateSplitter());
 			mInterpolAutomaton = conInterpolantProvider.getInterpolants((IRun<L, IPredicate>) mCounterexample,
 					predicates, mInterpolAutomaton);
+			mCegarLoopBenchmark.addConComCheckerData(mConComCheckerBenchmark);
 		}
 
 		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> ia = enhanceInterpolantAutomaton(
@@ -298,15 +302,15 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		final ArrayList<IPredicate> predicates = new ArrayList<>();
 		// cast should be fine, since isAbstractionEmpty() assigns mCounterexample a IRun<L, IPredicate>
 		for (IPredicate pred : ((IRun<L, IPredicate>) mCounterexample).getStateSequence()) {
-			
+
 			final PartialOrderReductionFacade.StateSplitter<IPredicate> splitter = mPOR.getStateSplitter();
 			if (splitter != null) {
 				pred = splitter.getOriginal(pred);
 			}
-			
+
 			if (pred instanceof MLPredicateWithInterpolants) {
 				predicates.add(((MLPredicateWithInterpolants) pred).getInterpolants());
-			} else if (pred instanceof MLPredicate){
+			} else if (pred instanceof MLPredicate) {
 				// TODO When can this happen? If it should never happen, throw an error instead.
 				// It can also be just an MLPredicate (during the first iteration) which doesn't have interpolants
 				// but maybe we should do a case distinction outside of this method instead
@@ -368,8 +372,10 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 						mAbstraction = new InformationStorage<>(mProgram == null ? mAbstraction : mProgram,
 								mItpAutomata, mFactory, PartialOrderCegarLoop::isFalseLiteral);
 						visitor = createVisitor();
-						mCegarLoopBenchmark.addConditionalCommutativityDFSRestart();
+						mConComCheckerBenchmark = new ConditionalCommutativityStatisticsGenerator();
+						mConComCheckerBenchmark.addConditionalCommutativityDFSRestart();	
 						mPOR.apply(mAbstraction, visitor);
+						mCegarLoopBenchmark.addConComCheckerData(mConComCheckerBenchmark);
 					} catch (final AutomataLibraryException e) {
 						// Auto-generated catch block
 						e.printStackTrace();
@@ -405,10 +411,12 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 			final ConditionalCommutativityCounterexampleChecker<L> conCounterexampleChecker =
 					new ConditionalCommutativityCounterexampleChecker<>(mServices, mCriterion, relation,
 							mPOR.getDfsOrder(), mCsToolkit.getManagedScript(), generator, mAbstraction, mFactory,
-							checker, new ConditionalCommutativityCheckerStatisticsUtils(mCegarLoopBenchmark));
+							checker, new ConditionalCommutativityCheckerStatisticsUtils(
+									mConComCheckerBenchmark = new ConditionalCommutativityStatisticsGenerator()));
 
 			mRefinementResult = conCounterexampleChecker.getInterpolants((IRun<L, IPredicate>) mCounterexample,
 					predicates, predicateUnifier);
+			mCegarLoopBenchmark.addConComCheckerData(mConComCheckerBenchmark);
 
 			if (mRefinementResult != null) {
 				mCounterexampleConComFound = true;
@@ -649,7 +657,8 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 			final SemanticIndependenceConditionGenerator generator = new SemanticIndependenceConditionGenerator(
 					mServices, mCsToolkit.getManagedScript(), mPredicateFactory, relation.isSymmetric(), true);
 			mConComChecker = new ConditionalCommutativityChecker<>(mCriterion, relation, mCsToolkit.getManagedScript(),
-					generator, checker, new ConditionalCommutativityCheckerStatisticsUtils(mCegarLoopBenchmark));
+					generator, checker, new ConditionalCommutativityCheckerStatisticsUtils(mConComCheckerBenchmark = new ConditionalCommutativityStatisticsGenerator()));
+			mCegarLoopBenchmark.addConComCheckerData(mConComCheckerBenchmark);
 
 		}
 	}

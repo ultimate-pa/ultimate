@@ -28,50 +28,58 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.c
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IConditionalCommutativityCheckerStatisticsUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.ConditionalCommutativityStatisticsGenerator.ConditionalCommutativityStatisticsDefinitions;
 
 // TODO decouple statistics from CegarLoopStatisticsGenerator!
 // The classes for conditional commutativity should collect their own statistics,
 // which may in the end be added to the CEGAR loop's statistics.
+/**
+ * Implementation of {@link IConditionalCommutativityCheckerStatisticsUtils} which is responsible for managing any
+ * statistics regarding conditional commutativity checks.
+ * 
+ * @author Marcel Ebbinghaus
+ *
+ */
 public class ConditionalCommutativityCheckerStatisticsUtils implements IConditionalCommutativityCheckerStatisticsUtils {
 
-	private final CegarLoopStatisticsGenerator mCegarLoopBenchmark;
+	private final ConditionalCommutativityStatisticsGenerator mGenerator;
 
-	public ConditionalCommutativityCheckerStatisticsUtils(final CegarLoopStatisticsGenerator cegarLoopBenchmark) {
-		mCegarLoopBenchmark = cegarLoopBenchmark;
+	public ConditionalCommutativityCheckerStatisticsUtils(final ConditionalCommutativityStatisticsGenerator generator) {
+		mGenerator = generator;
 	}
 
 	@Override
 	public void startStopwatch() {
-		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.ConditionalCommutativityCheckTime);
+		mGenerator.start(ConditionalCommutativityStatisticsDefinitions.ConditionalCommutativityCheckTime);
 	}
 
 	@Override
 	public void stopStopwatch() {
-		mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.ConditionalCommutativityCheckTime);
+		mGenerator.stop(ConditionalCommutativityStatisticsDefinitions.ConditionalCommutativityCheckTime);
 	}
 
 	@Override
 	public void addDFSRestart() {
-		mCegarLoopBenchmark.addConditionalCommutativityDFSRestart();
+		mGenerator.addConditionalCommutativityDFSRestart();
 	}
 
 	@Override
 	public void addIAIntegration() {
-		mCegarLoopBenchmark.addConditionalCommutativityIAIntegration();
+		mGenerator.addConditionalCommutativityIAIntegration();
 	}
 
 	@Override
 	public void addConditionCalculation() {
-		mCegarLoopBenchmark.addConditionalCommutativityConditionCalculation();
+		mGenerator.addConditionalCommutativityConditionCalculation();
 	}
 
 	@Override
 	public void addTraceCheck() {
-		mCegarLoopBenchmark.addConditionalCommutativityTraceCheck();
+		mGenerator.addConditionalCommutativityTraceCheck();
 	}
 
 	@Override
 	public void addImperfectProof() {
-		mCegarLoopBenchmark.addConditionalCommutativityImperfectProof();
+		mGenerator.addConditionalCommutativityImperfectProof();
 	}
 }

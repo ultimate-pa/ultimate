@@ -43,10 +43,21 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
  */
 // TODO We need to figure out how to appropriately use the existing trace checks (with different strategies, etc.)
 public interface ITraceChecker<L> {
-	// TODO documentation
 	// TODO Why is the run needed, as opposed to just the trace? Which automaton does the run belong to?
+	/**
+	 * Checks whether the given run fulfills the given precondition/postcondition pair.
+	 * 
+	 * @param run
+	 * @param precondition
+	 * @param postcondition
+	 * @return
+	 */
 	public TracePredicates checkTrace(IRun<L, IPredicate> run, IPredicate precondition, IPredicate postcondition);
 
-	// TODO documentation
+	/**
+	 * Allows to detect successful but imperfect proofs
+	 * 
+	 * @return true if the trace check was imperfect
+	 */
 	public boolean wasImperfectProof();
 }

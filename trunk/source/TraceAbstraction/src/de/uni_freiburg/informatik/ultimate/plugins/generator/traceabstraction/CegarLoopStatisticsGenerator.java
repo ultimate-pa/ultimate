@@ -51,12 +51,9 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 	private final StatisticsData mRefinementEngineStatistics = new StatisticsData();
 
 	// TODO Conditional commutativity statistics should not be inlined here.
+	private final StatisticsData mConComCheckerStatistics = new StatisticsData();
 	// TODO They should be collected in their own statistics object, which may then be added here.
-	private int mConditionalCommutativityIAIntegrations = 0;
-	private int mConditionalCommutativityDFSRestarts = 0;
-	private int mConditionalCommutativityConditionCalculations = 0;
-	private int mConditionalCommutativityTraceChecks = 0;
-	private int mConditionalCommutativityImperfectProofs = 0;
+	
 	private int mIterations = 0;
 	private SizeIterationPair mBiggestAbstraction = new SizeIterationPair(-1, -1);
 	private BackwardCoveringInformation mBCI = new BackwardCoveringInformation(0, 0);
@@ -108,25 +105,9 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 	public void addHoareAnnotationData(final IStatisticsDataProvider hasp) {
 		mHoareAnnotationData.aggregateBenchmarkData(hasp);
 	}
-
-	public void addConditionalCommutativityIAIntegration() {
-		mConditionalCommutativityIAIntegrations++;
-	}
-
-	public void addConditionalCommutativityDFSRestart() {
-		mConditionalCommutativityDFSRestarts++;
-	}
-
-	public void addConditionalCommutativityConditionCalculation() {
-		mConditionalCommutativityConditionCalculations++;
-	}
-
-	public void addConditionalCommutativityTraceCheck() {
-		mConditionalCommutativityTraceChecks++;
-	}
-
-	public void addConditionalCommutativityImperfectProof() {
-		mConditionalCommutativityImperfectProofs++;
+	
+	public void addConComCheckerData(final IStatisticsDataProvider cccd) {
+		mConComCheckerStatistics.aggregateBenchmarkData(cccd);
 	}
 
 	/**
@@ -167,7 +148,6 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 		case HoareAnnotationTime:
 		case BasicInterpolantAutomatonTime:
 		case InitialAbstractionConstructionTime:
-		case ConditionalCommutativityCheckTime:
 		case DumpTime:
 			try {
 				return getElapsedTime(key);
@@ -206,16 +186,8 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 			return mHoareAnnotationData;
 		case RefinementEngineStatistics:
 			return mRefinementEngineStatistics;
-		case ConditionalCommutativityIAIntegrations:
-			return mConditionalCommutativityIAIntegrations;
-		case ConditionalCommutativityDFSRestarts:
-			return mConditionalCommutativityDFSRestarts;
-		case ConditionalCommutativityConditionCalculations:
-			return mConditionalCommutativityConditionCalculations;
-		case ConditionalCommutativityTraceChecks:
-			return mConditionalCommutativityTraceChecks;
-		case ConditionalCommutativityImperfectProofs:
-			return mConditionalCommutativityImperfectProofs;
+		case ConComCheckerStatistics:
+			return mConComCheckerStatistics;
 		default:
 			throw new AssertionError("unknown data");
 		}
@@ -235,8 +207,7 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 				CegarLoopStatisticsDefinitions.HoareAnnotationTime.toString(),
 				CegarLoopStatisticsDefinitions.BasicInterpolantAutomatonTime.toString(),
 				CegarLoopStatisticsDefinitions.DumpTime.toString(),
-				CegarLoopStatisticsDefinitions.InitialAbstractionConstructionTime.toString(),
-				CegarLoopStatisticsDefinitions.ConditionalCommutativityCheckTime.toString() };
+				CegarLoopStatisticsDefinitions.InitialAbstractionConstructionTime.toString()};
 	}
 
 }

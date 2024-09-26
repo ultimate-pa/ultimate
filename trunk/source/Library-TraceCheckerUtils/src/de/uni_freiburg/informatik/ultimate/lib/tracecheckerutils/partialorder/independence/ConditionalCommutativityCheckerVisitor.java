@@ -70,7 +70,7 @@ public class ConditionalCommutativityCheckerVisitor<L extends IIcfgTransition<?>
 	private final IUltimateServiceProvider mServices;
 	private final IEmptyStackStateFactory<IPredicate> mEmptyStackStateFactory;
 	private final IPredicateUnifier mPredicateUnifier;
-	private StateSplitter<IPredicate> mSplitter;
+	private StateSplitter<IPredicate> mStateSplitter;
 
 	/**
 	 * Constructs a new instance of ConditionalCommutativityChecker.
@@ -99,7 +99,7 @@ public class ConditionalCommutativityCheckerVisitor<L extends IIcfgTransition<?>
 			final ConditionalCommutativityChecker<L> checker) {
 		super(underlying);
 		mAbstraction = abstraction;
-		mSplitter = splitter;
+		mStateSplitter = splitter;
 		mChecker = checker;
 		mServices = services;
 		mEmptyStackStateFactory = emptyStackStateFactory;
@@ -141,7 +141,7 @@ public class ConditionalCommutativityCheckerVisitor<L extends IIcfgTransition<?>
 			mPendingState = null;
 		}
 
-		IPredicate pred = mSplitter.getOriginal(state);
+		IPredicate pred = mStateSplitter.getOriginal(state);
 
 		// TODO We need to have access on the annotation
 		IPredicate annotation = null;

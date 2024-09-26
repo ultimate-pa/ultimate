@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
- * Loop criterion only for testing!
+ * Loop criterion which checks whether both letters belong to a loop.
  *
  * @author Marcel Ebbinghaus
  *
@@ -49,6 +49,12 @@ public class LoopCriterion<L extends IIcfgTransition<?>> implements IConditional
 	private final Set<IcfgEdge> mLoopEdges;
 	private ArrayDeque<IcfgEdge> mLetterStack;
 
+	/**
+	 * Constructs a loop criterion and collects all loop edges while doing so.
+	 * 
+	 * @param icfg
+	 *            The icfg where the loop edges will be collected from
+	 */
 	public LoopCriterion(final IIcfg<? extends IcfgLocation> icfg) {
 		mLoopheads = icfg.getLoopLocations();
 		mLoopEdges = new HashSet<>();
@@ -65,6 +71,7 @@ public class LoopCriterion<L extends IIcfgTransition<?>> implements IConditional
 
 	// TODO What does this method do exactly?
 	// TODO It should likely not be here
+	// It collects all loop edges
 	private void DFS(final IcfgLocation loc, final IcfgLocation loophead) {
 		if (loc.equals(loophead)) {
 			mLoopEdges.addAll(mLetterStack);

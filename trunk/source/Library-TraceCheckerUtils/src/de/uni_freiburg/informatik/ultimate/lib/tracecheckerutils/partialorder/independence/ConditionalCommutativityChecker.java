@@ -72,11 +72,11 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 	 * @param generator
 	 *            Generator for constructing commutativity conditions
 	 * @param traceChecker
-	 *            An {@link ITraceChecker} responsible for checking whether a condition is feasible
+	 *            An {@link ITraceChecker} responsible for proving that a condition holds after the run given in
+	 *            checkConditionalCommutativity
 	 * @param statisticsUtils
 	 *            An {@link IConditionalCommutativityCheckerStatisticsUtils} used for statistics
 	 */
-	// TODO What does it mean that a condition is "feasible"?
 	public ConditionalCommutativityChecker(final IConditionalCommutativityCriterion<L> criterion,
 			final IIndependenceRelation<IPredicate, L> independenceRelation, final ManagedScript script,
 			final IIndependenceConditionGenerator generator, final ITraceChecker<L> traceChecker,
@@ -94,7 +94,7 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 	 *
 	 * @author Marcel Ebbinghaus
 	 *
-	 * @param run
+	 * @param currentRun
 	 *            The run to state
 	 * @param predicates
 	 *            Predicates used as context for condition generation

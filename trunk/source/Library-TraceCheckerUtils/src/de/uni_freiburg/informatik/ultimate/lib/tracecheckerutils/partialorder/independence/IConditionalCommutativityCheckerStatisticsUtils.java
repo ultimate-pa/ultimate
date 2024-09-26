@@ -25,8 +25,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence;
 
-// TODO what is the purpose of this interface?
-// to dodge package dependencies, since the class which implements this interface lies in traceabstraction
+/**
+ * Interface for all tracked statistics regarding conditional commutativity checking. This interface mainly serves as a
+ * workaround for package dependencies.
+ * 
+ * @author Marcel Ebbinghaus
+ *
+ */
 public interface IConditionalCommutativityCheckerStatisticsUtils {
 	public void startStopwatch();
 
