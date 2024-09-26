@@ -76,8 +76,11 @@ public class TermTransferringIndependenceRelation<L extends IAction> implements 
 
 	@Override
 	public ISymbolicIndependenceRelation<L, IPredicate> getSymbolicRelation() {
-		// TODO not yet supported
-		return null;
+		final var underlying = mUnderlying.getSymbolicRelation();
+		if (underlying == null) {
+			return null;
+		}
+		return new SymbolicTransferringIndependence(underlying);
 	}
 
 	@Override
@@ -103,5 +106,29 @@ public class TermTransferringIndependenceRelation<L extends IAction> implements 
 			tfWithBE = null;
 		}
 		return mCopyFactory.copy(letter, tf, tfWithBE);
+	}
+
+	private class SymbolicTransferringIndependence implements ISymbolicIndependenceRelation<L, IPredicate> {
+		private final ISymbolicIndependenceRelation<L, IPredicate> mUnderlyingSymbolic;
+
+		public SymbolicTransferringIndependence(final ISymbolicIndependenceRelation<L, IPredicate> underlying) {
+			mUnderlyingSymbolic = underlying;
+		}
+
+		@Override
+		public IPredicate getCommutativityCondition(final L a, final L b) {
+			final var aTransferred = transfer(a);
+			final var bTransferred = transfer(b);
+			final var condition = mUnderlyingSymbolic.getCommutativityCondition(aTransferred, bTransferred);
+			if (condition == null) {
+				return null;
+			}
+			return mTransferrer.backTransferPredicate(condition);
+		}
+
+		@Override
+		public boolean isSymmetric() {
+			return mUnderlying.isSymmetric();
+		}
 	}
 }
