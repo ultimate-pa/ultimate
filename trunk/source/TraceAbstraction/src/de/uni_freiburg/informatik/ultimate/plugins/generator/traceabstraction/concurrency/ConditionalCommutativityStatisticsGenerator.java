@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsGeneratorWi
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
 
 /**
+ * Generator for managing statistics regarding conditional commutativity checks.
  * 
  * @author Marcel Ebbinghaus
  *
@@ -75,10 +76,11 @@ public class ConditionalCommutativityStatisticsGenerator extends StatisticsGener
 	public IStatisticsType getBenchmarkType() {
 		return TYPE;
 	}
-	
+
 	@Override
 	public String[] getStopwatches() {
-		return new String[] { ConditionalCommutativityStatisticsDefinitions.ConditionalCommutativityCheckTime.toString() };
+		return new String[] {
+				ConditionalCommutativityStatisticsDefinitions.ConditionalCommutativityCheckTime.toString() };
 	}
 
 	@Override
@@ -107,6 +109,12 @@ public class ConditionalCommutativityStatisticsGenerator extends StatisticsGener
 		}
 	}
 
+	/**
+	 * Enum for statistics regarding conditional commutativity checks.
+	 * 
+	 * @author Marcel Ebbinghaus
+	 *
+	 */
 	public enum ConditionalCommutativityStatisticsDefinitions implements IStatisticsElement {
 		ConditionalCommutativityCheckTime(StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_NANOS),
 

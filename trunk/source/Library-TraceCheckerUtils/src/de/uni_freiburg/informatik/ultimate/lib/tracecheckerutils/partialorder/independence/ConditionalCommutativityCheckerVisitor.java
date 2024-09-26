@@ -203,6 +203,12 @@ public class ConditionalCommutativityCheckerVisitor<L extends IIcfgTransition<?>
 		return result || mAbort;
 	}
 
+	/**
+	 * Allows to check whether the DFS has been aborted due to a successfully found and proven conditional
+	 * commutativity.
+	 * 
+	 * @return true if aborted because of conditional commutativity.
+	 */
 	public boolean aborted() {
 		return mAbort;
 	}

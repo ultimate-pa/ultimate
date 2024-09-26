@@ -26,13 +26,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency;
 
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IConditionalCommutativityCheckerStatisticsUtils;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.ConditionalCommutativityStatisticsGenerator.ConditionalCommutativityStatisticsDefinitions;
 
-// TODO decouple statistics from CegarLoopStatisticsGenerator!
-// The classes for conditional commutativity should collect their own statistics,
-// which may in the end be added to the CEGAR loop's statistics.
 /**
  * Implementation of {@link IConditionalCommutativityCheckerStatisticsUtils} which is responsible for managing any
  * statistics regarding conditional commutativity checks.

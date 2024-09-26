@@ -53,7 +53,7 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 	// TODO Conditional commutativity statistics should not be inlined here.
 	private final StatisticsData mConComCheckerStatistics = new StatisticsData();
 	// TODO They should be collected in their own statistics object, which may then be added here.
-	
+
 	private int mIterations = 0;
 	private SizeIterationPair mBiggestAbstraction = new SizeIterationPair(-1, -1);
 	private BackwardCoveringInformation mBCI = new BackwardCoveringInformation(0, 0);
@@ -105,7 +105,7 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 	public void addHoareAnnotationData(final IStatisticsDataProvider hasp) {
 		mHoareAnnotationData.aggregateBenchmarkData(hasp);
 	}
-	
+
 	public void addConComCheckerData(final IStatisticsDataProvider cccd) {
 		mConComCheckerStatistics.aggregateBenchmarkData(cccd);
 	}
@@ -207,7 +207,7 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 				CegarLoopStatisticsDefinitions.HoareAnnotationTime.toString(),
 				CegarLoopStatisticsDefinitions.BasicInterpolantAutomatonTime.toString(),
 				CegarLoopStatisticsDefinitions.DumpTime.toString(),
-				CegarLoopStatisticsDefinitions.InitialAbstractionConstructionTime.toString()};
+				CegarLoopStatisticsDefinitions.InitialAbstractionConstructionTime.toString() };
 	}
 
 }

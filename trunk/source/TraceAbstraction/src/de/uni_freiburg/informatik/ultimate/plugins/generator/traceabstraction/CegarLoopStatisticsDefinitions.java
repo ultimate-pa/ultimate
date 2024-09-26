@@ -92,7 +92,7 @@ public enum CegarLoopStatisticsDefinitions implements IStatisticsElement {
 
 	// TODO Conditional commutativity statistics should not be inlined here.
 	// TODO They should be collected in their own statistics object, which may then be referenced here
-	// TODO (see e.g. usages of STATISTICS_DATA_AGGREGATION above).	
+	// TODO (see e.g. usages of STATISTICS_DATA_AGGREGATION above).
 	ConComCheckerStatistics(StatisticsType.STATISTICS_DATA_AGGREGATION, StatisticsType.KEY_BEFORE_DATA);
 
 	private final Function<Object, Function<Object, Object>> mAggr;
