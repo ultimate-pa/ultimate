@@ -864,12 +864,22 @@ public final class TransFormulaUtils {
 		final TransFormulaBuilder tfb =
 				new TransFormulaBuilder(tf.getInVars(), tf.getInVars(), tf.getNonTheoryConsts().isEmpty(),
 						tf.getNonTheoryConsts().isEmpty() ? null : tf.getNonTheoryConsts(), true, null, false);
-		tfb.setFormula(computeGuardTerm(services, mgdScript, tf));
+		tfb.setFormula(computeGuardTermHelper(services, mgdScript, tf));
 		tfb.setInfeasibility(tf.isInfeasible());
 		return tfb.finishConstruction(mgdScript);
 	}
 
 	public static Term computeGuardTerm(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final UnmodifiableTransFormula tf) {
+		final var term = computeGuardTermHelper(services, mgdScript, tf);
+
+		// We substitute inVars by default vars of corresponding IProgramVars.
+		final var subst = tf.getInVars().entrySet().stream()
+				.collect(Collectors.toMap(e -> e.getValue(), e -> e.getKey().getTermVariable()));
+		return Substitution.apply(mgdScript, subst, term);
+	}
+
+	private static Term computeGuardTermHelper(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final UnmodifiableTransFormula tf) {
 		final Set<TermVariable> auxVars = new HashSet<>(tf.getAuxVars());
 		auxVars.addAll(tf.getBranchEncoders());
