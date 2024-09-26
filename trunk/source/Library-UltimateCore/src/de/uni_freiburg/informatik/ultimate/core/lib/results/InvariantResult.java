@@ -79,4 +79,8 @@ public class InvariantResult<ELEM extends IElement> extends AbstractResultAtElem
 	public Set<Check> getChecks() {
 		return mChecks;
 	}
+	
+	public boolean isLoopLocation() {
+		return mIsLoopLocation;
+	}
 }
