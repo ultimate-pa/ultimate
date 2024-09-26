@@ -122,7 +122,7 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 							new ConditionalCommutativityInterpolantAutomatonProvider<>(mServices, mAbstraction,
 									mEmptyStackStateFactory, predicateUnifier);
 					conComInterpolantProvider.setInterPolantAutomaton(null);
-					conComInterpolantProvider.addToInterpolantAutomaton(conPredicates, mRun.getWord());
+					conComInterpolantProvider.addToInterpolantAutomaton(conPredicates, currentRun.getWord());
 					final NestedWordAutomaton<L, IPredicate> automaton = conComInterpolantProvider.getInterpolantAutomaton();
 					
 

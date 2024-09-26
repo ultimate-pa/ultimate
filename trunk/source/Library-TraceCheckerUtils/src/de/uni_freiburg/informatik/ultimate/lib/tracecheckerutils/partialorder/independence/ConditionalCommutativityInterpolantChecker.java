@@ -184,7 +184,7 @@ public class ConditionalCommutativityInterpolantChecker<L extends IAction> {
 			conPredicates.addAll(tracePredicates.getPredicates());
 			conPredicates.add(tracePredicates.getPostcondition());
 			// addToCopy(conPredicates);
-			mInterpolantAutomatonProvider.addToInterpolantAutomaton(conPredicates, mRun.getWord());
+			mInterpolantAutomatonProvider.addToInterpolantAutomaton(conPredicates, currentRun.getWord());
 			mStatisticsUtils.addIAIntegration();
 		}
 		return (!conPredicates.isEmpty()
