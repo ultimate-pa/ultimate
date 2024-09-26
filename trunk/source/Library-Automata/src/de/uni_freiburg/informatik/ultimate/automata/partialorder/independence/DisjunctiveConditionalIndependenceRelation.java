@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.partialorder.independence;
 
 import java.util.Collection;
+import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.util.statistics.Aggregate;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
@@ -48,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.PrettyPrint;
 public class DisjunctiveConditionalIndependenceRelation<L, S, C extends Collection<S>>
 		implements IIndependenceRelation<C, L> {
 	private final IIndependenceRelation<S, L> mUnderlying;
+	private final Function<S, C> mBuildSingleton;
 	private final DisjunctiveStatistics mStatistics;
 
 	/**
@@ -57,8 +59,24 @@ public class DisjunctiveConditionalIndependenceRelation<L, S, C extends Collecti
 	 *            The underlying relation which is queried for individual conditions. This relation must be conditional.
 	 */
 	public DisjunctiveConditionalIndependenceRelation(final IIndependenceRelation<S, L> underlying) {
+		this(underlying, null);
+	}
+
+	/**
+	 * Creates a new instance which also provides a corresponding {@link ISymbolicIndependenceRelation}.
+	 *
+	 * @param underlying
+	 *            The underlying relation which is queried for individual conditions. This relation must be conditional.
+	 * @param buildSingleton
+	 *            A function that builds a singleton collection of type {@code C} from an element of type {@code S}.
+	 *            This is used for the corresponding {@link ISymbolicIndependenceRelation}. If this parameter is
+	 *            {@code null}, no symbolic relation can be created.
+	 */
+	public DisjunctiveConditionalIndependenceRelation(final IIndependenceRelation<S, L> underlying,
+			final Function<S, C> buildSingleton) {
 		assert underlying.isConditional() : "Only makes sense for conditional independence relations";
 		mUnderlying = underlying;
+		mBuildSingleton = buildSingleton;
 		mStatistics = new DisjunctiveStatistics();
 	}
 
@@ -103,8 +121,42 @@ public class DisjunctiveConditionalIndependenceRelation<L, S, C extends Collecti
 	}
 
 	@Override
+	public ISymbolicIndependenceRelation<L, C> getSymbolicRelation() {
+		if (mBuildSingleton == null) {
+			return null;
+		}
+		final var underlying = mUnderlying.getSymbolicRelation();
+		if (underlying == null) {
+			return null;
+		}
+		return new SymbolicDisjunctiveIndependence(underlying);
+	}
+
+	@Override
 	public IStatisticsDataProvider getStatistics() {
 		return mStatistics;
+	}
+
+	private class SymbolicDisjunctiveIndependence implements ISymbolicIndependenceRelation<L, C> {
+		private final ISymbolicIndependenceRelation<L, S> mUnderlyingSymbolic;
+
+		public SymbolicDisjunctiveIndependence(final ISymbolicIndependenceRelation<L, S> underlyingSymbolic) {
+			mUnderlyingSymbolic = underlyingSymbolic;
+		}
+
+		@Override
+		public C getCommutativityCondition(final L a, final L b) {
+			final S condition = mUnderlyingSymbolic.getCommutativityCondition(a, b);
+			if (condition == null) {
+				return null;
+			}
+			return mBuildSingleton.apply(condition);
+		}
+
+		@Override
+		public boolean isSymmetric() {
+			return mUnderlyingSymbolic.isSymmetric();
+		}
 	}
 
 	private class DisjunctiveStatistics extends IndependenceStatisticsDataProvider {

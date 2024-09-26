@@ -856,26 +856,30 @@ public final class TransFormulaUtils {
 
 	public static UnmodifiableTransFormula computeGuard(final UnmodifiableTransFormula tf,
 			final ManagedScript mgdScript, final IUltimateServiceProvider services) {
+		if (!tf.getBranchEncoders().isEmpty()) {
+			throw new AssertionError("I think this does not make sense with branch encoders");
+		}
+
+		// yes! outVars of result are indeed the inVars of input
+		final TransFormulaBuilder tfb =
+				new TransFormulaBuilder(tf.getInVars(), tf.getInVars(), tf.getNonTheoryConsts().isEmpty(),
+						tf.getNonTheoryConsts().isEmpty() ? null : tf.getNonTheoryConsts(), true, null, false);
+		tfb.setFormula(computeGuardTerm(services, mgdScript, tf));
+		tfb.setInfeasibility(tf.isInfeasible());
+		return tfb.finishConstruction(mgdScript);
+	}
+
+	public static Term computeGuardTerm(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final UnmodifiableTransFormula tf) {
 		final Set<TermVariable> auxVars = new HashSet<>(tf.getAuxVars());
+		auxVars.addAll(tf.getBranchEncoders());
 		for (final IProgramVar bv : tf.getAssignedVars()) {
 			final TermVariable outVar = tf.getOutVars().get(bv);
 			if (Arrays.asList(tf.getFormula().getFreeVars()).contains(outVar)) {
 				auxVars.add(outVar);
 			}
 		}
-		if (!tf.getBranchEncoders().isEmpty()) {
-			throw new AssertionError("I think this does not make sense with branch enconders");
-		}
-		// yes! outVars of result are indeed the inVars of input
-
-		final Term withoutAuxVars = quantifyAndTryToEliminateAuxVars(services, mgdScript, tf.getFormula(), auxVars);
-
-		final TransFormulaBuilder tfb =
-				new TransFormulaBuilder(tf.getInVars(), tf.getInVars(), tf.getNonTheoryConsts().isEmpty(),
-						tf.getNonTheoryConsts().isEmpty() ? null : tf.getNonTheoryConsts(), true, null, false);
-		tfb.setFormula(withoutAuxVars);
-		tfb.setInfeasibility(tf.isInfeasible());
-		return tfb.finishConstruction(mgdScript);
+		return quantifyAndTryToEliminateAuxVars(services, mgdScript, tf.getFormula(), auxVars);
 	}
 
 	/**

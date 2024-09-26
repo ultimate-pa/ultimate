@@ -117,6 +117,15 @@ public class CachedIndependenceRelation<S, L> implements IIndependenceRelation<S
 	}
 
 	@Override
+	public ISymbolicIndependenceRelation<L, S> getSymbolicRelation() {
+		// TODO Assuming soundness of the underlying symbolic relation, generated conditions could be added to mCache.
+
+		// The generated conditions are not cached for now.
+		// TODO Evaluate if caching of generated conditions is performance-relevant, and possibly implement it.
+		return mUnderlying.getSymbolicRelation();
+	}
+
+	@Override
 	public IStatisticsDataProvider getStatistics() {
 		return mStatistics;
 	}

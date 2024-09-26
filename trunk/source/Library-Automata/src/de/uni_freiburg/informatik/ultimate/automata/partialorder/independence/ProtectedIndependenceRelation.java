@@ -82,6 +82,15 @@ public class ProtectedIndependenceRelation<S, L> implements IIndependenceRelatio
 	}
 
 	@Override
+	public ISymbolicIndependenceRelation<L, S> getSymbolicRelation() {
+		final var underlying = mUnderlying.getSymbolicRelation();
+		if (underlying == null) {
+			return null;
+		}
+		return new SymbolicProtectedIndependence(underlying);
+	}
+
+	@Override
 	public IStatisticsDataProvider getStatistics() {
 		return mStatistics;
 	}
@@ -119,6 +128,27 @@ public class ProtectedIndependenceRelation<S, L> implements IIndependenceRelatio
 		 */
 		default void update(final L a, final L b, final Dependence result) {
 			// by default, do nothing
+		}
+	}
+
+	private class SymbolicProtectedIndependence implements ISymbolicIndependenceRelation<L, S> {
+		private final ISymbolicIndependenceRelation<L, S> mUnderlyingSymbolic;
+
+		public SymbolicProtectedIndependence(final ISymbolicIndependenceRelation<L, S> underlyingSymbolic) {
+			mUnderlyingSymbolic = underlyingSymbolic;
+		}
+
+		@Override
+		public S getCommutativityCondition(final L a, final L b) {
+			if (mFilter.test(a) && mFilter.test(b)) {
+				return mUnderlyingSymbolic.getCommutativityCondition(a, b);
+			}
+			return null;
+		}
+
+		@Override
+		public boolean isSymmetric() {
+			return mUnderlyingSymbolic.isSymmetric();
 		}
 	}
 

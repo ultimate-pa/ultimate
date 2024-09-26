@@ -30,6 +30,7 @@ import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.CachedIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.ISymbolicIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IndependenceStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -93,6 +94,12 @@ public final class SemanticConditionEliminator<L extends IAction> implements IIn
 		final Dependence result = mUnderlying.isIndependent(condition, a, b);
 		mStatistics.reportQuery(result, condition != null);
 		return result;
+	}
+
+	@Override
+	public ISymbolicIndependenceRelation<L, IPredicate> getSymbolicRelation() {
+		// No action needed here. In particular, we do not eliminate any of the generated conditions.
+		return mUnderlying.getSymbolicRelation();
 	}
 
 	@Override

@@ -27,6 +27,9 @@
 package de.uni_freiburg.informatik.ultimate.automata.partialorder.independence;
 
 import java.util.Collection;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
@@ -44,12 +47,32 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
 public class UnionIndependenceRelation<STATE, L> implements IIndependenceRelation<STATE, L> {
 
 	private final Collection<IIndependenceRelation<STATE, L>> mRelations;
+	private final Function<Stream<STATE>, STATE> mAggregateConditions;
 	private final boolean mSymmetric;
 	private final boolean mConditional;
 	private final IndependenceStatisticsDataProvider mStatistics;
 
 	public UnionIndependenceRelation(final Collection<IIndependenceRelation<STATE, L>> relations) {
+		this(relations, null);
+	}
+
+	/**
+	 * Creates a new instance which also provides a corresponding {@link ISymbolicIndependenceRelation}.
+	 *
+	 * @param relations
+	 *            The relations of which the union is taken
+	 * @param aggregateConditions
+	 *            A function that builds aggregates given states under which a pair of letters commutes. This is used to
+	 *            construct conditions for the corresponding symbolic relation.
+	 *
+	 *            The function receives a {@link Stream} such that it can emulate the short-circuiting behaviour of this
+	 *            class: If after some prefix of conditions it is already clear that further conditions will not change
+	 *            the result, the remainder of the stream shall not be consumed (to improve performance).
+	 */
+	public UnionIndependenceRelation(final Collection<IIndependenceRelation<STATE, L>> relations,
+			final Function<Stream<STATE>, STATE> aggregateConditions) {
 		mRelations = relations;
+		mAggregateConditions = aggregateConditions;
 		mSymmetric = relations.stream().allMatch(IIndependenceRelation::isSymmetric);
 		mConditional = relations.stream().anyMatch(IIndependenceRelation::isConditional);
 		mStatistics = new IndependenceStatisticsDataProvider(UnionIndependenceRelation.class, mRelations);
@@ -88,7 +111,39 @@ public class UnionIndependenceRelation<STATE, L> implements IIndependenceRelatio
 	}
 
 	@Override
+	public ISymbolicIndependenceRelation<L, STATE> getSymbolicRelation() {
+		if (mAggregateConditions == null || !mConditional) {
+			return null;
+		}
+		final var symbolicRelations = mRelations.stream().map(IIndependenceRelation::getSymbolicRelation)
+				.filter(r -> r != null).collect(Collectors.toList());
+		if (symbolicRelations.isEmpty()) {
+			return null;
+		}
+		return new SymbolicUnionIndependence(symbolicRelations);
+	}
+
+	@Override
 	public IStatisticsDataProvider getStatistics() {
 		return mStatistics;
+	}
+
+	private class SymbolicUnionIndependence implements ISymbolicIndependenceRelation<L, STATE> {
+		private final Collection<ISymbolicIndependenceRelation<L, STATE>> mSymbolicRelations;
+
+		public SymbolicUnionIndependence(final Collection<ISymbolicIndependenceRelation<L, STATE>> symbolicRelations) {
+			mSymbolicRelations = symbolicRelations;
+		}
+
+		@Override
+		public STATE getCommutativityCondition(final L a, final L b) {
+			return mAggregateConditions.apply(
+					mSymbolicRelations.stream().map(r -> r.getCommutativityCondition(a, b)).filter(c -> c != null));
+		}
+
+		@Override
+		public boolean isSymmetric() {
+			return mSymmetric;
+		}
 	}
 }

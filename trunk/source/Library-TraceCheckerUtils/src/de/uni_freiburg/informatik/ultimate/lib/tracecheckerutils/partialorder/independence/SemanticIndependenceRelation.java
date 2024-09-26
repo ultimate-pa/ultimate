@@ -31,6 +31,7 @@ import java.util.function.Supplier;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.CachedIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.ISymbolicIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.TimedIndependenceStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -40,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.TransferrerWithVariableCache;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
@@ -47,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
@@ -71,6 +74,7 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 	private final ILogger mLogger;
 	private final ManagedScript mManagedScript;
 	private final TransferrerWithVariableCache mTransferrer;
+	private final BasicPredicateFactory mPredicateFactory;
 	private final boolean mConditional;
 	private final boolean mSymmetric;
 
@@ -79,7 +83,7 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 
 	public SemanticIndependenceRelation(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final boolean conditional, final boolean symmetric) {
-		this(services, mgdScript, conditional, symmetric, null);
+		this(services, mgdScript, conditional, symmetric, null, null);
 	}
 
 	/**
@@ -96,13 +100,18 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 	 * @param transferrer
 	 *            Pass this argument if the given actions' transition formulas and the given conditions belong to
 	 *            another script. This transferrer will be used to transfer the terms to {@code mgdScript}.
+	 * @param predicateFactory
+	 *            Used for the symbolic relation returned by {@link #getSymbolicRelation()}. If {@code null} is passed,
+	 *            symbolic relations are not supported.
 	 */
 	public SemanticIndependenceRelation(final IUltimateServiceProvider services, final ManagedScript mgdScript,
-			final boolean conditional, final boolean symmetric, final TransferrerWithVariableCache transferrer) {
+			final boolean conditional, final boolean symmetric, final TransferrerWithVariableCache transferrer,
+			final BasicPredicateFactory predicateFactory) {
 		mServices = services;
 		mManagedScript = mgdScript;
 		mLogger = services.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
 		mTransferrer = transferrer;
+		mPredicateFactory = predicateFactory;
 
 		mConditional = conditional;
 		mSymmetric = symmetric;
@@ -124,6 +133,19 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 		final var result = toDependence(contains(state, a, b));
 		mStatistics.reportQuery(result, mConditional && state != null);
 		return result;
+	}
+
+	@Override
+	public ISymbolicIndependenceRelation<L, IPredicate> getSymbolicRelation() {
+		if (mPredicateFactory == null) {
+			return null;
+		}
+		return new SymbolicSemanticIndependence(mPredicateFactory);
+	}
+
+	@Override
+	public IStatisticsDataProvider getStatistics() {
+		return mStatistics;
 	}
 
 	/**
@@ -244,8 +266,46 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 		throw new IllegalArgumentException("Unknown value: " + value);
 	}
 
-	@Override
-	public IStatisticsDataProvider getStatistics() {
-		return mStatistics;
+	/**
+	 * A symbolic independence relation that synthesizes predicates under which two given actions would commute wrt.
+	 * {@link SemanticIndependenceRelation}. Specifically, the predicates capture precisely what is needed for
+	 * commutativity, as opposed to only a sufficient condition.
+	 *
+	 * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+	 */
+	public class SymbolicSemanticIndependence implements ISymbolicIndependenceRelation<L, IPredicate> {
+		private final BasicPredicateFactory mFactory;
+
+		public SymbolicSemanticIndependence(final BasicPredicateFactory factory) {
+			mFactory = factory;
+		}
+
+		@Override
+		public IPredicate getCommutativityCondition(final L a, final L b) {
+			final var compositions = buildCompositions(a, b);
+			final var tfAB = compositions.getFirst();
+			final var tfBA = compositions.getSecond();
+
+			final Term subset = computeInclusionTerm(tfAB, tfBA);
+			final Term formula;
+			if (!mConditional || SmtUtils.isFalseLiteral(subset)) {
+				formula = subset;
+			} else {
+				final Term superset = computeInclusionTerm(tfBA, tfAB);
+				formula = SmtUtils.and(mManagedScript.getScript(), subset, superset);
+			}
+			return mFactory.newPredicate(formula);
+		}
+
+		private Term computeInclusionTerm(final UnmodifiableTransFormula lhs, final UnmodifiableTransFormula rhs) {
+			final var difference = TransFormulaUtils.intersect(mManagedScript, lhs,
+					TransFormulaUtils.negate(rhs, mManagedScript, mServices));
+			return TransFormulaUtils.computeGuardTerm(mServices, mManagedScript, difference);
+		}
+
+		@Override
+		public boolean isSymmetric() {
+			return mSymmetric;
+		}
 	}
 }

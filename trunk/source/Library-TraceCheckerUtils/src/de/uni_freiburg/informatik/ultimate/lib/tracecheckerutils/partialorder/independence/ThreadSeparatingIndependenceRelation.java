@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.i
 import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.ISymbolicIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IndependenceStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
@@ -46,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
  *            The type of letters whose independence is tracked.
  */
 public class ThreadSeparatingIndependenceRelation<S, L extends IAction> implements IIndependenceRelation<S, L> {
-
 	private final IIndependenceRelation<S, L> mUnderlying;
 	private final SeparatingStatistics mStatistics;
 
@@ -81,8 +81,38 @@ public class ThreadSeparatingIndependenceRelation<S, L extends IAction> implemen
 	}
 
 	@Override
+	public ISymbolicIndependenceRelation<L, S> getSymbolicRelation() {
+		final var underlying = mUnderlying.getSymbolicRelation();
+		if (underlying == null) {
+			return null;
+		}
+		return new SymbolicThreadSeparatingIndependence(underlying);
+	}
+
+	@Override
 	public IStatisticsDataProvider getStatistics() {
 		return mStatistics;
+	}
+
+	private class SymbolicThreadSeparatingIndependence implements ISymbolicIndependenceRelation<L, S> {
+		private final ISymbolicIndependenceRelation<L, S> mUnderlyingSymbolic;
+
+		public SymbolicThreadSeparatingIndependence(final ISymbolicIndependenceRelation<L, S> underlying) {
+			mUnderlyingSymbolic = underlying;
+		}
+
+		@Override
+		public S getCommutativityCondition(final L a, final L b) {
+			if (fromSameThread(a, b)) {
+				return null;
+			}
+			return mUnderlyingSymbolic.getCommutativityCondition(a, b);
+		}
+
+		@Override
+		public boolean isSymmetric() {
+			return mUnderlyingSymbolic.isSymmetric();
+		}
 	}
 
 	private class SeparatingStatistics extends IndependenceStatisticsDataProvider {

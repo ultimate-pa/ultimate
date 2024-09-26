@@ -123,8 +123,9 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 	public static <L extends IAction> PredicateActionIndependenceBuilder.Impl<L> semantic(
 			final IUltimateServiceProvider services, final ManagedScript mgdScript, final boolean conditional,
 			final boolean symmetric, final TransferrerWithVariableCache transferrer) {
+		// TODO support passing predicateFactory to enable symbolic relation
 		return new PredicateActionIndependenceBuilder.Impl<>(
-				new SemanticIndependenceRelation<>(services, mgdScript, conditional, symmetric, transferrer));
+				new SemanticIndependenceRelation<>(services, mgdScript, conditional, symmetric, transferrer, null));
 	}
 
 	/**

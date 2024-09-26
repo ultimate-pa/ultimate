@@ -27,13 +27,14 @@
 package de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.abstraction;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.ISymbolicIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IndependenceStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.ILattice;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
 /**
  * A simple combination of abstraction and independence: This relation applies abstraction to letters at a fixed
- * abstraction levels and queries an underlying independence relation with the abstracted letters.
+ * abstraction level and queries an underlying independence relation with the abstracted letters.
  *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  *
@@ -60,11 +61,6 @@ public class IndependenceRelationWithAbstraction<H, L, S> implements IIndependen
 	}
 
 	@Override
-	public IStatisticsDataProvider getStatistics() {
-		return mStatistics;
-	}
-
-	@Override
 	public boolean isSymmetric() {
 		return mUnderlying.isSymmetric();
 	}
@@ -83,12 +79,46 @@ public class IndependenceRelationWithAbstraction<H, L, S> implements IIndependen
 		return result;
 	}
 
+	@Override
+	public SymbolicIndependenceWithAbstraction<S> getSymbolicRelation() {
+		final var underlyingSymbolic = mUnderlying.getSymbolicRelation();
+		if (underlyingSymbolic == null) {
+			return null;
+		}
+		return new SymbolicIndependenceWithAbstraction<>(underlyingSymbolic);
+	}
+
+	@Override
+	public IStatisticsDataProvider getStatistics() {
+		return mStatistics;
+	}
+
 	public ILattice<H> getHierarchy() {
 		return mAbstraction.getHierarchy();
 	}
 
 	public H getLevel() {
 		return mLevel;
+	}
+
+	public class SymbolicIndependenceWithAbstraction<C> implements ISymbolicIndependenceRelation<L, C> {
+		private final ISymbolicIndependenceRelation<L, C> mUnderlyingSymbolic;
+
+		public SymbolicIndependenceWithAbstraction(final ISymbolicIndependenceRelation<L, C> underlying) {
+			mUnderlyingSymbolic = underlying;
+		}
+
+		@Override
+		public C getCommutativityCondition(final L a, final L b) {
+			final L abstractA = mAbstraction.abstractLetter(a, mLevel);
+			final L abstractB = mAbstraction.abstractLetter(b, mLevel);
+			return mUnderlyingSymbolic.getCommutativityCondition(abstractA, abstractB);
+		}
+
+		@Override
+		public boolean isSymmetric() {
+			return mUnderlyingSymbolic.isSymmetric();
+		}
 	}
 
 	private class AbstractingStatistics extends IndependenceStatisticsDataProvider {

@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
 public class ConditionTransformingIndependenceRelation<S, T, L> implements IIndependenceRelation<S, L> {
 	private final IIndependenceRelation<T, L> mUnderlying;
 	private final Function<S, T> mTransformer;
+	private final Function<T, S> mBackTransformer;
 	private final boolean mConditional;
 	private final IndependenceStatisticsDataProvider mStatistics;
 
@@ -59,13 +60,15 @@ public class ConditionTransformingIndependenceRelation<S, T, L> implements IInde
 	 */
 	public ConditionTransformingIndependenceRelation(final IIndependenceRelation<T, L> underlying,
 			final Function<S, T> transformer) {
-		this(underlying, transformer, underlying.isConditional());
+		// TODO allow passing backtransformer
+		this(underlying, transformer, null, underlying.isConditional());
 	}
 
 	private ConditionTransformingIndependenceRelation(final IIndependenceRelation<T, L> underlying,
-			final Function<S, T> transformer, final boolean conditional) {
+			final Function<S, T> transformer, final Function<T, S> backtransformer, final boolean conditional) {
 		mUnderlying = underlying;
 		mTransformer = transformer;
+		mBackTransformer = backtransformer;
 		mConditional = conditional;
 		mStatistics =
 				new IndependenceStatisticsDataProvider(ConditionTransformingIndependenceRelation.class, underlying);
@@ -90,6 +93,18 @@ public class ConditionTransformingIndependenceRelation<S, T, L> implements IInde
 	}
 
 	@Override
+	public ISymbolicIndependenceRelation<L, S> getSymbolicRelation() {
+		if (!mConditional || mBackTransformer == null) {
+			return null;
+		}
+		final var underlying = mUnderlying.getSymbolicRelation();
+		if (underlying == null) {
+			return null;
+		}
+		return new SymbolicConditionTransformingIndependence(underlying);
+	}
+
+	@Override
 	public IStatisticsDataProvider getStatistics() {
 		return mStatistics;
 	}
@@ -108,6 +123,28 @@ public class ConditionTransformingIndependenceRelation<S, T, L> implements IInde
 	 * @return A new independence relation that discards conditions and then calls the underlying relation.
 	 */
 	public static <S, L> IIndependenceRelation<S, L> unconditional(final IIndependenceRelation<?, L> underlying) {
-		return new ConditionTransformingIndependenceRelation<>(underlying, x -> null, false);
+		return new ConditionTransformingIndependenceRelation<>(underlying, x -> null, null, false);
+	}
+
+	private class SymbolicConditionTransformingIndependence implements ISymbolicIndependenceRelation<L, S> {
+		private final ISymbolicIndependenceRelation<L, T> mUnderlyingSymbolic;
+
+		public SymbolicConditionTransformingIndependence(final ISymbolicIndependenceRelation<L, T> underlyingSymbolic) {
+			mUnderlyingSymbolic = underlyingSymbolic;
+		}
+
+		@Override
+		public S getCommutativityCondition(final L a, final L b) {
+			final T condition = mUnderlyingSymbolic.getCommutativityCondition(a, b);
+			if (condition == null) {
+				return null;
+			}
+			return mBackTransformer.apply(condition);
+		}
+
+		@Override
+		public boolean isSymmetric() {
+			return mUnderlyingSymbolic.isSymmetric();
+		}
 	}
 }
