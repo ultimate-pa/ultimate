@@ -457,7 +457,7 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 		final Set<L> counterexampleLetters = mCounterexample.getWord().asSet();
 		final PathProgramConstructionResult ppcr =
 				PathProgram.constructPathProgram("PathprogramSubtractedCheckIteration" + getIteration(), mIcfg,
-						counterexampleLetters, Collections.emptySet());
+						counterexampleLetters, Collections.emptySet(), x -> true);
 		final Map<IIcfgTransition<?>, IIcfgTransition<?>> oldTransition2NewTransition =
 				ppcr.getOldTransition2NewTransition();
 		final Map<IIcfgTransition<?>, IIcfgTransition<?>> newTransition2OldTransition =
