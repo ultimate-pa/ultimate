@@ -32,7 +32,7 @@ public class ReqCheckRedundancyResult<LOC extends IElement> extends ReqCheckFail
 	 * disjoint of the variable names used in the program that simulates the intersection of automata
 	 */
 	public static Set<String> extractRedundancySet(String invariant) {
-		String regex = "[a-zA-Z_]+[a-zA-Z0-9_]*_total";
+		String regex = "[a-zA-Z_]+[a-zA-Z0-9_]*_ct(0|[1-9][0-9]*)[a-zA-Z0-9_]*_total";
 		Pattern pattern = Pattern.compile(regex);
 		Matcher matcher = pattern.matcher(invariant);
 		
