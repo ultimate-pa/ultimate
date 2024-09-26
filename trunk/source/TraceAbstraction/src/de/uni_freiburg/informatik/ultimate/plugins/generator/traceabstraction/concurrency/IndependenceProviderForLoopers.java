@@ -131,7 +131,7 @@ class IndependenceProviderForLoopers<L extends IIcfgTransition<?>> implements IR
 				.constructEfficientHoareTripleChecker(mServices, HoareTripleChecks.MONOLITHIC, mCsToolkit, unifier);
 
 		final var transferrer = new TransferrerWithVariableCache(mCsToolkit.getManagedScript().getScript(),
-				mIndependenceScript.get(), factory);
+				mIndependenceScript.get(), factory, null);
 		final IHoareTripleChecker transferringHtc =
 				new TransferringHoareTripleChecker(underlyingHtc, transferrer, unifier);
 

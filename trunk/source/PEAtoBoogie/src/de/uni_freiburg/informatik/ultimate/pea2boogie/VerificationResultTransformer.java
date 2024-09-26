@@ -480,7 +480,8 @@ public class VerificationResultTransformer {
 		final Map<TermVariable, Boolean>[] branchEncoders = pe.getBranchEncoders();
 		final List<IAction> rtr = new ArrayList<>();
 
-		final TransferrerWithVariableCache tt = new TransferrerWithVariableCache(mgdScriptAux.getScript(), mgdScriptTc);
+		final TransferrerWithVariableCache tt =
+				new TransferrerWithVariableCache(mgdScriptAux.getScript(), mgdScriptTc, null);
 		for (int i = 0; i < pe.getLength(); i++) {
 			final AtomicTraceElement<? extends IAction> ate = pe.getTraceElement(i);
 

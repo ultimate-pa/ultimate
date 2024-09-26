@@ -122,8 +122,8 @@ public class IndependenceProviderFactory<L extends IIcfgTransition<?>> {
 		}
 
 		// We need to transfer given transition formulas and condition predicates to the independenceScript.
-		final TransferrerWithVariableCache transferrer =
-				new TransferrerWithVariableCache(csToolkit.getManagedScript().getScript(), mIndependenceScript);
+		final TransferrerWithVariableCache transferrer = new TransferrerWithVariableCache(
+				csToolkit.getManagedScript().getScript(), mIndependenceScript, predicateFactory);
 
 		if (settings.getAbstractionType() == AbstractionType.NONE) {
 			// Construct the independence relation (without abstraction). It is the responsibility of the independence
