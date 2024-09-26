@@ -99,8 +99,6 @@ public class VariableAbstraction<L extends IAction>
 		return mSpecific.abstractLetter(inLetter, constraint);
 	}
 
-	// Verband - Lattice
-
 	@Override
 	public ILattice<BitSubSet<IProgramVar>> getHierarchy() {
 		return mHierarchy;
