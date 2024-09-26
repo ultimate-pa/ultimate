@@ -143,7 +143,8 @@ public class VerificationResultTransformer {
 			return null;
 		} else if (result instanceof InvariantResult) {
 			invResult = (InvariantResult<?>) result;
-			if (!invResult.isLoopLocation()) {
+			// Only want to process location invariants
+			if (invResult.isLoopLocation()) {
 				return result;
 			}
 			oldRes = (AbstractResultAtElement<?>) result;
@@ -213,7 +214,7 @@ public class VerificationResultTransformer {
 			final Set<String> redundancySet = ReqCheckRedundancyResult.extractRedundancySet(invariant);
 			// TODO: Apply post-processing to the redundancy set here
 			resultString.append(redundancySet.toString());
-			resultString.append(" derived by loop invariant: ");
+			resultString.append(" derived by location invariant: ");
 			resultString.append(invariant);
 			return new ReqCheckRedundancyResult<>(element, plugin, reqCheck.getReqIds().iterator().next(), resultString.toString());
 		}		
