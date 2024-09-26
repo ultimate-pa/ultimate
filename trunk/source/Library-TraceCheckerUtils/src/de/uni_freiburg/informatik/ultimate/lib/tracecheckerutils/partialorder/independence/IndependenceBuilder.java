@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.ICopyActionFactory;
 
 /**
  * Provides fluent API to create independence relations for software analysis. Usage of this API usually follows 3
@@ -93,39 +94,16 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 	/**
 	 * Create a new instance, with a semantic independence relation as base. See
 	 * {@link SemanticIndependenceRelation::new} for details.
+	 *
+	 * @param mgdScript
+	 *            This script is used for SMT checks
 	 */
 	public static <L extends IAction> PredicateActionIndependenceBuilder.Impl<L> semantic(
 			final IUltimateServiceProvider services, final ManagedScript mgdScript, final boolean conditional,
 			final boolean symmetric) {
-		return semantic(services, mgdScript, conditional, symmetric, null);
-	}
-
-	/**
-	 * Create a new instance, with a semantic independence relation as base. See
-	 * {@link SemanticIndependenceRelation::new} for details.
-	 *
-	 * @param mgdScript
-	 *            This script is used for SMT checks
-	 * @param transferrer
-	 *            TransFormulas of input actions and the formulae of input conditions are assumed to not be created by
-	 *            the given {@code mgdScript}, this is used to transfer them.
-	 */
-	public static <L extends IAction> PredicateActionIndependenceBuilder.Impl<L> semantic(
-			final IUltimateServiceProvider services, final ManagedScript mgdScript,
-			final TransferrerWithVariableCache transferrer, final boolean conditional, final boolean symmetric) {
-		return semantic(services, mgdScript, conditional, symmetric, transferrer);
-	}
-
-	/**
-	 * Create a new instance, with a semantic independence relation as base. See
-	 * {@link SemanticIndependenceRelation::new} for details.
-	 */
-	public static <L extends IAction> PredicateActionIndependenceBuilder.Impl<L> semantic(
-			final IUltimateServiceProvider services, final ManagedScript mgdScript, final boolean conditional,
-			final boolean symmetric, final TransferrerWithVariableCache transferrer) {
 		// TODO support passing predicateFactory to enable symbolic relation
 		return new PredicateActionIndependenceBuilder.Impl<>(
-				new SemanticIndependenceRelation<>(services, mgdScript, conditional, symmetric, transferrer, null));
+				new SemanticIndependenceRelation<>(services, mgdScript, conditional, symmetric, null));
 	}
 
 	/**
@@ -467,6 +445,12 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 				assert mRelation.isConditional() : UNCONDITIONAL_ERROR;
 				return new ActionIndependenceBuilder.Impl<>(
 						new ConditionTransformingIndependenceRelation<>(mRelation, transformer));
+			}
+
+			public Impl<L> transferTerms(final TransferrerWithVariableCache transferrer,
+					final ICopyActionFactory<L> copyFactory, final boolean transferOnlyConditions) {
+				return new Impl<>(new TermTransferringIndependenceRelation<>(mRelation, transferrer, copyFactory,
+						transferOnlyConditions));
 			}
 
 			/**

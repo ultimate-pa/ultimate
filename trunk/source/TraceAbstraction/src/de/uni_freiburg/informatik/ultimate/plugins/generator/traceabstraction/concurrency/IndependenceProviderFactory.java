@@ -156,14 +156,11 @@ public class IndependenceProviderFactory<L extends IIcfgTransition<?>> {
 		assert settings.getIndependenceType() == IndependenceType.SEMANTIC : "unsupported independence type";
 		return IndependenceBuilder
 				// Semantic independence forms the base.
-				// If transition formulas are already transferred to the independenceScript, we need not transfer them
-				// here. Otherwise, pass on the transferrer. Conditions are handled below.
-				.<L> semantic(mServices, independenceScript, tfsAlreadyTransferred ? null : transferrer,
-						settings.useConditional(), !settings.useSemiCommutativity())
-				// If TFs have already been transferred and the relation is conditional, then we need to also transfer
-				// the condition predicates to the independenceScript.
-				.ifThen(tfsAlreadyTransferred && settings.useConditional(),
-						b -> b.withTransformedPredicates(transferrer::transferPredicate))
+				.<L> semantic(mServices, independenceScript, settings.useConditional(),
+						!settings.useSemiCommutativity())
+				// Make sure transition formulas and conditions are transferred to independence script.
+				.ifThen(transferrer != null && (!tfsAlreadyTransferred || settings.useConditional()),
+						b -> b.transferTerms(transferrer, mCopyFactory, tfsAlreadyTransferred))
 				// Protect the SMT solver against checks with quantifiers that are unlikely to succeed anyway.
 				.protectAgainstQuantifiers()
 				// Add syntactic independence check (cheaper sufficient condition).

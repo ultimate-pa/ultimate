@@ -40,7 +40,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.TransferrerWithVariableCache;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -63,7 +62,6 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
  * @param <L>
  *            The type of letters whose independence is checked.
  */
-
 public class SemanticIndependenceRelation<L extends IAction> implements IIndependenceRelation<IPredicate, L> {
 
 	private static final SimplificationTechnique SIMPLIFICATION_TECHNIQUE = SimplificationTechnique.SIMPLIFY_DDA;
@@ -73,7 +71,6 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final ManagedScript mManagedScript;
-	private final TransferrerWithVariableCache mTransferrer;
 	private final BasicPredicateFactory mPredicateFactory;
 	private final boolean mConditional;
 	private final boolean mSymmetric;
@@ -83,7 +80,7 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 
 	public SemanticIndependenceRelation(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final boolean conditional, final boolean symmetric) {
-		this(services, mgdScript, conditional, symmetric, null, null);
+		this(services, mgdScript, conditional, symmetric, null);
 	}
 
 	/**
@@ -97,20 +94,15 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 	 * @param symmetric
 	 *            If set to true, the relation will check for full commutativity. If false, only semicommutativity is
 	 *            checked, which subsumes full commutativity.
-	 * @param transferrer
-	 *            Pass this argument if the given actions' transition formulas and the given conditions belong to
-	 *            another script. This transferrer will be used to transfer the terms to {@code mgdScript}.
 	 * @param predicateFactory
 	 *            Used for the symbolic relation returned by {@link #getSymbolicRelation()}. If {@code null} is passed,
 	 *            symbolic relations are not supported.
 	 */
 	public SemanticIndependenceRelation(final IUltimateServiceProvider services, final ManagedScript mgdScript,
-			final boolean conditional, final boolean symmetric, final TransferrerWithVariableCache transferrer,
-			final BasicPredicateFactory predicateFactory) {
+			final boolean conditional, final boolean symmetric, final BasicPredicateFactory predicateFactory) {
 		mServices = services;
 		mManagedScript = mgdScript;
 		mLogger = services.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
-		mTransferrer = transferrer;
 		mPredicateFactory = predicateFactory;
 
 		mConditional = conditional;
@@ -172,18 +164,7 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 		return and(subset, () -> checkInclusionWithGuard(context, tfBA, tfAB));
 	}
 
-	private UnmodifiableTransFormula getTransFormula(final L a) {
-		return getTransFormula(a.getTransformula());
-	}
-
-	private UnmodifiableTransFormula getTransFormula(final UnmodifiableTransFormula tf) {
-		if (mTransferrer == null) {
-			return tf;
-		}
-		return mTransferrer.transferTransFormula(tf);
-	}
-
-	private final LBool checkInclusionWithGuard(IPredicate context, final UnmodifiableTransFormula ab,
+	private final LBool checkInclusionWithGuard(final IPredicate context, final UnmodifiableTransFormula ab,
 			final UnmodifiableTransFormula ba) {
 		if (context != null && SmtUtils.isFalseLiteral(context.getFormula())) {
 			return LBool.UNSAT;
@@ -202,9 +183,6 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 		if (context == null) {
 			abWithGuard = ab;
 		} else {
-			if (mTransferrer != null) {
-				context = mTransferrer.transferPredicate(context);
-			}
 			final var guard = TransFormulaBuilder.constructTransFormulaFromPredicate(context, mManagedScript);
 
 			// This composition should not introduce auxVars.
@@ -216,8 +194,8 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 	}
 
 	private Pair<UnmodifiableTransFormula, UnmodifiableTransFormula> buildCompositions(final L a, final L b) {
-		final UnmodifiableTransFormula tfA = getTransFormula(a);
-		final UnmodifiableTransFormula tfB = getTransFormula(b);
+		final UnmodifiableTransFormula tfA = a.getTransformula();
+		final UnmodifiableTransFormula tfB = b.getTransformula();
 
 		// Compose the two transition formulas in both orders.
 		// For the composition a*b, only spend time eliminating auxVars if it might be used on the right-hand side of an
