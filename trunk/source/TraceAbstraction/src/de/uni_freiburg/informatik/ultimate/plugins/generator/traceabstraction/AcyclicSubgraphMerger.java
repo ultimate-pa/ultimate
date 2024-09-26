@@ -143,7 +143,7 @@ public class AcyclicSubgraphMerger {
 		{
 			final String identifier = "InductivityChecksStartingFrom_" + initialCopy.getSubgraphStartLocation();
 			final PathProgramConstructionResult pc = PathProgram.constructPathProgram(identifier, initialCopy.getIcfg(),
-					subgraphEdgesInCopy, Collections.singleton(initialCopy.getSubgraphStartLocation()));
+					subgraphEdgesInCopy, Collections.singleton(initialCopy.getSubgraphStartLocation()), x -> false);
 			final Map<IcfgLocation, IcfgLocation> copy2projection = pc.getLocationMapping();
 			final Map<IcfgLocation, IcfgLocation> projection2copy =
 					DataStructureUtils.constructReverseMapping(copy2projection);

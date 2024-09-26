@@ -125,8 +125,8 @@ public final class PathInvariantsGenerator<LETTER extends IAction> implements II
 		final Set<? extends IcfgEdge> allowedTransitions =
 				extractTransitionsFromRun(run, icfg.getCfgSmtToolkit().getIcfgEdgeFactory());
 
-		final PathProgram.PathProgramConstructionResult ppResult = PathProgram
-				.constructPathProgram("PathInvariantsPathProgram", icfg, allowedTransitions, Collections.emptySet());
+		final PathProgram.PathProgramConstructionResult ppResult = PathProgram.constructPathProgram(
+				"PathInvariantsPathProgram", icfg, allowedTransitions, Collections.emptySet(), x -> true);
 		final IIcfg<IcfgLocation> pathProgram = ppResult.getPathProgram();
 		final Map<IcfgLocation, IcfgLocation> inputIcfgLocs2PathProgramLocs = ppResult.getLocationMapping();
 
