@@ -153,6 +153,12 @@ public class VerificationResultTransformer {
 				return null;
 			}
 			reqCheck = (ReqCheck) check.get();
+			// Important if other specs receive invariants too,
+			// in order to prevent the results to slip through to
+			// the last return unhandled
+			if (!reqCheck.getSpec().contains(Spec.REDUNDANCY)) {
+				return result;
+			}
 			isPositive = true;
 		} else {
 			return result;
