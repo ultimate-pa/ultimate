@@ -827,6 +827,9 @@ public class StandardFunctionHandler {
 		fill(map, "strtoull", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 3,
 				new CPrimitive(CPrimitives.ULONGLONG)));
 
+		// https://en.cppreference.com/w/c/string/byte/toupper
+		fill(map, "toupper", this::handleToUpper);
+
 		// https://en.cppreference.com/w/c/string/byte/strtok
 		fill(map, "strtok", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
 				new CPointer(new CPrimitive(CPrimitives.CHAR))));
@@ -3083,6 +3086,32 @@ public class StandardFunctionHandler {
 			final String name) {
 		checkArguments(loc, 1, name, node.getArguments());
 		return handlePrintFunction(main, node, loc);
+	}
+
+	private Result handleToUpper(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+			final String name) {
+		// Translate toupper(x) to x >= 'a' && x <= 'z' ? x - 32 : x
+		// (with 'a' = 97 and 'z' = 122)
+		// This function might translate more lower-case chars (depending on the C locale), but we ignore that for now.
+		checkArguments(loc, 1, name, node.getArguments());
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		final ExpressionResult argRes =
+				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, node.getArguments()[0]);
+		builder.addAllExceptLrValue(argRes);
+		final Expression arg = argRes.getLrValue().getValue();
+		final CPrimitive type = new CPrimitive(CPrimitives.INT);
+		final Expression a = mExpressionTranslation.constructLiteralForIntegerType(loc, type, BigInteger.valueOf(97));
+		final Expression z = mExpressionTranslation.constructLiteralForIntegerType(loc, type, BigInteger.valueOf(122));
+		final Expression greaterA = mExpressionTranslation.constructBinaryComparisonExpression(loc,
+				IASTBinaryExpression.op_greaterEqual, arg, type, a, type);
+		final Expression smallerZ = mExpressionTranslation.constructBinaryComparisonExpression(loc,
+				IASTBinaryExpression.op_lessEqual, arg, type, z, type);
+		final Expression isLower = ExpressionFactory.and(loc, List.of(greaterA, smallerZ));
+		final Expression upperArg =
+				mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_minus, arg, type,
+						mExpressionTranslation.constructLiteralForIntegerType(loc, type, BigInteger.valueOf(32)), type);
+		final Expression ite = ExpressionFactory.constructIfThenElseExpression(loc, isLower, upperArg, arg);
+		return builder.setLrValue(new RValue(ite, type)).build();
 	}
 
 	private boolean isStringLiteral(final IASTInitializerClause expr) {
