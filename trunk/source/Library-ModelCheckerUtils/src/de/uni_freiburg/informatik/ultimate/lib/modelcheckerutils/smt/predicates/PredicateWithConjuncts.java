@@ -54,8 +54,8 @@ public class PredicateWithConjuncts implements IPredicate {
 	protected final Script mScript;
 	private Term mFormula;
 	private Term mClosedFormula;
-	private final Set<IProgramVar> mVars;
-	private final Set<IProgramFunction> mFuns;
+	private Set<IProgramVar> mVars;
+	private Set<IProgramFunction> mFuns;
 	private IPredicate mOld;
 	private IPredicate mNew;
 
@@ -74,8 +74,8 @@ public class PredicateWithConjuncts implements IPredicate {
 		mSerial = serialNumber;
 		mConjuncts = conjuncts;
 		mScript = script;
-		mVars = new HashSet<>();
-		mFuns = new HashSet<>();
+		mVars = null;
+		mFuns = null;
 
 	}
 
@@ -96,8 +96,8 @@ public class PredicateWithConjuncts implements IPredicate {
 			final Script script) {
 		mSerial = serialNumber;
 		mScript = script;
-		mVars = new HashSet<>();
-		mFuns = new HashSet<>();
+		mVars = null;
+		mFuns = null;
 
 		// TODO keeping the reference to the old predicates costs can be extremely expensive in terms of memory!
 		// but it allows to extend the old predicate with the new conjunct instead of rebuilding it all
@@ -182,8 +182,8 @@ public class PredicateWithConjuncts implements IPredicate {
 	@Override
 	public Set<IProgramVar> getVars() {
 		// compute on-demand (and possibly use partial results when constructed from conjunction)
-		if (mVars.isEmpty()) {
-			// TODO why is this a check for emptiness, not null? The set may be legitimately empty.
+		if (mVars == null) {
+			mVars = new HashSet<>();
 			if (mOld != null) {
 				mVars.addAll(mOld.getVars());
 				mVars.addAll(mNew.getVars());
@@ -199,8 +199,8 @@ public class PredicateWithConjuncts implements IPredicate {
 	@Override
 	public Set<IProgramFunction> getFuns() {
 		// compute on-demand (and possibly use partial results when constructed from conjunction)
-		if (mFuns.isEmpty()) {
-			// TODO why is this a check for emptiness, not null? The set may be legitimately empty.
+		if (mFuns == null) {
+			mFuns = new HashSet<>();
 			if (mOld != null) {
 				mFuns.addAll(mOld.getFuns());
 				mFuns.addAll(mNew.getFuns());
