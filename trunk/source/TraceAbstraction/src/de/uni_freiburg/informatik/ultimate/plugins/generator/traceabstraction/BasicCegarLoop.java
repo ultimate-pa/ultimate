@@ -105,6 +105,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Pat
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram.PathProgramConstructionResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgAngelicProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorlocalization.FlowSensitiveFaultLocalizer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorlocalization.TraceAberrantChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.NondeterministicInterpolantAutomaton;
@@ -340,6 +341,7 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 						mCsToolkit.getModifiableGlobalsTable(), mRefinementResult.getPredicateUnifier(),
 						mFaultLocalizationMode, mSimplificationTechnique, mXnfConversionTechnique,
 						mIcfg.getCfgSmtToolkit().getSymbolTable(), (IIcfg<IcfgLocation>) mIcfg);
+				
 				if (!(rcfgProgramExecution instanceof IcfgProgramExecution)) {
 					throw new UnsupportedOperationException("Program execution is not " + IcfgProgramExecution.class);
 				}
@@ -350,6 +352,20 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 					rcfgProgramExecution =
 							new IcfgAngelicProgramExecution<>(rcfgProgramExecution, fl.getAngelicStatus());
 				}
+			}
+			// TODO setting
+			if (true && feasibility == LBool.SAT) {
+				final TraceAberrantChecker<L> tac = new TraceAberrantChecker<>(
+						(NestedRun<L, IPredicate>) mCounterexample, getServices(), mCsToolkit, mPredicateFactory,
+						mCsToolkit.getModifiableGlobalsTable(), mRefinementResult.getPredicateUnifier(),
+						mFaultLocalizationMode, mSimplificationTechnique, mXnfConversionTechnique,
+						mIcfg.getCfgSmtToolkit().getSymbolTable(), (IIcfg<IcfgLocation>) mIcfg);
+				if (!(rcfgProgramExecution instanceof IcfgProgramExecution)) {
+					throw new UnsupportedOperationException("Program execution is not " + IcfgProgramExecution.class);
+				}
+				rcfgProgramExecution = ((IcfgProgramExecution<L>) rcfgProgramExecution)
+						.addRelevanceInformation(tac.getAberranceInformation());
+				
 			}
 		}
 

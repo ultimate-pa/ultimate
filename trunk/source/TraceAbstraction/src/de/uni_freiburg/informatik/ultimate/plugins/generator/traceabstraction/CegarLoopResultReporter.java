@@ -26,13 +26,19 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.BiConsumer;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.OverapproxVariable;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.DataRaceFoundResult;
@@ -44,10 +50,12 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.UserSpecifiedLimitRe
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IRelevanceInformation;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgElement;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -56,6 +64,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgAngelicProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
+
 
 /**
  *
@@ -145,9 +155,35 @@ public final class CegarLoopResultReporter<L extends IIcfgTransition<?>> {
 				new PositiveResult<>(mPluginName, errorLoc, mServices.getBacktranslationService());
 		mReportFunction.accept(errorLoc, pResult);
 	}
-
+	
+	public static <TE extends IElement> Map<String, ILocation> getOverapproximations(final IProgramExecution<TE, ?> pe) {
+		final Map<String, ILocation> result = new HashMap<>();
+		final Iterator<AtomicTraceElement<TE>> iter = pe.iterator();
+		while (iter.hasNext()) {
+			final AtomicTraceElement<TE> currentTraceElement = iter.next();
+			final TE current = currentTraceElement.getTraceElement();
+			final Overapprox overapprox = Overapprox.getAnnotation(current);
+			if (overapprox == null) {
+				continue;
+			}
+			IRelevanceInformation relevanceInformation = currentTraceElement.getRelevanceInformation();
+			if (overapprox instanceof OverapproxVariable && relevanceInformation instanceof AberranceInformation && ((AberranceInformation)relevanceInformation).GetTraceAberrance() == TraceAberrance.NO) {
+				continue;
+			}
+			result.putAll(overapprox.getOverapproximatedLocations());
+		}	
+		return result;
+	}
+	public static <TE extends IElement> List<UnprovabilityReason> getUnprovabilityReasons(final IProgramExecution<TE, ?> pe) {
+	final List<UnprovabilityReason> unproabilityReasons = new ArrayList<>();
+	for (final Entry<String, ILocation> entry : getOverapproximations(pe).entrySet()) {
+		unproabilityReasons
+				.add(new UnprovabilityReason("overapproximation of " + entry.getKey(), entry.getValue()));
+	}
+	return unproabilityReasons;
+}
 	private void reportCounterexampleResult(final IcfgLocation errorLoc, final IProgramExecution<L, Term> pe) {
-		final List<UnprovabilityReason> upreasons = UnprovabilityReason.getUnprovabilityReasons(pe);
+		final List<UnprovabilityReason> upreasons = getUnprovabilityReasons(pe);
 		if (!upreasons.isEmpty()) {
 			reportUnproveableResult(errorLoc, pe, upreasons);
 			return;
