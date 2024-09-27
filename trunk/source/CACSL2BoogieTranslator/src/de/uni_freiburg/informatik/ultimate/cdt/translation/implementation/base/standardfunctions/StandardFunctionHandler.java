@@ -379,6 +379,14 @@ public class StandardFunctionHandler {
 		fill(map, "feof", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
 				new CPrimitive(CPrimitives.INT)));
 
+		// https://en.cppreference.com/w/c/io/fseek
+		fill(map, "fseek", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
+				new CPrimitive(CPrimitives.INT)));
+
+		// https://en.cppreference.com/w/c/io/fread
+		fill(map, "fread", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
+				new CPrimitive(CPrimitives.ULONG)));
+
 		fill(map, "__builtin_memcpy", this::handleMemcpy);
 		fill(map, "__memcpy", this::handleMemcpy);
 		fill(map, "memcpy", this::handleMemcpy);
@@ -819,11 +827,23 @@ public class StandardFunctionHandler {
 		fill(map, "strtoull", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 3,
 				new CPrimitive(CPrimitives.ULONGLONG)));
 
+		// https://en.cppreference.com/w/c/string/byte/strtok
+		fill(map, "strtok", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
+				new CPointer(new CPrimitive(CPrimitives.CHAR))));
+
 		// https://en.cppreference.com/w/c/string/byte/strcat
 		fill(map, "strcat", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
 				new CPointer(new CPrimitive(CPrimitives.CHAR))));
 		// https://en.cppreference.com/w/c/string/byte/strncat
 		fill(map, "strncat", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
+				new CPointer(new CPrimitive(CPrimitives.CHAR))));
+
+		// https://en.cppreference.com/w/c/string/byte/strcspn
+		fill(map, "strcspn", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 2,
+				new CPrimitive(CPrimitives.ULONG)));
+
+		// https://en.cppreference.com/w/c/string/byte/strpbrk
+		fill(map, "strpbrk", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
 				new CPointer(new CPrimitive(CPrimitives.CHAR))));
 
 		// https://en.cppreference.com/w/c/string/byte/memchr
@@ -863,6 +883,10 @@ public class StandardFunctionHandler {
 		// https://en.cppreference.com/w/c/io/setbuf
 		fill(map, "setbuf", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
 				new CPrimitive(CPrimitives.VOID)));
+
+		// https://en.cppreference.com/w/c/io/clearerr
+		// We don't handle the error flags anyway, so we just dispatch the argument.
+		fill(map, "clearerr", (main, node, loc, name) -> handleVoidFunctionBySkipAndDispatch(main, node, loc, name, 1));
 
 		// https://en.cppreference.com/w/c/io/vfprintf
 		fill(map, "vprintf", (main, node, loc, name) -> handlePrintF(main, node, loc));
