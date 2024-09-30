@@ -320,7 +320,7 @@ class TestVector {
 		String valueInRange = null;
 		switch (valueTerm.getSort().getName()) {
 		case SmtSortUtils.FLOATINGPOINT_SORT: {
-			if (type.equals("double")) { // if (type.equals("float")) {
+			if (type.equals("float")) {
 				if (((ApplicationTerm) valueTerm).getParameters().length == 3) {
 					assert valueTerm instanceof ApplicationTerm;
 					// final ApplicationTerm cva = (ApplicationTerm) valueTerm;
@@ -355,7 +355,7 @@ class TestVector {
 					}
 					break;
 				}
-			} else { // if (type.equals("double")) {
+			} else if (type.equals("double")) {
 				assert valueTerm instanceof ApplicationTerm;
 				if (((ApplicationTerm) valueTerm).getParameters().length == 3) {
 					final ApplicationTerm cva = (ApplicationTerm) valueTerm;
@@ -443,7 +443,6 @@ class TestVector {
 			valueInRange = valueTerm.toStringDirect().replaceAll("[\\(\\)\\s]", "");
 			if (valueInRange.contains(".")) {
 				valueInRange = valueInRange.split("\\.")[0];
-
 			}
 			final BigInteger value = new BigInteger(valueInRange);
 			if (type.equals("long")) {
