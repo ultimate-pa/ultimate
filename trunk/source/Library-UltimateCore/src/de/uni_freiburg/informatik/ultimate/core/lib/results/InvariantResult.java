@@ -80,7 +80,7 @@ public class InvariantResult<ELEM extends IElement> extends AbstractResultAtElem
 		return mChecks;
 	}
 	
-	public boolean isLoopLocation() {
+	public boolean isLoopInvariant() {
 		return mIsLoopLocation;
 	}
 }

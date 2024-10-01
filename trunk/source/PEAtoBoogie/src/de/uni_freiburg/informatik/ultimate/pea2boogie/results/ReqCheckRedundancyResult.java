@@ -24,7 +24,7 @@ public class ReqCheckRedundancyResult<LOC extends IElement> extends ReqCheckFail
 	}
 	
 	/*
-	 * Function that parses loop invariants represented by strings. In the terms of the regex,
+	 * Function that parses (loop/location) invariants represented by strings. In the terms of the regex,
 	 * we extract every name of the automata appearing inside of the loop invariant.
 	 * TODO: One issue that persist is if a user names the observable of a requirement
 	 * such that it matches the regex (for example: "input FakeReq_ct0_total_pc IS bool").
