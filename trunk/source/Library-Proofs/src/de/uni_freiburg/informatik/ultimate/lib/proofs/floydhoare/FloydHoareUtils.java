@@ -131,29 +131,6 @@ public final class FloydHoareUtils {
 			}
 			new WitnessInvariant(invResult.getInvariant()).annotate(locNode);
 		}
-		
-		// Temporary hack: Get the invariant of the pre-error location
-		// There exists only one in our use case, needs to be generalized if obtaining
-		// invariants for all pre-error locations is desired
-		//final var errorLocs = IcfgUtils.getErrorLocations(icfg).iterator();
-		//if (errorLocs.hasNext())
-		/*{
-			final var preLocs = errorLocs.next().getIncomingNodes();
-			// Hack: For reqcheck there only exists one pre-error location
-			final var preLoc = preLocs.isEmpty() ? null : preLocs.get(0);
-			if (preLoc != null)
-			{
-				final IPredicate hoare = annotation.getAnnotation(preLoc);
-				if (hoare == null)
-				{
-					return;
-				}
-				final Term formula = hoare.getFormula();
-				final var invResult =
-						new InvariantResult<IIcfgElement>(pluginName, preLoc, backTranslatorService, formula, checks);
-				reporter.accept(invResult);
-			}
-		}*/
 	}
 
 	public static void createProcedureContractResults(final IUltimateServiceProvider services, final String pluginName,
