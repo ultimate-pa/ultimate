@@ -144,7 +144,7 @@ public class VerificationResultTransformer {
 		} else if (result instanceof InvariantResult) {
 			invResult = (InvariantResult<?>) result;
 			// Only want to process location invariants
-			if (invResult.isLoopLocation()) {
+			if (invResult.isLoopInvariant()) {
 				return result;
 			}
 			oldRes = (AbstractResultAtElement<?>) result;
