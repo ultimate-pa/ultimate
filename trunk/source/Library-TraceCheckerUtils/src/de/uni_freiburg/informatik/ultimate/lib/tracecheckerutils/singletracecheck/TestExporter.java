@@ -337,7 +337,7 @@ class TestVector {
 					// significant = significant.replaceAll("[^01]", "");
 					// final String floatAsBitString = sign + exponent + significant;
 					// final int intBits = Integer.parseInt(floatAsBitString, 2);
-					final int intBits = (int) Long.parseLong(floatAsBitString, 2);
+					final int intBits = new BigInteger(floatAsBitString, 2).intValue();
 					final float asFloat = Float.intBitsToFloat(intBits);
 					valueInRange = asFloat + "";
 					break;
@@ -393,6 +393,31 @@ class TestVector {
 
 		}
 		case SmtSortUtils.BITVECTOR_SORT: {
+			if (valueTerm.toStringDirect().startsWith("(fp")) {
+				if (((ApplicationTerm) valueTerm).getParameters().length == 3) {
+					assert valueTerm instanceof ApplicationTerm;
+					// final ApplicationTerm cva = (ApplicationTerm) valueTerm;
+					final String bitString = valueTerm.toStringDirect();
+					final String floatAsBitString = bitString.replaceAll("[^01]", "");
+
+					// String sign = cva.getParameters()[0].toStringDirect();
+					// sign = sign.replaceAll("[^01]", "");
+					//
+					// String exponent = cva.getParameters()[1].toStringDirect();
+					// exponent = exponent.replaceAll("[^01]", "");
+					//
+					// String significant = cva.getParameters()[2].toStringDirect();
+					// significant = significant.replaceAll("[^01]", "");
+					// final String floatAsBitString = sign + exponent + significant;
+					// final int intBits = Integer.parseInt(floatAsBitString, 2);
+					final int intBits = new BigInteger(floatAsBitString, 2).intValue();
+					final float myFloat = Float.intBitsToFloat(intBits);
+
+					valueInRange = myFloat + "";
+					break;
+				}
+			}
+
 			final Matcher m = Pattern.compile("\\(_\\sbv(\\d+)\\s\\d+\\)").matcher(valueTerm.toStringDirect());
 			m.find();
 			valueInRange = m.group(1);
