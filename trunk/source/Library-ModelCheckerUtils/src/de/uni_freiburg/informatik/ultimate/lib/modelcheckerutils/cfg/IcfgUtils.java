@@ -85,6 +85,13 @@ public class IcfgUtils {
 			return loa != null && loa.getLoopEntryType() == LoopEntryType.GOTO;
 		})).collect(Collectors.toSet());
 	}
+	
+	/**
+	 * Collect all program points that are predecessors of an error location
+	 */
+	public static <LOC extends IcfgLocation> Set<LOC> getPreErrorLocations(final IIcfg<LOC> icfg) {
+		return (Set<LOC>) IcfgUtils.getErrorLocations(icfg).stream().map(node -> node.getIncomingNodes()).flatMap(List::stream).collect(Collectors.toSet());
+	}
 
 	/**
 	 * Collect all program points that are predecessors or successors of an {@link IIcfgCallTransition}.
