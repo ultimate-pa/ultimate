@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.ITraceChecker;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IConditionalCommutativityCheckerStatisticsUtils.ConditionalCommutativityStopwatches;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
@@ -110,7 +111,7 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 			final List<IPredicate> predicates, final IPredicate state, final L letter1, final L letter2) {
 
 		try {
-			mStatisticsUtils.startStopwatch();
+			mStatisticsUtils.startStopwatch(ConditionalCommutativityStopwatches.CHECKER);
 			if (mManagedScript.isLocked()) {
 				mManagedScript.requestLockRelease();
 			}
@@ -166,7 +167,7 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 			}
 			return null;
 		} finally {
-			mStatisticsUtils.stopStopwatch();
+			mStatisticsUtils.stopStopwatch(ConditionalCommutativityStopwatches.CHECKER);
 		}
 	}
 

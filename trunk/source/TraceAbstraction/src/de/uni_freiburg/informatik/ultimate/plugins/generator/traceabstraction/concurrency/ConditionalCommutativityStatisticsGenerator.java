@@ -80,6 +80,7 @@ public class ConditionalCommutativityStatisticsGenerator extends StatisticsGener
 	@Override
 	public String[] getStopwatches() {
 		return new String[] {
+				ConditionalCommutativityStatisticsDefinitions.ConditionalCommutativityOverallTime.toString(),
 				ConditionalCommutativityStatisticsDefinitions.ConditionalCommutativityCheckTime.toString() };
 	}
 
@@ -88,6 +89,7 @@ public class ConditionalCommutativityStatisticsGenerator extends StatisticsGener
 		final ConditionalCommutativityStatisticsDefinitions keyEnum =
 				Enum.valueOf(ConditionalCommutativityStatisticsDefinitions.class, key);
 		switch (keyEnum) {
+		case ConditionalCommutativityOverallTime:
 		case ConditionalCommutativityCheckTime:
 			try {
 				return getElapsedTime(key);
@@ -116,6 +118,8 @@ public class ConditionalCommutativityStatisticsGenerator extends StatisticsGener
 	 *
 	 */
 	public enum ConditionalCommutativityStatisticsDefinitions implements IStatisticsElement {
+		ConditionalCommutativityOverallTime(StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_NANOS),
+		
 		ConditionalCommutativityCheckTime(StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_NANOS),
 
 		ConditionalCommutativityIAIntegrations(StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),

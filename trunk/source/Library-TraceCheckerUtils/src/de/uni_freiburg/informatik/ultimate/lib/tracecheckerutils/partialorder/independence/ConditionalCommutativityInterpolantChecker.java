@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.ITraceChecker;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.LoopLockstepOrder.PredicateWithLastThread;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderReductionFacade.StateSplitter;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IConditionalCommutativityCheckerStatisticsUtils.ConditionalCommutativityStopwatches;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
@@ -132,6 +133,7 @@ public class ConditionalCommutativityInterpolantChecker<L extends IAction> {
 	 */
 	public NestedWordAutomaton<L, IPredicate> getInterpolants(final IRun<L, IPredicate> run,
 			final List<IPredicate> runPredicates, final NestedWordAutomaton<L, IPredicate> interpolantAutomaton) {
+		mStatisticsUtils.startStopwatch(ConditionalCommutativityStopwatches.OVERALL);
 		mRun = run;
 		mInterpolantAutomatonProvider.setInterPolantAutomaton(createCopy(interpolantAutomaton));
 		// mCopy = createCopy(interpolantAutomaton);
@@ -142,11 +144,15 @@ public class ConditionalCommutativityInterpolantChecker<L extends IAction> {
 			final var transitions = DataStructureUtils.asList(mAbstraction.internalSuccessors(pred).iterator());
 			if (checkState(state, transitions, i, runPredicates)) {
 				// return mCopy;
-				return mInterpolantAutomatonProvider.getInterpolantAutomaton();
+				NestedWordAutomaton<L, IPredicate> automaton = mInterpolantAutomatonProvider.getInterpolantAutomaton();
+				mStatisticsUtils.stopStopwatch(ConditionalCommutativityStopwatches.OVERALL);
+				return automaton;
 			}
 		}
 		// return mCopy;
-		return mInterpolantAutomatonProvider.getInterpolantAutomaton();
+		NestedWordAutomaton<L, IPredicate> automaton = mInterpolantAutomatonProvider.getInterpolantAutomaton();
+		mStatisticsUtils.stopStopwatch(ConditionalCommutativityStopwatches.OVERALL);
+		return automaton;
 	}
 
 	private boolean checkState(final IPredicate state,

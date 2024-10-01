@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.ITraceChecker;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IConditionalCommutativityCheckerStatisticsUtils.ConditionalCommutativityStopwatches;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.util.Lazy;
 
@@ -85,6 +86,7 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 	public BasicRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> getInterpolants(
 			final IRun<L, IPredicate> run, final List<IPredicate> runPredicates,
 			final IPredicateUnifier predicateUnifier) {
+		mStatisticsUtils.startStopwatch(ConditionalCommutativityStopwatches.OVERALL);
 		mRun = run;
 		mPredicateUnifier = predicateUnifier;
 
@@ -130,12 +132,12 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 							new BasicRefinementEngineResult<>(LBool.UNSAT, automaton, null, false,
 									List.of(new QualifiedTracePredicates(tracePredicates, getClass(), false)),
 									new Lazy<>(() -> null), new Lazy<>(() -> predicateUnifier));
-
+					mStatisticsUtils.stopStopwatch(ConditionalCommutativityStopwatches.OVERALL);
 					return refinementResult;
 				}
 			}
 		}
-
+		mStatisticsUtils.stopStopwatch(ConditionalCommutativityStopwatches.OVERALL);
 		return null;
 	}
 
