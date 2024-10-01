@@ -1,6 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.pea2boogie.results;
 
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
@@ -36,7 +36,7 @@ public class ReqCheckRedundancyResult<LOC extends IElement> extends ReqCheckFail
 		Pattern pattern = Pattern.compile(regex);
 		Matcher matcher = pattern.matcher(invariant);
 		
-		Set<String> redundancySet = new HashSet<>();
+		Set<String> redundancySet = new LinkedHashSet<>();
 		
 		while (matcher.find()) {
 			redundancySet.add(matcher.group().split("_ct")[0]);
