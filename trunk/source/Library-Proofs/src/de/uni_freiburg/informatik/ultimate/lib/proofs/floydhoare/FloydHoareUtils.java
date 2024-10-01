@@ -108,11 +108,15 @@ public final class FloydHoareUtils {
 		final var checks = getCheckedSpecifications(icfg, annotation);
 
 		// find all locations that have outgoing edges which are annotated with LoopEntry, i.e., all loop candidates
-		final Set<IcfgLocation> locsForLoopLocations = new HashSet<>();
-		locsForLoopLocations.addAll(IcfgUtils.getPotentialCycleProgramPoints(icfg));
-		locsForLoopLocations.addAll(icfg.getLoopLocations());
-
-		for (final IcfgLocation locNode : locsForLoopLocations) {
+		final Set<IcfgLocation> locsForInvariants = new HashSet<>();
+		locsForInvariants.addAll(IcfgUtils.getPotentialCycleProgramPoints(icfg));
+		locsForInvariants.addAll(icfg.getLoopLocations());
+		
+		// find the predecessor locations of all error locations
+		var test = IcfgUtils.getPreErrorLocations(icfg);
+		locsForInvariants.addAll(test);
+		
+		for (final IcfgLocation locNode : locsForInvariants) {
 			final IPredicate hoare = annotation.getAnnotation(locNode);
 			if (hoare == null) {
 				continue;
@@ -131,9 +135,9 @@ public final class FloydHoareUtils {
 		// Temporary hack: Get the invariant of the pre-error location
 		// There exists only one in our use case, needs to be generalized if obtaining
 		// invariants for all pre-error locations is desired
-		final var errorLocs = IcfgUtils.getErrorLocations(icfg).iterator();
-		if (errorLocs.hasNext())
-		{
+		//final var errorLocs = IcfgUtils.getErrorLocations(icfg).iterator();
+		//if (errorLocs.hasNext())
+		/*{
 			final var preLocs = errorLocs.next().getIncomingNodes();
 			// Hack: For reqcheck there only exists one pre-error location
 			final var preLoc = preLocs.isEmpty() ? null : preLocs.get(0);
@@ -149,7 +153,7 @@ public final class FloydHoareUtils {
 						new InvariantResult<IIcfgElement>(pluginName, preLoc, backTranslatorService, formula, checks);
 				reporter.accept(invResult);
 			}
-		}
+		}*/
 	}
 
 	public static void createProcedureContractResults(final IUltimateServiceProvider services, final String pluginName,
