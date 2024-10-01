@@ -661,14 +661,14 @@ public class StandardFunctionHandler {
 		fill(map, "__VERIFIER_nondet__Bool", (main, node, loc, name) -> handleVerifierNondetBool(main, loc));
 		fill(map, "__VERIFIER_nondet_char",
 				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.CHAR)));
-		fill(map, "__VERIFIER_nondet_pchar",
-				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.CHAR)));
+		fill(map, "__VERIFIER_nondet_pchar", (main, node, loc, name) -> handleVerifierNonDet(main, loc,
+				new CPointer(new CPrimitive(CPrimitives.CHAR))));
+		fill(map, "__VERIFIER_nondet_charp", (main, node, loc, name) -> handleVerifierNonDet(main, loc,
+				new CPointer(new CPrimitive(CPrimitives.CHAR))));
 		fill(map, "__VERIFIER_nondet_float",
 				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.FLOAT)));
 		fill(map, "__VERIFIER_nondet_double",
 				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.DOUBLE)));
-		fill(map, "__VERIFIER_nondet_size_t",
-				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.INT)));
 		fill(map, "__VERIFIER_nondet_int",
 				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.INT)));
 		fill(map, "__VERIFIER_nondet_long",
@@ -677,13 +677,11 @@ public class StandardFunctionHandler {
 				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.LONGLONG)));
 		fill(map, "__VERIFIER_nondet_int128",
 				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.INT128)));
-		fill(map, "__VERIFIER_nondet_loff_t",
-				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.LONG)));
 		fill(map, "__VERIFIER_nondet_short",
 				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.SHORT)));
-		fill(map, "__VERIFIER_nondet_pointer", (main, node, loc, name) -> handleVerifierNonDet(main, loc,
-				new CPointer(new CPrimitive(CPrimitives.VOID))));
 		fill(map, "__VERIFIER_nondet_uchar",
+				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.UCHAR)));
+		fill(map, "__VERIFIER_nondet_unsigned_char",
 				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.UCHAR)));
 		fill(map, "__VERIFIER_nondet_unsigned",
 				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.UINT)));
@@ -697,6 +695,22 @@ public class StandardFunctionHandler {
 				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.UINT128)));
 		fill(map, "__VERIFIER_nondet_ushort",
 				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.USHORT)));
+
+		// TODO: These are no predefined types, thus the return value may depend on the benchmark
+		fill(map, "__VERIFIER_nondet_loff_t",
+				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.LONG)));
+		fill(map, "__VERIFIER_nondet_size_t",
+				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.ULONG)));
+		fill(map, "__VERIFIER_nondet_pthread_t",
+				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.ULONG)));
+		fill(map, "__VERIFIER_nondet_sector_t",
+				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.ULONG)));
+		fill(map, "__VERIFIER_nondet_u8",
+				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.UCHAR)));
+		fill(map, "__VERIFIER_nondet_u16",
+				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.USHORT)));
+		fill(map, "__VERIFIER_nondet_u32",
+				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.UINT)));
 
 		fill(map, "__VERIFIER_atomic_begin", (main, node, loc, name) -> handleByFunctionCall(main, node, loc, name,
 				new CPrimitive(CPrimitives.VOID)));

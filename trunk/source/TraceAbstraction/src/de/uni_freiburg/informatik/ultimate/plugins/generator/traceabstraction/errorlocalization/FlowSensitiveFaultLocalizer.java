@@ -146,7 +146,7 @@ public class FlowSensitiveFaultLocalizer<L extends IIcfgTransition<?>> {
 					"doing error localization for trace of length " + counterexample.getLength());
 			throw new ToolchainCanceledException(tce, rti);
 		}
-		mErrorLocalizationStatisticsGenerator.reportSuccesfullyFinished();
+		mErrorLocalizationStatisticsGenerator.reportSuccessfullyFinished();
 		mErrorLocalizationStatisticsGenerator.stopErrorLocalizationTime();
 
 		final StatisticsData stat = new StatisticsData();

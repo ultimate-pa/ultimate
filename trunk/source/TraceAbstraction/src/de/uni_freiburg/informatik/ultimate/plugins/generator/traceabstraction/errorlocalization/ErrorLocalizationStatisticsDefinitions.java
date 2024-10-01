@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
 
 public enum ErrorLocalizationStatisticsDefinitions implements IStatisticsElement {
 
-	SuccesfullyFinished(Result.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
+	SuccessfullyFinished(Result.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
 	ErrorLocalizationTime(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.NANOS_BEFORE_KEY),
 
