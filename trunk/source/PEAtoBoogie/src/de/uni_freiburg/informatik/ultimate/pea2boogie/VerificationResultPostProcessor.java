@@ -36,9 +36,6 @@ public class VerificationResultPostProcessor {
 			var vars = mReqIdToVars.get(reqId);
 			for (var v : vars) {
 				var reqSet = varToReqs.get(v);
-				if (reqSet == null) {
-					continue;
-				}
 				for (var r : reqSet) {
 					if (!newSet.contains(r)) {
 						newSet.add(r);

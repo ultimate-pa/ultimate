@@ -220,10 +220,21 @@ public class VerificationResultTransformer {
 			String redundantId = reqCheck.getReqIds().iterator().next();
 			StringBuilder resultString = new StringBuilder("");
 			final String invariant = invResult.getInvariant();
-			final Set<String> redundancySet = mPostProcessor.variableAnalysis(redundantId, ReqCheckRedundancyResult.extractRedundancySet(invariant));
+			final Set<String> redundancySet = ReqCheckRedundancyResult.extractRedundancySet(invariant);
 			// TODO: Apply post-processing to the redundancy set here
-			resultString.append(redundancySet.toString());
-			resultString.append(" derived by location invariant: ");
+			final Set<String> optimizedRedundancySet = mPostProcessor.variableAnalysis(redundantId, redundancySet);
+			if (redundancySet.size() == optimizedRedundancySet.size()) {
+				resultString.append(redundancySet.toString());
+			} else {
+				resultString.append(optimizedRedundancySet.toString());
+				resultString.append(". Eliminated ");
+				final int eliminatedReqs = redundancySet.size() - optimizedRedundancySet.size();
+				resultString.append(eliminatedReqs);
+				resultString.append(eliminatedReqs == 1 ? " requirement " : " requirements ");
+				resultString.append(" of initial redundancy set ");
+				resultString.append(redundancySet.toString());
+			}
+			resultString.append(" derived by location invariant ");
 			resultString.append(invariant);
 			return new ReqCheckRedundancyResult<>(element, plugin, redundantId, resultString.toString());
 		}		
