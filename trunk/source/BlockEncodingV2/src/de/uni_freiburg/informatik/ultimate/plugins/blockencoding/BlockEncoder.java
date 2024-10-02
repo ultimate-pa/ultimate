@@ -62,7 +62,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding.Simpli
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding.SmallBlockEncoder;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.preferences.BlockEncodingPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.preferences.BlockEncodingPreferences.MinimizeStates;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgSizeBenchmark;
 
 /**
@@ -321,15 +320,16 @@ public final class BlockEncoder {
 		if (node == null) {
 			return false;
 		}
-		if (node instanceof BoogieIcfgLocation) {
-			final BoogieIcfgLocation pp = (BoogieIcfgLocation) node;
-			return pp.isErrorLocation();
-		}
 
 		final String proc = node.getProcedure();
 		final Set<?> errorNodes = icfg.getProcedureErrorNodes().get(proc);
-		if (errorNodes != null && !errorNodes.isEmpty()) {
-			return errorNodes.contains(node);
+		if (errorNodes.contains(node)) {
+			return true;
+		}
+
+		final Set<?> loopHeads = icfg.getLoopLocations();
+		if (loopHeads.contains(node)) {
+			return true;
 		}
 
 		return false;
