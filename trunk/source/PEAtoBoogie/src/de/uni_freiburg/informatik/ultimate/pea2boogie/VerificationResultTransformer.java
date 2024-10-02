@@ -231,7 +231,7 @@ public class VerificationResultTransformer {
 				final int eliminatedReqs = redundancySet.size() - optimizedRedundancySet.size();
 				resultString.append(eliminatedReqs);
 				resultString.append(eliminatedReqs == 1 ? " requirement " : " requirements ");
-				resultString.append(" of initial redundancy set ");
+				resultString.append("of initial redundancy set ");
 				resultString.append(redundancySet.toString());
 			}
 			resultString.append(" derived by location invariant ");
