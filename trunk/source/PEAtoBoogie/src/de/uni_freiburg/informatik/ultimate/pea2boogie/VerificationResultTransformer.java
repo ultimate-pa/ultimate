@@ -117,12 +117,14 @@ public class VerificationResultTransformer {
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final IReqSymbolTable mReqSymbolTable;
+	private final VerificationResultPostProcessor mPostProcessor;
 
 	public VerificationResultTransformer(final ILogger logger, final IUltimateServiceProvider services,
-			final IReqSymbolTable reqSymbolTable) {
+			final IReqSymbolTable reqSymbolTable, final VerificationResultPostProcessor postProcessor) {
 		mLogger = logger;
 		mServices = services;
 		mReqSymbolTable = reqSymbolTable;
+		mPostProcessor = postProcessor;
 	}
 
 	public IResult convertTraceAbstractionResult(final IResult result) {
