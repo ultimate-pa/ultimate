@@ -889,6 +889,20 @@ public class StandardFunctionHandler {
 		fill(map, "vsnprintf_s", this::handleSnPrintF);
 
 		/**
+		 * 7.27 Date and time <time.h>
+		 *
+		 * We just overapproximate all functions
+		 */
+		fill(map, "ctime", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
+				new CPointer(new CPrimitive(CPrimitives.CHAR))));
+		fill(map, "localtime", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
+				new CPointer(new CPrimitive(CPrimitives.VOID))));
+		fill(map, "mktime", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
+				new CPointer(new CPrimitive(CPrimitives.VOID))));
+		fill(map, "strftime", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 4,
+				new CPrimitive(CPrimitives.ULONG)));
+
+		/**
 		 * 7.22.2.1 The rand function
 		 *
 		 * see https://en.cppreference.com/w/c/numeric/random/rand
