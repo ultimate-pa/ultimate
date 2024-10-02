@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -698,6 +699,19 @@ public class Req2BoogieTranslator {
 
 	public List<ReqPeas> getReqPeas() {
 		return Collections.unmodifiableList(mReqPeas);
+	}
+	
+	public HashMap<String, List<PhaseEventAutomata>> getRawPeas() {
+		final var idToPea = new HashMap<String, List<PhaseEventAutomata>>();
+		for (var reqPea : mReqPeas) {
+			var peaList = new ArrayList<PhaseEventAutomata>();
+			var id = reqPea.getPattern().getId();
+			for (var pea : reqPea.getCounterTrace2Pea()) {
+				peaList.add(pea.getValue());
+			}
+			idToPea.put(id, peaList);
+		}
+		return idToPea;
 	}
 
 	private Declaration generateProcedure(final List<DeclarationPattern> init) {
