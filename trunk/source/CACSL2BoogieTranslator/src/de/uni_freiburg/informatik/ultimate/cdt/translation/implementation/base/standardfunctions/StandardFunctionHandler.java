@@ -831,7 +831,7 @@ public class StandardFunctionHandler {
 		fill(map, "toupper", this::handleToUpper);
 
 		// https://en.cppreference.com/w/c/string/byte/strtok
-		fill(map, "strtok", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
+		fill(map, "strtok", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 2,
 				new CPointer(new CPrimitive(CPrimitives.CHAR))));
 
 		// https://en.cppreference.com/w/c/string/byte/strcat
@@ -846,7 +846,7 @@ public class StandardFunctionHandler {
 				new CPrimitive(CPrimitives.ULONG)));
 
 		// https://en.cppreference.com/w/c/string/byte/strpbrk
-		fill(map, "strpbrk", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
+		fill(map, "strpbrk", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 2,
 				new CPointer(new CPrimitive(CPrimitives.CHAR))));
 
 		// https://en.cppreference.com/w/c/string/byte/memchr
