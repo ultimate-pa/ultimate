@@ -537,6 +537,45 @@ public class StandardFunctionHandler {
 		fill(map, "strcpy", this::handleStrCpy);
 		fill(map, "strncpy", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 3,
 				new CPointer(new CPrimitive(CPrimitives.CHAR))));
+		// https://en.cppreference.com/w/c/string/byte/toupper
+		fill(map, "toupper", this::handleToUpper);
+
+		// https://en.cppreference.com/w/c/string/byte/strtok
+		fill(map, "strtok", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 2,
+				new CPointer(new CPrimitive(CPrimitives.CHAR))));
+
+		// https://en.cppreference.com/w/c/string/byte/strcat
+		fill(map, "strcat", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
+				new CPointer(new CPrimitive(CPrimitives.CHAR))));
+		// https://en.cppreference.com/w/c/string/byte/strncat
+		fill(map, "strncat", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
+				new CPointer(new CPrimitive(CPrimitives.CHAR))));
+
+		// https://en.cppreference.com/w/c/string/byte/strcspn
+		fill(map, "strcspn", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 2,
+				new CPrimitive(CPrimitives.ULONG)));
+
+		// https://en.cppreference.com/w/c/string/byte/strpbrk
+		fill(map, "strpbrk", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 2,
+				new CPointer(new CPrimitive(CPrimitives.CHAR))));
+
+		// https://en.cppreference.com/w/c/string/byte/memchr
+		fill(map, "memchr", this::handleMemchr);
+
+		// https://en.cppreference.com/w/c/string/byte/strstr
+		// This is handled the same way as memchr
+		fill(map, "strstr", this::handleMemchr);
+
+		// https://en.cppreference.com/w/cpp/string/byte/strrchr
+		// This is handled the same way as memchr
+		fill(map, "strrchr", this::handleMemchr);
+
+		// https://en.cppreference.com/w/c/string/byte/strerror
+		fill(map, "strerror", this::handleStrerror);
+
+		// https://en.cppreference.com/w/c/string/byte/strspn
+		fill(map, "strspn", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
+				new CPrimitive(CPrimitives.ULONGLONG)));
 
 		/** various float builtins **/
 		fill(map, "nan", (main, node, loc, name) -> handleNaNOrInfinity(loc, name));
@@ -831,46 +870,6 @@ public class StandardFunctionHandler {
 		fill(map, "strtoul", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 3,
 				new CPrimitive(CPrimitives.ULONG)));
 		fill(map, "strtoull", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 3,
-				new CPrimitive(CPrimitives.ULONGLONG)));
-
-		// https://en.cppreference.com/w/c/string/byte/toupper
-		fill(map, "toupper", this::handleToUpper);
-
-		// https://en.cppreference.com/w/c/string/byte/strtok
-		fill(map, "strtok", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 2,
-				new CPointer(new CPrimitive(CPrimitives.CHAR))));
-
-		// https://en.cppreference.com/w/c/string/byte/strcat
-		fill(map, "strcat", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
-				new CPointer(new CPrimitive(CPrimitives.CHAR))));
-		// https://en.cppreference.com/w/c/string/byte/strncat
-		fill(map, "strncat", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
-				new CPointer(new CPrimitive(CPrimitives.CHAR))));
-
-		// https://en.cppreference.com/w/c/string/byte/strcspn
-		fill(map, "strcspn", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 2,
-				new CPrimitive(CPrimitives.ULONG)));
-
-		// https://en.cppreference.com/w/c/string/byte/strpbrk
-		fill(map, "strpbrk", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 2,
-				new CPointer(new CPrimitive(CPrimitives.CHAR))));
-
-		// https://en.cppreference.com/w/c/string/byte/memchr
-		fill(map, "memchr", this::handleMemchr);
-
-		// https://en.cppreference.com/w/c/string/byte/strstr
-		// This is handled the same way as memchr
-		fill(map, "strstr", this::handleMemchr);
-
-		// https://en.cppreference.com/w/cpp/string/byte/strrchr
-		// This is handled the same way as memchr
-		fill(map, "strrchr", this::handleMemchr);
-
-		// https://en.cppreference.com/w/c/string/byte/strerror
-		fill(map, "strerror", this::handleStrerror);
-
-		// https://en.cppreference.com/w/c/string/byte/strspn
-		fill(map, "strspn", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
 				new CPrimitive(CPrimitives.ULONGLONG)));
 
 		// https://en.cppreference.com/w/c/io/putchar
