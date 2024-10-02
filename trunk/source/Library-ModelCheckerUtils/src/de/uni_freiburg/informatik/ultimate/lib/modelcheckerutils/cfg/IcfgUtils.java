@@ -87,7 +87,7 @@ public class IcfgUtils {
 	}
 	
 	/**
-	 * Collect all program points that are predecessors of an error location
+	 * Collect all program points that are predecessors of a final location
 	 */
 	public static <LOC extends IcfgLocation> Set<LOC> getPreErrorLocations(final IIcfg<LOC> icfg) {
 		return (Set<LOC>) IcfgUtils.getErrorLocations(icfg).stream().map(node -> node.getIncomingNodes()).flatMap(List::stream).collect(Collectors.toSet());
