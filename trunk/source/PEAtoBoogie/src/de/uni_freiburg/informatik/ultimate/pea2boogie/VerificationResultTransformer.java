@@ -212,19 +212,20 @@ public class VerificationResultTransformer {
 			return new ReqCheckRtInconsistentResult<>(element, plugin, failurePath);
 		}
 		
-		// If a loop invariant result is present, transform it into the
+		// If an invariant result is present, transform it into the
 		// new output, rather than a generic ReqCheckFailResult
 		if (spec == Spec.REDUNDANCY && invResult != null) {
 			// Annotation needed for the result to know the respective Check
 			reqCheck.annotate(element);
+			String redundantId = reqCheck.getReqIds().iterator().next();
 			StringBuilder resultString = new StringBuilder("");
 			final String invariant = invResult.getInvariant();
-			final Set<String> redundancySet = ReqCheckRedundancyResult.extractRedundancySet(invariant);
+			final Set<String> redundancySet = mPostProcessor.variableAnalysis(redundantId, ReqCheckRedundancyResult.extractRedundancySet(invariant));
 			// TODO: Apply post-processing to the redundancy set here
 			resultString.append(redundancySet.toString());
 			resultString.append(" derived by location invariant: ");
 			resultString.append(invariant);
-			return new ReqCheckRedundancyResult<>(element, plugin, reqCheck.getReqIds().iterator().next(), resultString.toString());
+			return new ReqCheckRedundancyResult<>(element, plugin, redundantId, resultString.toString());
 		}		
 		return new ReqCheckFailResult<>(element, plugin);
 	}
