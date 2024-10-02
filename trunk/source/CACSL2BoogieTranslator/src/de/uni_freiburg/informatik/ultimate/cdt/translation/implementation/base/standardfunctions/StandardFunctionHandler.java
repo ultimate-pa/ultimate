@@ -363,29 +363,35 @@ public class StandardFunctionHandler {
 		// https://en.cppreference.com/w/c/io/puts
 		fill(map, "puts", this::handlePuts);
 
-		// https://en.cppreference.com/w/c/io/fflush
-		fill(map, "fflush", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
+		/**
+		 * 7.21.3 Files
+		 *
+		 * We cannot handle files properly, therefore we just overapproximate. For functions that modify the files, we
+		 * use the "assert false" overapproximation, otherwise we just overapproximate the return value.
+		 */
+		fill(map, "fflush", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
 				new CPrimitive(CPrimitives.INT)));
-
-		// https://en.cppreference.com/w/c/io/fopen
 		fill(map, "fopen", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
 				new CPointer(new CPrimitive(CPrimitives.VOID))));
-
-		// https://en.cppreference.com/w/c/io/fclose
 		fill(map, "fclose", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
 				new CPrimitive(CPrimitives.INT)));
-
-		// https://en.cppreference.com/w/c/io/feof
 		fill(map, "feof", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
 				new CPrimitive(CPrimitives.INT)));
-
-		// https://en.cppreference.com/w/c/io/fseek
 		fill(map, "fseek", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
 				new CPrimitive(CPrimitives.INT)));
-
-		// https://en.cppreference.com/w/c/io/fread
 		fill(map, "fread", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
 				new CPrimitive(CPrimitives.ULONG)));
+		fill(map, "ferror", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
+				new CPrimitive(CPrimitives.INT)));
+		fill(map, "fputs", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
+				new CPrimitive(CPrimitives.INT)));
+		fill(map, "fwrite", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
+				new CPrimitive(CPrimitives.ULONGLONG)));
+		fill(map, "setbuf", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
+				new CPrimitive(CPrimitives.VOID)));
+		// https://en.cppreference.com/w/c/io/clearerr
+		// We don't handle the error flags anyway, so we just dispatch the argument.
+		fill(map, "clearerr", (main, node, loc, name) -> handleVoidFunctionBySkipAndDispatch(main, node, loc, name, 1));
 
 		fill(map, "__builtin_memcpy", this::handleMemcpy);
 		fill(map, "__memcpy", this::handleMemcpy);
@@ -870,26 +876,6 @@ public class StandardFunctionHandler {
 		// https://en.cppreference.com/w/c/io/putchar
 		fill(map, "putchar", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
 				new CPrimitive(CPrimitives.INT)));
-
-		// https://en.cppreference.com/w/c/io/ferror
-		fill(map, "ferror", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
-				new CPrimitive(CPrimitives.INT)));
-
-		// https://en.cppreference.com/w/c/io/fputs
-		fill(map, "fputs", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
-				new CPrimitive(CPrimitives.INT)));
-
-		// https://en.cppreference.com/w/c/io/fwrite
-		fill(map, "fwrite", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
-				new CPrimitive(CPrimitives.ULONGLONG)));
-
-		// https://en.cppreference.com/w/c/io/setbuf
-		fill(map, "setbuf", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
-				new CPrimitive(CPrimitives.VOID)));
-
-		// https://en.cppreference.com/w/c/io/clearerr
-		// We don't handle the error flags anyway, so we just dispatch the argument.
-		fill(map, "clearerr", (main, node, loc, name) -> handleVoidFunctionBySkipAndDispatch(main, node, loc, name, 1));
 
 		// https://en.cppreference.com/w/c/io/vfprintf
 		fill(map, "vprintf", (main, node, loc, name) -> handlePrintF(main, node, loc));
