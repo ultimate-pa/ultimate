@@ -51,7 +51,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.SPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ApplicationTermFinder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
@@ -429,8 +428,8 @@ public class NestedInterpolantsBuilder<L extends IAction> {
 		// matrix
 		final Term matrix = qs.getInnerTerm();
 
-		final ApplicationTermFinder atf = new ApplicationTermFinder("array-ext", false);
-		final Set<ApplicationTerm> arrayExtAppTerms = atf.findMatchingSubterms(matrix);
+		final Set<ApplicationTerm> arrayExtAppTerms = SmtUtils.extractApplicationTerms("array-ext",
+				interpolantWithoutIndices, false);
 		if (arrayExtAppTerms.isEmpty()) {
 			return interpolantWithoutIndices;
 		}
