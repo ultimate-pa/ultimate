@@ -226,23 +226,24 @@ public class VerificationResultTransformer {
 			final String invariant = invResult.getInvariant();
 			final Set<String> redundancySet = ReqCheckRedundancyResult.extractRedundancySet(invariant);
 			// Compare loop invariant to location invariant
-			final int loopLocationDifference = mPostProcessor.getReqBuffer().size() - redundancySet.size();
-			if (loopLocationDifference > 0) {
+			final int loopDifference = mPostProcessor.getReqBuffer().size() - redundancySet.size();
+			if (loopDifference > 0) {
 				debugInfo.append("Eliminated ");
-				debugInfo.append(loopLocationDifference);
-				debugInfo.append(loopLocationDifference == 1 ? " requirement " : " requirements ");
+				debugInfo.append(loopDifference);
+				debugInfo.append(loopDifference == 1 ? " requirement " : " requirements ");
 				debugInfo.append("by considering location invariant over loop invariant. ");
 			}
 			// Apply post-processing to the redundancy set here
 			final Set<String> optimizedRedundancySet = mPostProcessor.variableAnalysis(redundantId, redundancySet);
 			if (redundancySet.size() > optimizedRedundancySet.size()) {
-				debugInfo.append(optimizedRedundancySet.toString());
+	
 				debugInfo.append("Eliminated ");
 				final int eliminatedReqs = redundancySet.size() - optimizedRedundancySet.size();
 				debugInfo.append(eliminatedReqs);
 				debugInfo.append(eliminatedReqs == 1 ? " requirement " : " requirements ");
 				debugInfo.append("of initial redundancy set ");
 				debugInfo.append(redundancySet.toString());
+				debugInfo.append(" by variable analysis. ");
 			}
 			debugInfo.append("Redundancy set derived by location invariant: ");
 			debugInfo.append(invariant);
