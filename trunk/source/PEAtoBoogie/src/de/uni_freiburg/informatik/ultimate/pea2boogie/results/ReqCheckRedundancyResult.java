@@ -11,16 +11,18 @@ public class ReqCheckRedundancyResult<LOC extends IElement> extends ReqCheckFail
 
 	private String mReqName;
 	private String mRedundancySet;
+	private String mDebugInfo;
 	
-	public ReqCheckRedundancyResult(LOC element, String plugin, String reqName, String redundancySet) {
+	public ReqCheckRedundancyResult(LOC element, String plugin, String reqName, String redundancySet, String debugInfo) {
 		super(element, plugin);
 		mReqName = reqName;
 		mRedundancySet = redundancySet;
+		mDebugInfo = debugInfo;
 	}
 
 	@Override
 	public String getLongDescription() {
-		return "Extracted redundancy set for " + mReqName + ": " + mRedundancySet;
+		return "Extracted redundancy set for " + mReqName + ": " + mRedundancySet + ". " + mDebugInfo;
 	}
 	
 	/*

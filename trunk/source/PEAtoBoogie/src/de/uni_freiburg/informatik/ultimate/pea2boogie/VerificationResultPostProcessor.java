@@ -12,8 +12,10 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 public class VerificationResultPostProcessor {
 
 	private final HashMap<String, Set<String>> mReqIdToVars;
+	private Set<String> mReqBuffer;
 	
 	public VerificationResultPostProcessor(final HashMap<String, List<PhaseEventAutomata>> reqIdToPeas) {
+		mReqBuffer = new HashSet<>();
 		mReqIdToVars = new HashMap<String, Set<String>>();
 		reqIdToPeas.forEach((id, peas) -> {
 			var varSet = new HashSet<String>();
@@ -62,5 +64,13 @@ public class VerificationResultPostProcessor {
 			}
 		}
 		return varToReqs;
+	}
+	
+	public void setReqBuffer(Set<String> reqs) {
+		mReqBuffer = reqs;
+	}
+	
+	public Set<String> getReqBuffer() {
+		return mReqBuffer;
 	}
 }
