@@ -171,8 +171,7 @@ public class Interpolator<LETTER extends IIcfgTransition<?>> {
 				mPrefs.getCfgSmtToolkit(), mScript, (PredicateFactory) mPredicateUnifier.getPredicateFactory(),
 				mPredicateUnifier, mPrefs.getAssertCodeBlockOrder(), mPrefs.computeCounterexample(),
 				mPrefs.collectInterpolantStatistics(), InterpolationTechnique.Craig_NestedInterpolation,
-				instanticateArrayExt, mPrefs.getXnfConversionTechnique(), mPrefs.getSimplificationTechnique(),
-				innerRecursiveNestedInterpolationCall);
+				instanticateArrayExt, mPrefs.getSimplificationTechnique(), innerRecursiveNestedInterpolationCall);
 		mTraceCheckResult = itcc.isCorrect();
 		if (mTraceCheckResult == LBool.UNSAT) {
 			return itcc.getInterpolants();

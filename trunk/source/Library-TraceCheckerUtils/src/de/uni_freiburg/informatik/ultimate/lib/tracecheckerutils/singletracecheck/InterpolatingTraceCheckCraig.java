@@ -53,7 +53,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckStatisticsGenerator.InterpolantType;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
@@ -82,11 +81,10 @@ public class InterpolatingTraceCheckCraig<L extends IAction> extends Interpolati
 			final IPredicateUnifier predicateUnifier, final AssertCodeBlockOrder assertCodeBlockOrder,
 			final boolean computeRcfgProgramExecution, final boolean collectInterpolantStatistics,
 			final InterpolationTechnique interpolation, final boolean instanticateArrayExt,
-			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique,
-			final boolean innerRecursiveNestedInterpolationCall) {
+			final SimplificationTechnique simplificationTechnique, final boolean innerRecursiveNestedInterpolationCall) {
 		super(precondition, postcondition, pendingContexts, trace, controlLocationSequence, services, csToolkit,
 				mgdScriptTc, predicateFactory, predicateUnifier, assertCodeBlockOrder, computeRcfgProgramExecution,
-				collectInterpolantStatistics, simplificationTechnique, xnfConversionTechnique);
+				collectInterpolantStatistics, simplificationTechnique);
 		if (assertCodeBlockOrder.getAssertCodeBlockOrderType() != AssertCodeBlockOrderType.NOT_INCREMENTALLY) {
 			throw new UnsupportedOperationException("incremental assertion is not available for Craig interpolation");
 		}
@@ -136,12 +134,11 @@ public class InterpolatingTraceCheckCraig<L extends IAction> extends Interpolati
 			final IPredicateUnifier predicateUnifier, final AssertCodeBlockOrder assertCodeBlockOrder,
 			final boolean computeRcfgProgramExecution, final boolean collectInterpolantStatistics,
 			final InterpolationTechnique interpolation, final boolean instanticateArrayExt,
-			final XnfConversionTechnique xnfConversionTechnique,
 			final SimplificationTechnique simplificationTechnique) {
 		this(precondition, postcondition, pendingContexts, trace, controlLocationSequence, services, csToolkit,
 				csToolkit.getManagedScript(), predicateFactory, predicateUnifier, assertCodeBlockOrder,
 				computeRcfgProgramExecution, collectInterpolantStatistics, interpolation, instanticateArrayExt,
-				xnfConversionTechnique, simplificationTechnique, false);
+				simplificationTechnique, false);
 	}
 
 	private InterpolantComputationStatus handleNestedTraceCheckException(final NestedTraceCheckException e) {
@@ -302,7 +299,7 @@ public class InterpolatingTraceCheckCraig<L extends IAction> extends Interpolati
 		final NestedInterpolantsBuilder<L> nib = new NestedInterpolantsBuilder<>(mTcSmtManager, mTraceCheckLock,
 				mAAA.getAnnotatedSsa(), mNsb.getConstants2BoogieVar(), mPredicateUnifier, mPredicateFactory,
 				interpolatedPositions, true, mServices, this, mCfgManagedScript, mInstantiateArrayExt,
-				mSimplificationTechnique, mXnfConversionTechnique);
+				mSimplificationTechnique);
 		mInterpolants = nib.getNestedInterpolants();
 		assert TraceCheckUtils.checkInterpolantsInductivityForward(Arrays.asList(mInterpolants), mTrace, mPrecondition,
 				mPostcondition, mPendingContexts, "Craig", mCsToolkit,
@@ -333,7 +330,7 @@ public class InterpolatingTraceCheckCraig<L extends IAction> extends Interpolati
 		final NestedInterpolantsBuilder<L> nib = new NestedInterpolantsBuilder<>(mTcSmtManager, mTraceCheckLock,
 				mAAA.getAnnotatedSsa(), mNsb.getConstants2BoogieVar(), mPredicateUnifier, mPredicateFactory,
 				newInterpolatedPositions, false, mServices, this, mCfgManagedScript, mInstantiateArrayExt,
-				mSimplificationTechnique, mXnfConversionTechnique);
+				mSimplificationTechnique);
 		mInterpolants = nib.getNestedInterpolants();
 		final IPredicate oldPrecondition = mPrecondition;
 		final IPredicate oldPostcondition = mPostcondition;
@@ -385,8 +382,8 @@ public class InterpolatingTraceCheckCraig<L extends IAction> extends Interpolati
 					interpolantAtReturnPosition, pendingContexts, subtrace, null, mServices, mCsToolkit, mTcSmtManager,
 					mPredicateFactory, mPredicateUnifier, mAssertCodeBlockOrder, false,
 					mTraceCheckBenchmarkGenerator.isCollectingInterpolantSequenceStatistics(),
-					InterpolationTechnique.Craig_NestedInterpolation, mInstantiateArrayExt, mXnfConversionTechnique,
-					mSimplificationTechnique, true);
+					InterpolationTechnique.Craig_NestedInterpolation, mInstantiateArrayExt, mSimplificationTechnique,
+					true);
 			final LBool isSafe = tc.isCorrect();
 			if (isSafe == LBool.SAT) {
 				throw new AssertionError(

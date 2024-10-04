@@ -46,7 +46,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformat
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.IcfgDuplicator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding.IEncoder;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding.InterproceduralSequenzer;
@@ -127,18 +126,15 @@ public final class BlockEncoder {
 	 *            The {@link IIcfg} you wish to encode.
 	 * @param simplificationTechnique
 	 *            The {@link SimplificationTechnique} that should be used.
-	 * @param xnfConversionTechnique
-	 *            The {@link XnfConversionTechnique} that should be used.
 	 */
 	public BlockEncoder(final ILogger logger, final IUltimateServiceProvider services, final IIcfg<?> originalIcfg,
-			final SimplificationTechnique simplificationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique) {
+			final SimplificationTechnique simplificationTechnique) {
 		mServices = services;
 		mLogger = logger;
 		mRunAsPlugin = false;
 		mBacktranslator = new BlockEncodingBacktranslator(IcfgEdge.class, Term.class, mLogger);
 		final CfgSmtToolkit toolkit = originalIcfg.getCfgSmtToolkit();
-		mEdgeBuilder = new IcfgEdgeBuilder(toolkit, mServices, simplificationTechnique, xnfConversionTechnique);
+		mEdgeBuilder = new IcfgEdgeBuilder(toolkit, mServices, simplificationTechnique);
 		final BasicIcfg<IcfgLocation> copiedIcfg =
 				new IcfgDuplicator(mLogger, mServices, toolkit.getManagedScript(), mBacktranslator).copy(originalIcfg,
 						true);

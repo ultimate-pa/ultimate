@@ -48,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.
 import de.uni_freiburg.informatik.ultimate.lib.pdr.Pdr;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.ExternalSolver;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolatingTraceCheckCraig;
@@ -90,7 +89,6 @@ public final class IpTcStrategyModulePreferences<L extends IIcfgTransition<?>>
 	protected IInterpolatingTraceCheck<L> construct() {
 		final AssertCodeBlockOrder assertionOrder =
 				mAssertionOrderModulation.get(mCounterexample, mInterpolationTechnique);
-		final XnfConversionTechnique xnfConversionTechnique = mPrefs.getXnfConversionTechnique();
 		final SimplificationTechnique simplificationTechnique = mPrefs.getSimplificationTechnique();
 		final TreeMap<Integer, IPredicate> pendingContexts = new TreeMap<>();
 		final NestedWord<L> nestedWord = NestedWord.nestedWord(mCounterexample.getWord());
@@ -107,7 +105,7 @@ public final class IpTcStrategyModulePreferences<L extends IIcfgTransition<?>>
 					sequenceOfProgramPoints, mServices, mPrefs.getCfgSmtToolkit(), managedScript, mPredicateFactory,
 					mPredicateUnifier, assertionOrder, mPrefs.computeCounterexample(),
 					mPrefs.collectInterpolantStatistics(), mInterpolationTechnique, instanticateArrayExt,
-					xnfConversionTechnique, simplificationTechnique, innerRecursiveNestedInterpolationCall);
+					simplificationTechnique, innerRecursiveNestedInterpolationCall);
 		case ForwardPredicates:
 		case BackwardPredicates:
 		case FPandBP:
@@ -115,8 +113,8 @@ public final class IpTcStrategyModulePreferences<L extends IIcfgTransition<?>>
 			return new TraceCheckSpWp<>(mPrecondition, mPostcondition, pendingContexts, nestedWord,
 					mPrefs.getCfgSmtToolkit(), assertionOrder, mPrefs.getUnsatCores(), mPrefs.getUseLiveVariables(),
 					mServices, mPrefs.computeCounterexample(), mPredicateFactory, mPredicateUnifier,
-					mInterpolationTechnique, managedScript, xnfConversionTechnique, simplificationTechnique,
-					sequenceOfProgramPoints, mPrefs.collectInterpolantStatistics());
+					mInterpolationTechnique, managedScript, simplificationTechnique, sequenceOfProgramPoints,
+					mPrefs.collectInterpolantStatistics());
 		case PathInvariants:
 			final IIcfg<?> icfgContainer = mPrefs.getIcfgContainer();
 			final boolean useNonlinearConstraints = mPrefs.getUseNonlinearConstraints();
@@ -133,8 +131,7 @@ public final class IpTcStrategyModulePreferences<L extends IIcfgTransition<?>>
 			return new InterpolatingTraceCheckPathInvariantsWithFallback<>(mPrecondition, mPostcondition,
 					pendingContexts, (NestedRun<L, IPredicate>) mCounterexample, mPrefs.getCfgSmtToolkit(),
 					assertionOrder, mServices, mPrefs.computeCounterexample(), mPredicateFactory, mPredicateUnifier,
-					invariantSynthesisSettings, xnfConversionTechnique, simplificationTechnique, icfgContainer,
-					mPrefs.collectInterpolantStatistics());
+					invariantSynthesisSettings, simplificationTechnique, icfgContainer, mPrefs.collectInterpolantStatistics());
 		case PDR:
 			return new Pdr<>(mServices, mServices.getLoggingService().getLogger(Activator.PLUGIN_ID), mPrefs,
 					mPredicateUnifier, mPrecondition, mPostcondition, mCounterexample.getWord().asList(),

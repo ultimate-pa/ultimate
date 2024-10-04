@@ -42,7 +42,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolatingTraceCheck;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
@@ -71,12 +70,11 @@ public class InterpolatingTraceCheckPathInvariantsWithFallback<LETTER extends IA
 			final AssertCodeBlockOrder assertCodeBlockOrder, final IUltimateServiceProvider services,
 			final boolean computeRcfgProgramExecution, final PredicateFactory predicateFactory,
 			final IPredicateUnifier predicateUnifier, final InvariantSynthesisSettings invariantSynthesisSettings,
-			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique,
-			final IIcfg<?> icfgContainer, final boolean collectInterpolantStatistics) {
+			final SimplificationTechnique simplificationTechnique, final IIcfg<?> icfgContainer,
+			final boolean collectInterpolantStatistics) {
 		super(precondition, postcondition, pendingContexts, run.getWord(), run.getStateSequence(), services, csToolkit,
 				csToolkit.getManagedScript(), predicateFactory, predicateUnifier, assertCodeBlockOrder,
-				computeRcfgProgramExecution, collectInterpolantStatistics, simplificationTechnique,
-				xnfConversionTechnique);
+				computeRcfgProgramExecution, collectInterpolantStatistics, simplificationTechnique);
 		mNestedRun = run;
 		mInvariantSynthesisSettings = invariantSynthesisSettings;
 		mIcfg = icfgContainer;
@@ -99,7 +97,7 @@ public class InterpolatingTraceCheckPathInvariantsWithFallback<LETTER extends IA
 			final InterpolationTechnique interpolation) {
 		final PathInvariantsGenerator<LETTER> pathInvariantsGenerator = new PathInvariantsGenerator<>(super.mServices,
 				mNestedRun, super.getPrecondition(), super.getPostcondition(), mPredicateFactory, mPredicateUnifier,
-				mIcfg, mInvariantSynthesisSettings, mSimplificationTechnique, mXnfConversionTechnique);
+				mIcfg, mInvariantSynthesisSettings, mSimplificationTechnique);
 		mInterpolantComputationStatus = pathInvariantsGenerator.getInterpolantComputationStatus();
 		final IPredicate[] interpolants = pathInvariantsGenerator.getInterpolants();
 		if (interpolants == null) {

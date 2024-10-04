@@ -54,7 +54,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttrans
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubtermPropertyChecker;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
@@ -85,7 +84,6 @@ public class NestedInterpolantsBuilder<L extends IAction> {
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final SimplificationTechnique mSimplificationTechnique;
-	private final XnfConversionTechnique mXnfConversionTechnique;
 
 	private final ManagedScript mMgdScriptTc;
 	private final TraceCheckLock mScriptLockOwner;
@@ -132,12 +130,10 @@ public class NestedInterpolantsBuilder<L extends IAction> {
 			final IPredicateUnifier predicateBuilder, final BasicPredicateFactory predicateFactory,
 			final Set<Integer> interpolatedPositions, final boolean treeInterpolation,
 			final IUltimateServiceProvider services, final TraceCheck<L> traceCheck, final ManagedScript mgdScriptCfg,
-			final boolean instantiateArrayExt, final SimplificationTechnique simplificationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique) {
+			final boolean instantiateArrayExt, final SimplificationTechnique simplificationTechnique) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(TraceCheckerUtils.PLUGIN_ID);
 		mSimplificationTechnique = simplificationTechnique;
-		mXnfConversionTechnique = xnfConversionTechnique;
 		mTreeInterpolation = treeInterpolation;
 		mMgdScriptTc = mgdScriptTc;
 		mScriptLockOwner = scriptLockOwner;

@@ -64,7 +64,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.xnf.Dnf;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -188,7 +187,6 @@ public final class CFGInvariantsGenerator {
 	 * @param csToolkit
 	 *            the smt manager for constructing the default {@link IInvariantPatternProcessorFactory}
 	 * @param simplicationTechnique
-	 * @param xnfConversionTechnique
 	 * @param synthesizeEntryPattern
 	 *            true if the the pattern for the start location need to be synthesized (instead of being inferred from
 	 *            the precondition)
@@ -200,16 +198,14 @@ public final class CFGInvariantsGenerator {
 	private static IInvariantPatternProcessorFactory<?> createDefaultFactory(final IUltimateServiceProvider services,
 			final IPredicateUnifier predicateUnifier, final CfgSmtToolkit csToolkit, final boolean useNonlinerConstraints,
 			final boolean useVarsFromUnsatCore, final SolverSettings solverSettings,
-			final SimplificationTechnique simplicationTechnique, final XnfConversionTechnique xnfConversionTechnique,
-			final ILinearInequalityInvariantPatternStrategy<Dnf<AbstractLinearInvariantPattern>> strategy,
+			final SimplificationTechnique simplicationTechnique, final ILinearInequalityInvariantPatternStrategy<Dnf<AbstractLinearInvariantPattern>> strategy,
 			final Map<IcfgLocation, IPredicate> loc2underApprox,
-			final Map<IcfgLocation, IPredicate> loc2overApprox, final boolean synthesizeEntryPattern,
-			final KindOfInvariant kindOfInvariant) {
+			final Map<IcfgLocation, IPredicate> loc2overApprox,
+			final boolean synthesizeEntryPattern, final KindOfInvariant kindOfInvariant) {
 
 		return new LinearInequalityInvariantPatternProcessorFactory(services, predicateUnifier, csToolkit, strategy,
-				useNonlinerConstraints, useVarsFromUnsatCore, solverSettings, simplicationTechnique, xnfConversionTechnique,
-				csToolkit.getSmtFunctionsAndAxioms(), loc2underApprox, loc2overApprox, synthesizeEntryPattern,
-				kindOfInvariant);
+				useNonlinerConstraints, useVarsFromUnsatCore, solverSettings, simplicationTechnique, csToolkit.getSmtFunctionsAndAxioms(),
+				loc2underApprox, loc2overApprox, synthesizeEntryPattern, kindOfInvariant);
 	}
 
 	/**
@@ -261,8 +257,8 @@ public final class CFGInvariantsGenerator {
 	 * (CFG), and then applying {@link generateInvariantsForTransitions} on them.
 	 */
 	private Map<IcfgLocation, IPredicate> generateInvariantsForPathProgram(final IIcfg<IcfgLocation> pathProgram,
-			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
-			final CfgSmtToolkit csToolkit, final InvariantSynthesisSettings invSynthSettings) {
+			final SimplificationTechnique simplificationTechnique, final CfgSmtToolkit csToolkit,
+			final InvariantSynthesisSettings invSynthSettings) {
 
 		final IcfgLocation startLocation = new ArrayList<>(pathProgram.getInitialNodes()).get(0);
 		final Set<IcfgLocation> errorLocations = IcfgUtils.getErrorLocations(pathProgram);
@@ -336,8 +332,8 @@ public final class CFGInvariantsGenerator {
 		final IInvariantPatternProcessorFactory<?> invPatternProcFactory =
 				createDefaultFactory(mServices, mPredicateUnifier, csToolkit, invSynthSettings.useNonLinearConstraints(),
 						invSynthSettings.useUnsatCores(), invSynthSettings.getSolverSettings(),
-						simplificationTechnique, xnfConversionTechnique, strategy, loc2underApprox,
-						loc2overApprox, synthesizeEntryPattern, mKindOfInvariant);
+						simplificationTechnique, strategy, loc2underApprox, loc2overApprox,
+						synthesizeEntryPattern, mKindOfInvariant);
 
 		final Map<IcfgLocation, IPredicate> invariants =
 				generateInvariantsForTransitions(locationsAsList, transitionsAsList, mPredicateOfInitialLocations,
@@ -946,8 +942,8 @@ public final class CFGInvariantsGenerator {
 		mPathInvariantsStatistics.setNumOfPathProgramLocations(numLocsBeforeLbe, numLocsAfterLbe);
 
 		Map<IcfgLocation, IPredicate> invariants = generateInvariantsForPathProgram(lbePathProgram,
-				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
-				mCsToolKit, mInvariantSynthesisSettings);
+				SimplificationTechnique.SIMPLIFY_DDA, mCsToolKit,
+				mInvariantSynthesisSettings);
 
 		if (invariants != null) {
 			// invariants = buTransformer.transform(invariants);

@@ -64,7 +64,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.P
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -184,7 +183,7 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 				final StoreChainSquisher scs = new StoreChainSquisher(mMgdScript);
 
 				final Term atMostOneStore = SmtUtils.toDnf(
-						mServices, mMgdScript, scs.transform(tfTerm), XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+						mServices, mMgdScript, scs.transform(tfTerm));
 				//final Term atMostOneStore = scs.transform(tfTerm);
 				final Collection<Term> arrayEqualities = scs.getReplacementEquations();
 				final Collection<Term> newAuxVars = scs.getReplacementTermVariables();
@@ -586,7 +585,7 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 				while (iterate) {
 					//TODO
 					final Term iterDnf = SmtUtils.toDnf(
-							mServices, mMgdScript, scs.transform(newTfTerm), XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+							mServices, mMgdScript, scs.transform(newTfTerm));
 					final StoreSelectEqualityCollector iterSsec = new StoreSelectEqualityCollector();
 					iterSsec.transform(iterDnf);
 

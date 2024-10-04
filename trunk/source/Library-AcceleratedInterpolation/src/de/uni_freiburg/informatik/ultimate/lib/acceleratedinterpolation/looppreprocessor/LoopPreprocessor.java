@@ -49,7 +49,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ApplicationTermFinder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 
 /**
@@ -107,8 +106,7 @@ public class LoopPreprocessor<L extends IIcfgTransition<?>>
 			for (final List<L> loopActions : loopSet.getValue()) {
 				UnmodifiableTransFormula interprocedualTransformula = SequentialComposition
 						.getInterproceduralTransFormula(mCsToolkit, false, false, false, false, mLogger, mServices,
-								loopActions, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
-								SimplificationTechnique.SIMPLIFY_DDA);
+								loopActions, SimplificationTechnique.SIMPLIFY_DDA);
 				for (final String option : mOptions) {
 					final ApplicationTermFinder applicationTermFinder = new ApplicationTermFinder(option, false);
 					if (!applicationTermFinder.findMatchingSubterms(interprocedualTransformula.getFormula())
@@ -133,7 +131,7 @@ public class LoopPreprocessor<L extends IIcfgTransition<?>>
 				final UnmodifiableTransFormula[] tfs =
 						disjuncts.toArray(new UnmodifiableTransFormula[disjuncts.size()]);
 				final UnmodifiableTransFormula disjunct = TransFormulaUtils.parallelComposition(mLogger, mServices,
-						mScript, null, false, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, false, tfs);
+						mScript, null, false, false, tfs);
 				final ArrayList<UnmodifiableTransFormula> dj = new ArrayList<>();
 				dj.add(disjunct);
 				result.put(loophead, dj);
@@ -161,8 +159,8 @@ public class LoopPreprocessor<L extends IIcfgTransition<?>>
 			for (final List<L> loopActions : loopSet.getValue()) {
 				final List<UnmodifiableTransFormula> loopTransitions = convertActionToFormula(loopActions);
 				UnmodifiableTransFormula loopRelation = TransFormulaUtils.sequentialComposition(mLogger, mServices,
-						mScript, true, true, false, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
-						SimplificationTechnique.SIMPLIFY_DDA, loopTransitions);
+						mScript, true, true, false, SimplificationTechnique.SIMPLIFY_DDA,
+						loopTransitions);
 				/*
 				 * Transform found unsupported operations:
 				 */

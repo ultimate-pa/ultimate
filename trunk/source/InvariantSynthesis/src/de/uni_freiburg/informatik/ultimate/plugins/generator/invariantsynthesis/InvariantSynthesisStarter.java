@@ -69,7 +69,6 @@ import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.IcfgFloydHoareV
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.ExternalSolver;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
@@ -111,13 +110,11 @@ public class InvariantSynthesisStarter<L extends IIcfgTransition<?>> {
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 
 		final SimplificationTechnique simplificationTechnique = SimplificationTechnique.SIMPLIFY_DDA;
-		final XnfConversionTechnique xnfConversionTechnique =
-				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 		final ManagedScript mgdScript = icfg.getCfgSmtToolkit().getManagedScript();
 		final PredicateFactory predicateFactory =
 				new PredicateFactory(mServices, mgdScript, icfg.getCfgSmtToolkit().getSymbolTable());
 		final IPredicateUnifier predicateUnifier = new PredicateUnifier(mLogger, mServices, mgdScript, predicateFactory,
-				icfg.getCfgSmtToolkit().getSymbolTable(), simplificationTechnique, xnfConversionTechnique);
+				icfg.getCfgSmtToolkit().getSymbolTable(), simplificationTechnique);
 
 		final InvariantSynthesisSettings invSynthSettings = constructSettings(icfg.getIdentifier());
 

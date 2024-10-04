@@ -80,7 +80,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.I
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.NwaFloydHoareValidityCheck;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolatingTraceCheck;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolatingTraceCheckCraig;
@@ -126,8 +125,6 @@ import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
  */
 public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>> {
 	private static final SimplificationTechnique SIMPLIFICATION_TECHNIQUE = SimplificationTechnique.SIMPLIFY_DDA;
-	private static final XnfConversionTechnique XNF_CONVERSION_TECHNIQUE =
-			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 
 	protected final IUltimateServiceProvider mServices;
 	protected final ILogger mLogger;
@@ -224,12 +221,12 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 
 		final TaCheckAndRefinementPreferences<L> taCheckAndRefinementPrefs =
 				new TaCheckAndRefinementPreferences<>(mServices, mPref, mInterpolation, SIMPLIFICATION_TECHNIQUE,
-						XNF_CONVERSION_TECHNIQUE, mCsToolkitWithoutRankVars, mPredicateFactory, icfg);
+						mCsToolkitWithoutRankVars, mPredicateFactory, icfg);
 		mRefinementStrategyFactory = new StrategyFactory<>(mLogger, mPref, taCheckAndRefinementPrefs, icfg,
 				mPredicateFactory, mDefaultStateFactory, transitionClazz);
 		mAbstraction = initialAbstraction;
 		mInterpolantAutomatonBuilder = new BuchiInterpolantAutomatonBuilder<>(mServices, mCsToolkitWithRankVars,
-				SIMPLIFICATION_TECHNIQUE, XNF_CONVERSION_TECHNIQUE, predicateFactory, mInterpolation);
+				SIMPLIFICATION_TECHNIQUE, predicateFactory, mInterpolation);
 		mBiaConstructionStyleSequence =
 				baPref.getEnum(BuchiAutomizerPreferenceInitializer.LABEL_BIA_CONSTRUCTION_STRATEGY,
 						BuchiInterpolantAutomatonConstructionStrategy.class).getBiaConstrucionStyleSequence(baPref);
@@ -358,8 +355,8 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 				final String identifier = mIdentifier + "_Iteration" + mIteration;
 				lassoCheck = new LassoCheck<>(mCsToolkitWithoutRankVars, mPredicateFactory,
 						mCsToolkitWithoutRankVars.getSmtFunctionsAndAxioms(), mBinaryStatePredicateManager,
-						mCounterexample, identifier, mServices, SIMPLIFICATION_TECHNIQUE, XNF_CONVERSION_TECHNIQUE,
-						mRefinementStrategyFactory, mAbstraction, taskIdentifier, mBenchmarkGenerator);
+						mCounterexample, identifier, mServices, SIMPLIFICATION_TECHNIQUE, mRefinementStrategyFactory,
+						mAbstraction, taskIdentifier, mBenchmarkGenerator);
 				if (lassoCheck.getLassoCheckResult().getContinueDirective() == ContinueDirective.REPORT_UNKNOWN) {
 					// if result was unknown, then try again but this time add one
 					// iteration of the loop to the stem.
@@ -372,8 +369,8 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 					mCounterexample = new NestedLassoRun<>(newStem, mCounterexample.getLoop());
 					lassoCheck = new LassoCheck<>(mCsToolkitWithoutRankVars, mPredicateFactory,
 							mCsToolkitWithoutRankVars.getSmtFunctionsAndAxioms(), mBinaryStatePredicateManager,
-							mCounterexample, identifier, mServices, SIMPLIFICATION_TECHNIQUE, XNF_CONVERSION_TECHNIQUE,
-							mRefinementStrategyFactory, mAbstraction, unwindingTaskIdentifier, mBenchmarkGenerator);
+							mCounterexample, identifier, mServices, SIMPLIFICATION_TECHNIQUE, mRefinementStrategyFactory,
+							mAbstraction, unwindingTaskIdentifier, mBenchmarkGenerator);
 				}
 			} catch (final ToolchainCanceledException e) {
 				final int traceHistogramMaxStem =
@@ -553,9 +550,8 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 				final PredicateUnifier pu =
 						new PredicateUnifier(mLogger, mServices, mCsToolkitWithRankVars.getManagedScript(),
 								mPredicateFactory, mCsToolkitWithRankVars.getSymbolTable(), SIMPLIFICATION_TECHNIQUE,
-								XNF_CONVERSION_TECHNIQUE, bspmResult.getStemPrecondition(), hondaPredicate, rankEqAndSi,
-								bspmResult.getStemPostcondition(), bspmResult.getRankDecreaseAndBound(),
-								bspmResult.getSiConjunction());
+								bspmResult.getStemPrecondition(), hondaPredicate, rankEqAndSi, bspmResult.getStemPostcondition(),
+								bspmResult.getRankDecreaseAndBound(), bspmResult.getSiConjunction());
 				final IPredicate[] stemInterpolants = getStemInterpolants(mCounterexample.getStem(),
 						bspmResult.getStemPrecondition(), bspmResult.getStemPostcondition(), pu);
 				final IPredicate[] loopInterpolants =
@@ -734,7 +730,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 			return new InterpolatingTraceCheckCraig<>(precond, postcond, new TreeMap<>(), run.getWord(), null,
 					mServices, mCsToolkitWithRankVars, mPredicateFactory, predicateUnifier,
 					AssertCodeBlockOrder.NOT_INCREMENTALLY, false, false, mInterpolation, true,
-					XNF_CONVERSION_TECHNIQUE, SIMPLIFICATION_TECHNIQUE);
+					SIMPLIFICATION_TECHNIQUE);
 		}
 		case ForwardPredicates:
 		case BackwardPredicates:
@@ -743,7 +739,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 			return new TraceCheckSpWp<>(precond, postcond, new TreeMap<>(), run.getWord(), mCsToolkitWithRankVars,
 					AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true, mServices, false,
 					mPredicateFactory, predicateUnifier, mInterpolation, mCsToolkitWithRankVars.getManagedScript(),
-					XNF_CONVERSION_TECHNIQUE, SIMPLIFICATION_TECHNIQUE, null, false);
+					SIMPLIFICATION_TECHNIQUE, null, false);
 		}
 		default:
 			throw new UnsupportedOperationException("unsupported interpolation");

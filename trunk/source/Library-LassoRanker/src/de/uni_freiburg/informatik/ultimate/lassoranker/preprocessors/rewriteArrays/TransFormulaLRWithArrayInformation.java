@@ -52,7 +52,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayEquality;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayEquality.ArrayEqualityExtractor;
@@ -81,7 +80,6 @@ public class TransFormulaLRWithArrayInformation {
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final SimplificationTechnique mSimplificationTechnique;
-	private final XnfConversionTechnique mXnfConversionTechnique;
 
 	private final boolean mContainsArrays;
 
@@ -122,12 +120,10 @@ public class TransFormulaLRWithArrayInformation {
 	public TransFormulaLRWithArrayInformation(final IUltimateServiceProvider services,
 			final ModifiableTransFormula transFormulaLR, final ReplacementVarFactory replacementVarFactory,
 			final ManagedScript script, final IIcfgSymbolTable boogie2smt,
-			final TransFormulaLRWithArrayInformation stem, final SimplificationTechnique simplificationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique) {
+			final TransFormulaLRWithArrayInformation stem, final SimplificationTechnique simplificationTechnique) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
 		mSimplificationTechnique = simplificationTechnique;
-		mXnfConversionTechnique = xnfConversionTechnique;
 		mTransFormulaLR = transFormulaLR;
 		mScript = script;
 		mReplacementVarFactory = replacementVarFactory;
@@ -143,7 +139,7 @@ public class TransFormulaLRWithArrayInformation {
 			mContainsArrays = true;
 			final Term term =
 					SmtUtils.simplify(mScript, mTransFormulaLR.getFormula(), mServices, simplificationTechnique);
-			Term dnf = SmtUtils.toDnf(mServices, mScript, term, xnfConversionTechnique);
+			Term dnf = SmtUtils.toDnf(mServices, mScript, term);
 			dnf = SmtUtils.simplify(mScript, dnf, mServices, simplificationTechnique);
 			final Term[] disjuncts = SmtUtils.getDisjuncts(dnf);
 			sunnf = new Term[disjuncts.length];
@@ -185,8 +181,8 @@ public class TransFormulaLRWithArrayInformation {
 			final ManagedScript ftvc, final IIcfgSymbolTable boogie2smt,
 			final List<List<ArrayEquality>> arrayEqualities, final SingleUpdateNormalFormTransformer[] sunfts) {
 		final ModifiableTransFormula afterSunft =
-				constructTransFormulaLRWInSunf(services, mXnfConversionTechnique, mSimplificationTechnique, logger,
-						ftvc, mReplacementVarFactory, mScript.getScript(), mTransFormulaLR, arrayEqualities, sunfts);
+				constructTransFormulaLRWInSunf(services, mSimplificationTechnique, logger, ftvc,
+						mReplacementVarFactory, mScript.getScript(), mTransFormulaLR, arrayEqualities, sunfts);
 		final LBool notStronger = ModifiableTransFormulaUtils.implies(mServices, mLogger, mTransFormulaLR, afterSunft,
 				mScript, boogie2smt);
 		if (notStronger != LBool.SAT && notStronger != LBool.UNSAT) {
@@ -774,10 +770,9 @@ public class TransFormulaLRWithArrayInformation {
 	}
 
 	private static ModifiableTransFormula constructTransFormulaLRWInSunf(final IUltimateServiceProvider services,
-			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique,
-			final ILogger logger, final ManagedScript ftvc, final ReplacementVarFactory repVarFactory,
-			final Script script, final ModifiableTransFormula tf, final List<List<ArrayEquality>> arrayEqualities,
-			final SingleUpdateNormalFormTransformer... sunfts) {
+			final SimplificationTechnique simplificationTechnique, final ILogger logger,
+			final ManagedScript ftvc, final ReplacementVarFactory repVarFactory, final Script script,
+			final ModifiableTransFormula tf, final List<List<ArrayEquality>> arrayEqualities, final SingleUpdateNormalFormTransformer... sunfts) {
 		final ModifiableTransFormula result = new ModifiableTransFormula(tf);
 		final List<Term> disjuncts = new ArrayList<Term>();
 		assert arrayEqualities.size() == sunfts.length;

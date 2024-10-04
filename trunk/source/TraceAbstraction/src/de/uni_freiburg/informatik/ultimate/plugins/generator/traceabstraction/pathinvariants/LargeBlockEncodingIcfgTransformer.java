@@ -60,7 +60,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckSpWp;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -111,7 +110,7 @@ public final class LargeBlockEncodingIcfgTransformer {
 		ups.put(BlockEncodingPreferences.FXP_REMOVE_INFEASIBLE_EDGES, false);
 		ups.put(BlockEncodingPreferences.FXP_REMOVE_SINK_STATES, false);
 		final BlockEncoder blockEncoder = new BlockEncoder(mLogger, beServices, inputIcfg,
-				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+				SimplificationTechnique.SIMPLIFY_DDA);
 		final IIcfg<IcfgLocation> outputIcfg = blockEncoder.getResult();
 		assert !outputIcfg.getInitialNodes().isEmpty() : "LBE ICFG is emtpy";
 		mLbeBacktranslation = blockEncoder.getBacktranslator().getLocationMapping();
@@ -261,12 +260,10 @@ public final class LargeBlockEncodingIcfgTransformer {
 		final InterpolationTechnique interpolation = InterpolationTechnique.ForwardPredicates;
 		final ManagedScript mgdScriptTc = csToolkit.getManagedScript();
 		final SimplificationTechnique simplificationTechnique = SimplificationTechnique.SIMPLIFY_DDA;
-		final XnfConversionTechnique xnfConversionTechnique =
-				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 		final TraceCheckSpWp<? extends IAction> tc = new TraceCheckSpWp<>(precondition, postcondition, pendingContexts,
 				run.getWord(), csToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY, unsatCores, useLiveVariables,
 				mServices, computeRcfgProgramExecution, mPredicateFactory, predicateUnifier, interpolation, mgdScriptTc,
-				xnfConversionTechnique, simplificationTechnique, run.getStateSequence(), false);
+				simplificationTechnique, run.getStateSequence(), false);
 		return tc.getInterpolants();
 	}
 

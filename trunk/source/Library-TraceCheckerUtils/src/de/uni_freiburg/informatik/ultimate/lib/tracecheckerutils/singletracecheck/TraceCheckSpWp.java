@@ -59,7 +59,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationC
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.ContainsQuantifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.CoverageAnalysis.BackwardCoveringInformation;
@@ -122,13 +121,12 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 			final boolean useLiveVariables, final IUltimateServiceProvider services,
 			final boolean computeRcfgProgramExecution, final PredicateFactory predicateFactory,
 			final IPredicateUnifier predicateUnifier, final InterpolationTechnique interpolation,
-			final ManagedScript mgdScriptTc, final XnfConversionTechnique xnfConversionTechnique,
-			final SimplificationTechnique simplificationTechnique, final List<? extends Object> controlLocationSequence,
-			final boolean collectInterpolatSequenceStatistics) {
+			final ManagedScript mgdScriptTc, final SimplificationTechnique simplificationTechnique,
+			final List<? extends Object> controlLocationSequence, final boolean collectInterpolatSequenceStatistics) {
 		// superclass does feasibility check
 		super(precondition, postcondition, pendingContexts, trace, controlLocationSequence, services, csToolkit,
 				mgdScriptTc, predicateFactory, predicateUnifier, assertCodeBlockOrder, computeRcfgProgramExecution,
-				collectInterpolatSequenceStatistics, simplificationTechnique, xnfConversionTechnique);
+				collectInterpolatSequenceStatistics, simplificationTechnique);
 		mUnsatCores = unsatCores;
 		mLiveVariables = useLiveVariables;
 		switch (interpolation) {
@@ -293,8 +291,7 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 				postprocs.add(new UnifyPostprocessor(mPredicateUnifier));
 				final IterativePredicateTransformer<L> spt = new IterativePredicateTransformer<>(mPredicateFactory,
 						mCfgManagedScript, mCsToolkit.getModifiableGlobalsTable(), mServices, mTrace, mPrecondition,
-						mPostcondition, mPendingContexts, null, mSimplificationTechnique, mXnfConversionTechnique,
-						mBoogie2SmtSymbolTable);
+						mPostcondition, mPendingContexts, null, mSimplificationTechnique, mBoogie2SmtSymbolTable);
 				mInterpolantsFp = spt.computeStrongestPostconditionSequence(rtf, postprocs).getPredicates();
 			} catch (final ToolchainCanceledException tce) {
 				final String taskDescription = "constructing forward predicates";
@@ -335,8 +332,7 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 				postprocs.add(new UnifyPostprocessor(mPredicateUnifier));
 				final IterativePredicateTransformer<L> spt = new IterativePredicateTransformer<>(mPredicateFactory,
 						mCfgManagedScript, mCsToolkit.getModifiableGlobalsTable(), mServices, mTrace, mPrecondition,
-						mPostcondition, mPendingContexts, null, mSimplificationTechnique, mXnfConversionTechnique,
-						mBoogie2SmtSymbolTable);
+						mPostcondition, mPendingContexts, null, mSimplificationTechnique, mBoogie2SmtSymbolTable);
 				mInterpolantsBp =
 						spt.computeWeakestPreconditionSequence(rtf, postprocs, false, mAlternatingQuantifierBailout)
 								.getPredicates();

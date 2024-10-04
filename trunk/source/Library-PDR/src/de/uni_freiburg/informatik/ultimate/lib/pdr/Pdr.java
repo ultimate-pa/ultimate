@@ -84,7 +84,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
@@ -208,8 +207,7 @@ public class Pdr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 			mLocalPredicateUnifier = mExternalPredicateUnifier;
 		} else {
 			mLocalPredicateUnifier = new PredicateUnifier(mLogger, mServices, mScript,
-					predicateUnifier.getPredicateFactory(), mSymbolTable, SimplificationTechnique.SIMPLIFY_DDA,
-					XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+					predicateUnifier.getPredicateFactory(), mSymbolTable, SimplificationTechnique.SIMPLIFY_DDA);
 		}
 
 		mInvarSpot = -1;
@@ -1214,7 +1212,7 @@ public class Pdr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 				new IterativePredicateTransformer<>(mLocalPredicateUnifier.getPredicateFactory(), mScript,
 						mCsToolkit.getModifiableGlobalsTable(), mServices, nestedWord, mTruePred, mFalsePred,
 						Collections.emptySortedMap(), mTruePred, SimplificationTechnique.SIMPLIFY_DDA,
-						XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, mSymbolTable);
+						mSymbolTable);
 
 		final OldVarsAssignmentCache oldVarsAssignmentCache = mCsToolkit.getOldVarsAssignmentCache();
 		final DefaultTransFormulas<L> rtf = new DefaultTransFormulas<>(nestedWord, mTruePred, mFalsePred,

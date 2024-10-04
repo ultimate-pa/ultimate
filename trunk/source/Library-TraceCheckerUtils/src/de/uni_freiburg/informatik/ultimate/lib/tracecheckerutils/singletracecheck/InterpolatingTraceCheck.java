@@ -44,7 +44,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 
 /**
@@ -58,7 +57,6 @@ public abstract class InterpolatingTraceCheck<L extends IAction> extends TraceCh
 		implements IInterpolatingTraceCheck<L> {
 
 	protected final SimplificationTechnique mSimplificationTechnique;
-	protected final XnfConversionTechnique mXnfConversionTechnique;
 
 	/**
 	 * Data structure that unifies Predicates with respect to its Term.
@@ -81,8 +79,7 @@ public abstract class InterpolatingTraceCheck<L extends IAction> extends TraceCh
 			final CfgSmtToolkit csToolkit, final ManagedScript tcSmtManager, final PredicateFactory predicateFactory,
 			final IPredicateUnifier predicateUnifier, final AssertCodeBlockOrder assertCodeBlockOrder,
 			final boolean computeRcfgProgramExecution, final boolean collectInterpolatSequenceStatistics,
-			final SimplificationTechnique simplificationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique) {
+			final SimplificationTechnique simplificationTechnique) {
 		super(precondition, postcondition, pendingContexts, trace,
 				TraceCheckUtils.decoupleArrayValues(csToolkit.getManagedScript(),
 						new DefaultTransFormulas<>(trace, precondition, postcondition, pendingContexts,
@@ -92,7 +89,6 @@ public abstract class InterpolatingTraceCheck<L extends IAction> extends TraceCh
 		mPredicateUnifier = predicateUnifier;
 		mPredicateFactory = predicateFactory;
 		mSimplificationTechnique = simplificationTechnique;
-		mXnfConversionTechnique = xnfConversionTechnique;
 		mControlLocationSequence = controlLocationSequence;
 	}
 

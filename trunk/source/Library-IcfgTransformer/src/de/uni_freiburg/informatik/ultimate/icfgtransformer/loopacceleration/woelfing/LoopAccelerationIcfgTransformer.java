@@ -60,7 +60,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermClassifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
@@ -242,8 +241,8 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 		final IteratedSymbolicMemory iteratedSymbolicMemory = getIteratedSymbolicMemoryForLoop(oldSource);
 		final UnmodifiableTransFormula loopTf = getLoopTransFormula(iteratedSymbolicMemory, mBackbones.get(oldSource));
 		final UnmodifiableTransFormula tf = TransFormulaUtils.sequentialComposition(mLogger, mServices, mScript, true,
-				true, false, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
-				SimplificationTechnique.SIMPLIFY_DDA, Arrays.asList(loopTf, oldTransition.getTransformula()));
+				true, false, SimplificationTechnique.SIMPLIFY_DDA,
+				Arrays.asList(loopTf, oldTransition.getTransformula()));
 		assert oldTransition instanceof IIcfgInternalTransition;
 		// When the iterated symbolic memory cannot represent the values of all variables or when there
 		// are multiple backbones the calculated loop transformula might be an overapproximation.
@@ -413,8 +412,8 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 			}
 
 			final TransFormula tf = TransFormulaUtils.sequentialComposition(mLogger, mServices, mScript, true, true,
-					false, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
-					SimplificationTechnique.SIMPLIFY_DDA, transFormulas);
+					false, SimplificationTechnique.SIMPLIFY_DDA,
+					transFormulas);
 			mBackboneTransformulas.put(backbone, tf);
 
 			final SymbolicMemory symbolicMemory = new SymbolicMemory(mScript, tf, overapproximation);

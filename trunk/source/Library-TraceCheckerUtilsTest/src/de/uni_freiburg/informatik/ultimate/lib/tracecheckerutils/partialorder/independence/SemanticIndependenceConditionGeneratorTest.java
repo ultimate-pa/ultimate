@@ -52,7 +52,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttrans
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -372,13 +371,12 @@ public class SemanticIndependenceConditionGeneratorTest {
 				compose(TransFormulaBuilder.constructTransFormulaFromTerm(SmtUtils.not(mScript, condition),
 						(Set) mSymbolTable.getGlobals(), mMgdScript), elseBranch);
 		return TransFormulaUtils.parallelComposition(mLogger, mServices, mMgdScript, null, false,
-				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, true, takeThen, takeElse);
+				true, takeThen, takeElse);
 	}
 
 	private UnmodifiableTransFormula compose(final UnmodifiableTransFormula a, final UnmodifiableTransFormula b) {
 		return TransFormulaUtils.sequentialComposition(mLogger, mServices, mMgdScript, false, false, false,
-				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, SimplificationTechnique.SIMPLIFY_DDA,
-				Arrays.asList(a, b));
+				SimplificationTechnique.SIMPLIFY_DDA, Arrays.asList(a, b));
 	}
 
 	private Term parseWithVariables(final String syntax) {

@@ -46,7 +46,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ApplicationTermFinder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
@@ -61,7 +60,7 @@ public class LoopPreprocessorTransformulaTransformer {
 	 */
 	public static List<UnmodifiableTransFormula> splitDisjunction(final ModifiableTransFormula loopRelation,
 			final ManagedScript managedScript, final IUltimateServiceProvider services) {
-		final DNF dnfConverter = new DNF(services, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		final DNF dnfConverter = new DNF(services);
 		ModifiableTransFormula dnfModTf;
 		try {
 			dnfModTf = dnfConverter.process(managedScript, loopRelation);

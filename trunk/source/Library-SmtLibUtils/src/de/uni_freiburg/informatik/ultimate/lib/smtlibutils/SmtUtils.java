@@ -145,10 +145,6 @@ public final class SmtUtils {
 		}
 	}
 
-	public enum XnfConversionTechnique {
-		BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION
-	}
-
 	public enum SimplificationTechnique {
 		SIMPLIFY_QUICK(true),
 
@@ -2224,9 +2220,7 @@ public final class SmtUtils {
 	/**
 	 * @return logically equivalent term in disjunctive normal form (DNF)
 	 */
-	// TODO: xnfConversionTechnique is currently not used, should we remove it?
-	public static Term toDnf(final IUltimateServiceProvider services, final ManagedScript mgdScript, final Term term,
-			final XnfConversionTechnique xnfConversionTechnique) {
+	public static Term toDnf(final IUltimateServiceProvider services, final ManagedScript mgdScript, final Term term) {
 		return new DnfTransformer(mgdScript, services).transform(term);
 	}
 
@@ -2240,9 +2234,7 @@ public final class SmtUtils {
 	/**
 	 * @return logically equivalent term in conjunctive normal form (CNF)
 	 */
-	// TODO: xnfConversionTechnique is currently not used, should we remove it?
-	public static Term toCnf(final IUltimateServiceProvider services, final ManagedScript mgdScript, final Term term,
-			final XnfConversionTechnique xnfConversionTechnique) {
+	public static Term toCnf(final IUltimateServiceProvider services, final ManagedScript mgdScript, final Term term) {
 		return new CnfTransformer(mgdScript, services).transform(term);
 	}
 

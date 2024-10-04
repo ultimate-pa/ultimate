@@ -84,7 +84,6 @@ import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.HoareAnnotation
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.NwaFloydHoareValidityCheck;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.NwaHoareProofProducer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SMTFeatureExtractionTermClassifier.ScoringMethod;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.cfg2automaton.Cfg2Automaton;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -276,7 +275,7 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 		final PredicateFactory predicateFactory = mPredicateFactory;
 		final IPredicateUnifier predicateUnifier = new PredicateUnifier(mLogger, getServices(),
 				mCsToolkit.getManagedScript(), predicateFactory, mCsToolkit.getSymbolTable(),
-				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+				SimplificationTechnique.SIMPLIFY_DDA);
 		final IPredicate precondition = predicateUnifier.getTruePredicate();
 		final DangerInvariantGuesser dig = new DangerInvariantGuesser(pathProgram, getServices(), precondition,
 				predicateFactory, predicateUnifier, mCsToolkit);
@@ -296,7 +295,7 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 	@Override
 	protected void constructErrorAutomaton() throws AutomataOperationCanceledException {
 		mErrorGeneralizationEngine.constructErrorAutomaton(mCounterexample, mPredicateFactory,
-				mRefinementResult.getPredicateUnifier(), mCsToolkit, mSimplificationTechnique, mXnfConversionTechnique,
+				mRefinementResult.getPredicateUnifier(), mCsToolkit, mSimplificationTechnique,
 				mIcfg.getCfgSmtToolkit().getSymbolTable(), mPredicateFactoryInterpolantAutomata, mAbstraction,
 				getIteration());
 
@@ -395,9 +394,8 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 							getServices(), super.mIcfg, mStateFactoryForRefinement, super.mErrorLocs,
 							mPref.interprocedural(), mPredicateFactory);
 					mErrorGeneralizationEngine.faultLocalizationWithStorage(cfg, mCsToolkit, mPredicateFactory,
-							mRefinementResult.getPredicateUnifier(), mSimplificationTechnique, mXnfConversionTechnique,
-							mIcfg.getCfgSmtToolkit().getSymbolTable(), null, (NestedRun<L, IPredicate>) mCounterexample,
-							(IIcfg<IcfgLocation>) mIcfg);
+							mRefinementResult.getPredicateUnifier(), mSimplificationTechnique, mIcfg.getCfgSmtToolkit().getSymbolTable(),
+							null, (NestedRun<L, IPredicate>) mCounterexample, (IIcfg<IcfgLocation>) mIcfg);
 				}
 			}
 
@@ -443,7 +441,7 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 	protected void performAbstractionSanityCheck() {
 		if (mProofUpdater != null && mPref.getHoareAnnotationPositions() == HoareAnnotationPositions.All) {
 			final var unifier = new PredicateUnifier(mLogger, mServices, mCsToolkit.getManagedScript(),
-					mPredicateFactory, mCsToolkit.getSymbolTable(), mSimplificationTechnique, mXnfConversionTechnique);
+					mPredicateFactory, mCsToolkit.getSymbolTable(), mSimplificationTechnique);
 			assert NwaFloydHoareValidityCheck
 					.forInterpolantAutomaton(mServices, mCsToolkit.getManagedScript(),
 							new IncrementalHoareTripleChecker(mCsToolkit, false), unifier, mAbstraction, true)

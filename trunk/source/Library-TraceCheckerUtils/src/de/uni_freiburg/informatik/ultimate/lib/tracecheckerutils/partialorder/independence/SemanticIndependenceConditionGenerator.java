@@ -44,7 +44,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.abduction.Abducer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
@@ -59,8 +58,6 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  */
 public class SemanticIndependenceConditionGenerator {
-	private static final XnfConversionTechnique XNF_CONVERSION_TECHNIQUE =
-			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 	private static final SimplificationTechnique SIMPLIFICATION_TECHNIQUE = SimplificationTechnique.SIMPLIFY_DDA;
 
 	private final ManagedScript mMgdScript;
@@ -189,7 +186,7 @@ public class SemanticIndependenceConditionGenerator {
 		final boolean tryAuxVarElimination = true;
 
 		return TransFormulaUtils.sequentialComposition(mLogger, mServices, mMgdScript, simplify, tryAuxVarElimination,
-				false, XNF_CONVERSION_TECHNIQUE, SIMPLIFICATION_TECHNIQUE, Arrays.asList(first, second));
+				false, SIMPLIFICATION_TECHNIQUE, Arrays.asList(first, second));
 	}
 
 	private final UnmodifiableTransFormula withGuard(final IPredicate guard, final UnmodifiableTransFormula tf) {

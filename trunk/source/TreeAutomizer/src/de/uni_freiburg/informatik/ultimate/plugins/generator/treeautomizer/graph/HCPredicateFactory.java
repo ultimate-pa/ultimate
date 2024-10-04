@@ -43,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -73,11 +72,10 @@ public class HCPredicateFactory extends BasicPredicateFactory {
 	 * @param mgdScript
 	 * @param symbolTable
 	 * @param simplificationTechnique
-	 * @param xnfConversionTechnique
 	 */
 	public HCPredicateFactory(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final HcSymbolTable symbolTable,
-			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
+			final SimplificationTechnique simplificationTechnique) {
 		super(services, mgdScript, symbolTable);
 		mMgdScript = mgdScript;
 		mHCSymbolTable = symbolTable;

@@ -53,7 +53,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ApplicationTermFinder
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayUpdate;
@@ -77,7 +76,6 @@ public class TransFormulaLRWithArrayCells {
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final SimplificationTechnique mSimplificationTechnique;
-	private final XnfConversionTechnique mXnfConversionTechnique;
 
 	static final String s_AuxArray = "auxArray";
 
@@ -124,12 +122,10 @@ public class TransFormulaLRWithArrayCells {
 			final TransFormulaLRWithArrayInformation tflrwai, final EqualityAnalysisResult equalityAnalysisAtHonda,
 			final IIcfgSymbolTable boogie2smt, final ArrayCellRepVarConstructor acrvc,
 			final boolean moverapproximateByOmmitingDisjointIndices, final boolean isStem,
-			final SimplificationTechnique simplificationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique) {
+			final SimplificationTechnique simplificationTechnique) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
 		mSimplificationTechnique = simplificationTechnique;
-		mXnfConversionTechnique = xnfConversionTechnique;
 		mOverapproximateByOmmitingDisjointIndices = moverapproximateByOmmitingDisjointIndices;
 		this.tflrwai = tflrwai;
 		mScript = script;

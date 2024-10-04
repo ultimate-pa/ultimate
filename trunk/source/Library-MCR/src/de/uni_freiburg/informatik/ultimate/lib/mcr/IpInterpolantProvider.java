@@ -26,7 +26,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
@@ -52,20 +51,17 @@ public class IpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements
 	private final ManagedScript mManagedScript;
 	private final IUltimateServiceProvider mServices;
 	private final SimplificationTechnique mSimplificationTechnique;
-	private final XnfConversionTechnique mXnfConversionTechnique;
 	private final MultiElementCounter<IProgramVar> mConstVarCounter;
 
 	public IpInterpolantProvider(final IUltimateServiceProvider services, final ILogger logger,
 			final ManagedScript managedScript, final IPredicateUnifier predicateUnifier,
-			final SimplificationTechnique simplificationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique) {
+			final SimplificationTechnique simplificationTechnique) {
 		mServices = services;
 		mPredicateUnifier = predicateUnifier;
 		mLogger = logger;
 		// TODO: Use another managedScript?
 		mManagedScript = managedScript;
 		mSimplificationTechnique = simplificationTechnique;
-		mXnfConversionTechnique = xnfConversionTechnique;
 		mConstVarCounter = new MultiElementCounter<>();
 	}
 
@@ -179,7 +175,7 @@ public class IpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements
 				TransFormulaBuilder.constructTransFormulaFromTerm(term, pred.getVars(), mManagedScript);
 		final List<UnmodifiableTransFormula> tfs = precondition ? Arrays.asList(assume, tf) : Arrays.asList(tf, assume);
 		return TransFormulaUtils.sequentialComposition(mLogger, mServices, mManagedScript, false, true, false,
-				mXnfConversionTechnique, mSimplificationTechnique, tfs);
+				mSimplificationTechnique, tfs);
 	}
 
 	private Term substituteTransformulas(final List<TransFormula> tfs, final List<Map<IProgramVar, Term>> inVarMappings,
@@ -245,7 +241,7 @@ public class IpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements
 	private Term renameAndAbstract(final Term term, final Map<Term, Term> mapping, final Set<TermVariable> varsToKeep) {
 		final Term substituted = Substitution.apply(mManagedScript, mapping, term);
 		final Term abstracted = McrUtils.abstractVariables(substituted, varsToKeep, QuantifiedFormula.EXISTS,
-				mManagedScript, mServices, mLogger, mSimplificationTechnique, mXnfConversionTechnique);
+				mManagedScript, mServices, mLogger, mSimplificationTechnique);
 		return PartialQuantifierElimination.eliminateCompat(mServices, mManagedScript, mSimplificationTechnique, abstracted);
 	}
 

@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE LassoRanker Library.
- * 
+ *
  * The ULTIMATE LassoRanker Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE LassoRanker Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE LassoRanker Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE LassoRanker Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE LassoRanker Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE LassoRanker Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.lassoranker.variables;
@@ -39,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.NonTheorySymbol;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -49,20 +48,20 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 
 /**
  * Split lasso into independent components.
- * 
+ *
  * @author Matthias Heizmann
  *
  */
 public class LassoPartitioneer {
-	
+
 	private final IUltimateServiceProvider mServices;
 	private final ManagedScript mMgdScript;
-	
+
 	private final LassoUnderConstruction mLasso;
-	
+
 	private enum Part { STEM, LOOP };
-	
-	private final NestedMap2<Part, NonTheorySymbol<?>, ModifiableTransFormula> mSymbol2OriginalTF = 
+
+	private final NestedMap2<Part, NonTheorySymbol<?>, ModifiableTransFormula> mSymbol2OriginalTF =
 			new NestedMap2<Part, NonTheorySymbol<?>, ModifiableTransFormula>();
 	private HashRelation<NonTheorySymbol<?>, Term> mSymbol2StemConjuncts;
 	/**
@@ -81,17 +80,14 @@ public class LassoPartitioneer {
 	private final UnionFind<NonTheorySymbol<?>> mEquivalentSymbols = new UnionFind<>();
 	private final Set<IProgramVar> mAllRankVars = new HashSet<IProgramVar>();
 	private final List<LassoUnderConstruction> mNewLassos = new ArrayList<>();
-	private final XnfConversionTechnique mXnfConversionTechnique;
-	
-	
-	public LassoPartitioneer(final IUltimateServiceProvider services, 
-			final ManagedScript mgdScript, 
-			final LassoUnderConstruction lasso, 
-			final XnfConversionTechnique xnfConversionTechnique) {
+
+
+	public LassoPartitioneer(final IUltimateServiceProvider services,
+			final ManagedScript mgdScript,
+			final LassoUnderConstruction lasso) {
 		mServices = services;
 		mMgdScript = mgdScript;
 		mLasso = lasso;
-		mXnfConversionTechnique = xnfConversionTechnique;
 		doPartition();
 //		assert checkStemImplications() : "stem problem";
 	}
@@ -104,10 +100,10 @@ public class LassoPartitioneer {
 //		}
 //		return result;
 //	}
-//	
+//
 //	private boolean checkStemImplication(LassoUnderConstruction newLasso) {
-//		boolean result = TransFormulaUtils.implies(mLasso.getStem(), newLasso.getStem(), mScript, 
-//				mBoogie2Smt.getBoogie2SmtSymbolTable(), 
+//		boolean result = TransFormulaUtils.implies(mLasso.getStem(), newLasso.getStem(), mScript,
+//				mBoogie2Smt.getBoogie2SmtSymbolTable(),
 //				mBoogie2Smt.getVariableManager()) != LBool.SAT;
 //		return result;
 //	}
@@ -123,23 +119,23 @@ public class LassoPartitioneer {
 		mLoopSymbolsWithoutConjuncts = new HashSet<>();
 		mStemConjunctsWithoutSymbols = new ArrayList<>();
 		mLoopConjunctsWithoutSymbols = new ArrayList<>();
-		
-		extractSymbols(Part.STEM, mLasso.getStem(), mSymbol2StemConjuncts, 
+
+		extractSymbols(Part.STEM, mLasso.getStem(), mSymbol2StemConjuncts,
 				mStemSymbolsWithoutConjuncts, mStemConjunctsWithoutSymbols);
-		extractSymbols(Part.LOOP, mLasso.getLoop(), mSymbol2LoopConjuncts, 
+		extractSymbols(Part.LOOP, mLasso.getLoop(), mSymbol2LoopConjuncts,
 				mLoopSymbolsWithoutConjuncts, mLoopConjunctsWithoutSymbols);
-		
+
 		for (final IProgramVar rv : mAllRankVars) {
 			final Set<NonTheorySymbol<?>> symbols = new HashSet<NonTheorySymbol<?>>();
 			extractInVarAndOutVarSymbols(rv, symbols, mLasso.getStem());
-			extractInVarAndOutVarSymbols(rv, symbols, mLasso.getLoop()); 
+			extractInVarAndOutVarSymbols(rv, symbols, mLasso.getLoop());
 			announceEquivalence(symbols);
 		}
 
 
-		for (final NonTheorySymbol<?> equivalenceClassRepresentative : 
+		for (final NonTheorySymbol<?> equivalenceClassRepresentative :
 								mEquivalentSymbols.getAllRepresentatives()) {
-			final Set<NonTheorySymbol<?>> symbolEquivalenceClass = 
+			final Set<NonTheorySymbol<?>> symbolEquivalenceClass =
 					mEquivalentSymbols.getEquivalenceClassMembers(equivalenceClassRepresentative);
 			final Set<Term> equivalentStemConjuncts = new HashSet<Term>();
 			final Set<Term> equivalentLoopConjuncts = new HashSet<Term>();
@@ -158,7 +154,7 @@ public class LassoPartitioneer {
 					throw new AssertionError("unknown variable " + tv);
 				}
 			}
-			if (equivalentStemConjuncts.isEmpty() && equivalentStemSymbolsWithoutConjunct.isEmpty() 
+			if (equivalentStemConjuncts.isEmpty() && equivalentStemSymbolsWithoutConjunct.isEmpty()
 					&& equivalentLoopConjuncts.isEmpty() && equivalentLoopSymbolsWithoutConjunct.isEmpty()) {
 				// do nothing
 			} else {
@@ -167,7 +163,7 @@ public class LassoPartitioneer {
 				mNewLassos.add(new LassoUnderConstruction(stemTransformulaLR, loopTransformulaLR));
 			}
 		}
-		
+
 		if (emptyOrTrue(mStemConjunctsWithoutSymbols) && emptyOrTrue(mLoopConjunctsWithoutSymbols)) {
 			// do nothing
 		} else {
@@ -200,7 +196,7 @@ public class LassoPartitioneer {
 		}
 		assert (inVar == null) == (outVar == null) : "both or none";
 	}
-	
+
 	private ModifiableTransFormula constructTransFormulaLR(
 			final Part part, final Set<Term> equivalentConjuncts, final Set<NonTheorySymbol<?>> equivalentVariablesWithoutConjunct) {
 		ModifiableTransFormula transformulaLR;
@@ -214,7 +210,7 @@ public class LassoPartitioneer {
 		}
 		return transformulaLR;
 	}
-	
+
 	private ModifiableTransFormula constructTransFormulaLR(
 			final Part part, final List<Term> conjunctsWithoutSymbols) {
 		ModifiableTransFormula transformulaLR;
@@ -256,14 +252,14 @@ public class LassoPartitioneer {
 
 
 	private HashRelation<NonTheorySymbol<?>, Term> extractSymbols(
-			final Part part, final ModifiableTransFormula tf, 
-			final HashRelation<NonTheorySymbol<?>, Term> symbol2Conjuncts, 
+			final Part part, final ModifiableTransFormula tf,
+			final HashRelation<NonTheorySymbol<?>, Term> symbol2Conjuncts,
 			final HashSet<NonTheorySymbol<?>> symbolsWithoutConjuncts,
 			final List<Term> conjunctsWithoutSymbols) {
 		mAllRankVars.addAll(tf.getInVars().keySet());
 		mAllRankVars.addAll(tf.getOutVars().keySet());
 		//FIXME CNF conversion should be done in advance if desired
-		final Term cnf = SmtUtils.toCnf(mServices, mMgdScript, tf.getFormula(), mXnfConversionTechnique);
+		final Term cnf = SmtUtils.toCnf(mServices, mMgdScript, tf.getFormula());
 		final Term[] conjuncts = SmtUtils.getConjuncts(cnf);
 		for (final Term conjunct : conjuncts) {
 			final Set<NonTheorySymbol<?>> allSymbolsOfConjunct = NonTheorySymbol.extractNonTheorySymbols(conjunct);
