@@ -564,16 +564,16 @@ public class NestedInterpolantsBuilder<L extends IAction> {
 				result[resultPos] = withIndices2Predicate.get(withIndices);
 				if (result[resultPos] == null) {
 					/*
-					 * remove all let terms added because iZ3's interpolants contain let terms better solution:
-					 * implement support for let terms in SafeSubstitution
+					 * remove all let terms added because iZ3's interpolants contain let terms
+					 * better solution: implement support for let terms in SafeSubstitution
 					 */
 					withIndices = new FormulaUnLet().transform(withIndices);
 					Term withoutIndices = mConst2RepTvSubst.apply(withIndices);
 					if (mInstantiateArrayExt) {
 						withoutIndices = instantiateArrayExt(withoutIndices);
 					}
-					if (!ALLOW_AT_DIFF
-							&& new SubtermPropertyChecker(x -> isAtDiffTerm(x)).isSatisfiedBySomeSubterm(withoutIndices)) {
+					if (!ALLOW_AT_DIFF && new SubtermPropertyChecker(x -> isAtDiffTerm(x))
+							.isSatisfiedBySomeSubterm(withoutIndices)) {
 						throw new UnsupportedOperationException(DIFF_IS_UNSUPPORTED);
 					}
 					final Term withoutIndicesNormalized = new ConstantTermNormalizer().transform(withoutIndices);
@@ -598,9 +598,10 @@ public class NestedInterpolantsBuilder<L extends IAction> {
 	}
 
 	/**
-	 * The interpolating Z3 generates Craig interpolants that contain the array-ext function whose semantics is defined
-	 * by the following axiom ∀a∀b∃k. array-ext(a,b)=k <--> (a=b \/ a[k] != b[k]). The theory of arrays does not contain
-	 * this axiom, hence we instantiate it for each occurrence.
+	 * The interpolating Z3 generates Craig interpolants that contain the array-ext
+	 * function whose semantics is defined by the following axiom ∀a∀b∃k.
+	 * array-ext(a,b)=k <--> (a=b \/ a[k] != b[k]). The theory of arrays does not
+	 * contain this axiom, hence we instantiate it for each occurrence.
 	 */
 	private Term instantiateArrayExt(final Term interpolantWithoutIndices) {
 		final Term nnf = new NnfTransformer(mMgdScriptCfg, mServices, QuantifierHandling.PULL)
@@ -634,7 +635,8 @@ public class NestedInterpolantsBuilder<L extends IAction> {
 		result = mMgdScriptCfg.getScript().quantifier(QuantifiedFormula.EXISTS, replacingTermVariable, result);
 		result = QuantifierSequence.prependQuantifierSequence(mMgdScriptCfg.getScript(), qs.getQuantifierBlocks(),
 				result);
-		// Term pushed = new QuantifierPusher(mCsToolkitPredicates.getScript(), mServices).transform(result);
+		// Term pushed = new QuantifierPusher(mCsToolkitPredicates.getScript(),
+		// mServices).transform(result);
 		return result;
 	}
 
@@ -655,16 +657,16 @@ public class NestedInterpolantsBuilder<L extends IAction> {
 			}
 			mFirstArray = mArrayExtTerm.getParameters()[0];
 			mSecondArray = mArrayExtTerm.getParameters()[1];
-			mReplacementTermVariable =
-					arrayExtTerm.getTheory().createFreshTermVariable("arrExt", arrayExtTerm.getSort());
+			mReplacementTermVariable = arrayExtTerm.getTheory().createFreshTermVariable("arrExt",
+					arrayExtTerm.getSort());
 			mImplication = constructImplication();
 		}
 
 		private Term constructImplication() {
 			final Term arraysDistinct = mMgdScriptCfg.getScript().term("distinct", mFirstArray, mSecondArray);
 			final Term firstSelect = SmtUtils.select(mMgdScriptCfg.getScript(), mFirstArray, mReplacementTermVariable);
-			final Term secondSelect =
-					SmtUtils.select(mMgdScriptCfg.getScript(), mSecondArray, mReplacementTermVariable);
+			final Term secondSelect = SmtUtils.select(mMgdScriptCfg.getScript(), mSecondArray,
+					mReplacementTermVariable);
 			final Term selectDistinct = mMgdScriptCfg.getScript().term("distinct", firstSelect, secondSelect);
 			final Term implication = Util.implies(mMgdScriptCfg.getScript(), arraysDistinct, selectDistinct);
 			return implication;
