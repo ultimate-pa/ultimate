@@ -2,9 +2,9 @@
 /*
  * Author: Marcel Ebbinghaus
  *
- * Idea: Program highly benefits from LooplockStep order, but seems to be nonterminating 
- * (or at least takes a lot of time) without our approach
+ * Idea: Variation of parallelSumConComAtomic with 3 threads
  *
+ * Observation: Writing everything into a single atomic statements seems to be problematic for the sleep set criterion!
  */
 var A : [int]int;
 var i, j, k, c, x, y, z, n : int;
