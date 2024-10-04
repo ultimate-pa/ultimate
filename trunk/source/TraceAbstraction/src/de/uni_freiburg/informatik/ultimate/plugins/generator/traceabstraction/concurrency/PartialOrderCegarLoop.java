@@ -361,7 +361,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 					final IPredicate initialSink =
 							DataStructureUtils.getOneAndOnly(interpolantAutomaton.getInitialStates(), "initial state");
 					final TotalizeNwa<L, IPredicate> totalInterpol = new TotalizeNwa<>(ia, initialSink, false);
-					
+
 					try {
 						if (mItpAutomata == null) {
 							mItpAutomata = totalInterpol;

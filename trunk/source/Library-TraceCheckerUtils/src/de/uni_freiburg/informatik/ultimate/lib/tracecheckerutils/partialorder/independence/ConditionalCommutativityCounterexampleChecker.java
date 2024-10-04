@@ -54,6 +54,15 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.in
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.util.Lazy;
 
+/**
+ * Checks whether a counterexample has an equivalent trace of lower order (i.e. one which was already explored in a
+ * previous iteration).
+ * 
+ * @author Marcel Ebbinghaus
+ *
+ * @param <L>
+ *            letter type
+ */
 public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 
 	private final IUltimateServiceProvider mServices;
@@ -61,11 +70,32 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 	private final IEmptyStackStateFactory<IPredicate> mEmptyStackStateFactory;
 	private final ConditionalCommutativityChecker<L> mChecker;
 	private final IConditionalCommutativityCheckerStatisticsUtils mStatisticsUtils;
-	private IRun<L, IPredicate> mRun;
-	private final IIndependenceRelation<IPredicate, L> mIndependenceRelation;
 	private final IDfsOrder<L, IPredicate> mDFSOrder;
-	private IPredicateUnifier mPredicateUnifier;
 
+	/**
+	 * Constructor.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param criterion
+	 *            An IConditionalCommutativityCriterion to decide when to check for conditional commutativity
+	 * @param independenceRelation
+	 *            The independence relation used for the reduction
+	 * @param DFSOrder
+	 *            The order used for the emptiness check, which is a DFS
+	 * @param script
+	 *            Script for conjunction handling
+	 * @param generator
+	 *            Generator for constructing commutativity conditions
+	 * @param abstraction
+	 *            Current abstraction
+	 * @param emptyStackStateFactory
+	 *            Factory
+	 * @param traceChecker
+	 *            An ITraceChecker responsible for checking whether a condition holds after the currentRun
+	 * @param statisticsUtils
+	 *            Statistics
+	 */
 	public ConditionalCommutativityCounterexampleChecker(final IUltimateServiceProvider services,
 			final IConditionalCommutativityCriterion<L> criterion,
 			final IIndependenceRelation<IPredicate, L> independenceRelation, final IDfsOrder<L, IPredicate> DFSOrder,
@@ -74,7 +104,6 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 			final IEmptyStackStateFactory<IPredicate> emptyStackStateFactory, final ITraceChecker<L> traceChecker,
 			final IConditionalCommutativityCheckerStatisticsUtils statisticsUtils) {
 		mServices = services;
-		mIndependenceRelation = independenceRelation;
 		mDFSOrder = DFSOrder;
 		mAbstraction = abstraction;
 		mEmptyStackStateFactory = emptyStackStateFactory;
@@ -83,17 +112,27 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 		mStatisticsUtils = statisticsUtils;
 	}
 
+	/**
+	 * Checks for conditional commutativity along the given run (which represents the counterexample) and may provide an
+	 * interpolant automaton which proves conditional commutativity and thus equivalence of a trace of lower order.
+	 * 
+	 * @param run
+	 *            the run representing the counterexample
+	 * @param runPredicates
+	 *            the predicates of the given run
+	 * @param predicateUnifier
+	 *            predicate unifier
+	 * @return an interpolant automaton proving conditional commutativity or null otherwise
+	 */
 	public BasicRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> getInterpolants(
 			final IRun<L, IPredicate> run, final List<IPredicate> runPredicates,
 			final IPredicateUnifier predicateUnifier) {
 		mStatisticsUtils.startStopwatch(ConditionalCommutativityStopwatches.OVERALL);
-		mRun = run;
-		mPredicateUnifier = predicateUnifier;
 
-		for (int i = 0; i < mRun.getStateSequence().size() - 2; i++) {
-			final IPredicate state = mRun.getStateSequence().get(i);
-			final L letter1 = mRun.getWord().getSymbol(i);
-			final L letter2 = mRun.getWord().getSymbol(i + 1);
+		for (int i = 0; i < run.getStateSequence().size() - 2; i++) {
+			final IPredicate state = run.getStateSequence().get(i);
+			final L letter1 = run.getWord().getSymbol(i);
+			final L letter2 = run.getWord().getSymbol(i + 1);
 
 			// TODO this is brittle, it will not work for many configurations
 			if (((SleepPredicate<L>) state).getSleepSet().contains(letter2)
@@ -104,8 +143,8 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 				if (runPredicate != null && !SmtUtils.isTrueLiteral(runPredicate.getFormula())) {
 					interpolantPredicates.add(runPredicate);
 				}
-				NestedRun<L, IPredicate> currentRun = (NestedRun<L, IPredicate>) mRun;
-				if (i != mRun.getStateSequence().size() - 1) {
+				NestedRun<L, IPredicate> currentRun = (NestedRun<L, IPredicate>) run;
+				if (i != run.getStateSequence().size() - 1) {
 					currentRun = currentRun.getSubRun(0, i);
 				}
 
@@ -117,15 +156,15 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 					conPredicates.add(tracePredicates.getPrecondition());
 					conPredicates.addAll(tracePredicates.getPredicates());
 					conPredicates.add(tracePredicates.getPostcondition());
-					//final NestedWordAutomaton<L, IPredicate> automaton = constructInterpolantAutomaton(conPredicates);
-					
+
 					ConditionalCommutativityInterpolantAutomatonProvider<L> conComInterpolantProvider =
 							new ConditionalCommutativityInterpolantAutomatonProvider<>(mServices, mAbstraction,
 									mEmptyStackStateFactory, predicateUnifier);
 					conComInterpolantProvider.setInterPolantAutomaton(null);
 					conComInterpolantProvider.addToInterpolantAutomaton(conPredicates, currentRun.getWord());
-					final NestedWordAutomaton<L, IPredicate> automaton = conComInterpolantProvider.getInterpolantAutomaton();
-					
+					final NestedWordAutomaton<L, IPredicate> automaton =
+							conComInterpolantProvider.getInterpolantAutomaton();
+
 					mStatisticsUtils.addCommutingCounterexample();
 
 					final BasicRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> refinementResult =

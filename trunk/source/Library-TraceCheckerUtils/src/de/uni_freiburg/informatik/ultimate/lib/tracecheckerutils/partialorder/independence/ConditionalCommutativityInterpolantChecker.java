@@ -99,6 +99,7 @@ public class ConditionalCommutativityInterpolantChecker<L extends IAction> {
 	 * @param statisticsUtils
 	 *            Statistics
 	 * @param predicateUnifier
+	 *            Predicate unifier
 	 */
 	public ConditionalCommutativityInterpolantChecker(final IUltimateServiceProvider services,
 			final IConditionalCommutativityCriterion<L> criterion,
@@ -120,8 +121,8 @@ public class ConditionalCommutativityInterpolantChecker<L extends IAction> {
 	}
 
 	/**
-	 * Constructs a copy of interpolantAutomaton and adds states and transitions for conditional commutativity along a
-	 * given run.
+	 * Constructs a copy of interpolantAutomaton, then checks for conditional commutativity along the given run and
+	 * integrates any found conditional commutativity into the copy.
 	 *
 	 * @param run
 	 *            The run
@@ -129,7 +130,7 @@ public class ConditionalCommutativityInterpolantChecker<L extends IAction> {
 	 *            Predicates used as context for the generator
 	 * @param interpolantAutomaton
 	 *            The interpolant automaton
-	 * @return mCopy The extended copy of interpolantAutomaton
+	 * @return The extended copy of interpolantAutomaton
 	 */
 	public NestedWordAutomaton<L, IPredicate> getInterpolants(final IRun<L, IPredicate> run,
 			final List<IPredicate> runPredicates, final NestedWordAutomaton<L, IPredicate> interpolantAutomaton) {
