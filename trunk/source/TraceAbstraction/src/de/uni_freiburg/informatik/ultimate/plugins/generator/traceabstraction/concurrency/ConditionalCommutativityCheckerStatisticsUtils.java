@@ -95,4 +95,10 @@ public class ConditionalCommutativityCheckerStatisticsUtils implements IConditio
 	public void addImperfectProof() {
 		mGenerator.addConditionalCommutativityImperfectProof();
 	}
+
+	@Override
+	public void addCommutingCounterexample() {
+		mGenerator.addConditionalCommutativityCommutingCounterexample();
+
+	}
 }

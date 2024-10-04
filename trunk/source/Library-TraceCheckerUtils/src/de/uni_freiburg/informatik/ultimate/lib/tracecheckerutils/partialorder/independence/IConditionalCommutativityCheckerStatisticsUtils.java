@@ -40,6 +40,8 @@ public interface IConditionalCommutativityCheckerStatisticsUtils {
 	public void addDFSRestart();
 
 	public void addIAIntegration();
+	
+	public void addCommutingCounterexample();
 
 	public void addConditionCalculation();
 

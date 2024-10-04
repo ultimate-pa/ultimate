@@ -117,7 +117,6 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 					conPredicates.add(tracePredicates.getPrecondition());
 					conPredicates.addAll(tracePredicates.getPredicates());
 					conPredicates.add(tracePredicates.getPostcondition());
-					mStatisticsUtils.addIAIntegration();
 					//final NestedWordAutomaton<L, IPredicate> automaton = constructInterpolantAutomaton(conPredicates);
 					
 					ConditionalCommutativityInterpolantAutomatonProvider<L> conComInterpolantProvider =
@@ -127,6 +126,7 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 					conComInterpolantProvider.addToInterpolantAutomaton(conPredicates, currentRun.getWord());
 					final NestedWordAutomaton<L, IPredicate> automaton = conComInterpolantProvider.getInterpolantAutomaton();
 					
+					mStatisticsUtils.addCommutingCounterexample();
 
 					final BasicRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> refinementResult =
 							new BasicRefinementEngineResult<>(LBool.UNSAT, automaton, null, false,
