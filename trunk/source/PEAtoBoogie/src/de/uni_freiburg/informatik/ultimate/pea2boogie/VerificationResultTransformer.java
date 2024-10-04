@@ -145,10 +145,6 @@ public class VerificationResultTransformer {
 			return null;
 		} else if (result instanceof InvariantResult) {
 			invResult = (InvariantResult<?>) result;
-			// Only want to process location invariants
-			if (invResult.isLoopInvariant()) {
-				return result;
-			}
 			oldRes = (AbstractResultAtElement<?>) result;
 			final var check = invResult.getChecks().stream().filter(c -> c instanceof ReqCheck).findFirst();
 			if (check.isEmpty()) {
@@ -159,6 +155,14 @@ public class VerificationResultTransformer {
 			// in order to prevent the results to slip through to
 			// the last return unhandled
 			if (!reqCheck.getSpec().contains(Spec.REDUNDANCY)) {
+				return result;
+			}
+			// Loop invariants are stored for later comparison with
+			// respective location invariant. This only works because
+			// the creation order of invariant results is respected by 
+			// using a LinkedHashSet in FloydHoareUtils
+			if (invResult.isLoopInvariant()) {
+				mPostProcessor.setReqBuffer(ReqCheckRedundancyResult.extractRedundancySet(invResult.getInvariant()));
 				return result;
 			}
 			isPositive = true;
@@ -212,31 +216,37 @@ public class VerificationResultTransformer {
 			return new ReqCheckRtInconsistentResult<>(element, plugin, failurePath);
 		}
 		
-		// If an invariant result is present, transform it into the
+		// If an invariant result is present for a redundancy, transform it into the
 		// new output, rather than a generic ReqCheckFailResult
 		if (spec == Spec.REDUNDANCY && invResult != null) {
 			// Annotation needed for the result to know the respective Check
 			reqCheck.annotate(element);
 			String redundantId = reqCheck.getReqIds().iterator().next();
-			StringBuilder resultString = new StringBuilder("");
+			StringBuilder debugInfo = new StringBuilder("");
 			final String invariant = invResult.getInvariant();
 			final Set<String> redundancySet = ReqCheckRedundancyResult.extractRedundancySet(invariant);
-			// TODO: Apply post-processing to the redundancy set here
-			final Set<String> optimizedRedundancySet = mPostProcessor.variableAnalysis(redundantId, redundancySet);
-			if (redundancySet.size() == optimizedRedundancySet.size()) {
-				resultString.append(redundancySet.toString());
-			} else {
-				resultString.append(optimizedRedundancySet.toString());
-				resultString.append(". Eliminated ");
-				final int eliminatedReqs = redundancySet.size() - optimizedRedundancySet.size();
-				resultString.append(eliminatedReqs);
-				resultString.append(eliminatedReqs == 1 ? " requirement " : " requirements ");
-				resultString.append("of initial redundancy set ");
-				resultString.append(redundancySet.toString());
+			// Compare loop invariant to location invariant
+			final int loopLocationDifference = mPostProcessor.getReqBuffer().size() - redundancySet.size();
+			if (loopLocationDifference > 0) {
+				debugInfo.append("Eliminated ");
+				debugInfo.append(loopLocationDifference);
+				debugInfo.append(loopLocationDifference == 1 ? " requirement " : " requirements ");
+				debugInfo.append("by considering location invariant over loop invariant. ");
 			}
-			resultString.append(" derived by location invariant ");
-			resultString.append(invariant);
-			return new ReqCheckRedundancyResult<>(element, plugin, redundantId, resultString.toString());
+			// Apply post-processing to the redundancy set here
+			final Set<String> optimizedRedundancySet = mPostProcessor.variableAnalysis(redundantId, redundancySet);
+			if (redundancySet.size() > optimizedRedundancySet.size()) {
+				debugInfo.append(optimizedRedundancySet.toString());
+				debugInfo.append("Eliminated ");
+				final int eliminatedReqs = redundancySet.size() - optimizedRedundancySet.size();
+				debugInfo.append(eliminatedReqs);
+				debugInfo.append(eliminatedReqs == 1 ? " requirement " : " requirements ");
+				debugInfo.append("of initial redundancy set ");
+				debugInfo.append(redundancySet.toString());
+			}
+			debugInfo.append("Redundancy set derived by location invariant: ");
+			debugInfo.append(invariant);
+			return new ReqCheckRedundancyResult<>(element, plugin, redundantId, optimizedRedundancySet.toString(), debugInfo.toString());
 		}		
 		return new ReqCheckFailResult<>(element, plugin);
 	}
