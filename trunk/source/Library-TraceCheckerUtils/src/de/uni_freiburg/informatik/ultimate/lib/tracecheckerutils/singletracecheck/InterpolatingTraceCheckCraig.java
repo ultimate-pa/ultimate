@@ -92,7 +92,7 @@ public class InterpolatingTraceCheckCraig<L extends IAction> extends Interpolati
 		if (isCorrect() == LBool.UNSAT) {
 			InterpolantComputationStatus ics = new InterpolantComputationStatus();
 			try {
-				computeInterpolants(new AllIntegers(), interpolation);
+				computeInterpolants(interpolation);
 				mTraceCheckBenchmarkGenerator.reportSequenceOfInterpolants(Arrays.asList(mInterpolants),
 						InterpolantType.Craig);
 				if (!innerRecursiveNestedInterpolationCall) {
@@ -217,8 +217,7 @@ public class InterpolatingTraceCheckCraig<L extends IAction> extends Interpolati
 	}
 
 	@Override
-	protected void computeInterpolants(final Set<Integer> interpolatedPositions,
-			final InterpolationTechnique interpolation) {
+	protected void computeInterpolants(final InterpolationTechnique interpolation) {
 		mTraceCheckBenchmarkGenerator.start(TraceCheckStatisticsDefinitions.InterpolantComputationTime.toString());
 		assert mPredicateUnifier != null;
 		assert mPredicateUnifier.isRepresentative(mPrecondition);
@@ -229,10 +228,10 @@ public class InterpolatingTraceCheckCraig<L extends IAction> extends Interpolati
 		try {
 			switch (interpolation) {
 			case Craig_NestedInterpolation:
-				computeInterpolantsRecursive(interpolatedPositions);
+				computeInterpolantsRecursive();
 				break;
 			case Craig_TreeInterpolation:
-				computeInterpolantsTree(interpolatedPositions);
+				computeInterpolantsTree();
 				break;
 			default:
 				throw new UnsupportedOperationException("unsupportedInterpolation");
@@ -289,13 +288,14 @@ public class InterpolatingTraceCheckCraig<L extends IAction> extends Interpolati
 	/**
 	 * Use tree interpolants to compute nested interpolants.
 	 */
-	private void computeInterpolantsTree(final Set<Integer> interpolatedPositions) {
+	private void computeInterpolantsTree() {
 		if (mFeasibilityResult.getLBool() != LBool.UNSAT) {
 			throw new IllegalArgumentException("Interpolants only available if trace fulfills specification");
 		}
 		if (mInterpolants != null) {
 			throw new AssertionError("You already computed interpolants");
 		}
+		final Set<Integer> interpolatedPositions = new AllIntegers();
 		final NestedInterpolantsBuilder<L> nib = new NestedInterpolantsBuilder<>(mTcSmtManager, mTraceCheckLock,
 				mAAA.getAnnotatedSsa(), mNsb.getConstants2BoogieVar(), mPredicateUnifier, mPredicateFactory,
 				interpolatedPositions, true, mServices, this, mCfgManagedScript, mInstantiateArrayExt,
@@ -311,8 +311,7 @@ public class InterpolatingTraceCheckCraig<L extends IAction> extends Interpolati
 	 * Use Matthias' old naive iterative method to compute nested interpolants. (Recursive interpolation queries, one
 	 * for each call-return pair)
 	 */
-	private void computeInterpolantsRecursive(final Set<Integer> interpolatedPositions) {
-		assert interpolatedPositions != null : "no interpolatedPositions";
+	private void computeInterpolantsRecursive() {
 		if (mFeasibilityResult.getLBool() != LBool.UNSAT) {
 			if (mFeasibilityResult.getLBool() == null) {
 				throw new AssertionError("No trace check at the moment - no interpolants!");
@@ -324,12 +323,11 @@ public class InterpolatingTraceCheckCraig<L extends IAction> extends Interpolati
 		}
 
 		final List<Integer> nonPendingCallPositions = new ArrayList<>();
-		final Set<Integer> newInterpolatedPositions =
-				interpolatedPositionsForSubtraces(interpolatedPositions, nonPendingCallPositions);
+		final Set<Integer> interpolatedPositions = interpolatedPositionsForSubtraces(nonPendingCallPositions);
 
 		final NestedInterpolantsBuilder<L> nib = new NestedInterpolantsBuilder<>(mTcSmtManager, mTraceCheckLock,
 				mAAA.getAnnotatedSsa(), mNsb.getConstants2BoogieVar(), mPredicateUnifier, mPredicateFactory,
-				newInterpolatedPositions, false, mServices, this, mCfgManagedScript, mInstantiateArrayExt,
+				interpolatedPositions, false, mServices, this, mCfgManagedScript, mInstantiateArrayExt,
 				mSimplificationTechnique);
 		mInterpolants = nib.getNestedInterpolants();
 		final IPredicate oldPrecondition = mPrecondition;
@@ -417,23 +415,22 @@ public class InterpolatingTraceCheckCraig<L extends IAction> extends Interpolati
 	/**
 	 * Compute interpolated positions used in recursive interpolant computation
 	 */
-	private Set<Integer> interpolatedPositionsForSubtraces(final Set<Integer> interpolatedPositions,
-			final List<Integer> nonPendingCallPositions) {
+	private Set<Integer> interpolatedPositionsForSubtraces(final List<Integer> nonPendingCallPositions) {
 
-		final Set<Integer> newInterpolatedPositions = new HashSet<>();
+		final Set<Integer> result = new HashSet<>();
 
 		int currentContextStackDepth = 0;
 		final NestedWord<?> nestedTrace = mTrace;
 		for (int i = 0; i < nestedTrace.length() - 1; i++) {
 
 			if (nestedTrace.isInternalPosition(i)) {
-				if (interpolatedPositions.contains(i) && currentContextStackDepth == 0) {
-					newInterpolatedPositions.add(i);
+				if (currentContextStackDepth == 0) {
+					result.add(i);
 				}
 			} else if (nestedTrace.isCallPosition(i)) {
 				if (nestedTrace.isPendingCall(i)) {
-					if (interpolatedPositions.contains(i) && currentContextStackDepth == 0) {
-						newInterpolatedPositions.add(i);
+					if (currentContextStackDepth == 0) {
+						result.add(i);
 					}
 				} else {
 					// we need interpolant before call if
@@ -449,13 +446,13 @@ public class InterpolatingTraceCheckCraig<L extends IAction> extends Interpolati
 				// new need interpolant after return if currentContextStackDepth
 				// == 0
 				if (currentContextStackDepth == 0) {
-					newInterpolatedPositions.add(i);
+					result.add(i);
 				}
 			} else {
 				throw new AssertionError();
 			}
 		}
-		return newInterpolatedPositions;
+		return result;
 	}
 
 	/**

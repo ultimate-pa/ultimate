@@ -157,7 +157,7 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 		if (result == LBool.UNSAT) {
 			InterpolantComputationStatus actualInterpolationComputationStatus = null;
 			try {
-				computeInterpolants(new AllIntegers(), interpolation);
+				computeInterpolants(interpolation);
 				actualInterpolationComputationStatus = new InterpolantComputationStatus();
 			} catch (final ToolchainCanceledException ex) {
 				throw ex;
@@ -175,11 +175,10 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 	}
 
 	@Override
-	public void computeInterpolants(final Set<Integer> interpolatedPositions,
-			final InterpolationTechnique interpolation) {
+	public void computeInterpolants(final InterpolationTechnique interpolation) {
 		mTraceCheckBenchmarkGenerator.start(TraceCheckStatisticsDefinitions.InterpolantComputationTime.toString());
 		try {
-			computeInterpolantsUsingUnsatCore(interpolatedPositions);
+			computeInterpolantsUsingUnsatCore();
 		} finally {
 			mTraceCheckBenchmarkGenerator.stop(TraceCheckStatisticsDefinitions.InterpolantComputationTime.toString());
 		}
@@ -233,10 +232,7 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 	 * @see LiveVariables
 	 * @see PredicateTransformer
 	 */
-	private void computeInterpolantsUsingUnsatCore(final Set<Integer> interpolatedPositions) {
-		if (!(interpolatedPositions instanceof AllIntegers)) {
-			throw new UnsupportedOperationException();
-		}
+	private void computeInterpolantsUsingUnsatCore() {
 		final Set<Term> unsatCore = new HashSet<>(Arrays.asList(mTcSmtManager.getScript().getUnsatCore()));
 		// unsat core obtained. We now pop assertion stack of solver. This
 		// allows us to use solver e.g. for simplifications

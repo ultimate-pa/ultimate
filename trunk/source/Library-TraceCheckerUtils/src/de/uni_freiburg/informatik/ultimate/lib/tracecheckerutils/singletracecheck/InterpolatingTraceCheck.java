@@ -103,21 +103,12 @@ public abstract class InterpolatingTraceCheck<L extends IAction> extends TraceCh
 	 * Furthermore throughout the lifetime of the {@link TraceCheck}, the traceCheck will always use one predicate
 	 * object for all interpolants which are similar (represented by the same term).
 	 * <p>
-	 *
-	 * @param interpolatedPositions
-	 *            Positions at which we compute interpolants. If interpolatedPositions==null each interpolant
-	 *            φ_0,...,φ_n is computed. Otherwise for each index i (but zero and n) that does not occur in
-	 *            interpolatedPositions φ_i will be an UnknownPredicate.
-	 *            <p>
-	 *            interpolatedPositions has to be sorted (ascending) and its entries have to be smaller than or equal to
-	 *            mTrace.size()
-	 * @param mPedicateUnifier
-	 *            A IPredicateUnifier in which precondition, postcondition and all pending contexts are representatives.
 	 * @param interpolation
 	 *            Method that is used to compute the interpolants.
+	 * @param mPedicateUnifier
+	 *            A IPredicateUnifier in which precondition, postcondition and all pending contexts are representatives.
 	 */
-	protected abstract void computeInterpolants(Set<Integer> interpolatedPositions,
-			InterpolationTechnique interpolation);
+	protected abstract void computeInterpolants(InterpolationTechnique interpolation);
 
 	private boolean testRelevantVars() {
 		boolean result = true;

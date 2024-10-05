@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants;
 
 import java.util.Arrays;
-import java.util.Set;
 import java.util.SortedMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
@@ -81,7 +80,7 @@ public class InterpolatingTraceCheckPathInvariantsWithFallback<LETTER extends IA
 		if (super.isCorrect() == LBool.UNSAT) {
 			mTraceCheckFinished = true;
 			cleanupAndUnlockSolver();
-			computeInterpolants(new AllIntegers(), InterpolationTechnique.PathInvariants);
+			computeInterpolants(InterpolationTechnique.PathInvariants);
 			if (!mInterpolantComputationStatus.wasComputationSuccessful()) {
 				final String message = "invariant synthesis failed";
 				final String taskDescription =
@@ -93,8 +92,7 @@ public class InterpolatingTraceCheckPathInvariantsWithFallback<LETTER extends IA
 	}
 
 	@Override
-	protected void computeInterpolants(final Set<Integer> interpolatedPositions,
-			final InterpolationTechnique interpolation) {
+	protected void computeInterpolants(final InterpolationTechnique interpolation) {
 		final PathInvariantsGenerator<LETTER> pathInvariantsGenerator = new PathInvariantsGenerator<>(super.mServices,
 				mNestedRun, super.getPrecondition(), super.getPostcondition(), mPredicateFactory, mPredicateUnifier,
 				mIcfg, mInvariantSynthesisSettings, mSimplificationTechnique);
