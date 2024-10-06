@@ -103,7 +103,7 @@ public class NestedInterpolantsBuilder<L extends IAction> {
 	private final IPredicateUnifier mPredicateUnifier;
 	private final BasicPredicateFactory mPredicateFactory;
 
-	private final Set<Integer> mInterpolatedPositions;
+	private final Set<Integer> mSkippedInnerProcedurePositions;
 
 	private ArrayList<Term> mInterpolInput;
 
@@ -128,7 +128,7 @@ public class NestedInterpolantsBuilder<L extends IAction> {
 	public NestedInterpolantsBuilder(final ManagedScript mgdScriptTc, final TraceCheckLock scriptLockOwner,
 			final NestedFormulas<L, Term, Term> annotatdSsa, final Map<Term, IProgramVar> constants2BoogieVar,
 			final IPredicateUnifier predicateBuilder, final BasicPredicateFactory predicateFactory,
-			final Set<Integer> interpolatedPositions, final boolean treeInterpolation,
+			final Set<Integer> skippedInnerProcedurePositions, final boolean treeInterpolation,
 			final IUltimateServiceProvider services, final TraceCheck<L> traceCheck, final ManagedScript mgdScriptCfg,
 			final boolean instantiateArrayExt, final SimplificationTechnique simplificationTechnique) {
 		mServices = services;
@@ -142,7 +142,7 @@ public class NestedInterpolantsBuilder<L extends IAction> {
 		mPredicateFactory = predicateFactory;
 		mAnnotSSA = annotatdSsa;
 		mCraigInterpolants = new Term[mAnnotSSA.getTrace().length() - 1];
-		mInterpolatedPositions = interpolatedPositions;
+		mSkippedInnerProcedurePositions = skippedInnerProcedurePositions;
 		mTrace = annotatdSsa.getTrace();
 		mInstantiateArrayExt = instantiateArrayExt;
 		final HashMap<Term, Term> const2RepTv = new HashMap<>();
@@ -332,7 +332,7 @@ public class NestedInterpolantsBuilder<L extends IAction> {
 		if (i == mTrace.length() - 1) {
 			return false;
 		}
-		return mInterpolatedPositions.contains(i);
+		return !mSkippedInnerProcedurePositions.contains(i);
 	}
 
 	public IPredicate[] getNestedInterpolants() {
@@ -390,6 +390,7 @@ public class NestedInterpolantsBuilder<L extends IAction> {
 					withIndices2Predicate.put(withIndices, result[resultPos]);
 				}
 			} else {
+				assert mSkippedInnerProcedurePositions.contains(resultPos);
 				result[resultPos] = mPredicateFactory.newDontCarePredicate(null);
 			}
 		}
