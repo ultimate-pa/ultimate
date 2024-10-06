@@ -12,6 +12,7 @@ public class ReqCheckRedundancyResult<LOC extends IElement> extends ReqCheckFail
 	private String mReqName;
 	private String mRedundancySet;
 	private String mDebugInfo;
+	private static String mRegex = "[a-zA-Z_]+[a-zA-Z0-9_]*_ct(0|[1-9][0-9]*)[a-zA-Z0-9_]*_total";
 	
 	public ReqCheckRedundancyResult(LOC element, String plugin, String reqName, String redundancySet, String debugInfo) {
 		super(element, plugin);
@@ -34,8 +35,7 @@ public class ReqCheckRedundancyResult<LOC extends IElement> extends ReqCheckFail
 	 * disjoint of the variable names used in the program that simulates the intersection of automata
 	 */
 	public static Set<String> extractRedundancySet(String invariant) {
-		String regex = "[a-zA-Z_]+[a-zA-Z0-9_]*_ct(0|[1-9][0-9]*)[a-zA-Z0-9_]*_total";
-		Pattern pattern = Pattern.compile(regex);
+		Pattern pattern = Pattern.compile(mRegex);
 		Matcher matcher = pattern.matcher(invariant);
 		
 		Set<String> redundancySet = new LinkedHashSet<>();
