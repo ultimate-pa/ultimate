@@ -245,7 +245,7 @@ public class VerificationResultTransformer {
 				debugInfo.append(redundancySet.toString());
 				debugInfo.append(" by variable analysis. ");
 			}
-			debugInfo.append("Redundancy set derived by location invariant: ");
+			debugInfo.append("Initial redundancy set derived by location invariant: ");
 			debugInfo.append(invariant);
 			return new ReqCheckRedundancyResult<>(element, plugin, redundantId, optimizedRedundancySet.toString(), debugInfo.toString());
 		}		
