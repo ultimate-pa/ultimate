@@ -365,28 +365,13 @@ public class NestedInterpolantsBuilder<L extends IAction> {
 			}
 			assert positionOfThisCraigInterpolant >= resultPos;
 			if (isInterpolatedPosition(resultPos)) {
-				Term withIndices = mCraigInterpolants[craigInterpolPos];
+				final Term withIndices = mCraigInterpolants[craigInterpolPos];
 				assert resultPos == mCraigInt2interpolantIndex.get(craigInterpolPos);
 				craigInterpolPos++;
 				result[resultPos] = withIndices2Predicate.get(withIndices);
 				if (result[resultPos] == null) {
-					/*
-					 * remove all let terms added because iZ3's interpolants contain let terms
-					 * better solution: implement support for let terms in SafeSubstitution
-					 */
-					withIndices = new FormulaUnLet().transform(withIndices);
-					Term withoutIndices = mConst2RepTvSubst.apply(withIndices);
-					if (mInstantiateArrayExt) {
-						withoutIndices = instantiateArrayExt(withoutIndices);
-					}
-					if (!ALLOW_AT_DIFF && new SubtermPropertyChecker(x -> isAtDiffTerm(x))
-							.isSatisfiedBySomeSubterm(withoutIndices)) {
-						throw new UnsupportedOperationException(DIFF_IS_UNSUPPORTED);
-					}
-					final Term withoutIndicesNormalized = new ConstantTermNormalizer().transform(withoutIndices);
-					final Term lessQuantifiers = PartialQuantifierElimination.eliminate(mServices, mMgdScriptCfg,
-							withoutIndicesNormalized, mSimplificationTechnique);
-					result[resultPos] = mPredicateUnifier.getOrConstructPredicate(lessQuantifiers);
+					final Term postprocessed = postprocessInterpolant(withIndices);
+					result[resultPos] = mPredicateUnifier.getOrConstructPredicate(postprocessed);
 					withIndices2Predicate.put(withIndices, result[resultPos]);
 				}
 			} else {
@@ -396,6 +381,35 @@ public class NestedInterpolantsBuilder<L extends IAction> {
 		}
 		assert craigInterpolPos == mCraigInterpolants.length;
 		return result;
+	}
+
+
+	/**
+	 * Apply various processing steps and (seemingly) translate terms to the script
+	 * of the CFG. <br />
+	 * TODO 2024-10-06 Matthias:
+	 * <li>Check if all postprocessing steps are needed (remove iZ3 support?)
+	 * <li>Check if quantifier elimination should really be done here (is it done
+	 * twice in the overall trace check?)
+	 */
+	private Term postprocessInterpolant(final Term withIndices) {
+		/*
+		 * remove all let terms added because iZ3's interpolants contain let terms
+		 * better solution: implement support for let terms in SafeSubstitution
+		 */
+		final Term unlet = new FormulaUnLet().transform(withIndices);
+		Term withoutIndices = mConst2RepTvSubst.apply(unlet);
+		if (mInstantiateArrayExt) {
+			withoutIndices = instantiateArrayExt(withoutIndices);
+		}
+		if (!ALLOW_AT_DIFF
+				&& new SubtermPropertyChecker(x -> isAtDiffTerm(x)).isSatisfiedBySomeSubterm(withoutIndices)) {
+			throw new UnsupportedOperationException(DIFF_IS_UNSUPPORTED);
+		}
+		final Term withoutIndicesNormalized = new ConstantTermNormalizer().transform(withoutIndices);
+		final Term lessQuantifiers = PartialQuantifierElimination.eliminate(mServices, mMgdScriptCfg,
+				withoutIndicesNormalized, mSimplificationTechnique);
+		return lessQuantifiers;
 	}
 
 	private void checkTimeout() {
