@@ -258,7 +258,7 @@ public class NestedInterpolantsBuilder<L extends IAction> {
 			// interpolInput[correspondingReturn] might be the wrong position
 			int interpolInputPositionOfReturn = 0;
 			for (int i = 0; i < correspondingReturn; i++) {
-				if (mInterpolatedPositions.contains(i)) {
+				if (isInterpolatedPosition(i)) {
 					interpolInputPositionOfReturn++;
 				}
 			}
@@ -331,9 +331,6 @@ public class NestedInterpolantsBuilder<L extends IAction> {
 		assert i < mTrace.length();
 		if (i == mTrace.length() - 1) {
 			return false;
-		}
-		if (mInterpolatedPositions == null) {
-			return true;
 		}
 		return mInterpolatedPositions.contains(i);
 	}
