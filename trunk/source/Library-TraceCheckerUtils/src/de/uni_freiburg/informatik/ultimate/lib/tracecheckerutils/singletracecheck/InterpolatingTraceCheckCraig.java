@@ -322,8 +322,9 @@ public class InterpolatingTraceCheckCraig<L extends IAction> extends Interpolati
 			throw new AssertionError("You already computed interpolants");
 		}
 
-		final List<Integer> nonPendingCallPositions = new ArrayList<>();
-		final Set<Integer> interpolatedPositions = interpolatedPositionsForSubtraces(nonPendingCallPositions);
+
+		final List<Integer> outerNonPendingCallPositions = computeOutermostNonPendingCallPosition(mTrace);
+		final Set<Integer> interpolatedPositions = computeInterpolatedPositions(mTrace, outerNonPendingCallPositions);
 
 		final NestedInterpolantsBuilder<L> nib = new NestedInterpolantsBuilder<>(mTcSmtManager, mTraceCheckLock,
 				mAAA.getAnnotatedSsa(), mNsb.getConstants2BoogieVar(), mPredicateUnifier, mPredicateFactory,
@@ -333,7 +334,7 @@ public class InterpolatingTraceCheckCraig<L extends IAction> extends Interpolati
 		final IPredicate oldPrecondition = mPrecondition;
 		final IPredicate oldPostcondition = mPostcondition;
 
-		for (final Integer nonPendingCall : nonPendingCallPositions) {
+		for (final Integer nonPendingCall : outerNonPendingCallPositions) {
 			// compute subtrace from to call to corresponding return
 			final int returnPosition = mTrace.getReturnPosition(nonPendingCall);
 			final NestedWord<L> subtrace = mTrace.getSubWord(nonPendingCall + 1, returnPosition + 1);
@@ -412,48 +413,40 @@ public class InterpolatingTraceCheckCraig<L extends IAction> extends Interpolati
 				mLogger) : "invalid Hoare triple in nested interpolants";
 	}
 
-	/**
-	 * Compute interpolated positions used in recursive interpolant computation
-	 */
-	private Set<Integer> interpolatedPositionsForSubtraces(final List<Integer> nonPendingCallPositions) {
-
-		final Set<Integer> result = new HashSet<>();
-
-		int currentContextStackDepth = 0;
-		final NestedWord<?> nestedTrace = mTrace;
-		for (int i = 0; i < nestedTrace.length() - 1; i++) {
-
-			if (nestedTrace.isInternalPosition(i)) {
-				if (currentContextStackDepth == 0) {
-					result.add(i);
-				}
-			} else if (nestedTrace.isCallPosition(i)) {
-				if (nestedTrace.isPendingCall(i)) {
-					if (currentContextStackDepth == 0) {
-						result.add(i);
-					}
-				} else {
-					// we need interpolant before call if
-					// currentContextStackDepth == 0
-					if (currentContextStackDepth == 0) {
-						nonPendingCallPositions.add(i);
-					}
-					currentContextStackDepth++;
-					assert currentContextStackDepth > 0;
-				}
-			} else if (nestedTrace.isReturnPosition(i)) {
-				currentContextStackDepth--;
-				// new need interpolant after return if currentContextStackDepth
-				// == 0
-				if (currentContextStackDepth == 0) {
-					result.add(i);
-				}
-			} else {
-				throw new AssertionError();
+	private static <L> List<Integer> computeOutermostNonPendingCallPosition(final NestedWord<L> trace) {
+		final List<Integer> result = new ArrayList<>();
+		int i = 0;
+		while (i < trace.length()) {
+			// if i is position of non-pending call then set i to
+			// the position of the return and increment it afterwards
+			if (trace.isCallPosition(i) && !trace.isPendingCall(i)) {
+				result.add(i);
+				i = trace.getReturnPosition(i);
 			}
+			i++;
 		}
 		return result;
 	}
+
+	/**
+	 * Compute interpolated positions used in recursive interpolant computation
+	 */
+	private static <L> Set<Integer> computeInterpolatedPositions(final NestedWord<L> trace,
+			final List<Integer> nonPendingCalls) {
+		final Set<Integer> result = new HashSet<>();
+		int itBegin = 0;
+		for (final int callPos : nonPendingCalls) {
+			for (int i = itBegin; i < callPos; i++) {
+				result.add(i);
+			}
+			itBegin = trace.getReturnPosition(callPos);
+		}
+		for (int i = itBegin; i < trace.length() - 1; i++) {
+			result.add(i);
+		}
+		return result;
+	}
+
 
 	/**
 	 * A {@link RuntimeException} that can be thrown when a nested trace check fails.
