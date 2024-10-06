@@ -26,8 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck;
 
-import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.SortedMap;
@@ -155,76 +153,4 @@ public abstract class InterpolatingTraceCheck<L extends IAction> extends TraceCh
 		return perfectSequences == 1;
 	}
 
-	/**
-	 * Integer set implementation that has only a contains method. The method always returns true.
-	 *
-	 * @author heizmann@informatik.uni-freiburg.de
-	 */
-	public static class AllIntegers implements Set<Integer> {
-
-		@Override
-		public int size() {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public boolean isEmpty() {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public boolean contains(final Object obj) {
-			return true;
-		}
-
-		@Override
-		public Iterator<Integer> iterator() {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public Object[] toArray() {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public <T> T[] toArray(final T[] array) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public boolean add(final Integer elem) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public boolean remove(final Object obj) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public boolean containsAll(final Collection<?> coll) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public boolean addAll(final Collection<? extends Integer> coll) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public boolean retainAll(final Collection<?> coll) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public boolean removeAll(final Collection<?> coll) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public void clear() {
-			throw new UnsupportedOperationException();
-		}
-	}
 }

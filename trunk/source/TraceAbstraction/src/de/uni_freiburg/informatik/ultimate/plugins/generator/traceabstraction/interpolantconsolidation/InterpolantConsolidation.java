@@ -68,7 +68,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.CoverageAnalysis.BackwardCoveringInformation;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolatingTraceCheck.AllIntegers;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckSpWp;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
@@ -121,7 +120,7 @@ public class InterpolantConsolidation<TC extends IInterpolantGenerator<LETTER>, 
 
 		final InterpolantComputationStatus status = mIpTc.getInterpolantComputationStatus();
 		if (status.wasComputationSuccessful()) {
-			mInterpolantsConsolidationSuccessful = computeInterpolants(new AllIntegers());
+			mInterpolantsConsolidationSuccessful = computeInterpolants();
 		} else {
 			mInterpolantsConsolidationSuccessful = false;
 		}
@@ -129,7 +128,7 @@ public class InterpolantConsolidation<TC extends IInterpolantGenerator<LETTER>, 
 				computeIsConsolidatedInterpolantsPerfectSequence(mConsolidatedInterpolants);
 	}
 
-	private final boolean computeInterpolants(final Set<Integer> interpolatedPositions)
+	private final boolean computeInterpolants()
 			throws AutomataOperationCanceledException {
 		// Start the stopwatch to measure the time we need for interpolant consolidation
 		mInterpolantConsolidationBenchmarkGenerator.start(InterpolantConsolidationBenchmarkType.s_TimeOfConsolidation);
