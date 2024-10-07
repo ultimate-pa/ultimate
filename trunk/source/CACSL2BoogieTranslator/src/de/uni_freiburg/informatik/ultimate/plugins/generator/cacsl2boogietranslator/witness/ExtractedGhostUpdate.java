@@ -42,11 +42,9 @@ import de.uni_freiburg.informatik.ultimate.acsl.parser.ACSLSyntaxErrorException;
 import de.uni_freiburg.informatik.ultimate.acsl.parser.Parser;
 import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryModelDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
@@ -115,18 +113,13 @@ public class ExtractedGhostUpdate implements IExtractedWitnessEntry {
 		return null;
 	}
 
-	private static List<Statement> annotateAtomicCall(final ILocation loc, final List<Statement> programStatements,
-			final List<Statement> ghostUpdate, final String functionName) {
+	private static List<Statement> annotateAtomicBlock(final ILocation loc, final List<Statement> programStatements,
+			final List<Statement> ghostUpdate) {
 		final List<Statement> result = new ArrayList<>();
 		boolean isAnnotated = false;
 		for (final Statement st : programStatements) {
-			if (isAnnotated || !(st instanceof AtomicStatement)) {
-				result.add(st);
-				continue;
-			}
-			final Statement[] atomicBody = ((AtomicStatement) st).getBody();
-			if (Arrays.stream(atomicBody).anyMatch(
-					x -> x instanceof CallStatement && ((CallStatement) x).getMethodName().equals(functionName))) {
+			if (st instanceof AtomicStatement && !isAnnotated) {
+				final Statement[] atomicBody = ((AtomicStatement) st).getBody();
 				isAnnotated = true;
 				result.add(StatementFactory.constructAtomicStatement(loc,
 						Stream.concat(ghostUpdate.stream(), Arrays.stream(atomicBody))));
@@ -175,30 +168,14 @@ public class ExtractedGhostUpdate implements IExtractedWitnessEntry {
 			// Insert the ghost update before the end of the atomic block to ensure that it is executed atomically.
 			return new ExpressionResultBuilder(witness).addAllExceptLrValue(expressionResult).build();
 		case "pthread_mutex_lock":
-			return new ExpressionResultBuilder(expressionResult).addAllExceptLrValueAndStatements(witness)
-					.resetStatements(annotateAtomicCall(loc, expressionResult.getStatements(), witness.getStatements(),
-							MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX_LOCK.getName()))
-					.build();
 		case "pthread_mutex_unlock":
 		case "pthread_cond_wait":
-			return new ExpressionResultBuilder(expressionResult).addAllExceptLrValueAndStatements(witness)
-					.resetStatements(annotateAtomicCall(loc, expressionResult.getStatements(), witness.getStatements(),
-							MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX_UNLOCK.getName()))
-					.build();
 		case "pthread_rwlock_rdlock":
-			return new ExpressionResultBuilder(expressionResult).addAllExceptLrValueAndStatements(witness)
-					.resetStatements(annotateAtomicCall(loc, expressionResult.getStatements(), witness.getStatements(),
-							MemoryModelDeclarations.ULTIMATE_PTHREADS_RWLOCK_READLOCK.getName()))
-					.build();
 		case "pthread_rwlock_wrlock":
-			return new ExpressionResultBuilder(expressionResult).addAllExceptLrValueAndStatements(witness)
-					.resetStatements(annotateAtomicCall(loc, expressionResult.getStatements(), witness.getStatements(),
-							MemoryModelDeclarations.ULTIMATE_PTHREADS_RWLOCK_WRITELOCK.getName()))
-					.build();
 		case "pthread_rwlock_unlock":
 			return new ExpressionResultBuilder(expressionResult).addAllExceptLrValueAndStatements(witness)
-					.resetStatements(annotateAtomicCall(loc, expressionResult.getStatements(), witness.getStatements(),
-							MemoryModelDeclarations.ULTIMATE_PTHREADS_RWLOCK_UNLOCK.getName()))
+					.resetStatements(
+							annotateAtomicBlock(loc, expressionResult.getStatements(), witness.getStatements()))
 					.build();
 		case "pthread_create":
 			// Make the ghost update itself atomic and insert it just before the fork.
