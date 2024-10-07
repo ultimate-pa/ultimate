@@ -41,7 +41,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -50,14 +49,12 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubTermFinder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineTermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -120,11 +117,10 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 					}
 					continue;
 				}
-				final Predicate<Term> isDivModTerm = (x -> isDivModTerm(x));
 				final boolean onlyOutermost = false;
-				final Set<Term> divModSubterms = SubTermFinder.find(dualJunct, isDivModTerm, onlyOutermost);
-				for (final Term subterm : divModSubterms) {
-					final ApplicationTerm appTerm = (ApplicationTerm) subterm;
+				final Set<ApplicationTerm> divModSubterms =
+						SmtUtils.extractApplicationTerms(Set.of("div", "mod"), dualJunct, onlyOutermost);
+				for (final ApplicationTerm appTerm : divModSubterms) {
 					assert appTerm.getFunction().getApplicationString().equals("div")
 							|| appTerm.getFunction().getApplicationString().equals("mod");
 					assert appTerm.getParameters().length == 2;
@@ -175,7 +171,7 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 					}
 					final DmlPossibility dmlPossibility =
 							new DmlPossibility(appTerm.getFunction().getApplicationString(), ceo, divisorAsBigInteger,
-									dualJunct, inverse, subterm, eliminateeOccursInCorrespondingFiniteJunction);
+									dualJunct, inverse, appTerm, eliminateeOccursInCorrespondingFiniteJunction);
 					result.add(dmlPossibility);
 				}
 			}
@@ -424,19 +420,6 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 		final Term interval = constructInterval(inputEt.getQuantifier(), z, divisor);
 		return QuantifierUtils.applyDualFiniteConnective(mScript, inputEt.getQuantifier(), eliminateeReplaced,
 				interval);
-	}
-
-	/**
-	 * Return true if the input is `div` term or a `mod` term.
-	 */
-	private boolean isDivModTerm(final Term term) {
-		if (term instanceof ApplicationTerm) {
-			final FunctionSymbol fun = ((ApplicationTerm) term).getFunction();
-			if (fun.getApplicationString().equals("div") || fun.getApplicationString().equals("mod")) {
-				return true;
-			}
-		}
-		return false;
 	}
 
 	/**

@@ -39,7 +39,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
@@ -320,9 +319,7 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	}
 
 	private Term tryModSimplification(final Term term) {
-		final Predicate<Term> p =
-				(x -> (x instanceof ApplicationTerm) && ((ApplicationTerm) x).getFunction().getName().equals("mod"));
-		final Set<Term> subTerms = SubTermFinder.find(term, p, true);
+		final Set<ApplicationTerm> subTerms = SmtUtils.extractApplicationTerms("mod", term, true);
 		if (subTerms.isEmpty()) {
 			return null;
 		}
