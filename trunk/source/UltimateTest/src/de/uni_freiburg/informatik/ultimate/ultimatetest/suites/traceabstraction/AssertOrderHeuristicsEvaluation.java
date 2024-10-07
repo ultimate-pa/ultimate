@@ -167,6 +167,32 @@ public class AssertOrderHeuristicsEvaluation extends
 		/*** Heuristic 5 (TERMS_WITH_SMALL_CONSTANTS_FIRST) ***/
 		"automizer/AssertOrderHeuristics/Reach-32bit-Automizer_Default-IcWpLv-H5.epf",
 
+		/*** No Heuristic ***/
+		"automizer/AssertOrderHeuristics/Reach-32bit-Automizer_Default-NestedInterpolation.epf",
+		/*** Heuristic 1 (OUTSIDE_LOOP_FIRST1) ***/
+		"automizer/AssertOrderHeuristics/Reach-32bit-Automizer_Default-NestedInterpolation-H1.epf",
+		/*** Heuristic 2 (OUTSIDE_LOOP_FIRST2) ***/
+		"automizer/AssertOrderHeuristics/Reach-32bit-Automizer_Default-NestedInterpolation-H2.epf",
+		/*** Heuristic 3 (INSIDE_LOOP_FIRST1) ***/
+		"automizer/AssertOrderHeuristics/Reach-32bit-Automizer_Default-NestedInterpolation-H3.epf",
+		/*** Heuristic 4 (MIX_INSIDE_OUTSIDE) ***/
+		"automizer/AssertOrderHeuristics/Reach-32bit-Automizer_Default-NestedInterpolation-H4.epf",
+		/*** Heuristic 5 (TERMS_WITH_SMALL_CONSTANTS_FIRST) ***/
+		"automizer/AssertOrderHeuristics/Reach-32bit-Automizer_Default-NestedInterpolation-H5.epf",
+
+		/*** No Heuristic ***/
+		"automizer/AssertOrderHeuristics/Reach-32bit-Automizer_Default-TreeInterpolation.epf",
+		/*** Heuristic 1 (OUTSIDE_LOOP_FIRST1) ***/
+		"automizer/AssertOrderHeuristics/Reach-32bit-Automizer_Default-TreeInterpolation-H1.epf",
+		/*** Heuristic 2 (OUTSIDE_LOOP_FIRST2) ***/
+		"automizer/AssertOrderHeuristics/Reach-32bit-Automizer_Default-TreeInterpolation-H2.epf",
+		/*** Heuristic 3 (INSIDE_LOOP_FIRST1) ***/
+		"automizer/AssertOrderHeuristics/Reach-32bit-Automizer_Default-TreeInterpolation-H3.epf",
+		/*** Heuristic 4 (MIX_INSIDE_OUTSIDE) ***/
+		"automizer/AssertOrderHeuristics/Reach-32bit-Automizer_Default-TreeInterpolation-H4.epf",
+		/*** Heuristic 5 (TERMS_WITH_SMALL_CONSTANTS_FIRST) ***/
+		"automizer/AssertOrderHeuristics/Reach-32bit-Automizer_Default-TreeInterpolation-H5.epf",
+
 	};
 
 
