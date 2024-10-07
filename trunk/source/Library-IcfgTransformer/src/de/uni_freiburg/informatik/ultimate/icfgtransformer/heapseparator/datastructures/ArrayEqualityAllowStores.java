@@ -30,7 +30,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ApplicationTermFinder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayEquality;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayEquality.ArrayEqualityException;
@@ -99,8 +98,7 @@ public class ArrayEqualityAllowStores {
 
 		final List<ArrayEqualityAllowStores> result = new ArrayList<>();
 
-		final ApplicationTermFinder atf = new ApplicationTermFinder(functionSymbolNames, false);
-		for (final ApplicationTerm subterm : atf.findMatchingSubterms(formula)) {
+		for (final ApplicationTerm subterm : SmtUtils.extractApplicationTerms(functionSymbolNames, formula, false)) {
 			final boolean isNegated =
 					subterm.getFunction().getName().equals("not") || subterm.getFunction().getName().equals("distinct");
 

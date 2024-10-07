@@ -37,7 +37,6 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ApplicationTermFinder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.DagSizePrinter;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
@@ -181,8 +180,7 @@ public class ModuloNeighborTransformation extends TransitionPreprocessor {
 		 */
 		mgdScript.declareFun(this, MODULO_REPLACEMENT, new Sort[] { intSort, intSort }, intSort);
 		while (true) {
-			final Set<ApplicationTerm> modTerms =
-					new ApplicationTermFinder(Collections.singleton("mod"), false).findMatchingSubterms(term);
+			final Set<ApplicationTerm> modTerms = SmtUtils.extractApplicationTerms("mod", term, false);
 			if (modTerms.isEmpty()) {
 				break;
 			}
@@ -245,9 +243,7 @@ public class ModuloNeighborTransformation extends TransitionPreprocessor {
 		term = SmtUtils.simplify(mgdScript, term, mServices, SimplificationTechnique.SIMPLIFY_DDA);
 
 		while (true) {
-			final Set<ApplicationTerm> auxModTerms =
-					new ApplicationTermFinder(Collections.singleton(MODULO_REPLACEMENT), false)
-							.findMatchingSubterms(term);
+			final Set<ApplicationTerm> auxModTerms = SmtUtils.extractApplicationTerms(MODULO_REPLACEMENT, term, false);
 			if (auxModTerms.isEmpty()) {
 				break;
 			}

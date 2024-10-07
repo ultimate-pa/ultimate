@@ -2582,6 +2582,18 @@ public final class SmtUtils {
 	}
 
 	/**
+	 *
+	 * @param onlyOutermost
+	 *            if set to true we do not descend to subterms of a term that has been found
+	 */
+	@SuppressWarnings("unchecked")
+	public static Set<ApplicationTerm> extractApplicationTerms(final Set<String> funs, final Term term,
+			final boolean onlyOutermost) {
+		return (Set) SubTermFinder.find(term, x -> funs.stream().anyMatch(f -> isFunctionApplication(x, f)),
+				onlyOutermost);
+	}
+
+	/**
 	 * Find all subterms of the given term that are constants (i.e. {@link ApplicationTerm}s with zero parameters).
 	 *
 	 * @param restrictToNonTheoryConstants

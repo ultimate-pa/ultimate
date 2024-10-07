@@ -32,7 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ApplicationTermFinder;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.BinaryEqualityRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -249,8 +249,7 @@ public class ArrayUpdate {
 
 		final List<ArrayUpdate> result = new ArrayList<>();
 
-		final ApplicationTermFinder atf = new ApplicationTermFinder(functionSymbolNames, false);
-		for (final ApplicationTerm subterm : atf.findMatchingSubterms(formula)) {
+		for (final ApplicationTerm subterm : SmtUtils.extractApplicationTerms(functionSymbolNames, formula, false)) {
 			ArrayUpdate arrayUpdate = null;
 
 			final boolean isNegated =

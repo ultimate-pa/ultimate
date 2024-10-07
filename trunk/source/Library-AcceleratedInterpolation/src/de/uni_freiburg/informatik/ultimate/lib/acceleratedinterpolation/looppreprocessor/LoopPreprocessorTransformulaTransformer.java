@@ -43,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ApplicationTermFinder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -126,11 +125,10 @@ public class LoopPreprocessorTransformulaTransformer {
 		}
 
 		final List<Term> result = new ArrayList<>();
-		final ApplicationTermFinder applicationTermFinder = new ApplicationTermFinder("mod", false);
 		if (modTfTransformed != null) {
 			final ApplicationTerm modAppTermTransformed = (ApplicationTerm) modTfTransformed.getFormula();
 			for (final Term param : modAppTermTransformed.getParameters()) {
-				if (applicationTermFinder.findMatchingSubterms(param).isEmpty()) {
+				if (SmtUtils.extractApplicationTerms("mod", param, false).isEmpty()) {
 					result.add(param);
 				}
 			}

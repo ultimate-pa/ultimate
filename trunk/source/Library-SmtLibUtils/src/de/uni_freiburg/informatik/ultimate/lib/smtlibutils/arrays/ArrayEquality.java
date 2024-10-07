@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ApplicationTermFinder;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -137,8 +137,7 @@ public class ArrayEquality {
 
 		final List<ArrayEquality> result = new ArrayList<>();
 
-		final ApplicationTermFinder atf = new ApplicationTermFinder(functionSymbolNames, false);
-		for (final ApplicationTerm subterm : atf.findMatchingSubterms(term)) {
+		for (final ApplicationTerm subterm : SmtUtils.extractApplicationTerms(functionSymbolNames, term, false)) {
 			ArrayEquality arrayEquality = null;
 			try {
 				arrayEquality = new ArrayEquality(subterm, true, true);

@@ -46,8 +46,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ApplicationTermFinder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 
@@ -108,8 +108,7 @@ public class LoopPreprocessor<L extends IIcfgTransition<?>>
 						.getInterproceduralTransFormula(mCsToolkit, false, false, false, false, mLogger, mServices,
 								loopActions, SimplificationTechnique.SIMPLIFY_DDA);
 				for (final String option : mOptions) {
-					final ApplicationTermFinder applicationTermFinder = new ApplicationTermFinder(option, false);
-					if (!applicationTermFinder.findMatchingSubterms(interprocedualTransformula.getFormula())
+					if (!SmtUtils.extractApplicationTerms(option, interprocedualTransformula.getFormula(), false)
 							.isEmpty()) {
 						interprocedualTransformula = preProcessing(option, interprocedualTransformula);
 					}
@@ -159,15 +158,13 @@ public class LoopPreprocessor<L extends IIcfgTransition<?>>
 			for (final List<L> loopActions : loopSet.getValue()) {
 				final List<UnmodifiableTransFormula> loopTransitions = convertActionToFormula(loopActions);
 				UnmodifiableTransFormula loopRelation = TransFormulaUtils.sequentialComposition(mLogger, mServices,
-						mScript, true, true, false, SimplificationTechnique.SIMPLIFY_DDA,
-						loopTransitions);
+						mScript, true, true, false, SimplificationTechnique.SIMPLIFY_DDA, loopTransitions);
 				/*
 				 * Transform found unsupported operations:
 				 */
 				boolean noSplit = false;
 				for (final String option : mOptions) {
-					final ApplicationTermFinder applicationTermFinder = new ApplicationTermFinder(option, false);
-					if (!applicationTermFinder.findMatchingSubterms(loopRelation.getFormula()).isEmpty()) {
+					if (!SmtUtils.extractApplicationTerms(option, loopRelation.getFormula(), false).isEmpty()) {
 						loopRelation = preProcessing(option, loopRelation);
 					}
 					if ("no DNF".equals(option)) {

@@ -49,7 +49,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.equalityanalysis.EqualityAnalysisResult;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.equalityanalysis.IndexAnalysisResult;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.equalityanalysis.IndexAnalyzer;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ApplicationTermFinder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
@@ -404,8 +403,7 @@ public class TransFormulaLRWithArrayCells {
 			offset++;
 		}
 		final Term result = SmtUtils.and(mScript.getScript(), conjuncts);
-		assert (new ApplicationTermFinder("select", true)).findMatchingSubterms(result)
-				.isEmpty() : "contains select terms";
+		assert SmtUtils.extractApplicationTerms("select", result, true).isEmpty() : "contains select terms";
 		return result;
 	}
 

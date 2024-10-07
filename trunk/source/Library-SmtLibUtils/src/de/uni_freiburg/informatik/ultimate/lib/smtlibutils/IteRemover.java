@@ -58,12 +58,12 @@ public class IteRemover extends NonCoreBooleanSubTermTransformer {
 	protected Term transformNonCoreBooleanSubterm(final Term term) {
 		assert SmtSortUtils.isBoolSort(term.getSort());
 		Term result = term;
-		Set<ApplicationTerm> iteSubterms = (new ApplicationTermFinder("ite", false)).findMatchingSubterms(result);
+		Set<ApplicationTerm> iteSubterms = SmtUtils.extractApplicationTerms("ite", result, false);
 		while (!iteSubterms.isEmpty()) {
 			// remove one ite after another. Cannot naively remove all since
 			// one might be subterm of other.
 			result = removeIteTerm(result, iteSubterms.iterator().next());
-			iteSubterms = (new ApplicationTermFinder("ite", false)).findMatchingSubterms(result);
+			iteSubterms = SmtUtils.extractApplicationTerms("ite", result, false);
 		}
 		assert doesNotContainIteTerm(result) : "not all ite terms were removed";
 		assert (term == result
@@ -72,7 +72,7 @@ public class IteRemover extends NonCoreBooleanSubTermTransformer {
 	}
 
 	private boolean doesNotContainIteTerm(final Term term) {
-		return (new ApplicationTermFinder("ite", true)).findMatchingSubterms(term).isEmpty();
+		return SmtUtils.extractApplicationTerms("ite", term, false).isEmpty();
 	}
 
 	private Term removeIteTerm(final Term term, final ApplicationTerm iteTerm) {
