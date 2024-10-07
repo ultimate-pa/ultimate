@@ -407,11 +407,6 @@ public class PRDispatcher implements IDispatcher {
 	}
 
 	@Override
-	public Result transformWithWitness(final IASTNode node, final Result result) {
-		return result;
-	}
-
-	@Override
 	public List<ACSLNode> getFunctionContractFromWitness(final IASTNode node) {
 		return List.of();
 	}
