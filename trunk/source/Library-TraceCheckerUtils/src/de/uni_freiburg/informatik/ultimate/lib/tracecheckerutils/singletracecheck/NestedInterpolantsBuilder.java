@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletraceche
 import java.io.PrintWriter;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
@@ -73,9 +74,21 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.model.ConstantTermNormalizer;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
+/**
+ * Class for the computation of nested interpolants and tree interpolants.
+ * <br />
+ * TODO 2024-10-06 Matthias: We do not really need a class that can be
+ * instantiated for the current computation. If I would have more time, I would
+ * consider the following options.
+ * <li>Do all computations in static methods.
+ * <li>Use a class hierarchy to split the computation of nested interpolants and
+ * tree interpolants. (I have doubts that this is possible.)
+ */
 public class NestedInterpolantsBuilder<L extends IAction> {
 
+	private static final int SKIPPED_POSITION_FOR_RECURSIVE_COMPUATION = -47;
 	// TODO 2017-10-13 Matthias: When Jochen implement support for "@diff" this
 	// probably has to become a parameter for this class.
 	private static final boolean ALLOW_AT_DIFF = SolverBuilder.USE_DIFF_WRAPPER_SCRIPT;
@@ -84,46 +97,18 @@ public class NestedInterpolantsBuilder<L extends IAction> {
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final SimplificationTechnique mSimplificationTechnique;
-
-	private final ManagedScript mMgdScriptTc;
-	private final TraceCheckLock mScriptLockOwner;
+	private final boolean mInstantiateArrayExt;
 	private final ManagedScript mMgdScriptCfg;
-
-	Term[] mCraigInterpolants;
-	final PrintWriter mIterationPW = null;
-	// final int mIteration =-1;
-	// int mInterpolationProblem = 0;
-
-	private final IPredicate[] mInterpolants;
-
-	// private TAPreferences mPref = null;
-
-	private final NestedFormulas<L, Term, Term> mAnnotSSA;
-
 	private final IPredicateUnifier mPredicateUnifier;
 	private final BasicPredicateFactory mPredicateFactory;
 
 	private final Set<Integer> mSkippedInnerProcedurePositions;
 
-	private ArrayList<Term> mInterpolInput;
-
-	private ArrayList<Integer> mTreeStructure;
-
-	private ArrayList<Integer> mCraigInt2interpolantIndex;
-
-	private int mStartOfCurrentSubtree;
-
-	private final NestedWord<L> mTrace;
-
-	private int mStackHeightAtLastInterpolatedPosition;
-
-	private Deque<Integer> mStartOfSubtreeStack;
-
-	private final boolean mTreeInterpolation;
-
 	private final Function<Term, Term> mConst2RepTvSubst;
+	private final int[] mPositionMapping;
+	private final Term[] mCraigInterpolants;
 
-	private final boolean mInstantiateArrayExt;
+	private final IPredicate[] mInterpolants;
 
 	public NestedInterpolantsBuilder(final ManagedScript mgdScriptTc, final TraceCheckLock scriptLockOwner,
 			final NestedFormulas<L, Term, Term> annotatdSsa, final Map<Term, IProgramVar> constants2BoogieVar,
@@ -134,205 +119,218 @@ public class NestedInterpolantsBuilder<L extends IAction> {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(TraceCheckerUtils.PLUGIN_ID);
 		mSimplificationTechnique = simplificationTechnique;
-		mTreeInterpolation = treeInterpolation;
-		mMgdScriptTc = mgdScriptTc;
-		mScriptLockOwner = scriptLockOwner;
 		mMgdScriptCfg = mgdScriptCfg;
 		mPredicateUnifier = predicateBuilder;
 		mPredicateFactory = predicateFactory;
-		mAnnotSSA = annotatdSsa;
-		mCraigInterpolants = new Term[mAnnotSSA.getTrace().length() - 1];
 		mSkippedInnerProcedurePositions = skippedInnerProcedurePositions;
-		mTrace = annotatdSsa.getTrace();
+
 		mInstantiateArrayExt = instantiateArrayExt;
 		final HashMap<Term, Term> const2RepTv = new HashMap<>();
 		for (final Entry<Term, IProgramVar> entry : constants2BoogieVar.entrySet()) {
 			const2RepTv.put(entry.getKey(), entry.getValue().getTermVariable());
 		}
-		if (mMgdScriptTc != mgdScriptCfg) {
-			mConst2RepTvSubst = (x -> new TermTransferrer(mMgdScriptTc.getScript(), mMgdScriptCfg.getScript(),
+		if (mgdScriptTc != mgdScriptCfg) {
+			mConst2RepTvSubst = (x -> new TermTransferrer(mgdScriptTc.getScript(), mMgdScriptCfg.getScript(),
 					const2RepTv, true).transform(x));
 		} else {
 			mConst2RepTvSubst = (x -> Substitution.apply(mMgdScriptCfg, const2RepTv, x));
 		}
 
-		computeCraigInterpolants();
+		final Triple<Term[], int[], int[]> triple = generateInterpolationInput(mgdScriptTc, annotatdSsa,
+				mSkippedInnerProcedurePositions);
+		final Term[] interpolInput = triple.getFirst();
+		final int[] startOfSubtree = triple.getSecond();
+		final int[] positionMapping = triple.getThird();
+		mPositionMapping = positionMapping;
+
+		if (treeInterpolation) {
+			mCraigInterpolants = mgdScriptTc.getInterpolants(scriptLockOwner, interpolInput, startOfSubtree);
+		} else {
+			mCraigInterpolants = mgdScriptTc.getInterpolants(scriptLockOwner, interpolInput);
+		}
+
 		traceCheck.cleanupAndUnlockSolver();
 		for (int i = 0; i < mCraigInterpolants.length; i++) {
 			mLogger.debug(new DebugMessage("NestedInterpolant {0}: {1}", i, mCraigInterpolants[i]));
 		}
-		mInterpolants = computePredicates();
+		mInterpolants = buildPredicates();
 		assert mInterpolants != null;
 		// if (mPref.dumpFormulas()) {
 		// dumpNestedStateFormulas(mInterpolants, mTrace, mIterationPW);
 	}
 
-	public void computeCraigInterpolants() {
-		mInterpolInput = new ArrayList<>();
-		mTreeStructure = new ArrayList<>();
-		mCraigInt2interpolantIndex = new ArrayList<>();
-		mStartOfCurrentSubtree = 0;
-		mStartOfSubtreeStack = new ArrayDeque<>();
-		mStackHeightAtLastInterpolatedPosition = 0;
-		boolean startNewFormula = true;
+	private static <L extends IAction> Triple<Term[], int[], int[]> generateInterpolationInput(
+			final ManagedScript mgdScriptTc, final NestedFormulas<L, Term, Term> annotSsa,
+			final Set<Integer> skippedInnerProcedurePositions) {
+		final NestedWord<L> trace = annotSsa.getTrace();
 
-		for (int i = 0; i < mAnnotSSA.getTrace().length(); i++) {
-			// if last position was interpolated position we add new formula to
-			// interpol input
-			if (startNewFormula) {
-				if (mTrace.isInternalPosition(i)) {
-					newInterpolInputFormula(i);
-				} else if (mTrace.isCallPosition(i)) {
-					if (!mTrace.isPendingCall(i)) {
-						final int nextPosition = mInterpolInput.size();
-						mStartOfSubtreeStack.push(mStartOfCurrentSubtree);
-						mStartOfCurrentSubtree = nextPosition;
-					}
-					newInterpolInputFormula(i);
-					if (mTrace.isPendingCall(i)) {
-						addToLastInterpolInputFormula(mAnnotSSA.getLocalVarAssignment(i));
-						addToLastInterpolInputFormula(mAnnotSSA.getOldVarAssignment(i));
-					}
-				} else if (mTrace.isReturnPosition(i)) {
-					if (mTrace.isPendingReturn(i)) {
-						newInterpolInputFormula(i);
-						addToLastInterpolInputFormula(mAnnotSSA.getLocalVarAssignment(i));
-						addToLastInterpolInputFormula(mAnnotSSA.getOldVarAssignment(i));
-						addToLastInterpolInputFormula(mAnnotSSA.getPendingContext(i));
-					} else {
-						mStartOfCurrentSubtree = mStartOfSubtreeStack.pop();
-						newInterpolInputFormula(i);
-						final int correspondingCallPosition = mTrace.getCallPosition(i);
-						addToLastInterpolInputFormula(mAnnotSSA.getLocalVarAssignment(correspondingCallPosition));
-						addToLastInterpolInputFormula(mAnnotSSA.getOldVarAssignment(correspondingCallPosition));
-					}
+		final List<Term> interpolInputList = new ArrayList<>();
+		final List<Integer> treeInterpolantStructure = new ArrayList<>();
+		final int[] positionMapping = new int[trace.length() - 1];
 
+		int startOfCurrentSubtree = 0;
+		final Deque<Integer> mStartOfSubtreeStack = new ArrayDeque<>();
+
+		for (int i = 0; i < annotSsa.getTrace().length(); i++) {
+			final List<Term> terms;
+			if (trace.isInternalPosition(i)) {
+				terms = getAnnotatedFormulasForInternalPosition(annotSsa, i);
+			} else if (trace.isCallPosition(i)) {
+				if (!trace.isPendingCall(i)) {
+					final int nextPosition = interpolInputList.size();
+					mStartOfSubtreeStack.push(startOfCurrentSubtree);
+					startOfCurrentSubtree = nextPosition;
+					terms = getAnnotatedFormulasForNonPendingCallPosition(annotSsa, i);
 				} else {
-					throw new AssertionError();
+					terms = getAnnotatedFormulasForPendingCallPosition(annotSsa, i);
 				}
-
+			} else if (trace.isReturnPosition(i)) {
+				if (trace.isPendingReturn(i)) {
+					terms = getAnnotatedFormulasForPendingReturnPosition(annotSsa, i);
+				} else {
+					startOfCurrentSubtree = mStartOfSubtreeStack.pop();
+					final int correspondingCallPosition = trace.getCallPosition(i);
+					terms = getAnnotatedFormulasForNonPendingReturnPosition(annotSsa, i, correspondingCallPosition);
+				}
 			} else {
-				if (mTrace.isInternalPosition(i)) {
-					addToLastInterpolInputFormula(mAnnotSSA.getFormulaFromNonCallPos(i));
-				} else if (mTrace.isCallPosition(i)) {
-					if (!mTrace.isPendingCall(i)) {
-						mStartOfSubtreeStack.push(mStartOfCurrentSubtree);
-						mStartOfCurrentSubtree = -23;
-					}
-					addToLastInterpolInputFormula(mAnnotSSA.getGlobalVarAssignment(i));
-					if (mTrace.isPendingCall(i)) {
-						addToLastInterpolInputFormula(mAnnotSSA.getLocalVarAssignment(i));
-						addToLastInterpolInputFormula(mAnnotSSA.getOldVarAssignment(i));
-					}
-				} else if (mTrace.isReturnPosition(i)) {
-					if (mTrace.isPendingReturn(i)) {
-						addToLastInterpolInputFormula(mAnnotSSA.getFormulaFromNonCallPos(i));
-						addToLastInterpolInputFormula(mAnnotSSA.getLocalVarAssignment(i));
-						addToLastInterpolInputFormula(mAnnotSSA.getOldVarAssignment(i));
-						addToLastInterpolInputFormula(mAnnotSSA.getPendingContext(i));
-					} else {
-						mStartOfCurrentSubtree = mStartOfSubtreeStack.pop();
-						addToLastInterpolInputFormula(mAnnotSSA.getFormulaFromNonCallPos(i));
-						final int correspondingCallPosition = mTrace.getCallPosition(i);
-						addToLastInterpolInputFormula(mAnnotSSA.getLocalVarAssignment(correspondingCallPosition));
-						addToLastInterpolInputFormula(mAnnotSSA.getOldVarAssignment(correspondingCallPosition));
-					}
-				} else {
-					throw new AssertionError();
+				throw new AssertionError("Each position must be either internal, call, or return");
+			}
+			final Term term = SmtUtils.and(mgdScriptTc.getScript(), terms);
+			// Check whether the last position (position i-1) is a position where we want to
+			// compute interpolants. If not we do not want to start a new interpolation
+			// input formulas afterwards but append the current annotated ssa term(s) to the
+			// last interpolation input.
+			final boolean startNewFormula = (i == 0 || !skippedInnerProcedurePositions.contains(i - 1));
+			if (startNewFormula) {
+				if (i > 0) {
+					positionMapping[i - 1] = interpolInputList.size() - 1;
 				}
+				interpolInputList.add(term);
+				treeInterpolantStructure.add(startOfCurrentSubtree);
+			} else {
+				if (i > 0) {
+					positionMapping[i - 1] = SKIPPED_POSITION_FOR_RECURSIVE_COMPUATION;
+				}
+				final int lastPosition = interpolInputList.size() - 1;
+				final Term newFormula = SmtUtils.and(mgdScriptTc.getScript(), interpolInputList.get(lastPosition),
+						term);
+				assert newFormula != null : "newFormula must be != null";
+				interpolInputList.set(lastPosition, newFormula);
 			}
-			startNewFormula = isInterpolatedPosition(i);
-			if (isInterpolatedPosition(i)) {
-				mStackHeightAtLastInterpolatedPosition = mStartOfSubtreeStack.size();
-				mCraigInt2interpolantIndex.add(i);
-			}
-
 		}
-		final Term[] interpolInput = mInterpolInput.toArray(new Term[0]);
+
+		final Term[] interpolInput = interpolInputList.toArray(new Term[interpolInputList.size()]);
 		// add precondition to first term
 		// special case: if first position is non pending call, then we add the
 		// precondition to the corresponding return.
-		if (mTrace.isCallPosition(0) && !mTrace.isPendingCall(0)) {
-			final int correspondingReturn = mTrace.getReturnPosition(0);
+		if (trace.isCallPosition(0) && !trace.isPendingCall(0)) {
+			final int correspondingReturn = trace.getReturnPosition(0);
 			// if we do not interpolate at each position
 			// interpolInput[correspondingReturn] might be the wrong position
 			int interpolInputPositionOfReturn = 0;
 			for (int i = 0; i < correspondingReturn; i++) {
-				if (isInterpolatedPosition(i)) {
+				if (!skippedInnerProcedurePositions.contains(i)) {
 					interpolInputPositionOfReturn++;
 				}
 			}
-			interpolInput[interpolInputPositionOfReturn] = SmtUtils.and(mMgdScriptTc.getScript(),
-					interpolInput[interpolInputPositionOfReturn], mAnnotSSA.getPrecondition());
+			interpolInput[interpolInputPositionOfReturn] = SmtUtils.and(mgdScriptTc.getScript(),
+					interpolInput[interpolInputPositionOfReturn], annotSsa.getPrecondition());
 		} else {
-			interpolInput[0] = SmtUtils.and(mMgdScriptTc.getScript(), interpolInput[0], mAnnotSSA.getPrecondition());
+			interpolInput[0] = SmtUtils.and(mgdScriptTc.getScript(), interpolInput[0], annotSsa.getPrecondition());
 		}
+
 		// add negated postcondition to last term
-		interpolInput[interpolInput.length - 1] = SmtUtils.and(mMgdScriptTc.getScript(),
-				interpolInput[interpolInput.length - 1], mAnnotSSA.getPostcondition());
+		interpolInput[interpolInput.length - 1] = SmtUtils.and(mgdScriptTc.getScript(),
+				interpolInput[interpolInput.length - 1], annotSsa.getPostcondition());
 
-		final int[] startOfSubtree = integerListToIntArray(mTreeStructure);
-		if (mTreeInterpolation) {
-			mCraigInterpolants = mMgdScriptTc.getInterpolants(mScriptLockOwner, interpolInput, startOfSubtree);
-		} else {
-			mCraigInterpolants = mMgdScriptTc.getInterpolants(mScriptLockOwner, interpolInput);
-		}
-
+		final int[] startOfSubtree = integerListToIntArray(treeInterpolantStructure);
+		return new Triple<Term[], int[], int[]>(interpolInput, startOfSubtree, positionMapping);
 	}
 
-	public static int[] integerListToIntArray(final List<Integer> integerList) {
+	private static <L extends IAction> List<Term> getAnnotatedFormulasForInternalPosition(
+			final NestedFormulas<L, Term, Term> annotSSA, final int i) {
+		final Term internalTransition = annotSSA.getFormulaFromNonCallPos(i);
+		if (internalTransition != null) {
+			return Collections.singletonList(internalTransition);
+		} else {
+			return Collections.emptyList();
+		}
+	}
+
+	private static <L extends IAction> List<Term> getAnnotatedFormulasForNonPendingCallPosition(
+			final NestedFormulas<L, Term, Term> annotSSA, final int i) {
+		final Term globalVarAssignment = annotSSA.getGlobalVarAssignment(i);
+		if (globalVarAssignment != null) {
+			return Collections.singletonList(globalVarAssignment);
+		} else {
+			return Collections.emptyList();
+		}
+	}
+
+	private static <L extends IAction> List<Term> getAnnotatedFormulasForPendingCallPosition(
+			final NestedFormulas<L, Term, Term> annotSSA, final int i) {
+		final List<Term> result = new ArrayList<>();
+		final Term localVarsAssignment = annotSSA.getLocalVarAssignment(i);
+		if (localVarsAssignment != null) {
+			result.add(localVarsAssignment);
+		}
+		final Term globalVarsAssignment = annotSSA.getGlobalVarAssignment(i);
+		if (globalVarsAssignment != null) {
+			result.add(globalVarsAssignment);
+		}
+		final Term oldVarsAssignment = annotSSA.getOldVarAssignment(i);
+		if (oldVarsAssignment != null) {
+			result.add(oldVarsAssignment);
+		}
+		return result;
+	}
+
+	private static <L extends IAction> List<Term> getAnnotatedFormulasForNonPendingReturnPosition(
+			final NestedFormulas<L, Term, Term> annotSSA, final int i, final int correspondingCallPosition) {
+		final List<Term> result = new ArrayList<>();
+		final Term assignmentOnReturn = annotSSA.getFormulaFromNonCallPos(i);
+		if (assignmentOnReturn != null) {
+			result.add(assignmentOnReturn);
+		}
+		final Term localVarsAssignment = annotSSA.getLocalVarAssignment(correspondingCallPosition);
+		if (localVarsAssignment != null) {
+			result.add(localVarsAssignment);
+		}
+		final Term oldVarsAssignment = annotSSA.getOldVarAssignment(correspondingCallPosition);
+		if (oldVarsAssignment != null) {
+			result.add(oldVarsAssignment);
+		}
+		return result;
+	}
+
+	private static <L extends IAction> List<Term> getAnnotatedFormulasForPendingReturnPosition(
+			final NestedFormulas<L, Term, Term> annotSSA, final int i) {
+		final List<Term> result = new ArrayList<>();
+		final Term assignmentOnReturn = annotSSA.getFormulaFromNonCallPos(i);
+		if (assignmentOnReturn != null) {
+			result.add(assignmentOnReturn);
+		}
+		final Term localVarsAssignment = annotSSA.getLocalVarAssignment(i);
+		if (localVarsAssignment != null) {
+			result.add(localVarsAssignment);
+		}
+		final Term oldVarsAssignment = annotSSA.getOldVarAssignment(i);
+		if (oldVarsAssignment != null) {
+			result.add(oldVarsAssignment);
+		}
+		final Term pendingContext = annotSSA.getPendingContext(i);
+		if (pendingContext != null) {
+			result.add(pendingContext);
+		}
+		return result;
+	}
+
+	private static int[] integerListToIntArray(final List<Integer> integerList) {
 		final int[] result = new int[integerList.size()];
 		for (int i = 0; i < integerList.size(); i++) {
 			result[i] = integerList.get(i);
 		}
 		return result;
-	}
-
-	private void newInterpolInputFormula(final int i) {
-		if (mStackHeightAtLastInterpolatedPosition == mStartOfSubtreeStack.size()) {
-			// everything ok
-		} else {
-			if (mStackHeightAtLastInterpolatedPosition + 1 == mStartOfSubtreeStack.size() && mTrace.isCallPosition(i)
-					&& (i == 0 || isInterpolatedPosition(i - 1))) {
-				// everything ok
-			} else {
-				if (mStackHeightAtLastInterpolatedPosition - 1 == mStartOfSubtreeStack.size()
-						&& mTrace.isReturnPosition(i) && isInterpolatedPosition(i - 1)) {
-					// everything ok
-				} else {
-					throw new IllegalArgumentException(
-							"if you want to interpolate between call and return you have to interpolate after call and after return.");
-				}
-			}
-		}
-		Term term;
-		if (mTrace.isCallPosition(i)) {
-			term = mAnnotSSA.getGlobalVarAssignment(i);
-		} else {
-			term = mAnnotSSA.getFormulaFromNonCallPos(i);
-		}
-		mInterpolInput.add(term);
-		// the interpolant between last formula and this new formula can be
-		// found
-		// at position i-1
-
-		mTreeStructure.add(mStartOfCurrentSubtree);
-	}
-
-	private void addToLastInterpolInputFormula(final Term term) {
-		final int lastPosition = mInterpolInput.size() - 1;
-		final Term newFormula = SmtUtils.and(mMgdScriptTc.getScript(), mInterpolInput.get(lastPosition), term);
-		assert newFormula != null : "newFormula must be != null";
-		mInterpolInput.set(lastPosition, newFormula);
-	}
-
-	public boolean isInterpolatedPosition(final int i) {
-		assert i >= 0;
-		assert i < mTrace.length();
-		if (i == mTrace.length() - 1) {
-			return false;
-		}
-		return !mSkippedInnerProcedurePositions.contains(i);
 	}
 
 	public IPredicate[] getNestedInterpolants() {
@@ -342,47 +340,32 @@ public class NestedInterpolantsBuilder<L extends IAction> {
 		return mInterpolants;
 	}
 
-	private IPredicate[] computePredicates() {
-		final IPredicate[] result = new IPredicate[mTrace.length() - 1];
-		assert mCraigInterpolants.length == mCraigInt2interpolantIndex.size();
-		// assert mInterpolatedPositions.size() == mCraigInterpolants.length;
-
+	private IPredicate[] buildPredicates() {
+		final IPredicate[] result = new IPredicate[mPositionMapping.length];
 		final Map<Term, IPredicate> withIndices2Predicate = new HashMap<>();
 
-		int craigInterpolPos = 0;
-		for (int resultPos = 0; resultPos < mTrace.length() - 1; resultPos++) {
-			checkTimeout();
-			int positionOfThisCraigInterpolant;
-			if (craigInterpolPos == mCraigInterpolants.length) {
-				// special case where trace ends with return
-				// we already added all CraigInterpolants
-				// remaining interpolants are "unknown" and the implicit given
-				// false at the end
-				assert mTrace.isReturnPosition(mTrace.length() - 1);
-				positionOfThisCraigInterpolant = Integer.MAX_VALUE;
+		for (int i = 0; i < mPositionMapping.length; i++) {
+			final int craigInterpolPos = mPositionMapping[i];
+
+			final IPredicate pred;
+			if (craigInterpolPos == SKIPPED_POSITION_FOR_RECURSIVE_COMPUATION) {
+				assert mSkippedInnerProcedurePositions.contains(i);
+				pred = mPredicateFactory.newDontCarePredicate(null);
 			} else {
-				positionOfThisCraigInterpolant = mCraigInt2interpolantIndex.get(craigInterpolPos);
-			}
-			assert positionOfThisCraigInterpolant >= resultPos;
-			if (isInterpolatedPosition(resultPos)) {
 				final Term withIndices = mCraigInterpolants[craigInterpolPos];
-				assert resultPos == mCraigInt2interpolantIndex.get(craigInterpolPos);
-				craigInterpolPos++;
-				result[resultPos] = withIndices2Predicate.get(withIndices);
-				if (result[resultPos] == null) {
+				final IPredicate cachedResult = withIndices2Predicate.get(withIndices);
+				if (cachedResult != null) {
+					pred = cachedResult;
+				} else {
 					final Term postprocessed = postprocessInterpolant(withIndices);
-					result[resultPos] = mPredicateUnifier.getOrConstructPredicate(postprocessed);
-					withIndices2Predicate.put(withIndices, result[resultPos]);
+					pred = mPredicateUnifier.getOrConstructPredicate(postprocessed);
+					withIndices2Predicate.put(withIndices, pred);
 				}
-			} else {
-				assert mSkippedInnerProcedurePositions.contains(resultPos);
-				result[resultPos] = mPredicateFactory.newDontCarePredicate(null);
 			}
+			result[i] = pred;
 		}
-		assert craigInterpolPos == mCraigInterpolants.length;
 		return result;
 	}
-
 
 	/**
 	 * Apply various processing steps and (seemingly) translate terms to the script
@@ -412,10 +395,15 @@ public class NestedInterpolantsBuilder<L extends IAction> {
 		return lessQuantifiers;
 	}
 
+	/**
+	 * TODO 2024-10-06 Matthias: Timeout checks here are probably useless. However
+	 * we should catch timeouts thrown by time-consuming methods and append our
+	 * message from below.
+	 */
 	private void checkTimeout() {
 		if (!mServices.getProgressMonitorService().continueProcessing()) {
 			throw new ToolchainCanceledException(this.getClass(),
-					"constructing predicates for " + (mTrace.length() - 1) + " interpolants");
+					"constructing predicates for " + (mPositionMapping.length - 1) + " interpolants");
 		}
 	}
 
