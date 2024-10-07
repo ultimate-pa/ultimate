@@ -123,11 +123,9 @@ public final class SmtUtils {
 	 */
 	public static final String FP_TO_IEEE_BV_EXTENSION = "fp.to_ieee_bv";
 
-
 	/**
-	 * Enum for conjunctions and disjunctions. The toString method returns the
-	 * string that is required to construct a term via {@link Script#term} or
-	 * {@link SmtUtils#unfTerm}
+	 * Enum for conjunctions and disjunctions. The toString method returns the string that is required to construct a
+	 * term via {@link Script#term} or {@link SmtUtils#unfTerm}
 	 *
 	 */
 	public enum Junction {
@@ -155,8 +153,7 @@ public final class SmtUtils {
 		POLY_PAC(false),
 
 		/**
-		 * Simplification that uses the (non-standard) simplify command which is
-		 * implemented by some SMT solvers.
+		 * Simplification that uses the (non-standard) simplify command which is implemented by some SMT solvers.
 		 */
 		NATIVE(false),
 
@@ -309,7 +306,8 @@ public final class SmtUtils {
 
 	public static ExtendedSimplificationResult simplifyWithStatistics(final ManagedScript mgdScript, final Term formula,
 			final IUltimateServiceProvider services, final SimplificationTechnique simplificationTechnique) {
-		return simplifyWithStatistics(mgdScript, formula, mgdScript.term(null, "true"), services, simplificationTechnique);
+		return simplifyWithStatistics(mgdScript, formula, mgdScript.term(null, "true"), services,
+				simplificationTechnique);
 	}
 
 	public static ExtendedSimplificationResult simplifyWithStatistics(final ManagedScript mgdScript, final Term formula,
@@ -908,9 +906,8 @@ public final class SmtUtils {
 	}
 
 	/**
-	 * This method tries to declare and construct a fresh constant symbol for a
-	 * {@link TermVariable}. We are unable to find out which constants were already
-	 * declared hence we append the hash code of the variable to the identifier of
+	 * This method tries to declare and construct a fresh constant symbol for a {@link TermVariable}. We are unable to
+	 * find out which constants were already declared hence we append the hash code of the variable to the identifier of
 	 * the constant symbol and hope that this has not yet been declared.
 	 */
 	public static Map<TermVariable, Term> termVariables2PseudofreshConstants(final Script script,
@@ -1398,8 +1395,7 @@ public final class SmtUtils {
 			}
 		}
 		if (SmtSortUtils.isNumericSort(lhs.getSort())) {
-			return PolynomialRelation.of(script, RelationSymbol.convert(functionSymbol), lhs, rhs)
-					.toTerm(script);
+			return PolynomialRelation.of(script, RelationSymbol.convert(functionSymbol), lhs, rhs).toTerm(script);
 		} else {
 			assert SmtSortUtils.isBitvecSort(lhs.getSort());
 			// TODO 20220908 Matthias: Minor improvements still possible. E.g., everything
@@ -1638,10 +1634,9 @@ public final class SmtUtils {
 	}
 
 	/**
-	 * Construct store term from the array theory. Uses an optimization for
-	 * (syntactically) similar indices. E.g., if we have a store term of the form
-	 * `(store (store (store (store a k 0) j 1) k 2) j 3)`, the two innermost store
-	 * terms are dropped because the outer store terms use also index k and j.
+	 * Construct store term from the array theory. Uses an optimization for (syntactically) similar indices. E.g., if we
+	 * have a store term of the form `(store (store (store (store a k 0) j 1) k 2) j 3)`, the two innermost store terms
+	 * are dropped because the outer store terms use also index k and j.
 	 */
 	public static Term store(final Script script, final Term array, final Term index, final Term value) {
 		ArrayStore as = ArrayStore.of(array);
@@ -1868,9 +1863,8 @@ public final class SmtUtils {
 	}
 
 	/**
-	 * Convert `(div (div a1 ... an) d)` to `(div a1 ... d*an)` if `an` is a
-	 * positive literal and convert it to `(div a1 ... an d)` otherwise. Note that
-	 * the similar transformation would be unsound for negative literals, see
+	 * Convert `(div (div a1 ... an) d)` to `(div a1 ... d*an)` if `an` is a positive literal and convert it to `(div a1
+	 * ... an d)` otherwise. Note that the similar transformation would be unsound for negative literals, see
 	 * {@link PolynomialTest#intDivision10}
 	 */
 	public static Term divIntFlatten(final Script script, final Term divident, final BigInteger divisorBigInt) {
@@ -2373,10 +2367,8 @@ public final class SmtUtils {
 	}
 
 	/**
-	 * @return LBool.UNSAT if the SMT solver was able to prove that the antecedent
-	 *         implies the succedent, LBool.SAT if the SMT was able to prove that
-	 *         the antecent does not imply the succedent, and LBool.UNKNOWN
-	 *         otherwise.
+	 * @return LBool.UNSAT if the SMT solver was able to prove that the antecedent implies the succedent, LBool.SAT if
+	 *         the SMT was able to prove that the antecent does not imply the succedent, and LBool.UNKNOWN otherwise.
 	 */
 	public static LBool checkImplication(final Term antecedent, final Term succedent, final Script script) {
 		final Term notImply = SmtUtils.and(script, antecedent, SmtUtils.not(script, succedent));
@@ -2616,8 +2608,7 @@ public final class SmtUtils {
 	}
 
 	/**
-	 * If the term is a negated formula return the subformula of the `not` operator,
-	 * otherwise return null.
+	 * If the term is a negated formula return the subformula of the `not` operator, otherwise return null.
 	 */
 	public static Term unzipNot(final Term term) {
 		if (term instanceof ApplicationTerm) {
@@ -2802,15 +2793,12 @@ public final class SmtUtils {
 	}
 
 	/**
-	 * Auxiliary method that replaces all free variables in a term by constant
-	 * symbols (i.e., 0-ary function symbols). These constant symbols are declared
-	 * in the script. <br>
-	 * Use this method with caution. The constant symbols will live forever in the
-	 * current stack frame, hence this method should be used in combination with
-	 * push/pop in order to remove the constant symbols from the assertion stack
-	 * after they are not needed any more. <br>
-	 * The name for the new constant symbols are defined by the method
-	 * {@link SmtUtils#termVariable2constant}).
+	 * Auxiliary method that replaces all free variables in a term by constant symbols (i.e., 0-ary function symbols).
+	 * These constant symbols are declared in the script. <br>
+	 * Use this method with caution. The constant symbols will live forever in the current stack frame, hence this
+	 * method should be used in combination with push/pop in order to remove the constant symbols from the assertion
+	 * stack after they are not needed any more. <br>
+	 * The name for the new constant symbols are defined by the method {@link SmtUtils#termVariable2constant}).
 	 */
 	public static Term replaceFreeVariablesByConstants(final Script script, final Term term) {
 		final TermVariable[] vars = term.getFreeVars();
