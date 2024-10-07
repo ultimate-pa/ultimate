@@ -39,7 +39,7 @@ EOF
   put -r WebFrontend/* ${TARGET_DIR}/frontend/
   put -r ../website-config/* ${TARGET_DIR}/config/
   put adds/z3 ${TARGET_DIR}/solver/
-  put adds/cvc4 ${TARGET_DIR}/solver/
+  put adds/cvc5 ${TARGET_DIR}/solver/
   put adds/mathsat ${TARGET_DIR}/solver/
   put adds/ltl2ba ${TARGET_DIR}/solver/
   put WEBSITE_VERSION ${TARGET_DIR}/VERSION

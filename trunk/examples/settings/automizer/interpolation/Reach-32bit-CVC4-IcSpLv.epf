@@ -44,7 +44,7 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Trace\ refinement\ strategy=FIXED_PREFERENCES
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Dump\ SMT\ script\ to\ file=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/To\ the\ following\ directory=/home/matthias/ultimate/dump
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Command\ for\ external\ solver=cvc4 --incremental --print-success --lang smt --tlimit-per\=12000
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Command\ for\ external\ solver=cvc5 --incremental --print-success --lang smt --tlimit-per\=12000
 
 
 #Thu Oct 29 23:01:13 CET 2015

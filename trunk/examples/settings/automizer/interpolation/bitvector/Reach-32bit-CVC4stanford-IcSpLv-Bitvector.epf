@@ -33,8 +33,8 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Use\ separate\ solver\ for\ trace\ checks=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/SMT\ solver=External_ModelsAndUnsatCoreMode
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Dump\ SMT\ script\ to\ file=false
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/To\ the\ following\ directory=/home/matthias/ultimate/dump/cvc4nyu/
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Command\ for\ external\ solver=cvc4nyustanford --incremental --rewrite-divk --print-success --lang smt
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/To\ the\ following\ directory=/home/matthias/ultimate/dump/cvc5nyu/
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Command\ for\ external\ solver=cvc5nyustanford --incremental --rewrite-divk --print-success --lang smt
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Logic\ for\ external\ solver=AUFBV
 
 

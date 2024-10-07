@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyFactory;
 
 /**
- * {@link IRefinementStrategy} that first tries either {@code MathSat} for floating points or {@code CVC4} in bitvector
+ * {@link IRefinementStrategy} that first tries either {@code MathSat} for floating points or {@code CVC5} in bitvector
  * mode, and then {@code Z3}.
  * <p>
  * The class uses a {@link StraightLineInterpolantAutomatonBuilder} for constructing the interpolant automaton.
@@ -64,7 +64,7 @@ public class WarthogNoAmRefinementStrategy<L extends IIcfgTransition<?>> extends
 		final TermClassifier tc = factory.getTermClassifierForTrace();
 		final List<IIpTcStrategyModule<?, L>> rtr = new ArrayList<>();
 		if (RefinementStrategyUtils.hasNoFloats(tc)) {
-			rtr.add(factory.createIpTcStrategyModuleCVC4(InterpolationTechnique.ForwardPredicates,
+			rtr.add(factory.createIpTcStrategyModuleCVC5(InterpolationTechnique.ForwardPredicates,
 					AssertCodeBlockOrder.NOT_INCREMENTALLY));
 		} else if (RefinementStrategyUtils.hasNoQuantifiersNoBitvectorExtensions(tc)) {
 			// floats, but no quantifiers and no extensions

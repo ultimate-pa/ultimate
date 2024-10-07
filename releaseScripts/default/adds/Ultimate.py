@@ -645,8 +645,7 @@ def debug_environment():
     solver_versions = [
         ("z3", "-version"),
         ("mathsat", "-version"),
-        ("cvc4", "--version"),
-        ("cvc4nyu", "--version"),
+        ("cvc5", "--version"),
     ]
     for solver, vflag in solver_versions:
         abs_solver = os.path.join(ultimatedir, solver)

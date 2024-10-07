@@ -56,7 +56,7 @@ public class LazyTaipanRefinementStrategy<L extends IIcfgTransition<?>> extends 
 		final IIpTcStrategyModule<?, L> smtinterpol =
 				factory.createIpTcStrategyModuleSmtInterpolCraig(InterpolationTechnique.Craig_TreeInterpolation);
 		final IIpTcStrategyModule<?, L> z3 = factory.createIpTcStrategyModuleZ3(InterpolationTechnique.FPandBP);
-		final IIpTcStrategyModule<?, L> cvc4 = factory.createIpTcStrategyModuleCVC4(InterpolationTechnique.FPandBP);
+		final IIpTcStrategyModule<?, L> cvc4 = factory.createIpTcStrategyModuleCVC5(InterpolationTechnique.FPandBP);
 		final IIpTcStrategyModule<?, L> absint = factory.createIpTcStrategyModuleAbstractInterpretation();
 
 		final ITraceCheckStrategyModule<L, ?>[] traceChecks = new ITraceCheckStrategyModule[] { smtinterpol, z3, cvc4 };

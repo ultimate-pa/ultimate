@@ -1,6 +1,6 @@
 #!/bin/bash
 # This script generates a zip file for each Ultimate tool that should be deployed to GitHub or to some place else
-# It takes additional binaries from the adds/ folder. Currently, we use z3, cvc4 and mathsat
+# It takes additional binaries from the adds/ folder. Currently, we use z3, cvc5 and mathsat
 # It also adds README, Ultimate.py, and various license files 
 
 
@@ -48,12 +48,12 @@ if [ "$2" == "linux" ]; then
   echo "Building .zip for linux..."
   ARCH="linux"
   ARCHPATH="products/CLI-E4/linux/gtk/x86_64"
-  ADDS+=("adds/z3" "adds/cvc4nyu" "adds/cvc4" "adds/mathsat")
+  ADDS+=("adds/z3" "adds/cvc5" "adds/mathsat")
 elif [ "$2" == "win32" ]; then
   echo "Building .zip for win32..."
   ARCH="win32"
   ARCHPATH="products/CLI-E4/win32/win32/x86_64"
-  ADDS+=("adds/z3.exe" "adds/cvc4nyu.exe" "adds/cvc4.exe" "adds/mathsat.exe" "adds/mpir.dll" "adds/mathsat.dll")
+  ADDS+=("adds/z3.exe" "adds/cvc5.exe" "adds/mathsat.exe" "adds/mpir.dll" "adds/mathsat.dll")
 else
   echo "Wrong argument: ""$2"" -- use 'linux' or 'win32'"
   exit 1
