@@ -81,7 +81,7 @@ public class InterpolatingTraceCheckCraig<L extends IAction> extends Interpolati
 			final CfgSmtToolkit csToolkit, final ManagedScript mgdScriptTc, final PredicateFactory predicateFactory,
 			final IPredicateUnifier predicateUnifier, final AssertCodeBlockOrder assertCodeBlockOrder,
 			final boolean computeRcfgProgramExecution, final boolean collectInterpolantStatistics,
-			final InterpolationTechnique interpolation, final boolean instanticateArrayExt,
+			final InterpolationTechnique interpolation, final boolean instantiateArrayExt,
 			final SimplificationTechnique simplificationTechnique, final boolean innerRecursiveNestedInterpolationCall) {
 		super(precondition, postcondition, pendingContexts, trace, controlLocationSequence, services, csToolkit,
 				mgdScriptTc, predicateFactory, predicateUnifier, assertCodeBlockOrder, computeRcfgProgramExecution,
@@ -89,7 +89,7 @@ public class InterpolatingTraceCheckCraig<L extends IAction> extends Interpolati
 		if (assertCodeBlockOrder.getAssertCodeBlockOrderType() != AssertCodeBlockOrderType.NOT_INCREMENTALLY) {
 			throw new UnsupportedOperationException("incremental assertion is not available for Craig interpolation");
 		}
-		mInstantiateArrayExt = instanticateArrayExt;
+		mInstantiateArrayExt = instantiateArrayExt;
 		if (isCorrect() == LBool.UNSAT) {
 			InterpolantComputationStatus ics = new InterpolantComputationStatus();
 			try {
@@ -134,11 +134,11 @@ public class InterpolatingTraceCheckCraig<L extends IAction> extends Interpolati
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final IPredicateUnifier predicateUnifier, final AssertCodeBlockOrder assertCodeBlockOrder,
 			final boolean computeRcfgProgramExecution, final boolean collectInterpolantStatistics,
-			final InterpolationTechnique interpolation, final boolean instanticateArrayExt,
+			final InterpolationTechnique interpolation, final boolean instantiateArrayExt,
 			final SimplificationTechnique simplificationTechnique) {
 		this(precondition, postcondition, pendingContexts, trace, controlLocationSequence, services, csToolkit,
 				csToolkit.getManagedScript(), predicateFactory, predicateUnifier, assertCodeBlockOrder,
-				computeRcfgProgramExecution, collectInterpolantStatistics, interpolation, instanticateArrayExt,
+				computeRcfgProgramExecution, collectInterpolantStatistics, interpolation, instantiateArrayExt,
 				simplificationTechnique, false);
 	}
 

@@ -99,12 +99,12 @@ public final class IpTcStrategyModulePreferences<L extends IIcfgTransition<?>>
 		switch (mInterpolationTechnique) {
 		case Craig_NestedInterpolation:
 		case Craig_TreeInterpolation:
-			final boolean instanticateArrayExt = true;
+			final boolean instantiateArrayExt = true;
 			final boolean innerRecursiveNestedInterpolationCall = false;
 			return new InterpolatingTraceCheckCraig<>(mPrecondition, mPostcondition, pendingContexts, nestedWord,
 					sequenceOfProgramPoints, mServices, mPrefs.getCfgSmtToolkit(), managedScript, mPredicateFactory,
 					mPredicateUnifier, assertionOrder, mPrefs.computeCounterexample(),
-					mPrefs.collectInterpolantStatistics(), mInterpolationTechnique, instanticateArrayExt,
+					mPrefs.collectInterpolantStatistics(), mInterpolationTechnique, instantiateArrayExt,
 					simplificationTechnique, innerRecursiveNestedInterpolationCall);
 		case ForwardPredicates:
 		case BackwardPredicates:
