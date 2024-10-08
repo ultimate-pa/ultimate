@@ -54,7 +54,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckStatisticsGenerator.InterpolantType;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -98,16 +97,7 @@ public class InterpolatingTraceCheckCraig<L extends IAction> extends Interpolati
 						InterpolantType.Craig);
 				if (!innerRecursiveNestedInterpolationCall) {
 					mTraceCheckBenchmarkGenerator.reportInterpolantComputation();
-					if (mControlLocationSequence != null) {
-						final BackwardCoveringInformation bci = TraceCheckUtils.computeCoverageCapability(mServices,
-								getIpp(), mControlLocationSequence, mLogger, mPredicateUnifier);
-						final boolean perfectSequence =
-								bci.getPotentialBackwardCoverings() == bci.getSuccessfullBackwardCoverings();
-						if (perfectSequence) {
-							mTraceCheckBenchmarkGenerator.reportPerfectInterpolantSequences();
-						}
-						mTraceCheckBenchmarkGenerator.addBackwardCoveringInformation(bci);
-					}
+					checkPerfectSequence(getIpp());
 				}
 			} catch (final UnsupportedOperationException e) {
 				ics = handleUnsupportedOperationException(e);

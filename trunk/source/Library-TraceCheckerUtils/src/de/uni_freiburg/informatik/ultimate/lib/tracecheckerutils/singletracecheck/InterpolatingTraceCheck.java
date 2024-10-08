@@ -36,12 +36,14 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolk
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.IInterpolatingTraceCheck;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 
 /**
@@ -64,7 +66,7 @@ public abstract class InterpolatingTraceCheck<L extends IAction> extends TraceCh
 
 	protected IPredicate[] mInterpolants;
 
-	protected List<? extends Object> mControlLocationSequence;
+	private final List<? extends Object> mControlLocationSequence;
 
 	/**
 	 * Check if trace fulfills specification given by precondition, postcondition and pending contexts. The
@@ -101,6 +103,7 @@ public abstract class InterpolatingTraceCheck<L extends IAction> extends TraceCh
 	 * Furthermore throughout the lifetime of the {@link TraceCheck}, the traceCheck will always use one predicate
 	 * object for all interpolants which are similar (represented by the same term).
 	 * <p>
+	 *
 	 * @param interpolation
 	 *            Method that is used to compute the interpolants.
 	 * @param mPedicateUnifier
@@ -153,4 +156,18 @@ public abstract class InterpolatingTraceCheck<L extends IAction> extends TraceCh
 		return perfectSequences == 1;
 	}
 
+	protected boolean checkPerfectSequence(final TracePredicates sequence) {
+		if (mControlLocationSequence != null) {
+			final BackwardCoveringInformation bci = TraceCheckUtils.computeCoverageCapability(mServices, sequence,
+					mControlLocationSequence, mLogger, mPredicateUnifier);
+			final boolean perfectSequence =
+					bci.getPotentialBackwardCoverings() == bci.getSuccessfullBackwardCoverings();
+			if (perfectSequence) {
+				mTraceCheckBenchmarkGenerator.reportPerfectInterpolantSequences();
+			}
+			mTraceCheckBenchmarkGenerator.addBackwardCoveringInformation(bci);
+			return perfectSequence;
+		}
+		return false;
+	}
 }

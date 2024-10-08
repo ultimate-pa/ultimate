@@ -61,7 +61,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.ContainsQuantifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.predicates.IterativePredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.predicates.IterativePredicateTransformer.IPredicatePostprocessor;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.predicates.IterativePredicateTransformer.TraceInterpolationException;
@@ -300,15 +299,7 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 			mTraceCheckBenchmarkGenerator.reportSequenceOfInterpolants(mInterpolantsFp, InterpolantType.Forward);
 			mTraceCheckBenchmarkGenerator.reportNumberOfNonLiveVariables(mNonLiveVariablesFp, InterpolantType.Forward);
 			mTraceCheckBenchmarkGenerator.reportInterpolantComputation();
-			if (mControlLocationSequence != null) {
-				final BackwardCoveringInformation bci = TraceCheckUtils.computeCoverageCapability(mServices,
-						getForwardIpp(), mControlLocationSequence, mLogger, mPredicateUnifier);
-				mPerfectForwardSequence = bci.getPotentialBackwardCoverings() == bci.getSuccessfullBackwardCoverings();
-				if (mPerfectForwardSequence) {
-					mTraceCheckBenchmarkGenerator.reportPerfectInterpolantSequences();
-				}
-				mTraceCheckBenchmarkGenerator.addBackwardCoveringInformation(bci);
-			}
+			mPerfectForwardSequence = checkPerfectSequence(getForwardIpp());
 		}
 
 		if (mConstructBackwardInterpolantSequence == ConstructBackwardSequence.IF_FP_WAS_NOT_PERFECT
@@ -341,16 +332,7 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 				mTraceCheckBenchmarkGenerator.reportNumberOfNonLiveVariables(mNonLiveVariablesBp,
 						InterpolantType.Backward);
 				mTraceCheckBenchmarkGenerator.reportInterpolantComputation();
-				if (mControlLocationSequence != null) {
-					final BackwardCoveringInformation bci = TraceCheckUtils.computeCoverageCapability(mServices,
-							getBackwardIpp(), mControlLocationSequence, mLogger, mPredicateUnifier);
-					mPerfectBackwardSequence =
-							bci.getPotentialBackwardCoverings() == bci.getSuccessfullBackwardCoverings();
-					if (mPerfectBackwardSequence) {
-						mTraceCheckBenchmarkGenerator.reportPerfectInterpolantSequences();
-					}
-					mTraceCheckBenchmarkGenerator.addBackwardCoveringInformation(bci);
-				}
+				mPerfectBackwardSequence = checkPerfectSequence(getBackwardIpp());
 			} catch (final ToolchainCanceledException tce) {
 				final String taskDescription = "constructing backward predicates";
 				tce.addRunningTaskInfo(new RunningTaskInfo(getClass(), taskDescription));
