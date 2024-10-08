@@ -3,6 +3,9 @@
 /instance/org.eclipse.ant.core/property.workspacedir=${workspace_loc}
 /instance/org.eclipse.egit.core/core_autoIgnoreDerivedResources=false
 /instance/org.eclipse.core.resources/encoding=UTF-8
+/instance/org.eclipse.jdt.core/org.eclipse.jdt.core.compiler.codegen.targetPlatform=21
+/instance/org.eclipse.jdt.core/org.eclipse.jdt.core.compiler.compliance=21
+/instance/org.eclipse.jdt.core/org.eclipse.jdt.core.compiler.source=21
 
 /instance/org.eclipse.jdt.core/org.eclipse.jdt.core.codeComplete.fieldPrefixes=m
 /instance/org.eclipse.jdt.core/org.eclipse.jdt.core.codeComplete.staticFieldPrefixes=s
