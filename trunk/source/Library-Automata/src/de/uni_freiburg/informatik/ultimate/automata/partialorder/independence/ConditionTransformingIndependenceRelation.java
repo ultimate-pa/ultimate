@@ -60,8 +60,21 @@ public class ConditionTransformingIndependenceRelation<S, T, L> implements IInde
 	 */
 	public ConditionTransformingIndependenceRelation(final IIndependenceRelation<T, L> underlying,
 			final Function<S, T> transformer) {
-		// TODO allow passing backtransformer
-		this(underlying, transformer, null, underlying.isConditional());
+		this(underlying, transformer, null);
+	}
+
+	/**
+	 * Creates a new instance.
+	 *
+	 * @param underlying
+	 *            The underlying conditional independence relation.
+	 * @param transformer
+	 *            A transformation applied to conditions.
+	 * @param backtransformer
+	 */
+	public ConditionTransformingIndependenceRelation(final IIndependenceRelation<T, L> underlying,
+			final Function<S, T> transformer, final Function<T, S> backtransformer) {
+		this(underlying, transformer, backtransformer, underlying.isConditional());
 	}
 
 	private ConditionTransformingIndependenceRelation(final IIndependenceRelation<T, L> underlying,

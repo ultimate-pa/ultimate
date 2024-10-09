@@ -151,12 +151,12 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 			case PARTIAL_ORDER_FA:
 				requireNoReuse("POR-based analysis");
 				requireNoWitnesses(witnessAutomaton, "POR-based analysis");
-				final var factory = new IndependenceProviderFactory<>(services, mPrefs, mCopyFactory);
+				final var factory = new IndependenceProviderFactory<>(services, mPrefs, mCopyFactory, predicateFactory);
 				final var poCegar = new PartialOrderCegarLoop<>(name,
 						createPartialOrderAbstraction(services, predicateFactory, stateFactoryForRefinement, root,
 								errorLocs),
-						root, csToolkit, predicateFactory, mPrefs, errorLocs, services,
-						factory.createProviders(root, predicateFactory), mTransitionClazz, stateFactoryForRefinement);
+						root, csToolkit, predicateFactory, mPrefs, errorLocs, services, factory.createProviders(root),
+						mTransitionClazz, stateFactoryForRefinement);
 				return new Pair<>(poCegar, null);
 			case PETRI_NET:
 				requireNoReuse("Petri net-based analysis");

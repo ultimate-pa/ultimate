@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.CachedIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.CachedIndependenceRelation.IIndependenceCache;
@@ -46,11 +47,13 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.ab
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.TransferrerWithVariableCache;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.DebugPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.ICopyActionFactory;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
  * Provides fluent API to create independence relations for software analysis. Usage of this API usually follows 3
@@ -101,9 +104,24 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 	public static <L extends IAction> PredicateActionIndependenceBuilder.Impl<L> semantic(
 			final IUltimateServiceProvider services, final ManagedScript mgdScript, final boolean conditional,
 			final boolean symmetric) {
-		// TODO support passing predicateFactory to enable symbolic relation
 		return new PredicateActionIndependenceBuilder.Impl<>(
 				new SemanticIndependenceRelation<>(services, mgdScript, conditional, symmetric, null));
+	}
+
+	/**
+	 * Create a new instance, with a semantic independence relation as base. See
+	 * {@link SemanticIndependenceRelation::new} for details.
+	 *
+	 * @param mgdScript
+	 *            This script is used for SMT checks
+	 * @param predicateFactory
+	 *            Used for the corresponding symbolic relation
+	 */
+	public static <L extends IAction> PredicateActionIndependenceBuilder.Impl<L> semantic(
+			final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final BasicPredicateFactory predicateFactory, final boolean conditional, final boolean symmetric) {
+		return new PredicateActionIndependenceBuilder.Impl<>(
+				new SemanticIndependenceRelation<>(services, mgdScript, conditional, symmetric, predicateFactory));
 	}
 
 	/**
@@ -207,6 +225,38 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 	}
 
 	/**
+	 * Union the current independence relation with the given relation (the given relation is queried first).
+	 */
+	public B unionLeft(final IIndependenceRelation<S, L> relation, final Function<Stream<S>, S> aggregateConditions) {
+		return unionLeft(List.of(relation), aggregateConditions);
+	}
+
+	/**
+	 * Union the current independence relation with the given relations (the given relations are queried in the given
+	 * order, before the current relation).
+	 */
+	public B unionLeft(final List<IIndependenceRelation<S, L>> relations,
+			final Function<Stream<S>, S> aggregateConditions) {
+		return union(relations, List.of(), aggregateConditions);
+	}
+
+	/**
+	 * Union the current independence relation with the given relation (the given relation is queried last).
+	 */
+	public B unionRight(final IIndependenceRelation<S, L> relation, final Function<Stream<S>, S> aggregateConditions) {
+		return unionRight(List.of(relation), aggregateConditions);
+	}
+
+	/**
+	 * Union the current independence relation with the given relations (the given relations are queried in the given
+	 * order, but after the current relation).
+	 */
+	public B unionRight(final List<IIndependenceRelation<S, L>> relations,
+			final Function<Stream<S>, S> aggregateConditions) {
+		return union(List.of(), relations, aggregateConditions);
+	}
+
+	/**
 	 * Union the current independence relation with the given relations.
 	 *
 	 * @see ActionIndependenceBuilder#withSyntacticCheck() for a common special case.
@@ -225,6 +275,28 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 		relations.addAll(right);
 
 		return mCreator.apply(new UnionIndependenceRelation<>(relations));
+	}
+
+	/**
+	 * Union the current independence relation with the given relations.
+	 *
+	 * @see ActionIndependenceBuilder#withSyntacticCheck() for a common special case.
+	 *
+	 * @param left
+	 *            A list of independence relations used as operands in the union. These relations are queried in the
+	 *            given order, before the current relation is queried.
+	 * @param right
+	 *            A list of independence relations used as operands in the union. These relations are queried in the
+	 *            given order, after the current relation is queried.
+	 */
+	public B union(final List<IIndependenceRelation<S, L>> left, final List<IIndependenceRelation<S, L>> right,
+			final Function<Stream<S>, S> aggregateConditions) {
+		final ArrayList<IIndependenceRelation<S, L>> relations = new ArrayList<>(left.size() + 1 + right.size());
+		relations.addAll(left);
+		relations.add(mRelation);
+		relations.addAll(right);
+
+		return mCreator.apply(new UnionIndependenceRelation<>(relations, aggregateConditions));
 	}
 
 	/**
@@ -264,8 +336,8 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 	 */
 	public B withFilteredConditions(final Predicate<S> filter) {
 		if (mRelation.isConditional()) {
-			return mCreator
-					.apply(new ConditionTransformingIndependenceRelation<>(mRelation, x -> filter.test(x) ? x : null));
+			final UnaryOperator<S> transformer = x -> filter.test(x) ? x : null;
+			return mCreator.apply(new ConditionTransformingIndependenceRelation<>(mRelation, transformer, transformer));
 		}
 		return mCreator.apply(mRelation);
 	}
@@ -323,6 +395,15 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 		 */
 		public B withSyntacticCheck() {
 			return unionLeft(new SyntacticIndependenceRelation<>());
+		}
+
+		/**
+		 * Combines the current relation with a syntactic independence relation. This is typically done for semantic
+		 * independence relations, as the syntactic check provides a cheap sufficient condition for semantic
+		 * independence.
+		 */
+		public B withSyntacticCheck(final Function<Stream<S>, S> aggregateConditions) {
+			return unionLeft(new SyntacticIndependenceRelation<>(), aggregateConditions);
 		}
 
 		/**
@@ -491,10 +572,29 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 				return this;
 			}
 
-			public <C extends Collection<IPredicate>> Impl<L>
-					withDisjunctivePredicatesUnion(final Function<IPredicate, C> getDisjuncts) {
-				return unionLeft(new ConditionTransformingIndependenceRelation<>(
-						new DisjunctiveConditionalIndependenceRelation<>(mRelation), getDisjuncts));
+			/**
+			 * Splits a condition into multiple parts ("disjuncts"), and checks independence for each disjunct
+			 * separately. If any disjunct induces independence, then the original condition is considered to induce
+			 * independence.
+			 */
+			public <C extends Collection<IPredicate>> Impl<L> withDisjunctivePredicates(
+					final Function<IPredicate, C> getDisjuncts, final Function<IPredicate, C> buildSingleton) {
+				if (mRelation.isConditional()) {
+					return new Impl<>(new ConditionTransformingIndependenceRelation<>(
+							new DisjunctiveConditionalIndependenceRelation<>(mRelation, buildSingleton), getDisjuncts,
+							x -> DataStructureUtils.getOneAndOnly(x, "condition")));
+				}
+				return this;
+			}
+
+			public <C extends Collection<IPredicate>> Impl<L> withDisjunctivePredicatesUnion(
+					final Function<IPredicate, C> getDisjuncts, final Function<IPredicate, C> buildSingleton,
+					final Function<Stream<IPredicate>, IPredicate> aggregateConditions) {
+				return unionLeft(
+						new ConditionTransformingIndependenceRelation<>(
+								new DisjunctiveConditionalIndependenceRelation<>(mRelation, buildSingleton),
+								getDisjuncts, x -> DataStructureUtils.getOneAndOnly(x, "condition")),
+						aggregateConditions);
 			}
 		}
 	}
