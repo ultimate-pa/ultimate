@@ -155,9 +155,9 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	private ConditionalCommutativityChecker<L> mConComChecker;
 	private IDfsVisitor<L, IPredicate> mConComVisitor;
 	private boolean mCounterexampleConComFound;
-	private ConditionalCommutativityStatisticsGenerator mConComCheckerBenchmark =
+	private final ConditionalCommutativityStatisticsGenerator mConComCheckerBenchmark =
 			new ConditionalCommutativityStatisticsGenerator();
-	private ConditionalCommutativityCheckerStatisticsUtils mConComCheckerStatisticsUtils =
+	private final ConditionalCommutativityCheckerStatisticsUtils mConComCheckerStatisticsUtils =
 			new ConditionalCommutativityCheckerStatisticsUtils(mConComCheckerBenchmark);
 
 	public PartialOrderCegarLoop(final DebugIdentifier name,
