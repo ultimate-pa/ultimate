@@ -6,9 +6,11 @@
   <column title="walltime"        displayTitle="Wall Time"/>
   <column title="memory"          displayTitle="Memory" sourceUnit="B" displayUnit="MB"/>
   <column title="iterations"      displayTitle="TAR Iterations">OverallIterations:\s*(\d+)</column>
-  <column title="checktime"       displayTitle="Con. Com. Check Time" sourceUnit="s">ConditionalCommutativityCheckTime: (\d+(\.\d+)?)s</column>
+  <column title="overalltime"       displayTitle="ConComChecker Overall Time" sourceUnit="s">ConditionalCommutativityOverallTime: (\d+(\.\d+)?)s</column>
+  <column title="checktime"       displayTitle="ConComChecker Check Time" sourceUnit="s">ConditionalCommutativityCheckTime: (\d+(\.\d+)?)s</column>
   <column title="IAIntegrations"  displayTitle="IA Integrations">ConditionalCommutativityIAIntegrations:\s*(\d+)</column>
   <column title="DFSRestarts"     displayTitle="DFS Restarts">ConditionalCommutativityDFSRestarts:\s*(\d+)</column>
+  <column title="CommutingCounterexamples" displayTitle="CommutingCounterexamples">ConditionalCommutativityCommutingCounterexamples:\s*(\d+)</column>
   <column title="ConditionCalculations" displayTitle="Condition Calculations">ConditionalCommutativityConditionCalculations:\s*(\d+)</column>
   <column title="TraceChecks" displayTitle="Trace Checks">ConditionalCommutativityTraceChecks:\s*(\d+)</column>
   <column title="ImperfectProofs" displayTitle="Imperfect Proofs">ConditionalCommutativityImperfectProofs:\s*(\d+)</column>
@@ -29,8 +31,6 @@
   <union>
     <result filename="conditional-commutativity.*.results.IA-Forward.*.xml" />
   </union>
-  
-
   <union>
     <result filename="aggregated-IA-Random-MIN.*.xml" />
   </union>
@@ -45,51 +45,53 @@
   </union>
 
   <union>
-    <result filename="conditional-commutativity.*.results.DFS-Default.*.xml" />
+    <result filename="conditional-commutativity.*.results.CE-Default.*.xml" />
+  </union>
+  <union>
+    <result filename="conditional-commutativity.*.results.CE-Loop.*.xml" />
+  </union>
+  <union>
+    <result filename="conditional-commutativity.*.results.CE-SleepSet.*.xml" />
+  </union>
+  <union>
+    <result filename="conditional-commutativity.*.results.CE-Forward.*.xml" />
+  </union>
+  <union>
+    <result filename="aggregated-CE-Random-MIN.*.xml" />
+  </union>
+  <union>
+    <result filename="conditional-commutativity.*.results.CE-Random-20-213.*.xml" />
+  </union>
+  <union>
+    <result filename="conditional-commutativity.*.results.CE-Random-20-546.*.xml" />
+  </union>
+  <union>
+    <result filename="conditional-commutativity.*.results.CE-Random-50-213.*.xml" />
   </union>
 
   <union>
     <result filename="conditional-commutativity.*.results.DFS-Default-Limit2.*.xml" />
   </union>
   <union>
-    <result filename="conditional-commutativity.*.results.DFS-Default-Limit10.*.xml" />
+    <result filename="conditional-commutativity.*.results.DFS-Loop-Limit2.*.xml" />
   </union>
   <union>
-    <result filename="conditional-commutativity.*.results.DFS-Default-Limit50.*.xml" />
+    <result filename="conditional-commutativity.*.results.DFS-SleepSet-Limit2.*.xml" />
   </union>
-
-  <union>
-    <result filename="conditional-commutativity.*.results.DFS-Loop-Limit10.*.xml" />
-  </union>
-
-  <union>
-    <result filename="conditional-commutativity.*.results.DFS-SleepSet-Limit10.*.xml" />
-  </union>
-  
    <union>
-    <result filename="conditional-commutativity.*.results.DFS-Forward-Limit10.*.xml" />
+    <result filename="conditional-commutativity.*.results.DFS-Forward-Limit2.*.xml" />
   </union>
-
   <union>
     <result filename="aggregated-DFS-Random-MIN.*.xml" />
   </union>
   <union>
-    <result filename="conditional-commutativity.*.results.DFS-Random-20-213-Limit10.*.xml" />
+    <result filename="conditional-commutativity.*.results.DFS-Random-20-213-Limit2.*.xml" />
   </union>
   <union>
-    <result filename="conditional-commutativity.*.results.DFS-Random-20-546-Limit10.*.xml" />
+    <result filename="conditional-commutativity.*.results.DFS-Random-20-546-Limit2.*.xml" />
   </union>
   <union>
-    <result filename="conditional-commutativity.*.results.DFS-Random-50-213-Limit10.*.xml" />
+    <result filename="conditional-commutativity.*.results.DFS-Random-50-213-Limit2.*.xml" />
   </union>
-
-  <union>
-    <result filename="conditional-commutativity.*.results.BOTH-Default-Limit10.*.xml" />
-  </union>
-  <union>
-    <result filename="conditional-commutativity.*.results.BOTH-Loop-Limit10.*.xml" />
-  </union>
-  <union>
-    <result filename="conditional-commutativity.*.results.BOTH-SleepSet-Limit10.*.xml" />
-  </union>
+  
 </table>

@@ -2,9 +2,9 @@
 /*
  * Author: Marcel Ebbinghaus
  *
- * Idea: Program highly benefits from LooplockStep order, but seems to be nonterminating 
- * (or at least takes a lot of time) without our approach
+ * Idea: Variation of parallelSumConCom with atomic statements
  *
+ * Observation: Writing everything into a single atomic statements seems to be problematic for the sleep set criterion!
  */
 var A : [int]int;
 var i, j, x, y, z, n : int;
@@ -23,27 +23,30 @@ modifies i, j, A, n, x, y, z;
   fork 2 thread2();
   join 1;
   join 2;
+  assume (i == n && j == n);
   assert (x == y);
 }
 
 procedure thread1()
-modifies i, A, x, y, z;
+modifies i, A, x, z;
 {
-  z := z + 1;
-  while (i <= n) {
-    z := z + 1;
+  while (*) {
+  atomic {
+    assume (i < n);
+	z := z + 1;
     x := x + A[i];
-    i := i + 1;
+    i := i + 1;}
   }
 }
 
 procedure thread2()
-modifies j, A, x, y, z;
-{
-  assume (z >= 0);
-  while (j <= n) {
-    assume (z >= 0);
+modifies j, A, y, z;
+{ 
+  while (*) {
+  atomic {
+    assume (j < n);
+	assume (z >= 0);
     y := y + A[j];
-    j := j + 1;
+    j := j + 1;}
   }
 }
