@@ -114,6 +114,7 @@ public final class UltimateRunDefinitionGenerator {
 	 * relative to the Ultimate trunk directory.
 	 *
 	 * @param timeout
+	 *            Timeout in milliseconds
 	 */
 	public static Collection<UltimateRunDefinition> getRunDefinitionFromTrunk(final String[] directories,
 			final String[] fileEndings, final String settings, final String toolchain, final long timeout) {
