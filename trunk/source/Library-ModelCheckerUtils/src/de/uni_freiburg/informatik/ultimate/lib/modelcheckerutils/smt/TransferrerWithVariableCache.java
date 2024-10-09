@@ -30,6 +30,8 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
@@ -132,6 +134,25 @@ public class TransferrerWithVariableCache {
 
 	public <T extends Term> T transferTerm(final T term) {
 		return (T) mTransferrer.transform(term);
+	}
+
+	public IIcfgSymbolTable transferSymbolTable(final IIcfgSymbolTable symbolTable, final Set<String> procs) {
+		final var result = new DefaultIcfgSymbolTable();
+
+		for (final var glob : symbolTable.getGlobals()) {
+			result.add(transferProgramVar(glob));
+		}
+		for (final var proc : procs) {
+			for (final var loc : symbolTable.getLocals(proc)) {
+				result.add(transferProgramVar(loc));
+			}
+		}
+		for (final var constant : symbolTable.getConstants()) {
+			result.add(transferProgramConst(constant));
+		}
+
+		result.finishConstruction();
+		return result;
 	}
 
 	public TermTransferrer getTransferrer() {
