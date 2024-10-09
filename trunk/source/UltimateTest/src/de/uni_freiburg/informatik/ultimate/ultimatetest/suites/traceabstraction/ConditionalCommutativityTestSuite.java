@@ -33,6 +33,7 @@ import java.util.function.UnaryOperator;
 
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderReductionFacade.OrderType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.ConComChecker;
@@ -53,8 +54,12 @@ public class ConditionalCommutativityTestSuite extends AbstractTraceAbstractionT
 	private static final String TOOLCHAIN_C = "AutomizerCInline.xml";
 	private static final String TOOLCHAIN_BPL = "AutomizerBplInline.xml";
 
-	// TODO change & rename settings file
-	private static final String BASE_SETTINGS = "gemcutter/Marcel.epf";
+	// @formatter:off
+	private static final String[] BASE_SETTINGS = {
+		"gemcutter/NewStatesSleep.epf",
+		"gemcutter/NewStatesSleepPersistentFixedOrder.epf"
+	};
+	// @formatter:on
 
 	// @formatter:off
 	private static final List<Map<String, Object>> VARIANTS = List.of(
@@ -82,11 +87,15 @@ public class ConditionalCommutativityTestSuite extends AbstractTraceAbstractionT
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		for (final var variant : VARIANTS) {
-			addTestCase(UltimateRunDefinitionGenerator.getRunDefinitionFromTrunk(BENCHMARKS_C, new String[] { ".c" },
-					BASE_SETTINGS, TOOLCHAIN_C, getTimeout()), overwriteSettings(variant));
-			addTestCase(UltimateRunDefinitionGenerator.getRunDefinitionFromTrunk(BENCHMARKS_BPL,
-					new String[] { ".bpl" }, BASE_SETTINGS, TOOLCHAIN_BPL, getTimeout()), overwriteSettings(variant));
+		for (final var setting : BASE_SETTINGS) {
+			for (final var variant : VARIANTS) {
+				addTestCase(UltimateRunDefinitionGenerator.getRunDefinitionFromTrunk(BENCHMARKS_C,
+						new String[] { ".c" }, setting, TOOLCHAIN_C, getTimeout()), overwriteSettings(variant));
+				addTestCase(
+						UltimateRunDefinitionGenerator.getRunDefinitionFromTrunk(BENCHMARKS_BPL,
+								new String[] { ".bpl" }, setting, TOOLCHAIN_BPL, getTimeout()),
+						overwriteSettings(variant));
+			}
 		}
 		return super.createTestCases();
 	}
@@ -106,6 +115,7 @@ public class ConditionalCommutativityTestSuite extends AbstractTraceAbstractionT
 	private static Map<String, Object> interpolantApproach() {
 		return Map.of(
 		// @formatter:off
+			TraceAbstractionPreferenceInitializer.LABEL_POR_DFS_ORDER, OrderType.LOOP_LOCKSTEP,
 			TraceAbstractionPreferenceInitializer.LABEL_CON_COM_CHECKER, ConComChecker.IA,
 			TraceAbstractionPreferenceInitializer.LABEL_CON_COM_CHECKER_CRITERION, ConComCheckerCriterion.DEFAULT
 		// @formatter:on
