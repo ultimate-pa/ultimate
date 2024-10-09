@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!DOCTYPE benchmark PUBLIC "+//IDN sosy-lab.org//DTD BenchExec benchmark 1.9//EN" "https://www.sosy-lab.org/benchexec/benchmark-2.3.dtd">
-<benchmark tool="ultimateautomizer.py" displayName="UAutomizer" timelimit="120s" hardtimelimit="120s" memlimit="8 GB" cpuCores="2">
+<benchmark tool="ultimateautomizer" displayName="UAutomizer" timelimit="120s" hardtimelimit="120s" memlimit="8 GB" cpuCores="2">
 
   <resultfiles>**/witness.*</resultfiles>
 
