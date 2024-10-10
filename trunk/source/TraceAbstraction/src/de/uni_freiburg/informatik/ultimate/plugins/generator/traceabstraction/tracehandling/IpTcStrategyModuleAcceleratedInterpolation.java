@@ -27,14 +27,15 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
-import de.uni_freiburg.informatik.ultimate.automata.IRun;
+import java.util.List;
+
+import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.AcceleratedInterpolation;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.AcceleratedInterpolationCore.IStrategySupplier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.IInterpolatingTraceCheck;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.RefinementEngineStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.RefinementEngineStatisticsGenerator.RefinementEngineStatisticsDefinitions;
@@ -51,7 +52,8 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 public class IpTcStrategyModuleAcceleratedInterpolation<L extends IIcfgTransition<?>>
 		extends IpTcStrategyModuleBase<IInterpolatingTraceCheck<L>, L> {
 
-	private final IRun<L, ?> mCounterexample;
+	private final Word<L> mCounterexample;
+	private final List<?> mControlLocations;
 	private final IPredicateUnifier mPredicateUnifier;
 	private final TaCheckAndRefinementPreferences<L> mPrefs;
 	private final ILogger mLogger;
@@ -61,11 +63,12 @@ public class IpTcStrategyModuleAcceleratedInterpolation<L extends IIcfgTransitio
 	private final IStrategySupplier<L> mStrategySupplier;
 
 	public IpTcStrategyModuleAcceleratedInterpolation(final IUltimateServiceProvider services, final ILogger logger,
-			final IRun<L, ?> counterexample, final IPredicateUnifier predicateUnifier,
+			final Word<L> counterexample, final List<?> controlLocations, final IPredicateUnifier predicateUnifier,
 			final TaCheckAndRefinementPreferences<L> prefs, final IStrategySupplier<L> strategySupplier,
 			final Class<L> transitionClazz) {
 		mServices = services;
 		mCounterexample = counterexample;
+		mControlLocations = controlLocations;
 		mPredicateUnifier = predicateUnifier;
 		mLogger = logger;
 		mPrefs = prefs;
@@ -77,9 +80,8 @@ public class IpTcStrategyModuleAcceleratedInterpolation<L extends IIcfgTransitio
 	@SuppressWarnings("unchecked")
 	@Override
 	protected IInterpolatingTraceCheck<L> construct() {
-		return new AcceleratedInterpolation<>(mServices, mLogger, mPrefs, mScript, mPredicateUnifier,
-				(IRun<L, IPredicate>) mCounterexample, mTransitionClazz, mPrefs.getLoopAccelerationTechnique(),
-				mStrategySupplier);
+		return new AcceleratedInterpolation<>(mServices, mLogger, mPrefs, mScript, mPredicateUnifier, mCounterexample,
+				mControlLocations, mTransitionClazz, mPrefs.getLoopAccelerationTechnique(), mStrategySupplier);
 	}
 
 	@Override

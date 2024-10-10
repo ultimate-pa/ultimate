@@ -66,7 +66,7 @@ public abstract class InterpolatingTraceCheck<L extends IAction> extends TraceCh
 
 	protected IPredicate[] mInterpolants;
 
-	private final List<? extends Object> mControlLocationSequence;
+	protected final List<?> mControlConfigurationSequence;
 
 	/**
 	 * Check if trace fulfills specification given by precondition, postcondition and pending contexts. The
@@ -75,7 +75,7 @@ public abstract class InterpolatingTraceCheck<L extends IAction> extends TraceCh
 	 */
 	public InterpolatingTraceCheck(final IPredicate precondition, final IPredicate postcondition,
 			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<L> trace,
-			final List<? extends Object> controlLocationSequence, final IUltimateServiceProvider services,
+			final List<?> controlLocationSequence, final IUltimateServiceProvider services,
 			final CfgSmtToolkit csToolkit, final ManagedScript tcSmtManager, final PredicateFactory predicateFactory,
 			final IPredicateUnifier predicateUnifier, final AssertCodeBlockOrder assertCodeBlockOrder,
 			final boolean computeRcfgProgramExecution, final boolean collectInterpolatSequenceStatistics,
@@ -89,7 +89,7 @@ public abstract class InterpolatingTraceCheck<L extends IAction> extends TraceCh
 		mPredicateUnifier = predicateUnifier;
 		mPredicateFactory = predicateFactory;
 		mSimplificationTechnique = simplificationTechnique;
-		mControlLocationSequence = controlLocationSequence;
+		mControlConfigurationSequence = controlLocationSequence;
 	}
 
 	/**
@@ -157,9 +157,9 @@ public abstract class InterpolatingTraceCheck<L extends IAction> extends TraceCh
 	}
 
 	protected boolean checkPerfectSequence(final TracePredicates sequence) {
-		if (mControlLocationSequence != null) {
+		if (mControlConfigurationSequence != null) {
 			final BackwardCoveringInformation bci = TraceCheckUtils.computeCoverageCapability(mServices, sequence,
-					mControlLocationSequence, mLogger, mPredicateUnifier);
+					mControlConfigurationSequence, mLogger, mPredicateUnifier);
 			final boolean perfectSequence =
 					bci.getPotentialBackwardCoverings() == bci.getSuccessfullBackwardCoverings();
 			if (perfectSequence) {

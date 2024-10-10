@@ -8,7 +8,7 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.IRun;
+import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -54,7 +54,7 @@ public class StrategyModuleMcr<L extends IIcfgTransition<?>>
 	public StrategyModuleMcr(final IUltimateServiceProvider services, final ILogger logger,
 			final TaCheckAndRefinementPreferences<L> prefs, final IPredicateUnifier predicateUnifier,
 			final IEmptyStackStateFactory<IPredicate> emptyStackFactory, final StrategyFactory<L> strategyFactory,
-			final IRun<L, ?> counterexample, final IAutomaton<L, IPredicate> abstraction,
+			final Word<L> counterexample, final IAutomaton<L, IPredicate> abstraction,
 			final TaskIdentifier taskIdentifier, final IInterpolantProvider<L> interpolantProvider) {
 		mServices = services;
 		mPrefs = prefs;
@@ -62,7 +62,7 @@ public class StrategyModuleMcr<L extends IIcfgTransition<?>>
 		mLogger = logger;
 		mPredicateUnifier = predicateUnifier;
 		mEmptyStackFactory = emptyStackFactory;
-		mCounterexample = counterexample.getWord().asList();
+		mCounterexample = counterexample.asList();
 		mAbstraction = abstraction;
 		mTaskIdentifier = taskIdentifier;
 		mInterpolantProvider = interpolantProvider;
@@ -151,17 +151,17 @@ public class StrategyModuleMcr<L extends IIcfgTransition<?>>
 	}
 
 	@Override
-	public McrTraceCheckResult<L> getResult(final IRun<L, ?> counterexample) {
+	public McrTraceCheckResult<L> getResult(final Word<L> counterexample, final List<?> controlLocationSequence) {
 		// Run mRefinementEngine for the given trace
 		final RefinementStrategy refinementStrategy = mPrefs.getMcrRefinementStrategy();
 		if (refinementStrategy == RefinementStrategy.MCR) {
 			throw new IllegalStateException("MCR cannot used with MCR as internal strategy.");
 		}
 		final IRefinementStrategy<L> strategy = mStrategyFactory.constructStrategy(mServices, counterexample,
-				mAbstraction, mTaskIdentifier, mEmptyStackFactory, mPredicateUnifier,
+				controlLocationSequence, mAbstraction, mTaskIdentifier, mEmptyStackFactory, mPredicateUnifier,
 				mPredicateUnifier.getTruePredicate(), mPredicateUnifier.getFalsePredicate(), refinementStrategy);
 		final AutomatonFreeRefinementEngine<L> afe = new AutomatonFreeRefinementEngine<>(mServices, mLogger, strategy);
-		final List<L> trace = counterexample.getWord().asList();
+		final List<L> trace = counterexample.asList();
 		final RefinementEngineStatisticsGenerator statistics = afe.getRefinementEngineStatistics();
 		mAfeResult = afe.getResult();
 		final LBool feasibility = mAfeResult.getCounterexampleFeasibility();

@@ -26,7 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
-import de.uni_freiburg.informatik.ultimate.automata.IRun;
+import java.util.List;
+
+import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -55,21 +57,23 @@ public abstract class IpTcStrategyModuleTraceCheck<T extends IInterpolatingTrace
 	protected final IUltimateServiceProvider mServices;
 	protected final TaCheckAndRefinementPreferences<?> mPrefs;
 	protected final AssertionOrderModulation<LETTER> mAssertionOrderModulation;
-	protected final IRun<LETTER, ?> mCounterexample;
+	protected final Word<LETTER> mCounterexample;
+	protected final List<?> mControlConfigurationSequence;
 	protected final IPredicateUnifier mPredicateUnifier;
 	protected final IPredicate mPrecondition;
 	protected final IPredicate mPostcondition;
 	protected final PredicateFactory mPredicateFactory;
 
 	public IpTcStrategyModuleTraceCheck(final TaskIdentifier taskIdentifier, final IUltimateServiceProvider services,
-			final TaCheckAndRefinementPreferences<LETTER> prefs, final IRun<LETTER, ?> counterExample,
-			final IPredicate precondition, final IPredicate postcondition,
+			final TaCheckAndRefinementPreferences<LETTER> prefs, final Word<LETTER> counterExample,
+			final List<?> controlConfigurationSequence, final IPredicate precondition, final IPredicate postcondition,
 			final AssertionOrderModulation<LETTER> assertionOrderModulation, final IPredicateUnifier predicateUnifier,
 			final PredicateFactory predicateFactory) {
 		mServices = services;
 		mPrefs = prefs;
 		mAssertionOrderModulation = assertionOrderModulation;
 		mCounterexample = counterExample;
+		mControlConfigurationSequence = controlConfigurationSequence;
 		mPredicateUnifier = predicateUnifier;
 		mPredicateFactory = predicateFactory;
 		mPrecondition = precondition;

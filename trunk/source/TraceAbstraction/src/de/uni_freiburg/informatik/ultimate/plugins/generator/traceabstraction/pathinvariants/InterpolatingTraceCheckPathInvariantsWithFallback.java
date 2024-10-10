@@ -27,14 +27,16 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.SortedMap;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.InterpolantComputationStatus;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
@@ -56,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
 public class InterpolatingTraceCheckPathInvariantsWithFallback<LETTER extends IAction>
 		extends InterpolatingTraceCheck<LETTER> {
 
-	private final NestedRun<LETTER, IPredicate> mNestedRun;
+	private final NestedWord<LETTER> mNestedWord;
 	private final IIcfg<?> mIcfg;
 	private IStatisticsDataProvider mPathInvariantsStats;
 
@@ -65,16 +67,17 @@ public class InterpolatingTraceCheckPathInvariantsWithFallback<LETTER extends IA
 
 	public InterpolatingTraceCheckPathInvariantsWithFallback(final IPredicate precondition,
 			final IPredicate postcondition, final SortedMap<Integer, IPredicate> pendingContexts,
-			final NestedRun<LETTER, IPredicate> run, final CfgSmtToolkit csToolkit,
-			final AssertCodeBlockOrder assertCodeBlockOrder, final IUltimateServiceProvider services,
-			final boolean computeRcfgProgramExecution, final PredicateFactory predicateFactory,
-			final IPredicateUnifier predicateUnifier, final InvariantSynthesisSettings invariantSynthesisSettings,
+			final NestedWord<LETTER> counterexample, final List<?> controlLocationSequence,
+			final CfgSmtToolkit csToolkit, final AssertCodeBlockOrder assertCodeBlockOrder,
+			final IUltimateServiceProvider services, final boolean computeRcfgProgramExecution,
+			final PredicateFactory predicateFactory, final IPredicateUnifier predicateUnifier,
+			final InvariantSynthesisSettings invariantSynthesisSettings,
 			final SimplificationTechnique simplificationTechnique, final IIcfg<?> icfgContainer,
 			final boolean collectInterpolantStatistics) {
-		super(precondition, postcondition, pendingContexts, run.getWord(), run.getStateSequence(), services, csToolkit,
-				csToolkit.getManagedScript(), predicateFactory, predicateUnifier, assertCodeBlockOrder,
+		super(precondition, postcondition, pendingContexts, counterexample, controlLocationSequence, services,
+				csToolkit, csToolkit.getManagedScript(), predicateFactory, predicateUnifier, assertCodeBlockOrder,
 				computeRcfgProgramExecution, collectInterpolantStatistics, simplificationTechnique);
-		mNestedRun = run;
+		mNestedWord = counterexample;
 		mInvariantSynthesisSettings = invariantSynthesisSettings;
 		mIcfg = icfgContainer;
 		if (super.isCorrect() == LBool.UNSAT) {
@@ -88,14 +91,14 @@ public class InterpolatingTraceCheckPathInvariantsWithFallback<LETTER extends IA
 				throw new ToolchainCanceledException(message, getClass(), taskDescription);
 			}
 		}
-
 	}
 
 	@Override
 	protected void computeInterpolants(final InterpolationTechnique interpolation) {
 		final PathInvariantsGenerator<LETTER> pathInvariantsGenerator = new PathInvariantsGenerator<>(super.mServices,
-				mNestedRun, super.getPrecondition(), super.getPostcondition(), mPredicateFactory, mPredicateUnifier,
-				mIcfg, mInvariantSynthesisSettings, mSimplificationTechnique);
+				mNestedWord, (List<IcfgLocation>) mControlConfigurationSequence, super.getPrecondition(),
+				super.getPostcondition(), mPredicateFactory, mPredicateUnifier, mIcfg, mInvariantSynthesisSettings,
+				mSimplificationTechnique);
 		mInterpolantComputationStatus = pathInvariantsGenerator.getInterpolantComputationStatus();
 		final IPredicate[] interpolants = pathInvariantsGenerator.getInterpolants();
 		if (interpolants == null) {
@@ -103,7 +106,7 @@ public class InterpolatingTraceCheckPathInvariantsWithFallback<LETTER extends IA
 					.wasComputationSuccessful() : "null only allowed if computation was not successful";
 		} else {
 			if (interpolants.length != mTrace.length() - 1) {
-				throw new AssertionError("inkorrekt number of interpolants. "
+				throw new AssertionError("incorrekt number of interpolants. "
 						+ "There should be one interpolant between each " + "two successive CodeBlocks");
 			}
 			assert TraceCheckUtils.checkInterpolantsInductivityForward(Arrays.asList(interpolants), mTrace,
@@ -123,5 +126,4 @@ public class InterpolatingTraceCheckPathInvariantsWithFallback<LETTER extends IA
 	public IStatisticsDataProvider getPathInvariantsStats() {
 		return mPathInvariantsStats;
 	}
-
 }

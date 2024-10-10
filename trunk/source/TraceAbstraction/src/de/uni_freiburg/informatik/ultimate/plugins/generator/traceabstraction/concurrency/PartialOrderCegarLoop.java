@@ -435,6 +435,12 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		return mDeadEndStore;
 	}
 
+	@Override
+	protected List<?> getControlLocationsFromCounterexample(final IRun<L, ?> counterexample) {
+		return counterexample.getStateSequence().stream().map(s -> ((IMLPredicate) s).getProgramPoints())
+				.collect(Collectors.toList());
+	}
+
 	private static final class MLPredicateWithInterpolants extends AnnotatedMLPredicate<IPredicate> {
 		protected MLPredicateWithInterpolants(final IMLPredicate underlying, final IPredicate annotation) {
 			super(underlying, annotation);

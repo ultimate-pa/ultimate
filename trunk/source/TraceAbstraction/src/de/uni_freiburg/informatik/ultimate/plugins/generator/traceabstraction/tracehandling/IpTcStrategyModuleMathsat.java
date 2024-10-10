@@ -26,7 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
-import de.uni_freiburg.informatik.ultimate.automata.IRun;
+import java.util.List;
+
+import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -47,12 +49,12 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracechec
  */
 public class IpTcStrategyModuleMathsat<L extends IIcfgTransition<?>> extends IpTcStrategyModuleSpWp<L> {
 	public IpTcStrategyModuleMathsat(final TaskIdentifier taskIdentifier, final IUltimateServiceProvider services,
-			final TaCheckAndRefinementPreferences<L> prefs, final IRun<L, ?> counterExample,
-			final IPredicate precondition, final IPredicate postcondition,
+			final TaCheckAndRefinementPreferences<L> prefs, final Word<L> counterExample,
+			final List<?> controlConfigurationSequence, final IPredicate precondition, final IPredicate postcondition,
 			final AssertionOrderModulation<L> assertionOrderModulation, final IPredicateUnifier predicateUnifier,
 			final PredicateFactory predicateFactory, final InterpolationTechnique interpolationTechnique) {
-		super(taskIdentifier, services, prefs, counterExample, precondition, postcondition, assertionOrderModulation,
-				predicateUnifier, predicateFactory, interpolationTechnique);
+		super(taskIdentifier, services, prefs, counterExample, controlConfigurationSequence, precondition,
+				postcondition, assertionOrderModulation, predicateUnifier, predicateFactory, interpolationTechnique);
 	}
 
 	@Override

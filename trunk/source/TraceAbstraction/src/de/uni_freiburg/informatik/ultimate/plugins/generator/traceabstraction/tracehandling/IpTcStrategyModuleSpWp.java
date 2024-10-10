@@ -28,9 +28,10 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.t
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.TreeMap;
 
-import de.uni_freiburg.informatik.ultimate.automata.IRun;
+import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -45,7 +46,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.Simplificati
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckSpWp;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
 
 /**
  * Creates a {@link TraceCheckSpWp} based on instructions of subclass.
@@ -58,12 +58,12 @@ public abstract class IpTcStrategyModuleSpWp<LETTER extends IIcfgTransition<?>>
 	private final InterpolationTechnique mInterpolationTechnique;
 
 	public IpTcStrategyModuleSpWp(final TaskIdentifier taskIdentifier, final IUltimateServiceProvider services,
-			final TaCheckAndRefinementPreferences<LETTER> prefs, final IRun<LETTER, ?> counterExample,
-			final IPredicate precondition, final IPredicate postcondition,
+			final TaCheckAndRefinementPreferences<LETTER> prefs, final Word<LETTER> counterExample,
+			final List<?> controlConfigurationSequence, final IPredicate precondition, final IPredicate postcondition,
 			final AssertionOrderModulation<LETTER> assertionOrderModulation, final IPredicateUnifier predicateUnifier,
 			final PredicateFactory predicateFactory, final InterpolationTechnique interpolationTechnique) {
-		super(taskIdentifier, services, prefs, counterExample, precondition, postcondition, assertionOrderModulation,
-				predicateUnifier, predicateFactory);
+		super(taskIdentifier, services, prefs, counterExample, controlConfigurationSequence, precondition,
+				postcondition, assertionOrderModulation, predicateUnifier, predicateFactory);
 		mInterpolationTechnique = interpolationTechnique;
 	}
 
@@ -106,11 +106,10 @@ public abstract class IpTcStrategyModuleSpWp<LETTER extends IIcfgTransition<?>>
 		final ManagedScript managedScript = createExternalManagedScript(getSolverSettings());
 
 		return new TraceCheckSpWp<>(mPrecondition, mPostcondition, new TreeMap<Integer, IPredicate>(),
-				NestedWord.nestedWord(mCounterexample.getWord()), mPrefs.getCfgSmtToolkit(), assertionOrder,
+				NestedWord.nestedWord(mCounterexample), mPrefs.getCfgSmtToolkit(), assertionOrder,
 				mPrefs.getUnsatCores(), mPrefs.getUseLiveVariables(), mServices, mPrefs.computeCounterexample(),
 				mPredicateFactory, mPredicateUnifier, mInterpolationTechnique, managedScript, simplificationTechnique,
-				TraceCheckUtils.getSequenceOfProgramPoints(NestedWord.nestedWord(mCounterexample.getWord())),
-				mPrefs.collectInterpolantStatistics());
+				mControlConfigurationSequence, mPrefs.collectInterpolantStatistics());
 	}
 
 	protected abstract SolverSettings getSolverSettings();

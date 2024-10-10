@@ -27,8 +27,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
 import java.util.Arrays;
+import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.automata.IRun;
+import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -57,12 +58,13 @@ public class IpTcStrategyModuleSmtInterpolCraig<LETTER extends IIcfgTransition<?
 
 	public IpTcStrategyModuleSmtInterpolCraig(final TaskIdentifier taskIdentifier,
 			final IUltimateServiceProvider services, final TaCheckAndRefinementPreferences<LETTER> prefs,
-			final IRun<LETTER, ?> counterExample, final IPredicate precondition, final IPredicate postcondition,
+			final Word<LETTER> counterExample, final List<?> controlConfigurationSequence,
+			final IPredicate precondition, final IPredicate postcondition,
 			final AssertionOrderModulation<LETTER> assertionOrderModulation, final IPredicateUnifier predicateUnifier,
 			final PredicateFactory predicateFactory, final long timeoutInMillis,
 			final InterpolationTechnique interpolationTechnique) {
-		super(taskIdentifier, services, prefs, counterExample, precondition, postcondition, assertionOrderModulation,
-				predicateUnifier, predicateFactory);
+		super(taskIdentifier, services, prefs, counterExample, controlConfigurationSequence, precondition,
+				postcondition, assertionOrderModulation, predicateUnifier, predicateFactory);
 		mTimeoutInMillis = timeoutInMillis;
 		mInterpolationTechnique = interpolationTechnique;
 		assert Arrays.stream(SUPPORTED_TECHNIQUES).anyMatch(

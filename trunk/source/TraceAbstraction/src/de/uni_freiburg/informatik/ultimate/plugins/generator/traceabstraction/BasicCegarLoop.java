@@ -188,9 +188,8 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 		mFaultLocalizationAngelic =
 				prefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_ERROR_TRACE_ANGELIC_VERIFICATION_ACTIVE);
 
-		final TaCheckAndRefinementPreferences<L> taCheckAndRefinementPrefs =
-				new TaCheckAndRefinementPreferences<>(getServices(), mPref, interpolation, mSimplificationTechnique,
-						mCsToolkit, mPredicateFactory, mIcfg);
+		final TaCheckAndRefinementPreferences<L> taCheckAndRefinementPrefs = new TaCheckAndRefinementPreferences<>(
+				getServices(), mPref, interpolation, mSimplificationTechnique, mCsToolkit, mPredicateFactory, mIcfg);
 		mStrategyFactory = new StrategyFactory<>(mLogger, mPref, taCheckAndRefinementPrefs, mIcfg, mPredicateFactory,
 				mPredicateFactoryInterpolantAutomata, transitionClazz);
 
@@ -252,8 +251,9 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 			throw new IllegalStateException(e);
 		}
 
-		final IPredicateUnifier unifier = new PredicateUnifier(mLogger, mServices, mCsToolkit.getManagedScript(),
-				mPredicateFactory, mCsToolkit.getSymbolTable(), mSimplificationTechnique, predicates.toArray(IPredicate[]::new));
+		final IPredicateUnifier unifier =
+				new PredicateUnifier(mLogger, mServices, mCsToolkit.getManagedScript(), mPredicateFactory,
+						mCsToolkit.getSymbolTable(), mSimplificationTechnique, predicates.toArray(IPredicate[]::new));
 
 		final VpAlphabet<L> alphabet;
 		if (mAbstraction instanceof INwaBasis<?, ?>) {
@@ -283,17 +283,21 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 		refineAbstraction();
 	}
 
+	protected abstract List<?> getControlLocationsFromCounterexample(final IRun<L, ?> run);
+
 	@Override
 	protected Pair<LBool, IProgramExecution<L, Term>> isCounterexampleFeasible()
 			throws AutomataOperationCanceledException {
 
 		IStatisticsDataProvider refinementEngineStats = null;
-		final ITARefinementStrategy<L> strategy = mStrategyFactory.constructStrategy(getServices(), mCounterexample,
-				mAbstraction, new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()),
-				mPredicateFactoryInterpolantAutomata, getPreconditionProvider(), getPostconditionProvider());
+		final var locations = getControlLocationsFromCounterexample(mCounterexample);
+		final ITARefinementStrategy<L> strategy =
+				mStrategyFactory.constructStrategy(getServices(), mCounterexample.getWord(), locations, mAbstraction,
+						new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()),
+						mPredicateFactoryInterpolantAutomata, getPreconditionProvider(), getPostconditionProvider());
 		try {
 			if (mPref.hasLimitPathProgramCount() && mPref.getLimitPathProgramCount() < mStrategyFactory
-					.getPathProgramCache().getPathProgramCount(mCounterexample)) {
+					.getPathProgramCache().getPathProgramCount(mCounterexample.getWord())) {
 				final String taskDescription = "bailout by path program count limit in iteration " + getIteration();
 				throw new TaskCanceledException(UserDefinedLimit.PATH_PROGRAM_ATTEMPTS, getClass(), taskDescription);
 			}

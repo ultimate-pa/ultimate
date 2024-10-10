@@ -38,8 +38,7 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.IRun;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
+import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -111,7 +110,8 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 	private final IcfgEdgeFactory mIcfgEdgeFactory;
 	private IPredicate[] mInterpolants;
 	private final IIcfgSymbolTable mSymbolTable;
-	private final IRun<L, IPredicate> mCounterexampleTrace;
+	private final Word<L> mCounterexampleTrace;
+	private final List<?> mControlLocations;
 	private final List<L> mCounterexample;
 	private Map<IcfgLocation, Set<List<L>>> mLoops;
 	private final Map<IcfgLocation, Set<List<UnmodifiableTransFormula>>> mLoopsAsTf;
@@ -154,7 +154,7 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 	 */
 	public AcceleratedInterpolationCore(final IUltimateServiceProvider services, final ILogger logger,
 			final ManagedScript script, final IPredicateUnifier predicateUnifier, final ITraceCheckPreferences prefs,
-			final IRun<L, IPredicate> counterexample, final IIcfg<?> icfg,
+			final Word<L> counterexample, final List<?> controlLocations, final IIcfg<?> icfg,
 			final ILoopdetector<IcfgLocation, L> loopdetector,
 			final ILoopPreprocessor<IcfgLocation, L, UnmodifiableTransFormula> loopPreprocessor,
 			final IAccelerator accelerator, final IStrategySupplier<L> strategySupplier) {
@@ -163,7 +163,8 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 		mLogger = logger;
 		mIcfg = icfg;
 		mCounterexampleTrace = counterexample;
-		mCounterexample = counterexample.getWord().asList();
+		mControlLocations = controlLocations;
+		mCounterexample = counterexample.asList();
 		mLoopdetector = loopdetector;
 		mAccelerator = accelerator;
 		mAccelerations = new HashMap<>();
@@ -199,7 +200,7 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 	public LBool acceleratedInterpolationCoreIsCorrect() {
 		if (mLoops.isEmpty() || mIcfg.getLoopLocations().isEmpty()) {
 			mLogger.info("No loops in this trace, falling back to nested interpolation");
-			return runStrategy(mCounterexampleTrace);
+			return runStrategy(mCounterexampleTrace, mControlLocations);
 		}
 		final Map<IcfgLocation, Set<List<L>>> trueLoops = new HashMap<>();
 		for (final Entry<IcfgLocation, Set<List<L>>> loop : mLoops.entrySet()) {
@@ -271,33 +272,34 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 		}
 		if (mAccelerations.isEmpty()) {
 			mLogger.info("Could not compute an accelerate.");
-			return runStrategy(mCounterexampleTrace);
+			return runStrategy(mCounterexampleTrace, mControlLocations);
 		}
 
 		// translate the given trace into a meta trace which makes use of the loop
 		// acceleration.
-		final NestedRun<L, IPredicate> metaTrace = generateMetaTrace();
+		final Pair<NestedWord<L>, List<?>> metaPair = generateMetaTrace();
+		final NestedWord<L> metaTrace = metaPair.getFirst();
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Meta-Trace: ");
-			for (int i = 0; i < metaTrace.getLength() - 1; i++) {
+			for (int i = 0; i < metaTrace.length(); i++) {
 				mLogger.debug(SmtUtils.simplify(mScript, metaTrace.getSymbol(i).getTransformula().getFormula(),
 						mServices, SimplificationTechnique.SIMPLIFY_DDA).toStringDirect());
 			}
 		}
 
-		final LBool feasResult = runStrategy(metaTrace);
+		final LBool feasResult = runStrategy(metaTrace, metaPair.getSecond());
 		if (feasResult == LBool.UNSAT) {
 			mInterpolants = mMetaTraceTransformer.getInductiveLoopInterpolants(mInterpolants, mAccelerations, mLoopSize,
 					mMetaTraceApplicationMethod);
 		} else {
-			return runStrategy(mCounterexampleTrace);
+			return runStrategy(mCounterexampleTrace, mControlLocations);
 		}
 		return feasResult;
 	}
 
-	private LBool runStrategy(final IRun<L, ?> actualTrace) throws AssertionError {
+	private LBool runStrategy(final Word<L> actualTrace, final List<?> controlLocations) throws AssertionError {
 		final AutomatonFreeRefinementEngine<L> afre = new AutomatonFreeRefinementEngine<>(mServices, mLogger,
-				mStrategySupplier.constructStrategy(actualTrace));
+				mStrategySupplier.constructStrategy(actualTrace, controlLocations));
 
 		final IRefinementEngineResult<L, Collection<QualifiedTracePredicates>> result = afre.getResult();
 		if (result.getCounterexampleFeasibility() != LBool.UNSAT) {
@@ -338,13 +340,13 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 	 *
 	 * @return
 	 */
-	private NestedRun<L, IPredicate> generateMetaTrace() {
+	private Pair<NestedWord<L>, List<?>> generateMetaTrace() {
 		final List<L> counterExampleNonAccelerated = new ArrayList<>(mCounterexample);
 		final List<UnmodifiableTransFormula> counterExampleAccelerated = new ArrayList<>();
 		final List<L> counterExampleAcceleratedLetter = new ArrayList<>();
-		final ArrayList<IPredicate> traceStates = new ArrayList<>();
-		final ArrayList<IPredicate> acceleratedTraceSchemeStates = new ArrayList<>();
-		traceStates.addAll(mCounterexampleTrace.getStateSequence());
+		final ArrayList<Object> traceStates = new ArrayList<>();
+		final ArrayList<Object> acceleratedTraceSchemeStates = new ArrayList<>();
+		traceStates.addAll(mControlLocations);
 		for (int i = 0; i < counterExampleNonAccelerated.size(); i++) {
 			final L l = counterExampleNonAccelerated.get(i);
 			counterExampleAccelerated.add(l.getTransformula());
@@ -445,7 +447,7 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 			mCounterexample.forEach(a -> mLogger.debug(a.getTransformula()));
 		}
 
-		return new NestedRun<>(traceSchemeNestedWord, acceleratedTraceSchemeStates);
+		return new Pair<>(traceSchemeNestedWord, acceleratedTraceSchemeStates);
 	}
 
 	/**
@@ -521,6 +523,6 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 
 	@FunctionalInterface
 	public interface IStrategySupplier<L extends IAction> {
-		IRefinementStrategy<L> constructStrategy(final IRun<L, ?> counterexample);
+		IRefinementStrategy<L> constructStrategy(final Word<L> counterexample, List<?> controlConfigurationSequence);
 	}
 }

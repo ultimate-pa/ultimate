@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.IRun;
+import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
@@ -49,7 +49,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ce
 public class IpAbStrategyModuleAbstractInterpretation<LETTER extends IIcfgTransition<?>>
 		implements IIpAbStrategyModule<LETTER> {
 
-	private final IRun<LETTER, ?> mCounterexample;
+	private final Word<LETTER> mCounterexample;
+	private final List<?> mControlConfigurationSequence;
 	private final IPredicateUnifier mPredicateUnifier;
 	private final IEmptyStackStateFactory<IPredicate> mEmptyStackFactory;
 	private final IAutomaton<LETTER, IPredicate> mAbstraction;
@@ -58,11 +59,13 @@ public class IpAbStrategyModuleAbstractInterpretation<LETTER extends IIcfgTransi
 	private IpAbStrategyModuleResult<LETTER> mResult;
 
 	public IpAbStrategyModuleAbstractInterpretation(final IAutomaton<LETTER, IPredicate> abstraction,
-			final IRun<LETTER, ?> counterexample, final IPredicateUnifier predicateUnifier,
+			final Word<LETTER> counterexample, final List<?> controlConfigurationSequence,
+			final IPredicateUnifier predicateUnifier,
 			final IpTcStrategyModuleAbstractInterpretation<LETTER> ipTcSmAbsInt,
 			final IEmptyStackStateFactory<IPredicate> emptyStackFactory) {
 		mAbstraction = abstraction;
 		mCounterexample = counterexample;
+		mControlConfigurationSequence = controlConfigurationSequence;
 		mPredicateUnifier = predicateUnifier;
 		mIpTcSmAbsInt = ipTcSmAbsInt;
 		mEmptyStackFactory = emptyStackFactory;
@@ -79,7 +82,7 @@ public class IpAbStrategyModuleAbstractInterpretation<LETTER extends IIcfgTransi
 			final NestedWordAutomaton<LETTER, IPredicate> automaton =
 					runner.createInterpolantAutomatonBuilder(mPredicateUnifier,
 							(INestedWordAutomaton<LETTER, IPredicate>) mAbstraction, mCounterexample,
-							mEmptyStackFactory).getResult();
+							mControlConfigurationSequence, mEmptyStackFactory).getResult();
 			mResult = new IpAbStrategyModuleResult<>(automaton, predicates);
 		}
 		return mResult;

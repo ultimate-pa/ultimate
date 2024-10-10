@@ -26,9 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
+import java.util.List;
 import java.util.TreeMap;
 
-import de.uni_freiburg.informatik.ultimate.automata.IRun;
+import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -41,7 +42,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolatingTraceCheckCraig;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
 
 /**
  * Creates a {@link InterpolatingTraceCheckCraig} based on instructions of subclass.
@@ -53,12 +53,12 @@ public abstract class IpTcStrategyModuleCraig<LETTER extends IIcfgTransition<?>>
 		extends IpTcStrategyModuleTraceCheck<InterpolatingTraceCheckCraig<LETTER>, LETTER> {
 
 	public IpTcStrategyModuleCraig(final TaskIdentifier taskIdentifier, final IUltimateServiceProvider services,
-			final TaCheckAndRefinementPreferences<LETTER> prefs, final IRun<LETTER, ?> counterExample,
-			final IPredicate precondition, final IPredicate postcondition,
+			final TaCheckAndRefinementPreferences<LETTER> prefs, final Word<LETTER> counterExample,
+			final List<?> controlConfigurationSequence, final IPredicate precondition, final IPredicate postcondition,
 			final AssertionOrderModulation<LETTER> assertionOrderModulation, final IPredicateUnifier predicateUnifier,
 			final PredicateFactory predicateFactory) {
-		super(taskIdentifier, services, prefs, counterExample, precondition, postcondition, assertionOrderModulation,
-				predicateUnifier, predicateFactory);
+		super(taskIdentifier, services, prefs, counterExample, controlConfigurationSequence, precondition,
+				postcondition, assertionOrderModulation, predicateUnifier, predicateFactory);
 	}
 
 	@Override
@@ -75,8 +75,7 @@ public abstract class IpTcStrategyModuleCraig<LETTER extends IIcfgTransition<?>>
 		final boolean instantiateArrayExt = true;
 		final boolean innerRecursiveNestedInterpolationCall = false;
 		return new InterpolatingTraceCheckCraig<>(mPrecondition, mPostcondition, new TreeMap<Integer, IPredicate>(),
-				NestedWord.nestedWord(mCounterexample.getWord()),
-				TraceCheckUtils.getSequenceOfProgramPoints(NestedWord.nestedWord(mCounterexample.getWord())), mServices,
+				NestedWord.nestedWord(mCounterexample), mControlConfigurationSequence, mServices,
 				mPrefs.getCfgSmtToolkit(), managedScript, mPredicateFactory, mPredicateUnifier, assertionOrder,
 				mPrefs.computeCounterexample(), mPrefs.collectInterpolantStatistics(), interpolationTechnique,
 				instantiateArrayExt, simplificationTechnique, innerRecursiveNestedInterpolationCall);

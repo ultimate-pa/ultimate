@@ -33,7 +33,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.automata.IRun;
+import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -89,7 +89,8 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 	private final ILogger mLogger;
 	private final ManagedScript mScript;
 	private final IUltimateServiceProvider mServices;
-	private final IRun<L, IPredicate> mCounterexampleTrace;
+	private final Word<L> mCounterexampleTrace;
+	private final List<?> mControlLocations;
 	private final List<L> mCounterexample;
 	private final IPredicateUnifier mPredUnifier;
 	private final PredicateTransformer<Term, IPredicate, TransFormula> mPredTransformer;
@@ -124,14 +125,15 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 	 */
 	public AcceleratedInterpolation(final IUltimateServiceProvider services, final ILogger logger,
 			final ITraceCheckPreferences prefs, final ManagedScript script, final IPredicateUnifier predicateUnifier,
-			final IRun<L, IPredicate> counterexample, final Class<L> transitionClazz,
+			final Word<L> counterexample, final List<?> controlLocations, final Class<L> transitionClazz,
 			final LoopAccelerators accelerationMethod, final IStrategySupplier<L> strategySupplier) {
 		mLogger = logger;
 		mScript = script;
 		mTransitionClazz = transitionClazz;
 		mServices = services;
 		mCounterexampleTrace = counterexample;
-		mCounterexample = mCounterexampleTrace.getWord().asList();
+		mControlLocations = controlLocations;
+		mCounterexample = mCounterexampleTrace.asList();
 		mPrefs = prefs;
 		mAccelInterpolBench = new AcceleratedInterpolationBenchmark();
 		mAccelInterpolBench.start(AcceleratedInterpolationStatisticsDefinitions.ACCELINTERPOL_OVERALL);
@@ -186,9 +188,9 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 			throw new UnsupportedOperationException("Unkown " + accelerationMethod);
 
 		}
-		final AcceleratedInterpolationCore<L> accelInterpolCore =
-				new AcceleratedInterpolationCore<>(mServices, mLogger, mScript, mPredUnifier, mPrefs,
-						mCounterexampleTrace, mIcfg, loopdetector, loopPreprocessor, loopAccelerator, strategySupplier);
+		final AcceleratedInterpolationCore<L> accelInterpolCore = new AcceleratedInterpolationCore<>(mServices, mLogger,
+				mScript, mPredUnifier, mPrefs, mCounterexampleTrace, mControlLocations, mIcfg, loopdetector,
+				loopPreprocessor, loopAccelerator, strategySupplier);
 
 		try {
 			mAccelInterpolBench.start(AcceleratedInterpolationStatisticsDefinitions.ACCELINTERPOL_CORE);

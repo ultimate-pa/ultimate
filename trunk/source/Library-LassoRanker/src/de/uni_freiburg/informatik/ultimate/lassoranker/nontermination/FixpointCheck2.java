@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.lassoranker.nontermination;
 import java.util.Collections;
 import java.util.SortedMap;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.FixpointCheck.HasFixpoint;
@@ -64,14 +64,13 @@ public class FixpointCheck2<L extends IIcfgTransition<?>> {
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final CfgSmtToolkit mCsToolkit;
-	private final NestedRun<L, IPredicate> mStem;
+	private final NestedWord<L> mStem;
 	private final TransFormula mLoop;
 	private final HasFixpoint mResult;
 	private InfiniteFixpointRepetitionWithExecution<L> mTerminationArgument;
 
 	public FixpointCheck2(final IUltimateServiceProvider services, final ILogger logger, final CfgSmtToolkit csToolkit,
-			final BasicPredicateFactory pf, final NestedRun<L, IPredicate> stem,
-			final UnmodifiableTransFormula loopTF) {
+			final BasicPredicateFactory pf, final NestedWord<L> stem, final UnmodifiableTransFormula loopTF) {
 		mServices = services;
 		mLogger = logger;
 		mCsToolkit = csToolkit;
@@ -86,8 +85,8 @@ public class FixpointCheck2<L extends IIcfgTransition<?>> {
 		final IPredicate postcondition = constructNegatedLoopPredicate(services, csToolkit.getManagedScript(), pf,
 				mLoop);
 		final SortedMap<Integer, IPredicate> pendingContexts = Collections.emptySortedMap();
-		final TraceCheck<L> tc = new TraceCheck<L>(precondition, postcondition, pendingContexts, mStem.getWord(),
-				services, csToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY, true, false);
+		final TraceCheck<L> tc = new TraceCheck<>(precondition, postcondition, pendingContexts, mStem, services,
+				csToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY, true, false);
 		switch (tc.isCorrect()) {
 		case SAT:
 			mResult = HasFixpoint.YES;
