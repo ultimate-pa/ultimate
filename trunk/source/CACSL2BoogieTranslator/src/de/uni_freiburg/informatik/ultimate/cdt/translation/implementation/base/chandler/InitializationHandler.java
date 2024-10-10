@@ -1165,7 +1165,7 @@ public class InitializationHandler {
 				final StringLiteralResult slr = (StringLiteralResult) initializerResult.getRootExpressionResult();
 
 				final List<Overapprox> overapproxList;
-				if (slr.overApproximatesLongStringLiteral()) {
+				if (!slr.getOverapprs().isEmpty()) {
 					final Overapprox overapprox = new Overapprox("large string literal", loc);
 					overapproxList = new ArrayList<>();
 					overapproxList.add(overapprox);
