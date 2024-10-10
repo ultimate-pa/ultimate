@@ -382,42 +382,33 @@ public class IntegerTranslation extends ExpressionTranslation {
 				&& !mTypeSizes.isUnsigned(oldType)) {
 			return oldWrappedIfUnsigned;
 		}
-		// According to C11 6.3.1.3.3 the result is implementation-defined
-		// it the value cannot be represented by the new type
-		// We have chosen an implementation that is similar to
-		// taking the lowest bits in a two's complement representation:
-		// First we take the value modulo the cardinality of the
-		// data range (which is 2*(MAX_VALUE+1) for signed )
-		// If the number is strictly larger than MAX_VALUE we
-		// subtract the cardinality of the data range.
+		return convertToSmallerSignedType(loc, resultType, oldWrappedIfUnsigned);
+	}
+
+	private Expression convertToSmallerSignedType(final ILocation loc, final CPrimitive resultType,
+			final Expression expression) {
+		// According to C11 6.3.1.3.3 the result is implementation-defined it the value cannot be represented by the new
+		// type. We have chosen an implementation that is similar to taking the lowest bits in a two's complement
+		// representation:
+		// First we take the value modulo the cardinality of the data range (which is 2*(MAX_VALUE+1) for signed).
+		// If the number is strictly larger than MAX_VALUE, we subtract the cardinality of the data range.
+		// For example for the type int (with 32bits), we convert an expression x to the following:
+		// x % 2**32 < 2**31 ? x % 2**32 : x % 2**32 - 2**32
+		// This ensures that the result is indeed in the range (i.e., between -2**31 and excl. 2**31 for 32bits)
 		final CPrimitive correspondingUnsignedType = mTypeSizes.getCorrespondingUnsignedType(resultType);
-		final Expression wrapped = applyWraparound(loc, correspondingUnsignedType, oldWrappedIfUnsigned);
-		final Expression maxValue = mTypeSizes.constructLiteralForIntegerType(loc, oldType,
-				mTypeSizes.getMaxValueOfPrimitiveType(resultType));
-		final Expression condition = ExpressionFactory.newBinaryExpression(loc, Operator.COMPLEQ, wrapped, maxValue);
-		final Expression range = mTypeSizes.constructLiteralForIntegerType(loc, oldType,
+		final Expression wrapped = applyWraparound(loc, correspondingUnsignedType, expression);
+		final Expression range = constructLiteralForIntegerType(loc, resultType,
 				mTypeSizes.getMaxValueOfPrimitiveType(correspondingUnsignedType).add(BigInteger.ONE));
-		return ExpressionFactory.constructIfThenElseExpression(loc, condition, wrapped,
+		return ExpressionFactory.constructIfThenElseExpression(loc,
+				constructSmallerMaxIntExpression(loc, resultType, wrapped), wrapped,
 				ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMINUS, wrapped, range));
 	}
 
 	@Override
 	public Expression convertInfinitePrecisionExpression(final ILocation loc, final Expression exp,
 			final CPrimitive type) {
-		if (mTypeSizes.isUnsigned(type)) {
-			// For unsigned types, we apply a wraparound
-			return applyWraparound(loc, type, exp);
-		}
-		// For unsigned types, we apply a wraparound (in the corresponding unsigned type) and shift the result
-		// accordingly.
-		final CPrimitive correspondingUnsignedType = mTypeSizes.getCorrespondingUnsignedType(type);
-		final Expression wrapped = applyWraparound(loc, correspondingUnsignedType, exp);
-		final Expression maxValue = constructLiteralForIntegerType(loc, type,
-				mTypeSizes.getMaxValueOfPrimitiveType(correspondingUnsignedType).add(BigInteger.ONE));
-		final Expression shiftedToType =
-				ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMINUS, wrapped, maxValue);
-		return ExpressionFactory.constructIfThenElseExpression(loc,
-				checkInRangeInfinitePrecision(loc, wrapped, null, type), wrapped, shiftedToType);
+		return mTypeSizes.isUnsigned(type) ? applyWraparound(loc, type, exp)
+				: convertToSmallerSignedType(loc, type, exp);
 	}
 
 	@Override
