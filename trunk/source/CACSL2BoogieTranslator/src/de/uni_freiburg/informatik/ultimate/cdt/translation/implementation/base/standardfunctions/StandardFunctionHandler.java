@@ -276,7 +276,12 @@ public class StandardFunctionHandler {
 		/** https://www.man7.org/linux/man-pages/man3/sleep.3.html **/
 		fill(map, "sleep", this::handleSleep);
 
-		// https://linux.die.net/man/3/ntohs
+		/**
+		 * https://linux.die.net/man/3/ntohs "htonl, htons, ntohl, ntohs - convert values between host and network byte
+		 * order"
+		 *
+		 * We simply overapproximate those functions.
+		 */
 		fill(map, "htonl", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
 				new CPrimitive(CPrimitives.UINT)));
 		fill(map, "htons", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
@@ -560,15 +565,11 @@ public class StandardFunctionHandler {
 				new CPointer(new CPrimitive(CPrimitives.CHAR))));
 
 		// https://en.cppreference.com/w/c/string/byte/memchr
-		fill(map, "memchr", this::handleMemchr);
-
+		fill(map, "memchr", (main, node, loc, name) -> handleStringSearch(main, node, loc, name, 3));
 		// https://en.cppreference.com/w/c/string/byte/strstr
-		// This is handled the same way as memchr
-		fill(map, "strstr", this::handleMemchr);
-
+		fill(map, "strstr", (main, node, loc, name) -> handleStringSearch(main, node, loc, name, 2));
 		// https://en.cppreference.com/w/cpp/string/byte/strrchr
-		// This is handled the same way as memchr
-		fill(map, "strrchr", this::handleMemchr);
+		fill(map, "strrchr", (main, node, loc, name) -> handleStringSearch(main, node, loc, name, 2));
 
 		// https://en.cppreference.com/w/c/string/byte/strerror
 		fill(map, "strerror", this::handleStrerror);
@@ -1112,10 +1113,16 @@ public class StandardFunctionHandler {
 		return builder.build();
 	}
 
-	private Result handleMemchr(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
-			final String name) {
+	/**
+	 * This function is used to model functions that perform string search and return a substring (like memchr, strstr,
+	 * strrchr).
+	 *
+	 * We just dispatch the arguments and overapproximate the return value with some non-deterministic string.
+	 */
+	private Result handleStringSearch(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name, final int numberOfArguments) {
 		final var builder = new ExpressionResultBuilder();
-		checkArguments(loc, 3, name, node.getArguments());
+		checkArguments(loc, numberOfArguments, name, node.getArguments());
 		for (final var arg : node.getArguments()) {
 			if (!isStringLiteral(arg)) {
 				final var argRes = (ExpressionResult) main.dispatch(arg);
@@ -1129,6 +1136,7 @@ public class StandardFunctionHandler {
 	private Result handleStrerror(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final String name) {
 		checkArguments(loc, 1, name, node.getArguments());
+		// Just dispatch the argument and return a non-deterministic string
 		return new ExpressionResultBuilder((ExpressionResult) main.dispatch(node.getArguments()[0]))
 				.addAllIncludingLrValue(getNondetStringOrNull(loc)).build();
 	}
