@@ -27,7 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
-import de.uni_freiburg.informatik.ultimate.automata.IRun;
+import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrderType;
@@ -74,13 +74,15 @@ public class AssertionOrderModulation<LETTER> {
 	/**
 	 * Get the assertion order to use based on the current state of the {@link PathProgramCache}.
 	 *
+	 * TODO Should this take into account the control configuration sequence as well as the word?
+	 *
 	 * @param counterexample
 	 *            counterexample
 	 * @param interpolationTechnique
 	 *            interpolation technique
 	 * @return which assertion order to use
 	 */
-	public AssertCodeBlockOrder get(final IRun<LETTER, ?> counterexample,
+	public AssertCodeBlockOrder get(final Word<LETTER> counterexample,
 			final InterpolationTechnique interpolationTechnique) {
 
 		final int count = mPathProgramCache.getPathProgramCount(counterexample);

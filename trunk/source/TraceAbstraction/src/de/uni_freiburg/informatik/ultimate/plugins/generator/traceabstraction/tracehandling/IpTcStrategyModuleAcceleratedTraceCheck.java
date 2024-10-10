@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -76,7 +77,7 @@ public class IpTcStrategyModuleAcceleratedTraceCheck<L extends IIcfgTransition<?
 	@Override
 	protected IInterpolatingTraceCheck<L> construct() {
 		return new AcceleratedTraceCheck<>(mServices, mLogger, mPrefs, mScript, mPredicateUnifier,
-				(IRun<L, IPredicate>) mCounterexample, mPrecondition, mPostcondition, mPredicateFactory);
+				(NestedRun<L, IPredicate>) mCounterexample, mPrecondition, mPostcondition, mPredicateFactory);
 	}
 
 	@Override

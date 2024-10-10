@@ -39,6 +39,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
+import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
@@ -152,6 +153,7 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 	 * @param accelerator
 	 *            An {@link IAccelerator}
 	 */
+	// TODO Does this really need an IRun? From which automaton is the run supposed to be?
 	public AcceleratedInterpolationCore(final IUltimateServiceProvider services, final ILogger logger,
 			final ManagedScript script, final IPredicateUnifier predicateUnifier, final ITraceCheckPreferences prefs,
 			final IRun<L, IPredicate> counterexample, final IIcfg<?> icfg,
@@ -521,6 +523,6 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 
 	@FunctionalInterface
 	public interface IStrategySupplier<L extends IAction> {
-		IRefinementStrategy<L> constructStrategy(final IRun<L, ?> counterexample);
+		IRefinementStrategy<L> constructStrategy(final Word<L> counterexample, List<?> controlConfigurationSequence);
 	}
 }

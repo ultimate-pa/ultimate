@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
-import de.uni_freiburg.informatik.ultimate.automata.IRun;
+import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
@@ -39,14 +39,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Si
 
 /**
  * Creates {@link IInterpolatingTraceCheck} using symbolic interpretation with fluid abstractions (SIFA).
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
 public class IpTcStrategyModuleSifa<LETTER extends IIcfgTransition<?>>
 		extends IpTcStrategyModuleBase<IInterpolatingTraceCheck<LETTER>, LETTER> {
 
-	private final IRun<LETTER, ?> mCounterExample;
+	private final Word<LETTER> mCounterExample;
 	private final IPredicateUnifier mPredicateUnifier;
 	private final IIcfg<?> mIcfg;
 	private final IUltimateServiceProvider mServices;
@@ -54,7 +54,7 @@ public class IpTcStrategyModuleSifa<LETTER extends IIcfgTransition<?>>
 	private final ILogger mLogger;
 
 	public IpTcStrategyModuleSifa(final IUltimateServiceProvider services, final ILogger logger, final IIcfg<?> icfg,
-			final IRun<LETTER, ?> counterexample, final IPredicateUnifier predicateUnifier) {
+			final Word<LETTER> counterexample, final IPredicateUnifier predicateUnifier) {
 		super();
 		mServices = services;
 		mLogger = logger;

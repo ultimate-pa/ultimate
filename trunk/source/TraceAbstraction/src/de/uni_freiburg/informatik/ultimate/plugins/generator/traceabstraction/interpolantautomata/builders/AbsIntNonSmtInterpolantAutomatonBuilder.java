@@ -66,6 +66,7 @@ public class AbsIntNonSmtInterpolantAutomatonBuilder<LETTER>
 	private final PredicateFactory mPredicateFactory;
 	private final ManagedScript mBoogie2Smt;
 
+	// TODO Does this really need an IRun?
 	public AbsIntNonSmtInterpolantAutomatonBuilder(final IUltimateServiceProvider services,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> oldAbstraction,
 			final IPredicateUnifier predUnifier, final ManagedScript csToolkit, final IIcfgSymbolTable symbolTable,

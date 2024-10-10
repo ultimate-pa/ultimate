@@ -35,7 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.IRun;
+import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
 
@@ -67,8 +67,8 @@ public class PathProgramCache<LETTER> {
 	 *            The counterexample you want to cache.
 	 * @return The number of times the path program induced by this counterexample has already been added (will be > 0).
 	 */
-	public int addRun(final IRun<LETTER, ?> counterexample) {
-		final List<LETTER> trace = counterexample.getWord().asList();
+	public int addRun(final Word<LETTER> counterexample) {
+		final List<LETTER> trace = counterexample.asList();
 		final int traceHash = trace.hashCode();
 		mTraceHashes.add(traceHash);
 
@@ -92,8 +92,8 @@ public class PathProgramCache<LETTER> {
 	 *
 	 * @return The number of times the path program induced by the supplied counterexample has already been added.
 	 */
-	public int getPathProgramCount(final IRun<LETTER, ?> counterexample) {
-		final Set<LETTER> pathProgramRepresentative = counterexample.getWord().asSet();
+	public int getPathProgramCount(final Word<LETTER> counterexample) {
+		final Set<LETTER> pathProgramRepresentative = counterexample.asSet();
 		final Integer count = mKnownPathPrograms.get(pathProgramRepresentative);
 		if (count == null) {
 			mLogger.warn("You did not report this counterexample before!");

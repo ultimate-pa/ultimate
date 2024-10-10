@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
-import de.uni_freiburg.informatik.ultimate.automata.IRun;
+import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -41,14 +41,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 
 /**
  * Creates {@link IInterpolatingTraceCheck} using fixpoint computation based on abstract interpretation plugin.
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
 public class IpTcStrategyModuleAbstractInterpretation<LETTER extends IIcfgTransition<?>>
 		extends IpTcStrategyModuleBase<IInterpolatingTraceCheck<LETTER>, LETTER> {
 
-	private final IRun<LETTER, ?> mCounterExample;
+	private final Word<LETTER> mCounterExample;
 	private final IPredicateUnifier mPredicateUnifier;
 	private final TAPreferences mTaPrefs;
 	private final PathProgramCache<LETTER> mPathProgramCache;
@@ -57,7 +57,7 @@ public class IpTcStrategyModuleAbstractInterpretation<LETTER extends IIcfgTransi
 
 	private CegarAbsIntRunner<LETTER> mAbsIntRunner;
 
-	public IpTcStrategyModuleAbstractInterpretation(final IRun<LETTER, ?> counterexample,
+	public IpTcStrategyModuleAbstractInterpretation(final Word<LETTER> counterexample,
 			final IPredicateUnifier predicateUnifier, final IUltimateServiceProvider services, final IIcfg<?> icfg,
 			final PathProgramCache<LETTER> pathProgramCache, final TAPreferences taPrefs) {
 		super();

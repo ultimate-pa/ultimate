@@ -132,8 +132,8 @@ public final class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 	private final IPredicateUnifier mPredicateUnifierSmt;
 
 	public CegarAbsIntRunner(final IUltimateServiceProvider services, final IIcfg<?> root,
-			final PathProgramCache<LETTER> pathProgramCache, final TAPreferences taPrefs,
-			final IRun<LETTER, ?> currentCex, final IPredicateUnifier unifier) {
+			final PathProgramCache<LETTER> pathProgramCache, final TAPreferences taPrefs, final Word<LETTER> currentCex,
+			final IPredicateUnifier unifier) {
 		mStats = new AbsIntStatisticsGenerator();
 		mServices = services;
 		mTaPreferences = taPrefs;
@@ -164,7 +164,7 @@ public final class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 	 * <li>The path program does not contain any loops.
 	 * </ul>
 	 */
-	private AbsIntCurrentIteration<?> generateFixpoints(final IRun<LETTER, ?> cex) {
+	private AbsIntCurrentIteration<?> generateFixpoints(final Word<LETTER> cex) {
 		assert cex != null : "Cannot run AI on empty counterexample";
 
 		if (!mRoot.getLocationClass().equals(BoogieIcfgLocation.class)) {
@@ -188,7 +188,7 @@ public final class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 				mLogger.info("Skipping current iteration for AI because we have already analyzed this path program");
 				return null;
 			}
-			final Set<LETTER> pathProgramSet = cex.getWord().asSet();
+			final Set<LETTER> pathProgramSet = cex.asSet();
 			if (!containsLoop(pathProgramSet)
 					&& mTaPreferences.getRefinementStrategy() != RefinementStrategy.TOOTHLESS_TAIPAN) {
 				mLogger.info("Skipping current iteration for AI because the path program does not contain any loops");
@@ -201,12 +201,12 @@ public final class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 			// final IProgressAwareTimer timer = mServices.getProgressMonitorService().getChildTimer(0.2);
 			// allow for all the remaining time
 			final IProgressAwareTimer timer = mServices.getProgressMonitorService();
-			mLogger.info("Running AI on error trace of length " + cex.getLength());
+			mLogger.info("Running AI on error trace of length " + cex.length());
 			if (DEBUG_PRINT_TRACE) {
 				mLogger.info(String.join(", ", pathProgramSet.stream().map(LETTER::hashCode).sorted()
 						.map(a -> '[' + String.valueOf(a) + ']').collect(Collectors.toList())));
 				mLogger.info("Trace:");
-				for (final LETTER trans : cex.getWord().asList()) {
+				for (final LETTER trans : cex.asList()) {
 					mLogger.info("[" + trans.hashCode() + "] " + trans);
 				}
 			}
@@ -285,7 +285,7 @@ public final class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 				break;
 			case USE_PREDICATES:
 				aiInterpolAutomatonBuilder = new AbsIntStraightLineInterpolantAutomatonBuilder<>(mServices, abstraction,
-						mCurrentIteration.getResult(), predicateUnifier, mCsToolkit, currentCex,
+						mCurrentIteration.getResult(), predicateUnifier, mCsToolkit, currentCex.getWord(),
 						simplificationTechnique, mRoot.getCfgSmtToolkit().getSymbolTable(), emptyStackFactory);
 				break;
 			case USE_CANONICAL:
@@ -293,7 +293,7 @@ public final class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 						"Canonical interpolant automaton generation not yet implemented.");
 			case USE_TOTAL:
 				aiInterpolAutomatonBuilder = new AbsIntTotalInterpolationAutomatonBuilder<>(mServices, abstraction,
-						mCurrentIteration.getResult(), predicateUnifier, mCsToolkit, currentCex,
+						mCurrentIteration.getResult(), predicateUnifier, mCsToolkit, currentCex.getWord(),
 						mRoot.getCfgSmtToolkit().getSymbolTable(), emptyStackFactory);
 				break;
 			default:
@@ -456,7 +456,7 @@ public final class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 	 * @param <STATE>
 	 */
 	private final class AbsIntCurrentIteration<STATE extends IAbstractState<STATE>> {
-		private final IRun<LETTER, ?> mCex;
+		private final Word<LETTER> mCex;
 		private final IAbstractInterpretationResult<STATE, LETTER, ?> mResult;
 
 		private IInterpolatingTraceCheck<LETTER> mInterpolantGenerator;
@@ -466,7 +466,7 @@ public final class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 		private final IPredicateUnifier mPredicateUnifierAbsInt;
 		private final PathProgram mPathProgram;
 
-		public AbsIntCurrentIteration(final IRun<LETTER, ?> cex,
+		public AbsIntCurrentIteration(final Word<LETTER> cex,
 				final IAbstractInterpretationResult<STATE, LETTER, ?> result, final PathProgram pathprogram) {
 			mPathProgram = Objects.requireNonNull(pathprogram);
 			mCex = Objects.requireNonNull(cex);
@@ -476,8 +476,8 @@ public final class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 			mTruePredicate = new AbsIntPredicate<>(mPredicateUnifierSmt.getTruePredicate(),
 					mResult.getUsedDomain().createTopState());
 			mPredicateUnifierAbsInt = new AbsIntPredicateUnifier<>(mLogger, mServices, mCsToolkit.getManagedScript(),
-					mPredicateUnifierSmt.getPredicateFactory(), mCsToolkit.getSymbolTable(),
-					mFalsePredicate, mTruePredicate);
+					mPredicateUnifierSmt.getPredicateFactory(), mCsToolkit.getSymbolTable(), mFalsePredicate,
+					mTruePredicate);
 		}
 
 		public IPredicateUnifier getPredicateUnifier() {
@@ -515,11 +515,11 @@ public final class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 		private IInterpolatingTraceCheck<LETTER> createInterpolantGenerator() {
 			if (mResult.hasReachedError()) {
 				// analysis was not strong enough
-				return new AbsIntFailedInterpolantGenerator<>(mPredicateUnifierAbsInt, mCex.getWord(),
+				return new AbsIntFailedInterpolantGenerator<>(mPredicateUnifierAbsInt, mCex,
 						ItpErrorStatus.ALGORITHM_FAILED, null);
 			}
 			// we were strong enough!
-			final Word<LETTER> word = mCex.getWord();
+			final Word<LETTER> word = mCex;
 			try {
 				mLogger.info("Generating AbsInt predicates");
 				final List<LETTER> ppTrace = constructTraceFromWord(word, mPathProgram);
@@ -548,7 +548,7 @@ public final class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 				assert isInductive(ppTrace, interpolants,
 						getHoareTripleChecker()) : "Sequence of interpolants not inductive (after unification)";
 				mLogger.info("Finished generation of AbsInt predicates");
-				return new AbsIntInterpolantGenerator<>(mPredicateUnifierAbsInt, mCex.getWord(),
+				return new AbsIntInterpolantGenerator<>(mPredicateUnifierAbsInt, mCex,
 						interpolants.toArray(new IPredicate[interpolants.size()]), getHoareTripleChecker(),
 						mTruePredicate, mFalsePredicate);
 			} catch (final ToolchainCanceledException tce) {

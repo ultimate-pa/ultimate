@@ -11,7 +11,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.IRun;
+import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
@@ -234,6 +234,6 @@ public class Mcr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 	}
 
 	public interface IMcrResultProvider<LETTER extends IIcfgTransition<?>> {
-		McrTraceCheckResult<LETTER> getResult(IRun<LETTER, ?> counterexample);
+		McrTraceCheckResult<LETTER> getResult(Word<LETTER> counterexample, List<?> controlLocationSequence);
 	}
 }

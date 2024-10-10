@@ -30,7 +30,7 @@ import java.util.Collections;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.IRun;
+import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
@@ -50,7 +50,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.in
 public class IpAbStrategyModuleCanonical<LETTER> implements IIpAbStrategyModule<LETTER> {
 
 	private final IUltimateServiceProvider mServices;
-	private final IRun<LETTER, ?> mCounterexample;
+	private final Word<LETTER> mCounterexample;
+	private final List<?> mControlConfigurationSequence;
 	private final IAutomaton<LETTER, IPredicate> mAbstraction;
 	private final IEmptyStackStateFactory<IPredicate> mEmptyStackFactory;
 	private final ILogger mLogger;
@@ -59,11 +60,13 @@ public class IpAbStrategyModuleCanonical<LETTER> implements IIpAbStrategyModule<
 	private IpAbStrategyModuleResult<LETTER> mResult;
 
 	public IpAbStrategyModuleCanonical(final IUltimateServiceProvider services, final ILogger logger,
-			final IAutomaton<LETTER, IPredicate> abstraction, final IRun<LETTER, ?> counterexample,
-			final IEmptyStackStateFactory<IPredicate> emptyStackFactory, final IPredicateUnifier predicateUnifier) {
+			final IAutomaton<LETTER, IPredicate> abstraction, final Word<LETTER> counterexample,
+			final List<?> controlConfigurationSequence, final IEmptyStackStateFactory<IPredicate> emptyStackFactory,
+			final IPredicateUnifier predicateUnifier) {
 		mServices = services;
 		mAbstraction = abstraction;
 		mCounterexample = counterexample;
+		mControlConfigurationSequence = controlConfigurationSequence;
 		mEmptyStackFactory = emptyStackFactory;
 		mLogger = logger;
 		mPredicateUnifier = predicateUnifier;
@@ -85,9 +88,8 @@ public class IpAbStrategyModuleCanonical<LETTER> implements IIpAbStrategyModule<
 
 			final CanonicalInterpolantAutomatonBuilder<? extends Object, LETTER> iab =
 					new CanonicalInterpolantAutomatonBuilder<>(mServices, ipp.getTracePredicates(),
-							mCounterexample.getStateSequence(), NestedWordAutomataUtils.getVpAlphabet(mAbstraction),
-							mEmptyStackFactory, mLogger, mPredicateUnifier,
-							NestedWord.nestedWord(mCounterexample.getWord()));
+							mControlConfigurationSequence, NestedWordAutomataUtils.getVpAlphabet(mAbstraction),
+							mEmptyStackFactory, mLogger, mPredicateUnifier, NestedWord.nestedWord(mCounterexample));
 			iab.analyze();
 			final NestedWordAutomaton<LETTER, IPredicate> automaton = iab.getResult();
 			mResult = new IpAbStrategyModuleResult<>(automaton, Collections.singletonList(ipp));

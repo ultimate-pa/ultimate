@@ -35,7 +35,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.automata.IRun;
+import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -82,18 +82,17 @@ public final class SifaRunner<L extends IIcfgTransition<?>> implements IInterpol
 	private final InterpolantComputationStatus mInterpolantComputationStatus;
 
 	public SifaRunner(final IUltimateServiceProvider services, final ILogger logger, final IIcfg<?> icfg,
-			final IRun<L, ?> currentCex, final IPredicateUnifier unifier) {
-		mTrace = currentCex.getWord().asList();
+			final Word<L> currentCex, final IPredicateUnifier unifier) {
+		mTrace = currentCex.asList();
 		mPredicateUnifier = unifier;
 		mPrecondition = mPredicateUnifier.getTruePredicate();
-		final Set<L> pathProgramSet = currentCex.getWord().asSet();
+		final Set<L> pathProgramSet = currentCex.asSet();
 		final PathProgramConstructionResult ppConstructionResult = PathProgram.constructPathProgram("sifa-path-program",
 				icfg, pathProgramSet, Collections.emptySet(), x -> true);
 		final PathProgram pp = ppConstructionResult.getPathProgram();
 
-		final List<IcfgLocation> locationOfInterestList =
-				TraceCheckUtils.getSequenceOfProgramPoints(currentCex.getWord()).stream()
-						.map(a -> ppConstructionResult.getLocationMapping().get(a)).collect(Collectors.toList());
+		final List<IcfgLocation> locationOfInterestList = TraceCheckUtils.getSequenceOfProgramPoints(currentCex)
+				.stream().map(a -> ppConstructionResult.getLocationMapping().get(a)).collect(Collectors.toList());
 		final Collection<IcfgLocation> locationOfInterestSet = new HashSet<>(locationOfInterestList);
 		final SifaComponents sifaComponents = new SifaBuilder(services, logger).construct(pp,
 				services.getProgressMonitorService(), locationOfInterestSet);
@@ -118,7 +117,7 @@ public final class SifaRunner<L extends IIcfgTransition<?>> implements IInterpol
 		mInterpolants = generateInterpolants(locationOfInterestList, predicates, unifier);
 
 		assert TraceCheckUtils.checkInterpolantsInductivityForward(Arrays.asList(mInterpolants),
-				NestedWord.nestedWord(currentCex.getWord()), mPrecondition, mPostcondition, Collections.emptyMap(),
+				NestedWord.nestedWord(currentCex), mPrecondition, mPostcondition, Collections.emptyMap(),
 				getClass().getSimpleName(), icfg.getCfgSmtToolkit(), logger);
 		mStats = sifaComponents.getStats();
 		if (unifier.getFalsePredicate() == mPostcondition) {
