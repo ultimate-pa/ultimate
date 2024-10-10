@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.pea2boogie.generator;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -105,8 +106,7 @@ public class PeaViolablePhases {
 	private Map<Phase, Set<Phase>> getReachabilityBetweenPhasesOfPhaseSet(final List<Phase> phaseSet) {
 		Map<Phase, Set<Phase>> reachabilityMap = new HashMap<Phase, Set<Phase>>();
 		for (Phase p : phaseSet) {
-			reachabilityMap.put(p, new HashSet<Phase>()); // Initialize map
-			reachabilityMap = dfsCheckForReachabilityCheck(p, phaseSet, reachabilityMap);
+			reachabilityMap.put(p, dfsCheckForReachabilityCheck(p, new HashSet<Phase>(phaseSet)));
 		}
 		return reachabilityMap;
 	}
@@ -119,36 +119,30 @@ public class PeaViolablePhases {
 	 *            the Phase from which it is being checked which other Phases are reachable.
 	 * @param phaseSet
 	 *            the List of phases which are being checked for reachability from checkingPhase.
-	 * @param reachabilityMap
-	 *            the Map containing entries of the form <Phase, List of Phases in phaseSet which are reachable from the
-	 *            Phase>
-	 * @return a Map which includes entries of the form <Phase, Set of Phases which are reachable from the Phase>.
+	 * @return the Set of those Phases which are reachable from checkingPhase, exclusively via Phases in phaseSet
 	 */
-	private Map<Phase, Set<Phase>> dfsCheckForReachabilityCheck(Phase checkingPhase, List<Phase> phaseSet,
-			Map<Phase, Set<Phase>> reachabilityMap) {
-		Set<Phase> checked = new HashSet<Phase>();
+	private Set<Phase> dfsCheckForReachabilityCheck(Phase checkingPhase, Set<Phase> phaseSet) {
+		Set<Phase> reachablePhases = new HashSet<Phase>();
 		Stack<Phase> phaseStack = new Stack<>();
 		phaseStack.push(checkingPhase);
-		while (!phaseStack.isEmpty()) {
-			Phase phaseOnStack = phaseStack.pop();
-			if (checked.contains(phaseOnStack)) {
+		// if the stack isn't empty and the collected reachable locations aren't equal to phaseSet
+		while (!phaseStack.isEmpty() && reachablePhases != phaseSet) {
+			// get the next node from the stack
+			Phase currentPhase = phaseStack.pop();
+			if (reachablePhases.contains(currentPhase)) {
 				continue;
 			}
-			checked.add(phaseOnStack);
-			Set<Phase> currentReachablePhases = reachabilityMap.get(phaseOnStack);
-			if (currentReachablePhases == null) {
-				currentReachablePhases = new HashSet<>();
-				reachabilityMap.put(phaseOnStack, currentReachablePhases);
-			}
-			for (Transition t : phaseOnStack.getTransitions()) {
+			// for each transition leaving this node, check what is reachable from them
+			for (Transition t : currentPhase.getTransitions()) {
 				Phase destPhase = t.getDest();
 				if (phaseSet.contains(destPhase)) {
-					currentReachablePhases.add(destPhase);
+					// add node to set of reachable nodes
+					reachablePhases.add(destPhase);
 					phaseStack.push(destPhase);
 				}
 			}
 		}
-		return reachabilityMap;
+		return reachablePhases;
 	}
 
 	/**
@@ -418,6 +412,21 @@ public class PeaViolablePhases {
 			tarjansComponents.add(stronglyConnectedComponent);
 		}
 	}
+	
+	/**
+	 * Returns if the given List of Phases contains all Phases of the PEA.
+	 * 
+	 * @param phaseSet List of Phases to be checked
+	 * @return true or false
+	 */
+	private boolean checkIfSetEqualsFullSetOfPeaPhases(List<Phase> phaseSet) {
+		if (phaseSet.containsAll(Arrays.asList(mPea.getPhases()))) {
+			return true;
+		}
+		else {
+			return false;
+		}
+	}
 
 	/**
 	 * Checks a List of Phases for subsets of Phases which are last phases, i.e. set of Phases which are strongly
@@ -444,10 +453,11 @@ public class PeaViolablePhases {
 				}
 			}
 			count++;
-			if (phaseFulfillsSAPReachabilityCondition(subPhaseSet)
+			if (!checkIfSetEqualsFullSetOfPeaPhases(subPhaseSet) 
+					&& phaseFulfillsSAPReachabilityCondition(subPhaseSet)
 					&& !outgoingTransitionsOfPhaseAreTautology(subPhaseSet)) {
 				allSubPhases.add(subPhaseSet);
-				phasesToCheck = markPhaseSubsetAsNVP(i, phasesToCheck);
+				phasesToCheck = markPhaseSubsetAsVP(i, phasesToCheck);
 				mLogger.info(count + " subsets checked");
 			}
 		}
@@ -455,18 +465,18 @@ public class PeaViolablePhases {
 	}
 
 	/**
-	 * Used to track which sets of Phases are to be checked and which aren't (subsets of detected NVPs should not be
+	 * Used to track which sets of Phases are to be checked and which aren't (subsets of detected VPs should not be
 	 * checked). This is done using a list of Boolean elements, each representing a Set of Phases. Given the index
 	 * representing one of the Sets, the elements representing subsets of the Set are all set to False
 	 * 
 	 * @param setMask
-	 *            the index of the element representing a Set of Phases found to be an NVP
+	 *            the index of the element representing a Set of Phases found to be a violable phase
 	 * @param checkPhases
 	 *            the List of Boolean elements, each of which represents a set of Phases.
 	 * @return the updated List of Boolean elements, in which all elements representing subsets of the element
 	 *         represented at index setMask have been changed to False.
 	 */
-	private boolean[] markPhaseSubsetAsNVP(int setMask, boolean[] checkPhases) {
+	private boolean[] markPhaseSubsetAsVP(int setMask, boolean[] checkPhases) {
 		for (int subsetMask = setMask; subsetMask > 0; subsetMask = (subsetMask - 1) & setMask) {
 			checkPhases[subsetMask] = true;
 		}
