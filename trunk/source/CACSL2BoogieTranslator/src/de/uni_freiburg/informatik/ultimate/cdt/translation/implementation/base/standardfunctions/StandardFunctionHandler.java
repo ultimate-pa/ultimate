@@ -1080,13 +1080,12 @@ public class StandardFunctionHandler {
 		final ExpressionResult memoryOrder =
 				mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, arguments[2]);
 		builder.addAllExceptLrValue(pointer1, pointer2, memoryOrder);
-		final ExpressionResultBuilder atomicBuilder = new ExpressionResultBuilder();
+		// Make sure that only the read, but not the write is atomic
 		final ExpressionResult read = mExprResultTransformer.readPointerValue(loc, pointer1.getLrValue());
-		atomicBuilder.addAllExceptLrValue(read,
-				mExprResultTransformer.makePointerAssignment(loc, pointer2.getLrValue(), read.getLrValue().getValue()));
-		// Both the read and the write are atomic
-		return builder.addAllIncludingLrValue(
-				applyMemoryOrder(loc, atomicBuilder.build(), memoryOrder.getLrValue().getValue())).build();
+		final ExpressionResult write =
+				mExprResultTransformer.makePointerAssignment(loc, pointer2.getLrValue(), read.getLrValue().getValue());
+		return builder.addAllIncludingLrValue(applyMemoryOrder(loc, read, memoryOrder.getLrValue().getValue()))
+				.addAllExceptLrValue(write).build();
 	}
 
 	private Result handleAtomicStore(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
