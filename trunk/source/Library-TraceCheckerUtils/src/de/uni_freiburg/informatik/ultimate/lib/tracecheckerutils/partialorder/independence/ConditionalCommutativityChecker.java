@@ -30,6 +30,7 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation.Dependence;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.ISymbolicIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicate;
@@ -143,14 +144,20 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 				if (mManagedScript.isLocked()) {
 					mManagedScript.requestLockRelease();
 				}
-				IPredicate condition;
-				if (pred != null) {
+				IPredicate condition = null;
+				
+				ISymbolicIndependenceRelation<L, IPredicate> relation = mIndependenceRelation.getSymbolicRelation();
+				
+				if (relation != null) {
+					condition = relation.getCommutativityCondition(letter1, letter2);
+				} 
+				/*if (pred != null) {
 					condition = mGenerator.generateCondition(
 							new PredicateWithConjuncts(0, new ImmutableList<>(predicates), mManagedScript.getScript()),
 							letter1.getTransformula(), letter2.getTransformula());
 				} else {
 					condition = mGenerator.generateCondition(letter1.getTransformula(), letter2.getTransformula());
-				}
+				}*/
 				mStatisticsUtils.addConditionCalculation();
 				mCriterion.updateCriterion(state, letter1, letter2);
 

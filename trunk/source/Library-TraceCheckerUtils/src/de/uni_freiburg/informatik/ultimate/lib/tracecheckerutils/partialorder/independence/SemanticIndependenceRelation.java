@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -53,20 +54,20 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
 /**
- * An independence relation that implements an SMT-based inclusion or equality check on the semantics.
+ * An independence relation that implements an SMT-based inclusion or equality
+ * check on the semantics.
  *
- * It is recommended to wrap this relation in a {@link CachedIndependenceRelation} for better performance.
+ * It is recommended to wrap this relation in a
+ * {@link CachedIndependenceRelation} for better performance.
  *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  *
- * @param <L>
- *            The type of letters whose independence is checked.
+ * @param <L> The type of letters whose independence is checked.
  */
 public class SemanticIndependenceRelation<L extends IAction> implements IIndependenceRelation<IPredicate, L> {
 
 	private static final SimplificationTechnique SIMPLIFICATION_TECHNIQUE = SimplificationTechnique.SIMPLIFY_DDA;
-	private static final XnfConversionTechnique XNF_CONVERSION_TECHNIQUE =
-			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
+	private static final XnfConversionTechnique XNF_CONVERSION_TECHNIQUE = XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
@@ -75,8 +76,8 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 	private final boolean mConditional;
 	private final boolean mSymmetric;
 
-	private final TimedIndependenceStatisticsDataProvider mStatistics =
-			new TimedIndependenceStatisticsDataProvider(SemanticIndependenceRelation.class);
+	private final TimedIndependenceStatisticsDataProvider mStatistics = new TimedIndependenceStatisticsDataProvider(
+			SemanticIndependenceRelation.class);
 
 	public SemanticIndependenceRelation(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final boolean conditional, final boolean symmetric) {
@@ -86,17 +87,18 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 	/**
 	 * Create a new variant of the semantic independence relation.
 	 *
-	 * @param mgdScript
-	 *            A script that will be used to construct and solve the required SMT queries for independence checks
-	 * @param conditional
-	 *            If set to true, the relation will be conditional: It will use the given {@link IPredicate} as context
-	 *            to enable additional commutativity. This subsumes the non-conditional variant.
-	 * @param symmetric
-	 *            If set to true, the relation will check for full commutativity. If false, only semicommutativity is
-	 *            checked, which subsumes full commutativity.
-	 * @param predicateFactory
-	 *            Used for the symbolic relation returned by {@link #getSymbolicRelation()}. If {@code null} is passed,
-	 *            symbolic relations are not supported.
+	 * @param mgdScript        A script that will be used to construct and solve the
+	 *                         required SMT queries for independence checks
+	 * @param conditional      If set to true, the relation will be conditional: It
+	 *                         will use the given {@link IPredicate} as context to
+	 *                         enable additional commutativity. This subsumes the
+	 *                         non-conditional variant.
+	 * @param symmetric        If set to true, the relation will check for full
+	 *                         commutativity. If false, only semicommutativity is
+	 *                         checked, which subsumes full commutativity.
+	 * @param predicateFactory Used for the symbolic relation returned by
+	 *                         {@link #getSymbolicRelation()}. If {@code null} is
+	 *                         passed, symbolic relations are not supported.
 	 */
 	public SemanticIndependenceRelation(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final boolean conditional, final boolean symmetric, final BasicPredicateFactory predicateFactory) {
@@ -141,13 +143,14 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 	}
 
 	/**
-	 * Implements {@link #isIndependent(IPredicate, IAction, IAction)} but returns {@code UNKNOWN} if the solver is
-	 * unable to decide commutativity.
+	 * Implements {@link #isIndependent(IPredicate, IAction, IAction)} but returns
+	 * {@code UNKNOWN} if the solver is unable to decide commutativity.
 	 */
 	private LBool contains(final IPredicate state, final L a, final L b) {
 		final IPredicate context = mConditional ? state : null;
 		if (context instanceof IMLPredicate) {
-			// Locations will be ignored. However, using predicates with the same formula but different locations will
+			// Locations will be ignored. However, using predicates with the same formula
+			// but different locations will
 			// negatively affect cache efficiency. Hence output a warning message.
 			mLogger.warn("Predicates with locations should not be used for independence.");
 		}
@@ -186,7 +189,8 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 			final var guard = TransFormulaBuilder.constructTransFormulaFromPredicate(context, mManagedScript);
 
 			// This composition should not introduce auxVars.
-			// Avoid re-trying elimination of auxVars that already could not be eliminated from ab.
+			// Avoid re-trying elimination of auxVars that already could not be eliminated
+			// from ab.
 			final boolean tryAuxVarElimination = false;
 			abWithGuard = compose(guard, ab, tryAuxVarElimination);
 		}
@@ -198,10 +202,12 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 		final UnmodifiableTransFormula tfB = b.getTransformula();
 
 		// Compose the two transition formulas in both orders.
-		// For the composition a*b, only spend time eliminating auxVars if it might be used on the right-hand side of an
+		// For the composition a*b, only spend time eliminating auxVars if it might be
+		// used on the right-hand side of an
 		// inclusion check, as auxVars on the left-hand side can be skolemized anyway.
 		final UnmodifiableTransFormula transFormulaAB = compose(tfA, tfB, mConditional);
-		// For the composition b*a, always try to eliminate auxVars, because it always appears on the right-hand side of
+		// For the composition b*a, always try to eliminate auxVars, because it always
+		// appears on the right-hand side of
 		// an inclusion check.
 		final UnmodifiableTransFormula transFormulaBA = compose(tfB, tfA, true);
 
@@ -245,8 +251,9 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 	}
 
 	/**
-	 * A symbolic independence relation that synthesizes predicates under which two given actions would commute wrt.
-	 * {@link SemanticIndependenceRelation}. Specifically, the predicates capture precisely what is needed for
+	 * A symbolic independence relation that synthesizes predicates under which two
+	 * given actions would commute wrt. {@link SemanticIndependenceRelation}.
+	 * Specifically, the predicates capture precisely what is needed for
 	 * commutativity, as opposed to only a sufficient condition.
 	 *
 	 * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
@@ -260,6 +267,8 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 
 		@Override
 		public IPredicate getCommutativityCondition(final L a, final L b) {
+			// TODO: seems to work as intended, but for some reason the predicate gets
+			// (wrongly) modified or replaced by some other class, we have to look into it
 			final var compositions = buildCompositions(a, b);
 			final var tfAB = compositions.getFirst();
 			final var tfBA = compositions.getSecond();
@@ -272,13 +281,15 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 				final Term superset = computeInclusionTerm(tfBA, tfAB);
 				formula = SmtUtils.and(mManagedScript.getScript(), subset, superset);
 			}
+			BasicPredicate test = mFactory.newPredicate(formula);
 			return mFactory.newPredicate(formula);
 		}
 
 		private Term computeInclusionTerm(final UnmodifiableTransFormula lhs, final UnmodifiableTransFormula rhs) {
 			final var difference = TransFormulaUtils.intersect(mManagedScript, lhs,
 					TransFormulaUtils.negate(rhs, mManagedScript, mServices));
-			return TransFormulaUtils.computeGuardTerm(mServices, mManagedScript, difference);
+			return SmtUtils.not(mManagedScript.getScript(),
+					TransFormulaUtils.computeGuardTerm(mServices, mManagedScript, difference));
 		}
 
 		@Override
