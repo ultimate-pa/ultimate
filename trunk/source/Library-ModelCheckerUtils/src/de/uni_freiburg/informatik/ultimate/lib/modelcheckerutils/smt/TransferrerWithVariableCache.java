@@ -30,6 +30,8 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
@@ -40,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.SmtFreePredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
@@ -97,6 +100,20 @@ public class TransferrerWithVariableCache {
 
 		mTargetFactory = targetFactory;
 		mSourceFactory = sourceFactory;
+	}
+
+	public TransferrerWithVariableCache(final IUltimateServiceProvider services, final CfgSmtToolkit sourceCsToolkit,
+			final ManagedScript targetScript, final SmtFreePredicateFactory sourceFactory) {
+		final var sourceScript = sourceCsToolkit.getManagedScript().getScript();
+		mTargetScript = targetScript;
+
+		final var transferMap = new BidirectionalMap<Term, Term>();
+		mTransferrer = new TermTransferrer(sourceScript, targetScript.getScript(), transferMap, false);
+		mBackTransferrer = new TermTransferrer(targetScript.getScript(), sourceScript, transferMap.inverse(), false);
+
+		mSourceFactory = sourceFactory;
+		final var symbolTable = transferSymbolTable(sourceCsToolkit.getSymbolTable(), sourceCsToolkit.getProcedures());
+		mTargetFactory = new BasicPredicateFactory(services, targetScript, symbolTable);
 	}
 
 	public IProgramVar transferProgramVar(final IProgramVar oldPv) {
@@ -186,5 +203,9 @@ public class TransferrerWithVariableCache {
 
 	private Set<IProgramVar> backTransferVariables(final Set<IProgramVar> vars) {
 		return vars.stream().map(this::backTransferProgramVar).collect(Collectors.toSet());
+	}
+
+	public SmtFreePredicateFactory getTargetPredicateFactory() {
+		return mTargetFactory;
 	}
 }

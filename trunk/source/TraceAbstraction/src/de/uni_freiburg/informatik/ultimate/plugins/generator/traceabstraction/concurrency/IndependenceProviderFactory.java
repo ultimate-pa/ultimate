@@ -127,13 +127,11 @@ public class IndependenceProviderFactory<L extends IIcfgTransition<?>> {
 			mIndependenceScript = constructIndependenceScript(settings);
 
 			// We need to transfer given transition formulas and condition predicates to mIndependenceScript.
-			mTransferrer = new TransferrerWithVariableCache(csToolkit.getManagedScript().getScript(),
-					mIndependenceScript, mPredicateFactory);
+			mTransferrer =
+					new TransferrerWithVariableCache(mServices, csToolkit, mIndependenceScript, mPredicateFactory);
 
 			// For symbolic independence relations, we need a predicate factory that works on mIndependenceScript.
-			final var symbolTable =
-					mTransferrer.transferSymbolTable(csToolkit.getSymbolTable(), csToolkit.getProcedures());
-			mIndepScriptPredicateFactory = new BasicPredicateFactory(mServices, mIndependenceScript, symbolTable);
+			mIndepScriptPredicateFactory = (BasicPredicateFactory) mTransferrer.getTargetPredicateFactory();
 		}
 
 		if (settings.getAbstractionType() == AbstractionType.NONE) {
