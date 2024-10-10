@@ -2797,16 +2797,13 @@ public class StandardFunctionHandler {
 		final Pair<Expression, ASTType> infinitePrecisionResult =
 				mExpressionTranslation.constructInfinitePrecisionOperation(loc, operator, left.getLrValue().getValue(),
 						right.getLrValue().getValue(), resultType);
+		final Expression infinitePrecisionExpr = infinitePrecisionResult.getFirst();
 		final ASTType infinitePrecisionType = infinitePrecisionResult.getSecond();
-		final AuxVarInfo auxVar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, infinitePrecisionType, AUXVAR.RETURNED);
-		builder.addAuxVarWithDeclaration(auxVar);
-		builder.addStatement(StatementFactory.constructSingleAssignmentStatement(loc, auxVar.getLhs(),
-				infinitePrecisionResult.getFirst()));
 		// Write the (converted) result of the operation to the third argument
 		builder.addAllExceptLrValue(mExprResultTransformer.dispatchPointerWrite(main, loc, arguments[2],
-				mExpressionTranslation.convertInfinitePrecisionExpression(loc, auxVar.getExp(), resultType)));
+				mExpressionTranslation.convertInfinitePrecisionExpression(loc, infinitePrecisionExpr, resultType)));
 		// If the infinite precision result fits in the given type, return 0 otherwise 1.
-		final Expression inRange = mExpressionTranslation.checkInRangeInfinitePrecision(loc, auxVar.getExp(),
+		final Expression inRange = mExpressionTranslation.checkInRangeInfinitePrecision(loc, infinitePrecisionExpr,
 				infinitePrecisionType, resultType);
 		final Expression notInRange =
 				new UnaryExpression(loc, inRange.getType(), UnaryExpression.Operator.LOGICNEG, inRange);
