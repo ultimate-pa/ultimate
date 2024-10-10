@@ -34,7 +34,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.Function;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
@@ -47,7 +46,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
@@ -1041,8 +1039,9 @@ public class ExpressionResultTransformer {
 	}
 
 	/**
-	 * Method to dispatch the read/write of {@code *pointer}. Uses an optimization that if pointer is of the form
-	 * {@code &x}, we try to avoid putting x on the heap and dispatch {@code x} instead.
+	 * Dispatches a pointer and ensures that the result contains either a {@code LocalLValue} or a {@code HeapLValue}.
+	 * If possible (i.e., pointer is of the form {@code &x} where {@code x} is not already on the heap), a
+	 * {@code LocalLValue} is returned as an optimization.
 	 *
 	 * @param main
 	 *            Dispatcher
@@ -1050,19 +1049,31 @@ public class ExpressionResultTransformer {
 	 *            Location
 	 * @param pointer
 	 *            Pointer AST-expression
-	 * @return A object, where reads/writes can be received from
+	 * @return The dispatched {@code ExpressionResult} with either a {@code LocalLValue} or a {@code HeapLValue}.
 	 */
-	public IPointerReadWrite dispatchPointerWithOptimization(final IDispatcher main, final ILocation loc,
-			final IASTNode pointer) {
+	public ExpressionResult dispatchPointerLValue(final IDispatcher main, final ILocation loc, final IASTNode pointer) {
 		if (isAdressofOperator(pointer)) {
-			final ExpressionResult disp =
+			// If pointer is of the form &x, simply dispatch x an return the result, if it contains a LocalLValue.
+			// To match the type, create a new LocalLValue with a pointer type that points to the type of x.
+			final ExpressionResult subresult =
 					(ExpressionResult) main.dispatch(((IASTUnaryExpression) pointer).getOperand());
-			if (disp.getLrValue() instanceof LocalLValue) {
-				return new AddressofReadWrite(disp, loc);
+			if (subresult.getLrValue() instanceof LocalLValue) {
+				final LocalLValue addressValue = (LocalLValue) subresult.getLrValue();
+				final LocalLValue resultValue = new LocalLValue(addressValue.getLhs(),
+						new CPointer(subresult.getCType()), addressValue.isBoogieBool(),
+						addressValue.isIntFromPointer(), addressValue.getBitfieldInformation());
+				return new ExpressionResultBuilder(subresult).resetLrValue(resultValue).build();
 			}
 		}
-		return new NormalPointerReadWrite(transformDecaySwitch((ExpressionResult) main.dispatch(pointer), loc, pointer),
-				loc);
+		// Otherwise simply dispatch the expression, but make sure that the result contains a HeapLValue.
+		final ExpressionResult result = decayArrayToPointer((ExpressionResult) main.dispatch(pointer), loc, pointer);
+		if (result.getLrValue() instanceof HeapLValue) {
+			return result;
+		}
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder(result);
+		builder.resetLrValue(LRValueFactory.constructHeapLValue(mTypeHandler, result.getLrValue().getValue(),
+				result.getCType(), null));
+		return builder.build();
 	}
 
 	private static boolean isAdressofOperator(final IASTNode node) {
@@ -1070,110 +1081,70 @@ public class ExpressionResultTransformer {
 				&& ((IASTUnaryExpression) node).getOperator() == IASTUnaryExpression.op_amper;
 	}
 
+	/**
+	 * Assigns the value of the expression {@code rhs} to the given {@code lhs} of pointer type. If {@code lhs} is a
+	 * {@code LocalLValue}, a simple assignment is performed, otherwise a write in the memory.
+	 *
+	 * @param loc
+	 *            Location
+	 * @param lhs
+	 *            A LRValue of pointer type
+	 * @param rhs
+	 *            The expression to be assigned
+	 * @return The expression result containing the assignment
+	 */
+	public ExpressionResult makePointerAssignment(final ILocation loc, final LRValue lhs, final Expression rhs) {
+		if (lhs instanceof RValue) {
+			return makePointerAssignment(loc, new HeapLValue(lhs.getValue(), lhs.getCType(), null), rhs);
+		}
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		if (lhs instanceof LocalLValue) {
+			builder.addStatement(
+					StatementFactory.constructSingleAssignmentStatement(loc, ((LocalLValue) lhs).getLhs(), rhs));
+
+		} else if (lhs instanceof HeapLValue) {
+			final CType resultType = ((CPointer) lhs.getCType()).getPointsToType();
+			builder.addStatements(mMemoryHandler.getWriteCall(loc, (HeapLValue) lhs, rhs, resultType, false));
+		}
+		if (mDataRaceChecker != null) {
+			mDataRaceChecker.checkOnWrite(builder, loc, lhs);
+		}
+		return builder.build();
+	}
+
+	/**
+	 * Reads the value of the given {@code value} of pointer type. The result is guaranteed to return an aux-var as
+	 * RValue. If {@code value} is a {@code LocalLValue}, the value is simply assigned to a fresh aux-var, otherwise a
+	 * read in the memory is performed (which also assigns the return value to an aux-var).
+	 *
+	 * @param loc
+	 *            Location
+	 * @param value
+	 *            A LRValue of pointer type
+	 * @return The expression result containing the assignment
+	 */
+	public ExpressionResult readPointerValue(final ILocation loc, final LRValue value) {
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		final CType resultType = ((CPointer) value.getCType()).getPointsToType();
+		if (mDataRaceChecker != null) {
+			mDataRaceChecker.checkOnRead(builder, loc, value);
+		}
+		if (value instanceof HeapLValue) {
+			final HeapLValue heapValue = (HeapLValue) value;
+			builder.addAllIncludingLrValue(mMemoryHandler.getReadCall(heapValue.getAddress(), resultType));
+		} else {
+			// Introduce an auxvar for the result for consistency, mMemoryHandler.getReadCall also creates an auxvar
+			final AuxVarInfo auxVar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, resultType, AUXVAR.RETURNED);
+			builder.addAuxVarWithDeclaration(auxVar).setLrValue(new RValue(auxVar.getExp(), resultType));
+			builder.addStatement(
+					StatementFactory.constructSingleAssignmentStatement(loc, auxVar.getLhs(), value.getValue()));
+		}
+		return builder.build();
+	}
+
 	@FunctionalInterface
 	private interface ITransformationFunction {
 		ExpressionResult apply(final ExpressionResultTransformer ert, final ExpressionResult expr,
 				final CType targetCType, final ILocation loc, final IASTNode hook);
-	}
-
-	public interface IPointerReadWrite {
-		ExpressionResult getDispatchedResult();
-
-		ExpressionResult getRead();
-
-		ExpressionResult getWrite(final Function<CType, ExpressionResult> valueProvider);
-
-		default ExpressionResult getWrite(final Expression value) {
-			return getWrite(type -> new ExpressionResult(new RValue(value, type)));
-		}
-	}
-
-	private class NormalPointerReadWrite implements IPointerReadWrite {
-		private final ExpressionResult mExprResult;
-		private final ILocation mLoc;
-
-		private NormalPointerReadWrite(final ExpressionResult exprResult, final ILocation loc) {
-			mExprResult = exprResult;
-			mLoc = loc;
-		}
-
-		@Override
-		public ExpressionResult getDispatchedResult() {
-			return mExprResult;
-		}
-
-		@Override
-		public ExpressionResult getRead() {
-			final ExpressionResultBuilder builder = new ExpressionResultBuilder();
-			final ExpressionResult read = mMemoryHandler.getReadCall(mExprResult.getLrValue().getValue(),
-					((CPointer) mExprResult.getCType()).getPointsToType());
-			builder.addAllIncludingLrValue(read);
-			if (mDataRaceChecker != null) {
-				final var heapValue = LRValueFactory.constructHeapLValue(mTypeHandler,
-						mExprResult.getLrValue().getValue(), mExprResult.getCType(), null);
-				mDataRaceChecker.checkOnRead(builder, mLoc, heapValue);
-			}
-			return builder.build();
-		}
-
-		@Override
-		public ExpressionResult getWrite(final Function<CType, ExpressionResult> valueProvider) {
-			final ExpressionResultBuilder builder = new ExpressionResultBuilder();
-			final CType valueType = ((CPointer) mExprResult.getCType()).getPointsToType();
-			final ExpressionResult value = valueProvider.apply(valueType);
-			builder.addAllExceptLrValue(value);
-			final var heapValue = LRValueFactory.constructHeapLValue(mTypeHandler, mExprResult.getLrValue().getValue(),
-					mExprResult.getCType(), null);
-			builder.addStatements(
-					mMemoryHandler.getWriteCall(mLoc, heapValue, value.getLrValue().getValue(), valueType, false));
-			if (mDataRaceChecker != null) {
-				mDataRaceChecker.checkOnWrite(builder, mLoc, heapValue);
-			}
-			return builder.build();
-		}
-	}
-
-	private class AddressofReadWrite implements IPointerReadWrite {
-		private final ExpressionResult mExprResult;
-		private final ILocation mLoc;
-
-		private AddressofReadWrite(final ExpressionResult exprResult, final ILocation loc) {
-			mExprResult = exprResult;
-			mLoc = loc;
-		}
-
-		@Override
-		public ExpressionResult getDispatchedResult() {
-			return mExprResult;
-		}
-
-		@Override
-		public ExpressionResult getRead() {
-			final ExpressionResultBuilder builder = new ExpressionResultBuilder();
-			// Introduce an auxvar for the result for consistency, mMemoryHandler.getReadCall also creates an auxvar
-			final AuxVarInfo auxVar =
-					mAuxVarInfoBuilder.constructAuxVarInfo(mLoc, mExprResult.getCType(), AUXVAR.RETURNED);
-			builder.addAuxVarWithDeclaration(auxVar).setLrValue(new RValue(auxVar.getExp(), mExprResult.getCType()));
-			builder.addStatement(StatementFactory.constructSingleAssignmentStatement(mLoc, auxVar.getLhs(),
-					mExprResult.getLrValue().getValue()));
-			if (mDataRaceChecker != null) {
-				mDataRaceChecker.checkOnRead(builder, mLoc, mExprResult.getLrValue());
-			}
-			return builder.build();
-		}
-
-		@Override
-		public ExpressionResult getWrite(final Function<CType, ExpressionResult> valueProvider) {
-			final ExpressionResultBuilder builder = new ExpressionResultBuilder();
-			final ExpressionResult value = valueProvider.apply(mExprResult.getCType());
-			builder.addAllExceptLrValue(value);
-			final LeftHandSide lhs = ((LocalLValue) mExprResult.getLrValue()).getLhs();
-			builder.addStatement(
-					StatementFactory.constructSingleAssignmentStatement(mLoc, lhs, value.getLrValue().getValue()));
-			if (mDataRaceChecker != null) {
-				mDataRaceChecker.checkOnWrite(builder, mLoc, mExprResult.getLrValue());
-			}
-			return builder.build();
-		}
 	}
 }

@@ -63,7 +63,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultTransformer;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultTransformer.IPointerReadWrite;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -132,9 +131,8 @@ public class ThreadIdManager {
 
 		final Expression threadId = getOldForkCounterAsTemp(loc, erb);
 		incrementForkCounter(loc, erb);
-		final IPointerReadWrite rw =
-				mExpressionResultTransformer.dispatchPointerWithOptimization(dispatcher, loc, argument);
-		erb.addAllExceptLrValue(rw.getDispatchedResult(), rw.getWrite(threadId));
+		final ExpressionResult pointerLValue = mExpressionResultTransformer.dispatchPointerLValue(dispatcher, loc, argument);
+		erb.addAllExceptLrValue(pointerLValue, mExpressionResultTransformer.makePointerAssignment(loc, pointerLValue.getLrValue(), threadId));
 
 		if (UNAMBIGUOUS_THREAD_ID_OPTIMIZATION) {
 			final Integer unambiguousId = getUnambiguousThreadIdCounter(argument);
