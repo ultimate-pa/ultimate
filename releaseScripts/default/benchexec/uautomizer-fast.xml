@@ -3,6 +3,7 @@
 <benchmark tool="ultimateautomizer" displayName="UAutomizer" timelimit="120s" hardtimelimit="120s" memlimit="8 GB" cpuCores="2">
 
   <resultfiles>**/witness.*</resultfiles>
+  <option name="--full-output" />
 
   <rundefinition name="SV-COMP24_unreach-call">
     <tasks name="ReachSafety-Arrays">
