@@ -243,9 +243,9 @@ public class IntegerTranslation extends ExpressionTranslation {
 	}
 
 	@Override
-	public Pair<Expression, ASTType> constructInfinitePrecisionArithmeticIntegerExpression(final ILocation loc,
-			final int nodeOperator, final Expression exp1, final Expression exp2, final CPrimitive type) {
-		return new Pair<>(constructArithmeticExpression(loc, nodeOperator, exp1, exp2),
+	public Pair<Expression, ASTType> constructInfinitePrecisionOperation(final ILocation loc, final int operator,
+			final Expression exp1, final Expression exp2, final CPrimitive type) {
+		return new Pair<>(constructArithmeticExpression(loc, operator, exp1, exp2),
 				mTypeHandler.cType2AstType(loc, type));
 	}
 
@@ -402,16 +402,20 @@ public class IntegerTranslation extends ExpressionTranslation {
 	}
 
 	@Override
-	public Expression convertInfinitePrecisionToType(final ILocation loc, final Expression exp, final CPrimitive type) {
+	public Expression convertInfinitePrecisionExpression(final ILocation loc, final Expression exp,
+			final CPrimitive type) {
 		if (mTypeSizes.isUnsigned(type)) {
+			// For unsigned types, we apply a wraparound
 			return applyWraparound(loc, type, exp);
 		}
-		final CPrimitive unsignedType = mTypeSizes.getCorrespondingUnsignedType(type);
-		final Expression wrapped = applyWraparound(loc, unsignedType, exp);
-		final Expression range = mTypeSizes.constructLiteralForIntegerType(loc, type,
-				mTypeSizes.getMaxValueOfPrimitiveType(unsignedType).add(BigInteger.ONE));
+		// For unsigned types, we apply a wraparound (in the corresponding unsigned type) and shift the result
+		// accordingly.
+		final CPrimitive correspondingUnsignedType = mTypeSizes.getCorrespondingUnsignedType(type);
+		final Expression wrapped = applyWraparound(loc, correspondingUnsignedType, exp);
+		final Expression maxValue = constructLiteralForIntegerType(loc, type,
+				mTypeSizes.getMaxValueOfPrimitiveType(correspondingUnsignedType).add(BigInteger.ONE));
 		final Expression shiftedToType =
-				ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMINUS, wrapped, range);
+				ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMINUS, wrapped, maxValue);
 		return ExpressionFactory.constructIfThenElseExpression(loc,
 				checkInRangeInfinitePrecision(loc, wrapped, null, type), wrapped, shiftedToType);
 	}

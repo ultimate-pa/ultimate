@@ -437,33 +437,33 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	}
 
 	@Override
-	public Pair<Expression, ASTType> constructInfinitePrecisionArithmeticIntegerExpression(final ILocation loc,
-			final int nodeOperator, final Expression exp1, final Expression exp2, final CPrimitive type) {
+	public Pair<Expression, ASTType> constructInfinitePrecisionOperation(final ILocation loc, final int operator,
+			final Expression exp1, final Expression exp2, final CPrimitive type) {
 		final int inputBitsize = computeBitsize(type);
 		final int resultBitsize;
 		final BvOp bvop;
-		if (nodeOperator == IASTBinaryExpression.op_plus) {
+		if (operator == IASTBinaryExpression.op_plus) {
 			resultBitsize = inputBitsize + 1;
 			bvop = BvOp.bvadd;
-		} else if (nodeOperator == IASTBinaryExpression.op_minus) {
+		} else if (operator == IASTBinaryExpression.op_minus) {
 			resultBitsize = inputBitsize + 1;
 			bvop = BvOp.bvsub;
-		} else if (nodeOperator == IASTBinaryExpression.op_divide) {
+		} else if (operator == IASTBinaryExpression.op_divide) {
 			resultBitsize = inputBitsize + 1;
 			bvop = BvOp.bvsdiv;
-		} else if (nodeOperator == IASTBinaryExpression.op_multiply) {
+		} else if (operator == IASTBinaryExpression.op_multiply) {
 			resultBitsize = 2 * inputBitsize;
 			bvop = BvOp.bvmul;
 		} else {
-			throw new AssertionError("Not applicable to operation " + nodeOperator);
+			throw new AssertionError("Unsupported operator for infinite precision operation: " + operator);
 		}
 		final ExtendOperation extendOp =
 				mTypeSizes.isUnsigned(type) ? ExtendOperation.zero_extend : ExtendOperation.sign_extend;
 		final Expression exp1Extended = extend(loc, exp1, extendOp, inputBitsize, resultBitsize);
 		final Expression exp2Extended = extend(loc, exp2, extendOp, inputBitsize, resultBitsize);
 		declareBitvectorFunctionForArithmeticOperation(loc, bvop, resultBitsize);
-		final Expression resultExpr = BitvectorFactory.constructBinaryBitvectorOperation(loc, bvop,
-				new Expression[] { exp1Extended, exp2Extended });
+		final Expression resultExpr =
+				BitvectorFactory.constructBinaryBitvectorOperation(loc, bvop, exp1Extended, exp2Extended);
 		final ASTType resultType =
 				new PrimitiveType(loc, BoogieType.createBitvectorType(resultBitsize), "bv" + resultBitsize);
 		return new Pair<>(resultExpr, resultType);
@@ -647,7 +647,8 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	}
 
 	@Override
-	public Expression convertInfinitePrecisionToType(final ILocation loc, final Expression exp, final CPrimitive type) {
+	public Expression convertInfinitePrecisionExpression(final ILocation loc, final Expression exp,
+			final CPrimitive type) {
 		return extractBits(loc, exp, computeBitsize(type), 0);
 	}
 

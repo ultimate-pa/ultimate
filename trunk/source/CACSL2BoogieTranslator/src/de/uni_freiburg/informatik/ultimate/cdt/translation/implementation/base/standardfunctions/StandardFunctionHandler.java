@@ -2794,18 +2794,19 @@ public class StandardFunctionHandler {
 		// Apply the operator to the first two parameters with infinite precision (i.e. ignoring any wraparound or
 		// overflows), convert the result to the given type and write it to the third argument.
 		final Pair<Expression, ASTType> infinitePrecisionResult =
-				mExpressionTranslation.constructInfinitePrecisionArithmeticIntegerExpression(loc, operator,
-						left.getLrValue().getValue(), right.getLrValue().getValue(), resultType);
-		final AuxVarInfo auxVar =
-				mAuxVarInfoBuilder.constructAuxVarInfo(loc, infinitePrecisionResult.getSecond(), AUXVAR.RETURNED);
+				mExpressionTranslation.constructInfinitePrecisionOperation(loc, operator, left.getLrValue().getValue(),
+						right.getLrValue().getValue(), resultType);
+		final ASTType infinitePrecisionType = infinitePrecisionResult.getSecond();
+		final AuxVarInfo auxVar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, infinitePrecisionType, AUXVAR.RETURNED);
 		builder.addAuxVarWithDeclaration(auxVar);
 		builder.addStatement(StatementFactory.constructSingleAssignmentStatement(loc, auxVar.getLhs(),
 				infinitePrecisionResult.getFirst()));
+		// Write the (converted) result of the operation to the third argument
 		builder.addAllExceptLrValue(mExprResultTransformer.dispatchPointerWrite(main, loc, arguments[2],
-				mExpressionTranslation.convertInfinitePrecisionToType(loc, auxVar.getExp(), resultType)));
+				mExpressionTranslation.convertInfinitePrecisionExpression(loc, auxVar.getExp(), resultType)));
 		// If the infinite precision result fits in the given type, return 0 otherwise 1.
 		final Expression inRange = mExpressionTranslation.checkInRangeInfinitePrecision(loc, auxVar.getExp(),
-				infinitePrecisionResult.getSecond(), resultType);
+				infinitePrecisionType, resultType);
 		final CPrimitive boolType = new CPrimitive(CPrimitives.BOOL);
 		final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(loc, boolType, BigInteger.ZERO);
 		final Expression one = mExpressionTranslation.constructLiteralForIntegerType(loc, boolType, BigInteger.ONE);
