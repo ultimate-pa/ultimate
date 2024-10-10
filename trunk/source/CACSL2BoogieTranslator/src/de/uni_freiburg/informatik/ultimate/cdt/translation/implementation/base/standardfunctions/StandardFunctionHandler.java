@@ -74,6 +74,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ReturnStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StringLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
@@ -2807,11 +2808,10 @@ public class StandardFunctionHandler {
 		// If the infinite precision result fits in the given type, return 0 otherwise 1.
 		final Expression inRange = mExpressionTranslation.checkInRangeInfinitePrecision(loc, auxVar.getExp(),
 				infinitePrecisionType, resultType);
-		final CPrimitive boolType = new CPrimitive(CPrimitives.BOOL);
-		final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(loc, boolType, BigInteger.ZERO);
-		final Expression one = mExpressionTranslation.constructLiteralForIntegerType(loc, boolType, BigInteger.ONE);
-		final Expression resultExpr = ExpressionFactory.constructIfThenElseExpression(loc, inRange, zero, one);
-		return builder.setLrValue(new RValue(resultExpr, boolType)).build();
+		final Expression notInRange =
+				new UnaryExpression(loc, inRange.getType(), UnaryExpression.Operator.LOGICNEG, inRange);
+		return mExprResultTransformer.rexBoolToInt(
+				builder.setLrValue(new RValue(notInRange, new CPrimitive(CPrimitives.BOOL), true)).build(), loc);
 	}
 
 	private Result handleFloatBuiltinBinaryComparison(final IDispatcher main, final IASTFunctionCallExpression node,
