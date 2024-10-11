@@ -31,8 +31,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * Waypoints are the basic building blocks of entry-based violation witnesses. Technically a waypoint is a mapping with
- * our keys: type, location, constraint and action.
+ * Waypoints are the basic building blocks of entry-based violation witnesses. A waypoint consists of: type (provided by
+ * the implementation), location, constraint and action (provided by the parent {@link Segment}).
  *
  * @author Helen Meyer (helen.anna.meyer@gmail.com)
  */
