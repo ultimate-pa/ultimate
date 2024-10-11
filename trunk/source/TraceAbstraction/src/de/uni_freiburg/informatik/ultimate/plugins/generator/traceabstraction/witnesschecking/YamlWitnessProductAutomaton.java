@@ -249,7 +249,8 @@ public class YamlWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 	/** Creates a ProductPredicate with the counters */
 	private IPredicate createProductState(final IPredicate predicate, final int waypointCounter,
 			final int violationSequenceCounter) {
-		final ProductPredicate result = new ProductPredicate(predicate, waypointCounter, violationSequenceCounter);
+		final ProductPredicate result =
+				new ProductPredicate((ISLPredicate) predicate, waypointCounter, violationSequenceCounter);
 		mAllProductStates.add(result);
 		return result;
 	}
@@ -257,9 +258,9 @@ public class YamlWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 	/**
 	 * IPredicate annotated with counters for the Violation Sequence and Segments of an entry-based violation witness
 	 */
-	private static final class ProductPredicate extends AnnotatedPredicate<IPredicate, Pair<Integer, Integer>>
+	private static final class ProductPredicate extends AnnotatedPredicate<ISLPredicate, Pair<Integer, Integer>>
 			implements ISLPredicate {
-		public ProductPredicate(final IPredicate underlying, final int segmentCounter,
+		public ProductPredicate(final ISLPredicate underlying, final int segmentCounter,
 				final int violationSequenceCounter) {
 			super(underlying, new Pair<>(segmentCounter, violationSequenceCounter));
 		}
@@ -275,7 +276,7 @@ public class YamlWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 
 		@Override
 		public IcfgLocation getProgramPoint() {
-			return ((ISLPredicate) mUnderlying).getProgramPoint();
+			return mUnderlying.getProgramPoint();
 		}
 	}
 }
