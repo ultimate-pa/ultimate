@@ -227,7 +227,7 @@ public class ConditionalCommutativityCheckerVisitor<L extends IIcfgTransition<?>
 		final List<IPredicate> conPredicates = new ArrayList<>();
 		conPredicates.add(mTracePredicates.getPrecondition());
 		conPredicates.addAll(mTracePredicates.getPredicates());
-		conPredicates.add(mTracePredicates.getPostcondition());
+		// conPredicates.add(mTracePredicates.getPostcondition());
 
 		ConditionalCommutativityInterpolantAutomatonProvider<L> conComInterpolantProvider =
 				new ConditionalCommutativityInterpolantAutomatonProvider<>(mServices, mAbstraction,

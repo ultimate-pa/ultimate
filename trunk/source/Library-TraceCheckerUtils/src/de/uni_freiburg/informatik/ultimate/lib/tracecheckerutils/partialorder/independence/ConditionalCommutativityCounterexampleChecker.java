@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult.BasicRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -52,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.ITraceChecker;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.ConditionalCommutativityChecker.ConComTraceCheckMode;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IConditionalCommutativityCheckerStatisticsUtils.ConditionalCommutativityStopwatches;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.ICopyActionFactory;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.util.Lazy;
 
@@ -102,7 +104,8 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 			final IIndependenceRelation<IPredicate, L> independenceRelation, final IDfsOrder<L, IPredicate> DFSOrder,
 			final ManagedScript script, final IIndependenceConditionGenerator generator,
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction,
-			final IEmptyStackStateFactory<IPredicate> emptyStackStateFactory, final ITraceChecker<L> traceChecker,
+			final IEmptyStackStateFactory<IPredicate> emptyStackStateFactory, final PredicateFactory predicateFactory,
+			ICopyActionFactory<L> copyFactory, ITraceChecker<L> traceChecker,
 			final IConditionalCommutativityCheckerStatisticsUtils statisticsUtils,
 			ConComTraceCheckMode traceCheckMode) {
 		mServices = services;
@@ -110,7 +113,7 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 		mAbstraction = abstraction;
 		mEmptyStackStateFactory = emptyStackStateFactory;
 		mChecker = new ConditionalCommutativityChecker<>(criterion, independenceRelation, script, generator,
-				traceChecker, statisticsUtils, traceCheckMode);
+				traceChecker, statisticsUtils, predicateFactory, copyFactory, traceCheckMode);
 		mStatisticsUtils = statisticsUtils;
 	}
 
@@ -157,7 +160,7 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 				if (tracePredicates != null) {
 					conPredicates.add(tracePredicates.getPrecondition());
 					conPredicates.addAll(tracePredicates.getPredicates());
-					conPredicates.add(tracePredicates.getPostcondition());
+					// conPredicates.add(tracePredicates.getPostcondition());
 
 					ConditionalCommutativityInterpolantAutomatonProvider<L> conComInterpolantProvider =
 							new ConditionalCommutativityInterpolantAutomatonProvider<>(mServices, mAbstraction,

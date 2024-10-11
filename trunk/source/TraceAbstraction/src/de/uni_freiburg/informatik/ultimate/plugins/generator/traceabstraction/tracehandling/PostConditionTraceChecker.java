@@ -94,9 +94,15 @@ public class PostConditionTraceChecker<L extends IIcfgTransition<?>> implements 
 	public TracePredicates checkTrace(final IRun<L, IPredicate> run, final IPredicate preCondition,
 			final IPredicate postCondition) {
 
+		IPredicate postPred;
+		if (postCondition == null) {
+			postPred = mPredicateUnifier.getFalsePredicate();
+		} else {
+			postPred = mPredicateUnifier.getOrConstructPredicate(postCondition);
+		}
 		final ITARefinementStrategy<L> strategy = mStrategyFactory.constructStrategy(mServices, run, mAbstraction,
-				mTaskIdentifier, mEmptyStackFactory, mPredicateUnifier, mPredicateUnifier.getTruePredicate(),
-				mPredicateUnifier.getOrConstructPredicate(postCondition), RefinementStrategy.SMTINTERPOLSLEEPSETPOR);
+				mTaskIdentifier, mEmptyStackFactory, mPredicateUnifier, mPredicateUnifier.getTruePredicate(), postPred,
+				RefinementStrategy.SMTINTERPOLSLEEPSETPOR);
 
 		while (strategy.hasNextFeasilibityCheck()) {
 			final ITraceCheckStrategyModule<L, ?> check = strategy.nextFeasibilityCheck();
