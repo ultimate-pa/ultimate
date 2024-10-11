@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
  *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  */
+// TODO (Dominik 2024-10-11) Get rid of this interface again, use ISymbolicIndependenceRelation instead.
 public interface IIndependenceConditionGenerator {
 	/**
 	 * Generate a condition under which the given transitions are independent.
@@ -47,7 +48,8 @@ public interface IIndependenceConditionGenerator {
 	 *
 	 * @return a sufficient condition for independence
 	 */
-	IPredicate generateCondition(final IPredicate context, final UnmodifiableTransFormula a, final UnmodifiableTransFormula b);
+	IPredicate generateCondition(final IPredicate context, final UnmodifiableTransFormula a,
+			final UnmodifiableTransFormula b);
 
 	/**
 	 * Generate a condition under which the given transitions are independent.
@@ -62,4 +64,6 @@ public interface IIndependenceConditionGenerator {
 	default IPredicate generateCondition(final UnmodifiableTransFormula a, final UnmodifiableTransFormula b) {
 		return generateCondition(null, a, b);
 	}
+
+	boolean isSymmetric();
 }

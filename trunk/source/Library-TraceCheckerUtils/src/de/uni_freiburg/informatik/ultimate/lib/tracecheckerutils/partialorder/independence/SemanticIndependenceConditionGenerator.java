@@ -193,4 +193,9 @@ public class SemanticIndependenceConditionGenerator implements IIndependenceCond
 		}
 		return PartialQuantifierElimination.eliminateLight(mServices, mMgdScript, quantified);
 	}
+
+	@Override
+	public boolean isSymmetric() {
+		return mSymmetric;
+	}
 }

@@ -40,7 +40,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -261,8 +260,6 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 
 		@Override
 		public IPredicate getCommutativityCondition(final L a, final L b) {
-			// TODO: seems to work as intended, but for some reason the predicate gets
-			// (wrongly) modified or replaced by some other class, we have to look into it
 			final var compositions = buildCompositions(a, b);
 			final var tfAB = compositions.getFirst();
 			final var tfBA = compositions.getSecond();
@@ -275,7 +272,6 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 				final Term superset = computeInclusionTerm(tfBA, tfAB);
 				formula = SmtUtils.and(mManagedScript.getScript(), subset, superset);
 			}
-			final BasicPredicate test = mFactory.newPredicate(formula);
 			return mFactory.newPredicate(formula);
 		}
 
@@ -284,6 +280,31 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 					TransFormulaUtils.negate(rhs, mManagedScript, mServices));
 			return SmtUtils.not(mManagedScript.getScript(),
 					TransFormulaUtils.computeGuardTerm(mServices, mManagedScript, difference));
+		}
+
+		@Override
+		public boolean isSymmetric() {
+			return mSymmetric;
+		}
+	}
+
+	/**
+	 * A symbolic independence relation that uses an {@link IIndependenceConditionGenerator} to generate a
+	 * <em>sufficient</em> (but possibly not necessary) condition under which two given statements commute semantically.
+	 *
+	 * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+	 */
+	public class ConditionGeneratorIndependence implements ISymbolicIndependenceRelation<L, IPredicate> {
+		private final IIndependenceConditionGenerator mGenerator;
+
+		public ConditionGeneratorIndependence(final IIndependenceConditionGenerator generator) {
+			mGenerator = generator;
+			assert mGenerator.isSymmetric() == mSymmetric : "Symmetry of relation and generator does not match";
+		}
+
+		@Override
+		public IPredicate getCommutativityCondition(final L a, final L b) {
+			return mGenerator.generateCondition(a.getTransformula(), b.getTransformula());
 		}
 
 		@Override
