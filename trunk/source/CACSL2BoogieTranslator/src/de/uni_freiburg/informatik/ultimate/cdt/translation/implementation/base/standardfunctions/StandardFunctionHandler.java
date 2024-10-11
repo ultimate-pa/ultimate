@@ -3034,7 +3034,9 @@ public class StandardFunctionHandler {
 		final Expression infinitePrecisionExpr = infinitePrecisionResult.getFirst();
 		final ASTType infinitePrecisionType = infinitePrecisionResult.getSecond();
 		// Write the (converted) result of the operation to the third argument
-		builder.addAllExceptLrValue(mExprResultTransformer.dispatchPointerWrite(main, loc, arguments[2],
+		final ExpressionResult resPointer = mExprResultTransformer.dispatchPointerLValue(main, loc, arguments[2]);
+		builder.addAllExceptLrValue(resPointer);
+		builder.addAllExceptLrValue(mExprResultTransformer.makePointerAssignment(loc, resPointer.getLrValue(),
 				mExpressionTranslation.convertInfinitePrecisionExpression(loc, infinitePrecisionExpr, resultType)));
 		// If the infinite precision result fits in the given type, return 0 otherwise 1.
 		final Expression inRange = mExpressionTranslation.checkInRangeInfinitePrecision(loc, infinitePrecisionExpr,
