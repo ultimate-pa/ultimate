@@ -36,7 +36,6 @@ public class BoogieBacktranslationValueProvider implements IBacktranslationValue
 
 	@Override
 	public int getLineNumberFromStep(final BoogieASTNode step, final EnumSet<AtomicTraceElement.StepInfo> stepInfo) {
-		// TODO: Do we want some different lines for Boogie?
 		return getStartLineNumberFromStep(step);
 	}
 
@@ -45,7 +44,6 @@ public class BoogieBacktranslationValueProvider implements IBacktranslationValue
 		if (step.getLocation() == null) {
 			return -1;
 		}
-		// TODO: Do we want some different columns for Boogie?
 		return step.getLocation().getStartColumn();
 	}
 
