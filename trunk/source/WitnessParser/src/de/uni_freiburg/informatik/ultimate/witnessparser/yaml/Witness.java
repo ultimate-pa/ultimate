@@ -53,11 +53,12 @@ public class Witness extends BasePayloadContainer {
 	}
 
 	public boolean isCorrectnessWitness() {
-		// TODO: Consistency check with invariants
-		for (final WitnessEntry entry : mEntries) {
-			if (entry instanceof ViolationSequence) {
-				return false;
+		if (mEntries.stream().anyMatch(ViolationSequence.class::isInstance)) {
+			if (!mEntries.stream().allMatch(ViolationSequence.class::isInstance)) {
+				throw new AssertionError(
+						"The witness contains violation sequences and invariants and is thus syntactically invalid.");
 			}
+			return false;
 		}
 		return true;
 	}
