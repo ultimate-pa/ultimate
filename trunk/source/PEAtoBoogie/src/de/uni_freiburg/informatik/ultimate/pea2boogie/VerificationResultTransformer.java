@@ -95,9 +95,12 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheck;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheckFailResult;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheckRtInconsistentResult;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheckStuckAtResult;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheckSuccessResult;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.Req2BoogieTranslator;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.ReqSymboltableBuilder;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.StuckAtAnnotation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ParallelComposition;
@@ -188,6 +191,12 @@ public class VerificationResultTransformer {
 					generateTimeSequenceMap(newPe.getProgramStates());
 			final String failurePath = formatTimeSequenceMap(delta2var2value);
 			return new ReqCheckRtInconsistentResult<>(element, plugin, translatorSequence, failurePath);
+		}
+		if (spec == Spec.STUCKAT) {
+			// Return a ReqCheckStuckAtResult, i.e., a ReqCheckFailResult with additional
+			// StuckAtAnnotation containing the nvp for which the check was executed.
+			StuckAtAnnotation nvp = StuckAtAnnotation.getAnnotation(((BoogieIcfgLocation) element).getBoogieASTNode());
+			return new ReqCheckStuckAtResult<>(element, plugin, translatorSequence, nvp.getNvp().toString());
 		}
 		return new ReqCheckFailResult<>(element, plugin, translatorSequence);
 	}

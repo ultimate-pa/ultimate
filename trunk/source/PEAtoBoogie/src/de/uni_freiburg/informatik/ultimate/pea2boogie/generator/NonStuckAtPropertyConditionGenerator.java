@@ -26,6 +26,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.CddToSmt;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolTable;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.PeaResultUtil;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * This class generates the non-Stuck-At-Property condition for a given PEA.
@@ -148,18 +149,20 @@ public class NonStuckAtPropertyConditionGenerator {
 	 * 
 	 * @return a Map with entries of the form <PhaseEventAutomaton, List of SMT Expressions to check for the SAP>
 	 */
-	public Map<PhaseEventAutomata, List<Expression>> generateNonStuckAtPropertyCondition() {
-		Map<PhaseEventAutomata, List<Expression>> result = new HashMap<PhaseEventAutomata, List<Expression>>();
+	public Map<PhaseEventAutomata, List<Pair<List<Phase>,Expression>>> generateNonStuckAtPropertyCondition() {
+		Map<PhaseEventAutomata, List<Pair<List<Phase>,Expression>>> result = new HashMap<PhaseEventAutomata, List<Pair<List<Phase>,Expression>>>();
 		Map<PhaseEventAutomata, List<List<Phase>>> nvps = getNonterminalViolablePhases();
 		for (PhaseEventAutomata pea : nvps.keySet()) {
 			Map<Phase, Integer> phaseIndices = getPhaseIndices(pea);
-			result.put(pea, new ArrayList<Expression>());
+			result.put(pea, new ArrayList<Pair<List<Phase>,Expression>>());
+			List<Pair<List<Phase>,Expression>> l = result.get(pea);
 			for (List<Phase> nvp : nvps.get(pea)) {
 				Term nvpInfo = getNonStuckAtProperyTermForNVP(nvp, phaseIndices, pea);
-				List<Expression> addResult = result.get(pea);
-				addResult.add(mBoogie2Smt.getTerm2Expression().translate(nvpInfo));
-				result.put(pea, addResult);
+				Expression stuckAtCond = mBoogie2Smt.getTerm2Expression().translate(nvpInfo);
+				Pair<List<Phase>,Expression> p = new Pair<List<Phase>,Expression>(nvp,stuckAtCond);
+				l.add(p);
 			}
+			result.put(pea, l);
 		}
 		return result;
 	}

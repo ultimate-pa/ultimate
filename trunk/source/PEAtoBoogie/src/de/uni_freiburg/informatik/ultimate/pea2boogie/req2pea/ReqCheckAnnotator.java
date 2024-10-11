@@ -72,6 +72,7 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.RtInconcistencyC
 import de.uni_freiburg.informatik.ultimate.pea2boogie.preferences.Pea2BoogiePreferences;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheck;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.CheckedReqLocation;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.StuckAtAnnotation;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -391,15 +392,20 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 			return Collections.emptyList();
 		}
 		final List<Statement> stmtList = new ArrayList<>();
-		Map<PhaseEventAutomata, List<Expression>> toAssert = mNonStuckAtPropertyConditionGenerator.generateNonStuckAtPropertyCondition();
+		 Map<PhaseEventAutomata, List<Pair<List<Phase>,Expression>>> toAssert = mNonStuckAtPropertyConditionGenerator.generateNonStuckAtPropertyCondition();
 		PatternType<?> pattern = null;
 		for (PhaseEventAutomata pea : toAssert.keySet()) {
 			for (ReqPeas reqPeas : mReqPeas) {
 				pattern = getPeaPattern(reqPeas, pea, pattern);
 			}
 			int index = 0;
-			for (Expression expr : toAssert.get(pea)) {
-				stmtList.add(genAssertNonStuckAtProperty(pattern, pea, bl, expr, index));
+			for (Pair<List<Phase>,Expression> pair : toAssert.get(pea)) {
+				Statement assertStmt = genAssertNonStuckAtProperty(pattern, pea, bl, pair.getSecond(), index);
+				
+				StuckAtAnnotation stuckAtAnnotation = new StuckAtAnnotation(pair.getFirst());
+				stuckAtAnnotation.annotate(assertStmt);
+				
+				stmtList.add(assertStmt);
 				index += 1;
 			}
 		}
