@@ -199,21 +199,25 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_CON_COM_CHECKER_CRITERION = "Criterion for conditional commutativity checking";
 	private static final ConComCheckerCriterion DEF_CON_COM_CHECKER_CRITERION = ConComCheckerCriterion.DEFAULT;
 
+	public static final String LABEL_CON_COM_CHECKER_TRACECHECK_MODE = "TraceCheck mode for conditional commutativity";
+	private static final ConComCheckerTraceCheckMode DEF_CON_COM_CHECKER_TRACECHECK_MODE =
+			ConComCheckerTraceCheckMode.GENERATOR;
+
 	public static final String LABEL_CON_COM_CHECKER_LIMITED_CHECKS_CRITERION =
-			"use limited checks (recommended for DFS)";
+			"Use limited checks (recommended for DFS)";
 	private static final boolean DEF_CON_COM_CHECKER_LIMITED_CHECKS_CRITERION = false;
 
 	public static final String LABEL_CON_COM_CHECKER_CRITERION_LIMIT = "Limit for limited checks";
 	private static final int DEF_CON_COM_CHECKER_CRITERION_LIMIT = 1;
 
-	public static final String LABEL_CON_COM_CHECKER_RANDOM_PROB = "probability for random criterion as percentage";
+	public static final String LABEL_CON_COM_CHECKER_RANDOM_PROB = "Probability for random criterion as percentage";
 	private static final int DEF_CON_COM_CHECKER_RANDOM_PROB = 100;
 
-	public static final String LABEL_CON_COM_CHECKER_RANDOM_SEED = "seed for random criterion";
+	public static final String LABEL_CON_COM_CHECKER_RANDOM_SEED = "Seed for random criterion";
 	private static final int DEF_CON_COM_CHECKER_RANDOM_SEED = 123;
 
 	public static final String LABEL_CON_COM_CHECKER_CONDITION_CRITERION =
-			"use condition criterion (recommended for programs with arrays)";
+			"Use condition criterion (recommended for programs with arrays)";
 	private static final boolean DEF_CON_COM_CHECKER_CONDITION_CRITERION = false;
 
 	// Settings for PetriAutomizer
@@ -750,6 +754,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						ConComChecker.values()),
 				new UltimatePreferenceItem<>(LABEL_CON_COM_CHECKER_CRITERION, DEF_CON_COM_CHECKER_CRITERION,
 						PreferenceType.Combo, ConComCheckerCriterion.values()),
+				new UltimatePreferenceItem<>(LABEL_CON_COM_CHECKER_TRACECHECK_MODE, DEF_CON_COM_CHECKER_TRACECHECK_MODE,
+						PreferenceType.Combo, ConComCheckerTraceCheckMode.values()),
 				new UltimatePreferenceItem<>(LABEL_CON_COM_CHECKER_LIMITED_CHECKS_CRITERION,
 						DEF_CON_COM_CHECKER_LIMITED_CHECKS_CRITERION, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_CON_COM_CHECKER_CRITERION_LIMIT, DEF_CON_COM_CHECKER_CRITERION_LIMIT,
@@ -1087,5 +1093,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 
 	public enum ConComCheckerCriterion {
 		DEFAULT, RANDOM, SLEEP_SET, FORWARD, LOOP
+	}
+
+	public enum ConComCheckerTraceCheckMode {
+		GENERATOR, GENERATOR_WITH_CONTEXT, SYMBOLIC_RELATION
 	}
 }

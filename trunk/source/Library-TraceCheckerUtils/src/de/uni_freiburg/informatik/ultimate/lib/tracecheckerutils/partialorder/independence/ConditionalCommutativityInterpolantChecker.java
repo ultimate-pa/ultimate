@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.ITraceChecker;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.LoopLockstepOrder.PredicateWithLastThread;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderReductionFacade.StateSplitter;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.ConditionalCommutativityChecker.ConComTraceCheckMode;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IConditionalCommutativityCheckerStatisticsUtils.ConditionalCommutativityStopwatches;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
@@ -70,7 +71,6 @@ public class ConditionalCommutativityInterpolantChecker<L extends IAction> {
 	private final ConditionalCommutativityChecker<L> mChecker;
 	private final IUltimateServiceProvider mServices;
 	private final IEmptyStackStateFactory<IPredicate> mEmptyStackStateFactory;
-	// private NestedWordAutomaton<L, IPredicate> mCopy;
 	private IRun<L, IPredicate> mRun;
 	private final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mAbstraction;
 	private final IConditionalCommutativityCheckerStatisticsUtils mStatisticsUtils;
@@ -108,12 +108,13 @@ public class ConditionalCommutativityInterpolantChecker<L extends IAction> {
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction,
 			final IEmptyStackStateFactory<IPredicate> emptyStackStateFactory, final ITraceChecker<L> traceChecker,
 			final IPredicateUnifier predicateUnifier,
-			final IConditionalCommutativityCheckerStatisticsUtils statisticsUtils, StateSplitter<IPredicate> splitter) {
+			final IConditionalCommutativityCheckerStatisticsUtils statisticsUtils, StateSplitter<IPredicate> splitter,
+			ConComTraceCheckMode traceCheckMode) {
 		mServices = services;
 		mAbstraction = abstraction;
 		mEmptyStackStateFactory = emptyStackStateFactory;
 		mChecker = new ConditionalCommutativityChecker<>(criterion, independenceRelation, script, generator,
-				traceChecker, statisticsUtils);
+				traceChecker, statisticsUtils, traceCheckMode);
 		mStatisticsUtils = statisticsUtils;
 		mStateSplitter = splitter;
 		mInterpolantAutomatonProvider = new ConditionalCommutativityInterpolantAutomatonProvider<>(services,

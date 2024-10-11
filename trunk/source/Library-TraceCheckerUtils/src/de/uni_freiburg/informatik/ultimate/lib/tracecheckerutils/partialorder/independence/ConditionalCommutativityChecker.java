@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.i
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation.Dependence;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.ISymbolicIndependenceRelation;
@@ -35,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.MLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateWithConjuncts;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.ITraceChecker;
@@ -59,6 +61,7 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 	private final ITraceChecker<L> mTraceChecker;
 	private final ManagedScript mManagedScript;
 	private final IConditionalCommutativityCheckerStatisticsUtils mStatisticsUtils;
+	private ConComTraceCheckMode mTraceCheckMode;
 
 	/**
 	 * Constructs a new instance of ConditionalCommutativityChecker.
@@ -82,13 +85,15 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 	public ConditionalCommutativityChecker(final IConditionalCommutativityCriterion<L> criterion,
 			final IIndependenceRelation<IPredicate, L> independenceRelation, final ManagedScript script,
 			final IIndependenceConditionGenerator generator, final ITraceChecker<L> traceChecker,
-			final IConditionalCommutativityCheckerStatisticsUtils statisticsUtils) {
+			final IConditionalCommutativityCheckerStatisticsUtils statisticsUtils,
+			ConComTraceCheckMode traceCheckMode) {
 		mCriterion = criterion;
 		mIndependenceRelation = independenceRelation;
 		mManagedScript = script;
 		mGenerator = generator;
 		mTraceChecker = traceChecker;
 		mStatisticsUtils = statisticsUtils;
+		mTraceCheckMode = traceCheckMode;
 	}
 
 	/**
@@ -108,7 +113,7 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 	 *            A letter of another outgoing transition of state
 	 * @return A list of predicates which serves as a proof for conditional commutativity.
 	 */
-	public TracePredicates checkConditionalCommutativity(final IRun<L, IPredicate> currentRun,
+	public TracePredicates checkConditionalCommutativity(final NestedRun<L, IPredicate> currentRun,
 			final List<IPredicate> predicates, final IPredicate state, final L letter1, final L letter2) {
 
 		try {
@@ -145,25 +150,62 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 					mManagedScript.requestLockRelease();
 				}
 				IPredicate condition = null;
-				
+
 				ISymbolicIndependenceRelation<L, IPredicate> relation = mIndependenceRelation.getSymbolicRelation();
-				
-				if (relation != null) {
-					condition = relation.getCommutativityCondition(letter1, letter2);
-				} 
-				/*if (pred != null) {
-					condition = mGenerator.generateCondition(
-							new PredicateWithConjuncts(0, new ImmutableList<>(predicates), mManagedScript.getScript()),
-							letter1.getTransformula(), letter2.getTransformula());
-				} else {
+
+				switch (mTraceCheckMode) {
+				case GENERATOR:
 					condition = mGenerator.generateCondition(letter1.getTransformula(), letter2.getTransformula());
-				}*/
+					break;
+				case GENERATOR_WITH_CONTEXT:
+					if (pred != null) {
+						condition = mGenerator.generateCondition(
+								new PredicateWithConjuncts(0, new ImmutableList<>(predicates),
+										mManagedScript.getScript()),
+								letter1.getTransformula(), letter2.getTransformula());
+					} else {
+						condition = mGenerator.generateCondition(letter1.getTransformula(), letter2.getTransformula());
+					}
+					break;
+				case SYMBOLIC_RELATION:
+					if (relation != null) {
+						condition = relation.getCommutativityCondition(letter1, letter2);
+					}
+					break;
+				default:
+					throw new UnsupportedOperationException(
+							"PartialOrderCegarLoop currently does not support " + mTraceCheckMode);
+				}
+
+				/*
+				 * if (relation != null) { condition = relation.getCommutativityCondition(letter1, letter2); } // TODO:
+				 * integrate setting s.t. we can try both versions: with and without context if (pred != null) {
+				 * condition = mGenerator.generateCondition( new PredicateWithConjuncts(0, new
+				 * ImmutableList<>(predicates), mManagedScript.getScript()), letter1.getTransformula(),
+				 * letter2.getTransformula()); } else { condition =
+				 * mGenerator.generateCondition(letter1.getTransformula(), letter2.getTransformula()); }
+				 */
 				mStatisticsUtils.addConditionCalculation();
 				mCriterion.updateCriterion(state, letter1, letter2);
 
 				if ((condition != null) && (!condition.getFormula().toString().equals("true"))
 						&& mCriterion.decide(condition)) {
 
+					// TODO: construct a run which has the negated condition at last, then remove the last entry of
+					// trace before returning
+
+					// construct a transformula which represents the negation of the condition
+					// via TransFormulaBuilder.constructTransFormulaFromPredicate
+					// copy a transition with the new transformula with IcfgCopyFactory from
+					// CegarLoopFactory.mCopyFactory (needs to be passed to the CEGAR-Loop)
+					// create a MLPredicate and a SleepSetPredicate as dummy state
+					// add both to the currentRun
+
+					/*
+					 * NestedRun<L, IPredicate> conditionRun = new
+					 * NestedRun(currentRun.getStateAtPosition(currentRun.getLength() - 1), null, 0, null); NestedRun<L,
+					 * IPredicate> currentRunWithCondition = currentRun.concatenate(conditionRun);
+					 */
 					final TracePredicates trace = mTraceChecker.checkTrace(currentRun, null, condition);
 					mStatisticsUtils.addTraceCheck();
 					if (mTraceChecker.wasImperfectProof()) {
@@ -184,5 +226,9 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 
 	public ITraceChecker<L> getTraceChecker() {
 		return mTraceChecker;
+	}
+
+	public enum ConComTraceCheckMode {
+		GENERATOR, GENERATOR_WITH_CONTEXT, SYMBOLIC_RELATION
 	}
 }
