@@ -36,31 +36,6 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Future-live\ optimization=false
 
 
-#Thu Nov 06 16:26:23 CET 2014
-\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=
-file_export_version=3.0
-@de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=0.0.1
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Interpolants\ consolidation=false
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Compute\ Interpolants\ along\ a\ Counterexample=FPandBP
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Use\ separate\ solver\ for\ trace\ checks=true
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/SMT\ solver=External_ModelsAndUnsatCoreMode
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Command\ for\ external\ solver=z3 SMTLIB2_COMPLIANT\=true -memory\:2024 -smt2 -in
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Positions\ where\ we\ compute\ the\ Hoare\ Annotation=LoopHeads
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Trace\ refinement\ strategy=CAMEL
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Trace\ refinement\ exception\ blacklist=DEPENDING
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Automaton\ type\ used\ in\ concurrency\ analysis=PETRI_NET
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Apply\ one-shot\ large\ block\ encoding\ in\ concurrent\ analysis=false
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Looper\ check\ in\ Petri\ net\ analysis=SEMANTIC
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Order\ on\ configurations\ for\ Petri\ net\ unfoldings=DBO
-
-
-#Thu Oct 29 23:01:13 CET 2015
-file_export_version=3.0
-@de.uni_freiburg.informatik.ultimate.boogie.procedureinliner=0.0.1
-\!/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner=
-/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/Ignore\ calls\ to\ procedures\ called\ more\ than\ once=ONLY_FOR_SEQUENTIAL_PROGRAMS
-
-
 #Tue Nov 21 08:04:41 CET 2017
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding=
 file_export_version=3.0
