@@ -138,7 +138,7 @@ public class YamlWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 
 	@Override
 	public String sizeInformation() {
-		return mAbstraction.sizeInformation();
+		return "has currently " + size() + " states, but on-demand construction may add more states";
 	}
 
 	@Override
