@@ -51,9 +51,7 @@ import org.junit.Before;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
@@ -539,6 +537,12 @@ public abstract class ConditionalCommutativityTestSuite implements IMessagePrint
 		public IPredicate generateCondition(final IPredicate context, final UnmodifiableTransFormula a,
 				final UnmodifiableTransFormula b) {
 			return mMap.get(new Triple<>(context, a, b));
+		}
+
+		@Override
+		public boolean isSymmetric() {
+			// Unclear what makes sense here, so we err on the safe side.
+			return false;
 		}
 	}
 
