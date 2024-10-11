@@ -64,7 +64,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.pref
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.WitnessAutomatonAbstractionProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.WitnessTransformer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IWitnessTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 
 /**
@@ -90,7 +90,7 @@ public class BuchiCegarLoopFactory<L extends IIcfgTransition<?>> {
 	}
 
 	public AbstractBuchiCegarLoop<L, ?> constructCegarLoop(final IIcfg<?> icfg,
-			final WitnessTransformer<L> witnessTransformer) {
+			final IWitnessTransformer<L> witnessTransformer) {
 		final String variableSuffix = mNumberOfConstructions > 0 ? Integer.toString(mNumberOfConstructions) : "";
 		mNumberOfConstructions++;
 		final RankVarConstructor rankVarConstructor = new RankVarConstructor(icfg.getCfgSmtToolkit(), variableSuffix);
@@ -144,7 +144,7 @@ public class BuchiCegarLoopFactory<L extends IIcfgTransition<?>> {
 
 	private BuchiAutomatonCegarLoop<L> createBuchiAutomatonCegarLoop(final IIcfg<?> icfg,
 			final RankVarConstructor rankVarConstructor, final PredicateFactory predicateFactory,
-			final WitnessTransformer<L> witnessTransformer, final PredicateFactoryRefinement stateFactory,
+			final IWitnessTransformer<L> witnessTransformer, final PredicateFactoryRefinement stateFactory,
 			IInitialAbstractionProvider<L, ? extends INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> provider) {
 		if (witnessTransformer != null) {
 			provider = new WitnessAutomatonAbstractionProvider<>(predicateFactory, provider, witnessTransformer);

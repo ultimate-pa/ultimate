@@ -127,7 +127,7 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 	 */
 	public Pair<? extends BasicCegarLoop<L, ?>, IProofProducer<IIcfg<IcfgLocation>, ?>> constructCegarLoop(
 			final IUltimateServiceProvider services, final DebugIdentifier name, final IIcfg<IcfgLocation> root,
-			final Set<IcfgLocation> errorLocs, final WitnessTransformer<L> witnessTransformer,
+			final Set<IcfgLocation> errorLocs, final IWitnessTransformer<L> witnessTransformer,
 			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile) {
 		mCegarLoopBenchmark = new CegarLoopStatisticsGenerator();
 
@@ -184,7 +184,7 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 			final DebugIdentifier name, final IIcfg<IcfgLocation> root, final PredicateFactory predicateFactory,
 			final Set<IcfgLocation> errorLocs,
 			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile,
-			final PredicateFactoryRefinement stateFactoryForRefinement, final WitnessTransformer<L> witnessTransformer,
+			final PredicateFactoryRefinement stateFactoryForRefinement, final IWitnessTransformer<L> witnessTransformer,
 			final INestedWordAutomaton<L, IPredicate> abstraction, final NwaHoareProofProducer<L> proofProducer) {
 
 		final LanguageOperation languageOperation = services.getPreferenceProvider(Activator.PLUGIN_ID)
@@ -227,7 +227,7 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 		}
 	}
 
-	private static void requireNoWitnesses(final WitnessTransformer<?> witnessTransformer, final String analysis) {
+	private static void requireNoWitnesses(final IWitnessTransformer<?> witnessTransformer, final String analysis) {
 		if (witnessTransformer != null) {
 			throw new UnsupportedOperationException("Witness automata not supported for " + analysis);
 		}
@@ -236,7 +236,7 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 	private Triple<IInitialAbstractionProvider<L, ? extends INestedWordAutomaton<L, IPredicate>>, Supplier<NwaHoareProofProducer<L>>, Function<IFloydHoareAnnotation<IPredicate>, IFloydHoareAnnotation<IcfgLocation>>>
 			createAutomataAbstractionProvider(final IUltimateServiceProvider services, final boolean isConcurrent,
 					final PredicateFactory predicateFactory, final PredicateFactoryRefinement stateFactory,
-					final WitnessTransformer<L> witnessTransformer) {
+					final IWitnessTransformer<L> witnessTransformer) {
 		if (!isConcurrent) {
 			final var provider = new NwaInitialAbstractionProvider<L>(services, stateFactory, mPrefs.interprocedural(),
 					predicateFactory, mPrefs.getHoareSettings());

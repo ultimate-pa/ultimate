@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  */
 @FunctionalInterface
-public interface WitnessTransformer<L> {
+public interface IWitnessTransformer<L> {
 	INestedWordAutomaton<L, IPredicate> transform(INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction,
 			final PredicateFactory predicateFactory) throws AutomataLibraryException;
 }

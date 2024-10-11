@@ -117,10 +117,10 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 	private Map<IcfgLocation, IcfgLocation> mLocationMap;
 	private final Map<IcfgLocation, IResult> mResultsPerLocation;
 	private final CegarLoopResultReporter<L> mResultReporter;
-	private final WitnessTransformer<L> mWitnessTransformer;
+	private final IWitnessTransformer<L> mWitnessTransformer;
 
 	public TraceAbstractionStarter(final IUltimateServiceProvider services, final IIcfg<IcfgLocation> icfg,
-			final WitnessTransformer<L> witnessTransformer,
+			final IWitnessTransformer<L> witnessTransformer,
 			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile,
 			final Supplier<IPLBECompositionFactory<L>> createCompositionFactory,
 			final ICopyActionFactory<L> copyFactory, final Class<L> transitionClazz) {

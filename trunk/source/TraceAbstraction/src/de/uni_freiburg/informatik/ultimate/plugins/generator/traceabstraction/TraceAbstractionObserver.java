@@ -65,7 +65,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 
 	private final List<IIcfg<?>> mIcfgs;
 	private IElement mRootOfNewModel;
-	private WitnessTransformer<IcfgEdge> mTransformer;
+	private IWitnessTransformer<IcfgEdge> mTransformer;
 	private final List<AutomataTestFileAST> mAutomataTestFileAsts;
 	private boolean mLastModel;
 	private ModelType mCurrentGraphType;

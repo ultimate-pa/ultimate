@@ -85,7 +85,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.cega
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.WitnessTransformer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IWitnessTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessModelToAutomatonTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessUtils;
@@ -108,7 +108,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 
 	private final List<IIcfg<?>> mIcfgs;
 	private IElement mRootOfNewModel;
-	private WitnessTransformer<IcfgEdge> mWitnessTransformer;
+	private IWitnessTransformer<IcfgEdge> mWitnessTransformer;
 	private final List<AutomataTestFileAST> mAutomataTestFileAsts;
 	private boolean mLastModel;
 	private ModelType mCurrentGraphType;

@@ -51,13 +51,13 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
  */
 public class WitnessAutomatonAbstractionProvider<L extends IIcfgTransition<?>>
 		implements IInitialAbstractionProvider<L, INestedWordAutomaton<L, IPredicate>> {
-	private final WitnessTransformer<L> mWitnessTransformer;
+	private final IWitnessTransformer<L> mWitnessTransformer;
 	private final IInitialAbstractionProvider<L, ? extends INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> mUnderlying;
 	private final PredicateFactory mPredicateFactory;
 
 	public WitnessAutomatonAbstractionProvider(final PredicateFactory predicateFactory,
 			final IInitialAbstractionProvider<L, ? extends INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> underlying,
-			final WitnessTransformer<L> witnessTransformer) {
+			final IWitnessTransformer<L> witnessTransformer) {
 		mPredicateFactory = predicateFactory;
 		mWitnessTransformer = witnessTransformer;
 		mUnderlying = underlying;
