@@ -85,10 +85,4 @@ public class MLPredicate extends BasicPredicate implements IMLPredicate {
 		result += mFormula.toString();
 		return result;
 	}
-
-	@Override
-	public boolean isUnknown() {
-		return false;
-	}
-
 }
