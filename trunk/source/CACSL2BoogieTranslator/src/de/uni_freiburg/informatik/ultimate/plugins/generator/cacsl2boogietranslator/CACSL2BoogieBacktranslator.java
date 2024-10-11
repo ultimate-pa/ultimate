@@ -223,13 +223,13 @@ public class CACSL2BoogieBacktranslator extends
 					// it comes from the if(!cond)break; construct in Boogie.
 					// we therefore invert the stepinfo, i.e. from condevaltrue
 					// to condevalfalse
-					newAte = handleConditional(ate, cloc, ((CASTWhileStatement) cnode).getCondition());
+					newAte = handleLoopConditional(ate, cloc, ((CASTWhileStatement) cnode).getCondition());
 				} else if (cnode instanceof CASTDoStatement) {
 					// same as while
-					newAte = handleConditional(ate, cloc, ((CASTDoStatement) cnode).getCondition());
+					newAte = handleLoopConditional(ate, cloc, ((CASTDoStatement) cnode).getCondition());
 				} else if (cnode instanceof CASTForStatement) {
 					// same as while
-					newAte = handleConditional(ate, cloc, ((CASTForStatement) cnode).getConditionExpression());
+					newAte = handleLoopConditional(ate, cloc, ((CASTForStatement) cnode).getConditionExpression());
 				} else if (cnode instanceof CASTFunctionCallExpression) {
 					// more complex, handled separately
 					i = handleCASTFunctionCallExpression(oldPE, i, (CASTFunctionCallExpression) cnode, cloc,
@@ -314,7 +314,7 @@ public class CACSL2BoogieBacktranslator extends
 		return check.areAllTemp();
 	}
 
-	private AtomicTraceElement<CACSLLocation> handleConditional(final AtomicTraceElement<BoogieASTNode> ate,
+	private AtomicTraceElement<CACSLLocation> handleLoopConditional(final AtomicTraceElement<BoogieASTNode> ate,
 			final CACSLLocation cloc, final IASTExpression condition) {
 		final EnumSet<StepInfo> newSi = invertConditionInStepInfo(ate.getStepInfo());
 		if (newSi == null) {
