@@ -53,7 +53,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermDomainOperationProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.predicates.IterativePredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.predicates.IterativePredicateTransformer.IPredicatePostprocessor;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.predicates.IterativePredicateTransformer.QuantifierEliminationPostprocessor;
@@ -140,8 +139,6 @@ class ErrorAutomatonBuilder<L extends IIcfgTransition<?>> implements IErrorAutom
 	 *            SMT toolkit
 	 * @param simplificationTechnique
 	 *            simplification technique
-	 * @param xnfConversionTechnique
-	 *            XNF conversion technique
 	 * @param symbolTable
 	 *            symbol table
 	 * @param predicateFactoryErrorAutomaton
@@ -157,17 +154,17 @@ class ErrorAutomatonBuilder<L extends IIcfgTransition<?>> implements IErrorAutom
 	 */
 	public ErrorAutomatonBuilder(final IUltimateServiceProvider services, final PredicateFactory predicateFactory,
 			final IPredicateUnifier predicateUnifier, final CfgSmtToolkit csToolkit,
-			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
-			final IIcfgSymbolTable symbolTable,
+			final SimplificationTechnique simplificationTechnique, final IIcfgSymbolTable symbolTable,
 			final PredicateFactoryForInterpolantAutomata predicateFactoryErrorAutomaton,
-			final INestedWordAutomaton<L, IPredicate> abstraction, final NestedWord<L> trace) {
+			final INestedWordAutomaton<L, IPredicate> abstraction,
+			final NestedWord<L> trace) {
 		final ILogger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		final PredicateUnificationMechanism internalPredicateUnifier =
 				new PredicateUnificationMechanism(predicateUnifier, UNIFY_PREDICATES);
 
 		mResultBeforeEnhancement = constructStraightLineAutomaton(services, logger, csToolkit, predicateFactory,
-				internalPredicateUnifier, simplificationTechnique, xnfConversionTechnique, symbolTable,
-				predicateFactoryErrorAutomaton, NestedWordAutomataUtils.getVpAlphabet(abstraction), trace);
+				internalPredicateUnifier, simplificationTechnique, symbolTable, predicateFactoryErrorAutomaton,
+				NestedWordAutomataUtils.getVpAlphabet(abstraction), trace);
 
 		mResultAfterEnhancement =
 				USE_ENHANCEMENT
@@ -206,9 +203,9 @@ class ErrorAutomatonBuilder<L extends IIcfgTransition<?>> implements IErrorAutom
 	private NestedWordAutomaton<L, IPredicate> constructStraightLineAutomaton(final IUltimateServiceProvider services,
 			final ILogger logger, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final PredicateUnificationMechanism predicateUnifier, final SimplificationTechnique simplificationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique, final IIcfgSymbolTable symbolTable,
-			final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata,
-			final VpAlphabet<L> alphabet, final NestedWord<L> trace) throws AssertionError {
+			final IIcfgSymbolTable symbolTable, final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata,
+			final VpAlphabet<L> alphabet,
+			final NestedWord<L> trace) throws AssertionError {
 		final IPredicate falsePredicate = predicateUnifier.getFalsePredicate();
 		final IPredicate truePredicate = predicateUnifier.getTruePredicate();
 		final List<IPredicatePostprocessor> postprocessors;
@@ -222,8 +219,8 @@ class ErrorAutomatonBuilder<L extends IIcfgTransition<?>> implements IErrorAutom
 
 		// compute 'wp' sequence from 'false'
 		final TracePredicates wpPredicates = getPredicates(services, csToolkit, predicateFactory,
-				simplificationTechnique, xnfConversionTechnique, symbolTable, truePredicate, trace, null,
-				falsePredicate, postprocessors, PredicateTransformerType.WP);
+				simplificationTechnique, symbolTable, truePredicate, trace, null, falsePredicate,
+				postprocessors, PredicateTransformerType.WP);
 
 		// negate 'wp' sequence to get 'pre'
 		final List<IPredicate> wpIntermediatePredicates = wpPredicates.getPredicates();
@@ -238,8 +235,8 @@ class ErrorAutomatonBuilder<L extends IIcfgTransition<?>> implements IErrorAutom
 		if (INTERSECT_WITH_SP_PREDICATES) {
 			// compute 'sp' sequence from error precondition
 			final TracePredicates spPredicates = getPredicates(services, csToolkit, predicateFactory,
-					simplificationTechnique, xnfConversionTechnique, symbolTable, truePredicate, trace, prePrecondition,
-					null, postprocessors, PredicateTransformerType.SP);
+					simplificationTechnique, symbolTable, truePredicate, trace, prePrecondition, null,
+					postprocessors, PredicateTransformerType.SP);
 			assert preIntermediatePredicates.size() == spPredicates.getPredicates().size();
 			newIntermediatePredicates = new ArrayList<>(preIntermediatePredicates.size());
 			final Iterator<IPredicate> preIt = preIntermediatePredicates.iterator();
@@ -270,15 +267,14 @@ class ErrorAutomatonBuilder<L extends IIcfgTransition<?>> implements IErrorAutom
 
 	private TracePredicates getPredicates(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final SimplificationTechnique simplificationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique, final IIcfgSymbolTable symbolTable,
-			final IPredicate truePredicate, final NestedWord<L> trace, final IPredicate precondition,
-			final IPredicate postcondition, final List<IPredicatePostprocessor> postprocessors,
-			final PredicateTransformerType predicateTransformer) throws AssertionError {
+			final IIcfgSymbolTable symbolTable, final IPredicate truePredicate,
+			final NestedWord<L> trace, final IPredicate precondition, final IPredicate postcondition,
+			final List<IPredicatePostprocessor> postprocessors, final PredicateTransformerType predicateTransformer) throws AssertionError {
 		final DefaultTransFormulas<L> dtf = new DefaultTransFormulas<>(trace, precondition, postcondition,
 				Collections.emptySortedMap(), csToolkit.getOldVarsAssignmentCache(), false);
 		final IterativePredicateTransformer<L> ipt = new IterativePredicateTransformer<>(predicateFactory,
 				csToolkit.getManagedScript(), csToolkit.getModifiableGlobalsTable(), services, trace, precondition,
-				postcondition, null, truePredicate, simplificationTechnique, xnfConversionTechnique, symbolTable);
+				postcondition, null, truePredicate, simplificationTechnique, symbolTable);
 		final TracePredicates predicates;
 		try {
 			switch (predicateTransformer) {

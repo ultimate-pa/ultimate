@@ -336,7 +336,7 @@ public class SmtParser implements ISource {
 		final ParseEnvironment parseEnv = new ExceptionThrowingParseEnvironment(script, optionMap);
 		try {
 			parseEnv.parseScript(file.getAbsolutePath());
-			mLogger.info("Succesfully executed SMT file " + file.getAbsolutePath());
+			mLogger.info("Successfully executed SMT file " + file.getAbsolutePath());
 			if (smtParserMode == SmtParserMode.UltimateTreeAutomizer) {
 				mOutput = ((HornClauseParserScript) script).getHornClauses();
 			}
@@ -358,7 +358,7 @@ public class SmtParser implements ISource {
 		final ParseEnvironment parseEnv1 = new ParseEnvironment(cns, optionMap);
 		try {
 			parseEnv1.parseScript(file.getAbsolutePath());
-			mLogger.info("Succesfully read SMT file " + file.getAbsolutePath());
+			mLogger.info("Successfully read SMT file " + file.getAbsolutePath());
 		} catch (final SMTLIBException exc) {
 			mLogger.info("Failed while reading SMT file " + file.getAbsolutePath());
 			mLogger.info("SMTLIBException " + exc.getMessage());
@@ -375,7 +375,7 @@ public class SmtParser implements ISource {
 				new ParseEnvironment(new FilteredLoggingScript(outputFilename, true, cns.getNames()), optionMap);
 		try {
 			parseEnv2.parseScript(file.getAbsolutePath());
-			mLogger.info("Succesfully wrote SMT file " + outputFilename);
+			mLogger.info("Successfully wrote SMT file " + outputFilename);
 		} catch (final SMTLIBException exc) {
 			mLogger.fatal("Failed while writing SMT file " + outputFilename, exc);
 		}

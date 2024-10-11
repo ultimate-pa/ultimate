@@ -53,7 +53,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.I
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermClassifier;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
@@ -223,7 +222,7 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 			return new BPredicateUnifier(services, mLogger, managedScript, mPredicateFactory, symbolTable);
 		}
 		return new PredicateUnifier(mLogger, services, managedScript, mPredicateFactory, symbolTable,
-				mTaPrefs.getSimplificationTechnique(), mTaPrefs.getXnfConversionTechnique());
+				mTaPrefs.getSimplificationTechnique());
 	}
 
 	/**
@@ -440,14 +439,13 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 		private IInterpolantProvider<L> createMcrInterpolantProvider() {
 			final ManagedScript managedScript = mPrefs.getCfgSmtToolkit().getManagedScript();
 			final SimplificationTechnique simplificationTechnique = mPrefs.getSimplificationTechnique();
-			final XnfConversionTechnique xnfConversionTechnique = mPrefs.getXnfConversionTechnique();
 			switch (mTaPrefs.getMcrInterpolantMethod()) {
 			case WP:
 				return new WpInterpolantProvider<>(mServices, mLogger, managedScript, simplificationTechnique,
-						xnfConversionTechnique, mPredicateUnifier);
+						mPredicateUnifier);
 			case SP:
 				return new SpInterpolantProvider<>(mServices, mLogger, managedScript, simplificationTechnique,
-						xnfConversionTechnique, mPredicateUnifier);
+						mPredicateUnifier);
 			default:
 				throw new IllegalArgumentException("Setting " + mTaPrefs.getMcrInterpolantMethod() + " is unsupported");
 			}

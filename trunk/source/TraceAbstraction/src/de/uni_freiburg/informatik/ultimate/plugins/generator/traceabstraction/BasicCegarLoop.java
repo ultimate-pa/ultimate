@@ -190,7 +190,7 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 
 		final TaCheckAndRefinementPreferences<L> taCheckAndRefinementPrefs =
 				new TaCheckAndRefinementPreferences<>(getServices(), mPref, interpolation, mSimplificationTechnique,
-						mXnfConversionTechnique, mCsToolkit, mPredicateFactory, mIcfg);
+						mCsToolkit, mPredicateFactory, mIcfg);
 		mStrategyFactory = new StrategyFactory<>(mLogger, mPref, taCheckAndRefinementPrefs, mIcfg, mPredicateFactory,
 				mPredicateFactoryInterpolantAutomata, transitionClazz);
 
@@ -253,8 +253,7 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 		}
 
 		final IPredicateUnifier unifier = new PredicateUnifier(mLogger, mServices, mCsToolkit.getManagedScript(),
-				mPredicateFactory, mCsToolkit.getSymbolTable(), mSimplificationTechnique, mXnfConversionTechnique,
-				predicates.toArray(IPredicate[]::new));
+				mPredicateFactory, mCsToolkit.getSymbolTable(), mSimplificationTechnique, predicates.toArray(IPredicate[]::new));
 
 		final VpAlphabet<L> alphabet;
 		if (mAbstraction instanceof INwaBasis<?, ?>) {
@@ -338,8 +337,8 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 				final FlowSensitiveFaultLocalizer<L> fl = new FlowSensitiveFaultLocalizer<>(
 						(NestedRun<L, IPredicate>) mCounterexample, cfg, getServices(), mCsToolkit, mPredicateFactory,
 						mCsToolkit.getModifiableGlobalsTable(), mRefinementResult.getPredicateUnifier(),
-						mFaultLocalizationMode, mSimplificationTechnique, mXnfConversionTechnique,
-						mIcfg.getCfgSmtToolkit().getSymbolTable(), (IIcfg<IcfgLocation>) mIcfg);
+						mFaultLocalizationMode, mSimplificationTechnique, mIcfg.getCfgSmtToolkit().getSymbolTable(),
+						(IIcfg<IcfgLocation>) mIcfg);
 				if (!(rcfgProgramExecution instanceof IcfgProgramExecution)) {
 					throw new UnsupportedOperationException("Program execution is not " + IcfgProgramExecution.class);
 				}
@@ -457,7 +456,7 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 		final Set<L> counterexampleLetters = mCounterexample.getWord().asSet();
 		final PathProgramConstructionResult ppcr =
 				PathProgram.constructPathProgram("PathprogramSubtractedCheckIteration" + getIteration(), mIcfg,
-						counterexampleLetters, Collections.emptySet());
+						counterexampleLetters, Collections.emptySet(), x -> true);
 		final Map<IIcfgTransition<?>, IIcfgTransition<?>> oldTransition2NewTransition =
 				ppcr.getOldTransition2NewTransition();
 		final Map<IIcfgTransition<?>, IIcfgTransition<?>> newTransition2OldTransition =

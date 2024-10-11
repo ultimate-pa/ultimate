@@ -36,7 +36,6 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
@@ -277,6 +276,21 @@ public class StandardFunctionHandler {
 		/** https://www.man7.org/linux/man-pages/man3/sleep.3.html **/
 		fill(map, "sleep", this::handleSleep);
 
+		/**
+		 * https://linux.die.net/man/3/ntohs "htonl, htons, ntohl, ntohs - convert values between host and network byte
+		 * order"
+		 *
+		 * We simply overapproximate those functions.
+		 */
+		fill(map, "htonl", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
+				new CPrimitive(CPrimitives.UINT)));
+		fill(map, "htons", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
+				new CPrimitive(CPrimitives.USHORT)));
+		fill(map, "ntohl", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
+				new CPrimitive(CPrimitives.UINT)));
+		fill(map, "ntohs", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
+				new CPrimitive(CPrimitives.USHORT)));
+
 		/** functions of pthread library **/
 		fill(map, "pthread_create", this::handlePthread_create);
 		fill(map, "pthread_join", this::handlePthread_join);
@@ -285,6 +299,7 @@ public class StandardFunctionHandler {
 		fill(map, "pthread_mutex_trylock", this::handlePthread_mutex_trylock);
 		fill(map, "pthread_mutex_unlock", this::handlePthread_mutex_unlock);
 		fill(map, "pthread_exit", this::handlePthread_exit);
+		fill(map, "pthread_detach", this::handlePthread_detach);
 		fill(map, "pthread_cond_init", this::handlePthread_success);
 		fill(map, "pthread_cond_wait", this::handlePthread_cond_wait);
 		fill(map, "pthread_cond_signal", this::handlePthread_success);
@@ -331,7 +346,8 @@ public class StandardFunctionHandler {
 		fill(map, "wprintf", (main, node, loc, name) -> handlePrintF(main, node, loc));
 		fill(map, "fprintf", (main, node, loc, name) -> handlePrintFunction(main, node, loc));
 		fill(map, "sprintf", (main, node, loc, name) -> handleSPrintF(main, node, loc));
-		fill(map, "snprintf", (main, node, loc, name) -> handleSnPrintF(main, node, loc));
+		fill(map, "snprintf", this::handleSnPrintF);
+		fill(map, "swprintf", this::handleSnPrintF);
 
 		// https://en.cppreference.com/w/c/io/fscanf
 		fill(map, "scanf", (main, node, loc, name) -> handleScanf(name, main, node, loc, 1));
@@ -351,6 +367,36 @@ public class StandardFunctionHandler {
 
 		// https://en.cppreference.com/w/c/io/puts
 		fill(map, "puts", this::handlePuts);
+
+		/**
+		 * 7.21.3 Files
+		 *
+		 * We cannot handle files properly, therefore we just overapproximate. For functions that modify the files, we
+		 * use the "assert false" overapproximation, otherwise we just overapproximate the return value.
+		 */
+		fill(map, "fflush", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
+				new CPrimitive(CPrimitives.INT)));
+		fill(map, "fopen", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
+				new CPointer(new CPrimitive(CPrimitives.VOID))));
+		fill(map, "fclose", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
+				new CPrimitive(CPrimitives.INT)));
+		fill(map, "feof", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
+				new CPrimitive(CPrimitives.INT)));
+		fill(map, "fseek", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
+				new CPrimitive(CPrimitives.INT)));
+		fill(map, "fread", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
+				new CPrimitive(CPrimitives.ULONG)));
+		fill(map, "ferror", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
+				new CPrimitive(CPrimitives.INT)));
+		fill(map, "fputs", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
+				new CPrimitive(CPrimitives.INT)));
+		fill(map, "fwrite", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
+				new CPrimitive(CPrimitives.ULONGLONG)));
+		fill(map, "setbuf", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
+				new CPrimitive(CPrimitives.VOID)));
+		// https://en.cppreference.com/w/c/io/clearerr
+		// We don't handle the error flags anyway, so we just dispatch the argument.
+		fill(map, "clearerr", (main, node, loc, name) -> handleVoidFunctionBySkipAndDispatch(main, node, loc, name, 1));
 
 		fill(map, "__builtin_memcpy", this::handleMemcpy);
 		fill(map, "__memcpy", this::handleMemcpy);
@@ -514,6 +560,41 @@ public class StandardFunctionHandler {
 		fill(map, "strcpy", this::handleStrCpy);
 		fill(map, "strncpy", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 3,
 				new CPointer(new CPrimitive(CPrimitives.CHAR))));
+		// https://en.cppreference.com/w/c/string/byte/toupper
+		fill(map, "toupper", this::handleToUpper);
+
+		// https://en.cppreference.com/w/c/string/byte/strtok
+		fill(map, "strtok", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 2,
+				new CPointer(new CPrimitive(CPrimitives.CHAR))));
+
+		// https://en.cppreference.com/w/c/string/byte/strcat
+		fill(map, "strcat", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
+				new CPointer(new CPrimitive(CPrimitives.CHAR))));
+		// https://en.cppreference.com/w/c/string/byte/strncat
+		fill(map, "strncat", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
+				new CPointer(new CPrimitive(CPrimitives.CHAR))));
+
+		// https://en.cppreference.com/w/c/string/byte/strcspn
+		fill(map, "strcspn", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 2,
+				new CPrimitive(CPrimitives.ULONG)));
+
+		// https://en.cppreference.com/w/c/string/byte/strpbrk
+		fill(map, "strpbrk", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 2,
+				new CPointer(new CPrimitive(CPrimitives.CHAR))));
+
+		// https://en.cppreference.com/w/c/string/byte/memchr
+		fill(map, "memchr", (main, node, loc, name) -> handleStringSearch(main, node, loc, name, 3));
+		// https://en.cppreference.com/w/c/string/byte/strstr
+		fill(map, "strstr", (main, node, loc, name) -> handleStringSearch(main, node, loc, name, 2));
+		// https://en.cppreference.com/w/cpp/string/byte/strrchr
+		fill(map, "strrchr", (main, node, loc, name) -> handleStringSearch(main, node, loc, name, 2));
+
+		// https://en.cppreference.com/w/c/string/byte/strerror
+		fill(map, "strerror", this::handleStrerror);
+
+		// https://en.cppreference.com/w/c/string/byte/strspn
+		fill(map, "strspn", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
+				new CPrimitive(CPrimitives.ULONGLONG)));
 
 		/** various float builtins **/
 		fill(map, "nan", (main, node, loc, name) -> handleNaNOrInfinity(loc, name));
@@ -680,14 +761,14 @@ public class StandardFunctionHandler {
 		fill(map, "__VERIFIER_nondet__Bool", (main, node, loc, name) -> handleVerifierNondetBool(main, loc));
 		fill(map, "__VERIFIER_nondet_char",
 				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.CHAR)));
-		fill(map, "__VERIFIER_nondet_pchar",
-				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.CHAR)));
+		fill(map, "__VERIFIER_nondet_pchar", (main, node, loc, name) -> handleVerifierNonDet(main, loc,
+				new CPointer(new CPrimitive(CPrimitives.CHAR))));
+		fill(map, "__VERIFIER_nondet_charp", (main, node, loc, name) -> handleVerifierNonDet(main, loc,
+				new CPointer(new CPrimitive(CPrimitives.CHAR))));
 		fill(map, "__VERIFIER_nondet_float",
 				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.FLOAT)));
 		fill(map, "__VERIFIER_nondet_double",
 				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.DOUBLE)));
-		fill(map, "__VERIFIER_nondet_size_t",
-				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.INT)));
 		fill(map, "__VERIFIER_nondet_int",
 				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.INT)));
 		fill(map, "__VERIFIER_nondet_long",
@@ -696,13 +777,11 @@ public class StandardFunctionHandler {
 				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.LONGLONG)));
 		fill(map, "__VERIFIER_nondet_int128",
 				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.INT128)));
-		fill(map, "__VERIFIER_nondet_loff_t",
-				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.LONG)));
 		fill(map, "__VERIFIER_nondet_short",
 				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.SHORT)));
-		fill(map, "__VERIFIER_nondet_pointer", (main, node, loc, name) -> handleVerifierNonDet(main, loc,
-				new CPointer(new CPrimitive(CPrimitives.VOID))));
 		fill(map, "__VERIFIER_nondet_uchar",
+				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.UCHAR)));
+		fill(map, "__VERIFIER_nondet_unsigned_char",
 				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.UCHAR)));
 		fill(map, "__VERIFIER_nondet_unsigned",
 				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.UINT)));
@@ -716,6 +795,22 @@ public class StandardFunctionHandler {
 				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.UINT128)));
 		fill(map, "__VERIFIER_nondet_ushort",
 				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.USHORT)));
+
+		// TODO: These are no predefined types, thus the return value may depend on the benchmark
+		fill(map, "__VERIFIER_nondet_loff_t",
+				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.LONG)));
+		fill(map, "__VERIFIER_nondet_size_t",
+				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.ULONG)));
+		fill(map, "__VERIFIER_nondet_pthread_t",
+				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.ULONG)));
+		fill(map, "__VERIFIER_nondet_sector_t",
+				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.ULONG)));
+		fill(map, "__VERIFIER_nondet_u8",
+				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.UCHAR)));
+		fill(map, "__VERIFIER_nondet_u16",
+				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.USHORT)));
+		fill(map, "__VERIFIER_nondet_u32",
+				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.UINT)));
 
 		fill(map, "__VERIFIER_atomic_begin", (main, node, loc, name) -> handleByFunctionCall(main, node, loc, name,
 				new CPrimitive(CPrimitives.VOID)));
@@ -790,6 +885,55 @@ public class StandardFunctionHandler {
 				new CPrimitive(CPrimitives.DOUBLE)));
 		fill(map, "strtold", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 2,
 				new CPrimitive(CPrimitives.LONGDOUBLE)));
+
+		/**
+		 * 7.22.1.4 The strtol, strtoll, strtoul, and strtoull functions
+		 *
+		 * see https://en.cppreference.com/w/c/string/byte/strtoul
+		 *
+		 * Interprets an unsigned integer value in a byte string pointed to by str.
+		 *
+		 * We handle this by overapproximation and do not check of range errors.
+		 *
+		 */
+		fill(map, "strtol", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 3,
+				new CPrimitive(CPrimitives.LONG)));
+		fill(map, "strtoll", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 3,
+				new CPrimitive(CPrimitives.LONGLONG)));
+		fill(map, "strtoul", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 3,
+				new CPrimitive(CPrimitives.ULONG)));
+		fill(map, "strtoull", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 3,
+				new CPrimitive(CPrimitives.ULONGLONG)));
+
+		// https://en.cppreference.com/w/c/io/putchar
+		fill(map, "putchar", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
+				new CPrimitive(CPrimitives.INT)));
+
+		// https://en.cppreference.com/w/c/io/vfprintf
+		fill(map, "vprintf", (main, node, loc, name) -> handlePrintF(main, node, loc));
+		fill(map, "vfprintf", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
+				new CPrimitive(CPrimitives.INT)));
+		fill(map, "vsprintf", this::handleSnPrintF);
+		fill(map, "vsnprintf", this::handleSnPrintF);
+		fill(map, "vprintf_s", (main, node, loc, name) -> handlePrintF(main, node, loc));
+		fill(map, "vfprintf_s", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
+				new CPrimitive(CPrimitives.INT)));
+		fill(map, "vsprintf_s", this::handleSnPrintF);
+		fill(map, "vsnprintf_s", this::handleSnPrintF);
+
+		/**
+		 * 7.27 Date and time <time.h>
+		 *
+		 * We just overapproximate all functions
+		 */
+		fill(map, "ctime", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
+				new CPointer(new CPrimitive(CPrimitives.CHAR))));
+		fill(map, "localtime", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
+				new CPointer(new CPrimitive(CPrimitives.VOID))));
+		fill(map, "mktime", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
+				new CPointer(new CPrimitive(CPrimitives.VOID))));
+		fill(map, "strftime", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 4,
+				new CPrimitive(CPrimitives.ULONG)));
 
 		/**
 		 * 7.22.2.1 The rand function
@@ -1001,6 +1145,34 @@ public class StandardFunctionHandler {
 		return builder.build();
 	}
 
+	/**
+	 * This function is used to model functions that perform string search and return a substring (like memchr, strstr,
+	 * strrchr).
+	 *
+	 * We just dispatch the arguments and overapproximate the return value with some non-deterministic string.
+	 */
+	private Result handleStringSearch(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name, final int numberOfArguments) {
+		final var builder = new ExpressionResultBuilder();
+		checkArguments(loc, numberOfArguments, name, node.getArguments());
+		for (final var arg : node.getArguments()) {
+			if (!isStringLiteral(arg)) {
+				final var argRes = (ExpressionResult) main.dispatch(arg);
+				builder.addAllExceptLrValue(argRes);
+			}
+		}
+		builder.addOverapprox(new Overapprox(name, loc));
+		return builder.addAllIncludingLrValue(getNondetStringOrNull(loc)).build();
+	}
+
+	private Result handleStrerror(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+			final String name) {
+		checkArguments(loc, 1, name, node.getArguments());
+		// Just dispatch the argument and return a non-deterministic string
+		return new ExpressionResultBuilder((ExpressionResult) main.dispatch(node.getArguments()[0]))
+				.addAllIncludingLrValue(getNondetStringOrNull(loc)).build();
+	}
+
 	private ExpressionResult getNondetStringOrNull(final ILocation loc) {
 		final var charType = new CPrimitive(CPrimitives.CHAR);
 		final var sizeT = mTypeSizes.getSizeT();
@@ -1060,23 +1232,34 @@ public class StandardFunctionHandler {
 			final String name) {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 2, name, arguments);
+		final ExpressionResult pointer = mExprResultTransformer.dispatchPointerLValue(main, loc, arguments[0]);
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		final ExpressionResult memoryOrder =
+				mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, arguments[1]);
+		builder.addAllExceptLrValue(pointer, memoryOrder);
 		final ExpressionResult write =
-				mExprResultTransformer.dispatchPointerWrite(main, loc, arguments[0], mExpressionTranslation
+				mExprResultTransformer.makePointerAssignment(loc, pointer.getLrValue(), mExpressionTranslation
 						.constructLiteralForIntegerType(loc, new CPrimitive(CPrimitives.BOOL), BigInteger.ZERO));
-		return applyMemoryOrder(loc, write, (ExpressionResult) main.dispatch(arguments[1]));
+		return builder.addAllExceptLrValue(applyMemoryOrder(loc, write, memoryOrder.getLrValue().getValue())).build();
 	}
 
 	private Result handleAtomicTestAndSet(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 2, name, arguments);
+		final ExpressionResult pointer = mExprResultTransformer.dispatchPointerLValue(main, loc, arguments[0]);
+		final ExpressionResultBuilder atomicBuilder =
+				new ExpressionResultBuilder(mExprResultTransformer.readPointerValue(loc, pointer.getLrValue()));
 		final CPrimitive boolType = new CPrimitive(CPrimitives.BOOL);
 		final Expression value = mExpressionTranslation.constructLiteralForIntegerType(loc, boolType, BigInteger.ONE);
-		final IASTNode target = arguments[0];
-		final ExpressionResultBuilder builder =
-				new ExpressionResultBuilder(mExprResultTransformer.dispatchPointerRead(main, loc, target));
-		builder.addAllExceptLrValue(mExprResultTransformer.dispatchPointerWrite(main, loc, target, value));
-		return applyMemoryOrder(loc, builder.build(), (ExpressionResult) main.dispatch(arguments[1]));
+		atomicBuilder
+				.addAllExceptLrValue(mExprResultTransformer.makePointerAssignment(loc, pointer.getLrValue(), value));
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		final ExpressionResult memoryOrder =
+				mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, arguments[1]);
+		builder.addAllExceptLrValue(pointer, memoryOrder).addAllIncludingLrValue(
+				applyMemoryOrder(loc, atomicBuilder.build(), memoryOrder.getLrValue().getValue()));
+		return builder.build();
 	}
 
 	private Result handleAtomicLoad(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
@@ -1084,13 +1267,17 @@ public class StandardFunctionHandler {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 3, name, arguments);
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
-		final ExpressionResult read = mExprResultTransformer.dispatchPointerRead(main, loc, arguments[0]);
-		builder.addAllExceptLrValue(read);
+		final ExpressionResult pointer1 = mExprResultTransformer.dispatchPointerLValue(main, loc, arguments[0]);
+		final ExpressionResult pointer2 = mExprResultTransformer.dispatchPointerLValue(main, loc, arguments[1]);
+		final ExpressionResult memoryOrder =
+				mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, arguments[2]);
+		builder.addAllExceptLrValue(pointer1, pointer2, memoryOrder);
+		// Make sure that only the read, but not the write is atomic
+		final ExpressionResult read = mExprResultTransformer.readPointerValue(loc, pointer1.getLrValue());
 		final ExpressionResult write =
-				mExprResultTransformer.dispatchPointerWrite(main, loc, arguments[1], read.getLrValue().getValue());
-		builder.addAllExceptLrValue(write);
-		// Both the read and the write are atomic
-		return applyMemoryOrder(loc, builder.build(), (ExpressionResult) main.dispatch(arguments[2]));
+				mExprResultTransformer.makePointerAssignment(loc, pointer2.getLrValue(), read.getLrValue().getValue());
+		return builder.addAllIncludingLrValue(applyMemoryOrder(loc, read, memoryOrder.getLrValue().getValue()))
+				.addAllExceptLrValue(write).build();
 	}
 
 	private Result handleAtomicStore(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
@@ -1098,12 +1285,17 @@ public class StandardFunctionHandler {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 3, name, arguments);
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
-		final ExpressionResult read = mExprResultTransformer.dispatchPointerRead(main, loc, arguments[1]);
+		final ExpressionResult pointer1 = mExprResultTransformer.dispatchPointerLValue(main, loc, arguments[0]);
+		final ExpressionResult pointer2 = mExprResultTransformer.dispatchPointerLValue(main, loc, arguments[1]);
+		final ExpressionResult memoryOrder =
+				mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, arguments[2]);
+		builder.addAllExceptLrValue(pointer1, pointer2, memoryOrder);
+		final ExpressionResult read = mExprResultTransformer.readPointerValue(loc, pointer2.getLrValue());
 		builder.addAllExceptLrValue(read);
 		// Make sure that only the write, but not the read is atomic
-		final ExpressionResult write =
-				mExprResultTransformer.dispatchPointerWrite(main, loc, arguments[0], read.getLrValue().getValue());
-		builder.addAllExceptLrValue(applyMemoryOrder(loc, write, (ExpressionResult) main.dispatch(arguments[2])));
+		builder.addAllExceptLrValue(applyMemoryOrder(loc,
+				mExprResultTransformer.makePointerAssignment(loc, pointer1.getLrValue(), read.getLrValue().getValue()),
+				memoryOrder.getLrValue().getValue()));
 		return builder.build();
 	}
 
@@ -1112,24 +1304,34 @@ public class StandardFunctionHandler {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 4, name, arguments);
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
-		final ExpressionResult read1 = mExprResultTransformer.dispatchPointerRead(main, loc, arguments[0]);
-		builder.addAllExceptLrValue(read1);
-		builder.addAllExceptLrValue(
-				mExprResultTransformer.dispatchPointerWrite(main, loc, arguments[2], read1.getLrValue().getValue()));
-		final ExpressionResult read2 = mExprResultTransformer.dispatchPointerRead(main, loc, arguments[1]);
-		builder.addAllExceptLrValue(read2);
-		builder.addAllExceptLrValue(
-				mExprResultTransformer.dispatchPointerWrite(main, loc, arguments[0], read2.getLrValue().getValue()));
+		final ExpressionResult pointer1 = mExprResultTransformer.dispatchPointerLValue(main, loc, arguments[0]);
+		final ExpressionResult pointer2 = mExprResultTransformer.dispatchPointerLValue(main, loc, arguments[1]);
+		final ExpressionResult pointer3 = mExprResultTransformer.dispatchPointerLValue(main, loc, arguments[2]);
+		final ExpressionResult memoryOrder =
+				mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, arguments[3]);
+		builder.addAllExceptLrValue(pointer1, pointer2, pointer3, memoryOrder);
+		final ExpressionResult read0 = mExprResultTransformer.readPointerValue(loc, pointer1.getLrValue());
+		final ExpressionResultBuilder atomicBuilder = new ExpressionResultBuilder();
+		final ExpressionResult read1 = mExprResultTransformer.readPointerValue(loc, pointer2.getLrValue());
 		// All reads and writes are atomic
-		return applyMemoryOrder(loc, builder.build(), (ExpressionResult) main.dispatch(arguments[3]));
+		atomicBuilder.addAllExceptLrValue(read0,
+				mExprResultTransformer.makePointerAssignment(loc, pointer3.getLrValue(), read0.getLrValue().getValue()),
+				read1, mExprResultTransformer.makePointerAssignment(loc, pointer1.getLrValue(),
+						read1.getLrValue().getValue()));
+		builder.addAllExceptLrValue(applyMemoryOrder(loc, atomicBuilder.build(), memoryOrder.getLrValue().getValue()));
+		return builder.build();
 	}
 
 	private Result handleAtomicLoadN(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final String name) {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 2, name, arguments);
-		return applyMemoryOrder(loc, mExprResultTransformer.dispatchPointerRead(main, loc, arguments[0]),
-				(ExpressionResult) main.dispatch(arguments[1]));
+		final ExpressionResult pointer = mExprResultTransformer.dispatchPointerLValue(main, loc, arguments[0]);
+		final ExpressionResult read = mExprResultTransformer.readPointerValue(loc, pointer.getLrValue());
+		final ExpressionResult memoryOrder =
+				mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, arguments[1]);
+		return new ExpressionResultBuilder().addAllExceptLrValue(pointer, memoryOrder)
+				.addAllIncludingLrValue(applyMemoryOrder(loc, read, memoryOrder.getLrValue().getValue())).build();
 	}
 
 	private Result handleAtomicStoreN(final IDispatcher main, final IASTFunctionCallExpression node,
@@ -1137,38 +1339,50 @@ public class StandardFunctionHandler {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 3, name, arguments);
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		final ExpressionResult pointer = mExprResultTransformer.dispatchPointerLValue(main, loc, arguments[0]);
 		final ExpressionResult valueResult =
 				mExprResultTransformer.transformDecaySwitch((ExpressionResult) main.dispatch(arguments[1]), loc, node);
-		builder.addAllExceptLrValue(valueResult);
+		final ExpressionResult memoryOrder =
+				mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, arguments[2]);
+		builder.addAllExceptLrValue(pointer, valueResult, memoryOrder);
 		// Make sure that only the write, but not the read is atomic
-		builder.addAllExceptLrValue(applyMemoryOrder(loc, mExprResultTransformer.dispatchPointerWrite(main, loc,
-				arguments[0], valueResult.getLrValue().getValue()), (ExpressionResult) main.dispatch(arguments[2])));
-		return builder.build();
+		final ExpressionResult write = mExprResultTransformer.makePointerAssignment(loc, pointer.getLrValue(),
+				valueResult.getLrValue().getValue());
+		return builder.addAllExceptLrValue(applyMemoryOrder(loc, write, memoryOrder.getLrValue().getValue())).build();
 	}
 
 	private Result handleAtomicExchangeN(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 3, name, arguments);
-		final ExpressionResultBuilder builder =
-				new ExpressionResultBuilder(mExprResultTransformer.dispatchPointerRead(main, loc, arguments[0]));
+		final ExpressionResult pointer = mExprResultTransformer.dispatchPointerLValue(main, loc, arguments[0]);
 		final ExpressionResult valueResult =
 				mExprResultTransformer.transformDecaySwitch((ExpressionResult) main.dispatch(arguments[1]), loc, node);
-		builder.addAllExceptLrValue(valueResult);
-		builder.addAllExceptLrValue(mExprResultTransformer.dispatchPointerWrite(main, loc, arguments[0],
+		final ExpressionResult memoryOrder =
+				mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, arguments[2]);
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		builder.addAllExceptLrValue(pointer, valueResult, memoryOrder);
+		final ExpressionResultBuilder atomicBuilder =
+				new ExpressionResultBuilder(mExprResultTransformer.readPointerValue(loc, pointer.getLrValue()));
+		atomicBuilder.addAllExceptLrValue(mExprResultTransformer.makePointerAssignment(loc, pointer.getLrValue(),
 				valueResult.getLrValue().getValue()));
-		return applyMemoryOrder(loc, builder.build(), (ExpressionResult) main.dispatch(arguments[2]));
+		return builder.addAllIncludingLrValue(
+				applyMemoryOrder(loc, atomicBuilder.build(), memoryOrder.getLrValue().getValue())).build();
 	}
 
 	private Result handleAtomicFetch(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final String name, final int operator) {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 3, name, arguments);
+		final ExpressionResult pointer = mExprResultTransformer.dispatchPointerLValue(main, loc, arguments[0]);
 		final ExpressionResult operand =
 				mExprResultTransformer.transformDecaySwitch((ExpressionResult) main.dispatch(arguments[1]), loc, node);
-		final IASTNode target = arguments[0];
-		final ExpressionResult read = mExprResultTransformer.dispatchPointerRead(main, loc, target);
-		final ExpressionResultBuilder builder = new ExpressionResultBuilder(read);
+		final ExpressionResult memoryOrder =
+				mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, arguments[2]);
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		builder.addAllExceptLrValue(pointer, operand, memoryOrder);
+		final ExpressionResult read = mExprResultTransformer.readPointerValue(loc, pointer.getLrValue());
+		final ExpressionResultBuilder atomicBuilder = new ExpressionResultBuilder(read);
 		final Expression newValue;
 		final CPrimitive readType = (CPrimitive) read.getCType().getUnderlyingType();
 		final CPrimitive operandType = (CPrimitive) operand.getCType().getUnderlyingType();
@@ -1179,14 +1393,14 @@ public class StandardFunctionHandler {
 			final ExpressionResult bitwiseResult =
 					mExpressionTranslation.handleBinaryBitwiseExpression(loc, operator, read.getLrValue().getValue(),
 							readType, operand.getLrValue().getValue(), operandType, mAuxVarInfoBuilder);
-			builder.addAllExceptLrValue(bitwiseResult);
+			atomicBuilder.addAllExceptLrValue(bitwiseResult);
 			newValue = bitwiseResult.getLrValue().getValue();
 		}
-		builder.addAllExceptLrValue(mExprResultTransformer.dispatchPointerWrite(main, loc, target, newValue));
+		atomicBuilder
+				.addAllExceptLrValue(mExprResultTransformer.makePointerAssignment(loc, pointer.getLrValue(), newValue));
 		// Make sure that only the write, but not the read is atomic
-		final ExpressionResult atomicBlock =
-				applyMemoryOrder(loc, builder.build(), (ExpressionResult) main.dispatch(arguments[2]));
-		return new ExpressionResultBuilder().addAllExceptLrValue(operand).addAllIncludingLrValue(atomicBlock).build();
+		return builder.addAllIncludingLrValue(
+				applyMemoryOrder(loc, atomicBuilder.build(), memoryOrder.getLrValue().getValue())).build();
 	}
 
 	/**
@@ -1203,14 +1417,14 @@ public class StandardFunctionHandler {
 	 * @return An ExpressionResult representing the translation respecting the memory order
 	 */
 	private ExpressionResult applyMemoryOrder(final ILocation loc, final ExpressionResult body,
-			final ExpressionResult memoryOrder) {
+			final Expression memoryOrder) {
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder(body);
-		builder.resetStatements(List.of()).addAllExceptLrValue(memoryOrder);
+		builder.resetStatements(List.of());
 		final CPrimitive intType = new CPrimitive(CPrimitives.INT);
 		final Expression seqCst = mExpressionTranslation.constructLiteralForIntegerType(loc, intType,
 				BigInteger.valueOf(MEMORY_ORDER_SEQ_CST));
 		final Expression atomicCond = mExpressionTranslation.constructBinaryEqualityExpression(loc,
-				IASTBinaryExpression.op_equals, memoryOrder.getLrValue().getValue(), intType, seqCst, intType);
+				IASTBinaryExpression.op_equals, memoryOrder, intType, seqCst, intType);
 		final Statement atomic = new AtomicStatement(loc, body.getStatements().toArray(Statement[]::new));
 		final Statement overapproxAssert = new AssertStatement(loc, ExpressionFactory.createBooleanLiteral(loc, false));
 		new Overapprox("memory order (only sequential consistency is supported)", loc).annotate(overapproxAssert);
@@ -1517,12 +1731,13 @@ public class StandardFunctionHandler {
 
 	// Overapproximates snprintf as follows:
 	// ctr:=0; while (*) { assume ctr < len; havoc aux; *(ptr+ctr) := aux; ctr := ctr + 1; }
-	private Result handleSnPrintF(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc) {
+	private Result handleSnPrintF(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+			final String name) {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		assert arguments.length >= 2 : "insufficient arguments to snprintf";
 		final var builder = new ExpressionResultBuilder();
 
-		final Overapprox overAppFlag = new Overapprox("snprintf", loc);
+		final Overapprox overAppFlag = new Overapprox(name, loc);
 		builder.addOverapprox(overAppFlag);
 
 		// first argument is ptr
@@ -1636,16 +1851,15 @@ public class StandardFunctionHandler {
 				continue;
 			}
 
-			final Function<CType, ExpressionResult> valueProvider = type -> {
-				final ExpressionResultBuilder valueBuilder = new ExpressionResultBuilder();
-				// Write a non-deterministic value to the given address, but make sure the value is in range
-				final AuxVarInfo auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, type, SFO.AUXVAR.NONDET);
-				valueBuilder.addAuxVarWithDeclaration(auxvar).setLrValue(new RValue(auxvar.getExp(), type));
-				mExpressionTranslation.addAssumeValueInRangeStatements(loc, auxvar.getExp(), type, valueBuilder);
-				return valueBuilder.build();
-			};
+			final ExpressionResult pointer = mExprResultTransformer.dispatchPointerLValue(main, loc, arguments[i]);
+			builder.addAllExceptLrValue(pointer);
+			// Write a non-deterministic value to the given address, but make sure the value is in range
+			final CType valueType = ((CPointer) pointer.getCType()).getPointsToType();
+			final AuxVarInfo auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, valueType, SFO.AUXVAR.NONDET);
+			builder.addAuxVarWithDeclaration(auxvar);
+			mExpressionTranslation.addAssumeValueInRangeStatements(loc, auxvar.getExp(), valueType, builder);
 			final ExpressionResult writeResult =
-					mExprResultTransformer.dispatchPointerWrite(main, loc, arguments[i], valueProvider);
+					mExprResultTransformer.makePointerAssignment(loc, pointer.getLrValue(), auxvar.getExp());
 			if (markAsOverapproximation) {
 				writeResult.getStatements().forEach(new Overapprox(name, loc)::annotate);
 			}
@@ -2154,6 +2368,27 @@ public class StandardFunctionHandler {
 		erb.addStatement(new ReturnStatement(loc));
 
 		return erb.build();
+	}
+
+	private Result handlePthread_detach(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+		// See https://man7.org/linux/man-pages/man3/pthread_detach.3.html
+		// "The pthread_detach() function marks the thread identified by thread as detached. When a detached thread
+		// terminates, its resources are automatically released back to the system without the need for another thread
+		// to join with the terminated thread."
+		// "On success, pthread_detach() returns 0; on error, it returns an error number."
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 1, name, arguments);
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		// The function just releases resources, without any other effect.
+		// Therefore we just dispatch the argument and return a non-deterministic value (indicating success)
+		builder.addAllExceptLrValue(
+				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]));
+		final CType retType = new CPrimitive(CPrimitives.INT);
+		final AuxVarInfo retValue = mAuxVarInfoBuilder.constructAuxVarInfo(loc, retType);
+		builder.addAuxVarWithDeclaration(retValue);
+		mExpressionTranslation.addAssumeValueInRangeStatements(loc, retValue.getExp(), retType, builder);
+		return builder.setLrValue(new RValue(retValue.getExp(), retType)).build();
 	}
 
 	/**
@@ -2964,6 +3199,32 @@ public class StandardFunctionHandler {
 			final String name) {
 		checkArguments(loc, 1, name, node.getArguments());
 		return handlePrintFunction(main, node, loc);
+	}
+
+	private Result handleToUpper(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+			final String name) {
+		// Translate toupper(x) to x >= 'a' && x <= 'z' ? x - 32 : x
+		// (with 'a' = 97 and 'z' = 122)
+		// This function might translate more lower-case chars (depending on the C locale), but we ignore that for now.
+		checkArguments(loc, 1, name, node.getArguments());
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		final ExpressionResult argRes =
+				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, node.getArguments()[0]);
+		builder.addAllExceptLrValue(argRes);
+		final Expression arg = argRes.getLrValue().getValue();
+		final CPrimitive type = new CPrimitive(CPrimitives.INT);
+		final Expression a = mExpressionTranslation.constructLiteralForIntegerType(loc, type, BigInteger.valueOf(97));
+		final Expression z = mExpressionTranslation.constructLiteralForIntegerType(loc, type, BigInteger.valueOf(122));
+		final Expression greaterA = mExpressionTranslation.constructBinaryComparisonExpression(loc,
+				IASTBinaryExpression.op_greaterEqual, arg, type, a, type);
+		final Expression smallerZ = mExpressionTranslation.constructBinaryComparisonExpression(loc,
+				IASTBinaryExpression.op_lessEqual, arg, type, z, type);
+		final Expression isLower = ExpressionFactory.and(loc, List.of(greaterA, smallerZ));
+		final Expression upperArg =
+				mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_minus, arg, type,
+						mExpressionTranslation.constructLiteralForIntegerType(loc, type, BigInteger.valueOf(32)), type);
+		final Expression ite = ExpressionFactory.constructIfThenElseExpression(loc, isLower, upperArg, arg);
+		return builder.setLrValue(new RValue(ite, type)).build();
 	}
 
 	private boolean isStringLiteral(final IASTInitializerClause expr) {

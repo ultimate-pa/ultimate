@@ -161,7 +161,7 @@ public class Interpolator<LETTER extends IIcfgTransition<?>> {
 		final List<LETTER> counterexample = counterexampleRun.getWord().asList();
 		final NestedWord<LETTER> nestedWord = TraceCheckUtils.toNestedWord(counterexample);
 		final TreeMap<Integer, IPredicate> pendingContexts = new TreeMap<>();
-		final boolean instanticateArrayExt = true;
+		final boolean instantiateArrayExt = true;
 		final boolean innerRecursiveNestedInterpolationCall = false;
 		final IPredicate preCondition = mPredicateUnifier.getTruePredicate();
 		final IPredicate postCondition = mPredicateUnifier.getFalsePredicate();
@@ -171,8 +171,7 @@ public class Interpolator<LETTER extends IIcfgTransition<?>> {
 				mPrefs.getCfgSmtToolkit(), mScript, (PredicateFactory) mPredicateUnifier.getPredicateFactory(),
 				mPredicateUnifier, mPrefs.getAssertCodeBlockOrder(), mPrefs.computeCounterexample(),
 				mPrefs.collectInterpolantStatistics(), InterpolationTechnique.Craig_NestedInterpolation,
-				instanticateArrayExt, mPrefs.getXnfConversionTechnique(), mPrefs.getSimplificationTechnique(),
-				innerRecursiveNestedInterpolationCall);
+				instantiateArrayExt, mPrefs.getSimplificationTechnique(), innerRecursiveNestedInterpolationCall);
 		mTraceCheckResult = itcc.isCorrect();
 		if (mTraceCheckResult == LBool.UNSAT) {
 			return itcc.getInterpolants();

@@ -67,7 +67,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.Boogie2S
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
@@ -123,8 +122,6 @@ public class ConversionVisitor implements IMinimizationVisitor {
 	private final CodeBlockFactory mCbf;
 
 	private final SimplificationTechnique mSimplificationTechnique = SimplificationTechnique.SIMPLIFY_DDA;
-	private final XnfConversionTechnique mXnfConversionTechnique =
-			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 
 	/**
 	 * Simplify TransFormulas of CodeBlocks
@@ -243,8 +240,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 				} else if (edge instanceof ShortcutErrEdge) {
 					if (cb instanceof ShortcutCodeBlock) {
 						cb = mCbf.constructSequentialCompositionAndDisconnectEdges(null, null, false, false,
-								Arrays.asList(((ShortcutCodeBlock) cb).getCodeBlocks()), mXnfConversionTechnique,
-								mSimplificationTechnique);
+								Arrays.asList(((ShortcutCodeBlock) cb).getCodeBlocks()), mSimplificationTechnique);
 					} else {
 						throw new IllegalArgumentException(
 								"Converted CodeBlock for ShortcutErrEdge" + " is no ShortcutCodeBlock");
@@ -443,14 +439,14 @@ public class ConversionVisitor implements IMinimizationVisitor {
 					}
 					return mCbf.constructSequentialCompositionAndDisconnectEdges(null, null, simplify, extPqe,
 							Collections.singletonList(replaceGotoEdge(gotoEdges.get(0), gotoEdges.get(1))),
-							mXnfConversionTechnique, mSimplificationTechnique);
+							mSimplificationTechnique);
 				}
 				if (edge instanceof ShortcutErrEdge) {
 					return new ShortcutCodeBlock(null, null, composeEdges.toArray(new CodeBlock[composeEdges.size()]),
 							mLogger);
 				}
 				return mCbf.constructSequentialCompositionAndDisconnectEdges(null, null, simplify, extPqe,
-						Collections.unmodifiableList(composeEdges), mXnfConversionTechnique, mSimplificationTechnique);
+						Collections.unmodifiableList(composeEdges), mSimplificationTechnique);
 			}
 			if (edge instanceof DisjunctionEdge) {
 				final ArrayList<CodeBlock> composeEdges = new ArrayList<>();
@@ -489,8 +485,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 				final List<CodeBlock> parallelCodeBlocks = new ArrayList<>();
 				parallelCodeBlocks.add(composeEdges.get(0));
 				parallelCodeBlocks.add(composeEdges.get(1));
-				return mCbf.constructParallelComposition(null, null, parallelCodeBlocks, mXnfConversionTechnique,
-						mSimplificationTechnique);
+				return mCbf.constructParallelComposition(null, null, parallelCodeBlocks, mSimplificationTechnique);
 			}
 		}
 		// should never reach this end here?

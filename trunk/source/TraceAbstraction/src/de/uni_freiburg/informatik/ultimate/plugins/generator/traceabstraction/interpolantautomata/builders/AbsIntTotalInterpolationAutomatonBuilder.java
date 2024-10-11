@@ -66,8 +66,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHo
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgStatementExtractor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
@@ -94,8 +92,6 @@ public class AbsIntTotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransi
 	private final RcfgStatementExtractor mStatementExtractor;
 	private final VariableCollector mVariableCollector;
 	private final IIcfgSymbolTable mSymbolTable;
-	private final XnfConversionTechnique mXnfConversionTechnique;
-	private final SimplificationTechnique mSimplificationTechnique;
 
 	/**
 	 * Constructs a new AbsIntTotalInterpolationAutomatonBuilder which preforms total interpolation on a given counter
@@ -108,16 +104,12 @@ public class AbsIntTotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransi
 	 * @param csToolkit
 	 * @param currentCounterExample
 	 * @param symbolTable
-	 * @param simplificationTechnique
-	 * @param xnfConversionTechnique
 	 */
 	public AbsIntTotalInterpolationAutomatonBuilder(final IUltimateServiceProvider services,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> oldAbstraction,
 			final IAbstractInterpretationResult<?, LETTER, ?> aiResult, final IPredicateUnifier predicateUnifier,
 			final CfgSmtToolkit csToolkit, final IRun<LETTER, ?> currentCounterExample,
-			final IIcfgSymbolTable symbolTable, final SimplificationTechnique simplificationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique,
-			final IEmptyStackStateFactory<IPredicate> emptyStackFactory) {
+			final IIcfgSymbolTable symbolTable, final IEmptyStackStateFactory<IPredicate> emptyStackFactory) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mCsToolkit = csToolkit;
@@ -126,8 +118,6 @@ public class AbsIntTotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransi
 		mVariableCollector = new VariableCollector();
 		mStatementExtractor = new RcfgStatementExtractor();
 		mResult = constructAutomaton(oldAbstraction, aiResult, predicateUnifier, emptyStackFactory);
-		mSimplificationTechnique = simplificationTechnique;
-		mXnfConversionTechnique = xnfConversionTechnique;
 	}
 
 	private NestedWordAutomaton<LETTER, IPredicate> constructAutomaton(

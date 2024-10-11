@@ -76,7 +76,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SMTPrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -110,7 +109,6 @@ public class LassoAnalysis {
 
 	private final ILogger mLogger;
 	private final SimplificationTechnique mSimplificationTechnique;
-	private final XnfConversionTechnique mXnfConversionTechnique;
 
 	/**
 	 * Stem formula of the linear lasso program
@@ -172,7 +170,6 @@ public class LassoAnalysis {
 	 * Constructor for the LassoRanker interface. Calling this invokes the preprocessor on the stem and loop formula.
 	 *
 	 * If the stem is null, the stem has to be added separately by calling addStem().
-	 *
 	 * @param modifiableGlobalsAtHonda
 	 *            global BoogieVars that are modifiable in the procedure where the honda of the lasso lies.
 	 * @param smtSymbols
@@ -181,7 +178,6 @@ public class LassoAnalysis {
 	 *            configuration options for this plugin; these are constant for the life time of this object
 	 * @param services
 	 * @param simplificationTechnique
-	 * @param xnfConversionTechnique
 	 * @param script
 	 *            the SMT script used to construct the transition formulae
 	 * @param boogie2smt
@@ -199,11 +195,9 @@ public class LassoAnalysis {
 	public LassoAnalysis(final CfgSmtToolkit csToolkit, final UnmodifiableTransFormula stemTransition,
 			final UnmodifiableTransFormula loopTransition, final Set<IProgramNonOldVar> modifiableGlobalsAtHonda,
 			final SmtFunctionsAndAxioms smtSymbols, final ILassoRankerPreferences preferences,
-			final IUltimateServiceProvider services, final SimplificationTechnique simplificationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique) throws TermException {
+			final IUltimateServiceProvider services, final SimplificationTechnique simplificationTechnique) throws TermException {
 		mServices = services;
 		mSimplificationTechnique = simplificationTechnique;
-		mXnfConversionTechnique = xnfConversionTechnique;
 		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
 
 		mPreferences = preferences;
@@ -231,35 +225,6 @@ public class LassoAnalysis {
 		// This is now a good time to do garbage collection to free the memory
 		// allocated during preprocessing. Hopefully it is then available when
 		// we call the SMT solver.
-	}
-
-	/**
-	 * Constructor for the LassoRanker interface. Calling this invokes the preprocessor on the stem and loop formula.
-	 *
-	 * @param loop
-	 *            a transition formula corresponding to the lasso's loop
-	 * @param symbols
-	 *            a collection of axioms regarding the transitions' constants
-	 * @param preferences
-	 *            configuration options for this plugin; these are constant for the life time of this object
-	 * @param services
-	 * @param script
-	 *            the SMT script used to construct the transition formulae
-	 * @param boogie2smt
-	 *            the boogie2smt object that created the TransFormulas
-	 *
-	 * @throws TermException
-	 *             if preprocessing fails
-	 * @throws FileNotFoundException
-	 *             if the file for dumping the script cannot be opened
-	 */
-	public LassoAnalysis(final CfgSmtToolkit csToolkit, final IIcfgSymbolTable symbolTable,
-			final UnmodifiableTransFormula loop, final Set<IProgramNonOldVar> modifiableGlobalsAtHonda,
-			final SmtFunctionsAndAxioms symbols, final LassoRankerPreferences preferences,
-			final IUltimateServiceProvider services, final XnfConversionTechnique xnfConversionTechnique,
-			final SimplificationTechnique simplificationTechnique) throws TermException, FileNotFoundException {
-		this(csToolkit, null, loop, modifiableGlobalsAtHonda, symbols, preferences, services, simplificationTechnique,
-				xnfConversionTechnique);
 	}
 
 	/**
@@ -304,24 +269,20 @@ public class LassoAnalysis {
 		if (mPreferences.isUseOldMapElimination()) {
 			mapElimination = new RewriteArrays2(true, mStemTransition, mLoopTransition, mModifiableGlobalsAtHonda,
 					mServices, mArrayIndexSupportingInvariants, mSymbolTable, mMgdScript,
-					lassoBuilder.getReplacementVarFactory(), mSimplificationTechnique, mXnfConversionTechnique);
+					lassoBuilder.getReplacementVarFactory(), mSimplificationTechnique);
 		} else {
 			mapElimination = new MapEliminationLassoPreprocessor(mServices, mMgdScript, mSymbolTable,
 					lassoBuilder.getReplacementVarFactory(), mStemTransition, mLoopTransition,
 					mModifiableGlobalsAtHonda, mArrayIndexSupportingInvariants,
-					mPreferences.getMapEliminationSettings(mSimplificationTechnique, mXnfConversionTechnique));
+					mPreferences.getMapEliminationSettings(mSimplificationTechnique));
 		}
 		return new LassoPreprocessor[] { new StemAndLoopPreprocessor(mMgdScript, new MatchInOutVars()),
 				new StemAndLoopPreprocessor(mMgdScript,
 						new AddSymbols(lassoBuilder.getReplacementVarFactory(), mSmtSymbols)),
 				new StemAndLoopPreprocessor(mMgdScript, new CommuHashPreprocessor(mServices)),
-				mPreferences.isEnablePartitioneer()
-						? new LassoPartitioneerPreprocessor(mMgdScript, mServices, mXnfConversionTechnique)
-						: null,
+				mPreferences.isEnablePartitioneer() ? new LassoPartitioneerPreprocessor(mMgdScript, mServices) : null,
 				mapElimination, new StemAndLoopPreprocessor(mMgdScript, new MatchInOutVars()),
-				mPreferences.isEnablePartitioneer()
-						? new LassoPartitioneerPreprocessor(mMgdScript, mServices, mXnfConversionTechnique)
-						: null,
+				mPreferences.isEnablePartitioneer() ? new LassoPartitioneerPreprocessor(mMgdScript, mServices) : null,
 				new StemAndLoopPreprocessor(mMgdScript, new RewriteDivision(lassoBuilder.getReplacementVarFactory())),
 				new StemAndLoopPreprocessor(mMgdScript,
 						new RewriteBooleans(lassoBuilder.getReplacementVarFactory(), mMgdScript)),
@@ -331,7 +292,7 @@ public class LassoAnalysis {
 				new StemAndLoopPreprocessor(mMgdScript, new RewriteEquality()),
 				new StemAndLoopPreprocessor(mMgdScript, new CommuHashPreprocessor(mServices)),
 				new StemAndLoopPreprocessor(mMgdScript, new SimplifyPreprocessor(mServices, mSimplificationTechnique)),
-				new StemAndLoopPreprocessor(mMgdScript, new DNF(mServices, mXnfConversionTechnique)),
+				new StemAndLoopPreprocessor(mMgdScript, new DNF(mServices)),
 				new StemAndLoopPreprocessor(mMgdScript, new SimplifyPreprocessor(mServices, mSimplificationTechnique)),
 				new StemAndLoopPreprocessor(mMgdScript, new RewriteTrueFalse()),
 				new StemAndLoopPreprocessor(mMgdScript, new RemoveNegation()),

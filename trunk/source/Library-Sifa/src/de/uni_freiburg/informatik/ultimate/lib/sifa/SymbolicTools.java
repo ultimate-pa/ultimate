@@ -50,7 +50,6 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -71,13 +70,12 @@ public class SymbolicTools {
 	private final IPredicate mTop;
 	private final IPredicate mBottom;
 	private final SimplificationTechnique mSimplification;
-	private final XnfConversionTechnique mXnfConversion;
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mPQELogger;
 	private final SifaStats mStats;
 
 	public SymbolicTools(final IUltimateServiceProvider services, final SifaStats stats, final IIcfg<IcfgLocation> icfg,
-			final SimplificationTechnique simplification, final XnfConversionTechnique xnfConversion) {
+			final SimplificationTechnique simplification) {
 		mServices = services;
 		mStats = stats;
 		mIcfg = icfg;
@@ -88,7 +86,6 @@ public class SymbolicTools {
 		mServices.getLoggingService().setLogLevel(ModelCheckerUtils.PLUGIN_ID, LogLevel.WARN);
 
 		mSimplification = simplification;
-		mXnfConversion = xnfConversion;
 		mMngdScript = icfg.getCfgSmtToolkit().getManagedScript();
 		final Script script = mMngdScript.getScript();
 		mFactory = new BasicPredicateFactory(services, mMngdScript, icfg.getCfgSmtToolkit().getSymbolTable());
@@ -155,7 +152,7 @@ public class SymbolicTools {
 
 	public Term[] dnfDisjuncts(final IPredicate pred, final UnaryOperator<Term> termTransformer) {
 		final Term dnf =
-				SmtUtils.toDnf(mServices, mMngdScript, termTransformer.apply(pred.getFormula()), mXnfConversion);
+				SmtUtils.toDnf(mServices, mMngdScript, termTransformer.apply(pred.getFormula()));
 		return SmtUtils.getDisjuncts(dnf);
 	}
 

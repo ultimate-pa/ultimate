@@ -2,7 +2,7 @@
 <feature
       id="BA_FeatureUltimateCommandLine"
       label="BA_FeatureUltimateCommandLine"
-      version="0.2.4"
+      version="0.2.5"
       arch="x86_64">
 
    <requires>

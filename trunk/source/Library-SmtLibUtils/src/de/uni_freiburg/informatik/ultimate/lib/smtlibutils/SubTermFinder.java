@@ -43,8 +43,6 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
  * Collects all the subterms of a given {@link Term} that match the given {@link Predicate}.
- * <p>
- * Generalization of {@link ApplicationTermFinder}.
  *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  */

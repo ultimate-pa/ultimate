@@ -40,6 +40,10 @@ import java.util.Set;
 public class HashRelation3<K1, K2, K3> implements Iterable<Triple<K1, K2, K3>> {
 	private final NestedMap3<K1, K2, K3, IsContained> mBackingMap = new NestedMap3<>();
 
+	public boolean isEmpty() {
+		return mBackingMap.size() == 0;
+	}
+
 	public boolean addTriple(final K1 fst, final K2 snd, final K3 trd) {
 		final IsContained isContained = mBackingMap.put(fst, snd, trd, IsContained.IsContained);
 		return isContained == IsContained.IsContained;

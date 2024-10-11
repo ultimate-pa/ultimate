@@ -2080,15 +2080,9 @@ public class CHandler {
 		}
 		mStaticObjectsHandler.addStatementsForUltimateInit(statements);
 
-		final List<Overapprox> overapproxList;
-		if (writeValues) {
-			overapproxList = Collections.emptyList();
-		} else {
-			final Overapprox overapprox = new Overapprox("large string literal", actualLoc);
-			overapproxList = new ArrayList<>();
-			overapproxList.add(overapprox);
-		}
-		return new StringLiteralResult(addressRValue, overapproxList, auxvar, stringLiteral, !writeValues);
+		final List<Overapprox> overapproxList =
+				writeValues ? List.of() : List.of(new Overapprox("large string literal", actualLoc));
+		return new StringLiteralResult(addressRValue, overapproxList, auxvar, stringLiteral);
 	}
 
 	public Result visit(final IDispatcher main, final IASTNode node) {

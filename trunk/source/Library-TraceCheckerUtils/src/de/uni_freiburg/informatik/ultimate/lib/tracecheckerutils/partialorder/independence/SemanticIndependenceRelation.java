@@ -45,8 +45,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
 /**
@@ -63,20 +63,16 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
 public class SemanticIndependenceRelation<L extends IAction> implements IIndependenceRelation<IPredicate, L> {
 
 	private static final SimplificationTechnique SIMPLIFICATION_TECHNIQUE = SimplificationTechnique.SIMPLIFY_DDA;
-	private static final XnfConversionTechnique XNF_CONVERSION_TECHNIQUE =
-			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 
 	private final IUltimateServiceProvider mServices;
-	private final ManagedScript mManagedScript;
 	private final ILogger mLogger;
-
+	private final ManagedScript mManagedScript;
+	private final TransferrerWithVariableCache mTransferrer;
 	private final boolean mConditional;
 	private final boolean mSymmetric;
 
 	private final TimedIndependenceStatisticsDataProvider mStatistics =
 			new TimedIndependenceStatisticsDataProvider(SemanticIndependenceRelation.class);
-
-	private final TransferrerWithVariableCache mTransferrer;
 
 	public SemanticIndependenceRelation(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final boolean conditional, final boolean symmetric) {
@@ -86,12 +82,17 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 	/**
 	 * Create a new variant of the semantic independence relation.
 	 *
+	 * @param mgdScript
+	 *            A script that will be used to construct and solve the required SMT queries for independence checks
 	 * @param conditional
 	 *            If set to true, the relation will be conditional: It will use the given {@link IPredicate} as context
 	 *            to enable additional commutativity. This subsumes the non-conditional variant.
 	 * @param symmetric
 	 *            If set to true, the relation will check for full commutativity. If false, only semicommutativity is
 	 *            checked, which subsumes full commutativity.
+	 * @param transferrer
+	 *            Pass this argument if the given actions' transition formulas and the given conditions belong to
+	 *            another script. This transferrer will be used to transfer the terms to {@code mgdScript}.
 	 */
 	public SemanticIndependenceRelation(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final boolean conditional, final boolean symmetric, final TransferrerWithVariableCache transferrer) {
@@ -116,6 +117,7 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 
 	@Override
 	public Dependence isIndependent(final IPredicate state, final L a, final L b) {
+		mStatistics.startQuery();
 		final var result = toDependence(contains(state, a, b));
 		mStatistics.reportQuery(result, mConditional && state != null);
 		return result;
@@ -133,17 +135,16 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 			mLogger.warn("Predicates with locations should not be used for independence.");
 		}
 
-		mStatistics.startQuery();
-		final UnmodifiableTransFormula tfA = getTransFormula(a);
-		final UnmodifiableTransFormula tfB = getTransFormula(b);
+		final var compositions = buildCompositions(a, b);
+		final var tfAB = compositions.getFirst();
+		final var tfBA = compositions.getSecond();
 
-		// TODO We do composition twice for symmetric relations (in performInclusionCheck). Why?
-		final LBool subset = performInclusionCheck(context, tfA, tfB);
+		final LBool subset = checkInclusionWithGuard(context, tfAB, tfBA);
 		if (!mSymmetric) {
 			return subset;
 		}
 
-		return and(subset, () -> performInclusionCheck(context, tfB, tfA));
+		return and(subset, () -> checkInclusionWithGuard(context, tfBA, tfAB));
 	}
 
 	private UnmodifiableTransFormula getTransFormula(final L a) {
@@ -157,8 +158,8 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 		return mTransferrer.transferTransFormula(tf);
 	}
 
-	private final LBool performInclusionCheck(IPredicate context, final UnmodifiableTransFormula a,
-			final UnmodifiableTransFormula b) {
+	private final LBool checkInclusionWithGuard(IPredicate context, final UnmodifiableTransFormula ab,
+			final UnmodifiableTransFormula ba) {
 		if (context != null && SmtUtils.isFalseLiteral(context.getFormula())) {
 			return LBool.UNSAT;
 		}
@@ -172,32 +173,45 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 			}
 		}
 
-		UnmodifiableTransFormula transFormula1 = compose(a, b);
-		final UnmodifiableTransFormula transFormula2 = compose(b, a);
-
-		if (context != null) {
+		UnmodifiableTransFormula abWithGuard;
+		if (context == null) {
+			abWithGuard = ab;
+		} else {
 			if (mTransferrer != null) {
 				context = mTransferrer.transferPredicate(context);
 			}
-			final UnmodifiableTransFormula guard =
-					TransFormulaBuilder.constructTransFormulaFromPredicate(context, mManagedScript);
-			transFormula1 = compose(getTransFormula(guard), transFormula1);
+			final var guard = TransFormulaBuilder.constructTransFormulaFromPredicate(context, mManagedScript);
+
+			// This composition should not introduce auxVars.
+			// Avoid re-trying elimination of auxVars that already could not be eliminated from ab.
+			final boolean tryAuxVarElimination = false;
+			abWithGuard = compose(guard, ab, tryAuxVarElimination);
 		}
-		return TransFormulaUtils.checkImplication(transFormula1, transFormula2, mManagedScript);
+		return TransFormulaUtils.checkImplication(abWithGuard, ba, mManagedScript);
+	}
+
+	private Pair<UnmodifiableTransFormula, UnmodifiableTransFormula> buildCompositions(final L a, final L b) {
+		final UnmodifiableTransFormula tfA = getTransFormula(a);
+		final UnmodifiableTransFormula tfB = getTransFormula(b);
+
+		// Compose the two transition formulas in both orders.
+		// For the composition a*b, only spend time eliminating auxVars if it might be used on the right-hand side of an
+		// inclusion check, as auxVars on the left-hand side can be skolemized anyway.
+		final UnmodifiableTransFormula transFormulaAB = compose(tfA, tfB, mConditional);
+		// For the composition b*a, always try to eliminate auxVars, because it always appears on the right-hand side of
+		// an inclusion check.
+		final UnmodifiableTransFormula transFormulaBA = compose(tfB, tfA, true);
+
+		return new Pair<>(transFormulaAB, transFormulaBA);
 	}
 
 	private final UnmodifiableTransFormula compose(final UnmodifiableTransFormula first,
-			final UnmodifiableTransFormula second) {
+			final UnmodifiableTransFormula second, final boolean tryAuxVarElimination) {
 		// no need to do simplification, result is only used in one implication check
 		final boolean simplify = false;
 
-		// try to eliminate auxiliary variables to avoid quantifier alternation in
-		// implication check
-		final boolean tryAuxVarElimination = false;
-
 		return TransFormulaUtils.sequentialComposition(mLogger, mServices, mManagedScript, simplify,
-				tryAuxVarElimination, false, XNF_CONVERSION_TECHNIQUE, SIMPLIFICATION_TECHNIQUE,
-				Arrays.asList(first, second));
+				tryAuxVarElimination, false, SIMPLIFICATION_TECHNIQUE, Arrays.asList(first, second));
 	}
 
 	private static LBool and(final LBool lhs, final Supplier<LBool> getRhs) {

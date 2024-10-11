@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.CastExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.CodeAnnotStmt;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Ensures;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.FieldAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.GhostDeclaration;
@@ -49,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopInvariant;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.OldValueExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.RealLiteral;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Requires;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ValidExpression;
 
@@ -79,7 +81,13 @@ public class ACSLPrettyPrinter {
 			return String.format("//@ ghost %s = %s;", update.getIdentifier(), printExpression(update.getExpr()));
 		}
 		if (node instanceof LoopInvariant) {
-			return "//@ loop invariant" + printExpression(((LoopInvariant) node).getFormula()) + ";";
+			return "//@ loop invariant " + printExpression(((LoopInvariant) node).getFormula()) + ";";
+		}
+		if (node instanceof Requires) {
+			return "//@ requires " + printExpression(((Requires) node).getFormula()) + ";";
+		}
+		if (node instanceof Ensures) {
+			return "//@ requires " + printExpression(((Ensures) node).getFormula()) + ";";
 		}
 		// TODO: Add more cases
 		return node.toString();

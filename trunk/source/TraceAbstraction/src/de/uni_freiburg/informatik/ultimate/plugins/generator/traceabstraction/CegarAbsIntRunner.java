@@ -81,7 +81,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.Reason;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -213,7 +212,7 @@ public final class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 			}
 
 			final PathProgram pp = PathProgram.constructPathProgram("absint-pp-iter-" + currentAbsIntIter, mRoot,
-					pathProgramSet, Collections.emptySet()).getPathProgram();
+					pathProgramSet, Collections.emptySet(), x -> true).getPathProgram();
 
 			@SuppressWarnings("unchecked")
 			final IAbstractInterpretationResult<?, LETTER, ?> result =
@@ -276,20 +275,18 @@ public final class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 			mLogger.info("Constructing AI automaton with mode " + mMode);
 			final IInterpolantAutomatonBuilder<LETTER, IPredicate> aiInterpolAutomatonBuilder;
 			final SimplificationTechnique simplificationTechnique = mTaPreferences.getSimplificationTechnique();
-			final XnfConversionTechnique xnfConversionTechnique = mTaPreferences.getXnfConversionTechnique();
 			switch (mMode) {
 			case NONE:
 				throw new AssertionError("Mode should have been checked earlier");
 			case USE_PATH_PROGRAM:
 				aiInterpolAutomatonBuilder = new AbsIntNonSmtInterpolantAutomatonBuilder<>(mServices, abstraction,
 						predicateUnifier, mCsToolkit.getManagedScript(), mRoot.getCfgSmtToolkit().getSymbolTable(),
-						currentCex, simplificationTechnique, xnfConversionTechnique, emptyStackFactory);
+						currentCex, simplificationTechnique, emptyStackFactory);
 				break;
 			case USE_PREDICATES:
 				aiInterpolAutomatonBuilder = new AbsIntStraightLineInterpolantAutomatonBuilder<>(mServices, abstraction,
 						mCurrentIteration.getResult(), predicateUnifier, mCsToolkit, currentCex,
-						simplificationTechnique, xnfConversionTechnique, mRoot.getCfgSmtToolkit().getSymbolTable(),
-						emptyStackFactory);
+						simplificationTechnique, mRoot.getCfgSmtToolkit().getSymbolTable(), emptyStackFactory);
 				break;
 			case USE_CANONICAL:
 				throw new UnsupportedOperationException(
@@ -297,8 +294,7 @@ public final class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 			case USE_TOTAL:
 				aiInterpolAutomatonBuilder = new AbsIntTotalInterpolationAutomatonBuilder<>(mServices, abstraction,
 						mCurrentIteration.getResult(), predicateUnifier, mCsToolkit, currentCex,
-						mRoot.getCfgSmtToolkit().getSymbolTable(), simplificationTechnique, xnfConversionTechnique,
-						emptyStackFactory);
+						mRoot.getCfgSmtToolkit().getSymbolTable(), emptyStackFactory);
 				break;
 			default:
 				throw new UnsupportedOperationException("AI mode " + mMode + " not yet implemented");
@@ -481,7 +477,7 @@ public final class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 					mResult.getUsedDomain().createTopState());
 			mPredicateUnifierAbsInt = new AbsIntPredicateUnifier<>(mLogger, mServices, mCsToolkit.getManagedScript(),
 					mPredicateUnifierSmt.getPredicateFactory(), mCsToolkit.getSymbolTable(),
-					XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, mFalsePredicate, mTruePredicate);
+					mFalsePredicate, mTruePredicate);
 		}
 
 		public IPredicateUnifier getPredicateUnifier() {

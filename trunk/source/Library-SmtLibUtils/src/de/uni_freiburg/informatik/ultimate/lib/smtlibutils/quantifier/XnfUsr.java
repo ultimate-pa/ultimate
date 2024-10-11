@@ -33,8 +33,8 @@ import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ApplicationTermFinder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -70,8 +70,7 @@ public class XnfUsr extends XjunctPartialQuantifierElimination {
 		final HashRelation<TermVariable, Term> var2parameters = new HashRelation<>();
 		final Set<TermVariable> blacklist = new HashSet<>();
 		for (final Term param : dualJuncts) {
-			final Set<ApplicationTerm> storeTerms =
-					(new ApplicationTermFinder("store", true)).findMatchingSubterms(param);
+			final Set<ApplicationTerm> storeTerms = SmtUtils.extractApplicationTerms("store", param, true);
 			if (storeTerms.isEmpty()) {
 				final List<MultiDimensionalSelect> slects = MultiDimensionalSelect.extractSelectDeep(param);
 				for (final MultiDimensionalSelect mds : slects) {

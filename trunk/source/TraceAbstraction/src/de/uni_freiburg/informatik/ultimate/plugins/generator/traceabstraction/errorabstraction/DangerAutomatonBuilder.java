@@ -66,7 +66,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationC
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.predicates.IterativePredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.predicates.IterativePredicateTransformer.IPredicatePostprocessor;
@@ -129,8 +128,6 @@ class DangerAutomatonBuilder<L extends IIcfgTransition<?>> implements IErrorAuto
 	 *            SMT toolkit
 	 * @param simplificationTechnique
 	 *            simplification technique
-	 * @param xnfConversionTechnique
-	 *            XNF conversion technique
 	 * @param symbolTable
 	 *            symbol table
 	 * @param predicateFactoryForAutomaton
@@ -144,10 +141,10 @@ class DangerAutomatonBuilder<L extends IIcfgTransition<?>> implements IErrorAuto
 	 */
 	public DangerAutomatonBuilder(final IUltimateServiceProvider services, final PredicateFactory predicateFactory,
 			final IPredicateUnifier predicateUnifier, final CfgSmtToolkit csToolkit,
-			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
-			final IIcfgSymbolTable symbolTable,
+			final SimplificationTechnique simplificationTechnique, final IIcfgSymbolTable symbolTable,
 			final PredicateFactoryForInterpolantAutomata predicateFactoryForAutomaton,
-			final INestedWordAutomaton<L, IPredicate> abstraction, final NestedWord<L> trace) {
+			final INestedWordAutomaton<L, IPredicate> abstraction,
+			final NestedWord<L> trace) {
 		if (!NestedWordAutomataUtils.isFiniteAutomaton(abstraction)) {
 			throw new IllegalArgumentException("Calls and returns are not yet supported.");
 		}
@@ -159,7 +156,7 @@ class DangerAutomatonBuilder<L extends IIcfgTransition<?>> implements IErrorAuto
 				new PredicateUnificationMechanism(predicateUnifier, UNIFY_PREDICATES);
 
 		final TracePredicates tracePredicates = constructPredicates(mLogger, predicateFactory, internalPredicateUnifier,
-				csToolkit, simplificationTechnique, xnfConversionTechnique, symbolTable, trace, predicateUnifier);
+				csToolkit, simplificationTechnique, symbolTable, trace, predicateUnifier);
 		mErrorPrecondition = tracePredicates.getPrecondition();
 		mPredicates = collectPredicates(tracePredicates);
 		mLogger.info("Constructing danger automaton with " + mPredicates.size() + " predicates.");
@@ -476,13 +473,13 @@ class DangerAutomatonBuilder<L extends IIcfgTransition<?>> implements IErrorAuto
 
 	private TracePredicates constructPredicates(final ILogger logger, final PredicateFactory predicateFactory,
 			final PredicateUnificationMechanism pum, final CfgSmtToolkit csToolkit,
-			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
-			final IIcfgSymbolTable symbolTable, final NestedWord<L> trace, final IPredicateUnifier predicateUnifier)
+			final SimplificationTechnique simplificationTechnique, final IIcfgSymbolTable symbolTable,
+			final NestedWord<L> trace, final IPredicateUnifier predicateUnifier)
 			throws AssertionError {
 		final IterativePredicateTransformer<L> ipt =
 				new IterativePredicateTransformer<>(predicateFactory, csToolkit.getManagedScript(),
 						csToolkit.getModifiableGlobalsTable(), mServices, trace, null, pum.getTruePredicate(), null,
-						pum.getTruePredicate(), simplificationTechnique, xnfConversionTechnique, symbolTable);
+						pum.getTruePredicate(), simplificationTechnique, symbolTable);
 		final List<IPredicatePostprocessor> postprocessors = new ArrayList<>();
 		final QuantifierEliminationPostprocessor qepp = new QuantifierEliminationPostprocessor(mServices, csToolkit.getManagedScript(),
 				predicateFactory, simplificationTechnique);

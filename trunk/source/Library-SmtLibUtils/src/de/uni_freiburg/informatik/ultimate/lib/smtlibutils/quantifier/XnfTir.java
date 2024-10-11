@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.ExtendedSimplificationResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.BinaryNumericRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
@@ -66,12 +65,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public class XnfTir extends XjunctPartialQuantifierElimination {
 
-	private final XnfConversionTechnique mXnfConversionTechnique;
-
-	public XnfTir(final ManagedScript script, final IUltimateServiceProvider services,
-			final XnfConversionTechnique xnfConversionTechnique) {
+	public XnfTir(final ManagedScript script, final IUltimateServiceProvider services) {
 		super(script, services);
-		mXnfConversionTechnique = xnfConversionTechnique;
 	}
 
 	@Override
@@ -157,9 +152,9 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 		// already in XNF.
 		Term disjunction;
 		if (quantifier == QuantifiedFormula.EXISTS) {
-			disjunction = SmtUtils.toDnf(mServices, mMgdScript, conjunction, mXnfConversionTechnique);
+			disjunction = SmtUtils.toDnf(mServices, mMgdScript, conjunction);
 		} else if (quantifier == QuantifiedFormula.FORALL) {
-			disjunction = SmtUtils.toCnf(mServices, mMgdScript, conjunction, mXnfConversionTechnique);
+			disjunction = SmtUtils.toCnf(mServices, mMgdScript, conjunction);
 		} else {
 			throw new AssertionError("unknown quantifier");
 		}
@@ -381,7 +376,7 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 	/**
 	 * @return true iff tv is subterm of some select term in term.
 	 */
-	private static boolean occursInsideSelectTerm(Script script, final Term term, final TermVariable tv) {
+	private static boolean occursInsideSelectTerm(final Script script, final Term term, final TermVariable tv) {
 		final List<MultiDimensionalSelect> selectTerms = MultiDimensionalSelect.extractSelectShallow(term);
 		for (final MultiDimensionalSelect mds : selectTerms) {
 			for (final Term index : mds.getIndex()) {

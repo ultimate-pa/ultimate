@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornAnnot;
+import de.uni_freiburg.informatik.ultimate.lib.chc.results.ChcUnknownResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.graph.TreeAutomizerCEGAR;
 
@@ -62,6 +63,12 @@ public class TreeAutomizerObserver extends BaseObserver {
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("HornAnnot as passed to TreeAutomizer:");
 			mLogger.debug(annot);
+		}
+		if (!annot.getSymbolTable().getSkolemFunctions().isEmpty()) {
+			mLogger.warn("Horn clauses contain skolem functions. TreeAutomizer does not support such Horn clauses.");
+			mServices.getResultService().reportResult(Activator.PLUGIN_ID,
+					new ChcUnknownResult(Activator.PLUGIN_ID, "UNKNOWN: unsupported Skolem functions"));
+			return false;
 		}
 
 		final TreeAutomizerCEGAR cegar = new TreeAutomizerCEGAR(mServices, annot, taPrefs, mLogger);

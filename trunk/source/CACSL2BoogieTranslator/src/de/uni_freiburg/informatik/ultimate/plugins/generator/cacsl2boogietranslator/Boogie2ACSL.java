@@ -37,8 +37,6 @@ import java.util.function.Consumer;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
-import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.ACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.AcslTypeUtils;
@@ -94,21 +92,6 @@ public final class Boogie2ACSL {
 	private BacktranslatedExpression translateExpression(
 			final de.uni_freiburg.informatik.ultimate.boogie.ast.Expression expression, final ILocation context,
 			final boolean isNegated) {
-		final ILocation loc = expression.getLocation();
-		if (loc instanceof ACSLLocation) {
-			mReporter.accept("Expression " + BoogiePrettyPrinter.print(expression)
-					+ " has an ACSLNode, but we do not support it yet");
-			return null;
-		}
-
-		if (loc instanceof CLocation) {
-			final CLocation cloc = (CLocation) loc;
-			if (cloc.ignoreDuringBacktranslation()) {
-				// this should lead to nothing
-				return null;
-			}
-		}
-
 		if (expression instanceof de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression) {
 			return translateUnaryExpression((de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression) expression,
 					context, isNegated);

@@ -270,7 +270,7 @@ public final class AutomatonFreeRefinementEngine<L extends IIcfgTransition<?>>
 				throw new AssertionError(
 						interpolantGenerator.getClass() + " provided no interpolant computation status");
 			}
-			if (status.wasComputationSuccesful()) {
+			if (status.wasComputationSuccessful()) {
 				return interpolantGenerator;
 			}
 		} catch (final ToolchainCanceledException tce) {
