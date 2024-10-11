@@ -41,7 +41,7 @@ public abstract class Waypoint {
 	private final Location mLocation;
 	private final String mConstraintFormat;
 
-	public Waypoint(final String constraint, final String constraintFormat, final Location location) {
+	protected Waypoint(final String constraint, final String constraintFormat, final Location location) {
 		mConstraint = constraint;
 		mConstraintFormat = constraintFormat;
 		mLocation = location;
