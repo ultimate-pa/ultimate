@@ -3598,7 +3598,7 @@ public class CHandler {
 		final List<Statement> result = new ArrayList<>(condTransformed.getStatements());
 		resultBuilder.addDeclarations(condTransformed.getDeclarations());
 		// Insert an if-statement: if (cond) {} else break;
-		// Note: we could invert the condition and ommit the then branch, but we want to keep the negation consistent in
+		// Note: we could invert the condition and omit the then branch, but we want to keep the negation consistent in
 		// C and Boogie.
 		// Make sure to havoc all aux-vars that are created from the translation of cond (in the if and else branches)
 		final Statement[] havocs =
