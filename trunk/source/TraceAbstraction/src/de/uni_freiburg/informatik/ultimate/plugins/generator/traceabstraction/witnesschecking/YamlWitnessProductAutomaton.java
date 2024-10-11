@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.AnnotatedPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
@@ -73,7 +74,7 @@ public class YamlWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 	private final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> mAbstraction;
 	private final Witness mWitness;
 	private final ISLPredicate mEmptyStackState;
-	private final Set<ProductPredicate> mAllProductStates = new HashSet<>();
+	private final Set<ProductPredicate<?>> mAllProductStates = new HashSet<>();
 	private static final boolean CHECK_ASSUMPTION_LOCATIONS = true;
 
 	public YamlWitnessProductAutomaton(final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> abstraction,
@@ -110,7 +111,7 @@ public class YamlWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 
 	@Override
 	public boolean isInitial(final IPredicate state) {
-		final ProductPredicate productState = (ProductPredicate) state;
+		final ProductPredicate<?> productState = (ProductPredicate<?>) state;
 		return mAbstraction.isInitial(productState.getUnderlying()) && productState.getSegmentCounter() == 0;
 	}
 
@@ -118,7 +119,7 @@ public class YamlWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 	public boolean isFinal(final IPredicate state) {
 		// A product state is accepting, if the underlying state is accepting, the the witness was fully read, and the
 		// previous waypoint was a target.
-		final ProductPredicate productState = (ProductPredicate) state;
+		final ProductPredicate<?> productState = (ProductPredicate<?>) state;
 		if (productState.getSegmentCounter() == 0) {
 			// Therefore we cannot accept, if no segment was read.
 			return false;
@@ -144,7 +145,7 @@ public class YamlWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, IPredicate>> internalSuccessors(final IPredicate state,
 			final LETTER letter) {
-		final ProductPredicate productState = (ProductPredicate) state;
+		final ProductPredicate<?> productState = (ProductPredicate<?>) state;
 		final int successorSegmentCounter = getSuccessorCounter(productState, letter);
 		if (successorSegmentCounter == -1) {
 			return List.of();
@@ -158,7 +159,7 @@ public class YamlWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 	@Override
 	public Iterable<OutgoingCallTransition<LETTER, IPredicate>> callSuccessors(final IPredicate state,
 			final LETTER letter) {
-		final ProductPredicate productState = (ProductPredicate) state;
+		final ProductPredicate<?> productState = (ProductPredicate<?>) state;
 		final int successorSegmentCounter = getSuccessorCounter(productState, letter);
 		if (successorSegmentCounter == -1) {
 			return List.of();
@@ -172,8 +173,8 @@ public class YamlWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, IPredicate>> returnSuccessors(final IPredicate state,
 			final IPredicate hier, final LETTER letter) {
-		final ProductPredicate productState = (ProductPredicate) state;
-		final ProductPredicate productHier = (ProductPredicate) hier;
+		final ProductPredicate<?> productState = (ProductPredicate<?>) state;
+		final ProductPredicate<?> productHier = (ProductPredicate<?>) hier;
 		final IPredicate currentUnderlying = productState.getUnderlying();
 		final int successorSegmentCounter = getSuccessorCounter(productState, letter);
 		if (successorSegmentCounter == -1) {
@@ -186,7 +187,7 @@ public class YamlWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 	}
 
 	/** returns the appropriate segment counter for the successors of the product state and letter */
-	private int getSuccessorCounter(final ProductPredicate productState, final LETTER letter) {
+	private int getSuccessorCounter(final ProductPredicate<?> productState, final LETTER letter) {
 		final List<Segment> segments =
 				((ViolationSequence) mWitness.getEntries().get(productState.getViolationSequenceCounter()))
 						.getSegments();
@@ -249,7 +250,14 @@ public class YamlWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 	/** Creates a ProductPredicate with the counters */
 	private IPredicate createProductState(final IPredicate predicate, final int waypointCounter,
 			final int violationSequenceCounter) {
-		final ProductPredicate result = new ProductPredicate(predicate, waypointCounter, violationSequenceCounter);
+		ProductPredicate<?> result;
+		if (predicate instanceof ISLPredicate) {
+			result = new ProductSLPredicate((ISLPredicate) predicate, waypointCounter, violationSequenceCounter);
+		} else if (predicate instanceof IMLPredicate) {
+			result = new ProductMLPredicate((IMLPredicate) predicate, waypointCounter, violationSequenceCounter);
+		} else {
+			throw new AssertionError("Unknown predicate type " + predicate.getClass().getSimpleName());
+		}
 		mAllProductStates.add(result);
 		return result;
 	}
@@ -257,10 +265,8 @@ public class YamlWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 	/**
 	 * IPredicate annotated with counters for the Violation Sequence and Segments of an entry-based violation witness
 	 */
-	private static final class ProductPredicate extends AnnotatedPredicate<IPredicate, Pair<Integer, Integer>>
-			implements ISLPredicate {
-		public ProductPredicate(final IPredicate underlying, final int segmentCounter,
-				final int violationSequenceCounter) {
+	private static class ProductPredicate<P extends IPredicate> extends AnnotatedPredicate<P, Pair<Integer, Integer>> {
+		public ProductPredicate(final P underlying, final int segmentCounter, final int violationSequenceCounter) {
 			super(underlying, new Pair<>(segmentCounter, violationSequenceCounter));
 		}
 
@@ -273,9 +279,29 @@ public class YamlWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 			return mAnnotation.getSecond();
 		}
 
+	}
+
+	private static final class ProductSLPredicate extends ProductPredicate<ISLPredicate> implements ISLPredicate {
+		public ProductSLPredicate(final ISLPredicate underlying, final int segmentCounter,
+				final int violationSequenceCounter) {
+			super(underlying, segmentCounter, violationSequenceCounter);
+		}
+
 		@Override
 		public IcfgLocation getProgramPoint() {
-			return ((ISLPredicate) mUnderlying).getProgramPoint();
+			return mUnderlying.getProgramPoint();
+		}
+	}
+
+	private static final class ProductMLPredicate extends ProductPredicate<IMLPredicate> implements IMLPredicate {
+		public ProductMLPredicate(final IMLPredicate underlying, final int segmentCounter,
+				final int violationSequenceCounter) {
+			super(underlying, segmentCounter, violationSequenceCounter);
+		}
+
+		@Override
+		public IcfgLocation[] getProgramPoints() {
+			return mUnderlying.getProgramPoints();
 		}
 	}
 }
