@@ -86,10 +86,6 @@ public class BasicPredicate extends ModernAnnotations implements IPredicate {
 		return mSerialNumber + "#" + mFormula.toStringDirect();
 	}
 
-	public boolean isUnknown() {
-		return false;
-	}
-
 	@Override
 	public final int hashCode() {
 		return HashUtils.hashJenkins(31, mSerialNumber);
@@ -109,5 +105,4 @@ public class BasicPredicate extends ModernAnnotations implements IPredicate {
 		final BasicPredicate other = (BasicPredicate) obj;
 		return mSerialNumber == other.mSerialNumber;
 	}
-
 }
