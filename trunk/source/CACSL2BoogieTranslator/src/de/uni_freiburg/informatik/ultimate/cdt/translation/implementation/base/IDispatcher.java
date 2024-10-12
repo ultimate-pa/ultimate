@@ -91,17 +91,6 @@ public interface IDispatcher {
 
 	NextACSL nextACSLStatement() throws ParseException;
 
-	/**
-	 * Transform the given {@code result} with the witness entries found at {@code node}.
-	 *
-	 * @param node
-	 *            The node where the witness entries should be matched.
-	 * @param result
-	 *            The result to be transformed.
-	 * @return The result transformed by the witness.
-	 */
-	Result transformWithWitness(final IASTNode node, final Result result);
-
 	List<ACSLNode> getFunctionContractFromWitness(IASTNode node);
 
 	Set<IExtractedWitnessDeclaration> getWitnessDeclarations();

@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 
 /**
  * Bundles various settings related to the computation of Floyd/Hoare proofs.
@@ -37,14 +36,11 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversio
 public class HoareProofSettings {
 	private final HoareAnnotationPositions mHoarePositions;
 	private final SimplificationTechnique mSimplificationTechnique;
-	private final XnfConversionTechnique mXnfConversionTechnique;
 
 	public HoareProofSettings(final HoareAnnotationPositions hoarePositions,
-			final SimplificationTechnique simplificationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique) {
+			final SimplificationTechnique simplificationTechnique) {
 		mHoarePositions = hoarePositions;
 		mSimplificationTechnique = simplificationTechnique;
-		mXnfConversionTechnique = xnfConversionTechnique;
 	}
 
 	/**
@@ -63,9 +59,5 @@ public class HoareProofSettings {
 
 	public SimplificationTechnique getSimplificationTechnique() {
 		return mSimplificationTechnique;
-	}
-
-	public XnfConversionTechnique getXnfConversionTechnique() {
-		return mXnfConversionTechnique;
 	}
 }

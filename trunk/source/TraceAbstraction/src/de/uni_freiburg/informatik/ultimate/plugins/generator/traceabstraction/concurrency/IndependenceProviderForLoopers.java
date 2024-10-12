@@ -51,7 +51,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.ILooperCheck;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings;
@@ -124,8 +123,7 @@ class IndependenceProviderForLoopers<L extends IIcfgTransition<?>> implements IR
 		final BasicPredicateFactory factory =
 				new BasicPredicateFactory(mServices, mIndependenceScript.get(), mCsToolkit.getSymbolTable());
 		final var unifier = new PredicateUnifier(mLogger, mServices, mIndependenceScript.get(), factory,
-				mCsToolkit.getSymbolTable(), SimplificationTechnique.NONE,
-				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+				mCsToolkit.getSymbolTable(), SimplificationTechnique.NONE);
 
 		final IHoareTripleChecker underlyingHtc = HoareTripleCheckerUtils
 				.constructEfficientHoareTripleChecker(mServices, HoareTripleChecks.MONOLITHIC, mCsToolkit, unifier);

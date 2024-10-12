@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SMTFeatureExtractionTermClassifier.ScoringMethod;
 
 /**
@@ -207,8 +206,6 @@ public interface ITraceCheckPreferences {
 	UnsatCores getUnsatCores();
 
 	SimplificationTechnique getSimplificationTechnique();
-
-	XnfConversionTechnique getXnfConversionTechnique();
 
 	CfgSmtToolkit getCfgSmtToolkit();
 

@@ -32,7 +32,6 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.variables.InequalityConve
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.InequalityConverter.NlaHandling;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.mapelimination.MapEliminationSettings;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
@@ -155,10 +154,8 @@ public interface ILassoRankerPreferences {
 				.setSmtInterpolTimeout(timeoutSmtInterpol);
 	}
 
-	default MapEliminationSettings getMapEliminationSettings(final SimplificationTechnique simplificationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique) {
+	default MapEliminationSettings getMapEliminationSettings(final SimplificationTechnique simplificationTechnique) {
 		return new MapEliminationSettings(isMapElimAddInequalities(), isMapElimOnlyTrivialImplicationsIndexAssignment(),
-				isMapElimOnlyTrivialImplicationsArrayWrite(), isMapElimOnlyIndicesInFormula(), simplificationTechnique,
-				xnfConversionTechnique);
+				isMapElimOnlyTrivialImplicationsArrayWrite(), isMapElimOnlyIndicesInFormula(), simplificationTechnique);
 	}
 }

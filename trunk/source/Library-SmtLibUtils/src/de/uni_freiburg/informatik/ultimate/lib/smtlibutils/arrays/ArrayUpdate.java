@@ -28,11 +28,11 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ApplicationTermFinder;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.BinaryEqualityRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -41,13 +41,10 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
- * Wrapper for an equality (resp. not equals relation) of the form
- * arr' = (store, arr, index, value),
- * where
- * the array arr' is a TermVariable, and
- * (store, arr, index, value) is a multidimensional store.
- * A boolean flag allows to put the requirenment that also arr is a
- * TermVariable.
+ * Wrapper for an equality (resp. not equals relation) of the form arr' = (store, arr, index, value), where the array
+ * arr' is a TermVariable, and (store, arr, index, value) is a multidimensional store. A boolean flag allows to put the
+ * requirenment that also arr is a TermVariable.
+ *
  * @author Matthias Heizmann
  */
 public class ArrayUpdate {
@@ -58,11 +55,10 @@ public class ArrayUpdate {
 	private final boolean mIsNegatedEquality;
 
 	/**
-	 * Construct ArrayUpdate wrapper from term. Throw an ArrayUpdateException if
-	 * term is no array update.
+	 * Construct ArrayUpdate wrapper from term. Throw an ArrayUpdateException if term is no array update.
 	 */
-	public ArrayUpdate(final Term term, final boolean isNegated,
-			final boolean enforceThatOldArrayIsTermVariable) throws ArrayUpdateException {
+	public ArrayUpdate(final Term term, final boolean isNegated, final boolean enforceThatOldArrayIsTermVariable)
+			throws ArrayUpdateException {
 		final BinaryEqualityRelation ber = BinaryEqualityRelation.convert(term);
 		if (ber == null) {
 			throw new ArrayUpdateException("not a binary equality relation");
@@ -100,14 +96,13 @@ public class ArrayUpdate {
 		assert mNewArray.getSort() == allegedStoreTerm.getSort();
 
 		mMultiDimensionalStore = MultiDimensionalStore.of(allegedStoreTerm);
-		if (mMultiDimensionalStore.getIndex().size() == 0) {
+		if (mMultiDimensionalStore.getIndex().isEmpty()) {
 			throw new ArrayUpdateException("no multidimensional array");
 		}
 		if (!mMultiDimensionalStore.getArray().getSort().equals(mNewArray.getSort())) {
 			throw new AssertionError("sort mismatch");
 		}
-		if (enforceThatOldArrayIsTermVariable &&
-				!(mMultiDimensionalStore.getArray() instanceof TermVariable)) {
+		if (enforceThatOldArrayIsTermVariable && !(mMultiDimensionalStore.getArray() instanceof TermVariable)) {
 			throw new ArrayUpdateException("old array is no term variable");
 
 		}
@@ -118,17 +113,11 @@ public class ArrayUpdate {
 	 * Returns true iff term is TermVariable and has array sort
 	 */
 	private boolean isArrayTermVariable(final Term term) {
-		if (term instanceof TermVariable) {
-			if (term.getSort().isArraySort()) {
-				return true;
-			}
-		}
-		return false;
+		return term instanceof TermVariable && term.getSort().isArraySort();
 	}
 
 	/**
-	 * Returns true iff term is ApplicationTerm whose function symbol is
-	 * "store".
+	 * Returns true iff term is ApplicationTerm whose function symbol is "store".
 	 */
 	private boolean isStoreTerm(final Term term) {
 		if (term instanceof ApplicationTerm) {
@@ -141,8 +130,7 @@ public class ArrayUpdate {
 	}
 
 	/**
-	 * If term is a term variable of Sort sort, return term as TermVariable,
-	 * return null otherwise.
+	 * If term is a term variable of Sort sort, return term as TermVariable, return null otherwise.
 	 */
 	TermVariable isArrayWithSort(final Term term, final Sort sort) {
 		if (term instanceof TermVariable) {
@@ -159,18 +147,23 @@ public class ArrayUpdate {
 	public Term getOldArray() {
 		return mMultiDimensionalStore.getArray();
 	}
+
 	public TermVariable getNewArray() {
 		return mNewArray;
 	}
+
 	public ArrayIndex getIndex() {
 		return mMultiDimensionalStore.getIndex();
 	}
+
 	public Term getValue() {
 		return mMultiDimensionalStore.getValue();
 	}
+
 	public Term getArrayUpdateTerm() {
 		return mArrayUpdateTerm;
 	}
+
 	public MultiDimensionalStore getMultiDimensionalStore() {
 		return mMultiDimensionalStore;
 	}
@@ -188,7 +181,6 @@ public class ArrayUpdate {
 		return mArrayUpdateTerm.toString();
 	}
 
-
 	public static class ArrayUpdateException extends Exception {
 
 		private static final long serialVersionUID = -5344050289008681972L;
@@ -199,23 +191,18 @@ public class ArrayUpdate {
 	}
 
 	/**
-	 * Given an array of terms, partition them into terms that are array updates
-	 * and terms that are not array updates.
+	 * Given an array of terms, partition them into terms that are array updates and terms that are not array updates.
 	 */
 	public static class ArrayUpdateExtractor {
-		private final Map<Term, Term> mStore2TermVariable =
-				new HashMap<Term, Term>();
-		private final List<ArrayUpdate> mArrayUpdates =
-				new ArrayList<ArrayUpdate>();
-		private final List<Term> remainingTerms =
-				new ArrayList<Term>();
+		private final Map<Term, Term> mStore2TermVariable = new HashMap<>();
+		private final List<ArrayUpdate> mArrayUpdates = new ArrayList<>();
+		private final List<Term> remainingTerms = new ArrayList<>();
 
 		/**
-		 * If negatedUpdate is true we search for terms of the form
-		 * (not (= a (store a' b c)))
+		 * If negatedUpdate is true we search for terms of the form (not (= a (store a' b c)))
 		 */
-		public ArrayUpdateExtractor(final boolean negatedUpdate,
-				final boolean oldArrayIsTermVariable, final Term... terms) {
+		public ArrayUpdateExtractor(final boolean negatedUpdate, final boolean oldArrayIsTermVariable,
+				final Term... terms) {
 			for (final Term term : terms) {
 				ArrayUpdate au;
 				try {
@@ -227,9 +214,7 @@ public class ArrayUpdate {
 					remainingTerms.add(term);
 				} else {
 					mArrayUpdates.add(au);
-					mStore2TermVariable.put(
-							au.getStoreAsTerm(),
-							au.getNewArray());
+					mStore2TermVariable.put(au.getStoreAsTerm(), au.getNewArray());
 				}
 			}
 		}
@@ -248,9 +233,9 @@ public class ArrayUpdate {
 
 	}
 
-
 	/**
 	 * Extract and wrap subterms that are array updates. Enforce that the right hand side is a TermVariable.
+	 *
 	 * @param formula
 	 * @return
 	 */
@@ -258,20 +243,17 @@ public class ArrayUpdate {
 		return extractArrayUpdates(formula, true);
 	}
 
-	public static List<ArrayUpdate> extractArrayUpdates(final Term formula, final boolean enforceThatOldArrayIsTermVariable) {
-		final HashSet<String> functionSymbolNames = new HashSet<>(3);
-		functionSymbolNames.add("=");
-		functionSymbolNames.add("distinct");
-		functionSymbolNames.add("not");
+	public static List<ArrayUpdate> extractArrayUpdates(final Term formula,
+			final boolean enforceThatOldArrayIsTermVariable) {
+		final Set<String> functionSymbolNames = Set.of("=", "distinct", "not");
 
 		final List<ArrayUpdate> result = new ArrayList<>();
 
-		final ApplicationTermFinder atf = new ApplicationTermFinder(functionSymbolNames, false);
-		for (final ApplicationTerm subterm : atf.findMatchingSubterms(formula)) {
+		for (final ApplicationTerm subterm : SmtUtils.extractApplicationTerms(functionSymbolNames, formula, false)) {
 			ArrayUpdate arrayUpdate = null;
 
-			final boolean isNegated = subterm.getFunction().getName().equals("not")
-					|| subterm.getFunction().getName().equals("distinct");
+			final boolean isNegated =
+					subterm.getFunction().getName().equals("not") || subterm.getFunction().getName().equals("distinct");
 			try {
 				arrayUpdate = new ArrayUpdate(subterm, isNegated, enforceThatOldArrayIsTermVariable);
 			} catch (final ArrayUpdateException e) {

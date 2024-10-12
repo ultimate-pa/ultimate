@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.ConComChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.ConComCheckerCriterion;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
+import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition.NamedServiceCallback;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.decider.SafetyCheckTestResultDecider;
@@ -89,12 +90,11 @@ public class ConditionalCommutativityTestSuite extends AbstractTraceAbstractionT
 	public Collection<UltimateTestCase> createTestCases() {
 		for (final var setting : BASE_SETTINGS) {
 			for (final var variant : VARIANTS) {
+				final var namedCallback = new NamedServiceCallback("IA", overwriteSettings(variant));
 				addTestCase(UltimateRunDefinitionGenerator.getRunDefinitionFromTrunk(BENCHMARKS_C,
-						new String[] { ".c" }, setting, TOOLCHAIN_C, getTimeout()), overwriteSettings(variant));
-				addTestCase(
-						UltimateRunDefinitionGenerator.getRunDefinitionFromTrunk(BENCHMARKS_BPL,
-								new String[] { ".bpl" }, setting, TOOLCHAIN_BPL, getTimeout()),
-						overwriteSettings(variant));
+						new String[] { ".c" }, setting, TOOLCHAIN_C, getTimeout(), namedCallback));
+				addTestCase(UltimateRunDefinitionGenerator.getRunDefinitionFromTrunk(BENCHMARKS_BPL,
+						new String[] { ".bpl" }, setting, TOOLCHAIN_BPL, getTimeout(), namedCallback));
 			}
 		}
 		return super.createTestCases();

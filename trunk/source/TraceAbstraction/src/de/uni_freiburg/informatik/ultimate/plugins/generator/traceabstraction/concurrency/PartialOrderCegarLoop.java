@@ -665,9 +665,8 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 			}
 
 			final IIcfgSymbolTable symbolTable = mCsToolkit.getSymbolTable();
-			final IPredicateUnifier predicateUnifier =
-					new PredicateUnifier(mLogger, mServices, mCsToolkit.getManagedScript(), mPredicateFactory,
-							symbolTable, mPref.getSimplificationTechnique(), mPref.getXnfConversionTechnique());
+			final IPredicateUnifier predicateUnifier = new PredicateUnifier(mLogger, mServices,
+					mCsToolkit.getManagedScript(), mPredicateFactory, symbolTable, mPref.getSimplificationTechnique());
 			final PostConditionTraceChecker<L> checker = new PostConditionTraceChecker<>(mServices, mAbstraction,
 					mTaskIdentifier, mFactory, predicateUnifier, mStrategyFactory);
 			final IIndependenceRelation<IPredicate, L> relation = mPOR.getIndependence(0);

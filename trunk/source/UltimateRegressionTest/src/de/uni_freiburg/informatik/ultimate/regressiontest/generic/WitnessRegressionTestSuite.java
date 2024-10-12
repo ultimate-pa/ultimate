@@ -77,7 +77,7 @@ public class WitnessRegressionTestSuite extends AbstractRegressionTestSuite {
 					final File[] newFiles = DataStructureUtils.concat(def.getInput(), new File[] { witness });
 					final UltimateRunDefinition newDef = new UltimateRunDefinition(newFiles, def.getSettings(),
 							def.getToolchain(), def.getTimeout());
-					result.add(new UltimateTestCase(getTestResultDecider(def), newDef, List.of(), null));
+					result.add(new UltimateTestCase(getTestResultDecider(def), newDef, List.of()));
 				}
 			}
 		}

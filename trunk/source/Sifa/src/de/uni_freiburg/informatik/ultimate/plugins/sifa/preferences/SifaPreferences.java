@@ -54,7 +54,6 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.summarizers.InterpretCallSum
 import de.uni_freiburg.informatik.ultimate.lib.sifa.summarizers.ReUseSupersetCallSummarizer;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.summarizers.TopInputCallSummarizer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.sifa.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.sifa.SifaBuilder;
 
@@ -103,12 +102,6 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 	private static final SimplificationTechnique DEFAULT_SIMPLIFICATION = SimplificationTechnique.NONE;
 	private static final SimplificationTechnique[] VALUES_SIMPLIFICATION = SimplificationTechnique.values();
 	public static final Class<SimplificationTechnique> CLASS_SIMPLIFICATION = SimplificationTechnique.class;
-
-	public static final String LABEL_XNF_CONVERSION = "Xnf Conversion Technique";
-	private static final XnfConversionTechnique DEFAULT_XNF_CONVERSION =
-			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
-	private static final XnfConversionTechnique[] VALUES_XNF_CONVERSION = XnfConversionTechnique.values();
-	public static final Class<XnfConversionTechnique> CLASS_XNF_CONVERSION = XnfConversionTechnique.class;
 
 	// ---- settings in containers ----
 
@@ -231,7 +224,6 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 				combo(LABEL_FLUID, TOOLTIP_FLUID, DEFAULT_FLUID, VALUES_FLUID),
 				//
 				combo(LABEL_SIMPLIFICATION, DEFAULT_SIMPLIFICATION, VALUES_SIMPLIFICATION),
-				combo(LABEL_XNF_CONVERSION, DEFAULT_XNF_CONVERSION, VALUES_XNF_CONVERSION),
 				//
 				containerExplValDom, containerIntervalDom, containerOctagonDom, containerEqDom, containerCompoundDom,
 				containerLogFluid, containerSizeLimitFluid };

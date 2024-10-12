@@ -38,7 +38,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.HoareAnnotationPositions;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.HoareProofSettings;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SMTFeatureExtractionTermClassifier.ScoringMethod;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.ExternalSolver;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
@@ -482,11 +481,6 @@ public final class TAPreferences {
 				SimplificationTechnique.class);
 	}
 
-	public XnfConversionTechnique getXnfConversionTechnique() {
-		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_XNF_CONVERSION_TECHNIQUE,
-				XnfConversionTechnique.class);
-	}
-
 	public boolean fakeNonIncrementalSolver() {
 		return mPrefs.getBoolean(RcfgPreferenceInitializer.LABEL_FAKE_NON_INCREMENTAL_SCRIPT);
 	}
@@ -615,7 +609,6 @@ public final class TAPreferences {
 
 	// TODO #proofRefactor update all settings files to reflect the removal / changes to the Hoare/proof settings
 	public HoareProofSettings getHoareSettings() {
-		return new HoareProofSettings(getHoareAnnotationPositions(), getSimplificationTechnique(),
-				getXnfConversionTechnique());
+		return new HoareProofSettings(getHoareAnnotationPositions(), getSimplificationTechnique());
 	}
 }

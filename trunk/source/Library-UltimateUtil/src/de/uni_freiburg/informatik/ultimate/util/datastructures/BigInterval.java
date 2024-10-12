@@ -88,11 +88,11 @@ public class BigInterval {
 	}
 
 	public boolean isStrictlyNonNegative() {
-		return mMaxValue != null && mMaxValue.signum() >= 0;
+		return mMinValue != null && mMinValue.signum() >= 0;
 	}
 
 	public boolean isStrictlyNonPositive() {
-		return mMinValue != null && mMinValue.signum() <= 0;
+		return mMaxValue != null && mMaxValue.signum() <= 0;
 	}
 
 	public boolean isZero() {

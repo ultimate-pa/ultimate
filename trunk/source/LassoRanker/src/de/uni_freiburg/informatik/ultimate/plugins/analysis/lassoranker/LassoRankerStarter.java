@@ -90,7 +90,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -118,8 +117,6 @@ public class LassoRankerStarter {
 	private final PredicateFactory mPredicateFactory;
 	private final IUltimateServiceProvider mServices;
 	private final SimplificationTechnique mSimplificationTechnique = SimplificationTechnique.SIMPLIFY_DDA;
-	private final XnfConversionTechnique mXnfConversionTechnique =
-			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 	private final RankVarConstructor mRankVarConstructor;
 
 	public LassoRankerStarter(final IIcfg<IcfgLocation> icfg, final IUltimateServiceProvider services)
@@ -177,7 +174,7 @@ public class LassoRankerStarter {
 		LassoAnalysis laNT = null;
 		try {
 			laNT = new LassoAnalysis(mIcfg.getCfgSmtToolkit(), stemTF, loopTf, modifiableGlobalsAtHonda, smtSymbols,
-					preferences, mServices, mSimplificationTechnique, mXnfConversionTechnique);
+					preferences, mServices, mSimplificationTechnique);
 		} catch (final TermException e) {
 			reportUnuspportedSyntax(mHonda, e.getMessage());
 			return;
@@ -214,7 +211,7 @@ public class LassoRankerStarter {
 		LassoAnalysis laT = null;
 		try {
 			laT = new LassoAnalysis(mIcfg.getCfgSmtToolkit(), stemTF, loopTf, modifiableGlobalsAtHonda, smtSymbols,
-					preferences, mServices, mSimplificationTechnique, mXnfConversionTechnique);
+					preferences, mServices, mSimplificationTechnique);
 		} catch (final TermException e) {
 			reportUnuspportedSyntax(mHonda, e.getMessage());
 			return;
@@ -277,7 +274,7 @@ public class LassoRankerStarter {
 		final boolean withBranchEncoders = false;
 		final List<IIcfgTransition<IcfgLocation>> codeBlocks = Collections.unmodifiableList(nw.asList());
 		return SequentialComposition.getInterproceduralTransFormula(mCsToolkit, simplify, extPqe, tranformToCNF,
-				withBranchEncoders, mLogger, mServices, codeBlocks, mXnfConversionTechnique, mSimplificationTechnique);
+				withBranchEncoders, mLogger, mServices, codeBlocks, mSimplificationTechnique);
 	}
 
 	/**

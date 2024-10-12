@@ -70,7 +70,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -265,7 +264,6 @@ public final class LinearInequalityInvariantPatternProcessor
 	 * @param useNonlinearConstraints
 	 *            Kind of constraints that are used to specify invariant.
 	 * @param simplicationTechnique
-	 * @param xnfConversionTechnique
 	 * @param synthesizeEntryPattern
 	 *            true if the the pattern for the start location need to be synthesized (instead of being inferred from
 	 *            the precondition)
@@ -283,9 +281,9 @@ public final class LinearInequalityInvariantPatternProcessor
 			final Set<IcfgLocation> errorLocations,
 			final ILinearInequalityInvariantPatternStrategy<Dnf<AbstractLinearInvariantPattern>> strategy,
 			final boolean useNonlinearConstraints, final boolean useUnsatCores,
-			final SimplificationTechnique simplicationTechnique, final XnfConversionTechnique xnfConversionTechnique,
-			final Map<IcfgLocation, IPredicate> loc2underApprox, final Map<IcfgLocation, IPredicate> loc2overApprox,
-			final boolean synthesizeEntryPattern, final KindOfInvariant kindOfInvariant) {
+			final SimplificationTechnique simplicationTechnique, final Map<IcfgLocation, IPredicate> loc2underApprox,
+			final Map<IcfgLocation, IPredicate> loc2overApprox, final boolean synthesizeEntryPattern,
+			final KindOfInvariant kindOfInvariant) {
 		super(predicateUnifier, csToolkit);
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -296,8 +294,7 @@ public final class LinearInequalityInvariantPatternProcessor
 		mSynthesizeEntryPattern = synthesizeEntryPattern;
 		mKindOfInvariant = kindOfInvariant;
 
-		mLinearizer = new CachedTransFormulaLinearizer(services, csToolkit, smtSymbols, simplicationTechnique,
-				xnfConversionTechnique);
+		mLinearizer = new CachedTransFormulaLinearizer(services, csToolkit, smtSymbols, simplicationTechnique);
 		mPrecondition = mLinearizer.linearize(
 				TransFormulaBuilder.constructTransFormulaFromPredicate(precondition, csToolkit.getManagedScript()));
 		mPostcondition = mLinearizer.linearize(

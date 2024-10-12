@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants;
 
 import java.util.Arrays;
-import java.util.Set;
 import java.util.SortedMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
@@ -42,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolatingTraceCheck;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
@@ -71,19 +69,18 @@ public class InterpolatingTraceCheckPathInvariantsWithFallback<LETTER extends IA
 			final AssertCodeBlockOrder assertCodeBlockOrder, final IUltimateServiceProvider services,
 			final boolean computeRcfgProgramExecution, final PredicateFactory predicateFactory,
 			final IPredicateUnifier predicateUnifier, final InvariantSynthesisSettings invariantSynthesisSettings,
-			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique,
-			final IIcfg<?> icfgContainer, final boolean collectInterpolantStatistics) {
+			final SimplificationTechnique simplificationTechnique, final IIcfg<?> icfgContainer,
+			final boolean collectInterpolantStatistics) {
 		super(precondition, postcondition, pendingContexts, run.getWord(), run.getStateSequence(), services, csToolkit,
 				csToolkit.getManagedScript(), predicateFactory, predicateUnifier, assertCodeBlockOrder,
-				computeRcfgProgramExecution, collectInterpolantStatistics, simplificationTechnique,
-				xnfConversionTechnique);
+				computeRcfgProgramExecution, collectInterpolantStatistics, simplificationTechnique);
 		mNestedRun = run;
 		mInvariantSynthesisSettings = invariantSynthesisSettings;
 		mIcfg = icfgContainer;
 		if (super.isCorrect() == LBool.UNSAT) {
 			mTraceCheckFinished = true;
 			cleanupAndUnlockSolver();
-			computeInterpolants(new AllIntegers(), InterpolationTechnique.PathInvariants);
+			computeInterpolants(InterpolationTechnique.PathInvariants);
 			if (!mInterpolantComputationStatus.wasComputationSuccessful()) {
 				final String message = "invariant synthesis failed";
 				final String taskDescription =
@@ -95,11 +92,10 @@ public class InterpolatingTraceCheckPathInvariantsWithFallback<LETTER extends IA
 	}
 
 	@Override
-	protected void computeInterpolants(final Set<Integer> interpolatedPositions,
-			final InterpolationTechnique interpolation) {
+	protected void computeInterpolants(final InterpolationTechnique interpolation) {
 		final PathInvariantsGenerator<LETTER> pathInvariantsGenerator = new PathInvariantsGenerator<>(super.mServices,
 				mNestedRun, super.getPrecondition(), super.getPostcondition(), mPredicateFactory, mPredicateUnifier,
-				mIcfg, mInvariantSynthesisSettings, mSimplificationTechnique, mXnfConversionTechnique);
+				mIcfg, mInvariantSynthesisSettings, mSimplificationTechnique);
 		mInterpolantComputationStatus = pathInvariantsGenerator.getInterpolantComputationStatus();
 		final IPredicate[] interpolants = pathInvariantsGenerator.getInterpolants();
 		if (interpolants == null) {

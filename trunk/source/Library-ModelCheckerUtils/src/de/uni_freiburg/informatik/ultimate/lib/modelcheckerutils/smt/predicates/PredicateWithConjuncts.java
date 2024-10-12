@@ -123,16 +123,18 @@ public class PredicateWithConjuncts implements IPredicate {
 	}
 
 	@Override
-	public boolean equals(final Object obj) {
+	public final boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		}
-		if (obj == null) {
+		if (obj == null || !(obj instanceof PredicateWithConjuncts)) {
 			return false;
 		}
-		if (getClass() == obj.getClass()) {
-			final PredicateWithConjuncts other = (PredicateWithConjuncts) obj;
-			return mSerial == other.mSerial;
+		if (mSerial == ((PredicateWithConjuncts) obj).mSerial) {
+			// Different predicates with the same serial number must not be used within the same context.
+			// Hence we throw an exception if they are compared for equality.
+			// The only case in which PredicateWithConjuncts are considered equal is reference equality (case 1 above).
+			throw new UnsupportedOperationException("different predicates with same serial number");
 		}
 		return false;
 	}

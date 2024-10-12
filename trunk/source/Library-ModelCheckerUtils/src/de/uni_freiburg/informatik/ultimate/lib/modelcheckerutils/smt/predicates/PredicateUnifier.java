@@ -55,7 +55,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtTestGenerationUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.ContainsQuantifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PrenexNormalForm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierSequence;
@@ -107,7 +106,6 @@ public class PredicateUnifier implements IPredicateUnifier {
 	private final MonolithicImplicationChecker mImplicationChecker;
 	private final IIcfgSymbolTable mSymbolTable;
 	private final SimplificationTechnique mSimplificationTechnique;
-	private final XnfConversionTechnique mXnfConversionTechnique;
 
 	private final IPredicate mTruePredicate;
 	private final IPredicate mFalsePredicate;
@@ -117,10 +115,9 @@ public class PredicateUnifier implements IPredicateUnifier {
 	public PredicateUnifier(final ILogger logger, final IUltimateServiceProvider services,
 			final ManagedScript mgdScript, final BasicPredicateFactory predicateFactory,
 			final IIcfgSymbolTable symbolTable, final SimplificationTechnique simplificationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique, final IPredicate... initialPredicates) {
+			final IPredicate... initialPredicates) {
 		mPredicateUnifierBenchmarkGenerator = new PredicateUnifierStatisticsGenerator();
 		mSimplificationTechnique = simplificationTechnique;
-		mXnfConversionTechnique = xnfConversionTechnique;
 		mMgdScript = mgdScript;
 		mPredicateFactory = predicateFactory;
 		mScript = mgdScript.getScript();

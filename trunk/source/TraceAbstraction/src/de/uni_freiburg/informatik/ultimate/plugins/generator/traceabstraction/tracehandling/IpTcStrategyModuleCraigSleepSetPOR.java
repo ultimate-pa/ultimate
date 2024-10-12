@@ -38,7 +38,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.TaskIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolatingTraceCheckCraig;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
@@ -95,7 +94,6 @@ public abstract class IpTcStrategyModuleCraigSleepSetPOR<LETTER extends IIcfgTra
 
 		final AssertCodeBlockOrder assertionOrder =
 				mAssertionOrderModulation.get(mCounterexample, interpolationTechnique);
-		final XnfConversionTechnique xnfConversionTechnique = mPrefs.getXnfConversionTechnique();
 		final SimplificationTechnique simplificationTechnique = mPrefs.getSimplificationTechnique();
 		final ManagedScript managedScript = constructManagedScript();
 
@@ -106,8 +104,7 @@ public abstract class IpTcStrategyModuleCraigSleepSetPOR<LETTER extends IIcfgTra
 				TraceCheckUtils.getSequenceOfProgramPointsWithSleepSet(mCounterexample.getStateSequence()), mServices,
 				mPrefs.getCfgSmtToolkit(), managedScript, mPredicateFactory, mPredicateUnifier, assertionOrder,
 				mPrefs.computeCounterexample(), mPrefs.collectInterpolantStatistics(), interpolationTechnique,
-				instanticateArrayExt, xnfConversionTechnique, simplificationTechnique,
-				innerRecursiveNestedInterpolationCall);
+				instanticateArrayExt, simplificationTechnique, innerRecursiveNestedInterpolationCall);
 	}
 
 	protected abstract ManagedScript constructManagedScript();

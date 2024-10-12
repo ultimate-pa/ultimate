@@ -56,7 +56,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PrenexNormalForm;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.TraceCheckerUtils;
@@ -81,7 +80,6 @@ public class IterativePredicateTransformer<L extends IAction> {
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final SimplificationTechnique mSimplificationTechnique;
-	private final XnfConversionTechnique mXnfConversionTechnique;
 	private final ManagedScript mMgdScript;
 
 	private final PredicateTransformer<Term, IPredicate, TransFormula> mPredicateTransformer;
@@ -108,12 +106,10 @@ public class IterativePredicateTransformer<L extends IAction> {
 			final ModifiableGlobalsTable modifiableGlobalsTable, final IUltimateServiceProvider services,
 			final NestedWord<L> trace, final IPredicate precondition, final IPredicate postcondition,
 			final SortedMap<Integer, IPredicate> pendingContexts, final IPredicate truePredicate,
-			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
-			final IIcfgSymbolTable symbolTable) {
+			final SimplificationTechnique simplificationTechnique, final IIcfgSymbolTable symbolTable) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(TraceCheckerUtils.PLUGIN_ID);
 		mSimplificationTechnique = simplificationTechnique;
-		mXnfConversionTechnique = xnfConversionTechnique;
 		mMgdScript = mgdScript;
 		mModifiedGlobals = modifiableGlobalsTable;
 		mPredicateTransformer =
@@ -465,8 +461,8 @@ public class IterativePredicateTransformer<L extends IAction> {
 		final UnmodifiableTransFormula summaryWithCallAndReturn =
 				TransFormulaUtils.sequentialCompositionWithCallAndReturn(mMgdScript, true, false,
 						TRANSFORM_SUMMARY_TO_CNF, callTf, oldVarsAssignmentTf, globalVarsAssignment,
-						summaryOfInnerStatements, returnTf, mLogger, mServices, mXnfConversionTechnique,
-						mSimplificationTechnique, mSymbolTable, mModifiedGlobals.getModifiedBoogieVars(callee));
+						summaryOfInnerStatements, returnTf, mLogger, mServices, mSimplificationTechnique,
+						mSymbolTable, mModifiedGlobals.getModifiedBoogieVars(callee));
 		return new ProcedureSummary(summaryWithCallAndReturn, summaryOfInnerStatements);
 	}
 
@@ -492,9 +488,9 @@ public class IterativePredicateTransformer<L extends IAction> {
 					return TransFormulaUtils.sequentialCompositionWithPendingCall(mMgdScript, true, false,
 							TRANSFORM_SUMMARY_TO_CNF, transformulasToComputeSummaryFor, callTf, oldVarsAssignment, null,
 							summaryAfterPendingCall, mLogger, mServices, modifiableGlobalsOfEndProcedure,
-							mXnfConversionTechnique, mSimplificationTechnique, mSymbolTable,
-							trace.getSymbol(start).getPrecedingProcedure(), trace.getSymbol(i).getPrecedingProcedure(),
-							trace.getSymbol(i).getSucceedingProcedure(), nameEndProcedure, mModifiedGlobals);
+							mSimplificationTechnique, mSymbolTable, trace.getSymbol(start).getPrecedingProcedure(),
+							trace.getSymbol(i).getPrecedingProcedure(), trace.getSymbol(i).getSucceedingProcedure(),
+							nameEndProcedure, mModifiedGlobals);
 				}
 				// Case: non-pending call
 				// Compute a summary for Call and corresponding Return, but
@@ -513,10 +509,10 @@ public class IterativePredicateTransformer<L extends IAction> {
 					return TransFormulaUtils.sequentialCompositionWithPendingCall(mMgdScript, true, false,
 							TRANSFORM_SUMMARY_TO_CNF, transformulasToComputeSummaryFor, callTf, oldVarsAssignment,
 							globalVarsAssignment, summaryAfterPendingCall, mLogger, mServices,
-							modifiableGlobalsOfEndProcedure, mXnfConversionTechnique, mSimplificationTechnique,
-							mSymbolTable, trace.getSymbol(start).getPrecedingProcedure(),
-							trace.getSymbol(i).getPrecedingProcedure(), trace.getSymbol(i).getSucceedingProcedure(),
-							nameEndProcedure, mModifiedGlobals);
+							modifiableGlobalsOfEndProcedure, mSimplificationTechnique, mSymbolTable,
+							trace.getSymbol(start).getPrecedingProcedure(), trace.getSymbol(i).getPrecedingProcedure(),
+							trace.getSymbol(i).getSucceedingProcedure(), nameEndProcedure,
+							mModifiedGlobals);
 				}
 				// 1. Compute a summary for the statements between this
 				// non-pending Call
@@ -528,8 +524,7 @@ public class IterativePredicateTransformer<L extends IAction> {
 				transformulasToComputeSummaryFor.addLast(TransFormulaUtils.sequentialCompositionWithCallAndReturn(
 						mMgdScript, true, false, TRANSFORM_SUMMARY_TO_CNF, callTf, oldVarsAssignment,
 						globalVarsAssignment, summaryBetweenCallAndReturn, returnTf, mLogger, mServices,
-						mXnfConversionTechnique, mSimplificationTechnique, mSymbolTable,
-						mModifiedGlobals.getModifiedBoogieVars(callee)));
+						mSimplificationTechnique, mSymbolTable, mModifiedGlobals.getModifiedBoogieVars(callee)));
 				i = returnPosition;
 			} else if (trace.getSymbol(i) instanceof IReturnAction) {
 				// Nothing to do
@@ -538,8 +533,7 @@ public class IterativePredicateTransformer<L extends IAction> {
 			}
 		}
 		return TransFormulaUtils.sequentialComposition(mLogger, mServices, mMgdScript, true, false,
-				TRANSFORM_SUMMARY_TO_CNF, mXnfConversionTechnique, mSimplificationTechnique,
-				transformulasToComputeSummaryFor);
+				TRANSFORM_SUMMARY_TO_CNF, mSimplificationTechnique, transformulasToComputeSummaryFor);
 	}
 
 	// /**

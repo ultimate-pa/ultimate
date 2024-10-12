@@ -35,7 +35,7 @@ create_tool_zips() {
     exit_on_fail bash makeZip.sh GemCutter $platform AutomizerCInline_WitnessPrinter.xml NONE AutomizerCInline.xml AutomizerCInline_WitnessPrinter.xml NONE NONE
 
     # Referee
-    exit_on_fail bash makeZip.sh Referee $platform RefereeC.xml NONE RefereeC.xml NONE NONE NONE
+    exit_on_fail bash makeZip.sh Referee $platform RefereeCInline.xml NONE RefereeCInline.xml NONE NONE NONE
 
     # DeltaDebugger
     exit_on_fail bash createDeltaDebuggerDir.sh $platform

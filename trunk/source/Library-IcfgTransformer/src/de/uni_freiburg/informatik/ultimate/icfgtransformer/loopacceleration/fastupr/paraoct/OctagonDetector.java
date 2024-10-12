@@ -36,7 +36,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
@@ -111,8 +110,7 @@ public class OctagonDetector extends NonRecursive {
 	 * @return Set of Subterms
 	 */
 	public Set<Term> getConjunctSubTerms(final Term t) {
-		final Term cnfRelation = SmtUtils.toCnf(mServices, mManagedScript, t,
-				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		final Term cnfRelation = SmtUtils.toCnf(mServices, mManagedScript, t);
 		mCheckedTerms.clear();
 		run(new ConjunctionWalker(cnfRelation));
 		return mSubTerms;

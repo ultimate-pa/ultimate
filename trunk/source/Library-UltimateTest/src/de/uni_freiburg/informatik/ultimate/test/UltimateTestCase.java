@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.test;
 
 import java.util.List;
-import java.util.function.Function;
 
 import org.eclipse.core.runtime.IStatus;
 
@@ -67,15 +66,11 @@ public final class UltimateTestCase implements Comparable<UltimateTestCase> {
 	private ITestResultDecider mDecider;
 	private AfterTest mFunAfterTest;
 
-	private final Function<IUltimateServiceProvider, IUltimateServiceProvider> mServicesCallback;
-
 	public UltimateTestCase(final ITestResultDecider decider, final UltimateRunDefinition urd,
-			final List<ITestLogfile> logs,
-			final Function<IUltimateServiceProvider, IUltimateServiceProvider> servicesCallback) {
+			final List<ITestLogfile> logs) {
 		if (urd == null) {
 			throw new IllegalArgumentException("ultimateRunDefinition");
 		}
-		mServicesCallback = servicesCallback;
 
 		mDecider = decider;
 		mLogs = logs;
@@ -115,7 +110,7 @@ public final class UltimateTestCase implements Comparable<UltimateTestCase> {
 		Throwable th = null;
 		TestResult result = TestResult.FAIL;
 		boolean livecycleFailure = false;
-		final UltimateStarter starter = new UltimateStarter(mUltimateRunDefinition, mServicesCallback);
+		final UltimateStarter starter = new UltimateStarter(mUltimateRunDefinition);
 
 		try {
 			updateLogsPre();

@@ -39,7 +39,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
@@ -81,11 +80,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
  */
 public class SimplifyDDA2 extends TermWalker<Term> {
 	/**
-	 * Replace terms of the form `x = l ∧ φ(x)` by `x = l ∧ φ(l)` and replace terms
-	 * of the form `x ≠ l ∨ φ(x)` by `x ≠ l ∨ φ(l)`, where l is a literal (of sort
-	 * Real, Int, or BitVec) and x is a variable in a {@link PolynomialRelation}
-	 * (E.g., a {@link TermVariable}, a constant symbol (0-ary function symbol), a
-	 * select term `(select a k)`.)
+	 * Replace terms of the form `x = l ∧ φ(x)` by `x = l ∧ φ(l)` and replace terms of the form `x ≠ l ∨ φ(x)` by `x ≠ l
+	 * ∨ φ(l)`, where l is a literal (of sort Real, Int, or BitVec) and x is a variable in a {@link PolynomialRelation}
+	 * (E.g., a {@link TermVariable}, a constant symbol (0-ary function symbol), a select term `(select a k)`.)
 	 */
 	private static final boolean APPLY_CONSTANT_FOLDING = false;
 	private static final boolean DEBUG_CHECK_RESULT = false;
@@ -93,18 +90,15 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	private static final boolean PREPROCESS_WITH_POLY_PAC_SIMPLIFICATION = true;
 	private static final boolean DESCEND_INTO_QUANTIFIED_FORMULAS = true;
 	/**
-	 * This option allows us to omit quantified formulas from the critical
-	 * constraint.
+	 * This option allows us to omit quantified formulas from the critical constraint.
 	 */
 	private static final boolean OVERAPROXIMATE_QUANTIFIED_FORMULAS_IN_CONTEXT = true;
 	private static final boolean SIMPLIFY_REPEATEDLY = true;
 	private static final CheckedNodes CHECKED_NODES = CheckedNodes.ONLY_LEAVES;
 	/**
-	 * Do some overapproximation of quantifiers in the succedent of implications. We
-	 * implement implication checks as satisfiability checks. If this variable is
-	 * set to true, we overapproximate universally quantified formulas. (We keep
-	 * existentially quantified formulas because SMT solver can handle them easily
-	 * via Skolemization. <br>
+	 * Do some overapproximation of quantifiers in the succedent of implications. We implement implication checks as
+	 * satisfiability checks. If this variable is set to true, we overapproximate universally quantified formulas. (We
+	 * keep existentially quantified formulas because SMT solver can handle them easily via Skolemization. <br>
 	 * This option has no effect if check only leaves.
 	 */
 	private static final boolean OVERAPPROXIMATE_DIFFCULT_QUANTIFIERS_IN_NODES = false;
@@ -118,15 +112,14 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	private static final boolean ARRAY_SIMPLIFICATION = true;
 
 	/**
-	 * Options for which nodes to check for redundancy. To check redundancy, we
-	 * check if the critical constraint at the current node implies either the
-	 * formula at the node, or its negation. If a node is redundant, it will be
-	 * replaces with `true` or `false`.
+	 * Options for which nodes to check for redundancy. To check redundancy, we check if the critical constraint at the
+	 * current node implies either the formula at the node, or its negation. If a node is redundant, it will be replaces
+	 * with `true` or `false`.
 	 */
 	private enum CheckedNodes {
 		/**
-		 * Only leaves checks only nodes that are considered leaves, including negated
-		 * atoms. Quantified formulas are never considered as leaves.
+		 * Only leaves checks only nodes that are considered leaves, including negated atoms. Quantified formulas are
+		 * never considered as leaves.
 		 */
 		ONLY_LEAVES,
 		/**
@@ -142,12 +135,10 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	private final IUltimateServiceProvider mServices;
 	private final ManagedScript mMgdScript;
 	/**
-	 * The assertion stack height keeps track of the number of pushes and pops we
-	 * have made to the assertion stack of the SMT solver. It is cleared after each
-	 * run/timeout, so that subsequent runs are not affected.
+	 * The assertion stack height keeps track of the number of pushes and pops we have made to the assertion stack of
+	 * the SMT solver. It is cleared after each run/timeout, so that subsequent runs are not affected.
 	 *
-	 * We initialize it at 1, to make it possible for a user to input an initial
-	 * critical constraint.
+	 * We initialize it at 1, to make it possible for a user to input an initial critical constraint.
 	 */
 	private int mAssertionStackHeight = 1;
 	private int mNumberOfCheckSatCommands = 0;
@@ -236,9 +227,8 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	}
 
 	/**
-	 * Checks if the current node is a leaf, i.e., if we are at a atomic formula, or
-	 * at a negated atomic formula. Additionally, quantified formulas are never
-	 * considered to be leaves
+	 * Checks if the current node is a leaf, i.e., if we are at a atomic formula, or at a negated atomic formula.
+	 * Additionally, quantified formulas are never considered to be leaves
 	 */
 	private static boolean isLeaf(final Term term) {
 		if (term instanceof QuantifiedFormula) {
@@ -253,19 +243,17 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	}
 
 	/**
-	 * This method is called on subformulas, and checks if current the current
-	 * subformula is redundant. A subformula is redundant if it can be replaced by
-	 * true or false, and the resulting formula is logically equivalent to the
+	 * This method is called on subformulas, and checks if current the current subformula is redundant. A subformula is
+	 * redundant if it can be replaced by true or false, and the resulting formula is logically equivalent to the
 	 * original formula.
 	 *
-	 * We call a formula non-constraining if it can be replaced this way by true,
-	 * and non-relaxing if it can be replaced by false.
+	 * We call a formula non-constraining if it can be replaced this way by true, and non-relaxing if it can be replaced
+	 * by false.
 	 *
-	 * A subformula is non-constraining if it is implied by the critical constraint,
-	 * and non-relaxing if it's negation is implied by the critical constraint.
+	 * A subformula is non-constraining if it is implied by the critical constraint, and non-relaxing if it's negation
+	 * is implied by the critical constraint.
 	 *
-	 * We assume that the critical constraint is asserted onto the assertion stack
-	 * of the SMT solver.
+	 * We assume that the critical constraint is asserted onto the assertion stack of the SMT solver.
 	 */
 	private DescendResult checkRedundancy(final Term term) {
 		final Term result;
@@ -302,8 +290,8 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 			} else {
 				rhs = term;
 			}
-			final LBool isNonConstraining = Util.checkSat(mMgdScript.getScript(),
-					SmtUtils.not(mMgdScript.getScript(), rhs));
+			final LBool isNonConstraining =
+					Util.checkSat(mMgdScript.getScript(), SmtUtils.not(mMgdScript.getScript(), rhs));
 			mCheckSatTime += (System.nanoTime() - timeBeforeConstrainigcheck);
 			if (isNonConstraining == LBool.UNSAT) {
 				mNonConstrainingNodes++;
@@ -331,9 +319,7 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	}
 
 	private Term tryModSimplification(final Term term) {
-		final Predicate<Term> p = (x -> (x instanceof ApplicationTerm)
-				&& ((ApplicationTerm) x).getFunction().getName().equals("mod"));
-		final Set<Term> subTerms = SubTermFinder.find(term, p, true);
+		final Set<ApplicationTerm> subTerms = SmtUtils.extractApplicationTerms("mod", term, true);
 		if (subTerms.isEmpty()) {
 			return null;
 		}
@@ -348,11 +334,11 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 					modTerm = new ModTerm(tmp, modTerm.getDivisor());
 				}
 			}
-			final Term dividentGeq0 = SmtUtils.geq(mMgdScript.getScript(), modTerm.getDivident(),
-					SmtUtils.constructIntegerValue(mMgdScript.getScript(), SmtSortUtils.getIntSort(mMgdScript),
-							BigInteger.ZERO));
-			final Term dividentSmallerDivisor = SmtUtils.less(mMgdScript.getScript(), modTerm.getDivident(),
-					modTerm.getDivisor());
+			final Term dividentGeq0 =
+					SmtUtils.geq(mMgdScript.getScript(), modTerm.getDivident(), SmtUtils.constructIntegerValue(
+							mMgdScript.getScript(), SmtSortUtils.getIntSort(mMgdScript), BigInteger.ZERO));
+			final Term dividentSmallerDivisor =
+					SmtUtils.less(mMgdScript.getScript(), modTerm.getDivident(), modTerm.getDivisor());
 			final Term inRange = SmtUtils.and(mMgdScript.getScript(), dividentGeq0, dividentSmallerDivisor);
 			final Term notInRange = SmtUtils.not(mMgdScript.getScript(), inRange);
 			final LBool modIsSuperfluous = Util.checkSat(mMgdScript.getScript(), notInRange);
@@ -368,8 +354,8 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	}
 
 	private Term tryArraySimplification(final Term term) {
-		final List<MultiDimensionalSelectOverNestedStore> list = MultiDimensionalSelectOverNestedStore
-				.extractMultiDimensionalSelectOverNestedStore(term, true);
+		final List<MultiDimensionalSelectOverNestedStore> list =
+				MultiDimensionalSelectOverNestedStore.extractMultiDimensionalSelectOverNestedStore(term, true);
 		if (list.isEmpty()) {
 			return null;
 		}
@@ -380,10 +366,10 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 			}
 			final ArrayIndex storeIndex = mdsons.getNestedStore().getIndices().get(0);
 			final ArrayIndex selectIndex = mdsons.getSelectIndex();
-			final Term idxEquivalence = ArrayIndex.constructIndexEquality(mMgdScript.getScript(), storeIndex,
-					selectIndex);
-			final LBool idxEquivalent = Util.checkSat(mMgdScript.getScript(),
-					SmtUtils.not(mMgdScript.getScript(), idxEquivalence));
+			final Term idxEquivalence =
+					ArrayIndex.constructIndexEquality(mMgdScript.getScript(), storeIndex, selectIndex);
+			final LBool idxEquivalent =
+					Util.checkSat(mMgdScript.getScript(), SmtUtils.not(mMgdScript.getScript(), idxEquivalence));
 			if (idxEquivalent == LBool.UNSAT) {
 				substitutionMapping.put(mdsons.toTerm(mMgdScript.getScript()),
 						mdsons.getNestedStore().getValues().get(0));
@@ -391,8 +377,8 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 			}
 			final LBool idxNotEquivalent = Util.checkSat(mMgdScript.getScript(), idxEquivalence);
 			if (idxNotEquivalent == LBool.UNSAT) {
-				final MultiDimensionalSelect mds = new MultiDimensionalSelect(mdsons.getNestedStore().getArray(),
-						mdsons.getSelectIndex());
+				final MultiDimensionalSelect mds =
+						new MultiDimensionalSelect(mdsons.getNestedStore().getArray(), mdsons.getSelectIndex());
 				substitutionMapping.put(mdsons.toTerm(mMgdScript.getScript()), mds.toTerm(mMgdScript.getScript()));
 			}
 		}
@@ -408,8 +394,8 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	 */
 	private QuantifiedFormula preprocessQuantifiedFormula(final QuantifiedFormula term, final Term context) {
 		mMgdScript.lock(this);
-		final Map<TermVariable, Term> substitutionMapping = constructFreshConstantSymbols(mMgdScript,
-				Arrays.asList(term.getVariables()), term, context);
+		final Map<TermVariable, Term> substitutionMapping =
+				constructFreshConstantSymbols(mMgdScript, Arrays.asList(term.getVariables()), term, context);
 		mRenamingMaps.push(substitutionMapping);
 		mMgdScript.unlock(this);
 		final Term substitutedSubformula = Substitution.apply(mMgdScript, substitutionMapping, term.getSubformula());
@@ -418,9 +404,8 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	}
 
 	/**
-	 * Given a collection of {@link TermVariable}s, construct a fresh constant
-	 * symbol for each {@link TermVariable} and return a map that maps each
-	 * {@link TermVariable} to its fresh constant symbol.
+	 * Given a collection of {@link TermVariable}s, construct a fresh constant symbol for each {@link TermVariable} and
+	 * return a map that maps each {@link TermVariable} to its fresh constant symbol.
 	 */
 	private static Map<TermVariable, Term> constructFreshConstantSymbols(final ManagedScript mgdScript,
 			final Collection<TermVariable> tvs, final Term term, final Term context) {
@@ -433,26 +418,23 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	}
 
 	/**
-	 * Construct a constant symbol (reminder constant symbol is a 0-ary
-	 * {@link ApplicationTerm}). The constant symbol should be fresh (i.e.,
-	 * different from all constant symbols that have been declared already.
-	 * Unfortunately, we do not have a reliable mechanism for getting fresh constant
-	 * symbols. As a workaround we add a suffix to the variable name and hope that
-	 * this name did not yet occur. If the name did already occur the {@link Script}
-	 * will throw and {@link SMTLIBException}. We expect that this will never happen
-	 * in practice and hence do not handle this exception.
+	 * Construct a constant symbol (reminder constant symbol is a 0-ary {@link ApplicationTerm}). The constant symbol
+	 * should be fresh (i.e., different from all constant symbols that have been declared already. Unfortunately, we do
+	 * not have a reliable mechanism for getting fresh constant symbols. As a workaround we add a suffix to the variable
+	 * name and hope that this name did not yet occur. If the name did already occur the {@link Script} will throw and
+	 * {@link SMTLIBException}. We expect that this will never happen in practice and hence do not handle this
+	 * exception.
 	 */
 	private static Term constructFreshConstantSymbol(final ManagedScript mgdScript, final TermVariable tv,
 			final Term term, final Term context) {
-		final String name = tv.getName() + "_SimplifyDDA_" + tv.hashCode() + "_" + term.hashCode() + "_"
-				+ context.hashCode();
+		final String name =
+				tv.getName() + "_SimplifyDDA_" + tv.hashCode() + "_" + term.hashCode() + "_" + context.hashCode();
 		mgdScript.getScript().declareFun(name, new Sort[0], tv.getSort());
 		return mgdScript.getScript().term(name);
 	}
 
 	/**
-	 * Boolean for determining whether we check the redundancy of a node given the
-	 * initial flag settings.
+	 * Boolean for determining whether we check the redundancy of a node given the initial flag settings.
 	 */
 	private static boolean checkRedundancyForNode(final Term term) {
 		return ((CHECKED_NODES == CheckedNodes.ALL_NODES)
@@ -483,9 +465,8 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	}
 
 	/**
-	 * Simplifies the formula based on if we want to preprocess it with PolyPac
-	 * simplification or constant folding. Constant folding is already applied in
-	 * the PolyPac simplification.
+	 * Simplifies the formula based on if we want to preprocess it with PolyPac simplification or constant folding.
+	 * Constant folding is already applied in the PolyPac simplification.
 	 */
 	@Override
 	protected DescendResult convert(final Term context, final Term term) {
@@ -504,9 +485,8 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	}
 
 	/**
-	 * Checks if we want to attempt to simplify the current node, and returns an
-	 * ascend or descend result accordingly. If we descend into a quantified
-	 * formula, it is first preprocessed.,
+	 * Checks if we want to attempt to simplify the current node, and returns an ascend or descend result accordingly.
+	 * If we descend into a quantified formula, it is first preprocessed.,
 	 */
 	private DescendResult convertForPreprocessedInputTerms(final Term context, final Term term) {
 
@@ -597,8 +577,8 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 		final Set<TermVariable> freeVariables = new HashSet<>();
 		freeVariables.addAll(Arrays.asList(context.getFreeVars()));
 		freeVariables.addAll(Arrays.asList(term.getFreeVars()));
-		final Map<TermVariable, Term> substitutionMapping = constructFreshConstantSymbols(mgdScript, freeVariables,
-				term, context);
+		final Map<TermVariable, Term> substitutionMapping =
+				constructFreshConstantSymbols(mgdScript, freeVariables, term, context);
 		final Term closedContext = Substitution.apply(mgdScript, substitutionMapping, context);
 		final Term closedTerm = Substitution.apply(mgdScript, substitutionMapping, term);
 		mgdScript.getScript().assertTerm(closedContext);
@@ -606,8 +586,8 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 		try {
 			final Term nnf = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP).transform(closedTerm);
 			final Comparator<Term> siblingOrder = new TreeSizeComperator(CommuhashUtils.HASH_BASED_COMPERATOR);
-			final Term intermediateResult = TermContextTransformationEngine.transform(simplifyDDA2, siblingOrder,
-					closedContext, nnf);
+			final Term intermediateResult =
+					TermContextTransformationEngine.transform(simplifyDDA2, siblingOrder, closedContext, nnf);
 			if (substitutionMapping.isEmpty()) {
 				result = intermediateResult;
 			} else {

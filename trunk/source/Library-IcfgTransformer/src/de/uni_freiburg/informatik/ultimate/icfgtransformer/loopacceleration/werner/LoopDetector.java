@@ -48,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -512,8 +511,7 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 		}
 
 		return TransFormulaUtils.sequentialComposition(mLogger, mServices, mScript, true, true, false,
-				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, SimplificationTechnique.NONE,
-				transformulas);
+				SimplificationTechnique.NONE, transformulas);
 	}
 
 	/**
@@ -528,8 +526,7 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 		for (final Backbone backbone : backbones) {
 			path.addAll(backbone.getPath());
 			loopFormula = TransFormulaUtils.parallelComposition(mLogger, mServices, mScript, null, false,
-					XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, false, loopFormula,
-					(UnmodifiableTransFormula) backbone.getFormula());
+					false, loopFormula, (UnmodifiableTransFormula) backbone.getFormula());
 		}
 		return new Pair<>(loopFormula, path);
 	}

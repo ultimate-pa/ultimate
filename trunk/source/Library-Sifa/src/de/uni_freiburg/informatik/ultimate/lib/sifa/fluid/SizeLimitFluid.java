@@ -27,7 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.fluid;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ApplicationTermFinder;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 
@@ -37,11 +37,12 @@ public class SizeLimitFluid implements IFluid {
 	private final int mMaxDisjuncts;
 
 	/**
-	 * Creates a new fluid.
-	 * Negative values for limits disable the corresponding limit.
+	 * Creates a new fluid. Negative values for limits disable the corresponding limit.
 	 *
-	 * @param maxDagSize Abstract when formula has dag size strictly greater than this
-	 * @param maxDisjuncts Abstract when formula has strictly more disjuncts than this
+	 * @param maxDagSize
+	 *            Abstract when formula has dag size strictly greater than this
+	 * @param maxDisjuncts
+	 *            Abstract when formula has strictly more disjuncts than this
 	 */
 	public SizeLimitFluid(final int maxDagSize, final int maxDisjuncts) {
 		mMaxDagSize = maxDagSize;
@@ -70,10 +71,8 @@ public class SizeLimitFluid implements IFluid {
 
 	public static int numberOfDisjuncts(final Term term) {
 		final boolean includeSubterms = true;
-		return new ApplicationTermFinder("or", includeSubterms)
-				.findMatchingSubterms(term).stream()
-				.mapToInt(orTerm -> orTerm.getParameters().length)
-				.sum();
+		return SmtUtils.extractApplicationTerms("or", term, includeSubterms).stream()
+				.mapToInt(orTerm -> orTerm.getParameters().length).sum();
 	}
 
 }

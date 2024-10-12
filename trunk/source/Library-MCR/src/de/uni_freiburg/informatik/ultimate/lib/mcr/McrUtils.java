@@ -17,7 +17,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -34,16 +33,15 @@ public class McrUtils {
 
 	public static Term abstractVariables(final Term term, final Set<TermVariable> varsToKeep, final int quantifier,
 			final ManagedScript managedScript, final IUltimateServiceProvider services, final ILogger logger,
-			final SimplificationTechnique simplificationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique) {
+			final SimplificationTechnique simplificationTechnique) {
 		final Term eliminated = PartialQuantifierElimination.eliminateCompat(services, managedScript, simplificationTechnique, term);
 		final Term normalForm;
 		switch (quantifier) {
 		case QuantifiedFormula.EXISTS:
-			normalForm = SmtUtils.toDnf(services, managedScript, eliminated, xnfConversionTechnique);
+			normalForm = SmtUtils.toDnf(services, managedScript, eliminated);
 			break;
 		case QuantifiedFormula.FORALL:
-			normalForm = SmtUtils.toCnf(services, managedScript, eliminated, xnfConversionTechnique);
+			normalForm = SmtUtils.toCnf(services, managedScript, eliminated);
 			break;
 		default:
 			throw new AssertionError("Invalid Quantifier!");

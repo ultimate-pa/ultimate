@@ -53,7 +53,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 
 /**
  * The main class for Fast Acceleration of Ultimately Periodic Relations
@@ -217,8 +216,8 @@ public class FastUPRTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgL
 				}
 
 				final UnmodifiableTransFormula formula = TransFormulaUtils.sequentialComposition(mLogger, mServices,
-						mManagedScript, true, false, false, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
-						SimplificationTechnique.SIMPLIFY_DDA, formulas);
+						mManagedScript, true, false, false, SimplificationTechnique.SIMPLIFY_DDA,
+						formulas);
 				final FastUPRCore fastUpr = new FastUPRCore(formula, mManagedScript, mLogger, mServices);
 
 				if (mReplacementMethod == FastUPRReplacementMethod.REPLACE_LOOP_EDGE) {

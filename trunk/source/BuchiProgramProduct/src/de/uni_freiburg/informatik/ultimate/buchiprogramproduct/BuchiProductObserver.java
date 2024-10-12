@@ -37,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserv
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.never2nwa.NWAContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -51,8 +50,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.Ic
 public class BuchiProductObserver implements IUnmanagedObserver {
 
 	private static final SimplificationTechnique SIMPLIFICATION_TECHNIQUE = SimplificationTechnique.SIMPLIFY_DDA;
-	private static final XnfConversionTechnique XNF_CONVERSION_TECHNIQUE =
-			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 
 	private final ILogger mLogger;
 	private BoogieIcfgContainer mRcfg;
@@ -60,7 +57,6 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 	private BoogieIcfgContainer mProduct;
 	private final IUltimateServiceProvider mServices;
 	private final ProductBacktranslator mBacktranslator;
-	private final XnfConversionTechnique mXnfConversionTechnique;
 	private final SimplificationTechnique mSimplificationTechnique;
 
 	public BuchiProductObserver(final ILogger logger, final IUltimateServiceProvider services,
@@ -72,7 +68,6 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 		mNeverClaimNWAContainer = null;
 		mBacktranslator = backtranslator;
 		mSimplificationTechnique = SIMPLIFICATION_TECHNIQUE;
-		mXnfConversionTechnique = XNF_CONVERSION_TECHNIQUE;
 	}
 
 	@Override
@@ -93,7 +88,7 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 		mLogger.info("Beginning generation of product automaton");
 		final LTLPropertyCheck ltlAnnot = LTLPropertyCheck.getAnnotation(mNeverClaimNWAContainer);
 		mProduct = new ProductGenerator(mNeverClaimNWAContainer.getValue(), mRcfg, ltlAnnot, mServices, mBacktranslator,
-				mSimplificationTechnique, mXnfConversionTechnique).getProductRcfg();
+				mSimplificationTechnique).getProductRcfg();
 		mLogger.info("Finished generation of product automaton successfully");
 		reportSizeBenchmark("BuchiProgram size", mProduct);
 	}

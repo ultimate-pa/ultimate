@@ -34,7 +34,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -42,7 +41,6 @@ import org.junit.AfterClass;
 import org.junit.runner.RunWith;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.junitextension.testfactory.FactoryTestRunner;
 import de.uni_freiburg.informatik.ultimate.test.junitextension.testfactory.TestFactory;
@@ -102,12 +100,7 @@ public abstract class UltimateTestSuite {
 	}
 
 	protected UltimateTestCase buildTestCase(final UltimateRunDefinition urd, final ITestResultDecider decider) {
-		return buildTestCase(urd, decider, null);
-	}
-
-	protected UltimateTestCase buildTestCase(final UltimateRunDefinition urd, final ITestResultDecider decider,
-			final Function<IUltimateServiceProvider, IUltimateServiceProvider> callback) {
-		return new UltimateTestCase(decider, urd, mLogs, callback);
+		return new UltimateTestCase(decider, urd, mLogs);
 	}
 
 	@TestFactory

@@ -73,7 +73,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubtermPropertyChecker;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPushTermWalker;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher.PqeTechniques;
@@ -510,8 +509,7 @@ public class VerificationResultTransformer {
 				sc = transFormulas.get(0);
 			} else {
 				sc = TransFormulaUtils.sequentialComposition(mLogger, mServices, mgdScriptTc, false, false, false,
-						XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, SimplificationTechnique.NONE,
-						transFormulas);
+						SimplificationTechnique.NONE, transFormulas);
 			}
 			rtr.add(new BasicInternalAction(Req2BoogieTranslator.PROCEDURE_NAME, Req2BoogieTranslator.PROCEDURE_NAME,
 					sc));

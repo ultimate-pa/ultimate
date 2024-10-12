@@ -28,7 +28,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.mapelimination;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 
 /**
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
@@ -41,7 +40,6 @@ public final class MapEliminationSettings {
 	private final boolean mOnlyArgumentsInFormula;
 
 	private final SimplificationTechnique mSimplificationTechnique;
-	private final XnfConversionTechnique mXnfConversionTechnique;
 
 	/**
 	 * @param addInequalities
@@ -60,19 +58,15 @@ public final class MapEliminationSettings {
 	 *            transformula, if all free-vars of i and j occur in the transformula
 	 * @param simplificationTechnique
 	 *            SimplicationTechnique
-	 * @param xnfConversionTechnique
-	 *            XnfConversionTechnique
 	 */
 	public MapEliminationSettings(final boolean addInequalities,
 			final boolean onlyTrivialImplicationsForModifiedArguments, final boolean onlyTrivialImplicationsArrayWrite,
-			final boolean onlyArgumentsInFormula, final SimplificationTechnique simplificationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique) {
+			final boolean onlyArgumentsInFormula, final SimplificationTechnique simplificationTechnique) {
 		mAddInequalities = addInequalities;
 		mOnlyTrivialImplicationsForModifiedArguments = onlyTrivialImplicationsForModifiedArguments;
 		mOnlyTrivialImplicationsArrayWrite = onlyTrivialImplicationsArrayWrite;
 		mOnlyArgumentsInFormula = onlyArgumentsInFormula;
 		mSimplificationTechnique = simplificationTechnique;
-		mXnfConversionTechnique = xnfConversionTechnique;
 	}
 
 	public boolean addInequalities() {
@@ -95,15 +89,10 @@ public final class MapEliminationSettings {
 		return mSimplificationTechnique;
 	}
 
-	public XnfConversionTechnique getXnfConversionTechnique() {
-		return mXnfConversionTechnique;
-	}
-
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("SimplificationTechnique=").append(getSimplificationTechnique());
-		sb.append(" XnfConversionTechnique=").append(getXnfConversionTechnique());
 		sb.append(" AddInequalities=").append(addInequalities());
 		sb.append(" OnlyTrivialImplicationsArrayWrite=").append(onlyTrivialImplicationsArrayWrite());
 		sb.append(" OnlyTrivialImplicationsForModifiedArguments=");

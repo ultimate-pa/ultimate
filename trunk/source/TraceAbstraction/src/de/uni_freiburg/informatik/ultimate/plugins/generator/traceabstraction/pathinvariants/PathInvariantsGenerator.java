@@ -54,7 +54,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram;
@@ -102,7 +101,6 @@ public final class PathInvariantsGenerator<LETTER extends IAction> implements II
 	 * @param predicateUnifier
 	 *            the predicate unifier to unify final predicates with
 	 * @param icfg
-	 * @param xnfConversionTechnique
 	 * @param csToolkit
 	 *            the smt manager for constructing the default {@link IInvariantPatternProcessorFactory}
 	 * @param simplicationTechnique
@@ -110,8 +108,7 @@ public final class PathInvariantsGenerator<LETTER extends IAction> implements II
 	public PathInvariantsGenerator(final IUltimateServiceProvider services, final NestedRun<LETTER, IPredicate> run,
 			final IPredicate precondition, final IPredicate postcondition, final PredicateFactory predicateFactory,
 			final IPredicateUnifier predicateUnifier, final IIcfg<?> icfg,
-			final InvariantSynthesisSettings invSynthSettings, final SimplificationTechnique simplificationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique) {
+			final InvariantSynthesisSettings invSynthSettings, final SimplificationTechnique simplificationTechnique) {
 		mServices = services;
 		mRun = run;
 
@@ -125,8 +122,8 @@ public final class PathInvariantsGenerator<LETTER extends IAction> implements II
 		final Set<? extends IcfgEdge> allowedTransitions =
 				extractTransitionsFromRun(run, icfg.getCfgSmtToolkit().getIcfgEdgeFactory());
 
-		final PathProgram.PathProgramConstructionResult ppResult = PathProgram
-				.constructPathProgram("PathInvariantsPathProgram", icfg, allowedTransitions, Collections.emptySet());
+		final PathProgram.PathProgramConstructionResult ppResult = PathProgram.constructPathProgram(
+				"PathInvariantsPathProgram", icfg, allowedTransitions, Collections.emptySet(), x -> true);
 		final IIcfg<IcfgLocation> pathProgram = ppResult.getPathProgram();
 		final Map<IcfgLocation, IcfgLocation> inputIcfgLocs2PathProgramLocs = ppResult.getLocationMapping();
 
