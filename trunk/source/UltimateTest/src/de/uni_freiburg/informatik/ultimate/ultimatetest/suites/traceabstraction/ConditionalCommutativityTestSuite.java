@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.decider.SafetyCheckTestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.util.UltimateRunDefinitionGenerator;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * @author klumpp@informatik.uni-freiburg.de
@@ -63,8 +64,9 @@ public class ConditionalCommutativityTestSuite extends AbstractTraceAbstractionT
 	// @formatter:on
 
 	// @formatter:off
-	private static final List<Map<String, Object>> VARIANTS = List.of(
-		interpolantApproach()
+	private static final List<Pair<String, Map<String, Object>>> VARIANTS = List.of(
+		interpolantApproach(),
+		counterExampleApproach()
 	);
 	// @formatter:on
 
@@ -90,11 +92,11 @@ public class ConditionalCommutativityTestSuite extends AbstractTraceAbstractionT
 	public Collection<UltimateTestCase> createTestCases() {
 		for (final var setting : BASE_SETTINGS) {
 			for (final var variant : VARIANTS) {
-				final var namedCallback = new NamedServiceCallback("IA", overwriteSettings(variant));
+				final var callback = new NamedServiceCallback(variant.getKey(), overwriteSettings(variant.getValue()));
 				addTestCase(UltimateRunDefinitionGenerator.getRunDefinitionFromTrunk(BENCHMARKS_C,
-						new String[] { ".c" }, setting, TOOLCHAIN_C, getTimeout(), namedCallback));
+						new String[] { ".c" }, setting, TOOLCHAIN_C, getTimeout(), callback));
 				addTestCase(UltimateRunDefinitionGenerator.getRunDefinitionFromTrunk(BENCHMARKS_BPL,
-						new String[] { ".bpl" }, setting, TOOLCHAIN_BPL, getTimeout(), namedCallback));
+						new String[] { ".bpl" }, setting, TOOLCHAIN_BPL, getTimeout(), callback));
 			}
 		}
 		return super.createTestCases();
@@ -112,13 +114,23 @@ public class ConditionalCommutativityTestSuite extends AbstractTraceAbstractionT
 		};
 	}
 
-	private static Map<String, Object> interpolantApproach() {
-		return Map.of(
+	private static Pair<String, Map<String, Object>> interpolantApproach() {
+		return new Pair<>("IA", Map.of(
 		// @formatter:off
 			TraceAbstractionPreferenceInitializer.LABEL_POR_DFS_ORDER, OrderType.LOOP_LOCKSTEP,
 			TraceAbstractionPreferenceInitializer.LABEL_CON_COM_CHECKER, ConComChecker.IA,
 			TraceAbstractionPreferenceInitializer.LABEL_CON_COM_CHECKER_CRITERION, ConComCheckerCriterion.DEFAULT
 		// @formatter:on
-		);
+		));
+	}
+
+	private static Pair<String, Map<String, Object>> counterExampleApproach() {
+		return new Pair<>("CE", Map.of(
+		// @formatter:off
+			TraceAbstractionPreferenceInitializer.LABEL_POR_DFS_ORDER, OrderType.LOOP_LOCKSTEP,
+			TraceAbstractionPreferenceInitializer.LABEL_CON_COM_CHECKER, ConComChecker.COUNTEREXAMPLE,
+			TraceAbstractionPreferenceInitializer.LABEL_CON_COM_CHECKER_CRITERION, ConComCheckerCriterion.DEFAULT
+		// @formatter:on
+		));
 	}
 }
