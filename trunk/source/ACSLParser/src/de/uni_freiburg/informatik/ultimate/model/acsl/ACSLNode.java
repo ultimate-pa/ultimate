@@ -4,22 +4,22 @@
  * Copyright (C) 2015 Oleksii Saukh (saukho@informatik.uni-freiburg.de)
  * Copyright (C) 2015 Stefan Wissert
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE ACSLParser plug-in.
- * 
+ *
  * The ULTIMATE ACSLParser plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE ACSLParser plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE ACSLParser plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ACSLParser plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -37,9 +37,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
+import java.util.regex.Pattern;
 
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLTransformer;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLVisitor;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.IdentifierExpression;
 
 /**
  * @author Markus Lindenmann
@@ -53,8 +55,18 @@ public abstract class ACSLNode {
 	 */
 	public static final ACSLSourceLocation INVALID_LOCATION = new ACSLSourceLocation(-1, -1, -1, -1);
 
+	private static final Pattern IDENTIFIER_REGEX = Pattern.compile("[a-zA-Z_\\$]([a-zA-Z_\\$]|[a-fA-F0-9])*");
+
 	// do not rename this field as auto-generated subclasses depend on it
 	protected static final Map<Class<?>, Predicate<ACSLNode>> VALIDATORS = new HashMap<>();
+
+	static {
+		final Predicate<ACSLNode> iexprValidator = instance -> {
+			final IdentifierExpression iexpr = (IdentifierExpression) instance;
+			return IDENTIFIER_REGEX.matcher(iexpr.getIdentifier()).matches();
+		};
+		VALIDATORS.put(IdentifierExpression.class, iexprValidator);
+	}
 
 	/**
 	 * The list of children.
@@ -71,7 +83,7 @@ public abstract class ACSLNode {
 
 	/**
 	 * Getter for the starting line number of this ACSL comment.
-	 * 
+	 *
 	 * @return the starting line number of the ACSL-comment.
 	 */
 	public int getStartingLineNumber() {
@@ -89,7 +101,7 @@ public abstract class ACSLNode {
 
 	/**
 	 * Returns a list of the nodes children.
-	 * 
+	 *
 	 * @return list of children.
 	 */
 	public List<ACSLNode> getOutgoingNodes() {
@@ -98,7 +110,7 @@ public abstract class ACSLNode {
 
 	/**
 	 * Returns the file name.
-	 * 
+	 *
 	 * @return the fileName
 	 */
 	public String getFileName() {
@@ -107,7 +119,7 @@ public abstract class ACSLNode {
 
 	/**
 	 * Sets the file name.
-	 * 
+	 *
 	 * @param fileName
 	 *            the fileName to set
 	 */
@@ -136,7 +148,7 @@ public abstract class ACSLNode {
 
 	/**
 	 * Accepts a visitor and starts a DFS traversal of the AST.
-	 * 
+	 *
 	 * @param visitor
 	 *            visitor
 	 */
