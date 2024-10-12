@@ -1152,7 +1152,8 @@ public class StandardFunctionHandler {
 			final String name) {
 		checkArguments(loc, 1, name, node.getArguments());
 		// Just dispatch the argument and return a non-deterministic string
-		return new ExpressionResultBuilder((ExpressionResult) main.dispatch(node.getArguments()[0]))
+		return new ExpressionResultBuilder()
+				.addAllExceptLrValue((ExpressionResult) main.dispatch(node.getArguments()[0]))
 				.addAllIncludingLrValue(getNondetStringOrNull(loc)).build();
 	}
 
