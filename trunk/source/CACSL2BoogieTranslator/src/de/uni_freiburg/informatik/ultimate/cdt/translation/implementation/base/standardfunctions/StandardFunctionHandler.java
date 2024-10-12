@@ -2388,7 +2388,7 @@ public class StandardFunctionHandler {
 		builder.addAllExceptLrValue(
 				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]));
 		final CType retType = new CPrimitive(CPrimitives.INT);
-		final AuxVarInfo retValue = mAuxVarInfoBuilder.constructAuxVarInfo(loc, retType);
+		final AuxVarInfo retValue = mAuxVarInfoBuilder.constructAuxVarInfo(loc, retType, AUXVAR.NONDET);
 		builder.addAuxVarWithDeclaration(retValue);
 		mExpressionTranslation.addAssumeValueInRangeStatements(loc, retValue.getExp(), retType, builder);
 		return builder.setLrValue(new RValue(retValue.getExp(), retType)).build();
