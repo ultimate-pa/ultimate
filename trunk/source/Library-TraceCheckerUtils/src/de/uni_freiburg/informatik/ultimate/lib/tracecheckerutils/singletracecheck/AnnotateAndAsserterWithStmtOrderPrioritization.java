@@ -587,8 +587,9 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 			}
 		}
 
-		// number that the pending context. The first pending context has
-		// number -1, the second -2, ...
+		// Number that the pending context. The first pending context has
+		// number -2, the second -3, the third -4, ...
+		// (the number -1 is reserved for the precondition)
 		int pendingContextCode = -1 - mSSA.getTrace().getPendingReturns().size();
 		for (final Integer positionOfPendingReturn : mSSA.getTrace().getPendingReturns().keySet()) {
 			assert trace.isPendingReturn(positionOfPendingReturn);
