@@ -333,7 +333,7 @@ public class StandardFunctionHandler {
 		fill(map, "printf", (main, node, loc, name) -> handlePrintF(main, node, loc));
 
 		// https://en.cppreference.com/w/c/io/fgets
-		fill(map, "fgets", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 2,
+		fill(map, "fgets", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 3,
 				new CPointer(new CPrimitive(CPrimitives.CHAR))));
 
 		// https://en.cppreference.com/w/c/io/fgetc
@@ -375,7 +375,7 @@ public class StandardFunctionHandler {
 		 */
 		fill(map, "fflush", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
 				new CPrimitive(CPrimitives.INT)));
-		fill(map, "fopen", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
+		fill(map, "fopen", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 2,
 				new CPointer(new CPrimitive(CPrimitives.VOID))));
 		fill(map, "fclose", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
 				new CPrimitive(CPrimitives.INT)));
@@ -574,7 +574,7 @@ public class StandardFunctionHandler {
 		fill(map, "strerror", this::handleStrerror);
 
 		// https://en.cppreference.com/w/c/string/byte/strspn
-		fill(map, "strspn", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
+		fill(map, "strspn", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 2,
 				new CPrimitive(CPrimitives.ULONGLONG)));
 
 		/** various float builtins **/
