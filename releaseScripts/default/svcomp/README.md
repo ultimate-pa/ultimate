@@ -53,8 +53,8 @@ actually work with them.
    **Ensure benchexec tool-info module**
    If you have a new tool, you need to add a tool-info module to the benchexec repository.
    <https://github.com/sosy-lab/benchexec/blob/main/doc/tool-integration.md> describes the process.
-   If you are unsure, test with
-   `python3 -m benchexec.test_tool_info <TOOL> [--debug] [--tool-output <OUTPUT_FILE>] ...`
+   If you are unsure, test with  
+   `PYTHONPATH=<path-to-benchexec> python3 -m benchexec.test_tool_info --debug --tool-directory <path-to-tool> --no-container  <name-of-toolinfo-module>`  
    If your tool is based on Ultimate, you should copy the latest Ultimate tool and adapt the text.
    <https://github.com/sosy-lab/benchexec/blob/main/benchexec/tools/ultimategemcutter.py> is currently the latest.
 
@@ -67,10 +67,11 @@ actually work with them.
    1. Checkout our fm-tools fork <https://gitlab.com/ultimate-pa/fm-tools> and sync it with
       upstream (add new remote `upstream` for <https://gitlab.com/sosy-lab/benchmarking/fm-tools>).
    2. Create a new branch for your submission.
-   3. Ensure that existing files in `data/` are up-to-date wrt. metadata (not Zenodo) -- if not, fix it and commit.
+   3. Ensure that existing files in `data/` are up-to-date wrt. metadata (everything except the DOI).
    4. Add new tool without Zenodo if necessary, commit.
-   5. Ensure that `releaseScripts/default/svcomp/upload_zenodo.py` from ``releaseScripts/default`` contains all tools
-      you want to submit (.zip location and fm-tools .yml location).
+   5. Ensure that `releaseScripts/default/svcomp/upload_zenodo.py` from ``releaseScripts/default`` 
+      * contains all tools you want to submit (.zip location and fm-tools .yml location), and
+      * uses the correct metadata for Zenodo itself (authors, strings, etc).
    6. Use `upload_zenodo.py` to upload the .zips to Zenodo, using metadata from the fm-tools .yml file. This will
       generate a DOI for each tool and modify the .yml file.
    7. Commit new DOI in fm-tools.

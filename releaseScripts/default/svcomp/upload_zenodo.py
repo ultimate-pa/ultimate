@@ -17,7 +17,7 @@ from zenodo_client import Creator, Metadata, Zenodo
 from zenodo_client.api import Data, Paths
 import pystow
 
-import ruamel.yaml
+from ruamel.yaml import YAML
 
 # note
 # tested the following API wrappers 1.11.2023:
@@ -335,13 +335,20 @@ def get_available_licenses():
 
 def upload_tools(args, tools):
     # it is enough to use Automizer's version
+    automizer_py = Path(tools["Automizer"]).parent / "UAutomizer-linux" / "Ultimate.py"
+    if not automizer_py.exists():
+        logger.fatal(
+            "Did not find Automizer's directory relative to .zip file."
+            f"This script assumes {automizer_py} exists."
+        )
+        sys.exit(1)
     output = subprocess.run(
-        ["../UAutomizer-linux/Ultimate.py", "--ultversion"],
+        [automizer_py.absolute(), "--ultversion"],
         check=True,
         capture_output=True,
         text=True,
     )
-    m = re.search("This is Ultimate (\d+.\d+.\d+-\w+-\w+(-m)?)", output.stdout)
+    m = re.search(r"This is Ultimate (\d+.\d+.\d+-\w+-\w+(-m)?)", output.stdout)
     if not m:
         logger.fatal(
             f"Could not determine version from Ultimate output: {output.stdout}"
@@ -383,15 +390,18 @@ def upload_tools(args, tools):
 
 def create_metadata(toolname: str, version: str) -> Metadata:
     return Metadata(
-        title=f"Ultimate {toolname} SV-COMP 2024",
+        title=f"Ultimate {toolname} SV-COMP 2025",
         upload_type="software",
-        description=f"""This is Ultimate {toolname}'s competition version for SV-COMP 2024. Visit <a href="https://github.com/ultimate-pa/ultimate">our Github repository</a> for the latest version or <a href="https://ultimate-pa.org">our website</a> to try it for yourself.""",
+        description=f"""This is Ultimate {toolname}'s competition version for SV-COMP 2025. Visit <a href="https://github.com/ultimate-pa/ultimate">our Github repository</a> for the latest version or <a href="https://ultimate-pa.org">our website</a> to try it for yourself.""",
         creators=[
             creator(
                 name="Dietsch, Daniel",
                 orcid="0000-0002-8947-5373",
             ),
             creator(name="Bentele, Manuel", orcid="0009-0003-4794-958X"),
+            creator(
+                name="Ebbinghaus, Marcel",
+            ),
             creator(
                 name="Heizmann, Matthias",
                 orcid="0000-0003-4252-3558",
@@ -414,22 +424,24 @@ def create_metadata(toolname: str, version: str) -> Metadata:
     )
 
 
+def tool_zip(tool: str):
+    """.zip of tool"""
+    return f"/storage/repos/ultimate-2/releaseScripts/default/Ultimate{tool}-linux.zip"
+
+
+def tool_yaml(tool: str):
+    """YAML file relative to fm-tools repo"""
+    return f"data/u{tool.lower()}.yml"
+
+
 # get_available_licenses()
 args = parse_args()
-tools = {
-    "Automizer": "../UltimateAutomizer-linux.zip",
-    "Kojak": "../UltimateKojak-linux.zip",
-    "Taipan": "../UltimateTaipan-linux.zip",
-    "GemCutter": "../UltimateGemCutter-linux.zip",
-}
-yaml_files = {
-    "Automizer": "data/uautomizer.yml",
-    "Kojak": "data/ukojak.yml",
-    "Taipan": "data/utaipan.yml",
-    "GemCutter": "data/ugemcutter.yml",
-}
-tool_to_doi = upload_tools(args, tools)
 
+tool_names = ["Automizer", "Kojak", "Taipan", "GemCutter", "Referee"]
+tools = {k: tool_zip(k) for k in tool_names}
+yaml_files = {k: tool_yaml(k) for k in tool_names}
+
+tool_to_doi = upload_tools(args, tools)
 if args.fmtools_path:
     p = Path(args.fmtools_path)
     if p.is_dir() and p.exists():
@@ -443,7 +455,8 @@ if args.fmtools_path:
                 continue
             content = None
             with open(yaml_file, "r") as file:
-                content = ruamel.yaml.load(file, Loader=ruamel.yaml.RoundTripLoader)
+                yaml = YAML()
+                content = yaml.load(file)
             if content["name"][1:].lower() != tool.lower():
                 logger.error(
                     f"{yaml_file} for {tool} is actually for {content['name']}, skipping"
@@ -453,15 +466,24 @@ if args.fmtools_path:
                 logger.error(f"{yaml_file} for {tool} does not have 'versions' section")
                 continue
 
+            dump_yaml = False
+
             def replace_if_matching(version):
-                if version["version"] == f"svcomp{args.year[:2]}":
-                    new = version["version"]
+                global dump_yaml
+                target_ver = f"svcomp{args.year[2:]}"
+                if target_ver in version["version"]:
+                    new = version
                     new["doi"] = tool_to_doi[tool]
+                    logger.info(f'Updated {tool} {version["version"]} to {new["doi"]}')
+                    dump_yaml = True
                     return new
                 return version
 
             content["versions"] = [replace_if_matching(c) for c in content["versions"]]
 
-            with open(yaml_file, "w") as f:
-                ruamel.yaml.dump(content, f, Dumper=ruamel.yaml.RoundTripDumper)
-                logger.info(f"Updated {yaml_file} for {tool} with new DOI")
+            if dump_yaml:
+                with open(yaml_file, "w") as f:
+                    yaml = YAML()
+                    yaml.default_flow_style = False
+                    yaml.dump(content, f)
+                    logger.info(f"Updated {yaml_file} for {tool} with new DOI(s)")
