@@ -51,9 +51,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.ITraceChecker;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.LoopLockstepOrder.PredicateWithLastThread;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderReductionFacade.StateSplitter;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.ConditionalCommutativityChecker.ConComTraceCheckMode;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IConditionalCommutativityCheckerStatisticsUtils.ConditionalCommutativityStopwatches;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.ICopyActionFactory;
@@ -76,8 +74,8 @@ public class ConditionalCommutativityInterpolantChecker<L extends IAction> {
 	private IRun<L, IPredicate> mRun;
 	private final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mAbstraction;
 	private final IConditionalCommutativityCheckerStatisticsUtils mStatisticsUtils;
-	private ConditionalCommutativityInterpolantAutomatonProvider<L> mInterpolantAutomatonProvider;
-	private StateSplitter<IPredicate> mStateSplitter;
+	private final ConditionalCommutativityInterpolantAutomatonProvider<L> mInterpolantAutomatonProvider;
+	private final StateSplitter<IPredicate> mStateSplitter;
 
 	/**
 	 * Constructs a new instance of ConditionalCommutativityInterpolantProvider.
@@ -108,11 +106,11 @@ public class ConditionalCommutativityInterpolantChecker<L extends IAction> {
 			final IIndependenceRelation<IPredicate, L> independenceRelation, final ManagedScript script,
 			final IIndependenceConditionGenerator generator,
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction,
-			final IEmptyStackStateFactory<IPredicate> emptyStackStateFactory, PredicateFactory predicateFactory,
-			ICopyActionFactory<L> copyFactory, final ITraceChecker<L> traceChecker,
+			final IEmptyStackStateFactory<IPredicate> emptyStackStateFactory, final PredicateFactory predicateFactory,
+			final ICopyActionFactory<L> copyFactory, final ITraceChecker<L> traceChecker,
 			final IPredicateUnifier predicateUnifier,
-			final IConditionalCommutativityCheckerStatisticsUtils statisticsUtils, StateSplitter<IPredicate> splitter,
-			ConComTraceCheckMode traceCheckMode) {
+			final IConditionalCommutativityCheckerStatisticsUtils statisticsUtils,
+			final StateSplitter<IPredicate> splitter, final ConComTraceCheckMode traceCheckMode) {
 		mServices = services;
 		mAbstraction = abstraction;
 		mEmptyStackStateFactory = emptyStackStateFactory;
@@ -144,18 +142,19 @@ public class ConditionalCommutativityInterpolantChecker<L extends IAction> {
 		// mCopy = createCopy(interpolantAutomaton);
 		for (int i = 0; i < mRun.getStateSequence().size(); i++) {
 			final IPredicate state = mRun.getStateSequence().get(i);
-			IPredicate pred = mStateSplitter.getOriginal(state);
+			final IPredicate pred = mStateSplitter.getOriginal(state);
 
 			final var transitions = DataStructureUtils.asList(mAbstraction.internalSuccessors(pred).iterator());
 			if (checkState(state, transitions, i, runPredicates)) {
 				// return mCopy;
-				NestedWordAutomaton<L, IPredicate> automaton = mInterpolantAutomatonProvider.getInterpolantAutomaton();
+				final NestedWordAutomaton<L, IPredicate> automaton =
+						mInterpolantAutomatonProvider.getInterpolantAutomaton();
 				mStatisticsUtils.stopStopwatch(ConditionalCommutativityStopwatches.OVERALL);
 				return automaton;
 			}
 		}
 		// return mCopy;
-		NestedWordAutomaton<L, IPredicate> automaton = mInterpolantAutomatonProvider.getInterpolantAutomaton();
+		final NestedWordAutomaton<L, IPredicate> automaton = mInterpolantAutomatonProvider.getInterpolantAutomaton();
 		mStatisticsUtils.stopStopwatch(ConditionalCommutativityStopwatches.OVERALL);
 		return automaton;
 	}

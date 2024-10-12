@@ -25,23 +25,18 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence;
 
-import java.util.HashSet;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation.Dependence;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.ISymbolicIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.MLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateWithConjuncts;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
@@ -50,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.ITraceChecker;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IConditionalCommutativityCheckerStatisticsUtils.ConditionalCommutativityStopwatches;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.ICopyActionFactory;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
@@ -70,9 +64,9 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 	private final ITraceChecker<L> mTraceChecker;
 	private final ManagedScript mManagedScript;
 	private final IConditionalCommutativityCheckerStatisticsUtils mStatisticsUtils;
-	private ConComTraceCheckMode mTraceCheckMode;
-	private PredicateFactory mPredicateFactory;
-	private ICopyActionFactory<L> mCopyFactory;
+	private final ConComTraceCheckMode mTraceCheckMode;
+	private final PredicateFactory mPredicateFactory;
+	private final ICopyActionFactory<L> mCopyFactory;
 
 	/**
 	 * Constructs a new instance of ConditionalCommutativityChecker.
@@ -96,8 +90,9 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 	public ConditionalCommutativityChecker(final IConditionalCommutativityCriterion<L> criterion,
 			final IIndependenceRelation<IPredicate, L> independenceRelation, final ManagedScript script,
 			final IIndependenceConditionGenerator generator, final ITraceChecker<L> traceChecker,
-			final IConditionalCommutativityCheckerStatisticsUtils statisticsUtils, PredicateFactory predicateFactory,
-			ICopyActionFactory<L> copyFactory, ConComTraceCheckMode traceCheckMode) {
+			final IConditionalCommutativityCheckerStatisticsUtils statisticsUtils,
+			final PredicateFactory predicateFactory, final ICopyActionFactory<L> copyFactory,
+			final ConComTraceCheckMode traceCheckMode) {
 		mCriterion = criterion;
 		mIndependenceRelation = independenceRelation;
 		mManagedScript = script;
@@ -164,7 +159,8 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 				}
 				IPredicate condition = null;
 
-				ISymbolicIndependenceRelation<L, IPredicate> relation = mIndependenceRelation.getSymbolicRelation();
+				final ISymbolicIndependenceRelation<L, IPredicate> relation =
+						mIndependenceRelation.getSymbolicRelation();
 
 				switch (mTraceCheckMode) {
 				case GENERATOR:
@@ -204,23 +200,23 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 				if ((condition != null) && (!condition.getFormula().toString().equals("true"))
 						&& mCriterion.decide(condition)) {
 
-					BasicPredicate notCondition = mPredicateFactory
+					final BasicPredicate notCondition = mPredicateFactory
 							.newPredicate(SmtUtils.not(mManagedScript.getScript(), condition.getFormula()));
 					// construct a transformula which represents the negation of the condition
 					// via TransFormulaBuilder.constructTransFormulaFromPredicate
-					UnmodifiableTransFormula tf =
+					final UnmodifiableTransFormula tf =
 							TransFormulaBuilder.constructTransFormulaFromPredicate(notCondition, mManagedScript);
 					// copy a transition with the new transformula with IcfgCopyFactory from
 					// CegarLoopFactory.mCopyFactory (needs to be passed to the CEGAR-Loop)
-					L notConditionLetter = mCopyFactory.copy(letter1, tf, tf);
+					final L notConditionLetter = mCopyFactory.copy(letter1, tf, tf);
 					// create a MLPredicate and a SleepSetPredicate as dummy state
-					SleepPredicate<L> dummySleepPredicate =
-							new SleepPredicate<L>(mPredicateFactory.newMLDontCarePredicate(null), null);
+					final SleepPredicate<L> dummySleepPredicate =
+							new SleepPredicate<>(mPredicateFactory.newMLDontCarePredicate(null), null);
 					// add both to the currentRun
-					NestedRun<L, IPredicate> conditionRun =
+					final NestedRun<L, IPredicate> conditionRun =
 							new NestedRun<>(currentRun.getStateAtPosition(currentRun.getLength() - 1),
 									notConditionLetter, -2, dummySleepPredicate);
-					NestedRun<L, IPredicate> currentRunWithCondition = currentRun.concatenate(conditionRun);
+					final NestedRun<L, IPredicate> currentRunWithCondition = currentRun.concatenate(conditionRun);
 
 					final TracePredicates trace = mTraceChecker.checkTrace(currentRunWithCondition, null, null);
 					// final TracePredicates trace = mTraceChecker.checkTrace(currentRun, null, condition);
