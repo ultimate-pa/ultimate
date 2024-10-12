@@ -40,7 +40,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
@@ -144,10 +143,10 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 		int i = lowerIndex;
 		while (i < upperIndex) {
 			// Is the current statement a loop entry?
-			if (rwt.getImage(pps.get(i)).size() >= 2 && ((TreeSet<Integer>) rwt.getImage(pps.get(i))).higher(i) != null
-					&& ((TreeSet<Integer>) rwt.getImage(pps.get(i))).higher(i) < upperIndex) {
+			if (rwt.getImage(pps.get(i)).size() >= 2 && rwt.getImage(pps.get(i)).higher(i) != null
+					&& rwt.getImage(pps.get(i)).higher(i) < upperIndex) {
 				// the new upper index is the last occurrence of the same location
-				final int newUpperIndex = ((TreeSet<Integer>) rwt.getImage(pps.get(i))).lower(upperIndex);
+				final int newUpperIndex = rwt.getImage(pps.get(i)).lower(upperIndex);
 				addStmtPositionToDepth(depth + 1, depth2Statements, i);
 				// we consider the subtrace from i+1 to newUpperIndex as a loop
 				// and apply the partitioning recursively on the subtrace
