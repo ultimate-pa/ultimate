@@ -714,7 +714,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 	}
 
 	@Override
-	public ExpressionResult constructBuiltinFesetround(final ILocation loc, final RValue arg,
+	public ExpressionResult constructBuiltinFesetround(final ILocation loc, final ExpressionResult arg,
 			final AuxVarInfoBuilder auxVarInfoBuilder) {
 		throw new UnsupportedOperationException("fesetround not supported in non-bitprecise translation");
 	}

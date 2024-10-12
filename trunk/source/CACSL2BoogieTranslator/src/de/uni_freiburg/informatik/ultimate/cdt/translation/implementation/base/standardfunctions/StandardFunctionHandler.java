@@ -2624,9 +2624,8 @@ public class StandardFunctionHandler {
 				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
 		final ExpressionResult convertedArgument =
 				mExprResultTransformer.convertIfNecessary(loc, decayedArgument, new CPrimitive(CPrimitives.INT));
-		final ExpressionResult arg = convertedArgument;
 
-		return mExpressionTranslation.constructBuiltinFesetround(loc, (RValue) arg.getLrValue(), mAuxVarInfoBuilder);
+		return mExpressionTranslation.constructBuiltinFesetround(loc, convertedArgument, mAuxVarInfoBuilder);
 	}
 
 	private Result handleMemset(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,

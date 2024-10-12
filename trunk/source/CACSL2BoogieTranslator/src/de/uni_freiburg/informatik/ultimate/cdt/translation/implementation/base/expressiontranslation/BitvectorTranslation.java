@@ -1430,7 +1430,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	}
 
 	@Override
-	public ExpressionResult constructBuiltinFesetround(final ILocation loc, final RValue arg,
+	public ExpressionResult constructBuiltinFesetround(final ILocation loc, final ExpressionResult arg,
 			final AuxVarInfoBuilder auxVarInfoBuilder) {
 		// see https://en.cppreference.com/w/c/types/limits/FLT_ROUNDS and
 		// https://en.cppreference.com/w/c/numeric/fenv/feround
@@ -1440,7 +1440,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			final ASTType intAstType = mTypeHandler.cType2AstType(loc, intCPrimitive);
 			Expression[] arguments;
 			arguments = new Expression[1];
-			arguments[0] = arg.getValue();
+			arguments[0] = arg.getLrValue().getValue();
 
 			final AuxVarInfo auxvar =
 					auxVarInfoBuilder.constructAuxVarInfo(loc, intCPrimitive, intAstType, AUXVAR.RETURNED);
@@ -1450,16 +1450,17 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			final CallStatement result = StatementFactory.constructCallStatement(loc, false,
 					new VariableLHS[] { auxvar.getLhs() }, ULTIMATE_PROC_SET_CURRENT_ROUNDING_MODE, arguments);
 
-			final ExpressionResultBuilder resultBuider = new ExpressionResultBuilder();
-			resultBuider.addAuxVarWithDeclaration(auxvar);
-			resultBuider.addStatement(result);
-			resultBuider.setLrValue(llv);
-			return resultBuider.build();
+			final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder().addAllExceptLrValue(arg);
+			resultBuilder.addAuxVarWithDeclaration(auxvar);
+			resultBuilder.addStatement(result);
+			resultBuilder.setLrValue(llv);
+			return resultBuilder.build();
 		}
 		// always returns fail value when feround is disabled in settings
 		final CPrimitive intCPrimitive = new CPrimitive(CPrimitives.INT);
 		final Expression fail = mTypeSizes.constructLiteralForIntegerType(loc, intCPrimitive, BigInteger.valueOf(-1));
-		return new ExpressionResultBuilder().setLrValue(new RValue(fail, intCPrimitive)).build();
+		return new ExpressionResultBuilder().addAllExceptLrValue(arg).setLrValue(new RValue(fail, intCPrimitive))
+				.build();
 	}
 
 	@Override

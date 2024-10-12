@@ -565,7 +565,7 @@ public abstract class ExpressionTranslation {
 
 	public abstract RValue constructBuiltinFegetround(final ILocation loc);
 
-	public abstract ExpressionResult constructBuiltinFesetround(final ILocation loc, final RValue arg,
+	public abstract ExpressionResult constructBuiltinFesetround(final ILocation loc, final ExpressionResult arg,
 			AuxVarInfoBuilder auxVarInfoBuilder);
 
 	public abstract Expression applyWraparound(ILocation loc, CPrimitive cPrimitive, Expression operand);
