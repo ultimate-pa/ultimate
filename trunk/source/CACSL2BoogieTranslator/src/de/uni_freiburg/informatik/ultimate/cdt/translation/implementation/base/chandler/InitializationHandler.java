@@ -101,6 +101,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.StringLiteralResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO.AUXVAR;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -918,7 +919,15 @@ public class InitializationHandler {
 	 */
 	private LocalLValue obtainAuxVarLocalLValue(final ILocation loc, final CType cType,
 			final ExpressionResultBuilder initialization) {
-		final AuxVarInfo auxVar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, cType);
+		final AUXVAR auxVarType;
+		if (cType instanceof CArray) {
+			auxVarType = SFO.AUXVAR.ARRAYINIT;
+		} else if (cType instanceof CStructOrUnion) {
+			auxVarType = SFO.AUXVAR.STRUCTINIT;
+		} else {
+			throw new UnsupportedOperationException();
+		}
+		final AuxVarInfo auxVar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, cType, auxVarType);
 		initialization.addAuxVarWithDeclaration(auxVar);
 		final LocalLValue arrayLhsToInitialize = new LocalLValue(auxVar.getLhs(), cType, null);
 		initialization.setLrValue(arrayLhsToInitialize);
