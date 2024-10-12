@@ -143,9 +143,10 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 
 			IPredicate pred = null;
 			if (!predicates.isEmpty()) {
-				pred = new PredicateWithConjuncts(0, new ImmutableList<>(predicates), mManagedScript.getScript());
-				pred = new BasicPredicate(0, pred.getFormula(), pred.getVars(), pred.getFuns(),
-						pred.getClosedFormula());
+				final var conjPred = mPredicateFactory.construct(id -> new PredicateWithConjuncts(id,
+						new ImmutableList<>(predicates), mManagedScript.getScript()));
+				pred = mPredicateFactory.construct(id -> new BasicPredicate(id, conjPred.getFormula(),
+						conjPred.getVars(), conjPred.getFuns(), conjPred.getClosedFormula()));
 			}
 
 			if (mIndependenceRelation.isIndependent(pred, letter1, letter2).equals(Dependence.INDEPENDENT)) {
