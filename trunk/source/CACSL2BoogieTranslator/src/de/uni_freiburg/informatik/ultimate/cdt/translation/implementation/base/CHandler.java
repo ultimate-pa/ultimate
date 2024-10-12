@@ -2806,6 +2806,7 @@ public class CHandler {
 				for (final var oa : rhsConverted.getOverapprs()) {
 					new OverapproxVariable(oa.getOverapproximatedLocations()).annotate(assignment);
 				}
+				builder.addAuxVarWithDeclaration(auxVar);
 				builder.addStatement(assignment);
 				resultRhs = auxVar.getExp();
 			}
