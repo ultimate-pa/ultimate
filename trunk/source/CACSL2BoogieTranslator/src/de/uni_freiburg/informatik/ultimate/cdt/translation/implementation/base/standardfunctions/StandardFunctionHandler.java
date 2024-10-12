@@ -1078,26 +1078,6 @@ public class StandardFunctionHandler {
 		fill(map, "__ctype_b_loc", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 0,
 				new CPointer(new CPointer(new CPrimitive(CPrimitives.SHORT)))));
 
-		// TODO: These functions occur in SV-COMP, are they builtins?
-		fill(map, "__bad_size_call_parameter",
-				(main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
-						new CPrimitive(CPrimitives.VOID)));
-		fill(map, "__bad_percpu_size", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main,
-				loc, name, new CPrimitive(CPrimitives.VOID)));
-		fill(map, "__bad_unaligned_access_size",
-				(main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
-						new CPrimitive(CPrimitives.VOID)));
-		fill(map, "__xchg_wrong_size", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main,
-				loc, name, new CPrimitive(CPrimitives.VOID)));
-		fill(map, "__xadd_wrong_size", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main,
-				loc, name, new CPrimitive(CPrimitives.VOID)));
-		fill(map, "__cmpxchg_wrong_size", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main,
-				loc, name, new CPrimitive(CPrimitives.VOID)));
-		fill(map, "__get_user_bad", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc,
-				name, new CPrimitive(CPrimitives.VOID)));
-		fill(map, "__put_user_bad", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc,
-				name, new CPrimitive(CPrimitives.VOID)));
-
 		/** End <stdlib.h> functions according to 7.22 General utilities <stdlib.h> **/
 
 		checkFloatSupport(map, dieFloat);
