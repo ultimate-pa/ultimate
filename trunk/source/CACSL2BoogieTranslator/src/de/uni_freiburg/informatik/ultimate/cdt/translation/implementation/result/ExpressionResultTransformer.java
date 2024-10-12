@@ -590,6 +590,9 @@ public class ExpressionResultTransformer {
 	 */
 	public ExpressionResult makeRepresentationReadyForConversion(final ExpressionResult expr, final ILocation loc,
 			final CType targetCType, final IASTNode hook) {
+		if (expr.getLrValue() == null) {
+			throw new AssertionError("Missing value " + loc);
+		}
 		if (expr.getLrValue().getCType().getUnderlyingType() instanceof CArray
 				&& (targetCType.getUnderlyingType() instanceof CPointer
 						|| targetCType.getUnderlyingType() instanceof CPrimitive)) {
