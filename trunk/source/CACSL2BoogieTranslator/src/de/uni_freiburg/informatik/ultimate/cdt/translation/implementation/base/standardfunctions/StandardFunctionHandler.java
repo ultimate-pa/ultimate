@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
@@ -454,27 +455,45 @@ public class StandardFunctionHandler {
 		 */
 		final IFunctionModelHandler overapproximateGccOverflowCheck = (main, node, loc,
 				name) -> handleByOverapproximation(main, node, loc, name, 3, new CPrimitive(CPrimitives.BOOL));
-		fill(map, "__builtin_add_overflow", overapproximateGccOverflowCheck);
-		fill(map, "__builtin_sadd_overflow", overapproximateGccOverflowCheck);
-		fill(map, "__builtin_saddl_overflow", overapproximateGccOverflowCheck);
-		fill(map, "__builtin_saddll_overflow", overapproximateGccOverflowCheck);
-		fill(map, "__builtin_uadd_overflow", overapproximateGccOverflowCheck);
-		fill(map, "__builtin_uaddl_overflow", overapproximateGccOverflowCheck);
-		fill(map, "__builtin_uaddll_overflow", overapproximateGccOverflowCheck);
-		fill(map, "__builtin_sub_overflow", overapproximateGccOverflowCheck);
-		fill(map, "__builtin_ssub_overflow", overapproximateGccOverflowCheck);
-		fill(map, "__builtin_ssubl_overflow", overapproximateGccOverflowCheck);
-		fill(map, "__builtin_ssubll_overflow", overapproximateGccOverflowCheck);
-		fill(map, "__builtin_usub_overflow", overapproximateGccOverflowCheck);
-		fill(map, "__builtin_usubl_overflow", overapproximateGccOverflowCheck);
-		fill(map, "__builtin_usubll_overflow", overapproximateGccOverflowCheck);
-		fill(map, "__builtin_mul_overflow", overapproximateGccOverflowCheck);
-		fill(map, "__builtin_smul_overflow", overapproximateGccOverflowCheck);
-		fill(map, "__builtin_smull_overflow", overapproximateGccOverflowCheck);
-		fill(map, "__builtin_smulll_overflow", overapproximateGccOverflowCheck);
-		fill(map, "__builtin_umul_overflow", overapproximateGccOverflowCheck);
-		fill(map, "__builtin_umull_overflow", overapproximateGccOverflowCheck);
-		fill(map, "__builtin_umulll_overflow", overapproximateGccOverflowCheck);
+		fill(map, "__builtin_add_overflow", die);
+		fill(map, "__builtin_sadd_overflow", (main, node, loc, name) -> handleBuiltinOverflow(main, node, loc, name,
+				IASTBinaryExpression.op_plus, new CPrimitive(CPrimitives.INT)));
+		fill(map, "__builtin_saddl_overflow", (main, node, loc, name) -> handleBuiltinOverflow(main, node, loc, name,
+				IASTBinaryExpression.op_plus, new CPrimitive(CPrimitives.LONG)));
+		fill(map, "__builtin_saddll_overflow", (main, node, loc, name) -> handleBuiltinOverflow(main, node, loc, name,
+				IASTBinaryExpression.op_plus, new CPrimitive(CPrimitives.LONGLONG)));
+		fill(map, "__builtin_uadd_overflow", (main, node, loc, name) -> handleBuiltinOverflow(main, node, loc, name,
+				IASTBinaryExpression.op_plus, new CPrimitive(CPrimitives.UINT)));
+		fill(map, "__builtin_uaddl_overflow", (main, node, loc, name) -> handleBuiltinOverflow(main, node, loc, name,
+				IASTBinaryExpression.op_plus, new CPrimitive(CPrimitives.ULONG)));
+		fill(map, "__builtin_uaddll_overflow", (main, node, loc, name) -> handleBuiltinOverflow(main, node, loc, name,
+				IASTBinaryExpression.op_plus, new CPrimitive(CPrimitives.ULONGLONG)));
+		fill(map, "__builtin_sub_overflow", die);
+		fill(map, "__builtin_ssub_overflow", (main, node, loc, name) -> handleBuiltinOverflow(main, node, loc, name,
+				IASTBinaryExpression.op_minus, new CPrimitive(CPrimitives.INT)));
+		fill(map, "__builtin_ssubl_overflow", (main, node, loc, name) -> handleBuiltinOverflow(main, node, loc, name,
+				IASTBinaryExpression.op_minus, new CPrimitive(CPrimitives.LONG)));
+		fill(map, "__builtin_ssubll_overflow", (main, node, loc, name) -> handleBuiltinOverflow(main, node, loc, name,
+				IASTBinaryExpression.op_minus, new CPrimitive(CPrimitives.LONGLONG)));
+		fill(map, "__builtin_usub_overflow", (main, node, loc, name) -> handleBuiltinOverflow(main, node, loc, name,
+				IASTBinaryExpression.op_minus, new CPrimitive(CPrimitives.UINT)));
+		fill(map, "__builtin_usubl_overflow", (main, node, loc, name) -> handleBuiltinOverflow(main, node, loc, name,
+				IASTBinaryExpression.op_minus, new CPrimitive(CPrimitives.ULONG)));
+		fill(map, "__builtin_usubll_overflow", (main, node, loc, name) -> handleBuiltinOverflow(main, node, loc, name,
+				IASTBinaryExpression.op_minus, new CPrimitive(CPrimitives.ULONGLONG)));
+		fill(map, "__builtin_mul_overflow", die);
+		fill(map, "__builtin_smul_overflow", (main, node, loc, name) -> handleBuiltinOverflow(main, node, loc, name,
+				IASTBinaryExpression.op_multiply, new CPrimitive(CPrimitives.INT)));
+		fill(map, "__builtin_smull_overflow", (main, node, loc, name) -> handleBuiltinOverflow(main, node, loc, name,
+				IASTBinaryExpression.op_multiply, new CPrimitive(CPrimitives.LONG)));
+		fill(map, "__builtin_smulll_overflow", (main, node, loc, name) -> handleBuiltinOverflow(main, node, loc, name,
+				IASTBinaryExpression.op_multiply, new CPrimitive(CPrimitives.LONGLONG)));
+		fill(map, "__builtin_umul_overflow", (main, node, loc, name) -> handleBuiltinOverflow(main, node, loc, name,
+				IASTBinaryExpression.op_multiply, new CPrimitive(CPrimitives.UINT)));
+		fill(map, "__builtin_umull_overflow", (main, node, loc, name) -> handleBuiltinOverflow(main, node, loc, name,
+				IASTBinaryExpression.op_multiply, new CPrimitive(CPrimitives.ULONG)));
+		fill(map, "__builtin_umulll_overflow", (main, node, loc, name) -> handleBuiltinOverflow(main, node, loc, name,
+				IASTBinaryExpression.op_multiply, new CPrimitive(CPrimitives.ULONGLONG)));
 		fill(map, "__builtin_add_overflow_p", overapproximateGccOverflowCheck);
 		fill(map, "__builtin_sub_overflow_p", overapproximateGccOverflowCheck);
 		fill(map, "__builtin_mul_overflow_p", overapproximateGccOverflowCheck);
@@ -2994,6 +3013,41 @@ public class StandardFunctionHandler {
 			return newRtr;
 		}
 		return rtr;
+	}
+
+	/**
+	 * See https://gcc.gnu.org/onlinedocs/gcc/Integer-Overflow-Builtins.html for specification
+	 */
+	private Result handleBuiltinOverflow(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name, final int operator, final CPrimitive resultType) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 3, name, arguments);
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		final ExpressionResult left = mExprResultTransformer.convertIfNecessary(loc,
+				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]), resultType);
+		final ExpressionResult right = mExprResultTransformer.convertIfNecessary(loc,
+				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[1]), resultType);
+		builder.addAllExceptLrValue(left, right);
+		// Apply the operator to the first two parameters with infinite precision (i.e. ignoring any wraparound or
+		// overflows), convert the result to the given type and write it to the third argument.
+		final Pair<Expression, ASTType> infinitePrecisionResult =
+				mExpressionTranslation.constructInfinitePrecisionOperation(loc, operator, left.getLrValue().getValue(),
+						right.getLrValue().getValue(), resultType);
+		final Expression infinitePrecisionExpr = infinitePrecisionResult.getFirst();
+		final ASTType infinitePrecisionType = infinitePrecisionResult.getSecond();
+		// Write the (converted) result of the operation to the third argument
+		final ExpressionResult resPointer = mExprResultTransformer.dispatchPointerLValue(main, loc, arguments[2]);
+		builder.addAllExceptLrValue(resPointer);
+		builder.addAllExceptLrValue(mExprResultTransformer.makePointerAssignment(loc, resPointer.getLrValue(),
+				mExpressionTranslation.convertInfinitePrecisionExpression(loc, infinitePrecisionExpr, resultType)));
+		// If the infinite precision result fits in the given type, return 0 otherwise 1.
+		final Expression inRange = mExpressionTranslation.checkInRangeInfinitePrecision(loc, infinitePrecisionExpr,
+				infinitePrecisionType, resultType);
+		final CPrimitive boolType = new CPrimitive(CPrimitives.BOOL);
+		final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(loc, boolType, BigInteger.ZERO);
+		final Expression one = mExpressionTranslation.constructLiteralForIntegerType(loc, boolType, BigInteger.ONE);
+		final Expression resultExpr = ExpressionFactory.constructIfThenElseExpression(loc, inRange, zero, one);
+		return builder.setLrValue(new RValue(resultExpr, boolType)).build();
 	}
 
 	private Result handleFloatBuiltinBinaryComparison(final IDispatcher main, final IASTFunctionCallExpression node,

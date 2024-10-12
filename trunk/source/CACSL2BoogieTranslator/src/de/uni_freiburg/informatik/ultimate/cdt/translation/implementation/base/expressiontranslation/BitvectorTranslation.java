@@ -436,6 +436,39 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		return BitvectorFactory.constructBinaryBitvectorOperation(loc, bvop, new Expression[] { exp1, exp2 });
 	}
 
+	@Override
+	public Pair<Expression, ASTType> constructInfinitePrecisionOperation(final ILocation loc, final int operator,
+			final Expression exp1, final Expression exp2, final CPrimitive type) {
+		final int inputBitsize = computeBitsize(type);
+		final int resultBitsize;
+		final BvOp bvop;
+		if (operator == IASTBinaryExpression.op_plus) {
+			resultBitsize = inputBitsize + 1;
+			bvop = BvOp.bvadd;
+		} else if (operator == IASTBinaryExpression.op_minus) {
+			resultBitsize = inputBitsize + 1;
+			bvop = BvOp.bvsub;
+		} else if (operator == IASTBinaryExpression.op_divide) {
+			resultBitsize = inputBitsize + 1;
+			bvop = BvOp.bvsdiv;
+		} else if (operator == IASTBinaryExpression.op_multiply) {
+			resultBitsize = 2 * inputBitsize;
+			bvop = BvOp.bvmul;
+		} else {
+			throw new AssertionError("Unsupported operator for infinite precision operation: " + operator);
+		}
+		final ExtendOperation extendOp =
+				mTypeSizes.isUnsigned(type) ? ExtendOperation.zero_extend : ExtendOperation.sign_extend;
+		final Expression exp1Extended = extend(loc, exp1, extendOp, inputBitsize, resultBitsize);
+		final Expression exp2Extended = extend(loc, exp2, extendOp, inputBitsize, resultBitsize);
+		declareBitvectorFunctionForArithmeticOperation(loc, bvop, resultBitsize);
+		final Expression resultExpr =
+				BitvectorFactory.constructBinaryBitvectorOperation(loc, bvop, exp1Extended, exp2Extended);
+		final ASTType resultType =
+				new PrimitiveType(loc, BoogieType.createBitvectorType(resultBitsize), "bv" + resultBitsize);
+		return new Pair<>(resultExpr, resultType);
+	}
+
 	public void declareBitvectorFunction(final ILocation loc, final BvOp smtFunctionName,
 			final String boogieFunctionName, final boolean boogieResultTypeBool, final CPrimitive resultCType,
 			final int[] indices, final CPrimitive... paramCType) {
@@ -611,6 +644,12 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		final Expression bv = extractBits(loc, operand.getLrValue().getValue(), resultLength, 0);
 		final RValue rVal = new RValue(bv, resultType);
 		return new ExpressionResultBuilder().addAllExceptLrValue(operand).setLrValue(rVal).build();
+	}
+
+	@Override
+	public Expression convertInfinitePrecisionExpression(final ILocation loc, final Expression exp,
+			final CPrimitive type) {
+		return extractBits(loc, exp, computeBitsize(type), 0);
 	}
 
 	@Override
@@ -1507,21 +1546,43 @@ public class BitvectorTranslation extends ExpressionTranslation {
 
 	private Expression constructSmallerMaxIntConstraint(final ILocation loc, final CPrimitive resultType,
 			final int requiredBitsize, final Expression opResult) {
+		final BvOp operator = mTypeSizes.isUnsigned(resultType) ? BvOp.bvule : BvOp.bvsle;
 		final BigInteger maxValueAsInt = mTypeSizes.getMaxValueOfPrimitiveType(resultType);
 		final Expression maxValueAsExpr = ExpressionFactory.createBitvecLiteral(loc, maxValueAsInt, requiredBitsize);
-		final Expression smallerMaxInt = BitvectorFactory.constructBinaryBitvectorOperation(loc, BvOp.bvsle,
+		final Expression smallerMaxInt = BitvectorFactory.constructBinaryBitvectorOperation(loc, operator,
 				new Expression[] { opResult, maxValueAsExpr });
 		return smallerMaxInt;
 	}
 
 	private Expression constructBiggerMinIntConstraint(final ILocation loc, final CPrimitive resultType,
 			final int requiredBitsize, final Expression opResult) {
-		declareBitvectorFunctionForComparisonOperation(loc, BvOp.bvsle, requiredBitsize);
+		final BvOp operator = mTypeSizes.isUnsigned(resultType) ? BvOp.bvule : BvOp.bvsle;
+		declareBitvectorFunctionForComparisonOperation(loc, operator, requiredBitsize);
 		final BigInteger minValueAsInt = mTypeSizes.getMinValueOfPrimitiveType(resultType);
 		final Expression minValueAsExpr = ExpressionFactory.createBitvecLiteral(loc, minValueAsInt, requiredBitsize);
-		final Expression biggerMinInt = BitvectorFactory.constructBinaryBitvectorOperation(loc, BvOp.bvsle,
+		final Expression biggerMinInt = BitvectorFactory.constructBinaryBitvectorOperation(loc, operator,
 				new Expression[] { minValueAsExpr, opResult });
 		return biggerMinInt;
+	}
+
+	private static int computeBitsize(final ASTType type) {
+		if (!(type instanceof PrimitiveType)) {
+			throw new AssertionError("Cannot extract bitsize from type " + type);
+		}
+		final String typeName = ((PrimitiveType) type).getName();
+		if (!typeName.startsWith("bv")) {
+			throw new AssertionError("Cannot extract bitsize from type with name " + typeName);
+		}
+		return Integer.parseInt(typeName.substring(2));
+	}
+
+	@Override
+	public Expression checkInRangeInfinitePrecision(final ILocation loc, final Expression expr, final ASTType inputType,
+			final CPrimitive resultType) {
+		final int bitsize = computeBitsize(inputType);
+		final Expression greaterMin = constructBiggerMinIntConstraint(loc, resultType, bitsize, expr);
+		final Expression smallerMax = constructSmallerMaxIntConstraint(loc, resultType, bitsize, expr);
+		return ExpressionFactory.and(loc, List.of(greaterMin, smallerMax));
 	}
 
 	@Override
