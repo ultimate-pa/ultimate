@@ -766,6 +766,8 @@ public class StandardFunctionHandler {
 				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.UCHAR)));
 		fill(map, "__VERIFIER_nondet_unsigned",
 				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.UINT)));
+		fill(map, "__VERIFIER_nondet_unsigned_int",
+				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.UINT)));
 		fill(map, "__VERIFIER_nondet_uint",
 				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.UINT)));
 		fill(map, "__VERIFIER_nondet_ulong",
