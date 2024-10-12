@@ -124,8 +124,8 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 	public TracePredicates checkConditionalCommutativity(final NestedRun<L, IPredicate> currentRun,
 			final List<IPredicate> predicates, final IPredicate state, final L letter1, final L letter2) {
 
+		mStatisticsUtils.startStopwatch(ConditionalCommutativityStopwatches.CHECKER);
 		try {
-			mStatisticsUtils.startStopwatch(ConditionalCommutativityStopwatches.CHECKER);
 			if (mManagedScript.isLocked()) {
 				mManagedScript.requestLockRelease();
 			}
