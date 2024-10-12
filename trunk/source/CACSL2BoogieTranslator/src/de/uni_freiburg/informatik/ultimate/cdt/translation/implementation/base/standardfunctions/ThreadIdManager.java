@@ -159,7 +159,7 @@ public class ThreadIdManager {
 	 */
 	public Expression[] getJoinedThreadId(final IASTInitializerClause argument, final IDispatcher dispatcher,
 			final ILocation loc, final ExpressionResultBuilder erb) {
-		final CPrimitive threadIdType = mMemoryHandler.getThreadIdType();
+		final CPrimitive threadIdType = mTypeHandler.getThreadIdType();
 		final ExpressionResult tmp =
 				mExpressionResultTransformer.transformDispatchDecaySwitchRexBoolToInt(dispatcher, loc, argument);
 		final ExpressionResult argThreadId =
@@ -183,7 +183,7 @@ public class ThreadIdManager {
 	private Expression getOldForkCounterAsTemp(final ILocation loc, final ExpressionResultBuilder erb) {
 		// create temporary variable for fork counter value
 		final AuxVarInfo tmpThreadId =
-				mAuxVarInfoBuilder.constructAuxVarInfo(loc, mMemoryHandler.getThreadIdType(), SFO.AUXVAR.PRE_MOD);
+				mAuxVarInfoBuilder.constructAuxVarInfo(loc, mTypeHandler.getThreadIdType(), SFO.AUXVAR.PRE_MOD);
 		erb.addAuxVarWithDeclaration(tmpThreadId);
 
 		// assignment: temp variable gets fork counter value
@@ -200,7 +200,7 @@ public class ThreadIdManager {
 	 */
 	private void incrementForkCounter(final ILocation loc, final ExpressionResultBuilder erb) {
 		final IdentifierExpression forkCount = mMemoryHandler.getPthreadForkCount(loc);
-		final CPrimitive threadIdType = mMemoryHandler.getThreadIdType();
+		final CPrimitive threadIdType = mTypeHandler.getThreadIdType();
 
 		final var counterLhs = new VariableLHS(loc, forkCount.getType(), forkCount.getIdentifier(),
 				forkCount.getDeclarationInformation());

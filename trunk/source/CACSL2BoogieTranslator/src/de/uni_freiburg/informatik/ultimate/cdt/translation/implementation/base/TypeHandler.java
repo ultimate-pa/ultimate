@@ -307,6 +307,9 @@ public class TypeHandler implements ITypeHandler {
 			} else if (cId.equals("__pthread_list_t")) {
 				return (new TypesResult(constructPointerType(loc), node.isConst(), false,
 						new CPointer(new CPrimitive(CPrimitives.VOID))));
+			} else if (cId.equals("pthread_t")) {
+				final var cType = getThreadIdType();
+				return new TypesResult(cPrimitive2AstType(loc, cType), node.isConst(), false, cType);
 			} else if (cId.equals("__float128")) {
 				// DD 2020-12-02: Not entirely accurate, because it is actually architecture dependent.
 				// see https://en.wikipedia.org/wiki/Quadruple-precision_floating-point_format and
@@ -1114,4 +1117,8 @@ public class TypeHandler implements ITypeHandler {
 		mNamedIncompleteTypes.addPair(incompleteType, named);
 	}
 
+	@Override
+	public CPrimitive getThreadIdType() {
+		return new CPrimitive(CPrimitives.ULONG);
+	}
 }

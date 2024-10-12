@@ -133,8 +133,8 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.MemoryModel;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.CheckMode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.MemoryModel;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.LinkedScopedHashMap;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -1039,7 +1039,7 @@ public class MemoryHandler {
 	}
 
 	public IdentifierExpression getPthreadForkCount(final ILocation loc) {
-		final BoogieType counterType = mTypeHandler.getBoogieTypeForCType(getThreadIdType());
+		final BoogieType counterType = mTypeHandler.getBoogieTypeForCType(mTypeHandler.getThreadIdType());
 		return ExpressionFactory.constructIdentifierExpression(loc, counterType, SFO.ULTIMATE_FORK_COUNT,
 				new DeclarationInformation(StorageClass.GLOBAL, null));
 	}
@@ -1742,13 +1742,9 @@ public class MemoryHandler {
 	}
 
 	private VariableDeclaration declarePthreadsForkCount(final ILocation loc) {
-		final ASTType counterType = mTypeHandler.cType2AstType(loc, getThreadIdType());
+		final ASTType counterType = mTypeHandler.cType2AstType(loc, mTypeHandler.getThreadIdType());
 		final VarList varList = new VarList(loc, new String[] { SFO.ULTIMATE_FORK_COUNT }, counterType);
 		return new VariableDeclaration(loc, new Attribute[0], new VarList[] { varList });
-	}
-
-	public CPrimitive getThreadIdType() {
-		return new CPrimitive(CPrimitives.INT);
 	}
 
 	private VariableDeclaration declarePThreadsMutexArray(final ILocation loc) {
@@ -2727,7 +2723,8 @@ public class MemoryHandler {
 		case ULTIMATE_MEMINIT:
 			break;
 		case ULTIMATE_PTHREADS_FORK_COUNT:
-			return new MemoryModelDeclarationInfo(mmd, mTypeHandler.getBoogieTypeForCType(getThreadIdType()));
+			return new MemoryModelDeclarationInfo(mmd,
+					mTypeHandler.getBoogieTypeForCType(mTypeHandler.getThreadIdType()));
 		case ULTIMATE_PTHREADS_MUTEX:
 			return new MemoryModelDeclarationInfo(mmd,
 					BoogieType.createArrayType(0, new BoogieType[] { mTypeHandler.getBoogiePointerType() }, mTypeHandler
