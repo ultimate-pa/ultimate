@@ -933,6 +933,9 @@ public class CACSL2BoogieBacktranslator extends
 	@Override
 	public BacktranslatedExpression translateExpressionWithContext(final Expression expression,
 			final ILocation context) {
+		if (context instanceof CACSLLocation && ((CACSLLocation) context).ignoreDuringBacktranslation()) {
+			return null;
+		}
 		return mBoogie2ACSL.translateExpression(expression, context);
 	}
 
