@@ -290,7 +290,7 @@ public class InterpolatingTraceCheckCraig<L extends IAction> extends Interpolati
 		final NestedInterpolantsBuilder<L> nib = new NestedInterpolantsBuilder<>(mTcSmtManager, mTraceCheckLock,
 				mAAA.getAnnotatedSsa(), mNsb.getConstants2BoogieVar(), mPredicateUnifier, mPredicateFactory,
 				skippedInnerProcedurePositions, true, mServices, this, mCfgManagedScript, mInstantiateArrayExt,
-				mSimplificationTechnique);
+				mSimplificationTechnique, mPrecondition, mPostcondition);
 		mInterpolants = nib.getNestedInterpolants();
 		assert TraceCheckUtils.checkInterpolantsInductivityForward(Arrays.asList(mInterpolants), mTrace, mPrecondition,
 				mPostcondition, mPendingContexts, "Craig", mCsToolkit,
@@ -320,7 +320,7 @@ public class InterpolatingTraceCheckCraig<L extends IAction> extends Interpolati
 		final NestedInterpolantsBuilder<L> nib = new NestedInterpolantsBuilder<>(mTcSmtManager, mTraceCheckLock,
 				mAAA.getAnnotatedSsa(), mNsb.getConstants2BoogieVar(), mPredicateUnifier, mPredicateFactory,
 				skippedInnerProcedurePositions, false, mServices, this, mCfgManagedScript, mInstantiateArrayExt,
-				mSimplificationTechnique);
+				mSimplificationTechnique, mPrecondition, mPostcondition);
 		mInterpolants = nib.getNestedInterpolants();
 		final IPredicate oldPrecondition = mPrecondition;
 		final IPredicate oldPostcondition = mPostcondition;
