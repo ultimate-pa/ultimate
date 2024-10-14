@@ -65,6 +65,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CAtomic;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
@@ -260,6 +261,10 @@ public final class DataRaceChecker {
 	}
 
 	private static boolean isRaceImpossible(final LRValue lrVal) {
+		if (lrVal.getCType() instanceof CAtomic) {
+			// Atomic types cannot lead to data races
+			return true;
+		}
 		if (lrVal instanceof HeapLValue) {
 			final Expression address = ((HeapLValue) lrVal).getAddress();
 			return address instanceof IdentifierExpression
