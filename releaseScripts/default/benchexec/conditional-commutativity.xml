@@ -11,6 +11,60 @@
     <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">NONE</option>
   </rundefinition>
 
+  
+   <rundefinition name="CE-Default-Generator">
+    <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">COUNTEREXAMPLE</option>
+    <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">DEFAULT</option>
+	<option name="&#45;-traceabstraction.tracecheck.mode.for.conditional.commutativity">GENERATOR</option>
+  </rundefinition>
+  
+    <rundefinition name="CE-Default-GeneratorWithContext">
+    <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">COUNTEREXAMPLE</option>
+    <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">DEFAULT</option>
+	<option name="&#45;-traceabstraction.tracecheck.mode.for.conditional.commutativity">GENERATOR_WITH_CONTEXT</option>
+  </rundefinition>
+  
+    <rundefinition name="CE-Default-SymbolicRelation">
+    <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">COUNTEREXAMPLE</option>
+    <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">DEFAULT</option>
+	<option name="&#45;-traceabstraction.tracecheck.mode.for.conditional.commutativity">SYMBOLIC_RELATION</option>
+  </rundefinition>
+  
+  <rundefinition name="CE-SleepSet">
+    <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">COUNTEREXAMPLE</option>
+    <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">SLEEP_SET</option>
+  </rundefinition>
+  
+  <rundefinition name="CE-Loop">
+    <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">COUNTEREXAMPLE</option>
+    <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">LOOP</option>
+  </rundefinition>
+  
+   <rundefinition name="CE-Forward">
+    <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">COUNTEREXAMPLE</option>
+    <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">FORWARD</option>
+  </rundefinition>
+  
+  <rundefinition name="CE-Random-20-213">
+    <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">COUNTEREXAMPLE</option>
+    <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">RANDOM</option>
+    <option name="&#45;-traceabstraction.probability.for.random.criterion">20</option>
+    <option name="&#45;-traceabstraction.seed.for.random.criterion">213</option>
+  </rundefinition>
+  
+   <rundefinition name="CE-Random-20-546">
+    <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">COUNTEREXAMPLE</option>
+    <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">RANDOM</option>
+    <option name="&#45;-traceabstraction.probability.for.random.criterion">20</option>
+    <option name="&#45;-traceabstraction.seed.for.random.criterion">546</option>
+  </rundefinition>
+  
+  <rundefinition name="CE-Random-50-213">
+    <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">COUNTEREXAMPLE</option>
+    <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">RANDOM</option>
+    <option name="&#45;-traceabstraction.probability.for.random.criterion">50</option>
+    <option name="&#45;-traceabstraction.seed.for.random.criterion">213</option>
+  </rundefinition>
 
 
   <rundefinition name="IA-Default">
@@ -23,136 +77,32 @@
     <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">SLEEP_SET</option>
   </rundefinition>
   
-   <rundefinition name="IA-Forward">
-    <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">IA</option>
-    <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">FORWARD</option>
-  </rundefinition>
-  
-  <rundefinition name="IA-Loop">
+   <rundefinition name="IA-Loop">
     <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">IA</option>
     <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">LOOP</option>
   </rundefinition>
   
-  <rundefinition name="IA-Random-20-213">
-    <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">IA</option>
-    <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">RANDOM</option>
-    <option name="&#45;-traceabstraction.probability.for.random.criterion">20</option>
-    <option name="&#45;-traceabstraction.seed.for.random.criterion">213</option>
-  </rundefinition>
-  
-  <rundefinition name="IA-Random-50-213">
-    <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">IA</option>
-    <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">RANDOM</option>
-    <option name="&#45;-traceabstraction.probability.for.random.criterion">50</option>
-    <option name="&#45;-traceabstraction.seed.for.random.criterion">213</option>
-  </rundefinition>
-
-  <rundefinition name="IA-Random-20-546">
-    <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">IA</option>
-    <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">RANDOM</option>
-    <option name="&#45;-traceabstraction.probability.for.random.criterion">20</option>
-    <option name="&#45;-traceabstraction.seed.for.random.criterion">546</option>
-  </rundefinition>
-  
-  
-  
-   <rundefinition name="CE-Default">
-    <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">COUNTEREXAMPLE</option>
-    <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">DEFAULT</option>
-  </rundefinition>
-  
-  <rundefinition name="CE-SleepSet">
-    <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">COUNTEREXAMPLE</option>
-    <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">SLEEP_SET</option>
-  </rundefinition>
-  
-   <rundefinition name="CE-Forward">
-    <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">COUNTEREXAMPLE</option>
-    <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">FORWARD</option>
-  </rundefinition>
-  
-  <rundefinition name="CE-Loop">
-    <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">COUNTEREXAMPLE</option>
-    <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">LOOP</option>
-  </rundefinition>
-  
-  <rundefinition name="CE-Random-20-213">
-    <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">COUNTEREXAMPLE</option>
-    <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">RANDOM</option>
-    <option name="&#45;-traceabstraction.probability.for.random.criterion">20</option>
-    <option name="&#45;-traceabstraction.seed.for.random.criterion">213</option>
-  </rundefinition>
-  
-  <rundefinition name="CE-Random-50-213">
-    <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">COUNTEREXAMPLE</option>
-    <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">RANDOM</option>
-    <option name="&#45;-traceabstraction.probability.for.random.criterion">50</option>
-    <option name="&#45;-traceabstraction.seed.for.random.criterion">213</option>
-  </rundefinition>
-
-  <rundefinition name="CE-Random-20-546">
-    <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">COUNTEREXAMPLE</option>
-    <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">RANDOM</option>
-    <option name="&#45;-traceabstraction.probability.for.random.criterion">20</option>
-    <option name="&#45;-traceabstraction.seed.for.random.criterion">546</option>
-  </rundefinition>
-  
-  
-  
-   <rundefinition name="DFS-Default-Limit2">
+   <rundefinition name="DFS-Default-Limit5">
     <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">DFS</option>
     <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">DEFAULT</option>
     <option name="&#45;-traceabstraction.use.limited.checks.recommended.for.dfs">true</option>
-    <option name="&#45;-traceabstraction.limit.for.limited.checks">2</option>
+    <option name="&#45;-traceabstraction.limit.for.limited.checks">5</option>
   </rundefinition>
 
-  <rundefinition name="DFS-SleepSet-Limit2">
+  <rundefinition name="DFS-SleepSet-Limit5">
     <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">DFS</option>
     <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">SLEEP_SET</option>
     <option name="&#45;-traceabstraction.use.limited.checks.recommended.for.dfs">true</option>
-    <option name="&#45;-traceabstraction.limit.for.limited.checks">2</option>
+    <option name="&#45;-traceabstraction.limit.for.limited.checks">5</option>
   </rundefinition>
   
-   <rundefinition name="DFS-Forward-Limit2">
-    <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">DFS</option>
-    <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">FORWARD</option>
-    <option name="&#45;-traceabstraction.use.limited.checks.recommended.for.dfs">true</option>
-    <option name="&#45;-traceabstraction.limit.for.limited.checks">2</option>
-  </rundefinition>
-  
-  <rundefinition name="DFS-Loop-Limit2">
+   <rundefinition name="DFS-Loop-Limit5">
     <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">DFS</option>
     <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">LOOP</option>
     <option name="&#45;-traceabstraction.use.limited.checks.recommended.for.dfs">true</option>
-    <option name="&#45;-traceabstraction.limit.for.limited.checks">2</option>
+    <option name="&#45;-traceabstraction.limit.for.limited.checks">5</option>
   </rundefinition>
 
-  <rundefinition name="DFS-Random-20-213-Limit2">
-    <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">DFS</option>
-    <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">RANDOM</option>
-    <option name="&#45;-traceabstraction.probability.for.random.criterion">20</option>
-    <option name="&#45;-traceabstraction.seed.for.random.criterion">213</option>
-    <option name="&#45;-traceabstraction.use.limited.checks.recommended.for.dfs">true</option>
-    <option name="&#45;-traceabstraction.limit.for.limited.checks">2</option>
-  </rundefinition>
-
-  <rundefinition name="DFS-Random-50-213-Limit2">
-    <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">DFS</option>
-    <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">RANDOM</option>
-    <option name="&#45;-traceabstraction.probability.for.random.criterion">50</option>
-    <option name="&#45;-traceabstraction.seed.for.random.criterion">213</option>
-    <option name="&#45;-traceabstraction.use.limited.checks.recommended.for.dfs">true</option>
-    <option name="&#45;-traceabstraction.limit.for.limited.checks">2</option>
-  </rundefinition>
-
-  <rundefinition name="DFS-Random-20-546-Limit2">
-    <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">DFS</option>
-    <option name="&#45;-traceabstraction.criterion.for.conditional.commutativity.checking">RANDOM</option>
-    <option name="&#45;-traceabstraction.probability.for.random.criterion">20</option>
-    <option name="&#45;-traceabstraction.seed.for.random.criterion">546</option>
-    <option name="&#45;-traceabstraction.use.limited.checks.recommended.for.dfs">true</option>
-    <option name="&#45;-traceabstraction.limit.for.limited.checks">2</option>
-  </rundefinition>
 
   <tasks name="single">
     <option name="-tc">${benchmark_path}/../../../trunk/examples/toolchains/AutomizerCInline.xml</option>

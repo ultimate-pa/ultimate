@@ -20,40 +20,21 @@
   </union>
 
   <union>
-    <result filename="conditional-commutativity.*.results.IA-Default.*.xml" />
+    <result filename="conditional-commutativity.*.results.CE-Default-Generator.*.xml" />
   </union>
   <union>
-    <result filename="conditional-commutativity.*.results.IA-Loop.*.xml" />
+    <result filename="conditional-commutativity.*.results.CE-Default-GeneratorWithContext.*.xml" />
   </union>
   <union>
-    <result filename="conditional-commutativity.*.results.IA-SleepSet.*.xml" />
-  </union>
-  <union>
-    <result filename="conditional-commutativity.*.results.IA-Forward.*.xml" />
-  </union>
-  <union>
-    <result filename="aggregated-IA-Random-MIN.*.xml" />
-  </union>
-  <union>
-    <result filename="conditional-commutativity.*.results.IA-Random-20-213.*.xml" />
-  </union>
-  <union>
-    <result filename="conditional-commutativity.*.results.IA-Random-20-546.*.xml" />
-  </union>
-  <union>
-    <result filename="conditional-commutativity.*.results.IA-Random-50-213.*.xml" />
-  </union>
-
-  <union>
-    <result filename="conditional-commutativity.*.results.CE-Default.*.xml" />
-  </union>
-  <union>
-    <result filename="conditional-commutativity.*.results.CE-Loop.*.xml" />
+    <result filename="conditional-commutativity.*.results.CE-Default-SymbolicRelation.*.xml" />
   </union>
   <union>
     <result filename="conditional-commutativity.*.results.CE-SleepSet.*.xml" />
   </union>
   <union>
+    <result filename="conditional-commutativity.*.results.CE-Loop.*.xml" />
+  </union>
+   <union>
     <result filename="conditional-commutativity.*.results.CE-Forward.*.xml" />
   </union>
   <union>
@@ -70,28 +51,23 @@
   </union>
 
   <union>
-    <result filename="conditional-commutativity.*.results.DFS-Default-Limit2.*.xml" />
+    <result filename="conditional-commutativity.*.results.IA-Default.*.xml" />
   </union>
   <union>
-    <result filename="conditional-commutativity.*.results.DFS-Loop-Limit2.*.xml" />
+    <result filename="conditional-commutativity.*.results.IA-SleepSet.*.xml" />
   </union>
   <union>
-    <result filename="conditional-commutativity.*.results.DFS-SleepSet-Limit2.*.xml" />
+    <result filename="conditional-commutativity.*.results.IA-Loop.*.xml" />
   </union>
-   <union>
-    <result filename="conditional-commutativity.*.results.DFS-Forward-Limit2.*.xml" />
+
+  <union>
+    <result filename="conditional-commutativity.*.results.DFS-Default-Limit5.*.xml" />
   </union>
   <union>
-    <result filename="aggregated-DFS-Random-MIN.*.xml" />
+    <result filename="conditional-commutativity.*.results.DFS-SleepSet-Limit5.*.xml" />
   </union>
   <union>
-    <result filename="conditional-commutativity.*.results.DFS-Random-20-213-Limit2.*.xml" />
-  </union>
-  <union>
-    <result filename="conditional-commutativity.*.results.DFS-Random-20-546-Limit2.*.xml" />
-  </union>
-  <union>
-    <result filename="conditional-commutativity.*.results.DFS-Random-50-213-Limit2.*.xml" />
+    <result filename="conditional-commutativity.*.results.DFS-Loop-Limit5.*.xml" />
   </union>
   
 </table>
