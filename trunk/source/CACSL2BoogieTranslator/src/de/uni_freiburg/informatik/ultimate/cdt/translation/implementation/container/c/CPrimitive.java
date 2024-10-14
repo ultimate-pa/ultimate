@@ -30,6 +30,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c;
 
+import java.util.Arrays;
+
 import org.eclipse.cdt.core.dom.ast.IASTDeclSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclSpecifier;
 
@@ -147,7 +149,7 @@ public class CPrimitive extends CType {
 
 	public CPrimitive(final CPrimitives type) {
 		// FIXME: integrate those flags -- you will also need to change the equals method if you do
-		super(false, false, false, false, false);
+		super(false, false, false, false, false, false);
 		mType = type;
 		mGeneralType = getGeneralType(type);
 	}
@@ -160,7 +162,8 @@ public class CPrimitive extends CType {
 	 */
 	public CPrimitive(final IASTDeclSpecifier cDeclSpec) {
 		// FIXME: integrate those flags -- you will also need to change the equals method if you do
-		super(false, false, false, false, false);
+		super(false, false, false, false, false, Arrays.stream(cDeclSpec.getAttributes())
+				.map(x -> String.valueOf(x.getName())).anyMatch("atomic"::equals));
 		if (!(cDeclSpec instanceof IASTSimpleDeclSpecifier)) {
 			throw new IllegalArgumentException("Unknown C Declaration!");
 		}
