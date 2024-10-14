@@ -64,7 +64,7 @@ public class CEnum extends CType implements ICPossibleIncompleteType<CEnum> {
 	 */
 	public CEnum(final String id, final String[] fNames) {
 		// FIXME: integrate those flags -- you will also need to change the equals method if you do
-		super(false, false, false, false, false);
+		super(false, false, false, false, false, false);
 
 		assert id != null;
 		mIdentifier = id;
@@ -74,7 +74,7 @@ public class CEnum extends CType implements ICPossibleIncompleteType<CEnum> {
 
 	public CEnum(final String id) {
 		// FIXME: integrate those flags -- you will also need to change the equals method if you do
-		super(false, false, false, false, false);
+		super(false, false, false, false, false, false);
 
 		mIdentifier = id;
 		mIsComplete = false;
