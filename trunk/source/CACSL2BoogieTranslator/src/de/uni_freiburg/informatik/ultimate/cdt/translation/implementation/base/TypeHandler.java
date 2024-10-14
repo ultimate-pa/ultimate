@@ -35,6 +35,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -81,6 +82,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CAtomic;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CNamed;
@@ -223,6 +225,8 @@ public class TypeHandler implements ITypeHandler {
 
 	@Override
 	public Result visit(final IDispatcher main, final IASTSimpleDeclSpecifier node) {
+		final boolean isAtomic =
+				Arrays.stream(node.getAttributes()).map(x -> String.valueOf(x.getName())).anyMatch("atomic"::equals);
 		// we have model.boogie.ast.PrimitiveType, which should
 		// only contain BOOL, INT, REAL ...
 		final ILocation loc = mLocationFactory.createCLocation(node);
@@ -242,7 +246,8 @@ public class TypeHandler implements ITypeHandler {
 			// NOTE: in a extended implementation we should
 			// handle here different types of int (short, long,...)
 			final CPrimitive cvar = new CPrimitive(node);
-			return (new TypesResult(cPrimitive2AstType(loc, cvar), node.isConst(), false, cvar));
+			return (new TypesResult(cPrimitive2AstType(loc, cvar), node.isConst(), false,
+					isAtomic ? new CAtomic(cvar) : cvar));
 		}
 		case IASTSimpleDeclSpecifier.t_double:
 		case IASTSimpleDeclSpecifier.t_float:
@@ -250,7 +255,8 @@ public class TypeHandler implements ITypeHandler {
 			// floating point number are not supported by Ultimate,
 			// somehow we treat it here as REALs
 			final CPrimitive cvar = new CPrimitive(node);
-			return new TypesResult(new PrimitiveType(loc, BoogieType.TYPE_REAL, SFO.REAL), node.isConst(), false, cvar);
+			return new TypesResult(new PrimitiveType(loc, BoogieType.TYPE_REAL, SFO.REAL), node.isConst(), false,
+					isAtomic ? new CAtomic(cvar) : cvar);
 		}
 		case IASTSimpleDeclSpecifier.t_typeof: {
 			/*
@@ -645,6 +651,8 @@ public class TypeHandler implements ITypeHandler {
 			return constructPointerType(loc);
 		} else if (cType instanceof CEnum) {
 			return cPrimitive2AstType(loc, new CPrimitive(CPrimitives.INT));
+		} else if (cType instanceof CAtomic) {
+			return cType2AstType(loc, cType.getUnderlyingType());
 		}
 		throw new UnsupportedSyntaxException(loc, "unknown type");
 	}
