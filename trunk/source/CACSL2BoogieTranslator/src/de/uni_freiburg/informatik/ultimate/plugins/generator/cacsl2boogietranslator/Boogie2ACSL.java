@@ -338,8 +338,8 @@ public final class Boogie2ACSL {
 		final CPrimitive int128 = new CPrimitive(CPrimitives.INT128);
 		final CPrimitive uint128 = new CPrimitive(CPrimitives.UINT128);
 		if (!fitsInType(value, int128) && !fitsInType(value, uint128)) {
-			throw new UnsupportedOperationException(
-					"Unable to backtranslate " + valueString + ", there is no C type to represent it.");
+			mReporter.accept("Unable to backtranslate " + valueString + ", there is no C type to represent it.");
+			return null;
 		}
 		// Otherwise we need to split the literal x to ((x / 2^N) << N) | (x % 2^N)
 		// (where N are the number of bits for long long; using appropriate casts)
