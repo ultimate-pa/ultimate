@@ -1,11 +1,14 @@
 package de.uni_freiburg.informatik.ultimate.boogie;
 
+import java.util.EnumSet;
+
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslationValueProvider;
 
 /**
@@ -32,12 +35,34 @@ public class BoogieBacktranslationValueProvider implements IBacktranslationValue
 	}
 
 	@Override
+	public int getLineNumberFromStep(final BoogieASTNode step, final EnumSet<AtomicTraceElement.StepInfo> stepInfo) {
+		return getStartLineNumberFromStep(step);
+	}
+
+	@Override
+	public int getColumnNumberFromStep(final BoogieASTNode step, final EnumSet<AtomicTraceElement.StepInfo> stepInfo) {
+		if (step.getLocation() == null) {
+			return -1;
+		}
+		return step.getLocation().getStartColumn();
+	}
+
+	@Override
 	public String getOriginFileNameFromStep(final BoogieASTNode step) {
 		final ILocation loc = step.getLocation();
 		if (loc == null) {
 			return null;
 		}
 		return loc.getFileName();
+	}
+
+	@Override
+	public String getFunctionFromStep(final BoogieASTNode step) {
+		final ILocation loc = step.getLocation();
+		if (loc == null) {
+			return null;
+		}
+		return loc.getFunction();
 	}
 
 	@Override

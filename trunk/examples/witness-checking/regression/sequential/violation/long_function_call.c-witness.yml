@@ -1,0 +1,59 @@
+- entry_type: violation_sequence
+  metadata:
+    format_version: '2.0'
+    uuid: 259dfe07-1c84-4d51-91f6-168397aaddab
+    creation_time: '2024-07-16T23:58:46+02:00'
+    producer:
+      name: UNUSED
+      version: 0.2.4-wip.fs.yaml-violation-witnesses-26c5761-m
+    task:
+      input_files:
+      - C:\Users\helan\Desktop\ultimate\trunk\examples\witness-checking\regression\violation\long_function_call.c
+      input_file_hashes:
+        C:\Users\helan\Desktop\ultimate\trunk\examples\witness-checking\regression\violation\long_function_call.c: UNUSED
+      specification: UNUSED
+      data_model: UNUSED
+      language: C
+  content:
+  - segment:
+    - waypoint:
+        type: function_enter
+        location:
+          file_name: C:\Users\helan\Desktop\ultimate\trunk\examples\witness-checking\regression\violation\long_function_call.c
+          file_hash: UNUSED
+          line: 10
+          column: 88
+          function: main
+        action: follow
+  - segment:
+    - waypoint:
+        type: function_return
+        location:
+          file_name: C:\Users\helan\Desktop\ultimate\trunk\examples\witness-checking\regression\violation\long_function_call.c
+          file_hash: UNUSED
+          line: 10
+          column: 88
+          function: main
+        action: follow
+  - segment:
+    - waypoint:
+        type: branching
+        constraint:
+          value: 'true'
+        location:
+          file_name: C:\Users\helan\Desktop\ultimate\trunk\examples\witness-checking\regression\violation\long_function_call.c
+          file_hash: UNUSED
+          line: 11
+          column: 5
+          function: main
+        action: follow
+  - segment:
+    - waypoint:
+        type: target
+        location:
+          file_name: C:\Users\helan\Desktop\ultimate\trunk\examples\witness-checking\regression\violation\long_function_call.c
+          file_hash: UNUSED
+          line: 12
+          column: 9
+          function: main
+        action: follow

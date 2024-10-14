@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator;
 
+import java.util.EnumSet;
+
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IPointerType;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTIdExpression;
@@ -33,6 +35,8 @@ import org.eclipse.cdt.internal.core.dom.parser.c.CASTIdExpression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.ACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CLocation;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement.StepInfo;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslationValueProvider;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLPrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Boogie2ACSL.BacktranslatedExpression;
@@ -53,6 +57,39 @@ public class CACSLBacktranslationValueProvider
 	@Override
 	public int getEndLineNumberFromStep(final CACSLLocation step) {
 		return step.getEndLine();
+	}
+
+	@Override
+	public int getLineNumberFromStep(final CACSLLocation step, final EnumSet<AtomicTraceElement.StepInfo> stepInfo) {
+		if (stepInfo.contains(StepInfo.PROC_CALL) || stepInfo.contains(StepInfo.PROC_RETURN)) {
+			// Use the end location (should be the location of the closing parenthesis)
+			return step.getEndLine();
+		}
+		if ((stepInfo.contains(StepInfo.CONDITION_EVAL_TRUE) || stepInfo.contains(StepInfo.CONDITION_EVAL_FALSE))
+				&& step instanceof CLocation) {
+			// Use the starting location of the parent (should be the corresponding if/while)
+			return ((CLocation) step).getParent().getStartLine();
+		}
+		return step.getStartLine();
+	}
+
+	@Override
+	public int getColumnNumberFromStep(final CACSLLocation step, final EnumSet<AtomicTraceElement.StepInfo> stepInfo) {
+		if (stepInfo.contains(StepInfo.PROC_CALL) || stepInfo.contains(StepInfo.PROC_RETURN)) {
+			// Use the end location (should be the location of the closing parenthesis)
+			return step.getEndColumn();
+		}
+		if ((stepInfo.contains(StepInfo.CONDITION_EVAL_TRUE) || stepInfo.contains(StepInfo.CONDITION_EVAL_FALSE))
+				&& step instanceof CLocation) {
+			// Use the starting location of the parent (should be the corresponding if/while)
+			return ((CLocation) step).getParent().getStartColumn();
+		}
+		return step.getStartColumn();
+	}
+
+	@Override
+	public String getFunctionFromStep(final CACSLLocation step) {
+		return step.getFunction();
 	}
 
 	@Override

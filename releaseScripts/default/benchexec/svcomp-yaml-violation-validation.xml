@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+<!DOCTYPE benchmark PUBLIC "+//IDN sosy-lab.org//DTD BenchExec benchmark 1.4//EN" "http://www.sosy-lab.org/benchexec/benchmark-1.4.dtd">
+<benchmark tool="ultimateautomizer" timelimit="900s" hardtimelimit="900s" memlimit="4GB" cpuCores="2">
+ 
+  <rundefinition name="Default">
+    <option name="&#45;-preprocessor.replace.while.statements.and.if-then-else.statements">false</option>
+    <option name="&#45;-icfgbuilder.size.of.a.code.block">SequenceOfStatements</option>
+  </rundefinition>
+  
+  <resultfiles></resultfiles>
+  
+  <option name="--full-output"/>
+  <option name="&#45;-witness-type">violation_witness</option>
+
+  <!-- update path as needed -->
+  <option name="&#45;-validate">./svcomp-yaml-violation-generation.2024-08-01_14-26-22.files/Default/${taskdef_name}/witness.yml</option>
+
+  <tasks name="canary">
+    <include>../../../trunk/examples/svcomp/loops/array-2.yml</include>
+    <propertyfile expectedverdict="false">../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
+  </tasks>
+    
+  <tasks name="ReachSafety">
+    <includesfile>../../../trunk/examples/svcomp/ReachSafety-Arrays.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/ReachSafety-BitVectors.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/ReachSafety-ControlFlow.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/ReachSafety-Combinations.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/ReachSafety-ECA.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/ReachSafety-Floats.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/ReachSafety-Hardness.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/ReachSafety-Hardware.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/ReachSafety-Heap.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/ReachSafety-Loops.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/ReachSafety-ProductLines.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/ReachSafety-Recursive.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/ReachSafety-Sequentialized.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/ReachSafety-XCSP.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/ReachSafety-Fuzzle.set</includesfile>
+    <propertyfile expectedverdict="false">../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
+  </tasks>
+</benchmark>

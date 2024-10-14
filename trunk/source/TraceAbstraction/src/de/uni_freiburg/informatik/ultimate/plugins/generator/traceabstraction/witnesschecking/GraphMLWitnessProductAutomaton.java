@@ -40,13 +40,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -67,7 +65,7 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNodeAnnotation;
 
-public class WitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
+public class GraphMLWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 		implements INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> {
 	private static final Integer STUTTERING_STEPS_LIMIT = Integer.valueOf(10);
 
@@ -128,18 +126,17 @@ public class WitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 		}
 	}
 
-	public WitnessProductAutomaton(final IUltimateServiceProvider services,
+	public GraphMLWitnessProductAutomaton(final IUltimateServiceProvider services,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> controlFlowAutomaton,
 			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton,
-			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
-			final IEmptyStackStateFactory<IPredicate> stateFactory) {
+			final PredicateFactory predicateFactory) {
 		mWitnessLocationMatcher = new WitnessLocationMatcher<>(services, controlFlowAutomaton, witnessAutomaton);
 		mControlFlowAutomaton = controlFlowAutomaton;
 		mWitnessAutomaton = witnessAutomaton;
 		mPredicateFactory = predicateFactory;
 		mFinalStates = new HashSet<>();
 		mInitialStates = constructInitialStates();
-		mEmptyStackState = stateFactory.createEmptyStackState();
+		mEmptyStackState = predicateFactory.newEmptyStackPredicate();
 	}
 
 	private ProductState getOrConstructProductState(final IPredicate cfgAutomatonState,

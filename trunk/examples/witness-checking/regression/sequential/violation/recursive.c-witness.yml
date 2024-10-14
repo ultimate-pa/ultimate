@@ -1,0 +1,135 @@
+- entry_type: violation_sequence
+  metadata:
+    format_version: '2.0'
+    uuid: 88394a3c-b93e-40ee-a7da-46cce21e83c7
+    creation_time: '2024-07-17T11:19:43+02:00'
+    producer:
+      name: UNUSED
+      version: 0.2.4-yaml-violation-witnesses-ff72a30
+    task:
+      input_files:
+      - C:\ultimate\trunk\examples\witness-checking\regression\violation\recursive.c
+      input_file_hashes:
+        C:\ultimate\trunk\examples\witness-checking\regression\violation\recursive.c: UNUSED
+      specification: UNUSED
+      data_model: UNUSED
+      language: C
+  content:
+  - segment:
+    - waypoint:
+        type: function_enter
+        location:
+          file_name: C:\ultimate\trunk\examples\witness-checking\regression\violation\recursive.c
+          file_hash: UNUSED
+          line: 7
+          column: 10
+          function: main
+        action: follow
+  - segment:
+    - waypoint:
+        type: branching
+        constraint:
+          value: 'false'
+        location:
+          file_name: C:\ultimate\trunk\examples\witness-checking\regression\violation\recursive.c
+          file_hash: UNUSED
+          line: 2
+          column: 3
+          function: f
+        action: follow
+  - segment:
+    - waypoint:
+        type: function_enter
+        location:
+          file_name: C:\ultimate\trunk\examples\witness-checking\regression\violation\recursive.c
+          file_hash: UNUSED
+          line: 3
+          column: 13
+          function: f
+        action: follow
+  - segment:
+    - waypoint:
+        type: branching
+        constraint:
+          value: 'false'
+        location:
+          file_name: C:\ultimate\trunk\examples\witness-checking\regression\violation\recursive.c
+          file_hash: UNUSED
+          line: 2
+          column: 3
+          function: f
+        action: follow
+  - segment:
+    - waypoint:
+        type: function_enter
+        location:
+          file_name: C:\ultimate\trunk\examples\witness-checking\regression\violation\recursive.c
+          file_hash: UNUSED
+          line: 3
+          column: 13
+          function: f
+        action: follow
+  - segment:
+    - waypoint:
+        type: branching
+        constraint:
+          value: 'true'
+        location:
+          file_name: C:\ultimate\trunk\examples\witness-checking\regression\violation\recursive.c
+          file_hash: UNUSED
+          line: 2
+          column: 3
+          function: f
+        action: follow
+  - segment:
+    - waypoint:
+        type: function_return
+        location:
+          file_name: C:\ultimate\trunk\examples\witness-checking\regression\violation\recursive.c
+          file_hash: UNUSED
+          line: 3
+          column: 13
+          function: f
+        action: follow
+  - segment:
+    - waypoint:
+        type: function_return
+        location:
+          file_name: C:\ultimate\trunk\examples\witness-checking\regression\violation\recursive.c
+          file_hash: UNUSED
+          line: 3
+          column: 13
+          function: f
+        action: follow
+  - segment:
+    - waypoint:
+        type: function_return
+        location:
+          file_name: C:\ultimate\trunk\examples\witness-checking\regression\violation\recursive.c
+          file_hash: UNUSED
+          line: 7
+          column: 10
+          function: main
+        action: follow
+  - segment:
+    - waypoint:
+        type: branching
+        constraint:
+          value: 'true'
+        location:
+          file_name: C:\ultimate\trunk\examples\witness-checking\regression\violation\recursive.c
+          file_hash: UNUSED
+          line: 7
+          column: 3
+          function: main
+        action: follow
+  - segment:
+    - waypoint:
+        type: target
+        location:
+          file_name: C:\ultimate\trunk\examples\witness-checking\regression\violation\recursive.c
+          file_hash: UNUSED
+          line: 7
+          column: 17
+          function: main
+        action: follow

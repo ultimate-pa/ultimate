@@ -1,0 +1,111 @@
+- entry_type: violation_sequence
+  metadata:
+    format_version: '2.0'
+    uuid: dc9efd14-070a-4ea6-abd3-3c2afae09e9d
+    creation_time: '2024-07-17T14:08:26+02:00'
+    producer:
+      name: UNUSED
+      version: 0.2.4-yaml-violation-witnesses-ff72a30-m
+    task:
+      input_files:
+      - C:\ultimate\trunk\examples\witness-checking\regression\violation\long_while.c
+      input_file_hashes:
+        C:\ultimate\trunk\examples\witness-checking\regression\violation\long_while.c: UNUSED
+      specification: UNUSED
+      data_model: UNUSED
+      language: C
+  content:
+  - segment:
+    - waypoint:
+        type: branching
+        constraint:
+          value: 'true'
+        location:
+          file_name: C:\ultimate\trunk\examples\witness-checking\regression\violation\long_while.c
+          file_hash: UNUSED
+          line: 3
+          column: 3
+          function: main
+        action: follow
+  - segment:
+    - waypoint:
+        type: branching
+        constraint:
+          value: 'true'
+        location:
+          file_name: C:\ultimate\trunk\examples\witness-checking\regression\violation\long_while.c
+          file_hash: UNUSED
+          line: 3
+          column: 3
+          function: main
+        action: follow
+  - segment:
+    - waypoint:
+        type: branching
+        constraint:
+          value: 'true'
+        location:
+          file_name: C:\ultimate\trunk\examples\witness-checking\regression\violation\long_while.c
+          file_hash: UNUSED
+          line: 3
+          column: 3
+          function: main
+        action: follow
+  - segment:
+    - waypoint:
+        type: branching
+        constraint:
+          value: 'true'
+        location:
+          file_name: C:\ultimate\trunk\examples\witness-checking\regression\violation\long_while.c
+          file_hash: UNUSED
+          line: 3
+          column: 3
+          function: main
+        action: follow
+  - segment:
+    - waypoint:
+        type: branching
+        constraint:
+          value: 'true'
+        location:
+          file_name: C:\ultimate\trunk\examples\witness-checking\regression\violation\long_while.c
+          file_hash: UNUSED
+          line: 3
+          column: 3
+          function: main
+        action: follow
+  - segment:
+    - waypoint:
+        type: branching
+        constraint:
+          value: 'false'
+        location:
+          file_name: C:\ultimate\trunk\examples\witness-checking\regression\violation\long_while.c
+          file_hash: UNUSED
+          line: 3
+          column: 3
+          function: main
+        action: follow
+  - segment:
+    - waypoint:
+        type: branching
+        constraint:
+          value: 'true'
+        location:
+          file_name: C:\ultimate\trunk\examples\witness-checking\regression\violation\long_while.c
+          file_hash: UNUSED
+          line: 4
+          column: 3
+          function: main
+        action: follow
+  - segment:
+    - waypoint:
+        type: target
+        location:
+          file_name: C:\ultimate\trunk\examples\witness-checking\regression\violation\long_while.c
+          file_hash: UNUSED
+          line: 4
+          column: 15
+          function: main
+        action: follow

@@ -212,4 +212,12 @@ public class CLocation extends CACSLLocation {
 		}
 		return scope.getDeclarator().getName().toString();
 	}
+
+	/**
+	 * Returns a location for the parent node of this.
+	 */
+	public CLocation getParent() {
+		return new CLocation(mNode.getParent(), ignoreDuringBacktranslation(), mLineDirectiveMapping,
+				mLineOffsetComputer);
+	}
 }

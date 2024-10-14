@@ -316,8 +316,9 @@ public class CACSL2BoogieBacktranslator extends
 
 	private AtomicTraceElement<CACSLLocation> handleLoopConditional(final AtomicTraceElement<BoogieASTNode> ate,
 			final CACSLLocation cloc, final IASTExpression condition) {
-		final EnumSet<StepInfo> newSi = invertConditionInStepInfo(ate.getStepInfo());
-		if (newSi == null) {
+		if (!ate.hasStepInfo(StepInfo.CONDITION_EVAL_FALSE) && !ate.hasStepInfo(StepInfo.CONDITION_EVAL_TRUE)) {
+			reportUnfinishedBacktranslation(
+					"Expected StepInfo for loop construct to contain Condition, but it did not");
 			return null;
 		}
 		final CACSLLocation step = mLocationFactory.createCLocation(condition);
@@ -327,39 +328,9 @@ public class CACSL2BoogieBacktranslator extends
 			builder.setThreadId(ate.getThreadId());
 		}
 		builder.setRelevanceInformation(ate.getRelevanceInformation()).setElement(cloc).setStep(step)
-				.setStepInfo(newSi).setProcedures(ate.getPrecedingProcedure(), ate.getSucceedingProcedure());
+				.setStepInfo(ate.getStepInfo())
+				.setProcedures(ate.getPrecedingProcedure(), ate.getSucceedingProcedure());
 		return builder.build();
-	}
-
-	/**
-	 * This method converts condition eval false to condition eval true and vice versa. It is used because we translate
-	 * C loop conditions to if(!cond) break; in Boogie, i.e., while in Boogie, the condition was true, in C it is false
-	 * and vice versa.
-	 *
-	 * @param oldSiSet
-	 * @return
-	 */
-	private EnumSet<StepInfo> invertConditionInStepInfo(final EnumSet<StepInfo> oldSiSet) {
-		if (!oldSiSet.contains(StepInfo.CONDITION_EVAL_FALSE) && !oldSiSet.contains(StepInfo.CONDITION_EVAL_TRUE)) {
-			reportUnfinishedBacktranslation(
-					"Expected StepInfo for loop construct to contain Condition, but it did not");
-			return null;
-		}
-		final EnumSet<StepInfo> set = EnumSet.noneOf(StepInfo.class);
-		for (final StepInfo oldSi : oldSiSet) {
-			switch (oldSi) {
-			case CONDITION_EVAL_FALSE:
-				set.add(StepInfo.CONDITION_EVAL_TRUE);
-				break;
-			case CONDITION_EVAL_TRUE:
-				set.add(StepInfo.CONDITION_EVAL_FALSE);
-				break;
-			default:
-				set.add(oldSi);
-				break;
-			}
-		}
-		return set;
 	}
 
 	/**

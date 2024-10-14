@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Manuel Bentele (bentele@informatik.uni-freiburg.de)
- * Copyright (C) 2023 University of Freiburg
+ * Copyright (C) 2024 Helen Meyer (helen.anna.meyer@gmail.com)
+ * Copyright (C) 2024 University of Freiburg
  *
  * This file is part of the ULTIMATE WitnessParser plug-in.
  *
@@ -29,37 +29,37 @@ package de.uni_freiburg.informatik.ultimate.witnessparser.yaml;
 
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.core.lib.models.BasePayloadContainer;
-
 /**
- * @author Manuel Bentele (bentele@informatik.uni-freiburg.de)
+ * Waypoints are organized into Segments. Each segment contains zero or more Waypoints with action "avoid" and exactly
+ * one with action "follow"
+ *
+ * @author Helen Meyer (helen.anna.meyer@gmail.com)
  */
-public class Witness extends BasePayloadContainer {
-	private static final long serialVersionUID = 2111530908758373549L;
+public class Segment {
+	private final List<Waypoint> mAvoidWaypoints;
+	private final Waypoint mFollowWaypoint;
 
-	private final List<WitnessEntry> mEntries;
-
-	public Witness(final List<WitnessEntry> entries) {
-		mEntries = entries;
+	public Segment(final List<Waypoint> avoidWaypoints, final Waypoint followWaypoint) {
+		mAvoidWaypoints = avoidWaypoints;
+		mFollowWaypoint = followWaypoint;
 	}
 
-	public List<WitnessEntry> getEntries() {
-		return mEntries;
+	public List<Waypoint> getAvoidWaypoints() {
+		return mAvoidWaypoints;
+	}
+
+	public Waypoint getFollowWaypoint() {
+		return mFollowWaypoint;
 	}
 
 	@Override
 	public String toString() {
-		return mEntries.toString();
+		final StringBuilder sb = new StringBuilder();
+		sb.append("Segment: ");
+		if (!mAvoidWaypoints.isEmpty()) {
+			sb.append("avoid:").append(mAvoidWaypoints).append(", ");
+		}
+		return sb.append("follow: ").append(mFollowWaypoint).toString();
 	}
 
-	public boolean isCorrectnessWitness() {
-		if (mEntries.stream().anyMatch(ViolationSequence.class::isInstance)) {
-			if (!mEntries.stream().allMatch(ViolationSequence.class::isInstance)) {
-				throw new AssertionError(
-						"The witness contains violation sequences and invariants and is thus syntactically invalid.");
-			}
-			return false;
-		}
-		return true;
-	}
 }
