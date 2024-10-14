@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessPro
 import de.uni_freiburg.informatik.ultimate.core.lib.results.InvariantResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ProcedureContractResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ProcedureContract;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -168,14 +169,23 @@ public final class FloydHoareUtils {
 			checkPermissibleVariables(ensuresFormula, permissibleForEnsures(procName, csToolkit),
 					"ensures for " + procName);
 
-			final var result = new ProcedureContractResult<IIcfgElement>(pluginName, exit, backTranslatorService,
-					procName, requiresFormula, ensuresFormula, checks);
-			if (result.isTrivial()) {
+			final var modifies = csToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(procName).stream()
+					.map(IProgramVar::getTermVariable).collect(Collectors.toSet());
+			final var contract = new ProcedureContract<>(procName,
+					requiresFormula == null || SmtUtils.isTrueLiteral(requiresFormula) ? null : requiresFormula,
+					ensuresFormula == null || SmtUtils.isTrueLiteral(ensuresFormula) ? null : ensuresFormula, modifies);
+
+			final ILocation context = ILocation.getAnnotation(exit);
+			final var translatedContract =
+					backTranslatorService.translateProcedureContract(contract, context, Term.class);
+			if (translatedContract.isTrivial()) {
 				continue;
 			}
 
+			final var result =
+					new ProcedureContractResult<IIcfgElement>(pluginName, exit, procName, translatedContract, checks);
 			reporter.accept(result);
-			new WitnessProcedureContract(result.getRequiresResult(), result.getEnsuresResult()).annotate(exit);
+			new WitnessProcedureContract(translatedContract).annotate(exit);
 		}
 	}
 

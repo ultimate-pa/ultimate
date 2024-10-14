@@ -32,7 +32,10 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 
@@ -88,6 +91,53 @@ public final class Boogie2ACSL {
 	public BacktranslatedExpression translateExpression(
 			final de.uni_freiburg.informatik.ultimate.boogie.ast.Expression expression, final ILocation context) {
 		return translateExpression(expression, context, false);
+	}
+
+	/**
+	 * Provides a specialized translation for the 'ensures' clause in a procedure contract. Specifically, it adds
+	 * conjuncts of the form 'x == \old(x)' for all global variables that are not modifiable by the procedure, and that
+	 * are off-heap (because we assume conservatively that the procedure may modify the heap).
+	 *
+	 * @param expression
+	 *            The original 'ensures' clause to translate
+	 * @param context
+	 *            The context, i.e., the location of the C function definition
+	 * @param modifiableGlobals
+	 *            The set of variables listed in the Boogie procedure "modifies" clause
+	 * @return A backtranslated ensures clause with the additional conjuncts
+	 */
+	public BacktranslatedExpression translateEnsuresExpression(
+			final de.uni_freiburg.informatik.ultimate.boogie.ast.Expression expression, final ILocation context,
+			final Set<de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression> modifiableGlobals) {
+		final var intType = new CPrimitive(CPrimitives.INT);
+		final var boolRange = BigInterval.booleanRange();
+
+		if (expression == null) {
+			return computeOldVarEqualities(modifiableGlobals)
+					.map(e -> new BacktranslatedExpression(e, intType, boolRange)).orElse(null);
+		}
+
+		final var mainExpression = translateExpression(expression, context);
+		final var oldVarEqualities = computeOldVarEqualities(modifiableGlobals);
+		if (oldVarEqualities.isPresent()) {
+			return new BacktranslatedExpression(
+					new BinaryExpression(Operator.LOGICAND, mainExpression.getExpression(), oldVarEqualities.get()),
+					new CPrimitive(CPrimitives.INT), BigInterval.booleanRange());
+		}
+
+		return mainExpression;
+	}
+
+	private Optional<Expression> computeOldVarEqualities(
+			final Set<de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression> modifiableGlobals) {
+		final var modifiableNames = modifiableGlobals.stream().map(e -> e.getIdentifier()).collect(Collectors.toSet());
+		return mSymbolTable.getGlobalScope().entrySet().stream()
+				.filter(e -> !modifiableNames.contains(e.getValue().getBoogieName()))
+				.filter(e -> !mMapping.getVar(e.getValue().getBoogieName(), e.getValue().getDeclarationInformation())
+						.getThird())
+				.map(e -> new IdentifierExpression(e.getKey()))
+				.<Expression> map(v -> new BinaryExpression(Operator.COMPEQ, v, new OldValueExpression(v)))
+				.reduce((eq1, eq2) -> new BinaryExpression(Operator.LOGICAND, eq1, eq2));
 	}
 
 	private BacktranslatedExpression translateExpression(
