@@ -31,7 +31,7 @@ datadir = os.path.join(ultimatedir, "data")
 witnessdir = ultimatedir
 witnessname = "witness"
 enable_assertions = False
-referee_strict_validation = True
+referee_strict_validation = False
 
 # special strings in ultimate output
 unsupported_syntax_errorstring = "ShortDescription: Unsupported Syntax"
