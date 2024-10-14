@@ -63,6 +63,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BigInterval;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * Translate Boogie expressions to ACSL
@@ -139,7 +140,9 @@ public final class Boogie2ACSL {
 			final var range = getRangeForCType(type);
 			return new BacktranslatedExpression(new ACSLResultExpression(), type, range);
 		} else if (mMapping.hasVar(boogieId, expr.getDeclarationInformation())) {
-			final Pair<String, CType> pair = mMapping.getVar(boogieId, expr.getDeclarationInformation());
+			final Triple<String, CType, Boolean> pair = mMapping.getVar(boogieId, expr.getDeclarationInformation());
+			// TODO Should we do something different if the variable is on-heap?
+
 			if (isPresentInContext(pair.getFirst(), context)) {
 				final var range = getRangeForCType(pair.getSecond());
 				return new BacktranslatedExpression(new IdentifierExpression(pair.getFirst()), pair.getSecond(), range);
