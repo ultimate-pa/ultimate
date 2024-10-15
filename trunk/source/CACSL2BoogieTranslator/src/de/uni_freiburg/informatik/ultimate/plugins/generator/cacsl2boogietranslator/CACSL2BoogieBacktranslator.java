@@ -98,6 +98,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceEle
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslatedCFG;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLTransformer;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLVisitor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Boogie2ACSL.BacktranslatedExpression;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -223,13 +225,13 @@ public class CACSL2BoogieBacktranslator extends
 					// it comes from the if(!cond)break; construct in Boogie.
 					// we therefore invert the stepinfo, i.e. from condevaltrue
 					// to condevalfalse
-					newAte = handleConditional(ate, cloc, ((CASTWhileStatement) cnode).getCondition());
+					newAte = handleLoopConditional(ate, cloc, ((CASTWhileStatement) cnode).getCondition());
 				} else if (cnode instanceof CASTDoStatement) {
 					// same as while
-					newAte = handleConditional(ate, cloc, ((CASTDoStatement) cnode).getCondition());
+					newAte = handleLoopConditional(ate, cloc, ((CASTDoStatement) cnode).getCondition());
 				} else if (cnode instanceof CASTForStatement) {
 					// same as while
-					newAte = handleConditional(ate, cloc, ((CASTForStatement) cnode).getConditionExpression());
+					newAte = handleLoopConditional(ate, cloc, ((CASTForStatement) cnode).getConditionExpression());
 				} else if (cnode instanceof CASTFunctionCallExpression) {
 					// more complex, handled separately
 					i = handleCASTFunctionCallExpression(oldPE, i, (CASTFunctionCallExpression) cnode, cloc,
@@ -314,7 +316,7 @@ public class CACSL2BoogieBacktranslator extends
 		return check.areAllTemp();
 	}
 
-	private AtomicTraceElement<CACSLLocation> handleConditional(final AtomicTraceElement<BoogieASTNode> ate,
+	private AtomicTraceElement<CACSLLocation> handleLoopConditional(final AtomicTraceElement<BoogieASTNode> ate,
 			final CACSLLocation cloc, final IASTExpression condition) {
 		final EnumSet<StepInfo> newSi = invertConditionInStepInfo(ate.getStepInfo());
 		if (newSi == null) {
@@ -326,8 +328,8 @@ public class CACSL2BoogieBacktranslator extends
 		if (ate.hasThreadId()) {
 			builder.setThreadId(ate.getThreadId());
 		}
-		builder.setRelevanceInformation(ate.getRelevanceInformation()).setElement(cloc).setStep(step)
-				.setStepInfo(newSi).setProcedures(ate.getPrecedingProcedure(), ate.getSucceedingProcedure());
+		builder.setRelevanceInformation(ate.getRelevanceInformation()).setElement(cloc).setStep(step).setStepInfo(newSi)
+				.setProcedures(ate.getPrecedingProcedure(), ate.getSucceedingProcedure());
 		return builder.build();
 	}
 
@@ -583,9 +585,17 @@ public class CACSL2BoogieBacktranslator extends
 		final Map<BacktranslatedExpression, Collection<BacktranslatedExpression>> translatedStateMap = new HashMap<>();
 		final ProgramState<Expression> compressedProgramState = compressProgramState(programState);
 
+		// Suppress backtranslation warnings for program states
+		// We just skip variables like pointers or aux-vars in the programs states
+		// TODO: This is a bit hacky, but we need to distinguish the translation of invariants and program states.
+		final boolean generateOld = mGenerateBacktranslationWarnings;
+		final boolean warnedOld = mBacktranslationWarned;
+		mGenerateBacktranslationWarnings = false;
 		for (final Expression varName : compressedProgramState.getVariables()) {
 			translateProgramStateEntry(varName, compressedProgramState, translatedStateMap);
 		}
+		mGenerateBacktranslationWarnings = generateOld;
+		mBacktranslationWarned = warnedOld;
 		return new ProgramState<>(translatedStateMap, BacktranslatedExpression.class);
 
 	}
@@ -914,10 +924,9 @@ public class CACSL2BoogieBacktranslator extends
 				}
 			}
 			// Otherwise create a value like {base:offset}
-			// This is not a real ACSL-expression, so we wrap it simply into an IdentifierExpression
+			// This is not a real ACSL-expression, so we wrap it into FakeAcslPointerExpression
 			return new BacktranslatedExpression(
-					new de.uni_freiburg.informatik.ultimate.model.acsl.ast.IdentifierExpression(
-							"{" + translateExpression(base) + ":" + translateExpression(pointer.mOffset) + "}"));
+					new FakeAcslPointerExpression(translateExpression(base), translateExpression(pointer.mOffset)));
 		}
 		return translateExpression(expression);
 	}
@@ -925,6 +934,9 @@ public class CACSL2BoogieBacktranslator extends
 	@Override
 	public BacktranslatedExpression translateExpressionWithContext(final Expression expression,
 			final ILocation context) {
+		if (context instanceof CACSLLocation && ((CACSLLocation) context).ignoreDuringBacktranslation()) {
+			return null;
+		}
 		return mBoogie2ACSL.translateExpression(expression, context);
 	}
 
@@ -1120,5 +1132,33 @@ public class CACSL2BoogieBacktranslator extends
 		public Expression accept(final GeneratedBoogieAstTransformer visitor) {
 			return null;
 		}
+	}
+
+	private static class FakeAcslPointerExpression
+			extends de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression {
+		private final BacktranslatedExpression mBase;
+		private final BacktranslatedExpression mOffset;
+
+		public FakeAcslPointerExpression(final BacktranslatedExpression base, final BacktranslatedExpression offset) {
+			mBase = base;
+			mOffset = offset;
+		}
+
+		@Override
+		public String toString() {
+			return "{" + mBase + ":" + mOffset + "}";
+		}
+
+		@Override
+		public void accept(final ACSLVisitor visitor) {
+			// nothing to accept here
+
+		}
+
+		@Override
+		public de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression accept(final ACSLTransformer visitor) {
+			return null;
+		}
+
 	}
 }

@@ -52,7 +52,8 @@ public abstract class YamlWitnessWriter {
 			return new YamlWitnessWriterV0(metadataProvider);
 		}
 		if (formatVersion.getMajor() == 2) {
-			return new YamlWitnessWriterV2(metadataProvider, formatVersion.getMinor() >= 1);
+			return new YamlWitnessWriterV2(metadataProvider, formatVersion.getMinor() >= 1,
+					formatVersion.getMinor() >= 1);
 		}
 		throw new UnsupportedOperationException("Unknown format version " + formatVersion);
 	}

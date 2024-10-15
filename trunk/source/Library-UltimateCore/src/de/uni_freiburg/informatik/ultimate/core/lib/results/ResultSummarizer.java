@@ -119,6 +119,9 @@ public final class ResultSummarizer {
 					toolchainResult = updateIfLess(toolchainResult, ToolchainResult.CORRECT);
 				} else if (result instanceof TerminationArgumentResult<?, ?>) {
 					toolchainResult = updateIfLess(toolchainResult, ToolchainResult.CORRECT);
+				} else if (result instanceof AnnotationCheckResult<?, ?>) {
+					final ToolchainResult newResult = translateRefereeResult((AnnotationCheckResult<?, ?>) result);
+					toolchainResult = updateIfLess(toolchainResult, newResult);
 				} else if (result instanceof ExceptionOrErrorResult) {
 					toolchainResult = updateIfLess(toolchainResult, ToolchainResult.ERROR);
 				} else if (result instanceof TerminationAnalysisResult) {
@@ -143,6 +146,20 @@ public final class ResultSummarizer {
 		}
 		mSummary = toolchainResult;
 		mDescription = description;
+	}
+
+	private static ToolchainResult translateRefereeResult(final AnnotationCheckResult<?, ?> result) {
+		switch (result.getAnnotationState()) {
+		case INVALID:
+			// While the program need not be INCORRECT, the program's supposedly inductive annotation / the witness is.
+			return ToolchainResult.INCORRECT;
+		case UNKNOWN:
+			return ToolchainResult.UNPROVABLE;
+		case VALID:
+			return ToolchainResult.CORRECT;
+		default:
+			throw new AssertionError("unknown annotation state: " + result.getAnnotationState());
+		}
 	}
 
 	private static ToolchainResult updateIfLess(final ToolchainResult current, final ToolchainResult desired) {

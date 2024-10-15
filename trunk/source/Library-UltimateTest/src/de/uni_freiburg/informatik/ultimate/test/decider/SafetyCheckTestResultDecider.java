@@ -28,6 +28,8 @@
 
 package de.uni_freiburg.informatik.ultimate.test.decider;
 
+import java.util.regex.Pattern;
+
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ExceptionOrErrorResult;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.decider.expectedresult.IExpectedResultFinder;
@@ -38,8 +40,7 @@ import de.uni_freiburg.informatik.ultimate.test.decider.overallresult.SafetyChec
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 
 /**
- * Use keywords in filename and first line to decide correctness of safety
- * checker results.
+ * Use keywords in filename and first line to decide correctness of safety checker results.
  *
  * @author heizmann@informatik.uni-freiburg.de
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
@@ -50,19 +51,33 @@ public class SafetyCheckTestResultDecider extends ThreeTierTestResultDecider<Saf
 	/**
 	 *
 	 * @param ultimateRunDefinition
-	 *
 	 * @param unknownIsJUnitSuccess
-	 *            if true the TestResult UNKNOWN is a success for JUnit, if
-	 *            false, the TestResult UNKNOWN is a failure for JUnit.
+	 *            if true the TestResult UNKNOWN is a success for JUnit, if false, the TestResult UNKNOWN is a failure
+	 *            for JUnit.
+	 *
+	 * @param overridenExpectedVerdict
+	 *            The expected verdict overridden in a separate file, null if not present.
 	 */
-	public SafetyCheckTestResultDecider(final UltimateRunDefinition ultimateRunDefinition, final boolean unknownIsJUnitSuccess) {
+	public SafetyCheckTestResultDecider(final UltimateRunDefinition ultimateRunDefinition,
+			final boolean unknownIsJUnitSuccess, final String overridenExpectedVerdict) {
+		super(ultimateRunDefinition, unknownIsJUnitSuccess, overridenExpectedVerdict);
+	}
+
+	/**
+	 *
+	 * @param ultimateRunDefinition
+	 * @param unknownIsJUnitSuccess
+	 *            if true the TestResult UNKNOWN is a success for JUnit, if false, the TestResult UNKNOWN is a failure
+	 *            for JUnit.
+	 */
+	public SafetyCheckTestResultDecider(final UltimateRunDefinition ultimateRunDefinition,
+			final boolean unknownIsJUnitSuccess) {
 		super(ultimateRunDefinition, unknownIsJUnitSuccess);
 	}
 
 	@Override
 	public IExpectedResultFinder<SafetyCheckerOverallResult> constructExpectedResultFinder() {
-		return new KeywordBasedExpectedResultFinder<>(
-				TestUtil.constructFilenameKeywordMap_AllSafetyChecker(), null,
+		return new KeywordBasedExpectedResultFinder<>(TestUtil.constructFilenameKeywordMap_AllSafetyChecker(), null,
 				TestUtil.constructFirstlineKeywordMap_SafetyChecker());
 	}
 
@@ -84,6 +99,19 @@ public class SafetyCheckTestResultDecider extends ThreeTierTestResultDecider<Saf
 		@Override
 		public void evaluateTestResult(final IExpectedResultFinder<SafetyCheckerOverallResult> expectedResultFinder,
 				final IOverallResultEvaluator<SafetyCheckerOverallResult> overallResultDeterminer) {
+			if (mOverridenExpectedVerdict != null) {
+				final SafetyCheckerOverallResult overallResult = overallResultDeterminer.getOverallResult();
+				final String overallResultMsg = overallResultDeterminer.generateOverallResultMessage();
+				final Pattern pattern = Pattern.compile(mOverridenExpectedVerdict, Pattern.CASE_INSENSITIVE);
+				if (pattern.matcher(overallResult.toString()) != null || pattern.matcher(overallResultMsg) != null) {
+					mTestResult = TestResult.IGNORE;
+				} else {
+					mTestResult = TestResult.FAIL;
+				}
+				mCategory = overallResult + " (Expected to match :" + mOverridenExpectedVerdict + ")";
+				mMessage = " UltimateResult: " + overallResultMsg;
+				return;
+			}
 			evaluateExpectedResult(expectedResultFinder);
 			switch (expectedResultFinder.getExpectedResultFinderStatus()) {
 			case ERROR:

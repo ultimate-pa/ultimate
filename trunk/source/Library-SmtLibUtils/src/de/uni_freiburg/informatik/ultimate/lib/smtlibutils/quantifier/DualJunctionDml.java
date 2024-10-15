@@ -41,7 +41,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -50,14 +49,12 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubTermFinder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineTermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -78,17 +75,15 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 
 	private static final boolean POSTPONE_ELIMINATEES_NOT_YET_PROMISING = true;
 	/**
-	 * Looks very useful and is required for some benchmarks but had surprisingly
-	 * bad effects on {@link QuantifierEliminationDivModCrafted#bvToIntFoxExists04}
-	 * (which are by now solved by another optimization).
+	 * Looks very useful and is required for some benchmarks but had surprisingly bad effects on
+	 * {@link QuantifierEliminationDivModCrafted#bvToIntFoxExists04} (which are by now solved by another optimization).
 	 */
 	private static final boolean EXCLUDE_CORRESPONDING_FINITE_JUNCTIONS = true;
 	/**
-	 * Omit `div` eliminations where we think that an elimination of the new
-	 * auxiliary variables is unlikely. Currently: Omit if the absolut value of the
-	 * coefficient of the eliminatee is one. <br />
-	 * TODO Matthias 20230312: Maybe we can do the elimination additionally if the
-	 * eliminatee occurs only in one dualJunct.
+	 * Omit `div` eliminations where we think that an elimination of the new auxiliary variables is unlikely. Currently:
+	 * Omit if the absolut value of the coefficient of the eliminatee is one. <br />
+	 * TODO Matthias 20230312: Maybe we can do the elimination additionally if the eliminatee occurs only in one
+	 * dualJunct.
 	 */
 	private static final boolean OMIT_NON_PROMISING_DIV_ELIMINATIONS = true;
 
@@ -122,11 +117,10 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 					}
 					continue;
 				}
-				final Predicate<Term> isDivModTerm = (x -> isDivModTerm(x));
 				final boolean onlyOutermost = false;
-				final Set<Term> divModSubterms = SubTermFinder.find(dualJunct, isDivModTerm, onlyOutermost);
-				for (final Term subterm : divModSubterms) {
-					final ApplicationTerm appTerm = (ApplicationTerm) subterm;
+				final Set<ApplicationTerm> divModSubterms =
+						SmtUtils.extractApplicationTerms(Set.of("div", "mod"), dualJunct, onlyOutermost);
+				for (final ApplicationTerm appTerm : divModSubterms) {
 					assert appTerm.getFunction().getApplicationString().equals("div")
 							|| appTerm.getFunction().getApplicationString().equals("mod");
 					assert appTerm.getParameters().length == 2;
@@ -149,8 +143,8 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 					if (!Arrays.asList(dividentAsTerm.getFreeVars()).contains(eliminatee)) {
 						continue;
 					}
-					final CoeffcientEliminateeOffset ceo = CoeffcientEliminateeOffset.of(mScript, eliminatee,
-							dividentAsTerm);
+					final CoeffcientEliminateeOffset ceo =
+							CoeffcientEliminateeOffset.of(mScript, eliminatee, dividentAsTerm);
 					if (ceo == null) {
 						continue;
 					}
@@ -164,8 +158,8 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 					}
 					final BigInteger inverse;
 					{
-						final BigInteger tmp = ArithmeticUtils.multiplicativeInverse(ceo.getCoefficient(),
-								divisorAsBigInteger);
+						final BigInteger tmp =
+								ArithmeticUtils.multiplicativeInverse(ceo.getCoefficient(), divisorAsBigInteger);
 						// In order to simplify other parts of the algorithm, we want to make sure that
 						// the multiplication of coefficient and inverse is always positive. Hence, if
 						// the coefficient was negative, we have to take a negative inverse.
@@ -175,9 +169,9 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 							inverse = tmp;
 						}
 					}
-					final DmlPossibility dmlPossibility = new DmlPossibility(
-							appTerm.getFunction().getApplicationString(), ceo, divisorAsBigInteger, dualJunct, inverse,
-							subterm, eliminateeOccursInCorrespondingFiniteJunction);
+					final DmlPossibility dmlPossibility =
+							new DmlPossibility(appTerm.getFunction().getApplicationString(), ceo, divisorAsBigInteger,
+									dualJunct, inverse, appTerm, eliminateeOccursInCorrespondingFiniteJunction);
 					result.add(dmlPossibility);
 				}
 			}
@@ -244,18 +238,17 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 	}
 
 	/**
-	 * Given an {@link EliminationTask} whose set of eliminatees may "accidentally"
-	 * contain some "newEliminatees", remove the newEliminatees from the
-	 * {@link EliminationTask} and add the ones that are really there separately to
+	 * Given an {@link EliminationTask} whose set of eliminatees may "accidentally" contain some "newEliminatees",
+	 * remove the newEliminatees from the {@link EliminationTask} and add the ones that are really there separately to
 	 * an {@link EliminationResult}.
 	 */
 	private EliminationResult extractNewEliminatees(final EliminationTask et, final Set<TermVariable> newEliminatees) {
-		final Set<TermVariable> originalEliminatees = et.getEliminatees().stream()
-				.filter(x -> !newEliminatees.contains(x)).collect(Collectors.toSet());
-		final Set<TermVariable> occuingNewEliminatees = et.getEliminatees().stream()
-				.filter(x -> newEliminatees.contains(x)).collect(Collectors.toSet());
-		final EliminationTask eliminationTask = new EliminationTask(et.getQuantifier(), originalEliminatees,
-				et.getTerm(), et.getContext());
+		final Set<TermVariable> originalEliminatees =
+				et.getEliminatees().stream().filter(x -> !newEliminatees.contains(x)).collect(Collectors.toSet());
+		final Set<TermVariable> occuingNewEliminatees =
+				et.getEliminatees().stream().filter(x -> newEliminatees.contains(x)).collect(Collectors.toSet());
+		final EliminationTask eliminationTask =
+				new EliminationTask(et.getQuantifier(), originalEliminatees, et.getTerm(), et.getContext());
 		return new EliminationResult(eliminationTask, occuingNewEliminatees);
 	}
 
@@ -263,10 +256,10 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 			throws AssertionError {
 		final TermVariable y = mMgdScript.constructFreshTermVariable("y", SmtSortUtils.getIntSort(mScript));
 		final TermVariable z = mMgdScript.constructFreshTermVariable("z", SmtSortUtils.getIntSort(mScript));
-		final Term divisor = SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript),
-				pmt.getDivisor());
-		final Term inverse = SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript),
-				pmt.getInverse());
+		final Term divisor =
+				SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript), pmt.getDivisor());
+		final Term inverse =
+				SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript), pmt.getInverse());
 		final Term replacedDivMod;
 		if (pmt.getFunName().equals("mod")) {
 			replacedDivMod = applyModElimination(inputEt, pmt, y, z, divisor, inverse);
@@ -275,8 +268,8 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 		} else {
 			throw new AssertionError();
 		}
-		final Term simplifiedResultTerm = SmtUtils.simplify(mMgdScript, replacedDivMod, mServices,
-				SimplificationTechnique.POLY_PAC);
+		final Term simplifiedResultTerm =
+				SmtUtils.simplify(mMgdScript, replacedDivMod, mServices, SimplificationTechnique.POLY_PAC);
 		final Set<TermVariable> remainingEliminatees = new HashSet<>(inputEt.getEliminatees());
 		remainingEliminatees.remove(pmt.getEliminate());
 		final EliminationTask eliminationTask = new EliminationTask(inputEt.getQuantifier(), remainingEliminatees,
@@ -313,8 +306,8 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 	}
 
 	private Term constructInterval(final int quantifier, final TermVariable z, final Term divisor) {
-		final Term zeroAsTerm = SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript),
-				BigInteger.ZERO);
+		final Term zeroAsTerm =
+				SmtUtils.constructIntegerValue(mScript, SmtSortUtils.getIntSort(mScript), BigInteger.ZERO);
 		final Term result;
 		if (quantifier == QuantifiedFormula.EXISTS) {
 			// lowerBoundExists: 0 <= z
@@ -356,8 +349,7 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 	}
 
 	/**
-	 * Replace `(a*x+b) div K` by `IF ((b mod k) + z < K) THEN ay + (b div k) + nz
-	 * ELSE ay + (b div k) + nz + 1`
+	 * Replace `(a*x+b) div K` by `IF ((b mod k) + z < K) THEN ay + (b div k) + nz ELSE ay + (b div k) + nz + 1`
 	 */
 	private Term replaceDivTerm(final EliminationTask inputEt, final DmlPossibility pmt, final TermVariable y,
 			final TermVariable z, final Term divisor, final Term n) {
@@ -431,22 +423,8 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 	}
 
 	/**
-	 * Return true if the input is `div` term or a `mod` term.
-	 */
-	private boolean isDivModTerm(final Term term) {
-		if (term instanceof ApplicationTerm) {
-			final FunctionSymbol fun = ((ApplicationTerm) term).getFunction();
-			if (fun.getApplicationString().equals("div") || fun.getApplicationString().equals("mod")) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	/**
 	 * Represents a term of the form `(+ (* a x) b)`, where
-	 * <li>x is the {@link TermVariable} that we want to eliminate, hence called
-	 * eliminatee,
+	 * <li>x is the {@link TermVariable} that we want to eliminate, hence called eliminatee,
 	 * <li>a is some non-zero integer (called coeffcient of x)
 	 * <li>b is some term that must not contain x (called offset).
 	 */
@@ -485,8 +463,8 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 					offsetAsAffineTermMap.put(entry.getKey(), entry.getValue());
 				}
 			}
-			final AffineTerm offsetAsAffineTerm = new AffineTerm(affineTerm.getSort(), affineTerm.getConstant(),
-					offsetAsAffineTermMap);
+			final AffineTerm offsetAsAffineTerm =
+					new AffineTerm(affineTerm.getSort(), affineTerm.getConstant(), offsetAsAffineTermMap);
 			final Term bAsTerm = offsetAsAffineTerm.toTerm(script);
 			if (Arrays.asList(bAsTerm.getFreeVars()).contains(eliminatee)) {
 				return null;
@@ -504,14 +482,12 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 	 * Represents a subterm of the form `(op (+ (* a x) b) K)`, where
 	 * <ul>
 	 * <li>`op` is either "div" or "mod",
-	 * <li>x is the {@link TermVariable} that we want to eliminate, hence called
-	 * eliminatee,
+	 * <li>x is the {@link TermVariable} that we want to eliminate, hence called eliminatee,
 	 * <li>a is some non-zero integer (called coeffcient of x) that is coprime to K,
 	 * <li>b is some term (called offset) that must not contain x,
 	 * <li>K is some positive integer that we call the divisor. </ ul> <br />
-	 * This subterm will be one candidate for an elimination of x via
-	 * {@link DualJunctionDml} and contains additional data that supports the
-	 * elimination.
+	 * This subterm will be one candidate for an elimination of x via {@link DualJunctionDml} and contains additional
+	 * data that supports the elimination.
 	 */
 	private static class DmlPossibility {
 		/**
@@ -520,14 +496,12 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 		private final String mFunName;
 		final BigInteger mDivisor;
 		/**
-		 * The dualJunct of the elimination input that contains the div/mod subterm we
-		 * will replace.
+		 * The dualJunct of the elimination input that contains the div/mod subterm we will replace.
 		 */
 		final Term mContainingDualJunct;
 		/**
-		 * Term that is the inverse of a in the ring of integers modulo the divisor. The
-		 * inverse exists always because a and the divisor are coprime. I.e., this is a
-		 * term such that (a*mInverse%K)=1 holds.
+		 * Term that is the inverse of a in the ring of integers modulo the divisor. The inverse exists always because a
+		 * and the divisor are coprime. I.e., this is a term such that (a*mInverse%K)=1 holds.
 		 */
 		final BigInteger mInverse;
 		/**

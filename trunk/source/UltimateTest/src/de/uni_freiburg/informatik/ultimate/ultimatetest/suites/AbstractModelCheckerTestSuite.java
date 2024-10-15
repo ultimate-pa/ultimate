@@ -31,7 +31,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
-import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
@@ -125,13 +125,6 @@ public abstract class AbstractModelCheckerTestSuite extends UltimateTestSuite {
 		}
 	}
 
-	protected void addTestCase(final Collection<UltimateRunDefinition> urds,
-			final Function<IUltimateServiceProvider, IUltimateServiceProvider> callback) {
-		for (final UltimateRunDefinition urd : urds) {
-			mTestCases.add(buildTestCase(urd, constructITestResultDecider(urd), callback));
-		}
-	}
-
 	protected void addTestCase(final UltimateRunDefinition urd) {
 		mTestCases.add(buildTestCase(urd, constructITestResultDecider(urd)));
 	}
@@ -154,8 +147,8 @@ public abstract class AbstractModelCheckerTestSuite extends UltimateTestSuite {
 
 	protected void addTestCase(final String toolchain, final String settings,
 			final DirectoryFileEndingsPair[] directoryFileEndingsPairs,
-			final Function<IUltimateServiceProvider, IUltimateServiceProvider> callback) {
+			final UnaryOperator<IUltimateServiceProvider> callback) {
 		addTestCase(UltimateRunDefinitionGenerator.getRunDefinitionFromTrunk(toolchain, settings,
-				directoryFileEndingsPairs, getTimeout()), callback);
+				directoryFileEndingsPairs, getTimeout(), callback));
 	}
 }

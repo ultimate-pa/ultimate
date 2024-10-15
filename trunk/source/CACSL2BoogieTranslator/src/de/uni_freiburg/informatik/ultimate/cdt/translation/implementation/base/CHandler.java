@@ -573,6 +573,7 @@ public class CHandler {
 				stv = new SymbolTableValue(bId, null, pointerType, newDecl, oldStv.getDeclarationInformation(), hook,
 						false);
 				addBoogieIdsOfHeapVars(bId);
+				addBoogieIdsOfHeapVars(oldStv.getBoogieName());
 			} else {
 				// Copy the old value to the symbol table
 				stv = oldStv;
@@ -629,6 +630,7 @@ public class CHandler {
 	 */
 
 	public CHandlerTranslationResult visit(final IDispatcher main, final List<DecoratedUnit> units) {
+		final List<Statement> additionalInitializations = handleWitnessDeclarations(main);
 		IASTNode globalHook = null;
 		for (final DecoratedUnit du : units) {
 			if (du.getRootNode().getCNode() != null) {
@@ -664,7 +666,7 @@ public class CHandler {
 			offset++;
 		}
 
-		mDeclarations.addAll(0, mPostProcessor.postProcess(loc, globalHook));
+		mDeclarations.addAll(0, mPostProcessor.postProcess(loc, globalHook, additionalInitializations));
 
 		/*
 		 * this must come after the post processor because the post processor might add declarations when dispatching
@@ -742,6 +744,22 @@ public class CHandler {
 				mDeclarations.toArray(new Declaration[mDeclarations.size()]));
 		propChecks.forEach(x -> x.annotate(boogieUnit));
 		return new CHandlerTranslationResult(boogieUnit, mSymbolTable.getBoogieCIdentifierMapping());
+	}
+
+	private List<Statement> handleWitnessDeclarations(final IDispatcher dispatcher) {
+		final List<Statement> result = new ArrayList<>();
+		for (final var ghost : dispatcher.getWitnessDeclarations()) {
+			final ExpressionResult exprRes = ghost.getInitializationResult(dispatcher);
+			// Collect all statement for initialization to return them and add in PostProcessor
+			result.addAll(exprRes.getStatements());
+			result.addAll(CTranslationUtil.createHavocsForAuxVars(exprRes.getAuxVars()));
+			// Add the declaration of global ghost variables (and possible auxiliary variables)
+			for (final var d : exprRes.getDeclarations()) {
+				mStaticObjectsHandler.addGlobalVarDeclarationWithoutCDeclaration((VariableDeclaration) d);
+			}
+			mStaticObjectsHandler.addGlobalVarDeclarationWithoutCDeclaration(ghost.getDeclaration(mSymbolTable));
+		}
+		return result;
 	}
 
 	public Result visit(final IDispatcher main, final CASTDesignatedInitializer node) {
@@ -1601,11 +1619,7 @@ public class CHandler {
 		final ArrayList<Statement> stmt = new ArrayList<>();
 		final String[] name = { node.getName().toString() };
 		stmt.add(new GotoStatement(mLocationFactory.createCLocation(node), name));
-		final ExpressionResult result = new ExpressionResult(stmt, null);
-		if (mIsPrerun) {
-			return result;
-		}
-		return main.transformWithWitness(node, result);
+		return new ExpressionResult(stmt, null);
 	}
 
 	public Result visit(final IDispatcher main, final IASTIdExpression node) {
@@ -2067,15 +2081,9 @@ public class CHandler {
 		}
 		mStaticObjectsHandler.addStatementsForUltimateInit(statements);
 
-		final List<Overapprox> overapproxList;
-		if (writeValues) {
-			overapproxList = Collections.emptyList();
-		} else {
-			final Overapprox overapprox = new Overapprox("large string literal", actualLoc);
-			overapproxList = new ArrayList<>();
-			overapproxList.add(overapprox);
-		}
-		return new StringLiteralResult(addressRValue, overapproxList, auxvar, stringLiteral, !writeValues);
+		final List<Overapprox> overapproxList =
+				writeValues ? List.of() : List.of(new Overapprox("large string literal", actualLoc));
+		return new StringLiteralResult(addressRValue, overapproxList, auxvar, stringLiteral);
 	}
 
 	public Result visit(final IDispatcher main, final IASTNode node) {
@@ -2799,6 +2807,7 @@ public class CHandler {
 				for (final var oa : rhsConverted.getOverapprs()) {
 					new OverapproxVariable(oa.getOverapproximatedLocations()).annotate(assignment);
 				}
+				builder.addAuxVarWithDeclaration(auxVar);
 				builder.addStatement(assignment);
 				resultRhs = auxVar.getExp();
 			}
@@ -3602,8 +3611,8 @@ public class CHandler {
 			final List<Statement> bodyBlock, final ExpressionResultBuilder resultBuilder) {
 		final LoopInvariantSpecification[] spec = extractLoopInvariants(main, node);
 		final ILocation igLoc = LocationFactory.createIgnoreLocation(loc);
-		final WhileStatement whileStmt = new WhileStatement(igLoc,
-				ExpressionFactory.createBooleanLiteral(igLoc, true), spec, bodyBlock.toArray(Statement[]::new));
+		final WhileStatement whileStmt = new WhileStatement(igLoc, ExpressionFactory.createBooleanLiteral(igLoc, true),
+				spec, bodyBlock.toArray(Statement[]::new));
 		resultBuilder.getOverappr().stream().forEach(a -> a.annotate(whileStmt));
 		resultBuilder.addStatement(whileStmt);
 
@@ -3614,11 +3623,7 @@ public class CHandler {
 
 		assert resultBuilder.getLrValue() == null : "there is an lrvalue although there should be none";
 		assert resultBuilder.getAuxVars().isEmpty() : "auxvars were added although they should have been havoced";
-		final ExpressionResult result = resultBuilder.build();
-		if (mIsPrerun) {
-			return result;
-		}
-		return main.transformWithWitness(node, result);
+		return resultBuilder.build();
 	}
 
 	private LoopInvariantSpecification[] extractLoopInvariants(final IDispatcher main, final IASTStatement node) {

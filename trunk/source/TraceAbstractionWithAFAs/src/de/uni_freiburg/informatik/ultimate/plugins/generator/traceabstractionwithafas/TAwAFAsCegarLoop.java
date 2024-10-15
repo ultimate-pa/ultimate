@@ -110,8 +110,7 @@ public class TAwAFAsCegarLoop<L extends IIcfgTransition<?>> extends NwaCegarLoop
 				csToolkit, predicateFactory, taPrefs, errorLocs, null, services, transitionClazz,
 				stateFactoryForRefinement);
 		mPredicateUnifier = new PredicateUnifier(mLogger, services, csToolkit.getManagedScript(), predicateFactory,
-				rootNode.getCfgSmtToolkit().getSymbolTable(), mSimplificationTechnique, mXnfConversionTechnique,
-				predicateFactory.newPredicate(csToolkit.getManagedScript().getScript().term("true")),
+				rootNode.getCfgSmtToolkit().getSymbolTable(), mSimplificationTechnique, predicateFactory.newPredicate(csToolkit.getManagedScript().getScript().term("true")),
 				predicateFactory.newPredicate(csToolkit.getManagedScript().getScript().term("false")));
 	}
 
@@ -121,7 +120,7 @@ public class TAwAFAsCegarLoop<L extends IIcfgTransition<?>> extends NwaCegarLoop
 		final IEmptyStackStateFactory<IPredicate> predicateFactoryForItp = new PredicateFactoryForInterpolantAutomata(
 				csToolkit.getManagedScript(), predicateFactory, pref.getHoareSettings().computeHoareAnnotation());
 		final Cfg2Nwa<L> cFG2NestedWordAutomaton = new Cfg2Nwa<>(icfg, predicateFactoryForItp, csToolkit,
-				predicateFactory, services, pref.getXnfConversionTechnique(), pref.getSimplificationTechnique());
+				predicateFactory, services, pref.getSimplificationTechnique());
 		return cFG2NestedWordAutomaton.getResult();
 	}
 

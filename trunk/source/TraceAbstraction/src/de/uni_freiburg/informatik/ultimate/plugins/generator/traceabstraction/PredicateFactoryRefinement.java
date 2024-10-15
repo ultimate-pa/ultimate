@@ -150,7 +150,13 @@ public class PredicateFactoryRefinement extends PredicateFactoryForInterpolantAu
 				}
 			}
 		} else if (firstPredicate instanceof IMLPredicate) {
-			mServices.getLoggingService().getLogger(Activator.PLUGIN_ID).warn("Check not implemented");
+			final IcfgLocation[] firstProgramPoints = ((IMLPredicate) firstPredicate).getProgramPoints();
+			while (it.hasNext()) {
+				final IcfgLocation[] pps = ((IMLPredicate) it.next()).getProgramPoints();
+				if (!Arrays.equals(pps, firstProgramPoints)) {
+					return false;
+				}
+			}
 		} else {
 			throw new AssertionError("unsupported predicate");
 		}

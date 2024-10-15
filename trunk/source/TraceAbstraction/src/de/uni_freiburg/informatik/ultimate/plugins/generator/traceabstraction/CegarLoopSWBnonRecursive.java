@@ -581,7 +581,7 @@ public class CegarLoopSWBnonRecursive<L extends IIcfgTransition<?>> extends NwaC
 		final InterpolatingTraceCheckCraig<L> traceCheck =
 				new InterpolatingTraceCheckCraig<>(pre, post, pendingContexts, word, null, getServices(), mCsToolkit,
 						mPredicateFactory, mPredicateUnifier, AssertCodeBlockOrder.NOT_INCREMENTALLY, false, false,
-						mPref.interpolation(), false, mXnfConversionTechnique, mSimplificationTechnique);
+						mPref.interpolation(), false, mSimplificationTechnique);
 
 		mInterpolantGenerator = traceCheck;
 		if (traceCheck.isCorrect() == LBool.UNSAT) {

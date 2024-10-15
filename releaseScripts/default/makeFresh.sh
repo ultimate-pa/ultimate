@@ -32,7 +32,10 @@ create_tool_zips() {
     exit_on_fail bash makeZip.sh Kojak $platform KojakC_WitnessPrinter.xml NONE NONE KojakC_WitnessPrinter.xml NONE NONE
 
     # GemCutter
-    exit_on_fail bash makeZip.sh GemCutter $platform AutomizerCInline_WitnessPrinter.xml NONE NONE AutomizerCInline_WitnessPrinter.xml NONE NONE
+    exit_on_fail bash makeZip.sh GemCutter $platform AutomizerCInline_WitnessPrinter.xml NONE AutomizerCInline.xml AutomizerCInline_WitnessPrinter.xml NONE NONE
+
+    # Referee
+    exit_on_fail bash makeZip.sh Referee $platform RefereeCInline.xml NONE RefereeCInline.xml NONE NONE NONE
 
     # DeltaDebugger
     exit_on_fail bash createDeltaDebuggerDir.sh $platform

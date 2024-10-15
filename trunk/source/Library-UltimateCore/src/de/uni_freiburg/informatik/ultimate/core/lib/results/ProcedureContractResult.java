@@ -62,11 +62,12 @@ public class ProcedureContractResult<ELEM extends IElement> extends AbstractResu
 	}
 
 	@SuppressWarnings("unchecked")
-	private static <E> String translateTerm(final IBacktranslationService translatorSequence, final E term) {
+	private <E> String translateTerm(final IBacktranslationService translatorSequence, final E term) {
 		if (term == null) {
 			return null;
 		}
-		final String result = translatorSequence.translateExpressionToString(term, (Class<E>) term.getClass());
+		final String result = translatorSequence.translateExpressionWithContextToString(term, getLocation(),
+				(Class<E>) term.getClass());
 		if ("1".equals(result)) {
 			return null;
 		}

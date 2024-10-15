@@ -46,7 +46,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformat
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.IcfgDuplicator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding.IEncoder;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding.InterproceduralSequenzer;
@@ -62,7 +61,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding.Simpli
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding.SmallBlockEncoder;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.preferences.BlockEncodingPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.preferences.BlockEncodingPreferences.MinimizeStates;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgSizeBenchmark;
 
 /**
@@ -128,18 +126,15 @@ public final class BlockEncoder {
 	 *            The {@link IIcfg} you wish to encode.
 	 * @param simplificationTechnique
 	 *            The {@link SimplificationTechnique} that should be used.
-	 * @param xnfConversionTechnique
-	 *            The {@link XnfConversionTechnique} that should be used.
 	 */
 	public BlockEncoder(final ILogger logger, final IUltimateServiceProvider services, final IIcfg<?> originalIcfg,
-			final SimplificationTechnique simplificationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique) {
+			final SimplificationTechnique simplificationTechnique) {
 		mServices = services;
 		mLogger = logger;
 		mRunAsPlugin = false;
 		mBacktranslator = new BlockEncodingBacktranslator(IcfgEdge.class, Term.class, mLogger);
 		final CfgSmtToolkit toolkit = originalIcfg.getCfgSmtToolkit();
-		mEdgeBuilder = new IcfgEdgeBuilder(toolkit, mServices, simplificationTechnique, xnfConversionTechnique);
+		mEdgeBuilder = new IcfgEdgeBuilder(toolkit, mServices, simplificationTechnique);
 		final BasicIcfg<IcfgLocation> copiedIcfg =
 				new IcfgDuplicator(mLogger, mServices, toolkit.getManagedScript(), mBacktranslator).copy(originalIcfg,
 						true);
@@ -321,15 +316,16 @@ public final class BlockEncoder {
 		if (node == null) {
 			return false;
 		}
-		if (node instanceof BoogieIcfgLocation) {
-			final BoogieIcfgLocation pp = (BoogieIcfgLocation) node;
-			return pp.isErrorLocation();
-		}
 
 		final String proc = node.getProcedure();
 		final Set<?> errorNodes = icfg.getProcedureErrorNodes().get(proc);
-		if (errorNodes != null && !errorNodes.isEmpty()) {
-			return errorNodes.contains(node);
+		if (errorNodes.contains(node)) {
+			return true;
+		}
+
+		final Set<?> loopHeads = icfg.getLoopLocations();
+		if (loopHeads.contains(node)) {
+			return true;
 		}
 
 		return false;

@@ -86,10 +86,6 @@ public class BasicPredicate extends ModernAnnotations implements IPredicate {
 		return mSerialNumber + "#" + mFormula.toStringDirect();
 	}
 
-	public boolean isUnknown() {
-		return false;
-	}
-
 	@Override
 	public final int hashCode() {
 		return HashUtils.hashJenkins(31, mSerialNumber);
@@ -106,8 +102,14 @@ public class BasicPredicate extends ModernAnnotations implements IPredicate {
 		if (!(obj instanceof BasicPredicate)) {
 			return false;
 		}
-		final BasicPredicate other = (BasicPredicate) obj;
-		return mSerialNumber == other.mSerialNumber;
-	}
 
+		final BasicPredicate other = (BasicPredicate) obj;
+		if (mSerialNumber == other.mSerialNumber) {
+			// Different predicates with the same serial number must not be used within the same context.
+			// Hence we throw an exception if they are compared for equality.
+			// The only case in which two BasicPredicates are considered equal is reference equality (case 1 above).
+			throw new UnsupportedOperationException("different predicates with same serial number");
+		}
+		return false;
+	}
 }

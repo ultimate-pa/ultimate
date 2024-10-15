@@ -28,7 +28,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -50,6 +52,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.FunctionContract;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.GhostUpdate;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.GhostVariable;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Location;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LocationInvariant;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LoopInvariant;
@@ -89,6 +93,13 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 		for (final WitnessEntry entry : mWitness.getEntries()) {
 			final Location location;
 			final Consumer<IASTNode> addFunction;
+			if (entry instanceof GhostVariable) {
+				final GhostVariable ghost = (GhostVariable) entry;
+				rtr.addGlobalDeclaration(new ExtractedGhostVariable(ghost.getVariable(), ghost.getInitialValue(),
+						ghost.getType(), mTranslationUnit));
+				mStats.success();
+				continue;
+			}
 			if (entry instanceof LocationInvariant) {
 				location = ((LocationInvariant) entry).getLocation();
 				addFunction = node -> addLocationInvariant((LocationInvariant) entry, node, locationInvariants);
@@ -98,6 +109,11 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 			} else if (entry instanceof FunctionContract) {
 				location = ((FunctionContract) entry).getLocation();
 				addFunction = node -> addFunctionContract((FunctionContract) entry, node, rtr);
+			} else if (entry instanceof GhostUpdate) {
+				final GhostUpdate update = (GhostUpdate) entry;
+				location = update.getLocation();
+				addFunction = node -> rtr.addGhostUpdate(node,
+						new ExtractedGhostUpdate(update.getVariable(), update.getValue(), node));
 			} else {
 				throw new UnsupportedOperationException("Unknown entry type " + entry.getClass().getSimpleName());
 			}
@@ -203,6 +219,8 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 	private static final class YamlExtractedCorrectnessWitness implements IExtractedCorrectnessWitness {
 		private final HashRelation<IASTNode, ExtractedWitnessInvariant> mInvariants = new HashRelation<>();
 		private final HashRelation<IASTNode, ExtractedFunctionContract> mFunctionContracts = new HashRelation<>();
+		private final Map<IASTNode, List<ExtractedGhostUpdate>> mGhostUpdates = new HashMap<>();
+		private final Set<IExtractedWitnessDeclaration> mGlobalDeclarations = new HashSet<>();
 
 		private void addInvariant(final IASTNode node, final ExtractedWitnessInvariant entry) {
 			mInvariants.addPair(node, entry);
@@ -210,6 +228,14 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 
 		private void addFunctionContract(final IASTNode function, final ExtractedFunctionContract contract) {
 			mFunctionContracts.addPair(function, contract);
+		}
+
+		private void addGhostUpdate(final IASTNode node, final ExtractedGhostUpdate update) {
+			mGhostUpdates.computeIfAbsent(node, x -> new ArrayList<>()).add(update);
+		}
+
+		private void addGlobalDeclaration(final IExtractedWitnessDeclaration declaration) {
+			mGlobalDeclarations.add(declaration);
 		}
 
 		@Override
@@ -223,6 +249,16 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 		}
 
 		@Override
+		public List<ExtractedGhostUpdate> getGhostUpdates(final IASTNode node) {
+			return mGhostUpdates.getOrDefault(node, List.of());
+		}
+
+		@Override
+		public Set<IExtractedWitnessDeclaration> getGlobalDeclarations() {
+			return Collections.unmodifiableSet(mGlobalDeclarations);
+		}
+
+		@Override
 		public List<String> printAllEntries() {
 			final List<String> result = new ArrayList<>();
 			for (final Entry<IASTNode, ExtractedWitnessInvariant> entry : mInvariants.getSetOfPairs()) {
@@ -230,6 +266,14 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 			}
 			for (final Entry<IASTNode, ExtractedFunctionContract> entry : mFunctionContracts.getSetOfPairs()) {
 				result.add(entry.getValue().toString());
+			}
+			for (final var d : mGlobalDeclarations) {
+				result.add(d.toString());
+			}
+			for (final var updates : mGhostUpdates.values()) {
+				for (final var u : updates) {
+					result.add(u.toString());
+				}
 			}
 			return result;
 		}

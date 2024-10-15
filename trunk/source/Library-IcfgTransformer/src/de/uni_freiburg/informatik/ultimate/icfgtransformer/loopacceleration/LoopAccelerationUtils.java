@@ -35,7 +35,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
@@ -108,8 +107,7 @@ public class LoopAccelerationUtils {
 			// result. In order to implement this check, we determine if R(x,x')⚬R(x,x') ∧
 			// ¬res(x,x') is satisfiable.
 			final UnmodifiableTransFormula loop2 = TransFormulaUtils.sequentialComposition(logger, services, mgdScript,
-					true, true, false, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
-					SimplificationTechnique.NONE,
+					true, true, false, SimplificationTechnique.NONE,
 					Arrays.asList(new UnmodifiableTransFormula[] { loopTransFormula, loopTransFormula }));
 			final UnmodifiableTransFormula and = TransFormulaUtils.intersect(mgdScript, loop2, neg);
 			final LBool lbool = Util.checkSat(mgdScript.getScript(), and.getClosedFormula());
@@ -132,8 +130,7 @@ public class LoopAccelerationUtils {
 				final UnmodifiableTransFormula reflexiveClosure = TransFormulaBuilder.getTrivialTransFormula(mgdScript);
 				final UnmodifiableTransFormula guardedHavocOrReflexiveClosure = TransFormulaUtils.parallelComposition(
 						logger, services, mgdScript, null, false,
-						XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, false, guardedHavoc,
-						reflexiveClosure);
+						false, guardedHavoc, reflexiveClosure);
 				negated = TransFormulaUtils.negate(guardedHavocOrReflexiveClosure, mgdScript, services);
 			} else {
 				negated = TransFormulaUtils.negate(guardedHavoc, mgdScript, services);

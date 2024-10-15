@@ -43,5 +43,9 @@ public interface IExtractedCorrectnessWitness {
 
 	Set<ExtractedFunctionContract> getFunctionContracts(final IASTNode node);
 
+	List<ExtractedGhostUpdate> getGhostUpdates(IASTNode node);
+
+	Set<IExtractedWitnessDeclaration> getGlobalDeclarations();
+
 	List<String> printAllEntries();
 }

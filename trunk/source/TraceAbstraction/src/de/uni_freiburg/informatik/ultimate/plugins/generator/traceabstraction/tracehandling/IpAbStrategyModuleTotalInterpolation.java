@@ -42,7 +42,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.TotalInterpolationAutomatonBuilder;
@@ -99,8 +98,7 @@ public class IpAbStrategyModuleTotalInterpolation<LETTER extends IIcfgTransition
 			final NestedWordAutomaton<LETTER, IPredicate> automaton =
 					new TotalInterpolationAutomatonBuilder<>(castedAbstraction, castedCex, mCsToolkit,
 							mPredicateFactory, mInterpolationTechnique, mServices, SimplificationTechnique.SIMPLIFY_DDA,
-							XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, false, mPredicateUnifier,
-							ipp.getTracePredicates()).getResult();
+							false, mPredicateUnifier, ipp.getTracePredicates()).getResult();
 			mResult = new IpAbStrategyModuleResult<>(automaton, Collections.singletonList(ipp));
 		}
 		return mResult;

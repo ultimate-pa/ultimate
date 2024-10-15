@@ -33,6 +33,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
@@ -43,14 +44,19 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgElement;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramOldVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 public final class FloydHoareUtils {
 	private FloydHoareUtils() {
@@ -128,6 +134,8 @@ public final class FloydHoareUtils {
 			final IBacktranslationService backTranslatorService,
 			final Consumer<ProcedureContractResult<IIcfgElement>> reporter) {
 		final var checks = getCheckedSpecifications(icfg, annotation);
+		final var csToolkit = icfg.getCfgSmtToolkit();
+		final var logger = services.getLoggingService().getLogger(FloydHoareUtils.class);
 
 		final Map<String, IcfgLocation> exitNodes = icfg.getProcedureExitNodes();
 		final Map<String, IcfgLocation> entryNodes = icfg.getProcedureEntryNodes();
@@ -139,15 +147,26 @@ public final class FloydHoareUtils {
 
 			final IcfgLocation entry = e.getValue();
 			final IPredicate requires = annotation.getAnnotation(entry);
+
+			// TODO Dominik 2024-09-24: shouldn't we rather **substitute** old vars by the corresponding non-old var?
 			final Term requiresFormula = requires == null ? null
-					: PredicateUtils.eliminateOldVars(services, icfg.getCfgSmtToolkit().getManagedScript(), requires);
+					: PredicateUtils.eliminateOldVars(services, csToolkit.getManagedScript(), requires);
+			if (requires != null && containsOldVar(requires)) {
+				logger.warn("Requires clause for %s contained old-variable. Original clause: %s  Eliminated clause: %s",
+						procName, requires.getFormula(), requiresFormula);
+			}
+
+			checkPermissibleVariables(requiresFormula, permissibleForRequires(procName, csToolkit),
+					"requires for " + procName);
 
 			final IcfgLocation exit = exitNodes.get(procName);
 			assert exit != null : "Icfg must contain exit node for every procedure";
 
 			final IPredicate ensures = annotation.getAnnotation(exit);
-			final Term ensuresFormula = ensures == null ? null
-					: PredicateUtils.eliminateLocalVars(ensures, services, icfg.getCfgSmtToolkit());
+			final Term ensuresFormula =
+					ensures == null ? null : PredicateUtils.eliminateLocalVars(ensures, services, csToolkit);
+			checkPermissibleVariables(ensuresFormula, permissibleForEnsures(procName, csToolkit),
+					"ensures for " + procName);
 
 			final var result = new ProcedureContractResult<IIcfgElement>(pluginName, exit, backTranslatorService,
 					procName, requiresFormula, ensuresFormula, checks);
@@ -158,6 +177,38 @@ public final class FloydHoareUtils {
 			reporter.accept(result);
 			new WitnessProcedureContract(result.getRequiresResult(), result.getEnsuresResult()).annotate(exit);
 		}
+	}
+
+	private static boolean containsOldVar(final IPredicate pred) {
+		// Note: This is in general an overapproximation, but still good enough to output a warning.
+		return pred.getVars().stream().anyMatch(IProgramOldVar.class::isInstance);
+	}
+
+	private static void checkPermissibleVariables(final Term term, final Set<TermVariable> permissible,
+			final String context) {
+		if (term == null) {
+			return;
+		}
+		for (final var tv : term.getFreeVars()) {
+			if (!permissible.contains(tv)) {
+				throw new IllegalStateException("Variable " + tv + " not permitted in " + context + ": " + term);
+			}
+		}
+	}
+
+	private static Set<TermVariable> permissibleForRequires(final String procedure, final CfgSmtToolkit csToolkit) {
+		final var nonOldGlobals = csToolkit.getSymbolTable().getGlobals().stream();
+		final var params = csToolkit.getInParams().get(procedure).stream();
+		return Stream.concat(nonOldGlobals, params).map(IProgramVar::getTermVariable).collect(Collectors.toSet());
+	}
+
+	private static Set<TermVariable> permissibleForEnsures(final String procedure, final CfgSmtToolkit csToolkit) {
+		final var nonOldGlobals = csToolkit.getSymbolTable().getGlobals();
+		final var oldGlobals = nonOldGlobals.stream().map(IProgramNonOldVar::getOldVar);
+		final var inParams = csToolkit.getInParams().get(procedure).stream();
+		final var outParams = csToolkit.getOutParams().get(procedure).stream();
+		return Stream.concat(Stream.concat(nonOldGlobals.stream(), oldGlobals), Stream.concat(inParams, outParams))
+				.map(IProgramVar::getTermVariable).collect(Collectors.toSet());
 	}
 
 	private static Set<Check> getCheckedSpecifications(final IIcfg<?> icfg,

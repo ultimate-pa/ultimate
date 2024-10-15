@@ -1,0 +1,16 @@
+TIMEOUT:
+- task: static-array-copy3.c
+  settings: DataRace-32bit-Automizer_Bitvector.epf
+  toolchain: DataRace.xml
+- task: static-array-copy3.c
+  settings: DataRace-32bit-Automizer_Default.epf
+  toolchain: DataRace.xml
+- task: static-array-copy3.c
+  settings: DataRace-32bit-GemCutter_Bitvector.epf
+  toolchain: DataRace.xml
+
+# Crash in MathSAT
+SMTLIBException.*mathsat:
+- task: struct-array-write.c
+  settings: DataRace-32bit-GemCutter_Bitvector.epf
+  toolchain: DataRace.xml

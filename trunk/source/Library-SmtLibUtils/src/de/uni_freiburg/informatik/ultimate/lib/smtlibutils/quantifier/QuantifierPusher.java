@@ -44,7 +44,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.ExtendedSimplificationResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubTermFinder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.CondisDepthCodeGenerator.CondisDepthCode;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.DualJunctionQuantifierElimination.EliminationResult;
@@ -577,16 +576,14 @@ public class QuantifierPusher extends TermTransformer {
 			elimtechniques.add(new DualJunctionQeAdapter2014(mgdScript, services, new XnfPlr(mgdScript, services)));
 			elimtechniques.add(new DualJunctionQeAdapter2014(mgdScript, services, new XnfDer(mgdScript, services)));
 			elimtechniques.add(new DualJunctionQeAdapter2014(mgdScript, services, new XnfIrd(mgdScript, services)));
-			elimtechniques.add(new DualJunctionQeAdapter2014(mgdScript, services,
-					new XnfTir(mgdScript, services, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION)));
+			elimtechniques.add(new DualJunctionQeAdapter2014(mgdScript, services, new XnfTir(mgdScript, services)));
 			elimtechniques.add(new DualJunctionQeAdapter2014(mgdScript, services, new XnfUpd(mgdScript, services)));
 			break;
 		case NO_UPD:
 			elimtechniques.add(new DualJunctionQeAdapter2014(mgdScript, services, new XnfPlr(mgdScript, services)));
 			elimtechniques.add(new DualJunctionQeAdapter2014(mgdScript, services, new XnfDer(mgdScript, services)));
 			elimtechniques.add(new DualJunctionQeAdapter2014(mgdScript, services, new XnfIrd(mgdScript, services)));
-			elimtechniques.add(new DualJunctionQeAdapter2014(mgdScript, services,
-					new XnfTir(mgdScript, services, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION)));
+			elimtechniques.add(new DualJunctionQeAdapter2014(mgdScript, services, new XnfTir(mgdScript, services)));
 			break;
 		case ONLY_DER:
 			elimtechniques.add(new DualJunctionQeAdapter2014(mgdScript, services, new XnfDer(mgdScript, services)));
@@ -657,7 +654,7 @@ public class QuantifierPusher extends TermTransformer {
 			elimtechniques.add(new XnfDer(mgdScript, services));
 			elimtechniques.add(new XnfIrd(mgdScript, services));
 			elimtechniques
-					.add(new XnfTir(mgdScript, services, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION));
+					.add(new XnfTir(mgdScript, services));
 			elimtechniques.add(new XnfUpd(mgdScript, services));
 			break;
 		case NO_UPD:
@@ -665,7 +662,7 @@ public class QuantifierPusher extends TermTransformer {
 			elimtechniques.add(new XnfDer(mgdScript, services));
 			elimtechniques.add(new XnfIrd(mgdScript, services));
 			elimtechniques
-					.add(new XnfTir(mgdScript, services, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION));
+					.add(new XnfTir(mgdScript, services));
 			break;
 		case ONLY_DER:
 			elimtechniques.add(new XnfDer(mgdScript, services));

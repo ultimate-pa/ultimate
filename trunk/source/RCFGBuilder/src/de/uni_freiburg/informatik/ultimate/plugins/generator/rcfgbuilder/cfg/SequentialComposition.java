@@ -49,7 +49,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 
@@ -70,7 +69,6 @@ public class SequentialComposition extends CodeBlock implements IIcfgInternalTra
 	SequentialComposition(final int serialNumber, final BoogieIcfgLocation source, final BoogieIcfgLocation target,
 			final CfgSmtToolkit csToolkit, final boolean simplify, final boolean extPqe,
 			final IUltimateServiceProvider services, final List<CodeBlock> codeBlocks,
-			final XnfConversionTechnique xnfConversionTechnique,
 			final SimplificationTechnique simplificationTechnique) {
 		super(serialNumber, source, target, services.getLoggingService().getLogger(Activator.PLUGIN_ID));
 
@@ -86,9 +84,9 @@ public class SequentialComposition extends CodeBlock implements IIcfgInternalTra
 				services.getPreferenceProvider(Activator.PLUGIN_ID).getBoolean(RcfgPreferenceInitializer.LABEL_CNF);
 
 		mTransitionFormula = getInterproceduralTransFormula(csToolkit, simplify, extPqe, transformToCNF, false, mLogger,
-				services, codeBlocks, xnfConversionTechnique, simplificationTechnique);
+				services, codeBlocks, simplificationTechnique);
 		mTransitionFormulaWithBranchEncoders = getInterproceduralTransFormula(csToolkit, simplify, extPqe,
-				transformToCNF, true, mLogger, services, codeBlocks, xnfConversionTechnique, simplificationTechnique);
+				transformToCNF, true, mLogger, services, codeBlocks, simplificationTechnique);
 
 		assert mCallsWithoutReturns > 0
 				|| TransFormulaUtils.hasInternalNormalForm(mTransitionFormula) : "Expected TF in internal normal form";
@@ -149,17 +147,15 @@ public class SequentialComposition extends CodeBlock implements IIcfgInternalTra
 	/**
 	 * Returns Transformula for a sequence of CodeBlocks that may (opposed to the method sequentialComposition) contain
 	 * also Call and Return.
-	 *
 	 * @param logger
 	 * @param services
 	 */
 	public static <ACTION extends IAction> UnmodifiableTransFormula getInterproceduralTransFormula(
 			final CfgSmtToolkit csToolkit, final boolean simplify, final boolean extPqe, final boolean tranformToCNF,
 			final boolean withBranchEncoders, final ILogger logger, final IUltimateServiceProvider services,
-			final List<ACTION> actions, final XnfConversionTechnique xnfConversionTechnique,
-			final SimplificationTechnique simplificationTechnique) {
+			final List<ACTION> actions, final SimplificationTechnique simplificationTechnique) {
 		return getInterproceduralTransFormula(csToolkit, simplify, extPqe, tranformToCNF, withBranchEncoders, null,
-				null, null, null, logger, services, actions, xnfConversionTechnique, simplificationTechnique);
+				null, null, null, logger, services, actions, simplificationTechnique);
 	}
 
 	private static <ACTION extends IAction> UnmodifiableTransFormula getInterproceduralTransFormula(
@@ -167,7 +163,6 @@ public class SequentialComposition extends CodeBlock implements IIcfgInternalTra
 			final boolean withBranchEncoders, final String nameStartProcedure,
 			final UnmodifiableTransFormula[] beforeCall, final ICallAction call, final IReturnAction ret,
 			final ILogger logger, final IUltimateServiceProvider services, final List<ACTION> actions,
-			final XnfConversionTechnique xnfConversionTechnique,
 			final SimplificationTechnique simplificationTechnique) {
 		final List<UnmodifiableTransFormula> beforeFirstPendingCall = new ArrayList<>();
 		ICallAction lastUnmatchedCall = null;
@@ -202,7 +197,7 @@ public class SequentialComposition extends CodeBlock implements IIcfgInternalTra
 						final UnmodifiableTransFormula localTransFormula =
 								getInterproceduralTransFormula(csToolkit, simplify, extPqe, tranformToCNF,
 										withBranchEncoders, null, null, lastUnmatchedCall, correspondingReturn, logger,
-										services, actionsBetween, xnfConversionTechnique, simplificationTechnique);
+										services, actionsBetween, simplificationTechnique);
 						beforeFirstPendingCall.add(localTransFormula);
 						lastUnmatchedCall = null;
 						callsSinceLastUnmatchedCall = 0;
@@ -227,8 +222,7 @@ public class SequentialComposition extends CodeBlock implements IIcfgInternalTra
 			assert afterLastUnmatchedCall.isEmpty();
 			// no pending call in codeBlocks
 			tfForCodeBlocks = TransFormulaUtils.sequentialComposition(logger, services, csToolkit.getManagedScript(),
-					simplify, extPqe, tranformToCNF, xnfConversionTechnique, simplificationTechnique,
-					beforeFirstPendingCall);
+					simplify, extPqe, tranformToCNF, simplificationTechnique, beforeFirstPendingCall);
 		} else {
 			// there is a pending call in codeBlocks
 			assert ret == null : "no pending call between call and return possible!";
@@ -236,8 +230,7 @@ public class SequentialComposition extends CodeBlock implements IIcfgInternalTra
 			tfForCodeBlocks = getInterproceduralTransFormula(csToolkit, simplify, extPqe, tranformToCNF,
 					withBranchEncoders, actions.get(0).getPrecedingProcedure(),
 					beforeFirstPendingCall.toArray(new UnmodifiableTransFormula[beforeFirstPendingCall.size()]),
-					lastUnmatchedCall, null, logger, services, actionsBetween, xnfConversionTechnique,
-					simplificationTechnique);
+					lastUnmatchedCall, null, logger, services, actionsBetween, simplificationTechnique);
 		}
 
 		UnmodifiableTransFormula result;
@@ -263,9 +256,9 @@ public class SequentialComposition extends CodeBlock implements IIcfgInternalTra
 				result = TransFormulaUtils.sequentialCompositionWithPendingCall(csToolkit.getManagedScript(), simplify,
 						extPqe, tranformToCNF, Arrays.asList(beforeCall), call.getLocalVarsAssignment(),
 						oldVarsAssignment, globalVarsAssignment, tfForCodeBlocks, logger, services,
-						modifiableGlobalsOfEndProcedure, xnfConversionTechnique, simplificationTechnique,
-						csToolkit.getSymbolTable(), nameStartProcedure, call.getPrecedingProcedure(), calledProc,
-						nameEndProcedure, csToolkit.getModifiableGlobalsTable());
+						modifiableGlobalsOfEndProcedure, simplificationTechnique, csToolkit.getSymbolTable(),
+						nameStartProcedure, call.getPrecedingProcedure(), calledProc, nameEndProcedure,
+						csToolkit.getModifiableGlobalsTable());
 			} else {
 				assert beforeCall == null;
 				final UnmodifiableTransFormula oldVarsAssignment =
@@ -275,8 +268,7 @@ public class SequentialComposition extends CodeBlock implements IIcfgInternalTra
 				result = TransFormulaUtils.sequentialCompositionWithCallAndReturn(csToolkit.getManagedScript(),
 						simplify, extPqe, tranformToCNF, call.getLocalVarsAssignment(), oldVarsAssignment,
 						globalVarsAssignment, tfForCodeBlocks, ret.getAssignmentOfReturn(), logger, services,
-						xnfConversionTechnique, simplificationTechnique, csToolkit.getSymbolTable(),
-						csToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(calledProc));
+						simplificationTechnique, csToolkit.getSymbolTable(), csToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(calledProc));
 			}
 
 		}

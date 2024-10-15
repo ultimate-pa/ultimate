@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.d
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 /**
- * Node of an interprocedureal control flow graph.
+ * Node of an interprocedural control flow graph.
  *
  * @author heizmann@informatik.uni-freiburg.
  */

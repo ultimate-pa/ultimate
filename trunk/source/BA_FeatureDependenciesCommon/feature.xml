@@ -2,7 +2,7 @@
 <feature
       id="BA_FeatureDependenciesCommon"
       label="BA_FeatureDependenciesCommon"
-      version="0.2.4"
+      version="0.2.5"
       arch="x86_64">
 
    <description url="http://www.example.com/description">

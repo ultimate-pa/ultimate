@@ -36,7 +36,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 
 public final class Cfg2Nwa<LETTER extends IIcfgTransition<?>>
 		extends CFG2Automaton<LETTER, INestedWordAutomaton<LETTER, IPredicate>> {
@@ -45,10 +44,8 @@ public final class Cfg2Nwa<LETTER extends IIcfgTransition<?>>
 
 	public Cfg2Nwa(final IIcfg<?> rootNode, final IEmptyStackStateFactory<IPredicate> contentFactory,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
-			final IUltimateServiceProvider services, final XnfConversionTechnique xnfConversionTechnique,
-			final SimplificationTechnique simplificationTechnique) {
-		super(rootNode, contentFactory, csToolkit, predicateFactory, services, simplificationTechnique,
-				xnfConversionTechnique);
+			final IUltimateServiceProvider services, final SimplificationTechnique simplificationTechnique) {
+		super(rootNode, contentFactory, csToolkit, predicateFactory, services, simplificationTechnique);
 
 		constructProcedureAutomata();
 		INestedWordAutomaton<LETTER, IPredicate> result = mAutomata.get(0);

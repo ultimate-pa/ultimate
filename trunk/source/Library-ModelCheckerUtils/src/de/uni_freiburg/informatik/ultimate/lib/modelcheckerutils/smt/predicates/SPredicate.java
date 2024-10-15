@@ -82,9 +82,4 @@ public class SPredicate extends BasicPredicate implements ISLPredicate {
 		result += mFormula.toString();
 		return result;
 	}
-
-	@Override
-	public boolean isUnknown() {
-		return false;
-	}
 }

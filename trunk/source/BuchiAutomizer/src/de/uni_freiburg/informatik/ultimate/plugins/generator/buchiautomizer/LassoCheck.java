@@ -86,7 +86,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.I
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.DagSizePrinter;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BinaryStatePredicateManager.BspmResult;
@@ -141,7 +140,6 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 	private final ILogger mLogger;
 
 	private final SimplificationTechnique mSimplificationTechnique;
-	private final XnfConversionTechnique mXnfConversionTechnique;
 
 	private final AnalysisType mRankAnalysisType;
 	private final AnalysisType mGntaAnalysisType;
@@ -218,12 +216,10 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 			final SmtFunctionsAndAxioms smtSymbols, final BinaryStatePredicateManager bspm,
 			final NestedLassoRun<L, IPredicate> counterexample, final String lassoCheckIdentifier,
 			final IUltimateServiceProvider services, final SimplificationTechnique simplificationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique, final StrategyFactory<L> refinementStrategyFactory,
-			final IAutomaton<L, IPredicate> abstraction, final TaskIdentifier taskIdentifier,
-			final BuchiCegarLoopBenchmarkGenerator cegarStatistics) throws IOException {
+			final StrategyFactory<L> refinementStrategyFactory, final IAutomaton<L, IPredicate> abstraction,
+			final TaskIdentifier taskIdentifier, final BuchiCegarLoopBenchmarkGenerator cegarStatistics) throws IOException {
 		mServices = services;
 		mSimplificationTechnique = simplificationTechnique;
-		mXnfConversionTechnique = xnfConversionTechnique;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		final IPreferenceProvider baPref = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		mRankAnalysisType =
@@ -361,7 +357,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		final boolean toCNF = false;
 		return SequentialComposition.getInterproceduralTransFormula(mCsToolkit, simplify,
 				extendedPartialQuantifierElimination, toCNF, withBranchEncoders, mLogger, mServices, word.asList(),
-				mXnfConversionTechnique, mSimplificationTechnique);
+				mSimplificationTechnique);
 	}
 
 	// private boolean areSupportingInvariantsCorrect() {
@@ -584,7 +580,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 				laNT = new LassoAnalysis(mCsToolkit, stemTF, loopTF, mModifiableGlobalsAtHonda, mSmtSymbols,
 						constructLassoRankerPreferences(withStem, overapproximateArrayIndexConnection,
 								NlaHandling.UNDERAPPROXIMATE, AnalysisTechnique.GEOMETRIC_NONTERMINATION_ARGUMENTS),
-						mServices, mSimplificationTechnique, mXnfConversionTechnique);
+						mServices, mSimplificationTechnique);
 				mPreprocessingBenchmarks.add(laNT.getPreprocessingBenchmark());
 			} catch (final TermException e) {
 				e.printStackTrace();
@@ -616,7 +612,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 			laT = new LassoAnalysis(mCsToolkit, stemTF, loopTF, mModifiableGlobalsAtHonda, mSmtSymbols,
 					constructLassoRankerPreferences(withStem, overapproximateArrayIndexConnection,
 							NlaHandling.OVERAPPROXIMATE, AnalysisTechnique.RANKING_FUNCTIONS_SUPPORTING_INVARIANTS),
-					mServices, mSimplificationTechnique, mXnfConversionTechnique);
+					mServices, mSimplificationTechnique);
 			mPreprocessingBenchmarks.add(laT.getPreprocessingBenchmark());
 		} catch (final TermException e) {
 			e.printStackTrace();

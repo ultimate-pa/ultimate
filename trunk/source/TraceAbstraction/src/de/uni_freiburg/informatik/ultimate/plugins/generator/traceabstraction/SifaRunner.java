@@ -88,7 +88,7 @@ public final class SifaRunner<L extends IIcfgTransition<?>> implements IInterpol
 		mPrecondition = mPredicateUnifier.getTruePredicate();
 		final Set<L> pathProgramSet = currentCex.getWord().asSet();
 		final PathProgramConstructionResult ppConstructionResult = PathProgram.constructPathProgram("sifa-path-program",
-				icfg, pathProgramSet, Collections.emptySet());
+				icfg, pathProgramSet, Collections.emptySet(), x -> true);
 		final PathProgram pp = ppConstructionResult.getPathProgram();
 
 		final List<IcfgLocation> locationOfInterestList =

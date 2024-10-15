@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?pde version="3.5"?>
 
-<product name="UltimateEliminator" uid="UltimateEliminator" id="de.uni_freiburg.informatik.ultimate.core.CLI" application="de.uni_freiburg.informatik.ultimate.core.CoreRCP" version="0.2.4" useFeatures="false" includeLaunchers="true">
+<product name="UltimateEliminator" uid="UltimateEliminator" id="de.uni_freiburg.informatik.ultimate.core.CLI" application="de.uni_freiburg.informatik.ultimate.core.CoreRCP" version="0.2.5" useFeatures="false" includeLaunchers="true">
 
    <aboutInfo>
       <text>

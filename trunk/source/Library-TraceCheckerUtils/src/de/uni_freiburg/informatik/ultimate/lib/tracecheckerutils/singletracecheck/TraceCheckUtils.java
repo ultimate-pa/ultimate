@@ -210,7 +210,7 @@ public final class TraceCheckUtils {
 		for (int i = 0; i <= interpolants.size(); i++) {
 			result = checkInductivityAtPosition(i, ipp, trace, pendingContexts, htc, logger);
 			if (result != Validity.VALID && result != Validity.UNKNOWN) {
-				throw new AssertionError("invalid Hoare triple in " + computation);
+				throw new AssertionError("invalid Hoare triple in " + computation + " Trace length " + trace.length());
 			}
 		}
 		return true;

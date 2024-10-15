@@ -39,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.RefinementStrategyExceptionBlacklist;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.TaskIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SMTFeatureExtractionTermClassifier.ScoringMethod;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
@@ -60,7 +59,6 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 	// fields that are provided in the constructor
 	private final InterpolationTechnique mInterpolationTechnique;
 	private final SimplificationTechnique mSimplificationTechnique;
-	private final XnfConversionTechnique mXnfConversionTechnique;
 	private final CfgSmtToolkit mCfgSmtToolkit;
 	private final PredicateFactory mPredicateFactory;
 	private final IIcfg<?> mIcfgContainer;
@@ -108,8 +106,6 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 	 *            interpolation technique
 	 * @param simplificationTechnique
 	 *            simplification technique
-	 * @param xnfConversionTechnique
-	 *            XNF conversion technique
 	 * @param cfgSmtToolkit
 	 *            CFG-SMT toolkit
 	 * @param predicateFactory
@@ -121,11 +117,10 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 	 */
 	public TaCheckAndRefinementPreferences(final IUltimateServiceProvider services, final TAPreferences taPrefs,
 			final InterpolationTechnique interpolationTechnique, final SimplificationTechnique simplificationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique, final CfgSmtToolkit cfgSmtToolkit,
-			final PredicateFactory predicateFactory, final IIcfg<?> icfgContainer) {
+			final CfgSmtToolkit cfgSmtToolkit, final PredicateFactory predicateFactory,
+			final IIcfg<?> icfgContainer) {
 		mInterpolationTechnique = interpolationTechnique;
 		mSimplificationTechnique = simplificationTechnique;
-		mXnfConversionTechnique = xnfConversionTechnique;
 		mCfgSmtToolkit = cfgSmtToolkit;
 		mPredicateFactory = predicateFactory;
 		mIcfgContainer = icfgContainer;
@@ -234,11 +229,6 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 	@Override
 	public SimplificationTechnique getSimplificationTechnique() {
 		return mSimplificationTechnique;
-	}
-
-	@Override
-	public XnfConversionTechnique getXnfConversionTechnique() {
-		return mXnfConversionTechnique;
 	}
 
 	@Override

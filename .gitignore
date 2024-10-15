@@ -18,6 +18,8 @@ hs_err_pid*
 /releaseScripts/default/UGemCutter-win32/*
 /releaseScripts/default/UKojak-linux/*
 /releaseScripts/default/UKojak-win32/*
+/releaseScripts/default/UReferee-linux/*
+/releaseScripts/default/UReferee-win32/*
 /releaseScripts/default/UTaipan-linux/*
 /releaseScripts/default/UTaipan-win32/*
 /releaseScripts/default/UTaipan-win32/
@@ -320,3 +322,4 @@ trunk/source/WebsiteStatic/js/webinterface/config.js
 trunk/source/WebsiteStatic/webinterface/code_examples/
 trunk/source/WebsiteStatic/webinterface/workers/*.json
 !trunk/source/WebsiteStatic/webinterface/workers/*.override.json
+releaseScripts/default/sv-benchmarks

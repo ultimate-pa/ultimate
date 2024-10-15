@@ -193,9 +193,12 @@ public class PostProcessor {
 	/**
 	 * Start method for the post processing.
 	 *
+	 * @param additionalInitializations
+	 *
 	 * @return a declaration list holding the init() and start() procedure.
 	 */
-	public ArrayList<Declaration> postProcess(final ILocation loc, final IASTNode hook) {
+	public ArrayList<Declaration> postProcess(final ILocation loc, final IASTNode hook,
+			final List<Statement> additionalInitializations) {
 		final ArrayList<Declaration> decl = new ArrayList<>();
 
 		final Set<String> undefinedTypes = mTypeHandler.getUndefinedTypes();
@@ -206,7 +209,8 @@ public class PostProcessor {
 		if (!checkedMethod.equals(SFO.EMPTY) && mProcedureManager.hasProcedure(checkedMethod)) {
 			mLogger.info("Analyzing one entry point: " + checkedMethod);
 
-			final UltimateInitProcedure initProcedure = createUltimateInitProcedure(loc, hook);
+			final UltimateInitProcedure initProcedure =
+					createUltimateInitProcedure(loc, hook, additionalInitializations);
 			decl.add(initProcedure.getUltimateInitImplementation());
 
 			final UltimateStartProcedure startProcedure = createUltimateStartProcedure(loc, hook);
@@ -738,7 +742,8 @@ public class PostProcessor {
 		}
 	}
 
-	private UltimateInitProcedure createUltimateInitProcedure(final ILocation translationUnitLoc, final IASTNode hook) {
+	private UltimateInitProcedure createUltimateInitProcedure(final ILocation translationUnitLoc, final IASTNode hook,
+			final List<Statement> additionalInitializations) {
 		final Procedure initProcedureDecl = new Procedure(translationUnitLoc, new Attribute[0], SFO.INIT, new String[0],
 				new VarList[0], new VarList[0], new Specification[0], null);
 		mProcedureManager.beginCustomProcedure(mCHandler, translationUnitLoc, SFO.INIT, initProcedureDecl);
@@ -882,6 +887,7 @@ public class PostProcessor {
 		final List<Statement> sohInitStatements = mStaticObjectsHandler.getStatementsForUltimateInit();
 		initStatements.addAll(sohInitStatements);
 		initStatements.addAll(staticObjectInitStatements);
+		initStatements.addAll(additionalInitializations);
 
 		/*
 		 * note that we only have to deal with the implementation part of the procedure, the declaration is managed by

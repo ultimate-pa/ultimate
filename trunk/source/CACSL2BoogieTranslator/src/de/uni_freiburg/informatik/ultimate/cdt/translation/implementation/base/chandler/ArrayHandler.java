@@ -62,7 +62,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IT
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerCheckMode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.CheckMode;
 
 /**
  * Class that handles translation of arrays.
@@ -243,7 +243,7 @@ public class ArrayHandler {
 	 */
 	private void addArrayBoundsCheckForCurrentIndex(final ILocation loc, final RValue currentIndex,
 			final RValue currentDimension, final ExpressionResultBuilder exprResult) {
-		if (mSettings.checkArrayAccessOffHeap() == PointerCheckMode.IGNORE) {
+		if (mSettings.checkArrayAccessOffHeap() == CheckMode.IGNORE) {
 			// do not check anything
 			return;
 		}

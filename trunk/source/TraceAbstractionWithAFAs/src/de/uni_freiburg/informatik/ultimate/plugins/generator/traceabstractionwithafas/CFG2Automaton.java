@@ -53,7 +53,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
@@ -70,7 +69,6 @@ public abstract class CFG2Automaton<LETTER extends IIcfgTransition<?>, RESULT> {
 	protected final ILogger mLogger;
 	protected final IUltimateServiceProvider mServices;
 	private final SimplificationTechnique mSimplificationTechnique;
-	private final XnfConversionTechnique mXnfConversionTechnique;
 
 	private final IIcfg<?> mIcfg;
 	private final CfgSmtToolkit mCsToolkit;
@@ -82,12 +80,10 @@ public abstract class CFG2Automaton<LETTER extends IIcfgTransition<?>, RESULT> {
 
 	public CFG2Automaton(final IIcfg<?> icfg, final IEmptyStackStateFactory<IPredicate> contentFactory,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
-			final IUltimateServiceProvider services, final SimplificationTechnique simplificationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique) {
+			final IUltimateServiceProvider services, final SimplificationTechnique simplificationTechnique) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mSimplificationTechnique = simplificationTechnique;
-		mXnfConversionTechnique = xnfConversionTechnique;
 		mIcfg = icfg;
 		mContentFactory = contentFactory;
 		mCsToolkit = csToolkit;
@@ -147,7 +143,7 @@ public abstract class CFG2Automaton<LETTER extends IIcfgTransition<?>, RESULT> {
 
 		// TODO: This cast to letter will probably not fail if nothing in this method failed before
 		return (LETTER) boogieIcfg.getCodeBlockFactory().constructSequentialCompositionAndDisconnectEdges(entry, exit,
-				true, false, codeBlocks, mXnfConversionTechnique, mSimplificationTechnique);
+				true, false, codeBlocks, mSimplificationTechnique);
 	}
 
 	/**

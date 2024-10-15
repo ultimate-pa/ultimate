@@ -1,0 +1,5 @@
+# Timeout with Automizer, GemCutter succeeds
+TIMEOUT:
+- task: NonAtomicIncrement_2Threads.c
+  settings: ReachSafety-32bit-Automizer.epf
+  toolchain: ReachSafety.xml

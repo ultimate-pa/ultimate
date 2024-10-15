@@ -42,6 +42,7 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.MergedLocation;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AnnotationCheckResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AnnotationCheckResult.CategorizedProgramPoint;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AnnotationCheckResult.CheckPoint;
@@ -158,7 +159,12 @@ public class InvariantChecker {
 			final EdgeCheckResult ecr = doCheck(startLoc, tf, errorLoc);
 			switch (ecr.getValidity()) {
 			case INVALID:
-				invalidTpsds.put(tpsd, ecr);
+				// If any of the edges in the subgraph contains an overapproximation, report unknown instead of invalid
+				if (tpsd.getSubgraphEdges().stream().anyMatch(x -> Overapprox.getAnnotation(x) != null)) {
+					unknownTpsds.add(tpsd);
+				} else {
+					invalidTpsds.put(tpsd, ecr);
+				}
 				break;
 			case NOT_CHECKED:
 				throw new AssertionError("failed to perfrom check");

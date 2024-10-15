@@ -780,6 +780,18 @@ public class GraphMLCorrectnessWitnessExtractor extends CorrectnessWitnessExtrac
 		}
 
 		@Override
+		public List<ExtractedGhostUpdate> getGhostUpdates(final IASTNode node) {
+			// GraphML witnesses do not contain any ghost updates
+			return List.of();
+		}
+
+		@Override
+		public Set<IExtractedWitnessDeclaration> getGlobalDeclarations() {
+			// GraphML witnesses do not contain any global declarations
+			return Set.of();
+		}
+
+		@Override
 		public List<String> printAllEntries() {
 			return mInvariants.values().stream().map(x -> x.getInvariant().toString()).collect(Collectors.toList());
 		}

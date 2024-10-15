@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare;
 
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -34,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgSummaryTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -92,7 +94,7 @@ public class IcfgFloydHoareValidityCheck<LOC extends IcfgLocation> extends Floyd
 
 	@Override
 	protected Iterable<Pair<IInternalAction, LOC>> getInternalSuccessors(final LOC state) {
-		return getSuccessors(state, IInternalAction.class);
+		return getSuccessors(state, IInternalAction.class, this::isNoTrivialSummary);
 	}
 
 	@Override
@@ -102,14 +104,25 @@ public class IcfgFloydHoareValidityCheck<LOC extends IcfgLocation> extends Floyd
 
 	@Override
 	protected Iterable<Triple<IReturnAction, LOC, LOC>> getReturnSuccessors(final LOC state) {
-		return state.getIncomingEdges().stream().filter(IIcfgReturnTransition.class::isInstance)
+		return state.getOutgoingEdges().stream().filter(IIcfgReturnTransition.class::isInstance)
 				.map(e -> new Triple<>((IReturnAction) e, (LOC) e.getTarget(),
 						((IIcfgReturnTransition<LOC, ?>) e).getCallerProgramPoint()))
 				.collect(Collectors.toList());
 	}
 
+	private boolean isNoTrivialSummary(final IInternalAction action) {
+		return !(action instanceof IIcfgSummaryTransition<?>
+				&& ((IIcfgSummaryTransition<?>) action).calledProcedureHasImplementation());
+	}
+
 	private <A extends IAction> Iterable<Pair<A, LOC>> getSuccessors(final LOC state, final Class<A> clazz) {
-		return state.getIncomingEdges().stream().filter(clazz::isInstance)
-				.map(e -> new Pair<>(clazz.cast(e), (LOC) e.getTarget())).collect(Collectors.toList());
+		return getSuccessors(state, clazz, x -> true);
+	}
+
+	private <A extends IAction> Iterable<Pair<A, LOC>> getSuccessors(final LOC state, final Class<A> clazz,
+			final Predicate<A> filter) {
+		return state.getOutgoingEdges().stream().filter(clazz::isInstance)
+				.map(e -> new Pair<>(clazz.cast(e), (LOC) e.getTarget())).filter(p -> filter.test(p.getFirst()))
+				.collect(Collectors.toList());
 	}
 }

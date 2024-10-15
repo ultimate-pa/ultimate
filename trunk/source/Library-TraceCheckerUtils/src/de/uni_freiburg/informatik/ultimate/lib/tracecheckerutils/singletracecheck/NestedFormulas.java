@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck;
 
-import java.util.Objects;
 import java.util.Set;
 import java.util.SortedMap;
 
@@ -147,27 +146,22 @@ public abstract class NestedFormulas<L extends IAction, TF, SF> {
 			if (mNestedWord.isCallPosition(i)) {
 				sb.append("Position " + i + " (call): ");
 				final TF localVarAssignment = getLocalVarAssignment(i);
-				Objects.requireNonNull(localVarAssignment);
 				sb.append(localVarAssignment);
 				sb.append(System.lineSeparator());
 				sb.append("\t GlobalVarAssignment: ");
 				final TF globalVarAssignment = getGlobalVarAssignment(i);
-				Objects.requireNonNull(globalVarAssignment);
 				sb.append(globalVarAssignment);
 				sb.append(System.lineSeparator());
 				sb.append("\t OldVarAssignment: ");
 				final TF oldVarAssignment = getOldVarAssignment(i);
-				Objects.requireNonNull(oldVarAssignment);
 				sb.append(oldVarAssignment);
 			} else if (mNestedWord.isReturnPosition(i)) {
 				sb.append("Position " + i + " (return): ");
 				final TF returnAssignment = getFormulaFromNonCallPos(i);
-				Objects.requireNonNull(returnAssignment);
 				sb.append(returnAssignment);
 			} else {
 				sb.append("Position " + i + " (internal): ");
 				final TF tf = getFormulaFromNonCallPos(i);
-				Objects.requireNonNull(tf);
 				sb.append(tf);
 			}
 			sb.append(System.lineSeparator());

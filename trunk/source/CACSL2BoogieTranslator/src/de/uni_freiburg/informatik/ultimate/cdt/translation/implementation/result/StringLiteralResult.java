@@ -66,7 +66,6 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox
 public class StringLiteralResult extends ExpressionResult {
 
 	private final CStringLiteral mStringLiteral;
-	private final boolean mOverapproximatesLongStringLiteral;
 	private final AuxVarInfo mAuxVarName;
 
 	/**
@@ -78,14 +77,12 @@ public class StringLiteralResult extends ExpressionResult {
 	 * @param overapproxList
 	 * @param auxVarName
 	 * @param stringLiteral
-	 * @param overAppLongLiteral
 	 */
 	public StringLiteralResult(final LRValue lrVal, final List<Overapprox> overapproxList, final AuxVarInfo auxVarName,
-			final CStringLiteral stringLiteral, final boolean overAppLongLiteral) {
+			final CStringLiteral stringLiteral) {
 		super(Collections.emptyList(), lrVal, Collections.emptyList(), Collections.emptySet(), overapproxList);
 		mAuxVarName = auxVarName;
 		mStringLiteral = stringLiteral;
-		mOverapproximatesLongStringLiteral = overAppLongLiteral;
 	}
 
 	public CStringLiteral getLiteralString() {
@@ -95,15 +92,6 @@ public class StringLiteralResult extends ExpressionResult {
 	@Override
 	public String toString() {
 		return "StringLiteralResult: " + mStringLiteral;
-	}
-
-	/**
-	 * We overapproximate string literals that are longer than a certain threshold by a nondeterministic value.
-	 *
-	 * @return true iff the string literal that this StringLiteralResult represents is being overapproximated
-	 */
-	public boolean overApproximatesLongStringLiteral() {
-		return mOverapproximatesLongStringLiteral;
 	}
 
 	/**
