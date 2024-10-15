@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.eclipse.cdt.core.dom.ast.ASTNameCollector;
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
@@ -61,15 +62,19 @@ import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.GeneratedBoogieAstVisitor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ModifiesSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
@@ -81,6 +86,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.StructType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
@@ -122,8 +128,10 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO.AUXVAR;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
@@ -1171,8 +1179,33 @@ public class FunctionHandler {
 		return Collections.unmodifiableSet(mFunctionSignaturesThatHaveAFunctionPointer);
 	}
 
-	public Set<String> getCalledFunctionsWithoutDefinition() {
-		return DataStructureUtils.difference(mCalledFunctions, mDefinedFunctions);
+	private Declaration getDefaultImplementation(final String name) {
+		final Procedure proc = mProcedureManager.getProcedureDeclaration(name);
+		final ILocation loc = LocationFactory.createIgnoreLocation(proc.getLoc());
+		final Statement assertFalse = new AssertStatement(loc, new BooleanLiteral(loc, false));
+		new Check(Spec.UNKNOWN).annotate(assertFalse);
+		new Overapprox("undefined function " + name, loc).annotate(assertFalse);
+		final Statement statement = new WhileStatement(loc, new BooleanLiteral(loc, true),
+				new LoopInvariantSpecification[0], new Statement[] { assertFalse });
+		final Body body =
+				mProcedureManager.constructBody(loc, new VariableDeclaration[0], new Statement[] { statement }, name);
+		return new Procedure(loc, proc.getAttributes(), name, proc.getTypeParams(), proc.getInParams(),
+				proc.getOutParams(), null, body);
+	}
+
+	public Set<Declaration> handleFunctionsWithoutDefinitions(final boolean allowUndefinedFunctions) {
+		final Set<String> calledFunctionsWithoutDefinition =
+				DataStructureUtils.difference(mCalledFunctions, mDefinedFunctions);
+		if (calledFunctionsWithoutDefinition.isEmpty()) {
+			return Set.of();
+		}
+		mLogger.warn("The following functions are not defined or handled internally: "
+				+ String.join(", ", calledFunctionsWithoutDefinition));
+		if (allowUndefinedFunctions) {
+			return Set.of();
+		}
+		return calledFunctionsWithoutDefinition.stream().map(this::getDefaultImplementation)
+				.collect(Collectors.toSet());
 	}
 
 	/**
