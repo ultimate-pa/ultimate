@@ -371,11 +371,8 @@ public class StandardFunctionHandler {
 		/**
 		 * 7.21.3 Files
 		 *
-		 * We cannot handle files properly, therefore we just overapproximate. For functions that modify the files, we
-		 * use the "assert false" overapproximation, otherwise we just overapproximate the return value.
+		 * We cannot handle files properly, therefore we just try to overapproximate the return value (where possible).
 		 */
-		fill(map, "fflush", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
-				new CPrimitive(CPrimitives.INT)));
 		fill(map, "fopen", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 2,
 				new CPointer(new CPrimitive(CPrimitives.VOID))));
 		fill(map, "fclose", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
@@ -388,12 +385,6 @@ public class StandardFunctionHandler {
 				new CPrimitive(CPrimitives.ULONG)));
 		fill(map, "ferror", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
 				new CPrimitive(CPrimitives.INT)));
-		fill(map, "fputs", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
-				new CPrimitive(CPrimitives.INT)));
-		fill(map, "fwrite", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
-				new CPrimitive(CPrimitives.ULONGLONG)));
-		fill(map, "setbuf", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
-				new CPrimitive(CPrimitives.VOID)));
 		// https://en.cppreference.com/w/c/io/clearerr
 		// We don't handle the error flags anyway, so we just dispatch the argument.
 		fill(map, "clearerr", (main, node, loc, name) -> handleVoidFunctionBySkipAndDispatch(main, node, loc, name, 1));
@@ -523,16 +514,6 @@ public class StandardFunctionHandler {
 		fill(map, "__atomic_test_and_set", this::handleAtomicTestAndSet);
 		fill(map, "__atomic_clear", this::handleAtomicClear);
 
-		fill(map, "__atomic_compare_exchange",
-				(main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
-						new CPrimitive(CPrimitives.BOOL)));
-		fill(map, "__atomic_compare_exchange_n",
-				(main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
-						new CPrimitive(CPrimitives.BOOL)));
-		fill(map, "__atomic_thread_fence", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main,
-				loc, name, new CPrimitive(CPrimitives.VOID)));
-		fill(map, "__atomic_signal_fence", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main,
-				loc, name, new CPrimitive(CPrimitives.VOID)));
 		fill(map, "__atomic_always_lock_free", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
 				name, 2, new CPrimitive(CPrimitives.BOOL)));
 		fill(map, "__atomic_is_lock_free", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name,
@@ -565,13 +546,6 @@ public class StandardFunctionHandler {
 
 		// https://en.cppreference.com/w/c/string/byte/strtok
 		fill(map, "strtok", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 2,
-				new CPointer(new CPrimitive(CPrimitives.CHAR))));
-
-		// https://en.cppreference.com/w/c/string/byte/strcat
-		fill(map, "strcat", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
-				new CPointer(new CPrimitive(CPrimitives.CHAR))));
-		// https://en.cppreference.com/w/c/string/byte/strncat
-		fill(map, "strncat", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
 				new CPointer(new CPrimitive(CPrimitives.CHAR))));
 
 		// https://en.cppreference.com/w/c/string/byte/strcspn
@@ -913,13 +887,9 @@ public class StandardFunctionHandler {
 
 		// https://en.cppreference.com/w/c/io/vfprintf
 		fill(map, "vprintf", (main, node, loc, name) -> handlePrintF(main, node, loc));
-		fill(map, "vfprintf", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
-				new CPrimitive(CPrimitives.INT)));
 		fill(map, "vsprintf", this::handleSnPrintF);
 		fill(map, "vsnprintf", this::handleSnPrintF);
 		fill(map, "vprintf_s", (main, node, loc, name) -> handlePrintF(main, node, loc));
-		fill(map, "vfprintf_s", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
-				new CPrimitive(CPrimitives.INT)));
 		fill(map, "vsprintf_s", this::handleSnPrintF);
 		fill(map, "vsnprintf_s", this::handleSnPrintF);
 
@@ -1056,12 +1026,6 @@ public class StandardFunctionHandler {
 		 */
 		fill(map, "mbstowcs", die);
 		fill(map, "wcstombs", die);
-
-		// longjmp https://en.cppreference.com/w/c/program/longjmp
-		// We cannot handle restoring the environment, so we just check if the function is reachable and create an
-		// overraproximation for that case
-		fill(map, "longjmp", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
-				new CPrimitive(CPrimitives.VOID)));
 
 		// setjmp https://en.cppreference.com/w/c/program/setjmp
 		fill(map, "_setjmp", this::handleSetjmp);
@@ -3428,26 +3392,6 @@ public class StandardFunctionHandler {
 			results.add((ExpressionResult) main.dispatch(argument));
 		}
 		return new ExpressionResultBuilder().addAllExceptLrValue(results).build();
-	}
-
-	/**
-	 * Overapproximate the reachability of unsupported functions by translating them to while(true) assert false; where
-	 * the assert is labeled with an overapproximation
-	 */
-	private Result handleUnsupportedFunctionByOverapproximation(final IDispatcher main, final ILocation loc,
-			final String name, final CType returnType) {
-		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
-		final Statement unreach = new AssertStatement(loc, ExpressionFactory.createBooleanLiteral(loc, false));
-		new Overapprox(name, loc).annotate(unreach);
-		new Check(Spec.UNKNOWN).annotate(unreach);
-		builder.addStatement(new WhileStatement(loc, ExpressionFactory.createBooleanLiteral(loc, true),
-				new LoopInvariantSpecification[0], new Statement[] { unreach }));
-		if (!returnType.isVoidType()) {
-			final AuxVarInfo auxVar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, returnType, AUXVAR.NONDET);
-			builder.addAuxVarWithDeclaration(auxVar);
-			builder.setLrValue(new RValue(auxVar.getExp(), returnType));
-		}
-		return builder.build();
 	}
 
 	private Result handleUnsoundByOverapproximationWithoutDispatch(final IDispatcher main,
