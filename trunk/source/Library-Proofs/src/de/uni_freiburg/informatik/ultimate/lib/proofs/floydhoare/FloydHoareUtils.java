@@ -133,7 +133,7 @@ public final class FloydHoareUtils {
 	public static void createProcedureContractResults(final IUltimateServiceProvider services, final String pluginName,
 			final IIcfg<IcfgLocation> icfg, final IFloydHoareAnnotation<IcfgLocation> annotation,
 			final IBacktranslationService backTranslatorService,
-			final Consumer<ProcedureContractResult<IIcfgElement>> reporter) {
+			final Consumer<ProcedureContractResult<IIcfgElement, ?>> reporter) {
 		final var checks = getCheckedSpecifications(icfg, annotation);
 		final var csToolkit = icfg.getCfgSmtToolkit();
 		final var logger = services.getLoggingService().getLogger(FloydHoareUtils.class);
@@ -182,8 +182,8 @@ public final class FloydHoareUtils {
 				continue;
 			}
 
-			final var result =
-					new ProcedureContractResult<IIcfgElement>(pluginName, exit, procName, translatedContract, checks);
+			final var result = new ProcedureContractResult<IIcfgElement, Object>(pluginName, exit, procName,
+					translatedContract, checks);
 			reporter.accept(result);
 			new WitnessProcedureContract(translatedContract).annotate(exit);
 		}

@@ -38,9 +38,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ProcedureContract;
  *
  * @author Matthias Heizmann
  */
-public class ProcedureContractResult<ELEM extends IElement> extends AbstractResultAtElement<ELEM> {
+public class ProcedureContractResult<ELEM extends IElement, E> extends AbstractResultAtElement<ELEM> {
 
-	private final ProcedureContract<?, ?> mContract;
+	private final ProcedureContract<E, ? extends E> mContract;
 	private final String mProcedureName;
 	private final Set<Check> mChecks;
 
@@ -50,7 +50,7 @@ public class ProcedureContractResult<ELEM extends IElement> extends AbstractResu
 	 * @param location
 	 *            the Location
 	 */
-	public <E> ProcedureContractResult(final String plugin, final ELEM position, final String procedureName,
+	public ProcedureContractResult(final String plugin, final ELEM position, final String procedureName,
 			final ProcedureContract<E, ? extends E> contract, final Set<Check> checks) {
 		super(position, plugin);
 		mProcedureName = procedureName;
@@ -58,12 +58,12 @@ public class ProcedureContractResult<ELEM extends IElement> extends AbstractResu
 		mChecks = checks;
 	}
 
-	public String getEnsures() {
-		return mContract.getEnsures() == null ? null : mContract.getEnsures().toString();
+	public E getEnsures() {
+		return mContract.getEnsures();
 	}
 
-	public String getRequires() {
-		return mContract.getRequires() == null ? null : mContract.getRequires().toString();
+	public E getRequires() {
+		return mContract.getRequires();
 	}
 
 	@Override
