@@ -40,10 +40,12 @@ import java.util.stream.Collectors;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.AcslTypeUtils;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
@@ -131,13 +133,45 @@ public final class Boogie2ACSL {
 	private Optional<Expression> computeOldVarEqualities(
 			final Set<de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression> modifiableGlobals) {
 		final var modifiableNames = modifiableGlobals.stream().map(e -> e.getIdentifier()).collect(Collectors.toSet());
+
 		return mSymbolTable.getGlobalScope().entrySet().stream()
-				.filter(e -> !modifiableNames.contains(e.getValue().getBoogieName()))
-				.filter(e -> !mMapping.getVar(e.getValue().getBoogieName(), e.getValue().getDeclarationInformation())
-						.getThird())
-				.map(e -> new IdentifierExpression(e.getKey()))
-				.<Expression> map(v -> new BinaryExpression(Operator.COMPEQ, v, new OldValueExpression(v)))
+				.flatMap(e -> makeOldVarEquality(e.getKey(), e.getValue(), modifiableNames).stream())
 				.reduce((eq1, eq2) -> new BinaryExpression(Operator.LOGICAND, eq1, eq2));
+	}
+
+	private Optional<Expression> makeOldVarEquality(final String cId, final SymbolTableValue stv,
+			final Set<String> modifiableNames) {
+		final boolean isTypeDecl = stv.getBoogieDecl() instanceof TypeDeclaration;
+		if (isTypeDecl) {
+			// Type declarations are not global variables
+			return Optional.empty();
+		}
+
+		final var boogieName = stv.getBoogieName();
+		if (modifiableNames.contains(boogieName)) {
+			// No equalities for modifiable variables.
+			return Optional.empty();
+		}
+
+		if (!mMapping.hasVar(boogieName, stv.getDeclarationInformation())) {
+			// We omit the conjunct if the variable cannot be backtranslated and output a warning (sound but imprecise).
+			mReporter.accept("Unknown variable: " + boogieName);
+			return Optional.empty();
+		}
+
+		final var info = mMapping.getVar(boogieName, stv.getDeclarationInformation());
+		final boolean isOnHeap = info.getThird();
+		if (isOnHeap) {
+			// We cannot say whether an on-heap variable is modified, so we omit the conjunct (sound but imprecise).
+			//
+			// TODO We could check if the procedure can modify the heap. To do so, we would need the Boogie names of the
+			// heap data arrays.
+			mReporter.accept("Cannot encode non-modifiability of on-heap variable " + cId);
+			return Optional.empty();
+		}
+
+		final var id = new IdentifierExpression(cId);
+		return Optional.of(new BinaryExpression(Operator.COMPEQ, id, new OldValueExpression(id)));
 	}
 
 	private BacktranslatedExpression translateExpression(
