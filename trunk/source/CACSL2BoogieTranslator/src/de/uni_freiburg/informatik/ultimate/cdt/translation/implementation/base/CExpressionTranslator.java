@@ -586,7 +586,7 @@ public class CExpressionTranslator {
 
 		boolean makeAtomic = false;
 		if (oType instanceof CAtomic) {
-			oType = ((CAtomic) oType).getBaseType();
+			oType = ((CAtomic) oType).getUnderlyingType();
 			makeAtomic = true;
 		}
 
@@ -640,7 +640,7 @@ public class CExpressionTranslator {
 		CType oType = exprRes.getLrValue().getCType().getUnderlyingType();
 		boolean makeAtomic = false;
 		if (oType instanceof CAtomic) {
-			oType = ((CAtomic) oType).getBaseType();
+			oType = ((CAtomic) oType).getUnderlyingType();
 			makeAtomic = true;
 		}
 		// in-/decremented value
