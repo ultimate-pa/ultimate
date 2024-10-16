@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
@@ -61,6 +62,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.e
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CAtomic;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
@@ -570,7 +572,7 @@ public class CExpressionTranslator {
 		final LeftHandSide[] tmpAsLhs = new LeftHandSide[] { auxvar.getLhs() };
 		final Expression[] oldValue = new Expression[] { exprRes.getLrValue().getValue() };
 		builder.addStatement(StatementFactory.constructAssignmentStatement(loc, tmpAsLhs, oldValue));
-		final CType oType = exprRes.getLrValue().getCType().getUnderlyingType();
+		CType oType = exprRes.getLrValue().getCType().getUnderlyingType();
 		final RValue tmpRValue = new RValue(auxvar.getExp(), oType);
 
 		final int op;
@@ -582,13 +584,26 @@ public class CExpressionTranslator {
 			throw new AssertionError("no postfix");
 		}
 
+		boolean makeAtomic = false;
+		if (oType instanceof CAtomic) {
+			oType = ((CAtomic) oType).getBaseType();
+			makeAtomic = true;
+		}
+
 		// in-/decremented value
 		final Expression valueXcremented = constructXcrementedValue(loc, builder, oType, op, tmpRValue.getValue());
 
 		builder.setOrResetLrValue(new RValue(valueXcremented, oType, false, false));
 		final ExpressionResult assign = funMakeAssignment.apply(builder.build());
 
-		return new ExpressionResultBuilder().addAllExceptLrValue(assign).setLrValue(tmpRValue).build();
+		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder().setLrValue(tmpRValue);
+		if (makeAtomic) {
+			final AtomicStatement atomic = new AtomicStatement(loc, assign.getStatements().toArray(Statement[]::new));
+			resultBuilder.addAllExceptLrValueAndStatements(assign).addStatement(atomic);
+		} else {
+			resultBuilder.addAllExceptLrValue(assign);
+		}
+		return resultBuilder.build();
 	}
 
 	/**
@@ -622,7 +637,12 @@ public class CExpressionTranslator {
 			throw new AssertionError("no prefix");
 		}
 
-		final CType oType = exprRes.getLrValue().getCType().getUnderlyingType();
+		CType oType = exprRes.getLrValue().getCType().getUnderlyingType();
+		boolean makeAtomic = false;
+		if (oType instanceof CAtomic) {
+			oType = ((CAtomic) oType).getBaseType();
+			makeAtomic = true;
+		}
 		// in-/decremented value
 		final Expression valueXcremented =
 				constructXcrementedValue(loc, builder, oType, op, exprRes.getLrValue().getValue());
@@ -635,7 +655,14 @@ public class CExpressionTranslator {
 		builder.setLrValue(new RValue(valueXcremented, oType, false, false));
 		final ExpressionResult assign = funMakeAssignment.apply(builder.build());
 		final RValue tmpRValue = new RValue(auxvar.getExp(), oType);
-		return new ExpressionResultBuilder().addAllExceptLrValue(assign).setLrValue(tmpRValue).build();
+		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder().setLrValue(tmpRValue);
+		if (makeAtomic) {
+			final AtomicStatement atomic = new AtomicStatement(loc, assign.getStatements().toArray(Statement[]::new));
+			resultBuilder.addAllExceptLrValueAndStatements(assign).addStatement(atomic);
+		} else {
+			resultBuilder.addAllExceptLrValue(assign);
+		}
+		return resultBuilder.build();
 	}
 
 	/**
