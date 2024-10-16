@@ -122,7 +122,7 @@ public class NvpTest {
 		 * Example which contains non-typical pseudo last phases (non singular seeping phase)
 		 * Precedence After: After "P", it is always the case that if "R" holds, then "S" previously held
 		 * 
-		 * Here, the NVPs are [0, 01, 012] and [01, 02, 012]
+		 * Here, the NVPs are [0, 01, 012], [01, 02, 012], [0, 01, 02], and [0, 02, 012]
 		 */
 		PhaseEventAutomata PrecedenceAfter = createPrecedenceAfter();
 		IReqSymbolTable symbolTablePrecedenceAfter = createSymbolTablePrecedenceAfter();
@@ -491,7 +491,8 @@ public class NvpTest {
 	 */
 	@Test
 	public void testNVPsOfPrecedenceAfter() {
-		List<List<String>> PrecedenceAfterNvps = new ArrayList<>(Arrays.asList(Arrays.asList("012", "01", "0"), Arrays.asList("012", "02", "01")));
+		List<List<String>> PrecedenceAfterNvps = new ArrayList<>(Arrays.asList(Arrays.asList("02", "01", "0"), Arrays.asList("012", "01", "0"),  
+				Arrays.asList("012", "02", "0"),  Arrays.asList("012", "02", "01")));
 		assertEquals(mNvpResults.get(2), PrecedenceAfterNvps);
 	}
 	

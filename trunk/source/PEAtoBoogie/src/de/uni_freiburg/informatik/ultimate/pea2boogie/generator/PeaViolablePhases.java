@@ -126,22 +126,27 @@ public class PeaViolablePhases {
 		Stack<Phase> phaseStack = new Stack<>();
 		phaseStack.push(checkingPhase);
 		// if the stack isn't empty and the collected reachable locations aren't equal to phaseSet
-		while (!phaseStack.isEmpty() && reachablePhases != phaseSet) {
+		while (!phaseStack.isEmpty() && 
+				!(reachablePhases.containsAll(phaseSet) && phaseSet.containsAll(reachablePhases))) {
 			// get the next node from the stack
 			Phase currentPhase = phaseStack.pop();
-			if (reachablePhases.contains(currentPhase)) {
-				continue;
-			}
-			// for each transition leaving this node, check what is reachable from them
-			for (Transition t : currentPhase.getTransitions()) {
-				Phase destPhase = t.getDest();
-				if (phaseSet.contains(destPhase)) {
-					// add node to set of reachable nodes
-					reachablePhases.add(destPhase);
-					phaseStack.push(destPhase);
+			if (!reachablePhases.contains(currentPhase)) {
+				if (currentPhase != checkingPhase) { // don't automatically include the input Phase
+					reachablePhases.add(currentPhase);
+				}
+				for (Transition t : currentPhase.getTransitions()) {
+					Phase destPhase = t.getDest();
+					if (destPhase == checkingPhase) { // include the input if it's reachable
+						reachablePhases.add(destPhase);
+					}
+					if (phaseSet.contains(destPhase)) {
+						// add node to set of reachable nodes
+						phaseStack.push(destPhase);
+					}
 				}
 			}
 		}
+		
 		return reachablePhases;
 	}
 
@@ -155,11 +160,9 @@ public class PeaViolablePhases {
 	private boolean phaseFulfillsSAPReachabilityCondition(final List<Phase> phaseSet) {
 		Map<Phase, Set<Phase>> reachabilityMap = getReachabilityBetweenPhasesOfPhaseSet(phaseSet);
 		boolean allPhasesMutuallyReachableViaPhaseSet = true;
-		for (Phase p : reachabilityMap.keySet()) {
-			for (Phase dest : phaseSet) {
-				if (!(reachabilityMap.get(p).contains(dest))) {
-					allPhasesMutuallyReachableViaPhaseSet = false;
-				}
+		for (Phase p : phaseSet) {
+			if (reachabilityMap.get(p).size() != phaseSet.size()) {
+				allPhasesMutuallyReachableViaPhaseSet = false;
 			}
 		}
 		return allPhasesMutuallyReachableViaPhaseSet;
@@ -239,6 +242,7 @@ public class PeaViolablePhases {
 		for (List<Phase> phaseSet : tarjansComponents) {
 			List<List<Phase>> tarjanLastPhases = getLastPhaseTarjanSubsets(phaseSet);
 			for (List<Phase> lastPhase : tarjanLastPhases) {
+				mLogger.info("SCC added:" + lastPhase);
 				tarjansComponentsAndSubcomponents.add(lastPhase);
 			}
 		}
@@ -453,13 +457,22 @@ public class PeaViolablePhases {
 				}
 			}
 			count++;
-			if (!checkIfSetEqualsFullSetOfPeaPhases(subPhaseSet) 
-					&& phaseFulfillsSAPReachabilityCondition(subPhaseSet)
-					&& !outgoingTransitionsOfPhaseAreTautology(subPhaseSet)) {
-				allSubPhases.add(subPhaseSet);
-				phasesToCheck = markPhaseSubsetAsVP(i, phasesToCheck);
-				mLogger.info(count + " subsets checked");
+			mLogger.info("the following phases are in the SCC being checked");
+			for (Phase p : subPhaseSet) {
+				mLogger.info(p);
 			}
+			if (!checkIfSetEqualsFullSetOfPeaPhases(subPhaseSet)) {
+				mLogger.info("was not full set P");
+				if (phaseFulfillsSAPReachabilityCondition(subPhaseSet)) {
+					mLogger.info("was fully reachable");
+					if (!outgoingTransitionsOfPhaseAreTautology(subPhaseSet)) {
+						mLogger.info("was not a tautology");
+						allSubPhases.add(subPhaseSet);
+						phasesToCheck = markPhaseSubsetAsVP(i, phasesToCheck);
+						mLogger.info(count + " subsets checked");
+					}
+				}
+			}		
 		}
 		return allSubPhases;
 	}
