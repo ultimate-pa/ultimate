@@ -1543,7 +1543,7 @@ public class StandardFunctionHandler {
 
 			// 0 != arg & (1 << (result-1))
 			// This means that at index "result", the argument has a 1.
-			final var lShiftRes = mExpressionTranslation.handleBitshiftExpression(loc,
+			final var lShiftRes = mExpressionTranslation.handleBinaryBitwiseExpression(loc,
 					IASTBinaryExpression.op_shiftLeft,
 					mExpressionTranslation.constructLiteralForIntegerType(loc, argType, BigInteger.ONE), argType,
 					mExpressionTranslation.constructArithmeticIntegerExpression(loc, IASTBinaryExpression.op_minus,
@@ -1562,15 +1562,16 @@ public class StandardFunctionHandler {
 
 			// 0 == arg & (~0 >> |arg|-(result-1))
 			// This means that at all lower indices than "result", the argument has only zeroes.
-			final var rShiftRes = mExpressionTranslation.handleBitshiftExpression(loc,
-					IASTBinaryExpression.op_shiftRight, allOnes, argType,
+			// We use the corresponding unsigned types to force a logical right-shift rather than an arithmetic shift.
+			final var rShiftRes = mExpressionTranslation.handleBinaryBitwiseExpression(loc,
+					IASTBinaryExpression.op_shiftRight, allOnes, mTypeSizes.getCorrespondingUnsignedType(argType),
 					mExpressionTranslation.constructArithmeticIntegerExpression(loc, IASTBinaryExpression.op_minus,
 							sizeExp, resultType,
 							mExpressionTranslation.constructArithmeticIntegerExpression(loc,
 									IASTBinaryExpression.op_minus, resultInfo.getExp(), resultType, resultOne,
 									resultType),
 							resultType),
-					resultType, mAuxVarInfoBuilder);
+					mTypeSizes.getCorrespondingUnsignedType(resultType), mAuxVarInfoBuilder);
 			builder.addAllExceptLrValueAndStatements(rShiftRes);
 			statements.addAll(rShiftRes.getStatements());
 			final var andRes2 = mExpressionTranslation.handleBinaryBitwiseExpression(loc,
