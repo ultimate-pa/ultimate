@@ -111,15 +111,14 @@ public final class Boogie2ACSL {
 	public BacktranslatedExpression translateEnsuresExpression(
 			final de.uni_freiburg.informatik.ultimate.boogie.ast.Expression expression, final ILocation context,
 			final Set<de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression> modifiableGlobals) {
-		final var intType = new CPrimitive(CPrimitives.INT);
-		final var boolRange = BigInterval.booleanRange();
-
-		if (expression == null) {
+		final var mainExpression = expression == null ? null : translateExpression(expression, context);
+		if (mainExpression == null) {
+			final var intType = new CPrimitive(CPrimitives.INT);
+			final var boolRange = BigInterval.booleanRange();
 			return computeOldVarEqualities(modifiableGlobals)
 					.map(e -> new BacktranslatedExpression(e, intType, boolRange)).orElse(null);
 		}
 
-		final var mainExpression = translateExpression(expression, context);
 		final var oldVarEqualities = computeOldVarEqualities(modifiableGlobals);
 		if (oldVarEqualities.isPresent()) {
 			return new BacktranslatedExpression(
