@@ -5,7 +5,7 @@
  */
 extern int __VERIFIER_nondet_int();
 extern long __VERIFIER_nondet_long();
-extern long long __VERIFIER_nondet_long_long();
+extern long long __VERIFIER_nondet_longlong();
 
 #include <strings>
 
@@ -22,7 +22,7 @@ int main() {
     //@ assert y <= 32;
     //@ assert (l == 0) == (y == 0);
 
-    long long ll = __VERIFIER_nondet_long_long();
+    long long ll = __VERIFIER_nondet_longlong();
     int z = ffsll(ll);
     //@ assert z >= 0;
     //@ assert z <= 64;
