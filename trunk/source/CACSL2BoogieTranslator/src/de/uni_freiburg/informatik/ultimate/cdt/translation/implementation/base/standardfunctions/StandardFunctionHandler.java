@@ -1503,11 +1503,23 @@ public class StandardFunctionHandler {
 		builder.addAllExceptLrValue(argResult);
 
 		final var resultType = new CPrimitive(CPrimitives.INT);
-		final AuxVarInfo resultInfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, resultType, AUXVAR.NONDET);
+		final AuxVarInfo resultInfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, resultType, AUXVAR.RETURNED);
 		builder.addAuxVarWithDeclaration(resultInfo);
 
 		final int argSize = mTypeSizes.getSize(argPrimitive);
 		final var argType = new CPrimitive(argPrimitive);
+
+		// Get an expression for result that has the same type as the argument.
+		final Expression resultExpr;
+		if (argType.equals(resultType)) {
+			resultExpr = resultInfo.getExp();
+		} else {
+			assert argSize >= mTypeSizes.getSize(resultType.getType()) : "expected argument larger than INT";
+			final var convertedResult = mExpressionTranslation.convertIntToInt(loc,
+					new ExpressionResult(new RValue(resultInfo.getExp(), resultType)), argType);
+			builder.addAllExceptLrValue(convertedResult);
+			resultExpr = convertedResult.getLrValue().getValue();
+		}
 
 		final var argZero = mExpressionTranslation.constructZero(loc, argType);
 		final var argIsZero = mExpressionTranslation.constructBinaryEqualityExpression(loc,
@@ -1525,16 +1537,15 @@ public class StandardFunctionHandler {
 			final ArrayList<Statement> statements = new ArrayList<>();
 
 			// 1 <= result <= argSize*8
-			final var resultOne =
-					mExpressionTranslation.constructLiteralForIntegerType(loc, resultType, BigInteger.ONE);
+			final var one = mExpressionTranslation.constructLiteralForIntegerType(loc, argType, BigInteger.ONE);
 			final long bitsPerByte = 8L;
-			final var sizeExp = mExpressionTranslation.constructLiteralForIntegerType(loc, resultType,
+			final var sizeExp = mExpressionTranslation.constructLiteralForIntegerType(loc, argType,
 					BigInteger.valueOf(argSize * bitsPerByte));
-			final var resultInRange = ExpressionFactory.and(loc, List.of(
-					mExpressionTranslation.constructBinaryComparisonIntegerExpression(loc,
-							IASTBinaryExpression.op_lessEqual, resultOne, resultType, resultInfo.getExp(), resultType),
-					mExpressionTranslation.constructBinaryComparisonIntegerExpression(loc,
-							IASTBinaryExpression.op_lessEqual, resultInfo.getExp(), resultType, sizeExp, resultType)));
+			final var resultInRange = ExpressionFactory.and(loc,
+					List.of(mExpressionTranslation.constructBinaryComparisonIntegerExpression(loc,
+							IASTBinaryExpression.op_lessEqual, one, argType, resultExpr, argType),
+							mExpressionTranslation.constructBinaryComparisonIntegerExpression(loc,
+									IASTBinaryExpression.op_lessEqual, resultExpr, argType, sizeExp, argType)));
 			statements.add(new AssumeStatement(loc, resultInRange));
 
 			// expression "~0", which is 11...111 in binary.
@@ -1543,12 +1554,13 @@ public class StandardFunctionHandler {
 
 			// 0 != arg & (1 << (result-1))
 			// This means that at index "result", the argument has a 1.
-			final var lShiftRes = mExpressionTranslation.handleBinaryBitwiseExpression(loc,
-					IASTBinaryExpression.op_shiftLeft,
-					mExpressionTranslation.constructLiteralForIntegerType(loc, argType, BigInteger.ONE), argType,
-					mExpressionTranslation.constructArithmeticIntegerExpression(loc, IASTBinaryExpression.op_minus,
-							resultInfo.getExp(), resultType, resultOne, resultType),
-					resultType, mAuxVarInfoBuilder);
+			final var lShiftRes =
+					mExpressionTranslation.handleBinaryBitwiseExpression(loc, IASTBinaryExpression.op_shiftLeft,
+							mExpressionTranslation.constructLiteralForIntegerType(loc, argType, BigInteger.ONE),
+							argType,
+							mExpressionTranslation.constructArithmeticIntegerExpression(loc,
+									IASTBinaryExpression.op_minus, resultExpr, argType, one, argType),
+							argType, mAuxVarInfoBuilder);
 			builder.addAllExceptLrValueAndStatements(lShiftRes);
 			statements.addAll(lShiftRes.getStatements());
 			final var andRes1 = mExpressionTranslation.handleBinaryBitwiseExpression(loc,
@@ -1566,12 +1578,11 @@ public class StandardFunctionHandler {
 			final var rShiftRes = mExpressionTranslation.handleBinaryBitwiseExpression(loc,
 					IASTBinaryExpression.op_shiftRight, allOnes, mTypeSizes.getCorrespondingUnsignedType(argType),
 					mExpressionTranslation.constructArithmeticIntegerExpression(loc, IASTBinaryExpression.op_minus,
-							sizeExp, resultType,
+							sizeExp, argType,
 							mExpressionTranslation.constructArithmeticIntegerExpression(loc,
-									IASTBinaryExpression.op_minus, resultInfo.getExp(), resultType, resultOne,
-									resultType),
-							resultType),
-					mTypeSizes.getCorrespondingUnsignedType(resultType), mAuxVarInfoBuilder);
+									IASTBinaryExpression.op_minus, resultExpr, argType, one, argType),
+							argType),
+					mTypeSizes.getCorrespondingUnsignedType(argType), mAuxVarInfoBuilder);
 			builder.addAllExceptLrValueAndStatements(rShiftRes);
 			statements.addAll(rShiftRes.getStatements());
 			final var andRes2 = mExpressionTranslation.handleBinaryBitwiseExpression(loc,
