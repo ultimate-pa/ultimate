@@ -2178,8 +2178,7 @@ public class CHandler {
 			return new SkipResult();
 		}
 		// TODO: This is just a workaround for now to crash when thread local variables are used in a concurrent program
-		if (Arrays.stream(node.getDeclSpecifier().getAttributes()).map(x -> String.valueOf(x.getName()))
-				.anyMatch("thread"::equals)) {
+		if (CTranslationUtil.hasAttribute(node.getDeclSpecifier(), "thread")) {
 			mHasThreadLocalVars = true;
 			// Only crash for thread local variable in concurrent programs
 			if (mIsConcurrent) {
