@@ -130,6 +130,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck;
 import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck.CheckableExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Axiom;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
@@ -2843,7 +2844,11 @@ public class CHandler {
 		final AssignmentStatement assignStmt = StatementFactory.constructAssignmentStatement(loc,
 				new LeftHandSide[] { lValue.getLhs() }, new Expression[] { rhsWithBitfieldTreatment });
 
-		builder.addStatement(assignStmt);
+		if (leftHandSide.getCType().isAtomic()) {
+			builder.addStatement(new AtomicStatement(loc, new Statement[] { assignStmt }));
+		} else {
+			builder.addStatement(assignStmt);
+		}
 
 		for (final Overapprox oa : rhsConverted.getOverapprs()) {
 			new OverapproxVariable(oa.getOverapproximatedLocations()).annotate(assignStmt);

@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
@@ -588,7 +589,14 @@ public class CExpressionTranslator {
 		builder.setOrResetLrValue(new RValue(valueXcremented, oType, false, false));
 		final ExpressionResult assign = funMakeAssignment.apply(builder.build());
 
-		return new ExpressionResultBuilder().addAllExceptLrValue(assign).setLrValue(tmpRValue).build();
+		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder().setLrValue(tmpRValue);
+		if (oType.isAtomic()) {
+			final AtomicStatement atomic = new AtomicStatement(loc, assign.getStatements().toArray(Statement[]::new));
+			resultBuilder.addAllExceptLrValueAndStatements(assign).addStatement(atomic);
+		} else {
+			resultBuilder.addAllExceptLrValue(assign);
+		}
+		return resultBuilder.build();
 	}
 
 	/**
@@ -635,7 +643,14 @@ public class CExpressionTranslator {
 		builder.setLrValue(new RValue(valueXcremented, oType, false, false));
 		final ExpressionResult assign = funMakeAssignment.apply(builder.build());
 		final RValue tmpRValue = new RValue(auxvar.getExp(), oType);
-		return new ExpressionResultBuilder().addAllExceptLrValue(assign).setLrValue(tmpRValue).build();
+		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder().setLrValue(tmpRValue);
+		if (oType.isAtomic()) {
+			final AtomicStatement atomic = new AtomicStatement(loc, assign.getStatements().toArray(Statement[]::new));
+			resultBuilder.addAllExceptLrValueAndStatements(assign).addStatement(atomic);
+		} else {
+			resultBuilder.addAllExceptLrValue(assign);
+		}
+		return resultBuilder.build();
 	}
 
 	/**

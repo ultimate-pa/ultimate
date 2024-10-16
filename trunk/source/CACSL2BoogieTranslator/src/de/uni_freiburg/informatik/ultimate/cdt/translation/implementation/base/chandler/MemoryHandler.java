@@ -781,7 +781,11 @@ public class MemoryHandler {
 		final CallStatement call = StatementFactory.constructCallStatement(loc, false, lhss,
 				determineReadProcedure(resultType, unchecked, loc),
 				new Expression[] { address, calculateSizeOf(loc, resultType) });
-		resultBuilder.addStatement(call);
+		if (resultType.isAtomic()) {
+			resultBuilder.addStatement(new AtomicStatement(loc, new Statement[] { call }));
+		} else {
+			resultBuilder.addStatement(call);
+		}
 		assert CTranslationUtil.isAuxVarMapComplete(mNameHandler, resultBuilder);
 		// TODO Frank 2022-12-16: We should add an in-range assumption here, but this could be problematic if we cast
 		// e.g. unsigned to signed pointers and read from them
@@ -856,7 +860,11 @@ public class MemoryHandler {
 
 		final HeapWriteMode writeMode =
 				isStaticInitialization ? HeapWriteMode.STORE_UNCHECKED : HeapWriteMode.STORE_CHECKED;
-		return getWriteCall(loc, hlv, value, realValueType, writeMode);
+		final List<Statement> result = getWriteCall(loc, hlv, value, realValueType, writeMode);
+		if (valueType.isAtomic()) {
+			return List.of(new AtomicStatement(loc, result.toArray(Statement[]::new)));
+		}
+		return result;
 	}
 
 	private List<Statement> getWriteCall(final ILocation loc, final HeapLValue hlv, final Expression value,
