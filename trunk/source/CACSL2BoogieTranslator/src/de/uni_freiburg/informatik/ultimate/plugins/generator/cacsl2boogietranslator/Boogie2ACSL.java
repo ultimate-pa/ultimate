@@ -224,7 +224,13 @@ public final class Boogie2ACSL {
 			return new BacktranslatedExpression(new ACSLResultExpression(), type, range);
 		} else if (mMapping.hasVar(boogieId, expr.getDeclarationInformation())) {
 			final Triple<String, CType, Boolean> pair = mMapping.getVar(boogieId, expr.getDeclarationInformation());
-			// TODO Should we do something different if the variable is on-heap?
+
+			// TODO If the C variable is on-heap, we technically have to backtranslate the Boogie variable to an
+			// address-of expression (the Boogie variable represents the pointer to the C variable), and similarly for
+			// in-vars below.
+			// However, this only becomes critical once we can actually backtranslate expressions with pointers. At the
+			// moment, instead of a pointer variable x we get expressions involving x!base and x!offset, which are
+			// treated as unknown variables anyway.
 
 			if (isPresentInContext(pair.getFirst(), context)) {
 				final var range = getRangeForCType(pair.getSecond());
