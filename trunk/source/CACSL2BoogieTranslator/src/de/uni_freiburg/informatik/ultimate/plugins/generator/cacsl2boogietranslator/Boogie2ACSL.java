@@ -111,15 +111,18 @@ public final class Boogie2ACSL {
 	public BacktranslatedExpression translateEnsuresExpression(
 			final de.uni_freiburg.informatik.ultimate.boogie.ast.Expression expression, final ILocation context,
 			final Set<de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression> modifiableGlobals) {
+		final String cFun =
+				((IASTFunctionDefinition) ((CLocation) context).getNode()).getDeclarator().getName().toString();
+
 		final var mainExpression = expression == null ? null : translateExpression(expression, context);
 		if (mainExpression == null) {
 			final var intType = new CPrimitive(CPrimitives.INT);
 			final var boolRange = BigInterval.booleanRange();
-			return computeOldVarEqualities(modifiableGlobals)
+			return computeOldVarEqualities(cFun, modifiableGlobals)
 					.map(e -> new BacktranslatedExpression(e, intType, boolRange)).orElse(null);
 		}
 
-		final var oldVarEqualities = computeOldVarEqualities(modifiableGlobals);
+		final var oldVarEqualities = computeOldVarEqualities(cFun, modifiableGlobals);
 		if (oldVarEqualities.isPresent()) {
 			return new BacktranslatedExpression(
 					new BinaryExpression(Operator.LOGICAND, mainExpression.getExpression(), oldVarEqualities.get()),
@@ -129,17 +132,18 @@ public final class Boogie2ACSL {
 		return mainExpression;
 	}
 
-	private Optional<Expression> computeOldVarEqualities(
+	private Optional<Expression> computeOldVarEqualities(final String proc,
 			final Set<de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression> modifiableGlobals) {
 		final var modifiableNames = modifiableGlobals.stream().map(e -> e.getIdentifier()).collect(Collectors.toSet());
+		final boolean modifiesMemory = modifiableNames.stream().anyMatch(name -> name.startsWith(SFO.MEMORY));
 
-		return mSymbolTable.getGlobalScope().entrySet().stream()
-				.flatMap(e -> makeOldVarEquality(e.getKey(), e.getValue(), modifiableNames).stream())
+		return mSymbolTable.getGlobalScope().entrySet().stream().flatMap(
+				e -> makeOldVarEquality(proc, e.getKey(), e.getValue(), modifiableNames, modifiesMemory).stream())
 				.reduce((eq1, eq2) -> new BinaryExpression(Operator.LOGICAND, eq1, eq2));
 	}
 
-	private Optional<Expression> makeOldVarEquality(final String cId, final SymbolTableValue stv,
-			final Set<String> modifiableNames) {
+	private Optional<Expression> makeOldVarEquality(final String proc, final String cId, final SymbolTableValue stv,
+			final Set<String> modifiableNames, final boolean modifiesMemory) {
 		final boolean isTypeDecl = stv.getBoogieDecl() instanceof TypeDeclaration;
 		if (isTypeDecl) {
 			// Type declarations are not global variables
@@ -160,12 +164,9 @@ public final class Boogie2ACSL {
 
 		final var info = mMapping.getVar(boogieName, stv.getDeclarationInformation());
 		final boolean isOnHeap = info.getThird();
-		if (isOnHeap) {
+		if (isOnHeap && modifiesMemory) {
 			// We cannot say whether an on-heap variable is modified, so we omit the conjunct (sound but imprecise).
-			//
-			// TODO We could check if the procedure can modify the heap. To do so, we would need the Boogie names of the
-			// heap data arrays.
-			mReporter.accept("Cannot encode non-modifiability of on-heap variable " + cId);
+			mReporter.accept("Cannot encode non-modifiability of on-heap variable " + cId + " by function " + proc);
 			return Optional.empty();
 		}
 
