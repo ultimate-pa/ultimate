@@ -60,7 +60,7 @@ public class CFunction extends CType {
 	private CFunction(final boolean isConst, final boolean isInline, final boolean isRestrict, final boolean isVolatile,
 			final boolean isExtern, final CType resultType, final CDeclaration[] paramTypes, final boolean takesVarArgs,
 			final VarArgsUsage varArgsUsage) {
-		super(isConst, isInline, isRestrict, isVolatile, isExtern);
+		super(isConst, isInline, isRestrict, isVolatile, isExtern, false);
 		mResultType = resultType;
 		mParamTypes = paramTypes;
 		mTakesVarArgs = takesVarArgs;
