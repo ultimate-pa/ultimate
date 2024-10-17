@@ -48,7 +48,8 @@
 		"Memory model",
 		"Adapt memory model on pointer casts if necessary",
 		"Entry function",
-		"Report unsoundness warnings"
+		"Report unsoundness warnings",
+		"Check assertions from assert.h"
 	],
 	"de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer": [
 		"Try twofold refinement",
