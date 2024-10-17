@@ -3,26 +3,44 @@ Overapproximation:
 - task: ffs.c
   settings: AutomizerC-forwardPredicates.epf
   toolchain: AutomizerC.xml
+- task: ffs-nonzero.c
+  settings: AutomizerC-forwardPredicates.epf
+  toolchain: AutomizerC.xml
 - task: ffs.c
+  settings: AutomizerC-forwardPredicates_const.epf
+  toolchain: AutomizerC.xml
+- task: ffs-nonzero.c
   settings: AutomizerC-forwardPredicates_const.epf
   toolchain: AutomizerC.xml
 - task: ffs.c
   settings: AutomizerC-nestedInterpolants.epf
   toolchain: AutomizerC.xml
+- task: ffs-nonzero.c
+  settings: AutomizerC-nestedInterpolants.epf
+  toolchain: AutomizerC.xml
 - task: ffs.c
+  settings: AutomizerC-nestedInterpolants_const.epf
+  toolchain: AutomizerC.xml
+- task: ffs-nonzero.c
   settings: AutomizerC-nestedInterpolants_const.epf
   toolchain: AutomizerC.xml
 - task: ffs.c
   settings: BlockEncodingV2AutomizerC-forwardPredicates.epf
   toolchain: BlockEncodingV2AutomizerC.xml
-- task: ffs.c
-  settings: BlockEncodingV2AutomizerC-FP-MaxSaneBE.epf
+- task: ffs-nonzero.c
+  settings: BlockEncodingV2AutomizerC-forwardPredicates.epf
   toolchain: BlockEncodingV2AutomizerC.xml
 - task: ffs.c
+  settings: KojakC-Reach-32Bit-Default.epf
+  toolchain: KojakC.xml
+- task: ffs-nonzero.c
   settings: KojakC-Reach-32Bit-Default.epf
   toolchain: KojakC.xml
 
 TIMEOUT:
 - task: ffs.c
+  settings: BlockEncodingV2AutomizerC-FP-MaxSaneBE.epf
+  toolchain: BlockEncodingV2AutomizerC.xml
+- task: ffs-nonzero.c
   settings: BlockEncodingV2AutomizerC-FP-MaxSaneBE.epf
   toolchain: BlockEncodingV2AutomizerC.xml
