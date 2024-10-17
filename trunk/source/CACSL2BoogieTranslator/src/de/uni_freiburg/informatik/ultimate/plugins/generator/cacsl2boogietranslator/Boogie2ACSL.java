@@ -32,15 +32,20 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.AcslTypeUtils;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
@@ -63,6 +68,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BigInterval;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * Translate Boogie expressions to ACSL
@@ -87,6 +93,85 @@ public final class Boogie2ACSL {
 	public BacktranslatedExpression translateExpression(
 			final de.uni_freiburg.informatik.ultimate.boogie.ast.Expression expression, final ILocation context) {
 		return translateExpression(expression, context, false);
+	}
+
+	/**
+	 * Provides a specialized translation for the 'ensures' clause in a procedure contract. Specifically, it adds
+	 * conjuncts of the form 'x == \old(x)' for all global variables that are not modifiable by the procedure, and that
+	 * are off-heap (because we assume conservatively that the procedure may modify the heap).
+	 *
+	 * @param expression
+	 *            The original 'ensures' clause to translate
+	 * @param context
+	 *            The context, i.e., the location of the C function definition
+	 * @param modifiableGlobals
+	 *            The set of variables listed in the Boogie procedure "modifies" clause
+	 * @return A backtranslated ensures clause with the additional conjuncts
+	 */
+	public BacktranslatedExpression translateEnsuresExpression(
+			final de.uni_freiburg.informatik.ultimate.boogie.ast.Expression expression, final ILocation context,
+			final Set<de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression> modifiableGlobals) {
+		final String cFun =
+				((IASTFunctionDefinition) ((CLocation) context).getNode()).getDeclarator().getName().toString();
+
+		final var mainExpression = expression == null ? null : translateExpression(expression, context);
+		if (mainExpression == null) {
+			final var intType = new CPrimitive(CPrimitives.INT);
+			final var boolRange = BigInterval.booleanRange();
+			return computeOldVarEqualities(cFun, modifiableGlobals)
+					.map(e -> new BacktranslatedExpression(e, intType, boolRange)).orElse(null);
+		}
+
+		final var oldVarEqualities = computeOldVarEqualities(cFun, modifiableGlobals);
+		if (oldVarEqualities.isPresent()) {
+			return new BacktranslatedExpression(
+					new BinaryExpression(Operator.LOGICAND, mainExpression.getExpression(), oldVarEqualities.get()),
+					new CPrimitive(CPrimitives.INT), BigInterval.booleanRange());
+		}
+
+		return mainExpression;
+	}
+
+	private Optional<Expression> computeOldVarEqualities(final String proc,
+			final Set<de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression> modifiableGlobals) {
+		final var modifiableNames = modifiableGlobals.stream().map(e -> e.getIdentifier()).collect(Collectors.toSet());
+		final boolean modifiesMemory = modifiableNames.stream().anyMatch(name -> name.startsWith(SFO.MEMORY));
+
+		return mSymbolTable.getGlobalScope().entrySet().stream().flatMap(
+				e -> makeOldVarEquality(proc, e.getKey(), e.getValue(), modifiableNames, modifiesMemory).stream())
+				.reduce((eq1, eq2) -> new BinaryExpression(Operator.LOGICAND, eq1, eq2));
+	}
+
+	private Optional<Expression> makeOldVarEquality(final String proc, final String cId, final SymbolTableValue stv,
+			final Set<String> modifiableNames, final boolean modifiesMemory) {
+		final boolean isTypeDecl = stv.getBoogieDecl() instanceof TypeDeclaration;
+		if (isTypeDecl) {
+			// Type declarations are not global variables
+			return Optional.empty();
+		}
+
+		final var boogieName = stv.getBoogieName();
+		if (modifiableNames.contains(boogieName)) {
+			// No equalities for modifiable variables.
+			return Optional.empty();
+		}
+
+		if (!mMapping.hasVar(boogieName, stv.getDeclarationInformation())) {
+			// We omit the conjunct if the variable cannot be backtranslated and output a warning (sound but imprecise).
+			mReporter.accept("Unknown variable: " + boogieName);
+			return Optional.empty();
+		}
+
+		final var info = mMapping.getVar(boogieName, stv.getDeclarationInformation());
+		final boolean isOnHeap = info.getThird();
+		if (isOnHeap && modifiesMemory) {
+			// We cannot say whether an on-heap variable is modified, so we omit the conjunct (sound but imprecise).
+			mReporter.accept("Cannot encode non-modifiability of on-heap variable " + cId + " by function " + proc);
+			return Optional.empty();
+		}
+
+		final var id = new IdentifierExpression(cId);
+		return Optional.of(new BinaryExpression(Operator.COMPEQ, id, new OldValueExpression(id)));
 	}
 
 	private BacktranslatedExpression translateExpression(
@@ -139,7 +224,15 @@ public final class Boogie2ACSL {
 			final var range = getRangeForCType(type);
 			return new BacktranslatedExpression(new ACSLResultExpression(), type, range);
 		} else if (mMapping.hasVar(boogieId, expr.getDeclarationInformation())) {
-			final Pair<String, CType> pair = mMapping.getVar(boogieId, expr.getDeclarationInformation());
+			final Triple<String, CType, Boolean> pair = mMapping.getVar(boogieId, expr.getDeclarationInformation());
+
+			// TODO If the C variable is on-heap, we technically have to backtranslate the Boogie variable to an
+			// address-of expression (the Boogie variable represents the pointer to the C variable), and similarly for
+			// in-vars below.
+			// However, this only becomes critical once we can actually backtranslate expressions with pointers. At the
+			// moment, instead of a pointer variable x we get expressions involving x!base and x!offset, which are
+			// treated as unknown variables anyway.
+
 			if (isPresentInContext(pair.getFirst(), context)) {
 				final var range = getRangeForCType(pair.getSecond());
 				return new BacktranslatedExpression(new IdentifierExpression(pair.getFirst()), pair.getSecond(), range);

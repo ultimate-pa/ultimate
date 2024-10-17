@@ -94,7 +94,7 @@ public class NameHandler implements INameHandler {
 			while (curr != null && !(curr.getParent() instanceof IASTTranslationUnit)) {
 				if (curr instanceof IASTCompositeTypeSpecifier) {
 					boogieId = cId;
-					mBacktranslator.putVar(boogieId, cId, cType, decInfo);
+					mBacktranslator.putVar(boogieId, cId, cType, decInfo, isOnHeap);
 					return boogieId;
 				}
 				curr = curr.getParent();
@@ -115,7 +115,7 @@ public class NameHandler implements INameHandler {
 		} else {
 			boogieId = "~" + onHeapStr + cId;
 		}
-		mBacktranslator.putVar(boogieId, cId, cType, decInfo);
+		mBacktranslator.putVar(boogieId, cId, cType, decInfo, isOnHeap);
 		return boogieId;
 	}
 
@@ -157,10 +157,9 @@ public class NameHandler implements INameHandler {
 	public String getTempVarUIDForBlockScope(final SFO.AUXVAR purpose, final CType cType) {
 		final String boogieId = SFO.TEMP + purpose.getId() + mTmpUID++;
 		// do not add it as a temp var since it should not be havocced immediately (at C statement level)
-//		mBacktranslator.putTempVar(boogieId, purpose, cType);
+		// mBacktranslator.putTempVar(boogieId, purpose, cType);
 		return boogieId;
 	}
-
 
 	@Override
 	public String getGloballyUniqueIdentifier(final String looplabel) {

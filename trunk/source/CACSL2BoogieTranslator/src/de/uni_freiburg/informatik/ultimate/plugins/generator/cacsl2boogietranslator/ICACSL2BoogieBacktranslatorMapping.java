@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
  */
 public interface ICACSL2BoogieBacktranslatorMapping {
 
-	void putVar(String boogieId, String cId, CType cType, DeclarationInformation decInfo);
+	void putVar(String boogieId, String cId, CType cType, DeclarationInformation decInfo, boolean isOnHeap);
 
 	void putInVar(String boogieId, String cId, CType cType, DeclarationInformation decInfo);
 

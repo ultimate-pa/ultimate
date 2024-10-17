@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IExplicitEdgesMultigraph;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IMultigraphEdge;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ProcedureContract;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement.StepInfo;
@@ -68,7 +69,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *            Source Trace Element. Type of trace elements (e.g., Statements, CodeBlocks, BoogieASTNodes) in the source
  *            program model.
  * @param <TTE>
- *            Target Trace Elment. Type of trace elements (e.g., Statements, CodeBlocks, BoogieASTNodes) in the target
+ *            Target Trace Element. Type of trace elements (e.g., Statements, CodeBlocks, BoogieASTNodes) in the target
  *            program model.
  * @param <SE>
  *            Source Expression. Type of expression in the source program model.
@@ -367,6 +368,21 @@ public class DefaultTranslator<STE, TTE, SE, TE, SVL, TVL, CTX>
 		final Multigraph<VL, TTE> rtr = new Multigraph<>(old.getLabel());
 		ModelUtils.copyAnnotations(old, rtr);
 		return rtr;
+	}
+
+	@Override
+	public ProcedureContract<TE, ? extends TE>
+			translateProcedureContract(final ProcedureContract<SE, ? extends SE> oldContract, final CTX context) {
+		final var newRequires = oldContract.getRequires() == null ? null
+				: translateExpressionWithContext(oldContract.getRequires(), context);
+		final var newEnsures = oldContract.getEnsures() == null ? null
+				: translateExpressionWithContext(oldContract.getEnsures(), context);
+		final var newModifies =
+				oldContract.hasModifies()
+						? oldContract.getModifies().stream().map(mv -> translateExpressionWithContext(mv, context))
+								.collect(Collectors.toSet())
+						: null;
+		return new ProcedureContract<>(oldContract.getProcedure(), newRequires, newEnsures, newModifies);
 	}
 
 	protected <VL> Multigraph<VL, TTE> createUnlabeledWitnessNode(final IElement old) {
