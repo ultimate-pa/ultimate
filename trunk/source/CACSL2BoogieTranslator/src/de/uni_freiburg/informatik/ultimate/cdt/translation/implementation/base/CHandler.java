@@ -2061,28 +2061,22 @@ public class CHandler {
 					MemoryArea.STACK);
 		}
 
-		final List<Statement> statements = new ArrayList<>();
-		statements.add(ultimateAllocCall);
+		mStaticObjectsHandler.addStatementsForUltimateInit(List.of(ultimateAllocCall));
 
 		// Overapproximate string literals of length STRING_OVERAPPROXIMATION_THRESHOLD
 		// or longer
-		final boolean writeValues =
-				stringLiteral.getByteValues().size() < mSettings.getStringOverapproximationThreshold();
-		if (writeValues) {
-			final ExpressionResult exprRes =
-					mInitHandler.writeStringLiteral(actualLoc, addressRValue, stringLiteral, node);
-			assert !exprRes.hasLRValue();
-			assert exprRes.getDeclarations().isEmpty();
-			assert exprRes.getOverapprs().isEmpty();
-			assert exprRes.getAuxVars().isEmpty();
-			assert exprRes.getNeighbourUnionFields().isEmpty();
-			statements.addAll(exprRes.getStatements());
+		if (stringLiteral.getByteValues().size() >= mSettings.getStringOverapproximationThreshold()) {
+			return new StringLiteralResult(addressRValue, List.of(new Overapprox("large string literal", actualLoc)),
+					stringLiteral);
 		}
-		mStaticObjectsHandler.addStatementsForUltimateInit(statements);
-
-		final List<Overapprox> overapproxList =
-				writeValues ? List.of() : List.of(new Overapprox("large string literal", actualLoc));
-		return new StringLiteralResult(addressRValue, overapproxList, stringLiteral);
+		final ExpressionResult exprRes = mInitHandler.writeStringLiteral(actualLoc, addressRValue, stringLiteral, node);
+		assert !exprRes.hasLRValue();
+		assert exprRes.getDeclarations().isEmpty();
+		assert exprRes.getOverapprs().isEmpty();
+		assert exprRes.getAuxVars().isEmpty();
+		assert exprRes.getNeighbourUnionFields().isEmpty();
+		mStaticObjectsHandler.addStatementsForUltimateInit(exprRes.getStatements());
+		return new StringLiteralResult(addressRValue, List.of(), stringLiteral);
 	}
 
 	public Result visit(final IDispatcher main, final IASTNode node) {
