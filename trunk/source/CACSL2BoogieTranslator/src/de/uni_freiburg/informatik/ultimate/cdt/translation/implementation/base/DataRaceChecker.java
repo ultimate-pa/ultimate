@@ -260,6 +260,10 @@ public final class DataRaceChecker {
 	}
 
 	private static boolean isRaceImpossible(final LRValue lrVal) {
+		if (lrVal.getCType().isAtomic()) {
+			// Atomic types cannot lead to data races
+			return true;
+		}
 		if (lrVal instanceof HeapLValue) {
 			final Expression address = ((HeapLValue) lrVal).getAddress();
 			return address instanceof IdentifierExpression
