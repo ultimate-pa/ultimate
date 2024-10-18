@@ -2042,18 +2042,17 @@ public class CHandler {
 		final CArray arrayType = new CArray(dimension, new CPrimitive(CPrimitives.CHAR));
 		final CPointer pointerType = new CPointer(new CPrimitive(CPrimitives.CHAR));
 
-		final AuxVarInfo auxvar;
 		final RValue addressRValue;
 		final CallStatement ultimateAllocCall;
 		if (MemoryHandler.FIXED_ADDRESSES_FOR_INITIALIZATION) {
-			auxvar = null;
 			final Pair<RValue, CallStatement> pair = mMemoryHandler.getUltimateMemAllocInitCall(actualLoc, arrayType);
 
 			addressRValue = pair.getFirst();
 			ultimateAllocCall = pair.getSecond();
 
 		} else {
-			auxvar = mAuxVarInfoBuilder.constructGlobalAuxVarInfo(actualLoc, pointerType, SFO.AUXVAR.STRINGLITERAL);
+			final AuxVarInfo auxvar =
+					mAuxVarInfoBuilder.constructGlobalAuxVarInfo(actualLoc, pointerType, SFO.AUXVAR.STRINGLITERAL);
 			addressRValue = new RValue(auxvar.getExp(), arrayType);
 			// the declaration of the variable that corresponds to a string literal has to
 			// be made global
@@ -2083,7 +2082,7 @@ public class CHandler {
 
 		final List<Overapprox> overapproxList =
 				writeValues ? List.of() : List.of(new Overapprox("large string literal", actualLoc));
-		return new StringLiteralResult(addressRValue, overapproxList, auxvar, stringLiteral);
+		return new StringLiteralResult(addressRValue, overapproxList, stringLiteral);
 	}
 
 	public Result visit(final IDispatcher main, final IASTNode node) {
