@@ -29,8 +29,10 @@ package de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -57,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferencePro
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieDeclarations;
+import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PEAComplement;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
@@ -75,6 +78,7 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.preferences.Pea2BoogiePref
 import de.uni_freiburg.informatik.ultimate.pea2boogie.preferences.Pea2BoogiePreferences.PEATransformerMode;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheck;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.CheckedReqLocation;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.VacuityAnnotation;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -108,6 +112,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 	private final List<ReqPeas> mReqPeas;
 
 	private final Durations mDurations;
+	private CDD mEnforcedInv;
 
 	public ReqCheckAnnotator(final IUltimateServiceProvider services, final ILogger logger, final List<ReqPeas> reqPeas,
 			final IReqSymbolTable symbolTable, final Durations durations) {
@@ -442,7 +447,10 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 			final PatternType<?> pattern = reqpea.getPattern();
 			for (final Entry<CounterTrace, PhaseEventAutomata> pea : reqpea.getCounterTrace2Pea()) {
 				final Statement assertStmt = genAssertNonVacuous(pattern, pea.getValue(), bl);
+
 				if (assertStmt != null) {
+					VacuityAnnotation vacAnnotation = new VacuityAnnotation(mEnforcedInv);
+					vacAnnotation.annotate(assertStmt);
 					stmtList.add(assertStmt);
 				}
 			}
@@ -467,6 +475,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 	private Statement genAssertNonVacuous(final PatternType<?> req, final PhaseEventAutomata aut,
 			final BoogieLocation bl) {
 		final List<Phase> phases = aut.getPhases();
+		mEnforcedInv = CDD.TRUE;
 
 		// compute the maximal phase number occurring in the automaton.
 		int maxBits = 0;
@@ -487,20 +496,32 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 
 		// check that one of those phases is eventually reached.
 		final List<Expression> checkReached = new ArrayList<>();
+		final Map<Phase, CDD> enforcedInv = new HashMap<>();
+
 		if (pnr > 0) {
 			for (int i = 0; i < phases.size(); i++) {
 				final PhaseBits bits = phases.get(i).getPhaseBits();
 				if (bits == null || (bits.getActive() & 1 << pnr - 1) == 0) {
 					checkReached.add(genComparePhaseCounter(i, mSymbolTable.getPcName(aut), bl));
 				}
+				// Store state invariants of PEA locations where max DC phase is not active.
+				if (bits.getActive() < (1 << pnr - 1)) {
+					enforcedInv.put(phases.get(i), phases.get(i).getStateInv());
+				}
 			}
+		}
+		// Store invariant enforced by the requirement in case of vacuity
+		if (enforcedInv.size() == 1) {
+			mEnforcedInv = (CDD) enforcedInv.values().toArray()[0];
 		}
 		if (checkReached.isEmpty()) {
 			return null;
 		}
+
 		final Expression disjunction = genDisjunction(checkReached, bl);
 		final ReqCheck check = createReqCheck(Spec.VACUOUS, req, aut);
 		final String label = "VACUOUS_" + aut.getName();
+
 		return createAssert(disjunction, check, label);
 	}
 
