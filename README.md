@@ -1,7 +1,6 @@
 # Ultimate
 [![Build Status Jenkins](https://jenkins.sopranium.de/buildStatus/icon?job=Ultimate%2FUltimate%2Fdev&subject=jenkins:dev)](https://jenkins.sopranium.de/job/Ultimate/job/Ultimate/job/dev/)
 [![LGPL License](https://img.shields.io/badge/license-LGPLv3+LE-brightgreen.svg)](https://github.com/ultimate-pa/ultimate/wiki/License)
-[![ZenHub](https://img.shields.io/badge/ZenHub-Board-orange.svg)](https://app.zenhub.com/workspaces/ultimate-5d19cb84cfdf4303fb078546)
 
 Ultimate is a program analysis framework. Ultimate consists of several plugins that perform steps of a program analysis, e.g., parsing source code, transforming programs from one representation to another, or analyzing programs. Toolchains of these plugins can perform complex tasks, e.g., verify that a C program fulfills a given specification.
 
