@@ -1,6 +1,5 @@
 # Ultimate
 [![Build Status Jenkins](https://jenkins.sopranium.de/buildStatus/icon?job=Ultimate%2FUltimate%2Fdev&subject=jenkins:dev)](https://jenkins.sopranium.de/job/Ultimate/job/Ultimate/job/dev/)
-[![Build Status Travis](https://travis-ci.com/ultimate-pa/ultimate.svg?branch=dev)](https://travis-ci.com/ultimate-pa/ultimate)
 [![LGPL License](https://img.shields.io/badge/license-LGPLv3+LE-brightgreen.svg)](https://github.com/ultimate-pa/ultimate/wiki/License)
 [![ZenHub](https://img.shields.io/badge/ZenHub-Board-orange.svg)](https://app.zenhub.com/workspaces/ultimate-5d19cb84cfdf4303fb078546)
 
@@ -37,6 +36,7 @@ Automizer uses _**trace abstraction**_ to generalize infeasibility proofs for si
 #### Publications about Automizer
 
 To cite:
+
 ```bibtex
 @inproceedings{sas09:trace-abstraction,
   author    = {Matthias Heizmann and Jochen Hoenicke and Andreas Podelski},
@@ -53,9 +53,9 @@ To cite:
 }
 ```
 
-* *Ultimate Automizer and CommuHash Normal Form - (Competition Contribution)*. Heizmann, Barth, Dietsch, Fichtner, Hoenicke, Klumpp, Naouar, Schindler, Schüssele and Podelski, TACAS (SV-COMP) 2023, https://doi.org/10.1007/978-3-319-89963-3_30
-* *Software Model Checking for People Who Love Automata*. Heizmann, Hoenicke and Podelski, CAV 2013, https://doi.org/10.1007/978-3-642-39799-8_2
-* *Refinement of Trace Abstraction*. Heizmann, Hoenicke and Podelski, SAS 2009, https://doi.org/10.1007/978-3-642-03237-0_7
+* _Ultimate Automizer and CommuHash Normal Form - (Competition Contribution)_. Heizmann, Barth, Dietsch, Fichtner, Hoenicke, Klumpp, Naouar, Schindler, Schüssele and Podelski, TACAS (SV-COMP) 2023, <https://doi.org/10.1007/978-3-319-89963-3_30>
+* _Software Model Checking for People Who Love Automata_. Heizmann, Hoenicke and Podelski, CAV 2013, <https://doi.org/10.1007/978-3-642-39799-8_2>
+* _Refinement of Trace Abstraction_. Heizmann, Hoenicke and Podelski, SAS 2009, <https://doi.org/10.1007/978-3-642-03237-0_7>
 
 ### Ultimate Taipan
 Contact: Daniel Dietsch
@@ -67,6 +67,7 @@ Taipan uses _**abstract interpretation**_ with various domains to find loop inva
 #### Publications about Taipan
 
 To cite:
+
 ```bibtex
 @inproceedings{sas17:loop-inv-from-ctex,
   author    = {Marius Greitschus and Daniel Dietsch and Andreas Podelski},
@@ -83,10 +84,10 @@ To cite:
 }
 ```
 
-* *Ultimate Taipan with Symbolic Interpretation and Fluid Abstractions - (Competition Contribution)*. Dietsch, Heizmann, Nutz, Schätzle and Schüssele, TACAS (SV-COMP) 2020, https://doi.org/10.1007/978-3-030-45237-7_32
-* *Ultimate Taipan with Dynamic Block Encoding - (Competition Contribution)*. Dietsch, Greitschus, Heizmann, Hoenicke, Nutz, Podelski, Schilling and Schindler, TACAS (SV-COMP) 2018, https://doi.org/10.1007/978-3-319-89963-3_31
-* *Loop Invariants from Counterexamples*. Greitschus, Dietsch and Podelski, SAS 2017, https://doi.org/10.1007/978-3-319-66706-5_7
-* *Ultimate Taipan: Trace Abstraction and Abstract Interpretation - (Competition Contribution)*. Greitschus, Dietsch, Heizmann, Nutz, Schätzle, Schilling, Schüssele and Podelski, TACAS (SV-COMP) 2017, https://doi.org/10.1007/978-3-662-54580-5_31
+* _Ultimate Taipan with Symbolic Interpretation and Fluid Abstractions - (Competition Contribution)_. Dietsch, Heizmann, Nutz, Schätzle and Schüssele, TACAS (SV-COMP) 2020, <https://doi.org/10.1007/978-3-030-45237-7_32>
+* _Ultimate Taipan with Dynamic Block Encoding - (Competition Contribution)_. Dietsch, Greitschus, Heizmann, Hoenicke, Nutz, Podelski, Schilling and Schindler, TACAS (SV-COMP) 2018, <https://doi.org/10.1007/978-3-319-89963-3_31>
+* _Loop Invariants from Counterexamples_. Greitschus, Dietsch and Podelski, SAS 2017, <https://doi.org/10.1007/978-3-319-66706-5_7>
+* _Ultimate Taipan: Trace Abstraction and Abstract Interpretation - (Competition Contribution)_. Greitschus, Dietsch, Heizmann, Nutz, Schätzle, Schilling, Schüssele and Podelski, TACAS (SV-COMP) 2017, <https://doi.org/10.1007/978-3-662-54580-5_31>
 
 ### Ultimate Kojak
 Contact: Frank Schüssele
@@ -98,6 +99,7 @@ Kojak analyses programs using an extension of the _**Lazy Interpolants**_ CEGAR 
 #### Publications about Kojak
 
 To cite:
+
 ```bibtex
 @inproceedings{tacas14:kojak,
   author    = {Evren Ermis and Alexander Nutz and Daniel Dietsch and Jochen Hoenicke and Andreas Podelski},
@@ -114,8 +116,8 @@ To cite:
 }
 ```
 
-* *Ultimate Kojak with Memory Safety Checks - (Competition Contribution)*. Nutz, Dietsch, Mohamed and Podelski, TACAS (SV-COMP) 2015, https://doi.org/10.1007/978-3-662-46681-0_44
-* *Ultimate Kojak - (Competition Contribution)*. Ermis, Nutz, Dietsch, Hoenicke and Podelski, TACAS (SV-COMP) 2014, https://doi.org/10.1007/978-3-642-54862-8_36
+* _Ultimate Kojak with Memory Safety Checks - (Competition Contribution)_. Nutz, Dietsch, Mohamed and Podelski, TACAS (SV-COMP) 2015, <https://doi.org/10.1007/978-3-662-46681-0_44>
+* _Ultimate Kojak - (Competition Contribution)_. Ermis, Nutz, Dietsch, Hoenicke and Podelski, TACAS (SV-COMP) 2014, <https://doi.org/10.1007/978-3-642-54862-8_36>
 
 ### Ultimate GemCutter
 Contact: Dominik Klumpp
@@ -129,6 +131,7 @@ It integrates partial order reduction algorithms (that take advantage of commuta
 #### Publications about GemCutter
 
 To cite:
+
 ```bibtex
 @inproceedings{pldi22:sound-sequentialization,
   author    = {Azadeh Farzan and Dominik Klumpp and Andreas Podelski},
@@ -143,6 +146,6 @@ To cite:
 }
 ```
 
-* *Stratified Commutativity in Verification Algorithms for Concurrent Programs*. Farzan, Klumpp and Podelski, POPL 2023, https://doi.org/10.1145/3571242
-* *Sound Sequentialization for Concurrent Program Verification*. Farzan, Klumpp and Podelski, PLDI 2022, https://doi.org/10.1145/3519939.3523727
-* *Ultimate GemCutter and the Axes of Generalization - (Competition Contribution)*. Klumpp, Dietsch, Heizmann, Schüssele, Ebbinghaus, Farzan and Podelski, TACAS (SV-COMP) 2022, https://doi.org/10.1007/978-3-030-99527-0_35
+* _Stratified Commutativity in Verification Algorithms for Concurrent Programs_. Farzan, Klumpp and Podelski, POPL 2023, <https://doi.org/10.1145/3571242>
+* _Sound Sequentialization for Concurrent Program Verification_. Farzan, Klumpp and Podelski, PLDI 2022, <https://doi.org/10.1145/3519939.3523727>
+* _Ultimate GemCutter and the Axes of Generalization - (Competition Contribution)_. Klumpp, Dietsch, Heizmann, Schüssele, Ebbinghaus, Farzan and Podelski, TACAS (SV-COMP) 2022, <https://doi.org/10.1007/978-3-030-99527-0_35>
