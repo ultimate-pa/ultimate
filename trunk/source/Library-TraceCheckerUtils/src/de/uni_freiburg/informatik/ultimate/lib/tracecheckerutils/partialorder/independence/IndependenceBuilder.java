@@ -394,16 +394,8 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 		 * independence.
 		 */
 		public B withSyntacticCheck() {
-			return unionLeft(new SyntacticIndependenceRelation<>());
-		}
-
-		/**
-		 * Combines the current relation with a syntactic independence relation. This is typically done for semantic
-		 * independence relations, as the syntactic check provides a cheap sufficient condition for semantic
-		 * independence.
-		 */
-		public B withSyntacticCheck(final Function<Stream<S>, S> aggregateConditions) {
-			return unionLeft(new SyntacticIndependenceRelation<>(), aggregateConditions);
+			// Trivial aggregation of symbolic conditions, as syntactic relation does not support them.
+			return unionLeft(new SyntacticIndependenceRelation<>(), conditions -> conditions.findAny().orElse(null));
 		}
 
 		/**

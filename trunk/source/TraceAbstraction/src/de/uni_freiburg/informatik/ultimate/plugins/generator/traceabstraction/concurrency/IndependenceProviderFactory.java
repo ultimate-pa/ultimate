@@ -170,8 +170,7 @@ public class IndependenceProviderFactory<L extends IIcfgTransition<?>> {
 				// Protect the SMT solver against checks with quantifiers that are unlikely to succeed anyway.
 				.protectAgainstQuantifiers()
 				// Add syntactic independence check (cheaper sufficient condition).
-				// (Trivial aggregation of symbolic conditions, as syntactic relation does not support them.)
-				.withSyntacticCheck(conditions -> conditions.findAny().orElse(null))
+				.withSyntacticCheck()
 				// Cache independence query results.
 				.cached()
 				// Setup condition optimization (if conditional independence is enabled).
