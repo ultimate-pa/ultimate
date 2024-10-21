@@ -578,21 +578,23 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 			 * independence.
 			 */
 			public <C extends Collection<IPredicate>> Impl<L> withDisjunctivePredicates(
-					final Function<IPredicate, C> getDisjuncts, final Function<IPredicate, C> buildSingleton) {
+					final Function<IPredicate, C> getDisjuncts, final Function<List<IPredicate>, C> buildCollection) {
 				if (mRelation.isConditional()) {
+					// TODO The backtransformer will fail for DisjunctiveConditionalIndependenceRelation with context
 					return new Impl<>(new ConditionTransformingIndependenceRelation<>(
-							new DisjunctiveConditionalIndependenceRelation<>(mRelation, buildSingleton), getDisjuncts,
+							new DisjunctiveConditionalIndependenceRelation<>(mRelation, buildCollection), getDisjuncts,
 							x -> DataStructureUtils.getOneAndOnly(x, "condition")));
 				}
 				return this;
 			}
 
 			public <C extends Collection<IPredicate>> Impl<L> withDisjunctivePredicatesUnion(
-					final Function<IPredicate, C> getDisjuncts, final Function<IPredicate, C> buildSingleton,
+					final Function<IPredicate, C> getDisjuncts, final Function<List<IPredicate>, C> buildCollection,
 					final Function<Stream<IPredicate>, IPredicate> aggregateConditions) {
+				// TODO The backtransformer will fail for DisjunctiveConditionalIndependenceRelation with context
 				return unionLeft(
 						new ConditionTransformingIndependenceRelation<>(
-								new DisjunctiveConditionalIndependenceRelation<>(mRelation, buildSingleton),
+								new DisjunctiveConditionalIndependenceRelation<>(mRelation, buildCollection),
 								getDisjuncts, x -> DataStructureUtils.getOneAndOnly(x, "condition")),
 						aggregateConditions);
 			}

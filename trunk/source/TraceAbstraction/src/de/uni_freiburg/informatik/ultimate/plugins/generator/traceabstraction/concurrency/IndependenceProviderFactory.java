@@ -185,7 +185,7 @@ public class IndependenceProviderFactory<L extends IIcfgTransition<?>> {
 				.withFilteredConditions(p -> !mPredicateFactory.isDontCare(p))
 				// TODO (Dominik 2024-09-24): We cannot generally change GemCutter's independence relation in this way.
 				// TODO This is likely very expensive!
-				.withDisjunctivePredicatesUnion(PartialOrderCegarLoop::getConjuncts, ImmutableList::singleton,
+				.withDisjunctivePredicatesUnion(PartialOrderCegarLoop::getConjuncts, ImmutableList::new,
 						this::aggregateConditions)
 				// .withDisjunctivePredicates(PartialOrderCegarLoop::getConjuncts, ImmutableList::singleton)
 				// =========================================================================

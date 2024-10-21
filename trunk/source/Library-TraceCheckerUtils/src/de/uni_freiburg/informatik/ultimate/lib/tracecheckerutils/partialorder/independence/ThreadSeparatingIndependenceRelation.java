@@ -102,16 +102,21 @@ public class ThreadSeparatingIndependenceRelation<S, L extends IAction> implemen
 		}
 
 		@Override
-		public S getCommutativityCondition(final L a, final L b) {
+		public S getCommutativityCondition(final S condition, final L a, final L b) {
 			if (fromSameThread(a, b)) {
 				return null;
 			}
-			return mUnderlyingSymbolic.getCommutativityCondition(a, b);
+			return mUnderlyingSymbolic.getCommutativityCondition(condition, a, b);
 		}
 
 		@Override
 		public boolean isSymmetric() {
 			return mUnderlyingSymbolic.isSymmetric();
+		}
+
+		@Override
+		public boolean isConditional() {
+			return mUnderlyingSymbolic.isConditional();
 		}
 	}
 

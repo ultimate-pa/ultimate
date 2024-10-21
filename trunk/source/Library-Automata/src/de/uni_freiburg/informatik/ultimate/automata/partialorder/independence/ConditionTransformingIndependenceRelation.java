@@ -147,17 +147,23 @@ public class ConditionTransformingIndependenceRelation<S, T, L> implements IInde
 		}
 
 		@Override
-		public S getCommutativityCondition(final L a, final L b) {
-			final T condition = mUnderlyingSymbolic.getCommutativityCondition(a, b);
-			if (condition == null) {
+		public S getCommutativityCondition(final S condition, final L a, final L b) {
+			final T transformedCondition = !isConditional() || condition == null ? null : mTransformer.apply(condition);
+			final T generatedCondition = mUnderlyingSymbolic.getCommutativityCondition(transformedCondition, a, b);
+			if (generatedCondition == null) {
 				return null;
 			}
-			return mBackTransformer.apply(condition);
+			return mBackTransformer.apply(generatedCondition);
 		}
 
 		@Override
 		public boolean isSymmetric() {
 			return mUnderlyingSymbolic.isSymmetric();
+		}
+
+		@Override
+		public boolean isConditional() {
+			return mConditional && mUnderlyingSymbolic.isConditional();
 		}
 	}
 }

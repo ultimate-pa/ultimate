@@ -42,9 +42,15 @@ public interface ISymbolicIndependenceRelation<LETTER, CONDITION> {
 	/**
 	 * Generates a sufficient condition under which the given letters commute, or returns {@code null} if no such
 	 * condition could be found.
+	 *
+	 * @param existingCondition
+	 *            Optionally, an existing condition which does not suffice for commutativity of the given letters. The
+	 *            symbolic relation may take this condition into account and return a refined, more constraining
+	 *            condition, but there is no guarantee that the returned condition is indeed a refinement of the
+	 *            existing condition. If no condition is known or passing existing conditions is unsupported (see
+	 *            {@link #isConditional()}), {@code null} may be used.
 	 */
-	// TODO support passing existing context?
-	CONDITION getCommutativityCondition(LETTER a, LETTER b);
+	CONDITION getCommutativityCondition(CONDITION existingCondition, LETTER a, LETTER b);
 
 	/**
 	 * Indicates whether this relation is symmetric (i.e., captures full commutativity) or not (i.e., captures
@@ -53,4 +59,10 @@ public interface ISymbolicIndependenceRelation<LETTER, CONDITION> {
 	 * @see IIndependenceRelation#isSymmetric()
 	 */
 	boolean isSymmetric();
+
+	/**
+	 * Indicates whether this relation can take advantage of a known existing condition (see
+	 * {@link #getCommutativityCondition(CONDITION, LETTER, LETTER)}.
+	 */
+	boolean isConditional();
 }

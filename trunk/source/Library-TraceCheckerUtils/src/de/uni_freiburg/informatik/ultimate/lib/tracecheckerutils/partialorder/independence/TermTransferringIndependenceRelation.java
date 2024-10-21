@@ -116,19 +116,27 @@ public class TermTransferringIndependenceRelation<L extends IAction> implements 
 		}
 
 		@Override
-		public IPredicate getCommutativityCondition(final L a, final L b) {
+		public IPredicate getCommutativityCondition(final IPredicate condition, final L a, final L b) {
 			final var aTransferred = transfer(a);
 			final var bTransferred = transfer(b);
-			final var condition = mUnderlyingSymbolic.getCommutativityCondition(aTransferred, bTransferred);
-			if (condition == null) {
+			final var conditionTransferred =
+					!isConditional() || condition == null ? null : mTransferrer.transferPredicate(condition);
+			final var generatedCondition =
+					mUnderlyingSymbolic.getCommutativityCondition(conditionTransferred, aTransferred, bTransferred);
+			if (generatedCondition == null) {
 				return null;
 			}
-			return mTransferrer.backTransferPredicate(condition);
+			return mTransferrer.backTransferPredicate(generatedCondition);
 		}
 
 		@Override
 		public boolean isSymmetric() {
 			return mUnderlying.isSymmetric();
+		}
+
+		@Override
+		public boolean isConditional() {
+			return mUnderlyingSymbolic.isConditional();
 		}
 	}
 }

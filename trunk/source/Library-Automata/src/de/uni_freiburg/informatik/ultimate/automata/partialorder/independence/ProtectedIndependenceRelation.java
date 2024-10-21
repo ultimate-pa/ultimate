@@ -139,9 +139,9 @@ public class ProtectedIndependenceRelation<S, L> implements IIndependenceRelatio
 		}
 
 		@Override
-		public S getCommutativityCondition(final L a, final L b) {
+		public S getCommutativityCondition(final S condition, final L a, final L b) {
 			if (mFilter.test(a) && mFilter.test(b)) {
-				return mUnderlyingSymbolic.getCommutativityCondition(a, b);
+				return mUnderlyingSymbolic.getCommutativityCondition(condition, a, b);
 			}
 			return null;
 		}
@@ -149,6 +149,11 @@ public class ProtectedIndependenceRelation<S, L> implements IIndependenceRelatio
 		@Override
 		public boolean isSymmetric() {
 			return mUnderlyingSymbolic.isSymmetric();
+		}
+
+		@Override
+		public boolean isConditional() {
+			return mUnderlyingSymbolic.isConditional();
 		}
 	}
 

@@ -130,20 +130,27 @@ public class UnionIndependenceRelation<STATE, L> implements IIndependenceRelatio
 
 	private class SymbolicUnionIndependence implements ISymbolicIndependenceRelation<L, STATE> {
 		private final Collection<ISymbolicIndependenceRelation<L, STATE>> mSymbolicRelations;
+		private final boolean mSymbolicConditional;
 
 		public SymbolicUnionIndependence(final Collection<ISymbolicIndependenceRelation<L, STATE>> symbolicRelations) {
 			mSymbolicRelations = symbolicRelations;
+			mSymbolicConditional = mSymbolicRelations.stream().anyMatch(ISymbolicIndependenceRelation::isConditional);
 		}
 
 		@Override
-		public STATE getCommutativityCondition(final L a, final L b) {
-			return mAggregateConditions.apply(
-					mSymbolicRelations.stream().map(r -> r.getCommutativityCondition(a, b)).filter(c -> c != null));
+		public STATE getCommutativityCondition(final STATE condition, final L a, final L b) {
+			return mAggregateConditions.apply(mSymbolicRelations.stream()
+					.map(r -> r.getCommutativityCondition(condition, a, b)).filter(c -> c != null));
 		}
 
 		@Override
 		public boolean isSymmetric() {
 			return mSymmetric;
+		}
+
+		@Override
+		public boolean isConditional() {
+			return mSymbolicConditional;
 		}
 	}
 }

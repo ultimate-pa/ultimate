@@ -255,7 +255,7 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 		}
 
 		@Override
-		public IPredicate getCommutativityCondition(final L a, final L b) {
+		public IPredicate getCommutativityCondition(final IPredicate condition, final L a, final L b) {
 			final var compositions = buildCompositions(a, b);
 			final var tfAB = compositions.getFirst();
 			final var tfBA = compositions.getSecond();
@@ -282,6 +282,11 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 		public boolean isSymmetric() {
 			return mSymmetric;
 		}
+
+		@Override
+		public boolean isConditional() {
+			return false;
+		}
 	}
 
 	/**
@@ -292,20 +297,31 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 	 */
 	public class ConditionGeneratorIndependence implements ISymbolicIndependenceRelation<L, IPredicate> {
 		private final IIndependenceConditionGenerator mGenerator;
+		private final boolean mIsConditional;
 
-		public ConditionGeneratorIndependence(final IIndependenceConditionGenerator generator) {
+		public ConditionGeneratorIndependence(final IIndependenceConditionGenerator generator,
+				final boolean conditional) {
 			mGenerator = generator;
+			mIsConditional = conditional;
 			assert mGenerator.isSymmetric() == mSymmetric : "Symmetry of relation and generator does not match";
 		}
 
 		@Override
-		public IPredicate getCommutativityCondition(final L a, final L b) {
+		public IPredicate getCommutativityCondition(final IPredicate condition, final L a, final L b) {
+			if (mIsConditional && condition != null) {
+				return mGenerator.generateCondition(condition, a.getTransformula(), b.getTransformula());
+			}
 			return mGenerator.generateCondition(a.getTransformula(), b.getTransformula());
 		}
 
 		@Override
 		public boolean isSymmetric() {
 			return mSymmetric;
+		}
+
+		@Override
+		public boolean isConditional() {
+			return mIsConditional;
 		}
 	}
 }

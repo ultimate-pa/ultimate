@@ -109,15 +109,20 @@ public class IndependenceRelationWithAbstraction<H, L, S> implements IIndependen
 		}
 
 		@Override
-		public C getCommutativityCondition(final L a, final L b) {
+		public C getCommutativityCondition(final C condition, final L a, final L b) {
 			final L abstractA = mAbstraction.abstractLetter(a, mLevel);
 			final L abstractB = mAbstraction.abstractLetter(b, mLevel);
-			return mUnderlyingSymbolic.getCommutativityCondition(abstractA, abstractB);
+			return mUnderlyingSymbolic.getCommutativityCondition(condition, abstractA, abstractB);
 		}
 
 		@Override
 		public boolean isSymmetric() {
 			return mUnderlyingSymbolic.isSymmetric();
+		}
+
+		@Override
+		public boolean isConditional() {
+			return mUnderlyingSymbolic.isConditional();
 		}
 	}
 

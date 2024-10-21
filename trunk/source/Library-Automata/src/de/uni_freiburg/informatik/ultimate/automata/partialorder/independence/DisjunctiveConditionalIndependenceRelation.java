@@ -26,7 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.partialorder.independence;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.util.statistics.Aggregate;
@@ -49,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.PrettyPrint;
 public class DisjunctiveConditionalIndependenceRelation<L, S, C extends Collection<S>>
 		implements IIndependenceRelation<C, L> {
 	private final IIndependenceRelation<S, L> mUnderlying;
-	private final Function<S, C> mBuildSingleton;
+	private final Function<List<S>, C> mBuildCollection;
 	private final DisjunctiveStatistics mStatistics;
 
 	/**
@@ -73,10 +75,10 @@ public class DisjunctiveConditionalIndependenceRelation<L, S, C extends Collecti
 	 *            {@code null}, no symbolic relation can be created.
 	 */
 	public DisjunctiveConditionalIndependenceRelation(final IIndependenceRelation<S, L> underlying,
-			final Function<S, C> buildSingleton) {
+			final Function<List<S>, C> buildCollection) {
 		assert underlying.isConditional() : "Only makes sense for conditional independence relations";
 		mUnderlying = underlying;
-		mBuildSingleton = buildSingleton;
+		mBuildCollection = buildCollection;
 		mStatistics = new DisjunctiveStatistics();
 	}
 
@@ -122,7 +124,7 @@ public class DisjunctiveConditionalIndependenceRelation<L, S, C extends Collecti
 
 	@Override
 	public ISymbolicIndependenceRelation<L, C> getSymbolicRelation() {
-		if (mBuildSingleton == null) {
+		if (mBuildCollection == null) {
 			return null;
 		}
 		final var underlying = mUnderlying.getSymbolicRelation();
@@ -145,17 +147,34 @@ public class DisjunctiveConditionalIndependenceRelation<L, S, C extends Collecti
 		}
 
 		@Override
-		public C getCommutativityCondition(final L a, final L b) {
-			final S condition = mUnderlyingSymbolic.getCommutativityCondition(a, b);
-			if (condition == null) {
-				return null;
+		public C getCommutativityCondition(final C state, final L a, final L b) {
+			if (state == null || state.isEmpty() || !isConditional()) {
+				final S generatedCondition = mUnderlyingSymbolic.getCommutativityCondition(null, a, b);
+				if (generatedCondition == null) {
+					return null;
+				}
+				return mBuildCollection.apply(List.of(generatedCondition));
 			}
-			return mBuildSingleton.apply(condition);
+
+			final var generatedConditions = new ArrayList<S>();
+			for (final var condition : state) {
+				final S generatedCondition = mUnderlyingSymbolic.getCommutativityCondition(condition, a, b);
+				if (generatedCondition == null) {
+					continue;
+				}
+				generatedConditions.add(generatedCondition);
+			}
+			return mBuildCollection.apply(generatedConditions);
 		}
 
 		@Override
 		public boolean isSymmetric() {
 			return mUnderlyingSymbolic.isSymmetric();
+		}
+
+		@Override
+		public boolean isConditional() {
+			return mUnderlyingSymbolic.isConditional();
 		}
 	}
 

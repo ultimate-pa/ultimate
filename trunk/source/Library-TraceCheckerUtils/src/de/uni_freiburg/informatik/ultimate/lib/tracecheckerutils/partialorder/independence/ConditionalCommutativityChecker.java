@@ -179,7 +179,7 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 					break;
 				case SYMBOLIC_RELATION:
 					if (relation != null) {
-						condition = relation.getCommutativityCondition(letter1, letter2);
+						condition = relation.getCommutativityCondition(null, letter1, letter2);
 					}
 					break;
 				default:
