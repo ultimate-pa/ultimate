@@ -18,6 +18,8 @@ The main active developers of Ultimate are:
 * Daniel Dietsch (@danieldietsch)
 * Dominik Klumpp (@maul-esel)
 * Frank Schüssele (@schuessf)
+* Manuel Bentele (@bahnwaerter)
+* Marcel Ebbinghaus (@ebbima)
 
 You can find an extensive list of past and current contributors [on our website](https://ultimate-pa.org/developers/).
 
