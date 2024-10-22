@@ -1359,6 +1359,8 @@ public class StandardFunctionHandler {
 	private Result handleAtomicCompareExchange(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final ExpressionResult desiredResult, final ExpressionResult desiredRead) {
 		final IASTInitializerClause[] arguments = node.getArguments();
+
+		// Evaluate the arguments passed to the function. This happens non-atomically.
 		final ExpressionResult pointer = mExprResultTransformer.dispatchPointerLValue(main, loc, arguments[0]);
 		final ExpressionResult expectedResult = mExprResultTransformer.dispatchPointerLValue(main, loc, arguments[1]);
 		final ExpressionResult weakResult = mExprResultTransformer
@@ -1370,16 +1372,20 @@ public class StandardFunctionHandler {
 		final var resultBuilder = new ExpressionResultBuilder().addAllExceptLrValue(pointer, expectedResult,
 				desiredResult, weakResult, successMemoryOrder, failureMemoryOrder);
 
+		// Introduce an auxvar indicating whether the function is successful, i.e., the exchange was performed.
 		final var boolType = new CPrimitive(CPrimitives.BOOL);
 		final var success = mAuxVarInfoBuilder.constructAuxVarInfo(loc, boolType, AUXVAR.RETURNED);
+		final var boolZero = mExpressionTranslation.constructZero(loc, boolType);
+		final var successBoolean = mExpressionTranslation.constructBinaryEqualityExpression(loc,
+				IASTBinaryExpression.op_notequals, success.getExp(), boolType, boolZero, boolType);
+		final var noSuccessBoolean = mExpressionTranslation.constructBinaryEqualityExpression(loc,
+				IASTBinaryExpression.op_equals, success.getExp(), boolType, boolZero, boolType);
+
 		final var pointerRead = mExprResultTransformer.readPointerValue(loc, pointer.getLrValue());
 		final var expectedRead = mExprResultTransformer.readPointerValue(loc, expectedResult.getLrValue());
 		final var pointerWrite = mExprResultTransformer.makePointerAssignment(loc, pointer.getLrValue(),
 				desiredRead.getLrValue().getValue());
 
-		final var successBoolean =
-				mExpressionTranslation.constructBinaryEqualityExpression(loc, IASTBinaryExpression.op_notequals,
-						success.getExp(), boolType, mExpressionTranslation.constructZero(loc, boolType), boolType);
 		final var atomicBody = new ExpressionResultBuilder().addAuxVarWithDeclaration(success)
 				.addStatement(StatementFactory.constructIfStatement(loc, weakResult.getLrValue().getValue(),
 						new Statement[] { new HavocStatement(loc, new VariableLHS[] { success.getLhs() }) },
@@ -1404,8 +1410,8 @@ public class StandardFunctionHandler {
 		final var expectedWrite = mExprResultTransformer.makePointerAssignment(loc, expectedResult.getLrValue(),
 				pointerRead.getLrValue().getValue());
 		return resultBuilder.addAllExceptLrValue(atomic).addAllExceptLrValueAndStatements(expectedWrite)
-				.addStatement(StatementFactory.constructIfStatement(loc, successBoolean, new Statement[0],
-						expectedWrite.getStatements().toArray(Statement[]::new)))
+				.addStatement(StatementFactory.constructIfStatement(loc, noSuccessBoolean,
+						expectedWrite.getStatements().toArray(Statement[]::new), new Statement[0]))
 				.setLrValue(new RValue(success.getExp(), boolType)).build();
 	}
 
