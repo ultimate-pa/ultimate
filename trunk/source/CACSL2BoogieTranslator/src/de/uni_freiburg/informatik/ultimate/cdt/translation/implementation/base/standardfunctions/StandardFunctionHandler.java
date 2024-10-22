@@ -1305,8 +1305,9 @@ public class StandardFunctionHandler {
 	// https://gcc.gnu.org/onlinedocs/gcc/_005f_005fatomic-Builtins.html#index-_005f_005fatomic_005fcompare_005fexchange_005fn
 	// https://en.cppreference.com/w/c/atomic/atomic_compare_exchange
 	//
-	// The implementation below generates Boogie code that roughly follows this schema, where success and ptr_val are
-	// auxiliary variables:
+	// The implementation below generates Boogie code that roughly follows the schema below, where success and ptr_val
+	// are auxiliary variables. However, if the memoryOrder argument is not sequential consistency, we instead
+	// overapproximate the method with "assert false".
 	//
 	// @formatter:off
 	// (evaluate arguments)
@@ -1432,8 +1433,9 @@ public class StandardFunctionHandler {
 	// https://gcc.gnu.org/onlinedocs/gcc/_005f_005fatomic-Builtins.html#index-_005f_005fatomic_005fcompare_005fexchange_005fn
 	// https://en.cppreference.com/w/c/atomic/atomic_compare_exchange
 	//
-	// The implementation below generates Boogie code that roughly follows this schema, where success and ptr_val are
-	// auxiliary variables:
+	// The implementation below generates Boogie code that roughly follows the schema below, where success and ptr_val
+	// are auxiliary variables. However, if the memoryOrder argument is not sequential consistency, we instead
+	// overapproximate the method with "assert false".
 	//
 	// @formatter:off
 	// (evaluate arguments)
