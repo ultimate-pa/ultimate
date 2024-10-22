@@ -104,6 +104,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO.AUXVAR;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.OverapproxVariable;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
 
@@ -939,7 +940,7 @@ public class InitializationHandler {
 			return;
 		}
 		for (final Overapprox overapprItem : overappr) {
-			overapprItem.annotate(stm);
+			new OverapproxVariable(overapprItem.getOverapproximatedLocations()).annotate(stm);
 		}
 	}
 
