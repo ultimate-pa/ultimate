@@ -1355,10 +1355,9 @@ public class StandardFunctionHandler {
 		final var atomicBody = new ExpressionResultBuilder().addAuxVarWithDeclaration(success)
 				.addStatement(StatementFactory.constructIfStatement(loc, weakResult.getLrValue().getValue(),
 						new Statement[] { new HavocStatement(loc, new VariableLHS[] { success.getLhs() }) },
-						new Statement[] { StatementFactory.constructAssignmentStatement(loc,
-								new LeftHandSide[] { success.getLhs() },
-								new Expression[] { mExpressionTranslation.constructLiteralForIntegerType(loc, boolType,
-										BigInteger.ONE) }) }))
+						new Statement[] { StatementFactory.constructSingleAssignmentStatement(loc, success.getLhs(),
+								mExpressionTranslation.constructLiteralForIntegerType(loc, boolType,
+										BigInteger.ONE)) }))
 				.addAllExceptLrValue(pointerRead, expectedRead).addAllExceptLrValueAndStatements(desiredRead)
 				.addAllExceptLrValueAndStatements(pointerWrite)
 				.addStatement(StatementFactory.constructIfStatement(loc,
@@ -1367,9 +1366,9 @@ public class StandardFunctionHandler {
 										expectedRead.getLrValue().getValue())),
 						DataStructureUtils.concat(desiredRead.getStatements(), pointerWrite.getStatements())
 								.toArray(Statement[]::new),
-						new Statement[] { StatementFactory.constructAssignmentStatement(loc,
-								new LeftHandSide[] { success.getLhs() }, new Expression[] { mExpressionTranslation
-										.constructLiteralForIntegerType(loc, boolType, BigInteger.ZERO) }) }))
+						new Statement[] { StatementFactory.constructSingleAssignmentStatement(loc, success.getLhs(),
+								mExpressionTranslation.constructLiteralForIntegerType(loc, boolType,
+										BigInteger.ZERO)) }))
 				.build();
 		final var atomic = applyMemoryOrders(loc, atomicBody, successMemoryOrder.getLrValue().getValue(),
 				failureMemoryOrder.getLrValue().getValue());
@@ -1483,19 +1482,18 @@ public class StandardFunctionHandler {
 		final var atomicBody = new ExpressionResultBuilder().addAuxVarWithDeclaration(success)
 				.addStatement(StatementFactory.constructIfStatement(loc, weakResult.getLrValue().getValue(),
 						new Statement[] { new HavocStatement(loc, new VariableLHS[] { success.getLhs() }) },
-						new Statement[] { StatementFactory.constructAssignmentStatement(loc,
-								new LeftHandSide[] { success.getLhs() },
-								new Expression[] { mExpressionTranslation.constructLiteralForIntegerType(loc, boolType,
-										BigInteger.ONE) }) }))
+						new Statement[] { StatementFactory.constructSingleAssignmentStatement(loc, success.getLhs(),
+								mExpressionTranslation.constructLiteralForIntegerType(loc, boolType,
+										BigInteger.ONE)) }))
 				.addAllExceptLrValue(pointerRead, expectedRead).addAllExceptLrValueAndStatements(pointerWrite)
 				.addStatement(StatementFactory.constructIfStatement(loc,
 						new BinaryExpression(loc, Operator.LOGICAND, successBoolean,
 								new BinaryExpression(loc, Operator.COMPEQ, pointerRead.getLrValue().getValue(),
 										expectedRead.getLrValue().getValue())),
 						pointerWrite.getStatements().toArray(Statement[]::new),
-						new Statement[] { StatementFactory.constructAssignmentStatement(loc,
-								new LeftHandSide[] { success.getLhs() }, new Expression[] { mExpressionTranslation
-										.constructLiteralForIntegerType(loc, boolType, BigInteger.ZERO) }) }))
+						new Statement[] { StatementFactory.constructSingleAssignmentStatement(loc, success.getLhs(),
+								mExpressionTranslation.constructLiteralForIntegerType(loc, boolType,
+										BigInteger.ZERO)) }))
 				.build();
 		final var atomic = applyMemoryOrders(loc, atomicBody, successMemoryOrder.getLrValue().getValue(),
 				failureMemoryOrder.getLrValue().getValue());
