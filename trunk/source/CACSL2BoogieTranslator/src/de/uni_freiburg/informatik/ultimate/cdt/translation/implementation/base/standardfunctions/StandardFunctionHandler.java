@@ -1371,9 +1371,8 @@ public class StandardFunctionHandler {
 								new LeftHandSide[] { success.getLhs() }, new Expression[] { mExpressionTranslation
 										.constructLiteralForIntegerType(loc, boolType, BigInteger.ZERO) }) }))
 				.build();
-		final var atomic =
-				applyMemoryOrder(loc, applyMemoryOrder(loc, atomicBody, successMemoryOrder.getLrValue().getValue()),
-						failureMemoryOrder.getLrValue().getValue());
+		final var atomic = applyMemoryOrder(loc, atomicBody, successMemoryOrder.getLrValue().getValue(),
+				failureMemoryOrder.getLrValue().getValue());
 
 		final var expectedWrite = mExprResultTransformer.makePointerAssignment(loc, expectedResult.getLrValue(),
 				pointerRead.getLrValue().getValue());
@@ -1498,9 +1497,8 @@ public class StandardFunctionHandler {
 								new LeftHandSide[] { success.getLhs() }, new Expression[] { mExpressionTranslation
 										.constructLiteralForIntegerType(loc, boolType, BigInteger.ZERO) }) }))
 				.build();
-		final var atomic =
-				applyMemoryOrder(loc, applyMemoryOrder(loc, atomicBody, successMemoryOrder.getLrValue().getValue()),
-						failureMemoryOrder.getLrValue().getValue());
+		final var atomic = applyMemoryOrder(loc, atomicBody, successMemoryOrder.getLrValue().getValue(),
+				failureMemoryOrder.getLrValue().getValue());
 
 		final var expectedWrite = mExprResultTransformer.makePointerAssignment(loc, expectedResult.getLrValue(),
 				pointerRead.getLrValue().getValue());
@@ -1552,30 +1550,35 @@ public class StandardFunctionHandler {
 	 *            The C location
 	 * @param body
 	 *            The body that should be atomic based on the memory order
-	 * @param memoryOrder
-	 *            The memory order
+	 * @param memoryOrders
+	 *            The memory orders to apply
 	 * @return An ExpressionResult representing the translation respecting the memory order
 	 */
 	private ExpressionResult applyMemoryOrder(final ILocation loc, final ExpressionResult body,
-			final Expression memoryOrder) {
+			final Expression... memoryOrders) {
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder(body);
 		builder.resetStatements(List.of());
 		final CPrimitive intType = new CPrimitive(CPrimitives.INT);
 		final Expression seqCst = mExpressionTranslation.constructLiteralForIntegerType(loc, intType,
 				BigInteger.valueOf(MEMORY_ORDER_SEQ_CST));
-		final Expression atomicCond = mExpressionTranslation.constructBinaryEqualityExpression(loc,
-				IASTBinaryExpression.op_equals, memoryOrder, intType, seqCst, intType);
 		final Statement atomic = new AtomicStatement(loc, body.getStatements().toArray(Statement[]::new));
-		final Statement overapproxAssert = new AssertStatement(loc, ExpressionFactory.createBooleanLiteral(loc, false));
-		new Overapprox("memory order (only sequential consistency is supported)", loc).annotate(overapproxAssert);
-		new Check(Spec.UNKNOWN).annotate(overapproxAssert);
-		Statement statement;
-		// Try to avoid unnecessary IfStatements
-		if (atomicCond instanceof BooleanLiteral) {
-			statement = ((BooleanLiteral) atomicCond).getValue() ? atomic : overapproxAssert;
-		} else {
-			statement =
-					new IfStatement(loc, atomicCond, new Statement[] { atomic }, new Statement[] { overapproxAssert });
+		Statement statement = atomic;
+
+		for (final var memoryOrder : memoryOrders) {
+			final Expression atomicCond = mExpressionTranslation.constructBinaryEqualityExpression(loc,
+					IASTBinaryExpression.op_equals, memoryOrder, intType, seqCst, intType);
+			final Statement overapproxAssert =
+					new AssertStatement(loc, ExpressionFactory.createBooleanLiteral(loc, false));
+			new Overapprox("memory order (only sequential consistency is supported)", loc).annotate(overapproxAssert);
+			new Check(Spec.UNKNOWN).annotate(overapproxAssert);
+
+			// Try to avoid unnecessary IfStatements
+			if (atomicCond instanceof BooleanLiteral) {
+				statement = ((BooleanLiteral) atomicCond).getValue() ? statement : overapproxAssert;
+			} else {
+				statement = new IfStatement(loc, atomicCond, new Statement[] { statement },
+						new Statement[] { overapproxAssert });
+			}
 		}
 		return builder.addStatement(statement).build();
 	}
