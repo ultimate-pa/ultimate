@@ -31,11 +31,13 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
@@ -1395,14 +1397,13 @@ public class StandardFunctionHandler {
 				.addAllExceptLrValue(pointerRead, expectedRead).addAllExceptLrValueAndStatements(desiredRead)
 				.addAllExceptLrValueAndStatements(pointerWrite)
 				.addStatement(StatementFactory.constructIfStatement(loc,
-						new BinaryExpression(loc, Operator.LOGICAND, successBoolean,
-								new BinaryExpression(loc, Operator.COMPEQ, pointerRead.getLrValue().getValue(),
-										expectedRead.getLrValue().getValue())),
+						ExpressionFactory.and(loc,
+								List.of(successBoolean, ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ,
+										pointerRead.getLrValue().getValue(), expectedRead.getLrValue().getValue()))),
 						DataStructureUtils.concat(desiredRead.getStatements(), pointerWrite.getStatements())
 								.toArray(Statement[]::new),
-						new Statement[] { StatementFactory.constructSingleAssignmentStatement(loc, success.getLhs(),
-								mExpressionTranslation.constructLiteralForIntegerType(loc, boolType,
-										BigInteger.ZERO)) }))
+						new Statement[] {
+								StatementFactory.constructSingleAssignmentStatement(loc, success.getLhs(), boolZero) }))
 				.build();
 		final var atomic = applyMemoryOrders(loc, atomicBody, successMemoryOrder.getLrValue().getValue(),
 				failureMemoryOrder.getLrValue().getValue());
@@ -1513,27 +1514,31 @@ public class StandardFunctionHandler {
 			final Expression... memoryOrders) {
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder(body);
 		builder.resetStatements(List.of());
+
+		final Statement atomic = new AtomicStatement(loc, body.getStatements().toArray(Statement[]::new));
+
+		// create condition checking whether all memory orders are supported
 		final CPrimitive intType = new CPrimitive(CPrimitives.INT);
 		final Expression seqCst = mExpressionTranslation.constructLiteralForIntegerType(loc, intType,
 				BigInteger.valueOf(MEMORY_ORDER_SEQ_CST));
-		final Statement atomic = new AtomicStatement(loc, body.getStatements().toArray(Statement[]::new));
-		Statement statement = atomic;
+		final var conjuncts = Arrays.stream(memoryOrders)
+				.map(memoryOrder -> mExpressionTranslation.constructBinaryEqualityExpression(loc,
+						IASTBinaryExpression.op_equals, memoryOrder, intType, seqCst, intType))
+				.collect(Collectors.toList());
+		final Expression atomicCond = ExpressionFactory.and(loc, conjuncts);
 
-		for (final var memoryOrder : memoryOrders) {
-			final Expression atomicCond = mExpressionTranslation.constructBinaryEqualityExpression(loc,
-					IASTBinaryExpression.op_equals, memoryOrder, intType, seqCst, intType);
-			final Statement overapproxAssert =
-					new AssertStatement(loc, ExpressionFactory.createBooleanLiteral(loc, false));
-			new Overapprox("memory order (only sequential consistency is supported)", loc).annotate(overapproxAssert);
-			new Check(Spec.UNKNOWN).annotate(overapproxAssert);
+		// overapproximated assert used in case some memory order is unsupported
+		final Statement overapproxAssert = new AssertStatement(loc, ExpressionFactory.createBooleanLiteral(loc, false));
+		new Overapprox("memory order (only sequential consistency is supported)", loc).annotate(overapproxAssert);
+		new Check(Spec.UNKNOWN).annotate(overapproxAssert);
 
-			// Try to avoid unnecessary IfStatements
-			if (atomicCond instanceof BooleanLiteral) {
-				statement = ((BooleanLiteral) atomicCond).getValue() ? statement : overapproxAssert;
-			} else {
-				statement = new IfStatement(loc, atomicCond, new Statement[] { statement },
-						new Statement[] { overapproxAssert });
-			}
+		// Try to avoid unnecessary IfStatements
+		final Statement statement;
+		if (atomicCond instanceof BooleanLiteral) {
+			statement = ((BooleanLiteral) atomicCond).getValue() ? atomic : overapproxAssert;
+		} else {
+			statement =
+					new IfStatement(loc, atomicCond, new Statement[] { atomic }, new Statement[] { overapproxAssert });
 		}
 		return builder.addStatement(statement).build();
 	}
