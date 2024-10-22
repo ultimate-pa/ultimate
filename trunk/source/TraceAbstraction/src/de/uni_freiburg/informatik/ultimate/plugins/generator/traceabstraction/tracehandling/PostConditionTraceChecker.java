@@ -57,6 +57,7 @@ public class PostConditionTraceChecker<L extends IIcfgTransition<?>> implements 
 	private final StrategyFactory<L> mStrategyFactory;
 	private final IPredicateUnifier mPredicateUnifier;
 	private boolean mImperfectProof;
+	private boolean mUnknown;
 
 	/**
 	 * Constructs a PostConditionTraceChecker.
@@ -87,6 +88,7 @@ public class PostConditionTraceChecker<L extends IIcfgTransition<?>> implements 
 		mPredicateUnifier = predicateUnifier;
 		mStrategyFactory = strategyFactory;
 		mImperfectProof = false;
+		mUnknown = false;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -107,7 +109,11 @@ public class PostConditionTraceChecker<L extends IIcfgTransition<?>> implements 
 		while (strategy.hasNextFeasilibityCheck()) {
 			final ITraceCheckStrategyModule<L, ?> check = strategy.nextFeasibilityCheck();
 			mImperfectProof = false;
-			if (check.isCorrect().equals(LBool.UNSAT)
+			mUnknown = false;
+
+			if (check.isCorrect().equals(LBool.UNKNOWN)) {
+				mUnknown = true;
+			} else if (check.isCorrect().equals(LBool.UNSAT)
 					&& check instanceof IpTcStrategyModuleSmtInterpolCraigSleepSetPOR) {
 				final InterpolatingTraceCheckCraig<L> checkCraig =
 						((IpTcStrategyModuleSmtInterpolCraigSleepSetPOR<L>) check).construct();
@@ -129,4 +135,10 @@ public class PostConditionTraceChecker<L extends IIcfgTransition<?>> implements 
 	public boolean wasImperfectProof() {
 		return mImperfectProof;
 	}
+
+	@Override
+	public boolean wasUnknown() {
+		return mUnknown;
+	}
+
 }

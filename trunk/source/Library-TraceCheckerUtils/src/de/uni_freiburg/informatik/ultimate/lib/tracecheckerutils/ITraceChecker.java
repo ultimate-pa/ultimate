@@ -60,4 +60,6 @@ public interface ITraceChecker<L> {
 	 * @return true if the trace check was imperfect
 	 */
 	public boolean wasImperfectProof();
+
+	public boolean wasUnknown();
 }

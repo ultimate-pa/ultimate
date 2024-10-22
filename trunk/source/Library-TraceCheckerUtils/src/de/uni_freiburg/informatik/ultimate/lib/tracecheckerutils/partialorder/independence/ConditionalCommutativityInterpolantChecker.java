@@ -53,7 +53,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.ITraceChecker;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderReductionFacade.StateSplitter;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.ConditionalCommutativityChecker.ConComTraceCheckMode;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IConditionalCommutativityCheckerStatisticsUtils.ConditionalCommutativityStopwatches;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.ICopyActionFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
@@ -136,30 +135,24 @@ public class ConditionalCommutativityInterpolantChecker<L extends IAction> {
 	 */
 	public NestedWordAutomaton<L, IPredicate> getInterpolants(final IRun<L, IPredicate> run,
 			final List<IPredicate> runPredicates, final NestedWordAutomaton<L, IPredicate> interpolantAutomaton) {
-		mStatisticsUtils.startStopwatch(ConditionalCommutativityStopwatches.OVERALL);
-		try {
-			mRun = run;
-			mInterpolantAutomatonProvider.setInterPolantAutomaton(createCopy(interpolantAutomaton));
-			// mCopy = createCopy(interpolantAutomaton);
-			for (int i = 0; i < mRun.getStateSequence().size(); i++) {
-				final IPredicate state = mRun.getStateSequence().get(i);
-				final IPredicate pred = mStateSplitter.getOriginal(state);
+		mRun = run;
+		mInterpolantAutomatonProvider.setInterPolantAutomaton(createCopy(interpolantAutomaton));
+		// mCopy = createCopy(interpolantAutomaton);
+		for (int i = 0; i < mRun.getStateSequence().size(); i++) {
+			final IPredicate state = mRun.getStateSequence().get(i);
+			final IPredicate pred = mStateSplitter.getOriginal(state);
 
-				final var transitions = DataStructureUtils.asList(mAbstraction.internalSuccessors(pred).iterator());
-				if (checkState(state, transitions, i, runPredicates)) {
-					// return mCopy;
-					final NestedWordAutomaton<L, IPredicate> automaton =
-							mInterpolantAutomatonProvider.getInterpolantAutomaton();
-					return automaton;
-				}
+			final var transitions = DataStructureUtils.asList(mAbstraction.internalSuccessors(pred).iterator());
+			if (checkState(state, transitions, i, runPredicates)) {
+				// return mCopy;
+				final NestedWordAutomaton<L, IPredicate> automaton =
+						mInterpolantAutomatonProvider.getInterpolantAutomaton();
+				return automaton;
 			}
-			// return mCopy;
-			final NestedWordAutomaton<L, IPredicate> automaton =
-					mInterpolantAutomatonProvider.getInterpolantAutomaton();
-			return automaton;
-		} finally {
-			mStatisticsUtils.stopStopwatch(ConditionalCommutativityStopwatches.OVERALL);
 		}
+		// return mCopy;
+		final NestedWordAutomaton<L, IPredicate> automaton = mInterpolantAutomatonProvider.getInterpolantAutomaton();
+		return automaton;
 	}
 
 	private boolean checkState(final IPredicate state,

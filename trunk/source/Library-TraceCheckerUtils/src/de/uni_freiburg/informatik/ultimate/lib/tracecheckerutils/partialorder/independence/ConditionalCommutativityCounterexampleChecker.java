@@ -48,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.ITraceChecker;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.ConditionalCommutativityChecker.ConComTraceCheckMode;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IConditionalCommutativityCheckerStatisticsUtils.ConditionalCommutativityStopwatches;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.ICopyActionFactory;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.util.Lazy;
@@ -128,57 +127,51 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 	public BasicRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> getInterpolants(
 			final IRun<L, IPredicate> run, final List<IPredicate> runPredicates,
 			final IPredicateUnifier predicateUnifier) {
-		mStatisticsUtils.startStopwatch(ConditionalCommutativityStopwatches.OVERALL);
-		try {
-			for (int i = 0; i < run.getStateSequence().size() - 2; i++) {
-				final IPredicate state = run.getStateSequence().get(i);
-				final L letter1 = run.getWord().getSymbol(i);
-				final L letter2 = run.getWord().getSymbol(i + 1);
+		for (int i = 0; i < run.getStateSequence().size() - 2; i++) {
+			final IPredicate state = run.getStateSequence().get(i);
+			final L letter1 = run.getWord().getSymbol(i);
+			final L letter2 = run.getWord().getSymbol(i + 1);
 
-				// TODO this is brittle, it will not work for many configurations
-				if (((SleepPredicate<L>) state).getSleepSet().contains(letter2)
-						|| (mDFSOrder.getOrder(state).compare(letter1, letter2) > 0)) {
+			// TODO this is brittle, it will not work for many configurations
+			if (((SleepPredicate<L>) state).getSleepSet().contains(letter2)
+					|| (mDFSOrder.getOrder(state).compare(letter1, letter2) > 0)) {
 
-					final IPredicate runPredicate = runPredicates.get(i);
-					final List<IPredicate> interpolantPredicates = new ArrayList<>();
-					if (runPredicate != null && !SmtUtils.isTrueLiteral(runPredicate.getFormula())) {
-						interpolantPredicates.add(runPredicate);
-					}
-					NestedRun<L, IPredicate> currentRun = (NestedRun<L, IPredicate>) run;
-					if (i != run.getStateSequence().size() - 1) {
-						currentRun = currentRun.getSubRun(0, i);
-					}
+				final IPredicate runPredicate = runPredicates.get(i);
+				final List<IPredicate> interpolantPredicates = new ArrayList<>();
+				if (runPredicate != null && !SmtUtils.isTrueLiteral(runPredicate.getFormula())) {
+					interpolantPredicates.add(runPredicate);
+				}
+				NestedRun<L, IPredicate> currentRun = (NestedRun<L, IPredicate>) run;
+				if (i != run.getStateSequence().size() - 1) {
+					currentRun = currentRun.getSubRun(0, i);
+				}
 
-					final TracePredicates tracePredicates = mChecker.checkConditionalCommutativity(currentRun,
-							interpolantPredicates, state, letter1, letter2);
+				final TracePredicates tracePredicates = mChecker.checkConditionalCommutativity(currentRun,
+						interpolantPredicates, state, letter1, letter2);
 
-					final List<IPredicate> conPredicates = new ArrayList<>();
-					if (tracePredicates != null) {
-						conPredicates.add(tracePredicates.getPrecondition());
-						conPredicates.addAll(tracePredicates.getPredicates());
-						// conPredicates.add(tracePredicates.getPostcondition());
+				final List<IPredicate> conPredicates = new ArrayList<>();
+				if (tracePredicates != null) {
+					conPredicates.add(tracePredicates.getPrecondition());
+					conPredicates.addAll(tracePredicates.getPredicates());
+					// conPredicates.add(tracePredicates.getPostcondition());
 
-						final ConditionalCommutativityInterpolantAutomatonProvider<L> conComInterpolantProvider =
-								new ConditionalCommutativityInterpolantAutomatonProvider<>(mServices, mAbstraction,
-										mEmptyStackStateFactory, predicateUnifier);
-						conComInterpolantProvider.setInterPolantAutomaton(null);
-						conComInterpolantProvider.addToInterpolantAutomaton(conPredicates, currentRun.getWord());
-						final NestedWordAutomaton<L, IPredicate> automaton =
-								conComInterpolantProvider.getInterpolantAutomaton();
+					final ConditionalCommutativityInterpolantAutomatonProvider<L> conComInterpolantProvider =
+							new ConditionalCommutativityInterpolantAutomatonProvider<>(mServices, mAbstraction,
+									mEmptyStackStateFactory, predicateUnifier);
+					conComInterpolantProvider.setInterPolantAutomaton(null);
+					conComInterpolantProvider.addToInterpolantAutomaton(conPredicates, currentRun.getWord());
+					final NestedWordAutomaton<L, IPredicate> automaton =
+							conComInterpolantProvider.getInterpolantAutomaton();
 
-						mStatisticsUtils.addCommutingCounterexample();
+					mStatisticsUtils.addCommutingCounterexample();
 
-						final BasicRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> refinementResult =
-								new BasicRefinementEngineResult<>(LBool.UNSAT, automaton, null, false,
-										List.of(new QualifiedTracePredicates(tracePredicates, getClass(), false)),
-										new Lazy<>(() -> null), new Lazy<>(() -> predicateUnifier));
-						return refinementResult;
-					}
+					final BasicRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> refinementResult =
+							new BasicRefinementEngineResult<>(LBool.UNSAT, automaton, null, false,
+									List.of(new QualifiedTracePredicates(tracePredicates, getClass(), false)),
+									new Lazy<>(() -> null), new Lazy<>(() -> predicateUnifier));
+					return refinementResult;
 				}
 			}
-		} finally {
-			// make sure the stopwatch is always stopped, even in case of TIMEOUT or other exceptions
-			mStatisticsUtils.stopStopwatch(ConditionalCommutativityStopwatches.OVERALL);
 		}
 		return null;
 	}

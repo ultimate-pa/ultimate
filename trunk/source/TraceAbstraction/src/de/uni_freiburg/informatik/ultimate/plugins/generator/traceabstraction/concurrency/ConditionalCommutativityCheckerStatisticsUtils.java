@@ -44,31 +44,13 @@ public class ConditionalCommutativityCheckerStatisticsUtils implements IConditio
 	}
 
 	@Override
-	public void startStopwatch(ConditionalCommutativityStopwatches stopwatch) {
-		switch (stopwatch) {
-		case OVERALL:
-			mGenerator.start(ConditionalCommutativityStatisticsDefinitions.ConditionalCommutativityOverallTime);
-			break;
-		case CHECKER:
-			mGenerator.start(ConditionalCommutativityStatisticsDefinitions.ConditionalCommutativityCheckTime);
-			break;
-		default:
-			throw new AssertionError("unknown stopwatch");
-		}
+	public void startCheckerStopwatch() {
+		mGenerator.start(ConditionalCommutativityStatisticsDefinitions.ConditionalCommutativityCheckTime);
 	}
 
 	@Override
-	public void stopStopwatch(ConditionalCommutativityStopwatches stopwatch) {
-		switch (stopwatch) {
-		case OVERALL:
-			mGenerator.stop(ConditionalCommutativityStatisticsDefinitions.ConditionalCommutativityOverallTime);
-			break;
-		case CHECKER:
-			mGenerator.stop(ConditionalCommutativityStatisticsDefinitions.ConditionalCommutativityCheckTime);
-			break;
-		default:
-			throw new AssertionError("unknown stopwatch");
-		}
+	public void stopCheckerStopwatch() {
+		mGenerator.stop(ConditionalCommutativityStatisticsDefinitions.ConditionalCommutativityCheckTime);
 	}
 
 	@Override
@@ -89,6 +71,11 @@ public class ConditionalCommutativityCheckerStatisticsUtils implements IConditio
 	@Override
 	public void addTraceCheck() {
 		mGenerator.addConditionalCommutativityTraceCheck();
+	}
+	
+	@Override
+	public void addUnknownTraceCheck() {
+		mGenerator.addConditionalCommutativityUnknownTraceCheck();
 	}
 
 	@Override

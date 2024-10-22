@@ -134,4 +134,10 @@ public class PrePostConditionTraceChecker<L extends IIcfgTransition<?>> implemen
 		// TODO Auto-generated method stub
 		return false;
 	}
+
+	@Override
+	public boolean wasUnknown() {
+		// TODO Auto-generated method stub
+		return false;
+	}
 }

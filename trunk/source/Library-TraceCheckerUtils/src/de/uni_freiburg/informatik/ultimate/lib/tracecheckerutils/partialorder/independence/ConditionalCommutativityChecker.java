@@ -43,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.ITraceChecker;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IConditionalCommutativityCheckerStatisticsUtils.ConditionalCommutativityStopwatches;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.ICopyActionFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
@@ -124,7 +123,7 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 	public TracePredicates checkConditionalCommutativity(final NestedRun<L, IPredicate> currentRun,
 			final List<IPredicate> predicates, final IPredicate state, final L letter1, final L letter2) {
 
-		mStatisticsUtils.startStopwatch(ConditionalCommutativityStopwatches.CHECKER);
+		mStatisticsUtils.startCheckerStopwatch();
 		try {
 			if (mManagedScript.isLocked()) {
 				mManagedScript.requestLockRelease();
@@ -222,6 +221,9 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 					final TracePredicates trace = mTraceChecker.checkTrace(currentRunWithCondition, null, null);
 					// final TracePredicates trace = mTraceChecker.checkTrace(currentRun, null, condition);
 					mStatisticsUtils.addTraceCheck();
+					if (mTraceChecker.wasUnknown()) {
+						mStatisticsUtils.addUnknownTraceCheck();
+					}
 					if (mTraceChecker.wasImperfectProof()) {
 						mStatisticsUtils.addImperfectProof();
 					}
@@ -230,7 +232,7 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 			}
 			return null;
 		} finally {
-			mStatisticsUtils.stopStopwatch(ConditionalCommutativityStopwatches.CHECKER);
+			mStatisticsUtils.stopCheckerStopwatch();
 		}
 	}
 

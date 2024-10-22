@@ -50,6 +50,7 @@ public class ConditionalCommutativityStatisticsGenerator extends StatisticsGener
 	private int mConditionalCommutativityDFSRestarts = 0;
 	private int mConditionalCommutativityConditionCalculations = 0;
 	private int mConditionalCommutativityTraceChecks = 0;
+	private int mConditionalCommutativityUnknownTraceChecks = 0;
 	private int mConditionalCommutativityImperfectProofs = 0;
 	private int mConditionalCommutativityCommutingCounterexamples = 0;
 
@@ -72,6 +73,10 @@ public class ConditionalCommutativityStatisticsGenerator extends StatisticsGener
 	public void addConditionalCommutativityTraceCheck() {
 		mConditionalCommutativityTraceChecks++;
 	}
+	
+	public void addConditionalCommutativityUnknownTraceCheck() {
+		mConditionalCommutativityUnknownTraceChecks++;
+	}
 
 	public void addConditionalCommutativityImperfectProof() {
 		mConditionalCommutativityImperfectProofs++;
@@ -85,7 +90,6 @@ public class ConditionalCommutativityStatisticsGenerator extends StatisticsGener
 	@Override
 	public String[] getStopwatches() {
 		return new String[] {
-				ConditionalCommutativityStatisticsDefinitions.ConditionalCommutativityOverallTime.toString(),
 				ConditionalCommutativityStatisticsDefinitions.ConditionalCommutativityCheckTime.toString() };
 	}
 
@@ -94,7 +98,6 @@ public class ConditionalCommutativityStatisticsGenerator extends StatisticsGener
 		final ConditionalCommutativityStatisticsDefinitions keyEnum =
 				Enum.valueOf(ConditionalCommutativityStatisticsDefinitions.class, key);
 		switch (keyEnum) {
-		case ConditionalCommutativityOverallTime:
 		case ConditionalCommutativityCheckTime:
 			try {
 				return getElapsedTime(key);
@@ -111,6 +114,8 @@ public class ConditionalCommutativityStatisticsGenerator extends StatisticsGener
 			return mConditionalCommutativityConditionCalculations;
 		case ConditionalCommutativityTraceChecks:
 			return mConditionalCommutativityTraceChecks;
+		case ConditionalCommutativityUnknownTraceChecks:
+			return mConditionalCommutativityUnknownTraceChecks;
 		case ConditionalCommutativityImperfectProofs:
 			return mConditionalCommutativityImperfectProofs;
 		default:
@@ -125,7 +130,6 @@ public class ConditionalCommutativityStatisticsGenerator extends StatisticsGener
 	 *
 	 */
 	public enum ConditionalCommutativityStatisticsDefinitions implements IStatisticsElement {
-		ConditionalCommutativityOverallTime(StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_NANOS),
 
 		ConditionalCommutativityCheckTime(StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_NANOS),
 
@@ -139,6 +143,8 @@ public class ConditionalCommutativityStatisticsGenerator extends StatisticsGener
 		ConditionalCommutativityConditionCalculations(StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
 
 		ConditionalCommutativityTraceChecks(StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
+		
+		ConditionalCommutativityUnknownTraceChecks(StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
 
 		ConditionalCommutativityImperfectProofs(StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA);
 
