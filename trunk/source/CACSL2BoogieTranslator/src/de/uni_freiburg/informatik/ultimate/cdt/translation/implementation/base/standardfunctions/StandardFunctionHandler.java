@@ -1220,7 +1220,7 @@ public class StandardFunctionHandler {
 		final ExpressionResult write =
 				mExprResultTransformer.makePointerAssignment(loc, pointer.getLrValue(), mExpressionTranslation
 						.constructLiteralForIntegerType(loc, new CPrimitive(CPrimitives.BOOL), BigInteger.ZERO));
-		return builder.addAllExceptLrValue(applyMemoryOrder(loc, write, memoryOrder.getLrValue().getValue())).build();
+		return builder.addAllExceptLrValue(applyMemoryOrders(loc, write, memoryOrder.getLrValue().getValue())).build();
 	}
 
 	private Result handleAtomicTestAndSet(final IDispatcher main, final IASTFunctionCallExpression node,
@@ -1238,7 +1238,7 @@ public class StandardFunctionHandler {
 		final ExpressionResult memoryOrder =
 				mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, arguments[1]);
 		builder.addAllExceptLrValue(pointer, memoryOrder).addAllIncludingLrValue(
-				applyMemoryOrder(loc, atomicBuilder.build(), memoryOrder.getLrValue().getValue()));
+				applyMemoryOrders(loc, atomicBuilder.build(), memoryOrder.getLrValue().getValue()));
 		return builder.build();
 	}
 
@@ -1256,7 +1256,7 @@ public class StandardFunctionHandler {
 		final ExpressionResult read = mExprResultTransformer.readPointerValue(loc, pointer1.getLrValue());
 		final ExpressionResult write =
 				mExprResultTransformer.makePointerAssignment(loc, pointer2.getLrValue(), read.getLrValue().getValue());
-		return builder.addAllIncludingLrValue(applyMemoryOrder(loc, read, memoryOrder.getLrValue().getValue()))
+		return builder.addAllIncludingLrValue(applyMemoryOrders(loc, read, memoryOrder.getLrValue().getValue()))
 				.addAllExceptLrValue(write).build();
 	}
 
@@ -1273,7 +1273,7 @@ public class StandardFunctionHandler {
 		final ExpressionResult read = mExprResultTransformer.readPointerValue(loc, pointer2.getLrValue());
 		builder.addAllExceptLrValue(read);
 		// Make sure that only the write, but not the read is atomic
-		builder.addAllExceptLrValue(applyMemoryOrder(loc,
+		builder.addAllExceptLrValue(applyMemoryOrders(loc,
 				mExprResultTransformer.makePointerAssignment(loc, pointer1.getLrValue(), read.getLrValue().getValue()),
 				memoryOrder.getLrValue().getValue()));
 		return builder.build();
@@ -1298,7 +1298,7 @@ public class StandardFunctionHandler {
 				mExprResultTransformer.makePointerAssignment(loc, pointer3.getLrValue(), read0.getLrValue().getValue()),
 				read1, mExprResultTransformer.makePointerAssignment(loc, pointer1.getLrValue(),
 						read1.getLrValue().getValue()));
-		builder.addAllExceptLrValue(applyMemoryOrder(loc, atomicBuilder.build(), memoryOrder.getLrValue().getValue()));
+		builder.addAllExceptLrValue(applyMemoryOrders(loc, atomicBuilder.build(), memoryOrder.getLrValue().getValue()));
 		return builder.build();
 	}
 
@@ -1371,7 +1371,7 @@ public class StandardFunctionHandler {
 								new LeftHandSide[] { success.getLhs() }, new Expression[] { mExpressionTranslation
 										.constructLiteralForIntegerType(loc, boolType, BigInteger.ZERO) }) }))
 				.build();
-		final var atomic = applyMemoryOrder(loc, atomicBody, successMemoryOrder.getLrValue().getValue(),
+		final var atomic = applyMemoryOrders(loc, atomicBody, successMemoryOrder.getLrValue().getValue(),
 				failureMemoryOrder.getLrValue().getValue());
 
 		final var expectedWrite = mExprResultTransformer.makePointerAssignment(loc, expectedResult.getLrValue(),
@@ -1391,7 +1391,7 @@ public class StandardFunctionHandler {
 		final ExpressionResult memoryOrder =
 				mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, arguments[1]);
 		return new ExpressionResultBuilder().addAllExceptLrValue(pointer, memoryOrder)
-				.addAllIncludingLrValue(applyMemoryOrder(loc, read, memoryOrder.getLrValue().getValue())).build();
+				.addAllIncludingLrValue(applyMemoryOrders(loc, read, memoryOrder.getLrValue().getValue())).build();
 	}
 
 	private Result handleAtomicStoreN(final IDispatcher main, final IASTFunctionCallExpression node,
@@ -1408,7 +1408,7 @@ public class StandardFunctionHandler {
 		// Make sure that only the write, but not the read is atomic
 		final ExpressionResult write = mExprResultTransformer.makePointerAssignment(loc, pointer.getLrValue(),
 				valueResult.getLrValue().getValue());
-		return builder.addAllExceptLrValue(applyMemoryOrder(loc, write, memoryOrder.getLrValue().getValue())).build();
+		return builder.addAllExceptLrValue(applyMemoryOrders(loc, write, memoryOrder.getLrValue().getValue())).build();
 	}
 
 	private Result handleAtomicExchangeN(final IDispatcher main, final IASTFunctionCallExpression node,
@@ -1427,7 +1427,7 @@ public class StandardFunctionHandler {
 		atomicBuilder.addAllExceptLrValue(mExprResultTransformer.makePointerAssignment(loc, pointer.getLrValue(),
 				valueResult.getLrValue().getValue()));
 		return builder.addAllIncludingLrValue(
-				applyMemoryOrder(loc, atomicBuilder.build(), memoryOrder.getLrValue().getValue())).build();
+				applyMemoryOrders(loc, atomicBuilder.build(), memoryOrder.getLrValue().getValue())).build();
 	}
 
 	// https://gcc.gnu.org/onlinedocs/gcc/_005f_005fatomic-Builtins.html#index-_005f_005fatomic_005fcompare_005fexchange_005fn
@@ -1497,7 +1497,7 @@ public class StandardFunctionHandler {
 								new LeftHandSide[] { success.getLhs() }, new Expression[] { mExpressionTranslation
 										.constructLiteralForIntegerType(loc, boolType, BigInteger.ZERO) }) }))
 				.build();
-		final var atomic = applyMemoryOrder(loc, atomicBody, successMemoryOrder.getLrValue().getValue(),
+		final var atomic = applyMemoryOrders(loc, atomicBody, successMemoryOrder.getLrValue().getValue(),
 				failureMemoryOrder.getLrValue().getValue());
 
 		final var expectedWrite = mExprResultTransformer.makePointerAssignment(loc, expectedResult.getLrValue(),
@@ -1538,13 +1538,13 @@ public class StandardFunctionHandler {
 				.addAllExceptLrValue(mExprResultTransformer.makePointerAssignment(loc, pointer.getLrValue(), newValue));
 		// Make sure that only the write, but not the read is atomic
 		return builder.addAllIncludingLrValue(
-				applyMemoryOrder(loc, atomicBuilder.build(), memoryOrder.getLrValue().getValue())).build();
+				applyMemoryOrders(loc, atomicBuilder.build(), memoryOrder.getLrValue().getValue())).build();
 	}
 
 	/**
-	 * Apply the {@code memoryOrder} to the {@code body} for stdatomic-library. If the memory order is equal to
-	 * {@code MEMORY_ORDER_SEQ_CST}, we just make all statements atomic. For all other cases we just overapproximate
-	 * (using an {@code assert false}), since we only support sequential consistency.
+	 * Apply the given {@code memoryOrders} to the {@code body} for stdatomic-library. If every given memory order is
+	 * equal to {@code MEMORY_ORDER_SEQ_CST}, we just make all statements atomic. For all other cases we just
+	 * overapproximate (using an {@code assert false}), since we only support sequential consistency.
 	 *
 	 * @param loc
 	 *            The C location
@@ -1554,7 +1554,7 @@ public class StandardFunctionHandler {
 	 *            The memory orders to apply
 	 * @return An ExpressionResult representing the translation respecting the memory order
 	 */
-	private ExpressionResult applyMemoryOrder(final ILocation loc, final ExpressionResult body,
+	private ExpressionResult applyMemoryOrders(final ILocation loc, final ExpressionResult body,
 			final Expression... memoryOrders) {
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder(body);
 		builder.resetStatements(List.of());
