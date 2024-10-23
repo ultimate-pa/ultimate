@@ -27,10 +27,8 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result;
 
 import java.util.Collections;
-import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.CStringLiteral;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 
 /**
  * A Result that carries the information for all the possible uses of a C string literal. There are two uses:
@@ -72,12 +70,10 @@ public class StringLiteralResult extends ExpressionResult {
 	 * statements and declarations must thus be registered in the StaticObjectsHandler)
 	 *
 	 * @param lrVal
-	 * @param overapproxList
 	 * @param stringLiteral
 	 */
-	public StringLiteralResult(final LRValue lrVal, final List<Overapprox> overapproxList,
-			final CStringLiteral stringLiteral) {
-		super(Collections.emptyList(), lrVal, Collections.emptyList(), Collections.emptySet(), overapproxList);
+	public StringLiteralResult(final LRValue lrVal, final CStringLiteral stringLiteral) {
+		super(Collections.emptyList(), lrVal, Collections.emptyList(), Collections.emptySet(), Collections.emptyList());
 		mStringLiteral = stringLiteral;
 	}
 

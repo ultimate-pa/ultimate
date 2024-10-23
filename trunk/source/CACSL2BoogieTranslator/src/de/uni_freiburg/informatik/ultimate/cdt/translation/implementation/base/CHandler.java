@@ -131,6 +131,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck;
 import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck.CheckableExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Axiom;
@@ -761,7 +762,7 @@ public class CHandler {
 
 	public Result visit(final IDispatcher main, final IASTArraySubscriptExpression node) {
 		final ILocation loc = mLocationFactory.createCLocation(node);
-		final ExpressionResult array = ((ExpressionResult) main.dispatch(node.getArrayExpression()));
+		final ExpressionResult array = (ExpressionResult) main.dispatch(node.getArrayExpression());
 		final ExpressionResult subscript =
 				mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, node.getArgument());
 		return handleArraySubscriptExpression(array, subscript, node);
@@ -837,8 +838,8 @@ public class CHandler {
 		}
 		case IASTBinaryExpression.op_plus:
 		case IASTBinaryExpression.op_minus: {
-			assert checkSubstractPointerArith(node, leftOperand,
-					rightOperand) : "subtraction is not allowed in pointer arithmetic, right?";
+			assert checkSubstractPointerArith(node, leftOperand, rightOperand)
+					: "subtraction is not allowed in pointer arithmetic, right?";
 
 			// if we are "adding" arrays, they must be treated as pointers
 			final ExpressionResult rl = mExprResultTransformer.transformDecaySwitchRexBoolToInt(leftOperand, loc, node);
@@ -849,8 +850,8 @@ public class CHandler {
 		}
 		case IASTBinaryExpression.op_plusAssign:
 		case IASTBinaryExpression.op_minusAssign: {
-			assert checkSubstractPointerArith(node, leftOperand,
-					rightOperand) : "subtraction is not allowed in pointer arithmetic, right?";
+			assert checkSubstractPointerArith(node, leftOperand, rightOperand)
+					: "subtraction is not allowed in pointer arithmetic, right?";
 
 			final ExpressionResult rl = mExprResultTransformer.transformDecaySwitchRexBoolToInt(leftOperand, loc, node);
 			final ExpressionResult rr =
@@ -1361,8 +1362,8 @@ public class CHandler {
 		} else if (node instanceof ICASTKnRFunctionDeclarator) {
 			final ICASTKnRFunctionDeclarator funcDecl = (ICASTKnRFunctionDeclarator) node;
 
-			assert funcDecl.getParameterDeclarations().length == funcDecl
-					.getParameterNames().length : "implicit int declarations are forbidden from C99 on, this is one, right?";
+			assert funcDecl.getParameterDeclarations().length == funcDecl.getParameterNames().length
+					: "implicit int declarations are forbidden from C99 on, this is one, right?";
 
 			final CDeclaration[] paramsParsed = new CDeclaration[funcDecl.getParameterDeclarations().length];
 			for (int i = 0; i < funcDecl.getParameterDeclarations().length; i++) {
@@ -2078,21 +2079,26 @@ public class CHandler {
 
 		mStaticObjectsHandler.addStatementsForUltimateInit(List.of(ultimateAllocCall));
 
-		// Overapproximate string literals of length STRING_OVERAPPROXIMATION_THRESHOLD
-		// or longer
-		if (stringLiteral.getByteValues().size() >= mSettings.getStringOverapproximationThreshold()) {
-			// FIXME Frank 2024-11-18: We omit the overapproximation flag, even thought no initialization is performed.
-			// This is unsound, but does not lead to any wrong results in SV-COMP.
-			return new StringLiteralResult(addressRValue, List.of(), stringLiteral);
+		List<Statement> stringWrites;
+		if (stringLiteral.getByteValues().size() < mSettings.getStringOverapproximationThreshold()) {
+			final ExpressionResult exprRes =
+					mInitHandler.writeStringLiteral(actualLoc, addressRValue, stringLiteral, node);
+			stringWrites = exprRes.getStatements();
+			assert !exprRes.hasLRValue();
+			assert exprRes.getDeclarations().isEmpty();
+			assert exprRes.getOverapprs().isEmpty();
+			assert exprRes.getAuxVars().isEmpty();
+			assert exprRes.getNeighbourUnionFields().isEmpty();
+		} else {
+			// Overapproximate string literals of length STRING_OVERAPPROXIMATION_THRESHOLD or longer
+			// TODO: Create an aux-var and create OverapproxVariable instead
+			final AssumeStatement assumeTrue =
+					new AssumeStatement(actualLoc, ExpressionFactory.createBooleanLiteral(actualLoc, true));
+			new Overapprox("large string literal", actualLoc).annotate(assumeTrue);
+			stringWrites = List.of(assumeTrue);
 		}
-		final ExpressionResult exprRes = mInitHandler.writeStringLiteral(actualLoc, addressRValue, stringLiteral, node);
-		assert !exprRes.hasLRValue();
-		assert exprRes.getDeclarations().isEmpty();
-		assert exprRes.getOverapprs().isEmpty();
-		assert exprRes.getAuxVars().isEmpty();
-		assert exprRes.getNeighbourUnionFields().isEmpty();
-		mStaticObjectsHandler.addStatementsForUltimateInit(exprRes.getStatements());
-		return new StringLiteralResult(addressRValue, List.of(), stringLiteral);
+		mStaticObjectsHandler.addStatementsForUltimateInit(stringWrites);
+		return new StringLiteralResult(addressRValue, stringLiteral);
 	}
 
 	public Result visit(final IDispatcher main, final IASTNode node) {
