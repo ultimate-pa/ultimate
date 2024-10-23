@@ -5,5 +5,6 @@
   { "id": "cacsl2boogietranslator_check_if_freed_pointer_was_valid", "visible": true },
   { "id": "cacsl2boogietranslator_pointer_to_allocated_memory_at_dereference", "visible": true },
   { "id": "cacsl2boogietranslator_check_array_bounds_for_arrays_that_are_off_heap", "visible": true },
-  { "id": "cacsl2boogietranslator_pointer_base_address_is_valid_at_dereference", "visible": true }
+  { "id": "cacsl2boogietranslator_pointer_base_address_is_valid_at_dereference", "visible": true },
+  { "id": "cacsl2boogietranslator_check_assertions_from_assert_h", "visible": true }
 ]

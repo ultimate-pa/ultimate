@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.core.model.services;
 
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.core.model.models.ProcedureContract;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslatedCFG;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
@@ -73,6 +74,9 @@ public interface IBacktranslationService {
 	<SE> String translateProgramStateToString(ProgramState<SE> programState);
 
 	<STE, SE> IBacktranslatedCFG<?, ?> translateCFG(IBacktranslatedCFG<?, STE> cfg);
+
+	<TE, SE, CTX> ProcedureContract<TE, ? extends TE>
+			translateProcedureContract(ProcedureContract<SE, ? extends SE> contract, CTX context, Class<SE> clazz);
 
 	/**
 	 * Use this if you want to keep a certain state of the backtranslation chain during toolchain execution.

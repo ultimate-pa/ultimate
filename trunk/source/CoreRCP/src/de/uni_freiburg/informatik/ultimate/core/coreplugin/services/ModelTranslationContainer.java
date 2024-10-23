@@ -31,6 +31,7 @@ import java.util.ArrayDeque;
 import java.util.List;
 import java.util.Stack;
 
+import de.uni_freiburg.informatik.ultimate.core.model.models.ProcedureContract;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslatedCFG;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
@@ -328,6 +329,24 @@ class ModelTranslationContainer implements IBacktranslationService {
 				(ITranslator<STE, TTE, SE, TE, SVL, TVL, ?>) remaining.pop();
 		final IBacktranslatedCFG<?, TTE> translated = translator.translateCFG(cfg);
 		return translateCFG(remaining, translated);
+	}
+
+	@Override
+	public <TE, SE, CTX> ProcedureContract<TE, ? extends TE> translateProcedureContract(
+			final ProcedureContract<SE, ? extends SE> contract, final CTX context, final Class<SE> clazz) {
+		final Stack<ITranslator<?, ?, ?, ?, ?, ?, ?>> current = prepareTranslatorStackAndCheckSourceExpression(clazz);
+		return translateProcedureContract(current, contract, context);
+	}
+
+	@SuppressWarnings("unchecked")
+	private <TE, SE, CTX> ProcedureContract<TE, ? extends TE> translateProcedureContract(
+			final Stack<ITranslator<?, ?, ?, ?, ?, ?, ?>> remaining, final ProcedureContract<SE, ? extends SE> contract,
+			final CTX context) {
+		if (remaining.isEmpty()) {
+			return (ProcedureContract<TE, ? extends TE>) contract;
+		}
+		final ITranslator<?, ?, SE, TE, ?, ?, CTX> tmp = (ITranslator<?, ?, SE, TE, ?, ?, CTX>) remaining.pop();
+		return translateProcedureContract(remaining, tmp.translateProcedureContract(contract, context), context);
 	}
 
 	@Override

@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.core.model.translation;
 
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.core.model.models.ProcedureContract;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
 
 /**
@@ -84,6 +85,9 @@ public interface ITranslator<STE, TTE, SE, TE, SVL, TVL, CTX> {
 	IProgramExecution<TTE, TE> translateProgramExecution(IProgramExecution<STE, SE> programExecution);
 
 	IBacktranslatedCFG<TVL, TTE> translateCFG(IBacktranslatedCFG<SVL, STE> cfg);
+
+	ProcedureContract<TE, ? extends TE> translateProcedureContract(ProcedureContract<SE, ? extends SE> contract,
+			CTX context);
 
 	Class<? extends STE> getSourceTraceElementClass();
 

@@ -88,6 +88,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.translation.ProgramExecution
 import de.uni_freiburg.informatik.ultimate.core.model.models.IExplicitEdgesMultigraph;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IMultigraphEdge;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ProcedureContract;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IRelevanceInformation;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -792,6 +793,24 @@ public class CACSL2BoogieBacktranslator extends
 		final ConditionAnnotation coan = ConditionAnnotation.getAnnotation(oldEdge);
 		createCFGMultigraphEdge(currentSource, loc, lastTarget, coan != null && coan.isNegated());
 		return lastTarget;
+	}
+
+	@Override
+	public ProcedureContract<BacktranslatedExpression, BacktranslatedExpression> translateProcedureContract(
+			final ProcedureContract<Expression, ? extends Expression> oldContract, final ILocation context) {
+		if (context instanceof CACSLLocation && ((CACSLLocation) context).ignoreDuringBacktranslation()) {
+			return null;
+		}
+
+		final var newRequires = oldContract.getRequires() == null ? null
+				: translateExpressionWithContext(oldContract.getRequires(), context);
+
+		// Use special method that translates Boogie's modifies clauses into additional conjuncts in "ensures".
+		final var newEnsures = mBoogie2ACSL.translateEnsuresExpression(oldContract.getEnsures(), context,
+				(Set<IdentifierExpression>) oldContract.getModifies());
+
+		// Create a new contract without modifies clause.
+		return new ProcedureContract<>(oldContract.getProcedure(), newRequires, newEnsures);
 	}
 
 	private <TVL> void createCFGMultigraphEdge(final Multigraph<TVL, CACSLLocation> currentSource, final ILocation loc,

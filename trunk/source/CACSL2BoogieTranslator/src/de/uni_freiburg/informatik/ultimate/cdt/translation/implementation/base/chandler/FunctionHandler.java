@@ -493,6 +493,9 @@ public class FunctionHandler {
 
 		final String procName = procSig.toString();
 
+		// We pretend that procName is defined here, this happens later in PostProcessor
+		mDefinedFunctions.add(procName);
+
 		final CFunction cFuncWithFP = addFPParamToCFunction(calledFuncCFunction);
 
 		// TODO 2023-07-08 Matthias: I don't know what could be passed as hook, so I
@@ -532,7 +535,6 @@ public class FunctionHandler {
 			// A 'real' function in the symbol table has a IASTFunctionDefinition as the parent of the declarator.
 			return handleFunctionPointerCall(loc, main, functionName, arguments, memoryHandler);
 		}
-		mCalledFunctions.add(rawName);
 		return handleFunctionCallGivenNameAndArguments(main, loc, methodName, arguments, memoryHandler);
 	}
 
@@ -1093,6 +1095,7 @@ public class FunctionHandler {
 
 	private ExpressionResult createFunctionCall(final ILocation loc, final String methodName,
 			final ExpressionResultBuilder builder, final List<Expression> parameters) {
+		mCalledFunctions.add(methodName);
 		final Expression returnedValue;
 		final Statement call;
 		final BoogieProcedureInfo procInfo;

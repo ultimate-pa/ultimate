@@ -30,7 +30,6 @@ import java.util.Collections;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.CStringLiteral;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 
 /**
@@ -66,7 +65,6 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox
 public class StringLiteralResult extends ExpressionResult {
 
 	private final CStringLiteral mStringLiteral;
-	private final AuxVarInfo mAuxVarName;
 
 	/**
 	 * Note that a StringLiteralResults need no fields for declarations and statements because the literals have static
@@ -75,13 +73,11 @@ public class StringLiteralResult extends ExpressionResult {
 	 *
 	 * @param lrVal
 	 * @param overapproxList
-	 * @param auxVarName
 	 * @param stringLiteral
 	 */
-	public StringLiteralResult(final LRValue lrVal, final List<Overapprox> overapproxList, final AuxVarInfo auxVarName,
+	public StringLiteralResult(final LRValue lrVal, final List<Overapprox> overapproxList,
 			final CStringLiteral stringLiteral) {
 		super(Collections.emptyList(), lrVal, Collections.emptyList(), Collections.emptySet(), overapproxList);
-		mAuxVarName = auxVarName;
 		mStringLiteral = stringLiteral;
 	}
 
@@ -92,12 +88,5 @@ public class StringLiteralResult extends ExpressionResult {
 	@Override
 	public String toString() {
 		return "StringLiteralResult: " + mStringLiteral;
-	}
-
-	/**
-	 * Returns the name of the auxiliary variable that marks the memory location of the string in our Boogie heap array.
-	 */
-	public AuxVarInfo getAuxVar() {
-		return mAuxVarName;
 	}
 }
