@@ -180,7 +180,7 @@ public class LargeBlockEncoding {
 
 				final SequentialComposition comp =
 						mCbf.constructSequentialComposition(predecessor, successor, mSimplifyCodeBlocks, false,
-								sequence, CfgBuilder.XNF_CONVERSION_TECHNIQUE, CfgBuilder.SIMPLIFICATION_TECHNIQUE);
+								sequence, CfgBuilder.SIMPLIFICATION_TECHNIQUE);
 				ModelUtils.mergeAnnotations(comp, incoming, outgoing);
 				newEdges.add(comp);
 			}
@@ -218,7 +218,7 @@ public class LargeBlockEncoding {
 	private void composeParallel(final BoogieIcfgLocation pp, final List<CodeBlock> outgoing) {
 		final BoogieIcfgLocation successor = (BoogieIcfgLocation) outgoing.get(0).getTarget();
 		mCbf.constructParallelComposition(pp, successor, Collections.unmodifiableList(outgoing),
-				CfgBuilder.XNF_CONVERSION_TECHNIQUE, CfgBuilder.SIMPLIFICATION_TECHNIQUE);
+				CfgBuilder.SIMPLIFICATION_TECHNIQUE);
 		considerCompositionCandidate(pp, false);
 		considerCompositionCandidate(successor, false);
 	}

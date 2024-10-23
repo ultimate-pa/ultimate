@@ -353,17 +353,20 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 			}
 			// TODO setting
 			if (true && feasibility == LBool.SAT) {
-				final TraceAberrantChecker<L> tac = new TraceAberrantChecker<>(
-						(NestedRun<L, IPredicate>) mCounterexample, getServices(), mCsToolkit, mPredicateFactory,
-						mCsToolkit.getModifiableGlobalsTable(), mRefinementResult.getPredicateUnifier(),
-						mFaultLocalizationMode, mSimplificationTechnique, mXnfConversionTechnique,
-						mIcfg.getCfgSmtToolkit().getSymbolTable(), (IIcfg<IcfgLocation>) mIcfg);
-				if (!(rcfgProgramExecution instanceof IcfgProgramExecution)) {
-					throw new UnsupportedOperationException("Program execution is not " + IcfgProgramExecution.class);
+				if (!(mCounterexample instanceof NestedRun)) {
+					mLogger.info("aborting trace aberrance, not NestedRun");
+				} else {
+					final TraceAberrantChecker<L> tac = new TraceAberrantChecker<>(
+							(NestedRun<L, IPredicate>) mCounterexample, getServices(), mCsToolkit, mPredicateFactory,
+							mCsToolkit.getModifiableGlobalsTable(), mRefinementResult.getPredicateUnifier(),
+							mFaultLocalizationMode, mSimplificationTechnique,
+							mIcfg.getCfgSmtToolkit().getSymbolTable(), (IIcfg<IcfgLocation>) mIcfg);
+					if (!(rcfgProgramExecution instanceof IcfgProgramExecution)) {
+						throw new UnsupportedOperationException("Program execution is not " + IcfgProgramExecution.class);
+					}
+					rcfgProgramExecution = ((IcfgProgramExecution<L>) rcfgProgramExecution)
+							.addRelevanceInformation(tac.getAberranceInformation());
 				}
-				rcfgProgramExecution = ((IcfgProgramExecution<L>) rcfgProgramExecution)
-						.addRelevanceInformation(tac.getAberranceInformation());
-				
 			}
 		}
 

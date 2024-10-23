@@ -140,6 +140,7 @@ public class NestedSsaBuilder<L extends IAction> {
 	 */
 	private final boolean mTransferToScriptNeeded;
 	private final TermTransferrer mTermTransferrer;
+	private boolean mReplaceAuxVarsNeeded;
 
 	/**
 	 * Counter that helps us to ensure that we construct a fresh constant for each occurrence of an aux var.
@@ -148,7 +149,8 @@ public class NestedSsaBuilder<L extends IAction> {
 
 	public NestedSsaBuilder(final NestedWord<L> trace, final ManagedScript managedTcScript,
 			final CfgSmtToolkit cfgSmtToolkit,
-			final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> nestedTransFormulas, final ILogger logger) {
+			final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> nestedTransFormulas, final ILogger logger,
+			final boolean replaceAuxVarsNeeded) {
 		mLogger = logger;
 		mTcScript = managedTcScript.getScript();
 		mFormulas = nestedTransFormulas;
@@ -161,7 +163,14 @@ public class NestedSsaBuilder<L extends IAction> {
 		} else {
 			mTermTransferrer = null;
 		}
+		mReplaceAuxVarsNeeded = replaceAuxVarsNeeded;
 		buildSSA();
+	}
+	
+	public NestedSsaBuilder(final NestedWord<L> trace, final ManagedScript managedTcScript,
+			final CfgSmtToolkit cfgSmtToolkit,
+			final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> nestedTransFormulas, final ILogger logger) {
+		this(trace, managedTcScript, cfgSmtToolkit, nestedTransFormulas, logger, true); 
 	}
 
 	protected void buildSSA() {
@@ -574,6 +583,9 @@ public class NestedSsaBuilder<L extends IAction> {
 		}
 
 		public void replaceAuxVars() {
+			if (!mReplaceAuxVarsNeeded) {
+				return;
+			}
 			for (TermVariable tv : mTF.getAuxVars()) {
 				tv = transferToCurrentScriptIfNecessary(tv);
 				// construct constant only after variable was translated

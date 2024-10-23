@@ -323,3 +323,12 @@ trunk/source/WebsiteStatic/webinterface/code_examples/
 trunk/source/WebsiteStatic/webinterface/workers/*.json
 !trunk/source/WebsiteStatic/webinterface/workers/*.override.json
 releaseScripts/default/sv-benchmarks
+/trunk/examples/svcomp_overapprox
+/trunk/examples/svcomp_overapprox_testset
+/trunk/examples/svcomp_overapprox_only_unsafe
+/trunk/examples/svcomp_overapprox_no-overflow
+/trunk/examples/svcomp_overapprox_no-overflow_unsafe
+/trunk/examples/svcomp_overapprox_unreach-call
+/trunk/examples/svcomp_overapprox_unreach-call_unsafe
+/trunk/examples/svcomp_overapprox_valid-memsafety
+/trunk/examples/svcomp_overapprox_valid-memsafety_unsafe

@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.predicates;
 
+import java.awt.Container;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -132,6 +134,11 @@ public class IterativePredicateTransformer<L extends IAction> {
 		 */
 		IPredicate postprocess(IPredicate pred, int i);
 	}
+	public TracePredicates computeStrongestPostconditionSequence(
+			final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> nf,
+			final List<IPredicatePostprocessor> postprocs) {
+		return computeStrongestPostconditionSequence(nf, postprocs, Integer.MAX_VALUE, new ArrayList<L>());
+	}
 
 	/**
 	 * Compute sequence of strongest postcondition along a trace. Start with the given precondition and compute
@@ -146,7 +153,7 @@ public class IterativePredicateTransformer<L extends IAction> {
 	 */
 	public TracePredicates computeStrongestPostconditionSequence(
 			final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> nf,
-			final List<IPredicatePostprocessor> postprocs) {
+			final List<IPredicatePostprocessor> postprocs, int limit, List<L> skipList) {
 		final IPredicate[] spSequence = new IPredicate[mTrace.length() - 1];
 		final TracePredicates ipp = new TracePredicates(mPrecondition, mPostcondition, Arrays.asList(spSequence));
 
@@ -155,6 +162,10 @@ public class IterativePredicateTransformer<L extends IAction> {
 
 		IPredicate computedPostcondition = null;
 		for (int i = 0; i < positionOfLastPredicate; i++) {
+			if (i > Math.max(limit+1, limit)) {
+				break;
+			}
+			if (skipList.contains(mTrace.getSymbol(i))) continue;
 			final IPredicate predecessor = ipp.getPredicate(i);
 			final Term spTerm;
 			if (mTrace.getSymbol(i) instanceof IIcfgCallTransition<?>) {
@@ -265,18 +276,30 @@ public class IterativePredicateTransformer<L extends IAction> {
 			final List<IPredicatePostprocessor> postprocs, final boolean useTrueAsCallPredecessor,
 			final boolean alternatingQuantifierBailout) throws TraceInterpolationException {
 		return computeBackwardSequence(nf, postprocs, useTrueAsCallPredecessor, alternatingQuantifierBailout,
-				BackwardSequence.WP);
+				BackwardSequence.WP, -1, new ArrayList<L>());
 	}
 
 	public TracePredicates computePreSequence(final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> nf,
 			final List<IPredicatePostprocessor> postprocs, final boolean alternatingQuantifierBailout)
 			throws TraceInterpolationException {
-		return computeBackwardSequence(nf, postprocs, true, alternatingQuantifierBailout, BackwardSequence.PRE);
+		return computeBackwardSequence(nf, postprocs, true, alternatingQuantifierBailout, BackwardSequence.PRE, -1, new ArrayList<L>());
+	}
+	public TracePredicates computePreSequence(final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> nf,
+			final List<IPredicatePostprocessor> postprocs, final boolean alternatingQuantifierBailout, int limit)
+			throws TraceInterpolationException {
+		return computeBackwardSequence(nf, postprocs, true, alternatingQuantifierBailout, BackwardSequence.PRE, limit, new ArrayList<L>());
+	}
+	
+	public TracePredicates computePreSequence(final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> nf,
+			final List<IPredicatePostprocessor> postprocs, final boolean alternatingQuantifierBailout, int limit,
+			List<L> skipList)
+			throws TraceInterpolationException {
+		return computeBackwardSequence(nf, postprocs, true, alternatingQuantifierBailout, BackwardSequence.PRE, limit, skipList);
 	}
 
 	public TracePredicates computeBackwardSequence(final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> nf,
 			final List<IPredicatePostprocessor> postprocs, final boolean useTrueAsCallPredecessor,
-			final boolean alternatingQuantifierBailout, final BackwardSequence bs) throws TraceInterpolationException {
+			final boolean alternatingQuantifierBailout, final BackwardSequence bs, int limit, List<L> skipList) throws TraceInterpolationException {
 		final IPredicate[] backwardSequence = new IPredicate[mTrace.length() - 1];
 		final TracePredicates ipp;
 		if (bs == BackwardSequence.WP) {
@@ -297,7 +320,8 @@ public class IterativePredicateTransformer<L extends IAction> {
 
 		for (int i = mTrace.length() - 1; i >= positionOfFirstPredicate; i--) {
 			final Term backwardTerm;
-
+			if (i < limit-1) break;
+			if (skipList.contains(mTrace.getSymbol(i))) continue;
 			final IPredicate successorWp;
 			if (bs == BackwardSequence.WP) {
 				successorWp = ipp.getPredicate(i + 1);

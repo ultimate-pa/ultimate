@@ -44,6 +44,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
@@ -93,7 +94,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ThreadInsta
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgElement;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadOther;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadCurrent;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadOther;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -122,6 +125,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Weakest
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer.CodeBlockSize;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.TransFormulaAdder;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.HashDeque;
 
 /**
  * This class generates a recursive control flow graph (in the style of POPL'10 - Heizmann, Hoenicke, Podelski - Nested
@@ -170,7 +175,7 @@ public class CfgBuilder {
 
 	private int mRemovedAssumeTrueStatements = 0;
 
-	private static final SimplificationTechnique SIMPLIFICATION_TECHNIQUE = SimplificationTechnique.POLY_PAC;
+	static final SimplificationTechnique SIMPLIFICATION_TECHNIQUE = SimplificationTechnique.POLY_PAC;
 
 	private final Set<String> mAllGotoTargets;
 
@@ -282,14 +287,14 @@ public class CfgBuilder {
 		mLogger.info("Performing block encoding");
 		switch (mCodeBlockSize) {
 		case LoopFreeBlock:
-			new LargeBlockEncoding(mServices, mIcfg, mCbf, InternalLbeMode.ALL);
+			new LargeBlockEncoding(InternalLbeMode.ALL);
 			break;
 		case SequenceOfStatements: // handled in ProcedureCfgBuilder
 		case OneNontrivialStatement:
 		case SingleStatement:
 			final var internalMode = mCtxSwitchOnlyAtAtomicBoundaries ? InternalLbeMode.ALL_EXCEPT_ATOMIC_BOUNDARIES
 					: InternalLbeMode.ONLY_ATOMIC_BLOCK;
-			new LargeBlockEncoding(mServices, mIcfg, mCbf, internalMode);
+			new LargeBlockEncoding(internalMode);
 			break;
 		default:
 			throw new AssertionError("unknown value: " + mCodeBlockSize);
@@ -310,6 +315,10 @@ public class CfgBuilder {
 		mLogger.info("Removed " + mRemovedAssumeTrueStatements + " assume(true) statements.");
 
 		return icfg;
+	}
+	
+	private Stream<BoogieIcfgLocation> getAllLocations() {
+		return IcfgUtils.getAllLocations(mIcfg);
 	}
 
 	public Boogie2SMT getBoogie2Smt() {

@@ -26,12 +26,16 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorlocalization;
 
+import java.io.Console;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -45,11 +49,13 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpt
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IRelevanceInformation;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.mcr.WpInterpolantProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
@@ -64,16 +70,22 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.MonolithicHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils.HoareTripleChecks;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateTransformer;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermDomainOperationProvider;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.VarAbsConstraints;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.predicates.IterativePredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.predicates.IterativePredicateTransformer.IPredicatePostprocessor;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.predicates.IterativePredicateTransformer.QuantifierEliminationPostprocessor;
@@ -142,6 +154,8 @@ public class FlowSensitiveFaultLocalizer<L extends IIcfgTransition<?>> {
 					"doing error localization for trace of length " + counterexample.getLength());
 			throw new ToolchainCanceledException(tce, rti);
 		}
+		//doTraceAberrantAnalysis(counterexample.getWord(), predicateUnifier.getTruePredicate(),
+				//predicateUnifier.getFalsePredicate(), modifiableGlobalsTable, csToolkit, predicateUnifier);
 		mErrorLocalizationStatisticsGenerator.reportSuccessfullyFinished();
 		mErrorLocalizationStatisticsGenerator.stopErrorLocalizationTime();
 
@@ -728,6 +742,8 @@ public class FlowSensitiveFaultLocalizer<L extends IIcfgTransition<?>> {
 		mErrorLocalizationStatisticsGenerator.addHoareTripleCheckerStatistics(rc.getHoareTripleCheckerStatistics());
 		return weakestPreconditionLeft;
 	}
+	
+	// TODO BA
 
 	/**
 	 * Computes the relevance information of a position in the trace, depending on the type of the codeblock at that
@@ -925,5 +941,52 @@ public class FlowSensitiveFaultLocalizer<L extends IIcfgTransition<?>> {
 
 		}
 		return angelicScore;
+	}
+	
+	private List<Validity> doTraceAberrantAnalysis(final NestedWord<L> counterexampleWord, final IPredicate truePredicate,
+			final IPredicate falsePredicate, final ModifiableGlobalsTable modGlobVarManager,
+			final CfgSmtToolkit csToolkit, final IPredicateUnifier predicateUnifier){
+		final IterativePredicateTransformer<L> iptWp = new IterativePredicateTransformer<>(mPredicateFactory,
+				csToolkit.getManagedScript(), csToolkit.getModifiableGlobalsTable(), mServices, counterexampleWord,
+				null, falsePredicate, null, mPredicateFactory.not(falsePredicate), mSimplificationTechnique,
+				mSymbolTable);
+		final IterativePredicateTransformer<L> iptSp = new IterativePredicateTransformer<>(mPredicateFactory,
+				csToolkit.getManagedScript(), csToolkit.getModifiableGlobalsTable(), mServices, counterexampleWord,
+				truePredicate, null, null, mPredicateFactory.not(falsePredicate), mSimplificationTechnique,
+				mSymbolTable);
+		final DefaultTransFormulas<L> dtf = new DefaultTransFormulas<>(counterexampleWord, truePredicate,
+				falsePredicate, Collections.emptySortedMap(), csToolkit.getOldVarsAssignmentCache(), false);
+		final List<IPredicatePostprocessor> postprocessors;
+		if (mApplyQuantifierElimination) {
+			final QuantifierEliminationPostprocessor qePostproc =
+					new QuantifierEliminationPostprocessor(mServices, csToolkit.getManagedScript(), mPredicateFactory,
+							mSimplificationTechnique);
+			postprocessors = Collections.singletonList(qePostproc);
+		} else {
+			postprocessors = Collections.emptyList();
+		}
+		TracePredicates weakestPreconditionSequence;
+		TracePredicates strongestPostconditionSequence;
+		try {
+			weakestPreconditionSequence = iptWp.computeWeakestPreconditionSequence(dtf, postprocessors, true, false);
+			strongestPostconditionSequence = iptSp.computeStrongestPostconditionSequence(dtf, postprocessors);
+			// evtl nur teilweise
+		} catch (TraceInterpolationException e) {
+			throw new RuntimeException(e);
+		}
+//		var hc = HoareTripleCheckerUtils.constructEfficientHoareTripleCheckerWithCaching(mServices, HoareTripleChecks.MONOLITHIC, csToolkit, predicateUnifier);
+		List<Validity> resultList = new ArrayList<Validity>(counterexampleWord.length());
+		MonolithicHoareTripleChecker hc = new MonolithicHoareTripleChecker(csToolkit);
+		for (int i = 0; i < counterexampleWord.length(); i++) {
+			if (null != Overapprox.getAnnotation(counterexampleWord.getSymbol(i))) {
+				final IPredicate wp = weakestPreconditionSequence.getPredicate(i + 1);
+				final IPredicate pre = mPredicateFactory.not(weakestPreconditionSequence.getPredicate(i));
+				final IPredicate sp = strongestPostconditionSequence.getPredicate(i);
+				resultList.add(hc.checkInternal(pre, (IInternalAction) counterexampleWord.getSymbol(i), sp));
+				System.out.println("");
+			}
+			
+		}
+		return resultList;
 	}
 }

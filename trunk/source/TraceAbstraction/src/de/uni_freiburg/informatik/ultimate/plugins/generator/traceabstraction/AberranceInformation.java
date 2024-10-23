@@ -17,7 +17,11 @@ public class AberranceInformation implements IRelevanceInformation {
 	}
 	@Override
 	public IRelevanceInformation merge(IRelevanceInformation... relevanceInformations) {
-		// TODO Auto-generated method stub
+		for (IRelevanceInformation rel : relevanceInformations) {
+			if (rel instanceof AberranceInformation && ((AberranceInformation)rel).traceAberrant != TraceAberrance.MAYBE) {
+				return rel;
+			}
+		}
 		return this;
 	}
 
