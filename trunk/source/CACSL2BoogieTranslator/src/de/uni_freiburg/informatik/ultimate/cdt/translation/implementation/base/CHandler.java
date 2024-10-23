@@ -131,7 +131,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck;
 import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck.CheckableExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Axiom;
@@ -2079,25 +2078,14 @@ public class CHandler {
 
 		mStaticObjectsHandler.addStatementsForUltimateInit(List.of(ultimateAllocCall));
 
-		List<Statement> stringWrites;
-		if (stringLiteral.getByteValues().size() < mSettings.getStringOverapproximationThreshold()) {
-			final ExpressionResult exprRes =
-					mInitHandler.writeStringLiteral(actualLoc, addressRValue, stringLiteral, node);
-			stringWrites = exprRes.getStatements();
-			assert !exprRes.hasLRValue();
-			assert exprRes.getDeclarations().isEmpty();
-			assert exprRes.getOverapprs().isEmpty();
-			assert exprRes.getAuxVars().isEmpty();
-			assert exprRes.getNeighbourUnionFields().isEmpty();
-		} else {
-			// Overapproximate string literals of length STRING_OVERAPPROXIMATION_THRESHOLD or longer
-			// TODO: Create an aux-var and create OverapproxVariable instead
-			final AssumeStatement assumeTrue =
-					new AssumeStatement(actualLoc, ExpressionFactory.createBooleanLiteral(actualLoc, true));
-			new Overapprox("large string literal", actualLoc).annotate(assumeTrue);
-			stringWrites = List.of(assumeTrue);
-		}
-		mStaticObjectsHandler.addStatementsForUltimateInit(stringWrites);
+		final ExpressionResult exprRes = mInitHandler.writeStringLiteral(actualLoc, addressRValue, stringLiteral, node,
+				mSettings.getStringOverapproximationThreshold());
+		assert !exprRes.hasLRValue();
+		assert exprRes.getDeclarations().isEmpty();
+		assert exprRes.getOverapprs().isEmpty();
+		assert exprRes.getAuxVars().isEmpty();
+		assert exprRes.getNeighbourUnionFields().isEmpty();
+		mStaticObjectsHandler.addStatementsForUltimateInit(exprRes.getStatements());
 		return new StringLiteralResult(addressRValue, stringLiteral);
 	}
 
