@@ -51,6 +51,7 @@ import org.eclipse.cdt.internal.core.dom.parser.c.CASTFieldDesignator;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
@@ -283,7 +284,16 @@ public class InitializationHandler {
 	}
 
 	public ExpressionResult writeStringLiteral(final ILocation loc, final RValue auxVarRValue,
-			final CStringLiteral stringLiteral, final IASTNode hook) {
+			final CStringLiteral stringLiteral, final IASTNode hook, final int stringOverapproximationThreshold) {
+		if (stringLiteral.getByteValues().size() >= stringOverapproximationThreshold) {
+			// Overapproximate string literals of length STRING_OVERAPPROXIMATION_THRESHOLD or longer
+			// TODO: Create an aux-var and create OverapproxVariable instead
+			final AssumeStatement assumeTrue =
+					new AssumeStatement(loc, ExpressionFactory.createBooleanLiteral(loc, true));
+			new Overapprox("large string literal", loc).annotate(assumeTrue);
+			return new ExpressionResult(List.of(assumeTrue), null);
+		}
+
 		final CArray auxVarType = (CArray) auxVarRValue.getCType();
 		assert CTranslationUtil.getConstantFirstDimensionOfArray(auxVarType, mTypeSizes) == stringLiteral
 				.getByteValues().size();
