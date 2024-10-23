@@ -51,10 +51,10 @@ import org.eclipse.cdt.internal.core.dom.parser.c.CASTFieldDesignator;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
@@ -288,10 +288,13 @@ public class InitializationHandler {
 		if (stringLiteral.getByteValues().size() >= stringOverapproximationThreshold) {
 			// Overapproximate string literals of length STRING_OVERAPPROXIMATION_THRESHOLD or longer
 			// TODO: Create an aux-var and create OverapproxVariable instead
-			final AssumeStatement assumeTrue =
-					new AssumeStatement(loc, ExpressionFactory.createBooleanLiteral(loc, true));
-			new Overapprox("large string literal", loc).annotate(assumeTrue);
-			return new ExpressionResult(List.of(assumeTrue), null);
+			final AuxVarInfo auxVar =
+					mAuxVarInfoBuilder.constructGlobalAuxVarInfo(loc, auxVarRValue.getCType(), AUXVAR.ARRAYINIT);
+			final ExpressionResultBuilder builder = new ExpressionResultBuilder().addDeclaration(auxVar.getVarDec());
+			final HavocStatement havoc = new HavocStatement(loc, new VariableLHS[] { auxVar.getLhs() });
+			new Overapprox("large string literal", loc).annotate(havoc);
+			builder.addStatement(havoc);
+			return builder.build();
 		}
 
 		final CArray auxVarType = (CArray) auxVarRValue.getCType();

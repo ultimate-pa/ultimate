@@ -2066,10 +2066,11 @@ public class CHandler {
 		final ExpressionResult exprRes = mInitHandler.writeStringLiteral(actualLoc, addressRValue, stringLiteral, node,
 				mSettings.getStringOverapproximationThreshold());
 		assert !exprRes.hasLRValue();
-		assert exprRes.getDeclarations().isEmpty();
 		assert exprRes.getOverapprs().isEmpty();
 		assert exprRes.getAuxVars().isEmpty();
 		assert exprRes.getNeighbourUnionFields().isEmpty();
+		exprRes.getDeclarations().forEach(
+				x -> mStaticObjectsHandler.addGlobalVarDeclarationWithoutCDeclaration((VariableDeclaration) x));
 		mStaticObjectsHandler.addStatementsForUltimateInit(exprRes.getStatements());
 		return new StringLiteralResult(addressRValue, stringLiteral);
 	}
