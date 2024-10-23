@@ -40,7 +40,7 @@ public interface IConditionalCommutativityCheckerStatisticsUtils {
 	public void addDFSRestart();
 
 	public void addIAIntegration();
-	
+
 	public void addCommutingCounterexample();
 
 	public void addConditionCalculation();
@@ -48,6 +48,8 @@ public interface IConditionalCommutativityCheckerStatisticsUtils {
 	public void addTraceCheck();
 
 	public void addImperfectProof();
-	
+
 	public void addUnknownTraceCheck();
+
+	public void addQuantifiedCondition();
 }

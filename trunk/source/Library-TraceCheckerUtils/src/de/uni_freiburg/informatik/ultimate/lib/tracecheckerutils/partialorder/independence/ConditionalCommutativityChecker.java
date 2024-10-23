@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateWithConjuncts;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.ITraceChecker;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.ICopyActionFactory;
@@ -199,6 +200,10 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 
 				if ((condition != null) && (!condition.getFormula().toString().equals("true"))
 						&& mCriterion.decide(condition)) {
+
+					if (condition != null && !QuantifierUtils.isQuantifierFree(condition.getFormula())) {
+						mStatisticsUtils.addQuantifiedCondition();
+					}
 
 					final BasicPredicate notCondition = mPredicateFactory
 							.newPredicate(SmtUtils.not(mManagedScript.getScript(), condition.getFormula()));

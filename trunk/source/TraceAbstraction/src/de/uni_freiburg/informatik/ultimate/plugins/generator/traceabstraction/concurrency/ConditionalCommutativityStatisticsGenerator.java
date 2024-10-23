@@ -53,6 +53,7 @@ public class ConditionalCommutativityStatisticsGenerator extends StatisticsGener
 	private int mConditionalCommutativityUnknownTraceChecks = 0;
 	private int mConditionalCommutativityImperfectProofs = 0;
 	private int mConditionalCommutativityCommutingCounterexamples = 0;
+	private int mConditionalCommutativityQuantifiedConditions = 0;
 
 	public void addConditionalCommutativityIAIntegration() {
 		mConditionalCommutativityIAIntegrations++;
@@ -73,13 +74,18 @@ public class ConditionalCommutativityStatisticsGenerator extends StatisticsGener
 	public void addConditionalCommutativityTraceCheck() {
 		mConditionalCommutativityTraceChecks++;
 	}
-	
+
 	public void addConditionalCommutativityUnknownTraceCheck() {
 		mConditionalCommutativityUnknownTraceChecks++;
 	}
 
 	public void addConditionalCommutativityImperfectProof() {
 		mConditionalCommutativityImperfectProofs++;
+	}
+
+	public void ConditionalCommutativityQuantifiedCondition() {
+		mConditionalCommutativityQuantifiedConditions++;
+
 	}
 
 	@Override
@@ -118,6 +124,8 @@ public class ConditionalCommutativityStatisticsGenerator extends StatisticsGener
 			return mConditionalCommutativityUnknownTraceChecks;
 		case ConditionalCommutativityImperfectProofs:
 			return mConditionalCommutativityImperfectProofs;
+		case ConditionalCommutativityQuantifiedConditions:
+			return mConditionalCommutativityQuantifiedConditions;
 		default:
 			throw new AssertionError("unknown data");
 		}
@@ -143,10 +151,12 @@ public class ConditionalCommutativityStatisticsGenerator extends StatisticsGener
 		ConditionalCommutativityConditionCalculations(StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
 
 		ConditionalCommutativityTraceChecks(StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
-		
+
 		ConditionalCommutativityUnknownTraceChecks(StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
 
-		ConditionalCommutativityImperfectProofs(StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA);
+		ConditionalCommutativityImperfectProofs(StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
+
+		ConditionalCommutativityQuantifiedConditions(StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA);
 
 		private Function<Object, Function<Object, Object>> mAggr;
 		private Function<String, Function<Object, String>> mPrettyprinter;

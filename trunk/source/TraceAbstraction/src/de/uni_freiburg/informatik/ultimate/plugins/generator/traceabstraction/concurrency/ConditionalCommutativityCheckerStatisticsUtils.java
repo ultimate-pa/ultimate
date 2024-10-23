@@ -72,7 +72,7 @@ public class ConditionalCommutativityCheckerStatisticsUtils implements IConditio
 	public void addTraceCheck() {
 		mGenerator.addConditionalCommutativityTraceCheck();
 	}
-	
+
 	@Override
 	public void addUnknownTraceCheck() {
 		mGenerator.addConditionalCommutativityUnknownTraceCheck();
@@ -86,6 +86,12 @@ public class ConditionalCommutativityCheckerStatisticsUtils implements IConditio
 	@Override
 	public void addCommutingCounterexample() {
 		mGenerator.addConditionalCommutativityCommutingCounterexample();
+
+	}
+
+	@Override
+	public void addQuantifiedCondition() {
+		mGenerator.ConditionalCommutativityQuantifiedCondition();
 
 	}
 }
