@@ -296,8 +296,7 @@ public class CExpressionTranslator {
 			builder.getDeclarations().forEach(decl -> mStaticObjectsHandler
 					.addGlobalVarDeclarationWithoutCDeclaration((VariableDeclaration) decl));
 			mStaticObjectsHandler.addStatementsForUltimateInit(builder.getStatements());
-			return new StringLiteralResult(builder.getLrValue(), builder.getOverappr(),
-					((StringLiteralResult) left).getLiteralString());
+			return new StringLiteralResult(builder.getLrValue(), ((StringLiteralResult) left).getLiteralString());
 
 		}
 		return builder.build();

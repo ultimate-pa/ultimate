@@ -1174,13 +1174,6 @@ public class InitializationHandler {
 
 				final StringLiteralResult slr = (StringLiteralResult) initializerResult.getRootExpressionResult();
 
-				final List<Overapprox> overapproxList;
-				if (!slr.getOverapprs().isEmpty()) {
-					final Overapprox overapprox = new Overapprox("large string literal", loc);
-					overapproxList = new ArrayList<>();
-					overapproxList.add(overapprox);
-					return new InitializerInfo(overapprox);
-				}
 				// make the list (in our case a map because we support
 				// sparse lists in other cases)
 				final Map<Integer, InitializerInfo> indexToInitInfo = new HashMap<>();
