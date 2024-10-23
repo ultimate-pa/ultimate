@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.Quantifier
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.ITraceChecker;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.ICopyActionFactory;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
@@ -130,7 +131,7 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 				mManagedScript.requestLockRelease();
 			}
 
-			if (((IAction) letter1).getSucceedingProcedure().equals(((IAction) letter2).getSucceedingProcedure())) {
+			if (((IAction) letter1).getPrecedingProcedure().equals(((IAction) letter2).getPrecedingProcedure())) {
 				return null;
 			}
 
@@ -178,7 +179,7 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 					}
 					break;
 				case SYMBOLIC_RELATION:
-					if (relation != null) {
+					if (relation != null && !relation.isConditional()) {
 						condition = relation.getCommutativityCondition(null, letter1, letter2);
 					}
 					break;
@@ -198,11 +199,19 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 				mStatisticsUtils.addConditionCalculation();
 				mCriterion.updateCriterion(state, letter1, letter2);
 
-				if ((condition != null) && (!condition.getFormula().toString().equals("true"))
-						&& mCriterion.decide(condition)) {
+				if (condition == null) {
+					return null;
+				} else if (SmtUtils.isTrueLiteral(condition.getFormula())) {
+					throw new IllegalArgumentException("condition is not allowed to be true");
+				} else if (mCriterion.decide(condition)) {
 
-					if (condition != null && !QuantifierUtils.isQuantifierFree(condition.getFormula())) {
+					if (!QuantifierUtils.isQuantifierFree(condition.getFormula())) {
 						mStatisticsUtils.addQuantifiedCondition();
+					}
+
+					if (SmtUtils.checkSatTerm(mManagedScript.getScript(), condition.getFormula()).equals(LBool.UNSAT)) {
+						mStatisticsUtils.addFalseCondition();
+						return null;
 					}
 
 					final BasicPredicate notCondition = mPredicateFactory
@@ -236,7 +245,9 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 				}
 			}
 			return null;
-		} finally {
+		} finally
+
+		{
 			mStatisticsUtils.stopCheckerStopwatch();
 		}
 	}

@@ -52,4 +52,6 @@ public interface IConditionalCommutativityCheckerStatisticsUtils {
 	public void addUnknownTraceCheck();
 
 	public void addQuantifiedCondition();
+
+	public void addFalseCondition();
 }

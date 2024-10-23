@@ -91,7 +91,13 @@ public class ConditionalCommutativityCheckerStatisticsUtils implements IConditio
 
 	@Override
 	public void addQuantifiedCondition() {
-		mGenerator.ConditionalCommutativityQuantifiedCondition();
+		mGenerator.addConditionalCommutativityQuantifiedCondition();
+
+	}
+
+	@Override
+	public void addFalseCondition() {
+		mGenerator.addConditionalCommutativityFalseCondition();
 
 	}
 }

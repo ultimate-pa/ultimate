@@ -54,6 +54,7 @@ public class ConditionalCommutativityStatisticsGenerator extends StatisticsGener
 	private int mConditionalCommutativityImperfectProofs = 0;
 	private int mConditionalCommutativityCommutingCounterexamples = 0;
 	private int mConditionalCommutativityQuantifiedConditions = 0;
+	private int mConditionalCommutativityFalseConditions = 0;
 
 	public void addConditionalCommutativityIAIntegration() {
 		mConditionalCommutativityIAIntegrations++;
@@ -83,8 +84,13 @@ public class ConditionalCommutativityStatisticsGenerator extends StatisticsGener
 		mConditionalCommutativityImperfectProofs++;
 	}
 
-	public void ConditionalCommutativityQuantifiedCondition() {
+	public void addConditionalCommutativityQuantifiedCondition() {
 		mConditionalCommutativityQuantifiedConditions++;
+
+	}
+
+	public void addConditionalCommutativityFalseCondition() {
+		mConditionalCommutativityFalseConditions++;
 
 	}
 
@@ -126,6 +132,8 @@ public class ConditionalCommutativityStatisticsGenerator extends StatisticsGener
 			return mConditionalCommutativityImperfectProofs;
 		case ConditionalCommutativityQuantifiedConditions:
 			return mConditionalCommutativityQuantifiedConditions;
+		case ConditionalCommutativityFalseConditions:
+			return mConditionalCommutativityFalseConditions;
 		default:
 			throw new AssertionError("unknown data");
 		}
@@ -156,7 +164,9 @@ public class ConditionalCommutativityStatisticsGenerator extends StatisticsGener
 
 		ConditionalCommutativityImperfectProofs(StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
 
-		ConditionalCommutativityQuantifiedConditions(StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA);
+		ConditionalCommutativityQuantifiedConditions(StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
+
+		ConditionalCommutativityFalseConditions(StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA);
 
 		private Function<Object, Function<Object, Object>> mAggr;
 		private Function<String, Function<Object, String>> mPrettyprinter;
