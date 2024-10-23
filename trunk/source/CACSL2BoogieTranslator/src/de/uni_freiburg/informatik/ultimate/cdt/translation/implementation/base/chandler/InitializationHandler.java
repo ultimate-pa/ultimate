@@ -59,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.StructAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieArrayType;
@@ -287,13 +288,22 @@ public class InitializationHandler {
 			final CStringLiteral stringLiteral, final IASTNode hook, final int stringOverapproximationThreshold) {
 		if (stringLiteral.getByteValues().size() >= stringOverapproximationThreshold) {
 			// Overapproximate string literals of length STRING_OVERAPPROXIMATION_THRESHOLD or longer
-			// TODO: Create an aux-var and create OverapproxVariable instead
 			final AuxVarInfo auxVar =
 					mAuxVarInfoBuilder.constructGlobalAuxVarInfo(loc, auxVarRValue.getCType(), AUXVAR.ARRAYINIT);
 			final ExpressionResultBuilder builder = new ExpressionResultBuilder().addDeclaration(auxVar.getVarDec());
 			final HavocStatement havoc = new HavocStatement(loc, new VariableLHS[] { auxVar.getLhs() });
-			new Overapprox("large string literal", loc).annotate(havoc);
+			new OverapproxVariable("large string literal", loc).annotate(havoc);
 			builder.addStatement(havoc);
+			final StructAccessExpression base =
+					ExpressionFactory.constructStructAccessExpression(loc, auxVarRValue.getValue(), SFO.POINTER_BASE);
+			final var hda = mMemoryHandler.getMemoryModel().getDataHeapArray(CPrimitives.INT);
+			final Expression function =
+					ExpressionFactory.constructFunctionApplication(loc, mMemoryHandler.getNameOfHeapStoreFunction(hda),
+							new Expression[] { hda.getIdentifierExpression(), base, auxVar.getExp() },
+							(BoogieType) hda.getVariableLHS().getType());
+			mMemoryHandler.getRequiredMemoryModelFeatures().reportDataOnHeapStoreFunctionRequired(CPrimitives.INT);
+			builder.addStatement(
+					StatementFactory.constructSingleAssignmentStatement(loc, hda.getVariableLHS(), function));
 			return builder.build();
 		}
 
