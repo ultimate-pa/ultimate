@@ -46,7 +46,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
@@ -597,8 +596,8 @@ public class CExpressionTranslator {
 		final ExpressionResultBuilder resultBuilder =
 				new ExpressionResultBuilder().setLrValue(tmpRValue).addStatements(originalStatements);
 		if (oType.isAtomic()) {
-			final AtomicStatement atomic = new AtomicStatement(loc, assign.getStatements().toArray(Statement[]::new));
-			resultBuilder.addAllExceptLrValueAndStatements(assign).addStatement(atomic);
+			resultBuilder.addAllExceptLrValueAndStatements(assign)
+					.addStatement(StatementFactory.constructAtomicStatement(loc, assign.getStatements()));
 		} else {
 			resultBuilder.addAllExceptLrValue(assign);
 		}
@@ -657,8 +656,8 @@ public class CExpressionTranslator {
 		final ExpressionResultBuilder resultBuilder =
 				new ExpressionResultBuilder().setLrValue(tmpRValue).addStatements(originalStatements);
 		if (oType.isAtomic()) {
-			final AtomicStatement atomic = new AtomicStatement(loc, assign.getStatements().toArray(Statement[]::new));
-			resultBuilder.addAllExceptLrValueAndStatements(assign).addStatement(atomic);
+			resultBuilder.addAllExceptLrValueAndStatements(assign)
+					.addStatement(StatementFactory.constructAtomicStatement(loc, assign.getStatements()));
 		} else {
 			resultBuilder.addAllExceptLrValue(assign);
 		}

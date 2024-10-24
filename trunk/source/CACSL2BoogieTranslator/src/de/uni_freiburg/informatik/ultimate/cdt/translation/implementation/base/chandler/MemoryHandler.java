@@ -862,7 +862,7 @@ public class MemoryHandler {
 				isStaticInitialization ? HeapWriteMode.STORE_UNCHECKED : HeapWriteMode.STORE_CHECKED;
 		final List<Statement> result = getWriteCall(loc, hlv, value, realValueType, writeMode);
 		if (valueType.isAtomic()) {
-			return List.of(new AtomicStatement(loc, result.toArray(Statement[]::new)));
+			return List.of(StatementFactory.constructAtomicStatement(loc, result));
 		}
 		return result;
 	}
