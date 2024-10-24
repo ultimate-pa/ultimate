@@ -130,6 +130,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck;
 import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck.CheckableExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Axiom;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
@@ -836,7 +837,8 @@ public class CHandler {
 			final ExpressionResult rr = mExprResultTransformer.transformSwitchRexBoolToInt(rightOperand, loc, node);
 			final ExpressionResult result =
 					mCExpressionTranslator.handleMultiplicativeOperation(loc, node.getOperator(), rl, rr);
-			return makeAssignment(loc, leftOperand.getLrValue(), Collections.emptyList(), result, node);
+			return makeAtomicAssignmentIfNecessary(loc, leftOperand.getLrValue(),
+					DataStructureUtils.concat(leftOperand.getStatements(), rr.getStatements()), result, node);
 		}
 		case IASTBinaryExpression.op_plus:
 		case IASTBinaryExpression.op_minus: {
@@ -860,7 +862,8 @@ public class CHandler {
 					mExprResultTransformer.transformDecaySwitchRexBoolToInt(rightOperand, loc, node);
 			final ExpressionResult result =
 					mCExpressionTranslator.handleAdditiveOperation(loc, node.getOperator(), rl, rr);
-			return makeAssignment(loc, leftOperand.getLrValue(), Collections.emptyList(), result, node);
+			return makeAtomicAssignmentIfNecessary(loc, leftOperand.getLrValue(),
+					DataStructureUtils.concat(leftOperand.getStatements(), rr.getStatements()), result, node);
 		}
 		case IASTBinaryExpression.op_binaryAnd:
 		case IASTBinaryExpression.op_binaryOr:
@@ -876,7 +879,8 @@ public class CHandler {
 			final ExpressionResult rr = mExprResultTransformer.transformSwitchRexBoolToInt(rightOperand, loc, node);
 			final ExpressionResult result =
 					mCExpressionTranslator.handleBitwiseArithmeticOperation(loc, node.getOperator(), rl, rr);
-			return makeAssignment(loc, leftOperand.getLrValue(), Collections.emptyList(), result, node);
+			return makeAtomicAssignmentIfNecessary(loc, leftOperand.getLrValue(),
+					DataStructureUtils.concat(leftOperand.getStatements(), rr.getStatements()), result, node);
 		}
 		case IASTBinaryExpression.op_shiftLeft:
 		case IASTBinaryExpression.op_shiftRight: {
@@ -891,7 +895,8 @@ public class CHandler {
 			final ExpressionResult rr = mExprResultTransformer.transformSwitchRexBoolToInt(rightOperand, loc, node);
 			final ExpressionResult result =
 					mCExpressionTranslator.handleBitshiftOperation(loc, node.getOperator(), rl, rr);
-			return makeAssignment(loc, leftOperand.getLrValue(), Collections.emptyList(), result, node);
+			return makeAtomicAssignmentIfNecessary(loc, leftOperand.getLrValue(),
+					DataStructureUtils.concat(leftOperand.getStatements(), rr.getStatements()), result, node);
 		}
 		default:
 			final String msg = "Unknown or unsupported unary operation";
@@ -2178,8 +2183,7 @@ public class CHandler {
 			return new SkipResult();
 		}
 		// TODO: This is just a workaround for now to crash when thread local variables are used in a concurrent program
-		if (Arrays.stream(node.getDeclSpecifier().getAttributes()).map(x -> String.valueOf(x.getName()))
-				.anyMatch("thread"::equals)) {
+		if (CTranslationUtil.hasAttribute(node.getDeclSpecifier(), "thread")) {
 			mHasThreadLocalVars = true;
 			// Only crash for thread local variable in concurrent programs
 			if (mIsConcurrent) {
@@ -2717,6 +2721,19 @@ public class CHandler {
 		}
 	}
 
+	private ExpressionResult makeAtomicAssignmentIfNecessary(final ILocation loc, final LRValue leftHandSide,
+			final List<Statement> nonAtomicStatements, final ExpressionResult rhs, final IASTNode hook) {
+		final ExpressionResult assignment = makeAssignment(loc, leftHandSide, Set.of(), rhs, hook);
+		if (!leftHandSide.getCType().isAtomic()) {
+			return assignment;
+		}
+		final List<Statement> atomicStatements = new ArrayList<>(assignment.getStatements());
+		atomicStatements.removeAll(nonAtomicStatements);
+		return new ExpressionResultBuilder().addAllExceptLrValueAndStatements(assignment)
+				.setLrValue(assignment.getLrValue()).addStatements(nonAtomicStatements)
+				.addStatement(StatementFactory.constructAtomicStatement(loc, atomicStatements)).build();
+	}
+
 	/**
 	 *
 	 * @param loc
@@ -2844,7 +2861,11 @@ public class CHandler {
 		final AssignmentStatement assignStmt = StatementFactory.constructAssignmentStatement(loc,
 				new LeftHandSide[] { lValue.getLhs() }, new Expression[] { rhsWithBitfieldTreatment });
 
-		builder.addStatement(assignStmt);
+		if (leftHandSide.getCType().isAtomic()) {
+			builder.addStatement(new AtomicStatement(loc, new Statement[] { assignStmt }));
+		} else {
+			builder.addStatement(assignStmt);
+		}
 
 		for (final Overapprox oa : rhsConverted.getOverapprs()) {
 			new OverapproxVariable(oa.getOverapproximatedLocations()).annotate(assignStmt);

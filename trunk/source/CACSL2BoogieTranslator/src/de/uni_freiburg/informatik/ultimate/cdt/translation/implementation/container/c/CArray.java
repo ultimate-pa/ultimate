@@ -72,7 +72,7 @@ public class CArray extends CType {
 	 */
 	public CArray(final RValue bound, final CType valueType) {
 		// FIXME: integrate those flags -- you will also need to change the equals method if you do
-		super(false, false, false, false, false);
+		super(false, false, false, false, false, false);
 		mBound = bound;
 		mValueType = valueType;
 	}

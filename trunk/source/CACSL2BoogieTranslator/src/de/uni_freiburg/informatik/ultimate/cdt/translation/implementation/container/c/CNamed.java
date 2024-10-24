@@ -57,7 +57,7 @@ public class CNamed extends CType {
 	 */
 	public CNamed(final String name, final CType mappedType) {
 		// FIXME: integrate those flags -- you will also need to change the equals method if you do
-		super(false, false, false, false, false);
+		super(false, false, false, false, false, mappedType.isAtomic());
 		mName = name;
 		mMappedType = mappedType;
 	}
