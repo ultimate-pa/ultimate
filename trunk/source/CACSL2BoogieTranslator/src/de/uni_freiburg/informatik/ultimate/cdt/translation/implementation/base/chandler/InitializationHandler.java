@@ -1028,42 +1028,44 @@ public class InitializationHandler {
 			return false;
 		}
 
-		final float numberOfCells = countNumberOfPrimitiveElementInType(cType, hook);
-		if (numberOfCells < MINIMAL_NUMBER_CELLS_FOR_USING_CONSTARRAYS_FOR_ONHEAP_INIT) {
+		final BigInteger numberOfCells = countNumberOfPrimitiveElementInType(cType, hook);
+		if (numberOfCells
+				.compareTo(BigInteger.valueOf(MINIMAL_NUMBER_CELLS_FOR_USING_CONSTARRAYS_FOR_ONHEAP_INIT)) < 0) {
 			return false;
 		}
 
-		final float numberOfInitializerValues = initInfo == null ? 0f : initInfo.getNumberOfValues();
-		final float ratio = numberOfInitializerValues / numberOfCells;
-		if (ratio > MAXIMAL_EXPLICIT_TO_OVERALL_RATIO_FOR_USING_CONSTARRAYS_FOR_ONHEAP_INIT) {
+		final BigDecimal numberOfInitializerValues =
+				initInfo == null ? BigDecimal.ZERO : BigDecimal.valueOf(initInfo.getNumberOfValues());
+		final BigDecimal threshold = new BigDecimal(numberOfCells)
+				.multiply(BigDecimal.valueOf(MAXIMAL_EXPLICIT_TO_OVERALL_RATIO_FOR_USING_CONSTARRAYS_FOR_ONHEAP_INIT));
+		if (numberOfInitializerValues.compareTo(threshold) > 0) {
 			return false;
 		}
 
 		return true;
 	}
 
-	private long countNumberOfPrimitiveElementInType(final CType cTypeRaw, final IASTNode hook) {
+	private BigInteger countNumberOfPrimitiveElementInType(final CType cTypeRaw, final IASTNode hook) {
 		final CType cType = cTypeRaw.getUnderlyingType();
 		if (cType instanceof CPrimitive || cType instanceof CEnum || cType instanceof CPointer) {
-			return 1;
+			return BigInteger.ONE;
 		}
 		if (cType instanceof CStructOrUnion) {
 			if (CStructOrUnion.isUnion(cType)) {
-				return 1;
+				return BigInteger.ONE;
 			}
 			return Arrays.stream(((CStructOrUnion) cType).getFieldTypes())
-					.mapToLong(t -> countNumberOfPrimitiveElementInType(t, hook)).sum();
+					.map(t -> countNumberOfPrimitiveElementInType(t, hook)).reduce(BigInteger.ZERO, BigInteger::add);
 		}
 		if (cType instanceof CArray) {
 			if (cType.isIncomplete()) {
 				// An incomplete array can be the last member of a struct. It is not copied, so we return 0 here.
-				return 0;
+				return BigInteger.ZERO;
 			}
 			final CArray cArray = (CArray) cType;
-			final long innerCount = countNumberOfPrimitiveElementInType(cArray.getValueType(), hook);
-			final BigInteger boundBig = mTypeSizes.extractIntegerValue(cArray.getBound());
-			final long bound = boundBig.longValueExact();
-			return innerCount * bound;
+			final BigInteger innerCount = countNumberOfPrimitiveElementInType(cArray.getValueType(), hook);
+			final BigInteger bound = mTypeSizes.extractIntegerValue(cArray.getBound());
+			return innerCount.multiply(bound);
 		}
 		throw new AssertionError("Cannot count the primitive elements in type " + cType.getClass().getSimpleName());
 	}
