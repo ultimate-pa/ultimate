@@ -837,8 +837,8 @@ public class CHandler {
 			final ExpressionResult rr = mExprResultTransformer.transformSwitchRexBoolToInt(rightOperand, loc, node);
 			final ExpressionResult result =
 					mCExpressionTranslator.handleMultiplicativeOperation(loc, node.getOperator(), rl, rr);
-			return makeAtomicAssignmentIfNecessary(loc, leftOperand.getLrValue(), leftOperand.getStatements(), result,
-					node);
+			return makeAtomicAssignmentIfNecessary(loc, leftOperand.getLrValue(),
+					DataStructureUtils.concat(leftOperand.getStatements(), rr.getStatements()), result, node);
 		}
 		case IASTBinaryExpression.op_plus:
 		case IASTBinaryExpression.op_minus: {
@@ -862,8 +862,8 @@ public class CHandler {
 					mExprResultTransformer.transformDecaySwitchRexBoolToInt(rightOperand, loc, node);
 			final ExpressionResult result =
 					mCExpressionTranslator.handleAdditiveOperation(loc, node.getOperator(), rl, rr);
-			return makeAtomicAssignmentIfNecessary(loc, leftOperand.getLrValue(), leftOperand.getStatements(), result,
-					node);
+			return makeAtomicAssignmentIfNecessary(loc, leftOperand.getLrValue(),
+					DataStructureUtils.concat(leftOperand.getStatements(), rr.getStatements()), result, node);
 		}
 		case IASTBinaryExpression.op_binaryAnd:
 		case IASTBinaryExpression.op_binaryOr:
@@ -879,8 +879,8 @@ public class CHandler {
 			final ExpressionResult rr = mExprResultTransformer.transformSwitchRexBoolToInt(rightOperand, loc, node);
 			final ExpressionResult result =
 					mCExpressionTranslator.handleBitwiseArithmeticOperation(loc, node.getOperator(), rl, rr);
-			return makeAtomicAssignmentIfNecessary(loc, leftOperand.getLrValue(), leftOperand.getStatements(), result,
-					node);
+			return makeAtomicAssignmentIfNecessary(loc, leftOperand.getLrValue(),
+					DataStructureUtils.concat(leftOperand.getStatements(), rr.getStatements()), result, node);
 		}
 		case IASTBinaryExpression.op_shiftLeft:
 		case IASTBinaryExpression.op_shiftRight: {
@@ -895,8 +895,8 @@ public class CHandler {
 			final ExpressionResult rr = mExprResultTransformer.transformSwitchRexBoolToInt(rightOperand, loc, node);
 			final ExpressionResult result =
 					mCExpressionTranslator.handleBitshiftOperation(loc, node.getOperator(), rl, rr);
-			return makeAtomicAssignmentIfNecessary(loc, leftOperand.getLrValue(), leftOperand.getStatements(), result,
-					node);
+			return makeAtomicAssignmentIfNecessary(loc, leftOperand.getLrValue(),
+					DataStructureUtils.concat(leftOperand.getStatements(), rr.getStatements()), result, node);
 		}
 		default:
 			final String msg = "Unknown or unsupported unary operation";
