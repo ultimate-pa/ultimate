@@ -799,7 +799,7 @@ public class CACSL2BoogieBacktranslator extends
 	public ProcedureContract<BacktranslatedExpression, BacktranslatedExpression> translateProcedureContract(
 			final ProcedureContract<Expression, ? extends Expression> oldContract, final ILocation context) {
 		if (context instanceof CACSLLocation && ((CACSLLocation) context).ignoreDuringBacktranslation()) {
-			return null;
+			return new ProcedureContract<>(oldContract.getProcedure(), null, null);
 		}
 
 		final var newRequires = oldContract.getRequires() == null ? null
