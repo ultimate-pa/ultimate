@@ -837,7 +837,8 @@ public class CHandler {
 			final ExpressionResult rr = mExprResultTransformer.transformSwitchRexBoolToInt(rightOperand, loc, node);
 			final ExpressionResult result =
 					mCExpressionTranslator.handleMultiplicativeOperation(loc, node.getOperator(), rl, rr);
-			return makeAssignment(loc, leftOperand.getLrValue(), Collections.emptyList(), result, node);
+			return makeAtomicAssignmentIfNecessary(loc, leftOperand.getLrValue(), leftOperand.getStatements(), result,
+					node);
 		}
 		case IASTBinaryExpression.op_plus:
 		case IASTBinaryExpression.op_minus: {
@@ -861,7 +862,8 @@ public class CHandler {
 					mExprResultTransformer.transformDecaySwitchRexBoolToInt(rightOperand, loc, node);
 			final ExpressionResult result =
 					mCExpressionTranslator.handleAdditiveOperation(loc, node.getOperator(), rl, rr);
-			return makeAssignment(loc, leftOperand.getLrValue(), Collections.emptyList(), result, node);
+			return makeAtomicAssignmentIfNecessary(loc, leftOperand.getLrValue(), leftOperand.getStatements(), result,
+					node);
 		}
 		case IASTBinaryExpression.op_binaryAnd:
 		case IASTBinaryExpression.op_binaryOr:
@@ -877,7 +879,8 @@ public class CHandler {
 			final ExpressionResult rr = mExprResultTransformer.transformSwitchRexBoolToInt(rightOperand, loc, node);
 			final ExpressionResult result =
 					mCExpressionTranslator.handleBitwiseArithmeticOperation(loc, node.getOperator(), rl, rr);
-			return makeAssignment(loc, leftOperand.getLrValue(), Collections.emptyList(), result, node);
+			return makeAtomicAssignmentIfNecessary(loc, leftOperand.getLrValue(), leftOperand.getStatements(), result,
+					node);
 		}
 		case IASTBinaryExpression.op_shiftLeft:
 		case IASTBinaryExpression.op_shiftRight: {
@@ -892,7 +895,8 @@ public class CHandler {
 			final ExpressionResult rr = mExprResultTransformer.transformSwitchRexBoolToInt(rightOperand, loc, node);
 			final ExpressionResult result =
 					mCExpressionTranslator.handleBitshiftOperation(loc, node.getOperator(), rl, rr);
-			return makeAssignment(loc, leftOperand.getLrValue(), Collections.emptyList(), result, node);
+			return makeAtomicAssignmentIfNecessary(loc, leftOperand.getLrValue(), leftOperand.getStatements(), result,
+					node);
 		}
 		default:
 			final String msg = "Unknown or unsupported unary operation";
@@ -2715,6 +2719,19 @@ public class CHandler {
 		default:
 			throw new AssertionError("should not happen");
 		}
+	}
+
+	private ExpressionResult makeAtomicAssignmentIfNecessary(final ILocation loc, final LRValue leftHandSide,
+			final List<Statement> nonAtomicStatements, final ExpressionResult rhs, final IASTNode hook) {
+		final ExpressionResult assignment = makeAssignment(loc, leftHandSide, Set.of(), rhs, hook);
+		if (!leftHandSide.getCType().isAtomic()) {
+			return assignment;
+		}
+		final List<Statement> atomicStatements = new ArrayList<>(assignment.getStatements());
+		atomicStatements.removeAll(nonAtomicStatements);
+		return new ExpressionResultBuilder().addAllExceptLrValueAndStatements(assignment)
+				.setLrValue(assignment.getLrValue()).addStatements(nonAtomicStatements)
+				.addStatement(StatementFactory.constructAtomicStatement(loc, atomicStatements)).build();
 	}
 
 	/**
