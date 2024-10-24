@@ -31,11 +31,13 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
@@ -125,6 +127,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.CheckMode;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -502,12 +505,14 @@ public class StandardFunctionHandler {
 		// Preprocessing leads to: https://gcc.gnu.org/onlinedocs/gcc/_005f_005fatomic-Builtins.html
 
 		fill(map, "__atomic_load", this::handleAtomicLoad);
-		fill(map, "__atomic_exchange", this::handleAtomicExchange);
 		fill(map, "__atomic_store", this::handleAtomicStore);
+		fill(map, "__atomic_exchange", this::handleAtomicExchange);
+		fill(map, "__atomic_compare_exchange", this::handleAtomicCompareExchange);
 
 		fill(map, "__atomic_load_n", this::handleAtomicLoadN);
 		fill(map, "__atomic_store_n", this::handleAtomicStoreN);
 		fill(map, "__atomic_exchange_n", this::handleAtomicExchangeN);
+		fill(map, "__atomic_compare_exchange_n", this::handleAtomicCompareExchangeN);
 
 		fill(map, "__atomic_fetch_add",
 				(main, node, loc, name) -> handleAtomicFetch(main, node, loc, name, IASTBinaryExpression.op_plus));
@@ -523,12 +528,6 @@ public class StandardFunctionHandler {
 		fill(map, "__atomic_test_and_set", this::handleAtomicTestAndSet);
 		fill(map, "__atomic_clear", this::handleAtomicClear);
 
-		fill(map, "__atomic_compare_exchange",
-				(main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
-						new CPrimitive(CPrimitives.BOOL)));
-		fill(map, "__atomic_compare_exchange_n",
-				(main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
-						new CPrimitive(CPrimitives.BOOL)));
 		fill(map, "__atomic_thread_fence", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main,
 				loc, name, new CPrimitive(CPrimitives.VOID)));
 		fill(map, "__atomic_signal_fence", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main,
@@ -1223,7 +1222,7 @@ public class StandardFunctionHandler {
 		final ExpressionResult write =
 				mExprResultTransformer.makePointerAssignment(loc, pointer.getLrValue(), mExpressionTranslation
 						.constructLiteralForIntegerType(loc, new CPrimitive(CPrimitives.BOOL), BigInteger.ZERO));
-		return builder.addAllExceptLrValue(applyMemoryOrder(loc, write, memoryOrder.getLrValue().getValue())).build();
+		return builder.addAllExceptLrValue(applyMemoryOrders(loc, write, memoryOrder.getLrValue().getValue())).build();
 	}
 
 	private Result handleAtomicTestAndSet(final IDispatcher main, final IASTFunctionCallExpression node,
@@ -1241,7 +1240,7 @@ public class StandardFunctionHandler {
 		final ExpressionResult memoryOrder =
 				mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, arguments[1]);
 		builder.addAllExceptLrValue(pointer, memoryOrder).addAllIncludingLrValue(
-				applyMemoryOrder(loc, atomicBuilder.build(), memoryOrder.getLrValue().getValue()));
+				applyMemoryOrders(loc, atomicBuilder.build(), memoryOrder.getLrValue().getValue()));
 		return builder.build();
 	}
 
@@ -1259,7 +1258,7 @@ public class StandardFunctionHandler {
 		final ExpressionResult read = mExprResultTransformer.readPointerValue(loc, pointer1.getLrValue());
 		final ExpressionResult write =
 				mExprResultTransformer.makePointerAssignment(loc, pointer2.getLrValue(), read.getLrValue().getValue());
-		return builder.addAllIncludingLrValue(applyMemoryOrder(loc, read, memoryOrder.getLrValue().getValue()))
+		return builder.addAllIncludingLrValue(applyMemoryOrders(loc, read, memoryOrder.getLrValue().getValue()))
 				.addAllExceptLrValue(write).build();
 	}
 
@@ -1276,7 +1275,7 @@ public class StandardFunctionHandler {
 		final ExpressionResult read = mExprResultTransformer.readPointerValue(loc, pointer2.getLrValue());
 		builder.addAllExceptLrValue(read);
 		// Make sure that only the write, but not the read is atomic
-		builder.addAllExceptLrValue(applyMemoryOrder(loc,
+		builder.addAllExceptLrValue(applyMemoryOrders(loc,
 				mExprResultTransformer.makePointerAssignment(loc, pointer1.getLrValue(), read.getLrValue().getValue()),
 				memoryOrder.getLrValue().getValue()));
 		return builder.build();
@@ -1301,8 +1300,120 @@ public class StandardFunctionHandler {
 				mExprResultTransformer.makePointerAssignment(loc, pointer3.getLrValue(), read0.getLrValue().getValue()),
 				read1, mExprResultTransformer.makePointerAssignment(loc, pointer1.getLrValue(),
 						read1.getLrValue().getValue()));
-		builder.addAllExceptLrValue(applyMemoryOrder(loc, atomicBuilder.build(), memoryOrder.getLrValue().getValue()));
+		builder.addAllExceptLrValue(applyMemoryOrders(loc, atomicBuilder.build(), memoryOrder.getLrValue().getValue()));
 		return builder.build();
+	}
+
+	// https://gcc.gnu.org/onlinedocs/gcc/_005f_005fatomic-Builtins.html#index-_005f_005fatomic_005fcompare_005fexchange_005fn
+	// https://en.cppreference.com/w/c/atomic/atomic_compare_exchange
+	private Result handleAtomicCompareExchange(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 6, name, arguments);
+
+		// In this function, the desired value is passed via a pointer.
+		final ExpressionResult desiredResult = mExprResultTransformer.dispatchPointerLValue(main, loc, arguments[2]);
+		final var desiredRead = mExprResultTransformer.readPointerValue(loc, desiredResult.getLrValue());
+
+		return handleAtomicCompareExchange(main, node, loc, desiredResult, desiredRead);
+	}
+
+	// https://gcc.gnu.org/onlinedocs/gcc/_005f_005fatomic-Builtins.html#index-_005f_005fatomic_005fcompare_005fexchange_005fn
+	// https://en.cppreference.com/w/c/atomic/atomic_compare_exchange
+	private Result handleAtomicCompareExchangeN(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 6, name, arguments);
+
+		// In this function, the desired value is passed directly. We create a small dummy ExpressionResult for the
+		// helper function and store only the desired LRValue.
+		final ExpressionResult desiredResult =
+				mExprResultTransformer.transformDecaySwitch((ExpressionResult) main.dispatch(arguments[2]), loc, node);
+		final var desiredRead = new ExpressionResult(desiredResult.getLrValue());
+
+		return handleAtomicCompareExchange(main, node, loc, desiredResult, desiredRead);
+	}
+
+	// https://gcc.gnu.org/onlinedocs/gcc/_005f_005fatomic-Builtins.html#index-_005f_005fatomic_005fcompare_005fexchange_005fn
+	// https://en.cppreference.com/w/c/atomic/atomic_compare_exchange
+	//
+	// The implementation below generates Boogie code that roughly follows the schema below, where success and ptr_val
+	// are auxiliary variables. However, if the memoryOrder argument is not sequential consistency, we instead
+	// overapproximate the method with "assert false".
+	//
+	// @formatter:off
+	// (evaluate arguments)
+	// atomic {
+	//  if weak
+	//    havoc success
+	//  else
+	//    success := true
+	//  ptr_val := read(ptr)
+	//  if success && ptr_val == read(expected):
+	//    write(read(desired), ptr)
+	//  else
+	//    success := false
+	// }
+	// if !success
+	//   write(ptr_val, expected)
+	// return success
+	// @formatter:on
+	private Result handleAtomicCompareExchange(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final ExpressionResult desiredResult, final ExpressionResult desiredRead) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+
+		// Evaluate the arguments passed to the function. This happens non-atomically.
+		final ExpressionResult pointer = mExprResultTransformer.dispatchPointerLValue(main, loc, arguments[0]);
+		final ExpressionResult expectedResult = mExprResultTransformer.dispatchPointerLValue(main, loc, arguments[1]);
+		final ExpressionResult weakResult = mExprResultTransformer
+				.transformSwitchRexIntToBool((ExpressionResult) main.dispatch(arguments[3]), loc, node);
+		final ExpressionResult successMemoryOrder =
+				mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, arguments[4]);
+		final ExpressionResult failureMemoryOrder =
+				mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, arguments[5]);
+		final var resultBuilder = new ExpressionResultBuilder().addAllExceptLrValue(pointer, expectedResult,
+				desiredResult, weakResult, successMemoryOrder, failureMemoryOrder);
+
+		// Introduce an auxvar indicating whether the function is successful, i.e., the exchange was performed.
+		final var boolType = new CPrimitive(CPrimitives.BOOL);
+		final var success = mAuxVarInfoBuilder.constructAuxVarInfo(loc, boolType, AUXVAR.RETURNED);
+		final var boolZero = mExpressionTranslation.constructZero(loc, boolType);
+		final var successBoolean = mExpressionTranslation.constructBinaryEqualityExpression(loc,
+				IASTBinaryExpression.op_notequals, success.getExp(), boolType, boolZero, boolType);
+		final var noSuccessBoolean = mExpressionTranslation.constructBinaryEqualityExpression(loc,
+				IASTBinaryExpression.op_equals, success.getExp(), boolType, boolZero, boolType);
+
+		final var pointerRead = mExprResultTransformer.readPointerValue(loc, pointer.getLrValue());
+		final var expectedRead = mExprResultTransformer.readPointerValue(loc, expectedResult.getLrValue());
+		final var pointerWrite = mExprResultTransformer.makePointerAssignment(loc, pointer.getLrValue(),
+				desiredRead.getLrValue().getValue());
+
+		final var atomicBody = new ExpressionResultBuilder().addAuxVarWithDeclaration(success)
+				.addStatement(StatementFactory.constructIfStatement(loc, weakResult.getLrValue().getValue(),
+						new Statement[] { new HavocStatement(loc, new VariableLHS[] { success.getLhs() }) },
+						new Statement[] { StatementFactory.constructSingleAssignmentStatement(loc, success.getLhs(),
+								mExpressionTranslation.constructLiteralForIntegerType(loc, boolType,
+										BigInteger.ONE)) }))
+				.addAllExceptLrValue(pointerRead, expectedRead).addAllExceptLrValueAndStatements(desiredRead)
+				.addAllExceptLrValueAndStatements(pointerWrite)
+				.addStatement(StatementFactory.constructIfStatement(loc,
+						ExpressionFactory.and(loc,
+								List.of(successBoolean, ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ,
+										pointerRead.getLrValue().getValue(), expectedRead.getLrValue().getValue()))),
+						DataStructureUtils.concat(desiredRead.getStatements(), pointerWrite.getStatements())
+								.toArray(Statement[]::new),
+						new Statement[] {
+								StatementFactory.constructSingleAssignmentStatement(loc, success.getLhs(), boolZero) }))
+				.build();
+		final var atomic = applyMemoryOrders(loc, atomicBody, successMemoryOrder.getLrValue().getValue(),
+				failureMemoryOrder.getLrValue().getValue());
+
+		final var expectedWrite = mExprResultTransformer.makePointerAssignment(loc, expectedResult.getLrValue(),
+				pointerRead.getLrValue().getValue());
+		return resultBuilder.addAllExceptLrValue(atomic).addAllExceptLrValueAndStatements(expectedWrite)
+				.addStatement(StatementFactory.constructIfStatement(loc, noSuccessBoolean,
+						expectedWrite.getStatements().toArray(Statement[]::new), new Statement[0]))
+				.setLrValue(new RValue(success.getExp(), boolType)).build();
 	}
 
 	private Result handleAtomicLoadN(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
@@ -1314,7 +1425,7 @@ public class StandardFunctionHandler {
 		final ExpressionResult memoryOrder =
 				mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, arguments[1]);
 		return new ExpressionResultBuilder().addAllExceptLrValue(pointer, memoryOrder)
-				.addAllIncludingLrValue(applyMemoryOrder(loc, read, memoryOrder.getLrValue().getValue())).build();
+				.addAllIncludingLrValue(applyMemoryOrders(loc, read, memoryOrder.getLrValue().getValue())).build();
 	}
 
 	private Result handleAtomicStoreN(final IDispatcher main, final IASTFunctionCallExpression node,
@@ -1331,7 +1442,7 @@ public class StandardFunctionHandler {
 		// Make sure that only the write, but not the read is atomic
 		final ExpressionResult write = mExprResultTransformer.makePointerAssignment(loc, pointer.getLrValue(),
 				valueResult.getLrValue().getValue());
-		return builder.addAllExceptLrValue(applyMemoryOrder(loc, write, memoryOrder.getLrValue().getValue())).build();
+		return builder.addAllExceptLrValue(applyMemoryOrders(loc, write, memoryOrder.getLrValue().getValue())).build();
 	}
 
 	private Result handleAtomicExchangeN(final IDispatcher main, final IASTFunctionCallExpression node,
@@ -1350,7 +1461,7 @@ public class StandardFunctionHandler {
 		atomicBuilder.addAllExceptLrValue(mExprResultTransformer.makePointerAssignment(loc, pointer.getLrValue(),
 				valueResult.getLrValue().getValue()));
 		return builder.addAllIncludingLrValue(
-				applyMemoryOrder(loc, atomicBuilder.build(), memoryOrder.getLrValue().getValue())).build();
+				applyMemoryOrders(loc, atomicBuilder.build(), memoryOrder.getLrValue().getValue())).build();
 	}
 
 	private Result handleAtomicFetch(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
@@ -1383,37 +1494,46 @@ public class StandardFunctionHandler {
 				.addAllExceptLrValue(mExprResultTransformer.makePointerAssignment(loc, pointer.getLrValue(), newValue));
 		// Make sure that only the write, but not the read is atomic
 		return builder.addAllIncludingLrValue(
-				applyMemoryOrder(loc, atomicBuilder.build(), memoryOrder.getLrValue().getValue())).build();
+				applyMemoryOrders(loc, atomicBuilder.build(), memoryOrder.getLrValue().getValue())).build();
 	}
 
 	/**
-	 * Apply the {@code memoryOrder} to the {@code body} for stdatomic-library. If the memory order is equal to
-	 * {@code MEMORY_ORDER_SEQ_CST}, we just make all statements atomic. For all other cases we just overapproximate
-	 * (using an {@code assert false}), since we only support sequential consistency.
+	 * Apply the given {@code memoryOrders} to the {@code body} for stdatomic-library. If every given memory order is
+	 * equal to {@code MEMORY_ORDER_SEQ_CST}, we just make all statements atomic. For all other cases we just
+	 * overapproximate (using an {@code assert false}), since we only support sequential consistency.
 	 *
 	 * @param loc
 	 *            The C location
 	 * @param body
 	 *            The body that should be atomic based on the memory order
-	 * @param memoryOrder
-	 *            The memory order
+	 * @param memoryOrders
+	 *            The memory orders to apply
 	 * @return An ExpressionResult representing the translation respecting the memory order
 	 */
-	private ExpressionResult applyMemoryOrder(final ILocation loc, final ExpressionResult body,
-			final Expression memoryOrder) {
+	private ExpressionResult applyMemoryOrders(final ILocation loc, final ExpressionResult body,
+			final Expression... memoryOrders) {
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder(body);
 		builder.resetStatements(List.of());
+
+		final Statement atomic = new AtomicStatement(loc, body.getStatements().toArray(Statement[]::new));
+
+		// create condition checking whether all memory orders are supported
 		final CPrimitive intType = new CPrimitive(CPrimitives.INT);
 		final Expression seqCst = mExpressionTranslation.constructLiteralForIntegerType(loc, intType,
 				BigInteger.valueOf(MEMORY_ORDER_SEQ_CST));
-		final Expression atomicCond = mExpressionTranslation.constructBinaryEqualityExpression(loc,
-				IASTBinaryExpression.op_equals, memoryOrder, intType, seqCst, intType);
-		final Statement atomic = new AtomicStatement(loc, body.getStatements().toArray(Statement[]::new));
+		final var conjuncts = Arrays.stream(memoryOrders)
+				.map(memoryOrder -> mExpressionTranslation.constructBinaryEqualityExpression(loc,
+						IASTBinaryExpression.op_equals, memoryOrder, intType, seqCst, intType))
+				.collect(Collectors.toList());
+		final Expression atomicCond = ExpressionFactory.and(loc, conjuncts);
+
+		// overapproximated assert used in case some memory order is unsupported
 		final Statement overapproxAssert = new AssertStatement(loc, ExpressionFactory.createBooleanLiteral(loc, false));
 		new Overapprox("memory order (only sequential consistency is supported)", loc).annotate(overapproxAssert);
 		new Check(Spec.UNKNOWN).annotate(overapproxAssert);
-		Statement statement;
+
 		// Try to avoid unnecessary IfStatements
+		final Statement statement;
 		if (atomicCond instanceof BooleanLiteral) {
 			statement = ((BooleanLiteral) atomicCond).getValue() ? atomic : overapproxAssert;
 		} else {
