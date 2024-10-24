@@ -26,7 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare;
 
-import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -109,11 +110,18 @@ public final class FloydHoareUtils {
 		final var checks = getCheckedSpecifications(icfg, annotation);
 
 		// find all locations that have outgoing edges which are annotated with LoopEntry, i.e., all loop candidates
-		final Set<IcfgLocation> locsForLoopLocations = new HashSet<>();
-		locsForLoopLocations.addAll(IcfgUtils.getPotentialCycleProgramPoints(icfg));
-		locsForLoopLocations.addAll(icfg.getLoopLocations());
+		final Set<IcfgLocation> locsForInvariants = new LinkedHashSet<>();
+		locsForInvariants.addAll(IcfgUtils.getPotentialCycleProgramPoints(icfg));
+		locsForInvariants.addAll(icfg.getLoopLocations());
+		
+		// fetch predecessors of final states
+		var spec = annotation.getSpecification();
+		locsForInvariants.addAll(IcfgUtils.getErrorLocations(icfg).stream()
+				.filter(spec::isFinalState).map(loc -> loc.getIncomingNodes())
+				.flatMap(List::stream).collect(Collectors.toSet()));
 
-		for (final IcfgLocation locNode : locsForLoopLocations) {
+		
+		for (final IcfgLocation locNode : locsForInvariants) {
 			final IPredicate hoare = annotation.getAnnotation(locNode);
 			if (hoare == null) {
 				continue;
@@ -129,7 +137,7 @@ public final class FloydHoareUtils {
 			new WitnessInvariant(invResult.getInvariant()).annotate(locNode);
 		}
 	}
-
+	
 	public static void createProcedureContractResults(final IUltimateServiceProvider services, final String pluginName,
 			final IIcfg<IcfgLocation> icfg, final IFloydHoareAnnotation<IcfgLocation> annotation,
 			final IBacktranslationService backTranslatorService,

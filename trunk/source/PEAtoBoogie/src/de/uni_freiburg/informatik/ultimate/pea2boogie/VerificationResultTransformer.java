@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.AbstractResultAtElem
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.IResultWithCheck;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.InvariantResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
@@ -92,6 +93,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheck;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheckFailResult;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheckRedundancyResult;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheckRtInconsistentResult;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheckSuccessResult;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.Req2BoogieTranslator;
@@ -125,6 +127,7 @@ public class VerificationResultTransformer {
 	public IResult convertTraceAbstractionResult(final IResult result) {
 		final AbstractResultAtElement<?> oldRes;
 		final ReqCheck reqCheck;
+		InvariantResult<?> invResult = null;
 		boolean isPositive;
 		if (result instanceof CounterExampleResult<?, ?, ?>) {
 			oldRes = (AbstractResultAtElement<?>) result;
@@ -137,6 +140,25 @@ public class VerificationResultTransformer {
 		} else if (result instanceof AllSpecificationsHoldResult) {
 			// makes no sense in our context, suppress it
 			return null;
+		} else if (result instanceof InvariantResult) {
+			invResult = (InvariantResult<?>) result;
+			// Only want to process location invariants
+			if (invResult.isLoopInvariant()) {
+				return result;
+			}
+			oldRes = (AbstractResultAtElement<?>) result;
+			final var check = invResult.getChecks().stream().filter(c -> c instanceof ReqCheck).findFirst();
+			if (check.isEmpty()) {
+				return null;
+			}
+			reqCheck = (ReqCheck) check.get();
+			// Important if other specs receive invariants too,
+			// in order to prevent the results to slip through to
+			// the last return unhandled
+			if (!reqCheck.getSpec().contains(Spec.REDUNDANCY)) {
+				return result;
+			}
+			isPositive = true;
 		} else {
 			return result;
 		}
@@ -186,6 +208,21 @@ public class VerificationResultTransformer {
 			final String failurePath = formatTimeSequenceMap(delta2var2value);
 			return new ReqCheckRtInconsistentResult<>(element, plugin, failurePath);
 		}
+		
+		// If a loop invariant result is present, transform it into the
+		// new output, rather than a generic ReqCheckFailResult
+		if (spec == Spec.REDUNDANCY && invResult != null) {
+			// Annotation needed for the result to know the respective Check
+			reqCheck.annotate(element);
+			StringBuilder resultString = new StringBuilder("");
+			final String invariant = invResult.getInvariant();
+			final Set<String> redundancySet = ReqCheckRedundancyResult.extractRedundancySet(invariant);
+			// TODO: Apply post-processing to the redundancy set here
+			resultString.append(redundancySet.toString());
+			resultString.append(" derived by location invariant: ");
+			resultString.append(invariant);
+			return new ReqCheckRedundancyResult<>(element, plugin, reqCheck.getReqIds().iterator().next(), resultString.toString());
+		}		
 		return new ReqCheckFailResult<>(element, plugin);
 	}
 
