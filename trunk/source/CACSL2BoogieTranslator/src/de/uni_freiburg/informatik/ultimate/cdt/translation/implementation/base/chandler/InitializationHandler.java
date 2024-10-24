@@ -83,7 +83,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
@@ -227,16 +226,16 @@ public class InitializationHandler {
 
 		final InitializerInfo initializerInfo;
 		if (initializerRaw != null) {
-			/*
-			 * C11 6.7.9.1 : the grammar for initializers cannot generate empty initializers
-			 */
 			if (initializerRaw.getRootExpressionResult() == null
 					&& (initializerRaw.getList() == null || initializerRaw.getList().isEmpty())) {
-				throw new IncorrectSyntaxException(loc, "Empty initializers are not allowed by the C standard.");
+				// Empty initializers are not allowed in C11 (see 6.7.9.1), but C23 and GNU C allows it.
+				// Therefore we handle this here (as if there is not initializer), s.t. we are not stricter than C23 or
+				// GNU C.
+				initializerInfo = null;
+			} else {
+				// construct an InitializerInfo from the InitializerResult
+				initializerInfo = constructInitializerInfo(loc, initializerRaw, targetCTypeRaw, hook);
 			}
-
-			// construct an InitializerInfo from the InitializerResult
-			initializerInfo = constructInitializerInfo(loc, initializerRaw, targetCTypeRaw, hook);
 		} else {
 			initializerInfo = null;
 		}
