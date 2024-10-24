@@ -1,31 +1,30 @@
 package de.uni_freiburg.informatik.ultimate.web.backend;
 
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.PrintStream;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.EnumSet;
 
 import javax.servlet.DispatcherType;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.eclipse.equinox.app.IApplication;
 import org.eclipse.equinox.app.IApplicationContext;
 import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
-import org.eclipse.jetty.server.handler.HandlerCollection;
-import org.eclipse.jetty.server.handler.ResourceHandler;
-import org.eclipse.jetty.servlet.FilterHolder;
-import org.eclipse.jetty.servlet.ServletContextHandler;
-import org.eclipse.jetty.servlet.ServletHolder;
-import org.eclipse.jetty.util.log.Log;
-import org.eclipse.jetty.util.resource.PathResource;
+import org.eclipse.jetty.ee8.nested.ContextHandler;
+import org.eclipse.jetty.ee8.nested.ResourceHandler;
+import org.eclipse.jetty.ee8.servlet.FilterHolder;
+import org.eclipse.jetty.ee8.servlet.ServletContextHandler;
+import org.eclipse.jetty.ee8.servlet.ServletHolder;
+import org.eclipse.jetty.util.resource.PathResourceFactory;
+import org.eclipse.jetty.util.resource.Resource;
 
 import de.uni_freiburg.informatik.ultimate.web.backend.util.CrossOriginFilter;
 
 public class WebBackend implements IApplication {
 
+	private static final Logger LOGGER = LogManager.getLogger();
+	
 	private Server mJettyServer;
 
 	public WebBackend() {
@@ -34,9 +33,10 @@ public class WebBackend implements IApplication {
 
 	@Override
 	public Object start(final IApplicationContext context) throws Exception {
+		System.setProperty("org.eclipse.jetty.util.log.class", "org.eclipse.jetty.util.log.LoggerLog");
+
 		Config.load();
 
-		initLogging();
 		initJettyServer();
 
 		mJettyServer.start();
@@ -54,27 +54,6 @@ public class WebBackend implements IApplication {
 		}
 	}
 
-	private static void initLogging() {
-		// Set log level
-		System.setProperty("org.eclipse.jetty.LEVEL", Config.LOG_LEVEL);
-
-		if (Config.LOG_FILE_PATH.isEmpty()) {
-			Log.getRootLogger().info("Logging to stdout/stderr");
-			return;
-		}
-		// Redirect logging to file.
-		FileOutputStream outStream;
-		try {
-			outStream = new FileOutputStream(Config.LOG_FILE_PATH, true);
-			final PrintStream logStream = new PrintStream(outStream);
-			System.setOut(logStream);
-			System.setErr(logStream);
-			Log.getRootLogger().info("Logging to '" + Config.LOG_FILE_PATH + "'");
-		} catch (final FileNotFoundException e) {
-			Log.getRootLogger().warn("Not able to log to '" + Config.LOG_FILE_PATH + "'");
-		}
-	}
-
 	/**
 	 * Initialize Jetty front- and back-end server.
 	 */
@@ -87,8 +66,7 @@ public class WebBackend implements IApplication {
 		if (Config.SERVE_WEBSITE) {
 			final Path absPath = Config.tryGetAbsolutePath(Config.FRONTEND_PATH);
 			addStaticPathToContext(contexts, absPath, Config.FRONTEND_ROUTE);
-			Log.getRootLogger()
-					.info("Serving frontend (" + absPath.toString() + ") at route: " + Config.FRONTEND_ROUTE);
+			LOGGER.info("Serving frontend (" + absPath.toString() + ") at route: " + Config.FRONTEND_ROUTE);
 		}
 
 		// Serve the API.
@@ -100,7 +78,7 @@ public class WebBackend implements IApplication {
 		// Enable CORS to allow ultimate back-end/front-end running on a separate port and domain.
 		enableCorsOnServletContextHandler(servlets);
 
-		Log.getRootLogger().info("Serving API at route: " + Config.BACKEND_ROUTE);
+		LOGGER.info("Serving API at route: " + Config.BACKEND_ROUTE);
 	}
 
 	/**
@@ -112,14 +90,17 @@ public class WebBackend implements IApplication {
 	 * @param routePath
 	 *            The route the files should be served at (e.g. "/media").
 	 */
-	private static void addStaticPathToContext(final HandlerCollection contextCollection, final Path folderPath,
+	private static void addStaticPathToContext(final ContextHandlerCollection contextCollection, final Path folderPath,
 			final String routePath) {
 		final ResourceHandler frontendResourceHandler = new ResourceHandler();
-		frontendResourceHandler.setDirectoriesListed(true);
+		frontendResourceHandler.setDirAllowed(true);
+
+		final PathResourceFactory resourceFactory = new PathResourceFactory();
+		final Resource folderPathRes = resourceFactory.newResource(folderPath.toUri());
 
 		final ContextHandler frontendContextHandler = new ContextHandler();
 		frontendContextHandler.setContextPath(routePath);
-		frontendContextHandler.setBaseResource(new PathResource(folderPath));
+		frontendContextHandler.setBaseResource(folderPathRes);
 		frontendContextHandler.setHandler(frontendResourceHandler);
 
 		contextCollection.addHandler(frontendContextHandler);
@@ -141,5 +122,4 @@ public class WebBackend implements IApplication {
 		cors.setInitParameter(CrossOriginFilter.ALLOWED_METHODS_PARAM, "GET,POST");
 
 	}
-
 }

@@ -4,7 +4,7 @@
   	<parent>
 		<artifactId>mavenparent</artifactId>
 		<groupId>de.uni_freiburg.informatik.ultimate</groupId>
-		<version>0.2.5</version>
+		<version>0.3.0</version>
 		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
 	</parent>
   
@@ -12,31 +12,35 @@
   <artifactId>de.uni_freiburg.informatik.ultimate.lib.srparse</artifactId>
   <version>1.0.0</version>
   <packaging>eclipse-plugin</packaging>
-  
-  <build>
+
+	<build>
 		<plugins>
 			<plugin>
 				<artifactId>maven-antrun-plugin</artifactId>
 				<version>${maven-antrun-version}</version>
 				<executions>
 					<execution>
-						<id>generate parser sources</id>
+						<id>generate-parser-sources</id>
 						<phase>generate-sources</phase>
 						<configuration>
 							<target>
-								<echo>Library-srParse: workspaceDir is ${workspaceDir}</echo>
-								<echo>Library-srParse: cupDir is ${cupDir}</echo>
-								<echo>Library-srParse: srparseparserDir is ${srparseparserDir}</echo>
-								<echo>Library-srParse: flexBinary is ${flexBinary}</echo>
-
-								<java classname="com.github.jhoenicke.javacup.Main" classpath="${cupDir}" fork="true"
-									dir="${srparseparserDir}" failonerror="true">
-									<arg line="-expect 2" />
-									<arg value="Requirements.cup" />
-								</java>
-								<java jar="${flexBinary}" fork="true" dir="${srparseparserDir}" failonerror="true">
-									<arg value="Requirements.flex" />
-								</java>
+								<ant antfile="${basedir}/build.xml">
+									<target name="generate" />
+								</ant>
+							</target>
+						</configuration>
+						<goals>
+							<goal>run</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>clean-parser-sources</id>
+						<phase>clean</phase>
+						<configuration>
+							<target>
+								<ant antfile="${basedir}/build.xml">
+									<target name="clean" />
+								</ant>
 							</target>
 						</configuration>
 						<goals>
@@ -45,24 +49,7 @@
 					</execution>
 				</executions>
 			</plugin>
-			<plugin>
-				<artifactId>maven-clean-plugin</artifactId>
-				<version>${maven-clean-version}</version>
-				<configuration>
-					<filesets>
-						<fileset>
-							<directory>${srparseparserDir}</directory>
-							<includes>
-								<include>ReqParser.java</include>
-								<include>ReqLexer.java</include>
-								<include>ReqLexer.java~</include>
-								<include>ReqSymbols.java</include>
-							</includes>
-						</fileset>
-					</filesets>
-				</configuration>
-			</plugin>
 		</plugins>
 	</build>
-  
+
 </project>

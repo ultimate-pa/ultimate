@@ -2,7 +2,8 @@
 <feature
       id="BA_FeatureUltimateDeltaDebugger"
       label="BA_FeatureUltimateDeltaDebugger"
-      version="0.2.5">
+      version="0.3.0"
+      provider-name="Ultimate Program Analysis Team">
 
    <requires>
       <import feature="BA_FeatureDependenciesCommon"/>
@@ -11,23 +12,14 @@
 
    <plugin
          id="de.uni_freiburg.informatik.ultimate.deltadebugger"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
+         version="0.0.0"/>
 
    <plugin
          id="de.uni_freiburg.informatik.ultimate.cli"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
+         version="0.0.0"/>
 
    <plugin
          id="org.apache.commons.cli"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
+         version="0.0.0"/>
 
 </feature>

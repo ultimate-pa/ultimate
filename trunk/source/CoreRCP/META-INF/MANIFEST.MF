@@ -3,7 +3,8 @@ Eclipse-BuddyPolicy: dependent
 Bundle-ManifestVersion: 2
 Bundle-Name: CoreRCP Plug-in
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.core;singleton:=true
-Bundle-Version: 0.2.5
+Bundle-Vendor: Ultimate Program Analysis Team
+Bundle-Version: 0.3.0
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator
 Require-Bundle: org.eclipse.core.runtime;visibility:=reexport,
  de.uni_freiburg.informatik.ultimate.lib.core;visibility:=reexport,
@@ -11,7 +12,6 @@ Require-Bundle: org.eclipse.core.runtime;visibility:=reexport,
  de.uni_freiburg.informatik.ultimate.lib.smtlib,
  de.uni_freiburg.informatik.ultimate.lib.util,
  org.apache.log4j,
- org.apache.logging.log4j,
  org.apache.commons.lang,
  org.eclipse.core.resources
 Bundle-ActivationPolicy: lazy
@@ -26,6 +26,6 @@ Export-Package: de.uni_freiburg.informatik.ultimate.core.coreplugin,
  de.uni_freiburg.informatik.ultimate.core.preferences,
  de.uni_freiburg.informatik.ultimate.core.util,
  de.uni_freiburg.informatik.ultimate.ep
-Bundle-RequiredExecutionEnvironment: JavaSE-11
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Import-Package: de.uni_freiburg.informatik.ultimate.astbuilder
 Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.core

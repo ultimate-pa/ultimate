@@ -22,13 +22,13 @@
 	<parent>
 		<artifactId>mavenparent</artifactId>
 		<groupId>de.uni_freiburg.informatik.ultimate</groupId>
-		<version>0.2.5</version>
+		<version>0.3.0</version>
 		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
 	</parent>
 
 	<groupId>de.uni_freiburg.informatik.ultimate</groupId>
 	<artifactId>de.uni_freiburg.informatik.ultimate.crocotta</artifactId>
-	<version>0.2.5</version>
+	<version>0.3.0</version>
 	<packaging>eclipse-plugin</packaging>
 
 	<build>
@@ -38,30 +38,27 @@
 				<version>${maven-antrun-version}</version>
 				<executions>
 					<execution>
-						<id>generate parser sources</id>
+						<id>generate-parser-sources</id>
 						<phase>generate-sources</phase>
 						<configuration>
 							<target>
-								<echo>Crocotta: workspaceDir is ${workspaceDir}</echo>
-								<echo>Crocotta: cupDir is ${cupDir}</echo>
-								<echo>Crocotta: crocottaDir is ${crocottaDir}</echo>
-								<echo>Crocotta: flexBinary is ${flexBinary}</echo>
-
-								<java classname="com.github.jhoenicke.javacup.Main"
-									classpath="${cupDir}" fork="true" dir="${crocottaDir}/parser"
-									failonerror="true">
-									<arg value="CrocParser.cup" />
-								</java>
-								<java jar="${flexBinary}" fork="true" dir="${crocottaDir}/parser"
-									failonerror="true">
-									<arg value="CrocParser.flex" />
-								</java>
-								<java classname="de.uni_freiburg.informatik.ultimate.astbuilder.Main"
-									classpath="${astbuilderBinaries}:${cupDir}" fork="true"
-									dir="${crocottaDir}/ast" failonerror="true">
-									<arg value="-crocotta" />
-									<arg value="Crocotta.ast" />
-								</java>
+								<ant antfile="${basedir}/build.xml">
+									<target name="generate" />
+								</ant>
+							</target>
+						</configuration>
+						<goals>
+							<goal>run</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>clean-parser-sources</id>
+						<phase>clean</phase>
+						<configuration>
+							<target>
+								<ant antfile="${basedir}/build.xml">
+									<target name="clean" />
+								</ant>
 							</target>
 						</configuration>
 						<goals>
@@ -69,31 +66,6 @@
 						</goals>
 					</execution>
 				</executions>
-			</plugin>
-			<plugin>
-				<artifactId>maven-clean-plugin</artifactId>
-				<version>${maven-clean-version}</version>
-				<configuration>
-					<filesets>
-						<fileset>
-							<directory>${crocottaDir}/parser</directory>
-							<includes>
-								<include>CrocParser.java</include>
-								<include>CrocLexer.java</include>
-								<include>CrocLexer.java~</include>
-								<include>CrocSymbols.java</include>
-							</includes>
-						</fileset>
-						<fileset>
-							<directory>${crocottaDir}/ast</directory>
-							<excludes>
-								<exclude>*.xml</exclude>
-								<exclude>*.ast</exclude>
-								<exclude>CrocottaQuery.java</exclude>
-							</excludes>
-						</fileset>
-					</filesets>
-				</configuration>
 			</plugin>
 		</plugins>
 	</build>

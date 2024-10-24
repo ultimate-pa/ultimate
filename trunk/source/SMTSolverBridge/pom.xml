@@ -32,7 +32,7 @@
 	<parent>
 		<artifactId>mavenparent</artifactId>
 		<groupId>de.uni_freiburg.informatik.ultimate</groupId>
-		<version>0.2.5</version>
+		<version>0.3.0</version>
 		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
 	</parent>
 
@@ -47,21 +47,27 @@
 				<version>${maven-antrun-version}</version>
 				<executions>
 					<execution>
-						<id>generate parser sources</id>
+						<id>generate-parser-sources</id>
 						<phase>generate-sources</phase>
 						<configuration>
 							<target>
-								<echo>SMTSolverBridge: workspaceDir is ${workspaceDir}</echo>
-								<echo>SMTSolverBridge: cupDir is ${cupDir}</echo>
-								<echo>SMTSolverBridge: externalsmtsolverDir is ${externalsmtsolverDir}</echo>
-								<echo>SMTSolverBridge: flexBinary is ${flexBinary}</echo>
-
-								<java classname="com.github.jhoenicke.javacup.Main" classpath="${cupDir}" fork="true" dir="${externalsmtsolverDir}" failonerror="true">
-									<arg value="scriptResult.cup" />
-								</java>
-								<java jar="${flexBinary}" fork="true" dir="${externalsmtsolverDir}" failonerror="true">
-									<arg value="scriptResult.flex" />
-								</java>
+								<ant antfile="${basedir}/build.xml">
+									<target name="generate" />
+								</ant>
+							</target>
+						</configuration>
+						<goals>
+							<goal>run</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>clean-parser-sources</id>
+						<phase>clean</phase>
+						<configuration>
+							<target>
+								<ant antfile="${basedir}/build.xml">
+									<target name="clean" />
+								</ant>
 							</target>
 						</configuration>
 						<goals>
@@ -69,23 +75,6 @@
 						</goals>
 					</execution>
 				</executions>
-			</plugin>
-			<plugin>
-				<artifactId>maven-clean-plugin</artifactId>
-				<version>${maven-clean-version}</version>
-				<configuration>
-					<filesets>
-						<fileset>
-							<directory>${externalsmtsolverDir}</directory>
-							<includes>
-								<include>Parser.java</include>
-								<include>Lexer.java</include>
-								<include>Lexer.java~</include>
-								<include>LexerSymbols.java</include>
-							</includes>
-						</fileset>
-					</filesets>
-				</configuration>
 			</plugin>
 		</plugins>
 	</build>

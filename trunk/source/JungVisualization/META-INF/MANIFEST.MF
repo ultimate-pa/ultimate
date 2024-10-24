@@ -2,15 +2,21 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Jung Visualization Plug-in
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization;singleton:=true
-Bundle-Version: 0.2.5
+Bundle-Vendor: Ultimate Program Analysis Team
+Bundle-Version: 0.3.0
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
- edu.uci.ics.jung,
+ wrapped.net.sf.jung.jung-algorithms,
+ wrapped.net.sf.jung.jung-api,
+ wrapped.net.sf.jung.jung-graph-impl,
+ wrapped.net.sf.jung.jung-io,
+ wrapped.net.sf.jung.jung-visualization,
+ com.google.guava,
  de.uni_freiburg.informatik.ultimate.core,
  de.uni_freiburg.informatik.ultimate.gui,
  org.apache.batik.anim,
  org.apache.batik.svggen,
- org.apache.batik.ext.awt
-Bundle-RequiredExecutionEnvironment: JavaSE-11
+ org.apache.batik.awt.util
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Bundle-ActivationPolicy: lazy
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.Activator
 Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.plugins.output.jungvisualization

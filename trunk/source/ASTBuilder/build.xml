@@ -1,0 +1,63 @@
+<project name="ast-builder" default="generate" basedir=".">
+	<property name="pluginDir" location="${basedir}" />
+	<property name="workspaceDir" location="${pluginDir}/.." />
+	<property name="astbuilderDir" location="${pluginDir}/bin" />
+	<property name="cupDir" location="${workspaceDir}/JavaCup/bin" />
+	<property name="astCodeDir" location="${pluginDir}/src/de/uni_freiburg/informatik/ultimate/astbuilder" />
+
+	<description>Build automation for AST builder</description>
+
+	<target name="generate" depends="compile-ast" />
+	<target name="clean" depends="clean-parser,clean-compile,clean-ast" />
+
+	<echo level="info">ASTBuilder: pluginDir     is ${pluginDir}</echo>
+	<echo level="info">ASTBuilder: workspaceDir  is ${workspaceDir}</echo>
+	<echo level="info">ASTBuilder: astbuilderDir is ${astbuilderDir}</echo>
+	<echo level="info">ASTBuilder: cupDir        is ${cupDir}</echo>
+	<echo level="info">ASTBuilder: astCodeDir    is ${astCodeDir}</echo>
+
+	<target name="generate-parser">
+		<!-- Generate ASTBuilder parser with the parser generator JavaCup -->
+		<java classname="com.github.jhoenicke.javacup.Main" classpath="${cupDir}" dir="${astCodeDir}" fork="true" failonerror="true">
+			<arg value="parser.cup" />
+		</java>
+	</target>
+
+	<target name="compile-parser" depends="generate-parser">
+		<!-- Compile a first-stage ASTBuilder with the new parser and old AST -->
+		<mkdir dir="${astbuilderDir}" />
+		<javac srcdir="${pluginDir}/src" destdir="${astbuilderDir}" classpath="${cupDir}" includeantruntime="false" fork="true" failonerror="true" />
+	</target>
+
+	<target name="generate-ast" depends="compile-parser">
+		<!-- Generate ASTBuilder AST with the AST generator TreeBuilder -->
+		<java classname="de.uni_freiburg.informatik.ultimate.astbuilder.Main" classpath="${astbuilderDir}:${cupDir}" dir="${astCodeDir}" fork="true" failonerror="true">
+			<arg value="parser.ast" />
+		</java>
+	</target>
+
+	<target name="compile-ast" depends="generate-ast">
+		<!-- Compile a second-stage ASTBuilder with the new parser and new AST -->
+		<javac srcdir="${pluginDir}/src" destdir="${astbuilderDir}" classpath="${cupDir}" includeantruntime="false" fork="true" failonerror="true" />
+	</target>
+
+	<target name="clean-parser">
+		<!-- Clean generated ASTBuilder parser files -->
+		<delete verbose="true" failonerror="false">
+			<fileset dir="${astCodeDir}" defaultexcludes="false">
+				<include name="parser.java" />
+				<include name="sym.java" />
+			</fileset>
+		</delete>
+	</target>
+
+	<target name="clean-compile">
+		<!-- Clean compiled ASTBuilder files -->
+		<delete verbose="true" dir="${astbuilderDir}" />
+	</target>
+
+	<target name="clean-ast">
+		<!-- Clean generated ASTBuilder AST files -->
+		<!-- Generated AST files are not deleted, otherwise the ASTBuilder can no longer build itself -->
+	</target>
+</project>

@@ -31,16 +31,16 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>de.uni_freiburg.informatik.ultimate</groupId>
 	<artifactId>de.uni_freiburg.informatik.ultimate.lib.test</artifactId>
-	<version>0.2.5</version>
+	<version>0.3.0</version>
 	<packaging>eclipse-plugin</packaging>
 
 	<parent>
 		<artifactId>mavenparent</artifactId>
 		<groupId>de.uni_freiburg.informatik.ultimate</groupId>
-		<version>0.2.5</version>
+		<version>0.3.0</version>
 		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
 	</parent>
-	
+
 	<build>
 		<plugins>
 			<plugin>
@@ -48,32 +48,27 @@
 				<version>${maven-antrun-version}</version>
 				<executions>
 					<execution>
-						<id>generate parser sources</id>
+						<id>generate-binding-sources</id>
 						<phase>generate-sources</phase>
 						<configuration>
 							<target>
-								<echo>Building rundefinition with xjc</echo>
-								<echo>Library-UltimateCore: workspaceDir is ${workspaceDir}</echo>
-								<echo>Library-UltimateCore: rundefDir is ${benchexecDir}</echo>
-<!--
-								<exec executable="xjc" failonerror="true" dir="${project.basedir}">
-									<arg value="-d" />
-									<arg value="${workspaceDir}/Library-UltimateTest/src" />
-									<arg value="-p" />
-									<arg value="de.uni_freiburg.informatik.ultimate.test.benchexec.benchmark" />
-									<arg value="${benchexecDir}/benchmark-1.9.xsd" />
-								</exec>
--->
-								<taskdef name="xjc" classname="com.sun.tools.xjc.XJCTask">
-							    	<classpath>
-							        	<fileset dir="${baSharedJarsDir}" includes="*.jar"/>
-							    	</classpath>
-								</taskdef>
-								
-								<xjc schema="${benchexecDir}/benchmark-1.9.xsd" package="de.uni_freiburg.informatik.ultimate.test.benchexec.benchmark" destdir="${workspaceDir}/Library-UltimateTest/src">
-									<produces dir="${workspaceDir}/Library-UltimateTest/src/de.uni_freiburg.informatik.ultimate.test.benchexec.benchmark" includes="**/*.java"/>
-								</xjc>
-								
+								<ant antfile="${basedir}/build.xml">
+									<target name="generate" />
+								</ant>
+							</target>
+						</configuration>
+						<goals>
+							<goal>run</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>clean-binding-sources</id>
+						<phase>clean</phase>
+						<configuration>
+							<target>
+								<ant antfile="${basedir}/build.xml">
+									<target name="clean" />
+								</ant>
 							</target>
 						</configuration>
 						<goals>
@@ -82,22 +77,7 @@
 					</execution>
 				</executions>
 			</plugin>
-			<plugin>
-				<artifactId>maven-clean-plugin</artifactId>
-				<version>${maven-clean-version}</version>
-				<configuration>
-					<filesets>
-						<fileset>
-							<directory>${benchexecDir}</directory>
-							<excludes>
-							<exclude>*.xml</exclude>
-							<exclude>*.xsd</exclude>
-							<exclude>jaxb.properties</exclude>
-							</excludes>
-						</fileset>
-					</filesets>
-				</configuration>
-			</plugin>
 		</plugins>
 	</build>
+
 </project>

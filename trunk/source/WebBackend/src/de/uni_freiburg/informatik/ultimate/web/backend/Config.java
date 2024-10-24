@@ -10,8 +10,8 @@ import java.nio.file.Path;
 import java.util.Properties;
 import java.util.function.Function;
 
-import org.eclipse.jetty.util.log.Log;
-import org.eclipse.jetty.util.log.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * @formatter:off
@@ -39,6 +39,8 @@ import org.eclipse.jetty.util.log.Logger;
  * @formatter:on
  */
 public class Config {
+
+	private static final Logger LOGGER = LogManager.getLogger();
 
 	private Config() {
 		// do not instantiate config class
@@ -75,8 +77,7 @@ public class Config {
 		try {
 			return FileSystems.getDefault().getPath(path).normalize().toAbsolutePath().normalize();
 		} catch (final InvalidPathException | IOError | SecurityException ex) {
-			final Logger logger = Log.getRootLogger();
-			logger.warn(String.format("Could not convert %s to absolute path: %s", path, ex.getMessage()));
+			LOGGER.warn(String.format("Could not convert %s to absolute path: %s", path, ex.getMessage()));
 		}
 		return null;
 	}
@@ -86,19 +87,18 @@ public class Config {
 	 */
 	private static void loadSettingsFile() {
 		final String settingsFilePath = loadString("SETTINGS_FILE", SETTINGS_FILE);
-		final Logger logger = Log.getRootLogger();
 		final Path absolutePath = tryGetAbsolutePath(settingsFilePath);
 		if (absolutePath == null) {
-			logger.warn(String.format("Could not load settings file from '%s', using defaults", settingsFilePath));
+			LOGGER.warn(String.format("Could not load settings file from '%s', using defaults", settingsFilePath));
 			return;
 		}
 
 		try (final FileInputStream fileInputStream = new FileInputStream(absolutePath.toFile())) {
 			APP_SETTINGS.load(fileInputStream);
-			logger.info(String.format("Loaded settings file from %s", settingsFilePath));
+			LOGGER.info(String.format("Loaded settings file from %s", settingsFilePath));
 		} catch (final IOException e) {
-			logger.warn(String.format("Could not load settings file from '%s', using defaults", settingsFilePath));
-			logger.warn(e.getMessage());
+			LOGGER.warn(String.format("Could not load settings file from '%s', using defaults", settingsFilePath));
+			LOGGER.warn(e.getMessage());
 		}
 	}
 

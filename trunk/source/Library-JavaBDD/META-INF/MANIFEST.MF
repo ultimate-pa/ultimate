@@ -1,9 +1,0 @@
-Manifest-Version: 1.0
-Bundle-ManifestVersion: 2
-Bundle-Name: Library-JavaBDD
-Bundle-SymbolicName: net.sf.javabdd
-Bundle-Version: 0.6.0
-Bundle-Vendor: http://javabdd.sourceforge.net/
-Bundle-RequiredExecutionEnvironment: JavaSE-1.8
-Export-Package: net.sf.javabdd
-Automatic-Module-Name: net.sf.javabdd

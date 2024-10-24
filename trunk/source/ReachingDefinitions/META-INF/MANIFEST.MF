@@ -2,7 +2,8 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Reaching Definitions
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions;singleton:=true
-Bundle-Version: 0.2.5
+Bundle-Vendor: Ultimate Program Analysis Team
+Bundle-Version: 0.3.0
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.core,
  de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils,
@@ -12,7 +13,7 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.smtlib,
  de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2
 Bundle-ActivationPolicy: lazy
-Bundle-RequiredExecutionEnvironment: JavaSE-11
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Export-Package: de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions,
  de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations,
  de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.boogie,

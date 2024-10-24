@@ -1,0 +1,44 @@
+<project name="ultimatetest-benchmark" default="generate" basedir=".">
+	<property name="pluginDir" location="${basedir}" />
+	<property name="workspaceDir" location="${pluginDir}/.." />
+	<property name="xjcDir" location="${workspaceDir}/BA_SharedJARs" />
+	<property name="xjcSourceDir" location="${pluginDir}/src/de/uni_freiburg/informatik/ultimate/test/benchexec/benchmark" />
+	<property name="xjcTargetDir" location="${pluginDir}/src" />
+	<property name="xjcPkgDir" location="${xjcSourceDir}" />
+	<property name="xjcPkgName" value="de.uni_freiburg.informatik.ultimate.test.benchexec.benchmark" />
+
+	<description>Build automation for UltimateTest benchmark XML bindings</description>
+
+	<target name="generate" depends="generate-bindings" />
+	<target name="clean" depends="clean-bindings" />
+
+	<echo level="info">LibraryUltimateTest: pluginDir    is ${pluginDir}</echo>
+	<echo level="info">LibraryUltimateTest: workspaceDir is ${workspaceDir}</echo>
+	<echo level="info">LibraryUltimateTest: xjcDir       is ${xjcDir}</echo>
+	<echo level="info">LibraryUltimateTest: xjcSourceDir is ${xjcSourceDir}</echo>
+	<echo level="info">LibraryUltimateTest: xjcTargetDir is ${xjcTargetDir}</echo>
+	<echo level="info">LibraryUltimateTest: xjcPkgDir    is ${xjcPkgDir}</echo>
+	<echo level="info">LibraryUltimateTest: xjcPkgName   is ${xjcPkgName}</echo>
+
+	<taskdef name="xjc" classname="com.sun.tools.xjc.XJCTask">
+		<classpath>
+			<fileset dir="${xjcDir}" includes="*.jar" />
+		</classpath>
+	</taskdef>
+
+	<target name="generate-bindings">
+		<!-- Generate UltimateTest benchmark XML bindings with the Java XML Binding Compiler xjc -->
+		<xjc schema="${xjcSourceDir}/benchmark-1.9.xsd" package="${xjcPkgName}" destdir="${xjcTargetDir}">
+			<produces dir="${xjcPkgDir}" includes="*.java" />
+		</xjc>
+	</target>
+
+	<target name="clean-bindings">
+		<!-- Clean generated UltimateTest benchmark XML binding files -->
+		<delete verbose="true" includeEmptyDirs="false">
+			<fileset dir="${xjcPkgDir}">
+				<exclude name="benchmark-1.9.xsd" />
+			</fileset>
+		</delete>
+	</target>
+</project>
