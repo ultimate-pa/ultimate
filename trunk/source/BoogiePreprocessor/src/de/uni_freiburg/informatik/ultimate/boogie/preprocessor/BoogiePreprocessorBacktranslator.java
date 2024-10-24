@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2024 Niklas Kult (niklas111098@gmail.com)
  * Copyright (C) 2015 University of Freiburg
  *
  * This file is part of the ULTIMATE BoogiePreprocessor plug-in.
@@ -200,19 +201,37 @@ public class BoogiePreprocessorBacktranslator
 			}
 
 			final AtomicTraceElement<BoogieASTNode> ate = programExecution.getTraceElement(i);
-			if (elem instanceof WhileStatement) {
+			if (elem instanceof WhileStatement ) {
 				assert checkProcedureNames(elem, ate);
-				final AssumeStatement assumeStmt = (AssumeStatement) ate.getTraceElement();
+				// If trace element was an AssumeStatement, the UnstructureCode was used and we
+				// have to compute the StepInfo.
 				final WhileStatement stmt = (WhileStatement) elem;
-				final Expression cond = stmt.getCondition();
-				final StepInfo info = getStepInfoFromCondition(assumeStmt.getFormula(), cond);
-				atomicTrace.add(createAtomicTraceElement(ate, stmt, cond, info));
+				final StepInfo info;
+				if (ate.getTraceElement() instanceof AssumeStatement) {
+					final AssumeStatement assumeStmt = (AssumeStatement) ate.getTraceElement();
+					final Expression cond = stmt.getCondition();
+					info = getStepInfoFromCondition(assumeStmt.getFormula(), cond);
+				} else {
+					info = ate.getStepInfo().iterator().next();
+					assert ate.getStepInfo().size() == 1;
+					assert info == StepInfo.CONDITION_EVAL_TRUE || info == StepInfo.CONDITION_EVAL_FALSE;
+				}
+				atomicTrace.add(createAtomicTraceElement(ate, stmt, stmt.getCondition(), info));
 
 			} else if (elem instanceof IfStatement) {
 				assert checkProcedureNames(elem, ate);
-				final AssumeStatement assumeStmt = (AssumeStatement) ate.getTraceElement();
 				final IfStatement stmt = (IfStatement) elem;
-				final StepInfo info = getStepInfoFromCondition(assumeStmt.getFormula(), stmt.getCondition());
+				final StepInfo info;
+				// If trace element was an AssumeStatement, the UnstructureCode was used and we
+				// have to compute the StepInfo.
+				if (ate.getTraceElement() instanceof AssumeStatement) {
+					final AssumeStatement assumeStmt = (AssumeStatement) ate.getTraceElement();
+					info = getStepInfoFromCondition(assumeStmt.getFormula(), stmt.getCondition());
+				} else {
+					info = ate.getStepInfo().iterator().next();
+					assert ate.getStepInfo().size() == 1;
+					assert info == StepInfo.CONDITION_EVAL_TRUE || info == StepInfo.CONDITION_EVAL_FALSE;
+				}
 				atomicTrace.add(createAtomicTraceElement(ate, stmt, stmt.getCondition(), info));
 
 			} else if (elem instanceof CallStatement) {

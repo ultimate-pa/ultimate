@@ -43,9 +43,9 @@ public class AutomizerRegressionTest extends AbstractTraceAbstractionTestSuite {
 	
 	private static final String[] mUltimateRepository_ForwardPredicates = {
 		"examples/programs/regression",
-//		"examples/programs/quantifier/regression",
-//		"examples/programs/recursive/regression",
-//		"examples/programs/toy",
+		"examples/programs/quantifier/regression",
+		"examples/programs/recursive/regression",
+		"examples/programs/toy",
 //		"examples/ultimate-benchmarks/pathprograms/20170417-DifficultOverflow/MapElim/"
 	};
 	
@@ -59,13 +59,14 @@ public class AutomizerRegressionTest extends AbstractTraceAbstractionTestSuite {
 	
 	
 	private static final String[] mSettings_ForwardPredicates = {
-		"automizer/ForwardPredicates.epf",
-		"automizer/BackwardPredicates.epf",
+//		"automizer/ForwardPredicates.epf",
+		"automizer/ForwardPredicates_IcfgBuilder.epf",
+//		"automizer/BackwardPredicates.epf",
 	};
 	
 	private static final String[] mSettings_TreeInterpolation = {
-		"automizer/NestedInterpolants.epf",
-		"automizer/TreeInterpolants.epf",
+//		"automizer/NestedInterpolants.epf",
+//		"automizer/TreeInterpolants.epf",
 	};
 
 	
@@ -78,12 +79,13 @@ public class AutomizerRegressionTest extends AbstractTraceAbstractionTestSuite {
 	}
 	
 	private static final String[] mBoogieToolchains = {
-		"AutomizerBpl.xml",
+//		"AutomizerBpl.xml",
+		"AutomizerBpl_IcfgBuilder.xml",
 //		"AutomizerBplInline.xml",
 	};
 	
 	private static final String[] mCToolchains = {
-		"AutomizerC.xml",
+//		"AutomizerC.xml",
 //		"AutomizerCInline.xml",
 	};
 
