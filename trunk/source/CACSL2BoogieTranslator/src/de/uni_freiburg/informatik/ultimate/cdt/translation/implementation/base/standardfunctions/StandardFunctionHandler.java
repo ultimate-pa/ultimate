@@ -58,7 +58,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
@@ -1553,7 +1552,7 @@ public class StandardFunctionHandler {
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder(body);
 		builder.resetStatements(List.of());
 
-		final Statement atomic = new AtomicStatement(loc, body.getStatements().toArray(Statement[]::new));
+		final Statement atomic = StatementFactory.constructAtomicStatement(loc, body.getStatements());
 
 		// create condition checking whether all memory orders are supported
 		final CPrimitive intType = new CPrimitive(CPrimitives.INT);

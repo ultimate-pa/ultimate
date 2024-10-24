@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransl
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Stream;
 
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
 import org.eclipse.cdt.core.dom.ast.IASTExpressionStatement;
@@ -39,6 +40,7 @@ import org.eclipse.cdt.core.dom.ast.IASTNode;
 
 import de.uni_freiburg.informatik.ultimate.acsl.parser.ACSLSyntaxErrorException;
 import de.uni_freiburg.informatik.ultimate.acsl.parser.Parser;
+import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
@@ -50,7 +52,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
  * Witness entry for the update of ghost variables
@@ -127,8 +128,8 @@ public class ExtractedGhostUpdate implements IExtractedWitnessEntry {
 			if (Arrays.stream(atomicBody).anyMatch(
 					x -> x instanceof CallStatement && ((CallStatement) x).getMethodName().equals(functionName))) {
 				isAnnotated = true;
-				result.add(new AtomicStatement(loc,
-						DataStructureUtils.concat(ghostUpdate.toArray(Statement[]::new), atomicBody)));
+				result.add(StatementFactory.constructAtomicStatement(loc,
+						Stream.concat(ghostUpdate.stream(), Arrays.stream(atomicBody))));
 			} else {
 				result.add(st);
 			}
@@ -146,7 +147,7 @@ public class ExtractedGhostUpdate implements IExtractedWitnessEntry {
 		for (final Statement st : programStatements) {
 			if (!isAnnotated && st instanceof ForkStatement) {
 				isAnnotated = true;
-				result.add(new AtomicStatement(loc, ghostUpdate.toArray(Statement[]::new)));
+				result.add(StatementFactory.constructAtomicStatement(loc, ghostUpdate));
 			}
 			result.add(st);
 		}

@@ -26,9 +26,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.boogie;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
@@ -92,5 +95,22 @@ public class StatementFactory {
 	public static Statement constructIfStatement(final ILocation loc, final Expression condition,
 			final List<Statement> thenPart) {
 		return constructIfStatement(loc, condition, thenPart.toArray(Statement[]::new), new Statement[0]);
+	}
+
+	public static AtomicStatement constructAtomicStatement(final ILocation loc, final List<Statement> statements) {
+		return constructAtomicStatement(loc, statements.stream());
+	}
+
+	public static AtomicStatement constructAtomicStatement(final ILocation loc, final Stream<Statement> statements) {
+		return new AtomicStatement(loc,
+				statements.flatMap(StatementFactory::getFlattenedStatements).toArray(Statement[]::new));
+	}
+
+	private static Stream<Statement> getFlattenedStatements(final Statement statement) {
+		if (statement instanceof AtomicStatement) {
+			return Arrays.stream(((AtomicStatement) statement).getBody())
+					.flatMap(StatementFactory::getFlattenedStatements);
+		}
+		return Stream.of(statement);
 	}
 }
