@@ -556,11 +556,16 @@ public class CExpressionTranslator {
 	 *            {@link ExpressionResult} containing <code>LV := t~post + 1</code>. Usually, this is an invocation of
 	 *            {@link CHandler#makeAssignment(ILocation, LRValue, java.util.Collection, ExpressionResult, IASTNode)}.
 	 */
-	public Result handlePostfixIncrementAndDecrement(final ILocation loc, final int postfixOp, ExpressionResult exprRes,
-			final IASTNode hook, final Function<ExpressionResult, ExpressionResult> funMakeAssignment) {
-		assert !exprRes.getLrValue().isBoogieBool();
-		exprRes = mExprResultTransformer.switchToRValue(exprRes, loc, hook);
-		final ExpressionResultBuilder builder = new ExpressionResultBuilder().addAllIncludingLrValue(exprRes);
+	public Result handlePostfixIncrementAndDecrement(final ILocation loc, final int postfixOp,
+			final ExpressionResult originalExprRes, final IASTNode hook,
+			final Function<ExpressionResult, ExpressionResult> funMakeAssignment) {
+		assert !originalExprRes.getLrValue().isBoogieBool();
+		final List<Statement> originalStatements = originalExprRes.getStatements();
+		final ExpressionResult exprRes = mExprResultTransformer.switchToRValue(originalExprRes, loc, hook);
+		final List<Statement> newStatements = new ArrayList<>(exprRes.getStatements());
+		newStatements.removeAll(originalStatements);
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder().addAllExceptLrValueAndStatements(exprRes)
+				.addStatements(newStatements).setLrValue(exprRes.getLrValue());
 
 		// In this case we need a temporary variable for the old value
 		final AuxVarInfo auxvar =
@@ -589,7 +594,8 @@ public class CExpressionTranslator {
 		builder.setOrResetLrValue(new RValue(valueXcremented, oType, false, false));
 		final ExpressionResult assign = funMakeAssignment.apply(builder.build());
 
-		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder().setLrValue(tmpRValue);
+		final ExpressionResultBuilder resultBuilder =
+				new ExpressionResultBuilder().setLrValue(tmpRValue).addStatements(originalStatements);
 		if (oType.isAtomic()) {
 			final AtomicStatement atomic = new AtomicStatement(loc, assign.getStatements().toArray(Statement[]::new));
 			resultBuilder.addAllExceptLrValueAndStatements(assign).addStatement(atomic);
@@ -610,11 +616,16 @@ public class CExpressionTranslator {
 	 * increment/decrement operations in one expression. We might extend our implementation in a way where the operation
 	 * is done at a certain sequence point or all evaluation orders are considered.
 	 */
-	public Result handlePrefixIncrementAndDecrement(final int prefixOp, final ILocation loc, ExpressionResult exprRes,
-			final IASTNode hook, final Function<ExpressionResult, ExpressionResult> funMakeAssignment) {
-		assert !exprRes.getLrValue().isBoogieBool();
-		exprRes = mExprResultTransformer.switchToRValue(exprRes, loc, hook);
-		final ExpressionResultBuilder builder = new ExpressionResultBuilder().addAllExceptLrValue(exprRes);
+	public Result handlePrefixIncrementAndDecrement(final int prefixOp, final ILocation loc,
+			final ExpressionResult originalExprRes, final IASTNode hook,
+			final Function<ExpressionResult, ExpressionResult> funMakeAssignment) {
+		assert !originalExprRes.getLrValue().isBoogieBool();
+		final List<Statement> originalStatements = originalExprRes.getStatements();
+		final ExpressionResult exprRes = mExprResultTransformer.switchToRValue(originalExprRes, loc, hook);
+		final List<Statement> newStatements = new ArrayList<>(exprRes.getStatements());
+		newStatements.removeAll(originalStatements);
+		final ExpressionResultBuilder builder =
+				new ExpressionResultBuilder().addAllExceptLrValueAndStatements(exprRes).addStatements(newStatements);
 
 		// In this case we need a temporary variable for the new value
 		final AuxVarInfo auxvar =
@@ -643,7 +654,8 @@ public class CExpressionTranslator {
 		builder.setLrValue(new RValue(valueXcremented, oType, false, false));
 		final ExpressionResult assign = funMakeAssignment.apply(builder.build());
 		final RValue tmpRValue = new RValue(auxvar.getExp(), oType);
-		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder().setLrValue(tmpRValue);
+		final ExpressionResultBuilder resultBuilder =
+				new ExpressionResultBuilder().setLrValue(tmpRValue).addStatements(originalStatements);
 		if (oType.isAtomic()) {
 			final AtomicStatement atomic = new AtomicStatement(loc, assign.getStatements().toArray(Statement[]::new));
 			resultBuilder.addAllExceptLrValueAndStatements(assign).addStatement(atomic);
