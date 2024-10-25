@@ -132,18 +132,6 @@ public abstract class ExpressionTranslation {
 	public final ExpressionResult handleBitshiftExpression(final ILocation loc, final int nodeOperator,
 			final Expression exp1, final CPrimitive type1, final Expression exp2, final CPrimitive type2,
 			final AuxVarInfoBuilder auxVarInfoBuilder) {
-		// TODO: Should we really throw an exception here or just report undefined behavior somehow?
-		final BigInteger shiftValue = mTypeSizes.extractIntegerValue(exp2, type2);
-		if (shiftValue != null) {
-			if (shiftValue.signum() < 0) {
-				throw new UnsupportedOperationException("Shift by negative value is not allowed (6.5.7.2)");
-			}
-			final BigInteger bitNumber = BigInteger.valueOf(8 * mTypeSizes.getSize(type1.getType()));
-			if (shiftValue.compareTo(bitNumber) >= 0) {
-				throw new UnsupportedOperationException(
-						"Shift by too large value " + shiftValue + " is not allowed (6.5.7.2)");
-			}
-		}
 		final ExpressionResult result =
 				handleBinaryBitwiseIntegerExpression(loc, nodeOperator, exp1, type1, exp2, type2, auxVarInfoBuilder);
 		if (mSettings.checkSignedIntegerBounds() == CheckMode.IGNORE || !type1.isIntegerType()
