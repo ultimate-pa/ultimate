@@ -121,6 +121,10 @@ public class ExpressionFactory {
 		return new UnaryExpression(loc, resultType, operator, expr);
 	}
 
+	public static Expression not(final ILocation loc, final Expression expr) {
+		return constructUnaryExpression(loc, UnaryExpression.Operator.LOGICNEG, expr);
+	}
+
 	public static Expression newBinaryExpression(final ILocation loc, final Operator op, final Expression left,
 			final Expression right) {
 
@@ -419,11 +423,17 @@ public class ExpressionFactory {
 	}
 
 	public static boolean isTrueLiteral(final Expression expr) {
+		return isBooleanLiteral(expr, true);
+	}
+
+	public static boolean isFalseLiteral(final Expression expr) {
+		return isBooleanLiteral(expr, false);
+	}
+
+	public static boolean isBooleanLiteral(final Expression expr, final boolean value) {
 		if (expr instanceof BooleanLiteral) {
 			final BooleanLiteral bl = (BooleanLiteral) expr;
-			if (bl.getValue()) {
-				return true;
-			}
+			return bl.getValue() == value;
 		}
 		return false;
 	}
@@ -479,6 +489,10 @@ public class ExpressionFactory {
 
 	public static Expression or(final ILocation loc, final List<Expression> exprs) {
 		return bin(loc, exprs, false, Operator.LOGICOR);
+	}
+
+	public static Expression or(final ILocation loc, final Expression... exprs) {
+		return or(loc, Arrays.asList(exprs));
 	}
 
 	private static Expression bin(final ILocation loc, final List<Expression> exprs, final boolean neutralElement,
