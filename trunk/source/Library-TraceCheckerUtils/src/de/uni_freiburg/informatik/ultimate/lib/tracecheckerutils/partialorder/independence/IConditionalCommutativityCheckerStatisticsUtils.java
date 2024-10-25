@@ -33,9 +33,9 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.i
  *
  */
 public interface IConditionalCommutativityCheckerStatisticsUtils {
-	public void startCheckerStopwatch();
+	public void startStopwatch(ConditionalCommutativityStopwatches stopwatch);
 
-	public void stopCheckerStopwatch();
+	public void stopStopwatch(ConditionalCommutativityStopwatches stopwatch);
 
 	public void addDFSRestart();
 
@@ -54,4 +54,9 @@ public interface IConditionalCommutativityCheckerStatisticsUtils {
 	public void addQuantifiedCondition();
 
 	public void addFalseCondition();
+
+	public enum ConditionalCommutativityStopwatches {
+		CHECKER, CONDITION
+	}
+
 }

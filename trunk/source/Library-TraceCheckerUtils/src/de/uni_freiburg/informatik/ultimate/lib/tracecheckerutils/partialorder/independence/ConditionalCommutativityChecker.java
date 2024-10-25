@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.ITraceChecker;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IConditionalCommutativityCheckerStatisticsUtils.ConditionalCommutativityStopwatches;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.ICopyActionFactory;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
@@ -125,7 +126,7 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 	public TracePredicates checkConditionalCommutativity(final NestedRun<L, IPredicate> currentRun,
 			final List<IPredicate> predicates, final IPredicate state, final L letter1, final L letter2) {
 
-		mStatisticsUtils.startCheckerStopwatch();
+		mStatisticsUtils.startStopwatch(ConditionalCommutativityStopwatches.CHECKER);
 		try {
 			if (mManagedScript.isLocked()) {
 				mManagedScript.requestLockRelease();
@@ -164,28 +165,35 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 				final ISymbolicIndependenceRelation<L, IPredicate> relation =
 						mIndependenceRelation.getSymbolicRelation();
 
-				switch (mTraceCheckMode) {
-				case GENERATOR:
-					condition = mGenerator.generateCondition(letter1.getTransformula(), letter2.getTransformula());
-					break;
-				case GENERATOR_WITH_CONTEXT:
-					if (pred != null) {
-						condition = mGenerator.generateCondition(
-								new PredicateWithConjuncts(0, new ImmutableList<>(predicates),
-										mManagedScript.getScript()),
-								letter1.getTransformula(), letter2.getTransformula());
-					} else {
+				mStatisticsUtils.startStopwatch(ConditionalCommutativityStopwatches.CONDITION);
+				try {
+					switch (mTraceCheckMode) {
+					case GENERATOR:
 						condition = mGenerator.generateCondition(letter1.getTransformula(), letter2.getTransformula());
+						break;
+					case GENERATOR_WITH_CONTEXT:
+						if (pred != null) {
+							condition = mGenerator.generateCondition(
+									new PredicateWithConjuncts(0, new ImmutableList<>(predicates),
+											mManagedScript.getScript()),
+									letter1.getTransformula(), letter2.getTransformula());
+						} else {
+							condition =
+									mGenerator.generateCondition(letter1.getTransformula(), letter2.getTransformula());
+						}
+						break;
+					case SYMBOLIC_RELATION:
+						if (relation != null && !relation.isConditional()) {
+							condition = relation.getCommutativityCondition(null, letter1, letter2);
+						}
+						break;
+					default:
+						throw new UnsupportedOperationException(
+								"PartialOrderCegarLoop currently does not support " + mTraceCheckMode);
 					}
-					break;
-				case SYMBOLIC_RELATION:
-					if (relation != null && !relation.isConditional()) {
-						condition = relation.getCommutativityCondition(null, letter1, letter2);
-					}
-					break;
-				default:
-					throw new UnsupportedOperationException(
-							"PartialOrderCegarLoop currently does not support " + mTraceCheckMode);
+				} finally {
+
+					mStatisticsUtils.stopStopwatch(ConditionalCommutativityStopwatches.CONDITION);
 				}
 
 				/*
@@ -248,7 +256,8 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 		} finally
 
 		{
-			mStatisticsUtils.stopCheckerStopwatch();
+			mStatisticsUtils.stopStopwatch(ConditionalCommutativityStopwatches.CHECKER);
+			// mStatisticsUtils.stopStopwatch(ConditionalCommutativityStopwatches.CONDITION);
 		}
 	}
 
