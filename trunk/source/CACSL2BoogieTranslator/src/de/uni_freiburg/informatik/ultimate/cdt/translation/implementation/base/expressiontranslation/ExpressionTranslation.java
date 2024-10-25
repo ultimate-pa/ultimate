@@ -559,6 +559,31 @@ public abstract class ExpressionTranslation {
 		}
 	}
 
+	public Expression boolToInt(final ILocation loc, final Expression boolExpr) {
+		return boolToInt(loc, boolExpr, CPrimitives.INT);
+	}
+
+	public Expression boolToInt(final ILocation loc, final Expression boolExpr, final CPrimitives intType) {
+		final Expression one = mTypeSizes.constructLiteralForIntegerType(loc, new CPrimitive(intType), BigInteger.ONE);
+		final Expression zero =
+				mTypeSizes.constructLiteralForIntegerType(loc, new CPrimitive(intType), BigInteger.ZERO);
+		return ExpressionFactory.constructIfThenElseExpression(loc, boolExpr, one, zero);
+	}
+
+	public Expression toBool(final ILocation loc, final Expression intExpr, final CType cType) {
+		final CType underlyingType = CEnum.replaceEnumWithInt(cType.getUnderlyingType());
+		final Expression zero = constructZero(loc, underlyingType);
+
+		if (underlyingType instanceof CPrimitive) {
+			return constructBinaryEqualityExpression(loc, IASTBinaryExpression.op_notequals, intExpr, cType, zero,
+					underlyingType);
+		}
+		if (underlyingType instanceof CPointer || underlyingType instanceof CArray) {
+			return ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPNEQ, intExpr, zero);
+		}
+		throw new UnsupportedSyntaxException(loc, "unsupported type " + underlyingType);
+	}
+
 	public abstract Expression transformBitvectorToFloat(ILocation loc, Expression bitvector, CPrimitives floatType);
 
 	public abstract Expression transformFloatToBitvector(ILocation loc, Expression value, CPrimitives cprimitive);

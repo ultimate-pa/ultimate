@@ -1343,19 +1343,18 @@ public class StandardFunctionHandler {
 	//
 	// @formatter:off
 	// (evaluate arguments)
-	// atomic {
-	//  if weak
-	//    havoc success
-	//  else
-	//    success := true
-	//  ptr_val := read(ptr)
-	//  if success && ptr_val == read(expected):
-	//    write(read(desired), ptr)
-	//  else
-	//    success := false
+	// havoc success
+	// if (!weak || success) {
+	//   atomic {
+	//     ptr_val := read(ptr)
+	//     success := ptr_val == read(expected)
+	//     if (success) {
+	//       write(read(desired), ptr)
+	//     } else {
+	//       write(ptr_val, expected)
+	//     }
+	//   }
 	// }
-	// if !success
-	//   write(ptr_val, expected)
 	// return success
 	// @formatter:on
 	private Result handleAtomicCompareExchange(final IDispatcher main, final IASTFunctionCallExpression node,
@@ -1373,47 +1372,57 @@ public class StandardFunctionHandler {
 				mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, arguments[5]);
 		final var resultBuilder = new ExpressionResultBuilder().addAllExceptLrValue(pointer, expectedResult,
 				desiredResult, weakResult, successMemoryOrder, failureMemoryOrder);
+		final boolean mayFailSpuriously = !ExpressionFactory.isFalseLiteral(weakResult.getLrValue().getValue());
 
 		// Introduce an auxvar indicating whether the function is successful, i.e., the exchange was performed.
+		// We immediately havoc the auxvar.
 		final var boolType = new CPrimitive(CPrimitives.BOOL);
 		final var success = mAuxVarInfoBuilder.constructAuxVarInfo(loc, boolType, AUXVAR.RETURNED);
-		final var boolZero = mExpressionTranslation.constructZero(loc, boolType);
-		final var successBoolean = mExpressionTranslation.constructBinaryEqualityExpression(loc,
-				IASTBinaryExpression.op_notequals, success.getExp(), boolType, boolZero, boolType);
-		final var noSuccessBoolean = mExpressionTranslation.constructBinaryEqualityExpression(loc,
-				IASTBinaryExpression.op_equals, success.getExp(), boolType, boolZero, boolType);
+		final var successBoolean = mExpressionTranslation.toBool(loc, success.getExp(), boolType);
+		resultBuilder.addAuxVarWithDeclaration(success);
+		if (mayFailSpuriously) {
+			resultBuilder.addStatement(new HavocStatement(loc, new VariableLHS[] { success.getLhs() }));
+		}
 
+		// Construct the code that actually executes the compare-and-exchange.
 		final var pointerRead = mExprResultTransformer.readPointerValue(loc, pointer.getLrValue());
 		final var expectedRead = mExprResultTransformer.readPointerValue(loc, expectedResult.getLrValue());
 		final var pointerWrite = mExprResultTransformer.makePointerAssignment(loc, pointer.getLrValue(),
 				desiredRead.getLrValue().getValue());
-
-		final var atomicBody = new ExpressionResultBuilder().addAuxVarWithDeclaration(success)
-				.addStatement(StatementFactory.constructIfStatement(loc, weakResult.getLrValue().getValue(),
-						new Statement[] { new HavocStatement(loc, new VariableLHS[] { success.getLhs() }) },
-						new Statement[] { StatementFactory.constructSingleAssignmentStatement(loc, success.getLhs(),
-								mExpressionTranslation.constructLiteralForIntegerType(loc, boolType,
-										BigInteger.ONE)) }))
-				.addAllExceptLrValue(pointerRead, expectedRead).addAllExceptLrValueAndStatements(desiredRead)
-				.addAllExceptLrValueAndStatements(pointerWrite)
-				.addStatement(StatementFactory.constructIfStatement(loc,
-						ExpressionFactory.and(loc,
-								List.of(successBoolean, ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ,
-										pointerRead.getLrValue().getValue(), expectedRead.getLrValue().getValue()))),
-						DataStructureUtils.concat(desiredRead.getStatements(), pointerWrite.getStatements())
-								.toArray(Statement[]::new),
-						new Statement[] {
-								StatementFactory.constructSingleAssignmentStatement(loc, success.getLhs(), boolZero) }))
+		final var expectedWrite = mExprResultTransformer.makePointerAssignment(loc, expectedResult.getLrValue(),
+				pointerRead.getLrValue().getValue());
+		final var atomicBody = new ExpressionResultBuilder().addAllExceptLrValue(pointerRead, expectedRead)
+				.addAllExceptLrValueAndStatements(desiredRead).addAllExceptLrValueAndStatements(pointerWrite)
+				.addAllExceptLrValueAndStatements(expectedWrite)
+				// success := read(ptr) == read(expected)
+				.addStatement(StatementFactory.constructSingleAssignmentStatement(loc, success.getLhs(),
+						mExpressionTranslation.boolToInt(loc,
+								mExpressionTranslation.constructBinaryEqualityExpression(loc,
+										IASTBinaryExpression.op_equals, pointerRead.getLrValue().getValue(),
+										pointerRead.getLrValue().getCType(), expectedRead.getLrValue().getValue(),
+										expectedRead.getCType()))))
+				// if (success) { write(read(desired), ptr) } else { write(ptr_val, expected) }
+				.addStatement(StatementFactory.constructIfStatement(loc, successBoolean,
+						DataStructureUtils.concat(desiredRead.getStatements(), pointerWrite.getStatements()),
+						expectedWrite.getStatements()))
 				.build();
+
+		// Wrap the compare-exchange in an atomic block, and check if the memory order arguments are supported.
 		final var atomic = applyMemoryOrders(loc, atomicBody, successMemoryOrder.getLrValue().getValue(),
 				failureMemoryOrder.getLrValue().getValue());
 
-		final var expectedWrite = mExprResultTransformer.makePointerAssignment(loc, expectedResult.getLrValue(),
-				pointerRead.getLrValue().getValue());
-		return resultBuilder.addAllExceptLrValue(atomic).addAllExceptLrValueAndStatements(expectedWrite)
-				.addStatement(StatementFactory.constructIfStatement(loc, noSuccessBoolean,
-						expectedWrite.getStatements().toArray(Statement[]::new), new Statement[0]))
-				.setLrValue(new RValue(success.getExp(), boolType)).build();
+		// Wrap atomic compare-exchange block in "if (success || !weak) { ... }" to model spurious failures.
+		if (mayFailSpuriously) {
+			resultBuilder.addAllExceptLrValueAndStatements(atomic)
+					.addStatement(StatementFactory.constructIfStatement(loc,
+							ExpressionFactory.or(loc, successBoolean,
+									ExpressionFactory.not(loc, weakResult.getLrValue().getValue())),
+							atomic.getStatements()));
+		} else {
+			resultBuilder.addAllExceptLrValue(atomic);
+		}
+
+		return resultBuilder.setLrValue(new RValue(success.getExp(), boolType)).build();
 	}
 
 	private Result handleAtomicLoadN(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,

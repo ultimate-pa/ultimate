@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.boogie;
 
+import java.util.List;
+
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
@@ -81,4 +83,14 @@ public class StatementFactory {
 		return new IfStatement(loc, condition, thenPart, elsePart);
 	}
 
+	public static Statement constructIfStatement(final ILocation loc, final Expression condition,
+			final List<Statement> thenPart, final List<Statement> elsePart) {
+		return constructIfStatement(loc, condition, thenPart.toArray(Statement[]::new),
+				elsePart.toArray(Statement[]::new));
+	}
+
+	public static Statement constructIfStatement(final ILocation loc, final Expression condition,
+			final List<Statement> thenPart) {
+		return constructIfStatement(loc, condition, thenPart.toArray(Statement[]::new), new Statement[0]);
+	}
 }

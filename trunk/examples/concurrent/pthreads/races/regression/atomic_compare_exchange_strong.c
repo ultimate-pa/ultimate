@@ -13,7 +13,7 @@ int memorder_SEQCST = 5;
 
 void* thread1(void* ptr) {
   _Bool weak = 0;
-  _Bool success = __atomic_compare_exchange_n(&x, &y, 42, weak, memorder_SEQCST, memorder_SEQCST);
+  _Bool success = __atomic_compare_exchange_n(&x, &y, 42, 0, memorder_SEQCST, memorder_SEQCST);
   if (! success) {
     x = -1; // access would race, but is unreachable as strong __atomic_compare_exchange_n cannot fail here
     return;
