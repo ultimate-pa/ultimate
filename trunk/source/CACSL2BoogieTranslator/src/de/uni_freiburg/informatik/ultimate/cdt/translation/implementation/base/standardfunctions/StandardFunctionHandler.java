@@ -1565,9 +1565,8 @@ public class StandardFunctionHandler {
 		final Expression atomicCond = ExpressionFactory.and(loc, conjuncts);
 
 		// overapproximated assert used in case some memory order is unsupported
-		final Statement overapproxAssert = new AssertStatement(loc, ExpressionFactory.createBooleanLiteral(loc, false));
-		new Overapprox("memory order (only sequential consistency is supported)", loc).annotate(overapproxAssert);
-		new Check(Spec.UNKNOWN).annotate(overapproxAssert);
+		final Statement overapproxAssert =
+				modelUnsupportedFeature(loc, "memory order (only sequential consistency is supported)");
 
 		// Try to avoid unnecessary IfStatements
 		final Statement statement;
@@ -3599,6 +3598,14 @@ public class StandardFunctionHandler {
 		return new ExpressionResultBuilder().addAllExceptLrValue(results).build();
 	}
 
+	private Statement modelUnsupportedFeature(final ILocation loc, final String reason) {
+		final Statement assertFalse = new AssertStatement(loc, ExpressionFactory.createBooleanLiteral(loc, false));
+		new Overapprox(reason, loc).annotate(assertFalse);
+		new Check(Spec.UNSUPPORTED_FEATURE).annotate(assertFalse);
+		return new WhileStatement(loc, ExpressionFactory.createBooleanLiteral(loc, true),
+				new LoopInvariantSpecification[0], new Statement[] { assertFalse });
+	}
+
 	/**
 	 * Overapproximate the reachability of unsupported functions by translating them to while(true) assert false; where
 	 * the assert is labeled with an overapproximation
@@ -3606,11 +3613,7 @@ public class StandardFunctionHandler {
 	private Result handleUnsupportedFunctionByOverapproximation(final IDispatcher main, final ILocation loc,
 			final String name, final CType returnType) {
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
-		final Statement unreach = new AssertStatement(loc, ExpressionFactory.createBooleanLiteral(loc, false));
-		new Overapprox(name, loc).annotate(unreach);
-		new Check(Spec.UNKNOWN).annotate(unreach);
-		builder.addStatement(new WhileStatement(loc, ExpressionFactory.createBooleanLiteral(loc, true),
-				new LoopInvariantSpecification[0], new Statement[] { unreach }));
+		builder.addStatement(modelUnsupportedFeature(loc, name));
 		if (!returnType.isVoidType()) {
 			final AuxVarInfo auxVar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, returnType, AUXVAR.NONDET);
 			builder.addAuxVarWithDeclaration(auxVar);
