@@ -288,7 +288,8 @@ public class CfgBuilder {
 		case SequenceOfStatements: // handled in ProcedureCfgBuilder
 		case OneNontrivialStatement:
 		case SingleStatement:
-			final var internalMode = mCtxSwitchOnlyAtAtomicBoundaries ? InternalLbeMode.ALL_EXCEPT_ATOMIC_BOUNDARIES
+			final var internalMode = mCtxSwitchOnlyAtAtomicBoundaries && IcfgUtils.isConcurrent(mIcfg)
+					? InternalLbeMode.ALL_EXCEPT_ATOMIC_BOUNDARIES
 					: InternalLbeMode.ONLY_ATOMIC_BLOCK;
 			new LargeBlockEncoding(mServices, mIcfg, mCbf, internalMode);
 			break;
