@@ -577,6 +577,7 @@
 		<module>../UltimateCLI</module>
 		<module>../UltimateDeltaDebugger</module>
 		<module>../UltimateEliminatorController</module>
+		<module>../ViewAbstraction</module>
 		<module>../WebBackend</module>
 		<module>../WitnessParser</module>
 		<module>../WitnessPrinter</module>
@@ -606,6 +607,7 @@
 		<module>../SMTSolverBridgeTest</module>
 		<module>../SpaceExParserTest</module>
 		<module>../PEAtoBoogieTest</module>
+		<module>../ViewAbstractionTest</module>
 
 		<!-- UltimateRegressionTest contains system tests that are relatively fast -->
 		<module>../UltimateRegressionTest</module>
