@@ -1050,6 +1050,11 @@ public class CHandler {
 		} else {
 			castTargetValueType = ((CPointer) castTargetType).getPointsToType().getUnderlyingType();
 		}
+		if (operandValueType.isIncomplete() || castTargetValueType.isIncomplete()) {
+			mLogger.warn(
+					"saw a pointer cast to a type that we could not get a type size for, not adapting memory model");
+			return;
+		}
 
 		final Expression operandTypeByteSizeExp;
 		try {
@@ -1058,13 +1063,6 @@ public class CHandler {
 			mLogger.debug("saw a pointer cast to a type that we could not get a type size for, not adapting memory "
 					+ "model");
 			return;
-		} catch (final IllegalArgumentException e) {
-			if ("cannot determine size of incomplete type".equals(e.getMessage())) {
-				mLogger.debug("saw a pointer cast to a type that we could not get a type size for, not adapting memory "
-						+ "model");
-				return;
-			}
-			throw e;
 		}
 		final BigInteger operandTypeByteSize =
 				mTypeSizes.extractIntegerValue(operandTypeByteSizeExp, mTypeSizeComputer.getSizeT());
