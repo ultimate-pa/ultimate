@@ -24,24 +24,29 @@
  * licensors of the ULTIMATE ViewAbstraction plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.cfg;
 
-import java.util.List;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.interpreter.BoogieInterpreter;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 
-public class Program<S> {
-	private final Class<S> mStateClazz;
-	private final List<? extends IRule<S>> mRules;
+public class StatementSequenceRule extends CfgRule<StatementSequence> {
 
-	public Program(final Class<S> stateClazz, final List<? extends IRule<S>> rules) {
-		mStateClazz = stateClazz;
-		mRules = rules;
+	public StatementSequenceRule(final IUltimateServiceProvider services, final IIcfgSymbolTable symbolTable,
+			final StatementSequence edge) {
+		super(services, symbolTable, edge);
 	}
 
-	public Class<S> getStateClazz() {
-		return mStateClazz;
+	@Override
+	protected CfgProgramStateView apply(final CfgProgramStateView view) {
+		return new BoogieInterpreter<CfgProgramStateView>().interpret(view, mEdge.getStatements()).orElse(null);
 	}
 
-	public List<? extends IRule<S>> getRules() {
-		return mRules;
+	@Override
+	public int extensionSize() {
+		// default to 1 in case global variables are involved
+		// TODO refine this to use 0 when possible
+		return 1;
 	}
 }

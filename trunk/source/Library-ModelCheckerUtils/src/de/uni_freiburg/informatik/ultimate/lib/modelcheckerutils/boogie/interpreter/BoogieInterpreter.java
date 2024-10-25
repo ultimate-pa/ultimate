@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.interpreter;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
@@ -74,6 +76,10 @@ public class BoogieInterpreter<V extends IValuation<V>> {
 	}
 
 	public Optional<V> interpret(final V valuation, final Statement[] stmts) {
+		return interpret(valuation, Arrays.asList(stmts));
+	}
+
+	public Optional<V> interpret(final V valuation, final List<Statement> stmts) {
 		V current = valuation;
 		for (final var stmt : stmts) {
 			final var next = interpret(current, stmt);

@@ -24,24 +24,49 @@
  * licensors of the ULTIMATE ViewAbstraction plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.cfg;
 
-import java.util.List;
+import java.util.Objects;
 
-public class Program<S> {
-	private final Class<S> mStateClazz;
-	private final List<? extends IRule<S>> mRules;
+public class ThreadInstance {
+	private final String mTemplate;
+	private final int mInstanceNumber;
 
-	public Program(final Class<S> stateClazz, final List<? extends IRule<S>> rules) {
-		mStateClazz = stateClazz;
-		mRules = rules;
+	public ThreadInstance(final String template, final int instanceNumber) {
+		mTemplate = template;
+		mInstanceNumber = instanceNumber;
 	}
 
-	public Class<S> getStateClazz() {
-		return mStateClazz;
+	public String getTemplateName() {
+		return mTemplate;
 	}
 
-	public List<? extends IRule<S>> getRules() {
-		return mRules;
+	public int getInstanceNumber() {
+		return mInstanceNumber;
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(mInstanceNumber, mTemplate);
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		final ThreadInstance other = (ThreadInstance) obj;
+		return mInstanceNumber == other.mInstanceNumber && Objects.equals(mTemplate, other.mTemplate);
+	}
+
+	@Override
+	public String toString() {
+		return mTemplate + "#" + mInstanceNumber;
 	}
 }

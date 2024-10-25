@@ -28,15 +28,20 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.cfg.CfgProgramConverter;
 
 public class ViewAbstractionObserver implements IUnmanagedObserver {
+	public static final boolean USE_SLEEP_REDUCTION = false;
+	public static final boolean USE_PERSISTENT_REDUCTION = false;
 
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
@@ -75,16 +80,37 @@ public class ViewAbstractionObserver implements IUnmanagedObserver {
 			throw new UnsupportedOperationException("ViewAbstraction needs an ICFG");
 		}
 		mLogger.info("Analyzing ICFG " + icfgRootNode.getIdentifier());
-		// final ViewAbstractionStarter<IcfgEdge> tas =
-		// new ViewAbstractionStarter<>(mServices, rcfgRootNode, witnessAutomaton, rawFloydHoareAutomataFromFile,
-		// () -> new IcfgCompositionFactory(mServices, rcfgRootNode.getCfgSmtToolkit()),
-		// new IcfgCopyFactory(mServices, rcfgRootNode.getCfgSmtToolkit()), IcfgEdge.class);
-		// mRootOfNewModel = tas.getRootOfNewModel();
+
+		final var converter = new CfgProgramConverter(mServices, icfgRootNode);
+		final var program = converter.getProgram();
+
+		if (USE_SLEEP_REDUCTION) {
+			// TODO create sleep set-instrumented program
+			throw new UnsupportedOperationException("not yet implemented");
+		}
+		if (USE_PERSISTENT_REDUCTION) {
+			// TODO create persistent set-instrumented program
+			throw new UnsupportedOperationException("not yet implemented");
+		}
+
+		final var runner = new ViewAbstractionRunner<>(mServices, program);
+		for (int k = 1; true; ++k) {
+			mLogger.info("Computing view abstraction at level k=%d", k);
+
+			final var initial = converter.getInitialConfiguration(k);
+			final var fp = runner.computeFixedPoint(Set.of(initial), k, -1);
+
+			mLogger.info(fp);
+
+			if (!mServices.getProgressMonitorService().continueProcessing()) {
+				throw new ToolchainCanceledException(getClass());
+			}
+			// TODO check if fixed point is safe
+			// TODO interleave fixed point computation with unabstracted exploration
+			// TODO possibly use diagonal pattern in case fixed point computation/exploration needs unbounded iterations
+		}
 	}
 
-	/**
-	 * @return the root of the CFG.
-	 */
 	public IElement getRootOfNewModel() {
 		return mRootOfNewModel;
 	}

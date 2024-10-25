@@ -32,7 +32,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.Configuration;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.IRule;
@@ -43,13 +45,16 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class ViewAbstractionRunner<S> {
+	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 
 	private final Program<S> mProgram;
 	private final int mDelta;
 
 	public ViewAbstractionRunner(final IUltimateServiceProvider services, final Program<S> program) {
+		mServices = services;
 		mLogger = services.getLoggingService().getLogger(getClass());
+		mLogger.setLevel(LogLevel.DEBUG);
 
 		mProgram = program;
 		mDelta = program.getRules().stream().mapToInt(IRule::extensionSize).max().orElse(0);
@@ -59,13 +64,16 @@ public class ViewAbstractionRunner<S> {
 			final int maxIterations) {
 		final var current = new HashSet<>(initial);
 		int iteration = 0;
-		// mLogger.debug("fixpoint iteration %d : %s", iteration, current);
 
 		boolean changed;
 		do {
 			changed = current.addAll(abstractPost(current, k));
 			iteration++;
-			// mLogger.debug("fixpoint iteration %d : %s", iteration, current);
+			mLogger.info("fixpoint iteration %d : %d views", iteration, current.size());
+
+			if (!mServices.getProgressMonitorService().continueProcessing()) {
+				throw new ToolchainCanceledException(getClass());
+			}
 		} while (changed && (maxIterations < 0 || iteration <= maxIterations));
 
 		mLogger.info("fixpoint algorithm %s after %d iterations", changed ? "ABORTED" : "finished", iteration);
@@ -75,8 +83,15 @@ public class ViewAbstractionRunner<S> {
 
 	public Set<Configuration<S>> abstractPost(final Set<Configuration<S>> views, final int k) {
 		final var extended = extend(views, k, mDelta);
+		mLogger.debug("extended %d views of size %d by delta=%d to %d views", views.size(), k, mDelta, extended.size());
+
 		final var post = concretePost(extended);
-		return getViews(post, k);
+		mLogger.debug("concrete post of %d extended views had %d configurations", extended.size(), post.size());
+
+		final var abstracted = getViews(post, k);
+		mLogger.debug("abstraction yielded %d views", abstracted.size());
+
+		return abstracted;
 	}
 
 	public Set<Configuration<S>> concretePost(final Set<Configuration<S>> configs) {
