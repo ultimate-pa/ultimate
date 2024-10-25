@@ -1080,6 +1080,34 @@ public class StandardFunctionHandler {
 
 		/** End <stdlib.h> functions according to 7.22 General utilities <stdlib.h> **/
 
+		/**
+		 * Function from socket.h (see https://pubs.opengroup.org/onlinepubs/009604499/basedefs/sys/socket.h.html). We
+		 * simply overapproximate the return values of these functions
+		 */
+		// https://pubs.opengroup.org/onlinepubs/009604499/functions/accept.html
+		fill(map, "accept", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 3,
+				new CPrimitive(CPrimitives.INT)));
+		// https://pubs.opengroup.org/onlinepubs/009604499/functions/bind.html
+		fill(map, "bind", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 3,
+				new CPrimitive(CPrimitives.INT)));
+		// https://pubs.opengroup.org/onlinepubs/009604499/functions/connect.html
+		fill(map, "connect", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 3,
+				new CPrimitive(CPrimitives.INT)));
+		// https://pubs.opengroup.org/onlinepubs/009604499/functions/listen.html
+		fill(map, "listen", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 2,
+				new CPrimitive(CPrimitives.INT)));
+		// https://pubs.opengroup.org/onlinepubs/009604499/functions/socket.html
+		fill(map, "socket", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 3,
+				new CPrimitive(CPrimitives.INT)));
+
+		// https://pubs.opengroup.org/onlinepubs/009604499/functions/inet_addr.html
+		fill(map, "inet_addr", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
+				new CPrimitive(CPrimitives.UINT)));
+
+		// https://pubs.opengroup.org/onlinepubs/009604499/functions/close.html
+		fill(map, "close", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
+				new CPrimitive(CPrimitives.INT)));
+
 		checkFloatSupport(map, dieFloat);
 
 		return Collections.unmodifiableMap(map);
