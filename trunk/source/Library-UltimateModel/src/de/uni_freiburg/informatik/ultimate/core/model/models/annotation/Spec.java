@@ -159,6 +159,12 @@ public enum Spec {
 			"petrification did provide enough thread instances (tool internal message)",
 			"petrification did not provide enough thread instances (tool internal message)"),
 	/**
+	 * Check if a program contains unsupported features
+	 */
+	UNSUPPORTED_FEATURE(Group.PROGRAM,
+			"there are no unsupported features in the program",
+			"unsupported features may occur in the program"),
+	/**
 	 * Check data races in concurrent programs.
 	 */
 	DATA_RACE(Group.PROGRAM,
