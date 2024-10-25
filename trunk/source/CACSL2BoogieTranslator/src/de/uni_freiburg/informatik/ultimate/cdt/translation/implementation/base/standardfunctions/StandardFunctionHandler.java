@@ -384,7 +384,7 @@ public class StandardFunctionHandler {
 				new CPrimitive(CPrimitives.INT)));
 		fill(map, "fseek", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
 				new CPrimitive(CPrimitives.INT)));
-		fill(map, "fread", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
+		fill(map, "fread", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 4,
 				new CPrimitive(CPrimitives.ULONG)));
 		fill(map, "ferror", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
 				new CPrimitive(CPrimitives.INT)));
