@@ -363,9 +363,12 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	protected ExpressionResult handleBinaryBitwiseIntegerExpression(final ILocation loc, final int op,
 			final Expression left, final CPrimitive typeLeft, final Expression right, final CPrimitive typeRight,
 			final AuxVarInfoBuilder auxVarInfoBuilder) {
-		final Expression resultExpr =
-				constructBinaryBitwiseIntegerExpression(loc, op, left, typeLeft, right, typeRight);
-		return new ExpressionResult(new RValue(resultExpr, typeLeft, false, false));
+		final ExpressionResult rightConverted =
+				convertIntToInt(loc, new ExpressionResult(new RValue(right, typeRight)), typeLeft);
+		final Expression resultExpr = constructBinaryBitwiseIntegerExpression(loc, op, left, typeLeft,
+				rightConverted.getLrValue().getValue(), typeLeft);
+		return new ExpressionResultBuilder().addAllExceptLrValue(rightConverted)
+				.setLrValue(new RValue(resultExpr, typeLeft, false, false)).build();
 	}
 
 	@Override
