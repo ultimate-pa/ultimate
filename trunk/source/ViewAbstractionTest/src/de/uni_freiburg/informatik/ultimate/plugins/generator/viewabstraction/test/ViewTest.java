@@ -35,12 +35,15 @@ import java.util.stream.IntStream;
 
 import org.junit.Test;
 
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.Explorer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.ViewAbstractionComputation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.ViewAbstractionComputation.Status;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.Configuration;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.IRule;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.Program;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.SleepReducedProgram;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.test.systems.BurnsRezine;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.test.systems.BurnsSimple;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.test.systems.Firefly;
@@ -49,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.tes
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.test.systems.MutexBroadcast;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class ViewTest {
 	private static final int MAX_ITERATIONS = 100;
@@ -92,6 +96,42 @@ public class ViewTest {
 		logger.info(fp);
 	}
 
+	private static <X> void abstractFpReduced(final ITestProgram<X> program,
+			final IIndependenceRelation<?, IRule<X>> comm, final int parameter, final int maxInterations) {
+		final var reduced = SleepReducedProgram.reduce(program.getTransitions(), comm);
+		final var testReduced = new ITestProgram<Pair<X, Boolean>>() {
+			@Override
+			public Program<Pair<X, Boolean>> getTransitions() {
+				return reduced;
+			}
+
+			@Override
+			public Configuration<Pair<X, Boolean>> init(final int parameter) {
+				final var underlying = program.init(parameter);
+				return new Configuration<>(new ImmutableList<>(
+						underlying.stream().map(s -> new Pair<>(s, false)).collect(Collectors.toList())));
+			}
+
+			@Override
+			public boolean isBad(final Configuration<Pair<X, Boolean>> config) {
+				return program.isBad(SleepReducedProgram.underlying(config));
+			}
+		};
+
+		final var services = UltimateMocks.createUltimateServiceProviderMock();
+		final var va = new ViewAbstractionComputation<>(services, testReduced.getTransitions(),
+				Set.of(testReduced.init(parameter)), parameter);
+		final var status = va.run(100);
+		final var fp = va.getCurrentAbstraction();
+
+		final var logger = services.getLoggingService().getLogger(ViewTest.class);
+		fp.stream().forEach(consumeConfiguration(services, testReduced::isBad));
+		logger.info(fp);
+
+		logger.info("projected fixed point: %s",
+				fp.stream().map(SleepReducedProgram::underlying).distinct().collect(Collectors.toList()));
+	}
+
 	@Test
 	public void exploreMutex2() {
 		explore(new Mutex(2), 2);
@@ -128,6 +168,12 @@ public class ViewTest {
 	}
 
 	@Test
+	public void abstract3MutexReduced() {
+		final var program = new Mutex(-1);
+		abstractFpReduced(program, program.getIndependence(), 3, MAX_ITERATIONS);
+	}
+
+	@Test
 	public void exploreMutex2Broadcast() {
 		explore(new MutexBroadcast(2), 2);
 	}
@@ -160,6 +206,63 @@ public class ViewTest {
 	@Test
 	public void abstract4MutexBroadcast3() {
 		abstractFp(new MutexBroadcast(3), 4);
+	}
+
+	@Test
+	public void abstract3MutexBroadcast3Reduced() {
+		final var program = new MutexBroadcast(3);
+		abstractFpReduced(program, program.getIndependence(), 4, -1);
+	}
+
+	@Test(expected = BadConfigurationException.class)
+	public void abstract1MutexBroadcast8() {
+		abstractFp(new MutexBroadcast(8), 1, MAX_ITERATIONS);
+	}
+
+	@Test(expected = BadConfigurationException.class)
+	public void abstract2MutexBroadcast8() {
+		abstractFp(new MutexBroadcast(8), 2, MAX_ITERATIONS);
+	}
+
+	@Test(expected = BadConfigurationException.class)
+	public void abstract3MutexBroadcast8() {
+		abstractFp(new MutexBroadcast(8), 3, MAX_ITERATIONS);
+	}
+
+	@Test(expected = BadConfigurationException.class)
+	public void abstract4MutexBroadcast8() {
+		abstractFp(new MutexBroadcast(8), 4, MAX_ITERATIONS);
+	}
+
+	@Test(expected = BadConfigurationException.class)
+	public void abstract5MutexBroadcast8() {
+		abstractFp(new MutexBroadcast(8), 5, MAX_ITERATIONS);
+	}
+
+	@Test(expected = BadConfigurationException.class)
+	public void abstract6MutexBroadcast8() {
+		abstractFp(new MutexBroadcast(8), 6, MAX_ITERATIONS);
+	}
+
+	@Test(expected = BadConfigurationException.class)
+	public void abstract7MutexBroadcast8() {
+		abstractFp(new MutexBroadcast(8), 7, MAX_ITERATIONS);
+	}
+
+	@Test(expected = BadConfigurationException.class)
+	public void abstract8MutexBroadcast8() {
+		abstractFp(new MutexBroadcast(8), 8, MAX_ITERATIONS);
+	}
+
+	@Test
+	public void abstract9MutexBroadcast8() {
+		abstractFp(new MutexBroadcast(8), 9, MAX_ITERATIONS);
+	}
+
+	@Test
+	public void abstract2MutexBroadcast8Reduced() {
+		final var program = new MutexBroadcast(8);
+		abstractFpReduced(program, program.getIndependence(), 4, MAX_ITERATIONS);
 	}
 
 	@Test
@@ -235,6 +338,18 @@ public class ViewTest {
 	@Test
 	public void abstractIllinois3() {
 		abstractFp(new Illinois(), 3);
+	}
+
+	@Test
+	public void abstractIllinois2Reduced() {
+		final var illinois = new Illinois();
+		abstractFpReduced(illinois, illinois.getIndependence(), 2, -1);
+	}
+
+	@Test
+	public void abstractIllinois3Reduced() {
+		final var illinois = new Illinois();
+		abstractFpReduced(illinois, illinois.getIndependence(), 3, -1);
 	}
 
 	@Test

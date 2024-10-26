@@ -30,12 +30,16 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.Configuration;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.GlobalVarUpdate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.IRule;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.Program;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.ProgramState;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.test.ListIndependence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.test.ViewTest.ITestProgram;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class Mutex implements ITestProgram<ProgramState<Integer, Mutex.IncDecLocation>> {
 	enum IncDecLocation {
@@ -54,17 +58,19 @@ public class Mutex implements ITestProgram<ProgramState<Integer, Mutex.IncDecLoc
 	}
 
 	private final int mBound;
+	private final IRule<ProgramState<Integer, IncDecLocation>> increment;
+	private final IRule<ProgramState<Integer, IncDecLocation>> decrement;
 
 	public Mutex(final int bound) {
 		mBound = bound;
+		increment = new GlobalVarUpdate<>(IncDecLocation.MINUS, IncDecLocation.PLUS,
+				i -> (mBound == -1 || i < mBound) ? i + 1 : null);
+		decrement = new GlobalVarUpdate<>(IncDecLocation.PLUS, IncDecLocation.MINUS, i -> i - 1);
 	}
 
 	@Override
 	public Program<ProgramState<Integer, Mutex.IncDecLocation>> getTransitions() {
-		return new Program<>(null,
-				List.of(new GlobalVarUpdate<>(IncDecLocation.MINUS, IncDecLocation.PLUS,
-						i -> (mBound == -1 || i < mBound) ? i + 1 : null),
-						new GlobalVarUpdate<>(IncDecLocation.PLUS, IncDecLocation.MINUS, i -> i - 1)));
+		return new Program<>(null, List.of(increment, decrement));
 	}
 
 	@Override
@@ -82,4 +88,10 @@ public class Mutex implements ITestProgram<ProgramState<Integer, Mutex.IncDecLoc
 				&& config.stream().filter(s -> s.isControllerState()).findAny().get().getControllerState() == 0;
 	}
 
+	public <S> IIndependenceRelation<S, IRule<ProgramState<Integer, IncDecLocation>>> getIndependence() {
+		if (mBound == -1) {
+			return new ListIndependence<>(List.of(new Pair<>(increment, decrement), new Pair<>(decrement, increment)));
+		}
+		return null;
+	}
 }

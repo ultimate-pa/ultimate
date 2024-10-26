@@ -28,45 +28,56 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.te
 
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.BroadcastRule;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.ConditionalBroadcast;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.Configuration;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.GlobalRule;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.GlobalRule.Quantifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.GlobalRule.Range;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.IRule;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.LocalRule;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.Program;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.RendezVous;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.test.ListIndependence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.test.ViewTest;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.test.ViewTest.ITestProgram;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class Illinois implements ITestProgram<Illinois.Ill> {
 	public enum Ill {
 		invd, dirt, shrd, vlid
 	}
 
+	private static final IRule<Ill> t1 = new RendezVous<>(Ill.invd, Ill.shrd, Ill.dirt, Ill.shrd);
+	private static final IRule<Ill> t2 =
+			new GlobalRule<>(Ill.invd, Ill.vlid, Range.DISTINCT, Quantifier.FORALL, x -> x == Ill.invd);
+	private static final IRule<Ill> t3 = new BroadcastRule<>(Ill.invd, Ill.dirt, x -> Ill.invd);
+	private static final IRule<Ill> t4 = new LocalRule<>(Ill.dirt, Ill.invd);
+	private static final IRule<Ill> t5 = new ConditionalBroadcast<>(Ill.invd, Ill.shrd, Range.DISTINCT,
+			Quantifier.EXISTS, s -> s == Ill.vlid || s == Ill.shrd, s -> s == Ill.vlid ? Ill.shrd : s);
+	private static final IRule<Ill> t6 = new BroadcastRule<>(Ill.shrd, Ill.dirt, x -> x == Ill.shrd ? Ill.invd : x);
+	private static final IRule<Ill> t7 = new LocalRule<>(Ill.shrd, Ill.invd);
+	private static final IRule<Ill> t8 = new LocalRule<>(Ill.vlid, Ill.invd);
+	private static final IRule<Ill> t9 = new LocalRule<>(Ill.vlid, Ill.dirt);
+
+	// manually determined; likely incomplete
+	private static final List<Pair<IRule<Ill>, IRule<Ill>>> comm =
+			List.of(new Pair<>(t2, t4), new Pair<>(t2, t7), new Pair<>(t2, t8), new Pair<>(t4, t6), new Pair<>(t4, t7),
+					new Pair<>(t4, t8), new Pair<>(t4, t9), new Pair<>(t5, t7), new Pair<>(t6, t8), new Pair<>(t6, t9),
+					new Pair<>(t7, t3), new Pair<>(t7, t4), new Pair<>(t7, t6), new Pair<>(t7, t8), new Pair<>(t7, t9),
+					new Pair<>(t8, t3), new Pair<>(t8, t4), new Pair<>(t8, t6), new Pair<>(t8, t7), new Pair<>(t8, t9),
+					new Pair<>(t9, t3), new Pair<>(t9, t4), new Pair<>(t9, t6), new Pair<>(t9, t7), new Pair<>(t9, t8)
+
+			);
+
+	public <S> IIndependenceRelation<S, IRule<Ill>> getIndependence() {
+		return new ListIndependence<>(comm);
+	}
+
 	@Override
 	public Program<Ill> getTransitions() {
-		return new Program<>(null, List.of(
-				// t1
-				new RendezVous<>(Ill.invd, Ill.shrd, Ill.dirt, Ill.shrd),
-				// t2
-				new GlobalRule<>(Ill.invd, Ill.vlid, Range.DISTINCT, Quantifier.FORALL, x -> x == Ill.invd),
-				// t3
-				new BroadcastRule<>(Ill.invd, Ill.dirt, x -> Ill.invd),
-				// t4
-				new LocalRule<>(Ill.dirt, Ill.invd),
-				// t5
-				new ConditionalBroadcast<>(Ill.invd, Ill.shrd, Range.DISTINCT, Quantifier.EXISTS,
-						s -> s == Ill.vlid || s == Ill.shrd, s -> s == Ill.vlid ? Ill.shrd : s),
-				// t6
-				new BroadcastRule<>(Ill.shrd, Ill.dirt, x -> x == Ill.shrd ? Ill.invd : x),
-				// t7
-				new LocalRule<>(Ill.shrd, Ill.invd),
-				// t8
-				new LocalRule<>(Ill.vlid, Ill.invd),
-				// t9
-				new LocalRule<>(Ill.vlid, Ill.dirt)));
+		return new Program<>(null, List.of(t1, t2, t3, t4, t5, t6, t7, t8, t9));
 	}
 
 	@Override

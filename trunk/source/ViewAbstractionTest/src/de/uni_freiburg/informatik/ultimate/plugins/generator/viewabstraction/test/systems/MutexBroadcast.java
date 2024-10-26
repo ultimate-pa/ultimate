@@ -31,10 +31,12 @@ import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.BroadcastRule;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.Configuration;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.IRule;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.Program;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.test.ListIndependence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.test.ViewTest.ITestProgram;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.test.systems.Mutex.IncDecLocation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
@@ -42,13 +44,15 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class MutexBroadcast implements ITestProgram<Pair<IncDecLocation, Integer>> {
 	private final int mBound;
+	private final Program<Pair<IncDecLocation, Integer>> mProgram;
+	private IIndependenceRelation<Object, IRule<Pair<IncDecLocation, Integer>>> mComm;
 
 	public MutexBroadcast(final int bound) {
 		mBound = bound;
+		mProgram = getTransitionsInternal();
 	}
 
-	@Override
-	public Program<Pair<IncDecLocation, Integer>> getTransitions() {
+	private Program<Pair<IncDecLocation, Integer>> getTransitionsInternal() {
 		final var rules = new ArrayList<IRule<Pair<IncDecLocation, Integer>>>();
 
 		final UnaryOperator<Pair<IncDecLocation, Integer>> incBroadcast =
@@ -58,14 +62,24 @@ public class MutexBroadcast implements ITestProgram<Pair<IncDecLocation, Integer
 					incBroadcast));
 		}
 
+		final var increments = new ArrayList<>(rules);
+		final var comm =
+				new ArrayList<Pair<IRule<Pair<IncDecLocation, Integer>>, IRule<Pair<IncDecLocation, Integer>>>>();
+
 		final UnaryOperator<Pair<IncDecLocation, Integer>> decBroadcast =
 				st -> new Pair<>(st.getFirst(), st.getSecond() - 1);
 		for (int i = 0; i <= mBound; ++i) {
 			// implicitly puts a guard on the decrement
-			rules.add(new BroadcastRule<>(new Pair<>(IncDecLocation.PLUS, i), new Pair<>(IncDecLocation.MINUS, i - 1),
-					decBroadcast));
+			final var dec = new BroadcastRule<>(new Pair<>(IncDecLocation.PLUS, i),
+					new Pair<>(IncDecLocation.MINUS, i - 1), decBroadcast);
+			rules.add(dec);
+			for (final var inc : increments) {
+				comm.add(new Pair<>(inc, dec));
+				comm.add(new Pair<>(dec, inc));
+			}
 		}
 
+		mComm = new ListIndependence<>(comm);
 		return new Program<>(null, rules);
 	}
 
@@ -82,4 +96,12 @@ public class MutexBroadcast implements ITestProgram<Pair<IncDecLocation, Integer
 		return config.stream().anyMatch(s -> s.getFirst() == IncDecLocation.PLUS && s.getSecond() == 0);
 	}
 
+	public IIndependenceRelation<Object, IRule<Pair<IncDecLocation, Integer>>> getIndependence() {
+		return mComm;
+	}
+
+	@Override
+	public Program<Pair<IncDecLocation, Integer>> getTransitions() {
+		return mProgram;
+	}
 }
