@@ -201,6 +201,8 @@ public class ViewAbstractionComputation<S> {
 				queue.push(new Pair<>(next, i));
 			}
 		}
+
+		// mLogger.debug("Views of configuration %s : %s", config, result);
 		return result;
 	}
 

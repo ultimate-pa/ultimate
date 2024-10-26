@@ -29,6 +29,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.function.IntFunction;
+import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
@@ -36,11 +38,16 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.Configuration;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.Program;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.SleepReducedProgram;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.cfg.CfgProgramConverter;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.cfg.CfgRuleIndependence;
 
 public class ViewAbstractionObserver implements IUnmanagedObserver {
-	public static final boolean USE_SLEEP_REDUCTION = false;
+	public static final boolean USE_SLEEP_REDUCTION = true;
 	public static final boolean USE_PERSISTENT_REDUCTION = false;
 
 	private final ILogger mLogger;
@@ -85,26 +92,39 @@ public class ViewAbstractionObserver implements IUnmanagedObserver {
 		final var program = converter.getProgram();
 
 		if (USE_SLEEP_REDUCTION) {
-			// TODO create sleep set-instrumented program
-			throw new UnsupportedOperationException("not yet implemented");
+			final var cbIndependence = IndependenceBuilder
+					.semantic(mServices, icfgRootNode.getCfgSmtToolkit().getManagedScript(), false, false)
+					.withSyntacticCheck().cached().build();
+			final var reduced =
+					SleepReducedProgram.reduceWithGlobals(program, new CfgRuleIndependence<>(cbIndependence));
+			runAnalysis(reduced,
+					i -> SleepReducedProgram.wrapInitialProgramConfig(converter.getInitialConfiguration(i)),
+					c -> converter.isErrorView(SleepReducedProgram.underlyingProgramConfig(c)));
 		}
+
 		if (USE_PERSISTENT_REDUCTION) {
 			// TODO create persistent set-instrumented program
+			// TODO does this require to petrify the Icfg? (look at ThreadBasedPersistentSets to find out)
 			throw new UnsupportedOperationException("not yet implemented");
 		}
 
+		runAnalysis(program, converter::getInitialConfiguration, converter::isErrorView);
+	}
+
+	private <S> void runAnalysis(final Program<S> program, final IntFunction<Configuration<S>> makeInitial,
+			final Predicate<Configuration<S>> isBadView) {
 		for (int k = 1; true; ++k) {
 			mLogger.info("Computing view abstraction at level %d", k);
 
-			final var initial = converter.getInitialConfiguration(k);
+			final var initial = makeInitial.apply(k);
 			final var runner =
-					new ViewAbstractionComputation<>(mServices, program, Set.of(initial), k, converter::isErrorView);
+					new ViewAbstractionComputation<>(mServices, program, Set.of(initial), k, isBadView::test);
 			final var status = runner.run();
 			final var fp = runner.getCurrentAbstraction();
 
 			switch (status) {
 			case CANCELLED:
-				final var violation = fp.stream().filter(converter::isErrorView).findFirst().get();
+				final var violation = fp.stream().filter(isBadView).findFirst().get();
 				mLogger.warn("Violation found in iteration %d: %s", runner.getCurrentIteration() + 1, violation);
 				break;
 			case COMPLETED:

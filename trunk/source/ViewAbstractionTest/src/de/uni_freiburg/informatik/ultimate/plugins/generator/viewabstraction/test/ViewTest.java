@@ -107,9 +107,7 @@ public class ViewTest {
 
 			@Override
 			public Configuration<Pair<X, Boolean>> init(final int parameter) {
-				final var underlying = program.init(parameter);
-				return new Configuration<>(new ImmutableList<>(
-						underlying.stream().map(s -> new Pair<>(s, false)).collect(Collectors.toList())));
+				return SleepReducedProgram.wrapInitial(program.init(parameter));
 			}
 
 			@Override
