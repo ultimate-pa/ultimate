@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
 public class CfgProgramConverter {
 	private final IUltimateServiceProvider mServices;
 	private final BoogieIcfgContainer mIcfg;
+
 	private final Program<ProgramState<Map<IProgramNonOldVar, Object>, CfgThreadLocalState>> mProgram;
 
 	public CfgProgramConverter(final IUltimateServiceProvider services, final BoogieIcfgContainer icfg) {
@@ -86,6 +87,11 @@ public class CfgProgramConverter {
 		}
 
 		return new Configuration<>(new ImmutableList<>(result));
+	}
+
+	public boolean
+			isErrorView(final Configuration<ProgramState<Map<IProgramNonOldVar, Object>, CfgThreadLocalState>> view) {
+		return view.stream().anyMatch(s -> s.isThreadState() && s.getThreadState().getLocation().isErrorLocation());
 	}
 
 	private CfgRule<?> createRule(final IcfgEdge edge) {

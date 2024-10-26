@@ -37,7 +37,8 @@ import org.junit.Test;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.Explorer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.ViewAbstractionRunner;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.ViewAbstractionComputation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.ViewAbstractionComputation.Status;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.Configuration;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.Program;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.test.systems.BurnsRezine;
@@ -76,10 +77,17 @@ public class ViewTest {
 
 	private static <X> void abstractFp(final ITestProgram<X> program, final int parameter, final int maxIterations) {
 		final var services = UltimateMocks.createUltimateServiceProviderMock();
-		final var va = new ViewAbstractionRunner<>(services, program.getTransitions());
-		final var fp = va.computeFixedPoint(Set.of(program.init(parameter)), parameter, maxIterations);
+		final var va = new ViewAbstractionComputation<>(services, program.getTransitions(),
+				Set.of(program.init(parameter)), parameter);
+		final var status = va.run(maxIterations);
+		final var fp = va.getCurrentAbstraction();
 
 		final var logger = services.getLoggingService().getLogger(ViewTest.class);
+		if (status == Status.COMPLETED) {
+			logger.info("Fixpoint computation completed after %d iterations", va.getCurrentIteration());
+		} else {
+			logger.info("Fixpoint computation aborted");
+		}
 		fp.stream().forEach(consumeConfiguration(services, program::isBad));
 		logger.info(fp);
 	}

@@ -27,7 +27,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction;
 
 import java.util.ArrayDeque;
-import java.util.HashSet;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -44,44 +45,103 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
-public class ViewAbstractionRunner<S> {
+public class ViewAbstractionComputation<S> {
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 
 	private final Program<S> mProgram;
-	private final int mDelta;
+	private final int mLevel;
+	private final IObserver<S> mObserver;
 
-	public ViewAbstractionRunner(final IUltimateServiceProvider services, final Program<S> program) {
+	private final int mDelta;
+	private final Set<Configuration<S>> mCurrent;
+	private final Set<Configuration<S>> mNewViews = new LinkedHashSet<>();
+
+	private Status mStatus = Status.PAUSED;
+	private int mIteration = 0;
+
+	public enum Status {
+		PAUSED, COMPLETED, CANCELLED
+	}
+
+	public ViewAbstractionComputation(final IUltimateServiceProvider services, final Program<S> program,
+			final Set<Configuration<S>> initial, final int level) {
+		this(services, program, initial, level, null);
+	}
+
+	public ViewAbstractionComputation(final IUltimateServiceProvider services, final Program<S> program,
+			final Set<Configuration<S>> initial, final int level, final IObserver<S> observer) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(getClass());
 		mLogger.setLevel(LogLevel.DEBUG);
 
 		mProgram = program;
+		mLevel = level;
+		mObserver = observer;
+
+		mCurrent = new LinkedHashSet<>(initial);
 		mDelta = program.getRules().stream().mapToInt(IRule::extensionSize).max().orElse(0);
 	}
 
-	public Set<Configuration<S>> computeFixedPoint(final Set<Configuration<S>> initial, final int k,
-			final int maxIterations) {
-		final var current = new HashSet<>(initial);
-		int iteration = 0;
+	public Set<Configuration<S>> getCurrentAbstraction() {
+		return Collections.unmodifiableSet(mCurrent);
+	}
+
+	public int getCurrentIteration() {
+		return mIteration;
+	}
+
+	public Status getStatus() {
+		return mStatus;
+	}
+
+	public Status run() {
+		return run(-1);
+	}
+
+	public Status run(final int maxIterations) {
+		if (mStatus == Status.COMPLETED || mStatus == Status.CANCELLED) {
+			return mStatus;
+		}
+
+		int localIterations = 0;
 
 		boolean changed;
 		do {
-			changed = current.addAll(abstractPost(current, k));
-			iteration++;
-			mLogger.info("fixpoint iteration %d : %d views", iteration, current.size());
+			changed = false;
+			mNewViews.clear();
+			final var nextViews = abstractPost(mCurrent, mLevel);
+			for (final var view : nextViews) {
+				final boolean isNew = mCurrent.add(view);
+				changed = changed || isNew;
+				if (isNew) {
+					mNewViews.add(view);
+					// TODO in next iteration, only compute successors of configs that have at least one new view
+
+					final boolean stop = observe(view);
+					if (stop) {
+						mStatus = Status.CANCELLED;
+						return mStatus;
+					}
+				}
+			}
+
+			mIteration++;
+			localIterations++;
+			mLogger.info("fixpoint iteration %d : %d views", mIteration, mCurrent.size());
 
 			if (!mServices.getProgressMonitorService().continueProcessing()) {
+				mStatus = changed ? Status.CANCELLED : Status.COMPLETED;
 				throw new ToolchainCanceledException(getClass());
 			}
-		} while (changed && (maxIterations < 0 || iteration <= maxIterations));
+		} while (changed && (maxIterations < 0 || localIterations <= maxIterations));
 
-		mLogger.info("fixpoint algorithm %s after %d iterations", changed ? "ABORTED" : "finished", iteration);
-
-		return current;
+		mStatus = changed ? Status.PAUSED : Status.COMPLETED;
+		mLogger.info("fixpoint algorithm %s after %d iterations", mStatus, mIteration);
+		return mStatus;
 	}
 
-	public Set<Configuration<S>> abstractPost(final Set<Configuration<S>> views, final int k) {
+	private Set<Configuration<S>> abstractPost(final Set<Configuration<S>> views, final int k) {
 		final var extended = extend(views, k, mDelta);
 		mLogger.debug("extended %d views of size %d by delta=%d to %d views", views.size(), k, mDelta, extended.size());
 
@@ -94,8 +154,8 @@ public class ViewAbstractionRunner<S> {
 		return abstracted;
 	}
 
-	public Set<Configuration<S>> concretePost(final Set<Configuration<S>> configs) {
-		final var result = new HashSet<>(configs);
+	private Set<Configuration<S>> concretePost(final Set<Configuration<S>> configs) {
+		final var result = new LinkedHashSet<>(configs);
 		for (final var rule : mProgram.getRules()) {
 			for (final var c : configs) {
 				if (rule.isApplicable(c)) {
@@ -106,11 +166,11 @@ public class ViewAbstractionRunner<S> {
 		return result;
 	}
 
-	public Set<Configuration<S>> getViews(final Set<Configuration<S>> configs, final int k) {
+	private Set<Configuration<S>> getViews(final Set<Configuration<S>> configs, final int k) {
 		return configs.stream().flatMap(c -> getViews(c, k).stream()).collect(Collectors.toSet());
 	}
 
-	public Set<Configuration<S>> getViews(final Configuration<S> config, final int k) {
+	private Set<Configuration<S>> getViews(final Configuration<S> config, final int k) {
 		final boolean hasController = config.get(0) instanceof ControllerState<?, ?>;
 		final int minIndex = hasController ? 1 : 0;
 
@@ -119,7 +179,7 @@ public class ViewAbstractionRunner<S> {
 			queue.push(new Pair<ImmutableList<S>, Integer>(ImmutableList.empty(), i));
 		}
 
-		final var result = new HashSet<Configuration<S>>();
+		final var result = new LinkedHashSet<Configuration<S>>();
 		while (!queue.isEmpty()) {
 			final var current = queue.pop();
 			final var list = current.getFirst();
@@ -145,7 +205,7 @@ public class ViewAbstractionRunner<S> {
 	}
 
 	// TODO This is an extremely naive and inefficient implementation that is bound to cause issues later on.
-	public Set<Configuration<S>> extend(final Set<Configuration<S>> configs, final int k, final int delta) {
+	private Set<Configuration<S>> extend(final Set<Configuration<S>> configs, final int k, final int delta) {
 		final var states = configs.stream().flatMap(c -> c.stream()).collect(Collectors.toSet());
 		final var controllerStates =
 				states.stream().filter(s -> s instanceof ControllerState<?, ?>).collect(Collectors.toSet());
@@ -160,7 +220,7 @@ public class ViewAbstractionRunner<S> {
 					candidates.flatMap(c -> controllerStates.stream().map(s -> new ImmutableList<>(s, c)));
 		}
 		return augmentedCandidates.map(Configuration::new).filter(c -> configs.containsAll(getViews(c, k)))
-				.collect(Collectors.toSet());
+				.collect(Collectors.toCollection(LinkedHashSet::new));
 	}
 
 	private Stream<ImmutableList<S>> listsOfSize(final Set<S> elements, final int size) {
@@ -168,5 +228,16 @@ public class ViewAbstractionRunner<S> {
 			return Stream.of(ImmutableList.empty());
 		}
 		return listsOfSize(elements, size - 1).flatMap(l -> elements.stream().map(e -> new ImmutableList<>(e, l)));
+	}
+
+	private boolean observe(final Configuration<S> newView) {
+		if (mObserver == null) {
+			return false;
+		}
+		return mObserver.observe(newView);
+	}
+
+	public interface IObserver<S> {
+		boolean observe(Configuration<S> newView);
 	}
 }

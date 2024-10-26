@@ -93,19 +93,37 @@ public class ViewAbstractionObserver implements IUnmanagedObserver {
 			throw new UnsupportedOperationException("not yet implemented");
 		}
 
-		final var runner = new ViewAbstractionRunner<>(mServices, program);
 		for (int k = 1; true; ++k) {
-			mLogger.info("Computing view abstraction at level k=%d", k);
+			mLogger.info("Computing view abstraction at level %d", k);
 
 			final var initial = converter.getInitialConfiguration(k);
-			final var fp = runner.computeFixedPoint(Set.of(initial), k, -1);
+			final var runner =
+					new ViewAbstractionComputation<>(mServices, program, Set.of(initial), k, converter::isErrorView);
+			final var status = runner.run();
+			final var fp = runner.getCurrentAbstraction();
 
-			mLogger.info(fp);
+			switch (status) {
+			case CANCELLED:
+				final var violation = fp.stream().filter(converter::isErrorView).findFirst().get();
+				mLogger.warn("Violation found in iteration %d: %s", runner.getCurrentIteration() + 1, violation);
+				break;
+			case COMPLETED:
+				mLogger.info("Fixpoint computation completed after %d iterations with %d views: %s",
+						runner.getCurrentIteration(), fp.size(), fp);
+				break;
+			case PAUSED:
+				mLogger.warn("Fixpoint computation stopped after %d iterations (%d views in pre-fixpoint)",
+						runner.getCurrentIteration(), fp.size());
+				break;
+			default:
+				break;
+
+			}
 
 			if (!mServices.getProgressMonitorService().continueProcessing()) {
 				throw new ToolchainCanceledException(getClass());
 			}
-			// TODO check if fixed point is safe
+
 			// TODO interleave fixed point computation with unabstracted exploration
 			// TODO possibly use diagonal pattern in case fixed point computation/exploration needs unbounded iterations
 		}
