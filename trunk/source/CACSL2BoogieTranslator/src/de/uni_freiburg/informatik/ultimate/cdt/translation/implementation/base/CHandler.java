@@ -573,7 +573,6 @@ public class CHandler {
 				stv = new SymbolTableValue(bId, null, pointerType, newDecl, oldStv.getDeclarationInformation(), hook,
 						false);
 				addBoogieIdsOfHeapVars(bId);
-				addBoogieIdsOfHeapVars(oldStv.getBoogieName());
 			} else {
 				// Copy the old value to the symbol table
 				stv = oldStv;
