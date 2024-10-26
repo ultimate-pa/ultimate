@@ -1428,7 +1428,8 @@ public class StandardFunctionHandler {
 								mExpressionTranslation.constructBinaryEqualityExpression(loc,
 										IASTBinaryExpression.op_equals, pointerRead.getLrValue().getValue(),
 										pointerRead.getLrValue().getCType(), expectedRead.getLrValue().getValue(),
-										expectedRead.getCType()))))
+										expectedRead.getCType()),
+								boolType.getType())))
 				// if (success) { write(read(desired), ptr) } else { write(ptr_val, expected) }
 				.addStatement(StatementFactory.constructIfStatement(loc, successBoolean,
 						DataStructureUtils.concat(desiredRead.getStatements(), pointerWrite.getStatements()),
