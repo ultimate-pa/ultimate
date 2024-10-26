@@ -40,27 +40,27 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Boo
  */
 public class CfgThreadLocalState {
 	private final IIcfgSymbolTable mSymbolTable;
-	private final ThreadInstance mThread;
+	private final String mTemplateName;
 	private final BoogieIcfgLocation mLocation;
 	private final Map<ILocalProgramVar, Object> mLocalState;
 
-	public CfgThreadLocalState(final IIcfgSymbolTable symbolTable, final ThreadInstance thread,
+	public CfgThreadLocalState(final IIcfgSymbolTable symbolTable, final String templateName,
 			final BoogieIcfgLocation location, final Map<ILocalProgramVar, Object> localState) {
 		mSymbolTable = Objects.requireNonNull(symbolTable);
-		mThread = Objects.requireNonNull(thread);
+		mTemplateName = Objects.requireNonNull(templateName);
 		mLocation = Objects.requireNonNull(location);
 		mLocalState = Objects.requireNonNull(localState);
 	}
 
-	public CfgThreadLocalState(final IIcfgSymbolTable symbolTable, final ThreadInstance thread) {
+	public CfgThreadLocalState(final IIcfgSymbolTable symbolTable, final String templateName) {
 		mSymbolTable = Objects.requireNonNull(symbolTable);
-		mThread = Objects.requireNonNull(thread);
+		mTemplateName = Objects.requireNonNull(templateName);
 		mLocation = null;
 		mLocalState = null;
 	}
 
-	public ThreadInstance getThread() {
-		return mThread;
+	public String getTemplateName() {
+		return mTemplateName;
 	}
 
 	public boolean isIdle() {
@@ -74,26 +74,26 @@ public class CfgThreadLocalState {
 	public Object getLocal(final ILocalProgramVar localVar) {
 		assert !isIdle() : "no variable values stored in idle state";
 		final var value = mLocalState.get(localVar);
-		assert value != null : "no value stored for local variable " + localVar + " of " + mThread;
+		assert value != null : "no value stored for local variable " + localVar;
 		return value;
 	}
 
 	public CfgThreadLocalState updateLocation(final BoogieIcfgLocation newLocation) {
-		return new CfgThreadLocalState(mSymbolTable, mThread, newLocation, mLocalState);
+		return new CfgThreadLocalState(mSymbolTable, mTemplateName, newLocation, mLocalState);
 	}
 
 	public CfgThreadLocalState updateLocal(final ILocalProgramVar localVar, final Object newValue) {
-		assert mSymbolTable.getLocals(mThread.getTemplateName()).contains(localVar) : "unknown variable " + localVar
-				+ " for thread " + mThread;
+		assert mSymbolTable.getLocals(mTemplateName).contains(localVar) : "unknown variable " + localVar
+				+ " for thread template " + mTemplateName;
 
 		final var newLocalState = new HashMap<>(mLocalState);
 		newLocalState.put(localVar, newValue);
-		return new CfgThreadLocalState(mSymbolTable, mThread, mLocation, newLocalState);
+		return new CfgThreadLocalState(mSymbolTable, mTemplateName, mLocation, newLocalState);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(mLocalState, mLocation, mSymbolTable, mThread);
+		return Objects.hash(mLocalState, mLocation, mSymbolTable, mTemplateName);
 	}
 
 	@Override
@@ -109,11 +109,15 @@ public class CfgThreadLocalState {
 		}
 		final CfgThreadLocalState other = (CfgThreadLocalState) obj;
 		return Objects.equals(mLocalState, other.mLocalState) && Objects.equals(mLocation, other.mLocation)
-				&& Objects.equals(mSymbolTable, other.mSymbolTable) && Objects.equals(mThread, other.mThread);
+				&& Objects.equals(mSymbolTable, other.mSymbolTable)
+				&& Objects.equals(mTemplateName, other.mTemplateName);
 	}
 
 	@Override
 	public String toString() {
-		return mThread + "[" + mLocation + "]:: " + mLocalState;
+		if (mLocalState.isEmpty()) {
+			return mTemplateName + "@[" + mLocation + "]";
+		}
+		return mTemplateName + "@[" + mLocation + "]::" + mLocalState;
 	}
 }

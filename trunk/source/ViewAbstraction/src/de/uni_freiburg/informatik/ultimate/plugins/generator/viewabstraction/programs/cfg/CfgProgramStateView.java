@@ -104,7 +104,7 @@ public class CfgProgramStateView implements IValuation<CfgProgramStateView> {
 	}
 
 	private ILocalProgramVar getLocal(final String variable) {
-		return mSymbolTable.getLocals(mLocalState.getThread().getTemplateName()).stream()
+		return mSymbolTable.getLocals(mLocalState.getTemplateName()).stream()
 				.filter(pv -> pv.getIdentifier().equals(variable)).findAny().orElse(null);
 	}
 

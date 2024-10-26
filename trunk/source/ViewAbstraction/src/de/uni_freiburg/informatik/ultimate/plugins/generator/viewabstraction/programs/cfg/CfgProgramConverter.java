@@ -79,8 +79,7 @@ public class CfgProgramConverter {
 			final var initialValues =
 					getInitialAssignment(mIcfg.getCfgSmtToolkit().getSymbolTable().getLocals(template));
 			for (int i = 0; i < k; ++i) {
-				final var instance = new ThreadInstance(template, i);
-				final var state = new CfgThreadLocalState(mIcfg.getCfgSmtToolkit().getSymbolTable(), instance,
+				final var state = new CfgThreadLocalState(mIcfg.getCfgSmtToolkit().getSymbolTable(), template,
 						initialLoc, initialValues);
 				result.add(new ThreadState<>(state));
 			}
