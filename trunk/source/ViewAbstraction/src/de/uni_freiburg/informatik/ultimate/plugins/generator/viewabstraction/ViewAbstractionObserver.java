@@ -26,12 +26,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 import java.util.function.IntFunction;
 import java.util.function.Predicate;
 
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
@@ -41,8 +40,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.abstractdomain.IViewAbstraction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.abstractdomain.ProgramViewAbstraction;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.por.PersistentSetSupport;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.Program;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.SleepReducedProgram;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.cfg.CfgProgramConverter;
@@ -55,21 +56,22 @@ public class ViewAbstractionObserver implements IUnmanagedObserver {
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 
-	private final List<BoogieIcfgContainer> mIcfgs;
+	private BoogieIcfgContainer mIcfg;
 	private IElement mRootOfNewModel;
 	private boolean mLastModel;
+
+	private IIndependenceRelation<?, ? super CodeBlock> mCodeBlockIndependence;
 
 	public ViewAbstractionObserver(final IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mLastModel = false;
-		mIcfgs = new ArrayList<>();
 	}
 
 	@Override
 	public boolean process(final IElement root) {
 		if (root instanceof BoogieIcfgContainer) {
-			mIcfgs.add((BoogieIcfgContainer) root);
+			mIcfg = (BoogieIcfgContainer) root;
 		}
 		return false;
 	}
@@ -80,35 +82,22 @@ public class ViewAbstractionObserver implements IUnmanagedObserver {
 			return;
 		}
 
-		if (mIcfgs.isEmpty()) {
+		if (mIcfg == null) {
 			throw new IllegalArgumentException("No ICFG present, ViewAbstraction cannot run");
 		}
+		mLogger.info("Analyzing ICFG " + mIcfg.getIdentifier());
 
-		final BoogieIcfgContainer icfgRootNode = mIcfgs.get(mIcfgs.size() - 1);
-		if (icfgRootNode == null) {
-			throw new UnsupportedOperationException("ViewAbstraction needs an ICFG");
-		}
-		mLogger.info("Analyzing ICFG " + icfgRootNode.getIdentifier());
-
-		final var converter = new CfgProgramConverter(mServices, icfgRootNode);
+		final var converter = new CfgProgramConverter(mServices, mIcfg);
 		final var program = converter.getProgram();
 
 		if (USE_SLEEP_REDUCTION) {
-			final var cbIndependence = IndependenceBuilder
-					.semantic(mServices, icfgRootNode.getCfgSmtToolkit().getManagedScript(), false, false)
-					.withSyntacticCheck().cached().build();
+			final var cbIndependence = getOrConstructIndependence();
 			final var reduced =
 					SleepReducedProgram.reduceWithGlobals(program, new CfgRuleIndependence<>(cbIndependence));
 			runAnalysis(new ProgramViewAbstraction<>(), reduced,
 					i -> SleepReducedProgram.wrapInitialProgramConfig(converter.getInitialConfiguration(i)),
 					c -> converter.isErrorView(SleepReducedProgram.underlyingProgramConfig(c)));
 			return;
-		}
-
-		if (USE_PERSISTENT_REDUCTION) {
-			// TODO create persistent set-instrumented program
-			// TODO does this require to petrify the Icfg? (look at ThreadBasedPersistentSets to find out)
-			throw new UnsupportedOperationException("not yet implemented");
 		}
 
 		runAnalysis(new ProgramViewAbstraction<>(), program, converter::getInitialConfiguration,
@@ -119,6 +108,19 @@ public class ViewAbstractionObserver implements IUnmanagedObserver {
 			final IntFunction<V> makeInitial, final Predicate<V> isBadView) {
 		for (int k = 1; true; ++k) {
 			mLogger.info("Computing view abstraction at level %d", k);
+
+			if (USE_PERSISTENT_REDUCTION) {
+				// compute the number of threads to be considered for persistent sets
+				final int delta = program.getExtensionSize();
+				final int extendedThreads = k + delta;
+
+				final var persistent =
+						new PersistentSetSupport(mServices, mIcfg, getOrConstructIndependence(), extendedThreads);
+				final var persistentSets = persistent.getPersistentSets();
+
+				// TODO create persistent set-instrumented program
+				throw new UnsupportedOperationException("not yet implemented");
+			}
 
 			final var initial = makeInitial.apply(k);
 			final var runner = new ViewAbstractionComputation<>(mServices, viewAbstraction, k, program, Set.of(initial),
@@ -168,5 +170,14 @@ public class ViewAbstractionObserver implements IUnmanagedObserver {
 	@Override
 	public boolean performedChanges() {
 		return false;
+	}
+
+	private IIndependenceRelation<?, ? super CodeBlock> getOrConstructIndependence() {
+		if (mCodeBlockIndependence == null) {
+			mCodeBlockIndependence =
+					IndependenceBuilder.semantic(mServices, mIcfg.getCfgSmtToolkit().getManagedScript(), false, false)
+							.withSyntacticCheck().cached().build();
+		}
+		return mCodeBlockIndependence;
 	}
 }

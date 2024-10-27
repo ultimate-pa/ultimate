@@ -38,4 +38,8 @@ public class Program<C> {
 	public List<? extends IRule<C>> getRules() {
 		return mRules;
 	}
+
+	public int getExtensionSize() {
+		return mRules.stream().mapToInt(IRule::extensionSize).max().orElse(0);
+	}
 }
