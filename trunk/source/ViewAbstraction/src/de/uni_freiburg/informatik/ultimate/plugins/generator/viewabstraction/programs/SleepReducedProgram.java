@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs;
 
 import java.util.List;
+import java.util.function.IntPredicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -90,12 +91,8 @@ public class SleepReducedProgram {
 
 		private Configuration<Pair<S, Boolean>> updateSleep(final Configuration<Pair<S, Boolean>> previous,
 				final Configuration<S> config, final IntStream active) {
-			final int maxActive = active.max().getAsInt();
-			return new Configuration<>(new ImmutableList<>(IntStream.range(0, config.numberOfThreads())
-					.mapToObj(i -> new Pair<>(config.getThread(i), (i < maxActive || previous.getThread(i).getSecond())
-							&& enabled(mProgram, underlying(previous), i).filter(r -> !r.isSpecRule()).allMatch(
-									r -> mIndependence.isIndependent(null, r, mUnderlying) == Dependence.INDEPENDENT)))
-					.collect(Collectors.toList())));
+			return SleepReducedProgram.updateSleep(mProgram, mIndependence, mUnderlying, underlying(previous),
+					i -> previous.getThread(i).getSecond(), config, active);
 		}
 	}
 
@@ -139,22 +136,35 @@ public class SleepReducedProgram {
 		private ProgramConfiguration<S, Pair<T, Boolean>> updateSleep(
 				final ProgramConfiguration<S, Pair<T, Boolean>> previous, final ProgramConfiguration<S, T> config,
 				final IntStream active) {
-			final int maxActive = active.max().getAsInt();
-			return new ProgramConfiguration<>(config.getControllerState(),
-					new Configuration<>(new ImmutableList<>(IntStream.range(0, config.numberOfThreads())
-							.<Pair<T, Boolean>> mapToObj(i -> new Pair<>(config.getThread(i),
-									(i < maxActive || previous.getThread(i).getSecond())
-											&& enabled(mProgram, underlyingProgramConfig(previous), i)
-													.filter(r -> !r.isSpecRule())
-													.allMatch(r -> mIndependence.isIndependent(null, r,
-															mUnderlying) == Dependence.INDEPENDENT)))
-							.collect(Collectors.toList()))));
+			final var newThreads = SleepReducedProgram.<T, ProgramConfiguration<S, T>> updateSleep(mProgram,
+					mIndependence, mUnderlying, underlyingProgramConfig(previous),
+					i -> previous.getThread(i).getSecond(), config, active);
+			return new ProgramConfiguration<>(config.getControllerState(), newThreads);
 		}
 
 		@Override
 		public String toString() {
 			return "sleep<" + mUnderlying.toString() + ">";
 		}
+	}
+
+	private static <S, C extends IThreadBasedConfiguration<S, C>> Configuration<Pair<S, Boolean>> updateSleep(
+			final Program<C> program, final IIndependenceRelation<?, IRule<C>> independence, final IRule<C> action,
+			final C previous, final IntPredicate previousSleep, final C config, final IntStream active) {
+		final int maxActive = active.max().getAsInt();
+		ImmutableList<Pair<S, Boolean>> newThreads = ImmutableList.empty();
+		for (int i = config.numberOfThreads() - 1; i >= 0; --i) {
+			final boolean asleep;
+			if (i < maxActive || previousSleep.test(i)) {
+				asleep = enabled(program, previous, i).filter(r -> !r.isSpecRule())
+						.allMatch(r -> independence.isIndependent(null, action, r) == Dependence.INDEPENDENT);
+			} else {
+				asleep = false;
+			}
+
+			newThreads = new ImmutableList<>(new Pair<>(config.getThread(i), asleep), newThreads);
+		}
+		return new Configuration<>(newThreads);
 	}
 
 	private static <C extends IThreadBasedConfiguration<?, C>> Stream<? extends IRule<C>>
