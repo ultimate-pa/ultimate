@@ -31,18 +31,39 @@ import java.util.stream.Stream;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.interpreter.BoogieInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ParallelComposition;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 
-public class StatementSequenceRule extends CfgRule<StatementSequence> {
+public class SequentialCompositionRule extends CfgRule<SequentialComposition> {
+	private final BoogieInterpreter<CfgProgramStateView> mInterpreter = new BoogieInterpreter<>();
 
-	public StatementSequenceRule(final IUltimateServiceProvider services, final IIcfgSymbolTable symbolTable,
-			final StatementSequence edge) {
+	public SequentialCompositionRule(final IUltimateServiceProvider services, final IIcfgSymbolTable symbolTable,
+			final SequentialComposition edge) {
 		super(services, symbolTable, edge);
 	}
 
 	@Override
-	protected Stream<CfgProgramStateView> apply(final CfgProgramStateView view) {
-		return new BoogieInterpreter<CfgProgramStateView>().interpret(view, mEdge.getStatements()).stream();
+	protected Stream<CfgProgramStateView> apply(final CfgProgramStateView stateView) {
+		return interpret(stateView, mEdge);
+	}
+
+	private Stream<CfgProgramStateView> interpret(final CfgProgramStateView current, final CodeBlock cb) {
+		if (cb instanceof StatementSequence) {
+			return mInterpreter.interpret(current, ((StatementSequence) cb).getStatements()).stream();
+		}
+		if (cb instanceof SequentialComposition) {
+			var result = Stream.of(current);
+			for (final var block : ((SequentialComposition) cb).getCodeBlocks()) {
+				result = result.flatMap(cpsv -> interpret(cpsv, block));
+			}
+			return result;
+		}
+		if (cb instanceof ParallelComposition) {
+			return ((ParallelComposition) cb).getCodeBlocks().stream().flatMap(block -> interpret(current, block));
+		}
+		throw new IllegalArgumentException("unsupported type of code block: " + cb);
 	}
 
 	@Override

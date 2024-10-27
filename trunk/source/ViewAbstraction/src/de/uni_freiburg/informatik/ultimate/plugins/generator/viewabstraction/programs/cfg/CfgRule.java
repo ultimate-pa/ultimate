@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.pr
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
@@ -51,7 +52,6 @@ public abstract class CfgRule<E extends CodeBlock>
 	// TODO - GotoEdge
 	//
 	// TODO add support for atomic blocks
-	// TODO - SequentialComposition (suffices for atomic blocks containing sequences of simple statements)
 	// TODO - ParallelComposition (needed for atomic blocks with branching)
 	protected final E mEdge;
 
@@ -87,18 +87,8 @@ public abstract class CfgRule<E extends CodeBlock>
 			}
 
 			final var view = new CfgProgramStateView(mSymbolTable, globalState, localState);
-			final var newState = apply(view);
-			if (newState == null) {
-				continue;
-			}
-
-			var newLocalState = newState.getLocalState();
-			if (newLocalState.getLocation().equals(mEdge.getSource())) {
-				newLocalState = newLocalState.updateLocation((BoogieIcfgLocation) mEdge.getTarget());
-			}
-
-			final var newConfig = config.replaceController(newState.getGlobalState()).replaceThread(i, newLocalState);
-			successors.add(newConfig);
+			final int thread = i;
+			apply(view).map(newState -> updateConfig(config, thread, newState)).forEach(successors::add);
 		}
 
 		mLastConfig = config;
@@ -106,7 +96,18 @@ public abstract class CfgRule<E extends CodeBlock>
 		return successors;
 	}
 
-	protected abstract CfgProgramStateView apply(CfgProgramStateView stateView);
+	protected abstract Stream<CfgProgramStateView> apply(CfgProgramStateView stateView);
+
+	private ProgramConfiguration<Map<IProgramNonOldVar, Object>, CfgThreadLocalState> updateConfig(
+			final ProgramConfiguration<Map<IProgramNonOldVar, Object>, CfgThreadLocalState> config, final int thread,
+			final CfgProgramStateView newState) {
+		var newLocalState = newState.getLocalState();
+		if (newLocalState.getLocation().equals(mEdge.getSource())) {
+			newLocalState = newLocalState.updateLocation((BoogieIcfgLocation) mEdge.getTarget());
+		}
+
+		return config.replaceController(newState.getGlobalState()).replaceThread(thread, newLocalState);
+	}
 
 	@Override
 	public abstract int extensionSize();

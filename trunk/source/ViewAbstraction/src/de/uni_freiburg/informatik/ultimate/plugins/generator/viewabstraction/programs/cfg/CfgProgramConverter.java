@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.Configuration;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.Program;
@@ -91,6 +92,10 @@ public class CfgProgramConverter {
 		if (edge instanceof StatementSequence) {
 			return new StatementSequenceRule(mServices, mIcfg.getCfgSmtToolkit().getSymbolTable(),
 					(StatementSequence) edge);
+		}
+		if (edge instanceof SequentialComposition) {
+			return new SequentialCompositionRule(mServices, mIcfg.getCfgSmtToolkit().getSymbolTable(),
+					(SequentialComposition) edge);
 		}
 		throw new UnsupportedOperationException(
 				"Edges of type " + edge.getClass().getSimpleName() + " not yet supported");
