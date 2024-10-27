@@ -215,7 +215,7 @@ public class BoogieInterpreter<V extends IValuation<V>> {
 		case COMPLEQ:
 			return evaluateInteger(expr.getLeft(), valuation) <= evaluateInteger(expr.getRight(), valuation);
 		case COMPLT:
-			return evaluateInteger(expr.getLeft(), valuation) <= evaluateInteger(expr.getRight(), valuation);
+			return evaluateInteger(expr.getLeft(), valuation) < evaluateInteger(expr.getRight(), valuation);
 		case COMPNEQ:
 			opType = expr.getLeft().getType();
 			if (isBool(opType)) {
