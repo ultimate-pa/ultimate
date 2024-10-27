@@ -33,6 +33,7 @@ import java.util.function.Predicate;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.UserSpecifiedLimitReachedResultAtElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
@@ -50,11 +51,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.pro
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.cfg.CfgRuleIndependence;
 
 public class ViewAbstractionObserver implements IUnmanagedObserver {
-	public static final boolean USE_SLEEP_REDUCTION = true;
-	public static final boolean USE_PERSISTENT_REDUCTION = false;
-
-	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
+	private final ILogger mLogger;
+	private final VAPreferences mPreferences;
 
 	private BoogieIcfgContainer mIcfg;
 	private IElement mRootOfNewModel;
@@ -65,7 +64,7 @@ public class ViewAbstractionObserver implements IUnmanagedObserver {
 	public ViewAbstractionObserver(final IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		mLastModel = false;
+		mPreferences = new VAPreferences(services);
 	}
 
 	@Override
@@ -90,7 +89,7 @@ public class ViewAbstractionObserver implements IUnmanagedObserver {
 		final var converter = new CfgProgramConverter(mServices, mIcfg);
 		final var program = converter.getProgram();
 
-		if (USE_SLEEP_REDUCTION) {
+		if (mPreferences.enableSleepSets()) {
 			final var cbIndependence = getOrConstructIndependence();
 			final var reduced =
 					SleepReducedProgram.reduceWithGlobals(program, new CfgRuleIndependence<>(cbIndependence));
@@ -106,10 +105,11 @@ public class ViewAbstractionObserver implements IUnmanagedObserver {
 
 	private <V, C> void runAnalysis(final IViewAbstraction<C, V> viewAbstraction, final Program<C> program,
 			final IntFunction<V> makeInitial, final Predicate<V> isBadView) {
-		for (int k = 1; true; ++k) {
+		final int maxLevel = mPreferences.maxAbstractionLevel();
+		for (int k = mPreferences.minAbstractionLevel(); maxLevel <= 0 || k <= maxLevel; ++k) {
 			mLogger.info("Computing view abstraction at level %d", k);
 
-			if (USE_PERSISTENT_REDUCTION) {
+			if (mPreferences.enablePersistentSets()) {
 				// compute the number of threads to be considered for persistent sets
 				final int delta = program.getExtensionSize();
 				final int extendedThreads = k + delta;
@@ -126,22 +126,22 @@ public class ViewAbstractionObserver implements IUnmanagedObserver {
 			final var runner = new ViewAbstractionComputation<>(mServices, viewAbstraction, k, program, Set.of(initial),
 					isBadView::test);
 			final var status = runner.run();
-			final var fp = runner.getCurrentAbstraction();
+			final var currentAbstraction = runner.getCurrentAbstraction();
 
 			switch (status) {
 			case CANCELLED:
-				final var violation = fp.stream().filter(isBadView).findFirst().get();
+				final var violation = currentAbstraction.stream().filter(isBadView).findFirst().get();
 				mLogger.warn("Violation found in iteration %d: %s", runner.getCurrentIteration() + 1, violation);
 				break;
 			case COMPLETED:
 				mLogger.info("Fixpoint computation completed after %d iterations with %d views",
-						runner.getCurrentIteration(), fp.size());
+						runner.getCurrentIteration(), currentAbstraction.size());
 				mServices.getResultService().reportResult(Activator.PLUGIN_ID, new AllSpecificationsHoldResult(
 						Activator.PLUGIN_ID, "ViewAbstraction proved that the parameterized program is correct."));
 				return;
 			case PAUSED:
 				mLogger.warn("Fixpoint computation stopped after %d iterations (%d views in pre-fixpoint)",
-						runner.getCurrentIteration(), fp.size());
+						runner.getCurrentIteration(), currentAbstraction.size());
 				break;
 			default:
 				break;
@@ -154,6 +154,11 @@ public class ViewAbstractionObserver implements IUnmanagedObserver {
 			// TODO interleave fixed point computation with unabstracted exploration
 			// TODO possibly use diagonal pattern in case fixed point computation/exploration needs unbounded iterations
 		}
+
+		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
+				new UserSpecifiedLimitReachedResultAtElement<>("abstraction level", mIcfg, Activator.PLUGIN_ID, null,
+						null, "maximum abstraction level " + maxLevel
+								+ " was reached without proving correctness or detecting a bug"));
 	}
 
 	public IElement getRootOfNewModel() {
@@ -174,9 +179,11 @@ public class ViewAbstractionObserver implements IUnmanagedObserver {
 
 	private IIndependenceRelation<?, ? super CodeBlock> getOrConstructIndependence() {
 		if (mCodeBlockIndependence == null) {
-			mCodeBlockIndependence =
-					IndependenceBuilder.semantic(mServices, mIcfg.getCfgSmtToolkit().getManagedScript(), false, false)
-							.withSyntacticCheck().cached().build();
+			final var settings = mPreferences.independenceSettings();
+			mCodeBlockIndependence = IndependenceBuilder
+					.semantic(mServices, mIcfg.getCfgSmtToolkit().getManagedScript(), settings.useConditional(),
+							!settings.useSemiCommutativity())
+					.withSyntacticCheck().cached().build();
 		}
 		return mCodeBlockIndependence;
 	}

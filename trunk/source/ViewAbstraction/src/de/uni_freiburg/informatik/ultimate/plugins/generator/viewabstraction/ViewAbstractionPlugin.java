@@ -103,7 +103,7 @@ public class ViewAbstractionPlugin implements IGenerator {
 
 	@Override
 	public IPreferenceInitializer getPreferences() {
-		return null;
+		return new ViewAbstractionPreferenceInitializer();
 	}
 
 	@Override

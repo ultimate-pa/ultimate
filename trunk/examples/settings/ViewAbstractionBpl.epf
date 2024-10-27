@@ -1,0 +1,44 @@
+#Sun Oct 27 17:24:30 CET 2024
+\!/instance/de.uni_freiburg.informatik.ultimate.core=
+@de.uni_freiburg.informatik.ultimate.core=0.2.5
+file_export_version=3.0
+
+#Sun Oct 27 17:24:30 CET 2024
+\!/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner=
+/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/Entry\ procedures=ULTIMATE.start
+/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/Fallback\ to\ processing\ everything=true
+/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/Ignore\ calls\ to\ procedures\ called\ more\ than\ once=NEVER
+/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/Ignore\ calls\ to\ procedures\ with\ 'free\ requires'\ specifications=false
+/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/Ignore\ calls\ to\ recursive\ procedures=true
+/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/Inline\ calls\ to\ implemented\ procedures=ALWAYS
+/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/Inline\ calls\ to\ unimplemented\ procedures=true
+/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/Remove\ dead\ code=true
+@de.uni_freiburg.informatik.ultimate.boogie.procedureinliner=0.2.5
+file_export_version=3.0
+
+#Sun Oct 27 17:24:30 CET 2024
+\!/instance/de.uni_freiburg.informatik.ultimate.boogie.preprocessor=
+@de.uni_freiburg.informatik.ultimate.boogie.preprocessor=0.2.5
+file_export_version=3.0
+
+#Sun Oct 27 17:24:30 CET 2024
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Add\ additional\ assume\ for\ each\ assert=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Size\ of\ a\ code\ block=OneNontrivialStatement
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Only\ consider\ context\ switches\ at\ boundaries\ of\ atomic\ blocks=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Future-live\ optimization=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Remove\ assume\ true\ statements=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Remove\ goto\ edges\ from\ RCFG=false
+@de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=0.2.5
+file_export_version=3.0
+
+#Sun Oct 27 17:24:30 CET 2024
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction/Minimum\ view\ abstraction\ level=1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction/Maximum\ view\ abstraction\ level=0
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction/Enable\ sleep\ set\ reduction=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction/Enable\ persistent\ set\ reduction=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction/Use\ semi-commutativity\ for\ reduction=true
+@de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction=0.2.5
+file_export_version=3.0
+
