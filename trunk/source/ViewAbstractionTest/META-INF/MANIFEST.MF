@@ -9,7 +9,9 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.test,
  org.junit,
  de.uni_freiburg.informatik.ultimate.lib.smtlib,
- de.uni_freiburg.informatik.ultimate.smtsolver.external
+ de.uni_freiburg.informatik.ultimate.smtsolver.external,
+ de.uni_freiburg.informatik.ultimate.ultimatetest,
+ org.yaml.snakeyaml
 Import-Package: junit.framework,
  org.junit,
  org.junit.runner,

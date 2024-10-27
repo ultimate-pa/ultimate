@@ -33,7 +33,7 @@ import java.util.function.Predicate;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.UserSpecifiedLimitReachedResultAtElement;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovableResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
@@ -156,9 +156,8 @@ public class ViewAbstractionObserver implements IUnmanagedObserver {
 		}
 
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
-				new UserSpecifiedLimitReachedResultAtElement<>("abstraction level", mIcfg, Activator.PLUGIN_ID, null,
-						null, "maximum abstraction level " + maxLevel
-								+ " was reached without proving correctness or detecting a bug"));
+				new UnprovableResult<>(Activator.PLUGIN_ID, mIcfg, null, null, "maximum abstraction level " + maxLevel
+						+ " was reached without proving correctness or detecting a bug"));
 	}
 
 	public IElement getRootOfNewModel() {

@@ -23,6 +23,7 @@ file_export_version=3.0
 
 #Sun Oct 27 17:24:30 CET 2024
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/SMT\ solver=Internal_SMTInterpol
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Add\ additional\ assume\ for\ each\ assert=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Size\ of\ a\ code\ block=OneNontrivialStatement
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Only\ consider\ context\ switches\ at\ boundaries\ of\ atomic\ blocks=false

@@ -209,6 +209,8 @@ public class SafetyCheckTestResultDecider extends ThreeTierTestResultDecider<Saf
 				// syntax error should always have been found
 				if (expectedResult == SafetyCheckerOverallResult.SYNTAX_ERROR) {
 					mTestResult = TestResult.FAIL;
+				} else if (expectedResult == SafetyCheckerOverallResult.UNKNOWN) {
+					mTestResult = TestResult.SUCCESS;
 				} else {
 					mTestResult = TestResult.UNKNOWN;
 				}

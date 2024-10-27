@@ -1,0 +1,15 @@
+format_version: '2.0'
+
+input_files: 'mutex-2.bpl'
+
+properties:
+  - property_file: ../properties/unreach-call.prp
+    expected_verdict: true
+
+options:
+  language: BPL
+  de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction:
+    Minimum view abstraction level: 2
+    Maximum view abstraction level: 2
+    Enable sleep set reduction: true
+
