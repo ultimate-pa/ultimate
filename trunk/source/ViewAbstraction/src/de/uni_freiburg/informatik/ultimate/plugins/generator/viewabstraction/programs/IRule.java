@@ -28,10 +28,14 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.pr
 
 import java.util.List;
 
-public interface IRule<S> {
-	boolean isApplicable(Configuration<S> config);
+public interface IRule<C> {
+	boolean isApplicable(C config);
 
-	List<Configuration<S>> successors(Configuration<S> config);
+	List<C> successors(C config);
 
 	int extensionSize();
+
+	default boolean isSpecRule() {
+		return false;
+	}
 }

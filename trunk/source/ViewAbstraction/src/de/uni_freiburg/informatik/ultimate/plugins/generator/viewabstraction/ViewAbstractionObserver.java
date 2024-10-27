@@ -40,7 +40,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.Configuration;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.abstractdomain.IViewAbstraction;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.abstractdomain.ProgramViewAbstraction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.Program;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.SleepReducedProgram;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.cfg.CfgProgramConverter;
@@ -97,7 +98,7 @@ public class ViewAbstractionObserver implements IUnmanagedObserver {
 					.withSyntacticCheck().cached().build();
 			final var reduced =
 					SleepReducedProgram.reduceWithGlobals(program, new CfgRuleIndependence<>(cbIndependence));
-			runAnalysis(reduced,
+			runAnalysis(new ProgramViewAbstraction<>(), reduced,
 					i -> SleepReducedProgram.wrapInitialProgramConfig(converter.getInitialConfiguration(i)),
 					c -> converter.isErrorView(SleepReducedProgram.underlyingProgramConfig(c)));
 		}
@@ -108,17 +109,18 @@ public class ViewAbstractionObserver implements IUnmanagedObserver {
 			throw new UnsupportedOperationException("not yet implemented");
 		}
 
-		runAnalysis(program, converter::getInitialConfiguration, converter::isErrorView);
+		runAnalysis(new ProgramViewAbstraction<>(), program, converter::getInitialConfiguration,
+				converter::isErrorView);
 	}
 
-	private <S> void runAnalysis(final Program<S> program, final IntFunction<Configuration<S>> makeInitial,
-			final Predicate<Configuration<S>> isBadView) {
+	private <V, C> void runAnalysis(final IViewAbstraction<C, V> viewAbstraction, final Program<C> program,
+			final IntFunction<V> makeInitial, final Predicate<V> isBadView) {
 		for (int k = 1; true; ++k) {
 			mLogger.info("Computing view abstraction at level %d", k);
 
 			final var initial = makeInitial.apply(k);
-			final var runner =
-					new ViewAbstractionComputation<>(mServices, program, Set.of(initial), k, isBadView::test);
+			final var runner = new ViewAbstractionComputation<>(mServices, viewAbstraction, k, program, Set.of(initial),
+					isBadView::test);
 			final var status = runner.run();
 			final var fp = runner.getCurrentAbstraction();
 
@@ -130,7 +132,7 @@ public class ViewAbstractionObserver implements IUnmanagedObserver {
 			case COMPLETED:
 				mLogger.info("Fixpoint computation completed after %d iterations with %d views: %s",
 						runner.getCurrentIteration(), fp.size(), fp);
-				break;
+				return;
 			case PAUSED:
 				mLogger.warn("Fixpoint computation stopped after %d iterations (%d views in pre-fixpoint)",
 						runner.getCurrentIteration(), fp.size());

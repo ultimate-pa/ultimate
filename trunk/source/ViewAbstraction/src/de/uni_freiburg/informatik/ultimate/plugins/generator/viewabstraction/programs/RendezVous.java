@@ -31,7 +31,7 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
-public class RendezVous<S> implements IRule<S> {
+public class RendezVous<S> implements IRule<Configuration<S>> {
 	private final ImmutableList<Pair<S, S>> mTransitions;
 
 	public RendezVous(final S s1, final S s1next, final S s2, final S s2next) {

@@ -28,7 +28,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.pr
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -44,35 +43,30 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Boo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.Configuration;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.Program;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.ProgramState;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.ProgramState.ControllerState;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.ProgramState.ThreadState;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.ProgramConfiguration;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
 
 public class CfgProgramConverter {
 	private final IUltimateServiceProvider mServices;
 	private final BoogieIcfgContainer mIcfg;
 
-	private final Program<ProgramState<Map<IProgramNonOldVar, Object>, CfgThreadLocalState>> mProgram;
+	private final Program<ProgramConfiguration<Map<IProgramNonOldVar, Object>, CfgThreadLocalState>> mProgram;
 
 	public CfgProgramConverter(final IUltimateServiceProvider services, final BoogieIcfgContainer icfg) {
 		mServices = services;
 		mIcfg = icfg;
 
 		final var rules = new IcfgEdgeIterator(icfg).asStream().map(this::createRule).collect(Collectors.toList());
-		mProgram = new Program<>(ProgramState.class, (List) rules);
+		mProgram = new Program<>(rules);
 	}
 
-	public Program<ProgramState<Map<IProgramNonOldVar, Object>, CfgThreadLocalState>> getProgram() {
+	public Program<ProgramConfiguration<Map<IProgramNonOldVar, Object>, CfgThreadLocalState>> getProgram() {
 		return mProgram;
 	}
 
-	public Configuration<ProgramState<Map<IProgramNonOldVar, Object>, CfgThreadLocalState>>
+	public ProgramConfiguration<Map<IProgramNonOldVar, Object>, CfgThreadLocalState>
 			getInitialConfiguration(final int k) {
-		final var result = new ArrayList<ProgramState<Map<IProgramNonOldVar, Object>, CfgThreadLocalState>>();
-
-		final var initialGlobals = getInitialGlobalState();
-		result.add(new ControllerState<>(initialGlobals));
+		final var result = new ArrayList<CfgThreadLocalState>();
 
 		final var threadTemplates = mIcfg.getCfgSmtToolkit().getProcedures();
 		for (final var template : threadTemplates) {
@@ -82,16 +76,15 @@ public class CfgProgramConverter {
 			for (int i = 0; i < k; ++i) {
 				final var state = new CfgThreadLocalState(mIcfg.getCfgSmtToolkit().getSymbolTable(), template,
 						initialLoc, initialValues);
-				result.add(new ThreadState<>(state));
+				result.add(state);
 			}
 		}
 
-		return new Configuration<>(new ImmutableList<>(result));
+		return new ProgramConfiguration<>(getInitialGlobalState(), new Configuration<>(new ImmutableList<>(result)));
 	}
 
-	public boolean
-			isErrorView(final Configuration<ProgramState<Map<IProgramNonOldVar, Object>, CfgThreadLocalState>> view) {
-		return view.stream().anyMatch(s -> s.isThreadState() && s.getThreadState().getLocation().isErrorLocation());
+	public boolean isErrorView(final ProgramConfiguration<Map<IProgramNonOldVar, Object>, CfgThreadLocalState> view) {
+		return view.getThreadConfiguration().stream().anyMatch(s -> s.getLocation().isErrorLocation());
 	}
 
 	private CfgRule<?> createRule(final IcfgEdge edge) {

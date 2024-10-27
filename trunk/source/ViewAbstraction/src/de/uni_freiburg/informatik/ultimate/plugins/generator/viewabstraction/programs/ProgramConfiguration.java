@@ -26,51 +26,47 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs;
 
-import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
-import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
+public class ProgramConfiguration<C, T> implements IThreadBasedConfiguration<T, ProgramConfiguration<C, T>> {
+	private final C mControllerState;
+	private final Configuration<T> mThreadStates;
 
-public class Configuration<S> implements IThreadBasedConfiguration<S, Configuration<S>> {
-	private final ImmutableList<S> mStates;
-
-	public Configuration(final ImmutableList<S> states) {
-		mStates = states;
-	}
-
-	public boolean contains(final S predecessor) {
-		return mStates.contains(predecessor);
+	public ProgramConfiguration(final C controllerState, final Configuration<T> threadStates) {
+		mControllerState = controllerState;
+		mThreadStates = threadStates;
 	}
 
 	@Override
 	public int numberOfThreads() {
-		return mStates.size();
+		return mThreadStates.numberOfThreads();
+	}
+
+	public C getControllerState() {
+		return mControllerState;
 	}
 
 	@Override
-	public S getThread(final int thread) {
-		return mStates.get(thread);
+	public T getThread(final int i) {
+		return mThreadStates.getThread(i);
+	}
+
+	public Configuration<T> getThreadConfiguration() {
+		return mThreadStates;
+	}
+
+	public ProgramConfiguration<C, T> replaceController(final C newControllerState) {
+		return new ProgramConfiguration<>(newControllerState, mThreadStates);
 	}
 
 	@Override
-	public Configuration<S> replaceThread(final int thread, final S newThreadState) {
-		final var list = IntStream.range(0, mStates.size()).mapToObj(j -> j == thread ? newThreadState : getThread(j))
-				.collect(Collectors.toList());
-		return new Configuration<>(new ImmutableList<>(list));
-	}
-
-	public Configuration<S> replace(final Map<Integer, S> subst) {
-		final var list = IntStream.range(0, mStates.size()).mapToObj(j -> subst.getOrDefault(j, getThread(j)))
-				.collect(Collectors.toList());
-		return new Configuration<>(new ImmutableList<>(list));
+	public ProgramConfiguration<C, T> replaceThread(final int thread, final T newThreadState) {
+		return new ProgramConfiguration<>(mControllerState, mThreadStates.replaceThread(thread, newThreadState));
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(mStates);
+		return Objects.hash(mControllerState, mThreadStates);
 	}
 
 	@Override
@@ -84,16 +80,13 @@ public class Configuration<S> implements IThreadBasedConfiguration<S, Configurat
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		final Configuration other = (Configuration) obj;
-		return Objects.equals(mStates, other.mStates);
+		final ProgramConfiguration other = (ProgramConfiguration) obj;
+		return Objects.equals(mControllerState, other.mControllerState)
+				&& Objects.equals(mThreadStates, other.mThreadStates);
 	}
 
 	@Override
 	public String toString() {
-		return mStates.toString();
-	}
-
-	public Stream<S> stream() {
-		return mStates.stream();
+		return "(" + mControllerState + ")" + mThreadStates;
 	}
 }

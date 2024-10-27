@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
  * Main class of Plug-In ViewAbstraction
  *
  */
-public class ViewAbstraction implements IGenerator {
+public class ViewAbstractionPlugin implements IGenerator {
 
 	private static final String PLUGIN_NAME = Activator.PLUGIN_NAME;
 	private static final String PLUGIN_ID = Activator.PLUGIN_ID;

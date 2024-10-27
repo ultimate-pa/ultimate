@@ -24,40 +24,12 @@
  * licensors of the ULTIMATE ViewAbstraction plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.abstractdomain;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Set;
 
-public class LocalRule<S> implements IRule<Configuration<S>> {
-	private final S mSource;
-	private final S mTarget;
+public interface IViewAbstraction<C, V> {
+	public Set<V> abstractAsViews(C config, int viewSize);
 
-	public LocalRule(final S source, final S target) {
-		mSource = source;
-		mTarget = target;
-	}
-
-	@Override
-	public boolean isApplicable(final Configuration<S> config) {
-		return config.contains(mSource);
-	}
-
-	@Override
-	public List<Configuration<S>> successors(final Configuration<S> config) {
-		final var result = new ArrayList<Configuration<S>>();
-
-		for (int i = 0; i < config.numberOfThreads(); ++i) {
-			final S state = config.getThread(i);
-			if (state.equals(mSource)) {
-				result.add(config.replaceThread(i, mTarget));
-			}
-		}
-		return result;
-	}
-
-	@Override
-	public int extensionSize() {
-		return 0;
-	}
+	public Set<C> concretizeFromViews(Set<V> views, int viewSize, int configSize);
 }

@@ -40,14 +40,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.pro
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.test.ViewTest;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.test.ViewTest.ITestProgram;
 
-public class Firefly implements ITestProgram<Firefly.Ffl> {
+public class Firefly implements ITestProgram<Configuration<Firefly.Ffl>> {
 	enum Ffl {
 		invd, excl, shrd, dirt
 	}
 
 	@Override
-	public Program<Firefly.Ffl> getTransitions() {
-		return new Program<>(null, List.of(
+	public Program<Configuration<Ffl>> getTransitions() {
+		return new Program<>(List.of(
 				// t1
 				new RendezVous<>(Ffl.invd, Ffl.shrd, Ffl.dirt, Ffl.shrd),
 				// t2

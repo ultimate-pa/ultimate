@@ -28,20 +28,14 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.pr
 
 import java.util.List;
 
-public class Program<S> {
-	private final Class<S> mStateClazz;
-	private final List<? extends IRule<S>> mRules;
+public class Program<C> {
+	private final List<? extends IRule<C>> mRules;
 
-	public Program(final Class<S> stateClazz, final List<? extends IRule<S>> rules) {
-		mStateClazz = stateClazz;
+	public Program(final List<? extends IRule<C>> rules) {
 		mRules = rules;
 	}
 
-	public Class<S> getStateClazz() {
-		return mStateClazz;
-	}
-
-	public List<? extends IRule<S>> getRules() {
+	public List<? extends IRule<C>> getRules() {
 		return mRules;
 	}
 }

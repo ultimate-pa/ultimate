@@ -31,21 +31,20 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.function.Consumer;
 
-import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.Configuration;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.Program;
 
-public class Explorer<S> {
-	private final Program<S> mProgram;
-	private final List<Configuration<S>> mInitialConfigurations;
+public class Explorer<C> {
+	private final Program<C> mProgram;
+	private final List<C> mInitialConfigurations;
 
-	public Explorer(final Program<S> program, final List<Configuration<S>> initialConfigurations) {
+	public Explorer(final Program<C> program, final List<C> initialConfigurations) {
 		mProgram = program;
 		mInitialConfigurations = initialConfigurations;
 	}
 
-	public void dfs(final Consumer<Configuration<S>> consumer) {
-		final var stack = new ArrayDeque<Configuration<S>>();
-		final var visited = new HashSet<Configuration<S>>();
+	public void dfs(final Consumer<C> consumer) {
+		final var stack = new ArrayDeque<C>();
+		final var visited = new HashSet<C>();
 		stack.addAll(mInitialConfigurations);
 
 		while (!stack.isEmpty()) {

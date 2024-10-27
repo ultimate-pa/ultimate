@@ -31,7 +31,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction;
  */
 public class Activator {
 	// The plug-in ID
-	public static final String PLUGIN_ID = ViewAbstraction.class.getPackage().getName();
+	public static final String PLUGIN_ID = ViewAbstractionPlugin.class.getPackage().getName();
 
 	// The plug-in name
 	public static final String PLUGIN_NAME = "ViewAbstraction";

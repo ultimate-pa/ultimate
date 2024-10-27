@@ -33,54 +33,53 @@ import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation.Dependence;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.ProgramState.ControllerState;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.ProgramState.ThreadState;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class SleepReducedProgram {
-	public static <X> Program<Pair<X, Boolean>> reduce(final Program<X> program,
-			final IIndependenceRelation<?, IRule<X>> commutativity) {
-		final List<IRule<Pair<X, Boolean>>> reducedRules = program.getRules().stream()
+	public static <S> Program<Configuration<Pair<S, Boolean>>> reduce(final Program<Configuration<S>> program,
+			final IIndependenceRelation<?, IRule<Configuration<S>>> commutativity) {
+		final List<IRule<Configuration<Pair<S, Boolean>>>> reducedRules = program.getRules().stream()
 				.map(r -> new ReducedRule<>(r, commutativity, program)).collect(Collectors.toList());
-		return new Program<>(null, reducedRules);
+		return new Program<>(reducedRules);
 	}
 
-	public static <S, T> Program<ProgramState<S, Pair<T, Boolean>>> reduceWithGlobals(
-			final Program<ProgramState<S, T>> program,
-			final IIndependenceRelation<?, IRule<ProgramState<S, T>>> commutativity) {
-		final List<IRule<ProgramState<S, Pair<T, Boolean>>>> reducedRules = program.getRules().stream()
+	public static <S, T> Program<ProgramConfiguration<S, Pair<T, Boolean>>> reduceWithGlobals(
+			final Program<ProgramConfiguration<S, T>> program,
+			final IIndependenceRelation<?, IRule<ProgramConfiguration<S, T>>> commutativity) {
+		final List<IRule<ProgramConfiguration<S, Pair<T, Boolean>>>> reducedRules = program.getRules().stream()
 				.map(r -> new ReducedProgramRule<>(r, commutativity, program)).collect(Collectors.toList());
-		return new Program<>(null, reducedRules);
+		return new Program<>(reducedRules);
 	}
 
-	private static class ReducedRule<X> implements IRule<Pair<X, Boolean>> {
-		private final IRule<X> mUnderlying;
-		private final IIndependenceRelation<?, IRule<X>> mIndependence;
-		private final Program<X> mProgram;
+	private static class ReducedRule<S> implements IRule<Configuration<Pair<S, Boolean>>> {
+		private final IRule<Configuration<S>> mUnderlying;
+		private final IIndependenceRelation<?, IRule<Configuration<S>>> mIndependence;
+		private final Program<Configuration<S>> mProgram;
 
-		public ReducedRule(final IRule<X> underlying, final IIndependenceRelation<?, IRule<X>> independence,
-				final Program<X> program) {
+		public ReducedRule(final IRule<Configuration<S>> underlying,
+				final IIndependenceRelation<?, IRule<Configuration<S>>> independence,
+				final Program<Configuration<S>> program) {
 			mUnderlying = underlying;
 			mIndependence = independence;
 			mProgram = program;
 		}
 
 		@Override
-		public boolean isApplicable(final Configuration<Pair<X, Boolean>> config) {
+		public boolean isApplicable(final Configuration<Pair<S, Boolean>> config) {
 			final var original = underlying(config);
 			if (!mUnderlying.isApplicable(original)) {
 				return false;
 			}
 			final var succs = mUnderlying.successors(original);
-			return succs.stream().anyMatch(s -> active(original, s).noneMatch(i -> config.get(i).getSecond()));
+			return succs.stream().anyMatch(s -> active(original, s).noneMatch(i -> config.getThread(i).getSecond()));
 		}
 
 		@Override
-		public List<Configuration<Pair<X, Boolean>>> successors(final Configuration<Pair<X, Boolean>> config) {
+		public List<Configuration<Pair<S, Boolean>>> successors(final Configuration<Pair<S, Boolean>> config) {
 			final var original = underlying(config);
 			final var succs = mUnderlying.successors(original);
-			return succs.stream().filter(s -> active(original, s).noneMatch(i -> config.get(i).getSecond()))
+			return succs.stream().filter(s -> active(original, s).noneMatch(i -> config.getThread(i).getSecond()))
 					.map(s -> updateSleep(config, s, active(original, s))).collect(Collectors.toList());
 		}
 
@@ -89,49 +88,46 @@ public class SleepReducedProgram {
 			return mUnderlying.extensionSize();
 		}
 
-		private Configuration<Pair<X, Boolean>> updateSleep(final Configuration<Pair<X, Boolean>> previous,
-				final Configuration<X> config, final IntStream active) {
+		private Configuration<Pair<S, Boolean>> updateSleep(final Configuration<Pair<S, Boolean>> previous,
+				final Configuration<S> config, final IntStream active) {
 			final int maxActive = active.max().getAsInt();
-			return new Configuration<>(new ImmutableList<>(IntStream.range(0, config.size())
-					.mapToObj(i -> new Pair<>(config.get(i), (i < maxActive || previous.get(i).getSecond())
-							&& enabled(mProgram, underlying(previous), i).allMatch(
+			return new Configuration<>(new ImmutableList<>(IntStream.range(0, config.numberOfThreads())
+					.mapToObj(i -> new Pair<>(config.getThread(i), (i < maxActive || previous.getThread(i).getSecond())
+							&& enabled(mProgram, underlying(previous), i).filter(r -> !r.isSpecRule()).allMatch(
 									r -> mIndependence.isIndependent(null, r, mUnderlying) == Dependence.INDEPENDENT)))
 					.collect(Collectors.toList())));
 		}
 	}
 
-	private static class ReducedProgramRule<S, T> implements IRule<ProgramState<S, Pair<T, Boolean>>> {
-		private final IRule<ProgramState<S, T>> mUnderlying;
-		private final IIndependenceRelation<?, IRule<ProgramState<S, T>>> mIndependence;
-		private final Program<ProgramState<S, T>> mProgram;
+	private static class ReducedProgramRule<S, T> implements IRule<ProgramConfiguration<S, Pair<T, Boolean>>> {
+		private final IRule<ProgramConfiguration<S, T>> mUnderlying;
+		private final IIndependenceRelation<?, IRule<ProgramConfiguration<S, T>>> mIndependence;
+		private final Program<ProgramConfiguration<S, T>> mProgram;
 
-		public ReducedProgramRule(final IRule<ProgramState<S, T>> underlying,
-				final IIndependenceRelation<?, IRule<ProgramState<S, T>>> independence,
-				final Program<ProgramState<S, T>> program) {
+		public ReducedProgramRule(final IRule<ProgramConfiguration<S, T>> underlying,
+				final IIndependenceRelation<?, IRule<ProgramConfiguration<S, T>>> independence,
+				final Program<ProgramConfiguration<S, T>> program) {
 			mUnderlying = underlying;
 			mIndependence = independence;
 			mProgram = program;
 		}
 
 		@Override
-		public boolean isApplicable(final Configuration<ProgramState<S, Pair<T, Boolean>>> config) {
+		public boolean isApplicable(final ProgramConfiguration<S, Pair<T, Boolean>> config) {
 			final var original = underlyingProgramConfig(config);
 			if (!mUnderlying.isApplicable(original)) {
 				return false;
 			}
 			final var succs = mUnderlying.successors(original);
-			return succs.stream().anyMatch(s -> active(original, s)
-					.noneMatch(i -> config.get(i).isThreadState() && config.get(i).getThreadState().getSecond()));
+			return succs.stream().anyMatch(s -> active(original, s).noneMatch(i -> config.getThread(i).getSecond()));
 		}
 
 		@Override
-		public List<Configuration<ProgramState<S, Pair<T, Boolean>>>>
-				successors(final Configuration<ProgramState<S, Pair<T, Boolean>>> config) {
+		public List<ProgramConfiguration<S, Pair<T, Boolean>>>
+				successors(final ProgramConfiguration<S, Pair<T, Boolean>> config) {
 			final var original = underlyingProgramConfig(config);
 			final var succs = mUnderlying.successors(original);
-			return succs.stream()
-					.filter(s -> active(original, s).noneMatch(
-							i -> config.get(i).isThreadState() && config.get(i).getThreadState().getSecond()))
+			return succs.stream().filter(s -> active(original, s).noneMatch(i -> config.getThread(i).getSecond()))
 					.map(s -> updateSleep(config, s, active(original, s))).collect(Collectors.toList());
 		}
 
@@ -140,30 +136,35 @@ public class SleepReducedProgram {
 			return mUnderlying.extensionSize();
 		}
 
-		private Configuration<ProgramState<S, Pair<T, Boolean>>> updateSleep(
-				final Configuration<ProgramState<S, Pair<T, Boolean>>> previous,
-				final Configuration<ProgramState<S, T>> config, final IntStream active) {
+		private ProgramConfiguration<S, Pair<T, Boolean>> updateSleep(
+				final ProgramConfiguration<S, Pair<T, Boolean>> previous, final ProgramConfiguration<S, T> config,
+				final IntStream active) {
 			final int maxActive = active.max().getAsInt();
-			return new Configuration<>(new ImmutableList<>(IntStream.range(0, config.size())
-					.<ProgramState<S, Pair<T, Boolean>>> mapToObj(i -> config.get(i).isControllerState()
-							? new ControllerState<>(config.get(i).getControllerState())
-							: new ThreadState<>(new Pair<>(config.get(i).getThreadState(),
-									(i < maxActive || previous.get(i).getThreadState().getSecond())
+			return new ProgramConfiguration<>(config.getControllerState(),
+					new Configuration<>(new ImmutableList<>(IntStream.range(0, config.numberOfThreads())
+							.<Pair<T, Boolean>> mapToObj(i -> new Pair<>(config.getThread(i),
+									(i < maxActive || previous.getThread(i).getSecond())
 											&& enabled(mProgram, underlyingProgramConfig(previous), i)
+													.filter(r -> !r.isSpecRule())
 													.allMatch(r -> mIndependence.isIndependent(null, r,
-															mUnderlying) == Dependence.INDEPENDENT))))
-					.collect(Collectors.toList())));
+															mUnderlying) == Dependence.INDEPENDENT)))
+							.collect(Collectors.toList()))));
+		}
+
+		@Override
+		public String toString() {
+			return "sleep<" + mUnderlying.toString() + ">";
 		}
 	}
 
-	private static <X> Stream<? extends IRule<X>> enabled(final Program<X> program, final Configuration<X> config,
-			final int i) {
+	private static <C extends IThreadBasedConfiguration<?, C>> Stream<? extends IRule<C>>
+			enabled(final Program<C> program, final C config, final int i) {
 		return program.getRules().stream().filter(r -> r.isApplicable(config))
 				.filter(r -> r.successors(config).stream().anyMatch(s -> active(config, s).anyMatch(j -> j == i)));
 	}
 
-	private static <X> IntStream active(final Configuration<X> original, final Configuration<X> succ) {
-		return IntStream.range(0, original.size()).filter(i -> original.get(i) != succ.get(i));
+	private static <C extends IThreadBasedConfiguration<?, C>> IntStream active(final C original, final C succ) {
+		return IntStream.range(0, original.numberOfThreads()).filter(i -> original.getThread(i) != succ.getThread(i));
 	}
 
 	public static <X> Configuration<X> underlying(final Configuration<Pair<X, Boolean>> config) {
@@ -171,12 +172,9 @@ public class SleepReducedProgram {
 				new ImmutableList<>(config.stream().map(Pair::getFirst).collect(Collectors.toList())));
 	}
 
-	public static <S, T> Configuration<ProgramState<S, T>>
-			underlyingProgramConfig(final Configuration<ProgramState<S, Pair<T, Boolean>>> config) {
-		return new Configuration<>(new ImmutableList<>(config.stream()
-				.<ProgramState<S, T>> map(s -> s.isControllerState() ? new ControllerState<>(s.getControllerState())
-						: new ThreadState<>(s.getThreadState().getFirst()))
-				.collect(Collectors.toList())));
+	public static <S, T> ProgramConfiguration<S, T>
+			underlyingProgramConfig(final ProgramConfiguration<S, Pair<T, Boolean>> config) {
+		return new ProgramConfiguration<>(config.getControllerState(), underlying(config.getThreadConfiguration()));
 	}
 
 	public static <X> Configuration<Pair<X, Boolean>> wrapInitial(final Configuration<X> initial) {
@@ -184,13 +182,8 @@ public class SleepReducedProgram {
 				new ImmutableList<>(initial.stream().map(s -> new Pair<>(s, false)).collect(Collectors.toList())));
 	}
 
-	public static <S, T> Configuration<ProgramState<S, Pair<T, Boolean>>>
-			wrapInitialProgramConfig(final Configuration<ProgramState<S, T>> initial) {
-		return new Configuration<>(
-				new ImmutableList<>(initial.stream()
-						.<ProgramState<S, Pair<T, Boolean>>> map(
-								s -> s.isControllerState() ? new ControllerState<>(s.getControllerState())
-										: new ThreadState<>(new Pair<>(s.getThreadState(), false)))
-						.collect(Collectors.toList())));
+	public static <S, T> ProgramConfiguration<S, Pair<T, Boolean>>
+			wrapInitialProgramConfig(final ProgramConfiguration<S, T> initial) {
+		return new ProgramConfiguration<>(initial.getControllerState(), wrapInitial(initial.getThreadConfiguration()));
 	}
 }

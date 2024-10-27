@@ -41,24 +41,23 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.pro
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.test.ViewTest.ITestProgram;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
 
-public class BurnsSimple implements ITestProgram<BurnsSimple.B> {
+public class BurnsSimple implements ITestProgram<Configuration<BurnsSimple.B>> {
 	public enum B {
 		green, white, black, yellow, blue, red
 	}
 
 	@Override
-	public Program<B> getTransitions() {
+	public Program<Configuration<B>> getTransitions() {
 		final Predicate<B> ybr = Set.of(B.yellow, B.blue, B.red)::contains;
 		final Predicate<B> gwb = Set.of(B.green, B.white, B.black)::contains;
-		return new Program<>(null,
-				List.of(new LocalRule<>(B.green, B.white),
-						new GlobalRule<>(B.white, B.green, Range.LESS, Quantifier.EXISTS, ybr),
-						new GlobalRule<>(B.white, B.black, Range.LESS, Quantifier.FORALL, gwb),
-						new LocalRule<>(B.black, B.yellow),
-						new GlobalRule<>(B.yellow, B.green, Range.LESS, Quantifier.EXISTS, ybr),
-						new GlobalRule<>(B.yellow, B.blue, Range.LESS, Quantifier.FORALL, gwb),
-						new GlobalRule<>(B.blue, B.red, Range.GREATER, Quantifier.FORALL, gwb),
-						new LocalRule<>(B.red, B.green)));
+		return new Program<>(List.of(new LocalRule<>(B.green, B.white),
+				new GlobalRule<>(B.white, B.green, Range.LESS, Quantifier.EXISTS, ybr),
+				new GlobalRule<>(B.white, B.black, Range.LESS, Quantifier.FORALL, gwb),
+				new LocalRule<>(B.black, B.yellow),
+				new GlobalRule<>(B.yellow, B.green, Range.LESS, Quantifier.EXISTS, ybr),
+				new GlobalRule<>(B.yellow, B.blue, Range.LESS, Quantifier.FORALL, gwb),
+				new GlobalRule<>(B.blue, B.red, Range.GREATER, Quantifier.FORALL, gwb),
+				new LocalRule<>(B.red, B.green)));
 	}
 
 	@Override

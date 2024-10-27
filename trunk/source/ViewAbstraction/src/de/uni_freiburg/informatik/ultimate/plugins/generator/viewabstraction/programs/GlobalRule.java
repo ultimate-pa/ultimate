@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 
-public class GlobalRule<S> implements IRule<S> {
+public class GlobalRule<S> implements IRule<Configuration<S>> {
 	public enum Quantifier {
 		EXISTS(false), FORALL(true);
 
@@ -88,8 +88,8 @@ public class GlobalRule<S> implements IRule<S> {
 
 	@Override
 	public boolean isApplicable(final Configuration<S> config) {
-		for (int i = 0; i < config.size(); ++i) {
-			final var state = config.get(i);
+		for (int i = 0; i < config.numberOfThreads(); ++i) {
+			final var state = config.getThread(i);
 			if (state.equals(mSource)) {
 				final boolean conditionSatisfied = checkCondition(config, i);
 				if (conditionSatisfied) {
@@ -102,9 +102,9 @@ public class GlobalRule<S> implements IRule<S> {
 
 	private boolean checkCondition(final Configuration<S> config, final int index) {
 		boolean result = mQuantifier.defaultValue();
-		for (int i = 0; i < config.size(); ++i) {
+		for (int i = 0; i < config.numberOfThreads(); ++i) {
 			if (mRange.satisfies(i, index)) {
-				final var state = config.get(i);
+				final var state = config.getThread(i);
 				result = mQuantifier.combine(result, mCondition.test(state));
 			}
 		}
@@ -116,10 +116,10 @@ public class GlobalRule<S> implements IRule<S> {
 		assert isApplicable(config);
 
 		final var result = new ArrayList<Configuration<S>>();
-		for (int i = 0; i < config.size(); ++i) {
-			final var state = config.get(i);
+		for (int i = 0; i < config.numberOfThreads(); ++i) {
+			final var state = config.getThread(i);
 			if (state.equals(mSource) && checkCondition(config, i)) {
-				result.add(config.replace(i, mTarget));
+				result.add(config.replaceThread(i, mTarget));
 			}
 
 		}

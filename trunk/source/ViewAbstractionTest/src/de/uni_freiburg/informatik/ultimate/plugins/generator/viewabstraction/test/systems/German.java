@@ -30,13 +30,13 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.Configuration;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.Program;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.ProgramState;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.ProgramConfiguration;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.test.ViewTest;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.test.ViewTest.ITestProgram;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
-public class German implements ITestProgram<ProgramState<Pair<Boolean, German.Comm>, German.LocalState>> {
+public class German implements ITestProgram<ProgramConfiguration<Pair<Boolean, German.Comm>, German.LocalState>> {
 	enum Comm {
 		eps, reqShr, reqExc
 	}
@@ -83,24 +83,22 @@ public class German implements ITestProgram<ProgramState<Pair<Boolean, German.Co
 	}
 
 	@Override
-	public Program<ProgramState<Pair<Boolean, German.Comm>, German.LocalState>> getTransitions() {
+	public Program<ProgramConfiguration<Pair<Boolean, German.Comm>, German.LocalState>> getTransitions() {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public Configuration<ProgramState<Pair<Boolean, German.Comm>, German.LocalState>> init(final int parameter) {
-		final ProgramState<Pair<Boolean, German.Comm>, German.LocalState> local =
-				new ProgramState.ThreadState<>(LocalState.initial());
-		final ProgramState<Pair<Boolean, German.Comm>, German.LocalState> global =
-				new ProgramState.ControllerState<>(new Pair<>(false, Comm.eps));
-		return new Configuration<>(new ImmutableList<>(global, ViewTest.repeat(parameter, local)));
+	public ProgramConfiguration<Pair<Boolean, Comm>, LocalState> init(final int parameter) {
+		final var local = LocalState.initial();
+		final var global = new Pair<>(false, Comm.eps);
+		return new ProgramConfiguration<>(global,
+				new Configuration<>(new ImmutableList<>(ViewTest.repeat(parameter, local))));
 	}
 
 	@Override
-	public boolean isBad(final Configuration<ProgramState<Pair<Boolean, German.Comm>, German.LocalState>> config) {
-		final var states = config.stream().filter(ProgramState::isThreadState).map(s -> s.getThreadState().mState)
-				.collect(Collectors.toList());
+	public boolean isBad(final ProgramConfiguration<Pair<Boolean, Comm>, LocalState> config) {
+		final var states = config.getThreadConfiguration().stream().map(s -> s.mState).collect(Collectors.toList());
 		return states.stream().filter(Q.excl::equals).count() > 2
 				|| (states.stream().anyMatch(Q.excl::equals) && states.stream().anyMatch(Q.shrd::equals));
 	}

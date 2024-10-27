@@ -35,14 +35,11 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbol
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.Configuration;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.IRule;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.ProgramState;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.ProgramState.ControllerState;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.ProgramState.ThreadState;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.ProgramConfiguration;
 
 public abstract class CfgRule<E extends CodeBlock>
-		implements IRule<ProgramState<Map<IProgramNonOldVar, Object>, CfgThreadLocalState>> {
+		implements IRule<ProgramConfiguration<Map<IProgramNonOldVar, Object>, CfgThreadLocalState>> {
 	protected final IUltimateServiceProvider mServices;
 	protected final IIcfgSymbolTable mSymbolTable;
 
@@ -58,8 +55,8 @@ public abstract class CfgRule<E extends CodeBlock>
 	// TODO - ParallelComposition (needed for atomic blocks with branching)
 	protected final E mEdge;
 
-	private Configuration<ProgramState<Map<IProgramNonOldVar, Object>, CfgThreadLocalState>> mLastConfig;
-	private List<Configuration<ProgramState<Map<IProgramNonOldVar, Object>, CfgThreadLocalState>>> mLastSuccessors;
+	private ProgramConfiguration<Map<IProgramNonOldVar, Object>, CfgThreadLocalState> mLastConfig;
+	private List<ProgramConfiguration<Map<IProgramNonOldVar, Object>, CfgThreadLocalState>> mLastSuccessors;
 
 	public CfgRule(final IUltimateServiceProvider services, final IIcfgSymbolTable symbolTable, final E edge) {
 		mServices = services;
@@ -68,31 +65,23 @@ public abstract class CfgRule<E extends CodeBlock>
 	}
 
 	@Override
-	public boolean isApplicable(
-			final Configuration<ProgramState<Map<IProgramNonOldVar, Object>, CfgThreadLocalState>> config) {
+	public boolean
+			isApplicable(final ProgramConfiguration<Map<IProgramNonOldVar, Object>, CfgThreadLocalState> config) {
 		return !successors(config).isEmpty();
 	}
 
 	@Override
-	public List<Configuration<ProgramState<Map<IProgramNonOldVar, Object>, CfgThreadLocalState>>>
-			successors(final Configuration<ProgramState<Map<IProgramNonOldVar, Object>, CfgThreadLocalState>> config) {
+	public List<ProgramConfiguration<Map<IProgramNonOldVar, Object>, CfgThreadLocalState>>
+			successors(final ProgramConfiguration<Map<IProgramNonOldVar, Object>, CfgThreadLocalState> config) {
 		if (mLastConfig == config) {
 			return mLastSuccessors;
 		}
 
-		Map<IProgramNonOldVar, Object> globalState = null;
-		final List<Configuration<ProgramState<Map<IProgramNonOldVar, Object>, CfgThreadLocalState>>> successors =
+		final List<ProgramConfiguration<Map<IProgramNonOldVar, Object>, CfgThreadLocalState>> successors =
 				new ArrayList<>();
-		for (int i = 0; i < config.size(); ++i) {
-			final var state = config.get(i);
-			assert (i == 0) == state.isControllerState();
-			if (state.isControllerState()) {
-				globalState = state.getControllerState();
-				continue;
-			}
-
-			assert globalState != null;
-			final var localState = state.getThreadState();
+		final Map<IProgramNonOldVar, Object> globalState = config.getControllerState();
+		for (int i = 0; i < config.numberOfThreads(); ++i) {
+			final var localState = config.getThread(i);
 			if (!localState.getLocation().equals(mEdge.getSource())) {
 				continue;
 			}
@@ -108,8 +97,7 @@ public abstract class CfgRule<E extends CodeBlock>
 				newLocalState = newLocalState.updateLocation((BoogieIcfgLocation) mEdge.getTarget());
 			}
 
-			final var newConfig = config.replace(0, new ControllerState<>(newState.getGlobalState())).replace(i,
-					new ThreadState<>(newLocalState));
+			final var newConfig = config.replaceController(newState.getGlobalState()).replaceThread(i, newLocalState);
 			successors.add(newConfig);
 		}
 
@@ -122,4 +110,14 @@ public abstract class CfgRule<E extends CodeBlock>
 
 	@Override
 	public abstract int extensionSize();
+
+	@Override
+	public boolean isSpecRule() {
+		return ((BoogieIcfgLocation) mEdge.getTarget()).isErrorLocation();
+	}
+
+	@Override
+	public String toString() {
+		return mEdge.toString();
+	}
 }

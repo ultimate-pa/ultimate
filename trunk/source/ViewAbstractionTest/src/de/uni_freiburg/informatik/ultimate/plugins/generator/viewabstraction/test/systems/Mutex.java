@@ -27,21 +27,19 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.test.systems;
 
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.Configuration;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.GlobalVarUpdate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.IRule;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.Program;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.ProgramState;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.ProgramConfiguration;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.test.ListIndependence;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.test.ViewTest;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.test.ViewTest.ITestProgram;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
-public class Mutex implements ITestProgram<ProgramState<Integer, Mutex.IncDecLocation>> {
+public class Mutex implements ITestProgram<ProgramConfiguration<Integer, Mutex.IncDecLocation>> {
 	enum IncDecLocation {
 		MINUS("⊖"), PLUS("⨁");
 
@@ -58,8 +56,8 @@ public class Mutex implements ITestProgram<ProgramState<Integer, Mutex.IncDecLoc
 	}
 
 	private final int mBound;
-	private final IRule<ProgramState<Integer, IncDecLocation>> increment;
-	private final IRule<ProgramState<Integer, IncDecLocation>> decrement;
+	private final IRule<ProgramConfiguration<Integer, IncDecLocation>> increment;
+	private final IRule<ProgramConfiguration<Integer, IncDecLocation>> decrement;
 
 	public Mutex(final int bound) {
 		mBound = bound;
@@ -69,26 +67,26 @@ public class Mutex implements ITestProgram<ProgramState<Integer, Mutex.IncDecLoc
 	}
 
 	@Override
-	public Program<ProgramState<Integer, Mutex.IncDecLocation>> getTransitions() {
-		return new Program<>(null, List.of(increment, decrement));
+	public Program<ProgramConfiguration<Integer, Mutex.IncDecLocation>> getTransitions() {
+		return new Program<>(List.of(increment, decrement));
 	}
 
 	@Override
-	public Configuration<ProgramState<Integer, Mutex.IncDecLocation>> init(final int parameter) {
-		final ProgramState<Integer, Mutex.IncDecLocation> controller = new ProgramState.ControllerState<>(0);
-		final ProgramState<Integer, Mutex.IncDecLocation> thread = new ProgramState.ThreadState<>(IncDecLocation.MINUS);
-		final var threads =
-				new ImmutableList<>(IntStream.range(0, parameter).mapToObj(i -> thread).collect(Collectors.toList()));
-		return new Configuration<>(new ImmutableList<>(controller, threads));
+	public ProgramConfiguration<Integer, Mutex.IncDecLocation> init(final int parameter) {
+		final int controller = 0;
+		final var thread = IncDecLocation.MINUS;
+
+		final var threads = ViewTest.repeat(parameter, thread);
+		return new ProgramConfiguration<>(controller, new Configuration<>(threads));
 	}
 
 	@Override
-	public boolean isBad(final Configuration<ProgramState<Integer, Mutex.IncDecLocation>> config) {
-		return config.stream().anyMatch(s -> s.isThreadState() && s.getThreadState() == IncDecLocation.PLUS)
-				&& config.stream().filter(s -> s.isControllerState()).findAny().get().getControllerState() == 0;
+	public boolean isBad(final ProgramConfiguration<Integer, Mutex.IncDecLocation> config) {
+		return config.getThreadConfiguration().stream().anyMatch(s -> s == IncDecLocation.PLUS)
+				&& config.getControllerState() == 0;
 	}
 
-	public <S> IIndependenceRelation<S, IRule<ProgramState<Integer, IncDecLocation>>> getIndependence() {
+	public <S> IIndependenceRelation<S, IRule<ProgramConfiguration<Integer, IncDecLocation>>> getIndependence() {
 		if (mBound == -1) {
 			return new ListIndependence<>(List.of(new Pair<>(increment, decrement), new Pair<>(decrement, increment)));
 		}

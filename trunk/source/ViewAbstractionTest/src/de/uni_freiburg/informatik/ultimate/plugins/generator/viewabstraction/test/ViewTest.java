@@ -40,9 +40,13 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.Explorer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.ViewAbstractionComputation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.ViewAbstractionComputation.Status;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.abstractdomain.IViewAbstraction;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.abstractdomain.ProgramViewAbstraction;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.abstractdomain.SimpleViewAbstraction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.Configuration;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.IRule;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.Program;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.ProgramConfiguration;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.SleepReducedProgram;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.test.systems.BurnsRezine;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.test.systems.BurnsSimple;
@@ -57,8 +61,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class ViewTest {
 	private static final int MAX_ITERATIONS = 100;
 
-	private static <X> Consumer<Configuration<X>> consumeConfiguration(final IUltimateServiceProvider services,
-			final Predicate<Configuration<X>> isBad) {
+	private static <C> Consumer<C> consumeConfiguration(final IUltimateServiceProvider services,
+			final Predicate<C> isBad) {
 		final var logger = services.getLoggingService().getLogger(ViewTest.class);
 		return config -> {
 			logger.info(config);
@@ -69,20 +73,31 @@ public class ViewTest {
 		};
 	}
 
-	private static <X> void explore(final ITestProgram<X> program, final int parameter) {
+	private static <C> void explore(final ITestProgram<C> program, final int parameter) {
 		final var services = UltimateMocks.createUltimateServiceProviderMock();
 		new Explorer<>(program.getTransitions(), List.of(program.init(parameter)))
 				.dfs(consumeConfiguration(services, program::isBad));
 	}
 
-	private static <X> void abstractFp(final ITestProgram<X> program, final int parameter) {
-		abstractFp(program, parameter, -1);
+	private static <S> void abstractFp(final ITestProgram<Configuration<S>> program, final int parameter,
+			final int maxIterations) {
+		abstractFp(program, new SimpleViewAbstraction<>(), parameter, maxIterations);
 	}
 
-	private static <X> void abstractFp(final ITestProgram<X> program, final int parameter, final int maxIterations) {
+	private static <S> void abstractFp(final ITestProgram<Configuration<S>> program, final int parameter) {
+		abstractFp(program, new SimpleViewAbstraction<>(), parameter);
+	}
+
+	private static <C> void abstractFp(final ITestProgram<C> program, final IViewAbstraction<C, C> viewAbstraction,
+			final int parameter) {
+		abstractFp(program, viewAbstraction, parameter, -1);
+	}
+
+	private static <C> void abstractFp(final ITestProgram<C> program, final IViewAbstraction<C, C> viewAbstraction,
+			final int parameter, final int maxIterations) {
 		final var services = UltimateMocks.createUltimateServiceProviderMock();
-		final var va = new ViewAbstractionComputation<>(services, program.getTransitions(),
-				Set.of(program.init(parameter)), parameter);
+		final var va = new ViewAbstractionComputation<>(services, viewAbstraction, parameter, program.getTransitions(),
+				Set.of(program.init(parameter)));
 		final var status = va.run(maxIterations);
 		final var fp = va.getCurrentAbstraction();
 
@@ -96,30 +111,31 @@ public class ViewTest {
 		logger.info(fp);
 	}
 
-	private static <X> void abstractFpReduced(final ITestProgram<X> program,
-			final IIndependenceRelation<?, IRule<X>> comm, final int parameter, final int maxInterations) {
+	private static <S> void abstractFpReduced(final ITestProgram<Configuration<S>> program,
+			final IIndependenceRelation<?, IRule<Configuration<S>>> comm, final int parameter,
+			final int maxIterations) {
 		final var reduced = SleepReducedProgram.reduce(program.getTransitions(), comm);
-		final var testReduced = new ITestProgram<Pair<X, Boolean>>() {
+		final var testReduced = new ITestProgram<Configuration<Pair<S, Boolean>>>() {
 			@Override
-			public Program<Pair<X, Boolean>> getTransitions() {
+			public Program<Configuration<Pair<S, Boolean>>> getTransitions() {
 				return reduced;
 			}
 
 			@Override
-			public Configuration<Pair<X, Boolean>> init(final int parameter) {
+			public Configuration<Pair<S, Boolean>> init(final int parameter) {
 				return SleepReducedProgram.wrapInitial(program.init(parameter));
 			}
 
 			@Override
-			public boolean isBad(final Configuration<Pair<X, Boolean>> config) {
+			public boolean isBad(final Configuration<Pair<S, Boolean>> config) {
 				return program.isBad(SleepReducedProgram.underlying(config));
 			}
 		};
 
 		final var services = UltimateMocks.createUltimateServiceProviderMock();
-		final var va = new ViewAbstractionComputation<>(services, testReduced.getTransitions(),
-				Set.of(testReduced.init(parameter)), parameter);
-		final var status = va.run(100);
+		final var va = new ViewAbstractionComputation<>(services, new SimpleViewAbstraction<>(), parameter,
+				testReduced.getTransitions(), Set.of(testReduced.init(parameter)));
+		final var status = va.run(maxIterations);
 		final var fp = va.getCurrentAbstraction();
 
 		final var logger = services.getLoggingService().getLogger(ViewTest.class);
@@ -128,6 +144,41 @@ public class ViewTest {
 
 		logger.info("projected fixed point: %s",
 				fp.stream().map(SleepReducedProgram::underlying).distinct().collect(Collectors.toList()));
+	}
+
+	private static <C, S> void abstractFpReducedProgram(final ITestProgram<ProgramConfiguration<C, S>> program,
+			final IIndependenceRelation<?, IRule<ProgramConfiguration<C, S>>> comm, final int parameter,
+			final int maxIterations) {
+		final var reduced = SleepReducedProgram.reduceWithGlobals(program.getTransitions(), comm);
+		final var testReduced = new ITestProgram<ProgramConfiguration<C, Pair<S, Boolean>>>() {
+			@Override
+			public Program<ProgramConfiguration<C, Pair<S, Boolean>>> getTransitions() {
+				return reduced;
+			}
+
+			@Override
+			public ProgramConfiguration<C, Pair<S, Boolean>> init(final int parameter) {
+				return SleepReducedProgram.wrapInitialProgramConfig(program.init(parameter));
+			}
+
+			@Override
+			public boolean isBad(final ProgramConfiguration<C, Pair<S, Boolean>> config) {
+				return program.isBad(SleepReducedProgram.underlyingProgramConfig(config));
+			}
+		};
+
+		final var services = UltimateMocks.createUltimateServiceProviderMock();
+		final var va = new ViewAbstractionComputation<>(services, new ProgramViewAbstraction<>(), parameter,
+				testReduced.getTransitions(), Set.of(testReduced.init(parameter)));
+		final var status = va.run(maxIterations);
+		final var fp = va.getCurrentAbstraction();
+
+		final var logger = services.getLoggingService().getLogger(ViewTest.class);
+		fp.stream().forEach(consumeConfiguration(services, testReduced::isBad));
+		logger.info(fp);
+
+		logger.info("projected fixed point: %s",
+				fp.stream().map(SleepReducedProgram::underlyingProgramConfig).distinct().collect(Collectors.toList()));
 	}
 
 	@Test
@@ -147,28 +198,28 @@ public class ViewTest {
 
 	@Test(expected = BadConfigurationException.class)
 	public void abstract2Mutex2() {
-		abstractFp(new Mutex(2), 2, MAX_ITERATIONS);
+		abstractFp(new Mutex(2), new ProgramViewAbstraction<>(), 2, MAX_ITERATIONS);
 	}
 
 	@Test
 	public void abstract3Mutex2() {
-		abstractFp(new Mutex(2), 3);
+		abstractFp(new Mutex(2), new ProgramViewAbstraction<>(), 3);
 	}
 
 	@Test(expected = BadConfigurationException.class)
 	public void abstract3Mutex3() {
-		abstractFp(new Mutex(3), 3, MAX_ITERATIONS);
+		abstractFp(new Mutex(3), new ProgramViewAbstraction<>(), 3, MAX_ITERATIONS);
 	}
 
 	@Test
 	public void abstract4Mutex3() {
-		abstractFp(new Mutex(3), 4);
+		abstractFp(new Mutex(3), new ProgramViewAbstraction<>(), 4);
 	}
 
 	@Test
 	public void abstract3MutexReduced() {
 		final var program = new Mutex(-1);
-		abstractFpReduced(program, program.getIndependence(), 3, MAX_ITERATIONS);
+		abstractFpReducedProgram(program, program.getIndependence(), 3, MAX_ITERATIONS);
 	}
 
 	@Test
@@ -379,18 +430,18 @@ public class ViewTest {
 		return new ImmutableList<>(IntStream.range(0, n).mapToObj(i -> elem).collect(Collectors.toList()));
 	}
 
-	public interface ITestProgram<X> {
-		Program<X> getTransitions();
+	public interface ITestProgram<C> {
+		Program<C> getTransitions();
 
-		Configuration<X> init(int parameter);
+		C init(int parameter);
 
-		boolean isBad(Configuration<X> config);
+		boolean isBad(C config);
 	}
 
 	public static class BadConfigurationException extends RuntimeException {
-		private final Configuration<?> mBadConfig;
+		private final Object mBadConfig;
 
-		public BadConfigurationException(final Configuration<?> badConfig) {
+		public BadConfigurationException(final Object badConfig) {
 			super("Bad configuration: " + badConfig);
 			mBadConfig = badConfig;
 		}

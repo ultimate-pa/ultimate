@@ -35,7 +35,7 @@ import java.util.function.UnaryOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.GlobalRule.Quantifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.GlobalRule.Range;
 
-public class ConditionalBroadcast<S> implements IRule<S> {
+public class ConditionalBroadcast<S> implements IRule<Configuration<S>> {
 	private final S mSource;
 	private final S mTarget;
 	private final Range mRange;
@@ -55,8 +55,8 @@ public class ConditionalBroadcast<S> implements IRule<S> {
 
 	@Override
 	public boolean isApplicable(final Configuration<S> config) {
-		for (int i = 0; i < config.size(); ++i) {
-			final var state = config.get(i);
+		for (int i = 0; i < config.numberOfThreads(); ++i) {
+			final var state = config.getThread(i);
 			if (state.equals(mSource)) {
 				final boolean conditionSatisfied = checkCondition(config, i);
 				if (conditionSatisfied) {
@@ -69,9 +69,9 @@ public class ConditionalBroadcast<S> implements IRule<S> {
 
 	private boolean checkCondition(final Configuration<S> config, final int index) {
 		boolean result = mQuantifier.defaultValue();
-		for (int i = 0; i < config.size(); ++i) {
+		for (int i = 0; i < config.numberOfThreads(); ++i) {
 			if (mRange.satisfies(i, index)) {
-				final var state = config.get(i);
+				final var state = config.getThread(i);
 				result = mQuantifier.combine(result, mCondition.test(state));
 			}
 		}
@@ -83,8 +83,8 @@ public class ConditionalBroadcast<S> implements IRule<S> {
 		assert isApplicable(config);
 
 		final var result = new ArrayList<Configuration<S>>();
-		for (int i = 0; i < config.size(); ++i) {
-			final var state = config.get(i);
+		for (int i = 0; i < config.numberOfThreads(); ++i) {
+			final var state = config.getThread(i);
 			if (state.equals(mSource) && checkCondition(config, i)) {
 				result.add(successor(config, i));
 			}
@@ -97,8 +97,8 @@ public class ConditionalBroadcast<S> implements IRule<S> {
 		final var subst = new HashMap<Integer, S>();
 		subst.put(index, mTarget);
 
-		for (int i = 0; i < config.size(); ++i) {
-			final var state = config.get(i);
+		for (int i = 0; i < config.numberOfThreads(); ++i) {
+			final var state = config.getThread(i);
 			final var newState = mBroadcast.apply(state);
 			if (i != index && newState != null) {
 				subst.put(i, newState);

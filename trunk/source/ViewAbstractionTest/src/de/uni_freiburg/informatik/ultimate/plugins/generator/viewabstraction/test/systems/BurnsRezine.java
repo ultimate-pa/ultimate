@@ -41,14 +41,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.tes
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 // version of Burns protocol as in Ahmed Rezine's PhD thesis
-public class BurnsRezine implements ITestProgram<Pair<BurnsRezine.Burns, Boolean>> {
+public class BurnsRezine implements ITestProgram<Configuration<Pair<BurnsRezine.Burns, Boolean>>> {
 	public enum Burns {
 		q1, q2, q3, q4, q5, q6, q7;
 	}
 
 	@Override
-	public Program<Pair<BurnsRezine.Burns, Boolean>> getTransitions() {
-		final List<IRule<Pair<BurnsRezine.Burns, Boolean>>> rules = Arrays.asList(
+	public Program<Configuration<Pair<BurnsRezine.Burns, Boolean>>> getTransitions() {
+		final List<IRule<Configuration<Pair<BurnsRezine.Burns, Boolean>>>> rules = Arrays.asList(
 				// first rule
 				new LocalRule<>(new Pair<>(Burns.q1, true), new Pair<>(Burns.q2, false)),
 				new LocalRule<>(new Pair<>(Burns.q1, false), new Pair<>(Burns.q2, false)),
@@ -97,7 +97,7 @@ public class BurnsRezine implements ITestProgram<Pair<BurnsRezine.Burns, Boolean
 
 		);
 
-		return new Program<>(null, rules);
+		return new Program<>(rules);
 	}
 
 	@Override

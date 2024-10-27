@@ -44,25 +44,26 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.tes
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.test.ViewTest.ITestProgram;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
-public class Illinois implements ITestProgram<Illinois.Ill> {
+public class Illinois implements ITestProgram<Configuration<Illinois.Ill>> {
 	public enum Ill {
 		invd, dirt, shrd, vlid
 	}
 
-	private static final IRule<Ill> t1 = new RendezVous<>(Ill.invd, Ill.shrd, Ill.dirt, Ill.shrd);
-	private static final IRule<Ill> t2 =
+	private static final IRule<Configuration<Ill>> t1 = new RendezVous<>(Ill.invd, Ill.shrd, Ill.dirt, Ill.shrd);
+	private static final IRule<Configuration<Ill>> t2 =
 			new GlobalRule<>(Ill.invd, Ill.vlid, Range.DISTINCT, Quantifier.FORALL, x -> x == Ill.invd);
-	private static final IRule<Ill> t3 = new BroadcastRule<>(Ill.invd, Ill.dirt, x -> Ill.invd);
-	private static final IRule<Ill> t4 = new LocalRule<>(Ill.dirt, Ill.invd);
-	private static final IRule<Ill> t5 = new ConditionalBroadcast<>(Ill.invd, Ill.shrd, Range.DISTINCT,
+	private static final IRule<Configuration<Ill>> t3 = new BroadcastRule<>(Ill.invd, Ill.dirt, x -> Ill.invd);
+	private static final IRule<Configuration<Ill>> t4 = new LocalRule<>(Ill.dirt, Ill.invd);
+	private static final IRule<Configuration<Ill>> t5 = new ConditionalBroadcast<>(Ill.invd, Ill.shrd, Range.DISTINCT,
 			Quantifier.EXISTS, s -> s == Ill.vlid || s == Ill.shrd, s -> s == Ill.vlid ? Ill.shrd : s);
-	private static final IRule<Ill> t6 = new BroadcastRule<>(Ill.shrd, Ill.dirt, x -> x == Ill.shrd ? Ill.invd : x);
-	private static final IRule<Ill> t7 = new LocalRule<>(Ill.shrd, Ill.invd);
-	private static final IRule<Ill> t8 = new LocalRule<>(Ill.vlid, Ill.invd);
-	private static final IRule<Ill> t9 = new LocalRule<>(Ill.vlid, Ill.dirt);
+	private static final IRule<Configuration<Ill>> t6 =
+			new BroadcastRule<>(Ill.shrd, Ill.dirt, x -> x == Ill.shrd ? Ill.invd : x);
+	private static final IRule<Configuration<Ill>> t7 = new LocalRule<>(Ill.shrd, Ill.invd);
+	private static final IRule<Configuration<Ill>> t8 = new LocalRule<>(Ill.vlid, Ill.invd);
+	private static final IRule<Configuration<Ill>> t9 = new LocalRule<>(Ill.vlid, Ill.dirt);
 
 	// manually determined; likely incomplete
-	private static final List<Pair<IRule<Ill>, IRule<Ill>>> comm =
+	private static final List<Pair<IRule<Configuration<Ill>>, IRule<Configuration<Ill>>>> comm =
 			List.of(new Pair<>(t2, t4), new Pair<>(t2, t7), new Pair<>(t2, t8), new Pair<>(t4, t6), new Pair<>(t4, t7),
 					new Pair<>(t4, t8), new Pair<>(t4, t9), new Pair<>(t5, t7), new Pair<>(t6, t8), new Pair<>(t6, t9),
 					new Pair<>(t7, t3), new Pair<>(t7, t4), new Pair<>(t7, t6), new Pair<>(t7, t8), new Pair<>(t7, t9),
@@ -71,13 +72,13 @@ public class Illinois implements ITestProgram<Illinois.Ill> {
 
 			);
 
-	public <S> IIndependenceRelation<S, IRule<Ill>> getIndependence() {
+	public <S> IIndependenceRelation<S, IRule<Configuration<Ill>>> getIndependence() {
 		return new ListIndependence<>(comm);
 	}
 
 	@Override
-	public Program<Ill> getTransitions() {
-		return new Program<>(null, List.of(t1, t2, t3, t4, t5, t6, t7, t8, t9));
+	public Program<Configuration<Ill>> getTransitions() {
+		return new Program<>(List.of(t1, t2, t3, t4, t5, t6, t7, t8, t9));
 	}
 
 	@Override

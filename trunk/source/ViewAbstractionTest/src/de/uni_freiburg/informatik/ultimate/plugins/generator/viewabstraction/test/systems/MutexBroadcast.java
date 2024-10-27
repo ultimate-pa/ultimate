@@ -42,18 +42,18 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.tes
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
-public class MutexBroadcast implements ITestProgram<Pair<IncDecLocation, Integer>> {
+public class MutexBroadcast implements ITestProgram<Configuration<Pair<IncDecLocation, Integer>>> {
 	private final int mBound;
-	private final Program<Pair<IncDecLocation, Integer>> mProgram;
-	private IIndependenceRelation<Object, IRule<Pair<IncDecLocation, Integer>>> mComm;
+	private final Program<Configuration<Pair<IncDecLocation, Integer>>> mProgram;
+	private IIndependenceRelation<Object, IRule<Configuration<Pair<IncDecLocation, Integer>>>> mComm;
 
 	public MutexBroadcast(final int bound) {
 		mBound = bound;
 		mProgram = getTransitionsInternal();
 	}
 
-	private Program<Pair<IncDecLocation, Integer>> getTransitionsInternal() {
-		final var rules = new ArrayList<IRule<Pair<IncDecLocation, Integer>>>();
+	private Program<Configuration<Pair<IncDecLocation, Integer>>> getTransitionsInternal() {
+		final var rules = new ArrayList<IRule<Configuration<Pair<IncDecLocation, Integer>>>>();
 
 		final UnaryOperator<Pair<IncDecLocation, Integer>> incBroadcast =
 				st -> new Pair<>(st.getFirst(), st.getSecond() + 1);
@@ -64,7 +64,7 @@ public class MutexBroadcast implements ITestProgram<Pair<IncDecLocation, Integer
 
 		final var increments = new ArrayList<>(rules);
 		final var comm =
-				new ArrayList<Pair<IRule<Pair<IncDecLocation, Integer>>, IRule<Pair<IncDecLocation, Integer>>>>();
+				new ArrayList<Pair<IRule<Configuration<Pair<IncDecLocation, Integer>>>, IRule<Configuration<Pair<IncDecLocation, Integer>>>>>();
 
 		final UnaryOperator<Pair<IncDecLocation, Integer>> decBroadcast =
 				st -> new Pair<>(st.getFirst(), st.getSecond() - 1);
@@ -80,7 +80,7 @@ public class MutexBroadcast implements ITestProgram<Pair<IncDecLocation, Integer
 		}
 
 		mComm = new ListIndependence<>(comm);
-		return new Program<>(null, rules);
+		return new Program<>(rules);
 	}
 
 	@Override
@@ -96,12 +96,12 @@ public class MutexBroadcast implements ITestProgram<Pair<IncDecLocation, Integer
 		return config.stream().anyMatch(s -> s.getFirst() == IncDecLocation.PLUS && s.getSecond() == 0);
 	}
 
-	public IIndependenceRelation<Object, IRule<Pair<IncDecLocation, Integer>>> getIndependence() {
+	public IIndependenceRelation<Object, IRule<Configuration<Pair<IncDecLocation, Integer>>>> getIndependence() {
 		return mComm;
 	}
 
 	@Override
-	public Program<Pair<IncDecLocation, Integer>> getTransitions() {
+	public Program<Configuration<Pair<IncDecLocation, Integer>>> getTransitions() {
 		return mProgram;
 	}
 }
