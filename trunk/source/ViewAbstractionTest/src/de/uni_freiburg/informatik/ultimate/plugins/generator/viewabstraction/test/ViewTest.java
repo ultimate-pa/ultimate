@@ -43,11 +43,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.Vie
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.abstractdomain.IViewAbstraction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.abstractdomain.ProgramViewAbstraction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.abstractdomain.SimpleViewAbstraction;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.por.SleepReducedProgram;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.Configuration;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.IRule;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.Program;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.ProgramConfiguration;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.SleepReducedProgram;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.test.systems.BurnsRezine;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.test.systems.BurnsSimple;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.test.systems.Firefly;

@@ -44,8 +44,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.abstractdomain.IViewAbstraction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.abstractdomain.ProgramViewAbstraction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.por.PersistentSetSupport;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.por.SleepReducedProgram;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.Program;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.SleepReducedProgram;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.cfg.CfgProgramConverter;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.cfg.CfgRuleIndependence;
 

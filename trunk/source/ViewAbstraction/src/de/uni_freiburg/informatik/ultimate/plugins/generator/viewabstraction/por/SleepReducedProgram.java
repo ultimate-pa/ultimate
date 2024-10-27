@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE ViewAbstraction plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.por;
 
 import java.util.List;
 import java.util.function.IntPredicate;
@@ -34,6 +34,11 @@ import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation.Dependence;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.Configuration;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.IRule;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.IThreadBasedConfiguration;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.Program;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.ProgramConfiguration;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
