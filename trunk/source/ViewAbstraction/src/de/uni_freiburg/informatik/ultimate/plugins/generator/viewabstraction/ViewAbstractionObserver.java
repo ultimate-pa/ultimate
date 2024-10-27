@@ -33,6 +33,7 @@ import java.util.function.IntFunction;
 import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
@@ -101,6 +102,7 @@ public class ViewAbstractionObserver implements IUnmanagedObserver {
 			runAnalysis(new ProgramViewAbstraction<>(), reduced,
 					i -> SleepReducedProgram.wrapInitialProgramConfig(converter.getInitialConfiguration(i)),
 					c -> converter.isErrorView(SleepReducedProgram.underlyingProgramConfig(c)));
+			return;
 		}
 
 		if (USE_PERSISTENT_REDUCTION) {
@@ -130,8 +132,10 @@ public class ViewAbstractionObserver implements IUnmanagedObserver {
 				mLogger.warn("Violation found in iteration %d: %s", runner.getCurrentIteration() + 1, violation);
 				break;
 			case COMPLETED:
-				mLogger.info("Fixpoint computation completed after %d iterations with %d views: %s",
-						runner.getCurrentIteration(), fp.size(), fp);
+				mLogger.info("Fixpoint computation completed after %d iterations with %d views",
+						runner.getCurrentIteration(), fp.size());
+				mServices.getResultService().reportResult(Activator.PLUGIN_ID, new AllSpecificationsHoldResult(
+						Activator.PLUGIN_ID, "ViewAbstraction proved that the parameterized program is correct."));
 				return;
 			case PAUSED:
 				mLogger.warn("Fixpoint computation stopped after %d iterations (%d views in pre-fixpoint)",
@@ -139,7 +143,6 @@ public class ViewAbstractionObserver implements IUnmanagedObserver {
 				break;
 			default:
 				break;
-
 			}
 
 			if (!mServices.getProgressMonitorService().continueProcessing()) {
