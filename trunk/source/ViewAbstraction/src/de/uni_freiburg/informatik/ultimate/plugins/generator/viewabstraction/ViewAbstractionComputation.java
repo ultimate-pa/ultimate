@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -35,7 +36,6 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceled
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.abstractdomain.IViewAbstraction;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.IRule;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.Program;
 
 public class ViewAbstractionComputation<C, V> {
@@ -52,6 +52,7 @@ public class ViewAbstractionComputation<C, V> {
 
 	private final Set<V> mCurrent;
 	private final Set<V> mNewViews = new LinkedHashSet<>();
+	private final Set<C> mConsideredConfigs = new HashSet<>();
 
 	private Status mStatus = Status.PAUSED;
 	private int mIteration = 0;
@@ -76,11 +77,12 @@ public class ViewAbstractionComputation<C, V> {
 		mLevel = level;
 
 		mProgram = program;
-		mDelta = program.getRules().stream().mapToInt(IRule::extensionSize).max().orElse(0);
+		mDelta = program.getExtensionSize();
 
 		mObserver = observer;
 
 		mCurrent = new LinkedHashSet<>(initial);
+		mNewViews.addAll(initial);
 	}
 
 	public Set<V> getCurrentAbstraction() {
@@ -109,14 +111,14 @@ public class ViewAbstractionComputation<C, V> {
 		boolean changed;
 		do {
 			changed = false;
-			mNewViews.clear();
 			final var nextViews = abstractPost(mCurrent);
+			mNewViews.clear();
 			for (final var view : nextViews) {
 				final boolean isNew = mCurrent.add(view);
 				changed = changed || isNew;
 				if (isNew) {
 					mNewViews.add(view);
-					// TODO in next iteration, only compute successors of configs that have at least one new view
+					mLogger.debug("new view: %s", view);
 
 					final boolean stop = observe(view);
 					if (stop) {
@@ -147,8 +149,14 @@ public class ViewAbstractionComputation<C, V> {
 		mLogger.debug("extended %d views of size %d by delta=%d to %d configurations", views.size(), mLevel, mDelta,
 				extended.size());
 
-		final var post = concretePost(extended);
-		mLogger.debug("concrete post of %d extended views had %d configurations", extended.size(), post.size());
+		// TODO rather than post-hoc filtering, only generated extended configs with at least one new view
+		final var filteredExt = extended.stream()
+				.filter(c -> mViewAbstraction.abstractAsViews(c, mLevel).stream().anyMatch(mNewViews::contains))
+				.collect(Collectors.toCollection(LinkedHashSet::new));
+		mLogger.debug("filtered configurations %d configurations have new views", filteredExt.size());
+
+		final var post = concretePost(filteredExt);
+		mLogger.debug("concrete post of %d extended views had %d configurations", filteredExt.size(), post.size());
 
 		final var abstracted = getViews(post);
 		mLogger.debug("abstraction yielded %d views", abstracted.size());
@@ -158,10 +166,18 @@ public class ViewAbstractionComputation<C, V> {
 
 	private Set<C> concretePost(final Set<C> configs) {
 		final var result = new LinkedHashSet<>(configs);
-		for (final var rule : mProgram.getRules()) {
-			for (final var c : configs) {
+		for (final var c : configs) {
+			final boolean newConfig = mConsideredConfigs.add(c);
+			if (!newConfig) {
+				continue;
+			}
+
+			mLogger.debug("considering successors for configuration %s", c);
+			for (final var rule : mProgram.getRules()) {
 				if (rule.isApplicable(c)) {
-					result.addAll(rule.successors(c));
+					final var successors = rule.successors(c);
+					mLogger.debug("  successors for rule %s: %s", rule, successors);
+					result.addAll(successors);
 				}
 			}
 		}
