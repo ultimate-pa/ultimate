@@ -197,7 +197,7 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 		// Compose the two transition formulas in both orders.
 		// For the composition a*b, only spend time eliminating auxVars if it might be used on the right-hand side of an
 		// inclusion check, as auxVars on the left-hand side can be skolemized anyway.
-		final UnmodifiableTransFormula transFormulaAB = compose(tfA, tfB, mConditional);
+		final UnmodifiableTransFormula transFormulaAB = compose(tfA, tfB, mSymmetric);
 		// For the composition b*a, always try to eliminate auxVars, because it always appears on the right-hand side of
 		// an inclusion check.
 		final UnmodifiableTransFormula transFormulaBA = compose(tfB, tfA, true);
