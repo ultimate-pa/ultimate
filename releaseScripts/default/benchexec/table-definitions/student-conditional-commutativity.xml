@@ -18,7 +18,6 @@
   <union>
     <result filename="conditional-commutativity.*.results.NONE.*.xml" />
   </union>
-
   <union>
     <result filename="conditional-commutativity.*.results.CE-Default-Generator.*.xml" />
   </union>
@@ -29,45 +28,7 @@
     <result filename="conditional-commutativity.*.results.CE-Default-SymbolicRelation.*.xml" />
   </union>
   <union>
-    <result filename="conditional-commutativity.*.results.CE-SleepSet.*.xml" />
-  </union>
-  <union>
-    <result filename="conditional-commutativity.*.results.CE-Loop.*.xml" />
-  </union>
-   <union>
-    <result filename="conditional-commutativity.*.results.CE-Forward.*.xml" />
-  </union>
-  <union>
-    <result filename="aggregated-CE-Random-MIN.*.xml" />
-  </union>
-  <union>
-    <result filename="conditional-commutativity.*.results.CE-Random-20-213.*.xml" />
-  </union>
-  <union>
-    <result filename="conditional-commutativity.*.results.CE-Random-20-546.*.xml" />
-  </union>
-  <union>
-    <result filename="conditional-commutativity.*.results.CE-Random-50-213.*.xml" />
+    <result filename="conditional-commutativity.*.results.IA-Default-SymbolicRelation.*.xml" />
   </union>
 
-  <union>
-    <result filename="conditional-commutativity.*.results.IA-Default.*.xml" />
-  </union>
-  <union>
-    <result filename="conditional-commutativity.*.results.IA-SleepSet.*.xml" />
-  </union>
-  <union>
-    <result filename="conditional-commutativity.*.results.IA-Loop.*.xml" />
-  </union>
-
-  <union>
-    <result filename="conditional-commutativity.*.results.DFS-Default-Limit5.*.xml" />
-  </union>
-  <union>
-    <result filename="conditional-commutativity.*.results.DFS-SleepSet-Limit5.*.xml" />
-  </union>
-  <union>
-    <result filename="conditional-commutativity.*.results.DFS-Loop-Limit5.*.xml" />
-  </union>
-  
 </table>
