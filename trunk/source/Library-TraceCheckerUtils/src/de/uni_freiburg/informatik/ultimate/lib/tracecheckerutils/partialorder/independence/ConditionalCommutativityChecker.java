@@ -59,7 +59,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
  *            The type of letters.
  */
 public class ConditionalCommutativityChecker<L extends IAction> {
-
 	private final IConditionalCommutativityCriterion<L> mCriterion;
 	private final IIndependenceRelation<IPredicate, L> mIndependenceRelation;
 	private final IIndependenceConditionGenerator mGenerator;
@@ -212,22 +211,20 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 				} else if (SmtUtils.isTrueLiteral(condition.getFormula())) {
 					throw new IllegalArgumentException("condition is not allowed to be true");
 				} else if (mCriterion.decide(condition)) {
-
-					if (!QuantifierUtils.isQuantifierFree(condition.getFormula())) {
-						mStatisticsUtils.addQuantifiedCondition();
-					}
-
 					if (SmtUtils.checkSatTerm(mManagedScript.getScript(), condition.getFormula()).equals(LBool.UNSAT)) {
 						mStatisticsUtils.addFalseCondition();
 						return null;
 					}
 
+					// construct a transformula which represents the negation of the condition
 					final BasicPredicate notCondition = mPredicateFactory
 							.newPredicate(SmtUtils.not(mManagedScript.getScript(), condition.getFormula()));
-					// construct a transformula which represents the negation of the condition
-					// via TransFormulaBuilder.constructTransFormulaFromPredicate
 					final UnmodifiableTransFormula tf =
 							TransFormulaBuilder.constructTransFormulaFromPredicate(notCondition, mManagedScript);
+					if (!QuantifierUtils.isQuantifierFree(tf.getFormula())) {
+						mStatisticsUtils.addQuantifiedCondition();
+					}
+
 					// copy a transition with the new transformula with IcfgCopyFactory from
 					// CegarLoopFactory.mCopyFactory (needs to be passed to the CEGAR-Loop)
 					final L notConditionLetter = mCopyFactory.copy(letter1, tf, tf);
