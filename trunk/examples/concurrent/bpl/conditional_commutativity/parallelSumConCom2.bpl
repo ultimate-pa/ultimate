@@ -5,7 +5,7 @@
  * Idea: Variation of parallelSumConComAtomic with 3 threads
  *
  * Observation: Writing everything into a single atomic statements seems to be problematic for the sleep set criterion!
- * Observation: CE-Approach seems to have problems (i.e. it never checks for conditional commutativity and thus won't find it)
+ * Observation: CE-Approach seems to have problems (i.e. it won't check for conditional commutativity for a very long time and thus takes over 300s)
  */
 var A : [int]int;
 var i, j, k, c, x, y, z, n : int;
