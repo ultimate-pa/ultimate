@@ -136,9 +136,14 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		mIsConcurrent = IcfgUtils.isConcurrent(icfg);
 		mResultReporter = new CegarLoopResultReporter<>(mServices, mLogger, Activator.PLUGIN_ID, Activator.PLUGIN_NAME,
 				this::recordLocationResult);
-		mCegarFactory = new CegarLoopFactory<>(transitionClazz, mPrefs, createCompositionFactory, copyFactory);
+		mCegarFactory =
+				new CegarLoopFactory<>(services, transitionClazz, mPrefs, createCompositionFactory, copyFactory);
 
-		runCegarLoops(icfg);
+		try {
+			runCegarLoops(icfg);
+		} finally {
+			mCegarFactory.shutdown();
+		}
 	}
 
 	private void runCegarLoops(final IIcfg<IcfgLocation> icfg) {
