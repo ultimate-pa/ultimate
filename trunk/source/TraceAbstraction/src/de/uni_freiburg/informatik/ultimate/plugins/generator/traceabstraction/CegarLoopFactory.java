@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2Finit
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainExceptionWrapper;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
@@ -91,10 +92,9 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
  *            The type of transitions in programs analyzed by the created CEGAR loops
  */
 public class CegarLoopFactory<L extends IIcfgTransition<?>> {
-
-	private static final boolean FORCE_FINITE_AUTOMATA_FOR_SEQUENTIAL_PROGRAMS = true;
-
 	private final IUltimateServiceProvider mBaseServices;
+	private final ILogger mLogger;
+
 	private final Class<L> mTransitionClazz;
 	private final TAPreferences mPrefs;
 	private final Supplier<IPLBECompositionFactory<L>> mCreateCompositionFactory;
@@ -108,6 +108,8 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 			final TAPreferences taPrefs, final Supplier<IPLBECompositionFactory<L>> createCompositionFactory,
 			final ICopyActionFactory<L> copyFactory) {
 		mBaseServices = services;
+		mLogger = mBaseServices.getLoggingService().getLogger(CegarLoopFactory.class);
+
 		mTransitionClazz = transitionClazz;
 		mPrefs = taPrefs;
 		mCreateCompositionFactory = createCompositionFactory;
@@ -151,7 +153,18 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 
 		// handle CEGAR loops that are not based on finite automata
 		if (isConcurrent) {
-			switch (mPrefs.getAutomataTypeConcurrency()) {
+			final Concurrency automataTypeConcurrency;
+			if (witnessAutomaton != null && mPrefs.getAutomataTypeConcurrency() != Concurrency.FINITE_AUTOMATA) {
+				mLogger.warn(
+						"Violation witness validation is only supported for CEGAR loops based on %s. "
+								+ "Ignoring concurrency settiong %s and switching to %s.",
+						Concurrency.FINITE_AUTOMATA, mPrefs.getAutomataTypeConcurrency(), Concurrency.FINITE_AUTOMATA);
+				automataTypeConcurrency = Concurrency.FINITE_AUTOMATA;
+			} else {
+				automataTypeConcurrency = mPrefs.getAutomataTypeConcurrency();
+			}
+
+			switch (automataTypeConcurrency) {
 			case PARTIAL_ORDER_FA:
 				requireNoReuse("POR-based analysis");
 				requireNoWitnesses(witnessAutomaton, "POR-based analysis");
@@ -212,26 +225,22 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 			return new CegarLoopSWBnonRecursive<>(name, abstraction, root, csToolkit, predicateFactory, mPrefs,
 					errorLocs, proofProducer, services, mTransitionClazz, stateFactoryForRefinement);
 		}
-		if ((FORCE_FINITE_AUTOMATA_FOR_SEQUENTIAL_PROGRAMS && !IcfgUtils.isConcurrent(root)) || witnessAutomaton != null
-				|| mPrefs.getAutomataTypeConcurrency() == Concurrency.FINITE_AUTOMATA) {
-			switch (mPrefs.getFloydHoareAutomataReuse()) {
-			case EAGER:
-				return new EagerReuseCegarLoop<>(name, abstraction, root, csToolkit, predicateFactory, mPrefs,
-						errorLocs, proofProducer, services, Collections.emptyList(), rawFloydHoareAutomataFromFile,
-						mTransitionClazz, stateFactoryForRefinement);
-			case LAZY_IN_ORDER:
-				return new LazyReuseCegarLoop<>(name, abstraction, root, csToolkit, predicateFactory, mPrefs, errorLocs,
-						proofProducer, services, Collections.emptyList(), rawFloydHoareAutomataFromFile,
-						mTransitionClazz, stateFactoryForRefinement);
-			case NONE:
-				return new NwaCegarLoop<>(name, abstraction, root, csToolkit, predicateFactory, mPrefs, errorLocs,
-						proofProducer, services, mTransitionClazz, stateFactoryForRefinement);
-			default:
-				throw new AssertionError("Unknown Setting: " + mPrefs.getFloydHoareAutomataReuse());
-			}
 
+		switch (mPrefs.getFloydHoareAutomataReuse()) {
+		case EAGER:
+			return new EagerReuseCegarLoop<>(name, abstraction, root, csToolkit, predicateFactory, mPrefs, errorLocs,
+					proofProducer, services, Collections.emptyList(), rawFloydHoareAutomataFromFile, mTransitionClazz,
+					stateFactoryForRefinement);
+		case LAZY_IN_ORDER:
+			return new LazyReuseCegarLoop<>(name, abstraction, root, csToolkit, predicateFactory, mPrefs, errorLocs,
+					proofProducer, services, Collections.emptyList(), rawFloydHoareAutomataFromFile, mTransitionClazz,
+					stateFactoryForRefinement);
+		case NONE:
+			return new NwaCegarLoop<>(name, abstraction, root, csToolkit, predicateFactory, mPrefs, errorLocs,
+					proofProducer, services, mTransitionClazz, stateFactoryForRefinement);
+		default:
+			throw new AssertionError("Unknown Setting: " + mPrefs.getFloydHoareAutomataReuse());
 		}
-		throw new UnsupportedOperationException("unsupported settings combination");
 	}
 
 	private void requireNoReuse(final String analysis) {
