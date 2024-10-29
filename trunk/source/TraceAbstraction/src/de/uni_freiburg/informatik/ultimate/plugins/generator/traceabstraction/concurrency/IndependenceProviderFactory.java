@@ -32,7 +32,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.CachedIndependenceRelation.IIndependenceCache;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.DefaultIndependenceCache;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -83,7 +82,7 @@ public class IndependenceProviderFactory<L extends IIcfgTransition<?>> {
 	private final ICopyActionFactory<L> mCopyFactory;
 
 	private ManagedScript mIndependenceScript;
-	private final IIndependenceCache<IPredicate, L> mIndependenceCache = new DefaultIndependenceCache<>();
+	private final DefaultIndependenceCache<IPredicate, L> mIndependenceCache = new DefaultIndependenceCache<>();
 
 	public IndependenceProviderFactory(final IUltimateServiceProvider services, final TAPreferences pref,
 			final ICopyActionFactory<L> copyFactory) {
@@ -95,6 +94,11 @@ public class IndependenceProviderFactory<L extends IIcfgTransition<?>> {
 
 	public List<IRefinableIndependenceProvider<L>> createProviders(final IIcfg<?> icfg,
 			final PredicateFactory predicateFactory) {
+		// We clear cached conditional independence, because the predicate factory changes and thus the previously
+		// cached conditions become meaningless (and potentially harmful, as we should never compare predicates from
+		// different factories).
+		mIndependenceCache.clearConditional();
+
 		final int numIndependenceRelations = mPref.getNumberOfIndependenceRelations();
 		final List<IRefinableIndependenceProvider<L>> independenceProviders = new ArrayList<>(numIndependenceRelations);
 
