@@ -42,6 +42,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -88,12 +90,33 @@ public class PredicateUtils {
 	public static Term computeClosedFormula(final Term formula, final Set<IProgramVar> boogieVars,
 			final ManagedScript mgdScript) {
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
+
+		final Term closedTerm;
+		if (((HistoryRecordingScript) mgdScript.getScript()).getMainScript() != null) {
+
+			final TermTransferrer tf =
+					new TermTransferrer(((HistoryRecordingScript) mgdScript.getScript()).getMainScript().getScript(),
+							mgdScript.getScript());
+			for (final IProgramVar bv : boogieVars) {
+				substitutionMapping.put(tf.transform(bv.getTermVariable()), tf.transform(bv.getDefaultConstant()));
+			}
+
+			final Term transferredFormula = tf.transform(formula);
+			closedTerm = Substitution.apply(mgdScript, substitutionMapping, transferredFormula);
+			assert closedTerm.getFreeVars().length == 0;
+			return closedTerm;
+
+		}
+
 		for (final IProgramVar bv : boogieVars) {
 			substitutionMapping.put(bv.getTermVariable(), bv.getDefaultConstant());
 		}
-		final Term closedTerm = Substitution.apply(mgdScript, substitutionMapping, formula);
+
+		closedTerm = Substitution.apply(mgdScript, substitutionMapping, formula);
+
 		assert closedTerm.getFreeVars().length == 0;
 		return closedTerm;
+
 	}
 
 	// public static LBool isInductiveHelper(Boogie2SMT boogie2smt,
@@ -217,12 +240,19 @@ public class PredicateUtils {
 			final int idxOutVar, final Set<IProgramVar> assignedVars, final Map<String, Term> indexedConstants,
 			final Script script) {
 		assert (assignedVars != null && assignedVars.isEmpty());
+
+		for (final Term con : indexedConstants.values()) {
+			assert con.getTheory().equals(script.getTheory());
+		}
+
 		final Set<TermVariable> notYetSubst = new HashSet<>();
 		notYetSubst.addAll(Arrays.asList(tf.getFormula().getFreeVars()));
 		Term fTrans = tf.getFormula();
+		assert fTrans.getTheory().equals(script.getTheory());
 		final Map<TermVariable, IProgramVar> reverseMapping = new HashMap<>();
 		for (final IProgramVar inVar : tf.getInVars().keySet()) {
 			final TermVariable tv = tf.getInVars().get(inVar);
+			assert tv.getTheory().equals(script.getTheory());
 			reverseMapping.put(tv, inVar);
 			Term cIndex;
 			if (inVar.isOldvar()) {
@@ -230,13 +260,16 @@ public class PredicateUtils {
 			} else {
 				cIndex = getIndexedConstant(inVar, idxInVar, indexedConstants, script);
 			}
+			assert cIndex.getTheory().equals(script.getTheory());
 			final TermVariable[] vars = { tv };
 			final Term[] values = { cIndex };
+
 			fTrans = script.let(vars, values, fTrans);
 			notYetSubst.remove(tv);
 		}
 		for (final IProgramVar outVar : tf.getOutVars().keySet()) {
 			final TermVariable tv = tf.getOutVars().get(outVar);
+			assert tv.getTheory().equals(script.getTheory());
 			reverseMapping.put(tv, outVar);
 			if (tf.getInVars().get(outVar) != tv) {
 				assignedVars.add(outVar);
@@ -246,6 +279,7 @@ public class PredicateUtils {
 				} else {
 					cIndex = getIndexedConstant(outVar, idxOutVar, indexedConstants, script);
 				}
+				assert cIndex.getTheory().equals(script.getTheory());
 				final TermVariable[] vars = { tv };
 				final Term[] values = { cIndex };
 				fTrans = script.let(vars, values, fTrans);
@@ -260,6 +294,7 @@ public class PredicateUtils {
 			} else {
 				cIndex = reverseMapping.get(tv).getDefaultConstant();
 			}
+			assert cIndex.getTheory().equals(script.getTheory());
 			final TermVariable[] vars = { tv };
 			final Term[] values = { cIndex };
 			fTrans = script.let(vars, values, fTrans);
@@ -291,8 +326,15 @@ public class PredicateUtils {
 	public static LBool isInductiveHelper(final Script script, final IPredicate precond, final IPredicate postcond,
 			final UnmodifiableTransFormula tf, final Set<IProgramNonOldVar> modifiableGlobalsPred,
 			final Set<IProgramNonOldVar> modifiableGlobalsSucc) {
-		script.push(1);
 
+		if (((HistoryRecordingScript) script).getMainScript() != null) {
+			return transferredIsInductiveHelper(script, precond, postcond, tf, modifiableGlobalsPred,
+					modifiableGlobalsSucc);
+		}
+
+		// TODO make old
+
+		script.push(1);
 		final List<Term> conjuncts = new ArrayList<>();
 		{
 			// add oldvar equalities for precond and tf
@@ -316,12 +358,20 @@ public class PredicateUtils {
 		{
 			// add precond
 			final Term precondRenamed = precond.getClosedFormula();
+
 			assert precondRenamed != null;
 			conjuncts.add(precondRenamed);
 		}
 		{
 			// add tf
-			final Term tfRenamed = tf.getClosedFormula();
+			// tf comes from main script and needs to be on worker since we do a worker checksat here
+			Term tfRenamed = tf.getClosedFormula();
+			if (((HistoryRecordingScript) script).getMainScript() != null) {
+				final TermTransferrer termTransfer =
+						new TermTransferrer(((HistoryRecordingScript) script).getMainScript().getScript(), script);
+				tfRenamed = termTransfer.transform(tfRenamed);
+
+			}
 			assert tfRenamed != null;
 			conjuncts.add(tfRenamed);
 
@@ -341,13 +391,116 @@ public class PredicateUtils {
 			}
 		}
 		{
-			final Term postcondRenamed = rename(script, postcond, tf.getAssignedVars());
+			Term postcondRenamed = rename(script, postcond, tf.getAssignedVars());
+			if (((HistoryRecordingScript) script).getMainScript() != null) {
+				final TermTransferrer termTransfer =
+						new TermTransferrer(((HistoryRecordingScript) script).getMainScript().getScript(), script);
+				postcondRenamed = termTransfer.transform(postcondRenamed);
+
+			}
 			conjuncts.add(SmtUtils.not(script, postcondRenamed));
 		}
-		script.assertTerm(SmtUtils.and(script, conjuncts));
+
+		// some conjunct besides the tf.closedFormula comes from main script
+		List<Term> transferredConjuncts = new ArrayList<Term>();
+		if (((HistoryRecordingScript) script).getMainScript() != null) {
+			for (int i = 0; i < conjuncts.size(); i++) {
+				final TermTransferrer termTransfer =
+						new TermTransferrer(((HistoryRecordingScript) script).getMainScript().getScript(), script);
+				transferredConjuncts.add(termTransfer.transform(conjuncts.get(i)));
+			}
+		} else {
+			transferredConjuncts = conjuncts;
+		}
+		script.assertTerm(SmtUtils.and(script, transferredConjuncts));
 		final LBool result = script.checkSat();
 
 		script.pop(1);
+
+		return result;
+	}
+
+	public static LBool transferredIsInductiveHelper(final Script script, final IPredicate precond,
+			final IPredicate postcond, final UnmodifiableTransFormula tf,
+			final Set<IProgramNonOldVar> modifiableGlobalsPred, final Set<IProgramNonOldVar> modifiableGlobalsSucc) {
+		final TermTransferrer termTransfer =
+				new TermTransferrer(((HistoryRecordingScript) script).getMainScript().getScript(), script);
+
+		script.push(1);
+
+		final List<Term> conjuncts = new ArrayList<>();
+		{
+			// add oldvar equalities for precond and tf
+			final Set<IProgramNonOldVar> unprimedOldVarEqualities = new HashSet<>();
+			final Set<IProgramNonOldVar> primedOldVarEqualities = new HashSet<>();
+
+			findNonModifiablesGlobals(precond.getVars(), modifiableGlobalsPred, Collections.emptySet(),
+					unprimedOldVarEqualities, primedOldVarEqualities);
+			findNonModifiablesGlobals(tf.getInVars().keySet(), modifiableGlobalsPred, Collections.emptySet(),
+					unprimedOldVarEqualities, primedOldVarEqualities);
+			findNonModifiablesGlobals(tf.getOutVars().keySet(), modifiableGlobalsSucc, tf.getAssignedVars(),
+					unprimedOldVarEqualities, primedOldVarEqualities);
+
+			for (final IProgramNonOldVar bv : unprimedOldVarEqualities) {
+				conjuncts.add(ModifiableGlobalsTable.transferredConstructConstantOldVarEquality(termTransfer, bv, false,
+						script));
+			}
+			for (final IProgramNonOldVar bv : primedOldVarEqualities) {
+				conjuncts.add(ModifiableGlobalsTable.transferredConstructConstantOldVarEquality(termTransfer, bv, true,
+						script));
+			}
+		}
+		{
+			// add precond
+			final Term precondRenamed = termTransfer.transform(precond.getClosedFormula());
+
+			assert precondRenamed != null;
+			conjuncts.add(precondRenamed);
+		}
+		{
+
+			final Term tfRenamed = termTransfer.transform(tf.getClosedFormula());
+
+			assert tfRenamed != null;
+			conjuncts.add(tfRenamed);
+
+		}
+		{
+			// add oldvar equalities for postcond
+			final Set<IProgramNonOldVar> unprimedOldVarEqualities = new HashSet<>();
+			final Set<IProgramNonOldVar> primedOldVarEqualities = new HashSet<>();
+
+			findNonModifiablesGlobals(postcond.getVars(), modifiableGlobalsSucc, tf.getAssignedVars(),
+					unprimedOldVarEqualities, primedOldVarEqualities);
+			for (final IProgramNonOldVar bv : unprimedOldVarEqualities) {
+				conjuncts.add(ModifiableGlobalsTable.transferredConstructConstantOldVarEquality(termTransfer, bv, false,
+						script));
+			}
+			for (final IProgramNonOldVar bv : primedOldVarEqualities) {
+				conjuncts.add(ModifiableGlobalsTable.transferredConstructConstantOldVarEquality(termTransfer, bv, true,
+						script));
+			}
+		}
+		{
+			final Term postcondRenamed = termTransfer.transform(rename(script, postcond, tf.getAssignedVars()));
+
+			conjuncts.add(SmtUtils.not(script, postcondRenamed));
+		}
+
+		// some conjunct besides the tf.closedFormula comes from main script
+		List<Term> transferredConjuncts = new ArrayList<Term>();
+		if (((HistoryRecordingScript) script).getMainScript() != null) {
+			for (int i = 0; i < conjuncts.size(); i++) {
+				transferredConjuncts.add(termTransfer.transform(conjuncts.get(i)));
+			}
+		} else {
+			transferredConjuncts = conjuncts;
+		}
+		script.assertTerm(SmtUtils.and(script, transferredConjuncts));
+		final LBool result = script.checkSat();
+
+		script.pop(1);
+
 		return result;
 	}
 
@@ -383,6 +536,26 @@ public class PredicateUtils {
 
 	private static Term rename(final Script script, final IPredicate postcond, final Set<IProgramVar> assignedVars) {
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
+
+		if (((HistoryRecordingScript) script).getMainScript() != null) {
+			final TermTransferrer tf =
+					new TermTransferrer(((HistoryRecordingScript) script).getMainScript().getScript(), script);
+
+			for (final IProgramVar bv : postcond.getVars()) {
+				Term constant;
+				if (assignedVars.contains(bv)) {
+					constant = tf.transform(bv.getPrimedConstant());
+				} else {
+					constant = tf.transform(bv.getDefaultConstant());
+				}
+				substitutionMapping.put(tf.transform(bv.getTermVariable()), constant);
+			}
+			final Term result =
+					(PureSubstitution.apply(script, substitutionMapping, tf.transform(postcond.getFormula())));
+			assert result.getFreeVars().length == 0 : "there are free vars";
+			return result;
+		}
+
 		for (final IProgramVar bv : postcond.getVars()) {
 			Term constant;
 			if (assignedVars.contains(bv)) {

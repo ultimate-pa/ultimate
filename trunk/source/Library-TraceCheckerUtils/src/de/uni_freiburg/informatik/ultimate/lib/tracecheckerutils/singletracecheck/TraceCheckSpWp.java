@@ -288,8 +288,8 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 				if (mLiveVariables) {
 					postprocs.add(new LiveVariablesPostprocessorForward(liveVariables));
 				}
-				postprocs.add(new IterativePredicateTransformer.QuantifierEliminationPostprocessor(mServices, mCfgManagedScript,
-						mPredicateFactory, mSimplificationTechnique));
+				postprocs.add(new IterativePredicateTransformer.QuantifierEliminationPostprocessor(mServices,
+						mCfgManagedScript, mPredicateFactory, mSimplificationTechnique));
 				postprocs.add(new UnifyPostprocessor(mPredicateUnifier));
 				final IterativePredicateTransformer<L> spt = new IterativePredicateTransformer<>(mPredicateFactory,
 						mCfgManagedScript, mCsToolkit.getModifiableGlobalsTable(), mServices, mTrace, mPrecondition,
@@ -330,8 +330,8 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 				if (mLiveVariables) {
 					postprocs.add(new LiveVariablesPostprocessorBackward(liveVariables));
 				}
-				postprocs.add(new IterativePredicateTransformer.QuantifierEliminationPostprocessor(mServices, mCfgManagedScript,
-						mPredicateFactory, mSimplificationTechnique));
+				postprocs.add(new IterativePredicateTransformer.QuantifierEliminationPostprocessor(mServices,
+						mCfgManagedScript, mPredicateFactory, mSimplificationTechnique));
 				postprocs.add(new UnifyPostprocessor(mPredicateUnifier));
 				final IterativePredicateTransformer<L> spt = new IterativePredicateTransformer<>(mPredicateFactory,
 						mCfgManagedScript, mCsToolkit.getModifiableGlobalsTable(), mServices, mTrace, mPrecondition,
@@ -420,8 +420,11 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 					codeBlocksInUnsatCore, mCsToolkit.getOldVarsAssignmentCache(), localVarAssignmentAtCallInUnsatCore,
 					oldVarAssignmentAtCallInUnsatCore, mCfgManagedScript);
 		} else if (mUnsatCores == UnsatCores.CONJUNCT_LEVEL) {
-			rtf = new RelevantTransFormulas<>(mNestedFormulas, mPrecondition, mPostcondition, mPendingContexts, unsatCore,
-					mCsToolkit.getOldVarsAssignmentCache(), mCfgManagedScript, mAAA, mAnnotateAndAsserterConjuncts);
+
+			rtf = new RelevantTransFormulas<>(mNestedFormulas, mPrecondition, mPostcondition, mPendingContexts,
+					unsatCore, mCsToolkit.getOldVarsAssignmentCache(), mCfgManagedScript, mAAA,
+					mAnnotateAndAsserterConjuncts);
+
 		} else {
 			throw new AssertionError("unknown case:" + mUnsatCores);
 		}
@@ -475,6 +478,7 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 	 * @return true iff result of infeasiblity check is unsat or unknown
 	 */
 	private boolean stillInfeasible(final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> rv) {
+
 		final TraceCheck<L> tc = new TraceCheck<>(rv.getPrecondition(), rv.getPostcondition(), new TreeMap<>(),
 				rv.getTrace(), rv, mServices, mCsToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY, false, true, true);
 		final boolean result = tc.isCorrect() != LBool.SAT;
@@ -576,6 +580,11 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 
 		@Override
 		public IPredicate postprocess(final IPredicate pred, final int i) {
+			// Here we had a tf, maybe
+			// final ManagedScript script = mPredicateUnifier.getPredicateFactory().mMgdScript;
+			// final TermTransferrer tf = new TermTransferrer(
+			// ((HistoryRecordingScript) script.getScript()).getMainScript().getScript(), script.getScript());
+			// final IPredicate unified = mPredicateUnifier.getOrConstructPredicate(tf.transform(pred.getFormula()));
 			final IPredicate unified = mPredicateUnifier.getOrConstructPredicate(pred.getFormula());
 			return unified;
 		}
@@ -617,8 +626,14 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 	@Override
 	protected AnnotateAndAssertCodeBlocks<L> getAnnotateAndAsserterCodeBlocks(final NestedFormulas<L, Term, Term> ssa) {
 		if (mAnnotateAndAsserterConjuncts == null) {
-			mAnnotateAndAsserterConjuncts = new AnnotateAndAssertConjunctsOfCodeBlocks<>(mTcSmtManager, mTraceCheckLock,
-					ssa, mNestedFormulas, mLogger, mCfgManagedScript);
+			if (mCfgManagedScript.equals(mTcSmtManager)) {
+				mAnnotateAndAsserterConjuncts = new AnnotateAndAssertToWorker<>(mTcSmtManager, mTraceCheckLock, ssa,
+						mNestedFormulas, mLogger, mCfgManagedScript);
+			} else {
+				mAnnotateAndAsserterConjuncts = new AnnotateAndAssertConjunctsOfCodeBlocks<>(mTcSmtManager,
+						mTraceCheckLock, ssa, mNestedFormulas, mLogger, mCfgManagedScript);
+			}
+
 		}
 		return mAnnotateAndAsserterConjuncts;
 	}

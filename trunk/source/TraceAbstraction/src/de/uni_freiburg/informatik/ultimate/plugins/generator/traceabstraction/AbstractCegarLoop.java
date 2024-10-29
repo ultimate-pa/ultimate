@@ -420,7 +420,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 		return false;
 	}
 
-	private void iterate() throws AutomataLibraryException {
+	protected void iterate() throws AutomataLibraryException {
 		mTimeBudget = initializeTimeBudget();
 		for (mIteration = 1; mIteration <= mPref.maxIterations(); mIteration++) {
 			abortIfTimeout();
@@ -531,7 +531,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 		}
 	}
 
-	private IcfgLocation getErrorLocFromCounterexample() {
+	protected IcfgLocation getErrorLocFromCounterexample() {
 		return mCounterexample.getSymbol(mCounterexample.getLength() - 2).getTarget();
 	}
 
@@ -631,7 +631,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 		return rtr;
 	}
 
-	private IUltimateServiceProvider createIterationTimer(final IcfgLocation currentErrorLoc) {
+	protected IUltimateServiceProvider createIterationTimer(final IcfgLocation currentErrorLoc) {
 		if (!mPref.hasErrorLocTimeLimit()) {
 			// do not limit single counterexample if there is no limit on assert
 			return mServices;
@@ -825,7 +825,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 
 	}
 
-	private final class CegarLoopResultBuilder {
+	protected final class CegarLoopResultBuilder {
 		// TODO result for test generation
 		private final Map<IcfgLocation, CegarLoopLocalResult<L>> mResults = new LinkedHashMap<>();
 

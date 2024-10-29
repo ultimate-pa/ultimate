@@ -129,12 +129,12 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 	protected final Collection<INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> mStoredRawInterpolantAutomata;
 
 	private final SearchStrategy mSearchStrategy;
-	private final ErrorGeneralizationEngine<L> mErrorGeneralizationEngine;
+	protected final ErrorGeneralizationEngine<L> mErrorGeneralizationEngine;
 
 	private final boolean mUseHeuristicEmptinessCheck;
 	private final ScoringMethod mScoringMethod;
 	private final AStarHeuristic mAStarHeuristic;
-	private final Integer mAStarRandomHeuristicSeed;
+	protected final Integer mAStarRandomHeuristicSeed;
 
 	// TestGeneration
 	private final ArrayList<Integer> mTestGoalTodoStack = new ArrayList<>();
@@ -369,8 +369,11 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 						.containsKey(TestGoalAnnotation.class.getName());
 				final TestGoalAnnotation pLocAnnoTG = (TestGoalAnnotation) testGoalISL.getProgramPoint().getPayload()
 						.getAnnotations().get(TestGoalAnnotation.class.getName());
-
+				System.out.println(pLocAnnoTG.mId);
 				if (!pLocAnnoVA.mIsActiveTestGoal || mTestGoalWorkingSet.contains(pLocAnnoTG.mId)) {
+					System.out.println("HIER HALLO: " + pLocAnnoTG.mId);
+					System.out.println(mTestGoalWorkingSet.contains(pLocAnnoTG.mId));
+					System.out.println("HIER HALasLO: " + mTestGoalWorkingSet);
 					mErrorGeneralizationEngine.addCoveredTestGoalToErrorAutomaton(testGoal,
 							mAbstraction.internalPredecessors(testGoal));
 				}
@@ -421,7 +424,6 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 			subtrahendBeforeEnhancement = mInterpolAutomaton;
 			enhanceMode = mPref.interpolantAutomatonEnhancement();
 			subtrahend = enhanceInterpolantAutomaton(enhanceMode, predicateUnifier, htc, subtrahendBeforeEnhancement);
-
 		}
 
 		// TODO: HTC and predicateunifier statistics are saved in the following

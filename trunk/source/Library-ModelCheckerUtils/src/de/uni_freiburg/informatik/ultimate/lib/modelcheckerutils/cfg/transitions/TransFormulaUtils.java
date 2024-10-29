@@ -60,6 +60,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermDomainOperationProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.DagSizePrinter;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
@@ -944,8 +946,8 @@ public final class TransFormulaUtils {
 		if (!tf.getBranchEncoders().isEmpty()) {
 			throw new AssertionError("I think this does not make sense with branch enconders");
 		}
-		final Term withoutAuxVars = quantifyAndTryToEliminateAuxVars(services, mgdScript, tf.getFormula(),
-				tf.getAuxVars());
+		final Term withoutAuxVars =
+				quantifyAndTryToEliminateAuxVars(services, mgdScript, tf.getFormula(), tf.getAuxVars());
 		final Term formula = SmtUtils.not(mgdScript.getScript(), withoutAuxVars);
 
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(tf.getInVars(), tf.getOutVars(),
@@ -957,9 +959,8 @@ public final class TransFormulaUtils {
 	}
 
 	/**
-	 * Given a list of {@link UnmodifiableTransFormula}s tf1,..., tfn that represent
-	 * relations R1,...,Rn, construct a {@link UnmodifiableTransFormula} that
-	 * represents the intersection R1∩...∩Rn.
+	 * Given a list of {@link UnmodifiableTransFormula}s tf1,..., tfn that represent relations R1,...,Rn, construct a
+	 * {@link UnmodifiableTransFormula} that represents the intersection R1∩...∩Rn.
 	 */
 	public static UnmodifiableTransFormula intersect(final ManagedScript mgdScript,
 			final UnmodifiableTransFormula... tfs) {
@@ -978,16 +979,15 @@ public final class TransFormulaUtils {
 	}
 
 	/**
-	 * Given term and auxvars of a {@link Transformula}. Quantify all auxvars
-	 * existentially and try to eliminate quantifiers.
+	 * Given term and auxvars of a {@link Transformula}. Quantify all auxvars existentially and try to eliminate
+	 * quantifiers.
 	 *
-	 * TODO 20220720 Matthias: Fix POLY_PAC as simplification? Maybe this and the
-	 * elimination procedure should become a parameter of this method.
+	 * TODO 20220720 Matthias: Fix POLY_PAC as simplification? Maybe this and the elimination procedure should become a
+	 * parameter of this method.
 	 */
 	private static Term quantifyAndTryToEliminateAuxVars(final IUltimateServiceProvider services,
 			final ManagedScript maScript, final Term term, final Set<TermVariable> auxVars) {
-		final Term quantifiedTerm =
-				SmtUtils.quantifier(maScript.getScript(), QuantifiedFormula.EXISTS, auxVars, term);
+		final Term quantifiedTerm = SmtUtils.quantifier(maScript.getScript(), QuantifiedFormula.EXISTS, auxVars, term);
 		final Term resultTerm = PartialQuantifierElimination.eliminate(services, maScript, quantifiedTerm,
 				SimplificationTechnique.POLY_PAC);
 		return resultTerm;
@@ -1268,6 +1268,15 @@ public final class TransFormulaUtils {
 		return sb.toString();
 	}
 
+	private static Set<TermVariable> transferSet(final TermTransferrer termTF, final Set<TermVariable> inputSet) {
+		final Set<TermVariable> outSet = new HashSet<>();
+		for (final TermVariable var : inputSet) {
+			// maybe we could use the TV mapping from historyrecordingscript
+			outSet.add((TermVariable) termTF.transform(var));
+		}
+		return outSet;
+	}
+
 	/**
 	 * Replace each term of the form (store a k v) by the conjunction (store a k aux) /\ (= aux v) for a fresh auxiliary
 	 * variable aux. Motivation: The term (store a k v) carries two information: (1) This term and the array a are
@@ -1277,14 +1286,33 @@ public final class TransFormulaUtils {
 	 */
 	public static UnmodifiableTransFormula decoupleArrayValues(final UnmodifiableTransFormula tf,
 			final ManagedScript mgdScript) {
-		final Map<TermVariable, TermVariable> oldAuxVar2newAuxVar = mgdScript.constructFreshCopies(tf.getAuxVars());
-		final Term renamed = Substitution.apply(mgdScript, oldAuxVar2newAuxVar, tf.getFormula());
-		final Triple<Term, List<TermVariable>, List<Term>> decoupled = decoupleArrayValues(renamed, mgdScript);
+
+		Set<TermVariable> auxVars = tf.getAuxVars();
+		Term formula = tf.getFormula();
+
+		if (((HistoryRecordingScript) mgdScript.getScript()).getMainScript() != null) {
+
+			final TermTransferrer termTF =
+					new TermTransferrer(((HistoryRecordingScript) mgdScript.getScript()).getMainScript().getScript(),
+							(mgdScript.getScript()));
+
+			formula = termTF.transform(tf.getFormula());
+
+			auxVars = transferSet(termTF, auxVars);
+		}
+
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(tf.getInVars(), tf.getOutVars(), false,
 				tf.getNonTheoryConsts(), false, tf.getBranchEncoders(), false);
+
+		final Map<TermVariable, TermVariable> oldAuxVar2newAuxVar = mgdScript.constructFreshCopies(auxVars);
+		final Term renamed = Substitution.apply(mgdScript, oldAuxVar2newAuxVar, formula);
+		final Triple<Term, List<TermVariable>, List<Term>> decoupled = decoupleArrayValues(renamed, mgdScript);
+
 		final ArrayList<Term> resultConjuncts = new ArrayList<>(decoupled.getThird());
 		resultConjuncts.add(decoupled.getFirst());
+
 		final Term resultTerm = SmtUtils.and(mgdScript.getScript(), resultConjuncts);
+
 		tfb.setFormula(resultTerm);
 		for (final TermVariable auxVar : oldAuxVar2newAuxVar.values()) {
 			tfb.addAuxVar(auxVar);

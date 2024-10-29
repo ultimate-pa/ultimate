@@ -26,19 +26,31 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.ISmtDeclarable.IllegalSmtDeclarableUsageException;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.logic.Annotation;
+import de.uni_freiburg.informatik.ultimate.logic.Assignments;
+import de.uni_freiburg.informatik.ultimate.logic.DataType;
+import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
+import de.uni_freiburg.informatik.ultimate.logic.Logics;
+import de.uni_freiburg.informatik.ultimate.logic.Model;
+import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.logic.WrapperScript;
 
 /**
@@ -53,58 +65,101 @@ import de.uni_freiburg.informatik.ultimate.logic.WrapperScript;
  */
 public class HistoryRecordingScript extends WrapperScript {
 
-	private final Deque<ISmtDeclarable> mHistory;
+	public final Deque<ISmtDeclarable> mHistory;
 	private final Map<String, ISmtDeclarable> mSymbolTable;
 	private int mCurrentStackLevel;
+	public HistoryRecordingScript mCurrentlyUsedScript = this;
+	private ManagedScript mMainScript = null;
+	public boolean mAfterSynchronisation = false;
+
+	public HashMap<TermVariable, TermVariable> workerTermVariableToMainTermVariable;
+
+	private TermTransferrer mTf = null;
 
 	public HistoryRecordingScript(final Script script) {
 		super(script);
 		mHistory = new ArrayDeque<>();
 		mSymbolTable = new Hashtable<>();
+		workerTermVariableToMainTermVariable = new HashMap<>();
 		mCurrentStackLevel = 0;
+	}
+
+	public void setMainScript(final ManagedScript mainScript) {
+		mMainScript = mainScript;
+		mTf = new TermTransferrer(mMainScript.getScript(), this);
+	}
+
+	public ManagedScript getMainScript() {
+		return mMainScript;
+	}
+
+	/*
+	 * maps for the termvariables for boogievars
+	 */
+	public void addTermVariableToMap(final TermVariable workerTv, final TermVariable mainTv) {
+		workerTermVariableToMainTermVariable.put(workerTv, mainTv);
+	}
+
+	public TermVariable getMainTv(final TermVariable workerTv) {
+		return workerTermVariableToMainTermVariable.get(workerTv);
+	}
+
+	public void synchronizeWorkerAndMain() {
+		mAfterSynchronisation = true;
+		transferHistoryFromRecord(mMainScript.getScript());
+		mCurrentlyUsedScript = (HistoryRecordingScript) mMainScript.getScript();
 	}
 
 	@Override
 	public void defineFun(final String fun, final TermVariable[] params, final Sort resultSort, final Term definition)
 			throws SMTLIBException {
-		super.defineFun(fun, params, resultSort, definition);
+		mCurrentlyUsedScript.mScript.defineFun(fun, params, resultSort, definition);
 		insert(DeclarableFunctionSymbol.createFromScriptDefineFun(fun, params, resultSort, definition));
 	}
 
 	@Override
 	public void resetAssertions() {
-		super.resetAssertions();
+		mCurrentlyUsedScript.mScript.resetAssertions();
+
 		removeStackLevelsFromHistory(mCurrentStackLevel);
 	}
 
 	@Override
 	public void reset() {
-		super.reset();
+		mCurrentlyUsedScript.mScript.reset();
+
 		mHistory.clear();
 		mSymbolTable.clear();
 	}
 
 	@Override
 	public void defineSort(final String sort, final Sort[] sortParams, final Sort definition) {
-		super.defineSort(sort, sortParams, definition);
+		mCurrentlyUsedScript.mScript.defineSort(sort, sortParams, definition);
+
 		insert(DeclarableSortSymbol.createFromScriptDefineSort(sort, sortParams, definition));
 	}
 
 	@Override
 	public void declareFun(final String fun, final Sort[] paramSorts, final Sort resultSort) {
-		super.declareFun(fun, paramSorts, resultSort);
+		if (mCurrentlyUsedScript.mScript.getTheory().mFunFactory.get(fun) != null
+				|| mCurrentlyUsedScript.mScript.getTheory().mDeclaredFuns.get(fun) != null) {
+			return;
+		}
+		mCurrentlyUsedScript.mScript.declareFun(fun, paramSorts, resultSort);
+
 		insert(DeclarableFunctionSymbol.createFromScriptDeclareFun(fun, paramSorts, resultSort));
 	}
 
 	@Override
 	public void declareSort(final String sort, final int arity) {
-		super.declareSort(sort, arity);
+		mCurrentlyUsedScript.mScript.declareSort(sort, arity);
 		insert(DeclarableSortSymbol.createFromScriptDeclareSort(sort, arity));
 	}
 
 	@Override
 	public void push(final int levels) {
-		super.push(levels);
+		mCurrentlyUsedScript.mScript.push(levels);
+
 		assert levels > 0;
 		for (int i = 0; i < levels; ++i) {
 			mHistory.push(StackMarker.INSTANCE);
@@ -114,7 +169,8 @@ public class HistoryRecordingScript extends WrapperScript {
 
 	@Override
 	public void pop(final int levels) {
-		super.pop(levels);
+		mCurrentlyUsedScript.mScript.pop(levels);
+
 		removeStackLevelsFromHistory(levels);
 	}
 
@@ -169,6 +225,7 @@ public class HistoryRecordingScript extends WrapperScript {
 				continue;
 			}
 			elem.defineOrDeclare(script);
+
 		}
 	}
 
@@ -226,6 +283,287 @@ public class HistoryRecordingScript extends WrapperScript {
 	@Override
 	public String toString() {
 		return getClass().getSimpleName() + ": " + mHistory;
+	}
+
+	/**
+	 * Find the first {@link Script} instance that has the given type or is a subtype of the given type in the stack of
+	 * {@link Script} instances represented by this {@link WrapperScript}.
+	 *
+	 * @param <T>
+	 *            The type of {@link Script} to search for.
+	 * @param clazz
+	 *            The {@link Class} instance representing the type.
+	 * @return A {@link Script} instance if one can be found or null.
+	 */
+	@Override
+	@SuppressWarnings("unchecked")
+	public <T extends Script> T findBacking(final Class<T> clazz) {
+		final Iterator<Script> iter = getScriptIterator();
+		while (iter.hasNext()) {
+			final Script current = iter.next();
+			if (clazz.isAssignableFrom(current.getClass())) {
+				return (T) current;
+			}
+		}
+		return null;
+	}
+
+	@Override
+	public void setLogic(final String logic) throws UnsupportedOperationException, SMTLIBException {
+		mCurrentlyUsedScript.mScript.setLogic(logic);
+	}
+
+	@Override
+	public void setLogic(final Logics logic) throws UnsupportedOperationException, SMTLIBException {
+		mCurrentlyUsedScript.mScript.setLogic(logic);
+	}
+
+	@Override
+	public void setOption(final String opt, final Object value) throws UnsupportedOperationException, SMTLIBException {
+		mCurrentlyUsedScript.mScript.setOption(opt, value);
+	}
+
+	@Override
+	public void setInfo(final String info, final Object value) {
+		mCurrentlyUsedScript.mScript.setInfo(info, value);
+	}
+
+	@Override
+	public void declareDatatype(final DataType datatype, final DataType.Constructor[] constrs) throws SMTLIBException {
+		mCurrentlyUsedScript.mScript.declareDatatype(datatype, constrs);
+	}
+
+	@Override
+	public void declareDatatypes(final DataType[] datatypes, final DataType.Constructor[][] constrs,
+			final Sort[][] sortParams) throws SMTLIBException {
+		mCurrentlyUsedScript.mScript.declareDatatypes(datatypes, constrs, sortParams);
+	}
+
+	@Override
+	public LBool assertTerm(final Term term) throws SMTLIBException {
+		return mCurrentlyUsedScript.mScript.assertTerm(term);
+	}
+
+	@Override
+	public LBool checkSat() throws SMTLIBException {
+		return mCurrentlyUsedScript.mScript.checkSat();
+	}
+
+	@Override
+	public LBool checkSatAssuming(final Term... assumptions) throws SMTLIBException {
+		return mCurrentlyUsedScript.mScript.checkSatAssuming(assumptions);
+	}
+
+	@Override
+	public Term[] getAssertions() throws SMTLIBException {
+		return mCurrentlyUsedScript.mScript.getAssertions();
+	}
+
+	@Override
+	public Term getProof() throws SMTLIBException, UnsupportedOperationException {
+		return mCurrentlyUsedScript.mScript.getProof();
+	}
+
+	@Override
+	public Term[] getUnsatCore() throws SMTLIBException, UnsupportedOperationException {
+		return mCurrentlyUsedScript.mScript.getUnsatCore();
+	}
+
+	@Override
+	public Term[] getUnsatAssumptions() throws SMTLIBException, UnsupportedOperationException {
+		return mCurrentlyUsedScript.mScript.getUnsatAssumptions();
+	}
+
+	@Override
+	public Map<Term, Term> getValue(final Term[] terms) throws SMTLIBException, UnsupportedOperationException {
+		return mCurrentlyUsedScript.mScript.getValue(terms);
+	}
+
+	@Override
+	public Assignments getAssignment() throws SMTLIBException, UnsupportedOperationException {
+
+		return mCurrentlyUsedScript.mScript.getAssignment();
+	}
+
+	@Override
+	public Object getOption(final String opt) throws UnsupportedOperationException {
+		return mCurrentlyUsedScript.mScript.getOption(opt);
+	}
+
+	@Override
+	public Object getInfo(final String info) throws UnsupportedOperationException, SMTLIBException {
+		return mCurrentlyUsedScript.mScript.getInfo(info);
+	}
+
+	@Override
+	public void exit() {
+		mCurrentlyUsedScript.mScript.exit();
+	}
+
+	public void exitWorkerOnly() {
+		mScript.exit();
+	}
+
+	@Override
+	public Theory getTheory() {
+		return mCurrentlyUsedScript.mScript.getTheory();
+	}
+
+	@Override
+	public Sort sort(final String sortname, final Sort... params) throws SMTLIBException {
+		return mCurrentlyUsedScript.mScript.sort(sortname, params);
+	}
+
+	@Override
+	public Sort sort(final String sortname, final String[] indices, final Sort... params) throws SMTLIBException {
+		return mCurrentlyUsedScript.mScript.sort(sortname, indices, params);
+	}
+
+	@Override
+	public Sort[] sortVariables(final String... names) throws SMTLIBException {
+		return mCurrentlyUsedScript.mScript.sortVariables(names);
+	}
+
+	@Override
+	public DataType.Constructor constructor(final String name, final String[] selectors, final Sort[] argumentSorts)
+			throws SMTLIBException {
+		return mCurrentlyUsedScript.mScript.constructor(name, selectors, argumentSorts);
+	}
+
+	@Override
+	public DataType datatype(final String typename, final int numParams) throws SMTLIBException {
+		return mCurrentlyUsedScript.mScript.datatype(typename, numParams);
+	}
+
+	@Override
+	public Term term(final String funcname, final Term... params) throws SMTLIBException {
+		if (!mScript.equals(mCurrentlyUsedScript.mScript)) {
+			final TermTransferrer tf = new TermTransferrer(this, mCurrentlyUsedScript);
+			final Term[] transferredParams = new Term[params.length];
+			for (int i = 0; i < params.length; i++) {
+				transferredParams[i] = tf.transform(params[i]);
+			}
+			return mCurrentlyUsedScript.mScript.term(funcname, transferredParams);
+		}
+
+		return mCurrentlyUsedScript.mScript.term(funcname, params);
+
+	}
+
+	@Override
+	public Term term(final String funcname, final String[] indices, final Sort returnSort, final Term... params)
+			throws SMTLIBException {
+		return mCurrentlyUsedScript.mScript.term(funcname, indices, returnSort, params);
+	}
+
+	@Override
+	public TermVariable variable(final String varname, final Sort sort) throws SMTLIBException {
+		return mCurrentlyUsedScript.mScript.variable(varname, sort);
+	}
+
+	@Override
+	public Term quantifier(final int quantor, final TermVariable[] vars, final Term body, final Term[]... patterns)
+			throws SMTLIBException {
+		return mCurrentlyUsedScript.mScript.quantifier(quantor, vars, body, patterns);
+	}
+
+	@Override
+	public Term let(final TermVariable[] vars, final Term[] values, final Term body) throws SMTLIBException {
+		return mCurrentlyUsedScript.mScript.let(vars, values, body);
+	}
+
+	@Override
+	public Term match(final Term dataArg, final TermVariable[][] vars, final Term[] cases,
+			final DataType.Constructor[] constructors) throws SMTLIBException {
+		return mCurrentlyUsedScript.mScript.match(dataArg, vars, cases, constructors);
+	}
+
+	@Override
+	public Term annotate(final Term t, final Annotation... annotations) throws SMTLIBException {
+		return mCurrentlyUsedScript.mScript.annotate(t, annotations);
+	}
+
+	@Override
+	public Term numeral(final String num) throws SMTLIBException {
+		return mCurrentlyUsedScript.mScript.numeral(num);
+	}
+
+	@Override
+	public Term numeral(final BigInteger num) throws SMTLIBException {
+		return mCurrentlyUsedScript.mScript.numeral(num);
+	}
+
+	@Override
+	public Term decimal(final String decimal) throws SMTLIBException {
+		return mCurrentlyUsedScript.mScript.decimal(decimal);
+	}
+
+	@Override
+	public Term decimal(final BigDecimal decimal) throws SMTLIBException {
+		return mCurrentlyUsedScript.mScript.decimal(decimal);
+	}
+
+	@Override
+	public Term hexadecimal(final String hex) throws SMTLIBException {
+		return mCurrentlyUsedScript.mScript.hexadecimal(hex);
+	}
+
+	@Override
+	public Term binary(final String bin) throws SMTLIBException {
+		return mCurrentlyUsedScript.mScript.binary(bin);
+	}
+
+	@Override
+	public Term string(final QuotedObject str) throws SMTLIBException {
+		return mCurrentlyUsedScript.mScript.string(str);
+	}
+
+	@Override
+	public Term simplify(final Term term) throws SMTLIBException {
+		return mCurrentlyUsedScript.mScript.simplify(term);
+	}
+
+	@Override
+	public Term[] getInterpolants(final Term[] partition) throws SMTLIBException, UnsupportedOperationException {
+		return mCurrentlyUsedScript.mScript.getInterpolants(partition);
+	}
+
+	@Override
+	public Term[] getInterpolants(final Term[] partition, final int[] startOfSubtree)
+			throws SMTLIBException, UnsupportedOperationException {
+		return mCurrentlyUsedScript.mScript.getInterpolants(partition, startOfSubtree);
+	}
+
+	@Override
+	public Model getModel() throws SMTLIBException, UnsupportedOperationException {
+		return mCurrentlyUsedScript.mScript.getModel();
+	}
+
+	@Override
+	public Iterable<Term[]> checkAllsat(final Term[] predicates) throws SMTLIBException, UnsupportedOperationException {
+		return mCurrentlyUsedScript.mScript.checkAllsat(predicates);
+	}
+
+	@Override
+	public Term[] findImpliedEquality(final Term[] x, final Term[] y) {
+		return mCurrentlyUsedScript.mScript.findImpliedEquality(x, y);
+	}
+
+	@Override
+	public QuotedObject echo(final QuotedObject msg) {
+		return mCurrentlyUsedScript.mScript.echo(msg);
+	}
+
+	@Override
+	public FunctionSymbol getFunctionSymbol(final String constructor) {
+		return mCurrentlyUsedScript.mScript.getFunctionSymbol(constructor);
+	}
+
+	@Override
+	public Term[] getInterpolants(final Term[] partition, final int[] startOfSubtree, final Term proofTree)
+			throws SMTLIBException, UnsupportedOperationException {
+		return mCurrentlyUsedScript.mScript.getInterpolants(partition, startOfSubtree, proofTree);
+
 	}
 
 	private static final class StackMarker implements ISmtDeclarable {

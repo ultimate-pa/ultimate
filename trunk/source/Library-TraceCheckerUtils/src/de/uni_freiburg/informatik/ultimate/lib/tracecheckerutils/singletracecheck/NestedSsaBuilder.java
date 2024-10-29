@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
@@ -96,7 +97,7 @@ public class NestedSsaBuilder<L extends IAction> {
 	private final ILogger mLogger;
 
 	private final Script mTcScript;
-
+	private final Script mCfgWorkerScript;
 	/**
 	 * Map global BoogieVar bv to the constant bv_j that represents bv at the moment.
 	 */
@@ -151,6 +152,7 @@ public class NestedSsaBuilder<L extends IAction> {
 			final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> nestedTransFormulas, final ILogger logger) {
 		mLogger = logger;
 		mTcScript = managedTcScript.getScript();
+		mCfgWorkerScript = cfgSmtToolkit.getManagedScript().getScript();
 		mFormulas = nestedTransFormulas;
 		mModGlobVarManager = cfgSmtToolkit.getModifiableGlobalsTable();
 		mSsa = new ModifiableNestedFormulas<>(trace, new TreeMap<Integer, Term>());
@@ -464,12 +466,24 @@ public class NestedSsaBuilder<L extends IAction> {
 		if (bv instanceof IProgramConst) {
 			constant = transferToCurrentScriptIfNecessary(bv.getDefaultConstant());
 		} else {
-			final Sort sort = transferToCurrentScriptIfNecessary(bv.getTermVariable()).getSort();
+			// TODO ugly solution, important, that the sort we obtain here is a tc script sort. thats not guaranteed by
+			// term transferrers
+			final Sort sort = transferFromMainToTc(transferToCurrentScriptIfNecessary(bv.getTermVariable())).getSort();
 			constant = PredicateUtils.getIndexedConstant(bv.getGloballyUniqueId(), sort, index, mIndexedConstants,
 					mTcScript);
 		}
 		index2constant.put(index, constant);
 		return constant;
+	}
+
+	private Term transferFromMainToTc(final Term term) {
+		Term result = term;
+		if ((((HistoryRecordingScript) mTcScript).getMainScript() != null)) {
+			final TermTransferrer tf =
+					new TermTransferrer(((HistoryRecordingScript) mTcScript).getMainScript().getScript(), mTcScript);
+			result = tf.transform(term);
+		}
+		return result;
 	}
 
 	/**
@@ -540,6 +554,16 @@ public class NestedSsaBuilder<L extends IAction> {
 			mFormula = transferToCurrentScriptIfNecessary(pred.getFormula());
 		}
 
+		private Term transferFromMainToTc(final Term term) {
+			Term result = term;
+			if ((((HistoryRecordingScript) mTcScript).getMainScript() != null) && mTF != null) {
+				final TermTransferrer tf = new TermTransferrer(
+						((HistoryRecordingScript) mTcScript).getMainScript().getScript(), mTcScript);
+				result = tf.transform(term);
+			}
+			return result;
+		}
+
 		public void versionInVars() {
 			for (final IProgramVar bv : mTF.getInVars().keySet()) {
 				final TermVariable tv = transferToCurrentScriptIfNecessary(mTF.getInVars().get(bv));
@@ -599,7 +623,13 @@ public class NestedSsaBuilder<L extends IAction> {
 		}
 
 		public Term getVersioneeredTerm() {
-			final Term result = PureSubstitution.apply(mTcScript, mSubstitutionMapping, mFormula);
+			final HashMap<Term, Term> transferredSubsitutionMap = new HashMap<Term, Term>();
+			for (final Term entry : mSubstitutionMapping.keySet()) {
+				transferredSubsitutionMap.put(transferFromMainToTc(entry),
+						transferFromMainToTc(mSubstitutionMapping.get(entry)));
+			}
+			final Term result =
+					PureSubstitution.apply(mTcScript, transferredSubsitutionMap, transferFromMainToTc(mFormula));
 			assert result.getFreeVars().length == 0 : "free vars in versioneered term: "
 					+ Arrays.stream(result.getFreeVars()).map(a -> a.toString()).collect(Collectors.joining(","));
 			return result;

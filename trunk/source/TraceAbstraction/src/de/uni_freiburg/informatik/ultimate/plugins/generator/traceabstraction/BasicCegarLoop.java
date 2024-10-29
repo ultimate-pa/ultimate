@@ -163,7 +163,7 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 
 	}
 
-	private static final boolean NON_EA_INDUCTIVITY_CHECK = false;
+	protected static final boolean NON_EA_INDUCTIVITY_CHECK = false;
 
 	protected final PredicateFactoryRefinement mStateFactoryForRefinement;
 	protected final PredicateFactoryForInterpolantAutomata mPredicateFactoryInterpolantAutomata;
@@ -171,7 +171,7 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 
 	protected final RelevanceAnalysisMode mFaultLocalizationMode;
 	private final boolean mFaultLocalizationAngelic;
-	private final StrategyFactory<L> mStrategyFactory;
+	protected StrategyFactory<L> mStrategyFactory;
 	private final PathProgramDumpController<L> mPathProgramDumpController;
 	private final boolean mStoreFloydHoareAutomata;
 	private final Set<Pair<AbstractInterpolantAutomaton<L>, IPredicateUnifier>> mFloydHoareAutomata =
@@ -180,6 +180,8 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 	protected boolean mFallbackToFpIfInterprocedural = false;
 	protected HoareAnnotationFragments<L> mHaf;
 	protected IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> mRefinementResult;
+
+	protected InterpolationTechnique mInterpolationTechnique;
 
 	private boolean mFirstReuseDump = true;
 
@@ -197,7 +199,7 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 			mLogger.info("fallback from FPandBP to FP because CFG is interprocedural");
 			interpolation = InterpolationTechnique.ForwardPredicates;
 		}
-
+		mInterpolationTechnique = interpolation;
 		mStoreFloydHoareAutomata = taPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.NONE;
 		mHaf = new HoareAnnotationFragments<>(mLogger, hoareAnnotationLocs, mPref.getHoareAnnotationPositions());
 		mStateFactoryForRefinement = stateFactoryForRefinement;
@@ -456,8 +458,8 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 		}
 		// Use all edges of the interpolant automaton that is already constructed as an
 		// initial cache for the Hoare triple checker.
-		final HoareTripleCheckerCache initialCache = TraceAbstractionUtils
-				.extractHoareTriplesfromAutomaton(mRefinementResult.getInfeasibilityProof());
+		final HoareTripleCheckerCache initialCache =
+				TraceAbstractionUtils.extractHoareTriplesfromAutomaton(mRefinementResult.getInfeasibilityProof());
 		return HoareTripleCheckerUtils.constructEfficientHoareTripleCheckerWithCaching(getServices(),
 				mPref.getHoareTripleChecks(), mCsToolkit, mRefinementResult.getPredicateUnifier(), initialCache);
 	}

@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.SPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ApplicationTermFinder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
@@ -151,12 +152,25 @@ public class NestedInterpolantsBuilder<L extends IAction> {
 		mTrace = annotatdSsa.getTrace();
 		mInstantiateArrayExt = instantiateArrayExt;
 		final HashMap<Term, Term> const2RepTv = new HashMap<>();
-		for (final Entry<Term, IProgramVar> entry : constants2BoogieVar.entrySet()) {
-			const2RepTv.put(entry.getKey(), entry.getValue().getTermVariable());
+		// Used in mConst2RepTvSubst thus needs to be a worker term variable
+		if (((HistoryRecordingScript) mMgdScriptCfg.getScript()).getMainScript() != null) {
+			final TermTransferrer tf = new TermTransferrer(
+					((HistoryRecordingScript) mMgdScriptCfg.getScript()).getMainScript().getScript(),
+					mMgdScriptCfg.getScript());
+			for (final Entry<Term, IProgramVar> entry : constants2BoogieVar.entrySet()) {
+				const2RepTv.put(entry.getKey(), tf.transform(entry.getValue().getTermVariable()));
+			}
+		} else {
+			for (final Entry<Term, IProgramVar> entry : constants2BoogieVar.entrySet()) {
+				const2RepTv.put(entry.getKey(), entry.getValue().getTermVariable());
+			}
 		}
 		if (mMgdScriptTc != mgdScriptCfg) {
-			mConst2RepTvSubst = (x -> new TermTransferrer(mMgdScriptTc.getScript(), mMgdScriptCfg.getScript(),
-					const2RepTv, true).transform(x));
+
+			mConst2RepTvSubst =
+					(x -> new TermTransferrer(mMgdScriptTc.getScript(), mMgdScriptCfg.getScript(), const2RepTv, true)
+							.transform(x));
+
 		} else {
 			mConst2RepTvSubst = (x -> Substitution.apply(mMgdScriptCfg, const2RepTv, x));
 		}
@@ -559,6 +573,7 @@ public class NestedInterpolantsBuilder<L extends IAction> {
 			assert positionOfThisCraigInterpolant >= resultPos;
 			if (isInterpolatedPosition(resultPos)) {
 				Term withIndices = mCraigInterpolants[craigInterpolPos];
+
 				assert resultPos == mCraigInt2interpolantIndex.get(craigInterpolPos);
 				craigInterpolPos++;
 				result[resultPos] = withIndices2Predicate.get(withIndices);
@@ -567,18 +582,26 @@ public class NestedInterpolantsBuilder<L extends IAction> {
 					 * remove all let terms added because iZ3's interpolants contain let terms better solution:
 					 * implement support for let terms in SafeSubstitution
 					 */
+
+					// Tc script term
 					withIndices = new FormulaUnLet().transform(withIndices);
+
+					// Worker script term, mConst2RepTvSubst converts tc to worker
 					Term withoutIndices = mConst2RepTvSubst.apply(withIndices);
+
 					if (mInstantiateArrayExt) {
 						withoutIndices = instantiateArrayExt(withoutIndices);
 					}
-					if (!ALLOW_AT_DIFF
-							&& new SubtermPropertyChecker(x -> isAtDiffTerm(x)).isSatisfiedBySomeSubterm(withoutIndices)) {
+					if (!ALLOW_AT_DIFF && new SubtermPropertyChecker(x -> isAtDiffTerm(x))
+							.isSatisfiedBySomeSubterm(withoutIndices)) {
 						throw new UnsupportedOperationException(DIFF_IS_UNSUPPORTED);
 					}
+
 					final Term withoutIndicesNormalized = new ConstantTermNormalizer().transform(withoutIndices);
+
 					final Term lessQuantifiers = PartialQuantifierElimination.eliminate(mServices, mMgdScriptCfg,
 							withoutIndicesNormalized, mSimplificationTechnique);
+
 					result[resultPos] = mPredicateUnifier.getOrConstructPredicate(lessQuantifiers);
 					withIndices2Predicate.put(withIndices, result[resultPos]);
 				}

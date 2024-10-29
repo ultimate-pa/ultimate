@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -102,10 +103,24 @@ public class ModifiableGlobalsTable {
 		return SmtUtils.binaryEquality(script, oldConstant, nonOldConstant);
 	}
 
+	/**
+	 * Return equality (= g oldg) where g is the default constant of the BoogieNonOldVar bv and oldg is the default
+	 * constant of the corresponding oldVar. If primed is true, we return the primed constant instead of the default
+	 * constant.
+	 *
+	 * @param termTransfer
+	 */
+	public static Term transferredConstructConstantOldVarEquality(final TermTransferrer termTransfer,
+			final IProgramNonOldVar bv, final boolean primed, final Script script) {
+		final IProgramOldVar oldVar = bv.getOldVar();
+		final Term nonOldConstant = termTransfer.transform((primed ? bv.getPrimedConstant() : bv.getDefaultConstant()));
+		final Term oldConstant =
+				termTransfer.transform((primed ? oldVar.getPrimedConstant() : oldVar.getDefaultConstant()));
+		return SmtUtils.binaryEquality(script, oldConstant, nonOldConstant);
+	}
 
 	/**
-	 * @return
-	 * 		the contents of this ModifiedGlobalsTable as a hash relation
+	 * @return the contents of this ModifiedGlobalsTable as a hash relation
 	 */
 	public HashRelation<String, IProgramNonOldVar> getProcToGlobals() {
 		// if we have an unmodifiableHashRelation some day, use that

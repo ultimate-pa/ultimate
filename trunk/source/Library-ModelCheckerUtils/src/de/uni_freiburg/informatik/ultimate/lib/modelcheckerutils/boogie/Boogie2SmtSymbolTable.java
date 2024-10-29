@@ -83,12 +83,11 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
- * Stores a mapping from Boogie identifiers to {@link ProgramVar}s and a mapping
- * from TermVariables that are representatives of {@link ProgramVar}s to their
- * {@link ProgramVar}.
+ * Stores a mapping from Boogie identifiers to {@link ProgramVar}s and a mapping from TermVariables that are
+ * representatives of {@link ProgramVar}s to their {@link ProgramVar}.
  *
- * TODO 2018-09-15 Matthias: This class was build before we had
- * {@link DeclarationInformation} and might be unnecessarily complicated.
+ * TODO 2018-09-15 Matthias: This class was build before we had {@link DeclarationInformation} and might be
+ * unnecessarily complicated.
  *
  * @author Matthias Heizmann
  *
@@ -647,7 +646,8 @@ public class Boogie2SmtSymbolTable
 			final IBoogieType type = vl[i].getType().getBoogieType();
 			final String[] ids = vl[i].getIdentifiers();
 			for (int j = 0; j < ids.length; j++) {
-				final LocalProgramVar pv = constructLocalProgramVar(ids[j], procId, type, vl[i], declarationInformation);
+				final LocalProgramVar pv =
+						constructLocalProgramVar(ids[j], procId, type, vl[i], declarationInformation);
 				putNew(procId, ids[j], pv, specMap);
 				params.add(pv);
 			}
@@ -790,4 +790,7 @@ public class Boogie2SmtSymbolTable
 		return map.entrySet().stream().flatMap(a -> a.getValue().entrySet().stream()).map(a -> fun.apply(a.getValue()));
 	}
 
+	public Map<TermVariable, IProgramVar> getSmtVar2ProgramVarMap() {
+		return mSmtVar2ProgramVar;
+	}
 }

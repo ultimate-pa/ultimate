@@ -148,8 +148,23 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 	public ITARefinementStrategy<L> constructStrategy(final IUltimateServiceProvider services,
 			final IRun<L, ?> counterexample, final IAutomaton<L, IPredicate> abstraction,
 			final TaskIdentifier taskIdentifier, final IEmptyStackStateFactory<IPredicate> emptyStackFactory,
-			final IPredicateUnifier predicateUnifier, final IPredicate precondition,
-			final IPredicate postcondition, final RefinementStrategy strategyType) {
+			final IPreconditionProvider preconditionProvider, final IPostconditionProvider postconditionProvider,
+			final RefinementStrategy strategyType) {
+		final IPredicateUnifier predicateUnifier = constructPredicateUnifier(services);
+		final IPredicate precondition = preconditionProvider.constructPrecondition(predicateUnifier);
+		final IPredicate postcondition = postconditionProvider.constructPostcondition(predicateUnifier);
+		return constructStrategy(services, counterexample, abstraction, taskIdentifier, emptyStackFactory,
+				predicateUnifier, precondition, postcondition, strategyType);
+	}
+
+	/**
+	 * Constructs a {@link IRefinementStrategy} that can be used in conjunction with a {@link IRefinementEngine}.
+	 */
+	public ITARefinementStrategy<L> constructStrategy(final IUltimateServiceProvider services,
+			final IRun<L, ?> counterexample, final IAutomaton<L, IPredicate> abstraction,
+			final TaskIdentifier taskIdentifier, final IEmptyStackStateFactory<IPredicate> emptyStackFactory,
+			final IPredicateUnifier predicateUnifier, final IPredicate precondition, final IPredicate postcondition,
+			final RefinementStrategy strategyType) {
 
 		mPathProgramCache.addRun(counterexample);
 
@@ -222,6 +237,7 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 		if (mPrefs.usePredicateTrieBasedPredicateUnifier()) {
 			return new BPredicateUnifier(services, mLogger, managedScript, mPredicateFactory, symbolTable);
 		}
+
 		return new PredicateUnifier(mLogger, services, managedScript, mPredicateFactory, symbolTable,
 				mTaPrefs.getSimplificationTechnique(), mTaPrefs.getXnfConversionTechnique());
 	}

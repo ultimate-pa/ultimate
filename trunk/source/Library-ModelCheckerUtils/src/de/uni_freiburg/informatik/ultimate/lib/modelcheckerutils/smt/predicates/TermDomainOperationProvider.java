@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates
 
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -53,6 +54,7 @@ public class TermDomainOperationProvider implements IDomainSpecificOperationProv
 	public TermDomainOperationProvider(final IUltimateServiceProvider services, final ManagedScript mgdScript) {
 		mServices = services;
 		mMgdScript = mgdScript;
+
 	}
 
 	@Override
@@ -77,6 +79,11 @@ public class TermDomainOperationProvider implements IDomainSpecificOperationProv
 
 	@Override
 	public Term renameVariables(final Map<Term, Term> substitutionForTransFormula, final Term constraint) {
+		for (final Entry<Term, Term> entry : substitutionForTransFormula.entrySet()) {
+			assert mMgdScript.getScript().getTheory().equals(entry.getValue().getTheory());
+			assert mMgdScript.getScript().getTheory().equals(entry.getKey().getTheory());
+		}
+		assert mMgdScript.getScript().getTheory().equals(constraint.getTheory());
 		final Term renamedTransFormula = Substitution.apply(mMgdScript, substitutionForTransFormula, constraint);
 		return renamedTransFormula;
 	}
@@ -106,6 +113,9 @@ public class TermDomainOperationProvider implements IDomainSpecificOperationProv
 		return constructQuantifiedFormula(Script.FORALL, varsToProjectAway, constraint);
 	}
 
+	/*
+	 * Does check-sats, therefore needs to be worker script
+	 */
 	private Term constructQuantifiedFormula(final int quantifier, final Set<TermVariable> varsToQuantify,
 			final Term term) {
 		final Term quantified = SmtUtils.quantifier(mMgdScript.getScript(), quantifier, varsToQuantify, term);

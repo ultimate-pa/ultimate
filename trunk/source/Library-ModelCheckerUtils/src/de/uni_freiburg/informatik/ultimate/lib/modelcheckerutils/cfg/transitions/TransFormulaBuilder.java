@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.TransferrerWithVariableCache;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermVarsProc;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -63,11 +64,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class TransFormulaBuilder {
-	private final Map<IProgramVar, TermVariable> mInVars;
-	private final Map<IProgramVar, TermVariable> mOutVars;
-	private final Set<IProgramConst> mNonTheoryConsts;
-	private final Set<TermVariable> mAuxVars;
-	private final Set<TermVariable> mBranchEncoders;
+	private Map<IProgramVar, TermVariable> mInVars;
+	private Map<IProgramVar, TermVariable> mOutVars;
+	private Set<IProgramConst> mNonTheoryConsts;
+	private Set<TermVariable> mAuxVars;
+	private Set<TermVariable> mBranchEncoders;
 	private Infeasibility mInfeasibility = null;
 	private Term mFormula = null;
 	private boolean mConstructionFinished = false;
@@ -308,6 +309,40 @@ public class TransFormulaBuilder {
 		}
 	}
 
+	private void transferEverythingToWorker(final ManagedScript script) {
+		if (((HistoryRecordingScript) script.getScript()).getMainScript() != null) {
+
+			final TermTransferrer termTF = new TermTransferrer(
+					((HistoryRecordingScript) script.getScript()).getMainScript().getScript(), (script.getScript()));
+
+			mFormula = termTF.transform(mFormula);
+			mInVars = transferMap(termTF, mInVars);
+			mOutVars = transferMap(termTF, mOutVars);
+			mAuxVars = transferSet(termTF, mAuxVars);
+			mBranchEncoders = transferSet(termTF, mBranchEncoders);
+
+		} else {
+			return;
+		}
+	}
+
+	private Map<IProgramVar, TermVariable> transferMap(final TermTransferrer termTF,
+			final Map<IProgramVar, TermVariable> inputMap) {
+		final HashMap<IProgramVar, TermVariable> outMap = new HashMap<>();
+		for (final Entry<IProgramVar, TermVariable> entry : inputMap.entrySet()) {
+			outMap.put(entry.getKey(), (TermVariable) termTF.transform(entry.getValue()));
+		}
+		return outMap;
+	}
+
+	private Set<TermVariable> transferSet(final TermTransferrer termTF, final Set<TermVariable> inputSet) {
+		final Set<TermVariable> outSet = new HashSet<>();
+		for (final TermVariable var : inputSet) {
+			outSet.add((TermVariable) termTF.transform(var));
+		}
+		return outSet;
+	}
+
 	public UnmodifiableTransFormula finishConstruction(final ManagedScript script) {
 		if (mFormula == null) {
 			throw new IllegalStateException("cannot finish without formula");
@@ -316,10 +351,15 @@ public class TransFormulaBuilder {
 			throw new IllegalStateException("cannot finish without feasibility status");
 		}
 		mConstructionFinished = true;
+
+		transferEverythingToWorker(script);
+
 		removeSuperfluousVars(mFormula, mInVars, mOutVars, mAuxVars);
+
 		return new UnmodifiableTransFormula(mFormula, Collections.unmodifiableMap(mInVars),
 				Collections.unmodifiableMap(mOutVars), ImmutableSet.of(mNonTheoryConsts), ImmutableSet.of(mAuxVars),
 				ImmutableSet.of(mBranchEncoders), mInfeasibility, script);
+
 	}
 
 	/**
@@ -707,7 +747,7 @@ public class TransFormulaBuilder {
 
 			final TermVariable newTv;
 			if (entry.getValue() == tf.getInVars().get(entry.getKey())) {
-				//inVar and outVar are similar
+				// inVar and outVar are similar
 				newTv = newInVars.get(newPv);
 			} else {
 				if (constructFreshVariables) {
@@ -722,8 +762,8 @@ public class TransFormulaBuilder {
 
 		final Set<TermVariable> newAuxVars = new HashSet<>();
 		for (final TermVariable auxVar : tf.getAuxVars()) {
-			final TermVariable newAuxVar = script.constructFreshTermVariable("auxVar",
-					tt.getTransferrer().transferSort(auxVar.getSort()));
+			final TermVariable newAuxVar =
+					script.constructFreshTermVariable("auxVar", tt.getTransferrer().transferSort(auxVar.getSort()));
 			tt.getTransferrer().getTransferMapping().put(auxVar, newAuxVar);
 			newAuxVars.add(newAuxVar);
 		}

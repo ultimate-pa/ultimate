@@ -35,6 +35,7 @@ import java.util.function.Predicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramFunction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubTermFinder;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -80,9 +81,8 @@ public class TermVarsProc {
 	}
 
 	/**
-	 * Given a term in which every free variable is the TermVariable of a BoogieVar.
-	 * Compute the BoogieVars of the free variables and the procedures of these
-	 * BoogieVariables.
+	 * Given a term in which every free variable is the TermVariable of a BoogieVar. Compute the BoogieVars of the free
+	 * variables and the procedures of these BoogieVariables.
 	 */
 	public static TermVarsProc computeTermVarsProc(final Term term, final ManagedScript mgdScript,
 			final IIcfgSymbolTable symbolTable) {
@@ -90,9 +90,8 @@ public class TermVarsProc {
 	}
 
 	/**
-	 * Given a term in which every free variable is the TermVariable of a BoogieVar.
-	 * Compute the BoogieVars of the free variables and the procedures of these
-	 * BoogieVariables.
+	 * Given a term in which every free variable is the TermVariable of a BoogieVar. Compute the BoogieVars of the free
+	 * variables and the procedures of these BoogieVariables.
 	 */
 	public static TermVarsProc computeTermVarsProc(final Term term, final ManagedScript mgdScript,
 			final Function<TermVariable, IProgramVar> funTermVar2ProgVar,
@@ -100,7 +99,24 @@ public class TermVarsProc {
 		final HashSet<IProgramVar> vars = new HashSet<>();
 		final Set<String> procs = new HashSet<>();
 		for (final TermVariable tv : term.getFreeVars()) {
-			final IProgramVar bv = funTermVar2ProgVar.apply(tv);
+			/*
+			 * tv is from worker script
+			 *
+			 * cannot call funTermVar2ProgVar.apply(tv)
+			 * instead we need to map tc to main.tc and then apply.
+			 * I doubt we can use termtransferrer for that
+			 *
+			 * Wenn wir worker script erstellen, können wir eine tv map erstellen oder?
+			 *
+			 * Das geht jetzt
+			 */
+			IProgramVar bv = null;
+			if (((HistoryRecordingScript) mgdScript.getScript()).getMainScript() != null) {
+				bv = funTermVar2ProgVar.apply(((HistoryRecordingScript) mgdScript.getScript()).getMainTv(tv));
+			}
+			if (bv == null) {
+				bv = funTermVar2ProgVar.apply(tv);
+			}
 			if (bv == null) {
 				throw new AssertionError("No corresponding IProgramVar for " + tv);
 			}
@@ -109,8 +125,8 @@ public class TermVarsProc {
 				procs.add(bv.getProcedure());
 			}
 		}
-		final Predicate<Term> isNonTheoryApplicationTerm = (x -> ((x instanceof ApplicationTerm)
-				&& !((ApplicationTerm) x).getFunction().isIntern()));
+		final Predicate<Term> isNonTheoryApplicationTerm =
+				(x -> ((x instanceof ApplicationTerm) && !((ApplicationTerm) x).getFunction().isIntern()));
 		final Set<ApplicationTerm> nonTheoryAppTerms = findNonTheoryApplicationTerms(term);
 		Set<IProgramFunction> programFunctions;
 		if (nonTheoryAppTerms.isEmpty()) {
@@ -126,14 +142,13 @@ public class TermVarsProc {
 			}
 			programFunctions = DataStructureUtils.getUnmodifiable(tmp);
 		}
-
 		final Term closedTerm = PredicateUtils.computeClosedFormula(term, vars, mgdScript);
 		return new TermVarsProc(term, vars, programFunctions, procs.toArray(new String[procs.size()]), closedTerm);
 	}
 
 	public static Set<ApplicationTerm> findNonTheoryApplicationTerms(final Term term) {
-		final Predicate<Term> isNonTheoryApplicationTerm = (x -> ((x instanceof ApplicationTerm)
-				&& !((ApplicationTerm) x).getFunction().isIntern()));
+		final Predicate<Term> isNonTheoryApplicationTerm =
+				(x -> ((x instanceof ApplicationTerm) && !((ApplicationTerm) x).getFunction().isIntern()));
 		final Set tmp = SubTermFinder.find(term, isNonTheoryApplicationTerm, false);
 		final Set<ApplicationTerm> nonTheoryAppTerms = tmp;
 		return nonTheoryAppTerms;

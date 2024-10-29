@@ -208,6 +208,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		}
 		mSatCheckTime += System.nanoTime() - startTime;
 		mManagedScript.unlock(this);
+
 		return result;
 	}
 

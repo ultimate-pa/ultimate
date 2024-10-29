@@ -45,6 +45,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbol
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.MonolithicImplicationChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifierStatisticsGenerator.PredicateUnifierStatisticsType;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashNormalForm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
@@ -277,7 +279,14 @@ public class PredicateUnifier implements IPredicateUnifier {
 	 */
 	private boolean varsIsSupersetOfFreeTermVariables(final Term term, final Set<IProgramVar> vars) {
 		for (final TermVariable tv : term.getFreeVars()) {
-			final IProgramVar bv = mSymbolTable.getProgramVar(tv);
+			IProgramVar bv = null;
+			if (((HistoryRecordingScript) mMgdScript.getScript()).getMainScript() != null) {
+				bv = mSymbolTable.getProgramVar(((HistoryRecordingScript) mMgdScript.getScript()).getMainTv(tv));
+			}
+			if (bv == null) {
+				bv = mSymbolTable.getProgramVar(tv);
+			}
+
 			if (bv == null) {
 				throw new AssertionError("Variable " + tv + " has no corresponding BoogieVar, hence seems "
 						+ "to be some auxiliary variable and may not "
@@ -324,15 +333,28 @@ public class PredicateUnifier implements IPredicateUnifier {
 	/**
 	 * Variant of getOrConstruct methods where we can provide information about implied/explied predicates.
 	 */
-	private IPredicate getOrConstructPredicate(final Term term, final HashMap<IPredicate, Validity> impliedPredicates,
+	private IPredicate getOrConstructPredicate(final Term termWorker,
+			final HashMap<IPredicate, Validity> impliedPredicates,
 			final HashMap<IPredicate, Validity> expliedPredicates, final IPredicate originalPredicate,
 			final UnaryOperator<IPredicate> predicatePostProcessor) {
+		Term term = termWorker;
+
+		if (((HistoryRecordingScript) mScript).getMainScript() != null) {
+			final TermTransferrer tf =
+					new TermTransferrer(((HistoryRecordingScript) mScript).getMainScript().getScript(), mScript);
+			term = tf.transform(term);
+		}
 
 		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(term, mMgdScript, mSymbolTable);
+
 		mPredicateUnifierBenchmarkGenerator.continueTime();
 		mPredicateUnifierBenchmarkGenerator.incrementGetRequests();
 		assert varsIsSupersetOfFreeTermVariables(term, tvp.getVars());
 		final Term withoutAnnotation = stripAnnotation(term);
+
+		for (final Term key : mTerm2Predicates.keySet()) {
+			assert key.getTheory().equals(mMgdScript.getScript().getTheory());
+		}
 
 		{
 			IPredicate p = mTerm2Predicates.get(withoutAnnotation);
@@ -345,7 +367,15 @@ public class PredicateUnifier implements IPredicateUnifier {
 				return p;
 			}
 		}
+
 		final Term commuNF = new CommuhashNormalForm(mServices, mScript).transform(withoutAnnotation);
+
+		// was Main from here on
+
+		for (final Term key : mTerm2Predicates.keySet()) {
+			assert key.getTheory().equals(mMgdScript.getScript().getTheory());
+		}
+
 		{
 			IPredicate p = mTerm2Predicates.get(commuNF);
 			if (p != null) {
@@ -365,10 +395,13 @@ public class PredicateUnifier implements IPredicateUnifier {
 			mPredicateUnifierBenchmarkGenerator.stopTime();
 			return pc.getEquivalantLeqQuantifiedPredicate();
 		}
+
+		// Wokrer from here on
+
 		assert !SmtUtils.isTrueLiteral(commuNF) : "illegal predicate: true";
 		assert !SmtUtils.isFalseLiteral(commuNF) : "illegal predicate: false";
 		assert !mTerm2Predicates.containsKey(commuNF);
-		final Term simplifiedTerm;
+		Term simplifiedTerm;
 		if (pc.isIntricatePredicate()) {
 			simplifiedTerm = commuNF;
 		} else {
@@ -380,6 +413,9 @@ public class PredicateUnifier implements IPredicateUnifier {
 				throw tce;
 			}
 		}
+
+		// was Main from here on
+
 		final IPredicate result =
 				predicatePostProcessor.apply(constructNewPredicate(simplifiedTerm, originalPredicate));
 		if (pc.isEquivalentToExistingPredicatesWithGtQuantifiers()) {
@@ -388,11 +424,13 @@ public class PredicateUnifier implements IPredicateUnifier {
 			}
 			mPredicateUnifierBenchmarkGenerator.incrementDeprecatedPredicates();
 		}
+
 		addNewPredicate(result, term, simplifiedTerm, pc.getImpliedPredicates(), pc.getExpliedPredicates());
 		assert new CheckClosedTerm().isClosed(result.getClosedFormula());
 		assert varsIsSupersetOfFreeTermVariables(result.getFormula(), result.getVars());
 		mPredicateUnifierBenchmarkGenerator.incrementConstructedPredicates();
 		mPredicateUnifierBenchmarkGenerator.stopTime();
+
 		return result;
 	}
 
