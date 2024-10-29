@@ -1211,7 +1211,7 @@ public class StandardFunctionHandler {
 		body.add(mMemoryHandler.getUltimateMemAllocCall(len.getExp(), retvar.getLhs(), loc, MemoryArea.HEAP));
 		final var nullChar = mTypeSizes.constructLiteralForIntegerType(loc, charType, BigInteger.ZERO);
 		final var lenMinusOne = mExpressionTranslation.constructArithmeticIntegerExpression(loc,
-				IASTBinaryExpression.op_minus, len.getExp(), sizeT,
+				IASTBinaryExpression.op_minus, mExpressionTranslation.applyWraparound(loc, sizeT, len.getExp()), sizeT,
 				mTypeSizes.constructLiteralForIntegerType(loc, sizeT, BigInteger.ONE), sizeT);
 		final var lastChar = MemoryHandler.constructPointerFromBaseAndOffset(
 				MemoryHandler.getPointerBaseAddress(retvar.getExp(), loc), lenMinusOne, loc);
