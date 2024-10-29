@@ -141,10 +141,7 @@ public class HistoryRecordingScript extends WrapperScript {
 
 	@Override
 	public void declareFun(final String fun, final Sort[] paramSorts, final Sort resultSort) {
-		if (mCurrentlyUsedScript.mScript.getTheory().mFunFactory.get(fun) != null
-				|| mCurrentlyUsedScript.mScript.getTheory().mDeclaredFuns.get(fun) != null) {
-			return;
-		}
+
 		mCurrentlyUsedScript.mScript.declareFun(fun, paramSorts, resultSort);
 
 		insert(DeclarableFunctionSymbol.createFromScriptDeclareFun(fun, paramSorts, resultSort));
