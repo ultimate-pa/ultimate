@@ -2964,7 +2964,8 @@ public class CHandler {
 			final DeclaratorResult declResult, final IASTDeclarator hook, final CStorageClass storageClass) {
 
 		final CDeclaration cDec = declResult.getDeclaration();
-		final boolean onHeap = cDec.isOnHeap();
+		final var oldStv = mSymbolTable.findCSymbol(hook, cDec.getName());
+		final boolean onHeap = oldStv == null ? cDec.isOnHeap() : oldStv.getCDecl().isOnHeap();
 		final DeclarationInformation declarationInformation = getDeclarationInfo(storageClass);
 		final String bId = mNameHandler.getUniqueIdentifier(node, cDec.getName(), mSymbolTable.getCScopeId(hook),
 				onHeap, cDec.getType(), declarationInformation);
