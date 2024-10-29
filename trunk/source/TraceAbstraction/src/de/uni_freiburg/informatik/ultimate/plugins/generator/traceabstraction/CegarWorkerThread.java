@@ -1,0 +1,430 @@
+package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
+
+import java.util.List;
+import java.util.concurrent.Callable;
+
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.IRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.TaskCanceledException;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.TaskCanceledException.UserDefinedLimit;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovabilityReason;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerCache;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.CegarLoopResultBuilder;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorabstraction.ErrorGeneralizationEngine;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.NondeterministicInterpolantAutomaton;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine.ITARefinementStrategy;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
+
+public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>>
+		implements Callable<WorkerThreadResult<L, A>> {
+
+	private final ILogger mLogger;
+	private final TAPreferences mPref;
+
+	// TODO one for each worker or globally?
+	private final CegarLoopResultBuilder mResultBuilder;
+	private final IUltimateServiceProvider mServices;
+
+	// SMT solver warning
+	private final CfgSmtToolkit mCsToolkit;
+	final PredicateFactory mPredicateFactory;
+	PredicateFactoryForInterpolantAutomata mPredicateFactoryInterpolantAutomata;
+
+	// globally
+	protected CegarLoopStatisticsGenerator mCegarLoopBenchmark;
+
+	// each worker needs one of their own:
+	private final int mIteration;
+	private final IRun<L, ?> mCounterexample;
+	private final INestedWordAutomaton<L, IPredicate> mAbstraction; // abstraction at the point the worker was spawned
+	private final ErrorGeneralizationEngine<L> mErrorGeneralizationEngine;
+
+	// each worker needs one of their own, but creates it themself:
+	private IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> mRefinementResult;
+	private NestedWordAutomaton<L, IPredicate> mInterpolAutomaton;
+
+	// contains SMT solver stuff, should be done by master anyway
+	private final StrategyFactory<L> mStrategyFactory;
+
+	// ???
+	private final PredicateFactoryRefinement mStateFactoryForRefinement;
+	boolean mComputeHoareAnnotation;
+
+	private WorkerThreadResult<L, A> mThreadResult = null;
+	private final ITARefinementStrategy<L> mStrategy;
+	private final IcfgLocation mCurrentErrorLoc;
+
+	public CegarWorkerThread(final ILogger logger, final TAPreferences pref, final IRun<L, ?> counterexample,
+			final ErrorGeneralizationEngine<L> errorGeneralizationEngine, final int iteration,
+			final CegarLoopResultBuilder resultBuilder, final CegarLoopStatisticsGenerator statistcs,
+			final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
+			final StrategyFactory<L> strategyFactory, final INestedWordAutomaton<L, IPredicate> abstraction,
+			final PredicateFactory predicateFactory,
+			final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata,
+			final PredicateFactoryRefinement stateFactoryForRefinement, final boolean computeHoareAnnotation,
+			final ITARefinementStrategy<L> strategy, final IcfgLocation currentErrorLoc) {
+
+		mLogger = logger;
+		mPref = pref;
+		mRefinementResult = null;
+		mCounterexample = counterexample;
+		mResultBuilder = resultBuilder;
+		mErrorGeneralizationEngine = errorGeneralizationEngine;
+		mInterpolAutomaton = null;
+		mIteration = iteration;
+		mCegarLoopBenchmark = statistcs;
+		mServices = services;
+		mCsToolkit = csToolkit;
+		mStrategyFactory = strategyFactory;
+		mAbstraction = abstraction;
+		mPredicateFactory = predicateFactory;
+		mPredicateFactoryInterpolantAutomata = predicateFactoryInterpolantAutomata;
+		mStateFactoryForRefinement = stateFactoryForRefinement;
+		mComputeHoareAnnotation = computeHoareAnnotation;
+		mStrategy = strategy;
+		mCurrentErrorLoc = currentErrorLoc;
+
+	}
+
+	// public void setUpTaCheckAndRefinementPreferences(final SimplificationTechnique mSimplificationTechnique,
+	// final XnfConversionTechnique mXnfConversionTechnique, final InterpolationTechnique mInterpolationTechnique,
+	// final IIcfg<? extends IcfgLocation> mIcfg) {
+	// final TaCheckAndRefinementPreferences<L> mTaCheckAndRefinementPrefs =
+	// new TaCheckAndRefinementPreferences<L>(getServices(), mPref, mInterpolationTechnique,
+	// mSimplificationTechnique, mXnfConversionTechnique, mCsToolkit, mPredicateFactory, mIcfg);
+	// }
+	//
+	// public void setUpStrategy(final IIcfg<? extends IcfgLocation> mIcfg, final Class<L> mTransitionClazz,
+	// final TaskIdentifier mTaskIdentifier, final RefinementStrategy strategyType) {
+	// final StrategyFactory<L> strategyFactory = new StrategyFactory<L>(mLogger, mPref, mTaCheckAndRefinementPrefs,
+	// mIcfg, mPredicateFactory, mPredicateFactoryInterpolantAutomata, mTransitionClazz);
+	//
+	// final ITARefinementStrategy<L> mStrategy = strategyFactory.constructStrategy(getServices(), mCounterexample,
+	// mAbstraction, new SubtaskIterationIdentifier(mTaskIdentifier, mIteration),
+	// mPredicateFactoryInterpolantAutomata, getPreconditionProvider(), getPostconditionProvider(),
+	// strategyType);
+	// }
+
+	@Override
+	public WorkerThreadResult<L, A> call() {
+		final List<L> trace = mCounterexample.getWord().asList();
+		final int traceHash = trace.hashCode();
+		mLogger.info("Starting Thread: " + Thread.currentThread().getId() + "# for Trace Check: " + traceHash);
+
+		try {
+			final Pair<LBool, IProgramExecution<L, Term>> isCexResult = isCounterexampleFeasible(mStrategy);
+
+			final AbstractCegarLoop.AutomatonType automatonType =
+					processFeasibilityCheckResult(isCexResult.getFirst(), isCexResult.getSecond(), mCurrentErrorLoc);
+
+			constructRefinementAutomaton(automatonType);
+
+			mThreadResult = refineAbstractionInternally();
+		} catch (AutomataLibraryException | ToolchainCanceledException e) {
+			// TODO deal with failure
+		}
+		mLogger.info("Done with Thread: " + Thread.currentThread().getId() + "#"); // TODO print trace
+
+		return mThreadResult;
+	}
+
+	protected Pair<LBool, IProgramExecution<L, Term>> isCounterexampleFeasible(final ITARefinementStrategy<L> strategy)
+			throws AutomataOperationCanceledException {
+
+		IStatisticsDataProvider refinementEngineStats = null;
+
+		try {
+			if (mPref.hasLimitPathProgramCount() && mPref.getLimitPathProgramCount() < mStrategyFactory
+					.getPathProgramCache().getPathProgramCount(mCounterexample)) {
+				final String taskDescription = "bailout by path program count limit in iteration " + mIteration;
+				throw new TaskCanceledException(UserDefinedLimit.PATH_PROGRAM_ATTEMPTS, getClass(), taskDescription);
+			}
+
+			final TraceAbstractionRefinementEngine<L> refinementEngine =
+					new TraceAbstractionRefinementEngine<>(getServices(), mLogger, strategy);
+			mRefinementResult = refinementEngine.getResult();
+			refinementEngineStats = refinementEngine.getRefinementEngineStatistics();
+
+		} catch (final ToolchainCanceledException tce) {
+			throw tce;
+		}
+
+		final LBool feasibility = mRefinementResult.getCounterexampleFeasibility();
+		IProgramExecution<L, Term> rcfgProgramExecution = null;
+		if (feasibility != LBool.UNSAT) {
+			mLogger.info("Counterexample %s feasible", feasibility == LBool.SAT ? "is" : "might be");
+			if (mRefinementResult.providesIcfgProgramExecution()) {
+				rcfgProgramExecution = mRefinementResult.getIcfgProgramExecution();
+			} else {
+				rcfgProgramExecution =
+						TraceCheckUtils.computeSomeIcfgProgramExecutionWithoutValues(mCounterexample.getWord());
+			}
+
+		}
+		// mTcSmtManager.getScript().exit();
+
+		if (refinementEngineStats != null && false) { // leads to concurrency problems
+			mCegarLoopBenchmark.addRefinementEngineStatistics(refinementEngineStats);
+		}
+		return new Pair<>(feasibility, rcfgProgramExecution);
+	}
+
+	/**
+	 * Report results from a feasibility check if necessary and return the type of the refinement automaton
+	 */
+	public AbstractCegarLoop.AutomatonType processFeasibilityCheckResult(final LBool isCounterexampleFeasible,
+			final IProgramExecution<L, Term> programExecution, final IcfgLocation currentErrorLoc) {
+		if (isCounterexampleFeasible == Script.LBool.SAT) {
+
+			mResultBuilder.addResultForProgramExecution(Result.UNSAFE, programExecution, null, null);
+
+			if (mPref.stopAfterFirstViolation()) {
+				mResultBuilder.addResultForAllRemaining(Result.UNKNOWN);
+			}
+			return AbstractCegarLoop.AutomatonType.ERROR;
+		}
+		if (isCounterexampleFeasible != Script.LBool.UNKNOWN) {
+			return AbstractCegarLoop.AutomatonType.INTERPOLANT;
+		}
+		final Result actualResult;
+		if (programExecution != null) {
+			final UnprovabilityReason reasonUnknown =
+					new UnprovabilityReason("unable to decide satisfiability of path constraint");
+			actualResult = Result.UNKNOWN;
+			mResultBuilder.addResultForProgramExecution(actualResult, programExecution, null, reasonUnknown);
+		} else {
+			actualResult = Result.TIMEOUT;
+			mResultBuilder.addResult(currentErrorLoc, actualResult, null, null, null);
+		}
+
+		if (mPref.stopAfterFirstViolation()) {
+			mResultBuilder.addResultForAllRemaining(actualResult);
+		}
+
+		return AbstractCegarLoop.AutomatonType.UNKNOWN;
+	}
+
+	public void constructRefinementAutomaton(final AbstractCegarLoop.AutomatonType automatonType)
+			throws AutomataOperationCanceledException {
+		switch (automatonType) {
+		case ERROR:
+		case UNKNOWN:
+			if (mPref.stopAfterFirstViolation()) {
+				// return; //TODO must not return, instead do sth else
+			}
+			mLogger.info("Excluding counterexample to continue analysis with %s automaton", automatonType);
+			constructErrorAutomaton();
+			break;
+		case INTERPOLANT:
+			constructInterpolantAutomaton();
+			break;
+		default:
+			throw new UnsupportedOperationException("Unknown automaton type: " + automatonType);
+		}
+	}
+
+	protected void constructErrorAutomaton() throws AutomataOperationCanceledException {
+
+		// TODO problem? mCsToolkit is CFG script. Seems to be only used
+		// csToolkit.getManagedScript().getScript().term("true") in
+		// constructStraightLineAutomaton
+
+		// we only consider simple error automata for now, meaning we do not need all of this
+		mErrorGeneralizationEngine.constructErrorAutomaton(mCounterexample, mPredicateFactory,
+				mRefinementResult.getPredicateUnifier(), mCsToolkit, null, null, null,
+				mPredicateFactoryInterpolantAutomata, mAbstraction, mIteration);
+		mInterpolAutomaton = null;
+
+		// assert isInterpolantAutomatonOfSingleStateType(resultBeforeEnhancement);
+		// assert accepts(getServices(), resultBeforeEnhancement, mCounterexample.getWord(),
+		// false) : "Error automaton broken!";
+	}
+
+	protected void constructInterpolantAutomaton() throws AutomataOperationCanceledException {
+		mInterpolAutomaton = mRefinementResult.getInfeasibilityProof();
+
+		// TODO NON_EA_INDUCTIVITY_CHECK and assert
+
+		// assert isInterpolantAutomatonOfSingleStateType(mInterpolAutomaton);
+		// if (NON_EA_INDUCTIVITY_CHECK) {
+		// final boolean inductive = new InductivityCheck<>(getServices(), mInterpolAutomaton, false, true,
+		// new IncrementalHoareTripleChecker(super.mCsToolkit, false)).getResult();
+		//
+		// if (!inductive) {
+		// throw new AssertionError("not inductive");
+		// }
+		// }
+		//
+		// assert accepts(getServices(), mInterpolAutomaton, mCounterexample.getWord(),
+		// false) : "Interpolant automaton broken!: " + mCounterexample.getWord() + " not accepted";
+		//
+		// assert new InductivityCheck<>(getServices(), mInterpolAutomaton, false, true,
+		// new IncrementalHoareTripleChecker(super.mCsToolkit, false)).getResult();
+	}
+
+	protected IUltimateServiceProvider getServices() {
+		return mServices;
+	}
+
+	/*
+	 * construct the subtrahend automaton
+	 *
+	 *
+	 * Globals:
+	 * mErrorGeneralizationEngine
+	 * mIteration
+	 * mStateFactoryForRefinement
+	 * mRefinementResult
+	 * mInterpolAutomaton
+	*/
+	public WorkerThreadResult<L, A> refineAbstractionInternally() throws AutomataLibraryException {
+		mStateFactoryForRefinement.setIteration(mIteration); // TODO warning global var
+		// mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
+
+		// Warning global vars mRefinementResult
+		final IPredicateUnifier predicateUnifier = mRefinementResult.getPredicateUnifier();
+		final IHoareTripleChecker htc = getHoareTripleChecker();
+
+		final BasicCegarLoop.AutomatonType automatonType;
+		final boolean useErrorAutomaton;
+		final NestedWordAutomaton<L, IPredicate> subtrahendBeforeEnhancement;
+		final InterpolantAutomatonEnhancement enhanceMode;
+		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> subtrahend;
+		final boolean exploitSigmaStarConcatOfIa;
+		if (mErrorGeneralizationEngine.hasAutomatonInIteration(mIteration)) {
+			mErrorGeneralizationEngine.startDifference();
+			automatonType = BasicCegarLoop.AutomatonType.ERROR;
+			useErrorAutomaton = true;
+			exploitSigmaStarConcatOfIa = false;
+			enhanceMode = mErrorGeneralizationEngine.getEnhancementMode();
+			subtrahendBeforeEnhancement = mErrorGeneralizationEngine.getResultBeforeEnhancement();
+			subtrahend = mErrorGeneralizationEngine.getResultAfterEnhancement();
+
+		} else {
+			automatonType = BasicCegarLoop.AutomatonType.FLOYD_HOARE;
+			useErrorAutomaton = false;
+			exploitSigmaStarConcatOfIa = !mComputeHoareAnnotation;
+			subtrahendBeforeEnhancement = mInterpolAutomaton;
+			enhanceMode = mPref.interpolantAutomatonEnhancement();
+			subtrahend = enhanceInterpolantAutomaton(enhanceMode, predicateUnifier, htc, subtrahendBeforeEnhancement);
+
+		}
+
+		final WorkerThreadResult<L, A> workerResult = new WorkerThreadResult<L, A>(subtrahend,
+				subtrahendBeforeEnhancement, predicateUnifier, exploitSigmaStarConcatOfIa, enhanceMode,
+				useErrorAutomaton, automatonType, mCsToolkit.getManagedScript(), mCounterexample);
+
+		// TODO missing a lot of stuff from NwaCegarLoop
+
+		return workerResult;
+	}
+
+	protected final IHoareTripleChecker getHoareTripleChecker() {
+		final IHoareTripleChecker refinementHtc = mRefinementResult.getHoareTripleChecker();
+		if (refinementHtc != null) {
+			return refinementHtc;
+		}
+		// Use all edges of the interpolant automaton that is already constructed as an
+		// initial cache for the Hoare triple checker.
+		final HoareTripleCheckerCache initialCache =
+				TraceAbstractionUtils.extractHoareTriplesfromAutomaton(mRefinementResult.getInfeasibilityProof());
+		return HoareTripleCheckerUtils.constructEfficientHoareTripleCheckerWithCaching(getServices(),
+				mPref.getHoareTripleChecks(), mCsToolkit, mRefinementResult.getPredicateUnifier(), initialCache);
+	}
+
+	protected INwaOutgoingLetterAndTransitionProvider<L, IPredicate> enhanceInterpolantAutomaton(
+			final InterpolantAutomatonEnhancement enhanceMode, final IPredicateUnifier predicateUnifier,
+			final IHoareTripleChecker htc, final NestedWordAutomaton<L, IPredicate> interpolantAutomaton) {
+		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> subtrahend;
+		if (enhanceMode == InterpolantAutomatonEnhancement.NONE) {
+			subtrahend = interpolantAutomaton;
+		} else {
+			final AbstractInterpolantAutomaton<L> ia = constructInterpolantAutomatonForOnDemandEnhancement(
+					interpolantAutomaton, predicateUnifier, htc, enhanceMode);
+			subtrahend = ia;
+			// if (mStoreFloydHoareAutomata) {
+			// mFloydHoareAutomata.add(new Pair<>(ia, predicateUnifier));
+			// }
+		}
+		return subtrahend;
+	}
+
+	protected AbstractInterpolantAutomaton<L> constructInterpolantAutomatonForOnDemandEnhancement(
+			final NestedWordAutomaton<L, IPredicate> inputInterpolantAutomaton,
+			final IPredicateUnifier predicateUnifier, final IHoareTripleChecker htc,
+			final InterpolantAutomatonEnhancement enhanceMode) {
+		final AbstractInterpolantAutomaton<L> result;
+		switch (enhanceMode) {
+		case NONE:
+			throw new IllegalArgumentException("In setting NONE we will not do any enhancement");
+		case PREDICATE_ABSTRACTION:
+		case PREDICATE_ABSTRACTION_CONSERVATIVE:
+		case PREDICATE_ABSTRACTION_CANNIBALIZE:
+			result = constructInterpolantAutomatonForOnDemandEnhancementPredicateAbstraction(inputInterpolantAutomaton,
+					predicateUnifier, htc, enhanceMode);
+			break;
+		case EAGER:
+		case NO_SECOND_CHANCE:
+		case EAGER_CONSERVATIVE:
+			result = constructInterpolantAutomatonForOnDemandEnhancementEager(inputInterpolantAutomaton,
+					predicateUnifier, htc, enhanceMode);
+			break;
+		default:
+			throw new UnsupportedOperationException("unknown " + enhanceMode);
+		}
+		return result;
+	}
+
+	private NondeterministicInterpolantAutomaton<L> constructInterpolantAutomatonForOnDemandEnhancementEager(
+			final NestedWordAutomaton<L, IPredicate> inputInterpolantAutomaton,
+			final IPredicateUnifier predicateUnifier, final IHoareTripleChecker htc,
+			final InterpolantAutomatonEnhancement enhanceMode) {
+		final boolean conservativeSuccessorCandidateSelection =
+				enhanceMode == InterpolantAutomatonEnhancement.EAGER_CONSERVATIVE;
+		final boolean secondChance = enhanceMode != InterpolantAutomatonEnhancement.NO_SECOND_CHANCE;
+		return new NondeterministicInterpolantAutomaton<>(getServices(), mCsToolkit, htc, inputInterpolantAutomaton,
+				predicateUnifier, conservativeSuccessorCandidateSelection, secondChance);
+	}
+
+	private DeterministicInterpolantAutomaton<L>
+			constructInterpolantAutomatonForOnDemandEnhancementPredicateAbstraction(
+					final NestedWordAutomaton<L, IPredicate> inputInterpolantAutomaton,
+					final IPredicateUnifier predicateUnifier, final IHoareTripleChecker htc,
+					final InterpolantAutomatonEnhancement enhanceMode) {
+		final boolean conservativeSuccessorCandidateSelection =
+				enhanceMode == InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION_CONSERVATIVE;
+		final boolean cannibalize = enhanceMode == InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION_CANNIBALIZE;
+		return new DeterministicInterpolantAutomaton<>(getServices(), mCsToolkit, htc, inputInterpolantAutomaton,
+				predicateUnifier, conservativeSuccessorCandidateSelection, cannibalize);
+	}
+}
