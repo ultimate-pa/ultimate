@@ -68,6 +68,23 @@ update_cvc5(){
   version+="from ""$(echo "$nightly" | grep -oP "\-\d+\-\d+\-\d+\-\K.*" | sed 's/.exe//g')"
   echo "$version"
 }
+
+## bitwuzla
+update_bitwuzla(){
+  TMP_DIR="bitwuzla"
+  # Requires: meson (pip), ninja (pip), m4 (apt)
+  git clone https://github.com/bitwuzla/bitwuzla $TMP_DIR
+  cd $TMP_DIR
+  # TODO: Do we want additional arguments here?
+  ./configure.py
+  cd build && meson compile
+  # TODO: Also build for Windows
+  cd ../..
+  mv $TMP_DIR/build/src/main/bitwuzla adds/bitwuzla
+  mv $TMP_DIR/COPYING adds/bitwuzla-LICENSE
+  rm -rf $TMP_DIR
+  # TODO: Update readme_files
+}
 update_cvc5
 
 # TODO: continue when the rate limit allows us again (its 50 per h for unauthenticated users)
