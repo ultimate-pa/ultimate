@@ -45,17 +45,23 @@ update_mathsat(){
 
 ## cvc5
 update_cvc5(){
+  TMP_DIR="cvc5"
+  TMP_ZIP="$TMP_DIR/cvc5.zip"
   for platform in Linux Win64 ; do 
-    nightly=$(curl -sL https://api.github.com/repos/cvc5/cvc5/releases | jq -r 'map(select(.prerelease)) | first | .assets[] | select (.name| test(".*'$platform'.*$")) | .browser_download_url' | sort | tail -n1)
+    nightly=$(curl -sL https://api.github.com/repos/cvc5/cvc5/releases | jq -r 'map(select(.prerelease|not)) | first | .assets[] | select (.name| test(".*'$platform'.*x86.*static.zip")) | .browser_download_url' | sort | tail -n1)
     echo "$platform $nightly"
     
+    mkdir "$TMP_DIR"
+    curl -sL -o "$TMP_ZIP" "$nightly"
+    unzip -q -o -d "$TMP_DIR" "$TMP_ZIP"
     if [[ "$platform" == "Linux" ]]; then
-      target="adds/cvc5"
+      target="cvc5"
     else
-      target="adds/cvc5.exe"
+      target="cvc5.exe"
     fi
-    curl -sL -o "$target" "$nightly"
-    chmod a+x "$target"
+    find "$TMP_DIR" -type f -name $target -exec cp "{}" adds/ \;
+    chmod a+x "adds/$target"
+    rm -r "$TMP_DIR"
   done
   curl -sL -o adds/cvc5-LICENSE https://raw.githubusercontent.com/cvc5/cvc5/main/COPYING
   version=$(adds/cvc5 -V | head -n1 | tr '\n' ' ' | sed 's/This is //g')
