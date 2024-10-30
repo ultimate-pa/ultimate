@@ -72,15 +72,24 @@ update_cvc5(){
 ## bitwuzla
 update_bitwuzla(){
   TMP_DIR="bitwuzla"
-  # Requires: meson (pip), ninja (pip), m4 (apt)
+  # Requires: meson (pip), ninja (pip), m4 (apt), mingw-w64 (apt)
+  # Make sure to set the correct compilers:
+  # sudo update-alternatives --set x86_64-w64-mingw32-gcc /usr/bin/x86_64-w64-mingw32-gcc-posix
+  # sudo update-alternatives --set x86_64-w64-mingw32-g++ /usr/bin/x86_64-w64-mingw32-g++-posix
   git clone https://github.com/bitwuzla/bitwuzla $TMP_DIR
   cd $TMP_DIR
   # TODO: Do we want additional arguments here?
   ./configure.py
-  cd build && meson compile
-  # TODO: Also build for Windows
+  cd build
+  meson compile
+  mv src/main/bitwuzla ../../adds/bitwuzla
+  cd ..
+  # TODO: Do we want additional arguments here?
+  ./configure.py --wipe --win64
+  cd build
+  meson compile
+  mv src/main/bitwuzla.exe ../../adds/bitwuzla.exe 
   cd ../..
-  mv $TMP_DIR/build/src/main/bitwuzla adds/bitwuzla
   mv $TMP_DIR/COPYING adds/bitwuzla-LICENSE
   rm -rf $TMP_DIR
   # TODO: Update readme_files
