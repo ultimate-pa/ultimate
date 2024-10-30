@@ -1,6 +1,6 @@
 #!/bin/bash
 # This script generates a zip file for each Ultimate tool that should be deployed to GitHub or to some place else
-# It takes additional binaries from the adds/ folder. Currently, we use z3, cvc4 and mathsat
+# It takes additional binaries from the adds/ folder. Currently, we use z3, cvc4, mathsat and bitwuzla
 # It also adds README, Ultimate.py, and various license files 
 
 
