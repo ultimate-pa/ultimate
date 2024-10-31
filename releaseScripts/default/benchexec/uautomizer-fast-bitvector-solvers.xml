@@ -6,6 +6,7 @@
   <option name="--full-output"/>
   <option name="--force-no-wrapper"/>
   <option name="--traceabstraction.trace.refinement.strategy">FIXED_PREFERENCES</option>
+  <option name="--cacsl2boogietranslator.allow.undefined.functions">true</option>
 
   <rundefinition name="SMTInterpol">
     <option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
