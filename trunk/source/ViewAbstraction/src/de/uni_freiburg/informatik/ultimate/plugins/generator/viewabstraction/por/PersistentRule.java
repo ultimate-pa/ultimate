@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.por;
 
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IPersistentSetChoice;
@@ -36,32 +35,29 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class PersistentRule<T, C extends IThreadBasedConfiguration<T, C>> implements IRule<C> {
 	private final IRule<C> mUnderlying;
-	private final IPersistentSetChoice<Pair<IRule<C>, Integer>, C> mPersistentSets;
+	private final IPersistentSetChoice<Pair<IRule<C>, RuleInstantiation>, C> mPersistentSets;
 
 	public PersistentRule(final IRule<C> underlying,
-			final IPersistentSetChoice<Pair<IRule<C>, Integer>, C> persistentSets) {
+			final IPersistentSetChoice<Pair<IRule<C>, RuleInstantiation>, C> persistentSets) {
 		mUnderlying = underlying;
 		mPersistentSets = persistentSets;
 	}
 
 	@Override
 	public Stream<RuleInstantiation> possibleInstances(final C configuration) {
-		// TODO check if all instantiations of the rule are blocked by the persistent set or not
-		throw new UnsupportedOperationException("not yet implemented");
+		final var persistentSet = mPersistentSets.persistentSet(configuration);
+		return mUnderlying.possibleInstances(configuration)
+				.filter(instance -> persistentSet.contains(new Pair<>(mUnderlying, instance)));
 	}
 
 	@Override
 	public Stream<C> successors(final C configuration, final RuleInstantiation instance) {
-		// TODO filter instances that are blocked by the persistent set
-		throw new UnsupportedOperationException("not yet implemented");
+		assert mPersistentSets.persistentSet(configuration).contains(new Pair<>(mUnderlying, instance));
+		return mUnderlying.successors(configuration, instance);
 	}
 
 	@Override
 	public int extensionSize() {
 		return mUnderlying.extensionSize();
-	}
-
-	private static <C extends IThreadBasedConfiguration<?, C>> IntStream active(final C original, final C succ) {
-		return IntStream.range(0, original.numberOfThreads()).filter(i -> original.getThread(i) != succ.getThread(i));
 	}
 }
