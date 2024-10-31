@@ -26,10 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.function.UnaryOperator;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 public class BroadcastRule<S> implements IRule<Configuration<S>> {
 	private final S mSource;
@@ -43,22 +43,19 @@ public class BroadcastRule<S> implements IRule<Configuration<S>> {
 	}
 
 	@Override
-	public boolean isApplicable(final Configuration<S> config) {
-		return config.stream().anyMatch(mSource::equals);
+	public Stream<RuleInstantiation> possibleInstances(final Configuration<S> configuration) {
+		return IntStream.range(0, configuration.numberOfThreads())
+				.filter(i -> configuration.getThread(i).equals(mSource)).mapToObj(RuleInstantiation::new);
 	}
 
 	@Override
-	public List<Configuration<S>> successors(final Configuration<S> config) {
-		final var result = new ArrayList<Configuration<S>>();
+	public Stream<Configuration<S>> successors(final Configuration<S> configuration, final RuleInstantiation instance) {
+		assert instance.getThreads().length == 1;
 
-		for (int i = 0; i < config.numberOfThreads(); ++i) {
-			final var state = config.getThread(i);
-			if (mSource.equals(state)) {
-				result.add(successor(config, i));
-			}
-		}
+		final int thread = instance.getThreads()[0];
+		assert configuration.getThread(thread).equals(mSource);
 
-		return result;
+		return Stream.of(successor(configuration, thread));
 	}
 
 	private Configuration<S> successor(final Configuration<S> config, final int index) {

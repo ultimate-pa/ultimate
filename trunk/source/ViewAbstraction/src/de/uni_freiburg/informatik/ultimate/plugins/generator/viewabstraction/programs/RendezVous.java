@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs;
 
-import java.util.List;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -39,15 +39,13 @@ public class RendezVous<S> implements IRule<Configuration<S>> {
 	}
 
 	@Override
-	public boolean isApplicable(final Configuration<S> config) {
-		// TODO Auto-generated method stub
-		return false;
+	public Stream<RuleInstantiation> possibleInstances(final Configuration<S> configuration) {
+		throw new UnsupportedOperationException("not yet implemented");
 	}
 
 	@Override
-	public List<Configuration<S>> successors(final Configuration<S> config) {
-		// TODO Auto-generated method stub
-		return null;
+	public Stream<Configuration<S>> successors(final Configuration<S> configuration, final RuleInstantiation instance) {
+		throw new UnsupportedOperationException("not yet implemented");
 	}
 
 	@Override

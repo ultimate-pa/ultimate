@@ -26,8 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.por;
 
-import java.util.List;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IPersistentSetChoice;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.IRule;
@@ -45,19 +45,14 @@ public class PersistentRule<T, C extends IThreadBasedConfiguration<T, C>> implem
 	}
 
 	@Override
-	public boolean isApplicable(final C config) {
-		if (!mUnderlying.isApplicable(config)) {
-			return false;
-		}
+	public Stream<RuleInstantiation> possibleInstances(final C configuration) {
 		// TODO check if all instantiations of the rule are blocked by the persistent set or not
 		throw new UnsupportedOperationException("not yet implemented");
 	}
 
 	@Override
-	public List<C> successors(final C config) {
-		final var successors = mUnderlying.successors(config);
-
-		// TODO filter successors that are blocked by the persistent set
+	public Stream<C> successors(final C configuration, final RuleInstantiation instance) {
+		// TODO filter instances that are blocked by the persistent set
 		throw new UnsupportedOperationException("not yet implemented");
 	}
 

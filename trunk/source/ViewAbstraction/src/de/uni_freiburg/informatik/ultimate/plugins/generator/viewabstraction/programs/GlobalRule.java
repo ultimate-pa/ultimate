@@ -26,9 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.function.Predicate;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 public class GlobalRule<S> implements IRule<Configuration<S>> {
 	public enum Quantifier {
@@ -87,17 +87,21 @@ public class GlobalRule<S> implements IRule<Configuration<S>> {
 	}
 
 	@Override
-	public boolean isApplicable(final Configuration<S> config) {
-		for (int i = 0; i < config.numberOfThreads(); ++i) {
-			final var state = config.getThread(i);
-			if (state.equals(mSource)) {
-				final boolean conditionSatisfied = checkCondition(config, i);
-				if (conditionSatisfied) {
-					return true;
-				}
-			}
-		}
-		return false;
+	public Stream<RuleInstantiation> possibleInstances(final Configuration<S> configuration) {
+		return IntStream.range(0, configuration.numberOfThreads())
+				.filter(i -> configuration.getThread(i).equals(mSource) && checkCondition(configuration, i))
+				.mapToObj(RuleInstantiation::new);
+	}
+
+	@Override
+	public Stream<Configuration<S>> successors(final Configuration<S> configuration, final RuleInstantiation instance) {
+		assert instance.getThreads().length == 1;
+
+		final int thread = instance.getThreads()[0];
+		assert configuration.getThread(thread).equals(mSource);
+		assert checkCondition(configuration, thread);
+
+		return Stream.of(configuration.replaceThread(thread, mTarget));
 	}
 
 	private boolean checkCondition(final Configuration<S> config, final int index) {
@@ -107,21 +111,6 @@ public class GlobalRule<S> implements IRule<Configuration<S>> {
 				final var state = config.getThread(i);
 				result = mQuantifier.combine(result, mCondition.test(state));
 			}
-		}
-		return result;
-	}
-
-	@Override
-	public List<Configuration<S>> successors(final Configuration<S> config) {
-		assert isApplicable(config);
-
-		final var result = new ArrayList<Configuration<S>>();
-		for (int i = 0; i < config.numberOfThreads(); ++i) {
-			final var state = config.getThread(i);
-			if (state.equals(mSource) && checkCondition(config, i)) {
-				result.add(config.replaceThread(i, mTarget));
-			}
-
 		}
 		return result;
 	}

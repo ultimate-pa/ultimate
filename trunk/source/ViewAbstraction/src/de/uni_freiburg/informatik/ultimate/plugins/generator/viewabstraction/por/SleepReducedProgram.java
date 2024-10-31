@@ -26,16 +26,17 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.por;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.IntPredicate;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation.Dependence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.Configuration;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.IRule;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.IRule.RuleInstantiation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.IThreadBasedConfiguration;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.Program;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.ProgramConfiguration;
@@ -72,21 +73,18 @@ public class SleepReducedProgram {
 		}
 
 		@Override
-		public boolean isApplicable(final Configuration<Pair<S, Boolean>> config) {
-			final var original = underlying(config);
-			if (!mUnderlying.isApplicable(original)) {
-				return false;
-			}
-			final var succs = mUnderlying.successors(original);
-			return succs.stream().anyMatch(s -> active(original, s).noneMatch(i -> config.getThread(i).getSecond()));
+		public Stream<RuleInstantiation> possibleInstances(final Configuration<Pair<S, Boolean>> configuration) {
+			final var original = underlying(configuration);
+			return mUnderlying.possibleInstances(original).filter(instance -> !isSleepBlocked(configuration, instance));
 		}
 
 		@Override
-		public List<Configuration<Pair<S, Boolean>>> successors(final Configuration<Pair<S, Boolean>> config) {
-			final var original = underlying(config);
-			final var succs = mUnderlying.successors(original);
-			return succs.stream().filter(s -> active(original, s).noneMatch(i -> config.getThread(i).getSecond()))
-					.map(s -> updateSleep(config, s, active(original, s))).collect(Collectors.toList());
+		public Stream<Configuration<Pair<S, Boolean>>> successors(final Configuration<Pair<S, Boolean>> configuration,
+				final RuleInstantiation instance) {
+			assert !isSleepBlocked(configuration, instance);
+			final var original = underlying(configuration);
+			return mUnderlying.successors(original, instance)
+					.map(s -> updateSleep(configuration, s, instance.getThreads()));
 		}
 
 		@Override
@@ -95,7 +93,7 @@ public class SleepReducedProgram {
 		}
 
 		private Configuration<Pair<S, Boolean>> updateSleep(final Configuration<Pair<S, Boolean>> previous,
-				final Configuration<S> config, final IntStream active) {
+				final Configuration<S> config, final int[] active) {
 			return SleepReducedProgram.updateSleep(mProgram, mIndependence, mUnderlying, underlying(previous),
 					i -> previous.getThread(i).getSecond(), config, active);
 		}
@@ -115,22 +113,24 @@ public class SleepReducedProgram {
 		}
 
 		@Override
-		public boolean isApplicable(final ProgramConfiguration<S, Pair<T, Boolean>> config) {
-			final var original = underlyingProgramConfig(config);
-			if (!mUnderlying.isApplicable(original)) {
-				return false;
-			}
-			final var succs = mUnderlying.successors(original);
-			return succs.stream().anyMatch(s -> active(original, s).noneMatch(i -> config.getThread(i).getSecond()));
+		public Stream<RuleInstantiation>
+				possibleInstances(final ProgramConfiguration<S, Pair<T, Boolean>> configuration) {
+			final var original = underlyingProgramConfig(configuration);
+			return mUnderlying.possibleInstances(original).filter(instance -> !isSleepBlocked(configuration, instance));
 		}
 
 		@Override
-		public List<ProgramConfiguration<S, Pair<T, Boolean>>>
-				successors(final ProgramConfiguration<S, Pair<T, Boolean>> config) {
-			final var original = underlyingProgramConfig(config);
-			final var succs = mUnderlying.successors(original);
-			return succs.stream().filter(s -> active(original, s).noneMatch(i -> config.getThread(i).getSecond()))
-					.map(s -> updateSleep(config, s, active(original, s))).collect(Collectors.toList());
+		public Stream<ProgramConfiguration<S, Pair<T, Boolean>>> successors(
+				final ProgramConfiguration<S, Pair<T, Boolean>> configuration, final RuleInstantiation instance) {
+			assert !isSleepBlocked(configuration, instance);
+			final var original = underlyingProgramConfig(configuration);
+			return mUnderlying.successors(original, instance)
+					.map(s -> updateSleep(configuration, s, instance.getThreads()));
+		}
+
+		private boolean isSleepBlocked(final ProgramConfiguration<S, Pair<T, Boolean>> configuration,
+				final RuleInstantiation instance) {
+			return SleepReducedProgram.isSleepBlocked(configuration.getThreadConfiguration(), instance);
 		}
 
 		@Override
@@ -140,7 +140,7 @@ public class SleepReducedProgram {
 
 		private ProgramConfiguration<S, Pair<T, Boolean>> updateSleep(
 				final ProgramConfiguration<S, Pair<T, Boolean>> previous, final ProgramConfiguration<S, T> config,
-				final IntStream active) {
+				final int[] active) {
 			final var newThreads = SleepReducedProgram.<T, ProgramConfiguration<S, T>> updateSleep(mProgram,
 					mIndependence, mUnderlying, underlyingProgramConfig(previous),
 					i -> previous.getThread(i).getSecond(), config, active);
@@ -153,10 +153,15 @@ public class SleepReducedProgram {
 		}
 	}
 
+	private static <S> boolean isSleepBlocked(final Configuration<Pair<S, Boolean>> configuration,
+			final RuleInstantiation ruleInstance) {
+		return Arrays.stream(ruleInstance.getThreads()).anyMatch(i -> configuration.getThread(i).getSecond());
+	}
+
 	private static <S, C extends IThreadBasedConfiguration<S, C>> Configuration<Pair<S, Boolean>> updateSleep(
 			final Program<C> program, final IIndependenceRelation<?, IRule<C>> independence, final IRule<C> action,
-			final C previous, final IntPredicate previousSleep, final C config, final IntStream active) {
-		final int maxActive = active.max().getAsInt();
+			final C previous, final IntPredicate previousSleep, final C config, final int[] active) {
+		final int maxActive = Arrays.stream(active).max().getAsInt();
 		ImmutableList<Pair<S, Boolean>> newThreads = ImmutableList.empty();
 		for (int i = config.numberOfThreads() - 1; i >= 0; --i) {
 			final boolean asleep;
@@ -174,12 +179,13 @@ public class SleepReducedProgram {
 
 	private static <C extends IThreadBasedConfiguration<?, C>> Stream<? extends IRule<C>>
 			enabled(final Program<C> program, final C config, final int i) {
-		return program.getRules().stream().filter(r -> r.isApplicable(config))
-				.filter(r -> r.successors(config).stream().anyMatch(s -> active(config, s).anyMatch(j -> j == i)));
+		return program.getRules().stream()
+				.filter(r -> r.possibleInstances(config).filter(instance -> involves(instance, i))
+						.flatMap(instance -> r.successors(config, instance)).findAny().isPresent());
 	}
 
-	private static <C extends IThreadBasedConfiguration<?, C>> IntStream active(final C original, final C succ) {
-		return IntStream.range(0, original.numberOfThreads()).filter(i -> original.getThread(i) != succ.getThread(i));
+	private static boolean involves(final RuleInstantiation instance, final int thread) {
+		return Arrays.stream(instance.getThreads()).anyMatch(i -> i == thread);
 	}
 
 	public static <X> Configuration<X> underlying(final Configuration<Pair<X, Boolean>> config) {

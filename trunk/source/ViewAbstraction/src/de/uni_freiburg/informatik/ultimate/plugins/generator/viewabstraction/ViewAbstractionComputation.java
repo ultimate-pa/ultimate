@@ -174,8 +174,8 @@ public class ViewAbstractionComputation<C, V> {
 
 			mLogger.debug("considering successors for configuration %s", c);
 			for (final var rule : mProgram.getRules()) {
-				if (rule.isApplicable(c)) {
-					final var successors = rule.successors(c);
+				final var successors = rule.successors(c);
+				if (!successors.isEmpty()) {
 					mLogger.debug("  successors for rule %s: %s", rule, successors);
 					result.addAll(successors);
 				}

@@ -26,9 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.function.UnaryOperator;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 public class GlobalVarUpdate<S, T> implements IRule<ProgramConfiguration<S, T>> {
 	private final UnaryOperator<S> mGlobalUpdate;
@@ -42,42 +42,25 @@ public class GlobalVarUpdate<S, T> implements IRule<ProgramConfiguration<S, T>> 
 	}
 
 	@Override
-	public boolean isApplicable(final ProgramConfiguration<S, T> config) {
-		for (int i = 0; i < config.numberOfThreads(); ++i) {
-			final var thread = config.getThread(i);
-			if (thread.equals(mSource)) {
-				return true;
-			}
-		}
-		return false;
+	public Stream<RuleInstantiation> possibleInstances(final ProgramConfiguration<S, T> configuration) {
+		return IntStream.range(0, configuration.numberOfThreads())
+				.filter(i -> configuration.getThread(i).equals(mSource)).mapToObj(RuleInstantiation::new);
 	}
 
 	@Override
-	public List<ProgramConfiguration<S, T>> successors(final ProgramConfiguration<S, T> config) {
-		final var result = new ArrayList<ProgramConfiguration<S, T>>();
+	public Stream<ProgramConfiguration<S, T>> successors(final ProgramConfiguration<S, T> configuration,
+			final RuleInstantiation instance) {
+		assert instance.getThreads().length == 1;
 
-		for (int i = 0; i < config.numberOfThreads(); ++i) {
-			final var thread = config.getThread(i);
-			if (thread.equals(mSource)) {
-				final var succ = apply(config, i);
-				if (succ != null) {
-					result.add(succ);
-				}
-			}
-		}
+		final int thread = instance.getThreads()[0];
 
-		return result;
-	}
-
-	private ProgramConfiguration<S, T> apply(final ProgramConfiguration<S, T> config, final int i) {
-		final var controllerPred = config.getControllerState();
-
+		final var controllerPred = configuration.getControllerState();
 		final var controllerSucc = mGlobalUpdate.apply(controllerPred);
 		if (controllerSucc == null) {
 			return null;
 		}
 
-		return config.replaceController(controllerSucc).replaceThread(i, mTarget);
+		return Stream.of(configuration.replaceController(controllerSucc).replaceThread(thread, mTarget));
 	}
 
 	@Override

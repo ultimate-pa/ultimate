@@ -26,16 +26,68 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public interface IRule<C> {
-	boolean isApplicable(C config);
+	default List<C> successors(final C config) {
+		return possibleInstances(config).flatMap(instance -> successors(config, instance)).collect(Collectors.toList());
+	}
 
-	List<C> successors(C config);
+	Stream<RuleInstantiation> possibleInstances(C configuration);
+
+	Stream<C> successors(C configuration, RuleInstantiation instance);
 
 	int extensionSize();
 
 	default boolean isSpecRule() {
 		return false;
+	}
+
+	public class RuleInstantiation {
+		// TODO replace int by a semantically meaningful type
+		private final int[] mThreads;
+
+		public RuleInstantiation(final int thread) {
+			this(new int[] { thread });
+		}
+
+		public RuleInstantiation(final int[] threads) {
+			mThreads = threads;
+		}
+
+		public int[] getThreads() {
+			return mThreads;
+		}
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + Arrays.hashCode(mThreads);
+			return result;
+		}
+
+		@Override
+		public boolean equals(final Object obj) {
+			if (this == obj) {
+				return true;
+			}
+			if (obj == null) {
+				return false;
+			}
+			if (getClass() != obj.getClass()) {
+				return false;
+			}
+			final RuleInstantiation other = (RuleInstantiation) obj;
+			return Arrays.equals(mThreads, other.mThreads);
+		}
+
+		@Override
+		public String toString() {
+			return "RuleInstantiation [mThreads=" + Arrays.toString(mThreads) + "]";
+		}
 	}
 }

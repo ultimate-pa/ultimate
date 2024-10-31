@@ -26,8 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 public class LocalRule<S> implements IRule<Configuration<S>> {
 	private final S mSource;
@@ -39,21 +39,19 @@ public class LocalRule<S> implements IRule<Configuration<S>> {
 	}
 
 	@Override
-	public boolean isApplicable(final Configuration<S> config) {
-		return config.contains(mSource);
+	public Stream<RuleInstantiation> possibleInstances(final Configuration<S> configuration) {
+		return IntStream.range(0, configuration.numberOfThreads())
+				.filter(i -> configuration.getThread(i).equals(mSource)).mapToObj(i -> new RuleInstantiation(i));
 	}
 
 	@Override
-	public List<Configuration<S>> successors(final Configuration<S> config) {
-		final var result = new ArrayList<Configuration<S>>();
+	public Stream<Configuration<S>> successors(final Configuration<S> configuration, final RuleInstantiation instance) {
+		assert instance.getThreads().length == 1;
 
-		for (int i = 0; i < config.numberOfThreads(); ++i) {
-			final S state = config.getThread(i);
-			if (state.equals(mSource)) {
-				result.add(config.replaceThread(i, mTarget));
-			}
-		}
-		return result;
+		final int involvedThread = instance.getThreads()[0];
+		assert configuration.getThread(involvedThread).equals(mSource);
+
+		return Stream.of(configuration.replaceThread(involvedThread, mTarget));
 	}
 
 	@Override

@@ -55,11 +55,7 @@ public class Explorer<C> {
 			consumer.accept(current);
 
 			for (final var rule : mProgram.getRules()) {
-				if (rule.isApplicable(current)) {
-					final var succs = rule.successors(current);
-					// System.out.printf("successors of %s = %s\n", current, succs);
-					stack.addAll(succs);
-				}
+				stack.addAll(rule.successors(current));
 			}
 		}
 	}

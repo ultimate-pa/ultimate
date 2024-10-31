@@ -26,9 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.cfg;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -55,9 +54,6 @@ public abstract class CfgRule<E extends CodeBlock>
 	// TODO - ParallelComposition (needed for atomic blocks with branching)
 	protected final E mEdge;
 
-	private ProgramConfiguration<Map<IProgramNonOldVar, Object>, CfgThreadLocalState> mLastConfig;
-	private List<ProgramConfiguration<Map<IProgramNonOldVar, Object>, CfgThreadLocalState>> mLastSuccessors;
-
 	public CfgRule(final IUltimateServiceProvider services, final IIcfgSymbolTable symbolTable, final E edge) {
 		mServices = services;
 		mSymbolTable = symbolTable;
@@ -65,35 +61,25 @@ public abstract class CfgRule<E extends CodeBlock>
 	}
 
 	@Override
-	public boolean
-			isApplicable(final ProgramConfiguration<Map<IProgramNonOldVar, Object>, CfgThreadLocalState> config) {
-		return !successors(config).isEmpty();
+	public Stream<RuleInstantiation> possibleInstances(
+			final ProgramConfiguration<Map<IProgramNonOldVar, Object>, CfgThreadLocalState> configuration) {
+		return IntStream.range(0, configuration.numberOfThreads())
+				.filter(thread -> configuration.getThread(thread).getLocation().equals(mEdge.getSource()))
+				.mapToObj(thread -> new RuleInstantiation(thread));
 	}
 
 	@Override
-	public List<ProgramConfiguration<Map<IProgramNonOldVar, Object>, CfgThreadLocalState>>
-			successors(final ProgramConfiguration<Map<IProgramNonOldVar, Object>, CfgThreadLocalState> config) {
-		if (mLastConfig == config) {
-			return mLastSuccessors;
-		}
+	public Stream<ProgramConfiguration<Map<IProgramNonOldVar, Object>, CfgThreadLocalState>> successors(
+			final ProgramConfiguration<Map<IProgramNonOldVar, Object>, CfgThreadLocalState> configuration,
+			final RuleInstantiation instance) {
+		assert instance.getThreads().length == 1;
 
-		final List<ProgramConfiguration<Map<IProgramNonOldVar, Object>, CfgThreadLocalState>> successors =
-				new ArrayList<>();
-		final Map<IProgramNonOldVar, Object> globalState = config.getControllerState();
-		for (int i = 0; i < config.numberOfThreads(); ++i) {
-			final var localState = config.getThread(i);
-			if (!localState.getLocation().equals(mEdge.getSource())) {
-				continue;
-			}
+		final int thread = instance.getThreads()[0];
+		final var localState = configuration.getThread(thread);
+		assert localState.getLocation().equals(mEdge.getSource());
 
-			final var view = new CfgProgramStateView(mSymbolTable, globalState, localState);
-			final int thread = i;
-			apply(view).map(newState -> updateConfig(config, thread, newState)).forEach(successors::add);
-		}
-
-		mLastConfig = config;
-		mLastSuccessors = successors;
-		return successors;
+		final var view = new CfgProgramStateView(mSymbolTable, configuration.getControllerState(), localState);
+		return apply(view).map(newState -> updateConfig(configuration, thread, newState));
 	}
 
 	protected abstract Stream<CfgProgramStateView> apply(CfgProgramStateView stateView);

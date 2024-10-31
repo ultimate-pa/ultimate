@@ -26,11 +26,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.GlobalRule.Quantifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.GlobalRule.Range;
@@ -54,17 +54,31 @@ public class ConditionalBroadcast<S> implements IRule<Configuration<S>> {
 	}
 
 	@Override
-	public boolean isApplicable(final Configuration<S> config) {
-		for (int i = 0; i < config.numberOfThreads(); ++i) {
-			final var state = config.getThread(i);
-			if (state.equals(mSource)) {
-				final boolean conditionSatisfied = checkCondition(config, i);
-				if (conditionSatisfied) {
-					return true;
-				}
+	public Stream<RuleInstantiation> possibleInstances(final Configuration<S> configuration) {
+		return IntStream.range(0, configuration.numberOfThreads())
+				.filter(i -> configuration.getThread(i).equals(mSource) && checkCondition(configuration, i))
+				.mapToObj(RuleInstantiation::new);
+	}
+
+	@Override
+	public Stream<Configuration<S>> successors(final Configuration<S> configuration, final RuleInstantiation instance) {
+		assert instance.getThreads().length == 1;
+
+		final int thread = instance.getThreads()[0];
+		assert configuration.getThread(thread).equals(mSource) && checkCondition(configuration, thread);
+
+		final var subst = new HashMap<Integer, S>();
+		subst.put(thread, mTarget);
+
+		for (int i = 0; i < configuration.numberOfThreads(); ++i) {
+			final var state = configuration.getThread(i);
+			final var newState = mBroadcast.apply(state);
+			if (i != thread && newState != null) {
+				subst.put(i, newState);
 			}
 		}
-		return false;
+
+		return Stream.of(configuration.replace(subst));
 	}
 
 	private boolean checkCondition(final Configuration<S> config, final int index) {
@@ -76,36 +90,6 @@ public class ConditionalBroadcast<S> implements IRule<Configuration<S>> {
 			}
 		}
 		return result;
-	}
-
-	@Override
-	public List<Configuration<S>> successors(final Configuration<S> config) {
-		assert isApplicable(config);
-
-		final var result = new ArrayList<Configuration<S>>();
-		for (int i = 0; i < config.numberOfThreads(); ++i) {
-			final var state = config.getThread(i);
-			if (state.equals(mSource) && checkCondition(config, i)) {
-				result.add(successor(config, i));
-			}
-
-		}
-		return result;
-	}
-
-	private Configuration<S> successor(final Configuration<S> config, final int index) {
-		final var subst = new HashMap<Integer, S>();
-		subst.put(index, mTarget);
-
-		for (int i = 0; i < config.numberOfThreads(); ++i) {
-			final var state = config.getThread(i);
-			final var newState = mBroadcast.apply(state);
-			if (i != index && newState != null) {
-				subst.put(i, newState);
-			}
-		}
-
-		return config.replace(subst);
 	}
 
 	@Override
