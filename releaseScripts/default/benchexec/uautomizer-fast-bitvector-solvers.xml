@@ -49,23 +49,12 @@
     <includesfile>../../../trunk/examples/svcomp/SoftwareSystems-DeviceDriversLinux64.set</includesfile>
     <includesfile>../../../trunk/examples/svcomp/SoftwareSystems-AWS-C-Common.set</includesfile>
     <includesfile>../../../trunk/examples/svcomp/Hardware.set</includesfile>
-    <includesfile>../../../trunk/examples/svcomp/Juliet.set</includesfile>
     <propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
     <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-64bit-Automizer_Bitvector.epf</option>
   </tasks>
 
-  <tasks name="MemSafety32">
-    <includesfile>../../../trunk/examples/svcomp/BitVectors.set</includesfile>
-    <includesfile>../../../trunk/examples/svcomp/Floats.set</includesfile>
-    <includesfile>../../../trunk/examples/svcomp/Hardness.set</includesfile>
-    <propertyfile>../../../trunk/examples/svcomp/properties/valid-memsafety.prp</propertyfile>
-    <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-DerefFreeMemtrack-32bit-Automizer_Bitvector.epf</option>
-  </tasks>
-
   <tasks name="MemSafety64">
     <includesfile>../../../trunk/examples/svcomp/SoftwareSystems-DeviceDriversLinux64.set</includesfile>
-    <includesfile>../../../trunk/examples/svcomp/SoftwareSystems-AWS-C-Common.set</includesfile>
-    <includesfile>../../../trunk/examples/svcomp/Hardware.set</includesfile>
     <includesfile>../../../trunk/examples/svcomp/Juliet.set</includesfile>
     <propertyfile>../../../trunk/examples/svcomp/properties/valid-memsafety.prp</propertyfile>
     <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-DerefFreeMemtrack-64bit-Automizer_Bitvector.epf</option>
@@ -73,18 +62,7 @@
 
   <tasks name="NoOverflow32">
     <includesfile>../../../trunk/examples/svcomp/BitVectors.set</includesfile>
-    <includesfile>../../../trunk/examples/svcomp/Floats.set</includesfile>
-    <includesfile>../../../trunk/examples/svcomp/Hardness.set</includesfile>
     <propertyfile>../../../trunk/examples/svcomp/properties/no-overflow.prp</propertyfile>
     <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Overflow-32bit-Automizer_Bitvector.epf</option>
-  </tasks>
-
-  <tasks name="NoOverflow64">
-    <includesfile>../../../trunk/examples/svcomp/SoftwareSystems-DeviceDriversLinux64.set</includesfile>
-    <includesfile>../../../trunk/examples/svcomp/SoftwareSystems-AWS-C-Common.set</includesfile>
-    <includesfile>../../../trunk/examples/svcomp/Hardware.set</includesfile>
-    <includesfile>../../../trunk/examples/svcomp/Juliet.set</includesfile>
-    <propertyfile>../../../trunk/examples/svcomp/properties/no-overflow.prp</propertyfile>
-    <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Overflow-64bit-Automizer_Bitvector.epf</option>
   </tasks>
 </benchmark>
