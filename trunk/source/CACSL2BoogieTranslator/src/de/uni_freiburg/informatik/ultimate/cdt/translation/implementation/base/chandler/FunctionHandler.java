@@ -123,6 +123,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.OverapproxVariable;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
@@ -712,7 +713,7 @@ public class FunctionHandler {
 				final Statement assign =
 						StatementFactory.constructSingleAssignmentStatement(loc, auxVar.getLhs(), lrValue.getValue());
 				for (final Overapprox oa : in.getOverapprs()) {
-					oa.annotate(assign);
+					new OverapproxVariable(oa.getOverapproximatedLocations()).annotate(assign);
 				}
 				functionCallExpressionResultBuilder.addStatement(assign);
 				translatedParams.add(auxVar.getExp());
