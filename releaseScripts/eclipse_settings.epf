@@ -577,5 +577,7 @@
 /instance/org.eclipse.jdt.ui/sp_cleanup.useless_return=true
 /instance/org.eclipse.jdt.ui/sp_cleanup.valueof_rather_than_instantiation=true
 
+/instance/org.eclipse.ui.ide/WORKSPACE_NAME=Ultimate Program Analysis Framework
+/instance/org.eclipse.ui.ide/tipsAndTricks=false
 
 file_export_version=3.0
