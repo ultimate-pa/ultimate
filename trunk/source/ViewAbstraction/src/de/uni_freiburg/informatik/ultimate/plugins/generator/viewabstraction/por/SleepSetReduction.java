@@ -45,11 +45,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.pro
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
-public class SleepReducedProgram<C, CS> {
+public class SleepSetReduction<C, CS> {
 	private final Map<IRule<C>, IRule<CS>> mEdgeMap = new HashMap<>();
 	private final Program<CS> mProgram;
 
-	private SleepReducedProgram(final Program<C> program, final IIndependenceRelation<?, IRule<C>> independence,
+	private SleepSetReduction(final Program<C> program, final IIndependenceRelation<?, IRule<C>> independence,
 			final IRuleFactory<C, CS> factory) {
 		final var reducedRules = new ArrayList<IRule<CS>>();
 		for (final var rule : program.getRules()) {
@@ -74,13 +74,13 @@ public class SleepReducedProgram<C, CS> {
 
 	public static <S> Program<Configuration<Pair<S, Boolean>>> reduce(final Program<Configuration<S>> program,
 			final IIndependenceRelation<?, IRule<Configuration<S>>> commutativity) {
-		return new SleepReducedProgram<>(program, commutativity, ReducedRule::new).getProgram();
+		return new SleepSetReduction<>(program, commutativity, ReducedRule::new).getProgram();
 	}
 
-	public static <S, T> SleepReducedProgram<ProgramConfiguration<S, T>, ProgramConfiguration<S, Pair<T, Boolean>>>
+	public static <S, T> SleepSetReduction<ProgramConfiguration<S, T>, ProgramConfiguration<S, Pair<T, Boolean>>>
 			reduceWithGlobals(final Program<ProgramConfiguration<S, T>> program,
 					final IIndependenceRelation<?, IRule<ProgramConfiguration<S, T>>> commutativity) {
-		return new SleepReducedProgram<>(program, commutativity, ReducedProgramRule::new);
+		return new SleepSetReduction<>(program, commutativity, ReducedProgramRule::new);
 	}
 
 	public static class ReducedRule<S> implements IRule<Configuration<Pair<S, Boolean>>> {
@@ -118,7 +118,7 @@ public class SleepReducedProgram<C, CS> {
 
 		private Configuration<Pair<S, Boolean>> updateSleep(final Configuration<Pair<S, Boolean>> previous,
 				final Configuration<S> config, final int[] active) {
-			return SleepReducedProgram.updateSleep(mProgram, mIndependence, mUnderlying, underlying(previous),
+			return SleepSetReduction.updateSleep(mProgram, mIndependence, mUnderlying, underlying(previous),
 					i -> previous.getThread(i).getSecond(), config, active);
 		}
 	}
@@ -154,7 +154,7 @@ public class SleepReducedProgram<C, CS> {
 
 		private boolean isSleepBlocked(final ProgramConfiguration<S, Pair<T, Boolean>> configuration,
 				final RuleInstantiation instance) {
-			return SleepReducedProgram.isSleepBlocked(configuration.getThreadConfiguration(), instance);
+			return SleepSetReduction.isSleepBlocked(configuration.getThreadConfiguration(), instance);
 		}
 
 		@Override
@@ -165,7 +165,7 @@ public class SleepReducedProgram<C, CS> {
 		private ProgramConfiguration<S, Pair<T, Boolean>> updateSleep(
 				final ProgramConfiguration<S, Pair<T, Boolean>> previous, final ProgramConfiguration<S, T> config,
 				final int[] active) {
-			final var newThreads = SleepReducedProgram.<T, ProgramConfiguration<S, T>> updateSleep(mProgram,
+			final var newThreads = SleepSetReduction.<T, ProgramConfiguration<S, T>> updateSleep(mProgram,
 					mIndependence, mUnderlying, underlyingProgramConfig(previous),
 					i -> previous.getThread(i).getSecond(), config, active);
 			return new ProgramConfiguration<>(config.getControllerState(), newThreads);

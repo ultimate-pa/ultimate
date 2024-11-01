@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.abstractdomain.IViewAbstraction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.abstractdomain.ProgramViewAbstraction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.por.PersistentSetReduction;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.por.SleepReducedProgram;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.por.SleepSetReduction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.IRule;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.IThreadBasedConfiguration;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.Program;
@@ -101,11 +101,11 @@ public class ViewAbstractionObserver implements IUnmanagedObserver {
 		if (mPreferences.enableSleepSets()) {
 			final var cbIndependence = getOrConstructIndependence();
 			final var reducer =
-					SleepReducedProgram.reduceWithGlobals(program, new CfgRuleIndependence<>(cbIndependence));
+					SleepSetReduction.reduceWithGlobals(program, new CfgRuleIndependence<>(cbIndependence));
 			final var reduced = reducer.getProgram();
 			runAnalysis(new ProgramViewAbstraction<>(), reduced,
-					i -> SleepReducedProgram.wrapInitialProgramConfig(converter.getInitialConfiguration(i)),
-					c -> converter.isErrorView(SleepReducedProgram.underlyingProgramConfig(c)),
+					i -> SleepSetReduction.wrapInitialProgramConfig(converter.getInitialConfiguration(i)),
+					c -> converter.isErrorView(SleepSetReduction.underlyingProgramConfig(c)),
 					cb -> reducer.getReducedRule(converter.getRuleForEdge(cb)), p -> p.getFirst().getLocation());
 			reportIndependenceStatistics();
 			return;
