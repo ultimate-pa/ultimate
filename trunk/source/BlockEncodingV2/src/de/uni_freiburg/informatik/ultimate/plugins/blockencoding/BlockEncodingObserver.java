@@ -88,11 +88,10 @@ public class BlockEncodingObserver implements IUnmanagedObserver {
 		if (root instanceof IIcfg<?>) {
 			final IIcfg<?> originalIcfg = (IIcfg<?>) root;
 			final CfgSmtToolkit toolkit = originalIcfg.getCfgSmtToolkit();
-			final IcfgEdgeBuilder edgeBuilder =
-					new IcfgEdgeBuilder(toolkit, mServices, mSimplificationTechnique);
+			final IcfgEdgeBuilder edgeBuilder = new IcfgEdgeBuilder(toolkit, mServices, mSimplificationTechnique);
 			final BasicIcfg<IcfgLocation> copiedIcfg =
 					new IcfgDuplicator(mLogger, mServices, toolkit.getManagedScript(), mBacktranslator)
-							.copy(originalIcfg, true);
+							.copy(originalIcfg, "_BEv2", true);
 			mResult = new BlockEncoder(mLogger, mServices, mBacktranslator, edgeBuilder, copiedIcfg).getResult();
 			assert IcfgUtils.checkMatchingEntryExitNodes(mResult) : "Entry nodes and exit nodes do not match";
 			return false;

@@ -137,7 +137,7 @@ public final class BlockEncoder {
 		mEdgeBuilder = new IcfgEdgeBuilder(toolkit, mServices, simplificationTechnique);
 		final BasicIcfg<IcfgLocation> copiedIcfg =
 				new IcfgDuplicator(mLogger, mServices, toolkit.getManagedScript(), mBacktranslator).copy(originalIcfg,
-						true);
+						"_BEv2", true);
 		processIcfg(copiedIcfg);
 	}
 

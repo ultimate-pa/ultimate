@@ -63,7 +63,6 @@ public class ConcurrencyInformation {
 		return mThreadInstanceMap;
 	}
 
-
 	/**
 	 * Map is null if program is not a concurrent program.
 	 */
@@ -74,7 +73,4 @@ public class ConcurrencyInformation {
 	public Collection<IIcfgJoinTransitionThreadCurrent<IcfgLocation>> getJoinTransitions() {
 		return mJoinTransitions;
 	}
-
-
-
 }
