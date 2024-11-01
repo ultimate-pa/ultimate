@@ -174,9 +174,8 @@ public class SleepSetReduction<T, C extends IThreadBasedConfiguration<T, C>, CS 
 	private static <S> Configuration<Pair<S, Boolean>> injectSleep(final Configuration<S> config,
 			final IntPredicate sleep) {
 		final var threadStates = IntStream.range(0, config.numberOfThreads())
-				.mapToObj(i -> new Pair<>(config.getThread(i), sleep.test(i)))
-				.collect(Collectors.toCollection(ImmutableList::new));
-		return new Configuration<>(threadStates);
+				.mapToObj(i -> new Pair<>(config.getThread(i), sleep.test(i))).collect(Collectors.toList());
+		return new Configuration<>(new ImmutableList<>(threadStates));
 	}
 
 	public static <X> Configuration<Pair<X, Boolean>> wrapInitial(final Configuration<X> initial) {
