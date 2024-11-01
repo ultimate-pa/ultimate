@@ -44,12 +44,14 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.Un
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.abstraction.IAbstraction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.abstraction.IndependenceRelationWithAbstraction;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.TransferrerWithVariableCache;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.DebugPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.ICopyActionFactory;
 
 /**
  * Provides fluent API to create independence relations for software analysis. Usage of this API usually follows 3
@@ -351,6 +353,13 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 		 */
 		public B threadSeparated() {
 			return mCreator.apply(new ThreadSeparatingIndependenceRelation<>(mRelation));
+		}
+
+		/**
+		 * Pretends that the actions operate over disjoint sets of local variables.
+		 */
+		public B pretendDisjointLocals(final ICopyActionFactory<L> copyFactory, final CfgSmtToolkit csToolkit) {
+			return mCreator.apply(new DisjointLocalsIndependenceRelation<>(mRelation, copyFactory, csToolkit));
 		}
 
 		public <H> B withAbstraction(final IAbstraction<H, L> abstraction, final H level) {
