@@ -46,14 +46,28 @@ public class PersistentRule<T, C extends IThreadBasedConfiguration<T, C>> implem
 	@Override
 	public Stream<RuleInstantiation> possibleInstances(final C configuration) {
 		final var persistentSet = mPersistentSets.persistentSet(configuration);
+		if (persistentSet == null) {
+			return mUnderlying.possibleInstances(configuration);
+		}
 		return mUnderlying.possibleInstances(configuration)
 				.filter(instance -> persistentSet.contains(new Pair<>(mUnderlying, instance)));
 	}
 
 	@Override
 	public Stream<C> successors(final C configuration, final RuleInstantiation instance) {
-		assert mPersistentSets.persistentSet(configuration).contains(new Pair<>(mUnderlying, instance));
+		assert checkInstance(configuration, instance);
 		return mUnderlying.successors(configuration, instance);
+	}
+
+	private boolean checkInstance(final C configuration, final RuleInstantiation instance) {
+		final var persistentSet = mPersistentSets.persistentSet(configuration);
+		if (persistentSet == null) {
+			return true;
+		}
+		final boolean allowed = persistentSet.contains(new Pair<>(mUnderlying, instance));
+		assert allowed : "Cannot compute successors for instantiation " + instance + " of rule " + mUnderlying
+				+ " not in persistent set " + persistentSet + " at configuration " + configuration;
+		return allowed;
 	}
 
 	@Override

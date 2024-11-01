@@ -238,7 +238,8 @@ public class ThreadBasedPersistentSets<LOC extends IcfgLocation> implements IPer
 				.min(Comparator
 						// heuristic: choose smallest maximal SCC
 						.<StronglyConnectedComponent<N>> comparingInt(StronglyConnectedComponent::getNumberOfStates)
-						// fix preference among equally large SCCs
+						// fix preference among equally large SCCs (to be deterministic)
+						.thenComparing(Comparator.comparingInt(scc -> scc.getNodes().hashCode()))
 						.thenComparing(Comparator.comparing(StronglyConnectedComponent::toString)));
 
 		assert persistentScc.isPresent() : "There must be always at least one leaf SCC";

@@ -65,7 +65,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.util.DfsBookkeeping;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -463,9 +462,8 @@ public class IcfgUtils {
 		final Stream<String> threadInstances =
 				icfg.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().values().stream()
 						.flatMap(Collection::stream).map(ThreadInstance::getThreadInstanceName);
-		final String mainThread =
-				DataStructureUtils.getOneAndOnly(icfg.getInitialNodes(), "initial node").getProcedure();
-		return Stream.concat(Stream.of(mainThread), threadInstances).collect(Collectors.toSet());
+		final Stream<String> initialThreads = icfg.getInitialNodes().stream().map(IcfgLocation::getProcedure);
+		return Stream.concat(initialThreads, threadInstances).collect(Collectors.toSet());
 	}
 
 	public static Set<IIcfgForkTransitionThreadCurrent<IcfgLocation>> getForksInLoop(final IIcfg<?> icfg) {

@@ -26,8 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.por;
 
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.IntPredicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -43,23 +45,45 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.pro
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
-public class SleepReducedProgram {
+public class SleepReducedProgram<C, CS> {
+	private final Map<IRule<C>, IRule<CS>> mEdgeMap = new HashMap<>();
+	private final Program<CS> mProgram;
+
+	private SleepReducedProgram(final Program<C> program, final IIndependenceRelation<?, IRule<C>> independence,
+			final IRuleFactory<C, CS> factory) {
+		final var reducedRules = new ArrayList<IRule<CS>>();
+		for (final var rule : program.getRules()) {
+			final var reducedRule = factory.makeRule(rule, independence, program);
+			mEdgeMap.put(rule, reducedRule);
+			reducedRules.add(reducedRule);
+		}
+		mProgram = new Program<>(reducedRules);
+	}
+
+	public Program<CS> getProgram() {
+		return mProgram;
+	}
+
+	public IRule<CS> getReducedRule(final IRule<C> rule) {
+		return mEdgeMap.get(rule);
+	}
+
+	private interface IRuleFactory<C, CS> {
+		IRule<CS> makeRule(IRule<C> rule, IIndependenceRelation<?, IRule<C>> independence, Program<C> program);
+	}
+
 	public static <S> Program<Configuration<Pair<S, Boolean>>> reduce(final Program<Configuration<S>> program,
 			final IIndependenceRelation<?, IRule<Configuration<S>>> commutativity) {
-		final List<IRule<Configuration<Pair<S, Boolean>>>> reducedRules = program.getRules().stream()
-				.map(r -> new ReducedRule<>(r, commutativity, program)).collect(Collectors.toList());
-		return new Program<>(reducedRules);
+		return new SleepReducedProgram<>(program, commutativity, ReducedRule::new).getProgram();
 	}
 
-	public static <S, T> Program<ProgramConfiguration<S, Pair<T, Boolean>>> reduceWithGlobals(
-			final Program<ProgramConfiguration<S, T>> program,
-			final IIndependenceRelation<?, IRule<ProgramConfiguration<S, T>>> commutativity) {
-		final List<IRule<ProgramConfiguration<S, Pair<T, Boolean>>>> reducedRules = program.getRules().stream()
-				.map(r -> new ReducedProgramRule<>(r, commutativity, program)).collect(Collectors.toList());
-		return new Program<>(reducedRules);
+	public static <S, T> SleepReducedProgram<ProgramConfiguration<S, T>, ProgramConfiguration<S, Pair<T, Boolean>>>
+			reduceWithGlobals(final Program<ProgramConfiguration<S, T>> program,
+					final IIndependenceRelation<?, IRule<ProgramConfiguration<S, T>>> commutativity) {
+		return new SleepReducedProgram<>(program, commutativity, ReducedProgramRule::new);
 	}
 
-	private static class ReducedRule<S> implements IRule<Configuration<Pair<S, Boolean>>> {
+	public static class ReducedRule<S> implements IRule<Configuration<Pair<S, Boolean>>> {
 		private final IRule<Configuration<S>> mUnderlying;
 		private final IIndependenceRelation<?, IRule<Configuration<S>>> mIndependence;
 		private final Program<Configuration<S>> mProgram;
@@ -99,7 +123,7 @@ public class SleepReducedProgram {
 		}
 	}
 
-	private static class ReducedProgramRule<S, T> implements IRule<ProgramConfiguration<S, Pair<T, Boolean>>> {
+	public static class ReducedProgramRule<S, T> implements IRule<ProgramConfiguration<S, Pair<T, Boolean>>> {
 		private final IRule<ProgramConfiguration<S, T>> mUnderlying;
 		private final IIndependenceRelation<?, IRule<ProgramConfiguration<S, T>>> mIndependence;
 		private final Program<ProgramConfiguration<S, T>> mProgram;

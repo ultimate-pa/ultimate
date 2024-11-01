@@ -149,7 +149,7 @@ public class ViewTest {
 	private static <C, S> void abstractFpReducedProgram(final ITestProgram<ProgramConfiguration<C, S>> program,
 			final IIndependenceRelation<?, IRule<ProgramConfiguration<C, S>>> comm, final int parameter,
 			final int maxIterations) {
-		final var reduced = SleepReducedProgram.reduceWithGlobals(program.getTransitions(), comm);
+		final var reduced = SleepReducedProgram.reduceWithGlobals(program.getTransitions(), comm).getProgram();
 		final var testReduced = new ITestProgram<ProgramConfiguration<C, Pair<S, Boolean>>>() {
 			@Override
 			public Program<ProgramConfiguration<C, Pair<S, Boolean>>> getTransitions() {

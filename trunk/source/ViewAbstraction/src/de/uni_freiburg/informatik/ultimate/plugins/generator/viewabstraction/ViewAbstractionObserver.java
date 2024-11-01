@@ -26,29 +26,38 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction;
 
+import java.util.ArrayList;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.IntFunction;
 import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovableResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.abstractdomain.IViewAbstraction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.abstractdomain.ProgramViewAbstraction;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.por.PersistentSetSupport;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.por.PersistentSetReduction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.por.SleepReducedProgram;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.IRule;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.IThreadBasedConfiguration;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.Program;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.cfg.CfgProgramConverter;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.cfg.CfgRuleIndependence;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.cfg.CfgThreadLocalState;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
 public class ViewAbstractionObserver implements IUnmanagedObserver {
 	private final IUltimateServiceProvider mServices;
@@ -91,42 +100,60 @@ public class ViewAbstractionObserver implements IUnmanagedObserver {
 
 		if (mPreferences.enableSleepSets()) {
 			final var cbIndependence = getOrConstructIndependence();
-			final var reduced =
+			final var reducer =
 					SleepReducedProgram.reduceWithGlobals(program, new CfgRuleIndependence<>(cbIndependence));
+			final var reduced = reducer.getProgram();
 			runAnalysis(new ProgramViewAbstraction<>(), reduced,
 					i -> SleepReducedProgram.wrapInitialProgramConfig(converter.getInitialConfiguration(i)),
-					c -> converter.isErrorView(SleepReducedProgram.underlyingProgramConfig(c)));
+					c -> converter.isErrorView(SleepReducedProgram.underlyingProgramConfig(c)),
+					cb -> reducer.getReducedRule(converter.getRuleForEdge(cb)), p -> p.getFirst().getLocation());
+			reportIndependenceStatistics();
 			return;
 		}
 
-		runAnalysis(new ProgramViewAbstraction<>(), program, converter::getInitialConfiguration,
-				converter::isErrorView);
+		runAnalysis(new ProgramViewAbstraction<>(), program, converter::getInitialConfiguration, converter::isErrorView,
+				converter::getRuleForEdge, CfgThreadLocalState::getLocation);
+		reportIndependenceStatistics();
 	}
 
-	private <V, C> void runAnalysis(final IViewAbstraction<C, V> viewAbstraction, final Program<C> program,
-			final IntFunction<V> makeInitial, final Predicate<V> isBadView) {
+	private <V, T, C extends IThreadBasedConfiguration<T, C>> void runAnalysis(
+			final IViewAbstraction<C, V> viewAbstraction, final Program<C> program, final IntFunction<V> makeInitial,
+			final Predicate<V> isBadView, final Function<CodeBlock, IRule<C>> edge2Rule,
+			final Function<T, IcfgLocation> getThreadLocation) {
 		final int maxLevel = mPreferences.maxAbstractionLevel();
 		for (int k = mPreferences.minAbstractionLevel(); maxLevel <= 0 || k <= maxLevel; ++k) {
 			mLogger.info("Computing view abstraction at level %d", k);
+			final var iterationStatistics = new ArrayList<IStatisticsDataProvider>();
 
+			final Program<C> analysedProgram;
 			if (mPreferences.enablePersistentSets()) {
+				mLogger.info("Persistent set reduction is enabled. Analysing persistent set-instrumented program.");
+
 				// compute the number of threads to be considered for persistent sets
 				final int delta = program.getExtensionSize();
 				final int extendedThreads = k + delta;
 
-				final var persistent =
-						new PersistentSetSupport(mServices, mIcfg, getOrConstructIndependence(), extendedThreads);
-				final var persistentSets = persistent.getPersistentSets();
-
-				// TODO create persistent set-instrumented program
-				throw new UnsupportedOperationException("not yet implemented");
+				// create a persistent set-instrumented program
+				final var persistent = new PersistentSetReduction<>(mServices, mIcfg, program,
+						getOrConstructIndependence(), extendedThreads, getThreadLocation, edge2Rule);
+				analysedProgram = persistent.getReducedProgram();
+				iterationStatistics.add(persistent.getStatistics());
+			} else {
+				analysedProgram = program;
 			}
 
 			final var initial = makeInitial.apply(k);
-			final var runner = new ViewAbstractionComputation<>(mServices, viewAbstraction, k, program, Set.of(initial),
-					isBadView::test);
+			final var runner = new ViewAbstractionComputation<>(mServices, viewAbstraction, k, analysedProgram,
+					Set.of(initial), isBadView::test);
 			final var status = runner.run();
 			final var currentAbstraction = runner.getCurrentAbstraction();
+
+			for (final var stats : iterationStatistics) {
+				final var statistics = new StatisticsData();
+				statistics.aggregateBenchmarkData(stats);
+				mServices.getResultService().reportResult(Activator.PLUGIN_ID,
+						new StatisticsResult<>(Activator.PLUGIN_ID, "iteration " + k, statistics));
+			}
 
 			switch (status) {
 			case CANCELLED:
@@ -160,6 +187,16 @@ public class ViewAbstractionObserver implements IUnmanagedObserver {
 						+ " was reached without proving correctness or detecting a bug"));
 	}
 
+	private void reportIndependenceStatistics() {
+		if (mCodeBlockIndependence == null) {
+			return;
+		}
+		final var statistics = new StatisticsData();
+		statistics.aggregateBenchmarkData(mCodeBlockIndependence.getStatistics());
+		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
+				new StatisticsResult<>(Activator.PLUGIN_ID, "independence statistics", statistics));
+	}
+
 	public IElement getRootOfNewModel() {
 		return mRootOfNewModel;
 	}
@@ -176,6 +213,8 @@ public class ViewAbstractionObserver implements IUnmanagedObserver {
 		return false;
 	}
 
+	// FIXME Independence must work on instantiated rules in order to properly handle local variables
+	// TODO Take inspiration from IndependenceChecker::instantiate on sleep-threadmodular branch
 	private IIndependenceRelation<?, ? super CodeBlock> getOrConstructIndependence() {
 		if (mCodeBlockIndependence == null) {
 			final var settings = mPreferences.independenceSettings();

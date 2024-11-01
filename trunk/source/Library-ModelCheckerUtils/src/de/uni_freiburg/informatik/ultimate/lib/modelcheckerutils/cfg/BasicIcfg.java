@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -217,6 +218,10 @@ public class BasicIcfg<LOC extends IcfgLocation> extends BasePayloadContainer im
 		mLoopLocations.remove(loc);
 		mInitialNodes.remove(loc);
 		return true;
+	}
+
+	public void makeNonInitial(final Collection<IcfgLocation> locs) {
+		mInitialNodes.removeAll(locs);
 	}
 
 	private static String getProcedure(final IcfgLocation loc) {
