@@ -165,7 +165,7 @@ public class ViewAbstractionTestSuite extends UltimateTestSuite {
 		if (taskDefinition.containsKey("options")) {
 			final var options = (Map<String, Object>) taskDefinition.get("options");
 			if (options.containsKey("timeout")) {
-				return (long) options.get("timeout") * 1000L;
+				return (int) options.get("timeout") * 1000L;
 			}
 		}
 		return DEFAULT_TIMEOUT * 1000L;

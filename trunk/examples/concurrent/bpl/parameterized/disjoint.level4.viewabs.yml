@@ -1,0 +1,15 @@
+format_version: '2.0'
+
+input_files: 'disjoint.bpl'
+
+properties:
+  - property_file: ../properties/unreach-call.prp
+    expected_verdict: true
+
+options:
+  language: BPL
+  timeout: 150
+  de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction:
+    Minimum view abstraction level: 4
+    Maximum view abstraction level: 4
+
