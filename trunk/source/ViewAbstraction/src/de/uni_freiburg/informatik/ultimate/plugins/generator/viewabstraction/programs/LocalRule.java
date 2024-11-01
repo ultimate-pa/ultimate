@@ -39,19 +39,14 @@ public class LocalRule<S> implements IRule<Configuration<S>> {
 	}
 
 	@Override
-	public Stream<RuleInstantiation> possibleInstances(final Configuration<S> configuration) {
+	public Stream<TransitionProvider<Configuration<S>>> outgoingTransitions(final Configuration<S> configuration) {
 		return IntStream.range(0, configuration.numberOfThreads())
-				.filter(i -> configuration.getThread(i).equals(mSource)).mapToObj(i -> new RuleInstantiation(i));
+				.filter(i -> configuration.getThread(i).equals(mSource))
+				.mapToObj(i -> new TransitionProvider<>(configuration, i, this::successors));
 	}
 
-	@Override
-	public Stream<Configuration<S>> successors(final Configuration<S> configuration, final RuleInstantiation instance) {
-		assert instance.getThreads().length == 1;
-
-		final int involvedThread = instance.getThreads()[0];
-		assert configuration.getThread(involvedThread).equals(mSource);
-
-		return Stream.of(configuration.replaceThread(involvedThread, mTarget));
+	private Stream<Configuration<S>> successors(final Configuration<S> configuration, final int thread) {
+		return Stream.of(configuration).map(c -> c.replaceThread(thread, mTarget));
 	}
 
 	@Override

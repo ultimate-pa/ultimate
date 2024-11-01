@@ -42,22 +42,19 @@ public class GlobalVarUpdate<S, T> implements IRule<ProgramConfiguration<S, T>> 
 	}
 
 	@Override
-	public Stream<RuleInstantiation> possibleInstances(final ProgramConfiguration<S, T> configuration) {
+	public Stream<TransitionProvider<ProgramConfiguration<S, T>>>
+			outgoingTransitions(final ProgramConfiguration<S, T> configuration) {
 		return IntStream.range(0, configuration.numberOfThreads())
-				.filter(i -> configuration.getThread(i).equals(mSource)).mapToObj(RuleInstantiation::new);
+				.filter(i -> configuration.getThread(i).equals(mSource))
+				.mapToObj(thread -> new TransitionProvider<>(configuration, thread, this::successors));
 	}
 
-	@Override
-	public Stream<ProgramConfiguration<S, T>> successors(final ProgramConfiguration<S, T> configuration,
-			final RuleInstantiation instance) {
-		assert instance.getThreads().length == 1;
-
-		final int thread = instance.getThreads()[0];
-
+	private Stream<ProgramConfiguration<S, T>> successors(final ProgramConfiguration<S, T> configuration,
+			final int thread) {
 		final var controllerPred = configuration.getControllerState();
 		final var controllerSucc = mGlobalUpdate.apply(controllerPred);
 		if (controllerSucc == null) {
-			return null;
+			return Stream.of();
 		}
 
 		return Stream.of(configuration.replaceController(controllerSucc).replaceThread(thread, mTarget));

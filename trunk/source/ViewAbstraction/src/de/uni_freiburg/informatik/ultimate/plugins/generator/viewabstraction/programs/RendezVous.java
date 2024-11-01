@@ -39,12 +39,7 @@ public class RendezVous<S> implements IRule<Configuration<S>> {
 	}
 
 	@Override
-	public Stream<RuleInstantiation> possibleInstances(final Configuration<S> configuration) {
-		throw new UnsupportedOperationException("not yet implemented");
-	}
-
-	@Override
-	public Stream<Configuration<S>> successors(final Configuration<S> configuration, final RuleInstantiation instance) {
+	public Stream<TransitionProvider<Configuration<S>>> outgoingTransitions(final Configuration<S> configuration) {
 		throw new UnsupportedOperationException("not yet implemented");
 	}
 

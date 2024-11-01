@@ -36,10 +36,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.pro
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.GlobalRule.Quantifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.GlobalRule.Range;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.IRule;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.IRule.RuleInstance;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.LocalRule;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.Program;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.RendezVous;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.test.ListIndependence;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.test.InstanceListIndependence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.test.ViewTest;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.test.ViewTest.ITestProgram;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -72,8 +73,8 @@ public class Illinois implements ITestProgram<Configuration<Illinois.Ill>> {
 
 			);
 
-	public <S> IIndependenceRelation<S, IRule<Configuration<Ill>>> getIndependence() {
-		return new ListIndependence<>(comm);
+	public <S> IIndependenceRelation<S, RuleInstance<Configuration<Ill>>> getIndependence() {
+		return new InstanceListIndependence<>(comm);
 	}
 
 	@Override

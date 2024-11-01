@@ -35,8 +35,9 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.II
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.BroadcastRule;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.Configuration;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.IRule;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.IRule.RuleInstance;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.Program;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.test.ListIndependence;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.test.InstanceListIndependence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.test.ViewTest.ITestProgram;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.test.systems.Mutex.IncDecLocation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
@@ -45,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class MutexBroadcast implements ITestProgram<Configuration<Pair<IncDecLocation, Integer>>> {
 	private final int mBound;
 	private final Program<Configuration<Pair<IncDecLocation, Integer>>> mProgram;
-	private IIndependenceRelation<Object, IRule<Configuration<Pair<IncDecLocation, Integer>>>> mComm;
+	private IIndependenceRelation<Object, RuleInstance<Configuration<Pair<IncDecLocation, Integer>>>> mComm;
 
 	public MutexBroadcast(final int bound) {
 		mBound = bound;
@@ -79,7 +80,7 @@ public class MutexBroadcast implements ITestProgram<Configuration<Pair<IncDecLoc
 			}
 		}
 
-		mComm = new ListIndependence<>(comm);
+		mComm = new InstanceListIndependence<>(comm);
 		return new Program<>(rules);
 	}
 
@@ -96,7 +97,7 @@ public class MutexBroadcast implements ITestProgram<Configuration<Pair<IncDecLoc
 		return config.stream().anyMatch(s -> s.getFirst() == IncDecLocation.PLUS && s.getSecond() == 0);
 	}
 
-	public IIndependenceRelation<Object, IRule<Configuration<Pair<IncDecLocation, Integer>>>> getIndependence() {
+	public IIndependenceRelation<Object, RuleInstance<Configuration<Pair<IncDecLocation, Integer>>>> getIndependence() {
 		return mComm;
 	}
 

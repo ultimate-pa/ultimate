@@ -42,8 +42,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceBuilder;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.ICopyActionFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.abstractdomain.IViewAbstraction;
@@ -56,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.pro
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.cfg.CfgProgramConverter;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.cfg.CfgRuleIndependence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.cfg.CfgThreadLocalState;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.SerialProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
@@ -68,7 +72,7 @@ public class ViewAbstractionObserver implements IUnmanagedObserver {
 	private IElement mRootOfNewModel;
 	private boolean mLastModel;
 
-	private IIndependenceRelation<?, ? super CodeBlock> mCodeBlockIndependence;
+	private IIndependenceRelation<?, IcfgEdge> mIcfgIndependence;
 
 	public ViewAbstractionObserver(final IUltimateServiceProvider services) {
 		mServices = services;
@@ -99,13 +103,12 @@ public class ViewAbstractionObserver implements IUnmanagedObserver {
 		final var program = converter.getProgram();
 
 		if (mPreferences.enableSleepSets()) {
-			final var cbIndependence = getOrConstructIndependence();
-			final var reducer =
-					SleepSetReduction.reduceWithGlobals(program, new CfgRuleIndependence<>(cbIndependence));
+			final var cbIndependence = getOrConstructIcfgIndependence();
+			final var reducer = SleepSetReduction.reduceWithGlobals(program, new CfgRuleIndependence<>(cbIndependence));
 			final var reduced = reducer.getProgram();
 			runAnalysis(new ProgramViewAbstraction<>(), reduced,
 					i -> SleepSetReduction.wrapInitialProgramConfig(converter.getInitialConfiguration(i)),
-					c -> converter.isErrorView(SleepSetReduction.underlyingProgramConfig(c)),
+					c -> converter.isErrorView(SleepSetReduction.underlying(c)),
 					cb -> reducer.getReducedRule(converter.getRuleForEdge(cb)), p -> p.getFirst().getLocation());
 			reportIndependenceStatistics();
 			return;
@@ -135,7 +138,7 @@ public class ViewAbstractionObserver implements IUnmanagedObserver {
 
 				// create a persistent set-instrumented program
 				final var persistent = new PersistentSetReduction<>(mServices, mIcfg, program,
-						getOrConstructIndependence(), extendedThreads, getThreadLocation, edge2Rule);
+						getOrConstructIcfgIndependence(), extendedThreads, getThreadLocation, edge2Rule);
 				analysedProgram = persistent.getReducedProgram();
 				iterationStatistics.add(persistent.getStatistics());
 			} else {
@@ -188,11 +191,11 @@ public class ViewAbstractionObserver implements IUnmanagedObserver {
 	}
 
 	private void reportIndependenceStatistics() {
-		if (mCodeBlockIndependence == null) {
+		if (mIcfgIndependence == null) {
 			return;
 		}
 		final var statistics = new StatisticsData();
-		statistics.aggregateBenchmarkData(mCodeBlockIndependence.getStatistics());
+		statistics.aggregateBenchmarkData(mIcfgIndependence.getStatistics());
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
 				new StatisticsResult<>(Activator.PLUGIN_ID, "independence statistics", statistics));
 	}
@@ -213,16 +216,17 @@ public class ViewAbstractionObserver implements IUnmanagedObserver {
 		return false;
 	}
 
-	// FIXME Independence must work on instantiated rules in order to properly handle local variables
-	// TODO Take inspiration from IndependenceChecker::instantiate on sleep-threadmodular branch
-	private IIndependenceRelation<?, ? super CodeBlock> getOrConstructIndependence() {
-		if (mCodeBlockIndependence == null) {
+	private IIndependenceRelation<?, IcfgEdge> getOrConstructIcfgIndependence() {
+		if (mIcfgIndependence == null) {
 			final var settings = mPreferences.independenceSettings();
-			mCodeBlockIndependence = IndependenceBuilder
-					.semantic(mServices, mIcfg.getCfgSmtToolkit().getManagedScript(), settings.useConditional(),
-							!settings.useSemiCommutativity())
-					.withSyntacticCheck().cached().build();
+			final var edgeFactory = new IcfgEdgeFactory(new SerialProvider());
+			final ICopyActionFactory<IcfgEdge> copyFactory = (edge, tf, tfBE) -> edgeFactory
+					.createInternalTransition(edge.getSource(), edge.getTarget(), null, tf);
+			mIcfgIndependence = IndependenceBuilder
+					.<IcfgEdge> semantic(mServices, mIcfg.getCfgSmtToolkit().getManagedScript(),
+							settings.useConditional(), !settings.useSemiCommutativity())
+					.withSyntacticCheck().pretendDisjointLocals(copyFactory, mIcfg.getCfgSmtToolkit()).cached().build();
 		}
-		return mCodeBlockIndependence;
+		return mIcfgIndependence;
 	}
 }

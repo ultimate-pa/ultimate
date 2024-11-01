@@ -61,23 +61,18 @@ public abstract class CfgRule<E extends CodeBlock>
 	}
 
 	@Override
-	public Stream<RuleInstantiation> possibleInstances(
-			final ProgramConfiguration<Map<IProgramNonOldVar, Object>, CfgThreadLocalState> configuration) {
+	public Stream<TransitionProvider<ProgramConfiguration<Map<IProgramNonOldVar, Object>, CfgThreadLocalState>>>
+			outgoingTransitions(
+					final ProgramConfiguration<Map<IProgramNonOldVar, Object>, CfgThreadLocalState> configuration) {
 		return IntStream.range(0, configuration.numberOfThreads())
 				.filter(thread -> configuration.getThread(thread).getLocation().equals(mEdge.getSource()))
-				.mapToObj(thread -> new RuleInstantiation(thread));
+				.mapToObj(thread -> new TransitionProvider<>(configuration, thread, this::successors));
 	}
 
-	@Override
-	public Stream<ProgramConfiguration<Map<IProgramNonOldVar, Object>, CfgThreadLocalState>> successors(
+	private Stream<ProgramConfiguration<Map<IProgramNonOldVar, Object>, CfgThreadLocalState>> successors(
 			final ProgramConfiguration<Map<IProgramNonOldVar, Object>, CfgThreadLocalState> configuration,
-			final RuleInstantiation instance) {
-		assert instance.getThreads().length == 1;
-
-		final int thread = instance.getThreads()[0];
+			final int thread) {
 		final var localState = configuration.getThread(thread);
-		assert localState.getLocation().equals(mEdge.getSource());
-
 		final var view = new CfgProgramStateView(mSymbolTable, configuration.getControllerState(), localState);
 		return apply(view).map(newState -> updateConfig(configuration, thread, newState));
 	}

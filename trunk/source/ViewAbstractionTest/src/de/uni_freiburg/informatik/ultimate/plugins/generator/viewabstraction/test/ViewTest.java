@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.abs
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.abstractdomain.SimpleViewAbstraction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.por.SleepSetReduction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.Configuration;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.IRule;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.IRule.RuleInstance;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.Program;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.ProgramConfiguration;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.test.systems.BurnsRezine;
@@ -112,9 +112,9 @@ public class ViewTest {
 	}
 
 	private static <S> void abstractFpReduced(final ITestProgram<Configuration<S>> program,
-			final IIndependenceRelation<?, IRule<Configuration<S>>> comm, final int parameter,
+			final IIndependenceRelation<?, RuleInstance<Configuration<S>>> comm, final int parameter,
 			final int maxIterations) {
-		final var reduced = SleepSetReduction.reduce(program.getTransitions(), comm);
+		final var reduced = SleepSetReduction.reduce(program.getTransitions(), comm).getProgram();
 		final var testReduced = new ITestProgram<Configuration<Pair<S, Boolean>>>() {
 			@Override
 			public Program<Configuration<Pair<S, Boolean>>> getTransitions() {
@@ -147,7 +147,7 @@ public class ViewTest {
 	}
 
 	private static <C, S> void abstractFpReducedProgram(final ITestProgram<ProgramConfiguration<C, S>> program,
-			final IIndependenceRelation<?, IRule<ProgramConfiguration<C, S>>> comm, final int parameter,
+			final IIndependenceRelation<?, RuleInstance<ProgramConfiguration<C, S>>> comm, final int parameter,
 			final int maxIterations) {
 		final var reduced = SleepSetReduction.reduceWithGlobals(program.getTransitions(), comm).getProgram();
 		final var testReduced = new ITestProgram<ProgramConfiguration<C, Pair<S, Boolean>>>() {
@@ -163,7 +163,7 @@ public class ViewTest {
 
 			@Override
 			public boolean isBad(final ProgramConfiguration<C, Pair<S, Boolean>> config) {
-				return program.isBad(SleepSetReduction.underlyingProgramConfig(config));
+				return program.isBad(SleepSetReduction.underlying(config));
 			}
 		};
 
@@ -178,7 +178,7 @@ public class ViewTest {
 		logger.info(fp);
 
 		logger.info("projected fixed point: %s",
-				fp.stream().map(SleepSetReduction::underlyingProgramConfig).distinct().collect(Collectors.toList()));
+				fp.stream().map(SleepSetReduction::underlying).distinct().collect(Collectors.toList()));
 	}
 
 	@Test

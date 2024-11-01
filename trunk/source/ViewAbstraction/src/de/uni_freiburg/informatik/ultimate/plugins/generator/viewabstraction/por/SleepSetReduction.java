@@ -30,30 +30,36 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.function.IntPredicate;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation.Dependence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.Configuration;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.IRule;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.IRule.RuleInstantiation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.IRule.RuleInstance;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.IThreadBasedConfiguration;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.Program;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.ProgramConfiguration;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
-public class SleepSetReduction<C, CS> {
+public class SleepSetReduction<T, C extends IThreadBasedConfiguration<T, C>, CS extends IThreadBasedConfiguration<Pair<T, Boolean>, CS>> {
+	private static final boolean CHECK_EXECUTABLE_COMMUTATIVITY_ONLY = true;
+
 	private final Map<IRule<C>, IRule<CS>> mEdgeMap = new HashMap<>();
 	private final Program<CS> mProgram;
 
-	private SleepSetReduction(final Program<C> program, final IIndependenceRelation<?, IRule<C>> independence,
-			final IRuleFactory<C, CS> factory) {
+	private SleepSetReduction(final Program<C> program, final IIndependenceRelation<?, RuleInstance<C>> independence,
+			final Function<CS, C> projection, final BiFunction<C, IntPredicate, CS> injectSleep) {
 		final var reducedRules = new ArrayList<IRule<CS>>();
 		for (final var rule : program.getRules()) {
-			final var reducedRule = factory.makeRule(rule, independence, program);
+			final var reducedRule = new SleepRule<>(rule, independence, program, projection, injectSleep);
 			mEdgeMap.put(rule, reducedRule);
 			reducedRules.add(reducedRule);
 		}
@@ -68,47 +74,44 @@ public class SleepSetReduction<C, CS> {
 		return mEdgeMap.get(rule);
 	}
 
-	private interface IRuleFactory<C, CS> {
-		IRule<CS> makeRule(IRule<C> rule, IIndependenceRelation<?, IRule<C>> independence, Program<C> program);
+	public static <S> SleepSetReduction<S, Configuration<S>, Configuration<Pair<S, Boolean>>> reduce(
+			final Program<Configuration<S>> program,
+			final IIndependenceRelation<?, RuleInstance<Configuration<S>>> commutativity) {
+		return new SleepSetReduction<>(program, commutativity, SleepSetReduction::underlying,
+				SleepSetReduction::injectSleep);
 	}
 
-	public static <S> Program<Configuration<Pair<S, Boolean>>> reduce(final Program<Configuration<S>> program,
-			final IIndependenceRelation<?, IRule<Configuration<S>>> commutativity) {
-		return new SleepSetReduction<>(program, commutativity, ReducedRule::new).getProgram();
+	public static <G, T> SleepSetReduction<T, ProgramConfiguration<G, T>, ProgramConfiguration<G, Pair<T, Boolean>>>
+			reduceWithGlobals(final Program<ProgramConfiguration<G, T>> program,
+					final IIndependenceRelation<?, RuleInstance<ProgramConfiguration<G, T>>> commutativity) {
+		return new SleepSetReduction<>(program, commutativity, SleepSetReduction::underlying,
+				SleepSetReduction::injectSleep);
 	}
 
-	public static <S, T> SleepSetReduction<ProgramConfiguration<S, T>, ProgramConfiguration<S, Pair<T, Boolean>>>
-			reduceWithGlobals(final Program<ProgramConfiguration<S, T>> program,
-					final IIndependenceRelation<?, IRule<ProgramConfiguration<S, T>>> commutativity) {
-		return new SleepSetReduction<>(program, commutativity, ReducedProgramRule::new);
-	}
+	private static class SleepRule<T, C extends IThreadBasedConfiguration<T, C>, CS extends IThreadBasedConfiguration<Pair<T, Boolean>, CS>>
+			implements IRule<CS> {
+		private final IRule<C> mUnderlying;
+		private final IIndependenceRelation<?, RuleInstance<C>> mIndependence;
+		private final Program<C> mProgram;
 
-	public static class ReducedRule<S> implements IRule<Configuration<Pair<S, Boolean>>> {
-		private final IRule<Configuration<S>> mUnderlying;
-		private final IIndependenceRelation<?, IRule<Configuration<S>>> mIndependence;
-		private final Program<Configuration<S>> mProgram;
+		private final Function<CS, C> mProjection;
+		private final BiFunction<C, IntPredicate, CS> mInjectSleep;
 
-		public ReducedRule(final IRule<Configuration<S>> underlying,
-				final IIndependenceRelation<?, IRule<Configuration<S>>> independence,
-				final Program<Configuration<S>> program) {
+		public SleepRule(final IRule<C> underlying, final IIndependenceRelation<?, RuleInstance<C>> independence,
+				final Program<C> program, final Function<CS, C> projection,
+				final BiFunction<C, IntPredicate, CS> injectSleep) {
 			mUnderlying = underlying;
 			mIndependence = independence;
 			mProgram = program;
+			mProjection = projection;
+			mInjectSleep = injectSleep;
 		}
 
 		@Override
-		public Stream<RuleInstantiation> possibleInstances(final Configuration<Pair<S, Boolean>> configuration) {
-			final var original = underlying(configuration);
-			return mUnderlying.possibleInstances(original).filter(instance -> !isSleepBlocked(configuration, instance));
-		}
-
-		@Override
-		public Stream<Configuration<Pair<S, Boolean>>> successors(final Configuration<Pair<S, Boolean>> configuration,
-				final RuleInstantiation instance) {
-			assert !isSleepBlocked(configuration, instance);
-			final var original = underlying(configuration);
-			return mUnderlying.successors(original, instance)
-					.map(s -> updateSleep(configuration, s, instance.getThreads()));
+		public Stream<TransitionProvider<CS>> outgoingTransitions(final CS configuration) {
+			return mUnderlying.outgoingTransitions(mProjection.apply(configuration))
+					.filter(tp -> !isSleepBlocked(configuration, tp))
+					.map(tp -> wrapTransitionProvider(configuration, tp));
 		}
 
 		@Override
@@ -116,100 +119,41 @@ public class SleepSetReduction<C, CS> {
 			return mUnderlying.extensionSize();
 		}
 
-		private Configuration<Pair<S, Boolean>> updateSleep(final Configuration<Pair<S, Boolean>> previous,
-				final Configuration<S> config, final int[] active) {
-			return SleepSetReduction.updateSleep(mProgram, mIndependence, mUnderlying, underlying(previous),
-					i -> previous.getThread(i).getSecond(), config, active);
-		}
-	}
-
-	public static class ReducedProgramRule<S, T> implements IRule<ProgramConfiguration<S, Pair<T, Boolean>>> {
-		private final IRule<ProgramConfiguration<S, T>> mUnderlying;
-		private final IIndependenceRelation<?, IRule<ProgramConfiguration<S, T>>> mIndependence;
-		private final Program<ProgramConfiguration<S, T>> mProgram;
-
-		public ReducedProgramRule(final IRule<ProgramConfiguration<S, T>> underlying,
-				final IIndependenceRelation<?, IRule<ProgramConfiguration<S, T>>> independence,
-				final Program<ProgramConfiguration<S, T>> program) {
-			mUnderlying = underlying;
-			mIndependence = independence;
-			mProgram = program;
+		private boolean isSleepBlocked(final CS configuration, final TransitionProvider<C> transitionProvider) {
+			return Arrays.stream(transitionProvider.getThreads()).anyMatch(i -> configuration.getThread(i).getSecond());
 		}
 
-		@Override
-		public Stream<RuleInstantiation>
-				possibleInstances(final ProgramConfiguration<S, Pair<T, Boolean>> configuration) {
-			final var original = underlyingProgramConfig(configuration);
-			return mUnderlying.possibleInstances(original).filter(instance -> !isSleepBlocked(configuration, instance));
+		private TransitionProvider<CS> wrapTransitionProvider(final CS predecessor, final TransitionProvider<C> tp) {
+			return new TransitionProvider<>(predecessor, tp.getThreads(),
+					tp.getSuccessors().map(succ -> updateSleep(predecessor, tp.getThreads(), succ)));
 		}
 
-		@Override
-		public Stream<ProgramConfiguration<S, Pair<T, Boolean>>> successors(
-				final ProgramConfiguration<S, Pair<T, Boolean>> configuration, final RuleInstantiation instance) {
-			assert !isSleepBlocked(configuration, instance);
-			final var original = underlyingProgramConfig(configuration);
-			return mUnderlying.successors(original, instance)
-					.map(s -> updateSleep(configuration, s, instance.getThreads()));
+		private CS updateSleep(final CS predecessor, final int[] threads, final C successorWithoutSleep) {
+			final int maxActive = Arrays.stream(threads).max().getAsInt();
+			final var predecessorWithoutSleep = mProjection.apply(predecessor);
+			final var currentInstance = new RuleInstance<>(mUnderlying, threads);
+			final IntPredicate newSleep = i -> {
+				return (i < maxActive || predecessor.getThread(i).getSecond())
+						&& enabled(predecessorWithoutSleep, i).filter(r -> !r.getRule().isSpecRule()).allMatch(
+								r -> mIndependence.isIndependent(null, currentInstance, r) == Dependence.INDEPENDENT);
+			};
+			return mInjectSleep.apply(successorWithoutSleep, newSleep);
 		}
 
-		private boolean isSleepBlocked(final ProgramConfiguration<S, Pair<T, Boolean>> configuration,
-				final RuleInstantiation instance) {
-			return SleepSetReduction.isSleepBlocked(configuration.getThreadConfiguration(), instance);
-		}
-
-		@Override
-		public int extensionSize() {
-			return mUnderlying.extensionSize();
-		}
-
-		private ProgramConfiguration<S, Pair<T, Boolean>> updateSleep(
-				final ProgramConfiguration<S, Pair<T, Boolean>> previous, final ProgramConfiguration<S, T> config,
-				final int[] active) {
-			final var newThreads = SleepSetReduction.<T, ProgramConfiguration<S, T>> updateSleep(mProgram,
-					mIndependence, mUnderlying, underlyingProgramConfig(previous),
-					i -> previous.getThread(i).getSecond(), config, active);
-			return new ProgramConfiguration<>(config.getControllerState(), newThreads);
-		}
-
-		@Override
-		public String toString() {
-			return "sleep<" + mUnderlying.toString() + ">";
-		}
-	}
-
-	private static <S> boolean isSleepBlocked(final Configuration<Pair<S, Boolean>> configuration,
-			final RuleInstantiation ruleInstance) {
-		return Arrays.stream(ruleInstance.getThreads()).anyMatch(i -> configuration.getThread(i).getSecond());
-	}
-
-	private static <S, C extends IThreadBasedConfiguration<S, C>> Configuration<Pair<S, Boolean>> updateSleep(
-			final Program<C> program, final IIndependenceRelation<?, IRule<C>> independence, final IRule<C> action,
-			final C previous, final IntPredicate previousSleep, final C config, final int[] active) {
-		final int maxActive = Arrays.stream(active).max().getAsInt();
-		ImmutableList<Pair<S, Boolean>> newThreads = ImmutableList.empty();
-		for (int i = config.numberOfThreads() - 1; i >= 0; --i) {
-			final boolean asleep;
-			if (i < maxActive || previousSleep.test(i)) {
-				asleep = enabled(program, previous, i).filter(r -> !r.isSpecRule())
-						.allMatch(r -> independence.isIndependent(null, action, r) == Dependence.INDEPENDENT);
+		private Stream<RuleInstance<C>> enabled(final C config, final int thread) {
+			final Predicate<TransitionProvider<C>> transitionFilter;
+			if (CHECK_EXECUTABLE_COMMUTATIVITY_ONLY) {
+				transitionFilter = tp -> involves(tp, thread) && tp.getSuccessors().findAny().isPresent();
 			} else {
-				asleep = false;
+				transitionFilter = tp -> involves(tp, thread);
 			}
-
-			newThreads = new ImmutableList<>(new Pair<>(config.getThread(i), asleep), newThreads);
+			return mProgram.getRules().stream().flatMap(r -> r.outgoingTransitions(config).filter(transitionFilter)
+					.map(tp -> new RuleInstance<>(r, tp.getThreads())));
 		}
-		return new Configuration<>(newThreads);
-	}
 
-	private static <C extends IThreadBasedConfiguration<?, C>> Stream<? extends IRule<C>>
-			enabled(final Program<C> program, final C config, final int i) {
-		return program.getRules().stream()
-				.filter(r -> r.possibleInstances(config).filter(instance -> involves(instance, i))
-						.flatMap(instance -> r.successors(config, instance)).findAny().isPresent());
-	}
-
-	private static boolean involves(final RuleInstantiation instance, final int thread) {
-		return Arrays.stream(instance.getThreads()).anyMatch(i -> i == thread);
+		private boolean involves(final TransitionProvider<C> instance, final int thread) {
+			return Arrays.stream(instance.getThreads()).anyMatch(i -> i == thread);
+		}
 	}
 
 	public static <X> Configuration<X> underlying(final Configuration<Pair<X, Boolean>> config) {
@@ -217,14 +161,26 @@ public class SleepSetReduction<C, CS> {
 				new ImmutableList<>(config.stream().map(Pair::getFirst).collect(Collectors.toList())));
 	}
 
-	public static <S, T> ProgramConfiguration<S, T>
-			underlyingProgramConfig(final ProgramConfiguration<S, Pair<T, Boolean>> config) {
+	public static <S, T> ProgramConfiguration<S, T> underlying(final ProgramConfiguration<S, Pair<T, Boolean>> config) {
 		return new ProgramConfiguration<>(config.getControllerState(), underlying(config.getThreadConfiguration()));
 	}
 
+	private static <G, T> ProgramConfiguration<G, Pair<T, Boolean>> injectSleep(final ProgramConfiguration<G, T> config,
+			final IntPredicate sleep) {
+		return new ProgramConfiguration<>(config.getControllerState(),
+				injectSleep(config.getThreadConfiguration(), sleep));
+	}
+
+	private static <S> Configuration<Pair<S, Boolean>> injectSleep(final Configuration<S> config,
+			final IntPredicate sleep) {
+		final var threadStates = IntStream.range(0, config.numberOfThreads())
+				.mapToObj(i -> new Pair<>(config.getThread(i), sleep.test(i)))
+				.collect(Collectors.toCollection(ImmutableList::new));
+		return new Configuration<>(threadStates);
+	}
+
 	public static <X> Configuration<Pair<X, Boolean>> wrapInitial(final Configuration<X> initial) {
-		return new Configuration<>(
-				new ImmutableList<>(initial.stream().map(s -> new Pair<>(s, false)).collect(Collectors.toList())));
+		return injectSleep(initial, i -> false);
 	}
 
 	public static <S, T> ProgramConfiguration<S, Pair<T, Boolean>>

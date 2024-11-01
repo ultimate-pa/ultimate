@@ -28,17 +28,17 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.pr
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public interface IRule<C> {
 	default List<C> successors(final C config) {
-		return possibleInstances(config).flatMap(instance -> successors(config, instance)).collect(Collectors.toList());
+		return outgoingTransitions(config).flatMap(TransitionProvider::getSuccessors).collect(Collectors.toList());
 	}
 
-	Stream<RuleInstantiation> possibleInstances(C configuration);
-
-	Stream<C> successors(C configuration, RuleInstantiation instance);
+	Stream<TransitionProvider<C>> outgoingTransitions(final C configuration);
 
 	int extensionSize();
 
@@ -46,6 +46,90 @@ public interface IRule<C> {
 		return false;
 	}
 
+	class RuleInstance<C> {
+		private final IRule<C> mRule;
+
+		// TODO replace int by a semantically meaningful type
+		private final int[] mThreads;
+
+		public RuleInstance(final IRule<C> rule, final int thread) {
+			this(rule, new int[] { thread });
+		}
+
+		public RuleInstance(final IRule<C> rule, final int[] threads) {
+			mRule = rule;
+			mThreads = threads;
+		}
+
+		public IRule<C> getRule() {
+			return mRule;
+		}
+
+		public int[] getThreads() {
+			return mThreads;
+		}
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + Arrays.hashCode(mThreads);
+			result = prime * result + Objects.hash(mRule);
+			return result;
+		}
+
+		@Override
+		public boolean equals(final Object obj) {
+			if (this == obj) {
+				return true;
+			}
+			if (obj == null) {
+				return false;
+			}
+			if (getClass() != obj.getClass()) {
+				return false;
+			}
+			final RuleInstance other = (RuleInstance) obj;
+			return Objects.equals(mRule, other.mRule) && Arrays.equals(mThreads, other.mThreads);
+		}
+	}
+
+	final class TransitionProvider<C> {
+		private final C mPredecessor;
+		private final int[] mThreads;
+		private final Stream<C> mSuccessors;
+
+		public TransitionProvider(final C predecessor, final int thread,
+				final BiFunction<C, Integer, Stream<C>> getSuccessors) {
+			this(predecessor, new int[] { thread },
+					// We use the Stream.of() construct below to ensure that getSuccessors is called lazily.
+					Stream.of(predecessor).flatMap(c -> getSuccessors.apply(c, thread)));
+		}
+
+		public TransitionProvider(final C predecessor, final int thread, final Stream<C> successors) {
+			this(predecessor, new int[] { thread }, successors);
+		}
+
+		public TransitionProvider(final C predecessor, final int[] threads, final Stream<C> successors) {
+			mPredecessor = predecessor;
+			mThreads = threads;
+			mSuccessors = successors;
+		}
+
+		public C getPredecessor() {
+			return mPredecessor;
+		}
+
+		public int[] getThreads() {
+			return mThreads;
+		}
+
+		public Stream<C> getSuccessors() {
+			return mSuccessors;
+		}
+	}
+
+	@Deprecated
 	public class RuleInstantiation {
 		// TODO replace int by a semantically meaningful type
 		private final int[] mThreads;

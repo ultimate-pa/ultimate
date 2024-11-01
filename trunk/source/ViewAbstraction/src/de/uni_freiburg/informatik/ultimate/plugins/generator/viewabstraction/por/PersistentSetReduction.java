@@ -49,17 +49,17 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.ThreadBasedPersistentSets;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.ThreadSeparatingIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.IRule;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.IRule.RuleInstantiation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.IRule.RuleInstance;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.IThreadBasedConfiguration;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.Program;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BidirectionalMap;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
 public class PersistentSetReduction<T, C extends IThreadBasedConfiguration<T, C>> {
@@ -82,10 +82,10 @@ public class PersistentSetReduction<T, C extends IThreadBasedConfiguration<T, C>
 	private BiFunction<IcfgLocation, String, IcfgLocation> mGetNewLocation;
 
 	private final Program<C> mReducedProgram;
-	private final IPersistentSetChoice<Pair<IRule<C>, RuleInstantiation>, C> mPersistentSets;
+	private final IPersistentSetChoice<RuleInstance<C>, C> mPersistentSets;
 
 	public PersistentSetReduction(final IUltimateServiceProvider services, final BoogieIcfgContainer icfg,
-			final Program<C> program, final IIndependenceRelation<?, ? super CodeBlock> independence,
+			final Program<C> program, final IIndependenceRelation<?, IcfgEdge> independence,
 			final int threadInstanceCount, final Function<T, IcfgLocation> getThreadLocation,
 			final Function<CodeBlock, IRule<C>> edge2Rule) {
 		mServices = services;
@@ -144,11 +144,14 @@ public class PersistentSetReduction<T, C extends IThreadBasedConfiguration<T, C>
 		return duplicatedIcfg;
 	}
 
-	private IPersistentSetChoice<Pair<IRule<C>, RuleInstantiation>, C> getPersistentSets() {
+	private IPersistentSetChoice<RuleInstance<C>, C> getPersistentSets() {
+		// Make sure two actions from the same thread copy are not considered independent.
+		final var independence = new ThreadSeparatingIndependenceRelation<>(new PetrifiedIndependence<>());
+
 		// Create a persistent set computation that works in mDuplicatedIcfg
-		// TODO see if we need to analyse thread-by-thread and pass a subset of error locations
-		final var underlyingPersistent = new CachedPersistentSetChoice<>(new ThreadBasedPersistentSets<>(mServices,
-				mDuplicatedIcfg, new PetrifiedIndependence<>(), null, Set.of()),
+		// TODO see how to handle error locations
+		final var underlyingPersistent = new CachedPersistentSetChoice<>(
+				new ThreadBasedPersistentSets<>(mServices, mDuplicatedIcfg, independence, null, Set.of()),
 				pred -> ((IMLPredicate) pred).getProgramPoints());
 
 		// used to create MLPredicates from configurations of type C
@@ -188,7 +191,7 @@ public class PersistentSetReduction<T, C extends IThreadBasedConfiguration<T, C>
 		}
 	}
 
-	private class PetrifiedPersistentSets implements IPersistentSetChoice<Pair<IRule<C>, RuleInstantiation>, C> {
+	private class PetrifiedPersistentSets implements IPersistentSetChoice<RuleInstance<C>, C> {
 		private final IPersistentSetChoice<IcfgEdge, IPredicate> mUnderlying;
 		private final PredicateFactory mFactory;
 
@@ -199,20 +202,23 @@ public class PersistentSetReduction<T, C extends IThreadBasedConfiguration<T, C>
 		}
 
 		@Override
-		public Set<Pair<IRule<C>, RuleInstantiation>> persistentSet(final C configuration) {
+		public Set<RuleInstance<C>> persistentSet(final C configuration) {
 			final var mlPred = makePetrifiedLocations(configuration);
 			final var persistent = mUnderlying.persistentSet(mlPred);
 			if (persistent == null) {
 				return null;
 			}
 
-			final var result = new HashSet<Pair<IRule<C>, RuleInstantiation>>();
+			final var result = new HashSet<RuleInstance<C>>();
 			for (final var edgeCopy : persistent) {
 				final var cb = mGetOriginalEdge.apply(edgeCopy);
 				final var rule = mEdge2Rule.apply(cb);
-				final var instance = new RuleInstantiation(
-						Integer.parseInt(edgeCopy.getPrecedingProcedure().substring(mMainProcedure.length() + 5)));
-				result.add(new Pair<>(rule, instance));
+
+				// TODO find a less hacky way
+				final int thread =
+						Integer.parseInt(edgeCopy.getPrecedingProcedure().substring(mMainProcedure.length() + 5));
+
+				result.add(new RuleInstance<>(rule, thread));
 			}
 			persistent.stream().map(mGetOriginalEdge).map(mEdge2Rule);
 

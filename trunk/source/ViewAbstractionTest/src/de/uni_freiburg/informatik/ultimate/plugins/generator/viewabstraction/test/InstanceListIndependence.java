@@ -29,12 +29,14 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.te
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.IRule;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.IRule.RuleInstance;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
-public class ListIndependence<S, X> implements IIndependenceRelation<S, X> {
+public class InstanceListIndependence<S, C, X extends IRule<C>> implements IIndependenceRelation<S, RuleInstance<C>> {
 	private final List<Pair<X, X>> mList;
 
-	public ListIndependence(final List<Pair<X, X>> list) {
+	public InstanceListIndependence(final List<Pair<X, X>> list) {
 		mList = list;
 	}
 
@@ -49,8 +51,10 @@ public class ListIndependence<S, X> implements IIndependenceRelation<S, X> {
 	}
 
 	@Override
-	public Dependence isIndependent(final S state, final X a, final X b) {
-		return a == b || mList.contains(new Pair<>(a, b)) ? Dependence.INDEPENDENT : Dependence.DEPENDENT;
+	public Dependence isIndependent(final S state, final RuleInstance<C> a, final RuleInstance<C> b) {
+		return a.getRule() == b.getRule() || mList.contains(new Pair<>((X) a.getRule(), (X) b.getRule()))
+				? Dependence.INDEPENDENT
+				: Dependence.DEPENDENT;
 	}
 
 }

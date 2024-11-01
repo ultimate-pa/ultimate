@@ -54,17 +54,13 @@ public class ConditionalBroadcast<S> implements IRule<Configuration<S>> {
 	}
 
 	@Override
-	public Stream<RuleInstantiation> possibleInstances(final Configuration<S> configuration) {
+	public Stream<TransitionProvider<Configuration<S>>> outgoingTransitions(final Configuration<S> configuration) {
 		return IntStream.range(0, configuration.numberOfThreads())
 				.filter(i -> configuration.getThread(i).equals(mSource) && checkCondition(configuration, i))
-				.mapToObj(RuleInstantiation::new);
+				.mapToObj(thread -> new TransitionProvider<>(configuration, thread, this::successors));
 	}
 
-	@Override
-	public Stream<Configuration<S>> successors(final Configuration<S> configuration, final RuleInstantiation instance) {
-		assert instance.getThreads().length == 1;
-
-		final int thread = instance.getThreads()[0];
+	private Stream<Configuration<S>> successors(final Configuration<S> configuration, final int thread) {
 		assert configuration.getThread(thread).equals(mSource) && checkCondition(configuration, thread);
 
 		final var subst = new HashMap<Integer, S>();

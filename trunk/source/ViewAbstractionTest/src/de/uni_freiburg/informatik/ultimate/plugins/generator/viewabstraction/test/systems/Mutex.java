@@ -32,9 +32,10 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.II
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.Configuration;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.GlobalVarUpdate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.IRule;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.IRule.RuleInstance;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.Program;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.ProgramConfiguration;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.test.ListIndependence;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.test.InstanceListIndependence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.test.ViewTest;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.test.ViewTest.ITestProgram;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -86,9 +87,9 @@ public class Mutex implements ITestProgram<ProgramConfiguration<Integer, Mutex.I
 				&& config.getControllerState() == 0;
 	}
 
-	public <S> IIndependenceRelation<S, IRule<ProgramConfiguration<Integer, IncDecLocation>>> getIndependence() {
+	public <S> IIndependenceRelation<S, RuleInstance<ProgramConfiguration<Integer, IncDecLocation>>> getIndependence() {
 		if (mBound == -1) {
-			return new ListIndependence<>(List.of(new Pair<>(increment, decrement), new Pair<>(decrement, increment)));
+			return new InstanceListIndependence<>(List.of(new Pair<>(increment, decrement), new Pair<>(decrement, increment)));
 		}
 		return null;
 	}

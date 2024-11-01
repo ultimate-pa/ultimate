@@ -43,34 +43,25 @@ public class BroadcastRule<S> implements IRule<Configuration<S>> {
 	}
 
 	@Override
-	public Stream<RuleInstantiation> possibleInstances(final Configuration<S> configuration) {
+	public Stream<TransitionProvider<Configuration<S>>> outgoingTransitions(final Configuration<S> configuration) {
 		return IntStream.range(0, configuration.numberOfThreads())
-				.filter(i -> configuration.getThread(i).equals(mSource)).mapToObj(RuleInstantiation::new);
+				.filter(i -> configuration.getThread(i).equals(mSource))
+				.mapToObj(thread -> new TransitionProvider<>(configuration, thread, this::successors));
 	}
 
-	@Override
-	public Stream<Configuration<S>> successors(final Configuration<S> configuration, final RuleInstantiation instance) {
-		assert instance.getThreads().length == 1;
-
-		final int thread = instance.getThreads()[0];
-		assert configuration.getThread(thread).equals(mSource);
-
-		return Stream.of(successor(configuration, thread));
-	}
-
-	private Configuration<S> successor(final Configuration<S> config, final int index) {
+	private Stream<Configuration<S>> successors(final Configuration<S> config, final int thread) {
 		final var subst = new HashMap<Integer, S>();
-		subst.put(index, mTarget);
+		subst.put(thread, mTarget);
 
 		for (int i = 0; i < config.numberOfThreads(); ++i) {
 			final var state = config.getThread(i);
 			final var newState = mBroadcast.apply(state);
-			if (i != index && newState != null) {
+			if (i != thread && newState != null) {
 				subst.put(i, newState);
 			}
 		}
 
-		return config.replace(subst);
+		return Stream.of(config.replace(subst));
 	}
 
 	@Override

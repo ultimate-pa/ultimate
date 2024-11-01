@@ -27,13 +27,13 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.cfg;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.IRule;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.IRule.RuleInstance;
 
-public class CfgRuleIndependence<S> implements IIndependenceRelation<S, IRule<S>> {
-	private final IIndependenceRelation<?, ? super CodeBlock> mUnderlying;
+public class CfgRuleIndependence<S> implements IIndependenceRelation<S, RuleInstance<S>> {
+	private final IIndependenceRelation<?, ? super IcfgEdge> mUnderlying;
 
-	public CfgRuleIndependence(final IIndependenceRelation<?, ? super CodeBlock> underlying) {
+	public CfgRuleIndependence(final IIndependenceRelation<?, ? super IcfgEdge> underlying) {
 		mUnderlying = underlying;
 	}
 
@@ -48,13 +48,17 @@ public class CfgRuleIndependence<S> implements IIndependenceRelation<S, IRule<S>
 	}
 
 	@Override
-	public Dependence isIndependent(final S state, final IRule<S> a, final IRule<S> b) {
-		if (!(a instanceof CfgRule<?>) || !(b instanceof CfgRule<?>)) {
-			return Dependence.UNKNOWN;
+	public Dependence isIndependent(final S state, final RuleInstance<S> a, final RuleInstance<S> b) {
+		final var aRule = (CfgRule<?>) a.getRule();
+		final var bRule = (CfgRule<?>) b.getRule();
+
+		// If the rule instances involve the same thread, we consider them dependent.
+		assert a.getThreads().length == 1;
+		assert b.getThreads().length == 1;
+		if (a.getThreads()[0] == b.getThreads()[0]) {
+			return Dependence.DEPENDENT;
 		}
 
-		final var cbA = ((CfgRule<?>) a).mEdge;
-		final var cbB = ((CfgRule<?>) b).mEdge;
-		return mUnderlying.isIndependent(null, cbA, cbB);
+		return mUnderlying.isIndependent(null, aRule.mEdge, bRule.mEdge);
 	}
 }
