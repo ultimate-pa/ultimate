@@ -31,33 +31,32 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.interpreter.BoogieInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ParallelComposition;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.IRule;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.ProgramConfiguration;
 
-public abstract class CfgRule<E extends CodeBlock>
-		implements IRule<ProgramConfiguration<Map<IProgramNonOldVar, Object>, CfgThreadLocalState>> {
-	protected final IUltimateServiceProvider mServices;
-	protected final IIcfgSymbolTable mSymbolTable;
+public class CfgRule implements IRule<ProgramConfiguration<Map<IProgramNonOldVar, Object>, CfgThreadLocalState>> {
+	private final IUltimateServiceProvider mServices;
+	private final IIcfgSymbolTable mSymbolTable;
+	private final CodeBlock mEdge;
 
-	// TODO extend it to fork-join programs
-	// TODO - JoinThreadOther
-	// TODO - ForkThreadOther
-	//
-	// TODO why not?
-	// TODO - GotoEdge
-	//
-	// TODO add support for atomic blocks
-	// TODO - ParallelComposition (needed for atomic blocks with branching)
-	protected final E mEdge;
+	private final BoogieInterpreter<CfgProgramStateView> mInterpreter = new BoogieInterpreter<>();
 
-	public CfgRule(final IUltimateServiceProvider services, final IIcfgSymbolTable symbolTable, final E edge) {
+	public CfgRule(final IUltimateServiceProvider services, final IIcfgSymbolTable symbolTable, final CodeBlock edge) {
 		mServices = services;
 		mSymbolTable = symbolTable;
 		mEdge = edge;
+	}
+
+	CodeBlock getEdge() {
+		return mEdge;
 	}
 
 	@Override
@@ -74,10 +73,8 @@ public abstract class CfgRule<E extends CodeBlock>
 			final int thread) {
 		final var localState = configuration.getThread(thread);
 		final var view = new CfgProgramStateView(mSymbolTable, configuration.getControllerState(), localState);
-		return apply(view).map(newState -> updateConfig(configuration, thread, newState));
+		return interpret(view).map(newState -> updateConfig(configuration, thread, newState));
 	}
-
-	protected abstract Stream<CfgProgramStateView> apply(CfgProgramStateView stateView);
 
 	private ProgramConfiguration<Map<IProgramNonOldVar, Object>, CfgThreadLocalState> updateConfig(
 			final ProgramConfiguration<Map<IProgramNonOldVar, Object>, CfgThreadLocalState> config, final int thread,
@@ -90,8 +87,39 @@ public abstract class CfgRule<E extends CodeBlock>
 		return config.replaceController(newState.getGlobalState()).replaceThread(thread, newLocalState);
 	}
 
+	private Stream<CfgProgramStateView> interpret(final CfgProgramStateView stateView) {
+		return interpret(stateView, mEdge);
+	}
+
+	private Stream<CfgProgramStateView> interpret(final CfgProgramStateView current, final CodeBlock cb) {
+		// TODO extend it to fork-join programs
+		// TODO - JoinThreadOther
+		// TODO - ForkThreadOther
+		// TODO why not?
+		// TODO - GotoEdge
+
+		if (cb instanceof StatementSequence) {
+			return mInterpreter.interpret(current, ((StatementSequence) cb).getStatements()).stream();
+		}
+		if (cb instanceof SequentialComposition) {
+			var result = Stream.of(current);
+			for (final var block : ((SequentialComposition) cb).getCodeBlocks()) {
+				result = result.flatMap(cpsv -> interpret(cpsv, block));
+			}
+			return result;
+		}
+		if (cb instanceof ParallelComposition) {
+			return ((ParallelComposition) cb).getCodeBlocks().stream().flatMap(block -> interpret(current, block));
+		}
+		throw new IllegalArgumentException("unsupported type of code block: " + cb);
+	}
+
 	@Override
-	public abstract int extensionSize();
+	public int extensionSize() {
+		// default to 1 in case global variables are involved
+		// TODO refine this to use 0 when possible
+		return 1;
+	}
 
 	@Override
 	public boolean isSpecRule() {

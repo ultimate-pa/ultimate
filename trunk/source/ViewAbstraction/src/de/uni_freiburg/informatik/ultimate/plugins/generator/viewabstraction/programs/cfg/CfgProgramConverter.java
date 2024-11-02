@@ -41,8 +41,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.Configuration;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.Program;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.viewabstraction.programs.ProgramConfiguration;
@@ -53,7 +51,7 @@ public class CfgProgramConverter {
 	private final BoogieIcfgContainer mIcfg;
 
 	private final Program<ProgramConfiguration<Map<IProgramNonOldVar, Object>, CfgThreadLocalState>> mProgram;
-	private final Map<CodeBlock, CfgRule<?>> mEdge2Rule = new HashMap<>();
+	private final Map<CodeBlock, CfgRule> mEdge2Rule = new HashMap<>();
 
 	public CfgProgramConverter(final IUltimateServiceProvider services, final BoogieIcfgContainer icfg) {
 		mServices = services;
@@ -67,7 +65,7 @@ public class CfgProgramConverter {
 		return mProgram;
 	}
 
-	public CfgRule<?> getRuleForEdge(final CodeBlock cb) {
+	public CfgRule getRuleForEdge(final CodeBlock cb) {
 		return mEdge2Rule.get(cb);
 	}
 
@@ -94,21 +92,10 @@ public class CfgProgramConverter {
 		return view.getThreadConfiguration().stream().anyMatch(s -> s.getLocation().isErrorLocation());
 	}
 
-	private CfgRule<?> createRule(final IcfgEdge edge) {
-		if (edge instanceof StatementSequence) {
-			final var rule = new StatementSequenceRule(mServices, mIcfg.getCfgSmtToolkit().getSymbolTable(),
-					(StatementSequence) edge);
-			mEdge2Rule.put((CodeBlock) edge, rule);
-			return rule;
-		}
-		if (edge instanceof SequentialComposition) {
-			final var rule = new SequentialCompositionRule(mServices, mIcfg.getCfgSmtToolkit().getSymbolTable(),
-					(SequentialComposition) edge);
-			mEdge2Rule.put((CodeBlock) edge, rule);
-			return rule;
-		}
-		throw new UnsupportedOperationException(
-				"Edges of type " + edge.getClass().getSimpleName() + " not yet supported");
+	private CfgRule createRule(final IcfgEdge edge) {
+		final var rule = new CfgRule(mServices, mIcfg.getCfgSmtToolkit().getSymbolTable(), (CodeBlock) edge);
+		mEdge2Rule.put((CodeBlock) edge, rule);
+		return rule;
 	}
 
 	private Map<IProgramNonOldVar, Object> getInitialGlobalState() {

@@ -49,8 +49,8 @@ public class CfgRuleIndependence<S> implements IIndependenceRelation<S, RuleInst
 
 	@Override
 	public Dependence isIndependent(final S state, final RuleInstance<S> a, final RuleInstance<S> b) {
-		final var aRule = (CfgRule<?>) a.getRule();
-		final var bRule = (CfgRule<?>) b.getRule();
+		final var aRule = (CfgRule) a.getRule();
+		final var bRule = (CfgRule) b.getRule();
 
 		// If the rule instances involve the same thread, we consider them dependent.
 		assert a.getThreads().length == 1;
@@ -59,6 +59,6 @@ public class CfgRuleIndependence<S> implements IIndependenceRelation<S, RuleInst
 			return Dependence.DEPENDENT;
 		}
 
-		return mUnderlying.isIndependent(null, aRule.mEdge, bRule.mEdge);
+		return mUnderlying.isIndependent(null, aRule.getEdge(), bRule.getEdge());
 	}
 }
