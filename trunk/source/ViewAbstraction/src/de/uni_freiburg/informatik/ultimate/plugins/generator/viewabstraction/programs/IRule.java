@@ -46,7 +46,7 @@ public interface IRule<C> {
 		return false;
 	}
 
-	class RuleInstance<C> {
+	public class RuleInstance<C> {
 		private final IRule<C> mRule;
 
 		// TODO replace int by a semantically meaningful type
@@ -94,7 +94,7 @@ public interface IRule<C> {
 		}
 	}
 
-	final class TransitionProvider<C> {
+	public final class TransitionProvider<C> {
 		private final C mPredecessor;
 		private final int[] mThreads;
 		private final Stream<C> mSuccessors;
@@ -126,52 +126,6 @@ public interface IRule<C> {
 
 		public Stream<C> getSuccessors() {
 			return mSuccessors;
-		}
-	}
-
-	@Deprecated
-	public class RuleInstantiation {
-		// TODO replace int by a semantically meaningful type
-		private final int[] mThreads;
-
-		public RuleInstantiation(final int thread) {
-			this(new int[] { thread });
-		}
-
-		public RuleInstantiation(final int[] threads) {
-			mThreads = threads;
-		}
-
-		public int[] getThreads() {
-			return mThreads;
-		}
-
-		@Override
-		public int hashCode() {
-			final int prime = 31;
-			int result = 1;
-			result = prime * result + Arrays.hashCode(mThreads);
-			return result;
-		}
-
-		@Override
-		public boolean equals(final Object obj) {
-			if (this == obj) {
-				return true;
-			}
-			if (obj == null) {
-				return false;
-			}
-			if (getClass() != obj.getClass()) {
-				return false;
-			}
-			final RuleInstantiation other = (RuleInstantiation) obj;
-			return Arrays.equals(mThreads, other.mThreads);
-		}
-
-		@Override
-		public String toString() {
-			return "RuleInstantiation [mThreads=" + Arrays.toString(mThreads) + "]";
 		}
 	}
 }
