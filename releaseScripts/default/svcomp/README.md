@@ -50,7 +50,7 @@ actually work with them.
    2. Ensure that the tools have a version without `-m`, meaning the repo must not contain modification or untracked
       files (!). Use a clean git worktree if necessary.
 
-   **Ensure benchexec tool-info module**
+   **Ensure benchexec tool-info module is complete**  
    If you have a new tool, you need to add a tool-info module to the benchexec repository.
    <https://github.com/sosy-lab/benchexec/blob/main/doc/tool-integration.md> describes the process.
    If you are unsure, test with  
