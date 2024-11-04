@@ -7,10 +7,10 @@ file_export_version=3.0
 
  
 #Fri Apr 10 13:08:01 CEST 2015
-\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder=
 file_export_version=3.0
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Size\ of\ a\ code\ block=SequenceOfStatements
-@de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder/Size\ of\ a\ code\ block=SequenceOfStatements
+@de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder=0.0.1
 
 #Sat Mar 15 16:00:32 CET 2014
 file_export_version=3.0
