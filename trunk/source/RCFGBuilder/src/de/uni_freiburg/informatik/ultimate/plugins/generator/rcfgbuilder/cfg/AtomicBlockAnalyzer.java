@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  */
-class AtomicBlockAnalyzer {
+public class AtomicBlockAnalyzer {
 	private final BoogieIcfgContainer mIcfg;
 
 	// Locations that are (strictly) inside an atomic block.
