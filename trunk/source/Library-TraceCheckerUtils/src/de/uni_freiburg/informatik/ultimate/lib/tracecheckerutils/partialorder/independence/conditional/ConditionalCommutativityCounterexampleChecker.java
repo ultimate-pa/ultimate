@@ -58,7 +58,7 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 	private final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mAbstraction;
 	private final IEmptyStackStateFactory<IPredicate> mEmptyStackStateFactory;
 	private final ConditionalCommutativityChecker<L> mChecker;
-	private final ConditionalCommutativityCheckerStatisticsUtils mStatisticsUtils;
+	private final ConditionalCommutativityStatisticsGenerator mStatistics;
 	private final IDfsOrder<L, IPredicate> mDfsOrder;
 
 	/**
@@ -89,14 +89,14 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 			final IDfsOrder<L, IPredicate> dfsOrder,
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction,
 			final IEmptyStackStateFactory<IPredicate> emptyStackStateFactory,
-			final ConditionalCommutativityCheckerStatisticsUtils statisticsUtils,
+			final ConditionalCommutativityStatisticsGenerator statistics,
 			final ConditionalCommutativityChecker<L> conComChecker) {
 		mServices = services;
 		mDfsOrder = dfsOrder;
 		mAbstraction = abstraction;
 		mEmptyStackStateFactory = emptyStackStateFactory;
 		mChecker = conComChecker;
-		mStatisticsUtils = statisticsUtils;
+		mStatistics = statistics;
 	}
 
 	/**
@@ -141,7 +141,7 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 					final NestedWordAutomaton<L, IPredicate> automaton =
 							conComInterpolantProvider.getInterpolantAutomaton();
 
-					mStatisticsUtils.addCommutingCounterexample();
+					mStatistics.addCommutingCounterexample();
 
 					final BasicRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> refinementResultAut =
 							new BasicRefinementEngineResult<>(LBool.UNSAT, automaton, null, false,

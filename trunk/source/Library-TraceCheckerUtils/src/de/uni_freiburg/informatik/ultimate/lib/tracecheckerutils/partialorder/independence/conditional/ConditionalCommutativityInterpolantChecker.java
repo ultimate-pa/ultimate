@@ -64,7 +64,7 @@ public class ConditionalCommutativityInterpolantChecker<L extends IAction> {
 	private final IEmptyStackStateFactory<IPredicate> mEmptyStackStateFactory;
 	private IRun<L, IPredicate> mRun;
 	private final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mAbstraction;
-	private final ConditionalCommutativityCheckerStatisticsUtils mStatisticsUtils;
+	private final ConditionalCommutativityStatisticsGenerator mStatistics;
 	private final ConditionalCommutativityInterpolantAutomatonProvider<L> mInterpolantAutomatonProvider;
 	private final StateSplitter<IPredicate> mStateSplitter;
 
@@ -95,13 +95,13 @@ public class ConditionalCommutativityInterpolantChecker<L extends IAction> {
 	public ConditionalCommutativityInterpolantChecker(final IUltimateServiceProvider services,
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction,
 			final IEmptyStackStateFactory<IPredicate> emptyStackStateFactory, final IPredicateUnifier predicateUnifier,
-			final ConditionalCommutativityCheckerStatisticsUtils statisticsUtils,
-			final StateSplitter<IPredicate> splitter, final ConditionalCommutativityChecker<L> conComChecker) {
+			final ConditionalCommutativityStatisticsGenerator statistics, final StateSplitter<IPredicate> splitter,
+			final ConditionalCommutativityChecker<L> conComChecker) {
 		mServices = services;
 		mAbstraction = abstraction;
 		mEmptyStackStateFactory = emptyStackStateFactory;
 		mChecker = conComChecker;
-		mStatisticsUtils = statisticsUtils;
+		mStatistics = statistics;
 		mStateSplitter = splitter;
 		mInterpolantAutomatonProvider = new ConditionalCommutativityInterpolantAutomatonProvider<>(services,
 				abstraction.getAlphabet(), emptyStackStateFactory, predicateUnifier);
@@ -174,7 +174,7 @@ public class ConditionalCommutativityInterpolantChecker<L extends IAction> {
 			for (final var tp : refinementResult.getInfeasibilityProof()) {
 				mInterpolantAutomatonProvider.addToInterpolantAutomaton(tp.getTracePredicates(), currentRun.getWord());
 			}
-			mStatisticsUtils.addIAIntegration();
+			mStatistics.addIAIntegration();
 			return mInterpolantAutomatonProvider.hasFalseBeforeEnd();
 		}
 		return false;

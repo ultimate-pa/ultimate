@@ -44,8 +44,13 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
 public class ConditionalCommutativityStatisticsGenerator extends StatisticsGeneratorWithStopwatches
 		implements IStatisticsDataProvider {
 
+	public enum ConditionalCommutativityStopwatches {
+		CHECKER, CONDITION
+	}
+
 	private static final StatisticsType<ConditionalCommutativityStatisticsDefinitions> TYPE =
 			new StatisticsType<>(ConditionalCommutativityStatisticsDefinitions.class);
+
 	private int mConditionalCommutativityIAIntegrations = 0;
 	private int mConditionalCommutativityDFSRestarts = 0;
 	private int mConditionalCommutativityConditionCalculations = 0;
@@ -56,40 +61,66 @@ public class ConditionalCommutativityStatisticsGenerator extends StatisticsGener
 	private int mConditionalCommutativityQuantifiedConditions = 0;
 	private int mConditionalCommutativityFalseConditions = 0;
 
-	public void addConditionalCommutativityIAIntegration() {
+	public void startStopwatch(final ConditionalCommutativityStopwatches stopwatch) {
+		switch (stopwatch) {
+		case CHECKER:
+			start(ConditionalCommutativityStatisticsDefinitions.ConditionalCommutativityCheckTime);
+			break;
+		case CONDITION:
+			start(ConditionalCommutativityStatisticsDefinitions.ConditionalCommutativityConditionCalculationTime);
+			break;
+		default:
+			throw new AssertionError("unknown stopwatch");
+		}
+	}
+
+	public void stopStopwatch(final ConditionalCommutativityStopwatches stopwatch) {
+		switch (stopwatch) {
+		case CHECKER:
+			stop(ConditionalCommutativityStatisticsDefinitions.ConditionalCommutativityCheckTime);
+			break;
+		case CONDITION:
+			stop(ConditionalCommutativityStatisticsDefinitions.ConditionalCommutativityConditionCalculationTime);
+			break;
+		default:
+			throw new AssertionError("unknown stopwatch");
+		}
+	}
+
+	public void addIAIntegration() {
 		mConditionalCommutativityIAIntegrations++;
 	}
 
-	public void addConditionalCommutativityDFSRestart() {
+	public void addDFSRestart() {
 		mConditionalCommutativityDFSRestarts++;
 	}
 
-	public void addConditionalCommutativityCommutingCounterexample() {
+	public void addCommutingCounterexample() {
 		mConditionalCommutativityCommutingCounterexamples++;
 	}
 
-	public void addConditionalCommutativityConditionCalculation() {
+	public void addConditionCalculation() {
 		mConditionalCommutativityConditionCalculations++;
 	}
 
-	public void addConditionalCommutativityTraceCheck() {
+	public void addTraceCheck() {
 		mConditionalCommutativityTraceChecks++;
 	}
 
-	public void addConditionalCommutativityUnknownTraceCheck() {
+	public void addUnknownTraceCheck() {
 		mConditionalCommutativityUnknownTraceChecks++;
 	}
 
-	public void addConditionalCommutativityImperfectProof() {
+	public void addImperfectProof() {
 		mConditionalCommutativityImperfectProofs++;
 	}
 
-	public void addConditionalCommutativityQuantifiedCondition() {
+	public void addQuantifiedCondition() {
 		mConditionalCommutativityQuantifiedConditions++;
 
 	}
 
-	public void addConditionalCommutativityFalseCondition() {
+	public void addFalseCondition() {
 		mConditionalCommutativityFalseConditions++;
 
 	}

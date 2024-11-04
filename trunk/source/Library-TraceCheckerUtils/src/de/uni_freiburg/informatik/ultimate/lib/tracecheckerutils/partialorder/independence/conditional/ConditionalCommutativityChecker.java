@@ -54,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.Quantifier
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IIndependenceConditionGenerator;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.ICopyActionFactory;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.conditional.ConditionalCommutativityCheckerStatisticsUtils.ConditionalCommutativityStopwatches;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.conditional.ConditionalCommutativityStatisticsGenerator.ConditionalCommutativityStopwatches;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
@@ -75,7 +75,7 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 	private final IIndependenceRelation<IPredicate, L> mIndependenceRelation;
 	private final IIndependenceConditionGenerator mGenerator;
 	private final ManagedScript mManagedScript;
-	private final ConditionalCommutativityCheckerStatisticsUtils mStatisticsUtils;
+	private final ConditionalCommutativityStatisticsGenerator mStatistics;
 	private final ConComTraceCheckMode mTraceCheckMode;
 	private final PredicateFactory mPredicateFactory;
 	private final ICopyActionFactory<L> mCopyFactory;
@@ -98,16 +98,15 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 	 *            An {@link ITraceChecker} responsible for proving that a condition holds after the run given in
 	 *            checkConditionalCommutativity
 	 * @param statisticsUtils
-	 *            An {@link ConditionalCommutativityCheckerStatisticsUtils} used for statistics
+	 *            An {@link ConditionalCommutativityStatisticsGenerator} used for statistics
 	 */
 	public ConditionalCommutativityChecker(final IUltimateServiceProvider services,
 			final IConditionalCommutativityCriterion<L> criterion,
 			final IIndependenceRelation<IPredicate, L> independenceRelation, final ManagedScript script,
 			final IIndependenceConditionGenerator generator,
 			final Function<IRun<L, IPredicate>, IRefinementStrategy<L>> buildStrategy,
-			final ConditionalCommutativityCheckerStatisticsUtils statisticsUtils,
-			final PredicateFactory predicateFactory, final ICopyActionFactory<L> copyFactory,
-			final ConComTraceCheckMode traceCheckMode) {
+			final ConditionalCommutativityStatisticsGenerator statistics, final PredicateFactory predicateFactory,
+			final ICopyActionFactory<L> copyFactory, final ConComTraceCheckMode traceCheckMode) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(getClass());
 
@@ -115,7 +114,7 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 		mIndependenceRelation = independenceRelation;
 		mManagedScript = script;
 		mGenerator = generator;
-		mStatisticsUtils = statisticsUtils;
+		mStatistics = statistics;
 		mPredicateFactory = predicateFactory;
 		mCopyFactory = copyFactory;
 		mTraceCheckMode = traceCheckMode;
@@ -144,12 +143,11 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 			final NestedRun<L, IPredicate> currentRun, final List<IPredicate> predicates, final IPredicate state,
 			final L letter1, final L letter2) {
 
-		mStatisticsUtils.startStopwatch(ConditionalCommutativityStopwatches.CHECKER);
+		mStatistics.startStopwatch(ConditionalCommutativityStopwatches.CHECKER);
 		try {
 			return checkConditionalCommutativityInternal(currentRun, predicates, state, letter1, letter2);
 		} finally {
-			mStatisticsUtils.stopStopwatch(ConditionalCommutativityStopwatches.CHECKER);
-			// mStatisticsUtils.stopStopwatch(ConditionalCommutativityStopwatches.CONDITION);
+			mStatistics.stopStopwatch(ConditionalCommutativityStopwatches.CHECKER);
 		}
 	}
 
@@ -202,7 +200,7 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 
 			final ISymbolicIndependenceRelation<L, IPredicate> relation = mIndependenceRelation.getSymbolicRelation();
 
-			mStatisticsUtils.startStopwatch(ConditionalCommutativityStopwatches.CONDITION);
+			mStatistics.startStopwatch(ConditionalCommutativityStopwatches.CONDITION);
 			try {
 				switch (mTraceCheckMode) {
 				case GENERATOR:
@@ -231,10 +229,10 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 							"PartialOrderCegarLoop currently does not support " + mTraceCheckMode);
 				}
 			} finally {
-				mStatisticsUtils.stopStopwatch(ConditionalCommutativityStopwatches.CONDITION);
+				mStatistics.stopStopwatch(ConditionalCommutativityStopwatches.CONDITION);
 			}
 
-			mStatisticsUtils.addConditionCalculation();
+			mStatistics.addConditionCalculation();
 			mCriterion.updateCriterion(state, letter1, letter2);
 
 			if (condition == null) {
@@ -243,7 +241,7 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 				throw new IllegalArgumentException("condition is not allowed to be true");
 			} else if (mCriterion.decide(condition)) {
 				if (SmtUtils.checkSatTerm(mManagedScript.getScript(), condition.getFormula()).equals(LBool.UNSAT)) {
-					mStatisticsUtils.addFalseCondition();
+					mStatistics.addFalseCondition();
 					mLogger.warn("Unsatisfiable commutativity condition generated: %s", condition);
 					return null;
 				}
@@ -255,7 +253,7 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 				final UnmodifiableTransFormula tf =
 						TransFormulaBuilder.constructTransFormulaFromPredicate(notCondition, mManagedScript);
 				if (!QuantifierUtils.isQuantifierFree(tf.getFormula())) {
-					mStatisticsUtils.addQuantifiedCondition();
+					mStatistics.addQuantifiedCondition();
 					mLogger.warn("Quantified commutativity condition: %s", tf.getFormula());
 				}
 
@@ -275,12 +273,12 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 				final var afe = new AutomatonFreeRefinementEngine<>(mServices, mLogger, strategy);
 				final var result = afe.getResult();
 
-				mStatisticsUtils.addTraceCheck();
+				mStatistics.addTraceCheck();
 				if (result.getCounterexampleFeasibility() == LBool.UNKNOWN) {
-					mStatisticsUtils.addUnknownTraceCheck();
+					mStatistics.addUnknownTraceCheck();
 				}
 				if (!result.somePerfectSequenceFound()) {
-					mStatisticsUtils.addImperfectProof();
+					mStatistics.addImperfectProof();
 				}
 				if (result.getCounterexampleFeasibility() != LBool.UNSAT) {
 					return null;

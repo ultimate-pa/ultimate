@@ -99,7 +99,6 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.in
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.ICopyActionFactory;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.conditional.ConditionCriterion;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.conditional.ConditionalCommutativityChecker;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.conditional.ConditionalCommutativityCheckerStatisticsUtils;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.conditional.ConditionalCommutativityCheckerVisitor;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.conditional.ConditionalCommutativityCounterexampleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.conditional.ConditionalCommutativityInterpolantChecker;
@@ -162,8 +161,6 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	private boolean mCounterexampleConComFound;
 	private final ConditionalCommutativityStatisticsGenerator mConComCheckerBenchmark =
 			new ConditionalCommutativityStatisticsGenerator();
-	private final ConditionalCommutativityCheckerStatisticsUtils mConComCheckerStatisticsUtils =
-			new ConditionalCommutativityCheckerStatisticsUtils(mConComCheckerBenchmark);
 
 	private final ICopyActionFactory<L> mCopyFactory;
 
@@ -237,7 +234,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 			mCriterion.updateAbstraction(mAbstraction);
 			final ConditionalCommutativityInterpolantChecker<L> conInterpolantProvider =
 					new ConditionalCommutativityInterpolantChecker<>(mServices, mAbstraction, mFactory,
-							predicateUnifier, mConComCheckerStatisticsUtils, mPOR.getStateSplitter(), mConComChecker);
+							predicateUnifier, mConComCheckerBenchmark, mPOR.getStateSplitter(), mConComChecker);
 			mInterpolAutomaton = conInterpolantProvider.getInterpolants((IRun<L, IPredicate>) mCounterexample,
 					predicates, mInterpolAutomaton);
 		}
@@ -372,7 +369,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 						mAbstraction = new InformationStorage<>(mProgram == null ? mAbstraction : mProgram,
 								mItpAutomata, mFactory, PartialOrderCegarLoop::isFalseLiteral);
 						visitor = createVisitor();
-						mConComCheckerBenchmark.addConditionalCommutativityDFSRestart();
+						mConComCheckerBenchmark.addDFSRestart();
 						mPOR.apply(mAbstraction, visitor);
 						htc.releaseLock();
 					} catch (final AutomataLibraryException e) {
@@ -401,7 +398,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 			mCriterion.updateAbstraction(mAbstraction);
 			final ConditionalCommutativityCounterexampleChecker<L> conCounterexampleChecker =
 					new ConditionalCommutativityCounterexampleChecker<>(mServices, mPOR.getDfsOrder(), mAbstraction,
-							mFactory, mConComCheckerStatisticsUtils, mConComChecker);
+							mFactory, mConComCheckerBenchmark, mConComChecker);
 
 			mRefinementResult =
 					conCounterexampleChecker.getInterpolants((IRun<L, IPredicate>) mCounterexample, predicates);
@@ -649,8 +646,8 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 				mCsToolkit.getManagedScript(), mPredicateFactory, relation.isSymmetric(), true);
 
 		return new ConditionalCommutativityChecker<>(mServices, mCriterion, relation, mCsToolkit.getManagedScript(),
-				generator, this::buildStrategyForConditionalCommutativity, mConComCheckerStatisticsUtils,
-				mPredicateFactory, mCopyFactory, mPref.getConComCheckerTraceCheckMode());
+				generator, this::buildStrategyForConditionalCommutativity, mConComCheckerBenchmark, mPredicateFactory,
+				mCopyFactory, mPref.getConComCheckerTraceCheckMode());
 	}
 
 	private IRefinementStrategy<L> buildStrategyForConditionalCommutativity(final IRun<L, IPredicate> run) {
