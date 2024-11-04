@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverB
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderMode;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderReductionFacade.OrderType;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.ConditionalCommutativityChecker.ConComTraceCheckMode;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.AbstractionType;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.IndependenceType;
@@ -199,8 +200,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	private static final ConComCheckerCriterion DEF_CON_COM_CHECKER_CRITERION = ConComCheckerCriterion.DEFAULT;
 
 	public static final String LABEL_CON_COM_CHECKER_TRACECHECK_MODE = "TraceCheck mode for conditional commutativity";
-	private static final ConComCheckerTraceCheckMode DEF_CON_COM_CHECKER_TRACECHECK_MODE =
-			ConComCheckerTraceCheckMode.GENERATOR;
+	private static final ConComTraceCheckMode DEF_CON_COM_CHECKER_TRACECHECK_MODE = ConComTraceCheckMode.GENERATOR;
 
 	public static final String LABEL_CON_COM_CHECKER_LIMITED_CHECKS_CRITERION =
 			"Use limited checks (recommended for DFS)";
@@ -748,7 +748,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_CON_COM_CHECKER_CRITERION, DEF_CON_COM_CHECKER_CRITERION,
 						PreferenceType.Combo, ConComCheckerCriterion.values()),
 				new UltimatePreferenceItem<>(LABEL_CON_COM_CHECKER_TRACECHECK_MODE, DEF_CON_COM_CHECKER_TRACECHECK_MODE,
-						PreferenceType.Combo, ConComCheckerTraceCheckMode.values()),
+						PreferenceType.Combo, ConComTraceCheckMode.values()),
 				new UltimatePreferenceItem<>(LABEL_CON_COM_CHECKER_LIMITED_CHECKS_CRITERION,
 						DEF_CON_COM_CHECKER_LIMITED_CHECKS_CRITERION, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_CON_COM_CHECKER_CRITERION_LIMIT, DEF_CON_COM_CHECKER_CRITERION_LIMIT,
@@ -1086,9 +1086,5 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 
 	public enum ConComCheckerCriterion {
 		DEFAULT, RANDOM, SLEEP_SET, FORWARD, LOOP
-	}
-
-	public enum ConComCheckerTraceCheckMode {
-		GENERATOR, GENERATOR_WITH_CONTEXT, SYMBOLIC_RELATION
 	}
 }

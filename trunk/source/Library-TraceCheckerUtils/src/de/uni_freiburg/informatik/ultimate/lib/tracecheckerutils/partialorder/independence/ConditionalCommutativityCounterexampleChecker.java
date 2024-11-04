@@ -27,27 +27,20 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.i
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsOrder;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult.BasicRefinementEngineResult;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementStrategy;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.ConditionalCommutativityChecker.ConComTraceCheckMode;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.ICopyActionFactory;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.util.Lazy;
 
@@ -66,7 +59,7 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 	private final IEmptyStackStateFactory<IPredicate> mEmptyStackStateFactory;
 	private final ConditionalCommutativityChecker<L> mChecker;
 	private final IConditionalCommutativityCheckerStatisticsUtils mStatisticsUtils;
-	private final IDfsOrder<L, IPredicate> mDFSOrder;
+	private final IDfsOrder<L, IPredicate> mDfsOrder;
 
 	/**
 	 * Constructor.
@@ -77,7 +70,7 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 	 *            An IConditionalCommutativityCriterion to decide when to check for conditional commutativity
 	 * @param independenceRelation
 	 *            The independence relation used for the reduction
-	 * @param DFSOrder
+	 * @param dfsOrder
 	 *            The order used for the emptiness check, which is a DFS
 	 * @param script
 	 *            Script for conjunction handling
@@ -93,21 +86,16 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 	 *            Statistics
 	 */
 	public ConditionalCommutativityCounterexampleChecker(final IUltimateServiceProvider services,
-			final IConditionalCommutativityCriterion<L> criterion,
-			final IIndependenceRelation<IPredicate, L> independenceRelation, final IDfsOrder<L, IPredicate> DFSOrder,
-			final ManagedScript script, final IIndependenceConditionGenerator generator,
+			final IDfsOrder<L, IPredicate> dfsOrder,
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction,
 			final IEmptyStackStateFactory<IPredicate> emptyStackStateFactory,
-			final Function<IRun<L, IPredicate>, IRefinementStrategy<L>> buildStrategy,
-			final PredicateFactory predicateFactory, final ICopyActionFactory<L> copyFactory,
 			final IConditionalCommutativityCheckerStatisticsUtils statisticsUtils,
-			final ConComTraceCheckMode traceCheckMode) {
+			final ConditionalCommutativityChecker<L> conComChecker) {
 		mServices = services;
-		mDFSOrder = DFSOrder;
+		mDfsOrder = dfsOrder;
 		mAbstraction = abstraction;
 		mEmptyStackStateFactory = emptyStackStateFactory;
-		mChecker = new ConditionalCommutativityChecker<>(services, criterion, independenceRelation, script, generator,
-				buildStrategy, statisticsUtils, predicateFactory, copyFactory, traceCheckMode);
+		mChecker = conComChecker;
 		mStatisticsUtils = statisticsUtils;
 	}
 
@@ -130,7 +118,7 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 
 			// TODO this is brittle, it will fail for many configurations
 			if (((SleepPredicate<L>) state).getSleepSet().contains(letter2)
-					|| (mDFSOrder.getOrder(state).compare(letter1, letter2) > 0)) {
+					|| (mDfsOrder.getOrder(state).compare(letter1, letter2) > 0)) {
 
 				final IPredicate runPredicate = runPredicates.get(i);
 				final List<IPredicate> interpolantPredicates = new ArrayList<>();

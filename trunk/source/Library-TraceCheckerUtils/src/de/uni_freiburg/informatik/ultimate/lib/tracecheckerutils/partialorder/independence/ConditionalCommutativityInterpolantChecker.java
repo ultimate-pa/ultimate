@@ -32,7 +32,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
@@ -41,19 +40,13 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementStrategy;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderReductionFacade.StateSplitter;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.ConditionalCommutativityChecker.ConComTraceCheckMode;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.ICopyActionFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
@@ -100,21 +93,14 @@ public class ConditionalCommutativityInterpolantChecker<L extends IAction> {
 	 *            Predicate unifier
 	 */
 	public ConditionalCommutativityInterpolantChecker(final IUltimateServiceProvider services,
-			final IConditionalCommutativityCriterion<L> criterion,
-			final IIndependenceRelation<IPredicate, L> independenceRelation, final ManagedScript script,
-			final IIndependenceConditionGenerator generator,
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction,
-			final IEmptyStackStateFactory<IPredicate> emptyStackStateFactory,
-			final Function<IRun<L, IPredicate>, IRefinementStrategy<L>> buildStrategy,
-			final PredicateFactory predicateFactory, final ICopyActionFactory<L> copyFactory,
-			final IPredicateUnifier predicateUnifier,
+			final IEmptyStackStateFactory<IPredicate> emptyStackStateFactory, final IPredicateUnifier predicateUnifier,
 			final IConditionalCommutativityCheckerStatisticsUtils statisticsUtils,
-			final StateSplitter<IPredicate> splitter, final ConComTraceCheckMode traceCheckMode) {
+			final StateSplitter<IPredicate> splitter, final ConditionalCommutativityChecker<L> conComChecker) {
 		mServices = services;
 		mAbstraction = abstraction;
 		mEmptyStackStateFactory = emptyStackStateFactory;
-		mChecker = new ConditionalCommutativityChecker<>(services, criterion, independenceRelation, script, generator,
-				buildStrategy, statisticsUtils, predicateFactory, copyFactory, traceCheckMode);
+		mChecker = conComChecker;
 		mStatisticsUtils = statisticsUtils;
 		mStateSplitter = splitter;
 		mInterpolantAutomatonProvider = new ConditionalCommutativityInterpolantAutomatonProvider<>(services,
