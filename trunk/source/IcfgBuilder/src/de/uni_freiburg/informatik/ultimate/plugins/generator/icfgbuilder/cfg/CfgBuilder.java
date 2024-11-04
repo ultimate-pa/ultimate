@@ -48,7 +48,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Stack;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
@@ -136,6 +135,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.Weakest
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.preferences.IcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.preferences.IcfgPreferenceInitializer.CodeBlockSize;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.util.TransFormulaAdder;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.AtomicBlockAnalyzer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.AtomicBlockInfo;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
@@ -309,10 +309,10 @@ public class CfgBuilder {
 		}
 
 		if (mFutureLiveOptimization) {
-			if (icfg.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().isEmpty()) {
+			if (!IcfgUtils.isConcurrent(icfg)) {
 				LiveIcfgUtils.applyFutureLiveOptimization(mServices, icfg);
 			} else {
-				mLogger.info("Ommited future-live optimization because the input is a concurrent program.");
+				mLogger.info("Omitted future-live optimization because the input is a concurrent program.");
 			}
 		}
 
@@ -332,7 +332,7 @@ public class CfgBuilder {
 		default:
 			throw new AssertionError("unknown value: " + mCodeBlockSize);
 		}
-		ensureAtomicCompositionComplete();
+		AtomicBlockAnalyzer.ensureAtomicCompositionIsComplete(mIcfg, mLogger);
 
 		final Set<BoogieIcfgLocation> initialNodes = icfg.getProcedureEntryNodes().entrySet().stream()
 				.filter(a -> a.getKey().equals(ULTIMATE_START)).map(Entry::getValue).collect(Collectors.toSet());
@@ -348,60 +348,6 @@ public class CfgBuilder {
 		mLogger.info("Removed " + mRemovedAssumeTrueStatements + " assume(true) statements.");
 
 		return icfg;
-	}
-
-	private Stream<BoogieIcfgLocation> getAllLocations() {
-		return mIcfg.getProgramPoints().entrySet().stream().flatMap(e -> e.getValue().values().stream());
-	}
-
-	private Stream<IcfgEdge> getAllEdges() {
-		return getAllLocations().flatMap(loc -> loc.getOutgoingEdges().stream()).distinct();
-	}
-
-	private void ensureAtomicCompositionComplete() {
-		final Iterable<IcfgEdge> edges = getAllEdges()::iterator;
-		for (final var edge : edges) {
-			ensureAtomicCompositionComplete(edge);
-		}
-	}
-
-	private void ensureAtomicCompositionComplete(final IcfgEdge edge) {
-		if (AtomicBlockInfo.isEndOfAtomicBlock(edge)) {
-			// We must never have any dangling ends of atomic blocks;
-			// such an edge should have been fused with the corresponding start of the
-			// atomic block.
-			throw new UnsupportedOperationException("Incomplete atomic composition (dangling end of atomic block: "
-					+ edge + "). Is there illegal control flow (e.g. loops) within an atomic block?");
-		}
-
-		// If the edge is neither the start nor the end of an atomic block, everything
-		// is fine.
-		if (!AtomicBlockInfo.isStartOfAtomicBlock(edge)) {
-			// Edge may be marked as complete atomic block.
-			// If so, remove the annotation as it is only for internal use.
-			AtomicBlockInfo.removeAnnotation(edge);
-			return;
-		}
-
-		final var successor = (BoogieIcfgLocation) edge.getTarget();
-		if (successor.isErrorLocation()) {
-			// Assert statements in atomic blocks are ok.
-			// Remove the annotation as it is only for internal use.
-			AtomicBlockInfo.removeAnnotation(edge);
-			return;
-		}
-
-		// We tolerate nodes without successors inside atomic blocks, such as thread
-		// exit locations.
-		final boolean successorIsSink = successor.getOutgoingEdges().isEmpty();
-		if (!successorIsSink) {
-			throw new UnsupportedOperationException("Incomplete atomic composition (dangling start of atomic block: "
-					+ edge + "). Is there illegal control flow (e.g. loops) within an atomic block?");
-		}
-		mLogger.warn("Unexpected successor node of atomic block begin: %s is not an error location.", successor);
-
-		// Remove the annotation as it is only for internal use.
-		AtomicBlockInfo.removeAnnotation(edge);
 	}
 
 	public Boogie2SMT getBoogie2Smt() {
