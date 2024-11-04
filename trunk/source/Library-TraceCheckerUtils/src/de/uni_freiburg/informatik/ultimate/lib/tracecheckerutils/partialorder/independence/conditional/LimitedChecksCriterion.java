@@ -23,27 +23,53 @@
  * licensors of the ULTIMATE TraceCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence;
+package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.conditional;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.MLPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.LoopLockstepOrder.PredicateWithLastThread;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderReductionFacade.StateSplitter;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * Default criterion for conditional commutativity checking, which represents the case where no criterion should be
- * used.
+ * Criterion for conditional commutativity checking with limited checks.
  *
  * @author Marcel Ebbinghaus
  *
  * @param <L>
  *            The type of letters.
  */
-public class DefaultCriterion<L> implements IConditionalCommutativityCriterion<L> {
+public class LimitedChecksCriterion<L> implements IConditionalCommutativityCriterion<L> {
+	private final Map<Pair<L, L>, Integer> mStatementMap = new HashMap<>();
+	private final int mLimit;
+
+	public LimitedChecksCriterion(final int limit) {
+		mLimit = limit;
+	}
+
+	@SuppressWarnings("unchecked")
 	@Override
 	public boolean decide(final IPredicate state, final L letter1, final L letter2) {
-		return true;
+		final Pair<L, L> pair = new Pair<>(letter1, letter2);
+		return !(mStatementMap.containsKey(pair) && mStatementMap.get(pair) == mLimit);
 	}
 
 	@Override
 	public boolean decide(final IPredicate condition) {
 		return true;
+	}
+
+	@Override
+	public void updateCriterion(final IPredicate state, final L letter1, final L letter2) {
+		final Pair<L, L> pair = new Pair<>(letter1, letter2);
+		if (!mStatementMap.containsKey(pair)) {
+			mStatementMap.put(pair, 1);
+		} else {
+			mStatementMap.put(pair, mStatementMap.get(pair) + 1);
+		}
 	}
 }

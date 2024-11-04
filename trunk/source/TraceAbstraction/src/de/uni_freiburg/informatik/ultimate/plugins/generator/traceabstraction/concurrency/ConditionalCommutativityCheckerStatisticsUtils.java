@@ -25,7 +25,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency;
 
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IConditionalCommutativityCheckerStatisticsUtils;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.conditional.IConditionalCommutativityCheckerStatisticsUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.ConditionalCommutativityStatisticsGenerator.ConditionalCommutativityStatisticsDefinitions;
 
 /**

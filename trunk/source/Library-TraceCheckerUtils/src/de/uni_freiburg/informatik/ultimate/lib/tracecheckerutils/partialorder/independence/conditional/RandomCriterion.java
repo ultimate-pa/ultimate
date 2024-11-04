@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Marcel Ebbinghaus
+ * Copyright (C) 2023 Marcel Ebbinghaus
  *
  * This file is part of the ULTIMATE TraceCheckerUtils Library.
  *
@@ -23,39 +23,46 @@
  * licensors of the ULTIMATE TraceCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence;
+package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.conditional;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Objects;
+import java.util.Random;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.MLPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.LoopLockstepOrder.PredicateWithLastThread;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderReductionFacade.StateSplitter;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
- * Criterion for conditional commutativity checking with limited checks.
+ * Random criterion for conditional commutativity checking.
  *
  * @author Marcel Ebbinghaus
  *
  * @param <L>
  *            The type of letters.
  */
-public class LimitedChecksCriterion<L> implements IConditionalCommutativityCriterion<L> {
-	private final Map<Pair<L, L>, Integer> mStatementMap = new HashMap<>();
-	private final int mLimit;
+public class RandomCriterion<L> implements IConditionalCommutativityCriterion<L> {
+	private final int mProbability;
+	private final long mSeed;
 
-	public LimitedChecksCriterion(final int limit) {
-		mLimit = limit;
+	/**
+	 * Constructs a new random criterion.
+	 *
+	 * @author Marcel Ebbinghaus
+	 *
+	 * @param probability
+	 *            The probability.
+	 * @param seed
+	 *            The random seed.
+	 */
+	public RandomCriterion(final int probability, final long seed) {
+		mProbability = probability;
+		mSeed = seed;
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public boolean decide(final IPredicate state, final L letter1, final L letter2) {
-		final Pair<L, L> pair = new Pair<>(letter1, letter2);
-		return !(mStatementMap.containsKey(pair) && mStatementMap.get(pair) == mLimit);
+		final var normalized = normalize(state, letter1, letter2);
+		final Random random = new Random(mSeed * Objects.hashCode(normalized));
+		return (random.nextInt(100) < mProbability);
 	}
 
 	@Override
@@ -63,13 +70,8 @@ public class LimitedChecksCriterion<L> implements IConditionalCommutativityCrite
 		return true;
 	}
 
-	@Override
-	public void updateCriterion(final IPredicate state, final L letter1, final L letter2) {
-		final Pair<L, L> pair = new Pair<>(letter1, letter2);
-		if (!mStatementMap.containsKey(pair)) {
-			mStatementMap.put(pair, 1);
-		} else {
-			mStatementMap.put(pair, mStatementMap.get(pair) + 1);
-		}
+	private Triple<IPredicate, L, L> normalize(final IPredicate state, final L letter1, final L letter2) {
+		// TODO Is any real normalization needed?
+		return new Triple<>(state, letter1, letter2);
 	}
 }

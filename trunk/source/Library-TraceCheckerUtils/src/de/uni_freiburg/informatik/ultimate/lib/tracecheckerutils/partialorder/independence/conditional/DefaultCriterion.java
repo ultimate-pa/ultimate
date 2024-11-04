@@ -23,31 +23,23 @@
  * licensors of the ULTIMATE TraceCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence;
+package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.conditional;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
- * Sleep set criterion for conditional commutativity checking.
+ * Default criterion for conditional commutativity checking, which represents the case where no criterion should be
+ * used.
  *
  * @author Marcel Ebbinghaus
  *
  * @param <L>
  *            The type of letters.
  */
-public class SleepSetCriterion<L> implements IConditionalCommutativityCriterion<L> {
-	@SuppressWarnings("unchecked")
+public class DefaultCriterion<L> implements IConditionalCommutativityCriterion<L> {
 	@Override
 	public boolean decide(final IPredicate state, final L letter1, final L letter2) {
-		if (state instanceof SleepPredicate) {
-			final ImmutableSet<?> sleepSet = ((SleepPredicate<L>) state).getSleepSet();
-			if (sleepSet.contains(letter1) ^ sleepSet.contains(letter2)) {
-				return true;
-			}
-		}
-		return false;
+		return true;
 	}
 
 	@Override

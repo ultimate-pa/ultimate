@@ -23,29 +23,40 @@
  * licensors of the ULTIMATE TraceCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence;
-
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.conditional;
 
 /**
- * Criterion which excludes conditions containing a forall-quantifier and arrays.
- *
+ * Interface for all tracked statistics regarding conditional commutativity checking. This interface mainly serves as a
+ * workaround for package dependencies.
+ * 
  * @author Marcel Ebbinghaus
  *
- * @param <L>
- *            The type of letters.
  */
-public class ConditionCriterion<L> implements IConditionalCommutativityCriterion<L> {
-	@Override
-	public boolean decide(final IPredicate state, final L letter1, final L letter2) {
-		return true;
+public interface IConditionalCommutativityCheckerStatisticsUtils {
+	public void startStopwatch(ConditionalCommutativityStopwatches stopwatch);
+
+	public void stopStopwatch(ConditionalCommutativityStopwatches stopwatch);
+
+	public void addDFSRestart();
+
+	public void addIAIntegration();
+
+	public void addCommutingCounterexample();
+
+	public void addConditionCalculation();
+
+	public void addTraceCheck();
+
+	public void addImperfectProof();
+
+	public void addUnknownTraceCheck();
+
+	public void addQuantifiedCondition();
+
+	public void addFalseCondition();
+
+	public enum ConditionalCommutativityStopwatches {
+		CHECKER, CONDITION
 	}
 
-	@Override
-	public boolean decide(final IPredicate condition) {
-		// TODO Look at the AST of the formula rather than using toString!
-		final String conditionString = condition.toString();
-		final boolean debug = conditionString.contains("forall") && conditionString.contains("select");
-		return !debug;
-	}
 }

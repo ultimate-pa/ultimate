@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Marcel Ebbinghaus
+ * Copyright (C) 2024 Marcel Ebbinghaus
  *
  * This file is part of the ULTIMATE TraceCheckerUtils Library.
  *
@@ -23,55 +23,35 @@
  * licensors of the ULTIMATE TraceCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence;
-
-import java.util.Objects;
-import java.util.Random;
+package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.conditional;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
- * Random criterion for conditional commutativity checking.
+ * Sleep set criterion for conditional commutativity checking.
  *
  * @author Marcel Ebbinghaus
  *
  * @param <L>
  *            The type of letters.
  */
-public class RandomCriterion<L> implements IConditionalCommutativityCriterion<L> {
-	private final int mProbability;
-	private final long mSeed;
-
-	/**
-	 * Constructs a new random criterion.
-	 *
-	 * @author Marcel Ebbinghaus
-	 *
-	 * @param probability
-	 *            The probability.
-	 * @param seed
-	 *            The random seed.
-	 */
-	public RandomCriterion(final int probability, final long seed) {
-		mProbability = probability;
-		mSeed = seed;
-	}
-
+public class SleepSetCriterion<L> implements IConditionalCommutativityCriterion<L> {
+	@SuppressWarnings("unchecked")
 	@Override
 	public boolean decide(final IPredicate state, final L letter1, final L letter2) {
-		final var normalized = normalize(state, letter1, letter2);
-		final Random random = new Random(mSeed * Objects.hashCode(normalized));
-		return (random.nextInt(100) < mProbability);
+		if (state instanceof SleepPredicate) {
+			final ImmutableSet<?> sleepSet = ((SleepPredicate<L>) state).getSleepSet();
+			if (sleepSet.contains(letter1) ^ sleepSet.contains(letter2)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	@Override
 	public boolean decide(final IPredicate condition) {
 		return true;
-	}
-
-	private Triple<IPredicate, L, L> normalize(final IPredicate state, final L letter1, final L letter2) {
-		// TODO Is any real normalization needed?
-		return new Triple<>(state, letter1, letter2);
 	}
 }
