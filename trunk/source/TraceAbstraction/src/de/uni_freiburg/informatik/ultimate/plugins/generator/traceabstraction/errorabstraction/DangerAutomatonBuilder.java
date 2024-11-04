@@ -485,8 +485,8 @@ class DangerAutomatonBuilder<L extends IIcfgTransition<?>> implements IErrorAuto
 				predicateFactory, simplificationTechnique);
 		postprocessors.add(qepp);
 		postprocessors.add(new UnifyPostprocessor(predicateUnifier));
-		final DefaultTransFormulas<L> dtf = new DefaultTransFormulas<>(trace, null, null, Collections.emptySortedMap(),
-				csToolkit.getOldVarsAssignmentCache(), false);
+		final DefaultTransFormulas<L> dtf = new DefaultTransFormulas<>(trace, null, null, null,
+				Collections.emptySortedMap(), csToolkit.getOldVarsAssignmentCache(), false);
 		try {
 			return ipt.computePreSequence(dtf, postprocessors, false);
 		} catch (final TraceInterpolationException e) {

@@ -121,7 +121,7 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 			final boolean computeRcfgProgramExecution, final PredicateFactory predicateFactory,
 			final IPredicateUnifier predicateUnifier, final InterpolationTechnique interpolation,
 			final ManagedScript mgdScriptTc, final SimplificationTechnique simplificationTechnique,
-			final List<? extends Object> controlLocationSequence, final boolean collectInterpolatSequenceStatistics) {
+			final List<?> controlLocationSequence, final boolean collectInterpolatSequenceStatistics) {
 		// superclass does feasibility check
 		super(precondition, postcondition, pendingContexts, trace, controlLocationSequence, services, csToolkit,
 				mgdScriptTc, predicateFactory, predicateUnifier, assertCodeBlockOrder, computeRcfgProgramExecution,
@@ -382,20 +382,21 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 			constructRelevantTransFormulas(final Set<Term> unsatCore) {
 		final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> rtf;
 		if (mUnsatCores == UnsatCores.IGNORE) {
-			rtf = new DefaultTransFormulas<>(mTrace, mPrecondition, mPostcondition, mPendingContexts,
-					mCsToolkit.getOldVarsAssignmentCache(), false);
+			rtf = new DefaultTransFormulas<>(mTrace, mControlConfigurationSequence, mPrecondition, mPostcondition,
+					mPendingContexts, mCsToolkit.getOldVarsAssignmentCache(), false);
 		} else if (mUnsatCores == UnsatCores.STATEMENT_LEVEL) {
 			final boolean[] localVarAssignmentAtCallInUnsatCore = new boolean[mTrace.length()];
 			final boolean[] oldVarAssignmentAtCallInUnsatCore = new boolean[mTrace.length()];
 			// Filter out the statements, which doesn't occur in the unsat core.
 			final Set<L> codeBlocksInUnsatCore = filterOutIrrelevantStatements(mTrace, unsatCore,
 					localVarAssignmentAtCallInUnsatCore, oldVarAssignmentAtCallInUnsatCore);
-			rtf = new RelevantTransFormulas<>(mTrace, mPrecondition, mPostcondition, mPendingContexts,
-					codeBlocksInUnsatCore, mCsToolkit.getOldVarsAssignmentCache(), localVarAssignmentAtCallInUnsatCore,
-					oldVarAssignmentAtCallInUnsatCore, mCfgManagedScript);
+			rtf = new RelevantTransFormulas<>(mTrace, mControlConfigurationSequence, mPrecondition, mPostcondition,
+					mPendingContexts, codeBlocksInUnsatCore, mCsToolkit.getOldVarsAssignmentCache(),
+					localVarAssignmentAtCallInUnsatCore, oldVarAssignmentAtCallInUnsatCore, mCfgManagedScript);
 		} else if (mUnsatCores == UnsatCores.CONJUNCT_LEVEL) {
-			rtf = new RelevantTransFormulas<>(mNestedFormulas, mPrecondition, mPostcondition, mPendingContexts, unsatCore,
-					mCsToolkit.getOldVarsAssignmentCache(), mCfgManagedScript, mAAA, mAnnotateAndAsserterConjuncts);
+			rtf = new RelevantTransFormulas<>(mNestedFormulas, mPrecondition, mPostcondition, mPendingContexts,
+					unsatCore, mCsToolkit.getOldVarsAssignmentCache(), mCfgManagedScript, mAAA,
+					mAnnotateAndAsserterConjuncts);
 		} else {
 			throw new AssertionError("unknown case:" + mUnsatCores);
 		}

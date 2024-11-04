@@ -27,6 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionwithafas;
 
+import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 
@@ -44,11 +45,11 @@ public class TraceCheckWithAccessibleSSATerms extends TraceCheck<CodeBlock> {
 
 	public TraceCheckWithAccessibleSSATerms(final IPredicate precondition, final IPredicate postcondition,
 			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<CodeBlock> trace,
-			final CfgSmtToolkit csToolkit, final AssertCodeBlockOrder assertCodeBlockOrder,
-			final IUltimateServiceProvider services, final boolean computeRcfgProgramExecution,
-			final boolean collectInterpolatSequenceStatistics) {
-		super(precondition, postcondition, pendingContexts, trace, services, csToolkit, assertCodeBlockOrder,
-				computeRcfgProgramExecution, collectInterpolatSequenceStatistics);
+			final List<?> controlConfigurationSequence, final CfgSmtToolkit csToolkit,
+			final AssertCodeBlockOrder assertCodeBlockOrder, final IUltimateServiceProvider services,
+			final boolean computeRcfgProgramExecution, final boolean collectInterpolatSequenceStatistics) {
+		super(precondition, postcondition, pendingContexts, trace, controlConfigurationSequence, services, csToolkit,
+				assertCodeBlockOrder, computeRcfgProgramExecution, collectInterpolatSequenceStatistics);
 	}
 
 	public void traceCheckFinished() {

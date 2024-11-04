@@ -345,7 +345,7 @@ public class VerificationResultTransformer {
 			if (hasInvalidBranchEncoders(pe)) {
 				mLogger.info("Computing branch encoders");
 				final TraceCheck<IAction> tcl =
-						TraceCheck.createTraceCheck(mServices, toolkit, mgdScriptTc, truePred, falsePred, trace);
+						TraceCheck.createTraceCheck(mServices, toolkit, mgdScriptTc, truePred, falsePred, trace, null);
 				if (!tcl.providesRcfgProgramExecution()) {
 					mLogger.warn("Could not extract reduced program execution from trace: TraceCheck reported "
 							+ tcl.isCorrect());
@@ -361,8 +361,8 @@ public class VerificationResultTransformer {
 			final List<IAction> cleanedTrace = removeUnrelatedVariables(sequentialTrace, reqCheck, mgdScriptTc);
 
 			mLogger.info("Computing reduced program execution");
-			final TraceCheck<IAction> tc =
-					TraceCheck.createTraceCheck(mServices, toolkit, mgdScriptTc, truePred, falsePred, cleanedTrace);
+			final TraceCheck<IAction> tc = TraceCheck.createTraceCheck(mServices, toolkit, mgdScriptTc, truePred,
+					falsePred, cleanedTrace, null);
 			if (tc.isCorrect() == LBool.SAT) {
 				return tc.getRcfgProgramExecution();
 			}
@@ -370,9 +370,9 @@ public class VerificationResultTransformer {
 			// should be unreachable
 			mLogger.fatal("Reduced program execution is not 'sat'");
 			final TraceCheck<IAction> tcOrig =
-					TraceCheck.createTraceCheck(mServices, toolkit, mgdScriptTc, truePred, falsePred, trace);
-			final TraceCheck<IAction> tcSeq =
-					TraceCheck.createTraceCheck(mServices, toolkit, mgdScriptTc, truePred, falsePred, sequentialTrace);
+					TraceCheck.createTraceCheck(mServices, toolkit, mgdScriptTc, truePred, falsePred, trace, null);
+			final TraceCheck<IAction> tcSeq = TraceCheck.createTraceCheck(mServices, toolkit, mgdScriptTc, truePred,
+					falsePred, sequentialTrace, null);
 			final String msg =
 					String.format("Cleaned trace is not '%s', but '%s', sequentialized is '%s', original is '%s'.",
 							LBool.SAT, tc.isCorrect(), tcSeq.isCorrect(), tcOrig.isCorrect());

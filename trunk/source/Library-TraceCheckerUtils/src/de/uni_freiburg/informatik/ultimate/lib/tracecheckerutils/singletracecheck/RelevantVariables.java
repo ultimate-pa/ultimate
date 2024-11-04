@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletraceche
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -68,7 +69,7 @@ public class RelevantVariables<L extends IAction> {
 		mModifiableGlobals = modifiableGlobalsTable;
 		mTraceWithFormulas = traceWithFormulas;
 		mNestedConstraintAnalysis = new NestedConstraintAnalysis(traceWithFormulas.getTrace(),
-				new TreeMap<Integer, IPredicate>(), traceWithFormulas);
+				traceWithFormulas.getControlConfigurations(), new TreeMap<Integer, IPredicate>(), traceWithFormulas);
 		mOccurrence = new VariableOccurrence();
 		mForwardRelevantVariables = new Set[mTraceWithFormulas.getTrace().length() + 1];
 		computeForwardRelevantVariables();
@@ -832,10 +833,10 @@ public class RelevantVariables<L extends IAction> {
 	}
 
 	private class NestedConstraintAnalysis extends ModifiableNestedFormulas<L, ConstraintAnalysis, IPredicate> {
-		public NestedConstraintAnalysis(final NestedWord<L> nestedWord,
+		public NestedConstraintAnalysis(final NestedWord<L> nestedWord, final List<?> controlConfigurationSequence,
 				final SortedMap<Integer, IPredicate> pendingContexts,
 				final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> traceWithFormulas) {
-			super(nestedWord, pendingContexts);
+			super(nestedWord, pendingContexts, controlConfigurationSequence);
 			for (int i = 0; i < nestedWord.length(); i++) {
 				if (getTrace().isCallPosition(i)) {
 					final UnmodifiableTransFormula globalVarAssignment = traceWithFormulas.getGlobalVarAssignment(i);

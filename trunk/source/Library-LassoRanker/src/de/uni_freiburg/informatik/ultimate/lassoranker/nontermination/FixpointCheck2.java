@@ -85,7 +85,7 @@ public class FixpointCheck2<L extends IIcfgTransition<?>> {
 		final IPredicate postcondition = constructNegatedLoopPredicate(services, csToolkit.getManagedScript(), pf,
 				mLoop);
 		final SortedMap<Integer, IPredicate> pendingContexts = Collections.emptySortedMap();
-		final TraceCheck<L> tc = new TraceCheck<>(precondition, postcondition, pendingContexts, mStem, services,
+		final TraceCheck<L> tc = new TraceCheck<>(precondition, postcondition, pendingContexts, mStem, null, services,
 				csToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY, true, false);
 		switch (tc.isCorrect()) {
 		case SAT:

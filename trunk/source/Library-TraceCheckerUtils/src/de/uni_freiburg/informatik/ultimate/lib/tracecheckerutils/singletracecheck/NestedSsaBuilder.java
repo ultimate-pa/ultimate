@@ -153,8 +153,10 @@ public class NestedSsaBuilder<L extends IAction> {
 		mTcScript = managedTcScript.getScript();
 		mFormulas = nestedTransFormulas;
 		mModGlobVarManager = cfgSmtToolkit.getModifiableGlobalsTable();
-		mSsa = new ModifiableNestedFormulas<>(trace, new TreeMap<Integer, Term>());
-		mVariable2Constant = new ModifiableNestedFormulas<>(trace, new TreeMap<Integer, Map<Term, Term>>());
+		mSsa = new ModifiableNestedFormulas<>(trace, new TreeMap<Integer, Term>(),
+				nestedTransFormulas.getControlConfigurations());
+		mVariable2Constant = new ModifiableNestedFormulas<>(trace, new TreeMap<Integer, Map<Term, Term>>(),
+				nestedTransFormulas.getControlConfigurations());
 		mTransferToScriptNeeded = managedTcScript != cfgSmtToolkit.getManagedScript();
 		if (mTransferToScriptNeeded) {
 			mTermTransferrer = new TermTransferrer(cfgSmtToolkit.getManagedScript().getScript(), mTcScript);

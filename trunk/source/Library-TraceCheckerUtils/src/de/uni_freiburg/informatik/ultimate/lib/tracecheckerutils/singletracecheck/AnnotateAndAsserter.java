@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletraceche
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.TreeMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
@@ -51,6 +52,7 @@ public class AnnotateAndAsserter<L extends IAction> {
 
 	protected final ManagedScript mMgdScriptTc;
 	protected final NestedWord<L> mTrace;
+	protected final List<?> mControlConfigurationSequence;
 
 	protected LBool mSatisfiable;
 	protected final NestedFormulas<L, Term, Term> mSSA;
@@ -67,6 +69,7 @@ public class AnnotateAndAsserter<L extends IAction> {
 		mLogger = mServices.getLoggingService().getLogger(TraceCheckerUtils.PLUGIN_ID);
 		mMgdScriptTc = mgdScriptTc;
 		mTrace = nestedSSA.getTrace();
+		mControlConfigurationSequence = nestedSSA.getControlConfigurations();
 		mSSA = nestedSSA;
 		mAnnotateAndAssertCodeBlocks = aaacb;
 		mTcbg = tcbg;
@@ -78,7 +81,7 @@ public class AnnotateAndAsserter<L extends IAction> {
 		}
 		assert mSatisfiable == null;
 
-		mAnnotSSA = new ModifiableNestedFormulas<>(mTrace, new TreeMap<Integer, Term>());
+		mAnnotSSA = new ModifiableNestedFormulas<>(mTrace, new TreeMap<Integer, Term>(), mControlConfigurationSequence);
 
 		mAnnotSSA.setPrecondition(mAnnotateAndAssertCodeBlocks.annotateAndAssertPrecondition());
 		mAnnotSSA.setPostcondition(mAnnotateAndAssertCodeBlocks.annotateAndAssertPostcondition());

@@ -45,7 +45,6 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrderType;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.SmtFeatureHeuristicPartitioningType;
@@ -190,17 +189,18 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 	@Override
 	public void buildAnnotatedSsaAndAssertTerms() {
 		assert mCheckSat == 0 : "You should not call this method twice";
-		final List<IcfgLocation> pps = TraceCheckUtils.getSequenceOfProgramPoints(mTrace);
-		final HashTreeRelation<IcfgLocation, Integer> rwt = computeRelationWithTreeSetForTrace(0, mTrace.length(), pps);
+		final HashTreeRelation<?, Integer> rwt =
+				computeRelationWithTreeSetForTrace(0, mTrace.length(), mControlConfigurationSequence);
 
-		mAnnotSSA = new ModifiableNestedFormulas<>(mTrace, new TreeMap<Integer, Term>());
+		mAnnotSSA = new ModifiableNestedFormulas<>(mTrace, new TreeMap<Integer, Term>(), mControlConfigurationSequence);
 
 		mAnnotSSA.setPrecondition(mAnnotateAndAssertCodeBlocks.annotateAndAssertPrecondition());
 		mAnnotSSA.setPostcondition(mAnnotateAndAssertCodeBlocks.annotateAndAssertPostcondition());
 		final Collection<Integer> callPositions = new ArrayList<>();
 		final Collection<Integer> pendingReturnPositions = new ArrayList<>();
 
-		final Map<Integer, Set<Integer>> depth2Statements = partitionStatementsAccordingDepth(mTrace, rwt, pps);
+		final Map<Integer, Set<Integer>> depth2Statements =
+				partitionStatementsAccordingDepth(mTrace, rwt, (List) mControlConfigurationSequence);
 		// Report benchmark
 		mTcbg.reportNewCodeBlocks(mTrace.length());
 

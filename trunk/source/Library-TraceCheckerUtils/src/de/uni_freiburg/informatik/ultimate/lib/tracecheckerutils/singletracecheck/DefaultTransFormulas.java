@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck;
 
+import java.util.List;
 import java.util.SortedMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
@@ -43,10 +44,11 @@ public class DefaultTransFormulas<L extends IAction> extends NestedFormulas<L, U
 	private final OldVarsAssignmentCache mModifiableGlobalVariableManager;
 	private final boolean mWithBranchEncoders;
 
-	public DefaultTransFormulas(final NestedWord<L> nestedWord, final IPredicate precondition,
-			final IPredicate postcondition, final SortedMap<Integer, IPredicate> pendingContexts,
-			final OldVarsAssignmentCache oldVarsAssignmentCache, final boolean withBranchEncoders) {
-		super(nestedWord, pendingContexts);
+	public DefaultTransFormulas(final NestedWord<L> nestedWord, final List<?> controlConfigurationSequence,
+			final IPredicate precondition, final IPredicate postcondition,
+			final SortedMap<Integer, IPredicate> pendingContexts, final OldVarsAssignmentCache oldVarsAssignmentCache,
+			final boolean withBranchEncoders) {
+		super(nestedWord, pendingContexts, controlConfigurationSequence);
 		super.setPrecondition(precondition);
 		super.setPostcondition(postcondition);
 		mModifiableGlobalVariableManager = oldVarsAssignmentCache;

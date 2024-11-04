@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
+import java.util.List;
 import java.util.TreeMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
@@ -51,6 +52,7 @@ public class TraceCheckStrategyModuleDefaultTraceCheck<L extends IIcfgTransition
 	private final TaCheckAndRefinementPreferences<?> mPrefs;
 	private final AssertionOrderModulation<L> mAssertionOrderModulation;
 	private final IRun<L, ?> mCounterexample;
+	private final List<?> mControlConfigurationSequence;
 	private final IPredicateUnifier mPredicateUnifier;
 	private final IPredicate mPrecondition;
 
@@ -58,11 +60,13 @@ public class TraceCheckStrategyModuleDefaultTraceCheck<L extends IIcfgTransition
 
 	protected TraceCheckStrategyModuleDefaultTraceCheck(final IUltimateServiceProvider services,
 			final TaCheckAndRefinementPreferences<L> prefs, final AssertionOrderModulation<L> assertionOrderModulation,
-			final IRun<L, ?> counterexample, final IPredicateUnifier predicateUnifier, final IPredicate precondition) {
+			final IRun<L, ?> counterexample, final List<?> controlConfigurationSequence,
+			final IPredicateUnifier predicateUnifier, final IPredicate precondition) {
 		mServices = services;
 		mPrefs = prefs;
 		mAssertionOrderModulation = assertionOrderModulation;
 		mCounterexample = counterexample;
+		mControlConfigurationSequence = controlConfigurationSequence;
 		mPredicateUnifier = predicateUnifier;
 		mPrecondition = precondition;
 	}
@@ -98,8 +102,9 @@ public class TraceCheckStrategyModuleDefaultTraceCheck<L extends IIcfgTransition
 			final AssertCodeBlockOrder assertionOrder = mAssertionOrderModulation.get(mCounterexample.getWord(), null);
 			final IPredicate postcondition = mPredicateUnifier.getFalsePredicate();
 			mTraceCheck = new TraceCheck<>(mPrecondition, postcondition, new TreeMap<Integer, IPredicate>(),
-					NestedWord.nestedWord(mCounterexample.getWord()), mServices, mPrefs.getCfgSmtToolkit(),
-					assertionOrder, mPrefs.computeCounterexample(), mPrefs.collectInterpolantStatistics());
+					NestedWord.nestedWord(mCounterexample.getWord()), mControlConfigurationSequence, mServices,
+					mPrefs.getCfgSmtToolkit(), assertionOrder, mPrefs.computeCounterexample(),
+					mPrefs.collectInterpolantStatistics());
 		}
 		return mTraceCheck;
 	}

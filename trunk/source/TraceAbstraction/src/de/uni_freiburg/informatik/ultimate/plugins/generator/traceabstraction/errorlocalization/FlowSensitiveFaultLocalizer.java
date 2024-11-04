@@ -495,7 +495,7 @@ public class FlowSensitiveFaultLocalizer<L extends IIcfgTransition<?>> {
 				truePredicate, null, null, mPredicateFactory.not(falsePredicate), mSimplificationTechnique,
 				mSymbolTable);
 
-		final DefaultTransFormulas<L> dtf = new DefaultTransFormulas<>(counterexampleWord, truePredicate,
+		final DefaultTransFormulas<L> dtf = new DefaultTransFormulas<>(counterexampleWord, null, truePredicate,
 				falsePredicate, Collections.emptySortedMap(), csToolkit.getOldVarsAssignmentCache(), false);
 
 		final List<IPredicatePostprocessor> postprocessors;
@@ -817,7 +817,7 @@ public class FlowSensitiveFaultLocalizer<L extends IIcfgTransition<?>> {
 				counterexample.getWord(), truePredicate, null, null, mPredicateFactory.not(falsePredicate),
 				mSimplificationTechnique, mSymbolTable);
 
-		final DefaultTransFormulas<L> dtf = new DefaultTransFormulas<>(counterexample.getWord(), truePredicate,
+		final DefaultTransFormulas<L> dtf = new DefaultTransFormulas<>(counterexample.getWord(), null, truePredicate,
 				falsePredicate, Collections.emptySortedMap(), csToolkit.getOldVarsAssignmentCache(), false);
 
 		final List<IPredicatePostprocessor> postprocessors;

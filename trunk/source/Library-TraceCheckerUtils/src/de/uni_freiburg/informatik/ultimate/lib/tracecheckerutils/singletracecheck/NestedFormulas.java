@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck;
 
+import java.util.List;
 import java.util.Set;
 import java.util.SortedMap;
 
@@ -53,18 +54,25 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 public abstract class NestedFormulas<L extends IAction, TF, SF> {
 
 	private final NestedWord<L> mNestedWord;
+	private final List<?> mControlConfigurationSequence;
 	private SF mPrecondition;
 	private SF mPostcondition;
 	private final SortedMap<Integer, SF> mPendingContexts;
 
-	public NestedFormulas(final NestedWord<L> nestedWord, final SortedMap<Integer, SF> pendingContexts) {
+	public NestedFormulas(final NestedWord<L> nestedWord, final SortedMap<Integer, SF> pendingContexts,
+			final List<?> controlConfigurationSequence) {
 		mNestedWord = nestedWord;
 		assert pendingContexts != null;
 		mPendingContexts = pendingContexts;
+		mControlConfigurationSequence = controlConfigurationSequence;
 	}
 
 	public final NestedWord<L> getTrace() {
 		return mNestedWord;
+	}
+
+	public final List<?> getControlConfigurations() {
+		return mControlConfigurationSequence;
 	}
 
 	public final SF getPrecondition() {

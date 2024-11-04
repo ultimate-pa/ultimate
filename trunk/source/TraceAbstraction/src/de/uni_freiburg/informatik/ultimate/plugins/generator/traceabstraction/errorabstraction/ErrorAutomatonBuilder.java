@@ -270,7 +270,7 @@ class ErrorAutomatonBuilder<L extends IIcfgTransition<?>> implements IErrorAutom
 			final IIcfgSymbolTable symbolTable, final IPredicate truePredicate,
 			final NestedWord<L> trace, final IPredicate precondition, final IPredicate postcondition,
 			final List<IPredicatePostprocessor> postprocessors, final PredicateTransformerType predicateTransformer) throws AssertionError {
-		final DefaultTransFormulas<L> dtf = new DefaultTransFormulas<>(trace, precondition, postcondition,
+		final DefaultTransFormulas<L> dtf = new DefaultTransFormulas<>(trace, null, precondition, postcondition,
 				Collections.emptySortedMap(), csToolkit.getOldVarsAssignmentCache(), false);
 		final IterativePredicateTransformer<L> ipt = new IterativePredicateTransformer<>(predicateFactory,
 				csToolkit.getManagedScript(), csToolkit.getModifiableGlobalsTable(), services, trace, precondition,

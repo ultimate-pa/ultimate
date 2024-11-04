@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletraceche
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
@@ -89,12 +90,12 @@ public class RelevantTransFormulas<L extends IAction> extends NestedFormulas<L, 
 	 */
 	private int mSumSizeFormulasInUnsatCore = 0;
 
-	public RelevantTransFormulas(final NestedWord<L> nestedTrace, final IPredicate precondition,
-			final IPredicate postcondition, final SortedMap<Integer, IPredicate> pendingContexts,
-			final Set<L> unsatCore, final OldVarsAssignmentCache oldVarsAssignmentCache,
-			final boolean[] localVarAssignmentsAtCallInUnsatCore, final boolean[] oldVarAssignmentAtCallInUnsatCore,
-			final ManagedScript script) {
-		super(nestedTrace, pendingContexts);
+	public RelevantTransFormulas(final NestedWord<L> nestedTrace, final List<?> controlConfigurationSequence,
+			final IPredicate precondition, final IPredicate postcondition,
+			final SortedMap<Integer, IPredicate> pendingContexts, final Set<L> unsatCore,
+			final OldVarsAssignmentCache oldVarsAssignmentCache, final boolean[] localVarAssignmentsAtCallInUnsatCore,
+			final boolean[] oldVarAssignmentAtCallInUnsatCore, final ManagedScript script) {
+		super(nestedTrace, pendingContexts, controlConfigurationSequence);
 		super.setPrecondition(precondition);
 		super.setPostcondition(postcondition);
 		mTransFormulas = new UnmodifiableTransFormula[nestedTrace.length()];
@@ -110,7 +111,7 @@ public class RelevantTransFormulas<L extends IAction> extends NestedFormulas<L, 
 			final IPredicate postcondition, final SortedMap<Integer, IPredicate> pendingContexts,
 			final Set<Term> unsatCore, final OldVarsAssignmentCache modGlobalVarManager, final ManagedScript script,
 			final AnnotateAndAsserter<L> aaa, final AnnotateAndAssertConjunctsOfCodeBlocks<L> aac) {
-		super(nestedFormulas.getTrace(), pendingContexts);
+		super(nestedFormulas.getTrace(), pendingContexts, nestedFormulas.getControlConfigurations());
 		super.setPrecondition(precondition);
 		super.setPostcondition(postcondition);
 		mTransFormulas = new UnmodifiableTransFormula[nestedFormulas.getTrace().length()];

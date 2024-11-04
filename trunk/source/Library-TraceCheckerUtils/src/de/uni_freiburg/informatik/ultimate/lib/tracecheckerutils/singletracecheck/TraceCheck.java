@@ -154,12 +154,12 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 	 */
 	public TraceCheck(final IPredicate precondition, final IPredicate postcondition,
 			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<L> trace,
-			final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
-			final AssertCodeBlockOrder assertCodeBlockOrder, final boolean computeRcfgProgramExecution,
-			final boolean collectInterpolatSequenceStatistics) {
+			final List<?> controlConfigurationSequence, final IUltimateServiceProvider services,
+			final CfgSmtToolkit csToolkit, final AssertCodeBlockOrder assertCodeBlockOrder,
+			final boolean computeRcfgProgramExecution, final boolean collectInterpolatSequenceStatistics) {
 		this(precondition, postcondition, pendingContexts, trace,
-				new DefaultTransFormulas<>(trace, precondition, postcondition, pendingContexts,
-						csToolkit.getOldVarsAssignmentCache(), false),
+				new DefaultTransFormulas<>(trace, controlConfigurationSequence, precondition, postcondition,
+						pendingContexts, csToolkit.getOldVarsAssignmentCache(), false),
 				services, csToolkit, assertCodeBlockOrder, computeRcfgProgramExecution,
 				collectInterpolatSequenceStatistics, true);
 	}
@@ -263,11 +263,11 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 	 */
 	public static TraceCheck<IAction> createTraceCheck(final IUltimateServiceProvider services,
 			final CfgSmtToolkit toolkit, final ManagedScript mgdScriptTc, final IPredicate pre, final IPredicate post,
-			final List<? extends IAction> trace) {
+			final List<? extends IAction> trace, final List<?> controlConfigurationSequence) {
 		final SortedMap<Integer, IPredicate> pendingContexts = new TreeMap<>();
 		final NestedWord<IAction> nw = NestedWord.nestedWord(new Word<>(trace.toArray(new IAction[trace.size()])));
-		final NestedFormulas<IAction, UnmodifiableTransFormula, IPredicate> rv =
-				new DefaultTransFormulas<>(nw, pre, post, pendingContexts, toolkit.getOldVarsAssignmentCache(), false);
+		final NestedFormulas<IAction, UnmodifiableTransFormula, IPredicate> rv = new DefaultTransFormulas<>(nw,
+				controlConfigurationSequence, pre, post, pendingContexts, toolkit.getOldVarsAssignmentCache(), false);
 		final AssertCodeBlockOrder acbo = new AssertCodeBlockOrder(AssertCodeBlockOrderType.NOT_INCREMENTALLY);
 		final boolean computeRcfgProgramExecution = true;
 		final boolean collectInterpolatSequenceStatistics = false;
@@ -356,8 +356,8 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 			mLogger.info(msg);
 			cleanupAndUnlockSolver();
 			final DefaultTransFormulas<L> withBE = new DefaultTransFormulas<>(mNestedFormulas.getTrace(),
-					mNestedFormulas.getPrecondition(), mNestedFormulas.getPostcondition(), mPendingContexts,
-					mCsToolkit.getOldVarsAssignmentCache(), true);
+					mNestedFormulas.getControlConfigurations(), mNestedFormulas.getPrecondition(),
+					mNestedFormulas.getPostcondition(), mPendingContexts, mCsToolkit.getOldVarsAssignmentCache(), true);
 			final TraceCheck<L> tc = new TraceCheck<>(mNestedFormulas.getPrecondition(),
 					mNestedFormulas.getPostcondition(), mPendingContexts, mNestedFormulas.getTrace(), withBE, mServices,
 					mCsToolkit, mTcSmtManager, AssertCodeBlockOrder.NOT_INCREMENTALLY, true, false, true);
