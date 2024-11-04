@@ -165,7 +165,10 @@ public class IterativePredicateTransformer<L extends IAction> {
 			if (i > Math.max(limit+1, limit)) {
 				break;
 			}
-			if (skipList.contains(mTrace.getSymbol(i))) continue;
+			if (skipList.contains(mTrace.getSymbol(i))) {
+				spSequence[i] = spSequence[i-1];
+				continue;
+			}
 			final IPredicate predecessor = ipp.getPredicate(i);
 			final Term spTerm;
 			if (mTrace.getSymbol(i) instanceof IIcfgCallTransition<?>) {
@@ -321,7 +324,10 @@ public class IterativePredicateTransformer<L extends IAction> {
 		for (int i = mTrace.length() - 1; i >= positionOfFirstPredicate; i--) {
 			final Term backwardTerm;
 			if (i < limit-1) break;
-			if (skipList.contains(mTrace.getSymbol(i))) continue;
+			if (skipList.contains(mTrace.getSymbol(i))) {
+				backwardSequence[i - 1] = backwardSequence[i];
+				continue;
+			}
 			final IPredicate successorWp;
 			if (bs == BackwardSequence.WP) {
 				successorWp = ipp.getPredicate(i + 1);

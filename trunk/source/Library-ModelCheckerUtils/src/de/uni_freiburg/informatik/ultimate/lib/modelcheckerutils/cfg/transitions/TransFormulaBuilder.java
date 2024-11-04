@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
@@ -317,6 +318,8 @@ public class TransFormulaBuilder {
 		}
 		mConstructionFinished = true;
 		removeSuperfluousVars(mFormula, mInVars, mOutVars, mAuxVars);
+//		mFormula = SmtUtils.quantifier(script.getScript(), QuantifiedFormula.EXISTS, mAuxVars, mFormula);
+//		mAuxVars.clear();
 		return new UnmodifiableTransFormula(mFormula, Collections.unmodifiableMap(mInVars),
 				Collections.unmodifiableMap(mOutVars), ImmutableSet.of(mNonTheoryConsts), ImmutableSet.of(mAuxVars),
 				ImmutableSet.of(mBranchEncoders), mInfeasibility, script);

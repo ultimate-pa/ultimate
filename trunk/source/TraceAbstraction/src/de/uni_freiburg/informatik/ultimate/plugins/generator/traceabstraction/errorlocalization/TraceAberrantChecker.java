@@ -5,17 +5,20 @@ import java.io.ObjectOutputStream.PutField;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 import javax.management.NotificationBroadcaster;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.GetAcceptedLassoWord;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
@@ -35,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.B
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.LocalProgramVar;
@@ -155,13 +159,13 @@ public class TraceAberrantChecker<L extends IIcfgTransition<?>> {
 					mLastOverapproxVariable = i;
 				}
 				if (elem instanceof CodeBlock) {
-					for (IProgramVar outvar : ((CodeBlock)elem).getTransformula().getOutVars().keySet()) {
-//						TermVariable termVariable = ((CodeBlock)elem).getTransformula().getOutVars().get(outvar);
-						if (!overapproximatedVariables.containsKey(outvar)) {
-							overapproximatedVariables.put(outvar, new ArrayList<Integer>());
-						}
-						overapproximatedVariables.get(outvar).add(i);
-					}
+//					for (IProgramVar outvar : ((CodeBlock)elem).getTransformula().getOutVars().keySet()) {
+////						TermVariable termVariable = ((CodeBlock)elem).getTransformula().getOutVars().get(outvar);
+//						if (!overapproximatedVariables.containsKey(outvar)) {
+//							overapproximatedVariables.put(outvar, new ArrayList<Integer>());
+//						}
+//						overapproximatedVariables.get(outvar).add(i);
+//					}
 					for (IProgramVar outvar : ((CodeBlock)elem).getTransformula().getAssignedVars()) {
 //						TermVariable termVariable = ((CodeBlock)elem).getTransformula().getOutVars().get(outvar);
 						if (!overapproximatedVariables.containsKey(outvar)) {
@@ -207,6 +211,7 @@ public class TraceAberrantChecker<L extends IIcfgTransition<?>> {
 //						}
 //					}
 				}
+				
 				Term term = SmtUtils.and(csToolkit.getManagedScript().getScript(), terms);
 				Map<Term, Term> newVarMap = new HashMap<>();
 				for (IProgramVar lpv : overapproximatedVariables.keySet()) {
@@ -220,15 +225,50 @@ public class TraceAberrantChecker<L extends IIcfgTransition<?>> {
 						
 					}
 				}
+				List<ApplicationTerm> allVarApplicationTerms = new ArrayList<>();
+				//GetAllApplicationTermVariables(term, allVarApplicationTerms);
+				List<Map<Term, Term>> hashMaps = new ArrayList<>();
+				for (int i = 0; i < nBuilder.getVariable2Constant().getTrace().length(); i++) {
+					if (nFormulas.callPositions().contains(i)) {
+						hashMaps.add(nBuilder.getVariable2Constant().getGlobalVarAssignment(i));
+						hashMaps.add(nBuilder.getVariable2Constant().getLocalVarAssignment(i));
+						hashMaps.add(nBuilder.getVariable2Constant().getOldVarAssignment(i));
+					} else {
+						hashMaps.add(nBuilder.getVariable2Constant().getFormulaFromNonCallPos(i));
+					}
+				}
+				for (Map<Term, Term> map : hashMaps) {
+					for (Term t : map.values()) {
+						allVarApplicationTerms.add((ApplicationTerm)t);
+					}
+				}
+				for (IProgramVar t : a.keySet()) {
+					TreeMap<Integer, Term> map = a.get(t);
+					for (int i : map.keySet()) {
+						Term applicationTerm = map.get(i);
+						assert (applicationTerm instanceof ApplicationTerm);
+						allVarApplicationTerms.add((ApplicationTerm) applicationTerm);
+					}
+				}
+				List<TermVariable> nonOverapproxVars = new ArrayList<>();
+				for (ApplicationTerm t : allVarApplicationTerms) {
+					if (!newVarMap.containsKey(t)) {
+						TermVariable newTVariable = csToolkit.getManagedScript().constructFreshTermVariable((t).getFunction().getName(), t.getSort());
+						newVarMap.put(t, newTVariable);
+						nonOverapproxVars.add(newTVariable);
+						
+					}
+				}
 				term = Substitution.apply(csToolkit.getManagedScript().getScript(), newVarMap, term);
 //				final BigInteger minValue = mTypeSizes.getMinValueOfPrimitiveType(type);
 //				final Expression greaterMinValue = ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, auxvar,
 //						ExpressionFactory.createIntegerLiteral(loc, minValue.toString()));
 				// TODO alles in ein oder
-//				for (TermVariable quantifiedVar : quantifiedVars) {
-//					term = SmtUtils.or(csToolkit.getManagedScript().getScript(), SmtUtils.greater(csToolkit.getManagedScript().getScript(), quantifiedVar, csToolkit.getManagedScript().getScript().numeral(BigInteger.valueOf(1))),
-//							SmtUtils.greater(csToolkit.getManagedScript().getScript(), csToolkit.getManagedScript().getScript().numeral(BigInteger.valueOf(0)), quantifiedVar), term);
-//				}
+				term = SmtUtils.quantifier(csToolkit.getManagedScript().getScript(), QuantifiedFormula.EXISTS, nonOverapproxVars, term);
+				for (TermVariable quantifiedVar : quantifiedVars) {
+					term = SmtUtils.or(csToolkit.getManagedScript().getScript(), SmtUtils.greater(csToolkit.getManagedScript().getScript(), quantifiedVar, csToolkit.getManagedScript().getScript().numeral(BigInteger.valueOf(4294967295L))),
+							SmtUtils.greater(csToolkit.getManagedScript().getScript(), csToolkit.getManagedScript().getScript().numeral(BigInteger.valueOf(0)), quantifiedVar), term);
+				}
 				term = SmtUtils.quantifier(csToolkit.getManagedScript().getScript(), QuantifiedFormula.FORALL, quantifiedVars, term);
 				var t = SmtUtils.checkSatTerm((Script) csToolkit.getManagedScript().getScript(), term);
 				if (t == LBool.SAT) {
@@ -244,19 +284,20 @@ public class TraceAberrantChecker<L extends IIcfgTransition<?>> {
 
 		}
 		
-		mPrePostSequences = calculatePrePost(csToolkit, falsePredicate, truePredicate, counterexampleWord);
+		mPrePostSequences = calculatePrePost(csToolkit, falsePredicate, truePredicate, counterexampleWord, mFirstOverapproxVariable, mLastOverapproxVariable);
 		List<Boolean> toCheck = new ArrayList<>();
 		for (L edge : counterexampleWord) {
 			Overapprox overapprox = Overapprox.getAnnotation(edge);
-			toCheck.add(overapprox != null && overapprox instanceof OverapproxVariable);
+//			toCheck.add(overapprox != null && overapprox instanceof OverapproxVariable);
+			toCheck.add(overapprox != null);
 		}
-		mTraceAberrantList = checkHoareTriples(csToolkit, counterexampleWord, toCheck);
+		mTraceAberrantList = checkHoareTriples(csToolkit, counterexampleWord, mPrePostSequences, toCheck);
 		
 		
-		if (!noOverapproxVariableTraceAberrant(counterexampleWord)) {
+		if (true &&!noOverapproxVariableTraceAberrant(counterexampleWord)) {
 			for (int i = counterexampleWord.length()-1; i>=0; i--) {
 				boolean currentAssumeIrrelevant = false;
-				CodeBlock cBlock = (CodeBlock)counterexampleWord.getSymbol(i);
+				IcfgEdge cBlock = (IcfgEdge)counterexampleWord.getSymbol(i);
 				ConditionAnnotation cAnnotation = ConditionAnnotation.getAnnotation(cBlock);
 				Check check = Check.getAnnotation(cBlock);
 				if (cAnnotation == null || check != null) continue;
@@ -265,7 +306,7 @@ public class TraceAberrantChecker<L extends IIcfgTransition<?>> {
 					ConditionAnnotation edgeAnnotation = ConditionAnnotation.getAnnotation(edge);
 					if (edgeAnnotation == null || edgeAnnotation.isNegated() == cAnnotation.isNegated()) continue;				
 					System.out.print("");
-					if (cBlock.getTarget() == ((CodeBlock)edge).getTarget()) {
+					if (cBlock.getTarget() == ((IcfgEdge)edge).getTarget()) {
 						// empty split
 						currentAssumeIrrelevant = true;
 						break;
@@ -276,8 +317,10 @@ public class TraceAberrantChecker<L extends IIcfgTransition<?>> {
 						currentPath.add(counterexampleWord.getSymbol(j).getTarget());
 					}
 					List<IcfgLocation> otherPath = new ArrayList<>();
-					otherPath.add(((CodeBlock)edge).getTarget());
-					IcfgLocation currentNode = ((CodeBlock)edge).getTarget();
+					List<IcfgEdge> otherPathEdges = new ArrayList<>();
+					otherPath.add(((IcfgEdge)edge).getTarget());
+					otherPathEdges.add((IcfgEdge)edge);
+					IcfgLocation currentNode = ((IcfgEdge)edge).getTarget();
 					
 					boolean successFindingEnd = false;
 					
@@ -286,6 +329,7 @@ public class TraceAberrantChecker<L extends IIcfgTransition<?>> {
 							break;
 						}
 						IcfgLocation newNode = currentNode.getOutgoingEdges().get(0).getTarget();
+						otherPathEdges.add((IcfgEdge) currentNode.getOutgoingEdges().get(0));
 						otherPath.add(newNode);
 						int index = currentPath.indexOf(newNode);
 						if (index != -1) {
@@ -302,7 +346,7 @@ public class TraceAberrantChecker<L extends IIcfgTransition<?>> {
 					for (int j = 0; j < counterexampleWord.length(); j++) {
 						newToCheck.add(j > i && j < i + currentPath.size());
 					}
-					AberranceInformation[] traceAberrantList = checkHoareTriples(csToolkit, counterexampleWord, newToCheck);
+					AberranceInformation[] traceAberrantList = checkHoareTriples(csToolkit, counterexampleWord, mPrePostSequences, newToCheck);
 					for (int j = 1; j < currentPath.size(); j++) {
 						if (traceAberrantList[i+j].GetTraceAberrance() != TraceAberrance.NO) {
 							currentPathIrrelevant = false;
@@ -316,12 +360,46 @@ public class TraceAberrantChecker<L extends IIcfgTransition<?>> {
 						currentAssumeIrrelevant = true;
 						break;
 					}
-					//TODO else part
+					IcfgEdge[] newOtherPath = new IcfgEdge[counterexampleWord.length()+otherPath.size()-currentPath.size()];
+					List<Boolean> newCheck = new ArrayList<>();
+					for (int j = 0; j < i; j++) {
+						newOtherPath[j] = (IcfgEdge)counterexampleWord.getSymbol(j);
+						newCheck.add(false);
+					}
+					for (int j = 0; j < otherPathEdges.size(); j++) {
+						// TODO check if 
+						newOtherPath[i+j] = otherPathEdges.get(j);
+						newCheck.add(j != 0);
+					}
+					for (int j = i + currentPath.size(); j < counterexampleWord.length(); j++) {
+						newOtherPath[j-currentPath.size()+otherPath.size()] = (IcfgEdge)counterexampleWord.getSymbol(j);
+						newCheck.add(false);
+					}
+					int[] nestingRelations = new int[newOtherPath.length];
+					for (int j = 0; j < nestingRelations.length; j++) {
+						nestingRelations[j] = NestedWord.INTERNAL_POSITION;
+					}
+							
+					NestedWord<L> newCounterexample = new NestedWord<L>((L[]) newOtherPath, nestingRelations);
+					TracePredicates[] prePost = calculatePrePost(csToolkit, falsePredicate, truePredicate, newCounterexample, -1, Integer.MAX_VALUE);
+					// TODO exact min/max
+					
+					AberranceInformation[] aberranceInformations = checkHoareTriples(csToolkit, newCounterexample, prePost, newCheck);
+					currentAssumeIrrelevant = true;
+					for (int j = 1; j < otherPathEdges.size(); j++) {
+						if (aberranceInformations[i+j].GetTraceAberrance() != TraceAberrance.NO) {
+							currentAssumeIrrelevant = false;
+							break;
+						}
+					}	
 				}
 				if (currentAssumeIrrelevant) {
 					mPredicateSkipList.add(counterexampleWord.getSymbol(i));
-					mPrePostSequences = calculatePrePost(csToolkit, falsePredicate, truePredicate, counterexampleWord);
-					mTraceAberrantList = checkHoareTriples(csToolkit, counterexampleWord, toCheck);
+					mPrePostSequences = calculatePrePost(csToolkit, falsePredicate, truePredicate, counterexampleWord, mFirstOverapproxVariable, mLastOverapproxVariable);
+					mTraceAberrantList = checkHoareTriples(csToolkit, counterexampleWord, mPrePostSequences, toCheck);
+					if (noOverapproxVariableTraceAberrant(counterexampleWord)) {
+						break;
+					}
 				}
 				
 				
@@ -337,7 +415,8 @@ public class TraceAberrantChecker<L extends IIcfgTransition<?>> {
 	private boolean noOverapproxVariableTraceAberrant(final NestedWord<L> counterexampleWord) {
 		for (int i = 0; i < counterexampleWord.length(); i++) {
 			Overapprox overapprox = Overapprox.getAnnotation(counterexampleWord.getSymbol(i));
-			if (overapprox instanceof OverapproxVariable && mTraceAberrantList[i].GetTraceAberrance() != TraceAberrance.NO) {
+//			if (overapprox instanceof OverapproxVariable && mTraceAberrantList[i].GetTraceAberrance() != TraceAberrance.NO) {
+			if (mTraceAberrantList[i].GetTraceAberrance() != TraceAberrance.NO) {
 				return false;
 			}
 		}
@@ -345,7 +424,7 @@ public class TraceAberrantChecker<L extends IIcfgTransition<?>> {
 		
 	}
 	
-	private TracePredicates[] calculatePrePost(CfgSmtToolkit csToolkit, IPredicate falsePredicate, IPredicate truePredicate, NestedWord<L> counterexampleWord) {
+	private TracePredicates[] calculatePrePost(CfgSmtToolkit csToolkit, IPredicate falsePredicate, IPredicate truePredicate, NestedWord<L> counterexampleWord, int firstOverapproxVariable, int lastOverapproxVariable) {
 		// calculate Pre and Post
 		final DefaultTransFormulas<L> dtf = new DefaultTransFormulas<>(counterexampleWord, truePredicate,
 				falsePredicate, Collections.emptySortedMap(), csToolkit.getOldVarsAssignmentCache(), false);
@@ -371,10 +450,10 @@ public class TraceAberrantChecker<L extends IIcfgTransition<?>> {
 		
 		try {
 			mLogger.info("started wp calc");
-			preSequence = iptPre.computePreSequence(dtf, postprocessors, false, mFirstOverapproxVariable, mPredicateSkipList);
+			preSequence = iptPre.computePreSequence(dtf, postprocessors, false, -1, mPredicateSkipList);
 //					preSequence = iptPre.computePreSequence(dtf, postprocessors, false, firstOverapproxVariable);
 			mLogger.info("started sp calc");
-			postSequence = iptSp.computeStrongestPostconditionSequence(dtf, postprocessors, mLastOverapproxVariable, mPredicateSkipList);
+			postSequence = iptSp.computeStrongestPostconditionSequence(dtf, postprocessors, Integer.MAX_VALUE, mPredicateSkipList);
 //					strongestPostconditionSequence = iptSp.computeStrongestPostconditionSequence(dtf, postprocessors, lastOverapproxVariable);
 			mLogger.info("finished sp calc");
 			// evtl nur teilweise
@@ -384,7 +463,7 @@ public class TraceAberrantChecker<L extends IIcfgTransition<?>> {
 		return new TracePredicates[] {preSequence, postSequence};
 	}
 	
-	private AberranceInformation[] checkHoareTriples(CfgSmtToolkit csToolkit, NestedWord<L> counterexampleWord, List<Boolean> toCheck) {
+	private AberranceInformation[] checkHoareTriples(CfgSmtToolkit csToolkit, NestedWord<L> counterexampleWord, TracePredicates[] prePostPredicates, List<Boolean> toCheck) {
 		assert toCheck.size() == counterexampleWord.length();
 		List<AberranceInformation> traceAberranceList = new ArrayList<>();
 		MonolithicHoareTripleChecker hc = new MonolithicHoareTripleChecker(csToolkit);
@@ -394,15 +473,24 @@ public class TraceAberrantChecker<L extends IIcfgTransition<?>> {
 				traceAberranceList.add(new AberranceInformation(TraceAberrance.MAYBE));
 				continue;
 			}
-			final IPredicate pre = mPrePostSequences[0].getPredicate(i+1);
-			final IPredicate sp = mPrePostSequences[1].getPredicate(i);
-			IInternalAction internal = faultLocalizationRelevanceChecker.constructHavocedInternalAction(mServices, (IInternalAction)counterexampleWord.getSymbol(i), csToolkit.getManagedScript());
+			final IPredicate pre = prePostPredicates[0].getPredicate(i+1);
+			final IPredicate sp = prePostPredicates[1].getPredicate(i);
+			IInternalAction internal;
+			try {
+				internal = faultLocalizationRelevanceChecker.constructHavocedInternalAction(mServices, (IInternalAction)counterexampleWord.getSymbol(i), csToolkit.getManagedScript());
+
+			} catch (Exception e) {
+				// TODO: handle exception
+				traceAberranceList.add(new AberranceInformation(TraceAberrance.MAYBE));
+				continue;
+			}
 			// TODO check if internal possible
 			Validity res = null;
 			try {
 				 res = (hc.checkInternal(sp, internal, pre));
 			} catch (Exception e) {
 				// TODO: handle exception
+				mLogger.info(e.getMessage());
 			}
 				
 			if (res == Validity.VALID) {
@@ -416,4 +504,6 @@ public class TraceAberrantChecker<L extends IIcfgTransition<?>> {
 		}
 		return traceAberranceList.toArray(new AberranceInformation[traceAberranceList.size()]);
 	}
+	
+
 }

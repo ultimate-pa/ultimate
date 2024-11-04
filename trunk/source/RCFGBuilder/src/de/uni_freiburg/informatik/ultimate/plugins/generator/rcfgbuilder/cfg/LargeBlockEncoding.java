@@ -11,6 +11,8 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.OverapproxVariable;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -117,7 +119,21 @@ public class LargeBlockEncoding {
 	 * on what kind of composition is to be performed.
 	 */
 	private void considerCompositionCandidate(final BoogieIcfgLocation pp, final boolean allowComplex) {
-		mLogger.debug("Considering composition at " + pp);
+		mLogger.info("Considering composition at " + pp);
+		for (IcfgEdge edge : pp.getIncomingEdges()) {
+			Overapprox overapprox = Overapprox.getAnnotation(edge);
+			if (overapprox instanceof OverapproxVariable) {
+				mLogger.info("decided on NO composition, because of OverapproxVariable");
+				return;
+			}
+		}
+		for (IcfgEdge edge : pp.getOutgoingEdges()) {
+			Overapprox overapprox = Overapprox.getAnnotation(edge);
+			if (overapprox instanceof OverapproxVariable) {
+				mLogger.info("decided on NO composition, because of OverapproxVariable");
+				return;
+			}
+		}
 		final SequentialCompositionType seq = classifySequentialCompositionNode(pp);
 		if (seq == SequentialCompositionType.STRAIGHTLINE) {
 			mSequentialQueue.offerLast(pp);

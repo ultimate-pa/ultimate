@@ -91,6 +91,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryA
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopExitAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopExitAnnotation.LoopExitType;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.OverapproxVariable;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
@@ -955,8 +956,13 @@ public class CfgBuilder {
 					st = assign;
 				}
 			}
+			CodeBlockSize codeBlockSize = mCodeBlockSize;
+			Overapprox overapprox = Overapprox.getAnnotation(st);
+			if (overapprox != null && overapprox instanceof OverapproxVariable) {
+				codeBlockSize = CodeBlockSize.SingleStatement;
+			}
 
-			switch (mCodeBlockSize) {
+			switch (codeBlockSize) {
 			case OneNontrivialStatement:
 				if (currentLocation instanceof StatementSequence && !StatementSequence.isAssumeTrueStatement(st)
 						&& !((StatementSequence) currentLocation).isTrivial()) {
