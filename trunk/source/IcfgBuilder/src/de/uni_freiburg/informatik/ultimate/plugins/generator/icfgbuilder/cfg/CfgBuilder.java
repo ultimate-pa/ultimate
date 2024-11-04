@@ -228,12 +228,12 @@ public class CfgBuilder {
 
 		final CodeBlockSize userDefineCodeBlockSize =
 				prefs.getEnum(IcfgPreferenceInitializer.LABEL_CODE_BLOCK_SIZE, CodeBlockSize.class);
-		if ((userDefineCodeBlockSize == CodeBlockSize.LoopFreeBlock
-				|| userDefineCodeBlockSize == CodeBlockSize.SequenceOfStatements) && fgInfo.hasSomeForkEdge()) {
+		if (!userDefineCodeBlockSize.isConcurrencySafe() && fgInfo.hasSomeForkEdge()) {
 			mCodeBlockSize = CodeBlockSize.OneNontrivialStatement;
-			mLogger.warn("User set CodeBlockSize to " + userDefineCodeBlockSize
-					+ " but program contains fork statements. Overwriting the user preferences and setting CodeBlockSize to "
-					+ mCodeBlockSize);
+			mLogger.warn(
+					"User set CodeBlockSize to %s but program contains fork statements. "
+							+ "Overwriting the user preferences and setting CodeBlockSize to %s.",
+					userDefineCodeBlockSize, mCodeBlockSize);
 		} else {
 			mCodeBlockSize = userDefineCodeBlockSize;
 		}
