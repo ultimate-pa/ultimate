@@ -58,7 +58,7 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 	private final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mAbstraction;
 	private final IEmptyStackStateFactory<IPredicate> mEmptyStackStateFactory;
 	private final ConditionalCommutativityChecker<L> mChecker;
-	private final IConditionalCommutativityCheckerStatisticsUtils mStatisticsUtils;
+	private final ConditionalCommutativityCheckerStatisticsUtils mStatisticsUtils;
 	private final IDfsOrder<L, IPredicate> mDfsOrder;
 
 	/**
@@ -89,7 +89,7 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 			final IDfsOrder<L, IPredicate> dfsOrder,
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction,
 			final IEmptyStackStateFactory<IPredicate> emptyStackStateFactory,
-			final IConditionalCommutativityCheckerStatisticsUtils statisticsUtils,
+			final ConditionalCommutativityCheckerStatisticsUtils statisticsUtils,
 			final ConditionalCommutativityChecker<L> conComChecker) {
 		mServices = services;
 		mDfsOrder = dfsOrder;

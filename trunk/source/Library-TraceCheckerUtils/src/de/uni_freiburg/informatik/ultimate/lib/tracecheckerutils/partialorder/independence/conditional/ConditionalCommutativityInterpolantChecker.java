@@ -64,7 +64,7 @@ public class ConditionalCommutativityInterpolantChecker<L extends IAction> {
 	private final IEmptyStackStateFactory<IPredicate> mEmptyStackStateFactory;
 	private IRun<L, IPredicate> mRun;
 	private final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mAbstraction;
-	private final IConditionalCommutativityCheckerStatisticsUtils mStatisticsUtils;
+	private final ConditionalCommutativityCheckerStatisticsUtils mStatisticsUtils;
 	private final ConditionalCommutativityInterpolantAutomatonProvider<L> mInterpolantAutomatonProvider;
 	private final StateSplitter<IPredicate> mStateSplitter;
 
@@ -95,7 +95,7 @@ public class ConditionalCommutativityInterpolantChecker<L extends IAction> {
 	public ConditionalCommutativityInterpolantChecker(final IUltimateServiceProvider services,
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction,
 			final IEmptyStackStateFactory<IPredicate> emptyStackStateFactory, final IPredicateUnifier predicateUnifier,
-			final IConditionalCommutativityCheckerStatisticsUtils statisticsUtils,
+			final ConditionalCommutativityCheckerStatisticsUtils statisticsUtils,
 			final StateSplitter<IPredicate> splitter, final ConditionalCommutativityChecker<L> conComChecker) {
 		mServices = services;
 		mAbstraction = abstraction;

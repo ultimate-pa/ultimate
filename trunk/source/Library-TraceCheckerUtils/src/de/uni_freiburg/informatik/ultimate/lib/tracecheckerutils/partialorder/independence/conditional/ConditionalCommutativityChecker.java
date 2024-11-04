@@ -54,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.Quantifier
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IIndependenceConditionGenerator;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.ICopyActionFactory;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.conditional.IConditionalCommutativityCheckerStatisticsUtils.ConditionalCommutativityStopwatches;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.conditional.ConditionalCommutativityCheckerStatisticsUtils.ConditionalCommutativityStopwatches;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
@@ -75,7 +75,7 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 	private final IIndependenceRelation<IPredicate, L> mIndependenceRelation;
 	private final IIndependenceConditionGenerator mGenerator;
 	private final ManagedScript mManagedScript;
-	private final IConditionalCommutativityCheckerStatisticsUtils mStatisticsUtils;
+	private final ConditionalCommutativityCheckerStatisticsUtils mStatisticsUtils;
 	private final ConComTraceCheckMode mTraceCheckMode;
 	private final PredicateFactory mPredicateFactory;
 	private final ICopyActionFactory<L> mCopyFactory;
@@ -98,14 +98,14 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 	 *            An {@link ITraceChecker} responsible for proving that a condition holds after the run given in
 	 *            checkConditionalCommutativity
 	 * @param statisticsUtils
-	 *            An {@link IConditionalCommutativityCheckerStatisticsUtils} used for statistics
+	 *            An {@link ConditionalCommutativityCheckerStatisticsUtils} used for statistics
 	 */
 	public ConditionalCommutativityChecker(final IUltimateServiceProvider services,
 			final IConditionalCommutativityCriterion<L> criterion,
 			final IIndependenceRelation<IPredicate, L> independenceRelation, final ManagedScript script,
 			final IIndependenceConditionGenerator generator,
 			final Function<IRun<L, IPredicate>, IRefinementStrategy<L>> buildStrategy,
-			final IConditionalCommutativityCheckerStatisticsUtils statisticsUtils,
+			final ConditionalCommutativityCheckerStatisticsUtils statisticsUtils,
 			final PredicateFactory predicateFactory, final ICopyActionFactory<L> copyFactory,
 			final ConComTraceCheckMode traceCheckMode) {
 		mServices = services;
