@@ -16,9 +16,9 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Positions\ where\ we\ compute\ the\ Hoare\ Annotation=All
 #Wed Jan 15 21:36:24 CET 2014
 file_export_version=3.0
-\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=
-@de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=0.0.1
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Convert\ code\ blocks\ to\ CNF=false
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder=
+@de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder/Convert\ code\ blocks\ to\ CNF=false
 #Sat Mar 15 16:00:32 CET 2014
 file_export_version=3.0
 @de.uni_freiburg.informatik.ultimate.core=0.0.1
