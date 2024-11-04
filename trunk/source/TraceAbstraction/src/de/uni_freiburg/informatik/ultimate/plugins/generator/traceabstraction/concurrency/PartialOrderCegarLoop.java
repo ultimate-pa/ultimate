@@ -83,10 +83,11 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.MLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateWithConjuncts;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskIterationIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.BetterLockstepOrder;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.LoopLockstepOrder.PredicateWithLastThread;
@@ -121,7 +122,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.in
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.ConComChecker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.PostConditionTraceChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.util.Lazy;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
@@ -229,17 +230,16 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 
 			// get interpolants from mCounterexample
 			final ArrayList<IPredicate> predicates = getCounterexamplePredicates();
-			final PostConditionTraceChecker<L> checker = new PostConditionTraceChecker<>(mServices, mAbstraction,
-					mTaskIdentifier, mFactory, predicateUnifier, mStrategyFactory);
 			final IIndependenceRelation<IPredicate, L> relation = mPOR.getIndependence(0);
 			final SemanticIndependenceConditionGenerator generator = new SemanticIndependenceConditionGenerator(
 					mServices, mCsToolkit.getManagedScript(), mPredicateFactory, relation.isSymmetric(), true);
 			mCriterion.updateAbstraction(mAbstraction);
 			final ConditionalCommutativityInterpolantChecker<L> conInterpolantProvider =
 					new ConditionalCommutativityInterpolantChecker<>(mServices, mCriterion, relation,
-							mCsToolkit.getManagedScript(), generator, mAbstraction, mFactory, mPredicateFactory,
-							mCopyFactory, checker, predicateUnifier, mConComCheckerStatisticsUtils,
-							mPOR.getStateSplitter(), mConComTraceCheckMode);
+							mCsToolkit.getManagedScript(), generator, mAbstraction, mFactory,
+							this::buildStrategyForConditionalCommutativity, mPredicateFactory, mCopyFactory,
+							predicateUnifier, mConComCheckerStatisticsUtils, mPOR.getStateSplitter(),
+							mConComTraceCheckMode);
 			mInterpolAutomaton = conInterpolantProvider.getInterpolants((IRun<L, IPredicate>) mCounterexample,
 					predicates, mInterpolAutomaton);
 		}
@@ -355,7 +355,8 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 									.getInterpolantAutomaton();
 
 					final IPredicateUnifier predicateUnifier =
-							((PostConditionTraceChecker<L>) mConComChecker.getTraceChecker()).getPredicateUnifier();
+							((ConditionalCommutativityCheckerVisitor<L, IDfsVisitor<L, IPredicate>>) mConComVisitor)
+									.getPredicateUnifier();
 					final IHoareTripleChecker htc =
 							HoareTripleCheckerUtils.constructEfficientHoareTripleCheckerWithCaching(getServices(),
 									mPref.getHoareTripleChecks(), mCsToolkit, predicateUnifier);
@@ -403,10 +404,6 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		if (mPref.useConditionalCommutativityChecker().equals(ConComChecker.COUNTEREXAMPLE)) {
 
 			final ArrayList<IPredicate> predicates = getCounterexamplePredicates();
-			final IPredicateUnifier predicateUnifier =
-					((PostConditionTraceChecker<L>) mConComChecker.getTraceChecker()).getPredicateUnifier();
-			final PostConditionTraceChecker<L> checker = new PostConditionTraceChecker<>(mServices, mAbstraction,
-					mTaskIdentifier, mFactory, predicateUnifier, mStrategyFactory);
 			final IIndependenceRelation<IPredicate, L> relation = mPOR.getIndependence(0);
 			final SemanticIndependenceConditionGenerator generator = new SemanticIndependenceConditionGenerator(
 					mServices, mCsToolkit.getManagedScript(), mPredicateFactory, relation.isSymmetric(), true);
@@ -414,11 +411,11 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 			final ConditionalCommutativityCounterexampleChecker<L> conCounterexampleChecker =
 					new ConditionalCommutativityCounterexampleChecker<>(mServices, mCriterion, relation,
 							mPOR.getDfsOrder(), mCsToolkit.getManagedScript(), generator, mAbstraction, mFactory,
-							mPredicateFactory, mCopyFactory, checker, mConComCheckerStatisticsUtils,
-							mConComTraceCheckMode);
+							this::buildStrategyForConditionalCommutativity, mPredicateFactory, mCopyFactory,
+							mConComCheckerStatisticsUtils, mConComTraceCheckMode);
 
-			mRefinementResult = conCounterexampleChecker.getInterpolants((IRun<L, IPredicate>) mCounterexample,
-					predicates, predicateUnifier);
+			mRefinementResult =
+					conCounterexampleChecker.getInterpolants((IRun<L, IPredicate>) mCounterexample, predicates);
 
 			if (mRefinementResult != null) {
 				mCounterexampleConComFound = true;
@@ -499,7 +496,6 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 				|| mPref.useConditionalCommutativityChecker().equals(ConComChecker.BOTH)) {
 			mConComChecker.getCriterion().updateAbstraction(mAbstraction);
 			visitor = new ConditionalCommutativityCheckerVisitor<>(visitor, mAbstraction, mServices, mFactory,
-					((PostConditionTraceChecker<L>) mConComChecker.getTraceChecker()).getPredicateUnifier(),
 					mPOR.getStateSplitter(), mConComChecker);
 			mConComVisitor = visitor;
 		}
@@ -665,18 +661,20 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 			}
 
 			final IIcfgSymbolTable symbolTable = mCsToolkit.getSymbolTable();
-			final IPredicateUnifier predicateUnifier = new PredicateUnifier(mLogger, mServices,
-					mCsToolkit.getManagedScript(), mPredicateFactory, symbolTable, mPref.getSimplificationTechnique());
-			final PostConditionTraceChecker<L> checker = new PostConditionTraceChecker<>(mServices, mAbstraction,
-					mTaskIdentifier, mFactory, predicateUnifier, mStrategyFactory);
 			final IIndependenceRelation<IPredicate, L> relation = mPOR.getIndependence(0);
 			final SemanticIndependenceConditionGenerator generator = new SemanticIndependenceConditionGenerator(
 					mServices, mCsToolkit.getManagedScript(), mPredicateFactory, relation.isSymmetric(), true);
-			mConComChecker = new ConditionalCommutativityChecker<>(mCriterion, relation, mCsToolkit.getManagedScript(),
-					generator, checker, mConComCheckerStatisticsUtils, mPredicateFactory, mCopyFactory,
-					mConComTraceCheckMode);
+			mConComChecker = new ConditionalCommutativityChecker<>(mServices, mCriterion, relation,
+					mCsToolkit.getManagedScript(), generator, this::buildStrategyForConditionalCommutativity,
+					mConComCheckerStatisticsUtils, mPredicateFactory, mCopyFactory, mConComTraceCheckMode);
 
 		}
+	}
+
+	private IRefinementStrategy<L> buildStrategyForConditionalCommutativity(final IRun<L, IPredicate> run) {
+		return mStrategyFactory.constructStrategy(mServices, run, mAbstraction,
+				new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()), mFactory, getPreconditionProvider(),
+				getPostconditionProvider(), RefinementStrategy.SMTINTERPOLSLEEPSETPOR);
 	}
 
 	private static final class MLPredicateWithInterpolants extends AnnotatedMLPredicate<IPredicate> {

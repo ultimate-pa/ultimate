@@ -32,6 +32,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
@@ -44,13 +45,12 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.II
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.ITraceChecker;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderReductionFacade.StateSplitter;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.ConditionalCommutativityChecker.ConComTraceCheckMode;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.ICopyActionFactory;
@@ -66,7 +66,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
  *            The type of letters.
  */
 public class ConditionalCommutativityInterpolantChecker<L extends IAction> {
-
 	private final ConditionalCommutativityChecker<L> mChecker;
 	private final IUltimateServiceProvider mServices;
 	private final IEmptyStackStateFactory<IPredicate> mEmptyStackStateFactory;
@@ -105,20 +104,21 @@ public class ConditionalCommutativityInterpolantChecker<L extends IAction> {
 			final IIndependenceRelation<IPredicate, L> independenceRelation, final ManagedScript script,
 			final IIndependenceConditionGenerator generator,
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction,
-			final IEmptyStackStateFactory<IPredicate> emptyStackStateFactory, final PredicateFactory predicateFactory,
-			final ICopyActionFactory<L> copyFactory, final ITraceChecker<L> traceChecker,
+			final IEmptyStackStateFactory<IPredicate> emptyStackStateFactory,
+			final Function<IRun<L, IPredicate>, IRefinementStrategy<L>> buildStrategy,
+			final PredicateFactory predicateFactory, final ICopyActionFactory<L> copyFactory,
 			final IPredicateUnifier predicateUnifier,
 			final IConditionalCommutativityCheckerStatisticsUtils statisticsUtils,
 			final StateSplitter<IPredicate> splitter, final ConComTraceCheckMode traceCheckMode) {
 		mServices = services;
 		mAbstraction = abstraction;
 		mEmptyStackStateFactory = emptyStackStateFactory;
-		mChecker = new ConditionalCommutativityChecker<>(criterion, independenceRelation, script, generator,
-				traceChecker, statisticsUtils, predicateFactory, copyFactory, traceCheckMode);
+		mChecker = new ConditionalCommutativityChecker<>(services, criterion, independenceRelation, script, generator,
+				buildStrategy, statisticsUtils, predicateFactory, copyFactory, traceCheckMode);
 		mStatisticsUtils = statisticsUtils;
 		mStateSplitter = splitter;
 		mInterpolantAutomatonProvider = new ConditionalCommutativityInterpolantAutomatonProvider<>(services,
-				abstraction, emptyStackStateFactory, predicateUnifier);
+				abstraction.getAlphabet(), emptyStackStateFactory, predicateUnifier);
 	}
 
 	/**
@@ -136,7 +136,7 @@ public class ConditionalCommutativityInterpolantChecker<L extends IAction> {
 	public NestedWordAutomaton<L, IPredicate> getInterpolants(final IRun<L, IPredicate> run,
 			final List<IPredicate> runPredicates, final NestedWordAutomaton<L, IPredicate> interpolantAutomaton) {
 		mRun = run;
-		mInterpolantAutomatonProvider.setInterPolantAutomaton(createCopy(interpolantAutomaton));
+		mInterpolantAutomatonProvider.setInterpolantAutomaton(createCopy(interpolantAutomaton));
 		// mCopy = createCopy(interpolantAutomaton);
 		for (int i = 0; i < mRun.getStateSequence().size(); i++) {
 			final IPredicate state = mRun.getStateSequence().get(i);
@@ -181,20 +181,17 @@ public class ConditionalCommutativityInterpolantChecker<L extends IAction> {
 
 	private boolean checkTransitions(final NestedRun<L, IPredicate> currentRun,
 			final List<IPredicate> interpolantPredicates, final IPredicate state, final L letter1, final L letter2) {
-		final TracePredicates tracePredicates =
+		final var refinementResult =
 				mChecker.checkConditionalCommutativity(currentRun, interpolantPredicates, state, letter1, letter2);
 
-		final List<IPredicate> conPredicates = new ArrayList<>();
-		if (tracePredicates != null) {
-			conPredicates.add(tracePredicates.getPrecondition());
-			conPredicates.addAll(tracePredicates.getPredicates());
-			// conPredicates.add(tracePredicates.getPostcondition());
-			// addToCopy(conPredicates);
-			mInterpolantAutomatonProvider.addToInterpolantAutomaton(conPredicates, currentRun.getWord());
+		if (refinementResult != null) {
+			for (final var tp : refinementResult.getInfeasibilityProof()) {
+				mInterpolantAutomatonProvider.addToInterpolantAutomaton(tp.getTracePredicates(), currentRun.getWord());
+			}
 			mStatisticsUtils.addIAIntegration();
+			return mInterpolantAutomatonProvider.hasFalseBeforeEnd();
 		}
-		return (!conPredicates.isEmpty()
-				&& SmtUtils.isFalseLiteral(conPredicates.get(conPredicates.size() - 2).getFormula()));
+		return false;
 	}
 
 	private List<IPredicate> getInterpolantPredicates(final int runIndex, final IPredicate runPredicate) {

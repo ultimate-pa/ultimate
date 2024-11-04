@@ -26,6 +26,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
@@ -39,11 +40,12 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.Wrappe
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.AnnotatedMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.MLPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderReductionFacade.StateSplitter;
 
@@ -66,11 +68,10 @@ public class ConditionalCommutativityCheckerVisitor<L extends IIcfgTransition<?>
 	private L mPendingLetter;
 	private IPredicate mPendingState;
 	private NestedRun<L, IPredicate> mRun;
-	private TracePredicates mTracePredicates;
+	private IRefinementEngineResult<L, Collection<QualifiedTracePredicates>> mRefinementResult;
 	private final IUltimateServiceProvider mServices;
 	private final IEmptyStackStateFactory<IPredicate> mEmptyStackStateFactory;
-	private final IPredicateUnifier mPredicateUnifier;
-	private StateSplitter<IPredicate> mStateSplitter;
+	private final StateSplitter<IPredicate> mStateSplitter;
 
 	/**
 	 * Constructs a new instance of ConditionalCommutativityChecker.
@@ -95,15 +96,13 @@ public class ConditionalCommutativityCheckerVisitor<L extends IIcfgTransition<?>
 	public ConditionalCommutativityCheckerVisitor(final V underlying,
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction,
 			final IUltimateServiceProvider services, final IEmptyStackStateFactory<IPredicate> emptyStackStateFactory,
-			final IPredicateUnifier predicateUnifier, final StateSplitter<IPredicate> splitter,
-			final ConditionalCommutativityChecker<L> checker) {
+			final StateSplitter<IPredicate> splitter, final ConditionalCommutativityChecker<L> checker) {
 		super(underlying);
 		mAbstraction = abstraction;
 		mStateSplitter = splitter;
 		mChecker = checker;
 		mServices = services;
 		mEmptyStackStateFactory = emptyStackStateFactory;
-		mPredicateUnifier = predicateUnifier;
 	}
 
 	@Override
@@ -141,7 +140,7 @@ public class ConditionalCommutativityCheckerVisitor<L extends IIcfgTransition<?>
 			mPendingState = null;
 		}
 
-		IPredicate pred = mStateSplitter.getOriginal(state);
+		final IPredicate pred = mStateSplitter.getOriginal(state);
 
 		// TODO We need to have access on the annotation
 		IPredicate annotation = null;
@@ -164,17 +163,17 @@ public class ConditionalCommutativityCheckerVisitor<L extends IIcfgTransition<?>
 				final OutgoingInternalTransition<L, IPredicate> transition2 = transitions.get(k);
 				final L letter1 = transition1.getLetter();
 				final L letter2 = transition2.getLetter();
-				TracePredicates tracePredicates;
+				IRefinementEngineResult<L, Collection<QualifiedTracePredicates>> refinementResult;
 
 				if (annotation != null && !SmtUtils.isTrueLiteral(annotation.getFormula())) {
-					tracePredicates =
+					refinementResult =
 							mChecker.checkConditionalCommutativity(mRun, List.of(annotation), state, letter1, letter2);
 				} else {
-					tracePredicates = mChecker.checkConditionalCommutativity(mRun, List.of(), state, letter1, letter2);
+					refinementResult = mChecker.checkConditionalCommutativity(mRun, List.of(), state, letter1, letter2);
 				}
-				if (tracePredicates != null) {
+				if (refinementResult != null) {
 					mAbort = true;
-					mTracePredicates = tracePredicates;
+					mRefinementResult = refinementResult;
 					return mUnderlying.discoverState(state);
 				}
 			}
@@ -184,7 +183,6 @@ public class ConditionalCommutativityCheckerVisitor<L extends IIcfgTransition<?>
 
 	@Override
 	public void backtrackState(final IPredicate state, final boolean isComplete) {
-
 		mPendingLetter = null;
 		mPendingState = null;
 
@@ -206,7 +204,7 @@ public class ConditionalCommutativityCheckerVisitor<L extends IIcfgTransition<?>
 	/**
 	 * Allows to check whether the DFS has been aborted due to a successfully found and proven conditional
 	 * commutativity.
-	 * 
+	 *
 	 * @return true if aborted because of conditional commutativity.
 	 */
 	public boolean aborted() {
@@ -221,19 +219,17 @@ public class ConditionalCommutativityCheckerVisitor<L extends IIcfgTransition<?>
 	 * @return interpolant automaton
 	 */
 	public NestedWordAutomaton<L, IPredicate> getInterpolantAutomaton() {
-		if (mTracePredicates == null) {
+		if (mRefinementResult == null) {
 			return null;
 		}
-		final List<IPredicate> conPredicates = new ArrayList<>();
-		conPredicates.add(mTracePredicates.getPrecondition());
-		conPredicates.addAll(mTracePredicates.getPredicates());
-		// conPredicates.add(mTracePredicates.getPostcondition());
 
-		ConditionalCommutativityInterpolantAutomatonProvider<L> conComInterpolantProvider =
-				new ConditionalCommutativityInterpolantAutomatonProvider<>(mServices, mAbstraction,
-						mEmptyStackStateFactory, mPredicateUnifier);
-		conComInterpolantProvider.setInterPolantAutomaton(null);
-		conComInterpolantProvider.addToInterpolantAutomaton(conPredicates, mRun.getWord());
+		final var conComInterpolantProvider = ConditionalCommutativityInterpolantAutomatonProvider.fromRefinementResult(
+				mServices, mAbstraction.getAlphabet(), mEmptyStackStateFactory, mRun.getWord(), mRefinementResult);
 		return conComInterpolantProvider.getInterpolantAutomaton();
+	}
+
+	@Deprecated
+	public IPredicateUnifier getPredicateUnifier() {
+		return mRefinementResult.getPredicateUnifier();
 	}
 }

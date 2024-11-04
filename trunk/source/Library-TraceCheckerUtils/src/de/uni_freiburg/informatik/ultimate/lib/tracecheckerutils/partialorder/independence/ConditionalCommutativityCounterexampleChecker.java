@@ -27,6 +27,7 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.i
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
@@ -37,15 +38,13 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.II
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult.BasicRefinementEngineResult;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.ITraceChecker;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.ConditionalCommutativityChecker.ConComTraceCheckMode;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.ICopyActionFactory;
@@ -62,7 +61,6 @@ import de.uni_freiburg.informatik.ultimate.util.Lazy;
  *            letter type
  */
 public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
-
 	private final IUltimateServiceProvider mServices;
 	private final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mAbstraction;
 	private final IEmptyStackStateFactory<IPredicate> mEmptyStackStateFactory;
@@ -99,16 +97,17 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 			final IIndependenceRelation<IPredicate, L> independenceRelation, final IDfsOrder<L, IPredicate> DFSOrder,
 			final ManagedScript script, final IIndependenceConditionGenerator generator,
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction,
-			final IEmptyStackStateFactory<IPredicate> emptyStackStateFactory, final PredicateFactory predicateFactory,
-			final ICopyActionFactory<L> copyFactory, final ITraceChecker<L> traceChecker,
+			final IEmptyStackStateFactory<IPredicate> emptyStackStateFactory,
+			final Function<IRun<L, IPredicate>, IRefinementStrategy<L>> buildStrategy,
+			final PredicateFactory predicateFactory, final ICopyActionFactory<L> copyFactory,
 			final IConditionalCommutativityCheckerStatisticsUtils statisticsUtils,
 			final ConComTraceCheckMode traceCheckMode) {
 		mServices = services;
 		mDFSOrder = DFSOrder;
 		mAbstraction = abstraction;
 		mEmptyStackStateFactory = emptyStackStateFactory;
-		mChecker = new ConditionalCommutativityChecker<>(criterion, independenceRelation, script, generator,
-				traceChecker, statisticsUtils, predicateFactory, copyFactory, traceCheckMode);
+		mChecker = new ConditionalCommutativityChecker<>(services, criterion, independenceRelation, script, generator,
+				buildStrategy, statisticsUtils, predicateFactory, copyFactory, traceCheckMode);
 		mStatisticsUtils = statisticsUtils;
 	}
 
@@ -120,19 +119,16 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 	 *            the run representing the counterexample
 	 * @param runPredicates
 	 *            the predicates of the given run
-	 * @param predicateUnifier
-	 *            predicate unifier
 	 * @return an interpolant automaton proving conditional commutativity or null otherwise
 	 */
-	public BasicRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> getInterpolants(
-			final IRun<L, IPredicate> run, final List<IPredicate> runPredicates,
-			final IPredicateUnifier predicateUnifier) {
+	public BasicRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>>
+			getInterpolants(final IRun<L, IPredicate> run, final List<IPredicate> runPredicates) {
 		for (int i = 0; i < run.getStateSequence().size() - 2; i++) {
 			final IPredicate state = run.getStateSequence().get(i);
 			final L letter1 = run.getWord().getSymbol(i);
 			final L letter2 = run.getWord().getSymbol(i + 1);
 
-			// TODO this is brittle, it will not work for many configurations
+			// TODO this is brittle, it will fail for many configurations
 			if (((SleepPredicate<L>) state).getSleepSet().contains(letter2)
 					|| (mDFSOrder.getOrder(state).compare(letter1, letter2) > 0)) {
 
@@ -146,30 +142,24 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 					currentRun = currentRun.getSubRun(0, i);
 				}
 
-				final TracePredicates tracePredicates = mChecker.checkConditionalCommutativity(currentRun,
-						interpolantPredicates, state, letter1, letter2);
+				final var refinementResult = mChecker.checkConditionalCommutativity(currentRun, interpolantPredicates,
+						state, letter1, letter2);
 
-				final List<IPredicate> conPredicates = new ArrayList<>();
-				if (tracePredicates != null) {
-					conPredicates.add(tracePredicates.getPrecondition());
-					conPredicates.addAll(tracePredicates.getPredicates());
-					// conPredicates.add(tracePredicates.getPostcondition());
+				if (refinementResult != null) {
 
-					final ConditionalCommutativityInterpolantAutomatonProvider<L> conComInterpolantProvider =
-							new ConditionalCommutativityInterpolantAutomatonProvider<>(mServices, mAbstraction,
-									mEmptyStackStateFactory, predicateUnifier);
-					conComInterpolantProvider.setInterPolantAutomaton(null);
-					conComInterpolantProvider.addToInterpolantAutomaton(conPredicates, currentRun.getWord());
+					final var conComInterpolantProvider = ConditionalCommutativityInterpolantAutomatonProvider
+							.fromRefinementResult(mServices, mAbstraction.getAlphabet(), mEmptyStackStateFactory,
+									currentRun.getWord(), refinementResult);
 					final NestedWordAutomaton<L, IPredicate> automaton =
 							conComInterpolantProvider.getInterpolantAutomaton();
 
 					mStatisticsUtils.addCommutingCounterexample();
 
-					final BasicRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> refinementResult =
+					final BasicRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> refinementResultAut =
 							new BasicRefinementEngineResult<>(LBool.UNSAT, automaton, null, false,
-									List.of(new QualifiedTracePredicates(tracePredicates, getClass(), false)),
-									new Lazy<>(() -> null), new Lazy<>(() -> predicateUnifier));
-					return refinementResult;
+									refinementResult.getUsedTracePredicates(), new Lazy<>((IHoareTripleChecker) null),
+									new Lazy<>(refinementResult.getPredicateUnifier()));
+					return refinementResultAut;
 				}
 			}
 		}

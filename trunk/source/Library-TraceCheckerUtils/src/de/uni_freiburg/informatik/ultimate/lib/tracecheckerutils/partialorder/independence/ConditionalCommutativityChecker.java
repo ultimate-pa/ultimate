@@ -25,24 +25,32 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.function.Function;
 
+import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation.Dependence;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.ISymbolicIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateWithConjuncts;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.AutomatonFreeRefinementEngine;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.ITraceChecker;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IConditionalCommutativityCheckerStatisticsUtils.ConditionalCommutativityStopwatches;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.ICopyActionFactory;
@@ -59,15 +67,18 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
  *            The type of letters.
  */
 public class ConditionalCommutativityChecker<L extends IAction> {
+	private final IUltimateServiceProvider mServices;
+	private final ILogger mLogger;
+
 	private final IConditionalCommutativityCriterion<L> mCriterion;
 	private final IIndependenceRelation<IPredicate, L> mIndependenceRelation;
 	private final IIndependenceConditionGenerator mGenerator;
-	private final ITraceChecker<L> mTraceChecker;
 	private final ManagedScript mManagedScript;
 	private final IConditionalCommutativityCheckerStatisticsUtils mStatisticsUtils;
 	private final ConComTraceCheckMode mTraceCheckMode;
 	private final PredicateFactory mPredicateFactory;
 	private final ICopyActionFactory<L> mCopyFactory;
+	private final Function<IRun<L, IPredicate>, IRefinementStrategy<L>> mBuildStrategy;
 
 	/**
 	 * Constructs a new instance of ConditionalCommutativityChecker.
@@ -88,21 +99,26 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 	 * @param statisticsUtils
 	 *            An {@link IConditionalCommutativityCheckerStatisticsUtils} used for statistics
 	 */
-	public ConditionalCommutativityChecker(final IConditionalCommutativityCriterion<L> criterion,
+	public ConditionalCommutativityChecker(final IUltimateServiceProvider services,
+			final IConditionalCommutativityCriterion<L> criterion,
 			final IIndependenceRelation<IPredicate, L> independenceRelation, final ManagedScript script,
-			final IIndependenceConditionGenerator generator, final ITraceChecker<L> traceChecker,
+			final IIndependenceConditionGenerator generator,
+			final Function<IRun<L, IPredicate>, IRefinementStrategy<L>> buildStrategy,
 			final IConditionalCommutativityCheckerStatisticsUtils statisticsUtils,
 			final PredicateFactory predicateFactory, final ICopyActionFactory<L> copyFactory,
 			final ConComTraceCheckMode traceCheckMode) {
+		mServices = services;
+		mLogger = services.getLoggingService().getLogger(getClass());
+
 		mCriterion = criterion;
 		mIndependenceRelation = independenceRelation;
 		mManagedScript = script;
 		mGenerator = generator;
-		mTraceChecker = traceChecker;
 		mStatisticsUtils = statisticsUtils;
 		mPredicateFactory = predicateFactory;
 		mCopyFactory = copyFactory;
 		mTraceCheckMode = traceCheckMode;
+		mBuildStrategy = buildStrategy;
 	}
 
 	/**
@@ -122,148 +138,160 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 	 *            A letter of another outgoing transition of state
 	 * @return A list of predicates which serves as a proof for conditional commutativity.
 	 */
-	public TracePredicates checkConditionalCommutativity(final NestedRun<L, IPredicate> currentRun,
-			final List<IPredicate> predicates, final IPredicate state, final L letter1, final L letter2) {
+	// TODO method description is very vague (not more helpful than the method name)
+	public IRefinementEngineResult<L, Collection<QualifiedTracePredicates>> checkConditionalCommutativity(
+			final NestedRun<L, IPredicate> currentRun, final List<IPredicate> predicates, final IPredicate state,
+			final L letter1, final L letter2) {
 
 		mStatisticsUtils.startStopwatch(ConditionalCommutativityStopwatches.CHECKER);
 		try {
-			if (mManagedScript.isLocked()) {
-				mManagedScript.requestLockRelease();
-			}
-
-			if (((IAction) letter1).getPrecedingProcedure().equals(((IAction) letter2).getPrecedingProcedure())) {
-				return null;
-			}
-
-			if (state instanceof SleepPredicate) {
-				final ImmutableSet<?> sleepSet = ((SleepPredicate<L>) state).getSleepSet();
-				if (sleepSet.contains(letter1) && sleepSet.contains(letter2)) {
-					return null;
-				}
-			}
-
-			IPredicate pred = null;
-			if (!predicates.isEmpty()) {
-				final var conjPred = mPredicateFactory.construct(id -> new PredicateWithConjuncts(id,
-						new ImmutableList<>(predicates), mManagedScript.getScript()));
-				pred = mPredicateFactory.construct(id -> new BasicPredicate(id, conjPred.getFormula(),
-						conjPred.getVars(), conjPred.getFuns(), conjPred.getClosedFormula()));
-			}
-
-			if (mIndependenceRelation.isIndependent(pred, letter1, letter2).equals(Dependence.INDEPENDENT)) {
-				return null;
-			}
-
-			if (mCriterion.decide(state, letter1, letter2)) {
-
-				if (mManagedScript.isLocked()) {
-					mManagedScript.requestLockRelease();
-				}
-				IPredicate condition = null;
-
-				final ISymbolicIndependenceRelation<L, IPredicate> relation =
-						mIndependenceRelation.getSymbolicRelation();
-
-				mStatisticsUtils.startStopwatch(ConditionalCommutativityStopwatches.CONDITION);
-				try {
-					switch (mTraceCheckMode) {
-					case GENERATOR:
-						condition = mGenerator.generateCondition(letter1.getTransformula(), letter2.getTransformula());
-						break;
-					case GENERATOR_WITH_CONTEXT:
-						if (pred != null) {
-							condition = mGenerator.generateCondition(
-									new PredicateWithConjuncts(0, new ImmutableList<>(predicates),
-											mManagedScript.getScript()),
-									letter1.getTransformula(), letter2.getTransformula());
-						} else {
-							condition =
-									mGenerator.generateCondition(letter1.getTransformula(), letter2.getTransformula());
-						}
-						break;
-					case SYMBOLIC_RELATION:
-						if (relation != null && !relation.isConditional()) {
-							condition = relation.getCommutativityCondition(null, letter1, letter2);
-						}
-						break;
-					default:
-						throw new UnsupportedOperationException(
-								"PartialOrderCegarLoop currently does not support " + mTraceCheckMode);
-					}
-				} finally {
-
-					mStatisticsUtils.stopStopwatch(ConditionalCommutativityStopwatches.CONDITION);
-				}
-
-				/*
-				 * if (relation != null) { condition = relation.getCommutativityCondition(letter1, letter2); } // TODO:
-				 * integrate setting s.t. we can try both versions: with and without context if (pred != null) {
-				 * condition = mGenerator.generateCondition( new PredicateWithConjuncts(0, new
-				 * ImmutableList<>(predicates), mManagedScript.getScript()), letter1.getTransformula(),
-				 * letter2.getTransformula()); } else { condition =
-				 * mGenerator.generateCondition(letter1.getTransformula(), letter2.getTransformula()); }
-				 */
-				mStatisticsUtils.addConditionCalculation();
-				mCriterion.updateCriterion(state, letter1, letter2);
-
-				if (condition == null) {
-					return null;
-				} else if (SmtUtils.isTrueLiteral(condition.getFormula())) {
-					throw new IllegalArgumentException("condition is not allowed to be true");
-				} else if (mCriterion.decide(condition)) {
-					if (SmtUtils.checkSatTerm(mManagedScript.getScript(), condition.getFormula()).equals(LBool.UNSAT)) {
-						mStatisticsUtils.addFalseCondition();
-						return null;
-					}
-
-					// construct a transformula which represents the negation of the condition
-					final BasicPredicate notCondition = mPredicateFactory
-							.newPredicate(SmtUtils.not(mManagedScript.getScript(), condition.getFormula()));
-					final UnmodifiableTransFormula tf =
-							TransFormulaBuilder.constructTransFormulaFromPredicate(notCondition, mManagedScript);
-					if (!QuantifierUtils.isQuantifierFree(tf.getFormula())) {
-						mStatisticsUtils.addQuantifiedCondition();
-					}
-
-					// copy a transition with the new transformula with IcfgCopyFactory from
-					// CegarLoopFactory.mCopyFactory (needs to be passed to the CEGAR-Loop)
-					final L notConditionLetter = mCopyFactory.copy(letter1, tf, tf);
-					// create a MLPredicate and a SleepSetPredicate as dummy state
-					final SleepPredicate<L> dummySleepPredicate =
-							new SleepPredicate<>(mPredicateFactory.newMLDontCarePredicate(null), null);
-					// add both to the currentRun
-					final NestedRun<L, IPredicate> conditionRun =
-							new NestedRun<>(currentRun.getStateAtPosition(currentRun.getLength() - 1),
-									notConditionLetter, -2, dummySleepPredicate);
-					final NestedRun<L, IPredicate> currentRunWithCondition = currentRun.concatenate(conditionRun);
-
-					final TracePredicates trace = mTraceChecker.checkTrace(currentRunWithCondition, null, null);
-					// final TracePredicates trace = mTraceChecker.checkTrace(currentRun, null, condition);
-					mStatisticsUtils.addTraceCheck();
-					if (mTraceChecker.wasUnknown()) {
-						mStatisticsUtils.addUnknownTraceCheck();
-					}
-					if (mTraceChecker.wasImperfectProof()) {
-						mStatisticsUtils.addImperfectProof();
-					}
-					return trace;
-				}
-			}
-			return null;
-		} finally
-
-		{
+			return checkConditionalCommutativityInternal(currentRun, predicates, state, letter1, letter2);
+		} finally {
 			mStatisticsUtils.stopStopwatch(ConditionalCommutativityStopwatches.CHECKER);
 			// mStatisticsUtils.stopStopwatch(ConditionalCommutativityStopwatches.CONDITION);
 		}
 	}
 
-	public IConditionalCommutativityCriterion<L> getCriterion() {
-		return mCriterion;
+	private IRefinementEngineResult<L, Collection<QualifiedTracePredicates>> checkConditionalCommutativityInternal(
+			final NestedRun<L, IPredicate> currentRun, final List<IPredicate> predicates, final IPredicate state,
+			final L letter1, final L letter2) {
+
+		// TODO (Why) is this still needed? Unlocking the script used by interpolant automata can be very expensive.
+		if (mManagedScript.isLocked()) {
+			mManagedScript.requestLockRelease();
+		}
+
+		// TODO remove this once we have completely switched to symbolic independence relations
+		if (((IAction) letter1).getPrecedingProcedure().equals(((IAction) letter2).getPrecedingProcedure())) {
+			return null;
+		}
+
+		// TODO this is brittle, let caller decide how one extracts a sleep set from the states
+		if (state instanceof SleepPredicate) {
+			final ImmutableSet<?> sleepSet = ((SleepPredicate<L>) state).getSleepSet();
+			if (sleepSet.contains(letter1) && sleepSet.contains(letter2)) {
+				return null;
+			}
+		}
+
+		final IPredicate pred;
+		if (predicates.isEmpty()) {
+			pred = null;
+		} else {
+			// TODO why not make "predicates" an ImmutableList directly?
+			final var conjPred = mPredicateFactory.construct(
+					id -> new PredicateWithConjuncts(id, new ImmutableList<>(predicates), mManagedScript.getScript()));
+			pred = mPredicateFactory.construct(id -> new BasicPredicate(id, conjPred.getFormula(), conjPred.getVars(),
+					conjPred.getFuns(), conjPred.getClosedFormula()));
+		}
+
+		// TODO This does not accurately reflect how independence is checked in most configurations.
+		// TODO There, each conjunct is considered separately.
+		// TODO By passing the given context as predicate directly, this mismatch can be avoided.
+		if (mIndependenceRelation.isIndependent(pred, letter1, letter2).equals(Dependence.INDEPENDENT)) {
+			return null;
+		}
+
+		if (mCriterion.decide(state, letter1, letter2)) {
+			// TODO This is already done at the top of the method. Why here again?
+			if (mManagedScript.isLocked()) {
+				mManagedScript.requestLockRelease();
+			}
+			IPredicate condition = null;
+
+			final ISymbolicIndependenceRelation<L, IPredicate> relation = mIndependenceRelation.getSymbolicRelation();
+
+			mStatisticsUtils.startStopwatch(ConditionalCommutativityStopwatches.CONDITION);
+			try {
+				switch (mTraceCheckMode) {
+				case GENERATOR:
+					condition = mGenerator.generateCondition(letter1.getTransformula(), letter2.getTransformula());
+					break;
+				case GENERATOR_WITH_CONTEXT:
+					if (pred != null) {
+						condition = mGenerator.generateCondition(
+								// TODO Why is pred not used here? Again, conditions with fixed ID are dangerous!
+								new PredicateWithConjuncts(0, new ImmutableList<>(predicates),
+										mManagedScript.getScript()),
+								letter1.getTransformula(), letter2.getTransformula());
+					} else {
+						condition = mGenerator.generateCondition(letter1.getTransformula(), letter2.getTransformula());
+					}
+					break;
+				case SYMBOLIC_RELATION:
+					// TODO What if the relation is conditional? (we do not need to distinguish these cases here)
+					// TODO Why the null-check on relation? Either it cannot be null here, or we should fail if it is.
+					if (relation != null && !relation.isConditional()) {
+						condition = relation.getCommutativityCondition(null, letter1, letter2);
+					}
+					break;
+				default:
+					throw new UnsupportedOperationException(
+							"PartialOrderCegarLoop currently does not support " + mTraceCheckMode);
+				}
+			} finally {
+				mStatisticsUtils.stopStopwatch(ConditionalCommutativityStopwatches.CONDITION);
+			}
+
+			mStatisticsUtils.addConditionCalculation();
+			mCriterion.updateCriterion(state, letter1, letter2);
+
+			if (condition == null) {
+				return null;
+			} else if (SmtUtils.isTrueLiteral(condition.getFormula())) {
+				throw new IllegalArgumentException("condition is not allowed to be true");
+			} else if (mCriterion.decide(condition)) {
+				if (SmtUtils.checkSatTerm(mManagedScript.getScript(), condition.getFormula()).equals(LBool.UNSAT)) {
+					mStatisticsUtils.addFalseCondition();
+					mLogger.warn("Unsatisfiable commutativity condition generated: %s", condition);
+					return null;
+				}
+				// TODO split this large method into smaller ones. E.g. everything up to there to calculate the
+				// condition, the rest to prove it.
+
+				// construct a transformula which represents the negation of the condition
+				final IPredicate notCondition = mPredicateFactory.not(condition);
+				final UnmodifiableTransFormula tf =
+						TransFormulaBuilder.constructTransFormulaFromPredicate(notCondition, mManagedScript);
+				if (!QuantifierUtils.isQuantifierFree(tf.getFormula())) {
+					mStatisticsUtils.addQuantifiedCondition();
+					mLogger.warn("Quantified commutativity condition: %s", tf.getFormula());
+				}
+
+				// copy a transition with the new transformula with IcfgCopyFactory from
+				// CegarLoopFactory.mCopyFactory (needs to be passed to the CEGAR-Loop)
+				final L notConditionLetter = mCopyFactory.copy(letter1, tf, tf);
+				// create a MLPredicate and a SleepSetPredicate as dummy state
+				final SleepPredicate<L> dummySleepPredicate =
+						new SleepPredicate<>(mPredicateFactory.newMLDontCarePredicate(null), null);
+				// add both to the currentRun
+				final NestedRun<L, IPredicate> conditionRun =
+						new NestedRun<>(currentRun.getStateAtPosition(currentRun.getLength() - 1), notConditionLetter,
+								NestedWord.INTERNAL_POSITION, dummySleepPredicate);
+				final NestedRun<L, IPredicate> currentRunWithCondition = currentRun.concatenate(conditionRun);
+
+				final var strategy = mBuildStrategy.apply(currentRunWithCondition);
+				final var afe = new AutomatonFreeRefinementEngine<>(mServices, mLogger, strategy);
+				final var result = afe.getResult();
+
+				mStatisticsUtils.addTraceCheck();
+				if (result.getCounterexampleFeasibility() == LBool.UNKNOWN) {
+					mStatisticsUtils.addUnknownTraceCheck();
+				}
+				if (!result.somePerfectSequenceFound()) {
+					mStatisticsUtils.addImperfectProof();
+				}
+				if (result.getCounterexampleFeasibility() != LBool.UNSAT) {
+					return null;
+				}
+				return result;
+			}
+		}
+		return null;
 	}
 
-	public ITraceChecker<L> getTraceChecker() {
-		return mTraceChecker;
+	public IConditionalCommutativityCriterion<L> getCriterion() {
+		return mCriterion;
 	}
 
 	public enum ConComTraceCheckMode {

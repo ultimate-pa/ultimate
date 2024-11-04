@@ -25,20 +25,22 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence;
 
-import java.util.HashSet;
-import java.util.List;
+import java.util.Collection;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 
 /**
  * Provides an interpolant automaton.
@@ -49,12 +51,13 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
  *            The type of letters.
  */
 public class ConditionalCommutativityInterpolantAutomatonProvider<L extends IAction> {
-
-	private INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mAbstraction;
-	private IEmptyStackStateFactory<IPredicate> mFactory;
-	private IPredicateUnifier mPredicateUnifier;
-	private IUltimateServiceProvider mServices;
+	private final Set<L> mAlphabet;
+	private final IEmptyStackStateFactory<IPredicate> mFactory;
+	private final IPredicateUnifier mPredicateUnifier;
+	private final IUltimateServiceProvider mServices;
 	private NestedWordAutomaton<L, IPredicate> mAutomaton;
+
+	private boolean mHasFalseBeforeEnd;
 
 	/**
 	 * Constructs a new instance of ConditionalCommutativityInterpolantAutomatonProvider.
@@ -71,13 +74,26 @@ public class ConditionalCommutativityInterpolantAutomatonProvider<L extends IAct
 	 *            predicate unifier
 	 */
 	public ConditionalCommutativityInterpolantAutomatonProvider(final IUltimateServiceProvider services,
-			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction,
-			final IEmptyStackStateFactory<IPredicate> emptyStackStateFactory,
+			final Set<L> alphabet, final IEmptyStackStateFactory<IPredicate> emptyStackStateFactory,
 			final IPredicateUnifier predicateUnifier) {
 		mServices = services;
-		mAbstraction = abstraction;
+		mAlphabet = alphabet;
 		mFactory = emptyStackStateFactory;
 		mPredicateUnifier = predicateUnifier;
+	}
+
+	public static <L extends IAction> ConditionalCommutativityInterpolantAutomatonProvider<L> fromRefinementResult(
+			final IUltimateServiceProvider services, final Set<L> alphabet,
+			final IEmptyStackStateFactory<IPredicate> factory, final Word<L> word,
+			final IRefinementEngineResult<L, Collection<QualifiedTracePredicates>> result) {
+		final ConditionalCommutativityInterpolantAutomatonProvider<L> conComInterpolantProvider =
+				new ConditionalCommutativityInterpolantAutomatonProvider<>(services, alphabet, factory,
+						result.getPredicateUnifier());
+		conComInterpolantProvider.setInterpolantAutomaton(null);
+		for (final var tp : result.getInfeasibilityProof()) {
+			conComInterpolantProvider.addToInterpolantAutomaton(tp.getTracePredicates(), word);
+		}
+		return conComInterpolantProvider;
 	}
 
 	/**
@@ -92,38 +108,45 @@ public class ConditionalCommutativityInterpolantAutomatonProvider<L extends IAct
 	 *            Word, i.e. a sequence of letters
 	 * @return interpolant automaton
 	 */
-	public void addToInterpolantAutomaton(final List<IPredicate> predicates, final Word<L> word) {
-		if (!mAutomaton.contains(predicates.get(0))) {
-			mAutomaton.addState(true, false, predicates.get(0));
+	public void addToInterpolantAutomaton(final TracePredicates tracePredicates, final Word<L> word) {
+		final var precondition = mPredicateUnifier.getOrConstructPredicate(tracePredicates.getPrecondition());
+		if (!mAutomaton.contains(precondition)) {
+			mAutomaton.addState(true, false, precondition);
 		}
 		if (!mAutomaton.contains(mPredicateUnifier.getFalsePredicate())) {
 			mAutomaton.addState(false, true, mPredicateUnifier.getFalsePredicate());
 		}
-		for (Integer i = 1; i < predicates.size(); i++) {
-			final IPredicate succPred = predicates.get(i);
+
+		final var predicates = tracePredicates.getPredicates();
+		for (int i = 0; i < predicates.size(); i++) {
+			final IPredicate prePred = mPredicateUnifier
+					.getOrConstructPredicate(i == 0 ? tracePredicates.getPrecondition() : predicates.get(i - 1));
+			final IPredicate succPred = mPredicateUnifier.getOrConstructPredicate(predicates.get(i));
 			if (!mAutomaton.contains(succPred)) {
 				mAutomaton.addState(false, false, succPred);
 			}
-			mAutomaton.addInternalTransition(predicates.get(i - 1), word.getSymbol(i - 1), succPred);
+			mAutomaton.addInternalTransition(prePred, word.getSymbol(i), succPred);
 		}
+
+		final IPredicate prePred =
+				predicates.isEmpty() ? tracePredicates.getPrecondition() : predicates.get(predicates.size() - 1);
+		mHasFalseBeforeEnd |= SmtUtils.isFalseLiteral(prePred.getFormula());
 	}
 
 	/**
 	 * Sets the interpolant automaton to the given interpolant automaton and constructs an empty automaton if null is
 	 * given. Make sure that the given automaton is an interpolant automaton!
-	 * 
+	 *
 	 * @author Marcel Ebbinghaus
 	 *
 	 * @param automaton
 	 *            The given interpolant automaton
 	 */
-	public void setInterPolantAutomaton(NestedWordAutomaton<L, IPredicate> automaton) {
+	public void setInterpolantAutomaton(final NestedWordAutomaton<L, IPredicate> automaton) {
 		if (automaton != null) {
 			mAutomaton = automaton;
 		} else {
-			final Set<L> alphabet = new HashSet<>();
-			alphabet.addAll(mAbstraction.getAlphabet());
-			final VpAlphabet<L> vpAlphabet = new VpAlphabet<>(alphabet);
+			final VpAlphabet<L> vpAlphabet = new VpAlphabet<>(mAlphabet);
 			mAutomaton = new NestedWordAutomaton<>(new AutomataLibraryServices(mServices), vpAlphabet, mFactory);
 		}
 	}
@@ -137,5 +160,9 @@ public class ConditionalCommutativityInterpolantAutomatonProvider<L extends IAct
 	 */
 	public NestedWordAutomaton<L, IPredicate> getInterpolantAutomaton() {
 		return mAutomaton;
+	}
+
+	public boolean hasFalseBeforeEnd() {
+		return mHasFalseBeforeEnd;
 	}
 }
