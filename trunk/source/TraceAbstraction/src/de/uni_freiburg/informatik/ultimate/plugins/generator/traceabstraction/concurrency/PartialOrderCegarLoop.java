@@ -332,7 +332,6 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 				result.getUsedTracePredicates(), new Lazy<>(htc), new Lazy<>(result::getPredicateUnifier));
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	protected boolean isAbstractionEmpty() throws AutomataOperationCanceledException {
 		switchToOnDemandConstructionMode();
