@@ -6,7 +6,7 @@
 	</launcherArgs>
 	<locations>
 		<location includeAllPlatforms="false" includeConfigurePhase="true" includeSource="false" type="InstallableUnit">
-			<repository id="ultimate-dependencies" location="https://struebli.informatik.uni-freiburg.de/p2-repository-ultimate-dependencies/"/>
+			<repository id="ultimate-dependencies" location="https://struebli.informatik.uni-freiburg.de/p2-repository-ultimate-dependencies-21/"/>
 			<unit id="com.lmax.disruptor" version="3.3.5"/>
 			<unit id="org.yaml.snakeyaml" version="2.2.0"/>
 			<unit id="net.sf.jung.monolithic" version="2.1.1"/>
