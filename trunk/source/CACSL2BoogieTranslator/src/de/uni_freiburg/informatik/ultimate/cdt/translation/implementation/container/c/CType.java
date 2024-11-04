@@ -48,6 +48,7 @@ public abstract class CType {
 	private final boolean mIsVolatile;
 
 	private final boolean mIsExtern;
+	private final boolean mIsAtomic;
 
 	/**
 	 * Constructor.
@@ -55,12 +56,13 @@ public abstract class CType {
 	 * @param isExtern
 	 */
 	public CType(final boolean isConst, final boolean isInline, final boolean isRestrict, final boolean isVolatile,
-			final boolean isExtern) {
+			final boolean isExtern, final boolean isAtomic) {
 		mIsConst = isConst;
 		mIsInline = isInline;
 		mIsRestrict = isRestrict;
 		mIsVolatile = isVolatile;
 		mIsExtern = isExtern;
+		mIsAtomic = isAtomic;
 	}
 
 	public boolean isConst() {
@@ -81,6 +83,10 @@ public abstract class CType {
 
 	public boolean isExtern() {
 		return mIsExtern;
+	}
+
+	public boolean isAtomic() {
+		return mIsAtomic;
 	}
 
 	public abstract boolean isIncomplete();

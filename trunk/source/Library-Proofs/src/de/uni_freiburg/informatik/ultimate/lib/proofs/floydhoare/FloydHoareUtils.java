@@ -178,7 +178,7 @@ public final class FloydHoareUtils {
 			final ILocation context = ILocation.getAnnotation(exit);
 			final var translatedContract =
 					backTranslatorService.translateProcedureContract(contract, context, Term.class);
-			if (translatedContract.isTrivial()) {
+			if (translatedContract == null || translatedContract.hasOnlyTrivialClauses()) {
 				continue;
 			}
 

@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 
-import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
@@ -66,8 +66,7 @@ public class ExtractedLocationInvariant extends ExtractedWitnessInvariant {
 				new ExpressionResultBuilder(expressionResult).addAllExceptLrValueAndStatements(invariantExprResult);
 
 		// Make sure that the location invariant (incl. all auxiliary statements) is executed atomically.
-		final Statement invariant =
-				new AtomicStatement(loc, invariantExprResult.getStatements().toArray(Statement[]::new));
+		final Statement invariant = StatementFactory.constructAtomicStatement(loc, invariantExprResult.getStatements());
 
 		// Insert the location invariant at the appropriate location.
 		if (mIsBefore) {

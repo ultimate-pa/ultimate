@@ -123,6 +123,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.OverapproxVariable;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
@@ -493,9 +494,6 @@ public class FunctionHandler {
 
 		final String procName = procSig.toString();
 
-		// We pretend that procName is defined here, this happens later in PostProcessor
-		mDefinedFunctions.add(procName);
-
 		final CFunction cFuncWithFP = addFPParamToCFunction(calledFuncCFunction);
 
 		// TODO 2023-07-08 Matthias: I don't know what could be passed as hook, so I
@@ -535,6 +533,7 @@ public class FunctionHandler {
 			// A 'real' function in the symbol table has a IASTFunctionDefinition as the parent of the declarator.
 			return handleFunctionPointerCall(loc, main, functionName, arguments, memoryHandler);
 		}
+		mCalledFunctions.add(rawName);
 		return handleFunctionCallGivenNameAndArguments(main, loc, methodName, arguments, memoryHandler);
 	}
 
@@ -714,7 +713,7 @@ public class FunctionHandler {
 				final Statement assign =
 						StatementFactory.constructSingleAssignmentStatement(loc, auxVar.getLhs(), lrValue.getValue());
 				for (final Overapprox oa : in.getOverapprs()) {
-					oa.annotate(assign);
+					new OverapproxVariable(oa.getOverapproximatedLocations()).annotate(assign);
 				}
 				functionCallExpressionResultBuilder.addStatement(assign);
 				translatedParams.add(auxVar.getExp());
@@ -1095,7 +1094,6 @@ public class FunctionHandler {
 
 	private ExpressionResult createFunctionCall(final ILocation loc, final String methodName,
 			final ExpressionResultBuilder builder, final List<Expression> parameters) {
-		mCalledFunctions.add(methodName);
 		final Expression returnedValue;
 		final Statement call;
 		final BoogieProcedureInfo procInfo;

@@ -436,18 +436,32 @@ public class BitabsTranslation {
 				Operator.COMPLT);
 	}
 
+	private Integer extractShiftValue(final Expression expr, final CPrimitive type) {
+		final BigInteger bigIntValue = mTypeSizes.extractIntegerValue(expr, type);
+		if (bigIntValue == null || bigIntValue.signum() < 0) {
+			// The value is not a constant or negative
+			return null;
+		}
+		try {
+			return bigIntValue.intValueExact();
+		} catch (final ArithmeticException e) {
+			// Cannot be represented as int
+			return null;
+		}
+	}
+
 	private ExpressionResult abstractShift(final ILocation loc, final Expression left, final CPrimitive typeLeft,
 			final Expression right, final CPrimitive typeRight, final AuxVarInfoBuilder auxVarInfoBuilder,
 			final String functionName, final Operator shiftOperator, final Operator compOperator) {
 		final BigInteger leftValue = mTypeSizes.extractIntegerValue(left, typeLeft);
-		final BigInteger rightValue = mTypeSizes.extractIntegerValue(right, typeRight);
-		if (BigInteger.ZERO.equals(leftValue) || BigInteger.ZERO.equals(rightValue)) {
+		final Integer rightValue = extractShiftValue(right, typeRight);
+		if (BigInteger.ZERO.equals(leftValue) || Integer.valueOf(0).equals(rightValue)) {
 			return new ExpressionResult(new RValue(left, typeLeft));
 		}
 		final Expression leftWrapped = applyWraparoundIfNecessary(loc, left, typeLeft);
 		if (rightValue != null) {
-			final Expression shiftFactorExpr = mTypeSizes.constructLiteralForIntegerType(loc, typeRight,
-					BigInteger.TWO.pow(rightValue.intValueExact()));
+			final Expression shiftFactorExpr =
+					mTypeSizes.constructLiteralForIntegerType(loc, typeRight, BigInteger.TWO.pow(rightValue));
 			final Expression value =
 					ExpressionFactory.newBinaryExpression(loc, shiftOperator, leftWrapped, shiftFactorExpr);
 			return new ExpressionResult(new RValue(value, typeLeft));

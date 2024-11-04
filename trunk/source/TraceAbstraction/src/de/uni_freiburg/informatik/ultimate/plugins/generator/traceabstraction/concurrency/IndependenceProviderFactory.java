@@ -32,6 +32,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.DefaultIndependenceCache;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -81,6 +82,7 @@ public class IndependenceProviderFactory<L extends IIcfgTransition<?>> {
 	private final ICopyActionFactory<L> mCopyFactory;
 
 	private ManagedScript mIndependenceScript;
+	private final DefaultIndependenceCache<IPredicate, L> mIndependenceCache = new DefaultIndependenceCache<>();
 
 	public IndependenceProviderFactory(final IUltimateServiceProvider services, final TAPreferences pref,
 			final ICopyActionFactory<L> copyFactory) {
@@ -92,6 +94,11 @@ public class IndependenceProviderFactory<L extends IIcfgTransition<?>> {
 
 	public List<IRefinableIndependenceProvider<L>> createProviders(final IIcfg<?> icfg,
 			final PredicateFactory predicateFactory) {
+		// We clear cached conditional independence, because the predicate factory changes and thus the previously
+		// cached conditions become meaningless (and potentially harmful, as we should never compare predicates from
+		// different factories).
+		mIndependenceCache.clearConditional();
+
 		final int numIndependenceRelations = mPref.getNumberOfIndependenceRelations();
 		final List<IRefinableIndependenceProvider<L>> independenceProviders = new ArrayList<>(numIndependenceRelations);
 
@@ -169,7 +176,7 @@ public class IndependenceProviderFactory<L extends IIcfgTransition<?>> {
 				// Add syntactic independence check (cheaper sufficient condition).
 				.withSyntacticCheck()
 				// Cache independence query results.
-				.cached()
+				.cached(mIndependenceCache)
 				// Setup condition optimization (if conditional independence is enabled).
 				// =========================================================================
 				// NOTE: Soundness of the condition elimination here depends on the fact that all inconsistent
@@ -245,7 +252,6 @@ public class IndependenceProviderFactory<L extends IIcfgTransition<?>> {
 	public void shutdown() {
 		if (mIndependenceScript != null) {
 			// Shutdown the script
-			// TODO Share independence script and independence relation (including cache) between CEGAR loop instances!
 			mIndependenceScript.getScript().exit();
 		}
 	}

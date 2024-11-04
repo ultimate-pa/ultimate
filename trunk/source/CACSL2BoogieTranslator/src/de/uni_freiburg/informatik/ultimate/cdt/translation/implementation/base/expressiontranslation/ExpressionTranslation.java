@@ -132,18 +132,6 @@ public abstract class ExpressionTranslation {
 	public final ExpressionResult handleBitshiftExpression(final ILocation loc, final int nodeOperator,
 			final Expression exp1, final CPrimitive type1, final Expression exp2, final CPrimitive type2,
 			final AuxVarInfoBuilder auxVarInfoBuilder) {
-		// TODO: Should we really throw an exception here or just report undefined behavior somehow?
-		final BigInteger shiftValue = mTypeSizes.extractIntegerValue(exp2, type2);
-		if (shiftValue != null) {
-			if (shiftValue.signum() < 0) {
-				throw new UnsupportedOperationException("Shift by negative value is not allowed (6.5.7.2)");
-			}
-			final BigInteger bitNumber = BigInteger.valueOf(8 * mTypeSizes.getSize(type1.getType()));
-			if (shiftValue.compareTo(bitNumber) >= 0) {
-				throw new UnsupportedOperationException(
-						"Shift by too large value " + shiftValue + " is not allowed (6.5.7.2)");
-			}
-		}
 		final ExpressionResult result =
 				handleBinaryBitwiseIntegerExpression(loc, nodeOperator, exp1, type1, exp2, type2, auxVarInfoBuilder);
 		if (mSettings.checkSignedIntegerBounds() == CheckMode.IGNORE || !type1.isIntegerType()
@@ -557,6 +545,31 @@ public abstract class ExpressionTranslation {
 		} else {
 			erb.addStatement(new AssumeStatement(loc, condition));
 		}
+	}
+
+	public Expression boolToInt(final ILocation loc, final Expression boolExpr) {
+		return boolToInt(loc, boolExpr, CPrimitives.INT);
+	}
+
+	public Expression boolToInt(final ILocation loc, final Expression boolExpr, final CPrimitives intType) {
+		final Expression one = mTypeSizes.constructLiteralForIntegerType(loc, new CPrimitive(intType), BigInteger.ONE);
+		final Expression zero =
+				mTypeSizes.constructLiteralForIntegerType(loc, new CPrimitive(intType), BigInteger.ZERO);
+		return ExpressionFactory.constructIfThenElseExpression(loc, boolExpr, one, zero);
+	}
+
+	public Expression toBool(final ILocation loc, final Expression intExpr, final CType cType) {
+		final CType underlyingType = CEnum.replaceEnumWithInt(cType.getUnderlyingType());
+		final Expression zero = constructZero(loc, underlyingType);
+
+		if (underlyingType instanceof CPrimitive) {
+			return constructBinaryEqualityExpression(loc, IASTBinaryExpression.op_notequals, intExpr, cType, zero,
+					underlyingType);
+		}
+		if (underlyingType instanceof CPointer || underlyingType instanceof CArray) {
+			return ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPNEQ, intExpr, zero);
+		}
+		throw new UnsupportedSyntaxException(loc, "unsupported type " + underlyingType);
 	}
 
 	public abstract Expression transformBitvectorToFloat(ILocation loc, Expression bitvector, CPrimitives floatType);

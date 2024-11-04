@@ -130,6 +130,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck;
 import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck.CheckableExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Axiom;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
@@ -573,7 +574,6 @@ public class CHandler {
 				stv = new SymbolTableValue(bId, null, pointerType, newDecl, oldStv.getDeclarationInformation(), hook,
 						false);
 				addBoogieIdsOfHeapVars(bId);
-				addBoogieIdsOfHeapVars(oldStv.getBoogieName());
 			} else {
 				// Copy the old value to the symbol table
 				stv = oldStv;
@@ -836,7 +836,11 @@ public class CHandler {
 			final ExpressionResult rr = mExprResultTransformer.transformSwitchRexBoolToInt(rightOperand, loc, node);
 			final ExpressionResult result =
 					mCExpressionTranslator.handleMultiplicativeOperation(loc, node.getOperator(), rl, rr);
-			return makeAssignment(loc, leftOperand.getLrValue(), Collections.emptyList(), result, node);
+			// Make sure that the evaluation of the operands is not inside an atomic block, but the read of the left
+			// operand (i.e., the potential of a heap variable) is.
+			final List<Statement> statementsBeforeRead =
+					DataStructureUtils.concat(leftOperand.getStatements(), rr.getStatements());
+			return handleAtomicReadWrite(loc, leftOperand.getLrValue(), statementsBeforeRead, result, node);
 		}
 		case IASTBinaryExpression.op_plus:
 		case IASTBinaryExpression.op_minus: {
@@ -860,7 +864,11 @@ public class CHandler {
 					mExprResultTransformer.transformDecaySwitchRexBoolToInt(rightOperand, loc, node);
 			final ExpressionResult result =
 					mCExpressionTranslator.handleAdditiveOperation(loc, node.getOperator(), rl, rr);
-			return makeAssignment(loc, leftOperand.getLrValue(), Collections.emptyList(), result, node);
+			// Make sure that the evaluation of the operands is not inside an atomic block, but the read of the left
+			// operand (i.e., the potential of a heap variable) is.
+			final List<Statement> statementsBeforeRead =
+					DataStructureUtils.concat(leftOperand.getStatements(), rr.getStatements());
+			return handleAtomicReadWrite(loc, leftOperand.getLrValue(), statementsBeforeRead, result, node);
 		}
 		case IASTBinaryExpression.op_binaryAnd:
 		case IASTBinaryExpression.op_binaryOr:
@@ -876,7 +884,11 @@ public class CHandler {
 			final ExpressionResult rr = mExprResultTransformer.transformSwitchRexBoolToInt(rightOperand, loc, node);
 			final ExpressionResult result =
 					mCExpressionTranslator.handleBitwiseArithmeticOperation(loc, node.getOperator(), rl, rr);
-			return makeAssignment(loc, leftOperand.getLrValue(), Collections.emptyList(), result, node);
+			// Make sure that the evaluation of the operands is not inside an atomic block, but the read of the left
+			// operand (i.e., the potential of a heap variable) is.
+			final List<Statement> statementsBeforeRead =
+					DataStructureUtils.concat(leftOperand.getStatements(), rr.getStatements());
+			return handleAtomicReadWrite(loc, leftOperand.getLrValue(), statementsBeforeRead, result, node);
 		}
 		case IASTBinaryExpression.op_shiftLeft:
 		case IASTBinaryExpression.op_shiftRight: {
@@ -891,7 +903,11 @@ public class CHandler {
 			final ExpressionResult rr = mExprResultTransformer.transformSwitchRexBoolToInt(rightOperand, loc, node);
 			final ExpressionResult result =
 					mCExpressionTranslator.handleBitshiftOperation(loc, node.getOperator(), rl, rr);
-			return makeAssignment(loc, leftOperand.getLrValue(), Collections.emptyList(), result, node);
+			// Make sure that the evaluation of the operands is not inside an atomic block, but the read of the left
+			// operand (i.e., the potential of a heap variable) is.
+			final List<Statement> statementsBeforeRead =
+					DataStructureUtils.concat(leftOperand.getStatements(), rr.getStatements());
+			return handleAtomicReadWrite(loc, leftOperand.getLrValue(), statementsBeforeRead, result, node);
 		}
 		default:
 			final String msg = "Unknown or unsupported unary operation";
@@ -1050,6 +1066,11 @@ public class CHandler {
 		} else {
 			castTargetValueType = ((CPointer) castTargetType).getPointsToType().getUnderlyingType();
 		}
+		if (operandValueType.isIncomplete() || castTargetValueType.isIncomplete()) {
+			mLogger.warn(
+					"saw a pointer cast to a type that we could not get a type size for, not adapting memory model");
+			return;
+		}
 
 		final Expression operandTypeByteSizeExp;
 		try {
@@ -1058,13 +1079,6 @@ public class CHandler {
 			mLogger.debug("saw a pointer cast to a type that we could not get a type size for, not adapting memory "
 					+ "model");
 			return;
-		} catch (final IllegalArgumentException e) {
-			if ("cannot determine size of incomplete type".equals(e.getMessage())) {
-				mLogger.debug("saw a pointer cast to a type that we could not get a type size for, not adapting memory "
-						+ "model");
-				return;
-			}
-			throw e;
 		}
 		final BigInteger operandTypeByteSize =
 				mTypeSizes.extractIntegerValue(operandTypeByteSizeExp, mTypeSizeComputer.getSizeT());
@@ -2178,8 +2192,7 @@ public class CHandler {
 			return new SkipResult();
 		}
 		// TODO: This is just a workaround for now to crash when thread local variables are used in a concurrent program
-		if (Arrays.stream(node.getDeclSpecifier().getAttributes()).map(x -> String.valueOf(x.getName()))
-				.anyMatch("thread"::equals)) {
+		if (CTranslationUtil.hasAttribute(node.getDeclSpecifier(), "thread")) {
 			mHasThreadLocalVars = true;
 			// Only crash for thread local variable in concurrent programs
 			if (mIsConcurrent) {
@@ -2553,12 +2566,12 @@ public class CHandler {
 		case IASTUnaryExpression.op_postFixIncr:
 		case IASTUnaryExpression.op_postFixDecr: {
 			return mCExpressionTranslator.handlePostfixIncrementAndDecrement(loc, node.getOperator(), operand, node,
-					a -> makeAssignment(loc, operand.getLrValue(), Collections.emptyList(), a, node));
+					a -> handleAtomicReadWrite(loc, operand.getLrValue(), operand.getStatements(), a, node));
 		}
 		case IASTUnaryExpression.op_prefixDecr:
 		case IASTUnaryExpression.op_prefixIncr: {
 			return mCExpressionTranslator.handlePrefixIncrementAndDecrement(node.getOperator(), loc, operand, node,
-					a -> makeAssignment(loc, operand.getLrValue(), Collections.emptyList(), a, node));
+					a -> handleAtomicReadWrite(loc, operand.getLrValue(), operand.getStatements(), a, node));
 		}
 		case IASTUnaryExpression.op_bracketedPrimary:
 			return operand;
@@ -2717,6 +2730,28 @@ public class CHandler {
 		}
 	}
 
+	private ExpressionResult handleAtomicReadWrite(final ILocation loc, final LRValue leftHandSide,
+			final List<Statement> statementsBeforeRead, final ExpressionResult rhs, final IASTNode hook) {
+		final ExpressionResult assignment = makeAssignment(loc, leftHandSide, Set.of(), rhs, hook);
+		if (!leftHandSide.getCType().isAtomic()) {
+			// For non-atomic types return the normal assignment
+			return assignment;
+		}
+		final List<Statement> allStatements = assignment.getStatements();
+
+		// Check if statementsBeforeRead are a prefix of allStatements
+		if (!statementsBeforeRead.equals(allStatements.subList(0, statementsBeforeRead.size()))) {
+			throw new AssertionError(
+					"Unexpected result of makeAssignment: statements do not start with statements of rhs");
+		}
+		// For atomic types make sure that all statement except the ones before the read are in an atomic block
+		final List<Statement> atomicStatements =
+				allStatements.subList(statementsBeforeRead.size(), allStatements.size());
+		return new ExpressionResultBuilder().addStatements(statementsBeforeRead)
+				.addAllExceptLrValueAndStatements(assignment).setLrValue(assignment.getLrValue())
+				.addStatement(StatementFactory.constructAtomicStatement(loc, atomicStatements)).build();
+	}
+
 	/**
 	 *
 	 * @param loc
@@ -2804,6 +2839,7 @@ public class CHandler {
 				builder.addStatement(assignment);
 				resultRhs = auxVar.getExp();
 			}
+			// MemoryHandler::getWriteCall already handles atomic types properly, so there is nothing to do here.
 			builder.addStatements(mMemoryHandler.getWriteCall(loc, hlv, resultRhs,
 					rightHandSideValueWithConversionsApplied.getCType(), false));
 
@@ -2844,7 +2880,12 @@ public class CHandler {
 		final AssignmentStatement assignStmt = StatementFactory.constructAssignmentStatement(loc,
 				new LeftHandSide[] { lValue.getLhs() }, new Expression[] { rhsWithBitfieldTreatment });
 
-		builder.addStatement(assignStmt);
+		if (leftHandSide.getCType().isAtomic()) {
+			// For atomic types, make this assignment into an atomic block
+			builder.addStatement(new AtomicStatement(loc, new Statement[] { assignStmt }));
+		} else {
+			builder.addStatement(assignStmt);
+		}
 
 		for (final Overapprox oa : rhsConverted.getOverapprs()) {
 			new OverapproxVariable(oa.getOverapproximatedLocations()).annotate(assignStmt);
@@ -2967,7 +3008,12 @@ public class CHandler {
 			final DeclaratorResult declResult, final IASTDeclarator hook, final CStorageClass storageClass) {
 
 		final CDeclaration cDec = declResult.getDeclaration();
-		final boolean onHeap = cDec.isOnHeap();
+		final var oldStv = mSymbolTable.findCSymbol(hook, cDec.getName());
+		boolean onHeap = cDec.isOnHeap();
+		if (!onHeap && oldStv != null) {
+			// If the declaration is not on the heap, check if the declaration in the symbol table is on the heap.
+			onHeap = oldStv.getCDecl().isOnHeap();
+		}
 		final DeclarationInformation declarationInformation = getDeclarationInfo(storageClass);
 		final String bId = mNameHandler.getUniqueIdentifier(node, cDec.getName(), mSymbolTable.getCScopeId(hook),
 				onHeap, cDec.getType(), declarationInformation);

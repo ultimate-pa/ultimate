@@ -36,6 +36,7 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.DataRaceFoundResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.LassoShapedNonTerminationArgument;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
 import de.uni_freiburg.informatik.ultimate.core.lib.translation.BacktranslatedCFG;
@@ -46,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithFiniteTrace;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -130,7 +132,8 @@ public class WitnessPrinter implements IOutput {
 		final boolean createYaml = ups.getBoolean(PreferenceInitializer.LABEL_GENERATE_YAML_WITNESS);
 
 		final List<ResultWitness> witnesses;
-		if (results.stream().anyMatch(a -> a instanceof CounterExampleResult<?, ?, ?>)) {
+		if (results.stream().anyMatch(a -> a instanceof CounterExampleResult<?, ?, ?>)
+				|| results.stream().anyMatch(a -> a instanceof DataRaceFoundResult<?, ?, ?>)) {
 			mLogger.info("Generating witness for reachability counterexample");
 			witnesses = generateReachabilityCounterexampleWitness(results, createGraphML, createYaml);
 		} else if (results.stream().anyMatch(a -> a instanceof LassoShapedNonTerminationArgument<?, ?>)) {
@@ -177,13 +180,17 @@ public class WitnessPrinter implements IOutput {
 	private List<ResultWitness> generateReachabilityCounterexampleWitness(final List<IResult> results,
 			final boolean createGraphML, final boolean createYaml) {
 		final List<ResultWitness> suppliers = new ArrayList<>();
-		final Collection<CounterExampleResult> cexResults =
-				ResultUtil.filterResults(results, CounterExampleResult.class);
+		final Collection<IResultWithFiniteTrace> cexResults =
+				ResultUtil
+						.filterResults(results,
+								r -> r instanceof CounterExampleResult<?, ?, ?>
+										|| r instanceof DataRaceFoundResult<?, ?, ?>)
+						.stream().map(IResultWithFiniteTrace.class::cast).collect(Collectors.toList());
 		final IBacktranslationService backtrans = mServices.getBacktranslationService();
 		final BoogieIcfgContainer root = mRCFGCatcher.getModel();
 		final String filename = ILocation.getAnnotation(root).getFileName();
 
-		for (final CounterExampleResult<?, ?, ?> cex : cexResults) {
+		for (final IResultWithFiniteTrace<?, ?> cex : cexResults) {
 			final IProgramExecution<?, ?> backtransPe = backtrans.translateProgramExecution(cex.getProgramExecution());
 			if (createGraphML) {
 				final String witness =

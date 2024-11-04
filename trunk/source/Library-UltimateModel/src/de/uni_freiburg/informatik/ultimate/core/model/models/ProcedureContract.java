@@ -64,15 +64,43 @@ public class ProcedureContract<E, V> {
 	@Visualizable
 	private final Set<V> mModifies;
 
+	/**
+	 * Creates a new contract that does not have a "modifies" clause, i.e., the contract specifies that the procedure
+	 * may arbitrarily modify global state as long as it satisfies the "ensures" clause.
+	 *
+	 * @param procedure
+	 *            The procedure for which a contract is being created
+	 * @param requires
+	 *            The "requires" clause. A value of {@code null} represents a trivial clause, i.e., the logical formula
+	 *            {@code true}.
+	 * @param ensures
+	 *            The "ensures" clause. A value of {@code null} represents a trivial clause, i.e., the logical formula
+	 *            {@code true}.
+	 */
 	public ProcedureContract(final String procedure, final E requires, final E ensures) {
-		mProcedure = procedure;
+		mProcedure = Objects.requireNonNull(procedure);
 		mRequires = requires;
 		mEnsures = ensures;
 		mModifies = null;
 	}
 
+	/**
+	 * Creates a new contract with a "modifies" clause, i.e., the contract specifies that the procedure may only modify
+	 * the given global variables.
+	 *
+	 * @param procedure
+	 *            The procedure for which a contract is being created
+	 * @param requires
+	 *            The "requires" clause. A value of {@code null} represents a trivial clause, i.e., the logical formula
+	 *            {@code true}.
+	 * @param ensures
+	 *            The "ensures" clause. A value of {@code null} represents a trivial clause, i.e., the logical formula
+	 *            {@code true}.
+	 * @param modifies
+	 *            The set of global variables modifiable by the procedure.
+	 */
 	public ProcedureContract(final String procedure, final E requires, final E ensures, final Set<V> modifies) {
-		mProcedure = procedure;
+		mProcedure = Objects.requireNonNull(procedure);
 		mRequires = requires;
 		mEnsures = ensures;
 		mModifies = Objects.requireNonNull(modifies);
@@ -98,7 +126,20 @@ public class ProcedureContract<E, V> {
 		return Collections.unmodifiableSet(mModifies);
 	}
 
-	public boolean isTrivial() {
+	/**
+	 * Determines whether both the "requires" and "ensures" clauses of the contract are {@code null}, i.e., represent
+	 * the logical formula {@code true}, and the contract does not have a "modifies" clause.
+	 *
+	 * Note that this does not mean that the entire contract is trivial in the sense that any procedure would satisfy
+	 * it, as a "requires" clause of {@code true} indicates that there can be no assertion failure during execution of
+	 * the procedure for any input or initial global state. An entirely trivial contract would thus instead need to have
+	 * a "requires" clause {@code false}.
+	 *
+	 * For contracts with "modifies" clauses this method always return {@code false} as there is no way to determine if
+	 * the "modifies" clause is trivial without knowing the entire set of global variables in the program: only when
+	 * every variable can be modified, the clause would be trivial.
+	 */
+	public boolean hasOnlyTrivialClauses() {
 		return mRequires == null && mEnsures == null && !hasModifies();
 	}
 }

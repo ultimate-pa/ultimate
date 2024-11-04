@@ -33,6 +33,8 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.conta
 import org.eclipse.cdt.core.dom.ast.IASTDeclSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclSpecifier;
 
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
+
 /**
  * @author Markus Lindenmann
  * @date 13.07.2012
@@ -147,7 +149,7 @@ public class CPrimitive extends CType {
 
 	public CPrimitive(final CPrimitives type) {
 		// FIXME: integrate those flags -- you will also need to change the equals method if you do
-		super(false, false, false, false, false);
+		super(false, false, false, false, false, false);
 		mType = type;
 		mGeneralType = getGeneralType(type);
 	}
@@ -160,7 +162,7 @@ public class CPrimitive extends CType {
 	 */
 	public CPrimitive(final IASTDeclSpecifier cDeclSpec) {
 		// FIXME: integrate those flags -- you will also need to change the equals method if you do
-		super(false, false, false, false, false);
+		super(false, false, false, false, false, CTranslationUtil.hasAttribute(cDeclSpec, "atomic"));
 		if (!(cDeclSpec instanceof IASTSimpleDeclSpecifier)) {
 			throw new IllegalArgumentException("Unknown C Declaration!");
 		}
