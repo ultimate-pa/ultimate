@@ -13,11 +13,14 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.TaskCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.TaskCanceledException.UserDefinedLimit;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.TestGoalAnnotation;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.VarAssignmentReuseAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovabilityReason;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerCache;
@@ -25,8 +28,11 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.Hoa
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -84,22 +90,26 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 	private final ITARefinementStrategy<L> mStrategy;
 	private final IcfgLocation mCurrentErrorLoc;
 
+	// for error automata
+	private final SimplificationTechnique mSimplificationTechnique;
+	private final XnfConversionTechnique mXnfConversionTechnique;
+	private final IIcfg<? extends IcfgLocation> mIcfg;
+
 	public CegarWorkerThread(final ILogger logger, final TAPreferences pref, final IRun<L, ?> counterexample,
-			final ErrorGeneralizationEngine<L> errorGeneralizationEngine, final int iteration,
-			final CegarLoopResultBuilder resultBuilder, final CegarLoopStatisticsGenerator statistcs,
-			final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
-			final StrategyFactory<L> strategyFactory, final INestedWordAutomaton<L, IPredicate> abstraction,
-			final PredicateFactory predicateFactory,
+			final int iteration, final CegarLoopResultBuilder resultBuilder,
+			final CegarLoopStatisticsGenerator statistcs, final IUltimateServiceProvider services,
+			final CfgSmtToolkit csToolkit, final StrategyFactory<L> strategyFactory,
+			final INestedWordAutomaton<L, IPredicate> abstraction, final PredicateFactory predicateFactory,
 			final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata,
 			final PredicateFactoryRefinement stateFactoryForRefinement, final boolean computeHoareAnnotation,
-			final ITARefinementStrategy<L> strategy, final IcfgLocation currentErrorLoc) {
+			final ITARefinementStrategy<L> strategy, final IcfgLocation currentErrorLoc, final IIcfg<?> rootNode) {
 
 		mLogger = logger;
 		mPref = pref;
 		mRefinementResult = null;
 		mCounterexample = counterexample;
 		mResultBuilder = resultBuilder;
-		mErrorGeneralizationEngine = errorGeneralizationEngine;
+		mErrorGeneralizationEngine = new ErrorGeneralizationEngine<>(services);
 		mInterpolAutomaton = null;
 		mIteration = iteration;
 		mCegarLoopBenchmark = statistcs;
@@ -113,6 +123,9 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 		mComputeHoareAnnotation = computeHoareAnnotation;
 		mStrategy = strategy;
 		mCurrentErrorLoc = currentErrorLoc;
+		mSimplificationTechnique = pref.getSimplificationTechnique();
+		mXnfConversionTechnique = pref.getXnfConversionTechnique();
+		mIcfg = rootNode;
 
 	}
 
@@ -154,7 +167,6 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 			// TODO deal with failure
 		}
 		mLogger.info("Done with Thread: " + Thread.currentThread().getId() + "#"); // TODO print trace
-
 		return mThreadResult;
 	}
 
@@ -255,16 +267,38 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 
 	protected void constructErrorAutomaton() throws AutomataOperationCanceledException {
 
-		// TODO problem? mCsToolkit is CFG script. Seems to be only used
-		// csToolkit.getManagedScript().getScript().term("true") in
-		// constructStraightLineAutomaton
-
-		// we only consider simple error automata for now, meaning we do not need all of this
 		mErrorGeneralizationEngine.constructErrorAutomaton(mCounterexample, mPredicateFactory,
-				mRefinementResult.getPredicateUnifier(), mCsToolkit, null, null, null,
-				mPredicateFactoryInterpolantAutomata, mAbstraction, mIteration);
+				mRefinementResult.getPredicateUnifier(), mCsToolkit, mSimplificationTechnique, mXnfConversionTechnique,
+				mIcfg.getCfgSmtToolkit().getSymbolTable(), mPredicateFactoryInterpolantAutomata, mAbstraction,
+				mIteration);
 		mInterpolAutomaton = null;
+		for (final IPredicate testGoal : mAbstraction.getFinalStates()) {
+			final ISLPredicate testGoalISL = (ISLPredicate) testGoal;
+			if (testGoalISL.getProgramPoint().getPayload().getAnnotations()
+					.containsKey(VarAssignmentReuseAnnotation.class.getName())) {
 
+				final VarAssignmentReuseAnnotation pLocAnnoVA =
+						(VarAssignmentReuseAnnotation) testGoalISL.getProgramPoint().getPayload().getAnnotations()
+								.get(VarAssignmentReuseAnnotation.class.getName());
+				// If it contains a VA it should contain a TG
+				assert testGoalISL.getProgramPoint().getPayload().getAnnotations()
+						.containsKey(TestGoalAnnotation.class.getName());
+				final TestGoalAnnotation pLocAnnoTG = (TestGoalAnnotation) testGoalISL.getProgramPoint().getPayload()
+						.getAnnotations().get(TestGoalAnnotation.class.getName());
+
+				// TODO
+				// if (!pLocAnnoVA.mIsActiveTestGoal || mTestGoalWorkingSet.contains(pLocAnnoTG.mId)) {
+				// mErrorGeneralizationEngine.addCoveredTestGoalToErrorAutomaton(testGoal,
+				// mAbstraction.internalPredecessors(testGoal));
+				// }
+
+			}
+		}
+
+		mCegarLoopBenchmark.reportErrorAutomatonCreated();
+
+		// final NestedWordAutomaton<L, IPredicate> resultBeforeEnhancement =
+		// mErrorGeneralizationEngine.getResultBeforeEnhancement();
 		// assert isInterpolantAutomatonOfSingleStateType(resultBeforeEnhancement);
 		// assert accepts(getServices(), resultBeforeEnhancement, mCounterexample.getWord(),
 		// false) : "Error automaton broken!";

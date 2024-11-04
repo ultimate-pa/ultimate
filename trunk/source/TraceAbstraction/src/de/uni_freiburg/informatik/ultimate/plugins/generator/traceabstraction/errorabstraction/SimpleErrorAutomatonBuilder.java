@@ -119,8 +119,8 @@ public class SimpleErrorAutomatonBuilder<L extends IIcfgTransition<?>> implement
 				for (final IPredicate errorState : ((INestedWordAutomaton<L, IPredicate>) abstraction)
 						.getFinalStates()) {
 					if (errorStateIsTestGoalWithId((ISLPredicate) errorState, testGoalId)) {
-						final BasicPredicate errorStateAsBP =
-								new BasicPredicate(mResult.size(), null, errorState.getFormula(), null, null, null);
+						final BasicPredicate errorStateAsBP = new BasicPredicate(mResult.size() + testGoalId, null,
+								errorState.getFormula(), null, null, null);
 						mResult.addState(false, true, errorStateAsBP);
 
 						for (final Iterator<IPredicate> it = mResult.getInitialStates().iterator(); it.hasNext();) {
@@ -142,7 +142,8 @@ public class SimpleErrorAutomatonBuilder<L extends IIcfgTransition<?>> implement
 		final BasicPredicate errorStateAsBP =
 				new BasicPredicate(mResult.size(), null, testGoal.getFormula(), null, null, null);
 		mResult.addState(false, true, errorStateAsBP);
-
+		System.out.println(errorStateAsBP);
+		System.out.println(incomingedge);
 		for (final Iterator<IPredicate> it = mResult.getInitialStates().iterator(); it.hasNext();) {
 			final IPredicate f = it.next();
 

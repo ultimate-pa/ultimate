@@ -96,7 +96,6 @@ class ModelTranslationContainer implements IBacktranslationService {
 		return last.targetExpressionToString(expression);
 	}
 
-
 	@SuppressWarnings("unchecked")
 	private <TE, SE> TE translateExpression(final Stack<ITranslator<?, ?, ?, ?, ?, ?>> remaining, final SE expression) {
 		if (remaining.isEmpty()) {
@@ -105,7 +104,6 @@ class ModelTranslationContainer implements IBacktranslationService {
 		final ITranslator<?, ?, SE, TE, ?, ?> tmp = (ITranslator<?, ?, SE, TE, ?, ?>) remaining.pop();
 		return translateExpression(remaining, tmp.translateExpression(expression));
 	}
-
 
 	@Override
 	public <STE> List<?> translateTrace(final List<STE> trace, final Class<STE> clazz) {
@@ -127,8 +125,8 @@ class ModelTranslationContainer implements IBacktranslationService {
 		return last.targetTraceToString(trace);
 	}
 
-	private <STE> Stack<ITranslator<?, ?, ?, ?, ?, ?>> prepareTranslatorStackAndCheckSourceTraceElement(
-			final Class<STE> classOfSourceElement) {
+	private <STE> Stack<ITranslator<?, ?, ?, ?, ?, ?>>
+			prepareTranslatorStackAndCheckSourceTraceElement(final Class<STE> classOfSourceElement) {
 		final Stack<ITranslator<?, ?, ?, ?, ?, ?>> current = new Stack<>();
 		boolean canTranslate = false;
 		for (final ITranslator<?, ?, ?, ?, ?, ?> trans : mTranslationSequence) {
@@ -148,8 +146,8 @@ class ModelTranslationContainer implements IBacktranslationService {
 		return current;
 	}
 
-	private <STE> Stack<ITranslator<?, ?, ?, ?, ?, ?>> prepareTranslatorStackAndCheckSourceExpression(
-			final Class<STE> classOfSourceExpression) {
+	private <STE> Stack<ITranslator<?, ?, ?, ?, ?, ?>>
+			prepareTranslatorStackAndCheckSourceExpression(final Class<STE> classOfSourceExpression) {
 		final Stack<ITranslator<?, ?, ?, ?, ?, ?>> current = new Stack<>();
 		boolean canTranslate = false;
 		for (final ITranslator<?, ?, ?, ?, ?, ?> trans : mTranslationSequence) {
@@ -168,8 +166,6 @@ class ModelTranslationContainer implements IBacktranslationService {
 		}
 		return current;
 	}
-
-
 
 	@SuppressWarnings("unchecked")
 	private <TTE, STE> List<TTE> translateTrace(final Stack<ITranslator<?, ?, ?, ?, ?, ?>> remaining,
@@ -208,21 +204,16 @@ class ModelTranslationContainer implements IBacktranslationService {
 
 	@SuppressWarnings("unchecked")
 	private <STE, TTE, SE, TE> IProgramExecution<TTE, TE> translateProgramExecution(
-			final ArrayDeque<ITranslator<?, ?, ?, ?, ?, ?>> remainingBefore, final IProgramExecution<STE, SE> programExecution) {
+			final ArrayDeque<ITranslator<?, ?, ?, ?, ?, ?>> remainingBefore,
+			final IProgramExecution<STE, SE> programExecution) {
 		if (remainingBefore.isEmpty()) {
 			return (IProgramExecution<TTE, TE>) programExecution;
 		}
-		final ArrayDeque<ITranslator<?, ?, ?, ?, ?, ?>> remainingAfter = new ArrayDeque<ITranslator<?, ?, ?, ?, ?, ?>>(remainingBefore);
-		final ITranslator<STE, TTE, SE, TE, ?, ?> translator = (ITranslator<STE, TTE, SE, TE, ?, ?>) remainingAfter.pop();
+		final ArrayDeque<ITranslator<?, ?, ?, ?, ?, ?>> remainingAfter =
+				new ArrayDeque<ITranslator<?, ?, ?, ?, ?, ?>>(remainingBefore);
+		final ITranslator<STE, TTE, SE, TE, ?, ?> translator =
+				(ITranslator<STE, TTE, SE, TE, ?, ?>) remainingAfter.pop();
 		final IProgramExecution<TTE, TE> translated = translator.translateProgramExecution(programExecution);
-
-		// System.out.println("-----");
-		// System.out.println(translator.getClass());
-		// System.out.println(programExecution);
-		// System.out.println();
-		// System.out.println(translated);
-		// System.out.println("-----");
-
 		return translateProgramExecution(remainingAfter, translated);
 	}
 
@@ -265,12 +256,11 @@ class ModelTranslationContainer implements IBacktranslationService {
 
 	@Override
 	public <SE> String translateProgramStateToString(final ProgramState<SE> programState) {
-		final Stack<ITranslator<?, ?, ?, ?, ?, ?>> current = prepareTranslatorStackAndCheckSourceExpression(
-				programState.getClassOfExpression());
+		final Stack<ITranslator<?, ?, ?, ?, ?, ?>> current =
+				prepareTranslatorStackAndCheckSourceExpression(programState.getClassOfExpression());
 		final ITranslator<?, ?, ?, ?, ?, ?> last = current.firstElement();
 		return translateProgramStateToString(translateProgramState(current, programState), last);
 	}
-
 
 	private static <TE> String translateProgramStateToString(final ProgramState<TE> translateProgramState,
 			final ITranslator<?, ?, ?, ?, ?, ?> trans) {

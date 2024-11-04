@@ -189,8 +189,8 @@ public class ErrorGeneralizationEngine<L extends IIcfgTransition<?>> implements 
 			mLogger.info("Constructing %s automaton for trace of length %s", type, trace.length());
 		}
 
-		mErrorAutomatonStatisticsGenerator.reportTrace(trace);
-		mErrorAutomatonStatisticsGenerator.startErrorAutomatonConstructionTime();
+		// mErrorAutomatonStatisticsGenerator.reportTrace(trace);
+		// mErrorAutomatonStatisticsGenerator.startErrorAutomatonConstructionTime();
 
 		try {
 			switch (type) {
@@ -220,7 +220,7 @@ public class ErrorGeneralizationEngine<L extends IIcfgTransition<?>> implements 
 							+ mErrorAutomatonStatisticsGenerator.getLastConstructionTime() + " nanoseconds)");
 			throw new ToolchainCanceledException(tce, rti);
 		}
-		mErrorAutomatonStatisticsGenerator.stopErrorAutomatonConstructionTime();
+		// mErrorAutomatonStatisticsGenerator.stopErrorAutomatonConstructionTime();
 		mErrorTraces.addPrecondition(mErrorAutomatonBuilder.getErrorPrecondition());
 	}
 

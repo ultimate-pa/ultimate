@@ -181,7 +181,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		mLogger.info("Computing trace abstraction results");
 		// Report results that were buffered because they may be overridden or amended.
 
-		reportLocationResults();
+		// reportLocationResults();
 		reportBenchmarkResults();
 
 		logNumberOfWitnessInvariants(errNodesOfAllProc);

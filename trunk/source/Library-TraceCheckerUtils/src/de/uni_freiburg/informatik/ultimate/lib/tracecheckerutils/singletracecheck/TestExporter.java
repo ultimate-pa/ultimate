@@ -50,7 +50,7 @@ public class TestExporter {
 	public void exportTests(final TestVector testV, final String i, final boolean allInOneFile) throws Exception {
 
 		FileOutputStream output;
-		final String name = "testcase" + i;
+		final String name = "testcase" + i + Thread.currentThread().getId();
 		final boolean noDirectories = false;
 		final boolean allInOneDirecotry = true;
 		if (noDirectories) {

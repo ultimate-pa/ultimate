@@ -6,7 +6,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletionService;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -68,7 +70,9 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 	ExecutorService mExec;
 	List<Future<WorkerThreadResult<L, A>>> mWorkerFutures;
 
-	int mThreadLimit = 2; // Runtime.avalablecores or so
+	int mThreadLimit = 3; // Runtime.avalablecores or so
+	CompletionService<WorkerThreadResult<L, A>> mECS;
+	private final IIcfg<?> mRootNode;
 
 	/**
 	 *
@@ -107,7 +111,8 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 		mExec = Executors.newFixedThreadPool(mThreadLimit);
 		// Holds the Future of each thread
 		mWorkerFutures = new ArrayList<Future<WorkerThreadResult<L, A>>>();
-
+		mRootNode = rootNode;
+		mECS = new ExecutorCompletionService<>(mExec);
 	}
 
 	private CegarWorkerThread<L, A> setUpWorker(final IUltimateServiceProvider iterationServices,
@@ -162,10 +167,10 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 				strategyType);
 
 		// start worker
-		return new CegarWorkerThread<L, A>(mLogger, mPref, mCounterexample, mErrorGeneralizationEngine,
-				mAStarRandomHeuristicSeed, mResultBuilder, mCegarLoopBenchmark, iterationServices, freshToolKit,
-				mStrategyFactory, mAbstraction, predicateFactory, predicateFactoryInterpolantAutomata,
-				stateFactoryForRefinement, mComputeHoareAnnotation, strategy, currentErrorLoc);
+		return new CegarWorkerThread<L, A>(mLogger, mPref, mCounterexample, mAStarRandomHeuristicSeed, mResultBuilder,
+				mCegarLoopBenchmark, iterationServices, freshToolKit, mStrategyFactory, mAbstraction, predicateFactory,
+				predicateFactoryInterpolantAutomata, stateFactoryForRefinement, mComputeHoareAnnotation, strategy,
+				currentErrorLoc, mRootNode);
 	}
 
 	/*
@@ -252,11 +257,19 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 						final CegarWorkerThread<L, A> worker =
 								setUpWorker(iterationServices, runningThreads, currentErrorLoc, strategyType);
 
-						final Future<WorkerThreadResult<L, A>> future = mExec.submit(worker);
+						final Future<WorkerThreadResult<L, A>> future = mECS.submit(worker);
 						mWorkerFutures.add(future);
 						runningThreads += 1;
 					} else {
-						// mLogger.info("All threads busy");
+
+						try {
+							mLogger.info("All threads busy, going to sleep.");
+							mECS.take();
+							mLogger.info("Waking up, a worker is done.");
+						} catch (final InterruptedException e) {
+							e.printStackTrace();
+						}
+
 					}
 
 					final List<Future<WorkerThreadResult<L, A>>> doneThreads = new ArrayList<>();
