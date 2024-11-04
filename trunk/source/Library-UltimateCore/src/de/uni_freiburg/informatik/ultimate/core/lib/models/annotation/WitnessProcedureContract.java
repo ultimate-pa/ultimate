@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.core.lib.models.annotation;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ProcedureContract;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 
 /**
@@ -45,22 +46,22 @@ public class WitnessProcedureContract extends ModernAnnotations {
 	private static final String KEY = WitnessProcedureContract.class.getName();
 
 	@Visualizable
-	private final String mRequiresClause;
+	private final ProcedureContract<?, ?> mContract;
 
-	@Visualizable
-	private final String mEnsuresClause;
+	public WitnessProcedureContract(final ProcedureContract<?, ?> contract) {
+		mContract = contract;
+	}
 
-	public WitnessProcedureContract(final String requiresClause, final String ensuresClause) {
-		mRequiresClause = requiresClause;
-		mEnsuresClause = ensuresClause;
+	public ProcedureContract<?, ?> getContract() {
+		return mContract;
 	}
 
 	public String getRequires() {
-		return mRequiresClause;
+		return mContract.getRequires() == null ? null : mContract.getRequires().toString();
 	}
 
 	public String getEnsures() {
-		return mEnsuresClause;
+		return mContract.getEnsures() == null ? null : mContract.getEnsures().toString();
 	}
 
 	public void annotate(final IElement node) {

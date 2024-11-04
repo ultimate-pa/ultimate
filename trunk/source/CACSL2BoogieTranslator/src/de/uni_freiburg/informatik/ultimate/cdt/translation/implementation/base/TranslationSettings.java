@@ -79,7 +79,7 @@ public final class TranslationSettings {
 	private final FloatingPointRoundingMode mInitialRoundingMode;
 	private final boolean mAdaptMemoryModelResolutionOnPointerCasts;
 	private final int mStringOverapproximationThreshold;
-	private boolean mAllowUndefinedFunctions;
+	private final boolean mAllowUndefinedFunctions;
 
 	public TranslationSettings(final IPreferenceProvider ups) {
 		mCheckSignedIntegerBounds =
@@ -139,15 +139,14 @@ public final class TranslationSettings {
 			final CheckMode checkArrayAccessOffHeap, final boolean inRange,
 			final PointerIntegerConversion pointerIntegerConversion, final boolean checkIfFreedPointerIsValid,
 			final CheckMode pointerBaseValidity, final CheckMode pointerTargetFullyAllocated,
-			final CheckMode checkPointerSubtractionAndComparisonValidity,
-			final MemoryModel memoryModelPreference, final boolean fpToIeeeBvExtension,
-			final boolean smtBoolArraysWorkaround, final String checkedMethod, final boolean checkErrorFunction,
-			final boolean checkSvcompErrorFunction, final boolean isSvcompMemtrackCompatibilityMode,
-			final boolean checkAllocationPurity, final boolean checkMemoryLeakInMain,
-			final CheckMode checkSignedIntegerBounds, final boolean checkDataRaces,
+			final CheckMode checkPointerSubtractionAndComparisonValidity, final MemoryModel memoryModelPreference,
+			final boolean fpToIeeeBvExtension, final boolean smtBoolArraysWorkaround, final String checkedMethod,
+			final boolean checkErrorFunction, final boolean checkSvcompErrorFunction,
+			final boolean isSvcompMemtrackCompatibilityMode, final boolean checkAllocationPurity,
+			final boolean checkMemoryLeakInMain, final CheckMode checkSignedIntegerBounds, final boolean checkDataRaces,
 			final boolean useConstantArrays, final boolean useStoreChains, final boolean enableFesetround,
 			final FloatingPointRoundingMode initialRoundingMode, final boolean adaptMemoryModelResolutionOnPointerCasts,
-			final int stringOverapproximationThreshold) {
+			final int stringOverapproximationThreshold, final boolean allowUndefinedFunctions) {
 		mDivisionByZeroOfIntegerTypes = divisionByZeroOfIntegerTypes;
 		mDivisionByZeroOfFloatingTypes = divisionByZeroOfFloatingTypes;
 		mBitvectorTranslation = bitvectorTranslation;
@@ -177,6 +176,7 @@ public final class TranslationSettings {
 		mInitialRoundingMode = initialRoundingMode;
 		mAdaptMemoryModelResolutionOnPointerCasts = adaptMemoryModelResolutionOnPointerCasts;
 		mStringOverapproximationThreshold = stringOverapproximationThreshold;
+		mAllowUndefinedFunctions = allowUndefinedFunctions;
 	}
 
 	public PointerIntegerConversion getPointerIntegerCastMode() {
@@ -319,7 +319,8 @@ public final class TranslationSettings {
 				memoryModel, mFpToIeeeBvExtension, mSmtBoolArraysWorkaround, mEntryMethod, mCheckErrorFunction,
 				mCheckAssertions, mIsSvcompMemtrackCompatibilityMode, mCheckAllocationPurity, mCheckMemoryLeakInMain,
 				mCheckSignedIntegerBounds, mCheckDataRaces, mUseConstantArrays, mUseStoreChains, mEnableFesetround,
-				mInitialRoundingMode, mAdaptMemoryModelResolutionOnPointerCasts, mStringOverapproximationThreshold);
+				mInitialRoundingMode, mAdaptMemoryModelResolutionOnPointerCasts, mStringOverapproximationThreshold,
+				mAllowUndefinedFunctions);
 	}
 
 	/**

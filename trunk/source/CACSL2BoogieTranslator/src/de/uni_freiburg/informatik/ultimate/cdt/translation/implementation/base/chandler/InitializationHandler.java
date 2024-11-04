@@ -83,7 +83,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
@@ -101,8 +100,10 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.StringLiteralResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO.AUXVAR;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.OverapproxVariable;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
 
@@ -225,16 +226,16 @@ public class InitializationHandler {
 
 		final InitializerInfo initializerInfo;
 		if (initializerRaw != null) {
-			/*
-			 * C11 6.7.9.1 : the grammar for initializers cannot generate empty initializers
-			 */
 			if (initializerRaw.getRootExpressionResult() == null
 					&& (initializerRaw.getList() == null || initializerRaw.getList().isEmpty())) {
-				throw new IncorrectSyntaxException(loc, "Empty initializers are not allowed by the C standard.");
+				// Empty initializers are not allowed in C11 (see 6.7.9.1), but C23 and GNU C allows it.
+				// Therefore we handle this here (as if there is not initializer), s.t. we are not stricter than C23 or
+				// GNU C.
+				initializerInfo = null;
+			} else {
+				// construct an InitializerInfo from the InitializerResult
+				initializerInfo = constructInitializerInfo(loc, initializerRaw, targetCTypeRaw, hook);
 			}
-
-			// construct an InitializerInfo from the InitializerResult
-			initializerInfo = constructInitializerInfo(loc, initializerRaw, targetCTypeRaw, hook);
 		} else {
 			initializerInfo = null;
 		}
@@ -918,7 +919,15 @@ public class InitializationHandler {
 	 */
 	private LocalLValue obtainAuxVarLocalLValue(final ILocation loc, final CType cType,
 			final ExpressionResultBuilder initialization) {
-		final AuxVarInfo auxVar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, cType);
+		final AUXVAR auxVarType;
+		if (cType instanceof CArray) {
+			auxVarType = SFO.AUXVAR.ARRAYINIT;
+		} else if (cType instanceof CStructOrUnion) {
+			auxVarType = SFO.AUXVAR.STRUCTINIT;
+		} else {
+			throw new UnsupportedOperationException();
+		}
+		final AuxVarInfo auxVar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, cType, auxVarType);
 		initialization.addAuxVarWithDeclaration(auxVar);
 		final LocalLValue arrayLhsToInitialize = new LocalLValue(auxVar.getLhs(), cType, null);
 		initialization.setLrValue(arrayLhsToInitialize);
@@ -930,7 +939,7 @@ public class InitializationHandler {
 			return;
 		}
 		for (final Overapprox overapprItem : overappr) {
-			overapprItem.annotate(stm);
+			new OverapproxVariable(overapprItem.getOverapproximatedLocations()).annotate(stm);
 		}
 	}
 
@@ -1018,42 +1027,40 @@ public class InitializationHandler {
 			return false;
 		}
 
-		final float numberOfCells = countNumberOfPrimitiveElementInType(cType, hook);
-		if (numberOfCells < MINIMAL_NUMBER_CELLS_FOR_USING_CONSTARRAYS_FOR_ONHEAP_INIT) {
+		final BigInteger numberOfCells = countNumberOfPrimitiveElementInType(cType, hook);
+		if (numberOfCells
+				.compareTo(BigInteger.valueOf(MINIMAL_NUMBER_CELLS_FOR_USING_CONSTARRAYS_FOR_ONHEAP_INIT)) < 0) {
 			return false;
 		}
 
-		final float numberOfInitializerValues = initInfo == null ? 0f : initInfo.getNumberOfValues();
-		final float ratio = numberOfInitializerValues / numberOfCells;
-		if (ratio > MAXIMAL_EXPLICIT_TO_OVERALL_RATIO_FOR_USING_CONSTARRAYS_FOR_ONHEAP_INIT) {
-			return false;
-		}
-
-		return true;
+		final BigDecimal numberOfInitializerValues =
+				initInfo == null ? BigDecimal.ZERO : BigDecimal.valueOf(initInfo.getNumberOfValues());
+		final BigDecimal threshold = new BigDecimal(numberOfCells)
+				.multiply(BigDecimal.valueOf(MAXIMAL_EXPLICIT_TO_OVERALL_RATIO_FOR_USING_CONSTARRAYS_FOR_ONHEAP_INIT));
+		return numberOfInitializerValues.compareTo(threshold) > 0;
 	}
 
-	private long countNumberOfPrimitiveElementInType(final CType cTypeRaw, final IASTNode hook) {
+	private BigInteger countNumberOfPrimitiveElementInType(final CType cTypeRaw, final IASTNode hook) {
 		final CType cType = cTypeRaw.getUnderlyingType();
 		if (cType instanceof CPrimitive || cType instanceof CEnum || cType instanceof CPointer) {
-			return 1;
+			return BigInteger.ONE;
 		}
 		if (cType instanceof CStructOrUnion) {
 			if (CStructOrUnion.isUnion(cType)) {
-				return 1;
+				return BigInteger.ONE;
 			}
 			return Arrays.stream(((CStructOrUnion) cType).getFieldTypes())
-					.mapToLong(t -> countNumberOfPrimitiveElementInType(t, hook)).sum();
+					.map(t -> countNumberOfPrimitiveElementInType(t, hook)).reduce(BigInteger.ZERO, BigInteger::add);
 		}
 		if (cType instanceof CArray) {
 			if (cType.isIncomplete()) {
 				// An incomplete array can be the last member of a struct. It is not copied, so we return 0 here.
-				return 0;
+				return BigInteger.ZERO;
 			}
 			final CArray cArray = (CArray) cType;
-			final long innerCount = countNumberOfPrimitiveElementInType(cArray.getValueType(), hook);
-			final BigInteger boundBig = mTypeSizes.extractIntegerValue(cArray.getBound());
-			final long bound = boundBig.longValueExact();
-			return innerCount * bound;
+			final BigInteger innerCount = countNumberOfPrimitiveElementInType(cArray.getValueType(), hook);
+			final BigInteger bound = mTypeSizes.extractIntegerValue(cArray.getBound());
+			return innerCount.multiply(bound);
 		}
 		throw new AssertionError("Cannot count the primitive elements in type " + cType.getClass().getSimpleName());
 	}

@@ -133,8 +133,8 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.MemoryModel;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.CheckMode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.MemoryModel;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.LinkedScopedHashMap;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -781,7 +781,11 @@ public class MemoryHandler {
 		final CallStatement call = StatementFactory.constructCallStatement(loc, false, lhss,
 				determineReadProcedure(resultType, unchecked, loc),
 				new Expression[] { address, calculateSizeOf(loc, resultType) });
-		resultBuilder.addStatement(call);
+		if (resultType.isAtomic()) {
+			resultBuilder.addStatement(new AtomicStatement(loc, new Statement[] { call }));
+		} else {
+			resultBuilder.addStatement(call);
+		}
 		assert CTranslationUtil.isAuxVarMapComplete(mNameHandler, resultBuilder);
 		// TODO Frank 2022-12-16: We should add an in-range assumption here, but this could be problematic if we cast
 		// e.g. unsigned to signed pointers and read from them
@@ -856,7 +860,11 @@ public class MemoryHandler {
 
 		final HeapWriteMode writeMode =
 				isStaticInitialization ? HeapWriteMode.STORE_UNCHECKED : HeapWriteMode.STORE_CHECKED;
-		return getWriteCall(loc, hlv, value, realValueType, writeMode);
+		final List<Statement> result = getWriteCall(loc, hlv, value, realValueType, writeMode);
+		if (valueType.isAtomic()) {
+			return List.of(StatementFactory.constructAtomicStatement(loc, result));
+		}
+		return result;
 	}
 
 	private List<Statement> getWriteCall(final ILocation loc, final HeapLValue hlv, final Expression value,
@@ -1039,7 +1047,7 @@ public class MemoryHandler {
 	}
 
 	public IdentifierExpression getPthreadForkCount(final ILocation loc) {
-		final BoogieType counterType = mTypeHandler.getBoogieTypeForCType(getThreadIdType());
+		final BoogieType counterType = mTypeHandler.getBoogieTypeForCType(mTypeHandler.getThreadIdType());
 		return ExpressionFactory.constructIdentifierExpression(loc, counterType, SFO.ULTIMATE_FORK_COUNT,
 				new DeclarationInformation(StorageClass.GLOBAL, null));
 	}
@@ -1742,13 +1750,9 @@ public class MemoryHandler {
 	}
 
 	private VariableDeclaration declarePthreadsForkCount(final ILocation loc) {
-		final ASTType counterType = mTypeHandler.cType2AstType(loc, getThreadIdType());
+		final ASTType counterType = mTypeHandler.cType2AstType(loc, mTypeHandler.getThreadIdType());
 		final VarList varList = new VarList(loc, new String[] { SFO.ULTIMATE_FORK_COUNT }, counterType);
 		return new VariableDeclaration(loc, new Attribute[0], new VarList[] { varList });
-	}
-
-	public CPrimitive getThreadIdType() {
-		return new CPrimitive(CPrimitives.INT);
 	}
 
 	private VariableDeclaration declarePThreadsMutexArray(final ILocation loc) {
@@ -2727,7 +2731,8 @@ public class MemoryHandler {
 		case ULTIMATE_MEMINIT:
 			break;
 		case ULTIMATE_PTHREADS_FORK_COUNT:
-			return new MemoryModelDeclarationInfo(mmd, mTypeHandler.getBoogieTypeForCType(getThreadIdType()));
+			return new MemoryModelDeclarationInfo(mmd,
+					mTypeHandler.getBoogieTypeForCType(mTypeHandler.getThreadIdType()));
 		case ULTIMATE_PTHREADS_MUTEX:
 			return new MemoryModelDeclarationInfo(mmd,
 					BoogieType.createArrayType(0, new BoogieType[] { mTypeHandler.getBoogiePointerType() }, mTypeHandler

@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitiveCategory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
@@ -170,6 +171,8 @@ public interface ITypeHandler extends IHandler {
 	BoogieType getBoogieTypeForPointerComponents();
 
 	BoogieType getBoogieTypeForCType(CType resultType);
+
+	CPrimitive getThreadIdType();
 
 	/**
 	 * Can be called if a type-independent construct (such as a function or procedure) leads to the introduction of

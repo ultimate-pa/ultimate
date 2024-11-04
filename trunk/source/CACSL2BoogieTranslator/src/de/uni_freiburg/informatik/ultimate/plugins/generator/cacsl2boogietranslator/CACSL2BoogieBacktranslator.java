@@ -88,6 +88,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.translation.ProgramExecution
 import de.uni_freiburg.informatik.ultimate.core.model.models.IExplicitEdgesMultigraph;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IMultigraphEdge;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ProcedureContract;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IRelevanceInformation;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -98,6 +99,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceEle
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslatedCFG;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLTransformer;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLVisitor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Boogie2ACSL.BacktranslatedExpression;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -326,8 +329,8 @@ public class CACSL2BoogieBacktranslator extends
 		if (ate.hasThreadId()) {
 			builder.setThreadId(ate.getThreadId());
 		}
-		builder.setRelevanceInformation(ate.getRelevanceInformation()).setElement(cloc).setStep(step)
-				.setStepInfo(newSi).setProcedures(ate.getPrecedingProcedure(), ate.getSucceedingProcedure());
+		builder.setRelevanceInformation(ate.getRelevanceInformation()).setElement(cloc).setStep(step).setStepInfo(newSi)
+				.setProcedures(ate.getPrecedingProcedure(), ate.getSucceedingProcedure());
 		return builder.build();
 	}
 
@@ -792,6 +795,24 @@ public class CACSL2BoogieBacktranslator extends
 		return lastTarget;
 	}
 
+	@Override
+	public ProcedureContract<BacktranslatedExpression, BacktranslatedExpression> translateProcedureContract(
+			final ProcedureContract<Expression, ? extends Expression> oldContract, final ILocation context) {
+		if (context instanceof CACSLLocation && ((CACSLLocation) context).ignoreDuringBacktranslation()) {
+			return null;
+		}
+
+		final var newRequires = oldContract.getRequires() == null ? null
+				: translateExpressionWithContext(oldContract.getRequires(), context);
+
+		// Use special method that translates Boogie's modifies clauses into additional conjuncts in "ensures".
+		final var newEnsures = mBoogie2ACSL.translateEnsuresExpression(oldContract.getEnsures(), context,
+				(Set<IdentifierExpression>) oldContract.getModifies());
+
+		// Create a new contract without modifies clause.
+		return new ProcedureContract<>(oldContract.getProcedure(), newRequires, newEnsures);
+	}
+
 	private <TVL> void createCFGMultigraphEdge(final Multigraph<TVL, CACSLLocation> currentSource, final ILocation loc,
 			final Multigraph<TVL, CACSLLocation> lastTarget, final boolean isNegated) {
 		final MultigraphEdge<TVL, CACSLLocation> edge;
@@ -922,10 +943,9 @@ public class CACSL2BoogieBacktranslator extends
 				}
 			}
 			// Otherwise create a value like {base:offset}
-			// This is not a real ACSL-expression, so we wrap it simply into an IdentifierExpression
+			// This is not a real ACSL-expression, so we wrap it into FakeAcslPointerExpression
 			return new BacktranslatedExpression(
-					new de.uni_freiburg.informatik.ultimate.model.acsl.ast.IdentifierExpression(
-							"{" + translateExpression(base) + ":" + translateExpression(pointer.mOffset) + "}"));
+					new FakeAcslPointerExpression(translateExpression(base), translateExpression(pointer.mOffset)));
 		}
 		return translateExpression(expression);
 	}
@@ -933,6 +953,9 @@ public class CACSL2BoogieBacktranslator extends
 	@Override
 	public BacktranslatedExpression translateExpressionWithContext(final Expression expression,
 			final ILocation context) {
+		if (context instanceof CACSLLocation && ((CACSLLocation) context).ignoreDuringBacktranslation()) {
+			return null;
+		}
 		return mBoogie2ACSL.translateExpression(expression, context);
 	}
 
@@ -1128,5 +1151,33 @@ public class CACSL2BoogieBacktranslator extends
 		public Expression accept(final GeneratedBoogieAstTransformer visitor) {
 			return null;
 		}
+	}
+
+	private static class FakeAcslPointerExpression
+			extends de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression {
+		private final BacktranslatedExpression mBase;
+		private final BacktranslatedExpression mOffset;
+
+		public FakeAcslPointerExpression(final BacktranslatedExpression base, final BacktranslatedExpression offset) {
+			mBase = base;
+			mOffset = offset;
+		}
+
+		@Override
+		public String toString() {
+			return "{" + mBase + ":" + mOffset + "}";
+		}
+
+		@Override
+		public void accept(final ACSLVisitor visitor) {
+			// nothing to accept here
+
+		}
+
+		@Override
+		public de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression accept(final ACSLTransformer visitor) {
+			return null;
+		}
+
 	}
 }

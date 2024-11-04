@@ -73,6 +73,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayStore;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PrenexNormalForm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher.PqeTechniques;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.XnfDer;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.LetTerm;
@@ -1283,6 +1284,12 @@ public final class TransFormulaUtils {
 	 */
 	public static UnmodifiableTransFormula decoupleArrayValues(final UnmodifiableTransFormula tf,
 			final ManagedScript mgdScript) {
+		// Dominik (2024-10-28) Array decoupling is currently broken for quantified formulas.
+		// If store terms occur beneath a quantifier, bound variables may escape.
+		if (!QuantifierUtils.isQuantifierFree(tf.getFormula())) {
+			return tf;
+		}
+
 		final Map<TermVariable, TermVariable> oldAuxVar2newAuxVar = mgdScript.constructFreshCopies(tf.getAuxVars());
 		final Term renamed = Substitution.apply(mgdScript, oldAuxVar2newAuxVar, tf.getFormula());
 		final Triple<Term, List<TermVariable>, List<Term>> decoupled = decoupleArrayValues(renamed, mgdScript);

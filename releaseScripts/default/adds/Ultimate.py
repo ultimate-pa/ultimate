@@ -31,7 +31,7 @@ datadir = os.path.join(ultimatedir, "data")
 witnessdir = ultimatedir
 witnessname = "witness"
 enable_assertions = False
-referee_strict_validation = True
+referee_strict_validation = False
 
 # special strings in ultimate output
 unsupported_syntax_errorstring = "ShortDescription: Unsupported Syntax"
@@ -647,6 +647,8 @@ def debug_environment():
         ("mathsat", "-version"),
         ("cvc4", "--version"),
         ("cvc4nyu", "--version"),
+        ("cvc5", "--version"),
+        ("bitwuzla", "--version"),
     ]
     for solver, vflag in solver_versions:
         abs_solver = os.path.join(ultimatedir, solver)

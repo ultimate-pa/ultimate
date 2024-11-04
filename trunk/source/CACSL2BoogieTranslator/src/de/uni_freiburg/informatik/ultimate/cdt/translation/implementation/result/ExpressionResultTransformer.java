@@ -43,7 +43,6 @@ import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
@@ -517,19 +516,7 @@ public class ExpressionResultTransformer {
 	 */
 	private RValue toBoolean(final ILocation loc, final RValue rVal) {
 		assert !rVal.isBoogieBool();
-		final CType underlyingType = CEnum.replaceEnumWithInt(rVal.getCType().getUnderlyingType());
-		final Expression zero = mExprTrans.constructZero(loc, underlyingType);
-
-		final Expression resultEx;
-		if (underlyingType instanceof CPrimitive) {
-			resultEx = mExprTrans.constructBinaryEqualityExpression(loc, IASTBinaryExpression.op_notequals,
-					rVal.getValue(), rVal.getCType(), zero, underlyingType);
-		} else if (underlyingType instanceof CPointer || underlyingType instanceof CArray) {
-			resultEx = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPNEQ, rVal.getValue(),
-					zero);
-		} else {
-			throw new UnsupportedSyntaxException(loc, "unsupported type " + underlyingType);
-		}
+		final Expression resultEx = mExprTrans.toBool(loc, rVal.getValue(), rVal.getCType());
 		return new RValue(resultEx, new CPrimitive(CPrimitives.INT), true);
 	}
 
@@ -549,12 +536,7 @@ public class ExpressionResultTransformer {
 
 	private RValue toInteger(final ILocation loc, final RValue rVal) {
 		assert rVal.isBoogieBool();
-		final Expression one =
-				mTypeSizes.constructLiteralForIntegerType(loc, new CPrimitive(CPrimitives.INT), BigInteger.ONE);
-		final Expression zero =
-				mTypeSizes.constructLiteralForIntegerType(loc, new CPrimitive(CPrimitives.INT), BigInteger.ZERO);
-		return new RValue(ExpressionFactory.constructIfThenElseExpression(loc, rVal.getValue(), one, zero),
-				rVal.getCType(), false);
+		return new RValue(mExprTrans.boolToInt(loc, rVal.getValue()), rVal.getCType(), false);
 	}
 
 	/**
@@ -590,6 +572,9 @@ public class ExpressionResultTransformer {
 	 */
 	public ExpressionResult makeRepresentationReadyForConversion(final ExpressionResult expr, final ILocation loc,
 			final CType targetCType, final IASTNode hook) {
+		if (expr.getLrValue() == null) {
+			throw new AssertionError("Missing value " + loc);
+		}
 		if (expr.getLrValue().getCType().getUnderlyingType() instanceof CArray
 				&& (targetCType.getUnderlyingType() instanceof CPointer
 						|| targetCType.getUnderlyingType() instanceof CPrimitive)) {

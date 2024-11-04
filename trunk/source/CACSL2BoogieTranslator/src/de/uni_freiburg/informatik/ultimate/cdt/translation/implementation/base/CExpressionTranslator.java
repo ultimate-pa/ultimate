@@ -297,7 +297,7 @@ public class CExpressionTranslator {
 					.addGlobalVarDeclarationWithoutCDeclaration((VariableDeclaration) decl));
 			mStaticObjectsHandler.addStatementsForUltimateInit(builder.getStatements());
 			return new StringLiteralResult(builder.getLrValue(), builder.getOverappr(),
-					((StringLiteralResult) left).getAuxVar(), ((StringLiteralResult) left).getLiteralString());
+					((StringLiteralResult) left).getLiteralString());
 
 		}
 		return builder.build();
@@ -402,15 +402,15 @@ public class CExpressionTranslator {
 			throw new UnsupportedOperationException("operands have to have integer types");
 		}
 		final ExpressionResult leftPromoted = mExprResultTransformer.promoteToIntegerIfNecessary(loc, left);
-		final CPrimitive typeOfResult = (CPrimitive) leftPromoted.getLrValue().getCType().getUnderlyingType();
-		final ExpressionResult rightConverted =
-				mExprResultTransformer.performImplicitConversion(right, typeOfResult, loc);
+		final CPrimitive leftType = (CPrimitive) leftPromoted.getLrValue().getCType().getUnderlyingType();
+		final ExpressionResult rightPromoted = mExprResultTransformer.promoteToIntegerIfNecessary(loc, right);
+		final CPrimitive rightType = (CPrimitive) rightPromoted.getLrValue().getCType().getUnderlyingType();
 
 		final ExpressionResult result =
-				mExpressionTranslation.handleBitshiftExpression(loc, op, leftPromoted.getLrValue().getValue(),
-						typeOfResult, rightConverted.getLrValue().getValue(), typeOfResult, mAuxVarInfoBuilder);
+				mExpressionTranslation.handleBitshiftExpression(loc, op, leftPromoted.getLrValue().getValue(), leftType,
+						rightPromoted.getLrValue().getValue(), rightType, mAuxVarInfoBuilder);
 		final ExpressionResultBuilder builder =
-				new ExpressionResultBuilder().addAllExceptLrValue(leftPromoted, rightConverted);
+				new ExpressionResultBuilder().addAllExceptLrValue(leftPromoted, rightPromoted);
 		return builder.addAllIncludingLrValue(result).build();
 	}
 

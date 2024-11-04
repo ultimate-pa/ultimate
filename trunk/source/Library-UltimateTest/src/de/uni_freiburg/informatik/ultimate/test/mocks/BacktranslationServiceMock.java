@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.test.mocks;
 import java.util.Collections;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.core.model.models.ProcedureContract;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslatedCFG;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
@@ -93,6 +94,12 @@ final class BacktranslationServiceMock implements IBacktranslationService {
 
 	@Override
 	public <STE, SE> IBacktranslatedCFG<?, ?> translateCFG(final IBacktranslatedCFG<?, STE> cfg) {
+		return null;
+	}
+
+	@Override
+	public <TE, SE, CTX> ProcedureContract<TE, ? extends TE> translateProcedureContract(
+			final ProcedureContract<SE, ? extends SE> contract, final CTX context, final Class<SE> clazz) {
 		return null;
 	}
 

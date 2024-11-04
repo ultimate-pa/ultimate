@@ -404,8 +404,8 @@ public class TransFormulaBuilder {
 		return constructTransFormulaFromTerm(pred.getFormula(), pred.getVars(), script);
 	}
 
-	public static UnmodifiableTransFormula constructTransFormulaFromTerm(final Term term, final Set<IProgramVar> vars,
-			final ManagedScript script) {
+	public static UnmodifiableTransFormula constructTransFormulaFromTerm(final Term term,
+			final Set<? extends IProgramVar> vars, final ManagedScript script) {
 		final Set<ApplicationTerm> consts = SmtUtils.extractConstants(term, false);
 		if (!consts.isEmpty()) {
 			throw new UnsupportedOperationException("constants not yet supported");

@@ -20,7 +20,7 @@ logger = logging.getLogger(__package__)
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Upload latest Ultimate versions to Zenodo",
+        description="Download DOIs from Zenodo",
     )
     parser.add_argument(
         "--token",
@@ -55,7 +55,7 @@ def parse_args():
 
 args = parse_args()
 
-if args.doi.startswith("10.5281/zenodo."):
+if args.doi and args.doi.startswith("10.5281/zenodo."):
     args.doi = args.doi.replace("10.5281/zenodo.", "")
 else:
     print(f"Cannot download non-zenodo DOI {args.doi}")
