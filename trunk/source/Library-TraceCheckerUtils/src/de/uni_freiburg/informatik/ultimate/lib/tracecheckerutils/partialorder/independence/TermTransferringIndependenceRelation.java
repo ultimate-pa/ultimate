@@ -31,6 +31,7 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IS
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IActionWithBranchEncoders;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.PredicateTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.TransferrerWithVariableCache;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.ICopyActionFactory;
@@ -41,14 +42,16 @@ public class TermTransferringIndependenceRelation<L extends IAction> implements 
 
 	private final IIndependenceRelation<IPredicate, L> mUnderlying;
 	private final TransferrerWithVariableCache mTransferrer;
+	private final PredicateTransferrer mPredicateTransferrer;
 	private final ICopyActionFactory<L> mCopyFactory;
 	private final boolean mTransferOnlyConditions;
 
 	public TermTransferringIndependenceRelation(final IIndependenceRelation<IPredicate, L> underlying,
-			final TransferrerWithVariableCache transferrer, final ICopyActionFactory<L> copyFactory,
-			final boolean transferOnlyConditions) {
+			final TransferrerWithVariableCache transferrer, final PredicateTransferrer predicateTransferrer,
+			final ICopyActionFactory<L> copyFactory, final boolean transferOnlyConditions) {
 		mUnderlying = underlying;
 		mTransferrer = transferrer;
+		mPredicateTransferrer = predicateTransferrer;
 		mCopyFactory = copyFactory;
 		mTransferOnlyConditions = transferOnlyConditions;
 
@@ -70,7 +73,7 @@ public class TermTransferringIndependenceRelation<L extends IAction> implements 
 	public Dependence isIndependent(final IPredicate state, final L a, final L b) {
 		final var aTransferred = transfer(a);
 		final var bTransferred = transfer(b);
-		final IPredicate transferredState = state == null ? null : mTransferrer.transferPredicate(state);
+		final IPredicate transferredState = state == null ? null : mPredicateTransferrer.transferPredicate(state);
 		return mUnderlying.isIndependent(transferredState, aTransferred, bTransferred);
 	}
 
@@ -120,13 +123,13 @@ public class TermTransferringIndependenceRelation<L extends IAction> implements 
 			final var aTransferred = transfer(a);
 			final var bTransferred = transfer(b);
 			final var conditionTransferred =
-					!isConditional() || condition == null ? null : mTransferrer.transferPredicate(condition);
+					!isConditional() || condition == null ? null : mPredicateTransferrer.transferPredicate(condition);
 			final var generatedCondition =
 					mUnderlyingSymbolic.getCommutativityCondition(conditionTransferred, aTransferred, bTransferred);
 			if (generatedCondition == null) {
 				return null;
 			}
-			return mTransferrer.backTransferPredicate(generatedCondition);
+			return mPredicateTransferrer.backTransferPredicate(generatedCondition);
 		}
 
 		@Override

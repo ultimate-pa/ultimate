@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.ab
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.abstraction.IndependenceRelationWithAbstraction;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.PredicateTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.TransferrerWithVariableCache;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.DebugPredicate;
@@ -521,9 +522,10 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 			}
 
 			public Impl<L> transferTerms(final TransferrerWithVariableCache transferrer,
-					final ICopyActionFactory<L> copyFactory, final boolean transferOnlyConditions) {
-				return new Impl<>(new TermTransferringIndependenceRelation<>(mRelation, transferrer, copyFactory,
-						transferOnlyConditions));
+					final PredicateTransferrer predicateTransferrer, final ICopyActionFactory<L> copyFactory,
+					final boolean transferOnlyConditions) {
+				return new Impl<>(new TermTransferringIndependenceRelation<>(mRelation, transferrer,
+						predicateTransferrer, copyFactory, transferOnlyConditions));
 			}
 
 			/**

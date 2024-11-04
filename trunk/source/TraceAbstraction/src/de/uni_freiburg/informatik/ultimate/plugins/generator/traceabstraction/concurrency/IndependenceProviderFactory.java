@@ -37,12 +37,14 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.II
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeIterator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.PredicateTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.TransferrerWithVariableCache;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -82,22 +84,24 @@ public class IndependenceProviderFactory<L extends IIcfgTransition<?>> {
 
 	private final TAPreferences mPref;
 	private final ICopyActionFactory<L> mCopyFactory;
-	private final PredicateFactory mPredicateFactory;
 
 	private ManagedScript mIndependenceScript;
 	private TransferrerWithVariableCache mTransferrer;
+	private IIcfgSymbolTable mIndependenceSymbolTable;
 	private BasicPredicateFactory mIndepScriptPredicateFactory;
 
+	private PredicateTransferrer mPredicateTransferrer;
+
 	public IndependenceProviderFactory(final IUltimateServiceProvider services, final TAPreferences pref,
-			final ICopyActionFactory<L> copyFactory, final PredicateFactory predicateFactory) {
+			final ICopyActionFactory<L> copyFactory) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(IndependenceProviderFactory.class);
 		mPref = pref;
 		mCopyFactory = copyFactory;
-		mPredicateFactory = predicateFactory;
 	}
 
-	public List<IRefinableIndependenceProvider<L>> createProviders(final IIcfg<?> icfg) {
+	public List<IRefinableIndependenceProvider<L>> createProviders(final IIcfg<?> icfg,
+			final PredicateFactory predicateFactory) {
 		final int numIndependenceRelations = mPref.getNumberOfIndependenceRelations();
 		final List<IRefinableIndependenceProvider<L>> independenceProviders = new ArrayList<>(numIndependenceRelations);
 
@@ -105,15 +109,18 @@ public class IndependenceProviderFactory<L extends IIcfgTransition<?>> {
 			final IndependenceSettings settings = mPref.porIndependenceSettings(i);
 			mLogger.info("Independence Relation #%d: %s", i + 1, settings);
 
-			final var container = constructIndependenceProvider(icfg, settings);
+			final var container = constructIndependenceProvider(icfg, settings, predicateFactory);
 			independenceProviders.add(container);
 		}
+
+		// reset predicate transferrer, as we may be using a different predicate factory next time
+		mPredicateTransferrer = null;
 
 		return independenceProviders;
 	}
 
 	private IRefinableIndependenceProvider<L> constructIndependenceProvider(final IIcfg<?> icfg,
-			final IndependenceSettings settings) {
+			final IndependenceSettings settings, final PredicateFactory predicateFactory) {
 		final CfgSmtToolkit csToolkit = icfg.getCfgSmtToolkit();
 		if (settings.getAbstractionType() == AbstractionType.LOOPER) {
 			return new IndependenceProviderForLoopers<>(mServices, csToolkit,
@@ -128,16 +135,26 @@ public class IndependenceProviderFactory<L extends IIcfgTransition<?>> {
 
 			// We need to transfer given transition formulas and condition predicates to mIndependenceScript.
 			mTransferrer =
-					new TransferrerWithVariableCache(mServices, csToolkit, mIndependenceScript, mPredicateFactory);
+					new TransferrerWithVariableCache(csToolkit.getManagedScript().getScript(), mIndependenceScript);
 
 			// For symbolic independence relations, we need a predicate factory that works on mIndependenceScript.
-			mIndepScriptPredicateFactory = (BasicPredicateFactory) mTransferrer.getTargetPredicateFactory();
+			mIndependenceSymbolTable =
+					mTransferrer.transferSymbolTable(csToolkit.getSymbolTable(), csToolkit.getProcedures());
+			mIndepScriptPredicateFactory =
+					new BasicPredicateFactory(mServices, mIndependenceScript, mIndependenceSymbolTable);
+		}
+
+		if (mPredicateTransferrer == null) {
+			// We need to transfer given conditions to the independence script and, for symbolic relations, we need to
+			// transfer back computed independence conditions.
+			mPredicateTransferrer =
+					new PredicateTransferrer(mTransferrer, predicateFactory, mIndepScriptPredicateFactory);
 		}
 
 		if (settings.getAbstractionType() == AbstractionType.NONE) {
 			// Construct the independence relation (without abstraction). It is the responsibility of the independence
 			// relation to transfer any terms (transition formulas and condition predicates) to the independenceScript.
-			final var independence = constructIndependence(settings, false);
+			final var independence = constructIndependence(settings, false, predicateFactory, mPredicateTransferrer);
 			return new StaticIndependenceProvider<>(independence);
 		}
 
@@ -148,13 +165,14 @@ public class IndependenceProviderFactory<L extends IIcfgTransition<?>> {
 		// Construct the independence relation (still without abstraction).
 		// It is the responsibility of the abstraction function to transfer the transition formulas. But we leave it to
 		// the independence relation to transfer conditions.
-		final var independence = constructIndependence(settings, true);
+		final var independence = constructIndependence(settings, true, predicateFactory, mPredicateTransferrer);
 
 		return new IndependenceProviderWithAbstraction<>(cachedAbstraction, independence);
 	}
 
 	private IIndependenceRelation<IPredicate, L> constructIndependence(final IndependenceSettings settings,
-			final boolean tfsAlreadyTransferred) {
+			final boolean tfsAlreadyTransferred, final PredicateFactory predicateFactory,
+			final PredicateTransferrer predicateTransferrer) {
 		if (settings.getIndependenceType() == IndependenceType.SYNTACTIC) {
 			return IndependenceBuilder.<L, IPredicate> syntactic().cached().threadSeparated().build();
 		}
@@ -166,7 +184,7 @@ public class IndependenceProviderFactory<L extends IIcfgTransition<?>> {
 						!settings.useSemiCommutativity())
 				// Make sure transition formulas and conditions are transferred to independence script.
 				.ifThen(!tfsAlreadyTransferred || settings.useConditional(),
-						b -> b.transferTerms(mTransferrer, mCopyFactory, tfsAlreadyTransferred))
+						b -> b.transferTerms(mTransferrer, predicateTransferrer, mCopyFactory, tfsAlreadyTransferred))
 				// Protect the SMT solver against checks with quantifiers that are unlikely to succeed anyway.
 				.protectAgainstQuantifiers()
 				// Add syntactic independence check (cheaper sufficient condition).
@@ -181,11 +199,11 @@ public class IndependenceProviderFactory<L extends IIcfgTransition<?>> {
 				// (i.e., not conjunctions of them), where we assume this constraint holds.
 				.withConditionElimination(PartialOrderCegarLoop::isFalseLiteral)
 				// We ignore "don't care" conditions stemming from the initial program automaton states.
-				.withFilteredConditions(p -> !mPredicateFactory.isDontCare(p))
+				.withFilteredConditions(p -> !predicateFactory.isDontCare(p))
 				// TODO (Dominik 2024-09-24): We cannot generally change GemCutter's independence relation in this way.
 				// TODO This is likely very expensive!
 				.withDisjunctivePredicatesUnion(PartialOrderCegarLoop::getConjuncts, ImmutableList::new,
-						this::aggregateConditions)
+						s -> aggregateConditions(predicateFactory, s))
 				// .withDisjunctivePredicates(PartialOrderCegarLoop::getConjuncts, ImmutableList::singleton)
 				// =========================================================================
 				// Never consider letters of the same thread to be independent.
@@ -194,8 +212,9 @@ public class IndependenceProviderFactory<L extends IIcfgTransition<?>> {
 				.build();
 	}
 
-	private IPredicate aggregateConditions(final Stream<IPredicate> conditions) {
-		return mPredicateFactory.or(conditions.collect(Collectors.toList()));
+	private static IPredicate aggregateConditions(final PredicateFactory predicateFactory,
+			final Stream<IPredicate> conditions) {
+		return predicateFactory.or(conditions.collect(Collectors.toList()));
 	}
 
 	private ManagedScript constructIndependenceScript(final IndependenceSettings settings) {

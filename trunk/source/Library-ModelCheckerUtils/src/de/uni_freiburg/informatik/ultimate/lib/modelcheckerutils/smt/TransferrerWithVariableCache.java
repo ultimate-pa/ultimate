@@ -26,12 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt;
 
-import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
@@ -41,10 +38,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.SmtFreePredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -65,14 +59,7 @@ public class TransferrerWithVariableCache {
 	private final TermTransferrer mTransferrer;
 	private final TermTransferrer mBackTransferrer;
 
-	// Predicate factory used for predicates that belong to the target script.
-	private final SmtFreePredicateFactory mTargetFactory;
-
-	// Predicate factory used for backtransferring predicates to the source script.
-	private final SmtFreePredicateFactory mSourceFactory;
-
 	private final BidirectionalMap<IProgramVarOrConst, IProgramVarOrConst> mCache = new BidirectionalMap<>();
-	private final BidirectionalMap<IPredicate, IPredicate> mPredicateCache = new BidirectionalMap<>();
 
 	/**
 	 * Create a new transferrer.
@@ -81,39 +68,13 @@ public class TransferrerWithVariableCache {
 	 *            The script from which terms are transferred
 	 * @param targetScript
 	 *            The script to which terms are transferred
-	 * @param sourceFactory
-	 *            A predicate factory to be used if predicates are transferred back from the target script to the source
-	 *            script. May be {@code null} if no predicates will be transferred back.
 	 */
-	public TransferrerWithVariableCache(final Script sourceScript, final ManagedScript targetScript,
-			final SmtFreePredicateFactory sourceFactory) {
-		this(sourceScript, targetScript, new SmtFreePredicateFactory(), sourceFactory);
-	}
-
-	public TransferrerWithVariableCache(final Script sourceScript, final ManagedScript targetScript,
-			final SmtFreePredicateFactory targetFactory, final SmtFreePredicateFactory sourceFactory) {
+	public TransferrerWithVariableCache(final Script sourceScript, final ManagedScript targetScript) {
 		mTargetScript = targetScript;
 
 		final var transferMap = new BidirectionalMap<Term, Term>();
 		mTransferrer = new TermTransferrer(sourceScript, targetScript.getScript(), transferMap, false);
 		mBackTransferrer = new TermTransferrer(targetScript.getScript(), sourceScript, transferMap.inverse(), false);
-
-		mTargetFactory = targetFactory;
-		mSourceFactory = sourceFactory;
-	}
-
-	public TransferrerWithVariableCache(final IUltimateServiceProvider services, final CfgSmtToolkit sourceCsToolkit,
-			final ManagedScript targetScript, final SmtFreePredicateFactory sourceFactory) {
-		final var sourceScript = sourceCsToolkit.getManagedScript().getScript();
-		mTargetScript = targetScript;
-
-		final var transferMap = new BidirectionalMap<Term, Term>();
-		mTransferrer = new TermTransferrer(sourceScript, targetScript.getScript(), transferMap, false);
-		mBackTransferrer = new TermTransferrer(targetScript.getScript(), sourceScript, transferMap.inverse(), false);
-
-		mSourceFactory = sourceFactory;
-		final var symbolTable = transferSymbolTable(sourceCsToolkit.getSymbolTable(), sourceCsToolkit.getProcedures());
-		mTargetFactory = new BasicPredicateFactory(services, targetScript, symbolTable);
 	}
 
 	public IProgramVar transferProgramVar(final IProgramVar oldPv) {
@@ -132,21 +93,6 @@ public class TransferrerWithVariableCache {
 
 	public UnmodifiableTransFormula transferTransFormula(final UnmodifiableTransFormula tf) {
 		return TransFormulaBuilder.transferTransformula(this, mTargetScript, tf, true);
-	}
-
-	public IPredicate transferPredicate(final IPredicate predicate) {
-		return mPredicateCache.computeIfAbsent(predicate, this::transferPredicateHelper);
-	}
-
-	private BasicPredicate transferPredicateHelper(final IPredicate predicate) {
-		if (!predicate.getFuns().isEmpty()) {
-			throw new UnsupportedOperationException("Implement support for transferring functions");
-		}
-		final Set<IProgramVar> variables = transferVariables(predicate.getVars());
-		final Term transferredFormula = transferTerm(predicate.getFormula());
-		final Term transferredClosed = transferTerm(predicate.getClosedFormula());
-		return mTargetFactory.construct(serial -> new BasicPredicate(serial, transferredFormula, variables,
-				Collections.emptySet(), transferredClosed));
 	}
 
 	public <T extends Term> T transferTerm(final T term) {
@@ -176,36 +122,13 @@ public class TransferrerWithVariableCache {
 		return mTransferrer;
 	}
 
-	public IPredicate backTransferPredicate(final IPredicate predicate) {
-		return mPredicateCache.inverse().computeIfAbsent(predicate, this::backTransferPredicateHelper);
+	public <T extends Term> T backTransferTerm(final T term) {
+		return (T) mBackTransferrer.transform(term);
 	}
 
-	private BasicPredicate backTransferPredicateHelper(final IPredicate predicate) {
-		if (!predicate.getFuns().isEmpty()) {
-			throw new UnsupportedOperationException("Implement support for transferring functions");
-		}
-		final Set<IProgramVar> variables = backTransferVariables(predicate.getVars());
-		final Term transferredFormula = backTransferTerm(predicate.getFormula());
-		final Term transferredClosed = backTransferTerm(predicate.getClosedFormula());
-		return mSourceFactory.construct(serial -> new BasicPredicate(serial, transferredFormula, variables,
-				Collections.emptySet(), transferredClosed));
-	}
-
-	private Term backTransferTerm(final Term term) {
-		return mBackTransferrer.transform(term);
-	}
-
-	private IProgramVar backTransferProgramVar(final IProgramVar oldPv) {
+	public IProgramVar getOriginalProgramVar(final IProgramVar transferredPv) {
 		// We rely on the assumption that the program variable was created by this transferrer.
 		// We do not create new program variables belonging to the source script.
-		return (IProgramVar) mCache.inverse().get(oldPv);
-	}
-
-	private Set<IProgramVar> backTransferVariables(final Set<IProgramVar> vars) {
-		return vars.stream().map(this::backTransferProgramVar).collect(Collectors.toSet());
-	}
-
-	public SmtFreePredicateFactory getTargetPredicateFactory() {
-		return mTargetFactory;
+		return (IProgramVar) mCache.inverse().get(transferredPv);
 	}
 }
