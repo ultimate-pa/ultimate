@@ -34,6 +34,7 @@ import java.util.function.UnaryOperator;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderReductionFacade.OrderType;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.conditional.ConditionalCommutativityChecker.ConComTraceCheckMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.ConComChecker;
@@ -66,7 +67,8 @@ public class ConditionalCommutativityTestSuite extends AbstractTraceAbstractionT
 	// @formatter:off
 	private static final List<Pair<String, Map<String, Object>>> VARIANTS = List.of(
 		interpolantApproach(),
-		counterExampleApproach()
+		counterExampleApproach(),
+		counterExampleApproachWithSymbolic()
 	);
 	// @formatter:on
 
@@ -130,6 +132,17 @@ public class ConditionalCommutativityTestSuite extends AbstractTraceAbstractionT
 			TraceAbstractionPreferenceInitializer.LABEL_POR_DFS_ORDER, OrderType.LOOP_LOCKSTEP,
 			TraceAbstractionPreferenceInitializer.LABEL_CON_COM_CHECKER, ConComChecker.COUNTEREXAMPLE,
 			TraceAbstractionPreferenceInitializer.LABEL_CON_COM_CHECKER_CRITERION, ConComCheckerCriterion.DEFAULT
+		// @formatter:on
+		));
+	}
+
+	private static Pair<String, Map<String, Object>> counterExampleApproachWithSymbolic() {
+		return new Pair<>("CE+Symb", Map.of(
+		// @formatter:off
+			TraceAbstractionPreferenceInitializer.LABEL_POR_DFS_ORDER, OrderType.LOOP_LOCKSTEP,
+			TraceAbstractionPreferenceInitializer.LABEL_CON_COM_CHECKER, ConComChecker.COUNTEREXAMPLE,
+			TraceAbstractionPreferenceInitializer.LABEL_CON_COM_CHECKER_CRITERION, ConComCheckerCriterion.DEFAULT,
+			TraceAbstractionPreferenceInitializer.LABEL_CON_COM_CHECKER_TRACECHECK_MODE, ConComTraceCheckMode.SYMBOLIC_RELATION
 		// @formatter:on
 		));
 	}
