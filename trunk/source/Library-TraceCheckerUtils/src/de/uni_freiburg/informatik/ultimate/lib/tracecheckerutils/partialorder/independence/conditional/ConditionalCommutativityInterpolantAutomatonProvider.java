@@ -113,24 +113,25 @@ public class ConditionalCommutativityInterpolantAutomatonProvider<L extends IAct
 		if (!mAutomaton.contains(precondition)) {
 			mAutomaton.addState(true, false, precondition);
 		}
+
+		// TODO Why do we want this?
 		if (!mAutomaton.contains(mPredicateUnifier.getFalsePredicate())) {
 			mAutomaton.addState(false, true, mPredicateUnifier.getFalsePredicate());
 		}
 
-		final var predicates = tracePredicates.getPredicates();
-		for (int i = 0; i < predicates.size(); i++) {
-			final IPredicate prePred = mPredicateUnifier
-					.getOrConstructPredicate(i == 0 ? tracePredicates.getPrecondition() : predicates.get(i - 1));
-			final IPredicate succPred = mPredicateUnifier.getOrConstructPredicate(predicates.get(i));
-			if (!mAutomaton.contains(succPred)) {
-				mAutomaton.addState(false, false, succPred);
+		assert tracePredicates.getPredicates().size() == word.length() - 1 : "incompatible lengths of word and proof";
+		IPredicate predecessor = precondition;
+		for (int i = 0; i < word.length(); ++i) {
+			final IPredicate successor = mPredicateUnifier.getOrConstructPredicate(tracePredicates.getPredicate(i + 1));
+			if (!mAutomaton.contains(successor)) {
+				mAutomaton.addState(false, false, successor);
 			}
-			mAutomaton.addInternalTransition(prePred, word.getSymbol(i), succPred);
+			mAutomaton.addInternalTransition(predecessor, word.getSymbol(i), successor);
+			predecessor = successor;
 		}
 
-		final IPredicate prePred =
-				predicates.isEmpty() ? tracePredicates.getPrecondition() : predicates.get(predicates.size() - 1);
-		mHasFalseBeforeEnd |= SmtUtils.isFalseLiteral(prePred.getFormula());
+		final IPredicate beforeLast = tracePredicates.getPredicate(word.length());
+		mHasFalseBeforeEnd |= SmtUtils.isFalseLiteral(beforeLast.getFormula());
 	}
 
 	/**

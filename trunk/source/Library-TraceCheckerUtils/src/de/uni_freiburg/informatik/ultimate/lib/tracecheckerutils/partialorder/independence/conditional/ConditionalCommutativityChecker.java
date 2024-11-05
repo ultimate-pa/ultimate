@@ -25,7 +25,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.conditional;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.function.Function;
 
@@ -41,10 +43,12 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.AutomatonFreeRefinementEngine;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult.BasicRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -54,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.in
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.ICopyActionFactory;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.conditional.ConditionalCommutativityStatisticsGenerator.ConditionalCommutativityStopwatches;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.util.Lazy;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
@@ -288,7 +293,39 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 		if (!result.somePerfectSequenceFound()) {
 			mStatistics.addImperfectProof();
 		}
-		return result;
+		return postProcessRefinementResult(result);
+	}
+
+	// Post-processes the refinement result's trace predicates such that the usage of an additional non-commutativity
+	// assumption remains transparent (i.e., hidden) to the caller.
+	private IRefinementEngineResult<L, Collection<QualifiedTracePredicates>> postProcessRefinementResult(
+			final IRefinementEngineResult<L, Collection<QualifiedTracePredicates>> original) {
+		final var tpMap = new HashMap<QualifiedTracePredicates, QualifiedTracePredicates>();
+
+		final var tracePredicates = new ArrayList<QualifiedTracePredicates>();
+		for (final var qtp : original.getInfeasibilityProof()) {
+			final var newQtp = tpMap.computeIfAbsent(qtp, ConditionalCommutativityChecker::postProcessPredicates);
+			tracePredicates.add(newQtp);
+		}
+
+		final var usedTracePredicates = new ArrayList<QualifiedTracePredicates>();
+		for (final var qtp : original.getUsedTracePredicates()) {
+			final var newQtp = tpMap.computeIfAbsent(qtp, ConditionalCommutativityChecker::postProcessPredicates);
+			usedTracePredicates.add(newQtp);
+		}
+
+		return new BasicRefinementEngineResult<>(original.getCounterexampleFeasibility(), tracePredicates, null,
+				original.somePerfectSequenceFound(), usedTracePredicates, new Lazy<>(original::getHoareTripleChecker),
+				new Lazy<>(original::getPredicateUnifier));
+	}
+
+	private static QualifiedTracePredicates postProcessPredicates(final QualifiedTracePredicates qtp) {
+		final int numOfPreds = qtp.getPredicates().size();
+		final IPredicate newPost = qtp.getPredicates().get(numOfPreds - 1);
+		final List<IPredicate> newPredicates = new ArrayList<>(qtp.getPredicates().subList(0, numOfPreds - 1));
+		final TracePredicates tp =
+				new TracePredicates(qtp.getTracePredicates().getPrecondition(), newPost, newPredicates);
+		return new QualifiedTracePredicates(tp, qtp.getOrigin(), qtp.isPerfect());
 	}
 
 	public IConditionalCommutativityCriterion<L> getCriterion() {
