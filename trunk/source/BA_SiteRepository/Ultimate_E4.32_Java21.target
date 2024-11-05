@@ -6,13 +6,13 @@
 	</launcherArgs>
 	<locations>
 		<location includeAllPlatforms="false" includeConfigurePhase="true" includeSource="false" type="InstallableUnit">
-			<repository id="ultimate-dependencies" location="https://struebli.informatik.uni-freiburg.de/p2-repository-ultimate-dependencies-21/"/>
+			<repository id="ultimate-dependencies" location="https://nexus.sopranium.de/repository/p2-repository-ultimate-dependencies-21"/>
 			<unit id="com.lmax.disruptor" version="3.3.5"/>
 			<unit id="org.yaml.snakeyaml" version="2.2.0"/>
 			<unit id="net.sf.jung.monolithic" version="2.1.1"/>
 		</location>
 		<location includeAllPlatforms="false" includeConfigurePhase="true" includeSource="false" type="InstallableUnit">
-			<repository id="eclipse-releases" location="https://download.eclipse.org/releases/2024-06"/>
+			<repository id="eclipse-releases" location="https://nexus.sopranium.de/repository/eclipse-2024-06/"/>
 			<unit id="org.eclipse.cdt.feature.group" version="11.6.0.202406041555"/>
 			<unit id="org.eclipse.cdt.sdk.feature.group" version="11.6.0.202406041555"/>
 			<unit id="org.eclipse.equinox.sdk.feature.group" version="3.23.1200.v20240524-2033"/>
@@ -21,7 +21,7 @@
 			<unit id="org.eclipse.equinox.server.jetty.feature.group" version="1.11.500.v20240321-1445"/>
 		</location>
 		<location includeAllPlatforms="false" includeConfigurePhase="true" includeSource="false" type="InstallableUnit">
-			<repository id="orbit-aggregation" location="https://download.eclipse.org/tools/orbit/simrel/orbit-aggregation/2024-06"/>
+			<repository id="orbit-aggregation" location="https://nexus.sopranium.de/repository/orbit-2024-06/"/>
 			<unit id="org.eclipse.orbit.legacy.feature.group" version="4.32.0.v20240307-0931"/>
 			<unit id="org.eclipse.orbit.maven.aopalliance.feature.group" version="4.32.0"/>
 			<unit id="org.eclipse.orbit.maven.com.github.package-url.feature.group" version="4.32.0"/>
