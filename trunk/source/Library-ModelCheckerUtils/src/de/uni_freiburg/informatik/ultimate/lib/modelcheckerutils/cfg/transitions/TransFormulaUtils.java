@@ -856,14 +856,14 @@ public final class TransFormulaUtils {
 		final TransFormulaBuilder tfb =
 				new TransFormulaBuilder(tf.getInVars(), tf.getInVars(), tf.getNonTheoryConsts().isEmpty(),
 						tf.getNonTheoryConsts().isEmpty() ? null : tf.getNonTheoryConsts(), true, null, false);
-		tfb.setFormula(computeGuardTermHelper(services, mgdScript, tf));
+		tfb.setFormula(computeGuardTermHelper(services, mgdScript, tf, true));
 		tfb.setInfeasibility(tf.isInfeasible());
 		return tfb.finishConstruction(mgdScript);
 	}
 
 	public static Term computeGuardTerm(final IUltimateServiceProvider services, final ManagedScript mgdScript,
-			final UnmodifiableTransFormula tf) {
-		final var term = computeGuardTermHelper(services, mgdScript, tf);
+			final UnmodifiableTransFormula tf, final boolean tryAuxVarElimination) {
+		final var term = computeGuardTermHelper(services, mgdScript, tf, tryAuxVarElimination);
 
 		// We substitute inVars by default vars of corresponding IProgramVars.
 		final var subst = tf.getInVars().entrySet().stream()
@@ -872,7 +872,7 @@ public final class TransFormulaUtils {
 	}
 
 	private static Term computeGuardTermHelper(final IUltimateServiceProvider services, final ManagedScript mgdScript,
-			final UnmodifiableTransFormula tf) {
+			final UnmodifiableTransFormula tf, final boolean tryAuxVarElimination) {
 		final Set<TermVariable> auxVars = new HashSet<>(tf.getAuxVars());
 		auxVars.addAll(tf.getBranchEncoders());
 		for (final IProgramVar bv : tf.getAssignedVars()) {
@@ -881,7 +881,11 @@ public final class TransFormulaUtils {
 				auxVars.add(outVar);
 			}
 		}
-		return quantifyAndTryToEliminateAuxVars(services, mgdScript, tf.getFormula(), auxVars);
+
+		if (tryAuxVarElimination) {
+			return quantifyAndTryToEliminateAuxVars(services, mgdScript, tf.getFormula(), auxVars);
+		}
+		return SmtUtils.quantifier(mgdScript.getScript(), QuantifiedFormula.EXISTS, auxVars, tf.getFormula());
 	}
 
 	/**

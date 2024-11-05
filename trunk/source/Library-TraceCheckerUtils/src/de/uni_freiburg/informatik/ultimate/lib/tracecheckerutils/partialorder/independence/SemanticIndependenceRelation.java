@@ -326,8 +326,13 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 		private Term computeInclusionTerm(final UnmodifiableTransFormula lhs, final UnmodifiableTransFormula rhs) {
 			final var difference = TransFormulaUtils.intersect(mManagedScript, lhs,
 					TransFormulaUtils.negate(rhs, mManagedScript, mServices));
-			return SmtUtils.not(mManagedScript.getScript(),
-					TransFormulaUtils.computeGuardTerm(mServices, mManagedScript, difference));
+
+			// Do not spend time trying to eliminate auxiliary vars here, they can be skolemized later.
+			final boolean tryAuxVarElimination = false;
+			final Term nonInclusion =
+					TransFormulaUtils.computeGuardTerm(mServices, mManagedScript, difference, tryAuxVarElimination);
+
+			return SmtUtils.not(mManagedScript.getScript(), nonInclusion);
 		}
 
 		@Override
