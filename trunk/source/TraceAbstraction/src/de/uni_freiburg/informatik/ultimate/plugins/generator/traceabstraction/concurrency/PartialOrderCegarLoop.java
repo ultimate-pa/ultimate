@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.DeterminizeNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.InformationStorage;
@@ -100,7 +101,6 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.in
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.conditional.ConditionCriterion;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.conditional.ConditionalCommutativityChecker;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.conditional.ConditionalCommutativityCheckerVisitor;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.conditional.ConditionalCommutativityCounterexampleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.conditional.ConditionalCommutativityInterpolantChecker;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.conditional.ConditionalCommutativityStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.conditional.CriterionConjunction;
@@ -123,6 +123,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.ConComChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.ConComCheckerCriterion;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IIpAbStrategyModule;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IpAbStrategyModuleStraightlineAll;
 import de.uni_freiburg.informatik.ultimate.util.Lazy;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
@@ -161,8 +163,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	private boolean mCounterexampleConComFound;
 	private final ConditionalCommutativityStatisticsGenerator mConComCheckerBenchmark =
 			new ConditionalCommutativityStatisticsGenerator();
-
-	private final ICopyActionFactory<L> mCopyFactory;
+	private final ConditionalCommutativityCounterexampleChecker<L> mConCounterexampleChecker;
 
 	public PartialOrderCegarLoop(final DebugIdentifier name,
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> initialAbstraction,
@@ -213,16 +214,16 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		assert mSupportsDeadEnds == (mDeadEndStore != null);
 
 		mProgram = initialAbstraction;
-		mCopyFactory = copyFactory;
 
 		mCriterion = constructConditionalCommutativityCriterion();
-		mConComChecker = constructConComChecker();
+		mConComChecker = constructConComChecker(copyFactory);
+		mConCounterexampleChecker = new ConditionalCommutativityCounterexampleChecker<>(mServices, mPOR.getDfsOrder(),
+				mConComChecker, this::createConditionalCommutativityAutomatonBuilder, mConComCheckerBenchmark);
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	protected boolean refineAbstraction() throws AutomataLibraryException {
-		// Compute the enhanced interpolant automaton
 		final IPredicateUnifier predicateUnifier = mRefinementResult.getPredicateUnifier();
 		final IHoareTripleChecker htc = getHoareTripleChecker();
 
@@ -239,6 +240,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 					predicates, mInterpolAutomaton);
 		}
 
+		// Compute the enhanced interpolant automaton
 		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> ia = enhanceInterpolantAutomaton(
 				mPref.interpolantAutomatonEnhancement(), predicateUnifier, htc, mInterpolAutomaton);
 		if (ia instanceof AbstractInterpolantAutomaton<?>) {
@@ -395,12 +397,9 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 
 			final ArrayList<IPredicate> predicates = getCounterexamplePredicates();
 			mCriterion.updateAbstraction(mAbstraction);
-			final ConditionalCommutativityCounterexampleChecker<L> conCounterexampleChecker =
-					new ConditionalCommutativityCounterexampleChecker<>(mServices, mPOR.getDfsOrder(), mAbstraction,
-							mFactory, mConComCheckerBenchmark, mConComChecker);
 
 			mRefinementResult =
-					conCounterexampleChecker.getInterpolants((IRun<L, IPredicate>) mCounterexample, predicates);
+					mConCounterexampleChecker.getCommutativityProof((NestedRun<L, IPredicate>) mCounterexample, predicates);
 
 			if (mRefinementResult != null) {
 				mCounterexampleConComFound = true;
@@ -632,7 +631,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		throw new UnsupportedOperationException("PartialOrderCegarLoop currently does not support criterion " + type);
 	}
 
-	private ConditionalCommutativityChecker<L> constructConComChecker() {
+	private ConditionalCommutativityChecker<L> constructConComChecker(final ICopyActionFactory<L> copyFactory) {
 		if (mPref.useConditionalCommutativityChecker() == ConComChecker.NONE) {
 			return null;
 		}
@@ -646,13 +645,20 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 
 		return new ConditionalCommutativityChecker<>(mServices, mCriterion, relation, mCsToolkit.getManagedScript(),
 				generator, this::buildStrategyForConditionalCommutativity, mConComCheckerBenchmark, mPredicateFactory,
-				mCopyFactory, mPref.getConComCheckerTraceCheckMode());
+				copyFactory, mPref.getConComCheckerTraceCheckMode());
 	}
 
 	private IRefinementStrategy<L> buildStrategyForConditionalCommutativity(final IRun<L, IPredicate> run) {
 		return mStrategyFactory.constructStrategy(mServices, run, mAbstraction,
 				new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()), mFactory, getPreconditionProvider(),
 				getPostconditionProvider(), RefinementStrategy.SMTINTERPOLSLEEPSETPOR);
+	}
+
+	private IIpAbStrategyModule<L> createConditionalCommutativityAutomatonBuilder(final IRun<L, IPredicate> run) {
+		// This is the automaton builder used by our most common refinement strategies (e.g. CAMEL).
+		// The constructed automata should be enhanced through #enhanceInterpolantAutomaton(...) to be really useful.
+		return new IpAbStrategyModuleStraightlineAll<>(mServices, mLogger, mAbstraction, run,
+				mStateFactoryForRefinement);
 	}
 
 	private static final class MLPredicateWithInterpolants extends AnnotatedMLPredicate<IPredicate> {
