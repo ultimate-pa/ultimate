@@ -222,7 +222,5 @@ public class ConditionalCommutativityStatisticsGenerator extends StatisticsGener
 		public String prettyprint(final Object o) {
 			return mPrettyprinter.apply(CoreUtil.getUpperToCamelCase(name())).apply(o);
 		}
-
 	}
-
 }

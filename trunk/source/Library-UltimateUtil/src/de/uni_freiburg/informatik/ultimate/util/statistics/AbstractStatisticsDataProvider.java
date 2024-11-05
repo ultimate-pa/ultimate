@@ -152,6 +152,5 @@ public abstract class AbstractStatisticsDataProvider implements IStatisticsDataP
 			}
 			return sb.toString();
 		}
-
 	}
 }
