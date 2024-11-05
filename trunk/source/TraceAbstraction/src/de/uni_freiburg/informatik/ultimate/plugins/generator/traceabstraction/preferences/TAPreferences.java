@@ -579,6 +579,16 @@ public final class TAPreferences {
 		return mConComCheckerCriterion;
 	}
 
+	public boolean useIndependenceConditionGenerator() {
+		// TODO restructure settings
+		return getConComCheckerTraceCheckMode() != ConComTraceCheckMode.SYMBOLIC_RELATION;
+	}
+
+	public boolean passContextToConditionGeneration() {
+		// TODO restructure settings
+		return getConComCheckerTraceCheckMode() == ConComTraceCheckMode.GENERATOR_WITH_CONTEXT;
+	}
+
 	public ConComTraceCheckMode getConComCheckerTraceCheckMode() {
 		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_CON_COM_CHECKER_TRACECHECK_MODE,
 				ConComTraceCheckMode.class);

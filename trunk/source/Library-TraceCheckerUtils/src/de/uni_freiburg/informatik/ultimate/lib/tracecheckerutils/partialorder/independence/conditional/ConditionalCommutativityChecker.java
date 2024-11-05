@@ -54,7 +54,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IIndependenceConditionGenerator;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.ICopyActionFactory;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.conditional.ConditionalCommutativityStatisticsGenerator.ConditionalCommutativityStopwatches;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -76,11 +75,10 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 
 	private final IIndependenceRelation<IPredicate, L> mIndependenceRelation;
 	private final ISymbolicIndependenceRelation<L, IPredicate> mSymbolicRelation;
-	private final IIndependenceConditionGenerator mGenerator;
+	private final boolean mPassContextToSymbolicRelation;
 
 	private final IConditionalCommutativityCriterion<L> mCriterion;
 	private final PredicateFactory mPredicateFactory;
-	private final ConComTraceCheckMode mTraceCheckMode;
 	private final ICopyActionFactory<L> mCopyFactory;
 	private final Function<IRun<L, IPredicate>, IRefinementStrategy<L>> mBuildStrategy;
 
@@ -93,50 +91,49 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 	 *
 	 * @param criterion
 	 *            An {@link IConditionalCommutativityCriterion} to decide when to check for conditional commutativity
+	 * @param mgdScript
+	 *            Script to which the computed conditions belong.
 	 * @param independenceRelation
-	 *            Independence relation for commutativity
-	 * @param script
-	 *            Script for conjunction handling
-	 * @param generator
-	 *            Generator for constructing commutativity conditions
-	 * @param traceChecker
-	 *            An {@link ITraceChecker} responsible for proving that a condition holds after the run given in
-	 *            checkConditionalCommutativity
-	 * @param statisticsUtils
-	 *            An {@link ConditionalCommutativityStatisticsGenerator} used for statistics
+	 *            Independence relation used for commutativity checks. The corresponding symbolic relation (see
+	 *            {@link IIndependenceRelation#getSymbolicRelation()}) is used to compute commutativity conditions.
+	 * @param passContextToSymbolicRelation
+	 *            Determines whether or not the symbolic relation is given already known predicates as context or not.
+	 * @param buildStrategy
+	 *            Factory for strategies used to check whether a computed commutativity condition holds after some
+	 *            trace.
+	 * @param predicateFactory
+	 *            The predicate factory used by {@code independenceRelation} to build conditions.
+	 * @param copyFactory
+	 *            A factory that can be used to create new edges of type {@code L}.
+	 * @param statistics
+	 *            An {@link ConditionalCommutativityStatisticsGenerator} used to collect statistics
 	 */
-	public ConditionalCommutativityChecker(final IUltimateServiceProvider services,
+	public ConditionalCommutativityChecker(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final IConditionalCommutativityCriterion<L> criterion,
-			final IIndependenceRelation<IPredicate, L> independenceRelation, final ManagedScript script,
-			final IIndependenceConditionGenerator generator,
+			final IIndependenceRelation<IPredicate, L> independenceRelation,
+			final boolean passContextToSymbolicRelation,
 			final Function<IRun<L, IPredicate>, IRefinementStrategy<L>> buildStrategy,
-			final ConditionalCommutativityStatisticsGenerator statistics, final PredicateFactory predicateFactory,
-			final ICopyActionFactory<L> copyFactory, final ConComTraceCheckMode traceCheckMode) {
+			final PredicateFactory predicateFactory, final ICopyActionFactory<L> copyFactory,
+			final ConditionalCommutativityStatisticsGenerator statistics) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(getClass());
+		mManagedScript = mgdScript;
 
 		mCriterion = criterion;
+
 		mIndependenceRelation = independenceRelation;
-		mManagedScript = script;
-		mGenerator = generator;
-		mStatistics = statistics;
+		mSymbolicRelation = mIndependenceRelation.getSymbolicRelation();
+		if (mSymbolicRelation == null) {
+			throw new UnsupportedOperationException(
+					"Given independence relation does not offer a symbolic counterpart");
+		}
+		mPassContextToSymbolicRelation = passContextToSymbolicRelation && mSymbolicRelation.isConditional();
+
+		mBuildStrategy = buildStrategy;
 		mPredicateFactory = predicateFactory;
 		mCopyFactory = copyFactory;
-		mTraceCheckMode = traceCheckMode;
-		mBuildStrategy = buildStrategy;
 
-		if (mTraceCheckMode == ConComTraceCheckMode.SYMBOLIC_RELATION) {
-			mSymbolicRelation = mIndependenceRelation.getSymbolicRelation();
-			if (mSymbolicRelation == null) {
-				throw new UnsupportedOperationException(
-						"Given independence relation does not offer a symbolic counterpart");
-			}
-		} else {
-			mSymbolicRelation = null;
-			if (mGenerator == null) {
-				throw new IllegalArgumentException("Cannot use " + mTraceCheckMode + " without generator");
-			}
-		}
+		mStatistics = statistics;
 	}
 
 	/**
@@ -175,11 +172,6 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 		// TODO (Why) is this still needed? Unlocking the script used by interpolant automata can be very expensive.
 		if (mManagedScript.isLocked()) {
 			mManagedScript.requestLockRelease();
-		}
-
-		// TODO remove this once we have completely switched to symbolic independence relations
-		if (((IAction) letter1).getPrecedingProcedure().equals(((IAction) letter2).getPrecedingProcedure())) {
-			return null;
 		}
 
 		// TODO this is brittle, let caller decide how one extracts a sleep set from the states
@@ -233,20 +225,10 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 		mStatistics.startStopwatch(ConditionalCommutativityStopwatches.CONDITION);
 		try {
 			mStatistics.addConditionCalculation();
-			switch (mTraceCheckMode) {
-			case GENERATOR:
-				// context is deliberately ignored
-				return mGenerator.generateCondition(letter1.getTransformula(), letter2.getTransformula());
-			case GENERATOR_WITH_CONTEXT:
-				if (context != null) {
-					return mGenerator.generateCondition(context, letter1.getTransformula(), letter2.getTransformula());
-				}
-				return mGenerator.generateCondition(letter1.getTransformula(), letter2.getTransformula());
-			case SYMBOLIC_RELATION:
+			if (mPassContextToSymbolicRelation && context != null) {
 				return mSymbolicRelation.getCommutativityCondition(context, letter1, letter2);
 			}
-			throw new UnsupportedOperationException(
-					"ConditionalCommutativityChecker currently does not support " + mTraceCheckMode);
+			return mSymbolicRelation.getCommutativityCondition(null, letter1, letter2);
 		} finally {
 			mStatistics.stopStopwatch(ConditionalCommutativityStopwatches.CONDITION);
 		}

@@ -57,7 +57,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  */
-public class SemanticIndependenceConditionGenerator implements IIndependenceConditionGenerator {
+public class SemanticIndependenceConditionGenerator {
 	private static final SimplificationTechnique SIMPLIFICATION_TECHNIQUE = SimplificationTechnique.SIMPLIFY_DDA;
 
 	private final ManagedScript mMgdScript;
@@ -116,6 +116,20 @@ public class SemanticIndependenceConditionGenerator implements IIndependenceCond
 	/**
 	 * Generate a condition under which the given transitions are independent.
 	 *
+	 * @param a
+	 *            The first transition
+	 * @param b
+	 *            The second transition
+	 *
+	 * @return a sufficient condition for independence
+	 */
+	public IPredicate generateCondition(final UnmodifiableTransFormula a, final UnmodifiableTransFormula b) {
+		return generateCondition(null, a, b);
+	}
+
+	/**
+	 * Generate a condition under which the given transitions are independent.
+	 *
 	 * @param context
 	 *            A context that is already known, but not sufficient for commutativity
 	 * @param a
@@ -125,7 +139,6 @@ public class SemanticIndependenceConditionGenerator implements IIndependenceCond
 	 *
 	 * @return a sufficient condition for independence
 	 */
-	@Override
 	public IPredicate generateCondition(final IPredicate context, final UnmodifiableTransFormula a,
 			final UnmodifiableTransFormula b) {
 		// Generate both compositions, possibly adding a guard where applicable
@@ -191,7 +204,6 @@ public class SemanticIndependenceConditionGenerator implements IIndependenceCond
 		return PartialQuantifierElimination.eliminateLight(mServices, mMgdScript, quantified);
 	}
 
-	@Override
 	public boolean isSymmetric() {
 		return mSymmetric;
 	}

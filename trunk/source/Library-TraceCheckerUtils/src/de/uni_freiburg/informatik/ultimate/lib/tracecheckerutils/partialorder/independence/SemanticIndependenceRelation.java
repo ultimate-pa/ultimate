@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence;
 
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.function.Supplier;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.CachedIndependenceRelation;
@@ -68,20 +69,38 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final ManagedScript mManagedScript;
-	private final BasicPredicateFactory mPredicateFactory;
 	private final boolean mConditional;
 	private final boolean mSymmetric;
+
+	private final BasicPredicateFactory mPredicateFactory;
+	private final SemanticIndependenceConditionGenerator mIndependenceGenerator;
 
 	private final TimedIndependenceStatisticsDataProvider mStatistics =
 			new TimedIndependenceStatisticsDataProvider(SemanticIndependenceRelation.class);
 
+	/**
+	 * Create a new variant of the semantic independence relation.
+	 *
+	 * The returned relation will not offer a symbolic counterpart via {@link #getSymbolicRelation()}. To support
+	 * symbolic relations, call one of the other constructors.
+	 *
+	 * @param mgdScript
+	 *            A script that will be used to construct and solve the required SMT queries for independence checks
+	 * @param conditional
+	 *            If set to true, the relation will be conditional: It will use the given {@link IPredicate} as context
+	 *            to enable additional commutativity. This subsumes the non-conditional variant.
+	 * @param symmetric
+	 *            If set to true, the relation will check for full commutativity. If false, only semicommutativity is
+	 *            checked, which subsumes full commutativity.
+	 */
 	public SemanticIndependenceRelation(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final boolean conditional, final boolean symmetric) {
-		this(services, mgdScript, conditional, symmetric, null);
+		this(services, mgdScript, conditional, symmetric, null, null);
 	}
 
 	/**
-	 * Create a new variant of the semantic independence relation.
+	 * Create a new variant of the semantic independence relation. The relation offers a symbolic counterpart via
+	 * {@link #getSymbolicRelation()} that is based on {@link SymbolicSemanticIndependence}.
 	 *
 	 * @param mgdScript
 	 *            A script that will be used to construct and solve the required SMT queries for independence checks
@@ -92,18 +111,48 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 	 *            If set to true, the relation will check for full commutativity. If false, only semicommutativity is
 	 *            checked, which subsumes full commutativity.
 	 * @param predicateFactory
-	 *            Used for the symbolic relation returned by {@link #getSymbolicRelation()}. If {@code null} is passed,
-	 *            symbolic relations are not supported.
+	 *            Used for the symbolic relation returned by {@link #getSymbolicRelation()}.
 	 */
 	public SemanticIndependenceRelation(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final boolean conditional, final boolean symmetric, final BasicPredicateFactory predicateFactory) {
+		this(services, mgdScript, conditional, symmetric, Objects.requireNonNull(predicateFactory), null);
+	}
+
+	/**
+	 * Create a new variant of the semantic independence relation. The relation offers a symbolic counterpart via
+	 * {@link #getSymbolicRelation()} that is based on the given {@link SemanticIndependenceConditionGenerator}.
+	 *
+	 * @param mgdScript
+	 *            A script that will be used to construct and solve the required SMT queries for independence checks
+	 * @param conditional
+	 *            If set to true, the relation will be conditional: It will use the given {@link IPredicate} as context
+	 *            to enable additional commutativity. This subsumes the non-conditional variant.
+	 * @param symmetric
+	 *            If set to true, the relation will check for full commutativity. If false, only semicommutativity is
+	 *            checked, which subsumes full commutativity.
+	 * @param independenceGenerator
+	 *            Used for the symbolic relation returned by {@link #getSymbolicRelation()}.
+	 */
+	public SemanticIndependenceRelation(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final boolean conditional, final boolean symmetric,
+			final SemanticIndependenceConditionGenerator independenceGenerator) {
+		this(services, mgdScript, conditional, symmetric, null, Objects.requireNonNull(independenceGenerator));
+	}
+
+	private SemanticIndependenceRelation(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final boolean conditional, final boolean symmetric, final BasicPredicateFactory predicateFactory,
+			final SemanticIndependenceConditionGenerator independenceGenerator) {
+		assert predicateFactory == null || independenceGenerator == null;
+
 		mServices = services;
 		mManagedScript = mgdScript;
 		mLogger = services.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
-		mPredicateFactory = predicateFactory;
 
 		mConditional = conditional;
 		mSymmetric = symmetric;
+
+		mPredicateFactory = predicateFactory;
+		mIndependenceGenerator = independenceGenerator;
 	}
 
 	@Override
@@ -126,10 +175,13 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 
 	@Override
 	public ISymbolicIndependenceRelation<L, IPredicate> getSymbolicRelation() {
-		if (mPredicateFactory == null) {
-			return null;
+		if (mPredicateFactory != null) {
+			return new SymbolicSemanticIndependence(mPredicateFactory);
 		}
-		return new SymbolicSemanticIndependence(mPredicateFactory);
+		if (mIndependenceGenerator != null) {
+			return new ConditionGeneratorIndependence(mIndependenceGenerator, true);
+		}
+		return null;
 	}
 
 	@Override
@@ -290,16 +342,16 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 	}
 
 	/**
-	 * A symbolic independence relation that uses an {@link IIndependenceConditionGenerator} to generate a
+	 * A symbolic independence relation that uses an {@link SemanticIndependenceConditionGenerator} to generate a
 	 * <em>sufficient</em> (but possibly not necessary) condition under which two given statements commute semantically.
 	 *
 	 * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
 	 */
 	public class ConditionGeneratorIndependence implements ISymbolicIndependenceRelation<L, IPredicate> {
-		private final IIndependenceConditionGenerator mGenerator;
+		private final SemanticIndependenceConditionGenerator mGenerator;
 		private final boolean mIsConditional;
 
-		public ConditionGeneratorIndependence(final IIndependenceConditionGenerator generator,
+		public ConditionGeneratorIndependence(final SemanticIndependenceConditionGenerator generator,
 				final boolean conditional) {
 			mGenerator = generator;
 			mIsConditional = conditional;

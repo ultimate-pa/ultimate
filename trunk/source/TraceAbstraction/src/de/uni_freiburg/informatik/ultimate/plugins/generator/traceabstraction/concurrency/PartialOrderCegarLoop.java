@@ -96,7 +96,6 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.Pa
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderReductionFacade.StateSplitter;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.AbstractionType;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.SemanticIndependenceConditionGenerator;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.ICopyActionFactory;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.conditional.ConditionCriterion;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.conditional.ConditionalCommutativityChecker;
@@ -641,13 +640,9 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		// TODO This will cause issues for configurations in which the independence relation changes across iterations
 		final IIndependenceRelation<IPredicate, L> relation = mPOR.getIndependence(0);
 
-		// TODO remove this once ConditionalCommutativityChecker is fully switched to using symbolic relations
-		final SemanticIndependenceConditionGenerator generator = new SemanticIndependenceConditionGenerator(mServices,
-				mCsToolkit.getManagedScript(), mPredicateFactory, relation.isSymmetric(), true);
-
-		return new ConditionalCommutativityChecker<>(mServices, mCriterion, relation, mCsToolkit.getManagedScript(),
-				generator, this::buildStrategyForConditionalCommutativity, mConComCheckerBenchmark, mPredicateFactory,
-				copyFactory, mPref.getConComCheckerTraceCheckMode());
+		return new ConditionalCommutativityChecker<>(mServices, mCsToolkit.getManagedScript(), mCriterion, relation,
+				mPref.passContextToConditionGeneration(), this::buildStrategyForConditionalCommutativity,
+				mPredicateFactory, copyFactory, mConComCheckerBenchmark);
 	}
 
 	private IRefinementStrategy<L> buildStrategyForConditionalCommutativity(final IRun<L, IPredicate> run) {

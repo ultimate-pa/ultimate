@@ -478,7 +478,7 @@ public abstract class ConditionalCommutativityTestSuite implements IMessagePrint
 		return new TestCriterion<>(relation);
 	}
 
-	private IIndependenceConditionGenerator parseConditions(final Path path, final Map<Integer, SimpleAction> id2Action,
+	private TestConditionGenerator parseConditions(final Path path, final Map<Integer, SimpleAction> id2Action,
 			final int iteration, final IPredicateUnifier unifier) throws IOException {
 		final String prefix = "//@ condition(" + iteration + ") ";
 
@@ -525,7 +525,7 @@ public abstract class ConditionalCommutativityTestSuite implements IMessagePrint
 		mLogger.warn(longDescr);
 	}
 
-	private static final class TestConditionGenerator implements IIndependenceConditionGenerator {
+	private static final class TestConditionGenerator /* implements IIndependenceConditionGenerator */ {
 		private final Map<Triple<IPredicate, UnmodifiableTransFormula, UnmodifiableTransFormula>, IPredicate> mMap;
 
 		private TestConditionGenerator(
@@ -533,13 +533,13 @@ public abstract class ConditionalCommutativityTestSuite implements IMessagePrint
 			mMap = map;
 		}
 
-		@Override
+		// @Override
 		public IPredicate generateCondition(final IPredicate context, final UnmodifiableTransFormula a,
 				final UnmodifiableTransFormula b) {
 			return mMap.get(new Triple<>(context, a, b));
 		}
 
-		@Override
+		// @Override
 		public boolean isSymmetric() {
 			// Unclear what makes sense here, so we err on the safe side.
 			return false;

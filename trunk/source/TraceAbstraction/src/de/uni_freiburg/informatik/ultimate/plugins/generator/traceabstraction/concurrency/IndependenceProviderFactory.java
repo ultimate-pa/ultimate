@@ -59,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.in
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.AbstractionType;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.IndependenceType;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.SemanticIndependenceConditionGenerator;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.ICopyActionFactory;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.IRefinableAbstraction;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.RefinableCachedAbstraction;
@@ -186,10 +187,16 @@ public class IndependenceProviderFactory<L extends IIcfgTransition<?>> {
 		}
 		assert settings.getIndependenceType() == IndependenceType.SEMANTIC : "unsupported independence type";
 
-		return IndependenceBuilder
-				// Semantic independence forms the base.
-				.<L> semantic(mServices, mIndependenceScript, mIndepScriptPredicateFactory, settings.useConditional(),
-						!settings.useSemiCommutativity())
+		// Semantic independence forms the base.
+		final var builder = mPref.useIndependenceConditionGenerator()
+				? IndependenceBuilder.<L> semantic(mServices, mIndependenceScript, settings.useConditional(),
+						!settings.useSemiCommutativity(),
+						new SemanticIndependenceConditionGenerator(mServices, mIndependenceScript,
+								mIndepScriptPredicateFactory, !settings.useSemiCommutativity(), true))
+				: IndependenceBuilder.<L> semantic(mServices, mIndependenceScript, settings.useConditional(),
+						!settings.useSemiCommutativity(), mIndepScriptPredicateFactory);
+
+		return builder
 				// Make sure transition formulas and conditions are transferred to independence script.
 				.ifThen(!tfsAlreadyTransferred || settings.useConditional(),
 						b -> b.transferTerms(mTransferrer, predicateTransferrer, mCopyFactory, tfsAlreadyTransferred))
