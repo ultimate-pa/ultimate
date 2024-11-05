@@ -217,8 +217,10 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 
 		mCriterion = constructConditionalCommutativityCriterion();
 		mConComChecker = constructConComChecker(copyFactory);
-		mConCounterexampleChecker = new ConditionalCommutativityCounterexampleChecker<>(mServices, mPOR.getDfsOrder(),
-				mConComChecker, this::createConditionalCommutativityAutomatonBuilder, mConComCheckerBenchmark);
+		mConCounterexampleChecker = mPref.useConditionalCommutativityChecker() == ConComChecker.COUNTEREXAMPLE
+				? new ConditionalCommutativityCounterexampleChecker<>(mServices, mPOR.getDfsOrder(), mConComChecker,
+						this::createConditionalCommutativityAutomatonBuilder, mConComCheckerBenchmark)
+				: null;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -398,8 +400,8 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 			final ArrayList<IPredicate> predicates = getCounterexamplePredicates();
 			mCriterion.updateAbstraction(mAbstraction);
 
-			mRefinementResult =
-					mConCounterexampleChecker.getCommutativityProof((NestedRun<L, IPredicate>) mCounterexample, predicates);
+			mRefinementResult = mConCounterexampleChecker
+					.getCommutativityProof((NestedRun<L, IPredicate>) mCounterexample, predicates);
 
 			if (mRefinementResult != null) {
 				mCounterexampleConComFound = true;
