@@ -299,12 +299,6 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 				throw new TaskCanceledException(UserDefinedLimit.PATH_PROGRAM_ATTEMPTS, getClass(), taskDescription);
 			}
 
-			// TODO This code should not be needed here. If it is, that points to an issue somewhere else
-			// (i.e. some other class did not properly release its lock on the script)
-			/*
-			if (mCsToolkit.getManagedScript().isLocked()) {
-				mCsToolkit.getManagedScript().requestLockRelease();
-			}*/
 			final TraceAbstractionRefinementEngine<L> refinementEngine =
 					new TraceAbstractionRefinementEngine<>(getServices(), mLogger, strategy);
 			mRefinementResult = refinementEngine.getResult();
