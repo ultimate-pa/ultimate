@@ -84,6 +84,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryA
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopExitAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopExitAnnotation.LoopExitType;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.OverapproxVariable;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
@@ -145,6 +146,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Liv
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
  * This class generates a recursive control flow graph (in the style of POPL'10 - Heizmann, Hoenicke, Podelski - Nested
@@ -801,8 +803,34 @@ public class CfgBuilder {
 
 			final BoogieIcfgLocation srcLoc = buildNewIcfgLocation(st);
 			ModelUtils.copyAnnotations(st, thenCondition);
-			ModelUtils.copyAnnotations(st, thenCondition);
+			ModelUtils.copyAnnotations(st, elseCondition);
 			buildBranching(thenCondition, thenPart, elseCondition, elsePart, srcLoc);
+			// remove end node for LoopFreeBlock and SequenceOfStatements, if it only has one incoming edge and one
+			// outgoing edge
+			if ((mCodeBlockSize == CodeBlockSize.LoopFreeBlock || mCodeBlockSize == CodeBlockSize.SequenceOfStatements)
+					&& currentLocation.getIncomingEdges().size() == 1
+					&& currentLocation.getOutgoingEdges().size() == 1) {
+				final IcfgEdge edgeBefore = currentLocation.getIncomingEdges().get(0);
+				final IcfgEdge edgeAfter = currentLocation.getOutgoingEdges().get(0);
+				if (!(Overapprox.getAnnotation(edgeBefore) instanceof OverapproxVariable)
+						&& !(Overapprox.getAnnotation(edgeAfter) instanceof OverapproxVariable)
+						&& edgeBefore instanceof StatementSequence && edgeAfter instanceof StatementSequence) {
+					final List<Statement> combinedStatements =
+							DataStructureUtils.concat(((StatementSequence) edgeBefore).getStatements(),
+									((StatementSequence) edgeAfter).getStatements());
+					final StatementSequence newStatementSequence =
+							mCbf.constructStatementSequence((BoogieIcfgLocation) edgeBefore.getSource(),
+									(BoogieIcfgLocation) edgeAfter.getTarget(), combinedStatements);
+					mEdges.add(newStatementSequence);
+					mProcLocNodes.remove(currentLocation.getDebugIdentifier());
+					ModelUtils.copyAnnotations(edgeBefore, newStatementSequence);
+					ModelUtils.copyAnnotations(edgeAfter, newStatementSequence);
+					edgeAfter.getTarget().removeIncoming(edgeAfter);
+					edgeBefore.getSource().removeOutgoing(edgeBefore);
+					mEdges.remove(edgeAfter);
+					mEdges.remove(edgeBefore);
+				}
+			}
 			return srcLoc;
 		}
 
