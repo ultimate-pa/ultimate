@@ -80,7 +80,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.conditional.IConditionalCommutativityCriterion;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -443,40 +442,7 @@ public abstract class ConditionalCommutativityTestSuite implements IMessagePrint
 		return id2Action.get(id);
 	}
 
-	private IConditionalCommutativityCriterion<SimpleAction> parseCriterion(final Path path,
-			final Map<Integer, SimpleAction> id2Action, final int iteration, final IPredicateUnifier unifier)
-			throws IOException {
-		final String prefix = "//@ criterion(" + iteration + ") ";
 
-		final List<String> criterionLines;
-		try (final var lines = Files.lines(path)) {
-			criterionLines = lines.filter(l -> l.startsWith(prefix)).collect(Collectors.toList());
-		}
-
-		final var relation = new HashRelation3<IPredicate, SimpleAction, SimpleAction>();
-		if (criterionLines.isEmpty()) {
-			mLogger.warn("criterion always rejects");
-		}
-
-		final String statePattern = "\\(\\s*\\{[^\\}]*\\}\\,\\s*[^\\)]*\\)";
-		final Pattern criterionPattern = Pattern.compile("\\s*(" + statePattern + ")\\s+\\[(\\d+)\\]\\s+\\[(\\d+)\\]$");
-		for (final var criterionLine : criterionLines) {
-			final String criterionDescr = criterionLine.substring(prefix.length());
-			final var matcher = criterionPattern.matcher(criterionDescr);
-
-			final boolean found = matcher.find();
-			assert found : "failed to parse criterion: " + criterionLine;
-
-			final IPredicate state = parseState(matcher.group(1), unifier);
-			final var left = id2Action.get(Integer.parseUnsignedInt(matcher.group(2)));
-			final var right = id2Action.get(Integer.parseUnsignedInt(matcher.group(3)));
-
-			relation.addTriple(state, left, right);
-			relation.addTriple(state, right, left);
-		}
-
-		return new TestCriterion<>(relation);
-	}
 
 	private TestConditionGenerator parseConditions(final Path path, final Map<Integer, SimpleAction> id2Action,
 			final int iteration, final IPredicateUnifier unifier) throws IOException {
@@ -546,24 +512,6 @@ public abstract class ConditionalCommutativityTestSuite implements IMessagePrint
 		}
 	}
 
-	private static final class TestCriterion<L> implements IConditionalCommutativityCriterion<L> {
-		private final HashRelation3<IPredicate, L, L> mRelation;
-
-		public TestCriterion(final HashRelation3<IPredicate, L, L> relation) {
-			mRelation = relation;
-		}
-
-		@Override
-		public boolean decide(final IPredicate state, final L a, final L b) {
-			return mRelation.containsTriple(state, a, b);
-		}
-
-		@Override
-		public boolean decide(final IPredicate condition) {
-			assert condition != null : "should not invoke criterion with null condition";
-			return true;
-		}
-	}
 
 	private final class ConditionalCommutativityTestCase implements Comparable<ConditionalCommutativityTestCase> {
 		private final Path mPath;

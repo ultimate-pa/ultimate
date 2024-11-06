@@ -77,7 +77,6 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 	private final ISymbolicIndependenceRelation<L, IPredicate> mSymbolicRelation;
 	private final boolean mPassContextToSymbolicRelation;
 
-	private final IConditionalCommutativityCriterion<L> mCriterion;
 	private final PredicateFactory mPredicateFactory;
 	private final ICopyActionFactory<L> mCopyFactory;
 	private final Function<IRun<L, IPredicate>, IRefinementStrategy<L>> mBuildStrategy;
@@ -89,8 +88,8 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 	 *
 	 * @author Marcel Ebbinghaus
 	 *
-	 * @param criterion
-	 *            An {@link IConditionalCommutativityCriterion} to decide when to check for conditional commutativity
+	 * @param services
+	 *            Ultimate services.
 	 * @param mgdScript
 	 *            Script to which the computed conditions belong.
 	 * @param independenceRelation
@@ -109,7 +108,6 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 	 *            An {@link ConditionalCommutativityStatisticsGenerator} used to collect statistics
 	 */
 	public ConditionalCommutativityChecker(final IUltimateServiceProvider services, final ManagedScript mgdScript,
-			final IConditionalCommutativityCriterion<L> criterion,
 			final IIndependenceRelation<IPredicate, L> independenceRelation,
 			final boolean passContextToSymbolicRelation,
 			final Function<IRun<L, IPredicate>, IRefinementStrategy<L>> buildStrategy,
@@ -118,8 +116,6 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(getClass());
 		mManagedScript = mgdScript;
-
-		mCriterion = criterion;
 
 		mIndependenceRelation = independenceRelation;
 		mSymbolicRelation = mIndependenceRelation.getSymbolicRelation();
@@ -169,12 +165,6 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 	private IRefinementEngineResult<L, Collection<QualifiedTracePredicates>> checkConditionalCommutativityInternal(
 			final NestedRun<L, IPredicate> currentRun, final List<IPredicate> predicates, final IPredicate state,
 			final L letter1, final L letter2) {
-		// TODO (Why) is this still needed? Unlocking the script used by interpolant automata can be very expensive.
-		// I believe this is only required for the IA-approach, because there we construct the automaton step by step
-		// and we use the same script
-		if (mManagedScript.isLocked()) {
-			mManagedScript.requestLockRelease();
-		}
 
 		// TODO this is brittle, let caller decide how one extracts a sleep set from the states
 		if (state instanceof SleepPredicate) {
@@ -190,7 +180,7 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 		final IPredicate pred = predicates.isEmpty() ? null : mPredicateFactory.and(predicates);
 		final Dependence dependence = mIndependenceRelation.isIndependent(pred, letter1, letter2);
 
-		if (dependence == Dependence.INDEPENDENT || !mCriterion.decide(state, letter1, letter2)) {
+		if (dependence == Dependence.INDEPENDENT) {
 			return null;
 		}
 
@@ -204,16 +194,12 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 	private IPredicate generateCondition(final IPredicate state, final L letter1, final L letter2,
 			final IPredicate context) {
 		final IPredicate condition = generateRawCondition(letter1, letter2, context);
-		mCriterion.updateCriterion(state, letter1, letter2);
 
 		if (condition == null) {
 			return null;
 		}
 		if (SmtUtils.isTrueLiteral(condition.getFormula())) {
 			throw new AssertionError("Letters did not commute, but generated condition was 'true'");
-		}
-		if (!mCriterion.decide(condition)) {
-			return null;
 		}
 		if (SmtUtils.checkSatTerm(mManagedScript.getScript(), condition.getFormula()).equals(LBool.UNSAT)) {
 			mStatistics.addFalseCondition();
@@ -311,10 +297,6 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 		final TracePredicates tp =
 				new TracePredicates(qtp.getTracePredicates().getPrecondition(), newPost, newPredicates);
 		return new QualifiedTracePredicates(tp, qtp.getOrigin(), qtp.isPerfect());
-	}
-
-	public IConditionalCommutativityCriterion<L> getCriterion() {
-		return mCriterion;
 	}
 
 	public enum ConComTraceCheckMode {

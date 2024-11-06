@@ -118,8 +118,7 @@ public class ConditionalCommutativityTestSuite extends AbstractTraceAbstractionT
 		return new Pair<>("CE", Map.of(
 		// @formatter:off
 			TraceAbstractionPreferenceInitializer.LABEL_POR_DFS_ORDER, OrderType.LOOP_LOCKSTEP,
-			TraceAbstractionPreferenceInitializer.LABEL_CON_COM_CHECKER, true,
-			TraceAbstractionPreferenceInitializer.LABEL_CON_COM_CHECKER_CRITERION, ConComCheckerCriterion.DEFAULT
+			TraceAbstractionPreferenceInitializer.LABEL_CON_COM_CHECKER, true
 		// @formatter:on
 		));
 	}
@@ -129,7 +128,6 @@ public class ConditionalCommutativityTestSuite extends AbstractTraceAbstractionT
 		// @formatter:off
 			TraceAbstractionPreferenceInitializer.LABEL_POR_DFS_ORDER, OrderType.LOOP_LOCKSTEP,
 			TraceAbstractionPreferenceInitializer.LABEL_CON_COM_CHECKER, true,
-			TraceAbstractionPreferenceInitializer.LABEL_CON_COM_CHECKER_CRITERION, ConComCheckerCriterion.DEFAULT,
 			TraceAbstractionPreferenceInitializer.LABEL_CON_COM_CHECKER_TRACECHECK_MODE, ConComTraceCheckMode.SYMBOLIC_RELATION
 		// @formatter:on
 		));

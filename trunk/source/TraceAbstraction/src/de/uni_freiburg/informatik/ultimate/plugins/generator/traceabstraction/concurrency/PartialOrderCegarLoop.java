@@ -97,16 +97,8 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.Pa
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.AbstractionType;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.ICopyActionFactory;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.conditional.ConditionCriterion;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.conditional.ConditionalCommutativityChecker;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.conditional.ConditionalCommutativityStatisticsGenerator;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.conditional.CriterionConjunction;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.conditional.DefaultCriterion;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.conditional.ForwardCriterion;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.conditional.IConditionalCommutativityCriterion;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.conditional.LoopCriterion;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.conditional.RandomCriterion;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.conditional.SleepSetCriterion;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
@@ -116,7 +108,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.ConComCheckerCriterion;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IIpAbStrategyModule;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IpAbStrategyModuleStraightlineAll;
@@ -151,9 +142,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	private final boolean mSupportsDeadEnds;
 	private IDeadEndStore<IPredicate, IPredicate> mDeadEndStore;
 
-	private final IConditionalCommutativityCriterion<L> mCriterion;
 	private final ConditionalCommutativityChecker<L> mConComChecker;
-
 	private boolean mCounterexampleConComFound;
 	private final ConditionalCommutativityStatisticsGenerator mConComCheckerBenchmark =
 			new ConditionalCommutativityStatisticsGenerator();
@@ -209,7 +198,6 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 
 		mProgram = initialAbstraction;
 
-		mCriterion = constructConditionalCommutativityCriterion();
 		mConComChecker = constructConComChecker(copyFactory);
 		mConCounterexampleChecker = mPref.useConditionalCommutativityChecker()
 				? new ConditionalCommutativityCounterexampleChecker<>(mServices, mPOR.getDfsOrder(), mConComChecker,
@@ -342,7 +330,6 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		if (mPref.useConditionalCommutativityChecker()) {
 
 			final ArrayList<IPredicate> predicates = getCounterexamplePredicates();
-			mCriterion.updateAbstraction(mAbstraction);
 
 			mRefinementResult = mConCounterexampleChecker
 					.getCommutativityProof((NestedRun<L, IPredicate>) mCounterexample, predicates);
@@ -531,39 +518,6 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		return mDeadEndStore;
 	}
 
-	private IConditionalCommutativityCriterion<L> constructConditionalCommutativityCriterion() {
-		if (!mPref.useConditionalCommutativityChecker()) {
-			return null;
-		}
-
-		final var baseCriterion = constructConditionalCommutativityCriterion(mPref.getConComCheckerCriterion());
-
-		final IConditionalCommutativityCriterion<L> criterionWithCondition;
-		if (mPref.useConditionCriterion()) {
-			criterionWithCondition = new CriterionConjunction<>(baseCriterion, new ConditionCriterion<>());
-		} else {
-			criterionWithCondition = baseCriterion;
-		}
-		return criterionWithCondition;
-	}
-
-	private IConditionalCommutativityCriterion<L>
-			constructConditionalCommutativityCriterion(final ConComCheckerCriterion type) {
-		switch (type) {
-		case DEFAULT:
-			return new DefaultCriterion<>();
-		case RANDOM:
-			return new RandomCriterion<>(mPref.getConComCheckerRandomProb(), mPref.getConComCheckerRandomSeed());
-		case SLEEP_SET:
-			return new SleepSetCriterion<>();
-		case FORWARD:
-			return new ForwardCriterion<>(mAbstraction, mPOR.getIndependence(0), mPOR.getStateSplitter());
-		case LOOP:
-			return new LoopCriterion<>(mIcfg);
-		}
-		throw new UnsupportedOperationException("PartialOrderCegarLoop currently does not support criterion " + type);
-	}
-
 	private ConditionalCommutativityChecker<L> constructConComChecker(final ICopyActionFactory<L> copyFactory) {
 		if (!mPref.useConditionalCommutativityChecker()) {
 			return null;
@@ -572,7 +526,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		// TODO This will cause issues for configurations in which the independence relation changes across iterations
 		final IIndependenceRelation<IPredicate, L> relation = mPOR.getIndependence(0);
 
-		return new ConditionalCommutativityChecker<>(mServices, mCsToolkit.getManagedScript(), mCriterion, relation,
+		return new ConditionalCommutativityChecker<>(mServices, mCsToolkit.getManagedScript(), relation,
 				mPref.passContextToConditionGeneration(), this::buildStrategyForConditionalCommutativity,
 				mPredicateFactory, copyFactory, mConComCheckerBenchmark);
 	}

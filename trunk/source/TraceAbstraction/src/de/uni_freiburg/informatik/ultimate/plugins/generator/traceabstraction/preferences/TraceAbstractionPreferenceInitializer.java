@@ -196,21 +196,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_CON_COM_CHECKER = "Additional conditional commutativity checking";
 	private static final boolean DEF_CON_COM_CHECKER = false;
 
-	public static final String LABEL_CON_COM_CHECKER_CRITERION = "Criterion for conditional commutativity checking";
-	private static final ConComCheckerCriterion DEF_CON_COM_CHECKER_CRITERION = ConComCheckerCriterion.DEFAULT;
-
 	public static final String LABEL_CON_COM_CHECKER_TRACECHECK_MODE = "TraceCheck mode for conditional commutativity";
 	private static final ConComTraceCheckMode DEF_CON_COM_CHECKER_TRACECHECK_MODE = ConComTraceCheckMode.GENERATOR;
 
-	public static final String LABEL_CON_COM_CHECKER_RANDOM_PROB = "Probability for random criterion as percentage";
-	private static final int DEF_CON_COM_CHECKER_RANDOM_PROB = 100;
-
-	public static final String LABEL_CON_COM_CHECKER_RANDOM_SEED = "Seed for random criterion";
-	private static final int DEF_CON_COM_CHECKER_RANDOM_SEED = 123;
-
-	public static final String LABEL_CON_COM_CHECKER_CONDITION_CRITERION =
-			"Use condition criterion (recommended for programs with arrays)";
-	private static final boolean DEF_CON_COM_CHECKER_CONDITION_CRITERION = false;
 
 	// Settings for PetriAutomizer
 	// ========================================================================
@@ -738,17 +726,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItemGroup("Commutativity Condition Synthesis",
 						new UltimatePreferenceItem<>(LABEL_CON_COM_CHECKER, DEF_CON_COM_CHECKER,
 								PreferenceType.Boolean),
-						new UltimatePreferenceItem<>(LABEL_CON_COM_CHECKER_CRITERION, DEF_CON_COM_CHECKER_CRITERION,
-								PreferenceType.Combo, ConComCheckerCriterion.values()),
 						new UltimatePreferenceItem<>(LABEL_CON_COM_CHECKER_TRACECHECK_MODE,
 								DEF_CON_COM_CHECKER_TRACECHECK_MODE, PreferenceType.Combo,
-								ConComTraceCheckMode.values()),
-						new UltimatePreferenceItem<>(LABEL_CON_COM_CHECKER_RANDOM_PROB, DEF_CON_COM_CHECKER_RANDOM_PROB,
-								PreferenceType.Integer),
-						new UltimatePreferenceItem<>(LABEL_CON_COM_CHECKER_RANDOM_SEED, DEF_CON_COM_CHECKER_RANDOM_SEED,
-								PreferenceType.Integer),
-						new UltimatePreferenceItem<>(LABEL_CON_COM_CHECKER_CONDITION_CRITERION,
-								DEF_CON_COM_CHECKER_CONDITION_CRITERION, PreferenceType.Boolean)),
+								ConComTraceCheckMode.values())),
 
 				getIndependenceSettings(0),
 

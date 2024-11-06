@@ -97,10 +97,6 @@ public final class TAPreferences {
 	private final IndependenceSettings[] mPorIndependenceSettings;
 	private final IndependenceSettings mLbeIndependenceSettings;
 	private final boolean mConComChecker;
-	private final ConComCheckerCriterion mConComCheckerCriterion;
-	private final int mConComCheckerRandomProb;
-	private final int mConComCheckerRandomSeed;
-	private final boolean mConComCheckerConditionCriterion;
 
 	public enum Artifact {
 		ABSTRACTION, INTERPOLANT_AUTOMATON, NEG_INTERPOLANT_AUTOMATON, RCFG
@@ -206,15 +202,6 @@ public final class TAPreferences {
 				IndependenceSettings.DEFAULT_SOLVER_TIMEOUT /* currently ignored; not exposed as setting */);
 
 		mConComChecker = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_CON_COM_CHECKER);
-		mConComCheckerCriterion = mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_CON_COM_CHECKER_CRITERION,
-				ConComCheckerCriterion.class);
-		mConComCheckerRandomProb =
-				mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_CON_COM_CHECKER_RANDOM_PROB);
-		mConComCheckerRandomSeed =
-				mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_CON_COM_CHECKER_RANDOM_SEED);
-		mConComCheckerConditionCriterion =
-				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_CON_COM_CHECKER_CONDITION_CRITERION);
-
 	}
 
 	/**
@@ -567,10 +554,6 @@ public final class TAPreferences {
 
 	}
 
-	public ConComCheckerCriterion getConComCheckerCriterion() {
-		return mConComCheckerCriterion;
-	}
-
 	public boolean useIndependenceConditionGenerator() {
 		// TODO restructure settings
 		return getConComCheckerTraceCheckMode() != ConComTraceCheckMode.SYMBOLIC_RELATION;
@@ -584,18 +567,6 @@ public final class TAPreferences {
 	public ConComTraceCheckMode getConComCheckerTraceCheckMode() {
 		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_CON_COM_CHECKER_TRACECHECK_MODE,
 				ConComTraceCheckMode.class);
-	}
-
-	public int getConComCheckerRandomProb() {
-		return mConComCheckerRandomProb;
-	}
-
-	public int getConComCheckerRandomSeed() {
-		return mConComCheckerRandomSeed;
-	}
-
-	public boolean useConditionCriterion() {
-		return mConComCheckerConditionCriterion;
 	}
 
 	// TODO #proofRefactor update all settings files to reflect the removal / changes to the Hoare/proof settings

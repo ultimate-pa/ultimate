@@ -42,6 +42,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 
+//TODO: remove this class, once we made sure that the new implementation works
+
 /**
  * Provides an interpolant automaton.
  *
