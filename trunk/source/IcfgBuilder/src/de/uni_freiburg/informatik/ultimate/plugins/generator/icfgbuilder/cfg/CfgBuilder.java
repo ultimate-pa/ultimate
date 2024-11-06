@@ -863,7 +863,8 @@ public class CfgBuilder {
 			ModelUtils.copyAnnotations(st, condFalse);
 			buildBranching(condTrue, buildCodeBlock(st.getBody(), loopEntryLoc, false), condFalse, targetLoc,
 					afterInvariants);
-			assert (mWhileExits.pop() == targetLoc);
+			final BoogieIcfgLocation exit = mWhileExits.pop();
+			assert exit == targetLoc;
 			mConditionalStarts.pop();
 			return loopEntryLoc;
 		}
