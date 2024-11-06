@@ -31,7 +31,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.cfg;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -156,7 +155,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
  * @author heizmann@informatik.uni-freiburg.de
  */
 
-// TODO How to give every location the right line number
 public class CfgBuilder {
 
 	private static final String ULTIMATE_START = "ULTIMATE.start";
@@ -198,12 +196,10 @@ public class CfgBuilder {
 
 	private static final SimplificationTechnique SIMPLIFICATION_TECHNIQUE = SimplificationTechnique.POLY_PAC;
 
-	private final Set<String> mAllGotoTargets;
-
 	private final boolean mRemoveAssumeTrueStmt;
 	private final boolean mFutureLiveOptimization;
 
-	public CfgBuilder(final Unit unit, final IUltimateServiceProvider services) throws IOException {
+	public CfgBuilder(final Unit unit, final IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
@@ -219,7 +215,6 @@ public class CfgBuilder {
 		final boolean simplePartialSkolemization =
 				prefs.getBoolean(IcfgPreferenceInitializer.LABEL_SIMPLE_PARTIAL_SKOLEMIZATION);
 		final ForkAndGotoInformation fgInfo = new ForkAndGotoInformation(mBoogieDeclarations);
-		mAllGotoTargets = fgInfo.getAllGotoTargets();
 
 		final CodeBlockSize userDefineCodeBlockSize =
 				prefs.getEnum(IcfgPreferenceInitializer.LABEL_CODE_BLOCK_SIZE, CodeBlockSize.class);
@@ -283,8 +278,6 @@ public class CfgBuilder {
 			final BoogieIcfgLocation exitNode =
 					new BoogieIcfgLocation(new ProcedureExitDebugIdentifier(procName), procName, false, impl);
 			icfg.getProcedureExitNodes().put(procName, exitNode);
-
-			// new RootEdge(mGraphroot, mRootAnnot.mentryNode.get(procName));
 		}
 
 		// Build a control flow graph for each procedure
@@ -293,8 +286,6 @@ public class CfgBuilder {
 		for (final String procName : mBoogieDeclarations.getProcSpecification().keySet()) {
 			if (mBoogieDeclarations.getProcImplementation().containsKey(procName)) {
 				procCfgBuilder.buildProcedureCfgFromImplementation(procName);
-			} else {
-				// procCfgBuilder.buildProcedureCfgWithoutImplementation(procName);
 			}
 		}
 
@@ -525,8 +516,6 @@ public class CfgBuilder {
 	 * <li>information whether some {@link ForkStatement} occurs.
 	 * <li>the identifiers of all {@link Label}s that are target of some {@link GotoStatement}
 	 * </ul>
-	 * Expects that the input has been "unstructured", i.e., all {@link WhileStatement}s and {@link IfStatement}s have
-	 * been removed.
 	 */
 	private static class ForkAndGotoInformation {
 
@@ -570,10 +559,6 @@ public class CfgBuilder {
 		public boolean hasSomeForkEdge() {
 			return mHasSomeForkStatement;
 		}
-
-		public Set<String> getAllGotoTargets() {
-			return mAllGotoTargets;
-		}
 	}
 
 	/**
@@ -594,11 +579,6 @@ public class CfgBuilder {
 		private Map<DebugIdentifier, BoogieIcfgLocation> mLabel2LocNodes;
 
 		/**
-		 * Set of all labels that occurred in the procedure. If an element is inserted twice this is an error.
-		 */
-		// private Set<String> mLabels;
-
-		/**
 		 * Maps the Name of a Label to its Statement.
 		 */
 		private Map<String, Label> mLabelString2Statement;
@@ -607,11 +587,6 @@ public class CfgBuilder {
 		 * Name of that last Label for which we constructed a LocNode
 		 */
 		private DebugIdentifier mLastLabelName;
-
-		/**
-		 * Distance to the last LocNode that was constructed as representative of a label.
-		 */
-		// int mlocSuffix;
 
 		/**
 		 * Element at which we continue building the CFG. This should be a - LocNode if the last processed Statement was
@@ -676,7 +651,6 @@ public class CfgBuilder {
 				// first LocNode is the entry node of the procedure
 				final BoogieIcfgLocation locNode = mIcfg.getProcedureEntryNodes().get(procName);
 				mLastLabelName = locNode.getDebugIdentifier();
-				// mlocSuffix = 0;
 				mProcLocNodes.put(mLastLabelName, locNode);
 				mCurrent = locNode;
 			}
@@ -728,7 +702,7 @@ public class CfgBuilder {
 
 		}
 
-		private Boolean isAssuAssiHavoc(final Statement st) {
+		private boolean isAssuAssiHavoc(final Statement st) {
 			return st instanceof AssumeStatement || st instanceof AssignmentStatement || st instanceof HavocStatement;
 		}
 
@@ -802,11 +776,10 @@ public class CfgBuilder {
 			return currentLocation;
 		}
 
-		private BoogieIcfgLocation buildIf(BoogieIcfgLocation currentLocation, final IfStatement st) {
+		private BoogieIcfgLocation buildIf(final BoogieIcfgLocation currentLocation, final IfStatement st) {
 			mConditionalStarts.add(currentLocation);
 			final IIcfgElement thenPart = buildCodeBlock(st.getThenPart(), currentLocation, false);
-			final IIcfgElement elsePart = buildCodeBlock(st.getElsePart(), mConditionalStarts.peek(), false);
-			currentLocation = mConditionalStarts.pop();
+			final IIcfgElement elsePart = buildCodeBlock(st.getElsePart(), mConditionalStarts.pop(), false);
 			final AssumeStatement thenCondition;
 			final AssumeStatement elseCondition;
 
@@ -1253,19 +1226,16 @@ public class CfgBuilder {
 		 * Compute set of {@link BoogieIcfgLocation}s that a reachable from a given starting {@link BoogieIcfgLocation}
 		 */
 		private Set<BoogieIcfgLocation> computeReachableLocations(final BoogieIcfgLocation start) {
-			final Set<BoogieIcfgLocation> reachable;
-			{
-				reachable = new HashSet<>();
-				final ArrayDeque<BoogieIcfgLocation> worklist = new ArrayDeque<>();
-				worklist.add(start);
-				reachable.add(start);
-				while (!worklist.isEmpty()) {
-					final BoogieIcfgLocation loc = worklist.removeFirst();
-					for (final IcfgLocation succLoc : loc.getOutgoingNodes()) {
-						if (!reachable.contains(succLoc)) {
-							reachable.add((BoogieIcfgLocation) succLoc);
-							worklist.add((BoogieIcfgLocation) succLoc);
-						}
+			final Set<BoogieIcfgLocation> reachable = new HashSet<>();
+			final ArrayDeque<BoogieIcfgLocation> worklist = new ArrayDeque<>();
+			worklist.add(start);
+			reachable.add(start);
+			while (!worklist.isEmpty()) {
+				final BoogieIcfgLocation loc = worklist.removeFirst();
+				for (final IcfgLocation succLoc : loc.getOutgoingNodes()) {
+					if (!reachable.contains(succLoc)) {
+						reachable.add((BoogieIcfgLocation) succLoc);
+						worklist.add((BoogieIcfgLocation) succLoc);
 					}
 				}
 			}
@@ -1406,7 +1376,6 @@ public class CfgBuilder {
 			final BoogieIcfgLocation exitNode = mIcfg.getProcedureExitNodes().get(mCurrentProcedureName);
 			mLastLabelName = exitNode.getDebugIdentifier();
 			mProcLocNodes.put(mLastLabelName, exitNode);
-			// mlocSuffix = 0;
 			mCurrent = exitNode;
 
 			for (final EnsuresSpecification spec : ensures) {
@@ -1504,7 +1473,6 @@ public class CfgBuilder {
 		 */
 		private BoogieIcfgLocation getLocNodeForLabel(final DebugIdentifier labelId, final Statement st) {
 			final ILocation loc = st.getLocation();
-			// final LoopEntryAnnotation lea = LoopEntryAnnotation.getAnnotation(st);
 			BoogieIcfgLocation locNode = mLabel2LocNodes.get(labelId);
 			if (locNode != null) {
 				// The locNode to which labelId points may have been replaced
