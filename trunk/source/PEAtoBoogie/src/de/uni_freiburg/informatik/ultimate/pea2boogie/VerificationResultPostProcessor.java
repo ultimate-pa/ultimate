@@ -27,6 +27,9 @@ public class VerificationResultPostProcessor {
 	}
 	
 	public Set<String> variableAnalysis(String redundantId, Set<String> redundancySet) {
+		if (!redundancySet.contains(redundantId)) {
+			return redundancySet;
+		}
 		final var varToReqs = getVarToReqs(redundancySet);
 		final var newSet = new HashSet<String>();
 		Queue<String> fifo = new LinkedList<>();
@@ -38,10 +41,12 @@ public class VerificationResultPostProcessor {
 			var vars = mReqIdToVars.get(reqId);
 			for (var v : vars) {
 				var reqSet = varToReqs.get(v);
-				for (var r : reqSet) {
-					if (!newSet.contains(r)) {
-						newSet.add(r);
-						fifo.add(r);
+				if (reqSet != null) {
+					for (var r : reqSet) {
+						if (!newSet.contains(r)) {
+							newSet.add(r);
+							fifo.add(r);
+						}
 					}
 				}
 			}
