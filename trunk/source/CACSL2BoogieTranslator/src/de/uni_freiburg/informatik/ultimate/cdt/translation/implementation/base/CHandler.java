@@ -3008,12 +3008,7 @@ public class CHandler {
 			final DeclaratorResult declResult, final IASTDeclarator hook, final CStorageClass storageClass) {
 
 		final CDeclaration cDec = declResult.getDeclaration();
-		final var oldStv = mSymbolTable.findCSymbol(hook, cDec.getName());
-		boolean onHeap = cDec.isOnHeap() || mVariablesOnHeap.contains(hook);
-		if (!onHeap && oldStv != null) {
-			// If the declaration is not on the heap, check if the declaration in the symbol table is on the heap.
-			onHeap = oldStv.getCDecl().isOnHeap();
-		}
+		final boolean onHeap = cDec.isOnHeap() || isOnHeap(hook);
 		final DeclarationInformation declarationInformation = getDeclarationInfo(storageClass);
 		final String bId = mNameHandler.getUniqueIdentifier(node, cDec.getName(), mSymbolTable.getCScopeId(hook),
 				onHeap, cDec.getType(), declarationInformation);
