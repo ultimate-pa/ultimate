@@ -37,6 +37,7 @@ import java.util.Set;
 
 import org.eclipse.cdt.core.dom.ast.ASTGenericVisitor;
 import org.eclipse.cdt.core.dom.ast.IASTCompoundStatement;
+import org.eclipse.cdt.core.dom.ast.IASTContinueStatement;
 import org.eclipse.cdt.core.dom.ast.IASTDoStatement;
 import org.eclipse.cdt.core.dom.ast.IASTForStatement;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
@@ -252,6 +253,10 @@ public final class CdtASTUtils {
 		return new DesiredTypeExtractor(desiredTypes).run(node);
 	}
 
+	public static boolean containsContinue(final IASTStatement statement) {
+		return new ContinueFinder().run(statement);
+	}
+
 	private static final class DesiredTypeExtractor extends ASTGenericVisitor {
 		private Set<IASTStatement> mStatements;
 		private final Collection<Class<?>> mDesiredClasses;
@@ -304,6 +309,31 @@ public final class CdtASTUtils {
 			}
 			if (child == mCandidate) {
 				mIsContainedInSubtree = true;
+				return PROCESS_ABORT;
+			}
+			return PROCESS_CONTINUE;
+		}
+	}
+
+	private static final class ContinueFinder extends ASTGenericVisitor {
+		private boolean mFound;
+
+		public ContinueFinder() {
+			super(true);
+		}
+
+		public boolean run(final IASTNode subtreeRoot) {
+			subtreeRoot.accept(this);
+			return mFound;
+		}
+
+		@Override
+		protected int genericVisit(final IASTNode child) {
+			if (mFound) {
+				return PROCESS_ABORT;
+			}
+			if (child instanceof IASTContinueStatement) {
+				mFound = true;
 				return PROCESS_ABORT;
 			}
 			return PROCESS_CONTINUE;

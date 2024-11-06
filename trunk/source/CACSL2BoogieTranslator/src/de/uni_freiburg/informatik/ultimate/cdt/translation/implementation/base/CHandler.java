@@ -48,6 +48,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -218,6 +219,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.SkipResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.StringLiteralResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.TypesResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.CdtASTUtils;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO.AUXVAR;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
@@ -277,7 +279,7 @@ public class CHandler {
 	/**
 	 * Stores the labels of the loops we are currently inside. (For translation of a possible continue statement)
 	 */
-	private final Deque<String> mInnerMostLoopLabel;
+	private final Deque<Optional<String>> mInnerMostLoopLabel;
 
 	private final ILogger mLogger;
 
@@ -1224,9 +1226,11 @@ public class CHandler {
 
 	public Result visit(final IDispatcher main, final IASTContinueStatement cs) {
 		final ILocation loc = mLocationFactory.createCLocation(cs);
-		final ArrayList<Statement> stmt = new ArrayList<>();
-		stmt.add(new GotoStatement(loc, new String[] { mInnerMostLoopLabel.peek() }));
-		return new ExpressionResult(stmt, null);
+		final Optional<String> label = mInnerMostLoopLabel.peek();
+		if (label.isEmpty()) {
+			throw new AssertionError("Label for continue not found");
+		}
+		return new ExpressionResult(List.of(new GotoStatement(loc, new String[] { label.get() })), null);
 	}
 
 	public Result visit(final IDispatcher main, final IASTDeclarationStatement node) {
@@ -1485,9 +1489,12 @@ public class CHandler {
 		final ILocation loc = mLocationFactory.createCLocation(node);
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 		final List<Statement> bodyBlock = new ArrayList<>();
-		final String loopLabel = mNameHandler.getGloballyUniqueIdentifier(SFO.LOOPLABEL);
+		final boolean hasContinue = CdtASTUtils.containsContinue(node.getBody());
+		final String loopLabel = hasContinue ? mNameHandler.getGloballyUniqueIdentifier(SFO.LOOPLABEL) : null;
 		handleLoopBody(loc, main, node.getBody(), loopLabel, resultBuilder, bodyBlock);
-		bodyBlock.add(new Label(loc, loopLabel));
+		if (hasContinue) {
+			bodyBlock.add(new Label(loc, loopLabel));
+		}
 		bodyBlock.addAll(handleLoopCondition(loc, main, node.getCondition(), resultBuilder));
 		return buildLoopResult(main, loc, node, bodyBlock, resultBuilder);
 	}
@@ -1551,9 +1558,12 @@ public class CHandler {
 		}
 		final List<Statement> bodyBlock =
 				new ArrayList<>(handleLoopCondition(loc, main, node.getConditionExpression(), resultBuilder));
-		final String loopLabel = mNameHandler.getGloballyUniqueIdentifier(SFO.LOOPLABEL);
+		final boolean hasContinue = CdtASTUtils.containsContinue(node.getBody());
+		final String loopLabel = hasContinue ? mNameHandler.getGloballyUniqueIdentifier(SFO.LOOPLABEL) : null;
 		handleLoopBody(loc, main, node.getBody(), loopLabel, resultBuilder, bodyBlock);
-		bodyBlock.add(new Label(loc, loopLabel));
+		if (hasContinue) {
+			bodyBlock.add(new Label(loc, loopLabel));
+		}
 
 		// Insert the translated iterator at the end of the loop (after the loop label)
 		final IASTExpression cItExpr = node.getIterationExpression();
@@ -2605,9 +2615,12 @@ public class CHandler {
 	public Result visit(final IDispatcher main, final IASTWhileStatement node) {
 		final ILocation loc = mLocationFactory.createCLocation(node);
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
-		final String loopLabel = mNameHandler.getGloballyUniqueIdentifier(SFO.LOOPLABEL);
+		final boolean hasContinue = CdtASTUtils.containsContinue(node.getBody());
+		final String loopLabel = hasContinue ? mNameHandler.getGloballyUniqueIdentifier(SFO.LOOPLABEL) : null;
 		final List<Statement> bodyBlock = new ArrayList<>();
-		bodyBlock.add(new Label(loc, loopLabel));
+		if (hasContinue) {
+			bodyBlock.add(new Label(loc, loopLabel));
+		}
 		bodyBlock.addAll(handleLoopCondition(loc, main, node.getCondition(), resultBuilder));
 		handleLoopBody(loc, main, node.getBody(), loopLabel, resultBuilder, bodyBlock);
 		return buildLoopResult(main, loc, node, bodyBlock, resultBuilder);
@@ -3592,7 +3605,7 @@ public class CHandler {
 
 	private void handleLoopBody(final ILocation loc, final IDispatcher main, final IASTStatement bodyStmt,
 			final String loopLabel, final ExpressionResultBuilder resultBuilder, final List<Statement> bodyBlock) {
-		mInnerMostLoopLabel.push(loopLabel);
+		mInnerMostLoopLabel.push(Optional.ofNullable(loopLabel));
 		final Result bodyResult = main.dispatch(bodyStmt);
 		if (bodyResult instanceof ExpressionResult) {
 			final ExpressionResult re = (ExpressionResult) bodyResult;
