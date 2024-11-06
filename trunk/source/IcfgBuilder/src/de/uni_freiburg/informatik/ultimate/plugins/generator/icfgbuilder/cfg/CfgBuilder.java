@@ -79,6 +79,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.ConditionAnnotation;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LTLStepAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation.LoopEntryType;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopExitAnnotation;
@@ -193,7 +194,7 @@ public class CfgBuilder {
 
 	private Stack<BoogieIcfgLocation> mWhileExits;
 	private Stack<BoogieIcfgLocation> mConditionalStarts;
-	private final int mRemovedAssumeTrueStatements = 0;
+	private int mRemovedAssumeTrueStatements = 0;
 
 	private static final SimplificationTechnique SIMPLIFICATION_TECHNIQUE = SimplificationTechnique.POLY_PAC;
 
@@ -491,6 +492,34 @@ public class CfgBuilder {
 	}
 
 	/**
+	 * Check it this statement is a plain <code>assume true</code> statement, i.e. whether * it has an empty list of
+	 * attributes or no attributes at all, and * it is not annotated with an LTLStepAnnotation.
+	 */
+	private static boolean isPlainAssumeTrueStatement(final Statement st) {
+		if (st instanceof AssumeStatement) {
+			final AssumeStatement as = (AssumeStatement) st;
+			if (as.getAttributes() != null && as.getAttributes().length > 0) {
+				return false;
+			}
+			if (LTLStepAnnotation.getAnnotation(as) != null) {
+				return false;
+			}
+			if (as.getFormula() instanceof BooleanLiteral) {
+				final BooleanLiteral bl = (BooleanLiteral) as.getFormula();
+				if (bl.getValue()) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	private static boolean isOverapproximation(final Statement st) {
+		final Overapprox oa = Overapprox.getAnnotation(st);
+		return oa != null;
+	}
+
+	/**
 	 * Provides two informations that can be obtained by traversing all statements.
 	 * <ul>
 	 * <li>information whether some {@link ForkStatement} occurs.
@@ -727,6 +756,12 @@ public class CfgBuilder {
 			IIcfgElement currentLocation = endLoc;
 			for (int i = codeblock.length - 1; i >= 0; i--) {
 				final Statement st = codeblock[i];
+				// Rationale: <code>assume true</ code> statements can be omitted, unless they
+				// carry attributes or indicate an overapproximation.
+				if (mRemoveAssumeTrueStmt && isPlainAssumeTrueStatement(st) && !isOverapproximation(st)) {
+					mRemovedAssumeTrueStatements++;
+					continue;
+				}
 				if (currentLocation instanceof StatementSequence
 						&& !(st instanceof CallStatement || isAssuAssiHavoc(st) || st instanceof Label)) {
 					currentLocation = endStatementSequence((StatementSequence) currentLocation);
