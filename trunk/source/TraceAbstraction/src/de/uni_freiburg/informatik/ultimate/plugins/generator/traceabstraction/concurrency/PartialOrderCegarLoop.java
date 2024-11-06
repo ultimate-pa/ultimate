@@ -99,14 +99,11 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.in
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.ICopyActionFactory;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.conditional.ConditionCriterion;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.conditional.ConditionalCommutativityChecker;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.conditional.ConditionalCommutativityCheckerVisitor;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.conditional.ConditionalCommutativityInterpolantChecker;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.conditional.ConditionalCommutativityStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.conditional.CriterionConjunction;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.conditional.DefaultCriterion;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.conditional.ForwardCriterion;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.conditional.IConditionalCommutativityCriterion;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.conditional.LimitedChecksCriterion;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.conditional.LoopCriterion;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.conditional.RandomCriterion;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.conditional.SleepSetCriterion;
@@ -119,7 +116,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.ConComChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.ConComCheckerCriterion;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IIpAbStrategyModule;
@@ -158,7 +154,6 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	private final IConditionalCommutativityCriterion<L> mCriterion;
 	private final ConditionalCommutativityChecker<L> mConComChecker;
 
-	private ConditionalCommutativityCheckerVisitor<L, ?> mConComVisitor;
 	private boolean mCounterexampleConComFound;
 	private final ConditionalCommutativityStatisticsGenerator mConComCheckerBenchmark =
 			new ConditionalCommutativityStatisticsGenerator();
@@ -216,7 +211,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 
 		mCriterion = constructConditionalCommutativityCriterion();
 		mConComChecker = constructConComChecker(copyFactory);
-		mConCounterexampleChecker = mPref.useConditionalCommutativityChecker() == ConComChecker.COUNTEREXAMPLE
+		mConCounterexampleChecker = mPref.useConditionalCommutativityChecker()
 				? new ConditionalCommutativityCounterexampleChecker<>(mServices, mPOR.getDfsOrder(), mConComChecker,
 						this::createConditionalCommutativityAutomatonBuilder, mConComCheckerBenchmark)
 				: null;
@@ -227,19 +222,6 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	protected boolean refineAbstraction() throws AutomataLibraryException {
 		final IPredicateUnifier predicateUnifier = mRefinementResult.getPredicateUnifier();
 		final IHoareTripleChecker htc = getHoareTripleChecker();
-
-		if (mPref.useConditionalCommutativityChecker().equals(ConComChecker.IA)
-				|| mPref.useConditionalCommutativityChecker().equals(ConComChecker.BOTH)) {
-
-			// get interpolants from mCounterexample
-			final ArrayList<IPredicate> predicates = getCounterexamplePredicates();
-			mCriterion.updateAbstraction(mAbstraction);
-			final ConditionalCommutativityInterpolantChecker<L> conInterpolantProvider =
-					new ConditionalCommutativityInterpolantChecker<>(mServices, mAbstraction, mFactory,
-							predicateUnifier, mConComCheckerBenchmark, mPOR.getStateSplitter(), mConComChecker);
-			mInterpolAutomaton = conInterpolantProvider.getInterpolants((IRun<L, IPredicate>) mCounterexample,
-					predicates, mInterpolAutomaton);
-		}
 
 		// Compute the enhanced interpolant automaton
 		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> ia = enhanceInterpolantAutomaton(
@@ -343,43 +325,6 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		try {
 			IDfsVisitor<L, IPredicate> visitor = createVisitor();
 			mPOR.apply(mAbstraction, visitor);
-			if (mPref.useConditionalCommutativityChecker().equals(ConComChecker.DFS)
-					|| mPref.useConditionalCommutativityChecker().equals(ConComChecker.BOTH)) {
-				while (mConComVisitor.aborted()) {
-					final NestedWordAutomaton<L, IPredicate> interpolantAutomaton =
-							mConComVisitor.getInterpolantAutomaton();
-
-					final IPredicateUnifier predicateUnifier = mConComVisitor.getPredicateUnifier();
-					final IHoareTripleChecker htc =
-							HoareTripleCheckerUtils.constructEfficientHoareTripleCheckerWithCaching(getServices(),
-									mPref.getHoareTripleChecks(), mCsToolkit, predicateUnifier);
-
-					final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> ia = enhanceInterpolantAutomaton(
-							mPref.interpolantAutomatonEnhancement(), predicateUnifier, htc, interpolantAutomaton);
-
-					final IPredicate initialSink =
-							DataStructureUtils.getOneAndOnly(interpolantAutomaton.getInitialStates(), "initial state");
-					final TotalizeNwa<L, IPredicate> totalInterpol = new TotalizeNwa<>(ia, initialSink, false);
-
-					try {
-						if (mItpAutomata == null) {
-							mItpAutomata = totalInterpol;
-						} else {
-							mItpAutomata = new UnionNwa<>(mItpAutomata, totalInterpol, mFactory, false);
-						}
-
-						mAbstraction = new InformationStorage<>(mProgram == null ? mAbstraction : mProgram,
-								mItpAutomata, mFactory, PartialOrderCegarLoop::isFalseLiteral);
-						visitor = createVisitor();
-						mConComCheckerBenchmark.addDFSRestart();
-						mPOR.apply(mAbstraction, visitor);
-						htc.releaseLock();
-					} catch (final AutomataLibraryException e) {
-						// Auto-generated catch block
-						e.printStackTrace();
-					}
-				}
-			}
 			mCounterexample = getCounterexample(visitor);
 
 			assert mCounterexample == null || accepts(getServices(), mAbstraction, mCounterexample.getWord(),
@@ -394,7 +339,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	@Override
 	protected Pair<LBool, IProgramExecution<L, Term>> isCounterexampleFeasible()
 			throws AutomataOperationCanceledException {
-		if (mPref.useConditionalCommutativityChecker().equals(ConComChecker.COUNTEREXAMPLE)) {
+		if (mPref.useConditionalCommutativityChecker()) {
 
 			final ArrayList<IPredicate> predicates = getCounterexamplePredicates();
 			mCriterion.updateAbstraction(mAbstraction);
@@ -475,14 +420,6 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		if (PartialOrderReductionFacade.ENABLE_COVERING_OPTIMIZATION) {
 			visitor = new CoveringOptimizationVisitor<>(visitor, new SleepSetCoveringRelation<>(mPOR.getSleepFactory()),
 					CoveringMode.PRUNE);
-		}
-
-		if (mPref.useConditionalCommutativityChecker().equals(ConComChecker.DFS)
-				|| mPref.useConditionalCommutativityChecker().equals(ConComChecker.BOTH)) {
-			mConComChecker.getCriterion().updateAbstraction(mAbstraction);
-			mConComVisitor = new ConditionalCommutativityCheckerVisitor<>(visitor, mAbstraction, mServices, mFactory,
-					mPOR.getStateSplitter(), mConComChecker);
-			visitor = mConComVisitor;
 		}
 
 		if (mSupportsDeadEnds) {
@@ -595,7 +532,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	}
 
 	private IConditionalCommutativityCriterion<L> constructConditionalCommutativityCriterion() {
-		if (mPref.useConditionalCommutativityChecker() == ConComChecker.NONE) {
+		if (!mPref.useConditionalCommutativityChecker()) {
 			return null;
 		}
 
@@ -606,11 +543,6 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 			criterionWithCondition = new CriterionConjunction<>(baseCriterion, new ConditionCriterion<>());
 		} else {
 			criterionWithCondition = baseCriterion;
-		}
-
-		if (mPref.useLimitedChecksCriterion()) {
-			final var limitCriterion = new LimitedChecksCriterion<L>(mPref.getConComCheckerCriterionLimit());
-			return new CriterionConjunction<>(criterionWithCondition, limitCriterion);
 		}
 		return criterionWithCondition;
 	}
@@ -633,7 +565,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	}
 
 	private ConditionalCommutativityChecker<L> constructConComChecker(final ICopyActionFactory<L> copyFactory) {
-		if (mPref.useConditionalCommutativityChecker() == ConComChecker.NONE) {
+		if (!mPref.useConditionalCommutativityChecker()) {
 			return null;
 		}
 

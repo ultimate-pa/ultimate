@@ -37,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.Pa
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.conditional.ConditionalCommutativityChecker.ConComTraceCheckMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.ConComChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.ConComCheckerCriterion;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition.NamedServiceCallback;
@@ -66,7 +65,6 @@ public class ConditionalCommutativityTestSuite extends AbstractTraceAbstractionT
 
 	// @formatter:off
 	private static final List<Pair<String, Map<String, Object>>> VARIANTS = List.of(
-		interpolantApproach(),
 		counterExampleApproach(),
 		counterExampleApproachWithSymbolic()
 	);
@@ -116,21 +114,11 @@ public class ConditionalCommutativityTestSuite extends AbstractTraceAbstractionT
 		};
 	}
 
-	private static Pair<String, Map<String, Object>> interpolantApproach() {
-		return new Pair<>("IA", Map.of(
-		// @formatter:off
-			TraceAbstractionPreferenceInitializer.LABEL_POR_DFS_ORDER, OrderType.LOOP_LOCKSTEP,
-			TraceAbstractionPreferenceInitializer.LABEL_CON_COM_CHECKER, ConComChecker.IA,
-			TraceAbstractionPreferenceInitializer.LABEL_CON_COM_CHECKER_CRITERION, ConComCheckerCriterion.DEFAULT
-		// @formatter:on
-		));
-	}
-
 	private static Pair<String, Map<String, Object>> counterExampleApproach() {
 		return new Pair<>("CE", Map.of(
 		// @formatter:off
 			TraceAbstractionPreferenceInitializer.LABEL_POR_DFS_ORDER, OrderType.LOOP_LOCKSTEP,
-			TraceAbstractionPreferenceInitializer.LABEL_CON_COM_CHECKER, ConComChecker.COUNTEREXAMPLE,
+			TraceAbstractionPreferenceInitializer.LABEL_CON_COM_CHECKER, true,
 			TraceAbstractionPreferenceInitializer.LABEL_CON_COM_CHECKER_CRITERION, ConComCheckerCriterion.DEFAULT
 		// @formatter:on
 		));
@@ -140,7 +128,7 @@ public class ConditionalCommutativityTestSuite extends AbstractTraceAbstractionT
 		return new Pair<>("CE+Symb", Map.of(
 		// @formatter:off
 			TraceAbstractionPreferenceInitializer.LABEL_POR_DFS_ORDER, OrderType.LOOP_LOCKSTEP,
-			TraceAbstractionPreferenceInitializer.LABEL_CON_COM_CHECKER, ConComChecker.COUNTEREXAMPLE,
+			TraceAbstractionPreferenceInitializer.LABEL_CON_COM_CHECKER, true,
 			TraceAbstractionPreferenceInitializer.LABEL_CON_COM_CHECKER_CRITERION, ConComCheckerCriterion.DEFAULT,
 			TraceAbstractionPreferenceInitializer.LABEL_CON_COM_CHECKER_TRACECHECK_MODE, ConComTraceCheckMode.SYMBOLIC_RELATION
 		// @formatter:on

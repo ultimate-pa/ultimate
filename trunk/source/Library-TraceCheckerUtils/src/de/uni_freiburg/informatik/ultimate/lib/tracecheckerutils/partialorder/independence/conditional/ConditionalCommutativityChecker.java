@@ -170,6 +170,8 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 			final NestedRun<L, IPredicate> currentRun, final List<IPredicate> predicates, final IPredicate state,
 			final L letter1, final L letter2) {
 		// TODO (Why) is this still needed? Unlocking the script used by interpolant automata can be very expensive.
+		// I believe this is only required for the IA-approach, because there we construct the automaton step by step
+		// and we use the same script
 		if (mManagedScript.isLocked()) {
 			mManagedScript.requestLockRelease();
 		}
@@ -274,6 +276,7 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 		}
 		if (!result.somePerfectSequenceFound()) {
 			mStatistics.addImperfectProof();
+			return null;
 		}
 		return postProcessRefinementResult(result);
 	}
