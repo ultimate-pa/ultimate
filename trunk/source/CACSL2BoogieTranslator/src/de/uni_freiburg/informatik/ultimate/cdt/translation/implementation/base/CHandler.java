@@ -3009,7 +3009,7 @@ public class CHandler {
 
 		final CDeclaration cDec = declResult.getDeclaration();
 		final var oldStv = mSymbolTable.findCSymbol(hook, cDec.getName());
-		boolean onHeap = cDec.isOnHeap();
+		boolean onHeap = cDec.isOnHeap() || mVariablesOnHeap.contains(hook);
 		if (!onHeap && oldStv != null) {
 			// If the declaration is not on the heap, check if the declaration in the symbol table is on the heap.
 			onHeap = oldStv.getCDecl().isOnHeap();
