@@ -121,6 +121,7 @@ public class BoogiePreprocessor implements IAnalysis {
 		}
 		observers.add(new ConstExpander(backTranslator));
 		observers.add(new StructExpander(backTranslator, logger));
+		observers.add(new ReplaceArrayAssignments(backTranslator));
 		if (replaceWhileAndConditional) {
 			observers.add(new UnstructureCode(backTranslator));
 		}
