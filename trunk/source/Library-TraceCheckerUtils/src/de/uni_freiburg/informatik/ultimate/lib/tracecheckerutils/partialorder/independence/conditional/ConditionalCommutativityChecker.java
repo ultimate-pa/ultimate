@@ -61,7 +61,9 @@ import de.uni_freiburg.informatik.ultimate.util.Lazy;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
- * Conditional commutativity checker.
+ * Conditional commutativity checker, which checks for conditional commutativity of two given letters (letter1,letter2),
+ * i.e. whether there is a condition Phi such that those letters commute under Phi and Phi holds after the given
+ * currentRun. Also provides a proof, if this is the case.
  *
  * @author Marcel Ebbinghaus
  *
@@ -133,7 +135,10 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 	}
 
 	/**
-	 * Checks for conditional commutativity.
+	 * Checks for conditional commutativity of two given letters (letter1,letter2), i.e. whether there is a condition
+	 * Phi such that those letters commute under Phi and Phi holds after the given currentRun. If this is the case,
+	 * returns a proof that this Phi holds.
+	 * 
 	 *
 	 * @author Marcel Ebbinghaus
 	 *
