@@ -50,9 +50,6 @@ import java.util.Stack;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayStoreExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
@@ -67,11 +64,9 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.GotoStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.JoinStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RequiresSpecification;
@@ -79,7 +74,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ReturnStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
@@ -866,46 +860,7 @@ public class CfgBuilder {
 			return loopEntryLoc;
 		}
 
-		private Expression getLHSExpression(final LeftHandSide lhs) {
-			Expression expr;
-			if (lhs instanceof ArrayLHS) {
-				final ArrayLHS arrlhs = (ArrayLHS) lhs;
-				final Expression array = getLHSExpression(arrlhs.getArray());
-				expr = new ArrayAccessExpression(lhs.getLocation(), lhs.getType(), array, arrlhs.getIndices());
-			} else {
-				final VariableLHS varlhs = (VariableLHS) lhs;
-				expr = new IdentifierExpression(lhs.getLocation(), lhs.getType(), varlhs.getIdentifier(),
-						varlhs.getDeclarationInformation());
-			}
-			return expr;
-		}
-
-		private IIcfgElement buildAssuAssiHavoc(final IIcfgElement currentElement, Statement st) {
-			// FIXME Matthias 2024-09-22: This code is extremely problematic because it
-			// changes the original statement, we should handle this case in the
-			// BoogiePreprocessor
-			// convert ArrayLHS to ArrayStoreExpression
-			if (st instanceof AssignmentStatement) {
-				final AssignmentStatement assign = (AssignmentStatement) st;
-				final LeftHandSide[] lhs = assign.getLhs();
-				final Expression[] rhs = assign.getRhs();
-				boolean changed = false;
-				for (int i = 0; i < lhs.length; i++) {
-					while (lhs[i] instanceof ArrayLHS) {
-						final LeftHandSide array = ((ArrayLHS) lhs[i]).getArray();
-						final Expression[] indices = ((ArrayLHS) lhs[i]).getIndices();
-						final Expression arrayExpr = getLHSExpression(array);
-						rhs[i] = new ArrayStoreExpression(lhs[i].getLocation(), array.getType(), arrayExpr, indices,
-								rhs[i]);
-						lhs[i] = array;
-						changed = true;
-					}
-				}
-				if (changed) {
-					st = assign;
-				}
-			}
-
+		private IIcfgElement buildAssuAssiHavoc(final IIcfgElement currentElement, final Statement st) {
 			final StatementSequence stseq = prependStatement(st, currentElement);
 			if (mCodeBlockSize == CodeBlockSize.SingleStatement) {
 				return endStatementSequence(stseq);
