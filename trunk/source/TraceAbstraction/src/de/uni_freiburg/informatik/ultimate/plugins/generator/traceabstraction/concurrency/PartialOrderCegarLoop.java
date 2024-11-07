@@ -327,10 +327,8 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 			throws AutomataOperationCanceledException {
 		if (mPref.useConditionalCommutativityChecker()) {
 
-			final ArrayList<IPredicate> predicates = getCounterexamplePredicates();
-
 			mRefinementResult = mConCounterexampleChecker
-					.getCommutativityProof((NestedRun<L, IPredicate>) mCounterexample, predicates);
+					.getCommutativityProof((NestedRun<L, IPredicate>) mCounterexample);
 
 			if (mRefinementResult != null) {
 				mCounterexampleConComFound = true;

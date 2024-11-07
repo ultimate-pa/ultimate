@@ -144,8 +144,6 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 	 *
 	 * @param currentRun
 	 *            The run to state
-	 * @param predicates
-	 *            Predicates used as context for condition generation
 	 * @param state
 	 *            The state
 	 * @param letter1
@@ -156,20 +154,18 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 	 */
 	// TODO method description is very vague (not more helpful than the method name)
 	public IRefinementEngineResult<L, Collection<QualifiedTracePredicates>> checkConditionalCommutativity(
-			final NestedRun<L, IPredicate> currentRun, final List<IPredicate> predicates, final IPredicate state,
-			final L letter1, final L letter2) {
+			final NestedRun<L, IPredicate> currentRun, final IPredicate state, final L letter1, final L letter2) {
 
 		mStatistics.startStopwatch(ConditionalCommutativityStopwatches.CHECKER);
 		try {
-			return checkConditionalCommutativityInternal(currentRun, predicates, state, letter1, letter2);
+			return checkConditionalCommutativityInternal(currentRun, state, letter1, letter2);
 		} finally {
 			mStatistics.stopStopwatch(ConditionalCommutativityStopwatches.CHECKER);
 		}
 	}
 
 	private IRefinementEngineResult<L, Collection<QualifiedTracePredicates>> checkConditionalCommutativityInternal(
-			final NestedRun<L, IPredicate> currentRun, final List<IPredicate> predicates, final IPredicate state,
-			final L letter1, final L letter2) {
+			final NestedRun<L, IPredicate> currentRun, final IPredicate state, final L letter1, final L letter2) {
 
 		// TODO this is brittle, let caller decide how one extracts a sleep set from the states
 		if (state instanceof SleepPredicate) {
@@ -182,23 +178,22 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 		// TODO This does not accurately reflect how independence is checked in most configurations.
 		// TODO There, each conjunct is considered separately.
 		// TODO By passing the given context as predicate directly, this mismatch can be avoided.
-		final IPredicate pred = predicates.isEmpty() ? null : mPredicateFactory.and(predicates);
-		final Dependence dependence = mIndependenceRelation.isIndependent(pred, letter1, letter2);
+		// final IPredicate pred = predicates.isEmpty() ? null : mPredicateFactory.and(predicates);
+		final Dependence dependence = mIndependenceRelation.isIndependent(state, letter1, letter2);
 
 		if (dependence == Dependence.INDEPENDENT) {
 			return null;
 		}
 
-		final IPredicate condition = generateCondition(state, letter1, letter2, pred);
+		final IPredicate condition = generateCondition(state, letter1, letter2);
 		if (condition == null) {
 			return null;
 		}
 		return proveCommutativityCondition(currentRun, letter1, condition);
 	}
 
-	private IPredicate generateCondition(final IPredicate state, final L letter1, final L letter2,
-			final IPredicate context) {
-		final IPredicate condition = generateRawCondition(letter1, letter2, context);
+	private IPredicate generateCondition(final IPredicate state, final L letter1, final L letter2) {
+		final IPredicate condition = generateRawCondition(letter1, letter2, state);
 
 		if (condition == null) {
 			return null;
@@ -218,7 +213,7 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 		mStatistics.startStopwatch(ConditionalCommutativityStopwatches.CONDITION);
 		try {
 			mStatistics.addConditionCalculation();
-			if (mPassContextToSymbolicRelation && context != null) {
+			if (mPassContextToSymbolicRelation && context != null && !SmtUtils.isTrueLiteral(context.getFormula())) {
 				return mSymbolicRelation.getCommutativityCondition(context, letter1, letter2);
 			}
 			return mSymbolicRelation.getCommutativityCondition(null, letter1, letter2);

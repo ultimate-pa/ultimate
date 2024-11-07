@@ -51,8 +51,6 @@ public class ConditionalCommutativityStatisticsGenerator extends StatisticsGener
 	private static final StatisticsType<ConditionalCommutativityStatisticsDefinitions> TYPE =
 			new StatisticsType<>(ConditionalCommutativityStatisticsDefinitions.class);
 
-	private int mConditionalCommutativityIAIntegrations = 0;
-	private int mConditionalCommutativityDFSRestarts = 0;
 	private int mConditionalCommutativityConditionCalculations = 0;
 	private int mConditionalCommutativityTraceChecks = 0;
 	private int mConditionalCommutativityUnknownTraceChecks = 0;
@@ -85,14 +83,6 @@ public class ConditionalCommutativityStatisticsGenerator extends StatisticsGener
 		default:
 			throw new AssertionError("unknown stopwatch");
 		}
-	}
-
-	public void addIAIntegration() {
-		mConditionalCommutativityIAIntegrations++;
-	}
-
-	public void addDFSRestart() {
-		mConditionalCommutativityDFSRestarts++;
 	}
 
 	public void addCommutingCounterexample() {
@@ -150,10 +140,6 @@ public class ConditionalCommutativityStatisticsGenerator extends StatisticsGener
 			} catch (final StopwatchStillRunningException e) {
 				throw new AssertionError("clock still running: " + key);
 			}
-		case ConditionalCommutativityIAIntegrations:
-			return mConditionalCommutativityIAIntegrations;
-		case ConditionalCommutativityDFSRestarts:
-			return mConditionalCommutativityDFSRestarts;
 		case ConditionalCommutativityCommutingCounterexamples:
 			return mConditionalCommutativityCommutingCounterexamples;
 		case ConditionalCommutativityConditionCalculations:
@@ -184,10 +170,6 @@ public class ConditionalCommutativityStatisticsGenerator extends StatisticsGener
 		ConditionalCommutativityCheckTime(StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_NANOS),
 
 		ConditionalCommutativityConditionCalculationTime(StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_NANOS),
-
-		ConditionalCommutativityIAIntegrations(StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
-
-		ConditionalCommutativityDFSRestarts(StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
 
 		ConditionalCommutativityCommutingCounterexamples(StatisticsType.INTEGER_ADDITION,
 				StatisticsType.KEY_BEFORE_DATA),
