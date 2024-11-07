@@ -23,7 +23,7 @@
    <extension point="org.eclipse.core.runtime.products" id="Debug">
       <product application="de.uni_freiburg.informatik.ultimate.core.CoreRCP" name="Ultimate-Debug">
          <property name="appName" value="Ultimate-Debug" />
-         <property name="aboutImage" value="icons/about.gif" />
+         <property name="aboutImage" value="icons/logo.png" />
          <property name="aboutText"
                value="Ultimate is a tool for model checking and static program analysis. It provides multiple toolchains which check properties or transform input files." />
         </product>
@@ -52,7 +52,7 @@
          </property> 
          <property
                name="aboutImage"
-               value="icons/about.gif">
+               value="icons/logo.png">
          </property>
          <property
                name="appName"
