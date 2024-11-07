@@ -199,7 +199,6 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_CON_COM_CHECKER_CALCULATION_MODE = "Mode of commutativity condition calculation";
 	private static final ConComCalculationMode DEF_CON_COM_CHECKER_CALCULATION_MODE = ConComCalculationMode.GENERATOR;
 
-
 	// Settings for PetriAutomizer
 	// ========================================================================
 
