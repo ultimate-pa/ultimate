@@ -61,6 +61,12 @@ final class BacktranslationServiceMock implements IBacktranslationService {
 	}
 
 	@Override
+	public <SE, TE, CTX> TE translateExpressionWithContext(final SE expression, final CTX context,
+			final Class<SE> clazz) {
+		return translateExpression(expression, clazz);
+	}
+
+	@Override
 	public <SE, CTX> String translateExpressionWithContextToString(final SE expression, final CTX context,
 			final Class<SE> clazz) {
 		return translateExpressionToString(expression, clazz);

@@ -27,6 +27,8 @@
 
 package de.uni_freiburg.informatik.ultimate.core.lib.models.annotation;
 
+import java.util.Objects;
+
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
@@ -36,32 +38,27 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualiz
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-// TODO #witnessRefactor Remove this annotation. WitnessPrinter should work with a Floyd/Hoare proof directly.
-@Deprecated
-public class WitnessInvariant extends ModernAnnotations {
+public class WitnessInvariant<E> extends ModernAnnotations {
 
 	private static final long serialVersionUID = 1L;
 	private static final String KEY = WitnessInvariant.class.getName();
 
 	@Visualizable
-	private final String mInvariant;
+	private final E mInvariant;
 
-	public WitnessInvariant(final String invariant) {
-		mInvariant = invariant;
+	public WitnessInvariant(final E invariant) {
+		mInvariant = Objects.requireNonNull(invariant);
 	}
 
-	public String getInvariant() {
+	public E getInvariant() {
 		return mInvariant;
 	}
 
 	public void annotate(final IElement node) {
-		// Only add an annotation, if the invariant was successfully backtranslated (i.e. is not null)
-		if (mInvariant != null) {
-			node.getPayload().getAnnotations().put(KEY, this);
-		}
+		node.getPayload().getAnnotations().put(KEY, this);
 	}
 
-	public static WitnessInvariant getAnnotation(final IElement node) {
-		return ModelUtils.getAnnotation(node, KEY, a -> (WitnessInvariant) a);
+	public static WitnessInvariant<?> getAnnotation(final IElement node) {
+		return ModelUtils.getAnnotation(node, KEY, a -> (WitnessInvariant<?>) a);
 	}
 }

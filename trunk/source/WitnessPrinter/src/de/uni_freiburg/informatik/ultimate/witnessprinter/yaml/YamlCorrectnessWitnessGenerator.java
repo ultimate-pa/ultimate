@@ -131,11 +131,12 @@ public class YamlCorrectnessWitnessGenerator {
 		return Arrays.stream(ACSL_SUBSTRING).anyMatch(expression::contains);
 	}
 
-	private String filterInvariant(final WitnessInvariant invariant) {
+	private String filterInvariant(final WitnessInvariant<?> invariant) {
 		if (invariant == null) {
 			return null;
 		}
-		final String label = invariant.getInvariant();
+		// TODO work with the actual ACSL expression AST, and avoid substring matching in #containsACSL
+		final String label = invariant.getInvariant().toString();
 		if (!mIsAcslAllowed && containsACSL(label)) {
 			mLogger.warn("Not writing invariant because ACSL is forbidden: " + label);
 			return null;

@@ -390,8 +390,9 @@ public class RCFGBacktranslator extends
 	}
 
 	private static Multigraph<String, BoogieASTNode> createWitnessNode(final IcfgLocation old) {
-		final WitnessInvariant inv = WitnessInvariant.getAnnotation(old);
-		final Multigraph<String, BoogieASTNode> rtr = new Multigraph<>(inv == null ? null : inv.getInvariant());
+		final WitnessInvariant<?> inv = WitnessInvariant.getAnnotation(old);
+		final Multigraph<String, BoogieASTNode> rtr =
+				new Multigraph<>(inv == null ? null : inv.getInvariant().toString());
 		ModelUtils.copyAnnotations(old, rtr);
 		return rtr;
 	}

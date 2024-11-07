@@ -52,6 +52,8 @@ public interface IBacktranslationService {
 
 	<SE, TE> TE translateExpression(SE expression, Class<SE> sourceExpressionClass);
 
+	<SE, TE, CTX> TE translateExpressionWithContext(SE expression, CTX context, Class<SE> clazz);
+
 	/**
 	 * Translate an expression from the output type to a String.
 	 *

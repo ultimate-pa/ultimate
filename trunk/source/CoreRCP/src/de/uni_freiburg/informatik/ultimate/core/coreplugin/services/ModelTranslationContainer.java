@@ -85,6 +85,13 @@ class ModelTranslationContainer implements IBacktranslationService {
 	}
 
 	@Override
+	public <SE, TE, CTX> TE translateExpressionWithContext(final SE expression, final CTX context,
+			final Class<SE> clazz) {
+		final Stack<ITranslator<?, ?, ?, ?, ?, ?, ?>> current = prepareTranslatorStackAndCheckSourceExpression(clazz);
+		return translateExpressionWithContext(current, expression, context);
+	}
+
+	@Override
 	public <SE, CTX> String translateExpressionWithContextToString(final SE expression, final CTX context,
 			final Class<SE> clazz) {
 		final Stack<ITranslator<?, ?, ?, ?, ?, ?, ?>> current = prepareTranslatorStackAndCheckSourceExpression(clazz);
