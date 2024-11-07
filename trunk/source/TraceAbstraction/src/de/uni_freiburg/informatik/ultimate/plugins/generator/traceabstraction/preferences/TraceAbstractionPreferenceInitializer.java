@@ -56,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.Pa
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.AbstractionType;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.IndependenceType;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.conditional.ConditionalCommutativityChecker.ConComTraceCheckMode;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.conditional.ConditionalCommutativityChecker.ConComCalculationMode;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
@@ -196,8 +196,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_CON_COM_CHECKER = "Additional conditional commutativity checking";
 	private static final boolean DEF_CON_COM_CHECKER = false;
 
-	public static final String LABEL_CON_COM_CHECKER_TRACECHECK_MODE = "TraceCheck mode for conditional commutativity";
-	private static final ConComTraceCheckMode DEF_CON_COM_CHECKER_TRACECHECK_MODE = ConComTraceCheckMode.GENERATOR;
+	public static final String LABEL_CON_COM_CHECKER_CALCULATION_MODE = "Mode of commutativity condition calculation";
+	private static final ConComCalculationMode DEF_CON_COM_CHECKER_CALCULATION_MODE = ConComCalculationMode.GENERATOR;
 
 
 	// Settings for PetriAutomizer
@@ -726,9 +726,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItemGroup("Commutativity Condition Synthesis",
 						new UltimatePreferenceItem<>(LABEL_CON_COM_CHECKER, DEF_CON_COM_CHECKER,
 								PreferenceType.Boolean),
-						new UltimatePreferenceItem<>(LABEL_CON_COM_CHECKER_TRACECHECK_MODE,
-								DEF_CON_COM_CHECKER_TRACECHECK_MODE, PreferenceType.Combo,
-								ConComTraceCheckMode.values())),
+						new UltimatePreferenceItem<>(LABEL_CON_COM_CHECKER_CALCULATION_MODE,
+								DEF_CON_COM_CHECKER_CALCULATION_MODE, PreferenceType.Combo,
+								ConComCalculationMode.values())),
 
 				getIndependenceSettings(0),
 

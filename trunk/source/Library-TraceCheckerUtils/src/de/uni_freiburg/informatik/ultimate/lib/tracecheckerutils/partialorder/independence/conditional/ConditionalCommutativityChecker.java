@@ -304,7 +304,7 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 		return new QualifiedTracePredicates(tp, qtp.getOrigin(), qtp.isPerfect());
 	}
 
-	public enum ConComTraceCheckMode {
+	public enum ConComCalculationMode {
 		GENERATOR, GENERATOR_WITH_CONTEXT, SYMBOLIC_RELATION
 	}
 }
