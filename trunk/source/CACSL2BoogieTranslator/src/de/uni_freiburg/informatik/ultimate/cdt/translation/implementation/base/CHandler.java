@@ -3659,7 +3659,11 @@ public class CHandler {
 			final List<Statement> bodyBlock, final ExpressionResultBuilder resultBuilder) {
 		final LoopInvariantSpecification[] spec = extractLoopInvariants(main, node);
 		final ILocation igLoc = LocationFactory.createIgnoreLocation(loc);
-		final WhileStatement whileStmt = new WhileStatement(igLoc, ExpressionFactory.createBooleanLiteral(igLoc, true),
+		// Create a while true statement, the condition is handled inside the loop in an if
+		// Note that the "true" condition should be ignored during backtranslation (as it does not correspond to the
+		// condition in the C code), but the loop itself should not be ignored, otherwise we don't export any loop
+		// invariants.
+		final WhileStatement whileStmt = new WhileStatement(loc, ExpressionFactory.createBooleanLiteral(igLoc, true),
 				spec, bodyBlock.toArray(Statement[]::new));
 		resultBuilder.getOverappr().stream().forEach(a -> a.annotate(whileStmt));
 		resultBuilder.addStatement(whileStmt);
