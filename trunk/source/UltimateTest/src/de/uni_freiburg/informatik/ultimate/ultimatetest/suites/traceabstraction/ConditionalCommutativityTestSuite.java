@@ -65,6 +65,7 @@ public class ConditionalCommutativityTestSuite extends AbstractTraceAbstractionT
 	// @formatter:off
 	private static final List<Pair<String, Map<String, Object>>> VARIANTS = List.of(
 		counterExampleApproach(),
+		counterExampleApproachWithContext(),
 		counterExampleApproachWithSymbolic()
 	);
 	// @formatter:on
@@ -118,6 +119,16 @@ public class ConditionalCommutativityTestSuite extends AbstractTraceAbstractionT
 		// @formatter:off
 			TraceAbstractionPreferenceInitializer.LABEL_POR_DFS_ORDER, OrderType.LOOP_LOCKSTEP,
 			TraceAbstractionPreferenceInitializer.LABEL_CON_COM_CHECKER, true
+		// @formatter:on
+		));
+	}
+
+	private static Pair<String, Map<String, Object>> counterExampleApproachWithContext() {
+		return new Pair<>("CE+Ctx", Map.of(
+		// @formatter:off
+			TraceAbstractionPreferenceInitializer.LABEL_POR_DFS_ORDER, OrderType.LOOP_LOCKSTEP,
+			TraceAbstractionPreferenceInitializer.LABEL_CON_COM_CHECKER, true,
+			TraceAbstractionPreferenceInitializer.LABEL_CON_COM_CHECKER_CALCULATION_MODE, ConComCalculationMode.GENERATOR_WITH_CONTEXT
 		// @formatter:on
 		));
 	}
