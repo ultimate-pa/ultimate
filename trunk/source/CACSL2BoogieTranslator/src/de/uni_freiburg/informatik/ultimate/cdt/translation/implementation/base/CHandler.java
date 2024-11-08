@@ -3056,8 +3056,8 @@ public class CHandler {
 
 		// this is only to have a minimal symbolTableEntry (containing boogieID) for
 		// translation of the initializer
-		mSymbolTable.storeCSymbol(node, cDec.getName(),
-				new SymbolTableValue(bId, null, null, cDec, declarationInformation, hook, false));
+		final var stv = new SymbolTableValue(bId, null, null, cDec, declarationInformation, hook, false);
+		mSymbolTable.storeCSymbol(node, cDec.getName(), stv);
 		final InitializerResult initializer = translateInitializer(main, cDec);
 		cDec.setInitializerResult(initializer);
 
@@ -3095,7 +3095,8 @@ public class CHandler {
 			// global static variables are treated like normal global variables..
 			boogieDec = new VariableDeclaration(loc, new Attribute[0],
 					new VarList[] { new VarList(loc, new String[] { bId }, translatedType) });
-			mStaticObjectsHandler.addGlobalVariableDeclaration((VariableDeclaration) boogieDec, cDec);
+			final var scope = mSymbolTable.tableFindCursor(hook, cDec.getName(), stv);
+			mStaticObjectsHandler.addGlobalVariableDeclaration((VariableDeclaration) boogieDec, cDec, scope);
 			result = skipOrSideEffects(declResult);
 		} else {
 			final BoogieType boogieType =
@@ -3560,7 +3561,7 @@ public class CHandler {
 				if (!(boogieDecl instanceof VariableDeclaration)) {
 					throw new AssertionError("TODO: handle this case!");
 				}
-				mStaticObjectsHandler.addGlobalVariableDeclaration((VariableDeclaration) boogieDecl, cd);
+				mStaticObjectsHandler.addGlobalVariableDeclaration((VariableDeclaration) boogieDecl, cd, null);
 			}
 		} else {
 			if (childRes instanceof SkipResult || childRes.getNode() == null) {
