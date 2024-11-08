@@ -103,7 +103,7 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 	 * @return an interpolant automaton proving conditional commutativity or null otherwise
 	 */
 	public IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>>
-			getCommutativityProof(final NestedRun<L, IPredicate> run) {
+			getCommutativityProof(final NestedRun<L, IPredicate> run, final List<IPredicate> runPredicates) {
 		for (int i = 0; i < run.getStateSequence().size() - 2; i++) {
 			final IPredicate state = run.getStateSequence().get(i);
 			final L letter1 = run.getWord().getSymbol(i);
@@ -115,7 +115,7 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 
 			final NestedRun<L, IPredicate> currentRun = run.getSubRun(0, i);
 			final var refinementResult =
-					mChecker.checkConditionalCommutativity(currentRun, state, letter1, letter2);
+					mChecker.checkConditionalCommutativity(currentRun, state, runPredicates.get(i), letter1, letter2);
 
 			if (refinementResult != null) {
 				mStatistics.addCommutingCounterexample();
