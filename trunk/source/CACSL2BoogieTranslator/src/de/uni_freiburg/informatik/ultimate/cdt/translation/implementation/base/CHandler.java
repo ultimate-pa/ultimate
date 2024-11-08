@@ -1495,12 +1495,8 @@ public class CHandler {
 		if (hasContinue) {
 			bodyBlock.add(new Label(loc, loopLabel));
 		}
-		final ExpressionResult cond = dispatchCondition(loc, main, node.getCondition());
-		resultBuilder.addDeclarations(cond.getDeclarations());
-		bodyBlock.addAll(handleLoopCondition(loc, main, cond));
-		final ILocation igLoc = LocationFactory.createIgnoreLocation(loc);
-		final Expression loopCond = ExpressionFactory.createBooleanLiteral(igLoc, true);
-		return buildLoopResult(main, igLoc, node, loopCond, bodyBlock, resultBuilder);
+		bodyBlock.addAll(handleLoopCondition(loc, main, node.getCondition(), resultBuilder));
+		return buildLoopResult(main, loc, node, bodyBlock, resultBuilder);
 	}
 
 	public Result visit(final IDispatcher main, final IASTEqualsInitializer node) {
@@ -1560,18 +1556,8 @@ public class CHandler {
 						"Uninplemented type of for loop initialization: " + initializer.getClass());
 			}
 		}
-		final ExpressionResult cond = dispatchCondition(loc, main, node.getConditionExpression());
-		final ILocation loopLoc;
-		final Expression loopCond;
-		if (cond.hasNoSideEffects()) {
-			loopLoc = loc;
-			loopCond = cond.getLrValue().getValue();
-		} else {
-			resultBuilder.addDeclarations(cond.getDeclarations());
-			loopLoc = LocationFactory.createIgnoreLocation(loc);
-			loopCond = ExpressionFactory.createBooleanLiteral(loopLoc, true);
-		}
-		final List<Statement> bodyBlock = new ArrayList<>(handleLoopCondition(loc, main, cond));
+		final List<Statement> bodyBlock =
+				new ArrayList<>(handleLoopCondition(loc, main, node.getConditionExpression(), resultBuilder));
 		final boolean hasContinue = CdtASTUtils.containsContinue(node.getBody());
 		final String loopLabel = hasContinue ? mNameHandler.getGloballyUniqueIdentifier(SFO.LOOPLABEL) : null;
 		handleLoopBody(loc, main, node.getBody(), loopLabel, resultBuilder, bodyBlock);
@@ -1605,7 +1591,7 @@ public class CHandler {
 		updateStmtsAndDeclsAtScopeEnd(bodyBlockBuilder, node);
 		endScope();
 		resultBuilder.addDeclarations(bodyBlockBuilder.getDeclarations());
-		return buildLoopResult(main, loopLoc, node, loopCond, bodyBlockBuilder.getStatements(), resultBuilder);
+		return buildLoopResult(main, loc, node, bodyBlockBuilder.getStatements(), resultBuilder);
 	}
 
 	public Result visit(final IDispatcher main, final IASTFunctionCallExpression node) {
@@ -2635,20 +2621,9 @@ public class CHandler {
 		if (hasContinue) {
 			bodyBlock.add(new Label(loc, loopLabel));
 		}
-		final ExpressionResult cond = dispatchCondition(loc, main, node.getCondition());
-		final ILocation loopLoc;
-		final Expression loopCond;
-		if (cond.hasNoSideEffects()) {
-			loopLoc = loc;
-			loopCond = cond.getLrValue().getValue();
-		} else {
-			resultBuilder.addDeclarations(cond.getDeclarations());
-			loopLoc = LocationFactory.createIgnoreLocation(loc);
-			loopCond = ExpressionFactory.createBooleanLiteral(loopLoc, true);
-		}
-		bodyBlock.addAll(handleLoopCondition(loc, main, cond));
+		bodyBlock.addAll(handleLoopCondition(loc, main, node.getCondition(), resultBuilder));
 		handleLoopBody(loc, main, node.getBody(), loopLabel, resultBuilder, bodyBlock);
-		return buildLoopResult(main, loopLoc, node, loopCond, bodyBlock, resultBuilder);
+		return buildLoopResult(main, loc, node, bodyBlock, resultBuilder);
 	}
 
 	public Result visit(final IDispatcher main, final IGNUASTCompoundStatementExpression node) {
@@ -3654,37 +3629,38 @@ public class CHandler {
 		mInnerMostLoopLabel.pop();
 	}
 
-	private static List<Statement> handleLoopCondition(final ILocation loc, final IDispatcher main,
-			final ExpressionResult cond) {
-		final List<Statement> result = new ArrayList<>(cond.getStatements());
-		// Insert an if-statement: if (!cond) break;
-		// Make sure to havoc all aux-vars that are created from the translation of cond (in the if and else branches)
-		final Expression negatedCond = ExpressionFactory.constructUnaryExpression(loc,
-				UnaryExpression.Operator.LOGICNEG, cond.getLrValue().getValue());
-		final Statement[] havocs = CTranslationUtil.createHavocsForAuxVars(cond.getAuxVars()).toArray(Statement[]::new);
-		final IfStatement ifStmt = new IfStatement(loc, negatedCond,
-				DataStructureUtils.concat(havocs, new Statement[] { new BreakStatement(loc) }), havocs);
-		cond.getOverapprs().forEach(oa -> oa.annotate(ifStmt));
-		result.add(ifStmt);
-		return result;
-	}
-
-	private ExpressionResult dispatchCondition(final ILocation loc, final IDispatcher main, final IASTExpression cond) {
+	private List<Statement> handleLoopCondition(final ILocation loc, final IDispatcher main, final IASTExpression cond,
+			final ExpressionResultBuilder resultBuilder) {
 		if (cond == null) {
-			// If the condition is not present in a for-loop, we use true instead
-			return new ExpressionResult(
-					new RValue(ExpressionFactory.createBooleanLiteral(loc, true), new CPrimitive(CPrimitives.INT)));
+			// If the condition is not present in a for-loop, we can omit the if-statement
+			return List.of();
 		}
 		final ExpressionResult condResult = (ExpressionResult) main.dispatch(cond);
 		assert CTranslationUtil.isAuxVarMapComplete(mNameHandler, condResult.getDeclarations(),
 				condResult.getAuxVars());
-		return mExprResultTransformer.transformSwitchRexIntToBool(condResult, loc, cond);
+		final ExpressionResult condTransformed =
+				mExprResultTransformer.transformSwitchRexIntToBool(condResult, loc, cond);
+		final List<Statement> result = new ArrayList<>(condTransformed.getStatements());
+		resultBuilder.addDeclarations(condTransformed.getDeclarations());
+		// Insert an if-statement: if (!cond) break;
+		// Make sure to havoc all aux-vars that are created from the translation of cond (in the if and else branches)
+		final Expression negatedCond = ExpressionFactory.constructUnaryExpression(loc,
+				UnaryExpression.Operator.LOGICNEG, condTransformed.getLrValue().getValue());
+		final Statement[] havocs =
+				CTranslationUtil.createHavocsForAuxVars(condTransformed.getAuxVars()).toArray(Statement[]::new);
+		final IfStatement ifStmt = new IfStatement(loc, negatedCond,
+				DataStructureUtils.concat(havocs, new Statement[] { new BreakStatement(loc) }), havocs);
+		condTransformed.getOverapprs().forEach(oa -> oa.annotate(ifStmt));
+		result.add(ifStmt);
+		return result;
 	}
 
 	private Result buildLoopResult(final IDispatcher main, final ILocation loc, final IASTStatement node,
-			final Expression cond, final List<Statement> bodyBlock, final ExpressionResultBuilder resultBuilder) {
+			final List<Statement> bodyBlock, final ExpressionResultBuilder resultBuilder) {
 		final LoopInvariantSpecification[] spec = extractLoopInvariants(main, node);
-		final WhileStatement whileStmt = new WhileStatement(loc, cond, spec, bodyBlock.toArray(Statement[]::new));
+		final ILocation igLoc = LocationFactory.createIgnoreLocation(loc);
+		final WhileStatement whileStmt = new WhileStatement(igLoc, ExpressionFactory.createBooleanLiteral(igLoc, true),
+				spec, bodyBlock.toArray(Statement[]::new));
 		resultBuilder.getOverappr().stream().forEach(a -> a.annotate(whileStmt));
 		resultBuilder.addStatement(whileStmt);
 
