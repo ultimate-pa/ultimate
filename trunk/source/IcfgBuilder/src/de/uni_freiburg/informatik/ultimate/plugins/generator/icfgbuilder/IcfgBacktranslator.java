@@ -422,8 +422,9 @@ public class IcfgBacktranslator extends
 	}
 
 	private static Multigraph<String, BoogieASTNode> createWitnessNode(final IcfgLocation old) {
-		final WitnessInvariant inv = WitnessInvariant.getAnnotation(old);
-		final Multigraph<String, BoogieASTNode> rtr = new Multigraph<>(inv == null ? null : inv.getInvariant());
+		final WitnessInvariant<?> inv = WitnessInvariant.getAnnotation(old);
+		final Multigraph<String, BoogieASTNode> rtr =
+				new Multigraph<>(inv == null ? null : inv.getInvariant().toString());
 		ModelUtils.copyAnnotations(old, rtr);
 		return rtr;
 	}
@@ -432,6 +433,7 @@ public class IcfgBacktranslator extends
 	public Expression translateExpression(final Term term) {
 		return mTerm2Expression.translate(term);
 	}
+
 	// TODO maybe take getStepInfoFromCondition from BoogiePreprocessorBacktranslator
 	private StepInfo getStepInfoFromCondition(final Expression input, final Expression output) {
 		// compare the depth of UnaryExpression in the condition of the assume
