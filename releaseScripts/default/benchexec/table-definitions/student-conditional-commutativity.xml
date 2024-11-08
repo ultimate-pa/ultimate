@@ -5,30 +5,28 @@
   <column title="cputime"         displayTitle="CPU Time"/>
   <column title="walltime"        displayTitle="Wall Time"/>
   <column title="memory"          displayTitle="Memory" sourceUnit="B" displayUnit="MB"/>
-  <column title="iterations"      displayTitle="TAR Iterations">OverallIterations:\s*(\d+)</column>
-  <column title="overalltime"       displayTitle="ConComChecker Overall Time" sourceUnit="s">ConditionalCommutativityOverallTime: (\d+(\.\d+)?)s</column>
-  <column title="checktime"       displayTitle="ConComChecker Check Time" sourceUnit="s">ConditionalCommutativityCheckTime: (\d+(\.\d+)?)s</column>
-  <column title="IAIntegrations"  displayTitle="IA Integrations">ConditionalCommutativityIAIntegrations:\s*(\d+)</column>
-  <column title="DFSRestarts"     displayTitle="DFS Restarts">ConditionalCommutativityDFSRestarts:\s*(\d+)</column>
-  <column title="CommutingCounterexamples" displayTitle="CommutingCounterexamples">ConditionalCommutativityCommutingCounterexamples:\s*(\d+)</column>
+  <column title="Iterations"      displayTitle="TAR Iterations">OverallIterations:\s*(\d+)</column>
+  <column title="CheckTime"       displayTitle="Check Time" sourceUnit="s">ConditionalCommutativityCheckTime: (\d+(\.\d+)?)s</column>
+  <column title="ConditionCalculationTime" displayTitle="Condition Calculation Time" sourceUnit="s">ConditionalCommutativityConditionCalculationTime: (\d+(\.\d+)?)s</column>
+  <column title="CommutingCounterexamples" displayTitle="Commuting Counterexamples">ConditionalCommutativityCommutingCounterexamples:\s*(\d+)</column>
   <column title="ConditionCalculations" displayTitle="Condition Calculations">ConditionalCommutativityConditionCalculations:\s*(\d+)</column>
   <column title="TraceChecks" displayTitle="Trace Checks">ConditionalCommutativityTraceChecks:\s*(\d+)</column>
+  <column title="UnknownTraceChecks" displayTitle="Unknown Trace Checks">ConditionalCommutativityUnknownTraceChecks:\s*(\d+)</column>
   <column title="ImperfectProofs" displayTitle="Imperfect Proofs">ConditionalCommutativityImperfectProofs:\s*(\d+)</column>
+  <column title="QuantifiedConditions" displayTitle="Quantified Conditions">ConditionalCommutativityQuantifiedConditions:\s*(\d+)</column>
+  <column title="FalseConditions" displayTitle="False Conditions">ConditionalCommutativityFalseConditions:\s*(\d+)</column>
 
   <union>
     <result filename="conditional-commutativity.*.results.NONE.*.xml" />
   </union>
   <union>
-    <result filename="conditional-commutativity.*.results.CE-Default-Generator.*.xml" />
+    <result filename="conditional-commutativity.*.results.CE-Generator.*.xml" />
   </union>
   <union>
-    <result filename="conditional-commutativity.*.results.CE-Default-GeneratorWithContext.*.xml" />
+    <result filename="conditional-commutativity.*.results.CE-GeneratorWithContext.*.xml" />
   </union>
   <union>
-    <result filename="conditional-commutativity.*.results.CE-Default-SymbolicRelation.*.xml" />
-  </union>
-  <union>
-    <result filename="conditional-commutativity.*.results.IA-Default-SymbolicRelation.*.xml" />
+    <result filename="conditional-commutativity.*.results.CE-SymbolicRelation.*.xml" />
   </union>
 
 </table>
