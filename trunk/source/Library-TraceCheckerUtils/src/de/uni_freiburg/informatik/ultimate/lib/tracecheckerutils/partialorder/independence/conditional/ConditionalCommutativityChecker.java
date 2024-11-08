@@ -154,18 +154,18 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 	 */
 	// TODO method description is very vague (not more helpful than the method name)
 	public IRefinementEngineResult<L, Collection<QualifiedTracePredicates>> checkConditionalCommutativity(
-			final NestedRun<L, IPredicate> currentRun, final IPredicate state, final IPredicate context, final L letter1, final L letter2) {
+			final NestedRun<L, IPredicate> currentRun, final IPredicate state, final L letter1, final L letter2) {
 
 		mStatistics.startStopwatch(ConditionalCommutativityStopwatches.CHECKER);
 		try {
-			return checkConditionalCommutativityInternal(currentRun, state, context, letter1, letter2);
+			return checkConditionalCommutativityInternal(currentRun, state, letter1, letter2);
 		} finally {
 			mStatistics.stopStopwatch(ConditionalCommutativityStopwatches.CHECKER);
 		}
 	}
 
 	private IRefinementEngineResult<L, Collection<QualifiedTracePredicates>> checkConditionalCommutativityInternal(
-			final NestedRun<L, IPredicate> currentRun, final IPredicate state, final IPredicate context, final L letter1, final L letter2) {
+			final NestedRun<L, IPredicate> currentRun, final IPredicate state, final L letter1, final L letter2) {
 
 		// TODO this is brittle, let caller decide how one extracts a sleep set from the states
 		if (state instanceof SleepPredicate) {
@@ -185,15 +185,15 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 			return null;
 		}
 
-		final IPredicate condition = generateCondition(context, letter1, letter2);
+		final IPredicate condition = generateCondition(state, letter1, letter2);
 		if (condition == null) {
 			return null;
 		}
 		return proveCommutativityCondition(currentRun, letter1, condition);
 	}
 
-	private IPredicate generateCondition(final IPredicate pred, final L letter1, final L letter2) {
-		final IPredicate condition = generateRawCondition(letter1, letter2, pred);
+	private IPredicate generateCondition(final IPredicate state, final L letter1, final L letter2) {
+		final IPredicate condition = generateRawCondition(letter1, letter2, state);
 
 		if (condition == null) {
 			return null;

@@ -328,7 +328,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		if (mPref.useConditionalCommutativityChecker()) {
 
 			mRefinementResult = mConCounterexampleChecker
-					.getCommutativityProof((NestedRun<L, IPredicate>) mCounterexample, getCounterexamplePredicates());
+					.getCommutativityProof((NestedRun<L, IPredicate>) mCounterexample);
 
 			if (mRefinementResult != null) {
 				mCounterexampleConComFound = true;

@@ -156,7 +156,6 @@ public class DisjunctiveConditionalIndependenceRelation<L, S, C extends Collecti
 				return mBuildCollection.apply(List.of(generatedCondition));
 			}
 
-			//TODO: construct a conjunction instead of having a for loop iterating over the conjuncts
 			final var generatedConditions = new ArrayList<S>();
 			for (final var condition : state) {
 				final S generatedCondition = mUnderlyingSymbolic.getCommutativityCondition(condition, a, b);
