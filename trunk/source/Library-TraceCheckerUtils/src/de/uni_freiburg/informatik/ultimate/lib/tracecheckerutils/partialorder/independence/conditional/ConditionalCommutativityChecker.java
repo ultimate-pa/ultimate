@@ -138,7 +138,7 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 	 * Checks for conditional commutativity of two given letters (letter1,letter2), i.e. whether there is a condition
 	 * Phi such that those letters commute under Phi and Phi holds after the given currentRun. If this is the case,
 	 * returns a proof that this Phi holds.
-	 * 
+	 *
 	 *
 	 * @author Marcel Ebbinghaus
 	 *
@@ -213,10 +213,7 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 		mStatistics.startStopwatch(ConditionalCommutativityStopwatches.CONDITION);
 		try {
 			mStatistics.addConditionCalculation();
-			// TODO: context.getFormula does not work as intended
-			// not sure if getFormula is broken for MLPredicateWithInterpolants or we actually want to access its
-			// annotation instead (might be problematic if its just a MLPredicate, i.e. during the first iteration)
-			if (mPassContextToSymbolicRelation && context != null && !SmtUtils.isTrueLiteral(context.getFormula())) {
+			if (mPassContextToSymbolicRelation && context != null) {
 				return mSymbolicRelation.getCommutativityCondition(context, letter1, letter2);
 			}
 			return mSymbolicRelation.getCommutativityCondition(null, letter1, letter2);
