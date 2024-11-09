@@ -27,12 +27,11 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
 
 /**
  * NestedFormulas where we can set formulas after construction of the object.
@@ -67,10 +66,10 @@ public class ModifiableNestedFormulas<L extends IAction, TF, SF> extends NestedF
 	private final Map<Integer, TF> mGlobalOldVarAssignmentAtCall = new HashMap<>();
 
 	@SuppressWarnings("unchecked")
-	public ModifiableNestedFormulas(final NestedWord<L> nestedWord, final SortedMap<Integer, SF> pendingContexts,
-			final List<?> controlConfigurationSequence) {
-		super(nestedWord, pendingContexts, controlConfigurationSequence);
-		mTerms = (TF[]) new Object[nestedWord.length()];
+	public ModifiableNestedFormulas(final Counterexample<L> counterexample,
+			final SortedMap<Integer, SF> pendingContexts) {
+		super(counterexample, pendingContexts);
+		mTerms = (TF[]) new Object[counterexample.length()];
 	}
 
 	@Override

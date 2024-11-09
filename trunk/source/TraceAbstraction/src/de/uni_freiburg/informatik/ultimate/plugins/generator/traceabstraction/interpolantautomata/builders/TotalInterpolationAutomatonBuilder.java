@@ -69,6 +69,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.UnsatCores;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolatingTraceCheck;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolatingTraceCheckCraig;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
@@ -298,23 +299,23 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 		final SortedMap<Integer, IPredicate> pendingContexts = computePendingContexts(run);
 		// SortedMap<Integer, IPredicate> pendingContexts = new TreeMap<>();
 
+		final var ctex = new Counterexample<>(run.getWord(), run.getStateSequence());
 		InterpolatingTraceCheck<LETTER> tc;
 		switch (mInterpolation) {
 		case Craig_NestedInterpolation:
 		case Craig_TreeInterpolation:
-			tc = new InterpolatingTraceCheckCraig<>(precondition, postcondition, pendingContexts, run.getWord(),
-					run.getStateSequence(), mServices, mCsToolkit, mPredicateFactory, mPredicateUnifier,
-					AssertCodeBlockOrder.NOT_INCREMENTALLY, false, mCollectInterpolantStatistics, mInterpolation, true,
-					mSimplificationTechnique);
+			tc = new InterpolatingTraceCheckCraig<>(precondition, postcondition, pendingContexts, ctex, mServices,
+					mCsToolkit, mPredicateFactory, mPredicateUnifier, AssertCodeBlockOrder.NOT_INCREMENTALLY, false,
+					mCollectInterpolantStatistics, mInterpolation, true, mSimplificationTechnique);
 			break;
 		case ForwardPredicates:
 		case BackwardPredicates:
 		case FPandBP:
 		case FPandBPonlyIfFpWasNotPerfect:
-			tc = new TraceCheckSpWp<>(precondition, postcondition, pendingContexts, run.getWord(), mCsToolkit,
+			tc = new TraceCheckSpWp<>(precondition, postcondition, pendingContexts, ctex, mCsToolkit,
 					AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true, mServices, false,
 					mPredicateFactory, mPredicateUnifier, mInterpolation, mCsToolkit.getManagedScript(),
-					mSimplificationTechnique, run.getStateSequence(), mCollectInterpolantStatistics);
+					mSimplificationTechnique, mCollectInterpolantStatistics);
 			break;
 		case PathInvariants:
 		default:

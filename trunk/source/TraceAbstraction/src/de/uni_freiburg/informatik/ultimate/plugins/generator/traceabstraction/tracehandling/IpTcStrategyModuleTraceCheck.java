@@ -26,9 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
-import java.util.List;
-
-import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -41,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.R
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.RefinementEngineStatisticsGenerator.RefinementEngineStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheck;
 
 /**
@@ -57,23 +55,21 @@ public abstract class IpTcStrategyModuleTraceCheck<T extends IInterpolatingTrace
 	protected final IUltimateServiceProvider mServices;
 	protected final TaCheckAndRefinementPreferences<?> mPrefs;
 	protected final AssertionOrderModulation<LETTER> mAssertionOrderModulation;
-	protected final Word<LETTER> mCounterexample;
-	protected final List<?> mControlConfigurationSequence;
+	protected final Counterexample<LETTER> mCounterexample;
 	protected final IPredicateUnifier mPredicateUnifier;
 	protected final IPredicate mPrecondition;
 	protected final IPredicate mPostcondition;
 	protected final PredicateFactory mPredicateFactory;
 
 	public IpTcStrategyModuleTraceCheck(final TaskIdentifier taskIdentifier, final IUltimateServiceProvider services,
-			final TaCheckAndRefinementPreferences<LETTER> prefs, final Word<LETTER> counterExample,
-			final List<?> controlConfigurationSequence, final IPredicate precondition, final IPredicate postcondition,
+			final TaCheckAndRefinementPreferences<LETTER> prefs, final Counterexample<LETTER> counterexample,
+			final IPredicate precondition, final IPredicate postcondition,
 			final AssertionOrderModulation<LETTER> assertionOrderModulation, final IPredicateUnifier predicateUnifier,
 			final PredicateFactory predicateFactory) {
 		mServices = services;
 		mPrefs = prefs;
 		mAssertionOrderModulation = assertionOrderModulation;
-		mCounterexample = counterExample;
-		mControlConfigurationSequence = controlConfigurationSequence;
+		mCounterexample = counterexample;
 		mPredicateUnifier = predicateUnifier;
 		mPredicateFactory = predicateFactory;
 		mPrecondition = precondition;

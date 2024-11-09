@@ -96,6 +96,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult.BasicRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.NwaFloydHoareValidityCheck;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.cfg2automaton.Cfg2Automaton;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
@@ -291,10 +292,10 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 
 		IStatisticsDataProvider refinementEngineStats = null;
 		final var locations = getControlLocationsFromCounterexample(mCounterexample);
-		final ITARefinementStrategy<L> strategy =
-				mStrategyFactory.constructStrategy(getServices(), mCounterexample.getWord(), locations, mAbstraction,
-						new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()),
-						mPredicateFactoryInterpolantAutomata, getPreconditionProvider(), getPostconditionProvider());
+		final var counterexample = new Counterexample<>(mCounterexample.getWord(), locations);
+		final ITARefinementStrategy<L> strategy = mStrategyFactory.constructStrategy(getServices(), counterexample,
+				mAbstraction, new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()),
+				mPredicateFactoryInterpolantAutomata, getPreconditionProvider(), getPostconditionProvider());
 		try {
 			if (mPref.hasLimitPathProgramCount() && mPref.getLimitPathProgramCount() < mStrategyFactory
 					.getPathProgramCache().getPathProgramCount(mCounterexample.getWord())) {

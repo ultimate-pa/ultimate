@@ -30,12 +30,10 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletraceche
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.OldVarsAssignmentCache;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.ICallAction;
@@ -48,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.AnnotateAndAssertConjunctsOfCodeBlocks.SplitEqualityMapping;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -90,15 +89,15 @@ public class RelevantTransFormulas<L extends IAction> extends NestedFormulas<L, 
 	 */
 	private int mSumSizeFormulasInUnsatCore = 0;
 
-	public RelevantTransFormulas(final NestedWord<L> nestedTrace, final List<?> controlConfigurationSequence,
-			final IPredicate precondition, final IPredicate postcondition,
-			final SortedMap<Integer, IPredicate> pendingContexts, final Set<L> unsatCore,
-			final OldVarsAssignmentCache oldVarsAssignmentCache, final boolean[] localVarAssignmentsAtCallInUnsatCore,
-			final boolean[] oldVarAssignmentAtCallInUnsatCore, final ManagedScript script) {
-		super(nestedTrace, pendingContexts, controlConfigurationSequence);
+	public RelevantTransFormulas(final Counterexample<L> counterexample, final IPredicate precondition,
+			final IPredicate postcondition, final SortedMap<Integer, IPredicate> pendingContexts,
+			final Set<L> unsatCore, final OldVarsAssignmentCache oldVarsAssignmentCache,
+			final boolean[] localVarAssignmentsAtCallInUnsatCore, final boolean[] oldVarAssignmentAtCallInUnsatCore,
+			final ManagedScript script) {
+		super(counterexample, pendingContexts);
 		super.setPrecondition(precondition);
 		super.setPostcondition(postcondition);
-		mTransFormulas = new UnmodifiableTransFormula[nestedTrace.length()];
+		mTransFormulas = new UnmodifiableTransFormula[counterexample.length()];
 		mGlobalAssignmentTransFormulaAtCall = new HashMap<>();
 		mOldVarsAssignmentTransFormulasAtCall = new HashMap<>();
 		mScript = script;
@@ -111,7 +110,7 @@ public class RelevantTransFormulas<L extends IAction> extends NestedFormulas<L, 
 			final IPredicate postcondition, final SortedMap<Integer, IPredicate> pendingContexts,
 			final Set<Term> unsatCore, final OldVarsAssignmentCache modGlobalVarManager, final ManagedScript script,
 			final AnnotateAndAsserter<L> aaa, final AnnotateAndAssertConjunctsOfCodeBlocks<L> aac) {
-		super(nestedFormulas.getTrace(), pendingContexts, nestedFormulas.getControlConfigurations());
+		super(nestedFormulas.getCounterexample(), pendingContexts);
 		super.setPrecondition(precondition);
 		super.setPostcondition(postcondition);
 		mTransFormulas = new UnmodifiableTransFormula[nestedFormulas.getTrace().length()];

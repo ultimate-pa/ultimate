@@ -28,6 +28,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.RefinementEngineStatisticsGenerator;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
@@ -151,15 +152,16 @@ public class StrategyModuleMcr<L extends IIcfgTransition<?>>
 	}
 
 	@Override
-	public McrTraceCheckResult<L> getResult(final Word<L> counterexample, final List<?> controlLocationSequence) {
+	public McrTraceCheckResult<L> getResult(final Word<L> counterexample) {
 		// Run mRefinementEngine for the given trace
 		final RefinementStrategy refinementStrategy = mPrefs.getMcrRefinementStrategy();
 		if (refinementStrategy == RefinementStrategy.MCR) {
 			throw new IllegalStateException("MCR cannot used with MCR as internal strategy.");
 		}
-		final IRefinementStrategy<L> strategy = mStrategyFactory.constructStrategy(mServices, counterexample,
-				controlLocationSequence, mAbstraction, mTaskIdentifier, mEmptyStackFactory, mPredicateUnifier,
-				mPredicateUnifier.getTruePredicate(), mPredicateUnifier.getFalsePredicate(), refinementStrategy);
+		final IRefinementStrategy<L> strategy =
+				mStrategyFactory.constructStrategy(mServices, new Counterexample<>(counterexample), mAbstraction,
+						mTaskIdentifier, mEmptyStackFactory, mPredicateUnifier, mPredicateUnifier.getTruePredicate(),
+						mPredicateUnifier.getFalsePredicate(), refinementStrategy);
 		final AutomatonFreeRefinementEngine<L> afe = new AutomatonFreeRefinementEngine<>(mServices, mLogger, strategy);
 		final List<L> trace = counterexample.asList();
 		final RefinementEngineStatisticsGenerator statistics = afe.getRefinementEngineStatistics();

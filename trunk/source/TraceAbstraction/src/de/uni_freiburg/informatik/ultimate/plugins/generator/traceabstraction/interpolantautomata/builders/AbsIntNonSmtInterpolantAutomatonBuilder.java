@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 
 /**
@@ -69,13 +70,12 @@ public class AbsIntNonSmtInterpolantAutomatonBuilder<LETTER>
 	public AbsIntNonSmtInterpolantAutomatonBuilder(final IUltimateServiceProvider services,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> oldAbstraction,
 			final IPredicateUnifier predUnifier, final ManagedScript csToolkit, final IIcfgSymbolTable symbolTable,
-			final Word<LETTER> currentCounterexample, final List<?> controlConfigurationSequence,
-			final SimplificationTechnique simplificationTechnique,
+			final Counterexample<LETTER> currentCounterexample, final SimplificationTechnique simplificationTechnique,
 			final IEmptyStackStateFactory<IPredicate> emptyStackFactory) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		mCurrentCounterExample = currentCounterexample;
-		mControlConfigurationSequence = controlConfigurationSequence;
+		mCurrentCounterExample = currentCounterexample.getTrace();
+		mControlConfigurationSequence = currentCounterexample.getControlConfigurations();
 		mBoogie2Smt = csToolkit;
 		mPredicateFactory = new PredicateFactory(services, mBoogie2Smt, symbolTable);
 

@@ -226,8 +226,8 @@ public class MetaTraceTransformer<L extends IIcfgTransition<?>> {
 			final Integer start, final Integer end, final IPredicate precondition, final IPredicate postcondition) {
 		final List<L> loopTrace = mCounterexample.subList(start, end);
 		final NestedWord<L> nestedWordLoopTrace = TraceCheckUtils.toNestedWord(loopTrace);
-		final DefaultTransFormulas<L> rtf = new DefaultTransFormulas<>(nestedWordLoopTrace, null, precondition,
-				postcondition, Collections.emptySortedMap(), mToolkit.getOldVarsAssignmentCache(), false);
+		final DefaultTransFormulas<L> rtf = new DefaultTransFormulas<>(nestedWordLoopTrace, precondition, postcondition,
+				Collections.emptySortedMap(), mToolkit.getOldVarsAssignmentCache(), false);
 		final IterativePredicateTransformer<L> itp = new IterativePredicateTransformer<>(
 				mPredUnifier.getPredicateFactory(), mScript, mToolkit.getModifiableGlobalsTable(), mServices,
 				nestedWordLoopTrace, precondition, postcondition, Collections.emptySortedMap(),

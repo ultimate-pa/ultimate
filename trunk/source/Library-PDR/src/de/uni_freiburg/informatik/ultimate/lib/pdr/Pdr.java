@@ -1215,7 +1215,7 @@ public class Pdr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 						mSymbolTable);
 
 		final OldVarsAssignmentCache oldVarsAssignmentCache = mCsToolkit.getOldVarsAssignmentCache();
-		final DefaultTransFormulas<L> rtf = new DefaultTransFormulas<>(nestedWord, null, mTruePred, mFalsePred,
+		final DefaultTransFormulas<L> rtf = new DefaultTransFormulas<>(nestedWord, mTruePred, mFalsePred,
 				Collections.emptySortedMap(), oldVarsAssignmentCache, false);
 
 		final IPredicatePostprocessor pdrPostProcessor = new IPredicatePostprocessor() {

@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheck;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -85,8 +86,8 @@ public class FixpointCheck2<L extends IIcfgTransition<?>> {
 		final IPredicate postcondition = constructNegatedLoopPredicate(services, csToolkit.getManagedScript(), pf,
 				mLoop);
 		final SortedMap<Integer, IPredicate> pendingContexts = Collections.emptySortedMap();
-		final TraceCheck<L> tc = new TraceCheck<>(precondition, postcondition, pendingContexts, mStem, null, services,
-				csToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY, true, false);
+		final TraceCheck<L> tc = new TraceCheck<>(precondition, postcondition, pendingContexts,
+				new Counterexample<>(mStem), services, csToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY, true, false);
 		switch (tc.isCorrect()) {
 		case SAT:
 			mResult = HasFixpoint.YES;

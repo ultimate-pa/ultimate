@@ -86,6 +86,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.I
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.DagSizePrinter;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BinaryStatePredicateManager.BspmResult;
@@ -871,8 +872,8 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		private IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>>
 				checkFeasibilityAndComputeInterpolants(final NestedWord<L> word, final TaskIdentifier taskIdentifier) {
 			try {
-				final ITARefinementStrategy<L> strategy = mRefinementStrategyFactory.constructStrategy(mServices, word,
-						null, mAbstraction, taskIdentifier, mStateFactoryForInterpolantAutomaton,
+				final ITARefinementStrategy<L> strategy = mRefinementStrategyFactory.constructStrategy(mServices,
+						new Counterexample<>(word), mAbstraction, taskIdentifier, mStateFactoryForInterpolantAutomaton,
 						IPreconditionProvider.constructDefaultPreconditionProvider(),
 						IPostconditionProvider.constructDefaultPostconditionProvider());
 				final IRefinementEngine<L, NestedWordAutomaton<L, IPredicate>> engine =

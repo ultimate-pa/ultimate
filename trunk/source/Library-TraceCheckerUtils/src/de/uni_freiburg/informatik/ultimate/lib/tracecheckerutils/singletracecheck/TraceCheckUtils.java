@@ -367,7 +367,7 @@ public final class TraceCheckUtils {
 	public static <L extends IAction> NestedFormulas<L, UnmodifiableTransFormula, IPredicate> decoupleArrayValues(
 			final ManagedScript mgdScript, final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> nf) {
 		final ModifiableNestedFormulas<L, UnmodifiableTransFormula, IPredicate> result =
-				new ModifiableNestedFormulas<>(nf.getTrace(), new TreeMap<>(), nf.getControlConfigurations());
+				new ModifiableNestedFormulas<>(nf.getCounterexample(), new TreeMap<>());
 		result.setPrecondition(nf.getPrecondition());
 		result.setPostcondition(nf.getPostcondition());
 		for (int i = 0; i < nf.getTrace().length(); i++) {

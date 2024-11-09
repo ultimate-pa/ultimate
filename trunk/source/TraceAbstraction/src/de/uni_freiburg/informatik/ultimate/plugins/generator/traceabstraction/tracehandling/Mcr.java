@@ -103,7 +103,7 @@ public class Mcr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 			mLogger.info("---- MCR iteration " + iteration + " ----");
 			iteration++;
 			// TODO Is it correct to not pass any control locations here?
-			result = mResultProvider.getResult(counterexample.getWord(), null);
+			result = mResultProvider.getResult(counterexample.getWord());
 			final List<L> trace = counterexample.getWord().asList();
 			if (result.isCorrect() != LBool.UNSAT) {
 				// We found a feasible error trace
@@ -235,6 +235,6 @@ public class Mcr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 	}
 
 	public interface IMcrResultProvider<LETTER extends IIcfgTransition<?>> {
-		McrTraceCheckResult<LETTER> getResult(Word<LETTER> counterexample, List<?> controlLocationSequence);
+		McrTraceCheckResult<LETTER> getResult(Word<LETTER> counterexample);
 	}
 }

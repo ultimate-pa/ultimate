@@ -80,6 +80,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.Reason;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -264,8 +265,7 @@ public final class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 
 	public IInterpolantAutomatonBuilder<LETTER, IPredicate> createInterpolantAutomatonBuilder(
 			final IPredicateUnifier predicateUnifier, final INestedWordAutomaton<LETTER, IPredicate> abstraction,
-			final Word<LETTER> currentCex, final List<?> controlConfigurationSequence,
-			final IEmptyStackStateFactory<IPredicate> emptyStackFactory) {
+			final Counterexample<LETTER> currentCex, final IEmptyStackStateFactory<IPredicate> emptyStackFactory) {
 		if (mCurrentIteration == null) {
 			throw createNoFixpointsException();
 		}
@@ -281,11 +281,11 @@ public final class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 			case USE_PATH_PROGRAM:
 				aiInterpolAutomatonBuilder = new AbsIntNonSmtInterpolantAutomatonBuilder<>(mServices, abstraction,
 						predicateUnifier, mCsToolkit.getManagedScript(), mRoot.getCfgSmtToolkit().getSymbolTable(),
-						currentCex, controlConfigurationSequence, simplificationTechnique, emptyStackFactory);
+						currentCex, simplificationTechnique, emptyStackFactory);
 				break;
 			case USE_PREDICATES:
 				aiInterpolAutomatonBuilder = new AbsIntStraightLineInterpolantAutomatonBuilder<>(mServices, abstraction,
-						mCurrentIteration.getResult(), predicateUnifier, mCsToolkit, currentCex,
+						mCurrentIteration.getResult(), predicateUnifier, mCsToolkit, currentCex.getTrace(),
 						simplificationTechnique, mRoot.getCfgSmtToolkit().getSymbolTable(), emptyStackFactory);
 				break;
 			case USE_CANONICAL:
@@ -293,7 +293,7 @@ public final class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 						"Canonical interpolant automaton generation not yet implemented.");
 			case USE_TOTAL:
 				aiInterpolAutomatonBuilder = new AbsIntTotalInterpolationAutomatonBuilder<>(mServices, abstraction,
-						mCurrentIteration.getResult(), predicateUnifier, mCsToolkit, currentCex,
+						mCurrentIteration.getResult(), predicateUnifier, mCsToolkit, currentCex.getTrace(),
 						mRoot.getCfgSmtToolkit().getSymbolTable(), emptyStackFactory);
 				break;
 			default:

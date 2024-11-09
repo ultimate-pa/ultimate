@@ -93,6 +93,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 
 	private final AssertCodeBlockOrder mAssertCodeBlocksOrder;
 	private int mCheckSat;
+	private final List<Object> mControlConfigurationSequence;
 
 	public AnnotateAndAsserterWithStmtOrderPrioritization(final ManagedScript mgdScriptTc,
 			final NestedFormulas<L, Term, Term> nestedSSA, final AnnotateAndAssertCodeBlocks<L> aaacb,
@@ -101,6 +102,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 		super(mgdScriptTc, nestedSSA, aaacb, tcbg, services);
 		mAssertCodeBlocksOrder = assertCodeBlocksOrder;
 		mCheckSat = 0;
+		mControlConfigurationSequence = nestedSSA.getControlConfigurations();
 	}
 
 	/**
@@ -189,10 +191,10 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 	@Override
 	public void buildAnnotatedSsaAndAssertTerms() {
 		assert mCheckSat == 0 : "You should not call this method twice";
-		final HashTreeRelation<?, Integer> rwt =
+		final HashTreeRelation<Object, Integer> rwt =
 				computeRelationWithTreeSetForTrace(0, mTrace.length(), mControlConfigurationSequence);
 
-		mAnnotSSA = new ModifiableNestedFormulas<>(mTrace, new TreeMap<Integer, Term>(), mControlConfigurationSequence);
+		mAnnotSSA = new ModifiableNestedFormulas<>(mSSA.getCounterexample(), new TreeMap<Integer, Term>());
 
 		mAnnotSSA.setPrecondition(mAnnotateAndAssertCodeBlocks.annotateAndAssertPrecondition());
 		mAnnotSSA.setPostcondition(mAnnotateAndAssertCodeBlocks.annotateAndAssertPostcondition());
@@ -200,7 +202,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 		final Collection<Integer> pendingReturnPositions = new ArrayList<>();
 
 		final Map<Integer, Set<Integer>> depth2Statements =
-				partitionStatementsAccordingDepth(mTrace, rwt, (List) mControlConfigurationSequence);
+				partitionStatementsAccordingDepth(mTrace, rwt, mControlConfigurationSequence);
 		// Report benchmark
 		mTcbg.reportNewCodeBlocks(mTrace.length());
 

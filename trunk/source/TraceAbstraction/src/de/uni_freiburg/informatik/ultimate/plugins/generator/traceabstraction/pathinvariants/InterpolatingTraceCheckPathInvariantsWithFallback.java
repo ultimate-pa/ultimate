@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolatingTraceCheck;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
@@ -67,17 +68,18 @@ public class InterpolatingTraceCheckPathInvariantsWithFallback<LETTER extends IA
 
 	public InterpolatingTraceCheckPathInvariantsWithFallback(final IPredicate precondition,
 			final IPredicate postcondition, final SortedMap<Integer, IPredicate> pendingContexts,
-			final NestedWord<LETTER> counterexample, final List<?> controlLocationSequence,
-			final CfgSmtToolkit csToolkit, final AssertCodeBlockOrder assertCodeBlockOrder,
-			final IUltimateServiceProvider services, final boolean computeRcfgProgramExecution,
-			final PredicateFactory predicateFactory, final IPredicateUnifier predicateUnifier,
-			final InvariantSynthesisSettings invariantSynthesisSettings,
+			final Counterexample<LETTER> counterexample, final CfgSmtToolkit csToolkit,
+			final AssertCodeBlockOrder assertCodeBlockOrder, final IUltimateServiceProvider services,
+			final boolean computeRcfgProgramExecution, final PredicateFactory predicateFactory,
+			final IPredicateUnifier predicateUnifier, final InvariantSynthesisSettings invariantSynthesisSettings,
 			final SimplificationTechnique simplificationTechnique, final IIcfg<?> icfgContainer,
 			final boolean collectInterpolantStatistics) {
-		super(precondition, postcondition, pendingContexts, counterexample, controlLocationSequence, services,
-				csToolkit, csToolkit.getManagedScript(), predicateFactory, predicateUnifier, assertCodeBlockOrder,
+		super(precondition, postcondition, pendingContexts, counterexample, services, csToolkit,
+				csToolkit.getManagedScript(), predicateFactory, predicateUnifier, assertCodeBlockOrder,
 				computeRcfgProgramExecution, collectInterpolantStatistics, simplificationTechnique);
-		mNestedWord = counterexample;
+		mNestedWord = counterexample.getTrace();
+		counterexample.requireControlConfigurations();
+
 		mInvariantSynthesisSettings = invariantSynthesisSettings;
 		mIcfg = icfgContainer;
 		if (super.isCorrect() == LBool.UNSAT) {
