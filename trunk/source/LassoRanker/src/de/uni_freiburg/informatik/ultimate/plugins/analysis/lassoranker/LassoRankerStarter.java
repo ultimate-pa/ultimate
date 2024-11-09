@@ -32,7 +32,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -98,6 +97,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.Rank
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer.CodeBlockSize;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  * Takes the root node of an RCFG, extracts a lasso and analyzes its termination.
@@ -260,10 +260,10 @@ public class LassoRankerStarter {
 		reportNoResult(templates);
 	}
 
-	private Map<String, ILocation> lassoWasOverapproximated() {
-		final Map<String, ILocation> overapproximations = new HashMap<>();
-		overapproximations.putAll(Overapprox.getOverapproximations(mStem.asList()));
-		overapproximations.putAll(Overapprox.getOverapproximations(mLoop.asList()));
+	private HashRelation<String, ILocation> lassoWasOverapproximated() {
+		final HashRelation<String, ILocation> overapproximations = new HashRelation<>();
+		overapproximations.addAll(Overapprox.getOverapproximations(mStem.asList()));
+		overapproximations.addAll(Overapprox.getOverapproximations(mLoop.asList()));
 		return overapproximations;
 	}
 
