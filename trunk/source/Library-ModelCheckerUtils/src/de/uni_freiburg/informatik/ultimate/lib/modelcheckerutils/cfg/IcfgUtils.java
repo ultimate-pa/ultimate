@@ -161,7 +161,8 @@ public class IcfgUtils {
 	}
 
 	public static <LOC extends IcfgLocation> int getNumberOfLocations(final IIcfg<LOC> icfg) {
-		return (int) getAllLocations(icfg).count();
+		return icfg.getProgramPoints().entrySet().stream().map(x -> x.getValue().size())
+				.collect(Collectors.summingInt(Integer::intValue));
 	}
 
 	/**
