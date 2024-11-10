@@ -32,7 +32,6 @@ import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 
 /**
@@ -87,14 +86,6 @@ public class Counterexample<L> {
 		if (controlConfigurations.size() != mWord.length() + 1) {
 			throw new IllegalArgumentException("Number of control configurations does not match word length");
 		}
-	}
-
-	public static <L extends IAction> Counterexample<L> withOptionalConfigurations(final Word<L> word,
-			final List<?> maybeControlConfigurations) {
-		if (maybeControlConfigurations == null) {
-			return new Counterexample<>(word);
-		}
-		return new Counterexample<>(word, maybeControlConfigurations);
 	}
 
 	public NestedWord<L> getWord() {

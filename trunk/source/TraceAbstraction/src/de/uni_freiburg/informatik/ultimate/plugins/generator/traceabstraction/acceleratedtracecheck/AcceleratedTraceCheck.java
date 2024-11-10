@@ -118,6 +118,10 @@ public class AcceleratedTraceCheck<L extends IIcfgTransition<?>> implements IInt
 		mPrefs = prefs;
 		mPredicateFactory = predicateFactory;
 
+		// Daniel (2024-11-10): Control configurations are required in this class.
+		// (https://github.com/ultimate-pa/ultimate/pull/692#discussion_r1835721647)
+		counterexample.requireControlConfigurations();
+
 		mIcfg = mPrefs.getIcfgContainer();
 		mPredicateUnifier = predicateUnifier;
 		mInterpolants = null;
@@ -200,13 +204,10 @@ public class AcceleratedTraceCheck<L extends IIcfgTransition<?>> implements IInt
 			// (inclusive) of the loop body
 			final NestedWord<L> subWord =
 					counterexample.getWord().getSubWord(aseg.getStartPosition(), aseg.getEndPosition() + 1);
-			final List<?> subCCS =
-					counterexample.hasControlConfigurations()
-							? counterexample.getControlConfigurations().subList(aseg.getStartPosition(),
-									aseg.getEndPosition() + 2)
-							: null;
+			final List<Object> subCCS = counterexample.getControlConfigurations().subList(aseg.getStartPosition(),
+					aseg.getEndPosition() + 2);
 			final TraceCheckSpWp<L> inter =
-					checkTrace(precondition, postcondition, Counterexample.withOptionalConfigurations(subWord, subCCS));
+					checkTrace(precondition, postcondition, new Counterexample<>(subWord, subCCS));
 			if (inter.isCorrect() != LBool.UNSAT) {
 				throw new UnsupportedOperationException("Body trace check " + inter.isCorrect());
 			}
