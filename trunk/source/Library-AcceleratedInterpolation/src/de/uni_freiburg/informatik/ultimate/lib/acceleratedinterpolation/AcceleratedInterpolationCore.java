@@ -163,7 +163,7 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 		mLogger = logger;
 		mIcfg = icfg;
 		mCounterexampleTrace = counterexample;
-		mCounterexample = counterexample.getTrace().asList();
+		mCounterexample = counterexample.getWord().asList();
 		mLoopdetector = loopdetector;
 		mAccelerator = accelerator;
 		mAccelerations = new HashMap<>();
@@ -277,7 +277,7 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 		// translate the given trace into a meta trace which makes use of the loop
 		// acceleration.
 		final Counterexample<L> metaCounterexample = generateMetaTrace();
-		final Word<L> metaTrace = metaCounterexample.getTrace();
+		final Word<L> metaTrace = metaCounterexample.getWord();
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Meta-Trace: ");
 			for (int i = 0; i < metaTrace.length(); i++) {

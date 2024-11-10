@@ -36,9 +36,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 
 /**
- * Represents a trace (a word) with an optional list of control configurations of the program visited by the trace.
- *
- * We use this class to represent counterexample traces for trace checks, with additional meta-information.
+ * Represents a counterexample trace (a word) with additional meta-information that might be relevant for trace checks.
  *
  * In particular, the class currently stores an <em>optional</em> list of control configurations visited in the program.
  * These may be {@link IcfgLocation}s (for sequential programs), arrays of {@link IcfgLocation}s indicating the current
@@ -57,17 +55,17 @@ public class Counterexample<L> {
 			"Counterexample with control configurations is required, "
 					+ "but this counterexample does not have control configurations.";
 
-	private final NestedWord<L> mTrace;
+	private final NestedWord<L> mWord;
 	private final List<Object> mControlConfigurations;
 
 	/**
 	 * Creates a new instance that does not have any control configurations
 	 *
-	 * @param trace
+	 * @param word
 	 *            The trace of the counterexample
 	 */
-	public Counterexample(final Word<L> trace) {
-		mTrace = NestedWord.nestedWord(trace);
+	public Counterexample(final Word<L> word) {
+		mWord = NestedWord.nestedWord(word);
 		mControlConfigurations = null;
 	}
 
@@ -83,10 +81,10 @@ public class Counterexample<L> {
 	 *             if the length of the control configurations does not match the trace
 	 */
 	public Counterexample(final Word<L> trace, final List<?> controlConfigurations) {
-		mTrace = NestedWord.nestedWord(Objects.requireNonNull(trace));
+		mWord = NestedWord.nestedWord(Objects.requireNonNull(trace));
 		mControlConfigurations = List.copyOf(Objects.requireNonNull(controlConfigurations));
 
-		if (controlConfigurations.size() != mTrace.length() + 1) {
+		if (controlConfigurations.size() != mWord.length() + 1) {
 			throw new IllegalArgumentException("CNumber of control configurations does not match trace length");
 		}
 	}
@@ -99,15 +97,15 @@ public class Counterexample<L> {
 		return new Counterexample<>(trace, maybeControlConfigurations);
 	}
 
-	public NestedWord<L> getTrace() {
-		return mTrace;
+	public NestedWord<L> getWord() {
+		return mWord;
 	}
 
 	/**
 	 * @return the length of the trace of this counterexample.
 	 */
 	public int length() {
-		return mTrace.length();
+		return mWord.length();
 	}
 
 	public boolean hasControlConfigurations() {

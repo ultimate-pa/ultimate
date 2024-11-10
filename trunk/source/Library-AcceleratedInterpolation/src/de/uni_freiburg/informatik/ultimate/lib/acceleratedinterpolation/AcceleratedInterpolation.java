@@ -131,7 +131,7 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 		mTransitionClazz = transitionClazz;
 		mServices = services;
 		mCounterexampleTrace = counterexample;
-		mCounterexample = mCounterexampleTrace.getTrace().asList();
+		mCounterexample = mCounterexampleTrace.getWord().asList();
 		mPrefs = prefs;
 		mAccelInterpolBench = new AcceleratedInterpolationBenchmark();
 		mAccelInterpolBench.start(AcceleratedInterpolationStatisticsDefinitions.ACCELINTERPOL_OVERALL);

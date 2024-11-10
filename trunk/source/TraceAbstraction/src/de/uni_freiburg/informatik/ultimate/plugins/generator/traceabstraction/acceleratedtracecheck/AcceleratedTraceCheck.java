@@ -112,7 +112,7 @@ public class AcceleratedTraceCheck<L extends IIcfgTransition<?>> implements IInt
 		mLogger = logger;
 		mMgdScript = script;
 		mServices = services;
-		mCounterexample = counterexample.getTrace().asList();
+		mCounterexample = counterexample.getWord().asList();
 		mPrecondition = precondition;
 		mPostcondition = postcondition;
 		mPrefs = prefs;
@@ -157,7 +157,7 @@ public class AcceleratedTraceCheck<L extends IIcfgTransition<?>> implements IInt
 			case SAT:
 				final IcfgProgramExecution<L> pe = tc.getRcfgProgramExecution();
 				mFeasibleProgramExecution =
-						constructProgramExecution(counterexample.getTrace(), acceleratedSegments, pe);
+						constructProgramExecution(counterexample.getWord(), acceleratedSegments, pe);
 				break;
 			case UNKNOWN:
 				mReasonUnknown = tc.getTraceCheckReasonUnknown();
@@ -199,7 +199,7 @@ public class AcceleratedTraceCheck<L extends IIcfgTransition<?>> implements IInt
 			// Run for the trace from the first letter (inclusive) to the last letter
 			// (inclusive) of the loop body
 			final NestedWord<L> subWord =
-					counterexample.getTrace().getSubWord(aseg.getStartPosition(), aseg.getEndPosition() + 1);
+					counterexample.getWord().getSubWord(aseg.getStartPosition(), aseg.getEndPosition() + 1);
 			final List<?> subCCS =
 					counterexample.hasControlConfigurations()
 							? counterexample.getControlConfigurations().subList(aseg.getStartPosition(),
@@ -299,7 +299,7 @@ public class AcceleratedTraceCheck<L extends IIcfgTransition<?>> implements IInt
 	private Counterexample<L> construtAcceleratedCounterexample(final IUltimateServiceProvider services,
 			final ILogger logger, final ManagedScript mgdScript, final IcfgEdgeFactory icfgEdgeFactory,
 			final TreeMap<Integer, AcceleratedSegment> acceleratedSegments, final Counterexample<L> counterexample) {
-		final var counterexampleWord = counterexample.getTrace();
+		final var counterexampleWord = counterexample.getWord();
 		final var controlConfigurationSequence = counterexample.getControlConfigurations();
 
 		int lastcut = 0;
@@ -337,7 +337,7 @@ public class AcceleratedTraceCheck<L extends IIcfgTransition<?>> implements IInt
 			final TreeSet<Integer> positionsWithSimilarProgramPoint = loopPositions.getImage(i);
 			final Integer nextPosition = positionsWithSimilarProgramPoint.higher(i);
 			if (nextPosition != null) {
-				final NestedWord<L> subWord = counterexample.getTrace().getSubWord(i, nextPosition);
+				final NestedWord<L> subWord = counterexample.getWord().getSubWord(i, nextPosition);
 				final UnmodifiableTransFormula transitiveClosure = accelerate(services, logger, mgdScript, subWord);
 				mStatisticsGenerator.reportAccelerationAttempt();
 				if (transitiveClosure != null) {

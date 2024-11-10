@@ -82,7 +82,7 @@ public final class IpTcStrategyModulePreferences<L extends IIcfgTransition<?>>
 	@Override
 	protected IInterpolatingTraceCheck<L> construct() {
 		final AssertCodeBlockOrder assertionOrder =
-				mAssertionOrderModulation.get(mCounterexample.getTrace(), mInterpolationTechnique);
+				mAssertionOrderModulation.get(mCounterexample.getWord(), mInterpolationTechnique);
 		final SimplificationTechnique simplificationTechnique = mPrefs.getSimplificationTechnique();
 		final TreeMap<Integer, IPredicate> pendingContexts = new TreeMap<>();
 
@@ -126,7 +126,7 @@ public final class IpTcStrategyModulePreferences<L extends IIcfgTransition<?>>
 					simplificationTechnique, icfgContainer, mPrefs.collectInterpolantStatistics());
 		case PDR:
 			return new Pdr<>(mServices, mServices.getLoggingService().getLogger(Activator.PLUGIN_ID), mPrefs,
-					mPredicateUnifier, mPrecondition, mPostcondition, mCounterexample.getTrace().asList(),
+					mPredicateUnifier, mPrecondition, mPostcondition, mCounterexample.getWord().asList(),
 					mTransitionClazz);
 		default:
 			throw new UnsupportedOperationException("Unsupported interpolation technique: " + mInterpolationTechnique);

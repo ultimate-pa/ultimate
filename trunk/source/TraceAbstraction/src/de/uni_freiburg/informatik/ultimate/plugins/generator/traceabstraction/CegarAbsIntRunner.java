@@ -285,7 +285,7 @@ public final class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 				break;
 			case USE_PREDICATES:
 				aiInterpolAutomatonBuilder = new AbsIntStraightLineInterpolantAutomatonBuilder<>(mServices, abstraction,
-						mCurrentIteration.getResult(), predicateUnifier, mCsToolkit, currentCex.getTrace(),
+						mCurrentIteration.getResult(), predicateUnifier, mCsToolkit, currentCex.getWord(),
 						simplificationTechnique, mRoot.getCfgSmtToolkit().getSymbolTable(), emptyStackFactory);
 				break;
 			case USE_CANONICAL:
@@ -293,7 +293,7 @@ public final class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 						"Canonical interpolant automaton generation not yet implemented.");
 			case USE_TOTAL:
 				aiInterpolAutomatonBuilder = new AbsIntTotalInterpolationAutomatonBuilder<>(mServices, abstraction,
-						mCurrentIteration.getResult(), predicateUnifier, mCsToolkit, currentCex.getTrace(),
+						mCurrentIteration.getResult(), predicateUnifier, mCsToolkit, currentCex.getWord(),
 						mRoot.getCfgSmtToolkit().getSymbolTable(), emptyStackFactory);
 				break;
 			default:

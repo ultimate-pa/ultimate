@@ -99,7 +99,7 @@ public abstract class IpTcStrategyModuleSpWp<LETTER extends IIcfgTransition<?>>
 				|| mInterpolationTechnique == InterpolationTechnique.FPandBP;
 
 		final AssertCodeBlockOrder assertionOrder =
-				mAssertionOrderModulation.get(mCounterexample.getTrace(), mInterpolationTechnique);
+				mAssertionOrderModulation.get(mCounterexample.getWord(), mInterpolationTechnique);
 		final SimplificationTechnique simplificationTechnique = mPrefs.getSimplificationTechnique();
 		final ManagedScript managedScript = createExternalManagedScript(getSolverSettings());
 

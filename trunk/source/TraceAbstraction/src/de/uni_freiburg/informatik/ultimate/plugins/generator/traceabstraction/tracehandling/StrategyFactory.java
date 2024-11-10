@@ -171,7 +171,7 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 			final IPredicateUnifier predicateUnifier, final IPredicate precondition, final IPredicate postcondition,
 			final RefinementStrategy strategyType) {
 
-		mPathProgramCache.addRun(counterexample.getTrace());
+		mPathProgramCache.addRun(counterexample.getWord());
 
 		final StrategyModuleFactory strategyModuleFactory = new StrategyModuleFactory(taskIdentifier, services,
 				counterexample, precondition, postcondition, predicateUnifier, abstraction, emptyStackFactory);
@@ -294,7 +294,7 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 				throw new UnsupportedOperationException("Interpolant consolidation and MCR cannot be combined");
 			}
 			return new StrategyModuleMcr<>(mServices, mLogger, mPrefs, mPredicateUnifier, mEmptyStackFactory,
-					strategyFactory, mCounterexample.getTrace(), mAbstraction, mTaskIdentifier,
+					strategyFactory, mCounterexample.getWord(), mAbstraction, mTaskIdentifier,
 					createMcrInterpolantProvider());
 		}
 
@@ -401,19 +401,19 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 		public IIpTcStrategyModule<?, L> createIpTcStrategyModuleAbstractInterpretation() {
 			isOnlyDefaultPrePostConditions();
 			return createModuleWrapperIfNecessary(
-					new IpTcStrategyModuleAbstractInterpretation<>(mCounterexample.getTrace(), mPredicateUnifier,
+					new IpTcStrategyModuleAbstractInterpretation<>(mCounterexample.getWord(), mPredicateUnifier,
 							mServices, mPrefs.getIcfgContainer(), mPathProgramCache, mTaPrefs));
 		}
 
 		public IIpTcStrategyModule<?, L> createIpTcStrategyModuleSifa() {
 			isOnlyDefaultPrePostConditions();
 			return createModuleWrapperIfNecessary(new IpTcStrategyModuleSifa<>(mServices, mLogger,
-					mPrefs.getIcfgContainer(), mCounterexample.getTrace(), mPredicateUnifier));
+					mPrefs.getIcfgContainer(), mCounterexample.getWord(), mPredicateUnifier));
 		}
 
 		public IIpTcStrategyModule<?, L> createIpTcStrategyModulePdr() {
 			return createModuleWrapperIfNecessary(new IpTcStrategyModulePdr<>(mServices, mLogger, mPrecondition,
-					mPostcondition, mCounterexample.getTrace(), mPredicateUnifier, mPrefs, mTransitionClazz));
+					mPostcondition, mCounterexample.getWord(), mPredicateUnifier, mPrefs, mTransitionClazz));
 		}
 
 		public IIpTcStrategyModule<?, L> createIpTcStrategyModulePreferences() {
@@ -448,7 +448,7 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 			switch (realSetting) {
 			case STRAIGHT_LINE:
 				return new IpAbStrategyModuleStraightlineAll<>(mServices, mLogger, mAbstraction,
-						mCounterexample.getTrace(), mEmptyStackFactory);
+						mCounterexample.getWord(), mEmptyStackFactory);
 			case CANONICAL:
 				return new IpAbStrategyModuleCanonical<>(mServices, mLogger, mAbstraction, mCounterexample,
 						mEmptyStackFactory, mPredicateUnifier);
@@ -462,7 +462,7 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 				return new IpAbStrategyModuleAbstractInterpretation<>(mAbstraction, mCounterexample, mPredicateUnifier,
 						(IpTcStrategyModuleAbstractInterpretation<L>) strategy, mEmptyStackFactory);
 			case MCR:
-				return new IpAbStrategyModuleMcr<>(mCounterexample.getTrace().asList(), mPredicateUnifier,
+				return new IpAbStrategyModuleMcr<>(mCounterexample.getWord().asList(), mPredicateUnifier,
 						mEmptyStackFactory, mServices, mLogger, mAbstraction.getAlphabet(),
 						createMcrInterpolantProvider());
 			default:
@@ -509,7 +509,7 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 		}
 
 		public TermClassifier getTermClassifierForTrace() {
-			return TraceCheckUtils.classifyTermsInTrace(mCounterexample.getTrace(),
+			return TraceCheckUtils.classifyTermsInTrace(mCounterexample.getWord(),
 					mCfgSmtToolkit.getSmtFunctionsAndAxioms());
 		}
 

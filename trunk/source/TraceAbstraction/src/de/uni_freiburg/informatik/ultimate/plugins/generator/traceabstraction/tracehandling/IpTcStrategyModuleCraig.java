@@ -66,7 +66,7 @@ public abstract class IpTcStrategyModuleCraig<LETTER extends IIcfgTransition<?>>
 				|| interpolationTechnique == InterpolationTechnique.Craig_TreeInterpolation;
 
 		final AssertCodeBlockOrder assertionOrder =
-				mAssertionOrderModulation.get(mCounterexample.getTrace(), interpolationTechnique);
+				mAssertionOrderModulation.get(mCounterexample.getWord(), interpolationTechnique);
 		final SimplificationTechnique simplificationTechnique = mPrefs.getSimplificationTechnique();
 		final ManagedScript managedScript = constructManagedScript();
 

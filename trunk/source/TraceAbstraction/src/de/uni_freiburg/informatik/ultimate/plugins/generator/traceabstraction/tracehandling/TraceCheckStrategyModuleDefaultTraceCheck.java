@@ -95,7 +95,7 @@ public class TraceCheckStrategyModuleDefaultTraceCheck<L extends IIcfgTransition
 	@Override
 	public TraceCheck<L> getOrConstruct() {
 		if (mTraceCheck == null) {
-			final AssertCodeBlockOrder assertionOrder = mAssertionOrderModulation.get(mCounterexample.getTrace(), null);
+			final AssertCodeBlockOrder assertionOrder = mAssertionOrderModulation.get(mCounterexample.getWord(), null);
 			final IPredicate postcondition = mPredicateUnifier.getFalsePredicate();
 			mTraceCheck = new TraceCheck<>(mPrecondition, postcondition, new TreeMap<Integer, IPredicate>(),
 					mCounterexample, mServices, mPrefs.getCfgSmtToolkit(), assertionOrder,

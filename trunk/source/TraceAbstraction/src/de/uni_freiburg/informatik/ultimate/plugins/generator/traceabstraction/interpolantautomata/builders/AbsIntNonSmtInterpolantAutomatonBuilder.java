@@ -73,7 +73,7 @@ public class AbsIntNonSmtInterpolantAutomatonBuilder<LETTER>
 			final IEmptyStackStateFactory<IPredicate> emptyStackFactory) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		mCurrentCounterExample = currentCounterexample.getTrace();
+		mCurrentCounterExample = currentCounterexample.getWord();
 		mControlConfigurationSequence = currentCounterexample.getControlConfigurations();
 		mBoogie2Smt = csToolkit;
 		mPredicateFactory = new PredicateFactory(services, mBoogie2Smt, symbolTable);

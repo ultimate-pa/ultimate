@@ -67,7 +67,7 @@ public class CanonicalInterpolantAutomatonBuilder<LETTER> extends CoverageAnalys
 			final ILogger logger, final IPredicateUnifier predicateUnifier,
 			final Counterexample<LETTER> counterexample) {
 		super(services, ipp, counterexample.getControlConfigurations(), logger, predicateUnifier);
-		mNestedWord = counterexample.getTrace();
+		mNestedWord = counterexample.getWord();
 		mIA = new NestedWordAutomaton<>(new AutomataLibraryServices(mServices), alphabet, emptyStackFactory);
 	}
 

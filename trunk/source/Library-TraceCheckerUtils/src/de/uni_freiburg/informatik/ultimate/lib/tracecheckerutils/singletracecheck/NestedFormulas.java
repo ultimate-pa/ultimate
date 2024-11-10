@@ -66,7 +66,7 @@ public abstract class NestedFormulas<L extends IAction, TF, SF> {
 	}
 
 	public final NestedWord<L> getTrace() {
-		return mCounterexample.getTrace();
+		return mCounterexample.getWord();
 	}
 
 	public final Counterexample<L> getCounterexample() {

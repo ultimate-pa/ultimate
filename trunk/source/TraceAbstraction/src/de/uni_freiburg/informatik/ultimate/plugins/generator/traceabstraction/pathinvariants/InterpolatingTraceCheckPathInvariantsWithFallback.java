@@ -77,7 +77,7 @@ public class InterpolatingTraceCheckPathInvariantsWithFallback<LETTER extends IA
 		super(precondition, postcondition, pendingContexts, counterexample, services, csToolkit,
 				csToolkit.getManagedScript(), predicateFactory, predicateUnifier, assertCodeBlockOrder,
 				computeRcfgProgramExecution, collectInterpolantStatistics, simplificationTechnique);
-		mNestedWord = counterexample.getTrace();
+		mNestedWord = counterexample.getWord();
 		counterexample.requireControlConfigurations();
 
 		mInvariantSynthesisSettings = invariantSynthesisSettings;
