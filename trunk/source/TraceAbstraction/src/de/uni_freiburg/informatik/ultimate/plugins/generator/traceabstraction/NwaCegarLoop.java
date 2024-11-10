@@ -75,6 +75,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
@@ -268,7 +269,7 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 	}
 
 	private boolean checkForDangerInvariantAndReport() {
-		final var locations = getIcfgLocationsFromRun((NestedRun<L, IPredicate>) mCounterexample);
+		final var locations = getIcfgLocationsFromRun(mCounterexample);
 		final Set<? extends IcfgEdge> allowedTransitions = PathInvariantsGenerator.extractTransitionsFromRun(
 				(NestedWord<L>) mCounterexample.getWord(), locations, mIcfg.getCfgSmtToolkit().getIcfgEdgeFactory());
 		final PathProgramConstructionResult ppResult = PathProgram.constructPathProgram("PathInvariantsPathProgram",
@@ -577,14 +578,17 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 		}
 	}
 
-	private List<IcfgLocation> getIcfgLocationsFromRun(final NestedRun<L, IPredicate> run) {
-		return run.getStateSequence().stream().map(p -> ((ISLPredicate) p).getProgramPoint())
-				.collect(Collectors.toList());
+	@Override
+	protected List<?> getControlConfigurationsFromCounterexample(final IRun<L, ?> run) {
+		if (IcfgUtils.isConcurrent(mIcfg)) {
+			run.getStateSequence().stream().map(p -> ((IMLPredicate) p).getProgramPoints())
+					.collect(Collectors.toList());
+		}
+		return getIcfgLocationsFromRun(run);
 	}
 
-	@Override
-	protected List<?> getControlLocationsFromCounterexample(final IRun<L, ?> run) {
-		return run.getStateSequence().stream().map(s -> PredicateUtils.getLocations((IPredicate) s))
+	private List<IcfgLocation> getIcfgLocationsFromRun(final IRun<L, ?> run) {
+		return run.getStateSequence().stream().map(p -> ((ISLPredicate) p).getProgramPoint())
 				.collect(Collectors.toList());
 	}
 }

@@ -284,14 +284,23 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 		refineAbstraction();
 	}
 
-	protected abstract List<?> getControlLocationsFromCounterexample(final IRun<L, ?> run);
+	/**
+	 * Given a counterexample run in the current abstraction, extracts control configurations from the run's state
+	 * sequence. This sequence is used for trace checks (e.g. for detecting if a proof is "perfect").
+	 *
+	 * A control configuration in this sense can e.g. be an {@code IcfgLocation} (in sequential programs), an array or
+	 * collection of {@code IcfgLocation}s for all active threads (in concurrent programs) etc. The point is to
+	 * represent the control flow in the original program being verified (the initial abstraction) and remove all
+	 * information stored in the states that corresponds to the interpolant automata that were already subtracted.
+	 */
+	protected abstract List<?> getControlConfigurationsFromCounterexample(final IRun<L, ?> run);
 
 	@Override
 	protected Pair<LBool, IProgramExecution<L, Term>> isCounterexampleFeasible()
 			throws AutomataOperationCanceledException {
 
 		IStatisticsDataProvider refinementEngineStats = null;
-		final var locations = getControlLocationsFromCounterexample(mCounterexample);
+		final var locations = getControlConfigurationsFromCounterexample(mCounterexample);
 		final var counterexample = new Counterexample<>(mCounterexample.getWord(), locations);
 		final ITARefinementStrategy<L> strategy = mStrategyFactory.constructStrategy(getServices(), counterexample,
 				mAbstraction, new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()),

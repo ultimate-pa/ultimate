@@ -583,7 +583,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 	}
 
 	@Override
-	protected List<?> getControlLocationsFromCounterexample(final IRun<L, ?> run) {
+	protected List<Set<IPredicate>> getControlConfigurationsFromCounterexample(final IRun<L, ?> run) {
 		final var pnRun = (PetriNetRun<L, IPredicate>) run;
 
 		// Take the places in the run that belong to the initial abstraction.

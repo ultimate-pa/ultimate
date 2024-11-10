@@ -436,7 +436,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	}
 
 	@Override
-	protected List<?> getControlLocationsFromCounterexample(final IRun<L, ?> counterexample) {
+	protected List<?> getControlConfigurationsFromCounterexample(final IRun<L, ?> counterexample) {
 		return counterexample.getStateSequence().stream().map(s -> ((IMLPredicate) s).getProgramPoints())
 				.collect(Collectors.toList());
 	}
