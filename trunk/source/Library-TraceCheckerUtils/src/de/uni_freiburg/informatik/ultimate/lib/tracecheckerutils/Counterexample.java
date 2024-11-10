@@ -62,7 +62,7 @@ public class Counterexample<L> {
 	 * Creates a new instance that does not have any control configurations
 	 *
 	 * @param word
-	 *            The trace of the counterexample
+	 *            The word of the counterexample
 	 */
 	public Counterexample(final Word<L> word) {
 		mWord = NestedWord.nestedWord(word);
@@ -72,29 +72,29 @@ public class Counterexample<L> {
 	/**
 	 * Creates a new counterexample with a list of control configurations.
 	 *
-	 * @param trace
-	 *            The trace of the counterexample
+	 * @param word
+	 *            The word of the counterexample
 	 * @param controlConfigurations
 	 *            The list of control configurations visited along a trace
 	 *
 	 * @throws IllegalArgumentException
-	 *             if the length of the control configurations does not match the trace
+	 *             if the length of the control configurations does not match the word
 	 */
-	public Counterexample(final Word<L> trace, final List<?> controlConfigurations) {
-		mWord = NestedWord.nestedWord(Objects.requireNonNull(trace));
+	public Counterexample(final Word<L> word, final List<?> controlConfigurations) {
+		mWord = NestedWord.nestedWord(Objects.requireNonNull(word));
 		mControlConfigurations = List.copyOf(Objects.requireNonNull(controlConfigurations));
 
 		if (controlConfigurations.size() != mWord.length() + 1) {
-			throw new IllegalArgumentException("CNumber of control configurations does not match trace length");
+			throw new IllegalArgumentException("Number of control configurations does not match word length");
 		}
 	}
 
-	public static <L extends IAction> Counterexample<L> withOptionalConfigurations(final Word<L> trace,
+	public static <L extends IAction> Counterexample<L> withOptionalConfigurations(final Word<L> word,
 			final List<?> maybeControlConfigurations) {
 		if (maybeControlConfigurations == null) {
-			return new Counterexample<>(trace);
+			return new Counterexample<>(word);
 		}
-		return new Counterexample<>(trace, maybeControlConfigurations);
+		return new Counterexample<>(word, maybeControlConfigurations);
 	}
 
 	public NestedWord<L> getWord() {
