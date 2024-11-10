@@ -44,7 +44,6 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
@@ -550,7 +549,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	private InterpolatingTraceCheck<IIcfgTransition<IcfgLocation>> createTraceCheck(
 			final NestedRun<IIcfgTransition<IcfgLocation>, AnnotatedProgramPoint> errorRun,
 			final ManagedScript mgdScriptTracechecks) {
-		final var trace = NestedWord.nestedWord(errorRun.getWord());
+		final var trace = errorRun.getWord();
 		final var counterexample = new Counterexample<>(trace, TraceCheckUtils.getSequenceOfProgramPoints(trace));
 
 		switch (mGlobalSettings.getInterpolationMode()) {
