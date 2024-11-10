@@ -105,7 +105,7 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 	private final boolean mCollectInterpolantStatistics;
 
 	public TotalInterpolationAutomatonBuilder(final INestedWordAutomaton<LETTER, IPredicate> abstraction,
-			final List<IPredicate> run, final CfgSmtToolkit csToolkit,
+			final List<IPredicate> stateSequence, final CfgSmtToolkit csToolkit,
 			final PredicateFactoryForInterpolantAutomata predicateFactory, final InterpolationTechnique interpolation,
 			final IUltimateServiceProvider services, final SimplificationTechnique simplificationTechnique,
 			final boolean collectInterpolantStatistics, final IPredicateUnifier predicateUnifier,
@@ -113,7 +113,7 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 		mServices = services;
 		mSimplificationTechnique = simplificationTechnique;
 		mCollectInterpolantStatistics = collectInterpolantStatistics;
-		mStateSequence = run;
+		mStateSequence = stateSequence;
 		mCsToolkit = csToolkit;
 		mPredicateUnifier = predicateUnifier;
 		mPredicateFactory = (PredicateFactory) mPredicateUnifier.getPredicateFactory();
@@ -140,7 +140,7 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 		}
 		mHtc = HoareTripleCheckerUtils.constructEfficientHoareTripleCheckerWithCaching(services,
 				HoareTripleChecks.INCREMENTAL, mCsToolkit, mPredicateUnifier);
-		for (final IPredicate state : run) {
+		for (final IPredicate state : stateSequence) {
 			mWorklist.add(state);
 			mAnnotated.add(state);
 		}

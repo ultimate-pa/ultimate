@@ -519,10 +519,9 @@ public final class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 						ItpErrorStatus.ALGORITHM_FAILED, null);
 			}
 			// we were strong enough!
-			final Word<LETTER> word = mCex;
 			try {
 				mLogger.info("Generating AbsInt predicates");
-				final List<LETTER> ppTrace = constructTraceFromWord(word, mPathProgram);
+				final List<LETTER> ppTrace = constructTraceFromWord(mCex, mPathProgram);
 				final List<AbsIntPredicate<STATE>> nonUnifiedPredicates = generateAbsIntPredicates(ppTrace);
 				assert isInductive(ppTrace, nonUnifiedPredicates,
 						createHoareTripleChecker(true)) : "Sequence of interpolants not inductive (before weakening)!";
@@ -543,7 +542,7 @@ public final class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 					mLogger.debug("Interpolant sequence:");
 					mLogger.debug(interpolants);
 				}
-				assert word.length() - 1 == interpolants.size() : "Word has length " + word.length()
+				assert mCex.length() - 1 == interpolants.size() : "Word has length " + mCex.length()
 						+ " but interpolant sequence has length " + interpolants.size();
 				assert isInductive(ppTrace, interpolants,
 						getHoareTripleChecker()) : "Sequence of interpolants not inductive (after unification)";

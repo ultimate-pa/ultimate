@@ -108,7 +108,7 @@ public class InterpolatingTraceCheckPathInvariantsWithFallback<LETTER extends IA
 					.wasComputationSuccessful() : "null only allowed if computation was not successful";
 		} else {
 			if (interpolants.length != mTrace.length() - 1) {
-				throw new AssertionError("incorrekt number of interpolants. "
+				throw new AssertionError("incorrect number of interpolants. "
 						+ "There should be one interpolant between each " + "two successive CodeBlocks");
 			}
 			assert TraceCheckUtils.checkInterpolantsInductivityForward(Arrays.asList(interpolants), mTrace,

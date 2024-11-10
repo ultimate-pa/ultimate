@@ -137,7 +137,10 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 	 *            Optionally, the sequence of control configurations visited by the trace in the program that is being
 	 *            verified. Used to judge the quality of proofs ("perfect") and for assert order modulation.
 	 * @param abstraction
-	 *            TODO ???
+	 *            The initial abstraction representing the program. Various strategies require the initial abstraction,
+	 *            e.g., to extract the complete alphabet, or to perform more complex generalizationVarious strategies
+	 *            require the initial abstraction, e.g., to extract the complete alphabet, or to perform more complex
+	 *            generalizations.
 	 */
 	public ITARefinementStrategy<L> constructStrategy(final IUltimateServiceProvider services,
 			final Counterexample<L> counterexample, final IAutomaton<L, IPredicate> abstraction,
