@@ -27,6 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
@@ -437,8 +438,39 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 
 	@Override
 	protected List<?> getControlConfigurationsFromCounterexample(final IRun<L, ?> counterexample) {
-		return counterexample.getStateSequence().stream().map(s -> ((IMLPredicate) s).getProgramPoints())
-				.collect(Collectors.toList());
+		final var splitter = mPOR.getStateSplitter();
+
+		final var result = new ArrayList<>(counterexample.getLength());
+		for (final var state : counterexample.getStateSequence()) {
+			// Generally, the full state of the reduction automaton contains the state of the given input automaton
+			// (mAbstraction), as well as possibly additional information related to the reduction (e.g. a sleep set).
+			final IPredicate fullState = (IPredicate) state;
+
+			// We first retrieve the state of the input automaton (mAbstraction).
+			final IPredicate originalState = splitter == null ? fullState : splitter.getOriginal(fullState);
+
+			// We remove any interpolants from the mAbstraction state, if present. The programState should be a state of
+			// the initial abstraction (mProgram).
+			IPredicate programState;
+			if (originalState instanceof MLPredicateWithInterpolants) {
+				programState = ((MLPredicateWithInterpolants) originalState).getUnderlying();
+			} else {
+				programState = originalState;
+			}
+
+			if (splitter == null) {
+				// If the reduction does not add extra components, we store the programState.
+				result.add(programState);
+			} else {
+				// If the reduction added extra components, e.g. a sleep set, or the state of a monitor automaton
+				// supporting the preference order, we store the pair of programState and this extra information.
+				// The effect is that we only consider a loop to be found if the programState is repeated **with the
+				// same sleep set** (resp. the same monitor automaton state, etc).
+				final var extraInfo = splitter.getExtraInfo(fullState);
+				result.add(new Pair<>(programState, extraInfo));
+			}
+		}
+		return result;
 	}
 
 	private static final class MLPredicateWithInterpolants extends AnnotatedMLPredicate<IPredicate> {
