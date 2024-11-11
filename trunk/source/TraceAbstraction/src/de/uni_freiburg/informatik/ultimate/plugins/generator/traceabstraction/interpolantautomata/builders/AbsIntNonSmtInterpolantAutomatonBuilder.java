@@ -96,9 +96,6 @@ public class AbsIntNonSmtInterpolantAutomatonBuilder<LETTER>
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> oldAbstraction,
 			final IPredicateUnifier predicateUnifier, final IEmptyStackStateFactory<IPredicate> emptyStackFactory) {
 		mLogger.info("Creating interpolant automaton from AI using abstract post for generalization");
-		if (mControlConfigurationSequence.size() <= 1) {
-			throw new AssertionError("Unexpected: state sequence size <= 1");
-		}
 
 		final NestedWordAutomaton<LETTER, IPredicate> result = new NestedWordAutomaton<>(
 				new AutomataLibraryServices(mServices), oldAbstraction.getVpAlphabet(), emptyStackFactory);
@@ -159,5 +156,4 @@ public class AbsIntNonSmtInterpolantAutomatonBuilder<LETTER>
 
 		return result;
 	}
-
 }

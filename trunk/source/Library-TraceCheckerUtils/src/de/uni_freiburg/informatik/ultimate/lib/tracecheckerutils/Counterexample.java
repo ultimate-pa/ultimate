@@ -66,6 +66,10 @@ public class Counterexample<L> {
 	public Counterexample(final Word<L> word) {
 		mWord = NestedWord.nestedWord(word);
 		mControlConfigurations = null;
+
+		if (word.length() == 0) {
+			throw new IllegalArgumentException("Counterexample must be non-empty");
+		}
 	}
 
 	/**
@@ -82,6 +86,10 @@ public class Counterexample<L> {
 	public Counterexample(final Word<L> word, final List<?> controlConfigurations) {
 		mWord = NestedWord.nestedWord(Objects.requireNonNull(word));
 		mControlConfigurations = List.copyOf(Objects.requireNonNull(controlConfigurations));
+
+		if (word.length() == 0) {
+			throw new IllegalArgumentException("Counterexample must be non-empty");
+		}
 
 		if (controlConfigurations.size() != mWord.length() + 1) {
 			throw new IllegalArgumentException("Number of control configurations does not match word length");
