@@ -97,8 +97,6 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 	 * @param independenceRelation
 	 *            Independence relation used for commutativity checks. The corresponding symbolic relation (see
 	 *            {@link IIndependenceRelation#getSymbolicRelation()}) is used to compute commutativity conditions.
-	 * @param passContextToSymbolicRelation
-	 *            Determines whether or not the symbolic relation is given already known predicates as context or not.
 	 * @param buildStrategy
 	 *            Factory for strategies used to check whether a computed commutativity condition holds after some
 	 *            trace.
@@ -111,7 +109,6 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 	 */
 	public ConditionalCommutativityChecker(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final IIndependenceRelation<IPredicate, L> independenceRelation,
-			final boolean passContextToSymbolicRelation,
 			final Function<IRun<L, IPredicate>, IRefinementStrategy<L>> buildStrategy,
 			final PredicateFactory predicateFactory, final ICopyActionFactory<L> copyFactory,
 			final ConditionalCommutativityStatisticsGenerator statistics) {
@@ -125,7 +122,7 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 			throw new UnsupportedOperationException(
 					"Given independence relation does not offer a symbolic counterpart");
 		}
-		mPassContextToSymbolicRelation = passContextToSymbolicRelation && mSymbolicRelation.isConditional();
+		mPassContextToSymbolicRelation = mSymbolicRelation.isConditional();
 
 		mBuildStrategy = buildStrategy;
 		mPredicateFactory = predicateFactory;
@@ -297,9 +294,5 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 		final TracePredicates tp =
 				new TracePredicates(qtp.getTracePredicates().getPrecondition(), newPost, newPredicates);
 		return new QualifiedTracePredicates(tp, qtp.getOrigin(), qtp.isPerfect());
-	}
-
-	public enum ConComCalculationMode {
-		GENERATOR, GENERATOR_WITH_CONTEXT, SYMBOLIC_RELATION
 	}
 }

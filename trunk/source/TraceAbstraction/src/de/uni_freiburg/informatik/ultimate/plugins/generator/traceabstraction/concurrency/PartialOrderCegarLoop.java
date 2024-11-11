@@ -573,8 +573,8 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		final IIndependenceRelation<IPredicate, L> relation = mPOR.getIndependence(0);
 
 		return new ConditionalCommutativityChecker<>(mServices, mCsToolkit.getManagedScript(), relation,
-				mPref.passContextToConditionGeneration(), this::buildStrategyForConditionalCommutativity,
-				mPredicateFactory, copyFactory, mConComCheckerBenchmark);
+				this::buildStrategyForConditionalCommutativity, mPredicateFactory, copyFactory,
+				mConComCheckerBenchmark);
 	}
 
 	private IRefinementStrategy<L> buildStrategyForConditionalCommutativity(final IRun<L, IPredicate> run) {

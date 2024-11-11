@@ -188,15 +188,10 @@ public class IndependenceProviderFactory<L extends IIcfgTransition<?>> {
 		assert settings.getIndependenceType() == IndependenceType.SEMANTIC : "unsupported independence type";
 
 		// Semantic independence forms the base.
-		final var builder = mPref.useIndependenceConditionGenerator()
-				? IndependenceBuilder.<L> semantic(mServices, mIndependenceScript, settings.useConditional(),
-						!settings.useSemiCommutativity(),
-						new SemanticIndependenceConditionGenerator(mServices, mIndependenceScript,
-								mIndepScriptPredicateFactory, !settings.useSemiCommutativity(), true))
-				: IndependenceBuilder.<L> semantic(mServices, mIndependenceScript, settings.useConditional(),
-						!settings.useSemiCommutativity(), mIndepScriptPredicateFactory);
-
-		return builder
+		return IndependenceBuilder
+				.<L> semantic(mServices, mIndependenceScript, settings.useConditional(),
+						!settings.useSemiCommutativity(), mPref.getSymbolicRelationMode(), mIndepScriptPredicateFactory,
+						getGenerator(settings))
 				// Make sure transition formulas and conditions are transferred to independence script.
 				.ifThen(!tfsAlreadyTransferred || settings.useConditional(),
 						b -> b.transferTerms(mTransferrer, predicateTransferrer, mCopyFactory, tfsAlreadyTransferred))
@@ -225,6 +220,14 @@ public class IndependenceProviderFactory<L extends IIcfgTransition<?>> {
 				.threadSeparated()
 				// Retrieve the constructed relation.
 				.build();
+	}
+
+	private SemanticIndependenceConditionGenerator getGenerator(final IndependenceSettings settings) {
+		if (mPref.getSymbolicRelationMode().requiresConditionGenerator()) {
+			return new SemanticIndependenceConditionGenerator(mServices, mIndependenceScript,
+					mIndepScriptPredicateFactory, !settings.useSemiCommutativity(), true);
+		}
+		return null;
 	}
 
 	private static IPredicate aggregateConditions(final PredicateFactory predicateFactory,

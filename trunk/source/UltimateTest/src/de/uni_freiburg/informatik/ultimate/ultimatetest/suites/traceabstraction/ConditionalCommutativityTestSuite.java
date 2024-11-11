@@ -34,7 +34,7 @@ import java.util.function.UnaryOperator;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderReductionFacade.OrderType;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.conditional.ConditionalCommutativityChecker.ConComCalculationMode;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.SemanticIndependenceRelation.IndependenceConditions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
@@ -118,7 +118,7 @@ public class ConditionalCommutativityTestSuite extends AbstractTraceAbstractionT
 		return new Pair<>("CE", Map.of(
 		// @formatter:off
 			TraceAbstractionPreferenceInitializer.LABEL_POR_DFS_ORDER, OrderType.LOOP_LOCKSTEP,
-			TraceAbstractionPreferenceInitializer.LABEL_CON_COM_CHECKER, true
+			TraceAbstractionPreferenceInitializer.LABEL_COMMUTATIVITY_COND_SYNTHESIS, IndependenceConditions.SUFFICIENT
 		// @formatter:on
 		));
 	}
@@ -127,8 +127,7 @@ public class ConditionalCommutativityTestSuite extends AbstractTraceAbstractionT
 		return new Pair<>("CE+Ctx", Map.of(
 		// @formatter:off
 			TraceAbstractionPreferenceInitializer.LABEL_POR_DFS_ORDER, OrderType.LOOP_LOCKSTEP,
-			TraceAbstractionPreferenceInitializer.LABEL_CON_COM_CHECKER, true,
-			TraceAbstractionPreferenceInitializer.LABEL_CON_COM_CHECKER_CALCULATION_MODE, ConComCalculationMode.GENERATOR_WITH_CONTEXT
+			TraceAbstractionPreferenceInitializer.LABEL_COMMUTATIVITY_COND_SYNTHESIS, IndependenceConditions.SUFFICIENT_WITH_CONTEXT
 		// @formatter:on
 		));
 	}
@@ -137,8 +136,7 @@ public class ConditionalCommutativityTestSuite extends AbstractTraceAbstractionT
 		return new Pair<>("CE+Symb", Map.of(
 		// @formatter:off
 			TraceAbstractionPreferenceInitializer.LABEL_POR_DFS_ORDER, OrderType.LOOP_LOCKSTEP,
-			TraceAbstractionPreferenceInitializer.LABEL_CON_COM_CHECKER, true,
-			TraceAbstractionPreferenceInitializer.LABEL_CON_COM_CHECKER_CALCULATION_MODE, ConComCalculationMode.SYMBOLIC_RELATION
+			TraceAbstractionPreferenceInitializer.LABEL_COMMUTATIVITY_COND_SYNTHESIS, IndependenceConditions.NECESSARY_AND_SUFFICIENT
 		// @formatter:on
 		));
 	}

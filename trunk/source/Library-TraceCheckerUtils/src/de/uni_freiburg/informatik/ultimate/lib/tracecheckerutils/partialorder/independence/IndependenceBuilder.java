@@ -115,30 +115,14 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 	 *
 	 * @param mgdScript
 	 *            This script is used for SMT checks
-	 * @param predicateFactory
-	 *            Used for the corresponding symbolic relation
 	 */
 	public static <L extends IAction> PredicateActionIndependenceBuilder.Impl<L> semantic(
 			final IUltimateServiceProvider services, final ManagedScript mgdScript, final boolean conditional,
-			final boolean symmetric, final BasicPredicateFactory predicateFactory) {
-		return new PredicateActionIndependenceBuilder.Impl<>(
-				new SemanticIndependenceRelation<>(services, mgdScript, conditional, symmetric, predicateFactory));
-	}
-
-	/**
-	 * Create a new instance, with a semantic independence relation as base. See
-	 * {@link SemanticIndependenceRelation::new} for details.
-	 *
-	 * @param mgdScript
-	 *            This script is used for SMT checks
-	 * @param independenceGenerator
-	 *            Used for the corresponding symbolic relation
-	 */
-	public static <L extends IAction> PredicateActionIndependenceBuilder.Impl<L> semantic(
-			final IUltimateServiceProvider services, final ManagedScript mgdScript, final boolean conditional,
-			final boolean symmetric, final SemanticIndependenceConditionGenerator independenceGenerator) {
-		return new PredicateActionIndependenceBuilder.Impl<>(
-				new SemanticIndependenceRelation<>(services, mgdScript, conditional, symmetric, independenceGenerator));
+			final boolean symmetric, final SemanticIndependenceRelation.IndependenceConditions symbolicIndependenceMode,
+			final BasicPredicateFactory predicateFactory,
+			final SemanticIndependenceConditionGenerator independenceGenerator) {
+		return new PredicateActionIndependenceBuilder.Impl<>(new SemanticIndependenceRelation<>(services, mgdScript,
+				conditional, symmetric, symbolicIndependenceMode, predicateFactory, independenceGenerator));
 	}
 
 	/**

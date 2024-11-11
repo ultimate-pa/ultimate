@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.Pa
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.AbstractionType;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.IndependenceType;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.conditional.ConditionalCommutativityChecker.ConComCalculationMode;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.SemanticIndependenceRelation.IndependenceConditions;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
@@ -95,7 +95,6 @@ public final class TAPreferences {
 
 	private final IndependenceSettings[] mPorIndependenceSettings;
 	private final IndependenceSettings mLbeIndependenceSettings;
-	private final boolean mConComChecker;
 
 	public enum Artifact {
 		ABSTRACTION, INTERPOLANT_AUTOMATON, NEG_INTERPOLANT_AUTOMATON, RCFG
@@ -199,8 +198,6 @@ public final class TAPreferences {
 				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_SEMICOMM_PLBE),
 				IndependenceSettings.DEFAULT_SOLVER /* currently ignored; not exposed as setting */,
 				IndependenceSettings.DEFAULT_SOLVER_TIMEOUT /* currently ignored; not exposed as setting */);
-
-		mConComChecker = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_CON_COM_CHECKER);
 	}
 
 	/**
@@ -549,23 +546,12 @@ public final class TAPreferences {
 	}
 
 	public boolean useConditionalCommutativityChecker() {
-		return mConComChecker;
-
+		return getSymbolicRelationMode() != IndependenceConditions.NONE;
 	}
 
-	public boolean useIndependenceConditionGenerator() {
-		// TODO restructure settings
-		return getConComCheckerCalculationMode() != ConComCalculationMode.SYMBOLIC_RELATION;
-	}
-
-	public boolean passContextToConditionGeneration() {
-		// TODO restructure settings
-		return getConComCheckerCalculationMode() == ConComCalculationMode.GENERATOR_WITH_CONTEXT;
-	}
-
-	public ConComCalculationMode getConComCheckerCalculationMode() {
-		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_CON_COM_CHECKER_CALCULATION_MODE,
-				ConComCalculationMode.class);
+	public IndependenceConditions getSymbolicRelationMode() {
+		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_COMMUTATIVITY_COND_SYNTHESIS,
+				IndependenceConditions.class);
 	}
 
 	// TODO #proofRefactor update all settings files to reflect the removal / changes to the Hoare/proof settings
