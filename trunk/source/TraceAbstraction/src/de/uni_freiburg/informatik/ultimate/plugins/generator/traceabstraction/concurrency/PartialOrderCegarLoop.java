@@ -29,6 +29,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.c
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -145,6 +147,8 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	private final ConditionalCommutativityStatisticsGenerator mConComCheckerBenchmark =
 			new ConditionalCommutativityStatisticsGenerator();
 	private final ConditionalCommutativityCounterexampleChecker<L> mConCounterexampleChecker;
+	private Map<Set<?>, Integer> mControlConfigurationSets = new HashMap<>();
+	private Integer mConComThreshold = 1;
 
 	public PartialOrderCegarLoop(final DebugIdentifier name,
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> initialAbstraction,
@@ -325,20 +329,66 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	@Override
 	protected Pair<LBool, IProgramExecution<L, Term>> isCounterexampleFeasible()
 			throws AutomataOperationCanceledException {
+
+		// Applies conditional commutativity checking if enabled
 		if (mPref.useConditionalCommutativityChecker()) {
 
-			mRefinementResult = mConCounterexampleChecker
-					.getCommutativityProof((NestedRun<L, IPredicate>) mCounterexample);
+			Set<?> set = new HashSet<>(getControlConfigurationsFromCounterexample(mCounterexample));
+			int occurrences = mControlConfigurationSets.containsKey(set) ? mControlConfigurationSets.get(set) + 1 : 1;
+			mControlConfigurationSets.put(set, occurrences);
 
-			if (mRefinementResult != null) {
-				mCounterexampleConComFound = true;
-				mInterpolAutomaton = mRefinementResult.getInfeasibilityProof();
-				// TODO if succeeds: return UNSAT
-				return new Pair<>(LBool.UNSAT, null);
+			// and the occurrences of the underlying set of control configurations exceeds mConComThreshold (1)
+			if (occurrences > mConComThreshold) {
+				mRefinementResult =
+						mConCounterexampleChecker.getCommutativityProof((NestedRun<L, IPredicate>) mCounterexample);
+
+				if (mRefinementResult != null) {
+					mCounterexampleConComFound = true;
+					mInterpolAutomaton = mRefinementResult.getInfeasibilityProof();
+					// if succeeds: return UNSAT
+					return new Pair<>(LBool.UNSAT, null);
+				}
 			}
 		}
 		mCounterexampleConComFound = false;
 		return super.isCounterexampleFeasible();
+	}
+
+	// TODO: needs to be replaced when merging https://github.com/ultimate-pa/ultimate/pull/692
+	protected List<?> getControlConfigurationsFromCounterexample(final IRun<L, ?> counterexample) {
+		final var splitter = mPOR.getStateSplitter();
+
+		final var result = new ArrayList<>(counterexample.getLength());
+		for (final var state : counterexample.getStateSequence()) {
+			// Generally, the full state of the reduction automaton contains the state of the given input automaton
+			// (mAbstraction), as well as possibly additional information related to the reduction (e.g. a sleep set).
+			final IPredicate fullState = (IPredicate) state;
+
+			// We first retrieve the state of the input automaton (mAbstraction).
+			final IPredicate originalState = splitter == null ? fullState : splitter.getOriginal(fullState);
+
+			// We remove any interpolants from the mAbstraction state, if present. The programState should be a state of
+			// the initial abstraction (mProgram).
+			IPredicate programState;
+			if (originalState instanceof MLPredicateWithInterpolants) {
+				programState = ((MLPredicateWithInterpolants) originalState).getUnderlying();
+			} else {
+				programState = originalState;
+			}
+
+			if (splitter == null) {
+				// If the reduction does not add extra components, we store the programState.
+				result.add(programState);
+			} else {
+				// If the reduction added extra components, e.g. a sleep set, or the state of a monitor automaton
+				// supporting the preference order, we store the pair of programState and this extra information.
+				// The effect is that we only consider a loop to be found if the programState is repeated **with the
+				// same sleep set** (resp. the same monitor automaton state, etc).
+				final var extraInfo = splitter.getExtraInfo(fullState);
+				result.add(new Pair<>(programState, extraInfo));
+			}
+		}
+		return result;
 	}
 
 	@Override
