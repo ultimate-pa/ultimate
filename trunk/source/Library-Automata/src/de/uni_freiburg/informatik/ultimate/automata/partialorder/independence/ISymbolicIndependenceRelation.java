@@ -46,8 +46,8 @@ public interface ISymbolicIndependenceRelation<LETTER, CONDITION> {
 	 * @param existingCondition
 	 *            Optionally, an existing condition which does not suffice for commutativity of the given letters. The
 	 *            symbolic relation may take this condition into account and return a refined, more constraining
-	 *            condition, but there is no guarantee that the returned condition is indeed a refinement of the
-	 *            existing condition. If no condition is known or passing existing conditions is unsupported (see
+	 *            condition. There is no guarantee that the returned condition is indeed a refinement of the existing
+	 *            condition. If no condition is known or passing existing conditions is unsupported (see
 	 *            {@link #isConditional()}), {@code null} may be used.
 	 */
 	CONDITION getCommutativityCondition(CONDITION existingCondition, LETTER a, LETTER b);

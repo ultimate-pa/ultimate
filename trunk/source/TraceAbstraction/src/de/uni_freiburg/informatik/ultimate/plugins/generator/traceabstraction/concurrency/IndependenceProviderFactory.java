@@ -30,7 +30,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.DefaultIndependenceCache;
@@ -210,10 +209,11 @@ public class IndependenceProviderFactory<L extends IIcfgTransition<?>> {
 				.withConditionElimination(PartialOrderCegarLoop::isFalseLiteral)
 				// We ignore "don't care" conditions stemming from the initial program automaton states.
 				.withFilteredConditions(p -> !predicateFactory.isDontCare(p))
-				// TODO (Dominik 2024-09-24): We cannot generally change GemCutter's independence relation in this way.
-				// TODO This is likely very expensive!
-				.withDisjunctivePredicatesUnion(PartialOrderCegarLoop::getConjuncts, ImmutableList::new,
-						s -> aggregateConditions(predicateFactory, s))
+				// We check independence wrt. the interpolants of each CEGAR iteration separately, and consider two
+				// statements as independent if they are independent under the interpolants from some iteration.
+				// For the symbolic relation, we compute the conjunction of all context predicates.
+				.withDisjunctivePredicates(PartialOrderCegarLoop::getConjuncts, ImmutableList::new,
+						(ctx, a, b) -> predicateFactory.and(ctx))
 				// .withDisjunctivePredicates(PartialOrderCegarLoop::getConjuncts, ImmutableList::singleton)
 				// =========================================================================
 				// Never consider letters of the same thread to be independent.
@@ -228,11 +228,6 @@ public class IndependenceProviderFactory<L extends IIcfgTransition<?>> {
 					mIndepScriptPredicateFactory, !settings.useSemiCommutativity(), true);
 		}
 		return null;
-	}
-
-	private static IPredicate aggregateConditions(final PredicateFactory predicateFactory,
-			final Stream<IPredicate> conditions) {
-		return predicateFactory.or(conditions.collect(Collectors.toList()));
 	}
 
 	private ManagedScript constructIndependenceScript(final IndependenceSettings settings) {

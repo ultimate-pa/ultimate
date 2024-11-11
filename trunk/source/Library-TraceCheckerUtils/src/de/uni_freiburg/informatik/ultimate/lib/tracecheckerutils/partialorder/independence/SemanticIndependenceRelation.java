@@ -398,7 +398,8 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 		@Override
 		public IPredicate getCommutativityCondition(final IPredicate condition, final L a, final L b) {
 			if (mIsConditional && condition != null) {
-				return mGenerator.generateCondition(condition, a.getTransformula(), b.getTransformula());
+				final var generated = mGenerator.generateCondition(condition, a.getTransformula(), b.getTransformula());
+				return mPredicateFactory.and(condition, generated);
 			}
 			return mGenerator.generateCondition(a.getTransformula(), b.getTransformula());
 		}
