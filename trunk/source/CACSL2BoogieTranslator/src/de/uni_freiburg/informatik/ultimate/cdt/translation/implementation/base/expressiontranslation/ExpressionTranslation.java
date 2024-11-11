@@ -249,7 +249,12 @@ public abstract class ExpressionTranslation {
 	public abstract RValue translateIntegerLiteral(ILocation loc, String val);
 
 	public final RValue translateFloatingLiteral(final ILocation loc, final String val) {
-		final FloatingPointLiteral fpl = ISOIEC9899TC3.handleFloatConstant(val, loc);
+		final FloatingPointLiteral fpl;
+		try {
+			fpl = ISOIEC9899TC3.handleFloatConstant(val, loc);
+		} catch (final ArithmeticException e) {
+			throw new UnsupportedSyntaxException(loc, "Unable to represent float literal " + val);
+		}
 		final Expression expr =
 				constructLiteralForFloatingType(loc, fpl.getCPrimitive(), fpl.getDecimalRepresenation());
 		return new RValue(expr, fpl.getCPrimitive());
