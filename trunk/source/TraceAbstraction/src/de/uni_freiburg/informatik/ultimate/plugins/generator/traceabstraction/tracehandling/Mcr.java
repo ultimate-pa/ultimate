@@ -102,8 +102,11 @@ public class Mcr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 		while (counterexample != null) {
 			mLogger.info("---- MCR iteration " + iteration + " ----");
 			iteration++;
-			// TODO Is it correct to not pass any control locations here?
+
+			// As "counterexample" is not a run of the program (but the MHB automaton), we do not have program control
+			// locations for it. So we pass only the word to the trace check wrapped in mResultProvider.
 			result = mResultProvider.getResult(counterexample.getWord());
+
 			final List<L> trace = counterexample.getWord().asList();
 			if (result.isCorrect() != LBool.UNSAT) {
 				// We found a feasible error trace
