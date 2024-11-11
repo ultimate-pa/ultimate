@@ -781,7 +781,8 @@ public class CfgBuilder {
 		private BoogieIcfgLocation buildIf(final BoogieIcfgLocation currentLocation, final IfStatement st) {
 			mConditionalStarts.add(currentLocation);
 			final IIcfgElement thenPart = buildCodeBlock(st.getThenPart(), currentLocation, false);
-			final IIcfgElement elsePart = buildCodeBlock(st.getElsePart(), mConditionalStarts.pop(), false);
+			final IIcfgElement elsePart = buildCodeBlock(st.getElsePart(), mConditionalStarts.peek(), false);
+			final BoogieIcfgLocation endLoc = mConditionalStarts.pop();
 			final AssumeStatement thenCondition;
 			final AssumeStatement elseCondition;
 
@@ -808,10 +809,12 @@ public class CfgBuilder {
 			// remove end node for LoopFreeBlock and SequenceOfStatements, if it only has one incoming edge and one
 			// outgoing edge
 			if ((mCodeBlockSize == CodeBlockSize.LoopFreeBlock || mCodeBlockSize == CodeBlockSize.SequenceOfStatements)
-					&& currentLocation.getIncomingEdges().size() == 1
-					&& currentLocation.getOutgoingEdges().size() == 1) {
-				final IcfgEdge edgeBefore = currentLocation.getIncomingEdges().get(0);
-				final IcfgEdge edgeAfter = currentLocation.getOutgoingEdges().get(0);
+					&& endLoc.getIncomingEdges().size() == 1
+					&& endLoc.getOutgoingEdges().size() == 1
+					&& !mConditionalStarts.contains(endLoc)
+					&& !mLabel2LocNodes.containsValue(endLoc)) {
+				final IcfgEdge edgeBefore = endLoc.getIncomingEdges().get(0);
+				final IcfgEdge edgeAfter = endLoc.getOutgoingEdges().get(0);
 				if (!(Overapprox.getAnnotation(edgeBefore) instanceof OverapproxVariable)
 						&& !(Overapprox.getAnnotation(edgeAfter) instanceof OverapproxVariable)
 						&& edgeBefore instanceof StatementSequence && edgeAfter instanceof StatementSequence) {
@@ -822,11 +825,11 @@ public class CfgBuilder {
 							mCbf.constructStatementSequence((BoogieIcfgLocation) edgeBefore.getSource(),
 									(BoogieIcfgLocation) edgeAfter.getTarget(), combinedStatements);
 					mEdges.add(newStatementSequence);
-					mProcLocNodes.remove(currentLocation.getDebugIdentifier());
+					mProcLocNodes.remove(endLoc.getDebugIdentifier());
 					ModelUtils.copyAnnotations(edgeBefore, newStatementSequence);
 					ModelUtils.copyAnnotations(edgeAfter, newStatementSequence);
-					edgeAfter.getTarget().removeIncoming(edgeAfter);
-					edgeBefore.getSource().removeOutgoing(edgeBefore);
+					edgeAfter.disconnectTarget();
+					edgeBefore.disconnectSource();
 					mEdges.remove(edgeAfter);
 					mEdges.remove(edgeBefore);
 				}
