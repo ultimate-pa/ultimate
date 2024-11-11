@@ -133,9 +133,10 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 	 * @param counterexample
 	 *            A trace that will be checked for feasibility and for which, if it is infeasible, a refinement result
 	 *            will be constructed.
-	 * @param controlConfigurationSequence
-	 *            Optionally, the sequence of control configurations visited by the trace in the program that is being
-	 *            verified. Used to judge the quality of proofs ("perfect") and for assert order modulation.
+	 *
+	 *            Optionally, accompanied by the sequence of control configurations visited by the trace in the program
+	 *            that is being verified. This sequence is used to judge the quality of proofs ("perfect") and for
+	 *            assert order modulation.
 	 * @param abstraction
 	 *            The initial abstraction representing the program. Various strategies require the initial abstraction,
 	 *            e.g., to extract the complete alphabet, or to perform more complex generalizations.
@@ -157,9 +158,10 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 	 * @param counterexample
 	 *            A trace that will be checked for feasibility and for which, if it is infeasible, a refinement result
 	 *            will be constructed.
-	 * @param controlConfigurationSequence
-	 *            Optionally, the sequence of control configurations visited by the trace in the program that is being
-	 *            verified. Used to judge the quality of proofs ("perfect") and for assert order modulation.
+	 *
+	 *            Optionally, accompanied by the sequence of control configurations visited by the trace in the program
+	 *            that is being verified. This sequence is used to judge the quality of proofs ("perfect") and for
+	 *            assert order modulation.
 	 * @param abstraction
 	 *            The initial abstraction representing the program. Various strategies require the initial abstraction,
 	 *            e.g., to extract the complete alphabet, or to perform more complex generalizations.
@@ -266,11 +268,13 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 		 * @param counterexample
 		 *            A trace that will be checked for feasibility and for which, if it is infeasible, a refinement
 		 *            result will be constructed.
-		 * @param controlConfigurationSequence
-		 *            Optionally, the sequence of control configurations visited by the trace in the program that is
-		 *            being verified. Used to judge the quality of proofs ("perfect") and for assert order modulation.
+		 *
+		 *            Optionally, accompanied by the sequence of control configurations visited by the trace in the
+		 *            program that is being verified. This sequence is used to judge the quality of proofs ("perfect")
+		 *            and for assert order modulation.
 		 * @param abstraction
-		 *            TODO ???
+		 *            The initial abstraction representing the program. Various strategies require the initial
+		 *            abstraction, e.g., to extract the complete alphabet, or to perform more complex generalizations.
 		 */
 		public StrategyModuleFactory(final TaskIdentifier taskIdentifier, final IUltimateServiceProvider services,
 				final Counterexample<L> counterexample, final IPredicate precondition, final IPredicate postcondition,
