@@ -1097,6 +1097,9 @@ public class StandardFunctionHandler {
 		// https://pubs.opengroup.org/onlinepubs/009604499/functions/socket.html
 		fill(map, "socket", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 3,
 				new CPrimitive(CPrimitives.INT)));
+		// https://pubs.opengroup.org/onlinepubs/009604499/functions/recv.html
+		fill(map, "recv", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 4,
+				new CPrimitive(CPrimitives.LONG)));
 
 		// https://pubs.opengroup.org/onlinepubs/009604499/functions/inet_addr.html
 		fill(map, "inet_addr", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
