@@ -236,24 +236,4 @@
          id="jakarta.activation-api"
          version="0.0.0"/>
 
-   <plugin
-         id="wrapped.net.sf.jung.jung-api"
-         version="0.0.0"/>
-
-   <plugin
-         id="wrapped.net.sf.jung.jung-algorithms"
-         version="0.0.0"/>
-
-   <plugin
-         id="wrapped.net.sf.jung.jung-graph-impl"
-         version="0.0.0"/>
-
-   <plugin
-         id="wrapped.net.sf.jung.jung-io"
-         version="0.0.0"/>
-
-   <plugin
-         id="com.google.guava"
-         version="0.0.0"/>
-
 </feature>

@@ -252,8 +252,4 @@
          id="org.eclipse.jface.notifications"
          version="0.0.0"/>
 
-   <plugin
-         id="wrapped.net.sf.jung.jung-visualization"
-         version="0.0.0"/>
-
 </feature>
