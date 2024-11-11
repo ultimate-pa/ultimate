@@ -118,7 +118,7 @@ public final class SemanticConditionEliminator<L extends IAction> implements IIn
 		return null;
 	}
 
-	private boolean isRelevant(final IPredicate condition, final L statement) {
+	public static <L extends IAction> boolean isRelevant(final IPredicate condition, final L statement) {
 		return DataStructureUtils.haveNonEmptyIntersection(condition.getVars(),
 				statement.getTransformula().getInVars().keySet());
 	}

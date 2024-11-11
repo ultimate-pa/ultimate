@@ -27,12 +27,14 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.DefaultIndependenceCache;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.DisjunctiveConditionalIndependenceRelation.IConditionMerger;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -58,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.in
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.AbstractionType;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.IndependenceType;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.SemanticConditionEliminator;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.SemanticIndependenceConditionGenerator;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.ICopyActionFactory;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.IRefinableAbstraction;
@@ -80,6 +83,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
  * @param <L>
  */
 public class IndependenceProviderFactory<L extends IIcfgTransition<?>> {
+	private static final boolean REDUCE_CONTEXT_PREDICATES = true;
+
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 
@@ -213,13 +218,28 @@ public class IndependenceProviderFactory<L extends IIcfgTransition<?>> {
 				// statements as independent if they are independent under the interpolants from some iteration.
 				// For the symbolic relation, we compute the conjunction of all context predicates.
 				.withDisjunctivePredicates(PartialOrderCegarLoop::getConjuncts, ImmutableList::new,
-						(ctx, a, b) -> predicateFactory.and(ctx))
+						getConditionMerger(predicateFactory))
 				// .withDisjunctivePredicates(PartialOrderCegarLoop::getConjuncts, ImmutableList::singleton)
 				// =========================================================================
 				// Never consider letters of the same thread to be independent.
 				.threadSeparated()
 				// Retrieve the constructed relation.
 				.build();
+	}
+
+	private static <L extends IIcfgTransition<?>, C extends Collection<IPredicate>> IConditionMerger<L, IPredicate, C>
+			getConditionMerger(final PredicateFactory predicateFactory) {
+		if (REDUCE_CONTEXT_PREDICATES) {
+			return (ctx, a, b) -> {
+				final var reduced = ctx.stream().filter(p -> SemanticConditionEliminator.isRelevant(p, a)
+						|| SemanticConditionEliminator.isRelevant(p, b)).collect(Collectors.toList());
+				if (reduced.isEmpty()) {
+					return null;
+				}
+				return predicateFactory.and(reduced);
+			};
+		}
+		return (ctx, a, b) -> predicateFactory.and(ctx);
 	}
 
 	private SemanticIndependenceConditionGenerator getGenerator(final IndependenceSettings settings) {
