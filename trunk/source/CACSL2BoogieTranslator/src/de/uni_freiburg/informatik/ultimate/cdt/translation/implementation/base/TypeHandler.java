@@ -35,6 +35,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -50,6 +51,7 @@ import org.eclipse.cdt.core.dom.ast.IASTEnumerationSpecifier.IASTEnumerator;
 import org.eclipse.cdt.core.dom.ast.IASTNamedTypeSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclSpecifier;
+import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclaration;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTTypedefNameSpecifier;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
@@ -473,7 +475,26 @@ public class TypeHandler implements ITypeHandler {
 					fTypes.add(declaration.getType());
 					bitFieldWidths.add(declaration.getBitfieldSize());
 				}
-			} else if (r instanceof SkipResult) { // skip ;)
+			} else if (r instanceof SkipResult) {
+				// Check for an anonymous struct / union inside
+				if (dec instanceof IASTSimpleDeclaration) {
+					final Result declSpecifierResult = main.dispatch(((IASTSimpleDeclaration) dec).getDeclSpecifier());
+					if (declSpecifierResult instanceof TypesResult) {
+						// An unnamed member whose type specifier is a structure specifier with no tag is called an
+						// anonymous structure; an unnamed member whose type specifier is a union specifier with
+						// no tag is called an anonymous union. The members of an anonymous structure or union
+						// are considered to be members of the containing structure or union. This applies
+						// recursively if the containing structure or union is also anonymous.
+						// C11 6.7.2.1.13
+						final CType type = ((TypesResult) declSpecifierResult).getCType();
+						if (type instanceof CStructOrUnion) {
+							final CStructOrUnion structOrUnion = (CStructOrUnion) type;
+							fNames.addAll(Arrays.asList(structOrUnion.getFieldIds()));
+							fTypes.addAll(Arrays.asList(structOrUnion.getFieldTypes()));
+							bitFieldWidths.addAll(structOrUnion.getBitFieldWidths());
+						}
+					}
+				}
 			} else {
 				final String msg = "Unexpected syntax in struct declaration!";
 				throw new UnsupportedSyntaxException(loc, msg);
