@@ -60,7 +60,7 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<>(LABEL_EMIT_BACKTRANSLATION_WARNINGS, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_USE_SIMPLIFIER, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_USE_MEMORY_SLICER, false, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_REPLACE_WHILE_AND_CONDITIONAL, true, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_REPLACE_WHILE_AND_CONDITIONAL, false, PreferenceType.Boolean),
 		};
 	}
 }
