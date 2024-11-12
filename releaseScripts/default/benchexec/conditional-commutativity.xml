@@ -10,19 +10,16 @@
   <rundefinition name="NONE">
   </rundefinition>
 
-   <rundefinition name="CE-Generator">
-    <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">true</option>
-	<option name="&#45;-traceabstraction.mode.of.commutativity.condition.calculation">GENERATOR</option>
+   <rundefinition name="CE-Sufficient">
+    <option name="&#45;-traceabstraction.commutativity.condition.synthesis">SUFFICIENT</option>
   </rundefinition>
   
-    <rundefinition name="CE-GeneratorWithContext">
-    <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">true</option>
-	<option name="&#45;-traceabstraction.mode.of.commutativity.condition.calculation">GENERATOR_WITH_CONTEXT</option>
+    <rundefinition name="CE-SufficientWithContext">
+    <option name="&#45;-traceabstraction.commutativity.condition.synthesisg">SUFFICIENT_WITH_CONTEXT</option>
   </rundefinition>
   
-    <rundefinition name="CE-SymbolicRelation">
-    <option name="&#45;-traceabstraction.additional.conditional.commutativity.checking">true</option>
-	<option name="&#45;-traceabstraction.mode.of.commutativity.condition.calculation">SYMBOLIC_RELATION</option>
+    <rundefinition name="CE-NecessaryAndSufficient">
+    <option name="&#45;-traceabstraction.commutativity.condition.synthesis">NECESSARY_AND_SUFFICIENT</option>
   </rundefinition>
 
   <tasks name="single">

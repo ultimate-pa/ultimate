@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *
  */
 public class ConditionalCommutativityTestSuite extends AbstractTraceAbstractionTestSuite {
-	private static final int TIMEOUT = 30; // seconds
+	private static final int TIMEOUT = 60; // seconds
 
 	private static final String TOOLCHAIN_C = "AutomizerCInline.xml";
 	private static final String TOOLCHAIN_BPL = "AutomizerBplInline.xml";

@@ -20,13 +20,13 @@
     <result filename="conditional-commutativity.*.results.NONE.*.xml" />
   </union>
   <union>
-    <result filename="conditional-commutativity.*.results.CE-Generator.*.xml" />
+    <result filename="conditional-commutativity.*.results.CE-Sufficient.*.xml" />
   </union>
   <union>
-    <result filename="conditional-commutativity.*.results.CE-GeneratorWithContext.*.xml" />
+    <result filename="conditional-commutativity.*.results.CE-SufficientWithContext.*.xml" />
   </union>
   <union>
-    <result filename="conditional-commutativity.*.results.CE-SymbolicRelation.*.xml" />
+    <result filename="conditional-commutativity.*.results.CE-NecessaryAndSufficient.*.xml" />
   </union>
 
 </table>
