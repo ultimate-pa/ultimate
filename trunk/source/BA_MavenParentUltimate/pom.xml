@@ -478,7 +478,6 @@
 		<module>../LassoRanker</module>
 		<module>../Library-AcceleratedInterpolation</module>
 		<module>../Library-ApacheCommonsCLI</module>
-		<module>../Library-ApacheCommonsLang</module>
 		<module>../Library-Automata</module>
 		<module>../Library-BoogieAST</module>
 		<module>../Library-CHC</module>

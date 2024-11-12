@@ -132,7 +132,7 @@
         <setEntry value="de.uni_freiburg.informatik.ultimate.witnessprinter@default:default"/>
         <setEntry value="net.sourceforge.czt@default:default"/>
         <setEntry value="org.apache.commons.cli@default:default"/>
-        <setEntry value="org.apache.commons.lang@default:default"/>
+        <setEntry value="org.apache.commons.lang3@default:default"/>
     </setAttribute>
     <booleanAttribute key="show_selected_only" value="false"/>
     <booleanAttribute key="tracing" value="false"/>
