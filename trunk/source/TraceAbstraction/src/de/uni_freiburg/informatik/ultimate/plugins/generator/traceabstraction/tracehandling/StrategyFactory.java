@@ -74,6 +74,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.CamelSmtAmRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.DachshundRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.FixedRefinementStrategy;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.FoxRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.LazyTaipanRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.LizardRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.MammothNoAmRefinementStrategy;
@@ -199,6 +200,8 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 			return new WalrusRefinementStrategy<>(strategyModuleFactory, exceptionBlacklist);
 		case WOLF:
 			return new WolfRefinementStrategy<>(strategyModuleFactory, exceptionBlacklist);
+		case FOX:
+			return new FoxRefinementStrategy<>(strategyModuleFactory, exceptionBlacklist);
 		case BEAR:
 			return new BearRefinementStrategy<>(strategyModuleFactory, exceptionBlacklist);
 		case WARTHOG_NO_AM:

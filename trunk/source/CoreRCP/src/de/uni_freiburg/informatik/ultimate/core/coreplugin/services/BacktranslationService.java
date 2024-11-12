@@ -106,6 +106,12 @@ public class BacktranslationService implements IStorable, IBacktranslationServic
 	}
 
 	@Override
+	public <SE, TE, CTX> TE translateExpressionWithContext(final SE expression, final CTX context,
+			final Class<SE> clazz) {
+		return mTranslatorSequence.translateExpressionWithContext(expression, context, clazz);
+	}
+
+	@Override
 	public <STE> List<String> translateTraceToHumanReadableString(final List<STE> trace, final Class<STE> clazz) {
 		return mTranslatorSequence.translateTraceToHumanReadableString(trace, clazz);
 	}

@@ -48,6 +48,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -218,6 +219,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.SkipResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.StringLiteralResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.TypesResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.CdtASTUtils;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO.AUXVAR;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
@@ -277,7 +279,7 @@ public class CHandler {
 	/**
 	 * Stores the labels of the loops we are currently inside. (For translation of a possible continue statement)
 	 */
-	private final Deque<String> mInnerMostLoopLabel;
+	private final Deque<Optional<String>> mInnerMostLoopLabel;
 
 	private final ILogger mLogger;
 
@@ -1224,9 +1226,11 @@ public class CHandler {
 
 	public Result visit(final IDispatcher main, final IASTContinueStatement cs) {
 		final ILocation loc = mLocationFactory.createCLocation(cs);
-		final ArrayList<Statement> stmt = new ArrayList<>();
-		stmt.add(new GotoStatement(loc, new String[] { mInnerMostLoopLabel.peek() }));
-		return new ExpressionResult(stmt, null);
+		final Optional<String> label = mInnerMostLoopLabel.peek();
+		if (label.isEmpty()) {
+			throw new AssertionError("Label for continue not found");
+		}
+		return new ExpressionResult(List.of(new GotoStatement(loc, new String[] { label.get() })), null);
 	}
 
 	public Result visit(final IDispatcher main, final IASTDeclarationStatement node) {
@@ -1485,9 +1489,12 @@ public class CHandler {
 		final ILocation loc = mLocationFactory.createCLocation(node);
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 		final List<Statement> bodyBlock = new ArrayList<>();
-		final String loopLabel = mNameHandler.getGloballyUniqueIdentifier(SFO.LOOPLABEL);
+		final boolean hasContinue = CdtASTUtils.containsContinue(node.getBody());
+		final String loopLabel = hasContinue ? mNameHandler.getGloballyUniqueIdentifier(SFO.LOOPLABEL) : null;
 		handleLoopBody(loc, main, node.getBody(), loopLabel, resultBuilder, bodyBlock);
-		bodyBlock.add(new Label(loc, loopLabel));
+		if (hasContinue) {
+			bodyBlock.add(new Label(loc, loopLabel));
+		}
 		bodyBlock.addAll(handleLoopCondition(loc, main, node.getCondition(), resultBuilder));
 		return buildLoopResult(main, loc, node, bodyBlock, resultBuilder);
 	}
@@ -1551,9 +1558,12 @@ public class CHandler {
 		}
 		final List<Statement> bodyBlock =
 				new ArrayList<>(handleLoopCondition(loc, main, node.getConditionExpression(), resultBuilder));
-		final String loopLabel = mNameHandler.getGloballyUniqueIdentifier(SFO.LOOPLABEL);
+		final boolean hasContinue = CdtASTUtils.containsContinue(node.getBody());
+		final String loopLabel = hasContinue ? mNameHandler.getGloballyUniqueIdentifier(SFO.LOOPLABEL) : null;
 		handleLoopBody(loc, main, node.getBody(), loopLabel, resultBuilder, bodyBlock);
-		bodyBlock.add(new Label(loc, loopLabel));
+		if (hasContinue) {
+			bodyBlock.add(new Label(loc, loopLabel));
+		}
 
 		// Insert the translated iterator at the end of the loop (after the loop label)
 		final IASTExpression cItExpr = node.getIterationExpression();
@@ -2605,9 +2615,12 @@ public class CHandler {
 	public Result visit(final IDispatcher main, final IASTWhileStatement node) {
 		final ILocation loc = mLocationFactory.createCLocation(node);
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
-		final String loopLabel = mNameHandler.getGloballyUniqueIdentifier(SFO.LOOPLABEL);
+		final boolean hasContinue = CdtASTUtils.containsContinue(node.getBody());
+		final String loopLabel = hasContinue ? mNameHandler.getGloballyUniqueIdentifier(SFO.LOOPLABEL) : null;
 		final List<Statement> bodyBlock = new ArrayList<>();
-		bodyBlock.add(new Label(loc, loopLabel));
+		if (hasContinue) {
+			bodyBlock.add(new Label(loc, loopLabel));
+		}
 		bodyBlock.addAll(handleLoopCondition(loc, main, node.getCondition(), resultBuilder));
 		handleLoopBody(loc, main, node.getBody(), loopLabel, resultBuilder, bodyBlock);
 		return buildLoopResult(main, loc, node, bodyBlock, resultBuilder);
@@ -3008,12 +3021,7 @@ public class CHandler {
 			final DeclaratorResult declResult, final IASTDeclarator hook, final CStorageClass storageClass) {
 
 		final CDeclaration cDec = declResult.getDeclaration();
-		final var oldStv = mSymbolTable.findCSymbol(hook, cDec.getName());
-		boolean onHeap = cDec.isOnHeap();
-		if (!onHeap && oldStv != null) {
-			// If the declaration is not on the heap, check if the declaration in the symbol table is on the heap.
-			onHeap = oldStv.getCDecl().isOnHeap();
-		}
+		final boolean onHeap = cDec.isOnHeap() || isOnHeap(hook);
 		final DeclarationInformation declarationInformation = getDeclarationInfo(storageClass);
 		final String bId = mNameHandler.getUniqueIdentifier(node, cDec.getName(), mSymbolTable.getCScopeId(hook),
 				onHeap, cDec.getType(), declarationInformation);
@@ -3023,8 +3031,8 @@ public class CHandler {
 
 		// this is only to have a minimal symbolTableEntry (containing boogieID) for
 		// translation of the initializer
-		mSymbolTable.storeCSymbol(node, cDec.getName(),
-				new SymbolTableValue(bId, null, null, cDec, declarationInformation, hook, false));
+		final var stv = new SymbolTableValue(bId, null, null, cDec, declarationInformation, hook, false);
+		mSymbolTable.storeCSymbol(node, cDec.getName(), stv);
 		final InitializerResult initializer = translateInitializer(main, cDec);
 		cDec.setInitializerResult(initializer);
 
@@ -3062,7 +3070,8 @@ public class CHandler {
 			// global static variables are treated like normal global variables..
 			boogieDec = new VariableDeclaration(loc, new Attribute[0],
 					new VarList[] { new VarList(loc, new String[] { bId }, translatedType) });
-			mStaticObjectsHandler.addGlobalVariableDeclaration((VariableDeclaration) boogieDec, cDec);
+			final var scope = mSymbolTable.tableFindCursor(hook, cDec.getName(), stv);
+			mStaticObjectsHandler.addGlobalVariableDeclaration((VariableDeclaration) boogieDec, cDec, scope);
 			result = skipOrSideEffects(declResult);
 		} else {
 			final BoogieType boogieType =
@@ -3527,7 +3536,7 @@ public class CHandler {
 				if (!(boogieDecl instanceof VariableDeclaration)) {
 					throw new AssertionError("TODO: handle this case!");
 				}
-				mStaticObjectsHandler.addGlobalVariableDeclaration((VariableDeclaration) boogieDecl, cd);
+				mStaticObjectsHandler.addGlobalVariableDeclaration((VariableDeclaration) boogieDecl, cd, null);
 			}
 		} else {
 			if (childRes instanceof SkipResult || childRes.getNode() == null) {
@@ -3597,7 +3606,7 @@ public class CHandler {
 
 	private void handleLoopBody(final ILocation loc, final IDispatcher main, final IASTStatement bodyStmt,
 			final String loopLabel, final ExpressionResultBuilder resultBuilder, final List<Statement> bodyBlock) {
-		mInnerMostLoopLabel.push(loopLabel);
+		mInnerMostLoopLabel.push(Optional.ofNullable(loopLabel));
 		final Result bodyResult = main.dispatch(bodyStmt);
 		if (bodyResult instanceof ExpressionResult) {
 			final ExpressionResult re = (ExpressionResult) bodyResult;
@@ -3650,7 +3659,11 @@ public class CHandler {
 			final List<Statement> bodyBlock, final ExpressionResultBuilder resultBuilder) {
 		final LoopInvariantSpecification[] spec = extractLoopInvariants(main, node);
 		final ILocation igLoc = LocationFactory.createIgnoreLocation(loc);
-		final WhileStatement whileStmt = new WhileStatement(igLoc, ExpressionFactory.createBooleanLiteral(igLoc, true),
+		// Create a while true statement, the condition is handled inside the loop in an if
+		// Note that the "true" condition should be ignored during backtranslation (as it does not correspond to the
+		// condition in the C code), but the loop itself should not be ignored, otherwise we don't export any loop
+		// invariants.
+		final WhileStatement whileStmt = new WhileStatement(loc, ExpressionFactory.createBooleanLiteral(igLoc, true),
 				spec, bodyBlock.toArray(Statement[]::new));
 		resultBuilder.getOverappr().stream().forEach(a -> a.annotate(whileStmt));
 		resultBuilder.addStatement(whileStmt);

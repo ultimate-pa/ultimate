@@ -245,7 +245,9 @@ public class IntegerTranslation extends ExpressionTranslation {
 	@Override
 	public Pair<Expression, ASTType> constructInfinitePrecisionOperation(final ILocation loc, final int operator,
 			final Expression exp1, final Expression exp2, final CPrimitive type) {
-		return new Pair<>(constructArithmeticExpression(loc, operator, exp1, exp2),
+		final var wrappedExprs = applyWraparoundsIfNecessary(loc, exp1, type, exp2, type);
+		return new Pair<>(
+				constructArithmeticExpression(loc, operator, wrappedExprs.getFirst(), wrappedExprs.getSecond()),
 				mTypeHandler.cType2AstType(loc, type));
 	}
 

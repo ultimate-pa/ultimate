@@ -27,6 +27,8 @@
 
 package de.uni_freiburg.informatik.ultimate.core.lib.models.annotation;
 
+import java.util.Objects;
+
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ProcedureContract;
@@ -38,8 +40,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualiz
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-// TODO #witnessRefactor Remove this annotation. WitnessPrinter should work with a Floyd/Hoare proof directly.
-@Deprecated
 public class WitnessProcedureContract extends ModernAnnotations {
 
 	private static final long serialVersionUID = 1L;
@@ -49,7 +49,7 @@ public class WitnessProcedureContract extends ModernAnnotations {
 	private final ProcedureContract<?, ?> mContract;
 
 	public WitnessProcedureContract(final ProcedureContract<?, ?> contract) {
-		mContract = contract;
+		mContract = Objects.requireNonNull(contract);
 	}
 
 	public ProcedureContract<?, ?> getContract() {
