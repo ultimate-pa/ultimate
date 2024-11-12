@@ -5,6 +5,5 @@
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="lib" path="src/de/uni_freiburg/informatik/ultimate/automata/petrinet/petruchio/petruchio.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/Library-UltimateUtil"/>
-	<classpathentry kind="lib" path="src/de/uni_freiburg/informatik/ultimate/automata/nestedword/operations/optncsb/trove-3.0.3.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
