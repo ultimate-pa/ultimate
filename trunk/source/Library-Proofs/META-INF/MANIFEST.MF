@@ -2,8 +2,8 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Library-Proofs
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.proofs
-Bundle-Version: 0.2.5
-Bundle-RequiredExecutionEnvironment: JavaSE-11
+Bundle-Version: 0.3.0
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.smtlib,
  de.uni_freiburg.informatik.ultimate.lib.automata,

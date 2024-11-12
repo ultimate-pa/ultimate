@@ -2,7 +2,8 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: AutomataScriptInterpreter
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter;singleton:=true
-Bundle-Version: 0.2.5
+Bundle-Vendor: Ultimate Program Analysis Team
+Bundle-Version: 0.3.0
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.util,
  de.uni_freiburg.informatik.ultimate.core,
  de.uni_freiburg.informatik.ultimate.lib.core,
@@ -13,6 +14,6 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.util,
  de.uni_freiburg.informatik.ultimate.smtsolver.external,
  de.uni_freiburg.informatik.ultimate.lib.smtlibutils
 Bundle-ActivationPolicy: lazy
-Bundle-RequiredExecutionEnvironment: JavaSE-11
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Export-Package: de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter
 Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter

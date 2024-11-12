@@ -41,6 +41,6 @@ public interface IImageKeys {
 	// Icon for reexecute new toolchain on old file
 	public static final String REEXECNEWTC = "icons/reexecnewtc.png";
 
-	public static final String ICON_CANCEL_TOOLCHAIN = "icons/canceltc64.png";
+	public static final String ICON_CANCEL_TOOLCHAIN = "icons/canceltc.png";
 
 }

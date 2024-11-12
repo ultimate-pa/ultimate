@@ -31,7 +31,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import javax.xml.bind.JAXBException;
+import jakarta.xml.bind.JAXBException;
 
 import org.eclipse.core.runtime.IStatus;
 import org.xml.sax.SAXException;

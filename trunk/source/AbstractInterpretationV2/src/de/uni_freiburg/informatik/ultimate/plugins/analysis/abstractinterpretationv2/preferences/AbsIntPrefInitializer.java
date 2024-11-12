@@ -57,7 +57,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.poorman.PoormanDomainPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainPreferences;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.lpsolver.LpSolverPreferences;
 
 /**
  *
@@ -151,8 +150,6 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 		abstractDomainContainer.addAbstractItems(PoormanDomainPreferences.getPreferences());
 
 		rtr.add(abstractDomainContainer);
-
-		rtr.addAll(LpSolverPreferences.getPreferences());
 
 		return rtr.toArray(new BaseUltimatePreferenceItem[rtr.size()]);
 	}
