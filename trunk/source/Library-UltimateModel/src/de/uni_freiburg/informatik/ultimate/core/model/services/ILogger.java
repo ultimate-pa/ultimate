@@ -116,13 +116,11 @@ public interface ILogger {
 	}
 
 	default void info(final Object msg) {
-		final long threadId = Thread.currentThread().getId();
-		log(LogLevel.INFO, "Thread: " + threadId + "# " + msg);
+		log(LogLevel.INFO, msg);
 	}
 
 	default void info(final String formatString, final Object... formatArgs) {
-		final long threadId = Thread.currentThread().getId();
-		log(LogLevel.INFO, "Thread: " + threadId + "# " + formatString, formatArgs);
+		log(LogLevel.INFO, formatString, formatArgs);
 	}
 
 	default boolean isDebugEnabled() {
