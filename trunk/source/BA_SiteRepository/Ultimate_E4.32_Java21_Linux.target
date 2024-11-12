@@ -10,76 +10,7 @@
 		<arch>x86_64</arch>
 	</environment>
 	<locations>
-		<location includeAllPlatforms="false" includeConfigurePhase="true" includeSource="false" type="InstallableUnit">
-			<repository id="ultimate-dependencies" location="https://struebli.informatik.uni-freiburg.de/p2-repository-ultimate-dependencies-21/"/>
-			<unit id="com.lmax.disruptor" version="3.3.5"/>
-			<unit id="org.yaml.snakeyaml" version="2.2.0"/>
-			<unit id="net.sf.jung.monolithic" version="2.1.1"/>
-		</location>
-		<location includeAllPlatforms="false" includeConfigurePhase="true" includeSource="false" type="InstallableUnit">
-			<repository id="eclipse-releases" location="https://download.eclipse.org/releases/2024-06"/>
-			<unit id="org.eclipse.cdt.feature.group" version="11.6.0.202406041555"/>
-			<unit id="org.eclipse.cdt.sdk.feature.group" version="11.6.0.202406041555"/>
-			<unit id="org.eclipse.equinox.sdk.feature.group" version="3.23.1200.v20240524-2033"/>
-			<unit id="org.eclipse.sdk.feature.group" version="4.32.0.v20240601-0610"/>
-			<unit id="org.eclipse.jdt.feature.group" version="3.19.500.v20240601-0610"/>
-			<unit id="org.eclipse.equinox.server.jetty.feature.group" version="1.11.500.v20240321-1445"/>
-		</location>
-		<location includeAllPlatforms="false" includeConfigurePhase="true" includeSource="false" type="InstallableUnit">
-			<repository id="orbit-aggregation" location="https://download.eclipse.org/tools/orbit/simrel/orbit-aggregation/2024-06"/>
-			<unit id="org.eclipse.orbit.legacy.feature.group" version="4.32.0.v20240307-0931"/>
-			<unit id="org.eclipse.orbit.maven.aopalliance.feature.group" version="4.32.0"/>
-			<unit id="org.eclipse.orbit.maven.com.github.package-url.feature.group" version="4.32.0"/>
-			<unit id="org.eclipse.orbit.maven.com.github.virtuald.feature.group" version="4.32.0"/>
-			<unit id="org.eclipse.orbit.maven.com.google.javascript.feature.group" version="4.32.0.v20240319-0700"/>
-			<unit id="org.eclipse.orbit.maven.com.jcraft.jsch.feature.group" version="4.32.0"/>
-			<unit id="org.eclipse.orbit.maven.com.jcraft.jzlib.feature.group" version="4.32.0"/>
-			<unit id="org.eclipse.orbit.maven.com.jgoodies.common.feature.group" version="4.32.0.v20240327-0800"/>
-			<unit id="org.eclipse.orbit.maven.com.jgoodies.forms.feature.group" version="4.32.0.v20240327-0800"/>
-			<unit id="org.eclipse.orbit.maven.com.konghq.feature.group" version="4.32.0"/>
-			<unit id="org.eclipse.orbit.maven.com.zaxxer.feature.group" version="4.32.0"/>
-			<unit id="org.eclipse.orbit.maven.hamcrest.core.feature.group" version="4.32.0"/>
-			<unit id="org.eclipse.orbit.maven.hamcrest.deprecated.feature.group" version="4.32.0"/>
-			<unit id="org.eclipse.orbit.maven.hamcrest.library.feature.group" version="4.32.0"/>
-			<unit id="org.eclipse.orbit.maven.javax.wsdl.feature.group" version="4.32.0"/>
-			<unit id="org.eclipse.orbit.maven.jdom2.feature.group" version="4.32.0"/>
-			<unit id="org.eclipse.orbit.maven.jnr.feature.group" version="4.32.0"/>
-			<unit id="org.eclipse.orbit.maven.joni.feature.group" version="4.32.0"/>
-			<unit id="org.eclipse.orbit.maven.org.apache.axis.feature.group" version="4.32.0"/>
-			<unit id="org.eclipse.orbit.maven.org.apache.batik.feature.group" version="4.32.0"/>
-			<unit id="org.eclipse.orbit.maven.org.apache.poi.feature.group" version="4.32.0"/>
-			<unit id="org.eclipse.orbit.maven.org.apache.ws.commons.util.feature.group" version="4.32.0"/>
-			<unit id="org.eclipse.orbit.maven.org.apache.xmlbeans.feature.group" version="4.32.0.v20240527-0800"/>
-			<unit id="org.eclipse.orbit.maven.org.apache.xmlgraphics.feature.group" version="4.32.0"/>
-			<unit id="org.eclipse.orbit.maven.org.codelibs.nekohtml.feature.group" version="4.32.0.v20240413-0800"/>
-			<unit id="org.eclipse.orbit.maven.org.commonmark.feature.group" version="4.32.0.v20240316-0700"/>
-			<unit id="org.eclipse.orbit.maven.org.cyclonedx.feature.group" version="4.32.0"/>
-			<unit id="org.eclipse.orbit.maven.org.dom4j.feature.group" version="4.32.0"/>
-			<unit id="org.eclipse.orbit.maven.org.jdom.feature.group" version="4.32.0"/>
-			<unit id="org.eclipse.orbit.maven.org.pushingpixels.trident.feature.group" version="4.32.0"/>
-			<unit id="org.eclipse.orbit.maven.osgi.all.feature.group" version="4.32.0.v20240527-0800"/>
-			<unit id="org.eclipse.orbit.maven.xalan.feature.group" version="4.32.0"/>
-			<unit id="org.eclipse.orbit.maven.xerces.feature.group" version="4.32.0"/>
-			<unit id="org.eclipse.orbit.maven.xml-resolver.feature.group" version="4.32.0"/>
-			<unit id="org.eclipse.orbit.maven.junit.feature.group" version="4.32.0"/>
-			<unit id="org.eclipse.orbit.maven.lucene.feature.group" version="4.32.0"/>
-		</location>
-		<location includeDependencyDepth="none" includeDependencyScopes="compile" includeSource="false" missingManifest="generate" type="Maven">
-			<dependencies>
-				<dependency>
-					<groupId>org.ops4j.pax.logging</groupId>
-					<artifactId>pax-logging-api</artifactId>
-					<version>2.2.7</version>
-					<type>jar</type>
-				</dependency>
-				<dependency>
-					<groupId>org.ops4j.pax.logging</groupId>
-					<artifactId>pax-logging-log4j2</artifactId>
-					<version>2.2.7</version>
-					<type>jar</type>
-				</dependency>
-			</dependencies>
-		</location>
+		<location type="Target" uri="file:${project_loc:/BA_SiteRepository}/Ultimate_E4.32_Java21.target"/>
 	</locations>
 	<includeBundles>
 		<plugin id="bcpg" version="1.78.1"/>
@@ -106,7 +37,6 @@
 		<plugin id="javax.el-api" version="3.0.3"/>
 		<plugin id="javax.servlet-api" version="3.1.0"/>
 		<plugin id="javax.servlet.jsp-api" version="2.3.3"/>
-		<plugin id="net.sf.jung.monolithic"/>
 		<plugin id="org.apache.batik.anim"/>
 		<plugin id="org.apache.batik.awt.util"/>
 		<plugin id="org.apache.batik.constants" version="1.17.0.v20231215-1130"/>
@@ -139,8 +69,6 @@
 		<plugin id="org.eclipse.cdt.codan.core.cxx"/>
 		<plugin id="org.eclipse.cdt.codan.ui"/>
 		<plugin id="org.eclipse.cdt.core"/>
-		<plugin id="org.eclipse.cdt.core.linux"/>
-		<plugin id="org.eclipse.cdt.core.linux.x86_64"/>
 		<plugin id="org.eclipse.cdt.core.native"/>
 		<plugin id="org.eclipse.cdt.make.core"/>
 		<plugin id="org.eclipse.cdt.managedbuilder.core"/>
@@ -154,7 +82,6 @@
 		<plugin id="org.eclipse.core.databinding.property"/>
 		<plugin id="org.eclipse.core.expressions" version="3.9.400.v20240413-1529"/>
 		<plugin id="org.eclipse.core.filebuffers"/>
-		<plugin id="org.eclipse.core.filesystem.linux.x86_64"/>
 		<plugin id="org.eclipse.core.filesystem" version="1.10.400.v20240426-1040"/>
 		<plugin id="org.eclipse.core.jobs" version="3.15.300.v20240418-0734"/>
 		<plugin id="org.eclipse.core.resources" version="3.20.200.v20240513-1323"/>
@@ -204,7 +131,6 @@
 		<plugin id="org.eclipse.equinox.preferences" version="3.11.100.v20240327-0645"/>
 		<plugin id="org.eclipse.equinox.registry" version="3.12.100.v20240524-2011"/>
 		<plugin id="org.eclipse.equinox.security"/>
-		<plugin id="org.eclipse.equinox.security.linux"/>
 		<plugin id="org.eclipse.help"/>
 		<plugin id="org.eclipse.jdt.annotation" version="1.2.100.v20240212-1051"/>
 		<plugin id="org.eclipse.jdt.annotation" version="2.3.0.v20240111-2306"/>
@@ -230,7 +156,6 @@
 		<plugin id="org.eclipse.osgi" version="3.20.0.v20240509-1421"/>
 		<plugin id="org.eclipse.search"/>
 		<plugin id="org.eclipse.search.core"/>
-		<plugin id="org.eclipse.swt.gtk.linux.x86_64" version="3.126.0.v20240528-0813"/>
 		<plugin id="org.eclipse.swt" version="3.126.0.v20240528-0813"/>
 		<plugin id="org.eclipse.team.core"/>
 		<plugin id="org.eclipse.team.ui"/>
@@ -275,5 +200,11 @@
 		<plugin id="org.osgi.util.xml" version="1.0.2.202109301733"/>
 		<plugin id="org.tukaani.xz" version="1.9"/>
 		<plugin id="org.yaml.snakeyaml" version="2.2.0"/>
+		<!-- Architecture-specific bundles -->
+		<plugin id="org.eclipse.cdt.core.linux"/>
+		<plugin id="org.eclipse.cdt.core.linux.x86_64"/>
+		<plugin id="org.eclipse.core.filesystem.linux.x86_64"/>
+		<plugin id="org.eclipse.equinox.security.linux"/>
+		<plugin id="org.eclipse.swt.gtk.linux.x86_64" version="3.126.0.v20240528-0813"/>
 	</includeBundles>
 </target>
