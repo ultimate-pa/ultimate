@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.i
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.CachedIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
@@ -47,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -385,6 +387,8 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 	 * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
 	 */
 	public class ConditionGeneratorIndependence implements ISymbolicIndependenceRelation<L, IPredicate> {
+		private static final boolean QUANTIFY_IRRELEVANT_CONTEXT_VARS = true;
+
 		private final SemanticIndependenceConditionGenerator mGenerator;
 		private final boolean mIsConditional;
 
@@ -399,7 +403,20 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 		public IPredicate getCommutativityCondition(final IPredicate condition, final L a, final L b) {
 			if (mIsConditional && condition != null) {
 				final var generated = mGenerator.generateCondition(condition, a.getTransformula(), b.getTransformula());
-				return mPredicateFactory.and(condition, generated);
+				if (!QUANTIFY_IRRELEVANT_CONTEXT_VARS) {
+					return mPredicateFactory.and(condition, generated);
+				}
+
+				final var conjunction =
+						SmtUtils.and(mManagedScript.getScript(), condition.getFormula(), generated.getFormula());
+				final var irrelevantVars = condition.getVars().stream()
+						.filter(pv -> !SemanticConditionEliminator.isRelevant(condition, a)
+								&& !SemanticConditionEliminator.isRelevant(condition, b))
+						.map(pv -> pv.getTermVariable()).collect(Collectors.toList());
+				final var quantified = SmtUtils.quantifier(mManagedScript.getScript(), QuantifiedFormula.EXISTS,
+						irrelevantVars, conjunction);
+				return mPredicateFactory.newPredicate(quantified);
+
 			}
 			return mGenerator.generateCondition(a.getTransformula(), b.getTransformula());
 		}
