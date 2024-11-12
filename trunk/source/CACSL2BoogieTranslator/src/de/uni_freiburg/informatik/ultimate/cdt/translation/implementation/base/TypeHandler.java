@@ -486,10 +486,13 @@ public class TypeHandler implements ITypeHandler {
 						// are considered to be members of the containing structure or union. This applies
 						// recursively if the containing structure or union is also anonymous.
 						// C11 6.7.2.1.13
-						final CStructOrUnion type = (CStructOrUnion) ((TypesResult) declSpecifierResult).getCType();
-						fNames.addAll(Arrays.asList(type.getFieldIds()));
-						fTypes.addAll(Arrays.asList(type.getFieldTypes()));
-						bitFieldWidths.addAll(type.getBitFieldWidths());
+						final CType type = ((TypesResult) declSpecifierResult).getCType();
+						if (type instanceof CStructOrUnion) {
+							final CStructOrUnion structOrUnion = (CStructOrUnion) type;
+							fNames.addAll(Arrays.asList(structOrUnion.getFieldIds()));
+							fTypes.addAll(Arrays.asList(structOrUnion.getFieldTypes()));
+							bitFieldWidths.addAll(structOrUnion.getBitFieldWidths());
+						}
 					}
 				}
 			} else {
