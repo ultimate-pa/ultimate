@@ -4,8 +4,7 @@
  *
  * Idea: Variation of parallelSumConCom with atomic statements
  *
- * Observation: Writing everything into a single atomic statements seems to be problematic for the sleep set criterion!
- * Observation:  CE-Approach seems to have problems
+ * Observation:  SymbolicRelation seems to have Problems
  */
 var A : [int]int;
 var i, j, x, y, z, n : int;

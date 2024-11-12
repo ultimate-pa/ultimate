@@ -2,10 +2,8 @@
 /*
  * Author: Marcel Ebbinghaus
  *
- * Idea: Variation of parallelIncrementDecrementConCom.bpl with 3 threads and atomics
+ * Idea: Variation of parallelIncrementDecrementConCom.bpl with a third thread, which shares variable j with thread2
  *
- * Observation: Seems to be problematic for IA, DFS and especially for the sleep set criterion,
- * but works fine for the counterexample approach!
  */
 var i, j, n, x, y: int;
 
