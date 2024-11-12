@@ -332,3 +332,6 @@ releaseScripts/default/sv-benchmarks
 /trunk/examples/svcomp_overapprox_unreach-call_unsafe
 /trunk/examples/svcomp_overapprox_valid-memsafety
 /trunk/examples/svcomp_overapprox_valid-memsafety_unsafe
+/trunk/examples/svcomp old
+/trunk/examples/svcomp_overapprox_valid-memcleanup
+/trunk/examples/svcomp_overapprox_valid-memcleanup_unsafe

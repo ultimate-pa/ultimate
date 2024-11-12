@@ -1184,7 +1184,7 @@ public class CfgBuilder {
 			final boolean nonFreeRequiresIsEmpty = requiresNonFree == null || requiresNonFree.isEmpty();
 
 			if ((mCodeBlockSize == CodeBlockSize.SequenceOfStatements || mCodeBlockSize == CodeBlockSize.LoopFreeBlock)
-					&& !procedureHasImplementation && nonFreeRequiresIsEmpty) {
+					&& !procedureHasImplementation && nonFreeRequiresIsEmpty && !(Overapprox.getAnnotation(st) instanceof OverapproxVariable)) {
 				if (currentLocation instanceof BoogieIcfgLocation) {
 					return startNewStatementSequenceAndAddStatement((BoogieIcfgLocation) currentLocation, st);
 				} else if (currentLocation instanceof StatementSequence) {

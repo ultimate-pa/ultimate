@@ -374,7 +374,7 @@ public class IterativePredicateTransformer<L extends IAction> {
 					oldVarAssignments = nf.getOldVarAssignment(callPos);
 					final UnmodifiableTransFormula globalVarsAssignments = nf.getGlobalVarAssignment(callPos);
 					final ProcedureSummary summary = computeProcedureSummary(mTrace, callLocalVarsAssignment, returnTf,
-							oldVarAssignments, globalVarsAssignments, nf, callPos, i);
+							oldVarAssignments, globalVarsAssignments, nf, callPos, i, skipList);
 
 					final Term preOrWpOfSummaryTerm;
 					if (bs == BackwardSequence.WP) {
@@ -484,9 +484,9 @@ public class IterativePredicateTransformer<L extends IAction> {
 	private ProcedureSummary computeProcedureSummary(final NestedWord<L> trace, final UnmodifiableTransFormula callTf,
 			final UnmodifiableTransFormula returnTf, final UnmodifiableTransFormula oldVarsAssignmentTf,
 			final UnmodifiableTransFormula globalVarsAssignment,
-			final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> rv, final int callPos, final int returnPos) {
+			final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> rv, final int callPos, final int returnPos, List<L> skipList) {
 		final UnmodifiableTransFormula summaryOfInnerStatements =
-				computeSummaryForInterproceduralTrace(trace, rv, callPos + 1, returnPos);
+				computeSummaryForInterproceduralTrace(trace, rv, callPos + 1, returnPos, skipList);
 		final String callee = ((ICallAction) trace.getSymbol(callPos)).getSucceedingProcedure();
 		final UnmodifiableTransFormula summaryWithCallAndReturn =
 				TransFormulaUtils.sequentialCompositionWithCallAndReturn(mMgdScript, true, false,
@@ -496,13 +496,14 @@ public class IterativePredicateTransformer<L extends IAction> {
 		return new ProcedureSummary(summaryWithCallAndReturn, summaryOfInnerStatements);
 	}
 
+
 	/**
 	 * Computes a summary for the given trace, but only for the statements from position "start" to position "end".
 	 *
 	 * @return - a summary for the statements from the given trace from position "start" to position "end"
 	 */
 	private UnmodifiableTransFormula computeSummaryForInterproceduralTrace(final NestedWord<L> trace,
-			final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> rv, final int start, final int end) {
+			final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> rv, final int start, final int end, final List<L> skipList) {
 		final LinkedList<UnmodifiableTransFormula> transformulasToComputeSummaryFor = new LinkedList<>();
 		for (int i = start; i < end; i++) {
 			if (trace.getSymbol(i) instanceof ICallAction) {
@@ -511,7 +512,7 @@ public class IterativePredicateTransformer<L extends IAction> {
 				final UnmodifiableTransFormula globalVarsAssignment = rv.getGlobalVarAssignment(i);
 				if (trace.isPendingCall(i)) {
 					final UnmodifiableTransFormula summaryAfterPendingCall =
-							computeSummaryForInterproceduralTrace(trace, rv, i + 1, end);
+							computeSummaryForInterproceduralTrace(trace, rv, i + 1, end, skipList);
 					final String nameEndProcedure = trace.getSymbol(end).getSucceedingProcedure();
 					final Set<IProgramNonOldVar> modifiableGlobalsOfEndProcedure =
 							mModifiedGlobals.getModifiedBoogieVars(nameEndProcedure);
@@ -532,7 +533,7 @@ public class IterativePredicateTransformer<L extends IAction> {
 					// "end",
 					// then we handle this case as a pending-call
 					final UnmodifiableTransFormula summaryAfterPendingCall =
-							computeSummaryForInterproceduralTrace(trace, rv, i + 1, end);
+							computeSummaryForInterproceduralTrace(trace, rv, i + 1, end, skipList);
 					final String nameEndProcedure = trace.getSymbol(end).getSucceedingProcedure();
 					final Set<IProgramNonOldVar> modifiableGlobalsOfEndProcedure =
 							mModifiedGlobals.getModifiedBoogieVars(nameEndProcedure);
@@ -548,7 +549,7 @@ public class IterativePredicateTransformer<L extends IAction> {
 				// non-pending Call
 				// and the corresponding Return recursively
 				final UnmodifiableTransFormula summaryBetweenCallAndReturn =
-						computeSummaryForInterproceduralTrace(trace, rv, i + 1, returnPosition);
+						computeSummaryForInterproceduralTrace(trace, rv, i + 1, returnPosition, skipList);
 				final UnmodifiableTransFormula returnTf = rv.getFormulaFromNonCallPos(returnPosition);
 				final String callee = ((ICallAction) trace.getSymbol(i)).getSucceedingProcedure();
 				transformulasToComputeSummaryFor.addLast(TransFormulaUtils.sequentialCompositionWithCallAndReturn(
@@ -559,7 +560,9 @@ public class IterativePredicateTransformer<L extends IAction> {
 			} else if (trace.getSymbol(i) instanceof IReturnAction) {
 				// Nothing to do
 			} else {
-				transformulasToComputeSummaryFor.addLast(rv.getFormulaFromNonCallPos(i));
+				if (!skipList.contains(trace.getSymbol(i))) {
+					transformulasToComputeSummaryFor.addLast(rv.getFormulaFromNonCallPos(i));
+				}
 			}
 		}
 		return TransFormulaUtils.sequentialComposition(mLogger, mServices, mMgdScript, true, false,

@@ -73,7 +73,12 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.GotoEdge;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AberranceInformation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAberrance;
@@ -147,7 +152,7 @@ public class TraceAberrantChecker<L extends IIcfgTransition<?>> {
 				if (!(overapprox instanceof OverapproxVariable)) {
 					// cannot analyse error trace for other overapproximations
 					mLogger.info("aborting trace aberrance, other Overapproximation: " + overapprox.toString());
-//					return;
+					return;
 				}
 				mLogger.info("OverapproxVariable in trace: " + overapprox.toString());
 				// found overapproximation of variable, therefore analyse error trace
@@ -179,7 +184,7 @@ public class TraceAberrantChecker<L extends IIcfgTransition<?>> {
 		}
 		if (abort) {
 			mLogger.info("aborting trace aberrance, no OverapproxVariable");
-//			return;
+			return;
 		}
 		
 		// TODO setting
@@ -288,8 +293,8 @@ public class TraceAberrantChecker<L extends IIcfgTransition<?>> {
 		List<Boolean> toCheck = new ArrayList<>();
 		for (L edge : counterexampleWord) {
 			Overapprox overapprox = Overapprox.getAnnotation(edge);
-//			toCheck.add(overapprox != null && overapprox instanceof OverapproxVariable);
-			toCheck.add(overapprox != null);
+			toCheck.add(overapprox instanceof OverapproxVariable);
+//			toCheck.add(overapprox != null);
 		}
 		mTraceAberrantList = checkHoareTriples(csToolkit, counterexampleWord, mPrePostSequences, toCheck);
 		
@@ -328,8 +333,15 @@ public class TraceAberrantChecker<L extends IIcfgTransition<?>> {
 						if (currentNode.getOutgoingEdges().size() != 1) {
 							break;
 						}
-						IcfgLocation newNode = currentNode.getOutgoingEdges().get(0).getTarget();
-						otherPathEdges.add((IcfgEdge) currentNode.getOutgoingEdges().get(0));
+						if (otherPath.size() > 10) {
+							break;
+						}
+						IcfgEdge newEdge = currentNode.getOutgoingEdges().get(0);
+						if (!(newEdge instanceof CodeBlock) || !(((CodeBlock)newEdge) instanceof StatementSequence)) {
+							break;
+						}
+						IcfgLocation newNode = newEdge.getTarget();
+						otherPathEdges.add(newEdge);
 						otherPath.add(newNode);
 						int index = currentPath.indexOf(newNode);
 						if (index != -1) {
@@ -346,7 +358,21 @@ public class TraceAberrantChecker<L extends IIcfgTransition<?>> {
 					for (int j = 0; j < counterexampleWord.length(); j++) {
 						newToCheck.add(j > i && j < i + currentPath.size());
 					}
-					AberranceInformation[] traceAberrantList = checkHoareTriples(csToolkit, counterexampleWord, mPrePostSequences, newToCheck);
+					TracePredicates[] prePostSequence = mPrePostSequences;
+					int lastToCheck = -1;
+					int firstToCheck = -1;
+					for (int j = 0; j < newToCheck.size(); j++) {
+						if (newToCheck.get(j)) {
+							if (firstToCheck == -1) {
+								firstToCheck = j;
+							}
+							lastToCheck = j;
+						}
+					}
+					if (mFirstOverapproxVariable > firstToCheck || mLastOverapproxVariable < lastToCheck) {
+						prePostSequence = calculatePrePost(csToolkit, falsePredicate, truePredicate, counterexampleWord, firstToCheck, lastToCheck);
+					}
+					AberranceInformation[] traceAberrantList = checkHoareTriples(csToolkit, counterexampleWord, prePostSequence, newToCheck);
 					for (int j = 1; j < currentPath.size(); j++) {
 						if (traceAberrantList[i+j].GetTraceAberrance() != TraceAberrance.NO) {
 							currentPathIrrelevant = false;
@@ -379,9 +405,19 @@ public class TraceAberrantChecker<L extends IIcfgTransition<?>> {
 					for (int j = 0; j < nestingRelations.length; j++) {
 						nestingRelations[j] = NestedWord.INTERNAL_POSITION;
 					}
+					lastToCheck = -1;
+					firstToCheck = -1;
+					for (int j = 0; j < newCheck.size(); j++) {
+						if (newCheck.get(j)) {
+							if (firstToCheck == -1) {
+								firstToCheck = j;
+							}
+							lastToCheck = j;
+						}
+					}
 							
 					NestedWord<L> newCounterexample = new NestedWord<L>((L[]) newOtherPath, nestingRelations);
-					TracePredicates[] prePost = calculatePrePost(csToolkit, falsePredicate, truePredicate, newCounterexample, -1, Integer.MAX_VALUE);
+					TracePredicates[] prePost = calculatePrePost(csToolkit, falsePredicate, truePredicate, newCounterexample, firstToCheck, lastToCheck);
 					// TODO exact min/max
 					
 					AberranceInformation[] aberranceInformations = checkHoareTriples(csToolkit, newCounterexample, prePost, newCheck);
@@ -415,8 +451,8 @@ public class TraceAberrantChecker<L extends IIcfgTransition<?>> {
 	private boolean noOverapproxVariableTraceAberrant(final NestedWord<L> counterexampleWord) {
 		for (int i = 0; i < counterexampleWord.length(); i++) {
 			Overapprox overapprox = Overapprox.getAnnotation(counterexampleWord.getSymbol(i));
-//			if (overapprox instanceof OverapproxVariable && mTraceAberrantList[i].GetTraceAberrance() != TraceAberrance.NO) {
-			if (mTraceAberrantList[i].GetTraceAberrance() != TraceAberrance.NO) {
+			if (overapprox instanceof OverapproxVariable && mTraceAberrantList[i].GetTraceAberrance() != TraceAberrance.NO) {
+//			if (mTraceAberrantList[i].GetTraceAberrance() != TraceAberrance.NO) {
 				return false;
 			}
 		}
@@ -450,10 +486,10 @@ public class TraceAberrantChecker<L extends IIcfgTransition<?>> {
 		
 		try {
 			mLogger.info("started wp calc");
-			preSequence = iptPre.computePreSequence(dtf, postprocessors, false, -1, mPredicateSkipList);
+			preSequence = iptPre.computePreSequence(dtf, postprocessors, false, firstOverapproxVariable, mPredicateSkipList);
 //					preSequence = iptPre.computePreSequence(dtf, postprocessors, false, firstOverapproxVariable);
 			mLogger.info("started sp calc");
-			postSequence = iptSp.computeStrongestPostconditionSequence(dtf, postprocessors, Integer.MAX_VALUE, mPredicateSkipList);
+			postSequence = iptSp.computeStrongestPostconditionSequence(dtf, postprocessors, lastOverapproxVariable, mPredicateSkipList);
 //					strongestPostconditionSequence = iptSp.computeStrongestPostconditionSequence(dtf, postprocessors, lastOverapproxVariable);
 			mLogger.info("finished sp calc");
 			// evtl nur teilweise

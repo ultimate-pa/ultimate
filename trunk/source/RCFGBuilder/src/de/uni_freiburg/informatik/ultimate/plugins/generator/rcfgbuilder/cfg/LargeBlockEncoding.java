@@ -119,7 +119,7 @@ public class LargeBlockEncoding {
 	 * on what kind of composition is to be performed.
 	 */
 	private void considerCompositionCandidate(final BoogieIcfgLocation pp, final boolean allowComplex) {
-		mLogger.info("Considering composition at " + pp);
+		mLogger.debug("Considering composition at " + pp);
 		for (IcfgEdge edge : pp.getIncomingEdges()) {
 			Overapprox overapprox = Overapprox.getAnnotation(edge);
 			if (overapprox instanceof OverapproxVariable) {
