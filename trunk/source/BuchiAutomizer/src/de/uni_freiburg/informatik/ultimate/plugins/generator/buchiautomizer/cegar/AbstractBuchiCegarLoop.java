@@ -29,10 +29,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.cegar;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -117,6 +115,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TaCheckAndRefinementPreferences;
 import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
@@ -753,12 +752,12 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 		}
 	}
 
-	private Map<String, ILocation> getOverapproximations() {
+	private HashRelation<String, ILocation> getOverapproximations() {
 		final NestedWord<L> stem = mCounterexample.getStem().getWord();
 		final NestedWord<L> loop = mCounterexample.getLoop().getWord();
-		final Map<String, ILocation> overapproximations = new HashMap<>();
-		overapproximations.putAll(Overapprox.getOverapproximations(stem.asList()));
-		overapproximations.putAll(Overapprox.getOverapproximations(loop.asList()));
+		final HashRelation<String, ILocation> overapproximations = new HashRelation<>();
+		overapproximations.addAll(Overapprox.getOverapproximations(stem.asList()));
+		overapproximations.addAll(Overapprox.getOverapproximations(loop.asList()));
 		return overapproximations;
 	}
 

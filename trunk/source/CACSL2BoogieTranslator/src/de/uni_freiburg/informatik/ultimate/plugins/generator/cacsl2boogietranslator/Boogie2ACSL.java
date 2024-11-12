@@ -256,11 +256,15 @@ public final class Boogie2ACSL {
 		return null;
 	}
 
-	private static BacktranslatedExpression constructFloat(final BitvecLiteral sign, final BitvecLiteral exponent,
+	private BacktranslatedExpression constructFloat(final BitvecLiteral sign, final BitvecLiteral exponent,
 			final BitvecLiteral fraction) {
 		// TODO: Should we rather represent this C-float using scientific notation (e.g. -1.57E13)?
 		final String bit = bitvecToString(sign) + bitvecToString(exponent) + bitvecToString(fraction);
 		final BigDecimal f = getDecimalFromBinaryString(bit);
+		if (f == null) {
+			mReporter.accept("Unable to backtranslate infinite floats");
+			return null;
+		}
 		return new BacktranslatedExpression(new RealLiteral(f.toPlainString()));
 	}
 
@@ -269,10 +273,18 @@ public final class Boogie2ACSL {
 		if (len == 32) {
 			final int intBits = Integer.parseUnsignedInt(binary, 2);
 			final float floatValue = Float.intBitsToFloat(intBits);
+			if (!Float.isFinite(floatValue)) {
+				// TODO: How should we backtranslate NaN and infinity?
+				return null;
+			}
 			return BigDecimal.valueOf(floatValue);
 		} else if (len == 64) {
 			final long longBits = Long.parseUnsignedLong(binary, 2);
 			final double doubleValue = Double.longBitsToDouble(longBits);
+			if (!Double.isFinite(doubleValue)) {
+				// TODO: How should we backtranslate NaN and infinity?
+				return null;
+			}
 			return BigDecimal.valueOf(doubleValue);
 		} else {
 			throw new IllegalArgumentException("Unsupported length: " + len);

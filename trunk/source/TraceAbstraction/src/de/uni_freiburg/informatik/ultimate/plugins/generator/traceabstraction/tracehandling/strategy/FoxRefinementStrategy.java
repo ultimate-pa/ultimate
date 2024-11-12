@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
- * Copyright (C) 2018-2019 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * Copyright (C) 2018-2019 University of Freiburg
+ * Copyright (C) 2024 Frank Schüssele (schuessf@informatik.uni-freiburg.de)
+ * Copyright (C) 2024 University of Freiburg
  *
  * This file is part of the ULTIMATE TraceAbstraction plug-in.
  *
@@ -42,39 +41,44 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyFactory;
 
 /**
- * {@link IRefinementStrategy} that first tries either {@code MathSat} for
- * floating points or {@code CVC4} in bitvector mode, and then {@code Z3}.
+ * {@link IRefinementStrategy} that tries either {@code MathSat}, {@code Z3} and {@code CVC4} for floating points or
+ * {@code Z3}, {@code CVC4} and {@code MathSat} in bitvector mode.
  * <p>
- * The class uses a {@link StraightLineInterpolantAutomatonBuilder} for
- * constructing the interpolant automaton.
+ * The class uses a {@link StraightLineInterpolantAutomatonBuilder} for constructing the interpolant automaton.
  *
- * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  */
-public class WarthogRefinementStrategy<L extends IIcfgTransition<?>> extends BasicRefinementStrategy<L> {
+public class FoxRefinementStrategy<L extends IIcfgTransition<?>> extends BasicRefinementStrategy<L> {
 
-	public WarthogRefinementStrategy(final StrategyFactory<L>.StrategyModuleFactory factory,
+	public FoxRefinementStrategy(final StrategyFactory<L>.StrategyModuleFactory factory,
 			final RefinementStrategyExceptionBlacklist exceptionBlacklist) {
 		super(factory, createModules(factory), factory.createIpAbStrategyModuleStraightlineAll(), exceptionBlacklist);
 	}
 
 	@SuppressWarnings("unchecked")
-	private static <L extends IIcfgTransition<?>> IIpTcStrategyModule<?, L>[] createModules(
-			final StrategyFactory<L>.StrategyModuleFactory factory) {
+	static <L extends IIcfgTransition<?>> IIpTcStrategyModule<?, L>[]
+			createModules(final StrategyFactory<L>.StrategyModuleFactory factory) {
 
 		final TermClassifier tc = factory.getTermClassifierForTrace();
 		final List<IIpTcStrategyModule<?, L>> rtr = new ArrayList<>();
-		if (!RefinementStrategyUtils.hasFloats(tc)) {
-			rtr.add(factory.createIpTcStrategyModuleCVC4(InterpolationTechnique.ForwardPredicates));
-		} else if (RefinementStrategyUtils.hasNoQuantifiersNoBitvectorExtensions(tc)) {
-			// floats, but no quantifiers and no extensions
-			rtr.add(factory.createIpTcStrategyModuleMathsat(InterpolationTechnique.ForwardPredicates));
+		final boolean hasFloats = RefinementStrategyUtils.hasFloats(tc);
+		final boolean hasNoQuantifiersNoBitvectorExtensions =
+				RefinementStrategyUtils.hasNoQuantifiersNoBitvectorExtensions(tc);
+		if (hasNoQuantifiersNoBitvectorExtensions && hasFloats) {
+			// floats and no quantifiers and no FP_TO_IEEE_BV_EXTENSION
+			rtr.add(factory.createIpTcStrategyModuleMathsat(InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect));
 		}
-		rtr.add(factory.createIpTcStrategyModuleZ3(InterpolationTechnique.ForwardPredicates));
+		rtr.add(factory.createIpTcStrategyModuleZ3(InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect));
+		rtr.add(factory.createIpTcStrategyModuleCVC4(InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect));
+		if (hasNoQuantifiersNoBitvectorExtensions && !hasFloats) {
+			// no floats and no quantifiers and no FP_TO_IEEE_BV_EXTENSION
+			rtr.add(factory.createIpTcStrategyModuleMathsat(InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect));
+		}
 		return rtr.toArray(new IIpTcStrategyModule[rtr.size()]);
 	}
 
 	@Override
 	public String getName() {
-		return RefinementStrategy.WARTHOG.toString();
+		return RefinementStrategy.FOX.toString();
 	}
 }

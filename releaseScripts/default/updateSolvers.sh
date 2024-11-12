@@ -83,12 +83,14 @@ update_bitwuzla(){
   cd build
   meson compile
   mv src/main/bitwuzla ../../adds/bitwuzla
+  chmod a+x ../../adds/bitwuzla
   cd ..
   # TODO: Do we want additional arguments here?
   ./configure.py --wipe --win64
   cd build
   meson compile
-  mv src/main/bitwuzla.exe ../../adds/bitwuzla.exe 
+  mv src/main/bitwuzla.exe ../../adds/bitwuzla.exe
+  chmod a+x ../../adds/bitwuzla.exe
   cd ../..
   mv $TMP_DIR/COPYING adds/bitwuzla-LICENSE
   rm -rf $TMP_DIR
