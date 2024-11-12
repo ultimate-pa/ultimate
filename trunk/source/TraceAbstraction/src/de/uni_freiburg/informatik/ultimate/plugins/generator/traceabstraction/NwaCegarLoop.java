@@ -128,7 +128,7 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 
 	protected final Collection<INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> mStoredRawInterpolantAutomata;
 
-	private final SearchStrategy mSearchStrategy;
+	protected final SearchStrategy mSearchStrategy;
 	protected final ErrorGeneralizationEngine<L> mErrorGeneralizationEngine;
 
 	private final boolean mUseHeuristicEmptinessCheck;
@@ -169,7 +169,7 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 		}
 	}
 
-	private NestedRun<L, IPredicate> runWithModifiedGoalSet(final INestedWordAutomaton<L, IPredicate> abstraction,
+	protected NestedRun<L, IPredicate> runWithModifiedGoalSet(final INestedWordAutomaton<L, IPredicate> abstraction,
 			final Set<IPredicate> possibleEndPoints) throws AutomataOperationCanceledException {
 		return new IsEmpty<>(new AutomataLibraryServices(mServices), abstraction, abstraction.getInitialStates(),
 				Collections.emptySet(), possibleEndPoints).getNestedRun();

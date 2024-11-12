@@ -3,6 +3,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -21,10 +23,15 @@ import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Difference;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IOpWithDelayedDeadEndRemoval;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.senwa.DifferenceSenwa;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.TaskCanceledException;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.TaskCanceledException.UserDefinedLimit;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.TestGoalAnnotation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
@@ -36,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.d
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.WorkerPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
@@ -55,9 +63,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.in
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.TestGenerationMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TaCheckAndRefinementPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine.ITARefinementStrategy;
+import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
 
 public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>>
 		extends NwaCegarLoop<L> {
@@ -73,6 +83,10 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 	int mThreadLimit = 3; // Runtime.avalablecores or so
 	CompletionService<WorkerThreadResult<L, A>> mECS;
 	private final IIcfg<?> mRootNode;
+
+	private final Set<IPredicate> mActiveErrorLocs = new HashSet<>();
+	private final HashMap<Integer, Integer> mInActiveErrorLocs = new HashMap<>(); // maps counterexample hash to test
+																					// goal id
 
 	/**
 	 *
@@ -113,6 +127,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 		mWorkerFutures = new ArrayList<Future<WorkerThreadResult<L, A>>>();
 		mRootNode = rootNode;
 		mECS = new ExecutorCompletionService<>(mExec);
+
 	}
 
 	private CegarWorkerThread<L, A> setUpWorker(final IUltimateServiceProvider iterationServices,
@@ -229,10 +244,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 		int runningThreads = 0;
 
 		for (mIteration = 1; mIteration <= mPref.maxIterations(); mIteration++) {
-			final IcfgLocation currentErrorLoc = getErrorLocFromCounterexample();
-			final IUltimateServiceProvider parentServices = mServices;
-			final IUltimateServiceProvider iterationServices = createIterationTimer(currentErrorLoc);
-			mServices = iterationServices;
+
 			final boolean updateBudget = true;
 			boolean abstractionWasRefined = false;
 
@@ -241,8 +253,13 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 				mCegarLoopBenchmark.announceNextIteration();
 				try {
 
-					if (runningThreads < mThreadLimit) {
-
+					if (runningThreads < mThreadLimit && mCounterexample != null) { // can be null if no active test
+																					// goals but threads are still
+																					// runnning
+						final IcfgLocation currentErrorLoc = getErrorLocFromCounterexample();
+						final IUltimateServiceProvider parentServices = mServices;
+						final IUltimateServiceProvider iterationServices = createIterationTimer(currentErrorLoc);
+						mServices = iterationServices;
 						RefinementStrategy strategyType;
 						if (false) {
 							strategyType = RefinementStrategy.WOLF;
@@ -259,6 +276,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 
 						final Future<WorkerThreadResult<L, A>> future = mECS.submit(worker);
 						mWorkerFutures.add(future);
+
 						runningThreads += 1;
 					} else {
 
@@ -277,9 +295,18 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 						final Future<WorkerThreadResult<L, A>> futureResult = mWorkerFutures.get(i);
 						try {
 							if (futureResult.isDone()) {
-								mLogger.info("Thread Done");
+								mLogger.info("Thread Done: " + i);
 								runningThreads -= 1;
 								automataWaitingList.add(futureResult.get());
+								final List<L> trace = futureResult.get().getCounterexample().getWord().asList();
+								final int traceHash = trace.hashCode();
+
+								final Integer testGoalId = mInActiveErrorLocs.get(traceHash);
+
+								System.out.println("Done TestGoal: " + testGoalId);
+								System.out.println("Done Type: " + futureResult.get().getAutomatonType());
+
+								mInActiveErrorLocs.remove(traceHash);
 								doneThreads.add(mWorkerFutures.get(i));
 							}
 						} catch (InterruptedException | ExecutionException e) {
@@ -334,19 +361,21 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 				}
 
 				// Check if empty only if abstracion changed or we have a thread available
-				if (abstractionWasRefined || (runningThreads < mThreadLimit)) { // TODO differenciate, if
-																				// sheduleNewWorkerThread
-					// but !abstractionWasRefined then other
-					// counterexample
+				if (abstractionWasRefined) {
 					minimizeAbstractionIfEnabled();
-					final boolean isAbstractionCorrect = isAbstractionEmpty();
-					if (isAbstractionCorrect) {
-						mResultBuilder.addResultForAllRemaining(Result.SAFE);
-						mExec.shutdown();
-						return;
-					}
 				} else {
 					mIteration -= 1;
+				}
+				// need a new counterexample every iteration
+				if (runningThreads < mThreadLimit) {
+					final boolean isAbstractionCorrect = isAbstractionEmpty();
+					if (isAbstractionCorrect) {
+						if (runningThreads == 0) {
+							mResultBuilder.addResultForAllRemaining(Result.SAFE);
+							mExec.shutdown();
+							return;
+						}
+					}
 				}
 			} finally {
 				// TODO if (updateBudget) {
@@ -358,10 +387,95 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 		mResultBuilder.addResultForAllRemaining(Result.USER_LIMIT_ITERATIONS);
 	}
 
-	private INwaOutgoingLetterAndTransitionProvider<L, IPredicate> workerThread() {
+	@Override
+	protected boolean isAbstractionEmpty() throws AutomataOperationCanceledException {
+		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.EmptinessCheckTime);
+		if (mTestGeneration.equals(TestGenerationMode.None)) {
+			return super.isAbstractionEmpty();
+		}
 
-		automataWaitingList.add(null);
-		return null;
+		try {
+			// needs to be done in every iteration.
+			// Since mActiveErrorLocs must be subsetEq to getFinalStates()
+			mActiveErrorLocs.clear();
+			for (final IPredicate testGoal : mAbstraction.getFinalStates()) {
+
+				final ISLPredicate testGoalISL = (ISLPredicate) testGoal;
+				final IAnnotations pLocAnno = testGoalISL.getProgramPoint().getPayload().getAnnotations()
+						.get(TestGoalAnnotation.class.getName());
+
+				if (mInActiveErrorLocs.containsValue(((TestGoalAnnotation) pLocAnno).mId)) {
+					System.out.println("NOTADDED: " + ((TestGoalAnnotation) pLocAnno).mId);
+					continue;
+				} else {
+					if (pLocAnno instanceof TestGoalAnnotation) {
+						System.out.println("isAbstractionEmpty " + ((TestGoalAnnotation) pLocAnno).mId);
+						mActiveErrorLocs.add(testGoal);
+					}
+				}
+			}
+
+			System.out.println("isAbstractionEmpty");
+			if (!mActiveErrorLocs.isEmpty()) {
+				System.out.println("!mActiveErrorLocs.isEmpty()");
+				mCounterexample = runWithModifiedGoalSet(mAbstraction, mActiveErrorLocs);
+				final List<?> sequence = mCounterexample.getStateSequence();
+				final IPredicate currentGoal = (IPredicate) sequence.get(sequence.size() - 1);
+				assert mActiveErrorLocs.contains(currentGoal);
+
+				// mark test goal as busy
+				final ISLPredicate testGoalISL = (ISLPredicate) currentGoal;
+				final IAnnotations pLocAnno = testGoalISL.getProgramPoint().getPayload().getAnnotations()
+						.get(TestGoalAnnotation.class.getName());
+				System.out.println("Current TestGoal: " + ((TestGoalAnnotation) pLocAnno).mId);
+				System.out.println("Current TestGoal: " + currentGoal);
+				System.out.println("inactove before put: " + mInActiveErrorLocs.values().size());
+
+				final List<L> trace = mCounterexample.getWord().asList();
+				final int traceHash = trace.hashCode();
+
+				mInActiveErrorLocs.put(traceHash, ((TestGoalAnnotation) pLocAnno).mId);
+				System.out.println("inactove after put: " + mInActiveErrorLocs.values().size());
+
+			} // WARNING all goals can be in mInActiveErrorLocs, but we are not done yet!!
+			else {
+				System.out.println("isEmpty()!");
+				mThreadLimit = 1;
+				mCounterexample =
+						new IsEmpty<>(new AutomataLibraryServices(getServices()), mAbstraction, mSearchStrategy)
+								.getNestedRun();
+			}
+		} finally
+
+		{
+			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.EmptinessCheckTime);
+		}
+		if (mCounterexample == null) {
+			return true;
+		}
+		if (mPref.dumpAutomata()) {
+			mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.DumpTime);
+			mDumper.dumpNestedRun(mCounterexample);
+			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.DumpTime);
+		}
+		mLogger.info("Found error trace");
+
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug(mCounterexample.getWord());
+		}
+		final HistogramOfIterable<L> traceHistogram = new HistogramOfIterable<>(mCounterexample.getWord());
+		mCegarLoopBenchmark.reportTraceHistogramMaximum(traceHistogram.getMax());
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info("trace histogram " + traceHistogram.toString());
+		}
+
+		if (mPref.hasLimitTraceHistogram() && traceHistogram.getMax() > mPref.getLimitTraceHistogram()) {
+			final String taskDescription =
+					"bailout by trace histogram " + traceHistogram.toString() + " in iteration " + mIteration;
+			throw new TaskCanceledException(UserDefinedLimit.TRACE_HISTOGRAM, getClass(), taskDescription);
+		}
+
+		return false;
 	}
 
 	/*
