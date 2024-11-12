@@ -66,4 +66,9 @@ public class NoBacktranslationValueProvider<TTE, TE> implements IBacktranslation
 	public String getFunctionFromStep(final TTE step) {
 		throw new UnsupportedOperationException(NO_BACKTRANSLATION_VALUE_PROVIDER);
 	}
+
+	@Override
+	public boolean isValidAssumptionLocation(final TTE traceElement) {
+		throw new UnsupportedOperationException(NO_BACKTRANSLATION_VALUE_PROVIDER);
+	}
 }

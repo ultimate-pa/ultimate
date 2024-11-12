@@ -89,4 +89,9 @@ public class IcfgBacktranslationValueProvider<L extends IAction> implements IBac
 	public String getFunctionFromStep(final L step) {
 		return null;
 	}
+
+	@Override
+	public boolean isValidAssumptionLocation(final L traceElement) {
+		return false;
+	}
 }

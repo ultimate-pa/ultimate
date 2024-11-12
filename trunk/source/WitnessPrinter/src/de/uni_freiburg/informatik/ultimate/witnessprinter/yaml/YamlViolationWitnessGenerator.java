@@ -39,11 +39,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceEle
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement.StepInfo;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslationValueProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
-import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.FormatVersion;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Location;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Segment;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.ViolationSequence;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.WaypointAssumption;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.WaypointBranching;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.WaypointFunctionEnter;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.WaypointFunctionReturn;
@@ -65,6 +65,8 @@ public class YamlViolationWitnessGenerator<TE, E> {
 	private final YamlWitnessWriter mWriter;
 	private final ProgramStatePrinter<TE, E> mProgramStatePrinter;
 	private final Map<String, String> mProgramHashes;
+
+	private static final boolean PRODUCE_ASSUMPTIONS = false;
 
 	public YamlViolationWitnessGenerator(final IProgramExecution<TE, E> execution, final ILogger logger,
 			final IUltimateServiceProvider services) {
@@ -91,7 +93,6 @@ public class YamlViolationWitnessGenerator<TE, E> {
 		for (int i = 0; i < mExecution.getLength(); i++) {
 			final AtomicTraceElement<TE> currentATE = mExecution.getTraceElement(i);
 			final TE currentStep = currentATE.getStep();
-			final ProgramState<E> currentState = mExecution.getProgramState(i);
 			final int startLine = mStringProvider.getLineNumberFromStep(currentStep, currentATE.getStepInfo());
 			final int startColumn = mStringProvider.getColumnNumberFromStep(currentStep, currentATE.getStepInfo());
 			final String function = mStringProvider.getFunctionFromStep(currentStep);
@@ -99,9 +100,13 @@ public class YamlViolationWitnessGenerator<TE, E> {
 			final Location currentLocation =
 					new Location(filename, mProgramHashes.get(filename), startLine, startColumn, function);
 
-			// TODO: Create valid assumption waypoints. We could create assumptions from currentState, but we have to
-			// ensure that the location is valid in the witness. The location of assumption waypoint must point to a
-			// statement or declaration.
+			if (PRODUCE_ASSUMPTIONS && mStringProvider.isValidAssumptionLocation(currentStep)) {
+				final String previousState = mProgramStatePrinter.stateAsExpression(
+						i == 0 ? null : mExecution.getProgramState(i - 1), ProgramStatePrinter::isValidCVariable);
+				if (previousState != null) {
+					segments.add(new Segment(List.of(), new WaypointAssumption(previousState, currentLocation)));
+				}
+			}
 
 			if (i == mExecution.getLength() - 1) {
 				segments.add(new Segment(List.of(), new WaypointTarget(currentLocation)));
@@ -117,7 +122,8 @@ public class YamlViolationWitnessGenerator<TE, E> {
 			}
 			if (currentATE.hasStepInfo(StepInfo.PROC_RETURN)) {
 				segments.add(new Segment(List.of(), new WaypointFunctionReturn(
-						mProgramStatePrinter.stateAsExpression(currentState, "\\result"::equals), currentLocation)));
+						mProgramStatePrinter.stateAsExpression(mExecution.getProgramState(i), "\\result"::equals),
+						currentLocation)));
 			}
 		}
 		mLogger.info("Generated YAML witness of length %d.", segments.size());

@@ -28,7 +28,12 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransl
 
 import java.util.EnumSet;
 
+import org.eclipse.cdt.core.dom.ast.IASTExpressionStatement;
+import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
+import org.eclipse.cdt.core.dom.ast.IASTIfStatement;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
+import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclaration;
+import org.eclipse.cdt.core.dom.ast.IASTStatement;
 import org.eclipse.cdt.core.dom.ast.IPointerType;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTIdExpression;
 
@@ -141,5 +146,22 @@ public class CACSLBacktranslationValueProvider
 	@Override
 	public String getOriginFileNameFromStep(final CACSLLocation step) {
 		return step.getFileName();
+	}
+
+	@Override
+	public boolean isValidAssumptionLocation(final CACSLLocation traceElement) {
+		if (traceElement instanceof CLocation) {
+			final IASTNode node = ((CLocation) traceElement).getNode();
+			if (node instanceof IASTFunctionCallExpression) {
+				// For now we omit assumptions at function calls, as they might point to the wrong location.
+				return false;
+			}
+			// "assumption: The location has to point to the beginning of a statement or a declaration inside a compound
+			// statement."
+			return node instanceof IASTStatement || node instanceof IASTSimpleDeclaration
+					|| node.getParent() instanceof IASTExpressionStatement
+					|| node.getParent() instanceof IASTIfStatement;
+		}
+		return false;
 	}
 }
