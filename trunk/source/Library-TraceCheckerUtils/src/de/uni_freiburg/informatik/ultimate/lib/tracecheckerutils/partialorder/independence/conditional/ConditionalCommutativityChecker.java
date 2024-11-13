@@ -235,15 +235,13 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 		// TODO as workaround, we create a copy of an existing letter
 		final L notConditionLetter = mCopyFactory.copy(templateLetter, tf, tf);
 
-		// create a MLPredicate and a SleepSetPredicate as dummy state
-		// TODO once we no longer need our custom trace checks, this can be mPredicateFactory.newDebugPredicate("dummy")
-		final SleepPredicate<L> dummySleepPredicate =
-				new SleepPredicate<>(mPredicateFactory.newMLDontCarePredicate(null), null);
+		// create a dummy state for the end of the run
+		final IPredicate dummyPredicate = mPredicateFactory.newDebugPredicate("dummy");
 
 		// add both to the currentRun
 		final NestedRun<L, IPredicate> conditionRun =
 				new NestedRun<>(currentRun.getStateAtPosition(currentRun.getLength() - 1), notConditionLetter,
-						NestedWord.INTERNAL_POSITION, dummySleepPredicate);
+						NestedWord.INTERNAL_POSITION, dummyPredicate);
 		final NestedRun<L, IPredicate> currentRunWithCondition = currentRun.concatenate(conditionRun);
 
 		final var strategy = mBuildStrategy.apply(currentRunWithCondition);

@@ -77,6 +77,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.d
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.AnnotatedMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.DebugPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
@@ -536,6 +537,12 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 
 		final var result = new ArrayList<>(counterexample.getLength());
 		for (final var state : counterexample.getStateSequence()) {
+			if (state instanceof DebugPredicate) {
+				// This should only occur for the dummy predicate created by ConditionalCommutativityChecker.
+				result.add(state);
+				continue;
+			}
+
 			// Generally, the full state of the reduction automaton contains the state of the given input automaton
 			// (mAbstraction), as well as possibly additional information related to the reduction (e.g. a sleep set).
 			final IPredicate fullState = (IPredicate) state;
