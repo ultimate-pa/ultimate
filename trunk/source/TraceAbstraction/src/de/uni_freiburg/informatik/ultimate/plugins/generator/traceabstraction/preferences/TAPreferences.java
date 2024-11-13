@@ -554,6 +554,11 @@ public final class TAPreferences {
 				IndependenceConditions.class);
 	}
 
+	public RefinementStrategy getConditionalCommutativityRefinementStrategy() {
+		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_COMMUTATIVITY_COND_SYNTHESIS_STRATEGY,
+				RefinementStrategy.class);
+	}
+
 	// TODO #proofRefactor update all settings files to reflect the removal / changes to the Hoare/proof settings
 	public HoareProofSettings getHoareSettings() {
 		return new HoareProofSettings(getHoareAnnotationPositions(), getSimplificationTechnique());

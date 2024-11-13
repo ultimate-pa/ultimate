@@ -109,7 +109,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IIpAbStrategyModule;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IpAbStrategyModuleStraightlineAll;
 import de.uni_freiburg.informatik.ultimate.util.Lazy;
@@ -545,7 +544,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		var ctex = new Counterexample<>(run.getWord(), getControlConfigurationsFromCounterexample(run));
 		return mStrategyFactory.constructStrategy(mServices, ctex, mAbstraction,
 				new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()), mFactory, getPreconditionProvider(),
-				getPostconditionProvider(), RefinementStrategy.SMTINTERPOL);
+				getPostconditionProvider(), mPref.getConditionalCommutativityRefinementStrategy());
 	}
 
 	private IIpAbStrategyModule<L> createConditionalCommutativityAutomatonBuilder(final IRun<L, IPredicate> run) {
