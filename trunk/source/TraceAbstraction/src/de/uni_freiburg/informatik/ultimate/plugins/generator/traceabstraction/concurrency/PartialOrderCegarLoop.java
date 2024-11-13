@@ -273,30 +273,6 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		return true;
 	}
 
-	private ArrayList<IPredicate> getCounterexamplePredicates() {
-		final ArrayList<IPredicate> predicates = new ArrayList<>();
-		// cast should be fine, since isAbstractionEmpty() assigns mCounterexample a IRun<L, IPredicate>
-		for (IPredicate pred : ((IRun<L, IPredicate>) mCounterexample).getStateSequence()) {
-
-			final PartialOrderReductionFacade.StateSplitter<IPredicate> splitter = mPOR.getStateSplitter();
-			if (splitter != null) {
-				pred = splitter.getOriginal(pred);
-			}
-
-			if (pred instanceof MLPredicateWithInterpolants) {
-				predicates.add(((MLPredicateWithInterpolants) pred).getInterpolants());
-			} else if (pred instanceof MLPredicate) {
-				// TODO When can this happen? If it should never happen, throw an error instead.
-				// It can also be just an MLPredicate (during the first iteration) which doesn't have interpolants
-				// but maybe we should do a case distinction outside of this method instead
-				predicates.add(null);
-			} else {
-				throw new IllegalArgumentException("Predicate not supported: " + pred.getClass());
-			}
-		}
-		return predicates;
-	}
-
 	private <T> IRefinementEngineResult<L, T> addHoareTripleChecker(final IRefinementEngineResult<L, T> result,
 			final IHoareTripleChecker htc) {
 		if (result.getHoareTripleChecker() != null) {
