@@ -3,6 +3,7 @@
 /instance/org.eclipse.jdt.core/org.eclipse.jdt.core.compiler.codegen.targetPlatform=21
 /instance/org.eclipse.jdt.core/org.eclipse.jdt.core.compiler.compliance=21
 /instance/org.eclipse.jdt.core/org.eclipse.jdt.core.compiler.source=21
+/instance/org.eclipse.core.resources/description.autobuilding=false
 
 /instance/org.eclipse.jdt.core/org.eclipse.jdt.core.codeComplete.fieldPrefixes=m
 /instance/org.eclipse.jdt.core/org.eclipse.jdt.core.codeComplete.staticFieldPrefixes=s
