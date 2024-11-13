@@ -51,21 +51,21 @@ public class ConditionalCommutativityStatisticsGenerator extends StatisticsGener
 	private static final StatisticsType<ConditionalCommutativityStatisticsDefinitions> TYPE =
 			new StatisticsType<>(ConditionalCommutativityStatisticsDefinitions.class);
 
-	private int mConditionalCommutativityConditionCalculations = 0;
-	private int mConditionalCommutativityTraceChecks = 0;
-	private int mConditionalCommutativityUnknownTraceChecks = 0;
-	private int mConditionalCommutativityImperfectProofs = 0;
-	private int mConditionalCommutativityCommutingCounterexamples = 0;
-	private int mConditionalCommutativityQuantifiedConditions = 0;
-	private int mConditionalCommutativityFalseConditions = 0;
+	private int mConditionCalculations = 0;
+	private int mTraceChecks = 0;
+	private int mUnknownTraceChecks = 0;
+	private int mImperfectProofs = 0;
+	private int mCommutingCounterexamples = 0;
+	private int mQuantifiedConditions = 0;
+	private int mFalseConditions = 0;
 
 	public void startStopwatch(final ConditionalCommutativityStopwatches stopwatch) {
 		switch (stopwatch) {
 		case CHECKER:
-			start(ConditionalCommutativityStatisticsDefinitions.ConditionalCommutativityCheckTime);
+			start(ConditionalCommutativityStatisticsDefinitions.CheckTime);
 			break;
 		case CONDITION:
-			start(ConditionalCommutativityStatisticsDefinitions.ConditionalCommutativityConditionCalculationTime);
+			start(ConditionalCommutativityStatisticsDefinitions.ConditionCalculationTime);
 			break;
 		default:
 			throw new AssertionError("unknown stopwatch");
@@ -75,10 +75,10 @@ public class ConditionalCommutativityStatisticsGenerator extends StatisticsGener
 	public void stopStopwatch(final ConditionalCommutativityStopwatches stopwatch) {
 		switch (stopwatch) {
 		case CHECKER:
-			stop(ConditionalCommutativityStatisticsDefinitions.ConditionalCommutativityCheckTime);
+			stop(ConditionalCommutativityStatisticsDefinitions.CheckTime);
 			break;
 		case CONDITION:
-			stop(ConditionalCommutativityStatisticsDefinitions.ConditionalCommutativityConditionCalculationTime);
+			stop(ConditionalCommutativityStatisticsDefinitions.ConditionCalculationTime);
 			break;
 		default:
 			throw new AssertionError("unknown stopwatch");
@@ -86,32 +86,32 @@ public class ConditionalCommutativityStatisticsGenerator extends StatisticsGener
 	}
 
 	public void addCommutingCounterexample() {
-		mConditionalCommutativityCommutingCounterexamples++;
+		mCommutingCounterexamples++;
 	}
 
 	public void addConditionCalculation() {
-		mConditionalCommutativityConditionCalculations++;
+		mConditionCalculations++;
 	}
 
 	public void addTraceCheck() {
-		mConditionalCommutativityTraceChecks++;
+		mTraceChecks++;
 	}
 
 	public void addUnknownTraceCheck() {
-		mConditionalCommutativityUnknownTraceChecks++;
+		mUnknownTraceChecks++;
 	}
 
 	public void addImperfectProof() {
-		mConditionalCommutativityImperfectProofs++;
+		mImperfectProofs++;
 	}
 
 	public void addQuantifiedCondition() {
-		mConditionalCommutativityQuantifiedConditions++;
+		mQuantifiedConditions++;
 
 	}
 
 	public void addFalseCondition() {
-		mConditionalCommutativityFalseConditions++;
+		mFalseConditions++;
 
 	}
 
@@ -123,8 +123,8 @@ public class ConditionalCommutativityStatisticsGenerator extends StatisticsGener
 	@Override
 	public String[] getStopwatches() {
 		return new String[] {
-				ConditionalCommutativityStatisticsDefinitions.ConditionalCommutativityCheckTime.toString(),
-				ConditionalCommutativityStatisticsDefinitions.ConditionalCommutativityConditionCalculationTime
+				ConditionalCommutativityStatisticsDefinitions.CheckTime.toString(),
+				ConditionalCommutativityStatisticsDefinitions.ConditionCalculationTime
 						.toString() };
 	}
 
@@ -133,27 +133,27 @@ public class ConditionalCommutativityStatisticsGenerator extends StatisticsGener
 		final ConditionalCommutativityStatisticsDefinitions keyEnum =
 				Enum.valueOf(ConditionalCommutativityStatisticsDefinitions.class, key);
 		switch (keyEnum) {
-		case ConditionalCommutativityCheckTime:
-		case ConditionalCommutativityConditionCalculationTime:
+		case CheckTime:
+		case ConditionCalculationTime:
 			try {
 				return getElapsedTime(key);
 			} catch (final StopwatchStillRunningException e) {
 				throw new AssertionError("clock still running: " + key);
 			}
-		case ConditionalCommutativityCommutingCounterexamples:
-			return mConditionalCommutativityCommutingCounterexamples;
-		case ConditionalCommutativityConditionCalculations:
-			return mConditionalCommutativityConditionCalculations;
-		case ConditionalCommutativityTraceChecks:
-			return mConditionalCommutativityTraceChecks;
-		case ConditionalCommutativityUnknownTraceChecks:
-			return mConditionalCommutativityUnknownTraceChecks;
-		case ConditionalCommutativityImperfectProofs:
-			return mConditionalCommutativityImperfectProofs;
-		case ConditionalCommutativityQuantifiedConditions:
-			return mConditionalCommutativityQuantifiedConditions;
-		case ConditionalCommutativityFalseConditions:
-			return mConditionalCommutativityFalseConditions;
+		case CommutingCounterexamples:
+			return mCommutingCounterexamples;
+		case ConditionCalculations:
+			return mConditionCalculations;
+		case TraceChecks:
+			return mTraceChecks;
+		case UnknownTraceChecks:
+			return mUnknownTraceChecks;
+		case ImperfectProofs:
+			return mImperfectProofs;
+		case QuantifiedConditions:
+			return mQuantifiedConditions;
+		case FalseConditions:
+			return mFalseConditions;
 		default:
 			throw new AssertionError("unknown data");
 		}
@@ -167,24 +167,24 @@ public class ConditionalCommutativityStatisticsGenerator extends StatisticsGener
 	 */
 	public enum ConditionalCommutativityStatisticsDefinitions implements IStatisticsElement {
 
-		ConditionalCommutativityCheckTime(StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_NANOS),
+		CheckTime(StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_NANOS),
 
-		ConditionalCommutativityConditionCalculationTime(StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_NANOS),
+		ConditionCalculationTime(StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_NANOS),
 
-		ConditionalCommutativityCommutingCounterexamples(StatisticsType.INTEGER_ADDITION,
+		CommutingCounterexamples(StatisticsType.INTEGER_ADDITION,
 				StatisticsType.KEY_BEFORE_DATA),
 
-		ConditionalCommutativityConditionCalculations(StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
+		ConditionCalculations(StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
 
-		ConditionalCommutativityTraceChecks(StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
+		TraceChecks(StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
 
-		ConditionalCommutativityUnknownTraceChecks(StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
+		UnknownTraceChecks(StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
 
-		ConditionalCommutativityImperfectProofs(StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
+		ImperfectProofs(StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
 
-		ConditionalCommutativityQuantifiedConditions(StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
+		QuantifiedConditions(StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
 
-		ConditionalCommutativityFalseConditions(StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA);
+		FalseConditions(StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA);
 
 		private final Function<Object, Function<Object, Object>> mAggr;
 		private final Function<String, Function<Object, String>> mPrettyprinter;
