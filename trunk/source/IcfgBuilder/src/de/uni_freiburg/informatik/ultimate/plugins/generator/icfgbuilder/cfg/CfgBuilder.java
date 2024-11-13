@@ -912,7 +912,7 @@ public class CfgBuilder {
 
 		private IIcfgElement buildAssuAssiHavoc(final IIcfgElement currentElement, final Statement st) {
 			final StatementSequence stseq = prependStatement(st, currentElement);
-			if (mCodeBlockSize == CodeBlockSize.SingleStatement) {
+			if (mCodeBlockSize == CodeBlockSize.SingleStatement || Overapprox.getAnnotation(st) instanceof OverapproxVariable) {
 				return endStatementSequence(stseq);
 			} else {
 				return stseq;
@@ -931,7 +931,11 @@ public class CfgBuilder {
 		 */
 		private StatementSequence prependStatement(final Statement st, IIcfgElement currentElement) {
 			assert st instanceof AssumeStatement || st instanceof AssignmentStatement || st instanceof HavocStatement;
-			switch (mCodeBlockSize) {
+			CodeBlockSize codeBlockSize = mCodeBlockSize;
+			if (Overapprox.getAnnotation(st) instanceof OverapproxVariable) {
+				codeBlockSize = CodeBlockSize.SingleStatement;
+			}
+			switch (codeBlockSize) {
 			case OneNontrivialStatement:
 				if (currentElement instanceof StatementSequence && !StatementSequence.isAssumeTrueStatement(st)
 						&& !((StatementSequence) currentElement).isTrivial()) {
@@ -1139,7 +1143,7 @@ public class CfgBuilder {
 			final boolean nonFreeRequiresIsEmpty = requiresNonFree == null || requiresNonFree.isEmpty();
 
 			if ((mCodeBlockSize == CodeBlockSize.SequenceOfStatements || mCodeBlockSize == CodeBlockSize.LoopFreeBlock)
-					&& !procedureHasImplementation && nonFreeRequiresIsEmpty) {
+					&& !procedureHasImplementation && nonFreeRequiresIsEmpty && !(Overapprox.getAnnotation(st) instanceof OverapproxVariable)) {
 				if (currentLocation instanceof BoogieIcfgLocation) {
 					return startNewStatementSequenceAndAddStatement((BoogieIcfgLocation) currentLocation, st);
 				} else if (currentLocation instanceof StatementSequence) {
