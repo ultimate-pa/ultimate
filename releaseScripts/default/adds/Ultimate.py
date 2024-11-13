@@ -1015,7 +1015,7 @@ def main():
         )
         err_output_file = open(error_path_file_name, "wb")
         err_output_file.write(error_path.encode("utf-8"))
-        if not prop.is_reach() and not prop.is_data_race():
+        if not prop.is_reach():
             result = "FALSE({})".format(result_msg)
 
     print("Result:")
