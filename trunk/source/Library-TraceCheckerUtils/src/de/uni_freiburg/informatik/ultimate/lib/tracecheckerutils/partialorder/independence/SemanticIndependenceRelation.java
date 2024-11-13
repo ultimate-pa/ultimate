@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
 
 /**
  * An independence relation that implements an SMT-based inclusion or equality check on the semantics.
@@ -117,8 +118,7 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 	private final BasicPredicateFactory mPredicateFactory;
 	private final SemanticIndependenceConditionGenerator mIndependenceGenerator;
 
-	private final TimedIndependenceStatisticsDataProvider mStatistics =
-			new TimedIndependenceStatisticsDataProvider(SemanticIndependenceRelation.class);
+	private final Statistics mStatistics = new Statistics();
 
 	/**
 	 * Create a new variant of the semantic independence relation.
@@ -342,6 +342,8 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 
 		@Override
 		public IPredicate getCommutativityCondition(final IPredicate condition, final L a, final L b) {
+			mStatistics.reportSymbolicConditionComputation();
+
 			final var compositions = buildCompositions(a, b);
 			final var tfAB = compositions.getFirst();
 			final var tfBA = compositions.getSecond();
@@ -401,6 +403,8 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 
 		@Override
 		public IPredicate getCommutativityCondition(final IPredicate condition, final L a, final L b) {
+			mStatistics.reportSymbolicConditionComputation();
+
 			if (mIsConditional && condition != null) {
 				final var generated = mGenerator.generateCondition(condition, a.getTransformula(), b.getTransformula());
 				if (!QUANTIFY_IRRELEVANT_CONTEXT_VARS) {
@@ -429,6 +433,20 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 		@Override
 		public boolean isConditional() {
 			return mIsConditional;
+		}
+	}
+
+	private final static class Statistics extends TimedIndependenceStatisticsDataProvider {
+		private static final String SYMBOLIC_CONDITION_COMPUTATIONS = "Symbolic Condition Computations";
+		private int mSymbolicConditionComputations;
+
+		public Statistics() {
+			super(SemanticIndependenceRelation.class);
+			declare(SYMBOLIC_CONDITION_COMPUTATIONS, () -> mSymbolicConditionComputations, KeyType.COUNTER);
+		}
+
+		public void reportSymbolicConditionComputation() {
+			mSymbolicConditionComputations++;
 		}
 	}
 }
