@@ -348,7 +348,7 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 
 			final Term subset = computeInclusionTerm(tfAB, tfBA);
 			final Term formula;
-			if (!mConditional || SmtUtils.isFalseLiteral(subset)) {
+			if (!mSymmetric || SmtUtils.isFalseLiteral(subset)) {
 				formula = subset;
 			} else {
 				final Term superset = computeInclusionTerm(tfBA, tfAB);
