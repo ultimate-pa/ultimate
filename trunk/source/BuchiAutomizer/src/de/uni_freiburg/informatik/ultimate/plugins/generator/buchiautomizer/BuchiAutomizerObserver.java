@@ -83,6 +83,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessModelToAutomatonTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataTestFileAST;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
@@ -283,7 +284,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	}
 
 	private void reportUnknown(final BuchiCegarLoopResult<IcfgEdge> result, final String whatToProve) {
-		final Map<String, ILocation> overapprox = result.getOverapproximations();
+		final HashRelation<String, ILocation> overapprox = result.getOverapproximations();
 		final StringBuilder longDescr = new StringBuilder();
 		if (overapprox.isEmpty()) {
 			longDescr.append("Buchi Automizer is unable to decide " + whatToProve + " for the following lasso. ");
@@ -293,7 +294,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			longDescr.append(CoreUtil.getPlatformLineSeparator());
 			longDescr.append("Overapproximations");
 			longDescr.append(CoreUtil.getPlatformLineSeparator());
-			for (final Entry<String, ILocation> oa : overapprox.entrySet()) {
+			for (final Entry<String, ILocation> oa : overapprox) {
 				longDescr.append(String.format("%s (Reason %s)", oa.getValue(), oa.getKey()));
 			}
 			longDescr.append(CoreUtil.getPlatformLineSeparator());

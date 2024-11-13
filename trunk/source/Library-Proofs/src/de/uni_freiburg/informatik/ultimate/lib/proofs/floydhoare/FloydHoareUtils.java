@@ -105,7 +105,7 @@ public final class FloydHoareUtils {
 
 	public static void createInvariantResults(final String pluginName, final IIcfg<IcfgLocation> icfg,
 			final IFloydHoareAnnotation<IcfgLocation> annotation, final IBacktranslationService backTranslatorService,
-			final Consumer<InvariantResult<IIcfgElement>> reporter) {
+			final Consumer<InvariantResult<IIcfgElement, ?>> reporter) {
 		final var checks = getCheckedSpecifications(icfg, annotation);
 
 		// find all locations that have outgoing edges which are annotated with LoopEntry, i.e., all loop candidates
@@ -118,14 +118,20 @@ public final class FloydHoareUtils {
 			if (hoare == null) {
 				continue;
 			}
-			final Term formula = hoare.getFormula();
-			final var invResult =
-					new InvariantResult<IIcfgElement>(pluginName, locNode, backTranslatorService, formula, checks);
-			reporter.accept(invResult);
 
-			if (SmtUtils.isTrueLiteral(formula)) {
+			final Term invariant = hoare.getFormula();
+
+			final ILocation context = ILocation.getAnnotation(locNode);
+			final var translatedInvariant =
+					backTranslatorService.translateExpressionWithContext(invariant, context, Term.class);
+
+			if (translatedInvariant == null || translatedInvariant.toString().equals("1")) {
 				continue;
 			}
+
+			final var invResult =
+					new InvariantResult<IIcfgElement, Object>(pluginName, locNode, translatedInvariant, checks);
+			reporter.accept(invResult);
 			new WitnessInvariant(invResult.getInvariant()).annotate(locNode);
 		}
 	}

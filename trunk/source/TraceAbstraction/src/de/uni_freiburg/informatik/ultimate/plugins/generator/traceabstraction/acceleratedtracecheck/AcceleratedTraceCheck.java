@@ -38,8 +38,6 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.automata.IRun;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
@@ -65,18 +63,15 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.InterpolantComputationStatus.ItpErrorStatus;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.TaskIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.ExternalSolver;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckSpWp;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -95,7 +90,7 @@ public class AcceleratedTraceCheck<L extends IIcfgTransition<?>> implements IInt
 	private final ILogger mLogger;
 	private final ManagedScript mMgdScript;
 	private final IUltimateServiceProvider mServices;
-	private final NestedRun<L, IPredicate> mCounterexample;
+	private final List<L> mCounterexample;
 	private final IPredicate mPrecondition;
 	private final IPredicate mPostcondition;
 	private final IPredicateUnifier mPredicateUnifier;
@@ -110,29 +105,32 @@ public class AcceleratedTraceCheck<L extends IIcfgTransition<?>> implements IInt
 
 	private final AcceleratedTraceCheckStatisticsGenerator mStatisticsGenerator;
 
-
 	public AcceleratedTraceCheck(final IUltimateServiceProvider services, final ILogger logger,
 			final TaCheckAndRefinementPreferences<L> prefs, final ManagedScript script,
-			final IPredicateUnifier predicateUnifier, final IRun<L, IPredicate> counterexample,
+			final IPredicateUnifier predicateUnifier, final Counterexample<L> counterexample,
 			final IPredicate precondition, final IPredicate postcondition, final PredicateFactory predicateFactory) {
 		mLogger = logger;
 		mMgdScript = script;
 		mServices = services;
-		mCounterexample = (NestedRun<L, IPredicate>) counterexample;
+		mCounterexample = counterexample.getWord().asList();
 		mPrecondition = precondition;
 		mPostcondition = postcondition;
 		mPrefs = prefs;
 		mPredicateFactory = predicateFactory;
+
+		// Daniel (2024-11-10): Control configurations are required in this class.
+		// (https://github.com/ultimate-pa/ultimate/pull/692#discussion_r1835721647)
+		counterexample.requireControlConfigurations();
 
 		mIcfg = mPrefs.getIcfgContainer();
 		mPredicateUnifier = predicateUnifier;
 		mInterpolants = null;
 		mStatisticsGenerator = new AcceleratedTraceCheckStatisticsGenerator();
 
-		final TreeMap<Integer, AcceleratedSegment> acceleratedSegments = constructAcceleratedSegments(mServices,
-				mLogger, script, counterexample);
+		final TreeMap<Integer, AcceleratedSegment> acceleratedSegments =
+				constructAcceleratedSegments(mServices, mLogger, script, counterexample);
 		if (acceleratedSegments.isEmpty()) {
-			final TraceCheckSpWp<L> tc = checkTrace(mPrecondition, mPostcondition, mCounterexample);
+			final TraceCheckSpWp<L> tc = checkTrace(mPrecondition, mPostcondition, counterexample);
 			mIsTraceCorrect = tc.isCorrect();
 			switch (tc.isCorrect()) {
 			case SAT:
@@ -155,22 +153,21 @@ public class AcceleratedTraceCheck<L extends IIcfgTransition<?>> implements IInt
 				throw new AssertionError();
 			}
 		} else {
-			final NestedRun<L, IPredicate> acceleratedCounterexample = construtAcceleratedCounterexample(mServices,
-					mLogger, mMgdScript, mIcfg.getCfgSmtToolkit().getIcfgEdgeFactory(), acceleratedSegments,
-					mCounterexample);
+			final Counterexample<L> acceleratedCounterexample = construtAcceleratedCounterexample(mServices, mLogger,
+					mMgdScript, mIcfg.getCfgSmtToolkit().getIcfgEdgeFactory(), acceleratedSegments, counterexample);
 			final TraceCheckSpWp<L> tc = checkTrace(mPrecondition, mPostcondition, acceleratedCounterexample);
 			mIsTraceCorrect = tc.isCorrect();
 			switch (tc.isCorrect()) {
 			case SAT:
 				final IcfgProgramExecution<L> pe = tc.getRcfgProgramExecution();
-				mFeasibleProgramExecution = constructProgramExecution(mCounterexample.getWord(), acceleratedSegments,
-						pe);
+				mFeasibleProgramExecution =
+						constructProgramExecution(counterexample.getWord(), acceleratedSegments, pe);
 				break;
 			case UNKNOWN:
 				mReasonUnknown = tc.getTraceCheckReasonUnknown();
 				break;
 			case UNSAT:
-				mInterpolants = constructInterpolants(mCounterexample, acceleratedSegments, tc.getForwardPredicates());
+				mInterpolants = constructInterpolants(counterexample, acceleratedSegments, tc.getForwardPredicates());
 				break;
 			default:
 				throw new AssertionError();
@@ -183,7 +180,7 @@ public class AcceleratedTraceCheck<L extends IIcfgTransition<?>> implements IInt
 		}
 	}
 
-	private IPredicate[] constructInterpolants(final NestedRun<L, IPredicate> counterexample,
+	private IPredicate[] constructInterpolants(final Counterexample<L> counterexample,
 			final TreeMap<Integer, AcceleratedSegment> acceleratedSegments,
 			final List<IPredicate> interpolantsForAcceleratedTrace) {
 		// Note that the i-th state comes before the i-th letter and the i-th
@@ -197,17 +194,20 @@ public class AcceleratedTraceCheck<L extends IIcfgTransition<?>> implements IInt
 			assert entry.getKey() == entry.getValue().getStartPosition();
 			// Interpolants since last loop, including the last loop's postcondition and the
 			// next loop's precondition
-			final List<IPredicate> intermediateInterpolants = interpolantsForAcceleratedTrace
-					.subList(result.size() - offset, aseg.getStartPosition() - offset);
+			final List<IPredicate> intermediateInterpolants =
+					interpolantsForAcceleratedTrace.subList(result.size() - offset, aseg.getStartPosition() - offset);
 			result.addAll(intermediateInterpolants);
 			assert result.size() == aseg.getStartPosition();
 			final IPredicate precondition = interpolantsForAcceleratedTrace.get(aseg.getStartPosition() - offset - 1);
 			final IPredicate postcondition = interpolantsForAcceleratedTrace.get(aseg.getStartPosition() - offset);
 			// Run for the trace from the first letter (inclusive) to the last letter
 			// (inclusive) of the loop body
-			final NestedRun<L, IPredicate> subRun = counterexample.getSubRun(aseg.getStartPosition(),
-					aseg.getEndPosition() + 1);
-			final TraceCheckSpWp<L> inter = checkTrace(precondition, postcondition, subRun);
+			final NestedWord<L> subWord =
+					counterexample.getWord().getSubWord(aseg.getStartPosition(), aseg.getEndPosition() + 1);
+			final List<Object> subCCS = counterexample.getControlConfigurations().subList(aseg.getStartPosition(),
+					aseg.getEndPosition() + 2);
+			final TraceCheckSpWp<L> inter =
+					checkTrace(precondition, postcondition, new Counterexample<>(subWord, subCCS));
 			if (inter.isCorrect() != LBool.UNSAT) {
 				throw new UnsupportedOperationException("Body trace check " + inter.isCorrect());
 			}
@@ -222,20 +222,19 @@ public class AcceleratedTraceCheck<L extends IIcfgTransition<?>> implements IInt
 		// postcondition of the last loop
 		result.addAll(interpolantsForAcceleratedTrace.subList(result.size() - offset,
 				interpolantsForAcceleratedTrace.size()));
-		assert counterexample.getLength() == result.size() + 2;
+		assert counterexample.length() == result.size() + 1;
 		assert interpolantsForAcceleratedTrace.size() + offset == result.size();
 		return result.toArray(new IPredicate[result.size()]);
 	}
 
 	private TraceCheckSpWp<L> checkTrace(final IPredicate precondition, final IPredicate postcondition,
-			final NestedRun<L, IPredicate> counterexample) {
-		final TraceCheckSpWp<L> tc = new TraceCheckSpWp<L>(precondition, postcondition,
-				new TreeMap<Integer, IPredicate>(), NestedWord.nestedWord(counterexample.getWord()),
-				mPrefs.getCfgSmtToolkit(), mPrefs.getAssertCodeBlockOrder(), mPrefs.getUnsatCores(),
-				mPrefs.getUseLiveVariables(), mServices, mPrefs.computeCounterexample(), mPredicateFactory,
-				mPredicateUnifier, InterpolationTechnique.ForwardPredicates, constructManagedScript(),
-				SimplificationTechnique.SIMPLIFY_DDA, TraceCheckUtils.getSequenceOfProgramPoints(NestedWord.nestedWord(counterexample.getWord())),
-				mPrefs.collectInterpolantStatistics());
+			final Counterexample<L> counterexample) {
+		final TraceCheckSpWp<L> tc =
+				new TraceCheckSpWp<>(precondition, postcondition, new TreeMap<Integer, IPredicate>(), counterexample,
+						mPrefs.getCfgSmtToolkit(), mPrefs.getAssertCodeBlockOrder(), mPrefs.getUnsatCores(),
+						mPrefs.getUseLiveVariables(), mServices, mPrefs.computeCounterexample(), mPredicateFactory,
+						mPredicateUnifier, InterpolationTechnique.ForwardPredicates, constructManagedScript(),
+						SimplificationTechnique.SIMPLIFY_DDA, mPrefs.collectInterpolantStatistics());
 		return tc;
 	}
 
@@ -294,56 +293,52 @@ public class AcceleratedTraceCheck<L extends IIcfgTransition<?>> implements IInt
 				inAcceleratedSegment = false;
 			}
 		}
-		return new IcfgProgramExecution<L>(ateList, partialProgramStateMapping, branchEncoders, pe.isConcurrent(),
+		return new IcfgProgramExecution<>(ateList, partialProgramStateMapping, branchEncoders, pe.isConcurrent(),
 				(Class<L>) pe.getTraceElementClass());
 	}
 
-	private NestedRun<L, IPredicate> construtAcceleratedCounterexample(final IUltimateServiceProvider services,
+	private Counterexample<L> construtAcceleratedCounterexample(final IUltimateServiceProvider services,
 			final ILogger logger, final ManagedScript mgdScript, final IcfgEdgeFactory icfgEdgeFactory,
-			final TreeMap<Integer, AcceleratedSegment> acceleratedSegments,
-			final NestedRun<L, IPredicate> counterexample) {
+			final TreeMap<Integer, AcceleratedSegment> acceleratedSegments, final Counterexample<L> counterexample) {
+		final var counterexampleWord = counterexample.getWord();
+		final var controlConfigurationSequence = counterexample.getControlConfigurations();
+
 		int lastcut = 0;
 		NestedWord<L> currentWord = new NestedWord<>();
-		final ArrayList<IPredicate> currentSequenceofStates = new ArrayList<>();
+		final ArrayList<Object> currentSequenceofStates = new ArrayList<>();
 		for (final Entry<Integer, AcceleratedSegment> entry : acceleratedSegments.entrySet()) {
 			final AcceleratedSegment accelSegment = entry.getValue();
-			final NestedWord<L> subwordBefore = counterexample.getWord().getSubWord(lastcut,
-					accelSegment.getStartPosition());
+			final NestedWord<L> subwordBefore = counterexampleWord.getSubWord(lastcut, accelSegment.getStartPosition());
 			currentWord = currentWord.concatenate(subwordBefore);
-			final List<IPredicate> sequenceOfStatesBefore = counterexample.getStateSequence().subList(lastcut,
-					entry.getKey());
+			final List<?> sequenceOfStatesBefore = controlConfigurationSequence.subList(lastcut, entry.getKey());
 			currentSequenceofStates.addAll(sequenceOfStatesBefore);
-			final ISLPredicate loopPredicate = (ISLPredicate) counterexample
-					.getStateAtPosition(accelSegment.getStartPosition());
-			final IIcfgTransition<?> accelerationEdge = icfgEdgeFactory.createInternalTransition(
-					loopPredicate.getProgramPoint(), loopPredicate.getProgramPoint(), new Payload(),
-					accelSegment.getTransitiveClosure());
+			final IcfgLocation loopLocation = counterexampleWord.getSymbol(accelSegment.getStartPosition()).getSource();
+			final IIcfgTransition<?> accelerationEdge = icfgEdgeFactory.createInternalTransition(loopLocation,
+					loopLocation, new Payload(), accelSegment.getTransitiveClosure());
 			final L l = (L) accelerationEdge;
-			final NestedWord<L> singleWord = new NestedWord<L>(l, NestedWord.INTERNAL_POSITION);
+			final NestedWord<L> singleWord = new NestedWord<>(l, NestedWord.INTERNAL_POSITION);
 			currentWord = currentWord.concatenate(singleWord);
-			currentSequenceofStates.add(loopPredicate);
+			currentSequenceofStates.add(controlConfigurationSequence.get(accelSegment.getStartPosition()));
 			lastcut = accelSegment.getEndPosition() + 1;
 		}
-		final NestedWord<L> tailWord = counterexample.getWord().getSubWord(lastcut, counterexample.getLength() - 1);
+		final NestedWord<L> tailWord = counterexampleWord.getSubWord(lastcut, counterexample.length());
 		currentWord = currentWord.concatenate(tailWord);
-		currentSequenceofStates.addAll(counterexample.getStateSequence().subList(lastcut, counterexample.getLength()));
-		return new NestedRun<L, IPredicate>(currentWord, currentSequenceofStates);
+		currentSequenceofStates.addAll(controlConfigurationSequence.subList(lastcut, counterexample.length() + 1));
+		return new Counterexample<>(currentWord, currentSequenceofStates);
 	}
 
 	private TreeMap<Integer, AcceleratedSegment> constructAcceleratedSegments(final IUltimateServiceProvider services,
-			final ILogger logger, final ManagedScript mgdScript, final IRun<L, IPredicate> counterexample) {
+			final ILogger logger, final ManagedScript mgdScript, final Counterexample<L> counterexample) {
 		final TreeMap<Integer, AcceleratedSegment> result = new TreeMap<>();
-		final HashTreeRelation<IcfgLocation, Integer> similarProgramPoints = findSimilarProgramPoints(
-				counterexample.getStateSequence());
+		final HashTreeRelation<Object, Integer> similarProgramPoints =
+				findSimilarProgramPoints(counterexample.getControlConfigurations());
 		final TreeRelation<Integer, Integer> loopPositions = computeMaximalCrossFreeLoopPositions(similarProgramPoints);
 
-		for (int i = 0; i < counterexample.getLength(); i++) {
-			final TreeSet<Integer> positionsWithSimilarProgramPoint = loopPositions
-					.getImage(i);
+		for (int i = 0; i < counterexample.length() + 1; i++) {
+			final TreeSet<Integer> positionsWithSimilarProgramPoint = loopPositions.getImage(i);
 			final Integer nextPosition = positionsWithSimilarProgramPoint.higher(i);
 			if (nextPosition != null) {
-				final NestedWord<L> nestedWord = (NestedWord<L>) counterexample.getWord();
-				final NestedWord<L> subWord = nestedWord.getSubWord(i, nextPosition);
+				final NestedWord<L> subWord = counterexample.getWord().getSubWord(i, nextPosition);
 				final UnmodifiableTransFormula transitiveClosure = accelerate(services, logger, mgdScript, subWord);
 				mStatisticsGenerator.reportAccelerationAttempt();
 				if (transitiveClosure != null) {
@@ -357,13 +352,13 @@ public class AcceleratedTraceCheck<L extends IIcfgTransition<?>> implements IInt
 	}
 
 	/**
-	 * Compute a subset of the loop position relation. In this subset no pair should
-	 * cross (if you consider the elements a edges of a graph).
+	 * Compute a subset of the loop position relation. In this subset no pair should cross (if you consider the elements
+	 * a edges of a graph).
 	 */
-	private static TreeRelation<Integer, Integer> computeMaximalCrossFreeLoopPositions(
-			final HashTreeRelation<IcfgLocation, Integer> similarProgramPoints) {
+	private static TreeRelation<Integer, Integer>
+			computeMaximalCrossFreeLoopPositions(final HashTreeRelation<Object, Integer> similarProgramPoints) {
 		final TreeRelation<Integer, Integer> similarPosRel = new TreeRelation<>();
-		for (final Entry<IcfgLocation, TreeSet<Integer>> entry : similarProgramPoints.entrySet()) {
+		for (final Entry<Object, TreeSet<Integer>> entry : similarProgramPoints.entrySet()) {
 			final TreeSet<Integer> positionsOfLoc = entry.getValue();
 			for (final Integer pos : positionsOfLoc) {
 				similarPosRel.addAllPairs(pos, positionsOfLoc);
@@ -410,13 +405,12 @@ public class AcceleratedTraceCheck<L extends IIcfgTransition<?>> implements IInt
 		if (!subWord.hasEmptyNestingRelation()) {
 			return null;
 		}
-		final List<UnmodifiableTransFormula> transformulas = subWord.asList().stream().map(L::getTransformula)
-				.collect(Collectors.toList());
+		final List<UnmodifiableTransFormula> transformulas =
+				subWord.asList().stream().map(L::getTransformula).collect(Collectors.toList());
 		final UnmodifiableTransFormula sequentialComposition = TransFormulaUtils.sequentialComposition(logger, services,
-				mgdScript, true, true, false, SimplificationTechnique.SIMPLIFY_DDA,
-				transformulas);
-		final JordanLoopAccelerationResult jla = JordanLoopAcceleration.accelerateLoop(mServices, mMgdScript,
-				sequentialComposition, true);
+				mgdScript, true, true, false, SimplificationTechnique.SIMPLIFY_DDA, transformulas);
+		final JordanLoopAccelerationResult jla =
+				JordanLoopAcceleration.accelerateLoop(mServices, mMgdScript, sequentialComposition, true);
 		final JordanLoopAccelerationStatisticsGenerator stat = jla.getJordanLoopAccelerationStatistics();
 		final StatisticsData stats = new StatisticsData();
 		stats.aggregateBenchmarkData(stat);
@@ -428,13 +422,10 @@ public class AcceleratedTraceCheck<L extends IIcfgTransition<?>> implements IInt
 		return jla.getTransFormula();
 	}
 
-	private static HashTreeRelation<IcfgLocation, Integer> findSimilarProgramPoints(
-			final List<IPredicate> programPoints) {
-		final HashTreeRelation<IcfgLocation, Integer> result = new HashTreeRelation<>();
-		for (int i = 0; i < programPoints.size(); i++) {
-			final ISLPredicate pred = (ISLPredicate) programPoints.get(i);
-			final IcfgLocation programPoint = pred.getProgramPoint();
-			result.addPair(programPoint, i);
+	private static HashTreeRelation<Object, Integer> findSimilarProgramPoints(final List<?> controlConfigurations) {
+		final HashTreeRelation<Object, Integer> result = new HashTreeRelation<>();
+		for (int i = 0; i < controlConfigurations.size(); i++) {
+			result.addPair(controlConfigurations.get(i), i);
 		}
 		return result;
 	}
@@ -491,7 +482,7 @@ public class AcceleratedTraceCheck<L extends IIcfgTransition<?>> implements IInt
 
 	@Override
 	public List<L> getTrace() {
-		return mCounterexample.getWord().asList();
+		return mCounterexample;
 	}
 
 	@Override

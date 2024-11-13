@@ -24,7 +24,7 @@
  * Verification functions and data types built into Ultimate for static program analysis.
  * 
  * \author Manuel Bentele
- * \version 0.2.4
+ * \version 0.3.0
  */
 
 #ifndef __ULTIMATE_H

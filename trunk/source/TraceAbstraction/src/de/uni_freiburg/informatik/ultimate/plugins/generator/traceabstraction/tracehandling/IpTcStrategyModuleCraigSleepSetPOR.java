@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.TaskIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolatingTraceCheckCraig;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
@@ -79,7 +80,7 @@ public abstract class IpTcStrategyModuleCraigSleepSetPOR<LETTER extends IIcfgTra
 	 */
 	public IpTcStrategyModuleCraigSleepSetPOR(final TaskIdentifier taskIdentifier,
 			final IUltimateServiceProvider services, final TaCheckAndRefinementPreferences<LETTER> prefs,
-			final IRun<LETTER, ?> counterExample, final IPredicate precondition, final IPredicate postcondition,
+			final Counterexample<LETTER> counterExample, final IPredicate precondition, final IPredicate postcondition,
 			final AssertionOrderModulation<LETTER> assertionOrderModulation, final IPredicateUnifier predicateUnifier,
 			final PredicateFactory predicateFactory) {
 		super(taskIdentifier, services, prefs, counterExample, precondition, postcondition, assertionOrderModulation,
@@ -93,15 +94,14 @@ public abstract class IpTcStrategyModuleCraigSleepSetPOR<LETTER extends IIcfgTra
 				|| interpolationTechnique == InterpolationTechnique.Craig_TreeInterpolation;
 
 		final AssertCodeBlockOrder assertionOrder =
-				mAssertionOrderModulation.get(mCounterexample, interpolationTechnique);
+				mAssertionOrderModulation.get(mCounterexample.getWord(), interpolationTechnique);
 		final SimplificationTechnique simplificationTechnique = mPrefs.getSimplificationTechnique();
 		final ManagedScript managedScript = constructManagedScript();
 
 		final boolean instanticateArrayExt = true;
 		final boolean innerRecursiveNestedInterpolationCall = false;
 		return new InterpolatingTraceCheckCraig<>(mPrecondition, mPostcondition, new TreeMap<Integer, IPredicate>(),
-				NestedWord.nestedWord(mCounterexample.getWord()),
-				TraceCheckUtils.getSequenceOfProgramPointsWithSleepSet(mCounterexample.getStateSequence()), mServices,
+				mCounterexample, mServices,
 				mPrefs.getCfgSmtToolkit(), managedScript, mPredicateFactory, mPredicateUnifier, assertionOrder,
 				mPrefs.computeCounterexample(), mPrefs.collectInterpolantStatistics(), interpolationTechnique,
 				instanticateArrayExt, simplificationTechnique, innerRecursiveNestedInterpolationCall);

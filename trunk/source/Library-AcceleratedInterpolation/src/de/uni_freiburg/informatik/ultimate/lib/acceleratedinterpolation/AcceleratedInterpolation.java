@@ -33,7 +33,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -69,6 +68,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.ExceptionHandlingCategory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.Reason;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -89,7 +89,7 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 	private final ILogger mLogger;
 	private final ManagedScript mScript;
 	private final IUltimateServiceProvider mServices;
-	private final IRun<L, IPredicate> mCounterexampleTrace;
+	private final Counterexample<L> mCounterexampleTrace;
 	private final List<L> mCounterexample;
 	private final IPredicateUnifier mPredUnifier;
 	private final PredicateTransformer<Term, IPredicate, TransFormula> mPredTransformer;
@@ -124,7 +124,7 @@ public class AcceleratedInterpolation<L extends IIcfgTransition<?>> implements I
 	 */
 	public AcceleratedInterpolation(final IUltimateServiceProvider services, final ILogger logger,
 			final ITraceCheckPreferences prefs, final ManagedScript script, final IPredicateUnifier predicateUnifier,
-			final IRun<L, IPredicate> counterexample, final Class<L> transitionClazz,
+			final Counterexample<L> counterexample, final Class<L> transitionClazz,
 			final LoopAccelerators accelerationMethod, final IStrategySupplier<L> strategySupplier) {
 		mLogger = logger;
 		mScript = script;

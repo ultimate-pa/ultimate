@@ -35,7 +35,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
@@ -75,7 +75,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
  */
 public final class PathInvariantsGenerator<LETTER extends IAction> implements IInterpolantGenerator<LETTER> {
 
-	private final NestedRun<LETTER, IPredicate> mRun;
+	private final NestedWord<LETTER> mWord;
 	private final IPredicate mPrecondition;
 	private final IPredicate mPostcondition;
 	private final IPredicate[] mInterpolants;
@@ -105,12 +105,13 @@ public final class PathInvariantsGenerator<LETTER extends IAction> implements II
 	 *            the smt manager for constructing the default {@link IInvariantPatternProcessorFactory}
 	 * @param simplicationTechnique
 	 */
-	public PathInvariantsGenerator(final IUltimateServiceProvider services, final NestedRun<LETTER, IPredicate> run,
-			final IPredicate precondition, final IPredicate postcondition, final PredicateFactory predicateFactory,
+	public PathInvariantsGenerator(final IUltimateServiceProvider services, final NestedWord<LETTER> word,
+			final List<IcfgLocation> controlLocationSequence, final IPredicate precondition,
+			final IPredicate postcondition, final PredicateFactory predicateFactory,
 			final IPredicateUnifier predicateUnifier, final IIcfg<?> icfg,
 			final InvariantSynthesisSettings invSynthSettings, final SimplificationTechnique simplificationTechnique) {
 		mServices = services;
-		mRun = run;
+		mWord = word;
 
 		mPrecondition = precondition;
 		mPostcondition = postcondition;
@@ -118,9 +119,9 @@ public final class PathInvariantsGenerator<LETTER extends IAction> implements II
 
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 
-		mLogger.info("Current run: " + run);
+		mLogger.info("Current word and run: %s, %s", word, controlLocationSequence);
 		final Set<? extends IcfgEdge> allowedTransitions =
-				extractTransitionsFromRun(run, icfg.getCfgSmtToolkit().getIcfgEdgeFactory());
+				extractTransitionsFromRun(word, controlLocationSequence, icfg.getCfgSmtToolkit().getIcfgEdgeFactory());
 
 		final PathProgram.PathProgramConstructionResult ppResult = PathProgram.constructPathProgram(
 				"PathInvariantsPathProgram", icfg, allowedTransitions, Collections.emptySet(), x -> true);
@@ -137,9 +138,9 @@ public final class PathInvariantsGenerator<LETTER extends IAction> implements II
 
 		if (invariants != null) {
 			// Populate resulting array
-			mInterpolants = new IPredicate[mRun.getLength()];
-			for (int i = 0; i < mRun.getLength(); i++) {
-				final IcfgLocation originalLoc = ((ISLPredicate) mRun.getStateAtPosition(i)).getProgramPoint();
+			mInterpolants = new IPredicate[controlLocationSequence.size()];
+			for (int i = 0; i < controlLocationSequence.size(); i++) {
+				final IcfgLocation originalLoc = controlLocationSequence.get(i);
 				final IcfgLocation locFromPathProgram = inputIcfgLocs2PathProgramLocs.get(originalLoc);
 				// invariants.keySet().stream().filter(loc -> loc.toString().endsWith(originalLoc.toString()))
 				// .collect(Collectors.toList()).get(0);
@@ -156,21 +157,20 @@ public final class PathInvariantsGenerator<LETTER extends IAction> implements II
 		}
 	}
 
-	public static Set<? extends IcfgEdge> extractTransitionsFromRun(final NestedRun<? extends IAction, IPredicate> run,
-			final IcfgEdgeFactory edgeFac) {
-		final int len = run.getLength();
+	public static Set<? extends IcfgEdge> extractTransitionsFromRun(final NestedWord<? extends IAction> word,
+			final List<IcfgLocation> controlLocationSequence, final IcfgEdgeFactory edgeFac) {
+		final int len = controlLocationSequence.size();
 		final LinkedHashSet<IcfgInternalTransition> transitions = new LinkedHashSet<>(len - 1);
 		IcfgLocation previousLocation = null;
 
 		for (int i = 0; i < len; i++) {
-			final ISLPredicate pred = (ISLPredicate) run.getStateAtPosition(i);
-			final IcfgLocation currentLocation = pred.getProgramPoint();
+			final IcfgLocation currentLocation = controlLocationSequence.get(i);
 			if (i > 0) {
-				if (!run.getWord().isInternalPosition(i - 1)) {
+				if (!word.isInternalPosition(i - 1)) {
 					throw new UnsupportedOperationException("interprocedural traces are not supported (yet)");
 				}
 				final UnmodifiableTransFormula transFormula =
-						((IInternalAction) run.getSymbol(i - 1)).getTransformula();
+						((IInternalAction) word.getSymbol(i - 1)).getTransformula();
 				transitions.add(edgeFac.createInternalTransition(previousLocation, currentLocation,
 						currentLocation.getPayload(), transFormula));
 			}
@@ -181,7 +181,7 @@ public final class PathInvariantsGenerator<LETTER extends IAction> implements II
 
 	@Override
 	public List<LETTER> getTrace() {
-		return mRun.getWord().asList();
+		return mWord.asList();
 	}
 
 	@Override

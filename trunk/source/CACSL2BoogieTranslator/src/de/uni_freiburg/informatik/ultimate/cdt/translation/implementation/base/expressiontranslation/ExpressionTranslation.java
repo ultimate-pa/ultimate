@@ -156,9 +156,8 @@ public abstract class ExpressionTranslation {
 			final CPrimitive resultType, final Expression lhsOperand, final Expression rhsOperand,
 			final ExpressionResult exprResult);
 
-	// TODO 20221121 Matthias: If types of LHS and RHS differ, we have to extend/reduce the RHS
 	private Expression constructTypeCheckForShift(final ILocation loc, final Expression left,
-			final CPrimitive resultType, final CPrimitive rhsType, final Expression right, final int operator) {
+			final CPrimitive lhsType, final CPrimitive rhsType, final Expression right, final int operator) {
 		Expression rhsNonNegative;
 		{
 			final Expression zero = constructLiteralForIntegerType(loc, rhsType, BigInteger.ZERO);
@@ -167,19 +166,19 @@ public abstract class ExpressionTranslation {
 		}
 		Expression rhsSmallerBitWidth;
 		{
-			final BigInteger bitwidthOfLhsAsBigInt = BigInteger.valueOf(8 * mTypeSizes.getSize(resultType.getType()));
+			final BigInteger bitwidthOfLhsAsBigInt = BigInteger.valueOf(8 * mTypeSizes.getSize(lhsType.getType()));
 			final Expression bitwidthOfLhsAsExpr = constructLiteralForIntegerType(loc, rhsType, bitwidthOfLhsAsBigInt);
 			rhsSmallerBitWidth = constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_lessThan, right,
-					resultType, bitwidthOfLhsAsExpr, resultType);
+					rhsType, bitwidthOfLhsAsExpr, rhsType);
 		}
 		if (operator == IASTBinaryExpression.op_shiftRight || operator == IASTBinaryExpression.op_shiftRightAssign) {
 			return ExpressionFactory.and(loc, List.of(rhsNonNegative, rhsSmallerBitWidth));
 		}
 		Expression lhsNonNegative;
 		{
-			final Expression zero = constructLiteralForIntegerType(loc, resultType, BigInteger.ZERO);
-			lhsNonNegative = constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_lessEqual, zero,
-					resultType, left, resultType);
+			final Expression zero = constructLiteralForIntegerType(loc, lhsType, BigInteger.ZERO);
+			lhsNonNegative = constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_lessEqual, zero, lhsType,
+					left, lhsType);
 		}
 		return ExpressionFactory.and(loc, List.of(lhsNonNegative, rhsNonNegative, rhsSmallerBitWidth));
 	}
@@ -250,7 +249,12 @@ public abstract class ExpressionTranslation {
 	public abstract RValue translateIntegerLiteral(ILocation loc, String val);
 
 	public final RValue translateFloatingLiteral(final ILocation loc, final String val) {
-		final FloatingPointLiteral fpl = ISOIEC9899TC3.handleFloatConstant(val, loc);
+		final FloatingPointLiteral fpl;
+		try {
+			fpl = ISOIEC9899TC3.handleFloatConstant(val, loc);
+		} catch (final ArithmeticException e) {
+			throw new UnsupportedSyntaxException(loc, "Unable to represent float literal " + val);
+		}
 		final Expression expr =
 				constructLiteralForFloatingType(loc, fpl.getCPrimitive(), fpl.getDecimalRepresenation());
 		return new RValue(expr, fpl.getCPrimitive());

@@ -271,9 +271,9 @@ def get_java():
                 java_version = match.groups()[0]
                 java_version = java_version.split(".")[0]
                 java_version = int(java_version)
-                if java_version == 11:
+                if java_version == 21:
                     return candidate
-    print_err("Did not find Java 11 in known paths")
+    print_err("Did not find Java 21 in known paths")
     sys.exit(ExitCode.FAIL_NO_JAVA)
 
 
@@ -292,7 +292,7 @@ def create_ultimate_base_call():
         "-jar",
         os.path.join(
             ultimatedir,
-            "plugins/org.eclipse.equinox.launcher_1.5.800.v20200727-1323.jar",
+            "plugins/org.eclipse.equinox.launcher_1.6.800.v20240513-1750.jar",
         ),
         "-data",
         "@noDefault",
@@ -1015,7 +1015,7 @@ def main():
         )
         err_output_file = open(error_path_file_name, "wb")
         err_output_file.write(error_path.encode("utf-8"))
-        if not prop.is_reach() and not prop.is_data_race():
+        if not prop.is_reach():
             result = "FALSE({})".format(result_msg)
 
     print("Result:")

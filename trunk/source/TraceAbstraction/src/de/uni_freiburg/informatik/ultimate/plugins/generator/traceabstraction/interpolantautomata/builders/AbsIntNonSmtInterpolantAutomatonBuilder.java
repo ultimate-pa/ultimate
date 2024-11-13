@@ -32,10 +32,8 @@ import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -48,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 
 /**
@@ -62,18 +61,20 @@ public class AbsIntNonSmtInterpolantAutomatonBuilder<LETTER>
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final NestedWordAutomaton<LETTER, IPredicate> mResult;
-	private final IRun<LETTER, ?> mCurrentCounterExample;
+	private final Word<LETTER> mCurrentCounterExample;
+	private final List<?> mControlConfigurationSequence;
 	private final PredicateFactory mPredicateFactory;
 	private final ManagedScript mBoogie2Smt;
 
 	public AbsIntNonSmtInterpolantAutomatonBuilder(final IUltimateServiceProvider services,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> oldAbstraction,
 			final IPredicateUnifier predUnifier, final ManagedScript csToolkit, final IIcfgSymbolTable symbolTable,
-			final IRun<LETTER, ?> currentCounterexample, final SimplificationTechnique simplificationTechnique,
+			final Counterexample<LETTER> currentCounterexample, final SimplificationTechnique simplificationTechnique,
 			final IEmptyStackStateFactory<IPredicate> emptyStackFactory) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		mCurrentCounterExample = currentCounterexample;
+		mCurrentCounterExample = currentCounterexample.getWord();
+		mControlConfigurationSequence = currentCounterexample.getControlConfigurations();
 		mBoogie2Smt = csToolkit;
 		mPredicateFactory = new PredicateFactory(services, mBoogie2Smt, symbolTable);
 
@@ -96,23 +97,15 @@ public class AbsIntNonSmtInterpolantAutomatonBuilder<LETTER>
 			final IPredicateUnifier predicateUnifier, final IEmptyStackStateFactory<IPredicate> emptyStackFactory) {
 		mLogger.info("Creating interpolant automaton from AI using abstract post for generalization");
 
-		final NestedRun<LETTER, IPredicate> cex = (NestedRun<LETTER, IPredicate>) mCurrentCounterExample;
-		final List<IPredicate> stateSequence = cex.getStateSequence();
-
-		if (stateSequence.size() <= 1) {
-			throw new AssertionError("Unexpected: state sequence size <= 1");
-		}
-
 		final NestedWordAutomaton<LETTER, IPredicate> result = new NestedWordAutomaton<>(
 				new AutomataLibraryServices(mServices), oldAbstraction.getVpAlphabet(), emptyStackFactory);
 
-		final Map<IPredicate, IPredicate> newStates = new HashMap<>();
+		final Map<Object, IPredicate> newStates = new HashMap<>();
 		final Map<LETTER, IPredicate> callHierPreds = new HashMap<>();
-		final Word<LETTER> word = cex.getWord();
 		int i = 0;
-		for (final LETTER symbol : word) {
-			final IPredicate prevState = stateSequence.get(i);
-			final IPredicate succState = stateSequence.get(i + 1);
+		for (final LETTER symbol : mCurrentCounterExample) {
+			final Object prevState = mControlConfigurationSequence.get(i);
+			final Object succState = mControlConfigurationSequence.get(i + 1);
 			++i;
 
 			IPredicate newPrevState = newStates.get(prevState);
@@ -129,7 +122,7 @@ public class AbsIntNonSmtInterpolantAutomatonBuilder<LETTER>
 
 			IPredicate newSuccState = newStates.get(succState);
 			if (newSuccState == null) {
-				if (i == stateSequence.size() - 1) {
+				if (i == mControlConfigurationSequence.size() - 1) {
 					// the last state is always an error state
 					newSuccState = predicateUnifier.getFalsePredicate();
 					result.addState(false, true, newSuccState);
@@ -163,5 +156,4 @@ public class AbsIntNonSmtInterpolantAutomatonBuilder<LETTER>
 
 		return result;
 	}
-
 }

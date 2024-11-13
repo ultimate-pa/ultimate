@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.UnsatCores;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolatingTraceCheck;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolatingTraceCheckCraig;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
@@ -142,12 +143,14 @@ public class LoopCannibalizer<LETTER extends IIcfgTransition<?>> {
 
 	private InterpolatingTraceCheck<? extends IIcfgTransition<?>> getTraceCheck(
 			final NestedWord<? extends IIcfgTransition<?>> shifted, final InterpolationTechnique interpolation) {
+		final var counterexample = new Counterexample<>(shifted);
+
 		InterpolatingTraceCheck<? extends IIcfgTransition<?>> traceCheck;
 		switch (interpolation) {
 		case Craig_NestedInterpolation:
 		case Craig_TreeInterpolation:
 			traceCheck = new InterpolatingTraceCheckCraig<>(mRankEqAndSi, mHondaPredicate,
-					new TreeMap<Integer, IPredicate>(), shifted, null, mServices, mCsToolkit, mPredicateFactory,
+					new TreeMap<Integer, IPredicate>(), counterexample, mServices, mCsToolkit, mPredicateFactory,
 					mPredicateUnifier, AssertCodeBlockOrder.NOT_INCREMENTALLY, false, false, interpolation, true,
 					mSimplificationTechnique);
 			break;
@@ -156,9 +159,9 @@ public class LoopCannibalizer<LETTER extends IIcfgTransition<?>> {
 		case FPandBP:
 		case FPandBPonlyIfFpWasNotPerfect:
 			traceCheck = new TraceCheckSpWp<>(mRankEqAndSi, mHondaPredicate, new TreeMap<Integer, IPredicate>(),
-					shifted, mCsToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true,
+					counterexample, mCsToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true,
 					mServices, false, mPredicateFactory, mPredicateUnifier, interpolation,
-					mCsToolkit.getManagedScript(), mSimplificationTechnique, null, false);
+					mCsToolkit.getManagedScript(), mSimplificationTechnique, false);
 			break;
 		default:
 			throw new UnsupportedOperationException("unsupported interpolation");
