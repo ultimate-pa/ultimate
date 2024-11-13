@@ -545,7 +545,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		var ctex = new Counterexample<>(run.getWord(), getControlConfigurationsFromCounterexample(run));
 		return mStrategyFactory.constructStrategy(mServices, ctex, mAbstraction,
 				new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()), mFactory, getPreconditionProvider(),
-				getPostconditionProvider(), RefinementStrategy.SMTINTERPOLSLEEPSETPOR);
+				getPostconditionProvider(), RefinementStrategy.SMTINTERPOL);
 	}
 
 	private IIpAbStrategyModule<L> createConditionalCommutativityAutomatonBuilder(final IRun<L, IPredicate> run) {

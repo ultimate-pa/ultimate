@@ -124,32 +124,6 @@ public final class TraceCheckUtils {
 	}
 
 	/**
-	 * Given a stateSequence s_0,...,s_n returns the sequence of pairs (pp, sleepset)_0,...,(pp, sleepset)_n, s.t. (pp,
-	 * sleepset)_i consists of the program points of s_i and the sleep set of s_i.
-	 *
-	 * @param stateSequence
-	 *            sequence of SleepPredicates
-	 * @return sequence of pairs (pp, sleepset)
-	 */
-	public static List<Pair<IcfgLocation[], Set<?>>>
-			getSequenceOfProgramPointsWithSleepSet(final List<?> stateSequence) {
-		final ArrayList<Pair<IcfgLocation[], Set<?>>> sequence = new ArrayList<>();
-		for (int i = 0; i < stateSequence.size(); i++) {
-			final SleepPredicate<?> sleepPred = ((SleepPredicate<?>) stateSequence.get(i));
-			IPredicate pred = sleepPred.getUnderlying();
-
-			if (pred instanceof PredicateWithLastThread) {
-				pred = ((PredicateWithLastThread) pred).getUnderlying();
-			}
-			final ImmutableSet<?> sleepset = sleepPred.getSleepSet();
-			final IcfgLocation[] programPpoints = ((IMLPredicate) pred).getProgramPoints();
-			final Pair<IcfgLocation[], Set<?>> pair = new Pair<>(programPpoints, sleepset);
-			sequence.add(pair);
-		}
-		return sequence;
-	}
-
-	/**
 	 * Variant of
 	 * {@link #computeCoverageCapability(IUltimateServiceProvider, TracePredicates, List, ILogger, IPredicateUnifier)}
 	 * where the sequence of ProgramPoints is not a parameter but computed from the trace.
@@ -167,28 +141,6 @@ public final class TraceCheckUtils {
 		@SuppressWarnings("unchecked")
 		final NestedWord<IcfgEdge> trace = (NestedWord<IcfgEdge>) toNestedWord(traceCheck.getTrace());
 		final List<IcfgLocation> programPoints = getSequenceOfProgramPoints(trace);
-		return computeCoverageCapability(services, traceCheck.getIpp(), programPoints, logger,
-				traceCheck.getPredicateUnifier());
-	}
-
-	/**
-	 * Variant of
-	 * {@link #computeCoverageCapability(IUltimateServiceProvider, TracePredicates, List, ILogger, IPredicateUnifier)}
-	 * where the sequence of ProgramPoints is not a parameter but computed from the stateSequence for SleepPredicates.
-	 *
-	 * @param services
-	 *            Ultimate services
-	 * @param traceCheck
-	 *            trace checker
-	 * @param stateSequence
-	 *            sequence of SleepPredicate
-	 * @param logger
-	 *            logger
-	 * @return backward covering information
-	 */
-	public static BackwardCoveringInformation computeCoverageCapabilitySleepSet(final IUltimateServiceProvider services,
-			final IInterpolantGenerator<?> traceCheck, final List<IPredicate> stateSequence, final ILogger logger) {
-		final List<?> programPoints = getSequenceOfProgramPointsWithSleepSet(stateSequence);
 		return computeCoverageCapability(services, traceCheck.getIpp(), programPoints, logger,
 				traceCheck.getPredicateUnifier());
 	}
