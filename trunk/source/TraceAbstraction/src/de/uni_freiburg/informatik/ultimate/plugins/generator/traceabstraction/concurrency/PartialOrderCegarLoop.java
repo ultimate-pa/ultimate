@@ -130,6 +130,10 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
  */
 public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		extends BasicCegarLoop<L, INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> {
+	// Determines after how many occurrences of the same path program a conditional commutativity condition will be
+	// synthesized, if commutativity condition synthesis is enabled.
+	private static final int CONDITIONAL_COMMUTATIVITY_THRESHOLD = 1;
+
 	private final PartialOrderMode mPartialOrderMode;
 	private final InformationStorageFactory mFactory = new InformationStorageFactory();
 
@@ -148,8 +152,8 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	private final ConditionalCommutativityStatisticsGenerator mConComCheckerBenchmark =
 			new ConditionalCommutativityStatisticsGenerator();
 	private final ConditionalCommutativityCounterexampleChecker<L> mConCounterexampleChecker;
+
 	private final Map<Set<?>, Integer> mControlConfigurationSets = new HashMap<>();
-	private final Integer mConComThreshold = 1;
 
 	public PartialOrderCegarLoop(final DebugIdentifier name,
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> initialAbstraction,
@@ -315,8 +319,8 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 					mControlConfigurationSets.containsKey(set) ? mControlConfigurationSets.get(set) + 1 : 1;
 			mControlConfigurationSets.put(set, occurrences);
 
-			// and the occurrences of the underlying set of control configurations exceeds mConComThreshold (1)
-			if (occurrences > mConComThreshold) {
+			// and the occurrences of the underlying set of control configurations exceeds CONDITIONAL_COMMUTATIVITY_THRESHOLD
+			if (occurrences > CONDITIONAL_COMMUTATIVITY_THRESHOLD) {
 				mRefinementResult =
 						mConCounterexampleChecker.getCommutativityProof((NestedRun<L, IPredicate>) mCounterexample);
 
