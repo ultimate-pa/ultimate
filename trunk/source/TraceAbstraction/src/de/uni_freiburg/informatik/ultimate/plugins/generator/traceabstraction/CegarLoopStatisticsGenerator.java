@@ -49,10 +49,7 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 	private final StatisticsData mInterpolantConsolidationBenchmarks = new StatisticsData();
 	private final StatisticsData mPathInvariantsStatistics = new StatisticsData();
 	private final StatisticsData mRefinementEngineStatistics = new StatisticsData();
-
-	// TODO Conditional commutativity statistics should not be inlined here.
 	private final StatisticsData mConComCheckerStatistics = new StatisticsData();
-	// TODO They should be collected in their own statistics object, which may then be added here.
 
 	private int mIterations = 0;
 	private SizeIterationPair mBiggestAbstraction = new SizeIterationPair(-1, -1);
@@ -209,5 +206,4 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 				CegarLoopStatisticsDefinitions.DumpTime.toString(),
 				CegarLoopStatisticsDefinitions.InitialAbstractionConstructionTime.toString() };
 	}
-
 }
