@@ -36,10 +36,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -81,13 +79,13 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder<LETTER extends IIcfgT
 	private final ILogger mLogger;
 	private final NestedWordAutomaton<LETTER, IPredicate> mResult;
 	private final CfgSmtToolkit mCsToolkit;
-	private final IRun<LETTER, ?> mCurrentCounterExample;
+	private final Word<LETTER> mCurrentCounterExample;
 	private final IIcfgSymbolTable mSymbolTable;
 
 	public AbsIntStraightLineInterpolantAutomatonBuilder(final IUltimateServiceProvider services,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> oldAbstraction,
 			final IAbstractInterpretationResult<?, LETTER, ?> aiResult, final IPredicateUnifier predUnifier,
-			final CfgSmtToolkit csToolkit, final IRun<LETTER, ?> currentCounterExample,
+			final CfgSmtToolkit csToolkit, final Word<LETTER> currentCounterExample,
 			final SimplificationTechnique simplificationTechnique, final IIcfgSymbolTable symbolTable,
 			final IEmptyStackStateFactory<IPredicate> emptyStackFactory) {
 		mServices = services;
@@ -112,14 +110,10 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder<LETTER extends IIcfgT
 				new RcfgDebugHelper<>(mCsToolkit, mServices, mSymbolTable);
 		mLogger.info("Creating interpolant automaton from AI predicates (straight)");
 
-		final NestedWordAutomaton<LETTER, IPredicate> result =
-				new NestedWordAutomaton<>(new AutomataLibraryServices(mServices), oldAbstraction.getVpAlphabet(),
-						emptyStackFactory);
+		final NestedWordAutomaton<LETTER, IPredicate> result = new NestedWordAutomaton<>(
+				new AutomataLibraryServices(mServices), oldAbstraction.getVpAlphabet(), emptyStackFactory);
 
-		final NestedRun<LETTER, IPredicate> cex = (NestedRun<LETTER, IPredicate>) mCurrentCounterExample;
-		final Word<LETTER> word = cex.getWord();
-
-		final int wordlength = word.length();
+		final int wordlength = mCurrentCounterExample.length();
 		assert wordlength > 1 : "Unexpected: length of word smaller or equal to 1.";
 
 		final TripleStack<STATE> callStack = new TripleStack<>();
@@ -133,7 +127,7 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder<LETTER extends IIcfgT
 		result.addState(true, false, previous);
 
 		for (int i = 0; i < wordlength; i++) {
-			final LETTER symbol = word.getSymbol(i);
+			final LETTER symbol = mCurrentCounterExample.getSymbol(i);
 
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug("CallStack Before" + callStack.getCalls().stream()
@@ -323,7 +317,7 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder<LETTER extends IIcfgT
 
 		@Override
 		public Iterator<Triple<LETTER, IPredicate, Set<STATE>>> iterator() {
-			return new Iterator<Triple<LETTER, IPredicate, Set<STATE>>>() {
+			return new Iterator<>() {
 				private final Iterator<LETTER> mCallIter = mCalls.iterator();
 				private final Iterator<IPredicate> mPredicatesIter = mPredicates.iterator();
 				private final Iterator<Set<STATE>> mStatesIter = mStates.iterator();

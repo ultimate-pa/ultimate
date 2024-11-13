@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.t
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.IRun;
+import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
@@ -41,10 +41,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.in
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.StraightLineInterpolantAutomatonBuilder.InitialAndAcceptingStateMode;
 
 /**
- * 
+ *
  * {@link IIpAbStrategyModule} that uses the {@link StraightLineInterpolantAutomatonBuilder} and all perfect
  * interpolants if there are any, or all imperfect interpolants.
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  * @param <LETTER>
@@ -52,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.in
 public class IpAbStrategyModuleStraightlineAll<LETTER> implements IIpAbStrategyModule<LETTER> {
 
 	private final IUltimateServiceProvider mServices;
-	private final IRun<LETTER, ?> mCounterexample;
+	private final Word<LETTER> mCounterexample;
 	private final IAutomaton<LETTER, IPredicate> mAbstraction;
 	private final IEmptyStackStateFactory<IPredicate> mEmptyStackFactory;
 
@@ -60,7 +60,7 @@ public class IpAbStrategyModuleStraightlineAll<LETTER> implements IIpAbStrategyM
 	private final ILogger mLogger;
 
 	public IpAbStrategyModuleStraightlineAll(final IUltimateServiceProvider services, final ILogger logger,
-			final IAutomaton<LETTER, IPredicate> abstraction, final IRun<LETTER, ?> counterexample,
+			final IAutomaton<LETTER, IPredicate> abstraction, final Word<LETTER> counterexample,
 			final IEmptyStackStateFactory<IPredicate> emptyStackFactory) {
 		mServices = services;
 		mLogger = logger;
@@ -85,7 +85,7 @@ public class IpAbStrategyModuleStraightlineAll<LETTER> implements IIpAbStrategyM
 		mLogger.info(logMsg);
 		if (mResult == null) {
 			final StraightLineInterpolantAutomatonBuilder<LETTER> automatonBuilder =
-					new StraightLineInterpolantAutomatonBuilder<>(mServices, mCounterexample.getWord(),
+					new StraightLineInterpolantAutomatonBuilder<>(mServices, mCounterexample,
 							NestedWordAutomataUtils.getVpAlphabet(mAbstraction),
 							QualifiedTracePredicates.toList(usedIpps), mEmptyStackFactory,
 							InitialAndAcceptingStateMode.ONLY_FIRST_INITIAL_ONLY_FALSE_ACCEPTING);

@@ -96,6 +96,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult.BasicRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.NwaFloydHoareValidityCheck;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.cfg2automaton.Cfg2Automaton;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
@@ -188,9 +189,8 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 		mFaultLocalizationAngelic =
 				prefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_ERROR_TRACE_ANGELIC_VERIFICATION_ACTIVE);
 
-		final TaCheckAndRefinementPreferences<L> taCheckAndRefinementPrefs =
-				new TaCheckAndRefinementPreferences<>(getServices(), mPref, interpolation, mSimplificationTechnique,
-						mCsToolkit, mPredicateFactory, mIcfg);
+		final TaCheckAndRefinementPreferences<L> taCheckAndRefinementPrefs = new TaCheckAndRefinementPreferences<>(
+				getServices(), mPref, interpolation, mSimplificationTechnique, mCsToolkit, mPredicateFactory, mIcfg);
 		mStrategyFactory = new StrategyFactory<>(mLogger, mPref, taCheckAndRefinementPrefs, mIcfg, mPredicateFactory,
 				mPredicateFactoryInterpolantAutomata, transitionClazz);
 
@@ -252,8 +252,9 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 			throw new IllegalStateException(e);
 		}
 
-		final IPredicateUnifier unifier = new PredicateUnifier(mLogger, mServices, mCsToolkit.getManagedScript(),
-				mPredicateFactory, mCsToolkit.getSymbolTable(), mSimplificationTechnique, predicates.toArray(IPredicate[]::new));
+		final IPredicateUnifier unifier =
+				new PredicateUnifier(mLogger, mServices, mCsToolkit.getManagedScript(), mPredicateFactory,
+						mCsToolkit.getSymbolTable(), mSimplificationTechnique, predicates.toArray(IPredicate[]::new));
 
 		final VpAlphabet<L> alphabet;
 		if (mAbstraction instanceof INwaBasis<?, ?>) {
@@ -283,17 +284,30 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 		refineAbstraction();
 	}
 
+	/**
+	 * Given a counterexample run in the current abstraction, extracts control configurations from the run's state
+	 * sequence. This sequence is used for trace checks (e.g. for detecting if a proof is "perfect").
+	 *
+	 * A control configuration in this sense can e.g. be an {@code IcfgLocation} (in sequential programs), an array or
+	 * collection of {@code IcfgLocation}s for all active threads (in concurrent programs) etc. The point is to
+	 * represent the control flow in the original program being verified (the initial abstraction) and remove all
+	 * information stored in the states that corresponds to the interpolant automata that were already subtracted.
+	 */
+	protected abstract List<?> getControlConfigurationsFromCounterexample(final IRun<L, ?> run);
+
 	@Override
 	protected Pair<LBool, IProgramExecution<L, Term>> isCounterexampleFeasible()
 			throws AutomataOperationCanceledException {
 
 		IStatisticsDataProvider refinementEngineStats = null;
-		final ITARefinementStrategy<L> strategy = mStrategyFactory.constructStrategy(getServices(), mCounterexample,
+		final var locations = getControlConfigurationsFromCounterexample(mCounterexample);
+		final var counterexample = new Counterexample<>(mCounterexample.getWord(), locations);
+		final ITARefinementStrategy<L> strategy = mStrategyFactory.constructStrategy(getServices(), counterexample,
 				mAbstraction, new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()),
 				mPredicateFactoryInterpolantAutomata, getPreconditionProvider(), getPostconditionProvider());
 		try {
 			if (mPref.hasLimitPathProgramCount() && mPref.getLimitPathProgramCount() < mStrategyFactory
-					.getPathProgramCache().getPathProgramCount(mCounterexample)) {
+					.getPathProgramCache().getPathProgramCount(mCounterexample.getWord())) {
 				final String taskDescription = "bailout by path program count limit in iteration " + getIteration();
 				throw new TaskCanceledException(UserDefinedLimit.PATH_PROGRAM_ATTEMPTS, getClass(), taskDescription);
 			}

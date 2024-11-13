@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -38,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.NamedAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.AutomatonWithImplicitSelfloops;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
@@ -580,6 +582,17 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 		return mPetriClStatisticsGenerator;
 	}
 
+	@Override
+	protected List<Set<IPredicate>> getControlConfigurationsFromCounterexample(final IRun<L, ?> run) {
+		final var pnRun = (PetriNetRun<L, IPredicate>) run;
+
+		// Take the places in the run that belong to the initial abstraction.
+		// Remove any places belonging to the interpolant automata.
+		return pnRun.getStateSequence().stream()
+				.map(m -> m.stream().filter(mProgramPointPlaces::contains).collect(Collectors.toSet()))
+				.collect(Collectors.toList());
+	}
+
 	private static final class CounterexampleCache<L extends IIcfgTransition<?>> {
 		private PetriNetRun<L, IPredicate> mCounterexample;
 
@@ -591,5 +604,4 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 			mCounterexample = counterexample;
 		}
 	}
-
 }

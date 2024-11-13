@@ -30,7 +30,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.SortedMap;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
@@ -43,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 
@@ -66,7 +66,7 @@ public abstract class InterpolatingTraceCheck<L extends IAction> extends TraceCh
 
 	protected IPredicate[] mInterpolants;
 
-	private final List<? extends Object> mControlLocationSequence;
+	protected final List<?> mControlConfigurationSequence;
 
 	/**
 	 * Check if trace fulfills specification given by precondition, postcondition and pending contexts. The
@@ -74,22 +74,22 @@ public abstract class InterpolatingTraceCheck<L extends IAction> extends TraceCh
 	 * the context to which the return leads the trace.
 	 */
 	public InterpolatingTraceCheck(final IPredicate precondition, final IPredicate postcondition,
-			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<L> trace,
-			final List<? extends Object> controlLocationSequence, final IUltimateServiceProvider services,
-			final CfgSmtToolkit csToolkit, final ManagedScript tcSmtManager, final PredicateFactory predicateFactory,
-			final IPredicateUnifier predicateUnifier, final AssertCodeBlockOrder assertCodeBlockOrder,
-			final boolean computeRcfgProgramExecution, final boolean collectInterpolatSequenceStatistics,
-			final SimplificationTechnique simplificationTechnique) {
-		super(precondition, postcondition, pendingContexts, trace,
+			final SortedMap<Integer, IPredicate> pendingContexts, final Counterexample<L> counterexample,
+			final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit, final ManagedScript tcSmtManager,
+			final PredicateFactory predicateFactory, final IPredicateUnifier predicateUnifier,
+			final AssertCodeBlockOrder assertCodeBlockOrder, final boolean computeRcfgProgramExecution,
+			final boolean collectInterpolatSequenceStatistics, final SimplificationTechnique simplificationTechnique) {
+		super(precondition, postcondition, pendingContexts,
 				TraceCheckUtils.decoupleArrayValues(csToolkit.getManagedScript(),
-						new DefaultTransFormulas<>(trace, precondition, postcondition, pendingContexts,
+						new DefaultTransFormulas<>(counterexample, precondition, postcondition, pendingContexts,
 								csToolkit.getOldVarsAssignmentCache(), false)),
 				services, csToolkit, tcSmtManager, assertCodeBlockOrder, computeRcfgProgramExecution,
 				collectInterpolatSequenceStatistics, false);
 		mPredicateUnifier = predicateUnifier;
 		mPredicateFactory = predicateFactory;
 		mSimplificationTechnique = simplificationTechnique;
-		mControlLocationSequence = controlLocationSequence;
+		mControlConfigurationSequence =
+				counterexample.hasControlConfigurations() ? counterexample.getControlConfigurations() : null;
 	}
 
 	/**
@@ -157,9 +157,9 @@ public abstract class InterpolatingTraceCheck<L extends IAction> extends TraceCh
 	}
 
 	protected boolean checkPerfectSequence(final TracePredicates sequence) {
-		if (mControlLocationSequence != null) {
+		if (mControlConfigurationSequence != null) {
 			final BackwardCoveringInformation bci = TraceCheckUtils.computeCoverageCapability(mServices, sequence,
-					mControlLocationSequence, mLogger, mPredicateUnifier);
+					mControlConfigurationSequence, mLogger, mPredicateUnifier);
 			final boolean perfectSequence =
 					bci.getPotentialBackwardCoverings() == bci.getSuccessfullBackwardCoverings();
 			if (perfectSequence) {

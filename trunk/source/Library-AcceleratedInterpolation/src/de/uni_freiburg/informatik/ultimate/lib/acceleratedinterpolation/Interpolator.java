@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolatingTraceCheckCraig;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
@@ -166,12 +167,13 @@ public class Interpolator<LETTER extends IIcfgTransition<?>> {
 		final IPredicate preCondition = mPredicateUnifier.getTruePredicate();
 		final IPredicate postCondition = mPredicateUnifier.getFalsePredicate();
 
+		final var ctex = new Counterexample<>(nestedWord, counterexampleRun.getStateSequence());
 		final InterpolatingTraceCheckCraig<LETTER> itcc = new InterpolatingTraceCheckCraig<>(preCondition,
-				postCondition, pendingContexts, nestedWord, counterexampleRun.getStateSequence(), mServices,
-				mPrefs.getCfgSmtToolkit(), mScript, (PredicateFactory) mPredicateUnifier.getPredicateFactory(),
-				mPredicateUnifier, mPrefs.getAssertCodeBlockOrder(), mPrefs.computeCounterexample(),
-				mPrefs.collectInterpolantStatistics(), InterpolationTechnique.Craig_NestedInterpolation,
-				instantiateArrayExt, mPrefs.getSimplificationTechnique(), innerRecursiveNestedInterpolationCall);
+				postCondition, pendingContexts, ctex, mServices, mPrefs.getCfgSmtToolkit(), mScript,
+				(PredicateFactory) mPredicateUnifier.getPredicateFactory(), mPredicateUnifier,
+				mPrefs.getAssertCodeBlockOrder(), mPrefs.computeCounterexample(), mPrefs.collectInterpolantStatistics(),
+				InterpolationTechnique.Craig_NestedInterpolation, instantiateArrayExt,
+				mPrefs.getSimplificationTechnique(), innerRecursiveNestedInterpolationCall);
 		mTraceCheckResult = itcc.isCorrect();
 		if (mTraceCheckResult == LBool.UNSAT) {
 			return itcc.getInterpolants();

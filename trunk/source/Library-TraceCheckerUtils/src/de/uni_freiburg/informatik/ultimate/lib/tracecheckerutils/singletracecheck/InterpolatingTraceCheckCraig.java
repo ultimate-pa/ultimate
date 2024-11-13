@@ -54,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckStatisticsGenerator.InterpolantType;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -75,15 +76,15 @@ public class InterpolatingTraceCheckCraig<L extends IAction> extends Interpolati
 	 * the context to which the return leads the trace.
 	 */
 	public InterpolatingTraceCheckCraig(final IPredicate precondition, final IPredicate postcondition,
-			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<L> trace,
-			final List<? extends Object> controlLocationSequence, final IUltimateServiceProvider services,
-			final CfgSmtToolkit csToolkit, final ManagedScript mgdScriptTc, final PredicateFactory predicateFactory,
-			final IPredicateUnifier predicateUnifier, final AssertCodeBlockOrder assertCodeBlockOrder,
-			final boolean computeRcfgProgramExecution, final boolean collectInterpolantStatistics,
-			final InterpolationTechnique interpolation, final boolean instantiateArrayExt,
-			final SimplificationTechnique simplificationTechnique, final boolean innerRecursiveNestedInterpolationCall) {
-		super(precondition, postcondition, pendingContexts, trace, controlLocationSequence, services, csToolkit,
-				mgdScriptTc, predicateFactory, predicateUnifier, assertCodeBlockOrder, computeRcfgProgramExecution,
+			final SortedMap<Integer, IPredicate> pendingContexts, final Counterexample<L> counterexample,
+			final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit, final ManagedScript mgdScriptTc,
+			final PredicateFactory predicateFactory, final IPredicateUnifier predicateUnifier,
+			final AssertCodeBlockOrder assertCodeBlockOrder, final boolean computeRcfgProgramExecution,
+			final boolean collectInterpolantStatistics, final InterpolationTechnique interpolation,
+			final boolean instantiateArrayExt, final SimplificationTechnique simplificationTechnique,
+			final boolean innerRecursiveNestedInterpolationCall) {
+		super(precondition, postcondition, pendingContexts, counterexample, services, csToolkit, mgdScriptTc,
+				predicateFactory, predicateUnifier, assertCodeBlockOrder, computeRcfgProgramExecution,
 				collectInterpolantStatistics, simplificationTechnique);
 		if (assertCodeBlockOrder.getAssertCodeBlockOrderType() != AssertCodeBlockOrderType.NOT_INCREMENTALLY) {
 			throw new UnsupportedOperationException("incremental assertion is not available for Craig interpolation");
@@ -119,14 +120,13 @@ public class InterpolatingTraceCheckCraig<L extends IAction> extends Interpolati
 	}
 
 	public InterpolatingTraceCheckCraig(final IPredicate precondition, final IPredicate postcondition,
-			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<L> trace,
-			final List<? extends Object> controlLocationSequence, final IUltimateServiceProvider services,
-			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
-			final IPredicateUnifier predicateUnifier, final AssertCodeBlockOrder assertCodeBlockOrder,
-			final boolean computeRcfgProgramExecution, final boolean collectInterpolantStatistics,
-			final InterpolationTechnique interpolation, final boolean instantiateArrayExt,
-			final SimplificationTechnique simplificationTechnique) {
-		this(precondition, postcondition, pendingContexts, trace, controlLocationSequence, services, csToolkit,
+			final SortedMap<Integer, IPredicate> pendingContexts, final Counterexample<L> counterexample,
+			final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
+			final PredicateFactory predicateFactory, final IPredicateUnifier predicateUnifier,
+			final AssertCodeBlockOrder assertCodeBlockOrder, final boolean computeRcfgProgramExecution,
+			final boolean collectInterpolantStatistics, final InterpolationTechnique interpolation,
+			final boolean instantiateArrayExt, final SimplificationTechnique simplificationTechnique) {
+		this(precondition, postcondition, pendingContexts, counterexample, services, csToolkit,
 				csToolkit.getManagedScript(), predicateFactory, predicateUnifier, assertCodeBlockOrder,
 				computeRcfgProgramExecution, collectInterpolantStatistics, interpolation, instantiateArrayExt,
 				simplificationTechnique, false);
@@ -369,8 +369,8 @@ public class InterpolatingTraceCheckCraig<L extends IAction> extends Interpolati
 			// Compute interpolants for subsequence and add them to interpolants
 			// computed by this traceCheck
 			final InterpolatingTraceCheckCraig<L> tc = new InterpolatingTraceCheckCraig<>(precondition,
-					interpolantAtReturnPosition, pendingContexts, subtrace, null, mServices, mCsToolkit, mTcSmtManager,
-					mPredicateFactory, mPredicateUnifier, mAssertCodeBlockOrder, false,
+					interpolantAtReturnPosition, pendingContexts, new Counterexample<>(subtrace), mServices, mCsToolkit,
+					mTcSmtManager, mPredicateFactory, mPredicateUnifier, mAssertCodeBlockOrder, false,
 					mTraceCheckBenchmarkGenerator.isCollectingInterpolantSequenceStatistics(),
 					InterpolationTechnique.Craig_NestedInterpolation, mInstantiateArrayExt, mSimplificationTechnique,
 					true);
@@ -436,7 +436,6 @@ public class InterpolatingTraceCheckCraig<L extends IAction> extends Interpolati
 		}
 		return result;
 	}
-
 
 	/**
 	 * A {@link RuntimeException} that can be thrown when a nested trace check fails.

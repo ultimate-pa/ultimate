@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
-import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -36,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.ExternalSolver;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckSpWp;
 
@@ -49,12 +49,12 @@ public class IpTcStrategyModuleCvc4<LETTER extends IIcfgTransition<?>> extends I
 	private final long mTimeoutInMillis;
 
 	public IpTcStrategyModuleCvc4(final TaskIdentifier taskIdentifier, final IUltimateServiceProvider services,
-			final TaCheckAndRefinementPreferences<LETTER> prefs, final IRun<LETTER, ?> counterExample,
+			final TaCheckAndRefinementPreferences<LETTER> prefs, final Counterexample<LETTER> counterexample,
 			final IPredicate precondition, final IPredicate postcondition,
 			final AssertionOrderModulation<LETTER> assertionOrderModulation, final IPredicateUnifier predicateUnifier,
 			final PredicateFactory predicateFactory, final long timeoutInMillis,
 			final InterpolationTechnique interpolationTechnique) {
-		super(taskIdentifier, services, prefs, counterExample, precondition, postcondition, assertionOrderModulation,
+		super(taskIdentifier, services, prefs, counterexample, precondition, postcondition, assertionOrderModulation,
 				predicateUnifier, predicateFactory, interpolationTechnique);
 		mTimeoutInMillis = timeoutInMillis;
 	}

@@ -60,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckSpWp;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -260,10 +261,11 @@ public final class LargeBlockEncodingIcfgTransformer {
 		final InterpolationTechnique interpolation = InterpolationTechnique.ForwardPredicates;
 		final ManagedScript mgdScriptTc = csToolkit.getManagedScript();
 		final SimplificationTechnique simplificationTechnique = SimplificationTechnique.SIMPLIFY_DDA;
+		final var ctex = new Counterexample<>(run.getWord(), run.getStateSequence());
 		final TraceCheckSpWp<? extends IAction> tc = new TraceCheckSpWp<>(precondition, postcondition, pendingContexts,
-				run.getWord(), csToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY, unsatCores, useLiveVariables,
-				mServices, computeRcfgProgramExecution, mPredicateFactory, predicateUnifier, interpolation, mgdScriptTc,
-				simplificationTechnique, run.getStateSequence(), false);
+				ctex, csToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY, unsatCores, useLiveVariables, mServices,
+				computeRcfgProgramExecution, mPredicateFactory, predicateUnifier, interpolation, mgdScriptTc,
+				simplificationTechnique, false);
 		return tc.getInterpolants();
 	}
 
