@@ -148,8 +148,8 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	private final ConditionalCommutativityStatisticsGenerator mConComCheckerBenchmark =
 			new ConditionalCommutativityStatisticsGenerator();
 	private final ConditionalCommutativityCounterexampleChecker<L> mConCounterexampleChecker;
-	private Map<Set<?>, Integer> mControlConfigurationSets = new HashMap<>();
-	private Integer mConComThreshold = 1;
+	private final Map<Set<?>, Integer> mControlConfigurationSets = new HashMap<>();
+	private final Integer mConComThreshold = 1;
 
 	public PartialOrderCegarLoop(final DebugIdentifier name,
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> initialAbstraction,
@@ -290,7 +290,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.EmptinessCheckTime);
 		try {
-			IDfsVisitor<L, IPredicate> visitor = createVisitor();
+			final IDfsVisitor<L, IPredicate> visitor = createVisitor();
 			mPOR.apply(mAbstraction, visitor);
 			mCounterexample = getCounterexample(visitor);
 
@@ -310,8 +310,9 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		// Applies conditional commutativity checking if enabled
 		if (mPref.useConditionalCommutativityChecker()) {
 
-			Set<?> set = new HashSet<>(getControlConfigurationsFromCounterexample(mCounterexample));
-			int occurrences = mControlConfigurationSets.containsKey(set) ? mControlConfigurationSets.get(set) + 1 : 1;
+			final Set<?> set = new HashSet<>(getControlConfigurationsFromCounterexample(mCounterexample));
+			final int occurrences =
+					mControlConfigurationSets.containsKey(set) ? mControlConfigurationSets.get(set) + 1 : 1;
 			mControlConfigurationSets.put(set, occurrences);
 
 			// and the occurrences of the underlying set of control configurations exceeds mConComThreshold (1)
@@ -456,8 +457,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	public static ImmutableList<IPredicate> getConjuncts(final IPredicate conjunction) {
 		assert conjunction != null : "Cannot split 'null' into conjuncts";
 
-		if (conjunction instanceof MLPredicateWithInterpolants) {
-			final var predicate = (MLPredicateWithInterpolants) conjunction;
+		if (conjunction instanceof final MLPredicateWithInterpolants predicate) {
 			return new ImmutableList<>(predicate.getUnderlying(), getConjuncts(predicate.getInterpolants()));
 		}
 		if (conjunction instanceof PredicateWithConjuncts) {
@@ -487,10 +487,10 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	private IDeadEndStore<IPredicate, IPredicate> createDeadEndStore(final StateSplitter<IPredicate> splitter) {
 		assert mDeadEndStore == null : "Already created -- should only be called once";
 
-		final UnaryOperator<IPredicate> getUnderlying = (state) -> (state instanceof MLPredicateWithInterpolants)
+		final UnaryOperator<IPredicate> getUnderlying = state -> state instanceof MLPredicateWithInterpolants
 				? ((MLPredicateWithInterpolants) state).getUnderlying()
 				: state;
-		final UnaryOperator<IPredicate> getInterpolants = (state) -> (state instanceof MLPredicateWithInterpolants)
+		final UnaryOperator<IPredicate> getInterpolants = state -> state instanceof MLPredicateWithInterpolants
 				? ((MLPredicateWithInterpolants) state).getInterpolants()
 				: null;
 
@@ -518,7 +518,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	}
 
 	private IRefinementStrategy<L> buildStrategyForConditionalCommutativity(final IRun<L, IPredicate> run) {
-		var ctex = new Counterexample<>(run.getWord(), getControlConfigurationsFromCounterexample(run));
+		final var ctex = new Counterexample<>(run.getWord(), getControlConfigurationsFromCounterexample(run));
 		return mStrategyFactory.constructStrategy(mServices, ctex, mAbstraction,
 				new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()), mFactory, getPreconditionProvider(),
 				getPostconditionProvider(), mPref.getConditionalCommutativityRefinementStrategy());
