@@ -46,10 +46,4 @@ public abstract class AnnotatedMLPredicate<A> extends AnnotatedPredicate<IMLPred
 	public IcfgLocation[] getProgramPoints() {
 		return mUnderlying.getProgramPoints();
 	}
-
-	// TODO Remove this method again. Concrete subclasses should implement their own suitably-named getters.
-	@Deprecated
-	public A getAnnotation() {
-		return mAnnotation;
-	}
 }
