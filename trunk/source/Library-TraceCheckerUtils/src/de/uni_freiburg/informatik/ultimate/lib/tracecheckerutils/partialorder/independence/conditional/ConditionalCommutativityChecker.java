@@ -138,29 +138,27 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 	 * If this is the case, returns a proof that this Phi holds after executing {@code currentRun}.
 	 *
 	 * @param currentRun
-	 *            The run to state
-	 * @param state
-	 *            The state
+	 *            A run after which the given letters should be independent
 	 * @param letter1
 	 *            A letter of an outgoing transition of state
 	 * @param letter2
 	 *            A letter of another outgoing transition of state
 	 * @return A refinement result proving a sufficient condition for commutativity, or {@code null} if no such condition or proof was found.
 	 */
-	// TODO Why do we not simply use the final state of currentRun instead of passing state separately?
 	public IRefinementEngineResult<L, Collection<QualifiedTracePredicates>> checkConditionalCommutativity(
-			final NestedRun<L, IPredicate> currentRun, final IPredicate state, final L letter1, final L letter2) {
+			final NestedRun<L, IPredicate> currentRun, final L letter1, final L letter2) {
 
 		mStatistics.startStopwatch(ConditionalCommutativityStopwatches.CHECKER);
 		try {
-			return checkConditionalCommutativityInternal(currentRun, state, letter1, letter2);
+			return checkConditionalCommutativityInternal(currentRun, letter1, letter2);
 		} finally {
 			mStatistics.stopStopwatch(ConditionalCommutativityStopwatches.CHECKER);
 		}
 	}
 
 	private IRefinementEngineResult<L, Collection<QualifiedTracePredicates>> checkConditionalCommutativityInternal(
-			final NestedRun<L, IPredicate> currentRun, final IPredicate state, final L letter1, final L letter2) {
+			final NestedRun<L, IPredicate> currentRun, final L letter1, final L letter2) {
+		final IPredicate state = currentRun.getStateAtPosition(currentRun.getLength() - 1);
 
 		// TODO this is brittle, let caller decide how one extracts a sleep set from the states
 		if (state instanceof SleepPredicate) {
