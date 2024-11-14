@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.A
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 @FunctionalInterface
-public interface IMessagePrinter {
+interface IMessagePrinter {
 	/**
 	 * Reports the given string to the logger and to Ultimate as a
 	 * GenericResult.
