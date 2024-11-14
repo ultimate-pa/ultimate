@@ -112,6 +112,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.in
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IIpAbStrategyModule;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IpAbStrategyModuleStraightlineAll;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TaCheckAndRefinementPreferences;
 import de.uni_freiburg.informatik.ultimate.util.Lazy;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
@@ -147,12 +149,13 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	private final boolean mSupportsDeadEnds;
 	private IDeadEndStore<IPredicate, IPredicate> mDeadEndStore;
 
+	// Fields needed for commutativity condition synthesis
 	private final ConditionalCommutativityChecker<L> mConComChecker;
-	private boolean mCounterexampleConComFound;
-	private final ConditionalCommutativityStatisticsGenerator mConComCheckerBenchmark =
-			new ConditionalCommutativityStatisticsGenerator();
+	private final StrategyFactory<L> mCommutativityStrategyFactory;
+	private final ConditionalCommutativityStatisticsGenerator mConComCheckerBenchmark = new ConditionalCommutativityStatisticsGenerator();
 	private final ConditionalCommutativityCounterexampleChecker<L> mConCounterexampleChecker;
 
+	private boolean mCounterexampleConComFound;
 	private final Map<Set<?>, Integer> mControlConfigurationSets = new HashMap<>();
 
 	public PartialOrderCegarLoop(final DebugIdentifier name,
@@ -205,6 +208,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 
 		mProgram = initialAbstraction;
 
+		mCommutativityStrategyFactory = createConditionalCommutativityStrategyFactory(transitionClazz);
 		mConComChecker = constructConComChecker(copyFactory);
 		mConCounterexampleChecker = mPref.useConditionalCommutativityChecker()
 				? new ConditionalCommutativityCounterexampleChecker<>(mServices, mPOR.getDfsOrder(), mConComChecker,
@@ -509,6 +513,19 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		return mDeadEndStore;
 	}
 
+	private StrategyFactory<L> createConditionalCommutativityStrategyFactory(Class<L> transitionClazz) {
+		if (!mPref.useConditionalCommutativityChecker()) {
+			return null;
+		}
+
+		final boolean computeCounterexampleExecution = false;
+		final TaCheckAndRefinementPreferences<L> taCheckAndRefinementPrefs = new TaCheckAndRefinementPreferences<>(
+				getServices(), mPref, mPref.interpolation(), mSimplificationTechnique, mCsToolkit, mPredicateFactory, mIcfg,
+				computeCounterexampleExecution);
+		return new StrategyFactory<>(mLogger, mPref, taCheckAndRefinementPrefs, mIcfg, mPredicateFactory,
+				mPredicateFactoryInterpolantAutomata, transitionClazz);
+	}
+
 	private ConditionalCommutativityChecker<L> constructConComChecker(final ICopyActionFactory<L> copyFactory) {
 		if (!mPref.useConditionalCommutativityChecker()) {
 			return null;
@@ -524,7 +541,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 
 	private IRefinementStrategy<L> buildStrategyForConditionalCommutativity(final IRun<L, IPredicate> run) {
 		final var ctex = new Counterexample<>(run.getWord(), getControlConfigurationsFromCounterexample(run));
-		return mStrategyFactory.constructStrategy(mServices, ctex, mAbstraction,
+		return mCommutativityStrategyFactory.constructStrategy(mServices, ctex, mAbstraction,
 				new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()), mFactory, getPreconditionProvider(),
 				getPostconditionProvider(), mPref.getConditionalCommutativityRefinementStrategy());
 	}
