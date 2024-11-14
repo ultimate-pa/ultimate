@@ -14,7 +14,7 @@
   </rundefinition>
 
   <rundefinition name="CE-SufficientWithContext">
-    <option name="&#45;-traceabstraction.commutativity.condition.synthesisg">SUFFICIENT_WITH_CONTEXT</option>
+    <option name="&#45;-traceabstraction.commutativity.condition.synthesis">SUFFICIENT_WITH_CONTEXT</option>
   </rundefinition>
 
   <rundefinition name="CE-NecessaryAndSufficient">
