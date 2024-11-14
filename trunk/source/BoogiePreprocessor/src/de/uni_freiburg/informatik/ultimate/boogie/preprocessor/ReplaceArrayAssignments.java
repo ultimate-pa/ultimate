@@ -78,23 +78,19 @@ public class ReplaceArrayAssignments extends BoogieTransformer implements IUnman
 	@Override
 	public boolean process(final IElement root) {
 		if (root instanceof Unit) {
-			final Unit unit = (Unit) root;
-			for (final Declaration decl : unit.getDeclarations()) {
-				if (decl instanceof Procedure) {
-					final Procedure proc = (Procedure) decl;
-					if (proc.getBody() != null) {
-						replaceArrayAssignments(proc);
-					}
-				}
-			}
+			Arrays.stream(((Unit) root).getDeclarations()).forEach(this::replaceArrayAssignments);
 			return false;
 		}
 		return true;
 	}
 
-	private void replaceArrayAssignments(final Procedure proc) {
-		final Body body = proc.getBody();
-		body.setBlock(processStatements(body.getBlock()));
+	private void replaceArrayAssignments(final Declaration decl) {
+		if (decl instanceof final Procedure proc) {
+			final Body body = proc.getBody();
+			if (body != null) {
+				body.setBlock(processStatements(body.getBlock()));
+			}
+		}
 	}
 
 	private Expression getLHSExpression(final LeftHandSide lhs) {
