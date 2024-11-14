@@ -118,11 +118,11 @@ public class CachedIndependenceRelation<S, L> implements IIndependenceRelation<S
 
 	@Override
 	public ISymbolicIndependenceRelation<L, S> getSymbolicRelation() {
-		// TODO Assuming soundness of the underlying symbolic relation, generated conditions could be added to mCache.
-
-		// The generated conditions are not cached for now.
-		// TODO Evaluate if caching of generated conditions is performance-relevant, and possibly implement it.
-		return mUnderlying.getSymbolicRelation();
+		final var underlyingSymbolic = mUnderlying.getSymbolicRelation();
+		if (underlyingSymbolic == null) {
+			return null;
+		}
+		return new CachingSymbolicIndependence(underlyingSymbolic);
 	}
 
 	@Override
@@ -138,6 +138,40 @@ public class CachedIndependenceRelation<S, L> implements IIndependenceRelation<S
 	 */
 	public void removeFromCache(final L a) {
 		mCache.remove(a);
+	}
+
+	private final class CachingSymbolicIndependence implements ISymbolicIndependenceRelation<L, S> {
+		private final ISymbolicIndependenceRelation<L, S> mUnderlyingSymbolic;
+
+		public CachingSymbolicIndependence(ISymbolicIndependenceRelation<L, S> underlyingSymbolic) {
+			super();
+			mUnderlyingSymbolic = underlyingSymbolic;
+		}
+
+		@Override
+		public S getCommutativityCondition(S existingCondition, L a, L b) {
+			// The generated conditions are not cached for now.
+			// TODO Evaluate if caching of generated conditions is performance-relevant, and possibly implement it.
+			final S condition = mUnderlyingSymbolic.getCommutativityCondition(existingCondition, a, b);
+
+			if (condition != null) {
+				// Assuming soundness of the underlying symbolic relation, generated conditions can be added to mCache.
+				assert mUnderlying.isIndependent(condition, a, b) == Dependence.INDEPENDENT : "Generated condition does not guarantee independence";
+				mCache.cacheResult(condition, a, b, Dependence.INDEPENDENT);
+			}
+
+			return condition;
+		}
+
+		@Override
+		public boolean isSymmetric() {
+			return mUnderlyingSymbolic.isSymmetric();
+		}
+
+		@Override
+		public boolean isConditional() {
+			return mUnderlyingSymbolic.isConditional();
+		}
 	}
 
 	private final class CachedIndependenceStatisticsProvider extends IndependenceStatisticsDataProvider {
