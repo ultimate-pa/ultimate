@@ -51,7 +51,7 @@ void* thread1() {
     assume_abort_if_not( i1 < n );
     i1++;
     t1 = x[i1];
-	c++
+	c++;
 	__VERIFIER_atomic_end();
     __VERIFIER_atomic_begin();
     s1 = plus(s1, t1);
