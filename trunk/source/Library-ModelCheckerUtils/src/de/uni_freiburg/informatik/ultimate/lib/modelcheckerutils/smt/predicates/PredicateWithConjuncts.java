@@ -1,6 +1,5 @@
 /*
  * Copyright (C) 2022 Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
- * Copyright (C) 2024 Marcel Ebbinghaus
  * Copyright (C) 2022 University of Freiburg
  *
  * This file is part of the ULTIMATE ModelCheckerUtils Library.
@@ -27,13 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates;
 
-import java.util.HashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramFunction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
