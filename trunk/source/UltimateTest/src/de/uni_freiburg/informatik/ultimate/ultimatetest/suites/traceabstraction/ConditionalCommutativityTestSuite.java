@@ -72,9 +72,10 @@ public class ConditionalCommutativityTestSuite extends AbstractTraceAbstractionT
 
 	// @formatter:off
 	private static final String[] BENCHMARKS_BPL = {
-		"examples/concurrent/bpl/conditional_commutativity/"
+		"examples/concurrent/conditional_commutativity/"
 	};
 	private static final String[] BENCHMARKS_C = {
+		"examples/concurrent/conditional_commutativity/"
 	};
 	// @formatter:on
 
