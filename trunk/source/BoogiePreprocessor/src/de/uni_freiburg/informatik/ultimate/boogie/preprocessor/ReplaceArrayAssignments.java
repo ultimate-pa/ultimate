@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 
 /**
@@ -131,6 +132,7 @@ public class ReplaceArrayAssignments extends BoogieTransformer implements IUnman
 
 			if (changed) {
 				final AssignmentStatement newAssign = new AssignmentStatement(assign.getLocation(), lhs, rhs);
+				ModelUtils.copyAnnotations(assign, newAssign);
 				mTranslator.addMapping(assign, newAssign);
 				return newAssign;
 			}
