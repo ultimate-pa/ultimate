@@ -327,7 +327,6 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 				if (mRefinementResult != null) {
 					mCounterexampleConComFound = true;
 					mInterpolAutomaton = mRefinementResult.getInfeasibilityProof();
-					// if succeeds: return UNSAT
 					return new Pair<>(LBool.UNSAT, null);
 				}
 			}
@@ -338,8 +337,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 
 	@Override
 	protected void constructInterpolantAutomaton() throws AutomataOperationCanceledException {
-		// TODO if we did a commutativity proof, set mInterpolantAutomaton to the appropriate automaton
-		// TODO else: call super method (see below)
+		// If we did a commutativity proof, we did already set mInterpolantAutomaton to the appropriate automaton.
 		if (!mCounterexampleConComFound) {
 			super.constructInterpolantAutomaton();
 		}
