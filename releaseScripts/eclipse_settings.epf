@@ -123,7 +123,7 @@
 /instance/org.eclipse.jdt.ui/sp_cleanup.redundant_comparator=true
 /instance/org.eclipse.jdt.ui/sp_cleanup.redundant_falling_through_block_end=false
 /instance/org.eclipse.jdt.ui/sp_cleanup.remove_private_constructors=true
-/instance/org.eclipse.jdt.ui/sp_cleanup.remove_redundant_modifiers=false
+/instance/org.eclipse.jdt.ui/sp_cleanup.remove_redundant_modifiers=true
 /instance/org.eclipse.jdt.ui/sp_cleanup.remove_redundant_semicolons=true
 /instance/org.eclipse.jdt.ui/sp_cleanup.remove_redundant_type_arguments=true
 /instance/org.eclipse.jdt.ui/sp_cleanup.remove_trailing_whitespaces=true
