@@ -1,5 +1,7 @@
 /*
  * Copyright (C) 2023 Marcel Ebbinghaus
+ * Copyright (C) 2024 Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ * Copyright (C) 2023-2024 University of Freiburg
  *
  * This file is part of the ULTIMATE TraceCheckerUtils Library.
  *
@@ -66,6 +68,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
  * currentRun. Also provides a proof, if this is the case.
  *
  * @author Marcel Ebbinghaus
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  *
  * @param <L>
  *            The type of letters.
@@ -87,8 +90,6 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 
 	/**
 	 * Constructs a new instance of ConditionalCommutativityChecker.
-	 *
-	 * @author Marcel Ebbinghaus
 	 *
 	 * @param services
 	 *            Ultimate services.
@@ -132,12 +133,9 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 	}
 
 	/**
-	 * Checks for conditional commutativity of two given letters (letter1,letter2), i.e. whether there is a condition
-	 * Phi such that those letters commute under Phi and Phi holds after the given currentRun. If this is the case,
-	 * returns a proof that this Phi holds.
-	 *
-	 *
-	 * @author Marcel Ebbinghaus
+	 * Checks for conditional commutativity of two given letters ({@code letter1} and {@code letter2}), i.e. whether there is a condition
+	 * Phi such that those letters commute under Phi, and Phi holds after the given {@code currentRun}.
+	 * If this is the case, returns a proof that this Phi holds after executing {@code currentRun}.
 	 *
 	 * @param currentRun
 	 *            The run to state
@@ -147,9 +145,9 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 	 *            A letter of an outgoing transition of state
 	 * @param letter2
 	 *            A letter of another outgoing transition of state
-	 * @return A list of predicates which serves as a proof for conditional commutativity.
+	 * @return A refinement result proving a sufficient condition for commutativity, or {@code null} if no such condition or proof was found.
 	 */
-	// TODO method description is very vague (not more helpful than the method name)
+	// TODO Why do we not simply use the final state of currentRun instead of passing state separately?
 	public IRefinementEngineResult<L, Collection<QualifiedTracePredicates>> checkConditionalCommutativity(
 			final NestedRun<L, IPredicate> currentRun, final IPredicate state, final L letter1, final L letter2) {
 
@@ -172,12 +170,7 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 			}
 		}
 
-		// TODO This does not accurately reflect how independence is checked in most configurations.
-		// TODO There, each conjunct is considered separately.
-		// TODO By passing the given context as predicate directly, this mismatch can be avoided.
-		// final IPredicate pred = predicates.isEmpty() ? null : mPredicateFactory.and(predicates);
 		final Dependence dependence = mIndependenceRelation.isIndependent(state, letter1, letter2);
-
 		if (dependence == Dependence.INDEPENDENT) {
 			return null;
 		}
@@ -186,15 +179,17 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 		if (condition == null) {
 			return null;
 		}
+
 		return proveCommutativityCondition(currentRun, letter1, condition);
 	}
 
 	private IPredicate generateCondition(final IPredicate state, final L letter1, final L letter2) {
 		final IPredicate condition = generateRawCondition(letter1, letter2, state);
-
 		if (condition == null) {
 			return null;
 		}
+
+		// TODO consider moving these checks to the appropriate symbolic independence relation.
 		if (SmtUtils.isTrueLiteral(condition.getFormula())) {
 			throw new AssertionError("Letters did not commute, but generated condition was 'true'");
 		}
@@ -203,6 +198,7 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 			mLogger.warn("Unsatisfiable commutativity condition generated: %s", condition);
 			return null;
 		}
+
 		return condition;
 	}
 
@@ -263,7 +259,7 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 	}
 
 	// Post-processes the refinement result's trace predicates such that the usage of an additional non-commutativity
-	// assumption remains transparent (i.e., hidden) to the caller.
+	// assumption remains hidden to the caller.
 	private IRefinementEngineResult<L, Collection<QualifiedTracePredicates>> postProcessRefinementResult(
 			final IRefinementEngineResult<L, Collection<QualifiedTracePredicates>> original) {
 		final var tpMap = new HashMap<QualifiedTracePredicates, QualifiedTracePredicates>();

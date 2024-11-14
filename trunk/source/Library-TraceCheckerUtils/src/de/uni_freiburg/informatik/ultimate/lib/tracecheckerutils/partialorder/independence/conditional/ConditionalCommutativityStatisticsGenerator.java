@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
  * @author Marcel Ebbinghaus
  *
  */
+// TODO (Dominik 2024-11-14) Simplify statistics by switching to AbstractStatisticsDataProvider
 public class ConditionalCommutativityStatisticsGenerator extends StatisticsGeneratorWithStopwatches
 		implements IStatisticsDataProvider {
 

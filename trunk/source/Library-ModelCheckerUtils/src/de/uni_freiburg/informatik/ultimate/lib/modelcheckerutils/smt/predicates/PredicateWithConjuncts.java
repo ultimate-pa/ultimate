@@ -43,21 +43,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
  *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  */
-// TODO Consider undoing the implementations here, and explicitly throw errors.
-// Reason: GemCutter's performance crucially relies on the fact that these methods are not (routinely) called, as this
-// is usually not needed and has significant performance impact!
 public class PredicateWithConjuncts implements IPredicate {
 	protected final int mSerial;
 	protected final ImmutableList<IPredicate> mConjuncts;
-
-	// TODO Predicates should not hold a reference to the Script!
-	protected final Script mScript;
-	private Term mFormula;
-	private Term mClosedFormula;
-	private Set<IProgramVar> mVars;
-	private Set<IProgramFunction> mFuns;
-	private IPredicate mOld;
-	private IPredicate mNew;
 
 	/**
 	 * Create a new instance from scratch.
@@ -66,17 +54,10 @@ public class PredicateWithConjuncts implements IPredicate {
 	 *            The predicate's serial number
 	 * @param conjuncts
 	 *            The list of conjuncts
-	 * @param script
-	 *            A script to handle conjunction of terms.
 	 */
-	public PredicateWithConjuncts(final int serialNumber, final ImmutableList<IPredicate> conjuncts,
-			final Script script) {
+	public PredicateWithConjuncts(final int serialNumber, final ImmutableList<IPredicate> conjuncts) {
 		mSerial = serialNumber;
 		mConjuncts = conjuncts;
-		mScript = script;
-		mVars = null;
-		mFuns = null;
-
 	}
 
 	/**
@@ -89,20 +70,9 @@ public class PredicateWithConjuncts implements IPredicate {
 	 *            this class.
 	 * @param newConjunct
 	 *            A new conjunct to be added. Should not be an instance of this class (otherwise, nesting occurs).
-	 * @param script
-	 *            A script to handle conjunction of terms.
 	 */
-	public PredicateWithConjuncts(final int serialNumber, final IPredicate old, final IPredicate newConjunct,
-			final Script script) {
+	public PredicateWithConjuncts(final int serialNumber, final IPredicate old, final IPredicate newConjunct) {
 		mSerial = serialNumber;
-		mScript = script;
-		mVars = null;
-		mFuns = null;
-
-		// TODO keeping the reference to the old predicates costs can be extremely expensive in terms of memory!
-		// but it allows to extend the old predicate with the new conjunct instead of rebuilding it all
-		mOld = old;
-		mNew = newConjunct;
 
 		final ImmutableList<IPredicate> oldConjuncts;
 		if (old instanceof PredicateWithConjuncts) {
@@ -141,78 +111,22 @@ public class PredicateWithConjuncts implements IPredicate {
 
 	@Override
 	public Term getFormula() {
-		// compute on-demand (and possibly use partial results when constructed from conjunction)
-		if (mFormula == null) {
-			if (mOld != null) {
-				mFormula = SmtUtils.and(mScript, mOld.getFormula(), mNew.getFormula());
-			} else {
-				Term term = null;
-				for (final IPredicate conjunct : mConjuncts) {
-					if (term == null) {
-						term = conjunct.getFormula();
-					} else {
-						term = SmtUtils.and(mScript, term, conjunct.getFormula());
-					}
-				}
-				mFormula = term;
-			}
-		}
-		return mFormula;
+		throw new UnsupportedOperationException("PredicateWithConjuncts does not offer formula. Access conjuncts individually.");
 	}
 
 	@Override
 	public Term getClosedFormula() {
-		// compute on-demand (and possibly use partial results when constructed from conjunction)
-		if (mClosedFormula == null) {
-			if (mOld != null) {
-				mClosedFormula = SmtUtils.and(mScript, mOld.getClosedFormula(), mNew.getClosedFormula());
-			} else {
-				Term term = null;
-				for (final IPredicate conjunct : mConjuncts) {
-					if (term == null) {
-						term = conjunct.getClosedFormula();
-					} else {
-						term = SmtUtils.and(mScript, term, conjunct.getClosedFormula());
-					}
-				}
-				mClosedFormula = term;
-			}
-		}
-		return mClosedFormula;
+		throw new UnsupportedOperationException("PredicateWithConjuncts does not offer formula. Access conjuncts individually.");
 	}
 
 	@Override
 	public Set<IProgramVar> getVars() {
-		// compute on-demand (and possibly use partial results when constructed from conjunction)
-		if (mVars == null) {
-			mVars = new HashSet<>();
-			if (mOld != null) {
-				mVars.addAll(mOld.getVars());
-				mVars.addAll(mNew.getVars());
-			} else {
-				for (final IPredicate conjunct : mConjuncts) {
-					mVars.addAll(conjunct.getVars());
-				}
-			}
-		}
-		return mVars;
+		throw new UnsupportedOperationException("PredicateWithConjuncts does not offer variables. Access conjuncts individually.");
 	}
 
 	@Override
 	public Set<IProgramFunction> getFuns() {
-		// compute on-demand (and possibly use partial results when constructed from conjunction)
-		if (mFuns == null) {
-			mFuns = new HashSet<>();
-			if (mOld != null) {
-				mFuns.addAll(mOld.getFuns());
-				mFuns.addAll(mNew.getFuns());
-			} else {
-				for (final IPredicate conjunct : mConjuncts) {
-					mFuns.addAll(conjunct.getFuns());
-				}
-			}
-		}
-		return mFuns;
+		throw new UnsupportedOperationException("PredicateWithConjuncts does not offer functions. Access conjuncts individually.");
 	}
 
 	@Override

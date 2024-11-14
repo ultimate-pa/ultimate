@@ -297,10 +297,10 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 			final IDfsVisitor<L, IPredicate> visitor = createVisitor();
 			mPOR.apply(mAbstraction, visitor);
 			mCounterexample = getCounterexample(visitor);
+			switchToReadonlyMode();
 
 			assert mCounterexample == null || accepts(getServices(), mAbstraction, mCounterexample.getWord(),
 					false) : "Counterexample is not accepted by abstraction";
-			switchToReadonlyMode();
 			return mCounterexample == null;
 		} finally {
 			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.EmptinessCheckTime);
@@ -620,21 +620,17 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 				// Similarly, there is no point in adding state2 as conjunct if it is "true".
 				if (state1 instanceof PredicateWithConjuncts) {
 					final var conjState1 = (PredicateWithConjuncts) state1;
-					return mPredicateFactory.construct(id -> new PredicateWithConjuncts(id, conjState1.getConjuncts(),
-							mCsToolkit.getManagedScript().getScript()));
+					return mPredicateFactory.construct(id -> new PredicateWithConjuncts(id, conjState1.getConjuncts()));
 				}
-				return mPredicateFactory.construct(id -> new PredicateWithConjuncts(id, ImmutableList.singleton(state1),
-						mCsToolkit.getManagedScript().getScript()));
+				return mPredicateFactory.construct(id -> new PredicateWithConjuncts(id, ImmutableList.singleton(state1)));
 			}
 			if (isFalseLiteral(state2) || isTrueLiteral(state1)) {
 				// If state2 is "false", we ignore all previous conjuncts. This allows us to optimize in #isFalseLiteral
 				// As another (less important) optimization, we also ignore state1 if it is "true".
-				return mPredicateFactory.construct(id -> new PredicateWithConjuncts(id, ImmutableList.singleton(state2),
-						mCsToolkit.getManagedScript().getScript()));
+				return mPredicateFactory.construct(id -> new PredicateWithConjuncts(id, ImmutableList.singleton(state2)));
 			}
 			// In the normal case, we simply add state2 as conjunct.
-			return mPredicateFactory.construct(
-					id -> new PredicateWithConjuncts(id, state1, state2, mCsToolkit.getManagedScript().getScript()));
+			return mPredicateFactory.construct(id -> new PredicateWithConjuncts(id, state1, state2));
 		}
 	}
 

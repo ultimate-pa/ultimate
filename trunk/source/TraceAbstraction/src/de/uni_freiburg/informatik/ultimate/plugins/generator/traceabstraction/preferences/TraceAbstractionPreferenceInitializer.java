@@ -1054,8 +1054,4 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public enum PathProgramDumpStop {
 		NEVER, AFTER_FIRST_DUMP, BEFORE_FIRST_DUPLICATE
 	}
-
-	public enum ConComCheckerCriterion {
-		DEFAULT, RANDOM, SLEEP_SET, FORWARD, LOOP
-	}
 }

@@ -219,7 +219,6 @@ public class IndependenceProviderFactory<L extends IIcfgTransition<?>> {
 				// For the symbolic relation, we compute the conjunction of all context predicates.
 				.withDisjunctivePredicates(PartialOrderCegarLoop::getConjuncts, ImmutableList::new,
 						getConditionMerger(predicateFactory))
-				// .withDisjunctivePredicates(PartialOrderCegarLoop::getConjuncts, ImmutableList::singleton)
 				// =========================================================================
 				// Never consider letters of the same thread to be independent.
 				.threadSeparated()
