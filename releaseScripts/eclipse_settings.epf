@@ -480,7 +480,7 @@
 /instance/org.eclipse.jdt.ui/sp_cleanup.hash=false
 /instance/org.eclipse.jdt.ui/sp_cleanup.if_condition=false
 /instance/org.eclipse.jdt.ui/sp_cleanup.insert_inferred_type_arguments=false
-/instance/org.eclipse.jdt.ui/sp_cleanup.instanceof=true
+/instance/org.eclipse.jdt.ui/sp_cleanup.instanceof=false
 /instance/org.eclipse.jdt.ui/sp_cleanup.instanceof_keyword=true
 /instance/org.eclipse.jdt.ui/sp_cleanup.invert_equals=false
 /instance/org.eclipse.jdt.ui/sp_cleanup.join=true
