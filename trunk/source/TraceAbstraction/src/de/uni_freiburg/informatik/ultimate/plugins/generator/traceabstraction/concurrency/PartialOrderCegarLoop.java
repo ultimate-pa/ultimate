@@ -313,7 +313,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 
 		// Applies conditional commutativity checking if enabled
 		if (mPref.useConditionalCommutativityChecker()) {
-
+			// We approximate identification of the same path program by looking at the set of control configurations.
 			final Set<?> set = new HashSet<>(getControlConfigurationsFromCounterexample(mCounterexample));
 			final int occurrences =
 					mControlConfigurationSets.containsKey(set) ? mControlConfigurationSets.get(set) + 1 : 1;
@@ -321,14 +321,17 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 
 			// and the occurrences of the underlying set of control configurations exceeds CONDITIONAL_COMMUTATIVITY_THRESHOLD
 			if (occurrences > CONDITIONAL_COMMUTATIVITY_THRESHOLD) {
+				mLogger.info("Trying to prove commutativity for occurrence %d of (roughly) the same path program", occurrences+1);
 				mRefinementResult =
 						mConCounterexampleChecker.getCommutativityProof((NestedRun<L, IPredicate>) mCounterexample);
 
 				if (mRefinementResult != null) {
+					mLogger.info("Commutativity proof succeeded, skipping feasibility check.");
 					mCounterexampleConComFound = true;
 					mInterpolAutomaton = mRefinementResult.getInfeasibilityProof();
 					return new Pair<>(LBool.UNSAT, null);
 				}
+				mLogger.info("Commutativity proof failed, falling back to feasibility check.");
 			}
 		}
 		mCounterexampleConComFound = false;
