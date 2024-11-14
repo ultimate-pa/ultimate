@@ -29,7 +29,10 @@
 
 
    <launcher name="Ultimate">
-      <win useIco="false">
+      <linux icon="/CoreRCP/icons/icon.xpm"/>
+      <macosx icon="/CoreRCP/icons/icon.icns"/>
+      <win useIco="true">
+         <ico path="/CoreRCP/icons/icon.ico"/>
          <bmp/>
       </win>
    </launcher>
