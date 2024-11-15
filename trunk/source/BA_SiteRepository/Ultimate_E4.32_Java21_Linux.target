@@ -204,6 +204,7 @@
 		<plugin id="org.eclipse.cdt.core.linux"/>
 		<plugin id="org.eclipse.cdt.core.linux.x86_64"/>
 		<plugin id="org.eclipse.core.filesystem.linux.x86_64"/>
+		<plugin id="org.eclipse.e4.ui.swt.gtk"/>
 		<plugin id="org.eclipse.equinox.security.linux"/>
 		<plugin id="org.eclipse.swt.gtk.linux.x86_64" version="3.126.0.v20240528-0813"/>
 	</includeBundles>
