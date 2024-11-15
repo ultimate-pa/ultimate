@@ -3601,7 +3601,7 @@ public class StandardFunctionHandler {
 		return new ExpressionResultBuilder().addAllExceptLrValue(results).build();
 	}
 
-	private Statement modelUnsupportedFeature(final ILocation loc, final String reason) {
+	public static Statement modelUnsupportedFeature(final ILocation loc, final String reason) {
 		final Statement assertFalse = new AssertStatement(loc, ExpressionFactory.createBooleanLiteral(loc, false));
 		new Overapprox(reason, loc).annotate(assertFalse);
 		new Check(Spec.UNSUPPORTED_FEATURE).annotate(assertFalse);

@@ -136,10 +136,9 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 			+ "bytes or more are overapproximated, i.e., Ultimate assumes that the string can contain arbitrary bytes.";
 	private static final int DEFAULT_STRING_OVERAPPROXIMATION_THRESHOLD = 9;
 
-	public static final String LABEL_ALLOW_UNDEFINED_FUNCTIONS = "Allow undefined functions";
-	private static final String DESC_ALLOW_UNDEFINED_FUNCTIONS =
-			"Allow the calls of functions without a definition. In that case they are modeled fully non-deterministically.";
-	private static final boolean DEFAULT_ALLOW_UNDEFINED_FUNCTIONS = true;
+	public static final String LABEL_BEHAVIOUR_UNDEFINED_FUNCTIONS = "Behaviour of calls to undefined functions";
+	private static final String DESC_BEHAVIOUR_UNDEFINED_FUNCTIONS =
+			"Specify how the calls to undefined functions should be modeled (crash, overapproximate, non-deterministic return value).";
 
 	public enum CheckMode {
 		IGNORE, ASSUME, ASSERTandASSUME
@@ -197,7 +196,8 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 			}
 			if (byteSize >= 4) {
 				return HoenickeLindenmann_4ByteResolution;
-			} else if (byteSize >= 2) {
+			}
+			if (byteSize >= 2) {
 				return HoenickeLindenmann_2ByteResolution;
 			} else if (byteSize >= 1) {
 				return HoenickeLindenmann_1ByteResolution;
@@ -241,6 +241,24 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 			return mSmtRoundingMode;
 		}
 
+	}
+
+	public enum UndefinedFunctionBehaviour {
+		/**
+		 * Model using the return values non-deterministically
+		 */
+		NON_DETERMINISTIC_RETURN,
+
+		/**
+		 * Crash if undefined functions are called (might be unreachable)
+		 */
+		CRASH,
+
+		/**
+		 * Overapproximate the behaviour. We model this using {@code while (true) assert false;}, as arbitrary global
+		 * variables might be modified. This means, we report unknown if the call is reachable.
+		 */
+		OVERAPPROXIMATE_BEHAVIOUR
 	}
 
 	public CACSLPreferenceInitializer() {
@@ -324,8 +342,9 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<>(LABEL_STRING_OVERAPPROXIMATION_THRESHOLD,
 						DEFAULT_STRING_OVERAPPROXIMATION_THRESHOLD, DESC_STRING_OVERAPPROXIMATION_THRESHOLD,
 						PreferenceType.Integer),
-				new UltimatePreferenceItem<>(LABEL_ALLOW_UNDEFINED_FUNCTIONS, DEFAULT_ALLOW_UNDEFINED_FUNCTIONS,
-						DESC_ALLOW_UNDEFINED_FUNCTIONS, PreferenceType.Boolean), };
+				new UltimatePreferenceItem<>(LABEL_BEHAVIOUR_UNDEFINED_FUNCTIONS,
+						UndefinedFunctionBehaviour.NON_DETERMINISTIC_RETURN, DESC_BEHAVIOUR_UNDEFINED_FUNCTIONS,
+						PreferenceType.Combo, UndefinedFunctionBehaviour.values()), };
 
 	}
 }
