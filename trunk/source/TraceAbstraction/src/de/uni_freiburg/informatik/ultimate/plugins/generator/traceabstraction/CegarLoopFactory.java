@@ -275,10 +275,18 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 		if (!mPrefs.applyOneShotPOR()) {
 			final var provider =
 					new Petri2FiniteAutomatonAbstractionProvider.Eager<>(services, netProvider, stateFactory);
-			return new Triple<>(provider, () -> provider.getProofProducer(predicateFactory, mPrefs.getHoareSettings()),
-					null);
+			if (witnessAutomaton == null) {
+				return new Triple<>(provider,
+						() -> provider.getProofProducer(predicateFactory, mPrefs.getHoareSettings()), null);
+			}
+			return new Triple<>(new WitnessAutomatonAbstractionProvider<>(services, predicateFactory, stateFactory,
+					provider, witnessAutomaton, Property.NON_REACHABILITY), () -> null, null);
 		}
 
+		if (witnessAutomaton != null) {
+			throw new UnsupportedOperationException(
+					"Witness validation with partial order reduction is not supported yet.");
+		}
 		return new Triple<>(new PartialOrderAbstractionProvider<>(
 				// Partial Order reductions aim to avoid the explicit construction of the full finite automaton.
 				// Hence we use the lazy abstraction provider.
