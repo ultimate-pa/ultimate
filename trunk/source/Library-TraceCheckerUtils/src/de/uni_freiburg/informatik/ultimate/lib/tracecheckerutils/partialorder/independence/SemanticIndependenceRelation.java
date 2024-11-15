@@ -407,6 +407,9 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 
 			if (mIsConditional && condition != null) {
 				final var generated = mGenerator.generateCondition(condition, a.getTransformula(), b.getTransformula());
+				if (generated == null) {
+					return null;
+				}
 				if (!QUANTIFY_IRRELEVANT_CONTEXT_VARS) {
 					return mPredicateFactory.and(condition, generated);
 				}
