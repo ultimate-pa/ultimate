@@ -227,7 +227,7 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 
 		// create a transition with the new transformula
 		// TODO as workaround, we create a copy of an existing letter
-		final L notConditionLetter = mCopyFactory.copy(templateLetter, tf, tf);
+		final L notConditionLetter = mCopyFactory.copy(templateLetter, tf, null);
 
 		// create a dummy state for the end of the run
 		final IPredicate dummyPredicate = mPredicateFactory.newDebugPredicate("dummy");
