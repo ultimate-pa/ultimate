@@ -537,7 +537,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	}
 
 	@Override
-	protected List<?> getControlConfigurationsFromCounterexample(final IRun<L, ?> counterexample) {
+	protected List<Object> getControlConfigurationsFromCounterexample(final IRun<L, ?> counterexample) {
 		final var splitter = mPOR.getStateSplitter();
 
 		final var result = new ArrayList<>(counterexample.getLength());

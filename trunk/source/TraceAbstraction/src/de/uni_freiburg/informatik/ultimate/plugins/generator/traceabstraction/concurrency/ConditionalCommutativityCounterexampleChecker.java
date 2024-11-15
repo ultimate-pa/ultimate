@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.c
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -55,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.in
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IIpAbStrategyModule;
 import de.uni_freiburg.informatik.ultimate.util.Lazy;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * Checks whether a counterexample has an equivalent trace of lower order (i.e. one which was already explored in a
@@ -68,7 +70,11 @@ import de.uni_freiburg.informatik.ultimate.util.Lazy;
  */
 public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 	// Determines after how many occurrences of the same path program a conditional commutativity condition will be synthesized.
-	private static final int CONDITIONAL_COMMUTATIVITY_THRESHOLD = 1;
+	private static final int CONDITIONAL_COMMUTATIVITY_THRESHOLD = 2;
+
+	// How often we retry a check if the returned proof was imperfect.
+	// Currently, we do not retry at all, but this may change if we handle loop unrolling specially (see TODO further below).
+	private static final int IMPERFECT_PROOF_RETRIES = 0;
 
 	private final ILogger mLogger;
 	private final IDfsOrder<L, IPredicate> mDfsOrder;
@@ -78,6 +84,9 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 
 	// We approximate path programs by looking at the set of control configurations.
 	private final Map<Set<?>, Integer> mPreviouslySeenPathPrograms = new HashMap<>();
+
+	private final Set<Triple<List<Object>, L, L>> mHopelessConditionChecks = new HashSet<>();
+	private final Map<Triple<List<Object>, L, L>, Integer> mFailedConditionChecks = new HashMap<>();
 
 	/**
 	 * Creates a new instance. The instance may be used repeatedly throughout a CEGAR loop.
@@ -115,13 +124,13 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 	 *            the control configurations along the given run
 	 * @return an interpolant automaton proving conditional commutativity or null otherwise
 	 */
-	public IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> getCommutativityProof(final NestedRun<L, IPredicate> run, final List<?> controlConfigurations) {
+	public IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> getCommutativityProof(final NestedRun<L, IPredicate> run, final List<Object> controlConfigurations) {
 		final Set<?> pathProgram = Set.copyOf(controlConfigurations);
 		final int occurrence = mPreviouslySeenPathPrograms.containsKey(pathProgram) ? mPreviouslySeenPathPrograms.get(pathProgram) + 1 : 1;
 		mPreviouslySeenPathPrograms.put(pathProgram, occurrence);
 
 		mLogger.info("Examining path program with hash %d, occurence #%d", pathProgram.hashCode(), occurrence);
-		if (occurrence <= CONDITIONAL_COMMUTATIVITY_THRESHOLD) {
+		if (occurrence < CONDITIONAL_COMMUTATIVITY_THRESHOLD) {
 			mLogger.info("Commutativity condition synthesis is only active after more than %d occurrences. Skipping...", CONDITIONAL_COMMUTATIVITY_THRESHOLD);
 			return null;
 		}
@@ -135,16 +144,55 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 			if (!isNonMinimalityPoint(state, letter1, letter2)) {
 				continue;
 			}
-			mLogger.info("Performing commutativity condition check at non-minimality point %d", i);
 
 			final Word<L> currentTrace = run.getWord().getSubWord(0, i);
-			final List<?> currentConfigurations = controlConfigurations.subList(0, i+1);
+			final List<Object> currentConfigurations = controlConfigurations.subList(0, i+1);
 
+			// Check if we already cached this check as hopeless
+			final var triple = new Triple<>(controlConfigurations, letter1, letter2);
+			if (mHopelessConditionChecks.contains(triple)) {
+				mLogger.info("Commutativity condition check at non-minimality point %d is hopeless, skipping.", i);
+				continue;
+			}
+
+			mLogger.info("Performing commutativity condition check at non-minimality point %d", i);
 			final var checkResult = mChecker.checkConditionalCommutativity(currentTrace, currentConfigurations, state, letter1, letter2);
-			if (checkResult.isSuccess()) {
+			switch (checkResult.getType()) {
+			case SUCCESS:
 				mStatistics.addCommutingCounterexample();
 				mLogger.info("Successfully proved commutativity at non-minimality point %d. Constructing proof automaton...", i);
 				return buildAutomaton(currentTrace, checkResult.getRefinementResult());
+
+			case UNKNOWN_CHECK:
+			case CONDITION_NOT_SATISFIED:
+				// Cache as hopeless and avoid any repeated checks.
+				mLogger.info("Commutativity condition check vielded %s. Marking as hopeless.", checkResult.getType());
+				mHopelessConditionChecks.add(triple);
+				break;
+
+			case ALREADY_INDEPENDENT:
+				// By the definition of non-minimality points and the fact that we compute a minimal reduction, this should be impossible.
+				// TODO This can currently happen if letter2 is not enabled because letter1 is the fork that creates the thread of letter2.
+				// assert false : "Should never perform conditional commutativity check for already-independent letters";
+				mLogger.warn("Statements were already independent.");
+				break;
+
+			case PROOF_IMPERFECT:
+				final int repetition = mFailedConditionChecks.getOrDefault(triple, 0) + 1;
+				mLogger.info("Commutativity condition check failed due to imperfect proof (attempt %d of %d).", repetition, IMPERFECT_PROOF_RETRIES + 1);
+				if (repetition <= IMPERFECT_PROOF_RETRIES) {
+					mFailedConditionChecks.put(triple, repetition);
+				} else {
+					mFailedConditionChecks.remove(triple);
+					mHopelessConditionChecks.add(triple);
+				}
+				break;
+
+			case NO_CONDITION_FOUND:
+				// We do not cache this as hopeless because we assume the attempt to find a condition is comparatively cheap,
+				// and since this result may occur quite often (e.g. for letters of the same thread), the memory overhead would be large.
+				mLogger.info("No commutativity condition found.");
+				break;
 			}
 		}
 
