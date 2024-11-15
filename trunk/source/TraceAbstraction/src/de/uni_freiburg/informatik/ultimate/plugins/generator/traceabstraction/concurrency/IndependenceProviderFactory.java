@@ -93,7 +93,10 @@ public class IndependenceProviderFactory<L extends IIcfgTransition<?>> {
 
 	private ManagedScript mIndependenceScript;
 	private TransferrerWithVariableCache mTransferrer;
-	private IIcfgSymbolTable mIndependenceSymbolTable;
+
+	// The toolkit corresponding to mIndepScriptPredicateFactory.
+	// Used to detect whether this field has to be reset.
+	private CfgSmtToolkit mCachedCsToolkit;
 	private BasicPredicateFactory mIndepScriptPredicateFactory;
 
 	private PredicateTransferrer mPredicateTransferrer;
@@ -149,12 +152,17 @@ public class IndependenceProviderFactory<L extends IIcfgTransition<?>> {
 			// We need to transfer given transition formulas and condition predicates to mIndependenceScript.
 			mTransferrer =
 					new TransferrerWithVariableCache(csToolkit.getManagedScript().getScript(), mIndependenceScript);
+		}
 
-			// For symbolic independence relations, we need a predicate factory that works on mIndependenceScript.
-			mIndependenceSymbolTable =
+		// For symbolic independence relations, we need a predicate factory that works on mIndependenceScript.
+		// This factory must however be reset when the csToolkit changes.
+		if (mCachedCsToolkit != csToolkit) {
+			mCachedCsToolkit = csToolkit;
+
+			final var independenceSymbolTable =
 					mTransferrer.transferSymbolTable(csToolkit.getSymbolTable(), csToolkit.getProcedures());
 			mIndepScriptPredicateFactory =
-					new BasicPredicateFactory(mServices, mIndependenceScript, mIndependenceSymbolTable);
+					new BasicPredicateFactory(mServices, mIndependenceScript, independenceSymbolTable);
 		}
 
 		if (mPredicateTransferrer == null) {
