@@ -177,6 +177,10 @@ public final class Boogie2ACSL {
 	private BacktranslatedExpression translateExpression(
 			final de.uni_freiburg.informatik.ultimate.boogie.ast.Expression expression, final ILocation context,
 			final boolean isNegated) {
+		if (expression == null) {
+			mReporter.accept("Unknown expressions could not be backtranslated (possibly during translation to Boogie)");
+			return null;
+		}
 		if (expression instanceof de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression) {
 			return translateUnaryExpression((de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression) expression,
 					context, isNegated);

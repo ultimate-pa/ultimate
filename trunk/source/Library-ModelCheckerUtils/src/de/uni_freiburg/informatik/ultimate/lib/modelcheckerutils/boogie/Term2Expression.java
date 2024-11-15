@@ -266,6 +266,11 @@ public final class Term2Expression implements Serializable {
 					} else {
 						throw new UnsupportedOperationException("todo: implement more comprehensive to_real");
 					}
+				} else if ("const".equals(symb.getName())) {
+					// We don't support the backtranslation for now
+					// If we want to backtranslate the Boogie expression to C, null is handled there
+					// TODO: Backtranslate const properly
+					return null;
 				} else {
 					throw new IllegalArgumentException("unknown symbol " + symb);
 				}
