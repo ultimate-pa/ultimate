@@ -3588,7 +3588,7 @@ public class CHandler {
 		if (pointedType.isIncomplete()) {
 			return new ExpressionWithIncompleteTypeResult(rop.getStatements(),
 					LRValueFactory.constructHeapLValue(mTypeHandler, rValue.getValue(), pointedType, null),
-					rop.getDeclarations(), rop.getAuxVars(), rop.getOverapprs());
+					rop.getDeclarations(), rop.getAuxVars(), rop.getOverapprs(), loc);
 
 		}
 		return new ExpressionResult(rop.getStatements(),
