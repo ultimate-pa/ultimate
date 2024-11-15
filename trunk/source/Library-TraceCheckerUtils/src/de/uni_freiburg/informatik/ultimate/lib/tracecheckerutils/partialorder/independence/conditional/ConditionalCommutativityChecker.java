@@ -246,7 +246,7 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 		}
 
 		if (result.getCounterexampleFeasibility() == LBool.SAT) {
-			return new Result<>(ResultType.CONDTION_NOT_SATISFIED);
+			return new Result<>(ResultType.CONDITION_NOT_SATISFIED);
 		}
 		if (!result.somePerfectSequenceFound()) {
 			mStatistics.addImperfectProof();
@@ -319,7 +319,7 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 	public enum ResultType {
 		ALREADY_INDEPENDENT,
 		NO_CONDITION_FOUND,
-		CONDTION_NOT_SATISFIED,
+		CONDITION_NOT_SATISFIED,
 		UNKNOWN_CHECK,
 		PROOF_IMPERFECT,
 		SUCCESS
