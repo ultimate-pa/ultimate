@@ -1,5 +1,7 @@
 /*
  * Copyright (C) 2024 Marcel Ebbinghaus
+ * Copyright (C) 2024 Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ * Copyright (C) 2024 University of Freiburg
  *
  * This file is part of the ULTIMATE TraceAbstraction plug-in.
  *
@@ -26,6 +28,10 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency;
 
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -37,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsOrder;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
@@ -55,15 +62,23 @@ import de.uni_freiburg.informatik.ultimate.util.Lazy;
  * previous iteration).
  *
  * @author Marcel Ebbinghaus
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  *
  * @param <L>
  *            letter type
  */
 public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
+	// Determines after how many occurrences of the same path program a conditional commutativity condition will be synthesized.
+	private static final int CONDITIONAL_COMMUTATIVITY_THRESHOLD = 1;
+
+	private final ILogger mLogger;
 	private final IDfsOrder<L, IPredicate> mDfsOrder;
 	private final ConditionalCommutativityChecker<L> mChecker;
 	private final Function<IRun<L, IPredicate>, IIpAbStrategyModule<L>> mAutomatonBuilderFactory;
 	private final ConditionalCommutativityStatisticsGenerator mStatistics;
+
+	// We approximate path programs by looking at the set of control configurations.
+	private final Map<Set<?>, Integer> mPreviouslySeenPathPrograms = new HashMap<>();
 
 	/**
 	 * Creates a new instance. The instance may be used repeatedly throughout a CEGAR loop.
@@ -83,6 +98,8 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 			final IDfsOrder<L, IPredicate> dfsOrder, final ConditionalCommutativityChecker<L> conComChecker,
 			final Function<IRun<L, IPredicate>, IIpAbStrategyModule<L>> automatonBuilderFactory,
 			final ConditionalCommutativityStatisticsGenerator statistics) {
+		mLogger = services.getLoggingService().getLogger(ConditionalCommutativityCounterexampleChecker.class);
+
 		mDfsOrder = dfsOrder;
 		mChecker = conComChecker;
 		mAutomatonBuilderFactory = automatonBuilderFactory;
@@ -95,12 +112,22 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 	 *
 	 * @param run
 	 *            the run representing the counterexample
-	 * @param runPredicates
-	 *            the predicates of the given run
+	 * @param controlConfigurations
+	 *            the control configurations along the given run
 	 * @return an interpolant automaton proving conditional commutativity or null otherwise
 	 */
-	public IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>>
-			getCommutativityProof(final NestedRun<L, IPredicate> run) {
+	public IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> getCommutativityProof(final NestedRun<L, IPredicate> run, List<?> controlConfigurations) {
+		final Set<?> pathProgram = Set.copyOf(controlConfigurations);
+		final int occurrence = mPreviouslySeenPathPrograms.containsKey(pathProgram) ? mPreviouslySeenPathPrograms.get(pathProgram) + 1 : 1;
+		mPreviouslySeenPathPrograms.put(pathProgram, occurrence);
+
+		mLogger.info("Examining path program with hash %d, occurence #%d", pathProgram.hashCode(), occurrence);
+		if (occurrence <= CONDITIONAL_COMMUTATIVITY_THRESHOLD) {
+			mLogger.info("Commutativity condition synthesis is only active after more than %d occurrences. Skipping...", CONDITIONAL_COMMUTATIVITY_THRESHOLD);
+			return null;
+		}
+		mLogger.info("Trying to synthesize and prove commutativity condition.");
+
 		for (int i = 0; i < run.getStateSequence().size() - 2; i++) {
 			final IPredicate state = run.getStateSequence().get(i);
 			final L letter1 = run.getWord().getSymbol(i);
@@ -109,15 +136,18 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 			if (!isNonMinimalityPoint(state, letter1, letter2)) {
 				continue;
 			}
+			mLogger.info("Performing commutativity condition check at non-minimality point %d", i);
 
 			final NestedRun<L, IPredicate> currentRun = run.getSubRun(0, i);
 			final var checkResult = mChecker.checkConditionalCommutativity(currentRun, letter1, letter2);
-
 			if (checkResult.isSuccess()) {
 				mStatistics.addCommutingCounterexample();
+				mLogger.info("Successfully proved commutativity at non-minimality point %d. Constructing proof automaton...", i);
 				return buildAutomaton(currentRun, checkResult.getRefinementResult());
 			}
 		}
+
+		mLogger.warn("Failed to synthesize and prove commutativity condition.");
 		return null;
 	}
 
