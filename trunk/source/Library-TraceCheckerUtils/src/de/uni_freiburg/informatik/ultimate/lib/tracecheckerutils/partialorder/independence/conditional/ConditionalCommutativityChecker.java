@@ -34,9 +34,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 
-import de.uni_freiburg.informatik.ultimate.automata.IRun;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation.Dependence;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.ISymbolicIndependenceRelation;
@@ -56,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.I
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.ICopyActionFactory;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.conditional.ConditionalCommutativityStatisticsGenerator.ConditionalCommutativityStopwatches;
@@ -85,7 +84,7 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 
 	private final PredicateFactory mPredicateFactory;
 	private final ICopyActionFactory<L> mCopyFactory;
-	private final Function<IRun<L, IPredicate>, IRefinementStrategy<L>> mBuildStrategy;
+	private final Function<Counterexample<L>, IRefinementStrategy<L>> mBuildStrategy;
 
 	private final ConditionalCommutativityStatisticsGenerator mStatistics;
 
@@ -111,7 +110,7 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 	 */
 	public ConditionalCommutativityChecker(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final IIndependenceRelation<IPredicate, L> independenceRelation,
-			final Function<IRun<L, IPredicate>, IRefinementStrategy<L>> buildStrategy,
+			final Function<Counterexample<L>, IRefinementStrategy<L>> buildStrategy,
 			final PredicateFactory predicateFactory, final ICopyActionFactory<L> copyFactory,
 			final ConditionalCommutativityStatisticsGenerator statistics) {
 		mServices = services;
@@ -138,28 +137,29 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 	 * Phi such that those letters commute under Phi, and Phi holds after the given {@code currentRun}.
 	 * If this is the case, returns a proof that this Phi holds after executing {@code currentRun}.
 	 *
-	 * @param currentRun
-	 *            A run after which the given letters should be independent
+	 * @param trace
+	 *            A counterexample trace after which the given letters should be independent
+	 * @param controlConfigurations
+	 *            the sequence of control configurations visited in the program along the given {@code trace}
+	 * @param state
+	 *            the state reached in the current abstraction after reading the given trace
 	 * @param letter1
 	 *            A letter of an outgoing transition of state
 	 * @param letter2
 	 *            A letter of another outgoing transition of state
 	 * @return A refinement result proving a sufficient condition for commutativity, or {@code null} if no such condition or proof was found.
 	 */
-	public Result<L> checkConditionalCommutativity(
-			final NestedRun<L, IPredicate> currentRun, final L letter1, final L letter2) {
-
+	// We pass trace and controlConfigurations separately here rather than using Counterexample<L> because the latter does not allow an empty word.
+	public Result<L> checkConditionalCommutativity(final Word<L> trace, final List<?> controlConfigurations, final IPredicate state, final L letter1, final L letter2) {
 		mStatistics.startStopwatch(ConditionalCommutativityStopwatches.CHECKER);
 		try {
-			return checkConditionalCommutativityInternal(currentRun, letter1, letter2);
+			return checkConditionalCommutativityInternal(trace, controlConfigurations, state, letter1, letter2);
 		} finally {
 			mStatistics.stopStopwatch(ConditionalCommutativityStopwatches.CHECKER);
 		}
 	}
 
-	private Result<L> checkConditionalCommutativityInternal(final NestedRun<L, IPredicate> currentRun, final L letter1, final L letter2) {
-		final IPredicate state = currentRun.getStateAtPosition(currentRun.getLength() - 1);
-
+	private Result<L> checkConditionalCommutativityInternal(final Word<L> trace, final List<?> controlConfigurations, final IPredicate state, final L letter1, final L letter2) {
 		// TODO this is brittle, let caller decide how one extracts a sleep set from the states
 		// TODO is this actually still needed?
 		if (state instanceof SleepPredicate) {
@@ -179,7 +179,7 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 			return new Result<>(ResultType.NO_CONDITION_FOUND);
 		}
 
-		return proveCommutativityCondition(currentRun, letter1, condition);
+		return proveCommutativityCondition(trace, controlConfigurations, letter1, condition);
 	}
 
 	private IPredicate generateCondition(final IPredicate state, final L letter1, final L letter2) {
@@ -214,7 +214,7 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 		}
 	}
 
-	private Result<L> proveCommutativityCondition(final NestedRun<L, IPredicate> currentRun, final L templateLetter, final IPredicate condition) {
+	private Result<L> proveCommutativityCondition(final Word<L> trace, final List<?> controlConfigurations, final L templateLetter, final IPredicate condition) {
 		// construct a transformula which represents the negation of the condition
 		final IPredicate notCondition = mPredicateFactory.not(condition);
 		final UnmodifiableTransFormula tf =
@@ -229,16 +229,13 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 		// TODO as workaround, we create a copy of an existing letter
 		final L notConditionLetter = mCopyFactory.copy(templateLetter, tf, null);
 
-		// create a dummy state for the end of the run
-		final IPredicate dummyPredicate = mPredicateFactory.newDebugPredicate("dummy");
+		// add the transition and a dummy control configuration to the end of the given trace
+		final Word<L> traceWithCondition = trace.concatenate(new Word<>(notConditionLetter));
+		final List<Object> controlConfigurationsWithCondition = new ArrayList<>(controlConfigurations);
+		controlConfigurationsWithCondition.add(new Object());
+		final Counterexample<L> ctexWithCondition = new Counterexample<>(traceWithCondition, controlConfigurationsWithCondition);
 
-		// add both to the currentRun
-		final NestedRun<L, IPredicate> conditionRun =
-				new NestedRun<>(currentRun.getStateAtPosition(currentRun.getLength() - 1), notConditionLetter,
-						NestedWord.INTERNAL_POSITION, dummyPredicate);
-		final NestedRun<L, IPredicate> currentRunWithCondition = currentRun.concatenate(conditionRun);
-
-		final var strategy = mBuildStrategy.apply(currentRunWithCondition);
+		final var strategy = mBuildStrategy.apply(ctexWithCondition);
 		final var afe = new AutomatonFreeRefinementEngine<>(mServices, mLogger, strategy);
 		final var result = afe.getResult();
 

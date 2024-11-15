@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
+import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.DeterminizeNwa;
@@ -75,7 +76,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.d
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.AnnotatedMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.DebugPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
@@ -523,17 +523,16 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 				mConComCheckerBenchmark);
 	}
 
-	private IRefinementStrategy<L> buildStrategyForConditionalCommutativity(final IRun<L, IPredicate> run) {
-		final var ctex = new Counterexample<>(run.getWord(), getControlConfigurationsFromCounterexample(run));
-		return mCommutativityStrategyFactory.constructStrategy(mServices, ctex, mAbstraction,
+	private IRefinementStrategy<L> buildStrategyForConditionalCommutativity(final Counterexample<L> counterexample) {
+		return mCommutativityStrategyFactory.constructStrategy(mServices, counterexample, mAbstraction,
 				new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()), mFactory, getPreconditionProvider(),
 				getPostconditionProvider(), mPref.getConditionalCommutativityRefinementStrategy());
 	}
 
-	private IIpAbStrategyModule<L> createConditionalCommutativityAutomatonBuilder(final IRun<L, IPredicate> run) {
+	private IIpAbStrategyModule<L> createConditionalCommutativityAutomatonBuilder(final Word<L> word) {
 		// This is the automaton builder used by our most common refinement strategies (e.g. CAMEL).
 		// The constructed automata should be enhanced through #enhanceInterpolantAutomaton(...) to be really useful.
-		return new IpAbStrategyModuleStraightlineAll<>(mServices, mLogger, mAbstraction, run.getWord(),
+		return new IpAbStrategyModuleStraightlineAll<>(mServices, mLogger, mAbstraction, word,
 				mStateFactoryForRefinement);
 	}
 
@@ -543,12 +542,6 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 
 		final var result = new ArrayList<>(counterexample.getLength());
 		for (final var state : counterexample.getStateSequence()) {
-			if (state instanceof DebugPredicate) {
-				// This should only occur for the dummy predicate created by ConditionalCommutativityChecker.
-				result.add(state);
-				continue;
-			}
-
 			// Generally, the full state of the reduction automaton contains the state of the given input automaton
 			// (mAbstraction), as well as possibly additional information related to the reduction (e.g. a sleep set).
 			final IPredicate fullState = (IPredicate) state;

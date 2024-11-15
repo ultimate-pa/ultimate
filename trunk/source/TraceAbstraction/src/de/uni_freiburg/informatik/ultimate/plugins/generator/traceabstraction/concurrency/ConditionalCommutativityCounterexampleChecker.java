@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.c
 
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -37,7 +36,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.IRun;
+import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsOrder;
@@ -74,7 +73,7 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 	private final ILogger mLogger;
 	private final IDfsOrder<L, IPredicate> mDfsOrder;
 	private final ConditionalCommutativityChecker<L> mChecker;
-	private final Function<IRun<L, IPredicate>, IIpAbStrategyModule<L>> mAutomatonBuilderFactory;
+	private final Function<Word<L>, IIpAbStrategyModule<L>> mAutomatonBuilderFactory;
 	private final ConditionalCommutativityStatisticsGenerator mStatistics;
 
 	// We approximate path programs by looking at the set of control configurations.
@@ -96,7 +95,7 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 	 */
 	public ConditionalCommutativityCounterexampleChecker(final IUltimateServiceProvider services,
 			final IDfsOrder<L, IPredicate> dfsOrder, final ConditionalCommutativityChecker<L> conComChecker,
-			final Function<IRun<L, IPredicate>, IIpAbStrategyModule<L>> automatonBuilderFactory,
+			final Function<Word<L>, IIpAbStrategyModule<L>> automatonBuilderFactory,
 			final ConditionalCommutativityStatisticsGenerator statistics) {
 		mLogger = services.getLoggingService().getLogger(ConditionalCommutativityCounterexampleChecker.class);
 
@@ -116,7 +115,7 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 	 *            the control configurations along the given run
 	 * @return an interpolant automaton proving conditional commutativity or null otherwise
 	 */
-	public IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> getCommutativityProof(final NestedRun<L, IPredicate> run, List<?> controlConfigurations) {
+	public IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> getCommutativityProof(final NestedRun<L, IPredicate> run, final List<?> controlConfigurations) {
 		final Set<?> pathProgram = Set.copyOf(controlConfigurations);
 		final int occurrence = mPreviouslySeenPathPrograms.containsKey(pathProgram) ? mPreviouslySeenPathPrograms.get(pathProgram) + 1 : 1;
 		mPreviouslySeenPathPrograms.put(pathProgram, occurrence);
@@ -138,12 +137,14 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 			}
 			mLogger.info("Performing commutativity condition check at non-minimality point %d", i);
 
-			final NestedRun<L, IPredicate> currentRun = run.getSubRun(0, i);
-			final var checkResult = mChecker.checkConditionalCommutativity(currentRun, letter1, letter2);
+			final Word<L> currentTrace = run.getWord().getSubWord(0, i);
+			final List<?> currentConfigurations = controlConfigurations.subList(0, i+1);
+
+			final var checkResult = mChecker.checkConditionalCommutativity(currentTrace, currentConfigurations, state, letter1, letter2);
 			if (checkResult.isSuccess()) {
 				mStatistics.addCommutingCounterexample();
 				mLogger.info("Successfully proved commutativity at non-minimality point %d. Constructing proof automaton...", i);
-				return buildAutomaton(currentRun, checkResult.getRefinementResult());
+				return buildAutomaton(currentTrace, checkResult.getRefinementResult());
 			}
 		}
 
@@ -158,7 +159,7 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 	}
 
 	private IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> buildAutomaton(
-			final NestedRun<L, IPredicate> currentRun,
+			final Word<L> trace,
 			final IRefinementEngineResult<L, Collection<QualifiedTracePredicates>> refinementResult) {
 		// The code below is adapted from TraceAbstractionRefinementEngine.
 		final var perfectIps = refinementResult.getInfeasibilityProof().stream().filter(qtp -> qtp.isPerfect())
@@ -166,7 +167,7 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 		final var imperfectIps = refinementResult.getInfeasibilityProof().stream().filter(qtp -> !qtp.isPerfect())
 				.collect(Collectors.toList());
 
-		final var automatonBuilder = mAutomatonBuilderFactory.apply(currentRun);
+		final var automatonBuilder = mAutomatonBuilderFactory.apply(trace);
 		try {
 			final var automatonResult = automatonBuilder.buildInterpolantAutomaton(perfectIps, imperfectIps);
 			return new BasicRefinementEngineResult<>(LBool.UNSAT, automatonResult.getAutomaton(), null, false,
