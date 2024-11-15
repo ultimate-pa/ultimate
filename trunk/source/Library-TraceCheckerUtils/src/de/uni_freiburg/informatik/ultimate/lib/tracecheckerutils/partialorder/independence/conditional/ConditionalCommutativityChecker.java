@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
@@ -145,7 +146,7 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 	 *            A letter of another outgoing transition of state
 	 * @return A refinement result proving a sufficient condition for commutativity, or {@code null} if no such condition or proof was found.
 	 */
-	public IRefinementEngineResult<L, Collection<QualifiedTracePredicates>> checkConditionalCommutativity(
+	public Result<L> checkConditionalCommutativity(
 			final NestedRun<L, IPredicate> currentRun, final L letter1, final L letter2) {
 
 		mStatistics.startStopwatch(ConditionalCommutativityStopwatches.CHECKER);
@@ -156,11 +157,11 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 		}
 	}
 
-	private IRefinementEngineResult<L, Collection<QualifiedTracePredicates>> checkConditionalCommutativityInternal(
-			final NestedRun<L, IPredicate> currentRun, final L letter1, final L letter2) {
+	private Result<L> checkConditionalCommutativityInternal(final NestedRun<L, IPredicate> currentRun, final L letter1, final L letter2) {
 		final IPredicate state = currentRun.getStateAtPosition(currentRun.getLength() - 1);
 
 		// TODO this is brittle, let caller decide how one extracts a sleep set from the states
+		// TODO is this actually still needed?
 		if (state instanceof SleepPredicate) {
 			final ImmutableSet<?> sleepSet = ((SleepPredicate<L>) state).getSleepSet();
 			if (sleepSet.contains(letter1) && sleepSet.contains(letter2)) {
@@ -170,12 +171,12 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 
 		final Dependence dependence = mIndependenceRelation.isIndependent(state, letter1, letter2);
 		if (dependence == Dependence.INDEPENDENT) {
-			return null;
+			return new Result<>(ResultType.ALREADY_INDEPENDENT);
 		}
 
 		final IPredicate condition = generateCondition(state, letter1, letter2);
 		if (condition == null) {
-			return null;
+			return new Result<>(ResultType.NO_CONDITION_FOUND);
 		}
 
 		return proveCommutativityCondition(currentRun, letter1, condition);
@@ -213,8 +214,7 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 		}
 	}
 
-	private IRefinementEngineResult<L, Collection<QualifiedTracePredicates>> proveCommutativityCondition(
-			final NestedRun<L, IPredicate> currentRun, final L templateLetter, final IPredicate condition) {
+	private Result<L> proveCommutativityCondition(final NestedRun<L, IPredicate> currentRun, final L templateLetter, final IPredicate condition) {
 		// construct a transformula which represents the negation of the condition
 		final IPredicate notCondition = mPredicateFactory.not(condition);
 		final UnmodifiableTransFormula tf =
@@ -243,17 +243,19 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 		final var result = afe.getResult();
 
 		mStatistics.addTraceCheck();
-		if (result.getCounterexampleFeasibility() != LBool.UNSAT) {
-			return null;
-		}
 		if (result.getCounterexampleFeasibility() == LBool.UNKNOWN) {
 			mStatistics.addUnknownTraceCheck();
+			return new Result<>(ResultType.UNKNOWN_CHECK);
+		}
+
+		if (result.getCounterexampleFeasibility() == LBool.SAT) {
+			return new Result<>(ResultType.CONDTION_NOT_SATISFIED);
 		}
 		if (!result.somePerfectSequenceFound()) {
 			mStatistics.addImperfectProof();
-			return null;
+			return new Result<>(ResultType.PROOF_IMPERFECT);
 		}
-		return postProcessRefinementResult(result);
+		return new Result<>(postProcessRefinementResult(result));
 	}
 
 	// Post-processes the refinement result's trace predicates such that the usage of an additional non-commutativity
@@ -286,5 +288,43 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 		final TracePredicates tp =
 				new TracePredicates(qtp.getTracePredicates().getPrecondition(), newPost, newPredicates);
 		return new QualifiedTracePredicates(tp, qtp.getOrigin(), qtp.isPerfect());
+	}
+
+	public static final class Result<L extends IAction> {
+		private final ResultType mType;
+		private final IRefinementEngineResult<L, Collection<QualifiedTracePredicates>> mRefinementResult;
+
+		private Result(ResultType type) {
+			mType = type;
+			mRefinementResult = null;
+			assert !isSuccess() : "successful result must have refinement result";
+		}
+
+		private Result(IRefinementEngineResult<L, Collection<QualifiedTracePredicates>> refinementResult) {
+			mType = ResultType.SUCCESS;
+			mRefinementResult = Objects.requireNonNull(refinementResult);
+		}
+
+		public boolean isSuccess() {
+			return mType == ResultType.SUCCESS;
+		}
+
+		public ResultType getType() {
+			return mType;
+		}
+
+		public IRefinementEngineResult<L, Collection<QualifiedTracePredicates>> getRefinementResult() {
+			assert mRefinementResult != null : "No proof of commutativity found";
+			return mRefinementResult;
+		}
+	}
+
+	public enum ResultType {
+		ALREADY_INDEPENDENT,
+		NO_CONDITION_FOUND,
+		CONDTION_NOT_SATISFIED,
+		UNKNOWN_CHECK,
+		PROOF_IMPERFECT,
+		SUCCESS
 	}
 }

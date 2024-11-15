@@ -111,12 +111,11 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 			}
 
 			final NestedRun<L, IPredicate> currentRun = run.getSubRun(0, i);
-			final var refinementResult =
-					mChecker.checkConditionalCommutativity(currentRun, letter1, letter2);
+			final var checkResult = mChecker.checkConditionalCommutativity(currentRun, letter1, letter2);
 
-			if (refinementResult != null) {
+			if (checkResult.isSuccess()) {
 				mStatistics.addCommutingCounterexample();
-				return buildAutomaton(currentRun, refinementResult);
+				return buildAutomaton(currentRun, checkResult.getRefinementResult());
 			}
 		}
 		return null;
