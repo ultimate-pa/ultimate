@@ -363,8 +363,9 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 			final var difference = TransFormulaUtils.intersect(mManagedScript, lhs,
 					TransFormulaUtils.negate(rhs, mManagedScript, mServices));
 
-			// Do not spend time trying to eliminate auxiliary vars here, they can be skolemized later.
-			final boolean tryAuxVarElimination = false;
+			// Although auxiliary variables can be skolemized, elimination and simplification yields a simpler predicate.
+			// This also affects the trace proofs later on, especially if simplification can eliminate a program variable from the condition.
+			final boolean tryAuxVarElimination = true;
 			final Term nonInclusion =
 					TransFormulaUtils.computeGuardTerm(mServices, mManagedScript, difference, tryAuxVarElimination);
 
