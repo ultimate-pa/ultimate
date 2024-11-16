@@ -166,34 +166,6 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 	 * @param abstraction
 	 *            The initial abstraction representing the program. Various strategies require the initial abstraction,
 	 *            e.g., to extract the complete alphabet, or to perform more complex generalizations.
-	 * @param strategyType
-	 *            The type of refinement strategy that should be used.
-	 */
-	public ITARefinementStrategy<L> constructStrategy(final IUltimateServiceProvider services,
-			final Counterexample<L> counterexample, final IAutomaton<L, IPredicate> abstraction,
-			final TaskIdentifier taskIdentifier, final IEmptyStackStateFactory<IPredicate> emptyStackFactory,
-			final IPreconditionProvider preconditionProvider, final IPostconditionProvider postconditionProvider,
-			final RefinementStrategy strategyType) {
-		final IPredicateUnifier predicateUnifier = constructPredicateUnifier(services);
-		final IPredicate precondition = preconditionProvider.constructPrecondition(predicateUnifier);
-		final IPredicate postcondition = postconditionProvider.constructPostcondition(predicateUnifier);
-		return constructStrategy(services, counterexample, abstraction, taskIdentifier, emptyStackFactory,
-				predicateUnifier, precondition, postcondition, strategyType);
-	}
-
-	/**
-	 * Constructs a {@link IRefinementStrategy} that can be used in conjunction with a {@link IRefinementEngine}.
-	 *
-	 * @param counterexample
-	 *            A trace that will be checked for feasibility and for which, if it is infeasible, a refinement result
-	 *            will be constructed.
-	 *
-	 *            Optionally, accompanied by the sequence of control configurations visited by the trace in the program
-	 *            that is being verified. This sequence is used to judge the quality of proofs ("perfect") and for
-	 *            assert order modulation.
-	 * @param abstraction
-	 *            The initial abstraction representing the program. Various strategies require the initial abstraction,
-	 *            e.g., to extract the complete alphabet, or to perform more complex generalizations.
 	 */
 	public ITARefinementStrategy<L> constructStrategy(final IUltimateServiceProvider services,
 			final Counterexample<L> counterexample, final IAutomaton<L, IPredicate> abstraction,

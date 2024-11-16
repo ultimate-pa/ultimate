@@ -117,23 +117,23 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 	 */
 	public TaCheckAndRefinementPreferences(final IUltimateServiceProvider services, final TAPreferences taPrefs,
 			final InterpolationTechnique interpolationTechnique, final SimplificationTechnique simplificationTechnique,
-			final CfgSmtToolkit cfgSmtToolkit, final PredicateFactory predicateFactory,
-			final IIcfg<?> icfgContainer) {
-		this(services, taPrefs, interpolationTechnique, simplificationTechnique, cfgSmtToolkit, predicateFactory, icfgContainer,
-				services.getPreferenceProvider(Activator.PLUGIN_ID).getBoolean(TraceAbstractionPreferenceInitializer.LABEL_COMPUTE_COUNTEREXAMPLE));
+			final CfgSmtToolkit cfgSmtToolkit, final PredicateFactory predicateFactory, final IIcfg<?> icfgContainer) {
+		this(services, taPrefs, interpolationTechnique, simplificationTechnique, cfgSmtToolkit, predicateFactory,
+				icfgContainer, taPrefs.getRefinementStrategy(), services.getPreferenceProvider(Activator.PLUGIN_ID)
+						.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_COMPUTE_COUNTEREXAMPLE));
 	}
 
 	public TaCheckAndRefinementPreferences(final IUltimateServiceProvider services, final TAPreferences taPrefs,
 			final InterpolationTechnique interpolationTechnique, final SimplificationTechnique simplificationTechnique,
-			final CfgSmtToolkit cfgSmtToolkit, final PredicateFactory predicateFactory,
-			final IIcfg<?> icfgContainer, boolean computeCounterexample) {
+			final CfgSmtToolkit cfgSmtToolkit, final PredicateFactory predicateFactory, final IIcfg<?> icfgContainer,
+			final RefinementStrategy refinementStrategy, final boolean computeCounterexample) {
 		mInterpolationTechnique = interpolationTechnique;
 		mSimplificationTechnique = simplificationTechnique;
 		mCfgSmtToolkit = cfgSmtToolkit;
 		mPredicateFactory = predicateFactory;
 		mIcfgContainer = icfgContainer;
 
-		mRefinementStrategy = taPrefs.getRefinementStrategy();
+		mRefinementStrategy = refinementStrategy;
 		mMcrRefinementStrategy = taPrefs.getMcrRefinementStrategy();
 		mAcceleratedInterpolationRefinementStrategy = taPrefs.getAcceleratedInterpolationRefinementStrategy();
 		mUseSeparateSolverForTracechecks = taPrefs.useSeparateSolverForTracechecks();

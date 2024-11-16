@@ -499,18 +499,19 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 
 		// Create a strategy factory for conditional commutativity proofs, which never computes executions.
 		// Computing executions is expensive and not needed as we are only interested in proofs.
+		// Also change the default refinement strategy to mPref.getConditionalCommutativityRefinementStrategy().
 		Function<Counterexample<L>, IRefinementStrategy<L>> createStrategy;
 		{
 			final boolean computeCounterexampleExecution = false;
-			final TaCheckAndRefinementPreferences<L> taCheckAndRefinementPrefs = new TaCheckAndRefinementPreferences<>(
-					getServices(), mPref, mPref.interpolation(), mSimplificationTechnique, mCsToolkit,
-					mPredicateFactory, mIcfg, computeCounterexampleExecution);
+			final TaCheckAndRefinementPreferences<L> taCheckAndRefinementPrefs =
+					new TaCheckAndRefinementPreferences<>(getServices(), mPref, mPref.interpolation(),
+							mSimplificationTechnique, mCsToolkit, mPredicateFactory, mIcfg,
+							mPref.getConditionalCommutativityRefinementStrategy(), computeCounterexampleExecution);
 			final var commutativityStrategyFactory = new StrategyFactory<>(mLogger, mPref, taCheckAndRefinementPrefs,
 					mIcfg, mPredicateFactory, mPredicateFactoryInterpolantAutomata, transitionClazz);
 			createStrategy = counterexample -> commutativityStrategyFactory.constructStrategy(mServices, counterexample,
 					mAbstraction, new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()), mFactory,
-					getPreconditionProvider(), getPostconditionProvider(),
-					mPref.getConditionalCommutativityRefinementStrategy());
+					getPreconditionProvider(), getPostconditionProvider());
 		}
 
 		// TODO This will cause issues for configurations in which the independence relation changes across iterations
