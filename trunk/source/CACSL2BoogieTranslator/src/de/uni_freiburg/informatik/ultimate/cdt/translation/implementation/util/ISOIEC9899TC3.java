@@ -38,6 +38,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 
+import org.apache.commons.lang3.StringUtils;
+
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
@@ -342,7 +344,7 @@ public final class ISOIEC9899TC3 {
 		// convert literal in hex form to decimal form
 		if (suffixFreeValue.startsWith("0x") || suffixFreeValue.startsWith("0X")) {
 			String hexValue = suffixFreeValue.substring(2);
-			int suffixLength = -1;
+			int suffixLength = 0;
 			String hexExponentValue = null;
 
 			// extract exponent value of the hex literal
@@ -352,6 +354,7 @@ public final class ISOIEC9899TC3 {
 			}
 
 			if (hexValue.contains(".")) {
+				hexValue = StringUtils.stripEnd(hexValue, "0");
 				final int dotPosition = hexValue.indexOf('.');
 				suffixLength = hexValue.substring(dotPosition + 1).length();
 				hexValue = hexValue.substring(0, dotPosition) + hexValue.substring(dotPosition + 1);
@@ -372,7 +375,7 @@ public final class ISOIEC9899TC3 {
 				}
 			}
 
-			if (suffixLength != -1) {
+			if (suffixLength != 0) {
 				hexValueBigDecimal = hexValueBigDecimal.divide(BigDecimal.valueOf(Math.pow(16, suffixLength)));
 			}
 			return hexValueBigDecimal;
