@@ -59,7 +59,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.util.Lazy;
 import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
-import de.uni_freiburg.informatik.ultimate.util.statistics.Stopwatch;
+import de.uni_freiburg.informatik.ultimate.util.statistics.TimeTracker;
 
 /**
  * Conditional commutativity checker, which checks for conditional commutativity of two given letters (letter1,letter2),
@@ -296,8 +296,8 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 	}
 
 	private static class Statistics extends AbstractStatisticsDataProvider {
-		private final Stopwatch mOverallTime = new Stopwatch();
-		private final Stopwatch mConditionCalculationTime = new Stopwatch();
+		private final TimeTracker mOverallTime = new TimeTracker();
+		private final TimeTracker mConditionCalculationTime = new TimeTracker();
 
 		private int mConditionCalculations;
 		private int mQuantifiedConditions;
@@ -306,8 +306,8 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 		private int mImperfectProofs;
 
 		public Statistics() {
-			declareStopwatch("CheckTime", mOverallTime);
-			declareStopwatch("ConditionCalculationTime", mConditionCalculationTime);
+			declareTimeTracker("CheckTime", mOverallTime);
+			declareTimeTracker("ConditionCalculationTime", mConditionCalculationTime);
 
 			declareCounter("ConditionCalculations", () -> mConditionCalculations);
 			declareCounter("QuantifiedConditions", () -> mQuantifiedConditions);

@@ -31,6 +31,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
@@ -65,9 +66,9 @@ public abstract class AbstractStatisticsDataProvider implements IStatisticsDataP
 		declare(key, getter, type::aggregate, type::prettyPrint);
 	}
 
-	protected final void declareStopwatch(final String key, final Stopwatch stopwatch) {
-		declare(key, stopwatch::getElapsedTime, (x, y) -> (long) x + (long) y,
-				(k, data) -> PrettyPrint.keyColonData(k + " [ms]", Math.round((long) data * 1e-6)));
+	protected final void declareTimeTracker(final String key, final TimeTracker timeTracker) {
+		declare(key, () -> timeTracker.elapsedTime(TimeUnit.MILLISECONDS), (x, y) -> (long) x + (long) y,
+				(k, data) -> PrettyPrint.keyColonData(k + " [ms]", data));
 	}
 
 	protected final void declareCounter(final String key, final IntSupplier getter) {
