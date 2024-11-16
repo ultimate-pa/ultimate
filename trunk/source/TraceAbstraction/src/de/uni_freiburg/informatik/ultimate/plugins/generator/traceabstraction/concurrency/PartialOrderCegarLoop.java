@@ -497,6 +497,22 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 			return null;
 		}
 
+		final IIndependenceRelation<IPredicate, L> relation = mPOR.getIndependence(0);
+		if (mPref.getNumberOfIndependenceRelations() > 1) {
+			throw new UnsupportedOperationException(
+					"Commutativity condition synthesis is unsupported for stratified reductions.");
+		}
+		if (mPref.porIndependenceSettings(0).getAbstractionType() != AbstractionType.NONE) {
+			// TODO To support this, we need to handle commutativity proof automata specially (do not adapt
+			// independence, do not contribute to acceptance) and re-think which information may be cached.
+			throw new UnsupportedOperationException(
+					"Commutativity condition synthesis is unsupported for abstract independence.");
+		}
+		if (!mPref.getPartialOrderMode().hasSleepSets() || !relation.isConditional()) {
+			throw new UnsupportedOperationException(
+					"Commutativity condition synthesis is only useful for sleep set reduction with conditional independence.");
+		}
+
 		// Create a strategy factory for conditional commutativity proofs, which never computes executions.
 		// Computing executions is expensive and not needed as we are only interested in proofs.
 		// Also change the default refinement strategy to mPref.getConditionalCommutativityRefinementStrategy().
@@ -513,9 +529,6 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 					mAbstraction, new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()), mFactory,
 					getPreconditionProvider(), getPostconditionProvider());
 		}
-
-		// TODO This will cause issues for configurations in which the independence relation changes across iterations
-		final IIndependenceRelation<IPredicate, L> relation = mPOR.getIndependence(0);
 
 		final var conComChecker = new ConditionalCommutativityChecker<>(mServices, mCsToolkit.getManagedScript(),
 				relation, createStrategy, mPredicateFactory, copyFactory, mConComCheckerBenchmark);
