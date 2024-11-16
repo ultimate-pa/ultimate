@@ -97,7 +97,6 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.Pa
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderReductionFacade.StateSplitter;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.ConditionalCommutativityChecker;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.ConditionalCommutativityStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.AbstractionType;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.ICopyActionFactory;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -144,9 +143,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	private final boolean mSupportsDeadEnds;
 	private IDeadEndStore<IPredicate, IPredicate> mDeadEndStore;
 
-	// Fields needed for commutativity condition synthesis
-	private final ConditionalCommutativityStatisticsGenerator mConComCheckerBenchmark =
-			new ConditionalCommutativityStatisticsGenerator();
+	// Fields for commutativity condition synthesis
 	private final ConditionalCommutativityCounterexampleChecker<L> mConCounterexampleChecker;
 	private boolean mCounterexampleConComFound;
 
@@ -357,7 +354,9 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		for (final AbstractInterpolantAutomaton<L> ia : mAbstractItpAutomata) {
 			mCegarLoopBenchmark.reportInterpolantAutomatonStates(ia.size());
 		}
-		mCegarLoopBenchmark.addConComCheckerData(mConComCheckerBenchmark);
+		if (mConCounterexampleChecker != null) {
+			mCegarLoopBenchmark.addConComCheckerData(mConCounterexampleChecker.getStatistics());
+		}
 		final var data = new StatisticsData();
 		data.aggregateBenchmarkData(mPOR.getStatistics());
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
@@ -531,7 +530,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		}
 
 		final var conComChecker = new ConditionalCommutativityChecker<>(mServices, mCsToolkit.getManagedScript(),
-				relation, createStrategy, mPredicateFactory, copyFactory, mConComCheckerBenchmark);
+				relation, createStrategy, mPredicateFactory, copyFactory);
 
 		// This is the automaton builder used by our most common refinement strategies (e.g. CAMEL).
 		// The constructed automata should be enhanced through #enhanceInterpolantAutomaton(...) to be really useful.
@@ -540,7 +539,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 						mStateFactoryForRefinement);
 
 		return new ConditionalCommutativityCounterexampleChecker<>(mServices, mPOR.getDfsOrder(), conComChecker,
-				mPOR.getSleepFactory(), createAutomatonBuilder, mConComCheckerBenchmark);
+				mPOR.getSleepFactory(), createAutomatonBuilder);
 	}
 
 	@Override

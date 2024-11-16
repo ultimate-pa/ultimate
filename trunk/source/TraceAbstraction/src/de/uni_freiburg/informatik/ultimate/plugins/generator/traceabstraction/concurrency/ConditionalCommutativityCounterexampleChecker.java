@@ -53,11 +53,12 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult.BasicRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.ConditionalCommutativityChecker;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.ConditionalCommutativityStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IIpAbStrategyModule;
 import de.uni_freiburg.informatik.ultimate.util.Lazy;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
+import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
 /**
  * Checks whether a counterexample has an equivalent trace of lower order (i.e. one which was already explored in a
@@ -83,13 +84,14 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 
 	private final ISleepSetStateFactory<L, IPredicate, IPredicate> mSleepSetFactory;
 	private final Function<Word<L>, IIpAbStrategyModule<L>> mAutomatonBuilderFactory;
-	private final ConditionalCommutativityStatisticsGenerator mStatistics;
 
 	// We approximate path programs by looking at the set of control configurations.
 	private final Map<Set<?>, Integer> mPreviouslySeenPathPrograms = new HashMap<>();
 
 	private final Set<Triple<List<Object>, L, L>> mHopelessConditionChecks = new HashSet<>();
 	private final Map<Triple<List<Object>, L, L>, Integer> mFailedConditionChecks = new HashMap<>();
+
+	private final Statistics mStatistics;
 
 	/**
 	 * Creates a new instance. The instance may be used repeatedly throughout a CEGAR loop.
@@ -108,15 +110,14 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 	public ConditionalCommutativityCounterexampleChecker(final IUltimateServiceProvider services,
 			final IDfsOrder<L, IPredicate> dfsOrder, final ConditionalCommutativityChecker<L> conComChecker,
 			final ISleepSetStateFactory<L, IPredicate, IPredicate> sleepSetFactory,
-			final Function<Word<L>, IIpAbStrategyModule<L>> automatonBuilderFactory,
-			final ConditionalCommutativityStatisticsGenerator statistics) {
+			final Function<Word<L>, IIpAbStrategyModule<L>> automatonBuilderFactory) {
 		mLogger = services.getLoggingService().getLogger(ConditionalCommutativityCounterexampleChecker.class);
 
 		mDfsOrder = dfsOrder;
 		mChecker = conComChecker;
 		mSleepSetFactory = Objects.requireNonNull(sleepSetFactory);
 		mAutomatonBuilderFactory = automatonBuilderFactory;
-		mStatistics = statistics;
+		mStatistics = new Statistics(conComChecker);
 	}
 
 	/**
@@ -167,7 +168,7 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 					letter1, letter2);
 			switch (checkResult.getType()) {
 			case SUCCESS:
-				mStatistics.addCommutingCounterexample();
+				mStatistics.reportSuccessfulCommutativityProof();
 				mLogger.info(
 						"Successfully proved commutativity at non-minimality point %d. Constructing proof automaton...",
 						i);
@@ -214,6 +215,10 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 		return null;
 	}
 
+	public IStatisticsDataProvider getStatistics() {
+		return mStatistics;
+	}
+
 	private boolean isNonMinimalityPoint(final IPredicate state, final L currentLetter, final L nextLetter) {
 		final Set<L> sleepSet = mSleepSetFactory.getSleepSet(state);
 		return sleepSet.contains(nextLetter) || mDfsOrder.getOrder(state).compare(currentLetter, nextLetter) > 0;
@@ -236,6 +241,19 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 		} catch (final AutomataOperationCanceledException e) {
 			throw new ToolchainCanceledException(e,
 					new RunningTaskInfo(automatonBuilder.getClass(), "computing interpolant automaton"));
+		}
+	}
+
+	private static class Statistics extends AbstractStatisticsDataProvider {
+		private int mSuccessfulCommutativityProofs;
+
+		public Statistics(final ConditionalCommutativityChecker<?> conComChecker) {
+			declareCounter("SuccessfulCommutativityProofs", () -> mSuccessfulCommutativityProofs);
+			forward("ConComChecker Statistics", conComChecker::getStatistics);
+		}
+
+		public void reportSuccessfulCommutativityProof() {
+			mSuccessfulCommutativityProofs++;
 		}
 	}
 }

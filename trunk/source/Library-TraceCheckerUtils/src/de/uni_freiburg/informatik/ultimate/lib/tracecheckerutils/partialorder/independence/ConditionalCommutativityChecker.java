@@ -54,10 +54,12 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.I
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.ConditionalCommutativityStatisticsGenerator.ConditionalCommutativityStopwatches;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.ICopyActionFactory;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.util.Lazy;
+import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.Stopwatch;
 
 /**
  * Conditional commutativity checker, which checks for conditional commutativity of two given letters (letter1,letter2),
@@ -83,7 +85,7 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 	private final ICopyActionFactory<L> mCopyFactory;
 	private final Function<Counterexample<L>, IRefinementStrategy<L>> mBuildStrategy;
 
-	private final ConditionalCommutativityStatisticsGenerator mStatistics;
+	private final Statistics mStatistics = new Statistics();
 
 	/**
 	 * Constructs a new instance of ConditionalCommutativityChecker.
@@ -102,14 +104,11 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 	 *            The predicate factory used by {@code independenceRelation} to build conditions.
 	 * @param copyFactory
 	 *            A factory that can be used to create new edges of type {@code L}.
-	 * @param statistics
-	 *            An {@link ConditionalCommutativityStatisticsGenerator} used to collect statistics
 	 */
 	public ConditionalCommutativityChecker(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final IIndependenceRelation<IPredicate, L> independenceRelation,
 			final Function<Counterexample<L>, IRefinementStrategy<L>> buildStrategy,
-			final PredicateFactory predicateFactory, final ICopyActionFactory<L> copyFactory,
-			final ConditionalCommutativityStatisticsGenerator statistics) {
+			final PredicateFactory predicateFactory, final ICopyActionFactory<L> copyFactory) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(getClass());
 		mManagedScript = mgdScript;
@@ -125,8 +124,6 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 		mBuildStrategy = buildStrategy;
 		mPredicateFactory = predicateFactory;
 		mCopyFactory = copyFactory;
-
-		mStatistics = statistics;
 	}
 
 	/**
@@ -151,11 +148,11 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 	// does not allow an empty word.
 	public Result<L> checkConditionalCommutativity(final Word<L> trace, final List<?> controlConfigurations,
 			final IPredicate state, final L letter1, final L letter2) {
-		mStatistics.startStopwatch(ConditionalCommutativityStopwatches.CHECKER);
+		mStatistics.startCheck();
 		try {
 			return checkConditionalCommutativityInternal(trace, controlConfigurations, state, letter1, letter2);
 		} finally {
-			mStatistics.stopStopwatch(ConditionalCommutativityStopwatches.CHECKER);
+			mStatistics.stopCheck();
 		}
 	}
 
@@ -175,15 +172,14 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 	}
 
 	private IPredicate generateCondition(final IPredicate context, final L letter1, final L letter2) {
-		mStatistics.startStopwatch(ConditionalCommutativityStopwatches.CONDITION);
+		mStatistics.startConditionCalculation();
 		try {
-			mStatistics.addConditionCalculation();
 			if (mPassContextToSymbolicRelation && context != null) {
 				return mSymbolicRelation.getCommutativityCondition(context, letter1, letter2);
 			}
 			return mSymbolicRelation.getCommutativityCondition(null, letter1, letter2);
 		} finally {
-			mStatistics.stopStopwatch(ConditionalCommutativityStopwatches.CONDITION);
+			mStatistics.stopConditionCalculation();
 		}
 	}
 
@@ -195,7 +191,7 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 				TransFormulaBuilder.constructTransFormulaFromPredicate(notCondition, mManagedScript);
 
 		if (!QuantifierUtils.isQuantifierFree(tf.getFormula())) {
-			mStatistics.addQuantifiedCondition();
+			mStatistics.reportQuantifiedCondition();
 			mLogger.warn("Quantified commutativity condition: %s", tf.getFormula());
 		}
 
@@ -214,20 +210,20 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 		final var afe = new AutomatonFreeRefinementEngine<>(mServices, mLogger, strategy);
 		final var result = afe.getResult();
 
-		mStatistics.addTraceCheck();
-		if (result.getCounterexampleFeasibility() == LBool.UNKNOWN) {
-			mStatistics.addUnknownTraceCheck();
+		mStatistics.reportTraceCheck(result);
+		switch (result.getCounterexampleFeasibility()) {
+		case UNKNOWN:
 			return new Result<>(ResultType.UNKNOWN_CHECK);
-		}
-
-		if (result.getCounterexampleFeasibility() == LBool.SAT) {
+		case SAT:
 			return new Result<>(ResultType.CONDITION_NOT_SATISFIED);
+		case UNSAT:
+			if (!result.somePerfectSequenceFound()) {
+				return new Result<>(ResultType.PROOF_IMPERFECT);
+			}
+			return new Result<>(postProcessRefinementResult(result));
+		default:
+			throw new AssertionError("unknown LBool: " + result.getCounterexampleFeasibility());
 		}
-		if (!result.somePerfectSequenceFound()) {
-			mStatistics.addImperfectProof();
-			return new Result<>(ResultType.PROOF_IMPERFECT);
-		}
-		return new Result<>(postProcessRefinementResult(result));
 	}
 
 	// Post-processes the refinement result's trace predicates such that the usage of an additional non-commutativity
@@ -262,6 +258,10 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 		return new QualifiedTracePredicates(tp, qtp.getOrigin(), qtp.isPerfect());
 	}
 
+	public IStatisticsDataProvider getStatistics() {
+		return mStatistics;
+	}
+
 	public static final class Result<L extends IAction> {
 		private final ResultType mType;
 		private final IRefinementEngineResult<L, Collection<QualifiedTracePredicates>> mRefinementResult;
@@ -293,5 +293,58 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 
 	public enum ResultType {
 		ALREADY_INDEPENDENT, NO_CONDITION_FOUND, CONDITION_NOT_SATISFIED, UNKNOWN_CHECK, PROOF_IMPERFECT, SUCCESS
+	}
+
+	private static class Statistics extends AbstractStatisticsDataProvider {
+		private final Stopwatch mOverallTime = new Stopwatch();
+		private final Stopwatch mConditionCalculationTime = new Stopwatch();
+
+		private int mConditionCalculations;
+		private int mQuantifiedConditions;
+		private int mTraceChecks;
+		private int mUnknownTraceChecks;
+		private int mImperfectProofs;
+
+		public Statistics() {
+			declareStopwatch("CheckTime", mOverallTime);
+			declareStopwatch("ConditionCalculationTime", mConditionCalculationTime);
+
+			declareCounter("ConditionCalculations", () -> mConditionCalculations);
+			declareCounter("QuantifiedConditions", () -> mQuantifiedConditions);
+			declareCounter("TraceChecks", () -> mTraceChecks);
+			declareCounter("UnknownTraceChecks", () -> mUnknownTraceChecks);
+			declareCounter("ImperfectProofs", () -> mImperfectProofs);
+		}
+
+		private void startCheck() {
+			mOverallTime.start();
+		}
+
+		private void stopCheck() {
+			mOverallTime.stop();
+		}
+
+		private void startConditionCalculation() {
+			mConditionCalculations++;
+			mConditionCalculationTime.start();
+		}
+
+		private void stopConditionCalculation() {
+			mConditionCalculationTime.stop();
+		}
+
+		private void reportQuantifiedCondition() {
+			mQuantifiedConditions++;
+		}
+
+		private void reportTraceCheck(final IRefinementEngineResult<?, ?> result) {
+			mTraceChecks++;
+			final LBool feasibility = result.getCounterexampleFeasibility();
+			if (feasibility == LBool.UNKNOWN) {
+				mUnknownTraceChecks++;
+			} else if (feasibility == LBool.UNSAT && !result.somePerfectSequenceFound()) {
+				mImperfectProofs++;
+			}
+		}
 	}
 }

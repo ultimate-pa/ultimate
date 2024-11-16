@@ -34,6 +34,7 @@ import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
+import java.util.function.IntSupplier;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -62,6 +63,15 @@ public abstract class AbstractStatisticsDataProvider implements IStatisticsDataP
 	 */
 	protected final void declare(final String key, final Supplier<Object> getter, final KeyType type) {
 		declare(key, getter, type::aggregate, type::prettyPrint);
+	}
+
+	protected final void declareStopwatch(final String key, final Stopwatch stopwatch) {
+		declare(key, stopwatch::getElapsedTime, (x, y) -> (long) x + (long) y,
+				(k, data) -> PrettyPrint.keyColonData(k + " [ms]", Math.round(((Stopwatch) data).getElapsedTime())));
+	}
+
+	protected final void declareCounter(final String key, final IntSupplier getter) {
+		declare(key, getter::getAsInt, KeyType.COUNTER);
 	}
 
 	protected final void declare(final String key, final Supplier<Object> getter,
