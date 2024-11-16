@@ -52,7 +52,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult.BasicRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.ConditionalCommutativityStatisticsGenerator.ConditionalCommutativityStopwatches;
@@ -175,26 +174,7 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 		return proveCommutativityCondition(trace, controlConfigurations, letter1, condition);
 	}
 
-	private IPredicate generateCondition(final IPredicate state, final L letter1, final L letter2) {
-		final IPredicate condition = generateRawCondition(letter1, letter2, state);
-		if (condition == null) {
-			return null;
-		}
-
-		// TODO consider moving these checks to the appropriate symbolic independence relation.
-		if (SmtUtils.isTrueLiteral(condition.getFormula())) {
-			throw new AssertionError("Letters did not commute, but generated condition was 'true'");
-		}
-		if (SmtUtils.checkSatTerm(mManagedScript.getScript(), condition.getFormula()).equals(LBool.UNSAT)) {
-			mStatistics.addFalseCondition();
-			mLogger.warn("Unsatisfiable commutativity condition generated: %s", condition);
-			return null;
-		}
-
-		return condition;
-	}
-
-	private IPredicate generateRawCondition(final L letter1, final L letter2, final IPredicate context) {
+	private IPredicate generateCondition(final IPredicate context, final L letter1, final L letter2) {
 		mStatistics.startStopwatch(ConditionalCommutativityStopwatches.CONDITION);
 		try {
 			mStatistics.addConditionCalculation();

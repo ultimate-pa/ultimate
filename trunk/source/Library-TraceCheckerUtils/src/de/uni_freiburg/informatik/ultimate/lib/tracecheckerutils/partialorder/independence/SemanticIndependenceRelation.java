@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -356,6 +357,11 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 				final Term superset = computeInclusionTerm(tfBA, tfAB);
 				formula = SmtUtils.and(mManagedScript.getScript(), subset, superset);
 			}
+
+			if (SmtUtils.isFalseLiteral(formula)) {
+				// Filter false conditions and return "null" to indicate no condition could be found.
+				return null;
+			}
 			return mFactory.newPredicate(formula);
 		}
 
@@ -370,7 +376,23 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 			final Term nonInclusion =
 					TransFormulaUtils.computeGuardTerm(mServices, mManagedScript, difference, tryAuxVarElimination);
 
-			return SmtUtils.not(mManagedScript.getScript(), nonInclusion);
+			final Term inclusion = SmtUtils.not(mManagedScript.getScript(), nonInclusion);
+
+			// check the condition for satisfiability, and return "false" if it is unsatisfiable
+			mManagedScript.lock(this);
+			final LBool result = SmtUtils.checkSatTerm(mManagedScript.getScript(), inclusion);
+			mManagedScript.unlock(this);
+
+			switch (result) {
+			case UNKNOWN:
+				mStatistics.reportUnknownSymbolicCondition();
+				// $FALL-THROUGH$
+			case SAT:
+				return inclusion;
+			case UNSAT:
+				return mManagedScript.getScript().term(SMTLIBConstants.FALSE);
+			}
+			throw new IllegalStateException("Unknown LBool: " + result);
 		}
 
 		@Override
@@ -443,15 +465,22 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 
 	private final static class Statistics extends TimedIndependenceStatisticsDataProvider {
 		private static final String SYMBOLIC_CONDITION_COMPUTATIONS = "Symbolic Condition Computations";
+		private static final String UNKNOWN_SYMBOLIC_CONDITIONS = "Symbolic Conditions with UNKNOWN Satisfiability";
 		private int mSymbolicConditionComputations;
+		private int mUnknownSymbolicConditions;
 
 		public Statistics() {
 			super(SemanticIndependenceRelation.class);
 			declare(SYMBOLIC_CONDITION_COMPUTATIONS, () -> mSymbolicConditionComputations, KeyType.COUNTER);
+			declare(UNKNOWN_SYMBOLIC_CONDITIONS, () -> mUnknownSymbolicConditions, KeyType.COUNTER);
 		}
 
 		public void reportSymbolicConditionComputation() {
 			mSymbolicConditionComputations++;
+		}
+
+		public void reportUnknownSymbolicCondition() {
+			mUnknownSymbolicConditions++;
 		}
 	}
 }
