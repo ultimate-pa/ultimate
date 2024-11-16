@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE Test Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.ultimatetest.suites;
+package de.uni_freiburg.informatik.ultimate.test;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -34,9 +34,6 @@ import java.util.List;
 import java.util.function.UnaryOperator;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
-import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
-import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.util.DirectoryFileEndingsPair;
 import de.uni_freiburg.informatik.ultimate.test.util.UltimateRunDefinitionGenerator;
