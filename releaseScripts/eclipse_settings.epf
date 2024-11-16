@@ -38,6 +38,9 @@
 /instance/org.eclipse.jdt.core/org.eclipse.jdt.core.compiler.problem.unusedParameterIncludeDocCommentReference=disabled
 /instance/org.eclipse.jdt.core/org.eclipse.jdt.core.compiler.problem.unusedTypeParameter=info
 
+/instance/org.eclipse.jdt.ui/formatter_profile=_Ultimate
+/instance/org.eclipse.jdt.ui/formatter_settings_version=23
+/instance/org.eclipse.jdt.ui/org.eclipse.jdt.ui.formatterprofiles.version=23
 /instance/org.eclipse.jdt.core/org.eclipse.jdt.core.formatter.align_arrows_in_switch_on_columns=false
 /instance/org.eclipse.jdt.core/org.eclipse.jdt.core.formatter.align_assignment_statements_on_columns=false
 /instance/org.eclipse.jdt.core/org.eclipse.jdt.core.formatter.align_fields_grouping_blank_lines=2147483647
@@ -165,7 +168,7 @@
 /instance/org.eclipse.jdt.core/org.eclipse.jdt.core.formatter.indent_statements_compare_to_block=true
 /instance/org.eclipse.jdt.core/org.eclipse.jdt.core.formatter.indent_statements_compare_to_body=true
 /instance/org.eclipse.jdt.core/org.eclipse.jdt.core.formatter.indent_switchstatements_compare_to_cases=true
-/instance/org.eclipse.jdt.core/org.eclipse.jdt.core.formatter.indent_switchstatements_compare_to_switch=true
+/instance/org.eclipse.jdt.core/org.eclipse.jdt.core.formatter.indent_switchstatements_compare_to_switch=false
 /instance/org.eclipse.jdt.core/org.eclipse.jdt.core.formatter.indentation.size=4
 /instance/org.eclipse.jdt.core/org.eclipse.jdt.core.formatter.insert_new_line_after_annotation_on_enum_constant=insert
 /instance/org.eclipse.jdt.core/org.eclipse.jdt.core.formatter.insert_new_line_after_annotation_on_field=insert
@@ -477,10 +480,10 @@
 /instance/org.eclipse.jdt.ui/sp_cleanup.extract_increment=true
 /instance/org.eclipse.jdt.ui/sp_cleanup.format_source_code=true
 /instance/org.eclipse.jdt.ui/sp_cleanup.format_source_code_changes_only=false
-/instance/org.eclipse.jdt.ui/sp_cleanup.hash=false
+/instance/org.eclipse.jdt.ui/sp_cleanup.hash=true
 /instance/org.eclipse.jdt.ui/sp_cleanup.if_condition=false
 /instance/org.eclipse.jdt.ui/sp_cleanup.insert_inferred_type_arguments=false
-/instance/org.eclipse.jdt.ui/sp_cleanup.instanceof=true
+/instance/org.eclipse.jdt.ui/sp_cleanup.instanceof=false
 /instance/org.eclipse.jdt.ui/sp_cleanup.instanceof_keyword=true
 /instance/org.eclipse.jdt.ui/sp_cleanup.invert_equals=false
 /instance/org.eclipse.jdt.ui/sp_cleanup.join=true
@@ -508,7 +511,7 @@
 /instance/org.eclipse.jdt.ui/sp_cleanup.plain_replacement=true
 /instance/org.eclipse.jdt.ui/sp_cleanup.precompile_regex=false
 /instance/org.eclipse.jdt.ui/sp_cleanup.primitive_comparison=true
-/instance/org.eclipse.jdt.ui/sp_cleanup.primitive_parsing=true
+/instance/org.eclipse.jdt.ui/sp_cleanup.primitive_parsing=false
 /instance/org.eclipse.jdt.ui/sp_cleanup.primitive_rather_than_wrapper=true
 /instance/org.eclipse.jdt.ui/sp_cleanup.primitive_serialization=true
 /instance/org.eclipse.jdt.ui/sp_cleanup.pull_out_if_from_if_else=false
@@ -519,11 +522,11 @@
 /instance/org.eclipse.jdt.ui/sp_cleanup.qualify_static_member_accesses_through_subtypes_with_declaring_class=true
 /instance/org.eclipse.jdt.ui/sp_cleanup.qualify_static_member_accesses_with_declaring_class=true
 /instance/org.eclipse.jdt.ui/sp_cleanup.qualify_static_method_accesses_with_declaring_class=false
-/instance/org.eclipse.jdt.ui/sp_cleanup.reduce_indentation=true
+/instance/org.eclipse.jdt.ui/sp_cleanup.reduce_indentation=false
 /instance/org.eclipse.jdt.ui/sp_cleanup.redundant_comparator=true
 /instance/org.eclipse.jdt.ui/sp_cleanup.redundant_falling_through_block_end=false
 /instance/org.eclipse.jdt.ui/sp_cleanup.remove_private_constructors=true
-/instance/org.eclipse.jdt.ui/sp_cleanup.remove_redundant_modifiers=false
+/instance/org.eclipse.jdt.ui/sp_cleanup.remove_redundant_modifiers=true
 /instance/org.eclipse.jdt.ui/sp_cleanup.remove_redundant_semicolons=true
 /instance/org.eclipse.jdt.ui/sp_cleanup.remove_redundant_type_arguments=true
 /instance/org.eclipse.jdt.ui/sp_cleanup.remove_trailing_whitespaces=true

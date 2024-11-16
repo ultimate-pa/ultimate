@@ -848,8 +848,13 @@ public class CACSL2BoogieBacktranslator extends
 				} else if (cnode instanceof CASTForStatement) {
 					// same as while
 					final CASTForStatement forStmt = (CASTForStatement) cnode;
-					edge = new MultigraphEdge<>(currentSource,
-							mLocationFactory.createCLocation(forStmt.getConditionExpression()), lastTarget);
+					// If there is a condition in the for-loop use it as a location.
+					// Otherwise fall back to a dummy "1" expression (with for-loop as backing location).
+					IASTExpression condition = forStmt.getConditionExpression();
+					if (condition == null) {
+						condition = new FakeExpression(forStmt, "1");
+					}
+					edge = new MultigraphEdge<>(currentSource, mLocationFactory.createCLocation(condition), lastTarget);
 					new ConditionAnnotation(isNegated).annotate(edge);
 				} else if (cnode instanceof CASTFunctionCallExpression) {
 					edge = new MultigraphEdge<>(currentSource, cloc, lastTarget);

@@ -10,8 +10,24 @@ DIR="${BASH_SOURCE%/*}"
 if [[ ! -d "$DIR" ]]; then DIR="$PWD"; fi
 . "$DIR/makeSettings.sh"
 
+verlte() {
+  printf '%s\n%s' "$1" "$2" | sort -C -V
+}
+
 build() {
   spushd "../../trunk/source/BA_MavenParentUltimate/"
+  if ! command -v mvn  &> /dev/null ; then
+    echo "Maven not found. Please install Maven and make sure it is in your PATH."
+    exit 1
+  fi
+  mvn_version=$(mvn --version)
+  java_version=$(grep -oP 'Java version: \K.*?,' <<< "$mvn_version")
+  java_version=${java_version::-1} # remove ,
+  if verlte "$java_version" "21.0.0"; then
+    echo "Java version $java_version is too old. Please install Java 21 or newer."
+    exit 1
+  fi
+  printf 'Using the following versions:\n%s\n' "$mvn_version"
   exit_on_fail mvn -T 1C clean install -Pmaterialize
   spopd
 }

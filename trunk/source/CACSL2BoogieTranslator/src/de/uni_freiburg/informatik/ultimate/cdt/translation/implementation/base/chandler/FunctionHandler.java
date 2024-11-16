@@ -38,7 +38,9 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.eclipse.cdt.core.dom.ast.ASTNameCollector;
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
@@ -64,6 +66,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.GeneratedBoogieAstVisitor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
@@ -92,6 +95,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.I
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.MainDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.MemoryArea;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.StandardFunctionHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
@@ -127,6 +131,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.UndefinedFunctionBehaviour;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
@@ -1172,8 +1177,43 @@ public class FunctionHandler {
 		return Collections.unmodifiableSet(mFunctionSignaturesThatHaveAFunctionPointer);
 	}
 
-	public Set<String> getCalledFunctionsWithoutDefinition() {
-		return DataStructureUtils.difference(mCalledFunctions, mDefinedFunctions);
+	private Optional<Declaration> getDefaultImplementation(final String name,
+			final UndefinedFunctionBehaviour undefinedFunctionBehaviour) {
+		final Procedure proc = mProcedureManager.getProcedureDeclaration(name);
+		final ILocation loc = LocationFactory.createIgnoreLocation(proc.getLoc());
+		switch (undefinedFunctionBehaviour) {
+		case CRASH:
+			throw new IllegalArgumentException("Calls to undefined functions are not supported.");
+		case NON_DETERMINISTIC_RETURN:
+			// To model a non-determinstic return value, we can simply omit the declaration, as a Boogie procedure
+			// without an implementation does exactly that.
+			return Optional.empty();
+		case OVERAPPROXIMATE_BEHAVIOUR: {
+			// Implement the function using while (true) assert false;
+			final Statement statement = StandardFunctionHandler.modelUnsupportedFeature(loc, name);
+			final Body body = mProcedureManager.constructBody(loc, new VariableDeclaration[0],
+					new Statement[] { statement }, name);
+			final Procedure result = new Procedure(loc, proc.getAttributes(), name, proc.getTypeParams(),
+					proc.getInParams(), proc.getOutParams(), null, body);
+			return Optional.of(result);
+		}
+		default:
+			throw new AssertionError("Invalid setting " + undefinedFunctionBehaviour);
+		}
+	}
+
+	public Set<Declaration>
+			handleFunctionsWithoutDefinitions(final UndefinedFunctionBehaviour undefinedFunctionBehaviour) {
+		final Set<String> calledFunctionsWithoutDefinition =
+				DataStructureUtils.difference(mCalledFunctions, mDefinedFunctions);
+		if (calledFunctionsWithoutDefinition.isEmpty()) {
+			return Set.of();
+		}
+		mLogger.warn("The following functions are not defined or handled internally: "
+				+ String.join(", ", calledFunctionsWithoutDefinition));
+		return calledFunctionsWithoutDefinition.stream()
+				.flatMap(x -> getDefaultImplementation(x, undefinedFunctionBehaviour).stream())
+				.collect(Collectors.toSet());
 	}
 
 	/**
@@ -1414,7 +1454,7 @@ public class FunctionHandler {
 			if (one == null && other == null) {
 				return true;
 			}
-			if ((one == null) || (other == null)) {
+			if (one == null || other == null) {
 				return false;
 			}
 			throw new IllegalArgumentException("Both arguments are non-null");
