@@ -67,7 +67,7 @@ public abstract class AbstractStatisticsDataProvider implements IStatisticsDataP
 
 	protected final void declareStopwatch(final String key, final Stopwatch stopwatch) {
 		declare(key, stopwatch::getElapsedTime, (x, y) -> (long) x + (long) y,
-				(k, data) -> PrettyPrint.keyColonData(k + " [ms]", Math.round(((Stopwatch) data).getElapsedTime())));
+				(k, data) -> PrettyPrint.keyColonData(k + " [ms]", Math.round((long) data * 1e-6)));
 	}
 
 	protected final void declareCounter(final String key, final IntSupplier getter) {
