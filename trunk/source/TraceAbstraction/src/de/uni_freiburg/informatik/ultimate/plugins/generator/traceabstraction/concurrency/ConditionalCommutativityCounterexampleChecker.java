@@ -32,6 +32,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -41,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsOrder;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.ISleepSetStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -50,7 +52,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult.BasicRefinementEngineResult;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.ConditionalCommutativityChecker;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.ConditionalCommutativityStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -79,6 +80,8 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 	private final ILogger mLogger;
 	private final IDfsOrder<L, IPredicate> mDfsOrder;
 	private final ConditionalCommutativityChecker<L> mChecker;
+
+	private final ISleepSetStateFactory<L, IPredicate, IPredicate> mSleepSetFactory;
 	private final Function<Word<L>, IIpAbStrategyModule<L>> mAutomatonBuilderFactory;
 	private final ConditionalCommutativityStatisticsGenerator mStatistics;
 
@@ -104,12 +107,14 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 	 */
 	public ConditionalCommutativityCounterexampleChecker(final IUltimateServiceProvider services,
 			final IDfsOrder<L, IPredicate> dfsOrder, final ConditionalCommutativityChecker<L> conComChecker,
+			final ISleepSetStateFactory<L, IPredicate, IPredicate> sleepSetFactory,
 			final Function<Word<L>, IIpAbStrategyModule<L>> automatonBuilderFactory,
 			final ConditionalCommutativityStatisticsGenerator statistics) {
 		mLogger = services.getLoggingService().getLogger(ConditionalCommutativityCounterexampleChecker.class);
 
 		mDfsOrder = dfsOrder;
 		mChecker = conComChecker;
+		mSleepSetFactory = Objects.requireNonNull(sleepSetFactory);
 		mAutomatonBuilderFactory = automatonBuilderFactory;
 		mStatistics = statistics;
 	}
@@ -210,8 +215,7 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 	}
 
 	private boolean isNonMinimalityPoint(final IPredicate state, final L currentLetter, final L nextLetter) {
-		// TODO this is brittle, it will fail for many configurations
-		final Set<L> sleepSet = ((SleepPredicate<L>) state).getSleepSet();
+		final Set<L> sleepSet = mSleepSetFactory.getSleepSet(state);
 		return sleepSet.contains(nextLetter) || mDfsOrder.getOrder(state).compare(currentLetter, nextLetter) > 0;
 	}
 

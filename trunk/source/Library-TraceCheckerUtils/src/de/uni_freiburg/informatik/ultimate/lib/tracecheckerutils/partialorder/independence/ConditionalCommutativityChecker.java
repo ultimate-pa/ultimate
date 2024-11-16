@@ -55,12 +55,10 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.ConditionalCommutativityStatisticsGenerator.ConditionalCommutativityStopwatches;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.ICopyActionFactory;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.util.Lazy;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
  * Conditional commutativity checker, which checks for conditional commutativity of two given letters (letter1,letter2),
@@ -164,15 +162,6 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 
 	private Result<L> checkConditionalCommutativityInternal(final Word<L> trace, final List<?> controlConfigurations,
 			final IPredicate state, final L letter1, final L letter2) {
-		// TODO this is brittle, let caller decide how one extracts a sleep set from the states
-		// TODO is this actually still needed?
-		if (state instanceof SleepPredicate) {
-			final ImmutableSet<?> sleepSet = ((SleepPredicate<L>) state).getSleepSet();
-			if (sleepSet.contains(letter1) && sleepSet.contains(letter2)) {
-				return null;
-			}
-		}
-
 		final Dependence dependence = mIndependenceRelation.isIndependent(state, letter1, letter2);
 		if (dependence == Dependence.INDEPENDENT) {
 			return new Result<>(ResultType.ALREADY_INDEPENDENT);
