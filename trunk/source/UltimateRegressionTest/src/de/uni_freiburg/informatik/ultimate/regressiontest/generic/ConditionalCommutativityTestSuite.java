@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE Test Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.ultimatetest.suites.traceabstraction;
+package de.uni_freiburg.informatik.ultimate.regressiontest.generic;
 
 import java.util.Collection;
 import java.util.List;
@@ -37,11 +37,14 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.Pa
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.SemanticIndependenceRelation.IndependenceConditions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.test.AbstractModelCheckerTestSuite;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition.NamedServiceCallback;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.decider.SafetyCheckTestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.reporting.IIncrementalLog;
+import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
 import de.uni_freiburg.informatik.ultimate.test.util.UltimateRunDefinitionGenerator;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -49,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @author klumpp@informatik.uni-freiburg.de
  *
  */
-public class ConditionalCommutativityTestSuite extends AbstractTraceAbstractionTestSuite {
+public class ConditionalCommutativityTestSuite extends AbstractModelCheckerTestSuite {
 	private static final int TIMEOUT = 60; // seconds
 
 	private static final String TOOLCHAIN_C = "AutomizerCInline.xml";
@@ -82,6 +85,16 @@ public class ConditionalCommutativityTestSuite extends AbstractTraceAbstractionT
 	@Override
 	protected ITestResultDecider constructITestResultDecider(final UltimateRunDefinition urd) {
 		return new SafetyCheckTestResultDecider(urd, false);
+	}
+
+	@Override
+	protected ITestSummary[] constructTestSummaries() {
+		return new ITestSummary[0];
+	}
+
+	@Override
+	protected IIncrementalLog[] constructIncrementalLog() {
+		return new IIncrementalLog[0];
 	}
 
 	@Override
