@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
@@ -144,8 +145,6 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	private IDeadEndStore<IPredicate, IPredicate> mDeadEndStore;
 
 	// Fields needed for commutativity condition synthesis
-	private final ConditionalCommutativityChecker<L> mConComChecker;
-	private final StrategyFactory<L> mCommutativityStrategyFactory;
 	private final ConditionalCommutativityStatisticsGenerator mConComCheckerBenchmark = new ConditionalCommutativityStatisticsGenerator();
 	private final ConditionalCommutativityCounterexampleChecker<L> mConCounterexampleChecker;
 
@@ -201,12 +200,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 
 		mProgram = initialAbstraction;
 
-		mCommutativityStrategyFactory = createConditionalCommutativityStrategyFactory(transitionClazz);
-		mConComChecker = constructConComChecker(copyFactory);
-		mConCounterexampleChecker = mPref.useConditionalCommutativityChecker()
-				? new ConditionalCommutativityCounterexampleChecker<>(mServices, mPOR.getDfsOrder(), mConComChecker,
-						this::createConditionalCommutativityAutomatonBuilder, mConComCheckerBenchmark)
-				: null;
+		mConCounterexampleChecker = setupCommutativityConditionSynthesis(copyFactory, transitionClazz);
 	}
 
 	@Override
@@ -497,43 +491,42 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		return mDeadEndStore;
 	}
 
-	private StrategyFactory<L> createConditionalCommutativityStrategyFactory(Class<L> transitionClazz) {
+	private ConditionalCommutativityCounterexampleChecker<L> setupCommutativityConditionSynthesis(
+			final ICopyActionFactory<L> copyFactory, final Class<L> transitionClazz) {
 		if (!mPref.useConditionalCommutativityChecker()) {
 			return null;
 		}
 
-		final boolean computeCounterexampleExecution = false;
-		final TaCheckAndRefinementPreferences<L> taCheckAndRefinementPrefs = new TaCheckAndRefinementPreferences<>(
-				getServices(), mPref, mPref.interpolation(), mSimplificationTechnique, mCsToolkit, mPredicateFactory, mIcfg,
-				computeCounterexampleExecution);
-		return new StrategyFactory<>(mLogger, mPref, taCheckAndRefinementPrefs, mIcfg, mPredicateFactory,
-				mPredicateFactoryInterpolantAutomata, transitionClazz);
-	}
-
-	private ConditionalCommutativityChecker<L> constructConComChecker(final ICopyActionFactory<L> copyFactory) {
-		if (!mPref.useConditionalCommutativityChecker()) {
-			return null;
+		// Create a strategy factory for conditional commutativity proofs, which never computes executions.
+		// Computing executions is expensive and not needed as we are only interested in proofs.
+		Function<Counterexample<L>, IRefinementStrategy<L>> createStrategy;
+		{
+			final boolean computeCounterexampleExecution = false;
+			final TaCheckAndRefinementPreferences<L> taCheckAndRefinementPrefs = new TaCheckAndRefinementPreferences<>(
+					getServices(), mPref, mPref.interpolation(), mSimplificationTechnique, mCsToolkit,
+					mPredicateFactory, mIcfg, computeCounterexampleExecution);
+			final var commutativityStrategyFactory = new StrategyFactory<>(mLogger, mPref, taCheckAndRefinementPrefs,
+					mIcfg, mPredicateFactory, mPredicateFactoryInterpolantAutomata, transitionClazz);
+			createStrategy = counterexample -> commutativityStrategyFactory.constructStrategy(mServices, counterexample,
+					mAbstraction, new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()), mFactory,
+					getPreconditionProvider(), getPostconditionProvider(),
+					mPref.getConditionalCommutativityRefinementStrategy());
 		}
 
 		// TODO This will cause issues for configurations in which the independence relation changes across iterations
 		final IIndependenceRelation<IPredicate, L> relation = mPOR.getIndependence(0);
 
-		return new ConditionalCommutativityChecker<>(mServices, mCsToolkit.getManagedScript(), relation,
-				this::buildStrategyForConditionalCommutativity, mPredicateFactory, copyFactory,
-				mConComCheckerBenchmark);
-	}
+		final var conComChecker = new ConditionalCommutativityChecker<>(mServices, mCsToolkit.getManagedScript(),
+				relation, createStrategy, mPredicateFactory, copyFactory, mConComCheckerBenchmark);
 
-	private IRefinementStrategy<L> buildStrategyForConditionalCommutativity(final Counterexample<L> counterexample) {
-		return mCommutativityStrategyFactory.constructStrategy(mServices, counterexample, mAbstraction,
-				new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()), mFactory, getPreconditionProvider(),
-				getPostconditionProvider(), mPref.getConditionalCommutativityRefinementStrategy());
-	}
-
-	private IIpAbStrategyModule<L> createConditionalCommutativityAutomatonBuilder(final Word<L> word) {
 		// This is the automaton builder used by our most common refinement strategies (e.g. CAMEL).
 		// The constructed automata should be enhanced through #enhanceInterpolantAutomaton(...) to be really useful.
-		return new IpAbStrategyModuleStraightlineAll<>(mServices, mLogger, mAbstraction, word,
-				mStateFactoryForRefinement);
+		final Function<Word<L>, IIpAbStrategyModule<L>> createAutomatonBuilder =
+				word -> new IpAbStrategyModuleStraightlineAll<>(mServices, mLogger, mAbstraction, word,
+						mStateFactoryForRefinement);
+
+		return new ConditionalCommutativityCounterexampleChecker<>(mServices, mPOR.getDfsOrder(), conComChecker,
+				createAutomatonBuilder, mConComCheckerBenchmark);
 	}
 
 	@Override
