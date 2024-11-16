@@ -676,6 +676,35 @@
 						</executions>
 					</plugin>
 
+					<!-- Code Coverage Analysis -->
+					<plugin>
+						<groupId>org.jacoco</groupId>
+						<artifactId>jacoco-maven-plugin</artifactId>
+						<version>${jacoco-version}</version>
+						<configuration>
+							<excludes>
+								<exclude>**/jdd/**/*</exclude>
+								<exclude>**/com/github/jhoenicke/javacup/**/*</exclude>
+								<exclude>**/org/apache/commons/cli/**/*</exclude>
+								<exclude>**/de/uni_freiburg/informatik/ultimate/ultimatetest/suites/**/*</exclude>
+							</excludes>
+						</configuration>
+						<executions>
+							<execution>
+								<goals>
+									<goal>prepare-agent</goal>
+								</goals>
+							</execution>
+							<execution>
+								<id>report</id>
+								<goals>
+									<goal>report-aggregate</goal>
+								</goals>
+								<phase>verify</phase>
+							</execution>
+						</executions>
+					</plugin>
+
 				</plugins>
 			</build>
 		</profile>
