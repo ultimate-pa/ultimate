@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyFactory;
 
 /**
- * {@link IRefinementStrategy} that tries either {@code MathSat}, {@code Z3} and {@code CVC4} for floating points or
+ * {@link IRefinementStrategy} that tries either {@code MathSat}, {@code CVC4} and {@code Z3} for floating points or
  * {@code Z3}, {@code CVC4} and {@code MathSat} in bitvector mode.
  * <p>
  * The class uses a {@link StraightLineInterpolantAutomatonBuilder} for constructing the interpolant automaton.
@@ -62,17 +62,17 @@ public class FoxRefinementStrategy<L extends IIcfgTransition<?>> extends BasicRe
 		final TermClassifier tc = factory.getTermClassifierForTrace();
 		final List<IIpTcStrategyModule<?, L>> rtr = new ArrayList<>();
 		final boolean hasFloats = RefinementStrategyUtils.hasFloats(tc);
-		final boolean hasNoQuantifiersNoBitvectorExtensions =
-				RefinementStrategyUtils.hasNoQuantifiersNoBitvectorExtensions(tc);
-		if (hasNoQuantifiersNoBitvectorExtensions && hasFloats) {
-			// floats and no quantifiers and no FP_TO_IEEE_BV_EXTENSION
+		if (!hasFloats) {
+			rtr.add(factory.createIpTcStrategyModuleZ3(InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect));
+			rtr.add(factory.createIpTcStrategyModuleCVC4(InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect));
+		}
+		if (RefinementStrategyUtils.hasNoQuantifiersNoBitvectorExtensions(tc)) {
+			// no quantifiers and no FP_TO_IEEE_BV_EXTENSION
 			rtr.add(factory.createIpTcStrategyModuleMathsat(InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect));
 		}
-		rtr.add(factory.createIpTcStrategyModuleZ3(InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect));
-		rtr.add(factory.createIpTcStrategyModuleCVC4(InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect));
-		if (hasNoQuantifiersNoBitvectorExtensions && !hasFloats) {
-			// no floats and no quantifiers and no FP_TO_IEEE_BV_EXTENSION
-			rtr.add(factory.createIpTcStrategyModuleMathsat(InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect));
+		if (hasFloats) {
+			rtr.add(factory.createIpTcStrategyModuleCVC4(InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect));
+			rtr.add(factory.createIpTcStrategyModuleZ3(InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect));
 		}
 		return rtr.toArray(new IIpTcStrategyModule[rtr.size()]);
 	}
