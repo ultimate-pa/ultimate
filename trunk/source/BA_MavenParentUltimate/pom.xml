@@ -22,7 +22,7 @@
 		<!-- https://mvnrepository.com/artifact/org.eclipse.tycho/tycho-core -->
 		<tycho-version>4.0.9</tycho-version>
 		<!-- https://mvnrepository.com/artifact/org.sonarsource.scanner.maven/sonar-maven-plugin -->
-		<sonar-version>4.0.0.4121</sonar-version>
+		<sonar-version>5.0.0.4389</sonar-version>
 		<!-- https://mvnrepository.com/artifact/org.jacoco/jacoco-maven-plugin -->
 		<jacoco-version>0.8.12</jacoco-version>
 		<!-- https://mvnrepository.com/artifact/io.github.git-commit-id/git-commit-id-maven-plugin -->
@@ -580,6 +580,7 @@
 						<artifactId>tycho-surefire-plugin</artifactId>
 						<version>${tycho-version}</version>
 						<configuration>
+							<skipTests>false</skipTests>
 							<providerHint>junit47</providerHint>
 							<useUIHarness>false</useUIHarness>
 							<useUIThread>false</useUIThread>
@@ -641,11 +642,14 @@
 		</profile>
 
 		<profile>
-			<!-- The profile travis is used to generate junit test case coverage through 
-				travis. It uses all regression tests, but not UltimateTest, 
-				as those tests are very slow and should be executed manually via profile 
-				manualtest. You should not need to run this profile manually. -->
-			<id>travis</id>
+			<!-- 
+			Use this profile to run sonar analysis. You need to specify 
+			-Dsonar.host.url=<url> 
+			-Dsonar.token='<token>' 
+			as CLI arguments (or in some other way).
+			See https://docs.sonarsource.com/sonarqube/9.9/analyzing-source-code/scanners/sonarscanner-for-maven/
+			-->
+			<id>sonar</id>
 
 			<build>
 				<plugins>
@@ -654,44 +658,23 @@
 						<artifactId>tycho-surefire-plugin</artifactId>
 						<version>${tycho-version}</version>
 						<configuration>
-							<skipTests>false</skipTests>
-							<providerHint>junit47</providerHint>
-							<useUIHarness>false</useUIHarness>
-							<useUIThread>false</useUIThread>
-							<showEclipseLog>true</showEclipseLog>
-							<threadCount>1</threadCount>
-							<failIfNoTests>false</failIfNoTests>
-							<trimStackTrace>true</trimStackTrace>
-							<redirectTestOutputToFile>true</redirectTestOutputToFile>
-							<argLine>${tycho.testArgLine} ${coverage-argline}</argLine>
-
-							<includes>
-								<include>**/*.java</include>
-							</includes>
+							<skipTests>true</skipTests>
 						</configuration>
 					</plugin>
 
-					<!-- Code Coverage Analysis -->
 					<plugin>
-						<groupId>org.jacoco</groupId>
-						<artifactId>jacoco-maven-plugin</artifactId>
-						<version>${jacoco-version}</version>
+						<groupId>org.sonarsource.scanner.maven</groupId>
+						<artifactId>sonar-maven-plugin</artifactId>
+						<version>${sonar-version}</version>
 						<executions>
 							<execution>
 								<goals>
-									<goal>prepare-agent</goal>
+									<goal>sonar</goal>
 								</goals>
-							</execution>
-							<execution>
-								<id>report</id>
-								<goals>
-									<goal>report-aggregate</goal>
-								</goals>
-								<phase>verify</phase>
+								<phase>install</phase>
 							</execution>
 						</executions>
 					</plugin>
-
 
 				</plugins>
 			</build>
