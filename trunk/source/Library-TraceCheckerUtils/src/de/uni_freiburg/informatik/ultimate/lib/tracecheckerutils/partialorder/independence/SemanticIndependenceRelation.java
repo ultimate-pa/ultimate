@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -91,8 +92,7 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 		private final boolean mRequiresPredicateFactory;
 		private final boolean mRequiresConditionGenerator;
 
-		private IndependenceConditions(final boolean requiresPredicateFactory,
-				final boolean requiresConditionGenerator) {
+		IndependenceConditions(final boolean requiresPredicateFactory, final boolean requiresConditionGenerator) {
 			mRequiresPredicateFactory = requiresPredicateFactory;
 			mRequiresConditionGenerator = requiresConditionGenerator;
 		}
@@ -363,8 +363,9 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 			final var difference = TransFormulaUtils.intersect(mManagedScript, lhs,
 					TransFormulaUtils.negate(rhs, mManagedScript, mServices));
 
-			// Although auxiliary variables can be skolemized, elimination and simplification yields a simpler predicate.
-			// This also affects the trace proofs later on, especially if simplification can eliminate a program variable from the condition.
+			// Although auxiliary variables can be skolemized, elimination and simplification yields a simpler
+			// predicate. This also affects the trace proofs later on, especially if simplification can eliminate a
+			// program variable from the condition.
 			final boolean tryAuxVarElimination = true;
 			final Term nonInclusion =
 					TransFormulaUtils.computeGuardTerm(mServices, mManagedScript, difference, tryAuxVarElimination);
@@ -420,7 +421,7 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 				final var irrelevantVars = condition.getVars().stream()
 						.filter(pv -> !SemanticConditionEliminator.isRelevant(condition, a)
 								&& !SemanticConditionEliminator.isRelevant(condition, b))
-						.map(pv -> pv.getTermVariable()).collect(Collectors.toList());
+						.map(IProgramVar::getTermVariable).collect(Collectors.toList());
 				final var quantified = SmtUtils.quantifier(mManagedScript.getScript(), QuantifiedFormula.EXISTS,
 						irrelevantVars, conjunction);
 				return mPredicateFactory.newPredicate(quantified);

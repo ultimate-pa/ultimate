@@ -69,11 +69,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  *            letter type
  */
 public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
-	// Determines after how many occurrences of the same path program a conditional commutativity condition will be synthesized.
+	// Determines after how many occurrences of the same path program a commutativity condition will be synthesized.
 	private static final int CONDITIONAL_COMMUTATIVITY_THRESHOLD = 2;
 
 	// How often we retry a check if the returned proof was imperfect.
-	// Currently, we do not retry at all, but this may change if we handle loop unrolling specially (see TODO further below).
+	// Currently, we do not retry at all, but this may change if we handle loop unrolling specially (see TODO below).
 	private static final int IMPERFECT_PROOF_RETRIES = 0;
 
 	private final ILogger mLogger;
@@ -124,14 +124,16 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 	 *            the control configurations along the given run
 	 * @return an interpolant automaton proving conditional commutativity or null otherwise
 	 */
-	public IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> getCommutativityProof(final NestedRun<L, IPredicate> run, final List<Object> controlConfigurations) {
+	public IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>>
+			getCommutativityProof(final NestedRun<L, IPredicate> run, final List<Object> controlConfigurations) {
 		final Set<?> pathProgram = Set.copyOf(controlConfigurations);
-		final int occurrence = mPreviouslySeenPathPrograms.containsKey(pathProgram) ? mPreviouslySeenPathPrograms.get(pathProgram) + 1 : 1;
+		final int occurrence = mPreviouslySeenPathPrograms.getOrDefault(pathProgram, 0) + 1;
 		mPreviouslySeenPathPrograms.put(pathProgram, occurrence);
 
 		mLogger.info("Examining path program with hash %d, occurence #%d", pathProgram.hashCode(), occurrence);
 		if (occurrence < CONDITIONAL_COMMUTATIVITY_THRESHOLD) {
-			mLogger.info("Commutativity condition synthesis is only active after more than %d occurrences. Skipping...", CONDITIONAL_COMMUTATIVITY_THRESHOLD);
+			mLogger.info("Commutativity condition synthesis is only active after more than %d occurrences. Skipping...",
+					CONDITIONAL_COMMUTATIVITY_THRESHOLD);
 			return null;
 		}
 		mLogger.info("Trying to synthesize and prove commutativity condition.");
@@ -146,7 +148,7 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 			}
 
 			final Word<L> currentTrace = run.getWord().getSubWord(0, i);
-			final List<Object> currentConfigurations = controlConfigurations.subList(0, i+1);
+			final List<Object> currentConfigurations = controlConfigurations.subList(0, i + 1);
 
 			// Check if we already cached this check as hopeless
 			final var triple = new Triple<>(controlConfigurations, letter1, letter2);
@@ -156,11 +158,14 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 			}
 
 			mLogger.info("Performing commutativity condition check at non-minimality point %d", i);
-			final var checkResult = mChecker.checkConditionalCommutativity(currentTrace, currentConfigurations, state, letter1, letter2);
+			final var checkResult = mChecker.checkConditionalCommutativity(currentTrace, currentConfigurations, state,
+					letter1, letter2);
 			switch (checkResult.getType()) {
 			case SUCCESS:
 				mStatistics.addCommutingCounterexample();
-				mLogger.info("Successfully proved commutativity at non-minimality point %d. Constructing proof automaton...", i);
+				mLogger.info(
+						"Successfully proved commutativity at non-minimality point %d. Constructing proof automaton...",
+						i);
 				return buildAutomaton(currentTrace, checkResult.getRefinementResult());
 
 			case UNKNOWN_CHECK:
@@ -171,15 +176,18 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 				break;
 
 			case ALREADY_INDEPENDENT:
-				// By the definition of non-minimality points and the fact that we compute a minimal reduction, this should be impossible.
-				// TODO This can currently happen if letter2 is not enabled because letter1 is the fork that creates the thread of letter2.
-				// assert false : "Should never perform conditional commutativity check for already-independent letters";
+				// By the definition of non-minimality points and the fact that we compute a minimal reduction, this
+				// should be impossible.
+				// TODO This can currently happen if letter2 is not enabled because letter1 is the fork that creates the
+				// thread of letter2.
+				// assert false : "Should never perform conditional commutativity check for independent letters";
 				mLogger.warn("Statements were already independent.");
 				break;
 
 			case PROOF_IMPERFECT:
 				final int repetition = mFailedConditionChecks.getOrDefault(triple, 0) + 1;
-				mLogger.info("Commutativity condition check failed due to imperfect proof (attempt %d of %d).", repetition, IMPERFECT_PROOF_RETRIES + 1);
+				mLogger.info("Commutativity condition check failed due to imperfect proof (attempt %d of %d).",
+						repetition, IMPERFECT_PROOF_RETRIES + 1);
 				if (repetition <= IMPERFECT_PROOF_RETRIES) {
 					mFailedConditionChecks.put(triple, repetition);
 				} else {
@@ -189,8 +197,9 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 				break;
 
 			case NO_CONDITION_FOUND:
-				// We do not cache this as hopeless because we assume the attempt to find a condition is comparatively cheap,
-				// and since this result may occur quite often (e.g. for letters of the same thread), the memory overhead would be large.
+				// We do not cache this as hopeless because we assume the attempt to find a condition is comparatively
+				// cheap, and since this result may occur quite often (e.g. for letters of the same thread), the memory
+				// overhead would be large.
 				mLogger.info("No commutativity condition found.");
 				break;
 			}
@@ -206,12 +215,11 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 		return sleepSet.contains(nextLetter) || mDfsOrder.getOrder(state).compare(currentLetter, nextLetter) > 0;
 	}
 
-	private IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> buildAutomaton(
-			final Word<L> trace,
+	private IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> buildAutomaton(final Word<L> trace,
 			final IRefinementEngineResult<L, Collection<QualifiedTracePredicates>> refinementResult) {
 		// The code below is adapted from TraceAbstractionRefinementEngine.
-		final var perfectIps = refinementResult.getInfeasibilityProof().stream().filter(qtp -> qtp.isPerfect())
-				.collect(Collectors.toList());
+		final var perfectIps = refinementResult.getInfeasibilityProof().stream()
+				.filter(QualifiedTracePredicates::isPerfect).collect(Collectors.toList());
 		final var imperfectIps = refinementResult.getInfeasibilityProof().stream().filter(qtp -> !qtp.isPerfect())
 				.collect(Collectors.toList());
 

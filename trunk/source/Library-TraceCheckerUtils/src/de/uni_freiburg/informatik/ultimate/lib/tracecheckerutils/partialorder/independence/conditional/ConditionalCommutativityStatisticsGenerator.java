@@ -123,10 +123,8 @@ public class ConditionalCommutativityStatisticsGenerator extends StatisticsGener
 
 	@Override
 	public String[] getStopwatches() {
-		return new String[] {
-				ConditionalCommutativityStatisticsDefinitions.CheckTime.toString(),
-				ConditionalCommutativityStatisticsDefinitions.ConditionCalculationTime
-						.toString() };
+		return new String[] { ConditionalCommutativityStatisticsDefinitions.CheckTime.toString(),
+				ConditionalCommutativityStatisticsDefinitions.ConditionCalculationTime.toString() };
 	}
 
 	@Override
@@ -172,8 +170,7 @@ public class ConditionalCommutativityStatisticsGenerator extends StatisticsGener
 
 		ConditionCalculationTime(StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_NANOS),
 
-		CommutingCounterexamples(StatisticsType.INTEGER_ADDITION,
-				StatisticsType.KEY_BEFORE_DATA),
+		CommutingCounterexamples(StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
 
 		ConditionCalculations(StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
 

@@ -43,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
  *            The type of letters whose independence is defined by the relation.
  */
 public class CachedIndependenceRelation<S, L> implements IIndependenceRelation<S, L> {
-
 	private final IIndependenceRelation<S, L> mUnderlying;
 	private final IIndependenceCache<S, L> mCache;
 	private final CachedIndependenceStatisticsProvider mStatistics;
@@ -143,20 +142,20 @@ public class CachedIndependenceRelation<S, L> implements IIndependenceRelation<S
 	private final class CachingSymbolicIndependence implements ISymbolicIndependenceRelation<L, S> {
 		private final ISymbolicIndependenceRelation<L, S> mUnderlyingSymbolic;
 
-		public CachingSymbolicIndependence(ISymbolicIndependenceRelation<L, S> underlyingSymbolic) {
-			super();
+		public CachingSymbolicIndependence(final ISymbolicIndependenceRelation<L, S> underlyingSymbolic) {
 			mUnderlyingSymbolic = underlyingSymbolic;
 		}
 
 		@Override
-		public S getCommutativityCondition(S existingCondition, L a, L b) {
+		public S getCommutativityCondition(final S existingCondition, final L a, final L b) {
 			// The generated conditions are not cached for now.
 			// TODO Evaluate if caching of generated conditions is performance-relevant, and possibly implement it.
 			final S condition = mUnderlyingSymbolic.getCommutativityCondition(existingCondition, a, b);
 
 			if (condition != null) {
 				// Assuming soundness of the underlying symbolic relation, generated conditions can be added to mCache.
-				assert mUnderlying.isIndependent(condition, a, b) == Dependence.INDEPENDENT : "Generated condition does not guarantee independence";
+				assert mUnderlying.isIndependent(condition, a, b) == Dependence.INDEPENDENT
+						: "Generated condition does not guarantee independence";
 				mCache.cacheResult(condition, a, b, Dependence.INDEPENDENT);
 			}
 

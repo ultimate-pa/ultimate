@@ -145,9 +145,9 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	private IDeadEndStore<IPredicate, IPredicate> mDeadEndStore;
 
 	// Fields needed for commutativity condition synthesis
-	private final ConditionalCommutativityStatisticsGenerator mConComCheckerBenchmark = new ConditionalCommutativityStatisticsGenerator();
+	private final ConditionalCommutativityStatisticsGenerator mConComCheckerBenchmark =
+			new ConditionalCommutativityStatisticsGenerator();
 	private final ConditionalCommutativityCounterexampleChecker<L> mConCounterexampleChecker;
-
 	private boolean mCounterexampleConComFound;
 
 	public PartialOrderCegarLoop(final DebugIdentifier name,
@@ -289,8 +289,8 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 			mCounterexample = getCounterexample(visitor);
 			switchToReadonlyMode();
 
-			assert mCounterexample == null || accepts(getServices(), mAbstraction, mCounterexample.getWord(),
-					false) : "Counterexample is not accepted by abstraction";
+			assert mCounterexample == null || accepts(getServices(), mAbstraction, mCounterexample.getWord(), false)
+					: "Counterexample is not accepted by abstraction";
 			return mCounterexample == null;
 		} finally {
 			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.EmptinessCheckTime);
@@ -305,7 +305,8 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		if (mPref.useConditionalCommutativityChecker()) {
 			mLogger.info("Trying commutativity condition synthesis.");
 			final var controlConfigurations = getControlConfigurationsFromCounterexample(mCounterexample);
-			mRefinementResult = mConCounterexampleChecker.getCommutativityProof((NestedRun<L, IPredicate>) mCounterexample, controlConfigurations);
+			mRefinementResult = mConCounterexampleChecker
+					.getCommutativityProof((NestedRun<L, IPredicate>) mCounterexample, controlConfigurations);
 
 			if (mRefinementResult != null) {
 				mLogger.info("Commutativity proof succeeded, skipping feasibility check.");
@@ -403,8 +404,8 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	}
 
 	private boolean isGoalState(final IPredicate state) {
-		assert state instanceof IMLPredicate || state instanceof ISLPredicate : "unexpected type of predicate: "
-				+ state.getClass();
+		assert state instanceof IMLPredicate || state instanceof ISLPredicate
+				: "unexpected type of predicate: " + state.getClass();
 
 		final boolean isErrorState = PredicateUtils.streamLocations(state).anyMatch(mErrorLocs::contains);
 		return isErrorState && !isProvenState(state);
@@ -460,9 +461,8 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		}
 
 		// Sanity check to ensure we didn't forget to handle a case above.
-		assert conjunction.getClass() == MLPredicate.class
-				|| conjunction.getClass() == BasicPredicate.class : "unexpected predicate type: "
-						+ conjunction.getClass();
+		assert conjunction.getClass() == MLPredicate.class || conjunction.getClass() == BasicPredicate.class
+				: "unexpected predicate type: " + conjunction.getClass();
 		return ImmutableList.singleton(conjunction);
 	}
 
@@ -612,12 +612,14 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 					final var conjState1 = (PredicateWithConjuncts) state1;
 					return mPredicateFactory.construct(id -> new PredicateWithConjuncts(id, conjState1.getConjuncts()));
 				}
-				return mPredicateFactory.construct(id -> new PredicateWithConjuncts(id, ImmutableList.singleton(state1)));
+				return mPredicateFactory
+						.construct(id -> new PredicateWithConjuncts(id, ImmutableList.singleton(state1)));
 			}
 			if (isFalseLiteral(state2) || isTrueLiteral(state1)) {
 				// If state2 is "false", we ignore all previous conjuncts. This allows us to optimize in #isFalseLiteral
 				// As another (less important) optimization, we also ignore state1 if it is "true".
-				return mPredicateFactory.construct(id -> new PredicateWithConjuncts(id, ImmutableList.singleton(state2)));
+				return mPredicateFactory
+						.construct(id -> new PredicateWithConjuncts(id, ImmutableList.singleton(state2)));
 			}
 			// In the normal case, we simply add state2 as conjunct.
 			return mPredicateFactory.construct(id -> new PredicateWithConjuncts(id, state1, state2));

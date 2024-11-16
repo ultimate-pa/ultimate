@@ -38,11 +38,11 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.in
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
 /**
- * Utility independence relation that transfers relevant terms (i.e., transition formulas of actions, and condition predicates) to a different script,
- * such that an underlying relation can use that script to check independence.
+ * Utility independence relation that transfers relevant terms (i.e., transition formulas of actions, and condition
+ * predicates) to a different script, such that an underlying relation can use that script to check independence.
  *
  * @param <L>
- * 			The type of letters
+ *            The type of letters
  */
 public class TermTransferringIndependenceRelation<L extends IAction> implements IIndependenceRelation<IPredicate, L> {
 	private static final boolean ABSTRACT_TF_WITH_BRANCH_ENCODERS = false;

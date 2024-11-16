@@ -133,9 +133,9 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 	}
 
 	/**
-	 * Checks for conditional commutativity of two given letters ({@code letter1} and {@code letter2}), i.e. whether there is a condition
-	 * Phi such that those letters commute under Phi, and Phi holds after the given {@code currentRun}.
-	 * If this is the case, returns a proof that this Phi holds after executing {@code currentRun}.
+	 * Checks for conditional commutativity of two given letters ({@code letter1} and {@code letter2}), i.e. whether
+	 * there is a condition Phi such that those letters commute under Phi, and Phi holds after the given
+	 * {@code currentRun}. If this is the case, returns a proof that this Phi holds after executing {@code currentRun}.
 	 *
 	 * @param trace
 	 *            A counterexample trace after which the given letters should be independent
@@ -147,10 +147,13 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 	 *            A letter of an outgoing transition of state
 	 * @param letter2
 	 *            A letter of another outgoing transition of state
-	 * @return A refinement result proving a sufficient condition for commutativity, or {@code null} if no such condition or proof was found.
+	 * @return A refinement result proving a sufficient condition for commutativity, or {@code null} if no such
+	 *         condition or proof was found.
 	 */
-	// We pass trace and controlConfigurations separately here rather than using Counterexample<L> because the latter does not allow an empty word.
-	public Result<L> checkConditionalCommutativity(final Word<L> trace, final List<?> controlConfigurations, final IPredicate state, final L letter1, final L letter2) {
+	// We pass trace and controlConfigurations separately here rather than using Counterexample<L> because the latter
+	// does not allow an empty word.
+	public Result<L> checkConditionalCommutativity(final Word<L> trace, final List<?> controlConfigurations,
+			final IPredicate state, final L letter1, final L letter2) {
 		mStatistics.startStopwatch(ConditionalCommutativityStopwatches.CHECKER);
 		try {
 			return checkConditionalCommutativityInternal(trace, controlConfigurations, state, letter1, letter2);
@@ -159,7 +162,8 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 		}
 	}
 
-	private Result<L> checkConditionalCommutativityInternal(final Word<L> trace, final List<?> controlConfigurations, final IPredicate state, final L letter1, final L letter2) {
+	private Result<L> checkConditionalCommutativityInternal(final Word<L> trace, final List<?> controlConfigurations,
+			final IPredicate state, final L letter1, final L letter2) {
 		// TODO this is brittle, let caller decide how one extracts a sleep set from the states
 		// TODO is this actually still needed?
 		if (state instanceof SleepPredicate) {
@@ -214,7 +218,8 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 		}
 	}
 
-	private Result<L> proveCommutativityCondition(final Word<L> trace, final List<?> controlConfigurations, final L templateLetter, final IPredicate condition) {
+	private Result<L> proveCommutativityCondition(final Word<L> trace, final List<?> controlConfigurations,
+			final L templateLetter, final IPredicate condition) {
 		// construct a transformula which represents the negation of the condition
 		final IPredicate notCondition = mPredicateFactory.not(condition);
 		final UnmodifiableTransFormula tf =
@@ -233,7 +238,8 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 		final Word<L> traceWithCondition = trace.concatenate(new Word<>(notConditionLetter));
 		final List<Object> controlConfigurationsWithCondition = new ArrayList<>(controlConfigurations);
 		controlConfigurationsWithCondition.add(new Object());
-		final Counterexample<L> ctexWithCondition = new Counterexample<>(traceWithCondition, controlConfigurationsWithCondition);
+		final Counterexample<L> ctexWithCondition =
+				new Counterexample<>(traceWithCondition, controlConfigurationsWithCondition);
 
 		final var strategy = mBuildStrategy.apply(ctexWithCondition);
 		final var afe = new AutomatonFreeRefinementEngine<>(mServices, mLogger, strategy);
@@ -291,13 +297,13 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 		private final ResultType mType;
 		private final IRefinementEngineResult<L, Collection<QualifiedTracePredicates>> mRefinementResult;
 
-		private Result(ResultType type) {
+		private Result(final ResultType type) {
 			mType = type;
 			mRefinementResult = null;
 			assert !isSuccess() : "successful result must have refinement result";
 		}
 
-		private Result(IRefinementEngineResult<L, Collection<QualifiedTracePredicates>> refinementResult) {
+		private Result(final IRefinementEngineResult<L, Collection<QualifiedTracePredicates>> refinementResult) {
 			mType = ResultType.SUCCESS;
 			mRefinementResult = Objects.requireNonNull(refinementResult);
 		}
@@ -317,11 +323,6 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 	}
 
 	public enum ResultType {
-		ALREADY_INDEPENDENT,
-		NO_CONDITION_FOUND,
-		CONDITION_NOT_SATISFIED,
-		UNKNOWN_CHECK,
-		PROOF_IMPERFECT,
-		SUCCESS
+		ALREADY_INDEPENDENT, NO_CONDITION_FOUND, CONDITION_NOT_SATISFIED, UNKNOWN_CHECK, PROOF_IMPERFECT, SUCCESS
 	}
 }
