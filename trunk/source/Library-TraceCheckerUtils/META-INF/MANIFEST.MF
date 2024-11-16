@@ -12,7 +12,6 @@ Export-Package:
  de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder,
  de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence,
  de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction,
- de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.conditional,
  de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.petrinetlbe,
  de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.predicates,
  de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck

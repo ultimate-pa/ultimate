@@ -23,7 +23,7 @@
  * licensors of the ULTIMATE TraceCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.conditional;
+package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence;
 
 import java.util.Objects;
 import java.util.function.Function;
