@@ -199,8 +199,10 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 
 				FloydHoareUtils.createInvariantResults(Activator.PLUGIN_NAME, icfg, annotation, backTranslatorService,
 						mResultReporter::reportResult);
-				FloydHoareUtils.createProcedureContractResults(mServices, Activator.PLUGIN_NAME, icfg, annotation,
-						backTranslatorService, mResultReporter::reportResult);
+				if (mPrefs.computeProcedureContracts()) {
+					FloydHoareUtils.createProcedureContractResults(mServices, Activator.PLUGIN_NAME, icfg, annotation,
+							backTranslatorService, mResultReporter::reportResult);
+				}
 			} else if (result.getProof() != null) {
 				mLogger.warn("Unknown type of proof: " + result.getProof().getClass());
 			}

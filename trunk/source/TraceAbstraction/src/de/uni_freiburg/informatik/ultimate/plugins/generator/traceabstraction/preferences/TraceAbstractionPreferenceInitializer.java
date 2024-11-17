@@ -258,6 +258,16 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_HOARE_POSITIONS = "Positions where we compute the Hoare Annotation";
 	private static final HoareAnnotationPositions DEF_HOARE_POSITIONS = HoareAnnotationPositions.None;
 
+	// Dominik (2024-11-18): Introduced this setting to disable contract computation for SV-COMP (where it is currently
+	// not useful) because procedure contract computation has a bug ("ensures" clause uses non-permitted variables).
+	// See https://chat.sopranium.de/swt/pl/im6pymo9zjrn3kkiwzgcrce57o
+	// TODO Find the bug, fix the bug, remove this setting.
+	public static final String LABEL_COMPUTE_PROCEDURE_CONTRACTS = "Compute procedure contracts";
+	private static final String DESC_COMPUTE_PROCEDURE_CONTRACTS =
+			"Controls whether procedure contracts are computed from the Hoare annotation."
+					+ "Contract computation only works if the Hoare annotation for the relevant locations has been computed.";
+	private final boolean DEF_COMPUTE_PROCEDURE_CONTRACTS = true;
+
 	// Trace Check Solver
 	// ========================================================================
 
@@ -537,6 +547,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						new IUltimatePreferenceItemValidator.IntegerValidator(0, 1_0000_000)),
 				new UltimatePreferenceItem<>(LABEL_HOARE_POSITIONS, DEF_HOARE_POSITIONS, PreferenceType.Combo,
 						HoareAnnotationPositions.values()),
+				new UltimatePreferenceItem<>(LABEL_COMPUTE_PROCEDURE_CONTRACTS, DEF_COMPUTE_PROCEDURE_CONTRACTS,
+						DESC_COMPUTE_PROCEDURE_CONTRACTS, true, PreferenceType.Boolean),
 
 				new UltimatePreferenceItem<>(LABEL_USE_PREDICATE_TRIE_BASED_PREDICATE_UNIFIER,
 						DEF_USE_PREDICATE_TRIE_BASED_PREDICATE_UNIFIER, DESC_USE_PREDICATE_TRIE_BASED_PREDICATE_UNIFIER,
