@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletraceche
 import java.io.PrintWriter;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
@@ -367,32 +368,54 @@ public class NestedInterpolantsBuilder<L extends IAction> {
 				assert mSkippedInnerProcedurePositions.contains(i);
 				pred = mPredicateFactory.newDontCarePredicate(null);
 			} else if (craigInterpolPos == SKIPPED_POSITION_FOR_REPETITION) {
-				final int last = getLastInterpolantFromSameContext(i, mPositionMapping);
-				if (last == -1) {
-					pred = mPrecondition;
-				} else if (mTrace.isCallPosition(last)) {
+				if (mTrace.isCallPosition(i)) {
 					// We were unable to find a predicate in this context
 					// Hence, all formulas between this position and the call were overapproximated
 					// and hence irrelevant.
 					pred = mPredicateUnifier.getTruePredicate();
-				} else {
-					pred = result[last];
-				}
-			} else {
-				if (craigInterpolPos == mCraigInterpolants.length) {
+				} else if (mTrace.isReturnPosition(i)) {
+					if (mTrace.isPendingReturn(i)) {
+						throw new AssertionError("Pending returns are unsupported");
+					}
+					// neither call nor return nor oldvarssignment nor globalvarassignment asserted
+					// we take the conjunction of call predecessor and return predecessor
+					final IPredicate callPredecessor;
+					{
+						final int callPos = mTrace.getCallPosition(i);
+						if (callPos == 0) {
+							callPredecessor = mPrecondition;
+						} else {
+							callPredecessor = result[callPos - 1];
+						}
+					}
+					final IPredicate returnPredecessor = result[i - 1];
+					if (mPredicateFactory.isDontCare(returnPredecessor)) {
+						// we are computing nested interpolants, since this is a skipped position we
+						// asserted nothing between call and return, hence we may take the call
+						// predecessor
+						pred = callPredecessor;
+					} else {
+						pred = mPredicateUnifier.getOrConstructPredicateForConjunction(
+								Arrays.asList(new IPredicate[] { callPredecessor, returnPredecessor }));
+					}
+				} else if (i == 0) {
+					pred = mPrecondition;
+				} else if (craigInterpolPos == mCraigInterpolants.length) {
 					// SSA formulas at the end were omitted, craigInterpolPos points to first
 					// position after the interpolation array, we have to take the postcondition
 					pred = mPostcondition;
 				} else {
-					final Term withIndices = mCraigInterpolants[craigInterpolPos];
-					final IPredicate cachedResult = withIndices2Predicate.get(withIndices);
-					if (cachedResult != null) {
-						pred = cachedResult;
-					} else {
-						final Term postprocessed = postprocessInterpolant(withIndices);
-						pred = mPredicateUnifier.getOrConstructPredicate(postprocessed);
-						withIndices2Predicate.put(withIndices, pred);
-					}
+					pred = result[i - 1];
+				}
+			} else {
+				final Term withIndices = mCraigInterpolants[craigInterpolPos];
+				final IPredicate cachedResult = withIndices2Predicate.get(withIndices);
+				if (cachedResult != null) {
+					pred = cachedResult;
+				} else {
+					final Term postprocessed = postprocessInterpolant(withIndices);
+					pred = mPredicateUnifier.getOrConstructPredicate(postprocessed);
+					withIndices2Predicate.put(withIndices, pred);
 				}
 			}
 			result[i] = pred;
