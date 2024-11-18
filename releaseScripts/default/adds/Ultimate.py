@@ -518,6 +518,12 @@ def create_cli_settings(prop, validate_witness, architecture, c_file):
             "--traceabstraction.positions.where.we.compute.the.hoare.annotation"
         )
         ret.append("None")
+        # For now disable UnstructureCode in witness validation
+        # This is a workaround, in the future we always want to disable this.
+        ret.append(
+            "--boogiepreprocessor.replace.while.statements.and.if-then-else.statements"
+        )
+        ret.append("false")
     elif not validate_witness:
         # we are not in validation mode, so we should generate a witness and need
         # to pass some things to the witness printer
