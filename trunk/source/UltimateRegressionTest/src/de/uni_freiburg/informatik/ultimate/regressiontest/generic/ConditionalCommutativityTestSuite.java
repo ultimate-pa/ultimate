@@ -26,10 +26,14 @@
  */
 package de.uni_freiburg.informatik.ultimate.regressiontest.generic;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.function.UnaryOperator;
+
+import org.yaml.snakeyaml.Yaml;
 
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -55,8 +59,12 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class ConditionalCommutativityTestSuite extends AbstractModelCheckerTestSuite {
 	private static final int TIMEOUT = 60; // seconds
 
+	private static final String SKIPPED_TESTS_FILE = "examples/concurrent/conditional_commutativity/.testignore";
+
 	private static final String TOOLCHAIN_C = "AutomizerCInline.xml";
 	private static final String TOOLCHAIN_BPL = "AutomizerBplInline.xml";
+
+	private Map<String, List<Map<String, String>>> mIgnoredTests;
 
 	// @formatter:off
 	private static final String[] BASE_SETTINGS = {
@@ -84,7 +92,11 @@ public class ConditionalCommutativityTestSuite extends AbstractModelCheckerTestS
 
 	@Override
 	protected ITestResultDecider constructITestResultDecider(final UltimateRunDefinition urd) {
-		return new SafetyCheckTestResultDecider(urd, false);
+		final String overriddenVerdict = getSkipVerdict(urd);
+		if (overriddenVerdict == null) {
+			return new SafetyCheckTestResultDecider(urd, false);
+		}
+		return new SafetyCheckTestResultDecider(urd, false, overriddenVerdict);
 	}
 
 	@Override
@@ -104,6 +116,14 @@ public class ConditionalCommutativityTestSuite extends AbstractModelCheckerTestS
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
+		try {
+			mIgnoredTests = new Yaml()
+					.load(new FileInputStream(UltimateRunDefinitionGenerator.getFileFromTrunkDir(SKIPPED_TESTS_FILE)));
+		} catch (final FileNotFoundException e) {
+			// No tests to ignore
+			mIgnoredTests = Map.of();
+		}
+
 		for (final var setting : BASE_SETTINGS) {
 			for (final var variant : VARIANTS) {
 				final var callback = new NamedServiceCallback(variant.getKey(), overwriteSettings(variant.getValue()));
@@ -153,5 +173,19 @@ public class ConditionalCommutativityTestSuite extends AbstractModelCheckerTestS
 			TraceAbstractionPreferenceInitializer.LABEL_COMMUTATIVITY_COND_SYNTHESIS, IndependenceConditions.NECESSARY_AND_SUFFICIENT
 		// @formatter:on
 		));
+	}
+
+	private String getSkipVerdict(final UltimateRunDefinition urd) {
+		for (final var taskSet : mIgnoredTests.entrySet()) {
+			for (final var task : taskSet.getValue()) {
+				if (urd.getInput()[0].getName().equals(task.get("task"))
+						&& urd.getSettings().getName().equals(task.get("settings"))
+						&& urd.getToolchain().getName().equals(task.get("toolchain"))
+						&& urd.getServiceCallback().getName().equals(task.get("callback"))) {
+					return taskSet.getKey();
+				}
+			}
+		}
+		return null;
 	}
 }
