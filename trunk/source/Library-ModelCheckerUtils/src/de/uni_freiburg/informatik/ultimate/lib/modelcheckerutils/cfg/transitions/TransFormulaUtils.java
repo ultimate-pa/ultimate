@@ -848,26 +848,44 @@ public final class TransFormulaUtils {
 
 	public static UnmodifiableTransFormula computeGuard(final UnmodifiableTransFormula tf,
 			final ManagedScript mgdScript, final IUltimateServiceProvider services) {
+		if (!tf.getBranchEncoders().isEmpty()) {
+			throw new AssertionError("I think this does not make sense with branch encoders");
+		}
+
+		// yes! outVars of result are indeed the inVars of input
+		final TransFormulaBuilder tfb =
+				new TransFormulaBuilder(tf.getInVars(), tf.getInVars(), tf.getNonTheoryConsts().isEmpty(),
+						tf.getNonTheoryConsts().isEmpty() ? null : tf.getNonTheoryConsts(), true, null, false);
+		tfb.setFormula(computeGuardTermHelper(services, mgdScript, tf, true));
+		tfb.setInfeasibility(tf.isInfeasible());
+		return tfb.finishConstruction(mgdScript);
+	}
+
+	public static Term computeGuardTerm(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final UnmodifiableTransFormula tf, final boolean tryAuxVarElimination) {
+		final var term = computeGuardTermHelper(services, mgdScript, tf, tryAuxVarElimination);
+
+		// We substitute inVars by default vars of corresponding IProgramVars.
+		final var subst = tf.getInVars().entrySet().stream()
+				.collect(Collectors.toMap(e -> e.getValue(), e -> e.getKey().getTermVariable()));
+		return Substitution.apply(mgdScript, subst, term);
+	}
+
+	private static Term computeGuardTermHelper(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final UnmodifiableTransFormula tf, final boolean tryAuxVarElimination) {
 		final Set<TermVariable> auxVars = new HashSet<>(tf.getAuxVars());
+		auxVars.addAll(tf.getBranchEncoders());
 		for (final IProgramVar bv : tf.getAssignedVars()) {
 			final TermVariable outVar = tf.getOutVars().get(bv);
 			if (Arrays.asList(tf.getFormula().getFreeVars()).contains(outVar)) {
 				auxVars.add(outVar);
 			}
 		}
-		if (!tf.getBranchEncoders().isEmpty()) {
-			throw new AssertionError("I think this does not make sense with branch enconders");
+
+		if (tryAuxVarElimination) {
+			return quantifyAndTryToEliminateAuxVars(services, mgdScript, tf.getFormula(), auxVars);
 		}
-		// yes! outVars of result are indeed the inVars of input
-
-		final Term withoutAuxVars = quantifyAndTryToEliminateAuxVars(services, mgdScript, tf.getFormula(), auxVars);
-
-		final TransFormulaBuilder tfb =
-				new TransFormulaBuilder(tf.getInVars(), tf.getInVars(), tf.getNonTheoryConsts().isEmpty(),
-						tf.getNonTheoryConsts().isEmpty() ? null : tf.getNonTheoryConsts(), true, null, false);
-		tfb.setFormula(withoutAuxVars);
-		tfb.setInfeasibility(tf.isInfeasible());
-		return tfb.finishConstruction(mgdScript);
+		return SmtUtils.quantifier(mgdScript.getScript(), QuantifiedFormula.EXISTS, auxVars, tf.getFormula());
 	}
 
 	/**

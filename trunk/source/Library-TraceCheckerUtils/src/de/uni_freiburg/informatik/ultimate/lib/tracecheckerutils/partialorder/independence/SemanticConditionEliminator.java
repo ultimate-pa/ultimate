@@ -30,6 +30,7 @@ import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.CachedIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.ISymbolicIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IndependenceStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -96,6 +97,12 @@ public final class SemanticConditionEliminator<L extends IAction> implements IIn
 	}
 
 	@Override
+	public ISymbolicIndependenceRelation<L, IPredicate> getSymbolicRelation() {
+		// No action needed here. In particular, we do not eliminate any of the generated conditions.
+		return mUnderlying.getSymbolicRelation();
+	}
+
+	@Override
 	public IStatisticsDataProvider getStatistics() {
 		return mStatistics;
 	}
@@ -111,7 +118,7 @@ public final class SemanticConditionEliminator<L extends IAction> implements IIn
 		return null;
 	}
 
-	private boolean isRelevant(final IPredicate condition, final L statement) {
+	public static <L extends IAction> boolean isRelevant(final IPredicate condition, final L statement) {
 		return DataStructureUtils.haveNonEmptyIntersection(condition.getVars(),
 				statement.getTransformula().getInVars().keySet());
 	}

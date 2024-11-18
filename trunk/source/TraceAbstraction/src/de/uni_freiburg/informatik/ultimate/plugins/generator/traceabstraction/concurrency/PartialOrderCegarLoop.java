@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
@@ -41,7 +42,9 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
+import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.DeterminizeNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.InformationStorage;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
@@ -65,6 +68,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionSt
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IUnionStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -81,15 +85,22 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateWithConjuncts;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskIterationIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.BetterLockstepOrder;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.LoopLockstepOrder.PredicateWithLastThread;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderMode;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderReductionFacade;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderReductionFacade.StateSplitter;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.SleepSetStateFactoryForRefinement.SleepPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.ConditionalCommutativityChecker;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.AbstractionType;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.ICopyActionFactory;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
@@ -97,6 +108,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IIpAbStrategyModule;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IpAbStrategyModuleStraightlineAll;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TaCheckAndRefinementPreferences;
 import de.uni_freiburg.informatik.ultimate.util.Lazy;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
@@ -128,12 +143,16 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	private final boolean mSupportsDeadEnds;
 	private IDeadEndStore<IPredicate, IPredicate> mDeadEndStore;
 
+	// Fields for commutativity condition synthesis
+	private final ConditionalCommutativityCounterexampleChecker<L> mConCounterexampleChecker;
+	private boolean mCounterexampleConComFound;
+
 	public PartialOrderCegarLoop(final DebugIdentifier name,
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> initialAbstraction,
 			final IIcfg<IcfgLocation> rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final TAPreferences taPrefs, final Set<IcfgLocation> errorLocs, final IUltimateServiceProvider services,
 			final List<IRefinableIndependenceProvider<L>> independenceProviders, final Class<L> transitionClazz,
-			final PredicateFactoryRefinement stateFactoryForRefinement) {
+			final PredicateFactoryRefinement stateFactoryForRefinement, final ICopyActionFactory<L> copyFactory) {
 		super(name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, false, services,
 				transitionClazz, stateFactoryForRefinement);
 
@@ -177,13 +196,16 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		assert mSupportsDeadEnds == (mDeadEndStore != null);
 
 		mProgram = initialAbstraction;
+
+		mConCounterexampleChecker = setupCommutativityConditionSynthesis(copyFactory, transitionClazz);
 	}
 
 	@Override
 	protected boolean refineAbstraction() throws AutomataLibraryException {
-		// Compute the enhanced interpolant automaton
 		final IPredicateUnifier predicateUnifier = mRefinementResult.getPredicateUnifier();
 		final IHoareTripleChecker htc = getHoareTripleChecker();
+
+		// Compute the enhanced interpolant automaton
 		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> ia = enhanceInterpolantAutomaton(
 				mPref.interpolantAutomatonEnhancement(), predicateUnifier, htc, mInterpolAutomaton);
 		if (ia instanceof AbstractInterpolantAutomaton<?>) {
@@ -264,11 +286,43 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 			mCounterexample = getCounterexample(visitor);
 			switchToReadonlyMode();
 
-			assert mCounterexample == null || accepts(getServices(), mAbstraction, mCounterexample.getWord(),
-					false) : "Counterexample is not accepted by abstraction";
+			assert mCounterexample == null || accepts(getServices(), mAbstraction, mCounterexample.getWord(), false)
+					: "Counterexample is not accepted by abstraction";
 			return mCounterexample == null;
 		} finally {
 			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.EmptinessCheckTime);
+		}
+	}
+
+	@Override
+	protected Pair<LBool, IProgramExecution<L, Term>> isCounterexampleFeasible()
+			throws AutomataOperationCanceledException {
+
+		// Apply conditional commutativity checking if enabled
+		if (mPref.useConditionalCommutativityChecker()) {
+			mLogger.info("Trying commutativity condition synthesis.");
+			final var controlConfigurations = getControlConfigurationsFromCounterexample(mCounterexample);
+			mRefinementResult = mConCounterexampleChecker
+					.getCommutativityProof((NestedRun<L, IPredicate>) mCounterexample, controlConfigurations);
+
+			if (mRefinementResult != null) {
+				mLogger.info("Commutativity proof succeeded, skipping feasibility check.");
+				mCounterexampleConComFound = true;
+				mInterpolAutomaton = mRefinementResult.getInfeasibilityProof();
+				return new Pair<>(LBool.UNSAT, null);
+			}
+			mLogger.info("No commutativity proof found, falling back to feasibility check.");
+		}
+
+		mCounterexampleConComFound = false;
+		return super.isCounterexampleFeasible();
+	}
+
+	@Override
+	protected void constructInterpolantAutomaton() throws AutomataOperationCanceledException {
+		// If we did a commutativity proof, we did already set mInterpolantAutomaton to the appropriate automaton.
+		if (!mCounterexampleConComFound) {
+			super.constructInterpolantAutomaton();
 		}
 	}
 
@@ -300,7 +354,9 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		for (final AbstractInterpolantAutomaton<L> ia : mAbstractItpAutomata) {
 			mCegarLoopBenchmark.reportInterpolantAutomatonStates(ia.size());
 		}
-
+		if (mConCounterexampleChecker != null) {
+			mCegarLoopBenchmark.addConComCheckerData(mConCounterexampleChecker.getStatistics());
+		}
 		final var data = new StatisticsData();
 		data.aggregateBenchmarkData(mPOR.getStatistics());
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
@@ -347,8 +403,8 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	}
 
 	private boolean isGoalState(final IPredicate state) {
-		assert state instanceof IMLPredicate || state instanceof ISLPredicate : "unexpected type of predicate: "
-				+ state.getClass();
+		assert state instanceof IMLPredicate || state instanceof ISLPredicate
+				: "unexpected type of predicate: " + state.getClass();
 
 		final boolean isErrorState = PredicateUtils.streamLocations(state).anyMatch(mErrorLocs::contains);
 		return isErrorState && !isProvenState(state);
@@ -388,8 +444,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	public static ImmutableList<IPredicate> getConjuncts(final IPredicate conjunction) {
 		assert conjunction != null : "Cannot split 'null' into conjuncts";
 
-		if (conjunction instanceof MLPredicateWithInterpolants) {
-			final var predicate = (MLPredicateWithInterpolants) conjunction;
+		if (conjunction instanceof final MLPredicateWithInterpolants predicate) {
 			return new ImmutableList<>(predicate.getUnderlying(), getConjuncts(predicate.getInterpolants()));
 		}
 		if (conjunction instanceof PredicateWithConjuncts) {
@@ -405,9 +460,8 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		}
 
 		// Sanity check to ensure we didn't forget to handle a case above.
-		assert conjunction.getClass() == MLPredicate.class
-				|| conjunction.getClass() == BasicPredicate.class : "unexpected predicate type: "
-						+ conjunction.getClass();
+		assert conjunction.getClass() == MLPredicate.class || conjunction.getClass() == BasicPredicate.class
+				: "unexpected predicate type: " + conjunction.getClass();
 		return ImmutableList.singleton(conjunction);
 	}
 
@@ -419,10 +473,10 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	private IDeadEndStore<IPredicate, IPredicate> createDeadEndStore(final StateSplitter<IPredicate> splitter) {
 		assert mDeadEndStore == null : "Already created -- should only be called once";
 
-		final UnaryOperator<IPredicate> getUnderlying = (state) -> (state instanceof MLPredicateWithInterpolants)
+		final UnaryOperator<IPredicate> getUnderlying = state -> state instanceof MLPredicateWithInterpolants
 				? ((MLPredicateWithInterpolants) state).getUnderlying()
 				: state;
-		final UnaryOperator<IPredicate> getInterpolants = (state) -> (state instanceof MLPredicateWithInterpolants)
+		final UnaryOperator<IPredicate> getInterpolants = state -> state instanceof MLPredicateWithInterpolants
 				? ((MLPredicateWithInterpolants) state).getInterpolants()
 				: null;
 
@@ -436,8 +490,60 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		return mDeadEndStore;
 	}
 
+	private ConditionalCommutativityCounterexampleChecker<L> setupCommutativityConditionSynthesis(
+			final ICopyActionFactory<L> copyFactory, final Class<L> transitionClazz) {
+		if (!mPref.useConditionalCommutativityChecker()) {
+			return null;
+		}
+
+		final IIndependenceRelation<IPredicate, L> relation = mPOR.getIndependence(0);
+		if (mPref.getNumberOfIndependenceRelations() > 1) {
+			throw new UnsupportedOperationException(
+					"Commutativity condition synthesis is unsupported for stratified reductions.");
+		}
+		if (mPref.porIndependenceSettings(0).getAbstractionType() != AbstractionType.NONE) {
+			// TODO To support this, we need to handle commutativity proof automata specially (do not adapt
+			// independence, do not contribute to acceptance) and re-think which information may be cached.
+			throw new UnsupportedOperationException(
+					"Commutativity condition synthesis is unsupported for abstract independence.");
+		}
+		if (!mPref.getPartialOrderMode().hasSleepSets() || !relation.isConditional()) {
+			throw new UnsupportedOperationException(
+					"Commutativity condition synthesis is only useful for sleep set reduction with conditional independence.");
+		}
+
+		// Create a strategy factory for conditional commutativity proofs, which never computes executions.
+		// Computing executions is expensive and not needed as we are only interested in proofs.
+		// Also change the default refinement strategy to mPref.getConditionalCommutativityRefinementStrategy().
+		Function<Counterexample<L>, IRefinementStrategy<L>> createStrategy;
+		{
+			final boolean computeCounterexampleExecution = false;
+			final TaCheckAndRefinementPreferences<L> taCheckAndRefinementPrefs =
+					new TaCheckAndRefinementPreferences<>(getServices(), mPref, mPref.interpolation(),
+							mSimplificationTechnique, mCsToolkit, mPredicateFactory, mIcfg,
+							mPref.getConditionalCommutativityRefinementStrategy(), computeCounterexampleExecution);
+			final var commutativityStrategyFactory = new StrategyFactory<>(mLogger, mPref, taCheckAndRefinementPrefs,
+					mIcfg, mPredicateFactory, mPredicateFactoryInterpolantAutomata, transitionClazz);
+			createStrategy = counterexample -> commutativityStrategyFactory.constructStrategy(mServices, counterexample,
+					mAbstraction, new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()), mFactory,
+					getPreconditionProvider(), getPostconditionProvider());
+		}
+
+		final var conComChecker = new ConditionalCommutativityChecker<>(mServices, mCsToolkit.getManagedScript(),
+				relation, createStrategy, mPredicateFactory, copyFactory);
+
+		// This is the automaton builder used by our most common refinement strategies (e.g. CAMEL).
+		// The constructed automata should be enhanced through #enhanceInterpolantAutomaton(...) to be really useful.
+		final Function<Word<L>, IIpAbStrategyModule<L>> createAutomatonBuilder =
+				word -> new IpAbStrategyModuleStraightlineAll<>(mServices, mLogger, mAbstraction, word,
+						mStateFactoryForRefinement);
+
+		return new ConditionalCommutativityCounterexampleChecker<>(mServices, mPOR.getDfsOrder(), conComChecker,
+				mPOR.getSleepFactory(), createAutomatonBuilder);
+	}
+
 	@Override
-	protected List<?> getControlConfigurationsFromCounterexample(final IRun<L, ?> counterexample) {
+	protected List<Object> getControlConfigurationsFromCounterexample(final IRun<L, ?> counterexample) {
 		final var splitter = mPOR.getStateSplitter();
 
 		final var result = new ArrayList<>(counterexample.getLength());

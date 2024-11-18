@@ -107,26 +107,22 @@ public class PredicateWithConjuncts implements IPredicate {
 
 	@Override
 	public Term getFormula() {
-		// TODO compute on-demand (and possibly use partial results when constructed from conjunction)
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("PredicateWithConjuncts does not offer formula. Access conjuncts individually.");
 	}
 
 	@Override
 	public Term getClosedFormula() {
-		// TODO compute on-demand (and possibly use partial results when constructed from conjunction)
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("PredicateWithConjuncts does not offer formula. Access conjuncts individually.");
 	}
 
 	@Override
 	public Set<IProgramVar> getVars() {
-		// TODO compute on-demand (and possibly use partial results when constructed from conjunction)
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("PredicateWithConjuncts does not offer variables. Access conjuncts individually.");
 	}
 
 	@Override
 	public Set<IProgramFunction> getFuns() {
-		// TODO compute on-demand (and possibly use partial results when constructed from conjunction)
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("PredicateWithConjuncts does not offer functions. Access conjuncts individually.");
 	}
 
 	@Override

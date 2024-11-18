@@ -203,4 +203,8 @@ public class SemanticIndependenceConditionGenerator {
 		}
 		return PartialQuantifierElimination.eliminateLight(mServices, mMgdScript, quantified);
 	}
+
+	public boolean isSymmetric() {
+		return mSymmetric;
+	}
 }

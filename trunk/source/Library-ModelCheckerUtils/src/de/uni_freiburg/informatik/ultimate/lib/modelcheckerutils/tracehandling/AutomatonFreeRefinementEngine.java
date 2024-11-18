@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceled
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.InterpolantComputationStatus;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
@@ -60,7 +60,7 @@ import de.uni_freiburg.informatik.ultimate.util.Lazy;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
-public final class AutomatonFreeRefinementEngine<L extends IIcfgTransition<?>>
+public final class AutomatonFreeRefinementEngine<L extends IAction>
 		implements IRefinementEngine<L, Collection<QualifiedTracePredicates>> {
 
 	private final ILogger mLogger;

@@ -117,15 +117,23 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 	 */
 	public TaCheckAndRefinementPreferences(final IUltimateServiceProvider services, final TAPreferences taPrefs,
 			final InterpolationTechnique interpolationTechnique, final SimplificationTechnique simplificationTechnique,
-			final CfgSmtToolkit cfgSmtToolkit, final PredicateFactory predicateFactory,
-			final IIcfg<?> icfgContainer) {
+			final CfgSmtToolkit cfgSmtToolkit, final PredicateFactory predicateFactory, final IIcfg<?> icfgContainer) {
+		this(services, taPrefs, interpolationTechnique, simplificationTechnique, cfgSmtToolkit, predicateFactory,
+				icfgContainer, taPrefs.getRefinementStrategy(), services.getPreferenceProvider(Activator.PLUGIN_ID)
+						.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_COMPUTE_COUNTEREXAMPLE));
+	}
+
+	public TaCheckAndRefinementPreferences(final IUltimateServiceProvider services, final TAPreferences taPrefs,
+			final InterpolationTechnique interpolationTechnique, final SimplificationTechnique simplificationTechnique,
+			final CfgSmtToolkit cfgSmtToolkit, final PredicateFactory predicateFactory, final IIcfg<?> icfgContainer,
+			final RefinementStrategy refinementStrategy, final boolean computeCounterexample) {
 		mInterpolationTechnique = interpolationTechnique;
 		mSimplificationTechnique = simplificationTechnique;
 		mCfgSmtToolkit = cfgSmtToolkit;
 		mPredicateFactory = predicateFactory;
 		mIcfgContainer = icfgContainer;
 
-		mRefinementStrategy = taPrefs.getRefinementStrategy();
+		mRefinementStrategy = refinementStrategy;
 		mMcrRefinementStrategy = taPrefs.getMcrRefinementStrategy();
 		mAcceleratedInterpolationRefinementStrategy = taPrefs.getAcceleratedInterpolationRefinementStrategy();
 		mUseSeparateSolverForTracechecks = taPrefs.useSeparateSolverForTracechecks();
@@ -157,8 +165,7 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 				ultimatePrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_UNSAT_CORES_IN_PATHINVARIANTS);
 		mUseWeakestPreconditionForPathInvariants = ultimatePrefs
 				.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_WEAKEST_PRECONDITION_IN_PATHINVARIANTS);
-		mComputeCounterexample =
-				ultimatePrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_COMPUTE_COUNTEREXAMPLE);
+		mComputeCounterexample = computeCounterexample;
 		mUsePredicateTrieBasedPredicateUnifier = ultimatePrefs
 				.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_USE_PREDICATE_TRIE_BASED_PREDICATE_UNIFIER);
 		mUseMinimalUnsatCoreEnumerationForSmtInterpol = ultimatePrefs.getBoolean(

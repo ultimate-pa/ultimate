@@ -56,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.Pa
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.AbstractionType;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.IndependenceType;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.SemanticIndependenceRelation.IndependenceConditions;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
@@ -191,6 +192,19 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public enum CoinflipMode {
 		OFF, FALLBACK, PURE, COARSE
 	}
+
+	public static final String LABEL_COMMUTATIVITY_COND_SYNTHESIS = "Commutativity condition synthesis";
+	private static final String DESC_COMMUTATIVITY_COND_SYNTHESIS =
+			"If set to a value other than NONE, GemCutter will generate conditions"
+					+ " enabling commutativity (independence) of certain statements and try to prove that"
+					+ " these conditions hold at relevant points in the program, to enable more reduction.";
+	private static final IndependenceConditions DEF_COMMUTATIVITY_COND_SYNTHESIS = IndependenceConditions.NONE;
+
+	public static final String LABEL_COMMUTATIVITY_COND_SYNTHESIS_STRATEGY =
+			"Refinement strategy for commutativity condition synthesis";
+	private static final String DESC_COMMUTATIVITY_COND_SYNTHESIS_STRATEGY =
+			"Strategy used to check whether (and prove that) a synthesized commutativity condition holds.";
+	private static final RefinementStrategy DEF_COMMUTATIVITY_COND_SYNTHESIS_STRATEGY = RefinementStrategy.SMTINTERPOL;
 
 	// Settings for PetriAutomizer
 	// ========================================================================
@@ -726,6 +740,12 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_INDEPENDENCE_SCRIPT_DUMP_PATH, DEF_INDEPENDENCE_SCRIPT_DUMP_PATH,
 						PreferenceType.Directory),
+
+				new UltimatePreferenceItem<>(LABEL_COMMUTATIVITY_COND_SYNTHESIS, DEF_COMMUTATIVITY_COND_SYNTHESIS,
+						DESC_COMMUTATIVITY_COND_SYNTHESIS, PreferenceType.Combo, IndependenceConditions.values()),
+				new UltimatePreferenceItem<>(LABEL_COMMUTATIVITY_COND_SYNTHESIS_STRATEGY,
+						DEF_COMMUTATIVITY_COND_SYNTHESIS_STRATEGY, DESC_COMMUTATIVITY_COND_SYNTHESIS_STRATEGY,
+						PreferenceType.Combo, RefinementStrategy.values()),
 
 				getIndependenceSettings(0),
 

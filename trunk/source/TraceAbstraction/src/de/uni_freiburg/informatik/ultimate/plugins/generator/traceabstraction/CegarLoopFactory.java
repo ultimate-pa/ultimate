@@ -177,7 +177,7 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 								errorLocs),
 						root, csToolkit, predicateFactory, mPrefs, errorLocs, services,
 						mIndependenceProviderFactory.createProviders(root, predicateFactory), mTransitionClazz,
-						stateFactoryForRefinement);
+						stateFactoryForRefinement, mCopyFactory);
 				return new Pair<>(poCegar, null);
 			case PETRI_NET:
 				requireNoReuse("Petri net-based analysis");

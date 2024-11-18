@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.Pa
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.AbstractionType;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.IndependenceType;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.SemanticIndependenceRelation.IndependenceConditions;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
@@ -546,6 +547,20 @@ public final class TAPreferences {
 
 	public McrInterpolantMethod getMcrInterpolantMethod() {
 		return mMcrInterpolantMethod;
+	}
+
+	public boolean useConditionalCommutativityChecker() {
+		return getSymbolicRelationMode() != IndependenceConditions.NONE;
+	}
+
+	public IndependenceConditions getSymbolicRelationMode() {
+		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_COMMUTATIVITY_COND_SYNTHESIS,
+				IndependenceConditions.class);
+	}
+
+	public RefinementStrategy getConditionalCommutativityRefinementStrategy() {
+		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_COMMUTATIVITY_COND_SYNTHESIS_STRATEGY,
+				RefinementStrategy.class);
 	}
 
 	// TODO #proofRefactor update all settings files to reflect the removal / changes to the Hoare/proof settings
