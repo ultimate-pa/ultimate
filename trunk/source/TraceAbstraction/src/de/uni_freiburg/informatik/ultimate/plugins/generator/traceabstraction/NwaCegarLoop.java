@@ -581,7 +581,7 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 	@Override
 	protected List<?> getControlConfigurationsFromCounterexample(final IRun<L, ?> run) {
 		if (IcfgUtils.isConcurrent(mIcfg)) {
-			run.getStateSequence().stream().map(p -> ((IMLPredicate) p).getProgramPoints())
+			return run.getStateSequence().stream().map(p -> ((IMLPredicate) p).getProgramPoints())
 					.collect(Collectors.toList());
 		}
 		return getIcfgLocationsFromRun(run);
