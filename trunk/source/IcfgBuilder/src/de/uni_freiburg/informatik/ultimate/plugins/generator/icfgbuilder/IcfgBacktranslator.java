@@ -51,7 +51,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.Multigraph;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.MultigraphEdge;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.VisualizationNode;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.core.lib.translation.DefaultTranslator;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IExplicitEdgesMultigraph;
@@ -207,8 +206,8 @@ public class IcfgBacktranslator extends
 			for (final Statement st : ss.getStatements()) {
 				final BoogieASTNode[] sources = mCodeBlock2Statement.get(st);
 				if (sources != null) {
-					assert (sources.length == 1 || (sources.length == 2) && (sources[0] instanceof CallStatement)
-							&& (sources[1] instanceof RequiresSpecification));
+					assert sources.length == 1 || sources.length == 2 && sources[0] instanceof CallStatement
+							&& sources[1] instanceof RequiresSpecification;
 					for (final BoogieASTNode source : sources) {
 						if ((source instanceof WhileStatement || source instanceof IfStatement)
 								&& st instanceof AssumeStatement) {
@@ -284,14 +283,14 @@ public class IcfgBacktranslator extends
 
 	@Override
 	public IProgramExecution<BoogieASTNode, Expression>
-
 			translateProgramExecution(final IProgramExecution<IIcfgTransition<IcfgLocation>, Term> programExecution) {
 		if (!(programExecution instanceof IcfgProgramExecution)) {
 			throw new IllegalArgumentException();
 		}
-		final IcfgProgramExecution icfgProgramExecution = (IcfgProgramExecution) programExecution;
-		assert checkCallStackSourceProgramExecution(mLogger,
-				programExecution) : "callstack of initial program execution already broken";
+		final IcfgProgramExecution<IIcfgTransition<IcfgLocation>> icfgProgramExecution =
+				(IcfgProgramExecution<IIcfgTransition<IcfgLocation>>) programExecution;
+		assert checkCallStackSourceProgramExecution(mLogger, programExecution)
+				: "callstack of initial program execution already broken";
 
 		final List<AtomicTraceElement<BoogieASTNode>> trace = new ArrayList<>();
 		final Map<Integer, ProgramState<Expression>> programStateMapping = new HashMap<>();
@@ -318,9 +317,7 @@ public class IcfgBacktranslator extends
 	@Override
 	public IBacktranslatedCFG<String, BoogieASTNode>
 			translateCFG(final IBacktranslatedCFG<IcfgLocation, IIcfgTransition<IcfgLocation>> cfg) {
-		final IBacktranslatedCFG<String, BoogieASTNode> translatedCfg =
-				translateCFG(cfg, (a, b, c) -> translateCFGEdge(a, (IIcfgTransition<IcfgLocation>) b, c));
-		return translatedCfg;
+		return translateCFG(cfg, (a, b, c) -> translateCFGEdge(a, (IIcfgTransition<IcfgLocation>) b, c));
 	}
 
 	/**
@@ -334,8 +331,6 @@ public class IcfgBacktranslator extends
 			final Map<IExplicitEdgesMultigraph<?, ?, IcfgLocation, ? extends IIcfgTransition<IcfgLocation>, ?>, Multigraph<String, BoogieASTNode>> cache,
 			final IIcfgTransition<IcfgLocation> oldEdge, final Multigraph<String, BoogieASTNode> newSourceNode) {
 		final IcfgLocation oldTarget = oldEdge.getTarget();
-		final IExplicitEdgesMultigraph<IcfgLocation, IcfgEdge, IcfgLocation, ? extends IIcfgTransition<IcfgLocation>, VisualizationNode> bla =
-				oldTarget;
 		// this is the node we want to return
 		Multigraph<String, BoogieASTNode> newTarget;
 		if (oldTarget != null) {
