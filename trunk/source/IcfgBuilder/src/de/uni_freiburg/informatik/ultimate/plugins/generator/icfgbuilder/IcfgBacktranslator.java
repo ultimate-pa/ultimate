@@ -285,7 +285,8 @@ public class IcfgBacktranslator extends
 	public IProgramExecution<BoogieASTNode, Expression>
 			translateProgramExecution(final IProgramExecution<IIcfgTransition<IcfgLocation>, Term> programExecution) {
 		if (!(programExecution instanceof IcfgProgramExecution)) {
-			throw new IllegalArgumentException();
+			throw new IllegalArgumentException(
+					"Unsupported type of execution " + programExecution.getClass().getSimpleName());
 		}
 		final IcfgProgramExecution<IIcfgTransition<IcfgLocation>> icfgProgramExecution =
 				(IcfgProgramExecution<IIcfgTransition<IcfgLocation>>) programExecution;
