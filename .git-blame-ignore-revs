@@ -5,6 +5,7 @@
 
 # CC Fixes
 # git log -i --grep='cc fixes' --pretty=format:"%H" > .git-blame-ignore-revs
+d96655c8170e855960760e1b3efe1675aad5a513
 88063fc23b9a74380648770b2502ecacb8eb7f49
 aa26b171a802046ad7fa00b16ca2b834e0cb7310
 51b2612c08eb76439b769691605db70a68acf620
