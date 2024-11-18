@@ -403,8 +403,8 @@ public class CfgBuilder {
 			final SimplificationTechnique simplificationTechnique) {
 		final CallStatement st = edge.getCallStatement();
 		final String callee = st.getMethodName();
-		assert mIcfg.getProcedureEntryNodes().containsKey(callee) : "Source code contains" + " call of " + callee
-				+ " but no such procedure.";
+		assert mIcfg.getProcedureEntryNodes().containsKey(callee)
+				: "Source code contains" + " call of " + callee + " but no such procedure.";
 
 		// Add call transition from callerNode to procedures entry node
 		final BoogieIcfgLocation callerNode = (BoogieIcfgLocation) edge.getSource();
@@ -416,8 +416,7 @@ public class CfgBuilder {
 				mIcfg.getBoogie2SMT().getStatements2TransFormula().inParamAssignment(st, simplificationTechnique);
 		final TranslationResult outParams2CallerVars = mIcfg.getBoogie2SMT().getStatements2TransFormula()
 				.resultAssignment(st, caller, simplificationTechnique);
-		final Map<String, ILocation> overapproximations = new HashMap<>();
-		overapproximations.putAll(arguments2InParams.getOverapproximations());
+		final Map<String, ILocation> overapproximations = new HashMap<>(arguments2InParams.getOverapproximations());
 		overapproximations.putAll(outParams2CallerVars.getOverapproximations());
 
 		final Call call = mCbf.constructCall(callerNode, calleeEntryLoc, st);
@@ -809,10 +808,8 @@ public class CfgBuilder {
 			// remove end node for LoopFreeBlock and SequenceOfStatements, if it only has one incoming edge and one
 			// outgoing edge
 			if ((mCodeBlockSize == CodeBlockSize.LoopFreeBlock || mCodeBlockSize == CodeBlockSize.SequenceOfStatements)
-					&& endLoc.getIncomingEdges().size() == 1
-					&& endLoc.getOutgoingEdges().size() == 1
-					&& !mConditionalStarts.contains(endLoc)
-					&& !mLabel2LocNodes.containsValue(endLoc)) {
+					&& endLoc.getIncomingEdges().size() == 1 && endLoc.getOutgoingEdges().size() == 1
+					&& !mConditionalStarts.contains(endLoc) && !mLabel2LocNodes.containsValue(endLoc)) {
 				final IcfgEdge edgeBefore = endLoc.getIncomingEdges().get(0);
 				final IcfgEdge edgeAfter = endLoc.getOutgoingEdges().get(0);
 				if (!(Overapprox.getAnnotation(edgeBefore) instanceof OverapproxVariable)
@@ -1082,7 +1079,7 @@ public class CfgBuilder {
 		}
 
 		private BoogieIcfgLocation endAtomicBlockAtTop(final IIcfgElement curElement, final Statement st) {
-			assert (curElement instanceof BoogieIcfgLocation || curElement instanceof StatementSequence);
+			assert curElement instanceof BoogieIcfgLocation || curElement instanceof StatementSequence;
 			final StatementSequence stSeq;
 			if (!(curElement instanceof StatementSequence)) {
 				stSeq = startNewStatementSequence((BoogieIcfgLocation) curElement);
@@ -1190,7 +1187,7 @@ public class CfgBuilder {
 		}
 
 		private BoogieIcfgLocation endStatementSequence(final StatementSequence stseq, final BoogieIcfgLocation loc) {
-			((CodeBlock) stseq).connectSource(loc);
+			stseq.connectSource(loc);
 			return loc;
 		}
 
@@ -1353,7 +1350,7 @@ public class CfgBuilder {
 					ModelUtils.copyAnnotations(gotoEdge, out, LoopExitAnnotation.class);
 				}
 
-				final boolean childIsLoopEntry = (LoopEntryAnnotation.getAnnotation(mother) != null);
+				final boolean childIsLoopEntry = LoopEntryAnnotation.getAnnotation(mother) != null;
 				if (childIsLoopEntry) {
 					mergeLocNodes(mother, child, false);
 					mLogger.debug(mother + " gets absorbed by " + child);
