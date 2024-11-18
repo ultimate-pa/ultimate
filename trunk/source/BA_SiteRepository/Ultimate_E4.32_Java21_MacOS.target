@@ -203,7 +203,9 @@
 		<!-- Architecture-specific bundles -->
 		<plugin id="org.eclipse.cdt.core.macosx"/>
 		<plugin id="org.eclipse.core.filesystem.macosx"/>
+		<plugin id="org.eclipse.e4.ui.workbench.renderers.swt.cocoa"/>
 		<plugin id="org.eclipse.equinox.security.macosx"/>
 		<plugin id="org.eclipse.swt.cocoa.macosx.x86_64" version="3.126.0.v20240528-0813"/>
+		<plugin id="org.eclipse.ui.cocoa"/>
 	</includeBundles>
 </target>

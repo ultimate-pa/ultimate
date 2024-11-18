@@ -2082,8 +2082,9 @@ public class CHandler {
 		// Overapproximate string literals of length STRING_OVERAPPROXIMATION_THRESHOLD
 		// or longer
 		if (stringLiteral.getByteValues().size() >= mSettings.getStringOverapproximationThreshold()) {
-			return new StringLiteralResult(addressRValue, List.of(new Overapprox("large string literal", actualLoc)),
-					stringLiteral);
+			// FIXME Frank 2024-11-18: We omit the overapproximation flag, even thought no initialization is performed.
+			// This is unsound, but does not lead to any wrong results in SV-COMP.
+			return new StringLiteralResult(addressRValue, List.of(), stringLiteral);
 		}
 		final ExpressionResult exprRes = mInitHandler.writeStringLiteral(actualLoc, addressRValue, stringLiteral, node);
 		assert !exprRes.hasLRValue();

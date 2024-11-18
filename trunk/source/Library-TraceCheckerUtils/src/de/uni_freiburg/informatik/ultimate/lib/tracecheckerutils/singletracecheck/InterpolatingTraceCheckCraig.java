@@ -86,8 +86,10 @@ public class InterpolatingTraceCheckCraig<L extends IAction> extends Interpolati
 		super(precondition, postcondition, pendingContexts, counterexample, services, csToolkit, mgdScriptTc,
 				predicateFactory, predicateUnifier, assertCodeBlockOrder, computeRcfgProgramExecution,
 				collectInterpolantStatistics, simplificationTechnique);
-		if (assertCodeBlockOrder.getAssertCodeBlockOrderType() != AssertCodeBlockOrderType.NOT_INCREMENTALLY) {
-			throw new UnsupportedOperationException("incremental assertion is not available for Craig interpolation");
+		if (interpolation == InterpolationTechnique.Craig_NestedInterpolation
+				&& assertCodeBlockOrder.getAssertCodeBlockOrderType() != AssertCodeBlockOrderType.NOT_INCREMENTALLY) {
+			throw new UnsupportedOperationException(
+					"incremental assertion is not available for Craig_NestedInterpolation");
 		}
 		mInstantiateArrayExt = instantiateArrayExt;
 		if (isCorrect() == LBool.UNSAT) {

@@ -348,6 +348,10 @@ public final class TAPreferences {
 		return mHoareAnnotationPositions;
 	}
 
+	public boolean computeProcedureContracts() {
+		return mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_COMPUTE_PROCEDURE_CONTRACTS);
+	}
+
 	public static boolean separateViolationCheck() {
 		return SEPARATE_VIOLATION_CHECK;
 	}
