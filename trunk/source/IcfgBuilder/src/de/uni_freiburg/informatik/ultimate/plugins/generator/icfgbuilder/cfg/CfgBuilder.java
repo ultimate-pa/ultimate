@@ -805,33 +805,40 @@ public class CfgBuilder {
 			ModelUtils.copyAnnotations(st, thenCondition);
 			ModelUtils.copyAnnotations(st, elseCondition);
 			buildBranching(thenCondition, thenPart, elseCondition, elsePart, srcLoc);
+			if (canIfBeCombined(endLoc)) {
+				final IcfgEdge edgeBefore = endLoc.getIncomingEdges().get(0);
+				final IcfgEdge edgeAfter = endLoc.getOutgoingEdges().get(0);
+				final List<Statement> combinedStatements =
+						DataStructureUtils.concat(((StatementSequence) edgeBefore).getStatements(),
+								((StatementSequence) edgeAfter).getStatements());
+				final StatementSequence newStatementSequence =
+						mCbf.constructStatementSequence((BoogieIcfgLocation) edgeBefore.getSource(),
+								(BoogieIcfgLocation) edgeAfter.getTarget(), combinedStatements);
+				mEdges.add(newStatementSequence);
+				mProcLocNodes.remove(endLoc.getDebugIdentifier());
+				ModelUtils.copyAnnotations(edgeBefore, newStatementSequence);
+				ModelUtils.copyAnnotations(edgeAfter, newStatementSequence);
+				edgeAfter.disconnectTarget();
+				edgeBefore.disconnectSource();
+				mEdges.remove(edgeAfter);
+				mEdges.remove(edgeBefore);
+			}
+			return srcLoc;
+		}
+
+		private boolean canIfBeCombined(final BoogieIcfgLocation loc) {
 			// remove end node for LoopFreeBlock and SequenceOfStatements, if it only has one incoming edge and one
 			// outgoing edge
 			if ((mCodeBlockSize == CodeBlockSize.LoopFreeBlock || mCodeBlockSize == CodeBlockSize.SequenceOfStatements)
-					&& endLoc.getIncomingEdges().size() == 1 && endLoc.getOutgoingEdges().size() == 1
-					&& !mConditionalStarts.contains(endLoc) && !mLabel2LocNodes.containsValue(endLoc)) {
-				final IcfgEdge edgeBefore = endLoc.getIncomingEdges().get(0);
-				final IcfgEdge edgeAfter = endLoc.getOutgoingEdges().get(0);
-				if (!(Overapprox.getAnnotation(edgeBefore) instanceof OverapproxVariable)
+					&& loc.getIncomingEdges().size() == 1 && loc.getOutgoingEdges().size() == 1
+					&& !mConditionalStarts.contains(loc) && !mLabel2LocNodes.containsValue(loc)) {
+				final IcfgEdge edgeBefore = loc.getIncomingEdges().get(0);
+				final IcfgEdge edgeAfter = loc.getOutgoingEdges().get(0);
+				return !(Overapprox.getAnnotation(edgeBefore) instanceof OverapproxVariable)
 						&& !(Overapprox.getAnnotation(edgeAfter) instanceof OverapproxVariable)
-						&& edgeBefore instanceof StatementSequence && edgeAfter instanceof StatementSequence) {
-					final List<Statement> combinedStatements =
-							DataStructureUtils.concat(((StatementSequence) edgeBefore).getStatements(),
-									((StatementSequence) edgeAfter).getStatements());
-					final StatementSequence newStatementSequence =
-							mCbf.constructStatementSequence((BoogieIcfgLocation) edgeBefore.getSource(),
-									(BoogieIcfgLocation) edgeAfter.getTarget(), combinedStatements);
-					mEdges.add(newStatementSequence);
-					mProcLocNodes.remove(endLoc.getDebugIdentifier());
-					ModelUtils.copyAnnotations(edgeBefore, newStatementSequence);
-					ModelUtils.copyAnnotations(edgeAfter, newStatementSequence);
-					edgeAfter.disconnectTarget();
-					edgeBefore.disconnectSource();
-					mEdges.remove(edgeAfter);
-					mEdges.remove(edgeBefore);
-				}
+						&& edgeBefore instanceof StatementSequence && edgeAfter instanceof StatementSequence;
 			}
-			return srcLoc;
+			return false;
 		}
 
 		private BoogieIcfgLocation buildWhile(final BoogieIcfgLocation targetLoc, final WhileStatement st) {
