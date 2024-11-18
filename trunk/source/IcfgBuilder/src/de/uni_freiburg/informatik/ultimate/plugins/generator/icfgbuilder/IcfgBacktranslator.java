@@ -320,10 +320,6 @@ public class IcfgBacktranslator extends
 			translateCFG(final IBacktranslatedCFG<IcfgLocation, IIcfgTransition<IcfgLocation>> cfg) {
 		final IBacktranslatedCFG<String, BoogieASTNode> translatedCfg =
 				translateCFG(cfg, (a, b, c) -> translateCFGEdge(a, (IIcfgTransition<IcfgLocation>) b, c));
-		// mLogger.info(getClass().getSimpleName());
-		// printHondas(cfg, mLogger::info);
-		// printCFG(cfg, mLogger::info);
-		// mLogger.info("######## END "+getClass().getSimpleName());
 		return translatedCfg;
 	}
 
