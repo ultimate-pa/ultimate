@@ -25,11 +25,11 @@ TIMEOUT:
   callback: CE
 - task: parallelSumConComNonAtomic.bpl
   settings: NewStatesSleepPersistentFixedOrder.epf
-  toolchain: AutomizerCInline.xml
+  toolchain: AutomizerBplInline.xml
   callback: CE
 - task: parallelSumConComNonAtomic.bpl
   settings: NewStatesSleepPersistentFixedOrder.epf
-  toolchain: AutomizerCInline.xml
+  toolchain: AutomizerBplInline.xml
   callback: CE
 - task: context1.wvr.bpl
   settings: NewStatesSleep.epf
