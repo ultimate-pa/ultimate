@@ -521,7 +521,7 @@ def create_cli_settings(prop, validate_witness, architecture, c_file):
         # For now disable UnstructureCode in witness validation
         # This is a workaround, in the future we always want to disable this.
         ret.append(
-            "--boogiepreprocessor.replace.while.statements.and.if-then-else.statements"
+            "--preprocessor.replace.while.statements.and.if-then-else.statements"
         )
         ret.append("false")
     elif not validate_witness:
