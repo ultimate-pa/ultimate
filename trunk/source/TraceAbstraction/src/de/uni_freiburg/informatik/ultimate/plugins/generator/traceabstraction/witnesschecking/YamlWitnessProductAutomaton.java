@@ -75,7 +75,7 @@ public class YamlWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 	private final Witness mWitness;
 	private final ISLPredicate mEmptyStackState;
 	private final Set<ProductPredicate<?>> mAllProductStates = new HashSet<>();
-	private static final boolean CHECK_ASSUMPTION_LOCATIONS = true;
+	private static final boolean CHECK_ASSUMPTION_LOCATIONS = false;
 
 	public YamlWitnessProductAutomaton(final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> abstraction,
 			final Witness witness, final PredicateFactory predicateFactory) {
