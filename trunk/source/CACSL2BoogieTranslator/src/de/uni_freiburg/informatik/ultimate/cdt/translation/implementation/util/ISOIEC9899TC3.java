@@ -354,6 +354,8 @@ public final class ISOIEC9899TC3 {
 			}
 
 			if (hexValue.contains(".")) {
+				// Remove trailing zeros to avoid division by too large number (16^length(sufficLength)) that might not
+				// be represented as BigDecimal.
 				hexValue = StringUtils.stripEnd(hexValue, "0");
 				final int dotPosition = hexValue.indexOf('.');
 				suffixLength = hexValue.substring(dotPosition + 1).length();
