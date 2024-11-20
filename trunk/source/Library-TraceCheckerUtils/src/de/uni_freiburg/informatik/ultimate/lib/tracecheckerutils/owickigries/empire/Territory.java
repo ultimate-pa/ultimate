@@ -218,6 +218,23 @@ public final class Territory<PLACE> {
 		return enabledTransitions;
 	}
 
+	/**
+	 * Get bystanders in the territory for an enabled transition.
+	 *
+	 * @param <L>
+	 * @param transition
+	 *            Transition enabled by the territory
+	 * @return Set of bystander regions
+	 */
+	public <L> Set<Region<PLACE>> getBystanders(final Transition<L, PLACE> transition) {
+		assert enables(transition) : "Territory does not enable the given transition";
+		final var predecessors = transition.getPredecessors();
+		final var bystanders =
+				mTerritory.stream().filter(r -> DataStructureUtils.haveEmptyIntersection(r.getPlaces(), predecessors))
+						.collect(Collectors.toSet());
+		return bystanders;
+	}
+
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean equals(final Object obj) {

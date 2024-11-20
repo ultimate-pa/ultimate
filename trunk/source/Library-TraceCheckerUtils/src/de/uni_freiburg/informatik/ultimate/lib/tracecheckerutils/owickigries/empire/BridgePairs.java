@@ -59,6 +59,10 @@ public class BridgePairs<P> {
 	 */
 	public <L> boolean isNecessaryBridge(final Pair<Territory<P>, P> pair, final Transition<L, P> transition) {
 		final var predecessors = transition.getPredecessors();
+		final var successors = transition.getSuccessors();
+		if (pair.getFirst().getPlaces().containsAll(successors)) {
+			return false;
+		}
 		final var bystanderSet = mBridges.getImage(pair);
 		for (final Set<Region<P>> bystanders : bystanderSet) {
 			if (bystanderExtended(bystanders, predecessors)) {
