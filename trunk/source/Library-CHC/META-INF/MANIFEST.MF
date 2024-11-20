@@ -5,8 +5,6 @@ Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.chc
 Bundle-Vendor: Ultimate Program Analysis Team
 Bundle-Version: 0.3.0
 Bundle-RequiredExecutionEnvironment: JavaSE-21
-Bundle-ClassPath: .,
- Eldarica-assembly-2.0.8.jar
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.smtlibutils,
  de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils,
  de.uni_freiburg.informatik.ultimate.core,
@@ -14,7 +12,10 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.smtlibutils,
  de.uni_freiburg.informatik.ultimate.lib.smtlib,
  de.uni_freiburg.informatik.ultimate.lib.automata,
  de.uni_freiburg.informatik.ultimate.lib.boogieast,
- de.uni_freiburg.informatik.ultimate.smtsolver.external
+ de.uni_freiburg.informatik.ultimate.smtsolver.external,
+ wrapped.io.github.uuverifiers.eldarica_2.12,
+ wrapped.io.github.uuverifiers.princess_2.12,
+ org.scala-lang.scala-library
 Export-Package: de.uni_freiburg.informatik.ultimate.lib.chc,
  de.uni_freiburg.informatik.ultimate.lib.chc.eldarica,
  de.uni_freiburg.informatik.ultimate.lib.chc.results

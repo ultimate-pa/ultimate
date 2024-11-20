@@ -202,6 +202,9 @@
 		<plugin id="org.yaml.snakeyaml"/>
 		<plugin id="wrapped.net.sf.trove4j.trove4j"/>
 		<plugin id="wrapped.xerces.xercesImpl"/>
+		<plugin id="wrapped.io.github.uuverifiers.eldarica_2.12"/>
+		<plugin id="wrapped.io.github.uuverifiers.princess_2.12"/>
+		<plugin id="org.scala-lang.scala-library"/>
 		<!-- Architecture-specific bundles -->
 		<plugin id="org.eclipse.cdt.core.linux"/>
 		<plugin id="org.eclipse.cdt.core.linux.x86_64"/>

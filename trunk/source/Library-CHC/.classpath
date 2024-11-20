@@ -4,6 +4,5 @@
 	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/Library-UltimateUtil"/>
-	<classpathentry kind="lib" path="Eldarica-assembly-2.0.8.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
