@@ -253,7 +253,8 @@ public abstract class ExpressionTranslation {
 		try {
 			fpl = ISOIEC9899TC3.handleFloatConstant(val, loc);
 		} catch (final ArithmeticException e) {
-			throw new UnsupportedSyntaxException(loc, "Unable to represent float literal " + val);
+			throw new UnsupportedSyntaxException(loc,
+					"Unable to represent float literal " + val + " (" + e.getMessage() + ")");
 		}
 		final Expression expr =
 				constructLiteralForFloatingType(loc, fpl.getCPrimitive(), fpl.getDecimalRepresenation());
