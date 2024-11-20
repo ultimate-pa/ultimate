@@ -140,9 +140,10 @@ public class EmpireComputation<L, P> {
 					final var bridgeSuccessor = replaceRegions(transition, bystanders);
 					successor = new Pair<>(new Territory<>(ImmutableSet.of(bridgeSuccessor)), lawPlace);
 					bridgePairs.addBridge(successor, pair, transition);
-				} else {
-					successor = computeSuccessor(territory, lawPlace, transition);
+					queue.add(successor);
+					continue;
 				}
+				successor = computeSuccessor(territory, lawPlace, transition);
 				if (successor == null) {
 					continue;
 				}
@@ -164,6 +165,7 @@ public class EmpireComputation<L, P> {
 
 			if (subsumes) {
 				queue.add(pair);
+				// First fully extend the territory before any replacement
 				continue;
 			}
 
@@ -178,7 +180,15 @@ public class EmpireComputation<L, P> {
 					result.add(pair);
 					continue;
 				}
+				final var succTerritory = successor.getFirst();
+				final var succLawPlace = successor.getSecond();
 				mLogger.debug("successor of %s under transitions %s is %s", pair, transition, successor);
+
+				if (lawPlace.equals(succLawPlace) && territory.equals(succTerritory)) {
+					// do nothing
+					mLogger.debug("\t--> self loop; skipping...");
+					continue;
+				}
 
 				queue.offer(successor);
 				result.add(pair);
