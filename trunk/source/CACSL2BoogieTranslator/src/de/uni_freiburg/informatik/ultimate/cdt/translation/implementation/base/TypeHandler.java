@@ -491,7 +491,7 @@ public class TypeHandler implements ITypeHandler {
 			if (!mTranslationSettings.isBitvectorTranslation()
 					&& fTypes.stream().anyMatch(x -> x.getUnderlyingType().isFloatingType())) {
 				throw new UnsupportedSyntaxException(loc,
-						"floats in unnions are not supported in the integer translation.");
+						"floats in unions are not supported in the integer translation.");
 			}
 			isStructOrUnion = StructOrUnion.UNION;
 		} else {
