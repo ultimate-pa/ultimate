@@ -51,12 +51,12 @@ if [ "$2" == "linux" ]; then
   echo "Building .zip for linux..."
   ARCH="linux"
   ARCHPATH="products/CLI-E4/linux/gtk/x86_64"
-  ADDS+=("adds/z3" "adds/cvc4" "adds/mathsat" "add/ltl2ba")
+  ADDS+=("adds/z3" "adds/cvc4" "adds/mathsat" "adds/ltl2ba")
 elif [ "$2" == "win32" ]; then
   echo "Building .zip for win32..."
   ARCH="win32"
   ARCHPATH="products/CLI-E4/win32/win32/x86_64"
-  ADDS+=("adds/z3.exe" "adds/cvc4.exe" "adds/mathsat.exe" "adds/mpir.dll" "adds/mathsat.dll" "add/ltl2ba.exe")
+  ADDS+=("adds/z3.exe" "adds/cvc4.exe" "adds/mathsat.exe" "adds/mpir.dll" "adds/mathsat.dll" "adds/ltl2ba.exe")
 else
   echo "Wrong argument: ""$2"" -- use 'linux' or 'win32'"
   exit 1
