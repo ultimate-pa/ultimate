@@ -1,0 +1,75 @@
+- entry_type: loop_invariant
+  metadata:
+    format_version: '0.1'
+    uuid: 15c410a2-5312-4f09-bc05-c27ed01988c0
+    creation_time: '2023-10-31T13:37:25+01:00'
+    producer:
+      name: UNUSED
+      version: 0.2.3-dev-b094d93-m
+    task:
+      input_files:
+      - C:\ultimate\trunk\examples\witness-checking\regression\correctness\quick_sort_split.i
+      input_file_hashes:
+        C:\ultimate\trunk\examples\witness-checking\regression\correctness\quick_sort_split.i: UNUSED
+      specification: UNUSED
+      data_model: UNUSED
+      language: C
+  location:
+    file_name: C:\ultimate\trunk\examples\witness-checking\regression\correctness\quick_sort_split.i
+    file_hash: UNUSED
+    line: 596
+    function: main
+  loop_invariant:
+    string: ((high == 0) && (low == 0))
+    type: assertion
+    format: C
+- entry_type: loop_invariant
+  metadata:
+    format_version: '0.1'
+    uuid: d8fcfc6e-13ed-4213-b44a-e5348d0f293e
+    creation_time: '2023-10-31T13:37:25+01:00'
+    producer:
+      name: UNUSED
+      version: 0.2.3-dev-b094d93-m
+    task:
+      input_files:
+      - C:\ultimate\trunk\examples\witness-checking\regression\correctness\quick_sort_split.i
+      input_file_hashes:
+        C:\ultimate\trunk\examples\witness-checking\regression\correctness\quick_sort_split.i: UNUSED
+      specification: UNUSED
+      data_model: UNUSED
+      language: C
+  location:
+    file_name: C:\ultimate\trunk\examples\witness-checking\regression\correctness\quick_sort_split.i
+    file_hash: UNUSED
+    line: 603
+    function: main
+  loop_invariant:
+    string: ((high == 0) && (low == 0))
+    type: assertion
+    format: C
+- entry_type: loop_invariant
+  metadata:
+    format_version: '0.1'
+    uuid: ef6b2063-13e6-4b1f-a394-3862ba1b74c7
+    creation_time: '2023-10-31T13:37:25+01:00'
+    producer:
+      name: UNUSED
+      version: 0.2.3-dev-b094d93-m
+    task:
+      input_files:
+      - C:\ultimate\trunk\examples\witness-checking\regression\correctness\quick_sort_split.i
+      input_file_hashes:
+        C:\ultimate\trunk\examples\witness-checking\regression\correctness\quick_sort_split.i: UNUSED
+      specification: UNUSED
+      data_model: UNUSED
+      language: C
+  location:
+    file_name: C:\ultimate\trunk\examples\witness-checking\regression\correctness\quick_sort_split.i
+    file_hash: UNUSED
+    line: 608
+    function: main
+  loop_invariant:
+    string: ((high == 0) && (low == 0))
+    type: assertion
+    format: C

@@ -40,7 +40,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.xnf.Dnf;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.ScriptWithTermConstructionChecks;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
@@ -58,7 +57,6 @@ public class LinearInequalityInvariantPatternProcessorFactory
 
 	protected final IUltimateServiceProvider mServices;
 	private final SimplificationTechnique mSimplificationTechnique;
-	private final XnfConversionTechnique mXnfConversionTechnique;
 	protected final IPredicateUnifier predUnifier;
 	protected final CfgSmtToolkit mCsToolkit;
 	protected final ILinearInequalityInvariantPatternStrategy<Dnf<AbstractLinearInvariantPattern>> mStrategy;
@@ -83,7 +81,6 @@ public class LinearInequalityInvariantPatternProcessorFactory
 	 * @param strategy
 	 *            the invariant strategy to pass to the produced processor
 	 * @param simplificationTechnique
-	 * @param xnfConversionTechnique
 	 * @param smtSymbols
 	 * @param synthesizeEntryPattern
 	 *            true if the the pattern for the start location need to be synthesized (instead of being inferred from
@@ -97,13 +94,11 @@ public class LinearInequalityInvariantPatternProcessorFactory
 			final IPredicateUnifier predUnifier, final CfgSmtToolkit csToolkit,
 			final ILinearInequalityInvariantPatternStrategy<Dnf<AbstractLinearInvariantPattern>> strategy,
 			final boolean useNonlinerConstraints, final boolean useUnsatCores, final SolverSettings solverSettings,
-			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
-			final SmtFunctionsAndAxioms smtSymbols, final Map<IcfgLocation, IPredicate> loc2underApprox,
-			final Map<IcfgLocation, IPredicate> loc2overApprox, final boolean synthesizeEntryPattern,
-			final KindOfInvariant kindOfInvariant) {
+			final SimplificationTechnique simplificationTechnique, final SmtFunctionsAndAxioms smtSymbols,
+			final Map<IcfgLocation, IPredicate> loc2underApprox, final Map<IcfgLocation, IPredicate> loc2overApprox,
+			final boolean synthesizeEntryPattern, final KindOfInvariant kindOfInvariant) {
 		mServices = services;
 		mSimplificationTechnique = simplificationTechnique;
-		mXnfConversionTechnique = xnfConversionTechnique;
 		this.predUnifier = predUnifier;
 		mCsToolkit = csToolkit;
 		mSmtSymbols = smtSymbols;
@@ -144,7 +139,7 @@ public class LinearInequalityInvariantPatternProcessorFactory
 			final IPredicate postcondition, final IcfgLocation startLocation, final Set<IcfgLocation> errorLocations) {
 		return new LinearInequalityInvariantPatternProcessor(mServices, predUnifier, mCsToolkit, mSmtSymbols,
 				produceSmtSolver(), locations, transitions, precondition, postcondition, startLocation, errorLocations,
-				mStrategy, mUseNonlinearConstraints, mUseUnsatCores, mSimplificationTechnique, mXnfConversionTechnique,
-				mLoc2underApprox, mLoc2overApprox, mSynthesizeEntryPattern, mKindOfInvariant);
+				mStrategy, mUseNonlinearConstraints, mUseUnsatCores, mSimplificationTechnique, mLoc2underApprox,
+				mLoc2overApprox, mSynthesizeEntryPattern, mKindOfInvariant);
 	}
 }

@@ -58,11 +58,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  * {@link IcfgForkThreadOtherTransition}s and adds {@link ThreadInstance}s to the {@link IIcfg}s
  * {@link ConcurrencyInformation}.
  *
- * Currently the number of thread instances is hardcoded. We have one thread instance per
- * {@link IcfgForkThreadCurrentTransition}s. But in the future we will also allow that the amount of thread instances
- * becomes a parameter of this class.
- *
- *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class IcfgPetrifier {
@@ -74,17 +69,18 @@ public class IcfgPetrifier {
 
 	public IcfgPetrifier(final IUltimateServiceProvider services, final IIcfg<?> icfg,
 			final int numberOfThreadInstances, final boolean addSelfLoops) {
-
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
+		mBacktranslator = new BlockEncodingBacktranslator(IcfgEdge.class, Term.class, mLogger);
 
-		final BlockEncodingBacktranslator backtranslator =
-				new BlockEncodingBacktranslator(IcfgEdge.class, Term.class, mLogger);
+		// Create a copy of the original Icfg
 		final IcfgDuplicator duplicator =
-				new IcfgDuplicator(mLogger, mServices, icfg.getCfgSmtToolkit().getManagedScript(), backtranslator);
-		mPetrifiedIcfg = duplicator.copy(icfg, true);
+				new IcfgDuplicator(mLogger, mServices, icfg.getCfgSmtToolkit().getManagedScript(), mBacktranslator);
+		mPetrifiedIcfg = duplicator.copy(icfg, "_petrified" + numberOfThreadInstances, true);
 		final Map<IIcfgTransition<IcfgLocation>, IIcfgTransition<IcfgLocation>> old2newEdgeMapping =
 				duplicator.getOld2NewEdgeMapping();
+
+		// collect fork and join transitions in the copied Icfg
 		final ConcurrencyInformation concurrency = icfg.getCfgSmtToolkit().getConcurrencyInformation();
 		final List<IIcfgForkTransitionThreadCurrent<IcfgLocation>> forks = concurrency.getThreadInstanceMap().keySet()
 				.stream().map(x -> (IIcfgForkTransitionThreadCurrent<IcfgLocation>) old2newEdgeMapping.get(x))
@@ -92,6 +88,7 @@ public class IcfgPetrifier {
 		final List<IIcfgJoinTransitionThreadCurrent<IcfgLocation>> joins = concurrency.getJoinTransitions().stream()
 				.map(x -> (IIcfgJoinTransitionThreadCurrent<IcfgLocation>) old2newEdgeMapping.get(x))
 				.collect(Collectors.toList());
+
 		final ThreadInstanceAdder adder = new ThreadInstanceAdder(mServices, addSelfLoops);
 		final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, List<ThreadInstance>> threadInstanceMap =
 				ThreadInstanceAdder.constructThreadInstances(mPetrifiedIcfg, forks, numberOfThreadInstances);
@@ -99,23 +96,21 @@ public class IcfgPetrifier {
 		final CfgSmtToolkit cfgSmtToolkit = adder.constructNewToolkit(mPetrifiedIcfg.getCfgSmtToolkit(),
 				threadInstanceMap, inUseErrorNodeMap, joins);
 		mPetrifiedIcfg.setCfgSmtToolkit(cfgSmtToolkit);
+
+		// Note that threadInstanceMap, newForkCurrentThreads, and newJoinCurrentThreads are modified because the
+		// ProcedureMultiplier might introduce new IcfgForkThreadCurrentTransitions, namely in the case where
+		// a forked procedure contains a fork.
 		final List<ThreadInstance> instances = getAllInstances(threadInstanceMap);
-		// Note that threadInstanceMap, newForkCurrentThreads, and
-		// newJoinCurrentThreads are modified because the
-		// ProcedureMultiplier might introduce new
-		// IcfgForkThreadCurrentTransitions, namely in the case where
-		// a forked transition contains a fork.
-		ProcedureMultiplier.duplicateProcedures(mServices, mPetrifiedIcfg, instances, backtranslator, threadInstanceMap,
-				forks, joins);
+		ProcedureMultiplier.duplicateProcedures(mServices, mPetrifiedIcfg, instances, mBacktranslator,
+				threadInstanceMap, forks, joins);
 		fillErrorNodeMap(threadInstanceMap.keySet(), inUseErrorNodeMap);
 		inUseErrorNodeMap.values().forEach(x -> mPetrifiedIcfg.addLocation(x, false, true, false, false, false));
 		adder.connectThreadInstances(mPetrifiedIcfg, forks, joins, threadInstanceMap, inUseErrorNodeMap,
-				backtranslator);
+				mBacktranslator);
 
 		final Set<Term> idVars = instances.stream().flatMap(x -> Arrays.stream(x.getIdVars())).map(IProgramVar::getTerm)
 				.collect(Collectors.toSet());
-		backtranslator.setVariableBlacklist(idVars);
-		mBacktranslator = backtranslator;
+		mBacktranslator.setVariableBlacklist(idVars);
 	}
 
 	private static void fillErrorNodeMap(final Set<IIcfgForkTransitionThreadCurrent<IcfgLocation>> forkTransitions,
@@ -141,5 +136,4 @@ public class IcfgPetrifier {
 			final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, List<ThreadInstance>> threadInstanceMap) {
 		return threadInstanceMap.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
 	}
-
 }

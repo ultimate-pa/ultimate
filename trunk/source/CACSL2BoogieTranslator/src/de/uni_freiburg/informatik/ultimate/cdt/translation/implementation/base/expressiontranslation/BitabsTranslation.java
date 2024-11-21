@@ -30,16 +30,17 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation;
 
 import java.math.BigInteger;
-import java.util.Arrays;
 import java.util.List;
 import java.util.function.BinaryOperator;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
@@ -53,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.OverapproxVariable;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -99,7 +100,7 @@ public class BitabsTranslation {
 		}
 		final Expression zero = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
 
-		final AuxVarInfo auxvarinfo = auxVarInfoBuilder.constructAuxVarInfo(loc, type, SFO.AUXVAR.NONDET);
+		final AuxVarInfo auxvarinfo = auxVarInfoBuilder.constructAuxVarInfo(loc, type, SFO.AUXVAR.BITWISE);
 
 		final Expression auxvar = applyWraparoundIfNecessary(loc, auxvarinfo.getExp(), type);
 		final Expression leftWrapped = applyWraparoundIfNecessary(loc, left, type);
@@ -239,7 +240,7 @@ public class BitabsTranslation {
 
 		final Expression zero = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
 
-		final AuxVarInfo auxvarinfo = auxVarInfoBuilder.constructAuxVarInfo(loc, type, SFO.AUXVAR.NONDET);
+		final AuxVarInfo auxvarinfo = auxVarInfoBuilder.constructAuxVarInfo(loc, type, SFO.AUXVAR.BITWISE);
 		final Expression auxvar = applyWraparoundIfNecessary(loc, auxvarinfo.getExp(), type);
 		final Expression leftWrapped = applyWraparoundIfNecessary(loc, left, type);
 		final Expression rightWrapped = applyWraparoundIfNecessary(loc, right, type);
@@ -346,7 +347,7 @@ public class BitabsTranslation {
 		}
 
 		final Expression zero = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
-		final AuxVarInfo auxvarinfo = auxVarInfoBuilder.constructAuxVarInfo(loc, type, SFO.AUXVAR.NONDET);
+		final AuxVarInfo auxvarinfo = auxVarInfoBuilder.constructAuxVarInfo(loc, type, SFO.AUXVAR.BITWISE);
 		final Expression auxvar = applyWraparoundIfNecessary(loc, auxvarinfo.getExp(), type);
 		final Expression leftWrapped = applyWraparoundIfNecessary(loc, left, type);
 		final Expression rightWrapped = applyWraparoundIfNecessary(loc, right, type);
@@ -414,7 +415,7 @@ public class BitabsTranslation {
 	/**
 	 * Overapproximates the bitwise left-shift. Uses the following rules to increase the precision:
 	 * <li>If a=0 or b=0, then a<<b = a
-	 * <li>Otherwise a<<b > a
+	 * <li>Otherwise a<<b > a (if a is signed)
 	 * <li>In general a<<b = a * 2**b, therefore we return this expression if b is a constant.
 	 */
 	public ExpressionResult abstractLeftShift(final ILocation loc, final Expression left, final CPrimitive typeLeft,
@@ -426,7 +427,7 @@ public class BitabsTranslation {
 	/**
 	 * Overapproximates the bitwise right-shift. Uses the following rules to increase the precision:
 	 * <li>If a=0 or b=0, then a>>b = a
-	 * <li>Otherwise a>>b < a
+	 * <li>Otherwise a>>b < a (if a is signed)
 	 * <li>In general a>>b = a / 2**b, therefore we return this expression if b is a constant.
 	 */
 	public ExpressionResult abstractRightShift(final ILocation loc, final Expression left, final CPrimitive typeLeft,
@@ -435,23 +436,37 @@ public class BitabsTranslation {
 				Operator.COMPLT);
 	}
 
+	private Integer extractShiftValue(final Expression expr, final CPrimitive type) {
+		final BigInteger bigIntValue = mTypeSizes.extractIntegerValue(expr, type);
+		if (bigIntValue == null || bigIntValue.signum() < 0) {
+			// The value is not a constant or negative
+			return null;
+		}
+		try {
+			return bigIntValue.intValueExact();
+		} catch (final ArithmeticException e) {
+			// Cannot be represented as int
+			return null;
+		}
+	}
+
 	private ExpressionResult abstractShift(final ILocation loc, final Expression left, final CPrimitive typeLeft,
 			final Expression right, final CPrimitive typeRight, final AuxVarInfoBuilder auxVarInfoBuilder,
 			final String functionName, final Operator shiftOperator, final Operator compOperator) {
 		final BigInteger leftValue = mTypeSizes.extractIntegerValue(left, typeLeft);
-		final BigInteger rightValue = mTypeSizes.extractIntegerValue(right, typeRight);
-		if (BigInteger.ZERO.equals(leftValue) || BigInteger.ZERO.equals(rightValue)) {
+		final Integer rightValue = extractShiftValue(right, typeRight);
+		if (BigInteger.ZERO.equals(leftValue) || Integer.valueOf(0).equals(rightValue)) {
 			return new ExpressionResult(new RValue(left, typeLeft));
 		}
 		final Expression leftWrapped = applyWraparoundIfNecessary(loc, left, typeLeft);
 		if (rightValue != null) {
-			final Expression shiftFactorExpr = mTypeSizes.constructLiteralForIntegerType(loc, typeRight,
-					BigInteger.TWO.pow(rightValue.intValueExact()));
+			final Expression shiftFactorExpr =
+					mTypeSizes.constructLiteralForIntegerType(loc, typeRight, BigInteger.TWO.pow(rightValue));
 			final Expression value =
 					ExpressionFactory.newBinaryExpression(loc, shiftOperator, leftWrapped, shiftFactorExpr);
 			return new ExpressionResult(new RValue(value, typeLeft));
 		}
-		final AuxVarInfo auxVar = auxVarInfoBuilder.constructAuxVarInfo(loc, typeLeft, SFO.AUXVAR.NONDET);
+		final AuxVarInfo auxVar = auxVarInfoBuilder.constructAuxVarInfo(loc, typeLeft, SFO.AUXVAR.BITWISE);
 		final Expression zero = new IntegerLiteral(loc, BoogieType.TYPE_INT, "0");
 		final Expression leftEqualsZero =
 				ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, leftWrapped, zero);
@@ -462,7 +477,8 @@ public class BitabsTranslation {
 		final Expression compLeft = ExpressionFactory.newBinaryExpression(loc, compOperator,
 				applyWraparoundIfNecessary(loc, auxVar.getExp(), typeLeft), leftWrapped);
 		return buildExpressionResult(loc, functionName, typeLeft, auxVar,
-				List.of(new Pair<>(leftOrRightEqualsZero, left)), List.of(compLeft));
+				List.of(new Pair<>(leftOrRightEqualsZero, left)),
+				mTypeSizes.isUnsigned(typeLeft) ? List.of() : List.of(compLeft));
 	}
 
 	private Expression applyWraparoundIfNecessary(final ILocation loc, final Expression expr, final CPrimitive type) {
@@ -486,28 +502,23 @@ public class BitabsTranslation {
 			final List<Pair<Expression, Expression>> exactCases,
 			final List<Expression> assumptionsForOverapproximation) {
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
-		builder.addDeclaration(auxvarinfo.getVarDec());
-		builder.addAuxVar(auxvarinfo);
+		builder.addAuxVarWithDeclaration(auxvarinfo);
 		final IdentifierExpression auxvar = auxvarinfo.getExp();
 		builder.setLrValue(new RValue(auxvar, resultType));
 		final VariableLHS auxvarLhs = auxvarinfo.getLhs();
-
-		final Overapprox overapprox = new Overapprox(functionName, loc);
-		Statement[] resultStatements = new Statement[assumptionsForOverapproximation.size()];
-		// TODO: Is it better to have the one assume with the conjunction instead of multiple assumes?
-		for (int i = 0; i < assumptionsForOverapproximation.size(); i++) {
-			final Statement assume = new AssumeStatement(loc, assumptionsForOverapproximation.get(i));
-			overapprox.annotate(assume);
-			resultStatements[i] = assume;
-		}
+		final HavocStatement havoc = new HavocStatement(loc, new VariableLHS[] { auxvarLhs });
+		final AssumeStatement assume =
+				new AssumeStatement(loc, ExpressionFactory.and(loc, assumptionsForOverapproximation));
+		Statement resultStatement = new AtomicStatement(loc, new Statement[] { havoc, assume });
+		new OverapproxVariable(functionName, loc).annotate(resultStatement);
 		for (int i = exactCases.size() - 1; i >= 0; i--) {
 			final Pair<Expression, Expression> pair = exactCases.get(i);
 			final Statement assignment =
 					StatementFactory.constructSingleAssignmentStatement(loc, auxvarLhs, pair.getSecond());
 			final Statement ifStatement = StatementFactory.constructIfStatement(loc, pair.getFirst(),
-					new Statement[] { assignment }, resultStatements);
-			resultStatements = new Statement[] { ifStatement };
+					new Statement[] { assignment }, new Statement[] { resultStatement });
+			resultStatement = ifStatement;
 		}
-		return builder.addStatements(Arrays.asList(resultStatements)).build();
+		return builder.addStatement(resultStatement).build();
 	}
 }

@@ -34,7 +34,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubtermPropertyChecker;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
@@ -408,12 +407,11 @@ public class QuantifierUtils {
 	 * quantifier.
 	 */
 	public static Term transformToXnf(final IUltimateServiceProvider services, final Script script,
-			final int quantifier, final ManagedScript mgdScript, Term term,
-			final XnfConversionTechnique xnfConversionTechnique) throws AssertionError {
+			final int quantifier, final ManagedScript mgdScript, Term term) throws AssertionError {
 		if (quantifier == QuantifiedFormula.EXISTS) {
-			term = SmtUtils.toDnf(services, mgdScript, term, xnfConversionTechnique);
+			term = SmtUtils.toDnf(services, mgdScript, term);
 		} else if (quantifier == QuantifiedFormula.FORALL) {
-			term = SmtUtils.toCnf(services, mgdScript, term, xnfConversionTechnique);
+			term = SmtUtils.toCnf(services, mgdScript, term);
 		} else {
 			throw new AssertionError(UNKNOWN_QUANTIFIER);
 		}

@@ -59,7 +59,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeIterator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocationIterator;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramOldVar;
@@ -157,12 +156,13 @@ public class IcfgUtils {
 		return procErrorNodes.contains(loc);
 	}
 
+	public static <LOC extends IcfgLocation> Stream<LOC> getAllLocations(final IIcfg<LOC> icfg) {
+		return icfg.getProgramPoints().values().stream().flatMap(x -> x.values().stream());
+	}
+
 	public static <LOC extends IcfgLocation> int getNumberOfLocations(final IIcfg<LOC> icfg) {
-		int result = 0;
-		for (final Entry<String, Map<DebugIdentifier, LOC>> entry : icfg.getProgramPoints().entrySet()) {
-			result += entry.getValue().size();
-		}
-		return result;
+		return icfg.getProgramPoints().entrySet().stream().map(x -> x.getValue().size())
+				.collect(Collectors.summingInt(Integer::intValue));
 	}
 
 	/**
@@ -235,17 +235,52 @@ public class IcfgUtils {
 	}
 
 	/**
+	 * Checks an invariant that must hold for {@link IIcfg}s: For every procedure entry node, there must be a
+	 * corresponding procedure exit node, and vice versa. This should hold, even if e.g. the exit node is unreachable.
+	 */
+	public static <LOC extends IcfgLocation> boolean checkMatchingEntryExitNodes(final IIcfg<LOC> icfg) {
+		final var entryNodes = icfg.getProcedureEntryNodes();
+		final var exitNodes = icfg.getProcedureExitNodes();
+
+		for (final var e : entryNodes.entrySet()) {
+			final var proc = e.getKey();
+			assert e.getValue() != null : "Entry node for procedure " + proc + " is null";
+
+			final var exit = exitNodes.get(proc);
+			if (exit == null) {
+				assert false : "No corresponding exit node for entry node with procedure " + proc;
+				return false;
+			}
+		}
+
+		for (final var e : exitNodes.entrySet()) {
+			final var proc = e.getKey();
+			assert e.getValue() != null : "Exit node for procedure " + proc + " is null";
+
+			final var entry = entryNodes.get(proc);
+			if (entry == null) {
+				assert false : "No corresponding entry node for exit node with procedure " + proc;
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/**
 	 * @return true iff loc is entry node of some procedure
 	 */
 	public static <LOC extends IcfgLocation> boolean isEntry(final LOC loc, final IIcfg<LOC> icfg) {
-		return icfg.getProcedureEntryNodes().get(loc.getProcedure()).equals(loc);
+		final var entry = icfg.getProcedureEntryNodes().get(loc.getProcedure());
+		return entry.equals(loc);
 	}
 
 	/**
 	 * @return true iff loc is exit node of some procedure
 	 */
 	public static <LOC extends IcfgLocation> boolean isExit(final LOC loc, final IIcfg<LOC> icfg) {
-		return icfg.getProcedureExitNodes().get(loc.getProcedure()).equals(loc);
+		final var exit = icfg.getProcedureExitNodes().get(loc.getProcedure());
+		return loc.equals(exit);
 	}
 
 	/**

@@ -33,7 +33,8 @@ import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
 /**
  * Interface for the computation of the initial abstraction used by a CEGAR loop.
@@ -57,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
  * @param <A>
  *            The type of the computed abstraction
  */
-public interface IInitialAbstractionProvider<L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>> {
+public interface IInitialAbstractionProvider<L extends IIcfgTransition<?>, A extends IAutomaton<L, ?>> {
 	/**
 	 * Computes the initial abstraction for the given control flow graph and error locations.
 	 *
@@ -73,5 +74,9 @@ public interface IInitialAbstractionProvider<L extends IIcfgTransition<?>, A ext
 	A getInitialAbstraction(IIcfg<? extends IcfgLocation> icfg, Set<? extends IcfgLocation> errorLocs)
 			throws AutomataLibraryException;
 
-	// TODO Add statistics support
+	default IStatisticsDataProvider getStatistics() {
+		return new AbstractStatisticsDataProvider() {
+			// by default, no statistics are reported
+		};
+	}
 }

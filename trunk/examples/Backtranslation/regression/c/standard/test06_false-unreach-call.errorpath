@@ -9,7 +9,7 @@
 [L34]  EXPR        \read(a)
        VAL         [a={6:0}, p1={5:0}, p2={2:0}]
 [L34]  CALL, EXPR  f(a, &p1, &p2)
-       VAL         [\old(a)=4, p1={5:0}, p2={2:0}]
+       VAL         [\old(a)=4, \old(p1)={5:0}, \old(p2)={2:0}]
 [L14]  COND TRUE   a == 4
 [L15]  CALL        g(p1, p2)
 [L7]   EXPR        \read(**p2)

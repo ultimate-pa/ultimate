@@ -133,8 +133,8 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.CheckMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.MemoryModel;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerCheckMode;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.LinkedScopedHashMap;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -293,8 +293,7 @@ public class MemoryHandler {
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		builder.addOverapprox(new Overapprox("alignof", loc));
 		final AuxVarInfo auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, resultType, SFO.AUXVAR.NONDET);
-		builder.addDeclaration(auxvar.getVarDec());
-		builder.addAuxVar(auxvar);
+		builder.addAuxVarWithDeclaration(auxvar);
 		builder.setLrValue(new RValue(auxvar.getExp(), resultType));
 		return builder.build();
 	}
@@ -777,13 +776,16 @@ public class MemoryHandler {
 		final ILocation loc = address.getLocation();
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 		final AuxVarInfo auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, resultType, SFO.AUXVAR.MEMREAD);
-		resultBuilder.addDeclaration(auxvar.getVarDec());
-		resultBuilder.addAuxVar(auxvar);
+		resultBuilder.addAuxVarWithDeclaration(auxvar);
 		final VariableLHS[] lhss = new VariableLHS[] { auxvar.getLhs() };
 		final CallStatement call = StatementFactory.constructCallStatement(loc, false, lhss,
 				determineReadProcedure(resultType, unchecked, loc),
 				new Expression[] { address, calculateSizeOf(loc, resultType) });
-		resultBuilder.addStatement(call);
+		if (resultType.isAtomic()) {
+			resultBuilder.addStatement(new AtomicStatement(loc, new Statement[] { call }));
+		} else {
+			resultBuilder.addStatement(call);
+		}
 		assert CTranslationUtil.isAuxVarMapComplete(mNameHandler, resultBuilder);
 		// TODO Frank 2022-12-16: We should add an in-range assumption here, but this could be problematic if we cast
 		// e.g. unsigned to signed pointers and read from them
@@ -858,7 +860,11 @@ public class MemoryHandler {
 
 		final HeapWriteMode writeMode =
 				isStaticInitialization ? HeapWriteMode.STORE_UNCHECKED : HeapWriteMode.STORE_CHECKED;
-		return getWriteCall(loc, hlv, value, realValueType, writeMode);
+		final List<Statement> result = getWriteCall(loc, hlv, value, realValueType, writeMode);
+		if (valueType.isAtomic()) {
+			return List.of(StatementFactory.constructAtomicStatement(loc, result));
+		}
+		return result;
 	}
 
 	private List<Statement> getWriteCall(final ILocation loc, final HeapLValue hlv, final Expression value,
@@ -1041,7 +1047,7 @@ public class MemoryHandler {
 	}
 
 	public IdentifierExpression getPthreadForkCount(final ILocation loc) {
-		final BoogieType counterType = mTypeHandler.getBoogieTypeForCType(getThreadIdType());
+		final BoogieType counterType = mTypeHandler.getBoogieTypeForCType(mTypeHandler.getThreadIdType());
 		return ExpressionFactory.constructIdentifierExpression(loc, counterType, SFO.ULTIMATE_FORK_COUNT,
 				new DeclarationInformation(StorageClass.GLOBAL, null));
 	}
@@ -1744,13 +1750,9 @@ public class MemoryHandler {
 	}
 
 	private VariableDeclaration declarePthreadsForkCount(final ILocation loc) {
-		final ASTType counterType = mTypeHandler.cType2AstType(loc, getThreadIdType());
+		final ASTType counterType = mTypeHandler.cType2AstType(loc, mTypeHandler.getThreadIdType());
 		final VarList varList = new VarList(loc, new String[] { SFO.ULTIMATE_FORK_COUNT }, counterType);
 		return new VariableDeclaration(loc, new Attribute[0], new VarList[] { varList });
-	}
-
-	public CPrimitive getThreadIdType() {
-		return new CPrimitive(CPrimitives.INT);
 	}
 
 	private VariableDeclaration declarePThreadsMutexArray(final ILocation loc) {
@@ -2165,7 +2167,7 @@ public class MemoryHandler {
 	 */
 	public List<Specification> constructPointerTargetFullyAllocatedCheck(final ILocation loc, final Expression size,
 			final String ptrName, final String procedureName) {
-		if (mSettings.getPointerTargetFullyAllocatedMode() == PointerCheckMode.IGNORE) {
+		if (mSettings.getPointerTargetFullyAllocatedMode() == CheckMode.IGNORE) {
 			// add nothing
 			return Collections.emptyList();
 		}
@@ -2216,10 +2218,10 @@ public class MemoryHandler {
 		final Expression offsetInAllocatedRange =
 				ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND, leq, offsetGeqZero);
 		final boolean isFreeRequires;
-		if (mSettings.getPointerTargetFullyAllocatedMode() == PointerCheckMode.ASSERTandASSUME) {
+		if (mSettings.getPointerTargetFullyAllocatedMode() == CheckMode.ASSERTandASSUME) {
 			isFreeRequires = false;
 		} else {
-			assert mSettings.getPointerTargetFullyAllocatedMode() == PointerCheckMode.ASSUME;
+			assert mSettings.getPointerTargetFullyAllocatedMode() == CheckMode.ASSUME;
 			isFreeRequires = true;
 		}
 		final RequiresSpecification spec = new RequiresSpecification(loc, isFreeRequires, offsetInAllocatedRange);
@@ -2245,7 +2247,7 @@ public class MemoryHandler {
 	 */
 	public List<Specification> constructPointerBaseValidityCheck(final ILocation loc, final String ptrName,
 			final String procedureName) {
-		if (mSettings.getPointerBaseValidityMode() == PointerCheckMode.IGNORE) {
+		if (mSettings.getPointerBaseValidityMode() == CheckMode.IGNORE) {
 			// add nothing
 			return Collections.emptyList();
 		}
@@ -2254,10 +2256,10 @@ public class MemoryHandler {
 						new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procedureName));
 		final Expression isValid = constructPointerBaseValidityCheckExpr(loc, ptrExpr);
 		final boolean isFreeRequires;
-		if (mSettings.getPointerBaseValidityMode() == PointerCheckMode.ASSERTandASSUME) {
+		if (mSettings.getPointerBaseValidityMode() == CheckMode.ASSERTandASSUME) {
 			isFreeRequires = false;
 		} else {
-			assert mSettings.getPointerBaseValidityMode() == PointerCheckMode.ASSUME;
+			assert mSettings.getPointerBaseValidityMode() == CheckMode.ASSUME;
 			isFreeRequires = true;
 		}
 		final RequiresSpecification spec = new RequiresSpecification(loc, isFreeRequires, isValid);
@@ -2729,7 +2731,8 @@ public class MemoryHandler {
 		case ULTIMATE_MEMINIT:
 			break;
 		case ULTIMATE_PTHREADS_FORK_COUNT:
-			return new MemoryModelDeclarationInfo(mmd, mTypeHandler.getBoogieTypeForCType(getThreadIdType()));
+			return new MemoryModelDeclarationInfo(mmd,
+					mTypeHandler.getBoogieTypeForCType(mTypeHandler.getThreadIdType()));
 		case ULTIMATE_PTHREADS_MUTEX:
 			return new MemoryModelDeclarationInfo(mmd,
 					BoogieType.createArrayType(0, new BoogieType[] { mTypeHandler.getBoogiePointerType() }, mTypeHandler
@@ -3339,23 +3342,23 @@ public class MemoryHandler {
 	public List<Statement> constructMemsafetyChecksForPointerExpression(final ILocation loc,
 			final Expression pointerValue) {
 		final List<Statement> result = new ArrayList<>();
-		if (mSettings.getPointerBaseValidityMode() != PointerCheckMode.IGNORE) {
+		if (mSettings.getPointerBaseValidityMode() != CheckMode.IGNORE) {
 
 			// valid[s.base]
 			final Expression validBase = constructPointerBaseValidityCheckExpr(loc, pointerValue);
 
-			if (mSettings.getPointerBaseValidityMode() == PointerCheckMode.ASSERTandASSUME) {
+			if (mSettings.getPointerBaseValidityMode() == CheckMode.ASSERTandASSUME) {
 				final AssertStatement assertion = new AssertStatement(loc, validBase);
 				final Check chk = new Check(Spec.MEMORY_DEREFERENCE);
 				chk.annotate(assertion);
 				result.add(assertion);
 			} else {
-				assert mSettings.getPointerBaseValidityMode() == PointerCheckMode.ASSUME : "missed a case?";
+				assert mSettings.getPointerBaseValidityMode() == CheckMode.ASSUME : "missed a case?";
 				final Statement assume = new AssumeStatement(loc, validBase);
 				result.add(assume);
 			}
 		}
-		if (mSettings.getPointerTargetFullyAllocatedMode() != PointerCheckMode.IGNORE) {
+		if (mSettings.getPointerTargetFullyAllocatedMode() != CheckMode.IGNORE) {
 
 			// s.offset < length[s.base])
 			final Expression offsetSmallerLength = mExpressionTranslation.constructBinaryComparisonIntegerExpression(
@@ -3376,13 +3379,13 @@ public class MemoryHandler {
 					// new BinaryExpression(loc, Operator.LOGICAND, offsetSmallerLength, offsetNonnegative);
 					ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, offsetSmallerLength,
 							offsetNonnegative);
-			if (mSettings.getPointerBaseValidityMode() == PointerCheckMode.ASSERTandASSUME) {
+			if (mSettings.getPointerBaseValidityMode() == CheckMode.ASSERTandASSUME) {
 				final AssertStatement assertion = new AssertStatement(loc, aAndB);
 				final Check chk = new Check(Spec.MEMORY_DEREFERENCE);
 				chk.annotate(assertion);
 				result.add(assertion);
 			} else {
-				assert mSettings.getPointerBaseValidityMode() == PointerCheckMode.ASSUME : "missed a case?";
+				assert mSettings.getPointerBaseValidityMode() == CheckMode.ASSUME : "missed a case?";
 				final Statement assume = new AssumeStatement(loc, aAndB);
 				result.add(assume);
 			}

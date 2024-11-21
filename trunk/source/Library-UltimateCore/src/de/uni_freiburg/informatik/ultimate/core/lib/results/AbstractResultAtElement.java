@@ -27,10 +27,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.core.lib.results;
 
+import java.util.Objects;
+
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithLocation;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 
 /**
  * Superclass of all results that are reported for a specific element.
@@ -44,13 +45,10 @@ public abstract class AbstractResultAtElement<ELEM extends IElement> extends Abs
 		implements IResultWithLocation {
 
 	private final ELEM mElement;
-	protected final IBacktranslationService mTranslatorSequence;
 
-	public AbstractResultAtElement(final ELEM element, final String plugin,
-			final IBacktranslationService translatorSequence) {
+	public AbstractResultAtElement(final ELEM element, final String plugin) {
 		super(plugin);
-		mElement = element;
-		mTranslatorSequence = translatorSequence.getTranslationServiceCopy();
+		mElement = Objects.requireNonNull(element, "element of " + getClass().getSimpleName() + " must be non-null");
 	}
 
 	@Override
@@ -61,9 +59,4 @@ public abstract class AbstractResultAtElement<ELEM extends IElement> extends Abs
 	public final ELEM getElement() {
 		return mElement;
 	}
-
-	public final IBacktranslationService getCurrentBacktranslation() {
-		return mTranslatorSequence;
-	}
-
 }

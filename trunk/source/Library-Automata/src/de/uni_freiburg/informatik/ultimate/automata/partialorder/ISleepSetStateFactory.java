@@ -80,42 +80,6 @@ public interface ISleepSetStateFactory<L, S, R> extends IEmptyStackStateFactory<
 	ImmutableSet<L> getSleepSet(R sleepState);
 
 	/**
-	 * Simple implementation of the interface, which disregards the sleep set and simply returns the automaton state.
-	 *
-	 * As a result, the reduced automaton will be a sub-automaton of the input automaton, with some transitions removed.
-	 * No unrolling of loops or unfolding of branches is performed. While guaranteeing a small automaton size in terms
-	 * of states, this yields possibly non-minimal reductions (in terms of the language).
-	 *
-	 * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
-	 *
-	 * @param <L>
-	 *            The type of letters
-	 * @param <S>
-	 *            The type of states in the original (and in the reduced) automaton.
-	 */
-	class NoUnrolling<L, S> implements ISleepSetStateFactory<L, S, S> {
-		@Override
-		public S createEmptyStackState() {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public S createSleepSetState(final S state, final ImmutableSet<L> sleepset) {
-			return state;
-		}
-
-		@Override
-		public S getOriginalState(final S sleepState) {
-			return sleepState;
-		}
-
-		@Override
-		public ImmutableSet<L> getSleepSet(final S sleepState) {
-			throw new UnsupportedOperationException("state factory cannot recover sleep set");
-		}
-	}
-
-	/**
 	 * Simple implementation of the interface, which represents the sleep set state as a pair.
 	 *
 	 * Hence the reduced automaton unrolls loops and unfolds branches in the original automaton as far as necessary to

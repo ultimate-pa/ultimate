@@ -34,10 +34,10 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainExceptionWrapper;
@@ -79,13 +79,14 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.TaskIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngine;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.DagSizePrinter;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BinaryStatePredicateManager.BspmResult;
@@ -140,7 +141,6 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 	private final ILogger mLogger;
 
 	private final SimplificationTechnique mSimplificationTechnique;
-	private final XnfConversionTechnique mXnfConversionTechnique;
 
 	private final AnalysisType mRankAnalysisType;
 	private final AnalysisType mGntaAnalysisType;
@@ -163,7 +163,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 	/**
 	 * Accepting run of the abstraction obtained in this iteration.
 	 */
-	private final NestedLassoRun<L, IPredicate> mCounterexample;
+	private final NestedLassoWord<L> mCounterexample;
 
 	/**
 	 * Identifier for this LassoCheck. Can be used to get unique filenames when dumping files.
@@ -181,7 +181,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 	private IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> mLoopCheck;
 	private IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> mConcatCheck;
 
-	private NestedRun<L, IPredicate> mConcatenatedCounterexample;
+	private NestedWord<L> mConcatenatedCounterexample;
 
 	private NonTerminationArgument mNonterminationArgument;
 
@@ -217,12 +217,11 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 			final SmtFunctionsAndAxioms smtSymbols, final BinaryStatePredicateManager bspm,
 			final NestedLassoRun<L, IPredicate> counterexample, final String lassoCheckIdentifier,
 			final IUltimateServiceProvider services, final SimplificationTechnique simplificationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique, final StrategyFactory<L> refinementStrategyFactory,
-			final IAutomaton<L, IPredicate> abstraction, final TaskIdentifier taskIdentifier,
-			final BuchiCegarLoopBenchmarkGenerator cegarStatistics) throws IOException {
+			final StrategyFactory<L> refinementStrategyFactory, final IAutomaton<L, IPredicate> abstraction,
+			final TaskIdentifier taskIdentifier, final BuchiCegarLoopBenchmarkGenerator cegarStatistics)
+			throws IOException {
 		mServices = services;
 		mSimplificationTechnique = simplificationTechnique;
-		mXnfConversionTechnique = xnfConversionTechnique;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		final IPreferenceProvider baPref = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		mRankAnalysisType =
@@ -236,9 +235,9 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		mTryTwofoldRefinement = baPref.getBoolean(BuchiAutomizerPreferenceInitializer.LABEL_TRY_TWOFOLD_REFINEMENT);
 		mCsToolkit = csToolkit;
 		mBspm = bspm;
-		mCounterexample = counterexample;
+		mCounterexample = counterexample.getNestedLassoWord();
 		final IPredicate honda = counterexample.getLoop().getStateAtPosition(0);
-		mModifiableGlobalsAtHonda = BuchiAutomizerUtils.getLocations(honda).stream()
+		mModifiableGlobalsAtHonda = PredicateUtils.streamLocations(honda)
 				.flatMap(x -> mCsToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(x.getProcedure()).stream())
 				.collect(Collectors.toSet());
 		mLassoCheckIdentifier = lassoCheckIdentifier;
@@ -291,7 +290,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		return mConcatCheck;
 	}
 
-	public NestedRun<L, IPredicate> getConcatenatedCounterexample() {
+	public NestedWord<L> getConcatenatedCounterexample() {
 		assert mConcatenatedCounterexample != null;
 		return mConcatenatedCounterexample;
 	}
@@ -320,7 +319,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 	 * Compute TransFormula that represents the stem.
 	 */
 	protected UnmodifiableTransFormula computeStemTF() {
-		final NestedWord<L> stem = mCounterexample.getStem().getWord();
+		final NestedWord<L> stem = mCounterexample.getStem();
 		try {
 			final UnmodifiableTransFormula stemTF = computeTF(stem, SIMPLIFY_STEM_AND_LOOP, true, false);
 			if (SmtUtils.isFalseLiteral(stemTF.getFormula())) {
@@ -338,7 +337,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 	 * Compute TransFormula that represents the loop.
 	 */
 	protected UnmodifiableTransFormula computeLoopTF() {
-		final NestedWord<L> loop = mCounterexample.getLoop().getWord();
+		final NestedWord<L> loop = mCounterexample.getLoop();
 		try {
 			final UnmodifiableTransFormula loopTF = computeTF(loop, SIMPLIFY_STEM_AND_LOOP, true, false);
 			if (SmtUtils.isFalseLiteral(loopTF.getFormula())) {
@@ -360,7 +359,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		final boolean toCNF = false;
 		return SequentialComposition.getInterproceduralTransFormula(mCsToolkit, simplify,
 				extendedPartialQuantifierElimination, toCNF, withBranchEncoders, mLogger, mServices, word.asList(),
-				mXnfConversionTechnique, mSimplificationTechnique);
+				mSimplificationTechnique);
 	}
 
 	// private boolean areSupportingInvariantsCorrect() {
@@ -555,14 +554,14 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 				mModifiableGlobalsAtHonda, stemTF, loopTF);
 		if (fixpointCheck.getResult() == HasFixpoint.YES) {
 			if (withStem) {
-				if (TRACE_CHECK_BASED_FIXPOINT_CHECK && mCounterexample.getStem().getWord().length() > 0) {
-					final FixpointCheck2<L> fixpointCheck2 = new FixpointCheck2<L>(mServices, mLogger, mCsToolkit,
+				if (TRACE_CHECK_BASED_FIXPOINT_CHECK && mCounterexample.getStem().length() > 0) {
+					final FixpointCheck2<L> fixpointCheck2 = new FixpointCheck2<>(mServices, mLogger, mCsToolkit,
 							mPredicateFactory, mCounterexample.getStem(), loopTF);
 					if (fixpointCheck2.getResult() != fixpointCheck.getResult()) {
 						throw new AssertionError(String.format(
 								"Contradicting results of nontermination analyses: Old %s, New %s, Stem length %s, Loop length %s",
 								fixpointCheck.getResult(), fixpointCheck2.getResult(),
-								mCounterexample.getStem().getLength(), mCounterexample.getLoop().getLength()));
+								mCounterexample.getStem().length(), mCounterexample.getLoop().length()));
 					}
 					mNonterminationArgument = fixpointCheck2.getTerminationArgument();
 				} else {
@@ -583,7 +582,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 				laNT = new LassoAnalysis(mCsToolkit, stemTF, loopTF, mModifiableGlobalsAtHonda, mSmtSymbols,
 						constructLassoRankerPreferences(withStem, overapproximateArrayIndexConnection,
 								NlaHandling.UNDERAPPROXIMATE, AnalysisTechnique.GEOMETRIC_NONTERMINATION_ARGUMENTS),
-						mServices, mSimplificationTechnique, mXnfConversionTechnique);
+						mServices, mSimplificationTechnique);
 				mPreprocessingBenchmarks.add(laNT.getPreprocessingBenchmark());
 			} catch (final TermException e) {
 				e.printStackTrace();
@@ -615,7 +614,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 			laT = new LassoAnalysis(mCsToolkit, stemTF, loopTF, mModifiableGlobalsAtHonda, mSmtSymbols,
 					constructLassoRankerPreferences(withStem, overapproximateArrayIndexConnection,
 							NlaHandling.OVERAPPROXIMATE, AnalysisTechnique.RANKING_FUNCTIONS_SUPPORTING_INVARIANTS),
-					mServices, mSimplificationTechnique, mXnfConversionTechnique);
+					mServices, mSimplificationTechnique);
 			mPreprocessingBenchmarks.add(laT.getPreprocessingBenchmark());
 		} catch (final TermException e) {
 			e.printStackTrace();
@@ -744,9 +743,9 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		private final ContinueDirective mContinueDirective;
 
 		public LassoCheckResult() throws IOException {
-			final NestedRun<L, IPredicate> stem = mCounterexample.getStem();
+			final NestedWord<L> stem = mCounterexample.getStem();
 			mLogger.info("Stem: " + stem);
-			final NestedRun<L, IPredicate> loop = mCounterexample.getLoop();
+			final NestedWord<L> loop = mCounterexample.getLoop();
 			mLogger.info("Loop: " + loop);
 			mStemFeasibility = checkStemFeasibility();
 			if (mStemFeasibility == TraceCheckResult.INFEASIBLE) {
@@ -829,7 +828,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		}
 
 		private TraceCheckResult checkStemFeasibility() {
-			final NestedRun<L, IPredicate> stem = mCounterexample.getStem();
+			final NestedWord<L> stem = mCounterexample.getStem();
 			if (BuchiAutomizerUtils.isEmptyStem(stem)) {
 				return TraceCheckResult.FEASIBLE;
 			}
@@ -839,16 +838,16 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		}
 
 		private TraceCheckResult checkLoopFeasibility() {
-			final NestedRun<L, IPredicate> loop = mCounterexample.getLoop();
+			final NestedWord<L> loop = mCounterexample.getLoop();
 			mLoopCheck = checkFeasibilityAndComputeInterpolants(loop,
 					new SubtaskLassoCheckIdentifier(mTaskIdentifier, LassoPart.LOOP));
 			return translateSatisfiabilityToFeasibility(mLoopCheck.getCounterexampleFeasibility());
 		}
 
 		private TraceCheckResult checkConcatFeasibility() {
-			final NestedRun<L, IPredicate> stem = mCounterexample.getStem();
-			final NestedRun<L, IPredicate> loop = mCounterexample.getLoop();
-			final NestedRun<L, IPredicate> concat = stem.concatenate(loop);
+			final NestedWord<L> stem = mCounterexample.getStem();
+			final NestedWord<L> loop = mCounterexample.getLoop();
+			final NestedWord<L> concat = stem.concatenate(loop);
 			mConcatCheck = checkFeasibilityAndComputeInterpolants(concat,
 					new SubtaskLassoCheckIdentifier(mTaskIdentifier, LassoPart.CONCAT));
 			if (mConcatCheck.getCounterexampleFeasibility() == LBool.UNSAT) {
@@ -870,11 +869,11 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 			}
 		}
 
-		private IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> checkFeasibilityAndComputeInterpolants(
-				final NestedRun<L, IPredicate> run, final TaskIdentifier taskIdentifier) {
+		private IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>>
+				checkFeasibilityAndComputeInterpolants(final NestedWord<L> word, final TaskIdentifier taskIdentifier) {
 			try {
-				final ITARefinementStrategy<L> strategy = mRefinementStrategyFactory.constructStrategy(mServices, run,
-						mAbstraction, taskIdentifier, mStateFactoryForInterpolantAutomaton,
+				final ITARefinementStrategy<L> strategy = mRefinementStrategyFactory.constructStrategy(mServices,
+						new Counterexample<>(word), mAbstraction, taskIdentifier, mStateFactoryForInterpolantAutomaton,
 						IPreconditionProvider.constructDefaultPreconditionProvider(),
 						IPostconditionProvider.constructDefaultPostconditionProvider());
 				final IRefinementEngine<L, NestedWordAutomaton<L, IPredicate>> engine =
@@ -882,9 +881,9 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 				mCegarStatistics.addRefinementEngineStatistics(engine.getRefinementEngineStatistics());
 				return engine.getResult();
 			} catch (final ToolchainCanceledException tce) {
-				final int traceHistogramMax = new HistogramOfIterable<>(run.getWord()).getMax();
+				final int traceHistogramMax = new HistogramOfIterable<>(word).getMax();
 				final String taskDescription =
-						"analyzing trace of length " + run.getLength() + " with TraceHistMax " + traceHistogramMax;
+						"analyzing trace of length " + word.length() + " with TraceHistMax " + traceHistogramMax;
 				tce.addRunningTaskInfo(new RunningTaskInfo(getClass(), taskDescription));
 				throw tce;
 			}

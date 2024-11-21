@@ -1,0 +1,4 @@
+TIMEOUT:
+- task: nestedWhileSimple-Safe.bpl
+  settings: PdrAutomizerBpl.epf
+  toolchain: PdrAutomizerBpl.xml

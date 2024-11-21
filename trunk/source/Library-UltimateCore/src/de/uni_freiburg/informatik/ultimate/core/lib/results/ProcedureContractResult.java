@@ -27,20 +27,22 @@
  */
 package de.uni_freiburg.informatik.ultimate.core.lib.results;
 
+import java.util.Set;
+
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ProcedureContract;
 
 /**
- * Report a procedure contract that holds at ELEM which is a node in an Ultimate model. The contract is given as an
- * expression of type E.
+ * Report a procedure contract that holds at ELEM which is a node in an Ultimate model.
  *
  * @author Matthias Heizmann
  */
 public class ProcedureContractResult<ELEM extends IElement, E> extends AbstractResultAtElement<ELEM> {
 
-	private final String mEnsures;
-	private final String mRequires;
+	private final ProcedureContract<E, ? extends E> mContract;
 	private final String mProcedureName;
+	private final Set<Check> mChecks;
 
 	/**
 	 * Constructor.
@@ -48,30 +50,20 @@ public class ProcedureContractResult<ELEM extends IElement, E> extends AbstractR
 	 * @param location
 	 *            the Location
 	 */
-	public ProcedureContractResult(final String plugin, final ELEM position,
-			final IBacktranslationService translatorSequence, final String procedureName, final E requires,
-			final E ensures) {
-		super(position, plugin, translatorSequence);
+	public ProcedureContractResult(final String plugin, final ELEM position, final String procedureName,
+			final ProcedureContract<E, ? extends E> contract, final Set<Check> checks) {
+		super(position, plugin);
 		mProcedureName = procedureName;
-		mRequires = translateTerm(requires);
-		mEnsures = translateTerm(ensures);
+		mContract = contract;
+		mChecks = checks;
 	}
 
-	@SuppressWarnings("unchecked")
-	private String translateTerm(final E term) {
-		final String result = mTranslatorSequence.translateExpressionToString(term, (Class<E>) term.getClass());
-		if ("1".equals(result)) {
-			return null;
-		}
-		return result;
+	public E getEnsures() {
+		return mContract.getEnsures();
 	}
 
-	public String getEnsuresResult() {
-		return mEnsures;
-	}
-
-	public String getReqiresResult() {
-		return mRequires;
+	public E getRequires() {
+		return mContract.getRequires();
 	}
 
 	@Override
@@ -85,18 +77,23 @@ public class ProcedureContractResult<ELEM extends IElement, E> extends AbstractR
 		sb.append("Derived contract for procedure ");
 		sb.append(mProcedureName);
 		sb.append(".");
-		if (mRequires != null) {
+		final var requires = getRequires();
+		if (requires != null) {
 			sb.append(" Requires: ");
-			sb.append(mRequires);
+			sb.append(requires);
 		}
-		if (mEnsures != null) {
+		final var ensures = getEnsures();
+		if (ensures != null) {
 			sb.append(" Ensures: ");
-			sb.append(mEnsures);
+			sb.append(ensures);
 		}
 		return sb.toString();
 	}
 
-	public boolean isTrivial() {
-		return mRequires == null && mEnsures == null;
+	/**
+	 * Represents the specifications to whose proof this contract belongs.
+	 */
+	public Set<Check> getChecks() {
+		return mChecks;
 	}
 }

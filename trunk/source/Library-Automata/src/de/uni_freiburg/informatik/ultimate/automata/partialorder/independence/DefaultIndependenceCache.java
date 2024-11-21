@@ -101,6 +101,20 @@ public class DefaultIndependenceCache<S, L> implements IIndependenceCache<S, L> 
 		}
 	}
 
+	public void clearConditional() {
+		clearConditional(mIndependentCache);
+		clearConditional(mDependentCache);
+		clearConditional(mUnknownCache);
+	}
+
+	private void clearConditional(final Map<S, HashRelation<L, L>> cache) {
+		final var unconditional = cache.get(null);
+		cache.clear();
+		if (unconditional != null) {
+			cache.put(null, unconditional);
+		}
+	}
+
 	@Override
 	public void cacheResult(final S condition, final L a, final L b, final Dependence result) {
 		final Map<S, HashRelation<L, L>> cache = getCache(result);

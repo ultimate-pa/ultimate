@@ -10,3 +10,4 @@
 
 	The above requirements are rt-inconsistent under the assumption that the scope is not left, i.e. "!var1" holds. This assumption however is not represented in the rt-consistency check. The scope can hence be left and the pair of requirements can never be part of an rt-inconsistncy. 
   * ``toggle-issues/`` contains different issues with the toggle pattern (may be already fixed as soon as ``broken_patterns.txt`` is fixed)
+* ``other/`` contains testcases that fail to prove some of the properties, e.g., due to timeout etc.

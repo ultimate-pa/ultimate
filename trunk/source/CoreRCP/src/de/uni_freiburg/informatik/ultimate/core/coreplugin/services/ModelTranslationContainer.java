@@ -31,6 +31,7 @@ import java.util.ArrayDeque;
 import java.util.List;
 import java.util.Stack;
 
+import de.uni_freiburg.informatik.ultimate.core.model.models.ProcedureContract;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslatedCFG;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
@@ -81,6 +82,13 @@ class ModelTranslationContainer implements IBacktranslationService {
 	public <SE, TE> TE translateExpression(final SE expression, final Class<SE> clazz) {
 		final Stack<ITranslator<?, ?, ?, ?, ?, ?, ?>> current = prepareTranslatorStackAndCheckSourceExpression(clazz);
 		return translateExpression(current, expression);
+	}
+
+	@Override
+	public <SE, TE, CTX> TE translateExpressionWithContext(final SE expression, final CTX context,
+			final Class<SE> clazz) {
+		final Stack<ITranslator<?, ?, ?, ?, ?, ?, ?>> current = prepareTranslatorStackAndCheckSourceExpression(clazz);
+		return translateExpressionWithContext(current, expression, context);
 	}
 
 	@Override
@@ -246,6 +254,47 @@ class ModelTranslationContainer implements IBacktranslationService {
 	}
 
 	@Override
+	public <STE, SE> Lasso<IProgramExecution<?, ?>>
+			translateLassoProgramExecution(final Lasso<IProgramExecution<STE, SE>> programExecution) {
+		final ArrayDeque<ITranslator<?, ?, ?, ?, ?, ?, ?>> current = new ArrayDeque<>();
+		boolean canTranslate = false;
+		for (final ITranslator<?, ?, ?, ?, ?, ?, ?> trans : mTranslationSequence) {
+			current.push(trans);
+			if (trans.getSourceTraceElementClass().isAssignableFrom(programExecution.getTraceElementClass())
+					&& trans.getSourceExpressionClass().isAssignableFrom(programExecution.getExpressionClass())) {
+				canTranslate = true;
+			}
+		}
+		if (!canTranslate) {
+			throw new IllegalArgumentException("You cannot translate " + programExecution
+					+ " with this backtranslation service, as there is no compatible ITranslator available");
+		}
+
+		if (!current.peek().getSourceTraceElementClass().isAssignableFrom(programExecution.getTraceElementClass())
+				|| !current.peek().getSourceExpressionClass().isAssignableFrom(programExecution.getExpressionClass())) {
+			throw new IllegalArgumentException("You cannot translate " + programExecution
+					+ " with this backtranslation service, as the last ITranslator in this chain is not compatible");
+		}
+		return (Lasso) translateLassoProgramExecution(current, programExecution);
+	}
+
+	@SuppressWarnings("unchecked")
+	private <STE, TTE, SE, TE> Lasso<IProgramExecution<TTE, TE>> translateLassoProgramExecution(
+			final ArrayDeque<ITranslator<?, ?, ?, ?, ?, ?, ?>> remainingBefore,
+			final Lasso<IProgramExecution<STE, SE>> programExecution) {
+		if (remainingBefore.isEmpty()) {
+			return (Lasso) programExecution;
+		}
+		final ArrayDeque<ITranslator<?, ?, ?, ?, ?, ?, ?>> remainingAfter = new ArrayDeque<>(remainingBefore);
+		final ITranslator<STE, TTE, SE, TE, ?, ?, ?> translator =
+				(ITranslator<STE, TTE, SE, TE, ?, ?, ?>) remainingAfter.pop();
+		final Lasso<IProgramExecution<TTE, TE>> translated =
+				translator.translateLassoProgramExecution(programExecution);
+
+		return translateLassoProgramExecution(remainingAfter, translated);
+	}
+
+	@Override
 	public <SE> ProgramState<?> translateProgramState(final ProgramState<SE> programState) {
 		final Stack<ITranslator<?, ?, ?, ?, ?, ?, ?>> current = new Stack<>();
 		boolean canTranslate = false;
@@ -328,6 +377,24 @@ class ModelTranslationContainer implements IBacktranslationService {
 				(ITranslator<STE, TTE, SE, TE, SVL, TVL, ?>) remaining.pop();
 		final IBacktranslatedCFG<?, TTE> translated = translator.translateCFG(cfg);
 		return translateCFG(remaining, translated);
+	}
+
+	@Override
+	public <TE, SE, CTX> ProcedureContract<TE, ? extends TE> translateProcedureContract(
+			final ProcedureContract<SE, ? extends SE> contract, final CTX context, final Class<SE> clazz) {
+		final Stack<ITranslator<?, ?, ?, ?, ?, ?, ?>> current = prepareTranslatorStackAndCheckSourceExpression(clazz);
+		return translateProcedureContract(current, contract, context);
+	}
+
+	@SuppressWarnings("unchecked")
+	private <TE, SE, CTX> ProcedureContract<TE, ? extends TE> translateProcedureContract(
+			final Stack<ITranslator<?, ?, ?, ?, ?, ?, ?>> remaining, final ProcedureContract<SE, ? extends SE> contract,
+			final CTX context) {
+		if (remaining.isEmpty()) {
+			return (ProcedureContract<TE, ? extends TE>) contract;
+		}
+		final ITranslator<?, ?, SE, TE, ?, ?, CTX> tmp = (ITranslator<?, ?, SE, TE, ?, ?, CTX>) remaining.pop();
+		return translateProcedureContract(remaining, tmp.translateProcedureContract(contract, context), context);
 	}
 
 	@Override

@@ -126,10 +126,10 @@ public class AnnotationCheckResult<ELEM extends IElement, EXPR> extends Abstract
 			result = "Annotation is not a valid proof of correctness.";
 			break;
 		case UNKNOWN:
-			result = "Insufficient resources for checking whether annotation is a valid proof of correctness";
+			result = "Insufficient resources for checking whether annotation is a valid proof of correctness.";
 			break;
 		case VALID:
-			result = "Annotation is a valid proof of correctness";
+			result = "Annotation is a valid proof of correctness.";
 			break;
 		default:
 			throw new AssertionError("illegal value " + mAnnotationState);

@@ -31,9 +31,11 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
+import java.util.function.IntSupplier;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -64,6 +66,15 @@ public abstract class AbstractStatisticsDataProvider implements IStatisticsDataP
 		declare(key, getter, type::aggregate, type::prettyPrint);
 	}
 
+	protected final void declareTimeTracker(final String key, final TimeTracker timeTracker) {
+		declare(key, () -> timeTracker.elapsedTime(TimeUnit.MILLISECONDS), (x, y) -> (long) x + (long) y,
+				(k, data) -> PrettyPrint.keyColonData(k + " [ms]", data));
+	}
+
+	protected final void declareCounter(final String key, final IntSupplier getter) {
+		declare(key, getter::getAsInt, KeyType.COUNTER);
+	}
+
 	protected final void declare(final String key, final Supplier<Object> getter,
 			final BinaryOperator<Object> aggregator, final BiFunction<String, Object, String> printer) {
 		assert !mSuppliers.containsKey(key);
@@ -84,6 +95,17 @@ public abstract class AbstractStatisticsDataProvider implements IStatisticsDataP
 			final Function<T, IStatisticsDataProvider> getStatistics) {
 		declare(key, () -> StreamSupport.stream(elems.spliterator(), false).map(getStatistics)
 				.map(AbstractStatisticsDataProvider::toStatisticsData).collect(Collectors.toCollection(ArrayList::new)),
+				Aggregate::appendList, PrettyPrint.list(PrettyPrint::keyColonData, Object::toString));
+	}
+
+	protected final void include(final String key, final Supplier<StatisticsData> getStatistics) {
+		declare(key, getStatistics::get, Aggregate::statisticsDataAggregate, PrettyPrint::keyColonData);
+	}
+
+	protected final void includeAll(final String key, final Supplier<Iterable<StatisticsData>> getStatistics) {
+		declare(key,
+				() -> StreamSupport.stream(getStatistics.get().spliterator(), false)
+						.collect(Collectors.toCollection(ArrayList::new)),
 				Aggregate::appendList, PrettyPrint.list(PrettyPrint::keyColonData, Object::toString));
 	}
 
@@ -141,6 +163,5 @@ public abstract class AbstractStatisticsDataProvider implements IStatisticsDataP
 			}
 			return sb.toString();
 		}
-
 	}
 }

@@ -18,7 +18,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -28,9 +27,9 @@ public class AbsIntPredicateUnifier<STATE extends IAbstractState<STATE>> extends
 	public AbsIntPredicateUnifier(final ILogger logger, final IUltimateServiceProvider services,
 			final ManagedScript mgdScript, final BasicPredicateFactory predicateFactory,
 			final IIcfgSymbolTable symbolTable, 
-			final XnfConversionTechnique xnfConversionTechnique, final IPredicate... initialPredicates) {
+			final IPredicate... initialPredicates) {
 		super(logger, services, mgdScript, predicateFactory, symbolTable, SimplificationTechnique.NONE,
-				xnfConversionTechnique, initialPredicates);
+				initialPredicates);
 	}
 
 	@Override

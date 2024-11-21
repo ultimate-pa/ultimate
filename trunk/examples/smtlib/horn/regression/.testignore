@@ -1,0 +1,8 @@
+UNKNOWN:
+# Introduces Skolem functions which TreeAutomizer does not support (#679)
+- task: test-nested-quantifiers-mcarthy-sat.smt2
+  settings: TreeAutomizerStandardSettings.epf
+  toolchain: TreeAutomizer.xml
+- task: test-nested-quantifiers-mcarthy-hard-sat.smt2
+  settings: TreeAutomizerStandardSettings.epf
+  toolchain: TreeAutomizer.xml

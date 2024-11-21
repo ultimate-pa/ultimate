@@ -35,6 +35,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.eclipse.cdt.core.dom.ast.IASTNode;
+
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Axiom;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ConstDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
@@ -74,7 +76,9 @@ public class StaticObjectsHandler {
 
 	private boolean mIsFrozen;
 	private int mDeclCounter;
-	private final HashRelation<String, Triple<VariableDeclaration, CDeclaration, Integer>> mGlobalVarsForCVars =
+
+	// Relation from pair (cId, scope) to Boogie variable declaration
+	private final HashRelation<Pair<String, IASTNode>, Triple<VariableDeclaration, CDeclaration, Integer>> mGlobalVarsForCVars =
 			new HashRelation<>();
 	private final List<VariableDeclaration> mGlobalVarsWithoutCVar = new ArrayList<>();
 
@@ -135,8 +139,21 @@ public class StaticObjectsHandler {
 		}
 	}
 
-	public void addGlobalVariableDeclaration(final VariableDeclaration boogieDec, final CDeclaration cDec) {
-		mGlobalVarsForCVars.addPair(cDec.getName(), new Triple<>(boogieDec, cDec, mDeclCounter));
+	/**
+	 * Adds a declaration for a global variable.
+	 *
+	 * @param boogieDec
+	 *            the Boogie declaration
+	 * @param cDec
+	 *            the original C declaration
+	 * @param scope
+	 *            the scope: for global C variables, this should be {@code null}. For static C variables (which are
+	 *            mapped to global Boogie variables), this should be the cursor in the symbol table where the variable
+	 *            is stored.
+	 */
+	public void addGlobalVariableDeclaration(final VariableDeclaration boogieDec, final CDeclaration cDec,
+			final IASTNode scope) {
+		mGlobalVarsForCVars.addPair(new Pair<>(cDec.getName(), scope), new Triple<>(boogieDec, cDec, mDeclCounter));
 		mDeclCounter++;
 	}
 
@@ -148,8 +165,9 @@ public class StaticObjectsHandler {
 		// Matthias 20221110: Unfortunately, we cannot require that this object is frozen.
 		// This method is called by the PostProcessor and something modifies this object afterwards.
 		final List<Triple<VariableDeclaration, CDeclaration, Integer>> result = new ArrayList<>();
-		for (final String id : mGlobalVarsForCVars.getDomain()) {
-			final Set<Triple<VariableDeclaration, CDeclaration, Integer>> decls = mGlobalVarsForCVars.getImage(id);
+		for (final var idAndScope : mGlobalVarsForCVars.getDomain()) {
+			final Set<Triple<VariableDeclaration, CDeclaration, Integer>> decls =
+					mGlobalVarsForCVars.getImage(idAndScope);
 			final Triple<VariableDeclaration, CDeclaration, Integer> varDecl = computeSuitableVarDecl(decls);
 			result.add(varDecl);
 		}

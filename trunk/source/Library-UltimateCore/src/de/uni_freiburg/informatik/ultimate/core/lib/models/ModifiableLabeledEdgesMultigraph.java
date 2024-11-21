@@ -44,7 +44,7 @@ public class ModifiableLabeledEdgesMultigraph<T extends ModifiableLabeledEdgesMu
 	 *
 	 * @param node
 	 * @param label
-	 * @return true iff the list update was succesful, only then the hashmap is updated, too.
+	 * @return true iff the list update was successful, only then the hashmap is updated, too.
 	 */
 	public boolean addOutgoingNode(final T node, final L label) {
 		if (mOutgoingNodes.add(node)) {
@@ -86,7 +86,7 @@ public class ModifiableLabeledEdgesMultigraph<T extends ModifiableLabeledEdgesMu
 	 *
 	 * @param node
 	 * @param label
-	 * @return true iff the list update was succesful.
+	 * @return true iff the list update was successful.
 	 */
 	public boolean removeIncomingNode(final T node) {
 		return mIncomingNodes.remove(node);

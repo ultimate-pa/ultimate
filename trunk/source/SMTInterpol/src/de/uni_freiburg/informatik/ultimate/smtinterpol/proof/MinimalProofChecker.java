@@ -316,7 +316,7 @@ public class MinimalProofChecker extends NonRecursive {
 		case ":" + ProofRules.ORACLE: {
 			mNumOracles++;
 			mNumAxioms--;
-			reportWarning("Used oracle: %s", axiom);
+			reportWarning("Used oracle: %s", Arrays.asList(annots).subList(1, annots.length));
 			// convert to clause (and remove multiple occurrences)
 			final ProofLiteral[] lits = ProofRules.proofLiteralsFromAnnotation((Object[]) annots[0].getValue());
 			final LinkedHashSet<ProofLiteral> clause = new LinkedHashSet<>(Arrays.asList(lits));
@@ -791,7 +791,7 @@ public class MinimalProofChecker extends NonRecursive {
 					new ProofLiteral(new FormulaUnLet().unlet(letted), isForall) };
 		}
 		case ":" + ProofRules.GTDEF: {
-			if (!theory.getLogic().isArithmetic()) {
+			if (!theory.getLogic().isArithmetic() && !theory.getLogic().isBitVector()) {
 				reportError("Proof requires arithmetic");
 				return getTrueClause(theory);
 			}
@@ -805,7 +805,7 @@ public class MinimalProofChecker extends NonRecursive {
 							theory.term(SMTLIBConstants.LT, params[1], params[0])), true) };
 		}
 		case ":" + ProofRules.GEQDEF: {
-			if (!theory.getLogic().isArithmetic()) {
+			if (!theory.getLogic().isArithmetic() && !theory.getLogic().isBitVector()) {
 				reportError("Proof requires arithmetic");
 				return getTrueClause(theory);
 			}
@@ -819,7 +819,7 @@ public class MinimalProofChecker extends NonRecursive {
 							theory.term(SMTLIBConstants.LEQ, params[1], params[0])), true) };
 		}
 		case ":" + ProofRules.TRICHOTOMY: {
-			if (!theory.getLogic().isArithmetic()) {
+			if (!theory.getLogic().isArithmetic() && !theory.getLogic().isBitVector()) {
 				reportError("Proof requires arithmetic");
 				return getTrueClause(theory);
 			}
@@ -833,7 +833,7 @@ public class MinimalProofChecker extends NonRecursive {
 					new ProofLiteral(theory.term(SMTLIBConstants.LT, params[1], params[0]), true) };
 		}
 		case ":" + ProofRules.TOTAL: {
-			if (!theory.getLogic().isArithmetic()) {
+			if (!theory.getLogic().isArithmetic() && !theory.getLogic().isBitVector()) {
 				reportError("Proof requires arithmetic");
 				return getTrueClause(theory);
 			}
@@ -844,7 +844,7 @@ public class MinimalProofChecker extends NonRecursive {
 					new ProofLiteral(theory.term(SMTLIBConstants.LT, params[1], params[0]), true) };
 		}
 		case ":" + ProofRules.TOTALINT: {
-			if (!theory.getLogic().hasIntegers()) {
+			if (!theory.getLogic().hasIntegers() && !theory.getLogic().isBitVector()) {
 				reportError("Proof requires integer arithmetic");
 				return getTrueClause(theory);
 			}
@@ -863,7 +863,7 @@ public class MinimalProofChecker extends NonRecursive {
 					new ProofLiteral(theory.term(SMTLIBConstants.LEQ, cPlusOne, x), true) };
 		}
 		case ":" + ProofRules.FARKAS: {
-			if (!theory.getLogic().isArithmetic()) {
+			if (!theory.getLogic().isArithmetic() && !theory.getLogic().isBitVector()) {
 				reportError("Proof requires arithmetic");
 				return getTrueClause(theory);
 			}
@@ -881,7 +881,7 @@ public class MinimalProofChecker extends NonRecursive {
 			return clause.toArray(new ProofLiteral[clause.size()]);
 		}
 		case ":" + ProofRules.MULPOS: {
-			if (!theory.getLogic().isArithmetic()) {
+			if (!theory.getLogic().isArithmetic() && !theory.getLogic().isBitVector()) {
 				reportError("Proof requires arithmetic");
 				return getTrueClause(theory);
 			}
@@ -897,7 +897,7 @@ public class MinimalProofChecker extends NonRecursive {
 			return clause.toArray(new ProofLiteral[clause.size()]);
 		}
 		case ":" + ProofRules.POLYADD: {
-			if (!theory.getLogic().isArithmetic()) {
+			if (!theory.getLogic().isArithmetic() && !theory.getLogic().isBitVector()) {
 				reportError("Proof requires arithmetic");
 				return getTrueClause(theory);
 			}
@@ -911,7 +911,7 @@ public class MinimalProofChecker extends NonRecursive {
 					new ProofLiteral(theory.term(SMTLIBConstants.EQUALS, params[0], params[1]), true) };
 		}
 		case ":" + ProofRules.POLYMUL: {
-			if (!theory.getLogic().isArithmetic()) {
+			if (!theory.getLogic().isArithmetic() && !theory.getLogic().isBitVector()) {
 				reportError("Proof requires arithmetic");
 				return getTrueClause(theory);
 			}
@@ -959,7 +959,7 @@ public class MinimalProofChecker extends NonRecursive {
 			return clause.toArray(new ProofLiteral[clause.size()]);
 		}
 		case ":" + ProofRules.MINUSDEF: {
-			if (!theory.getLogic().isArithmetic()) {
+			if (!theory.getLogic().isArithmetic() && !theory.getLogic().isBitVector()) {
 				reportError("Proof requires arithmetic");
 				return getTrueClause(theory);
 			}
@@ -1020,7 +1020,7 @@ public class MinimalProofChecker extends NonRecursive {
 			return new ProofLiteral[] { new ProofLiteral(theory.term(SMTLIBConstants.LT, arg, toRealPlusOne), true) };
 		}
 		case ":" + ProofRules.DIVLOW: {
-			if (!theory.getLogic().hasIntegers()) {
+			if (!theory.getLogic().hasIntegers() && !theory.getLogic().isBitVector()) {
 				reportError("Proof requires integer arithmetic");
 				return getTrueClause(theory);
 			}
@@ -1036,7 +1036,7 @@ public class MinimalProofChecker extends NonRecursive {
 					new ProofLiteral(theory.term(SMTLIBConstants.EQUALS, divisor, zero), true) };
 		}
 		case ":" + ProofRules.DIVHIGH: {
-			if (!theory.getLogic().hasIntegers()) {
+			if (!theory.getLogic().hasIntegers() && !theory.getLogic().isBitVector()) {
 				reportError("Proof requires integer arithmetic");
 				return getTrueClause(theory);
 			}
@@ -1054,7 +1054,7 @@ public class MinimalProofChecker extends NonRecursive {
 					new ProofLiteral(theory.term(SMTLIBConstants.EQUALS, divisor, zero), true) };
 		}
 		case ":" + ProofRules.MODDEF: {
-			if (!theory.getLogic().hasIntegers()) {
+			if (!theory.getLogic().hasIntegers() && !theory.getLogic().isBitVector()) {
 				reportError("Proof requires integer arithmetic");
 				return getTrueClause(theory);
 			}

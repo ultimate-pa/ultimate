@@ -43,13 +43,14 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecut
  *            program position class
  */
 public abstract class NonTerminationArgumentResult<P extends IElement, E> extends AbstractResultAtElement<P> {
-
 	private final Class<E> mExprClazz;
+	private final IBacktranslationService mTranslatorSequence;
 
 	public NonTerminationArgumentResult(final P element, final String plugin,
 			final IBacktranslationService translatorSequence, final Class<E> exprClass) {
-		super(element, plugin, translatorSequence);
+		super(element, plugin);
 		mExprClazz = exprClass;
+		mTranslatorSequence = translatorSequence;
 	}
 
 	@Override

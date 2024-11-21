@@ -45,11 +45,6 @@ public class DebugPredicate implements IPredicate {
 	}
 
 	@Override
-	public String[] getProcedures() {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
 	public Term getFormula() {
 		return mTerm;
 	}
@@ -82,6 +77,5 @@ public class DebugPredicate implements IPredicate {
 	public int hashCode() {
 		return mSerialNumber;
 	}
-
 
 }

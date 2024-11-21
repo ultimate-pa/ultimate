@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
-import de.uni_freiburg.informatik.ultimate.automata.IRun;
+import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pdr.Pdr;
 public class IpTcStrategyModulePdr<L extends IIcfgTransition<?>>
 		extends IpTcStrategyModuleBase<IInterpolatingTraceCheck<L>, L> {
 
-	private final IRun<L, ?> mCounterExample;
+	private final Word<L> mCounterExample;
 	private final IPredicateUnifier mPredicateUnifier;
 	private final TaCheckAndRefinementPreferences<L> mPrefs;
 	private final ILogger mLogger;
@@ -56,7 +56,7 @@ public class IpTcStrategyModulePdr<L extends IIcfgTransition<?>>
 	private final IUltimateServiceProvider mServices;
 
 	public IpTcStrategyModulePdr(final IUltimateServiceProvider services, final ILogger logger,
-			final IPredicate precondition, final IPredicate postcondition, final IRun<L, ?> counterexample,
+			final IPredicate precondition, final IPredicate postcondition, final Word<L> counterexample,
 			final IPredicateUnifier predicateUnifier, final TaCheckAndRefinementPreferences<L> prefs,
 			final Class<L> transitionClazz) {
 		mServices = services;
@@ -72,7 +72,7 @@ public class IpTcStrategyModulePdr<L extends IIcfgTransition<?>>
 	@Override
 	protected IInterpolatingTraceCheck<L> construct() {
 		return new Pdr<>(mServices, mLogger, mPrefs, mPredicateUnifier, mPrecondition, mPostcondition,
-				mCounterExample.getWord().asList(), mTransitionClazz);
+				mCounterExample.asList(), mTransitionClazz);
 	}
 
 	@Override

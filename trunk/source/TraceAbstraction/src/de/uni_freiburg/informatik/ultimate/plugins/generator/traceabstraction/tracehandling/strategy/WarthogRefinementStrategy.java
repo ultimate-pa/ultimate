@@ -63,7 +63,7 @@ public class WarthogRefinementStrategy<L extends IIcfgTransition<?>> extends Bas
 
 		final TermClassifier tc = factory.getTermClassifierForTrace();
 		final List<IIpTcStrategyModule<?, L>> rtr = new ArrayList<>();
-		if (RefinementStrategyUtils.hasNoFloats(tc)) {
+		if (!RefinementStrategyUtils.hasFloats(tc)) {
 			rtr.add(factory.createIpTcStrategyModuleCVC4(InterpolationTechnique.ForwardPredicates));
 		} else if (RefinementStrategyUtils.hasNoQuantifiersNoBitvectorExtensions(tc)) {
 			// floats, but no quantifiers and no extensions

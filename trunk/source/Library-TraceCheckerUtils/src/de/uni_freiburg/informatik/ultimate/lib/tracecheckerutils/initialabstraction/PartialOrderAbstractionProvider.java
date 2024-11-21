@@ -45,6 +45,9 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.Pa
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderReductionFacade.OrderType;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderReductionFacade.StepType;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceBuilder;
+import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
 /**
  * Transforms an initial abstraction by applying one-shot Partial Order Reduction.
@@ -69,6 +72,8 @@ public class PartialOrderAbstractionProvider<L extends IIcfgTransition<?>>
 	private final String mThreadList;
 	private final int mMaxStep;
 	private final boolean mEnableHeuristic;
+
+	private final Statistics mStatistics = new Statistics();
 
 	/**
 	 * Create a new instance of the provider.
@@ -120,15 +125,34 @@ public class PartialOrderAbstractionProvider<L extends IIcfgTransition<?>>
 		final IIndependenceRelation<IPredicate, L> indep =
 				IndependenceBuilder.<L> semantic(mServices, icfg.getCfgSmtToolkit().getManagedScript(), false, false)
 						.withSyntacticCheck().cached().threadSeparated().build();
-		final PartialOrderReductionFacade<L> por =
-				new PartialOrderReductionFacade<>(mServices, mPredicateFactory, icfg, errorLocs, mPartialOrderMode,
-						mOrderType, mDfsOrderSeed, mStepType, mThreadList, mMaxStep, mEnableHeuristic, List.of(indep), null, null);
+		final PartialOrderReductionFacade<L> por = new PartialOrderReductionFacade<>(mServices, mPredicateFactory, icfg,
+				errorLocs, mPartialOrderMode, mOrderType, mDfsOrderSeed, mStepType, mThreadList, mMaxStep,
+				mEnableHeuristic, List.of(indep), null, null);
 
 		// actually apply POR to automaton
 		final NestedWordAutomaton<L, IPredicate> result = por.constructReduction(input, mStateFactory);
 
-		// TODO add statistics support to IInitialAbstractionProvider
-		por.reportStatistics(mPluginId);
+		mStatistics.reportPORStatistics(por);
 		return result;
+	}
+
+	@Override
+	public IStatisticsDataProvider getStatistics() {
+		return mStatistics;
+	}
+
+	private class Statistics extends AbstractStatisticsDataProvider {
+		private static final String POR_STATISTICS = "Partial Order Reduction statistics";
+		private static final String UNDERLYING_STATISTICS = "Statistics of underlying abstraction provider";
+
+		public Statistics() {
+			forward(UNDERLYING_STATISTICS, mUnderlying::getStatistics);
+		}
+
+		private void reportPORStatistics(final PartialOrderReductionFacade<?> por) {
+			final var data = new StatisticsData();
+			data.aggregateBenchmarkData(por.getStatistics());
+			include(POR_STATISTICS, () -> data);
+		}
 	}
 }

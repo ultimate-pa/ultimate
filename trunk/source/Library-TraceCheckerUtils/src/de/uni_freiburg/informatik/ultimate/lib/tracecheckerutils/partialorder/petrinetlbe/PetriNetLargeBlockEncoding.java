@@ -59,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.in
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.SyntacticIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
 /**
  * Performs a Large Block Encoding on Petri nets. This operation performs Lipton reduction ({@link LiptonReduction}) and
@@ -186,8 +187,8 @@ public class PetriNetLargeBlockEncoding<L extends IIcfgTransition<?>> {
 		return mBacktranslator;
 	}
 
-	public PetriNetLargeBlockEncodingBenchmarks getStatistics() {
-		return new PetriNetLargeBlockEncodingBenchmarks(mStatistics);
+	public IStatisticsDataProvider getStatistics() {
+		return mStatistics;
 	}
 
 	/**

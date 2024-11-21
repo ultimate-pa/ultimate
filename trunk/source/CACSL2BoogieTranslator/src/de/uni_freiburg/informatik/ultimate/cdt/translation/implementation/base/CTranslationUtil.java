@@ -28,12 +28,14 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import org.eclipse.cdt.core.dom.ast.IASTCompoundStatement;
+import org.eclipse.cdt.core.dom.ast.IASTDeclSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTStatement;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTCompoundStatementExpression;
@@ -529,5 +531,14 @@ public class CTranslationUtil {
 		}
 
 		return hook;
+	}
+
+	/**
+	 * Returns true iff the given {@code declSpec} has an attribute with the given {@code name}, i.e., is preceded by
+	 * {@code __attribute__((name))}.
+	 */
+	public static boolean hasAttribute(final IASTDeclSpecifier declSpec, final String attributeName) {
+		return Arrays.stream(declSpec.getAttributes()).map(x -> String.valueOf(x.getName()))
+				.anyMatch(attributeName::equals);
 	}
 }

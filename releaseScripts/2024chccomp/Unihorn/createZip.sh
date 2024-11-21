@@ -1,0 +1,20 @@
+#!/bin/bash
+mkdir StarExecArchive
+mkdir StarExecArchive/bin
+mkdir StarExecArchive/Ultimate
+cp -a ../../../trunk/source/BA_SiteRepository/target/products/CLI-E4/linux/gtk/x86_64/* StarExecArchive/Ultimate/
+cp LICENSE* StarExecArchive/Ultimate/
+cp starexec_description.txt StarExecArchive/
+cp ../../../trunk/examples/toolchains/AutomizerCHC.xml StarExecArchive/
+cp starexec_run_* StarExecArchive/bin/
+cp Ultimate.ini StarExecArchive/Ultimate/
+cp ../../../trunk/examples/settings/default/unihorn/chccomp-Unihorn_Default.epf StarExecArchive/
+#mkdir StarExecArchive/z3
+cp -LR ../../default/adds/z3 StarExecArchive/Ultimate/
+cp -LR ../../default/adds/z3-LICENSE StarExecArchive/Ultimate/
+cp starexec_run_z3test StarExecArchive/bin/
+cp -a java/jdk-11.0.2 StarExecArchive/Ultimate/
+
+cd StarExecArchive
+zip ../UltimateCommandline.zip -r *
+

@@ -38,6 +38,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 
+import org.apache.commons.lang3.StringUtils;
+
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
@@ -75,12 +77,12 @@ public final class ISOIEC9899TC3 {
 	/**
 	 * Float suffixes.
 	 */
-	private static final String[] SUFFIXES_FLOAT = new String[] { "f", "F", "l", "L" };
+	private static final String[] SUFFIXES_FLOAT = { "f", "F", "l", "L" };
 	/**
 	 * Integer suffixes.
 	 */
-	private static final String[] SUFFIXES_INT = new String[] { "ULL", "Ull", "ull", "uLL", "llu", "llU", "LLu", "LLU",
-			"ul", "uL", "Ul", "UL", "lu", "lU", "Lu", "LU", "ll", "LL", "u", "U", "l", "L" };
+	private static final String[] SUFFIXES_INT = { "ULL", "Ull", "ull", "uLL", "llu", "llU", "LLu", "LLU", "ul", "uL",
+			"Ul", "UL", "lu", "lU", "Lu", "LU", "ll", "LL", "u", "U", "l", "L" };
 
 	public enum IntegerConstantType {
 		OCTAL(8), DECIMAL(10), HEXADECIMAL(16);
@@ -169,7 +171,7 @@ public final class ISOIEC9899TC3 {
 			case '6':
 			case '7':
 				final int lastSuccessiveOctalCharacter =
-						lastsuccessiveMatchStartingFrom(1, sourceCharacterSequence, c -> isOctalDigit(c));
+						lastsuccessiveMatchStartingFrom(1, sourceCharacterSequence, ISOIEC9899TC3::isOctalDigit);
 				// octal sequences consist only of up to three digits
 				final int lastPositionOfThisOcalSequence;
 				if (lastSuccessiveOctalCharacter >= 4) {
@@ -183,7 +185,7 @@ public final class ISOIEC9899TC3 {
 				break;
 			case 'x':
 				final int lastSuccessiveHexCharacter =
-						lastsuccessiveMatchStartingFrom(2, sourceCharacterSequence, c -> isHexadecimalDigit(c));
+						lastsuccessiveMatchStartingFrom(2, sourceCharacterSequence, ISOIEC9899TC3::isHexadecimalDigit);
 				final String hexadecimalSequence = sourceCharacterSequence.substring(2, lastSuccessiveHexCharacter + 1);
 				numericalValue = Integer.valueOf(hexadecimalSequence, 16);
 				remainingCharacterSequence = sourceCharacterSequence.substring(lastSuccessiveHexCharacter + 1);
@@ -332,19 +334,17 @@ public final class ISOIEC9899TC3 {
 		}
 		final BigDecimal resultValue = getDecimalForm(suffixFreeValue);
 		final CPrimitive resultType = determineTypeFromSuffix(floatSuffix);
-		final FloatingPointLiteral result = new FloatingPointLiteral(resultValue, resultType);
-		return result;
+		return new FloatingPointLiteral(resultValue, resultType);
 	}
 
 	/**
 	 * Given a suffix-free decimal value, compute a BigDecimal representation of this value.
 	 */
 	private static BigDecimal getDecimalForm(final String suffixFreeValue) {
-		final BigDecimal floatVal;
 		// convert literal in hex form to decimal form
 		if (suffixFreeValue.startsWith("0x") || suffixFreeValue.startsWith("0X")) {
 			String hexValue = suffixFreeValue.substring(2);
-			int suffixLength = -1;
+			int suffixLength = 0;
 			String hexExponentValue = null;
 
 			// extract exponent value of the hex literal
@@ -354,6 +354,9 @@ public final class ISOIEC9899TC3 {
 			}
 
 			if (hexValue.contains(".")) {
+				// Remove trailing zeros to avoid division by too large number (16^length(sufficLength)) that might not
+				// be represented as BigDecimal.
+				hexValue = StringUtils.stripEnd(hexValue, "0");
 				final int dotPosition = hexValue.indexOf('.');
 				suffixLength = hexValue.substring(dotPosition + 1).length();
 				hexValue = hexValue.substring(0, dotPosition) + hexValue.substring(dotPosition + 1);
@@ -374,22 +377,21 @@ public final class ISOIEC9899TC3 {
 				}
 			}
 
-			if (suffixLength != -1) {
+			if (suffixLength != 0) {
 				hexValueBigDecimal = hexValueBigDecimal.divide(BigDecimal.valueOf(Math.pow(16, suffixLength)));
 			}
-			floatVal = hexValueBigDecimal;
-		} else if (suffixFreeValue.contains("e")) {
+			return hexValueBigDecimal;
+		}
+		if (suffixFreeValue.contains("e")) {
 			// if value contains e calculate the number according to it
 			final int eLocatation = suffixFreeValue.indexOf('e');
 			final String floatString = suffixFreeValue.substring(0, eLocatation);
-			final String exponentString = suffixFreeValue.substring(eLocatation + 1, suffixFreeValue.length());
+			final String exponentString = suffixFreeValue.substring(eLocatation + 1);
 			final BigDecimal base = new BigDecimal(floatString);
 			final int exponent = Integer.parseInt(exponentString);
-			floatVal = base.scaleByPowerOfTen(exponent);
-		} else {
-			floatVal = new BigDecimal(suffixFreeValue);
+			return base.scaleByPowerOfTen(exponent);
 		}
-		return floatVal;
+		return new BigDecimal(suffixFreeValue);
 	}
 
 	/**
@@ -459,6 +461,10 @@ public final class ISOIEC9899TC3 {
 		}
 	}
 
+	public static CPrimitive determineTypeForIntegerLiteral(final String integerLiteral, final TypeSizes typeSizes) {
+		return determineCType(new IntegerConstant(integerLiteral), typeSizes);
+	}
+
 	public static Expression constructLiteralForCIntegerLiteral(final ILocation loc, final boolean bitvectorTranslation,
 			final TypeSizes typeSizeConstants, final CPrimitive cType, final BigInteger value) {
 		final Expression resultLiteral;
@@ -470,7 +476,6 @@ public final class ISOIEC9899TC3 {
 		}
 		return resultLiteral;
 	}
-
 
 	private static class IntegerConstant {
 
@@ -527,10 +532,9 @@ public final class ISOIEC9899TC3 {
 	}
 
 	/**
-	 * Get the types that a given integer type can have. Returns the types in the
-	 * correct order according to 6.4.4.1.5 of the C11 standard. <br />
-	 * Note that we must not have __int128 from GNU C here since literals of that
-	 * size are not allowed.
+	 * Get the types that a given integer type can have. Returns the types in the correct order according to 6.4.4.1.5
+	 * of the C11 standard. <br />
+	 * Note that we must not have __int128 from GNU C here since literals of that size are not allowed.
 	 * https://gcc.gnu.org/onlinedocs/gcc/_005f_005fint128.html
 	 */
 	private static CPrimitives[] getPossibleTypes(final IntegerConstant ic) {
@@ -582,7 +586,6 @@ public final class ISOIEC9899TC3 {
 		private final CPrimitive mCPrimitive;
 
 		public FloatingPointLiteral(final BigDecimal decimalRepresenation, final CPrimitive cPrimitive) {
-			super();
 			mDecimalRepresenation = decimalRepresenation;
 			mCPrimitive = cPrimitive;
 		}

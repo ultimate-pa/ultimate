@@ -34,9 +34,11 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import org.eclipse.cdt.core.dom.ast.ASTGenericVisitor;
 import org.eclipse.cdt.core.dom.ast.IASTCompoundStatement;
+import org.eclipse.cdt.core.dom.ast.IASTContinueStatement;
 import org.eclipse.cdt.core.dom.ast.IASTDoStatement;
 import org.eclipse.cdt.core.dom.ast.IASTForStatement;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
@@ -189,23 +191,21 @@ public final class CdtASTUtils {
 
 	/**
 	 * Checks whether <code>canidate</code> is a transitive child of <code>possibleParent</code> or not.
-	 * 
+	 *
 	 * @param candidate
 	 *            The possible child.
 	 * @param possibleParent
 	 *            The possible parent.
-	 * 
+	 *
 	 * @return true iff candidate is a transitive child of possibleParent.
 	 */
 	public static boolean isContainedInSubtree(final IASTNode candidate, final IASTNode possibleParent) {
-		final SubtreeChecker sc = new SubtreeChecker(candidate);
-		possibleParent.accept(sc);
-		return sc.isContainedInSubtree();
+		return new SubtreeChecker(candidate::equals).check(possibleParent);
 	}
 
 	/**
 	 * Find the first {@link IASTNode} that is a parent to all of the provided nodes.
-	 * 
+	 *
 	 * @param nodes
 	 *            a collection of nodes for which a common parent should be found.
 	 * @return The first IASTNode that is a parent to all the provided nodes or the node itself if only one node is
@@ -252,6 +252,10 @@ public final class CdtASTUtils {
 		return new DesiredTypeExtractor(desiredTypes).run(node);
 	}
 
+	public static boolean containsContinue(final IASTStatement statement) {
+		return new SubtreeChecker(IASTContinueStatement.class::isInstance).check(statement);
+	}
+
 	private static final class DesiredTypeExtractor extends ASTGenericVisitor {
 		private Set<IASTStatement> mStatements;
 		private final Collection<Class<?>> mDesiredClasses;
@@ -280,20 +284,22 @@ public final class CdtASTUtils {
 	/**
 	 *
 	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+	 * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
 	 *
 	 */
 	private static final class SubtreeChecker extends ASTGenericVisitor {
 
-		private final IASTNode mCandidate;
+		private final Predicate<IASTNode> mPredicate;
 		private boolean mIsContainedInSubtree;
 
-		public SubtreeChecker(final IASTNode candidate) {
+		public SubtreeChecker(final Predicate<IASTNode> predicate) {
 			super(true);
-			mCandidate = candidate;
+			mPredicate = predicate;
 			mIsContainedInSubtree = false;
 		}
 
-		public boolean isContainedInSubtree() {
+		public boolean check(final IASTNode subtreeRoot) {
+			subtreeRoot.accept(this);
 			return mIsContainedInSubtree;
 		}
 
@@ -302,7 +308,7 @@ public final class CdtASTUtils {
 			if (mIsContainedInSubtree) {
 				return PROCESS_ABORT;
 			}
-			if (child == mCandidate) {
+			if (mPredicate.test(child)) {
 				mIsContainedInSubtree = true;
 				return PROCESS_ABORT;
 			}

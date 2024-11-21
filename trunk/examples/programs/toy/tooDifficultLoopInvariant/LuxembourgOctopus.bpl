@@ -2,7 +2,7 @@
 /*
  * Variation of the Luxembourg example that
  * cannot be solved with the octagon domain.
- * The loop invariant 1000-y<=x allows us to prove correctness.
+ * The loop invariant 1000-y>=x allows us to prove correctness.
  * 
  * Date: 2017-02-10
  * Author: heizmann@informatik.uni-freiburg.de

@@ -73,7 +73,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermDomainOperationProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.predicates.IterativePredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.predicates.IterativePredicateTransformer.IPredicatePostprocessor;
@@ -103,7 +102,6 @@ public class FlowSensitiveFaultLocalizer<L extends IIcfgTransition<?>> {
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final SimplificationTechnique mSimplificationTechnique;
-	private final XnfConversionTechnique mXnfConversionTechnique;
 	private final IRelevanceInformation[] mRelevanceOfTrace;
 	private final IIcfgSymbolTable mSymbolTable;
 	private final PredicateFactory mPredicateFactory;
@@ -119,12 +117,10 @@ public class FlowSensitiveFaultLocalizer<L extends IIcfgTransition<?>> {
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final ModifiableGlobalsTable modifiableGlobalsTable, final IPredicateUnifier predicateUnifier,
 			final RelevanceAnalysisMode faultLocalizationMode, final SimplificationTechnique simplificationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique, final IIcfgSymbolTable symbolTable,
-			final IIcfg<IcfgLocation> IIcfg) {
+			final IIcfgSymbolTable symbolTable, final IIcfg<IcfgLocation> IIcfg) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mSimplificationTechnique = simplificationTechnique;
-		mXnfConversionTechnique = xnfConversionTechnique;
 		mSymbolTable = symbolTable;
 		mPredicateFactory = predicateFactory;
 		mRelevanceOfTrace = initializeRelevanceOfTrace(counterexample);
@@ -146,7 +142,7 @@ public class FlowSensitiveFaultLocalizer<L extends IIcfgTransition<?>> {
 					"doing error localization for trace of length " + counterexample.getLength());
 			throw new ToolchainCanceledException(tce, rti);
 		}
-		mErrorLocalizationStatisticsGenerator.reportSuccesfullyFinished();
+		mErrorLocalizationStatisticsGenerator.reportSuccessfullyFinished();
 		mErrorLocalizationStatisticsGenerator.stopErrorLocalizationTime();
 
 		final StatisticsData stat = new StatisticsData();
@@ -493,11 +489,11 @@ public class FlowSensitiveFaultLocalizer<L extends IIcfgTransition<?>> {
 		final IterativePredicateTransformer<L> iptWp = new IterativePredicateTransformer<>(mPredicateFactory,
 				csToolkit.getManagedScript(), csToolkit.getModifiableGlobalsTable(), mServices, counterexampleWord,
 				null, falsePredicate, null, mPredicateFactory.not(falsePredicate), mSimplificationTechnique,
-				mXnfConversionTechnique, mSymbolTable);
+				mSymbolTable);
 		final IterativePredicateTransformer<L> iptSp = new IterativePredicateTransformer<>(mPredicateFactory,
 				csToolkit.getManagedScript(), csToolkit.getModifiableGlobalsTable(), mServices, counterexampleWord,
 				truePredicate, null, null, mPredicateFactory.not(falsePredicate), mSimplificationTechnique,
-				mXnfConversionTechnique, mSymbolTable);
+				mSymbolTable);
 
 		final DefaultTransFormulas<L> dtf = new DefaultTransFormulas<>(counterexampleWord, truePredicate,
 				falsePredicate, Collections.emptySortedMap(), csToolkit.getOldVarsAssignmentCache(), false);
@@ -819,7 +815,7 @@ public class FlowSensitiveFaultLocalizer<L extends IIcfgTransition<?>> {
 		final IterativePredicateTransformer<L> iptSp = new IterativePredicateTransformer<>(mPredicateFactory,
 				csToolkit.getManagedScript(), csToolkit.getModifiableGlobalsTable(), mServices,
 				counterexample.getWord(), truePredicate, null, null, mPredicateFactory.not(falsePredicate),
-				mSimplificationTechnique, mXnfConversionTechnique, mSymbolTable);
+				mSimplificationTechnique, mSymbolTable);
 
 		final DefaultTransFormulas<L> dtf = new DefaultTransFormulas<>(counterexample.getWord(), truePredicate,
 				falsePredicate, Collections.emptySortedMap(), csToolkit.getOldVarsAssignmentCache(), false);

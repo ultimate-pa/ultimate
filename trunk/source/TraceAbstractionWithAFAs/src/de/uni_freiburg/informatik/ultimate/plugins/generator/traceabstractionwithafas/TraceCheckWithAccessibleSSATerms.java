@@ -30,12 +30,12 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionwi
 import java.util.Map;
 import java.util.SortedMap;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheck;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -43,11 +43,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 public class TraceCheckWithAccessibleSSATerms extends TraceCheck<CodeBlock> {
 
 	public TraceCheckWithAccessibleSSATerms(final IPredicate precondition, final IPredicate postcondition,
-			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<CodeBlock> trace,
+			final SortedMap<Integer, IPredicate> pendingContexts, final Counterexample<CodeBlock> counterexample,
 			final CfgSmtToolkit csToolkit, final AssertCodeBlockOrder assertCodeBlockOrder,
 			final IUltimateServiceProvider services, final boolean computeRcfgProgramExecution,
 			final boolean collectInterpolatSequenceStatistics) {
-		super(precondition, postcondition, pendingContexts, trace, services, csToolkit, assertCodeBlockOrder,
+		super(precondition, postcondition, pendingContexts, counterexample, services, csToolkit, assertCodeBlockOrder,
 				computeRcfgProgramExecution, collectInterpolatSequenceStatistics);
 	}
 

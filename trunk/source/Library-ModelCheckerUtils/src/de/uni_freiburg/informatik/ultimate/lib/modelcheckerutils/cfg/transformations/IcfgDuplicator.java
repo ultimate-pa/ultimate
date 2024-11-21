@@ -54,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IJoinActionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IReturnAction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -72,27 +73,33 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class IcfgDuplicator {
 
 	private final ILogger mLogger;
-	private final BlockEncodingBacktranslator mBacktranslator;
-	private final Map<IIcfgCallTransition<IcfgLocation>, IIcfgCallTransition<IcfgLocation>> mCallCache;
 	private final ManagedScript mManagedScript;
-	private final Map<IIcfgTransition<IcfgLocation>, IIcfgTransition<IcfgLocation>> mOld2New;
+	private final BlockEncodingBacktranslator mBacktranslator;
+
+	private final Map<IIcfgCallTransition<IcfgLocation>, IIcfgCallTransition<IcfgLocation>> mCallCache =
+			new HashMap<>();
+
+	// Maps each original edge to its copy.
+	private Map<IIcfgTransition<IcfgLocation>, IIcfgTransition<IcfgLocation>> mOld2NewEdgeMap;
+
+	private Map<IcfgLocation, IcfgLocation> mOld2NewLocationMap;
 
 	public IcfgDuplicator(final ILogger logger, final IUltimateServiceProvider services,
 			final ManagedScript managedScript, final BlockEncodingBacktranslator backtranslator) {
 		mLogger = logger;
-		mBacktranslator = backtranslator;
-		mCallCache = new HashMap<>();
 		mManagedScript = Objects.requireNonNull(managedScript);
-		mOld2New = new HashMap<>();
+		mBacktranslator = backtranslator;
 	}
 
-	public BasicIcfg<IcfgLocation> copy(final IIcfg<?> originalIcfg, final boolean ignoreSummariesWithImplementation) {
+	public BasicIcfg<IcfgLocation> copy(final IIcfg<?> originalIcfg, final String identifierSuffix,
+			final boolean ignoreSummariesWithImplementation) {
+		mOld2NewLocationMap = new HashMap<>();
+		mOld2NewEdgeMap = new HashMap<>();
+
 		final BasicIcfg<IcfgLocation> newIcfg =
-				new BasicIcfg<>(((IIcfg<? extends IcfgLocation>) originalIcfg).getIdentifier() + "_BEv2",
+				new BasicIcfg<>(((IIcfg<? extends IcfgLocation>) originalIcfg).getIdentifier() + identifierSuffix,
 						originalIcfg.getCfgSmtToolkit(), IcfgLocation.class);
 		ModelUtils.copyAnnotations(originalIcfg, newIcfg);
-
-		final Map<IcfgLocation, IcfgLocation> old2new = new HashMap<>();
 
 		// iterator over all locations, begin at all procedure entries
 		final IcfgLocationIterator<?> iter = new IcfgLocationIterator<>(originalIcfg.getProcedureEntryNodes().values());
@@ -110,14 +117,14 @@ public class IcfgDuplicator {
 					oldLoc.equals(originalIcfg.getProcedureEntryNodes().get(proc)),
 					oldLoc.equals(originalIcfg.getProcedureExitNodes().get(proc)),
 					originalIcfg.getLoopLocations().contains(oldLoc));
-			old2new.put(oldLoc, newLoc);
+			mOld2NewLocationMap.put(oldLoc, newLoc);
 		}
 
 		assert noEdges(newIcfg) : "Icfg contains edges but should not";
 
 		final IcfgEdgeFactory edgeFactory = newIcfg.getCfgSmtToolkit().getIcfgEdgeFactory();
 		// second, add all non-return edges
-		for (final Entry<IcfgLocation, IcfgLocation> nodePair : old2new.entrySet()) {
+		for (final Entry<IcfgLocation, IcfgLocation> nodePair : mOld2NewLocationMap.entrySet()) {
 			final IcfgLocation newSource = nodePair.getValue();
 			for (final IcfgEdge oldEdge : nodePair.getKey().getOutgoingEdges()) {
 				if (oldEdge instanceof IIcfgReturnTransition<?, ?>) {
@@ -130,12 +137,12 @@ public class IcfgDuplicator {
 						continue;
 					}
 				}
-				createEdgeCopy(old2new, newSource, oldEdge, edgeFactory);
+				createEdgeCopy(newSource, oldEdge, edgeFactory);
 			}
 		}
 
 		// third, add all previously ignored return edges
-		openReturns.stream().forEach(a -> createEdgeCopy(old2new, a.getFirst(), a.getSecond(), edgeFactory));
+		openReturns.stream().forEach(a -> createEdgeCopy(a.getFirst(), a.getSecond(), edgeFactory));
 		mBacktranslator.removeIntermediateMappings();
 		return newIcfg;
 	}
@@ -148,7 +155,6 @@ public class IcfgDuplicator {
 	}
 
 	private boolean noEdges(final IIcfg<IcfgLocation> icfg) {
-
 		final Set<IcfgLocation> programPoints =
 				icfg.getProgramPoints().entrySet().stream().flatMap(a -> a.getValue().entrySet().stream())
 						.map(Entry<DebugIdentifier, IcfgLocation>::getValue).collect(Collectors.toSet());
@@ -165,16 +171,16 @@ public class IcfgDuplicator {
 		return true;
 	}
 
-	private IcfgEdge createEdgeCopy(final Map<IcfgLocation, IcfgLocation> old2new, final IcfgLocation newSource,
-			final IcfgEdge oldEdge, final IcfgEdgeFactory edgeFactory) {
-		final IcfgLocation newTarget = old2new.get(oldEdge.getTarget());
+	private IcfgEdge createEdgeCopy(final IcfgLocation newSource, final IcfgEdge oldEdge,
+			final IcfgEdgeFactory edgeFactory) {
+		final IcfgLocation newTarget = mOld2NewLocationMap.get(oldEdge.getTarget());
 		assert newTarget != null;
 		final IcfgEdge newEdge = createUnconnectedCopy(newSource, newTarget, oldEdge, edgeFactory);
 		newSource.addOutgoing(newEdge);
 		newTarget.addIncoming(newEdge);
 		ModelUtils.copyAnnotations(oldEdge, newEdge);
 		mBacktranslator.mapEdges(newEdge, oldEdge);
-		mOld2New.put(oldEdge, newEdge);
+		mOld2NewEdgeMap.put(oldEdge, newEdge);
 		return newEdge;
 	}
 
@@ -197,7 +203,8 @@ public class IcfgDuplicator {
 			rtr = edgeFactory.createInternalTransition(newSource, newTarget, null, newAction.getTransformula(),
 					tfWithBE);
 		} else if (oldEdge instanceof IIcfgCallTransition<?>) {
-			rtr = createCopyCall(newSource, newTarget, oldEdge, newAction, edgeFactory);
+			rtr = createCopyCall(newSource, newTarget, (IIcfgCallTransition<IcfgLocation>) oldEdge, newAction,
+					edgeFactory);
 		} else if (oldEdge instanceof IIcfgReturnTransition<?, ?>) {
 			final IIcfgReturnTransition<?, ?> oldReturn = (IIcfgReturnTransition<?, ?>) oldEdge;
 			final IIcfgCallTransition<?> oldCorrespondingCall = oldReturn.getCorrespondingCall();
@@ -226,16 +233,20 @@ public class IcfgDuplicator {
 	}
 
 	private IcfgEdge createCopyCall(final IcfgLocation source, final IcfgLocation target,
-			final IIcfgTransition<?> oldEdge, final IAction newAction, final IcfgEdgeFactory edgeFactory) {
-		final IcfgEdge rtr;
+			final IIcfgCallTransition<IcfgLocation> oldEdge, final IAction newAction,
+			final IcfgEdgeFactory edgeFactory) {
 		final ICallAction cAction = (ICallAction) newAction;
-		rtr = edgeFactory.createCallTransition(source, target, null, cAction.getLocalVarsAssignment());
-		mCallCache.put((IIcfgCallTransition<IcfgLocation>) oldEdge, (IIcfgCallTransition<IcfgLocation>) rtr);
+		final IcfgCallTransition rtr =
+				edgeFactory.createCallTransition(source, target, null, cAction.getLocalVarsAssignment());
+		mCallCache.put(oldEdge, rtr);
 		return rtr;
 	}
 
 	public Map<IIcfgTransition<IcfgLocation>, IIcfgTransition<IcfgLocation>> getOld2NewEdgeMapping() {
-		return Collections.unmodifiableMap(mOld2New);
+		return Collections.unmodifiableMap(mOld2NewEdgeMap);
 	}
 
+	public Map<IcfgLocation, IcfgLocation> getOld2NewLocationMapping() {
+		return Collections.unmodifiableMap(mOld2NewLocationMap);
+	}
 }

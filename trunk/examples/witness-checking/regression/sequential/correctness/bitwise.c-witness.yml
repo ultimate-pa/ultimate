@@ -1,0 +1,25 @@
+- entry_type: invariant_set
+  metadata:
+    format_version: '2.0'
+    uuid: 48c294c7-a9ef-46dc-ae78-80ecd5fa7495
+    creation_time: '2024-03-11T18:18:32+01:00'
+    producer:
+      name: manual
+      version: '1.0'
+    task:
+      input_files:
+      - bitwise.c
+      input_file_hashes:
+        bitwise.c: UNUSED
+      specification: UNUSED
+      data_model: UNUSED
+      language: C
+  content:
+  - invariant:
+      type: location_invariant
+      location:
+        file_name: bitwise.c
+        file_hash: UNUSED
+        line: 4
+      value: x << 16 == (x & y) && (x | y) == y
+      format: c_expression

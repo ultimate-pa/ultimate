@@ -169,7 +169,8 @@ public class UltimateEliminator extends WrapperScript {
 			mLogger.info("Copy this to one of our JUnit test files:\n"
 					+ SmtTestGenerationUtils.generateStringForTestfile(unf));
 		}
-		final Term lessQuantifier = PartialQuantifierElimination.eliminateCompat(mServices, mMgdScript, SimplificationTechnique.SIMPLIFY_DDA, unf);
+		final Term lessQuantifier = PartialQuantifierElimination.eliminateCompat(mServices, mMgdScript,
+				SimplificationTechnique.SIMPLIFY_DDA2, unf);
 		// TODO futher optimizations. E.g., overapproximation by replacing all
 		// quantified formulas.
 		if (!QuantifierUtils.isQuantifierFree(lessQuantifier)) {
@@ -272,7 +273,8 @@ public class UltimateEliminator extends WrapperScript {
 		final Term letFree = new FormulaUnLet().transform(term);
 		final Term annotationFree = new AnnotationRemover().transform(letFree);
 		final Term unf = new UnfTransformer(mMgdScript.getScript()).transform(annotationFree);
-		final Term lessQuantifier = PartialQuantifierElimination.eliminateCompat(mServices, mMgdScript, SimplificationTechnique.SIMPLIFY_DDA, unf);
+		final Term lessQuantifier = PartialQuantifierElimination.eliminateCompat(mServices, mMgdScript,
+				SimplificationTechnique.SIMPLIFY_DDA2, unf);
 		final IResult result = constructResult("simplify", String.valueOf(lessQuantifier));
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result );
 		return lessQuantifier;

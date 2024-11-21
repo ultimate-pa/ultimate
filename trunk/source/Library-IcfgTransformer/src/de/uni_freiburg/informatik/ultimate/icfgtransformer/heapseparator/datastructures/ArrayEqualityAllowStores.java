@@ -27,14 +27,13 @@
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ApplicationTermFinder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayEquality;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayUpdate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayEquality.ArrayEqualityException;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayUpdate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayUpdate.ArrayUpdateException;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -95,19 +94,13 @@ public class ArrayEqualityAllowStores {
 	}
 
 	public static List<ArrayEqualityAllowStores> extractArrayEqualityAllowStores(final Term formula) {
-		final HashSet<String> functionSymbolNames = new HashSet<>(3);
-		functionSymbolNames.add("=");
-		functionSymbolNames.add("distinct");
-		functionSymbolNames.add("not");
+		final Set<String> functionSymbolNames = Set.of("=", "distinct", "not");
 
 		final List<ArrayEqualityAllowStores> result = new ArrayList<>();
 
-		final ApplicationTermFinder atf = new ApplicationTermFinder(functionSymbolNames, false);
-		for (final ApplicationTerm subterm : atf.findMatchingSubterms(formula)) {
-			ArrayEqualityAllowStores arrayRel = null;
-
-			final boolean isNegated = subterm.getFunction().getName().equals("not")
-					|| subterm.getFunction().getName().equals("distinct");
+		for (final ApplicationTerm subterm : SmtUtils.extractApplicationTerms(functionSymbolNames, formula, false)) {
+			final boolean isNegated =
+					subterm.getFunction().getName().equals("not") || subterm.getFunction().getName().equals("distinct");
 
 			final Term lhs;
 			final Term rhs;
@@ -137,16 +130,14 @@ public class ArrayEqualityAllowStores {
 			}
 
 			try {
-				arrayRel = new ArrayEqualityAllowStores(new ArrayUpdate(subterm, isNegated, false));
-				result.add(arrayRel);
+				result.add(new ArrayEqualityAllowStores(new ArrayUpdate(subterm, isNegated, false)));
 				continue;
 			} catch (final ArrayUpdateException e) {
 				// do nothing/fall through
 			}
 
 			try {
-				arrayRel = new ArrayEqualityAllowStores(new ArrayEquality(subterm, true, true));
-				result.add(arrayRel);
+				result.add(new ArrayEqualityAllowStores(new ArrayEquality(subterm, true, true)));
 				continue;
 			} catch (final ArrayEqualityException e) {
 				// do nothing/fall through

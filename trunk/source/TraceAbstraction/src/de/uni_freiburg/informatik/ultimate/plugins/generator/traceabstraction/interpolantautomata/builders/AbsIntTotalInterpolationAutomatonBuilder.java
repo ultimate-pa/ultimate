@@ -35,10 +35,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyze;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyze.SymbolType;
@@ -66,8 +64,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHo
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgStatementExtractor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
@@ -90,12 +86,10 @@ public class AbsIntTotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransi
 	private final ILogger mLogger;
 	private final NestedWordAutomaton<LETTER, IPredicate> mResult;
 	private final CfgSmtToolkit mCsToolkit;
-	private final IRun<LETTER, ?> mCurrentCounterExample;
+	private final Word<LETTER> mCurrentCounterExample;
 	private final RcfgStatementExtractor mStatementExtractor;
 	private final VariableCollector mVariableCollector;
 	private final IIcfgSymbolTable mSymbolTable;
-	private final XnfConversionTechnique mXnfConversionTechnique;
-	private final SimplificationTechnique mSimplificationTechnique;
 
 	/**
 	 * Constructs a new AbsIntTotalInterpolationAutomatonBuilder which preforms total interpolation on a given counter
@@ -108,15 +102,11 @@ public class AbsIntTotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransi
 	 * @param csToolkit
 	 * @param currentCounterExample
 	 * @param symbolTable
-	 * @param simplificationTechnique
-	 * @param xnfConversionTechnique
 	 */
 	public AbsIntTotalInterpolationAutomatonBuilder(final IUltimateServiceProvider services,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> oldAbstraction,
 			final IAbstractInterpretationResult<?, LETTER, ?> aiResult, final IPredicateUnifier predicateUnifier,
-			final CfgSmtToolkit csToolkit, final IRun<LETTER, ?> currentCounterExample,
-			final IIcfgSymbolTable symbolTable, final SimplificationTechnique simplificationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique,
+			final CfgSmtToolkit csToolkit, final Word<LETTER> currentCounterExample, final IIcfgSymbolTable symbolTable,
 			final IEmptyStackStateFactory<IPredicate> emptyStackFactory) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -126,8 +116,6 @@ public class AbsIntTotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransi
 		mVariableCollector = new VariableCollector();
 		mStatementExtractor = new RcfgStatementExtractor();
 		mResult = constructAutomaton(oldAbstraction, aiResult, predicateUnifier, emptyStackFactory);
-		mSimplificationTechnique = simplificationTechnique;
-		mXnfConversionTechnique = xnfConversionTechnique;
 	}
 
 	private NestedWordAutomaton<LETTER, IPredicate> constructAutomaton(
@@ -140,10 +128,7 @@ public class AbsIntTotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransi
 		final NestedWordAutomaton<LETTER, IPredicate> result = new NestedWordAutomaton<>(
 				new AutomataLibraryServices(mServices), oldAbstraction.getVpAlphabet(), emptyStackFactory);
 
-		final NestedRun<LETTER, IPredicate> counterExample = (NestedRun<LETTER, IPredicate>) mCurrentCounterExample;
-		final Word<LETTER> word = counterExample.getWord();
-
-		final int wordLength = word.length();
+		final int wordLength = mCurrentCounterExample.length();
 		assert wordLength > 1 : "Unexpected: length of word smaller or equal to 1.";
 
 		final Map<LETTER, IPredicate> callHierarchyPredicates = new HashMap<>();
@@ -157,7 +142,7 @@ public class AbsIntTotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransi
 		final Map<IPredicate, Set<IAbstractState<?>>> predicateToStates = new HashMap<>();
 
 		for (int i = 0; i < wordLength; i++) {
-			final LETTER symbol = word.getSymbol(i);
+			final LETTER symbol = mCurrentCounterExample.getSymbol(i);
 
 			final Set<IAbstractState<?>> nextStates =
 					(Set<IAbstractState<?>>) aiResult.getLoc2States().get(symbol.getTarget());

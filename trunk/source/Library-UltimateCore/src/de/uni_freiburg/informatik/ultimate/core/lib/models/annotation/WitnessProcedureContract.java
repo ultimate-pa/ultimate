@@ -27,10 +27,11 @@
 
 package de.uni_freiburg.informatik.ultimate.core.lib.models.annotation;
 
-import java.util.List;
+import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ProcedureContract;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 
 /**
@@ -45,22 +46,22 @@ public class WitnessProcedureContract extends ModernAnnotations {
 	private static final String KEY = WitnessProcedureContract.class.getName();
 
 	@Visualizable
-	private final String mRequiresClause;
+	private final ProcedureContract<?, ?> mContract;
 
-	@Visualizable
-	private final String mEnsuresClause;
-
-	public WitnessProcedureContract(final String requiresClause, final String ensuresClause) {
-		mRequiresClause = requiresClause;
-		mEnsuresClause = ensuresClause;
+	public WitnessProcedureContract(final ProcedureContract<?, ?> contract) {
+		mContract = Objects.requireNonNull(contract);
 	}
 
-	public List<String> getRequires() {
-		return mRequiresClause == null ? List.of() : List.of(mRequiresClause);
+	public ProcedureContract<?, ?> getContract() {
+		return mContract;
 	}
 
-	public List<String> getEnsures() {
-		return mEnsuresClause == null ? List.of() : List.of(mEnsuresClause);
+	public String getRequires() {
+		return mContract.getRequires() == null ? null : mContract.getRequires().toString();
+	}
+
+	public String getEnsures() {
+		return mContract.getEnsures() == null ? null : mContract.getEnsures().toString();
 	}
 
 	public void annotate(final IElement node) {

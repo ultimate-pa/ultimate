@@ -76,7 +76,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.CACSL2BoogieBacktranslatorMapping;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.IdentifierMapping;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.ExtractedCorrectnessWitness;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.IExtractedCorrectnessWitness;
 
 public class MainTranslator {
 
@@ -87,14 +87,14 @@ public class MainTranslator {
 	private final WrapperNode mResult;
 
 	public MainTranslator(final IUltimateServiceProvider services, final ILogger logger,
-			final ExtractedCorrectnessWitness witnessEntries, final List<DecoratedUnit> units,
+			final IExtractedCorrectnessWitness witness, final List<DecoratedUnit> units,
 			final MultiparseSymbolTable symboltable, final ACSLNode acslAnnotation) {
 		mServices = services;
 		mLogger = logger;
-		mResult = run(witnessEntries, units, acslAnnotation, symboltable);
+		mResult = run(witness, units, acslAnnotation, symboltable);
 	}
 
-	private WrapperNode run(final ExtractedCorrectnessWitness witnessEntries, final List<DecoratedUnit> units,
+	private WrapperNode run(final IExtractedCorrectnessWitness witness, final List<DecoratedUnit> units,
 			final ACSLNode acslAnnotation, final MultiparseSymbolTable mst) {
 
 		// if an additional Annotation was parsed put it into the root node
@@ -113,7 +113,7 @@ public class MainTranslator {
 			 * translation artifacts (i.e. things which only should be created once per multifile project) are only run
 			 * once after all translation units have been dispatched.
 			 */
-			final BoogieASTNode outputTU = translate(units, witnessEntries, mst);
+			final BoogieASTNode outputTU = translate(units, witness, mst);
 
 			return new WrapperNode(null, outputTU);
 		} catch (final IncorrectSyntaxException e) {
@@ -133,7 +133,7 @@ public class MainTranslator {
 		}
 	}
 
-	private BoogieASTNode translate(final List<DecoratedUnit> nodes, final ExtractedCorrectnessWitness witnessEntries,
+	private BoogieASTNode translate(final List<DecoratedUnit> nodes, final IExtractedCorrectnessWitness witness,
 			final MultiparseSymbolTable mst) {
 
 		assert !nodes.isEmpty() : "Received no nodes";
@@ -200,7 +200,7 @@ public class MainTranslator {
 			mLogger.info("Completed pre-run");
 
 			final CHandlerTranslationResult result = performMainRun(translationSettings, prerunCHandler, reporter,
-					locationFactory, witnessEntries, backtranslatorMapping, nodes, prerunTypeHandler, mst, typeSizes);
+					locationFactory, witness, backtranslatorMapping, nodes, prerunTypeHandler, mst, typeSizes);
 			mLogger.info("Completed translation");
 
 			return result.getNode();
@@ -209,7 +209,7 @@ public class MainTranslator {
 
 	private CHandlerTranslationResult performMainRun(final TranslationSettings translationSettings,
 			final CHandler prerunCHandler, final CTranslationResultReporter reporter,
-			final LocationFactory locationFactory, final ExtractedCorrectnessWitness witnessEntries,
+			final LocationFactory locationFactory, final IExtractedCorrectnessWitness witness,
 			final CACSL2BoogieBacktranslatorMapping backtranslatorMapping, final List<DecoratedUnit> nodes,
 			final TypeHandler prerunTypeHandler, final MultiparseSymbolTable mst, final TypeSizes typeSizes) {
 		final NameHandler nameHandler = new NameHandler(backtranslatorMapping);
@@ -232,9 +232,9 @@ public class MainTranslator {
 				expressionTranslation, typeSizeAndOffsetComputer, nameHandler, flatSymbolTable, typeSizes);
 
 		final PreprocessorHandler ppHandler = new PreprocessorHandler(reporter, locationFactory);
-		final ACSLHandler acslHandler = new ACSLHandler(witnessEntries != null, flatSymbolTable, expressionTranslation,
+		final ACSLHandler acslHandler = new ACSLHandler(witness != null, flatSymbolTable, expressionTranslation,
 				typeHandler, procedureManager, locationFactory, mainCHandler);
-		final MainDispatcher mainDispatcher = new MainDispatcher(mLogger, witnessEntries, locationFactory, typeHandler,
+		final MainDispatcher mainDispatcher = new MainDispatcher(mLogger, witness, locationFactory, typeHandler,
 				mainCHandler, ppHandler, acslHandler);
 
 		final CHandlerTranslationResult result = mainDispatcher.dispatch(nodes);

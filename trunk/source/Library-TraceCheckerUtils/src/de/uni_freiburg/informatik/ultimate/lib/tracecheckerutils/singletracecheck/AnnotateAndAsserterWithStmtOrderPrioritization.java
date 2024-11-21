@@ -40,13 +40,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrderType;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.SmtFeatureHeuristicPartitioningType;
@@ -95,6 +93,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 
 	private final AssertCodeBlockOrder mAssertCodeBlocksOrder;
 	private int mCheckSat;
+	private final List<Object> mControlConfigurationSequence;
 
 	public AnnotateAndAsserterWithStmtOrderPrioritization(final ManagedScript mgdScriptTc,
 			final NestedFormulas<L, Term, Term> nestedSSA, final AnnotateAndAssertCodeBlocks<L> aaacb,
@@ -103,6 +102,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 		super(mgdScriptTc, nestedSSA, aaacb, tcbg, services);
 		mAssertCodeBlocksOrder = assertCodeBlocksOrder;
 		mCheckSat = 0;
+		mControlConfigurationSequence = nestedSSA.getControlConfigurations();
 	}
 
 	/**
@@ -144,10 +144,10 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 		int i = lowerIndex;
 		while (i < upperIndex) {
 			// Is the current statement a loop entry?
-			if (rwt.getImage(pps.get(i)).size() >= 2 && ((TreeSet<Integer>) rwt.getImage(pps.get(i))).higher(i) != null
-					&& ((TreeSet<Integer>) rwt.getImage(pps.get(i))).higher(i) < upperIndex) {
+			if (rwt.getImage(pps.get(i)).size() >= 2 && rwt.getImage(pps.get(i)).higher(i) != null
+					&& rwt.getImage(pps.get(i)).higher(i) < upperIndex) {
 				// the new upper index is the last occurrence of the same location
-				final int newUpperIndex = ((TreeSet<Integer>) rwt.getImage(pps.get(i))).lower(upperIndex);
+				final int newUpperIndex = rwt.getImage(pps.get(i)).lower(upperIndex);
 				addStmtPositionToDepth(depth + 1, depth2Statements, i);
 				// we consider the subtrace from i+1 to newUpperIndex as a loop
 				// and apply the partitioning recursively on the subtrace
@@ -191,17 +191,18 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 	@Override
 	public void buildAnnotatedSsaAndAssertTerms() {
 		assert mCheckSat == 0 : "You should not call this method twice";
-		final List<IcfgLocation> pps = TraceCheckUtils.getSequenceOfProgramPoints(mTrace);
-		final HashTreeRelation<IcfgLocation, Integer> rwt = computeRelationWithTreeSetForTrace(0, mTrace.length(), pps);
+		final HashTreeRelation<Object, Integer> rwt =
+				computeRelationWithTreeSetForTrace(0, mTrace.length(), mControlConfigurationSequence);
 
-		mAnnotSSA = new ModifiableNestedFormulas<>(mTrace, new TreeMap<Integer, Term>());
+		mAnnotSSA = new ModifiableNestedFormulas<>(mSSA.getCounterexample(), new TreeMap<Integer, Term>());
 
 		mAnnotSSA.setPrecondition(mAnnotateAndAssertCodeBlocks.annotateAndAssertPrecondition());
 		mAnnotSSA.setPostcondition(mAnnotateAndAssertCodeBlocks.annotateAndAssertPostcondition());
 		final Collection<Integer> callPositions = new ArrayList<>();
 		final Collection<Integer> pendingReturnPositions = new ArrayList<>();
 
-		final Map<Integer, Set<Integer>> depth2Statements = partitionStatementsAccordingDepth(mTrace, rwt, pps);
+		final Map<Integer, Set<Integer>> depth2Statements =
+				partitionStatementsAccordingDepth(mTrace, rwt, mControlConfigurationSequence);
 		// Report benchmark
 		mTcbg.reportNewCodeBlocks(mTrace.length());
 
@@ -239,7 +240,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 		final Set<Integer> stmtsOutsideOfLoop = depth2Statements.get(0);
 		// First, annotate and assert the statements, which doesn't occur within a loop
 		buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(mTrace, callPositions, pendingReturnPositions,
-				stmtsOutsideOfLoop);
+				stmtsOutsideOfLoop, true);
 
 		countCheckSat();
 		LBool sat = mMgdScriptTc.getScript().checkSat();
@@ -252,7 +253,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 			final Set<Integer> integersFromTrace = getSetOfIntegerForGivenInterval(0, mTrace.length());
 			final Set<Integer> stmtsWithinLoop = integerSetDifference(integersFromTrace, stmtsOutsideOfLoop);
 			buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(mTrace, callPositions, pendingReturnPositions,
-					stmtsWithinLoop);
+					stmtsWithinLoop, false);
 			assert callPositions.containsAll(mTrace.getCallPositions());
 			assert mTrace.getCallPositions().containsAll(callPositions);
 			countCheckSat();
@@ -270,9 +271,10 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 		final List<Integer> keysInSortedOrder = new ArrayList<>(depth2Statements.keySet());
 		Collections.sort(keysInSortedOrder);
 		LBool sat = null;
+		boolean isFirstIteration = true;
 		for (final Integer key : keysInSortedOrder) {
 			buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(trace, callPositions, pendingReturnPositions,
-					depth2Statements.get(key));
+					depth2Statements.get(key), isFirstIteration);
 			countCheckSat();
 			sat = mMgdScriptTc.getScript().checkSat();
 			// Report benchmarks
@@ -281,6 +283,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 			if (sat == LBool.UNSAT) {
 				return sat;
 			}
+			isFirstIteration = false;
 		}
 		return sat;
 	}
@@ -294,9 +297,10 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 		final List<Integer> keysInDescendingOrder = new ArrayList<>(depth2Statements.keySet());
 		Collections.sort(keysInDescendingOrder, (i1, i2) -> i2.compareTo(i1));
 		LBool sat = null;
+		boolean isFirstIteration = true;
 		for (final Integer key : keysInDescendingOrder) {
 			buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(trace, callPositions, pendingReturnPositions,
-					depth2Statements.get(key));
+					depth2Statements.get(key), isFirstIteration);
 			countCheckSat();
 			sat = mMgdScriptTc.getScript().checkSat();
 			// Report benchmarks
@@ -305,6 +309,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 			if (sat == LBool.UNSAT) {
 				return sat;
 			}
+			isFirstIteration = false;
 		}
 		return sat;
 	}
@@ -319,6 +324,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 		Collections.sort(depthAsQueue);
 		LBool sat = null;
 		boolean removeFirst = true;
+		boolean isFirstIteration = true;
 		while (!depthAsQueue.isEmpty()) {
 			int currentDepth = 0;
 			if (removeFirst) {
@@ -328,7 +334,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 			}
 			removeFirst = !removeFirst;
 			buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(trace, callPositions, pendingReturnPositions,
-					depth2Statements.get(currentDepth));
+					depth2Statements.get(currentDepth), isFirstIteration);
 			countCheckSat();
 			sat = mMgdScriptTc.getScript().checkSat();
 			// Report benchmarks
@@ -337,6 +343,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 			if (sat == LBool.UNSAT) {
 				return sat;
 			}
+			isFirstIteration = false;
 		}
 		return sat;
 	}
@@ -396,7 +403,8 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 		// Choose statements that contains only constants <= constantSize and assert them
 		final int constantSize = 10;
 		final Set<Integer> stmtsToAssert = partitionStmtsAccordingToConstantSize(trace, constantSize);
-		buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(trace, callPositions, pendingReturnPositions, stmtsToAssert);
+		buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(trace, callPositions, pendingReturnPositions, stmtsToAssert,
+				true);
 		LBool sat = mMgdScriptTc.getScript().checkSat();
 		// Report benchmarks
 		mTcbg.reportNewCheckSat();
@@ -407,7 +415,8 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 		// Then assert the rest of statements
 		final Set<Integer> remainingStmts =
 				integerSetDifference(getSetOfIntegerForGivenInterval(0, trace.length()), stmtsToAssert);
-		buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(trace, callPositions, pendingReturnPositions, remainingStmts);
+		buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(trace, callPositions, pendingReturnPositions, remainingStmts,
+				false);
 		sat = mMgdScriptTc.getScript().checkSat();
 		// Report benchmarks
 		mTcbg.reportNewCheckSat();
@@ -535,11 +544,13 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 
 		assert !partitions.isEmpty();
 
+		boolean isFirstIteration = true;
 		for (final LinkedHashSet<Integer> partition : partitions) {
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug("Checking partition " + partition);
 			}
-			buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(trace, callPositions, pendingReturnPositions, partition);
+			buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(trace, callPositions, pendingReturnPositions, partition,
+					isFirstIteration);
 			countCheckSat();
 			sat = mMgdScriptTc.getScript().checkSat();
 			// Report benchmarks
@@ -548,6 +559,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 			if (sat == LBool.UNSAT) {
 				return sat;
 			}
+			isFirstIteration = false;
 		}
 		return sat;
 	}
@@ -570,7 +582,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 	 */
 	private void buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(final NestedWord<? extends IAction> trace,
 			final Collection<Integer> callPositions, final Collection<Integer> pendingReturnPositions,
-			final Set<Integer> stmtsToAssert) {
+			final Set<Integer> stmtsToAssert, final boolean assertPendingContexts) {
 		for (final Integer i : stmtsToAssert) {
 			if (trace.isCallPosition(i)) {
 				callPositions.add(i);
@@ -588,27 +600,30 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 			}
 		}
 
-		// number that the pending context. The first pending context has
-		// number -1, the second -2, ...
-		int pendingContextCode = -1 - mSSA.getTrace().getPendingReturns().size();
-		for (final Integer positionOfPendingReturn : mSSA.getTrace().getPendingReturns().keySet()) {
-			assert trace.isPendingReturn(positionOfPendingReturn);
-			{
-				final Term annotated = mAnnotateAndAssertCodeBlocks
-						.annotateAndAssertPendingContext(positionOfPendingReturn, pendingContextCode);
-				mAnnotSSA.setPendingContext(positionOfPendingReturn, annotated);
+		if (assertPendingContexts) {
+			// Number that the pending context. The first pending context has
+			// number -2, the second -3, the third -4, ...
+			// (the number -1 is reserved for the precondition)
+			int pendingContextCode = -1 - mSSA.getTrace().getPendingReturns().size();
+			for (final Integer positionOfPendingReturn : mSSA.getTrace().getPendingReturns().keySet()) {
+				assert trace.isPendingReturn(positionOfPendingReturn);
+				{
+					final Term annotated = mAnnotateAndAssertCodeBlocks
+							.annotateAndAssertPendingContext(positionOfPendingReturn, pendingContextCode);
+					mAnnotSSA.setPendingContext(positionOfPendingReturn, annotated);
+				}
+				{
+					final Term annotated = mAnnotateAndAssertCodeBlocks
+							.annotateAndAssertLocalVarAssignemntPendingContext(positionOfPendingReturn, pendingContextCode);
+					mAnnotSSA.setLocalVarAssignmentAtPos(positionOfPendingReturn, annotated);
+				}
+				{
+					final Term annotated = mAnnotateAndAssertCodeBlocks
+							.annotateAndAssertOldVarAssignemntPendingContext(positionOfPendingReturn, pendingContextCode);
+					mAnnotSSA.setOldVarAssignmentAtPos(positionOfPendingReturn, annotated);
+				}
+				pendingContextCode++;
 			}
-			{
-				final Term annotated = mAnnotateAndAssertCodeBlocks
-						.annotateAndAssertLocalVarAssignemntPendingContext(positionOfPendingReturn, pendingContextCode);
-				mAnnotSSA.setLocalVarAssignmentAtPos(positionOfPendingReturn, annotated);
-			}
-			{
-				final Term annotated = mAnnotateAndAssertCodeBlocks
-						.annotateAndAssertOldVarAssignemntPendingContext(positionOfPendingReturn, pendingContextCode);
-				mAnnotSSA.setOldVarAssignmentAtPos(positionOfPendingReturn, annotated);
-			}
-			pendingContextCode++;
 		}
 	}
 

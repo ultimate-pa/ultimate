@@ -132,7 +132,7 @@ public class WitnessLocationMatcher<LETTER extends IIcfgTransition<?>> {
 		} else if (cb instanceof GotoEdge) {
 			matchLocations((GotoEdge) cb);
 		} else {
-			throw new AssertionError("Unknown type of CodeBlock: " + cb.getClass().getSimpleName());
+			matchLocations(ILocation.getAnnotation(cb));
 		}
 	}
 
@@ -175,6 +175,9 @@ public class WitnessLocationMatcher<LETTER extends IIcfgTransition<?>> {
 	}
 
 	private void matchLocations(final ILocation location) {
+		if (location == null) {
+			return;
+		}
 		if (location.getStartLine() == location.getEndLine()) {
 			final Set<WitnessEdge> witnessLetters = mLineNumber2WitnessLetter.getImage(location.getStartLine());
 			if (witnessLetters != null) {

@@ -1,0 +1,9 @@
+// #TestSpec: redundant:R2,R3; results:-1;
+Input x IS int
+Input A IS bool
+Input B IS bool
+
+R1: Globally, it is always the case that "x > 5" holds.
+R2: Globally, it is always the case that "x > 3" holds.
+R3: Globally, it is always the case that "A" holds.
+R4: Globally, it is always the case that "A && B" holds.
