@@ -473,7 +473,7 @@
 /instance/org.eclipse.jdt.ui/sp_cleanup.convert_to_switch_expressions=false
 /instance/org.eclipse.jdt.ui/sp_cleanup.correct_indentation=true
 /instance/org.eclipse.jdt.ui/sp_cleanup.do_while_rather_than_while=false
-/instance/org.eclipse.jdt.ui/sp_cleanup.double_negation=true
+/instance/org.eclipse.jdt.ui/sp_cleanup.double_negation=false
 /instance/org.eclipse.jdt.ui/sp_cleanup.else_if=true
 /instance/org.eclipse.jdt.ui/sp_cleanup.embedded_if=true
 /instance/org.eclipse.jdt.ui/sp_cleanup.evaluate_nullable=true
