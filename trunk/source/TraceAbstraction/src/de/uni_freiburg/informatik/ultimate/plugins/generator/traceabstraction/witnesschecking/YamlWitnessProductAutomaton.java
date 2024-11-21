@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.ConditionAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadOther;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -219,6 +220,10 @@ public class YamlWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 			return matchesStartLocation(statement, waypoint);
 		}
 		if (waypoint instanceof WaypointFunctionEnter) {
+			if (statement instanceof final IIcfgForkTransitionThreadOther fork) {
+				// The location is at the corresponding IIcfgForkTransitionThreadOther, so we check there
+				return matchesEndLocation(fork.getCorrespondingIIcfgForkTransitionCurrentThread(), waypoint);
+			}
 			return matchesEndLocation(statement, waypoint);
 		}
 		if (waypoint instanceof WaypointFunctionReturn) {
