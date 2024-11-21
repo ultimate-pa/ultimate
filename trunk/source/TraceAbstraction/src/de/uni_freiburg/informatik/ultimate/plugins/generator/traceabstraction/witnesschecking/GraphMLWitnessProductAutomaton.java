@@ -46,11 +46,11 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.SPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.GotoEdge;
@@ -59,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Ret
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.MLPredicateWithWitnessNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicateWithWitnessNode;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
@@ -87,21 +88,24 @@ public class GraphMLWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 		private final IPredicate mCfgAutomatonState;
 		private final WitnessNode mWitnessNode;
 		private final Integer mStutteringSteps;
-		private final ISLPredicate mResultState;
+		private final IPredicate mResultState;
 
 		public ProductState(final IPredicate cfgAutomatonState, final WitnessNode witnessAutomatonState,
 				final Integer stutteringSteps) {
-			super();
 			mCfgAutomatonState = cfgAutomatonState;
 			mWitnessNode = witnessAutomatonState;
 			mStutteringSteps = stutteringSteps;
 			mResultState = constructNewResultState(cfgAutomatonState, witnessAutomatonState, stutteringSteps);
 		}
 
-		private ISLPredicate constructNewResultState(final IPredicate cfgAutomatonState, final WitnessNode witnessNode,
+		private IPredicate constructNewResultState(final IPredicate cfgAutomatonState, final WitnessNode witnessNode,
 				final Integer stutteringSteps) {
-			return SPredicateWithWitnessNode.construct(mPredicateFactory,
-					((ISLPredicate) cfgAutomatonState).getProgramPoint(), witnessNode, stutteringSteps);
+			if (cfgAutomatonState instanceof final ISLPredicate sPred) {
+				return SPredicateWithWitnessNode.construct(mPredicateFactory, sPred.getProgramPoint(), witnessNode,
+						stutteringSteps);
+			}
+			return MLPredicateWithWitnessNode.construct(mPredicateFactory,
+					((IMLPredicate) cfgAutomatonState).getProgramPoints(), witnessNode, stutteringSteps);
 		}
 
 		public IPredicate getCfgAutomatonState() {
@@ -116,7 +120,7 @@ public class GraphMLWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 			return mStutteringSteps;
 		}
 
-		public ISLPredicate getResultState() {
+		public IPredicate getResultState() {
 			return mResultState;
 		}
 
@@ -376,9 +380,8 @@ public class GraphMLWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 	}
 
 	private static boolean isStateOfInitFunction(final IPredicate cfgAutomatonState) {
-		final IcfgLocation pp = ((SPredicate) cfgAutomatonState).getProgramPoint();
-		final String proc = pp.getProcedure();
-		return "ULTIMATE.init".equals(proc);
+		return PredicateUtils.streamLocations(cfgAutomatonState)
+				.anyMatch(pp -> "ULTIMATE.init".equals(pp.getProcedure()));
 	}
 
 	/**
@@ -436,7 +439,7 @@ public class GraphMLWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 			final GotoEdge gotoEdge = (GotoEdge) cb;
 			return isCompatible(gotoEdge, we);
 		} else {
-			throw new AssertionError("unknown type of LETTER");
+			return isCompatible(ILocation.getAnnotation(cb), we);
 		}
 	}
 
