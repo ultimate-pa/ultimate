@@ -234,6 +234,9 @@ public class YamlWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 	/** Returns true if the start line and column of the statement match the location of the waypoint */
 	private static boolean matchesStartLocation(final IElement statement, final Waypoint waypoint) {
 		final ILocation programLoc = ILocation.getAnnotation(statement);
+		if (programLoc == null) {
+			return false;
+		}
 		final Location witnessLoc = waypoint.getLocation();
 		return programLoc.getStartLine() == witnessLoc.getLine()
 				&& (witnessLoc.getColumn() == null || witnessLoc.getColumn() == programLoc.getStartColumn());
@@ -242,6 +245,9 @@ public class YamlWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 	/** Returns true if the end line and column of the statement match the location of the waypoint */
 	private static boolean matchesEndLocation(final IElement statement, final Waypoint waypoint) {
 		final ILocation programLoc = ILocation.getAnnotation(statement);
+		if (programLoc == null) {
+			return false;
+		}
 		final Location witnessLoc = waypoint.getLocation();
 		return programLoc.getEndLine() == witnessLoc.getLine()
 				&& (witnessLoc.getColumn() == null || witnessLoc.getColumn() == programLoc.getEndColumn());
