@@ -604,7 +604,7 @@ def check_witness_type_yaml(witness, type):
         return False
     with open(witness) as f:
         witness_content = f.read()
-    entry_types = re.findall(r'entry_type["\']?\s*:\s*["\']?([^"\']*)', witness_content)
+    entry_types = re.findall(r'entry_type["\']?\s*:\s*["\']?(.*?)["\'\n]', witness_content)
     are_violation_sequence = [e == "violation_sequence" for e in entry_types]
     if is_violation and not all(are_violation_sequence):
         print("Provided witness has other entry types than violation sequence, but your "
