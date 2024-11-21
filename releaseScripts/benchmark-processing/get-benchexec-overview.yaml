@@ -114,6 +114,7 @@ known_exceptions:
   "identifier is not declared (neither a variable nor a function name): argv in file":
   "Undeclared variable in ACSL expression":
   "The following witness entry could not be matched":
+  "Field not in struct":
 
 known_timeouts:
   "Cannot interrupt operation gracefully because timeout expired. Forcing shutdown":
