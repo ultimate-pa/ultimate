@@ -248,8 +248,10 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		} else {
 			mItpAutomata = new UnionNwa<>(mItpAutomata, determinized, mFactory, false);
 		}
-		mAbstraction = new InformationStorage<>(mProgram == null ? mAbstraction : mProgram, mItpAutomata, mFactory,
-				PartialOrderCegarLoop::isFalseLiteral);
+		// The initial abstraction is stored in mProgram by the constructor. However, if this method is called from
+		// #readInitialProof(), then mProgram is not yet initialized, but mAbstraction is to the initial abstraction.
+		final var program = mProgram == null ? mAbstraction : mProgram;
+		mAbstraction = new InformationStorage<>(program, mItpAutomata, mFactory, PartialOrderCegarLoop::isFalseLiteral);
 
 		// augment refinement result with Hoare triple checker to allow re-use by independence providers
 		final var resultWithHtc = addHoareTripleChecker(mRefinementResult, htc);
