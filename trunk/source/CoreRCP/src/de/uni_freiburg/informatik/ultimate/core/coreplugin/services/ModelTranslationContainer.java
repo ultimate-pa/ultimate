@@ -260,18 +260,28 @@ class ModelTranslationContainer implements IBacktranslationService {
 		boolean canTranslate = false;
 		for (final ITranslator<?, ?, ?, ?, ?, ?, ?> trans : mTranslationSequence) {
 			current.push(trans);
-			if (trans.getSourceTraceElementClass().isAssignableFrom(programExecution.getTraceElementClass())
-					&& trans.getSourceExpressionClass().isAssignableFrom(programExecution.getExpressionClass())) {
-				canTranslate = true;
-			}
+			canTranslate |= trans.getSourceTraceElementClass()
+					.isAssignableFrom(programExecution.getStem().getTraceElementClass())
+					&& trans.getSourceExpressionClass()
+							.isAssignableFrom(programExecution.getStem().getExpressionClass())
+					&& trans.getSourceTraceElementClass()
+							.isAssignableFrom(programExecution.getLoop().getTraceElementClass())
+					&& trans.getSourceExpressionClass()
+							.isAssignableFrom(programExecution.getLoop().getExpressionClass());
 		}
 		if (!canTranslate) {
 			throw new IllegalArgumentException("You cannot translate " + programExecution
 					+ " with this backtranslation service, as there is no compatible ITranslator available");
 		}
 
-		if (!current.peek().getSourceTraceElementClass().isAssignableFrom(programExecution.getTraceElementClass())
-				|| !current.peek().getSourceExpressionClass().isAssignableFrom(programExecution.getExpressionClass())) {
+		if (!current.peek().getSourceTraceElementClass()
+				.isAssignableFrom(programExecution.getStem().getTraceElementClass())
+				|| !current.peek().getSourceExpressionClass()
+						.isAssignableFrom(programExecution.getStem().getExpressionClass())
+				|| !current.peek().getSourceTraceElementClass()
+						.isAssignableFrom(programExecution.getLoop().getTraceElementClass())
+				|| !current.peek().getSourceExpressionClass()
+						.isAssignableFrom(programExecution.getLoop().getExpressionClass())) {
 			throw new IllegalArgumentException("You cannot translate " + programExecution
 					+ " with this backtranslation service, as the last ITranslator in this chain is not compatible");
 		}
