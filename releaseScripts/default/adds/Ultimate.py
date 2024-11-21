@@ -13,6 +13,7 @@ import signal
 import subprocess
 import sys
 import xml.etree.ElementTree as elementtree
+import yaml
 from stat import ST_MODE
 from functools import lru_cache
 
@@ -583,17 +584,47 @@ def check_dir(d):
 
 
 def check_witness_type(witness, type):
-    if not witness.endswith(".graphml"):
-        # Only check the format for GraphML witnesses
-        # TODO: Change this in the future
-        return
+    valid = False
+    if witness.endswith(".yml") or witness.endswith(".yaml"):
+        valid = check_witness_type_yaml(witness, type)
+    elif witness.endswith(".graphml"):
+        valid = check_witness_type_graphml(witness, type)
+    else:
+        print("Unsupported witness type", witness.rpartition(".")[2])
+    if not valid:
+        sys.exit(ExitCode.FAIL_WRONG_WITNESS_TYPE)
+
+
+def check_witness_type_yaml(witness, type):
+    if type == "correctness_witness":
+        is_violation = False
+    elif type == "violation_witness":
+        is_violation = True
+    else:
+        print("Unknown witness type", type)
+        return False
+    with open(witness) as f:
+        entries = yaml.load(f, Loader=yaml.CBaseLoader)
+    are_violation_sequence = [e.get("entry_type", None) == "violation_sequence" for e in entries]
+    if is_violation and not all(are_violation_sequence):
+        print("Provided witness has other entry types than violation sequence, but your "
+              "specified witness has type violation_witness.")
+        return False
+    if not is_violation and any(are_violation_sequence):
+        print("Provided witness has at least one violation sequence, but your specified"
+              "witness has type correctness_witness.")
+        return False
+    return True
+
+
+def check_witness_type_graphml(witness, type):
     tree = elementtree.parse(witness)
     namespace = "{http://graphml.graphdrawing.org/xmlns}"
     query = ".//{0}graph/{0}data[@key='witness-type']".format(namespace)
     elem = tree.find(query)
     if elem is not None:
         if type == elem.text:
-            return
+            return True
         else:
             print(
                 'Provided witness file has type "{}", but you specified witness type "{}"'.format(
@@ -606,7 +637,7 @@ def check_witness_type(witness, type):
                 query, witness
             )
         )
-    sys.exit(ExitCode.FAIL_WRONG_WITNESS_TYPE)
+    return False
 
 
 def debug_environment():
