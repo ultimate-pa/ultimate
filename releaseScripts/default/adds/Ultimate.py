@@ -13,7 +13,6 @@ import signal
 import subprocess
 import sys
 import xml.etree.ElementTree as elementtree
-import yaml
 from stat import ST_MODE
 from functools import lru_cache
 
@@ -604,8 +603,9 @@ def check_witness_type_yaml(witness, type):
         print("Unknown witness type", type)
         return False
     with open(witness) as f:
-        entries = yaml.load(f, Loader=yaml.CBaseLoader)
-    are_violation_sequence = [e.get("entry_type", None) == "violation_sequence" for e in entries]
+        witness_content = f.read()
+    entry_types = re.findall(r'entry_type["\']?\s*:\s*["\']?([^"\']*)', witness_content)
+    are_violation_sequence = [e == "violation_sequence" for e in entry_types]
     if is_violation and not all(are_violation_sequence):
         print("Provided witness has other entry types than violation sequence, but your "
               "specified witness has type violation_witness.")
