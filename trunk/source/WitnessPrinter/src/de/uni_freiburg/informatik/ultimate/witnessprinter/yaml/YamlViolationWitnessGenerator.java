@@ -93,12 +93,12 @@ public class YamlViolationWitnessGenerator<TE, E> {
 		for (int i = 0; i < mExecution.getLength(); i++) {
 			final AtomicTraceElement<TE> currentATE = mExecution.getTraceElement(i);
 			final TE currentStep = currentATE.getStep();
-			final int startLine = mStringProvider.getLineNumberFromStep(currentStep, currentATE.getStepInfo());
-			final int startColumn = mStringProvider.getColumnNumberFromStep(currentStep, currentATE.getStepInfo());
+			final int line = mStringProvider.getLineNumberFromStep(currentStep, currentATE.getStepInfo());
+			final int column = mStringProvider.getColumnNumberFromStep(currentStep, currentATE.getStepInfo());
 			final String function = mStringProvider.getFunctionFromStep(currentStep);
 			final String filename = mStringProvider.getFileNameFromStep(currentStep);
 			final Location currentLocation =
-					new Location(filename, mProgramHashes.get(filename), startLine, startColumn, function);
+					new Location(filename, mProgramHashes.get(filename), line, column, function);
 
 			if (PRODUCE_ASSUMPTIONS && mStringProvider.isValidAssumptionLocation(currentStep)) {
 				final String previousState = mProgramStatePrinter.stateAsExpression(
