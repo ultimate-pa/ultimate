@@ -58,7 +58,7 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Apply\ one-shot\ large\ block\ encoding\ in\ concurrent\ analysis=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Partial\ Order\ Reduction\ in\ concurrent\ analysis=PERSISTENT_SLEEP_NEW_STATES_FIXEDORDER
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/DFS\ Order\ used\ in\ POR=LOOP_LOCKSTEP
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Commutativity\ condition\ synthesis=SUFFICIENT
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Commutativity\ condition\ synthesis=NECESSARY_AND_SUFFICIENT
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Refinement\ strategy\ for\ commutativity\ condition\ synthesis=FOX
 
 
