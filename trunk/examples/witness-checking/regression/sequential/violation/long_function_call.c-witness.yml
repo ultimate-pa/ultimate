@@ -22,7 +22,7 @@
           file_name: C:\Users\helan\Desktop\ultimate\trunk\examples\witness-checking\regression\violation\long_function_call.c
           file_hash: UNUSED
           line: 10
-          column: 88
+          column: 87
           function: main
         action: follow
   - segment:
@@ -32,7 +32,7 @@
           file_name: C:\Users\helan\Desktop\ultimate\trunk\examples\witness-checking\regression\violation\long_function_call.c
           file_hash: UNUSED
           line: 10
-          column: 88
+          column: 87
           function: main
         action: follow
   - segment:

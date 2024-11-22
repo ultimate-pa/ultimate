@@ -255,7 +255,7 @@ public class YamlWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 		}
 		final Location witnessLoc = waypoint.getLocation();
 		return programLoc.getEndLine() == witnessLoc.getLine()
-				&& (witnessLoc.getColumn() == null || witnessLoc.getColumn() == programLoc.getEndColumn());
+				&& (witnessLoc.getColumn() == null || witnessLoc.getColumn() == programLoc.getEndColumn() - 1);
 	}
 
 	/** Creates a ProductPredicate with the counters */

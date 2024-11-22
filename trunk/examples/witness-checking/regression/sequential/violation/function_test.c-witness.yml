@@ -22,7 +22,7 @@
           file_name: C:\Users\helan\Desktop\ultimate\trunk\examples\witness-checking\regression\violation\function_test.c
           file_hash: UNUSED
           line: 6
-          column: 22
+          column: 21
           function: main
         action: follow
   - segment:
@@ -32,7 +32,7 @@
           file_name: C:\Users\helan\Desktop\ultimate\trunk\examples\witness-checking\regression\violation\function_test.c
           file_hash: UNUSED
           line: 6
-          column: 22
+          column: 21
           function: main
         action: follow
   - segment:
