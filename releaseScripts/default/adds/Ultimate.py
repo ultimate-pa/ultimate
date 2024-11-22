@@ -501,7 +501,7 @@ def write_ltl(ltlformula):
     return ltl_file_path
 
 
-def create_cli_settings(prop, validate_witness, architecture, c_file):
+def create_cli_settings(prop, validate_witness, witness_type, architecture, c_file):
     # append detected init method
     ret = ["--cacsl2boogietranslator.entry.function", prop.get_init_method()]
 
@@ -524,6 +524,10 @@ def create_cli_settings(prop, validate_witness, architecture, c_file):
             "--preprocessor.replace.while.statements.and.if-then-else.statements"
         )
         ret.append("false")
+        # For YAML violation witnesses, disable procedure inlining
+        if witness_type == "violation_witness" and any(i.endswith(".yml") for i in c_file):
+            ret.append("--procedureinliner.inline.calls.to.implemented.procedures")
+            ret.append("NEVER")
     elif not validate_witness:
         # we are not in validation mode, so we should generate a witness and need
         # to pass some things to the witness printer
@@ -875,6 +879,7 @@ def parse_args():
             [args.file[0], witness],
             args.full_output,
             args.validate,
+            args.witness_type,
             extras,
         )
     else:
@@ -884,6 +889,7 @@ def parse_args():
             [args.file[0]],
             args.full_output,
             args.validate,
+            None,
             extras,
         )
 
@@ -963,6 +969,7 @@ def main():
         input_files,
         verbose,
         validate_witness,
+        witness_type,
         extras,
     ) = parse_args()
     prop = _PropParser(property_file)
@@ -978,7 +985,7 @@ def main():
     # create manual settings that override settings files for witness passthrough (collecting various things)
     # and for witness validation
     cli_arguments = create_cli_settings(
-        prop, validate_witness, architecture, input_files
+        prop, validate_witness, witness_type, architecture, input_files
     )
     if not validate_witness:
         input_files = add_ltl_file_if_necessary(prop, input_files)
