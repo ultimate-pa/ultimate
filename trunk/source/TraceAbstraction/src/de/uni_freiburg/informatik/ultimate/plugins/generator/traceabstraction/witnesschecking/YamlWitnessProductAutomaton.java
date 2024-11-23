@@ -195,7 +195,7 @@ public class YamlWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 		for (int sCounter = productState.getSegmentCounter(); sCounter < segments.size(); sCounter++) {
 			final Segment currentSegment = segments.get(sCounter);
 			// check if an Avoid Waypoint of the segment matches (Assumption Waypoints are ignored)
-			if (currentSegment.getAvoidWaypoints().stream().anyMatch(x -> matchesAvoidWaypoint(letter, x))) {
+			if (currentSegment.getAvoidWaypoints().stream().anyMatch(x -> matchesWaypoint(letter, x))) {
 				return -1;
 			}
 			final Waypoint currentFollowWaypoint = currentSegment.getFollowWaypoint();
@@ -204,33 +204,36 @@ public class YamlWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 					&& (!CHECK_ASSUMPTION_LOCATIONS || matchesStartLocation(letter, currentFollowWaypoint))) {
 				continue;
 			}
-			if (matchesStartLocation(letter, currentFollowWaypoint)) {
-				return matchesWaypointAtStart(letter, currentFollowWaypoint) ? sCounter + 1 : -1;
-			}
-			if (matchesEndLocation(letter, currentFollowWaypoint)) {
-				return matchesWaypointAtEnd(letter, currentFollowWaypoint) ? sCounter + 1 : -1;
-			}
-			return sCounter;
+			return matchesWaypoint(letter, currentFollowWaypoint) ? sCounter + 1 : sCounter;
 		}
 		return segments.size();
 	}
 
-	private boolean matchesAvoidWaypoint(final LETTER statement, final Waypoint waypoint) {
-		return matchesWaypointAtStart(statement, waypoint) && matchesStartLocation(statement, waypoint)
-				|| matchesWaypointAtEnd(statement, waypoint) && matchesEndLocation(statement, waypoint);
-	}
-
-	private boolean matchesWaypointAtStart(final LETTER statement, final Waypoint waypoint) {
-		if (waypoint instanceof WaypointBranching) {
+	/** Checks if the waypoint matches with the statement. Assumption waypoints are not matched */
+	private boolean matchesWaypoint(final LETTER statement, final Waypoint waypoint) {
+		if (waypoint instanceof WaypointBranching && matchesStartLocation(statement, waypoint)) {
 			final ConditionAnnotation conditionAnnot = ConditionAnnotation.getAnnotation(statement);
 			return conditionAnnot != null
 					&& Boolean.parseBoolean(waypoint.getConstraint()) == !conditionAnnot.isNegated();
 		}
-		return waypoint instanceof WaypointTarget;
-	}
-
-	private boolean matchesWaypointAtEnd(final LETTER statement, final Waypoint waypoint) {
-		return waypoint instanceof WaypointFunctionEnter || waypoint instanceof WaypointFunctionReturn;
+		if (waypoint instanceof WaypointTarget) {
+			return matchesStartLocation(statement, waypoint);
+		}
+		if (waypoint instanceof WaypointFunctionEnter) {
+			if (statement instanceof final IIcfgForkTransitionThreadOther fork) {
+				// The location is at the corresponding IIcfgForkTransitionThreadOther, so we check there
+				return matchesEndLocation(fork.getCorrespondingIIcfgForkTransitionCurrentThread(), waypoint);
+			}
+			return matchesEndLocation(statement, waypoint);
+		}
+		if (waypoint instanceof WaypointFunctionReturn) {
+			if (statement instanceof IIcfgReturnTransition) {
+				// function_return waypoints match the location of the function call
+				return matchesEndLocation(((IIcfgReturnTransition<?, ?>) statement).getCorrespondingCall(), waypoint);
+			}
+			return matchesEndLocation(statement, waypoint);
+		}
+		return false;
 	}
 
 	/** Returns true if the start line and column of the statement match the location of the waypoint */
@@ -246,14 +249,6 @@ public class YamlWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 
 	/** Returns true if the end line and column of the statement match the location of the waypoint */
 	private static boolean matchesEndLocation(final IElement statement, final Waypoint waypoint) {
-		if (statement instanceof IIcfgReturnTransition) {
-			// function_return waypoints match the location of the function call
-			return matchesEndLocation(((IIcfgReturnTransition<?, ?>) statement).getCorrespondingCall(), waypoint);
-		}
-		if (statement instanceof final IIcfgForkTransitionThreadOther fork) {
-			// The location is at the corresponding IIcfgForkTransitionThreadOther, so we check there
-			return matchesEndLocation(fork.getCorrespondingIIcfgForkTransitionCurrentThread(), waypoint);
-		}
 		final ILocation programLoc = ILocation.getAnnotation(statement);
 		if (programLoc == null) {
 			return false;
