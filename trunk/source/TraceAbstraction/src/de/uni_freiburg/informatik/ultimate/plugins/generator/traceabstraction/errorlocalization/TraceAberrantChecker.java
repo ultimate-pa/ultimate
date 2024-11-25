@@ -11,9 +11,11 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Stack;
 import java.util.TreeMap;
 
 import javax.management.NotificationBroadcaster;
+import javax.swing.plaf.basic.BasicInternalFrameTitlePane.MaximizeAction;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
@@ -28,6 +30,8 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.OverapproxVariable;
 import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainData;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IRelevanceInformation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -77,11 +81,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cal
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.GotoEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AberranceInformation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAberrance;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RelevanceAnalysisMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.FaultLocalizationRelevanceChecker;
 
@@ -297,9 +303,12 @@ public class TraceAberrantChecker<L extends IIcfgTransition<?>> {
 //			toCheck.add(overapprox != null);
 		}
 		mTraceAberrantList = checkHoareTriples(csToolkit, counterexampleWord, mPrePostSequences, toCheck);
+		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		
-		
-		if (true &&!noOverapproxVariableTraceAberrant(counterexampleWord)) {
+		if (prefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_TRACE_ABERRANCE_CHECKER_IF_ELSE_ANALYSIS_ENABLED) 
+				&&!noOverapproxVariableTraceAberrant(counterexampleWord)) {
+			Integer maxPaths = prefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_TRACE_ABERRANCE_CHECKER_IF_ELSE_ANALYSIS_MAX_PATHS);
+			Integer maxPathLength = prefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_TRACE_ABERRANCE_CHECKER_IF_ELSE_ANALYSIS_MAX_PATH_LENGTH);
 			for (int i = counterexampleWord.length()-1; i>=0; i--) {
 				boolean currentAssumeIrrelevant = false;
 				IcfgEdge cBlock = (IcfgEdge)counterexampleWord.getSymbol(i);
@@ -321,39 +330,24 @@ public class TraceAberrantChecker<L extends IIcfgTransition<?>> {
 					for (int j = i; j < counterexampleWord.length(); j++) {
 						currentPath.add(counterexampleWord.getSymbol(j).getTarget());
 					}
+					List<List<IcfgLocation>> otherPaths = new ArrayList<>();
+					List<List<IcfgEdge>> otherPathsEdges = new ArrayList<>();
 					List<IcfgLocation> otherPath = new ArrayList<>();
 					List<IcfgEdge> otherPathEdges = new ArrayList<>();
+					otherPaths.add(otherPath);
+					otherPathsEdges.add(otherPathEdges);
+					
 					otherPath.add(((IcfgEdge)edge).getTarget());
 					otherPathEdges.add((IcfgEdge)edge);
 					IcfgLocation currentNode = ((IcfgEdge)edge).getTarget();
-					
-					boolean successFindingEnd = false;
-					
-					while (true) {
-						if (currentNode.getOutgoingEdges().size() != 1) {
-							break;
-						}
-						if (otherPath.size() > 10) {
-							break;
-						}
-						IcfgEdge newEdge = currentNode.getOutgoingEdges().get(0);
-						if (!(newEdge instanceof CodeBlock) || !(((CodeBlock)newEdge) instanceof StatementSequence)) {
-							break;
-						}
-						IcfgLocation newNode = newEdge.getTarget();
-						otherPathEdges.add(newEdge);
-						otherPath.add(newNode);
-						int index = currentPath.indexOf(newNode);
-						if (index != -1) {
-							currentPath = currentPath.subList(0, index+1);
-							successFindingEnd = true;
-							break;
-						}
-					}
-					if (!successFindingEnd) {
+					int currentPathEnd = findOtherPathEnd(currentPath, otherPath, otherPathEdges, otherPaths, otherPathsEdges, maxPaths, maxPathLength);
+					if (currentPathEnd == 0) {
 						break;
 					}
+					currentPath = currentPath.subList(0, currentPathEnd);
+					
 					boolean currentPathIrrelevant = true;
+					// check current path
 					List<Boolean> newToCheck = new ArrayList<>();
 					for (int j = 0; j < counterexampleWord.length(); j++) {
 						newToCheck.add(j > i && j < i + currentPath.size());
@@ -382,54 +376,70 @@ public class TraceAberrantChecker<L extends IIcfgTransition<?>> {
 					if (!currentPathIrrelevant) {
 						break;
 					}
-					if (otherPath.size() == 1) {
-						currentAssumeIrrelevant = true;
-						break;
-					}
-					IcfgEdge[] newOtherPath = new IcfgEdge[counterexampleWord.length()+otherPath.size()-currentPath.size()];
-					List<Boolean> newCheck = new ArrayList<>();
-					for (int j = 0; j < i; j++) {
-						newOtherPath[j] = (IcfgEdge)counterexampleWord.getSymbol(j);
-						newCheck.add(false);
-					}
-					for (int j = 0; j < otherPathEdges.size(); j++) {
-						// TODO check if 
-						newOtherPath[i+j] = otherPathEdges.get(j);
-						newCheck.add(j != 0);
-					}
-					for (int j = i + currentPath.size(); j < counterexampleWord.length(); j++) {
-						newOtherPath[j-currentPath.size()+otherPath.size()] = (IcfgEdge)counterexampleWord.getSymbol(j);
-						newCheck.add(false);
-					}
-					int[] nestingRelations = new int[newOtherPath.length];
-					for (int j = 0; j < nestingRelations.length; j++) {
-						nestingRelations[j] = NestedWord.INTERNAL_POSITION;
-					}
-					lastToCheck = -1;
-					firstToCheck = -1;
-					for (int j = 0; j < newCheck.size(); j++) {
-						if (newCheck.get(j)) {
-							if (firstToCheck == -1) {
-								firstToCheck = j;
-							}
-							lastToCheck = j;
-						}
-					}
-							
-					NestedWord<L> newCounterexample = new NestedWord<L>((L[]) newOtherPath, nestingRelations);
-					TracePredicates[] prePost = calculatePrePost(csToolkit, falsePredicate, truePredicate, newCounterexample, firstToCheck, lastToCheck);
-					// TODO exact min/max
-					
-					AberranceInformation[] aberranceInformations = checkHoareTriples(csToolkit, newCounterexample, prePost, newCheck);
+					// check other paths
 					currentAssumeIrrelevant = true;
-					for (int j = 1; j < otherPathEdges.size(); j++) {
-						if (aberranceInformations[i+j].GetTraceAberrance() != TraceAberrance.NO) {
-							currentAssumeIrrelevant = false;
+					for (int path = 0; path < otherPaths.size(); path++) {
+						if (!currentAssumeIrrelevant) {
 							break;
 						}
-					}	
+						otherPath = otherPaths.get(path);
+						otherPathEdges = otherPathsEdges.get(path);
+						if (otherPath.size() == 1) {
+							continue;
+						}
+						IcfgEdge[] newOtherPath = new IcfgEdge[counterexampleWord.length()+otherPath.size()-currentPath.size()];
+						List<Boolean> newCheck = new ArrayList<>();
+						for (int j = 0; j < i; j++) {
+							newOtherPath[j] = (IcfgEdge)counterexampleWord.getSymbol(j);
+							newCheck.add(false);
+						}
+						for (int j = 0; j < otherPathEdges.size(); j++) {
+							// TODO check if 
+							newOtherPath[i+j] = otherPathEdges.get(j);
+							newCheck.add(j != 0);
+						}
+						for (int j = i + currentPath.size(); j < counterexampleWord.length(); j++) {
+							newOtherPath[j-currentPath.size()+otherPath.size()] = (IcfgEdge)counterexampleWord.getSymbol(j);
+							newCheck.add(false);
+						}
+						int[] nestingRelations = new int[newOtherPath.length];
+						Stack<Integer> callStack = new Stack<>();
+						for (int j = 0; j < nestingRelations.length; j++) {
+							if (newOtherPath[j] instanceof Call) {
+								callStack.add(j);
+								nestingRelations[j] = NestedWord.PLUS_INFINITY;
+							} else if (newOtherPath[j] instanceof Return) {				
+								nestingRelations[j] = callStack.peek();
+								nestingRelations[callStack.pop()] = j;
+							} else {
+								nestingRelations[j] = NestedWord.INTERNAL_POSITION;
+							}
+							
+						}
+						lastToCheck = -1;
+						firstToCheck = -1;
+						for (int j = 0; j < newCheck.size(); j++) {
+							if (newCheck.get(j)) {
+								if (firstToCheck == -1) {
+									firstToCheck = j;
+								}
+								lastToCheck = j;
+							}
+						}
+						assert firstToCheck != -1 && lastToCheck != -1;
+						NestedWord<L> newCounterexample = new NestedWord<L>((L[]) newOtherPath, nestingRelations);
+						TracePredicates[] prePost = calculatePrePost(csToolkit, falsePredicate, truePredicate, newCounterexample, firstToCheck, lastToCheck);						
+						AberranceInformation[] aberranceInformations = checkHoareTriples(csToolkit, newCounterexample, prePost, newCheck);
+						for (int j = 1; j < otherPathEdges.size(); j++) {
+							if (aberranceInformations[i+j].GetTraceAberrance() != TraceAberrance.NO) {
+								currentAssumeIrrelevant = false;
+								break;
+							}
+						}
+					}
 				}
 				if (currentAssumeIrrelevant) {
+					mLogger.info("irrelevant assume: " + counterexampleWord.getSymbol(i));
 					mPredicateSkipList.add(counterexampleWord.getSymbol(i));
 					mPrePostSequences = calculatePrePost(csToolkit, falsePredicate, truePredicate, counterexampleWord, mFirstOverapproxVariable, mLastOverapproxVariable);
 					mTraceAberrantList = checkHoareTriples(csToolkit, counterexampleWord, mPrePostSequences, toCheck);
@@ -541,5 +551,61 @@ public class TraceAberrantChecker<L extends IIcfgTransition<?>> {
 		return traceAberranceList.toArray(new AberranceInformation[traceAberranceList.size()]);
 	}
 	
+	private static int findOtherPathEnd(List<IcfgLocation> currentPath, List<IcfgLocation> otherPath, List<IcfgEdge> otherPathEdges, List<List<IcfgLocation>> otherPaths, List<List<IcfgEdge>> otherPathsEdges, int maxPaths, int maxPathLength) {
+		assert otherPath.size() > 0 && currentPath.size() > 0;
+		IcfgLocation currentNode = otherPath.get(otherPath.size()-1);
+		while (true) {
+			if (currentNode.getIncomingEdges().size() > 1) {
+				return 0;
+			}
+			if (currentNode.getOutgoingEdges().size() == 0) {
+				return 0;
+			}
+			if (currentNode.getOutgoingEdges().size() > 1) {
+				for (int i = 1; i< currentNode.getOutgoingEdges().size(); i++) {
+					if (otherPaths.size() >= maxPaths) {
+						return 0;
+					}
+					IcfgEdge newEdge = currentNode.getOutgoingEdges().get(i);
+					if (!(newEdge instanceof CodeBlock) || !(((CodeBlock)newEdge) instanceof StatementSequence)) {
+						return 0;
+					}
+					List<IcfgLocation> newPath = new ArrayList<>(otherPath);
+					List<IcfgEdge> newEdges = new ArrayList<>(otherPathEdges);
+					newPath.add(newEdge.getTarget());
+					newEdges.add(newEdge);
+					otherPaths.add(newPath);
+					otherPathsEdges.add(newEdges);
+					if (findOtherPathEnd(currentPath, newPath, newEdges, otherPaths, otherPathsEdges, maxPaths, maxPathLength) == 0) {
+						return 0;
+					}
+				}
+			}
+			if (otherPath.size() > maxPathLength) {
+				return 0;
+			}
+			IcfgEdge newEdge = currentNode.getOutgoingEdges().get(0);
+			if (!(newEdge instanceof CodeBlock) || !(((CodeBlock)newEdge) instanceof StatementSequence)) {
+				if (newEdge instanceof SequentialComposition) {
+					for (var st : ((SequentialComposition)newEdge).getCodeBlocks()) {
+						if (!(st instanceof StatementSequence)) {
+							return 0;
+						}
+					}
+				} else {
+					return 0;
+				}
+			}
+			IcfgLocation newNode = newEdge.getTarget();
+			otherPathEdges.add(newEdge);
+			otherPath.add(newNode);
+			int index = currentPath.indexOf(newNode);
+			if (index != -1) {
+				return index+1;
+			}
+
+			currentNode = newNode;
+		}
+	}
 
 }

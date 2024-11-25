@@ -351,8 +351,9 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 							new IcfgAngelicProgramExecution<>(rcfgProgramExecution, fl.getAngelicStatus());
 				}
 			}
-			// TODO setting
-			if (true && feasibility == LBool.SAT) {
+			
+			if (mServices.getPreferenceProvider(Activator.PLUGIN_ID).getBoolean(TraceAbstractionPreferenceInitializer.LABEL_TRACE_ABERRANCE_CHECKER_ENABLED)
+					&& feasibility == LBool.SAT) {
 				if (!(mCounterexample instanceof NestedRun)) {
 					mLogger.info("aborting trace aberrance, not NestedRun");
 				} else {

@@ -486,7 +486,24 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 			AssertCodeBlockOrder.DEF_SCORE_THRESHOLD;
 	private static final String DESC_ASSERT_CODEBLOCKS_HEURISTIC_SCORE_THRESHOLD =
 			"If Assert CodeBlocks is set to SMT_FEATURE_HEURISTIC and partitioning strategy is THRESHOLD, two partitions are created, one partition contains all terms >= threshold  and one all terms < threshold";
+	
+	// Enable Trace Aberrance Checker
+	// ========================================================================
 
+	public static final String LABEL_TRACE_ABERRANCE_CHECKER_ENABLED =
+			"Enable Trace Aberrance Checker";
+	private static final Boolean DEF_TRACE_ABERRANCE_CHECKER_ENABLED = true;
+	private static final String DESC_TRACE_ABERRANCE_CHECKER_ENABLED =
+			"Checks Trace Aberrance in Error Trace when a Statement is Overapproximated with OverapproxVariable";
+	public static final String LABEL_TRACE_ABERRANCE_CHECKER_IF_ELSE_ANALYSIS_ENABLED =
+			"Enable IF/Else Analysis";
+	private static final Boolean DEF_TRACE_ABERRANCE_CHECKER_IF_ELSE_ANALYSIS_ENABLED = true;
+	public static final String LABEL_TRACE_ABERRANCE_CHECKER_IF_ELSE_ANALYSIS_MAX_PATH_LENGTH =
+			"Maximum alternative path length";
+	private static final Integer DEF_TRACE_ABERRANCE_CHECKER_IF_ELSE_ANALYSIS_MAX_PATH_LENGTH = 10;
+	public static final String LABEL_TRACE_ABERRANCE_CHECKER_IF_ELSE_ANALYSIS_MAX_PATHS =
+			"Maximum number of alternative paths";
+	private static final Integer DEF_TRACE_ABERRANCE_CHECKER_IF_ELSE_ANALYSIS_MAX_PATHS = 2;
 	/**
 	 * Constructor.
 	 */
@@ -670,7 +687,12 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_DUMP_PATH_PROGRAM_IF_ANALYZED_TOO_OFTEN, 0, PreferenceType.Integer),
 				new UltimatePreferenceItem<>(LABEL_DUMP_PATH_PROGRAM_STOP_MODE, PathProgramDumpStop.AFTER_FIRST_DUMP,
 						PreferenceType.Combo, PathProgramDumpStop.values()),
-				getConcurrencySettings() };
+				getConcurrencySettings(),
+				new UltimatePreferenceItemGroup("Trace Aberrance Checker",
+						new UltimatePreferenceItem<>(LABEL_TRACE_ABERRANCE_CHECKER_ENABLED, DEF_TRACE_ABERRANCE_CHECKER_ENABLED, DESC_TRACE_ABERRANCE_CHECKER_ENABLED, PreferenceType.Boolean),
+						new UltimatePreferenceItem<>(LABEL_TRACE_ABERRANCE_CHECKER_IF_ELSE_ANALYSIS_ENABLED, DEF_TRACE_ABERRANCE_CHECKER_IF_ELSE_ANALYSIS_ENABLED, PreferenceType.Boolean),
+						new UltimatePreferenceItem<>(LABEL_TRACE_ABERRANCE_CHECKER_IF_ELSE_ANALYSIS_MAX_PATH_LENGTH, DEF_TRACE_ABERRANCE_CHECKER_IF_ELSE_ANALYSIS_MAX_PATH_LENGTH, PreferenceType.Integer),
+						new UltimatePreferenceItem<>(LABEL_TRACE_ABERRANCE_CHECKER_IF_ELSE_ANALYSIS_MAX_PATHS, DEF_TRACE_ABERRANCE_CHECKER_IF_ELSE_ANALYSIS_MAX_PATHS, PreferenceType.Integer))};
 	}
 
 	public UltimatePreferenceItemContainer getConcurrencySettings() {
