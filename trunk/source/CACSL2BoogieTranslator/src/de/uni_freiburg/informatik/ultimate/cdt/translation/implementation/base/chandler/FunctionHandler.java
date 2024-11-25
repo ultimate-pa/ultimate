@@ -95,7 +95,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.I
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.MainDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.MemoryArea;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.StandardFunctionHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
@@ -1191,7 +1190,7 @@ public class FunctionHandler {
 		case OVERAPPROXIMATE_BEHAVIOUR: {
 			// Implement the function using while (true) assert false;
 			final Statement statement =
-					StandardFunctionHandler.modelUnsupportedFeature(loc, "undefined function " + name);
+					ExpressionTranslation.modelUnsupportedFeature(loc, "undefined function " + name);
 			final Body body = mProcedureManager.constructBody(loc, new VariableDeclaration[0],
 					new Statement[] { statement }, name);
 			final Procedure result = new Procedure(loc, proc.getAttributes(), name, proc.getTypeParams(),
