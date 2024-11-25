@@ -32,6 +32,7 @@ package de.uni_freiburg.informatik.ultimate.witnessparser;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -47,6 +48,14 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.GhostVariable;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Location;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LocationInvariant;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LoopInvariant;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Segment;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.ViolationSequence;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Waypoint;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.WaypointAssumption;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.WaypointBranching;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.WaypointFunctionEnter;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.WaypointFunctionReturn;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.WaypointTarget;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Witness;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.WitnessEntry;
 
@@ -96,8 +105,50 @@ public class YamlWitnessParser {
 					(List<Map<String, Map<String, Object>>>) entry.get("content");
 			return content.stream().map(x -> parseInvariantSetEntry(x));
 		}
+		case "violation_sequence":
+			return Stream
+					.of(parseViolationSequence((List<Map<String, List<Map<String, Object>>>>) entry.get("content")));
 		default:
 			throw new UnsupportedOperationException("Unknown entry type " + entry.get("entry_type"));
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	private static WitnessEntry parseViolationSequence(final List<Map<String, List<Map<String, Object>>>> content) {
+		final List<Segment> parsedContent = new ArrayList<>();
+		for (final Map<String, List<Map<String, Object>>> seg : content) {
+			final List<Waypoint> avoidWP = new ArrayList<>();
+			for (final Map<String, Object> wpMap : seg.get("segment")) {
+				final Map<String, Object> wp = (Map<String, Object>) wpMap.get("waypoint");
+				if (wp.get("action").equals("avoid")) {
+					avoidWP.add(parseViolationWaypoint(wp));
+				}
+				if (wp.get("action").equals("follow")) {
+					parsedContent.add(new Segment(avoidWP, parseViolationWaypoint(wp)));
+				}
+			}
+		}
+		return new ViolationSequence(parsedContent);
+	}
+
+	@SuppressWarnings("unchecked")
+	private static Waypoint parseViolationWaypoint(final Map<String, Object> wp) {
+		final Location location = parseLocation((Map<String, Object>) wp.get("location"));
+		final Map<String, String> constraintMap = (Map<String, String>) wp.get("constraint");
+		final String constraint = constraintMap == null ? null : constraintMap.get("value");
+		switch ((String) wp.get("type")) {
+		case "target":
+			return new WaypointTarget(location);
+		case "branching":
+			return new WaypointBranching(constraint, location);
+		case "assumption":
+			return new WaypointAssumption(constraint, location);
+		case "function_enter":
+			return new WaypointFunctionEnter(location);
+		case "function_return":
+			return new WaypointFunctionReturn(constraint, location);
+		default:
+			throw new UnsupportedOperationException("Unable to parse waypoint with type " + wp.get("type"));
 		}
 	}
 

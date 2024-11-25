@@ -50,9 +50,12 @@ public class LassoShapedNonTerminationArgument<P extends IElement, E> extends No
 			final IProgramExecution<P, E> stem, final IProgramExecution<P, E> loop) {
 		super(element, plugin, translatorSequence, exprClass);
 		mStemExecution = stem;
-		mStemExecutionAsString = translatorSequence.translateProgramExecution(mStemExecution).toString();
 		mLoopExecution = loop;
-		mLoopExecutionAsString = translatorSequence.translateProgramExecution(mLoopExecution).toString();
+
+		final var translated = translatorSequence
+				.translateLassoProgramExecution(new IBacktranslationService.Lasso<>(mStemExecution, mLoopExecution));
+		mStemExecutionAsString = translated.getStem().toString();
+		mLoopExecutionAsString = translated.getLoop().toString();
 	}
 
 	public IProgramExecution<P, E> getStemExecution() {

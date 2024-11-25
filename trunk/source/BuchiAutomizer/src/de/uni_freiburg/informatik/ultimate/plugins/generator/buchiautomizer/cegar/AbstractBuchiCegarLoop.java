@@ -78,6 +78,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.I
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.NwaFloydHoareValidityCheck;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolatingTraceCheck;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolatingTraceCheckCraig;
@@ -726,19 +727,19 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 		switch (mInterpolation) {
 		case Craig_NestedInterpolation:
 		case Craig_TreeInterpolation: {
-			return new InterpolatingTraceCheckCraig<>(precond, postcond, new TreeMap<>(), run.getWord(), null,
-					mServices, mCsToolkitWithRankVars, mPredicateFactory, predicateUnifier,
-					AssertCodeBlockOrder.NOT_INCREMENTALLY, false, false, mInterpolation, true,
+			return new InterpolatingTraceCheckCraig<>(precond, postcond, new TreeMap<>(),
+					new Counterexample<>(run.getWord()), mServices, mCsToolkitWithRankVars, mPredicateFactory,
+					predicateUnifier, AssertCodeBlockOrder.NOT_INCREMENTALLY, false, false, mInterpolation, true,
 					SIMPLIFICATION_TECHNIQUE);
 		}
 		case ForwardPredicates:
 		case BackwardPredicates:
 		case FPandBP:
 		case FPandBPonlyIfFpWasNotPerfect: {
-			return new TraceCheckSpWp<>(precond, postcond, new TreeMap<>(), run.getWord(), mCsToolkitWithRankVars,
-					AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true, mServices, false,
-					mPredicateFactory, predicateUnifier, mInterpolation, mCsToolkitWithRankVars.getManagedScript(),
-					SIMPLIFICATION_TECHNIQUE, null, false);
+			return new TraceCheckSpWp<>(precond, postcond, new TreeMap<>(), new Counterexample<>(run.getWord()),
+					mCsToolkitWithRankVars, AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true,
+					mServices, false, mPredicateFactory, predicateUnifier, mInterpolation,
+					mCsToolkitWithRankVars.getManagedScript(), SIMPLIFICATION_TECHNIQUE, false);
 		}
 		default:
 			throw new UnsupportedOperationException("unsupported interpolation");

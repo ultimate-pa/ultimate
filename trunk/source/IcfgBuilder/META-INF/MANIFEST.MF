@@ -2,7 +2,8 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: IcfgBuilder
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder;singleton:=true
-Bundle-Version: 0.2.4
+Bundle-Vendor: Ultimate Program Analysis Team
+Bundle-Version: 0.3.0
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.core,
  de.uni_freiburg.informatik.ultimate.lib.smtlib,
@@ -15,7 +16,7 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.smtlibutils,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder
 Bundle-ActivationPolicy: lazy
-Bundle-RequiredExecutionEnvironment: JavaSE-11
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Export-Package: de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder,
  de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.cfg,
  de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.preferences,

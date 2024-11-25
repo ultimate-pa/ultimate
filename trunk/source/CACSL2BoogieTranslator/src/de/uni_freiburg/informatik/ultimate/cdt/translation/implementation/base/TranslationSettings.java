@@ -36,10 +36,11 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.except
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.CheckMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.FloatingPointRoundingMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.MemoryModel;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.CheckMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerIntegerConversion;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.UndefinedFunctionBehaviour;
 
 /**
  * @author Markus Lindenmann
@@ -79,7 +80,7 @@ public final class TranslationSettings {
 	private final FloatingPointRoundingMode mInitialRoundingMode;
 	private final boolean mAdaptMemoryModelResolutionOnPointerCasts;
 	private final int mStringOverapproximationThreshold;
-	private final boolean mAllowUndefinedFunctions;
+	private final UndefinedFunctionBehaviour mUndefinedFunctionBehaviour;
 
 	public TranslationSettings(final IPreferenceProvider ups) {
 		mCheckSignedIntegerBounds =
@@ -130,7 +131,8 @@ public final class TranslationSettings {
 				ups.getBoolean(CACSLPreferenceInitializer.LABEL_ADAPT_MEMORY_MODEL_ON_POINTER_CASTS);
 		mStringOverapproximationThreshold =
 				ups.getInt(CACSLPreferenceInitializer.LABEL_STRING_OVERAPPROXIMATION_THRESHOLD);
-		mAllowUndefinedFunctions = ups.getBoolean(CACSLPreferenceInitializer.LABEL_ALLOW_UNDEFINED_FUNCTIONS);
+		mUndefinedFunctionBehaviour = ups.getEnum(CACSLPreferenceInitializer.LABEL_BEHAVIOUR_UNDEFINED_FUNCTIONS,
+				CACSLPreferenceInitializer.UndefinedFunctionBehaviour.class);
 	}
 
 	private TranslationSettings(final CheckMode divisionByZeroOfIntegerTypes,
@@ -146,7 +148,7 @@ public final class TranslationSettings {
 			final boolean checkMemoryLeakInMain, final CheckMode checkSignedIntegerBounds, final boolean checkDataRaces,
 			final boolean useConstantArrays, final boolean useStoreChains, final boolean enableFesetround,
 			final FloatingPointRoundingMode initialRoundingMode, final boolean adaptMemoryModelResolutionOnPointerCasts,
-			final int stringOverapproximationThreshold, final boolean allowUndefinedFunctions) {
+			final int stringOverapproximationThreshold, final UndefinedFunctionBehaviour undefinedFunctionBehaviour) {
 		mDivisionByZeroOfIntegerTypes = divisionByZeroOfIntegerTypes;
 		mDivisionByZeroOfFloatingTypes = divisionByZeroOfFloatingTypes;
 		mBitvectorTranslation = bitvectorTranslation;
@@ -176,7 +178,7 @@ public final class TranslationSettings {
 		mInitialRoundingMode = initialRoundingMode;
 		mAdaptMemoryModelResolutionOnPointerCasts = adaptMemoryModelResolutionOnPointerCasts;
 		mStringOverapproximationThreshold = stringOverapproximationThreshold;
-		mAllowUndefinedFunctions = allowUndefinedFunctions;
+		mUndefinedFunctionBehaviour = undefinedFunctionBehaviour;
 	}
 
 	public PointerIntegerConversion getPointerIntegerCastMode() {
@@ -307,8 +309,8 @@ public final class TranslationSettings {
 		return mStringOverapproximationThreshold;
 	}
 
-	public boolean allowUndefinedFunctions() {
-		return mAllowUndefinedFunctions;
+	public UndefinedFunctionBehaviour getUndefinedFunctionBehaviour() {
+		return mUndefinedFunctionBehaviour;
 	}
 
 	public TranslationSettings setMemoryModelPreference(final MemoryModel memoryModel) {
@@ -320,7 +322,7 @@ public final class TranslationSettings {
 				mCheckAssertions, mIsSvcompMemtrackCompatibilityMode, mCheckAllocationPurity, mCheckMemoryLeakInMain,
 				mCheckSignedIntegerBounds, mCheckDataRaces, mUseConstantArrays, mUseStoreChains, mEnableFesetround,
 				mInitialRoundingMode, mAdaptMemoryModelResolutionOnPointerCasts, mStringOverapproximationThreshold,
-				mAllowUndefinedFunctions);
+				mUndefinedFunctionBehaviour);
 	}
 
 	/**

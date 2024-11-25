@@ -2,8 +2,9 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SMTSolverBridgeTest
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.smtsolver.external.test
-Bundle-Version: 0.2.5
+Bundle-Vendor: Ultimate Program Analysis Team
+Bundle-Version: 0.3.0
 Fragment-Host: de.uni_freiburg.informatik.ultimate.smtsolver.external
-Bundle-RequiredExecutionEnvironment: JavaSE-11
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Require-Bundle: org.junit, de.uni_freiburg.informatik.ultimate.lib.test
 Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.smtsolver.external.test

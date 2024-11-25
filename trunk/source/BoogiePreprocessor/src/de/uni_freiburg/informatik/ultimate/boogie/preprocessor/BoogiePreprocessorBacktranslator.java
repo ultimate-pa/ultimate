@@ -509,6 +509,11 @@ public class BoogiePreprocessorBacktranslator
 
 		@Override
 		protected Expression processExpression(final Expression expr) {
+			if (expr == null) {
+				// Term2Expression may produce null expressions (that could not be backtranslated)
+				return null;
+			}
+
 			if (mSymbolTable == null) {
 				reportUnfinishedBacktranslation(
 						"No symboltable available, using identity as back-translation of " + expr);

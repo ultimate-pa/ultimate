@@ -2,7 +2,8 @@
 <feature
       id="BA_FeatureUltimateCommandLine"
       label="BA_FeatureUltimateCommandLine"
-      version="0.2.5"
+      version="0.3.0"
+      provider-name="Ultimate Program Analysis Team"
       arch="x86_64">
 
    <requires>
@@ -12,16 +13,10 @@
 
    <plugin
          id="de.uni_freiburg.informatik.ultimate.cli"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
+         version="0.0.0"/>
 
    <plugin
          id="org.apache.commons.cli"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
+         version="0.0.0"/>
 
 </feature>

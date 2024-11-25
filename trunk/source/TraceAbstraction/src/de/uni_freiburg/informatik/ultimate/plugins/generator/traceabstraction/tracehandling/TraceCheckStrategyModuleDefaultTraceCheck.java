@@ -28,18 +28,17 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.t
 
 import java.util.TreeMap;
 
-import de.uni_freiburg.informatik.ultimate.automata.IRun;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.ITraceCheckStrategyModule;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.RefinementEngineStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.RefinementEngineStatisticsGenerator.RefinementEngineStatisticsDefinitions;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheck;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -50,7 +49,7 @@ public class TraceCheckStrategyModuleDefaultTraceCheck<L extends IIcfgTransition
 	private final IUltimateServiceProvider mServices;
 	private final TaCheckAndRefinementPreferences<?> mPrefs;
 	private final AssertionOrderModulation<L> mAssertionOrderModulation;
-	private final IRun<L, ?> mCounterexample;
+	private final Counterexample<L> mCounterexample;
 	private final IPredicateUnifier mPredicateUnifier;
 	private final IPredicate mPrecondition;
 
@@ -58,7 +57,8 @@ public class TraceCheckStrategyModuleDefaultTraceCheck<L extends IIcfgTransition
 
 	protected TraceCheckStrategyModuleDefaultTraceCheck(final IUltimateServiceProvider services,
 			final TaCheckAndRefinementPreferences<L> prefs, final AssertionOrderModulation<L> assertionOrderModulation,
-			final IRun<L, ?> counterexample, final IPredicateUnifier predicateUnifier, final IPredicate precondition) {
+			final Counterexample<L> counterexample, final IPredicateUnifier predicateUnifier,
+			final IPredicate precondition) {
 		mServices = services;
 		mPrefs = prefs;
 		mAssertionOrderModulation = assertionOrderModulation;
@@ -95,11 +95,11 @@ public class TraceCheckStrategyModuleDefaultTraceCheck<L extends IIcfgTransition
 	@Override
 	public TraceCheck<L> getOrConstruct() {
 		if (mTraceCheck == null) {
-			final AssertCodeBlockOrder assertionOrder = mAssertionOrderModulation.get(mCounterexample, null);
+			final AssertCodeBlockOrder assertionOrder = mAssertionOrderModulation.get(mCounterexample.getWord(), null);
 			final IPredicate postcondition = mPredicateUnifier.getFalsePredicate();
 			mTraceCheck = new TraceCheck<>(mPrecondition, postcondition, new TreeMap<Integer, IPredicate>(),
-					NestedWord.nestedWord(mCounterexample.getWord()), mServices, mPrefs.getCfgSmtToolkit(),
-					assertionOrder, mPrefs.computeCounterexample(), mPrefs.collectInterpolantStatistics());
+					mCounterexample, mServices, mPrefs.getCfgSmtToolkit(), assertionOrder,
+					mPrefs.computeCounterexample(), mPrefs.collectInterpolantStatistics());
 		}
 		return mTraceCheck;
 	}

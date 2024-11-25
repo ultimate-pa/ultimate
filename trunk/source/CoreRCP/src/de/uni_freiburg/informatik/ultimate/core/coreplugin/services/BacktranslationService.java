@@ -74,6 +74,12 @@ public class BacktranslationService implements IStorable, IBacktranslationServic
 	}
 
 	@Override
+	public <STE, SE> Lasso<IProgramExecution<?, ?>>
+			translateLassoProgramExecution(final Lasso<IProgramExecution<STE, SE>> lasso) {
+		return mTranslatorSequence.translateLassoProgramExecution(lasso);
+	}
+
+	@Override
 	public <SE> ProgramState<?> translateProgramState(final ProgramState<SE> programState) {
 		return mTranslatorSequence.translateProgramState(programState);
 	}

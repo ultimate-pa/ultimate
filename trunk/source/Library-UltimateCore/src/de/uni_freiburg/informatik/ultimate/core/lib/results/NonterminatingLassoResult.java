@@ -52,9 +52,12 @@ public class NonterminatingLassoResult<ELEM extends IElement, TE extends IElemen
 			final IProgramExecution<TE, EXP> loop) {
 		super(position, plugin);
 		mStemExecution = stem;
-		mStemExecutionAsString = translatorSequence.translateProgramExecution(mStemExecution).toString();
 		mLoopExecution = loop;
-		mLoopExecutionAsString = translatorSequence.translateProgramExecution(mLoopExecution).toString();
+
+		final var translated = translatorSequence
+				.translateLassoProgramExecution(new IBacktranslationService.Lasso<>(mStemExecution, mLoopExecution));
+		mStemExecutionAsString = translated.getStem().toString();
+		mLoopExecutionAsString = translated.getLoop().toString();
 	}
 
 	@Override

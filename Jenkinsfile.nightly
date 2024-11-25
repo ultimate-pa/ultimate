@@ -26,7 +26,7 @@ pipeline {
     PATH = "${env.WORKSPACE}/releaseScripts/default/adds:${env.PATH}"
   }
   tools {
-    jdk 'JDK11'
+    jdk 'JDK21'
     maven 'Maven 3.9.8'
   }
   stages {
@@ -42,7 +42,7 @@ pipeline {
     stage('Check environment') {
       when {
         anyOf {
-          expression { return !currentBuild.changeSets.isEmpty() }
+          expression { return util.hasChanges(scmVars) }
           triggeredBy cause: 'UserIdCause'
         }
       }
@@ -67,7 +67,7 @@ pipeline {
     stage('Collect reference build') {
       when {
         anyOf {
-          expression { return !currentBuild.changeSets.isEmpty() }
+          expression { return util.hasChanges(scmVars) }
           triggeredBy cause: 'UserIdCause'
         }
       }
@@ -80,7 +80,7 @@ pipeline {
     stage('Build and run nightly tests') {
       when {
         anyOf {
-          expression { return !currentBuild.changeSets.isEmpty() }
+          expression { return util.hasChanges(scmVars) }
           triggeredBy cause: 'UserIdCause'
         }
       }
@@ -100,34 +100,30 @@ pipeline {
     //     }
     //   }
     // }
-    // disabled until ultimate supports Java 17
-    // stage('Run Sonar') {
-    //   tools {
-    //     jdk 'JDK17'
-    //   }
-    //   when {
-    //     allOf {
-    //       expression { return currentBuild.result == 'SUCCESS' || currentBuild.result == 'UNSTABLE' }
-    //       branch 'dev'
-    //       anyOf {
-    //         expression { return !currentBuild.changeSets.isEmpty() }
-    //         triggeredBy cause: 'UserIdCause'
-    //       }
-    //     }
-    //   }
-    //   steps {
-    //     withCredentials([string(credentialsId: 'SonarTokenJenkinsPipeline', variable: 'SONAR_TOKEN')]) {
-    //       withMaven(jdk: 'JDK17', mavenOpts: '-Xmx4g -Xss4m', options: [jacocoPublisher()], publisherStrategy: 'EXPLICIT') {
-    //         sh 'cd trunk/source/BA_MavenParentUltimate && mvn sonar:sonar -Pcoverage -Dsonar.host.url=https://sonar.sopranium.de -Dsonar.login=$SONAR_TOKEN'
-    //       }
-    //     }
-    //   }
-    // }
+    stage('Run Sonar') {
+      when {
+        allOf {
+          expression { return currentBuild.result == 'SUCCESS' || currentBuild.result == 'UNSTABLE' }
+          branch 'dev'
+          anyOf {
+            expression { return util.hasChanges(scmVars) }
+            triggeredBy cause: 'UserIdCause'
+          }
+        }
+      }
+      steps {
+        withCredentials([string(credentialsId: 'SonarTokenJenkinsPipeline', variable: 'SONAR_TOKEN')]) {
+          withMaven(mavenOpts: '-Xmx4g -Xss4m', options: [jacocoPublisher()], publisherStrategy: 'EXPLICIT', traceability: true) {
+            sh 'cd trunk/source/BA_MavenParentUltimate && mvn install -Psonar -Dsonar.host.url=https://sonar.sopranium.de -Dsonar.token=$SONAR_TOKEN'
+          }
+        }
+      }
+    }
     stage('Deploy nightly build') {
       when {
         allOf {
           branch 'dev'
-          expression { return !currentBuild.changeSets.isEmpty() }
+          expression { return util.hasChanges(scmVars) }
           expression { return currentBuild.result == 'SUCCESS' || currentBuild.result == 'UNSTABLE' }
         }
       }

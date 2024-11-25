@@ -2,7 +2,8 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: WitnessParser
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.witnessparser;singleton:=true
-Bundle-Version: 0.2.5
+Bundle-Vendor: Ultimate Program Analysis Team
+Bundle-Version: 0.3.0
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.witnessparser.Activator
 Require-Bundle: de.uni_freiburg.informatik.ultimate.core,
  edu.uci.ics.jung,
@@ -10,7 +11,7 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.core,
  de.uni_freiburg.informatik.ultimate.lib.ultimatemodel,
  org.yaml.snakeyaml
 Bundle-ActivationPolicy: lazy
-Bundle-RequiredExecutionEnvironment: JavaSE-11
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Export-Package: de.uni_freiburg.informatik.ultimate.witnessparser.graph,
  de.uni_freiburg.informatik.ultimate.witnessparser.preferences,
  de.uni_freiburg.informatik.ultimate.witnessparser.yaml

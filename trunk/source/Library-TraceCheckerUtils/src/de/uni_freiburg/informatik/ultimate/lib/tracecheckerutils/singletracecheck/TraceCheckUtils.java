@@ -366,15 +366,15 @@ public final class TraceCheckUtils {
 	 */
 	public static <L extends IAction> NestedFormulas<L, UnmodifiableTransFormula, IPredicate> decoupleArrayValues(
 			final ManagedScript mgdScript, final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> nf) {
-		final ModifiableNestedFormulas<L, UnmodifiableTransFormula, IPredicate> result = new ModifiableNestedFormulas<>(
-				nf.getTrace(), new TreeMap<>());
+		final ModifiableNestedFormulas<L, UnmodifiableTransFormula, IPredicate> result =
+				new ModifiableNestedFormulas<>(nf.getCounterexample(), new TreeMap<>());
 		result.setPrecondition(nf.getPrecondition());
 		result.setPostcondition(nf.getPostcondition());
 		for (int i = 0; i < nf.getTrace().length(); i++) {
 			if (nf.getTrace().isCallPosition(i)) {
 				{
-					final UnmodifiableTransFormula decoupledLocalVarAssignment = TransFormulaUtils
-							.decoupleArrayValues(nf.getLocalVarAssignment(i), mgdScript);
+					final UnmodifiableTransFormula decoupledLocalVarAssignment =
+							TransFormulaUtils.decoupleArrayValues(nf.getLocalVarAssignment(i), mgdScript);
 					result.setLocalVarAssignmentAtPos(i, decoupledLocalVarAssignment);
 				}
 				// globalVarAssignment and oldVarAssignment are equalities an cannot be affected
@@ -382,8 +382,8 @@ public final class TraceCheckUtils {
 				result.setGlobalVarAssignmentAtPos(i, nf.getGlobalVarAssignment(i));
 				result.setOldVarAssignmentAtPos(i, nf.getOldVarAssignment(i));
 			} else {
-				final UnmodifiableTransFormula decoupled = TransFormulaUtils
-						.decoupleArrayValues(nf.getFormulaFromNonCallPos(i), mgdScript);
+				final UnmodifiableTransFormula decoupled =
+						TransFormulaUtils.decoupleArrayValues(nf.getFormulaFromNonCallPos(i), mgdScript);
 				result.setFormulaAtNonCallPos(i, decoupled);
 				if (nf.getTrace().isPendingReturn(i)) {
 					result.setPendingContext(i, nf.getPendingContext(i));

@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.LassoShapedNonTermin
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
 import de.uni_freiburg.informatik.ultimate.core.lib.translation.BacktranslatedCFG;
 import de.uni_freiburg.informatik.ultimate.core.model.IOutput;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
@@ -49,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferencePro
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithFiniteTrace;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService.Lasso;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslatedCFG;
@@ -60,6 +62,7 @@ import de.uni_freiburg.informatik.ultimate.witnessprinter.graphml.GraphMLCorrect
 import de.uni_freiburg.informatik.ultimate.witnessprinter.graphml.GraphMLViolationWitnessGenerator;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.yaml.YamlCorrectnessWitnessGenerator;
+import de.uni_freiburg.informatik.ultimate.witnessprinter.yaml.YamlViolationWitnessGenerator;
 
 /**
  *
@@ -197,7 +200,11 @@ public class WitnessPrinter implements IOutput {
 						new GraphMLViolationWitnessGenerator<>(backtransPe, mLogger, mServices).makeGraphMLString();
 				suppliers.add(new ResultWitness(filename, GRAPHML, witness, cex));
 			}
-			// TODO: Add support for YAML
+			if (createYaml) {
+				final String witness =
+						new YamlViolationWitnessGenerator<>(backtransPe, mLogger, mServices).makeYamlString();
+				suppliers.add(new ResultWitness(filename, YAML, witness, cex));
+			}
 		}
 		return suppliers;
 	}
@@ -223,12 +230,12 @@ public class WitnessPrinter implements IOutput {
 	}
 
 	@SuppressWarnings("unchecked")
-	private <TE, T> String getWitness(final IBacktranslationService backtrans,
-			final LassoShapedNonTerminationArgument<?, ?> cex) {
-		final IProgramExecution<TE, T> stem =
-				(IProgramExecution<TE, T>) backtrans.translateProgramExecution(cex.getStemExecution());
-		final IProgramExecution<TE, T> loop =
-				(IProgramExecution<TE, T>) backtrans.translateProgramExecution(cex.getLoopExecution());
+	private <TE, T, STE extends IElement, ST> String getWitness(final IBacktranslationService backtrans,
+			final LassoShapedNonTerminationArgument<STE, ST> cex) {
+		final Lasso<?> lasso =
+				backtrans.translateLassoProgramExecution(new Lasso<>(cex.getStemExecution(), cex.getLoopExecution()));
+		final var stem = (IProgramExecution<TE, T>) lasso.getStem();
+		final var loop = (IProgramExecution<TE, T>) lasso.getLoop();
 		return new GraphMLViolationWitnessGenerator<>(stem, loop, mLogger, mServices).makeGraphMLString();
 	}
 

@@ -82,7 +82,7 @@ public class AbstractInterpretation implements IAnalysis {
 			mObserver.add(new AbstractInterpretationRcfgObserver(mServices));
 			break;
 		default:
-			mLogger.info("Ignoring creator " + creator);
+			mLogger.warn("Ignoring creator " + creator);
 			mObserver = null;
 			break;
 		}

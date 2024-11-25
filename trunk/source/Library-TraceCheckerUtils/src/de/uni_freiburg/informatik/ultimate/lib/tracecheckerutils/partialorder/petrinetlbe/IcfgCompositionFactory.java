@@ -37,13 +37,13 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.ICompositionFac
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgSummaryTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 
 /**
  * Implements an {@link ICompositionFactory} that is suitable for Trace Abstraction. This class is used by
@@ -68,7 +68,7 @@ public class IcfgCompositionFactory implements IPLBECompositionFactory<IcfgEdge>
 
 	@Override
 	public boolean isComposable(final IcfgEdge transition) {
-		return transition instanceof IIcfgInternalTransition<?> && !(transition instanceof Summary);
+		return transition instanceof IIcfgInternalTransition<?> && !(transition instanceof IIcfgSummaryTransition<?>);
 	}
 
 	private boolean isComposable(final List<IcfgEdge> transitions) {

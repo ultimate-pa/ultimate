@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IExplicitEdgesMulti
 import de.uni_freiburg.informatik.ultimate.core.model.models.IMultigraphEdge;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ProcedureContract;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService.Lasso;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement.StepInfo;
@@ -461,6 +462,14 @@ public class DefaultTranslator<STE, TTE, SE, TE, SVL, TVL, CTX>
 		return checkCallStackSource(logger, rtr);
 	}
 
+	protected boolean checkCallStackSourceLassoProgramExecution(final ILogger logger,
+			final Lasso<IProgramExecution<STE, SE>> sourceProgramExecution) {
+		final List<AtomicTraceElement<STE>> rtr = new ArrayList<>();
+		sourceProgramExecution.getStem().iterator().forEachRemaining(rtr::add);
+		sourceProgramExecution.getLoop().iterator().forEachRemaining(rtr::add);
+		return checkCallStackSource(logger, rtr);
+	}
+
 	/**
 	 * Check if the call stack of the source program execution is correct (according to procedure labels and step
 	 * infos).
@@ -469,6 +478,14 @@ public class DefaultTranslator<STE, TTE, SE, TE, SVL, TVL, CTX>
 			final IProgramExecution<TTE, TE> sourceProgramExecution) {
 		final List<AtomicTraceElement<TTE>> rtr = new ArrayList<>();
 		sourceProgramExecution.iterator().forEachRemaining(rtr::add);
+		return checkCallStackTarget(logger, rtr);
+	}
+
+	protected boolean checkCallStackTargetLassoProgramExecution(final ILogger logger,
+			final Lasso<IProgramExecution<TTE, TE>> sourceProgramExecution) {
+		final List<AtomicTraceElement<TTE>> rtr = new ArrayList<>();
+		sourceProgramExecution.getStem().iterator().forEachRemaining(rtr::add);
+		sourceProgramExecution.getLoop().iterator().forEachRemaining(rtr::add);
 		return checkCallStackTarget(logger, rtr);
 	}
 

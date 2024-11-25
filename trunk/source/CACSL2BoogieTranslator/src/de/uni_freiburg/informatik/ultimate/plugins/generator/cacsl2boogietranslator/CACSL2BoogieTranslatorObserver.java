@@ -96,7 +96,7 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 				mGraphMLWitnessExtractor.setAST(translationUnit);
 				mYamlWitnessExtractor.setAST(translationUnit);
 			} else {
-				mLogger.info("Witness extractor is disabled for multiple files");
+				mLogger.info("Witness extractor is disabled for %d files", mInputDecorator.countUnits());
 			}
 			return false;
 		}

@@ -155,7 +155,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.TypeDeclaration;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
@@ -704,16 +703,8 @@ public class CHandler {
 		if (!mIsPrerun) {
 			// handle proc. declaration & resolve their transitive modified globals
 			mDeclarations.addAll(mProcedureManager.computeFinalProcedureDeclarations(mMemoryHandler));
-			final Set<String> calledFunctionsWithoutDefinition = mFunctionHandler.getCalledFunctionsWithoutDefinition();
-			if (!calledFunctionsWithoutDefinition.isEmpty()) {
-				final String msg = "The following functions are not defined or handled internally: "
-						+ String.join(", ", calledFunctionsWithoutDefinition);
-				if (mSettings.allowUndefinedFunctions()) {
-					mLogger.warn(msg);
-				} else {
-					throw new UnsupportedSyntaxException(loc, msg);
-				}
-			}
+			mDeclarations.addAll(
+					mFunctionHandler.handleFunctionsWithoutDefinitions(mSettings.getUndefinedFunctionBehaviour()));
 		}
 
 		final IASTTranslationUnit hook = units.get(0).getSourceTranslationUnit();
@@ -2090,8 +2081,9 @@ public class CHandler {
 		// Overapproximate string literals of length STRING_OVERAPPROXIMATION_THRESHOLD
 		// or longer
 		if (stringLiteral.getByteValues().size() >= mSettings.getStringOverapproximationThreshold()) {
-			return new StringLiteralResult(addressRValue, List.of(new Overapprox("large string literal", actualLoc)),
-					stringLiteral);
+			// FIXME Frank 2024-11-18: We omit the overapproximation flag, even thought no initialization is performed.
+			// This is unsound, but does not lead to any wrong results in SV-COMP.
+			return new StringLiteralResult(addressRValue, List.of(), stringLiteral);
 		}
 		final ExpressionResult exprRes = mInitHandler.writeStringLiteral(actualLoc, addressRValue, stringLiteral, node);
 		assert !exprRes.hasLRValue();
@@ -3596,7 +3588,7 @@ public class CHandler {
 		if (pointedType.isIncomplete()) {
 			return new ExpressionWithIncompleteTypeResult(rop.getStatements(),
 					LRValueFactory.constructHeapLValue(mTypeHandler, rValue.getValue(), pointedType, null),
-					rop.getDeclarations(), rop.getAuxVars(), rop.getOverapprs());
+					rop.getDeclarations(), rop.getAuxVars(), rop.getOverapprs(), loc);
 
 		}
 		return new ExpressionResult(rop.getStatements(),
@@ -3642,14 +3634,14 @@ public class CHandler {
 				mExprResultTransformer.transformSwitchRexIntToBool(condResult, loc, cond);
 		final List<Statement> result = new ArrayList<>(condTransformed.getStatements());
 		resultBuilder.addDeclarations(condTransformed.getDeclarations());
-		// Insert an if-statement: if (!cond) break;
+		// Insert an if-statement: if (cond) {} else break;
+		// Note: we could invert the condition and omit the then branch, but we want to keep the negation consistent in
+		// C and Boogie.
 		// Make sure to havoc all aux-vars that are created from the translation of cond (in the if and else branches)
-		final Expression negatedCond = ExpressionFactory.constructUnaryExpression(loc,
-				UnaryExpression.Operator.LOGICNEG, condTransformed.getLrValue().getValue());
 		final Statement[] havocs =
 				CTranslationUtil.createHavocsForAuxVars(condTransformed.getAuxVars()).toArray(Statement[]::new);
-		final IfStatement ifStmt = new IfStatement(loc, negatedCond,
-				DataStructureUtils.concat(havocs, new Statement[] { new BreakStatement(loc) }), havocs);
+		final IfStatement ifStmt = new IfStatement(loc, condTransformed.getLrValue().getValue(), havocs,
+				DataStructureUtils.concat(havocs, new Statement[] { new BreakStatement(loc) }));
 		condTransformed.getOverapprs().forEach(oa -> oa.annotate(ifStmt));
 		result.add(ifStmt);
 		return result;

@@ -75,11 +75,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.FloydHoareAutomataReuse;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.LanguageOperation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessUtils.Property;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
-import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
-import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
 /**
  * A utility class that allows creating CEGAR loops for different programs (based on some common settings).
@@ -127,8 +124,8 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 	 *            The control flow graph of the analyzed program
 	 * @param errorLocs
 	 *            The error locations whose unreachability shall be proven
-	 * @param witnessAutomaton
-	 *            An (optional) witness automaton
+	 * @param witnessTransformer
+	 *            An (optional) transformer for the abstraction using the witness
 	 * @param rawFloydHoareAutomataFromFile
 	 *            A list of automata to use if a CEGAR loop with Floyd/Hoare automata reuse is created
 	 *
@@ -136,8 +133,7 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 	 */
 	public Pair<? extends BasicCegarLoop<L, ?>, IProofProducer<IIcfg<IcfgLocation>, ?>> constructCegarLoop(
 			final IUltimateServiceProvider services, final DebugIdentifier name, final IIcfg<IcfgLocation> root,
-			final Set<IcfgLocation> errorLocs,
-			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton,
+			final Set<IcfgLocation> errorLocs, final IWitnessTransformer<L> witnessTransformer,
 			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile) {
 		mCegarLoopBenchmark = new CegarLoopStatisticsGenerator();
 
@@ -154,7 +150,7 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 		// handle CEGAR loops that are not based on finite automata
 		if (isConcurrent) {
 			final Concurrency automataTypeConcurrency;
-			if (witnessAutomaton != null && mPrefs.getAutomataTypeConcurrency() != Concurrency.FINITE_AUTOMATA) {
+			if (witnessTransformer != null && mPrefs.getAutomataTypeConcurrency() != Concurrency.FINITE_AUTOMATA) {
 				mLogger.warn(
 						"Violation witness validation is only supported for CEGAR loops based on %s. "
 								+ "Ignoring concurrency settiong %s and switching to %s.",
@@ -167,7 +163,7 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 			switch (automataTypeConcurrency) {
 			case PARTIAL_ORDER_FA:
 				requireNoReuse("POR-based analysis");
-				requireNoWitnesses(witnessAutomaton, "POR-based analysis");
+				requireNoWitnesses(witnessTransformer, "POR-based analysis");
 				if (mIndependenceProviderFactory == null) {
 					mIndependenceProviderFactory =
 							new IndependenceProviderFactory<>(mBaseServices, mPrefs, mCopyFactory);
@@ -177,11 +173,11 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 								errorLocs),
 						root, csToolkit, predicateFactory, mPrefs, errorLocs, services,
 						mIndependenceProviderFactory.createProviders(root, predicateFactory), mTransitionClazz,
-						stateFactoryForRefinement);
+						stateFactoryForRefinement, mCopyFactory);
 				return new Pair<>(poCegar, null);
 			case PETRI_NET:
 				requireNoReuse("Petri net-based analysis");
-				requireNoWitnesses(witnessAutomaton, "Petri net-based analysis");
+				requireNoWitnesses(witnessTransformer, "Petri net-based analysis");
 				final var pnCegar = new CegarLoopForPetriNet<>(name,
 						createPetriAbstraction(services, predicateFactory, true, root, errorLocs), root, csToolkit,
 						predicateFactory, mPrefs, errorLocs, services, mTransitionClazz, stateFactoryForRefinement);
@@ -193,13 +189,13 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 
 		// handle finite automata-based CEGAR loops
 		final var triple = createAutomataAbstractionProvider(services, isConcurrent, predicateFactory,
-				stateFactoryForRefinement, witnessAutomaton);
+				stateFactoryForRefinement, witnessTransformer);
 		final var abstraction = constructInitialAbstraction(triple.getFirst(), root, errorLocs);
 
 		final var producer = triple.getSecond().get();
 		final var backtranslator = triple.getThird();
 		final var cegar = createFiniteAutomataCegarLoop(services, name, root, predicateFactory, errorLocs,
-				rawFloydHoareAutomataFromFile, stateFactoryForRefinement, witnessAutomaton, abstraction, producer);
+				rawFloydHoareAutomataFromFile, stateFactoryForRefinement, witnessTransformer, abstraction, producer);
 		final var proofProducer = producer == null || backtranslator == null ? null
 				: new BacktranslatingProofProducer<>(root, producer, backtranslator);
 		return new Pair<>(cegar, proofProducer);
@@ -209,8 +205,7 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 			final DebugIdentifier name, final IIcfg<IcfgLocation> root, final PredicateFactory predicateFactory,
 			final Set<IcfgLocation> errorLocs,
 			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile,
-			final PredicateFactoryRefinement stateFactoryForRefinement,
-			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton,
+			final PredicateFactoryRefinement stateFactoryForRefinement, final IWitnessTransformer<L> witnessTransformer,
 			final INestedWordAutomaton<L, IPredicate> abstraction, final NwaHoareProofProducer<L> proofProducer) {
 
 		final LanguageOperation languageOperation = services.getPreferenceProvider(Activator.PLUGIN_ID)
@@ -249,10 +244,8 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 		}
 	}
 
-	private static void requireNoWitnesses(
-			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton,
-			final String analysis) {
-		if (witnessAutomaton != null) {
+	private static void requireNoWitnesses(final IWitnessTransformer<?> witnessTransformer, final String analysis) {
+		if (witnessTransformer != null) {
 			throw new UnsupportedOperationException("Witness automata not supported for " + analysis);
 		}
 	}
@@ -260,25 +253,35 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 	private Triple<IInitialAbstractionProvider<L, ? extends INestedWordAutomaton<L, IPredicate>>, Supplier<NwaHoareProofProducer<L>>, Function<IFloydHoareAnnotation<IPredicate>, IFloydHoareAnnotation<IcfgLocation>>>
 			createAutomataAbstractionProvider(final IUltimateServiceProvider services, final boolean isConcurrent,
 					final PredicateFactory predicateFactory, final PredicateFactoryRefinement stateFactory,
-					final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton) {
+					final IWitnessTransformer<L> witnessTransformer) {
 		if (!isConcurrent) {
 			final var provider = new NwaInitialAbstractionProvider<L>(services, stateFactory, mPrefs.interprocedural(),
 					predicateFactory, mPrefs.getHoareSettings());
-			if (witnessAutomaton == null) {
+			if (witnessTransformer == null) {
 				return new Triple<>(provider, provider::getProofProducer, provider::backtranslateProof);
 			}
-			return new Triple<>(new WitnessAutomatonAbstractionProvider<>(services, predicateFactory, stateFactory,
-					provider, witnessAutomaton, Property.NON_REACHABILITY), () -> null, null);
+			return new Triple<>(
+					new WitnessAutomatonAbstractionProvider<>(predicateFactory, provider, witnessTransformer),
+					() -> null, null);
 		}
 
 		final var netProvider = createPetriAbstractionProvider(services, predicateFactory, false);
 		if (!mPrefs.applyOneShotPOR()) {
 			final var provider =
 					new Petri2FiniteAutomatonAbstractionProvider.Eager<>(services, netProvider, stateFactory);
-			return new Triple<>(provider, () -> provider.getProofProducer(predicateFactory, mPrefs.getHoareSettings()),
-					null);
+			if (witnessTransformer == null) {
+				return new Triple<>(provider,
+						() -> provider.getProofProducer(predicateFactory, mPrefs.getHoareSettings()), null);
+			}
+			return new Triple<>(
+					new WitnessAutomatonAbstractionProvider<>(predicateFactory, provider, witnessTransformer),
+					() -> null, null);
 		}
 
+		if (witnessTransformer != null) {
+			throw new UnsupportedOperationException(
+					"Witness validation with partial order reduction is not supported yet.");
+		}
 		return new Triple<>(new PartialOrderAbstractionProvider<>(
 				// Partial Order reductions aim to avoid the explicit construction of the full finite automaton.
 				// Hence we use the lazy abstraction provider.

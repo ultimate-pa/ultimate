@@ -56,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.Pa
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.AbstractionType;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.IndependenceType;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.SemanticIndependenceRelation.IndependenceConditions;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
@@ -192,6 +193,19 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		OFF, FALLBACK, PURE, COARSE
 	}
 
+	public static final String LABEL_COMMUTATIVITY_COND_SYNTHESIS = "Commutativity condition synthesis";
+	private static final String DESC_COMMUTATIVITY_COND_SYNTHESIS =
+			"If set to a value other than NONE, GemCutter will generate conditions"
+					+ " enabling commutativity (independence) of certain statements and try to prove that"
+					+ " these conditions hold at relevant points in the program, to enable more reduction.";
+	private static final IndependenceConditions DEF_COMMUTATIVITY_COND_SYNTHESIS = IndependenceConditions.NONE;
+
+	public static final String LABEL_COMMUTATIVITY_COND_SYNTHESIS_STRATEGY =
+			"Refinement strategy for commutativity condition synthesis";
+	private static final String DESC_COMMUTATIVITY_COND_SYNTHESIS_STRATEGY =
+			"Strategy used to check whether (and prove that) a synthesized commutativity condition holds.";
+	private static final RefinementStrategy DEF_COMMUTATIVITY_COND_SYNTHESIS_STRATEGY = RefinementStrategy.SMTINTERPOL;
+
 	// Settings for PetriAutomizer
 	// ========================================================================
 
@@ -257,6 +271,16 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 
 	public static final String LABEL_HOARE_POSITIONS = "Positions where we compute the Hoare Annotation";
 	private static final HoareAnnotationPositions DEF_HOARE_POSITIONS = HoareAnnotationPositions.None;
+
+	// Dominik (2024-11-18): Introduced this setting to disable contract computation for SV-COMP (where it is currently
+	// not useful) because procedure contract computation has a bug ("ensures" clause uses non-permitted variables).
+	// See https://chat.sopranium.de/swt/pl/im6pymo9zjrn3kkiwzgcrce57o
+	// TODO Find the bug, fix the bug, remove this setting.
+	public static final String LABEL_COMPUTE_PROCEDURE_CONTRACTS = "Compute procedure contracts";
+	private static final String DESC_COMPUTE_PROCEDURE_CONTRACTS =
+			"Controls whether procedure contracts are computed from the Hoare annotation."
+					+ "Contract computation only works if the Hoare annotation for the relevant locations has been computed.";
+	private final boolean DEF_COMPUTE_PROCEDURE_CONTRACTS = true;
 
 	// Trace Check Solver
 	// ========================================================================
@@ -554,6 +578,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						new IUltimatePreferenceItemValidator.IntegerValidator(0, 1_0000_000)),
 				new UltimatePreferenceItem<>(LABEL_HOARE_POSITIONS, DEF_HOARE_POSITIONS, PreferenceType.Combo,
 						HoareAnnotationPositions.values()),
+				new UltimatePreferenceItem<>(LABEL_COMPUTE_PROCEDURE_CONTRACTS, DEF_COMPUTE_PROCEDURE_CONTRACTS,
+						DESC_COMPUTE_PROCEDURE_CONTRACTS, true, PreferenceType.Boolean),
 
 				new UltimatePreferenceItem<>(LABEL_USE_PREDICATE_TRIE_BASED_PREDICATE_UNIFIER,
 						DEF_USE_PREDICATE_TRIE_BASED_PREDICATE_UNIFIER, DESC_USE_PREDICATE_TRIE_BASED_PREDICATE_UNIFIER,
@@ -736,6 +762,12 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_INDEPENDENCE_SCRIPT_DUMP_PATH, DEF_INDEPENDENCE_SCRIPT_DUMP_PATH,
 						PreferenceType.Directory),
+
+				new UltimatePreferenceItem<>(LABEL_COMMUTATIVITY_COND_SYNTHESIS, DEF_COMMUTATIVITY_COND_SYNTHESIS,
+						DESC_COMMUTATIVITY_COND_SYNTHESIS, PreferenceType.Combo, IndependenceConditions.values()),
+				new UltimatePreferenceItem<>(LABEL_COMMUTATIVITY_COND_SYNTHESIS_STRATEGY,
+						DEF_COMMUTATIVITY_COND_SYNTHESIS_STRATEGY, DESC_COMMUTATIVITY_COND_SYNTHESIS_STRATEGY,
+						PreferenceType.Combo, RefinementStrategy.values()),
 
 				getIndependenceSettings(0),
 

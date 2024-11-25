@@ -91,6 +91,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IMultigraphEdge;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ProcedureContract;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IRelevanceInformation;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity.Severity;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService.Lasso;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
@@ -168,9 +169,28 @@ public class CACSL2BoogieBacktranslator extends
 	@Override
 	public IProgramExecution<CACSLLocation, BacktranslatedExpression>
 			translateProgramExecution(final IProgramExecution<BoogieASTNode, Expression> oldPE) {
+		assert checkCallStackSourceProgramExecution(mLogger, oldPE)
+				: "callstack of initial program execution already broken";
+		final var translated = translateProgramExecutionInternal(oldPE);
+		assert checkCallStackTargetProgramExecution(mLogger, translated)
+				: "callstack broken after subtree inclusion reduction";
+		return translated;
+	}
 
-		assert checkCallStackSourceProgramExecution(mLogger,
-				oldPE) : "callstack of initial program execution already broken";
+	@Override
+	public Lasso<IProgramExecution<CACSLLocation, BacktranslatedExpression>>
+			translateLassoProgramExecution(final Lasso<IProgramExecution<BoogieASTNode, Expression>> oldPE) {
+		assert checkCallStackSourceLassoProgramExecution(mLogger, oldPE)
+				: "callstack of initial program execution already broken";
+		final var translated =
+				new Lasso<>(translateProgramExecution(oldPE.getStem()), translateProgramExecution(oldPE.getLoop()));
+		assert checkCallStackTargetLassoProgramExecution(mLogger, translated)
+				: "callstack broken after subtree inclusion reduction";
+		return translated;
+	}
+
+	private CACSLProgramExecution
+			translateProgramExecutionInternal(final IProgramExecution<BoogieASTNode, Expression> oldPE) {
 
 		// initial state
 		ProgramState<BacktranslatedExpression> initialState = translateProgramState(oldPE.getInitialProgramState());
@@ -297,8 +317,6 @@ public class CACSL2BoogieBacktranslator extends
 
 		// replace all expr eval occurences with the right atomictraceelements and return the result
 		final List<AtomicTraceElement<CACSLLocation>> checkedTranslatedATEs = checkForSubtreeInclusion(translatedATEs);
-		assert checkCallStackTarget(mLogger,
-				checkedTranslatedATEs) : "callstack broken after subtree inclusion reduction";
 		if (mBacktranslationWarned) {
 			reportUnfinishedBacktranslation("The program execution was not completely translated back.");
 		}
@@ -319,8 +337,9 @@ public class CACSL2BoogieBacktranslator extends
 
 	private AtomicTraceElement<CACSLLocation> handleLoopConditional(final AtomicTraceElement<BoogieASTNode> ate,
 			final CACSLLocation cloc, final IASTExpression condition) {
-		final EnumSet<StepInfo> newSi = invertConditionInStepInfo(ate.getStepInfo());
-		if (newSi == null) {
+		if (!ate.hasStepInfo(StepInfo.CONDITION_EVAL_FALSE) && !ate.hasStepInfo(StepInfo.CONDITION_EVAL_TRUE)) {
+			reportUnfinishedBacktranslation(
+					"Expected StepInfo for loop construct to contain Condition, but it did not");
 			return null;
 		}
 		final CACSLLocation step = mLocationFactory.createCLocation(condition);
@@ -329,40 +348,10 @@ public class CACSL2BoogieBacktranslator extends
 		if (ate.hasThreadId()) {
 			builder.setThreadId(ate.getThreadId());
 		}
-		builder.setRelevanceInformation(ate.getRelevanceInformation()).setElement(cloc).setStep(step).setStepInfo(newSi)
+		builder.setRelevanceInformation(ate.getRelevanceInformation()).setElement(cloc).setStep(step)
+				.setStepInfo(ate.getStepInfo())
 				.setProcedures(ate.getPrecedingProcedure(), ate.getSucceedingProcedure());
 		return builder.build();
-	}
-
-	/**
-	 * This method converts condition eval false to condition eval true and vice versa. It is used because we translate
-	 * C loop conditions to if(!cond) break; in Boogie, i.e., while in Boogie, the condition was true, in C it is false
-	 * and vice versa.
-	 *
-	 * @param oldSiSet
-	 * @return
-	 */
-	private EnumSet<StepInfo> invertConditionInStepInfo(final EnumSet<StepInfo> oldSiSet) {
-		if (!oldSiSet.contains(StepInfo.CONDITION_EVAL_FALSE) && !oldSiSet.contains(StepInfo.CONDITION_EVAL_TRUE)) {
-			reportUnfinishedBacktranslation(
-					"Expected StepInfo for loop construct to contain Condition, but it did not");
-			return null;
-		}
-		final EnumSet<StepInfo> set = EnumSet.noneOf(StepInfo.class);
-		for (final StepInfo oldSi : oldSiSet) {
-			switch (oldSi) {
-			case CONDITION_EVAL_FALSE:
-				set.add(StepInfo.CONDITION_EVAL_TRUE);
-				break;
-			case CONDITION_EVAL_TRUE:
-				set.add(StepInfo.CONDITION_EVAL_FALSE);
-				break;
-			default:
-				set.add(oldSi);
-				break;
-			}
-		}
-		return set;
 	}
 
 	/**
@@ -848,8 +837,13 @@ public class CACSL2BoogieBacktranslator extends
 				} else if (cnode instanceof CASTForStatement) {
 					// same as while
 					final CASTForStatement forStmt = (CASTForStatement) cnode;
-					edge = new MultigraphEdge<>(currentSource,
-							mLocationFactory.createCLocation(forStmt.getConditionExpression()), lastTarget);
+					// If there is a condition in the for-loop use it as a location.
+					// Otherwise fall back to a dummy "1" expression (with for-loop as backing location).
+					IASTExpression condition = forStmt.getConditionExpression();
+					if (condition == null) {
+						condition = new FakeExpression(forStmt, "1");
+					}
+					edge = new MultigraphEdge<>(currentSource, mLocationFactory.createCLocation(condition), lastTarget);
 					new ConditionAnnotation(isNegated).annotate(edge);
 				} else if (cnode instanceof CASTFunctionCallExpression) {
 					edge = new MultigraphEdge<>(currentSource, cloc, lastTarget);

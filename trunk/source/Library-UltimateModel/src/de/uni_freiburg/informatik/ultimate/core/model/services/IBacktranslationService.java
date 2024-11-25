@@ -71,6 +71,8 @@ public interface IBacktranslationService {
 
 	<STE, SE> IProgramExecution<?, ?> translateProgramExecution(IProgramExecution<STE, SE> programExecution);
 
+	<STE, SE> Lasso<IProgramExecution<?, ?>> translateLassoProgramExecution(Lasso<IProgramExecution<STE, SE>> lasso);
+
 	<SE> ProgramState<?> translateProgramState(ProgramState<SE> programState);
 
 	<SE> String translateProgramStateToString(ProgramState<SE> programState);
@@ -85,4 +87,21 @@ public interface IBacktranslationService {
 	 */
 	IBacktranslationService getTranslationServiceCopy();
 
+	public final class Lasso<X extends IProgramExecution<?, ?>> {
+		private final X mStem;
+		private final X mLoop;
+
+		public Lasso(final X stem, final X loop) {
+			mStem = stem;
+			mLoop = loop;
+		}
+
+		public X getStem() {
+			return mStem;
+		}
+
+		public X getLoop() {
+			return mLoop;
+		}
+	}
 }

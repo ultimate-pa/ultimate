@@ -1,6 +1,6 @@
 #!/bin/bash
 # This script generates a zip file for each Ultimate tool that should be deployed to GitHub or to some place else
-# It takes additional binaries from the adds/ folder. Currently, we use z3, cvc4, mathsat and bitwuzla
+# It takes additional binaries from the adds/ folder. Currently, we use z3, cvc4 and mathsat.
 # It also adds README, Ultimate.py, and various license files 
 
 
@@ -37,7 +37,10 @@ echo "Using $TOOLNAME ($LCTOOLNAME) as toolname"
 # additional files for all architectures 
 ADDS=(
   "adds/LICENSE*"
-  "adds/*LICENSE"
+  "adds/z3-LICENSE"
+  "adds/cvc4-LICENSE"
+  "adds/mathsat-LICENSE"
+  "adds/ltl2ba-LICENSE"
   "adds/Ultimate.py"
   "adds/Ultimate.ini"
   "adds/README"
@@ -48,12 +51,12 @@ if [ "$2" == "linux" ]; then
   echo "Building .zip for linux..."
   ARCH="linux"
   ARCHPATH="products/CLI-E4/linux/gtk/x86_64"
-  ADDS+=("adds/z3" "adds/cvc4nyu" "adds/cvc4" "adds/mathsat" "adds/bitwuzla" "adds/cvc5")
+  ADDS+=("adds/z3" "adds/cvc4" "adds/mathsat" "adds/ltl2ba")
 elif [ "$2" == "win32" ]; then
   echo "Building .zip for win32..."
   ARCH="win32"
   ARCHPATH="products/CLI-E4/win32/win32/x86_64"
-  ADDS+=("adds/z3.exe" "adds/cvc4nyu.exe" "adds/cvc4.exe" "adds/mathsat.exe" "adds/mpir.dll" "adds/mathsat.dll" "adds/bitwuzla.exe" "adds/cvc5.exe")
+  ADDS+=("adds/z3.exe" "adds/cvc4.exe" "adds/mathsat.exe" "adds/mpir.dll" "adds/mathsat.dll" "adds/ltl2ba.exe")
 else
   echo "Wrong argument: ""$2"" -- use 'linux' or 'win32'"
   exit 1

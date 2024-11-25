@@ -1,0 +1,53 @@
+<project name="requirements-parser" default="generate" basedir=".">
+	<property name="pluginDir" location="${basedir}" />
+	<property name="workspaceDir" location="${pluginDir}/.." />
+	<property name="cupDir" location="${workspaceDir}/JavaCup/bin" />
+	<property name="flexBinary" location="${workspaceDir}/JavaCup/JFlex.jar" />
+	<property name="srparseCodeDir" location="${pluginDir}/src/de/uni_freiburg/informatik/ultimate/lib/srparse" />
+
+	<description>Build automation for Requirements parser</description>
+
+	<target name="generate" depends="generate-parser" />
+	<target name="clean" depends="clean-lexer,clean-parser" />
+
+	<echo level="info">Library-srParse: pluginDir      is ${pluginDir}</echo>
+	<echo level="info">Library-srParse: workspaceDir   is ${workspaceDir}</echo>
+	<echo level="info">Library-srParse: cupDir         is ${cupDir}</echo>
+	<echo level="info">Library-srParse: flexBinary     is ${flexBinary}</echo>
+	<echo level="info">Library-srParse: srparseCodeDir is ${srparseCodeDir}</echo>
+
+	<target name="generate-lexer">
+		<!-- Generate Requirements lexer with the lexer generator JFlex -->
+		<java jar="${flexBinary}" dir="${srparseCodeDir}" fork="true" failonerror="true">
+			<arg value="Requirements.flex" />
+		</java>
+	</target>
+
+	<target name="generate-parser" depends="generate-lexer">
+		<!-- Generate Requirements parser with the parser generator JavaCup -->
+		<java classname="com.github.jhoenicke.javacup.Main" classpath="${cupDir}" dir="${srparseCodeDir}" fork="true" failonerror="true">
+			<arg line="-expect 2" />
+			<arg value="Requirements.cup" />
+		</java>
+	</target>
+
+	<target name="clean-lexer">
+		<!-- Clean generated Requirements lexer files -->
+		<delete verbose="true" failonerror="false">
+			<fileset dir="${srparseCodeDir}" defaultexcludes="false">
+				<include name="ReqLexer.java" />
+				<include name="ReqLexer.java~" />
+			</fileset>
+		</delete>
+	</target>
+
+	<target name="clean-parser">
+		<!-- Clean generated Requirements parser files -->
+		<delete verbose="true" failonerror="false">
+			<fileset dir="${srparseCodeDir}" defaultexcludes="false">
+				<include name="ReqParser.java" />
+				<include name="ReqSymbols.java" />
+			</fileset>
+		</delete>
+	</target>
+</project>

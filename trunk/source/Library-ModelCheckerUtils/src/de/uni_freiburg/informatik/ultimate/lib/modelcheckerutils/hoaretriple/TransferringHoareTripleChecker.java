@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.B
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IReturnAction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.PredicateTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.TransferrerWithVariableCache;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
@@ -52,6 +53,7 @@ public class TransferringHoareTripleChecker implements IHoareTripleChecker {
 	private final IHoareTripleChecker mUnderlying;
 	private final IPredicateUnifier mUnifier;
 	private final TransferrerWithVariableCache mTransferrer;
+	private final PredicateTransferrer mPredicateTransferrer;
 
 	/**
 	 * Create a new wrapper.
@@ -62,9 +64,11 @@ public class TransferringHoareTripleChecker implements IHoareTripleChecker {
 	 *            used to transfer predicates and actions to the given Hoare triple checker's script
 	 */
 	public TransferringHoareTripleChecker(final IHoareTripleChecker underlying,
-			final TransferrerWithVariableCache transferrer, final IPredicateUnifier unifier) {
+			final TransferrerWithVariableCache transferrer, final PredicateTransferrer predicateTransferrer,
+			final IPredicateUnifier unifier) {
 		mUnderlying = Objects.requireNonNull(underlying);
 		mTransferrer = Objects.requireNonNull(transferrer);
+		mPredicateTransferrer = Objects.requireNonNull(predicateTransferrer);
 		mUnifier = unifier;
 	}
 
@@ -109,6 +113,6 @@ public class TransferringHoareTripleChecker implements IHoareTripleChecker {
 	}
 
 	private IPredicate transfer(final IPredicate predicate) {
-		return mUnifier.getOrConstructPredicate(mTransferrer.transferPredicate(predicate));
+		return mUnifier.getOrConstructPredicate(mPredicateTransferrer.transferPredicate(predicate));
 	}
 }

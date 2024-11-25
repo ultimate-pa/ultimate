@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.core.model.translation;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.ProcedureContract;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService.Lasso;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
 
 /**
@@ -83,6 +84,12 @@ public interface ITranslator<STE, TTE, SE, TE, SVL, TVL, CTX> {
 	List<String> targetTraceToString(List<TTE> trace);
 
 	IProgramExecution<TTE, TE> translateProgramExecution(IProgramExecution<STE, SE> programExecution);
+
+	default Lasso<IProgramExecution<TTE, TE>>
+			translateLassoProgramExecution(final Lasso<IProgramExecution<STE, SE>> programExecution) {
+		return new Lasso<>(translateProgramExecution(programExecution.getStem()),
+				translateProgramExecution(programExecution.getLoop()));
+	}
 
 	IBacktranslatedCFG<TVL, TTE> translateCFG(IBacktranslatedCFG<SVL, STE> cfg);
 

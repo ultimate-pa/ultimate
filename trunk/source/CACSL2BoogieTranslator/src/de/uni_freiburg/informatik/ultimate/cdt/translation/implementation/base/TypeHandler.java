@@ -35,7 +35,6 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -51,7 +50,6 @@ import org.eclipse.cdt.core.dom.ast.IASTEnumerationSpecifier.IASTEnumerator;
 import org.eclipse.cdt.core.dom.ast.IASTNamedTypeSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclSpecifier;
-import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclaration;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTTypedefNameSpecifier;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
@@ -233,7 +231,7 @@ public class TypeHandler implements ITypeHandler {
 			// there is no void in Boogie,
 			// so we simply have no result variable.
 			final CPrimitive cvar = new CPrimitive(node);
-			return (new TypesResult(null, false, true, cvar));
+			return new TypesResult(null, false, true, cvar);
 		}
 		case IASTSimpleDeclSpecifier.t_unspecified:
 		case IASTSimpleDeclSpecifier.t_bool:
@@ -244,7 +242,7 @@ public class TypeHandler implements ITypeHandler {
 			// NOTE: in a extended implementation we should
 			// handle here different types of int (short, long,...)
 			final CPrimitive cvar = new CPrimitive(node);
-			return (new TypesResult(cPrimitive2AstType(loc, cvar), node.isConst(), false, cvar));
+			return new TypesResult(cPrimitive2AstType(loc, cvar), node.isConst(), false, cvar);
 		}
 		case IASTSimpleDeclSpecifier.t_double:
 		case IASTSimpleDeclSpecifier.t_float:
@@ -281,8 +279,8 @@ public class TypeHandler implements ITypeHandler {
 			// no restrictions / asserts in boogie
 			if (node.isLongLong() || node.isLong() || node.isShort() || node.isUnsigned()) {
 				final CPrimitive cvar = new CPrimitive(node);
-				return (new TypesResult(new PrimitiveType(loc, BoogieType.TYPE_INT, SFO.INT), node.isConst(), false,
-						cvar));
+				return new TypesResult(new PrimitiveType(loc, BoogieType.TYPE_INT, SFO.INT), node.isConst(), false,
+						cvar);
 			}
 			// if we do not find a type we cancel with Exception
 			final String msg = "TypeHandler: We do not support this type: " + node.getType() + "!";
@@ -298,17 +296,17 @@ public class TypeHandler implements ITypeHandler {
 			// quick solution --> TODO: maybe make this dependent on includes,
 			// maybe be more elegant (make an entry to symboltable, make a typedef in boogie file??)
 			if (cId.equals("size_t")) {
-				return (new TypesResult(new PrimitiveType(loc, BoogieType.TYPE_REAL, SFO.REAL), node.isConst(), false,
-						mTypeSizes.getSizeT()));
+				return new TypesResult(new PrimitiveType(loc, BoogieType.TYPE_REAL, SFO.REAL), node.isConst(), false,
+						mTypeSizes.getSizeT());
 			} else if (cId.equals("ssize_t")) {
-				return (new TypesResult(new PrimitiveType(loc, BoogieType.TYPE_REAL, SFO.REAL), node.isConst(), false,
-						mTypeSizes.getSsizeT()));
+				return new TypesResult(new PrimitiveType(loc, BoogieType.TYPE_REAL, SFO.REAL), node.isConst(), false,
+						mTypeSizes.getSsizeT());
 			} else if (cId.equals("__builtin_va_list")) {
-				return (new TypesResult(constructPointerType(loc), node.isConst(), false,
-						new CPointer(new CPrimitive(CPrimitives.CHAR))));
+				return new TypesResult(constructPointerType(loc), node.isConst(), false,
+						new CPointer(new CPrimitive(CPrimitives.CHAR)));
 			} else if (cId.equals("__pthread_list_t")) {
-				return (new TypesResult(constructPointerType(loc), node.isConst(), false,
-						new CPointer(new CPrimitive(CPrimitives.VOID))));
+				return new TypesResult(constructPointerType(loc), node.isConst(), false,
+						new CPointer(new CPrimitive(CPrimitives.VOID)));
 			} else if (cId.equals("pthread_t")) {
 				final var cType = getThreadIdType();
 				return new TypesResult(cPrimitive2AstType(loc, cType), node.isConst(), false, cType);
@@ -318,7 +316,7 @@ public class TypeHandler implements ITypeHandler {
 				// https://gcc.gnu.org/onlinedocs/gcc/Floating-Types.html
 				final CPrimitive cType = new CPrimitive(CPrimitives.LONGDOUBLE);
 				final ASTType astType = cType2AstType(loc, cType);
-				return (new TypesResult(astType, node.isConst(), false, cType));
+				return new TypesResult(astType, node.isConst(), false, cType);
 			} else {
 				final String modifiedName = mSymboltable.applyMultiparseRenaming(node.getContainingFilename(), cId);
 				final SymbolTableValue stv = mSymboltable.findCSymbol(node, modifiedName);
@@ -413,9 +411,8 @@ public class TypeHandler implements ITypeHandler {
 			final TypesResult originalType = mDefinedTypes.get(rslvName);
 			if (originalType != null) {
 				// --> we have a normal struct, union or enum declaration
-				final TypesResult withoutBoogieTypedef = new TypesResult(originalType.getAstType(),
-						originalType.isConst(), originalType.isVoid(), originalType.getCType());
-				return withoutBoogieTypedef;
+				return new TypesResult(originalType.getAstType(), originalType.isConst(), originalType.isVoid(),
+						originalType.getCType());
 			}
 			// --> This is a definition of an incomplete struct, enum or union.
 			String incompleteTypeName;
@@ -475,26 +472,7 @@ public class TypeHandler implements ITypeHandler {
 					fTypes.add(declaration.getType());
 					bitFieldWidths.add(declaration.getBitfieldSize());
 				}
-			} else if (r instanceof SkipResult) {
-				// Check for an anonymous struct / union inside
-				if (dec instanceof IASTSimpleDeclaration) {
-					final Result declSpecifierResult = main.dispatch(((IASTSimpleDeclaration) dec).getDeclSpecifier());
-					if (declSpecifierResult instanceof TypesResult) {
-						// An unnamed member whose type specifier is a structure specifier with no tag is called an
-						// anonymous structure; an unnamed member whose type specifier is a union specifier with
-						// no tag is called an anonymous union. The members of an anonymous structure or union
-						// are considered to be members of the containing structure or union. This applies
-						// recursively if the containing structure or union is also anonymous.
-						// C11 6.7.2.1.13
-						final CType type = ((TypesResult) declSpecifierResult).getCType();
-						if (type instanceof CStructOrUnion) {
-							final CStructOrUnion structOrUnion = (CStructOrUnion) type;
-							fNames.addAll(Arrays.asList(structOrUnion.getFieldIds()));
-							fTypes.addAll(Arrays.asList(structOrUnion.getFieldTypes()));
-							bitFieldWidths.addAll(structOrUnion.getBitFieldWidths());
-						}
-					}
-				}
+			} else if (r instanceof SkipResult) { // skip ;)
 			} else {
 				final String msg = "Unexpected syntax in struct declaration!";
 				throw new UnsupportedSyntaxException(loc, msg);
@@ -573,7 +551,7 @@ public class TypeHandler implements ITypeHandler {
 		}
 
 		CType newDefiningType;
-		if ((oldStv.getCType() instanceof CNamed)) {
+		if (oldStv.getCType() instanceof CNamed) {
 			// end of chain not yet reached
 			final var boogieId = ((CNamed) oldStv.getCType()).getName();
 			final var cId = mSymboltable.getCIdForBoogieId(boogieId);
@@ -680,8 +658,7 @@ public class TypeHandler implements ITypeHandler {
 			if (mTranslationSettings.isBitvectorTranslation()) {
 				final int bitsize = bytesize * 8;
 				final String name = "bv" + bitsize;
-				final ASTType astType = new PrimitiveType(loc, BoogieType.createBitvectorType(bitsize), name);
-				return astType;
+				return new PrimitiveType(loc, BoogieType.createBitvectorType(bitsize), name);
 			}
 			return new PrimitiveType(loc, BoogieType.TYPE_INT, SFO.INT);
 		case FLOATTYPE:
@@ -689,8 +666,7 @@ public class TypeHandler implements ITypeHandler {
 			if (mTranslationSettings.isBitvectorTranslation()) {
 				final int bitsize = bytesize * 8;
 				final String name = "bv" + bitsize;
-				final ASTType astType = new PrimitiveType(loc, BoogieType.createBitvectorType(bitsize), name);
-				return astType;
+				return new PrimitiveType(loc, BoogieType.createBitvectorType(bitsize), name);
 			}
 			return new PrimitiveType(loc, BoogieType.TYPE_REAL, SFO.REAL);
 		default:
@@ -732,7 +708,7 @@ public class TypeHandler implements ITypeHandler {
 					cType2AstType(tuLoc, expressionTranslation.getCTypeOfPointerComponents()));
 			final VarList fOffset = new VarList(tuLoc, new String[] { SFO.POINTER_OFFSET },
 					cType2AstType(tuLoc, expressionTranslation.getCTypeOfPointerComponents()));
-			final VarList[] fields = new VarList[] { fBase, fOffset };
+			final VarList[] fields = { fBase, fOffset };
 			final BoogieType boogieType =
 					BoogieType.createStructType(new String[] { SFO.POINTER_BASE, SFO.POINTER_OFFSET },
 							new BoogieType[] { (BoogieType) fBase.getType().getBoogieType(),
@@ -825,7 +801,7 @@ public class TypeHandler implements ITypeHandler {
 			return getBoogieTypeForCType(new CPrimitive(CPrimitives.INT));
 		} else if (cType instanceof CArray) {
 			final BoogieType[] indexTypes =
-					new BoogieType[] { getBoogieTypeForCType(mTranslationSettings.getCTypeOfPointerComponents()) };
+					{ getBoogieTypeForCType(mTranslationSettings.getCTypeOfPointerComponents()) };
 			final BoogieType valueType = getBoogieTypeForCType(((CArray) cType).getValueType());
 			return BoogieType.createArrayType(0, indexTypes, valueType);
 		} else if (cType instanceof CFunction) {
@@ -1037,7 +1013,7 @@ public class TypeHandler implements ITypeHandler {
 	private static boolean areMatchingTypes(final CEnum type1, final CEnum type2,
 			final SymmetricHashRelation<CType> visitedPairs) {
 
-		if (!(type1.getName().equals(type2.getName()))) {
+		if (!type1.getName().equals(type2.getName())) {
 			return false;
 		}
 
@@ -1045,7 +1021,7 @@ public class TypeHandler implements ITypeHandler {
 			return false;
 		}
 		for (int i = 0; i < type1.getFieldCount(); i++) {
-			if (!(type1.getFieldIds()[i].equals(type2.getFieldIds()[i]))) {
+			if (!type1.getFieldIds()[i].equals(type2.getFieldIds()[i])) {
 				return false;
 			}
 		}
@@ -1106,7 +1082,7 @@ public class TypeHandler implements ITypeHandler {
 
 		// TODO: DD: Do field names really impact type matching? I am not so sure that this is always the case
 		for (int i = 0; i < type1.getFieldIds().length - 1; i++) {
-			if (!(type1.getFieldIds()[i].equals(type2.getFieldIds()[i]))) {
+			if (!type1.getFieldIds()[i].equals(type2.getFieldIds()[i])) {
 				return false;
 			}
 		}

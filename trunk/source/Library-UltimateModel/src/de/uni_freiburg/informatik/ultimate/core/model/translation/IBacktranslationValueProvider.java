@@ -1,5 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.core.model.translation;
 
+import java.util.EnumSet;
+
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 
 /**
@@ -20,6 +22,12 @@ public interface IBacktranslationValueProvider<TTE, TE> {
 
 	int getEndLineNumberFromStep(TTE step);
 
+	int getLineNumberFromStep(TTE step, EnumSet<AtomicTraceElement.StepInfo> stepInfo);
+
+	int getColumnNumberFromStep(TTE step, EnumSet<AtomicTraceElement.StepInfo> stepInfo);
+
+	String getFunctionFromStep(TTE step);
+
 	String getOriginFileNameFromStep(TTE step);
 
 	String getFileNameFromStep(TTE step);
@@ -29,4 +37,6 @@ public interface IBacktranslationValueProvider<TTE, TE> {
 	String getStringFromTraceElement(TTE traceelement);
 
 	String getStringFromExpression(TE expression);
+
+	boolean isValidAssumptionLocation(TTE traceElement);
 }

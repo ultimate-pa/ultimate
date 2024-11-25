@@ -50,6 +50,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttrans
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PrenexNormalForm;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierSequence;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -410,7 +412,29 @@ public class TransFormulaBuilder {
 		if (!consts.isEmpty()) {
 			throw new UnsupportedOperationException("constants not yet supported");
 		}
-		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, true, null, true, null, true);
+
+		// Try to extract existentially quantified variables and make them auxVars of the transition formula.
+		final var prenex = new PrenexNormalForm(script).transform(term);
+		final Term transformedTerm;
+		final Set<TermVariable> additionalAuxVars;
+		if (prenex instanceof QuantifiedFormula) {
+			final var qs = new QuantifierSequence(script, prenex);
+			final var firstBlock = qs.getQuantifierBlocks().get(0);
+			if (firstBlock.getQuantifier() == QuantifiedFormula.EXISTS) {
+				transformedTerm = QuantifierSequence.prependQuantifierSequence(script.getScript(),
+						qs.getQuantifierBlocks().subList(1, qs.getNumberOfQuantifierBlocks()), qs.getInnerTerm());
+				additionalAuxVars = firstBlock.getVariables();
+			} else {
+				transformedTerm = term;
+				additionalAuxVars = Set.of();
+			}
+		} else {
+			transformedTerm = term;
+			additionalAuxVars = Set.of();
+		}
+
+		final TransFormulaBuilder tfb =
+				new TransFormulaBuilder(null, null, true, null, true, null, additionalAuxVars.isEmpty());
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		for (final IProgramVar bv : vars) {
 			final TermVariable freshTv =
@@ -419,8 +443,13 @@ public class TransFormulaBuilder {
 			tfb.addInVar(bv, freshTv);
 			tfb.addOutVar(bv, freshTv);
 		}
-		tfb.setFormula(Substitution.apply(script, substitutionMapping, term));
-		tfb.setInfeasibility(SmtUtils.isFalseLiteral(term) ? Infeasibility.INFEASIBLE : Infeasibility.NOT_DETERMINED);
+		final var substitutedTerm = Substitution.apply(script, substitutionMapping, transformedTerm);
+		tfb.setFormula(substitutedTerm);
+		if (!additionalAuxVars.isEmpty()) {
+			tfb.addAuxVarsButRenameToFreshCopies(additionalAuxVars, script);
+		}
+		tfb.setInfeasibility(
+				SmtUtils.isFalseLiteral(substitutedTerm) ? Infeasibility.INFEASIBLE : Infeasibility.NOT_DETERMINED);
 		return tfb.finishConstruction(script);
 	}
 
