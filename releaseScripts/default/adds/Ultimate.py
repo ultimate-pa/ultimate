@@ -599,24 +599,21 @@ def check_witness_type(witness, type):
 
 
 def check_witness_type_yaml(witness, type):
-    if type == "correctness_witness":
-        is_violation = False
-    elif type == "violation_witness":
-        is_violation = True
-    else:
-        print("Unknown witness type", type)
-        return False
     with open(witness) as f:
         witness_content = f.read()
-    entry_types = re.findall(r'entry_type["\']?\s*:\s*["\']?(.*?)["\'\n]', witness_content)
-    are_violation_sequence = [e == "violation_sequence" for e in entry_types]
-    if is_violation and not all(are_violation_sequence):
-        print("Provided witness has other entry types than violation sequence, but your "
-              "specified witness has type violation_witness.")
-        return False
-    if not is_violation and any(are_violation_sequence):
-        print("Provided witness has at least one violation sequence, but your specified"
-              "witness has type correctness_witness.")
+    has_violation_sequence = re.search(r'entry_type["\']?\s*:\s*["\']?violation_sequence', witness_content)
+    if type == "correctness_witness":
+        if has_violation_sequence:
+            print("Provided witness has at least one violation sequence, but your specified"
+                "witness has type correctness_witness.")
+            return False
+    elif type == "violation_witness":
+        if "entry_type" in witness_content and not has_violation_sequence:
+            print("Provided witness has other entry types than violation sequence, but your "
+                "specified witness has type violation_witness.")
+            return False
+    else:
+        print("Unknown witness type", type)
         return False
     return True
 
