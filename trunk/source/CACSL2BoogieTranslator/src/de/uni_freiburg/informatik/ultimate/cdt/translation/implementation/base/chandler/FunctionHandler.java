@@ -396,8 +396,8 @@ public class FunctionHandler {
 			// 3) ,4)
 			mCHandler.updateStmtsAndDeclsAtScopeEnd(bodyResultBuilder, node);
 
-			assert bodyResultBuilder.getAuxVars().isEmpty() : String.format("Body still contains aux vars: %s",
-					bodyResultBuilder.getAuxVars());
+			assert bodyResultBuilder.getAuxVars().isEmpty()
+					: String.format("Body still contains aux vars: %s", bodyResultBuilder.getAuxVars());
 			assert bodyResultBuilder.getOverappr().isEmpty();
 			assert bodyResultBuilder.getLrValue() == null;
 
@@ -780,7 +780,7 @@ public class FunctionHandler {
 	private static void checkNumberOfArguments(final ILocation loc, final String calleeName,
 			final IASTInitializerClause[] arguments, final Procedure calleeProcDecl, final CFunction calleeProcCType,
 			final boolean isCalleeSignatureNotYetDetermined) {
-		if (isCalleeSignatureNotYetDetermined || (arguments.length == calleeProcDecl.getInParams().length)) {
+		if (isCalleeSignatureNotYetDetermined || arguments.length == calleeProcDecl.getInParams().length) {
 			return;
 		}
 		if (calleeProcDecl.getInParams().length == 1 && calleeProcDecl.getInParams()[0].getType() == null

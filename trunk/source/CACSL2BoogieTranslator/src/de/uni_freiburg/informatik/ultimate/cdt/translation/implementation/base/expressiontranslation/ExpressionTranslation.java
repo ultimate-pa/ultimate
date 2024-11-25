@@ -156,8 +156,8 @@ public abstract class ExpressionTranslation {
 			final CPrimitive resultType, final Expression lhsOperand, final Expression rhsOperand,
 			final ExpressionResult exprResult);
 
-	private Expression constructTypeCheckForShift(final ILocation loc, final Expression left,
-			final CPrimitive lhsType, final CPrimitive rhsType, final Expression right, final int operator) {
+	private Expression constructTypeCheckForShift(final ILocation loc, final Expression left, final CPrimitive lhsType,
+			final CPrimitive rhsType, final Expression right, final int operator) {
 		Expression rhsNonNegative;
 		{
 			final Expression zero = constructLiteralForIntegerType(loc, rhsType, BigInteger.ZERO);
