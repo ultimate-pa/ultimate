@@ -501,7 +501,7 @@ def write_ltl(ltlformula):
     return ltl_file_path
 
 
-def create_cli_settings(prop, validate_witness, witness_type, architecture, c_file):
+def create_cli_settings(prop, validate_witness, witness_type, architecture, input_files):
     # append detected init method
     ret = ["--cacsl2boogietranslator.entry.function", prop.get_init_method()]
 
@@ -525,7 +525,7 @@ def create_cli_settings(prop, validate_witness, witness_type, architecture, c_fi
         )
         ret.append("false")
         # For YAML violation witnesses, disable procedure inlining
-        if witness_type == "violation_witness" and any(i.endswith(".yml") for i in c_file):
+        if witness_type == "violation_witness" and any(i.endswith(".yml") for i in input_files):
             ret.append("--procedureinliner.inline.calls.to.implemented.procedures")
             ret.append("NEVER")
     elif not validate_witness:
@@ -547,10 +547,10 @@ def create_cli_settings(prop, validate_witness, witness_type, architecture, c_fi
         ret.append("--witnessprinter.graph.data.programhash")
 
         if is_windows():
-            sha_call = call_desperate(["certutil", "-hashfile", c_file[0], "SHA256"])
+            sha_call = call_desperate(["certutil", "-hashfile", input_files[0], "SHA256"])
             sha = sha_call.communicate()[0].split()[3]
         else:
-            sha_call = call_desperate(["sha256sum", c_file[0]])
+            sha_call = call_desperate(["sha256sum", input_files[0]])
             sha = sha_call.communicate()[0].split()[0]
         ret.append(sha.decode("utf-8", "ignore"))
 
