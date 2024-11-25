@@ -1190,7 +1190,8 @@ public class FunctionHandler {
 			return Optional.empty();
 		case OVERAPPROXIMATE_BEHAVIOUR: {
 			// Implement the function using while (true) assert false;
-			final Statement statement = StandardFunctionHandler.modelUnsupportedFeature(loc, name);
+			final Statement statement =
+					StandardFunctionHandler.modelUnsupportedFeature(loc, "undefined function " + name);
 			final Body body = mProcedureManager.constructBody(loc, new VariableDeclaration[0],
 					new Statement[] { statement }, name);
 			final Procedure result = new Procedure(loc, proc.getAttributes(), name, proc.getTypeParams(),
