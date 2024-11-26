@@ -193,9 +193,9 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 				&& mPref.porIndependenceSettings(0).getAbstractionType() == AbstractionType.NONE;
 
 		mPOR = new PartialOrderReductionFacade<>(services, predicateFactory, rootNode, errorLocs, mPartialOrderMode,
-				mPref.getDfsOrderType(), mPref.getDfsOrderSeed(), mPref.getOrderStepType(), mPref.getOrderThreads(),
-				mPref.getOrderMaxStep(), mPref.getOrderHeuristic(), relations, this::makeBudget,
-				mSupportsDeadEnds ? this::createDeadEndStore : null);
+				mPref.getComplexPreferenceOrderSpec(), mPref.getDfsOrderType(), mPref.getDfsOrderSeed(),
+				mPref.getOrderStepType(), mPref.getOrderThreads(), mPref.getOrderMaxStep(), mPref.getOrderHeuristic(),
+				relations, this::makeBudget, mSupportsDeadEnds ? this::createDeadEndStore : null);
 		assert mSupportsDeadEnds == (mDeadEndStore != null);
 
 		mProgram = initialAbstraction;

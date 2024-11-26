@@ -393,6 +393,10 @@ public final class TAPreferences {
 		return mPrefs.getString(TraceAbstractionPreferenceInitializer.LABEL_INDEPENDENCE_SCRIPT_DUMP_PATH);
 	}
 
+	public String getComplexPreferenceOrderSpec() {
+		return mPrefs.getString(TraceAbstractionPreferenceInitializer.LABEL_COMPLEX_PREFERENCE_ORDER);
+	}
+
 	public OrderType getDfsOrderType() {
 		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_POR_DFS_ORDER, OrderType.class);
 	}
@@ -400,19 +404,19 @@ public final class TAPreferences {
 	public long getDfsOrderSeed() {
 		return mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_POR_DFS_RANDOM_SEED);
 	}
-	
+
 	public StepType getOrderStepType() {
 		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_POR_ORDER_STEP_TYPE, StepType.class);
 	}
-	
+
 	public String getOrderThreads() {
 		return mPrefs.getString(TraceAbstractionPreferenceInitializer.LABEL_POR_ORDER_THREADS);
 	}
-	
+
 	public int getOrderMaxStep() {
 		return mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_POR_ORDER_MAXSTEP);
 	}
-	
+
 	public boolean getOrderHeuristic() {
 		return mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_POR_ORDER_HEURISTIC);
 	}

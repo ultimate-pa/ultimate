@@ -126,7 +126,7 @@ public class PartialOrderAbstractionProvider<L extends IIcfgTransition<?>>
 				IndependenceBuilder.<L> semantic(mServices, icfg.getCfgSmtToolkit().getManagedScript(), false, false)
 						.withSyntacticCheck().cached().threadSeparated().build();
 		final PartialOrderReductionFacade<L> por = new PartialOrderReductionFacade<>(mServices, mPredicateFactory, icfg,
-				errorLocs, mPartialOrderMode, mOrderType, mDfsOrderSeed, mStepType, mThreadList, mMaxStep,
+				errorLocs, mPartialOrderMode, null, mOrderType, mDfsOrderSeed, mStepType, mThreadList, mMaxStep,
 				mEnableHeuristic, List.of(indep), null, null);
 
 		// actually apply POR to automaton

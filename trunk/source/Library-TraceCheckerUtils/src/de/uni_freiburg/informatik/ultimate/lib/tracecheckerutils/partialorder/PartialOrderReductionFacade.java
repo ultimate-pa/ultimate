@@ -135,13 +135,16 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 
 	public PartialOrderReductionFacade(final IUltimateServiceProvider services, final PredicateFactory predicateFactory,
 			final IIcfg<?> icfg, final Collection<? extends IcfgLocation> errorLocs, final PartialOrderMode mode,
-			final OrderType orderType, final long randomOrderSeed, StepType steptype, final String threads,
-			final int maxStep, final boolean enableHeuristic,
+			final String complexPreferenceOrder, final OrderType orderType, final long randomOrderSeed,
+			StepType steptype, final String threads, final int maxStep, final boolean enableHeuristic,
 			final List<IIndependenceRelation<IPredicate, L>> independenceRelations,
 			final Function<SleepMapReduction<L, IPredicate, IPredicate>, IBudgetFunction<L, IPredicate>> getBudget,
 			final Function<StateSplitter<IPredicate>, IDeadEndStore<?, IPredicate>> getDeadEndStore) {
 		mServices = services;
 		mAutomataServices = new AutomataLibraryServices(services);
+
+		mIcfg = icfg;
+		mErrorLocs = errorLocs;
 
 		mMode = mode;
 		if (independenceRelations.isEmpty() && mMode != PartialOrderMode.NONE) {
@@ -160,14 +163,12 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		if (enableHeuristic) {
 			steptype = StepType.LOOP;
 		}
-		mPreferenceOrder = getPreferenceOrder(steptype, threads, maxStep, icfg, enableHeuristic);
+		mPreferenceOrder =
+				getPreferenceOrder(complexPreferenceOrder, steptype, threads, maxStep, icfg, enableHeuristic);
 		// mDfsOrder = getDfsOrder(orderType, randomOrderSeed, icfg, errorLocs);
 
 		// TODO decouple dead end support from this class
 		mDeadEndStore = getDeadEndStore == null ? null : getDeadEndStore.apply(mStateSplitter);
-
-		mIcfg = icfg;
-		mErrorLocs = errorLocs;
 
 		mPersistent = createPersistentSets(mIcfg, mErrorLocs);
 	}
@@ -193,20 +194,26 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		return mIndependenceRelations.get(index);
 	}
 
-	private IPreferenceOrder<L, IPredicate, ?> getPreferenceOrder(final StepType steptype, final String threads,
-			final int maxStep, final IIcfg<?> icfg, final boolean heuristicEnabled) {
+	private IPreferenceOrder<L, IPredicate, ?> getPreferenceOrder(final String complexPreferenceOrder,
+			final StepType steptype, final String threads, final int maxStep, final IIcfg<?> icfg,
+			final boolean heuristicEnabled) {
 		// TODO Add support for all orders previously supported in #getDfsOrder
 
-		final ParameterizedPreferenceOrderUtils<L> paramPrefUtils =
-				new ParameterizedPreferenceOrderUtils<>(icfg, threads, maxStep, heuristicEnabled);
-		final Set<IProgramVar> effectiveGlobalVars = paramPrefUtils.getEffectiveGlobalVars();
-		final List<Integer> maxSteps = paramPrefUtils.getMaxSteps();
-		final List<String> threadList = paramPrefUtils.getThreadList();
+		final IPreferenceOrder<L, IPredicate, ?> order;
+		if (complexPreferenceOrder != null && !complexPreferenceOrder.isBlank()) {
+			order = new PreferenceOrderInterpreter<L>(mIcfg, mErrorLocs).interpret(complexPreferenceOrder);
+		} else {
+			final ParameterizedPreferenceOrderUtils<L> paramPrefUtils =
+					new ParameterizedPreferenceOrderUtils<>(icfg, threads, maxStep, heuristicEnabled);
+			final Set<IProgramVar> effectiveGlobalVars = paramPrefUtils.getEffectiveGlobalVars();
+			final List<Integer> maxSteps = paramPrefUtils.getMaxSteps();
+			final List<String> threadList = paramPrefUtils.getThreadList();
 
-		final VpAlphabet<L> alphabet = Cfg2Automaton.extractVpAlphabet(icfg, true);
+			final VpAlphabet<L> alphabet = Cfg2Automaton.extractVpAlphabet(icfg, true);
 
-		final IPreferenceOrder<L, IPredicate, ?> order = new ParameterizedPreferenceOrder<>(maxSteps, threadList,
-				alphabet, getStepDefinition(icfg, steptype, effectiveGlobalVars));
+			order = new ParameterizedPreferenceOrder<>(maxSteps, threadList, alphabet,
+					getStepDefinition(icfg, steptype, effectiveGlobalVars));
+		}
 
 		if (order.getMonitor() != null) {
 			final var splitter = mStateSplitter;

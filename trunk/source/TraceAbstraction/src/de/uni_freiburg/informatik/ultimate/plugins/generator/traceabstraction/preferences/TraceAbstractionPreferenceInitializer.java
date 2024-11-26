@@ -178,6 +178,12 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_POR_DFS_RANDOM_SEED = "Random seed used by POR DFS order";
 	private static final int DEF_POR_DFS_RANDOM_SEED = 0;
 
+	public static final String LABEL_COMPLEX_PREFERENCE_ORDER = "Complex preference order for POR";
+	private static final String DESC_COMPLEX_PREFERENCE_ORDER =
+			"This setting allows to describe a complex preference order by taking a few built-in orders and applying different combination operators. "
+					+ "The combination is described in YAML / JSON format. See the PreferenceOrderInterpreter class for more details.";
+	private static final String DEF_COMPLEX_PREFERENCE_ORDER = "";
+
 	public static final String LABEL_POR_ORDER_STEP_TYPE = "Defines what statements are considered a step in POR";
 	private static final StepType DEF_POR_ORDER_STEP_TYPE = StepType.ALL_READ_WRITE;
 
@@ -746,6 +752,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						PartialOrderMode.values()),
 
 				new UltimatePreferenceItemGroup("Preference Order",
+						new UltimatePreferenceItem<>(LABEL_COMPLEX_PREFERENCE_ORDER, DEF_COMPLEX_PREFERENCE_ORDER,
+								DESC_COMPLEX_PREFERENCE_ORDER, true, PreferenceType.String),
 						new UltimatePreferenceItem<>(LABEL_POR_DFS_ORDER, DEF_POR_DFS_ORDER, PreferenceType.Combo,
 								OrderType.values()),
 						new UltimatePreferenceItem<>(LABEL_POR_DFS_RANDOM_SEED, DEF_POR_DFS_RANDOM_SEED,
