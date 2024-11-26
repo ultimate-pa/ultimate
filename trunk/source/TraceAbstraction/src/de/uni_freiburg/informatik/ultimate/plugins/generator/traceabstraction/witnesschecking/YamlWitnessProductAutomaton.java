@@ -212,6 +212,11 @@ public class YamlWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 	/** Checks if the waypoint matches with the statement. Assumption waypoints are not matched */
 	private boolean matchesWaypoint(final LETTER statement, final Waypoint waypoint) {
 		if (waypoint instanceof WaypointBranching && matchesStartLocation(statement, waypoint)) {
+			// TODO: For switch-statements the constraint can be 1 or "default". For now, we don't support this
+			// properly, so we just pretend that this waypoint matches.
+			if (!"true".equals(waypoint.getConstraint()) && !"false".equals(waypoint.getConstraint())) {
+				return true;
+			}
 			final ConditionAnnotation conditionAnnot = ConditionAnnotation.getAnnotation(statement);
 			return conditionAnnot != null
 					&& Boolean.parseBoolean(waypoint.getConstraint()) == !conditionAnnot.isNegated();
