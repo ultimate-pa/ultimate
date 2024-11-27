@@ -2252,11 +2252,21 @@ public class CHandler {
 			final CDeclaration cDec = declResult.getDeclaration();
 			cDec.setStorageClass(storageClass);
 
-			// are we in prerun mode?
-			// all unions should be on heap
-			if (mIsPrerun && CStructOrUnion.isUnion(cDec.getType().getUnderlyingType())
-					&& storageClass != CStorageClass.TYPEDEF) {
-				addToVariablesOnHeap(declarator.getName());
+			final CType type = cDec.getType().getUnderlyingType();
+			if (CStructOrUnion.isUnion(type) && storageClass != CStorageClass.TYPEDEF) {
+				// For the memory model HoenickeLindenmann_Original, unions in floats are not handled properly,
+				// therefore we overapproximate them instead to avoid any unsoundness.
+				if (mSettings.getMemoryModelPreference() == MemoryModel.HoenickeLindenmann_Original
+						&& Arrays.stream(((CStructOrUnion) type).getFieldTypes()).anyMatch(CType::isFloatingType)) {
+					final Statement stmt = ExpressionTranslation.modelUnsupportedFeature(loc,
+							"union with floats in the HoenickeLindenmann_Original memory model");
+					intermediateResults.add(new ExpressionResultBuilder().addStatement(stmt).build());
+				}
+				// are we in prerun mode?
+				// all unions should be on heap
+				if (mIsPrerun) {
+					addToVariablesOnHeap(declarator.getName());
+				}
 			}
 
 			if (cDec.getType() instanceof CFunction && storageClass != CStorageClass.TYPEDEF) {
