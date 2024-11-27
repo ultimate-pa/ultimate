@@ -59,7 +59,6 @@
 		<plugin id="org.apache.log4j" version="1.2.25"/>
 		<plugin id="org.apache.logging.log4j.api"/>
 		<plugin id="org.apache.xalan"/>
-		<plugin id="org.apache.xerces"/>
 		<plugin id="org.apache.xmlgraphics" version="2.9.0.v20230916-1600"/>
 		<plugin id="org.apache.xml.resolver"/>
 		<plugin id="org.apache.xml.serializer"/>
@@ -177,7 +176,6 @@
 		<plugin id="org.freemarker.freemarker" version="2.3.32.stable"/>
 		<plugin id="org.glassfish.hk2.osgi-resource-locator"/>
 		<plugin id="org.hamcrest.core" version="1.3.0.v20230809-1000"/>
-		<plugin id="org.jdom" version="1.1.3.v20230812-1600"/>
 		<plugin id="org.junit" version="4.13.2.v20230809-1000"/>
 		<plugin id="org.ops4j.pax.logging.pax-logging-api"/>
 		<plugin id="org.ops4j.pax.logging.pax-logging-log4j2"/>
@@ -200,7 +198,6 @@
 		<plugin id="org.tukaani.xz" version="1.9"/>
 		<plugin id="org.yaml.snakeyaml"/>
 		<plugin id="wrapped.net.sf.trove4j.trove4j"/>
-		<plugin id="wrapped.xerces.xercesImpl"/>
 		<plugin id="wrapped.io.github.uuverifiers.eldarica_2.12"/>
 		<plugin id="wrapped.io.github.uuverifiers.princess_2.12"/>
 		<plugin id="org.scala-lang.scala-library"/>
