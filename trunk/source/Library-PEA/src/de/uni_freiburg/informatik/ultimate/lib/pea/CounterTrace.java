@@ -32,8 +32,6 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import net.sourceforge.czt.z.util.ZString;
-
 /**
  * Represents a counter example trace. A counter example trace is a sequence of phases (represented by
  * CounterTrace.DCPhase). Each phase has an invariant, a set of forbidden events, a set of entry events and an optional
@@ -167,11 +165,11 @@ public class CounterTrace {
 		}
 
 		public String toString(final boolean useUnicode) {
-			final String AND = useUnicode ? ZString.AND : "/\\";
+			final String AND = useUnicode ? "\u2227" : "/\\";
 			final String NOEVENT = useUnicode ? "\u229F" : "[-]";
 			final String EMPTY = useUnicode ? "\u2080" : "0";
-			final String GEQ = useUnicode ? ZString.GEQ : ">=";
-			final String LEQ = useUnicode ? ZString.LEQ : "<=";
+			final String GEQ = useUnicode ? "\u2265" : ">=";
+			final String LEQ = useUnicode ? "\u2264" : "<=";
 
 			final String LCEIL = useUnicode ? "\u2308" : "[";
 			final String RCEIL = useUnicode ? "\u2309" : "]";
