@@ -1,0 +1,30 @@
+format_version: '2.0'
+
+# The file containing the program to verify.
+input_files: 'ex01.bpl'
+
+properties:
+  # The property that should be satisfied (unreach-call is a stand-in for "no asserts violated")
+  # and the expected verdict (true for correct programs, false for incorrect programs).
+  - property_file: ./unreach-call.prp
+    expected_verdict: true
+
+options:
+  # The language in which the program is written.
+  language: BPL
+
+  # Ultimate options.
+  de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction:
+    # The preference order that GemCutter should use.
+    Complex preference order for POR:
+      builtin: loop_lockstep
+      iterations:
+        # Note that the thread names differ slightly from the program.
+        # Ultimate renames them because there could be multiple thread instances executing the same procedure.
+        - [thread1Thread1of1ForFork0, 1]
+        - [thread2Thread1of1ForFork1, 2]
+
+    # Additional options.
+    # For example, we expect GemCutter to find the simple invariant for the reduction in at most 10 iterations.
+    Limit iterations: 10
+
