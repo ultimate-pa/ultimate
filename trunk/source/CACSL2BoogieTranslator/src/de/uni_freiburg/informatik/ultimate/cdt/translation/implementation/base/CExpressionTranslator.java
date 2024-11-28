@@ -808,7 +808,8 @@ public class CExpressionTranslator {
 		// * assignment.
 		// */
 
-		if (opPositive.getStatements().isEmpty() && opNegative.getStatements().isEmpty()) {
+		if (!mSettings.enforceIfForConditional() && opPositive.getStatements().isEmpty()
+				&& opNegative.getStatements().isEmpty()) {
 			// neither second nor third operand have side-effects, we can translate to
 			// a Boogie if-then-else expression
 			resultBuilder.addAllExceptLrValue(opCondition, opPositive, opNegative);
