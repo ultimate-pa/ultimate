@@ -212,6 +212,12 @@ public class YamlWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 	/** Checks if the waypoint matches with the statement. Assumption waypoints are not matched */
 	private boolean matchesWaypoint(final LETTER statement, final Waypoint waypoint) {
 		if (waypoint instanceof WaypointBranching && matchesStartLocation(statement, waypoint)) {
+			// For switch-statements the constraint can be an integer constant or "default".
+			// For now, we don't support this.
+			if (!"true".equals(waypoint.getConstraint()) && !"false".equals(waypoint.getConstraint())) {
+				throw new UnsupportedOperationException(
+						"Branching waypoints at switch statements are not supported yet.");
+			}
 			final ConditionAnnotation conditionAnnot = ConditionAnnotation.getAnnotation(statement);
 			return conditionAnnot != null
 					&& Boolean.parseBoolean(waypoint.getConstraint()) == !conditionAnnot.isNegated();

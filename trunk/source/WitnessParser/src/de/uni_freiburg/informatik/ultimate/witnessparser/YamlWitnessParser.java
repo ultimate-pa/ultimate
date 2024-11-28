@@ -135,7 +135,7 @@ public class YamlWitnessParser {
 	private static Waypoint parseViolationWaypoint(final Map<String, Object> wp) {
 		final Location location = parseLocation((Map<String, Object>) wp.get("location"));
 		final Map<String, String> constraintMap = (Map<String, String>) wp.get("constraint");
-		final String constraint = constraintMap == null ? null : constraintMap.get("value");
+		final String constraint = constraintMap == null ? null : constraintMap.get("value").toString();
 		switch ((String) wp.get("type")) {
 		case "target":
 			return new WaypointTarget(location);

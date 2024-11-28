@@ -140,6 +140,12 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 	private static final String DESC_BEHAVIOUR_UNDEFINED_FUNCTIONS =
 			"Specify how the calls to undefined functions should be modeled (crash, overapproximate, non-deterministic return value).";
 
+	public static final String LABEL_ENFORCE_IF_FOR_CONDITIONAL =
+			"Always translate conditional expressions to if-statements";
+	private static final String DESC_ENFORCE_IF_FOR_CONDITIONAL =
+			"If this setting is enabled, we try to translate conditional expressions to if-statements in Boogie. "
+					+ "Otherwise, we try to translate them to conditionals expressions in Boogie instead";
+
 	public enum CheckMode {
 		IGNORE, ASSUME, ASSERTandASSUME
 	}
@@ -344,7 +350,9 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 						PreferenceType.Integer),
 				new UltimatePreferenceItem<>(LABEL_BEHAVIOUR_UNDEFINED_FUNCTIONS,
 						UndefinedFunctionBehaviour.NON_DETERMINISTIC_RETURN, DESC_BEHAVIOUR_UNDEFINED_FUNCTIONS,
-						PreferenceType.Combo, UndefinedFunctionBehaviour.values()), };
+						PreferenceType.Combo, UndefinedFunctionBehaviour.values()),
+				new UltimatePreferenceItem<>(LABEL_ENFORCE_IF_FOR_CONDITIONAL, false, DESC_ENFORCE_IF_FOR_CONDITIONAL,
+						PreferenceType.Boolean) };
 
 	}
 }

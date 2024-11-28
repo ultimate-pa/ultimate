@@ -81,6 +81,7 @@ public final class TranslationSettings {
 	private final boolean mAdaptMemoryModelResolutionOnPointerCasts;
 	private final int mStringOverapproximationThreshold;
 	private final UndefinedFunctionBehaviour mUndefinedFunctionBehaviour;
+	private final boolean mEnforceIfForConditional;
 
 	public TranslationSettings(final IPreferenceProvider ups) {
 		mCheckSignedIntegerBounds =
@@ -133,6 +134,7 @@ public final class TranslationSettings {
 				ups.getInt(CACSLPreferenceInitializer.LABEL_STRING_OVERAPPROXIMATION_THRESHOLD);
 		mUndefinedFunctionBehaviour = ups.getEnum(CACSLPreferenceInitializer.LABEL_BEHAVIOUR_UNDEFINED_FUNCTIONS,
 				CACSLPreferenceInitializer.UndefinedFunctionBehaviour.class);
+		mEnforceIfForConditional = ups.getBoolean(CACSLPreferenceInitializer.LABEL_ENFORCE_IF_FOR_CONDITIONAL);
 	}
 
 	private TranslationSettings(final CheckMode divisionByZeroOfIntegerTypes,
@@ -148,7 +150,8 @@ public final class TranslationSettings {
 			final boolean checkMemoryLeakInMain, final CheckMode checkSignedIntegerBounds, final boolean checkDataRaces,
 			final boolean useConstantArrays, final boolean useStoreChains, final boolean enableFesetround,
 			final FloatingPointRoundingMode initialRoundingMode, final boolean adaptMemoryModelResolutionOnPointerCasts,
-			final int stringOverapproximationThreshold, final UndefinedFunctionBehaviour undefinedFunctionBehaviour) {
+			final int stringOverapproximationThreshold, final UndefinedFunctionBehaviour undefinedFunctionBehaviour,
+			final boolean enforceIfForConditional) {
 		mDivisionByZeroOfIntegerTypes = divisionByZeroOfIntegerTypes;
 		mDivisionByZeroOfFloatingTypes = divisionByZeroOfFloatingTypes;
 		mBitvectorTranslation = bitvectorTranslation;
@@ -179,6 +182,7 @@ public final class TranslationSettings {
 		mAdaptMemoryModelResolutionOnPointerCasts = adaptMemoryModelResolutionOnPointerCasts;
 		mStringOverapproximationThreshold = stringOverapproximationThreshold;
 		mUndefinedFunctionBehaviour = undefinedFunctionBehaviour;
+		mEnforceIfForConditional = enforceIfForConditional;
 	}
 
 	public PointerIntegerConversion getPointerIntegerCastMode() {
@@ -313,6 +317,10 @@ public final class TranslationSettings {
 		return mUndefinedFunctionBehaviour;
 	}
 
+	public boolean enforceIfForConditional() {
+		return mEnforceIfForConditional;
+	}
+
 	public TranslationSettings setMemoryModelPreference(final MemoryModel memoryModel) {
 		return new TranslationSettings(mDivisionByZeroOfIntegerTypes, mDivisionByZeroOfFloatingTypes,
 				mBitvectorTranslation, mOverapproximateFloatingPointOperations, mBitpreciseBitfields,
@@ -322,7 +330,7 @@ public final class TranslationSettings {
 				mCheckAssertions, mIsSvcompMemtrackCompatibilityMode, mCheckAllocationPurity, mCheckMemoryLeakInMain,
 				mCheckSignedIntegerBounds, mCheckDataRaces, mUseConstantArrays, mUseStoreChains, mEnableFesetround,
 				mInitialRoundingMode, mAdaptMemoryModelResolutionOnPointerCasts, mStringOverapproximationThreshold,
-				mUndefinedFunctionBehaviour);
+				mUndefinedFunctionBehaviour, mEnforceIfForConditional);
 	}
 
 	/**
