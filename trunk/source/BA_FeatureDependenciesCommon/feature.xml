@@ -236,4 +236,43 @@
          id="jakarta.activation-api"
          version="0.0.0"/>
 
+   <plugin
+         id="com.lmax.disruptor"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.apache.commons.lang3"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.ops4j.pax.logging.pax-logging-api"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.ops4j.pax.logging.pax-logging-log4j2"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.scala-lang.scala-library"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.yaml.snakeyaml"
+         version="0.0.0"/>
+
+   <plugin
+         id="wrapped.io.github.uuverifiers.eldarica_2.12"
+         version="0.0.0"/>
+
+   <plugin
+         id="wrapped.io.github.uuverifiers.princess_2.12"
+         version="0.0.0"/>
+
+   <plugin
+         id="wrapped.net.sf.trove4j.trove4j"
+         version="0.0.0"/>
+
+   <plugin
+         id="wrapped.xerces.xercesImpl"
+         version="0.0.0"/>
 </feature>
