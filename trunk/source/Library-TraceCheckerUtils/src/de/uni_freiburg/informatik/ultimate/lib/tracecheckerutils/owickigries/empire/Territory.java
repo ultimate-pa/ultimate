@@ -206,15 +206,12 @@ public final class Territory<PLACE> {
 	 *            Assertion places of the proof automata
 	 * @return
 	 */
-	public <L> Stream<Transition<L, PLACE>> getEnabledTransitions(final IPetriNet<L, PLACE> net,
-			final Set<PLACE> lawPlaces) {
+	public <L> Stream<Transition<L, PLACE>> getEnabledTransitions(final IPetriNet<L, PLACE> net) {
 		Stream<Transition<L, PLACE>> enabledTransitions = Stream.empty();
-		for (final PLACE lawPlace : lawPlaces) {
-			final var mayPlaces = DataStructureUtils.union(getPlaces(), Set.of(lawPlace));
-			enabledTransitions =
-					Stream.concat(enabledTransitions, net.getSuccessorTransitionProviders(getPlaces(), mayPlaces)
-							.stream().flatMap(provider -> provider.getTransitions().stream()).filter(t -> enables(t)));
-		}
+		final var mayPlaces = DataStructureUtils.union(getPlaces());
+		enabledTransitions =
+				Stream.concat(enabledTransitions, net.getSuccessorTransitionProviders(getPlaces(), mayPlaces).stream()
+						.flatMap(provider -> provider.getTransitions().stream()).filter(t -> enables(t)));
 		return enabledTransitions;
 	}
 

@@ -140,8 +140,8 @@ public class EmpireValidityCheck<PLACE, LETTER extends IAction> {
 			}
 			final var territory = pair.getFirst();
 			final var law = pair.getSecond();
-			for (final var transition : (Iterable<Transition<LETTER, PLACE>>) territory.getEnabledTransitions(mNet,
-					Set.of())::iterator) {
+			for (final var transition : (Iterable<Transition<LETTER, PLACE>>) territory
+					.getEnabledTransitions(mNet)::iterator) {
 				final var predecessors = transition.getPredecessors();
 				final var successors = transition.getSuccessors();
 				final var bystanders = territory.getRegions().stream()
