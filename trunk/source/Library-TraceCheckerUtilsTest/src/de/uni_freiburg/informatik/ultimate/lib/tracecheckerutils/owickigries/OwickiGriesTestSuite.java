@@ -86,9 +86,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.NwaFloydHoareValidityCheck;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -222,8 +222,8 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 				automata.stream().map(aut -> replaceActionsAndStates(id2Action, aut)).collect(Collectors.toList()));
 
 		// check proofs
-		for (final var proof : mProofs) {
-			checkProof(proof);
+		for (int i = 0; i < mProofs.size(); ++i) {
+			checkProof(mProofs.get(i), mUnifiers.get(i));
 		}
 		mLogger.info("Number of proof automata: %d", mProofs.size());
 
@@ -296,7 +296,7 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 		return new ModifiableGlobalsTable(modifiesRelation);
 	}
 
-	private void checkProof(final INestedWordAutomaton<SimpleAction, IPredicate> proof)
+	private void checkProof(final INestedWordAutomaton<SimpleAction, IPredicate> proof, final IPredicateUnifier unifier)
 			throws AutomataLibraryException {
 		assert NestedWordAutomataUtils.isFiniteAutomaton(proof) : "Proof must not have call or return transitions";
 		assert new IsDeterministic<>(mAutomataServices, proof).getResult() : "Proof must be deterministic";
@@ -312,7 +312,8 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 			assert NestedWordAutomataUtils.isSinkState(proof, accepting) : "State 'false' should be a sink";
 		}
 
-		assert new InductivityCheck<>(mServices, proof, false, true, mHtc).getResult();
+		assert NwaFloydHoareValidityCheck.forInterpolantAutomaton(mServices, mMgdScript, mHtc, unifier, proof, true)
+				.getResult();
 	}
 
 	private IIcfgSymbolTable setupSymbolTable(final Path path) throws IOException {
