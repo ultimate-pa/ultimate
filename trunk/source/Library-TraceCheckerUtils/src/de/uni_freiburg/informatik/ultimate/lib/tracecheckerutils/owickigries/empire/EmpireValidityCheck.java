@@ -30,12 +30,10 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -49,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown.PlacesCoRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -76,19 +73,13 @@ public class EmpireValidityCheck<PLACE, LETTER extends IAction> {
 	private final BasicPredicateFactory mFactory;
 
 	private final EmpireAnnotation<PLACE> mEmpireAnnotation;
-	private final Map<IPredicate, Set<PLACE>> mPredicatePlaceMap;
 	private final IPetriNet<LETTER, PLACE> mNet;
-	private final IPetriNetSuccessorProvider<LETTER, PLACE> mRefinedNet;
-	private final Set<PLACE> mAssertionPlaces;
-	private final PlacesCoRelation<PLACE> mPlacesCoRelation;
 	private final Validity mValidity;
 
 	public EmpireValidityCheck(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final MonolithicImplicationChecker implicationChecker, final BasicPredicateFactory factory,
-			final IPetriNet<LETTER, PLACE> net, final IPetriNetSuccessorProvider<LETTER, PLACE> refinedNet,
-			final ModifiableGlobalsTable modifiableGlobals, final EmpireAnnotation<PLACE> empire,
-			final Map<IPredicate, Set<PLACE>> predicatePlaceMap, final Set<PLACE> assertionPlaces,
-			final PlacesCoRelation<PLACE> placesCoRelation) {
+			final IPetriNet<LETTER, PLACE> net, final ModifiableGlobalsTable modifiableGlobals,
+			final EmpireAnnotation<PLACE> empire) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(EmpireValidityCheck.class);
 		mMgdScript = mgdScript;
@@ -97,11 +88,7 @@ public class EmpireValidityCheck<PLACE, LETTER extends IAction> {
 		mFactory = factory;
 
 		mNet = net;
-		mRefinedNet = refinedNet;
-		mAssertionPlaces = assertionPlaces;
 		mEmpireAnnotation = empire;
-		mPredicatePlaceMap = predicatePlaceMap;
-		mPlacesCoRelation = placesCoRelation;
 
 		mValidity = checkValidity();
 	}
@@ -154,9 +141,9 @@ public class EmpireValidityCheck<PLACE, LETTER extends IAction> {
 			final var territory = pair.getFirst();
 			final var law = pair.getSecond();
 			for (final var transition : (Iterable<Transition<LETTER, PLACE>>) territory.getEnabledTransitions(mNet,
-					mPredicatePlaceMap.get(law))::iterator) {
-				final var predecessors = DataStructureUtils.difference(transition.getPredecessors(), mAssertionPlaces);
-				final var successors = DataStructureUtils.difference(transition.getSuccessors(), mAssertionPlaces);
+					Set.of())::iterator) {
+				final var predecessors = transition.getPredecessors();
+				final var successors = transition.getSuccessors();
 				final var bystanders = territory.getRegions().stream()
 						.filter(r -> DataStructureUtils.haveEmptyIntersection(r.getPlaces(), predecessors))
 						.collect(Collectors.toSet());
@@ -259,7 +246,7 @@ public class EmpireValidityCheck<PLACE, LETTER extends IAction> {
 		for (final Pair<Territory<PLACE>, IPredicate> pair : mEmpireAnnotation.getEmpire()) {
 			final var territory = pair.getFirst();
 			final var law = pair.getSecond();
-			if (!territory.getRegions().containsAll(bystanders) || !territory.enables(transition, mAssertionPlaces)) {
+			if (!territory.getRegions().containsAll(bystanders) || !territory.enables(transition)) {
 				continue;
 			}
 			result.add(pair);

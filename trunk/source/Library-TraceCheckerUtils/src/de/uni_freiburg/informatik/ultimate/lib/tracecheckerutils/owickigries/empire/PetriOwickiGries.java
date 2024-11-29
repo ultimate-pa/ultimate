@@ -202,8 +202,7 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 			final var implicationChecker = new MonolithicImplicationChecker(mServices, mMgdScript);
 			final var assertionPlaces = mProofPlaces.stream().flatMap(Set::stream).collect(Collectors.toSet());
 			final var checker = new EmpireValidityCheck<>(mServices, mMgdScript, implicationChecker, mFactory, mNet,
-					mBp.getNet(), mModifiableGlobals, mEmpireAnnotation, empireComputation.getPredicatePlaceMap(),
-					assertionPlaces, placesCoRelation);
+					mModifiableGlobals, mEmpireAnnotation);
 			return checker.getValidity();
 		}) != Validity.INVALID;
 	}
