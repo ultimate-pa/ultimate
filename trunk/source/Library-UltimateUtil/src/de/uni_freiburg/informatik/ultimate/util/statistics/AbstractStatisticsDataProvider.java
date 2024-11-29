@@ -103,7 +103,9 @@ public abstract class AbstractStatisticsDataProvider implements IStatisticsDataP
 
 	private static StatisticsData toStatisticsData(final IStatisticsDataProvider statistics) {
 		final StatisticsData data = new StatisticsData();
-		data.aggregateBenchmarkData(statistics);
+		if (statistics != null) {
+			data.aggregateBenchmarkData(statistics);
+		}
 		return data;
 	}
 

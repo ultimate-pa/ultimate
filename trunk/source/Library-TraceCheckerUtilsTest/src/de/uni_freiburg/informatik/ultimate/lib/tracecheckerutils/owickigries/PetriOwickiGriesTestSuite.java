@@ -74,7 +74,7 @@ public class PetriOwickiGriesTestSuite extends OwickiGriesTestSuite {
 		final StatisticsData data = new StatisticsData();
 		final var pog = new PetriOwickiGries<>(mServices, unfolding, program, mPredicateFactory, Function.identity(),
 				mMgdScript, mSymbolTable, Set.of(SimpleAction.PROCEDURE), computeModifiableGlobals(), proofPlaces,
-				product);
+				product, PetriOwickiGries.EmpireComputationMode.CROWNS);
 		data.aggregateBenchmarkData(pog.getStatistics());
 		mLogger.info("PetriOwickiGries Statistics: %s", data);
 	}
