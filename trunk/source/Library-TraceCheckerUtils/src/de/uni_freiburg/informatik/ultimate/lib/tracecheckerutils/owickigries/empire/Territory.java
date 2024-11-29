@@ -207,12 +207,9 @@ public final class Territory<PLACE> {
 	 * @return
 	 */
 	public <L> Stream<Transition<L, PLACE>> getEnabledTransitions(final IPetriNet<L, PLACE> net) {
-		Stream<Transition<L, PLACE>> enabledTransitions = Stream.empty();
 		final var mayPlaces = DataStructureUtils.union(getPlaces());
-		enabledTransitions =
-				Stream.concat(enabledTransitions, net.getSuccessorTransitionProviders(getPlaces(), mayPlaces).stream()
-						.flatMap(provider -> provider.getTransitions().stream()).filter(t -> enables(t)));
-		return enabledTransitions;
+		return net.getSuccessorTransitionProviders(getPlaces(), mayPlaces).stream()
+				.flatMap(provider -> provider.getTransitions().stream()).filter(t -> enables(t));
 	}
 
 	/**
