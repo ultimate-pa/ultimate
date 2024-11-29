@@ -59,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfunctions.RankingFunction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -66,7 +67,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.Hoa
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils.HoareTripleChecks;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
@@ -129,6 +132,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 	protected final IUltimateServiceProvider mServices;
 	protected final ILogger mLogger;
 	protected final String mIdentifier;
+	protected final boolean mIsConcurrent;
 
 	/**
 	 * Current Iteration of this CEGAR loop.
@@ -193,6 +197,8 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 		mIdentifier = icfg.getIdentifier();
 		// TODO: TaskIdentifier should probably be provided by caller
 		mTaskIdentifier = new SubtaskFileIdentifier(null, mIdentifier);
+		mIsConcurrent = IcfgUtils.isConcurrent(icfg);
+
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mMDBenchmark = new BuchiAutomizerModuleDecompositionBenchmark(mServices.getBacktranslationService());
@@ -355,8 +361,8 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 				final String identifier = mIdentifier + "_Iteration" + mIteration;
 				lassoCheck = new LassoCheck<>(mCsToolkitWithoutRankVars, mPredicateFactory,
 						mCsToolkitWithoutRankVars.getSmtFunctionsAndAxioms(), mBinaryStatePredicateManager,
-						mCounterexample, identifier, mServices, SIMPLIFICATION_TECHNIQUE, mRefinementStrategyFactory,
-						mAbstraction, taskIdentifier, mBenchmarkGenerator);
+						mCounterexample, this::getControlConfiguration, identifier, mServices, SIMPLIFICATION_TECHNIQUE,
+						mRefinementStrategyFactory, mAbstraction, taskIdentifier, mBenchmarkGenerator);
 				if (lassoCheck.getLassoCheckResult().getContinueDirective() == ContinueDirective.REPORT_UNKNOWN) {
 					// if result was unknown, then try again but this time add one
 					// iteration of the loop to the stem.
@@ -369,8 +375,9 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 					mCounterexample = new NestedLassoRun<>(newStem, mCounterexample.getLoop());
 					lassoCheck = new LassoCheck<>(mCsToolkitWithoutRankVars, mPredicateFactory,
 							mCsToolkitWithoutRankVars.getSmtFunctionsAndAxioms(), mBinaryStatePredicateManager,
-							mCounterexample, identifier, mServices, SIMPLIFICATION_TECHNIQUE, mRefinementStrategyFactory,
-							mAbstraction, unwindingTaskIdentifier, mBenchmarkGenerator);
+							mCounterexample, this::getControlConfiguration, identifier, mServices,
+							SIMPLIFICATION_TECHNIQUE, mRefinementStrategyFactory, mAbstraction, unwindingTaskIdentifier,
+							mBenchmarkGenerator);
 				}
 			} catch (final ToolchainCanceledException e) {
 				final int traceHistogramMaxStem =
@@ -762,6 +769,13 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 		return overapproximations;
 	}
 
+	protected Object getControlConfiguration(final IPredicate predicate) {
+		if (mIsConcurrent) {
+			return ((IMLPredicate) predicate).getProgramPoints();
+		}
+		return ((ISLPredicate) predicate).getProgramPoint();
+	}
+
 	private static class SubtaskAdditionalLoopUnwinding extends TaskIdentifier {
 		private final int mAdditionaUnwindings;
 
@@ -777,5 +791,4 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 		}
 
 	}
-
 }
