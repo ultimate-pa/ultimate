@@ -563,7 +563,6 @@ public final class TAPreferences {
 				RefinementStrategy.class);
 	}
 
-	// TODO #proofRefactor update all settings files to reflect the removal / changes to the Hoare/proof settings
 	public HoareProofSettings getHoareSettings() {
 		return new HoareProofSettings(getHoareAnnotationPositions(), getSimplificationTechnique());
 	}
