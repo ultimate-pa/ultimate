@@ -260,6 +260,14 @@ public class CHandler {
 
 	private static final boolean ADD_HAVOCS_AT_SCOPE_END = true;
 
+	/**
+	 * We translate a string literal to the pointer variable that points to the address where the string is stored. If
+	 * this flag is set we add an overapproximation flag to this variable if it refers to a large string literal. <br />
+	 * This is required for soundness because we omit the initialization of large string literals. A setting determine
+	 * the size from which a string is "large".
+	 */
+	private static final boolean OVERAPPROX_FLAG_LARGE_STRING_LITERAL = false;
+
 	private final MemoryHandler mMemoryHandler;
 
 	private final ArrayHandler mArrayHandler;
@@ -761,7 +769,7 @@ public class CHandler {
 
 	public Result visit(final IDispatcher main, final IASTArraySubscriptExpression node) {
 		final ILocation loc = mLocationFactory.createCLocation(node);
-		final ExpressionResult array = ((ExpressionResult) main.dispatch(node.getArrayExpression()));
+		final ExpressionResult array = (ExpressionResult) main.dispatch(node.getArrayExpression());
 		final ExpressionResult subscript =
 				mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, node.getArgument());
 		return handleArraySubscriptExpression(array, subscript, node);
@@ -837,8 +845,8 @@ public class CHandler {
 		}
 		case IASTBinaryExpression.op_plus:
 		case IASTBinaryExpression.op_minus: {
-			assert checkSubstractPointerArith(node, leftOperand,
-					rightOperand) : "subtraction is not allowed in pointer arithmetic, right?";
+			assert checkSubstractPointerArith(node, leftOperand, rightOperand)
+					: "subtraction is not allowed in pointer arithmetic, right?";
 
 			// if we are "adding" arrays, they must be treated as pointers
 			final ExpressionResult rl = mExprResultTransformer.transformDecaySwitchRexBoolToInt(leftOperand, loc, node);
@@ -849,8 +857,8 @@ public class CHandler {
 		}
 		case IASTBinaryExpression.op_plusAssign:
 		case IASTBinaryExpression.op_minusAssign: {
-			assert checkSubstractPointerArith(node, leftOperand,
-					rightOperand) : "subtraction is not allowed in pointer arithmetic, right?";
+			assert checkSubstractPointerArith(node, leftOperand, rightOperand)
+					: "subtraction is not allowed in pointer arithmetic, right?";
 
 			final ExpressionResult rl = mExprResultTransformer.transformDecaySwitchRexBoolToInt(leftOperand, loc, node);
 			final ExpressionResult rr =
@@ -1361,8 +1369,8 @@ public class CHandler {
 		} else if (node instanceof ICASTKnRFunctionDeclarator) {
 			final ICASTKnRFunctionDeclarator funcDecl = (ICASTKnRFunctionDeclarator) node;
 
-			assert funcDecl.getParameterDeclarations().length == funcDecl
-					.getParameterNames().length : "implicit int declarations are forbidden from C99 on, this is one, right?";
+			assert funcDecl.getParameterDeclarations().length == funcDecl.getParameterNames().length
+					: "implicit int declarations are forbidden from C99 on, this is one, right?";
 
 			final CDeclaration[] paramsParsed = new CDeclaration[funcDecl.getParameterDeclarations().length];
 			for (int i = 0; i < funcDecl.getParameterDeclarations().length; i++) {
@@ -2100,9 +2108,15 @@ public class CHandler {
 		// Overapproximate string literals of length STRING_OVERAPPROXIMATION_THRESHOLD
 		// or longer
 		if (stringLiteral.getByteValues().size() >= mSettings.getStringOverapproximationThreshold()) {
-			// FIXME Frank 2024-11-18: We omit the overapproximation flag, even thought no initialization is performed.
-			// This is unsound, but does not lead to any wrong results in SV-COMP.
-			return new StringLiteralResult(addressRValue, List.of(), stringLiteral);
+			final List<Overapprox> overapprox;
+			if (OVERAPPROX_FLAG_LARGE_STRING_LITERAL) {
+				overapprox = List.of(new Overapprox("Large string literal", actualLoc));
+			} else {
+				// FIXME Frank 2024-11-18: We omit the overapproximation flag, even thought no initialization is
+				// performed. This is unsound, but does not lead to any wrong results in SV-COMP.
+				overapprox = List.of();
+			}
+			return new StringLiteralResult(addressRValue, overapprox, stringLiteral);
 		}
 		final ExpressionResult exprRes = mInitHandler.writeStringLiteral(actualLoc, addressRValue, stringLiteral, node);
 		assert !exprRes.hasLRValue();
