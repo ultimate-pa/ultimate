@@ -35,7 +35,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.regex.Pattern;
 
 import org.yaml.snakeyaml.Yaml;
 
@@ -47,14 +46,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class EmpireAnnotationParser<P> {
-	private static final Pattern QUOTED_PLACE_REGEX = Pattern.compile("\\s*\"((\\\"|[^\"])*)\".*");
-	private static final Pattern IDENTIFIER_REGEX_NO_SUFFIX = Pattern.compile("\\s*([^\\s,\"\\}]*)(?=[\\s,\"\\}].*|$)");
-	private static final Pattern IDENTIFIER_REGEX = Pattern.compile("\\s*([^\\s,\"\\}]*)([\\s,\"\\}].*|$)");
-	private static final String PLACE_REGEX =
-			"((" + QUOTED_PLACE_REGEX.pattern() + ")|(" + IDENTIFIER_REGEX_NO_SUFFIX.pattern() + "))";
-	private static final Pattern REGION_LITERAL_REGEX =
-			Pattern.compile("\\s*\\{(\\s*" + PLACE_REGEX + "\\s*(,\\s*" + PLACE_REGEX + "\\s*)*)\\}.*");
-
 	public static final String NAMED_REGIONS = "named_regions";
 	public static final String LAW = "law";
 	public static final String TERRITORY = "territory";
