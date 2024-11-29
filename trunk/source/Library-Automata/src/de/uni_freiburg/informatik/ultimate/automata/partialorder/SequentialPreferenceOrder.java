@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2022 Marcel Ebbinghaus
- * Copyright (C) 2022 Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
- * Copyright (C) 2022 University of Freiburg
+ * Copyright (C) 2024 Marcel Ebbinghaus
+ * Copyright (C) 2024 University of Freiburg
  *
  * This file is part of the ULTIMATE TraceCheckerUtils Library.
  *
@@ -25,17 +24,46 @@
  * licensors of the ULTIMATE TraceCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder;
+package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
-import java.util.Comparator;
-
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator;
 
-public interface IPreferenceOrder<L, S1, S2> extends IPartialPreferenceOrder<L, S1, S2> {
-	Comparator<L> getOrder(S1 programState, S2 monitorState);
+/**
+ * Order representing the sequentialization of two given orders fst and snd.
+ *
+ * @param <L>
+ *            letter type
+ * @param <S1>
+ *            program state type
+ * @param <S2>
+ *            monitor state type
+ */
+public class SequentialPreferenceOrder<L extends IAction, S1, S2> implements IPartialPreferenceOrder<L, S1, S2> {
+
+	public SequentialPreferenceOrder(final IPartialPreferenceOrder<L, S1, S2> fst,
+			final IPartialPreferenceOrder<L, S1, S2> snd) {
+		// TODO implement constructor
+	}
 
 	@Override
-	default IPartialComparator<L> getPartialOrder(final S1 programState, final S2 monitorState) {
-		return IPartialComparator.fromNonPartialComparator(getOrder(programState, monitorState), true);
+	public boolean isPositional() {
+		// TODO Auto-generated method stub
+		return false;
 	}
+
+	@Override
+	public INwaOutgoingLetterAndTransitionProvider<L, S2> getMonitor() {
+		// TODO Auto-generated method stub
+		new SequentialPreferenceOrderAutomaton<L, S2>();
+		return null;
+	}
+
+	@Override
+	public IPartialComparator<L> getPartialOrder(final S1 programState, final S2 monitorState) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }

@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.ConstantDfsOrde
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.DepthFirstTraversal;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsOrder;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IPersistentSetChoice;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.IPreferenceOrder;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ISleepSetStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.MinimalSleepSetReduction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.MultiPersistentSetChoice;

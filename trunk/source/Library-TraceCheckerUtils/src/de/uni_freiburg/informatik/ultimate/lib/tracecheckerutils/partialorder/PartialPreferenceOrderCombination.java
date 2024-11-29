@@ -6,6 +6,8 @@ import java.util.Objects;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.MonitorProduct;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.IPartialPreferenceOrder;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.IPreferenceOrder;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMonitorStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator.ComparisonResult;

@@ -25,12 +25,23 @@
  * licensors of the ULTIMATE TraceCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder;
+package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator;
 
+/**
+ * Interface for partial preference orders, used in partial order reduction.
+ *
+ * @param <L>
+ *            letter type
+ * @param <S1>
+ *            program state type
+ * @param <S2>
+ *            monitor state type
+ */
 public interface IPartialPreferenceOrder<L, S1, S2> {
+
 	IPartialComparator<L> getPartialOrder(S1 programState, S2 monitorState);
 
 	boolean isPositional();

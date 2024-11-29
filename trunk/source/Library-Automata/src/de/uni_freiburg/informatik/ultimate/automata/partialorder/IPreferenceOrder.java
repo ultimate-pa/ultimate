@@ -25,16 +25,14 @@
  * licensors of the ULTIMATE TraceCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder;
+package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
 import java.util.Comparator;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsOrder;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.IPreferenceOrder;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator;
 
 /**
- * Preference order based on a given IDfsOrder.
+ * Interface for (total) preference orders, used in partial order reduction.
  *
  * @param <L>
  *            letter type
@@ -43,26 +41,12 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.IPreferenceOrde
  * @param <S2>
  *            monitor state type
  */
-public class Dfs2PreferenceOrder<L, S1, S2> implements IPreferenceOrder<L, S1, S2> {
-	private final IDfsOrder<L, S1> mDFSOrder;
+public interface IPreferenceOrder<L, S1, S2> extends IPartialPreferenceOrder<L, S1, S2> {
 
-	public Dfs2PreferenceOrder(final IDfsOrder<L, S1> underlying) {
-		mDFSOrder = underlying;
-	}
+	Comparator<L> getOrder(S1 programState, S2 monitorState);
 
 	@Override
-	public Comparator<L> getOrder(final S1 stateProgram, final S2 stateMonitor) {
-		return mDFSOrder.getOrder(stateProgram);
+	default IPartialComparator<L> getPartialOrder(final S1 programState, final S2 monitorState) {
+		return IPartialComparator.fromNonPartialComparator(getOrder(programState, monitorState), true);
 	}
-
-	@Override
-	public boolean isPositional() {
-		return true;
-	}
-
-	@Override
-	public INwaOutgoingLetterAndTransitionProvider<L, S2> getMonitor() {
-		return null;
-	}
-
 }

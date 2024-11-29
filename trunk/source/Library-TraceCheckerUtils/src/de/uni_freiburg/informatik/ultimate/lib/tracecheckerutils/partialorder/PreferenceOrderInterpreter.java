@@ -39,6 +39,7 @@ import org.yaml.snakeyaml.Yaml;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ConstantDfsOrder;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.IPreferenceOrder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;

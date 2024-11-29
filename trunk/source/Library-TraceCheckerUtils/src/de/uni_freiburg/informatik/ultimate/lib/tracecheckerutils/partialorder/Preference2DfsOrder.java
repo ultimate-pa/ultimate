@@ -31,6 +31,7 @@ import java.util.Comparator;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsOrder;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.IPreferenceOrder;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class Preference2DfsOrder<L, S1, S2, S> implements IDfsOrder<L, S> {
