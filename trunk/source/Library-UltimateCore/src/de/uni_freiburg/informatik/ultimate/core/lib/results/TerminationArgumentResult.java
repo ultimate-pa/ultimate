@@ -45,6 +45,7 @@ public class TerminationArgumentResult<P extends IElement, E> extends AbstractRe
 	private final E[] mRankingFunction;
 	private final E[] mSupportingInvariants;
 	private final Class<E> mExprClazz;
+	private final IBacktranslationService mTranslatorSequence;
 
 	/**
 	 * Construct a termination argument result
@@ -65,11 +66,12 @@ public class TerminationArgumentResult<P extends IElement, E> extends AbstractRe
 	public TerminationArgumentResult(final P position, final String plugin, final E[] ranking_function,
 			final String rankingFunctionDescription, final E[] supporting_invariants,
 			final IBacktranslationService translatorSequence, final Class<E> exprClazz) {
-		super(position, plugin, translatorSequence);
+		super(position, plugin);
 		mRankingFunction = ranking_function;
 		mRankingFunctionDescription = rankingFunctionDescription;
 		mSupportingInvariants = supporting_invariants;
 		mExprClazz = exprClazz;
+		mTranslatorSequence = translatorSequence;
 	}
 
 	@Override

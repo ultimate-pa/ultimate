@@ -1,0 +1,104 @@
+# Welcome to Jekyll!
+#
+# This config file is meant for settings that affect your whole blog, values
+# which you are expected to set up once and rarely edit after that. If you find
+# yourself editing this file very often, consider using Jekyll's data files
+# feature for the data you need to update frequently.
+#
+# For technical reasons, this file is *NOT* reloaded automatically when you use
+# 'bundle exec jekyll serve'. If you change this file, please restart the server process.
+#
+# If you need help with YAML syntax, here are some quick references for you:
+# https://learn-the-web.algonquindesign.ca/topics/markdown-yaml-cheat-sheet/#yaml
+# https://learnxinyminutes.com/docs/yaml/
+#
+# Site settings
+# These are used to personalize your new site. If you look in the HTML files,
+# you will see them accessed via {{ site.title }}, {{ site.email }}, and so on.
+# You can create any custom variable you would like, and they will be accessible
+# in the templates via {{ site.myvariable }}.
+
+title: Ultimate
+
+# The domain & protocol for the site.
+url: "https://ultimate-pa.org"
+
+# The basepath of the site.
+# ----------------------------------------------------------------------------------
+# We set this here to the same default as FRONTEND_ROUTE in WebBackend.
+# This allows for the site to be served by the backend.
+# Alternatively, the site can be served by jekyll directly.
+#
+# When deployed, this should be empty. It can be overridden during build by running
+#     jekyll build --baseurl "/"
+baseurl: "/website"
+
+
+# Build settings
+plugins: []
+
+collections:
+  # Awards won by ULTIMATE, collected in the directory _awards.
+  awards:
+    # We do not generate individual pages for each award.
+    # Instead, they are all listed on the single awards page (awards.html).
+    output: false
+    # We order the awards by year.
+    sort_by: "year"
+
+
+  # Ultimate tools with separate description pages and web interfaces.
+  tools:
+    # Each tool gets its own individual description page.
+    # (Web interfaces are handled separately.)
+    output: true
+    permalink: /:path/
+    # We fix a custom order for the tools.
+    order:
+      - automizer.html
+      - buechi_automizer.html
+      - gemcutter.html
+      - kojak.html
+      - taipan.html
+      - ltl_automizer.html
+      - lasso_ranker.html
+      - automata_library.html
+      - referee.html
+      - eliminator.html
+
+# Set defaults across files.
+defaults:
+  - scope:
+      path: ""
+    values:
+      # Unless specified otherwise, each file should use the "default" layout.
+      layout: "default"
+
+
+# Exclude from processing.
+# The following items will not be processed, by default.
+# Any item listed under the `exclude:` key here will be automatically added to
+# the internal "default list".
+#
+# Excluded items can be processed by explicitly listing the directories or
+# their entries' file path in the `include:` list.
+#
+# exclude:
+#   - .sass-cache/
+#   - .jekyll-cache/
+#   - gemfiles/
+#   - Gemfile
+#   - Gemfile.lock
+#   - node_modules/
+#   - vendor/bundle/
+#   - vendor/cache/
+#   - vendor/gems/
+#   - vendor/ruby/
+exclude:
+  - README.md
+  - _awards/README.md
+  - _tools/README.md
+  - bootstrap_dev/
+  - scripts/
+  - js/webinterface/config.dist.js
+

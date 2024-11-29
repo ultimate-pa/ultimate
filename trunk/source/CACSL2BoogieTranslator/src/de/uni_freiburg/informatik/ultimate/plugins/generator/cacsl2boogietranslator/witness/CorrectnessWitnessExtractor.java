@@ -27,6 +27,8 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness;
 
+import java.util.List;
+
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 
@@ -47,19 +49,18 @@ public abstract class CorrectnessWitnessExtractor {
 
 	private final IUltimateServiceProvider mServices;
 	protected final ILogger mLogger;
-	protected final boolean mCheckOnlyLoopInvariants;
+	protected IPreferenceProvider mPrefs;
 	protected final boolean mIgnoreUnmatchedEntries;
 
 	protected IASTTranslationUnit mTranslationUnit;
-	private ExtractedCorrectnessWitness mAST2Entries;
+	private IExtractedCorrectnessWitness mResult;
 	protected ExtractionStatistics mStats;
 
 	public CorrectnessWitnessExtractor(final IUltimateServiceProvider service) {
 		mServices = service;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		final IPreferenceProvider prefs = WitnessParserPreferences.getPrefs(service);
-		mCheckOnlyLoopInvariants = prefs.getBoolean(WitnessParserPreferences.LABEL_CW_USE_ONLY_LOOPINVARIANTS);
-		mIgnoreUnmatchedEntries = prefs.getBoolean(WitnessParserPreferences.LABEL_IGNORE_UNMATCHED_WITNESS_ENTRIES);
+		mPrefs = WitnessParserPreferences.getPrefs(service);
+		mIgnoreUnmatchedEntries = mPrefs.getBoolean(WitnessParserPreferences.LABEL_IGNORE_UNMATCHED_WITNESS_ENTRIES);
 		mStats = new ExtractionStatistics();
 	}
 
@@ -71,30 +72,35 @@ public abstract class CorrectnessWitnessExtractor {
 	 * Get the witness entries, i.e. a relation that maps each {@link IASTNode} to the {@link IExtractedWitnessEntry}s
 	 * that match this location.
 	 */
-	public ExtractedCorrectnessWitness getWitness() {
-		if (mAST2Entries == null) {
+	public IExtractedCorrectnessWitness getWitness() {
+		if (mResult == null) {
 			if (!isReady()) {
 				mLogger.warn("Cannot extract witness if there is no witness");
 				return null;
 			}
-			if (mCheckOnlyLoopInvariants) {
-				mLogger.info("Only extracting loop invariants from correctness witness");
-			} else {
-				mLogger.info("Extracting all invariants from correctness witness");
-			}
-			mAST2Entries = extractWitness();
-			mAST2Entries.printWitness(mLogger::info);
+			mResult = extractWitness();
+			printWitness();
 		}
-		return mAST2Entries;
+		return mResult;
+	}
+
+	private void printWitness() {
+		final List<String> entriesAsString = mResult.printAllEntries();
+		if (entriesAsString.isEmpty()) {
+			mLogger.info("Witness did not contain any usable entries.");
+			return;
+		}
+		mLogger.info("Found the following entries in the witness:");
+		entriesAsString.forEach(mLogger::info);
 	}
 
 	protected abstract boolean isReady();
 
 	/**
-	 * Compute the witness entries, i.e. a relation that maps each {@link IASTNode} to the
-	 * {@link IExtractedWitnessEntry}s that match this location.
+	 * Extract the witness, i.e. return an object that provides {@link IExtractedWitnessEntry}s that match a given
+	 * {@link IASTNode}.
 	 */
-	protected abstract ExtractedCorrectnessWitness extractWitness();
+	protected abstract IExtractedCorrectnessWitness extractWitness();
 
 	public static final class ExtractionStatistics {
 		private int mSuccess;

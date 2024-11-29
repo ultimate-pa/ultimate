@@ -37,8 +37,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
-
 /**
  * @author Markus Lindenmann
  * @date 18.09.2012
@@ -84,7 +82,7 @@ public class CStructOrUnion extends CType implements ICPossibleIncompleteType<CS
 	public CStructOrUnion(final StructOrUnion isStructOrUnion, final String name, final String[] fNames,
 			final CType[] fTypes, final List<Integer> bitFieldWidths) {
 		// FIXME: integrate those flags -- you will also need to change the equals method if you do
-		super(false, false, false, false, false);
+		super(false, false, false, false, false, false);
 		assert name != null;
 		assert fNames.length == bitFieldWidths.size();
 		mIsStructOrUnion = isStructOrUnion;
@@ -97,7 +95,7 @@ public class CStructOrUnion extends CType implements ICPossibleIncompleteType<CS
 
 	public CStructOrUnion(final StructOrUnion isStructOrUnion, final String name) {
 		// FIXME: integrate those flags -- you will also need to change the equals method if you do
-		super(false, false, false, false, false);
+		super(false, false, false, false, false, false);
 		assert name != null && !name.isEmpty();
 		mIsStructOrUnion = isStructOrUnion;
 		mFieldNames = new String[0];
@@ -132,7 +130,7 @@ public class CStructOrUnion extends CType implements ICPossibleIncompleteType<CS
 		assert !isIncomplete() : "Cannot get a field type in an incomplete struct type.";
 		final int idx = Arrays.asList(mFieldNames).indexOf(id);
 		if (idx < 0) {
-			throw new IllegalArgumentException("Field '" + id + "' not in struct!");
+			throw new IllegalArgumentException("Field not in struct: " + id);
 		}
 		return mFieldTypes[idx];
 	}
@@ -204,37 +202,6 @@ public class CStructOrUnion extends CType implements ICPossibleIncompleteType<CS
 		mIsComplete = true;
 	}
 
-	@Override
-	public boolean isCompatibleWith(final CType o) {
-		if (o == null) {
-			return false;
-		}
-		if (this == o) {
-			return true;
-		}
-		if (o instanceof CPrimitive && ((CPrimitive) o).getType() == CPrimitives.VOID) {
-			return true;
-		}
-		final CType oType = o.getUnderlyingType();
-		if (!(oType instanceof CStructOrUnion)) {
-			return false;
-		}
-
-		final CStructOrUnion oStruct = (CStructOrUnion) oType;
-		if (mFieldNames.length != oStruct.mFieldNames.length) {
-			return false;
-		}
-		if (mFieldTypes.length != oStruct.mFieldTypes.length) {
-			return false;
-		}
-		for (int i = mFieldTypes.length - 1; i >= 0; --i) {
-			if (!(mFieldTypes[i].equals(oStruct.mFieldTypes[i]))) {
-				return false;
-			}
-		}
-		return true;
-	}
-
 	public List<Integer> getBitFieldWidths() {
 		return mBitFieldWidths;
 	}
@@ -247,7 +214,7 @@ public class CStructOrUnion extends CType implements ICPossibleIncompleteType<CS
 		assert !isIncomplete() : "Cannot get a field type in an incomplete struct type.";
 		final int idx = Arrays.asList(mFieldNames).indexOf(id);
 		if (idx < 0) {
-			throw new IllegalArgumentException("Field '" + id + "' not in struct!");
+			throw new IllegalArgumentException("Field not in struct: " + id);
 		}
 		if (getBitFieldWidths().size() < idx) {
 			return -1;

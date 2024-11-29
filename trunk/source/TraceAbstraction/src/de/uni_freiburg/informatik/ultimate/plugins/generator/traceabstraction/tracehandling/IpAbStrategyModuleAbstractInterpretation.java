@@ -31,7 +31,6 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
@@ -39,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarAbsIntRunner;
 
 /**
@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ce
 public class IpAbStrategyModuleAbstractInterpretation<LETTER extends IIcfgTransition<?>>
 		implements IIpAbStrategyModule<LETTER> {
 
-	private final IRun<LETTER, ?> mCounterexample;
+	private final Counterexample<LETTER> mCounterexample;
 	private final IPredicateUnifier mPredicateUnifier;
 	private final IEmptyStackStateFactory<IPredicate> mEmptyStackFactory;
 	private final IAutomaton<LETTER, IPredicate> mAbstraction;
@@ -58,7 +58,7 @@ public class IpAbStrategyModuleAbstractInterpretation<LETTER extends IIcfgTransi
 	private IpAbStrategyModuleResult<LETTER> mResult;
 
 	public IpAbStrategyModuleAbstractInterpretation(final IAutomaton<LETTER, IPredicate> abstraction,
-			final IRun<LETTER, ?> counterexample, final IPredicateUnifier predicateUnifier,
+			final Counterexample<LETTER> counterexample, final IPredicateUnifier predicateUnifier,
 			final IpTcStrategyModuleAbstractInterpretation<LETTER> ipTcSmAbsInt,
 			final IEmptyStackStateFactory<IPredicate> emptyStackFactory) {
 		mAbstraction = abstraction;

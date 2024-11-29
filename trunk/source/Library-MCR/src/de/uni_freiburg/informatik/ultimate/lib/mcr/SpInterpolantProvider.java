@@ -13,7 +13,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
@@ -26,8 +25,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 public class SpInterpolantProvider<LETTER extends IIcfgTransition<?>> extends SpWpInterpolantProvider<LETTER> {
 	public SpInterpolantProvider(final IUltimateServiceProvider services, final ILogger logger,
 			final ManagedScript managedScript, final SimplificationTechnique simplificationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique, final IPredicateUnifier predicateUnifier) {
-		super(services, logger, managedScript, simplificationTechnique, xnfConversionTechnique, predicateUnifier);
+			final IPredicateUnifier predicateUnifier) {
+		super(services, logger, managedScript, simplificationTechnique, predicateUnifier);
 	}
 
 	@Override

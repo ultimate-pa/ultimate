@@ -114,6 +114,7 @@ known_exceptions:
   "identifier is not declared (neither a variable nor a function name): argv in file":
   "Undeclared variable in ACSL expression":
   "The following witness entry could not be matched":
+  "Field not in struct":
 
 known_timeouts:
   "Cannot interrupt operation gracefully because timeout expired. Forcing shutdown":
@@ -138,6 +139,7 @@ known_unsafe:
 
 known_unknown:
   "UnprovableResult":
+  "Provided witness file has type \"correctness_witness\", but you specified witness type \"violation_witness\"":
 
 known_wrapper_errors:
   "Ultimate.py: error: argument --validate: File":

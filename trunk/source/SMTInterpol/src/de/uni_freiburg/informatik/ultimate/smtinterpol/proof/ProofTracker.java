@@ -170,9 +170,7 @@ public class ProofTracker implements IProofTracker {
 			final String[] indices = new String[aIndices == null ? 1 : 1 + aIndices.length];
 			indices[0] = aFunc.getName();
 			if (aIndices != null) {
-				for (int i = 0; i < indices.length; i++) {
-					aIndices[i + 1] = indices[i];
-				}
+				System.arraycopy(aIndices, 0, indices, 1, aIndices.length);
 			}
 			final Sort resultSort = aFunc.isReturnOverload()
 					? theory.getSort(ProofConstants.SORT_EQPROOF, aFunc.getReturnSort())

@@ -50,7 +50,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BinaryStatePredicateManager.BspmResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.NondeterministicInterpolantAutomaton;
@@ -64,17 +63,15 @@ public class BuchiInterpolantAutomatonBuilder<LETTER extends IIcfgTransition<?>>
 	private final IUltimateServiceProvider mServices;
 	private final CfgSmtToolkit mCsToolkit;
 	private final SimplificationTechnique mSimplificationTechnique;
-	private final XnfConversionTechnique mXnfConversionTechnique;
 	private final PredicateFactory mPredicateFactory;
 	private final InterpolationTechnique mInterpolation;
 
 	public BuchiInterpolantAutomatonBuilder(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
-			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
-			final PredicateFactory predicateFactory, final InterpolationTechnique interpolation) {
+			final SimplificationTechnique simplificationTechnique, final PredicateFactory predicateFactory,
+			final InterpolationTechnique interpolation) {
 		mServices = services;
 		mCsToolkit = csToolkit;
 		mSimplificationTechnique = simplificationTechnique;
-		mXnfConversionTechnique = xnfConversionTechnique;
 		mPredicateFactory = predicateFactory;
 		mInterpolation = interpolation;
 	}
@@ -180,7 +177,7 @@ public class BuchiInterpolantAutomatonBuilder<LETTER extends IIcfgTransition<?>>
 					final LoopCannibalizer<LETTER> lc =
 							new LoopCannibalizer<>(counterexample, loopInterpolantsForRefinement,
 									bspmResult.getRankEqAndSi(), bspmResult.getHondaPredicate(), pu, mCsToolkit,
-									mInterpolation, mServices, mSimplificationTechnique, mXnfConversionTechnique);
+									mInterpolation, mServices, mSimplificationTechnique);
 					loopInterpolantsForRefinement = lc.getResult();
 				} catch (final ToolchainCanceledException tce) {
 					final String taskDescription = "loop cannibalization";

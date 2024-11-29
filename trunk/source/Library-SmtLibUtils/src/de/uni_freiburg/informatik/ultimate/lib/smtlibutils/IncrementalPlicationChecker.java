@@ -63,7 +63,7 @@ public class IncrementalPlicationChecker {
 			}
 			case UNKNOWN: {
 				final var other = otherSupplier.get();
-				return (other == NOT_CHECKED || other == INVALID) ? other : this;
+				return other == NOT_CHECKED || other == INVALID ? other : this;
 			}
 			case VALID:
 				return otherSupplier.get();
@@ -101,7 +101,9 @@ public class IncrementalPlicationChecker {
 		}
 	}
 
-	public enum Plication { IMPLICATION, EXPLICATION };
+	public enum Plication {
+		IMPLICATION, EXPLICATION
+	}
 
 	private final ManagedScript mMgdScript;
 	private final Term mLhs;
@@ -109,10 +111,7 @@ public class IncrementalPlicationChecker {
 	private Map<TermVariable, Term> mVar2ConstSubstitution;
 	private final Plication mPlication;
 
-
-
 	public IncrementalPlicationChecker(final Plication plication, final ManagedScript mgdScript, final Term lhs) {
-		super();
 		mPlication = plication;
 		mMgdScript = mgdScript;
 		mLhs = lhs;
@@ -140,14 +139,11 @@ public class IncrementalPlicationChecker {
 	}
 
 	/**
-	 * Construct a substitution that replaces all free TermVariables of lhs
-	 * by constants and declares these constants.
+	 * Construct a substitution that replaces all free TermVariables of lhs by constants and declares these constants.
 	 */
 	private Map<TermVariable, Term> constructVar2ConstSubstitution(final Term term) {
 		final Set<TermVariable> allTvs = new HashSet<>(Arrays.asList(term.getFreeVars()));
-		final Map<TermVariable, Term> substitutionMapping = SmtUtils.termVariables2Constants(mMgdScript.getScript(),
-				allTvs, true);
-		return substitutionMapping;
+		return SmtUtils.termVariables2Constants(mMgdScript.getScript(), allTvs, true);
 	}
 
 	public Validity checkPlication(final Term rhs) {
@@ -184,7 +180,7 @@ public class IncrementalPlicationChecker {
 			break;
 		case IMPLICATION:
 			assertTerm = additionalTerm;
-//			assertTerm = SmtUtils.not(mMgdScript.getScript(), additionalTerm);
+			// assertTerm = SmtUtils.not(mMgdScript.getScript(), additionalTerm);
 			break;
 		default:
 			throw new AssertionError("unknown case");
@@ -195,7 +191,6 @@ public class IncrementalPlicationChecker {
 		return isSat;
 	}
 
-
 	public void unlockSolver() {
 		if (mLhsIsAsserted) {
 			mMgdScript.pop(this, 1);
@@ -205,4 +200,3 @@ public class IncrementalPlicationChecker {
 		}
 	}
 }
-

@@ -61,7 +61,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
@@ -146,11 +145,11 @@ public class ErrorGeneralizationEngine<L extends IIcfgTransition<?>> implements 
 
 	public void constructErrorAutomaton(final IRun<L, ?> counterexample, final PredicateFactory predicateFactory,
 			final IPredicateUnifier predicateUnifier, final CfgSmtToolkit csToolkit,
-			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
-			final IIcfgSymbolTable symbolTable, final PredicateFactoryForInterpolantAutomata stateFactoryForAutomaton,
-			final INestedWordAutomaton<L, IPredicate> abstraction, final int iteration) {
+			final SimplificationTechnique simplificationTechnique, final IIcfgSymbolTable symbolTable,
+			final PredicateFactoryForInterpolantAutomata stateFactoryForAutomaton, final INestedWordAutomaton<L, IPredicate> abstraction,
+			final int iteration) {
 		constructErrorAutomaton(counterexample, predicateFactory, predicateUnifier, csToolkit, simplificationTechnique,
-				xnfConversionTechnique, symbolTable, stateFactoryForAutomaton, abstraction, iteration, mType);
+				symbolTable, stateFactoryForAutomaton, abstraction, iteration, mType);
 	}
 
 	/**
@@ -164,8 +163,6 @@ public class ErrorGeneralizationEngine<L extends IIcfgTransition<?>> implements 
 	 *            SMT toolkit
 	 * @param simplificationTechnique
 	 *            simplification technique
-	 * @param xnfConversionTechnique
-	 *            XNF conversion technique
 	 * @param symbolTable
 	 *            symbol table
 	 * @param stateFactoryForAutomaton
@@ -177,9 +174,9 @@ public class ErrorGeneralizationEngine<L extends IIcfgTransition<?>> implements 
 	 */
 	public void constructErrorAutomaton(final IRun<L, ?> counterexample, final PredicateFactory predicateFactory,
 			final IPredicateUnifier predicateUnifier, final CfgSmtToolkit csToolkit,
-			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
-			final IIcfgSymbolTable symbolTable, final PredicateFactoryForInterpolantAutomata stateFactoryForAutomaton,
-			final INestedWordAutomaton<L, IPredicate> abstraction, final int iteration, final ErrorAutomatonType type) {
+			final SimplificationTechnique simplificationTechnique, final IIcfgSymbolTable symbolTable,
+			final PredicateFactoryForInterpolantAutomata stateFactoryForAutomaton, final INestedWordAutomaton<L, IPredicate> abstraction,
+			final int iteration, final ErrorAutomatonType type) {
 		mErrorTraces.addTrace(counterexample);
 		mLastIteration = iteration;
 
@@ -199,13 +196,13 @@ public class ErrorGeneralizationEngine<L extends IIcfgTransition<?>> implements 
 				break;
 			case ERROR_AUTOMATON:
 				mErrorAutomatonBuilder = new ErrorAutomatonBuilder<>(mServices, predicateFactory, predicateUnifier,
-						csToolkit, simplificationTechnique, xnfConversionTechnique, symbolTable,
-						stateFactoryForAutomaton, abstraction, trace);
+						csToolkit, simplificationTechnique, symbolTable, stateFactoryForAutomaton,
+						abstraction, trace);
 				break;
 			case DANGER_AUTOMATON:
 				mErrorAutomatonBuilder = new DangerAutomatonBuilder<>(mServices, predicateFactory, predicateUnifier,
-						csToolkit, simplificationTechnique, xnfConversionTechnique, symbolTable,
-						stateFactoryForAutomaton, abstraction, trace);
+						csToolkit, simplificationTechnique, symbolTable, stateFactoryForAutomaton,
+						abstraction, trace);
 				break;
 			default:
 				throw new IllegalArgumentException("Unknown automaton type: " + type);
@@ -281,7 +278,7 @@ public class ErrorGeneralizationEngine<L extends IIcfgTransition<?>> implements 
 	public boolean isResultUnsafe(final Result abstractResult, final INestedWordAutomaton<L, IPredicate> cfg,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final IPredicateUnifier predicateUnifier, final SimplificationTechnique simplificationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique, final IIcfgSymbolTable symbolTable) {
+			final IIcfgSymbolTable symbolTable) {
 		if (mErrorTraces.isEmpty()) {
 			return false;
 		}
@@ -325,7 +322,7 @@ public class ErrorGeneralizationEngine<L extends IIcfgTransition<?>> implements 
 		// apply fault localization to all error traces
 		// TODO currently this is done in BasicCegarLoop after each error automaton construction due to timeout problems
 		aggregateFaultLocalization(cfg, csToolkit, predicateFactory, predicateUnifier, simplificationTechnique,
-				xnfConversionTechnique, symbolTable);
+				symbolTable);
 
 		// TODO 2017-06-18 Christian: Currently we want to run the CEGAR loop until the abstraction is empty.
 		// return abstractResult == Result.SAFE;
@@ -336,7 +333,7 @@ public class ErrorGeneralizationEngine<L extends IIcfgTransition<?>> implements 
 	private void aggregateFaultLocalization(final INestedWordAutomaton<L, IPredicate> cfg,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final IPredicateUnifier predicateUnifier, final SimplificationTechnique simplificationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique, final IIcfgSymbolTable symbolTable) {
+			final IIcfgSymbolTable symbolTable) {
 		final Map<IcfgLocation, Set<L>> finalLoc2responsibleStmts = new HashMap<>();
 		final List<ErrorLocalizationStatisticsGenerator> faultLocalizerStatistics = new ArrayList<>();
 		final Iterator<Collection<L>> relevantStatementsIt = mRelevantStatements.iterator();
@@ -361,30 +358,29 @@ public class ErrorGeneralizationEngine<L extends IIcfgTransition<?>> implements 
 	public void faultLocalizationWithStorage(final INestedWordAutomaton<L, IPredicate> cfg,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final IPredicateUnifier predicateUnifier, final SimplificationTechnique simplificationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique, final IIcfgSymbolTable symbolTable,
-			final List<ErrorLocalizationStatisticsGenerator> faultLocalizerStatistics,
-			final NestedRun<L, IPredicate> trace, final IIcfg<IcfgLocation> Icfg) {
+			final IIcfgSymbolTable symbolTable, final List<ErrorLocalizationStatisticsGenerator> faultLocalizerStatistics,
+			final NestedRun<L, IPredicate> trace,
+			final IIcfg<IcfgLocation> Icfg) {
 		final List<ErrorLocalizationStatisticsGenerator> realFaultLocalizerStatistics =
 				faultLocalizerStatistics == null ? mFaultLocalizerStatistics : faultLocalizerStatistics;
 		mRelevantStatements
 				.add(faultLocalization(cfg, csToolkit, predicateFactory, predicateUnifier, simplificationTechnique,
-						xnfConversionTechnique, symbolTable, realFaultLocalizerStatistics, trace, Icfg));
+						symbolTable, realFaultLocalizerStatistics, trace, Icfg));
 	}
 
 	/**
 	 * Fault localization of single trace.
-	 *
 	 * @param icfg
 	 */
 	private Collection<L> faultLocalization(final INestedWordAutomaton<L, IPredicate> cfg,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final IPredicateUnifier predicateUnifier, final SimplificationTechnique simplificationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique, final IIcfgSymbolTable symbolTable,
-			final List<ErrorLocalizationStatisticsGenerator> faultLocalizerStatistics,
-			final NestedRun<L, IPredicate> trace, final IIcfg<IcfgLocation> icfg) {
+			final IIcfgSymbolTable symbolTable, final List<ErrorLocalizationStatisticsGenerator> faultLocalizerStatistics,
+			final NestedRun<L, IPredicate> trace,
+			final IIcfg<IcfgLocation> icfg) {
 		final FlowSensitiveFaultLocalizer<L> faultLocalizer = new FlowSensitiveFaultLocalizer<>(trace, cfg, mServices,
 				csToolkit, predicateFactory, csToolkit.getModifiableGlobalsTable(), predicateUnifier,
-				RelevanceAnalysisMode.SINGLE_TRACE, simplificationTechnique, xnfConversionTechnique, symbolTable, icfg);
+				RelevanceAnalysisMode.SINGLE_TRACE, simplificationTechnique, symbolTable, icfg);
 		final List<IRelevanceInformation> relevanceInformation = faultLocalizer.getRelevanceInformation();
 		if (faultLocalizerStatistics != null) {
 			faultLocalizerStatistics.add(faultLocalizer.getStatistics());

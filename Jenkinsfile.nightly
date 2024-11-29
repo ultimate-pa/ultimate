@@ -19,14 +19,14 @@ pipeline {
   }
   options {
     skipDefaultCheckout()
-    timeout(time: 10, unit: 'HOURS')
+    timeout(time: 12, unit: 'HOURS')
     timestamps()
   }
   environment {
     PATH = "${env.WORKSPACE}/releaseScripts/default/adds:${env.PATH}"
   }
   tools {
-    jdk 'JDK11'
+    jdk 'JDK21'
     maven 'Maven 3.9.8'
   }
   stages {
@@ -42,7 +42,7 @@ pipeline {
     stage('Check environment') {
       when {
         anyOf {
-          expression { return !currentBuild.changeSets.isEmpty() }
+          expression { return util.hasChanges(scmVars) }
           triggeredBy cause: 'UserIdCause'
         }
       }
@@ -67,7 +67,7 @@ pipeline {
     stage('Collect reference build') {
       when {
         anyOf {
-          expression { return !currentBuild.changeSets.isEmpty() }
+          expression { return util.hasChanges(scmVars) }
           triggeredBy cause: 'UserIdCause'
         }
       }
@@ -80,7 +80,7 @@ pipeline {
     stage('Build and run nightly tests') {
       when {
         anyOf {
-          expression { return !currentBuild.changeSets.isEmpty() }
+          expression { return util.hasChanges(scmVars) }
           triggeredBy cause: 'UserIdCause'
         }
       }
@@ -106,15 +106,15 @@ pipeline {
           expression { return currentBuild.result == 'SUCCESS' || currentBuild.result == 'UNSTABLE' }
           branch 'dev'
           anyOf {
-            expression { return !currentBuild.changeSets.isEmpty() }
+            expression { return util.hasChanges(scmVars) }
             triggeredBy cause: 'UserIdCause'
           }
         }
       }
       steps {
         withCredentials([string(credentialsId: 'SonarTokenJenkinsPipeline', variable: 'SONAR_TOKEN')]) {
-          withMaven(mavenOpts: '-Xmx4g -Xss4m', options: [jacocoPublisher()], publisherStrategy: 'EXPLICIT') {
-            sh 'cd trunk/source/BA_MavenParentUltimate && mvn sonar:sonar -Pcoverage -Dsonar.host.url=https://sonar.sopranium.de -Dsonar.login=$SONAR_TOKEN'
+          withMaven(mavenOpts: '-Xmx4g -Xss4m', options: [jacocoPublisher()], publisherStrategy: 'EXPLICIT', traceability: true) {
+            sh 'cd trunk/source/BA_MavenParentUltimate && mvn install -Psonar -Dsonar.host.url=https://sonar.sopranium.de -Dsonar.token=$SONAR_TOKEN'
           }
         }
       }
@@ -123,7 +123,7 @@ pipeline {
       when {
         allOf {
           branch 'dev'
-          expression { return !currentBuild.changeSets.isEmpty() }
+          expression { return util.hasChanges(scmVars) }
           expression { return currentBuild.result == 'SUCCESS' || currentBuild.result == 'UNSTABLE' }
         }
       }

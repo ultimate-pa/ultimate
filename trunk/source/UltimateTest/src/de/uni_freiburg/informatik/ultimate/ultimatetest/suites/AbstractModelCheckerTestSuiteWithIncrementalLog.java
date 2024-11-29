@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.ultimatetest.suites;
 
 import java.util.Collection;
 
+import de.uni_freiburg.informatik.ultimate.test.AbstractModelCheckerTestSuite;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimate.test.logs.incremental.IncrementalLogWithVMParameters;
 import de.uni_freiburg.informatik.ultimate.test.reporting.IIncrementalLog;

@@ -30,7 +30,7 @@ import java.util.Set;
 
 /**
  * Defines specification types for arbitrary checks and analyzes.
- * 
+ *
  * @author Manuel Bentele
  */
 public enum Spec {
@@ -159,6 +159,12 @@ public enum Spec {
 			"petrification did provide enough thread instances (tool internal message)",
 			"petrification did not provide enough thread instances (tool internal message)"),
 	/**
+	 * Check if a program contains unsupported features
+	 */
+	UNSUPPORTED_FEATURE(Group.PROGRAM,
+			"there are no unsupported features in the program",
+			"unsupported features may occur in the program"),
+	/**
 	 * Check data races in concurrent programs.
 	 */
 	DATA_RACE(Group.PROGRAM,
@@ -197,7 +203,19 @@ public enum Spec {
 	 */
 	INCOMPLETE(Group.REQUIREMENT,
 			"complete",
-			"incomplete");
+			"incomplete"),
+	/**
+	 * Checks if two PEAs accept each others complement language.
+	 */
+	COMPLEMENT(Group.REQUIREMENT,
+			"complements of each other",
+			"not complements of each other"),
+	/**
+	* Checks for redundancy.
+	*/
+	REDUNDANCY(Group.REQUIREMENT,
+			"non-redundant",
+			"redundant");
 	// @formatter:on
 
 	/**
@@ -236,7 +254,7 @@ public enum Spec {
 
 	/**
 	 * Create a new specification type.
-	 * 
+	 *
 	 * @param group
 	 *            specification group for the specification type.
 	 */
@@ -246,7 +264,7 @@ public enum Spec {
 
 	/**
 	 * Create a new specification type.
-	 * 
+	 *
 	 * @param group
 	 *            specification group for the specification type.
 	 * @param defaultPosMsg
@@ -262,10 +280,10 @@ public enum Spec {
 
 	/**
 	 * Check if specification type is part of the given group.
-	 * 
+	 *
 	 * @param group
 	 *            specification group for the check.
-	 * 
+	 *
 	 * @return {@code true} if specification type is part of the given group, otherwise {@link false}.
 	 */
 	public boolean isInGroup(final Spec.Group group) {
@@ -274,10 +292,10 @@ public enum Spec {
 
 	/**
 	 * Check if specification type is part of a set of given groups.
-	 * 
+	 *
 	 * @param groups
 	 *            set of specification group for the check.
-	 * 
+	 *
 	 * @return {@code true} if specification type is part a set of given groups, otherwise {@link false}.
 	 */
 	public boolean isInGroups(final Set<Spec.Group> groups) {
@@ -286,27 +304,27 @@ public enum Spec {
 
 	/**
 	 * Return the default message of a specification type depending on the default message.
-	 * 
+	 *
 	 * If the given default message is a valid message of the specification type, then return the given default message.
 	 * Otherwise return the specified fallback message.
-	 * 
+	 *
 	 * @param defaultMsg
 	 *            default message of the specification type.
 	 * @param fallbackMsg
 	 *            fallback message for the specification type.
-	 * 
+	 *
 	 * @return default message for the specification type.
 	 */
 	private String getDefaultMessage(final String defaultMsg, final String fallbackMsg) {
-		return (defaultMsg == null) ? String.format("%s: %s", fallbackMsg, this) : defaultMsg;
+		return defaultMsg == null ? String.format("%s: %s", fallbackMsg, this) : defaultMsg;
 	}
 
 	/**
 	 * Return the default positive message of the specification type.
-	 * 
+	 *
 	 * If there is no positive default message for the specification type defined, the
 	 * {@link #FALLBACK_POSITIVE_MESSAGE} is returned.
-	 * 
+	 *
 	 * @return default positive message of the specification type.
 	 */
 	public String getDefaultPositiveMessage() {
@@ -315,10 +333,10 @@ public enum Spec {
 
 	/**
 	 * Return the default negative message of the specification type.
-	 * 
+	 *
 	 * If there is no negative default message for the specification type defined, the
 	 * {@link #FALLBACK_NEGATIVE_MESSAGE} is returned.
-	 * 
+	 *
 	 * @return default negative message of the specification type.
 	 */
 	public String getDefaultNegativeMessage() {

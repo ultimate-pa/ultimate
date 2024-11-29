@@ -37,10 +37,9 @@ import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
  *
  */
 public final class TimeTracker {
-
-	private long mStartTime;
+	private long mStartTime = -1L;
 	private long mElapsedTimeNs;
-	private long mLastDeltaNs;
+	private long mLastDeltaNs = -1L;
 
 	public TimeTracker() {
 		reset();
@@ -63,18 +62,21 @@ public final class TimeTracker {
 	}
 
 	public void start() {
+		assert mStartTime == -1L : "TimeTracker already running";
 		mStartTime = System.nanoTime();
 	}
 
 	public void stop() {
+		assert mStartTime != -1L : "TimeTracker was not running";
 		mLastDeltaNs = System.nanoTime() - mStartTime;
-		mElapsedTimeNs = mLastDeltaNs + mElapsedTimeNs;
+		mElapsedTimeNs += mLastDeltaNs;
+		mStartTime = -1L;
 	}
 
 	public void reset() {
-		mStartTime = -1;
-		mElapsedTimeNs = 0;
-		mLastDeltaNs = -1;
+		mStartTime = -1L;
+		mElapsedTimeNs = 0L;
+		mLastDeltaNs = -1L;
 	}
 
 	@Override
@@ -86,13 +88,15 @@ public final class TimeTracker {
 	}
 
 	public long lastDelta(final TimeUnit unit) {
-		if (mLastDeltaNs == -1) {
+		assert mStartTime == -1L : "TimeTracker currently running";
+		if (mLastDeltaNs == -1L) {
 			throw new IllegalStateException("Clock was not started");
 		}
 		return unit.convert(mLastDeltaNs, TimeUnit.NANOSECONDS);
 	}
 
 	public long elapsedTime(final TimeUnit unit) {
+		assert mStartTime == -1L : "TimeTracker currently running";
 		return unit.convert(mElapsedTimeNs, TimeUnit.NANOSECONDS);
 	}
 }

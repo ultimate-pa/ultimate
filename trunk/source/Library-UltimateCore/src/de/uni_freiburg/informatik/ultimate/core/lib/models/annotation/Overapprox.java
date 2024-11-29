@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotat
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  * Annotation for transition (e.g., CodeBlock) that indicates that it was not build by a semantics preserving
@@ -54,9 +55,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecut
 public class Overapprox extends ModernAnnotations {
 
 	private static final long serialVersionUID = -575969312624287029L;
-	public static final String BITVEC = "bitvector operation";
-	public static final String BITSHIFT_OVERFLOW = "overflow check for bitwise shift operation";
-	public static final String FUNC_POINTER = "call of function pointer";
 
 	@Visualizable
 	private final Map<String, ILocation> mReason2Loc;
@@ -78,21 +76,23 @@ public class Overapprox extends ModernAnnotations {
 		return mReason2Loc;
 	}
 
-	public static Map<String, ILocation> getOverapproximations(final List<? extends IElement> trace) {
-		final Map<String, ILocation> result = new HashMap<>();
+	public static HashRelation<String, ILocation> getOverapproximations(final List<? extends IElement> trace) {
+		final HashRelation<String, ILocation> result = new HashRelation<>();
 		for (final IElement elem : trace) {
 			final Overapprox overapprox = Overapprox.getAnnotation(elem);
 			if (overapprox == null) {
 				continue;
 			}
-			result.putAll(overapprox.getOverapproximatedLocations());
+			for (final Entry<String, ILocation> entry : overapprox.getOverapproximatedLocations().entrySet()) {
+				result.addPair(entry.getKey(), entry.getValue());
+			}
 		}
 		return result;
 	}
 
-	public static <TE extends IElement> Map<String, ILocation>
-			getOverapproximations(final IProgramExecution<TE, ?> pe) {
-		final Map<String, ILocation> result = new HashMap<>();
+	public static <TE extends IElement> HashRelation<String, ILocation> getOverapproximations(
+			final IProgramExecution<TE, ?> pe) {
+		final HashRelation<String, ILocation> result = new HashRelation<>();
 		final Iterator<AtomicTraceElement<TE>> iter = pe.iterator();
 		while (iter.hasNext()) {
 			final TE current = iter.next().getTraceElement();
@@ -100,7 +100,9 @@ public class Overapprox extends ModernAnnotations {
 			if (overapprox == null) {
 				continue;
 			}
-			result.putAll(overapprox.getOverapproximatedLocations());
+			for (final Entry<String, ILocation> entry : overapprox.getOverapproximatedLocations().entrySet()) {
+				result.addPair(entry.getKey(), entry.getValue());
+			}
 		}
 		return result;
 	}

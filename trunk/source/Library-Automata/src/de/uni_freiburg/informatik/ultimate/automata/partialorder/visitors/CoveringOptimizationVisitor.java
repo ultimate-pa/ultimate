@@ -52,7 +52,7 @@ import java.util.Set;
  *            The type of states in the explored automaton
  */
 public class CoveringOptimizationVisitor<L, S> extends WrapperVisitor<L, S, IDfsVisitor<L, S>> {
-	private final ICoveringRelation<S> mCoveringRelation;
+	private final IGeneralizedCoveringRelation<S> mCoveringRelation;
 	private final CoveringMode mMode;
 	private final Map<Object, Set<S>> mCoveringMap = new HashMap<>();
 
@@ -87,11 +87,16 @@ public class CoveringOptimizationVisitor<L, S> extends WrapperVisitor<L, S, IDfs
 
 	@Override
 	public boolean discoverTransition(final S source, final L letter, final S target) {
-		final S cover = getCoveringState(target);
+		final Set<S> cover = getCoveringStates(target);
 		switch (mMode) {
 		case REDIRECT:
-			final boolean result = super.discoverTransition(source, letter, cover == null ? target : cover);
-			return result || cover != null;
+			if (cover == null) {
+				return super.discoverTransition(source, letter, target);
+			}
+			for (final var old : cover) {
+				super.discoverTransition(source, letter, old);
+			}
+			return true;
 		case PRUNE:
 			if (cover != null) {
 				return true;
@@ -102,19 +107,14 @@ public class CoveringOptimizationVisitor<L, S> extends WrapperVisitor<L, S, IDfs
 		}
 	}
 
-	private S getCoveringState(final S state) {
+	private Set<S> getCoveringStates(final S state) {
 		final Object key = mCoveringRelation.getKey(state);
 		final Set<S> cover = mCoveringMap.get(key);
 		if (cover == null || cover.contains(state)) {
 			return null;
 		}
 
-		for (final S old : cover) {
-			if (mCoveringRelation.covers(old, state)) {
-				return old;
-			}
-		}
-		return null;
+		return mCoveringRelation.coveringStates(cover, state);
 	}
 
 	@Override
@@ -148,7 +148,7 @@ public class CoveringOptimizationVisitor<L, S> extends WrapperVisitor<L, S, IDfs
 	 *            The type of states.
 	 */
 	@FunctionalInterface
-	public interface ICoveringRelation<S> {
+	public interface ICoveringRelation<S> extends IGeneralizedCoveringRelation<S> {
 		/**
 		 * Determines if a given old (already explored) state covers a given new (possibly unexplored) state.
 		 *
@@ -159,6 +159,29 @@ public class CoveringOptimizationVisitor<L, S> extends WrapperVisitor<L, S, IDfs
 		 * @return true if the old state covers the new state, false otherwise
 		 */
 		boolean covers(S oldState, S newState);
+
+		@Override
+		default Set<S> coveringStates(final Set<S> oldStates, final S newState) {
+			final var covering = oldStates.stream().filter(o -> covers(o, newState)).findAny();
+			if (covering.isEmpty()) {
+				return null;
+			}
+			return Set.of(covering.get());
+		}
+	}
+
+	@FunctionalInterface
+	public interface IGeneralizedCoveringRelation<S> {
+		/**
+		 * Determines if some given old (already explored) states jointly cover a given new (possibly unexplored) state.
+		 *
+		 * @param oldStates
+		 *            a set of previously explored states
+		 * @param newState
+		 *            a state about to be explored
+		 * @return a subset of old states that jointly cover the new state; or null if no such set could be found.
+		 */
+		Set<S> coveringStates(Set<S> oldStates, S newState);
 
 		/**
 		 * Can be used to optimize the search for old covering states. If a state s1 covers a state s2, then the call

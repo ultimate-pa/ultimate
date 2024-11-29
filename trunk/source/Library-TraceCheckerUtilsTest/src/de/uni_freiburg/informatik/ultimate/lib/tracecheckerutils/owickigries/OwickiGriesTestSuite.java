@@ -88,7 +88,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
@@ -303,13 +302,13 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 		assert new IsDeterministic<>(mAutomataServices, proof).getResult() : "Proof must be deterministic";
 
 		for (final var initial : proof.getInitialStates()) {
-			assert "true".equals(
-					initial.getFormula().toString()) : "Initial state of proof automaton must be labeled 'true'";
+			assert "true".equals(initial.getFormula().toString())
+					: "Initial state of proof automaton must be labeled 'true'";
 		}
 
 		for (final var accepting : proof.getFinalStates()) {
-			assert "false".equals(
-					accepting.getFormula().toString()) : "Accepting state of proof automaton must be labeled 'false'";
+			assert "false".equals(accepting.getFormula().toString())
+					: "Accepting state of proof automaton must be labeled 'false'";
 			assert NestedWordAutomataUtils.isSinkState(proof, accepting) : "State 'false' should be a sink";
 		}
 
@@ -467,7 +466,7 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 
 		// create predicate unifier for this iteration
 		final var unifier = new PredicateUnifier(mLogger, mServices, mMgdScript, mPredicateFactory, mSymbolTable,
-				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+				SimplificationTechnique.SIMPLIFY_DDA);
 		mUnifiers.add(unifier);
 
 		// parse states

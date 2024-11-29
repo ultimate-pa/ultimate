@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
@@ -56,7 +55,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ApplicationTermFinder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
@@ -242,9 +240,8 @@ public final class DebuggingHoareTripleChecker implements IHoareTripleChecker {
 				log.accept("--");
 				log.accept("Model of prestate for invars");
 				final UnmodifiableTransFormula actTf = getAction().getTransformula();
-				final ApplicationTermFinder selectFinder =
-						new ApplicationTermFinder(Collections.singleton("select"), false);
-				final Set<ApplicationTerm> selects = selectFinder.findMatchingSubterms(actTf.getClosedFormula());
+				final Set<ApplicationTerm> selects =
+						SmtUtils.extractApplicationTerms("select", actTf.getClosedFormula(), false);
 				for (final Entry<IProgramVar, TermVariable> entry : actTf.getInVars().entrySet()) {
 					final IProgramVar key = entry.getKey();
 					final TermVariable tv = key.getTermVariable();

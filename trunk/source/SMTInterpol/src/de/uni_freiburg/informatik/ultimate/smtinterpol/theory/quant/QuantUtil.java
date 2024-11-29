@@ -20,6 +20,7 @@ package de.uni_freiburg.informatik.ultimate.smtinterpol.theory.quant;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -28,12 +29,12 @@ import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SMTAffineTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.TermCompiler;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.Polynomial;
 
 /**
  * This class contains helper methods to classify quantified terms and literals.
- * 
+ *
  * @author Tanja Schindler
  */
 public class QuantUtil {
@@ -45,9 +46,9 @@ public class QuantUtil {
 	/**
 	 * Check if a given term is essentially uninterpreted, i.e., it is ground or variables only appear as arguments of
 	 * uninterpreted functions.
-	 * 
+	 *
 	 * TODO Nonrecursive.
-	 * 
+	 *
 	 * @param term
 	 *            The term to check.
 	 * @return true if the term is essentially uninterpreted, false otherwise.
@@ -59,7 +60,7 @@ public class QuantUtil {
 			final ApplicationTerm appTerm = (ApplicationTerm) term;
 			final FunctionSymbol func = appTerm.getFunction();
 			if (!func.isInterpreted()) {
-				for (Term arg : appTerm.getParameters()) {
+				for (final Term arg : appTerm.getParameters()) {
 					if (!(arg instanceof TermVariable)) {
 						if (!isEssentiallyUninterpreted(arg)) {
 							return false;
@@ -77,10 +78,12 @@ public class QuantUtil {
 				}
 				return true;
 			} else if (func.getName() == "+" || func.getName() == "-" || func.getName() == "*") {
-				final SMTAffineTerm affineTerm = SMTAffineTerm.create(term);
-				for (Term summand : affineTerm.getSummands().keySet()) {
-					if (!isEssentiallyUninterpreted(summand)) {
-						return false;
+				final Polynomial affineTerm = new Polynomial(term);
+				for (final Map<Term, Integer> summand : affineTerm.getSummands().keySet()) {
+					for (final Term factor : summand.keySet()) {
+						if (!isEssentiallyUninterpreted(factor)) {
+							return false;
+						}
 					}
 				}
 				return true;
@@ -96,7 +99,7 @@ public class QuantUtil {
 	 * Check if a quantified atom contains arithmetic on quantified terms only at top level, i.e., the left and right
 	 * hand side of the (in)equality are affine terms where the summands do not contain arithmetic on quantified terms
 	 * themselves.
-	 * 
+	 *
 	 * @param atom
 	 *            the quantified atom.
 	 * @return true if the literal contains arithmetic on quantified terms only at top level, false else.
@@ -107,9 +110,9 @@ public class QuantUtil {
 			return containsArithmeticOnQuantOnlyAtTopLevel(((QuantBoundConstraint) atom).getAffineTerm());
 		} else {
 			final QuantEquality eq = (QuantEquality) atom;
-			final SMTAffineTerm lhsAff = new SMTAffineTerm(eq.getLhs());
+			final Polynomial lhsAff = new Polynomial(eq.getLhs());
 			if (containsArithmeticOnQuantOnlyAtTopLevel(lhsAff)) {
-				final SMTAffineTerm rhsAff = new SMTAffineTerm(eq.getRhs());
+				final Polynomial rhsAff = new Polynomial(eq.getRhs());
 				return containsArithmeticOnQuantOnlyAtTopLevel(rhsAff);
 			}
 		}
@@ -119,7 +122,7 @@ public class QuantUtil {
 	/**
 	 * Check that any variable occurring in a quantified literal appears at least once in a function application within
 	 * this literal, excluding top level arithmetic function applications.
-	 * 
+	 *
 	 * @param atom
 	 *            the quantified atom.
 	 * @return true if each variable appears at least once in a function application, false else.
@@ -132,13 +135,19 @@ public class QuantUtil {
 			final QuantEquality eq = (QuantEquality) atom;
 			final Term lhs = eq.getLhs();
 			final Term rhs = eq.getRhs();
-			final SMTAffineTerm lhsAff = new SMTAffineTerm(lhs);
-			final SMTAffineTerm rhsAff = new SMTAffineTerm(rhs);
-			allSummandsWithoutCoeffs.addAll(lhsAff.getSummands().keySet());
-			allSummandsWithoutCoeffs.addAll(rhsAff.getSummands().keySet());
+			final Polynomial lhsAff = new Polynomial(lhs);
+			final Polynomial rhsAff = new Polynomial(rhs);
+			for (final Map<Term, Integer> monom : lhsAff.getSummands().keySet()) {
+				allSummandsWithoutCoeffs.addAll(monom.keySet());
+			}
+			for (final Map<Term, Integer> monom : rhsAff.getSummands().keySet()) {
+				allSummandsWithoutCoeffs.addAll(monom.keySet());
+			}
 		} else {
 			final QuantBoundConstraint bc = (QuantBoundConstraint) atom;
-			allSummandsWithoutCoeffs.addAll(bc.getAffineTerm().getSummands().keySet());
+			for (final Map<Term, Integer> monom : bc.getAffineTerm().getSummands().keySet()) {
+				allSummandsWithoutCoeffs.addAll(monom.keySet());
+			}
 		}
 		final Set<Term> varTerms = new HashSet<>();
 		final Set<TermVariable> varsInApps = new HashSet<>();
@@ -170,7 +179,7 @@ public class QuantUtil {
 	/**
 	 * For an arithmetical literal, get the terms t1, t2, such that the literal t1<t2 has form var<ground, ground<var,
 	 * var<var, or t1=t2 has form var=ground.
-	 * 
+	 *
 	 * @param arithLit
 	 *            an arithmetical literal
 	 * @return the array [t1,t2]
@@ -189,50 +198,63 @@ public class QuantUtil {
 			final QuantBoundConstraint bc = (QuantBoundConstraint) arithLit.getAtom();
 			TermVariable lowerVar = null;
 			TermVariable upperVar = null;
-			SMTAffineTerm remainder = new SMTAffineTerm();
-			SMTAffineTerm aff = bc.getAffineTerm();
-			for (final Entry<Term, Rational> smd : aff.getSummands().entrySet()) {
-				if (smd.getKey() instanceof TermVariable) {
+			final Polynomial remainder = new Polynomial();
+			final Polynomial aff = bc.getAffineTerm();
+			for (final Entry<Map<Term, Integer>, Rational> smd : aff.getSummands().entrySet()) {
+				Term singleton = null;
+				if (smd.getKey().size() == 1 && smd.getKey().values().iterator().next() == 1) {
+					singleton = smd.getKey().keySet().iterator().next();
+				}
+				if (singleton instanceof TermVariable) {
 					if (smd.getValue().signum() < 0) {
 						assert t1 == null;
-						lowerVar = (TermVariable) smd.getKey();
+						lowerVar = (TermVariable) singleton;
 					} else {
 						assert upperVar == null;
-						upperVar = (TermVariable) smd.getKey();
+						upperVar = (TermVariable) singleton;
 					}
 				} else {
 					remainder.add(smd.getValue(), smd.getKey());
 				}
 			}
-			remainder.add(aff.getConstant());
 			assert lowerVar != null || upperVar != null;
 			if (lowerVar != null && upperVar != null) {
-				assert remainder.isConstant() && remainder.getConstant() == Rational.ZERO;
+				assert remainder.isZero();
 				t1 = lowerVar;
 				t2 = upperVar;
 			} else if (lowerVar != null) {
 				t1 = lowerVar;
-				t2 = remainder.toTerm(compiler, lowerVar.getSort());
+				t2 = remainder.toTerm(lowerVar.getSort());
 			} else {
-				remainder.negate();
-				t1 = remainder.toTerm(compiler, upperVar.getSort());
+				remainder.mul(Rational.MONE);
+				t1 = remainder.toTerm(upperVar.getSort());
 				t2 = upperVar;
 			}
 		}
 		return new Term[] { t1, t2 };
 	}
 
+	public static boolean isTermVariable(Map<Term, Integer> monom) {
+		return monom.size() == 1 &&
+				monom.values().iterator().next() == 1 &&
+				monom.keySet().iterator().next() instanceof TermVariable;
+	}
+
 	/**
 	 * Check if an affine term contains arithmetic on quantified terms only at top level, i.e., its summands do not
 	 * contain arithmetic on quantified terms.
-	 * 
+	 *
 	 * @param at
 	 *            the SMTAffineTerm to check
 	 */
-	public static boolean containsArithmeticOnQuantOnlyAtTopLevel(final SMTAffineTerm at) {
-		for (final Term smd : at.getSummands().keySet()) {
-			if (!(smd instanceof TermVariable) && !isSimpleEU(smd)) {
-				return false;
+	public static boolean containsArithmeticOnQuantOnlyAtTopLevel(final Polynomial at) {
+		for (final Map<Term,Integer> monom : at.getSummands().keySet()) {
+			if (!isTermVariable(monom)) {
+				for (final Term factor : monom.keySet()) {
+					if (!isSimpleEU(factor)) {
+						return false;
+					}
+				}
 			}
 		}
 		return true;
@@ -242,9 +264,9 @@ public class QuantUtil {
 	 * Check if a term is a "simple" EU term, i.e., it is ground, or an application of an uninterpreted function where
 	 * all arguments are variables or simple EU terms. (Exception: select behaves as an uninterpreted function but may
 	 * not have a variable as first argument.)
-	 * 
+	 *
 	 * TODO Nonrecursive.
-	 * 
+	 *
 	 * @param term
 	 *            the term to check.
 	 * @return true, if the term is a "simple" EU term, false otherwise.
@@ -282,13 +304,13 @@ public class QuantUtil {
 
 	/**
 	 * Check if a term is an application term with an internal {@literal @}AUX function.
-	 * 
+	 *
 	 * @param term
 	 *            the term to check.
 	 */
 	public static boolean isAuxApplication(final Term term) {
 		if (term instanceof ApplicationTerm) {
-			FunctionSymbol fsym = ((ApplicationTerm) term).getFunction();
+			final FunctionSymbol fsym = ((ApplicationTerm) term).getFunction();
 			return fsym.isIntern() && fsym.getName().startsWith("@AUX");
 		}
 		return false;
@@ -296,13 +318,13 @@ public class QuantUtil {
 
 	/**
 	 * Check if a term is a lambda.
-	 * 
+	 *
 	 * @param term
 	 *            the term to check.
 	 */
 	public static boolean isLambda(final Term term) {
 		if (term instanceof ApplicationTerm) {
-			FunctionSymbol fsym = ((ApplicationTerm) term).getFunction();
+			final FunctionSymbol fsym = ((ApplicationTerm) term).getFunction();
 			return fsym.isIntern() && fsym.getName().startsWith("@0");
 		}
 		return false;

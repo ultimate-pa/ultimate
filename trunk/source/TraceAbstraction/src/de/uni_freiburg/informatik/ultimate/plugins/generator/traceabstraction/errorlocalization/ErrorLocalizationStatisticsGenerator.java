@@ -40,7 +40,7 @@ public class ErrorLocalizationStatisticsGenerator implements IStatisticsDataProv
 	private final Benchmark mBenchmark;
 	private boolean mRunning = false;
 
-	private boolean mSuccesfullyFinished;
+	private boolean mSuccessfullyFinished;
 	private int mIcfgEdges;
 	private int mErrorEnforcingIcfgEdges;
 	private int mErrorAdmittingIcfgEdges;
@@ -69,11 +69,11 @@ public class ErrorLocalizationStatisticsGenerator implements IStatisticsDataProv
 		mBenchmark.pause(String.valueOf(ErrorLocalizationStatisticsDefinitions.ErrorLocalizationTime));
 	}
 	
-	public void reportSuccesfullyFinished() {
-		if (mSuccesfullyFinished) {
+	public void reportSuccessfullyFinished() {
+		if (mSuccessfullyFinished) {
 			throw new IllegalStateException("already finished before");
 		}
-		mSuccesfullyFinished = true;
+		mSuccessfullyFinished = true;
 	}
 	
 	public void reportIcfgEdge() {
@@ -129,8 +129,8 @@ public class ErrorLocalizationStatisticsGenerator implements IStatisticsDataProv
 			return mHoareTripleCheckerStatistics;
 		case IcfgEdges:
 			return mIcfgEdges;
-		case SuccesfullyFinished:
-			return mSuccesfullyFinished ? 1 : 0;
+		case SuccessfullyFinished:
+			return mSuccessfullyFinished ? 1 : 0;
 		default:
 			throw new AssertionError("unknown key");
 		}

@@ -1,7 +1,7 @@
 //#Safe
 /*
  * Variation of the HiddenEquality example.
- * The loop invariant 1000-y<=x allows us to prove correctness.
+ * The loop invariant 1000-y>=x allows us to prove correctness.
  * 
  * Date: 2017-04-26
  * Author: greitsch@informatik.uni-freiburg.de

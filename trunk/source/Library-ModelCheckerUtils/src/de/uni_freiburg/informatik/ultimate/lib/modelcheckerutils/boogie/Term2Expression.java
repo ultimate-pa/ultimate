@@ -35,6 +35,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BitvectorFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
@@ -214,20 +215,17 @@ public final class Term2Expression implements Serializable {
 					return translateBitvectorAccess(type, term);
 				} else if ("concat".equals(symb.getName())) {
 					return translateBitvectorConcat(type, term);
-				} else if (Arrays
-						.asList(new String[] { "bvsle", "bvslt", "bvsge", "bvsgt", "bvule", "bvult", "bvuge", "bvugt" })
+				} else if (Arrays.asList("bvsle", "bvslt", "bvsge", "bvsgt", "bvule", "bvult", "bvuge", "bvugt")
 						.contains(symb.getName())) {
 					return BitvectorFactory.constructBinaryOperationForMultipleArguments(null,
 							BvOp.valueOf(symb.getName()), params);
-				} else if (Arrays.asList(new String[] { "zero_extend", "sign_extend" }).contains(symb.getName())) {
+				} else if (Arrays.asList("zero_extend", "sign_extend").contains(symb.getName())) {
 					return BitvectorFactory.constructExtendOperation(null, ExtendOperation.valueOf(symb.getName()),
 							new BigInteger(symb.getIndices()[0]), params[0]);
-				} else if (Arrays.asList(new String[] { "bvnot", "bvneg" }).contains(symb.getName())) {
+				} else if (Arrays.asList("bvnot", "bvneg").contains(symb.getName())) {
 					return BitvectorFactory.constructUnaryOperation(null, BvOp.valueOf(symb.getName()), params[0]);
-				} else if (Arrays
-						.asList(new String[] { "bvadd", "bvsub", "bvmul", "bvudiv", "bvurem", "bvsdiv", "bvsrem",
-								"bvsmod", "bvand", "bvor", "bvxor", "bvshl", "bvlshr", "bvashr" })
-						.contains(symb.getName())) {
+				} else if (Arrays.asList("bvadd", "bvsub", "bvmul", "bvudiv", "bvurem", "bvsdiv", "bvsrem", "bvsmod",
+						"bvand", "bvor", "bvxor", "bvshl", "bvlshr", "bvashr").contains(symb.getName())) {
 					return BitvectorFactory.constructBinaryOperationForMultipleArguments(null,
 							BvOp.valueOf(symb.getName()), params);
 				} else {
@@ -237,6 +235,14 @@ public final class Term2Expression implements Serializable {
 			} else if (symb.getParameterSorts().length == 1) {
 				if ("not".equals(symb.getName())) {
 					final Expression param = translate(term.getParameters()[0]);
+					if (param instanceof BinaryExpression) {
+						// Translate (not (= (x y)) to x != y
+						final BinaryExpression binary = (BinaryExpression) param;
+						if (binary.getOperator() == Operator.COMPEQ) {
+							return new BinaryExpression(binary.getLoc(), binary.getType(), Operator.COMPNEQ,
+									binary.getLeft(), binary.getRight());
+						}
+					}
 					return new UnaryExpression(null, type, UnaryExpression.Operator.LOGICNEG, param);
 				} else if ("-".equals(symb.getName())) {
 					final Expression param = translate(term.getParameters()[0]);
@@ -259,6 +265,11 @@ public final class Term2Expression implements Serializable {
 					} else {
 						throw new UnsupportedOperationException("todo: implement more comprehensive to_real");
 					}
+				} else if ("const".equals(symb.getName())) {
+					// We don't support the backtranslation for now
+					// If we want to backtranslate the Boogie expression to C, null is handled there
+					// TODO: Backtranslate const properly
+					return null;
 				} else {
 					throw new IllegalArgumentException("unknown symbol " + symb);
 				}
@@ -328,7 +339,7 @@ public final class Term2Expression implements Serializable {
 		assert term.getSort().getIndices().length == 1;
 		final String name = term.getFunction().getName();
 		assert name.startsWith("bv");
-		final String decimalValue = name.substring(2, name.length());
+		final String decimalValue = name.substring(2);
 		final IBoogieType type = mTypeSortTranslator.getType(term.getSort());
 		final BigInteger length = new BigInteger(term.getSort().getIndices()[0]);
 		return new BitvecLiteral(null, type, decimalValue, length.intValue());
@@ -397,17 +408,9 @@ public final class Term2Expression implements Serializable {
 			if (indices.length != 1) {
 				throw new AssertionError("BitVec has exactly one index");
 			}
-
-			BigInteger decimalValue;
-			if (value.toString().startsWith("#x")) {
-				decimalValue = new BigInteger(value.toString().substring(2), 16);
-			} else if (value.toString().startsWith("#b")) {
-				decimalValue = new BigInteger(value.toString().substring(2), 2);
-			} else {
-				throw new UnsupportedOperationException("only hexadecimal values and boolean values supported yet");
-			}
+			final BigInteger bigInteger = BitvectorUtils.extractValueFromBitvectorConstant(term);
 			final int length = Integer.valueOf(indices[0]);
-			return new BitvecLiteral(null, type, String.valueOf(decimalValue), length);
+			return new BitvecLiteral(null, type, String.valueOf(bigInteger), length);
 		}
 		if (value instanceof String) {
 			return new StringLiteral(null, type, value.toString());
@@ -448,7 +451,7 @@ public final class Term2Expression implements Serializable {
 		final IBoogieType type = mTypeSortTranslator.getType(term.getSort());
 		assert term.getQuantifier() == QuantifiedFormula.FORALL || term.getQuantifier() == QuantifiedFormula.EXISTS;
 		final boolean isUniversal = term.getQuantifier() == QuantifiedFormula.FORALL;
-		final String[] typeParams = new String[0];
+		final String[] typeParams = {};
 		Attribute[] attributes;
 		Term subTerm = term.getSubformula();
 		if (subTerm instanceof AnnotatedTerm) {
@@ -505,14 +508,11 @@ public final class Term2Expression implements Serializable {
 					new DeclarationInformation(StorageClass.QUANTIFIED, null));
 		} else {
 			final IProgramVar pv = mBoogie2SmtSymbolTable.getProgramVar(term);
-			// final BoogieASTNode astNode =
-			// assert astNode != null : "There is no AstNode for the IProgramVar " + pv;
-			// final ILocation loc = astNode.getLocation();
 			final ILocation loc = mBoogie2SmtSymbolTable.getLocation(pv);
 			final DeclarationInformation declInfo = mBoogie2SmtSymbolTable.getDeclarationInformation(pv);
 			if (pv instanceof LocalProgramVar) {
-				result = new IdentifierExpression(loc, type, translateIdentifier(((LocalProgramVar) pv).getIdentifier()),
-						declInfo);
+				result = new IdentifierExpression(loc, type,
+						translateIdentifier(((LocalProgramVar) pv).getIdentifier()), declInfo);
 			} else if (pv instanceof ProgramNonOldVar) {
 				result = new IdentifierExpression(loc, type,
 						translateIdentifier(((ProgramNonOldVar) pv).getIdentifier()), declInfo);
@@ -525,14 +525,7 @@ public final class Term2Expression implements Serializable {
 				result = new IdentifierExpression(loc, type, translateIdentifier(((ProgramConst) pv).getIdentifier()),
 						declInfo);
 			} else {
-				// } else if (pv instanceof HcHeadVar) {
-				// TODO hack
 				result = new IdentifierExpression(loc, type, pv.getGloballyUniqueId(), declInfo);
-				// } else if (pv instanceof HcBodyVar) {
-				// result = new IdentifierExpression(loc, type, pv.getGloballyUniqueId(),
-				// declInfo);
-				// } else {
-				// throw new AssertionError("unsupported kind of variable " + pv.getClass().getSimpleName());
 			}
 		}
 		return result;
@@ -724,11 +717,7 @@ public final class Term2Expression implements Serializable {
 
 		@Override
 		public int hashCode() {
-			final int prime = 31;
-			int result = 1;
-			result = prime * result + mFreshIdentiferCounter;
-			result = prime * result + (mQuantifiedVariables == null ? 0 : mQuantifiedVariables.hashCode());
-			return result;
+			return Objects.hash(mFreshIdentiferCounter, mQuantifiedVariables);
 		}
 
 		@Override

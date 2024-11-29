@@ -244,7 +244,7 @@ public abstract class OwickiGriesValidityCheck<T, P> {
 		} else {
 			final var ghostTransition = ghostUpdate.makeTransitionFormula(mManagedScript, mAnnotation.getSymbolTable());
 			combinedTf = TransFormulaUtils.sequentialComposition(mLogger, mServices, mManagedScript, false, false,
-					false, null, null, Arrays.asList(transitionTf, ghostTransition));
+					false, null, Arrays.asList(transitionTf, ghostTransition));
 		}
 
 		return new BasicInternalAction(null, null, combinedTf);

@@ -27,13 +27,15 @@
 
 package de.uni_freiburg.informatik.ultimate.core.lib.models.annotation;
 
+import java.util.Objects;
+
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ProcedureContract;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 
 /**
- * Copy and paste of {@link WitnessInvariant}. Makeshift solution. In the future
- * both classes should be merged into one.
+ * Copy and paste of {@link WitnessInvariant}. Makeshift solution. In the future both classes should be merged into one.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
@@ -44,29 +46,26 @@ public class WitnessProcedureContract extends ModernAnnotations {
 	private static final String KEY = WitnessProcedureContract.class.getName();
 
 	@Visualizable
-	private final String mRequiresClause;
+	private final ProcedureContract<?, ?> mContract;
 
-	@Visualizable
-	private final String mEnsuresClause;
-
-	public WitnessProcedureContract(final String requiresClause, final String ensuresClause) {
-		mRequiresClause = requiresClause;
-		mEnsuresClause = ensuresClause;
+	public WitnessProcedureContract(final ProcedureContract<?, ?> contract) {
+		mContract = Objects.requireNonNull(contract);
 	}
 
-	public String getRequiresClause() {
-		return mRequiresClause;
+	public ProcedureContract<?, ?> getContract() {
+		return mContract;
 	}
 
-	public String getEnsuresClause() {
-		return mEnsuresClause;
+	public String getRequires() {
+		return mContract.getRequires() == null ? null : mContract.getRequires().toString();
+	}
+
+	public String getEnsures() {
+		return mContract.getEnsures() == null ? null : mContract.getEnsures().toString();
 	}
 
 	public void annotate(final IElement node) {
-		// Only add an annotation, if the expression was successfully backtranslated (i.e. is not null)
-		if (mEnsuresClause != null) {
-			node.getPayload().getAnnotations().put(KEY, this);
-		}
+		node.getPayload().getAnnotations().put(KEY, this);
 	}
 
 	public static WitnessProcedureContract getAnnotation(final IElement node) {

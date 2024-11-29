@@ -1,0 +1,28 @@
+(set-option :produce-proofs true)
+(set-logic QF_UFNIA)
+
+(declare-const x Int)
+(declare-const d Int)
+(declare-const a Int)
+(declare-const b Int)
+
+(push 1)
+(assert (not (= x (+ (* d (div x d)) (mod x d)))))
+(assert (not (= d 0)))
+(check-sat)
+(get-proof)
+(pop 1)
+
+(push 1)
+(assert (not (= x (+ (*(- 5) (div x(- 5))) (mod x(- 5))))))
+(assert (not (=(- 5) 0)))
+(check-sat)
+(get-proof)
+(pop 1)
+
+(push 1)
+(assert (not (= x (+ (*(- a b) (div x(- a b))) (mod x(- a b))))))
+(assert (not (=(- a b) 0)))
+(check-sat)
+(get-proof)
+(pop 1)

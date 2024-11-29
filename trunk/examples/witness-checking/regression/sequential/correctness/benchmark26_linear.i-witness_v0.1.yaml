@@ -1,0 +1,25 @@
+- entry_type: loop_invariant
+  metadata:
+    format_version: '0.1'
+    uuid: 61b1331d-2680-4534-a582-7f34df8382dc
+    creation_time: '2023-10-31T13:36:31+01:00'
+    producer:
+      name: UNUSED
+      version: 0.2.3-dev-b094d93-m
+    task:
+      input_files:
+      - C:\ultimate\trunk\examples\witness-checking\regression\correctness\benchmark26_linear.i
+      input_file_hashes:
+        C:\ultimate\trunk\examples\witness-checking\regression\correctness\benchmark26_linear.i: UNUSED
+      specification: UNUSED
+      data_model: UNUSED
+      language: C
+  location:
+    file_name: C:\ultimate\trunk\examples\witness-checking\regression\correctness\benchmark26_linear.i
+    file_hash: UNUSED
+    line: 23
+    function: main
+  loop_invariant:
+    string: (x < (y + 1))
+    type: assertion
+    format: C

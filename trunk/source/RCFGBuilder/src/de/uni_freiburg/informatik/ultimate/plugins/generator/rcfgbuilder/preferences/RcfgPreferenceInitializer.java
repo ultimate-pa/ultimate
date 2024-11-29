@@ -42,7 +42,21 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activat
 public class RcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 
 	public enum CodeBlockSize {
-		SingleStatement, OneNontrivialStatement, SequenceOfStatements, LoopFreeBlock
+		SingleStatement, OneNontrivialStatement, SequenceOfStatements, LoopFreeBlock;
+
+		public boolean isConcurrencySafe() {
+			switch (this) {
+			case SingleStatement:
+			case OneNontrivialStatement:
+				return true;
+			case SequenceOfStatements:
+			case LoopFreeBlock:
+				return false;
+			default:
+				throw new IllegalArgumentException(
+						"cannot determine concurrency safety for unknown CodeBlockSize " + this);
+			}
+		}
 	}
 
 	// some solver commands

@@ -19,7 +19,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermDomainOperationProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndexEqualityManager;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalSelectOverNestedStore;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalSelectOverStoreEliminationUtils;
@@ -40,7 +39,6 @@ public abstract class SpWpInterpolantProvider<LETTER extends IIcfgTransition<?>>
 		implements IInterpolantProvider<LETTER> {
 	private final ILogger mLogger;
 	private final SimplificationTechnique mSimplificationTechnique;
-	private final XnfConversionTechnique mXnfConversionTechnique;
 	private final ArrayIndexEqualityManager mAiem;
 	private final ManagedScript mManagedScript;
 	private final IUltimateServiceProvider mServices;
@@ -51,13 +49,12 @@ public abstract class SpWpInterpolantProvider<LETTER extends IIcfgTransition<?>>
 
 	public SpWpInterpolantProvider(final IUltimateServiceProvider services, final ILogger logger,
 			final ManagedScript managedScript, final SimplificationTechnique simplificationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique, final IPredicateUnifier predicateUnifier) {
+			final IPredicateUnifier predicateUnifier) {
 		mManagedScript = managedScript;
 		mScript = managedScript.getScript();
 		mServices = services;
 		mLogger = logger;
 		mSimplificationTechnique = simplificationTechnique;
-		mXnfConversionTechnique = xnfConversionTechnique;
 		mPredicateUnifier = predicateUnifier;
 		mPredicateTransformer =
 				new PredicateTransformer<>(mManagedScript, new TermDomainOperationProvider(mServices, mManagedScript));
@@ -103,7 +100,7 @@ public abstract class SpWpInterpolantProvider<LETTER extends IIcfgTransition<?>>
 
 	private IPredicate getPredicateWithAbstraction(final Term term, final Set<TermVariable> importantVars) {
 		Term result = McrUtils.abstractVariables(term, importantVars, getQuantifier(), mManagedScript, mServices,
-				mLogger, mSimplificationTechnique, mXnfConversionTechnique);
+				mLogger, mSimplificationTechnique);
 		if (!QuantifierUtils.isQuantifierFree(result)) {
 			return null;
 		}

@@ -28,7 +28,6 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.i
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Set;
 
 import org.junit.After;
 import org.junit.Before;
@@ -52,7 +51,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttrans
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -366,19 +364,19 @@ public class SemanticIndependenceConditionGeneratorTest {
 
 	private UnmodifiableTransFormula constructIte(final Term condition, final UnmodifiableTransFormula thenBranch,
 			final UnmodifiableTransFormula elseBranch) {
-		final UnmodifiableTransFormula takeThen = compose(TransFormulaBuilder.constructTransFormulaFromTerm(condition,
-				(Set) mSymbolTable.getGlobals(), mMgdScript), thenBranch);
+		final UnmodifiableTransFormula takeThen = compose(
+				TransFormulaBuilder.constructTransFormulaFromTerm(condition, mSymbolTable.getGlobals(), mMgdScript),
+				thenBranch);
 		final UnmodifiableTransFormula takeElse =
 				compose(TransFormulaBuilder.constructTransFormulaFromTerm(SmtUtils.not(mScript, condition),
-						(Set) mSymbolTable.getGlobals(), mMgdScript), elseBranch);
-		return TransFormulaUtils.parallelComposition(mLogger, mServices, mMgdScript, null, false,
-				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, true, takeThen, takeElse);
+						mSymbolTable.getGlobals(), mMgdScript), elseBranch);
+		return TransFormulaUtils.parallelComposition(mLogger, mServices, mMgdScript, null, false, true, takeThen,
+				takeElse);
 	}
 
-	private UnmodifiableTransFormula compose(final UnmodifiableTransFormula a, final UnmodifiableTransFormula b) {
+	private UnmodifiableTransFormula compose(final UnmodifiableTransFormula fst, final UnmodifiableTransFormula snd) {
 		return TransFormulaUtils.sequentialComposition(mLogger, mServices, mMgdScript, false, false, false,
-				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, SimplificationTechnique.SIMPLIFY_DDA,
-				Arrays.asList(a, b));
+				SimplificationTechnique.SIMPLIFY_DDA, Arrays.asList(fst, snd));
 	}
 
 	private Term parseWithVariables(final String syntax) {

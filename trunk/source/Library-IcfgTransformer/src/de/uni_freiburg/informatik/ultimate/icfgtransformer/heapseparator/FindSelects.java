@@ -39,8 +39,8 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastr
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ApplicationTermFinder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayUpdate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -55,13 +55,13 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  * <p>
  * These subterms are divided into:
  * <ul>
- * <li> cell updates (array updates where the lhs and rhs array refer to the same program variable, "array writes")
- * <li> array relations (equalities where the lhs and rhs have array type -stores are allowed- and which are not cell
- *  updates )
- * <li> cell accesses (essentially select terms, "array reads")
+ * <li>cell updates (array updates where the lhs and rhs array refer to the same program variable, "array writes")
+ * <li>array relations (equalities where the lhs and rhs have array type -stores are allowed- and which are not cell
+ * updates )
+ * <li>cell accesses (essentially select terms, "array reads")
  * </ul>
- * Furthermore from the result of this analysis we can compute the groups of arrays whose partitioning has to be
- * aligned because they are assigned to each other {@link ArrayGroup}.
+ * Furthermore from the result of this analysis we can compute the groups of arrays whose partitioning has to be aligned
+ * because they are assigned to each other {@link ArrayGroup}.
  *
  * @author Alexander Nutz
  *
@@ -128,12 +128,10 @@ public class FindSelects {
 
 		// not sure if the mdSelects are good enough, therefore making a check here
 		if (!mdSelects.isEmpty()) {
-			final Set<ApplicationTerm> allSelects =
-				new ApplicationTermFinder("select", false).findMatchingSubterms(tf.getFormula());
+			final Set<ApplicationTerm> allSelects = SmtUtils.extractApplicationTerms("select", tf.getFormula(), false);
 
 			final Set<ApplicationTerm> selectsInMdSelects = mdSelects.stream()
-					.map(mds -> new ApplicationTermFinder("select", false)
-					.findMatchingSubterms(mds.toTerm(mMgdScript.getScript())))
+					.map(mds -> SmtUtils.extractApplicationTerms("select", mds.toTerm(mMgdScript.getScript()), false))
 					.reduce((s1, s2) -> DataStructureUtils.union(s1, s2)).get();
 
 			if (!allSelects.equals(selectsInMdSelects)) {

@@ -3,32 +3,31 @@
  * Copyright (C) 2011-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
  *
- * This file is part of the ULTIMATE TraceAbstractionConcurrent plug-in.
+ * This file is part of the ULTIMATE TraceAbstraction plug-in.
  *
- * The ULTIMATE TraceAbstractionConcurrent plug-in is free software: you can redistribute it and/or modify
+ * The ULTIMATE TraceAbstraction plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * The ULTIMATE TraceAbstractionConcurrent plug-in is distributed in the hope that it will be useful,
+ * The ULTIMATE TraceAbstraction plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with the ULTIMATE TraceAbstractionConcurrent plug-in. If not, see <http://www.gnu.org/licenses/>.
+ * along with the ULTIMATE TraceAbstraction plug-in. If not, see <http://www.gnu.org/licenses/>.
  *
  * Additional permission under GNU GPL version 3 section 7:
- * If you modify the ULTIMATE TraceAbstractionConcurrent plug-in, or any covered work, by linking
+ * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
  * containing parts covered by the terms of the Eclipse Public License, the
- * licensors of the ULTIMATE TraceAbstractionConcurrent plug-in grant you additional permission
+ * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -42,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.NamedAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.AutomatonWithImplicitSelfloops;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
@@ -81,7 +81,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateCoverageChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
@@ -95,7 +94,6 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.Owi
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.PetriFloydHoare;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.PetriFloydHoareValidityCheck;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.PetriOwickiGriesValidityCheck;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
@@ -165,9 +163,11 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 
 	private Set<IPredicate> mProgramPointPlaces;
 
-	private final CounterexampleCache<L> mCounterexampleCache;
+	private final CounterexampleCache<L> mCounterexampleCache = new CounterexampleCache<>();
 	private final IPetriNet<L, IPredicate> mInitialNet;
 	private final List<IRefinementEngineResult<L, ?>> mRefinementEngines = new ArrayList<>();
+
+	private final boolean mProduceProof = false;
 
 	public CegarLoopForPetriNet(final DebugIdentifier name, final BoundedPetriNet<L, IPredicate> initialAbstraction,
 			final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
@@ -175,10 +175,8 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 			final IUltimateServiceProvider services, final Class<L> transitionClazz,
 			final PredicateFactoryRefinement stateFactoryForRefinement) {
 		super(name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs,
-				taPrefs.interpolation(), computeHoareAnnotation, Collections.emptySet(), services, transitionClazz,
-				stateFactoryForRefinement);
+				computeHoareAnnotation, services, transitionClazz, stateFactoryForRefinement);
 		mPetriClStatisticsGenerator = new PetriCegarLoopStatisticsGenerator(mCegarLoopBenchmark);
-		mCounterexampleCache = new CounterexampleCache<>();
 
 		mInitialNet = initialAbstraction;
 		if (DEBUG_WRITE_NET_HASH_CODES) {
@@ -190,7 +188,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 
 	@Override
 	protected boolean isAbstractionEmpty() throws AutomataOperationCanceledException {
-		if (USE_COUNTEREXAMPLE_CACHE && mIteration != 0) {
+		if (USE_COUNTEREXAMPLE_CACHE && getIteration() != 0) {
 			mCounterexample = mCounterexampleCache.getCounterexample();
 		} else {
 			final boolean cutOffSameTrans = mPref.cutOffRequiresSameTransition();
@@ -236,7 +234,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 
 		if (mPref.hasLimitTraceHistogram() && traceHistogram.getMax() > mPref.getLimitTraceHistogram()) {
 			final String taskDescription =
-					"bailout by trace histogram " + traceHistogram.toString() + " in iteration " + mIteration;
+					"bailout by trace histogram " + traceHistogram.toString() + " in iteration " + getIteration();
 			throw new TaskCanceledException(UserDefinedLimit.TRACE_HISTOGRAM, getClass(), taskDescription);
 		}
 		return false;
@@ -266,7 +264,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 				super.writeAutomatonToFile(enhancementResult.getSecond().getResult(), filename);
 			}
 
-			if (mIteration <= mPref.watchIteration() && mPref.artifact() == Artifact.NEG_INTERPOLANT_AUTOMATON) {
+			if (getIteration() <= mPref.watchIteration() && mPref.artifact() == Artifact.NEG_INTERPOLANT_AUTOMATON) {
 				// Complement the interpolant automaton
 				final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> nia =
 						new ComplementDD<>(new AutomataLibraryServices(getServices()),
@@ -397,7 +395,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 			}
 		}
 
-		mCegarLoopBenchmark.reportAbstractionSize(mAbstraction.size(), mIteration);
+		mCegarLoopBenchmark.reportAbstractionSize(mAbstraction.size(), getIteration());
 		mBiggestAbstractionTransitions = mAbstraction.getTransitions().size();
 
 		assert !acceptsPetriViaFA(getServices(), mAbstraction, mCounterexample.getWord()) : "Intersection broken!";
@@ -408,12 +406,12 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 		// statistic[0] + " internal transitions " + statistic[1] +
 		// "call transitions " + statistic[2]+ " return transitions ");
 
-		if (mIteration <= mPref.watchIteration()
+		if (getIteration() <= mPref.watchIteration()
 				&& (mPref.artifact() == Artifact.ABSTRACTION || mPref.artifact() == Artifact.RCFG)) {
 			mArtifactAutomaton = mAbstraction;
 		}
 		if (mPref.dumpAutomata()) {
-			final String filename = "Abstraction" + mIteration;
+			final String filename = "Abstraction" + getIteration();
 			writeAutomatonToFile(mAbstraction, filename);
 		}
 		return true;
@@ -468,9 +466,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 					flowRemovedByMinimization);
 			mPetriClStatisticsGenerator.stop(PetriCegarLoopStatisticsDefinitions.RemoveRedundantFlowTime.toString());
 		}
-		final Triple<BoundedPetriNet<L, IPredicate>, AutomataMinimizationStatisticsGenerator, Long> minimizationResult =
-				new Triple<>(reducedNet, amsg, automataMinimizationTime);
-		return minimizationResult;
+		return new Triple<>(reducedNet, amsg, automataMinimizationTime);
 	}
 
 	protected Pair<INestedWordAutomaton<L, IPredicate>, DifferencePairwiseOnDemand<L, IPredicate, ?>>
@@ -509,7 +505,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 							raw, universalSubtrahendLoopers);
 				} catch (final AutomataOperationCanceledException tce) {
 					final String taskDescription = generateOnDemandEnhancementCanceledMessage(interpolAutomaton,
-							universalSubtrahendLoopers, mAbstraction.getAlphabet(), mIteration);
+							universalSubtrahendLoopers, mAbstraction.getAlphabet(), getIteration());
 					tce.addRunningTaskInfo(new RunningTaskInfo(getClass(), taskDescription));
 					throw tce;
 				} finally {
@@ -522,7 +518,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 				if (end - start > DEBUG_DUMP_DRYRUNRESULT_THRESHOLD * 1_000_000_000L) {
 					final String filename = new SubtaskIterationIdentifier(mTaskIdentifier, getIteration())
 							+ "_DifferencePairwiseOnDemandInput";
-					final String atsHeaderMessage = "inputs of difference operation in iteration " + mIteration;
+					final String atsHeaderMessage = "inputs of difference operation in iteration " + getIteration();
 					final String atsCode = "PetriNet diff = differencePairwiseOnDemand(net, nwa);";
 					super.writeAutomataToFile(filename, atsHeaderMessage, atsCode,
 							new NamedAutomaton<>("net", mAbstraction), new NamedAutomaton<>("nwa", dia));
@@ -551,12 +547,11 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 			throw new UnsupportedOperationException();
 		}
 
-		if (mComputeHoareAnnotation) {
-			assert new InductivityCheck<>(getServices(), dia, false, true,
-					new IncrementalHoareTripleChecker(super.mCsToolkit, false)).getResult() : "Not inductive";
+		if (mProduceProof) {
+			assert checkInterpolantAutomatonInductivity(dia) : "Not inductive";
 		}
 		if (mPref.dumpAutomata()) {
-			final String filename = "InterpolantAutomatonDeterminized_Iteration" + mIteration;
+			final String filename = "InterpolantAutomatonDeterminized_Iteration" + getIteration();
 			writeAutomatonToFile(dia, filename);
 		}
 		if (DUMP_OWICKI_GRIES_TEST) {
@@ -596,11 +591,6 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 	}
 
 	@Override
-	protected void computeIcfgHoareAnnotation() {
-		throw new UnsupportedOperationException("Petri net based analysis cannot compute Hoare annotation.");
-	}
-
-	@Override
 	protected void constructErrorAutomaton() throws AutomataOperationCanceledException {
 		throw new UnsupportedOperationException("Error automata not supported for " + CegarLoopForPetriNet.class);
 	}
@@ -615,7 +605,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 		return super.accepts(services, petriNetAsFA, nw, false);
 	}
 
-	@Override
+	// TODO #proofRefactor Wrap in an IProofProducer implementation
 	protected
 			Triple<IPetriNet<L, IPredicate>, OwickiGriesAnnotation<Transition<L, IPredicate>, IPredicate>, IPossibleInterferences<Transition<L, IPredicate>, IPredicate>>
 			computeOwickiGriesAnnotation() {
@@ -682,6 +672,17 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 		return mPetriClStatisticsGenerator;
 	}
 
+	@Override
+	protected List<Set<IPredicate>> getControlConfigurationsFromCounterexample(final IRun<L, ?> run) {
+		final var pnRun = (PetriNetRun<L, IPredicate>) run;
+
+		// Take the places in the run that belong to the initial abstraction.
+		// Remove any places belonging to the interpolant automata.
+		return pnRun.getStateSequence().stream()
+				.map(m -> m.stream().filter(mProgramPointPlaces::contains).collect(Collectors.toSet()))
+				.collect(Collectors.toList());
+	}
+
 	private static final class CounterexampleCache<L extends IIcfgTransition<?>> {
 		private PetriNetRun<L, IPredicate> mCounterexample;
 
@@ -693,5 +694,4 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 			mCounterexample = counterexample;
 		}
 	}
-
 }

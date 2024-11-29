@@ -42,6 +42,7 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.MergedLocation;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AnnotationCheckResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AnnotationCheckResult.CategorizedProgramPoint;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AnnotationCheckResult.CheckPoint;
@@ -68,7 +69,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermVarsProc;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermVarsFuns;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -158,7 +159,12 @@ public class InvariantChecker {
 			final EdgeCheckResult ecr = doCheck(startLoc, tf, errorLoc);
 			switch (ecr.getValidity()) {
 			case INVALID:
-				invalidTpsds.put(tpsd, ecr);
+				// If any of the edges in the subgraph contains an overapproximation, report unknown instead of invalid
+				if (tpsd.getSubgraphEdges().stream().anyMatch(x -> Overapprox.getAnnotation(x) != null)) {
+					unknownTpsds.add(tpsd);
+				} else {
+					invalidTpsds.put(tpsd, ecr);
+				}
 				break;
 			case NOT_CHECKED:
 				throw new AssertionError("failed to perfrom check");
@@ -486,7 +492,7 @@ public class InvariantChecker {
 
 		final IPredicate precondition;
 		if (mIcfg.getProcedureEntryNodes().get(startLoc.getProcedure()).equals(startLoc)) {
-			final TermVarsProc tvp = TraceCheckUtils.getOldVarsEquality(startLoc.getProcedure(),
+			final TermVarsFuns tvp = TraceCheckUtils.getOldVarsEquality(startLoc.getProcedure(),
 					mIcfg.getCfgSmtToolkit().getModifiableGlobalsTable(), mIcfg.getCfgSmtToolkit().getManagedScript());
 			precondition = pf.newPredicate(tvp.getFormula());
 		} else {

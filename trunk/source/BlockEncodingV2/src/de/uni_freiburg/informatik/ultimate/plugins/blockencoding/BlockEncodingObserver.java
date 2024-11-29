@@ -34,13 +34,13 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.BlockEncodingBacktranslator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.IcfgDuplicator;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 
 /**
  *
@@ -52,19 +52,16 @@ public class BlockEncodingObserver implements IUnmanagedObserver {
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final BlockEncodingBacktranslator mBacktranslator;
-	private final XnfConversionTechnique mXnfConversionTechnique;
 	private final SimplificationTechnique mSimplificationTechnique;
 
 	private IIcfg<?> mResult;
 
 	public BlockEncodingObserver(final ILogger logger, final IUltimateServiceProvider services,
-			final BlockEncodingBacktranslator backtranslator, final SimplificationTechnique simplTech,
-			final XnfConversionTechnique xnfConvTech) {
+			final BlockEncodingBacktranslator backtranslator, final SimplificationTechnique simplTech) {
 		mLogger = logger;
 		mServices = services;
 		mBacktranslator = backtranslator;
 		mSimplificationTechnique = simplTech;
-		mXnfConversionTechnique = xnfConvTech;
 	}
 
 	@Override
@@ -91,12 +88,12 @@ public class BlockEncodingObserver implements IUnmanagedObserver {
 		if (root instanceof IIcfg<?>) {
 			final IIcfg<?> originalIcfg = (IIcfg<?>) root;
 			final CfgSmtToolkit toolkit = originalIcfg.getCfgSmtToolkit();
-			final IcfgEdgeBuilder edgeBuilder =
-					new IcfgEdgeBuilder(toolkit, mServices, mSimplificationTechnique, mXnfConversionTechnique);
+			final IcfgEdgeBuilder edgeBuilder = new IcfgEdgeBuilder(toolkit, mServices, mSimplificationTechnique);
 			final BasicIcfg<IcfgLocation> copiedIcfg =
 					new IcfgDuplicator(mLogger, mServices, toolkit.getManagedScript(), mBacktranslator)
-							.copy(originalIcfg, true);
+							.copy(originalIcfg, "_BEv2", true);
 			mResult = new BlockEncoder(mLogger, mServices, mBacktranslator, edgeBuilder, copiedIcfg).getResult();
+			assert IcfgUtils.checkMatchingEntryExitNodes(mResult) : "Entry nodes and exit nodes do not match";
 			return false;
 		}
 		return true;

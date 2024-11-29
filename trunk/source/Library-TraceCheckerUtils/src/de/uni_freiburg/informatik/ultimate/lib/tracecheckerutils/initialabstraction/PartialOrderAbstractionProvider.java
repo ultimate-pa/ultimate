@@ -44,6 +44,9 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.Pa
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderReductionFacade;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderReductionFacade.OrderType;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceBuilder;
+import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
 /**
  * Transforms an initial abstraction by applying one-shot Partial Order Reduction.
@@ -63,7 +66,8 @@ public class PartialOrderAbstractionProvider<L extends IIcfgTransition<?>>
 	private final PartialOrderMode mPartialOrderMode;
 	private final OrderType mOrderType;
 	private final long mDfsOrderSeed;
-	private final String mPluginId;
+
+	private final Statistics mStatistics = new Statistics();
 
 	/**
 	 * Create a new instance of the provider.
@@ -89,7 +93,7 @@ public class PartialOrderAbstractionProvider<L extends IIcfgTransition<?>>
 			final IInitialAbstractionProvider<L, ? extends INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> underlying,
 			final IUltimateServiceProvider services, final IEmptyStackStateFactory<IPredicate> stateFactory,
 			final PredicateFactory predicateFactory, final PartialOrderMode partialOrderMode, final OrderType orderType,
-			final long dfsOrderSeed, final String pluginId) {
+			final long dfsOrderSeed) {
 		mUnderlying = underlying;
 		mServices = services;
 		mStateFactory = stateFactory;
@@ -97,7 +101,6 @@ public class PartialOrderAbstractionProvider<L extends IIcfgTransition<?>>
 		mPartialOrderMode = partialOrderMode;
 		mOrderType = orderType;
 		mDfsOrderSeed = dfsOrderSeed;
-		mPluginId = pluginId;
 	}
 
 	@Override
@@ -116,8 +119,27 @@ public class PartialOrderAbstractionProvider<L extends IIcfgTransition<?>>
 		// actually apply POR to automaton
 		final NestedWordAutomaton<L, IPredicate> result = por.constructReduction(input, mStateFactory);
 
-		// TODO add statistics support to IInitialAbstractionProvider
-		por.reportStatistics(mPluginId);
+		mStatistics.reportPORStatistics(por);
 		return result;
+	}
+
+	@Override
+	public IStatisticsDataProvider getStatistics() {
+		return mStatistics;
+	}
+
+	private class Statistics extends AbstractStatisticsDataProvider {
+		private static final String POR_STATISTICS = "Partial Order Reduction statistics";
+		private static final String UNDERLYING_STATISTICS = "Statistics of underlying abstraction provider";
+
+		public Statistics() {
+			forward(UNDERLYING_STATISTICS, mUnderlying::getStatistics);
+		}
+
+		private void reportPORStatistics(final PartialOrderReductionFacade<?> por) {
+			final var data = new StatisticsData();
+			data.aggregateBenchmarkData(por.getStatistics());
+			include(POR_STATISTICS, () -> data);
+		}
 	}
 }

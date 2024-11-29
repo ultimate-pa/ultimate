@@ -73,7 +73,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.P
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -252,8 +251,7 @@ public class ThreadInstanceAdder {
 	private UnmodifiableTransFormula constructSequentialComposition(final ManagedScript managedScript,
 			final List<UnmodifiableTransFormula> transformulas) {
 		return TransFormulaUtils.sequentialComposition(mLogger, mServices, managedScript, false, false, false,
-				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, SimplificationTechnique.NONE,
-				transformulas);
+				SimplificationTechnique.NONE, transformulas);
 	}
 
 	private static void integrateForkEdge(final IIcfgForkTransitionThreadCurrent<IcfgLocation> originProvider,

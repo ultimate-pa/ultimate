@@ -58,7 +58,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence.Origin;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -552,7 +551,7 @@ public class OctAssumeProcessor {
 
 		final AssumeStatement assume = new AssumeStatement(originalExpression.getLoc(), originalExpression);
 		final StatementSequence assumeBlock = codeBlockFactory.constructStatementSequence(null, null,
-				Collections.singletonList(assume), Origin.IMPLEMENTATION);
+				Collections.singletonList(assume));
 		if (logger.isDebugEnabled()) {
 			logger.debug("Projection of current OctDomainState to Intervals: " + intervalStates);
 			logger.debug("Applying the following statement to each state: " + BoogiePrettyPrinter.print(assume));

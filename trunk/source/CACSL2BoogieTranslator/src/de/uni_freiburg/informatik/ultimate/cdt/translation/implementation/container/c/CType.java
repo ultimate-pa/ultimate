@@ -48,6 +48,7 @@ public abstract class CType {
 	private final boolean mIsVolatile;
 
 	private final boolean mIsExtern;
+	private final boolean mIsAtomic;
 
 	/**
 	 * Constructor.
@@ -55,12 +56,13 @@ public abstract class CType {
 	 * @param isExtern
 	 */
 	public CType(final boolean isConst, final boolean isInline, final boolean isRestrict, final boolean isVolatile,
-			final boolean isExtern) {
+			final boolean isExtern, final boolean isAtomic) {
 		mIsConst = isConst;
 		mIsInline = isInline;
 		mIsRestrict = isRestrict;
 		mIsVolatile = isVolatile;
 		mIsExtern = isExtern;
+		mIsAtomic = isAtomic;
 	}
 
 	public boolean isConst() {
@@ -83,6 +85,10 @@ public abstract class CType {
 		return mIsExtern;
 	}
 
+	public boolean isAtomic() {
+		return mIsAtomic;
+	}
+
 	public abstract boolean isIncomplete();
 
 	@Override
@@ -102,15 +108,6 @@ public abstract class CType {
 	public CType getUnderlyingType() {
 		return this;
 	}
-
-	/**
-	 * This is a special notion of type compatibility that we use for matching function signatures. -- i.e. for the most
-	 * part we say void is "compatible" with everything.. TODO: think about how general this notion is..
-	 *
-	 * @param cT
-	 * @return
-	 */
-	public abstract boolean isCompatibleWith(CType cT);
 
 	/**
 	 * Returns true iff this type is an integer type according to the definition 6.2.5.7 in the C11 standard.

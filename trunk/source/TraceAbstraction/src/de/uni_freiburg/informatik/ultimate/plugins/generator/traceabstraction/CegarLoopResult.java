@@ -32,7 +32,6 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
@@ -40,24 +39,25 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.in
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
-public class CegarLoopResult<L extends IIcfgTransition<?>> {
+/**
+ * Collects result information of a CEGAR loop.
+ *
+ * @param <L>
+ *            The type of transitions in the program analysed by the CEGAR loop
+ */
+public class CegarLoopResult<L> {
+	private final Map<IcfgLocation, CegarLoopLocalResult<L>> mLocalResults;
 	private final IStatisticsDataProvider mCegarLoopStatisticsGenerator;
 	private final IElement mArtifact;
 	private final List<Pair<AbstractInterpolantAutomaton<L>, IPredicateUnifier>> mFloydHoareAutomata;
-	private final Map<IcfgLocation, CegarLoopLocalResult<L>> mLocalResults;
-
-	// TODO #proofRefactor This is only supposed to be a temporary workaround.
-	private final Object mProof;
 
 	public CegarLoopResult(final Map<IcfgLocation, CegarLoopLocalResult<L>> localResults,
 			final IStatisticsDataProvider cegarLoopStatisticsGenerator, final IElement artifact,
-			final List<Pair<AbstractInterpolantAutomaton<L>, IPredicateUnifier>> floydHoareAutomata,
-			final Object proof) {
+			final List<Pair<AbstractInterpolantAutomaton<L>, IPredicateUnifier>> floydHoareAutomata) {
 		mLocalResults = Collections.unmodifiableMap(localResults);
 		mCegarLoopStatisticsGenerator = cegarLoopStatisticsGenerator;
 		mArtifact = artifact;
 		mFloydHoareAutomata = floydHoareAutomata;
-		mProof = proof;
 	}
 
 	public Stream<Result> resultStream() {
@@ -76,11 +76,11 @@ public class CegarLoopResult<L extends IIcfgTransition<?>> {
 		return mArtifact;
 	}
 
-	public List<Pair<AbstractInterpolantAutomaton<L>, IPredicateUnifier>> getFloydHoareAutomata() {
-		return mFloydHoareAutomata;
+	public boolean hasProvenAnything() {
+		return mLocalResults.values().stream().anyMatch(a -> a.getResult() == Result.SAFE);
 	}
 
-	public Object getProof() {
-		return mProof;
+	public List<Pair<AbstractInterpolantAutomaton<L>, IPredicateUnifier>> getFloydHoareAutomata() {
+		return mFloydHoareAutomata;
 	}
 }

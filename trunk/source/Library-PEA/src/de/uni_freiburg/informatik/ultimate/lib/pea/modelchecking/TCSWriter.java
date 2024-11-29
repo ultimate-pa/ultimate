@@ -41,15 +41,15 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.Decision;
  */
 public abstract class TCSWriter {
 
-	protected String fileName;
+	protected String mFileName;
 
-	protected PEA2TCSConverter converter;
+	protected PEA2TCSConverter mConverter;
 
 	/**
 	 * @return Returns the converter.
 	 */
 	public PEA2TCSConverter getConverter() {
-		return converter;
+		return mConverter;
 	}
 
 	/**
@@ -57,26 +57,25 @@ public abstract class TCSWriter {
 	 *            The converter to set.
 	 */
 	public void setConverter(final PEA2TCSConverter converter) {
-		this.converter = converter;
+		mConverter = converter;
 	}
 
 	/**
 	 * @param fileName
 	 */
 	public TCSWriter(final String fileName) {
-		super();
-		this.fileName = fileName;
+		mFileName = fileName;
 	}
 
 	/**
-	 * @param converter
+	 * @param mConverter
 	 */
 	public abstract void write();
 
 	/**
 	 * Writes a CDD that represents a conjunction into a specific output format. Therefore it uses abstract methods
 	 * writeAndDelimiter() and writeDecision(), which have to be implemented for every desired output.
-	 * 
+	 *
 	 * @param constraint
 	 *            The CDD constraint that has to be written. The constraint is not allowed to be equal to false. This
 	 *            causes an <code>IllegalArgumentException</code>.
@@ -98,7 +97,6 @@ public abstract class TCSWriter {
 			}
 
 			writeDecision(constraint.getDecision(), i, writer);
-			// if(i < constraint.getChilds().length - 1)
 			writeAndDelimiter(writer);
 
 			writeConjunction(constraint.getChilds()[i], writer);
@@ -110,7 +108,7 @@ public abstract class TCSWriter {
 	/**
 	 * Writes an And delimiter to the output file. Abstract method has to be overwritten to match domain specific And
 	 * symbols.
-	 * 
+	 *
 	 * @param writer
 	 *            The and delimiter is written to this writer object.
 	 * @throws IOException
@@ -121,7 +119,7 @@ public abstract class TCSWriter {
 	 * This method writes a decision from a given CDD into an Writer, usually a FileWriter. The exact representation of
 	 * a decision crucially depends on the target format so this method should be implemented for any specific output
 	 * language.
-	 * 
+	 *
 	 * @param decision
 	 *            The decision that shall be written.
 	 * @param child
@@ -129,11 +127,11 @@ public abstract class TCSWriter {
 	 * @param writer
 	 *            The writer for the result of this operation.
 	 */
-	protected abstract void writeDecision(Decision decision, int child, Writer writer) throws IOException;
+	protected abstract void writeDecision(Decision<?> decision, int child, Writer writer) throws IOException;
 
 	/**
 	 * TODO JF: comment
-	 * 
+	 *
 	 * @param declarations
 	 * @param variables
 	 * @param globalInvariant

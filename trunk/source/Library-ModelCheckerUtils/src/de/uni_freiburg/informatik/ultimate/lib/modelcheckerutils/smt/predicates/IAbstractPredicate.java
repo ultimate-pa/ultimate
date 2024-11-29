@@ -41,9 +41,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
  *
  */
 public interface IAbstractPredicate {
-
-	String[] getProcedures();
-
 	/**
 	 * Returns a superset of the all {@link IProgramVar} that are constraint
 	 * by this predicate (informally: whose corresponding TermVariable "occurs"

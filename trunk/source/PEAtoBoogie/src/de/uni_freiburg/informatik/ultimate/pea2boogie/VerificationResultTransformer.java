@@ -50,7 +50,6 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -74,7 +73,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubtermPropertyChecker;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPushTermWalker;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher.PqeTechniques;
@@ -153,17 +151,16 @@ public class VerificationResultTransformer {
 		final Spec spec = specs.iterator().next();
 		dieIfUnsupported(spec);
 
-		if (spec == Spec.CONSISTENCY || spec == Spec.VACUOUS) {
-			// a counterexample for consistency and vacuity means that the requirements are consistent or
-			// non-vacuous
+		if (spec == Spec.CONSISTENCY || spec == Spec.VACUOUS || spec == Spec.REDUNDANCY) {
+			// a counterexample for consistency and vacuity and redundancy means that the
+			// requirements are consistent or non-vacuous or non-redundant
 			isPositive = !isPositive;
 		}
 		final IElement element = oldRes.getElement();
 		final String plugin = oldRes.getPlugin();
-		final IBacktranslationService translatorSequence = oldRes.getCurrentBacktranslation();
 
 		if (isPositive) {
-			return new ReqCheckSuccessResult<>(element, plugin, translatorSequence);
+			return new ReqCheckSuccessResult<>(element, plugin);
 		}
 
 		if (spec == Spec.RTINCONSISTENT) {
@@ -173,7 +170,7 @@ public class VerificationResultTransformer {
 							.getProgramExecution();
 			final IProgramExecution<IAction, Term> newPe = reduceRtInconsistencyProgramExecution(oldPe, reqCheck);
 			if (newPe == null) {
-				return new ReqCheckRtInconsistentResult<>(element, plugin, translatorSequence);
+				return new ReqCheckRtInconsistentResult<>(element, plugin);
 			}
 			mLogger.info("Old program execution had length %s, new has length %s", oldPe.getLength(),
 					newPe.getLength());
@@ -187,9 +184,9 @@ public class VerificationResultTransformer {
 			final List<Entry<Rational, Map<Term, Term>>> delta2var2value =
 					generateTimeSequenceMap(newPe.getProgramStates());
 			final String failurePath = formatTimeSequenceMap(delta2var2value);
-			return new ReqCheckRtInconsistentResult<>(element, plugin, translatorSequence, failurePath);
+			return new ReqCheckRtInconsistentResult<>(element, plugin, failurePath);
 		}
-		return new ReqCheckFailResult<>(element, plugin, translatorSequence);
+		return new ReqCheckFailResult<>(element, plugin);
 	}
 
 	private String formatTimeSequenceMap(final List<Entry<Rational, Map<Term, Term>>> delta2var2value) {
@@ -511,8 +508,7 @@ public class VerificationResultTransformer {
 				sc = transFormulas.get(0);
 			} else {
 				sc = TransFormulaUtils.sequentialComposition(mLogger, mServices, mgdScriptTc, false, false, false,
-						XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, SimplificationTechnique.NONE,
-						transFormulas);
+						SimplificationTechnique.NONE, transFormulas);
 			}
 			rtr.add(new BasicInternalAction(Req2BoogieTranslator.PROCEDURE_NAME, Req2BoogieTranslator.PROCEDURE_NAME,
 					sc));
@@ -557,6 +553,8 @@ public class VerificationResultTransformer {
 		case CONSISTENCY:
 		case VACUOUS:
 		case RTINCONSISTENT:
+		case COMPLEMENT:
+		case REDUNDANCY:
 			return;
 		default:
 			throw new UnsupportedOperationException("Unknown spec type " + spec);

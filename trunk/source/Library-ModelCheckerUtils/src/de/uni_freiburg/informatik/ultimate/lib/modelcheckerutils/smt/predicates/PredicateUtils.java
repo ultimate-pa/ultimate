@@ -35,10 +35,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.ITerm2ExpressionSymbolTable;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
@@ -72,9 +76,9 @@ public class PredicateUtils {
 	public static long computeDagSizeOfPredicate(final IPredicate p, final FormulaSize size) {
 		switch (size) {
 		case DAGSIZE:
-			return (new DAGSize()).size(p.getFormula());
+			return new DAGSize().size(p.getFormula());
 		case TREESIZE:
-			return (new DAGSize()).treesize(p.getFormula());
+			return new DAGSize().treesize(p.getFormula());
 		default:
 			throw new AssertionError("unknown " + size);
 		}
@@ -205,8 +209,7 @@ public class PredicateUtils {
 			values[i] = entry.getValue();
 			i++;
 		}
-		final Term result = script.let(vars, values, psTerm);
-		return result;
+		return script.let(vars, values, psTerm);
 	}
 
 	/**
@@ -222,9 +225,8 @@ public class PredicateUtils {
 	public static Term formulaWithIndexedVars(final UnmodifiableTransFormula tf, final int idxInVar,
 			final int idxOutVar, final Set<IProgramVar> assignedVars, final Map<String, Term> indexedConstants,
 			final Script script) {
-		assert (assignedVars != null && assignedVars.isEmpty());
-		final Set<TermVariable> notYetSubst = new HashSet<>();
-		notYetSubst.addAll(Arrays.asList(tf.getFormula().getFreeVars()));
+		assert assignedVars != null && assignedVars.isEmpty();
+		final Set<TermVariable> notYetSubst = new HashSet<>(Arrays.asList(tf.getFormula().getFreeVars()));
 		Term fTrans = tf.getFormula();
 		final Map<TermVariable, IProgramVar> reverseMapping = new HashMap<>();
 		for (final IProgramVar inVar : tf.getInVars().keySet()) {
@@ -376,12 +378,10 @@ public class PredicateUtils {
 				final IProgramNonOldVar nonOldVar = ((IProgramOldVar) bv).getNonOldVar();
 				if (modifiableGlobalsPred.contains(nonOldVar)) {
 					// var modifiable, do nothing
+				} else if (primedRequired.contains(bv)) {
+					nonModifiableGlobalsPrimed.add(nonOldVar);
 				} else {
-					if (primedRequired.contains(bv)) {
-						nonModifiableGlobalsPrimed.add(nonOldVar);
-					} else {
-						nonModifiableGlobalsUnprimed.add(nonOldVar);
-					}
+					nonModifiableGlobalsUnprimed.add(nonOldVar);
 				}
 			}
 		}
@@ -398,34 +398,80 @@ public class PredicateUtils {
 			}
 			substitutionMapping.put(bv.getTermVariable(), constant);
 		}
-		final Term result = (PureSubstitution.apply(script, substitutionMapping, postcond.getFormula()));
+		final Term result = PureSubstitution.apply(script, substitutionMapping, postcond.getFormula());
 		assert result.getFreeVars().length == 0 : "there are free vars";
 		return result;
-	}
-
-	public static Stream<IcfgLocation> getLocations(final IPredicate pred) {
-		if (pred instanceof ISLPredicate) {
-			return Stream.of(((ISLPredicate) pred).getProgramPoint());
-		}
-		if (pred instanceof IMLPredicate) {
-			return Arrays.stream(((IMLPredicate) pred).getProgramPoints());
-		}
-		return Stream.of();
 	}
 
 	public static IcfgLocation getLocation(final IPredicate pred) {
 		if (pred instanceof ISLPredicate) {
 			return ((ISLPredicate) pred).getProgramPoint();
 		}
-		throw new IllegalArgumentException("does not have a location: " + pred);
+		throw new IllegalArgumentException("predicate does not offer program point: " + pred);
 	}
 
-	public static Term eliminateOldVars(final IUltimateServiceProvider services, final ManagedScript mgdScript,
-			final IPredicate p) {
-		final List<TermVariable> oldVars = p.getVars().stream().filter(x -> x.isOldvar()).map(x -> x.getTermVariable())
+	public static IcfgLocation getSingleLocation(final IPredicate pred) {
+		if (pred instanceof ISLPredicate) {
+			return ((ISLPredicate) pred).getProgramPoint();
+		}
+		if (pred instanceof IMLPredicate) {
+			final var locations = ((IMLPredicate) pred).getProgramPoints();
+			if (locations.length > 1) {
+				throw new IllegalArgumentException("predicate has more than one program point: " + pred);
+			}
+			if (locations.length != 0) {
+				return locations[0];
+			}
+		}
+		throw new IllegalArgumentException("predicate does not offer program point: " + pred);
+	}
+
+	public static Set<IcfgLocation> getLocations(final IPredicate pred) {
+		if (pred instanceof ISLPredicate) {
+			return Set.of(((ISLPredicate) pred).getProgramPoint());
+		}
+		if (pred instanceof IMLPredicate) {
+			return Set.of(((IMLPredicate) pred).getProgramPoints());
+		}
+		throw new UnsupportedOperationException("Unsupported type " + pred.getClass());
+	}
+
+	public static Stream<IcfgLocation> streamLocations(final IPredicate pred) {
+		if (pred instanceof ISLPredicate) {
+			return Stream.of(((ISLPredicate) pred).getProgramPoint());
+		}
+		if (pred instanceof IMLPredicate) {
+			return Arrays.stream(((IMLPredicate) pred).getProgramPoints());
+		}
+		throw new UnsupportedOperationException("Unsupported type " + pred.getClass());
+	}
+
+	private static Term eliminateVars(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final IPredicate p, final Predicate<IProgramVar> isQuantified) {
+		final List<TermVariable> oldVars = p.getVars().stream().filter(isQuantified).map(IProgramVar::getTermVariable)
 				.collect(Collectors.toList());
 		final Term quantified =
 				SmtUtils.quantifier(mgdScript.getScript(), QuantifiedFormula.EXISTS, oldVars, p.getFormula());
 		return PartialQuantifierElimination.eliminateLight(services, mgdScript, quantified);
+	}
+
+	public static Term eliminateOldVars(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final IPredicate p) {
+		return eliminateVars(services, mgdScript, p, IProgramVar::isOldvar);
+	}
+
+	public static Term eliminateLocalVars(final IPredicate predicate, final IUltimateServiceProvider services,
+			final CfgSmtToolkit cfgToolkit) {
+		final ITerm2ExpressionSymbolTable symbolTable = (ITerm2ExpressionSymbolTable) cfgToolkit.getSymbolTable();
+		return eliminateVars(services, cfgToolkit.getManagedScript(), predicate,
+				x -> symbolTable.getDeclarationInformation(x).getStorageClass().equals(StorageClass.LOCAL));
+	}
+
+	public static IPredicate computeInitialPredicateForProcedure(final ModifiableGlobalsTable modifiableGlobals,
+			final Script script, final String procedure, final BasicPredicateFactory factory) {
+		final var equalities = modifiableGlobals.getModifiedBoogieVars(procedure).stream().map(
+				global -> SmtUtils.equality(script, global.getTermVariable(), global.getOldVar().getTermVariable()))
+				.collect(Collectors.toList());
+		return factory.andT(equalities);
 	}
 }

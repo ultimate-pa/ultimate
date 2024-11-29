@@ -61,7 +61,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -155,7 +154,7 @@ public class QvasrsIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends Ic
 			}
 			final UnmodifiableTransFormula loopDisjunction =
 					TransFormulaUtils.parallelComposition(mLogger, mServices, mScript, null, false,
-							XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, false, distinctPathsFormulas);
+							false, distinctPathsFormulas);
 			mLogger.warn(loopDisjunction.toStringDirect());
 			loopsWithLoopHead.put((INLOC) loopMap.getKey(), loopDisjunction);
 		}
@@ -284,8 +283,7 @@ public class QvasrsIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends Ic
 			edgeTransitions.add(edge.getTransformula());
 		}
 		return TransFormulaUtils.sequentialComposition(mLogger, mServices, mScript, true, true, false,
-				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, SimplificationTechnique.POLY_PAC,
-				edgeTransitions);
+				SimplificationTechnique.POLY_PAC, edgeTransitions);
 	}
 
 	@Override

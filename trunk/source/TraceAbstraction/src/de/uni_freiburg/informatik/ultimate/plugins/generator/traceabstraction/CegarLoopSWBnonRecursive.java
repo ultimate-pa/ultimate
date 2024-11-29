@@ -59,14 +59,13 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.predicates.InductivityCheck;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.NwaHoareProofProducer;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolatingTraceCheckCraig;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheck;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
@@ -165,20 +164,18 @@ public class CegarLoopSWBnonRecursive<L extends IIcfgTransition<?>> extends NwaC
 	 * @param csToolkit
 	 * @param taPrefs
 	 * @param errorLocs
-	 * @param interpolation
-	 * @param computeHoareAnnotation
+	 * @param computeProof
 	 * @param services
 	 * @param transitionClazz
 	 */
 	public CegarLoopSWBnonRecursive(final DebugIdentifier name,
 			final INestedWordAutomaton<L, IPredicate> initialAbstraction, final IIcfg<?> icfg,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final TAPreferences taPrefs,
-			final Set<IcfgLocation> errorLocs, final InterpolationTechnique interpolation,
-			final boolean computeHoareAnnotation, final Set<IcfgLocation> hoareAnnotationLocs,
+			final Set<IcfgLocation> errorLocs, final NwaHoareProofProducer<L> proofProducer,
 			final IUltimateServiceProvider services, final Class<L> transitionClazz,
 			final PredicateFactoryRefinement stateFactoryForRefinement) {
-		super(name, initialAbstraction, icfg, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation,
-				computeHoareAnnotation, hoareAnnotationLocs, services, transitionClazz, stateFactoryForRefinement);
+		super(name, initialAbstraction, icfg, csToolkit, predicateFactory, taPrefs, errorLocs, proofProducer, services,
+				transitionClazz, stateFactoryForRefinement);
 		mErrorPathHistory = new ArrayList<>();
 		mnofStates = new ArrayList<>();
 	}
@@ -261,7 +258,7 @@ public class CegarLoopSWBnonRecursive<L extends IIcfgTransition<?>> extends NwaC
 		// Add internal states of the error path
 		mLogger.debug("Add internal states and edges of the error path");
 		addPath(ce_edges, ce_states, ce_interp, mAbstractionInitialState, mAbstractionFinalState,
-				new TreeMap<Integer, IPredicate>());
+				new TreeMap<>());
 
 		// // // debugging
 		// {
@@ -329,8 +326,7 @@ public class CegarLoopSWBnonRecursive<L extends IIcfgTransition<?>> extends NwaC
 		mLogger.debug("Epimorphism:");
 		mEpimorphism.print();
 
-		assert new InductivityCheck<>(getServices(), mInterpolAutomaton, false, true,
-				new IncrementalHoareTripleChecker(mCsToolkit, false)).getResult() : "Not inductive";
+		assert checkInterpolantAutomatonInductivity(mInterpolAutomaton) : "Not inductive";
 
 		mnofStates.add(mAbstraction.size());
 		int ii = 0;
@@ -583,10 +579,10 @@ public class CegarLoopSWBnonRecursive<L extends IIcfgTransition<?>> extends NwaC
 			}
 		}
 		// test if we found a new path which can be added
-		final InterpolatingTraceCheckCraig<L> traceCheck =
-				new InterpolatingTraceCheckCraig<>(pre, post, pendingContexts, word, null, getServices(), mCsToolkit,
-						mPredicateFactory, mPredicateUnifier, AssertCodeBlockOrder.NOT_INCREMENTALLY, false, false,
-						mPref.interpolation(), false, mXnfConversionTechnique, mSimplificationTechnique);
+		final InterpolatingTraceCheckCraig<L> traceCheck = new InterpolatingTraceCheckCraig<>(pre, post,
+				pendingContexts, new Counterexample<>(word), getServices(), mCsToolkit, mPredicateFactory,
+				mPredicateUnifier, AssertCodeBlockOrder.NOT_INCREMENTALLY, false, false, mPref.interpolation(), false,
+				mSimplificationTechnique);
 
 		mInterpolantGenerator = traceCheck;
 		if (traceCheck.isCorrect() == LBool.UNSAT) {
@@ -633,12 +629,12 @@ public class CegarLoopSWBnonRecursive<L extends IIcfgTransition<?>> extends NwaC
 			mLogger.debug("<" + edges.getSymbol(i).toString() + ">");
 		}
 		mLogger.debug("states:");
-		for (int i = 0; i < states.size(); i++) {
-			mLogger.debug("<" + states.get(i).toString() + ">");
+		for (final IPredicate state : states) {
+			mLogger.debug("<" + state.toString() + ">");
 		}
 		mLogger.debug("interp:");
-		for (int i = 0; i < interpolants.length; i++) {
-			mLogger.debug("<" + interpolants[i].toString() + ">");
+		for (final IPredicate interpolant : interpolants) {
+			mLogger.debug("<" + interpolant.toString() + ">");
 		}
 
 		final ArrayList<IPredicate> callPredecessors = new ArrayList<>();
@@ -721,7 +717,7 @@ public class CegarLoopSWBnonRecursive<L extends IIcfgTransition<?>> extends NwaC
 		// s_Logger.debug("[" + i + "]: " + mErrorPathHistory.get(i));
 		// }
 
-		mCegarLoopBenchmark.reportAbstractionSize(mAbstraction.size(), mIteration);
+		mCegarLoopBenchmark.reportAbstractionSize(mAbstraction.size(), getIteration());
 
 		mLogger.info("Abstraction has " + mNestedAbstraction.sizeInformation());
 		mLogger.info("Interpolant automaton has " + mInterpolAutomaton.sizeInformation());

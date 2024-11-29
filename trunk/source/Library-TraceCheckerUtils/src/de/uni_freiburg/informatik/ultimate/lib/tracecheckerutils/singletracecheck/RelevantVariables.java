@@ -34,7 +34,6 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
@@ -44,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashTreeRelation;
 
@@ -67,7 +67,7 @@ public class RelevantVariables<L extends IAction> {
 		super();
 		mModifiableGlobals = modifiableGlobalsTable;
 		mTraceWithFormulas = traceWithFormulas;
-		mNestedConstraintAnalysis = new NestedConstraintAnalysis(traceWithFormulas.getTrace(),
+		mNestedConstraintAnalysis = new NestedConstraintAnalysis(traceWithFormulas.getCounterexample(),
 				new TreeMap<Integer, IPredicate>(), traceWithFormulas);
 		mOccurrence = new VariableOccurrence();
 		mForwardRelevantVariables = new Set[mTraceWithFormulas.getTrace().length() + 1];
@@ -832,11 +832,11 @@ public class RelevantVariables<L extends IAction> {
 	}
 
 	private class NestedConstraintAnalysis extends ModifiableNestedFormulas<L, ConstraintAnalysis, IPredicate> {
-		public NestedConstraintAnalysis(final NestedWord<L> nestedWord,
+		public NestedConstraintAnalysis(final Counterexample<L> counterexample,
 				final SortedMap<Integer, IPredicate> pendingContexts,
 				final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> traceWithFormulas) {
-			super(nestedWord, pendingContexts);
-			for (int i = 0; i < nestedWord.length(); i++) {
+			super(counterexample, pendingContexts);
+			for (int i = 0; i < counterexample.length(); i++) {
 				if (getTrace().isCallPosition(i)) {
 					final UnmodifiableTransFormula globalVarAssignment = traceWithFormulas.getGlobalVarAssignment(i);
 					setGlobalVarAssignmentAtPos(i, new ConstraintAnalysis(globalVarAssignment));

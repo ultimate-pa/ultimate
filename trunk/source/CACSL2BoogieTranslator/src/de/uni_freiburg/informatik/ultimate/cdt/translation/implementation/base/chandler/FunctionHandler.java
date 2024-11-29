@@ -38,7 +38,9 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.eclipse.cdt.core.dom.ast.ASTNameCollector;
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
@@ -64,6 +66,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.GeneratedBoogieAstVisitor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
@@ -123,9 +126,11 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.OverapproxVariable;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.UndefinedFunctionBehaviour;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
@@ -233,6 +238,7 @@ public class FunctionHandler {
 		final CFunction funcType = (CFunction) cDec.getType();
 
 		registerFunctionDeclaration(main, loc, contract, methodName, funcType, hook);
+		mNameHandler.addFunction(methodName, funcType.getResultType());
 
 		return new SkipResult();
 	}
@@ -280,6 +286,7 @@ public class FunctionHandler {
 		final CFunction oldFunType = (CFunction) cDec.getType();
 		final CFunction funType = updateVarArgsUsage(loc, node, oldFunType, definedProcName);
 		final CType returnCType = funType.getResultType();
+		mNameHandler.addFunction(definedProcName, returnCType);
 		definedProcInfo.updateCFunction(funType);
 		final boolean returnTypeIsVoid =
 				returnCType instanceof CPrimitive && ((CPrimitive) returnCType).getType() == CPrimitives.VOID;
@@ -388,8 +395,8 @@ public class FunctionHandler {
 			// 3) ,4)
 			mCHandler.updateStmtsAndDeclsAtScopeEnd(bodyResultBuilder, node);
 
-			assert bodyResultBuilder.getAuxVars().isEmpty() : String.format("Body still contains aux vars: %s",
-					bodyResultBuilder.getAuxVars());
+			assert bodyResultBuilder.getAuxVars().isEmpty()
+					: String.format("Body still contains aux vars: %s", bodyResultBuilder.getAuxVars());
 			assert bodyResultBuilder.getOverappr().isEmpty();
 			assert bodyResultBuilder.getLrValue() == null;
 
@@ -705,12 +712,12 @@ public class FunctionHandler {
 				// If one of the arguments is overapproximated, assign the value to an aux-var and overapproximate this
 				// assignment
 				final AuxVarInfo auxVar =
-						mAuxVarInfoBuilder.constructAuxVarInfo(loc, lrValue.getCType(), AUXVAR.NONDET);
-				functionCallExpressionResultBuilder.addAuxVar(auxVar).addDeclaration(auxVar.getVarDec());
+						mAuxVarInfoBuilder.constructAuxVarInfo(loc, lrValue.getCType(), AUXVAR.RETURNED);
+				functionCallExpressionResultBuilder.addAuxVarWithDeclaration(auxVar);
 				final Statement assign =
 						StatementFactory.constructSingleAssignmentStatement(loc, auxVar.getLhs(), lrValue.getValue());
 				for (final Overapprox oa : in.getOverapprs()) {
-					oa.annotate(assign);
+					new OverapproxVariable(oa.getOverapproximatedLocations()).annotate(assign);
 				}
 				functionCallExpressionResultBuilder.addStatement(assign);
 				translatedParams.add(auxVar.getExp());
@@ -721,8 +728,7 @@ public class FunctionHandler {
 			final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc,
 					mTypeHandler.constructPointerType(loc), SFO.AUXVAR.VARARGS_POINTER);
 			// Declare the aux-var (it is allocated after the loop when the size is known)
-			functionCallExpressionResultBuilder.addAuxVar(auxvarinfo);
-			functionCallExpressionResultBuilder.addDeclaration(auxvarinfo.getVarDec());
+			functionCallExpressionResultBuilder.addAuxVarWithDeclaration(auxvarinfo);
 			final CPrimitive pointerType = mExpressionTranslation.getCTypeOfPointerComponents();
 			Expression currentOffset =
 					mExpressionTranslation.constructLiteralForIntegerType(loc, pointerType, BigInteger.ZERO);
@@ -773,7 +779,7 @@ public class FunctionHandler {
 	private static void checkNumberOfArguments(final ILocation loc, final String calleeName,
 			final IASTInitializerClause[] arguments, final Procedure calleeProcDecl, final CFunction calleeProcCType,
 			final boolean isCalleeSignatureNotYetDetermined) {
-		if (isCalleeSignatureNotYetDetermined || (arguments.length == calleeProcDecl.getInParams().length)) {
+		if (isCalleeSignatureNotYetDetermined || arguments.length == calleeProcDecl.getInParams().length) {
 			return;
 		}
 		if (calleeProcDecl.getInParams().length == 1 && calleeProcDecl.getInParams()[0].getType() == null
@@ -1025,6 +1031,9 @@ public class FunctionHandler {
 
 		final VarList[] in = processInParams(loc, funcType, procInfo, hook);
 
+		// if possible, find the actual definition of this declaration s.t. we can update the varargs usage
+		procInfo.updateCFunction(updateVarArgsForDeclaration(hook, funcType, loc, methodName));
+
 		// OUT VARLIST : only one out param in C
 		VarList[] out = new VarList[1];
 
@@ -1063,9 +1072,6 @@ public class FunctionHandler {
 				new Procedure(loc, attr, procInfo.getProcedureName(), typeParams, in, out, spec, null);
 
 		procInfo.resetDeclaration(newDeclaration);
-
-		// if possible, find the actual definition of this declaration s.t. we can update the varargs usage
-		procInfo.updateCFunction(updateVarArgsForDeclaration(hook, funcType, loc, methodName));
 		// end scope for retranslation of ACSL specification
 		mProcedureManager.endProcedureScope(mCHandler);
 	}
@@ -1111,8 +1117,7 @@ public class FunctionHandler {
 				final AuxVarInfo auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, astType, SFO.AUXVAR.RETURNED);
 				returnedValue = auxvar.getExp();
 				final VariableLHS returnedValueAsLhs = auxvar.getLhs();
-				builder.addAuxVar(auxvar);
-				builder.addDeclaration(auxvar.getVarDec());
+				builder.addAuxVarWithDeclaration(auxvar);
 
 				call = StatementFactory.constructCallStatement(loc, false, new VariableLHS[] { returnedValueAsLhs },
 						methodName, parameters.toArray(new Expression[parameters.size()]));
@@ -1135,8 +1140,7 @@ public class FunctionHandler {
 
 			returnedValue = auxvar.getExp();
 
-			builder.addDeclaration(auxvar.getVarDec());
-			builder.addAuxVar(auxvar);
+			builder.addAuxVarWithDeclaration(auxvar);
 
 			call = StatementFactory.constructCallStatement(loc, false, new VariableLHS[] { auxvar.getLhs() },
 					methodName, parameters.toArray(new Expression[parameters.size()]));
@@ -1172,8 +1176,44 @@ public class FunctionHandler {
 		return Collections.unmodifiableSet(mFunctionSignaturesThatHaveAFunctionPointer);
 	}
 
-	public Set<String> getCalledFunctionsWithoutDefinition() {
-		return DataStructureUtils.difference(mCalledFunctions, mDefinedFunctions);
+	private Optional<Declaration> getDefaultImplementation(final String name,
+			final UndefinedFunctionBehaviour undefinedFunctionBehaviour) {
+		final Procedure proc = mProcedureManager.getProcedureDeclaration(name);
+		final ILocation loc = LocationFactory.createIgnoreLocation(proc.getLoc());
+		switch (undefinedFunctionBehaviour) {
+		case CRASH:
+			throw new IllegalArgumentException("Calls to undefined functions are not supported.");
+		case NON_DETERMINISTIC_RETURN:
+			// To model a non-determinstic return value, we can simply omit the declaration, as a Boogie procedure
+			// without an implementation does exactly that.
+			return Optional.empty();
+		case OVERAPPROXIMATE_BEHAVIOUR: {
+			// Implement the function using while (true) assert false;
+			final Statement statement =
+					ExpressionTranslation.modelUnsupportedFeature(loc, "undefined function " + name);
+			final Body body = mProcedureManager.constructBody(loc, new VariableDeclaration[0],
+					new Statement[] { statement }, name);
+			final Procedure result = new Procedure(loc, proc.getAttributes(), name, proc.getTypeParams(),
+					proc.getInParams(), proc.getOutParams(), null, body);
+			return Optional.of(result);
+		}
+		default:
+			throw new AssertionError("Invalid setting " + undefinedFunctionBehaviour);
+		}
+	}
+
+	public Set<Declaration>
+			handleFunctionsWithoutDefinitions(final UndefinedFunctionBehaviour undefinedFunctionBehaviour) {
+		final Set<String> calledFunctionsWithoutDefinition =
+				DataStructureUtils.difference(mCalledFunctions, mDefinedFunctions);
+		if (calledFunctionsWithoutDefinition.isEmpty()) {
+			return Set.of();
+		}
+		mLogger.warn("The following functions are not defined or handled internally: "
+				+ String.join(", ", calledFunctionsWithoutDefinition));
+		return calledFunctionsWithoutDefinition.stream()
+				.flatMap(x -> getDefaultImplementation(x, undefinedFunctionBehaviour).stream())
+				.collect(Collectors.toSet());
 	}
 
 	/**
@@ -1414,7 +1454,7 @@ public class FunctionHandler {
 			if (one == null && other == null) {
 				return true;
 			}
-			if ((one == null) || (other == null)) {
+			if (one == null || other == null) {
 				return false;
 			}
 			throw new IllegalArgumentException("Both arguments are non-null");

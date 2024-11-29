@@ -49,6 +49,8 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 	private final StatisticsData mInterpolantConsolidationBenchmarks = new StatisticsData();
 	private final StatisticsData mPathInvariantsStatistics = new StatisticsData();
 	private final StatisticsData mRefinementEngineStatistics = new StatisticsData();
+	private final StatisticsData mConComCheckerStatistics = new StatisticsData();
+
 	private int mIterations = 0;
 	private SizeIterationPair mBiggestAbstraction = new SizeIterationPair(-1, -1);
 	private BackwardCoveringInformation mBCI = new BackwardCoveringInformation(0, 0);
@@ -99,6 +101,10 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 
 	public void addHoareAnnotationData(final IStatisticsDataProvider hasp) {
 		mHoareAnnotationData.aggregateBenchmarkData(hasp);
+	}
+
+	public void addConComCheckerData(final IStatisticsDataProvider cccd) {
+		mConComCheckerStatistics.aggregateBenchmarkData(cccd);
 	}
 
 	/**
@@ -177,6 +183,8 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 			return mHoareAnnotationData;
 		case RefinementEngineStatistics:
 			return mRefinementEngineStatistics;
+		case ConComCheckerStatistics:
+			return mConComCheckerStatistics;
 		default:
 			throw new AssertionError("unknown data");
 		}
@@ -196,6 +204,6 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 				CegarLoopStatisticsDefinitions.HoareAnnotationTime.toString(),
 				CegarLoopStatisticsDefinitions.BasicInterpolantAutomatonTime.toString(),
 				CegarLoopStatisticsDefinitions.DumpTime.toString(),
-				CegarLoopStatisticsDefinitions.InitialAbstractionConstructionTime.toString(), };
+				CegarLoopStatisticsDefinitions.InitialAbstractionConstructionTime.toString() };
 	}
 }

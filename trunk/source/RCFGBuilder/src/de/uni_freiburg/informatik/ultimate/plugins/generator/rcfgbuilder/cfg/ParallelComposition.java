@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -60,8 +59,7 @@ public class ParallelComposition extends CodeBlock implements IIcfgInternalTrans
 	private final IUltimateServiceProvider mServices;
 
 	ParallelComposition(final int serialNumber, final BoogieIcfgLocation source, final BoogieIcfgLocation target,
-			final ManagedScript mgdScript, final IUltimateServiceProvider services, final List<CodeBlock> codeBlocks,
-			final XnfConversionTechnique xnfConversionTechnique) {
+			final ManagedScript mgdScript, final IUltimateServiceProvider services, final List<CodeBlock> codeBlocks) {
 		super(serialNumber, source, target, services.getLoggingService().getLogger(Activator.PLUGIN_ID));
 		mServices = services;
 		final Script script = mgdScript.getScript();
@@ -112,9 +110,9 @@ public class ParallelComposition extends CodeBlock implements IIcfgInternalTrans
 				mServices.getPreferenceProvider(Activator.PLUGIN_ID).getBoolean(RcfgPreferenceInitializer.LABEL_CNF);
 
 		mTransitionFormula = TransFormulaUtils.parallelComposition(mLogger, mServices, mgdScript, null, transformToCNF,
-				xnfConversionTechnique, true, transFormulas);
+				true, transFormulas);
 		mTransitionFormulaWithBranchEncoders = TransFormulaUtils.parallelComposition(mLogger, mServices, mgdScript,
-				branchIndicator, transformToCNF, xnfConversionTechnique, true, transFormulasWithBranchEncoders);
+				branchIndicator, transformToCNF, true, transFormulasWithBranchEncoders);
 
 		assert TransFormulaUtils.hasInternalNormalForm(mTransitionFormula) : "Expected TF in internal normal form";
 		assert TransFormulaUtils

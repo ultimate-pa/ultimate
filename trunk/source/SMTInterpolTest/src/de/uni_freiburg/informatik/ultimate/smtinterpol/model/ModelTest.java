@@ -34,11 +34,13 @@ import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Model;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.DefaultLogger;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 
@@ -48,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
  * @author Juergen Christ
  */
 @RunWith(JUnit4.class)
-public class ModelTest {
+public class ModelTest implements SMTLIBConstants {
 
 	private final String[] mBooleanNames = { "P", "Q", "R", "S" };
 
@@ -219,8 +221,8 @@ public class ModelTest {
 		final ConstantTerm wwal = getConstantTerm(model, intTerms[2]);
 		// Test for math operations
 		// + (simple)
-		Rational expected =
-				((Rational) uval.getValue()).add((Rational) vval.getValue()).add((Rational) wwal.getValue());
+		Rational expected = ((Rational) uval.getValue()).add((Rational) vval.getValue())
+				.add((Rational) wwal.getValue());
 		ConstantTerm got = getConstantTerm(model, script.term("+", intTerms[0], intTerms[1], intTerms[2]));
 		Assert.assertEquals(expected, got.getValue());
 		// - (simple)
@@ -276,7 +278,7 @@ public class ModelTest {
 		Assert.assertEquals(Rational.ZERO,
 				getConstantTerm(model,
 						script.term("to_int", script.term("/", script.decimal("1.0"), script.decimal("2.0"))))
-								.getValue());
+						.getValue());
 		// Test to_real noop
 		Assert.assertEquals(Rational.ZERO,
 				getConstantTerm(model, script.term("to_real", script.numeral("0"))).getValue());
@@ -361,7 +363,7 @@ public class ModelTest {
 		Assert.assertEquals(five,
 				getConstantTerm(model,
 						script.term("f", script.term("+", x, script.term("-", y), yvalminus5.toTerm(intSort))))
-								.getValue());
+						.getValue());
 		Assert.assertEquals(five, getConstantTerm(model, script.term("f", script.numeral(BigInteger.TEN))).getValue());
 		final TermVariable[] args = new TermVariable[] { script.variable("@x", intSort) };
 		final String funcdef = model.getFunctionDefinition("f", args).toString();
@@ -484,6 +486,138 @@ public class ModelTest {
 			Assert.assertEquals(expected, valuation.get(intTerms[i]));
 			Assert.assertEquals(expected, modeleval.get(intTerms[i]));
 			Assert.assertEquals(expected, model.evaluate(intTerms[i]));
+		}
+	}
+
+	public void testBitVecDivisionSMTLIB(Model model, Term s, Term t, int m) {
+		final Theory th = s.getTheory();
+		final String m1 = String.valueOf(m - 1);
+		final Term msb_s = th.term(EXTRACT, new String[] { m1, m1 }, null, s);
+		final Term msb_t = th.term(EXTRACT, new String[] { m1, m1 }, null, t);
+		final Term smtsdiv = th.term(ITE,
+				th.term(AND, th.term(EQUALS, msb_s, th.binary("#b0")), th.term(EQUALS, msb_t, th.binary("#b0"))),
+				th.term(BVUDIV, s, t),
+				th.term(ITE,
+						th.term(AND, th.term(EQUALS, msb_s, th.binary("#b1")),
+								th.term(EQUALS, msb_t, th.binary("#b0"))),
+						th.term(BVNEG, th.term(BVUDIV, th.term(BVNEG, s), t)),
+						th.term(ITE,
+								th.term(AND, th.term(EQUALS, msb_s, th.binary("#b0")),
+										th.term(EQUALS, msb_t, th.binary("#b1"))),
+								th.term(BVNEG, th.term(BVUDIV, s, th.term(BVNEG, t))),
+								th.term(BVUDIV, th.term(BVNEG, s), th.term(BVNEG, t)))));
+		Assert.assertEquals(model.evaluate(smtsdiv), model.evaluate(th.term(BVSDIV, s, t)));
+
+		final Term smtsrem = th.term(ITE,
+				th.term(AND, th.term(EQUALS, msb_s, th.binary("#b0")), th.term(EQUALS, msb_t, th.binary("#b0"))),
+				th.term(BVUREM, s, t),
+				th.term(ITE,
+						th.term(AND, th.term(EQUALS, msb_s, th.binary("#b1")),
+								th.term(EQUALS, msb_t, th.binary("#b0"))),
+						th.term(BVNEG, th.term(BVUREM, th.term(BVNEG, s), t)),
+						th.term(ITE,
+								th.term(AND, th.term(EQUALS, msb_s, th.binary("#b0")),
+										th.term(EQUALS, msb_t, th.binary("#b1"))),
+								th.term(BVUREM, s, th.term(BVNEG, t)),
+								th.term(BVNEG, th.term(BVUREM, th.term(BVNEG, s), th.term(BVNEG, t))))));
+		Assert.assertEquals(model.evaluate(smtsrem), model.evaluate(th.term(BVSREM, s, t)));
+
+		final Term u = th.term(BVUREM, th.term(ITE, th.term(EQUALS, msb_s, th.binary("#b0")), s, th.term(BVNEG, s)),
+				th.term(ITE, th.term(EQUALS, msb_t, th.binary("#b0")), t, th.term(BVNEG, t)));
+		final Term smtsmod = th.term(ITE, th.term(EQUALS, u, th.constant(BigInteger.ZERO, u.getSort())), u, th.term(ITE,
+				th.term(AND, th.term(EQUALS, msb_s, th.binary("#b0")), th.term(EQUALS, msb_t, th.binary("#b0"))), u,
+				th.term(ITE,
+						th.term(AND, th.term(EQUALS, msb_s, th.binary("#b1")),
+								th.term(EQUALS, msb_t, th.binary("#b0"))),
+						th.term(BVADD, th.term(BVNEG, u), t),
+						th.term(ITE,
+								th.term(AND, th.term(EQUALS, msb_s, th.binary("#b0")),
+										th.term(EQUALS, msb_t, th.binary("#b1"))),
+								th.term(BVADD, u, t), th.term(BVNEG, u)))));
+		Assert.assertEquals(model.evaluate(smtsmod), model.evaluate(th.term(BVSMOD, s, t)));
+	}
+
+	@Test
+	public void testBitVecDivision() {
+		final Script script = setupScript(Logics.QF_BV);
+		final LBool isSat = script.checkSat();
+		final Sort bvSort = script.sort(BITVEC, new String[] { "8" });
+		Assert.assertEquals(LBool.SAT, isSat);
+		final Model model = script.getModel();
+		final Theory theory = script.getTheory();
+		final Term bv0 = theory.constant(BigInteger.ZERO, bvSort);
+		final Term bv1 = theory.constant(BigInteger.ONE, bvSort);
+		final Term bv2 = theory.constant(BigInteger.TWO, bvSort);
+		final Term bv3 = theory.constant(BigInteger.valueOf(3), bvSort);
+		final Term bv9 = theory.constant(BigInteger.valueOf(9), bvSort);
+		final Term bv10 = theory.constant(BigInteger.TEN, bvSort);
+		final Term bv128 = theory.constant(BigInteger.valueOf(128), bvSort);
+		final Term bvm1 = model.evaluate(theory.term(BVNEG, bv1));
+		final Term bvm2 = model.evaluate(theory.term(BVNEG, bv2));
+		final Term bvm3 = model.evaluate(theory.term(BVNEG, bv3));
+		final Term bvm9 = model.evaluate(theory.term(BVNEG, bv9));
+		final Term bvm10 = model.evaluate(theory.term(BVNEG, bv10));
+		Assert.assertEquals(theory.constant(BigInteger.valueOf(255), bvSort), bvm1);
+		Assert.assertEquals(theory.constant(BigInteger.valueOf(253), bvSort), bvm3);
+		Assert.assertEquals(theory.constant(BigInteger.valueOf(246), bvSort), bvm10);
+		Assert.assertEquals(bv3, model.evaluate(theory.term(BVUDIV, bv10, bv3)));
+		Assert.assertEquals(bv3, model.evaluate(theory.term(BVSDIV, bv10, bv3)));
+		Assert.assertEquals(bvm3, model.evaluate(theory.term(BVSDIV, bvm10, bv3)));
+		Assert.assertEquals(bvm3, model.evaluate(theory.term(BVSDIV, bv10, bvm3)));
+		Assert.assertEquals(bv3, model.evaluate(theory.term(BVSDIV, bvm10, bvm3)));
+		Assert.assertEquals(bv1, model.evaluate(theory.term(BVSREM, bv10, bv3)));
+		Assert.assertEquals(bvm1, model.evaluate(theory.term(BVSREM, bvm10, bv3)));
+		Assert.assertEquals(bv1, model.evaluate(theory.term(BVSREM, bv10, bvm3)));
+		Assert.assertEquals(bvm1, model.evaluate(theory.term(BVSREM, bvm10, bvm3)));
+		Assert.assertEquals(bv1, model.evaluate(theory.term(BVSMOD, bv10, bv3)));
+		Assert.assertEquals(bv2, model.evaluate(theory.term(BVSMOD, bvm10, bv3)));
+		Assert.assertEquals(bvm2, model.evaluate(theory.term(BVSMOD, bv10, bvm3)));
+		Assert.assertEquals(bvm1, model.evaluate(theory.term(BVSMOD, bvm10, bvm3)));
+
+		// division 0/x
+		Assert.assertEquals(bv0, model.evaluate(theory.term(BVUDIV, bv0, bv3)));
+		Assert.assertEquals(bv0, model.evaluate(theory.term(BVSDIV, bv0, bv3)));
+		Assert.assertEquals(bv0, model.evaluate(theory.term(BVSDIV, bv0, bvm3)));
+		Assert.assertEquals(bv0, model.evaluate(theory.term(BVSREM, bv0, bv3)));
+		Assert.assertEquals(bv0, model.evaluate(theory.term(BVSREM, bv0, bvm3)));
+		Assert.assertEquals(bv0, model.evaluate(theory.term(BVSMOD, bv0, bv3)));
+		Assert.assertEquals(bv0, model.evaluate(theory.term(BVSMOD, bv0, bvm3)));
+
+		// division by 0
+		Assert.assertEquals(bvm1, model.evaluate(theory.term(BVUDIV, bv10, bv0)));
+		Assert.assertEquals(bvm1, model.evaluate(theory.term(BVSDIV, bv10, bv0)));
+		Assert.assertEquals(bv1, model.evaluate(theory.term(BVSDIV, bvm10, bv0)));
+		Assert.assertEquals(bv10, model.evaluate(theory.term(BVSREM, bv10, bv0)));
+		Assert.assertEquals(bvm10, model.evaluate(theory.term(BVSREM, bvm10, bv0)));
+		Assert.assertEquals(bv10, model.evaluate(theory.term(BVSMOD, bv10, bv0)));
+		Assert.assertEquals(bvm10, model.evaluate(theory.term(BVSMOD, bvm10, bv0)));
+
+		// division -128/-1 = -128
+		Assert.assertEquals(bv128, model.evaluate(theory.term(BVSDIV, bv128, bvm1)));
+		Assert.assertEquals(bv128, model.evaluate(theory.term(BVSDIV, bv128, bv1)));
+
+		// rem/mod with 0 remainder
+		Assert.assertEquals(bv0, model.evaluate(theory.term(BVSREM, bv9, bv3)));
+		Assert.assertEquals(bv0, model.evaluate(theory.term(BVSREM, bvm9, bv3)));
+		Assert.assertEquals(bv0, model.evaluate(theory.term(BVSREM, bv9, bvm3)));
+		Assert.assertEquals(bv0, model.evaluate(theory.term(BVSREM, bvm9, bvm3)));
+		Assert.assertEquals(bv0, model.evaluate(theory.term(BVSMOD, bv9, bv3)));
+		Assert.assertEquals(bv0, model.evaluate(theory.term(BVSMOD, bvm9, bv3)));
+		Assert.assertEquals(bv0, model.evaluate(theory.term(BVSMOD, bv9, bvm3)));
+		Assert.assertEquals(bv0, model.evaluate(theory.term(BVSMOD, bvm9, bvm3)));
+
+		final Term[] interestingBVs = { bv0, bv3, bv10, bv128, bvm1, bvm3, bvm10 };
+		for (final Term s : interestingBVs) {
+			for (final Term t : interestingBVs) {
+				testBitVecDivisionSMTLIB(model, s, t, 8);
+			}
+		}
+		final Sort bv1Sort = script.sort(BITVEC, new String[] { "1" });
+		for (int i = 0; i < 2; i++) {
+			for (int j = 0; j < 2; j++) {
+				testBitVecDivisionSMTLIB(model, theory.constant(BigInteger.valueOf(i), bv1Sort),
+						theory.constant(BigInteger.valueOf(j), bv1Sort), 1);
+			}
 		}
 	}
 }

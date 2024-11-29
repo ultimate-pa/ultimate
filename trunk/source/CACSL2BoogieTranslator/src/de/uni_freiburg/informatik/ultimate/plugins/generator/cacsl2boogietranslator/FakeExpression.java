@@ -37,8 +37,6 @@ import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import org.eclipse.cdt.core.dom.ast.IType;
 import org.eclipse.cdt.core.parser.IToken;
 
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
-
 /**
  * This evil class allows us to create identifier or value expressions for the purpose of backtranslation without having
  * to rebuild a complete CDT AST from scratch.
@@ -53,17 +51,11 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 public class FakeExpression implements IASTExpression {
 
 	private final String mName;
-	private final CType mCType;
 	private final IASTNode mBackingNode;
 
-	public FakeExpression(final IASTNode actualNode, final String name, final CType cType) {
-		mBackingNode = actualNode;
+	public FakeExpression(final IASTNode backingNode, final String name) {
+		mBackingNode = backingNode;
 		mName = name;
-		mCType = cType;
-	}
-
-	public FakeExpression(final String name) {
-		this(null, name, null);
 	}
 
 	@Override
@@ -241,9 +233,5 @@ public class FakeExpression implements IASTExpression {
 	@Override
 	public String toString() {
 		return mName;
-	}
-
-	public CType getCType() {
-		return mCType;
 	}
 }

@@ -61,7 +61,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
@@ -69,7 +68,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence.Origin;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
@@ -112,13 +110,11 @@ public final class ProductGenerator {
 	private final NestedMap2<BoogieIcfgLocation, String, BoogieIcfgLocation> mResultProgramPointsProduct;
 	private final Map<BoogieIcfgLocation, List<Call>> mOrigRcfgCallLocs2CallEdges;
 	private final SimplificationTechnique mSimplificationTechnique;
-	private final XnfConversionTechnique mXnfConversionTechnique;
 	private final boolean mEverythingIsAStep;
 
 	public ProductGenerator(final INestedWordAutomaton<CodeBlock, String> nwa, final BoogieIcfgContainer rcfg,
 			final LTLPropertyCheck ltlAnnot, final IUltimateServiceProvider services,
-			final ProductBacktranslator backtrans, final SimplificationTechnique simplificationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique) {
+			final ProductBacktranslator backtrans, final SimplificationTechnique simplificationTechnique) {
 		// services and logger
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -128,7 +124,6 @@ public final class ProductGenerator {
 		mRcfgRoot = rcfg;
 		mCodeblockFactory = mRcfgRoot.getCodeBlockFactory();
 		mBacktranslator = backtrans;
-		mXnfConversionTechnique = xnfConversionTechnique;
 		mSimplificationTechnique = simplificationTechnique;
 
 		// initialize state
@@ -533,8 +528,7 @@ public final class ProductGenerator {
 	}
 
 	private void generateTransFormulas() {
-		final TransFormulaBuilder tfb = new TransFormulaBuilder(mProductRoot, mServices, mSimplificationTechnique,
-				mXnfConversionTechnique);
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(mProductRoot, mServices, mSimplificationTechnique);
 
 		final Set<Entry<String, Map<DebugIdentifier, BoogieIcfgLocation>>> programPoints = mProductRoot
 				.getProgramPoints().entrySet();
@@ -634,15 +628,14 @@ public final class ProductGenerator {
 		// each outgoing letter of the NWA and the resulting edges should be
 		// inserted in the new NWA (happens automatically during construction)
 
-		final TransFormulaBuilder tfb = new TransFormulaBuilder(mProductRoot, mServices, mSimplificationTechnique,
-				mXnfConversionTechnique);
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(mProductRoot, mServices, mSimplificationTechnique);
 
 		BoogieIcfgLocation targetpp;
 		for (final OutgoingInternalTransition<CodeBlock, String> autTrans : mNWA.internalSuccessors(nwaLoc)) {
 			targetpp = mResultProgramPointsProduct.get((BoogieIcfgLocation) summary.getTarget(), autTrans.getSucc());
 			final List<CodeBlock> sumAndSs = new ArrayList<>();
 			final StatementSequence seq = mCodeblockFactory.constructStatementSequence(productSourceLoc, targetpp,
-					checkLetter(autTrans.getLetter()), Origin.IMPLEMENTATION);
+					checkLetter(autTrans.getLetter()));
 
 			tfb.addTransFormula(seq, ((BoogieIcfgLocation) summary.getSource()).getProcedure());
 
@@ -650,7 +643,7 @@ public final class ProductGenerator {
 			sumAndSs.add(seq);
 
 			mCodeblockFactory.constructSequentialCompositionAndDisconnectEdges(productSourceLoc, targetpp, true, true,
-					sumAndSs, mXnfConversionTechnique, mSimplificationTechnique);
+					sumAndSs, mSimplificationTechnique);
 		}
 	}
 
@@ -819,9 +812,9 @@ public final class ProductGenerator {
 		assert currentpp != null;
 		assert targetpp != null;
 		if (originalSS == null) {
-			newSS = mCodeblockFactory.constructStatementSequence(currentpp, targetpp, stmts, Origin.IMPLEMENTATION);
+			newSS = mCodeblockFactory.constructStatementSequence(currentpp, targetpp, stmts);
 		} else {
-			newSS = mCodeblockFactory.constructStatementSequence(currentpp, targetpp, stmts, originalSS.getOrigin());
+			newSS = mCodeblockFactory.constructStatementSequence(currentpp, targetpp, stmts);
 		}
 
 		mapNewEdge2OldEdge(newSS, originalSS);

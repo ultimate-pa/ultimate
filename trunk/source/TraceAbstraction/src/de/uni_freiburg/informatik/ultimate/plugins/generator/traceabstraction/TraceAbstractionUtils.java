@@ -28,11 +28,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -44,32 +40,16 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.ICallAction;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IReturnAction;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramOldVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerCache;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareAnnotationPositions;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
@@ -108,106 +88,6 @@ public final class TraceAbstractionUtils {
 		}
 		logger.debug("Finished computation of initial partition.");
 		return new PartitionBackedSetOfPairs<>(partition);
-	}
-
-	/**
-	 * Construct Predicate which represents the same Predicate as ps, but where all globalVars are renamed to
-	 * oldGlobalVars.
-	 *
-	 * @param services
-	 * @param mgdScript
-	 * @param predicateFactory
-	 * @param simplificationTechnique
-	 */
-	public static IPredicate renameGlobalsToOldGlobals(final IPredicate ps, final IUltimateServiceProvider services,
-			final ManagedScript mgdScript, final BasicPredicateFactory predicateFactory,
-			final SimplificationTechnique simplificationTechnique) {
-		if (predicateFactory.isDontCare(ps)) {
-			throw new UnsupportedOperationException("don't cat not expected");
-		}
-		final Map<Term, Term> substitutionMapping = new HashMap<>();
-		for (final IProgramVar pv : ps.getVars()) {
-			if (pv instanceof IProgramNonOldVar) {
-				final IProgramVar oldVar = ((IProgramNonOldVar) pv).getOldVar();
-				substitutionMapping.put(pv.getTermVariable(), oldVar.getTermVariable());
-			}
-		}
-		Term renamedFormula = Substitution.apply(mgdScript, substitutionMapping, ps.getFormula());
-		renamedFormula = SmtUtils.simplify(mgdScript, renamedFormula, services, simplificationTechnique);
-		final IPredicate result = predicateFactory.newPredicate(renamedFormula);
-		return result;
-	}
-
-	/**
-	 * Construct Term which represents the same set of states as ps, but where all globalVars are renamed to
-	 * oldGlobalVars.
-	 *
-	 */
-	public static Term renameGlobalsToOldGlobals(final IPredicate ps, final IUltimateServiceProvider services,
-			final ManagedScript mgdScript) {
-		final Map<Term, Term> substitutionMapping = new HashMap<>();
-		for (final IProgramVar pv : ps.getVars()) {
-			if (pv instanceof IProgramNonOldVar) {
-				final IProgramVar oldVar = ((IProgramNonOldVar) pv).getOldVar();
-				substitutionMapping.put(pv.getTermVariable(), oldVar.getTermVariable());
-			}
-		}
-		final Term result = Substitution.apply(mgdScript, substitutionMapping, ps.getFormula());
-		return result;
-	}
-
-	public static <LOC extends IcfgLocation> Set<LOC> getLocationsForWhichHoareAnnotationIsComputed(
-			final IIcfg<LOC> root, final HoareAnnotationPositions hoareAnnotationPositions) {
-		final Set<LOC> hoareAnnotationLocs = new HashSet<>();
-		switch (hoareAnnotationPositions) {
-		case All:
-			for (final Entry<String, Map<DebugIdentifier, LOC>> entry : root.getProgramPoints().entrySet()) {
-				hoareAnnotationLocs.addAll(entry.getValue().values());
-			}
-			break;
-		case LoopsAndPotentialCycles:
-			hoareAnnotationLocs.addAll(root.getLoopLocations());
-			hoareAnnotationLocs.addAll(IcfgUtils.getCallerAndCalleePoints(root));
-			hoareAnnotationLocs.addAll(IcfgUtils.getReturnPredecessorPoints(root));
-			hoareAnnotationLocs.addAll(IcfgUtils.getPotentialCycleProgramPoints(root));
-			break;
-		case LoopHeads:
-			hoareAnnotationLocs.addAll(root.getLoopLocations());
-			hoareAnnotationLocs.addAll(IcfgUtils.getCallerAndCalleePoints(root));
-			hoareAnnotationLocs.addAll(IcfgUtils.getReturnPredecessorPoints(root));
-			break;
-		default:
-			throw new AssertionError("unknown value " + hoareAnnotationPositions);
-		}
-		return hoareAnnotationLocs;
-	}
-
-	/**
-	 * For each oldVar in vars that is not modifiable by procedure proc: substitute
-	 * the oldVar by the corresponding globalVar in term and remove the oldvar from
-	 * vars.
-	 */
-	public static Term substituteOldVarsOfNonModifiableGlobals(final String proc, final Set<IProgramVar> vars,
-			final Term term, final ModifiableGlobalsTable modifiableGlobals, final ManagedScript mgdScript) {
-		final Set<IProgramNonOldVar> modifiableGlobalsOfProc = modifiableGlobals.getModifiedBoogieVars(proc);
-		final List<IProgramVar> replacedOldVars = new ArrayList<>();
-		final Map<Term, Term> substitutionMapping = new HashMap<>();
-		for (final IProgramVar bv : vars) {
-			if (bv instanceof IProgramOldVar) {
-				final IProgramNonOldVar pnov = ((IProgramOldVar) bv).getNonOldVar();
-				if (!modifiableGlobalsOfProc.contains(pnov)) {
-					substitutionMapping.put(bv.getTermVariable(),
-							((IProgramOldVar) bv).getNonOldVar().getTermVariable());
-					replacedOldVars.add(bv);
-				}
-			}
-		}
-		final Term result = Substitution.apply(mgdScript, substitutionMapping, term);
-		for (final IProgramVar bv : replacedOldVars) {
-			vars.remove(bv);
-			vars.add(((IProgramOldVar) bv).getNonOldVar());
-		}
-		return result;
 	}
 
 	public static <L> String prettyPrintTracePredicates(final NestedWord<L> nestedWord,

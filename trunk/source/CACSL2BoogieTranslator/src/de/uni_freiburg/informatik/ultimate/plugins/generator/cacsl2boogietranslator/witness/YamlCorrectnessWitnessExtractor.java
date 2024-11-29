@@ -27,24 +27,33 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
-import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 import org.eclipse.cdt.core.dom.ast.ASTGenericVisitor;
+import org.eclipse.cdt.core.dom.ast.IASTDoStatement;
+import org.eclipse.cdt.core.dom.ast.IASTForStatement;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
+import org.eclipse.cdt.core.dom.ast.IASTWhileStatement;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.LineOffsetComputer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.FunctionContract;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.GhostUpdate;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.GhostVariable;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Location;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LocationInvariant;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LoopInvariant;
@@ -74,62 +83,61 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 	}
 
 	@Override
-	protected ExtractedCorrectnessWitness extractWitness() {
+	protected IExtractedCorrectnessWitness extractWitness() {
 		// TODO: The column extraction happens in LocationFactory, so we create one as a workaround
 		final LocationFactory locationFactory =
 				new LocationFactory(null, new LineOffsetComputer(mTranslationUnit.getRawSignature()));
 		final Map<IASTNode, ExtractedLoopInvariant> loopInvariants = new HashMap<>();
-		final Map<IASTNode, ExtractedLocationInvariant> locationInvariantsBefore = new HashMap<>();
-		final Map<IASTNode, ExtractedLocationInvariant> locationInvariantsAfter = new HashMap<>();
-		final ExtractedCorrectnessWitness rtr = new ExtractedCorrectnessWitness();
+		final Map<IASTNode, ExtractedLocationInvariant> locationInvariants = new HashMap<>();
+		final YamlExtractedCorrectnessWitness rtr = new YamlExtractedCorrectnessWitness();
 		for (final WitnessEntry entry : mWitness.getEntries()) {
 			final Location location;
-			final BiConsumer<IASTNode, Boolean> addFunction;
+			final Consumer<IASTNode> addFunction;
+			if (entry instanceof GhostVariable) {
+				final GhostVariable ghost = (GhostVariable) entry;
+				rtr.addGlobalDeclaration(new ExtractedGhostVariable(ghost.getVariable(), ghost.getInitialValue(),
+						ghost.getType(), mTranslationUnit));
+				mStats.success();
+				continue;
+			}
 			if (entry instanceof LocationInvariant) {
-				if (mCheckOnlyLoopInvariants) {
-					continue;
-				}
 				location = ((LocationInvariant) entry).getLocation();
-				addFunction = (node, before) -> addLocationInvariant((LocationInvariant) entry, node,
-						Boolean.TRUE.equals(before) ? locationInvariantsBefore : locationInvariantsAfter, before);
+				addFunction = node -> addLocationInvariant((LocationInvariant) entry, node, locationInvariants);
 			} else if (entry instanceof LoopInvariant) {
 				location = ((LoopInvariant) entry).getLocation();
-				addFunction = (node, before) -> addLoopInvariant((LoopInvariant) entry, node, loopInvariants, before);
+				addFunction = node -> addLoopInvariant((LoopInvariant) entry, node, loopInvariants);
 			} else if (entry instanceof FunctionContract) {
 				location = ((FunctionContract) entry).getLocation();
-				addFunction = (node, before) -> addFunctionContract((FunctionContract) entry, node, rtr, before);
+				addFunction = node -> addFunctionContract((FunctionContract) entry, node, rtr);
+			} else if (entry instanceof GhostUpdate) {
+				final GhostUpdate update = (GhostUpdate) entry;
+				location = update.getLocation();
+				addFunction = node -> rtr.addGhostUpdate(node,
+						new ExtractedGhostUpdate(update.getVariable(), update.getValue(), node));
 			} else {
 				throw new UnsupportedOperationException("Unknown entry type " + entry.getClass().getSimpleName());
 			}
 			final LineColumnMatchingVisitor visitor = new LineColumnMatchingVisitor(location, locationFactory);
 			visitor.run(mTranslationUnit);
-			final Set<IASTNode> matchesBefore = visitor.getMatchedNodesBefore();
-			final Set<IASTNode> matchesAfter = visitor.getMatchedNodesAfter();
-			if (matchesBefore.isEmpty() && matchesAfter.isEmpty()) {
+			final IASTNode node = visitor.getMatchedNode();
+			if (node == null) {
 				if (mIgnoreUnmatchedEntries) {
 					mStats.fail();
 					continue;
 				}
 				throw new UnsupportedOperationException("The following witness entry could not be matched: " + entry);
 			}
-			// TODO: Make sure that the invariant is only matched once
-			matchesBefore.forEach(x -> addFunction.accept(x, true));
-			matchesAfter.forEach(x -> addFunction.accept(x, false));
+			addFunction.accept(node);
 			mStats.success();
 		}
-		rtr.addWitnessStatements(loopInvariants);
-		rtr.addWitnessStatements(locationInvariantsBefore);
-		rtr.addWitnessStatements(locationInvariantsAfter);
+		loopInvariants.forEach(rtr::addInvariant);
+		locationInvariants.forEach(rtr::addInvariant);
 		return rtr;
 
 	}
 
 	private static void addFunctionContract(final FunctionContract functionContract, final IASTNode node,
-			final ExtractedCorrectnessWitness result, final boolean isBefore) {
-		if (!isBefore) {
-			// Functions contracts should only be matched before definitions / declarations
-			return;
-		}
+			final YamlExtractedCorrectnessWitness result) {
 		if (!(node instanceof IASTSimpleDeclaration) && !(node instanceof IASTFunctionDefinition)) {
 			throw new UnsupportedOperationException(
 					"Function contract is only allowed at declaration or definition of a function (found "
@@ -140,31 +148,28 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 	}
 
 	private static void addLocationInvariant(final LocationInvariant current, final IASTNode node,
-			final Map<IASTNode, ExtractedLocationInvariant> locationInvariants, final boolean isBefore) {
-		String invariant = current.getInvariant().getExpression();
-		Set<String> labels = Set.of(current.getMetadata().getUuid().toString());
+			final Map<IASTNode, ExtractedLocationInvariant> locationInvariants) {
+		String invariant = current.getInvariant();
 		final ExtractedLocationInvariant old = locationInvariants.get(node);
 		if (old != null) {
 			invariant = conjunctInvariants(old.getInvariant(), invariant);
-			labels = DataStructureUtils.union(old.getNodeLabels(), labels);
 		}
-		locationInvariants.put(node, new ExtractedLocationInvariant(invariant, labels, node, isBefore));
+		locationInvariants.put(node, new ExtractedLocationInvariant(invariant, node, true));
 	}
 
 	private static void addLoopInvariant(final LoopInvariant current, final IASTNode node,
-			final Map<IASTNode, ExtractedLoopInvariant> loopInvariants, final boolean isBefore) {
-		if (!isBefore) {
-			// Loop invariants should only be matched before the loops
-			return;
+			final Map<IASTNode, ExtractedLoopInvariant> loopInvariants) {
+		if (!(node instanceof IASTWhileStatement) && !(node instanceof IASTForStatement)
+				&& !(node instanceof IASTDoStatement)) {
+			throw new UnsupportedOperationException(
+					"Loop invariant is only allowed at loop (found " + node.getClass().getSimpleName() + ")");
 		}
-		String invariant = current.getInvariant().getExpression();
-		Set<String> labels = Set.of(current.getMetadata().getUuid().toString());
+		String invariant = current.getInvariant();
 		final ExtractedLoopInvariant old = loopInvariants.get(node);
 		if (old != null) {
 			invariant = conjunctInvariants(old.getInvariant(), invariant);
-			labels = DataStructureUtils.union(old.getNodeLabels(), labels);
 		}
-		loopInvariants.put(node, new ExtractedLoopInvariant(invariant, labels, node));
+		loopInvariants.put(node, new ExtractedLoopInvariant(invariant, node));
 	}
 
 	private static String conjunctInvariants(final String invariant1, final String invariant2) {
@@ -172,8 +177,7 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 	}
 
 	private static final class LineColumnMatchingVisitor extends ASTGenericVisitor {
-		private final Set<IASTNode> mMatchedNodesBefore = new HashSet<>();
-		private final Set<IASTNode> mMatchedNodesAfter = new HashSet<>();
+		private IASTNode mMatchedNode;
 		private final Location mLocation;
 		private final LocationFactory mLocationFactory;
 
@@ -187,12 +191,8 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 			translationUnit.accept(this);
 		}
 
-		public Set<IASTNode> getMatchedNodesBefore() {
-			return mMatchedNodesBefore;
-		}
-
-		public Set<IASTNode> getMatchedNodesAfter() {
-			return mMatchedNodesAfter;
+		public IASTNode getMatchedNode() {
+			return mMatchedNode;
 		}
 
 		@Override
@@ -204,20 +204,78 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 			if (loc == null) {
 				return PROCESS_CONTINUE;
 			}
-			// Match before the AST node, if the line matches and either the column is 0 or the column also matches
+			// Match before the AST node, if the line matches and either the column is not present (it can be omitted;
+			// should be matched the first node of the line in that case) or it also matches the AST node
 			if (mLocation.getLine() == loc.getStartLine()
-					&& (mLocation.getColumn() == 0 || mLocation.getColumn() == loc.getStartColumn())) {
-				mMatchedNodesBefore.add(node);
-				// skip the subtree if a match occurred, but continue with siblings.
-				return PROCESS_SKIP;
-			}
-			// Match after the AST node, if both the line and column match
-			if (mLocation.getLine() == loc.getEndLine() && mLocation.getColumn() == loc.getEndColumn()) {
-				mMatchedNodesAfter.add(node);
-				// skip the subtree if a match occurred, but continue with siblings.
-				return PROCESS_SKIP;
+					&& (mLocation.getColumn() == null || mLocation.getColumn() == loc.getStartColumn())) {
+				mMatchedNode = node;
+				// Abort the search, since we want the witness entry to be matched at most once.
+				return PROCESS_ABORT;
 			}
 			return PROCESS_CONTINUE;
+		}
+	}
+
+	private static final class YamlExtractedCorrectnessWitness implements IExtractedCorrectnessWitness {
+		private final HashRelation<IASTNode, ExtractedWitnessInvariant> mInvariants = new HashRelation<>();
+		private final HashRelation<IASTNode, ExtractedFunctionContract> mFunctionContracts = new HashRelation<>();
+		private final Map<IASTNode, List<ExtractedGhostUpdate>> mGhostUpdates = new HashMap<>();
+		private final Set<IExtractedWitnessDeclaration> mGlobalDeclarations = new HashSet<>();
+
+		private void addInvariant(final IASTNode node, final ExtractedWitnessInvariant entry) {
+			mInvariants.addPair(node, entry);
+		}
+
+		private void addFunctionContract(final IASTNode function, final ExtractedFunctionContract contract) {
+			mFunctionContracts.addPair(function, contract);
+		}
+
+		private void addGhostUpdate(final IASTNode node, final ExtractedGhostUpdate update) {
+			mGhostUpdates.computeIfAbsent(node, x -> new ArrayList<>()).add(update);
+		}
+
+		private void addGlobalDeclaration(final IExtractedWitnessDeclaration declaration) {
+			mGlobalDeclarations.add(declaration);
+		}
+
+		@Override
+		public Set<ExtractedWitnessInvariant> getInvariants(final IASTNode node) {
+			return mInvariants.getImage(node);
+		}
+
+		@Override
+		public Set<ExtractedFunctionContract> getFunctionContracts(final IASTNode node) {
+			return mFunctionContracts.getImage(node);
+		}
+
+		@Override
+		public List<ExtractedGhostUpdate> getGhostUpdates(final IASTNode node) {
+			return mGhostUpdates.getOrDefault(node, List.of());
+		}
+
+		@Override
+		public Set<IExtractedWitnessDeclaration> getGlobalDeclarations() {
+			return Collections.unmodifiableSet(mGlobalDeclarations);
+		}
+
+		@Override
+		public List<String> printAllEntries() {
+			final List<String> result = new ArrayList<>();
+			for (final Entry<IASTNode, ExtractedWitnessInvariant> entry : mInvariants.getSetOfPairs()) {
+				result.add(entry.getValue().toString());
+			}
+			for (final Entry<IASTNode, ExtractedFunctionContract> entry : mFunctionContracts.getSetOfPairs()) {
+				result.add(entry.getValue().toString());
+			}
+			for (final var d : mGlobalDeclarations) {
+				result.add(d.toString());
+			}
+			for (final var updates : mGhostUpdates.values()) {
+				for (final var u : updates) {
+					result.add(u.toString());
+				}
+			}
+			return result;
 		}
 	}
 }

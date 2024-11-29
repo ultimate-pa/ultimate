@@ -492,6 +492,8 @@ public class SMTInterpol extends NoopScript {
 								if (mErrorCallback != null) {
 									mErrorCallback.notifyError(ErrorReason.INVALID_MODEL);
 								}
+								result = LBool.UNKNOWN;
+								mReasonUnknown = ReasonUnknown.CRASHED;
 							}
 						}
 					} catch (final UnsupportedOperationException ex) {

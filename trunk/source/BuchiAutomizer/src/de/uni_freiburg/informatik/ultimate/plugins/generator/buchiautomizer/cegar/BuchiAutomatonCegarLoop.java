@@ -56,8 +56,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiAutomizerUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoopBenchmark;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoopBenchmarkGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.RankVarConstructor;
@@ -222,7 +222,7 @@ public class BuchiAutomatonCegarLoop<L extends IIcfgTransition<?>>
 				try {
 					am = new AutomataMinimization<>(mServices, result, automataMinimization, false, mIteration,
 							mStateFactoryForRefinement, -1, null, null, -1, mPredicateFactoryResultChecking,
-							BuchiAutomizerUtils::getLocations, false);
+							PredicateUtils::getLocations, false);
 				} catch (final AutomataMinimizationTimeout e) {
 					mBenchmarkGenerator.addAutomataMinimizationData(e.getStatistics());
 					throw e.getAutomataOperationCanceledException();

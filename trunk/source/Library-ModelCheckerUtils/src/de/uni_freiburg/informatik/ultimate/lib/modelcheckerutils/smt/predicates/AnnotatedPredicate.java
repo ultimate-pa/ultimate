@@ -53,11 +53,6 @@ public abstract class AnnotatedPredicate<P extends IPredicate, A> implements IPr
 	}
 
 	@Override
-	public String[] getProcedures() {
-		return mUnderlying.getProcedures();
-	}
-
-	@Override
 	public Set<IProgramVar> getVars() {
 		return mUnderlying.getVars();
 	}

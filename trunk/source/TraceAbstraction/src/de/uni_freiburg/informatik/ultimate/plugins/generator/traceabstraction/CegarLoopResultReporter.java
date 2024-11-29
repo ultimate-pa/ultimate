@@ -127,7 +127,7 @@ public final class CegarLoopResultReporter<L extends IIcfgTransition<?>> {
 		reportAllSafeResultIfNecessary(Collections.singletonList(clres), numberOfErrorLocs);
 	}
 
-	public void reportAllSafeResultIfNecessary(final Collection<CegarLoopResult<L>> clres,
+	public void reportAllSafeResultIfNecessary(final Collection<? extends CegarLoopResult<L>> clres,
 			final int numberOfErrorLocs) {
 		if (clres.stream().allMatch(a -> a.resultStream().allMatch(r -> r == Result.SAFE))) {
 			final AllSpecificationsHoldResult result =

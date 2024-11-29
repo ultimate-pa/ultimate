@@ -68,7 +68,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermVarsProc;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermVarsFuns;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -210,7 +210,7 @@ public final class TraceCheckUtils {
 		for (int i = 0; i <= interpolants.size(); i++) {
 			result = checkInductivityAtPosition(i, ipp, trace, pendingContexts, htc, logger);
 			if (result != Validity.VALID && result != Validity.UNKNOWN) {
-				throw new AssertionError("invalid Hoare triple in " + computation);
+				throw new AssertionError("invalid Hoare triple in " + computation + " Trace length " + trace.length());
 			}
 		}
 		return true;
@@ -343,7 +343,7 @@ public final class TraceCheckUtils {
 	 * Returns a predicate which states that old(g)=g for all global variables g that are modifiable by procedure proc
 	 * according to ModifiableGlobalVariableManager modGlobVarManager.
 	 */
-	public static TermVarsProc getOldVarsEquality(final String proc,
+	public static TermVarsFuns getOldVarsEquality(final String proc,
 			final ModifiableGlobalsTable modifiableGlobalsTable, final ManagedScript mgdScript) {
 		final Set<IProgramVar> vars = new HashSet<>();
 		Term term = mgdScript.getScript().term("true");
@@ -356,8 +356,7 @@ public final class TraceCheckUtils {
 			final Term equality = SmtUtils.binaryEquality(mgdScript.getScript(), tv, tvOld);
 			term = SmtUtils.and(mgdScript.getScript(), term, equality);
 		}
-		final String[] procs = new String[0];
-		final TermVarsProc result = new TermVarsProc(term, vars, Collections.emptySet(), procs,
+		final TermVarsFuns result = new TermVarsFuns(term, vars, Collections.emptySet(),
 				PredicateUtils.computeClosedFormula(term, vars, mgdScript));
 		return result;
 	}
@@ -367,15 +366,15 @@ public final class TraceCheckUtils {
 	 */
 	public static <L extends IAction> NestedFormulas<L, UnmodifiableTransFormula, IPredicate> decoupleArrayValues(
 			final ManagedScript mgdScript, final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> nf) {
-		final ModifiableNestedFormulas<L, UnmodifiableTransFormula, IPredicate> result = new ModifiableNestedFormulas<>(
-				nf.getTrace(), new TreeMap<>());
+		final ModifiableNestedFormulas<L, UnmodifiableTransFormula, IPredicate> result =
+				new ModifiableNestedFormulas<>(nf.getCounterexample(), new TreeMap<>());
 		result.setPrecondition(nf.getPrecondition());
 		result.setPostcondition(nf.getPostcondition());
 		for (int i = 0; i < nf.getTrace().length(); i++) {
 			if (nf.getTrace().isCallPosition(i)) {
 				{
-					final UnmodifiableTransFormula decoupledLocalVarAssignment = TransFormulaUtils
-							.decoupleArrayValues(nf.getLocalVarAssignment(i), mgdScript);
+					final UnmodifiableTransFormula decoupledLocalVarAssignment =
+							TransFormulaUtils.decoupleArrayValues(nf.getLocalVarAssignment(i), mgdScript);
 					result.setLocalVarAssignmentAtPos(i, decoupledLocalVarAssignment);
 				}
 				// globalVarAssignment and oldVarAssignment are equalities an cannot be affected
@@ -383,8 +382,8 @@ public final class TraceCheckUtils {
 				result.setGlobalVarAssignmentAtPos(i, nf.getGlobalVarAssignment(i));
 				result.setOldVarAssignmentAtPos(i, nf.getOldVarAssignment(i));
 			} else {
-				final UnmodifiableTransFormula decoupled = TransFormulaUtils
-						.decoupleArrayValues(nf.getFormulaFromNonCallPos(i), mgdScript);
+				final UnmodifiableTransFormula decoupled =
+						TransFormulaUtils.decoupleArrayValues(nf.getFormulaFromNonCallPos(i), mgdScript);
 				result.setFormulaAtNonCallPos(i, decoupled);
 				if (nf.getTrace().isPendingReturn(i)) {
 					result.setPendingContext(i, nf.getPendingContext(i));

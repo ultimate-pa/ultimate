@@ -57,7 +57,7 @@ public class CNamed extends CType {
 	 */
 	public CNamed(final String name, final CType mappedType) {
 		// FIXME: integrate those flags -- you will also need to change the equals method if you do
-		super(false, false, false, false, false);
+		super(false, false, false, false, false, mappedType.isAtomic());
 		mName = name;
 		mMappedType = mappedType;
 	}
@@ -99,14 +99,6 @@ public class CNamed extends CType {
 	@Override
 	public String toString() {
 		return getName();
-	}
-
-	@Override
-	public boolean isCompatibleWith(final CType o) {
-		if (o == null) {
-			return false;
-		}
-		return getUnderlyingType().isCompatibleWith(o.getUnderlyingType());
 	}
 
 	@Override

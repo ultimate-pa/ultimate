@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.core.model.services;
 
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.core.model.models.ProcedureContract;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslatedCFG;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
@@ -51,6 +52,8 @@ public interface IBacktranslationService {
 
 	<SE, TE> TE translateExpression(SE expression, Class<SE> sourceExpressionClass);
 
+	<SE, TE, CTX> TE translateExpressionWithContext(SE expression, CTX context, Class<SE> clazz);
+
 	/**
 	 * Translate an expression from the output type to a String.
 	 *
@@ -68,11 +71,16 @@ public interface IBacktranslationService {
 
 	<STE, SE> IProgramExecution<?, ?> translateProgramExecution(IProgramExecution<STE, SE> programExecution);
 
+	<STE, SE> Lasso<IProgramExecution<?, ?>> translateLassoProgramExecution(Lasso<IProgramExecution<STE, SE>> lasso);
+
 	<SE> ProgramState<?> translateProgramState(ProgramState<SE> programState);
 
 	<SE> String translateProgramStateToString(ProgramState<SE> programState);
 
 	<STE, SE> IBacktranslatedCFG<?, ?> translateCFG(IBacktranslatedCFG<?, STE> cfg);
+
+	<TE, SE, CTX> ProcedureContract<TE, ? extends TE>
+			translateProcedureContract(ProcedureContract<SE, ? extends SE> contract, CTX context, Class<SE> clazz);
 
 	/**
 	 * Use this if you want to keep a certain state of the backtranslation chain during toolchain execution.
@@ -80,4 +88,22 @@ public interface IBacktranslationService {
 	IBacktranslationService getTranslationServiceCopy();
 
 	<SE, TE> TE declareAndTranslateAuxiliaryVariable(SE variable);
+
+	public final class Lasso<X extends IProgramExecution<?, ?>> {
+		private final X mStem;
+		private final X mLoop;
+
+		public Lasso(final X stem, final X loop) {
+			mStem = stem;
+			mLoop = loop;
+		}
+
+		public X getStem() {
+			return mStem;
+		}
+
+		public X getLoop() {
+			return mLoop;
+		}
+	}
 }

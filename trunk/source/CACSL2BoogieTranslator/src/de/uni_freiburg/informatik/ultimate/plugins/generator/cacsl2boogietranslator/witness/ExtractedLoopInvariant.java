@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransl
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 
 import org.eclipse.cdt.core.dom.ast.IASTNode;
@@ -54,8 +53,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
  *
  */
 public class ExtractedLoopInvariant extends ExtractedWitnessInvariant {
-	public ExtractedLoopInvariant(final String invariant, final Collection<String> nodeLabel, final IASTNode match) {
-		super(invariant, nodeLabel, match);
+	public ExtractedLoopInvariant(final String invariant, final IASTNode match) {
+		super(invariant, match);
 	}
 
 	@Override
@@ -93,8 +92,10 @@ public class ExtractedLoopInvariant extends ExtractedWitnessInvariant {
 			return new ExpressionResultBuilder(expressionResult).addAllExceptLrValueAndStatements(invariantExprResult)
 					.resetStatements(statements).build();
 		}
-		// TODO: We might identify sth. that is not a loop (e.g. goto) as a loop. This should be handled correctly in
-		// GraphMLCorrectnessWitnessExtractor. For this case we just insert an assert (like a location invariant).
+		// The loop matching for GraphML does not always works correctly.
+		// We might identify sth. that is not a loop (e.g. goto) as a loop.
+		// Since the distinction is not strictly necessary for GraphML, we just insert an assert in this case.
+		// For YAML this should not happen, since we check earlier if the location of a loop invariant is really a loop.
 		return new ExpressionResultBuilder(invariantExprResult).addAllIncludingLrValue(expressionResult).build();
 	}
 
