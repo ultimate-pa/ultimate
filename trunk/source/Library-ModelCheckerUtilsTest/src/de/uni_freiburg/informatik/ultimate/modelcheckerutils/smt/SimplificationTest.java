@@ -162,7 +162,7 @@ public class SimplificationTest {
 		final String formulaAsString =
 				"(and (= c 1) (exists ((X Int)) (and (= X 1) (or (= (select a X) 5) (= c 0) (and (= d 23) (= X 1))))))";
 		final String expectedResultAsString =
-				"(and (exists ((X Int)) (let ((.cse0 (= X 1))) (and (or (= 5 (select a X)) (and .cse0 (= 23 d))) .cse0))) (= c 1))";
+				"(and (exists ((X Int)) (and (= X 1) (or (= 23 d) (= 5 (select a 1))))) (= c 1))";
 		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, SimplificationTechnique.SIMPLIFY_DDA2,
 				mServices, mLogger, mMgdScript, mCsvWriter);
 	}
@@ -1206,6 +1206,39 @@ public class SimplificationTest {
 		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "a"), };
 		final String formulaAsString = "(and (exists ((x Int)) (and (= x 7) (= x a))) (>= a 7))";
 		final String expectedResultAsString = "(exists ((x Int)) (and (= 7 x) (= 7 a)))";
+		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, SimplificationTechnique.SIMPLIFY_DDA2,
+				mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void simplifyMod01() {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "x", "y", "z", "c"), };
+		final String formulaAsString = "(and (= x (mod (+ (mod y 23) (mod z 256) c) 737)) (>= y 1) (<= y 20) (>= z 5) (<= z 255) (<= c 200) (>= c 13))";
+		final String expectedResultAsString = "(and (<= 13 c) (<= c 200) (<= 1 y) (<= y 20) (= x (+ c y z)) (<= 5 z) (<= z 255))";
+		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, SimplificationTechnique.SIMPLIFY_DDA2,
+				mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void selectOverStore01() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "i", "k", "z"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a"),
+		};
+		final String formulaAsString = "(and (= z (select (store a k 100) i)) (= i k))";
+		final String expectedResultAsString = "(and (= i k) (= z 100))";
+		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, SimplificationTechnique.SIMPLIFY_DDA2,
+				mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void selectOverStore02() {
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(SmtSortUtils::getIntSort, "i", "k", "z"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a"),
+		};
+		final String formulaAsString = "(and (= z (select (store a k 100) i)) (distinct i k))";
+		final String expectedResultAsString = "(and (= z (select a i)) (not (= i k)))";
 		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, SimplificationTechnique.SIMPLIFY_DDA2,
 				mServices, mLogger, mMgdScript, mCsvWriter);
 	}

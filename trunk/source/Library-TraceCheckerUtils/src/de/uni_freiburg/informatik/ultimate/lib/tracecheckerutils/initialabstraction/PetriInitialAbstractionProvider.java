@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction;
 
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
@@ -38,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.DebugPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.cfg2automaton.Cfg2Automaton;
@@ -58,6 +60,9 @@ public class PetriInitialAbstractionProvider<L extends IIcfgTransition<?>>
 	private final IUltimateServiceProvider mServices;
 	private final PredicateFactory mPredicateFactory;
 	private final boolean mRemoveDeadEnds;
+
+	// TODO #proofRefactor This is only supposed to be a temporary workaround.
+	private Set<IPredicate> mThreadMonitorPlaces;
 
 	/**
 	 * Create a new instance.
@@ -81,6 +86,10 @@ public class PetriInitialAbstractionProvider<L extends IIcfgTransition<?>>
 			final Set<? extends IcfgLocation> errorLocs) throws AutomataOperationCanceledException {
 		final BoundedPetriNet<L, IPredicate> net =
 				Cfg2Automaton.constructPetriNetWithSPredicates(mServices, icfg, errorLocs, mPredicateFactory);
+
+		mThreadMonitorPlaces =
+				net.getPlaces().stream().filter(DebugPredicate.class::isInstance).collect(Collectors.toSet());
+
 		if (!mRemoveDeadEnds) {
 			return net;
 		}
@@ -95,5 +104,10 @@ public class PetriInitialAbstractionProvider<L extends IIcfgTransition<?>>
 		} catch (final PetriNetNot1SafeException e) {
 			throw new AssertionError(e);
 		}
+	}
+
+	// TODO #proofRefactor This is only supposed to be a temporary workaround.
+	public Set<IPredicate> getThreadMonitorPlaces() {
+		return mThreadMonitorPlaces;
 	}
 }

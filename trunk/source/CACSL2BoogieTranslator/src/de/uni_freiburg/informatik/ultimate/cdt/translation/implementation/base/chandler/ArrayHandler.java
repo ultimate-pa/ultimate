@@ -32,6 +32,7 @@ import java.math.BigInteger;
 
 import org.eclipse.cdt.core.dom.ast.IASTArraySubscriptExpression;
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
+import org.eclipse.cdt.core.dom.ast.IASTNode;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
@@ -42,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
@@ -110,15 +110,12 @@ public class ArrayHandler {
 	 * <li>a[i_1]...[i_n-1] is a pointer (so it might not have that array subscript form), then we need to do pointer
 	 * arithmetic, similar to the on-heap case
 	 */
-	public ExpressionResult handleArraySubscriptExpression(final IDispatcher main,
-			final IASTArraySubscriptExpression node) {
-		final ILocation loc = mLocationFactory.createCLocation(node);
-		final ExpressionResult subscript =
-				mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, node.getArgument());
+	public ExpressionResult handleArraySubscriptExpression(final ExpressionResult array,
+			final ExpressionResult subscript, final IASTNode hook) {
+		final ILocation loc = mLocationFactory.createCLocation(hook);
 		assert subscript.getLrValue().getCType().isIntegerType();
 
-		final ExpressionResult leftExpRes = ((ExpressionResult) main.dispatch(node.getArrayExpression()));
-		final LRValue leftlrValue = leftExpRes.getLrValue();
+		final LRValue leftlrValue = array.getLrValue();
 
 		/*
 		 * note (AN, 2018/02/07): (the "not outermost" assert from the else case below was converted into this, not
@@ -134,7 +131,7 @@ public class ArrayHandler {
 		final ExpressionResultBuilder result = new ExpressionResultBuilder();
 		if (cTypeLeft instanceof CPointer) {
 			// if p is a pointer, then p[42] is equivalent to *(p + 42)
-			final ExpressionResult transformedResult = mExprResultTransformer.switchToRValue(leftExpRes, loc, node);
+			final ExpressionResult transformedResult = mExprResultTransformer.switchToRValue(array, loc, hook);
 			final LRValue transformedValue = transformedResult.getLrValue();
 			assert cTypeLeft.equals(transformedValue.getCType());
 			final RValue integer = (RValue) subscript.getLrValue();
@@ -175,7 +172,7 @@ public class ArrayHandler {
 					IASTBinaryExpression.op_plus, loc, oldAddress, (RValue) subscript.getLrValue(), resultCType);
 			final HeapLValue lValue = LRValueFactory.constructHeapLValue(mTypeHandler,
 					newAddress.getLrValue().getValue(), resultCType, false, null);
-			result.addAllExceptLrValue(leftExpRes, subscript, newAddress);
+			result.addAllExceptLrValue(array, subscript, newAddress);
 			result.setLrValue(lValue);
 			return result.build();
 		}
@@ -203,12 +200,12 @@ public class ArrayHandler {
 						((ArrayLHS) oldInnerArrayLHS).getArray(), newIndices);
 			} else {
 				// "innermost case", i.e. we arrived at the arrays cell level
-				assert isInnermostSubscriptExpression(node) : "not innermost";
+				// assert isInnermostSubscriptExpression(node) : "not innermost";
 				newInnerArrayLHS = ExpressionFactory.constructNestedArrayLHS(loc, oldInnerArrayLHS,
 						new Expression[] { index.getValue() });
 			}
 			final LocalLValue lValue = new LocalLValue(newInnerArrayLHS, resultCType, false, false, null);
-			result.addAllExceptLrValue(leftExpRes, convertedSubscript);
+			result.addAllExceptLrValue(array, convertedSubscript);
 			result.setLrValue(lValue);
 			addArrayBoundsCheckForCurrentIndex(loc, index, bound, result);
 			return result.build();
@@ -217,7 +214,7 @@ public class ArrayHandler {
 			final ExpressionResult newAddress =
 					mMemoryHandler.doPointerArithmeticWithConversion(IASTBinaryExpression.op_plus, loc,
 							leftlrValue.getValue(), (RValue) subscript.getLrValue(), resultCType);
-			result.addAllExceptLrValue(leftExpRes, subscript, newAddress);
+			result.addAllExceptLrValue(array, subscript, newAddress);
 			final HeapLValue lValue = LRValueFactory.constructHeapLValue(mTypeHandler,
 					newAddress.getLrValue().getValue(), resultCType, false, null);
 			result.setLrValue(lValue);

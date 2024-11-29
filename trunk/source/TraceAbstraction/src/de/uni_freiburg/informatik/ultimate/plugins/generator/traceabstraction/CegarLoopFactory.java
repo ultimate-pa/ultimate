@@ -95,6 +95,10 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 
 	private CegarLoopStatisticsGenerator mCegarLoopBenchmark;
 
+	// TODO #proofRefactor This is only supposed to be a temporary workaround.
+	private Set<IPredicate> mThreadMonitorPlaces;
+	private PetriInitialAbstractionProvider<L> mPetriProvider;
+
 	public CegarLoopFactory(final Class<L> transitionClazz, final TAPreferences taPrefs,
 			final Supplier<IPLBECompositionFactory<L>> createCompositionFactory,
 			final ICopyActionFactory<L> copyFactory, final boolean computeHoareAnnotation) {
@@ -300,6 +304,7 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 			final IUltimateServiceProvider services, final PredicateFactory predicateFactory,
 			final boolean removeDead) {
 		final var netProvider = new PetriInitialAbstractionProvider<L>(services, predicateFactory, removeDead);
+		mPetriProvider = netProvider;
 		if (!mPrefs.applyOneShotLbe()) {
 			return netProvider;
 		}
@@ -331,7 +336,11 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.OverallTime);
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.InitialAbstractionConstructionTime);
 		try {
-			return provider.getInitialAbstraction(icfg, errorLocs);
+			final var abstraction = provider.getInitialAbstraction(icfg, errorLocs);
+			if (mPetriProvider != null) {
+				mThreadMonitorPlaces = mPetriProvider.getThreadMonitorPlaces();
+			}
+			return abstraction;
 		} catch (final AutomataOperationCanceledException ex) {
 			final RunningTaskInfo runningTaskInfo =
 					new RunningTaskInfo(this.getClass(), "constructing initial abstraction");
@@ -352,5 +361,9 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 
 	public CegarLoopStatisticsGenerator getStatistics() {
 		return mCegarLoopBenchmark;
+	}
+
+	public Set<IPredicate> getThreadMonitorPlaces() {
+		return mThreadMonitorPlaces;
 	}
 }

@@ -100,4 +100,9 @@ final class BacktranslationServiceMock implements IBacktranslationService {
 	public IBacktranslationService getTranslationServiceCopy() {
 		return this;
 	}
+
+	@Override
+	public <SE, TE> TE declareAndTranslateAuxiliaryVariable(final SE variable) {
+		return null;
+	}
 }

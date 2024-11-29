@@ -46,13 +46,18 @@ public class CegarLoopResult<L extends IIcfgTransition<?>> {
 	private final List<Pair<AbstractInterpolantAutomaton<L>, IPredicateUnifier>> mFloydHoareAutomata;
 	private final Map<IcfgLocation, CegarLoopLocalResult<L>> mLocalResults;
 
+	// TODO #proofRefactor This is only supposed to be a temporary workaround.
+	private final Object mProof;
+
 	public CegarLoopResult(final Map<IcfgLocation, CegarLoopLocalResult<L>> localResults,
 			final IStatisticsDataProvider cegarLoopStatisticsGenerator, final IElement artifact,
-			final List<Pair<AbstractInterpolantAutomaton<L>, IPredicateUnifier>> floydHoareAutomata) {
+			final List<Pair<AbstractInterpolantAutomaton<L>, IPredicateUnifier>> floydHoareAutomata,
+			final Object proof) {
 		mLocalResults = Collections.unmodifiableMap(localResults);
 		mCegarLoopStatisticsGenerator = cegarLoopStatisticsGenerator;
 		mArtifact = artifact;
 		mFloydHoareAutomata = floydHoareAutomata;
+		mProof = proof;
 	}
 
 	public Stream<Result> resultStream() {
@@ -73,5 +78,9 @@ public class CegarLoopResult<L extends IIcfgTransition<?>> {
 
 	public List<Pair<AbstractInterpolantAutomaton<L>, IPredicateUnifier>> getFloydHoareAutomata() {
 		return mFloydHoareAutomata;
+	}
+
+	public Object getProof() {
+		return mProof;
 	}
 }

@@ -103,6 +103,9 @@ public class BoogiePreprocessor implements IAnalysis {
 				.getBoolean(PreferenceInitializer.LABEL_USE_SIMPLIFIER);
 		final boolean useMemorySlicer = mServices.getPreferenceProvider(getPluginID())
 				.getBoolean(PreferenceInitializer.LABEL_USE_MEMORY_SLICER);
+		final boolean replaceWhileAndConditional = mServices.getPreferenceProvider(getPluginID())
+				.getBoolean(PreferenceInitializer.LABEL_REPLACE_WHILE_AND_CONDITIONAL);
+
 
 		final ILogger logger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 
@@ -118,7 +121,9 @@ public class BoogiePreprocessor implements IAnalysis {
 		}
 		observers.add(new ConstExpander(backTranslator));
 		observers.add(new StructExpander(backTranslator, logger));
-		observers.add(new UnstructureCode(backTranslator));
+		if (replaceWhileAndConditional) {
+			observers.add(new UnstructureCode(backTranslator));
+		}
 		observers.add(new FunctionInliner(logger));
 		observers.add(new LTLStepAnnotator());
 		if (useSimplifier) {

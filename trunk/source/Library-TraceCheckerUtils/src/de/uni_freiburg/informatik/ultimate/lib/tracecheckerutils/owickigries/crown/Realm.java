@@ -26,12 +26,12 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.ICoRelation;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire.Region;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
@@ -51,6 +51,8 @@ public final class Realm<PLACE, LETTER> {
 	 * The set of conditions in realm.
 	 */
 	private final ImmutableSet<Condition<LETTER, PLACE>> mRealm;
+
+	private final HashMap<Condition<LETTER, PLACE>, CoRealm<PLACE, LETTER>> mCoRealms = new HashMap<>();
 
 	public Realm(final ImmutableSet<Condition<LETTER, PLACE>> realm) {
 		assert !realm.isEmpty() : "Realm is empty";
@@ -137,53 +139,13 @@ public final class Realm<PLACE, LETTER> {
 	}
 
 	/**
-	 * Check if a condition can be added to the realm without violation the corelation restrictions.
-	 *
-	 * @param bp
-	 *            branching process over which corelation is checked.
-	 * @return true if condition is NOT corelated to all conditions in the region. TODO: itself?? / intersection or
-	 *         isCorelated foreach condition in realm??
-	 */
-	public boolean checkAddCorelation(final Condition<LETTER, PLACE> condition,
-			final BranchingProcess<LETTER, PLACE> bp) {
-		final ICoRelation<LETTER, PLACE> coRelation = bp.getCoRelation();
-		// set of conditions in Branching process to which the specified condition is corelated with.
-		final Set<Condition<LETTER, PLACE>> coConditions = coRelation.computeCoRelatatedConditions(condition);
-		// if the intersection of the coCondition and the realm is empty then the condition is not corelated
-		// to any of the conditions in the realm and hence can be added.
-		if (DataStructureUtils.haveEmptyIntersection(coConditions, mRealm)) {
-			return true;
-		}
-		return false;
-	}
-
-	/**
-	 * @param bp
-	 *            branching process over which corelation is checked.
-	 * @return true if condition is corelated to all conditions in the region. For the addition of a condition into a
-	 *         territory. True AddCorelation to the realm in which the conditionn is added and true checkCorelation to
-	 *         all other realms. TODO: itself?? / intersection or isCorelated foreach condition in realm??
-	 */
-	public boolean checkCorelation(final Condition<LETTER, PLACE> condition, final BranchingProcess<LETTER, PLACE> bp) {
-		final ICoRelation<LETTER, PLACE> coRelation = bp.getCoRelation();
-		// set of conditions in Branching process to which the specified condition is corelated with.
-		final Set<Condition<LETTER, PLACE>> coConditions = coRelation.computeCoRelatatedConditions(condition);
-		// if the intersection of the coCondition and the realm is empty then the condition is not corelated
-		// to any of the conditions in the realm and hence can be added.
-		if (coConditions.containsAll(mRealm)) {
-			return true;
-		}
-		return false;
-	}
-
-	/**
 	 * @param condition
 	 * @param bp
 	 * @return CoRealm with CoRelationType, Positive and Negative corelated conditions.
 	 */
 	public CoRealm<PLACE, LETTER> getCoRealm(final Condition<LETTER, PLACE> condition,
 			final BranchingProcess<LETTER, PLACE> bp, final PlacesCoRelation<PLACE> placesCoRelation) {
-		return new CoRealm<>(this, condition, bp, placesCoRelation);
+		return mCoRealms.computeIfAbsent(condition, c -> new CoRealm<>(this, c, bp, placesCoRelation));
 	}
 
 	/**
@@ -192,7 +154,7 @@ public final class Realm<PLACE, LETTER> {
 	 *            Condition whose presence in the realm is to be tested
 	 * @return true if the realm contains condition
 	 */
-	public boolean contains(final Condition<LETTER, PLACE> condition) {
+	public boolean containsCondition(final Condition<LETTER, PLACE> condition) {
 		return mRealm.contains(condition);
 	}
 
@@ -203,6 +165,17 @@ public final class Realm<PLACE, LETTER> {
 	 */
 	public Region<PLACE> toRegion() {
 		return new Region<>(getPlaces());
+	}
+
+	public Realm<PLACE, LETTER> immigrationAndFoundation(final Condition<LETTER, PLACE> condition,
+			final BranchingProcess<LETTER, PLACE> bp, final PlacesCoRelation<PLACE> placesCoRelation) {
+		final CoRealm<PLACE, LETTER> negativeCoRealm = getCoRealm(condition, bp, placesCoRelation);
+		if (negativeCoRealm.getConflict() == ConflictType.CONFLICT_FREE) {
+			return addCondition(condition);
+		}
+		final Set<Condition<LETTER, PLACE>> conflictFreeConditions =
+				DataStructureUtils.union(negativeCoRealm.getConflictFreeSet(), Set.of(condition));
+		return new Realm<>(ImmutableSet.of(conflictFreeConditions));
 	}
 
 	/**

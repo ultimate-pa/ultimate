@@ -662,9 +662,11 @@ public class JordanLoopAcceleration {
 						}
 					}
 				}
-				throw new UnsupportedOperationException(
-						String.format("%s updates on array %s. %s indexPairs, %s moving in lockstep. Differences: %s",
-								indices.size(), array, indexPairs, movingInLockstep, sb.toString()));
+				if (indexPairs > movingInLockstep) {
+					throw new UnsupportedOperationException(String.format(
+							"%s updates on array %s. %s indexPairs, %s moving in lockstep. Differences: %s",
+							indices.size(), array, indexPairs, movingInLockstep, sb.toString()));
+				}
 			}
 		}
 
@@ -676,37 +678,43 @@ public class JordanLoopAcceleration {
 		for (final Entry<IProgramVar, MultiDimensionalNestedStore> entry : closedFormIt.getArrayUpdates().entrySet()) {
 			final IProgramVar array = entry.getKey();
 			final MultiDimensionalNestedStore mdns = entry.getValue();
-			if (mdns.getIndices().size() > 1) {
-				throw new UnsupportedOperationException(UNSUPPORTED_PREFIX + " Several updates per array");
-			}
-			final ArrayIndex index = mdns.getIndices().get(0);
-			final List<TermVariable> idx = constructIdxTermVariables(mgdScript, index.size());
-			final Term inRangeIndexEquality;
+//			if (mdns.getIndices().size() > 1) {
+//				throw new UnsupportedOperationException(UNSUPPORTED_PREFIX + " Several updates per array");
+//			}
+			final List<TermVariable> idx = constructIdxTermVariables(mgdScript, mdns.getDimension());
+			final Term[] inRangeAndIndexEquality = new Term[mdns.getIndices().size()];
 			{
-				final Term eq1 = SmtUtils.pairwiseEquality(script, idx, index);
 				final Term iterationRange = constructIterationRange(script, BigInteger.ZERO, it, BigInteger.ONE, itFin);
-				inRangeIndexEquality = SmtUtils.and(script, iterationRange, eq1);
+				for (int i = 0; i < mdns.getIndices().size(); i++) {
+					final ArrayIndex index = mdns.getIndices().get(i);
+					final Term eq1 = SmtUtils.pairwiseEquality(script, idx, index);
+					inRangeAndIndexEquality[i] = SmtUtils.and(script, iterationRange, eq1);
+				}
 			}
 			final List<Term> constraints = new ArrayList<>();
 			{
-				final Term valueConstraint;
 				final Term arrayCell = new MultiDimensionalSelect(loopTransFormula.getOutVars().get(array),
 						new ArrayIndex(idx)).toTerm(script);
-				if (!closedFormIt.getNondetArrayWriteConstraints().get(array).isNondeterministicArrayUpdate(0)) {
-					// deterministic update: we give the array cell a new value
-					final Term value = mdns.getValues().get(0);
-					final Term valueUpdate = SmtUtils.equality(script, arrayCell, value);
-					valueConstraint = valueUpdate;
-				} else {
-					// nondeterministic update: we add some constraints for the value of the cell.
-					// If there are no constraints, we use `true` and the `inRangeConstraint`
-					// (below) will also become true
-					valueConstraint = closedFormIt.getNondetArrayWriteConstraints().get(array)
-							.constructConstraints(script, 0, arrayCell);
+				final List<Term> implications = new ArrayList<>();
+				for (int i = 0; i < mdns.getIndices().size(); i++) {
+					final Term valueConstraint;
+					if (!closedFormIt.getNondetArrayWriteConstraints().get(array).isNondeterministicArrayUpdate(i)) {
+						// deterministic update: we give the array cell a new value
+						final Term value = mdns.getValues().get(i);
+						final Term valueUpdate = SmtUtils.equality(script, arrayCell, value);
+						valueConstraint = valueUpdate;
+					} else {
+						// nondeterministic update: we add some constraints for the value of the cell.
+						// If there are no constraints, we use `true` and the `inRangeConstraint`
+						// (below) will also become true
+						valueConstraint = closedFormIt.getNondetArrayWriteConstraints().get(array)
+								.constructConstraints(script, i, arrayCell);
+					}
+					final Term impl = SmtUtils.implies(script, inRangeAndIndexEquality[i], valueConstraint);
+					implications.add(impl);
 				}
-				final Term impl1 = SmtUtils.implies(script, inRangeIndexEquality, valueConstraint);
 				final Term quantified = SmtUtils.quantifier(script, QuantifiedFormula.FORALL, Collections.singleton(it),
-						impl1);
+						SmtUtils.and(script, implications));
 				final Term inRangeConstraint = PartialQuantifierElimination.eliminate(services, mgdScript, quantified,
 						SimplificationTechnique.SIMPLIFY_DDA2);
 				constraints.add(inRangeConstraint);
@@ -718,7 +726,7 @@ public class JordanLoopAcceleration {
 						new MultiDimensionalSelect(loopTransFormula.getInVars().get(array), new ArrayIndex(idx))
 								.toTerm(script));
 				final Term existsInRangeEquality = SmtUtils.quantifier(script, QuantifiedFormula.EXISTS,
-						Collections.singleton(it), inRangeIndexEquality);
+						Collections.singleton(it), SmtUtils.or(script, inRangeAndIndexEquality));
 				final Term quantified = SmtUtils.implies(script,
 						SmtUtils.not(mgdScript.getScript(), existsInRangeEquality), valueConstancy);
 				final Term outsideRangeConstraint = PartialQuantifierElimination.eliminate(services, mgdScript,

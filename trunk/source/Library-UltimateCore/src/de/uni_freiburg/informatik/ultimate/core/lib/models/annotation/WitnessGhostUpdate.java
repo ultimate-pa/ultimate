@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2024 Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ * Copyright (C) 2024 University of Freiburg
  *
  * This file is part of the ULTIMATE Core.
  *
@@ -27,41 +27,41 @@
 
 package de.uni_freiburg.informatik.ultimate.core.lib.models.annotation;
 
+import java.util.Map;
+
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 
 /**
- * Copy and paste of {@link WitnessInvariant}. Makeshift solution. In the future
- * both classes should be merged into one.
  *
- * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  *
  */
-public class WitnessEnsuresClause extends ModernAnnotations {
+public class WitnessGhostUpdate extends ModernAnnotations {
 
 	private static final long serialVersionUID = 1L;
-	private static final String KEY = WitnessEnsuresClause.class.getName();
+	private static final String KEY = WitnessGhostUpdate.class.getName();
 
 	@Visualizable
-	private final String mExpression;
+	private final Map<String, String> mUpdate;
 
-	public WitnessEnsuresClause(final String expression) {
-		mExpression = expression;
+	public WitnessGhostUpdate(final Map<String, String> update) {
+		mUpdate = update;
 	}
 
-	public String getExpression() {
-		return mExpression;
+	public Map<String, String> getUpdate() {
+		return mUpdate;
 	}
 
 	public void annotate(final IElement node) {
-		// Only add an annotation, if the expression was successfully backtranslated (i.e. is not null)
-		if (mExpression != null) {
+		// Only add an annotation, if the update was successfully backtranslated (i.e. is not null and not empty)
+		if (mUpdate != null && !mUpdate.isEmpty()) {
 			node.getPayload().getAnnotations().put(KEY, this);
 		}
 	}
 
-	public static WitnessEnsuresClause getAnnotation(final IElement node) {
-		return ModelUtils.getAnnotation(node, KEY, a -> (WitnessEnsuresClause) a);
+	public static WitnessGhostUpdate getAnnotation(final IElement node) {
+		return ModelUtils.getAnnotation(node, KEY, a -> (WitnessGhostUpdate) a);
 	}
 }

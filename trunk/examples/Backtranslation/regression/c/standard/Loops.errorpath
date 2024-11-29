@@ -31,28 +31,28 @@
 [L18]  COND FALSE  !(c > 0)
        VAL         [a=0, b=0, c=0, d=2, e=2, f=2]
 [L16]  COND FALSE  !(b > 0)
-       VAL         [a=0, b=0, c=0, d=2, e=2, f=2]
+       VAL         [a=0, c=0, d=2, e=2, f=2]
 [L23]  COND TRUE   d>0
 [L24]              e--
-       VAL         [a=0, b=0, c=0, d=2, e=1, f=2]
+       VAL         [a=0, c=0, d=2, e=1, f=2]
 [L23]              d--
-       VAL         [a=0, b=0, c=0, d=1, e=1, f=2]
+       VAL         [a=0, c=0, d=1, e=1, f=2]
 [L23]  COND TRUE   d>0
 [L24]              e--
-       VAL         [a=0, b=0, c=0, d=1, e=0, f=2]
+       VAL         [a=0, c=0, d=1, e=0, f=2]
 [L23]              d--
-       VAL         [a=0, b=0, c=0, d=0, e=0, f=2]
+       VAL         [a=0, c=0, d=0, e=0, f=2]
 [L23]  COND FALSE  !(d>0)
-       VAL         [a=0, b=0, c=0, d=0, e=0, f=2]
+       VAL         [a=0, c=0, e=0, f=2]
 [L28]              f--
-       VAL         [a=0, b=0, c=0, d=0, e=0, f=1]
+       VAL         [a=0, c=0, e=0, f=1]
 [L29]  COND TRUE   f>0
-       VAL         [a=0, b=0, c=0, d=0, e=0, f=1]
+       VAL         [a=0, c=0, e=0, f=1]
 [L28]              f--
-       VAL         [a=0, b=0, c=0, d=0, e=0, f=0]
+       VAL         [a=0, c=0, e=0, f=0]
 [L29]  COND FALSE  !(f>0)
-       VAL         [a=0, b=0, c=0, d=0, e=0, f=0]
+       VAL         [a=0, c=0, e=0]
 [L32]  COND TRUE   a == 0
-       VAL         [a=0, b=0, c=0, d=0, e=0, f=0]
+       VAL         [c=0, e=0]
 [L38]              __VERIFIER_error()
-       VAL         [a=0, b=0, c=0, d=0, e=0, f=0]
+       VAL         [c=0, e=0]

@@ -25,13 +25,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 final class CoKingdom<PLACE, LETTER> {
 
@@ -94,11 +92,14 @@ final class CoKingdom<PLACE, LETTER> {
 		mNegKingdom = new HashSet<>();
 		mParKingdom = new HashSet<>();
 		mParCoRealms = new HashSet<>();
+		if (mKingdom.containsCondition(mCondition)) {
+			return false;
+		}
 		for (final Realm<PLACE, LETTER> realm : mKingdom.getRealms()) {
-			if (realm.contains(mCondition)) {
-				return false;
+			if (mNegKingdom.size() > 1 || mParKingdom.size() > 1) {
+				return true;
 			}
-			final CoRealm<PLACE, LETTER> coRealm = new CoRealm<>(realm, mCondition, bp, placesCoRelation);
+			final CoRealm<PLACE, LETTER> coRealm = realm.getCoRealm(mCondition, bp, placesCoRelation);
 			switch (coRealm.getCoRelation()) {
 			case POSITIVE:
 				mPosKingdom.add(realm);
@@ -109,6 +110,7 @@ final class CoKingdom<PLACE, LETTER> {
 			default:
 				mParKingdom.add(realm);
 				mParCoRealms.add(coRealm);
+				break;
 			}
 		}
 		return true;
@@ -121,14 +123,13 @@ final class CoKingdom<PLACE, LETTER> {
 		if (!success) {
 			return CoRelationType.CONTAINS;
 		}
-		if (mKingdom.getRealms().size() == mPosKingdom.size()) {
+		final int kingdomSize = mKingdom.getRealms().size();
+		final int posKingdomSize = mPosKingdom.size();
+		if (kingdomSize == posKingdomSize) {
 			return CoRelationType.POSITIVE;
-		} else if (mNegKingdom.size() == 1
-				&& mPosKingdom.containsAll(DataStructureUtils.difference(mKingdom.getRealms(), mNegKingdom))
-				&& !mPosKingdom.isEmpty()) {
+		} else if (mNegKingdom.size() == 1 && posKingdomSize == kingdomSize - 1 && !mPosKingdom.isEmpty()) {
 			return CoRelationType.PARTIAL;
-		} else if (mParKingdom.size() == 1
-				&& mPosKingdom.containsAll(DataStructureUtils.difference(mKingdom.getRealms(), mParKingdom))) {
+		} else if (mParKingdom.size() == 1 && posKingdomSize == kingdomSize - 1) {
 			return CoRelationType.DIVERGENT;
 		} else {
 			return CoRelationType.NEGATIVE;
@@ -153,15 +154,5 @@ final class CoKingdom<PLACE, LETTER> {
 
 	public Set<CoRealm<PLACE, LETTER>> getParCoRealms() {
 		return mParCoRealms;
-	}
-
-	public Set<Condition<LETTER, PLACE>> getConflictFreeConditions(final BranchingProcess<LETTER, PLACE> bp,
-			final PlacesCoRelation<PLACE> placesCoRelation) {
-		if (mNegKingdom.isEmpty()) {
-			return Collections.emptySet();
-		}
-		final Realm<PLACE, LETTER> negativeRealm = DataStructureUtils.getOneAndOnly(mNegKingdom, "negative kingdom");
-		final CoRealm<PLACE, LETTER> negativeCoRealm = negativeRealm.getCoRealm(mCondition, bp, placesCoRelation);
-		return negativeCoRealm.getConflictFreeSet();
 	}
 }

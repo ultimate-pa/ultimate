@@ -26,10 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown;
 
-import java.util.HashSet;
 import java.util.Objects;
-import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
@@ -80,13 +79,8 @@ class TerritoryLaw<PLACE> {
 	 * @return Conjunction of the rooks assertions.
 	 */
 	final private <LETTER> IPredicate getRooksAssertion(final KingdomLaw<PLACE, LETTER> rookLaw) {
-		final Set<IPredicate> rooksAssertion = new HashSet<>();
-		final Set<Condition<LETTER, PLACE>> assertionConditions = rookLaw.getConditions();
-		for (final Condition<LETTER, PLACE> condition : assertionConditions) {
-			final IPredicate assertion = mPlaceToAssertion.apply(condition.getPlace());
-			rooksAssertion.add(assertion);
-		}
-		return mFactory.and(rooksAssertion);
+		return mFactory.and(rookLaw.getConditions().stream().map(Condition::getPlace).map(mPlaceToAssertion)
+				.collect(Collectors.toSet()));
 	}
 
 	/**

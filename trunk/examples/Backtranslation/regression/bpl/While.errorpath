@@ -21,6 +21,6 @@
 [L18]                a := -a - a - a - 1;
          VAL         [a=-310, ain=51, r=2]
 [L8]     COND FALSE  !(a > 0)
-         VAL         [a=-310, ain=51, r=2]
+         VAL         [ain=51, r=2]
 [L20]                assert r == 0;
-         VAL         [a=-310, ain=51, r=2]
+         VAL         [ain=51]

@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire;
 
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -42,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Event;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.ICoRelation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
@@ -52,8 +52,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.IPossibleInterferences;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.OwickiGriesAnnotation;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.OwickiGriesValidityCheck;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.PetriOwickiGriesValidityCheck;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown.Crown;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown.CrownConstruction;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown.CrownsEmpire;
@@ -79,6 +80,8 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 
 	private final IPetriNet<LETTER, PLACE> mNet;
 	private final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> mProduct;
+	private final Function<Transition<LETTER, PLACE>, Transition<LETTER, PLACE>> mDiff2OriginalTransition;
+
 	private final Set<PLACE> mOriginalPlaces;
 	private final List<Set<PLACE>> mProofPlaces;
 
@@ -89,7 +92,7 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 
 	private final Crown<PLACE, LETTER> mCrown;
 	private final EmpireAnnotation<PLACE> mEmpireAnnotation;
-	private final OwickiGriesAnnotation<LETTER, PLACE> mOwickiGriesAnnotation;
+	private final OwickiGriesAnnotation<Transition<LETTER, PLACE>, PLACE> mOwickiGriesAnnotation;
 
 	private final Statistics mStatistics = new Statistics();
 
@@ -105,9 +108,10 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 	 *            the original Petri program
 	 */
 	public PetriOwickiGries(final IUltimateServiceProvider services, final BranchingProcess<LETTER, PLACE> bp,
-			final IPetriNet<LETTER, PLACE> net, final BasicPredicateFactory factory,
-			final Function<PLACE, IPredicate> placeToAssertion, final ManagedScript mgdScript,
-			final IIcfgSymbolTable symbolTable, final Set<String> procedures,
+			final IPetriNet<LETTER, PLACE> net,
+			final Function<Transition<LETTER, PLACE>, Transition<LETTER, PLACE>> diff2OriginalTransition,
+			final BasicPredicateFactory factory, final Function<PLACE, IPredicate> placeToAssertion,
+			final ManagedScript mgdScript, final IIcfgSymbolTable symbolTable, final Set<String> procedures,
 			final ModifiableGlobalsTable modifiableGlobals, final List<Set<PLACE>> proofPlaces,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> product, final EmpireComputationMode mode) {
 		mServices = services;
@@ -123,11 +127,14 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 		mProduct = product;
 		mOriginalPlaces = mNet.getPlaces();
 		mProofPlaces = proofPlaces;
+		mDiff2OriginalTransition = diff2OriginalTransition;
 
 		mBp = bp;
 		mConditions = getConditions();
 		mOriginalConditions = getOrigConditions();
 		mAssertionConditions = DataStructureUtils.difference(mConditions, mOriginalConditions);
+
+		mLogger.setLevel(LogLevel.INFO);
 
 		final long cutoffs = bp.getConditions().stream().filter(c -> c.getPredecessorEvent().isCutoffEvent()).count();
 		mLogger.info(
@@ -139,7 +146,7 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 
 		if (mode == EmpireComputationMode.CROWNS) {
 			mCrown = getCrown();
-			mLogger.info("Constructed Crown:\n%s", mCrown);
+			mLogger.debug("Constructed Crown:\n%s", mCrown);
 			mEmpireAnnotation = getEmpireAnnotationFromCrown(placeToAssertion);
 			assert checkEmpireValidity() : "Empire annotation is invalid";
 		} else {
@@ -154,34 +161,39 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 			assert checkEmpireValidity(computation, placesCorelation) : "Empire annotation is invalid";
 		}
 
-		mLogger.info("Constructed Empire Annotation:\n%s", mEmpireAnnotation);
+		mLogger.debug("Constructed Empire Annotation:\n%s", mEmpireAnnotation);
 		mOwickiGriesAnnotation = getOwickiGriesAnnotation();
-		mLogger.info("Computed Owicki-Gries annotation:\n%s", mOwickiGriesAnnotation);
+		mLogger.debug("Computed Owicki-Gries annotation:\n%s", mOwickiGriesAnnotation);
 		mLogger.info("Owicki-Gries size: %s", mOwickiGriesAnnotation.size());
 		assert checkOwickiGriesValidity() : "Owicki Gries annotation is invalid";
+		mLogger.info("OG size: %s", mOwickiGriesAnnotation.size());
 	}
 
 	public static final boolean isCutoff(final Condition<?, ?> cond) {
 		return cond.getPredecessorEvent().isCutoffEvent();
 	}
 
-	public static <LETTER, PLACE> HashRelation<Transition<LETTER, PLACE>, PLACE>
-			getCoMarkedPlaces(final BranchingProcess<LETTER, PLACE> bp) {
-		final HashRelation<Transition<LETTER, PLACE>, PLACE> coMarkedPlaces = new HashRelation<>();
-		final Collection<Condition<LETTER, PLACE>> conditions = bp.getConditions();
+	public static <LETTER, PLACE> IPossibleInterferences<Transition<LETTER, PLACE>, PLACE> getPossibleInterferences(
+			final BranchingProcess<LETTER, PLACE> bp, final Set<PLACE> originalPlaces,
+			final Function<Transition<LETTER, PLACE>, Transition<LETTER, PLACE>> diff2OriginalTransition) {
+		final HashRelation<PLACE, Transition<LETTER, PLACE>> relation = new HashRelation<>();
 		final ICoRelation<LETTER, PLACE> coRelation = bp.getCoRelation();
-		PLACE place;
-		Transition<LETTER, PLACE> transition;
-		for (final Condition<LETTER, PLACE> condition : conditions) {
-			place = condition.getPlace();
+
+		for (final Condition<LETTER, PLACE> condition : bp.getConditions()) {
+			final PLACE place = condition.getPlace();
+			if (!originalPlaces.contains(place)) {
+				continue;
+			}
 			for (final Event<LETTER, PLACE> event : coRelation.computeCoRelatatedEvents(condition)) {
-				transition = event.getTransition();
+				final Transition<LETTER, PLACE> transition = event.getTransition();
 				if (!transition.getPredecessors().contains(place)) {
-					coMarkedPlaces.addPair(transition, place);
+					final var originalTransition = diff2OriginalTransition.apply(transition);
+					assert originalTransition != null : "no original transition for " + transition;
+					relation.addPair(place, originalTransition);
 				}
 			}
 		}
-		return coMarkedPlaces;
+		return IPossibleInterferences.fromRelation(relation);
 	}
 
 	private Crown<PLACE, LETTER> getCrown() {
@@ -231,7 +243,7 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 		}) != Validity.INVALID;
 	}
 
-	private OwickiGriesAnnotation<LETTER, PLACE> getOwickiGriesAnnotation() {
+	private OwickiGriesAnnotation<Transition<LETTER, PLACE>, PLACE> getOwickiGriesAnnotation() {
 		final var annotation = mStatistics.measureOwickiGries(() -> {
 			final EmpireToOwickiGries<LETTER, PLACE> empireToOwickiGries = new EmpireToOwickiGries<>(mServices,
 					mMgdScript, mNet, mSymbolTable, mProcedures, mEmpireAnnotation);
@@ -244,9 +256,10 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 
 	private boolean checkOwickiGriesValidity() {
 		return mStatistics.measureOwickiGriesValidity(() -> {
-			final HashRelation<Transition<LETTER, PLACE>, PLACE> coMarkedPlaces = getCoMarkedPlaces(mBp);
-			final OwickiGriesValidityCheck<LETTER, PLACE> owickiGriesValidity = new OwickiGriesValidityCheck<>(
-					mServices, mMgdScript, mModifiableGlobals, mOwickiGriesAnnotation, coMarkedPlaces);
+			final var possibleInterferences = getPossibleInterferences(mBp, mOriginalPlaces, mDiff2OriginalTransition);
+			final PetriOwickiGriesValidityCheck<LETTER, PLACE> owickiGriesValidity =
+					new PetriOwickiGriesValidityCheck<>(mServices, mMgdScript, mNet, mModifiableGlobals,
+							mOwickiGriesAnnotation, possibleInterferences);
 			return owickiGriesValidity.isValid();
 		}) != Validity.INVALID;
 	}

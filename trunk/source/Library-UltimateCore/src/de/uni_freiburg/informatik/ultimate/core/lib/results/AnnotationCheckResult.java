@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverit
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  *
@@ -55,6 +56,8 @@ public class AnnotationCheckResult<ELEM extends IElement, EXPR> extends Abstract
 	private final List<LoopFreeSegment<ELEM>> mSegmentsValid;
 	private final List<LoopFreeSegment<ELEM>> mSegmentsUnknown;
 	private final List<LoopFreeSegmentWithStatePair<ELEM, EXPR>> mSegmentsInvalid;
+	private final List<Pair<CategorizedProgramPoint, CategorizedProgramPoint>> mNonCycleFreeSubgraphs;
+	private final List<CategorizedProgramPoint> mLoopLocationsWithoutInvariant;
 
 	private final AnnotationState mAnnotationState;
 
@@ -66,20 +69,27 @@ public class AnnotationCheckResult<ELEM extends IElement, EXPR> extends Abstract
 	 */
 	public AnnotationCheckResult(final String plugin, final IBacktranslationService translatorSequence,
 			final List<LoopFreeSegment<ELEM>> segmentsValid, final List<LoopFreeSegment<ELEM>> segmentsUnknown,
-			final List<LoopFreeSegmentWithStatePair<ELEM, EXPR>> segmentsInvalid) {
+			final List<LoopFreeSegmentWithStatePair<ELEM, EXPR>> segmentsInvalid,
+			final List<Pair<CategorizedProgramPoint, CategorizedProgramPoint>> nonCycleFreeSubgraphs,
+			final List<CategorizedProgramPoint> loopLocationsWithoutInvariant) {
 		super(plugin);
 		mTranslatorSequence = translatorSequence;
 		mSegmentsValid = segmentsValid;
 		mSegmentsUnknown = segmentsUnknown;
 		mSegmentsInvalid = segmentsInvalid;
-		mAnnotationState = determineAnnotationState(segmentsValid, segmentsUnknown, segmentsInvalid);
+		mNonCycleFreeSubgraphs = nonCycleFreeSubgraphs;
+		mLoopLocationsWithoutInvariant = loopLocationsWithoutInvariant;
+		mAnnotationState = determineAnnotationState(segmentsValid, segmentsUnknown, segmentsInvalid,
+				nonCycleFreeSubgraphs, loopLocationsWithoutInvariant);
 	}
 
 	private AnnotationState determineAnnotationState(final List<LoopFreeSegment<ELEM>> segmentsValid,
 			final List<LoopFreeSegment<ELEM>> segmentsUnknown,
-			final List<LoopFreeSegmentWithStatePair<ELEM, EXPR>> segmentsInvalid) {
+			final List<LoopFreeSegmentWithStatePair<ELEM, EXPR>> segmentsInvalid,
+			final List<Pair<CategorizedProgramPoint, CategorizedProgramPoint>> nonCycleFreeSubgraphs,
+			final List<CategorizedProgramPoint> loopLocationsWithoutInvariant) {
 		final AnnotationState result;
-		if (segmentsInvalid.isEmpty()) {
+		if (segmentsInvalid.isEmpty() && nonCycleFreeSubgraphs.isEmpty() && loopLocationsWithoutInvariant.isEmpty()) {
 			if (segmentsUnknown.isEmpty()) {
 				result = AnnotationState.VALID;
 			} else {
@@ -132,6 +142,14 @@ public class AnnotationCheckResult<ELEM extends IElement, EXPR> extends Abstract
 		final StringBuilder sb = new StringBuilder();
 		sb.append(getShortDescription());
 		sb.append(System.lineSeparator());
+		for (final CategorizedProgramPoint pp : mLoopLocationsWithoutInvariant) {
+			sb.append(loopLocationsWithoutInvariantToString(pp, mTranslatorSequence));
+			sb.append(System.lineSeparator());
+		}
+		for (final Pair<CategorizedProgramPoint, CategorizedProgramPoint> nonCycleFree : mNonCycleFreeSubgraphs) {
+			sb.append(nonCycleFreeSubgraphToString(nonCycleFree, mTranslatorSequence));
+			sb.append(System.lineSeparator());
+		}
 		for (final LoopFreeSegmentWithStatePair<ELEM, EXPR> segment : mSegmentsInvalid) {
 			sb.append(invalidSegmentToString(segment, mTranslatorSequence));
 			sb.append(System.lineSeparator());
@@ -145,6 +163,17 @@ public class AnnotationCheckResult<ELEM extends IElement, EXPR> extends Abstract
 			sb.append(System.lineSeparator());
 		}
 		return sb.toString();
+	}
+
+	private String loopLocationsWithoutInvariantToString(final CategorizedProgramPoint pp,
+			final IBacktranslationService translatorSequence) {
+		return "Missing invariants at " + pp + ".";
+	}
+
+	private String nonCycleFreeSubgraphToString(
+			final Pair<CategorizedProgramPoint, CategorizedProgramPoint> nonCycleFree,
+			final IBacktranslationService translatorSequence) {
+		return "Not cycle-free: Subgraph between " + nonCycleFree.getFirst() + " and " + nonCycleFree.getSecond() + ".";
 	}
 
 	public static <E> String validSegmentToString(final LoopFreeSegment<E> segment) {

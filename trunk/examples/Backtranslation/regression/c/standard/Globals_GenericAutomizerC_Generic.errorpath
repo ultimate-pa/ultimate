@@ -2,23 +2,23 @@
 [L4]               int x = 0;
        VAL         [\old(a)=9, \old(x)=8, a=5, x=0]
 [L13]  EXPR        a++
-       VAL         [\old(a)=5, \old(x)=0, a++=5, a=6, x=0]
+       VAL         [\old(a)=5, \old(x)=0, a=6, x=0]
 [L13]  CALL, EXPR  f(a++)
        VAL         [\old(a)=5, \old(b)=5, \old(x)=0, a=6, x=0]
 [L7]   EXPR        ++b
 [L7]               x = ++b
 [L8]               return x;
-       VAL         [\old(a)=5, \old(b)=5, \old(x)=0, \result=6, a=6, b=6, x=6]
+       VAL         [\old(a)=5, \old(b)=5, \old(x)=0, \result=6, a=6, x=6]
 [L13]  RET, EXPR   f(a++)
-       VAL         [\old(a)=5, \old(x)=0, a++=5, a=6, f(a++)=6, x=6]
+       VAL         [\old(a)=5, \old(x)=0, a=6, x=6]
 [L13]  CALL, EXPR  f(f(a++))
        VAL         [\old(a)=5, \old(b)=6, \old(x)=6, a=6, x=6]
 [L7]   EXPR        ++b
 [L7]               x = ++b
 [L8]               return x;
-       VAL         [\old(a)=5, \old(b)=6, \old(x)=6, \result=7, a=6, b=7, x=7]
+       VAL         [\old(a)=5, \old(b)=6, \old(x)=6, \result=7, a=6, x=7]
 [L13]  RET, EXPR   f(f(a++))
-       VAL         [\old(a)=5, \old(x)=0, a++=5, a=6, f(a++)=6, f(f(a++))=7, x=7]
+       VAL         [\old(a)=5, \old(x)=0, a=6, x=7]
 [L13]              a = f(f(a++))
 [L15]  COND TRUE   a == x
        VAL         [\old(a)=5, \old(x)=0, a=7, x=7]

@@ -32,9 +32,9 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BitvectorFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
@@ -108,7 +108,7 @@ public final class Term2Expression implements Serializable {
 
 	private final ITerm2ExpressionSymbolTable mBoogie2SmtSymbolTable;
 
-	private final Set<IdentifierExpression> mFreeVariables;
+	private final Map<TermVariable, IdentifierExpression> mAuxiliaryVariables = new HashMap<>();
 
 	private final NestedMap2<Term, TranslateState, Expression> mCache;
 
@@ -117,7 +117,6 @@ public final class Term2Expression implements Serializable {
 		mTypeSortTranslator = tsTranslation;
 		mBoogie2SmtSymbolTable = boogie2SmtSymbolTable;
 		mScript = maScript.getScript();
-		mFreeVariables = new HashSet<>();
 		mTranslateState = new TranslateState();
 		mCache = new NestedMap2<>();
 	}
@@ -493,6 +492,8 @@ public final class Term2Expression implements Serializable {
 			final String id = varList.getIdentifiers()[0];
 			result = new IdentifierExpression(null, type, translateIdentifier(id),
 					new DeclarationInformation(StorageClass.QUANTIFIED, null));
+		} else if (mAuxiliaryVariables.containsKey(term)) {
+			result = mAuxiliaryVariables.get(term);
 		} else if (mBoogie2SmtSymbolTable.getProgramVar(term) == null) {
 			// Case where term contains some auxilliary variable that was
 			// introduced during model checking.
@@ -502,7 +503,6 @@ public final class Term2Expression implements Serializable {
 			// counterpart in the boogie program (and do not add it to the symbol table)
 			result = new IdentifierExpression(null, type, getFreshIdentifier(),
 					new DeclarationInformation(StorageClass.QUANTIFIED, null));
-			mFreeVariables.add((IdentifierExpression) result);
 		} else {
 			final IProgramVar pv = mBoogie2SmtSymbolTable.getProgramVar(term);
 			// final BoogieASTNode astNode =
@@ -641,6 +641,21 @@ public final class Term2Expression implements Serializable {
 			result = new UnaryExpression(null, type, neg, result);
 		}
 		return result;
+	}
+
+	public IdentifierExpression declareAndTranslateAuxiliaryVariable(final TermVariable variable) {
+		if (mAuxiliaryVariables.containsKey(variable)) {
+			throw new UnsupportedOperationException("Already declared auxiliary variable: " + variable);
+		}
+		final IProgramVar pv = mBoogie2SmtSymbolTable.getProgramVar(variable);
+		if (pv != null) {
+			throw new UnsupportedOperationException("Cannot redeclare program variable as auxiliary: " + pv);
+		}
+		final IBoogieType type = mTypeSortTranslator.getType(variable.getSort());
+		final var id = new IdentifierExpression(null, type, variable.getName(),
+				new DeclarationInformation(StorageClass.QUANTIFIED, null));
+		mAuxiliaryVariables.put(variable, id);
+		return id;
 	}
 
 	/**

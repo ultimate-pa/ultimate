@@ -52,7 +52,7 @@ public final class Kingdom<PLACE, LETTER> {
 	 */
 	private final ImmutableSet<Realm<PLACE, LETTER>> mKingdom;
 
-	private Set<Set<Condition<LETTER, PLACE>>> mTreaty = null;
+	private Set<Set<Condition<LETTER, PLACE>>> mTreaty;
 
 	public Kingdom(final ImmutableSet<Realm<PLACE, LETTER>> kingdom) {
 		mKingdom = kingdom;
@@ -156,6 +156,15 @@ public final class Kingdom<PLACE, LETTER> {
 		return new CoKingdom<>(this, condition, bp, placesCoRelation);
 	}
 
+	public boolean containsCondition(final Condition<LETTER, PLACE> condition) {
+		for (final Realm<PLACE, LETTER> realm : mKingdom) {
+			if (realm.containsCondition(condition)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	/**
 	 * Calculate the treaty by creating a set of cosets picking one condition per realm.
 	 *
@@ -181,6 +190,15 @@ public final class Kingdom<PLACE, LETTER> {
 		final ImmutableSet<Region<PLACE>> regions =
 				mKingdom.stream().map(r -> r.toRegion()).collect(ImmutableSet.collector());
 		return new Territory<>(regions);
+	}
+
+	public Kingdom<PLACE, LETTER> immigrationAndFoundation(final Realm<PLACE, LETTER> negativeRealm,
+			final Condition<LETTER, PLACE> condition, final BranchingProcess<LETTER, PLACE> bp,
+			final PlacesCoRelation<PLACE> placesCoRelation) {
+		final Set<Realm<PLACE, LETTER>> newRealms = getRealms().stream().filter(r -> !r.equals(negativeRealm))
+				.collect(Collectors.toCollection(HashSet::new));
+		newRealms.add(negativeRealm.immigrationAndFoundation(condition, bp, placesCoRelation));
+		return new Kingdom<>(ImmutableSet.of(newRealms));
 	}
 
 	/**

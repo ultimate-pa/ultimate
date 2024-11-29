@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -122,6 +123,38 @@ public final class GhostUpdate {
 			values.add(entry.getValue());
 		}
 		return TransFormulaBuilder.constructAssignment(variables, values, symbolTable, mgdScript);
+	}
+
+	/**
+	 * Creates a new instance with all updates of this instance, in addition to the given updates.
+	 *
+	 * @param updates
+	 *            Additional updates to include. This must not overlap withthe current instance.
+	 * @return
+	 */
+	public GhostUpdate withAdditionalUpdates(final Map<IProgramVar, Term> updates) {
+		if (updates.isEmpty()) {
+			return this;
+		}
+
+		final var newUpdates = new HashMap<>(mUpdates);
+		for (final var entry : updates.entrySet()) {
+			final var oldTerm = newUpdates.put(entry.getKey(), entry.getValue());
+			if (oldTerm != null) {
+				throw new IllegalArgumentException("Duplicate update for " + entry.getKey());
+			}
+		}
+		return new GhostUpdate(newUpdates);
+	}
+
+	public static GhostUpdate combine(final GhostUpdate oldUpdate, final Map<IProgramVar, Term> newUpdates) {
+		if (oldUpdate == null && newUpdates.isEmpty()) {
+			return null;
+		}
+		if (oldUpdate == null) {
+			return new GhostUpdate(newUpdates);
+		}
+		return oldUpdate;
 	}
 
 	/**

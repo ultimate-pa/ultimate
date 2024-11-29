@@ -72,9 +72,10 @@ public class PetriOwickiGriesTestSuite extends OwickiGriesTestSuite {
 		}
 		product = new NestedWordAutomatonReachableStates<>(mAutomataServices, product);
 		final StatisticsData data = new StatisticsData();
-		final var pog = new PetriOwickiGries<>(mServices, unfolding, program, mPredicateFactory, Function.identity(),
-				mMgdScript, mSymbolTable, Set.of(SimpleAction.PROCEDURE), computeModifiableGlobals(), proofPlaces,
-				product, PetriOwickiGries.EmpireComputationMode.CROWNS);
+		final var pog = new PetriOwickiGries<>(mServices, unfolding, program, mDiff2OriginalTransition,
+				mPredicateFactory, Function.identity(), mMgdScript, mSymbolTable, Set.of(SimpleAction.PROCEDURE),
+				computeModifiableGlobals(), proofPlaces, product,
+				PetriOwickiGries.EmpireComputationMode.SYMBOLIC_EXECUTION);
 		data.aggregateBenchmarkData(pog.getStatistics());
 		mLogger.info("PetriOwickiGries Statistics: %s", data);
 	}

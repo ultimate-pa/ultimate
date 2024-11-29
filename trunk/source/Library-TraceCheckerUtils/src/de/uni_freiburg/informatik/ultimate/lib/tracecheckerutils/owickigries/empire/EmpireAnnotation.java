@@ -60,7 +60,7 @@ public class EmpireAnnotation<PLACE> {
 	}
 
 	public EmpireAnnotation(final Map<Territory<PLACE>, IPredicate> lawMap) {
-		mEmpire = lawMap.entrySet().stream().map(e -> new Pair<Territory<PLACE>, IPredicate>(e.getKey(), e.getValue()))
+		mEmpire = lawMap.entrySet().stream().map(e -> new Pair<>(e.getKey(), e.getValue()))
 				.collect(Collectors.toSet());
 	}
 
@@ -70,9 +70,7 @@ public class EmpireAnnotation<PLACE> {
 	 * @return Set of Regions in Empire
 	 */
 	public Set<Region<PLACE>> getColony() {
-		final Set<Region<PLACE>> colony =
-				mEmpire.stream().flatMap(p -> p.getFirst().getRegions().stream()).collect(Collectors.toSet());
-		return colony;
+		return mEmpire.stream().flatMap(p -> p.getFirst().getRegions().stream()).collect(Collectors.toSet());
 	}
 
 	public Set<Territory<PLACE>> getTerritories() {

@@ -39,6 +39,7 @@ import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.LineDirectiveMapping;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.LineOffsetComputer;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DefaultLocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
@@ -50,9 +51,12 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 public class LocationFactory {
 
 	private final LineDirectiveMapping mLineDirectiveMapping;
+	private final LineOffsetComputer mLineOffsetComputer;
 
-	public LocationFactory(final LineDirectiveMapping lineDirectiveMapping) {
+	public LocationFactory(final LineDirectiveMapping lineDirectiveMapping,
+			final LineOffsetComputer lineOffsetComputer) {
 		mLineDirectiveMapping = lineDirectiveMapping;
+		mLineOffsetComputer = lineOffsetComputer;
 	}
 
 	public ILocation createRootCLocation(final Set<IASTTranslationUnit> set) {
@@ -60,11 +64,11 @@ public class LocationFactory {
 	}
 
 	public CACSLLocation createCLocation(final IASTNode cNode) {
-		return new CLocation(cNode, false, mLineDirectiveMapping);
+		return new CLocation(cNode, false, mLineDirectiveMapping, mLineOffsetComputer);
 	}
 
 	public static CACSLLocation createIgnoreCLocation(final IASTNode cNode) {
-		return new CLocation(cNode, true, null);
+		return new CLocation(cNode, true, null, null);
 	}
 
 	public static CACSLLocation createIgnoreCLocation() {
@@ -82,7 +86,7 @@ public class LocationFactory {
 		} else if (loc instanceof CLocation) {
 			final CLocation realLoc = (CLocation) loc;
 			return new CLocation(realLoc.getNode(), realLoc.ignoreDuringBacktranslation(),
-					realLoc.getLineDirectiveMapping());
+					realLoc.getLineDirectiveMapping(), realLoc.getLineOffsetComputer());
 		} else {
 			throw new UnsupportedOperationException();
 		}
@@ -94,7 +98,8 @@ public class LocationFactory {
 			return new ACSLLocation(realLoc.getNode(), true);
 		} else if (loc instanceof CLocation) {
 			final CLocation realLoc = (CLocation) loc;
-			return new CLocation(realLoc.getNode(), true, realLoc.getLineDirectiveMapping());
+			return new CLocation(realLoc.getNode(), true, realLoc.getLineDirectiveMapping(),
+					realLoc.getLineOffsetComputer());
 		} else {
 			throw new UnsupportedOperationException();
 		}

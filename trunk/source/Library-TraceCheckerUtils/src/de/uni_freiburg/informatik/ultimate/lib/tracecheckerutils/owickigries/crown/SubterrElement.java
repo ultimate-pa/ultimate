@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown;
 
-import java.util.HashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
@@ -49,11 +48,7 @@ class SubterrElement<LETTER, PLACE> {
 	}
 
 	private ImmutableSet<PLACE> calculateMarking() {
-		final Set<PLACE> marking = new HashSet<>();
-		for (final Condition<LETTER, PLACE> condition : mCoSet) {
-			marking.add(condition.getPlace());
-		}
-		return ImmutableSet.of(marking);
+		return mCoSet.stream().map(c -> c.getPlace()).collect(ImmutableSet.collector());
 	}
 
 	public Marking<PLACE> getMarking() {

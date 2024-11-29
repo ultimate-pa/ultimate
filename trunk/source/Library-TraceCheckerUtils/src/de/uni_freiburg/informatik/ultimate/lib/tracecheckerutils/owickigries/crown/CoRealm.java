@@ -25,14 +25,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown;
 
-import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.ICoRelation;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 final class CoRealm<PLACE, LETTER> {
 
@@ -41,16 +39,9 @@ final class CoRealm<PLACE, LETTER> {
 	private final Condition<LETTER, PLACE> mCondition;
 
 	/**
-	 * Subset of Realm's condition that are corelated to specified condition;
-	 */
-	private final Set<Condition<LETTER, PLACE>> mPosRealm;
-
-	/**
 	 * Subset of Realm's condition that are not corelated to mCondition;
 	 */
 	private final Set<Condition<LETTER, PLACE>> mNegRealm;
-
-	private final Set<Condition<LETTER, PLACE>> mConflictingConditions;
 
 	private final Set<Condition<LETTER, PLACE>> mConflictFreeConditions;
 
@@ -66,36 +57,30 @@ final class CoRealm<PLACE, LETTER> {
 		mCoRelation = bp.getCoRelation();
 		mRealm = realm;
 		mCondition = condition;
-		mPosRealm = getPosRealm();
-		mNegRealm = DataStructureUtils.difference(mRealm.getConditions(), mPosRealm);
+		mNegRealm = getNegRealm();
 		mCoRel = getCoRelType();
-		mConflictingConditions = getConflictingConditions(placesCoRelation);
-		mConflictFreeConditions = DataStructureUtils.difference(mRealm.getConditions(), mConflictingConditions);
+		mConflictFreeConditions = getConflicFreeConditions(placesCoRelation);
 		mConflictType = getConflictType();
 	}
 
 	/**
-	 * @return Subset of Realm's conditions corelated to CoRealm's condition.
+	 * @return Subset of Realm's conditions not corelated to CoRealm's condition.
 	 */
-	private Set<Condition<LETTER, PLACE>> getPosRealm() {
-		return mRealm.getConditions().stream().filter(c -> mCoRelation.isInCoRelation(c, mCondition))
+	private Set<Condition<LETTER, PLACE>> getNegRealm() {
+		return mRealm.getConditions().stream().filter(c -> !mCoRelation.isInCoRelation(c, mCondition))
 				.collect(Collectors.toSet());
 	}
 
 	/**
 	 * @param placesCoRelation
 	 *            Object which was initialized with the bp we want to create a proof for
-	 * @return Subset of Realm's conditions for which their places are corelated to the place of condition.
+	 * @return Subset of Realm's conditions for which their places are not corelated to the place of condition.
 	 */
-	private Set<Condition<LETTER, PLACE>> getConflictingConditions(final PlacesCoRelation<PLACE> placesCoRelation) {
-		final Set<Condition<LETTER, PLACE>> conflictingConditions = new HashSet<>();
+	private Set<Condition<LETTER, PLACE>> getConflicFreeConditions(final PlacesCoRelation<PLACE> placesCoRelation) {
 		final PLACE originalPlace = mCondition.getPlace();
-		for (final Condition<LETTER, PLACE> condition : mRealm.getConditions()) {
-			if (placesCoRelation.getPlacesCorelation(originalPlace, condition.getPlace())) {
-				conflictingConditions.add(condition);
-			}
-		}
-		return conflictingConditions;
+		return mRealm.getConditions().stream()
+				.filter(c -> !placesCoRelation.getPlacesCorelation(originalPlace, c.getPlace()))
+				.collect(Collectors.toSet());
 	}
 
 	/**
@@ -114,9 +99,10 @@ final class CoRealm<PLACE, LETTER> {
 	 */
 
 	private CoRelationType getCoRelType() {
-		if (mRealm.getConditions().equals(mPosRealm)) {
+		final int realmSize = mRealm.getConditions().size();
+		if (mNegRealm.isEmpty()) {
 			return CoRelationType.POSITIVE;
-		} else if (mRealm.getConditions().equals(mNegRealm)) {
+		} else if (realmSize == mNegRealm.size()) {
 			return CoRelationType.NEGATIVE;
 		} else {
 			return CoRelationType.PARTIAL;
@@ -130,10 +116,6 @@ final class CoRealm<PLACE, LETTER> {
 
 	public ConflictType getConflict() {
 		return mConflictType;
-	}
-
-	public Set<Condition<LETTER, PLACE>> getConflictingSet() {
-		return mConflictingConditions;
 	}
 
 	public Set<Condition<LETTER, PLACE>> getConflictFreeSet() {

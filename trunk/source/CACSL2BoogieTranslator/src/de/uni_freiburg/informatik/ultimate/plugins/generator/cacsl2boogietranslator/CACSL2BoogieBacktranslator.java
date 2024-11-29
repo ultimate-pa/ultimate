@@ -129,6 +129,11 @@ public class CACSL2BoogieBacktranslator
 		extends DefaultTranslator<BoogieASTNode, CACSLLocation, Expression, IASTExpression, String, String, ILocation> {
 
 	/**
+	 * Throw error in cases where we know that the backtranslation is not exact.
+	 */
+	private static final boolean DEBUG_ERROR_FOR_UNFINISHED_BACKTRANSLATION = false;
+
+	/**
 	 * {@link VariableType} is used to distinguish various special variables after they are converted to strings.
 	 *
 	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
@@ -142,7 +147,9 @@ public class CACSL2BoogieBacktranslator
 
 		POINTER_BASE,
 
-		POINTER_OFFSET
+		POINTER_OFFSET,
+
+		AUXVAR
 	}
 
 	private static final String UNFINISHED_BACKTRANSLATION = "Unfinished Backtranslation";
@@ -154,6 +161,8 @@ public class CACSL2BoogieBacktranslator
 	private final TypeSizes mTypeSizes;
 	private final CACSL2BoogieBacktranslatorMapping mMapping;
 	private final FlatSymbolTable mSymbolTable;
+
+	private final Map<String, FakeExpression> mAuxVars = new HashMap<>();
 
 	private boolean mGenerateBacktranslationWarnings;
 	private boolean mBacktranslationWarned;
@@ -170,6 +179,17 @@ public class CACSL2BoogieBacktranslator
 		mTypeSizes = typeSizes;
 		mLocationFactory = locationFactory;
 		mSymbolTable = symbolTable;
+	}
+
+	@Override
+	public IASTExpression declareAndTranslateAuxiliaryVariable(final Expression variable) {
+		final var id = ((IdentifierExpression) variable).getIdentifier();
+		if (mAuxVars.containsKey(id)) {
+			throw new UnsupportedOperationException();
+		}
+		final var cId = new FakeExpression(null, id, null);
+		mAuxVars.put(id, cId);
+		return cId;
 	}
 
 	@Override
@@ -329,11 +349,7 @@ public class CACSL2BoogieBacktranslator
 		final List<AtomicTraceElement<CACSLLocation>> checkedTranslatedATEs = checkForSubtreeInclusion(translatedATEs);
 		assert checkCallStackTarget(mLogger,
 				checkedTranslatedATEs) : "callstack broken after subtree inclusion reduction";
-		if (mBacktranslationWarned) {
-			mServices.getResultService().reportResult(Activator.PLUGIN_ID,
-					new GenericResult(Activator.PLUGIN_ID, UNFINISHED_BACKTRANSLATION,
-							"The program execution was not completely translated back.", Severity.WARNING));
-		}
+		reportUnfinishedBacktranslation("The program execution was not completely translated back.");
 		return new CACSLProgramExecution(initialState, checkedTranslatedATEs, translatedProgramStates,
 				oldPE.isConcurrent());
 	}
@@ -965,6 +981,16 @@ public class CACSL2BoogieBacktranslator
 			return ((TemporaryPointerExpression) expression).translate();
 		}
 
+		// Dominik 2024-02-14: This is a hack to allow ghost variable backtranslation.
+		// Ghost variables do not have an associated C location.
+		if (expression instanceof IdentifierExpression
+				&& mAuxVars.containsKey(((IdentifierExpression) expression).getIdentifier())) {
+			final String boogieId = ((IdentifierExpression) expression).getIdentifier();
+			final var cVar = mAuxVars.get(boogieId);
+			final var tv = new TranslatedVariable(cVar.toString(), cVar.getCType(), VariableType.AUXVAR);
+			return new FakeExpression(null, tv.getName(), tv.getCType());
+		}
+
 		final ILocation loc = expression.getLocation();
 		if (loc instanceof ACSLLocation) {
 			reportUnfinishedBacktranslation("Expression " + BoogiePrettyPrinter.print(expression)
@@ -1566,6 +1592,9 @@ public class CACSL2BoogieBacktranslator
 	}
 
 	private void reportUnfinishedBacktranslation(final String message) {
+		if (DEBUG_ERROR_FOR_UNFINISHED_BACKTRANSLATION) {
+			throw new AssertionError(UNFINISHED_BACKTRANSLATION + ": " + message );
+		}
 		mBacktranslationWarned = true;
 		if (!mGenerateBacktranslationWarnings) {
 			return;
@@ -1593,6 +1622,9 @@ public class CACSL2BoogieBacktranslator
 			// invars can only occur in expressions as part of synthetic expressions, and then they represent oldvars
 			final Pair<String, CType> pair = mMapping.getInVar(boogieId, expr.getDeclarationInformation());
 			return new TranslatedVariable(pair.getFirst(), pair.getSecond(), VariableType.INVAR);
+		} else if (mAuxVars.containsKey(boogieId)) {
+			final var cVar = mAuxVars.get(boogieId);
+			return new TranslatedVariable(cVar.toString(), cVar.getCType(), VariableType.AUXVAR);
 		} else if (boogieId.endsWith(SFO.POINTER_BASE)) {
 			// if its base or offset, try again with them stripped
 			final TranslatedVariable base = translateBoogieIdentifier(expr,

@@ -40,7 +40,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationS
 public class ProcedureContractResult<ELEM extends IElement, E> extends AbstractResultAtElement<ELEM>
 		implements IResultWithLocation {
 
-	private final String mContract;
+	private final String mEnsures;
+	private final String mRequires;
 	private final String mProcedureName;
 
 	/**
@@ -50,14 +51,19 @@ public class ProcedureContractResult<ELEM extends IElement, E> extends AbstractR
 	 */
 	@SuppressWarnings("unchecked")
 	public ProcedureContractResult(final String plugin, final ELEM position,
-			final IBacktranslationService translatorSequence, final String procedureName, final E contract) {
+			final IBacktranslationService translatorSequence, final String procedureName, final E requires, final E ensures) {
 		super(position, plugin, translatorSequence);
 		this.mProcedureName = procedureName;
-		this.mContract = mTranslatorSequence.translateExpressionToString(contract, (Class<E>) contract.getClass());
+		this.mRequires = mTranslatorSequence.translateExpressionToString(requires, (Class<E>) requires.getClass());
+		this.mEnsures = mTranslatorSequence.translateExpressionToString(ensures, (Class<E>) ensures.getClass());
 	}
 
-	public String getContract() {
-		return mContract;
+	public String getEnsuresResult() {
+		return mEnsures;
+	}
+
+	public String getReqiresResult() {
+		return mRequires;
 	}
 
 	@Override
@@ -70,8 +76,11 @@ public class ProcedureContractResult<ELEM extends IElement, E> extends AbstractR
 		final StringBuffer sb = new StringBuffer();
 		sb.append("Derived contract for procedure ");
 		sb.append(mProcedureName);
-		sb.append(": ");
-		sb.append(mContract);
+		sb.append(". ");
+		sb.append("Requires: ");
+		sb.append(mRequires);
+		sb.append("  Ensures: ");
+		sb.append(mEnsures);
 		return sb.toString();
 	}
 }

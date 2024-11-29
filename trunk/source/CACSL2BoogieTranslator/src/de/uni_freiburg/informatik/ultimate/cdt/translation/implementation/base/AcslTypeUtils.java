@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2016 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE CACSL2BoogieTranslator plug-in.
- * 
+ *
  * The ULTIMATE CACSL2BoogieTranslator plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE CACSL2BoogieTranslator plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE CACSL2BoogieTranslator plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CACSL2BoogieTranslator plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -34,27 +34,31 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLType;
 
 /**
  * Provides static methods for conversion from {@link ACSLType}s to C types.
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class AcslTypeUtils {
-	
-	private static final String[] CHAR_STRINGS = new String[]{ "char" };
-	private static final String[] SIGNED_CHAR_STRINGS = new String[]{ "signed char" };
-	private static final String[] UNSIGNED_CHAR_STRINGS = new String[]{ "unsigned char" };
-	private static final String[] SIGNED_SHORT_STRINGS = new String[]{ "short", "short int", "signed short", "signed short int" };
-	private static final String[] UNSIGNED_SHORT_STRINGS = new String[]{ "unsigned short", "unsigned short int" };
-	private static final String[] SIGNED_INT_STRINGS = new String[]{ "int", "signed int"};
-	private static final String[] UNSIGNED_INT_STRINGS = new String[]{ "unsigned int" };
-	private static final String[] SIGNED_LONG_STRINGS = new String[]{ "long", "long int", "signed long", "signed long int" };
-	private static final String[] UNSIGNED_LONG_STRINGS = new String[]{ "unsigned long", "unsigned long int" };
-	private static final String[] SIGNED_LONGLONG_STRINGS = new String[]{ "long long", "long long int", "signed long long", "signed long long int" };
-	private static final String[] UNSIGNED_LONGLONG_STRINGS = new String[]{ "unsigned long long", "unsigned long long int" };
-	private static final String[] FLOAT_STRINGS = new String[]{ "char" };
-	private static final String[] DOUBLE_CHAR_STRINGS = new String[]{ "signed char" };
-	private static final String[] LONGDOUBLE_STRINGS = new String[]{ "unsigned char" };
-	
-	
-	
+
+	private static final String[] CHAR_STRINGS = new String[] { "char" };
+	private static final String[] SIGNED_CHAR_STRINGS = new String[] { "signed char" };
+	private static final String[] UNSIGNED_CHAR_STRINGS = new String[] { "unsigned char" };
+	private static final String[] SIGNED_SHORT_STRINGS =
+			new String[] { "short", "short int", "signed short", "signed short int" };
+	private static final String[] UNSIGNED_SHORT_STRINGS = new String[] { "unsigned short", "unsigned short int" };
+	private static final String[] SIGNED_INT_STRINGS = new String[] { "int", "signed int" };
+	private static final String[] UNSIGNED_INT_STRINGS = new String[] { "unsigned int" };
+	private static final String[] SIGNED_LONG_STRINGS =
+			new String[] { "long", "long int", "signed long", "signed long int" };
+	private static final String[] UNSIGNED_LONG_STRINGS = new String[] { "unsigned long", "unsigned long int" };
+	private static final String[] SIGNED_LONGLONG_STRINGS =
+			new String[] { "long long", "long long int", "signed long long", "signed long long int" };
+	private static final String[] UNSIGNED_LONGLONG_STRINGS =
+			new String[] { "unsigned long long", "unsigned long long int", "size_t" };
+	private static final String[] FLOAT_STRINGS = new String[] { "char" };
+	private static final String[] DOUBLE_CHAR_STRINGS = new String[] { "signed char" };
+	private static final String[] LONGDOUBLE_STRINGS = new String[] { "unsigned char" };
+	private static final String[] BOOL_STRINGS = new String[] { "_Bool" };
+
 	public static CPrimitive translateAcslTypeToCType(final ACSLType t) {
 		final CPrimitives primitives;
 		if (Arrays.asList(CHAR_STRINGS).contains(t.getTypeName())) {
@@ -85,7 +89,9 @@ public class AcslTypeUtils {
 			primitives = CPrimitives.DOUBLE;
 		} else if (Arrays.asList(LONGDOUBLE_STRINGS).contains(t.getTypeName())) {
 			primitives = CPrimitives.LONGDOUBLE;
-		} else  {
+		} else if (Arrays.asList(BOOL_STRINGS).contains(t.getTypeName())) {
+			primitives = CPrimitives.BOOL;
+		} else {
 			throw new UnsupportedOperationException("not yet implemented " + t);
 		}
 		return new CPrimitive(primitives);

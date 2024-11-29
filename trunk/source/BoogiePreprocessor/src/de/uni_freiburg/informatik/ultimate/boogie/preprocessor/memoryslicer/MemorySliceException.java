@@ -33,10 +33,18 @@ package de.uni_freiburg.informatik.ultimate.boogie.preprocessor.memoryslicer;
  */
 public class MemorySliceException extends RuntimeException {
 
+	/**
+	 * Throw an error whenever the memory slicer cannot be applied.
+	 */
+	private static final boolean DEBUG_CRASH_IF_NOT_APPLICABLE = false;
+
 	private static final long serialVersionUID = 7973516400286737027L;
 
 	public MemorySliceException(final String message) {
 		super(message);
+		if (DEBUG_CRASH_IF_NOT_APPLICABLE) {
+			throw new AssertionError(message);
+		}
 	}
 
 }

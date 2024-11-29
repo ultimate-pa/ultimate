@@ -146,4 +146,8 @@ public class TranslatorConcatenation<STE, ITE, TTE, SE, IE, TE, SVL, IVL, TVL, L
 				.translateProgramState(mSource2IntermediateTranslator.translateProgramState(oldProgramState));
 	}
 
+	@Override
+	public TE declareAndTranslateAuxiliaryVariable(final SE variable) {
+		throw new UnsupportedOperationException("not implemented");
+	}
 }

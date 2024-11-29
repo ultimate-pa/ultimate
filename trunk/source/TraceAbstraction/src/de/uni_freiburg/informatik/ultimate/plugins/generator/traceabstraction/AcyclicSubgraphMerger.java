@@ -75,6 +75,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
  */
 public class AcyclicSubgraphMerger {
 
+	public static final String SUBGRAPH_HAS_A_CYCLE = "Subgraph has a cycle";
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 
@@ -157,6 +158,7 @@ public class AcyclicSubgraphMerger {
 			final IPreferenceProvider ups = beServices.getPreferenceProvider(BlockEncodingPreferences.PLUGIN_ID);
 			ups.put(BlockEncodingPreferences.FXP_REMOVE_SINK_STATES, false);
 			ups.put(BlockEncodingPreferences.FXP_REMOVE_INFEASIBLE_EDGES, false);
+			ups.put(BlockEncodingPreferences.FXP_MINIMIZE_STATES_IGNORE_BLOWUP, true);
 			final BlockEncoder be = new BlockEncoder(mLogger, beServices, projection.getIcfg(),
 					SimplificationTechnique.NONE, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 			blockEncoded = new Subgraph(projection, be.getResult(), be.getBacktranslator().getLocationMapping());
@@ -170,7 +172,7 @@ public class AcyclicSubgraphMerger {
 		mEndloc2TransFormula = new HashMap<>();
 		for (final IcfgEdge startSucc : blockEncoded.getSubgraphStartLocation().getOutgoingEdges()) {
 			if (!blockEncoded.getSubgraphEndLocations().contains(startSucc.getTarget())) {
-				throw new AssertionError();
+				throw new IllegalArgumentException(SUBGRAPH_HAS_A_CYCLE);
 			}
 			final IcfgLocation endLoc = startSucc.getTarget();
 			final IcfgLocation endInProjection = blockEncoded.getBacktranslation().get(endLoc);

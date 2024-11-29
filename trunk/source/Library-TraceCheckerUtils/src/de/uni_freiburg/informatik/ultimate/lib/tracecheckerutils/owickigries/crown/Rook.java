@@ -25,6 +25,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.crown;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -61,15 +62,22 @@ public final class Rook<PLACE, LETTER> {
 	 */
 	private final KingdomLaw<PLACE, LETTER> mLaw;
 
-	private Boolean mContainsNonCut = null;
+	private final int mHashCode;
+
+	private Boolean mContainsNonCut;
 
 	public Rook(final Kingdom<PLACE, LETTER> kingdom, final KingdomLaw<PLACE, LETTER> law) {
 		mKingdom = kingdom;
 		mLaw = law;
+		mHashCode = getHashCode();
 	}
 
-	private boolean isCut(final Set<Condition<LETTER, PLACE>> possibleCut, final BranchingProcess<LETTER, PLACE> bp) {
-		final Set<Condition<LETTER, PLACE>> allConditions = new HashSet<>(bp.getConditions());
+	private int getHashCode() {
+		return Objects.hash(mKingdom, mLaw);
+	}
+
+	private boolean isCut(final Set<Condition<LETTER, PLACE>> possibleCut, final BranchingProcess<LETTER, PLACE> bp,
+			final Set<Condition<LETTER, PLACE>> allConditions) {
 		final Set<Condition<LETTER, PLACE>> missingConditions =
 				DataStructureUtils.difference(allConditions, possibleCut);
 		final ICoRelation<LETTER, PLACE> coRelation = bp.getCoRelation();
@@ -95,13 +103,14 @@ public final class Rook<PLACE, LETTER> {
 	 *            Branching process of the refined Petri net
 	 * @return True if the Rook contains a non cut.
 	 */
-	public boolean containsNonCut(final BranchingProcess<LETTER, PLACE> bp) {
+	public boolean containsNonCut(final BranchingProcess<LETTER, PLACE> bp,
+			final Collection<Condition<LETTER, PLACE>> conditions) {
 		if (mContainsNonCut != null) {
 			return mContainsNonCut.booleanValue();
 		}
 		final Set<Set<Condition<LETTER, PLACE>>> census = getCensus();
 		for (final Set<Condition<LETTER, PLACE>> coSet : census) {
-			if (!isCut(coSet, bp)) {
+			if (!isCut(coSet, bp, new HashSet<>(conditions))) {
 				mContainsNonCut = true;
 				return true;
 			}
@@ -118,8 +127,7 @@ public final class Rook<PLACE, LETTER> {
 	 * @return Rook with modified Kingdom and the instances law.
 	 */
 	public Rook<PLACE, LETTER> expansion(final Condition<LETTER, PLACE> condition) {
-		final Realm<PLACE, LETTER> realm = new Realm<>(ImmutableSet.singleton(condition));
-		final Kingdom<PLACE, LETTER> newKingdom = mKingdom.addRealm(realm);
+		final Kingdom<PLACE, LETTER> newKingdom = mKingdom.addRealm(new Realm<>(ImmutableSet.singleton(condition)));
 		return new Rook<>(newKingdom, getLaw());
 	}
 
@@ -137,16 +145,9 @@ public final class Rook<PLACE, LETTER> {
 	 */
 	public Rook<PLACE, LETTER> immigrationAndFoundation(final CoRook<PLACE, LETTER> coRook,
 			final BranchingProcess<LETTER, PLACE> bp, final PlacesCoRelation<PLACE> placesCoRelation) {
-		final Set<Realm<PLACE, LETTER>> newRealms =
-				getKingdom().getRealms().stream().collect(Collectors.toCollection(HashSet::new));
-		newRealms.remove(getNegKingdom(coRook));
-		Set<Condition<LETTER, PLACE>> conflictFreeConditions =
-				coRook.getCoKingdom().getConflictFreeConditions(bp, placesCoRelation);
-		conflictFreeConditions = DataStructureUtils.union(conflictFreeConditions, Set.of(coRook.getCondition()));
-		final Realm<PLACE, LETTER> newRealm = new Realm<>(ImmutableSet.of(conflictFreeConditions));
-		newRealms.add(newRealm);
-		final Kingdom<PLACE, LETTER> kingdom = new Kingdom<>(ImmutableSet.of(newRealms));
-		return new Rook<>(kingdom, getLaw());
+		final Realm<PLACE, LETTER> negativeRealm = getNegKingdom(coRook);
+		return new Rook<>(mKingdom.immigrationAndFoundation(negativeRealm, coRook.getCondition(), bp, placesCoRelation),
+				getLaw());
 	}
 
 	public Rook<PLACE, LETTER> denial(final CoRook<PLACE, LETTER> coRook) {
@@ -169,8 +170,7 @@ public final class Rook<PLACE, LETTER> {
 	 * @return New Rook containing condition in its Law
 	 */
 	public Rook<PLACE, LETTER> approval(final Condition<LETTER, PLACE> condition) {
-		final KingdomLaw<PLACE, LETTER> newLaw = mLaw.addCondition(condition);
-		return new Rook<>(getKingdom(), newLaw);
+		return new Rook<>(getKingdom(), mLaw.addCondition(condition));
 	}
 
 	/**
@@ -181,8 +181,7 @@ public final class Rook<PLACE, LETTER> {
 	 * @return New Rook with Law containing solely condition.
 	 */
 	public Rook<PLACE, LETTER> enactment(final CoRook<PLACE, LETTER> coRook) {
-		final KingdomLaw<PLACE, LETTER> law = new KingdomLaw<>(ImmutableSet.singleton(coRook.getCondition()));
-		return new Rook<>(coRook.getRook().getKingdom(), law);
+		return new Rook<>(getKingdom(), new KingdomLaw<>(ImmutableSet.singleton(coRook.getCondition())));
 	}
 
 	/**
@@ -195,7 +194,7 @@ public final class Rook<PLACE, LETTER> {
 	public Rook<PLACE, LETTER> ratification(final CoRook<PLACE, LETTER> coRook) {
 		final Kingdom<PLACE, LETTER> kingdom = new Kingdom<>(ImmutableSet.of(coRook.getCoKingdom().getPosKingdom()));
 		final Set<Condition<LETTER, PLACE>> lawConditions =
-				DataStructureUtils.union(coRook.getRook().getLaw().getConditions(), Set.of(coRook.getCondition()));
+				DataStructureUtils.union(getLaw().getConditions(), Set.of(coRook.getCondition()));
 		final KingdomLaw<PLACE, LETTER> law = new KingdomLaw<>(ImmutableSet.of(lawConditions));
 		return new Rook<>(kingdom, law);
 	}
@@ -217,7 +216,7 @@ public final class Rook<PLACE, LETTER> {
 		Kingdom<PLACE, LETTER> kingdom = mKingdom.removeRealm(partialRealm);
 		partialRealm = partialRealm.removeCondition(partialCoRealm.getNegConditions());
 		kingdom = kingdom.addRealm(partialRealm);
-		final KingdomLaw<PLACE, LETTER> law = coRook.getRook().getLaw().addCondition(coRook.getCondition());
+		final KingdomLaw<PLACE, LETTER> law = getLaw().addCondition(coRook.getCondition());
 		return new Rook<>(kingdom, law);
 	}
 
@@ -240,18 +239,40 @@ public final class Rook<PLACE, LETTER> {
 		final Set<Set<Condition<LETTER, PLACE>>> treaty = getKingdom().getTreaty();
 		final Set<SubterrElement<LETTER, PLACE>> subterr = new HashSet<>();
 		for (final Set<Condition<LETTER, PLACE>> set : treaty) {
-			final SubterrElement<LETTER, PLACE> subterrElement = new SubterrElement<>(set);
-			subterr.add(subterrElement);
+			subterr.add(new SubterrElement<>(set));
 		}
 		return subterr;
 	}
 
+	/**
+	 * Check if all Rooks have equal Territories
+	 *
+	 * @param <P>
+	 *            The type of places in the Petri program
+	 * @param <L>
+	 *            The type of statements in the Petri program
+	 * @param rooks
+	 *            Rooks to check equality for the corresponding Territories
+	 * @return True if all Rooks Territories are equal
+	 */
 	public static <P, L> boolean getRooksTerritoryEquality(final Set<Rook<P, L>> rooks) {
 		final Set<Territory<P>> rookTerritories =
 				rooks.stream().map(rook -> rook.getKingdom().toTerritory()).collect(Collectors.toSet());
 		return (rookTerritories.size() == 1);
 	}
 
+	/**
+	 * Check if every Rooks Territories are unique i.e. there is no pair of Rooks in rooks such that their corresponding
+	 * Territories are equal
+	 *
+	 * @param <P>
+	 *            The type of places in the Petri program
+	 * @param <L>
+	 *            The type of statements in the Petri program
+	 * @param rooks
+	 *            Rooks to check uniqueness of their corresponding Territories.
+	 * @return True if all Territories are unique
+	 */
 	public static <P, L> boolean getRooksTerritoriesUnique(final Set<Rook<P, L>> rooks) {
 		final Set<Territory<P>> rookTerritories =
 				rooks.stream().map(rook -> rook.getKingdom().toTerritory()).collect(Collectors.toSet());
@@ -327,7 +348,7 @@ public final class Rook<PLACE, LETTER> {
 			}
 		}
 
-		if (containsNonCut(bp)) {
+		if (containsNonCut(bp, bp.getConditions())) {
 			assert false : "Not all co-sets in census of the Rook are Cuts";
 			return false;
 		}
@@ -350,7 +371,7 @@ public final class Rook<PLACE, LETTER> {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(mKingdom, mLaw);
+		return mHashCode;
 	}
 
 	@Override

@@ -77,7 +77,7 @@ public class OwickiGriesConstruction<P, L> {
 
 	private final Set<P> mHittingSet;
 	private final Map<P, IProgramVar> mGhostVariables;
-	private final OwickiGriesAnnotation<L, P> mAnnotation;
+	private final OwickiGriesAnnotation<Transition<L, P>, P> mAnnotation;
 
 	public OwickiGriesConstruction(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
 			final IPetriNet<L, P> net, final Map<Marking<P>, IPredicate> floydHoare, final boolean useHittingSets) {
@@ -102,8 +102,8 @@ public class OwickiGriesConstruction<P, L> {
 		final Map<Transition<L, P>, GhostUpdate> assignmentMapping = getAssignmentMapping();
 		final Map<IProgramVar, Term> ghostInitAssignment = getGhostInitAssignment();
 
-		mAnnotation = new OwickiGriesAnnotation<>(mNet, mSymbolTable, formulaMapping,
-				new HashSet<>(mGhostVariables.values()), ghostInitAssignment, assignmentMapping);
+		mAnnotation = new OwickiGriesAnnotation<>(mSymbolTable, formulaMapping, new HashSet<>(mGhostVariables.values()),
+				ghostInitAssignment, assignmentMapping);
 	}
 
 	/**
@@ -309,12 +309,12 @@ public class OwickiGriesConstruction<P, L> {
 		return new GhostUpdate(assignments);
 	}
 
-	public OwickiGriesAnnotation<L, P> getResult() {
+	public OwickiGriesAnnotation<Transition<L, P>, P> getResult() {
 		return mAnnotation;
 	}
 
-	public HashRelation<Transition<L, P>, P> getCoMarkedPlaces() {
-		final HashRelation<Transition<L, P>, P> relation = new HashRelation<>();
+	public IPossibleInterferences<Transition<L, P>, P> getPossibleInterferences() {
+		final HashRelation<P, Transition<L, P>> relation = new HashRelation<>();
 		for (final Transition<L, P> transition : mNet.getTransitions()) {
 			final Set<P> predecessors = transition.getPredecessors();
 			final Set<Marking<P>> enabledMarkings = mFloydHoareAnnotation.keySet().stream()
@@ -323,11 +323,11 @@ public class OwickiGriesConstruction<P, L> {
 				for (final P place : marking) {
 					// places that are not predecessors of transition
 					if (!predecessors.contains(place)) {
-						relation.addPair(transition, place);
+						relation.addPair(place, transition);
 					}
 				}
 			}
 		}
-		return relation;
+		return IPossibleInterferences.fromRelation(relation);
 	}
 }

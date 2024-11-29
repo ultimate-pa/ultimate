@@ -579,4 +579,15 @@ public class DefaultTranslator<STE, TTE, SE, TE, SVL, TVL, CTX>
 	public interface IFunction<P1, P2, P3, R> {
 		R create(P1 p1, P2 p2, P3 p3);
 	}
+
+	@Override
+	public TE declareAndTranslateAuxiliaryVariable(final SE variable) {
+		if (!mTargetExpressionType.isAssignableFrom(mSourceExpressionType)) {
+			final String message =
+					"Type of SourceExpression and type of" + " TargetExpression are different. DefaultTranslator can"
+							+ " only be applied to expression of same type.";
+			throw new AssertionError(message);
+		}
+		return (TE) variable;
+	}
 }

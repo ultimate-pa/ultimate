@@ -27,6 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils;
 
+import java.math.BigInteger;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -38,6 +39,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
@@ -45,6 +47,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransformationEngine.DescendResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransformationEngine.TermWalker;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndex;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalSelect;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalSelectOverNestedStore;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
@@ -103,6 +108,14 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	 * This option has no effect if check only leaves.
 	 */
 	private static final boolean OVERAPPROXIMATE_DIFFCULT_QUANTIFIERS_IN_NODES = false;
+	/**
+	 * Try to simplify modulo terms.
+	 */
+	private static final boolean MOD_SIMPLIFICATION = true;
+	/**
+	 * Try to apply a select-over-store simplification.
+	 */
+	private static final boolean ARRAY_SIMPLIFICATION = true;
 
 	/**
 	 * Options for which nodes to check for redundancy. To check redundancy, we
@@ -256,7 +269,31 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	 */
 	private DescendResult checkRedundancy(final Term term) {
 		final Term result;
+		// Some terms are non-contraining and non-relaxing (e.g., if the critical
+		// constraint is `false`) should we then replace by `true` or by `false`?
+		// We decided for `false` (resp. we first check whether the the term
+		// non-constraining) because we think that `false` is typically better for
+		// verification especially for the invariant-based simplification of our CFG.
 		{
+			// Check if formula is non-relaxing.
+			mNumberOfCheckSatCommands++;
+			final long timeBeforeRelaxingcheck = System.nanoTime();
+			final Term rhs;
+			if (OVERAPPROXIMATE_DIFFCULT_QUANTIFIERS_IN_NODES) {
+				rhs = replaceUniversalQuantifiersByTrue(mMgdScript, term);
+			} else {
+				rhs = term;
+			}
+			final LBool isNonRelaxing = Util.checkSat(mMgdScript.getScript(), rhs);
+			mCheckSatTime += (System.nanoTime() - timeBeforeRelaxingcheck);
+			if (isNonRelaxing == LBool.UNSAT) {
+				mNonRelaxingNodes++;
+				result = mMgdScript.getScript().term("false");
+				return new TermContextTransformationEngine.FinalResultForAscend(result);
+			}
+		}
+		{
+			// Check if formula is non-constraining.
 			final long timeBeforeConstrainigcheck = System.nanoTime();
 			mNumberOfCheckSatCommands++;
 			final Term rhs;
@@ -274,24 +311,96 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 				return new TermContextTransformationEngine.FinalResultForAscend(result);
 			}
 		}
-		{
-			mNumberOfCheckSatCommands++;
-			final long timeBeforeRelaxingcheck = System.nanoTime();
-			final Term rhs;
-			if (OVERAPPROXIMATE_DIFFCULT_QUANTIFIERS_IN_NODES) {
-				rhs = replaceUniversalQuantifiersByTrue(mMgdScript, term);
-			} else {
-				rhs = term;
-			}
-			final LBool isNonRelaxing = Util.checkSat(mMgdScript.getScript(), rhs);
-			mCheckSatTime += (System.nanoTime() - timeBeforeRelaxingcheck);
-			if (isNonRelaxing == LBool.UNSAT) {
-				mNonRelaxingNodes++;
-				result = mMgdScript.getScript().term("false");
-				return new TermContextTransformationEngine.FinalResultForAscend(result);
+		Term termBasedSimplification = term;
+		if (MOD_SIMPLIFICATION) {
+			final Term modSimplificationResult = tryModSimplification(term);
+			if (modSimplificationResult != null) {
+				termBasedSimplification = modSimplificationResult;
 			}
 		}
+		if (ARRAY_SIMPLIFICATION) {
+			final Term arraySimplificationResult = tryArraySimplification(termBasedSimplification);
+			if (arraySimplificationResult != null) {
+				termBasedSimplification = arraySimplificationResult;
+			}
+		}
+		if (termBasedSimplification != term) {
+			return new TermContextTransformationEngine.FinalResultForAscend(termBasedSimplification);
+		}
 		return null;
+	}
+
+	private Term tryModSimplification(final Term term) {
+		final Predicate<Term> p = (x -> (x instanceof ApplicationTerm)
+				&& ((ApplicationTerm) x).getFunction().getName().equals("mod"));
+		final Set<Term> subTerms = SubTermFinder.find(term, p, true);
+		if (subTerms.isEmpty()) {
+			return null;
+		}
+		final Map<Term, Term> substitutionMapping = new HashMap<>();
+		for (final Term subTerm : subTerms) {
+			ModTerm modTerm = ModTerm.of(subTerm);
+			{
+				// Check if we can apply the simplification recursively
+				final Term divident = modTerm.getDivident();
+				final Term tmp = tryModSimplification(divident);
+				if (tmp != null) {
+					modTerm = new ModTerm(tmp, modTerm.getDivisor());
+				}
+			}
+			final Term dividentGeq0 = SmtUtils.geq(mMgdScript.getScript(), modTerm.getDivident(),
+					SmtUtils.constructIntegerValue(mMgdScript.getScript(), SmtSortUtils.getIntSort(mMgdScript),
+							BigInteger.ZERO));
+			final Term dividentSmallerDivisor = SmtUtils.less(mMgdScript.getScript(), modTerm.getDivident(),
+					modTerm.getDivisor());
+			final Term inRange = SmtUtils.and(mMgdScript.getScript(), dividentGeq0, dividentSmallerDivisor);
+			final Term notInRange = SmtUtils.not(mMgdScript.getScript(), inRange);
+			final LBool modIsSuperfluous = Util.checkSat(mMgdScript.getScript(), notInRange);
+			if (modIsSuperfluous == LBool.UNSAT) {
+				substitutionMapping.put(subTerm, modTerm.getDivident());
+			}
+		}
+		if (!substitutionMapping.isEmpty()) {
+			return Substitution.apply(mMgdScript, substitutionMapping, term);
+		} else {
+			return null;
+		}
+	}
+
+	private Term tryArraySimplification(final Term term) {
+		final List<MultiDimensionalSelectOverNestedStore> list = MultiDimensionalSelectOverNestedStore
+				.extractMultiDimensionalSelectOverNestedStore(term, true);
+		if (list.isEmpty()) {
+			return null;
+		}
+		final Map<Term, Term> substitutionMapping = new HashMap<>();
+		for (final MultiDimensionalSelectOverNestedStore mdsons : list) {
+			if (mdsons.getNestedStore().getValues().size() != 1) {
+				continue;
+			}
+			final ArrayIndex storeIndex = mdsons.getNestedStore().getIndices().get(0);
+			final ArrayIndex selectIndex = mdsons.getSelectIndex();
+			final Term idxEquivalence = ArrayIndex.constructIndexEquality(mMgdScript.getScript(), storeIndex,
+					selectIndex);
+			final LBool idxEquivalent = Util.checkSat(mMgdScript.getScript(),
+					SmtUtils.not(mMgdScript.getScript(), idxEquivalence));
+			if (idxEquivalent == LBool.UNSAT) {
+				substitutionMapping.put(mdsons.toTerm(mMgdScript.getScript()),
+						mdsons.getNestedStore().getValues().get(0));
+				continue;
+			}
+			final LBool idxNotEquivalent = Util.checkSat(mMgdScript.getScript(), idxEquivalence);
+			if (idxNotEquivalent == LBool.UNSAT) {
+				final MultiDimensionalSelect mds = new MultiDimensionalSelect(mdsons.getNestedStore().getArray(),
+						mdsons.getSelectIndex());
+				substitutionMapping.put(mdsons.toTerm(mMgdScript.getScript()), mds.toTerm(mMgdScript.getScript()));
+			}
+		}
+		if (!substitutionMapping.isEmpty()) {
+			return Substitution.apply(mMgdScript, substitutionMapping, term);
+		} else {
+			return null;
+		}
 	}
 
 	/**

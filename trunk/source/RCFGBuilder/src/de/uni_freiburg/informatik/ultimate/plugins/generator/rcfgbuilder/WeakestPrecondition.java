@@ -86,7 +86,7 @@ public class WeakestPrecondition extends BoogieTransformer {
 		} else if (expr instanceof UnaryExpression) {
 			final UnaryExpression unexp = (UnaryExpression) expr;
 			if (unexp.getOperator() == Operator.OLD) {
-				newExpr = unexp.getExpr();
+				newExpr = processExpression(unexp.getExpr());
 			} else {
 				final Expression subexpr = processExpression(unexp.getExpr());
 				if (subexpr != unexp.getExpr()) {

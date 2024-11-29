@@ -15,14 +15,11 @@
 [L9]   EXPR        \read(**p2)
 [L9]               *p1 = *p2
 [L10]              *pq = 0
-       VAL         [p1={5:0}, p1={5:0}, p2={3:0}, p2={3:0}, pq={2:0}]
 [L15]  RET         g(p1, p2)
 [L16]              return 1;
-       VAL         [\old(a)=4, \result=1, a=4, p1={5:0}, p1={5:0}, p2={3:0}, p2={3:0}]
+       VAL         [\result=1]
 [L34]  RET, EXPR   f(a, &p1, &p2)
 [L34]              a = f(a, &p1, &p2)
 [L36]  EXPR        \read(*p1)
-       VAL         [\read(*p1)=0, \read(*p1)={2:0}, a={6:0}, b={2:0}, p1={5:0}, p2={3:0}]
 [L36]  COND TRUE   *p1 == 0
 [L44]              __VERIFIER_error()
-       VAL         [a={6:0}, b={2:0}, p1={5:0}, p2={3:0}]
