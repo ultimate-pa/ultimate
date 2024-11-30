@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -82,7 +81,6 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 	private final Function<Transition<LETTER, PLACE>, Transition<LETTER, PLACE>> mDiff2OriginalTransition;
 
 	private final Set<PLACE> mOriginalPlaces;
-	private final List<Set<PLACE>> mProofPlaces;
 
 	private final BranchingProcess<LETTER, PLACE> mBp;
 	private final Set<Condition<LETTER, PLACE>> mConditions;
@@ -111,7 +109,7 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 			final Function<Transition<LETTER, PLACE>, Transition<LETTER, PLACE>> diff2OriginalTransition,
 			final BasicPredicateFactory factory, final Function<PLACE, IPredicate> placeToAssertion,
 			final ManagedScript mgdScript, final IIcfgSymbolTable symbolTable, final Set<String> procedures,
-			final ModifiableGlobalsTable modifiableGlobals, final List<Set<PLACE>> proofPlaces,
+			final ModifiableGlobalsTable modifiableGlobals,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> product, final EmpireComputationMode mode) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(PetriOwickiGries.class);
@@ -125,7 +123,6 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 		mNet = net;
 		mProduct = product;
 		mOriginalPlaces = mNet.getPlaces();
-		mProofPlaces = proofPlaces;
 		mDiff2OriginalTransition = diff2OriginalTransition;
 
 		mBp = bp;
@@ -147,7 +144,6 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 			mCrown = getCrown();
 			mLogger.debug("Constructed Crown:\n%s", mCrown);
 			mEmpireAnnotation = getEmpireAnnotationFromCrown(placeToAssertion);
-			assert checkEmpireValidity() : "Empire annotation is invalid";
 		} else {
 			assert mode == EmpireComputationMode.SYMBOLIC_EXECUTION;
 			mCrown = null;
@@ -157,8 +153,8 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 			final var htc = new MonolithicHoareTripleChecker(mgdScript, modifiableGlobals);
 			final var computation = getEmpireComputation(placeToAssertion, placesCorelation, implicationChecker, htc);
 			mEmpireAnnotation = computation.getEmpire();
-			assert checkEmpireValidity(computation, placesCorelation) : "Empire annotation is invalid";
 		}
+		assert checkEmpireValidity() : "Empire annotation is invalid";
 
 		mLogger.debug("Constructed Empire Annotation:\n%s", mEmpireAnnotation);
 		mOwickiGriesAnnotation = getOwickiGriesAnnotation();
@@ -204,7 +200,8 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 	}
 
 	private EmpireAnnotation<PLACE> getEmpireAnnotationFromCrown(final Function<PLACE, IPredicate> placeToAssertion) {
-		final CrownsEmpire<PLACE, LETTER> crownsEmpire = mStatistics.measureEmpire(() -> mCrown.getCrownsEmpire(mFactory, placeToAssertion));
+		final CrownsEmpire<PLACE, LETTER> crownsEmpire =
+				mStatistics.measureEmpire(() -> mCrown.getCrownsEmpire(mFactory, placeToAssertion));
 		mStatistics.reportEmpireStatistics(crownsEmpire);
 		mLogger.info("PetriOwickiGries Empire Statistics: %s", crownsEmpire.getStatistics());
 		return crownsEmpire.getEmpireAnnotation();
@@ -222,17 +219,6 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 	private boolean checkEmpireValidity() {
 		return mStatistics.measureEmpireValidity(() -> {
 			final var implicationChecker = new MonolithicImplicationChecker(mServices, mMgdScript);
-			final var checker = new EmpireValidityCheck<>(mServices, mMgdScript, implicationChecker, mFactory, mNet,
-					mModifiableGlobals, mEmpireAnnotation);
-			return checker.getValidity();
-		}) != Validity.INVALID;
-	}
-
-	private boolean checkEmpireValidity(final EmpireComputation<LETTER, PLACE> empireComputation,
-			final PlacesCoRelation<PLACE> placesCoRelation) {
-		return mStatistics.measureEmpireValidity(() -> {
-			final var implicationChecker = new MonolithicImplicationChecker(mServices, mMgdScript);
-			final var assertionPlaces = mProofPlaces.stream().flatMap(Set::stream).collect(Collectors.toSet());
 			final var checker = new EmpireValidityCheck<>(mServices, mMgdScript, implicationChecker, mFactory, mNet,
 					mModifiableGlobals, mEmpireAnnotation);
 			return checker.getValidity();

@@ -29,13 +29,11 @@ package de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries;
 import java.nio.file.Path;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import org.junit.runner.RunWith;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.TotalizeNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.UnionNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
@@ -58,7 +56,6 @@ public class PetriOwickiGriesTestSuite extends OwickiGriesTestSuite {
 			final BoundedPetriNet<SimpleAction, IPredicate> refinedPetriNet,
 			final BranchingProcess<SimpleAction, IPredicate> unfolding) throws AutomataLibraryException {
 		// Assume.assumeTrue("More than one proof", mUnifiers.size() == 1);
-		final var proofPlaces = mProofs.stream().map(NestedWordAutomaton::getStates).collect(Collectors.toList());
 		final var factory = new UnionFactory(mPredicateFactory);
 		INwaOutgoingLetterAndTransitionProvider<SimpleAction, IPredicate> product = mProofs.get(0);
 		for (var i = 1; i < mProofs.size(); i++) {
@@ -73,8 +70,7 @@ public class PetriOwickiGriesTestSuite extends OwickiGriesTestSuite {
 		final StatisticsData data = new StatisticsData();
 		final var pog = new PetriOwickiGries<>(mServices, unfolding, program, mDiff2OriginalTransition,
 				mPredicateFactory, Function.identity(), mMgdScript, mSymbolTable, Set.of(SimpleAction.PROCEDURE),
-				computeModifiableGlobals(), proofPlaces, product,
-				PetriOwickiGries.EmpireComputationMode.SYMBOLIC_EXECUTION);
+				computeModifiableGlobals(), product, PetriOwickiGries.EmpireComputationMode.SYMBOLIC_EXECUTION);
 		data.aggregateBenchmarkData(pog.getStatistics());
 		mLogger.info("PetriOwickiGries Statistics: %s", data);
 	}
