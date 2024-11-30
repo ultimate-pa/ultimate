@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.ICoRelation;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -64,6 +65,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.TimeTracker;
 public final class CrownConstruction<PLACE, LETTER> {
 	public static final boolean SINGLE_ASSERTION_LAWS = false;
 
+	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 
 	private final BranchingProcess<LETTER, PLACE> mBp;
@@ -78,6 +80,7 @@ public final class CrownConstruction<PLACE, LETTER> {
 
 	public CrownConstruction(final IUltimateServiceProvider services, final BranchingProcess<LETTER, PLACE> bp,
 			final Set<Condition<LETTER, PLACE>> origConds, final Set<Condition<LETTER, PLACE>> assertConds) {
+		mServices = services;
 		mLogger = services.getLoggingService().getLogger(CrownConstruction.class);
 		mLogger.setLevel(LogLevel.INFO);
 
@@ -200,6 +203,10 @@ public final class CrownConstruction<PLACE, LETTER> {
 	// Recursive expansion
 	private Set<Rook<PLACE, LETTER>> crownExpansionRecursive(final Rook<PLACE, LETTER> rook,
 			final List<Condition<LETTER, PLACE>> troopConditions, final boolean colonizer) {
+		if (!mServices.getProgressMonitorService().continueProcessing()) {
+			throw new ToolchainCanceledException(getClass());
+		}
+
 		final Set<Rook<PLACE, LETTER>> crownRooks = new HashSet<>();
 		boolean isMaximal = true;
 		for (final Condition<LETTER, PLACE> condition : troopConditions) {
