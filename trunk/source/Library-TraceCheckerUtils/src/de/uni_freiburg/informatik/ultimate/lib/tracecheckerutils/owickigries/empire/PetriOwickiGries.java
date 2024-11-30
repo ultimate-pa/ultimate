@@ -63,7 +63,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
-import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
 import de.uni_freiburg.informatik.ultimate.util.statistics.TimeTracker;
 
 public class PetriOwickiGries<LETTER extends IAction, PLACE> {
@@ -308,10 +307,10 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 		private final TimeTracker mOwickiGriesValidityTime = new TimeTracker();
 
 		public Statistics() {
-			declare(EMPIRE_TIME, () -> mEmpireTime, KeyType.TT_TIMER_MS);
-			declare(OWICKI_GRIES_TIME, () -> mOwickiGriesTime, KeyType.TT_TIMER_MS);
-			declare(EMPIRE_VALIDITY_TIME, () -> mEmpireValidityTime, KeyType.TT_TIMER_MS);
-			declare(OWICKI_GRIES_VALIDITY_TIME, () -> mOwickiGriesValidityTime, KeyType.TT_TIMER_MS);
+			declareTimeTracker(EMPIRE_TIME, mEmpireTime);
+			declareTimeTracker(OWICKI_GRIES_TIME, mOwickiGriesTime);
+			declareTimeTracker(EMPIRE_VALIDITY_TIME, mEmpireValidityTime);
+			declareTimeTracker(OWICKI_GRIES_VALIDITY_TIME, mOwickiGriesValidityTime);
 
 			forward(CROWN_STATISTICS, () -> mCrownStatistics);
 			forward(EMPIRE_STATISTICS, () -> mEmpireStatistics);

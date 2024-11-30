@@ -430,9 +430,9 @@ public final class CrownConstruction<PLACE, LETTER> {
 		private final MinMaxMed mRealmsPerKingdom = new MinMaxMed();
 
 		public Statistics() {
-			declare(SETTLEMENT_TIME, () -> mSettlementTimer, KeyType.TT_TIMER_MS);
-			declare(CROWN_COMPUTATION_TIME, () -> mCrownTimer, KeyType.TT_TIMER_MS);
-			declare(CROWN_REFURBISHMENT_TIME, () -> mRefurbishmentTimer, KeyType.TT_TIMER_MS);
+			declareTimeTracker(SETTLEMENT_TIME, mSettlementTimer);
+			declareTimeTracker(CROWN_COMPUTATION_TIME, mCrownTimer);
+			declareTimeTracker(CROWN_REFURBISHMENT_TIME, mRefurbishmentTimer);
 			declare(NUM_KINGDOMS, () -> mNumKingdoms, KeyType.COUNTER);
 			declare(ASSERTION_SIZE, () -> mAssertionSize, KeyType.COUNTER);
 			declare(CROWN_SIZE, () -> mCrownSize, KeyType.COUNTER);
