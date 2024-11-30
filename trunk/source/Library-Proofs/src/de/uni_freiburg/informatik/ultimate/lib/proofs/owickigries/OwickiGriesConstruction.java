@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.IFloydHoareAnnotation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -72,7 +73,8 @@ public class OwickiGriesConstruction<P, L> {
 	private final BasicPredicateFactory mFactory;
 
 	private final IPetriNet<L, P> mNet;
-	private final Map<Marking<P>, IPredicate> mFloydHoareAnnotation;
+	private final Collection<Marking<P>> mReachableMarkings;
+	private final IFloydHoareAnnotation<Marking<P>> mFloydHoareAnnotation;
 	private final DefaultIcfgSymbolTable mSymbolTable;
 
 	private final Set<P> mHittingSet;
@@ -80,18 +82,21 @@ public class OwickiGriesConstruction<P, L> {
 	private final OwickiGriesAnnotation<Transition<L, P>, P> mAnnotation;
 
 	public OwickiGriesConstruction(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
-			final IPetriNet<L, P> net, final Map<Marking<P>, IPredicate> floydHoare, final boolean useHittingSets) {
+			final IPetriNet<L, P> net, final Collection<Marking<P>> reachableMarkings,
+			final IFloydHoareAnnotation<Marking<P>> floydHoare, final boolean useHittingSets) {
 		this(services, csToolkit.getManagedScript(), csToolkit.getSymbolTable(), csToolkit.getProcedures(), net,
-				floydHoare, useHittingSets);
+				reachableMarkings, floydHoare, useHittingSets);
 	}
 
 	public OwickiGriesConstruction(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final IIcfgSymbolTable symbolTable, final Set<String> procedures, final IPetriNet<L, P> net,
-			final Map<Marking<P>, IPredicate> floydHoare, final boolean useHittingSets) {
+			final Collection<Marking<P>> reachableMarkings, final IFloydHoareAnnotation<Marking<P>> floydHoare,
+			final boolean useHittingSets) {
 		mManagedScript = mgdScript;
 		mScript = mManagedScript.getScript();
 
 		mNet = net;
+		mReachableMarkings = reachableMarkings;
 		mFloydHoareAnnotation = floydHoare;
 		mSymbolTable = new DefaultIcfgSymbolTable(symbolTable, procedures);
 		mFactory = new BasicPredicateFactory(services, mManagedScript, mSymbolTable);
@@ -114,9 +119,8 @@ public class OwickiGriesConstruction<P, L> {
 	 */
 	private Map<P, IPredicate> getFormulaMapping() {
 		final Map<P, IPredicate> mapping = new HashMap<>();
-		final Set<Marking<P>> reachableMarkings = mFloydHoareAnnotation.keySet();
 		for (final P place : mNet.getPlaces()) {
-			final Set<Term> clauses = reachableMarkings.stream().filter(m -> m.contains(place))
+			final Set<Term> clauses = mReachableMarkings.stream().filter(m -> m.contains(place))
 					.map(this::getMarkingPredicate).collect(Collectors.toSet());
 			final Term disjunction = SmtUtils.or(mScript, clauses);
 			mapping.put(place, mFactory.newPredicate(disjunction));
@@ -145,7 +149,7 @@ public class OwickiGriesConstruction<P, L> {
 		} else {
 			terms.addAll(getHitNotMarking(marking));
 		}
-		terms.add(mFloydHoareAnnotation.get(marking).getFormula());
+		terms.add(mFloydHoareAnnotation.getAnnotation(marking).getFormula());
 		return SmtUtils.and(mScript, terms);
 	}
 
@@ -184,7 +188,7 @@ public class OwickiGriesConstruction<P, L> {
 
 	private Set<P> getHittingSet() {
 		final Set<Set<P>> reachableMarkings = new HashSet<>();
-		for (final Marking<P> mark : mFloydHoareAnnotation.keySet()) {
+		for (final Marking<P> mark : mReachableMarkings) {
 			reachableMarkings.add(mark.stream().collect(Collectors.toSet()));
 		}
 		final HittingSet<P> hitSet = new HittingSet<>(reachableMarkings);
@@ -198,9 +202,8 @@ public class OwickiGriesConstruction<P, L> {
 	 */
 	private Set<Term> getSubsetMarking(final Marking<P> marking) {
 		final Set<P> markPlaces = marking.stream().collect(Collectors.toSet());
-		final Set<Marking<P>> markings = mFloydHoareAnnotation.keySet();
 		final Set<P> notInMarking = new HashSet<>();
-		for (final Marking<P> otherMarking : markings) {
+		for (final Marking<P> otherMarking : mReachableMarkings) {
 			notInMarking.addAll(getSupPlaces(otherMarking, markPlaces));
 		}
 		final Set<Term> predicates = new HashSet<>();
@@ -317,7 +320,7 @@ public class OwickiGriesConstruction<P, L> {
 		final HashRelation<P, Transition<L, P>> relation = new HashRelation<>();
 		for (final Transition<L, P> transition : mNet.getTransitions()) {
 			final Set<P> predecessors = transition.getPredecessors();
-			final Set<Marking<P>> enabledMarkings = mFloydHoareAnnotation.keySet().stream()
+			final Set<Marking<P>> enabledMarkings = mReachableMarkings.stream()
 					.filter(marking -> marking.containsAll(predecessors)).collect(Collectors.toSet());
 			for (final Marking<P> marking : enabledMarkings) {
 				for (final P place : marking) {

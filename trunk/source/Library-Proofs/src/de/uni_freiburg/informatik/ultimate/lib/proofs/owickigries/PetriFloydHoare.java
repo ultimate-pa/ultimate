@@ -41,18 +41,16 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateCoverageChecker;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.PrePostConditionSpecification;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.FloydHoareMapping;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
- * Constructs an Floyd-Hoare annotation of a Petri program from the final refined Petri net.
+ * Constructs a Floyd-Hoare annotation of a Petri program from the final refined Petri net.
  *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  * @author Miriam Lagunes (miriam.lagunes@students.uni-freiburg.de)
@@ -63,10 +61,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
  *            The type of places in the Petri program
  */
 public class PetriFloydHoare<L, P> {
-	private final IUltimateServiceProvider mServices;
-	private final ManagedScript mManagedScript;
 	private final BasicPredicateFactory mFactory;
 	private final Function<P, IPredicate> mAssertionPlaceAnnotation;
+
 	// TODO should only be a single relation
 	private final List<IPredicateCoverageChecker> mCoverageRelations;
 
@@ -77,40 +74,41 @@ public class PetriFloydHoare<L, P> {
 
 	private final Set<P> mOriginalPlaces;
 
-	private final Map<Marking<P>, IPredicate> mFloydHoareAnnotation;
+	private final Map<Marking<P>, IPredicate> mMarkingMap;
+	private final FloydHoareMapping<Marking<P>> mFloydHoareAnnotation;
 
-	public PetriFloydHoare(final IUltimateServiceProvider services, final IPetriNet<L, P> program,
-			final CfgSmtToolkit csToolkit, final IPetriNet<L, P> refinedNet,
-			final Function<P, IPredicate> assertionPlaceAnnotation,
-			final List<IPredicateCoverageChecker> coverageRelations, final boolean coveringSimplification) {
-		this(services, csToolkit.getManagedScript(), program, csToolkit.getSymbolTable(), refinedNet,
-				assertionPlaceAnnotation, coverageRelations, coveringSimplification);
-	}
-
-	public PetriFloydHoare(final IUltimateServiceProvider services, final ManagedScript mgdScript,
-			final IPetriNet<L, P> program, final IIcfgSymbolTable symbolTable, final IPetriNet<L, P> refinedNet,
-			final Function<P, IPredicate> assertionPlaceAnnotation,
-			final List<IPredicateCoverageChecker> coverageRelations, final boolean coveringSimplification) {
-		mServices = services;
-		mManagedScript = mgdScript;
-		mAssertionPlaceAnnotation = assertionPlaceAnnotation;
-		mCoverageRelations = coverageRelations;
-		mFactory = new BasicPredicateFactory(mServices, mManagedScript, symbolTable);
-
+	public PetriFloydHoare(final BasicPredicateFactory predicateFactory, final IPetriNet<L, P> program,
+			final IPetriNet<L, P> refinedNet, final Function<P, IPredicate> assertionPlaceAnnotation,
+			final List<IPredicateCoverageChecker> coverageRelations, final boolean coveringSimplification)
+			throws PetriNetNot1SafeException {
+		mFactory = predicateFactory;
 		mOriginalProgram = program;
 		mRefinedNet = refinedNet;
+		mAssertionPlaceAnnotation = assertionPlaceAnnotation;
+		mCoverageRelations = coverageRelations;
+		mCoveringSimplification = coveringSimplification;
 
 		mOriginalPlaces = Collections.unmodifiableSet(mOriginalProgram.getPlaces());
 
-		final var refinedReach = computeReachableMarkings();
+		// compute the map that represents the Floyd-Hoare annotation
+		final var refinedReach = computeReachableMarkings(mRefinedNet);
 		final var originalToRefined = projectReachableMarkings(refinedReach);
+		mMarkingMap = getMaximalAnnotation(originalToRefined);
 
-		mCoveringSimplification = coveringSimplification;
-		mFloydHoareAnnotation = getMaximalAnnotation(originalToRefined);
+		// wrap the map in a FloydHoareMapping, together with the proven specification
+		final var falsePred = mFactory.or();
+		final var initialMarking = getInitialMarking(program);
+		final var spec = new PrePostConditionSpecification<>(Map.of(initialMarking, mFactory.and()),
+				program::isAccepting, falsePred);
+		mFloydHoareAnnotation = new FloydHoareMapping<>(spec, mMarkingMap, falsePred);
 	}
 
-	public Map<Marking<P>, IPredicate> getResult() {
+	public FloydHoareMapping<Marking<P>> getResult() {
 		return mFloydHoareAnnotation;
+	}
+
+	public Collection<Marking<P>> getReachableMarkings() {
+		return Collections.unmodifiableCollection(mMarkingMap.keySet());
 	}
 
 	private Map<Marking<P>, List<Marking<P>>> projectReachableMarkings(final Collection<Marking<P>> refinedReach) {
@@ -123,13 +121,12 @@ public class PetriFloydHoare<L, P> {
 	}
 
 	// a depth-first search of the reachability graph
-	private Collection<Marking<P>> computeReachableMarkings() {
-		final var net = mRefinedNet;
-
+	private static <L, P> Collection<Marking<P>> computeReachableMarkings(final IPetriNet<L, P> net)
+			throws PetriNetNot1SafeException {
 		final var result = new LinkedHashSet<Marking<P>>();
 		final var worklist = new ArrayDeque<Marking<P>>();
 
-		final var initialMarking = new Marking<>(ImmutableSet.of(net.getInitialPlaces()));
+		final var initialMarking = getInitialMarking(net);
 		worklist.push(initialMarking);
 
 		while (!worklist.isEmpty()) {
@@ -142,12 +139,8 @@ public class PetriFloydHoare<L, P> {
 			for (final var transitionProvider : net.getSuccessorTransitionProviders(places, places)) {
 				for (final var transition : transitionProvider.getTransitions()) {
 					assert marking.isTransitionEnabled(transition);
-					try {
-						final Marking<P> successor = marking.fireTransition(transition);
-						worklist.add(successor);
-					} catch (final PetriNetNot1SafeException e) {
-						throw new AssertionError("Petri net must be 1-safe", e);
-					}
+					final Marking<P> successor = marking.fireTransition(transition);
+					worklist.add(successor);
 				}
 			}
 		}
@@ -229,5 +222,9 @@ public class PetriFloydHoare<L, P> {
 			}
 		}
 		return false;
+	}
+
+	private static <P> Marking<P> getInitialMarking(final IPetriNet<?, P> net) {
+		return new Marking<>(ImmutableSet.of(net.getInitialPlaces()));
 	}
 }

@@ -86,6 +86,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskIterationIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.IFloydHoareAnnotation;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.IPossibleInterferences;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesAnnotation;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesConstruction;
@@ -608,7 +609,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 	// TODO #proofRefactor Wrap in an IProofProducer implementation
 	protected
 			Triple<IPetriNet<L, IPredicate>, OwickiGriesAnnotation<Transition<L, IPredicate>, IPredicate>, IPossibleInterferences<Transition<L, IPredicate>, IPredicate>>
-			computeOwickiGriesAnnotation() {
+			computeOwickiGriesAnnotation() throws PetriNetNot1SafeException {
 		if (mPref.applyOneShotLbe()) {
 			// TODO this should be moved somewhere else, it's not the responsibility of this CEGAR loop
 			throw new AssertionError("Owicki-Gries does currently not support Petri net LBE.");
@@ -622,14 +623,13 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 		// compute the Floyd-Hoare annotation
 		final var coverageRelations = mRefinementEngines.stream()
 				.map(r -> r.getPredicateUnifier().getCoverageRelation()).collect(Collectors.toList());
-		final var floydHoare = new PetriFloydHoare<>(getServices(), mInitialNet, mCsToolkit, mAbstraction,
-				Function.<IPredicate> identity(), coverageRelations, mPref.owickiGriesCoveringSimplification())
-						.getResult();
-		assert checkFloydHoareValidity(floydHoare) : "Invalid Floyd-Hoare annotation";
+		final var pfh = new PetriFloydHoare<>(mPredicateFactory, mInitialNet, mAbstraction,
+				Function.<IPredicate> identity(), coverageRelations, mPref.owickiGriesCoveringSimplification());
+		assert checkFloydHoareValidity(pfh.getResult()) : "Invalid Floyd-Hoare annotation";
 
 		// compute the Owicki-Gries annotation
 		final OwickiGriesConstruction<IPredicate, L> construction = new OwickiGriesConstruction<>(getServices(),
-				mCsToolkit, mInitialNet, floydHoare, mPref.owickiGriesHittingSets());
+				mCsToolkit, mInitialNet, pfh.getReachableMarkings(), pfh.getResult(), mPref.owickiGriesHittingSets());
 		assert checkOwickiGriesValidity(construction) : "Invalid Owicki-Gries annotation";
 		mLogger.info("Computed Owicki-Gries annotation of size %d in %dns", construction.getResult().size(),
 				System.nanoTime() - startTime);
@@ -637,19 +637,15 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 		return new Triple<>(mInitialNet, construction.getResult(), construction.getPossibleInterferences());
 	}
 
-	private boolean checkFloydHoareValidity(final Map<Marking<IPredicate>, IPredicate> floydHoare) {
-		try {
-			mLogger.warn("Checking inductivity of Floyd-Hoare annotation for initial Petri net");
-			final var fhValid = new PetriFloydHoareValidityCheck<>(mServices, mCsToolkit.getManagedScript(),
-					mCsToolkit.getSymbolTable(), mCsToolkit.getModifiableGlobalsTable(), mInitialNet, floydHoare)
-							.isValid();
-			if (fhValid == Validity.UNKNOWN) {
-				mLogger.warn("Could not confirm validity of Floyd-Hoare annotation.");
-			}
-			return fhValid != Validity.INVALID;
-		} catch (final PetriNetNot1SafeException e) {
-			throw new AssertionError("Petri net must be one-safe", e);
+	private boolean checkFloydHoareValidity(final IFloydHoareAnnotation<Marking<IPredicate>> floydHoare)
+			throws PetriNetNot1SafeException {
+		mLogger.warn("Checking inductivity of Floyd-Hoare annotation for initial Petri net");
+		final var fhValid = new PetriFloydHoareValidityCheck<>(mServices, mCsToolkit.getManagedScript(),
+				mCsToolkit.getModifiableGlobalsTable(), mInitialNet, floydHoare).isValid();
+		if (fhValid == Validity.UNKNOWN) {
+			mLogger.warn("Could not confirm validity of Floyd-Hoare annotation.");
 		}
+		return fhValid != Validity.INVALID;
 	}
 
 	private boolean checkOwickiGriesValidity(final OwickiGriesConstruction<IPredicate, L> construction) {

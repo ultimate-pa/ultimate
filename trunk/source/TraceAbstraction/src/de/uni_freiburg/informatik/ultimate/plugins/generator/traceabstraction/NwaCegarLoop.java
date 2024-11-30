@@ -90,6 +90,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskIterationIdentifier;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.PrePostConditionSpecification;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.FloydHoareMapping;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.HoareAnnotationPositions;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.NwaFloydHoareValidityCheck;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.NwaHoareProofProducer;
@@ -613,7 +615,8 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 		// Mark all reachable markings that do not have an assertion yet with TRUE.
 		final var stack = new ArrayDeque<Marking<IPredicate>>();
 		final var visited = new HashSet<>();
-		stack.push(new Marking<>(ImmutableSet.of(mPetriNet.getInitialPlaces())));
+		final var initialMarking = new Marking<>(ImmutableSet.of(mPetriNet.getInitialPlaces()));
+		stack.push(initialMarking);
 		while (!stack.isEmpty()) {
 			final var src = stack.pop();
 			if (!visited.add(src)) {
@@ -633,8 +636,12 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 			}
 		}
 
-		final OwickiGriesConstruction<IPredicate, L> construction =
-				new OwickiGriesConstruction<>(getServices(), mCsToolkit, mPetriNet, petriFloydHoare, false);
+		final var spec = new PrePostConditionSpecification<>(Map.of(initialMarking, mPredicateFactory.and()),
+				mPetriNet::isAccepting, mPredicateFactory.or());
+		final var petriFloydHoareAnnot = new FloydHoareMapping<>(spec, petriFloydHoare, mPredicateFactory.or());
+
+		final OwickiGriesConstruction<IPredicate, L> construction = new OwickiGriesConstruction<>(getServices(),
+				mCsToolkit, mPetriNet, petriFloydHoare.keySet(), petriFloydHoareAnnot, false);
 		// TODO: simplify
 		final long constructionTime = System.nanoTime();
 		mLogger.info("Computed Owicki-Gries annotation of size " + construction.getResult().size() + " in "

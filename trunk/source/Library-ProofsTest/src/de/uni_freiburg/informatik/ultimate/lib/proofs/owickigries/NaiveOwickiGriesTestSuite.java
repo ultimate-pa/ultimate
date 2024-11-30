@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries;
 
 import java.nio.file.Path;
-import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -43,9 +42,10 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableG
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.FloydHoareMapping;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.IFloydHoareAnnotation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataTestFileAST;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 import de.uni_freiburg.informatik.ultimate.test.junitextension.testfactory.FactoryTestRunner;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
@@ -61,18 +61,17 @@ public class NaiveOwickiGriesTestSuite extends OwickiGriesTestSuite {
 		// construct Floyd-Hoare annotation
 		final var coverageRelations =
 				mUnifiers.stream().map(IPredicateUnifier::getCoverageRelation).collect(Collectors.toList());
-		final var floydHoare = new PetriFloydHoare<>(mServices, mMgdScript, program, mSymbolTable, refinedPetriNet,
-				Function.identity(), coverageRelations, true);
-		final Map<Marking<IPredicate>, IPredicate> petriFloydHoare = floydHoare.getResult();
-		mLogger.info("Computed Floyd-Hoare proof with %d non-trivial markings and assertion size %d",
-				petriFloydHoare.size(), computeFloydHoareSize(petriFloydHoare));
+		final var floydHoare = new PetriFloydHoare<>(mPredicateFactory, program, refinedPetriNet, Function.identity(),
+				coverageRelations, true);
+		final FloydHoareMapping<Marking<IPredicate>> petriFloydHoare = floydHoare.getResult();
+		mLogger.info("Computed Floyd-Hoare proof with assertion size %d", petriFloydHoare.size());
 
 		// check validity of Floyd-Hoare annotation
 		assert checkFloydHoareValidity(program, petriFloydHoare) : "Invalid Floyd-Hoare annotation";
 
 		// construct Owicki-Gries annotation
 		final var construction = new OwickiGriesConstruction<>(mServices, mMgdScript, mSymbolTable,
-				Set.of(SimpleAction.PROCEDURE), program, petriFloydHoare, true);
+				Set.of(SimpleAction.PROCEDURE), program, floydHoare.getReachableMarkings(), petriFloydHoare, true);
 		final var annotation = construction.getResult();
 		mLogger.info(
 				"Computed Owicki-Gries annotation with %d ghost variables, %d ghost updates, and overall size %d\n%s",
@@ -86,17 +85,11 @@ public class NaiveOwickiGriesTestSuite extends OwickiGriesTestSuite {
 	}
 
 	private boolean checkFloydHoareValidity(final BoundedPetriNet<SimpleAction, IPredicate> program,
-			final Map<Marking<IPredicate>, IPredicate> petriFloydHoare) throws PetriNetNot1SafeException {
+			final IFloydHoareAnnotation<Marking<IPredicate>> petriFloydHoare) throws PetriNetNot1SafeException {
 		final HashRelation<String, IProgramNonOldVar> rel = new HashRelation<>();
 		rel.addAllPairs(SimpleAction.PROCEDURE, mSymbolTable.getGlobals());
 		final var modGlob = new ModifiableGlobalsTable(rel);
-		return new PetriFloydHoareValidityCheck<>(mServices, mMgdScript, mSymbolTable, modGlob, program,
-				petriFloydHoare).isValid() != Validity.INVALID;
-	}
-
-	private static long computeFloydHoareSize(final Map<Marking<IPredicate>, IPredicate> petriFloydHoare) {
-		final DAGSize sizeComputation = new DAGSize();
-		return petriFloydHoare.entrySet().stream()
-				.collect(Collectors.summingLong(x -> sizeComputation.size(x.getValue().getFormula())));
+		return new PetriFloydHoareValidityCheck<>(mServices, mMgdScript, modGlob, program, petriFloydHoare)
+				.isValid() != Validity.INVALID;
 	}
 }

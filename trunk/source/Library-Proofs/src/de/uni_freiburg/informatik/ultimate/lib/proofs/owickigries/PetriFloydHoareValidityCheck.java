@@ -26,116 +26,72 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries;
 
-import java.util.ArrayDeque;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.MonolithicHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.FloydHoareValidityCheck;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.IFloydHoareAnnotation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
-// TODO use InductivityCheck with LazyPetriNet2FiniteAutomaton instead
-// TODO For this to work, let InductivityCheck take Function<S, IPredicate> instead of fixing type
-// TODO also add (optional) checks for "initial true" and "accepting false" to InductivityCheck
-// TODO clean up code of InductivityCheck and add logging like here
-public class PetriFloydHoareValidityCheck<L extends IAction, P> {
-	private final ILogger mLogger;
-	private final IHoareTripleChecker mHtc;
-	private final BasicPredicateFactory mPredicateFactory;
-
+/**
+ * Checks validity of a Floyd/Hoare annotation for the reachability graph of a (1-safe) Petri net.
+ *
+ * @param <L>
+ *            The type of letters in the net
+ * @param <P>
+ *            The type of places
+ */
+public class PetriFloydHoareValidityCheck<L extends IAction, P> extends FloydHoareValidityCheck<Marking<P>> {
+	private static final String ONE_SAFE_ERROR = "Only 1-safe Petri nets are supported";
 	private final IPetriNet<L, P> mProgram;
-	private final Map<Marking<P>, IPredicate> mAnnotation;
-
-	private final Validity mResult;
 
 	public PetriFloydHoareValidityCheck(final IUltimateServiceProvider services, final ManagedScript mgdScript,
-			final IIcfgSymbolTable symbolTable, final ModifiableGlobalsTable modifiableGlobals,
-			final IPetriNet<L, P> program, final Map<Marking<P>, IPredicate> floydHoare)
-			throws PetriNetNot1SafeException {
-		mLogger = services.getLoggingService().getLogger(getClass());
-		mHtc = new MonolithicHoareTripleChecker(mgdScript, modifiableGlobals);
-		mPredicateFactory = new BasicPredicateFactory(services, mgdScript, symbolTable);
-
+			final ModifiableGlobalsTable modifiableGlobals, final IPetriNet<L, P> program,
+			final IFloydHoareAnnotation<Marking<P>> floydHoare) throws PetriNetNot1SafeException {
+		super(services, mgdScript, new MonolithicHoareTripleChecker(mgdScript, modifiableGlobals), floydHoare, false,
+				MissingAnnotationBehaviour.THROW, true);
 		mProgram = program;
-		mAnnotation = floydHoare;
-
-		// TODO check initial marking is annotated with true
-		// TODO check all error markings are annotated with false
-		mResult = checkInductivity(new Marking<>(ImmutableSet.of(program.getInitialPlaces())));
-	}
-
-	private Validity checkInductivity(final Marking<P> initial) throws PetriNetNot1SafeException {
-		final var worklist = new ArrayDeque<Marking<P>>();
-		worklist.add(initial);
-
-		final var visited = new HashSet<Marking<P>>();
-		var result = Validity.VALID;
-
-		while (!worklist.isEmpty()) {
-			final var markPre = worklist.poll();
-			if (!visited.add(markPre)) {
-				continue;
+		try {
+			performCheck();
+		} catch (final IllegalArgumentException e) {
+			if (ONE_SAFE_ERROR.equals(e.getMessage())) {
+				throw (PetriNetNot1SafeException) e.getCause();
 			}
-
-			final var pre = getAnnotation(markPre);
-			for (final var trans : getEnabledTransitions(markPre)) {
-				final var markPost = markPre.fireTransition(trans);
-
-				final var check = checkInductivity(markPre, pre, trans, markPost);
-				result = result.and(check);
-				if (result == Validity.INVALID) {
-					return result;
-				}
-
-				worklist.offer(markPost);
-			}
+			throw e;
 		}
-
-		return result;
 	}
 
-	private Validity checkInductivity(final Marking<P> markPre, final IPredicate pre, final Transition<L, P> trans,
-			final Marking<P> markPost) {
-		final var post = getAnnotation(markPost);
-		final Validity valid = mHtc.checkInternal(pre, (IInternalAction) trans.getSymbol(), post);
-		if (valid != Validity.VALID) {
-			mLogger.error("Non-inductive transition.\n"
-					+ "\tprecondition: %s\n\tpre-marking: %s\n\ttransition: %s\n\tpostcondition: %s\n\tpost-marking: %s",
-					pre, markPre, trans, post, markPost);
-		}
-		return valid;
+	@Override
+	protected Iterable<Pair<IInternalAction, Marking<P>>> getInternalSuccessors(final Marking<P> marking) {
+		return () -> mProgram.getSuccessorTransitionProviders(marking.getPlaces(), marking.getPlaces()).stream()
+				.flatMap(provider -> provider.getTransitions().stream()).map(transition -> {
+					try {
+						final var successor = marking.fireTransition(transition);
+						return new Pair<>((IInternalAction) transition.getSymbol(), successor);
+					} catch (final PetriNetNot1SafeException e) {
+						throw new IllegalArgumentException(ONE_SAFE_ERROR, e);
+					}
+				}).iterator();
 	}
 
-	private List<Transition<L, P>> getEnabledTransitions(final Marking<P> marking) {
-		return mProgram.getTransitions().stream().filter(marking::isTransitionEnabled).collect(Collectors.toList());
+	@Override
+	protected Iterable<Pair<ICallAction, Marking<P>>> getCallSuccessors(final Marking<P> state) {
+		return List.of();
 	}
 
-	private IPredicate getAnnotation(final Marking<P> marking) {
-		final var predicate = mAnnotation.get(marking);
-		if (predicate != null) {
-			return predicate;
-		}
-		mLogger.warn("Using annotation false for marking without entry: %s", marking);
-		return mPredicateFactory.or();
-	}
-
-	public Validity isValid() {
-		return mResult;
+	@Override
+	protected Iterable<Triple<IReturnAction, Marking<P>, Marking<P>>> getReturnSuccessors(final Marking<P> state) {
+		return List.of();
 	}
 }
