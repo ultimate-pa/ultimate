@@ -1,4 +1,30 @@
-package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries;
+/*
+ * Copyright (C) 2024 Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ * Copyright (C) 2024 University of Freiburg
+ *
+ * This file is part of the ULTIMATE ProofsTest Library.
+ *
+ * The ULTIMATE ProofsTest Library is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE ProofsTest Library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE ProofsTest Library. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE ProofsTest Library, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ProofsTest Library grant you additional permission
+ * to convey the resulting work.
+ */
+package de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertEquals;
@@ -9,16 +35,17 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.junit.runner.RunWith;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.MonolithicImplicationChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.PetriOwickiGriesValidityCheck;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireToOwickiGries;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireValidityCheck;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.PetriOwickiGries;
@@ -44,8 +71,9 @@ public class EmpireToOwickiGriesTest extends OwickiGriesTestSuite {
 				unifier::getOrConstructPredicateForConjunction).parse(computeEmpirePath(path));
 		mLogger.info("Parsed Empire annotation:\n%s", empire);
 
-		final var assertionPlaces =
-				mProofs.stream().map(nwa -> nwa.getStates()).flatMap(Set::stream).collect(Collectors.toSet());
+		final var assertionPlaces = mProofs.stream().map(
+				(Function<? super NestedWordAutomaton<SimpleAction, IPredicate>, ? extends Set<IPredicate>>) NestedWordAutomaton::getStates)
+				.flatMap(Set::stream).collect(Collectors.toSet());
 		final var predicatePlaceMap = new HashMap<IPredicate, Set<IPredicate>>();
 		for (final Pair<Territory<IPredicate>, IPredicate> pair : empire.getEmpire()) {
 			final var law = pair.getSecond();

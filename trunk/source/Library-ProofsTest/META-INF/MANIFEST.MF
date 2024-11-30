@@ -1,22 +1,22 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: Library-TraceCheckerUtilsTest
-Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.test
+Bundle-Name: Library-ProofsTest
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.proofs.test
 Bundle-Vendor: Ultimate Program Analysis Team
 Bundle-Version: 0.3.0
-Fragment-Host: de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils
+Fragment-Host: de.uni_freiburg.informatik.ultimate.lib.proofs
 Bundle-RequiredExecutionEnvironment: JavaSE-21
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.test,
  org.junit,
- org.yaml.snakeyaml,
  de.uni_freiburg.informatik.ultimate.smtsolver.external,
  de.uni_freiburg.informatik.ultimate.lib.smtlib,
  de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser,
- de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter
+ de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter,
+ org.yaml.snakeyaml
 Import-Package: junit.framework,
  org.junit,
  org.junit.runner,
  org.junit.runner.notification,
  org.junit.runners
-Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.lib.tracecheckerutils.test
+Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.lib.proofs.test
