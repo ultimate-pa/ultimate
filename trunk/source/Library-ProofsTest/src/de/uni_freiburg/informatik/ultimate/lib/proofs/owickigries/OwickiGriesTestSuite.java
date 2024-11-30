@@ -121,6 +121,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.MinMaxMed;
 public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 	private static final String SOLVER_COMMAND = "z3 SMTLIB2_COMPLIANT=true -t:1000 -memory:2024 -smt2 -in";
 	private static final LogLevel LOG_LEVEL = LogLevel.INFO;
+	private static final long TIMEOUT_MS = 30_000L;
 
 	protected IUltimateServiceProvider mServices;
 	protected AutomataLibraryServices mAutomataServices;
@@ -153,6 +154,8 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 		mStartTime = System.nanoTime();
 
 		mServices = UltimateMocks.createUltimateServiceProviderMock();
+		mServices.getProgressMonitorService().setDeadline(System.currentTimeMillis() + TIMEOUT_MS);
+
 		mAutomataServices = new AutomataLibraryServices(mServices);
 		mLogger = mServices.getLoggingService().getLogger(getClass());
 		mInterpreter = new AutomataDefinitionInterpreter(this, mLogger, mServices);
