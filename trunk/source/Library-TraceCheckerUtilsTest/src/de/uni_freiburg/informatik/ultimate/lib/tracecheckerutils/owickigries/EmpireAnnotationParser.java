@@ -39,9 +39,9 @@ import java.util.function.Function;
 import org.yaml.snakeyaml.Yaml;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire.EmpireAnnotation;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire.Region;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire.Territory;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireAnnotation;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.Region;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.Territory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
