@@ -81,9 +81,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.P
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.MonolithicHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtParserUtils;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.NwaFloydHoareValidityCheck;
@@ -129,7 +129,7 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 	protected ManagedScript mMgdScript;
 
 	protected IIcfgSymbolTable mSymbolTable;
-	protected BasicPredicateFactory mPredicateFactory;
+	protected PredicateFactory mPredicateFactory;
 	protected IHoareTripleChecker mHtc;
 	protected final List<IPredicateUnifier> mUnifiers = new ArrayList<>();
 	protected final Map<String, IPredicate> mProgramPlaceMap = new HashMap<>();
@@ -179,7 +179,7 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 	private void runTestInternal(final Path path) throws IOException, AutomataLibraryException {
 		mSymbolTable = setupSymbolTable(path);
 		final var id2Action = parseActions(path);
-		mPredicateFactory = new BasicPredicateFactory(mServices, mMgdScript, mSymbolTable);
+		mPredicateFactory = new PredicateFactory(mServices, mMgdScript, mSymbolTable);
 
 		final var modifiesRelation = new HashRelation<String, IProgramNonOldVar>();
 		for (final var pv : mSymbolTable.getGlobals()) {

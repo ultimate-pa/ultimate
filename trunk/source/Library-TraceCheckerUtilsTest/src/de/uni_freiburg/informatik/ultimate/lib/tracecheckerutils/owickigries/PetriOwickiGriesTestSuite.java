@@ -35,15 +35,16 @@ import org.junit.runner.RunWith;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.TotalizeNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.UnionNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IUnionStateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.empire.PetriOwickiGries;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataTestFileAST;
 import de.uni_freiburg.informatik.ultimate.test.junitextension.testfactory.FactoryTestRunner;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
@@ -57,9 +58,8 @@ public class PetriOwickiGriesTestSuite extends OwickiGriesTestSuite {
 			final BoundedPetriNet<SimpleAction, IPredicate> refinedPetriNet,
 			final BranchingProcess<SimpleAction, IPredicate> unfolding) throws AutomataLibraryException {
 		// Assume.assumeTrue("More than one proof", mUnifiers.size() == 1);
-		final var proofPlaces = mProofs.stream().map(nwa -> nwa.getStates()).collect(Collectors.toList());
-		final var factory = new PredicateFactoryForInterpolantAutomata(mMgdScript,
-				new PredicateFactory(mServices, mMgdScript, mSymbolTable), true);
+		final var proofPlaces = mProofs.stream().map(NestedWordAutomaton::getStates).collect(Collectors.toList());
+		final var factory = new UnionFactory(mPredicateFactory);
 		INwaOutgoingLetterAndTransitionProvider<SimpleAction, IPredicate> product = mProofs.get(0);
 		for (var i = 1; i < mProofs.size(); i++) {
 			final var proof = mProofs.get(i);
@@ -67,16 +67,40 @@ public class PetriOwickiGriesTestSuite extends OwickiGriesTestSuite {
 			final var totalizedProduct = new TotalizeNwa<>(product, initialTrueState1, false);
 			final var initialTrueState2 = DataStructureUtils.getOneAndOnly(proof.getInitialStates(), "initial state");
 			final var totalizedProof = new TotalizeNwa<>(proof, initialTrueState2, false);
-			final var u = new UnionNwa<>(totalizedProduct, totalizedProof, factory, false);
-			product = u;
+			product = new UnionNwa<>(totalizedProduct, totalizedProof, factory, false);
 		}
 		product = new NestedWordAutomatonReachableStates<>(mAutomataServices, product);
 		final StatisticsData data = new StatisticsData();
-		final var pog = new PetriOwickiGries<>(mServices, unfolding, program, mDiff2OriginalTransition,
-				mPredicateFactory, Function.identity(), mMgdScript, mSymbolTable, Set.of(SimpleAction.PROCEDURE),
-				computeModifiableGlobals(), proofPlaces, product,
+		final var pog = new PetriOwickiGries<>(mServices, unfolding, program,
+				mDiff2OriginalTransition, mPredicateFactory, Function.identity(), mMgdScript, mSymbolTable,
+				Set.of(SimpleAction.PROCEDURE), computeModifiableGlobals(), proofPlaces, product,
 				PetriOwickiGries.EmpireComputationMode.SYMBOLIC_EXECUTION);
 		data.aggregateBenchmarkData(pog.getStatistics());
 		mLogger.info("PetriOwickiGries Statistics: %s", data);
+	}
+
+	private static final class UnionFactory implements IUnionStateFactory<IPredicate> {
+		private final PredicateFactory mPredicateFactory;
+		private final IPredicate mEmptyStack;
+
+		public UnionFactory(final PredicateFactory predicateFactory) {
+			mPredicateFactory = predicateFactory;
+			mEmptyStack = predicateFactory.newEmptyStackPredicate();
+		}
+
+		@Override
+		public IPredicate createEmptyStackState() {
+			return mEmptyStack;
+		}
+
+		@Override
+		public IPredicate createSinkStateContent() {
+			return mPredicateFactory.and();
+		}
+
+		@Override
+		public IPredicate union(final IPredicate state1, final IPredicate state2) {
+			return mPredicateFactory.and(state1, state2);
+		}
 	}
 }
