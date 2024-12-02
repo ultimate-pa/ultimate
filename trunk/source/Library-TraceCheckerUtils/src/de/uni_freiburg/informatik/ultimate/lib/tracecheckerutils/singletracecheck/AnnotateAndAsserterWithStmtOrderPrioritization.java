@@ -26,8 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeMap;
@@ -95,7 +93,6 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 
 		mAnnotSSA.setPrecondition(mAnnotateAndAssertCodeBlocks.annotateAndAssertPrecondition());
 		mAnnotSSA.setPostcondition(mAnnotateAndAssertCodeBlocks.annotateAndAssertPostcondition());
-		final Collection<Integer> callPositions = new ArrayList<>();
 
 		// Report benchmark
 		mTcbg.reportNewCodeBlocks(mTrace.length());
@@ -103,7 +100,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 		final List<Set<Integer>> partitions =
 				getAssertOrder(mAssertCodeBlocksOrder).partitionTrace(mTrace, mControlConfigurationSequence);
 
-		mSatisfiable = annotateAndAssert(mTrace, callPositions, partitions);
+		mSatisfiable = annotateAndAssert(mTrace, partitions);
 		mLogger.info("Assert order " + mAssertCodeBlocksOrder + " issued " + mCheckSat + " check-sat command(s)");
 		mLogger.info("Conjunction of SSA is " + mSatisfiable);
 	}
@@ -129,12 +126,11 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 		}
 	}
 
-	private LBool annotateAndAssert(final NestedWord<? extends IAction> trace, final Collection<Integer> callPositions,
-			final List<Set<Integer>> partitions) {
+	private LBool annotateAndAssert(final NestedWord<? extends IAction> trace, final List<Set<Integer>> partitions) {
 		LBool sat = null;
 		boolean isFirstIteration = true;
 		for (final Set<Integer> partition : partitions) {
-			buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(trace, callPositions, partition, isFirstIteration);
+			buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(trace, partition, isFirstIteration);
 			mCheckSat++;
 			sat = mMgdScriptTc.getScript().checkSat();
 			// Report benchmarks
@@ -153,11 +149,9 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 	 * integer set stmtsToAssert.
 	 */
 	private void buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(final NestedWord<? extends IAction> trace,
-			final Collection<Integer> callPositions, final Set<Integer> stmtsToAssert,
-			final boolean assertPendingContexts) {
+			final Set<Integer> stmtsToAssert, final boolean assertPendingContexts) {
 		for (final Integer i : stmtsToAssert) {
 			if (trace.isCallPosition(i)) {
-				callPositions.add(i);
 				mAnnotSSA.setGlobalVarAssignmentAtPos(i,
 						mAnnotateAndAssertCodeBlocks.annotateAndAssertGlobalVarAssignemntCall(i));
 				mAnnotSSA.setLocalVarAssignmentAtPos(i,
