@@ -1,11 +1,11 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
@@ -24,12 +24,12 @@ public class AssertOrderMixInsideOutside<L extends IAction> extends AssertOrder<
 				computeRelationWithTreeSetForTrace(0, trace.length(), controlConfigurationSequence);
 		final Map<Integer, Set<Integer>> depth2Statements =
 				partitionStatementsAccordingDepth(trace, rwt, controlConfigurationSequence);
-		final LinkedList<Integer> depthAsQueue = new LinkedList<>(depth2Statements.keySet());
-		Collections.sort(depthAsQueue);
+		final LinkedList<Integer> depthAsQueue =
+				depth2Statements.keySet().stream().sorted().collect(Collectors.toCollection(LinkedList::new));
 		final List<Set<Integer>> result = new ArrayList<>(depth2Statements.size());
 		boolean removeFirst = true;
 		while (!depthAsQueue.isEmpty()) {
-			int currentDepth = 0;
+			final int currentDepth;
 			if (removeFirst) {
 				currentDepth = depthAsQueue.removeFirst();
 			} else {
