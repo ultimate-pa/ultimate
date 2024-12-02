@@ -303,16 +303,8 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 		mTraceCheckBenchmarkGenerator.stop(TraceCheckStatisticsDefinitions.SsaConstructionTime.toString());
 
 		mTraceCheckBenchmarkGenerator.start(TraceCheckStatisticsDefinitions.SatisfiabilityAnalysisTime.toString());
-		if (mAssertCodeBlockOrder.getAssertCodeBlockOrderType() != AssertCodeBlockOrderType.NOT_INCREMENTALLY) {
-			mAAA = new AnnotateAndAsserterWithStmtOrderPrioritization<>(mTcSmtManager, ssa,
-					getAnnotateAndAsserterCodeBlocks(ssa), mTraceCheckBenchmarkGenerator, mAssertCodeBlockOrder,
-					mServices);
-		} else {
-			mAAA = new AnnotateAndAsserter<>(mTcSmtManager, ssa, getAnnotateAndAsserterCodeBlocks(ssa),
-					mTraceCheckBenchmarkGenerator, mServices);
-			// Report the asserted code blocks
-			// mTraceCheckBenchmarkGenerator.reportnewAssertedCodeBlocks(mTrace.length());
-		}
+		mAAA = new AnnotateAndAsserter<>(mTcSmtManager, ssa, getAnnotateAndAsserterCodeBlocks(ssa),
+				mTraceCheckBenchmarkGenerator, mAssertCodeBlockOrder, mServices);
 		FeasibilityCheckResult result = null;
 		try {
 			mAAA.buildAnnotatedSsaAndAssertTerms();
