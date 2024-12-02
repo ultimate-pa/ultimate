@@ -87,15 +87,17 @@ public class EmpireToOwickiGriesTest extends OwickiGriesTestSuite {
 				program, modifiableGlobals, empire);
 		assumeThat("Given empire annotation is not valid", empireCheck.getValidity(), equalTo(Validity.VALID));
 
+		final var possibleInterferences =
+				PetriOwickiGries.getPossibleInterferences(unfolding, program.getPlaces(), mDiff2OriginalTransition);
 		final var empireToOwickiGries = new EmpireToOwickiGries<>(mServices, mMgdScript, program, mSymbolTable,
-				Set.of(SimpleAction.PROCEDURE), empire);
+				Set.of(SimpleAction.PROCEDURE), empire, possibleInterferences);
+
 		final var owickiGries = empireToOwickiGries.getAnnotation();
 		mLogger.info("Computed Owicki-Gries annotation:\n%s", owickiGries);
 		mLogger.info("Owicki-Gries annotation size: %s", owickiGries.size());
 
-		final var owickiGriesCheck = new PetriOwickiGriesValidityCheck<>(mServices, mMgdScript, program,
-				modifiableGlobals, owickiGries,
-				PetriOwickiGries.getPossibleInterferences(unfolding, program.getPlaces(), mDiff2OriginalTransition));
+		final var owickiGriesCheck =
+				new PetriOwickiGriesValidityCheck<>(mServices, mMgdScript, program, modifiableGlobals, owickiGries);
 		assertEquals("Computed Owicki-Gries annotation is not valid.", Validity.VALID, owickiGriesCheck.isValid());
 	}
 

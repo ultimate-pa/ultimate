@@ -88,7 +88,6 @@ public class OwickiGriesUnpetrifier<L extends IIcfgTransition<LOC>, P, LOC exten
 	private final Map<ILocalProgramVar, IProgramNonOldVar> mGhostMirrors = new HashMap<>();
 	private final DefaultIcfgSymbolTable mSymbolTable;
 
-	private final IPossibleInterferences<L, LOC> mPossibleInterferences;
 	private final OwickiGriesAnnotation<L, LOC, List<LOC>> mOwickiGries;
 
 	// TODO ConcurrencyInformation of petrified CFG?
@@ -105,7 +104,8 @@ public class OwickiGriesUnpetrifier<L extends IIcfgTransition<LOC>, P, LOC exten
 		mUnpetrifyVariable = unpetrifyVariable;
 		mThreadUsageMonitorPlaces = threadUsageMonitorPlaces;
 
-		mPossibleInterferences = translatePossibleInterferences(petrifiedProgram, petrifiedPossibleInterferences);
+		final var possibleInterferences =
+				translatePossibleInterferences(petrifiedProgram, petrifiedPossibleInterferences);
 
 		mSymbolTable = new DefaultIcfgSymbolTable(annotation.getSymbolTable(),
 				originalIcfg.getCfgSmtToolkit().getProcedures());
@@ -133,17 +133,12 @@ public class OwickiGriesUnpetrifier<L extends IIcfgTransition<LOC>, P, LOC exten
 
 		// TODO unpetrify specification
 		final ThreadModularPrePostSpecification<LOC, List<LOC>> unpetrifiedSpec = null;
-
-		mOwickiGries = new OwickiGriesAnnotation<>(mSymbolTable, formulaMapping, ghostVars, ghostInits, ghostUpdates,
-				unpetrifiedSpec);
+		mOwickiGries = new OwickiGriesAnnotation<>(unpetrifiedSpec, possibleInterferences, mSymbolTable, formulaMapping,
+				ghostVars, ghostInits, ghostUpdates);
 	}
 
 	public OwickiGriesAnnotation<L, LOC, List<LOC>> getResult() {
 		return mOwickiGries;
-	}
-
-	public IPossibleInterferences<L, LOC> getPossibleInterferences() {
-		return mPossibleInterferences;
 	}
 
 	private IPossibleInterferences<L, LOC> translatePossibleInterferences(final IPetriNet<L, P> petrifiedProgram,

@@ -87,7 +87,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskIterationIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.IFloydHoareAnnotation;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.IPossibleInterferences;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesAnnotation;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesConstruction;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.PetriFloydHoare;
@@ -608,7 +607,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 
 	// TODO #proofRefactor Wrap in an IProofProducer implementation
 	protected
-			Triple<IPetriNet<L, IPredicate>, OwickiGriesAnnotation<Transition<L, IPredicate>, IPredicate, Marking<IPredicate>>, IPossibleInterferences<Transition<L, IPredicate>, IPredicate>>
+			Pair<IPetriNet<L, IPredicate>, OwickiGriesAnnotation<Transition<L, IPredicate>, IPredicate, Marking<IPredicate>>>
 			computeOwickiGriesAnnotation() throws PetriNetNot1SafeException {
 		if (mPref.applyOneShotLbe()) {
 			// TODO this should be moved somewhere else, it's not the responsibility of this CEGAR loop
@@ -634,7 +633,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 		mLogger.info("Computed Owicki-Gries annotation of size %d in %dns", construction.getResult().size(),
 				System.nanoTime() - startTime);
 
-		return new Triple<>(mInitialNet, construction.getResult(), construction.getPossibleInterferences());
+		return new Pair<>(mInitialNet, construction.getResult());
 	}
 
 	private boolean checkFloydHoareValidity(final IFloydHoareAnnotation<Marking<IPredicate>> floydHoare)
@@ -650,8 +649,8 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 
 	private boolean checkOwickiGriesValidity(final OwickiGriesConstruction<IPredicate, L> construction) {
 		final long startTime = System.nanoTime();
-		final PetriOwickiGriesValidityCheck<L, IPredicate> check = new PetriOwickiGriesValidityCheck<>(getServices(),
-				mInitialNet, mCsToolkit, construction.getResult(), construction.getPossibleInterferences());
+		final PetriOwickiGriesValidityCheck<L, IPredicate> check =
+				new PetriOwickiGriesValidityCheck<>(getServices(), mInitialNet, mCsToolkit, construction.getResult());
 		final long endTime = System.nanoTime();
 		mLogger.info("Checked inductivity and non-interference of Owicki-Gries annotation in %dns",
 				endTime - startTime);

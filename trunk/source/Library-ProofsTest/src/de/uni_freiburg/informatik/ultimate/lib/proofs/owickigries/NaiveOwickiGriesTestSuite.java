@@ -79,9 +79,8 @@ public class NaiveOwickiGriesTestSuite extends OwickiGriesTestSuite {
 				annotation);
 
 		// check validity of annotation
-		assert new PetriOwickiGriesValidityCheck<>(mServices, mMgdScript, mHtc, program, annotation,
-				construction.getPossibleInterferences()).isValid() != Validity.INVALID
-				: "Invalid Owicki-Gries annotation";
+		assert new PetriOwickiGriesValidityCheck<>(mServices, mMgdScript, mHtc, program, annotation)
+				.isValid() != Validity.INVALID : "Invalid Owicki-Gries annotation";
 	}
 
 	private boolean checkFloydHoareValidity(final BoundedPetriNet<SimpleAction, IPredicate> program,

@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.P
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.GhostUpdate;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.IPossibleInterferences;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesAnnotation;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesConstruction;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
@@ -100,7 +101,8 @@ public class EmpireToOwickiGries<LETTER, PLACE> {
 	 */
 	public EmpireToOwickiGries(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final IPetriNet<LETTER, PLACE> net, final IIcfgSymbolTable symbolTable, final Set<String> procedures,
-			final EmpireAnnotation<PLACE> empireAnnotation) {
+			final EmpireAnnotation<PLACE> empireAnnotation,
+			final IPossibleInterferences<Transition<LETTER, PLACE>, PLACE> possibleInterferences) {
 		mManagedScript = mgdScript;
 		mScript = mManagedScript.getScript();
 		mSymbolTable = new DefaultIcfgSymbolTable(symbolTable, procedures);
@@ -114,9 +116,10 @@ public class EmpireToOwickiGries<LETTER, PLACE> {
 		final Map<Transition<LETTER, PLACE>, GhostUpdate> assignmentMapping = getAssignmentMapping();
 		final Map<IProgramVar, Term> ghostInitAssignment = getGhostInitAssignment();
 
-		mOwickiGriesAnnotation = new OwickiGriesAnnotation<>(mSymbolTable, formulaMapping,
-				new HashSet<>(mGhostVariables.values()), ghostInitAssignment, assignmentMapping,
-				OwickiGriesConstruction.getSpecificationForPetriNet(mNet, mFactory));
+		mOwickiGriesAnnotation =
+				new OwickiGriesAnnotation<>(OwickiGriesConstruction.getSpecificationForPetriNet(mNet, mFactory),
+						possibleInterferences, mSymbolTable, formulaMapping, new HashSet<>(mGhostVariables.values()),
+						ghostInitAssignment, assignmentMapping);
 	}
 
 	/**

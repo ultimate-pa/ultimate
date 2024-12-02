@@ -83,21 +83,17 @@ public abstract class OwickiGriesValidityCheck<T, P> {
 	private final IPossibleInterferences<T, P> mPossibleInterferences;
 
 	public OwickiGriesValidityCheck(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
-			final OwickiGriesAnnotation<T, P, ?> annotation, final IPossibleInterferences<T, P> possibleInterferences) {
-		this(services, csToolkit.getManagedScript(), new MonolithicHoareTripleChecker(csToolkit), annotation,
-				possibleInterferences);
+			final OwickiGriesAnnotation<T, P, ?> annotation) {
+		this(services, csToolkit.getManagedScript(), new MonolithicHoareTripleChecker(csToolkit), annotation);
 	}
 
 	public OwickiGriesValidityCheck(final IUltimateServiceProvider services, final ManagedScript mgdScript,
-			final ModifiableGlobalsTable modifiableGlobals, final OwickiGriesAnnotation<T, P, ?> annotation,
-			final IPossibleInterferences<T, P> possibleInterferences) {
-		this(services, mgdScript, new MonolithicHoareTripleChecker(mgdScript, modifiableGlobals), annotation,
-				possibleInterferences);
+			final ModifiableGlobalsTable modifiableGlobals, final OwickiGriesAnnotation<T, P, ?> annotation) {
+		this(services, mgdScript, new MonolithicHoareTripleChecker(mgdScript, modifiableGlobals), annotation);
 	}
 
 	public OwickiGriesValidityCheck(final IUltimateServiceProvider services, final ManagedScript mgdScript,
-			final IHoareTripleChecker htc, final OwickiGriesAnnotation<T, P, ?> annotation,
-			final IPossibleInterferences<T, P> possibleInterferences) {
+			final IHoareTripleChecker htc, final OwickiGriesAnnotation<T, P, ?> annotation) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(OwickiGriesValidityCheck.class);
 		mManagedScript = mgdScript;
@@ -107,7 +103,7 @@ public abstract class OwickiGriesValidityCheck<T, P> {
 		mScript = mgdScript.getScript();
 
 		mAnnotation = annotation;
-		mPossibleInterferences = possibleInterferences;
+		mPossibleInterferences = annotation.getPossibleInterferences();
 	}
 
 	protected abstract Collection<P> getProgramLocations();

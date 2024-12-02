@@ -108,8 +108,9 @@ public class OwickiGriesConstruction<P, L> {
 		final Map<Transition<L, P>, GhostUpdate> assignmentMapping = getAssignmentMapping();
 		final Map<IProgramVar, Term> ghostInitAssignment = getGhostInitAssignment();
 
-		mAnnotation = new OwickiGriesAnnotation<>(mSymbolTable, formulaMapping, new HashSet<>(mGhostVariables.values()),
-				ghostInitAssignment, assignmentMapping, getSpecificationForPetriNet(net, mFactory));
+		mAnnotation = new OwickiGriesAnnotation<>(getSpecificationForPetriNet(net, mFactory),
+				getPossibleInterferences(), mSymbolTable, formulaMapping, new HashSet<>(mGhostVariables.values()),
+				ghostInitAssignment, assignmentMapping);
 	}
 
 	/**
@@ -317,7 +318,7 @@ public class OwickiGriesConstruction<P, L> {
 		return mAnnotation;
 	}
 
-	public IPossibleInterferences<Transition<L, P>, P> getPossibleInterferences() {
+	private IPossibleInterferences<Transition<L, P>, P> getPossibleInterferences() {
 		final HashRelation<P, Transition<L, P>> relation = new HashRelation<>();
 		for (final Transition<L, P> transition : mNet.getTransitions()) {
 			final Set<P> predecessors = transition.getPredecessors();

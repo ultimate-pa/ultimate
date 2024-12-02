@@ -44,25 +44,22 @@ public class PetriOwickiGriesValidityCheck<L extends IAction, P> extends OwickiG
 	private final IPetriNet<L, P> mProgram;
 
 	public PetriOwickiGriesValidityCheck(final IUltimateServiceProvider services, final IPetriNet<L, P> program,
-			final CfgSmtToolkit csToolkit, final OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>> annotation,
-			final IPossibleInterferences<Transition<L, P>, P> possibleInterferences) {
-		super(services, csToolkit, annotation, possibleInterferences);
+			final CfgSmtToolkit csToolkit, final OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>> annotation) {
+		super(services, csToolkit, annotation);
 		mProgram = program;
 	}
 
 	public PetriOwickiGriesValidityCheck(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final IPetriNet<L, P> program, final ModifiableGlobalsTable modifiableGlobals,
-			final OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>> annotation,
-			final IPossibleInterferences<Transition<L, P>, P> possibleInterferences) {
-		super(services, mgdScript, modifiableGlobals, annotation, possibleInterferences);
+			final OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>> annotation) {
+		super(services, mgdScript, modifiableGlobals, annotation);
 		mProgram = program;
 	}
 
 	public PetriOwickiGriesValidityCheck(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final IHoareTripleChecker htc, final IPetriNet<L, P> program,
-			final OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>> annotation,
-			final IPossibleInterferences<Transition<L, P>, P> possibleInterferences) {
-		super(services, mgdScript, htc, annotation, possibleInterferences);
+			final OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>> annotation) {
+		super(services, mgdScript, htc, annotation);
 		mProgram = program;
 	}
 

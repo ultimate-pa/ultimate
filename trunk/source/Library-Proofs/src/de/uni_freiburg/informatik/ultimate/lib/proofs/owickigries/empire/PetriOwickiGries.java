@@ -228,8 +228,9 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 
 	private OwickiGriesAnnotation<Transition<LETTER, PLACE>, PLACE, Marking<PLACE>> getOwickiGriesAnnotation() {
 		final var annotation = mStatistics.measureOwickiGries(() -> {
+			final var possibleInterferences = getPossibleInterferences(mBp, mOriginalPlaces, mDiff2OriginalTransition);
 			final EmpireToOwickiGries<LETTER, PLACE> empireToOwickiGries = new EmpireToOwickiGries<>(mServices,
-					mMgdScript, mNet, mSymbolTable, mProcedures, mEmpireAnnotation);
+					mMgdScript, mNet, mSymbolTable, mProcedures, mEmpireAnnotation, possibleInterferences);
 			return empireToOwickiGries.getAnnotation();
 		});
 		mLogger.info("Computed Owicki-Gries annotation with %d ghost variables, %d ghost updates, and overall size %d",
@@ -239,10 +240,9 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 
 	private boolean checkOwickiGriesValidity() {
 		return mStatistics.measureOwickiGriesValidity(() -> {
-			final var possibleInterferences = getPossibleInterferences(mBp, mOriginalPlaces, mDiff2OriginalTransition);
 			final PetriOwickiGriesValidityCheck<LETTER, PLACE> owickiGriesValidity =
 					new PetriOwickiGriesValidityCheck<>(mServices, mMgdScript, mNet, mModifiableGlobals,
-							mOwickiGriesAnnotation, possibleInterferences);
+							mOwickiGriesAnnotation);
 			return owickiGriesValidity.isValid();
 		}) != Validity.INVALID;
 	}

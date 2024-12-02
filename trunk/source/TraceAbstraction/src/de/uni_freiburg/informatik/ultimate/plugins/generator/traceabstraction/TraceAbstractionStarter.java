@@ -285,7 +285,6 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 								unpetrifyAction, mUnpetrifyVariable, mThreadMonitorPlaces);
 
 						final var icfgOg = up.getResult();
-						final var pI = up.getPossibleInterferences();
 
 						// TODO check validity on Icfg
 

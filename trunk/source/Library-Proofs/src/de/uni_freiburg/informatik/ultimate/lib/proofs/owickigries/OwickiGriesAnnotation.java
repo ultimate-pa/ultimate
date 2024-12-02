@@ -55,6 +55,21 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
  *            The type of places, or program locations, in the program model
  */
 public class OwickiGriesAnnotation<T, P, M extends Iterable<P>> implements IProof {
+
+	/**
+	 * The specification proven by this annotation.
+	 */
+	private final ThreadModularPrePostSpecification<P, M> mSpecification;
+
+	/**
+	 * The possible interferences between transitions and places.
+	 *
+	 * Strictly speaking, this is not part of the proof but merely information about the concurrency and synchronization
+	 * of the program. But, as it is needed most of the time when we are working with the proof, and it needs to be
+	 * backtranslated in a similar manner as the proof, we include it here.
+	 */
+	private final IPossibleInterferences<T, P> mPossibleInterferences;
+
 	/**
 	 * A symbol table containing both the program symbols and the ghost variables in the annotation.
 	 */
@@ -80,8 +95,6 @@ public class OwickiGriesAnnotation<T, P, M extends Iterable<P>> implements IProo
 	 */
 	private final Map<IProgramVar, Term> mGhostInitAssignment;
 
-	private final ThreadModularPrePostSpecification<P, M> mSpecification;
-
 	/**
 	 * Creates a new Owicki/Gries annotation.
 	 *
@@ -98,9 +111,10 @@ public class OwickiGriesAnnotation<T, P, M extends Iterable<P>> implements IProo
 	 * @param assignmentMapping
 	 *            The annotation of transitions with ghost assignments.
 	 */
-	public OwickiGriesAnnotation(final IIcfgSymbolTable symbolTable, final Map<P, IPredicate> formulaMapping,
-			final Set<IProgramVar> ghostVariables, final Map<IProgramVar, Term> ghostInitAssignment,
-			final Map<T, GhostUpdate> assignmentMapping, final ThreadModularPrePostSpecification<P, M> specification) {
+	public OwickiGriesAnnotation(final ThreadModularPrePostSpecification<P, M> specification,
+			final IPossibleInterferences<T, P> possibleInterferences, final IIcfgSymbolTable symbolTable,
+			final Map<P, IPredicate> formulaMapping, final Set<IProgramVar> ghostVariables,
+			final Map<IProgramVar, Term> ghostInitAssignment, final Map<T, GhostUpdate> assignmentMapping) {
 		assert ghostInitAssignment.keySet().stream().allMatch(ghostVariables::contains)
 				: "Initial value only allowed for ghost variables";
 
@@ -116,12 +130,14 @@ public class OwickiGriesAnnotation<T, P, M extends Iterable<P>> implements IProo
 		assert assignmentMapping.values().stream().allMatch(u -> ghostVariables.containsAll(u.getAssignedVariables()))
 				: "Only updates to ghost variables allowed";
 
+		mSpecification = specification;
+		mPossibleInterferences = possibleInterferences;
+
 		mSymbolTable = symbolTable;
 		mFormulaMapping = formulaMapping;
 		mGhostVariables = ghostVariables;
 		mGhostInitAssignment = ghostInitAssignment;
 		mAssignmentMapping = assignmentMapping;
-		mSpecification = specification;
 	}
 
 	public IIcfgSymbolTable getSymbolTable() {
@@ -184,5 +200,9 @@ public class OwickiGriesAnnotation<T, P, M extends Iterable<P>> implements IProo
 	@Override
 	public ThreadModularPrePostSpecification<P, M> getSpecification() {
 		return mSpecification;
+	}
+
+	public IPossibleInterferences<T, P> getPossibleInterferences() {
+		return mPossibleInterferences;
 	}
 }
