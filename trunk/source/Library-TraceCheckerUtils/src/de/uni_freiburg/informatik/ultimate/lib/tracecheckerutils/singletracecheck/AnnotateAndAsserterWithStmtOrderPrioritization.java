@@ -36,6 +36,13 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.AssertOrder;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.AssertOrderInsideLoopFirst1;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.AssertOrderMixInsideOutside;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.AssertOrderOutsideLoopFirst1;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.AssertOrderOutsideLoopFirst2;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.AssertOrderSmallConstantsFirst;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.AssertOrderSmtFeatureHeuristic;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
