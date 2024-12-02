@@ -190,7 +190,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 		final AssertCodeBlockOrderType orderType = mAssertCodeBlocksOrder.getAssertCodeBlockOrderType();
 
 		if (orderType == AssertCodeBlockOrderType.OUTSIDE_LOOP_FIRST1) {
-			mSatisfiable = annotateAndAssertOutsideLoopFirst1(callPositions, depth2Statements);
+			mSatisfiable = annotateAndAssertOutsideLoopFirst1(mTrace, callPositions, depth2Statements);
 		} else if (orderType == AssertCodeBlockOrderType.OUTSIDE_LOOP_FIRST2) {
 			mSatisfiable = annotateAndAssertOutsideLoopFirst2(mTrace, callPositions, depth2Statements);
 		} else if (orderType == AssertCodeBlockOrderType.INSIDE_LOOP_FIRST1) {
@@ -212,12 +212,12 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 		mCheckSat++;
 	}
 
-	private LBool annotateAndAssertOutsideLoopFirst1(final Collection<Integer> callPositions,
+	private LBool annotateAndAssertOutsideLoopFirst1(final NestedWord<L> trace, final Collection<Integer> callPositions,
 			final Map<Integer, Set<Integer>> depth2Statements) {
 		// Statements outside of a loop have depth 0.
 		final Set<Integer> stmtsOutsideOfLoop = depth2Statements.get(0);
 		// First, annotate and assert the statements, which doesn't occur within a loop
-		buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(mTrace, callPositions, stmtsOutsideOfLoop, true);
+		buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(trace, callPositions, stmtsOutsideOfLoop, true);
 
 		countCheckSat();
 		LBool sat = mMgdScriptTc.getScript().checkSat();
@@ -226,11 +226,11 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 		mTcbg.reportNewAssertedCodeBlocks(stmtsOutsideOfLoop.size());
 		// If the statements outside of a loop are not unsatisfiable, then annotate and assert also
 		// the rest of the statements
-		if (sat != LBool.UNSAT && stmtsOutsideOfLoop.size() != mTrace.length()) {
-			final Set<Integer> stmtsWithinLoop = getTraceDifference(mTrace, stmtsOutsideOfLoop);
-			buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(mTrace, callPositions, stmtsWithinLoop, false);
-			assert callPositions.containsAll(mTrace.getCallPositions());
-			assert mTrace.getCallPositions().containsAll(callPositions);
+		if (sat != LBool.UNSAT && stmtsOutsideOfLoop.size() != trace.length()) {
+			final Set<Integer> stmtsWithinLoop = getTraceDifference(trace, stmtsOutsideOfLoop);
+			buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(trace, callPositions, stmtsWithinLoop, false);
+			assert callPositions.containsAll(trace.getCallPositions());
+			assert trace.getCallPositions().containsAll(callPositions);
 			countCheckSat();
 			sat = mMgdScriptTc.getScript().checkSat();
 			// Report benchmarks
