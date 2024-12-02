@@ -59,7 +59,7 @@ public class AssertOrderSmtFeatureHeuristic<L extends IAction> extends AssertOrd
 		return new LinkedHashSet<>(indices);
 	}
 
-	private void partitionFixedNumberOfPartitions(final LinkedHashSet<LinkedHashSet<Integer>> partitions,
+	private List<Set<Integer>> partitionFixedNumberOfPartitions(
 			final List<Triple<Term, Double, Integer>> termScoreIndexTriples, final boolean random) {
 
 		// The incremental Strategy creates N partitions.
@@ -78,6 +78,7 @@ public class AssertOrderSmtFeatureHeuristic<L extends IAction> extends AssertOrd
 
 		int numProcessed = 0;
 
+		final List<Set<Integer>> partitions = new ArrayList<>();
 		for (final int index : indices) {
 			currentChunk.add(index);
 			numProcessed += 1;
@@ -86,10 +87,11 @@ public class AssertOrderSmtFeatureHeuristic<L extends IAction> extends AssertOrd
 				currentChunk = new LinkedHashSet<>();
 			}
 		}
+		return partitions;
 	}
 
-	private void partitionUsingThreshold(final LinkedHashSet<LinkedHashSet<Integer>> partitions,
-			final List<Triple<Term, Double, Integer>> termScoreIndexTriples) {
+	private List<Set<Integer>>
+			partitionUsingThreshold(final List<Triple<Term, Double, Integer>> termScoreIndexTriples) {
 
 		// The incremental Strategy creates N partitions.
 		// Example:
@@ -99,8 +101,8 @@ public class AssertOrderSmtFeatureHeuristic<L extends IAction> extends AssertOrd
 		// Chunk_size = 2
 		// Partitions = [1,2], [3,4], [5,6]
 
-		final LinkedHashSet<Integer> partitionOne = new LinkedHashSet<>();
-		final LinkedHashSet<Integer> partitionTwo = new LinkedHashSet<>();
+		final Set<Integer> partitionOne = new LinkedHashSet<>();
+		final Set<Integer> partitionTwo = new LinkedHashSet<>();
 
 		for (final Triple<Term, Double, Integer> triple : termScoreIndexTriples) {
 			final Double score = triple.getSecond();
@@ -112,44 +114,42 @@ public class AssertOrderSmtFeatureHeuristic<L extends IAction> extends AssertOrd
 			}
 		}
 
+		final List<Set<Integer>> partitions = new ArrayList<>();
 		if (!partitionOne.isEmpty()) {
 			partitions.add(partitionOne);
 		}
 		if (!partitionTwo.isEmpty()) {
 			partitions.add(partitionTwo);
 		}
+		return partitions;
 	}
 
 	// Function to partition a list of Terms according to their scores.
 	private List<Set<Integer>>
 			partitionStmtsAccordingToTermScores(final List<Triple<Term, Double, Integer>> termScoreIndexTriples) {
-		final LinkedHashSet<LinkedHashSet<Integer>> partitions = new LinkedHashSet<>();
 		switch (mPartitioningType) {
 		case FIXED_NUM_PARTITIONS:
-			partitionFixedNumberOfPartitions(partitions, termScoreIndexTriples, false);
-			break;
+			return partitionFixedNumberOfPartitions(termScoreIndexTriples, false);
 		case THRESHOLD:
-			partitionUsingThreshold(partitions, termScoreIndexTriples);
-			break;
+			return partitionUsingThreshold(termScoreIndexTriples);
 		default:
 			throw new UnsupportedOperationException("Unknown partitioning type " + mPartitioningType);
 		}
-		assert !partitions.isEmpty();
-		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("TermScoreTriples: " + termScoreIndexTriples.toString());
-			mLogger.debug("Partitions: " + partitions.toString());
-		}
-		return new ArrayList<>(partitions);
 	}
 
 	@Override
 	public List<Set<Integer>> partitionTrace(final NestedWord<L> trace,
 			final List<Object> controlConfigurationSequence) {
+		// Score Trace Terms and order them according to score.
+		final List<Triple<Term, Double, Integer>> termScoreIndexTriples = scoreTrace(trace);
+		final List<Set<Integer>> partitions = partitionStmtsAccordingToTermScores(termScoreIndexTriples);
+		assert !partitions.isEmpty();
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Trace: " + trace.toString());
+			mLogger.debug("TermScoreTriples: " + termScoreIndexTriples.toString());
+			mLogger.debug("Partitions: " + partitions.toString());
 		}
-		// Score Trace Terms and order them according to score.
-		return partitionStmtsAccordingToTermScores(scoreTrace(trace));
+		return partitions;
 	}
 
 }
