@@ -166,7 +166,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 	 */
 	private static void addStmtPositionToDepth(final int depth, final Map<Integer, Set<Integer>> depth2Statements,
 			final int stmtPos) {
-		if (depth2Statements.keySet().contains(depth)) {
+		if (depth2Statements.containsKey(depth)) {
 			depth2Statements.get(depth).add(stmtPos);
 		} else {
 			final Set<Integer> s = new HashSet<>();
@@ -387,7 +387,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 		final Set<Integer> result = new HashSet<>();
 
 		for (int i = 0; i < trace.length(); i++) {
-			final Term t = ((IAction) trace.getSymbol(i)).getTransformula().getFormula();
+			final Term t = trace.getSymbol(i).getTransformula().getFormula();
 			if (!termHasConstantGreaterThan(t, constantSize)) {
 				result.add(i);
 			}
@@ -429,7 +429,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 		final List<Triple<Term, Double, Integer>> termScoreIndexTriples = new ArrayList<>();
 		for (int i = 0; i < trace.length(); i++) {
 			final SMTFeatureExtractionTermClassifier tc = new SMTFeatureExtractionTermClassifier();
-			final Term term = ((IAction) trace.getSymbol(i)).getTransformula().getFormula();
+			final Term term = trace.getSymbol(i).getTransformula().getFormula();
 			tc.checkTerm(term);
 			final Double score = tc.getScore(mAssertCodeBlocksOrder.getSmtFeatureHeuristicScoringMethod());
 			termScoreIndexTriples.add(new Triple<>(term, score, i));
@@ -613,13 +613,14 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 					mAnnotSSA.setPendingContext(positionOfPendingReturn, annotated);
 				}
 				{
-					final Term annotated = mAnnotateAndAssertCodeBlocks
-							.annotateAndAssertLocalVarAssignemntPendingContext(positionOfPendingReturn, pendingContextCode);
+					final Term annotated =
+							mAnnotateAndAssertCodeBlocks.annotateAndAssertLocalVarAssignemntPendingContext(
+									positionOfPendingReturn, pendingContextCode);
 					mAnnotSSA.setLocalVarAssignmentAtPos(positionOfPendingReturn, annotated);
 				}
 				{
-					final Term annotated = mAnnotateAndAssertCodeBlocks
-							.annotateAndAssertOldVarAssignemntPendingContext(positionOfPendingReturn, pendingContextCode);
+					final Term annotated = mAnnotateAndAssertCodeBlocks.annotateAndAssertOldVarAssignemntPendingContext(
+							positionOfPendingReturn, pendingContextCode);
 					mAnnotSSA.setOldVarAssignmentAtPos(positionOfPendingReturn, annotated);
 				}
 				pendingContextCode++;
