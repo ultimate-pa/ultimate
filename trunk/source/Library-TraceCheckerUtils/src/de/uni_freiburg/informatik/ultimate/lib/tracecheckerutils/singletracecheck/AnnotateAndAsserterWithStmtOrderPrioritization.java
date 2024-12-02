@@ -186,7 +186,8 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 		final AssertCodeBlockOrderType orderType = mAssertCodeBlocksOrder.getAssertCodeBlockOrderType();
 
 		if (orderType == AssertCodeBlockOrderType.OUTSIDE_LOOP_FIRST1) {
-			mSatisfiable = annotateAndAssertOutsideLoopFirst1(mTrace, mControlConfigurationSequence, callPositions);
+			mSatisfiable = annotateAndAssert(mTrace, callPositions,
+					partitionOutsideLoopFirst1(mTrace, mControlConfigurationSequence));
 		} else if (orderType == AssertCodeBlockOrderType.OUTSIDE_LOOP_FIRST2) {
 			mSatisfiable = annotateAndAssertOutsideLoopFirst2(mTrace, mControlConfigurationSequence, callPositions);
 		} else if (orderType == AssertCodeBlockOrderType.INSIDE_LOOP_FIRST1) {
@@ -204,40 +205,43 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 		mLogger.info("Conjunction of SSA is " + mSatisfiable);
 	}
 
+	private LBool annotateAndAssert(final NestedWord<? extends IAction> trace, final Collection<Integer> callPositions,
+			final List<Set<Integer>> partitions) {
+		LBool sat = null;
+		boolean isFirstIteration = true;
+		for (final Set<Integer> partition : partitions) {
+			buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(trace, callPositions, partition, isFirstIteration);
+			mCheckSat++;
+			sat = mMgdScriptTc.getScript().checkSat();
+			// Report benchmarks
+			mTcbg.reportNewCheckSat();
+			mTcbg.reportNewAssertedCodeBlocks(partition.size());
+			if (sat == LBool.UNSAT) {
+				return sat;
+			}
+			isFirstIteration = false;
+		}
+		return sat;
+	}
+
 	private void countCheckSat() {
 		mCheckSat++;
 	}
 
-	private LBool annotateAndAssertOutsideLoopFirst1(final NestedWord<L> trace, final List<Object> controlConfigurationSequence,
-			final Collection<Integer> callPositions) {
+	private List<Set<Integer>> partitionOutsideLoopFirst1(final NestedWord<L> trace,
+			final List<Object> controlConfigurationSequence) {
 		final HashTreeRelation<Object, Integer> rwt =
 				computeRelationWithTreeSetForTrace(0, trace.length(), controlConfigurationSequence);
 		final Map<Integer, Set<Integer>> depth2Statements =
 				partitionStatementsAccordingDepth(trace, rwt, controlConfigurationSequence);
 		// Statements outside of a loop have depth 0.
-		final Set<Integer> stmtsOutsideOfLoop = depth2Statements.get(0);
 		// First, annotate and assert the statements, which doesn't occur within a loop
-		buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(trace, callPositions, stmtsOutsideOfLoop, true);
-
-		countCheckSat();
-		LBool sat = mMgdScriptTc.getScript().checkSat();
-		// Report benchmarks
-		mTcbg.reportNewCheckSat();
-		mTcbg.reportNewAssertedCodeBlocks(stmtsOutsideOfLoop.size());
-		// If the statements outside of a loop are not unsatisfiable, then annotate and assert also
-		// the rest of the statements
-		if (sat != LBool.UNSAT && stmtsOutsideOfLoop.size() != trace.length()) {
-			final Set<Integer> stmtsWithinLoop = getTraceDifference(trace, stmtsOutsideOfLoop);
-			buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(trace, callPositions, stmtsWithinLoop, false);
-			assert callPositions.containsAll(trace.getCallPositions());
-			assert trace.getCallPositions().containsAll(callPositions);
-			countCheckSat();
-			sat = mMgdScriptTc.getScript().checkSat();
-			// Report benchmarks
-			mTcbg.reportNewCheckSat();
-			mTcbg.reportNewAssertedCodeBlocks(stmtsWithinLoop.size());
+		final Set<Integer> stmtsOutsideOfLoop = depth2Statements.get(0);
+		if (stmtsOutsideOfLoop.size() == trace.length()) {
+			return List.of(stmtsOutsideOfLoop);
 		}
-		return sat;
+		final Set<Integer> stmtsWithinLoop = getTraceDifference(trace, stmtsOutsideOfLoop);
+		return List.of(stmtsOutsideOfLoop, stmtsWithinLoop);
 	}
 
 	private LBool annotateAndAssertOutsideLoopFirst2(final NestedWord<? extends IAction> trace,
