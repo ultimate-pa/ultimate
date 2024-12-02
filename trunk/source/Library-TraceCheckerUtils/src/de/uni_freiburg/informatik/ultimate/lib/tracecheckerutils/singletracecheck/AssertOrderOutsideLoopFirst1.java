@@ -8,6 +8,13 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashTreeRelation;
 
+/**
+ * First, assert all statements which don't occur inside of a loop. Then, check for satisfiability. If the result of the
+ * satisfiability check is not unsatisfiable, then assert the rest of the statements, and return the result of the
+ * unsatisfiability check.
+ *
+ * @author musab@informatik.uni-freiburg.de
+ */
 public class AssertOrderOutsideLoopFirst1<L extends IAction> extends AssertOrder<L> {
 	@Override
 	public List<Set<Integer>> partitionTrace(final NestedWord<L> trace,

@@ -13,6 +13,13 @@ import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
+/**
+ * Assert statements that with small constants first. Then, check for satisfiability. If the result of the
+ * satisfiability check is not unsatisfiable, then assert the rest of the statements, and return the result of the
+ * unsatisfiability check.
+ *
+ * @author musab@informatik.uni-freiburg.de
+ */
 public class AssertOrderSmallConstantsFirst<L extends IAction> extends AssertOrder<L> {
 	private static final int CONSTANT_SIZE = 10;
 

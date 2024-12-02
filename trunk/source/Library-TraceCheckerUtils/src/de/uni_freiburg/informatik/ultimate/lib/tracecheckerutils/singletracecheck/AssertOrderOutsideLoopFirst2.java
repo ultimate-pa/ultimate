@@ -8,6 +8,12 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashTreeRelation;
 
+/**
+ * Assert statements in incremental order by their depth, and check after each step for satisfiability. E.g. first
+ * assert all statements with depth 0, then assert all statements at depth 1, and so on.
+ *
+ * @author musab@informatik.uni-freiburg.de
+ */
 public class AssertOrderOutsideLoopFirst2<L extends IAction> extends AssertOrder<L> {
 	@Override
 	public List<Set<Integer>> partitionTrace(final NestedWord<L> trace,

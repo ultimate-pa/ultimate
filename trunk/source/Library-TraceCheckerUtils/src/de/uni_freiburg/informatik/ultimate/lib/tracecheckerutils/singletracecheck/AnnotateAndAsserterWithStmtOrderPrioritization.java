@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2014-2015 Betim Musa (musab@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2024 Frank Schüssele (schuessf@informatik.uni-freiburg.de)
+ * Copyright (C) 2015-2024 University of Freiburg
  *
  * This file is part of the ULTIMATE TraceCheckerUtils Library.
  *
@@ -42,31 +43,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  * This class implements the possibility to partially (and in different order) annotate and assert the statements of a
  * trace in order to get better interpolants.
  *
- * Following heuristics are currently implemented: <br/>
- * <br/>
- * ********* 1. Heuristic ********* <br/>
- * General idea: First, assert all statements which don't occur inside of a loop. Then, check for satisfiability. If the
- * result of the satisfiability check is not unsatisfiable, then assert the rest of the statements, and return the
- * result of the unsatisfiability check. <br/>
- * <br/>
- ********* 2. Heuristic ********* <br/>
- * General idea: Assert statements in incremental order by their depth, and check after each step for satisfiability.
- * E.g. first assert all statements with depth 0, then assert all statements at depth 1, and so on. <br/>
- * <br/>
- ********* 3. Heuristic ********* <br/>
- * General idea: Assert statements in decremental order by their depth, and check after each step for satisfiability.
- * E.g. first assert all statements with depth max_depth, then assert all statements of depth max_depth - 1, and so
- * on.<br/>
- * <br/>
- ********* 4. Heuristic ********* <br/>
- * The 4.th heuristic is a mix-up of the 2nd the 3rd heuristic. <br/>
- * <br/>
- ******** 5. Heuristic ************ <br/>
- * General idea: Assert statements that with small constants first. Then, check for satisfiability. If the result of the
- * satisfiability check is not unsatisfiable, then assert the rest of the statements, and return the result of the
- * unsatisfiability check.
- *
  * @author musab@informatik.uni-freiburg.de
+ * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  */
 
 public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> extends AnnotateAndAsserter<L> {

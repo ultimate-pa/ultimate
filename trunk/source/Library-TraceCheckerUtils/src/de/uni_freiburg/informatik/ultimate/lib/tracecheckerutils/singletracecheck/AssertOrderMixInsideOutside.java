@@ -11,6 +11,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashTreeRelation;
 
+/**
+ * Assert the statements with the highest depth and lowest depth in alternating order.
+ *
+ * @author musab@informatik.uni-freiburg.de
+ */
 public class AssertOrderMixInsideOutside<L extends IAction> extends AssertOrder<L> {
 	@Override
 	public List<Set<Integer>> partitionTrace(final NestedWord<L> trace,
