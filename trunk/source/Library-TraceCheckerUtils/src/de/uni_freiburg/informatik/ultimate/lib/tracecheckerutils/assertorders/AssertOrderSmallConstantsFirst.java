@@ -20,7 +20,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  *
  * @author musab@informatik.uni-freiburg.de
  */
-public class AssertOrderSmallConstantsFirst<L extends IAction> extends AssertOrder<L> {
+public class AssertOrderSmallConstantsFirst<L extends IAction> implements IAssertOrder<L> {
 	private static final int CONSTANT_SIZE = 10;
 
 	/**
@@ -74,6 +74,6 @@ public class AssertOrderSmallConstantsFirst<L extends IAction> extends AssertOrd
 			final List<Object> controlConfigurationSequence) {
 		final Set<Integer> stmtsWithSmallConstant = partitionStmtsAccordingToConstantSize(trace, CONSTANT_SIZE);
 		// Then assert the rest of statements
-		return List.of(stmtsWithSmallConstant, getTraceDifference(trace, stmtsWithSmallConstant));
+		return List.of(stmtsWithSmallConstant, AssertOrderUtils.getTraceDifference(trace, stmtsWithSmallConstant));
 	}
 }

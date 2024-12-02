@@ -36,13 +36,13 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.AssertOrder;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.AssertOrderInsideLoopFirst1;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.AssertOrderMixInsideOutside;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.AssertOrderOutsideLoopFirst1;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.AssertOrderOutsideLoopFirst2;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.AssertOrderSmallConstantsFirst;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.AssertOrderSmtFeatureHeuristic;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.IAssertOrder;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
@@ -90,7 +90,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 		mLogger.info("Conjunction of SSA is " + mSatisfiable);
 	}
 
-	private AssertOrder<L> getAssertOrder(final AssertCodeBlockOrder order) {
+	private IAssertOrder<L> getAssertOrder(final AssertCodeBlockOrder order) {
 		switch (order.getAssertCodeBlockOrderType()) {
 		case OUTSIDE_LOOP_FIRST1:
 			return new AssertOrderOutsideLoopFirst1<>();

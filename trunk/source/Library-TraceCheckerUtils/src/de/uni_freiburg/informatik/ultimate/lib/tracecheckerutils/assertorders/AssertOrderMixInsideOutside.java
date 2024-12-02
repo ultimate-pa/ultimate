@@ -16,14 +16,14 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashTree
  *
  * @author musab@informatik.uni-freiburg.de
  */
-public class AssertOrderMixInsideOutside<L extends IAction> extends AssertOrder<L> {
+public class AssertOrderMixInsideOutside<L extends IAction> implements IAssertOrder<L> {
 	@Override
 	public List<Set<Integer>> partitionTrace(final NestedWord<L> trace,
 			final List<Object> controlConfigurationSequence) {
 		final HashTreeRelation<Object, Integer> rwt =
-				computeRelationWithTreeSetForTrace(0, trace.length(), controlConfigurationSequence);
+				AssertOrderUtils.computeRelationWithTreeSetForTrace(0, trace.length(), controlConfigurationSequence);
 		final Map<Integer, Set<Integer>> depth2Statements =
-				partitionStatementsAccordingDepth(trace, rwt, controlConfigurationSequence);
+				AssertOrderUtils.partitionStatementsAccordingDepth(trace, rwt, controlConfigurationSequence);
 		final LinkedList<Integer> depthAsQueue =
 				depth2Statements.keySet().stream().sorted().collect(Collectors.toCollection(LinkedList::new));
 		final List<Set<Integer>> result = new ArrayList<>(depth2Statements.size());

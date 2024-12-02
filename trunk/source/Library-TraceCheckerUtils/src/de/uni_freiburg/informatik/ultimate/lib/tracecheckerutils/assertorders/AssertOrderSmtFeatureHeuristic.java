@@ -17,7 +17,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SMTFeat
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
-public class AssertOrderSmtFeatureHeuristic<L extends IAction> extends AssertOrder<L> {
+public class AssertOrderSmtFeatureHeuristic<L extends IAction> implements IAssertOrder<L> {
 	private final ScoringMethod mScoringMethod;
 	private final int mNumberOfPartitions;
 	private final double mHeuristicThreshold;

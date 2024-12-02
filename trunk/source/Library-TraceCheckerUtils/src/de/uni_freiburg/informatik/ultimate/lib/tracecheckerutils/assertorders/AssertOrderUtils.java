@@ -12,12 +12,12 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashTreeRelation;
 
-public abstract class AssertOrder<L extends IAction> {
+public class AssertOrderUtils {
 	/**
 	 * Returns a set of indices that represents all statements that is present in {@code trace}, but not in
 	 * {@code statementIndices}.
 	 */
-	protected static Set<Integer> getTraceDifference(final NestedWord<?> trace, final Set<Integer> statementIndices) {
+	public static Set<Integer> getTraceDifference(final NestedWord<?> trace, final Set<Integer> statementIndices) {
 		return IntStream.range(0, trace.length()).boxed().filter(x -> !statementIndices.contains(x))
 				.collect(Collectors.toSet());
 	}
@@ -26,8 +26,8 @@ public abstract class AssertOrder<L extends IAction> {
 	 *
 	 * Partition the statements of the given trace according to their depth.
 	 */
-	protected <LOC> Map<Integer, Set<Integer>> partitionStatementsAccordingDepth(final NestedWord<L> trace,
-			final HashTreeRelation<LOC, Integer> rwt, final List<LOC> pps) {
+	public static <LETTER extends IAction, LOC> Map<Integer, Set<Integer>> partitionStatementsAccordingDepth(
+			final NestedWord<LETTER> trace, final HashTreeRelation<LOC, Integer> rwt, final List<LOC> pps) {
 		final Map<Integer, Set<Integer>> depth2Statements = new HashMap<>();
 
 		dfsPartitionStatementsAccordingToDepth(0, trace.length(), 0, rwt, depth2Statements, pps);
@@ -40,7 +40,7 @@ public abstract class AssertOrder<L extends IAction> {
 	 * for the meaning of 'depth'). The result is stored in the map 'depth2Statements'. The partitioning is done
 	 * recursively.
 	 */
-	private <LOC> void dfsPartitionStatementsAccordingToDepth(final Integer lowerIndex, final Integer upperIndex,
+	private static <LOC> void dfsPartitionStatementsAccordingToDepth(final Integer lowerIndex, final Integer upperIndex,
 			final int depth, final HashTreeRelation<LOC, Integer> rwt,
 			final Map<Integer, Set<Integer>> depth2Statements, final List<LOC> pps) {
 		int i = lowerIndex;
@@ -80,7 +80,7 @@ public abstract class AssertOrder<L extends IAction> {
 	/**
 	 * TODO(Betim): DOcumentation!
 	 */
-	protected static <LOC> HashTreeRelation<LOC, Integer> computeRelationWithTreeSetForTrace(final int lowerIndex,
+	public static <LOC> HashTreeRelation<LOC, Integer> computeRelationWithTreeSetForTrace(final int lowerIndex,
 			final int upperIndex, final List<LOC> pps) {
 		final HashTreeRelation<LOC, Integer> rwt = new HashTreeRelation<>();
 		for (int i = lowerIndex; i <= upperIndex; i++) {
@@ -88,7 +88,4 @@ public abstract class AssertOrder<L extends IAction> {
 		}
 		return rwt;
 	}
-
-	public abstract List<Set<Integer>> partitionTrace(final NestedWord<L> trace,
-			final List<Object> controlConfigurationSequence);
 }
