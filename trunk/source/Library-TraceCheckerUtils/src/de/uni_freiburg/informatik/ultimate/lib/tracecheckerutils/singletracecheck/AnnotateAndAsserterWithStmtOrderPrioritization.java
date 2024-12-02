@@ -199,7 +199,6 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 		mAnnotSSA.setPrecondition(mAnnotateAndAssertCodeBlocks.annotateAndAssertPrecondition());
 		mAnnotSSA.setPostcondition(mAnnotateAndAssertCodeBlocks.annotateAndAssertPostcondition());
 		final Collection<Integer> callPositions = new ArrayList<>();
-		final Collection<Integer> pendingReturnPositions = new ArrayList<>();
 
 		final Map<Integer, Set<Integer>> depth2Statements =
 				partitionStatementsAccordingDepth(mTrace, rwt, mControlConfigurationSequence);
@@ -209,20 +208,17 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 		final AssertCodeBlockOrderType orderType = mAssertCodeBlocksOrder.getAssertCodeBlockOrderType();
 
 		if (orderType == AssertCodeBlockOrderType.OUTSIDE_LOOP_FIRST1) {
-			mSatisfiable = annotateAndAssertOutsideLoopFirst1(callPositions, pendingReturnPositions, depth2Statements);
+			mSatisfiable = annotateAndAssertOutsideLoopFirst1(callPositions, depth2Statements);
 		} else if (orderType == AssertCodeBlockOrderType.OUTSIDE_LOOP_FIRST2) {
-			mSatisfiable =
-					annotateAndAssertOutsideLoopFirst2(mTrace, callPositions, pendingReturnPositions, depth2Statements);
+			mSatisfiable = annotateAndAssertOutsideLoopFirst2(mTrace, callPositions, depth2Statements);
 		} else if (orderType == AssertCodeBlockOrderType.INSIDE_LOOP_FIRST1) {
-			mSatisfiable =
-					annotateAndAssertInsideLoopFirst1(mTrace, callPositions, pendingReturnPositions, depth2Statements);
+			mSatisfiable = annotateAndAssertInsideLoopFirst1(mTrace, callPositions, depth2Statements);
 		} else if (orderType == AssertCodeBlockOrderType.MIX_INSIDE_OUTSIDE) {
-			mSatisfiable =
-					annotateAndAssertMixInsideOutside(mTrace, callPositions, pendingReturnPositions, depth2Statements);
+			mSatisfiable = annotateAndAssertMixInsideOutside(mTrace, callPositions, depth2Statements);
 		} else if (orderType == AssertCodeBlockOrderType.TERMS_WITH_SMALL_CONSTANTS_FIRST) {
-			mSatisfiable = annotateAndAssertTermsWithSmallConstantsFirst(mTrace, callPositions, pendingReturnPositions);
+			mSatisfiable = annotateAndAssertTermsWithSmallConstantsFirst(mTrace, callPositions);
 		} else if (orderType == AssertCodeBlockOrderType.SMT_FEATURE_HEURISTIC) {
-			mSatisfiable = annotateAndAssertStmtsSmtFeatureHeuristic(mTrace, callPositions, pendingReturnPositions);
+			mSatisfiable = annotateAndAssertStmtsSmtFeatureHeuristic(mTrace, callPositions);
 		} else {
 			throw new AssertionError("unknown heuristic " + mAssertCodeBlocksOrder);
 		}
@@ -235,12 +231,11 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 	}
 
 	private LBool annotateAndAssertOutsideLoopFirst1(final Collection<Integer> callPositions,
-			final Collection<Integer> pendingReturnPositions, final Map<Integer, Set<Integer>> depth2Statements) {
+			final Map<Integer, Set<Integer>> depth2Statements) {
 		// Statements outside of a loop have depth 0.
 		final Set<Integer> stmtsOutsideOfLoop = depth2Statements.get(0);
 		// First, annotate and assert the statements, which doesn't occur within a loop
-		buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(mTrace, callPositions, pendingReturnPositions,
-				stmtsOutsideOfLoop, true);
+		buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(mTrace, callPositions, stmtsOutsideOfLoop, true);
 
 		countCheckSat();
 		LBool sat = mMgdScriptTc.getScript().checkSat();
@@ -252,8 +247,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 		if (sat != LBool.UNSAT && stmtsOutsideOfLoop.size() != mTrace.length()) {
 			final Set<Integer> integersFromTrace = getSetOfIntegerForGivenInterval(0, mTrace.length());
 			final Set<Integer> stmtsWithinLoop = integerSetDifference(integersFromTrace, stmtsOutsideOfLoop);
-			buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(mTrace, callPositions, pendingReturnPositions,
-					stmtsWithinLoop, false);
+			buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(mTrace, callPositions, stmtsWithinLoop, false);
 			assert callPositions.containsAll(mTrace.getCallPositions());
 			assert mTrace.getCallPositions().containsAll(callPositions);
 			countCheckSat();
@@ -266,15 +260,14 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 	}
 
 	private LBool annotateAndAssertOutsideLoopFirst2(final NestedWord<? extends IAction> trace,
-			final Collection<Integer> callPositions, final Collection<Integer> pendingReturnPositions,
-			final Map<Integer, Set<Integer>> depth2Statements) {
+			final Collection<Integer> callPositions, final Map<Integer, Set<Integer>> depth2Statements) {
 		final List<Integer> keysInSortedOrder = new ArrayList<>(depth2Statements.keySet());
 		Collections.sort(keysInSortedOrder);
 		LBool sat = null;
 		boolean isFirstIteration = true;
 		for (final Integer key : keysInSortedOrder) {
-			buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(trace, callPositions, pendingReturnPositions,
-					depth2Statements.get(key), isFirstIteration);
+			buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(trace, callPositions, depth2Statements.get(key),
+					isFirstIteration);
 			countCheckSat();
 			sat = mMgdScriptTc.getScript().checkSat();
 			// Report benchmarks
@@ -292,15 +285,14 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 	 * See class description!
 	 */
 	private LBool annotateAndAssertInsideLoopFirst1(final NestedWord<? extends IAction> trace,
-			final Collection<Integer> callPositions, final Collection<Integer> pendingReturnPositions,
-			final Map<Integer, Set<Integer>> depth2Statements) {
+			final Collection<Integer> callPositions, final Map<Integer, Set<Integer>> depth2Statements) {
 		final List<Integer> keysInDescendingOrder = new ArrayList<>(depth2Statements.keySet());
 		Collections.sort(keysInDescendingOrder, (i1, i2) -> i2.compareTo(i1));
 		LBool sat = null;
 		boolean isFirstIteration = true;
 		for (final Integer key : keysInDescendingOrder) {
-			buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(trace, callPositions, pendingReturnPositions,
-					depth2Statements.get(key), isFirstIteration);
+			buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(trace, callPositions, depth2Statements.get(key),
+					isFirstIteration);
 			countCheckSat();
 			sat = mMgdScriptTc.getScript().checkSat();
 			// Report benchmarks
@@ -318,8 +310,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 	 * See class description!
 	 */
 	private LBool annotateAndAssertMixInsideOutside(final NestedWord<? extends IAction> trace,
-			final Collection<Integer> callPositions, final Collection<Integer> pendingReturnPositions,
-			final Map<Integer, Set<Integer>> depth2Statements) {
+			final Collection<Integer> callPositions, final Map<Integer, Set<Integer>> depth2Statements) {
 		final LinkedList<Integer> depthAsQueue = new LinkedList<>(depth2Statements.keySet());
 		Collections.sort(depthAsQueue);
 		LBool sat = null;
@@ -333,8 +324,8 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 				currentDepth = depthAsQueue.removeLast();
 			}
 			removeFirst = !removeFirst;
-			buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(trace, callPositions, pendingReturnPositions,
-					depth2Statements.get(currentDepth), isFirstIteration);
+			buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(trace, callPositions, depth2Statements.get(currentDepth),
+					isFirstIteration);
 			countCheckSat();
 			sat = mMgdScriptTc.getScript().checkSat();
 			// Report benchmarks
@@ -399,12 +390,11 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 	 * See class description!
 	 */
 	private LBool annotateAndAssertTermsWithSmallConstantsFirst(final NestedWord<? extends IAction> trace,
-			final Collection<Integer> callPositions, final Collection<Integer> pendingReturnPositions) {
+			final Collection<Integer> callPositions) {
 		// Choose statements that contains only constants <= constantSize and assert them
 		final int constantSize = 10;
 		final Set<Integer> stmtsToAssert = partitionStmtsAccordingToConstantSize(trace, constantSize);
-		buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(trace, callPositions, pendingReturnPositions, stmtsToAssert,
-				true);
+		buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(trace, callPositions, stmtsToAssert, true);
 		LBool sat = mMgdScriptTc.getScript().checkSat();
 		// Report benchmarks
 		mTcbg.reportNewCheckSat();
@@ -415,8 +405,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 		// Then assert the rest of statements
 		final Set<Integer> remainingStmts =
 				integerSetDifference(getSetOfIntegerForGivenInterval(0, trace.length()), stmtsToAssert);
-		buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(trace, callPositions, pendingReturnPositions, remainingStmts,
-				false);
+		buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(trace, callPositions, remainingStmts, false);
 		sat = mMgdScriptTc.getScript().checkSat();
 		// Report benchmarks
 		mTcbg.reportNewCheckSat();
@@ -531,7 +520,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 	}
 
 	private LBool annotateAndAssertStmtsSmtFeatureHeuristic(final NestedWord<? extends IAction> trace,
-			final Collection<Integer> callPositions, final Collection<Integer> pendingReturnPositions) {
+			final Collection<Integer> callPositions) {
 		LBool sat = LBool.UNKNOWN;
 		// Score Trace Terms and order them according to score.
 		final List<Triple<Term, Double, Integer>> termScoreTriples = scoreTrace(trace);
@@ -549,8 +538,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug("Checking partition " + partition);
 			}
-			buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(trace, callPositions, pendingReturnPositions, partition,
-					isFirstIteration);
+			buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(trace, callPositions, partition, isFirstIteration);
 			countCheckSat();
 			sat = mMgdScriptTc.getScript().checkSat();
 			// Report benchmarks
@@ -581,8 +569,8 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 	 * integer set stmtsToAssert.
 	 */
 	private void buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(final NestedWord<? extends IAction> trace,
-			final Collection<Integer> callPositions, final Collection<Integer> pendingReturnPositions,
-			final Set<Integer> stmtsToAssert, final boolean assertPendingContexts) {
+			final Collection<Integer> callPositions, final Set<Integer> stmtsToAssert,
+			final boolean assertPendingContexts) {
 		for (final Integer i : stmtsToAssert) {
 			if (trace.isCallPosition(i)) {
 				callPositions.add(i);
@@ -593,9 +581,6 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 				mAnnotSSA.setOldVarAssignmentAtPos(i,
 						mAnnotateAndAssertCodeBlocks.annotateAndAssertOldVarAssignemntCall(i));
 			} else {
-				if (trace.isReturnPosition(i) && trace.isPendingReturn(i)) {
-					pendingReturnPositions.add(i);
-				}
 				mAnnotSSA.setFormulaAtNonCallPos(i, mAnnotateAndAssertCodeBlocks.annotateAndAssertNonCall(i));
 			}
 		}
