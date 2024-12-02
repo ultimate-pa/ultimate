@@ -49,18 +49,13 @@ public class AssertOrderSmtFeatureHeuristic<L extends IAction> extends AssertOrd
 		return termScoreIndexTriples;
 	}
 
-	private static LinkedHashSet<Integer> getIndices(final List<Triple<Term, Double, Integer>> termScoreIndexTriples,
-			final boolean random) {
-		final List<Integer> indices = termScoreIndexTriples.stream().map(Triple<Term, Double, Integer>::getThird)
-				.collect(Collectors.toList());
-		if (random) {
-			Collections.shuffle(indices);
-		}
-		return new LinkedHashSet<>(indices);
+	private static LinkedHashSet<Integer> getIndices(final List<Triple<Term, Double, Integer>> termScoreIndexTriples) {
+		return termScoreIndexTriples.stream().map(Triple<Term, Double, Integer>::getThird)
+				.collect(Collectors.toCollection(LinkedHashSet::new));
 	}
 
-	private List<Set<Integer>> partitionFixedNumberOfPartitions(
-			final List<Triple<Term, Double, Integer>> termScoreIndexTriples, final boolean random) {
+	private List<Set<Integer>>
+			partitionFixedNumberOfPartitions(final List<Triple<Term, Double, Integer>> termScoreIndexTriples) {
 
 		// The incremental Strategy creates N partitions.
 		// Example:
@@ -70,7 +65,7 @@ public class AssertOrderSmtFeatureHeuristic<L extends IAction> extends AssertOrd
 		// Chunk_size = 2
 		// Partitions = [1,2], [3,4], [5,6]
 
-		final LinkedHashSet<Integer> indices = getIndices(termScoreIndexTriples, random);
+		final LinkedHashSet<Integer> indices = getIndices(termScoreIndexTriples);
 
 		final int chunksize = (int) Math.ceil(termScoreIndexTriples.size() * (1.0 / mNumberOfPartitions));
 
@@ -129,7 +124,7 @@ public class AssertOrderSmtFeatureHeuristic<L extends IAction> extends AssertOrd
 			partitionStmtsAccordingToTermScores(final List<Triple<Term, Double, Integer>> termScoreIndexTriples) {
 		switch (mPartitioningType) {
 		case FIXED_NUM_PARTITIONS:
-			return partitionFixedNumberOfPartitions(termScoreIndexTriples, false);
+			return partitionFixedNumberOfPartitions(termScoreIndexTriples);
 		case THRESHOLD:
 			return partitionUsingThreshold(termScoreIndexTriples);
 		default:
