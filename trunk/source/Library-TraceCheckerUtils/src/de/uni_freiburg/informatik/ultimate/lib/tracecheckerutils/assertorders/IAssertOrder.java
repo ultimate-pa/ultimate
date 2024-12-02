@@ -29,6 +29,9 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 
+/**
+ * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
+ */
 public interface IAssertOrder<L extends IAction> {
 	List<Set<Integer>> partitionTrace(final NestedWord<L> trace, final List<Object> controlConfigurationSequence);
 }

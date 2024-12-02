@@ -32,6 +32,10 @@ import java.util.stream.IntStream;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 
+/**
+ * @author Betim Musa (musab@informatik.uni-freiburg.de)
+ * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
+ */
 public class AssertOrderNotIncrementally<L extends IAction> implements IAssertOrder<L> {
 	@Override
 	public List<Set<Integer>> partitionTrace(final NestedWord<L> trace,

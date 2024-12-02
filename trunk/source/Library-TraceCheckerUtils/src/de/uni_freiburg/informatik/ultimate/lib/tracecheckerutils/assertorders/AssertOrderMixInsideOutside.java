@@ -38,7 +38,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashTree
 /**
  * Assert the statements with the highest depth and lowest depth in alternating order.
  *
- * @author musab@informatik.uni-freiburg.de
+ * @author Betim Musa (musab@informatik.uni-freiburg.de)
+ * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  */
 public class AssertOrderMixInsideOutside<L extends IAction> implements IAssertOrder<L> {
 	@Override

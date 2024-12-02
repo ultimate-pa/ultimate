@@ -41,6 +41,10 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SMTFeat
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
+/**
+ * @author Betim Musa (musab@informatik.uni-freiburg.de)
+ * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
+ */
 public class AssertOrderSmtFeatureHeuristic<L extends IAction> implements IAssertOrder<L> {
 	private final ScoringMethod mScoringMethod;
 	private final int mNumberOfPartitions;

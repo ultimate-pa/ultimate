@@ -42,7 +42,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  * satisfiability check is not unsatisfiable, then assert the rest of the statements, and return the result of the
  * unsatisfiability check.
  *
- * @author musab@informatik.uni-freiburg.de
+ * @author Betim Musa (musab@informatik.uni-freiburg.de)
+ * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  */
 public class AssertOrderSmallConstantsFirst<L extends IAction> implements IAssertOrder<L> {
 	private static final int CONSTANT_SIZE = 10;

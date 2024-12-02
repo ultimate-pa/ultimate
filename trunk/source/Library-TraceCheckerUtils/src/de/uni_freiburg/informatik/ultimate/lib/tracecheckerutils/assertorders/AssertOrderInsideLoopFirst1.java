@@ -36,7 +36,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashTree
  * Assert statements in decremental order by their depth, and check after each step for satisfiability. E.g. first
  * assert all statements with depth max_depth, then assert all statements of depth max_depth - 1, and so on.
  *
- * @author musab@informatik.uni-freiburg.de
+ * @author Betim Musa (musab@informatik.uni-freiburg.de)
+ * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  */
 public class AssertOrderInsideLoopFirst1<L extends IAction> implements IAssertOrder<L> {
 	@Override

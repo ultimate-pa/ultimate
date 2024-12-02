@@ -37,7 +37,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashTree
  * satisfiability check is not unsatisfiable, then assert the rest of the statements, and return the result of the
  * unsatisfiability check.
  *
- * @author musab@informatik.uni-freiburg.de
+ * @author Betim Musa (musab@informatik.uni-freiburg.de)
+ * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  */
 public class AssertOrderOutsideLoopFirst1<L extends IAction> implements IAssertOrder<L> {
 	@Override

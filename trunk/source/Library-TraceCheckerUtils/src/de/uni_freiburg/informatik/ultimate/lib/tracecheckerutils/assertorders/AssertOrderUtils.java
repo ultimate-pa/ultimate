@@ -36,6 +36,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashTreeRelation;
 
+/**
+ * @author Betim Musa (musab@informatik.uni-freiburg.de)
+ * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
+ */
 public class AssertOrderUtils {
 	/**
 	 * Returns a set of indices that represents all statements that is present in {@code trace}, but not in
@@ -47,7 +51,6 @@ public class AssertOrderUtils {
 	}
 
 	/**
-	 *
 	 * Partition the statements of the given trace according to their depth.
 	 */
 	public static <LETTER extends IAction, LOC> Map<Integer, Set<Integer>> partitionStatementsAccordingDepth(
@@ -102,7 +105,7 @@ public class AssertOrderUtils {
 	}
 
 	/**
-	 * TODO(Betim): DOcumentation!
+	 * TODO(Betim): Documentation!
 	 */
 	public static <LOC> HashTreeRelation<LOC, Integer> computeRelationWithTreeSetForTrace(final int lowerIndex,
 			final int upperIndex, final List<LOC> pps) {

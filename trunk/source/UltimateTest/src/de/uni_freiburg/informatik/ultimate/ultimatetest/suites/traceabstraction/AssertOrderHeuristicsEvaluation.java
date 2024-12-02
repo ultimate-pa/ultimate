@@ -26,9 +26,7 @@
  * licensors of the ULTIMATE Test Library grant you additional permission
  * to convey the resulting work.
  */
-/**
- *
- */
+
 package de.uni_freiburg.informatik.ultimate.ultimatetest.suites.traceabstraction;
 
 import java.util.Collection;
@@ -37,8 +35,9 @@ import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimate.test.util.DirectoryFileEndingsPair;
 
 /**
- * @author heizmann@informatik.uni-freiburg.de, musab@informatik.uni-freiburg.de
- *
+ * @author Betim Musa (musab@informatik.uni-freiburg.de)
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class AssertOrderHeuristicsEvaluation extends
 		AbstractTraceAbstractionTestSuite {
