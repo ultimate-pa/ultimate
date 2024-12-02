@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency;
+package de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries;
 
 import java.math.BigInteger;
 import java.util.HashMap;
@@ -52,9 +52,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.P
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.ThreadModularPrePostSpecification;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.GhostUpdate;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.IPossibleInterferences;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesAnnotation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
@@ -93,7 +90,6 @@ public class OwickiGriesUnpetrifier<L extends IIcfgTransition<LOC>, P, LOC exten
 	// TODO ConcurrencyInformation of petrified CFG?
 	public OwickiGriesUnpetrifier(final IUltimateServiceProvider services, final IIcfg<LOC> originalIcfg,
 			final IPetriNet<L, P> petrifiedProgram,
-			final IPossibleInterferences<Transition<L, P>, P> petrifiedPossibleInterferences,
 			final OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>> annotation,
 			final Function<P, LOC> placeToLocation, final UnaryOperator<L> unpetrifyAction,
 			final UnaryOperator<TermVariable> unpetrifyVariable, final Set<P> threadUsageMonitorPlaces) {
@@ -105,7 +101,7 @@ public class OwickiGriesUnpetrifier<L extends IIcfgTransition<LOC>, P, LOC exten
 		mThreadUsageMonitorPlaces = threadUsageMonitorPlaces;
 
 		final var possibleInterferences =
-				translatePossibleInterferences(petrifiedProgram, petrifiedPossibleInterferences);
+				translatePossibleInterferences(petrifiedProgram, annotation.getPossibleInterferences());
 
 		mSymbolTable = new DefaultIcfgSymbolTable(annotation.getSymbolTable(),
 				originalIcfg.getCfgSmtToolkit().getProcedures());

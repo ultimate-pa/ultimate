@@ -26,13 +26,17 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction;
 
+import java.util.List;
 import java.util.Set;
+import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.RemoveDead;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -42,6 +46,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.DebugPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesAnnotation;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesUnpetrifier;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.cfg2automaton.Cfg2Automaton;
 
 /**
@@ -60,6 +67,9 @@ public class PetriInitialAbstractionProvider<L extends IIcfgTransition<?>>
 	private final IUltimateServiceProvider mServices;
 	private final PredicateFactory mPredicateFactory;
 	private final boolean mRemoveDeadEnds;
+
+	private IIcfg<?> mIcfg;
+	private BoundedPetriNet<L, IPredicate> mAbstraction;
 
 	// TODO #proofRefactor This is only supposed to be a temporary workaround.
 	private Set<IPredicate> mThreadMonitorPlaces;
@@ -84,6 +94,7 @@ public class PetriInitialAbstractionProvider<L extends IIcfgTransition<?>>
 	@Override
 	public BoundedPetriNet<L, IPredicate> getInitialAbstraction(final IIcfg<? extends IcfgLocation> icfg,
 			final Set<? extends IcfgLocation> errorLocs) throws AutomataOperationCanceledException {
+		mIcfg = icfg;
 		final BoundedPetriNet<L, IPredicate> net =
 				Cfg2Automaton.constructPetriNetWithSPredicates(mServices, icfg, errorLocs, mPredicateFactory);
 
@@ -91,12 +102,14 @@ public class PetriInitialAbstractionProvider<L extends IIcfgTransition<?>>
 				net.getPlaces().stream().filter(DebugPredicate.class::isInstance).collect(Collectors.toSet());
 
 		if (!mRemoveDeadEnds) {
-			return net;
+			return mAbstraction = net;
 		}
 
 		try {
-			return new RemoveDead<>(new AutomataLibraryServices(mServices), net, null, KEEP_USELESS_SUCCESSOR_PLACES)
-					.getResult();
+			mAbstraction =
+					new RemoveDead<>(new AutomataLibraryServices(mServices), net, null, KEEP_USELESS_SUCCESSOR_PLACES)
+							.getResult();
+			return mAbstraction;
 		} catch (final AutomataOperationCanceledException aoce) {
 			final String taskDescription = "removing dead transitions from Petri net that has " + net.sizeInformation();
 			aoce.addRunningTaskInfo(new RunningTaskInfo(getClass(), taskDescription));
@@ -109,5 +122,12 @@ public class PetriInitialAbstractionProvider<L extends IIcfgTransition<?>>
 	// TODO #proofRefactor This is only supposed to be a temporary workaround.
 	public Set<IPredicate> getThreadMonitorPlaces() {
 		return mThreadMonitorPlaces;
+	}
+
+	public OwickiGriesAnnotation<L, IcfgLocation, List<IcfgLocation>> backtranslateProof(
+			final OwickiGriesAnnotation<Transition<L, IPredicate>, IPredicate, Marking<IPredicate>> ogForPn) {
+		return new OwickiGriesUnpetrifier(mServices, mIcfg, mAbstraction, ogForPn,
+				p -> PredicateUtils.getSingleLocation((IPredicate) p), UnaryOperator.identity(),
+				UnaryOperator.identity(), mThreadMonitorPlaces).getResult();
 	}
 }

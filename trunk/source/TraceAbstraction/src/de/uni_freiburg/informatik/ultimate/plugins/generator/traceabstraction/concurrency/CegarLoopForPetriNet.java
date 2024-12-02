@@ -171,11 +171,11 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 
 	public CegarLoopForPetriNet(final DebugIdentifier name, final BoundedPetriNet<L, IPredicate> initialAbstraction,
 			final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
-			final TAPreferences taPrefs, final Set<IcfgLocation> errorLocs, final boolean computeHoareAnnotation,
+			final TAPreferences taPrefs, final Set<IcfgLocation> errorLocs, final boolean computeProof,
 			final IUltimateServiceProvider services, final Class<L> transitionClazz,
 			final PredicateFactoryRefinement stateFactoryForRefinement) {
-		super(name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs,
-				computeHoareAnnotation, services, transitionClazz, stateFactoryForRefinement);
+		super(name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, computeProof,
+				services, transitionClazz, stateFactoryForRefinement);
 		mPetriClStatisticsGenerator = new PetriCegarLoopStatisticsGenerator(mCegarLoopBenchmark);
 
 		mInitialNet = initialAbstraction;
@@ -627,9 +627,9 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 		assert checkFloydHoareValidity(pfh.getResult()) : "Invalid Floyd-Hoare annotation";
 
 		// compute the Owicki-Gries annotation
-		final OwickiGriesConstruction<IPredicate, L> construction = new OwickiGriesConstruction<>(getServices(),
+		final OwickiGriesConstruction<L, IPredicate> construction = new OwickiGriesConstruction<>(getServices(),
 				mCsToolkit, mInitialNet, pfh.getReachableMarkings(), pfh.getResult(), mPref.owickiGriesHittingSets());
-		assert checkOwickiGriesValidity(construction) : "Invalid Owicki-Gries annotation";
+		assert checkOwickiGriesValidity(construction.getResult()) : "Invalid Owicki-Gries annotation";
 		mLogger.info("Computed Owicki-Gries annotation of size %d in %dns", construction.getResult().size(),
 				System.nanoTime() - startTime);
 
@@ -647,10 +647,11 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 		return fhValid != Validity.INVALID;
 	}
 
-	private boolean checkOwickiGriesValidity(final OwickiGriesConstruction<IPredicate, L> construction) {
+	private boolean checkOwickiGriesValidity(
+			final OwickiGriesAnnotation<Transition<L, IPredicate>, IPredicate, Marking<IPredicate>> annotation) {
 		final long startTime = System.nanoTime();
 		final PetriOwickiGriesValidityCheck<L, IPredicate> check =
-				new PetriOwickiGriesValidityCheck<>(getServices(), mInitialNet, mCsToolkit, construction.getResult());
+				new PetriOwickiGriesValidityCheck<>(getServices(), mInitialNet, mCsToolkit, annotation);
 		final long endTime = System.nanoTime();
 		mLogger.info("Checked inductivity and non-interference of Owicki-Gries annotation in %dns",
 				endTime - startTime);

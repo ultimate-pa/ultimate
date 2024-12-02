@@ -38,21 +38,33 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLette
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.LazyPetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.HoareProofSettings;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.IFloydHoareAnnotation;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.NwaHoareProofProducer;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.TransformFloydHoareAnnotation;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesAnnotation;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesConstruction;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.PetriFloydHoare;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.PetriFloydHoareValidityCheck;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.PetriOwickiGriesValidityCheck;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.BidirectionalMap;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
 /**
@@ -138,7 +150,11 @@ public abstract class Petri2FiniteAutomatonAbstractionProvider<L extends IIcfgTr
 	public static class Eager<L extends IIcfgTransition<?>>
 			extends Petri2FiniteAutomatonAbstractionProvider<L, INestedWordAutomaton<L, IPredicate>> {
 		private INestedWordAutomaton<L, IPredicate> mAbstraction;
+		private IPetriNet<L, IPredicate> mPetriNet;
 		private CfgSmtToolkit mCsToolkit;
+		private Map<Marking<IPredicate>, IPredicate> mMarking2State;
+
+		private final ILogger mLogger;
 
 		/**
 		 * Create a new instance of the provider.
@@ -154,6 +170,7 @@ public abstract class Petri2FiniteAutomatonAbstractionProvider<L extends IIcfgTr
 				final IInitialAbstractionProvider<L, ? extends IPetriNet<L, IPredicate>> underlying,
 				final IPetriNet2FiniteAutomatonStateFactory<IPredicate> stateFactory) {
 			super(services, underlying, stateFactory);
+			mLogger = services.getLoggingService().getLogger(getClass());
 		}
 
 		@Override
@@ -161,11 +178,13 @@ public abstract class Petri2FiniteAutomatonAbstractionProvider<L extends IIcfgTr
 				final Set<? extends IcfgLocation> errorLocs) throws AutomataLibraryException {
 			mCsToolkit = icfg.getCfgSmtToolkit();
 
-			final IPetriNet<L, IPredicate> net = mUnderlying.getInitialAbstraction(icfg, errorLocs);
+			mPetriNet = mUnderlying.getInitialAbstraction(icfg, errorLocs);
 			try {
 				final Map<IcfgLocation, Boolean> hopelessCache = new HashMap<>();
-				mAbstraction = new PetriNet2FiniteAutomaton<>(mAutomataServices, mStateFactory, net,
-						s -> areAllLocationsHopeless(hopelessCache, errorLocs, s)).getResult();
+				final var petri2FA = new PetriNet2FiniteAutomaton<>(mAutomataServices, mStateFactory, mPetriNet,
+						s -> areAllLocationsHopeless(hopelessCache, errorLocs, s));
+				mAbstraction = petri2FA.getResult();
+				mMarking2State = petri2FA.getStateMap();
 				return mAbstraction;
 			} catch (final PetriNetNot1SafeException e) {
 				final Collection<?> unsafePlaces = e.getUnsafePlaces();
@@ -182,6 +201,74 @@ public abstract class Petri2FiniteAutomatonAbstractionProvider<L extends IIcfgTr
 				final HoareProofSettings hoarePrefs) {
 			return new NwaHoareProofProducer<>(mServices, mAbstraction, mCsToolkit, predicateFactory, hoarePrefs,
 					mAbstraction.getStates());
+		}
+
+		public OwickiGriesAnnotation<Transition<L, IPredicate>, IPredicate, Marking<IPredicate>> backtranslateProof(
+				final IFloydHoareAnnotation<IPredicate> inputProof, final BasicPredicateFactory predicateFactory) {
+			final var map = new BidirectionalMap<Marking<IPredicate>, IPredicate>();
+			map.putAll(mMarking2State);
+
+			// Convert IFloydHoareAnnotation of automaton to IFloydHoareAnnotation of Petri reachability graph.
+			// We use truePredicate as fallback annotation. This should only be relevant for markings that are pruned
+			// by #areAllLocationsHopeless.
+			final IPredicate truePredicate = predicateFactory.and();
+			final var markingFloydHoare =
+					new TransformFloydHoareAnnotation<>(inputProof, map.values(), map.inverse()::get, truePredicate)
+							.getResult();
+			assert checkFloydHoareValidity(markingFloydHoare) : "Invalid Floyd-Hoare annotation";
+
+			// We explicitly compute the reachable markings here, rather than taking the keySet of mMarking2State,
+			// because some markings may be missing from this map due to pruning by #areAllLocationsHopeless.
+			final Collection<Marking<IPredicate>> reachableMarkings;
+			try {
+				reachableMarkings = PetriFloydHoare.computeReachableMarkings(mPetriNet);
+			} catch (final PetriNetNot1SafeException e) {
+				throw new AssertionError(e);
+			}
+
+			// run OwickiGriesConstruction to construct O/G annotation of Petri net
+			final boolean useHittingSets = false; // TODO use corresponding setting
+			final var naiveOG = new OwickiGriesConstruction<>(mServices, mCsToolkit, mPetriNet, reachableMarkings,
+					markingFloydHoare, useHittingSets);
+			assert checkOwickiGriesValidity(naiveOG.getResult()) : "Invalid Owicki-Gries annotation";
+
+			return naiveOG.getResult();
+		}
+
+		private boolean checkFloydHoareValidity(final IFloydHoareAnnotation<Marking<IPredicate>> floydHoare) {
+			final long startTime = System.currentTimeMillis();
+			final Validity validity;
+			try {
+				validity = new PetriFloydHoareValidityCheck<>(mServices, mCsToolkit.getManagedScript(),
+						mCsToolkit.getModifiableGlobalsTable(), mPetriNet, floydHoare).isValid();
+				if (validity == Validity.UNKNOWN) {
+					mLogger.warn("Could not prove validity of Floyd-Hoare annotation for Petri reachability graph");
+				}
+				return validity != Validity.INVALID;
+			} catch (final PetriNetNot1SafeException e) {
+				throw new AssertionError(e);
+			} finally {
+				final long elapsed = System.currentTimeMillis() - startTime;
+				mLogger.info("Checked validity of Floyd-Hoare annotation for Petri reachability graph in %d ms",
+						elapsed);
+			}
+		}
+
+		private boolean checkOwickiGriesValidity(
+				final OwickiGriesAnnotation<Transition<L, IPredicate>, IPredicate, Marking<IPredicate>> ogConstruction) {
+			final long startTime = System.currentTimeMillis();
+			try {
+				final var validity =
+						new PetriOwickiGriesValidityCheck<>(mServices, mPetriNet, mCsToolkit, ogConstruction).isValid();
+				assert validity != Validity.INVALID : "Owicki-Gries annotation is invalid";
+				if (validity == Validity.UNKNOWN) {
+					mLogger.warn("Could not prove validity of Owicki-Gries annotation");
+				}
+				return validity != Validity.INVALID;
+			} finally {
+				final long elapsed = System.currentTimeMillis() - startTime;
+				mLogger.info("Checked validity of Owicki-Gries annotation for Petri net in %d ms", elapsed);
+			}
 		}
 	}
 

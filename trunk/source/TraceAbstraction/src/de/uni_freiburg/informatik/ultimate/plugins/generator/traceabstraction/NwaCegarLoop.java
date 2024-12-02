@@ -29,12 +29,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -62,10 +59,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpt
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IOpWithDelayedDeadEndRemoval;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.senwa.DifferenceSenwa;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.TaskCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.TaskCanceledException.UserDefinedLimit;
@@ -90,16 +83,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskIterationIdentifier;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.PrePostConditionSpecification;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.FloydHoareMapping;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.HoareAnnotationPositions;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.NwaFloydHoareValidityCheck;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.NwaHoareProofProducer;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.IPossibleInterferences;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesAnnotation;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesConstruction;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.PetriOwickiGriesValidityCheck;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SMTFeatureExtractionTermClassifier.ScoringMethod;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.cfg2automaton.Cfg2Automaton;
@@ -119,7 +105,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RelevanceAnalysisMode;
 import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * Subclass of BasicCegarLoop for safety checking based on nested-word automata.
@@ -160,10 +145,6 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 	private static final int DEBUG_DANGER_INVARIANTS_THRESHOLD = Integer.MAX_VALUE;
 
 	protected final Collection<INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> mStoredRawInterpolantAutomata;
-
-	// TODO
-	private final IPetriNet<L, IPredicate> mPetriNet = null;
-	private final Map<Marking<IPredicate>, IPredicate> mMarking2State = null;
 
 	private final SearchStrategy mSearchStrategy;
 	private final ErrorGeneralizationEngine<L> mErrorGeneralizationEngine;
@@ -581,87 +562,6 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 		}
 		mErrorGeneralizationEngine.reportErrorGeneralizationBenchmarks();
 		super.finish();
-	}
-
-	protected
-			Triple<IPetriNet<L, IPredicate>, OwickiGriesAnnotation<Transition<L, IPredicate>, IPredicate, Marking<IPredicate>>, IPossibleInterferences<Transition<L, IPredicate>, IPredicate>>
-			computeOwickiGriesAnnotation() {
-		if (42 / 2 == 3 * 7) {
-			// TODO #proofRefactor This is temporarily disabled because we do not yet support it.
-			return null;
-		}
-
-		assert IcfgUtils.isConcurrent(mIcfg) : "Cannot compute Owicki-Gries for sequential program.";
-		if (mPref.applyOneShotLbe()) {
-			// TODO this should be moved somewhere else, it's not the responsibility of this CEGAR loop
-			throw new AssertionError("Owicki-Gries does currently not support Petri net LBE.");
-		}
-
-		final long startTime = System.nanoTime();
-		// TODO #proofRefactor
-		final Map<IPredicate, IPredicate> floydHoare = null; // computeHoareAnnotationComposer().getLoc2hoare();
-
-		final Map<Marking<IPredicate>, IPredicate> petriFloydHoare = new HashMap<>();
-		// FIXME mMarking2State is always null here; restore this functionality!
-		for (final Map.Entry<Marking<IPredicate>, IPredicate> entry : mMarking2State.entrySet()) {
-			final Marking<IPredicate> marking = entry.getKey();
-			final IPredicate state = entry.getValue();
-			final IPredicate hoare = floydHoare.get(state);
-			petriFloydHoare.put(marking, hoare);
-		}
-		assert !petriFloydHoare.isEmpty();
-
-		// Mark all reachable markings that do not have an assertion yet with TRUE.
-		final var stack = new ArrayDeque<Marking<IPredicate>>();
-		final var visited = new HashSet<>();
-		final var initialMarking = Marking.initial(mPetriNet);
-		stack.push(initialMarking);
-		while (!stack.isEmpty()) {
-			final var src = stack.pop();
-			if (!visited.add(src)) {
-				continue;
-			}
-			petriFloydHoare.putIfAbsent(src, mPredicateFactory.and());
-			for (final var trans : mPetriNet.getTransitions()) {
-				if (!src.isTransitionEnabled(trans)) {
-					continue;
-				}
-				try {
-					final var tgt = src.fireTransition(trans);
-					stack.push(tgt);
-				} catch (final PetriNetNot1SafeException e) {
-					mLogger.fatal(e);
-				}
-			}
-		}
-
-		final var spec = new PrePostConditionSpecification<>(Map.of(initialMarking, mPredicateFactory.and()),
-				mPetriNet::isAccepting, mPredicateFactory.or());
-		final var petriFloydHoareAnnot = new FloydHoareMapping<>(spec, petriFloydHoare, mPredicateFactory.or());
-
-		final OwickiGriesConstruction<IPredicate, L> construction = new OwickiGriesConstruction<>(getServices(),
-				mCsToolkit, mPetriNet, petriFloydHoare.keySet(), petriFloydHoareAnnot, false);
-		// TODO: simplify
-		final long constructionTime = System.nanoTime();
-		mLogger.info("Computed Owicki-Gries annotation of size " + construction.getResult().size() + " in "
-				+ (constructionTime - startTime) + "ns");
-
-		final PetriOwickiGriesValidityCheck<L, IPredicate> check =
-				new PetriOwickiGriesValidityCheck<>(getServices(), mPetriNet, mCsToolkit, construction.getResult());
-		final long endTime = System.nanoTime();
-		mLogger.info("Checked inductivity and non-interference of Owicki-Gries annotation in "
-				+ (endTime - constructionTime) + "ns");
-
-		final var result = check.isValid();
-		if (result == Validity.INVALID) {
-			throw new AssertionError("Invalid Owicki-Gries annotation");
-		}
-		if (result == Validity.UNKNOWN) {
-			mLogger.warn("Could not confirm validity of Owicki-Gries annotation.");
-		}
-
-		// TODO #proofRefactor
-		return null;
 	}
 
 	private static final boolean checkStoreCounterExamples(final TAPreferences pref) {

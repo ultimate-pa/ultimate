@@ -68,7 +68,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  * @param <L>
  *            The type of statements in the Petri program
  */
-public class OwickiGriesConstruction<P, L> {
+public class OwickiGriesConstruction<L, P> {
 	private final ManagedScript mManagedScript;
 	private final Script mScript;
 	private final BasicPredicateFactory mFactory;

@@ -121,7 +121,8 @@ public class PetriFloydHoare<L, P> {
 	}
 
 	// a depth-first search of the reachability graph
-	private static <L, P> Collection<Marking<P>> computeReachableMarkings(final IPetriNet<L, P> net)
+	// TODO move this utility method to a more suitable place
+	public static <L, P> Collection<Marking<P>> computeReachableMarkings(final IPetriNet<L, P> net)
 			throws PetriNetNot1SafeException {
 		final var result = new LinkedHashSet<Marking<P>>();
 		final var worklist = new ArrayDeque<Marking<P>>();
