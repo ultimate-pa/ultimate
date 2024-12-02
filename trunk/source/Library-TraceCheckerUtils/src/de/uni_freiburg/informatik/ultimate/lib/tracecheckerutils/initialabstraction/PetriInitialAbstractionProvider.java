@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstrac
 
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
@@ -47,6 +48,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.IPetriNetProofProducer;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.NaiveOwickiGries;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesAnnotation;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesUnpetrifier;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.cfg2automaton.Cfg2Automaton;
@@ -70,8 +73,6 @@ public class PetriInitialAbstractionProvider<L extends IIcfgTransition<?>>
 
 	private IIcfg<?> mIcfg;
 	private BoundedPetriNet<L, IPredicate> mAbstraction;
-
-	// TODO #proofRefactor This is only supposed to be a temporary workaround.
 	private Set<IPredicate> mThreadMonitorPlaces;
 
 	/**
@@ -95,23 +96,21 @@ public class PetriInitialAbstractionProvider<L extends IIcfgTransition<?>>
 	public BoundedPetriNet<L, IPredicate> getInitialAbstraction(final IIcfg<? extends IcfgLocation> icfg,
 			final Set<? extends IcfgLocation> errorLocs) throws AutomataOperationCanceledException {
 		mIcfg = icfg;
-		final BoundedPetriNet<L, IPredicate> net =
-				Cfg2Automaton.constructPetriNetWithSPredicates(mServices, icfg, errorLocs, mPredicateFactory);
-
+		mAbstraction = Cfg2Automaton.constructPetriNetWithSPredicates(mServices, icfg, errorLocs, mPredicateFactory);
 		mThreadMonitorPlaces =
-				net.getPlaces().stream().filter(DebugPredicate.class::isInstance).collect(Collectors.toSet());
+				mAbstraction.getPlaces().stream().filter(DebugPredicate.class::isInstance).collect(Collectors.toSet());
 
 		if (!mRemoveDeadEnds) {
-			return mAbstraction = net;
+			return mAbstraction;
 		}
 
 		try {
-			mAbstraction =
-					new RemoveDead<>(new AutomataLibraryServices(mServices), net, null, KEEP_USELESS_SUCCESSOR_PLACES)
-							.getResult();
+			mAbstraction = new RemoveDead<>(new AutomataLibraryServices(mServices), mAbstraction, null,
+					KEEP_USELESS_SUCCESSOR_PLACES).getResult();
 			return mAbstraction;
 		} catch (final AutomataOperationCanceledException aoce) {
-			final String taskDescription = "removing dead transitions from Petri net that has " + net.sizeInformation();
+			final String taskDescription =
+					"removing dead transitions from Petri net that has " + mAbstraction.sizeInformation();
 			aoce.addRunningTaskInfo(new RunningTaskInfo(getClass(), taskDescription));
 			throw aoce;
 		} catch (final PetriNetNot1SafeException e) {
@@ -119,9 +118,10 @@ public class PetriInitialAbstractionProvider<L extends IIcfgTransition<?>>
 		}
 	}
 
-	// TODO #proofRefactor This is only supposed to be a temporary workaround.
-	public Set<IPredicate> getThreadMonitorPlaces() {
-		return mThreadMonitorPlaces;
+	public IPetriNetProofProducer<L, IPredicate> getProofProducer(final boolean useHittingSets,
+			final boolean useCovering) {
+		return new NaiveOwickiGries<>(mServices, mPredicateFactory, mIcfg.getCfgSmtToolkit(), mAbstraction,
+				useHittingSets).createProofProducer(useCovering, Function.identity());
 	}
 
 	public OwickiGriesAnnotation<L, IcfgLocation, List<IcfgLocation>> backtranslateProof(

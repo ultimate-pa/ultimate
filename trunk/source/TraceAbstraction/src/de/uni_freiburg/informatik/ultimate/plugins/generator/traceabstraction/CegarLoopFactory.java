@@ -61,6 +61,7 @@ import de.uni_freiburg.informatik.ultimate.lib.proofs.IProof;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.IProofProducer;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.IFloydHoareAnnotation;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.NwaHoareProofProducer;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.IPetriNetProofProducer;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesAnnotation;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.BacktranslatingProofProducer;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.IInitialAbstractionProvider;
@@ -183,15 +184,15 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 			case PETRI_NET:
 				requireNoReuse("Petri net-based analysis");
 				requireNoWitnesses(witnessTransformer, "Petri net-based analysis");
-				final boolean computeProof = false; // TODO
 
 				final var absAndProof = createPetriAbstractionProvider(services, predicateFactory, true /* TODO */);
 				final var abstraction =
 						constructInitialAbstraction(absAndProof.initialAbstractionProvider(), root, errorLocs);
+				final IPetriNetProofProducer<L, IPredicate> proofProducer = absAndProof.proofProducer().get();
 
 				final var pnCegar = new CegarLoopForPetriNet<>(name, abstraction, root, csToolkit, predicateFactory,
-						mPrefs, errorLocs, computeProof, services, mTransitionClazz, stateFactoryForRefinement);
-				return new Pair<>(pnCegar, null);
+						mPrefs, errorLocs, proofProducer, services, mTransitionClazz, stateFactoryForRefinement);
+				return new Pair<>(pnCegar, absAndProof.proofProducerWithBacktranslation(root));
 			default:
 				// do nothing, and fall through to the code below
 			}
@@ -305,7 +306,8 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 					// Proof producer for NwaCegarLoop
 					() -> autProvider.getProofProducer(predicateFactory, mPrefs.getHoareSettings()),
 					// backtranslate proof
-					fh -> oldBacktranslator.apply(autProvider.backtranslateProof(fh, predicateFactory)));
+					fh -> oldBacktranslator.apply(
+							autProvider.backtranslateProof(fh, predicateFactory, mPrefs.owickiGriesHittingSets())));
 		}
 
 		// If a witness is given, proof production is not supported.
@@ -313,13 +315,17 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 				new WitnessAutomatonAbstractionProvider<>(predicateFactory, autProvider, witnessTransformer));
 	}
 
-	private AbstractionAndProof<L, BoundedPetriNet<L, IPredicate>, OwickiGriesAnnotation<Transition<L, IPredicate>, IPredicate, Marking<IPredicate>>, OwickiGriesAnnotation<L, IcfgLocation, List<IcfgLocation>>, ?>
+	private AbstractionAndProof<L, BoundedPetriNet<L, IPredicate>, OwickiGriesAnnotation<Transition<L, IPredicate>, IPredicate, Marking<IPredicate>>, OwickiGriesAnnotation<L, IcfgLocation, List<IcfgLocation>>, IPetriNetProofProducer<L, IPredicate>>
 			createPetriAbstractionProvider(final IUltimateServiceProvider services,
-					final PredicateFactory predicateFactory, final boolean removeDead) {
-		final var netProvider = new PetriInitialAbstractionProvider<L>(services, predicateFactory, removeDead);
+					final PredicateFactory predicateFactory, final boolean computeProof) {
+		final var netProvider = new PetriInitialAbstractionProvider<L>(services, predicateFactory, !computeProof);
 		if (!mPrefs.applyOneShotLbe()) {
-			// TODO add support for proof production
-			return new AbstractionAndProof<>(netProvider, Lazy.empty(), netProvider::backtranslateProof);
+			return new AbstractionAndProof<>(netProvider,
+					// support proof production (if used with CegarLoopForPetriNets)
+					() -> netProvider.getProofProducer(mPrefs.owickiGriesHittingSets(),
+							mPrefs.owickiGriesCoveringSimplification()),
+					// support proof backtranslation (also applicable when used with NwaCegarLoop)
+					netProvider::backtranslateProof);
 		}
 
 		final var lbeProvider = new PetriLbeInitialAbstractionProvider<>(services, netProvider, mTransitionClazz,
@@ -382,7 +388,7 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 		}
 	}
 
-	private static final record AbstractionAndProof<L extends IIcfgTransition<?>, A extends IAutomaton<L, ?>, P1 extends IProof, P2 extends IProof, H extends IProofProducer<A, P1>>(
+	private static final record AbstractionAndProof<L extends IIcfgTransition<?>, A extends IAutomaton<L, ?>, P1 extends IProof, P2 extends IProof, H extends IProofProducer<? super A, P1>>(
 			IInitialAbstractionProvider<L, ? extends A> initialAbstractionProvider, Lazy<H> proofProducer,
 			Function<P1, P2> proofBacktranslator) {
 		public AbstractionAndProof {

@@ -33,7 +33,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
@@ -55,12 +54,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Remove
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.ComplementDD;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DeterminizeDD;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.PetriNetUtils;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.Difference;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.Difference.LoopSyncMethod;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.DifferencePairwiseOnDemand;
@@ -85,14 +82,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateCoverageChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskIterationIdentifier;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.IFloydHoareAnnotation;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesAnnotation;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesConstruction;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.PetriFloydHoare;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.PetriFloydHoareValidityCheck;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.PetriOwickiGriesValidityCheck;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.IPetriNetProofProducer;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.ILooperCheck;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
@@ -119,9 +109,8 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 	}
 
 	private static final boolean DUMP_OWICKI_GRIES_TEST = false;
-	private static final boolean GENERATE_OWICKI_GRIES_PROOF = true;
-
 	private final List<INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> mProofAutomata = new ArrayList<>();
+	private final IPetriNet<L, IPredicate> mInitialNet;
 
 	private static final boolean USE_ON_DEMAND_RESULT = true;
 
@@ -164,19 +153,18 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 	private Set<IPredicate> mProgramPointPlaces;
 
 	private final CounterexampleCache<L> mCounterexampleCache = new CounterexampleCache<>();
-	private final IPetriNet<L, IPredicate> mInitialNet;
-	private final List<IRefinementEngineResult<L, ?>> mRefinementEngines = new ArrayList<>();
 
-	private final boolean mProduceProof = false;
+	private final IPetriNetProofProducer<L, IPredicate> mProofProducer;
 
 	public CegarLoopForPetriNet(final DebugIdentifier name, final BoundedPetriNet<L, IPredicate> initialAbstraction,
 			final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
-			final TAPreferences taPrefs, final Set<IcfgLocation> errorLocs, final boolean computeProof,
-			final IUltimateServiceProvider services, final Class<L> transitionClazz,
-			final PredicateFactoryRefinement stateFactoryForRefinement) {
-		super(name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, computeProof,
-				services, transitionClazz, stateFactoryForRefinement);
+			final TAPreferences taPrefs, final Set<IcfgLocation> errorLocs,
+			final IPetriNetProofProducer<L, IPredicate> proofProducer, final IUltimateServiceProvider services,
+			final Class<L> transitionClazz, final PredicateFactoryRefinement stateFactoryForRefinement) {
+		super(name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs,
+				proofProducer != null, services, transitionClazz, stateFactoryForRefinement);
 		mPetriClStatisticsGenerator = new PetriCegarLoopStatisticsGenerator(mCegarLoopBenchmark);
+		mProofProducer = proofProducer;
 
 		mInitialNet = initialAbstraction;
 		if (DEBUG_WRITE_NET_HASH_CODES) {
@@ -184,6 +172,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 		}
 
 		mProgramPointPlaces = mAbstraction.getPlaces();
+
 	}
 
 	@Override
@@ -242,7 +231,6 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 
 	@Override
 	protected boolean refineAbstraction() throws AutomataLibraryException {
-		mRefinementEngines.add(mRefinementResult);
 		final IHoareTripleChecker htc = getHoareTripleChecker();
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 		try {
@@ -282,6 +270,11 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 			}
 			if (USE_ON_DEMAND_RESULT) {
 				mAbstraction = enhancementResult.getSecond().getResult();
+				if (mProofProducer != null
+						&& enhancementResult.getSecond().getFinitePrefixOfDifference().getAcceptingRun() == null) {
+					mProofProducer.finalize(mAbstraction,
+							enhancementResult.getSecond().getFinitePrefixOfDifference().getResult());
+				}
 			} else {
 				final Difference<L, IPredicate, ?> diff = new Difference<>(new AutomataLibraryServices(getServices()),
 						mPredicateFactoryInterpolantAutomata, mAbstraction, dia, LoopSyncMethod.HEURISTIC,
@@ -547,8 +540,9 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 			throw new UnsupportedOperationException();
 		}
 
-		if (mProduceProof) {
+		if (mProofProducer != null) {
 			assert checkInterpolantAutomatonInductivity(dia) : "Not inductive";
+			mProofProducer.refine(mRefinementResult, dia);
 		}
 		if (mPref.dumpAutomata()) {
 			final String filename = "InterpolantAutomatonDeterminized_Iteration" + getIteration();
@@ -603,64 +597,6 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 				new PetriNet2FiniteAutomaton<>(new AutomataLibraryServices(services), mPredicateFactoryResultChecking,
 						(IPetriNet<L, IPredicate>) automaton).getResult();
 		return super.accepts(services, petriNetAsFA, nw, false);
-	}
-
-	// TODO #proofRefactor Wrap in an IProofProducer implementation
-	protected
-			Pair<IPetriNet<L, IPredicate>, OwickiGriesAnnotation<Transition<L, IPredicate>, IPredicate, Marking<IPredicate>>>
-			computeOwickiGriesAnnotation() throws PetriNetNot1SafeException {
-		if (mPref.applyOneShotLbe()) {
-			// TODO this should be moved somewhere else, it's not the responsibility of this CEGAR loop
-			throw new AssertionError("Owicki-Gries does currently not support Petri net LBE.");
-		}
-		if (!GENERATE_OWICKI_GRIES_PROOF) {
-			return null;
-		}
-
-		final long startTime = System.nanoTime();
-
-		// compute the Floyd-Hoare annotation
-		final var coverageRelations = mRefinementEngines.stream()
-				.map(r -> r.getPredicateUnifier().getCoverageRelation()).collect(Collectors.toList());
-		final var pfh = new PetriFloydHoare<>(mPredicateFactory, mInitialNet, mAbstraction,
-				Function.<IPredicate> identity(), coverageRelations, mPref.owickiGriesCoveringSimplification());
-		assert checkFloydHoareValidity(pfh.getResult()) : "Invalid Floyd-Hoare annotation";
-
-		// compute the Owicki-Gries annotation
-		final OwickiGriesConstruction<L, IPredicate> construction = new OwickiGriesConstruction<>(getServices(),
-				mCsToolkit, mInitialNet, pfh.getReachableMarkings(), pfh.getResult(), mPref.owickiGriesHittingSets());
-		assert checkOwickiGriesValidity(construction.getResult()) : "Invalid Owicki-Gries annotation";
-		mLogger.info("Computed Owicki-Gries annotation of size %d in %dns", construction.getResult().size(),
-				System.nanoTime() - startTime);
-
-		return new Pair<>(mInitialNet, construction.getResult());
-	}
-
-	private boolean checkFloydHoareValidity(final IFloydHoareAnnotation<Marking<IPredicate>> floydHoare)
-			throws PetriNetNot1SafeException {
-		mLogger.warn("Checking inductivity of Floyd-Hoare annotation for initial Petri net");
-		final var fhValid = new PetriFloydHoareValidityCheck<>(mServices, mCsToolkit.getManagedScript(),
-				mCsToolkit.getModifiableGlobalsTable(), mInitialNet, floydHoare).isValid();
-		if (fhValid == Validity.UNKNOWN) {
-			mLogger.warn("Could not confirm validity of Floyd-Hoare annotation.");
-		}
-		return fhValid != Validity.INVALID;
-	}
-
-	private boolean checkOwickiGriesValidity(
-			final OwickiGriesAnnotation<Transition<L, IPredicate>, IPredicate, Marking<IPredicate>> annotation) {
-		final long startTime = System.nanoTime();
-		final PetriOwickiGriesValidityCheck<L, IPredicate> check =
-				new PetriOwickiGriesValidityCheck<>(getServices(), mInitialNet, mCsToolkit, annotation);
-		final long endTime = System.nanoTime();
-		mLogger.info("Checked inductivity and non-interference of Owicki-Gries annotation in %dns",
-				endTime - startTime);
-
-		final var result = check.isValid();
-		if (result == Validity.UNKNOWN) {
-			mLogger.warn("Could not confirm validity of Owicki-Gries annotation.");
-		}
-		return result != Validity.INVALID;
 	}
 
 	@Override

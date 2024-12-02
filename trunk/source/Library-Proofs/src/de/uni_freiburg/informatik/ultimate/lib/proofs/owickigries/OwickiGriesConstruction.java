@@ -100,6 +100,8 @@ public class OwickiGriesConstruction<L, P> {
 		mReachableMarkings = reachableMarkings;
 		mFloydHoareAnnotation = floydHoare;
 		mSymbolTable = new DefaultIcfgSymbolTable(symbolTable, procedures);
+
+		// TODO let callers pass predicate factory
 		mFactory = new BasicPredicateFactory(services, mManagedScript, mSymbolTable);
 
 		mGhostVariables = getGhostVariables();
