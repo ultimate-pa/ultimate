@@ -584,7 +584,7 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 	}
 
 	protected
-			Triple<IPetriNet<L, IPredicate>, OwickiGriesAnnotation<Transition<L, IPredicate>, IPredicate>, IPossibleInterferences<Transition<L, IPredicate>, IPredicate>>
+			Triple<IPetriNet<L, IPredicate>, OwickiGriesAnnotation<Transition<L, IPredicate>, IPredicate, Marking<IPredicate>>, IPossibleInterferences<Transition<L, IPredicate>, IPredicate>>
 			computeOwickiGriesAnnotation() {
 		if (42 / 2 == 3 * 7) {
 			// TODO #proofRefactor This is temporarily disabled because we do not yet support it.

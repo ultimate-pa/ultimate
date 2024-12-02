@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.c
 import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -36,6 +37,7 @@ import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
@@ -49,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.P
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.ThreadModularPrePostSpecification;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.GhostUpdate;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.IPossibleInterferences;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesAnnotation;
@@ -86,15 +89,15 @@ public class OwickiGriesUnpetrifier<L extends IIcfgTransition<LOC>, P, LOC exten
 	private final DefaultIcfgSymbolTable mSymbolTable;
 
 	private final IPossibleInterferences<L, LOC> mPossibleInterferences;
-	private final OwickiGriesAnnotation<L, LOC> mOwickiGries;
+	private final OwickiGriesAnnotation<L, LOC, List<LOC>> mOwickiGries;
 
 	// TODO ConcurrencyInformation of petrified CFG?
 	public OwickiGriesUnpetrifier(final IUltimateServiceProvider services, final IIcfg<LOC> originalIcfg,
 			final IPetriNet<L, P> petrifiedProgram,
 			final IPossibleInterferences<Transition<L, P>, P> petrifiedPossibleInterferences,
-			final OwickiGriesAnnotation<Transition<L, P>, P> annotation, final Function<P, LOC> placeToLocation,
-			final UnaryOperator<L> unpetrifyAction, final UnaryOperator<TermVariable> unpetrifyVariable,
-			final Set<P> threadUsageMonitorPlaces) {
+			final OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>> annotation,
+			final Function<P, LOC> placeToLocation, final UnaryOperator<L> unpetrifyAction,
+			final UnaryOperator<TermVariable> unpetrifyVariable, final Set<P> threadUsageMonitorPlaces) {
 		mMgdScript = originalIcfg.getCfgSmtToolkit().getManagedScript();
 
 		mPlaceToLocation = placeToLocation;
@@ -128,10 +131,14 @@ public class OwickiGriesUnpetrifier<L extends IIcfgTransition<LOC>, P, LOC exten
 
 		final Map<L, GhostUpdate> ghostUpdates = computeUpdates(petrifiedProgram, annotation);
 
-		mOwickiGries = new OwickiGriesAnnotation<>(mSymbolTable, formulaMapping, ghostVars, ghostInits, ghostUpdates);
+		// TODO unpetrify specification
+		final ThreadModularPrePostSpecification<LOC, List<LOC>> unpetrifiedSpec = null;
+
+		mOwickiGries = new OwickiGriesAnnotation<>(mSymbolTable, formulaMapping, ghostVars, ghostInits, ghostUpdates,
+				unpetrifiedSpec);
 	}
 
-	public OwickiGriesAnnotation<L, LOC> getResult() {
+	public OwickiGriesAnnotation<L, LOC, List<LOC>> getResult() {
 		return mOwickiGries;
 	}
 
@@ -154,7 +161,7 @@ public class OwickiGriesUnpetrifier<L extends IIcfgTransition<LOC>, P, LOC exten
 	}
 
 	private Map<LOC, IPredicate> computeFormulaMapping(final IPetriNet<L, P> petrifiedProgram,
-			final OwickiGriesAnnotation<Transition<L, P>, P> annotation) {
+			final OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>> annotation) {
 		final var result = new HashMap<LOC, IPredicate>();
 		for (final var entry : annotation.getFormulaMapping().entrySet()) {
 			final P place = entry.getKey();
@@ -203,7 +210,7 @@ public class OwickiGriesUnpetrifier<L extends IIcfgTransition<LOC>, P, LOC exten
 	}
 
 	private Map<L, GhostUpdate> computeUpdates(final IPetriNet<L, P> petrifiedProgram,
-			final OwickiGriesAnnotation<Transition<L, P>, P> annotation) {
+			final OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>> annotation) {
 		final var result = new HashMap<L, GhostUpdate>();
 		for (final var entry : annotation.getAssignmentMapping().entrySet()) {
 			final var transition = entry.getKey();

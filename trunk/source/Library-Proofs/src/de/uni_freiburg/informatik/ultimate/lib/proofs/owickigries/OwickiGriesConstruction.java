@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.ThreadModularPrePostSpecification;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.IFloydHoareAnnotation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
@@ -79,7 +80,7 @@ public class OwickiGriesConstruction<P, L> {
 
 	private final Set<P> mHittingSet;
 	private final Map<P, IProgramVar> mGhostVariables;
-	private final OwickiGriesAnnotation<Transition<L, P>, P> mAnnotation;
+	private final OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>> mAnnotation;
 
 	public OwickiGriesConstruction(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
 			final IPetriNet<L, P> net, final Collection<Marking<P>> reachableMarkings,
@@ -108,7 +109,7 @@ public class OwickiGriesConstruction<P, L> {
 		final Map<IProgramVar, Term> ghostInitAssignment = getGhostInitAssignment();
 
 		mAnnotation = new OwickiGriesAnnotation<>(mSymbolTable, formulaMapping, new HashSet<>(mGhostVariables.values()),
-				ghostInitAssignment, assignmentMapping);
+				ghostInitAssignment, assignmentMapping, getSpecificationForPetriNet(net, mFactory));
 	}
 
 	/**
@@ -312,7 +313,7 @@ public class OwickiGriesConstruction<P, L> {
 		return new GhostUpdate(assignments);
 	}
 
-	public OwickiGriesAnnotation<Transition<L, P>, P> getResult() {
+	public OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>> getResult() {
 		return mAnnotation;
 	}
 
@@ -332,5 +333,11 @@ public class OwickiGriesConstruction<P, L> {
 			}
 		}
 		return IPossibleInterferences.fromRelation(relation);
+	}
+
+	public static <L, P> ThreadModularPrePostSpecification<P, Marking<P>>
+			getSpecificationForPetriNet(final IPetriNet<L, P> net, final BasicPredicateFactory factory) {
+		final var preconditions = Map.of(Marking.initial(net), factory.and());
+		return new ThreadModularPrePostSpecification<>(preconditions, net::isAccepting, factory.or());
 	}
 }

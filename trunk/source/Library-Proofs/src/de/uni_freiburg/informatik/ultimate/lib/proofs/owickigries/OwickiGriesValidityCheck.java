@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.Mon
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.MonolithicImplicationChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.ThreadModularPrePostSpecification;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -70,6 +70,7 @@ public abstract class OwickiGriesValidityCheck<T, P> {
 	private final ManagedScript mManagedScript;
 	private final Script mScript;
 	private final IHoareTripleChecker mHoareTripleChecker;
+	private final MonolithicImplicationChecker mImplicationChecker;
 	private final BasicPredicateFactory mPredicateFactory;
 
 	private final List<Integer> mInterferingActions = new ArrayList<>();
@@ -78,41 +79,38 @@ public abstract class OwickiGriesValidityCheck<T, P> {
 	private Validity mIsInterferenceFree;
 	private Validity mIsProgramSafe;
 
-	private final OwickiGriesAnnotation<T, P> mAnnotation;
+	private final OwickiGriesAnnotation<T, P, ?> mAnnotation;
 	private final IPossibleInterferences<T, P> mPossibleInterferences;
 
 	public OwickiGriesValidityCheck(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
-			final OwickiGriesAnnotation<T, P> annotation, final IPossibleInterferences<T, P> possibleInterferences) {
+			final OwickiGriesAnnotation<T, P, ?> annotation, final IPossibleInterferences<T, P> possibleInterferences) {
 		this(services, csToolkit.getManagedScript(), new MonolithicHoareTripleChecker(csToolkit), annotation,
 				possibleInterferences);
 	}
 
 	public OwickiGriesValidityCheck(final IUltimateServiceProvider services, final ManagedScript mgdScript,
-			final ModifiableGlobalsTable modifiableGlobals, final OwickiGriesAnnotation<T, P> annotation,
+			final ModifiableGlobalsTable modifiableGlobals, final OwickiGriesAnnotation<T, P, ?> annotation,
 			final IPossibleInterferences<T, P> possibleInterferences) {
 		this(services, mgdScript, new MonolithicHoareTripleChecker(mgdScript, modifiableGlobals), annotation,
 				possibleInterferences);
 	}
 
 	public OwickiGriesValidityCheck(final IUltimateServiceProvider services, final ManagedScript mgdScript,
-			final IHoareTripleChecker htc, final OwickiGriesAnnotation<T, P> annotation,
+			final IHoareTripleChecker htc, final OwickiGriesAnnotation<T, P, ?> annotation,
 			final IPossibleInterferences<T, P> possibleInterferences) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(OwickiGriesValidityCheck.class);
 		mManagedScript = mgdScript;
 		mHoareTripleChecker = htc;
-		mScript = mgdScript.getScript();
+		mImplicationChecker = new MonolithicImplicationChecker(mServices, mManagedScript);
 		mPredicateFactory = new BasicPredicateFactory(services, mManagedScript, annotation.getSymbolTable());
+		mScript = mgdScript.getScript();
 
 		mAnnotation = annotation;
 		mPossibleInterferences = possibleInterferences;
 	}
 
 	protected abstract Collection<P> getProgramLocations();
-
-	protected abstract Collection<P> getInitialLocations();
-
-	protected abstract Collection<P> getErrorLocations();
 
 	protected abstract Collection<T> getProgramTransitions();
 
@@ -251,7 +249,7 @@ public abstract class OwickiGriesValidityCheck<T, P> {
 	}
 
 	private Validity checkSafety() {
-		final var preImpliesInitial = checkInitImplication();
+		final var preImpliesInitial = checkInitImplication(mAnnotation.getSpecification());
 		if (preImpliesInitial == Validity.INVALID) {
 			return preImpliesInitial;
 		}
@@ -259,26 +257,41 @@ public abstract class OwickiGriesValidityCheck<T, P> {
 		return preImpliesInitial.and(checkAcceptFormula());
 	}
 
-	private Validity checkInitImplication() {
-		final IPredicate initFormula = getInitFormula();
-		final MonolithicImplicationChecker checker = new MonolithicImplicationChecker(mServices, mManagedScript);
+	private <M extends Iterable<P>> Validity checkInitImplication(final ThreadModularPrePostSpecification<P, M> spec) {
+
+		final var ghostInitialization = getGhostInitializationFormula();
 
 		Validity result = Validity.VALID;
-		for (final P place : getInitialLocations()) {
-			final var predicate = getPlacePredicate(place);
-			final var check = checker.checkImplication(initFormula, false, predicate, false);
+		for (final var initialMarking : spec.getInitialStates()) {
+			final var precondition = spec.getPrecondition(initialMarking);
+			final var check = checkInitImplication(initialMarking, precondition, ghostInitialization);
 			result = result.and(check);
-
 			if (result == Validity.INVALID) {
-				mLogger.warn("Annotation %s of initial place %s not implied by ghost variable initialization %s",
-						predicate, place, initFormula);
 				break;
 			}
 		}
 		return result;
 	}
 
-	private IPredicate getInitFormula() {
+	private Validity checkInitImplication(final Iterable<P> initialLocations, final IPredicate precondition,
+			final IPredicate ghostInitialization) {
+		Validity result = Validity.VALID;
+		for (final P place : initialLocations) {
+			final var predicate = getPlacePredicate(place);
+			final var check = mImplicationChecker.checkImplication(
+					mPredicateFactory.and(precondition, ghostInitialization), false, predicate, false);
+			result = result.and(check);
+
+			if (result == Validity.INVALID) {
+				mLogger.warn("Annotation %s of initial place %s not implied by ghost variable initialization %s",
+						predicate, place, precondition);
+				break;
+			}
+		}
+		return result;
+	}
+
+	private IPredicate getGhostInitializationFormula() {
 		final List<IPredicate> terms = new ArrayList<>();
 		for (final IProgramVar var : mAnnotation.getGhostAssignment().keySet()) {
 			terms.add(mPredicateFactory.newPredicate(
@@ -288,15 +301,21 @@ public abstract class OwickiGriesValidityCheck<T, P> {
 	}
 
 	private Validity checkAcceptFormula() {
+		final IPredicate postcondition = mAnnotation.getSpecification().getPostcondition();
+
 		Validity result = Validity.VALID;
-		for (final P place : getErrorLocations()) {
+		for (final P place : getProgramLocations()) {
+			if (!mAnnotation.getSpecification().isFinalThreadState(place)) {
+				continue;
+			}
+
 			final var predicate = getPlacePredicate(place);
-			final var check = IncrementalPlicationChecker
-					.convertLBool2Validity(SmtUtils.checkSatTerm(mScript, predicate.getFormula()));
+			final var check = mImplicationChecker.checkImplication(predicate, false, postcondition, false);
 			result = result.and(check);
 
 			if (result == Validity.INVALID) {
-				mLogger.warn("Annotation %s of error place %s is satisfiable", predicate, place);
+				mLogger.warn("Annotation %s of error place %s does not imply postcondition %s", predicate, place,
+						postcondition);
 				break;
 			}
 		}

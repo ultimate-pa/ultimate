@@ -34,6 +34,7 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
@@ -89,7 +90,7 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 
 	private final Crown<PLACE, LETTER> mCrown;
 	private final EmpireAnnotation<PLACE> mEmpireAnnotation;
-	private final OwickiGriesAnnotation<Transition<LETTER, PLACE>, PLACE> mOwickiGriesAnnotation;
+	private final OwickiGriesAnnotation<Transition<LETTER, PLACE>, PLACE, Marking<PLACE>> mOwickiGriesAnnotation;
 
 	private final Statistics mStatistics = new Statistics();
 
@@ -225,7 +226,7 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 		}) != Validity.INVALID;
 	}
 
-	private OwickiGriesAnnotation<Transition<LETTER, PLACE>, PLACE> getOwickiGriesAnnotation() {
+	private OwickiGriesAnnotation<Transition<LETTER, PLACE>, PLACE, Marking<PLACE>> getOwickiGriesAnnotation() {
 		final var annotation = mStatistics.measureOwickiGries(() -> {
 			final EmpireToOwickiGries<LETTER, PLACE> empireToOwickiGries = new EmpireToOwickiGries<>(mServices,
 					mMgdScript, mNet, mSymbolTable, mProcedures, mEmpireAnnotation);

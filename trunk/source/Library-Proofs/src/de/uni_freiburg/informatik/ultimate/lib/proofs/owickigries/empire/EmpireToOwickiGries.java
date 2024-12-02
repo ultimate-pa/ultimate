@@ -35,6 +35,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
@@ -45,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.GhostUpdate;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesAnnotation;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesConstruction;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -78,7 +80,7 @@ public class EmpireToOwickiGries<LETTER, PLACE> {
 	private final Map<Region<PLACE>, IProgramVar> mGhostVariables;
 	private final Map<Territory<PLACE>, IPredicate> mTerritoryFormulaMap = new HashMap<>();
 
-	private final OwickiGriesAnnotation<Transition<LETTER, PLACE>, PLACE> mOwickiGriesAnnotation;
+	private final OwickiGriesAnnotation<Transition<LETTER, PLACE>, PLACE, Marking<PLACE>> mOwickiGriesAnnotation;
 
 	/**
 	 * Constructs the Owicki-Gries-Annotation for empireAnnotation.
@@ -113,7 +115,8 @@ public class EmpireToOwickiGries<LETTER, PLACE> {
 		final Map<IProgramVar, Term> ghostInitAssignment = getGhostInitAssignment();
 
 		mOwickiGriesAnnotation = new OwickiGriesAnnotation<>(mSymbolTable, formulaMapping,
-				new HashSet<>(mGhostVariables.values()), ghostInitAssignment, assignmentMapping);
+				new HashSet<>(mGhostVariables.values()), ghostInitAssignment, assignmentMapping,
+				OwickiGriesConstruction.getSpecificationForPetriNet(mNet, mFactory));
 	}
 
 	/**
@@ -282,7 +285,7 @@ public class EmpireToOwickiGries<LETTER, PLACE> {
 		return new GhostUpdate(assignments);
 	}
 
-	public OwickiGriesAnnotation<Transition<LETTER, PLACE>, PLACE> getAnnotation() {
+	public OwickiGriesAnnotation<Transition<LETTER, PLACE>, PLACE, Marking<PLACE>> getAnnotation() {
 		return mOwickiGriesAnnotation;
 	}
 }

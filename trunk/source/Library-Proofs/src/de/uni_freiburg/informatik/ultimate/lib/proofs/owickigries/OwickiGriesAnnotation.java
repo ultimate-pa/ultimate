@@ -34,6 +34,8 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.IProof;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.ThreadModularPrePostSpecification;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 
@@ -52,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
  * @param <P>
  *            The type of places, or program locations, in the program model
  */
-public class OwickiGriesAnnotation<T, P> {
+public class OwickiGriesAnnotation<T, P, M extends Iterable<P>> implements IProof {
 	/**
 	 * A symbol table containing both the program symbols and the ghost variables in the annotation.
 	 */
@@ -78,6 +80,8 @@ public class OwickiGriesAnnotation<T, P> {
 	 */
 	private final Map<IProgramVar, Term> mGhostInitAssignment;
 
+	private final ThreadModularPrePostSpecification<P, M> mSpecification;
+
 	/**
 	 * Creates a new Owicki/Gries annotation.
 	 *
@@ -96,7 +100,7 @@ public class OwickiGriesAnnotation<T, P> {
 	 */
 	public OwickiGriesAnnotation(final IIcfgSymbolTable symbolTable, final Map<P, IPredicate> formulaMapping,
 			final Set<IProgramVar> ghostVariables, final Map<IProgramVar, Term> ghostInitAssignment,
-			final Map<T, GhostUpdate> assignmentMapping) {
+			final Map<T, GhostUpdate> assignmentMapping, final ThreadModularPrePostSpecification<P, M> specification) {
 		assert ghostInitAssignment.keySet().stream().allMatch(ghostVariables::contains)
 				: "Initial value only allowed for ghost variables";
 
@@ -117,6 +121,7 @@ public class OwickiGriesAnnotation<T, P> {
 		mGhostVariables = ghostVariables;
 		mGhostInitAssignment = ghostInitAssignment;
 		mAssignmentMapping = assignmentMapping;
+		mSpecification = specification;
 	}
 
 	public IIcfgSymbolTable getSymbolTable() {
@@ -174,5 +179,10 @@ public class OwickiGriesAnnotation<T, P> {
 			final String keyStr = String.format("%-" + len + "s", entry.getKey());
 			sb.append('\t').append(keyStr).append("  :  ").append(entry.getValue()).append('\n');
 		}
+	}
+
+	@Override
+	public ThreadModularPrePostSpecification<P, M> getSpecification() {
+		return mSpecification;
 	}
 }

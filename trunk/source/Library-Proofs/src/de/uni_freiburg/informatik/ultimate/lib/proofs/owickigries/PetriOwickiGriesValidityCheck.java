@@ -30,6 +30,7 @@ import java.util.Collection;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -43,7 +44,7 @@ public class PetriOwickiGriesValidityCheck<L extends IAction, P> extends OwickiG
 	private final IPetriNet<L, P> mProgram;
 
 	public PetriOwickiGriesValidityCheck(final IUltimateServiceProvider services, final IPetriNet<L, P> program,
-			final CfgSmtToolkit csToolkit, final OwickiGriesAnnotation<Transition<L, P>, P> annotation,
+			final CfgSmtToolkit csToolkit, final OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>> annotation,
 			final IPossibleInterferences<Transition<L, P>, P> possibleInterferences) {
 		super(services, csToolkit, annotation, possibleInterferences);
 		mProgram = program;
@@ -51,7 +52,7 @@ public class PetriOwickiGriesValidityCheck<L extends IAction, P> extends OwickiG
 
 	public PetriOwickiGriesValidityCheck(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final IPetriNet<L, P> program, final ModifiableGlobalsTable modifiableGlobals,
-			final OwickiGriesAnnotation<Transition<L, P>, P> annotation,
+			final OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>> annotation,
 			final IPossibleInterferences<Transition<L, P>, P> possibleInterferences) {
 		super(services, mgdScript, modifiableGlobals, annotation, possibleInterferences);
 		mProgram = program;
@@ -59,7 +60,7 @@ public class PetriOwickiGriesValidityCheck<L extends IAction, P> extends OwickiG
 
 	public PetriOwickiGriesValidityCheck(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final IHoareTripleChecker htc, final IPetriNet<L, P> program,
-			final OwickiGriesAnnotation<Transition<L, P>, P> annotation,
+			final OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>> annotation,
 			final IPossibleInterferences<Transition<L, P>, P> possibleInterferences) {
 		super(services, mgdScript, htc, annotation, possibleInterferences);
 		mProgram = program;
@@ -68,16 +69,6 @@ public class PetriOwickiGriesValidityCheck<L extends IAction, P> extends OwickiG
 	@Override
 	protected Collection<P> getProgramLocations() {
 		return mProgram.getPlaces();
-	}
-
-	@Override
-	protected Collection<P> getInitialLocations() {
-		return mProgram.getInitialPlaces();
-	}
-
-	@Override
-	protected Collection<P> getErrorLocations() {
-		return mProgram.getAcceptingPlaces();
 	}
 
 	@Override

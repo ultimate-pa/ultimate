@@ -83,11 +83,11 @@ import de.uni_freiburg.informatik.ultimate.lib.proofs.IProof;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.ProofAnnotation;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.FloydHoareUtils;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.FloydHoareValidityCheck.MissingAnnotationBehaviour;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.IFloydHoareAnnotation;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.IcfgFloydHoareValidityCheck;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.GhostUpdate;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.IPossibleInterferences;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesAnnotation;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.IFloydHoareAnnotation;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.IcfgFloydHoareValidityCheck;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.ICopyActionFactory;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -273,7 +273,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 					final var proofObj = result.getProof();
 					if (proofObj instanceof Triple<?, ?, ?>) {
 						final var triple =
-								(Triple<IPetriNet<L, IPredicate>, OwickiGriesAnnotation<Transition<L, IPredicate>, IPredicate>, IPossibleInterferences<Transition<L, IPredicate>, IPredicate>>) proofObj;
+								(Triple<IPetriNet<L, IPredicate>, OwickiGriesAnnotation<Transition<L, IPredicate>, IPredicate, ?>, IPossibleInterferences<Transition<L, IPredicate>, IPredicate>>) proofObj;
 						final var net = triple.getFirst();
 						final var og = triple.getSecond();
 						final var interf = triple.getThird();

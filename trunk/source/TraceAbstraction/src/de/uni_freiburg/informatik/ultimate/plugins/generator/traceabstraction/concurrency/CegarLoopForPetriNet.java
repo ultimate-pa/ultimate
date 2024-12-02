@@ -608,7 +608,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 
 	// TODO #proofRefactor Wrap in an IProofProducer implementation
 	protected
-			Triple<IPetriNet<L, IPredicate>, OwickiGriesAnnotation<Transition<L, IPredicate>, IPredicate>, IPossibleInterferences<Transition<L, IPredicate>, IPredicate>>
+			Triple<IPetriNet<L, IPredicate>, OwickiGriesAnnotation<Transition<L, IPredicate>, IPredicate, Marking<IPredicate>>, IPossibleInterferences<Transition<L, IPredicate>, IPredicate>>
 			computeOwickiGriesAnnotation() throws PetriNetNot1SafeException {
 		if (mPref.applyOneShotLbe()) {
 			// TODO this should be moved somewhere else, it's not the responsibility of this CEGAR loop
