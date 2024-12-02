@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.AssertOrderInsideLoopFirst1;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.AssertOrderMixInsideOutside;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.AssertOrderNotIncrementally;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.AssertOrderOutsideLoopFirst1;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.AssertOrderOutsideLoopFirst2;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.AssertOrderSmallConstantsFirst;
@@ -92,6 +93,8 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 
 	private IAssertOrder<L> getAssertOrder(final AssertCodeBlockOrder order) {
 		switch (order.getAssertCodeBlockOrderType()) {
+		case NOT_INCREMENTALLY:
+			return new AssertOrderNotIncrementally<>();
 		case OUTSIDE_LOOP_FIRST1:
 			return new AssertOrderOutsideLoopFirst1<>();
 		case OUTSIDE_LOOP_FIRST2:
