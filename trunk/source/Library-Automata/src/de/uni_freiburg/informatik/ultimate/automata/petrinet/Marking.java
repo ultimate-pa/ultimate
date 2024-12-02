@@ -193,4 +193,8 @@ public class Marking<PLACE> implements Iterable<PLACE>, Serializable {
 	public ImmutableSet<PLACE> getPlaces() {
 		return mPlaces;
 	}
+
+	public static <P> Marking<P> initial(final IPetriNetSuccessorProvider<?, P> petriNet) {
+		return new Marking<>(ImmutableSet.copyOf(petriNet.getInitialPlaces()));
+	}
 }

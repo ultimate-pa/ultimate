@@ -36,7 +36,6 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
  * Given stem and loop events of supposed accepting lasso word, if valid, {@link PetriNetLassoRun} is built.
@@ -73,7 +72,7 @@ public class Events2PetriNetLassoRunBuchi<LETTER, PLACE> {
 		final List<Transition<LETTER, PLACE>> loopTransitions =
 				mConfigLoopPart.stream().map(Event::getTransition).collect(Collectors.toList());
 
-		final Marking<PLACE> startMarking = new Marking<>(ImmutableSet.of(mUnfolding.getNet().getInitialPlaces()));
+		final Marking<PLACE> startMarking = Marking.initial(mUnfolding.getNet());
 
 		final PetriNetRun<LETTER, PLACE> stemRun = constructRun(startMarking, stemTransitions);
 		final PetriNetRun<LETTER, PLACE> loopRun =

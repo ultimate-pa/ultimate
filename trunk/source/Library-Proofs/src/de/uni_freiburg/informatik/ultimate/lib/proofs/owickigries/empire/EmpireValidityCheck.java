@@ -49,7 +49,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -97,7 +96,7 @@ public class EmpireValidityCheck<PLACE, LETTER extends IAction> {
 	private Validity checkValidity() {
 
 		final Set<Pair<Territory<PLACE>, IPredicate>> initialTerritories =
-				mEmpireAnnotation.getMarkingTerritories(new Marking<>(ImmutableSet.copyOf(mNet.getInitialPlaces())));
+				mEmpireAnnotation.getMarkingTerritories(Marking.initial(mNet));
 		if (checkInitialTerritories(initialTerritories) != Validity.VALID) {
 			return Validity.INVALID;
 		}

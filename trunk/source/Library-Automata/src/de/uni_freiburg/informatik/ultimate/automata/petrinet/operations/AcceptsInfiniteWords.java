@@ -39,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeExc
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -95,7 +94,7 @@ public abstract class AcceptsInfiniteWords<LETTER, PLACE>
 			throws PetriNetNot1SafeException {
 		super(services);
 		mOperand = operand;
-		mInitialMarking = new Marking<>(ImmutableSet.of(operand.getInitialPlaces()));
+		mInitialMarking = Marking.initial(operand);
 		mLassoWord = word;
 		mFireSequenceTreeMarkings = new HashSet<>();
 		mFireSequenceIndex = 0;

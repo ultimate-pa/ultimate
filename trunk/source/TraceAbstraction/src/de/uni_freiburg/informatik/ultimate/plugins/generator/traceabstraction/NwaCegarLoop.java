@@ -119,7 +119,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RelevanceAnalysisMode;
 import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
@@ -615,7 +614,7 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 		// Mark all reachable markings that do not have an assertion yet with TRUE.
 		final var stack = new ArrayDeque<Marking<IPredicate>>();
 		final var visited = new HashSet<>();
-		final var initialMarking = new Marking<>(ImmutableSet.of(mPetriNet.getInitialPlaces()));
+		final var initialMarking = Marking.initial(mPetriNet);
 		stack.push(initialMarking);
 		while (!stack.isEmpty()) {
 			final var src = stack.pop();

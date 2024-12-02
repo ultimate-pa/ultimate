@@ -38,7 +38,6 @@ import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.util.BFSIterator;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -61,12 +60,8 @@ public class EnumerateRuns {
 		private final IPetriNet<L, P> mNet;
 
 		public RunEnumerator(final IPetriNet<L, P> net) {
-			super(List.of(getInitialMarking(net)));
+			super(List.of(Marking.initial(net)));
 			mNet = net;
-		}
-
-		private static <P> Marking<P> getInitialMarking(final IPetriNet<?, P> net) {
-			return new Marking<>(ImmutableSet.copyOf(net.getInitialPlaces()));
 		}
 
 		@Override

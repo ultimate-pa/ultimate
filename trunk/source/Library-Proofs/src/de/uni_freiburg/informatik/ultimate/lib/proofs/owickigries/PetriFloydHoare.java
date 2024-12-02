@@ -97,7 +97,7 @@ public class PetriFloydHoare<L, P> {
 
 		// wrap the map in a FloydHoareMapping, together with the proven specification
 		final var falsePred = mFactory.or();
-		final var initialMarking = getInitialMarking(program);
+		final var initialMarking = Marking.initial(program);
 		final var spec = new PrePostConditionSpecification<>(Map.of(initialMarking, mFactory.and()),
 				program::isAccepting, falsePred);
 		mFloydHoareAnnotation = new FloydHoareMapping<>(spec, mMarkingMap, falsePred);
@@ -126,7 +126,7 @@ public class PetriFloydHoare<L, P> {
 		final var result = new LinkedHashSet<Marking<P>>();
 		final var worklist = new ArrayDeque<Marking<P>>();
 
-		final var initialMarking = getInitialMarking(net);
+		final var initialMarking = Marking.initial(net);
 		worklist.push(initialMarking);
 
 		while (!worklist.isEmpty()) {
@@ -222,9 +222,5 @@ public class PetriFloydHoare<L, P> {
 			}
 		}
 		return false;
-	}
-
-	private static <P> Marking<P> getInitialMarking(final IPetriNet<?, P> net) {
-		return new Marking<>(ImmutableSet.of(net.getInitialPlaces()));
 	}
 }
