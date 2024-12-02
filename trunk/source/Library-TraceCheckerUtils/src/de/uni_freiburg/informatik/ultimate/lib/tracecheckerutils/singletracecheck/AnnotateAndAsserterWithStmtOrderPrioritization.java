@@ -41,6 +41,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -106,31 +107,12 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 	}
 
 	/**
-	 * Returns a set of integers containing the values {lowerBound, lowerBound + 1, ..., upperBound - 1}.
+	 * Returns a set of indices that represents all statements that is present in {@code trace}, but not in
+	 * {@code statementIndices}.
 	 */
-	private static Set<Integer> getSetOfIntegerForGivenInterval(final int lowerBound, final int upperBound) {
-		final Set<Integer> result = new HashSet<>();
-		for (int i = lowerBound; i < upperBound; i++) {
-			result.add(i);
-		}
-		return result;
-	}
-
-	/**
-	 * Returns the set difference between first set and the second set.
-	 */
-	private static Set<Integer> integerSetDifference(final Set<Integer> firstSet, final Set<Integer> secondSet) {
-		if (secondSet.isEmpty()) {
-			return firstSet;
-		}
-
-		final Set<Integer> result = new HashSet<>();
-		for (final Integer i : firstSet) {
-			if (!secondSet.contains(i)) {
-				result.add(i);
-			}
-		}
-		return result;
+	private static Set<Integer> getTraceDifference(final NestedWord<?> trace, final Set<Integer> statementIndices) {
+		return IntStream.range(0, trace.length()).boxed().filter(x -> !statementIndices.contains(x))
+				.collect(Collectors.toSet());
 	}
 
 	/**
@@ -245,8 +227,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 		// If the statements outside of a loop are not unsatisfiable, then annotate and assert also
 		// the rest of the statements
 		if (sat != LBool.UNSAT && stmtsOutsideOfLoop.size() != mTrace.length()) {
-			final Set<Integer> integersFromTrace = getSetOfIntegerForGivenInterval(0, mTrace.length());
-			final Set<Integer> stmtsWithinLoop = integerSetDifference(integersFromTrace, stmtsOutsideOfLoop);
+			final Set<Integer> stmtsWithinLoop = getTraceDifference(mTrace, stmtsOutsideOfLoop);
 			buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(mTrace, callPositions, stmtsWithinLoop, false);
 			assert callPositions.containsAll(mTrace.getCallPositions());
 			assert mTrace.getCallPositions().containsAll(callPositions);
@@ -403,8 +384,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 			return sat;
 		}
 		// Then assert the rest of statements
-		final Set<Integer> remainingStmts =
-				integerSetDifference(getSetOfIntegerForGivenInterval(0, trace.length()), stmtsToAssert);
+		final Set<Integer> remainingStmts = getTraceDifference(trace, stmtsToAssert);
 		buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(trace, callPositions, remainingStmts, false);
 		sat = mMgdScriptTc.getScript().checkSat();
 		// Report benchmarks
