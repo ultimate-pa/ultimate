@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.As
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.AssertOrderShuffledSingletons;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.AssertOrderSmallConstantsFirst;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.AssertOrderSmtFeatureHeuristic;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.AssertOrderWitnessHierarchical;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.IAssertOrder;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -78,6 +79,8 @@ public class AnnotateAndAsserter<L extends IAction> {
 	private int mCheckSat;
 	private int mAssertedStatements;
 
+	private static final boolean USE_WITNESS_ASSERT_ORDER = true;
+
 	public AnnotateAndAsserter(final ManagedScript mgdScriptTc, final NestedFormulas<L, Term, Term> nestedSSA,
 			final AnnotateAndAssertCodeBlocks<L> aaacb, final TraceCheckStatisticsGenerator tcbg,
 			final AssertCodeBlockOrder assertCodeBlocksOrder, final IUltimateServiceProvider services) {
@@ -102,8 +105,11 @@ public class AnnotateAndAsserter<L extends IAction> {
 		// Report benchmark
 		mTcbg.reportNewCodeBlocks(mSSA.getCounterexample().length());
 
-		final List<Set<Integer>> partitions =
-				getAssertOrder(mAssertCodeBlocksOrder).partition(mSSA.getCounterexample());
+		IAssertOrder<L> assertOrder = getAssertOrder(mAssertCodeBlocksOrder);
+		if (USE_WITNESS_ASSERT_ORDER) {
+			assertOrder = new AssertOrderWitnessHierarchical<>(assertOrder);
+		}
+		final List<Set<Integer>> partitions = assertOrder.partition(mSSA.getCounterexample());
 
 		mLogger.info(String.format("Assert order %s partitioned %s statements into %s equivalence classes.",
 				mAssertCodeBlocksOrder, mSSA.getCounterexample().length(), partitions.size()));
