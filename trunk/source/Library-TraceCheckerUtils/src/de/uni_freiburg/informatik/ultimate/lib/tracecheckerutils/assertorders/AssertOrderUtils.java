@@ -33,6 +33,9 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashTreeRelation;
@@ -112,5 +115,13 @@ public class AssertOrderUtils {
 			s.add(stmtPos);
 			depth2Statements.put(depth, s);
 		}
+	}
+
+	public static <L extends IAction> boolean isWitnessAction(final L action) {
+		if (!(action instanceof final IElement element)) {
+			return false;
+		}
+		final Check check = Check.getAnnotation(element);
+		return check != null && check.getSpec().contains(Spec.WITNESS_INVARIANT);
 	}
 }
