@@ -100,6 +100,11 @@ public class TraceCheckReasonUnknown {
 		 * SMTInterpol does not support const arrays of finite types.
 		 */
 		UNSUPPORTED_FINITE_CONST_ARRAYS,
+
+		/**
+		 * MathSAT does not support roundNearestTiesToAway as rounding mode.
+		 */
+		MATHSAT_ROUNDINGMODE,
 	}
 
 	/**
@@ -266,6 +271,10 @@ public class TraceCheckReasonUnknown {
 		} else if (message.equals(SMTINTERPOL_CONST_FINITE_MESSAGE)) {
 			// SMTInterpol does not support const arrays for finite types
 			reason = Reason.UNSUPPORTED_FINITE_CONST_ARRAYS;
+			exceptionCategory = ExceptionHandlingCategory.KNOWN_IGNORE;
+		} else if (message.contains("unknown symbol: roundNearestTiesToAway")) {
+			// MathSAT does not support roundNearestTiesToAway as rounding mode
+			reason = Reason.MATHSAT_ROUNDINGMODE;
 			exceptionCategory = ExceptionHandlingCategory.KNOWN_IGNORE;
 		} else {
 			reason = Reason.SOLVER_CRASH_OTHER;
