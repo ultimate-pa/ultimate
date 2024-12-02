@@ -189,15 +189,18 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 			mSatisfiable = annotateAndAssert(mTrace, callPositions,
 					partitionOutsideLoopFirst1(mTrace, mControlConfigurationSequence));
 		} else if (orderType == AssertCodeBlockOrderType.OUTSIDE_LOOP_FIRST2) {
-			mSatisfiable = annotateAndAssertOutsideLoopFirst2(mTrace, mControlConfigurationSequence, callPositions);
+			mSatisfiable = annotateAndAssert(mTrace, callPositions,
+					partitionOutsideLoopFirst2(mTrace, mControlConfigurationSequence));
 		} else if (orderType == AssertCodeBlockOrderType.INSIDE_LOOP_FIRST1) {
-			mSatisfiable = annotateAndAssertInsideLoopFirst1(mTrace, mControlConfigurationSequence, callPositions);
+			mSatisfiable = annotateAndAssert(mTrace, callPositions,
+					partitionInsideLoopFirst1(mTrace, mControlConfigurationSequence));
 		} else if (orderType == AssertCodeBlockOrderType.MIX_INSIDE_OUTSIDE) {
-			mSatisfiable = annotateAndAssertMixInsideOutside(mTrace, mControlConfigurationSequence, callPositions);
+			mSatisfiable = annotateAndAssert(mTrace, callPositions,
+					partitionMixInsideOutside(mTrace, mControlConfigurationSequence));
 		} else if (orderType == AssertCodeBlockOrderType.TERMS_WITH_SMALL_CONSTANTS_FIRST) {
-			mSatisfiable = annotateAndAssertTermsWithSmallConstantsFirst(mTrace, callPositions);
+			mSatisfiable = annotateAndAssert(mTrace, callPositions, partitionSmallConstantsFirst(mTrace));
 		} else if (orderType == AssertCodeBlockOrderType.SMT_FEATURE_HEURISTIC) {
-			mSatisfiable = annotateAndAssertStmtsSmtFeatureHeuristic(mTrace, callPositions);
+			mSatisfiable = annotateAndAssert(mTrace, callPositions, partitionSmtFeatureHeuristic(mTrace));
 		} else {
 			throw new AssertionError("unknown heuristic " + mAssertCodeBlocksOrder);
 		}
@@ -224,10 +227,6 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 		return sat;
 	}
 
-	private void countCheckSat() {
-		mCheckSat++;
-	}
-
 	private List<Set<Integer>> partitionOutsideLoopFirst1(final NestedWord<L> trace,
 			final List<Object> controlConfigurationSequence) {
 		final HashTreeRelation<Object, Integer> rwt =
@@ -244,75 +243,41 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 		return List.of(stmtsOutsideOfLoop, stmtsWithinLoop);
 	}
 
-	private LBool annotateAndAssertOutsideLoopFirst2(final NestedWord<? extends IAction> trace,
-			final List<Object> controlConfigurationSequence, final Collection<Integer> callPositions) {
+	private List<Set<Integer>> partitionOutsideLoopFirst2(final NestedWord<L> trace,
+			final List<Object> controlConfigurationSequence) {
 		final HashTreeRelation<Object, Integer> rwt =
 				computeRelationWithTreeSetForTrace(0, trace.length(), controlConfigurationSequence);
 		final Map<Integer, Set<Integer>> depth2Statements =
 				partitionStatementsAccordingDepth(trace, rwt, controlConfigurationSequence);
-		final List<Integer> keysInSortedOrder = new ArrayList<>(depth2Statements.keySet());
-		Collections.sort(keysInSortedOrder);
-		LBool sat = null;
-		boolean isFirstIteration = true;
-		for (final Integer key : keysInSortedOrder) {
-			buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(trace, callPositions, depth2Statements.get(key),
-					isFirstIteration);
-			countCheckSat();
-			sat = mMgdScriptTc.getScript().checkSat();
-			// Report benchmarks
-			mTcbg.reportNewCheckSat();
-			mTcbg.reportNewAssertedCodeBlocks(depth2Statements.get(key).size());
-			if (sat == LBool.UNSAT) {
-				return sat;
-			}
-			isFirstIteration = false;
-		}
-		return sat;
+		return depth2Statements.keySet().stream().sorted().map(depth2Statements::get).toList();
 	}
 
 	/**
 	 * See class description!
 	 */
-	private LBool annotateAndAssertInsideLoopFirst1(final NestedWord<? extends IAction> trace,
-			final List<Object> controlConfigurationSequence, final Collection<Integer> callPositions) {
+	private List<Set<Integer>> partitionInsideLoopFirst1(final NestedWord<L> trace,
+			final List<Object> controlConfigurationSequence) {
 		final HashTreeRelation<Object, Integer> rwt =
 				computeRelationWithTreeSetForTrace(0, trace.length(), controlConfigurationSequence);
 		final Map<Integer, Set<Integer>> depth2Statements =
 				partitionStatementsAccordingDepth(trace, rwt, controlConfigurationSequence);
-		final List<Integer> keysInDescendingOrder = new ArrayList<>(depth2Statements.keySet());
-		Collections.sort(keysInDescendingOrder, (i1, i2) -> i2.compareTo(i1));
-		LBool sat = null;
-		boolean isFirstIteration = true;
-		for (final Integer key : keysInDescendingOrder) {
-			buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(trace, callPositions, depth2Statements.get(key),
-					isFirstIteration);
-			countCheckSat();
-			sat = mMgdScriptTc.getScript().checkSat();
-			// Report benchmarks
-			mTcbg.reportNewCheckSat();
-			mTcbg.reportNewAssertedCodeBlocks(depth2Statements.get(key).size());
-			if (sat == LBool.UNSAT) {
-				return sat;
-			}
-			isFirstIteration = false;
-		}
-		return sat;
+		return depth2Statements.keySet().stream().sorted((i1, i2) -> i2.compareTo(i1)).map(depth2Statements::get)
+				.toList();
 	}
 
 	/**
 	 * See class description!
 	 */
-	private LBool annotateAndAssertMixInsideOutside(final NestedWord<? extends IAction> trace,
-			final List<Object> controlConfigurationSequence, final Collection<Integer> callPositions) {
+	private List<Set<Integer>> partitionMixInsideOutside(final NestedWord<? extends IAction> trace,
+			final List<Object> controlConfigurationSequence) {
 		final HashTreeRelation<Object, Integer> rwt =
 				computeRelationWithTreeSetForTrace(0, trace.length(), controlConfigurationSequence);
 		final Map<Integer, Set<Integer>> depth2Statements =
 				partitionStatementsAccordingDepth(trace, rwt, controlConfigurationSequence);
 		final LinkedList<Integer> depthAsQueue = new LinkedList<>(depth2Statements.keySet());
 		Collections.sort(depthAsQueue);
-		LBool sat = null;
+		final List<Set<Integer>> result = new ArrayList<>(depth2Statements.size());
 		boolean removeFirst = true;
-		boolean isFirstIteration = true;
 		while (!depthAsQueue.isEmpty()) {
 			int currentDepth = 0;
 			if (removeFirst) {
@@ -321,19 +286,9 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 				currentDepth = depthAsQueue.removeLast();
 			}
 			removeFirst = !removeFirst;
-			buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(trace, callPositions, depth2Statements.get(currentDepth),
-					isFirstIteration);
-			countCheckSat();
-			sat = mMgdScriptTc.getScript().checkSat();
-			// Report benchmarks
-			mTcbg.reportNewCheckSat();
-			mTcbg.reportNewAssertedCodeBlocks(depth2Statements.get(currentDepth).size());
-			if (sat == LBool.UNSAT) {
-				return sat;
-			}
-			isFirstIteration = false;
+			result.add(depth2Statements.get(currentDepth));
 		}
-		return sat;
+		return result;
 	}
 
 	/**
@@ -386,27 +341,12 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 	/**
 	 * See class description!
 	 */
-	private LBool annotateAndAssertTermsWithSmallConstantsFirst(final NestedWord<? extends IAction> trace,
-			final Collection<Integer> callPositions) {
+	private List<Set<Integer>> partitionSmallConstantsFirst(final NestedWord<? extends IAction> trace) {
 		// Choose statements that contains only constants <= constantSize and assert them
 		final int constantSize = 10;
-		final Set<Integer> stmtsToAssert = partitionStmtsAccordingToConstantSize(trace, constantSize);
-		buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(trace, callPositions, stmtsToAssert, true);
-		LBool sat = mMgdScriptTc.getScript().checkSat();
-		// Report benchmarks
-		mTcbg.reportNewCheckSat();
-		mTcbg.reportNewAssertedCodeBlocks(stmtsToAssert.size());
-		if (sat == LBool.UNSAT) {
-			return sat;
-		}
+		final Set<Integer> stmtsWithSmallConstant = partitionStmtsAccordingToConstantSize(trace, constantSize);
 		// Then assert the rest of statements
-		final Set<Integer> remainingStmts = getTraceDifference(trace, stmtsToAssert);
-		buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(trace, callPositions, remainingStmts, false);
-		sat = mMgdScriptTc.getScript().checkSat();
-		// Report benchmarks
-		mTcbg.reportNewCheckSat();
-		mTcbg.reportNewAssertedCodeBlocks(remainingStmts.size());
-		return sat;
+		return List.of(stmtsWithSmallConstant, getTraceDifference(trace, stmtsWithSmallConstant));
 	}
 
 	// Function to score a trace, using the SMTFeatureExtractionTermClassifier.
@@ -497,7 +437,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 	}
 
 	// Function to partition a list of Terms according to their scores.
-	private LinkedHashSet<LinkedHashSet<Integer>>
+	private List<Set<Integer>>
 			partitionStmtsAccordingToTermScores(final List<Triple<Term, Double, Integer>> termScoreIndexTriples) {
 		final LinkedHashSet<LinkedHashSet<Integer>> partitions = new LinkedHashSet<>();
 		final SmtFeatureHeuristicPartitioningType partitioningType =
@@ -512,40 +452,20 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 		default:
 			throw new UnsupportedOperationException("Unknown partitioning type " + partitioningType);
 		}
-		return partitions;
-	}
-
-	private LBool annotateAndAssertStmtsSmtFeatureHeuristic(final NestedWord<? extends IAction> trace,
-			final Collection<Integer> callPositions) {
-		LBool sat = LBool.UNKNOWN;
-		// Score Trace Terms and order them according to score.
-		final List<Triple<Term, Double, Integer>> termScoreTriples = scoreTrace(trace);
-		final LinkedHashSet<LinkedHashSet<Integer>> partitions = partitionStmtsAccordingToTermScores(termScoreTriples);
+		assert !partitions.isEmpty();
 		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("Trace: " + trace.toString());
-			mLogger.debug("TermScoreTriples: " + termScoreTriples.toString());
+			mLogger.debug("TermScoreTriples: " + termScoreIndexTriples.toString());
 			mLogger.debug("Partitions: " + partitions.toString());
 		}
+		return new ArrayList<>(partitions);
+	}
 
-		assert !partitions.isEmpty();
-
-		boolean isFirstIteration = true;
-		for (final LinkedHashSet<Integer> partition : partitions) {
-			if (mLogger.isDebugEnabled()) {
-				mLogger.debug("Checking partition " + partition);
-			}
-			buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(trace, callPositions, partition, isFirstIteration);
-			countCheckSat();
-			sat = mMgdScriptTc.getScript().checkSat();
-			// Report benchmarks
-			mTcbg.reportNewCheckSat();
-			mTcbg.reportNewAssertedCodeBlocks(partition.size());
-			if (sat == LBool.UNSAT) {
-				return sat;
-			}
-			isFirstIteration = false;
+	private List<Set<Integer>> partitionSmtFeatureHeuristic(final NestedWord<? extends IAction> trace) {
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Trace: " + trace.toString());
 		}
-		return sat;
+		// Score Trace Terms and order them according to score.
+		return partitionStmtsAccordingToTermScores(scoreTrace(trace));
 	}
 
 	/**
