@@ -173,8 +173,6 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 	@Override
 	public void buildAnnotatedSsaAndAssertTerms() {
 		assert mCheckSat == 0 : "You should not call this method twice";
-		final HashTreeRelation<Object, Integer> rwt =
-				computeRelationWithTreeSetForTrace(0, mTrace.length(), mControlConfigurationSequence);
 
 		mAnnotSSA = new ModifiableNestedFormulas<>(mSSA.getCounterexample(), new TreeMap<Integer, Term>());
 
@@ -182,21 +180,19 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 		mAnnotSSA.setPostcondition(mAnnotateAndAssertCodeBlocks.annotateAndAssertPostcondition());
 		final Collection<Integer> callPositions = new ArrayList<>();
 
-		final Map<Integer, Set<Integer>> depth2Statements =
-				partitionStatementsAccordingDepth(mTrace, rwt, mControlConfigurationSequence);
 		// Report benchmark
 		mTcbg.reportNewCodeBlocks(mTrace.length());
 
 		final AssertCodeBlockOrderType orderType = mAssertCodeBlocksOrder.getAssertCodeBlockOrderType();
 
 		if (orderType == AssertCodeBlockOrderType.OUTSIDE_LOOP_FIRST1) {
-			mSatisfiable = annotateAndAssertOutsideLoopFirst1(mTrace, callPositions, depth2Statements);
+			mSatisfiable = annotateAndAssertOutsideLoopFirst1(mTrace, mControlConfigurationSequence, callPositions);
 		} else if (orderType == AssertCodeBlockOrderType.OUTSIDE_LOOP_FIRST2) {
-			mSatisfiable = annotateAndAssertOutsideLoopFirst2(mTrace, callPositions, depth2Statements);
+			mSatisfiable = annotateAndAssertOutsideLoopFirst2(mTrace, mControlConfigurationSequence, callPositions);
 		} else if (orderType == AssertCodeBlockOrderType.INSIDE_LOOP_FIRST1) {
-			mSatisfiable = annotateAndAssertInsideLoopFirst1(mTrace, callPositions, depth2Statements);
+			mSatisfiable = annotateAndAssertInsideLoopFirst1(mTrace, mControlConfigurationSequence, callPositions);
 		} else if (orderType == AssertCodeBlockOrderType.MIX_INSIDE_OUTSIDE) {
-			mSatisfiable = annotateAndAssertMixInsideOutside(mTrace, callPositions, depth2Statements);
+			mSatisfiable = annotateAndAssertMixInsideOutside(mTrace, mControlConfigurationSequence, callPositions);
 		} else if (orderType == AssertCodeBlockOrderType.TERMS_WITH_SMALL_CONSTANTS_FIRST) {
 			mSatisfiable = annotateAndAssertTermsWithSmallConstantsFirst(mTrace, callPositions);
 		} else if (orderType == AssertCodeBlockOrderType.SMT_FEATURE_HEURISTIC) {
@@ -212,8 +208,12 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 		mCheckSat++;
 	}
 
-	private LBool annotateAndAssertOutsideLoopFirst1(final NestedWord<L> trace, final Collection<Integer> callPositions,
-			final Map<Integer, Set<Integer>> depth2Statements) {
+	private LBool annotateAndAssertOutsideLoopFirst1(final NestedWord<L> trace, final List<Object> controlConfigurationSequence,
+			final Collection<Integer> callPositions) {
+		final HashTreeRelation<Object, Integer> rwt =
+				computeRelationWithTreeSetForTrace(0, trace.length(), controlConfigurationSequence);
+		final Map<Integer, Set<Integer>> depth2Statements =
+				partitionStatementsAccordingDepth(trace, rwt, controlConfigurationSequence);
 		// Statements outside of a loop have depth 0.
 		final Set<Integer> stmtsOutsideOfLoop = depth2Statements.get(0);
 		// First, annotate and assert the statements, which doesn't occur within a loop
@@ -241,7 +241,11 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 	}
 
 	private LBool annotateAndAssertOutsideLoopFirst2(final NestedWord<? extends IAction> trace,
-			final Collection<Integer> callPositions, final Map<Integer, Set<Integer>> depth2Statements) {
+			final List<Object> controlConfigurationSequence, final Collection<Integer> callPositions) {
+		final HashTreeRelation<Object, Integer> rwt =
+				computeRelationWithTreeSetForTrace(0, trace.length(), controlConfigurationSequence);
+		final Map<Integer, Set<Integer>> depth2Statements =
+				partitionStatementsAccordingDepth(trace, rwt, controlConfigurationSequence);
 		final List<Integer> keysInSortedOrder = new ArrayList<>(depth2Statements.keySet());
 		Collections.sort(keysInSortedOrder);
 		LBool sat = null;
@@ -266,7 +270,11 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 	 * See class description!
 	 */
 	private LBool annotateAndAssertInsideLoopFirst1(final NestedWord<? extends IAction> trace,
-			final Collection<Integer> callPositions, final Map<Integer, Set<Integer>> depth2Statements) {
+			final List<Object> controlConfigurationSequence, final Collection<Integer> callPositions) {
+		final HashTreeRelation<Object, Integer> rwt =
+				computeRelationWithTreeSetForTrace(0, trace.length(), controlConfigurationSequence);
+		final Map<Integer, Set<Integer>> depth2Statements =
+				partitionStatementsAccordingDepth(trace, rwt, controlConfigurationSequence);
 		final List<Integer> keysInDescendingOrder = new ArrayList<>(depth2Statements.keySet());
 		Collections.sort(keysInDescendingOrder, (i1, i2) -> i2.compareTo(i1));
 		LBool sat = null;
@@ -291,7 +299,11 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization<L extends IAction> e
 	 * See class description!
 	 */
 	private LBool annotateAndAssertMixInsideOutside(final NestedWord<? extends IAction> trace,
-			final Collection<Integer> callPositions, final Map<Integer, Set<Integer>> depth2Statements) {
+			final List<Object> controlConfigurationSequence, final Collection<Integer> callPositions) {
+		final HashTreeRelation<Object, Integer> rwt =
+				computeRelationWithTreeSetForTrace(0, trace.length(), controlConfigurationSequence);
+		final Map<Integer, Set<Integer>> depth2Statements =
+				partitionStatementsAccordingDepth(trace, rwt, controlConfigurationSequence);
 		final LinkedList<Integer> depthAsQueue = new LinkedList<>(depth2Statements.keySet());
 		Collections.sort(depthAsQueue);
 		LBool sat = null;
