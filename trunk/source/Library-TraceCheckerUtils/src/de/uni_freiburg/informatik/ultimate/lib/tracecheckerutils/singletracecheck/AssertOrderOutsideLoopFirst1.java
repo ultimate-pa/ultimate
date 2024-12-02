@@ -5,9 +5,10 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashTreeRelation;
 
-public class AssertOrderOutsideLoopFirst1<L> extends AssertOrder<L> {
+public class AssertOrderOutsideLoopFirst1<L extends IAction> extends AssertOrder<L> {
 	@Override
 	public List<Set<Integer>> partitionTrace(final NestedWord<L> trace,
 			final List<Object> controlConfigurationSequence) {
