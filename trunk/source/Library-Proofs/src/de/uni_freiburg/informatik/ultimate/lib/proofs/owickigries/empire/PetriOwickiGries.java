@@ -149,10 +149,9 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 			assert mode == EmpireComputationMode.SYMBOLIC_EXECUTION;
 			mCrown = null;
 
-			final var placesCorelation = new PlacesCoRelation<>(mBp);
 			final var implicationChecker = new MonolithicImplicationChecker(services, mgdScript);
 			final var htc = new MonolithicHoareTripleChecker(mgdScript, modifiableGlobals);
-			final var computation = getEmpireComputation(placeToAssertion, placesCorelation, implicationChecker, htc);
+			final var computation = getEmpireComputation(placeToAssertion, implicationChecker, htc);
 			mEmpireAnnotation = computation.getEmpire();
 		}
 		assert checkEmpireValidity() : "Empire annotation is invalid";
@@ -209,9 +208,9 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 	}
 
 	private EmpireComputation<LETTER, PLACE> getEmpireComputation(final Function<PLACE, IPredicate> placeToAssertion,
-			final PlacesCoRelation<PLACE> placesCoRelation, final MonolithicImplicationChecker implicationChecker,
-			final MonolithicHoareTripleChecker mhc) {
-		final var computation = new EmpireComputation<>(mServices, mFactory, mNet, placesCoRelation, placeToAssertion,
+			final MonolithicImplicationChecker implicationChecker, final MonolithicHoareTripleChecker mhc) {
+		final var placesCorelation = new PlacesCoRelation<>(mBp);
+		final var computation = new EmpireComputation<>(mServices, mFactory, mNet, placesCorelation, placeToAssertion,
 				mProduct, mhc, implicationChecker);
 		mStatistics.reportEmpireStatistics(computation);
 		return computation;

@@ -73,6 +73,12 @@ public class EmpireComputation<L, P> {
 	private final EmpireAnnotation<P> mEmpire;
 	private final Map<IPredicate, Set<P>> mPredicatePlacesMap;
 
+	public enum SuccessorComputationMode {
+		CO_RELATION, NO_CORELATION
+	}
+
+	private final SuccessorComputationMode mMode;
+
 	public EmpireComputation(final IUltimateServiceProvider services, final BasicPredicateFactory predicateFactory,
 			final IPetriNet<L, P> net, final PlacesCoRelation<P> coRelation,
 			final Function<P, IPredicate> assertionPlace2Predicate,
@@ -85,6 +91,35 @@ public class EmpireComputation<L, P> {
 		mNet = net;
 		mProduct = product;
 		mCoRelation = coRelation;
+		mMode = SuccessorComputationMode.CO_RELATION;
+
+		mFactory = predicateFactory;
+		mHc = hoareTripleChecker;
+		mImplicationChecker = implicationChecker;
+		mPlaceToPredicate = assertionPlace2Predicate;
+
+		final var mTerrPlacePairs = symbolicExecution();
+		final var territorySetPairs = mTerrPlacePairs.stream().map(p -> new Pair<>(p.getFirst(), Set.of(p.getSecond())))
+				.collect(Collectors.toSet());
+		final var postProcessing = new PostProcessing<>(services, territorySetPairs, predicateFactory,
+				implicationChecker, assertionPlace2Predicate);
+		final var processedPairs = postProcessing.getProcessedPairs();
+		mPredicatePlacesMap = postProcessing.getPredicatePlacesMap();
+		mEmpire = new EmpireAnnotation<>(processedPairs);
+	}
+
+	public EmpireComputation(final IUltimateServiceProvider services, final BasicPredicateFactory predicateFactory,
+			final IPetriNet<L, P> net, final Function<P, IPredicate> assertionPlace2Predicate,
+			final INwaOutgoingLetterAndTransitionProvider<L, P> product,
+			final MonolithicHoareTripleChecker hoareTripleChecker,
+			final MonolithicImplicationChecker implicationChecker) {
+		mLogger = services.getLoggingService().getLogger(getClass());
+		mLogger.setLevel(LogLevel.ERROR);
+
+		mNet = net;
+		mProduct = product;
+		mCoRelation = null;
+		mMode = SuccessorComputationMode.NO_CORELATION;
 
 		mFactory = predicateFactory;
 		mHc = hoareTripleChecker;
@@ -323,6 +358,9 @@ public class EmpireComputation<L, P> {
 			extendedRegions.add(new Region<>(ImmutableSet.of(DataStructureUtils.union(match.getPlaces(), successors))));
 			return extendedRegions;
 		}
+		if (mMode == SuccessorComputationMode.NO_CORELATION) {
+			return null;
+		}
 		for (final P placeP : successors) {
 			final var match = findMatchingRegion(remainingRegions, placeP, territory);
 			if (match == null) {
@@ -352,6 +390,9 @@ public class EmpireComputation<L, P> {
 			return false;
 		} else if (lawPlace == newLawPlace && predecessors.size() == 1 && successors.size() == 1) {
 			return true;
+		}
+		if (mMode == SuccessorComputationMode.NO_CORELATION) {
+			return false;
 		}
 		final var remainingRegions = territory.getRegions().stream()
 				.filter(r -> DataStructureUtils.haveEmptyIntersection(r.getPlaces(), predecessors))
