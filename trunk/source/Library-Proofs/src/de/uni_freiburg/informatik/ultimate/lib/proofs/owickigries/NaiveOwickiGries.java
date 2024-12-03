@@ -183,7 +183,8 @@ public class NaiveOwickiGries<L extends IAction, P> {
 
 		@Override
 		public void refine(final IRefinementEngineResult<L, ?> refinementResult,
-				final INestedWordAutomaton<L, IPredicate> interpolantAutomaton) {
+				final INestedWordAutomaton<L, IPredicate> interpolantAutomaton,
+				final Map<Transition<L, P>, Transition<L, P>> transitionBacktranslation) {
 			if (mSettings.useCoveringSimplification()) {
 				mCoverageRelations.add(refinementResult.getPredicateUnifier().getCoverageRelation());
 			}

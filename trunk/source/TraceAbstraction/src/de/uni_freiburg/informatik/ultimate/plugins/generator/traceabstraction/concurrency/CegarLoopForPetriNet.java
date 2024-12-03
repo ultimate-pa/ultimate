@@ -270,10 +270,9 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 			}
 			if (USE_ON_DEMAND_RESULT) {
 				mAbstraction = enhancementResult.getSecond().getResult();
-				if (mProofProducer != null
-						&& enhancementResult.getSecond().getFinitePrefixOfDifference().getAcceptingRun() == null) {
-					mProofProducer.finalize(mAbstraction,
-							enhancementResult.getSecond().getFinitePrefixOfDifference().getResult());
+				final var finPrefix = enhancementResult.getSecond().getFinitePrefixOfDifference();
+				if (mProofProducer != null && finPrefix.getAcceptingRun() == null) {
+					mProofProducer.finalize(mAbstraction, finPrefix.getResult());
 				}
 			} else {
 				final Difference<L, IPredicate, ?> diff = new Difference<>(new AutomataLibraryServices(getServices()),
@@ -542,7 +541,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 
 		if (mProofProducer != null) {
 			assert checkInterpolantAutomatonInductivity(dia) : "Not inductive";
-			mProofProducer.refine(mRefinementResult, dia);
+			mProofProducer.refine(mRefinementResult, dia, dpod.getTransitionBacktranslation());
 		}
 		if (mPref.dumpAutomata()) {
 			final String filename = "InterpolantAutomatonDeterminized_Iteration" + getIteration();

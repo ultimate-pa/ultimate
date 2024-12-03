@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries;
 
+import java.util.Map;
+
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
@@ -39,7 +41,8 @@ import de.uni_freiburg.informatik.ultimate.lib.proofs.IProofProducer;
 public interface IPetriNetProofProducer<L extends IAction, P>
 		extends IProofProducer<IPetriNet<L, P>, OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>>> {
 	void refine(IRefinementEngineResult<L, ?> refinementResult,
-			INestedWordAutomaton<L, IPredicate> interpolantAutomaton);
+			INestedWordAutomaton<L, IPredicate> interpolantAutomaton,
+			Map<Transition<L, P>, Transition<L, P>> transitionBacktranslation);
 
 	void finalize(IPetriNet<L, P> refinedNet, BranchingProcess<L, P> refinedNetUnfolding);
 }
