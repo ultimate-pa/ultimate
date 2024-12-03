@@ -144,7 +144,7 @@ public class VerificationResultTransformer {
 			final var check = invResult.getChecks().stream().filter(ReqCheck.class::isInstance).findFirst();
 			if (check.isEmpty()) {
 				// Not sure if such a case can ever occur or if to just return result here
-				return null;
+				return result;
 			}
 			reqCheck = (ReqCheck) check.get();
 			// Important if other specs receive invariants too
@@ -210,10 +210,11 @@ public class VerificationResultTransformer {
 			// Annotation needed for the result to know the respective Check
 			reqCheck.annotate(element);
 			final var invariant = (Expression) invResult.getInvariant();
-			// Only works because spec checks a single requirement
+			// Only works if spec checks a single requirement
+			assert reqCheck.getReqIds().size() == 1;
 			final var redId = reqCheck.getReqIds().iterator().next();
 			final var redSet = InvariantResultTransformer.extractRedundancySet(invariant);
-			return new ReqCheckRedundancyResult<>(element, plugin, redId, redSet.toString());
+			return new ReqCheckRedundancyResult<>(element, plugin, redId, redSet);
 
 		}
 		return new ReqCheckFailResult<>(element, plugin);
