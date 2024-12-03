@@ -142,13 +142,13 @@ public class EmpireComputation<L, P> {
 
 	private Set<Pair<Territory<P>, IPredicate>> symbolicExecution() {
 		final var result = new HashSet<Pair<Territory<P>, IPredicate>>();
-		final var queue = new ArrayDeque<Pair<Territory<P>, IPredicate>>();
-		final BridgePairs<P> bridgePairs = new BridgePairs<>();
+		final var queue = new ArrayDeque<GraphNode<P>>();
 
-		queue.offer(getInitialPair());
+		queue.offer(getInitialNode());
 
 		while (!queue.isEmpty()) {
-			var pair = queue.poll();
+			final var node = queue.poll();
+			var pair = node.getPair();
 			if (result.contains(pair)) {
 				continue;
 			}
@@ -163,13 +163,13 @@ public class EmpireComputation<L, P> {
 			for (final var transition : extendingTransitions) {
 				Pair<Territory<P>, IPredicate> successor;
 
-				if (bridgePairs.isNecessaryBridge(pair, transition)) {
+				if (node.isNecessaryBridge(transition)) {
 					result.add(pair);
 					final var bystanders = territory.getBystanders(transition);
 					final var bridgeSuccessor = replaceRegions(transition, bystanders);
 					successor = new Pair<>(new Territory<>(ImmutableSet.of(bridgeSuccessor)), lawPlace);
-					bridgePairs.addBridge(successor, pair, transition);
-					queue.add(successor);
+					final var successorNode = new GraphNode<>(successor, bystanders);
+					queue.add(successorNode);
 					continue;
 				}
 				successor = computeSuccessor(territory, lawPlace, transition);
@@ -193,7 +193,7 @@ public class EmpireComputation<L, P> {
 			}
 
 			if (subsumes) {
-				queue.add(pair);
+				queue.add(new GraphNode<>(pair, node.getBridgeBystanders()));
 				// First fully extend the territory before any replacement
 				continue;
 			}
@@ -219,20 +219,27 @@ public class EmpireComputation<L, P> {
 					continue;
 				}
 
-				queue.offer(successor);
+				final var bystanders = territory.getBystanders(transition);
+				GraphNode<P> successorNode;
+				if (bystanders.isEmpty()) {
+					successorNode = new GraphNode<>(successor);
+				} else {
+					successorNode = new GraphNode<>(successor, bystanders);
+				}
+				queue.offer(successorNode);
 				result.add(pair);
-				bridgePairs.addBridge(successor, pair, transition);
 			}
 
 		}
 		return result;
 	}
 
-	private Pair<Territory<P>, IPredicate> getInitialPair() {
+	private GraphNode<P> getInitialNode() {
 		final var initialLaw = DataStructureUtils.getOneAndOnly(mProduct.getInitialStates(), "initial law place");
 		final var regions = mNet.getInitialPlaces().stream().map(p -> new Region<>(ImmutableSet.singleton(p)))
 				.collect(ImmutableSet.collector());
-		return new Pair<>(new Territory<>(regions), initialLaw);
+		final var pair = new Pair<>(new Territory<>(regions), initialLaw);
+		return new GraphNode<>(pair);
 	}
 
 	private boolean enables(final Territory<P> territory, final IPredicate lawPredicate,
