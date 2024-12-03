@@ -59,23 +59,22 @@ public class NaiveOwickiGries<L extends IAction, P> {
 	private final BasicPredicateFactory mPredicateFactory;
 	private final CfgSmtToolkit mCsToolkit;
 	private final IPetriNet<L, P> mProgram;
-	private final boolean mUseHittingSetSimplification;
+	private final OwickiGriesSettings mSettings;
 
 	private final Statistics mStatistics = new Statistics();
 
 	public NaiveOwickiGries(final IUltimateServiceProvider services, final BasicPredicateFactory predicateFactory,
-			final CfgSmtToolkit csToolkit, final IPetriNet<L, P> program, final boolean useHittingSetSimplification) {
+			final CfgSmtToolkit csToolkit, final IPetriNet<L, P> program, final OwickiGriesSettings settings) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(getClass());
 		mPredicateFactory = predicateFactory;
 		mCsToolkit = csToolkit;
 		mProgram = program;
-		mUseHittingSetSimplification = useHittingSetSimplification;
+		mSettings = settings;
 	}
 
-	public IPetriNetProofProducer<L, P> createProofProducer(final boolean useCoveringSimplification,
-			final Function<P, IPredicate> assertionPlaceToAssertion) {
-		return new Producer(useCoveringSimplification, assertionPlaceToAssertion);
+	public IPetriNetProofProducer<L, P> createProofProducer(final Function<P, IPredicate> assertionPlaceToAssertion) {
+		return new Producer(assertionPlaceToAssertion);
 	}
 
 	/**
@@ -121,7 +120,7 @@ public class NaiveOwickiGries<L extends IAction, P> {
 		final long startTime = System.currentTimeMillis();
 
 		final OwickiGriesConstruction<L, P> construction = new OwickiGriesConstruction<>(mServices, mCsToolkit,
-				mProgram, reachableMarkings, floydHoare, mUseHittingSetSimplification);
+				mProgram, reachableMarkings, floydHoare, mSettings.useHittingSets());
 		mLogger.info("Computed Owicki-Gries annotation of size %d in %d ms", construction.getResult().size(),
 				System.currentTimeMillis() - startTime);
 
@@ -173,22 +172,19 @@ public class NaiveOwickiGries<L extends IAction, P> {
 	}
 
 	private class Producer implements IPetriNetProofProducer<L, P> {
-		private final boolean mUseCoveringSimplification;
 		private final Function<P, IPredicate> mAssertionPlaceToAssertion;
 
 		private final List<IPredicateCoverageChecker> mCoverageRelations = new ArrayList<>();
 		private IPetriNet<L, P> mFinalAbstraction;
 
-		private Producer(final boolean useCoveringSimplification,
-				final Function<P, IPredicate> assertionPlaceToAssertion) {
-			mUseCoveringSimplification = useCoveringSimplification;
+		private Producer(final Function<P, IPredicate> assertionPlaceToAssertion) {
 			mAssertionPlaceToAssertion = assertionPlaceToAssertion;
 		}
 
 		@Override
 		public void refine(final IRefinementEngineResult<L, ?> refinementResult,
 				final INestedWordAutomaton<L, IPredicate> interpolantAutomaton) {
-			if (mUseCoveringSimplification) {
+			if (mSettings.useCoveringSimplification()) {
 				mCoverageRelations.add(refinementResult.getPredicateUnifier().getCoverageRelation());
 			}
 		}
@@ -214,7 +210,7 @@ public class NaiveOwickiGries<L extends IAction, P> {
 			PetriFloydHoare<L, P> petriFloydHoare;
 			try {
 				petriFloydHoare = new PetriFloydHoare<>(mPredicateFactory, mProgram, mFinalAbstraction,
-						mAssertionPlaceToAssertion, mCoverageRelations, mUseCoveringSimplification);
+						mAssertionPlaceToAssertion, mCoverageRelations, mSettings.useCoveringSimplification());
 			} catch (final PetriNetNot1SafeException e) {
 				throw new AssertionError(e);
 			}

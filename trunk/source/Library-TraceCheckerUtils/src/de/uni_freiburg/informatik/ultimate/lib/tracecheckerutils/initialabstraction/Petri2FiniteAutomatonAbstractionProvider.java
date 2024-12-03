@@ -57,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.IFloydHoareAnno
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.NwaHoareProofProducer;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.NaiveOwickiGries;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesAnnotation;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesSettings;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
@@ -195,8 +196,8 @@ public abstract class Petri2FiniteAutomatonAbstractionProvider<L extends IIcfgTr
 
 		public OwickiGriesAnnotation<Transition<L, IPredicate>, IPredicate, Marking<IPredicate>> backtranslateProof(
 				final IFloydHoareAnnotation<IPredicate> inputProof, final BasicPredicateFactory predicateFactory,
-				final boolean useHittingSets) {
-			return new NaiveOwickiGries<>(mServices, predicateFactory, mCsToolkit, mPetriNet, useHittingSets)
+				final OwickiGriesSettings settings) {
+			return new NaiveOwickiGries<>(mServices, predicateFactory, mCsToolkit, mPetriNet, settings)
 					.<IPredicate> createProofConverter(mMarking2State).apply(inputProof);
 		}
 	}

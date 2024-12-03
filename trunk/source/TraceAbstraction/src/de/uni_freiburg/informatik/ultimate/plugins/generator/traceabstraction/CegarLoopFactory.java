@@ -307,7 +307,7 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 					() -> autProvider.getProofProducer(predicateFactory, mPrefs.getHoareSettings()),
 					// backtranslate proof
 					fh -> oldBacktranslator.apply(
-							autProvider.backtranslateProof(fh, predicateFactory, mPrefs.owickiGriesHittingSets())));
+							autProvider.backtranslateProof(fh, predicateFactory, mPrefs.getOwickiGriesSettings())));
 		}
 
 		// If a witness is given, proof production is not supported.
@@ -322,8 +322,7 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 		if (!mPrefs.applyOneShotLbe()) {
 			return new AbstractionAndProof<>(netProvider,
 					// support proof production (if used with CegarLoopForPetriNets)
-					() -> netProvider.getProofProducer(mPrefs.owickiGriesHittingSets(),
-							mPrefs.owickiGriesCoveringSimplification()),
+					() -> netProvider.getProofProducer(mPrefs.getOwickiGriesSettings()),
 					// support proof backtranslation (also applicable when used with NwaCegarLoop)
 					netProvider::backtranslateProof);
 		}

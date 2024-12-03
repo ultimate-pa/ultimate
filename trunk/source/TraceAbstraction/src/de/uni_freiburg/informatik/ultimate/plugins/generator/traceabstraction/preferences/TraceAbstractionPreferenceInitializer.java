@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.UnsatCores;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.RefinementStrategyExceptionBlacklist;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.HoareAnnotationPositions;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesSettings.OwickiGriesComputation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SMTFeatureExtractionTermClassifier.ScoringMethod;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.ExternalSolver;
@@ -129,6 +130,20 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_MCR_INTERPOLANT_METHOD =
 			"Method to provide additional interpolants for the MCR automaton";
 	private static final McrInterpolantMethod DEF_MCR_INTERPOLANT_METHOD = McrInterpolantMethod.WP;
+
+	// Owicki-Gries Proofs
+	// ========================================================================
+
+	public static final String LABEL_OWICKI_GRIES_COMPUTATION = "Owicki-Gries proof computation algorithm";
+	private static final OwickiGriesComputation DEF_OWICKI_GRIES_COMPUTATION = OwickiGriesComputation.NONE;
+
+	public static final String LABEL_OG_COVERING_SIMPLIFICATION =
+			"Simplify away covered predicates in OwickiGries annotation";
+	private static final boolean DEF_OG_COVERING_SIMPLIFICATION = false;
+
+	public static final String LABEL_OG_HITTING_SET_OPTIMIZATION =
+			"Use hitting sets in computation of OwickiGries annotation";
+	private static final boolean DEF_OG_HITTING_SET_OPTIMIZATION = false;
 
 	// Settings for Petri net Large Block Encoding (Lipton Reduction)
 	// ========================================================================
@@ -511,14 +526,6 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	private static final String DESC_ASSERT_CODEBLOCKS_HEURISTIC_SCORE_THRESHOLD =
 			"If Assert CodeBlocks is set to SMT_FEATURE_HEURISTIC and partitioning strategy is THRESHOLD, two partitions are created, one partition contains all terms >= threshold  and one all terms < threshold";
 
-	public static final String LABEL_OG_COVERING_SIMPLIFICATION =
-			"Simplify away covered predicates in OwickiGries annotation";
-	public static final boolean DEF_OG_COVERING_SIMPLIFICATION = false;
-
-	public static final String LABEL_OG_HITTING_SET_OPTIMIZATION =
-			"Use hitting sets in computation of OwickiGries annotation";
-	public static final boolean DEF_OG_HITTING_SET_OPTIMIZATION = false;
-
 	/**
 	 * Constructor.
 	 */
@@ -727,10 +734,13 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						new UltimatePreferenceItem<>(LABEL_LOOPER_CHECK_PETRI, DEF_LOOPER_CHECK_PETRI,
 								PreferenceType.Combo, LooperCheck.values())),
 
-				new UltimatePreferenceItem<>(LABEL_OG_COVERING_SIMPLIFICATION, DEF_OG_COVERING_SIMPLIFICATION,
-						PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_OG_HITTING_SET_OPTIMIZATION, DEF_OG_HITTING_SET_OPTIMIZATION,
-						PreferenceType.Boolean),
+				new UltimatePreferenceItemGroup("Owicki-Gries Proofs",
+						new UltimatePreferenceItem<>(LABEL_OWICKI_GRIES_COMPUTATION, DEF_OWICKI_GRIES_COMPUTATION,
+								PreferenceType.Combo, OwickiGriesComputation.values()),
+						new UltimatePreferenceItem<>(LABEL_OG_COVERING_SIMPLIFICATION, DEF_OG_COVERING_SIMPLIFICATION,
+								PreferenceType.Boolean),
+						new UltimatePreferenceItem<>(LABEL_OG_HITTING_SET_OPTIMIZATION, DEF_OG_HITTING_SET_OPTIMIZATION,
+								PreferenceType.Boolean)),
 
 				getPORSettings(), getPetriLbeSettings());
 	}

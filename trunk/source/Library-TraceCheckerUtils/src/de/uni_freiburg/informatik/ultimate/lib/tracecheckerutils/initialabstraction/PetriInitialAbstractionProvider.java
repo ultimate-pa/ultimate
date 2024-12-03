@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.IPetriNetProofProducer;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.NaiveOwickiGries;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesAnnotation;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesSettings;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesUnpetrifier;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.cfg2automaton.Cfg2Automaton;
 
@@ -118,10 +119,17 @@ public class PetriInitialAbstractionProvider<L extends IIcfgTransition<?>>
 		}
 	}
 
-	public IPetriNetProofProducer<L, IPredicate> getProofProducer(final boolean useHittingSets,
-			final boolean useCovering) {
-		return new NaiveOwickiGries<>(mServices, mPredicateFactory, mIcfg.getCfgSmtToolkit(), mAbstraction,
-				useHittingSets).createProofProducer(useCovering, Function.identity());
+	public IPetriNetProofProducer<L, IPredicate> getProofProducer(final OwickiGriesSettings settings) {
+		switch (settings.computationMode()) {
+		case NAIVE:
+			return new NaiveOwickiGries<>(mServices, mPredicateFactory, mIcfg.getCfgSmtToolkit(), mAbstraction,
+					settings).createProofProducer(Function.identity());
+		case NONE:
+			return null;
+		default:
+			throw new UnsupportedOperationException(
+					"Unsupported Owicki-Gries computation mode: " + settings.computationMode());
+		}
 	}
 
 	public OwickiGriesAnnotation<L, IcfgLocation, List<IcfgLocation>> backtranslateProof(
