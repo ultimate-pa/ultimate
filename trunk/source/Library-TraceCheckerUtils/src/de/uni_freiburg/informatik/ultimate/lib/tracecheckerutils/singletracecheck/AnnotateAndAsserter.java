@@ -1,7 +1,8 @@
 /*
+ * Copyright (C) 2012-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2014-2015 Betim Musa (musab@informatik.uni-freiburg.de)
  * Copyright (C) 2024 Frank Schüssele (schuessf@informatik.uni-freiburg.de)
- * Copyright (C) 2015-2024 University of Freiburg
+ * Copyright (C) 2012-2024 University of Freiburg
  *
  * This file is part of the ULTIMATE TraceCheckerUtils Library.
  *
@@ -53,7 +54,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  * This class implements the possibility to partially (and in different order) annotate and assert the statements of a
  * trace in order to get better interpolants.
  *
- * @author musab@informatik.uni-freiburg.de
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @author Betimt Musa (musab@informatik.uni-freiburg.de)
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  */
 
