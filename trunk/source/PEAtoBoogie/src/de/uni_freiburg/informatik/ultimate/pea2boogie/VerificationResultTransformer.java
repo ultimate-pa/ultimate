@@ -41,11 +41,13 @@ import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AbstractResultAtElement;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.IResultWithCheck;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.InvariantResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
@@ -92,6 +94,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheck;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheckFailResult;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheckRedundancyResult;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheckRtInconsistentResult;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheckSuccessResult;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.Req2BoogieTranslator;
@@ -126,6 +129,7 @@ public class VerificationResultTransformer {
 		final AbstractResultAtElement<?> oldRes;
 		final ReqCheck reqCheck;
 		boolean isPositive;
+		InvariantResult<?, ?> invResult = null;
 		if (result instanceof CounterExampleResult<?, ?, ?>) {
 			oldRes = (AbstractResultAtElement<?>) result;
 			reqCheck = (ReqCheck) ((IResultWithCheck) result).getCheckedSpecification();
@@ -133,6 +137,21 @@ public class VerificationResultTransformer {
 		} else if (result instanceof PositiveResult<?>) {
 			oldRes = (AbstractResultAtElement<?>) result;
 			reqCheck = (ReqCheck) ((IResultWithCheck) result).getCheckedSpecification();
+			isPositive = true;
+		} else if (result instanceof InvariantResult<?, ?>) {
+			invResult = (InvariantResult<?, ?>) result;
+			oldRes = (AbstractResultAtElement<?>) result;
+			final var check = invResult.getChecks().stream().filter(ReqCheck.class::isInstance).findFirst();
+			if (check.isEmpty()) {
+				// Not sure if such a case can ever occur or if to just return result here
+				return null;
+			}
+			reqCheck = (ReqCheck) check.get();
+			// Important if other specs receive invariants too
+			// that should be ignored
+			if (!reqCheck.getSpec().contains(Spec.REDUNDANCY)) {
+				return result;
+			}
 			isPositive = true;
 		} else if (result instanceof AllSpecificationsHoldResult) {
 			// makes no sense in our context, suppress it
@@ -185,6 +204,17 @@ public class VerificationResultTransformer {
 					generateTimeSequenceMap(newPe.getProgramStates());
 			final String failurePath = formatTimeSequenceMap(delta2var2value);
 			return new ReqCheckRtInconsistentResult<>(element, plugin, failurePath);
+		}
+		// If no InvariantResult is present, fall through to generic FailResult
+		if (spec == Spec.REDUNDANCY && invResult != null) {
+			// Annotation needed for the result to know the respective Check
+			reqCheck.annotate(element);
+			final var invariant = (Expression) invResult.getInvariant();
+			// Only works because spec checks a single requirement
+			final var redId = reqCheck.getReqIds().iterator().next();
+			final var redSet = InvariantResultTransformer.extractRedundancySet(invariant);
+			return new ReqCheckRedundancyResult<>(element, plugin, redId, redSet.toString());
+
 		}
 		return new ReqCheckFailResult<>(element, plugin);
 	}
