@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -109,6 +110,7 @@ public class AssertOrderUtils {
 	 */
 	public static <LOC> HashTreeRelation<LOC, Integer> computeRelationWithTreeSetForTrace(final int lowerIndex,
 			final int upperIndex, final List<LOC> pps) {
+		Objects.requireNonNull(pps, "No control configurations were provided.");
 		final HashTreeRelation<LOC, Integer> rwt = new HashTreeRelation<>();
 		for (int i = lowerIndex; i <= upperIndex; i++) {
 			rwt.addPair(pps.get(i), i);

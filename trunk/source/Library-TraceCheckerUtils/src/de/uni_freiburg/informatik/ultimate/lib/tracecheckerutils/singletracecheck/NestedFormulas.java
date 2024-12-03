@@ -77,6 +77,10 @@ public abstract class NestedFormulas<L extends IAction, TF, SF> {
 		return mCounterexample.getControlConfigurations();
 	}
 
+	public final boolean hasControlConfigurations() {
+		return mCounterexample.hasControlConfigurations();
+	}
+
 	public final SF getPrecondition() {
 		return mPrecondition;
 	}

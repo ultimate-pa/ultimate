@@ -76,10 +76,9 @@ public class AnnotateAndAsserter<L extends IAction> {
 	private int mCheckSat;
 	private final List<Object> mControlConfigurationSequence;
 
-	public AnnotateAndAsserter(final ManagedScript mgdScriptTc,
-			final NestedFormulas<L, Term, Term> nestedSSA, final AnnotateAndAssertCodeBlocks<L> aaacb,
-			final TraceCheckStatisticsGenerator tcbg, final AssertCodeBlockOrder assertCodeBlocksOrder,
-			final IUltimateServiceProvider services) {
+	public AnnotateAndAsserter(final ManagedScript mgdScriptTc, final NestedFormulas<L, Term, Term> nestedSSA,
+			final AnnotateAndAssertCodeBlocks<L> aaacb, final TraceCheckStatisticsGenerator tcbg,
+			final AssertCodeBlockOrder assertCodeBlocksOrder, final IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(TraceCheckerUtils.PLUGIN_ID);
 		mMgdScriptTc = mgdScriptTc;
@@ -89,7 +88,8 @@ public class AnnotateAndAsserter<L extends IAction> {
 		mTcbg = tcbg;
 		mAssertCodeBlocksOrder = assertCodeBlocksOrder;
 		mCheckSat = 0;
-		mControlConfigurationSequence = nestedSSA.getControlConfigurations();
+		mControlConfigurationSequence =
+				nestedSSA.hasControlConfigurations() ? nestedSSA.getControlConfigurations() : null;
 	}
 
 	public void buildAnnotatedSsaAndAssertTerms() {
