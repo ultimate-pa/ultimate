@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.CrownsOwickiGries;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.GraphEmpireOwickiGries;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.IPetriNetProofProducer;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.NaiveOwickiGries;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesAnnotation;
@@ -128,6 +129,8 @@ public class PetriInitialAbstractionProvider<L extends IIcfgTransition<?>>
 		case CROWN:
 			return new CrownsOwickiGries<>(mServices, mAbstraction, mIcfg.getCfgSmtToolkit(), mPredicateFactory,
 					Function.identity());
+		case SYMBOLIC_EXECUTION:
+			return new GraphEmpireOwickiGries<>(mServices, mAbstraction, mIcfg.getCfgSmtToolkit(), mPredicateFactory);
 		case NONE:
 			return null;
 		default:
