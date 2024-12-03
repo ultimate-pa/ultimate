@@ -57,14 +57,15 @@ public class AssertOrderUtils {
 	 * @return A map from depth to the set of statements (represented by their index) with this depth.
 	 */
 	public static <LETTER extends IAction, LOC> Map<Integer, Set<Integer>>
-			partitionStatementsAccordingDepth(final NestedWord<LETTER> trace, final List<LOC> pps) {
-		final HashTreeRelation<LOC, Integer> rwt = new HashTreeRelation<>();
+			partitionStatementsAccordingDepth(final NestedWord<LETTER> trace, final List<LOC> controlConfigurations) {
+		final HashTreeRelation<LOC, Integer> config2Indices = new HashTreeRelation<>();
 		for (int i = 0; i <= trace.length(); i++) {
-			rwt.addPair(pps.get(i), i);
+			config2Indices.addPair(controlConfigurations.get(i), i);
 		}
 
 		final Map<Integer, Set<Integer>> depth2Statements = new HashMap<>();
-		dfsPartitionStatementsAccordingToDepth(0, trace.length(), 0, rwt, depth2Statements, pps);
+		dfsPartitionStatementsAccordingToDepth(0, trace.length(), 0, config2Indices, depth2Statements,
+				controlConfigurations);
 		return depth2Statements;
 	}
 
@@ -73,19 +74,21 @@ public class AssertOrderUtils {
 	 * stored in the map 'depth2Statements'. The partitioning is done recursively.
 	 */
 	private static <LOC> void dfsPartitionStatementsAccordingToDepth(final Integer lowerIndex, final Integer upperIndex,
-			final int depth, final HashTreeRelation<LOC, Integer> rwt,
-			final Map<Integer, Set<Integer>> depth2Statements, final List<LOC> pps) {
+			final int depth, final HashTreeRelation<LOC, Integer> config2Indices,
+			final Map<Integer, Set<Integer>> depth2Statements, final List<LOC> controlConfigurations) {
 		int i = lowerIndex;
 		while (i < upperIndex) {
 			// Is the current statement a loop entry?
-			if (rwt.getImage(pps.get(i)).size() >= 2 && rwt.getImage(pps.get(i)).higher(i) != null
-					&& rwt.getImage(pps.get(i)).higher(i) < upperIndex) {
+			if (config2Indices.getImage(controlConfigurations.get(i)).size() >= 2
+					&& config2Indices.getImage(controlConfigurations.get(i)).higher(i) != null
+					&& config2Indices.getImage(controlConfigurations.get(i)).higher(i) < upperIndex) {
 				// the new upper index is the last occurrence of the same location
-				final int newUpperIndex = rwt.getImage(pps.get(i)).lower(upperIndex);
+				final int newUpperIndex = config2Indices.getImage(controlConfigurations.get(i)).lower(upperIndex);
 				addStmtPositionToDepth(depth + 1, depth2Statements, i);
 				// we consider the subtrace from i+1 to newUpperIndex as a loop
 				// and apply the partitioning recursively on the subtrace
-				dfsPartitionStatementsAccordingToDepth(i + 1, newUpperIndex, depth + 1, rwt, depth2Statements, pps);
+				dfsPartitionStatementsAccordingToDepth(i + 1, newUpperIndex, depth + 1, config2Indices,
+						depth2Statements, controlConfigurations);
 				// continue at the position after the loop
 				i = newUpperIndex;
 			} else {
