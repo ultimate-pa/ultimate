@@ -54,12 +54,16 @@ public class AssertOrderUtils {
 	/**
 	 * Partition the statements of the given trace according to their depth.
 	 */
-	public static <LETTER extends IAction, LOC> Map<Integer, Set<Integer>> partitionStatementsAccordingDepth(
-			final NestedWord<LETTER> trace, final HashTreeRelation<LOC, Integer> rwt, final List<LOC> pps) {
+	public static <LETTER extends IAction, LOC> Map<Integer, Set<Integer>>
+			partitionStatementsAccordingDepth(final NestedWord<LETTER> trace, final List<LOC> pps) {
+		Objects.requireNonNull(pps, "No control configurations were provided.");
+		final HashTreeRelation<LOC, Integer> rwt = new HashTreeRelation<>();
+		for (int i = 0; i <= trace.length(); i++) {
+			rwt.addPair(pps.get(i), i);
+		}
+
 		final Map<Integer, Set<Integer>> depth2Statements = new HashMap<>();
-
 		dfsPartitionStatementsAccordingToDepth(0, trace.length(), 0, rwt, depth2Statements, pps);
-
 		return depth2Statements;
 	}
 
@@ -103,18 +107,5 @@ public class AssertOrderUtils {
 			s.add(stmtPos);
 			depth2Statements.put(depth, s);
 		}
-	}
-
-	/**
-	 * TODO(Betim): Documentation!
-	 */
-	public static <LOC> HashTreeRelation<LOC, Integer> computeRelationWithTreeSetForTrace(final int lowerIndex,
-			final int upperIndex, final List<LOC> pps) {
-		Objects.requireNonNull(pps, "No control configurations were provided.");
-		final HashTreeRelation<LOC, Integer> rwt = new HashTreeRelation<>();
-		for (int i = lowerIndex; i <= upperIndex; i++) {
-			rwt.addPair(pps.get(i), i);
-		}
-		return rwt;
 	}
 }

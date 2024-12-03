@@ -32,7 +32,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.NestedFormulas;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashTreeRelation;
 
 /**
  * Assert statements in decremental order by their depth, and check after each step for satisfiability. E.g. first
@@ -46,10 +45,8 @@ public class AssertOrderInsideLoopFirst1<L extends IAction> implements IAssertOr
 	public List<Set<Integer>> partition(final NestedFormulas<L, Term, Term> ssa) {
 		final NestedWord<L> trace = ssa.getTrace();
 		final List<Object> controlConfigurationSequence = ssa.getControlConfigurations();
-		final HashTreeRelation<Object, Integer> rwt =
-				AssertOrderUtils.computeRelationWithTreeSetForTrace(0, trace.length(), controlConfigurationSequence);
 		final Map<Integer, Set<Integer>> depth2Statements =
-				AssertOrderUtils.partitionStatementsAccordingDepth(trace, rwt, controlConfigurationSequence);
+				AssertOrderUtils.partitionStatementsAccordingDepth(trace, controlConfigurationSequence);
 		return depth2Statements.keySet().stream().sorted((i1, i2) -> i2.compareTo(i1)).map(depth2Statements::get)
 				.toList();
 	}

@@ -35,7 +35,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.NestedFormulas;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashTreeRelation;
 
 /**
  * Assert the statements with the highest depth and lowest depth in alternating order.
@@ -48,10 +47,8 @@ public class AssertOrderMixInsideOutside<L extends IAction> implements IAssertOr
 	public List<Set<Integer>> partition(final NestedFormulas<L, Term, Term> ssa) {
 		final NestedWord<L> trace = ssa.getTrace();
 		final List<Object> controlConfigurationSequence = ssa.getControlConfigurations();
-		final HashTreeRelation<Object, Integer> rwt =
-				AssertOrderUtils.computeRelationWithTreeSetForTrace(0, trace.length(), controlConfigurationSequence);
 		final Map<Integer, Set<Integer>> depth2Statements =
-				AssertOrderUtils.partitionStatementsAccordingDepth(trace, rwt, controlConfigurationSequence);
+				AssertOrderUtils.partitionStatementsAccordingDepth(trace, controlConfigurationSequence);
 		final LinkedList<Integer> depthAsQueue =
 				depth2Statements.keySet().stream().sorted().collect(Collectors.toCollection(LinkedList::new));
 		final List<Set<Integer>> result = new ArrayList<>(depth2Statements.size());

@@ -32,7 +32,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.NestedFormulas;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashTreeRelation;
 
 /**
  * First, assert all statements which don't occur inside of a loop. Then, check for satisfiability. If the result of the
@@ -47,10 +46,8 @@ public class AssertOrderOutsideLoopFirst1<L extends IAction> implements IAssertO
 	public List<Set<Integer>> partition(final NestedFormulas<L, Term, Term> ssa) {
 		final NestedWord<L> trace = ssa.getTrace();
 		final List<Object> controlConfigurationSequence = ssa.getControlConfigurations();
-		final HashTreeRelation<Object, Integer> rwt =
-				AssertOrderUtils.computeRelationWithTreeSetForTrace(0, trace.length(), controlConfigurationSequence);
 		final Map<Integer, Set<Integer>> depth2Statements =
-				AssertOrderUtils.partitionStatementsAccordingDepth(trace, rwt, controlConfigurationSequence);
+				AssertOrderUtils.partitionStatementsAccordingDepth(trace, controlConfigurationSequence);
 		// Statements outside of a loop have depth 0.
 		// First, annotate and assert the statements, which doesn't occur within a loop
 		final Set<Integer> stmtsOutsideOfLoop = depth2Statements.get(0);
