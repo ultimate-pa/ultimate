@@ -79,11 +79,10 @@ public class AssertOrderUtils {
 		int i = lowerIndex;
 		while (i < upperIndex) {
 			// Is the current statement a loop entry?
-			if (config2Indices.getImage(controlConfigurations.get(i)).size() >= 2
-					&& config2Indices.getImage(controlConfigurations.get(i)).higher(i) != null
-					&& config2Indices.getImage(controlConfigurations.get(i)).higher(i) < upperIndex) {
+			final var indices = config2Indices.getImage(controlConfigurations.get(i));
+			if (indices.size() >= 2 && indices.higher(i) != null && indices.higher(i) < upperIndex) {
 				// the new upper index is the last occurrence of the same location
-				final int newUpperIndex = config2Indices.getImage(controlConfigurations.get(i)).lower(upperIndex);
+				final int newUpperIndex = indices.lower(upperIndex);
 				addStmtPositionToDepth(depth + 1, depth2Statements, i);
 				// we consider the subtrace from i+1 to newUpperIndex as a loop
 				// and apply the partitioning recursively on the subtrace
