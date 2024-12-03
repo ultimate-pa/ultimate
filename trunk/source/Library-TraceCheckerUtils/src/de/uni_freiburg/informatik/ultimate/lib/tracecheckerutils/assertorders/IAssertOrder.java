@@ -44,5 +44,5 @@ public interface IAssertOrder<L extends IAction> {
 	 *            the single static assignment form of the trace
 	 * @return the partitions represented by their indices.
 	 */
-	List<Set<Integer>> partitionTrace(final NestedFormulas<L, Term, Term> ssa);
+	List<Set<Integer>> partition(final NestedFormulas<L, Term, Term> ssa);
 }

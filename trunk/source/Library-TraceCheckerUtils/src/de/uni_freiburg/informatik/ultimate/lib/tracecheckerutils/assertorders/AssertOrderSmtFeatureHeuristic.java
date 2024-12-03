@@ -158,7 +158,7 @@ public class AssertOrderSmtFeatureHeuristic<L extends IAction> implements IAsser
 	}
 
 	@Override
-	public List<Set<Integer>> partitionTrace(final NestedFormulas<L, Term, Term> ssa) {
+	public List<Set<Integer>> partition(final NestedFormulas<L, Term, Term> ssa) {
 		final NestedWord<L> trace = ssa.getTrace();
 		// Score Trace Terms and order them according to score.
 		final List<Triple<Term, Double, Integer>> termScoreIndexTriples = scoreTrace(trace);

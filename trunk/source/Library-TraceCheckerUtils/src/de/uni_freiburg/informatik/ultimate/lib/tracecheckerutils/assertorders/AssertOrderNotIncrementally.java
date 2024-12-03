@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  */
 public class AssertOrderNotIncrementally<L extends IAction> implements IAssertOrder<L> {
 	@Override
-	public List<Set<Integer>> partitionTrace(final NestedFormulas<L, Term, Term> ssa) {
+	public List<Set<Integer>> partition(final NestedFormulas<L, Term, Term> ssa) {
 		final Set<Integer> partition = IntStream.range(0, ssa.getTrace().length()).boxed().collect(Collectors.toSet());
 		return List.of(partition);
 	}

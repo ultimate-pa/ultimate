@@ -96,7 +96,7 @@ public class AssertOrderSmallConstantsFirst<L extends IAction> implements IAsser
 	}
 
 	@Override
-	public List<Set<Integer>> partitionTrace(final NestedFormulas<L, Term, Term> ssa) {
+	public List<Set<Integer>> partition(final NestedFormulas<L, Term, Term> ssa) {
 		final NestedWord<L> trace = ssa.getTrace();
 		final Set<Integer> stmtsWithSmallConstant = partitionStmtsAccordingToConstantSize(trace, CONSTANT_SIZE);
 		// Then assert the rest of statements

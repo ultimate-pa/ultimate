@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashTree
  */
 public class AssertOrderOutsideLoopFirst2<L extends IAction> implements IAssertOrder<L> {
 	@Override
-	public List<Set<Integer>> partitionTrace(final NestedFormulas<L, Term, Term> ssa) {
+	public List<Set<Integer>> partition(final NestedFormulas<L, Term, Term> ssa) {
 		final NestedWord<L> trace = ssa.getTrace();
 		final List<Object> controlConfigurationSequence = ssa.getControlConfigurations();
 		final HashTreeRelation<Object, Integer> rwt =
