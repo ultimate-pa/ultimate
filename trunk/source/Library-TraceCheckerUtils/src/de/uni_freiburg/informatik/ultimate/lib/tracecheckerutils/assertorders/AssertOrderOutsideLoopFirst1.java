@@ -45,9 +45,8 @@ public class AssertOrderOutsideLoopFirst1<L extends IAction> implements IAssertO
 	@Override
 	public List<Set<Integer>> partition(final NestedFormulas<L, Term, Term> ssa) {
 		final NestedWord<L> trace = ssa.getTrace();
-		final List<Object> controlConfigurationSequence = ssa.getControlConfigurations();
 		final Map<Integer, Set<Integer>> depth2Statements =
-				AssertOrderUtils.partitionStatementsAccordingDepth(trace, controlConfigurationSequence);
+				AssertOrderUtils.partitionStatementsAccordingDepth(trace, ssa.getControlConfigurations());
 		// Statements outside of a loop have depth 0.
 		// First, annotate and assert the statements, which doesn't occur within a loop
 		final Set<Integer> stmtsOutsideOfLoop = depth2Statements.get(0);
