@@ -78,7 +78,7 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 	private final ModifiableGlobalsTable mModifiableGlobals;
 
 	private final IPetriNet<LETTER, PLACE> mNet;
-	private final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> mProduct;
+	private final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> mProduct;
 	private final Function<Transition<LETTER, PLACE>, Transition<LETTER, PLACE>> mDiff2OriginalTransition;
 
 	private final Set<PLACE> mOriginalPlaces;
@@ -111,7 +111,8 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 			final BasicPredicateFactory factory, final Function<PLACE, IPredicate> placeToAssertion,
 			final ManagedScript mgdScript, final IIcfgSymbolTable symbolTable, final Set<String> procedures,
 			final ModifiableGlobalsTable modifiableGlobals,
-			final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> product, final EmpireComputationMode mode) {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> product,
+			final EmpireComputationMode mode) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(PetriOwickiGries.class);
 		mMgdScript = mgdScript;
@@ -151,7 +152,7 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 
 			final var implicationChecker = new MonolithicImplicationChecker(services, mgdScript);
 			final var htc = new MonolithicHoareTripleChecker(mgdScript, modifiableGlobals);
-			final var computation = getEmpireComputation(placeToAssertion, implicationChecker, htc);
+			final var computation = getEmpireComputation(implicationChecker, htc);
 			mEmpireAnnotation = computation.getEmpire();
 		}
 		assert checkEmpireValidity() : "Empire annotation is invalid";
@@ -207,11 +208,11 @@ public class PetriOwickiGries<LETTER extends IAction, PLACE> {
 		return crownsEmpire.getEmpireAnnotation();
 	}
 
-	private EmpireComputation<LETTER, PLACE> getEmpireComputation(final Function<PLACE, IPredicate> placeToAssertion,
-			final MonolithicImplicationChecker implicationChecker, final MonolithicHoareTripleChecker mhc) {
+	private EmpireComputation<LETTER, PLACE> getEmpireComputation(final MonolithicImplicationChecker implicationChecker,
+			final MonolithicHoareTripleChecker mhc) {
 		final var placesCorelation = new PlacesCoRelation<>(mBp);
-		final var computation = new EmpireComputation<>(mServices, mFactory, mNet, placesCorelation, placeToAssertion,
-				mProduct, mhc, implicationChecker);
+		final var computation =
+				new EmpireComputation<>(mServices, mFactory, mNet, placesCorelation, mProduct, mhc, implicationChecker);
 		mStatistics.reportEmpireStatistics(computation);
 		return computation;
 	}

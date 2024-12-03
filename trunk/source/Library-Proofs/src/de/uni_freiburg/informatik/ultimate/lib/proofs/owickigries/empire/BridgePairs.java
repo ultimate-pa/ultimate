@@ -30,12 +30,13 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class BridgePairs<P> {
-	HashRelation<Pair<Territory<P>, P>, Set<Region<P>>> mBridges;
+	HashRelation<Pair<Territory<P>, IPredicate>, Set<Region<P>>> mBridges;
 
 	public BridgePairs() {
 		mBridges = new HashRelation<>();
@@ -58,8 +59,8 @@ public class BridgePairs<P> {
 	 *            Transition that leads to the bridge pair.
 	 * @return True if the pair is a bridge and was successfully added, false otherwise.
 	 */
-	public <L> boolean addBridge(final Pair<Territory<P>, P> bridgePair, final Pair<Territory<P>, P> predecessor,
-			final Transition<L, P> transition) {
+	public <L> boolean addBridge(final Pair<Territory<P>, IPredicate> bridgePair,
+			final Pair<Territory<P>, IPredicate> predecessor, final Transition<L, P> transition) {
 		final var territory = predecessor.getFirst();
 		final var predecessors = transition.getPredecessors();
 		final var bystanders = territory.getRegions().stream()
@@ -83,7 +84,7 @@ public class BridgePairs<P> {
 	 *            Transition for which the pair gets extended
 	 * @return True if the pair is necessary and false otherwise.
 	 */
-	public <L> boolean isNecessaryBridge(final Pair<Territory<P>, P> pair, final Transition<L, P> transition) {
+	public <L> boolean isNecessaryBridge(final Pair<Territory<P>, IPredicate> pair, final Transition<L, P> transition) {
 		final var predecessors = transition.getPredecessors();
 		final var successors = transition.getSuccessors();
 		if (pair.getFirst().getPlaces().containsAll(successors)) {

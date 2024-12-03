@@ -32,7 +32,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -62,16 +61,15 @@ public class EmpireComputation<L, P> {
 	private final ILogger mLogger;
 
 	private final IPetriNet<L, P> mNet;
-	private final INwaOutgoingLetterAndTransitionProvider<L, P> mProduct;
+	private final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mProduct;
 	private final PlacesCoRelation<P> mCoRelation;
 
 	private final BasicPredicateFactory mFactory;
 	private final MonolithicHoareTripleChecker mHc;
 	private final MonolithicImplicationChecker mImplicationChecker;
-	private final Function<P, IPredicate> mPlaceToPredicate;
 
 	private final EmpireAnnotation<P> mEmpire;
-	private final Map<IPredicate, Set<P>> mPredicatePlacesMap;
+	private final Map<IPredicate, Set<IPredicate>> mPredicatePlacesMap;
 
 	public enum SuccessorComputationMode {
 		CO_RELATION, NO_CORELATION
@@ -81,8 +79,7 @@ public class EmpireComputation<L, P> {
 
 	public EmpireComputation(final IUltimateServiceProvider services, final BasicPredicateFactory predicateFactory,
 			final IPetriNet<L, P> net, final PlacesCoRelation<P> coRelation,
-			final Function<P, IPredicate> assertionPlace2Predicate,
-			final INwaOutgoingLetterAndTransitionProvider<L, P> product,
+			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> product,
 			final MonolithicHoareTripleChecker hoareTripleChecker,
 			final MonolithicImplicationChecker implicationChecker) {
 		mLogger = services.getLoggingService().getLogger(getClass());
@@ -96,21 +93,19 @@ public class EmpireComputation<L, P> {
 		mFactory = predicateFactory;
 		mHc = hoareTripleChecker;
 		mImplicationChecker = implicationChecker;
-		mPlaceToPredicate = assertionPlace2Predicate;
 
 		final var mTerrPlacePairs = symbolicExecution();
 		final var territorySetPairs = mTerrPlacePairs.stream().map(p -> new Pair<>(p.getFirst(), Set.of(p.getSecond())))
 				.collect(Collectors.toSet());
-		final var postProcessing = new PostProcessing<>(services, territorySetPairs, predicateFactory,
-				implicationChecker, assertionPlace2Predicate);
+		final var postProcessing =
+				new PostProcessing<>(services, territorySetPairs, predicateFactory, implicationChecker);
 		final var processedPairs = postProcessing.getProcessedPairs();
 		mPredicatePlacesMap = postProcessing.getPredicatePlacesMap();
 		mEmpire = new EmpireAnnotation<>(processedPairs);
 	}
 
 	public EmpireComputation(final IUltimateServiceProvider services, final BasicPredicateFactory predicateFactory,
-			final IPetriNet<L, P> net, final Function<P, IPredicate> assertionPlace2Predicate,
-			final INwaOutgoingLetterAndTransitionProvider<L, P> product,
+			final IPetriNet<L, P> net, final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> product,
 			final MonolithicHoareTripleChecker hoareTripleChecker,
 			final MonolithicImplicationChecker implicationChecker) {
 		mLogger = services.getLoggingService().getLogger(getClass());
@@ -124,13 +119,12 @@ public class EmpireComputation<L, P> {
 		mFactory = predicateFactory;
 		mHc = hoareTripleChecker;
 		mImplicationChecker = implicationChecker;
-		mPlaceToPredicate = assertionPlace2Predicate;
 
 		final var mTerrPlacePairs = symbolicExecution();
 		final var territorySetPairs = mTerrPlacePairs.stream().map(p -> new Pair<>(p.getFirst(), Set.of(p.getSecond())))
 				.collect(Collectors.toSet());
-		final var postProcessing = new PostProcessing<>(services, territorySetPairs, predicateFactory,
-				implicationChecker, assertionPlace2Predicate);
+		final var postProcessing =
+				new PostProcessing<>(services, territorySetPairs, predicateFactory, implicationChecker);
 		final var processedPairs = postProcessing.getProcessedPairs();
 		mPredicatePlacesMap = postProcessing.getPredicatePlacesMap();
 		mEmpire = new EmpireAnnotation<>(processedPairs);
@@ -146,9 +140,9 @@ public class EmpireComputation<L, P> {
 		return statistics;
 	}
 
-	private Set<Pair<Territory<P>, P>> symbolicExecution() {
-		final var result = new HashSet<Pair<Territory<P>, P>>();
-		final var queue = new ArrayDeque<Pair<Territory<P>, P>>();
+	private Set<Pair<Territory<P>, IPredicate>> symbolicExecution() {
+		final var result = new HashSet<Pair<Territory<P>, IPredicate>>();
+		final var queue = new ArrayDeque<Pair<Territory<P>, IPredicate>>();
 		final BridgePairs<P> bridgePairs = new BridgePairs<>();
 
 		queue.offer(getInitialPair());
@@ -167,7 +161,7 @@ public class EmpireComputation<L, P> {
 			final var replacementTransitions = DataStructureUtils.difference(enabledTransitions, extendingTransitions);
 			var subsumes = false;
 			for (final var transition : extendingTransitions) {
-				Pair<Territory<P>, P> successor;
+				Pair<Territory<P>, IPredicate> successor;
 
 				if (bridgePairs.isNecessaryBridge(pair, transition)) {
 					result.add(pair);
@@ -234,20 +228,20 @@ public class EmpireComputation<L, P> {
 		return result;
 	}
 
-	private Pair<Territory<P>, P> getInitialPair() {
+	private Pair<Territory<P>, IPredicate> getInitialPair() {
 		final var initialLaw = DataStructureUtils.getOneAndOnly(mProduct.getInitialStates(), "initial law place");
 		final var regions = mNet.getInitialPlaces().stream().map(p -> new Region<>(ImmutableSet.singleton(p)))
 				.collect(ImmutableSet.collector());
 		return new Pair<>(new Territory<>(regions), initialLaw);
 	}
 
-	private boolean enables(final Territory<P> territory, final P lawPlace, final Transition<L, P> transition) {
+	private boolean enables(final Territory<P> territory, final IPredicate lawPredicate,
+			final Transition<L, P> transition) {
 		// TODO how should we handle transitions where some successor places are not reachable in the refined net
 		// (but may well be reachable in the original net?)
 		// This can happen because we look at each automaton individually; another automaton not currently considered
 		// may be responsible for the non-reachability.
 
-		final var lawPredicate = mPlaceToPredicate.apply(lawPlace);
 		final var htFalse = mHc.checkInternal(lawPredicate, (IInternalAction) transition.getSymbol(), mFactory.or());
 		final var accepting = transition.getSuccessors().stream().anyMatch(p -> mNet.isAccepting(p));
 		final var impliesFalse = mImplicationChecker.checkImplication(lawPredicate, false, mFactory.or(), false);
@@ -273,13 +267,12 @@ public class EmpireComputation<L, P> {
 		return true;
 	}
 
-	private Stream<Transition<L, P>> getEnabledTransitions(final Territory<P> territory, final P lawPlace) {
-		final var mayPlaces = DataStructureUtils.union(territory.getPlaces(), Set.of(lawPlace));
-		return mNet.getSuccessorTransitionProviders(territory.getPlaces(), mayPlaces).stream()
+	private Stream<Transition<L, P>> getEnabledTransitions(final Territory<P> territory, final IPredicate lawPlace) {
+		return mNet.getSuccessorTransitionProviders(territory.getPlaces(), territory.getPlaces()).stream()
 				.flatMap(provider -> provider.getTransitions().stream()).filter(t -> enables(territory, lawPlace, t));
 	}
 
-	private Pair<Territory<P>, P> computeSuccessor(final Territory<P> territory, final P lawPlace,
+	private Pair<Territory<P>, IPredicate> computeSuccessor(final Territory<P> territory, final IPredicate lawPlace,
 			final Transition<L, P> transition) {
 
 		final var successors = transition.getSuccessors();
@@ -289,7 +282,7 @@ public class EmpireComputation<L, P> {
 		}
 
 		final var succLaw = mProduct.internalSuccessors(lawPlace, transition.getSymbol());
-		P newLawPlace = lawPlace;
+		IPredicate newLawPlace = lawPlace;
 		if (succLaw.iterator().hasNext()) {
 			newLawPlace = DataStructureUtils.getOneAndOnly(succLaw, "successor state").getSucc();
 		} else {
@@ -348,8 +341,9 @@ public class EmpireComputation<L, P> {
 				&& region.getPlaces().stream().allMatch(p -> mCoRelation.getPlacesCorelation(place, p));
 	}
 
-	private Set<Region<P>> extendRegions(final Territory<P> territory, final P lawPlace, final P newLawPlace,
-			final Set<P> predecessors, final Set<P> successors, final Set<Region<P>> remainingRegions) {
+	private Set<Region<P>> extendRegions(final Territory<P> territory, final IPredicate lawPlace,
+			final IPredicate newLawPlace, final Set<P> predecessors, final Set<P> successors,
+			final Set<Region<P>> remainingRegions) {
 		final Set<Region<P>> extendedRegions = new HashSet<>();
 		if (lawPlace != newLawPlace || predecessors.size() != successors.size()) {
 			return null;
@@ -382,8 +376,8 @@ public class EmpireComputation<L, P> {
 		return regions;
 	}
 
-	private boolean isExtendingTransition(final Territory<P> territory, final P lawPlace, final P newLawPlace,
-			final Transition<L, P> transition) {
+	private boolean isExtendingTransition(final Territory<P> territory, final IPredicate lawPlace,
+			final IPredicate newLawPlace, final Transition<L, P> transition) {
 		final var predecessors = transition.getPredecessors();
 		final var successors = transition.getSuccessors();
 		if (lawPlace != newLawPlace || predecessors.size() != successors.size()) {
@@ -407,14 +401,14 @@ public class EmpireComputation<L, P> {
 		return true;
 	}
 
-	private Set<Transition<L, P>> getExtendingTransitions(final Pair<Territory<P>, P> pair,
+	private Set<Transition<L, P>> getExtendingTransitions(final Pair<Territory<P>, IPredicate> pair,
 			final Set<Transition<L, P>> transitions) {
 		final var territory = pair.getFirst();
 		final var lawPlace = pair.getSecond();
 		final var extendingTransitions = new HashSet<Transition<L, P>>();
 		for (final Transition<L, P> transition : transitions) {
 			final var succLaw = mProduct.internalSuccessors(lawPlace, transition.getSymbol());
-			P newLawPlace = lawPlace;
+			IPredicate newLawPlace = lawPlace;
 			if (succLaw.iterator().hasNext()) {
 				newLawPlace = DataStructureUtils.getOneAndOnly(succLaw, "successor state").getSucc();
 			} else {
@@ -427,7 +421,7 @@ public class EmpireComputation<L, P> {
 		return extendingTransitions;
 	}
 
-	public Map<IPredicate, Set<P>> getPredicatePlaceMap() {
+	public Map<IPredicate, Set<IPredicate>> getPredicatePlaceMap() {
 		return mPredicatePlacesMap;
 	}
 }
