@@ -98,4 +98,17 @@ public class GraphNode<PLACE> {
 		return mBridgeBystanders;
 	}
 
+	@SuppressWarnings("unchecked")
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null || getClass() != obj.getClass()) {
+			return false;
+		}
+		final GraphNode<PLACE> other = (GraphNode<PLACE>) obj;
+		return mPair.equals(other.getPair()) && mBridgeBystanders.equals(other.getBridgeBystanders());
+	}
+
 }
