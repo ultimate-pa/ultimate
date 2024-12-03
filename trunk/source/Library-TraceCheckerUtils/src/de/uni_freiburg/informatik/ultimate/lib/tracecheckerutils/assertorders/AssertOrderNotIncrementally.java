@@ -34,6 +34,8 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracechec
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
+ * Partitions the trace into a single partition.
+ *
  * @author Betim Musa (musab@informatik.uni-freiburg.de)
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  */

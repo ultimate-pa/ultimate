@@ -31,8 +31,18 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracechec
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
+ * This interface is used as an abstraction for assert orders. An assert order is a partitioning of the single static
+ * assignment form (SSA).
+ *
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  */
 public interface IAssertOrder<L extends IAction> {
+	/**
+	 * Partitions the SSA
+	 *
+	 * @param ssa
+	 *            the single static assignment form of the trace
+	 * @return the partitions represented by their indices.
+	 */
 	List<Set<Integer>> partitionTrace(final NestedFormulas<L, Term, Term> ssa);
 }
