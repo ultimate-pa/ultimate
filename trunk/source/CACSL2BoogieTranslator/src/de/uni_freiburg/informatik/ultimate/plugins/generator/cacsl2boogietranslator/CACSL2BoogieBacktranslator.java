@@ -84,6 +84,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.MultigraphEdge;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.ConditionAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.translation.DefaultTranslator;
+import de.uni_freiburg.informatik.ultimate.core.lib.translation.DefaultTranslator.IFunction;
 import de.uni_freiburg.informatik.ultimate.core.lib.translation.ProgramExecutionFormatter;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IExplicitEdgesMultigraph;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -140,6 +141,11 @@ public class CACSL2BoogieBacktranslator extends
 		mBacktranslationWarned = false;
 		mLocationFactory = locationFactory;
 		mBoogie2ACSL = new Boogie2ACSL(typeSizes, mapping, symbolTable, this::reportUnfinishedBacktranslation);
+	}
+
+	@Override
+	public BacktranslatedExpression declareAndTranslateAuxiliaryVariable(final Expression variable) {
+		return mBoogie2ACSL.declareAndTranslateAuxiliaryVariable((IdentifierExpression) variable);
 	}
 
 	@Override
