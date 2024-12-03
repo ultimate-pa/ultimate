@@ -29,8 +29,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.NestedFormulas;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
  * @author Betim Musa (musab@informatik.uni-freiburg.de)
@@ -38,9 +39,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
  */
 public class AssertOrderNotIncrementally<L extends IAction> implements IAssertOrder<L> {
 	@Override
-	public List<Set<Integer>> partitionTrace(final NestedWord<L> trace,
-			final List<Object> controlConfigurationSequence) {
-		final Set<Integer> partition = IntStream.range(0, trace.length()).boxed().collect(Collectors.toSet());
+	public List<Set<Integer>> partitionTrace(final NestedFormulas<L, Term, Term> ssa) {
+		final Set<Integer> partition = IntStream.range(0, ssa.getTrace().length()).boxed().collect(Collectors.toSet());
 		return List.of(partition);
 	}
 }

@@ -26,12 +26,13 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders;
 import java.util.List;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.NestedFormulas;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  */
 public interface IAssertOrder<L extends IAction> {
-	List<Set<Integer>> partitionTrace(final NestedWord<L> trace, final List<Object> controlConfigurationSequence);
+	List<Set<Integer>> partitionTrace(final NestedFormulas<L, Term, Term> ssa);
 }

@@ -32,6 +32,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.NestedFormulas;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -95,8 +96,8 @@ public class AssertOrderSmallConstantsFirst<L extends IAction> implements IAsser
 	}
 
 	@Override
-	public List<Set<Integer>> partitionTrace(final NestedWord<L> trace,
-			final List<Object> controlConfigurationSequence) {
+	public List<Set<Integer>> partitionTrace(final NestedFormulas<L, Term, Term> ssa) {
+		final NestedWord<L> trace = ssa.getTrace();
 		final Set<Integer> stmtsWithSmallConstant = partitionStmtsAccordingToConstantSize(trace, CONSTANT_SIZE);
 		// Then assert the rest of statements
 		return List.of(stmtsWithSmallConstant, AssertOrderUtils.getTraceDifference(trace, stmtsWithSmallConstant));

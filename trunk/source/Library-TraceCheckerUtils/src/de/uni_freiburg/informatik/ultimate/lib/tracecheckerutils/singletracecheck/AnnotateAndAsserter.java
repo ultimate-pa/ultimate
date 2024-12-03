@@ -62,7 +62,6 @@ public class AnnotateAndAsserter<L extends IAction> {
 	private final ILogger mLogger;
 
 	private final ManagedScript mMgdScriptTc;
-	private final NestedWord<L> mTrace;
 
 	private LBool mSatisfiable;
 	private final NestedFormulas<L, Term, Term> mSSA;
@@ -74,7 +73,6 @@ public class AnnotateAndAsserter<L extends IAction> {
 
 	private final AssertCodeBlockOrder mAssertCodeBlocksOrder;
 	private int mCheckSat;
-	private final List<Object> mControlConfigurationSequence;
 
 	public AnnotateAndAsserter(final ManagedScript mgdScriptTc, final NestedFormulas<L, Term, Term> nestedSSA,
 			final AnnotateAndAssertCodeBlocks<L> aaacb, final TraceCheckStatisticsGenerator tcbg,
@@ -82,14 +80,11 @@ public class AnnotateAndAsserter<L extends IAction> {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(TraceCheckerUtils.PLUGIN_ID);
 		mMgdScriptTc = mgdScriptTc;
-		mTrace = nestedSSA.getTrace();
 		mSSA = nestedSSA;
 		mAnnotateAndAssertCodeBlocks = aaacb;
 		mTcbg = tcbg;
 		mAssertCodeBlocksOrder = assertCodeBlocksOrder;
 		mCheckSat = 0;
-		mControlConfigurationSequence =
-				nestedSSA.hasControlConfigurations() ? nestedSSA.getControlConfigurations() : null;
 	}
 
 	public void buildAnnotatedSsaAndAssertTerms() {
@@ -101,12 +96,11 @@ public class AnnotateAndAsserter<L extends IAction> {
 		mAnnotSSA.setPostcondition(mAnnotateAndAssertCodeBlocks.annotateAndAssertPostcondition());
 
 		// Report benchmark
-		mTcbg.reportNewCodeBlocks(mTrace.length());
+		mTcbg.reportNewCodeBlocks(mSSA.getCounterexample().length());
 
-		final List<Set<Integer>> partitions =
-				getAssertOrder(mAssertCodeBlocksOrder).partitionTrace(mTrace, mControlConfigurationSequence);
+		final List<Set<Integer>> partitions = getAssertOrder(mAssertCodeBlocksOrder).partitionTrace(mSSA);
 
-		mSatisfiable = annotateAndAssert(mTrace, partitions);
+		mSatisfiable = annotateAndAssert(mSSA.getTrace(), partitions);
 		mLogger.info("Assert order " + mAssertCodeBlocksOrder + " issued " + mCheckSat + " check-sat command(s)");
 		mLogger.info("Conjunction of SSA is " + mSatisfiable);
 	}

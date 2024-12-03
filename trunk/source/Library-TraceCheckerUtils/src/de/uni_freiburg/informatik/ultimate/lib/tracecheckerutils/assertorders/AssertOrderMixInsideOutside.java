@@ -33,6 +33,8 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.NestedFormulas;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashTreeRelation;
 
 /**
@@ -43,8 +45,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashTree
  */
 public class AssertOrderMixInsideOutside<L extends IAction> implements IAssertOrder<L> {
 	@Override
-	public List<Set<Integer>> partitionTrace(final NestedWord<L> trace,
-			final List<Object> controlConfigurationSequence) {
+	public List<Set<Integer>> partitionTrace(final NestedFormulas<L, Term, Term> ssa) {
+		final NestedWord<L> trace = ssa.getTrace();
+		final List<Object> controlConfigurationSequence = ssa.getControlConfigurations();
 		final HashTreeRelation<Object, Integer> rwt =
 				AssertOrderUtils.computeRelationWithTreeSetForTrace(0, trace.length(), controlConfigurationSequence);
 		final Map<Integer, Set<Integer>> depth2Statements =
