@@ -645,7 +645,8 @@ public final class Term2Expression implements Serializable {
 			throw new UnsupportedOperationException("Cannot redeclare program variable as auxiliary: " + pv);
 		}
 		final IBoogieType type = mTypeSortTranslator.getType(variable.getSort());
-		final var id = new IdentifierExpression(null, type, variable.getName(),
+		final String newIdentifier = "~ghost~" + mAuxiliaryVariables.size();
+		final var id = new IdentifierExpression(null, type, newIdentifier,
 				new DeclarationInformation(StorageClass.QUANTIFIED, null));
 		mAuxiliaryVariables.put(variable, id);
 		return id;
