@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire;
 
 import java.util.Collections;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -48,6 +49,23 @@ public class GraphNode<PLACE> {
 		mBridgeBystanders = Collections.emptySet();
 	}
 
+	public <L> GraphNode(final Pair<Territory<PLACE>, IPredicate> pair, final Transition<L, PLACE> transition) {
+		mPair = pair;
+		mBridgeBystanders = getTransitionBystanders(transition);
+	}
+
+	private <L> Set<Region<PLACE>> getTransitionBystanders(final Transition<L, PLACE> transition) {
+		final var territory = mPair.getFirst();
+		final var successors = transition.getSuccessors();
+		final var bridgeBystanders = territory.getRegions().stream()
+				.filter(r -> DataStructureUtils.haveEmptyIntersection(r.getPlaces(), successors))
+				.collect(Collectors.toSet());
+		if (bridgeBystanders.isEmpty()) {
+			return Collections.emptySet();
+		}
+		return bridgeBystanders;
+	}
+
 	/**
 	 * Check if a (bridge-) pair is necessary i.e. check if an extension of the pair would lead to a breach of the
 	 * bystander condition.
@@ -59,11 +77,15 @@ public class GraphNode<PLACE> {
 	 */
 	public <L> boolean isNecessaryBridge(final Transition<L, PLACE> transition) {
 		final var territory = mPair.getFirst();
-		final var predecessors = transition.getPredecessors();
 		final var successors = transition.getSuccessors();
 		if (territory.getPlaces().containsAll(successors)) {
 			return false;
 		}
+		return extendsBridgeBystanders(transition);
+	}
+
+	private <L> boolean extendsBridgeBystanders(final Transition<L, PLACE> transition) {
+		final var predecessors = transition.getPredecessors();
 		return mBridgeBystanders.stream()
 				.anyMatch(bystander -> !DataStructureUtils.haveEmptyIntersection(bystander.getPlaces(), predecessors));
 	}
