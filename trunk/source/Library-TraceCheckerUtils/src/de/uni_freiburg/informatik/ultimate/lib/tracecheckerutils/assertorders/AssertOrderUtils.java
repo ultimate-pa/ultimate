@@ -56,9 +56,9 @@ public class AssertOrderUtils {
 	 *
 	 * @return A map from depth to the set of statements (represented by their index) with this depth.
 	 */
-	public static <LETTER extends IAction, LOC> Map<Integer, Set<Integer>>
-			partitionStatementsAccordingDepth(final NestedWord<LETTER> trace, final List<LOC> controlConfigurations) {
-		final HashTreeRelation<LOC, Integer> config2Indices = new HashTreeRelation<>();
+	public static <LETTER extends IAction> Map<Integer, Set<Integer>> partitionStatementsAccordingDepth(
+			final NestedWord<LETTER> trace, final List<Object> controlConfigurations) {
+		final HashTreeRelation<Object, Integer> config2Indices = new HashTreeRelation<>();
 		for (int i = 0; i <= trace.length(); i++) {
 			config2Indices.addPair(controlConfigurations.get(i), i);
 		}
@@ -73,9 +73,9 @@ public class AssertOrderUtils {
 	 * Partition the statement positions between lowerIndex and upperIndex according to their depth. The result is
 	 * stored in the map 'depth2Statements'. The partitioning is done recursively.
 	 */
-	private static <LOC> void dfsPartitionStatementsAccordingToDepth(final Integer lowerIndex, final Integer upperIndex,
-			final int depth, final HashTreeRelation<LOC, Integer> config2Indices,
-			final Map<Integer, Set<Integer>> depth2Statements, final List<LOC> controlConfigurations) {
+	private static void dfsPartitionStatementsAccordingToDepth(final Integer lowerIndex, final Integer upperIndex,
+			final int depth, final HashTreeRelation<Object, Integer> config2Indices,
+			final Map<Integer, Set<Integer>> depth2Statements, final List<Object> controlConfigurations) {
 		int i = lowerIndex;
 		while (i < upperIndex) {
 			// Is the current statement a loop entry?
