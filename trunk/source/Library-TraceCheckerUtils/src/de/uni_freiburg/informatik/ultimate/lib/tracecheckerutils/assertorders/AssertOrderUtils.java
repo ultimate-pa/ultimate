@@ -28,7 +28,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -59,7 +58,6 @@ public class AssertOrderUtils {
 	 */
 	public static <LETTER extends IAction, LOC> Map<Integer, Set<Integer>>
 			partitionStatementsAccordingDepth(final NestedWord<LETTER> trace, final List<LOC> pps) {
-		Objects.requireNonNull(pps, "No control configurations were provided.");
 		final HashTreeRelation<LOC, Integer> rwt = new HashTreeRelation<>();
 		for (int i = 0; i <= trace.length(); i++) {
 			rwt.addPair(pps.get(i), i);
