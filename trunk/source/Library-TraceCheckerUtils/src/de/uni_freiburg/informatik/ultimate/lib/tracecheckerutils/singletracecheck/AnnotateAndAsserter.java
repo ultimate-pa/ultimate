@@ -87,11 +87,10 @@ public class AnnotateAndAsserter<L extends IAction> {
 		mTcbg = tcbg;
 		mAssertCodeBlocksOrder = assertCodeBlocksOrder;
 		mCheckSat = 0;
+		buildAnnotatedSsaAndAssertTerms();
 	}
 
-	public void buildAnnotatedSsaAndAssertTerms() {
-		assert mCheckSat == 0 : "You should not call this method twice";
-
+	private void buildAnnotatedSsaAndAssertTerms() {
 		mAnnotSSA = new ModifiableNestedFormulas<>(mSSA.getCounterexample(), new TreeMap<Integer, Term>());
 
 		mAnnotSSA.setPrecondition(mAnnotateAndAssertCodeBlocks.annotateAndAssertPrecondition());

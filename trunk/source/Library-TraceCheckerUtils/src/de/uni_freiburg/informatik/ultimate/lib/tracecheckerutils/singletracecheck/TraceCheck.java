@@ -303,11 +303,10 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 		mTraceCheckBenchmarkGenerator.stop(TraceCheckStatisticsDefinitions.SsaConstructionTime.toString());
 
 		mTraceCheckBenchmarkGenerator.start(TraceCheckStatisticsDefinitions.SatisfiabilityAnalysisTime.toString());
-		mAAA = new AnnotateAndAsserter<>(mTcSmtManager, ssa, getAnnotateAndAsserterCodeBlocks(ssa),
-				mTraceCheckBenchmarkGenerator, mAssertCodeBlockOrder, mServices);
 		FeasibilityCheckResult result = null;
 		try {
-			mAAA.buildAnnotatedSsaAndAssertTerms();
+			mAAA = new AnnotateAndAsserter<>(mTcSmtManager, ssa, getAnnotateAndAsserterCodeBlocks(ssa),
+					mTraceCheckBenchmarkGenerator, mAssertCodeBlockOrder, mServices);
 			final LBool isSafe = mAAA.isInputSatisfiable();
 			TraceCheckReasonUnknown tcru;
 			if (isSafe == LBool.UNKNOWN) {
