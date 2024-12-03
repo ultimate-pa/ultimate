@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2015 Betim Musa (musab@informatik.uni-freiburg.de)
+ * Copyright (C) 2020 Julian Loeffler (loefflju@informatik.uni-freiburg.de)
  * Copyright (C) 2024 Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  * Copyright (C) 2024 University of Freiburg
  *
@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
- * @author Betim Musa (musab@informatik.uni-freiburg.de)
+ * @author Julian Loeffler (loefflju@informatik.uni-freiburg.de)
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  */
 public class AssertOrderSmtFeatureHeuristic<L extends IAction> implements IAssertOrder<L> {
