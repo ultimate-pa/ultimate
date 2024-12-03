@@ -44,6 +44,7 @@ public class AssertOrderInsideLoopFirst1<L extends IAction> implements IAssertOr
 	public List<Set<Integer>> partition(final NestedFormulas<L, Term, Term> ssa) {
 		final Map<Integer, Set<Integer>> depth2Statements =
 				AssertOrderUtils.partitionStatementsAccordingDepth(ssa.getTrace(), ssa.getControlConfigurations());
+		// Sort the statements by their depth in descending order (i.e., the most nested statements first).
 		return depth2Statements.keySet().stream().sorted((i1, i2) -> i2.compareTo(i1)).map(depth2Statements::get)
 				.toList();
 	}

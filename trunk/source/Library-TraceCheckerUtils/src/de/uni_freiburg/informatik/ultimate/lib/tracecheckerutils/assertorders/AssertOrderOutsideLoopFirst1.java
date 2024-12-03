@@ -53,6 +53,7 @@ public class AssertOrderOutsideLoopFirst1<L extends IAction> implements IAssertO
 		if (stmtsOutsideOfLoop.size() == trace.length()) {
 			return List.of(stmtsOutsideOfLoop);
 		}
+		// Then assert the other statements.
 		final Set<Integer> stmtsWithinLoop = AssertOrderUtils.getTraceDifference(trace, stmtsOutsideOfLoop);
 		return List.of(stmtsOutsideOfLoop, stmtsWithinLoop);
 	}
