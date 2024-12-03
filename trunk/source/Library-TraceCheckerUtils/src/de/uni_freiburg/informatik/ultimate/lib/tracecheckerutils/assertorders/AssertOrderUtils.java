@@ -52,7 +52,10 @@ public class AssertOrderUtils {
 	}
 
 	/**
-	 * Partition the statements of the given trace according to their depth.
+	 * Partition the statements of the given trace according to their depth, i.e. the number of nested loops that
+	 * statement is contained in.
+	 *
+	 * @return A map from depth to the set of statements (represented by their index) with this depth.
 	 */
 	public static <LETTER extends IAction, LOC> Map<Integer, Set<Integer>>
 			partitionStatementsAccordingDepth(final NestedWord<LETTER> trace, final List<LOC> pps) {
@@ -68,9 +71,8 @@ public class AssertOrderUtils {
 	}
 
 	/**
-	 * Partition the statement positions between lowerIndex and upperIndex according to their depth. (See documentation
-	 * for the meaning of 'depth'). The result is stored in the map 'depth2Statements'. The partitioning is done
-	 * recursively.
+	 * Partition the statement positions between lowerIndex and upperIndex according to their depth. The result is
+	 * stored in the map 'depth2Statements'. The partitioning is done recursively.
 	 */
 	private static <LOC> void dfsPartitionStatementsAccordingToDepth(final Integer lowerIndex, final Integer upperIndex,
 			final int depth, final HashTreeRelation<LOC, Integer> rwt,
