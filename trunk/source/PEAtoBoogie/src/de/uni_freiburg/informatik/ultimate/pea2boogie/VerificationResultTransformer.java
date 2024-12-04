@@ -210,9 +210,13 @@ public class VerificationResultTransformer {
 			// Annotation needed for the result to know the respective Check
 			reqCheck.annotate(element);
 			final var invariant = (Expression) invResult.getInvariant();
+			final var reqIds = reqCheck.getReqIds();
 			// Only works if spec checks a single requirement
-			assert reqCheck.getReqIds().size() == 1;
-			final var redId = reqCheck.getReqIds().iterator().next();
+			if (reqIds.size() != 1) {
+				throw new AssertionError(
+						"Creating redundancy sets for Check containing multiple requirements is not supported");
+			}
+			final var redId = reqIds.iterator().next();
 			final var redSet = InvariantResultTransformer.extractRedundancySet(invariant);
 			return new ReqCheckRedundancyResult<>(element, plugin, redId, redSet);
 

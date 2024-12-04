@@ -44,9 +44,9 @@ public class InvariantResultTransformer {
 	}
 
 	public static Set<String> extractRedundancySet(final Expression invariant) {
-		final BoogieIdExtractor bid = new BoogieIdExtractor();
-		bid.processExpression(invariant);
-		return bid.getIds().stream().filter(id -> (id.endsWith("_total_pc") || id.endsWith("_total")))
+		final BoogieIdExtractor idExtractor = new BoogieIdExtractor();
+		idExtractor.processExpression(invariant);
+		return idExtractor.getIds().stream().filter(id -> (id.endsWith("_total_pc") || id.endsWith("_total")))
 				.map(id -> id.split("_ct")[0]).collect(Collectors.toSet());
 	}
 }
