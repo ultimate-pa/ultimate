@@ -213,8 +213,8 @@ public class VerificationResultTransformer {
 			final var reqIds = reqCheck.getReqIds();
 			// Only works if spec checks a single requirement
 			if (reqIds.size() != 1) {
-				throw new AssertionError(
-						"Creating redundancy sets for Check containing multiple requirements is not supported");
+				throw new AssertionError("Creating redundancy sets for Check containing multiple requirements" + reqIds
+						+ "is not supported");
 			}
 			final var redId = reqIds.iterator().next();
 			final var redSet = InvariantResultTransformer.extractRedundancySet(invariant);
