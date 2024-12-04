@@ -401,7 +401,7 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 		}
 
 		public AbstractionAndProof(final IInitialAbstractionProvider<L, ? extends A> initialAbstractionProvider) {
-			this(initialAbstractionProvider, new Lazy<>(null), null);
+			this(initialAbstractionProvider, Lazy.empty(), null);
 		}
 
 		public IProofProducer<IIcfg<IcfgLocation>, IProof>
