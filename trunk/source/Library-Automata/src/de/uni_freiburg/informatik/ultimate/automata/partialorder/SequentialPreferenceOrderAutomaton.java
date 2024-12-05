@@ -45,8 +45,13 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 public class SequentialPreferenceOrderAutomaton<L extends IAction, S>
 		implements INwaOutgoingLetterAndTransitionProvider<L, S> {
 
-	public SequentialPreferenceOrderAutomaton() {
-		// TODO implement constructor
+	private final INwaOutgoingLetterAndTransitionProvider<L, S> mLeftAutomaton;
+	private final INwaOutgoingLetterAndTransitionProvider<L, S> mRightAutomaton;
+
+	public SequentialPreferenceOrderAutomaton(final INwaOutgoingLetterAndTransitionProvider<L, S> leftAutomaton,
+			final INwaOutgoingLetterAndTransitionProvider<L, S> rightAutomaton) {
+		mLeftAutomaton = leftAutomaton;
+		mRightAutomaton = rightAutomaton;
 	}
 
 	@Override
@@ -57,7 +62,6 @@ public class SequentialPreferenceOrderAutomaton<L extends IAction, S>
 
 	@Override
 	public VpAlphabet<L> getVpAlphabet() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
@@ -75,7 +79,6 @@ public class SequentialPreferenceOrderAutomaton<L extends IAction, S>
 
 	@Override
 	public boolean isInitial(final S state) {
-		// TODO Auto-generated method stub
 		return false;
 	}
 

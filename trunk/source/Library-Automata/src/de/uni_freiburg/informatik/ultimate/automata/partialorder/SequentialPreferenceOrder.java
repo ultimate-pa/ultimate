@@ -56,7 +56,7 @@ public class SequentialPreferenceOrder<L extends IAction, S1, S2> implements IPa
 	@Override
 	public INwaOutgoingLetterAndTransitionProvider<L, S2> getMonitor() {
 		// TODO Auto-generated method stub
-		new SequentialPreferenceOrderAutomaton<L, S2>();
+		// new SequentialPreferenceOrderAutomaton<L, S2>();
 		return null;
 	}
 
