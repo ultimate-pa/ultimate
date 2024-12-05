@@ -35,13 +35,12 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.T
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.IProofProducer;
 
 public interface IPetriNetProofProducer<L extends IAction, P>
 		extends IProofProducer<IPetriNet<L, P>, OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>>> {
-	void refine(IRefinementEngineResult<L, ?> refinementResult,
-			INestedWordAutomaton<L, IPredicate> interpolantAutomaton,
+	void refine(final IPredicateUnifier unifier, INestedWordAutomaton<L, IPredicate> interpolantAutomaton,
 			Map<Transition<L, P>, Transition<L, P>> transitionBacktranslation);
 
 	void finalize(IPetriNet<L, P> refinedNet, BranchingProcess<L, P> refinedNetUnfolding);

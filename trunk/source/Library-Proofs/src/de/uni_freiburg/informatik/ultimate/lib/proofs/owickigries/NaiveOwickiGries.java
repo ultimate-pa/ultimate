@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateCoverageChecker;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.IFloydHoareAnnotation;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.TransformFloydHoareAnnotation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
@@ -182,11 +182,11 @@ public class NaiveOwickiGries<L extends IAction, P> {
 		}
 
 		@Override
-		public void refine(final IRefinementEngineResult<L, ?> refinementResult,
+		public void refine(final IPredicateUnifier unifier,
 				final INestedWordAutomaton<L, IPredicate> interpolantAutomaton,
 				final Map<Transition<L, P>, Transition<L, P>> transitionBacktranslation) {
 			if (mSettings.useCoveringSimplification()) {
-				mCoverageRelations.add(refinementResult.getPredicateUnifier().getCoverageRelation());
+				mCoverageRelations.add(unifier.getCoverageRelation());
 			}
 		}
 

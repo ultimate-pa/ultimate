@@ -541,7 +541,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 
 		if (mProofProducer != null) {
 			assert checkInterpolantAutomatonInductivity(dia) : "Not inductive";
-			mProofProducer.refine(mRefinementResult, dia, dpod.getTransitionBacktranslation());
+			mProofProducer.refine(mRefinementResult.getPredicateUnifier(), dia, dpod.getTransitionBacktranslation());
 		}
 		if (mPref.dumpAutomata()) {
 			final String filename = "InterpolantAutomatonDeterminized_Iteration" + getIteration();

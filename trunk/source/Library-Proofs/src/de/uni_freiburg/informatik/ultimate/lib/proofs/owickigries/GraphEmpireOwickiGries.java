@@ -50,8 +50,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.Mon
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.MonolithicImplicationChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.crown.PlacesCoRelation;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireAnnotation;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireComputation;
@@ -106,8 +106,7 @@ public class GraphEmpireOwickiGries<L extends IAction, P> implements IPetriNetPr
 	}
 
 	@Override
-	public void refine(final IRefinementEngineResult<L, ?> refinementResult,
-			final INestedWordAutomaton<L, IPredicate> interpolantAutomaton,
+	public void refine(final IPredicateUnifier unifier, final INestedWordAutomaton<L, IPredicate> interpolantAutomaton,
 			final Map<Transition<L, P>, Transition<L, P>> transitionBacktranslation) {
 		mDiff2OriginalTransition = mDiff2OriginalTransition.compose(transitionBacktranslation::get);
 		if (mProofProduct == null) {

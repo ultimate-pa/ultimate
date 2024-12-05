@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.MonolithicImplicationChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.crown.Crown;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.crown.CrownConstruction;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.crown.CrownsEmpire;
@@ -107,8 +107,7 @@ public class CrownsOwickiGries<L extends IAction, P> implements IPetriNetProofPr
 	}
 
 	@Override
-	public void refine(final IRefinementEngineResult<L, ?> refinementResult,
-			final INestedWordAutomaton<L, IPredicate> interpolantAutomaton,
+	public void refine(final IPredicateUnifier unifier, final INestedWordAutomaton<L, IPredicate> interpolantAutomaton,
 			final Map<Transition<L, P>, Transition<L, P>> transitionBacktranslation) {
 		mDiff2OriginalTransition = mDiff2OriginalTransition.compose(transitionBacktranslation::get);
 	}
