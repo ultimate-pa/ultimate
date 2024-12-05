@@ -94,8 +94,11 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheck;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheckFailResult;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheckRtInconsistentResult;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheckSuccessResult;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheckVacuousResult;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.Req2BoogieTranslator;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.ReqSymboltableBuilder;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.VacuityAnnotation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ParallelComposition;
@@ -185,6 +188,15 @@ public class VerificationResultTransformer {
 					generateTimeSequenceMap(newPe.getProgramStates());
 			final String failurePath = formatTimeSequenceMap(delta2var2value);
 			return new ReqCheckRtInconsistentResult<>(element, plugin, failurePath);
+		}
+		if (spec == Spec.VACUOUS) {
+			// Return a ReqCheckVacuousResult, i.e., a ReqCheckFailResult with additional
+			// VacuityAnnotation containing an invariant that might be enforced by the
+			// vacuous requirement.
+			VacuityAnnotation enforcedInv = VacuityAnnotation
+					.getAnnotation(((BoogieIcfgLocation) element).getBoogieASTNode());
+			return new ReqCheckVacuousResult<>(element, plugin,
+					enforcedInv.getInvariant().toString());
 		}
 		return new ReqCheckFailResult<>(element, plugin);
 	}
