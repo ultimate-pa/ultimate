@@ -50,8 +50,8 @@ import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.IFloydHoareAnno
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.TransformFloydHoareAnnotation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BidirectionalMap;
-import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.TimeTracker;
 
 public class NaiveOwickiGries<L extends IAction, P> {
 	private final IUltimateServiceProvider mServices;
@@ -61,7 +61,7 @@ public class NaiveOwickiGries<L extends IAction, P> {
 	private final IPetriNet<L, P> mProgram;
 	private final OwickiGriesSettings mSettings;
 
-	private final Statistics mStatistics = new Statistics();
+	private final Statistics mStatistics;
 
 	public NaiveOwickiGries(final IUltimateServiceProvider services, final BasicPredicateFactory predicateFactory,
 			final CfgSmtToolkit csToolkit, final IPetriNet<L, P> program, final OwickiGriesSettings settings) {
@@ -71,6 +71,8 @@ public class NaiveOwickiGries<L extends IAction, P> {
 		mCsToolkit = csToolkit;
 		mProgram = program;
 		mSettings = settings;
+
+		mStatistics = new Statistics(mLogger);
 	}
 
 	public IPetriNetProofProducer<L, P> createProofProducer(final Function<P, IPredicate> assertionPlaceToAssertion) {
@@ -117,19 +119,23 @@ public class NaiveOwickiGries<L extends IAction, P> {
 
 	public OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>> convertToOwickiGries(
 			final IFloydHoareAnnotation<Marking<P>> floydHoare, final Collection<Marking<P>> reachableMarkings) {
-		final long startTime = System.currentTimeMillis();
+		mStatistics.startOwickiGriesComputation();
+		OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>> annotation;
+		try {
+			final OwickiGriesConstruction<L, P> construction = new OwickiGriesConstruction<>(mServices, mCsToolkit,
+					mProgram, reachableMarkings, floydHoare, mSettings.useHittingSets());
+			annotation = construction.getResult();
+			mStatistics.reportOwickiGries(annotation);
+		} finally {
+			mStatistics.stopOwickiGriesComputation();
+		}
 
-		final OwickiGriesConstruction<L, P> construction = new OwickiGriesConstruction<>(mServices, mCsToolkit,
-				mProgram, reachableMarkings, floydHoare, mSettings.useHittingSets());
-		mLogger.info("Computed Owicki-Gries annotation of size %d in %d ms", construction.getResult().size(),
-				System.currentTimeMillis() - startTime);
-
-		assert checkOwickiGriesValidity(construction.getResult()) : "Invalid Owicki-Gries annotation";
-		return construction.getResult();
+		assert checkOwickiGriesValidity(annotation) : "Invalid Owicki-Gries annotation";
+		return annotation;
 	}
 
 	private boolean checkFloydHoareValidity(final IFloydHoareAnnotation<Marking<P>> floydHoare) {
-		final long startTime = System.currentTimeMillis();
+		mStatistics.startFloydHoareValidity();
 		final Validity validity;
 		try {
 			validity = new PetriFloydHoareValidityCheck<>(mServices, mCsToolkit.getManagedScript(),
@@ -141,34 +147,27 @@ public class NaiveOwickiGries<L extends IAction, P> {
 		} catch (final PetriNetNot1SafeException e) {
 			throw new AssertionError(e);
 		} finally {
-			final long elapsed = System.currentTimeMillis() - startTime;
-			mLogger.info("Checked validity of Floyd-Hoare annotation for Petri reachability graph in %d ms", elapsed);
+			mStatistics.stopFloydHoareValidity();
 		}
 	}
 
-	private boolean
-			checkOwickiGriesValidity(final OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>> ogConstruction) {
-		final long startTime = System.currentTimeMillis();
+	private boolean checkOwickiGriesValidity(final OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>> annotation) {
+		mStatistics.startOwickiGriesValidity();
 		try {
 			final var validity =
-					new PetriOwickiGriesValidityCheck<>(mServices, mProgram, mCsToolkit, ogConstruction).isValid();
+					new PetriOwickiGriesValidityCheck<>(mServices, mProgram, mCsToolkit, annotation).isValid();
 			assert validity != Validity.INVALID : "Owicki-Gries annotation is invalid";
 			if (validity == Validity.UNKNOWN) {
 				mLogger.warn("Could not prove validity of Owicki-Gries annotation");
 			}
 			return validity != Validity.INVALID;
 		} finally {
-			final long elapsed = System.currentTimeMillis() - startTime;
-			mLogger.info("Checked validity of Owicki-Gries annotation for Petri net in %d ms", elapsed);
+			mStatistics.stopOwickiGriesValidity();
 		}
 	}
 
 	public IStatisticsDataProvider getStatistics() {
 		return mStatistics;
-	}
-
-	private static class Statistics extends AbstractStatisticsDataProvider {
-		// TODO measure times and sizes
 	}
 
 	private class Producer implements IPetriNetProofProducer<L, P> {
@@ -209,12 +208,17 @@ public class NaiveOwickiGries<L extends IAction, P> {
 		public OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>> getOrComputeProof() {
 			// compute the Floyd-Hoare annotation
 			PetriFloydHoare<L, P> petriFloydHoare;
+			mStatistics.startFloydHoareComputation();
 			try {
 				petriFloydHoare = new PetriFloydHoare<>(mPredicateFactory, mProgram, mFinalAbstraction,
 						mAssertionPlaceToAssertion, mCoverageRelations, mSettings.useCoveringSimplification());
 			} catch (final PetriNetNot1SafeException e) {
 				throw new AssertionError(e);
+			} finally {
+				mStatistics.stopFloydHoareComputation();
 			}
+
+			assert checkFloydHoareValidity(petriFloydHoare.getResult()) : "Invalid Floyd-Hoare annotation";
 
 			// convert the Floyd-Hoare annotation to Owicki-Gries
 			return convertToOwickiGries(petriFloydHoare.getResult(), petriFloydHoare.getReachableMarkings());
@@ -223,6 +227,31 @@ public class NaiveOwickiGries<L extends IAction, P> {
 		@Override
 		public IStatisticsDataProvider getStatistics() {
 			return NaiveOwickiGries.this.getStatistics();
+		}
+	}
+
+	private static final class Statistics extends OwickiGriesStatistics {
+		private final TimeTracker mFloydHoareTime = new TimeTracker();
+		private final TimeTracker mFloydHoareValidityTime = new TimeTracker();
+
+		public Statistics(final ILogger logger) {
+			super(logger, null, OwickiGriesConstruction.class);
+		}
+
+		public void startFloydHoareComputation() {
+			mFloydHoareTime.start();
+		}
+
+		public void stopFloydHoareComputation() {
+			mFloydHoareTime.stop();
+		}
+
+		public void startFloydHoareValidity() {
+			mFloydHoareValidityTime.start();
+		}
+
+		public void stopFloydHoareValidity() {
+			mFloydHoareValidityTime.stop();
 		}
 	}
 }

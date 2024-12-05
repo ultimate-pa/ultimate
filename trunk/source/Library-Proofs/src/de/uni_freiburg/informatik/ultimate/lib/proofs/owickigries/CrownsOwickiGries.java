@@ -58,9 +58,7 @@ import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.PetriOw
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
-import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
-import de.uni_freiburg.informatik.ultimate.util.statistics.TimeTracker;
 
 public class CrownsOwickiGries<L extends IAction, P> implements IPetriNetProofProducer<L, P> {
 	public static final boolean IGNORE_CUTOFF_CONDITIONS = true;
@@ -75,7 +73,7 @@ public class CrownsOwickiGries<L extends IAction, P> implements IPetriNetProofPr
 	private final BasicPredicateFactory mFactory;
 	private final Function<P, IPredicate> mAssertionPlace2Assertion;
 
-	private final Statistics mStatistics = new Statistics();
+	private final Statistics mStatistics;
 
 	private BranchingProcess<L, P> mRefinedUnfolding;
 	private Set<Condition<L, P>> mOriginalConditions;
@@ -104,6 +102,8 @@ public class CrownsOwickiGries<L extends IAction, P> implements IPetriNetProofPr
 		mModifiableGlobals = modifiableGlobals;
 		mFactory = predicateFactory;
 		mAssertionPlace2Assertion = assertionPlace2Assertion;
+
+		mStatistics = new Statistics(mLogger);
 	}
 
 	@Override
@@ -138,11 +138,12 @@ public class CrownsOwickiGries<L extends IAction, P> implements IPetriNetProofPr
 
 			final var empire = getEmpireAnnotationFromCrown(crown);
 			mLogger.debug("Constructed Empire Annotation:\n%s", empire);
+
 			assert checkEmpireValidity(empire) : "Empire annotation is invalid";
 
 			mOwickiGries = getOwickiGriesAnnotation(empire);
 			mLogger.debug("Computed Owicki-Gries annotation:\n%s", mOwickiGries);
-			mLogger.info("Owicki-Gries size: %d", mOwickiGries.size());
+
 			assert checkOwickiGriesValidity(mOwickiGries) : "Owicki Gries annotation is invalid";
 		}
 		return mOwickiGries;
@@ -152,60 +153,61 @@ public class CrownsOwickiGries<L extends IAction, P> implements IPetriNetProofPr
 		final var crownConstruction =
 				new CrownConstruction<>(mServices, mRefinedUnfolding, mOriginalConditions, mAssertionConditions);
 		mStatistics.reportCrownStatistics(crownConstruction);
-		mLogger.info("PetriOwickiGries Crown Statistics: %s", crownConstruction.getStatistics());
 		return crownConstruction.getCrown();
 	}
 
 	private EmpireAnnotation<P> getEmpireAnnotationFromCrown(final Crown<P, L> crown) {
-		mStatistics.mEmpireTime.start();
+		mStatistics.startEmpireComputation();
 		try {
 			final CrownsEmpire<P, L> crownsEmpire = crown.getCrownsEmpire(mFactory, mAssertionPlace2Assertion);
-			mStatistics.reportEmpireStatistics(crownsEmpire);
-			mLogger.info("PetriOwickiGries Empire Statistics: %s", crownsEmpire.getStatistics());
+			mStatistics.reportEmpire(crownsEmpire);
 			return crownsEmpire.getEmpireAnnotation();
 		} finally {
-			mStatistics.mEmpireTime.stop();
+			mStatistics.stopEmpireComputation();
 		}
 	}
 
 	private boolean checkEmpireValidity(final EmpireAnnotation<P> empire) {
-		mStatistics.mEmpireValidityTime.start();
+		mStatistics.startEmpireValidity();
 		try {
 			final var implicationChecker = new MonolithicImplicationChecker(mServices, mMgdScript);
 			final var checker = new EmpireValidityCheck<>(mServices, mMgdScript, implicationChecker, mFactory, mProgram,
 					mModifiableGlobals, empire);
 			return checker.getValidity() != Validity.INVALID;
 		} finally {
-			mStatistics.mEmpireValidityTime.stop();
+			mStatistics.stopEmpireValidity();
 		}
 	}
 
 	private OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>>
 			getOwickiGriesAnnotation(final EmpireAnnotation<P> empire) {
-		mStatistics.mOwickiGriesTime.start();
+		mStatistics.startOwickiGriesComputation();
 		try {
 			final var possibleInterferences = PetriOwickiGries.getPossibleInterferences(mRefinedUnfolding,
 					mProgram.getPlaces(), mDiff2OriginalTransition);
 			final EmpireToOwickiGries<L, P> empireToOwickiGries = new EmpireToOwickiGries<>(mServices, mMgdScript,
 					mProgram, mSymbolTable, mProcedures, empire, possibleInterferences);
 			final var annotation = empireToOwickiGries.getAnnotation();
-			mLogger.info(
-					"Computed Owicki-Gries annotation with %d ghost variables, %d ghost updates, and overall size %d",
-					annotation.getGhostVariables().size(), annotation.getAssignmentMapping().size(), annotation.size());
+			mStatistics.reportOwickiGries(annotation);
 			return annotation;
 		} finally {
-			mStatistics.mOwickiGriesTime.stop();
+			mStatistics.stopOwickiGriesComputation();
 		}
 	}
 
 	private boolean checkOwickiGriesValidity(final OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>> annotation) {
-		mStatistics.mOwickiGriesValidityTime.start();
+		mStatistics.startOwickiGriesValidity();
 		try {
-			final var owickiGriesValidity = new PetriOwickiGriesValidityCheck<>(mServices, mMgdScript, mProgram,
-					mModifiableGlobals, annotation);
-			return owickiGriesValidity.isValid() != Validity.INVALID;
+			final var validity =
+					new PetriOwickiGriesValidityCheck<>(mServices, mMgdScript, mProgram, mModifiableGlobals, annotation)
+							.isValid();
+			assert validity != Validity.INVALID : "Owicki-Gries annotation is invalid";
+			if (validity == Validity.UNKNOWN) {
+				mLogger.warn("Could not prove validity of Owicki-Gries annotation");
+			}
+			return validity != Validity.INVALID;
 		} finally {
-			mStatistics.mOwickiGriesValidityTime.stop();
+			mStatistics.stopOwickiGriesValidity();
 		}
 	}
 
@@ -239,39 +241,23 @@ public class CrownsOwickiGries<L extends IAction, P> implements IPetriNetProofPr
 		return mStatistics;
 	}
 
-	private static final class Statistics extends AbstractStatisticsDataProvider {
-		public static final String EMPIRE_TIME = "Crown empire time";
-		public static final String EMPIRE_VALIDITY_TIME = "Empire validity check time";
-		public static final String OWICKI_GRIES_TIME = "EmpireToOwickiGries time";
-		public static final String OWICKI_GRIES_VALIDITY_TIME = "Owicki-Gries validity check time";
-
+	private static final class Statistics extends OwickiGriesStatistics {
 		public static final String CROWN_STATISTICS = "Crown construction";
-		public static final String EMPIRE_STATISTICS = "Empire statistics";
-
-		private final TimeTracker mEmpireTime = new TimeTracker();
-		private final TimeTracker mEmpireValidityTime = new TimeTracker();
-		private final TimeTracker mOwickiGriesTime = new TimeTracker();
-		private final TimeTracker mOwickiGriesValidityTime = new TimeTracker();
 
 		private IStatisticsDataProvider mCrownStatistics;
-		private IStatisticsDataProvider mEmpireStatistics;
 
-		public Statistics() {
-			declareTimeTracker(EMPIRE_TIME, mEmpireTime);
-			declareTimeTracker(EMPIRE_VALIDITY_TIME, mEmpireValidityTime);
-			declareTimeTracker(OWICKI_GRIES_TIME, mOwickiGriesTime);
-			declareTimeTracker(OWICKI_GRIES_VALIDITY_TIME, mOwickiGriesValidityTime);
+		public Statistics(final ILogger logger) {
+			super(logger, CrownsEmpire.class, EmpireToOwickiGries.class);
 
 			forward(CROWN_STATISTICS, () -> mCrownStatistics);
-			forward(EMPIRE_STATISTICS, () -> mEmpireStatistics);
 		}
 
-		private void reportCrownStatistics(final CrownConstruction<?, ?> crownConstruction) {
+		public void reportCrownStatistics(final CrownConstruction<?, ?> crownConstruction) {
 			mCrownStatistics = crownConstruction.getStatistics();
 		}
 
-		private void reportEmpireStatistics(final CrownsEmpire<?, ?> crownsEmpire) {
-			mEmpireStatistics = crownsEmpire.getStatistics();
+		public void reportEmpire(final CrownsEmpire<?, ?> computation) {
+			reportEmpireStatistics(computation.getStatistics(), computation.getEmpireAnnotation());
 		}
 	}
 }
