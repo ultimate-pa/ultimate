@@ -14,6 +14,5 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
 Export-Package: 
  de.uni_freiburg.informatik.ultimate.lib.proofs,
  de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare,
- de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries,
- de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire
+ de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries
 Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.lib.proofs
