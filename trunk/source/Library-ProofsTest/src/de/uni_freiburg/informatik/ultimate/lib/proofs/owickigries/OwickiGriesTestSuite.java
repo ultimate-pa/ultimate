@@ -132,10 +132,14 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 	protected IIcfgSymbolTable mSymbolTable;
 	protected PredicateFactory mPredicateFactory;
 	protected IHoareTripleChecker mHtc;
-	protected final List<IPredicateUnifier> mUnifiers = new ArrayList<>();
 	protected final Map<String, IPredicate> mProgramPlaceMap = new HashMap<>();
-	protected final List<NestedWordAutomaton<SimpleAction, IPredicate>> mProofs = new ArrayList<>();
 
+	protected final List<NestedWordAutomaton<SimpleAction, IPredicate>> mProofs = new ArrayList<>();
+	protected final List<IPredicateUnifier> mUnifiers = new ArrayList<>();
+	protected final List<Map<Transition<SimpleAction, IPredicate>, Transition<SimpleAction, IPredicate>>> mBacktranslations =
+			new ArrayList<>();
+
+	@Deprecated
 	protected Function<Transition<SimpleAction, IPredicate>, Transition<SimpleAction, IPredicate>> mDiff2OriginalTransition;
 
 	private long mStartTime = -1L;
@@ -167,6 +171,7 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 		mProgramPlaceMap.clear();
 		mProofs.clear();
 		mUnifiers.clear();
+		mBacktranslations.clear();
 		mDiff2OriginalTransition = null;
 	}
 
@@ -246,8 +251,9 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 
 			final var oldNet = difference == null ? program : difference;
 			final var currentDifference = new DifferencePetriNet<>(mAutomataServices, oldNet, totalizedProof, loopers);
-			diff2OriginalTransition =
-					diff2OriginalTransition.compose(t -> currentDifference.getTransitionBacktranslation().get(t));
+			final var backtransMap = currentDifference.getTransitionBacktranslation();
+			mBacktranslations.add(backtransMap);
+			diff2OriginalTransition = diff2OriginalTransition.compose(backtransMap::get);
 			difference = currentDifference;
 			i++;
 		}
