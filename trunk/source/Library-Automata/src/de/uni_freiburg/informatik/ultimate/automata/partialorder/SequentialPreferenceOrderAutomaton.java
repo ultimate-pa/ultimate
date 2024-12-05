@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
+import java.util.Set;
+
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
@@ -33,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
  * Automaton representing the monitor of the sequentialization of two given orders fst and snd.
@@ -47,11 +50,14 @@ public class SequentialPreferenceOrderAutomaton<L extends IAction, S>
 
 	private final INwaOutgoingLetterAndTransitionProvider<L, S> mLeftAutomaton;
 	private final INwaOutgoingLetterAndTransitionProvider<L, S> mRightAutomaton;
+	private final ImmutableSet<L> mTransitionLetters;
 
 	public SequentialPreferenceOrderAutomaton(final INwaOutgoingLetterAndTransitionProvider<L, S> leftAutomaton,
-			final INwaOutgoingLetterAndTransitionProvider<L, S> rightAutomaton) {
+			final INwaOutgoingLetterAndTransitionProvider<L, S> rightAutomaton,
+			final ImmutableSet<L> transitionLetters) {
 		mLeftAutomaton = leftAutomaton;
 		mRightAutomaton = rightAutomaton;
+		mTransitionLetters = transitionLetters;
 	}
 
 	@Override
@@ -62,7 +68,10 @@ public class SequentialPreferenceOrderAutomaton<L extends IAction, S>
 
 	@Override
 	public VpAlphabet<L> getVpAlphabet() {
-		return null;
+		// Currently we assume both automata have the same alphabet,
+		// so it doesn't matter which one gets returned
+		// TODO Maybe return the union instead just to make sure?
+		return mLeftAutomaton.getVpAlphabet();
 	}
 
 	@Override
@@ -73,48 +82,50 @@ public class SequentialPreferenceOrderAutomaton<L extends IAction, S>
 
 	@Override
 	public Iterable<S> getInitialStates() {
-		// TODO Auto-generated method stub
-		return null;
+		return mLeftAutomaton.getInitialStates();
 	}
 
 	@Override
 	public boolean isInitial(final S state) {
-		return false;
+		// TODO Maybe this could lead to problems if S is not a state of mLeftAutomaton?
+		return mLeftAutomaton.isInitial(state);
 	}
 
 	@Override
 	public boolean isFinal(final S state) {
-		// TODO Auto-generated method stub
-		return false;
+		return mRightAutomaton.isFinal(state);
 	}
 
 	@Override
 	public int size() {
-		// TODO Auto-generated method stub
-		return 0;
+		return mLeftAutomaton.size() + mRightAutomaton.size();
 	}
 
 	@Override
 	public String sizeInformation() {
-		// TODO Auto-generated method stub
-		return null;
+		return "The first automaton has " + mLeftAutomaton.size() + " states, while the second one has "
+				+ mRightAutomaton.size() + ".";
 	}
 
 	@Override
 	public Iterable<OutgoingInternalTransition<L, S>> internalSuccessors(final S state, final L letter) {
-		// TODO Auto-generated method stub
+		if (mLeftAutomaton.isFinal(state) && mTransitionLetters.contains(letter)) {
+			// Transition from the final states of mLeftAutomaton to the initial state of mRightAutomaton
+			return Set
+					.of(new OutgoingInternalTransition<>(letter, mRightAutomaton.getInitialStates().iterator().next()));
+		}
 		return null;
 	}
 
 	@Override
 	public Iterable<OutgoingCallTransition<L, S>> callSuccessors(final S state, final L letter) {
-		// TODO Auto-generated method stub
+		// Not needed because recursion is not supported
 		return null;
 	}
 
 	@Override
 	public Iterable<OutgoingReturnTransition<L, S>> returnSuccessors(final S state, final S hier, final L letter) {
-		// TODO Auto-generated method stub
+		// Not needed because recursion is not supported
 		return null;
 	}
 
