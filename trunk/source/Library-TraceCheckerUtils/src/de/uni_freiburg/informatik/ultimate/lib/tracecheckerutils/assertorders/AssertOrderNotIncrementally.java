@@ -30,8 +30,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.NestedFormulas;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
 
 /**
  * Partitions the trace into a single partition.
@@ -41,8 +40,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  */
 public class AssertOrderNotIncrementally<L extends IAction> implements IAssertOrder<L> {
 	@Override
-	public List<Set<Integer>> partition(final NestedFormulas<L, Term, Term> ssa) {
-		final Set<Integer> partition = IntStream.range(0, ssa.getTrace().length()).boxed().collect(Collectors.toSet());
+	public List<Set<Integer>> partition(final Counterexample<L> counterexample) {
+		final Set<Integer> partition =
+				IntStream.range(0, counterexample.getWord().length()).boxed().collect(Collectors.toSet());
 		return List.of(partition);
 	}
 }

@@ -32,8 +32,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.NestedFormulas;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
 
 /**
  * Assert the statements with the highest depth and lowest depth in alternating order.
@@ -43,9 +42,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  */
 public class AssertOrderMixInsideOutside<L extends IAction> implements IAssertOrder<L> {
 	@Override
-	public List<Set<Integer>> partition(final NestedFormulas<L, Term, Term> ssa) {
+	public List<Set<Integer>> partition(final Counterexample<L> counterexample) {
 		final Map<Integer, Set<Integer>> depth2Statements =
-				AssertOrderUtils.partitionStatementsAccordingDepth(ssa.getTrace(), ssa.getControlConfigurations());
+				AssertOrderUtils.partitionStatementsAccordingDepth(counterexample);
 		final LinkedList<Integer> depthAsQueue =
 				depth2Statements.keySet().stream().sorted().collect(Collectors.toCollection(LinkedList::new));
 		final List<Set<Integer>> result = new ArrayList<>(depth2Statements.size());

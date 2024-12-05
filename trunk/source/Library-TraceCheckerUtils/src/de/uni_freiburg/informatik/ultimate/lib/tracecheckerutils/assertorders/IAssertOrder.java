@@ -27,22 +27,20 @@ import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.NestedFormulas;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
 
 /**
- * This interface is used as an abstraction for assert orders. An assert order is a partitioning of the single static
- * assignment form (SSA).
+ * This interface is used as an abstraction for assert orders. An assert order is a partitioning of the counterexample.
  *
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  */
 public interface IAssertOrder<L extends IAction> {
 	/**
-	 * Partitions the SSA
+	 * Partitions counterexample
 	 *
-	 * @param ssa
-	 *            the single static assignment form of the trace
+	 * @param counterexample
+	 *            the current counterexample
 	 * @return the partitions represented by their indices.
 	 */
-	List<Set<Integer>> partition(final NestedFormulas<L, Term, Term> ssa);
+	List<Set<Integer>> partition(final Counterexample<L> counterexample);
 }

@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.SmtFeatureHeuristicPartitioningType;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SMTFeatureExtractionTermClassifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SMTFeatureExtractionTermClassifier.ScoringMethod;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.NestedFormulas;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
@@ -158,14 +158,13 @@ public class AssertOrderSmtFeatureHeuristic<L extends IAction> implements IAsser
 	}
 
 	@Override
-	public List<Set<Integer>> partition(final NestedFormulas<L, Term, Term> ssa) {
-		final NestedWord<L> trace = ssa.getTrace();
+	public List<Set<Integer>> partition(final Counterexample<L> counterexample) {
 		// Score Trace Terms and order them according to score.
-		final List<Triple<Term, Double, Integer>> termScoreIndexTriples = scoreTrace(trace);
+		final List<Triple<Term, Double, Integer>> termScoreIndexTriples = scoreTrace(counterexample.getWord());
 		final List<Set<Integer>> partitions = partitionStmtsAccordingToTermScores(termScoreIndexTriples);
 		assert !partitions.isEmpty();
 		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("Trace: " + trace.toString());
+			mLogger.debug("Trace: " + counterexample.getWord().toString());
 			mLogger.debug("TermScoreTriples: " + termScoreIndexTriples.toString());
 			mLogger.debug("Partitions: " + partitions.toString());
 		}

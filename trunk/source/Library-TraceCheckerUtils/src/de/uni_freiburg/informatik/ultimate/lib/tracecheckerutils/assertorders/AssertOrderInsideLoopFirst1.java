@@ -29,8 +29,7 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.NestedFormulas;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
 
 /**
  * Assert statements in decremental order by their depth, and check after each step for satisfiability. E.g. first
@@ -41,9 +40,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  */
 public class AssertOrderInsideLoopFirst1<L extends IAction> implements IAssertOrder<L> {
 	@Override
-	public List<Set<Integer>> partition(final NestedFormulas<L, Term, Term> ssa) {
+	public List<Set<Integer>> partition(final Counterexample<L> counterexample) {
 		final Map<Integer, Set<Integer>> depth2Statements =
-				AssertOrderUtils.partitionStatementsAccordingDepth(ssa.getTrace(), ssa.getControlConfigurations());
+				AssertOrderUtils.partitionStatementsAccordingDepth(counterexample);
 		// Sort the statements by their depth in descending order (i.e., the most nested statements first).
 		return depth2Statements.keySet().stream().sorted((i1, i2) -> i2.compareTo(i1)).map(depth2Statements::get)
 				.toList();

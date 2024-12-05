@@ -28,10 +28,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.NestedFormulas;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
 
 /**
  * First, assert all statements which don't occur inside of a loop. Then, check for satisfiability. If the result of the
@@ -43,18 +41,18 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  */
 public class AssertOrderOutsideLoopFirst1<L extends IAction> implements IAssertOrder<L> {
 	@Override
-	public List<Set<Integer>> partition(final NestedFormulas<L, Term, Term> ssa) {
-		final NestedWord<L> trace = ssa.getTrace();
+	public List<Set<Integer>> partition(final Counterexample<L> counterexample) {
 		final Map<Integer, Set<Integer>> depth2Statements =
-				AssertOrderUtils.partitionStatementsAccordingDepth(trace, ssa.getControlConfigurations());
+				AssertOrderUtils.partitionStatementsAccordingDepth(counterexample);
 		// Statements outside of a loop have depth 0.
 		// First, annotate and assert the statements, which doesn't occur within a loop
 		final Set<Integer> stmtsOutsideOfLoop = depth2Statements.get(0);
-		if (stmtsOutsideOfLoop.size() == trace.length()) {
+		if (stmtsOutsideOfLoop.size() == counterexample.getWord().length()) {
 			return List.of(stmtsOutsideOfLoop);
 		}
 		// Then assert the other statements.
-		final Set<Integer> stmtsWithinLoop = AssertOrderUtils.getTraceDifference(trace, stmtsOutsideOfLoop);
+		final Set<Integer> stmtsWithinLoop =
+				AssertOrderUtils.getTraceDifference(counterexample.getWord(), stmtsOutsideOfLoop);
 		return List.of(stmtsOutsideOfLoop, stmtsWithinLoop);
 	}
 }

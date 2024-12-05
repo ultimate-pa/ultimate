@@ -34,6 +34,7 @@ import java.util.stream.IntStream;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashTreeRelation;
 
 /**
@@ -56,9 +57,11 @@ public class AssertOrderUtils {
 	 *
 	 * @return A map from depth to the set of statements (represented by their index) with this depth.
 	 */
-	public static <LETTER extends IAction> Map<Integer, Set<Integer>> partitionStatementsAccordingDepth(
-			final NestedWord<LETTER> trace, final List<Object> controlConfigurations) {
+	public static <L extends IAction> Map<Integer, Set<Integer>>
+			partitionStatementsAccordingDepth(final Counterexample<L> counterexample) {
 		final HashTreeRelation<Object, Integer> config2Indices = new HashTreeRelation<>();
+		final NestedWord<L> trace = counterexample.getWord();
+		final List<Object> controlConfigurations = counterexample.getControlConfigurations();
 		for (int i = 0; i <= trace.length(); i++) {
 			config2Indices.addPair(controlConfigurations.get(i), i);
 		}

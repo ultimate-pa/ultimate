@@ -99,7 +99,8 @@ public class AnnotateAndAsserter<L extends IAction> {
 		// Report benchmark
 		mTcbg.reportNewCodeBlocks(mSSA.getCounterexample().length());
 
-		final List<Set<Integer>> partitions = getAssertOrder(mAssertCodeBlocksOrder).partition(mSSA);
+		final List<Set<Integer>> partitions =
+				getAssertOrder(mAssertCodeBlocksOrder).partition(mSSA.getCounterexample());
 
 		mSatisfiable = annotateAndAssert(mSSA.getTrace(), partitions);
 		mLogger.info("Assert order " + mAssertCodeBlocksOrder + " issued " + mCheckSat + " check-sat command(s)");
