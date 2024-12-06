@@ -27,6 +27,9 @@
 
 package de.uni_freiburg.informatik.ultimate.pea2boogie.results;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
@@ -34,18 +37,19 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 public class ReqCheckRedundancyResult<LOC extends IElement> extends ReqCheckFailResult<LOC> {
 
 	private final String mReqName;
-	private final Set<String> mRedundancySet;
+	private final List<String> mRedundancyList;
 
 	public ReqCheckRedundancyResult(final LOC element, final String plugin, final String reqName,
 			final Set<String> redundancySet) {
 		super(element, plugin);
 		mReqName = reqName;
-		mRedundancySet = redundancySet;
+		mRedundancyList = new ArrayList<>(redundancySet);
+		Collections.sort(mRedundancyList);
 	}
 
 	@Override
 	public String getLongDescription() {
-		return "Extracted redundancy set for requirement " + mReqName + ": " + mRedundancySet.toString();
+		return "Extracted redundancy set for requirement " + mReqName + ": " + mRedundancyList.toString();
 	}
 
 }
