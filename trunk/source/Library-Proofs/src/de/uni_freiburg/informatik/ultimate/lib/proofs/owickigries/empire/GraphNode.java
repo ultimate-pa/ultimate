@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire;
 
 import java.util.Collections;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -108,7 +109,14 @@ public class GraphNode<PLACE> {
 			return false;
 		}
 		final GraphNode<PLACE> other = (GraphNode<PLACE>) obj;
-		return mPair.equals(other.getPair()) && mBridgeBystanders.equals(other.getBridgeBystanders());
+		final var pair1 = mPair;
+		final var pair2 = other.getPair();
+		return pair1.equals(pair2) && mBridgeBystanders.equals(other.getBridgeBystanders());
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(mPair, mBridgeBystanders);
 	}
 
 }

@@ -141,15 +141,15 @@ public class EmpireComputation<L, P> {
 	}
 
 	private Set<Pair<Territory<P>, IPredicate>> symbolicExecution() {
-		final var result = new HashSet<Pair<Territory<P>, IPredicate>>();
 		final var queue = new ArrayDeque<GraphNode<P>>();
+		final var resultNodes = new HashSet<GraphNode<P>>();
 
 		queue.offer(getInitialNode());
 
 		while (!queue.isEmpty()) {
 			var node = queue.poll();
 			var pair = node.getPair();
-			if (result.contains(pair)) {
+			if (resultNodes.contains(node)) {
 				continue;
 			}
 
@@ -158,7 +158,7 @@ public class EmpireComputation<L, P> {
 
 			final var enabledTransitions = getEnabledTransitions(territory, lawPlace).collect(Collectors.toSet());
 			if (enabledTransitions.isEmpty()) {
-				result.add(pair);
+				resultNodes.add(node);
 				continue;
 			}
 			final var extendingTransitions = getExtendingTransitions(node, enabledTransitions);
@@ -196,7 +196,7 @@ public class EmpireComputation<L, P> {
 			}
 
 			if (!necessaryBridgeTransitions.isEmpty()) {
-				result.add(pair);
+				resultNodes.add(node);
 			}
 
 			for (final var transition : necessaryBridgeTransitions) {
@@ -213,7 +213,7 @@ public class EmpireComputation<L, P> {
 
 				final var successor = getReplacementPair(pair, transition);
 				if (successor == null) {
-					result.add(pair);
+					resultNodes.add(node);
 					continue;
 				}
 				final var succTerritory = successor.getFirst();
@@ -227,11 +227,11 @@ public class EmpireComputation<L, P> {
 				}
 				final var successorNode = new GraphNode<>(successor, transition);
 				queue.offer(successorNode);
-				result.add(pair);
+				resultNodes.add(node);
 			}
 
 		}
-		return result;
+		return resultNodes.stream().map(GraphNode::getPair).collect(Collectors.toSet());
 	}
 
 	private GraphNode<P> getInitialNode() {
