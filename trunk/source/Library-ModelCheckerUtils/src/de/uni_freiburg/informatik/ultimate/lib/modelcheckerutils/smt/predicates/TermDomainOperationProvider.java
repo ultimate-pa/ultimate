@@ -85,11 +85,6 @@ public class TermDomainOperationProvider implements IDomainSpecificOperationProv
 
 	@Override
 	public Term renameVariables(final Map<Term, Term> substitutionForTransFormula, final Term constraint) {
-		System.out.println(substitutionForTransFormula);
-		System.out.println(constraint);
-
-		System.out.println(mMgdScript.getScript().getTheory());
-		System.out.println(constraint.getTheory());
 		Term renamedTransFormulaTest = null;
 		if (((HistoryRecordingScript) mMgdScript.getScript()).getMainScript() != null) {
 			final HashMap<Term, Term> transferredSubMap = new HashMap<>();
@@ -101,14 +96,9 @@ public class TermDomainOperationProvider implements IDomainSpecificOperationProv
 
 			renamedTransFormulaTest = Substitution.apply(mMgdScript, transferredSubMap,
 					((HistoryRecordingScript) mMgdScript.getScript()).transferTermToWorker(constraint));
-			System.out.println(transferredSubMap);
-			System.out.println(renamedTransFormulaTest);
-			System.out.println(renamedTransFormulaTest.getTheory());
 			return renamedTransFormulaTest;
 		}
 		final Term renamedTransFormula = Substitution.apply(mMgdScript, substitutionForTransFormula, constraint);
-		System.out.println(renamedTransFormula);
-		System.out.println(renamedTransFormula.getTheory());
 		return renamedTransFormula;
 	}
 
