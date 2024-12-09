@@ -83,8 +83,8 @@ public class Location {
 			return false;
 		}
 		final Location other = (Location) obj;
-		return mColumn == other.mColumn && Objects.equals(mFileName, other.mFileName)
-				&& Objects.equals(mFunction, other.mFunction) && mLine == other.mLine;
+		return Objects.equals(mColumn, other.mColumn) && Objects.equals(mFileName, other.mFileName)
+				&& Objects.equals(mFunction, other.mFunction) && Objects.equals(mLine, other.mLine);
 	}
 
 	public Map<String, Object> toMap() {
