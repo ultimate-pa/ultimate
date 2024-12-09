@@ -27,6 +27,7 @@
 
 package de.uni_freiburg.informatik.ultimate.witnessprinter;
 
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -94,7 +95,10 @@ public class TestCompMetaFilePrinter<TTE, TE> extends BaseWitnessGenerator<TTE, 
 				output = new FileOutputStream("metadata.xml");
 			} else if (allInOneDirecotry) {
 				Files.createDirectories(Paths.get("test-suite"));
-				output = new FileOutputStream("test-suite/metadata.xml");
+
+				final File metaFile = new File("test-suite/metadata.xml");
+				metaFile.createNewFile();
+				output = new FileOutputStream(metaFile, false);
 				createAndWriteDummyTestCase("test-suite/testcaseDummy.xml");
 			} else {
 				final String outputDir = "testsuite_" + mTranslatedCFG.getFilename().substring(

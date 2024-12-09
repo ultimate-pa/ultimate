@@ -80,7 +80,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 	ExecutorService mExec;
 	List<Future<WorkerThreadResult<L, A>>> mWorkerFutures;
 
-	int mThreadLimit = 6; // Runtime.avalablecores or so
+	int mThreadLimit = 1; // Runtime.avalablecores or so
 	CompletionService<WorkerThreadResult<L, A>> mECS;
 	private final IIcfg<?> mRootNode;
 
@@ -239,8 +239,8 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 	protected void iterate() throws AutomataLibraryException {
 		// TODO manage time and timeout
 
-		boolean strategyCamelInUse = false;
-		boolean strategyWolfInUse = false;
+		final boolean strategyCamelInUse = false;
+		final boolean strategyWolfInUse = false;
 		int runningThreads = 0;
 
 		for (mIteration = 1; mIteration <= mPref.maxIterations(); mIteration++) {
@@ -261,16 +261,16 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 						final IUltimateServiceProvider iterationServices = createIterationTimer(currentErrorLoc);
 						mServices = iterationServices;
 						RefinementStrategy strategyType;
-						if (false) {
-							strategyType = RefinementStrategy.WOLF;
-							strategyWolfInUse = true;
-							strategyCamelInUse = false;
-						} else {// if (strategyWolfInUse) {
-							strategyType = RefinementStrategy.CAMEL;
-							strategyCamelInUse = true;
-							strategyWolfInUse = false;
-						}
-
+						// if (false) {
+						// strategyType = RefinementStrategy.WOLF;
+						// strategyWolfInUse = true;
+						// strategyCamelInUse = false;
+						// } else {// if (strategyWolfInUse) {
+						// strategyType = RefinementStrategy.CAMEL;
+						// strategyCamelInUse = true;
+						// strategyWolfInUse = false;
+						// }
+						strategyType = mPref.getRefinementStrategy();
 						final CegarWorkerThread<L, A> worker =
 								setUpWorker(iterationServices, runningThreads, currentErrorLoc, strategyType);
 
