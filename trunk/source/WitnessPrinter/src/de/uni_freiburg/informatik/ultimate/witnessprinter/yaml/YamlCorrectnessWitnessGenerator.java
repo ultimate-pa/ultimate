@@ -35,7 +35,6 @@ public class YamlCorrectnessWitnessGenerator {
 	private final IIcfg<? extends IcfgLocation> mIcfg;
 	private final FormatVersion mFormatVersion;
 	private final boolean mIsAcslAllowed;
-	private final Map<String, String> mProgramHashes;
 	private final YamlWitnessWriter mWriter;
 
 	public YamlCorrectnessWitnessGenerator(final IIcfg<? extends IcfgLocation> icfg, final ILogger logger,
@@ -52,9 +51,9 @@ public class YamlCorrectnessWitnessGenerator {
 		final String arch = preferences.getString(PreferenceInitializer.LABEL_GRAPH_DATA_ARCHITECTURE);
 		final String version = new UltimateCore().getUltimateVersionString();
 		final String filename = ILocation.getAnnotation(mIcfg).getFileName();
-		mProgramHashes = Map.of(filename, programHash);
+		final Map<String, String> programHashes = Map.of(filename, programHash);
 		mWriter = YamlWitnessWriter.construct(mFormatVersion,
-				new MetadataProvider(mFormatVersion, producer, version, mProgramHashes, spec, arch, "C"));
+				new MetadataProvider(mFormatVersion, producer, version, programHashes, spec, arch, "C"));
 	}
 
 	private Witness getWitness() {
@@ -108,7 +107,7 @@ public class YamlCorrectnessWitnessGenerator {
 	}
 
 	private Location getWitnessLocation(final ILocation cLoc) {
-		return new Location(cLoc.getFileName(), mProgramHashes.get(cLoc.getFileName()), cLoc.getStartLine(),
+		return new Location(cLoc.getFileName(), cLoc.getStartLine(),
 				cLoc.getStartColumn() < 0 ? null : cLoc.getStartColumn(), cLoc.getFunction());
 	}
 

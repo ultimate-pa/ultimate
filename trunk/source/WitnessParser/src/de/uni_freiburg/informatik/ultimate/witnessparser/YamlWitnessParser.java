@@ -187,7 +187,7 @@ public class YamlWitnessParser {
 	}
 
 	private static Location parseLocation(final Map<String, Object> location) {
-		return new Location((String) location.get("file_name"), (String) location.get("file_hash"),
-				(Integer) location.get("line"), (Integer) location.get("column"), (String) location.get("function"));
+		return new Location((String) location.get("file_name"), (Integer) location.get("line"),
+				(Integer) location.get("column"), (String) location.get("function"));
 	}
 }

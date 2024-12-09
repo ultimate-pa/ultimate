@@ -37,15 +37,12 @@ import java.util.Objects;
 public class Location {
 
 	private final String mFileName;
-	private final String mFileHash;
 	private final Integer mLine;
 	private final Integer mColumn;
 	private final String mFunction;
 
-	public Location(final String fileName, final String fileHash, final Integer line, final Integer column,
-			final String function) {
+	public Location(final String fileName, final Integer line, final Integer column, final String function) {
 		mFileName = fileName;
-		mFileHash = fileHash;
 		mLine = line;
 		mColumn = column;
 		mFunction = function;
@@ -53,10 +50,6 @@ public class Location {
 
 	public String getFileName() {
 		return mFileName;
-	}
-
-	public String getFileHash() {
-		return mFileHash;
 	}
 
 	public Integer getLine() {
@@ -78,7 +71,7 @@ public class Location {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(mColumn, mFileHash, mFileName, mFunction, mLine);
+		return Objects.hash(mColumn, mFileName, mFunction, mLine);
 	}
 
 	@Override
@@ -90,15 +83,13 @@ public class Location {
 			return false;
 		}
 		final Location other = (Location) obj;
-		return mColumn == other.mColumn && Objects.equals(mFileHash, other.mFileHash)
-				&& Objects.equals(mFileName, other.mFileName) && Objects.equals(mFunction, other.mFunction)
-				&& mLine == other.mLine;
+		return mColumn == other.mColumn && Objects.equals(mFileName, other.mFileName)
+				&& Objects.equals(mFunction, other.mFunction) && mLine == other.mLine;
 	}
 
 	public Map<String, Object> toMap() {
 		final LinkedHashMap<String, Object> result = new LinkedHashMap<>();
 		result.put("file_name", mFileName);
-		result.put("file_hash", mFileHash);
 		result.put("line", mLine);
 		if (mColumn != null) {
 			result.put("column", mColumn);
