@@ -46,7 +46,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.MonolithicImplicationChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifierStatisticsGenerator.PredicateUnifierStatisticsType;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashNormalForm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
@@ -337,13 +336,8 @@ public class PredicateUnifier implements IPredicateUnifier {
 			final HashMap<IPredicate, Validity> impliedPredicates,
 			final HashMap<IPredicate, Validity> expliedPredicates, final IPredicate originalPredicate,
 			final UnaryOperator<IPredicate> predicatePostProcessor) {
-		Term term = termWorker;
 
-		if (((HistoryRecordingScript) mScript).getMainScript() != null) {
-			final TermTransferrer tf =
-					new TermTransferrer(((HistoryRecordingScript) mScript).getMainScript().getScript(), mScript);
-			term = tf.transform(term);
-		}
+		final Term term = ((HistoryRecordingScript) mScript).transferTermToWorker(termWorker);
 
 		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(term, mMgdScript, mSymbolTable);
 
@@ -358,6 +352,7 @@ public class PredicateUnifier implements IPredicateUnifier {
 
 		{
 			IPredicate p = mTerm2Predicates.get(withoutAnnotation);
+
 			if (p != null) {
 				if (mDeprecatedPredicates.containsKey(p)) {
 					p = mDeprecatedPredicates.get(p);
@@ -365,6 +360,8 @@ public class PredicateUnifier implements IPredicateUnifier {
 				mPredicateUnifierBenchmarkGenerator.incrementSyntacticMatches();
 				mPredicateUnifierBenchmarkGenerator.stopTime();
 				return p;
+			} else {
+				assert !mTerm2Predicates.containsKey(stripAnnotation(termWorker));
 			}
 		}
 

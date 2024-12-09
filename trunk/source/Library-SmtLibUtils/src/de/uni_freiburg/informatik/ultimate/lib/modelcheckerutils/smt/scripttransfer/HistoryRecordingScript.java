@@ -89,6 +89,27 @@ public class HistoryRecordingScript extends WrapperScript {
 		mTf = new TermTransferrer(mMainScript.getScript(), this);
 	}
 
+	public Term transferTermToWorker(final Term mainTerm) {
+		if (mTf == null) {
+			return mainTerm;
+		}
+		final Term workerTerm = mTf.transform(mainTerm);
+		if (workerTerm.equals(mainTerm)) {
+			return workerTerm;
+		}
+		if (mainTerm instanceof TermVariable) {
+			addTermVariableToMap((TermVariable) workerTerm, (TermVariable) mainTerm);
+		}
+		return workerTerm;
+	}
+
+	public Sort transferSortToWorker(final Sort mainSort) {
+		if (mTf == null) {
+			return mainSort;
+		}
+		return mTf.transferSort(mainSort);
+	}
+
 	public ManagedScript getMainScript() {
 		return mMainScript;
 	}
@@ -97,11 +118,17 @@ public class HistoryRecordingScript extends WrapperScript {
 	 * maps for the termvariables for boogievars
 	 */
 	public void addTermVariableToMap(final TermVariable workerTv, final TermVariable mainTv) {
+		assert !workerTv.equals(mainTv);
 		workerTermVariableToMainTermVariable.put(workerTv, mainTv);
 	}
 
 	public TermVariable getMainTv(final TermVariable workerTv) {
-		return workerTermVariableToMainTermVariable.get(workerTv);
+		if (workerTermVariableToMainTermVariable.containsKey(workerTv)) {
+			return workerTermVariableToMainTermVariable.get(workerTv);
+		} else {
+			return (TermVariable) mTf.getTransferMapping().get(workerTv);
+		}
+
 	}
 
 	public void synchronizeWorkerAndMain() {

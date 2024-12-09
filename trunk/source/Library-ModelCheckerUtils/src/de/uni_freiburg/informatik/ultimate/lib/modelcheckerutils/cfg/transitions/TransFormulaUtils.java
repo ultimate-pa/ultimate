@@ -189,20 +189,29 @@ public final class TransFormulaUtils {
 			final UnmodifiableTransFormula currentTf = transFormula.get(i);
 			for (final Entry<IProgramVar, TermVariable> entry : currentTf.getOutVars().entrySet()) {
 				final IProgramVar var = entry.getKey();
-				final TermVariable outVar = entry.getValue();
-				final TermVariable newOutVar;
+				TermVariable outVar = entry.getValue();
+				TermVariable newOutVar;
 				if (tfb.containsInVar(var)) {
 					newOutVar = tfb.getInVar(var);
 				} else {
 					newOutVar = mgdScript.constructFreshTermVariable(var.getGloballyUniqueId(),
-							var.getTermVariable().getSort());
+							((HistoryRecordingScript) script).transferSortToWorker(var.getTermVariable().getSort()));
 				}
+
+				// TODO Transfer outVar and newOutVar
+				newOutVar = (TermVariable) ((HistoryRecordingScript) script).transferTermToWorker(newOutVar);
+				outVar = (TermVariable) ((HistoryRecordingScript) script).transferTermToWorker(outVar);
+				assert outVar.getTheory().equals(script.getTheory());
+				assert newOutVar.getTheory().equals(script.getTheory());
 				substitutionMapping.put(outVar, newOutVar);
 				// add to outvars if var is not outvar
 				if (!tfb.containsOutVar(var)) {
 					tfb.addOutVar(var, newOutVar);
 				}
-				final TermVariable inVar = currentTf.getInVars().get(var);
+				TermVariable inVar = currentTf.getInVars().get(var);
+				if (inVar != null) {
+					inVar = (TermVariable) ((HistoryRecordingScript) script).transferTermToWorker(inVar);
+				}
 				if (inVar == null) {
 					// case: var is assigned without reading or havoced
 					if (tfb.getOutVar(var) != newOutVar) {
@@ -216,7 +225,9 @@ public final class TransFormulaUtils {
 				} else {
 					// case: var is read and written
 					final TermVariable newInVar = mgdScript.constructFreshTermVariable(var.getGloballyUniqueId(),
-							var.getTermVariable().getSort());
+							((HistoryRecordingScript) script).transferSortToWorker(var.getTermVariable().getSort()));
+					assert inVar.getTheory().equals(script.getTheory());
+					assert newInVar.getTheory().equals(script.getTheory());
 					substitutionMapping.put(inVar, newInVar);
 					tfb.addInVar(var, newInVar);
 					if (tfb.getOutVar(var) != newOutVar) {
@@ -225,8 +236,15 @@ public final class TransFormulaUtils {
 					}
 				}
 			}
+
+			// Transfer currentTf.getAuxVars()
+			final HashSet<TermVariable> transferredAuxVars = new HashSet<>();
+			for (final TermVariable av : currentTf.getAuxVars()) {
+				transferredAuxVars.add((TermVariable) ((HistoryRecordingScript) script).transferTermToWorker(av));
+			}
+
 			final Map<TermVariable, TermVariable> oldAuxVar2newAuxVar =
-					mgdScript.constructFreshCopies(currentTf.getAuxVars());
+					mgdScript.constructFreshCopies(transferredAuxVars);
 			substitutionMapping.putAll(oldAuxVar2newAuxVar);
 			auxVars.addAll(oldAuxVar2newAuxVar.values());
 			tfb.addBranchEncoders(currentTf.getBranchEncoders());
@@ -237,11 +255,11 @@ public final class TransFormulaUtils {
 					// nothing do to, this var was already considered above
 				} else {
 					// case var occurs only as inVar: var is havoc'ed (and possibly read)
-					final TermVariable inVar = entry.getValue();
-
+					TermVariable inVar = entry.getValue();
+					inVar = (TermVariable) ((HistoryRecordingScript) script).transferTermToWorker(inVar);
 					if (!tfb.containsOutVar(var)) {
 						// If var is not yet an outVar of tfb, add it.
-						final TermVariable newOutVar;
+						TermVariable newOutVar;
 						if (tfb.containsInVar(var)) {
 							// If var is an inVar of tfb, we must use the existing TermVariable.
 							// Note that below, the inVar of tfb for var is replaced, so we can use it here as outVar
@@ -250,8 +268,10 @@ public final class TransFormulaUtils {
 						} else {
 							// If var is not an inVar of tfb, we create a fresh dummy TermVariable.
 							newOutVar = mgdScript.constructFreshTermVariable(var.getGloballyUniqueId(),
-									var.getTermVariable().getSort());
+									((HistoryRecordingScript) script)
+											.transferSortToWorker(var.getTermVariable().getSort()));
 						}
+						newOutVar = (TermVariable) ((HistoryRecordingScript) script).transferTermToWorker(newOutVar);
 						tfb.addOutVar(var, newOutVar);
 					} else if (tfb.containsInVar(var) && tfb.getOutVar(var) != tfb.getInVar(var)) {
 						// If tfb has an inVar for var, and the inVar occurs *only* as inVar (not as outVar), we must
@@ -261,12 +281,15 @@ public final class TransFormulaUtils {
 
 					// Add a new inVar for var
 					final TermVariable newInVar = mgdScript.constructFreshTermVariable(var.getGloballyUniqueId(),
-							var.getTermVariable().getSort());
+							((HistoryRecordingScript) script).transferSortToWorker(var.getTermVariable().getSort()));
 					tfb.addInVar(var, newInVar);
+					assert inVar.getTheory().equals(script.getTheory());
+					assert newInVar.getTheory().equals(script.getTheory());
 					substitutionMapping.put(inVar, newInVar);
 				}
 			}
-			final Term originalFormula = currentTf.getFormula();
+			Term originalFormula = currentTf.getFormula();
+			originalFormula = ((HistoryRecordingScript) script).transferTermToWorker(originalFormula);
 			final Term updatedFormula = Substitution.apply(mgdScript, substitutionMapping, originalFormula);
 			nonTheoryConsts.addAll(currentTf.getNonTheoryConsts());
 			formula = SmtUtils.and(script, formula, updatedFormula);

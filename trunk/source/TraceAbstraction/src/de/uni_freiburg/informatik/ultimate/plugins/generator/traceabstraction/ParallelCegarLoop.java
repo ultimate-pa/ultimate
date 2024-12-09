@@ -80,7 +80,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 	ExecutorService mExec;
 	List<Future<WorkerThreadResult<L, A>>> mWorkerFutures;
 
-	int mThreadLimit = 3; // Runtime.avalablecores or so
+	int mThreadLimit = 6; // Runtime.avalablecores or so
 	CompletionService<WorkerThreadResult<L, A>> mECS;
 	private final IIcfg<?> mRootNode;
 
@@ -310,7 +310,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 								doneThreads.add(mWorkerFutures.get(i));
 							}
 						} catch (InterruptedException | ExecutionException e) {
-							e.printStackTrace();
+							throw new AutomataLibraryException(null, e.getMessage());
 						}
 					}
 					mWorkerFutures.removeAll(doneThreads);
@@ -347,6 +347,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 							((HistoryRecordingScript) firstAutomatonInWaitingList.getWorkerMgdScript().getScript())
 									.exitWorkerOnly();
 							abstractionWasRefined = true;
+							firstAutomatonInWaitingList.garbageCollect();
 							assert !abstraction.equals(mAbstraction);
 						} catch (final AssertionError ae) {
 							// TODO it might happen that mCounterexample is no longer accepted
@@ -369,6 +370,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 				// need a new counterexample every iteration
 				if (runningThreads < mThreadLimit) {
 					final boolean isAbstractionCorrect = isAbstractionEmpty();
+					System.gc();
 					if (isAbstractionCorrect) {
 						if (runningThreads == 0) {
 							mResultBuilder.addResultForAllRemaining(Result.SAFE);
@@ -405,11 +407,9 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 						.get(TestGoalAnnotation.class.getName());
 
 				if (mInActiveErrorLocs.containsValue(((TestGoalAnnotation) pLocAnno).mId)) {
-					System.out.println("NOTADDED: " + ((TestGoalAnnotation) pLocAnno).mId);
 					continue;
 				} else {
 					if (pLocAnno instanceof TestGoalAnnotation) {
-						System.out.println("isAbstractionEmpty " + ((TestGoalAnnotation) pLocAnno).mId);
 						mActiveErrorLocs.add(testGoal);
 					}
 				}
@@ -577,14 +577,14 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 
 final class WorkerThreadResult<L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>> {
 
-	private final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mSubtrahend;
-	private final AutomatonType mAutomatonType;
+	private INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mSubtrahend;
+	private AutomatonType mAutomatonType;
 	private final boolean mUseErrorAutomaton;
-	private final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mSubtrahendBeforeEnhancement;
-	private final InterpolantAutomatonEnhancement mEnhanceMode;
+	private INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mSubtrahendBeforeEnhancement;
+	private InterpolantAutomatonEnhancement mEnhanceMode;
 	private final boolean mExploitSigmaStarConcatOfIa;
-	private final ManagedScript mMgdScript;
-	private final IRun<L, ?> mCounterexample;
+	private ManagedScript mMgdScript;
+	private IRun<L, ?> mCounterexample;
 
 	/**
 	 * @param automatonType
@@ -636,5 +636,14 @@ final class WorkerThreadResult<L extends IIcfgTransition<?>, A extends IAutomato
 
 	public IRun<L, ?> getCounterexample() {
 		return mCounterexample;
+	}
+
+	public void garbageCollect() {
+		mSubtrahend = null;
+		mAutomatonType = null;
+		mEnhanceMode = null;
+		mSubtrahendBeforeEnhancement = null;
+		mMgdScript = null;
+		mCounterexample = null;
 	}
 }

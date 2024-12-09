@@ -118,9 +118,10 @@ public class SimpleErrorAutomatonBuilder<L extends IIcfgTransition<?>> implement
 				final Integer testGoalId = getTestGoalId((ISLPredicate) errorStatePredecessor);
 				for (final IPredicate errorState : ((INestedWordAutomaton<L, IPredicate>) abstraction)
 						.getFinalStates()) {
-					if (errorStateIsTestGoalWithId((ISLPredicate) errorState, testGoalId)) {
-						final BasicPredicate errorStateAsBP = new BasicPredicate(mResult.size() + testGoalId, null,
+					if (errorStateIsTestGoalWithId(errorState, testGoalId)) {
+						final BasicPredicate errorStateAsBP = new BasicPredicate(trace.length() + testGoalId, null,
 								errorState.getFormula(), null, null, null);
+
 						mResult.addState(false, true, errorStateAsBP);
 
 						for (final Iterator<IPredicate> it = mResult.getInitialStates().iterator(); it.hasNext();) {
@@ -138,12 +139,10 @@ public class SimpleErrorAutomatonBuilder<L extends IIcfgTransition<?>> implement
 
 	public void addCoveredTestGoalToErrorAutomaton(final IPredicate testGoal,
 			final Iterable<IncomingInternalTransition<L, IPredicate>> incomingedge) {
-
+		assert false;
 		final BasicPredicate errorStateAsBP =
 				new BasicPredicate(mResult.size(), null, testGoal.getFormula(), null, null, null);
 		mResult.addState(false, true, errorStateAsBP);
-		System.out.println(errorStateAsBP);
-		System.out.println(incomingedge);
 		for (final Iterator<IPredicate> it = mResult.getInitialStates().iterator(); it.hasNext();) {
 			final IPredicate f = it.next();
 
@@ -156,13 +155,20 @@ public class SimpleErrorAutomatonBuilder<L extends IIcfgTransition<?>> implement
 
 	/*
 	 * can be Check ErrorLocation and not a TestGoal
+	 * and if not already an accepting state
 	 */
-	private boolean errorStateIsTestGoalWithId(final ISLPredicate state, final Integer testGoalId) {
-		if (((TestGoalAnnotation) state.getProgramPoint().getPayload().getAnnotations()
+	private boolean errorStateIsTestGoalWithId(final IPredicate errorState, final Integer testGoalId) {
+		for (final Iterator<IPredicate> it = mResult.getFinalStates().iterator(); it.hasNext();) {
+			if (it.equals(errorState)) {
+				return false;
+			}
+			return false;
+		}
+		if (((TestGoalAnnotation) ((ISLPredicate) errorState).getProgramPoint().getPayload().getAnnotations()
 				.get(TestGoalAnnotation.class.getName())) == null) {
 			return false;
 		}
-		if (((TestGoalAnnotation) state.getProgramPoint().getPayload().getAnnotations()
+		if (((TestGoalAnnotation) ((ISLPredicate) errorState).getProgramPoint().getPayload().getAnnotations()
 				.get(TestGoalAnnotation.class.getName())).mId == testGoalId) {
 			return true;
 

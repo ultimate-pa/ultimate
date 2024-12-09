@@ -204,6 +204,10 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 		mLogger = mServices.getLoggingService().getLogger(TraceCheckerUtils.PLUGIN_ID);
 		mCfgManagedScript = csToolkit.getManagedScript();
 		mTcSmtManager = managedScriptTc;
+		// System.out.println("mTcSmtManager: " + mTcSmtManager.getScript().getTheory());
+		// System.out.println("mCfgManagedScript: " + mCfgManagedScript.getScript().getTheory());
+		// System.out.println("MainScript: "
+		// + ((HistoryRecordingScript) mCfgManagedScript.getScript()).getMainScript().getScript().getTheory());
 		mCsToolkit = csToolkit;
 		mBoogie2SmtSymbolTable = csToolkit.getSymbolTable();
 		if (trace.length() == 0) {
@@ -241,7 +245,8 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 				}
 			} else if (computeRcfgProgramExecution && feasibilityResult.getLBool() == LBool.SAT) {
 				if (!mAAA.mSucessfulReuse) {
-					icfgProgramExecution = computeRcfgProgramExecutionAndDecodeBranches(managedScriptTc);
+
+					icfgProgramExecution = computeRcfgProgramExecutionAndDecodeBranches(mTcSmtManager);
 					if (icfgProgramExecution != null) {
 						providesIcfgProgramExecution = true;
 					}

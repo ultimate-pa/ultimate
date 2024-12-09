@@ -55,7 +55,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
@@ -820,20 +819,14 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 
 	private Term transferBoogieVarOrConst(Term bvVarOrConst) {
 		if (((HistoryRecordingScript) mManagedScript.getScript()).getMainScript() != null) {
-			final TermTransferrer tf = new TermTransferrer(
-					((HistoryRecordingScript) mManagedScript.getScript()).getMainScript().getScript(),
-					(mManagedScript.getScript()));
-			bvVarOrConst = tf.transform(bvVarOrConst);
+			bvVarOrConst = ((HistoryRecordingScript) mManagedScript.getScript()).transferTermToWorker(bvVarOrConst);
 		}
 		return bvVarOrConst;
 	}
 
 	private static Term transferBoogieVarOrConstStatic(final ManagedScript managedScript, Term bvVarOrConst) {
 		if (((HistoryRecordingScript) managedScript.getScript()).getMainScript() != null) {
-			final TermTransferrer tf = new TermTransferrer(
-					((HistoryRecordingScript) managedScript.getScript()).getMainScript().getScript(),
-					(managedScript.getScript()));
-			bvVarOrConst = tf.transform(bvVarOrConst);
+			bvVarOrConst = ((HistoryRecordingScript) managedScript.getScript()).transferTermToWorker(bvVarOrConst);
 		}
 		return bvVarOrConst;
 	}
