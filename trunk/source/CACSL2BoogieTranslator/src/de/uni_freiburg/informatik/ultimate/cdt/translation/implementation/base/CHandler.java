@@ -873,11 +873,8 @@ public class CHandler {
 		}
 		case IASTBinaryExpression.op_binaryAnd:
 		case IASTBinaryExpression.op_binaryOr:
-		case IASTBinaryExpression.op_binaryXor: {
-			final ExpressionResult rl = mExprResultTransformer.transformSwitchRexBoolToInt(leftOperand, loc, node);
-			final ExpressionResult rr = mExprResultTransformer.transformSwitchRexBoolToInt(rightOperand, loc, node);
-			return mCExpressionTranslator.handleBitwiseArithmeticOperation(loc, node.getOperator(), rl, rr);
-		}
+		case IASTBinaryExpression.op_binaryXor:
+			return handleBitwiseOperation(node, loc, leftOperand, rightOperand);
 		case IASTBinaryExpression.op_binaryAndAssign:
 		case IASTBinaryExpression.op_binaryOrAssign:
 		case IASTBinaryExpression.op_binaryXorAssign: {
@@ -914,6 +911,38 @@ public class CHandler {
 			final String msg = "Unknown or unsupported unary operation";
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
+	}
+
+	private ExpressionResult handleBitwiseOperation(final IASTBinaryExpression node, final ILocation loc,
+			final ExpressionResult leftOperand, final ExpressionResult rightOperand) {
+		// If the left operand and the right operand are both bools, simply translate it to a boolean expression.
+		if (leftOperand.getLrValue().isBoogieBool() && rightOperand.getLrValue().isBoogieBool()) {
+			final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+			final ExpressionResult rl = mExprResultTransformer.switchToRValue(leftOperand, loc, node);
+			final ExpressionResult rr = mExprResultTransformer.switchToRValue(rightOperand, loc, node);
+			builder.addAllExceptLrValue(rl, rr);
+			final Expression leftValue = rl.getLrValue().getValue();
+			final Expression rightValue = rr.getLrValue().getValue();
+			Operator operator;
+			switch (node.getOperator()) {
+			case IASTBinaryExpression.op_binaryAnd:
+				operator = Operator.LOGICAND;
+				break;
+			case IASTBinaryExpression.op_binaryOr:
+				operator = Operator.LOGICOR;
+				break;
+			case IASTBinaryExpression.op_binaryXor:
+				operator = Operator.COMPNEQ;
+				break;
+			default:
+				throw new AssertionError("Unexpected operator " + node.getOperator());
+			}
+			final Expression resultExpr = ExpressionFactory.newBinaryExpression(loc, operator, leftValue, rightValue);
+			return builder.setLrValue(new RValue(resultExpr, new CPrimitive(CPrimitive.CPrimitives.INT), true)).build();
+		}
+		final ExpressionResult rl = mExprResultTransformer.transformSwitchRexBoolToInt(leftOperand, loc, node);
+		final ExpressionResult rr = mExprResultTransformer.transformSwitchRexBoolToInt(rightOperand, loc, node);
+		return mCExpressionTranslator.handleBitwiseArithmeticOperation(loc, node.getOperator(), rl, rr);
 	}
 
 	private static boolean checkSubstractPointerArith(final IASTBinaryExpression node,
