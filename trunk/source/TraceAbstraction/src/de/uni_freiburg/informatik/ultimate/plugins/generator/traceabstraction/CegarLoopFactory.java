@@ -232,13 +232,14 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 					errorLocs, mPrefs.interpolation(), mComputeHoareAnnotation, hoareAnnotationLocs, services,
 					Collections.emptyList(), rawFloydHoareAutomataFromFile, mTransitionClazz,
 					stateFactoryForRefinement);
-		case NONE:
+		case PARALLEL:
 			return new ParallelCegarLoop<>(name, initialAbstraction, root, csToolkit, predicateFactory, mPrefs,
 					errorLocs, mPrefs.interpolation(), mComputeHoareAnnotation, hoareAnnotationLocs, services,
 					mTransitionClazz, stateFactoryForRefinement);
-		// return new NwaCegarLoop<>(name, initialAbstraction, root, csToolkit, predicateFactory, mPrefs, errorLocs,
-		// mPrefs.interpolation(), mComputeHoareAnnotation, hoareAnnotationLocs, services, mTransitionClazz,
-		// stateFactoryForRefinement);
+		case NONE:
+			return new NwaCegarLoop<>(name, initialAbstraction, root, csToolkit, predicateFactory, mPrefs, errorLocs,
+					mPrefs.interpolation(), mComputeHoareAnnotation, hoareAnnotationLocs, services, mTransitionClazz,
+					stateFactoryForRefinement);
 		default:
 			throw new AssertionError("Unknown Setting: " + mPrefs.getFloydHoareAutomataReuse());
 		}

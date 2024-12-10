@@ -994,6 +994,10 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		 * Not yet defined...
 		 */
 		LAZY_IN_ORDER,
+		/**
+		 * Parallel CEGAR Loop (No reuse.)
+		 */
+		PARALLEL,
 	}
 
 	/**

@@ -47,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.WorkerPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskIterationIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
@@ -133,8 +132,9 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 	private CegarWorkerThread<L, A> setUpWorker(final IUltimateServiceProvider iterationServices,
 			final int runningThreads, final IcfgLocation currentErrorLoc, final RefinementStrategy strategyType) {
 		// mCsToolkit needs to give new mgdScript for each thread
-		final CfgSmtToolkit freshToolKit = mCsToolkit.getCfgSmtToolkitWithFreshScript(iterationServices,
-				getSolverSettings(iterationServices, mIteration + runningThreads + mCounterexample.hashCode() + "asd"));
+		final CfgSmtToolkit freshToolKit =
+				mCsToolkit.getCfgSmtToolkitWithFreshScript(iterationServices, getSolverSettings(iterationServices,
+						mIteration + runningThreads + mCounterexample.hashCode() + "parallel"));
 		// Set the Main Script
 		((HistoryRecordingScript) freshToolKit.getManagedScript().getScript())
 				.setMainScript(mCsToolkit.getManagedScript());
@@ -142,20 +142,19 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 		// Fill the map from worker tv to main tv so we can obtain boogievars later
 		final Map<TermVariable, IProgramVar> varMap =
 				((Boogie2SmtSymbolTable) mCsToolkit.getSymbolTable()).getSmtVar2ProgramVarMap();
-		final TermTransferrer tf = new TermTransferrer(mCsToolkit.getManagedScript().getScript(),
-				freshToolKit.getManagedScript().getScript());
+
 		for (final TermVariable tv : varMap.keySet()) {
-			((HistoryRecordingScript) freshToolKit.getManagedScript().getScript())
-					.addTermVariableToMap((TermVariable) tf.transform(tv), tv);
+			((HistoryRecordingScript) freshToolKit.getManagedScript().getScript()).addTermVariableToMap(
+					(TermVariable) ((HistoryRecordingScript) freshToolKit.getManagedScript().getScript())
+							.transferTermToWorker(tv),
+					tv);
 		}
 
-		/*
-		 * Es ist so: predicateFactory bekommt entweder das main scrip
-		 * Oder: Wir müssen uns darum kümmern, dass PredicateUnifier.getOrConstructPredicate etc. entsprechend transformieren
-		 */
+		// Create predicateFactory with worker script
 		final WorkerPredicateFactory predicateFactory =
 				new WorkerPredicateFactory(mServices, freshToolKit.getManagedScript(), freshToolKit.getSymbolTable());
 
+		// Create PredicateFactoryForInterpolantAutomata with worker script
 		final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata =
 				new PredicateFactoryForInterpolantAutomata(freshToolKit.getManagedScript(), mPredicateFactory,
 						mComputeHoareAnnotation);
