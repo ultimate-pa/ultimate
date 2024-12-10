@@ -228,7 +228,7 @@ public class ErrorGeneralizationEngine<L extends IIcfgTransition<?>> implements 
 	 * Starts difference time measurement.
 	 */
 	public void startDifference() {
-		mErrorAutomatonStatisticsGenerator.startErrorAutomatonDifferenceTime();
+		// mErrorAutomatonStatisticsGenerator.startErrorAutomatonDifferenceTime();
 	}
 
 	/**
@@ -247,7 +247,7 @@ public class ErrorGeneralizationEngine<L extends IIcfgTransition<?>> implements 
 			final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata,
 			final PredicateFactoryResultChecking predicateFactoryResultChecking, final IRun<L, ?> errorTrace,
 			final boolean prematureTermination) throws AutomataLibraryException {
-		mErrorAutomatonStatisticsGenerator.stopErrorAutomatonDifferenceTime();
+		// mErrorAutomatonStatisticsGenerator.stopErrorAutomatonDifferenceTime();
 		if (!prematureTermination) {
 			if (LOG_EXTENDED_SIZE_INFO) {
 				mErrorAutomatonStatisticsGenerator.evaluateFinalErrorAutomaton(mServices, mLogger,
@@ -256,7 +256,7 @@ public class ErrorGeneralizationEngine<L extends IIcfgTransition<?>> implements 
 			}
 			mErrorTraces.addEnhancementType(mErrorAutomatonStatisticsGenerator.getEnhancement());
 		}
-		mErrorAutomatonStatisticsGenerator.finishAutomatonInstance();
+		// mErrorAutomatonStatisticsGenerator.finishAutomatonInstance();
 	}
 
 	/**

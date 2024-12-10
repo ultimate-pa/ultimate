@@ -474,8 +474,8 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 			}
 
 			if (mErrorGeneralizationEngine.hasAutomatonInIteration(mIteration)) {
-				mErrorGeneralizationEngine.stopDifference(minuend, mPredicateFactoryInterpolantAutomata,
-						mPredicateFactoryResultChecking, mCounterexample, false);
+				// mErrorGeneralizationEngine.stopDifference(minuend, mPredicateFactoryInterpolantAutomata,
+				// mPredicateFactoryResultChecking, mCounterexample, false);
 				if (mFaultLocalizationMode != RelevanceAnalysisMode.NONE) {
 					final INestedWordAutomaton<L, IPredicate> cfg = Cfg2Automaton.constructAutomatonWithSPredicates(
 							getServices(), super.mIcfg, mStateFactoryForRefinement, super.mErrorLocs,
