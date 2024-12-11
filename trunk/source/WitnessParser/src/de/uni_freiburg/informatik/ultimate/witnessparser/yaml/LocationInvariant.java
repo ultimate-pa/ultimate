@@ -27,9 +27,6 @@
 
 package de.uni_freiburg.informatik.ultimate.witnessparser.yaml;
 
-import com.amihaiemil.eoyaml.Yaml;
-import com.amihaiemil.eoyaml.YamlNode;
-
 /**
  * @author Manuel Bentele (bentele@informatik.uni-freiburg.de)
  */
@@ -41,30 +38,30 @@ public class LocationInvariant extends WitnessEntry {
 	public static final String NAME = "location_invariant";
 
 	private final Location mLocation;
-	private final Invariant mInvariant;
+	private final String mInvariant;
+	private final String mFormat;
 
-	public LocationInvariant(final Metadata metadata, final Location location, final Invariant invariant) {
-		super(NAME, metadata);
+	public LocationInvariant(final Location location, final String invariant, final String format) {
+		super(NAME);
 		mLocation = location;
 		mInvariant = invariant;
+		mFormat = format;
 	}
 
 	public Location getLocation() {
 		return mLocation;
 	}
 
-	public Invariant getInvariant() {
+	public String getInvariant() {
 		return mInvariant;
+	}
+
+	public String getFormat() {
+		return mFormat;
 	}
 
 	@Override
 	public String toString() {
 		return getClass().getSimpleName() + " " + mLocation + ": " + mInvariant;
-	}
-
-	@Override
-	public YamlNode toYaml() {
-		return Yaml.createYamlMappingBuilder().add("entry_type", NAME).add("metadata", mMetadata.toYaml())
-				.add("location", mLocation.toYaml()).add(NAME, mInvariant.toYaml()).build();
 	}
 }

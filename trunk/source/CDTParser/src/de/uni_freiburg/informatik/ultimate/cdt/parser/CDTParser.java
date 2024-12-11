@@ -530,7 +530,7 @@ public class CDTParser implements ISource {
 
 		// make project ready
 		project.open(NULL_MONITOR);
-		mLogger.info("Created temporary CDT project at %s", getFullPath(mProject));
+		mLogger.info("Created temporary CDT project at %s", getFullPath(project));
 		return project;
 	}
 

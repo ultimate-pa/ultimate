@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.UnsatCores;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolatingTraceCheck;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolatingTraceCheckCraig;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
@@ -72,7 +72,6 @@ public class LoopCannibalizer<LETTER extends IIcfgTransition<?>> {
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final SimplificationTechnique mSimplificationTechnique;
-	private final XnfConversionTechnique mXnfConversionTechnique;
 	private final IPredicate mRankEqAndSi;
 	private final IPredicate mHondaPredicate;
 
@@ -80,13 +79,11 @@ public class LoopCannibalizer<LETTER extends IIcfgTransition<?>> {
 			final Set<IPredicate> loopInterpolants, final IPredicate rankEqAndSi, final IPredicate hondaPredicate,
 			final PredicateUnifier predicateUnifier, final CfgSmtToolkit csToolkit,
 			final InterpolationTechnique interpolation, final IUltimateServiceProvider services,
-			final SimplificationTechnique simplificationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique) {
+			final SimplificationTechnique simplificationTechnique) {
 		super();
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mSimplificationTechnique = simplificationTechnique;
-		mXnfConversionTechnique = xnfConversionTechnique;
 		mCounterexample = counterexample;
 		mRankEqAndSi = rankEqAndSi;
 		mHondaPredicate = hondaPredicate;
@@ -146,23 +143,25 @@ public class LoopCannibalizer<LETTER extends IIcfgTransition<?>> {
 
 	private InterpolatingTraceCheck<? extends IIcfgTransition<?>> getTraceCheck(
 			final NestedWord<? extends IIcfgTransition<?>> shifted, final InterpolationTechnique interpolation) {
+		final var counterexample = new Counterexample<>(shifted);
+
 		InterpolatingTraceCheck<? extends IIcfgTransition<?>> traceCheck;
 		switch (interpolation) {
 		case Craig_NestedInterpolation:
 		case Craig_TreeInterpolation:
 			traceCheck = new InterpolatingTraceCheckCraig<>(mRankEqAndSi, mHondaPredicate,
-					new TreeMap<Integer, IPredicate>(), shifted, null, mServices, mCsToolkit, mPredicateFactory,
+					new TreeMap<Integer, IPredicate>(), counterexample, mServices, mCsToolkit, mPredicateFactory,
 					mPredicateUnifier, AssertCodeBlockOrder.NOT_INCREMENTALLY, false, false, interpolation, true,
-					mXnfConversionTechnique, mSimplificationTechnique);
+					mSimplificationTechnique);
 			break;
 		case ForwardPredicates:
 		case BackwardPredicates:
 		case FPandBP:
 		case FPandBPonlyIfFpWasNotPerfect:
 			traceCheck = new TraceCheckSpWp<>(mRankEqAndSi, mHondaPredicate, new TreeMap<Integer, IPredicate>(),
-					shifted, mCsToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true,
+					counterexample, mCsToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true,
 					mServices, false, mPredicateFactory, mPredicateUnifier, interpolation,
-					mCsToolkit.getManagedScript(), mXnfConversionTechnique, mSimplificationTechnique, null, false);
+					mCsToolkit.getManagedScript(), mSimplificationTechnique, false);
 			break;
 		default:
 			throw new UnsupportedOperationException("unsupported interpolation");

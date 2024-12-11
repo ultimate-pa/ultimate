@@ -53,8 +53,7 @@ public class ReqGraphOracleAnnotation extends ModernAnnotations {
 	}
 
 	public static ReqGraphOracleAnnotation getAnnotation(final IElement node) {
-		return ModelUtils.getAnnotation(node, ReqGraphOracleAnnotation.class.getName(),
-				a -> (ReqGraphOracleAnnotation) a);
+		return ModelUtils.getAnnotation(node, ReqGraphOracleAnnotation.class);
 	}
 
 	@Override

@@ -42,7 +42,7 @@ public class NoResult<P extends IElement> extends AbstractResultAtElement<P> imp
 	 *            the valuation
 	 */
 	public NoResult(final P position, final String plugin, final IBacktranslationService translatorSequence) {
-		super(position, plugin, translatorSequence);
+		super(position, plugin);
 		mShortDescription = "";
 		mLongDescription = "";
 	}

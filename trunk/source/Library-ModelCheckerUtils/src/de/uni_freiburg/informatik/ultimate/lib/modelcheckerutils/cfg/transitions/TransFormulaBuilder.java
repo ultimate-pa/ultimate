@@ -45,12 +45,15 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.TransferrerWithVariableCache;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermVarsProc;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermVarsFuns;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PrenexNormalForm;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierSequence;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
@@ -401,13 +404,35 @@ public class TransFormulaBuilder {
 		return constructTransFormulaFromTerm(pred.getFormula(), pred.getVars(), script);
 	}
 
-	public static UnmodifiableTransFormula constructTransFormulaFromTerm(final Term term, final Set<IProgramVar> vars,
-			final ManagedScript script) {
+	public static UnmodifiableTransFormula constructTransFormulaFromTerm(final Term term,
+			final Set<? extends IProgramVar> vars, final ManagedScript script) {
 		final Set<ApplicationTerm> consts = SmtUtils.extractConstants(term, false);
 		if (!consts.isEmpty()) {
 			throw new UnsupportedOperationException("constants not yet supported");
 		}
-		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, true, null, true, null, true);
+
+		// Try to extract existentially quantified variables and make them auxVars of the transition formula.
+		final var prenex = new PrenexNormalForm(script).transform(term);
+		final Term transformedTerm;
+		final Set<TermVariable> additionalAuxVars;
+		if (prenex instanceof QuantifiedFormula) {
+			final var qs = new QuantifierSequence(script, prenex);
+			final var firstBlock = qs.getQuantifierBlocks().get(0);
+			if (firstBlock.getQuantifier() == QuantifiedFormula.EXISTS) {
+				transformedTerm = QuantifierSequence.prependQuantifierSequence(script.getScript(),
+						qs.getQuantifierBlocks().subList(1, qs.getNumberOfQuantifierBlocks()), qs.getInnerTerm());
+				additionalAuxVars = firstBlock.getVariables();
+			} else {
+				transformedTerm = term;
+				additionalAuxVars = Set.of();
+			}
+		} else {
+			transformedTerm = term;
+			additionalAuxVars = Set.of();
+		}
+
+		final TransFormulaBuilder tfb =
+				new TransFormulaBuilder(null, null, true, null, true, null, additionalAuxVars.isEmpty());
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		for (final IProgramVar bv : vars) {
 			final TermVariable freshTv =
@@ -416,8 +441,13 @@ public class TransFormulaBuilder {
 			tfb.addInVar(bv, freshTv);
 			tfb.addOutVar(bv, freshTv);
 		}
-		tfb.setFormula(Substitution.apply(script, substitutionMapping, term));
-		tfb.setInfeasibility(SmtUtils.isFalseLiteral(term) ? Infeasibility.INFEASIBLE : Infeasibility.NOT_DETERMINED);
+		final var substitutedTerm = Substitution.apply(script, substitutionMapping, transformedTerm);
+		tfb.setFormula(substitutedTerm);
+		if (!additionalAuxVars.isEmpty()) {
+			tfb.addAuxVarsButRenameToFreshCopies(additionalAuxVars, script);
+		}
+		tfb.setInfeasibility(
+				SmtUtils.isFalseLiteral(substitutedTerm) ? Infeasibility.INFEASIBLE : Infeasibility.NOT_DETERMINED);
 		return tfb.finishConstruction(script);
 	}
 
@@ -451,7 +481,7 @@ public class TransFormulaBuilder {
 			if (!consts.isEmpty()) {
 				throw new UnsupportedOperationException("constants not yet supported");
 			}
-			final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(rhs.get(i), mgdScript, symbolTable);
+			final TermVarsFuns tvp = TermVarsFuns.computeTermVarsFuns(rhs.get(i), mgdScript, symbolTable);
 			rhsPvs.addAll(tvp.getVars());
 		}
 

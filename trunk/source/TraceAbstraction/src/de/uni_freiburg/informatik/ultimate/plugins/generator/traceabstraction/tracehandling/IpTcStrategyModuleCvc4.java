@@ -26,19 +26,16 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
-import java.util.Arrays;
-
-import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.TaskIdentifier;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.ExternalSolver;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckSpWp;
 
@@ -49,40 +46,23 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracechec
  *
  */
 public class IpTcStrategyModuleCvc4<LETTER extends IIcfgTransition<?>> extends IpTcStrategyModuleSpWp<LETTER> {
-
-	private static final InterpolationTechnique[] SUPPORTED_TECHNIQUES =
-			new InterpolationTechnique[] { InterpolationTechnique.ForwardPredicates,
-					InterpolationTechnique.ForwardPredicates, InterpolationTechnique.BackwardPredicates,
-					InterpolationTechnique.FPandBP, InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect };
-
-	private final InterpolationTechnique mInterpolationTechnique;
 	private final long mTimeoutInMillis;
 
 	public IpTcStrategyModuleCvc4(final TaskIdentifier taskIdentifier, final IUltimateServiceProvider services,
-			final TaCheckAndRefinementPreferences<LETTER> prefs, final IRun<LETTER, ?> counterExample,
+			final TaCheckAndRefinementPreferences<LETTER> prefs, final Counterexample<LETTER> counterexample,
 			final IPredicate precondition, final IPredicate postcondition,
 			final AssertionOrderModulation<LETTER> assertionOrderModulation, final IPredicateUnifier predicateUnifier,
 			final PredicateFactory predicateFactory, final long timeoutInMillis,
 			final InterpolationTechnique interpolationTechnique) {
-		super(taskIdentifier, services, prefs, counterExample, precondition, postcondition, assertionOrderModulation,
-				predicateUnifier, predicateFactory);
+		super(taskIdentifier, services, prefs, counterexample, precondition, postcondition, assertionOrderModulation,
+				predicateUnifier, predicateFactory, interpolationTechnique);
 		mTimeoutInMillis = timeoutInMillis;
-		mInterpolationTechnique = interpolationTechnique;
-		assert Arrays.stream(SUPPORTED_TECHNIQUES).anyMatch(
-				a -> a == mInterpolationTechnique) : "Unsupported interpolation technique " + mInterpolationTechnique;
 	}
 
 	@Override
-	protected ManagedScript constructManagedScript() {
+	protected SolverSettings getSolverSettings() {
 		final long timeout = computeTimeout(mTimeoutInMillis);
-		final SolverSettings solverSettings = mPrefs.constructSolverSettings(mTaskIdentifier)
-				.setUseExternalSolver(ExternalSolver.CVC4, timeout)
+		return mPrefs.constructSolverSettings(mTaskIdentifier).setUseExternalSolver(ExternalSolver.CVC4, timeout)
 				.setSolverMode(SolverMode.External_ModelsAndUnsatCoreMode);
-		return createExternalManagedScript(solverSettings);
-	}
-
-	@Override
-	protected final InterpolationTechnique getInterpolationTechnique() {
-		return mInterpolationTechnique;
 	}
 }

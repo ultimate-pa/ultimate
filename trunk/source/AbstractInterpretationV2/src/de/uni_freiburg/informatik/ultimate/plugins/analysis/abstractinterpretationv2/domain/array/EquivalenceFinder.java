@@ -6,7 +6,6 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineTerm;
@@ -24,7 +23,7 @@ public class EquivalenceFinder {
 	public EquivalenceFinder(final Term term, final IUltimateServiceProvider services, final ManagedScript mgdScript) {
 		mScript = mgdScript.getScript();
 		final Term cnf =
-				SmtUtils.toCnf(services, mgdScript, term, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+				SmtUtils.toCnf(services, mgdScript, term);
 		mRelations = getEquivalenceRelations(cnf);
 	}
 

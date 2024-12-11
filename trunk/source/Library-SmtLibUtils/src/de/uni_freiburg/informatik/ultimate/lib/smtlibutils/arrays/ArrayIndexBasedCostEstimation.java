@@ -133,7 +133,7 @@ public class ArrayIndexBasedCostEstimation {
 		final Set<ArrayIndex> selectIndicesIntroducedBySos = new HashSet<>();
 		final List<MultiDimensionalSelectOverNestedStore> arraySelectOverStores = aoa.getArraySelectOverStores();
 		for (final MultiDimensionalSelectOverNestedStore sos : arraySelectOverStores) {
-			final ArrayIndex selectIdx = sos.getSelect().getIndex();
+			final ArrayIndex selectIdx = sos.getSelectIndex();
 			final List<ArrayIndex> nsi = sos.getNestedStore().getIndices();
 			final boolean earlyResultDetection = sosOuterLoop(aiem, eliminatee, selectIdx, nsi);
 			if (!earlyResultDetection) {

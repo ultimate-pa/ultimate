@@ -31,7 +31,6 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.IRunningTaskStackProvider;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovabilityReason;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
 
@@ -40,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ab
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public final class CegarLoopLocalResult<L extends IIcfgTransition<?>> {
+public final class CegarLoopLocalResult<L> {
 	private final IProgramExecution<L, Term> mProgramExecution;
 	private final IRunningTaskStackProvider mRunningTaskStackProvider;
 	private final List<UnprovabilityReason> mUnprovabilityReasons;

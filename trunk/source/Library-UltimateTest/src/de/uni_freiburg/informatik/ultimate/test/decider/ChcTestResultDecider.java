@@ -27,14 +27,21 @@
  */
 package de.uni_freiburg.informatik.ultimate.test.decider;
 
+import java.util.regex.Pattern;
+
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.decider.expectedresult.IExpectedResultFinder;
 import de.uni_freiburg.informatik.ultimate.test.decider.expectedresult.SMTLibExpectedResultFinder;
-import de.uni_freiburg.informatik.ultimate.test.decider.overallresult.IOverallResultEvaluator;
 import de.uni_freiburg.informatik.ultimate.test.decider.overallresult.ChcOverallResult;
 import de.uni_freiburg.informatik.ultimate.test.decider.overallresult.ChcOverallResultEvaluator;
+import de.uni_freiburg.informatik.ultimate.test.decider.overallresult.IOverallResultEvaluator;
 
 public class ChcTestResultDecider extends ThreeTierTestResultDecider<ChcOverallResult> {
+
+	public ChcTestResultDecider(final UltimateRunDefinition ultimateRunDefinition, final boolean unknownIsJUnitSuccess,
+			final String overriddenExpectedVerdict) {
+		super(ultimateRunDefinition, unknownIsJUnitSuccess, overriddenExpectedVerdict);
+	}
 
 	public ChcTestResultDecider(final UltimateRunDefinition ultimateRunDefinition,
 			final boolean unknownIsJUnitSuccess) {
@@ -43,8 +50,7 @@ public class ChcTestResultDecider extends ThreeTierTestResultDecider<ChcOverallR
 
 	@Override
 	public SMTLibExpectedResultFinder<ChcOverallResult> constructExpectedResultFinder() {
-		return new SMTLibExpectedResultFinder<>(ChcOverallResult.UNKNOWN, ChcOverallResult.SAT,
-				ChcOverallResult.UNSAT);
+		return new SMTLibExpectedResultFinder<>(ChcOverallResult.UNKNOWN, ChcOverallResult.SAT, ChcOverallResult.UNSAT);
 	}
 
 	@Override
@@ -68,6 +74,19 @@ public class ChcTestResultDecider extends ThreeTierTestResultDecider<ChcOverallR
 				final IOverallResultEvaluator<ChcOverallResult> overallResultDeterminer) {
 			final ChcOverallResult expectedResult = expectedResultEvaluation.getExpectedResult();
 			final ChcOverallResult actualResult = overallResultDeterminer.getOverallResult();
+
+			if (mOverridenExpectedVerdict != null) {
+				final String overallResultMsg = overallResultDeterminer.generateOverallResultMessage();
+				final Pattern pattern = Pattern.compile(mOverridenExpectedVerdict, Pattern.CASE_INSENSITIVE);
+				if (pattern.matcher(actualResult.toString()) != null || pattern.matcher(overallResultMsg) != null) {
+					mTestResult = TestResult.IGNORE;
+				} else {
+					mTestResult = TestResult.FAIL;
+				}
+				mCategory = actualResult + " (Expected to match :" + mOverridenExpectedVerdict + ")";
+				mMessage = " UltimateResult: " + overallResultMsg;
+				return;
+			}
 
 			if (expectedResult == ChcOverallResult.UNKNOWN) {
 				mCategory = "expected result unknown";

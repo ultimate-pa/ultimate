@@ -29,6 +29,8 @@ package de.uni_freiburg.informatik.ultimate.core.model.translation;
 
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.core.model.models.ProcedureContract;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService.Lasso;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
 
 /**
@@ -57,16 +59,18 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecut
  * @param <TVL>
  *            Target vertex label.
  */
-public interface ITranslator<STE, TTE, SE, TE, SVL, TVL> {
+public interface ITranslator<STE, TTE, SE, TE, SVL, TVL, CTX> {
 
 	/**
 	 * Note: Does not need to preserve instances
 	 */
-	public TE translateExpression(SE expression);
+	TE translateExpression(SE expression);
 
-	public ProgramState<TE> translateProgramState(ProgramState<SE> programState);
+	TE translateExpressionWithContext(SE expression, CTX context);
 
-	public String targetExpressionToString(TE expression);
+	ProgramState<TE> translateProgramState(ProgramState<SE> programState);
+
+	String targetExpressionToString(TE expression);
 
 	/**
 	 * Translate trace that is represented as a list of Source Trace Elements (resp. list of Target Trace Elements).
@@ -75,20 +79,29 @@ public interface ITranslator<STE, TTE, SE, TE, SVL, TVL> {
 	 *
 	 * @return
 	 */
-	public List<TTE> translateTrace(List<STE> trace);
+	List<TTE> translateTrace(List<STE> trace);
 
-	public List<String> targetTraceToString(List<TTE> trace);
+	List<String> targetTraceToString(List<TTE> trace);
 
-	public IProgramExecution<TTE, TE> translateProgramExecution(IProgramExecution<STE, SE> programExecution);
+	IProgramExecution<TTE, TE> translateProgramExecution(IProgramExecution<STE, SE> programExecution);
 
-	public IBacktranslatedCFG<TVL, TTE> translateCFG(IBacktranslatedCFG<SVL, STE> cfg);
+	default Lasso<IProgramExecution<TTE, TE>>
+			translateLassoProgramExecution(final Lasso<IProgramExecution<STE, SE>> programExecution) {
+		return new Lasso<>(translateProgramExecution(programExecution.getStem()),
+				translateProgramExecution(programExecution.getLoop()));
+	}
 
-	public Class<? extends STE> getSourceTraceElementClass();
+	IBacktranslatedCFG<TVL, TTE> translateCFG(IBacktranslatedCFG<SVL, STE> cfg);
 
-	public Class<? extends TTE> getTargetTraceElementClass();
+	ProcedureContract<TE, ? extends TE> translateProcedureContract(ProcedureContract<SE, ? extends SE> contract,
+			CTX context);
 
-	public Class<SE> getSourceExpressionClass();
+	Class<? extends STE> getSourceTraceElementClass();
 
-	public Class<TE> getTargetExpressionClass();
+	Class<? extends TTE> getTargetTraceElementClass();
+
+	Class<SE> getSourceExpressionClass();
+
+	Class<TE> getTargetExpressionClass();
 
 }

@@ -214,9 +214,9 @@ public class ElimStore3 {
 				if (store == null) {
 					store = update.getMultiDimensionalStore();
 				}
-				final Map<Term, Term> auxMap = Collections.singletonMap((Term) store.getStoreTerm(), (Term) auxArray);
+				final Map<Term, Term> auxMap = Collections.singletonMap(store.toTerm(mScript), (Term) auxArray);
 				Term auxTerm = Substitution.apply(mMgdScript, auxMap, term);
-				final Term auxVarDef = SmtUtils.binaryEquality(mScript, auxArray, store.getStoreTerm());
+				final Term auxVarDef = SmtUtils.binaryEquality(mScript, auxArray, store.toTerm(mScript));
 				if (quantifier == QuantifiedFormula.EXISTS) {
 					auxTerm = SmtUtils.and(mScript, auxTerm, auxVarDef);
 				} else {
@@ -243,7 +243,7 @@ public class ElimStore3 {
 			// if update is of form (store oldArr idx val) = newArr,
 			// we replace all occurrences of (store oldArr idx val) by newArr.
 			final Map<Term, Term> mapping = Collections.singletonMap(
-					(Term) writeInto.getMultiDimensionalStore().getStoreTerm(), (Term) writeInto.getNewArray());
+					writeInto.getMultiDimensionalStore().toTerm(mScript), (Term) writeInto.getNewArray());
 			intermediateResult = Substitution.apply(mMgdScript, mapping, intermediateResult);
 		}
 

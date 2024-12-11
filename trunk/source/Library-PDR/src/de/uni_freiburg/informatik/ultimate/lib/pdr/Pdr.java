@@ -84,7 +84,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
@@ -196,8 +195,8 @@ public class Pdr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 		mIcfg = prefs.getIcfgContainer();
 		mSymbolTable = mIcfg.getCfgSmtToolkit().getSymbolTable();
 
-		final PathProgramConstructionResult pp =
-				PathProgram.constructPathProgram("errorPP", mIcfg, new HashSet<>(counterexample));
+		final PathProgramConstructionResult pp = PathProgram.constructPathProgram("errorPP", mIcfg,
+				new HashSet<>(counterexample), Collections.emptySet(), x -> true);
 
 		mPpIcfg = pp.getPathProgram();
 		mCsToolkit = mPpIcfg.getCfgSmtToolkit();
@@ -208,8 +207,7 @@ public class Pdr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 			mLocalPredicateUnifier = mExternalPredicateUnifier;
 		} else {
 			mLocalPredicateUnifier = new PredicateUnifier(mLogger, mServices, mScript,
-					predicateUnifier.getPredicateFactory(), mSymbolTable, SimplificationTechnique.SIMPLIFY_DDA,
-					XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+					predicateUnifier.getPredicateFactory(), mSymbolTable, SimplificationTechnique.SIMPLIFY_DDA);
 		}
 
 		mInvarSpot = -1;
@@ -573,8 +571,8 @@ public class Pdr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 					 * Get the procedure in form of a trace.
 					 */
 					final List<L> procTrace = getProcedureTrace(returnTrans);
-					final PathProgramConstructionResult pp =
-							PathProgram.constructPathProgram("procErrorPP", mIcfg, new HashSet<>(procTrace));
+					final PathProgramConstructionResult pp = PathProgram.constructPathProgram("procErrorPP", mIcfg,
+							new HashSet<>(procTrace), Collections.emptySet(), x -> true);
 					final Set<IcfgLocation> errorLocOfProc = new HashSet<>();
 					errorLocOfProc.add(returnTrans.getTarget());
 
@@ -661,7 +659,7 @@ public class Pdr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 						 * Get the rest of the program as a trace.
 						 */
 						final PathProgramConstructionResult subPP =
-								PathProgram.constructPathProgram("procErrorPP", mIcfg, new HashSet<>(subTrace));
+								PathProgram.constructPathProgram("procErrorPP", mIcfg, new HashSet<>(subTrace), null, x -> true);
 						final ArrayDeque<ProofObligation> subTracePo = new ArrayDeque<>();
 						subTracePo.add(newLocalProofObligation);
 						final LBool subTraceResult = computePdr(subPP.getPathProgram(), subTracePo);
@@ -1214,7 +1212,7 @@ public class Pdr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 				new IterativePredicateTransformer<>(mLocalPredicateUnifier.getPredicateFactory(), mScript,
 						mCsToolkit.getModifiableGlobalsTable(), mServices, nestedWord, mTruePred, mFalsePred,
 						Collections.emptySortedMap(), mTruePred, SimplificationTechnique.SIMPLIFY_DDA,
-						XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, mSymbolTable);
+						mSymbolTable);
 
 		final OldVarsAssignmentCache oldVarsAssignmentCache = mCsToolkit.getOldVarsAssignmentCache();
 		final DefaultTransFormulas<L> rtf = new DefaultTransFormulas<>(nestedWord, mTruePred, mFalsePred,

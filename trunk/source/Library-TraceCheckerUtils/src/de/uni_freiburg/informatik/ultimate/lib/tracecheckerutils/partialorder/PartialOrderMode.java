@@ -35,42 +35,28 @@ public enum PartialOrderMode {
 	/**
 	 * No partial order reduction is performed.
 	 */
-	NONE(false, false, false, true),
-	/**
-	 * Sleep set partial order reduction. Delay sets are used to handle loops, and the reduced automaton is a
-	 * sub-structure of the input.
-	 */
-	SLEEP_DELAY_SET(true, false, false, true),
+	NONE(false, false, true),
 	/**
 	 * Sleep set partial order reduction. Unrolling and splitting is performed to achieve a minimal reduction (in terms
 	 * of the language). This duplicates states of the input automaton.
 	 */
-	SLEEP_NEW_STATES(true, false, true, true),
+	SLEEP_NEW_STATES(true, false, true),
 	/**
 	 * Persistent set reduction.
 	 */
-	PERSISTENT_SETS(false, true, false, false),
-	/**
-	 * Combines persistent set reduction with {@link SLEEP_DELAY_SET}.
-	 */
-	PERSISTENT_SLEEP_DELAY_SET(true, true, false, false),
-	PERSISTENT_SLEEP_DELAY_SET_FIXEDORDER(true, true, false, true),
+	PERSISTENT_SETS(false, true, false),
 	/**
 	 * Combines persistent set reduction with {@link SLEEP_NEW_STATES}.
 	 */
-	PERSISTENT_SLEEP_NEW_STATES(true, true, true, false),
-	PERSISTENT_SLEEP_NEW_STATES_FIXEDORDER(true, true, true, true);
+	PERSISTENT_SLEEP_NEW_STATES(true, true, false), PERSISTENT_SLEEP_NEW_STATES_FIXEDORDER(true, true, true);
 
 	private final boolean mHasSleepSets;
 	private final boolean mHasPersistentSets;
-	private final boolean mDoesUnrolling;
 	private final boolean mHasFixedOrder;
 
-	PartialOrderMode(final boolean hasSleepSets, final boolean hasPersistentSets, final boolean doesUnrolling,
-			final boolean hasFixedOrder) {
+	PartialOrderMode(final boolean hasSleepSets, final boolean hasPersistentSets, final boolean hasFixedOrder) {
 		mHasSleepSets = hasSleepSets;
 		mHasPersistentSets = hasPersistentSets;
-		mDoesUnrolling = doesUnrolling;
 		mHasFixedOrder = hasFixedOrder;
 	}
 
@@ -80,10 +66,6 @@ public enum PartialOrderMode {
 
 	public boolean hasPersistentSets() {
 		return mHasPersistentSets;
-	}
-
-	public boolean doesUnrolling() {
-		return mDoesUnrolling;
 	}
 
 	public boolean hasFixedOrder() {

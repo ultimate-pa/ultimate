@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Copyright (C) 2024 Niklas Kult (niklas111098@gmail.com)
  * Copyright (C) 2015 University of Freiburg
  *
  * This file is part of the ULTIMATE RCFGBuilder plug-in.
@@ -60,32 +61,20 @@ public class StatementSequence extends CodeBlock implements IIcfgInternalTransit
 	private static final long serialVersionUID = -1780068525981157749L;
 	private static final boolean ADD_SERIAL_NUMBER_IN_TO_STRING_REPRESENTATION = false;
 
-	public enum Origin {
-		ENSURES, REQUIRES, IMPLEMENTATION, ASSERT
-	}
-
 	private final List<Statement> mStatements;
 	private String mPrettyPrintedStatements;
 	/**
 	 * mOrigin stores the origin of this InternalEdge, which could be either be the ensures specification, the requires
 	 * specification or the implementation of a program.
 	 */
-	private final Origin mOrigin;
-
 	StatementSequence(final int serialNumber, final BoogieIcfgLocation source, final BoogieIcfgLocation target,
 			final Statement st, final ILogger logger) {
-		this(serialNumber, source, target, Collections.singletonList(st), Origin.IMPLEMENTATION, logger);
+		this(serialNumber, source, target, Collections.singletonList(st), logger);
 	}
 
 	StatementSequence(final int serialNumber, final BoogieIcfgLocation source, final BoogieIcfgLocation target,
-			final Statement st, final Origin origin, final ILogger logger) {
-		this(serialNumber, source, target, Collections.singletonList(st), origin, logger);
-	}
-
-	StatementSequence(final int serialNumber, final BoogieIcfgLocation source, final BoogieIcfgLocation target,
-			final List<Statement> stmts, final Origin origin, final ILogger logger) {
+			final List<Statement> stmts, final ILogger logger) {
 		super(serialNumber, source, target, logger);
-		mOrigin = origin;
 		mStatements = new ArrayList<>();
 		if (stmts != null && !stmts.isEmpty()) {
 			stmts.forEach(this::addStatement);
@@ -98,14 +87,28 @@ public class StatementSequence extends CodeBlock implements IIcfgInternalTransit
 	 * Return, Summary.
 	 */
 	public void addStatement(final Statement st) {
+		addStatement(st, -1);
+	}
+	
+	/**
+	 * Add a new {@link Statement} to this statement sequence at the specified index(use an index of -1 to append to the list). Only internal statements are allowed, i.e., no Call,
+	 * Return, Summary.
+	 */
+	public void addStatement(final Statement st, int index) {
 		if (!(st instanceof AssumeStatement) && !(st instanceof AssignmentStatement) && !(st instanceof HavocStatement)
 				&& !(st instanceof CallStatement)) {
 			throw new IllegalArgumentException("Only Assignment, Assume and HavocStatement allowed in InternalEdge."
 					+ " Additionally CallStatements are allowed if the callee is a procedure without implementation and has an emtpy requires clause.");
 		}
-		mStatements.add(st);
+		if (index == -1) {
+			mStatements.add(st);
+		} else {
+			mStatements.add(index, st);
+		}
+		
 		mPrettyPrintedStatements = null;
 	}
+
 
 	@Visualizable
 	public List<Statement> getStatements() {
@@ -122,10 +125,6 @@ public class StatementSequence extends CodeBlock implements IIcfgInternalTransit
 			mPrettyPrintedStatements = sb.toString();
 		}
 		return mPrettyPrintedStatements;
-	}
-
-	public Origin getOrigin() {
-		return mOrigin;
 	}
 
 	@Override

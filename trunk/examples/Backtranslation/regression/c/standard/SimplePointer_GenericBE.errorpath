@@ -7,4 +7,3 @@
 [L12]  EXPR       \read(*p1)
 [L12]  COND TRUE  *p1 == 4
 [L18]             __VERIFIER_error()
-       VAL        [a={2:0}, p1={2:0}]

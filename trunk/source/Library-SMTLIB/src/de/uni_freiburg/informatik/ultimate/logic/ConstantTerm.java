@@ -79,6 +79,9 @@ public class ConstantTerm extends Term {
 
 	@Override
 	public String toString() {
+		if (mSort.isBitVecSort() && mValue instanceof BigInteger) {
+			return "(_ bv" + mValue.toString() + " " + mSort.getIndices()[0] + ")";
+		}
 		if (mValue instanceof BigInteger) {
 			final BigInteger value = (BigInteger) mValue;
 			String result = value.abs().toString();

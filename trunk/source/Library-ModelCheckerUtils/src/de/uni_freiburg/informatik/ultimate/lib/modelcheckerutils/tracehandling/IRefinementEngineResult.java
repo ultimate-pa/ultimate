@@ -71,8 +71,8 @@ public interface IRefinementEngineResult<L extends IAction, T> {
 	T getInfeasibilityProof();
 
 	/**
-	 * @return true if {@link #getCounterexampleFeasibility()} was {@link LBool#UNSAT} and the underlying strategy can
-	 *         be queried via {@link #getIcfgProgramExecution()} to retrieve a program execution that describes the
+	 * @return true if {@link #getCounterexampleFeasibility()} was {@link LBool#SAT} and the underlying strategy can be
+	 *         queried via {@link #getIcfgProgramExecution()} to retrieve a program execution that describes the
 	 *         counterexample.
 	 */
 	boolean providesIcfgProgramExecution();

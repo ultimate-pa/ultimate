@@ -92,12 +92,16 @@ public interface ProofConstants {
 	public final static Annotation RW_DIV_ONE = new Annotation(":div1", null);
 	public final static Annotation RW_DIV_MONE = new Annotation(":div-1", null);
 	public final static Annotation RW_DIV_CONST = new Annotation(":divConst", null);
+	public final static Annotation RW_DIV_DIV = new Annotation(":divDiv", null);
 	public final static Annotation RW_TO_INT = new Annotation(":toInt", null);
 	public final static Annotation RW_STORE_OVER_STORE = new Annotation(":storeOverStore", null);
 	public final static Annotation RW_SELECT_OVER_STORE = new Annotation(":selectOverStore", null);
 	public final static Annotation RW_STORE_REWRITE = new Annotation(":storeRewrite", null);
 	public final static Annotation RW_AUX_INTRO = new Annotation(":auxIntro", null);
 	public final static Annotation RW_INTERN = new Annotation(":intern", null);
+	public static final Annotation RW_BV2NAT =  new Annotation(":bv2nat", null);
+	public static final Annotation RW_NAT2BV =  new Annotation(":nat2bv", null);
+
 
 	//// ==== Tautologies ====
 	public final static Annotation TAUT_TRUE_NOT_FALSE = new Annotation(":trueNotFalse", null);
@@ -127,14 +131,45 @@ public interface ProofConstants {
 	public final static Annotation TAUT_EXCLUDED_MIDDLE_2 = new Annotation(":excludedMiddle2", null);
 	public final static Annotation TAUT_TERM_ITE = new Annotation(":termITE", null);
 	public final static Annotation TAUT_TERM_ITE_BOUND = new Annotation(":termITEBound", null);
-	public final static Annotation TAUT_DIV_LOW = new Annotation(":divLow", null);
-	public final static Annotation TAUT_DIV_HIGH = new Annotation(":divHigh", null);
-	public final static Annotation TAUT_TO_INT_LOW = new Annotation(":toIntLow", null);
-	public final static Annotation TAUT_TO_INT_HIGH = new Annotation(":toIntHigh", null);
+	public final static Annotation TAUT_MODULO = new Annotation(":modulo", null);
+	public final static String TAUT_DIV_LOW = ":divLow";
+	public final static String TAUT_DIV_HIGH = ":divHigh";
+	public final static String TAUT_TO_INT_LOW = ":toIntLow";
+	public final static String TAUT_TO_INT_HIGH = ":toIntHigh";
 	public final static Annotation TAUT_ARRAY_STORE = new Annotation(":store", null);
 	public final static Annotation TAUT_ARRAY_DIFF = new Annotation(":diff", null);
 	public final static Annotation TAUT_MATCH_CASE = new Annotation(":matchCase", null);
 	public final static Annotation TAUT_MATCH_DEFAULT = new Annotation(":matchDefault", null);
+	public final static Annotation TAUT_NAT2BV = new Annotation(":nat2bv", null);
+	public static final Annotation TAUT_BV2NATLOW = new Annotation(":bv2natLow", null);
+	public static final Annotation TAUT_BV2NATHIGH = new Annotation(":bv2natHigh", null);
+	public static final Annotation TAUT_BV2NAT2BV = new Annotation(":bv2nat2bv", null);
+	public static final Annotation RW_BVEVAL = new Annotation(":bveval", null);
+	public static final Annotation RW_BVTOINT_CONST = new Annotation(":bv2int_const", null);
+	public static final Annotation RW_BVMUL2INT = new Annotation(":bvmul2int", null);
+	public static final Annotation RW_BVSUB2INT = new Annotation(":bvsub2int", null);
+	public static final Annotation RW_BVNOT2INT = new Annotation(":bvnot2int", null);
+	public static final Annotation RW_CONCAT2INT = new Annotation(":concat2int", null);
+	public static final Annotation RW_BVUDIV2INT = new Annotation(":bvudiv2int", null);
+	public static final Annotation RW_BVSHL2INT = new Annotation(":bvshl2int", null);
+	public static final Annotation RW_BVUREM2INT = new Annotation(":bvurem2int", null);
+	public static final Annotation RW_BVLSHR2INT = new Annotation(":bvlshr2int", null);
+	public static final Annotation RW_EXTRACT2INT = new Annotation(":extract2int", null);
+	public static final Annotation RW_BVEQ2INT = new Annotation(":bveq2int", null);
+	public static final Annotation RW_BVULT2INT = new Annotation(":bvult2int", null);
+	public static final Annotation RW_BVULE2INT = new Annotation(":bvule2int", null);
+	public static final Annotation RW_BVUGT2INT = new Annotation(":bvugt2int", null);
+	public static final Annotation RW_BVUGE2INT = new Annotation(":bvuge2int", null);
+	public static final Annotation RW_BVSLT2INT = new Annotation(":bvslt2int", null);
+	public static final Annotation RW_BVSLE2INT = new Annotation(":bvsle2int", null);
+	public static final Annotation RW_BVSGT2INT = new Annotation(":bvsgt2int", null);
+	public static final Annotation RW_BVSGE2INT = new Annotation(":bvsge2int", null);
+	public static final Annotation TAUT_BV2NAT = new Annotation(":bv2nat", null);
+	public static final Annotation RW_BVADD2INT = new Annotation(":bvadd2int", null);
+	public static final Annotation RW_BVBLAST = new Annotation(":bvblast", null);
+	public static final Annotation RW_BV_EXPAND_DEF = new Annotation(":bvexpand", null);
+	public static final Annotation RW_SIGNEXTEND = new Annotation(":signextend", null);
+	public static final Annotation RW_ZEROEXTEND = new Annotation(":zeroextend", null);
 
 	//// ==== Annotations with non-null value ====
 	public static Annotation getTautForallPos(final Term[] skolemFuns) {

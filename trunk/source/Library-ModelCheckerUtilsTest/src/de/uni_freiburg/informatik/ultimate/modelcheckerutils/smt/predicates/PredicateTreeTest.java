@@ -207,11 +207,6 @@ public class PredicateTreeTest {
 		}
 
 		@Override
-		public String[] getProcedures() {
-			return new String[0];
-		}
-
-		@Override
 		public Set<IProgramVar> getVars() {
 			return mVars;
 		}
@@ -235,7 +230,6 @@ public class PredicateTreeTest {
 		public String toString() {
 			return getFormula().toStringDirect();
 		}
-
 
 	}
 }

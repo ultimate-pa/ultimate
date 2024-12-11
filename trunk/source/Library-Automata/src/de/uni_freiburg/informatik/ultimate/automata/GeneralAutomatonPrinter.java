@@ -125,11 +125,11 @@ public abstract class GeneralAutomatonPrinter {
 		return input.toString().replaceAll("\"", "\\\"");
 	}
 
-	protected static final String quoteAndReplaceBackslashes(final Object input) {
+	public static final String quoteAndReplaceBackslashes(final Object input) {
 		return QUOTE + replaceBackslashes(input) + QUOTE;
 	}
 
-	protected static final String quoteAndReplaceBackslashes(final Object input, final String suffix) {
+	public static final String quoteAndReplaceBackslashes(final Object input, final String suffix) {
 		return QUOTE + replaceBackslashes(input) + suffix + QUOTE;
 	}
 

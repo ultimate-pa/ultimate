@@ -31,6 +31,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.Stack;
 
 import org.eclipse.cdt.core.dom.ast.ASTVisitor;
@@ -90,11 +91,11 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 
 	private final String mCheckedMethod;
 	private IASTTranslationUnit mTranslationUnit;
-	private final Map<String, Integer> mFunctionToIndex;
+	private final Set<String> mFunctions;
 	private final CTranslationResultReporter mReporter;
 
 	public DetermineNecessaryDeclarations(final String checkedMethod, final CTranslationResultReporter reporter,
-			final Map<String, IASTNode> fT, final Map<String, Integer> functionToIndex) {
+			final Map<String, IASTNode> fT, final Set<String> functions) {
 		mReporter = reporter;
 		shouldVisitParameterDeclarations = true;
 		shouldVisitTranslationUnit = true;
@@ -112,7 +113,7 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 		mReachableDeclarations = new LinkedHashSet<>();
 		mCurrentDeclarationStack = new Stack<>();
 		mCheckedMethod = checkedMethod;
-		mFunctionToIndex = functionToIndex;
+		mFunctions = functions;
 	}
 
 	@Override
@@ -244,7 +245,7 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 		} else {
 			// We add a dependency from the method/whatever the function pointer is used in to
 			// all methods that a function pointer may point to (from PreRunner's analysis)
-			for (final String fName : mFunctionToIndex.keySet()) {
+			for (final String fName : mFunctions) {
 				addDependency(mCurrentDeclarationStack.peek(),
 						getDeclarationFromFuncDefinitionOrFuncDeclarator(mFunctionTable.get(fName)));
 			}

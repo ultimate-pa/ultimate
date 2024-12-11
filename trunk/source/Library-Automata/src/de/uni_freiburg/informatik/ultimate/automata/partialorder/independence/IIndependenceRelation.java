@@ -68,6 +68,18 @@ public interface IIndependenceRelation<STATE, LETTER> {
 	Dependence isIndependent(STATE state, LETTER a, LETTER b);
 
 	/**
+	 * Constructs a corresponding {@link ISymbolicIndependenceRelation} which can be used to generate sufficient
+	 * conditions under which given letters commute.
+	 *
+	 * If the current relation is unconditional (see {@link #isConditional()}), {@code null} should be returned.
+	 * {@code null} may also be returned if the relation does not have a symbolic equivalent for some other reason.
+	 *
+	 * The constructed relation must behave consistently with this relation. In particular, if the current relation is
+	 * symmetric (see {@link #isSymmetric()}), then the returned relation must also be symmetric.
+	 */
+	ISymbolicIndependenceRelation<LETTER, STATE> getSymbolicRelation();
+
+	/**
 	 * An optional method that allows collecting statistics about the history of queries made to this independence
 	 * relation. The default implementation does not provide any statistics.
 	 *

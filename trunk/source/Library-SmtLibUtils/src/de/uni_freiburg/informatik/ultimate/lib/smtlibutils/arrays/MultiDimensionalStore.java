@@ -31,7 +31,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ApplicationTermFinder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ITermProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -54,53 +53,23 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  * (store a i1 (store (select a i1) i2 v))
  * This is data structure is a wrapper for such a nested select expression which
  * allows you to directly access the array, the indices and the value.
- * This data structure allows also multidimensional arrays of dimension 0. In
- * this case, mArray is null, mIndex is empty and mValue coincides with
- * mStoreTerm.
+
  * @author Matthias Heizmann
  */
 public class MultiDimensionalStore implements ITermProvider {
 	private final Term mArray;
 	private final ArrayIndex mIndex;
 	private final Term mValue;
-	private final ApplicationTerm mStoreTerm;
 
-
-	public MultiDimensionalStore(final Term array, final ArrayIndex index, final Term value, final Script script) {
+	public MultiDimensionalStore(final Term array, final ArrayIndex index, final Term value) {
 		super();
-		mArray = array;
-		mIndex = index;
-		mValue = value;
-		mStoreTerm = (ApplicationTerm) SmtUtils.multiDimensionalStore(script, array, index, value);
-	}
-
-	public MultiDimensionalStore(final Term array, final ArrayIndex index, final Term value, final Term asTerm) {
-		super();
-		mArray = array;
-		mIndex = index;
-		mValue = value;
-		mStoreTerm = (ApplicationTerm) asTerm;
-	}
-
-	public MultiDimensionalStore(final Term term) {
-		mStoreTerm = (ApplicationTerm) term;
-		final ArrayList<Term> index = new ArrayList<Term>();
-		Term remainder = term;
-		if (isStore(term)) {
-			mArray = ((ApplicationTerm) term).getParameters()[0];
-			index.add(((ApplicationTerm) term).getParameters()[1]);
-			remainder = ((ApplicationTerm) term).getParameters()[2];
-			while (isStore(remainder) && isCompatibleSelect(((ApplicationTerm) remainder).getParameters()[0], mArray, index)) {
-				index.add(((ApplicationTerm) remainder).getParameters()[1]);
-				remainder = ((ApplicationTerm) remainder).getParameters()[2];
-
-			}
-		} else {
-			mArray = null;
+		if (index.isEmpty()) {
+			throw new AssertionError("Zero dimensions are not supported");
 		}
-		mIndex = new ArrayIndex(index);
-		mValue = remainder;
-		assert classInvariant();
+		assert MultiDimensionalSort.areDimensionsConsistent(array, index, value);
+		mArray = array;
+		mIndex = index;
+		mValue = value;
 	}
 
 	private static boolean isStore(final Term term) {
@@ -108,16 +77,6 @@ public class MultiDimensionalStore implements ITermProvider {
 			return ((ApplicationTerm) term).getFunction().getName().equals("store");
 		} else {
 			return false;
-		}
-	}
-
-	private boolean classInvariant() {
-		if (mArray == null) {
-			return mIndex.size() == 0 && mStoreTerm == mValue;
-		} else {
-			return mArray.getSort() == mStoreTerm.getSort() &&
-					MultiDimensionalSort.
-					areDimensionsConsistent(mArray, mIndex, mValue);
 		}
 	}
 
@@ -146,10 +105,6 @@ public class MultiDimensionalStore implements ITermProvider {
 		return mValue;
 	}
 
-	public ApplicationTerm getStoreTerm() {
-		return mStoreTerm;
-	}
-
 	public int getDimension() {
 		return getIndex().size();
 	}
@@ -159,38 +114,11 @@ public class MultiDimensionalStore implements ITermProvider {
 		return SmtUtils.multiDimensionalStore(script, getArray(), getIndex(), getValue());
 	}
 
-
-	/**
-	 * Extract from this {@link MultiDimensionalStore} the
-	 * {@link MultiDimensionalStore} on the innermost dim dimensions That is the
-	 * {@link MultiDimensionalStore}
-	 * <ul>
-	 * <li>whose array has a dimension that is dim dimensions lower than the
-	 * dimension of this array,
-	 * <li>whose index consists only of the first dim entries of this arrays' index,
-	 * and
-	 * <li>whose (written) value is the same as the (written) value of this array.
-	 * </ul>
-	 */
-	public MultiDimensionalStore getInnermost(final int dim) {
-		if (dim < 1) {
-			throw new IllegalArgumentException("result must have at least dimension one");
-		}
-		if (dim > getDimension()) {
-			throw new IllegalArgumentException("cannot extract more dimensions than this array has");
-		}
-		ArrayStore as = ArrayStore.of(mStoreTerm);
-		for (int i = 0; i < getDimension() - dim; i++) {
-			as = ArrayStore.of(as.getValue());
-		}
-		return MultiDimensionalStore.convert(as.getTerm());
+	public static MultiDimensionalStore of(final Term term) {
+		return of(term, Integer.MAX_VALUE);
 	}
 
-	public static MultiDimensionalStore convert(final Term term) {
-		return convert(term, Integer.MAX_VALUE);
-	}
-
-	public static MultiDimensionalStore convert(final Term term, final int maxDimension) {
+	private static MultiDimensionalStore of(final Term term, final int maxDimension) {
 		final ArrayList<Term> index = new ArrayList<Term>();
 		Term remainder = term;
 		final Term array;
@@ -208,28 +136,66 @@ public class MultiDimensionalStore implements ITermProvider {
 		} else {
 			return null;
 		}
-		return new MultiDimensionalStore(array, new ArrayIndex(index), remainder, term);
+		return new MultiDimensionalStore(array, new ArrayIndex(index), remainder);
+	}
+
+	public MultiDimensionalStore getOutermost(final Script script, final int k) {
+		if (k <= 0) {
+			throw new AssertionError("Must extract at least one dimension");
+		}
+		if (k >= getDimension()) {
+			throw new AssertionError("Must not extract all dimensions");
+		}
+		final ArrayIndex lowerIndex = mIndex.getFirst(k);
+		final ArrayIndex higherIndex = mIndex.getLast(mIndex.size() - k);
+		final MultiDimensionalSelect selectInner = new MultiDimensionalSelect(mArray, lowerIndex);
+		final MultiDimensionalStore updateInner = new MultiDimensionalStore(selectInner.toTerm(script), higherIndex,
+				mValue);
+		return new MultiDimensionalStore(mArray, lowerIndex, updateInner.toTerm(script));
 	}
 
 	@Override
 	public String toString() {
-		return mStoreTerm.toString();
-	}
-
-	@Override
-	public boolean equals(final Object obj) {
-		if (obj instanceof MultiDimensionalStore) {
-			return mStoreTerm.equals(((MultiDimensionalStore) obj).getStoreTerm());
-		} else {
-			return false;
-		}
+		// not SMT-LIB syntax, but easier to read
+		return String.format("(store %s %s %s)", mArray, mIndex, mValue);
 	}
 
 	@Override
 	public int hashCode() {
-		return mStoreTerm.hashCode();
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((mArray == null) ? 0 : mArray.hashCode());
+		result = prime * result + ((mIndex == null) ? 0 : mIndex.hashCode());
+		result = prime * result + ((mValue == null) ? 0 : mValue.hashCode());
+		return result;
 	}
 
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		final MultiDimensionalStore other = (MultiDimensionalStore) obj;
+		if (mArray == null) {
+			if (other.mArray != null)
+				return false;
+		} else if (!mArray.equals(other.mArray))
+			return false;
+		if (mIndex == null) {
+			if (other.mIndex != null)
+				return false;
+		} else if (!mIndex.equals(other.mIndex))
+			return false;
+		if (mValue == null) {
+			if (other.mValue != null)
+				return false;
+		} else if (!mValue.equals(other.mValue))
+			return false;
+		return true;
+	}
 
 	/**
 	 * Return all MultiDimensionalStore objects for all multidimensional
@@ -242,10 +208,9 @@ public class MultiDimensionalStore implements ITermProvider {
 	 */
 	public static List<MultiDimensionalStore> extractArrayStoresShallow(final Term term) {
 		final List<MultiDimensionalStore> arrayStoreDefs = new ArrayList<MultiDimensionalStore>();
-		final Set<ApplicationTerm> storeTerms =
-				(new ApplicationTermFinder("store", true)).findMatchingSubterms(term);
+		final Set<ApplicationTerm> storeTerms = SmtUtils.extractApplicationTerms("store", term, true);
 		for (final Term storeTerm : storeTerms) {
-			final MultiDimensionalStore mdStore = MultiDimensionalStore.convert(storeTerm);
+			final MultiDimensionalStore mdStore = MultiDimensionalStore.of(storeTerm);
 			if (mdStore.getIndex().size() == 0) {
 				throw new AssertionError("store must not have dimension 0");
 			}

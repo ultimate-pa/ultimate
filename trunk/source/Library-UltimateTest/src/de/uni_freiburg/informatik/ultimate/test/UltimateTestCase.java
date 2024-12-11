@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.test;
 
 import java.util.List;
-import java.util.function.Function;
 
 import org.eclipse.core.runtime.IStatus;
 
@@ -38,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider.TestResult;
 import de.uni_freiburg.informatik.ultimate.test.junitextension.testfactory.FactoryTestMethod;
+import de.uni_freiburg.informatik.ultimate.test.junitextension.testfactory.FactoryTestRunner.SkipTestException;
 import de.uni_freiburg.informatik.ultimate.test.mocks.ConsoleLogger;
 import de.uni_freiburg.informatik.ultimate.test.reporting.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimate.test.reporting.ITestLogfile;
@@ -66,15 +66,11 @@ public final class UltimateTestCase implements Comparable<UltimateTestCase> {
 	private ITestResultDecider mDecider;
 	private AfterTest mFunAfterTest;
 
-	private final Function<IUltimateServiceProvider, IUltimateServiceProvider> mServicesCallback;
-
 	public UltimateTestCase(final ITestResultDecider decider, final UltimateRunDefinition urd,
-			final List<ITestLogfile> logs,
-			final Function<IUltimateServiceProvider, IUltimateServiceProvider> servicesCallback) {
+			final List<ITestLogfile> logs) {
 		if (urd == null) {
 			throw new IllegalArgumentException("ultimateRunDefinition");
 		}
-		mServicesCallback = servicesCallback;
 
 		mDecider = decider;
 		mLogs = logs;
@@ -114,7 +110,7 @@ public final class UltimateTestCase implements Comparable<UltimateTestCase> {
 		Throwable th = null;
 		TestResult result = TestResult.FAIL;
 		boolean livecycleFailure = false;
-		final UltimateStarter starter = new UltimateStarter(mUltimateRunDefinition, mServicesCallback);
+		final UltimateStarter starter = new UltimateStarter(mUltimateRunDefinition);
 
 		try {
 			updateLogsPre();
@@ -124,7 +120,7 @@ public final class UltimateTestCase implements Comparable<UltimateTestCase> {
 			final ILogger logger = getLoggerFromStarter(starter);
 			logger.info("Deciding this test: " + deciderName);
 			result = mDecider.getTestResult(starter.getServices());
-			if (!returnCode.isOK() && result != TestResult.FAIL) {
+			if (!returnCode.isOK() && result != TestResult.FAIL && result != TestResult.IGNORE) {
 				logger.fatal("#################### Overwriting decision of " + deciderName
 						+ " and setting test status to FAIL ####################");
 				logger.fatal("Ultimate returned an unexpected status:");
@@ -183,7 +179,12 @@ public final class UltimateTestCase implements Comparable<UltimateTestCase> {
 				}
 				if (th != null) {
 					message += " (Ultimate threw an Exception: " + th.getMessage() + ")";
+					if (result == TestResult.IGNORE) {
+						skipTest(message, th);
+					}
 					failTest(message, th);
+				} else if (result == TestResult.IGNORE) {
+					skipTest(message);
 				} else {
 					failTest(message);
 				}
@@ -264,6 +265,14 @@ public final class UltimateTestCase implements Comparable<UltimateTestCase> {
 				"UltimateTestCase.java", -1);
 		exception.setStackTrace(new StackTraceElement[] { elem });
 		throw exception;
+	}
+
+	private static void skipTest(final String message) {
+		throw new SkipTestException(message);
+	}
+
+	private static void skipTest(final String message, final Throwable cause) {
+		throw new SkipTestException(message, cause);
 	}
 
 	@Override

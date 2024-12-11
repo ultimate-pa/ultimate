@@ -28,11 +28,12 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.referee;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.referee.preferences.RefereePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InvariantChecker;
 
 public class RefereeStarter {
@@ -49,10 +50,12 @@ public class RefereeStarter {
 	public RefereeStarter(final IUltimateServiceProvider services, final IIcfg<IcfgLocation> rcfgRootNode) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		final InvariantChecker ic = new InvariantChecker(mServices, rcfgRootNode);
+		final IPreferenceProvider prefs = services.getPreferenceProvider(Activator.PLUGIN_ID);
+		final boolean allowLoopsWithoutAnnotation = prefs
+				.getBoolean(RefereePreferenceInitializer.LABEL_ALLOW_LOOPS_WITHOUT_ANNOTATION);
+		final InvariantChecker ic = new InvariantChecker(mServices, rcfgRootNode, allowLoopsWithoutAnnotation);
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, ic.getResultForUltimateUser());
 		mLogger.info(ic.getResultForUltimateUser().getShortDescription());
-
 	}
 
 	/**

@@ -54,7 +54,6 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstract
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.PetriLbeInitialAbstractionProvider;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.petrinetlbe.IcfgCompositionFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.Activator;
 
 /**
  * Performs Lipton reduction on a concurrent program, and returns a new ICFG for the reduced program.
@@ -166,9 +165,9 @@ public class IcfgLiptonReducer {
 				new PredicateFactory(services, csToolkit.getManagedScript(), csToolkit.getSymbolTable());
 		final PetriInitialAbstractionProvider<IcfgEdge> petriNetProvider =
 				new PetriInitialAbstractionProvider<>(services, predicateFactory, true);
-		final PetriLbeInitialAbstractionProvider<IcfgEdge> lbeProvider = new PetriLbeInitialAbstractionProvider<>(
-				petriNetProvider, services, IcfgEdge.class, new IndependenceSettings(),
-				new IcfgCompositionFactory(services, csToolkit), Activator.PLUGIN_ID);
+		final PetriLbeInitialAbstractionProvider<IcfgEdge> lbeProvider =
+				new PetriLbeInitialAbstractionProvider<>(services, petriNetProvider, IcfgEdge.class,
+						new IndependenceSettings(), new IcfgCompositionFactory(services, csToolkit));
 		final Set<IcfgLocation> inUseLocs =
 				new HashSet<>(icfg.getCfgSmtToolkit().getConcurrencyInformation().getInUseErrorNodeMap().values());
 		final Set<IcfgLocation> errors = icfg.getProcedureErrorNodes().values().stream().flatMap(Collection::stream)

@@ -59,6 +59,7 @@ public class DataRaceFoundResult<ELEM extends IElement, TE extends IElement, E> 
 		implements IResultWithFiniteTrace<TE, E> {
 
 	private final IProgramExecution<TE, E> mProgramExecution;
+	private final String mProgramExecutionAsString;
 	private final List<ILocation> mFailurePath;
 
 	private final DataRaceAnnotation mRaceAnnotation;
@@ -79,7 +80,7 @@ public class DataRaceFoundResult<ELEM extends IElement, TE extends IElement, E> 
 	 */
 	public DataRaceFoundResult(final ELEM position, final String plugin,
 			final IBacktranslationService translatorSequence, final IProgramExecution<TE, E> execution) {
-		super(position, plugin, translatorSequence);
+		super(position, plugin);
 
 		mRaceAnnotation = DataRaceAnnotation.getAnnotation(position);
 		assert mRaceAnnotation != null;
@@ -91,6 +92,8 @@ public class DataRaceFoundResult<ELEM extends IElement, TE extends IElement, E> 
 		// TODO cleanup execution: reorder independent parts so that racing accesses next to each other (possible?)
 		// TODO cleanup execution: stop before race begins
 		mProgramExecution = execution;
+
+		mProgramExecutionAsString = translatorSequence.translateProgramExecution(mProgramExecution).toString();
 		mFailurePath = ResultUtil.getLocationSequence(execution);
 	}
 
@@ -133,7 +136,7 @@ public class DataRaceFoundResult<ELEM extends IElement, TE extends IElement, E> 
 		sb.append(CoreUtil.getPlatformLineSeparator());
 		sb.append("The following path leads to a data race: ");
 		sb.append(CoreUtil.getPlatformLineSeparator());
-		sb.append(mTranslatorSequence.translateProgramExecution(mProgramExecution).toString());
+		sb.append(mProgramExecutionAsString);
 		sb.append(CoreUtil.getPlatformLineSeparator());
 
 		if (mPossibleConflicts.size() == 1) {

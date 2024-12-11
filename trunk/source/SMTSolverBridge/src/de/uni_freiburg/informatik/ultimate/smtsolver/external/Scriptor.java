@@ -218,7 +218,8 @@ public class Scriptor extends NoopScript {
 
 	@Override
 	public Term simplify(final Term term) throws SMTLIBException {
-		throw new UnsupportedOperationException();
+		mExecutor.input("(simplify " + term + ")");
+		return mExecutor.parseTerm();
 	}
 
 	@Override

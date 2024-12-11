@@ -26,6 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.arrays;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -46,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationC
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtLibUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtTestGenerationUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.ExtendedSimplificationResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
@@ -157,6 +162,8 @@ public class Elim1Store {
 	private static final boolean DEBUG_CRASH_ON_LARGE_SIMPLIFICATION_POTENTIAL = false;
 
 	private static final boolean SELECT_OVER_STORE_PREPROCESSING = true;
+
+	private static final boolean DEBUG_DUMP_TEST_FOR_BUG = false;
 
 
 	public Elim1Store(final ManagedScript mgdScript, final IUltimateServiceProvider services,
@@ -294,8 +301,28 @@ public class Elim1Store {
 		final Term intermediateTerm = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier,
 				indexAuxVarDefinitionsTerm,  input.getTerm(), hiddenWeakArrayEqualities);
 		final Term transformedTerm = Substitution.apply(mMgdScript, substitutionMapping, intermediateTerm);
-		assert !Arrays.asList(transformedTerm.getFreeVars()).contains(eliminatee) : "var is still there: "
-		+ eliminatee;
+		if (Arrays.asList(transformedTerm.getFreeVars()).contains(eliminatee)) {
+			final String errorMessage = "var is still there: " + eliminatee;
+			if (DEBUG_DUMP_TEST_FOR_BUG) {
+				final Term quantifiedFormula = input.toTerm(mScript);
+				final String name = String.format("ArrayQuantifierEliminationBug_%s_Size%s",
+						Integer.toHexString(quantifiedFormula.hashCode()), new DAGSize().treesize(quantifiedFormula));
+				final String testString = SmtTestGenerationUtils.generateQuantifierEliminationTest(name,
+						quantifiedFormula);
+				try (FileWriter fw = new FileWriter(name + ".txt");
+						BufferedWriter bw = new BufferedWriter(fw);
+						PrintWriter out = new PrintWriter(bw)) {
+					out.println(testString);
+					out.println(errorMessage);
+					out.close();
+					bw.close();
+					fw.close();
+				} catch (final IOException e) {
+					throw new AssertionError(e);
+				}
+			}
+			throw new AssertionError(errorMessage);
+		}
 
 		final Term singleCaseTerm = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier, singleCaseJuncts);
 //		final Term storedValueInformation = constructStoredValueInformation(quantifier, eliminatee, newArrayMapping,

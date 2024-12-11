@@ -18,6 +18,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol.model;
 
+import java.util.ArrayList;
+
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -32,21 +34,22 @@ import de.uni_freiburg.informatik.ultimate.logic.Theory;
  * @author Juergen Christ
  */
 public class FiniteSortInterpretation implements SortInterpretation {
+	private final Model mModel;
+	private final ArrayList<Term> mValues;
 
-	private int mSize = 0;
+	public FiniteSortInterpretation(Model model) {
+		mModel = model;
+		mValues = new ArrayList<>();
+	}
 
 	@Override
 	public Term toSMTLIB(final Theory t, final Sort sort) {
 		final TermVariable var = t.createTermVariable("@v", sort);
-		final Term[] disj = new Term[mSize];
-		for (int i = 0; i < mSize; ++i) {
-			disj[i] = t.equals(var, genModelTerm(i, t, sort));
+		final Term[] disj = new Term[mValues.size()];
+		for (int i = 0; i < mValues.size(); i++) {
+			disj[i] = t.equals(var, mValues.get(i));
 		}
 		return t.forall(new TermVariable[] {var}, t.or(disj));
-	}
-
-	private Term genModelTerm(final int idx, final Theory t, final Sort s) {
-		return t.term(t.getFunctionWithResult("@" + idx, null, s));
 	}
 
 	@Override
@@ -57,15 +60,17 @@ public class FiniteSortInterpretation implements SortInterpretation {
 	@Override
 	public Term extendFresh(final Sort sort) {
 		final Theory theory = sort.getTheory();
-		final int idx = mSize++;
-		return theory.term(theory.getFunctionWithResult("@" + idx, null, sort));
+		final int idx = mModel.getFreshModelValue();
+		final Term value = theory.term(theory.getFunctionWithResult("@" + idx, null, sort));
+		mValues.add(value);
+		return value;
 	}
 
 	@Override
 	public Term getModelValue(final int idx, final Sort sort) {
-		assert idx >= 0;
-		final Theory theory = sort.getTheory();
-		mSize = Math.max(mSize, idx);
-		return theory.term(theory.getFunctionWithResult("@" + idx, null, sort));
+		while (idx >= mValues.size()) {
+			extendFresh(sort);
+		}
+		return mValues.get(idx);
 	}
 }

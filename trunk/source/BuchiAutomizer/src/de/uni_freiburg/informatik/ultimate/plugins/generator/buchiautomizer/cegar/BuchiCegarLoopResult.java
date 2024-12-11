@@ -27,8 +27,6 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.cegar;
 
-import java.util.Map;
-
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -36,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTermina
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiAutomizerModuleDecompositionBenchmark;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.TermcompProofBenchmark;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  *
@@ -62,14 +61,14 @@ public final class BuchiCegarLoopResult<L extends IIcfgTransition<?>> {
 	private final Result mResult;
 	private final NestedWord<L> mStem;
 	private final NestedWord<L> mLoop;
-	private final Map<String, ILocation> mOverapproximations;
+	private final HashRelation<String, ILocation> mOverapproximations;
 	private final ToolchainCanceledException mToolchainCancelledException;
 	private final NonTerminationArgument mNonTerminationArgument;
 	private final BuchiAutomizerModuleDecompositionBenchmark mMDBenchmark;
 	private final TermcompProofBenchmark mTermcompProofBenchmark;
 
 	private BuchiCegarLoopResult(final Result result, final NestedWord<L> stem, final NestedWord<L> loop,
-			final Map<String, ILocation> overapproximations,
+			final HashRelation<String, ILocation> overapproximations,
 			final ToolchainCanceledException toolchainCancelledException,
 			final NonTerminationArgument nonTerminationArgument,
 			final BuchiAutomizerModuleDecompositionBenchmark mDBenchmark,
@@ -100,7 +99,7 @@ public final class BuchiCegarLoopResult<L extends IIcfgTransition<?>> {
 	}
 
 	public static <L extends IIcfgTransition<?>> BuchiCegarLoopResult<L> constructUnknownResult(
-			final NestedWord<L> stem, final NestedWord<L> loop, final Map<String, ILocation> overapproximations,
+			final NestedWord<L> stem, final NestedWord<L> loop, final HashRelation<String, ILocation> overapproximations,
 			final BuchiAutomizerModuleDecompositionBenchmark mDBenchmark,
 			final TermcompProofBenchmark termcompProofBenchmark) {
 		return new BuchiCegarLoopResult<>(Result.UNKNOWN, stem, loop, overapproximations, null, null, mDBenchmark,
@@ -137,7 +136,7 @@ public final class BuchiCegarLoopResult<L extends IIcfgTransition<?>> {
 		return mLoop;
 	}
 
-	public Map<String, ILocation> getOverapproximations() {
+	public HashRelation<String, ILocation> getOverapproximations() {
 		if (mResult != Result.NONTERMINATING && mResult != Result.UNKNOWN) {
 			throw new UnsupportedOperationException("Result " + mResult + " does not provide overapproximations.");
 		}

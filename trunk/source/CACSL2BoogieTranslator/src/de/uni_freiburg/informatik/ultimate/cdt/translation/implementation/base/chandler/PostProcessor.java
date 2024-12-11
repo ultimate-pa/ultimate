@@ -34,8 +34,6 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 
@@ -146,7 +144,7 @@ public class PostProcessor {
 
 	private final FunctionHandler mFunctionhandler;
 
-	private final Map<String, Integer> mFunctionToIndex;
+	private final Set<String> mFunctions;
 
 	/**
 	 * Constructor.
@@ -157,7 +155,7 @@ public class PostProcessor {
 	 * @param reporter
 	 * @param checkedMethod
 	 * @param auxVarInfoBuilder
-	 * @param functionToIndex
+	 * @param functions
 	 * @param typeSizes
 	 * @param symbolTable
 	 * @param staticObjectsHandler
@@ -170,17 +168,17 @@ public class PostProcessor {
 	 */
 	public PostProcessor(final ILogger logger, final ExpressionTranslation expressionTranslation,
 			final ITypeHandler typeHandler, final CTranslationResultReporter reporter,
-			final AuxVarInfoBuilder auxVarInfoBuilder, final Map<String, Integer> functionToIndex,
-			final TypeSizes typeSizes, final FlatSymbolTable symbolTable,
-			final StaticObjectsHandler staticObjectsHandler, final TranslationSettings settings,
-			final ProcedureManager procedureManager, final MemoryHandler memoryHandler,
-			final InitializationHandler initHandler, final FunctionHandler functionhandler, final CHandler chandler) {
+			final AuxVarInfoBuilder auxVarInfoBuilder, final Set<String> functions, final TypeSizes typeSizes,
+			final FlatSymbolTable symbolTable, final StaticObjectsHandler staticObjectsHandler,
+			final TranslationSettings settings, final ProcedureManager procedureManager,
+			final MemoryHandler memoryHandler, final InitializationHandler initHandler,
+			final FunctionHandler functionhandler, final CHandler chandler) {
 		mLogger = logger;
 		mExpressionTranslation = expressionTranslation;
 		mReporter = reporter;
 		mTypeHandler = typeHandler;
 		mAuxVarInfoBuilder = auxVarInfoBuilder;
-		mFunctionToIndex = functionToIndex;
+		mFunctions = functions;
 		mTypeSize = typeSizes;
 		mSymboltable = symbolTable;
 		mStaticObjectsHandler = staticObjectsHandler;
@@ -195,9 +193,12 @@ public class PostProcessor {
 	/**
 	 * Start method for the post processing.
 	 *
+	 * @param additionalInitializations
+	 *
 	 * @return a declaration list holding the init() and start() procedure.
 	 */
-	public ArrayList<Declaration> postProcess(final ILocation loc, final IASTNode hook) {
+	public ArrayList<Declaration> postProcess(final ILocation loc, final IASTNode hook,
+			final List<Statement> additionalInitializations) {
 		final ArrayList<Declaration> decl = new ArrayList<>();
 
 		final Set<String> undefinedTypes = mTypeHandler.getUndefinedTypes();
@@ -208,7 +209,8 @@ public class PostProcessor {
 		if (!checkedMethod.equals(SFO.EMPTY) && mProcedureManager.hasProcedure(checkedMethod)) {
 			mLogger.info("Analyzing one entry point: " + checkedMethod);
 
-			final UltimateInitProcedure initProcedure = createUltimateInitProcedure(loc, hook);
+			final UltimateInitProcedure initProcedure =
+					createUltimateInitProcedure(loc, hook, additionalInitializations);
 			decl.add(initProcedure.getUltimateInitImplementation());
 
 			final UltimateStartProcedure startProcedure = createUltimateStartProcedure(loc, hook);
@@ -612,10 +614,10 @@ public class PostProcessor {
 
 		// collect all functions that are addressoffed in the program and that match the signature
 		final ArrayList<String> fittingFunctions = new ArrayList<>();
-		for (final Entry<String, Integer> en : mFunctionToIndex.entrySet()) {
-			final CFunction ptdToFuncType = mProcedureManager.getCFunctionType(en.getKey());
+		for (final String function : mFunctions) {
+			final CFunction ptdToFuncType = mProcedureManager.getCFunctionType(function);
 			if (new ProcedureSignature(mTypeHandler, ptdToFuncType).equals(funcSignature)) {
-				fittingFunctions.add(en.getKey());
+				fittingFunctions.add(function);
 			}
 		}
 
@@ -663,12 +665,12 @@ public class PostProcessor {
 			if (!resultTypeIsVoid) {
 				auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, funcSignature.getReturnType(),
 						SFO.AUXVAR.FUNCPTRRES);
-				builder.addDeclaration(auxvar.getVarDec());
-				builder.addAuxVar(auxvar);
+				builder.addAuxVarWithDeclaration(auxvar);
 				funcCallResult = auxvar.getExp();
 			}
 
-			final ExpressionResult firstElseRex = mFunctionhandler.createFunctionCall(loc, fittingFunctions.get(0), args);
+			final ExpressionResult firstElseRex =
+					mFunctionhandler.createFunctionCall(loc, fittingFunctions.get(0), args);
 			for (final Declaration dec : firstElseRex.getDeclarations()) {
 				builder.addDeclaration(dec);
 			}
@@ -740,7 +742,8 @@ public class PostProcessor {
 		}
 	}
 
-	private UltimateInitProcedure createUltimateInitProcedure(final ILocation translationUnitLoc, final IASTNode hook) {
+	private UltimateInitProcedure createUltimateInitProcedure(final ILocation translationUnitLoc, final IASTNode hook,
+			final List<Statement> additionalInitializations) {
 		final Procedure initProcedureDecl = new Procedure(translationUnitLoc, new Attribute[0], SFO.INIT, new String[0],
 				new VarList[0], new VarList[0], new Specification[0], null);
 		mProcedureManager.beginCustomProcedure(mCHandler, translationUnitLoc, SFO.INIT, initProcedureDecl);
@@ -780,22 +783,23 @@ public class PostProcessor {
 							DeclarationInformation.DECLARATIONINFO_GLOBAL);
 
 					if (mCHandler.isHeapVar(id)) {
-						final CallStatement ultimateAllocCall;
 						if (MemoryHandler.FIXED_ADDRESSES_FOR_INITIALIZATION) {
 							final Pair<RValue, CallStatement> pair = mMemoryHandler
 									.getUltimateMemAllocInitCall(currentDeclsLoc, en.getValue().getType());
 							final RValue addressRValue = pair.getFirst();
-							ultimateAllocCall = pair.getSecond();
+							final CallStatement ultimateAllocCall = pair.getSecond();
+							staticObjectInitStatements.add(ultimateAllocCall);
 							final AssignmentStatement pointerAssignment = new AssignmentStatement(currentDeclsLoc,
 									new LeftHandSide[] { lhs }, new Expression[] { addressRValue.getValue() });
 							staticObjectInitStatements.add(pointerAssignment);
 						} else {
 							final LocalLValue llVal = new LocalLValue(lhs, en.getValue().getType(), null);
-							ultimateAllocCall =
+							final CallStatement ultimateAllocCall =
 									mMemoryHandler.getUltimateMemAllocCall(llVal, currentDeclsLoc, MemoryArea.STACK);
 							proceduresCalledByUltimateInit.add(MemoryModelDeclarations.ULTIMATE_ALLOC_STACK.name());
+							staticObjectInitStatements.add(ultimateAllocCall);
 						}
-						staticObjectInitStatements.add(ultimateAllocCall);
+
 					}
 
 					final ExpressionResult initRex =
@@ -842,21 +846,6 @@ public class PostProcessor {
 				initStatements.add(0, assignment);
 			}
 			{
-				// set the value of the NULL-constant to NULL = { base : 0,
-				// offset : 0 }
-				final VariableLHS slhs = ExpressionFactory.constructVariableLHS(translationUnitLoc,
-						mTypeHandler.getBoogiePointerType(), SFO.NULL, DeclarationInformation.DECLARATIONINFO_GLOBAL);
-				initStatements.add(0,
-						StatementFactory.constructAssignmentStatement(translationUnitLoc, new LeftHandSide[] { slhs },
-								new Expression[] { ExpressionFactory.constructStructConstructor(translationUnitLoc,
-										new String[] { "base", "offset" },
-										new Expression[] { mTypeSize.constructLiteralForIntegerType(translationUnitLoc,
-												mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO),
-												mTypeSize.constructLiteralForIntegerType(translationUnitLoc,
-														mExpressionTranslation.getCTypeOfPointerComponents(),
-														BigInteger.ZERO) }) }));
-			}
-			{
 				// Add assume(0 < #StackHeapBarrier) to ensure that the null
 				// pointer is on the heap.
 				final Expression zero = mTypeSize.constructLiteralForIntegerType(translationUnitLoc,
@@ -898,6 +887,7 @@ public class PostProcessor {
 		final List<Statement> sohInitStatements = mStaticObjectsHandler.getStatementsForUltimateInit();
 		initStatements.addAll(sohInitStatements);
 		initStatements.addAll(staticObjectInitStatements);
+		initStatements.addAll(additionalInitializations);
 
 		/*
 		 * note that we only have to deal with the implementation part of the procedure, the declaration is managed by

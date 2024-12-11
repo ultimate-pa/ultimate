@@ -1,0 +1,18 @@
+[L4]               y := 1;
+       VAL         [y=1]
+[L5]               x := 2;
+       VAL         [x=2, y=1]
+[L7]               free invariant x > 0;
+       VAL         [x=2, y=1]
+[L6]   COND TRUE   y > 0
+       VAL         [x=2, y=1]
+[L9]               y := y - 1;
+       VAL         [x=2, y=0]
+[L10]              x := x - 1;
+       VAL         [x=1, y=0]
+[L7]               free invariant x > 0;
+       VAL         [x=1, y=0]
+[L6]   COND FALSE  !(y > 0)
+       VAL         [x=1]
+[L12]              assert false;
+       VAL         [x=1]

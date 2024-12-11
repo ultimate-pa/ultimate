@@ -60,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.Reason;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.TraceCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
@@ -153,24 +154,24 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 	 * the context to which the return leads the trace.
 	 */
 	public TraceCheck(final IPredicate precondition, final IPredicate postcondition,
-			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<L> trace,
+			final SortedMap<Integer, IPredicate> pendingContexts, final Counterexample<L> counterexample,
 			final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
 			final AssertCodeBlockOrder assertCodeBlockOrder, final boolean computeRcfgProgramExecution,
 			final boolean collectInterpolatSequenceStatistics) {
-		this(precondition, postcondition, pendingContexts, trace,
-				new DefaultTransFormulas<>(trace, precondition, postcondition, pendingContexts,
+		this(precondition, postcondition, pendingContexts,
+				new DefaultTransFormulas<>(counterexample, precondition, postcondition, pendingContexts,
 						csToolkit.getOldVarsAssignmentCache(), false),
 				services, csToolkit, assertCodeBlockOrder, computeRcfgProgramExecution,
 				collectInterpolatSequenceStatistics, true);
 	}
 
 	protected TraceCheck(final IPredicate precondition, final IPredicate postcondition,
-			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<L> trace,
+			final SortedMap<Integer, IPredicate> pendingContexts,
 			final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> rv, final IUltimateServiceProvider services,
 			final CfgSmtToolkit csToolkit, final AssertCodeBlockOrder assertCodeBlockOrder,
 			final boolean computeRcfgProgramExecution, final boolean collectInterpolatSequenceStatistics,
 			final boolean unlockSmtSolverAlsoIfUnsat) {
-		this(precondition, postcondition, pendingContexts, trace, rv, services, csToolkit, csToolkit.getManagedScript(),
+		this(precondition, postcondition, pendingContexts, rv, services, csToolkit, csToolkit.getManagedScript(),
 				assertCodeBlockOrder, computeRcfgProgramExecution, collectInterpolatSequenceStatistics,
 				unlockSmtSolverAlsoIfUnsat);
 	}
@@ -181,7 +182,7 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 	 * @param services
 	 */
 	protected TraceCheck(final IPredicate precondition, final IPredicate postcondition,
-			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<L> trace,
+			final SortedMap<Integer, IPredicate> pendingContexts,
 			final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> rv, final IUltimateServiceProvider services,
 			final CfgSmtToolkit csToolkit, final ManagedScript managedScriptTc,
 			final AssertCodeBlockOrder assertCodeBlockOrder, final boolean computeRcfgProgramExecution,
@@ -192,11 +193,11 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 		mTcSmtManager = managedScriptTc;
 		mCsToolkit = csToolkit;
 		mBoogie2SmtSymbolTable = csToolkit.getSymbolTable();
-		if (trace.length() == 0) {
+		mTrace = rv.getTrace();
+		if (mTrace.length() == 0) {
 			throw new IllegalArgumentException(
 					"Only non-empty traces supported. For empty traces we are unable to determine the procedure in which precondition and postcondition are evaluated (needed to check whether a global var and the corresponding oldvar are equivalent)");
 		}
-		mTrace = trace;
 		mPrecondition = precondition;
 		mPostcondition = postcondition;
 		if (pendingContexts == null) {
@@ -272,7 +273,7 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 		final boolean computeRcfgProgramExecution = true;
 		final boolean collectInterpolatSequenceStatistics = false;
 		final boolean unlockSmtSolverAlsoIfUnsat = true;
-		return new TraceCheck<>(pre, post, pendingContexts, nw, rv, services, toolkit, mgdScriptTc, acbo,
+		return new TraceCheck<>(pre, post, pendingContexts, rv, services, toolkit, mgdScriptTc, acbo,
 				computeRcfgProgramExecution, collectInterpolatSequenceStatistics, unlockSmtSolverAlsoIfUnsat);
 	}
 
@@ -297,7 +298,7 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 	protected FeasibilityCheckResult checkTrace() {
 		lockAndPrepareSolverForTraceCheck();
 		mTraceCheckBenchmarkGenerator.start(TraceCheckStatisticsDefinitions.SsaConstructionTime.toString());
-		mNsb = new NestedSsaBuilder<>(mTrace, mTcSmtManager, mCsToolkit, mNestedFormulas, mLogger);
+		mNsb = new NestedSsaBuilder<>(mTcSmtManager, mCsToolkit, mNestedFormulas, mLogger);
 		final NestedFormulas<L, Term, Term> ssa = mNsb.getSsa();
 		mTraceCheckBenchmarkGenerator.stop(TraceCheckStatisticsDefinitions.SsaConstructionTime.toString());
 
@@ -355,12 +356,12 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 			managedScriptTc.echo(mTraceCheckLock, new QuotedObject(msg));
 			mLogger.info(msg);
 			cleanupAndUnlockSolver();
-			final DefaultTransFormulas<L> withBE = new DefaultTransFormulas<>(mNestedFormulas.getTrace(),
+			final DefaultTransFormulas<L> withBE = new DefaultTransFormulas<>(mNestedFormulas.getCounterexample(),
 					mNestedFormulas.getPrecondition(), mNestedFormulas.getPostcondition(), mPendingContexts,
 					mCsToolkit.getOldVarsAssignmentCache(), true);
 			final TraceCheck<L> tc = new TraceCheck<>(mNestedFormulas.getPrecondition(),
-					mNestedFormulas.getPostcondition(), mPendingContexts, mNestedFormulas.getTrace(), withBE, mServices,
-					mCsToolkit, mTcSmtManager, AssertCodeBlockOrder.NOT_INCREMENTALLY, true, false, true);
+					mNestedFormulas.getPostcondition(), mPendingContexts, withBE, mServices, mCsToolkit, mTcSmtManager,
+					AssertCodeBlockOrder.NOT_INCREMENTALLY, true, false, true);
 
 			switch (tc.isCorrect()) {
 			case SAT:
@@ -426,7 +427,21 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 				for (final var representative : indexedRepresentatives.entrySet()) {
 					final Integer index = representative.getKey();
 					final Term indexedVar = representative.getValue();
-					final Term valueT = funGetValue.apply(indexedVar);
+					final Term valueT;
+					try {
+						valueT = funGetValue.apply(indexedVar);
+					} catch (final UnsupportedOperationException uoe) {
+						// TODO 2023-10-26 Matthias: This is a workaround that makes sure that we don't
+						// crash while using SMTInterpol on quantified formulas. See {@link
+						// IcfgProgramExecutionBuilder#varValAtPos}. If SMTInterpol
+						// is able to produce values for the sorts `Int` and `Bool` this catch block
+						// should be removed.
+						if (uoe.getMessage().equals("Modelproduction for quantifier theory not implemented.")) {
+							continue;
+						} else {
+							throw uoe;
+						}
+					}
 					rpeb.addValueAtVarAssignmentPosition(bv, index, valueT);
 				}
 			}

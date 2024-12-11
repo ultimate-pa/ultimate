@@ -45,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CExpressionTranslator;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
@@ -173,32 +172,13 @@ public class IntegerTranslation extends ExpressionTranslation {
 			return mBitabsTranslation.abstractXor(loc, left, right, typeLeft, auxVarInfoBuilder);
 		case IASTBinaryExpression.op_shiftLeft:
 		case IASTBinaryExpression.op_shiftLeftAssign:
-			return handleLeftShift(loc, left, typeLeft, right, typeRight, auxVarInfoBuilder);
+			return mBitabsTranslation.abstractLeftShift(loc, left, typeLeft, right, typeRight, auxVarInfoBuilder);
 		case IASTBinaryExpression.op_shiftRight:
 		case IASTBinaryExpression.op_shiftRightAssign:
 			return mBitabsTranslation.abstractRightShift(loc, left, typeLeft, right, typeRight, auxVarInfoBuilder);
 		default:
 			throw new UnsupportedSyntaxException(loc, "Unknown or unsupported bitwise expression");
 		}
-	}
-
-	private ExpressionResult handleLeftShift(final ILocation loc, final Expression left, final CPrimitive typeLeft,
-			final Expression right, final CPrimitive typeRight, final AuxVarInfoBuilder auxVarInfoBuilder) {
-		final ExpressionResult result =
-				mBitabsTranslation.abstractLeftShift(loc, left, typeLeft, right, typeRight, auxVarInfoBuilder);
-		if (!mSettings.checkSignedIntegerBounds() || !typeLeft.isIntegerType() || mTypeSizes.isUnsigned(typeLeft)) {
-			return result;
-		}
-		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
-		// We need to add the trivial overflow check (one of the arguments is negative or rhs is too big for the type)
-		// before the actual result to avoid overapproximations.
-		CExpressionTranslator.addOverflowAssertion(loc,
-				constructOverflowCheckForLeftShift(loc, left, typeLeft, typeRight, right), builder);
-		final Expression expr = result.getLrValue().getValue();
-		builder.addAllIncludingLrValue(result);
-		CExpressionTranslator.addOverflowAssertion(loc, constructBiggerMinIntExpression(loc, typeLeft, expr), builder);
-		CExpressionTranslator.addOverflowAssertion(loc, constructSmallerMaxIntExpression(loc, typeLeft, expr), builder);
-		return builder.build();
 	}
 
 	@Override
@@ -260,6 +240,15 @@ public class IntegerTranslation extends ExpressionTranslation {
 		default:
 			throw new UnsupportedSyntaxException(loc, "Unknown or unsupported arithmetic expression");
 		}
+	}
+
+	@Override
+	public Pair<Expression, ASTType> constructInfinitePrecisionOperation(final ILocation loc, final int operator,
+			final Expression exp1, final Expression exp2, final CPrimitive type) {
+		final var wrappedExprs = applyWraparoundsIfNecessary(loc, exp1, type, exp2, type);
+		return new Pair<>(
+				constructArithmeticExpression(loc, operator, wrappedExprs.getFirst(), wrappedExprs.getSecond()),
+				mTypeHandler.cType2AstType(loc, type));
 	}
 
 	private Pair<Expression, Expression> applyWraparoundsIfNecessary(final ILocation loc, final Expression left,
@@ -395,23 +384,33 @@ public class IntegerTranslation extends ExpressionTranslation {
 				&& !mTypeSizes.isUnsigned(oldType)) {
 			return oldWrappedIfUnsigned;
 		}
-		// According to C11 6.3.1.3.3 the result is implementation-defined
-		// it the value cannot be represented by the new type
-		// We have chosen an implementation that is similar to
-		// taking the lowest bits in a two's complement representation:
-		// First we take the value modulo the cardinality of the
-		// data range (which is 2*(MAX_VALUE+1) for signed )
-		// If the number is strictly larger than MAX_VALUE we
-		// subtract the cardinality of the data range.
+		return convertToSmallerSignedType(loc, resultType, oldWrappedIfUnsigned);
+	}
+
+	private Expression convertToSmallerSignedType(final ILocation loc, final CPrimitive resultType,
+			final Expression expression) {
+		// According to C11 6.3.1.3.3 the result is implementation-defined it the value cannot be represented by the new
+		// type. We have chosen an implementation that is similar to taking the lowest bits in a two's complement
+		// representation:
+		// First we take the value modulo the cardinality of the data range (which is 2*(MAX_VALUE+1) for signed).
+		// If the number is strictly larger than MAX_VALUE, we subtract the cardinality of the data range.
+		// For example for the type int (with 32bits), we convert an expression x to the following:
+		// x % 2**32 < 2**31 ? x % 2**32 : x % 2**32 - 2**32
+		// This ensures that the result is indeed in the range (i.e., between -2**31 and excl. 2**31 for 32bits)
 		final CPrimitive correspondingUnsignedType = mTypeSizes.getCorrespondingUnsignedType(resultType);
-		final Expression wrapped = applyWraparound(loc, correspondingUnsignedType, oldWrappedIfUnsigned);
-		final Expression maxValue = mTypeSizes.constructLiteralForIntegerType(loc, oldType,
-				mTypeSizes.getMaxValueOfPrimitiveType(resultType));
-		final Expression condition = ExpressionFactory.newBinaryExpression(loc, Operator.COMPLEQ, wrapped, maxValue);
-		final Expression range = mTypeSizes.constructLiteralForIntegerType(loc, oldType,
+		final Expression wrapped = applyWraparound(loc, correspondingUnsignedType, expression);
+		final Expression range = constructLiteralForIntegerType(loc, resultType,
 				mTypeSizes.getMaxValueOfPrimitiveType(correspondingUnsignedType).add(BigInteger.ONE));
-		return ExpressionFactory.constructIfThenElseExpression(loc, condition, wrapped,
+		return ExpressionFactory.constructIfThenElseExpression(loc,
+				constructSmallerMaxIntExpression(loc, resultType, wrapped), wrapped,
 				ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMINUS, wrapped, range));
+	}
+
+	@Override
+	public Expression convertInfinitePrecisionExpression(final ILocation loc, final Expression exp,
+			final CPrimitive type) {
+		return mTypeSizes.isUnsigned(type) ? applyWraparound(loc, type, exp)
+				: convertToSmallerSignedType(loc, type, exp);
 	}
 
 	@Override
@@ -734,7 +733,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 	}
 
 	@Override
-	public ExpressionResult constructBuiltinFesetround(final ILocation loc, final RValue arg,
+	public ExpressionResult constructBuiltinFesetround(final ILocation loc, final ExpressionResult arg,
 			final AuxVarInfoBuilder auxVarInfoBuilder) {
 		throw new UnsupportedOperationException("fesetround not supported in non-bitprecise translation");
 	}
@@ -789,5 +788,20 @@ public class IntegerTranslation extends ExpressionTranslation {
 			final Expression expression) {
 		return ExpressionFactory.newBinaryExpression(loc, Operator.COMPGEQ, expression, ExpressionFactory
 				.createIntegerLiteral(loc, mTypeSizes.getMinValueOfPrimitiveType(primType).toString()));
+	}
+
+	@Override
+	public Expression checkInRangeInfinitePrecision(final ILocation loc, final Expression expr, final ASTType inputType,
+			final CPrimitive resultType) {
+		final Expression biggerMin = constructBiggerMinIntExpression(loc, resultType, expr);
+		final Expression smallerMax = constructSmallerMaxIntExpression(loc, resultType, expr);
+		return ExpressionFactory.and(loc, List.of(biggerMin, smallerMax));
+	}
+
+	@Override
+	protected Pair<Expression, Expression> constructOverflowCheckForLeftShift(final ILocation loc,
+			final CPrimitive resultType, final Expression lhsOperand, final Expression rhsOperand,
+			final ExpressionResult exprResult) {
+		return constructOverflowCheck(loc, resultType, exprResult.getLrValue().getValue());
 	}
 }

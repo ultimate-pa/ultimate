@@ -8,6 +8,9 @@
 #include <pthread.h>
 #include <stdio.h>
 
+extern void __VERIFIER_atomic_begin();
+extern void __VERIFIER_atomic_end();
+
 typedef unsigned long int pthread_t;
 
 int counter = 0;

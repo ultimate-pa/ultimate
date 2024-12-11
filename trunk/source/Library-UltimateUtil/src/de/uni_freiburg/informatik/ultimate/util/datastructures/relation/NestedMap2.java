@@ -228,6 +228,12 @@ public class NestedMap2<K1, K2, V> {
 		}
 	}
 
+	public V computeIfAbsent(final K1 key1, final K2 key2, final Function<K1, Function<? super K2, ? extends V>> func) {
+		final Map<K2, V> k2toV = mK1ToK2ToV.computeIfAbsent(key1, x -> new HashMap<K2, V>());
+		final Function<? super K2, ? extends V> func2 = func.apply(key1);
+		return k2toV.computeIfAbsent(key2, func2);
+	}
+
 	@Override
 	public String toString() {
 		return mK1ToK2ToV.toString();
@@ -278,4 +284,6 @@ public class NestedMap2<K1, K2, V> {
 	public boolean isEmpty() {
 		return mK1ToK2ToV.isEmpty();
 	}
+
+
 }

@@ -82,7 +82,7 @@ public class InlinedCallAnnotation extends ModernAnnotations {
 	}
 
 	public static InlinedCallAnnotation getAnnotation(final IElement node) {
-		return ModelUtils.getAnnotation(node, InlinedCallAnnotation.class.getName(), a -> (InlinedCallAnnotation) a);
+		return ModelUtils.getAnnotation(node, InlinedCallAnnotation.class);
 	}
 
 	@Override

@@ -124,6 +124,9 @@ public class ExpressionBacktranslation extends BoogieTransformer {
 
 	@Override
 	public Expression processExpression(final Expression expr) {
+		if (expr == null) {
+			return null;
+		}
 		if (isDisguisedStruct(expr)) {
 			return processDisguisedStruct((IdentifierExpression) expr);
 		} else if (expr instanceof IdentifierExpression) {

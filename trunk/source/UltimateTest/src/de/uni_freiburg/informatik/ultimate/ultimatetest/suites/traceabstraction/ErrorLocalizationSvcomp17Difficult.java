@@ -35,7 +35,7 @@ import java.util.Collection;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
-import de.uni_freiburg.informatik.ultimate.test.decider.SvcompReachTestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.decider.SvcompTestResultDeciderUnreachCall;
 
 /**
  * Testsuite that contains benchmarks where we get a timeout during
@@ -99,7 +99,7 @@ public class ErrorLocalizationSvcomp17Difficult extends AbstractTraceAbstraction
 	
 	@Override
 	protected ITestResultDecider constructITestResultDecider(final UltimateRunDefinition urd) {
-		return new SvcompReachTestResultDecider(urd, false);
+		return new SvcompTestResultDeciderUnreachCall(urd, false);
 	}
 
 	/**

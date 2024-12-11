@@ -183,6 +183,10 @@ public abstract class SdHoareTripleCheckHelper<L extends IAction> {
 		return DataStructureUtils.haveEmptyIntersection(state.getVars(), tf.getInVars().keySet());
 	}
 
+	protected static boolean varsDisjointFromOutVars(final IPredicate state, final UnmodifiableTransFormula tf) {
+		return DataStructureUtils.haveEmptyIntersection(state.getVars(), tf.getOutVars().keySet());
+	}
+
 	protected static boolean varsDisjointFromAssignedVars(final IPredicate state, final UnmodifiableTransFormula tf) {
 		return DataStructureUtils.haveEmptyIntersection(state.getVars(), tf.getAssignedVars());
 	}

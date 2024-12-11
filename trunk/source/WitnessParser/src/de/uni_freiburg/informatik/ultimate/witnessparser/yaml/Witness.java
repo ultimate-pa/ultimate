@@ -29,16 +29,12 @@ package de.uni_freiburg.informatik.ultimate.witnessparser.yaml;
 
 import java.util.List;
 
-import com.amihaiemil.eoyaml.Yaml;
-import com.amihaiemil.eoyaml.YamlNode;
-import com.amihaiemil.eoyaml.YamlSequenceBuilder;
-
 import de.uni_freiburg.informatik.ultimate.core.lib.models.BasePayloadContainer;
 
 /**
  * @author Manuel Bentele (bentele@informatik.uni-freiburg.de)
  */
-public class Witness extends BasePayloadContainer implements IYamlProvider {
+public class Witness extends BasePayloadContainer {
 	private static final long serialVersionUID = 2111530908758373549L;
 
 	private final List<WitnessEntry> mEntries;
@@ -56,19 +52,14 @@ public class Witness extends BasePayloadContainer implements IYamlProvider {
 		return mEntries.toString();
 	}
 
-	@Override
-	public YamlNode toYaml() {
-		final YamlSequenceBuilder builder = Yaml.createMutableYamlSequenceBuilder();
-		mEntries.forEach(x -> builder.add(x.toYaml()));
-		return builder.build();
-	}
-
-	public String toYamlString() {
-		return toYaml().toString() + "\n";
-	}
-
 	public boolean isCorrectnessWitness() {
-		// TODO: Check this, when we also support violation witnesses
+		if (mEntries.stream().anyMatch(ViolationSequence.class::isInstance)) {
+			if (!mEntries.stream().allMatch(ViolationSequence.class::isInstance)) {
+				throw new AssertionError(
+						"The witness contains violation sequences and invariants and is thus syntactically invalid.");
+			}
+			return false;
+		}
 		return true;
 	}
 }

@@ -65,7 +65,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
@@ -132,8 +131,8 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 				for (final Pair<List<UnmodifiableTransFormula>, INLOC> exitPath : loop.getLoopExits()) {
 					final UnmodifiableTransFormula exitUtf =
 							TransFormulaUtils.sequentialComposition(mLogger, mServices, mManagedScript, false, false,
-									false, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
-									SimplificationTechnique.SIMPLIFY_DDA, exitPath.getFirst());
+									false, SimplificationTechnique.SIMPLIFY_DDA,
+									exitPath.getFirst());
 					mLogger.info("Found exit path: " + exitUtf);
 					loopExits.get(loop.getHead()).add(new Pair<>(exitUtf, exitPath.getSecond()));
 				}
@@ -163,8 +162,8 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 					final UnmodifiableTransFormula loopSummary = loopSummaries.get(node);
 					final UnmodifiableTransFormula utf = TransFormulaUtils.sequentialComposition(mLogger, mServices,
 							mManagedScript, false, false, false,
-							XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
-							SimplificationTechnique.SIMPLIFY_DDA, Arrays.asList(loopSummary, edge.getTransformula()));
+							SimplificationTechnique.SIMPLIFY_DDA,
+							Arrays.asList(loopSummary, edge.getTransformula()));
 					mLogger.info("Loop Summary Transformula: " + utf);
 					final IcfgEdge e =
 							mTib.createNewInternalTransition(newSource, newTarget, utf, mOverApproximation.get(node));
@@ -173,8 +172,8 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 						final OUTLOC exitTarget = mTib.createNewLocation(exit.getSecond());
 						final UnmodifiableTransFormula exitSummary = TransFormulaUtils.sequentialComposition(mLogger,
 								mServices, mManagedScript, false, false, false,
-								XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
-								SimplificationTechnique.SIMPLIFY_DDA, Arrays.asList(loopSummary, exit.getFirst()));
+								SimplificationTechnique.SIMPLIFY_DDA,
+								Arrays.asList(loopSummary, exit.getFirst()));
 						final IcfgEdge o = mTib.createNewInternalTransition(newSource, exitTarget, exitSummary,
 								mOverApproximation.get(node));
 						new Overapprox("Because of loop acceleration", null).annotate(o);
@@ -220,7 +219,7 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 			}
 
 			final UnmodifiableTransFormula composition = TransFormulaUtils.sequentialComposition(mLogger, mServices,
-					mManagedScript, false, false, false, null, SimplificationTechnique.NONE, formulas);
+					mManagedScript, false, false, false, SimplificationTechnique.NONE, formulas);
 
 			mLogger.debug("Path formulas: " + formulas);
 			mLogger.debug("Composition: " + composition);
@@ -315,8 +314,7 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 	 * Converts a given transformula to DNF and returns a list of transformulas for each disjunct.
 	 */
 	private List<TransFormula> getDisjunctsFromTransformula(final TransFormula originalTf) {
-		final Term dnf = SmtUtils.toDnf(mServices, mManagedScript, originalTf.getFormula(),
-				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		final Term dnf = SmtUtils.toDnf(mServices, mManagedScript, originalTf.getFormula());
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("DNF: " + dnf.toStringDirect());
 		}

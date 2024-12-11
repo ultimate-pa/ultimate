@@ -324,8 +324,10 @@ public class QuantifierPushUtils {
 		boolean atLeastOneParameterModified = false;
 		for (int i = 0; i < dualFiniteParams.length; i++) {
 			if (dualFiniteParams[i] instanceof QuantifiedFormula) {
-				final Context childContext = et.getContext().constructChildContextForConDis(services, mgdScript,
-						((ApplicationTerm) et.getTerm()).getFunction(), Arrays.asList(dualFiniteParams), i);
+				final Context contextInsideOuterQuantifiers = et.getContext()
+						.constructChildContextForQuantifiedFormula(mgdScript.getScript(), et.getEliminatees());
+				final Context childContext = contextInsideOuterQuantifiers.constructChildContextForConDis(services,
+						mgdScript, ((ApplicationTerm) et.getTerm()).getFunction(), Arrays.asList(dualFiniteParams), i);
 				final Term resultDualFiniteParamI = qe.eliminate(services, mgdScript, applyDistributivity,
 						pqeTechniques, simplificationTechnique, childContext, dualFiniteParams[i]);
 				if (resultDualFiniteParamI != dualFiniteParams[i]) {

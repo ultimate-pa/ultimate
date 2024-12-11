@@ -37,7 +37,7 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramFunction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermVarsProc;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermVarsFuns;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.DeclarableFunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.ISmtDeclarable;
@@ -102,8 +102,8 @@ public class SmtFunctionsAndAxioms {
 	 */
 	public SmtFunctionsAndAxioms(final Term axioms, final Set<IProgramFunction> funs,
 			final ManagedScript mgdScript) {
-		this(new BasicPredicate(HARDCODED_SERIALNUMBER_FOR_AXIOMS, new String[0], axioms, Collections.emptySet(), funs,
-				axioms), mgdScript);
+		this(new BasicPredicate(HARDCODED_SERIALNUMBER_FOR_AXIOMS, axioms, Collections.emptySet(), funs, axioms),
+				mgdScript);
 	}
 
 	/**
@@ -122,8 +122,6 @@ public class SmtFunctionsAndAxioms {
 				HistoryRecordingScript.extractHistoryRecordingScript(Objects.requireNonNull(mgdScript.getScript())));
 		assert axioms.getClosedFormula() == axioms.getFormula() : "Axioms are not closed";
 		assert axioms.getFormula().getFreeVars().length == 0 : "Axioms are not closed";
-		assert axioms.getProcedures() != null;
-
 	}
 
 	/**
@@ -137,9 +135,9 @@ public class SmtFunctionsAndAxioms {
 		// TODO: Use an Ultimate result to report inconsistent axioms; we do not want to disallow inconsistent axioms,
 		// we just want to be informed about them.
 		assert quickCheckAxioms != LBool.UNSAT : "Axioms are inconsistent";
-		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(newAxioms, mMgdScript, symbolTable);
-		final IPredicate newAxiomsPred = new BasicPredicate(HARDCODED_SERIALNUMBER_FOR_AXIOMS, tvp.getProcedures(),
-				tvp.getFormula(), tvp.getVars(), tvp.getFuns(), tvp.getClosedFormula());
+		final TermVarsFuns tvp = TermVarsFuns.computeTermVarsFuns(newAxioms, mMgdScript, symbolTable);
+		final IPredicate newAxiomsPred = new BasicPredicate(HARDCODED_SERIALNUMBER_FOR_AXIOMS, tvp.getFormula(),
+				tvp.getVars(), tvp.getFuns(), tvp.getClosedFormula());
 		return new SmtFunctionsAndAxioms(newAxiomsPred, mMgdScript);
 	}
 

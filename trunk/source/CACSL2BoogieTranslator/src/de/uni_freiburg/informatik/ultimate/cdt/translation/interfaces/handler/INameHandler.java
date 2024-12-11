@@ -84,4 +84,6 @@ public interface INameHandler {
 	public boolean isTempVar(String id);
 
 	public String getTempVarUIDForBlockScope(AUXVAR auxVarType, CType cType);
+
+	void addFunction(final String boogieId, final CType returnType);
 }

@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbol
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermVarsProc;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermVarsFuns;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
@@ -290,7 +290,7 @@ public class PredicateTrie<T extends IPredicate> {
 	// -- functions for restructure --
 
 	protected Map<Term, Term> getWitness(final Term term) {
-		final TermVarsProc termVarsProc = TermVarsProc.computeTermVarsProc(term, mMgdScript, mSymbolTable);
+		final TermVarsFuns termVarsProc = TermVarsFuns.computeTermVarsFuns(term, mMgdScript, mSymbolTable);
 		if (mMgdScript.isLocked()) {
 			mMgdScript.requestLockRelease();
 		}
