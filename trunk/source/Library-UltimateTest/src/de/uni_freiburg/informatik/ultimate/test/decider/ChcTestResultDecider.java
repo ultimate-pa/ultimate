@@ -49,7 +49,7 @@ public class ChcTestResultDecider extends ThreeTierTestResultDecider<ChcOverallR
 	}
 
 	@Override
-	public SMTLibExpectedResultFinder<ChcOverallResult> constructExpectedResultFinder() {
+	public IExpectedResultFinder<ChcOverallResult> constructExpectedResultFinder() {
 		return new SMTLibExpectedResultFinder<>(ChcOverallResult.UNKNOWN, ChcOverallResult.SAT, ChcOverallResult.UNSAT);
 	}
 
