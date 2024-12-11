@@ -531,7 +531,7 @@ def create_cli_settings(prop, validate_witness, witness_type, architecture, inpu
             ret.append("--procedureinliner.inline.calls.to.implemented.procedures")
             ret.append("ONLY_FOR_CONCURRENT_PROGRAMS")
             ret.append("--cacsl2boogietranslator.always.translate.conditional.expressions.to.if-statements")
-            re.append("true")
+            ret.append("true")
     elif not validate_witness:
         # we are not in validation mode, so we should generate a witness and need
         # to pass some things to the witness printer
