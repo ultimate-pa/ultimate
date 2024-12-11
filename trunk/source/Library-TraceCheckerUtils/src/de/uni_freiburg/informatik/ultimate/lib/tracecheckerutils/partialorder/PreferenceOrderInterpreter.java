@@ -40,11 +40,13 @@ import org.yaml.snakeyaml.Yaml;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ConstantDfsOrder;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IPreferenceOrder;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.SequentialPreferenceOrder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.cfg2automaton.Cfg2Automaton;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
  * Interprets specifications of preference orders, constructed from a few built-in orders and several combination
@@ -121,9 +123,7 @@ public class PreferenceOrderInterpreter<L extends IIcfgTransition<?>> {
 		final Set<L> letters =
 				((List<String>) spec.get("switch_on")).stream().map(this::findLetter).collect(Collectors.toSet());
 
-		// TODO actually apply combination operator
-		throw new UnsupportedOperationException(
-				"PreferenceOrderInterpreter does not yet support sequential combination.");
+		return SequentialPreferenceOrder.create(left, right, ImmutableSet.of(letters));
 	}
 
 	private L findLetter(final String description) {
