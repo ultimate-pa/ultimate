@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Marcel Ebbinghaus
+ * Copyright (C) 2024 Emma Bach, Marcel Ebbinghaus
  * Copyright (C) 2024 University of Freiburg
  *
  * This file is part of the ULTIMATE Automata Library.
@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IRelabelStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
@@ -52,31 +53,33 @@ public class SequentialPreferenceOrderAutomaton<L extends IAction, S>
 	private final INwaOutgoingLetterAndTransitionProvider<L, S> mRightAutomaton;
 	private final ImmutableSet<L> mTransitionLetters;
 
+	private final IRelabelStateFactory<S> mStateFactory;
+
 	public SequentialPreferenceOrderAutomaton(final INwaOutgoingLetterAndTransitionProvider<L, S> leftAutomaton,
-			final INwaOutgoingLetterAndTransitionProvider<L, S> rightAutomaton,
-			final ImmutableSet<L> transitionLetters) {
+			final INwaOutgoingLetterAndTransitionProvider<L, S> rightAutomaton, final ImmutableSet<L> transitionLetters,
+			final IRelabelStateFactory<S> stateFactory) {
 		mLeftAutomaton = leftAutomaton;
 		mRightAutomaton = rightAutomaton;
 		mTransitionLetters = transitionLetters;
+		mStateFactory = stateFactory; // TODO: this is just a placeholder
 	}
 
 	@Override
 	public IStateFactory<S> getStateFactory() {
-		// TODO Auto-generated method stub
-		return null;
+		return mStateFactory;
 	}
 
 	@Override
 	public VpAlphabet<L> getVpAlphabet() {
 		// Currently we assume both automata have the same alphabet,
 		// so it doesn't matter which one gets returned
-		// TODO Maybe return the union instead just to make sure?
+		// TODO Maybe take the union of the alphabets or something?
 		return mLeftAutomaton.getVpAlphabet();
 	}
 
 	@Override
 	public S getEmptyStackState() {
-		// TODO Auto-generated method stub
+		// Not needed because this is not a pushdown automaton
 		return null;
 	}
 
@@ -109,10 +112,22 @@ public class SequentialPreferenceOrderAutomaton<L extends IAction, S>
 
 	@Override
 	public Iterable<OutgoingInternalTransition<L, S>> internalSuccessors(final S state, final L letter) {
+		// TODO: I highly doubt any of this works - I'll have to ask tomorrow how I implement the relabeling.
+
 		if (mLeftAutomaton.isFinal(state) && mTransitionLetters.contains(letter)) {
 			// Transition from the final states of mLeftAutomaton to the initial state of mRightAutomaton
 			return Set
 					.of(new OutgoingInternalTransition<>(letter, mRightAutomaton.getInitialStates().iterator().next()));
+		}
+
+		else if (mLeftAutomaton.internalSuccessors(state, letter).iterator().hasNext()) {
+			return Set
+					.of(new OutgoingInternalTransition<>(letter, mLeftAutomaton.getInitialStates().iterator().next()));
+		}
+
+		else if (mRightAutomaton.internalSuccessors(state, letter).iterator().hasNext()) {
+			return Set
+					.of(new OutgoingInternalTransition<>(letter, mLeftAutomaton.getInitialStates().iterator().next()));
 		}
 		return null;
 	}
